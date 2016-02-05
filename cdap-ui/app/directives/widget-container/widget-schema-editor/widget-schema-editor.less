@@ -17,5 +17,12 @@
 @import "../../../styles/variables.less";
 
 my-schema-editor {
-
+  .table td {
+    &.active-cell {
+      outline: 1px solid @cdap-orange;
+      &:hover {
+        outline: 1px solid @cdap-orange;
+      }
+    }
+  }
 }

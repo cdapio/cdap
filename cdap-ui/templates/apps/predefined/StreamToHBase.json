@@ -2,7 +2,7 @@
   "artifact": {
     "name": "cdap-etl-batch",
     "scope": "SYSTEM",
-    "version": "3.3.0-SNAPSHOT"
+    "version": "3.4.0-SNAPSHOT"
   },
   "config": {
     "source": {
@@ -17,9 +17,9 @@
         },
         "label": "Stream",
         "artifact": {
-          "name": "cdap-etl-lib",
+          "name": "core-plugins",
           "scope": "SYSTEM",
-          "version": "3.3.0-SNAPSHOT"
+          "version": "1.3.0-SNAPSHOT"
         }
       }
     },
@@ -35,9 +35,9 @@
           },
           "label": "Table",
           "artifact": {
-            "name": "cdap-etl-lib",
+            "name": "core-plugins",
             "scope": "SYSTEM",
-            "version": "3.3.0-SNAPSHOT"
+            "version": "1.3.0-SNAPSHOT"
           }
         }
       }

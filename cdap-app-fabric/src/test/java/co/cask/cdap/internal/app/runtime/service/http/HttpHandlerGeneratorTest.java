@@ -24,11 +24,13 @@ import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.api.plugin.PluginProperties;
 import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpContentConsumer;
+import co.cask.cdap.api.service.http.HttpContentProducer;
 import co.cask.cdap.api.service.http.HttpServiceContext;
 import co.cask.cdap.api.service.http.HttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceHandlerSpecification;
 import co.cask.cdap.api.service.http.HttpServiceRequest;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
+import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
 import co.cask.http.HttpHandler;
 import co.cask.http.NettyHttpService;
@@ -42,9 +44,11 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
 import com.google.common.hash.Hashing;
 import com.google.common.io.ByteStreams;
+import com.google.common.io.Closeables;
 import com.google.common.io.Files;
 import com.google.common.reflect.TypeToken;
 import org.apache.twill.common.Cancellable;
+import org.apache.twill.filesystem.Location;
 import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -61,7 +65,6 @@ import java.net.InetSocketAddress;
 import java.net.URL;
 import java.net.URLConnection;
 import java.nio.ByteBuffer;
-import java.nio.channels.Channels;
 import java.nio.channels.WritableByteChannel;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -142,14 +145,14 @@ public class HttpHandlerGeneratorTest {
   }
 
   /**
-   * A testing handler for testing file upload through usage of {@link HttpContentConsumer}.
+   * A testing handler for testing file upload and download through usage of {@link HttpContentConsumer}
+   * and {@link HttpContentProducer}.
    */
-  public static final class FileUploadHandler extends AbstractHttpServiceHandler {
+  public static final class FileHandler extends AbstractHttpServiceHandler {
 
-    private static final Logger LOG = LoggerFactory.getLogger(FileUploadHandler.class);
     private final File outputDir;
 
-    public FileUploadHandler(File outputDir) {
+    public FileHandler(File outputDir) {
       this.outputDir = outputDir;
     }
 
@@ -158,24 +161,69 @@ public class HttpHandlerGeneratorTest {
     public HttpContentConsumer upload(HttpServiceRequest request,
                                       HttpServiceResponder responder,
                                       @PathParam("file") String file) throws IOException {
-      final WritableByteChannel channel = Channels.newChannel(new FileOutputStream(new File(outputDir, file)));
-      return new HttpContentConsumer() {
-        @Override
-        public void onReceived(ByteBuffer chunk, Transactional transactional) throws Exception {
-          channel.write(chunk);
-        }
+      return new FileContentConsumer(new File(outputDir, file));
+    }
 
-        @Override
-        public void onFinish(HttpServiceResponder responder) throws Exception {
-          channel.close();
-          responder.sendStatus(200);
-        }
+    @Path("/download/{file}")
+    @GET
+    public void download(HttpServiceRequest request,
+                         HttpServiceResponder responder,
+                         @PathParam("file") String file) {
+      Location location = Locations.toLocation(new File(outputDir, file));
+      try {
+        responder.send(200, location, "text/plain");
+      } catch (IOException e) {
+        responder.sendStatus(500);
+      }
+    }
 
+    // A POST endpoint for upload file and response with the file content using HttpContentProducer
+    @Path("/upload/{file}")
+    @POST
+    public HttpContentConsumer uploadDownload(HttpServiceRequest request,
+                                              HttpServiceResponder responder,
+                                              @PathParam("file") String file) throws IOException {
+      final File targetFile = new File(outputDir, file);
+      return new FileContentConsumer(targetFile) {
         @Override
-        public void onError(HttpServiceResponder responder, Throwable failureCause) {
-          LOG.error("Failed when handling upload", failureCause);
+        protected void response(HttpServiceResponder responder) throws IOException {
+          responder.send(200, Locations.toLocation(targetFile), "text/plain");
         }
       };
+    }
+  }
+
+  /**
+   * A {@link HttpContentConsumer} that writes uploaded bytes to a file.
+   */
+  private static class FileContentConsumer extends HttpContentConsumer {
+
+    private static final Logger LOG = LoggerFactory.getLogger(FileContentConsumer.class);
+    private final WritableByteChannel channel;
+
+    FileContentConsumer(File file) throws IOException {
+      this.channel = new FileOutputStream(file).getChannel();
+    }
+
+    @Override
+    public void onReceived(ByteBuffer chunk, Transactional transactional) throws Exception {
+      channel.write(chunk);
+    }
+
+    @Override
+    public void onFinish(HttpServiceResponder responder) throws Exception {
+      channel.close();
+      response(responder);
+    }
+
+    @Override
+    public void onError(HttpServiceResponder responder, Throwable failureCause) {
+      Closeables.closeQuietly(channel);
+      LOG.error("Failed when handling upload", failureCause);
+    }
+
+    protected void response(HttpServiceResponder responder) throws IOException {
+      responder.sendStatus(200);
     }
   }
 
@@ -242,15 +290,17 @@ public class HttpHandlerGeneratorTest {
     // Create the file upload handler and starts a netty server with it
     final File outputDir = TEMP_FOLDER.newFolder();
     HttpHandler httpHandler = factory.createHttpHandler(
-      TypeToken.of(FileUploadHandler.class), new AbstractDelegatorContext<FileUploadHandler>() {
+      TypeToken.of(FileHandler.class), new AbstractDelegatorContext<FileHandler>() {
         @Override
-        protected FileUploadHandler createHandler() {
-          return new FileUploadHandler(outputDir);
+        protected FileHandler createHandler() {
+          return new FileHandler(outputDir);
         }
       });
 
+    // Creates a Netty http server with 1K request buffer
     NettyHttpService service = NettyHttpService.builder()
       .addHttpHandlers(ImmutableList.of(httpHandler))
+      .setHttpChunkLimit(1024)
       .build();
 
     service.startAndWait();
@@ -261,33 +311,119 @@ public class HttpHandlerGeneratorTest {
       HttpURLConnection urlConn = (HttpURLConnection) new URL(
         String.format("http://%s:%d/content/upload/test.txt",
                       bindAddress.getHostName(), bindAddress.getPort())).openConnection();
+      try {
+        urlConn.setReadTimeout(2000);
+        urlConn.setDoOutput(true);
+        urlConn.setRequestMethod("PUT");
+        // Set to use default chunk size
+        urlConn.setChunkedStreamingMode(-1);
 
-      urlConn.setReadTimeout(2000);
-      urlConn.setDoOutput(true);
-      urlConn.setRequestMethod("PUT");
-      // Set to use default chunk size
-      urlConn.setChunkedStreamingMode(-1);
-
-      // Write over 150MB of data
-      // One fragment is 10K of data
-      byte[] fragment = Strings.repeat("0123456789", 1024).getBytes(Charsets.UTF_8);
-      File localFile = TEMP_FOLDER.newFile();
-      try (
-        OutputStream os = urlConn.getOutputStream();
-        FileOutputStream fos = new FileOutputStream(localFile)
-      ) {
-        for (int i = 0; i < 20000; i++) {
-          os.write(fragment);
-          fos.write(fragment);
+        // Write over 1MB of data
+        // One fragment is 10K of data
+        byte[] fragment = Strings.repeat("0123456789", 1024).getBytes(Charsets.UTF_8);
+        File localFile = TEMP_FOLDER.newFile();
+        try (
+          OutputStream os = urlConn.getOutputStream();
+          FileOutputStream fos = new FileOutputStream(localFile)
+        ) {
+          for (int i = 0; i < 100; i++) {
+            os.write(fragment);
+            fos.write(fragment);
+          }
         }
+
+        Assert.assertEquals(200, urlConn.getResponseCode());
+
+        // File written on the remote end should be > 1K and should be the same as the local one
+        File remoteFile = new File(outputDir, "test.txt");
+        Assert.assertTrue(remoteFile.length() > 1024);
+        Assert.assertEquals(Files.hash(localFile, Hashing.md5()), Files.hash(remoteFile, Hashing.md5()));
+      } finally {
+        urlConn.disconnect();
+      }
+    } finally {
+      service.stopAndWait();
+    }
+  }
+
+  @Test
+  public void testContentProducer() throws Exception {
+    MetricsContext noOpsMetricsContext =
+      new NoOpMetricsCollectionService().getContext(new HashMap<String, String>());
+    HttpHandlerFactory factory = new HttpHandlerFactory("/content", noOpsMetricsContext);
+
+    // Create the file upload handler and starts a netty server with it
+    final File outputDir = TEMP_FOLDER.newFolder();
+    HttpHandler httpHandler = factory.createHttpHandler(
+      TypeToken.of(FileHandler.class), new AbstractDelegatorContext<FileHandler>() {
+        @Override
+        protected FileHandler createHandler() {
+          return new FileHandler(outputDir);
+        }
+      });
+
+    NettyHttpService service = NettyHttpService.builder()
+      .addHttpHandlers(ImmutableList.of(httpHandler))
+      .build();
+
+    service.startAndWait();
+    try {
+      // Generate a 100K file
+      File file = TEMP_FOLDER.newFile();
+      Files.write(Strings.repeat("0123456789", 10240).getBytes(Charsets.UTF_8), file);
+
+      InetSocketAddress bindAddress = service.getBindAddress();
+
+      // Upload the generated file
+      URL uploadURL = new URL(String.format("http://%s:%d/content/upload/test.txt",
+                                            bindAddress.getHostName(), bindAddress.getPort()));
+      HttpURLConnection urlConn = (HttpURLConnection) uploadURL.openConnection();
+      try {
+        urlConn.setDoOutput(true);
+        urlConn.setRequestMethod("PUT");
+        Files.copy(file, urlConn.getOutputStream());
+        Assert.assertEquals(200, urlConn.getResponseCode());
+      } finally {
+        urlConn.disconnect();
       }
 
-      Assert.assertEquals(200, urlConn.getResponseCode());
+      // Download the file
+      File downloadFile = TEMP_FOLDER.newFile();
+      urlConn = (HttpURLConnection) new URL(
+        String.format("http://%s:%d/content/download/test.txt",
+                      bindAddress.getHostName(), bindAddress.getPort())).openConnection();
+      try {
+        ByteStreams.copy(urlConn.getInputStream(), Files.newOutputStreamSupplier(downloadFile));
+      } finally {
+        urlConn.disconnect();
+      }
 
-      // File written on the remote end should be > 150MB and should be the same as the local one
-      File remoteFile = new File(outputDir, "test.txt");
-      Assert.assertTrue(remoteFile.length() > 150 * 1024 * 1024);
-      Assert.assertEquals(Files.hash(localFile, Hashing.md5()), Files.hash(remoteFile, Hashing.md5()));
+      // Compare if the file content are the same
+      Assert.assertTrue(Files.equal(file, downloadFile));
+
+      // Download a file that doesn't exist
+      urlConn = (HttpURLConnection) new URL(
+        String.format("http://%s:%d/content/download/test2.txt",
+                      bindAddress.getHostName(), bindAddress.getPort())).openConnection();
+      try {
+        Assert.assertEquals(500, urlConn.getResponseCode());
+      } finally {
+        urlConn.disconnect();
+      }
+
+      // Upload the file to the POST endpoint. The endpoint should response with the same file content
+      downloadFile = TEMP_FOLDER.newFile();
+      urlConn = (HttpURLConnection) uploadURL.openConnection();
+      try {
+        urlConn.setDoOutput(true);
+        urlConn.setRequestMethod("POST");
+        Files.copy(file, urlConn.getOutputStream());
+        ByteStreams.copy(urlConn.getInputStream(), Files.newOutputStreamSupplier(downloadFile));
+        Assert.assertEquals(200, urlConn.getResponseCode());
+        Assert.assertTrue(Files.equal(file, downloadFile));
+      } finally {
+        urlConn.disconnect();
+      }
 
     } finally {
       service.stopAndWait();

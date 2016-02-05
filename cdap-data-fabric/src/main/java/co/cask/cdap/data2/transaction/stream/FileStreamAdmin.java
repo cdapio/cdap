@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,6 +17,7 @@ package co.cask.cdap.data2.transaction.stream;
 
 import co.cask.cdap.api.data.format.FormatSpecification;
 import co.cask.cdap.api.data.schema.Schema;
+import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.StreamNotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
@@ -31,6 +32,8 @@ import co.cask.cdap.data.stream.service.StreamMetaStore;
 import co.cask.cdap.data.view.ViewAdmin;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
+import co.cask.cdap.data2.metadata.system.AbstractSystemMetadataWriter;
+import co.cask.cdap.data2.metadata.system.StreamSystemMetadataWriter;
 import co.cask.cdap.data2.metadata.writer.LineageWriter;
 import co.cask.cdap.data2.registry.UsageRegistry;
 import co.cask.cdap.explore.client.ExploreFacade;
@@ -89,8 +92,9 @@ public class FileStreamAdmin implements StreamAdmin {
   private final StreamMetaStore streamMetaStore;
   private final ExploreTableNaming tableNaming;
   private final ViewAdmin viewAdmin;
-  private ExploreFacade exploreFacade;
   private final MetadataStore metadataStore;
+
+  private ExploreFacade exploreFacade;
 
   @Inject
   public FileStreamAdmin(NamespacedLocationFactory namespacedLocationFactory,
@@ -318,6 +322,9 @@ public class FileStreamAdmin implements StreamAdmin {
         createStreamFeeds(config);
         alterExploreStream(streamId, true, config.getFormat());
         streamMetaStore.addStream(streamId);
+        AbstractSystemMetadataWriter systemMetadataWriter = new StreamSystemMetadataWriter(metadataStore, streamId,
+                                                                                           config);
+        systemMetadataWriter.write();
         return config;
       }
     });
@@ -365,7 +372,9 @@ public class FileStreamAdmin implements StreamAdmin {
       viewId.getStream(), new Callable<Boolean>() {
         @Override
         public Boolean call() throws Exception {
-          Preconditions.checkArgument(exists(viewId.getStream()), "Stream '%s' does not exist.", viewId.getStreamId());
+          if (!exists(viewId.getStream())) {
+            throw new NotFoundException(viewId.getStream());
+          }
           return viewAdmin.createOrUpdate(viewId, spec);
         }
       });
@@ -377,7 +386,9 @@ public class FileStreamAdmin implements StreamAdmin {
       viewId.getStream(), new Callable<Void>() {
         @Override
         public Void call() throws Exception {
-          Preconditions.checkArgument(exists(viewId.getStream()), "Stream '%s' does not exist.", viewId.getStreamId());
+          if (!exists(viewId.getStream())) {
+            throw new StreamNotFoundException(viewId.getStream());
+          }
           viewAdmin.delete(viewId);
           return null;
         }
@@ -386,13 +397,17 @@ public class FileStreamAdmin implements StreamAdmin {
 
   @Override
   public List<Id.Stream.View> listViews(final Id.Stream streamId) throws Exception {
-    Preconditions.checkArgument(exists(streamId), "Stream '%s' does not exist.", streamId);
+    if (!exists(streamId)) {
+      throw new StreamNotFoundException(streamId);
+    }
     return viewAdmin.list(streamId);
   }
 
   @Override
   public ViewSpecification getView(final Id.Stream.View viewId) throws Exception {
-    Preconditions.checkArgument(exists(viewId.getStream()), "Stream '%s' does not exist.", viewId.getStreamId());
+    if (!exists(viewId.getStream())) {
+      throw new StreamNotFoundException(viewId.getStream());
+    }
     return viewAdmin.get(viewId);
   }
 
@@ -459,18 +474,18 @@ public class FileStreamAdmin implements StreamAdmin {
           }
           alterExploreStream(StreamUtils.getStreamIdFromLocation(streamLocation), false, null);
 
+          // Drop the associated views
+          List<Id.Stream.View> views = viewAdmin.list(streamId);
+          for (Id.Stream.View view : views) {
+            viewAdmin.delete(view);
+          }
+
           if (!configLocation.delete()) {
             LOG.debug("Could not delete stream config location {}", streamLocation);
           }
 
           // Remove metadata for the stream
           metadataStore.removeMetadata(streamId);
-
-          // Drop the associated views
-          List<Id.Stream.View> views = viewAdmin.list(streamId);
-          for (Id.Stream.View view : views) {
-            viewAdmin.delete(view);
-          }
 
           // Move the stream directory to the deleted directory
           // The target directory has a timestamp appended to the stream name
@@ -480,6 +495,7 @@ public class FileStreamAdmin implements StreamAdmin {
           Locations.mkdirsIfNotExists(deleted);
           streamLocation.renameTo(deleted.append(streamId.getId() + System.currentTimeMillis()));
           streamMetaStore.removeStream(streamId);
+          metadataStore.removeMetadata(streamId);
         } catch (Exception e) {
           throw Throwables.propagate(e);
         }

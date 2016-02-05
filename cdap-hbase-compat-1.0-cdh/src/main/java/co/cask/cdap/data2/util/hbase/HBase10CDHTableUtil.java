@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -24,25 +24,19 @@ import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.proto.Id;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.ClusterStatus;
 import org.apache.hadoop.hbase.Coprocessor;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.NamespaceDescriptor;
 import org.apache.hadoop.hbase.NamespaceNotFoundException;
-import org.apache.hadoop.hbase.RegionLoad;
-import org.apache.hadoop.hbase.ServerName;
-import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.io.compress.Compression;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.Map;
 
 /**
  *
@@ -265,33 +259,7 @@ public class HBase10CDHTableUtil extends HBaseTableUtil {
   }
 
   @Override
-  public Map<TableId, TableStats> getTableStats(HBaseAdmin admin) throws IOException {
-    // The idea is to walk thru live region servers, collect table region stats and aggregate them towards table total
-    // metrics.
-    Map<TableId, TableStats> datasetStat = Maps.newHashMap();
-    ClusterStatus clusterStatus = admin.getClusterStatus();
-
-    for (ServerName serverName : clusterStatus.getServers()) {
-      Map<byte[], RegionLoad> regionsLoad = clusterStatus.getLoad(serverName).getRegionsLoad();
-
-      for (RegionLoad regionLoad : regionsLoad.values()) {
-        //String tableName = Bytes.toString(HRegionInfo.getTableName(regionLoad.getName()));
-        TableName tableName = HRegionInfo.getTable(regionLoad.getName());
-        if (!admin.tableExists(tableName) || !isCDAPTable(admin.getTableDescriptor(tableName))) {
-          continue;
-        }
-        HTableNameConverter hTableNameConverter = new HTable10CDHNameConverter();
-        TableId tableId = hTableNameConverter.from(new HTableDescriptor(tableName));
-        TableStats stat = datasetStat.get(tableId);
-        if (stat == null) {
-          stat = new TableStats(regionLoad.getStorefileSizeMB(), regionLoad.getMemStoreSizeMB());
-          datasetStat.put(tableId, stat);
-        } else {
-          stat.incStoreFileSizeMB(regionLoad.getStorefileSizeMB());
-          stat.incMemStoreSizeMB(regionLoad.getMemStoreSizeMB());
-        }
-      }
-    }
-    return datasetStat;
+  protected HTableNameConverter getHTableNameConverter() {
+    return nameConverter;
   }
 }

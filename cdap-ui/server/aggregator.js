@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -118,7 +118,7 @@ Aggregator.prototype.stopPollingAll = function() {
 };
 
 /**
- * Pushes the adapter configuration for templates and plugins to the
+ * Pushes the ETL Application configuration for templates and plugins to the
  * FE. These configurations are UI specific and hences need to be supported
  * here.
  */
@@ -228,6 +228,10 @@ function doPoll (resource) {
       if (error) {
         emitResponse.call(that, resource, error);
         return;
+      } else if (response.statusCode > 299) {
+        var errMessage = response.statusCode + ' ' + resource.url;
+        emitResponse.call(that, resource, errMessage, response, body);
+        return;
       }
       emitResponse.call(that, resource, false, response, body);
 
@@ -263,7 +267,17 @@ function emitResponse (resource, error, response, body) {
 
   if(error) {
     log.debug('[ERROR]: (id: ' + resource.id + ', url: ' + resource.url + ')');
-    log.trace('[ERROR]: (id: ' + resource.id + ',url: ' + resource.url + ') body : (' + error.toString() + ')');
+    log.trace('[ERROR]: (id: ' + resource.id + ', url: ' + resource.url + ') body : (' + error.toString() + ')');
+
+    if (this.polledResources[resource.id]) {
+      responseHash = hash(error || {});
+      if (this.polledResources[resource.id].response === responseHash.toString()) {
+        return;
+      } else {
+        this.polledResources[resource.id].response = responseHash.toString();
+      }
+    }
+
     this.connection.write(JSON.stringify({
       resource: resource,
       error: error,
@@ -275,7 +289,7 @@ function emitResponse (resource, error, response, body) {
     log.trace('[' + timeDiff + 'ms] Success (' + resource.id + ',' + resource.url + ') body : (' + JSON.stringify(body) + ')');
 
     if (this.polledResources[resource.id]) {
-      responseHash = hash(body);
+      responseHash = hash(body || {});
       if (this.polledResources[resource.id].response === responseHash.toString()){
         // No need to send this to the client as nothing changed.
         return;
@@ -303,7 +317,7 @@ function onSocketData (message) {
 
     switch(message.action) {
       case 'template-config':
-        log.debug('Adapter config request (' + r.method + ',' + r.id + ',' + r.templateid + ',' + r.pluginid);
+        log.debug('ETL application config request (' + r.method + ',' + r.id + ',' + r.templateid + ',' + r.pluginid);
         this.pushConfiguration(r);
         break;
       case 'poll-start':

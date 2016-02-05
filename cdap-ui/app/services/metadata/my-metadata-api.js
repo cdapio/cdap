@@ -33,19 +33,19 @@ angular.module(PKG.name + '.services')
     },
     {
       setProgramMetadata: myHelpers.getConfig('POST', 'REQUEST', programPath + '/tags'),
-      getProgramMetadata: myHelpers.getConfig('GET', 'REQUEST', programPath + '/tags', true),
+      getProgramMetadata: myHelpers.getConfig('GET', 'REQUEST', programPath, true),
       deleteProgramMetadata: myHelpers.getConfig('DELETE', 'REQUEST', programPath + '/tags/:tag'),
 
       setAppsMetadata: myHelpers.getConfig('POST', 'REQUEST', appsPath + '/tags'),
-      getAppsMetadata: myHelpers.getConfig('GET', 'REQUEST', appsPath + '/tags', true),
+      getAppsMetadata: myHelpers.getConfig('GET', 'REQUEST', appsPath, true),
       deleteAppsMetadata: myHelpers.getConfig('DELETE', 'REQUEST', appsPath + '/tags/:tag'),
 
       setDatasetsMetadata: myHelpers.getConfig('POST', 'REQUEST', datasetsPath + '/tags'),
-      getDatasetsMetadata: myHelpers.getConfig('GET', 'REQUEST', datasetsPath + '/tags', true),
+      getDatasetsMetadata: myHelpers.getConfig('GET', 'REQUEST', datasetsPath, true),
       deleteDatasetsMetadata: myHelpers.getConfig('DELETE', 'REQUEST', datasetsPath + '/tags/:tag'),
 
       setStreamsMetadata: myHelpers.getConfig('POST', 'REQUEST', streamsPath + '/tags'),
-      getStreamsMetadata: myHelpers.getConfig('GET', 'REQUEST', streamsPath + '/tags', true),
+      getStreamsMetadata: myHelpers.getConfig('GET', 'REQUEST', streamsPath, true),
       deleteStreamsMetadata: myHelpers.getConfig('DELETE', 'REQUEST', streamsPath + '/tags/:tag'),
 
     });

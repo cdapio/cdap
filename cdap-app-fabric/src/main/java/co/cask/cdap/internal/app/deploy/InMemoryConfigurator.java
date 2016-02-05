@@ -71,6 +71,9 @@ public final class InMemoryConfigurator implements Configurator {
   private final String configString;
   private final ArtifactClassLoaderFactory artifactClassLoaderFactory;
   private final File baseUnpackDir;
+  // this is the namespace that the app will be in, which may be different than the namespace of the artifact.
+  // if the artifact is a system artifact, the namespace will be the system namespace.
+  private final Id.Namespace appNamespace;
 
   private ArtifactRepository artifactRepository;
 
@@ -79,20 +82,17 @@ public final class InMemoryConfigurator implements Configurator {
   private String appClassName;
   private Id.Artifact artifactId;
 
-  public InMemoryConfigurator(CConfiguration cConf, Id.Artifact artifactId, String appClassName,
+  public InMemoryConfigurator(CConfiguration cConf, Id.Namespace appNamespace, Id.Artifact artifactId,
+                              String appClassName,
                               Location artifact, @Nullable String configString, ArtifactRepository artifactRepository) {
-    this(cConf, artifact, configString);
+    Preconditions.checkNotNull(artifact);
+    this.cConf = cConf;
+    this.appNamespace = appNamespace;
     this.artifactId = artifactId;
     this.appClassName = appClassName;
-    this.artifactRepository = artifactRepository;
-  }
-
-  // remove once app templates are gone
-  public InMemoryConfigurator(CConfiguration cConf, Location artifact, @Nullable String configString) {
-    Preconditions.checkNotNull(artifact);
     this.artifact = artifact;
     this.configString = configString;
-    this.cConf = cConf;
+    this.artifactRepository = artifactRepository;
     this.baseUnpackDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
                                   cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
     this.artifactClassLoaderFactory = new ArtifactClassLoaderFactory(cConf, baseUnpackDir);
@@ -161,9 +161,8 @@ public final class InMemoryConfigurator implements Configurator {
     DefaultAppConfigurer configurer;
     try (PluginInstantiator pluginInstantiator = new PluginInstantiator(
       cConf, app.getClass().getClassLoader(), tempDir)) {
-      configurer = artifactId == null ?
-        new DefaultAppConfigurer(app, configString) :
-        new DefaultAppConfigurer(artifactId, app, configString, artifactRepository, pluginInstantiator);
+      configurer =
+        new DefaultAppConfigurer(appNamespace, artifactId, app, configString, artifactRepository, pluginInstantiator);
 
       Config appConfig;
       Type configType = Artifacts.getConfigType(app.getClass());

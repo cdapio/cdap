@@ -28,23 +28,23 @@ angular.module(PKG.name + '.commons')
           scope: $scope,
           windowClass: 'custom-loading-modal'
         }, modal, isBackendDown = false;
-
+        var genericServiceErrorMsg = 'CDAP Services are not available';
+        var genericSubtitle = 'Trying to connect...';
         EventPipe.on('backendDown', function(message, subtitle) {
           if (!isBackendDown) {
             if (modal) {
               modal.close();
             }
             isBackendDown = true;
-            if (!message) {
-              $scope.message = 'Service(s) are offline';
-            } else {
-              $scope.message = message;
-              $scope.subtitle = subtitle;
-            }
+            $scope.message = message || genericServiceErrorMsg;
+            $scope.subtitle = subtitle || genericSubtitle;
             modal = $bootstrapModal.open(modalObj);
             modal.result.finally(function() {
-              $state.go('overview', {}, {reload: true});
+              $state.go('overview', {reload: true});
             });
+          } else {
+            $scope.message = message || genericServiceErrorMsg;
+            $scope.subtitle = subtitle || genericSubtitle;
           }
         }.bind($scope));
 

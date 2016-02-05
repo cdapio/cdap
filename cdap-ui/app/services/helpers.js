@@ -53,6 +53,32 @@ angular.module(PKG.name+'.services')
   /* ----------------------------------------------------------------------- */
 
   /**
+   * set a property deep in an object.
+   * The difference of objectSetter compared to deepSet is that
+   * objectSetter just need the nested path as an array instead of
+   * string with '.'
+   * @param {Object} obj object on which to set a value
+   * @param {Array} arr array of the nested path, eg ['foo', 'bar', 'baz']
+   * @param {Mixed} value  value to be set as the last path of arr
+   */
+  function objectSetter(obj, arr, value) {
+    var it = obj;
+
+    for (var i = 0; i < arr.length; i++) {
+      if (i === arr.length - 1) {
+        it[arr[i]] = value;
+      } else {
+        if (!it[arr[i]]) {
+          it[arr[i]] = {};
+        }
+        it = it[arr[i]];
+      }
+    }
+  }
+
+  /* ----------------------------------------------------------------------- */
+
+  /**
    * get to a property deep in an obj by jsonpath
    * @param  {Object} obj object to inspect
    * @param  {String} key jsonpath eg "foo.bar.baz"
@@ -105,10 +131,10 @@ angular.module(PKG.name+'.services')
       return null;
     }
     for (var i = 1; i < arguments.length; i++) {
-      obj = obj[arguments[i]];
       if (!angular.isObject(obj)) {
-        return obj;
+        return undefined;
       }
+      obj = obj[arguments[i]];
     }
     return obj;
   }
@@ -148,6 +174,7 @@ angular.module(PKG.name+'.services')
 
   return {
     deepSet: deepSet,
+    objectSetter: objectSetter,
     deepGet: deepGet,
     objectQuery: objectQuery,
     getConfig: getConfig,

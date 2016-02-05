@@ -37,6 +37,11 @@ angular.module(PKG.name + '.feature.hydrator')
       }.bind(this));
     };
 
+    this.emptyMetrics = function () {
+      this.state.metrics = [];
+      this.emitChange();
+    };
+
     this.setState = function(metrics) {
       var metricObj = {};
       angular.forEach(metrics.series, function (metric) {
@@ -66,5 +71,6 @@ angular.module(PKG.name + '.feature.hydrator')
       this.emitChange();
     };
     dispatcher.register('onMetricsFetch', this.setState.bind(this));
+    dispatcher.register('onEmptyMetrics', this.emptyMetrics.bind(this));
     dispatcher.register('onReset', this.setDefaults.bind(this));
   });

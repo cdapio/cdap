@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -162,8 +162,10 @@ public class MapReduceTaskContextProvider extends AbstractIdleService {
           program = programRef.get();
         }
         MapReduceSpecification spec = program.getApplicationSpecification().getMapReduce().get(program.getName());
-        MapReduceMetrics.TaskType taskType = MapReduceMetrics.TaskType.from(key.getTaskAttemptID().getTaskType());
-
+        MapReduceMetrics.TaskType taskType = null;
+        if (MapReduceMetrics.TaskType.hasType(key.getTaskAttemptID().getTaskType())) {
+          taskType = MapReduceMetrics.TaskType.from(key.getTaskAttemptID().getTaskType());
+        }
         // if this is not for a mapper or a reducer, we don't need the metrics collection service
         MetricsCollectionService metricsCollectionService =
           (taskType == null) ? null : injector.getInstance(MetricsCollectionService.class);

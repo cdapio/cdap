@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -42,6 +42,7 @@ import co.cask.cdap.internal.app.runtime.AbstractProgramRunnerWithPlugin;
 import co.cask.cdap.internal.app.runtime.DataSetFieldSetter;
 import co.cask.cdap.internal.app.runtime.MetricsFieldSetter;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
+import co.cask.cdap.internal.app.runtime.ProgramRunners;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.internal.app.runtime.workflow.BasicWorkflowToken;
 import co.cask.cdap.internal.lang.Reflections;
@@ -52,7 +53,6 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.io.Closeables;
 import com.google.common.reflect.TypeToken;
-import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.Service;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
@@ -69,7 +69,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
 import java.io.File;
-import java.security.PrivilegedExceptionAction;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -207,22 +206,10 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
       // runner, which is probably the yarn user. This may cause permissions issues if the program
       // tries to access cdap data. For example, writing to a FileSet will fail, as the yarn user will
       // be running the job, but the data directory will be owned by cdap.
-      if (!MapReduceTaskContextProvider.isLocal(hConf) && !UserGroupInformation.isSecurityEnabled()) {
-        String runAs = cConf.get(Constants.CFG_HDFS_USER);
-        try {
-          UserGroupInformation.createRemoteUser(runAs)
-            .doAs(new PrivilegedExceptionAction<ListenableFuture<Service.State>>() {
-              @Override
-              public ListenableFuture<Service.State> run() throws Exception {
-                return mapReduceRuntimeService.start();
-              }
-            });
-        } catch (Exception e) {
-          LOG.error("Exception running mapreduce job as user {}.", runAs, e);
-          throw Throwables.propagate(e);
-        }
-      } else {
+      if (MapReduceTaskContextProvider.isLocal(hConf) || UserGroupInformation.isSecurityEnabled()) {
         mapReduceRuntimeService.start();
+      } else {
+        ProgramRunners.startAsUser(cConf.get(Constants.CFG_HDFS_USER), mapReduceRuntimeService);
       }
       return controller;
     } catch (Exception e) {

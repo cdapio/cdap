@@ -42,7 +42,6 @@ import co.cask.cdap.common.ApplicationNotFoundException;
 import co.cask.cdap.common.ProgramNotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
@@ -52,13 +51,11 @@ import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
 import co.cask.cdap.internal.app.ForwardingApplicationSpecification;
 import co.cask.cdap.internal.app.ForwardingFlowSpecification;
 import co.cask.cdap.internal.app.program.ProgramBundle;
-import co.cask.cdap.proto.AdapterStatus;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.WorkflowStatistics;
 import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.templates.AdapterDefinition;
 import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionExecutorFactory;
@@ -465,7 +462,7 @@ public class DefaultStore implements Store {
     appsTx.get().executeUnchecked(new TransactionExecutor.Function<AppMetadataStore, Void>() {
       @Override
       public Void apply(AppMetadataStore mds) throws Exception {
-        mds.writeApplication(id.getNamespaceId(), id.getId(), spec, Locations.toURI(appArchiveLocation).toString());
+        mds.writeApplication(id.getNamespaceId(), id.getId(), spec, appArchiveLocation.toURI().toString());
         return null;
       }
     }, apps.get());
@@ -874,65 +871,6 @@ public class DefaultStore implements Store {
       case WORKFLOW:  return appSpec.getWorkflows().containsKey(id.getId());
       default:        throw new IllegalArgumentException("Unexpected ProgramType " + id.getType());
     }
-  }
-
-  @Override
-  public void addAdapter(final Id.Namespace id, final AdapterDefinition adapterSpec) {
-    appsTx.get().executeUnchecked(
-      new TransactionExecutor.Function<AppMetadataStore, Void>() {
-        @Override
-        public Void apply(AppMetadataStore mds) throws Exception {
-          mds.writeAdapter(id, adapterSpec, AdapterStatus.STOPPED);
-          return null;
-        }
-      }, apps.get());
-  }
-
-  @Nullable
-  @Override
-  public AdapterDefinition getAdapter(final Id.Namespace id, final String name) {
-    return appsTx.get().executeUnchecked(
-      new TransactionExecutor.Function<AppMetadataStore, AdapterDefinition>() {
-        @Override
-        public AdapterDefinition apply(AppMetadataStore mds) throws Exception {
-          return mds.getAdapter(id, name);
-        }
-      }, apps.get());
-  }
-
-  @Override
-  public Collection<AdapterDefinition> getAllAdapters(final Id.Namespace id) {
-    return appsTx.get().executeUnchecked(
-      new TransactionExecutor.Function<AppMetadataStore, Collection<AdapterDefinition>>() {
-        @Override
-        public Collection<AdapterDefinition> apply(AppMetadataStore mds) throws Exception {
-          return mds.getAllAdapters(id);
-        }
-      }, apps.get());
-  }
-
-  @Override
-  public void removeAdapter(final Id.Namespace id, final String name) {
-    appsTx.get().executeUnchecked(
-      new TransactionExecutor.Function<AppMetadataStore, Void>() {
-        @Override
-        public Void apply(AppMetadataStore mds) throws Exception {
-          mds.deleteAdapter(id, name);
-          return null;
-        }
-      }, apps.get());
-  }
-
-  @Override
-  public void removeAllAdapters(final Id.Namespace id) {
-    appsTx.get().executeUnchecked(
-      new TransactionExecutor.Function<AppMetadataStore, Void>() {
-        @Override
-        public Void apply(AppMetadataStore mds) throws Exception {
-          mds.deleteAllAdapters(id);
-          return null;
-        }
-      }, apps.get());
   }
 
   @Override

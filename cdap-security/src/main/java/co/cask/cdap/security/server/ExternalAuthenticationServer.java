@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,13 +16,14 @@
 
 package co.cask.cdap.security.server;
 
+import co.cask.cdap.common.ServiceBindException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.conf.SConfiguration;
 import co.cask.cdap.common.discovery.ResolvingDiscoverable;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
-import com.google.common.util.concurrent.AbstractExecutionThreadService;
+import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import org.apache.twill.common.Cancellable;
@@ -41,6 +42,7 @@ import org.jboss.resteasy.plugins.server.servlet.HttpServletDispatcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.net.BindException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
@@ -52,7 +54,7 @@ import javax.annotation.Nullable;
 /**
  * Jetty service for External Authentication.
  */
-public class ExternalAuthenticationServer extends AbstractExecutionThreadService {
+public class ExternalAuthenticationServer extends AbstractIdleService {
 
   public static final String NAMED_EXTERNAL_AUTH = "external.auth";
 
@@ -125,29 +127,7 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
   }
 
   @Override
-  protected void run() throws Exception {
-    server.start();
-
-    // assumes we only have one connector
-    final Connector connector = server.getConnectors()[0];
-    serviceCancellable = discoveryService.register(ResolvingDiscoverable.of(new Discoverable() {
-      @Override
-      public String getName() {
-        return Constants.Service.EXTERNAL_AUTHENTICATION;
-      }
-
-      @Override
-      public InetSocketAddress getSocketAddress() throws RuntimeException {
-        if (announceAddress != null) {
-          return new InetSocketAddress(announceAddress, connector.getLocalPort());
-        }
-        return new InetSocketAddress(connector.getHost(), connector.getLocalPort());
-      }
-    }));
-  }
-
-  @Override
-  protected void startUp() {
+  protected void startUp() throws Exception {
     try {
       server = new Server();
 
@@ -214,8 +194,35 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
 
       server.setHandler(handlers);
     } catch (Exception e) {
-      LOG.error("Error while starting server.", e);
+      LOG.error("Error while starting Authentication Server.", e);
     }
+
+    try {
+      server.start();
+    } catch (Exception e) {
+      Throwable cause = Throwables.getRootCause(e);
+      if (!(cause instanceof BindException)) {
+        throw e;
+      }
+      throw new ServiceBindException("Authentication Server", bindAddress.getCanonicalHostName(), port);
+    }
+
+    // assumes we only have one connector
+    final Connector connector = server.getConnectors()[0];
+    serviceCancellable = discoveryService.register(ResolvingDiscoverable.of(new Discoverable() {
+      @Override
+      public String getName() {
+        return Constants.Service.EXTERNAL_AUTHENTICATION;
+      }
+
+      @Override
+      public InetSocketAddress getSocketAddress() throws RuntimeException {
+        if (announceAddress != null) {
+          return new InetSocketAddress(announceAddress, connector.getLocalPort());
+        }
+        return new InetSocketAddress(connector.getHost(), connector.getLocalPort());
+      }
+    }));
   }
 
   /**
@@ -227,25 +234,32 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
   }
 
   @Override
-  protected Executor executor() {
+  protected Executor executor(State state) {
     final AtomicInteger id = new AtomicInteger();
     //noinspection NullableProblems
+    final Thread.UncaughtExceptionHandler h = new Thread.UncaughtExceptionHandler() {
+      @Override
+      public void uncaughtException(Thread t, Throwable e) {
+      }
+    };
     return new Executor() {
       @Override
       public void execute(Runnable runnable) {
-        new Thread(runnable, String.format("ExternalAuthenticationService-%d", id.incrementAndGet())).start();
+        Thread t = new Thread(runnable, String.format("ExternalAuthenticationServer-%d", id.incrementAndGet()));
+        t.setUncaughtExceptionHandler(h);
+        t.start();
       }
     };
   }
 
   @Override
-  protected void triggerShutdown() {
+  protected void shutDown() {
     try {
       serviceCancellable.cancel();
       server.stop();
       grantAccessToken.destroy();
     } catch (Exception e) {
-      LOG.error("Error stopping ExternalAuthenticationServer.", e);
+      LOG.error("Error stopping Authentication Server.", e);
     }
   }
 }

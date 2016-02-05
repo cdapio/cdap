@@ -46,33 +46,45 @@ public class DefaultDataWriter implements DataWriter {
 
   @Override
   public <T extends Dataset> T getDataset(final String name) throws DatasetInstantiationException {
-    try {
-      return LogContext.runWithoutLogging(new Callable<T>() {
-        @Override
-        public T call() throws Exception {
-          return dsContext.getDataset(name);
-        }
-      });
-    } catch (Exception e) {
-      Throwables.propagateIfInstanceOf(e, DatasetInstantiationException.class);
-      throw Throwables.propagate(e);
-    }
+    return LogContext.runWithoutLoggingUnchecked(new Callable<T>() {
+      @Override
+      public T call() throws Exception {
+        return dsContext.getDataset(name);
+      }
+    });
   }
 
   @Override
   public <T extends Dataset> T getDataset(final String name, final Map<String, String> arguments)
     throws DatasetInstantiationException {
-    try {
-      return LogContext.runWithoutLogging(new Callable<T>() {
-        @Override
-        public T call() throws Exception {
-          return dsContext.getDataset(name, arguments);
-        }
-      });
-    } catch (Exception e) {
-      Throwables.propagateIfInstanceOf(e, DatasetInstantiationException.class);
-      throw Throwables.propagate(e);
-    }
+    return LogContext.runWithoutLoggingUnchecked(new Callable<T>() {
+      @Override
+      public T call() throws Exception {
+        return dsContext.getDataset(name, arguments);
+      }
+    });
+  }
+
+  @Override
+  public void releaseDataset(final Dataset dataset) {
+    LogContext.runWithoutLoggingUnchecked(new Callable<Void>() {
+      @Override
+      public Void call() {
+        dsContext.releaseDataset(dataset);
+        return null;
+      }
+    });
+  }
+
+  @Override
+  public void discardDataset(final Dataset dataset) {
+    LogContext.runWithoutLoggingUnchecked(new Callable<Void>() {
+      @Override
+      public Void call() {
+        dsContext.discardDataset(dataset);
+        return null;
+      }
+    });
   }
 
   @Override

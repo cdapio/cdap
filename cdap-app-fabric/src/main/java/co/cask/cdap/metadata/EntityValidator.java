@@ -62,12 +62,14 @@ public class EntityValidator {
    * Ensures that the specified {@link Id.NamespacedId} exists.
    */
   public void ensureEntityExists(Id.NamespacedId entityId) throws NotFoundException {
-    try {
-      namespaceClient.get(entityId.getNamespace());
-    } catch (NamespaceNotFoundException e) {
-      throw e;
-    } catch (Exception e) {
-      throw Throwables.propagate(e);
+    if (!Id.Namespace.SYSTEM.equals(entityId.getNamespace())) {
+      try {
+        namespaceClient.get(entityId.getNamespace());
+      } catch (NamespaceNotFoundException e) {
+        throw e;
+      } catch (Exception e) {
+        throw Throwables.propagate(e);
+      }
     }
 
     // Check existence of entity

@@ -65,9 +65,9 @@ public class DefaultServiceConfigurer extends DefaultPluginConfigurer implements
   /**
    * Create an instance of {@link DefaultServiceConfigurer}
    */
-  public DefaultServiceConfigurer(Service service, Id.Artifact artifactId, ArtifactRepository artifactRepository,
-                                  PluginInstantiator pluginInstantiator) {
-    super(artifactId, artifactRepository, pluginInstantiator);
+  public DefaultServiceConfigurer(Service service, Id.Namespace namespace, Id.Artifact artifactId,
+                                  ArtifactRepository artifactRepository, PluginInstantiator pluginInstantiator) {
+    super(namespace, artifactId, artifactRepository, pluginInstantiator);
     this.className = service.getClass().getName();
     this.name = service.getClass().getSimpleName();
     this.description = "";
@@ -120,7 +120,7 @@ public class DefaultServiceConfigurer extends DefaultPluginConfigurer implements
     Map<String, HttpServiceHandlerSpecification> handleSpecs = Maps.newHashMap();
     for (HttpServiceHandler handler : handlers) {
       DefaultHttpServiceHandlerConfigurer configurer = new DefaultHttpServiceHandlerConfigurer(
-        handler, artifactId, artifactRepository, pluginInstantiator);
+        handler, deployNamespace, artifactId, artifactRepository, pluginInstantiator);
       handler.configure(configurer);
       HttpServiceHandlerSpecification spec = configurer.createSpecification();
       Preconditions.checkArgument(!handleSpecs.containsKey(spec.getName()),

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -31,6 +31,8 @@ import co.cask.cdap.cli.completer.element.ProgramIdCompleter;
 import co.cask.cdap.cli.completer.element.StreamIdCompleter;
 import co.cask.cdap.client.ApplicationClient;
 import co.cask.cdap.proto.ProgramRunStatus;
+import co.cask.cdap.proto.metadata.MetadataScope;
+import co.cask.cdap.proto.metadata.MetadataSearchTargetType;
 import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Injector;
@@ -69,6 +71,8 @@ public class DefaultCompleters implements Supplier<Map<String, Completer>> {
         .put(ArgumentName.COMMAND_CATEGORY.getName(), new EnumCompleter(CommandCategory.class))
         .put(ArgumentName.TABLE_RENDERER.getName(), new EnumCompleter(RenderAsCommand.Type.class))
         .put(ArgumentName.WORKFLOW_TOKEN_SCOPE.getName(), new EnumCompleter(WorkflowToken.Scope.class))
+        .put(ArgumentName.TARGET_TYPE.getName(), new EnumCompleter(MetadataSearchTargetType.class))
+        .put(ArgumentName.METADATA_SCOPE.getName(), new EnumCompleter(MetadataScope.class))
         .put(ArgumentName.FORMAT.getName(), new StringsCompleter(Formats.ALL))
         .putAll(generateProgramIdCompleters(injector)).build();
   }

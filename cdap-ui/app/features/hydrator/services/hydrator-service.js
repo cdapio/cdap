@@ -15,7 +15,7 @@
  */
 
 class HydratorService {
-  constructor(GLOBALS, MyDAGFactory, uuid, $state, $rootScope, myPipelineApi, $q, ConfigStore, IMPLICIT_SCHEMA, NodesStore) {
+  constructor(GLOBALS, MyDAGFactory, uuid, $state, $rootScope, myPipelineApi, $q, IMPLICIT_SCHEMA, NodesStore) {
     this.GLOBALS = GLOBALS;
     this.MyDAGFactory = MyDAGFactory;
     this.uuid = uuid;
@@ -23,7 +23,6 @@ class HydratorService {
     this.$rootScope = $rootScope;
     this.myPipelineApi = myPipelineApi;
     this.$q = $q;
-    this.ConfigStore = ConfigStore;
     this.IMPLICIT_SCHEMA = IMPLICIT_SCHEMA;
     this.NodesStore = NodesStore;
   }
@@ -35,22 +34,22 @@ class HydratorService {
     let artifact = this.GLOBALS.pluginTypes[pipeline.artifact.name];
 
     let source = angular.copy(pipeline.config.source);
-    let transforms = angular.copy(pipeline.config.transforms)
+    let transforms = angular.copy(pipeline.config.transforms || [])
       .map( node => {
         node.type = artifact.transform;
         node.label = node.label || node.name;
-        node.icon = this.MyDAGFactory.getIcon(node.name);
+        node.icon = this.MyDAGFactory.getIcon(node.plugin.name);
         return node;
       });
     let sinks = angular.copy(pipeline.config.sinks)
       .map( node => {
         node.type = artifact.sink;
-        node.icon = this.MyDAGFactory.getIcon(node.name);
+        node.icon = this.MyDAGFactory.getIcon(node.plugin.name);
         return node;
       });
 
     source.type = artifact.source;
-    source.icon = this.MyDAGFactory.getIcon(source.name);
+    source.icon = this.MyDAGFactory.getIcon(source.plugin.name);
     // replace with backend id
     nodes.push(source);
     nodes = nodes.concat(transforms);
@@ -80,7 +79,7 @@ class HydratorService {
     // happening
     var params = {
       namespace: this.$state.params.namespace,
-      pipelineType: appType || this.ConfigStore.getAppType(),
+      pipelineType: appType,
       version: (node.artifact && node.artifact.version ) || this.$rootScope.cdapVersion,
       extensionType: node.type,
       pluginName: node.plugin.name
@@ -108,9 +107,9 @@ class HydratorService {
     let jsonSchema;
 
     if (isStreamSource) {
-      if (node.properties.format === 'clf') {
+      if (node.plugin.properties.format === 'clf') {
         jsonSchema = this.IMPLICIT_SCHEMA.clf;
-      } else if (node.properties.format === 'syslog') {
+      } else if (node.plugin.properties.format === 'syslog') {
         jsonSchema = this.IMPLICIT_SCHEMA.syslog;
       } else {
         jsonSchema = node.outputSchema;
@@ -168,7 +167,7 @@ class HydratorService {
     var sourceNode;
 
     for (var i = 0; i<nodes.length; i++) {
-      if (nodes[i].id === sourceId) {
+      if (nodes[i].name === sourceId) {
         sourceNode = nodes[i];
         break;
       }
@@ -178,6 +177,6 @@ class HydratorService {
   }
 
 }
-HydratorService.$inject = ['GLOBALS', 'MyDAGFactory', 'uuid', '$state', '$rootScope', 'myPipelineApi', '$q', 'ConfigStore', 'IMPLICIT_SCHEMA', 'NodesStore'];
+HydratorService.$inject = ['GLOBALS', 'MyDAGFactory', 'uuid', '$state', '$rootScope', 'myPipelineApi', '$q', 'IMPLICIT_SCHEMA', 'NodesStore'];
 angular.module(`${PKG.name}.feature.hydrator`)
   .service('HydratorService', HydratorService);

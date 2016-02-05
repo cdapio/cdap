@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -532,7 +532,13 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     verifyProgramRuns(programId, "completed");
   }
 
-  private String getRunIdOfRunningProgram(Id.Program programId) throws Exception {
+  private String getRunIdOfRunningProgram(final Id.Program programId) throws Exception {
+    Tasks.waitFor(1, new Callable<Integer>() {
+      @Override
+      public Integer call() throws Exception {
+        return getProgramRuns(programId, "running").size();
+      }
+    }, 5, TimeUnit.SECONDS);
     List<RunRecord> historyRuns = getProgramRuns(programId, "running");
     Assert.assertEquals(1, historyRuns.size());
     RunRecord record = historyRuns.get(0);
@@ -582,6 +588,9 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     // Start the workflow
     startProgram(programId);
     waitState(programId, ProgramStatus.RUNNING.name());
+
+    // Wait until we have a run record
+    verifyProgramRuns(programId, "running");
     List<RunRecord> workflowHistoryRuns = getProgramRuns(programId, "running");
     String workflowRunId = workflowHistoryRuns.get(0).getPid();
 
@@ -1100,13 +1109,17 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
   public void testWorkflowToken() throws Exception {
     Assert.assertEquals(200, deploy(AppWithWorkflow.class).getStatusLine().getStatusCode());
     Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, AppWithWorkflow.NAME);
-    Id.Workflow workflowId = Id.Workflow.from(appId, AppWithWorkflow.SampleWorkflow.NAME);
+    final Id.Workflow workflowId = Id.Workflow.from(appId, AppWithWorkflow.SampleWorkflow.NAME);
     String outputPath = new File(tmpFolder.newFolder(), "output").getAbsolutePath();
     startProgram(workflowId, ImmutableMap.of("inputPath", createInput("input"),
                                              "outputPath", outputPath));
-    waitState(workflowId, ProgramStatus.RUNNING.name());
-    waitState(workflowId, ProgramStatus.STOPPED.name());
 
+    Tasks.waitFor(1, new Callable<Integer>() {
+      @Override
+      public Integer call() throws Exception {
+        return getProgramRuns(workflowId, ProgramRunStatus.COMPLETED.name()).size();
+      }
+    }, 60, TimeUnit.SECONDS);
     List<RunRecord> programRuns = getProgramRuns(workflowId, ProgramRunStatus.COMPLETED.name());
     Assert.assertEquals(1, programRuns.size());
     RunRecord runRecord = programRuns.get(0);

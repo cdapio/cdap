@@ -19,8 +19,8 @@ package co.cask.cdap.internal.app.runtime;
 import co.cask.cdap.api.RuntimeContext;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.common.RuntimeArguments;
+import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.data.DatasetInstantiationException;
-import co.cask.cdap.api.data.DatasetProvider;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.metrics.MetricsContext;
@@ -57,7 +57,7 @@ import javax.annotation.Nullable;
  * Base class for program runtime context
  */
 public abstract class AbstractContext extends AbstractServiceDiscoverer
-  implements DatasetProvider, RuntimeContext, PluginContext {
+  implements DatasetContext, RuntimeContext, PluginContext {
 
   private final Program program;
   private final RunId runId;
@@ -70,7 +70,7 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
   protected final DynamicDatasetCache datasetCache;
 
   /**
-   * Constructs a context without application template adapter support.
+   * Constructs a context without plugin support.
    */
   protected AbstractContext(Program program, RunId runId, Arguments arguments,
                             Set<String> datasets, MetricsContext metricsContext,
@@ -81,8 +81,7 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
   }
 
   /**
-   * Constructs a context. To have application template adapter support,
-   * both the {@code adapterSpec} and {@code pluginInstantiator} must not be null.
+   * Constructs a context. To have plugin support, the {@code pluginInstantiator} must not be null.
    */
   protected AbstractContext(Program program, RunId runId, Arguments arguments,
                             Set<String> datasets, MetricsContext metricsContext,

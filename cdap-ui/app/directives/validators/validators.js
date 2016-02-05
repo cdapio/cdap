@@ -21,7 +21,8 @@ angular.module(PKG.name + '.commons')
       scope: {
         model: '=ngModel',
         inputSchema: '=',
-        isDisabled: '='
+        isDisabled: '=',
+        outputSchema: '='
       },
       templateUrl: 'validators/validators.html',
       controller: 'MyValidatorsCtrl',

@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Cask Data, Inc.
+ * Copyright 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,6 +15,7 @@
  */
 package co.cask.cdap.data2.metadata.store;
 
+import co.cask.cdap.data2.metadata.indexer.Indexer;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.metadata.MetadataRecord;
 import co.cask.cdap.proto.metadata.MetadataScope;
@@ -37,6 +38,12 @@ public class NoOpMetadataStore implements MetadataStore {
   }
 
   @Override
+  public void setProperties(MetadataScope scope, Id.NamespacedId entityId, Map<String, String> properties,
+                            Indexer indexer) {
+    // NO-OP
+  }
+
+  @Override
   public void addTags(MetadataScope scope, Id.NamespacedId entityId, String... tagsToAdd) {
     // NO-OP
   }
@@ -49,7 +56,7 @@ public class NoOpMetadataStore implements MetadataStore {
 
   @Override
   public MetadataRecord getMetadata(MetadataScope scope, Id.NamespacedId entityId) {
-    return new MetadataRecord(entityId);
+    return new MetadataRecord(entityId, scope);
   }
 
   @Override
@@ -145,5 +152,10 @@ public class NoOpMetadataStore implements MetadataStore {
       builder.add(new MetadataRecord(entityId, scope));
     }
     return builder.build();
+  }
+
+  @Override
+  public void upgrade() {
+    // NO-OP
   }
 }

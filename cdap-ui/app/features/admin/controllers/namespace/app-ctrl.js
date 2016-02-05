@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.feature.admin').controller('NamespaceAppController',
-function ($scope, $state, myAppUploader, MyCDAPDataSource, myNamespace, $alert, GLOBALS, myHydratorFactory) {
+function ($scope, $state, myAppUploader, MyCDAPDataSource, myNamespace, myAlertOnValium, GLOBALS, myHydratorFactory) {
 
   $scope.apps = [];
   $scope.GLOBALS = GLOBALS;
@@ -36,12 +36,14 @@ function ($scope, $state, myAppUploader, MyCDAPDataSource, myNamespace, $alert, 
       _cdapPath: path + '/' + id,
       method: 'DELETE'
     }, function() {
-      $alert({
-        type: 'success',
-        title: id,
-        content: 'Application deleted successfully'
-      });
-      $state.reload();
+      $state.reload()
+        .then(function() {
+          myAlertOnValium.show({
+            type: 'success',
+            title: id,
+            content: 'Application deleted successfully'
+          });
+        });
     });
   };
 

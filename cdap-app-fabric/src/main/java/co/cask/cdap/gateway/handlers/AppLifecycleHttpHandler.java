@@ -36,8 +36,6 @@ import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
-import co.cask.cdap.internal.UserErrors;
-import co.cask.cdap.internal.UserMessages;
 import co.cask.cdap.internal.app.deploy.ProgramTerminator;
 import co.cask.cdap.internal.app.runtime.artifact.WriteConflictException;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
@@ -48,7 +46,6 @@ import co.cask.cdap.proto.artifact.ArtifactSummary;
 import co.cask.http.BodyConsumer;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Charsets;
-import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
@@ -223,7 +220,6 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     throws BadRequestException, NamespaceNotFoundException {
 
     Id.Application id = validateApplicationId(namespaceId, appId);
-    // Deletion of a particular application is not allowed if that application is used by an adapter
     AppFabricServiceStatus appStatus;
     try {
       applicationLifecycleService.removeApplication(id);
@@ -359,7 +355,12 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     }
 
     if (archiveName == null || archiveName.isEmpty()) {
-      responder.sendString(HttpResponseStatus.BAD_REQUEST, ARCHIVE_NAME_HEADER + " header not present",
+      responder.sendString(HttpResponseStatus.BAD_REQUEST,
+                           String.format(
+                             "%s header not present. Please include the header and set its value to the jar name. " +
+                               "If you are trying to create an app from an artifact that has already been deployed," +
+                               " set the %s header to %s.",
+                             ARCHIVE_NAME_HEADER, HttpHeaders.Names.CONTENT_TYPE,  MediaType.APPLICATION_JSON),
                            ImmutableMultimap.of(HttpHeaders.Names.CONNECTION, HttpHeaders.Values.CLOSE));
       return null;
     }
@@ -438,23 +439,12 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     };
   }
 
-  private void stopProgramIfRunning(Id.Program programId)
-    throws InterruptedException, ExecutionException {
-    ProgramRuntimeService.RuntimeInfo programRunInfo = findRuntimeInfo(programId.getNamespaceId(),
-                                                                       programId.getApplicationId(),
-                                                                       programId.getId(),
-                                                                       programId.getType(),
-                                                                       runtimeService);
+  private void stopProgramIfRunning(Id.Program programId) throws InterruptedException, ExecutionException {
+    ProgramRuntimeService.RuntimeInfo programRunInfo = findRuntimeInfo(programId, runtimeService);
     if (programRunInfo != null) {
-      doStop(programRunInfo);
+      ProgramController controller = programRunInfo.getController();
+      controller.stop().get();
     }
-  }
-
-  private void doStop(ProgramRuntimeService.RuntimeInfo runtimeInfo)
-    throws ExecutionException, InterruptedException {
-    Preconditions.checkNotNull(runtimeInfo, UserMessages.getMessage(UserErrors.RUNTIME_INFO_NOT_FOUND));
-    ProgramController controller = runtimeInfo.getController();
-    controller.stop().get();
   }
 
   private Id.Namespace validateNamespace(String namespaceId) throws BadRequestException, NamespaceNotFoundException {

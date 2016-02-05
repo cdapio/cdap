@@ -36,10 +36,12 @@ import co.cask.tephra.TransactionContext;
 import co.cask.tephra.TransactionFailureException;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Charsets;
+import com.google.common.base.Objects;
 import com.google.common.base.Predicates;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
+import com.google.common.io.ByteStreams;
 import com.google.common.io.Closeables;
 import com.google.common.io.Files;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
@@ -57,6 +59,7 @@ import scala.Tuple2;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.Writer;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -68,7 +71,9 @@ import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
+import javax.annotation.Nullable;
 
 /**
  * Performs the actual execution of Spark job.
@@ -128,17 +133,38 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
       ClientSparkContext clientContext = sparkContextFactory.getClientContext();
 
       final File jobJar = generateJobJar(tempDir);
-      File metricsConf = SparkMetricsSink.writeConfig(File.createTempFile("metrics", ".properties", tempDir));
       final List<LocalizeResource> localizeResources = new ArrayList<>();
       File pluginJar = clientContext.getPluginArchive();
 
-      if (!contextConfig.isLocal()) {
+      String metricsConfPath;
+      String logbackJarName = null;
+
+      if (contextConfig.isLocal()) {
+        File metricsConf = SparkMetricsSink.writeConfig(File.createTempFile("metrics", ".properties", tempDir));
+        metricsConfPath = metricsConf.getAbsolutePath();
+      } else {
+        // Localize files in distributed mode
         localizeResources.add(new LocalizeResource(copyProgramJar(programJarLocation, tempDir), true));
         localizeResources.add(new LocalizeResource(buildDependencyJar(tempDir), true));
         localizeResources.add(new LocalizeResource(saveCConf(cConf, tempDir)));
+
         if (pluginJar != null) {
           localizeResources.add(new LocalizeResource(pluginJar, true));
         }
+
+        File logbackJar = createLogbackJar(tempDir);
+        if (logbackJar != null) {
+          localizeResources.add(new LocalizeResource(logbackJar));
+          logbackJarName = logbackJar.getName();
+        }
+
+        // Create metrics conf file in the current directory since
+        // the same value for the "spark.metrics.conf" config needs to be used for both driver and executor processes
+        // Also localize the metrics conf file to the executor nodes
+        File metricsConf = SparkMetricsSink.writeConfig(File.createTempFile("metrics", ".properties",
+                                                                            new File(System.getProperty("user.dir"))));
+        metricsConfPath = metricsConf.getName();
+        localizeResources.add(new LocalizeResource(metricsConf));
       }
 
       // Create a long running transaction
@@ -163,8 +189,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
         localizeResources.add(new LocalizeResource(saveHConf(hConf, tempDir)));
       }
 
-      final Map<String, String> configs = createSubmitConfigs(clientContext,
-                                                              tempDir, metricsConf);
+      final Map<String, String> configs = createSubmitConfigs(clientContext, tempDir, metricsConfPath, logbackJarName);
       submitSpark = new Callable<ExecutionFuture<RunId>>() {
         @Override
         public ExecutionFuture<RunId> call() throws Exception {
@@ -318,7 +343,8 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
   /**
    * Creates the configurations for the spark submitter.
    */
-  private Map<String, String> createSubmitConfigs(ClientSparkContext context, File localDir, File metricsConf) {
+  private Map<String, String> createSubmitConfigs(ClientSparkContext context, File localDir, String metricsConfPath,
+                                                  @Nullable String logbackJarName) {
     Map<String, String> configs = new HashMap<>();
 
     // Add user specified configs first. CDAP specifics config will override them later if there are duplicates.
@@ -326,8 +352,12 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
       configs.put(tuple._1(), tuple._2());
     }
 
-    configs.put("spark.executor.extraClassPath", "$PWD/" + CDAP_SPARK_JAR + "/lib/*");
-    configs.put("spark.metrics.conf", metricsConf.getAbsolutePath());
+    String extraClassPath = "$PWD/" + CDAP_SPARK_JAR + "/lib/*";
+    if (logbackJarName != null) {
+      extraClassPath = logbackJarName + File.pathSeparator + extraClassPath;
+    }
+    configs.put("spark.executor.extraClassPath", extraClassPath);
+    configs.put("spark.metrics.conf", metricsConfPath);
     configs.put("spark.local.dir", localDir.getAbsolutePath());
     configs.put("spark.executor.memory", context.getExecutorResources().getMemoryMB() + "m");
     configs.put("spark.executor.cores", String.valueOf(context.getExecutorResources().getVirtualCores()));
@@ -361,7 +391,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
       }
     });
     appBundler.createBundle(tempLocation, SparkProgramWrapper.class, HBaseTableUtilFactory.getHBaseTableUtilClass());
-    return new File(Locations.toURI(tempLocation));
+    return new File(tempLocation.toURI());
   }
 
   /**
@@ -400,6 +430,32 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
       cConf.writeXml(writer);
     }
     return file;
+  }
+
+  /**
+   * Creates a jar in the given directory that contains a logback.xml loaded from the current ClassLoader.
+   *
+   * @param targetDir directory where the logback.xml should be copied to
+   * @return the {@link File} where the logback.xml jar copied to or {@code null} if "logback.xml" is not found
+   *         in the current ClassLoader.
+   */
+  @Nullable
+  private File createLogbackJar(File targetDir) throws IOException {
+    // Localize logback.xml
+    ClassLoader cl = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(), getClass().getClassLoader());
+    try (InputStream input = cl.getResourceAsStream("logback.xml")) {
+      if (input != null) {
+        File logbackJar = File.createTempFile("logback.xml", ".jar", targetDir);
+        try (JarOutputStream output = new JarOutputStream(new FileOutputStream(logbackJar))) {
+          output.putNextEntry(new JarEntry("logback.xml"));
+          ByteStreams.copy(input, output);
+        }
+        return logbackJar;
+      } else {
+        LOG.warn("Could not find logback.xml for Spark!");
+      }
+    }
+    return null;
   }
 
   /**

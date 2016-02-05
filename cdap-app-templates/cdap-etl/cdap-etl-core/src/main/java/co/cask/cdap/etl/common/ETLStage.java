@@ -28,7 +28,6 @@ public final class ETLStage {
   private final Plugin plugin;
   // TODO : can remove the following properties and clean up the constructor after UI support.
   private final Map<String, String> properties;
-  // TODO : remove errorDatasetName after CDAP-4232 is implemented
   private final String errorDatasetName;
 
   public ETLStage(String name, Plugin plugin, @Nullable String errorDatasetName) {

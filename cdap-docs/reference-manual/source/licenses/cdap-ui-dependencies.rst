@@ -1,7 +1,7 @@
 .. meta::
     :author: Cask Data, Inc.
     :copyright: Copyright © 2015 Cask Data, Inc.
-    :version: 3.2.1
+    :version: 3.3.0
 
 =================================================
 Cask Data Application Platform |version|
@@ -29,6 +29,7 @@ Cask Data Application Platform UI Dependencies
    "angular-cron-jobs","1.4.1","bower","MIT License","http://opensource.org/licenses/MIT"
    "angular-gridster","0.13.5","bower","MIT License","http://opensource.org/licenses/MIT"
    "angular-loading-bar","0.7.1","bower","MIT License","http://opensource.org/licenses/MIT"
+   "angular-marked","1.0.1","bower","MIT License","http://opensource.org/licenses/MIT"
    "angular-mocks","1.4.3","bower","MIT License","http://opensource.org/licenses/MIT"
    "angular-moment","0.10.1","bower","MIT License","http://opensource.org/licenses/MIT"
    "angular-motion","0.3.4","bower","MIT License","http://opensource.org/licenses/MIT"
@@ -37,6 +38,7 @@ Cask Data Application Platform UI Dependencies
    "angular-strap","2.3.1","bower","MIT License","http://opensource.org/licenses/MIT"
    "angular-ui-ace","bower","bower","MIT License","http://opensource.org/licenses/MIT"
    "angular-ui-router","0.2.14","bower","MIT License","http://opensource.org/licenses/MIT"
+   "angularjs-dropdown-multiselect","1.5.2","bower","MIT License","http://opensource.org/licenses/MIT"
    "body-parser","^1.12.1","npm","MIT License","http://opensource.org/licenses/MIT"
    "bootstrap","3.3.2","bower","MIT License","http://opensource.org/licenses/MIT"
    "c3","0.4.10","bower","MIT License","http://opensource.org/licenses/MIT"
@@ -54,8 +56,8 @@ Cask Data Application Platform UI Dependencies
    "ng-sortable","1.1.9","bower","MIT License","http://opensource.org/licenses/MIT"
    "ngstorage","0.3.0","bower","MIT License","http://opensource.org/licenses/MIT"
    "node-uuid","^1.4.3","bower","MIT License","http://opensource.org/licenses/MIT"
+   "object-hash","0.9.1","npm","MIT License","http://opensource.org/licenses/MIT"
    "q","^1.2.0","npm","MIT License","http://opensource.org/licenses/MIT"
    "request","^2.53.0","npm","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "serve-favicon","^2.2.0","npm","MIT License","http://opensource.org/licenses/MIT"
    "sockjs","^0.3.15","npm","MIT License","http://opensource.org/licenses/MIT"
-   "sockjs-client","1.0.2","bower","MIT License","http://opensource.org/licenses/MIT"

@@ -53,19 +53,18 @@ angular.module(PKG.name + '.feature.hydrator')
           }
         })
           .state('hydrator.create.studio', {
-            url: '/studio?name&type',
+            url: '/studio?draftId&type',
             params: {
               data: null
             },
             resolve: {
-              rConfig: function($stateParams, mySettings, $q) {
+              rConfig: function($stateParams, mySettings, $q, myHelpers) {
                 var defer = $q.defer();
-                if ($stateParams.name) {
-                  mySettings.get('adapterDrafts')
+                if ($stateParams.draftId) {
+                  mySettings.get('adapterDrafts', true)
                     .then(function(res) {
-                      var draft = res[$stateParams.name];
+                      var draft = myHelpers.objectQuery(res, $stateParams.namespace, $stateParams.draftId);
                       if (angular.isObject(draft)) {
-                        draft.name = $stateParams.name;
                         defer.resolve(draft);
                       } else {
                         defer.resolve(false);
@@ -108,6 +107,9 @@ angular.module(PKG.name + '.feature.hydrator')
                 controller: 'BottomPanelController as BottomPanelController'
               }
             },
+            onExit: function($modalStack) {
+              $modalStack.dismissAll();
+            }
           })
 
         .state('hydrator.detail', {

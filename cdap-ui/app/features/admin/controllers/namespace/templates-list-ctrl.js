@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.feature.admin')
-  .controller('NamespaceTemplatesListController', function ($scope, mySettings, $stateParams, $alert, myHelpers, GLOBALS) {
+  .controller('NamespaceTemplatesListController', function ($scope, mySettings, $stateParams, myAlertOnValium, myHelpers, GLOBALS) {
 
     var vm = this;
     vm.list = [];
@@ -57,6 +57,7 @@ angular.module(PKG.name + '.feature.admin')
     };
 
     vm.delete = function (template) {
+
       mySettings.get('pluginTemplates')
         .then(function (res) {
           delete res[$stateParams.nsadmin][template.templateType][template.pluginType][template.pluginTemplate];
@@ -65,7 +66,7 @@ angular.module(PKG.name + '.feature.admin')
 
           mySettings.set('pluginTemplates', res)
             .then(function () {
-              $alert({
+              myAlertOnValium.show({
                 type: 'success',
                 content: 'Successfully deleted template'
               });

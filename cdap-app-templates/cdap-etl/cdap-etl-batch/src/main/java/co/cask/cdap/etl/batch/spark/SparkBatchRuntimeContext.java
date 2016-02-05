@@ -65,4 +65,14 @@ public class SparkBatchRuntimeContext extends AbstractTransformContext implement
                                           Map<String, String> arguments) throws DatasetInstantiationException {
     throw new UnsupportedOperationException("Not supported");
   }
+
+  @Override
+  public void releaseDataset(Dataset dataset) {
+    throw new UnsupportedOperationException("Not supported");
+  }
+
+  @Override
+  public void discardDataset(Dataset dataset) {
+    throw new UnsupportedOperationException("Not supported");
+  }
 }

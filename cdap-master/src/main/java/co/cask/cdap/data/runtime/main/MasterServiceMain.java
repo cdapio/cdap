@@ -49,6 +49,7 @@ import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.explore.client.ExploreClient;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.explore.service.ExploreServiceUtils;
+import co.cask.cdap.hive.ExploreUtils;
 import co.cask.cdap.internal.app.services.AppFabricServer;
 import co.cask.cdap.logging.appender.LogAppenderInitializer;
 import co.cask.cdap.logging.guice.LoggingModules;
@@ -56,6 +57,7 @@ import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.notifications.feeds.guice.NotificationFeedServiceRuntimeModule;
 import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.security.TokenSecureStoreUpdater;
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
@@ -67,6 +69,7 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.common.io.Closeables;
 import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -84,6 +87,7 @@ import org.apache.twill.api.TwillRunnerService;
 import org.apache.twill.api.logging.PrinterLogHandler;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.common.Threads;
+import org.apache.twill.internal.ServiceListenerAdapter;
 import org.apache.twill.internal.zookeeper.LeaderElection;
 import org.apache.twill.kafka.client.KafkaClientService;
 import org.apache.twill.zookeeper.ZKClientService;
@@ -163,6 +167,24 @@ public class MasterServiceMain extends DaemonMain {
     this.serviceStore = injector.getInstance(ServiceStore.class);
     this.secureStoreUpdater = baseInjector.getInstance(TokenSecureStoreUpdater.class);
     this.leaderElection = createLeaderElection();
+    // leader election will normally stay running. Will only stop if there was some issue starting up.
+    this.leaderElection.addListener(new ServiceListenerAdapter() {
+      @Override
+      public void terminated(Service.State from) {
+        if (!stopped) {
+          LOG.error("CDAP Master failed to start");
+          System.exit(1);
+        }
+      }
+
+      @Override
+      public void failed(Service.State from, Throwable failure) {
+        if (!stopped) {
+          LOG.error("CDAP Master failed to start");
+          System.exit(1);
+        }
+      }
+    }, MoreExecutors.sameThreadExecutor());
   }
 
   @Override
@@ -203,7 +225,11 @@ public class MasterServiceMain extends DaemonMain {
     LOG.info("Stopping {}", Constants.Service.MASTER_SERVICES);
     stopped = true;
 
-    stopQuietly(leaderElection);
+    // if leader election failed to start, its listener will stop the master.
+    // In that case, we don't want to try stopping it again, as it will log confusing exceptions
+    if (leaderElection.isRunning()) {
+      stopQuietly(leaderElection);
+    }
     stopQuietly(serviceStore);
     stopQuietly(metricsCollectionService);
     stopQuietly(kafkaClient);
@@ -381,13 +407,26 @@ public class MasterServiceMain extends DaemonMain {
         // Start app-fabric and dataset services
         for (Service service : services) {
           LOG.info("Starting service in master: {}", service);
-          service.startAndWait();
+          try {
+            service.startAndWait();
+          } catch (Throwable t) {
+            // shut down the executor and stop the twill app,
+            // then throw an exception to cause the leader election service to stop
+            // leaderelection's listener will then shutdown the master
+            stop(true);
+            throw new RuntimeException(String.format("Unable to start service %s: %s", service, t.getMessage()));
+          }
         }
+        LOG.info("CDAP Master started successfully.");
       }
 
       @Override
       public void follower() {
         LOG.info("Became follower for master services");
+        stop(stopped);
+      }
+
+      private void stop(boolean shouldTerminateApp) {
         // Shutdown the retry executor so that no re-run of the twill app will be attempted
         if (executor != null) {
           executor.shutdownNow();
@@ -397,7 +436,7 @@ public class MasterServiceMain extends DaemonMain {
           secureStoreUpdateCancellable.cancel();
         }
         // If the master process has been explcitly stopped, stop the twill application as well.
-        if (stopped) {
+        if (shouldTerminateApp) {
           LOG.info("Stopping master twill application");
           TwillController twillController = controller.get();
           if (twillController != null) {
@@ -407,8 +446,11 @@ public class MasterServiceMain extends DaemonMain {
         // Stop local services last since DatasetService is running locally
         // and remote services need it to preserve states.
         for (Service service : Lists.reverse(services)) {
-          LOG.info("Stopping service in master: {}", service);
-          stopQuietly(service);
+          // service may not be running if there was an error in startup
+          if (service.isRunning()) {
+            LOG.info("Stopping service in master: {}", service);
+            stopQuietly(service);
+          }
         }
         services.clear();
 
@@ -425,6 +467,11 @@ public class MasterServiceMain extends DaemonMain {
   private void cleanupTempDir() {
     File tmpDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
                            cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
+
+    if (!tmpDir.isDirectory()) {
+      return;
+    }
+
     try {
       DirUtils.deleteDirectoryContents(tmpDir, true);
     } catch (IOException e) {
@@ -602,6 +649,8 @@ public class MasterServiceMain extends DaemonMain {
 
         if (cConf.getBoolean(Constants.COLLECT_CONTAINER_LOGS)) {
           preparer.addLogHandler(new PrinterLogHandler(new PrintWriter(System.out)));
+        } else {
+          preparer.addJVMOptions("-Dtwill.disable.kafka=true");
         }
 
         // Add logback xml
@@ -700,7 +749,7 @@ public class MasterServiceMain extends DaemonMain {
     // Add all the conf files needed by hive as resources available to containers
     File tempDir = DirUtils.createTempDir(new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
                                                    cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile());
-    Iterable<File> hiveConfFilesFiles = ExploreServiceUtils.getClassPathJarsFiles(hiveConfFiles);
+    Iterable<File> hiveConfFilesFiles = ExploreUtils.getClassPathJarsFiles(hiveConfFiles);
     Set<String> addedFiles = Sets.newHashSet();
     for (File file : hiveConfFilesFiles) {
       if (file.getName().matches(".*\\.xml") && !file.getName().equals("logback.xml")) {

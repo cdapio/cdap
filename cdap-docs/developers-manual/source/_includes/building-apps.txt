@@ -1,0 +1,7 @@
+.. include:: /getting-started/building-apps.rst
+   :start-line: 7
+   :end-line:   10
+
+See :ref:`Building and Running CDAP Applications <cdap-building-running>` for information
+on accessing the CDAP CLI and CDAP SDK bin utilities, building examples, starting CDAP,
+and deploying, starting, and stopping applications.

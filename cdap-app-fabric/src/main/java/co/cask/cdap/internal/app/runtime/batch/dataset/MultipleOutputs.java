@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,12 +16,11 @@
 
 package co.cask.cdap.internal.app.runtime.batch.dataset;
 
-import co.cask.cdap.common.lang.Instantiator;
-import co.cask.cdap.common.lang.InstantiatorFactory;
+import co.cask.cdap.app.metrics.MapReduceMetrics;
+import co.cask.cdap.common.lang.ClassLoaders;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Lists;
-import com.google.common.reflect.TypeToken;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.Counter;
 import org.apache.hadoop.mapreduce.Job;
@@ -30,9 +29,11 @@ import org.apache.hadoop.mapreduce.OutputFormat;
 import org.apache.hadoop.mapreduce.RecordWriter;
 import org.apache.hadoop.mapreduce.StatusReporter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
+import org.apache.hadoop.mapreduce.TaskCounter;
 import org.apache.hadoop.mapreduce.TaskInputOutputContext;
 import org.apache.hadoop.mapreduce.task.JobContextImpl;
 import org.apache.hadoop.mapreduce.task.TaskAttemptContextImpl;
+import org.apache.hadoop.util.ReflectionUtils;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -182,16 +183,28 @@ public class MultipleOutputs implements Closeable {
     // If not in cache, create a new one
     if (writer == null) {
       // get the record writer from context output format
+      TaskAttemptContext taskContext = getContext(namedOutput);
+
+      Class<? extends OutputFormat<?, ?>> outputFormatClass;
       try {
-        TaskAttemptContext taskContext = getContext(namedOutput);
-
-        Instantiator<? extends OutputFormat<?, ?>> instantiator =
-          new InstantiatorFactory(false).get(TypeToken.of(taskContext.getOutputFormatClass()));
-        OutputFormat<?, ?> outputFormat = instantiator.create();
-
-        writer = outputFormat.getRecordWriter(taskContext);
+        outputFormatClass = taskContext.getOutputFormatClass();
       } catch (ClassNotFoundException e) {
         throw new IOException(e);
+      }
+
+      ClassLoader outputFormatClassLoader = outputFormatClass.getClassLoader();
+      // This is needed in case the OutputFormat's classloader conflicts with the program classloader (for example,
+      // TableOutputFormat).
+      ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(outputFormatClassLoader);
+
+      try {
+        // We use ReflectionUtils to instantiate the OutputFormat, because it also calls setConf on the object, if it
+        // is a Configurable.
+        OutputFormat<?, ?> outputFormat =
+          ReflectionUtils.newInstance(outputFormatClass, taskContext.getConfiguration());
+        writer = new MeteredRecordWriter<>(outputFormat.getRecordWriter(taskContext), context);
+      } finally {
+        ClassLoaders.setContextClassLoader(oldClassLoader);
       }
 
       // add the record-writer to the cache
@@ -240,6 +253,50 @@ public class MultipleOutputs implements Closeable {
       conf.set(entry.getKey(), entry.getValue());
     }
     return job;
+  }
+
+  /**
+   * Wraps RecordWriter to increment output counters.
+   *
+   * Normally, the user calls context#write(key, value) - context in this case is a Hadoop class, which automatically
+   * increments the counter as well as writing the record.
+   * In the case of multiple outputs, the user calls context#write(outputName, key, value) - in this case, the context
+   * is a CDAP class, and this doesn't at all translate into a call to Hadoop's context#write. Because of that, the
+   * metrics for output records aren't automatically incremented.
+   */
+  private static class MeteredRecordWriter<K, V> extends RecordWriter<K, V> {
+    private final RecordWriter<K, V> writer;
+    private final String groupName;
+    private final String counterName;
+    private final TaskInputOutputContext context;
+
+    public MeteredRecordWriter(RecordWriter<K, V> writer, TaskInputOutputContext context) {
+      this.writer = writer;
+      this.context = context;
+      this.groupName = TaskCounter.class.getName();
+      this.counterName = getCounterName(context);
+    }
+
+    public void write(K key, V value) throws IOException, InterruptedException {
+      context.getCounter(groupName, counterName).increment(1);
+      writer.write(key, value);
+    }
+
+    public void close(TaskAttemptContext context) throws IOException, InterruptedException {
+      writer.close(context);
+    }
+
+    private String getCounterName(TaskInputOutputContext context) {
+      MapReduceMetrics.TaskType taskType = MapReduceMetrics.TaskType.from(context.getTaskAttemptID().getTaskType());
+      switch (taskType) {
+        case Mapper:
+          return TaskCounter.MAP_OUTPUT_RECORDS.name();
+        case Reducer:
+          return TaskCounter.REDUCE_OUTPUT_RECORDS.name();
+        default:
+          throw new IllegalArgumentException("Illegal task type: " + taskType);
+      }
+    }
   }
 
   private static class WrappedStatusReporter extends StatusReporter {

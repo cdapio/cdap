@@ -17,6 +17,7 @@
 package co.cask.cdap.etl.batch.mapreduce;
 
 import co.cask.cdap.api.ProgramLifecycle;
+import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.api.dataset.lib.KeyValue;
@@ -134,8 +135,13 @@ public class ETLMapReduce extends AbstractMapReduce {
           .setTableProperty("avro.schema.literal", Constants.ERROR_SCHEMA.toString())
           .build(), true);
 
-    if (config.getResources() != null) {
-      setMapperResources(config.getResources());
+    Resources resources = config.getResources();
+    if (resources != null) {
+      setMapperResources(resources);
+    }
+    Resources driverResources = config.getDriverResources();
+    if (driverResources != null) {
+      setDriverResources(driverResources);
     }
 
     // add source, sink, transform ids to the properties. These are needed at runtime to instantiate the plugins

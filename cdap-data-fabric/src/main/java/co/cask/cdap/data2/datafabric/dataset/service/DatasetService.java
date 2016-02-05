@@ -24,6 +24,7 @@ import co.cask.cdap.common.http.CommonNettyHttpServiceBuilder;
 import co.cask.cdap.common.metrics.MetricsReporterHook;
 import co.cask.cdap.common.namespace.AbstractNamespaceClient;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
+import co.cask.cdap.common.service.UnloggedExceptionIdleService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import co.cask.cdap.data2.datafabric.dataset.service.mds.MDSDatasetsRegistry;
 import co.cask.cdap.data2.datafabric.dataset.type.DatasetTypeManager;
@@ -47,6 +48,7 @@ import org.slf4j.LoggerFactory;
 import java.net.InetSocketAddress;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -244,5 +246,21 @@ public class DatasetService extends AbstractExecutionThreadService {
     return Objects.toStringHelper(this)
       .add("bindAddress", httpService.getBindAddress())
       .toString();
+  }
+
+  // in case there is an exception thrown during startup, don't want the thread to print to system.err
+  // instead, the caller should handler the error messaging.
+  @SuppressWarnings("NullableProblems")
+  @Override
+  protected Executor executor() {
+    final String name = getClass().getSimpleName();
+    return new Executor() {
+      @Override
+      public void execute(Runnable runnable) {
+        Thread t = new Thread(runnable, name);
+        t.setUncaughtExceptionHandler(UnloggedExceptionIdleService.UNCAUGHT_EXCEPTION_HANDLER);
+        t.start();
+      }
+    };
   }
 }

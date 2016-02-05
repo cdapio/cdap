@@ -80,7 +80,7 @@ public abstract class AbstractDatasetFrameworkTest {
   private static final Id.DatasetInstance MY_TABLE = Id.DatasetInstance.from(NAMESPACE_ID, "my_table");
   private static final Id.DatasetInstance MY_TABLE2 = Id.DatasetInstance.from(NAMESPACE_ID, "my_table2");
   private static final Id.DatasetInstance MY_DS = Id.DatasetInstance.from(NAMESPACE_ID, "myds");
-  private static final Id.DatasetType IN_MEMORY_TYPE = Id.DatasetType.from(NAMESPACE_ID, "orderedTable");
+  private static final Id.DatasetType IN_MEMORY_TYPE = Id.DatasetType.from(NAMESPACE_ID, "table");
   private static final Id.DatasetType SIMPLE_KV_TYPE = Id.DatasetType.from(NAMESPACE_ID, SimpleKVTable.class.getName());
   private static final Id.DatasetType DOUBLE_KV_TYPE = Id.DatasetType.from(NAMESPACE_ID,
                                                                            DoubleWrappedKVTable.class.getName());

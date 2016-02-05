@@ -86,7 +86,8 @@ angular
       'ui.ace',
       'gridster',
       'angular-cron-jobs',
-      'angularjs-dropdown-multiselect'
+      'angularjs-dropdown-multiselect',
+      'hc.marked'
 
     ]).name,
 
@@ -192,8 +193,8 @@ angular
   .config(function ($alertProvider) {
     angular.extend($alertProvider.defaults, {
       animation: 'am-fade-and-scale',
-      container: '#alerts > .container',
-      duration: 3
+      container: '#alerts',
+      duration: false
     });
   })
 
@@ -219,14 +220,46 @@ angular
     ]);
   })
 
-  .run(function (MYSOCKET_EVENT, myAlert, EventPipe) {
-    EventPipe.on(MYSOCKET_EVENT.closed, function (angEvent, data) {
-      myAlert({
-        title: 'Error',
-        content: data.reason || 'Unable to connect to CDAP',
-        type: 'danger'
-      });
+  .config(['markedProvider', function (markedProvider) {
+    markedProvider.setOptions({
+      gfm: true,
+      tables: true
     });
+  }])
+  /*
+    FIXME: This is a one time only thing. Once all old users who migrated to 3.3 have their drafts moved from global level to
+          namespace level this snippet can be removed. Ideally in 4.* we should be able to remove this.
+  */
+  .run(function(mySettings, EventPipe, $state, $alert, $q) {
+    mySettings.get('adapterDrafts')
+      .then(
+        function success(res) {
+          var namespacedDrafts = {
+            default: {}
+          };
+          if (res && !res.isMigrated) {
+            angular.forEach(res, function(draft, name) {
+               namespacedDrafts.default[name] = draft;
+            });
+
+            namespacedDrafts.isMigrated = true;
+            return mySettings.set('adapterDrafts', namespacedDrafts);
+          } else {
+            return $q.reject(false);
+          }
+        }
+      )
+      .then(
+        function showAlert() {
+          $alert({
+            type: 'info',
+            content: 'All current drafts can be found in Default namespace.'
+          });
+        }
+      );
+  })
+
+  .run(function (MYSOCKET_EVENT, myAlert, EventPipe) {
 
     EventPipe.on(MYSOCKET_EVENT.message, function (data) {
       if(data.statusCode > 399 && !data.resource.suppressErrors) {
@@ -256,7 +289,7 @@ angular
    * attached to the <body> tag, mostly responsible for
    *  setting the className based events from $state and caskTheme
    */
-  .controller('BodyCtrl', function ($scope, $cookies, $cookieStore, caskTheme, CASK_THEME_EVENT, $rootScope, $state, $log, MYSOCKET_EVENT, MyCDAPDataSource, MY_CONFIG, MYAUTH_EVENT, EventPipe, myAuth) {
+  .controller('BodyCtrl', function ($scope, $cookies, $cookieStore, caskTheme, CASK_THEME_EVENT, $rootScope, $state, $log, MYSOCKET_EVENT, MyCDAPDataSource, MY_CONFIG, MYAUTH_EVENT, EventPipe, myAuth, $window, myAlertOnValium) {
 
     var activeThemeClass = caskTheme.getClassName();
     var dataSource = new MyCDAPDataSource($scope);
@@ -269,6 +302,8 @@ angular
     } else {
       getVersion();
     }
+
+    $scope.copyrightYear = new Date().getFullYear();
 
     function getVersion() {
       dataSource.request({
@@ -287,34 +322,46 @@ angular
       }
     });
 
-
-
-
-    $scope.$on('$stateChangeSuccess', function (event, state) {
+    $scope.$on('$stateChangeSuccess', function (event, toState, toParams, fromState) {
       var classes = [];
-      if(state.data && state.data.bodyClass) {
-        classes = [state.data.bodyClass];
+      if(toState.data && toState.data.bodyClass) {
+        classes = [toState.data.bodyClass];
       }
       else {
-        var parts = state.name.split('.'),
+        var parts = toState.name.split('.'),
             count = parts.length + 1;
         while (1<count--) {
           classes.push('state-' + parts.slice(0,count).join('-'));
         }
       }
-
+      if(toState.name !== fromState.name && myAlertOnValium.isAnAlertOpened()) {
+        myAlertOnValium.destroy();
+      }
       classes.push(activeThemeClass);
 
       $scope.bodyClass = classes.join(' ');
+
+
+      /**
+       *  This is to make sure that the sroll position goes back to the top when user
+       *  change state. UI Router has this function ($anchorScroll), but for some
+       *  reason it is not working.
+       **/
+      $window.scrollTo(0, 0);
     });
 
     EventPipe.on(MYSOCKET_EVENT.reconnected, function () {
-      $log.log('[DataSource] reconnected, reloading...');
-
-      // https://github.com/angular-ui/ui-router/issues/582
-      $state.transitionTo($state.current, $state.$current.params,
-        { reload: true, inherit: true, notify: true }
-      );
+      $log.log('[DataSource] reconnected, reloading to home');
+      /*
+        TL;DR: We need to reload services to check if backend is up and running.
+        LONGER-VERSION : When node server goes down and then later comes up we used to use ui-router's transitionTo api.
+        This, however reloads the controllers but does not reload the services. As a result our poll for
+        backend services got dropped in the previous node server and the new node server is not polling for
+        backend service (system services & backend heartbeat apis). So we need to force reload the entire app
+        to reload services. Ideally we should have one controller that loaded everything so that we can control
+        the polling in services but unfortunately we are polling for stuff in too many places - StatusFactory, ServiceStatusFactory.
+      */
+      $window.location.reload();
     });
 
     $rootScope.$on('$stateChangeError', function () {

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -25,7 +25,6 @@ import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.flow.AbstractFlow;
 import co.cask.cdap.api.flow.flowlet.AbstractFlowlet;
-import co.cask.cdap.api.flow.flowlet.FlowletConfigurer;
 import co.cask.cdap.api.flow.flowlet.FlowletContext;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.api.worker.AbstractWorker;
@@ -118,10 +117,8 @@ public class ConfigTestApp extends AbstractApplication<ConfigTestApp.ConfigClass
     }
 
     @Override
-    public void configure(FlowletConfigurer configurer) {
-      super.configure(configurer);
+    public void configure() {
       createDataset(datasetName, KeyValueTable.class);
-      useDatasets(datasetName);
     }
 
     @Override

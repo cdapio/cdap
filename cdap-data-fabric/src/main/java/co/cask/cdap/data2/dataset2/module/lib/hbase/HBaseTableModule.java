@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,7 +18,6 @@ package co.cask.cdap.data2.dataset2.module.lib.hbase;
 
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.api.dataset.module.DatasetModule;
-import co.cask.cdap.api.dataset.table.OrderedTable;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.data2.dataset2.lib.table.hbase.HBaseTableDefinition;
 
@@ -30,7 +29,5 @@ public class HBaseTableModule implements DatasetModule {
   public void register(DatasetDefinitionRegistry registry) {
     registry.add(new HBaseTableDefinition("table"));
     registry.add(new HBaseTableDefinition(Table.class.getName()));
-    registry.add(new HBaseTableDefinition("orderedTable"));
-    registry.add(new HBaseTableDefinition(OrderedTable.class.getName()));
   }
 }

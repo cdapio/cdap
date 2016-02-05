@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -47,10 +47,11 @@ public final class WorkflowSpecification implements ProgramSpecification, Proper
     this.nodes = Collections.unmodifiableList(new ArrayList<>(nodes));
     this.nodeIdMap = Collections.unmodifiableMap(generateNodeIdMap(nodes));
   }
+
   /**
-   +   * Visit all the nodes in the {@link Workflow} and generate the map of node id to
-   +   * the {@link WorkflowNode}.
-   +   */
+   * Visit all the nodes in the {@link Workflow} and generate the map of node id to
+   * the {@link WorkflowNode}.
+   */
   private Map<String, WorkflowNode> generateNodeIdMap(List<WorkflowNode> nodesInWorkflow) {
     Map<String, WorkflowNode> nodeIdMap = new HashMap<>();
     Queue<WorkflowNode> nodes = new LinkedList<>(nodesInWorkflow);

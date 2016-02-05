@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -57,7 +57,10 @@ public class ObjectStoreDataset<T> extends AbstractDataset implements ObjectStor
   private final Schema schema;
 
   private final ReflectionDatumWriter<T> datumWriter;
-  private final ReflectionDatumReader<T> datumReader;
+  // we get this lazily, since we may not have the actual Type when simply instantiating this class (for instance, when
+  // datasets are instantiated in DatasetSystemMetadataWriter for checking RecordScannable/BatchWritable/etc.),
+  // but we do expect to have it when using it in a program context
+  private ReflectionDatumReader<T> datumReader;
 
   public ObjectStoreDataset(String name, KeyValueTable kvTable, TypeRepresentation typeRep,
                             Schema schema, @Nullable ClassLoader classLoader) {
@@ -67,7 +70,6 @@ public class ObjectStoreDataset<T> extends AbstractDataset implements ObjectStor
     this.typeRep.setClassLoader(classLoader);
     this.schema = schema;
     this.datumWriter = new ReflectionDatumWriter<>(this.schema);
-    this.datumReader = new ReflectionDatumReader<>(this.schema, getTypeToken());
   }
 
   public ObjectStoreDataset(String name, KeyValueTable kvTable,
@@ -126,12 +128,6 @@ public class ObjectStoreDataset<T> extends AbstractDataset implements ObjectStor
     kvTable.delete(key);
   }
 
-  // this function only exists to reduce the scope of the SuppressWarnings annotation to a single cast.
-  @SuppressWarnings("unchecked")
-  private TypeToken<T> getTypeToken() {
-    return (TypeToken<T>) TypeToken.of(this.typeRep.toType());
-  }
-
   private byte[] encode(T object) {
     // encode T using schema
     ByteArrayOutputStream bos = new ByteArrayOutputStream();
@@ -145,6 +141,14 @@ public class ObjectStoreDataset<T> extends AbstractDataset implements ObjectStor
     return bos.toByteArray();
   }
 
+  @SuppressWarnings("unchecked")
+  private ReflectionDatumReader<T> getReflectionDatumReader() {
+    if (datumReader == null) {
+      datumReader = new ReflectionDatumReader<>(schema, (TypeToken<T>) TypeToken.of(this.typeRep.toType()));
+    }
+    return datumReader;
+  }
+
   private T decode(byte[] bytes) {
     if (bytes == null) {
       return null;
@@ -153,7 +157,7 @@ public class ObjectStoreDataset<T> extends AbstractDataset implements ObjectStor
     ByteArrayInputStream bis = new ByteArrayInputStream(bytes);
     BinaryDecoder decoder = new BinaryDecoder(bis);
     try {
-      return this.datumReader.read(decoder, this.schema);
+      return getReflectionDatumReader().read(decoder, this.schema);
     } catch (IOException e) {
       // SHOULD NEVER happen
       throw new DataSetException("Failed to decode read object: " + e.getMessage(), e);

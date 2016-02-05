@@ -19,13 +19,16 @@ class PluginConfigFactory {
     this.myHelpers = myHelpers;
     this.myPipelineApi = myPipelineApi;
     this.$state = $state;
+    this.data = {};
   }
-  // Seems super lame. Need to remove this.
-  fetch(artifactName, artifactVersion, pluginName) {
-    var defer = this.$q.defer();
-    var key = `widgets.${pluginName}`;
-    this.myPipelineApi.fetchArtifactProperties({
-      namespace: this.$state.params.namespace,
+  fetchWidgetJson(artifactName, artifactVersion, key) {
+    let cache = this.data[`${artifactName}-${artifactVersion}-${key}`];
+    if (cache) {
+      return this.$q.when(cache);
+    }
+
+    return this.myPipelineApi.fetchArtifactProperties({
+      namespace: this.$state.params.namespace || this.$state.params.nsadmin,
       artifactName,
       artifactVersion,
       keys: key
@@ -37,19 +40,27 @@ class PluginConfigFactory {
             let config = res[key];
             if (config) {
               config = JSON.parse(config);
-              defer.resolve(config);
+              this.data[`${artifactName}-${artifactVersion}-${key}`] = config;
+              return config;
             } else {
-              defer.reject('NO_JSON_FOUND');
+              throw 'NO_JSON_FOUND';
             }
           } catch(e) {
-            defer.reject('CONFIG_SYNTAX_JSON_ERROR');
+            throw (e && e.name === 'SyntaxError')? 'CONFIG_SYNTAX_JSON_ERROR': e;
           }
         },
         () => {
-          defer.reject('NO_JSON_FOUND');
+          throw 'NO_JSON_FOUND';
         }
       );
-    return defer.promise;
+  }
+  fetchDocJson(artifactName, artifactVersion, key) {
+    return this.myPipelineApi.fetchArtifactProperties({
+      namespace: this.$state.params.namespace,
+      artifactName,
+      artifactVersion,
+      keys: key
+    }).$promise;
   }
 
   generateNodeConfig(backendProperties, nodeConfig) {
@@ -70,7 +81,8 @@ class PluginConfigFactory {
         schemaProperties: null,
         outputSchemaProperty: null,
         isOutputSchemaRequired: null,
-        implicitSchema: null
+        implicitSchema: null,
+        watchProperty: null
       },
       groups: []
     };

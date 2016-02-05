@@ -17,6 +17,7 @@
 
 package co.cask.cdap.client.util;
 
+import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.common.UnauthorizedException;
 import co.cask.cdap.security.authentication.client.AccessToken;
 import co.cask.common.http.HttpMethod;
@@ -60,7 +61,7 @@ import static com.google.inject.matcher.Matchers.only;
 public class RESTClientTest {
 
   private static final String ACCESS_TOKEN = "ssdw221e2ffderrfg33322rr";
-  private static final int RETRY_LIMIT = 25;
+  private static final int RETRY_LIMIT = 2;
 
   private TestHttpService httpService;
   private RESTClient restClient;
@@ -69,7 +70,7 @@ public class RESTClientTest {
   public void setUp() throws IOException {
     httpService = new TestHttpService();
     httpService.startAndWait();
-    restClient = new RESTClient();
+    restClient = new RESTClient(ClientConfig.builder().setUnavailableRetryLimit(3).build());
   }
 
   @After

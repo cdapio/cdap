@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,7 +21,6 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.ZKClientModule;
-import co.cask.cdap.common.io.FileContextLocationFactory;
 import co.cask.cdap.common.namespace.DefaultNamespacedLocationFactory;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.data.file.FileWriter;
@@ -47,6 +46,7 @@ import com.google.inject.Scopes;
 import com.google.inject.util.Modules;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hdfs.MiniDFSCluster;
+import org.apache.twill.filesystem.FileContextLocationFactory;
 import org.apache.twill.filesystem.LocationFactory;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -72,6 +72,7 @@ public class DFSStreamFileJanitorTest extends StreamFileJanitorTestBase {
     Configuration hConf = new Configuration();
     hConf.set(MiniDFSCluster.HDFS_MINIDFS_BASEDIR, tmpFolder.newFolder().getAbsolutePath());
     dfsCluster = new MiniDFSCluster.Builder(hConf).numDataNodes(1).build();
+    dfsCluster.waitClusterUp();
     final LocationFactory lf = new FileContextLocationFactory(dfsCluster.getFileSystem().getConf());
     final NamespacedLocationFactory nlf = new DefaultNamespacedLocationFactory(cConf, lf);
 

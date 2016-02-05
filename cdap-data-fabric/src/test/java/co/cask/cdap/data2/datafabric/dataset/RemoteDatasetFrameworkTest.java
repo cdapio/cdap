@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,6 @@
 package co.cask.cdap.data2.datafabric.dataset;
 
 import co.cask.cdap.api.dataset.module.DatasetModule;
-import co.cask.cdap.api.dataset.table.OrderedTable;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.common.conf.CConfigurationUtil;
 import co.cask.cdap.common.conf.Constants;
@@ -43,6 +42,8 @@ import co.cask.cdap.data2.dataset2.SingleTypeModule;
 import co.cask.cdap.data2.dataset2.lib.table.CoreDatasetsModule;
 import co.cask.cdap.data2.dataset2.module.lib.inmemory.InMemoryTableModule;
 import co.cask.cdap.data2.metrics.DatasetMetricsReporter;
+import co.cask.cdap.data2.transaction.DelegatingTransactionSystemClientService;
+import co.cask.cdap.data2.transaction.TransactionSystemClientService;
 import co.cask.cdap.explore.client.DiscoveryExploreClient;
 import co.cask.cdap.explore.client.ExploreFacade;
 import co.cask.cdap.proto.Id;
@@ -101,6 +102,7 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
     txManager = new TransactionManager(txConf);
     txManager.startAndWait();
     InMemoryTxSystemClient txSystemClient = new InMemoryTxSystemClient(txManager);
+    TransactionSystemClientService txSystemClientService = new DelegatingTransactionSystemClientService(txSystemClient);
 
     LocalLocationFactory locationFactory = new LocalLocationFactory(new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR)));
     NamespacedLocationFactory namespacedLocationFactory = new DefaultNamespacedLocationFactory(cConf, locationFactory);
@@ -121,7 +123,7 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
       .build();
 
     InMemoryDatasetFramework mdsFramework = new InMemoryDatasetFramework(registryFactory, modules, cConf);
-    MDSDatasetsRegistry mdsDatasetsRegistry = new MDSDatasetsRegistry(txSystemClient, mdsFramework);
+    MDSDatasetsRegistry mdsDatasetsRegistry = new MDSDatasetsRegistry(txSystemClientService, mdsFramework);
 
     ExploreFacade exploreFacade = new ExploreFacade(new DiscoveryExploreClient(discoveryService), cConf);
     DatasetInstanceService instanceService = new DatasetInstanceService(
@@ -180,8 +182,6 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
     } catch (DatasetManagementException e) {
       // expected
     }
-    Assert.assertTrue(framework.hasSystemType("orderedTable"));
-    Assert.assertTrue(framework.hasSystemType(OrderedTable.class.getName()));
     try {
       framework.deleteModule(Id.DatasetModule.from(Id.Namespace.SYSTEM, "orderedTable-memory"));
       Assert.fail("Should not be able to delete a default module.");

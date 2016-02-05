@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,6 @@
 package co.cask.cdap.api.dataset.lib.partitioned;
 
 import co.cask.cdap.api.dataset.lib.PartitionKey;
-import com.google.common.base.Throwables;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonDeserializer;
@@ -56,7 +55,7 @@ public class PartitionKeyCodec implements JsonSerializer<PartitionKey>, JsonDese
       // we know that the class is a Comparable because all partition keys are of type Comparable
       return (Class<? extends Comparable>) Class.forName(className);
     } catch (ClassNotFoundException e) {
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
   }
 

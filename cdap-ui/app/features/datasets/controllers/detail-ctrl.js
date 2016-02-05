@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.feature.datasets')
-  .controller('DatasetsDetailController', function($scope, $state, MyCDAPDataSource, $alert, $filter, myDatasetApi, explorableDatasets) {
+  .controller('DatasetsDetailController', function($scope, $state, MyCDAPDataSource, myAlertOnValium, $filter, myDatasetApi, explorableDatasets) {
     var params = {
       namespace: $state.params.namespace,
       scope: $scope
@@ -28,7 +28,7 @@ angular.module(PKG.name + '.feature.datasets')
       myDatasetApi.truncate(params, {})
         .$promise
         .then(function () {
-          $alert({
+          myAlertOnValium.show({
             content: 'Succesfully truncated ' + $state.params.datasetId + ' dataset',
             type: 'success'
           });
@@ -39,5 +39,5 @@ angular.module(PKG.name + '.feature.datasets')
       namespace: $state.params.namespace,
       datasetId: $state.params.datasetId
     };
-    
+
   });

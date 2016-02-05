@@ -63,7 +63,7 @@ dataset as a file. It declares its use of the dataset using a ``@UseDataSet`` an
 
 .. literalinclude:: /../../../cdap-examples/SportResults/src/main/java/co/cask/cdap/examples/sportresults/UploadService.java
     :language: java
-    :lines: 67-68
+    :lines: 65-66
     :dedent: 4
 
 Let's take a closer look at the upload method:
@@ -84,7 +84,7 @@ Let's take a closer look at the upload method:
 
 .. literalinclude:: /../../../cdap-examples/SportResults/src/main/java/co/cask/cdap/examples/sportresults/UploadService.java
     :language: java
-    :lines: 95-151
+    :lines: 90-146
     :dedent: 4
 
 

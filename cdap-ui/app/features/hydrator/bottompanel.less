@@ -27,15 +27,6 @@ body.theme-cdap.state-hydrator {
     }
 
     div.console {
-      &.maximized {
-        .node-config .bottompanel-body {
-          div.config-table {
-            height: ~"-moz-calc(100vh - 284px)";
-            height: ~"-webkit-calc(100vh - 284px)";
-            height: ~"calc(100vh - 284px)";
-          }
-        }
-      }
       div.console-tabs ul.nav-tabs li {
         margin-bottom: -1px;
       }
@@ -46,6 +37,10 @@ body.theme-cdap.state-hydrator {
         width: 100%;
         .p-10 {
           padding: 10px;
+        }
+        button.btn-grey {
+          .cask-btn(@background: @body-bg, @border: 1px solid @table-border-color, @border-radius: 4px, @color: #666, @font-size: 13px, @padding: 6px 12px);
+          margin-top: 10px;
         }
       }
       div.bottompanel-body {
@@ -89,20 +84,7 @@ body.theme-cdap.state-hydrator {
       }
     }
   }
-  &.state-hydrator-studio {
-    div.console {
-      &.maximized {
-        top: 120px;
-        .node-config .bottompanel-body {
-          div.config-table {
-            height: ~"-moz-calc(100vh - 284px)";
-            height: ~"-webkit-calc(100vh - 284px)";
-            height: ~"calc(100vh - 284px)";
-          }
-        }
-      }
-    }
-  }
+
   div.console {
     background-color: white;
     position: relative;
@@ -150,6 +132,13 @@ body.theme-cdap.state-hydrator {
       div.console-tabs {
         border-top: 0;
         .box-shadow(0 7px 7px fade(black, 10%), 0 19px 59px fade(black, 25%););
+      }
+      .node-config .bottompanel-body {
+        div.config-table {
+          height: ~"-moz-calc(100vh - 284px)";
+          height: ~"-webkit-calc(100vh - 284px)";
+          height: ~"calc(100vh - 284px)";
+        }
       }
     }
   }
@@ -255,6 +244,16 @@ body.theme-cdap.state-hydrator {
     .sink-output-schema {
       .output-schema {
         margin-top: 20px;
+      }
+    }
+    .output-schema {
+      .schema-propagation-confirm {
+        padding-top: 10px;
+      }
+      .btn-group {
+        .btn {
+          margin-right: 5px;
+        }
       }
     }
     .input-schema {
@@ -363,8 +362,17 @@ body.theme-cdap.state-hydrator {
       .box-shadow(none);
       &:focus {
         border-color: @table-border-color;
+        outline: 1px solid @cdap-orange;
         .box-shadow(none);
       }
+    }
+    td.active-cell {
+      input:focus, select:focus {
+        outline: 0;
+      }
+    }
+    .loading-message {
+      margin-left: 10px;
     }
     .bottompanel-header {
       border-bottom: 1px solid @table-border-color;
@@ -404,6 +412,7 @@ body.theme-cdap.state-hydrator {
           > div {
             display: table-cell;
             padding: 20px 10px;
+            vertical-align: top;
           }
         }
         div.source-table {
@@ -520,14 +529,12 @@ body.theme-cdap.state-hydrator {
       }
     }
 
-    .console-wrapper {
-      padding: 10px 0;
-    }
     pre {
       background-color: transparent;
       border: 0;
       display: inline;
       padding: 0;
+      white-space: pre-wrap;
       &:after {
         display: block;
         content: '';

@@ -29,12 +29,16 @@ from sphinx.util.osutil import movefile
 from sphinx.util.console import bold
 
 sys.path.append(os.path.abspath('../../_common'))
+from common_conf import setup as _setup
 from common_conf import *
+
 
 # Search Index
 # Includes handler to build a common search index of all manuals combined
 
 def setup(app):
+    # Call imported setup
+    _setup(app)
     # Define handler to build the common index
     app.connect('build-finished', build_common_index)
 
@@ -92,6 +96,7 @@ def dump_search_index(builder, index):
     movefile(searchindexfn + '.tmp', searchindexfn)
     builder.info('done')
 
+
 FILENAMES = 'filenames'
 TERMS = 'terms'
 TITLES = 'titles'
@@ -101,16 +106,27 @@ TITLETERMS = 'titleterms'
 def clean(master):
     for ref in range(len(master[FILENAMES])):
         file = master[FILENAMES][ref]
-        if file.endswith("/index"):
+        if file_to_be_removed(file):
+#             print "File to be removed:%s ref:%s" % (file, ref)
+            terms_to_remove = []
             # Remove any file number references
             for term in master[TERMS]:
                 files = master[TERMS][term]
                 if isinstance(files, list) and ref in files:
-                    master[TERMS][term] = files.remove(ref)
-                    print "Deleted list reference: %s" % ref             
-                elif ref == files: # A single file reference
-                    del master[TERMS][term]
-                    print "Deleted single reference: %s" % ref             
+                    files.remove(ref)
+                    master[TERMS][term] = files
+#                     print "Deleted list reference: %s of term %s from %s" % (ref, term, files)
+                elif ref == files or [ref] == files: # A single file reference
+#                     print "Deleting single reference: %s of term %s" % (ref, term)
+                    terms_to_remove.append(term)
+            for term in terms_to_remove:
+                del master[TERMS][term]
+                               
+
+def file_to_be_removed(file):
+    # Rules for which files are to be removed from the index
+    return bool(file.endswith("/index") or 
+                file == "404")
 
 
 # Merge an index back into master, where the second index is located in a manual
@@ -129,9 +145,9 @@ def merge(master, new, manual):
     master[TITLES] = master[TITLES] + new[TITLES]
     
     # Merge to terms
-    master[TERMS] = merger(master[TERMS], new[TERMS], offset)
+    merger(master[TERMS], new[TERMS], offset)
     # Merge to titleterms
-    master[TITLETERMS] = merger(master[TITLETERMS], new[TITLETERMS], offset)
+    merger(master[TITLETERMS], new[TITLETERMS], offset)
     
     return master
 
@@ -140,6 +156,9 @@ def merger(dict1, dict2, offset):
     # merges dict2 into dict1, adjusting by offset
     # accounts for if existing items are lists or single objects
     # dict:{document:[0,3],cdap:[0,3],placeholder:[1,4,2,5],test:0}
+    # dict1 = {"document":[0,3],"cdap":[0,3],"placeholder":[1,4,2,5],"test":0,"test1":1}
+    # dict2 = {"document":[10,13],"cdap":[10,13],"placeholder":[11,14,22,25],"test":10,"test2":22}
+    # Returns dict1 modified-in-place, with all elements as lists
 
     terms = dict1.keys()
     for term in dict2.keys():
@@ -148,19 +167,22 @@ def merger(dict1, dict2, offset):
         if isinstance(add_files, list): 
             add_files = [(file + offset) for file in add_files]
         else:
-            add_files = add_files + offset
+            add_files = [add_files + offset]
         # Add to existing?
         if term in terms:
             # Add to existing
             files = dict1[term]
             if not isinstance(files, list):
                 files = [files]
-            if not isinstance(add_files, list):
-                add_files = [add_files]
             new_files = files + add_files
         else:
             new_files = add_files
         
         dict1[term]=new_files
+        
+    for term in terms:
+        files = dict1[term]
+        if not isinstance(files, list):
+            dict1[term]=[files]
+            
     return dict1
-

@@ -22,6 +22,17 @@
     </a>
 </div>
 <div class="modal-body">
+  <div class="alerts">
+    <div class="alert alert-danger"
+         ng-show="error"
+         role="alert">
+      <button type="button"
+              class="close"
+              ng-click="error=null"
+              aria-label="Close">x</button>
+      <span>{{error}}</span>
+    </div>
+  </div>
   <form class="form-horizontal">
     <label class="col-sm-2 control-label">
       <span>Stream ID</span>
@@ -35,17 +46,6 @@
         placeholder="Stream ID"
         name="streamId"
         cask-focus="streamId">
-      <div class="alert alert-danger alert-dismissible"
-           ng-show="error"
-           role="alert">
-        <button type="button"
-                class="close"
-                ng-click="error=null"
-                aria-label="Close">
-          <span aria-hidden="true">&times;</span>
-        </button>
-        <p><i class="fa fa-exclamation-circle"></i>  {{error}}</p>
-      </div>
     </div>
   </form>
 </div>

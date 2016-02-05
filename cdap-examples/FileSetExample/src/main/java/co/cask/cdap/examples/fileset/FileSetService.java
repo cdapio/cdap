@@ -24,8 +24,6 @@ import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpContentConsumer;
 import co.cask.cdap.api.service.http.HttpServiceRequest;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
-import com.google.common.collect.ImmutableMultimap;
-import com.google.common.io.ByteStreams;
 import com.google.common.io.Closeables;
 import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
@@ -78,14 +76,11 @@ public class FileSetService extends AbstractService {
       Location location = fileSet.getLocation(filePath);
       getContext().discardDataset(fileSet);
 
-      ByteBuffer content;
       try {
-        content = ByteBuffer.wrap(ByteStreams.toByteArray(location.getInputStream()));
+        responder.send(200, location, "application/octet-stream");
       } catch (IOException e) {
         responder.sendError(400, String.format("Unable to read path '%s' in file set '%s'", filePath, set));
-        return;
       }
-      responder.send(200, content, "application/octet-stream", ImmutableMultimap.<String, String>of());
     }
 
     @PUT

@@ -73,7 +73,6 @@ public class DefaultMetricStore implements MetricStore {
   private static final String BY_WORKER = "worker";
   private static final String BY_WORKFLOW = "workflow";
   private static final String BY_SPARK = "spark";
-  private static final String BY_ADAPTER = "adapter";
   private static final String BY_STREAM = "stream";
   private static final String BY_DATASET = "dataset";
   private static final String BY_COMPONENT = "component";
@@ -168,13 +167,6 @@ public class DefaultMetricStore implements MetricStore {
       // i.e. for spark only
       ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.APP,
                        Constants.Metrics.Tag.SPARK)));
-
-    // batch adapters
-    aggs.put(BY_ADAPTER, new DefaultAggregation(
-      ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.ADAPTER,
-                       Constants.Metrics.Tag.RUN_ID),
-      // i.e. for adapter only
-      ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.ADAPTER)));
 
     // Streams:
     aggs.put(BY_STREAM, new DefaultAggregation(

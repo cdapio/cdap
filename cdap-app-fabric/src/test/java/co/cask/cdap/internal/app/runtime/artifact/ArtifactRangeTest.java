@@ -92,7 +92,13 @@ public class ArtifactRangeTest {
 
     for (String invalidRange : invalidRanges) {
       try {
-        ArtifactRange.parse(invalidRange);
+        ArtifactRange.parse(Id.Namespace.DEFAULT, invalidRange);
+        Assert.fail();
+      } catch (InvalidArtifactRangeException e) {
+        // expected
+      }
+      try {
+        ArtifactRange.parse("system:" + invalidRange);
         Assert.fail();
       } catch (InvalidArtifactRangeException e) {
         // expected
@@ -122,7 +128,13 @@ public class ArtifactRangeTest {
 
     for (String invalidRange : invalidRanges) {
       try {
-        ArtifactRange.parse(invalidRange);
+        ArtifactRange.parse(Id.Namespace.DEFAULT, invalidRange);
+        Assert.fail();
+      } catch (InvalidArtifactRangeException e) {
+        // expected
+      }
+      try {
+        ArtifactRange.parse("system:" + invalidRange);
         Assert.fail();
       } catch (InvalidArtifactRangeException e) {
         // expected

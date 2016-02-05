@@ -49,6 +49,7 @@ import co.cask.cdap.internal.app.worker.DefaultWorkerConfigurer;
 import co.cask.cdap.internal.app.workflow.DefaultWorkflowConfigurer;
 import co.cask.cdap.internal.schedule.StreamSizeSchedule;
 import co.cask.cdap.proto.Id;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 
 import java.util.HashMap;
@@ -73,21 +74,16 @@ public class DefaultAppConfigurer extends DefaultPluginConfigurer implements App
   private final Map<String, WorkerSpecification> workers = new HashMap<>();
 
   // passed app to be used to resolve default name and description
-  public DefaultAppConfigurer(Application app) {
-    super(null, null, null);
+  @VisibleForTesting
+  public DefaultAppConfigurer(Id.Namespace namespace, Application app) {
+    super(namespace, null, null, null);
     this.name = app.getClass().getSimpleName();
     this.description = "";
   }
 
-  // TODO: Remove this constructor when app templates are removed and when all applications are created from artifacts
-  public DefaultAppConfigurer(Application app, String configuration) {
-    this(app);
-    this.configuration = configuration;
-  }
-
-  public DefaultAppConfigurer(Id.Artifact artifactId, Application app, String configuration,
+  public DefaultAppConfigurer(Id.Namespace namespace, Id.Artifact artifactId, Application app, String configuration,
                               ArtifactRepository artifactRepository, PluginInstantiator pluginInstantiator) {
-    super(artifactId, artifactRepository, pluginInstantiator);
+    super(namespace, artifactId, artifactRepository, pluginInstantiator);
     this.name = app.getClass().getSimpleName();
     this.description = "";
     this.configuration = configuration;
@@ -121,7 +117,8 @@ public class DefaultAppConfigurer extends DefaultPluginConfigurer implements App
   @Override
   public void addMapReduce(MapReduce mapReduce) {
     Preconditions.checkArgument(mapReduce != null, "MapReduce cannot be null.");
-    DefaultMapReduceConfigurer configurer = new DefaultMapReduceConfigurer(mapReduce, artifactId, artifactRepository,
+    DefaultMapReduceConfigurer configurer = new DefaultMapReduceConfigurer(mapReduce, deployNamespace, artifactId,
+                                                                           artifactRepository,
                                                                            pluginInstantiator);
     mapReduce.configure(configurer);
 
@@ -136,7 +133,8 @@ public class DefaultAppConfigurer extends DefaultPluginConfigurer implements App
   @Override
   public void addSpark(Spark spark) {
     Preconditions.checkArgument(spark != null, "Spark cannot be null.");
-    DefaultSparkConfigurer configurer = new DefaultSparkConfigurer(spark, artifactId, artifactRepository,
+    DefaultSparkConfigurer configurer = new DefaultSparkConfigurer(spark, deployNamespace, artifactId,
+                                                                   artifactRepository,
                                                                    pluginInstantiator);
     spark.configure(configurer);
 
@@ -159,8 +157,8 @@ public class DefaultAppConfigurer extends DefaultPluginConfigurer implements App
 
   public void addService(Service service) {
     Preconditions.checkArgument(service != null, "Service cannot be null.");
-    DefaultServiceConfigurer configurer = new DefaultServiceConfigurer(service, artifactId, artifactRepository,
-                                                                       pluginInstantiator);
+    DefaultServiceConfigurer configurer = new DefaultServiceConfigurer(service, deployNamespace, artifactId,
+                                                                       artifactRepository, pluginInstantiator);
     service.configure(configurer);
 
     ServiceSpecification spec = configurer.createSpecification();
@@ -174,7 +172,8 @@ public class DefaultAppConfigurer extends DefaultPluginConfigurer implements App
   @Override
   public void addWorker(Worker worker) {
     Preconditions.checkArgument(worker != null, "Worker cannot be null.");
-    DefaultWorkerConfigurer configurer = new DefaultWorkerConfigurer(worker, artifactId, artifactRepository,
+    DefaultWorkerConfigurer configurer = new DefaultWorkerConfigurer(worker, deployNamespace, artifactId,
+                                                                     artifactRepository,
                                                                      pluginInstantiator);
     worker.configure(configurer);
 

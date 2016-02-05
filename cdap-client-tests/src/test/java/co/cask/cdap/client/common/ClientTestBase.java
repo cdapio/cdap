@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -24,7 +24,6 @@ import co.cask.cdap.client.config.ConnectionConfig;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.ProgramNotFoundException;
 import co.cask.cdap.common.UnauthorizedException;
-import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.internal.test.AppJarHelper;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRecord;
@@ -32,7 +31,6 @@ import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.test.SingletonExternalResource;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
-import com.google.common.io.Files;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
@@ -43,6 +41,8 @@ import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -131,8 +131,13 @@ public abstract class ClientTestBase {
     File tmpJarFolder = TMP_FOLDER.newFolder();
     LocationFactory locationFactory = new LocalLocationFactory(tmpJarFolder);
     Location deploymentJar = AppJarHelper.createDeploymentJar(locationFactory, cls);
+
     File appJarFile = new File(tmpJarFolder, String.format("%s-%s.jar", name, version));
-    Files.copy(Locations.newInputSupplier(deploymentJar), appJarFile);
+    try {
+      Files.createLink(appJarFile.toPath(), Paths.get(deploymentJar.toURI()));
+    } catch (Exception e) {
+      Files.copy(appJarFile.toPath(), Paths.get(deploymentJar.toURI()));
+    }
     return appJarFile;
   }
 }

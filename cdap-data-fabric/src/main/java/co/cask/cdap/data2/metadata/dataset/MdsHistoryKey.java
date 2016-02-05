@@ -29,7 +29,7 @@ public class MdsHistoryKey {
   public static MDSKey getMdsKey(Id.NamespacedId targetId, long time) {
     MDSKey.Builder builder = new MDSKey.Builder();
     builder.add(ROW_PREFIX);
-    KeyHelper.addNamespaceIdToKey(builder, targetId);
+    KeyHelper.addTargetIdToKey(builder, targetId);
     builder.add(invertTime(time));
     return builder.build();
   }
@@ -41,7 +41,7 @@ public class MdsHistoryKey {
   public static MDSKey getMdsScanEndKey(Id.NamespacedId targetId) {
     MDSKey.Builder builder = new MDSKey.Builder();
     builder.add(ROW_PREFIX);
-    KeyHelper.addNamespaceIdToKey(builder, targetId);
+    KeyHelper.addTargetIdToKey(builder, targetId);
     byte[] key = builder.build().getKey();
     return new MDSKey(Bytes.stopKeyForPrefix(key));
   }

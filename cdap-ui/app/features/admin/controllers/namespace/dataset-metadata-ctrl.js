@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.feature.admin').controller('NamespaceDatasetMetadataController',
-function ($scope, $state, $alert, $filter, myDatasetApi, myExploreApi, EventPipe) {
+function ($scope, $state, myAlertOnValium, $filter, myDatasetApi, myExploreApi, EventPipe) {
 
   var params = {
     namespace: $state.params.nsadmin,
@@ -57,7 +57,7 @@ function ($scope, $state, $alert, $filter, myDatasetApi, myExploreApi, EventPipe
       EventPipe.emit('hideLoadingIcon.immediate');
 
       $state.go('admin.namespace.detail.data', {}, {reload: true});
-      $alert({
+      myAlertOnValium.show({
         type: 'success',
         content: 'Successfully deleted dataset'
       });

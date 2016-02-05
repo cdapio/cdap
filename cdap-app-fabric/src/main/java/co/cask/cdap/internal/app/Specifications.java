@@ -20,6 +20,7 @@ import co.cask.cdap.api.app.Application;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.app.DefaultAppConfigurer;
 import co.cask.cdap.app.DefaultApplicationContext;
+import co.cask.cdap.proto.Id;
 
 /**
  * Util for building app spec for tests.
@@ -28,7 +29,7 @@ public final class Specifications {
   private Specifications() {}
 
   public static ApplicationSpecification from(Application app) {
-    DefaultAppConfigurer appConfigurer = new DefaultAppConfigurer(app);
+    DefaultAppConfigurer appConfigurer = new DefaultAppConfigurer(Id.Namespace.DEFAULT, app);
     app.configure(appConfigurer, new DefaultApplicationContext());
     return appConfigurer.createSpecification();
   }

@@ -28,11 +28,9 @@ import co.cask.cdap.common.ApplicationNotFoundException;
 import co.cask.cdap.common.ProgramNotFoundException;
 import co.cask.cdap.internal.app.store.RunRecordMeta;
 import co.cask.cdap.internal.app.store.WorkflowDataset;
-import co.cask.cdap.proto.AdapterStatus;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.WorkflowStatistics;
-import co.cask.cdap.templates.AdapterDefinition;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Predicate;
 import org.apache.twill.api.RunId;
@@ -341,57 +339,6 @@ public interface Store {
    * @return true if the program exists, false otherwise.
    */
   boolean programExists(Id.Program id);
-
-  /**
-   * Adds adapter spec to the store, with status = {@link AdapterStatus#STARTED}. Will overwrite the existing spec.
-   *
-   * @deprecated only used for cdap upgrade
-   * @param id Namespace id
-   * @param adapterSpec adapter specification of the adapter being added
-   */
-  @Deprecated
-  void addAdapter(Id.Namespace id, AdapterDefinition adapterSpec);
-
-  /**
-   * Fetch the adapter identified by the name in a give namespace.
-   *
-   * @deprecated only used for cdap upgrade
-   * @param id  Namespace id.
-   * @param name Adapter name
-   * @return an instance of {@link AdapterDefinition}.
-   */
-  @Nullable
-  @Deprecated
-  AdapterDefinition getAdapter(Id.Namespace id, String name);
-
-  /**
-   * Fetch all the adapters in a given namespace.
-   *
-   * @deprecated only used for cdap upgrade
-   * @param id Namespace id.
-   * @return {@link Collection} of Adapter Specifications.
-   */
-  @Deprecated
-  Collection<AdapterDefinition> getAllAdapters(Id.Namespace id);
-
-  /**
-   * Remove the adapter specified by the name in a given namespace.
-   *
-   * @deprecated only used for cdap upgrade
-   * @param id Namespace id.
-   * @param name Adapter name.
-   */
-  @Deprecated
-  void removeAdapter(Id.Namespace id, String name);
-
-  /**
-   * Remove all the adapters in a given namespace.
-   *
-   * @deprecated only used in unit test and cdap upgrade
-   * @param id Namespace id.
-   */
-  @Deprecated
-  void removeAllAdapters(Id.Namespace id);
 
   /**
    * Logs the start of the program running under Workflow

@@ -16,6 +16,7 @@
 
 package co.cask.cdap.data2.datafabric.dataset.service.executor;
 
+import co.cask.cdap.common.conf.CConfiguration;
 import com.google.inject.Inject;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 
@@ -27,8 +28,10 @@ public class LocalDatasetOpExecutor extends RemoteDatasetOpExecutor {
   private final DatasetOpExecutorService executorServer;
 
   @Inject
-  public LocalDatasetOpExecutor(DiscoveryServiceClient discoveryClient, DatasetOpExecutorService executorServer) {
-    super(discoveryClient);
+  public LocalDatasetOpExecutor(CConfiguration cConf,
+                                DiscoveryServiceClient discoveryClient,
+                                DatasetOpExecutorService executorServer) {
+    super(cConf, discoveryClient);
     this.executorServer = executorServer;
   }
 

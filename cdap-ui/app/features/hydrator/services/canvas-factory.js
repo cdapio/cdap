@@ -16,7 +16,7 @@
  */
 
 angular.module(PKG.name + '.feature.hydrator')
-  .factory('CanvasFactory', function(myHelpers, $q, $alert, GLOBALS, $filter) {
+  .factory('CanvasFactory', function(myHelpers, $q, myAlertOnValium, GLOBALS, $filter) {
     function extractMetadataFromDraft(data) {
       var returnConfig = {};
       returnConfig.name = myHelpers.objectQuery(data, 'name');
@@ -74,7 +74,7 @@ angular.module(PKG.name + '.feature.hydrator')
       reader.onload = function (evt) {
         var result = parseImportedJson(evt.target.result, templateType);
         if (result.error) {
-          $alert({
+          myAlertOnValium.show({
             type: 'danger',
             content: result.message
           });
@@ -173,7 +173,7 @@ angular.module(PKG.name + '.feature.hydrator')
         });
         finalConnections = finalConnections.concat(parallelConnections);
       }
-      return finalConnections;
+      return finalConnections.map(function (conn) { delete conn.visited; return conn; });
     }
 
     function pruneNonBackEndProperties(config) {
@@ -181,9 +181,14 @@ angular.module(PKG.name + '.feature.hydrator')
         if (backendProperties) {
           angular.forEach(properties, function(value, key) {
             // If its a required field don't remove it.
+            // This is specifically for Stream Grok pattern. If the user specifies format as "grok" in Stream we need to set this property in stream. It is not sent as list of properties from backend for that plugin.
             var isRequiredField = backendProperties[key] && backendProperties[key].required;
+            var isKeyFormatSetting = key === 'format.setting.pattern';
             var isPropertyEmptyOrNull = properties[key] === '' || properties[key] === null;
             var isErrorDatasetName = !backendProperties[key] && key !== 'errorDatasetName';
+            if (isKeyFormatSetting && !isPropertyEmptyOrNull) {
+              return;
+            }
             if (isErrorDatasetName || (!isRequiredField && isPropertyEmptyOrNull)) {
               delete properties[key];
             }

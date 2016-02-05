@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,6 +16,7 @@
 
 package co.cask.cdap.gateway.router;
 
+import co.cask.cdap.common.ServiceBindException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.conf.SConfiguration;
@@ -26,22 +27,23 @@ import co.cask.cdap.gateway.router.handlers.SecurityAuthenticationHttpHandler;
 import co.cask.cdap.security.auth.AccessTokenTransformer;
 import co.cask.cdap.security.auth.TokenValidator;
 import co.cask.cdap.security.tools.SSLHandlerFactory;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
-import org.apache.hadoop.hbase.util.Threads;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.jboss.netty.bootstrap.ClientBootstrap;
 import org.jboss.netty.bootstrap.ServerBootstrap;
 import org.jboss.netty.buffer.DirectChannelBufferFactory;
 import org.jboss.netty.channel.Channel;
-import org.jboss.netty.channel.ChannelEvent;
+import org.jboss.netty.channel.ChannelException;
 import org.jboss.netty.channel.ChannelHandlerContext;
 import org.jboss.netty.channel.ChannelPipeline;
 import org.jboss.netty.channel.ChannelPipelineFactory;
+import org.jboss.netty.channel.ChannelStateEvent;
 import org.jboss.netty.channel.ChannelUpstreamHandler;
 import org.jboss.netty.channel.Channels;
 import org.jboss.netty.channel.SimpleChannelUpstreamHandler;
@@ -62,13 +64,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.net.BindException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Proxies request to a set of servers. Experimental.
@@ -157,15 +162,16 @@ public class NettyRouter extends AbstractIdleService {
   protected void startUp() throws Exception {
     ChannelUpstreamHandler connectionTracker = new SimpleChannelUpstreamHandler() {
       @Override
-      public void handleUpstream(ChannelHandlerContext ctx, ChannelEvent e)
+      public void channelOpen(ChannelHandlerContext ctx, ChannelStateEvent e)
         throws Exception {
         channelGroup.add(e.getChannel());
-        super.handleUpstream(ctx, e);
+        super.channelOpen(ctx, e);
       }
     };
 
     tokenValidator.startAndWait();
-    timer = new HashedWheelTimer(Threads.newDaemonThreadFactory("router-idle-event-generator-timer"));
+    timer = new HashedWheelTimer(
+      new ThreadFactoryBuilder().setDaemon(true).setNameFormat("router-idle-event-generator-timer").build());
     bootstrapClient(connectionTracker);
 
     bootstrapServer(connectionTracker);
@@ -191,6 +197,25 @@ public class NettyRouter extends AbstractIdleService {
     LOG.info("Stopped Netty Router.");
   }
 
+  @Override
+  protected Executor executor(final State state) {
+    final AtomicInteger id = new AtomicInteger();
+    //noinspection NullableProblems
+    final Thread.UncaughtExceptionHandler h = new Thread.UncaughtExceptionHandler() {
+      @Override
+      public void uncaughtException(Thread t, Throwable e) {
+      }
+    };
+    return new Executor() {
+      @Override
+      public void execute(Runnable runnable) {
+        Thread t = new Thread(runnable, String.format("NettyRouter-%d", id.incrementAndGet()));
+        t.setUncaughtExceptionHandler(h);
+        t.start();
+      }
+    };
+  }
+
   public RouterServiceLookup getServiceLookup() {
     return serviceLookup;
   }
@@ -203,7 +228,7 @@ public class NettyRouter extends AbstractIdleService {
                                           .build());
   }
 
-  private void bootstrapServer(final ChannelUpstreamHandler connectionTracker) {
+  private void bootstrapServer(final ChannelUpstreamHandler connectionTracker) throws ServiceBindException {
     ExecutorService serverBossExecutor = createExecutorService(serverBossThreadPoolSize,
                                                                "router-server-boss-thread-%d");
     ExecutorService serverWorkerExecutor = createExecutorService(serverWorkerThreadPoolSize,
@@ -254,15 +279,24 @@ public class NettyRouter extends AbstractIdleService {
 
       InetSocketAddress bindAddress = new InetSocketAddress(hostname, port);
       LOG.info("Starting Netty Router for service {} on address {}...", service, bindAddress);
-      Channel channel = serverBootstrap.bind(bindAddress);
-      InetSocketAddress boundAddress = (InetSocketAddress) channel.getLocalAddress();
-      serviceMapBuilder.put(boundAddress.getPort(), service);
-      channelGroup.add(channel);
 
-      // Update service map
-      serviceLookup.updateServiceMap(serviceMapBuilder.build());
+      try {
+        Channel channel = serverBootstrap.bind(bindAddress);
+        InetSocketAddress boundAddress = (InetSocketAddress) channel.getLocalAddress();
+        serviceMapBuilder.put(boundAddress.getPort(), service);
+        channelGroup.add(channel);
 
-      LOG.info("Started Netty Router for service {} on address {}.", service, boundAddress);
+        // Update service map
+        serviceLookup.updateServiceMap(serviceMapBuilder.build());
+
+        LOG.info("Started Netty Router for service {} on address {}.", service, boundAddress);
+      } catch (ChannelException e) {
+        if (!(Throwables.getRootCause(e) instanceof BindException)) {
+          throw e;
+        }
+
+        throw new ServiceBindException("Router", hostname.getCanonicalHostName(), port);
+      }
     }
   }
 

@@ -28,8 +28,6 @@ import co.cask.cdap.api.service.http.HttpContentConsumer;
 import co.cask.cdap.api.service.http.HttpServiceRequest;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
 import com.google.common.base.Charsets;
-import com.google.common.collect.ImmutableMultimap;
-import com.google.common.io.ByteStreams;
 import com.google.common.io.Closeables;
 import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
@@ -81,15 +79,12 @@ public class UploadService extends AbstractService {
         responder.sendString(404, "Partition not found.", Charsets.UTF_8);
         return;
       }
-      ByteBuffer content;
+
       try {
-        Location location = partitionDetail.getLocation().append("file");
-        content = ByteBuffer.wrap(ByteStreams.toByteArray(location.getInputStream()));
+        responder.send(200, partitionDetail.getLocation().append("file"), "text/plain");
       } catch (IOException e) {
         responder.sendError(400, String.format("Unable to read path '%s'", partitionDetail.getRelativePath()));
-        return;
       }
-      responder.send(200, content, "text/plain", ImmutableMultimap.<String, String>of());
     }
 
     @PUT

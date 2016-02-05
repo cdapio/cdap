@@ -120,7 +120,7 @@ public class UsageDatasetTest {
 
     usageDataset.register(flow12, stream1);
 
-    // Verify app/adapter mappings
+    // Verify app mappings
     Assert.assertEquals(ImmutableSet.of(datasetInstance1), usageDataset.getDatasets(flow11));
     Assert.assertEquals(ImmutableSet.<Id.DatasetInstance>of(), usageDataset.getDatasets(flow12));
     Assert.assertEquals(ImmutableSet.of(datasetInstance3), usageDataset.getDatasets(service21));
@@ -136,7 +136,7 @@ public class UsageDatasetTest {
     // --------- Delete app1 -----------
     usageDataset.unregister(flow11.getApplication());
 
-    // Verify app/adapter mappings
+    // Verify app mappings
     Assert.assertEquals(ImmutableSet.<Id.DatasetInstance>of(), usageDataset.getDatasets(flow11));
     Assert.assertEquals(ImmutableSet.<Id.DatasetInstance>of(), usageDataset.getDatasets(flow12));
     Assert.assertEquals(ImmutableSet.of(datasetInstance3), usageDataset.getDatasets(service21));
@@ -149,7 +149,7 @@ public class UsageDatasetTest {
     Assert.assertEquals(ImmutableSet.<Id.Program>of(), usageDataset.getPrograms(stream1));
     Assert.assertEquals(ImmutableSet.<Id.Program>of(), usageDataset.getPrograms(stream2));
 
-    // Verify app/adapter mappings
+    // Verify app mappings
     Assert.assertEquals(ImmutableSet.<Id.DatasetInstance>of(), usageDataset.getDatasets(flow11));
     Assert.assertEquals(ImmutableSet.<Id.DatasetInstance>of(), usageDataset.getDatasets(flow12));
     Assert.assertEquals(ImmutableSet.of(datasetInstance3), usageDataset.getDatasets(service21));
@@ -162,7 +162,7 @@ public class UsageDatasetTest {
     Assert.assertEquals(ImmutableSet.<Id.Program>of(), usageDataset.getPrograms(stream1));
     Assert.assertEquals(ImmutableSet.<Id.Program>of(), usageDataset.getPrograms(stream2));
 
-    // Verify app/adapter mappings
+    // Verify app mappings
     Assert.assertEquals(ImmutableSet.<Id.DatasetInstance>of(), usageDataset.getDatasets(flow11));
     Assert.assertEquals(ImmutableSet.<Id.DatasetInstance>of(), usageDataset.getDatasets(flow12));
     Assert.assertEquals(ImmutableSet.of(datasetInstance3), usageDataset.getDatasets(service21));
@@ -177,7 +177,7 @@ public class UsageDatasetTest {
 
     // --------- Delete app2 -----------
     usageDataset.unregister(flow21.getApplication());
-    // Verify app/adapter mappings
+    // Verify app mappings
     Assert.assertEquals(ImmutableSet.<Id.DatasetInstance>of(), usageDataset.getDatasets(flow11));
     Assert.assertEquals(ImmutableSet.<Id.DatasetInstance>of(), usageDataset.getDatasets(flow12));
     Assert.assertEquals(ImmutableSet.<Id.DatasetInstance>of(), usageDataset.getDatasets(service21));

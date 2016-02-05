@@ -1,6 +1,10 @@
 antlr.antlr-2.7.7.jar
 aopalliance.aopalliance-1.0.jar
 c3p0.c3p0-0.9.1.1.jar
+cdap-data-quality-3.3.0.jar
+cdap-etl-batch-3.3.0.jar
+cdap-etl-realtime-3.3.0.jar
+cdap-etl-tools-3.3.0.jar
 ch.qos.logback.logback-classic-1.0.9.jar
 ch.qos.logback.logback-core-1.0.9.jar
 com.101tec.zkclient-0.3.jar
@@ -23,6 +27,7 @@ commons-cli.commons-cli-1.2.jar
 commons-codec.commons-codec-1.6.jar
 commons-collections.commons-collections-3.2.1.jar
 commons-configuration.commons-configuration-1.6.jar
+commons-daemon.commons-daemon-1.0.13.jar
 commons-dbcp.commons-dbcp-1.4.jar
 commons-digester.commons-digester-1.8.jar
 commons-el.commons-el-1.0.jar
@@ -51,8 +56,8 @@ javax.activation.activation-1.1.jar
 javax.annotation.jsr250-api-1.0.jar
 javax.inject.javax.inject-1.jar
 javax.jdo.jdo-api-3.0.1.jar
-javax.mail.mail-1.4.1.jar
 javax.servlet.javax.servlet-api-3.0.1.jar
+javax.servlet.jsp.jsp-api-2.1.jar
 javax.transaction.jta-1.1.jar
 javax.ws.rs.javax.ws.rs-api-2.0.jar
 javax.xml.bind.jaxb-api-2.2.2.jar
@@ -80,7 +85,7 @@ org.apache.avro.avro-mapred-1.6.2.jar
 org.apache.calcite.calcite-avatica-1.0.0-incubating.jar
 org.apache.calcite.calcite-core-1.0.0-incubating.jar
 org.apache.calcite.calcite-linq4j-1.0.0-incubating.jar
-org.apache.commons.commons-compress-1.4.1.jar
+org.apache.commons.commons-compress-1.9.jar
 org.apache.commons.commons-lang3-3.1.jar
 org.apache.commons.commons-math3-3.1.1.jar
 org.apache.curator.curator-client-2.6.0.jar
@@ -90,10 +95,7 @@ org.apache.flume.flume-ng-configuration-1.2.0.jar
 org.apache.flume.flume-ng-core-1.2.0.jar
 org.apache.flume.flume-ng-sdk-1.2.0.jar
 org.apache.geronimo.components.geronimo-jaspi-2.0.0.jar
-org.apache.geronimo.specs.geronimo-annotation_1.0_spec-1.1.1.jar
-org.apache.geronimo.specs.geronimo-jaspic_1.0_spec-1.0.jar
 org.apache.geronimo.specs.geronimo-jaspic_1.0_spec-1.1.jar
-org.apache.geronimo.specs.geronimo-jta_1.1_spec-1.1.1.jar
 org.apache.httpcomponents.httpclient-4.2.5.jar
 org.apache.httpcomponents.httpcore-4.2.5.jar
 org.apache.kafka.kafka_2.10-0.8.2.2.jar
@@ -109,14 +111,12 @@ org.apache.twill.twill-yarn-0.6.0-incubating.jar
 org.apache.twill.twill-zookeeper-0.6.0-incubating.jar
 org.apache.velocity.velocity-1.5.jar
 org.apache.xbean.xbean-reflect-3.6.jar
-org.cloudera.htrace.htrace-core-2.04.jar
 org.codehaus.janino.commons-compiler-2.7.6.jar
 org.codehaus.janino.janino-2.7.6.jar
 org.codehaus.jettison.jettison-1.1.jar
 org.datanucleus.datanucleus-api-jdo-3.2.6.jar
 org.datanucleus.datanucleus-core-3.2.10.jar
 org.datanucleus.datanucleus-rdbms-3.2.9.jar
-org.eclipse.jetty.aggregate.jetty-all-7.6.0.v20120127.jar
 org.eclipse.jetty.jetty-continuation-8.1.15.v20140411.jar
 org.eclipse.jetty.jetty-http-8.1.15.v20140411.jar
 org.eclipse.jetty.jetty-io-8.1.15.v20140411.jar
@@ -134,6 +134,7 @@ org.eclipse.jetty.orbit.javax.mail.glassfish-1.4.1.v201005082020.jar
 org.eclipse.jetty.orbit.javax.security.auth.message-1.0.0.v201108011116.jar
 org.eclipse.jetty.orbit.javax.servlet-3.0.0.v201112011016.jar
 org.eclipse.jetty.orbit.javax.transaction-1.1.1.v201105210645.jar
+org.fusesource.leveldbjni.leveldbjni-all-1.8.jar
 org.iq80.leveldb.leveldb-0.6.jar
 org.iq80.leveldb.leveldb-api-0.6.jar
 org.jboss.resteasy.async-http-servlet-3.0-3.0.8.Final.jar
@@ -151,8 +152,8 @@ org.quartz-scheduler.quartz-jobs-2.2.0.jar
 org.scala-lang.scala-library-2.10.4.jar
 org.slf4j.jcl-over-slf4j-1.7.2.jar
 org.slf4j.slf4j-api-1.7.5.jar
-org.tukaani.xz-1.0.jar
 org.xerial.snappy.snappy-java-1.1.1.7.jar
 oro.oro-2.0.8.jar
 stax.stax-api-1.0.1.jar
+tomcat.jasper-runtime-5.5.23.jar
 xmlenc.xmlenc-0.52.jar

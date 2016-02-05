@@ -40,6 +40,7 @@ function usage() {
   echo 
   echo "    docs-github-only  Clean build of HTML, zipped, with GitHub code, skipping Javadocs"
   echo "    docs-web-only     Clean build of HTML, zipped, with docs.cask.co code, skipping Javadocs"
+  echo "    docs-outer        Dirty build of HTML with docs.cask.co code, skipping re-building inner doc, zipping, and Javadocs"
   echo "    docs              Dirty build of HTML with docs.cask.co code, skipping zipping and Javadocs"
   echo 
   echo "    docs-github  Clean build of HTML and Javadocs, zipped, for placing on GitHub"
@@ -97,6 +98,7 @@ function run_command() {
   case ${1} in
     docs-all )          build_all;;
     docs )              build_docs ${DOCS};;
+    docs-outer )        build_docs ${DOCS_OUTER};;
     docs-github-only )  build_docs ${GITHUB_ONLY};;
     docs-web-only )     build_docs ${WEB_ONLY};;
     docs-github )       build_docs ${GITHUB};;
@@ -157,12 +159,16 @@ function build_docs() {
   echo "Building \"${doc_type}\" (${javadocs} Javadocs)"
   echo "--------------------------------------------------------"
   echo
-  if [ "${doc_type}" != "${DOCS}" ]; then
+  if [ "${doc_type}" != "${DOCS}" && "${doc_type}" != "${DOCS_OUTER}" ]; then
     clean_targets
   fi
   clear_messages_set_messages_file
-  run_command docs-first-pass ${source_path}
-  if [ "${doc_type}" == "${DOCS}" ]; then
+  
+  if [ "${doc_type}" != "${DOCS_OUTER}" ]; then
+    run_command docs-first-pass ${source_path}
+  fi
+  
+  if [ "${doc_type}" == "${DOCS}" -o "${doc_type}" == "${DOCS_OUTER}" ]; then
     build_docs_outer_level ${source_path}
     copy_docs_inner_level
   else
@@ -312,7 +318,7 @@ function build_docs_outer_level() {
   for i in ${MANUALS}; do
     echo "Copying source for ${i} ..."
     mkdir -p ${TARGET_PATH}/${SOURCE}/${i}
-    rewrite ${SCRIPT_PATH}/${COMMON_PLACEHOLDER} ${TARGET_PATH}/${SOURCE}/${i}/index.rst "<placeholder>" ${i}
+    rewrite ${SCRIPT_PATH}/${COMMON_PLACEHOLDER} ${TARGET_PATH}/${SOURCE}/${i}/index.rst "<placeholder-title>" ${i}
     echo
   done  
 
@@ -320,7 +326,6 @@ function build_docs_outer_level() {
   cp ${SCRIPT_PATH}/${COMMON_HIGHLEVEL_PY}  ${TARGET_PATH}/${SOURCE}/conf.py
   cp -R ${SCRIPT_PATH}/${COMMON_IMAGES}     ${TARGET_PATH}/${SOURCE}/
   cp ${SCRIPT_PATH}/${COMMON_SOURCE}/*.rst  ${TARGET_PATH}/${SOURCE}/
-  cp ${SCRIPT_PATH}/${COMMON_SOURCE}/*.md   ${TARGET_PATH}/${SOURCE}/
   
   local google_options
   if [ "x${google_code}" != "x" ]; then
@@ -375,16 +380,18 @@ function zip_extras() {
 }
 
 function clean_targets() {
-  # Removes all outer- and inner-level build ${TARGET} directories
+  # Removes all outer- and (sometimes) inner-level build ${TARGET} directories
   rm -rf ${TARGET_PATH}
   mkdir ${TARGET_PATH}
   echo "Cleaned ${TARGET_PATH} directory"
   echo
-  for i in ${MANUALS}; do
-    rm -rf ${SCRIPT_PATH}/${i}/${TARGET}/*
-    echo "Cleaned ${SCRIPT_PATH}/${i}/${TARGET} directories"
-    echo
-  done
+  if [ "${doc_type}" != "${DOCS_OUTER}" ]; then
+    for i in ${MANUALS}; do
+      rm -rf ${SCRIPT_PATH}/${i}/${TARGET}/*
+      echo "Cleaned ${SCRIPT_PATH}/${i}/${TARGET} directories"
+      echo
+    done
+  fi
 }
 
 function clean_outer_level() {

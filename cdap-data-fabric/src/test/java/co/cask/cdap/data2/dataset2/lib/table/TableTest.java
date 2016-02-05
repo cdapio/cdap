@@ -1257,6 +1257,39 @@ public abstract class TableTest<T extends Table> {
   }
 
   @Test
+  public void testBatchWritableKeyIsIgnored() throws Exception {
+    String tableName = "batchWritableTable";
+    getTableAdmin(CONTEXT1, tableName).create();
+    try {
+      // write in a transaction, three times, with key = null, a, q, always Put with row = a
+      Transaction tx = txClient.startShort();
+      Table table = getTable(CONTEXT1, tableName);
+      ((TransactionAware) table).startTx(tx);
+      table.write(null, new Put("a").add("x", "x"));
+      table.write(new byte[]{'q'}, new Put("a").add("y", "y"));
+      table.write(new byte[]{'a'}, new Put("a").add("z", "z"));
+      Assert.assertTrue(txClient.canCommit(tx, ((TransactionAware) table).getTxChanges()));
+      ((TransactionAware) table).commitTx();
+      Assert.assertTrue(txClient.commit(tx));
+
+      // validate that all writes went to row a, and row q was not written
+      tx = txClient.startShort();
+      ((TransactionAware) table).startTx(tx);
+      Assert.assertTrue(table.get(new Get("q")).isEmpty());
+      Row row = table.get(new Get("a"));
+      Assert.assertEquals(3, row.getColumns().size());
+      Assert.assertEquals("x", row.getString("x"));
+      Assert.assertEquals("y", row.getString("y"));
+      Assert.assertEquals("z", row.getString("z"));
+      ((TransactionAware) table).commitTx();
+      txClient.abort(tx);
+
+    } finally {
+      getTableAdmin(CONTEXT1, tableName).drop();
+    }
+  }
+
+  @Test
   public void testTxUsingMultipleTables() throws Exception {
     String table1 = "table1";
     String table2 = "table2";

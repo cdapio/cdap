@@ -34,24 +34,24 @@
         <div class="pipeline-name text-left">
           <h1 tooltip="{{ TopPanelCtrl.app.name }}"
               tooltip-placement="right"
-              tooltip-enable="TopPanelCtrl.app.name.length > 20"
+              tooltip-enable="TopPanelCtrl.app.name.length > 25"
               tooltip-append-to-body="true"
               tooltip-class="toppanel-tooltip">
-            {{ ::TopPanelCtrl.app.name }}
+            {{ ::TopPanelCtrl.app.name | myEllipsis: 25 }}
           </h1>
-          <p tooltip="{{ TopPanelCtrl.app.description }}"
-             tooltip-placement="right"
-             tooltip-enable="TopPanelCtrl.app.description.length > 40"
+          <p tooltip-placement="right"
+             tooltip-enable="TopPanelCtrl.app.description.length > 48"
              tooltip-append-to-body="true"
-             tooltip-class="toppanel-tooltip">
-            {{ ::TopPanelCtrl.app.description }}
+             tooltip-class="toppanel-tooltip"
+             tooltip-html="TopPanelCtrl.tooltipDescription">
+            {{ ::TopPanelCtrl.app.description | myEllipsis: 48 }}
           </p>
         </div>
       </div>
     </div>
   </div>
   <div class="tbl-cell">
-    <div class="app-status text-center" ng-class="{'status-green': TopPanelCtrl.appStatus === 'RUNNING' || TopPanelCtrl.appStatus === 'SCHEDULED' || TopPanelCtrl.appStatus === 'COMPLETED', 'status-red': TopPanelCtrl.appStatus !== 'RUNNING' && TopPanelCtrl.appStatus !== 'SCHEDULED' }">
+    <div class="app-status text-center" ng-class="{'status-green': TopPanelCtrl.isGreenStatus(), 'status-red': !TopPanelCtrl.isGreenStatus() }">
       <span class="fa fa-circle metric-value"></span>
       <span class="metric-label">{{ TopPanelCtrl.appStatus }}</span>
     </div>

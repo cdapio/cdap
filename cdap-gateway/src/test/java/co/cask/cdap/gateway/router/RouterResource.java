@@ -1,0 +1,91 @@
+/*
+ * Copyright © 2015 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
+package co.cask.cdap.gateway.router;
+
+import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.conf.SConfiguration;
+import co.cask.cdap.common.guice.ConfigModule;
+import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
+import co.cask.cdap.common.guice.IOModule;
+import co.cask.cdap.security.auth.AccessTokenTransformer;
+import co.cask.cdap.security.guice.SecurityModules;
+import com.google.common.collect.Maps;
+import com.google.common.net.InetAddresses;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
+import org.apache.twill.discovery.DiscoveryService;
+import org.apache.twill.discovery.DiscoveryServiceClient;
+import org.junit.rules.ExternalResource;
+
+import java.util.HashMap;
+import java.util.Map;
+
+class RouterResource extends ExternalResource {
+  private final String hostname;
+  private final DiscoveryService discoveryService;
+  private final Map<String, String> additionalConfig;
+  private final Map<String, Integer> serviceMap = Maps.newHashMap();
+
+  private NettyRouter router;
+
+  RouterResource(String hostname, DiscoveryService discoveryService) {
+    this(hostname, discoveryService, new HashMap<String, String>());
+  }
+
+  RouterResource(String hostname, DiscoveryService discoveryService, Map<String, String> additionalConfig) {
+    this.hostname = hostname;
+    this.discoveryService = discoveryService;
+    this.additionalConfig = additionalConfig;
+  }
+
+  @Override
+  protected void before() throws Throwable {
+    CConfiguration cConf = CConfiguration.create();
+    Injector injector = Guice.createInjector(new ConfigModule(cConf), new IOModule(),
+                                             new SecurityModules().getInMemoryModules(),
+                                             new DiscoveryRuntimeModule().getInMemoryModules());
+    DiscoveryServiceClient discoveryServiceClient = injector.getInstance(DiscoveryServiceClient.class);
+    AccessTokenTransformer accessTokenTransformer = new MockAccessTokenTransfomer();
+    SConfiguration sConf = injector.getInstance(SConfiguration.class);
+    cConf.set(Constants.Router.ADDRESS, hostname);
+    cConf.setInt(Constants.Router.ROUTER_PORT, 0);
+    cConf.setInt(Constants.Router.WEBAPP_PORT, 0);
+    for (Map.Entry<String, String> entry : additionalConfig.entrySet()) {
+      cConf.set(entry.getKey(), entry.getValue());
+    }
+    router =
+      new NettyRouter(cConf, sConf, InetAddresses.forString(hostname),
+                      new RouterServiceLookup((DiscoveryServiceClient) discoveryService,
+                                              new RouterPathLookup()),
+                      new MockTokenValidator("failme"), accessTokenTransformer, discoveryServiceClient);
+    router.startAndWait();
+
+    for (Map.Entry<Integer, String> entry : router.getServiceLookup().getServiceMap().entrySet()) {
+      serviceMap.put(entry.getValue(), entry.getKey());
+    }
+  }
+
+  @Override
+  protected void after() {
+    router.stopAndWait();
+  }
+
+  public Map<String, Integer> getServiceMap() {
+    return serviceMap;
+  }
+}
