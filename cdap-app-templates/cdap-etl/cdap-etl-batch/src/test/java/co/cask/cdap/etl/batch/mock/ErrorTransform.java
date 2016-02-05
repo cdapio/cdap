@@ -28,7 +28,7 @@ import java.util.HashMap;
 /**
  * Transform used to test writing to error datasets. Writes all its input as errors.
  */
-@Plugin(type = "transform")
+@Plugin(type = Transform.PLUGIN_TYPE)
 @Name("Error")
 public class ErrorTransform extends Transform<StructuredRecord, StructuredRecord> {
 

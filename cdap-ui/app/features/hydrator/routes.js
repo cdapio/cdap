@@ -61,7 +61,7 @@ angular.module(PKG.name + '.feature.hydrator')
               rConfig: function($stateParams, mySettings, $q, myHelpers) {
                 var defer = $q.defer();
                 if ($stateParams.draftId) {
-                  mySettings.get('adapterDrafts', true)
+                  mySettings.get('hydratorDrafts', true)
                     .then(function(res) {
                       var draft = myHelpers.objectQuery(res, $stateParams.namespace, $stateParams.draftId);
                       if (angular.isObject(draft)) {

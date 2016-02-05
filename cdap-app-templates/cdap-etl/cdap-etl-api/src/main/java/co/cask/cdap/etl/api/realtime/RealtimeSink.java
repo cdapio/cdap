@@ -28,6 +28,7 @@ import co.cask.cdap.etl.api.StageLifecycle;
  */
 @Beta
 public abstract class RealtimeSink<I> implements PipelineConfigurable, StageLifecycle<RealtimeContext> {
+  public static final String PLUGIN_TYPE = "realtimesink";
 
   @Override
   public void configurePipeline(PipelineConfigurer pipelineConfigurer) {

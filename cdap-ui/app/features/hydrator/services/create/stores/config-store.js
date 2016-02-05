@@ -664,7 +664,7 @@ class ConfigStore {
       draftsMap[config.__ui__.draftId] = config;
       return draftsMap;
     };
-    this.mySettings.get('adapterDrafts', true)
+    this.mySettings.get('hydratorDrafts', true)
       .then( (res = {isMigrated: true}) => {
         let draftsMap = res[this.$stateParams.namespace];
         if(!checkForDuplicateDrafts(config, draftsMap)) {
@@ -672,7 +672,7 @@ class ConfigStore {
         } else {
           throw 'A Draft with the same name already exist. Plesae rename your draft';
         }
-        return this.mySettings.set('adapterDrafts', res);
+        return this.mySettings.set('hydratorDrafts', res);
       })
       .then(
         () => {

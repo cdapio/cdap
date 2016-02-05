@@ -37,7 +37,7 @@ import javax.annotation.Nullable;
 /**
  * Mock realtime source that emits the records it is configured to emit, then does nothing.
  */
-@Plugin(type = "realtimesource")
+@Plugin(type = RealtimeSource.PLUGIN_TYPE)
 @Name("Mock")
 public class MockSource extends RealtimeSource<StructuredRecord> {
   private static final Gson GSON = new GsonBuilder()

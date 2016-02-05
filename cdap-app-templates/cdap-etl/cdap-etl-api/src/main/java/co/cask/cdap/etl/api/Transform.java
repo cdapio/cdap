@@ -27,6 +27,7 @@ import co.cask.cdap.api.annotation.Beta;
 @Beta
 public abstract class Transform<IN, OUT> implements StageLifecycle<TransformContext>,
   Transformation<IN, OUT>, PipelineConfigurable {
+  public static final String PLUGIN_TYPE = "transform";
 
   private TransformContext context;
 

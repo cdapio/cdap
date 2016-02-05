@@ -231,7 +231,7 @@ angular
           namespace level this snippet can be removed. Ideally in 4.* we should be able to remove this.
   */
   .run(function(mySettings, EventPipe, $state, $alert, $q) {
-    mySettings.get('adapterDrafts')
+    mySettings.get('hydratorDrafts')
       .then(
         function success(res) {
           var namespacedDrafts = {
@@ -243,7 +243,7 @@ angular
             });
 
             namespacedDrafts.isMigrated = true;
-            return mySettings.set('adapterDrafts', namespacedDrafts);
+            return mySettings.set('hydratorDrafts', namespacedDrafts);
           } else {
             return $q.reject(false);
           }

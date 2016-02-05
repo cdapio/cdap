@@ -88,4 +88,12 @@ public final class Resources {
   public int hashCode() {
     return Objects.hash(virtualCores, memoryMB);
   }
+
+  @Override
+  public String toString() {
+    return "Resources{" +
+      "virtualCores=" + virtualCores +
+      ", memoryMB=" + memoryMB +
+      '}';
+  }
 }

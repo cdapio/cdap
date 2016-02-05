@@ -21,6 +21,7 @@ import co.cask.cdap.etl.common.Connection;
 import co.cask.cdap.etl.common.ETLStage;
 import co.cask.cdap.etl.common.Plugin;
 import co.cask.cdap.etl.realtime.config.ETLRealtimeConfig;
+import co.cask.cdap.proto.artifact.ArtifactSummary;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import org.junit.Assert;
@@ -34,7 +35,7 @@ import java.util.List;
 public class OldETLRealtimeConfigTest {
 
   @Test
-  public void testGetNewConfig() {
+  public void testGetNewConfig() throws Exception {
     OldETLStage source = new OldETLStage("DataGenerator", ImmutableMap.of("p1", "v1"), null);
     ETLStage sourceNew = new ETLStage("DataGenerator.1",
                                       new Plugin(source.getName(), source.getProperties()),
@@ -78,12 +79,32 @@ public class OldETLRealtimeConfigTest {
                                                            ImmutableList.of(sink1, sink2),
                                                            ImmutableList.of(transform1, transform2, transform3),
                                                            resources);
-    ETLRealtimeConfig configNew = new ETLRealtimeConfig(1,
-                                                        sourceNew,
-                                                        ImmutableList.of(sink1New, sink2New),
-                                                        ImmutableList.of(transform1New, transform2New, transform3New),
-                                                        connections,
-                                                        resources);
-    Assert.assertEquals(configNew, config.getNewConfig());
+    ETLRealtimeConfig configNew = ETLRealtimeConfig.builder()
+      .setInstances(1)
+      .setSource(sourceNew)
+      .addSink(sink1New)
+      .addSink(sink2New)
+      .addTransform(transform1New)
+      .addTransform(transform2New)
+      .addTransform(transform3New)
+      .addConnections(connections)
+      .setResources(resources)
+      .build();
+    Assert.assertEquals(configNew, config.getNewConfig(new PluginArtifactFinder() {
+      @Override
+      public ArtifactSummary getSourcePluginArtifact(String pluginName) {
+        return null;
+      }
+
+      @Override
+      public ArtifactSummary getSinkPluginArtifact(String pluginName) {
+        return null;
+      }
+
+      @Override
+      public ArtifactSummary getTransformPluginArtifact(String pluginName) {
+        return null;
+      }
+    }));
   }
 }
