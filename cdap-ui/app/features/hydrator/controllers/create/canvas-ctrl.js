@@ -46,15 +46,14 @@ class HydratorCreateCanvasController {
       let draft = this.ConfigStore.getDraftState();
 
       if (!angular.equals(currentConfig, draft)) {
-        var response = confirm('Are you sure you want to navigate away?');
-        if (!response) {
+        var response = confirm('You have unsaved changes.\n\nTo stay on the page and save changes, click \“OK.\” To leave, click \“Cancel.\"');
+        if (response) {
           event.preventDefault();
         }
       }
-
     });
 
-    $window.onbeforeunload = (event) => {
+    this.$window.onbeforeunload = (event) => {
       event = event || $window.event;
 
       let currentConfig = this.ConfigStore.getState();
@@ -71,6 +70,10 @@ class HydratorCreateCanvasController {
         return;
       }
     };
+
+    this.$scope.$on('$destroy', () => {
+      this.$window.onbeforeunload = null;
+    });
   }
 
   setStateAndUpdateConfigStore() {
