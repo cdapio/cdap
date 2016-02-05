@@ -98,6 +98,12 @@ public class DatasetSpecificationUpgrader {
               for (Map.Entry<Long, byte[]> columnEntry : columnMap.getValue().entrySet()) {
                 Long timeStamp = columnEntry.getKey();
                 byte[] colVal = columnEntry.getValue();
+                // a deleted dataset can still show up here since BufferingTable doesn't actually delete, but
+                // writes a null value. The fact that we need to know that implementation detail here is bad.
+                // If we could use Table here instead of HTable, this would be hidden from us.
+                if (colVal == null || colVal.length == 0) {
+                  continue;
+                }
                 String specEntry = Bytes.toString(colVal);
                 DatasetSpecification specification = GSON.fromJson(specEntry, DatasetSpecification.class);
                 DatasetSpecification updatedSpec = updateTTLInSpecification(specification, null);
@@ -106,7 +112,10 @@ public class DatasetSpecificationUpgrader {
               }
             }
           }
-          specTable.put(put);
+          // might not need to put anything if all columns were skipped because they are delete markers.
+          if (put.size() > 0) {
+            specTable.put(put);
+          }
         }
       }
     } finally {
