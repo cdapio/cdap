@@ -69,6 +69,7 @@ class HydratorCreateCanvasController {
       pluginNode = nodeFromNodesStore[0];
     }
     this.PipelineNodeConfigActionFactory.choosePlugin(pluginNode);
+    this.setStateAndUpdateConfigStore();
   }
 
   deleteNode() {

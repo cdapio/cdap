@@ -129,7 +129,7 @@ angular
         if (config.options) {
           // Can/Should make use of my<whatever>Api service in another service.
           // So in that case the service will not have a scope. Hence the check
-          if (config.params && config.params.scope) {
+          if (config.params && config.params.scope && angular.isObject(config.params.scope)) {
             myDataSrc = MyCDAPDataSource(config.params.scope);
             delete config.params.scope;
           } else {
