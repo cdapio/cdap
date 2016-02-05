@@ -61,6 +61,13 @@
           </div>
         </div>
       </div>
+      <br/>
+      <div class="form-group" ng-if="NodeConfigController.state.showErrorDataset">
+        <label class="control-label">
+          Error Dataset
+        </label>
+        <input type="text" class="form-control" ng-model="NodeConfigController.state.node.errorDatasetName"/>
+      </div>
 
   </fieldset>
 
