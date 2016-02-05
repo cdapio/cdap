@@ -203,16 +203,7 @@ cdap_set_classpath() {
 
   # In order to ensure that we can do hacks, need to make sure classpath is sorted
   # so that cdap jars are placed earlier in the classpath than twill or hadoop jars
-  COMP_LIB=""
-  i=0
-  for jar in `ls -1 ${COMP_HOME}/lib/* | sort` ; do
-    ((i++))
-    if [ $i -eq 1 ] ; then
-        COMP_LIB=${jar}
-    else
-        COMP_LIB=${COMP_LIB}:${jar}
-    fi
-  done
+  COMP_LIB=$(find "${COMP_HOME}/lib" -type f | sort | tr '\n' ':')
 
   if [ -n "${HBASE_CP}" ]; then
     CP="${COMP_LIB}:${HBASE_CP}:${CCONF}/:${COMP_HOME}/conf/:${EXTRA_CLASSPATH}"
