@@ -147,7 +147,9 @@ gulp.task('js:lib', function() {
       './bower_components/angular-cron-jobs/dist/angular-cron-jobs.min.js',
       './bower_components/angularjs-dropdown-multiselect/dist/angularjs-dropdown-multiselect.min.js',
       './bower_components/marked/marked.min.js',
-      './bower_components/angular-marked/dist/angular-marked.min.js'
+      './bower_components/angular-marked/dist/angular-marked.min.js',
+
+      './bower_components/js-beautify/js/lib/beautify.js'
 
     ].concat([
       './bower_components/cask-angular-*/*/module.js'
