@@ -41,7 +41,7 @@ import java.util.UUID;
 /**
  * Mock source that can be used to write a list of records in a Table and reads them out in a pipeline run.
  */
-@Plugin(type = "batchsource")
+@Plugin(type = BatchSource.PLUGIN_TYPE)
 @Name("Mock")
 public class MockSource extends BatchSource<byte[], Row, StructuredRecord> {
   private static final byte[] SCHEMA_COL = Bytes.toBytes("s");

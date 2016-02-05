@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Cask Data, Inc.
+ * Copyright 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,12 +15,16 @@
  */
 package co.cask.cdap.data2.metadata.dataset;
 
+import co.cask.cdap.api.artifact.ArtifactId;
+import co.cask.cdap.api.artifact.ArtifactScope;
+import co.cask.cdap.api.artifact.ArtifactVersion;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFrameworkTestUtil;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.metadata.MetadataSearchTargetType;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
@@ -32,7 +36,6 @@ import org.junit.ClassRule;
 import org.junit.Test;
 
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -270,132 +273,77 @@ public class MetadataDatasetTest {
 
   @Test
   public void testSearchOnValue() throws Exception {
-    // Create entry
+    // Add some metadata
     MetadataEntry entry = new MetadataEntry(flow1, "key1", "value1");
     String multiWordValue = "aV1 av2 ,  -  ,  av3 - av4_av5 av6";
     MetadataEntry multiWordEntry = new MetadataEntry(flow1, "multiword", multiWordValue);
 
-    // Save it
     dataset.setProperty(flow1, "key1", "value1");
-
-    // Save it
     dataset.setProperty(flow1, "key2", "value2");
-
-    // Save a multi word key value
     dataset.setProperty(flow1, "multiword", multiWordValue);
 
     // Search for it based on value
     List<MetadataEntry> results =
       dataset.search("ns1", "value1", MetadataSearchTargetType.PROGRAM);
-
-    // Assert check
-    Assert.assertEquals(1, results.size());
-
-    MetadataEntry result = results.get(0);
-    Assert.assertEquals(entry, result);
+    Assert.assertEquals(ImmutableList.of(entry), results);
 
     // Search for it based on a word in value with spaces in search query
     results = dataset.search("ns1", "  aV1   ", MetadataSearchTargetType.PROGRAM);
-
-    // Assert check
-    Assert.assertEquals(1, results.size());
-    result = results.get(0);
-    Assert.assertEquals(multiWordEntry, result);
+    Assert.assertEquals(ImmutableList.of(multiWordEntry), results);
 
     // Search for it based split patterns to make sure nothing is matched
-    results =
-      dataset.search("ns1", "-", MetadataSearchTargetType.ALL);
-    // Assert check
-    Assert.assertEquals(0, results.size());
-
-    results =
-      dataset.search("ns1", ",", MetadataSearchTargetType.ALL);
-    // Assert check
-    Assert.assertEquals(0, results.size());
-
-    results =
-      dataset.search("ns1", "_", MetadataSearchTargetType.ALL);
-    // Assert check
-    Assert.assertEquals(0, results.size());
-
-    results =
-      dataset.search("ns1", ", ,", MetadataSearchTargetType.ALL);
-    // Assert check
-    Assert.assertEquals(0, results.size());
-
-    results =
-      dataset.search("ns1", ", - ,", MetadataSearchTargetType.ALL);
-    // Assert check
-    Assert.assertEquals(0, results.size());
-
+    results = dataset.search("ns1", "-", MetadataSearchTargetType.ALL);
+    Assert.assertTrue(results.isEmpty());
+    results = dataset.search("ns1", ",", MetadataSearchTargetType.ALL);
+    Assert.assertTrue(results.isEmpty());
+    results = dataset.search("ns1", "_", MetadataSearchTargetType.ALL);
+    Assert.assertTrue(results.isEmpty());
+    results = dataset.search("ns1", ", ,", MetadataSearchTargetType.ALL);
+    Assert.assertTrue(results.isEmpty());
+    results = dataset.search("ns1", ", - ,", MetadataSearchTargetType.ALL);
+    Assert.assertTrue(results.isEmpty());
 
     // Search for it based on a word in value
-    results =
-      dataset.search("ns1", "av5", MetadataSearchTargetType.PROGRAM);
-
-    // Assert check
-    Assert.assertEquals(1, results.size());
-
-    result = results.get(0);
-    Assert.assertEquals(multiWordEntry, result);
+    results = dataset.search("ns1", "av5", MetadataSearchTargetType.PROGRAM);
+    Assert.assertEquals(ImmutableList.of(multiWordEntry), results);
 
     // Case insensitive
     results = dataset.search("ns1", "ValUe1", MetadataSearchTargetType.PROGRAM);
+    Assert.assertEquals(ImmutableList.of(entry), results);
 
-    // Assert check
-    Assert.assertEquals(1, results.size());
-
-    result = results.get(0);
-    Assert.assertEquals(entry, result);
-
-    // Save it
+    // Search based on value
     dataset.setProperty(flow1, "key3", "value1");
-
-    // Search for it based on value
-    List<MetadataEntry> results2 =
-      dataset.search("ns1", "value1", MetadataSearchTargetType.PROGRAM);
-
-    // Assert check
-    Assert.assertEquals(2, results2.size());
-
-    for (MetadataEntry result2 : results2) {
-      Assert.assertEquals("value1", result2.getValue());
+    results = dataset.search("ns1", "value1", MetadataSearchTargetType.PROGRAM);
+    Assert.assertEquals(2, results.size());
+    for (MetadataEntry result : results) {
+      Assert.assertEquals("value1", result.getValue());
     }
 
-    // Save it
+    // Search based on value prefix
     dataset.setProperty(stream1, "key21", "value21");
-
-    // Search for it based on value asterix
-    List<MetadataEntry> results3 = dataset.search("ns1", "value2*", MetadataSearchTargetType.ALL);
-
-    // Assert check
-    Assert.assertEquals(2, results3.size());
-    for (MetadataEntry result3 : results3) {
-      Assert.assertTrue(result3.getValue().startsWith("value2"));
+    results = dataset.search("ns1", "value2*", MetadataSearchTargetType.ALL);
+    Assert.assertEquals(2, results.size());
+    for (MetadataEntry result : results) {
+      Assert.assertTrue(result.getValue().startsWith("value2"));
     }
 
-    // Search for it based on value asterix
-    List<MetadataEntry> results4 = dataset.search("ns12", "value2*", MetadataSearchTargetType.ALL);
-
-    // Assert check
-    Assert.assertEquals(0, results4.size());
+    // Search based on value prefix in the wrong namespace
+    results = dataset.search("ns12", "value2*", MetadataSearchTargetType.ALL);
+    Assert.assertTrue(results.isEmpty());
   }
 
   @Test
   public void testSearchOnKeyValue() throws Exception {
-    // Create entry
+    // Add some properties to flow1
     MetadataEntry flowEntry1 = new MetadataEntry(flow1, "key1", "value1");
     MetadataEntry flowEntry2 = new MetadataEntry(flow1, "key2", "value2");
-    String multiWordValue = "aV1 av2 ,  -  ,  av3 - av4_av5 av6";
-    MetadataEntry flowMultiWordEntry = new MetadataEntry(flow1, "multiword", multiWordValue);
-    // Save it
     dataset.setProperty(flow1, "key1", "value1");
-
-    // Save it
     dataset.setProperty(flow1, "key2", "value2");
 
-    // save a multi word value
-    dataset.setProperty(flow1, "multiword", multiWordValue);
+    // add a multi word value
+    String multiWordKey = "multiword";
+    String multiWordValue = "aV1 av2 ,  -  ,  av3 - av4_av5 av6";
+    dataset.setProperty(flow1, multiWordKey, multiWordValue);
 
     MetadataEntry streamEntry1 = new MetadataEntry(stream1, "Key1", "Value1");
     MetadataEntry streamEntry2 = new MetadataEntry(stream1, "sKey1", "sValue1");
@@ -404,54 +352,89 @@ public class MetadataDatasetTest {
 
     // Search for it based on value
     List<MetadataEntry> results =
-      dataset.search("ns1", "key1" + MetadataDataset.KEYVALUE_SEPARATOR + "value1",
-                               MetadataSearchTargetType.PROGRAM);
-
-    // Assert check
-    Assert.assertEquals(1, results.size());
-    MetadataEntry result = results.get(0);
-    Assert.assertEquals(flowEntry1, result);
+      dataset.search("ns1", "key1" + MetadataDataset.KEYVALUE_SEPARATOR + "value1", MetadataSearchTargetType.PROGRAM);
+    Assert.assertEquals(ImmutableList.of(flowEntry1), results);
 
     // Search for it based on a word in value with spaces in search query
     results = dataset.search("ns1", "  multiword" + MetadataDataset.KEYVALUE_SEPARATOR + "aV1   ",
                              MetadataSearchTargetType.PROGRAM);
 
-    // Assert check
-    Assert.assertEquals(1, results.size());
-    result = results.get(0);
-    Assert.assertEquals(flowMultiWordEntry, result);
+    MetadataEntry flowMultiWordEntry = new MetadataEntry(flow1, multiWordKey, multiWordValue);
+    Assert.assertEquals(ImmutableList.of(flowMultiWordEntry), results);
 
     // Search for it based on a word in value
     results =
-      dataset.search("ns1", "multiword" + MetadataDataset.KEYVALUE_SEPARATOR + "aV5",
+      dataset.search("ns1", multiWordKey + MetadataDataset.KEYVALUE_SEPARATOR + "aV5",
                      MetadataSearchTargetType.PROGRAM);
-    // Assert check
-    Assert.assertEquals(1, results.size());
-    result = results.get(0);
-    Assert.assertEquals(flowMultiWordEntry, result);
+    Assert.assertEquals(ImmutableList.of(flowMultiWordEntry), results);
 
-    dataset.removeProperties(flow1, "multiword");
-    results = dataset.search("ns1", "multiword" + MetadataDataset.KEYVALUE_SEPARATOR + "aV5",
-                   MetadataSearchTargetType.PROGRAM);
+    dataset.removeProperties(flow1, multiWordKey);
+    results = dataset.search("ns1", multiWordKey + MetadataDataset.KEYVALUE_SEPARATOR + "aV5",
+                             MetadataSearchTargetType.PROGRAM);
     // search results should be empty after removing this key as the indexes are deleted
-    Assert.assertEquals(0, results.size());
+    Assert.assertTrue(results.isEmpty());
 
     // Test wrong ns
     List<MetadataEntry> results2  =
       dataset.search("ns12", "key1" + MetadataDataset.KEYVALUE_SEPARATOR + "value1",
                                MetadataSearchTargetType.PROGRAM);
-    // Assert check
-    Assert.assertEquals(0, results2.size());
+    Assert.assertTrue(results2.isEmpty());
 
     // Test multi word query
     results = dataset.search("ns1", "  value1  av2 ", MetadataSearchTargetType.ALL);
-    Assert.assertEquals(Sets.newHashSet(flowEntry1, streamEntry1), new HashSet<>(results));
+    Assert.assertEquals(Sets.newHashSet(flowEntry1, streamEntry1), Sets.newHashSet(results));
 
     results = dataset.search("ns1", "  value1  sValue1 ", MetadataSearchTargetType.ALL);
-    Assert.assertEquals(Sets.newHashSet(flowEntry1, streamEntry1, streamEntry2), new HashSet<>(results));
+    Assert.assertEquals(Sets.newHashSet(flowEntry1, streamEntry1, streamEntry2), Sets.newHashSet(results));
 
     results = dataset.search("ns1", "  valu*  sVal* ", MetadataSearchTargetType.ALL);
-    Assert.assertEquals(Sets.newHashSet(flowEntry1, flowEntry2, streamEntry1, streamEntry2), new HashSet<>(results));
+    Assert.assertEquals(Sets.newHashSet(flowEntry1, flowEntry2, streamEntry1, streamEntry2), Sets.newHashSet(results));
+  }
+
+  @Test
+  public void testSearchIncludesSystemEntities() {
+    // Use the same artifact in two different namespaces - system and ns2
+    Id.Artifact sysArtifact = Id.Artifact.from(
+      Id.Namespace.SYSTEM, new ArtifactId("artifact", new ArtifactVersion("1.0"), ArtifactScope.SYSTEM));
+    Id.Artifact ns2Artifact = Id.Artifact.from(Id.Namespace.from("ns2"), "artifact", "1.0");
+    String multiWordKey = "multiword";
+    String multiWordValue = "aV1 av2 ,  -  ,  av3 - av4_av5 av6";
+    dataset.setProperty(flow1, multiWordKey, multiWordValue);
+    dataset.setProperty(sysArtifact, multiWordKey, multiWordValue);
+    dataset.setProperty(ns2Artifact, multiWordKey, multiWordValue);
+    // perform the exact same multiword search in the 'ns1' namespace. It should return the system artifact along with
+    // matched entities in the 'ns1' namespace
+    MetadataEntry flowMultiWordEntry = new MetadataEntry(flow1, multiWordKey, multiWordValue);
+    MetadataEntry systemArtifactEntry = new MetadataEntry(sysArtifact, multiWordKey, multiWordValue);
+    MetadataEntry ns2ArtifactEntry = new MetadataEntry(ns2Artifact, multiWordKey, multiWordValue);
+    List<MetadataEntry> results = dataset.search("ns1", "aV5", MetadataSearchTargetType.ALL);
+    Assert.assertEquals(Sets.newHashSet(flowMultiWordEntry, systemArtifactEntry), Sets.newHashSet(results));
+    // search only programs - should only return flow
+    results = dataset.search("ns1", multiWordKey + MetadataDataset.KEYVALUE_SEPARATOR + "aV5",
+                             MetadataSearchTargetType.PROGRAM);
+    Assert.assertEquals(ImmutableList.of(flowMultiWordEntry), results);
+    // search only artifacts - should only return system artifact
+    results = dataset.search("ns1", multiWordKey + MetadataDataset.KEYVALUE_SEPARATOR + multiWordValue,
+                             MetadataSearchTargetType.ARTIFACT);
+    // this query returns the system artifact 4 times, since the dataset returns a list with duplicates for scoring
+    // purposes. Convert to a Set for comparison.
+    Assert.assertEquals(Sets.newHashSet(systemArtifactEntry), Sets.newHashSet(results));
+    // search all entities in namespace 'ns2' - should return the system artifact and the same artifact in ns2
+    results = dataset.search("ns2", multiWordKey + MetadataDataset.KEYVALUE_SEPARATOR + "aV4",
+                             MetadataSearchTargetType.ALL);
+    Assert.assertEquals(Sets.newHashSet(systemArtifactEntry, ns2ArtifactEntry), Sets.newHashSet(results));
+    // search only programs in a namespace 'ns2'. Should return empty
+    results = dataset.search("ns2", "aV*", MetadataSearchTargetType.PROGRAM);
+    Assert.assertTrue(results.isEmpty());
+    // search all entities in namespace 'ns3'. Should return only the system artifact
+    results = dataset.search("ns3", "av*", MetadataSearchTargetType.ALL);
+    Assert.assertEquals(Sets.newHashSet(systemArtifactEntry), Sets.newHashSet(results));
+    // search the system namespace for all entities. Should return only the system artifact
+    results = dataset.search(Id.Namespace.SYSTEM.getId(), "av*", MetadataSearchTargetType.ALL);
+    Assert.assertEquals(Sets.newHashSet(systemArtifactEntry), Sets.newHashSet(results));
+    // clean up
+    dataset.removeProperties(flow1);
+    dataset.removeProperties(sysArtifact);
   }
 
   @Test

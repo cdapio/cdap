@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,7 +19,6 @@ package co.cask.cdap.internal.app.runtime.batch;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.common.RuntimeArguments;
 import co.cask.cdap.api.common.Scope;
-import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.api.dataset.lib.FileSetArguments;
 import co.cask.cdap.api.dataset.lib.FileSetProperties;
@@ -31,63 +30,31 @@ import co.cask.cdap.api.dataset.table.Get;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.metrics.MetricDataQuery;
-import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.api.metrics.MetricTimeSeries;
-import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.Arguments;
-import co.cask.cdap.app.runtime.ProgramController;
-import co.cask.cdap.app.runtime.ProgramRunner;
-import co.cask.cdap.common.app.RunIds;
-import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
-import co.cask.cdap.common.namespace.NamespaceAdmin;
-import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
-import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.data2.dataset2.DynamicDatasetCache;
-import co.cask.cdap.data2.dataset2.SingleThreadDatasetCache;
 import co.cask.cdap.data2.transaction.Transactions;
-import co.cask.cdap.internal.AppFabricTestHelper;
 import co.cask.cdap.internal.DefaultId;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
-import co.cask.cdap.internal.app.runtime.AbstractListener;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
-import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
-import co.cask.cdap.internal.app.runtime.ProgramRunnerFactory;
-import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
-import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.proto.NamespaceMeta;
-import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.test.XSlowTests;
 import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionExecutorFactory;
 import co.cask.tephra.TransactionFailureException;
-import co.cask.tephra.TransactionManager;
-import co.cask.tephra.TransactionSystemClient;
-import co.cask.tephra.TxConstants;
 import com.google.common.base.Charsets;
-import com.google.common.base.Supplier;
-import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.common.io.CharStreams;
 import com.google.common.io.Files;
-import com.google.inject.Injector;
 import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
-import org.apache.twill.common.Threads;
 import org.apache.twill.filesystem.Location;
-import org.apache.twill.filesystem.LocationFactory;
-import org.junit.After;
-import org.junit.AfterClass;
 import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
-import org.junit.rules.TemporaryFolder;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -103,76 +70,13 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
 /**
  *
  */
 @Category(XSlowTests.class)
-public class MapReduceProgramRunnerTest {
-
-  private static Injector injector;
-  private static TransactionExecutorFactory txExecutorFactory;
-
-  private static TransactionManager txService;
-  private static DatasetFramework dsFramework;
-  private static DynamicDatasetCache datasetCache;
-  private static MetricStore metricStore;
-
-  @ClassRule
-  public static TemporaryFolder tmpFolder = new TemporaryFolder();
-
-  private static final Supplier<File> TEMP_FOLDER_SUPPLIER = new Supplier<File>() {
-    @Override
-    public File get() {
-      try {
-        return tmpFolder.newFolder();
-      } catch (IOException e) {
-        throw Throwables.propagate(e);
-      }
-    }
-  };
-
-  @BeforeClass
-  public static void beforeClass() throws Exception {
-    // we are only gonna do long-running transactions here. Set the tx timeout to a ridiculously low value.
-    // that will test that the long-running transactions actually bypass that timeout.
-    CConfiguration conf = CConfiguration.create();
-    conf.setInt(TxConstants.Manager.CFG_TX_TIMEOUT, 1);
-    conf.setInt(TxConstants.Manager.CFG_TX_CLEANUP_INTERVAL, 2);
-    injector = AppFabricTestHelper.getInjector(conf);
-    txService = injector.getInstance(TransactionManager.class);
-    txExecutorFactory = injector.getInstance(TransactionExecutorFactory.class);
-    dsFramework = injector.getInstance(DatasetFramework.class);
-    datasetCache = new SingleThreadDatasetCache(
-      new SystemDatasetInstantiator(dsFramework, MapReduceProgramRunnerTest.class.getClassLoader(), null),
-      injector.getInstance(TransactionSystemClient.class),
-      NamespaceId.DEFAULT, DatasetDefinition.NO_ARGUMENTS, null, null);
-    metricStore = injector.getInstance(MetricStore.class);
-
-    txService.startAndWait();
-
-    // this seems to be needed to be able to use custom datasets (that get deployed to that dir).
-    injector.getInstance(LocationFactory.class).create("default").mkdirs();
-
-    // Make sure default namespace is created
-    injector.getInstance(NamespaceAdmin.class).create(NamespaceMeta.DEFAULT);
-  }
-
-  @AfterClass
-  public static void afterClass() throws Exception {
-    txService.stopAndWait();
-  }
-
-  @After
-  public void after() throws Exception {
-    // cleanup user data (only user datasets)
-    for (DatasetSpecificationSummary spec : dsFramework.getInstances(DefaultId.NAMESPACE)) {
-      dsFramework.deleteInstance(Id.DatasetInstance.from(DefaultId.NAMESPACE, spec.getName()));
-    }
-  }
+public class MapReduceProgramRunnerTest extends MapReduceRunnerTestBase {
 
   /**
    * Tests that beforeSubmit() and getSplits() are called in the same transaction,
@@ -180,8 +84,7 @@ public class MapReduceProgramRunnerTest {
    */
   @Test
   public void testTransactionHandling() throws Exception {
-    final ApplicationWithPrograms app = AppFabricTestHelper.
-      deployApplicationWithManager(AppWithTxAware.class, TEMP_FOLDER_SUPPLIER);
+    final ApplicationWithPrograms app = deployApp(AppWithTxAware.class);
     runProgram(app, AppWithTxAware.PedanticMapReduce.class,
                new BasicArguments(ImmutableMap.of("outputPath", TEMP_FOLDER_SUPPLIER.get().getPath() + "/output")));
   }
@@ -296,8 +199,7 @@ public class MapReduceProgramRunnerTest {
                                      Arguments runtimeArgs,
                                      @Nullable final String counterTableName) throws Exception {
 
-    final ApplicationWithPrograms app =
-      AppFabricTestHelper.deployApplicationWithManager(appClass, TEMP_FOLDER_SUPPLIER);
+    final ApplicationWithPrograms app = deployApp(appClass);
 
     Map<String, String> inputArgs = Maps.newHashMap();
     Map<String, String> outputArgs = Maps.newHashMap();
@@ -372,8 +274,7 @@ public class MapReduceProgramRunnerTest {
 
   @Test
   public void testMapReduceDriverResources() throws Exception {
-    final ApplicationWithPrograms app =
-      AppFabricTestHelper.deployApplicationWithManager(AppWithMapReduce.class, TEMP_FOLDER_SUPPLIER);
+    final ApplicationWithPrograms app = deployApp(AppWithMapReduce.class);
     MapReduceSpecification mrSpec =
       app.getSpecification().getMapReduce().get(AppWithMapReduce.ClassicWordCount.class.getSimpleName());
     Assert.assertEquals(AppWithMapReduce.ClassicWordCount.MEMORY_MB, mrSpec.getDriverResources().getMemoryMB());
@@ -381,8 +282,7 @@ public class MapReduceProgramRunnerTest {
 
   @Test
   public void testMapreduceWithObjectStore() throws Exception {
-    final ApplicationWithPrograms app =
-      AppFabricTestHelper.deployApplicationWithManager(AppWithMapReduceUsingObjectStore.class, TEMP_FOLDER_SUPPLIER);
+    final ApplicationWithPrograms app = deployApp(AppWithMapReduceUsingObjectStore.class);
 
     final ObjectStore<String> input = datasetCache.getDataset("keys");
 
@@ -421,8 +321,7 @@ public class MapReduceProgramRunnerTest {
   @Test
   public void testWordCount() throws Exception {
 
-    final ApplicationWithPrograms app = AppFabricTestHelper.deployApplicationWithManager(AppWithMapReduce.class,
-                                                                                         TEMP_FOLDER_SUPPLIER);
+    final ApplicationWithPrograms app = deployApp(AppWithMapReduce.class);
     final String inputPath = createInput();
     final java.io.File outputDir = new java.io.File(tmpFolder.newFolder(), "output");
 
@@ -471,8 +370,7 @@ public class MapReduceProgramRunnerTest {
   }
 
   private void testSuccess(boolean frequentFlushing) throws Exception {
-    final ApplicationWithPrograms app = AppFabricTestHelper.deployApplicationWithManager(AppWithMapReduce.class,
-                                                                                         TEMP_FOLDER_SUPPLIER);
+    final ApplicationWithPrograms app = deployApp(AppWithMapReduce.class);
 
     // we need to start a tx context and do a "get" on all datasets so that they are in datasetCache
     datasetCache.newTransactionContext();
@@ -539,8 +437,7 @@ public class MapReduceProgramRunnerTest {
 
   @Test
   public void testMapReduceWithLocalFiles() throws Exception {
-    ApplicationWithPrograms appWithPrograms =
-      AppFabricTestHelper.deployApplicationWithManager(AppWithLocalFiles.class, TEMP_FOLDER_SUPPLIER);
+    ApplicationWithPrograms appWithPrograms = deployApp(AppWithLocalFiles.class);
     URI stopWordsFile = createStopWordsFile();
 
     final KeyValueTable kvTable = datasetCache.getDataset(AppWithLocalFiles.MR_INPUT_DATASET);
@@ -597,8 +494,7 @@ public class MapReduceProgramRunnerTest {
     // NOTE: the code of this test is similar to testTimeSeriesRecordsCount() test. We put some "bad data" intentionally
     //       here to be recognized by map tasks as a message to emulate failure
 
-    final ApplicationWithPrograms app = AppFabricTestHelper.deployApplicationWithManager(AppWithMapReduce.class,
-                                                                                         TEMP_FOLDER_SUPPLIER);
+    final ApplicationWithPrograms app = deployApp(AppWithMapReduce.class);
 
     // we need to start a tx context and do a "get" on all datasets so that they are in datasetCache
     datasetCache.newTransactionContext();
@@ -670,34 +566,6 @@ public class MapReduceProgramRunnerTest {
 
   private void runProgram(ApplicationWithPrograms app, Class<?> programClass, boolean frequentFlushing)
     throws Exception {
-    waitForCompletion(submit(app, programClass, frequentFlushing));
-  }
-
-  private void runProgram(ApplicationWithPrograms app, Class<?> programClass, Arguments args)
-    throws Exception {
-    waitForCompletion(submit(app, programClass, args));
-  }
-
-  private void waitForCompletion(ProgramController controller) throws InterruptedException {
-    final CountDownLatch completion = new CountDownLatch(1);
-    controller.addListener(new AbstractListener() {
-      @Override
-      public void completed() {
-        completion.countDown();
-      }
-
-      @Override
-      public void error(Throwable cause) {
-        completion.countDown();
-      }
-    }, Threads.SAME_THREAD_EXECUTOR);
-
-    // MR tests can run for long time.
-    completion.await(5, TimeUnit.MINUTES);
-  }
-
-  private ProgramController submit(ApplicationWithPrograms app, Class<?> programClass, boolean frequentFlushing)
-    throws ClassNotFoundException {
     HashMap<String, String> userArgs = Maps.newHashMap();
     userArgs.put("metric", "metric");
     userArgs.put("startTs", "1");
@@ -706,27 +574,7 @@ public class MapReduceProgramRunnerTest {
     if (frequentFlushing) {
       userArgs.put("frequentFlushing", "true");
     }
-    return submit(app, programClass, new BasicArguments(userArgs));
-  }
-
-  private ProgramController submit(ApplicationWithPrograms app, Class<?> programClass, Arguments userArgs)
-    throws ClassNotFoundException {
-    ProgramRunnerFactory runnerFactory = injector.getInstance(ProgramRunnerFactory.class);
-    final Program program = getProgram(app, programClass);
-    Assert.assertNotNull(program);
-    ProgramRunner runner = runnerFactory.create(ProgramRunnerFactory.Type.valueOf(program.getType().name()));
-    BasicArguments systemArgs = new BasicArguments(ImmutableMap.of(ProgramOptionConstants.RUN_ID,
-                                                                   RunIds.generate().getId()));
-    return runner.run(program, new SimpleProgramOptions(program.getName(), systemArgs, userArgs));
-  }
-
-  private Program getProgram(ApplicationWithPrograms app, Class<?> programClass) throws ClassNotFoundException {
-    for (Program p : app.getPrograms()) {
-      if (programClass.getCanonicalName().equals(p.getMainClass().getCanonicalName())) {
-        return p;
-      }
-    }
-    return null;
+    runProgram(app, programClass, new BasicArguments(userArgs));
   }
 
   private String createInput() throws IOException {

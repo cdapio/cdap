@@ -78,7 +78,7 @@ class LeftPanelController {
 
     let filteredNodes = this.ConfigStore
                     .getNodes()
-                    .filter( node => node.plugin.label.includes(name) );
+                    .filter( node => (node.plugin.label ? node.plugin.label.includes(name) : false) );
     let config;
     if (item.pluginTemplate) {
       config = {

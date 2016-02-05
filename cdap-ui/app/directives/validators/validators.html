@@ -16,6 +16,15 @@
 
 
 <fieldset ng-disabled="isDisabled">
+  <div class="form-group">
+    <label class="control-label">
+      Label
+      <span class="fa fa-asterisk"></span>
+      <small class="text-danger" ng-if="ValidatorsCtrl.nodeLabelError">{{ValidatorsCtrl.nodeLabelError}}</small>
+    </label>
+    <input type="text" class="form-control" ng-model="model.label"/>
+  </div>
+
   <div class="row">
 
     <!-- INPUT SCHEMA -->
@@ -140,7 +149,7 @@
   <div class="row error-dataset">
     <div class="col-xs-12">
       <label class="label-control">Error Dataset</label>
-      <input type="text" class="form-control" ng-model="model.errorDatasetName">
+      <input type="text" class="form-control" ng-model="errorDatasetName">
     </div>
   </div>
 </fieldset>

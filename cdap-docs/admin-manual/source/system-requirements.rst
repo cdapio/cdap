@@ -163,23 +163,23 @@ NTP (Network Time Protocol)
 
 #. Install the NTP service and dependencies::
 
-    # sudo yum install ntp ntpdate ntp-doc
+    $ sudo yum install ntp ntpdate ntp-doc
 
 #. Set the service to start at reboot::
 
-    # sudo chkconfig ntpd on
+    $ sudo chkconfig ntpd on
 
 #. Start the NTP server. This will continuously adjust the system time from an upstream NTP server::
 
-   # sudo /etc/init.d/ntpd start
+    $ sudo /etc/init.d/ntpd start
 
 #. Synchronize the system clock with the ``0.pool.ntp.org`` server. You should use this command only once::
 
-    # sudo ntpdate -u pool.ntp.org
+    $ sudo ntpdate -u pool.ntp.org
 
 #. Synchronize the hardware clock (to prevent synchronization problems), unless on a virtual server::
 
-   # hwclock --systohc
+    $ sudo hwclock --systohc
   
 **Installing NTP on Debian using APT**
 
@@ -197,7 +197,7 @@ NTP (Network Time Protocol)
 
 #. Synchronize the hardware clock (to prevent synchronization problems), unless on a virtual server::
 
-    $ hwclock --systohc
+    $ sudo hwclock --systohc
 
 **NTP Troubleshooting and Configuration**
 

@@ -102,6 +102,13 @@ public final class ETLRealtimeConfig extends ETLConfig {
     return Objects.hash(super.hashCode(), instances);
   }
 
+  @Override
+  public String toString() {
+    return "ETLRealtimeConfig{" +
+      "instances=" + instances +
+      "} " + super.toString();
+  }
+
   public static Builder builder() {
     return new Builder();
   }

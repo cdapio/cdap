@@ -44,7 +44,7 @@ angular.module(PKG.name+'.feature.login')
         }
       });
   })
-  .run(function ($rootScope, $state, $location, MYAUTH_EVENT, myNamespace, $q, myHelpers) {
+  .run(function ($rootScope, $state, $location, MYAUTH_EVENT, myNamespace, $q, myHelpers, myAlert) {
 
     $rootScope.$on(MYAUTH_EVENT.loginSuccess, function onLoginSuccess() {
       // General case: User logs in and we emit login success event.
@@ -68,7 +68,7 @@ angular.module(PKG.name+'.feature.login')
           function onValidToken() {
             var next = $state.is('login') && $state.params.next;
             var nextParams = $state.params.nextParams;
-
+            myAlert.clear();
             if(next) {
               console.log('After login, will redirect to:', next);
 

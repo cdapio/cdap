@@ -54,6 +54,8 @@
               <configuration>
                 <excludes>
                   <exclude>**/resources/**/*.txt</exclude>
+                  <exclude>**/resources/**/*.md</exclude>
+                  <exclude>**/resources/**/*.json</exclude>
                   <exclude>**/README.md</exclude>
                 </excludes>
               </configuration>

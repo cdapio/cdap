@@ -75,13 +75,13 @@ class ConfigActionsFactory {
     let removeFromUserDrafts = (adapterName) => {
       let draftId = this.ConfigStore.getState().__ui__.draftId;
       this.mySettings
-        .get('adapterDrafts', true)
+        .get('hydratorDrafts', true)
         .then(
           (res) => {
             var savedDraft = this.myHelpers.objectQuery(res, this.$stateParams.namespace, draftId);
             if (savedDraft) {
               delete res[this.$stateParams.namespace][draftId];
-              return this.mySettings.set('adapterDrafts', res);
+              return this.mySettings.set('hydratorDrafts', res);
             }
           },
           (err) => {

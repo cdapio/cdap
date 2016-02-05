@@ -13,6 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package co.cask.cdap.data2.metadata.dataset;
 
 import co.cask.cdap.api.common.Bytes;
@@ -412,28 +413,25 @@ public class MetadataDataset extends AbstractDataset {
   }
 
   /**
-   * Performs a search for the given search query in the given namespace for the given {@link MetadataSearchTargetType}
+   * Searches entities that match the specified search query in the specified namespace and {@link Id.Namespace#SYSTEM}
+   * for the specified {@link MetadataSearchTargetType}.
    *
    * @param namespaceId the namespace to search in
    * @param searchQuery the search query, which could be of two forms: [key]:[value] or just [value] and can have '*'
-   * at the end for a prefixed search.
-   * @param type the {@link MetadataSearchTargetType} to restrict the search to
+   *                    at the end for a prefix search
+   * @param type the {@link MetadataSearchTargetType} to restrict the search to.
    */
-  public List<MetadataEntry> search(final String namespaceId, final String searchQuery,
-                                    final MetadataSearchTargetType type) {
+  public List<MetadataEntry> search(String namespaceId, String searchQuery, MetadataSearchTargetType type) {
     List<MetadataEntry> results = new ArrayList<>();
-    Scanner scanner;
-
-    for (String queryWord : Splitter.on(SPACE_SEPARATOR_PATTERN).omitEmptyStrings().trimResults().split(searchQuery)) {
-      String namespacedSearchQuery = prepareSearchQuery(namespaceId, queryWord);
-
-      if (namespacedSearchQuery.endsWith("*")) {
+    for (String searchTerm : getSearchTerms(namespaceId, searchQuery)) {
+      Scanner scanner;
+      if (searchTerm.endsWith("*")) {
         // if prefixed search get start and stop key
-        byte[] startKey = Bytes.toBytes(namespacedSearchQuery.substring(0, namespacedSearchQuery.lastIndexOf("*")));
+        byte[] startKey = Bytes.toBytes(searchTerm.substring(0, searchTerm.lastIndexOf("*")));
         byte[] stopKey = Bytes.stopKeyForPrefix(startKey);
         scanner = indexedTable.scanByIndex(Bytes.toBytes(INDEX_COLUMN), startKey, stopKey);
       } else {
-        byte[] value = Bytes.toBytes(namespacedSearchQuery);
+        byte[] value = Bytes.toBytes(searchTerm);
         scanner = indexedTable.readByIndex(Bytes.toBytes(INDEX_COLUMN), value);
       }
       try {
@@ -466,22 +464,36 @@ public class MetadataDataset extends AbstractDataset {
   }
 
   /**
-   * Prepares a search query by trimming and also removing whitespaces around the {@link #KEYVALUE_SEPARATOR} and
-   * appending the given namespaceId to perform search in a namespace.
+   * Prepares search terms from the specified search query by
+   * <ol>
+   *   <li>Splitting on {@link #SPACE_SEPARATOR_PATTERN} and trimming</li>
+   *   <li>Handling {@link #KEYVALUE_SEPARATOR}, so searches of the pattern key:value* can be supported</li>
+   *   <li>Prepending the result with the specified namespaceId and {@link Id.Namespace#SYSTEM} so the search can
+   *   be restricted to entities in the specified namespace and {@link Id.Namespace#SYSTEM}.</li>
+   * </ol>t
    *
    * @param namespaceId the namespaceId to search in
    * @param searchQuery the user specified search query
    * @return formatted search query which is namespaced
    */
-  private String prepareSearchQuery(String namespaceId, String searchQuery) {
-    String formattedSearchQuery = searchQuery.toLowerCase();
-    // if this is a key:value search remove  spaces around the separator too
-    if (formattedSearchQuery.contains(KEYVALUE_SEPARATOR)) {
-      // split the search query in two parts on first occurrence of KEYVALUE_SEPARATOR and the trim the key and value
-      String[] split = formattedSearchQuery.split(KEYVALUE_SEPARATOR, 2);
-      formattedSearchQuery = split[0].trim() + KEYVALUE_SEPARATOR + split[1].trim();
+  private Iterable<String> getSearchTerms(String namespaceId, String searchQuery) {
+    List<String> searchTerms = new ArrayList<>();
+    for (String term : Splitter.on(SPACE_SEPARATOR_PATTERN).omitEmptyStrings().trimResults().split(searchQuery)) {
+      String formattedSearchTerm = term.toLowerCase();
+      // if this is a key:value search remove  spaces around the separator too
+      if (formattedSearchTerm.contains(KEYVALUE_SEPARATOR)) {
+        // split the search query in two parts on first occurrence of KEYVALUE_SEPARATOR and the trim the key and value
+        String[] split = formattedSearchTerm.split(KEYVALUE_SEPARATOR, 2);
+        formattedSearchTerm = split[0].trim() + KEYVALUE_SEPARATOR + split[1].trim();
+      }
+      searchTerms.add(namespaceId + KEYVALUE_SEPARATOR + formattedSearchTerm);
+      // for non-system namespaces, also add the system namespace, so entities from system namespace are surfaced
+      // in the search results as well
+      if (!Id.Namespace.SYSTEM.getId().equals(namespaceId)) {
+        searchTerms.add(Id.Namespace.SYSTEM.getId() + KEYVALUE_SEPARATOR + formattedSearchTerm);
+      }
     }
-    return namespaceId + KEYVALUE_SEPARATOR + formattedSearchQuery;
+    return searchTerms;
   }
 
   private void write(Id.NamespacedId targetId, MetadataEntry entry, Indexer indexer) {

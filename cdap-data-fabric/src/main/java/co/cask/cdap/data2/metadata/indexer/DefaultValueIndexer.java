@@ -18,7 +18,6 @@ package co.cask.cdap.data2.metadata.indexer;
 
 import co.cask.cdap.data2.metadata.dataset.MetadataDataset;
 import co.cask.cdap.data2.metadata.dataset.MetadataEntry;
-import com.google.common.collect.Sets;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -42,7 +41,7 @@ public class DefaultValueIndexer implements Indexer {
       // for key value the complete value is an index
       valueIndexes.add(entry.getValue());
     }
-    Set<String> indexes = Sets.newHashSet();
+    Set<String> indexes = new HashSet<>();
     for (String index : valueIndexes) {
       // split all value indexes on the VALUE_SPLIT_PATTERN
       indexes.addAll(Arrays.asList(VALUE_SPLIT_PATTERN.split(index)));

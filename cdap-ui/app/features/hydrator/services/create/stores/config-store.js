@@ -15,7 +15,7 @@
  */
 
 class ConfigStore {
-  constructor(ConfigDispatcher, CanvasFactory, GLOBALS, mySettings, ConsoleActionsFactory, $stateParams, myHelpers, NonStorePipelineErrorFactory, HydratorService, $q, PluginConfigFactory, uuid){
+  constructor(ConfigDispatcher, CanvasFactory, GLOBALS, mySettings, ConsoleActionsFactory, $stateParams, myHelpers, NonStorePipelineErrorFactory, HydratorService, $q, PluginConfigFactory, uuid, $state){
     this.state = {};
     this.mySettings = mySettings;
     this.ConsoleActionsFactory = ConsoleActionsFactory;
@@ -28,6 +28,7 @@ class ConfigStore {
     this.$q = $q;
     this.PluginConfigFactory = PluginConfigFactory;
     this.uuid = uuid;
+    this.$state = $state;
 
     this.changeListeners = [];
     this.setDefaults();
@@ -93,6 +94,12 @@ class ConfigStore {
   getState() {
     return angular.copy(this.state);
   }
+  getDraftId() {
+    return this.state.__ui__.draftId;
+  }
+  setDraftId(draftId) {
+    this.state.__ui__.draftId = draftId;
+  }
   getArtifact() {
     return this.getState().artifact;
   }
@@ -152,9 +159,6 @@ class ConfigStore {
           inputSchema: node.inputSchema
         };
       } else if (node.type === 'transform') {
-        if (node.plugin.errorDatasetName && node.plugin.errorDatasetName.length > 0) {
-          pluginConfig.errorDatasetName = node.plugin.errorDatasetName;
-        }
         if (node.plugin.validationFields) {
           pluginConfig.validationFields = node.plugin.validationFields;
         }
@@ -164,6 +168,11 @@ class ConfigStore {
           outputSchema: node.outputSchema,
           inputSchema: node.inputSchema
         };
+
+        if (node.errorDatasetName && node.errorDatasetName.length > 0) {
+          pluginConfig.errorDatasetName = node.errorDatasetName;
+        }
+
         config['transforms'].push(pluginConfig);
       } else if (node.type === artifactTypeExtension.sink) {
         pluginConfig = {
@@ -637,8 +646,12 @@ class ConfigStore {
 
   saveAsDraft() {
     this.ConsoleActionsFactory.resetMessages();
+    if(!this.getDraftId()) {
+      this.setDraftId(this.uuid.v4());
+      this.$stateParams.draftId = this.getDraftId();
+      this.$state.go('hydrator.create.studio', this.$stateParams, {notify: false});
+    }
     let config = this.getState();
-    config.__ui__.draftId = config.__ui__.draftId || this.uuid.v4();
     let checkForDuplicateDrafts = (config, draftsMap = {}) => {
       return Object.keys(draftsMap).filter(
         draft => {
@@ -651,7 +664,7 @@ class ConfigStore {
       draftsMap[config.__ui__.draftId] = config;
       return draftsMap;
     };
-    this.mySettings.get('adapterDrafts', true)
+    this.mySettings.get('hydratorDrafts', true)
       .then( (res = {isMigrated: true}) => {
         let draftsMap = res[this.$stateParams.namespace];
         if(!checkForDuplicateDrafts(config, draftsMap)) {
@@ -659,7 +672,7 @@ class ConfigStore {
         } else {
           throw 'A Draft with the same name already exist. Plesae rename your draft';
         }
-        return this.mySettings.set('adapterDrafts', res);
+        return this.mySettings.set('hydratorDrafts', res);
       })
       .then(
         () => {
@@ -678,6 +691,6 @@ class ConfigStore {
   }
 }
 
-ConfigStore.$inject = ['ConfigDispatcher', 'CanvasFactory', 'GLOBALS', 'mySettings', 'ConsoleActionsFactory', '$stateParams', 'myHelpers', 'NonStorePipelineErrorFactory', 'HydratorService', '$q', 'PluginConfigFactory', 'uuid'];
+ConfigStore.$inject = ['ConfigDispatcher', 'CanvasFactory', 'GLOBALS', 'mySettings', 'ConsoleActionsFactory', '$stateParams', 'myHelpers', 'NonStorePipelineErrorFactory', 'HydratorService', '$q', 'PluginConfigFactory', 'uuid', '$state'];
 angular.module(`${PKG.name}.feature.hydrator`)
   .service('ConfigStore', ConfigStore);

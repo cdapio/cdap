@@ -10,8 +10,7 @@
 Installation using Apache Ambari
 ================================
 
-.. figure:: ../_images/cdap-installation-steps.png
-   :align: left
+.. include:: ../_includes/installation/installation-steps-images.txt
    
 .. rubric:: Notes
 
@@ -45,6 +44,17 @@ Preparing the Cluster
     :start-after: .. _ambari-install-node-js:
     :end-before: .. _ambari-install-packaging:
 
+.. Hadoop Configuration
+.. --------------------
+.. include:: ../_includes/installation/hadoop-configuration.txt
+      
+You can make these changes during the configuration of your cluster `using Ambari 
+<http://docs.hortonworks.com/HDPDocuments/Ambari-2.2.0.0/bk_Installing_HDP_AMB/content/_customize_services.html>`__.
+
+.. HDFS Permissions
+.. ----------------
+.. include:: ../_includes/installation/hdfs-permissions.txt
+
 
 Downloading and Distributing Packages
 =====================================
@@ -61,18 +71,20 @@ To install the ``cdap-ambari-service`` package, first add the appropriate CDAP r
 to your system’s package manager by following the steps below. These steps will install a
 Cask repository on your Ambari server.
 
-The **repository version** (shown in the commands below as ``"cdap/``\ |literal-short-version|\ ``"``) must match the
-**CDAP version** which you’d like installed on your cluster. To install the *CDAP 3.0 series,*
-you would install the *CDAP 3.0 repository.* The default is to use **cdap/3.3**, which has the
-widest compatibility with Ambari-supported Hadoop distributions.
+The **repository version** (shown in the commands below as ``"cdap/``\ |literal-short-version|\ ``"``) 
+must match the **CDAP series** which you’d like installed on your cluster. To install the
+**latest** version of the *CDAP 3.0 series,* you would install the *CDAP 3.0 repository.*
+The default (in the commands below) is to use **cdap/3.3**, which has the widest
+compatibility with the Ambari-supported Hadoop distributions.
 
-Replace |---| in the commands that follow on this page |---| all references to ``"cdap/``\ |literal-short-version|\ ``"`` 
+Replace |---| in the commands that follow on this page |---| all references to 
+``"cdap/``\ |literal-short-version|\ ``"`` 
 with the CDAP Repository from the list below that you would like to use:
 
 +-----------------------------------------------------------------------+
 | Supported Hortonworks Data Platform (HDP) Distributions               |
 +----------------+-----------------+------------------------------------+
-| CDAP Version   | CDAP Repository | Hadoop Distributions               |
+| CDAP Series    | CDAP Repository | Hadoop Distributions               |
 +================+=================+====================================+
 | CDAP 3.3.x     | ``cdap/3.3``    | HDP 2.0, HDP 2.1, HDP 2.2, HDP 2.3 |
 +----------------+-----------------+------------------------------------+
@@ -184,6 +196,11 @@ Customize CDAP
    Under *Advanced cdap-env*, you can configure environment settings such as heap sizes
    and the directories used to store logs and pids for the CDAP services which run on the edge nodes.
 
+   **Including Spark:** If you are including Spark, the *Advanced cdap-env* needs to
+   contain the location of the Spark libraries, typically as
+   ``SPARK_HOME=/usr/hdp/<version>/spark``, where "<version>" matches the HDP version
+   of the cluster, including its build iteration, such as "2.3.4.0-3485".
+
    .. figure:: ../_images/ambari/ss05-config-cdap-env.png
       :figwidth: 100%
       :width: 800px
@@ -206,7 +223,11 @@ Customize CDAP
 #. To use the CDAP Explore service (to use SQL to query CDAP data), you must have Hive
    installed on the cluster, have the Hive client libraries installed on the same host as
    the CDAP services, and have the *Advanced cdap-site* ``explore.enabled`` option set to
-   *true* (the default).
+   *true* (the default). If you do not have Hive installed or available, this option must be
+   set to *false*.
+
+   **Router Bind Port, Router Server Port:** These two ports should match; *Router Server
+   Port* is used by the CDAP UI to connect to the CDAP Router service.
 
    .. figure:: ../_images/ambari/ss07-config-enable-explore.png
       :figwidth: 100%
@@ -216,9 +237,17 @@ Customize CDAP
  
       **Ambari Dashboard:** Enabling *CDAP Explore*
 
-   For a **complete explanation of these options,** refer to the :ref:`CDAP documentation of
-   cdap-site.xml <appendix-cdap-site.xml>`. When finished with configuration changes, click
-   *Next*.
+   **Additional environment variables** can be set, as required, using Ambari's 
+   "Configs > Advanced > Advanced cdap-env".
+
+   **Additional CDAP configuration properties**, not shown in the web interface, can be
+   added using Ambari's advanced custom properties at the end of the page. Documentation
+   of the available CDAP properties is in the :ref:`appendix-cdap-site.xml`.
+
+   For a **complete explanation of these options,** refer to the :ref:`CDAP documentation
+   of cdap-site.xml <appendix-cdap-site.xml>`. When finished with configuration changes,
+   click *Next*.
+
 
 Starting CDAP Services
 ======================

@@ -10,8 +10,7 @@
 Installation using Cloudera Manager
 ===================================
 
-.. figure:: ../_images/cdap-installation-steps.png
-   :align: left
+.. include:: ../_includes/installation/installation-steps-images.txt
 
 Preparing the Cluster
 =====================
@@ -39,7 +38,8 @@ consists of four mandatory roles and two optional roles:
    * - CDAP Security Auth Service
      - Performs client authentication for CDAP when security is enabled (*optional*)
    * - Gateway
-     - `Cloudera Manager Gateway Role <http://www.cloudera.com/content/www/en-us/documentation/enterprise/latest/topics/cm_mc_managing_roles.html>`__
+     - `Cloudera Manager Gateway Role 
+       <http://www.cloudera.com/content/www/en-us/documentation/enterprise/latest/topics/cm_mc_managing_roles.html>`__
        that installs the CDAP client tools (such as the *CDAP CLI*) and configuration (*optional*)
 
 These roles map to the :ref:`CDAP components <admin-manual-cdap-components>` of the same name.
@@ -51,14 +51,13 @@ These roles map to the :ref:`CDAP components <admin-manual-cdap-components>` of 
 - As CDAP depends on HDFS, YARN, HBase, ZooKeeper, and (optionally) Hive and Spark, it must be placed
   on a cluster host with full client configurations for these dependent services. 
 
-- CDAP roles must be co-located on a cluster host with at least an HDFS Gateway, a YARN
-  Gateway, an HBase Gateway, and |---| optionally |---| Hive or Spark Gateways.
-
 - The CDAP Master role must be co-located on a cluster host with an HDFS Gateway, a YARN
   Gateway, an HBase Gateway, and |---| optionally |---| Hive or Spark Gateways.
 
-- Note that these Gateways are redundant if you are co-locating the [CDAP Master role] on cluster hosts with
-  actual services, such as the HDFS Namenode, the YARN resource manager, or the HBase Master.
+- Note that these Gateways are redundant if you are co-locating the CDAP Master role 
+  on a cluster host (or hosts, in the case of a deployment with high availability) with
+  actual services, such as the HDFS Namenode, the YARN resource manager, or the HBase
+  Master.
 
 - All services run as the ``'cdap'`` user installed by the parcel.
 
@@ -68,38 +67,17 @@ These roles map to the :ref:`CDAP components <admin-manual-cdap-components>` of 
     :start-after: .. _cloudera-install-node-js:
     :end-before: .. _cloudera-install-packaging:
 
-Configurations
---------------
-#. ZooKeeper's ``maxClientCnxns`` must be raised from its default.  We suggest setting it to zero
-   (unlimited connections). As each YARN container launched by CDAP makes a connection to ZooKeeper, 
-   the number of connections required is a function of usage. You can make this change using Cloudera Manager to
-   `modify the ZooKeeper configuration properties 
-   <http://www.cloudera.com/content/www/en-us/documentation/enterprise/latest/topics/cm_mc_mod_configs.html>`__.
+.. Hadoop Configuration
+.. --------------------
+.. include:: ../_includes/installation/hadoop-configuration.txt
 
-#. Ensure that YARN has sufficient memory capacity by lowering the default minimum container 
-   size (controlled by the property ``yarn.scheduler.minimum-allocation-mb``). Lack of
-   YARN memory capacity is the leading cause of apparent failures that we see reported.
-   We recommend starting with these settings:
-   
-   - ``yarn.nodemanager.delete.debug-delay-sec``: 43200
-   - ``yarn.scheduler.minimum-allocation-mb``: 512 mb
-   
-   Please ensure your ``yarn.nodemanager.resource.cpu-vcores`` and
-   ``yarn.nodemanager.resource.memory-mb`` settings are set sufficiently to run CDAP,
-   as described in the :ref:`CDAP Memory and Core Requirements 
-   <admin-manual-memory-core-requirements>`.
-      
-   You can make these changes `using Cloudera Manager 
-   <http://www.cloudera.com/content/www/en-us/documentation/enterprise/latest/topics/cm_mc_mod_configs.html>`__.
-   You will be prompted to restart the stale services after making changes.
+You can make these changes `using Cloudera Manager 
+<http://www.cloudera.com/content/www/en-us/documentation/enterprise/latest/topics/cm_mc_mod_configs.html>`__.
+You will be prompted to restart the stale services after making changes.
 
-HDFS Permissions
-----------------
-Ensure YARN is configured properly to run MapReduce programs.  Often, this includes
-ensuring that the HDFS ``/user/yarn`` directory exists with proper permissions::
-   
-  # su hdfs
-  $ hdfs dfs -mkdir -p /user/yarn && hadoop fs -chown yarn /user/yarn && hadoop fs -chgrp yarn /user/yarn
+.. HDFS Permissions
+.. ----------------
+.. include:: ../_includes/installation/hdfs-permissions.txt
 
 
 Downloading and Distributing Packages
@@ -109,19 +87,59 @@ Downloading and Distributing Packages
 
 Downloading and Installing CSD
 ------------------------------
-- Download the CDAP CSD (Custom Service Descriptor) by `downloading the JAR file 
-  <http://cask.co/resources/#cdap-integrations>`__.
+To install CDAP on a cluster managed by Cloudera, we have available a Custom Service
+Descriptor (CSD) which you can install onto your CM server. This adds CDAP to the list of
+available services which CM can install. 
 
-  Details on CSDs and Cloudera Manager Extensions are `available online 
-  <https://github.com/cloudera/cm_ext/wiki>`__.
+.. _cloudera-compatibility-matrix:
 
-  .. _cloudera-installation-csd:
++---------------------------------------------------------------------------------------+
+| Supported Cloudera Manager (CM) and Cloudera Data Hub (CDH) Distributions             |
++------------+-----------------------+---------------------+----------------------------+
+| CM Version | CDH Version           | CSD Version         |  CDAP Parcel Version       |
++============+=======================+=====================+============================+
+| 5.5        | 5.5.x                 | 3.3.x               | *Matching CSD major.minor* | 
++------------+-----------------------+---------------------+----------------------------+
+| 5.5        | 5.4.x                 | 3.1.x through 3.3.x | *Matching CSD major.minor* |
++------------+-----------------------+---------------------+----------------------------+
+| 5.5        | no greater than 5.3.x | 3.0.x through 3.3.x | *Matching CSD major.minor* |
++------------+-----------------------+---------------------+----------------------------+
+|                                                                                       |
++------------+-----------------------+---------------------+----------------------------+
+| 5.4        | 5.4.x                 | 3.1.x through 3.3.x | *Matching CSD major.minor* | 
++------------+-----------------------+---------------------+----------------------------+
+| 5.4        | no greater than 5.3.x | 3.0.x through 3.3.x | *Matching CSD major.minor* | 
++------------+-----------------------+---------------------+----------------------------+
+|                                                                                       |
++------------+-----------------------+---------------------+----------------------------+
+| 5.3        | no greater than 5.3.x | 3.0.x through 3.1.x | *Matching CSD major.minor* |
++------------+-----------------------+---------------------+----------------------------+
+| 5.2        | no greater than 5.2.x | 3.0.x through 3.1.x | *Matching CSD major.minor* |
++------------+-----------------------+---------------------+----------------------------+
+| 5.1        | no greater than 5.1.x | *Not supported*     | |---|                      | 
++------------+-----------------------+---------------------+----------------------------+
 
-- Install the CSD following the instructions at Cloudera's website on `Add-on Services
-  <http://www.cloudera.com/content/cloudera/en/documentation/core/latest/topics/cm_mc_addon_services.html>`__, 
-  using the instructions given for the case of installing software in the form of a parcel.
+**Notes:**
 
-  In this case, you install the CSD first and then install the parcel.
+- Cloudera Manager supports `a version of CDH no greater than its own 
+  <http://www.cloudera.com/documentation/enterprise/latest/topics/pcm_cdh_cm.html>`__
+  (for example, CM version 5.1 supports CDH versions less than or equal to 5.1).
+  
+- The version of the CDAP Parcel that is used should match the CSD major.minor version.
+
+**Steps:**
+
+#. Download the CDAP CSD by `downloading the JAR file 
+   <http://cask.co/resources/#cdap-integrations>`__.
+   Details on CSDs and Cloudera Manager Extensions are `available online 
+   <https://github.com/cloudera/cm_ext/wiki>`__.
+
+   .. _cloudera-installation-csd:
+
+#. Install the CSD following the instructions at Cloudera's website on `Add-on Services
+   <http://www.cloudera.com/content/cloudera/en/documentation/core/latest/topics/cm_mc_addon_services.html>`__, 
+   using the instructions given for the case of installing software in the form of a parcel.
+   In this case, you install the CSD first and then install the parcel second.
 
 .. _cloudera-installation-download-distribute-parcel:
 
@@ -146,8 +164,16 @@ cm_ig_parcels.html>`__, but in summary these are the steps:
    <http://www.cloudera.com/content/cloudera/en/documentation/core/latest/topics/cm_ig_parcels.html#concept_vwq_421_yk_unique_1__section_ug1_c3y_bm_unique_1>`__
    the parcel.
 
-If the Cask parcel repository is inaccessible to your cluster, please see :ref:`these
-suggestions <faqs-cloudera-direct-parcel-access>`.
+**Notes:**
+
+- If the Cask parcel repository is inaccessible to your cluster, please see :ref:`these
+  suggestions <faqs-cloudera-direct-parcel-access>`.
+- The CDAP parcels are hosted at a repository determined by the CDAP version.
+  For instance, the CDAP |short-version| parcel metadata is accessed by Cloudera Manager at this URL:
+  
+  .. parsed-literal::
+  
+    \http://repository.cask.co/parcels/cdap/|short-version|\ /manifest.json
 
 
 Installing CDAP Services
@@ -503,10 +529,29 @@ Upgrading CDH
 
 .. _cloudera-release-specific-upgrade-notes:
 
-**Upgrading CDH (Cloudera Data Hub) 5.3 to 5.4**
+These steps cover upgrading the version of CDH of an existing CDAP installation.
+As the different versions of CDH can use different versions of HBase, upgrading from
+one version to the next can require that the HBase coprocessors be upgraded to the correct
+version. The table below lists the different coprocessor package names managed by CDAP
+for each version of CDH. If the version changes, you need to check that the version being
+used has changed as described below.
 
-**Background:** CDH 5.3 ships with HBase 0.98 while CDH 5.4 ships with HBase 1.0. We support
-CDH 5.4 as of CDAP 3.1.0 - however, upgrading the underlying CDH version is only supported
++-------------+-------------------------------------+
+| CDH Version | CDAP HBase Coprocessor Package Name |
++=============+=====================================+
+| 5.5         | ``hbase10cdh550``                   |
++-------------+-------------------------------------+
+| 5.4         | ``hbase10cdh``                      |
++-------------+-------------------------------------+
+| 5.3         | ``hbase98``                         |
++-------------+-------------------------------------+
+| 5.2         | ``hbase98``                         |
++-------------+-------------------------------------+
+| 5.1         | |---|                               |
++-------------+-------------------------------------+
+
+**For example:** CDH 5.3 ships with HBase 0.98 while CDH 5.4 ships with HBase 1.0. We support
+CDH 5.4 as of CDAP 3.1.0 |---| however, upgrading the underlying CDH version is only supported
 since CDAP 3.2.0. Therefore, before upgrading from CDH 5.3 to CDH 5.4, upgrade CDAP to version
 3.2.0 or greater, following the normal upgrade procedure. Start CDAP at least once to make sure
 it works properly, before you upgrade to CDH 5.4.
@@ -527,7 +572,7 @@ goes wrong, see these troubleshooting instructions for :ref:`problems while upgr
 
     > disable_all 'cdap.*'
     
-#. Upgrade to CDH 5.4.
+#. Upgrade to the new version of CDH.
 #. Stop all CDAP services, as CM will have (again) auto-started CDAP::
 
     $ for i in `ls /etc/init.d/ | grep cdap` ; do sudo service $i stop ; done
@@ -536,15 +581,19 @@ goes wrong, see these troubleshooting instructions for :ref:`problems while upgr
 
     $ /opt/cdap/master/bin/svc-master run co.cask.cdap.data.tools.UpgradeTool upgrade_hbase
     
-#. Check if the coprocessor JARs for all CDAP tables have been upgraded to CDH HBase 1.0,
-   by checking that the coprocessor classnames are using the ``hbase10cdh`` package |---|
-   for example, ``co.cask.cdap.data2.transaction.coprocessor.hbase10cdh.DefaultTransactionProcessor``
+#. Check if the coprocessor JARs for all CDAP tables have been upgraded to the correct version
+   :ref:`as listed above <cloudera-release-specific-upgrade-notes>` by checking that 
+   the coprocessor classnames are using the correct package |---| for example, if
+   upgrading from CDH 5.3 to 5.4, the new coprocessor package is ``hbase10cdh`` and a
+   classname using it would be
+   ``co.cask.cdap.data2.transaction.coprocessor.hbase10cdh.DefaultTransactionProcessor``.
   
    Running this command in an HBase shell will give you table attributes::
   
     > describe 'cdap_system:app.meta'
     
-   The resulting output will show the coprocessor classname::
+   The resulting output will show the coprocessor classname; in this case, we are looking for
+   the inclusion of ``hbase10cdh`` in the name::
   
     'cdap_system:app.meta', {TABLE_ATTRIBUTES => {coprocessor$1 =>
     'hdfs://server.example.com/cdap/cdap/lib/

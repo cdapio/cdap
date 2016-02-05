@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
 <!--
-  Copyright © 2014-2015 Cask Data, Inc.
+  Copyright © 2014-2016 Cask Data, Inc.
 
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy of
@@ -50,43 +50,8 @@
     <name>zookeeper.quorum</name>
     <value>FQDN1:2181,FQDN2:2181/${root.namespace}</value>
     <description>
-      ZooKeeper quorum string; specifies the ZooKeeper host:port; 
-      substitute the quorum for the components shown here (FQDN1:2181,FQDN2:2181)
-    </description>
-  </property>
-
-
-  <!-- Router Configuration -->
-
-  <property>
-    <name>router.bind.address</name>
-    <value>0.0.0.0</value>
-    <description>
-      Router server address
-    </description>
-  </property>
-  
-  <property>
-    <name>router.bind.port</name>
-    <value>10000</value>
-    <description>
-      Port number that the CDAP router should bind to for HTTP connections
-    </description>
-  </property>
-
-  <property>
-    <name>router.server.address</name>
-    <value>{ROUTER-HOST-IP}</value>
-    <description>
-      Router address to which CDAP UI connects
-    </description>
-  </property>
-
-  <property>
-    <name>router.server.port</name>
-    <value>${router.bind.port}</value>
-    <description>
-      Router port to which CDAP UI connects
+      ZooKeeper quorum string; specifies the ZooKeeper host:port; substitute the quorum
+      (FQDN1:2181,FQDN2:2181,...) for the components shown here
     </description>
   </property>
 
@@ -97,7 +62,7 @@
     <name>app.bind.address</name>
     <value>0.0.0.0</value>
     <description>
-      Host address on which the app fabric server is started
+      App Fabric service bind address
     </description>
   </property>
 
@@ -108,7 +73,7 @@
     <name>data.tx.bind.address</name>
     <value>0.0.0.0</value>
     <description>
-      Transaction service inet address
+      Transaction service bind address
     </description>
   </property>
 
@@ -119,9 +84,9 @@
     <name>kafka.default.replication.factor</name>
     <value>1</value>
     <description>
-      Kafka replication factor; used to replicate Kafka messages across
+      CDAP Kafka replication factor; used to replicate Kafka messages across
       multiple machines to prevent data loss in the event of a hardware
-      failure. The recommended setting is to run at least two Kafka servers.
+      failure. The recommended setting is to run at least two CDAP Kafka servers.
       If you are running two Kafka servers, set this value to 2; otherwise,
       set it to the number of Kafka servers.
     </description>
@@ -131,7 +96,7 @@
     <name>kafka.log.dir</name>
     <value>/tmp/kafka-logs</value>
     <description>
-      Kafka log storage directory
+      CDAP Kafka service log storage directory
     </description>
   </property>
 
@@ -139,7 +104,8 @@
     <name>kafka.seed.brokers</name>
     <value>FQDN1:9092,FQDN2:9092</value>
     <description>
-      List of Kafka brokers (comma separated, replace with correct values)
+      Comma-separated list of CDAP Kafka service brokers; for distributed CDAP, 
+      replace with list of FQDN:port brokers
     </description>
   </property>
 
@@ -150,7 +116,42 @@
     <name>metrics.query.bind.address</name>
     <value>0.0.0.0</value>
     <description>
-      Metrics query server host address
+      Metrics Query service bind address
+    </description>
+  </property>
+
+
+  <!-- Router Configuration -->
+
+  <property>
+    <name>router.bind.address</name>
+    <value>0.0.0.0</value>
+    <description>
+      CDAP Router service bind address
+    </description>
+  </property>
+  
+  <property>
+    <name>router.bind.port</name>
+    <value>10000</value>
+    <description>
+      CDAP Router service bind port
+    </description>
+  </property>
+
+  <property>
+    <name>router.server.address</name>
+    <value>{ROUTER-HOST-IP}</value>
+    <description>
+      CDAP Router service address to which CDAP UI connects
+    </description>
+  </property>
+
+  <property>
+    <name>router.server.port</name>
+    <value>${router.bind.port}</value>
+    <description>
+      CDAP Router service port to which CDAP UI connects
     </description>
   </property>
 

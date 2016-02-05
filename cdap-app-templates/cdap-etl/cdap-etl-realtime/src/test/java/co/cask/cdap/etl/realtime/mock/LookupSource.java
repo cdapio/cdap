@@ -41,7 +41,7 @@ import javax.annotation.Nullable;
  * Source used to test lookup functionality. Takes a set of fields as config and emits a single record with
  * each field value being the result of lookup for that field.
  */
-@Plugin(type = "realtimesource")
+@Plugin(type = RealtimeSource.PLUGIN_TYPE)
 @Name("Lookup")
 public class LookupSource extends RealtimeSource<StructuredRecord> {
   private final Config config;

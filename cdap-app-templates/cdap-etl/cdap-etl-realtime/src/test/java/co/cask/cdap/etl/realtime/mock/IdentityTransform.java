@@ -27,7 +27,7 @@ import java.util.HashMap;
 /**
  * Transform that passes every record on.
  */
-@Plugin(type = "transform")
+@Plugin(type = Transform.PLUGIN_TYPE)
 @Name("Identity")
 public class IdentityTransform extends Transform<StructuredRecord, StructuredRecord> {
 

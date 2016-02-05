@@ -10,8 +10,7 @@
 Installation for MapR
 =====================
 
-.. figure:: ../_images/cdap-installation-steps.png
-   :align: left
+.. include:: ../_includes/installation/installation-steps-images.txt
 
 Preparing the Cluster
 =====================
@@ -42,6 +41,14 @@ packages installed, and can be configured using the MapR `configure.sh
     :start-after: .. _mapr-install-node-js:
     :end-before: .. _mapr-install-packaging:
  
+.. Hadoop Configuration
+.. --------------------
+.. include:: ../_includes/installation/hadoop-configuration.txt
+
+.. HDFS Permissions
+.. ----------------
+.. include:: ../_includes/installation/hdfs-permissions.txt
+      
 
 Downloading and Distributing Packages
 =====================================

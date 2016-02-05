@@ -27,7 +27,7 @@ import java.util.HashMap;
 /**
  * Transform that doubles every record it receives.
  */
-@Plugin(type = "transform")
+@Plugin(type = Transform.PLUGIN_TYPE)
 @Name("Double")
 public class DoubleTransform extends Transform<StructuredRecord, StructuredRecord> {
 
