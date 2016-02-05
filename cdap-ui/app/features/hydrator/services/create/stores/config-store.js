@@ -652,6 +652,12 @@ class ConfigStore {
       this.$state.go('hydrator.create.studio', this.$stateParams, {notify: false});
     }
     let config = this.getState();
+    // This is not to fall in the scenario where when the user saves a draft with a node selected.
+    // Next time they come to the draft and we still have the node selected but the bottom panel not updated.
+    config.__ui__.nodes = config.__ui__.nodes.map( node => {
+      delete node.selected;
+      return node;
+    });
     let checkForDuplicateDrafts = (config, draftsMap = {}) => {
       return Object.keys(draftsMap).filter(
         draft => {

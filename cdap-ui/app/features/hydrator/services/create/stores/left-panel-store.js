@@ -167,7 +167,7 @@ class LeftPanelStore {
           .get('plugin-default-version')
           .then( res => {
             this.state.defaultVersionsMap = res;
-            this.updateDefaultVersion(pluginsList, this.state.defaultVersionsMap);
+            updateDefaultVersion(pluginsList, this.state.defaultVersionsMap);
           });
     } else {
       updateDefaultVersion(pluginsList, this.state.defaultVersionsMap);
