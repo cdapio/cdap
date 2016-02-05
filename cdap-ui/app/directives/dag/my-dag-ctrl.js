@@ -179,10 +179,12 @@ angular.module(PKG.name + '.commons')
                   .text(0);
                 return;
               }
-$scope.metricsData[endpoint.elementId].recordsOut = METRICS_THRESHOLD + 10;
+
               var recordsOut = $scope.metricsData[endpoint.elementId].recordsOut;
 
-              // hide label if the length is greater than 12 characters
+              // hide label if the metric is greater than METRICS_THRESHOLD.
+              // the intent is to hide the metrics when the length is greater than 12.
+              // Since records out metrics is an integer we can do a straight comparison
               if(recordsOut > METRICS_THRESHOLD) {
                 label.hide();
               } else if (recordsOut <= METRICS_THRESHOLD && vm.scale >= SHOW_METRICS_THRESHOLD ) {
