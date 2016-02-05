@@ -19,12 +19,15 @@ package co.cask.cdap.data2.datafabric.dataset.service.executor;
 import co.cask.cdap.common.conf.CConfiguration;
 import com.google.inject.Inject;
 import org.apache.twill.discovery.DiscoveryServiceClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Executes Dataset operations
  */
 public class LocalDatasetOpExecutor extends RemoteDatasetOpExecutor {
 
+  private static final Logger LOG = LoggerFactory.getLogger(LocalDatasetOpExecutor.class);
   private final DatasetOpExecutorService executorServer;
 
   @Inject
@@ -43,5 +46,10 @@ public class LocalDatasetOpExecutor extends RemoteDatasetOpExecutor {
   @Override
   protected void shutDown() throws Exception {
     executorServer.stopAndWait();
+  }
+
+  @Override
+  protected Logger getUncaughtExceptionLogger() {
+    return LOG;
   }
 }

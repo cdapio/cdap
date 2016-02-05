@@ -23,7 +23,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.EndpointStrategy;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
-import co.cask.cdap.common.service.UnloggedExceptionIdleService;
+import co.cask.cdap.common.service.UncaughtExceptionIdleService;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.cdap.proto.Id;
@@ -54,7 +54,7 @@ import java.util.concurrent.TimeoutException;
 /**
  * Executes Dataset operations by querying a {@link DatasetOpExecutorService} via REST.
  */
-public abstract class RemoteDatasetOpExecutor extends UnloggedExceptionIdleService implements DatasetOpExecutor {
+public abstract class RemoteDatasetOpExecutor extends UncaughtExceptionIdleService implements DatasetOpExecutor {
   private static final Logger LOG = LoggerFactory.getLogger(RemoteDatasetOpExecutor.class);
 
   private static final Gson GSON = new Gson();
@@ -172,5 +172,10 @@ public abstract class RemoteDatasetOpExecutor extends UnloggedExceptionIdleServi
       throw new HandlerException(HttpResponseStatus.valueOf(httpResponse.getResponseCode()),
                                  httpResponse.getResponseBodyAsString(Charsets.UTF_8));
     }
+  }
+
+  @Override
+  protected Logger getUncaughtExceptionLogger() {
+    return LOG;
   }
 }
