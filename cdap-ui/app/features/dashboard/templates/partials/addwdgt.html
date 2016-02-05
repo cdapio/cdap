@@ -45,22 +45,6 @@
     </div>
 
     <div class="form-group">
-      <div class="col-xs-offset-3 col-xs-8">
-        <div class="radio">
-          <label>
-            <input type="radio" ng-model="addType" value="MULTIPLE" checked> Add metrics to a single widget
-          </label>
-        </div>
-
-        <div class="radio">
-          <label>
-            <input type="radio" ng-model="addType" value="INDIVIDUAL"> Add metrics to individual widgets
-          </label>
-        </div>
-      </div>
-    </div>
-
-    <div class="form-group">
       <label class="col-xs-3 control-label">
         <span>Context</span>
         <span class="fa fa-asterisk"></span>
@@ -74,6 +58,24 @@
           required
         ></my-metric-picker>
 
+      </div>
+    </div>
+
+    <div class="form-group">
+      <div class="col-xs-offset-3 col-xs-8">
+        <div class="radio">
+          <label>
+            <input type="radio" ng-model="addType" value="INDIVIDUAL" checked>
+            Multiple widgets with one metric each
+          </label>
+        </div>
+
+        <div class="radio">
+          <label>
+            <input type="radio" ng-model="addType" value="MULTIPLE">
+            One widget with one or more metrics
+          </label>
+        </div>
       </div>
     </div>
 

@@ -24,7 +24,7 @@ function ($scope, $modalInstance, caskFocusManager, Widget) {
   caskFocusManager.focus('addWdgtType');
 
   $scope.model = new Widget();
-  $scope.addType = 'MULTIPLE';
+  $scope.addType = 'INDIVIDUAL';
 
   $scope.widgetTypes = [
     { name: 'Line',                  type: 'c3-line'},
