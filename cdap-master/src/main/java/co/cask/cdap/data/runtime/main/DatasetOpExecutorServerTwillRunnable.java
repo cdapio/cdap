@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -47,6 +47,7 @@ import co.cask.cdap.notifications.feeds.client.NotificationFeedClientModule;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.store.DefaultNamespaceStore;
 import co.cask.cdap.store.NamespaceStore;
+import co.cask.cdap.store.guice.NamespaceStoreModule;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.AbstractModule;
@@ -108,6 +109,7 @@ public class DatasetOpExecutorServerTwillRunnable extends AbstractMasterTwillRun
       new LoggingModules().getDistributedModules(),
       new ExploreClientModule(),
       new NamespaceClientRuntimeModule().getDistributedModules(),
+      new NamespaceStoreModule().getDistributedModules(),
       new MetadataServiceModule(),
       new ViewAdminModules().getDistributedModules(),
       new StreamAdminModules().getDistributedModules(),
@@ -116,7 +118,6 @@ public class DatasetOpExecutorServerTwillRunnable extends AbstractMasterTwillRun
         @Override
         protected void configure() {
           bind(Store.class).to(DefaultStore.class);
-          bind(NamespaceStore.class).to(DefaultNamespaceStore.class);
         }
       });
   }

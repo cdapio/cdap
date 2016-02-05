@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -26,8 +26,6 @@ import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
-import co.cask.cdap.common.namespace.AbstractNamespaceClient;
-import co.cask.cdap.common.namespace.InMemoryNamespaceClient;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiatorFactory;
@@ -43,6 +41,7 @@ import co.cask.cdap.data2.datafabric.dataset.type.DatasetTypeManager;
 import co.cask.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
 import co.cask.cdap.data2.dataset2.DefaultDatasetDefinitionRegistry;
 import co.cask.cdap.data2.dataset2.InMemoryDatasetFramework;
+import co.cask.cdap.data2.dataset2.InMemoryNamespaceStore;
 import co.cask.cdap.data2.metrics.DatasetMetricsReporter;
 import co.cask.cdap.data2.transaction.DelegatingTransactionSystemClientService;
 import co.cask.cdap.data2.transaction.TransactionSystemClientService;
@@ -52,6 +51,7 @@ import co.cask.cdap.internal.test.AppJarHelper;
 import co.cask.cdap.proto.DatasetModuleMeta;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
+import co.cask.cdap.store.NamespaceStore;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpRequests;
 import co.cask.common.http.HttpResponse;
@@ -107,7 +107,7 @@ public abstract class DatasetServiceTestBase {
   private DatasetOpExecutorService opExecutorService;
   private DatasetService service;
   private LocationFactory locationFactory;
-  private AbstractNamespaceClient namespaceClient;
+  private NamespaceStore namespaceStore;
   protected TransactionManager txManager;
   protected RemoteDatasetFramework dsFramework;
 
@@ -179,8 +179,8 @@ public abstract class DatasetServiceTestBase {
       new MDSDatasetsRegistry(txSystemClientService, new InMemoryDatasetFramework(registryFactory, modules, cConf));
 
     ExploreFacade exploreFacade = new ExploreFacade(new DiscoveryExploreClient(discoveryService), cConf);
-    namespaceClient = new InMemoryNamespaceClient();
-    namespaceClient.create(NamespaceMeta.DEFAULT);
+    namespaceStore = new InMemoryNamespaceStore();
+    namespaceStore.create(NamespaceMeta.DEFAULT);
     DatasetInstanceService instanceService = new DatasetInstanceService(
       new DatasetTypeManager(cConf, mdsDatasetsRegistry, locationFactory,
                              // we don't need any default modules in this test
@@ -191,7 +191,7 @@ public abstract class DatasetServiceTestBase {
       cConf,
       txExecutorFactory,
       registryFactory,
-      namespaceClient);
+      namespaceStore);
 
     service = new DatasetService(cConf,
                                  namespacedLocationFactory,
@@ -206,9 +206,7 @@ public abstract class DatasetServiceTestBase {
                                  new HashSet<DatasetMetricsReporter>(),
                                  instanceService,
                                  new LocalStorageProviderNamespaceAdmin(cConf, namespacedLocationFactory,
-                                                                        exploreFacade),
-                                 namespaceClient
-    );
+                                                                        exploreFacade), namespaceStore);
 
     // Start dataset service, wait for it to be discoverable
     service.start();
@@ -230,7 +228,7 @@ public abstract class DatasetServiceTestBase {
   @After
   public void after() throws Exception {
     Services.chainStop(service, opExecutorService, txManager);
-    namespaceClient.delete(Id.Namespace.DEFAULT);
+    namespaceStore.delete(Id.Namespace.DEFAULT);
     Locations.deleteQuietly(locationFactory.create(Id.Namespace.DEFAULT.getId()));
   }
 

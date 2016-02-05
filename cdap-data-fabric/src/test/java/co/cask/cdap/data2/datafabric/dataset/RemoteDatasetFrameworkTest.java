@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -135,7 +135,7 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
       cConf,
       txExecutorFactory,
       registryFactory,
-      NAMESPACE_CLIENT);
+      NAMESPACE_STORE);
 
     service = new DatasetService(cConf,
                                  namespacedLocationFactory,
@@ -149,7 +149,7 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
                                  instanceService,
                                  new LocalStorageProviderNamespaceAdmin(cConf, namespacedLocationFactory,
                                                                         exploreFacade),
-                                 NAMESPACE_CLIENT
+                                 NAMESPACE_STORE
     );
     // Start dataset service, wait for it to be discoverable
     service.start();

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -58,6 +58,7 @@ import co.cask.cdap.notifications.feeds.guice.NotificationFeedServiceRuntimeModu
 import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.security.TokenSecureStoreUpdater;
+import co.cask.cdap.store.guice.NamespaceStoreModule;
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
@@ -354,7 +355,8 @@ public class MasterServiceMain extends DaemonMain {
       new NotificationServiceRuntimeModule().getDistributedModules(),
       new ViewAdminModules().getDistributedModules(),
       new StreamAdminModules().getDistributedModules(),
-      new NamespaceClientRuntimeModule().getDistributedModules()
+      new NamespaceClientRuntimeModule().getDistributedModules(),
+      new NamespaceStoreModule().getDistributedModules()
     );
   }
 

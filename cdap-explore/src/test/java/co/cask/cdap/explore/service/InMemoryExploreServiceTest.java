@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -42,6 +42,7 @@ import co.cask.cdap.proto.QueryResult;
 import co.cask.cdap.proto.QueryStatus;
 import co.cask.cdap.store.DefaultNamespaceStore;
 import co.cask.cdap.store.NamespaceStore;
+import co.cask.cdap.store.guice.NamespaceStoreModule;
 import co.cask.cdap.test.SlowTests;
 import co.cask.tephra.TransactionManager;
 import com.google.common.collect.ImmutableList;
@@ -97,11 +98,11 @@ public class InMemoryExploreServiceTest {
         new ViewAdminModules().getInMemoryModules(),
         new StreamAdminModules().getInMemoryModules(),
         new NamespaceClientRuntimeModule().getInMemoryModules(),
+        new NamespaceStoreModule().getStandaloneModules(),
         new AbstractModule() {
           @Override
           protected void configure() {
             bind(NotificationFeedManager.class).to(NoOpNotificationFeedManager.class);
-            bind(NamespaceStore.class).to(DefaultNamespaceStore.class);
           }
         });
     transactionManager = injector.getInstance(TransactionManager.class);

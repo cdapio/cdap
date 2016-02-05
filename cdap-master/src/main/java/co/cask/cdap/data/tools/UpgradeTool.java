@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -67,6 +67,7 @@ import co.cask.cdap.metrics.store.MetricDatasetFactory;
 import co.cask.cdap.notifications.feeds.client.NotificationFeedClientModule;
 import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.store.guice.NamespaceStoreModule;
 import co.cask.tephra.distributed.TransactionService;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
@@ -205,6 +206,7 @@ public class UpgradeTool {
       // don't need real notifications for upgrade, so use the in-memory implementations
       new NotificationServiceRuntimeModule().getInMemoryModules(),
       new KafkaClientModule(),
+      new NamespaceStoreModule().getDistributedModules(),
       new AbstractModule() {
         @Override
         protected void configure() {
