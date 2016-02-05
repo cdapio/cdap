@@ -48,9 +48,8 @@ The following is the generic procedure for Major/Minor version upgrades:
 #. Use the Cloudera Manager UI to download, distribute, and activate the corresponding
    CDAP parcel version on all cluster hosts.
 
-#. Before starting services, run the *Upgrade Tool* to update any necessary CDAP table
-   definitions. From the CDAP Service page, select "Run CDAP Upgrade Tool" from the
-   Actions menu.
+#. Before starting services, run the *Upgrade Tool* to update CDAP. From the CDAP Service 
+   page, select "Run CDAP Upgrade Tool" from the Actions menu.
 
 #. Start the CDAP services.  At this point it may be necessary to correct for any changes in
    the CSD.  For example, if new CDAP services were added or removed, you must add or
