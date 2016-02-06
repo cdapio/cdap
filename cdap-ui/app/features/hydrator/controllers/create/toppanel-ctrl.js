@@ -22,6 +22,7 @@ class TopPanelController{
     this.$bootstrapModal = $bootstrapModal;
     this.ConsoleActionsFactory = ConsoleActionsFactory;
     this.NodesActionsFactory = NodesActionsFactory;
+    this.parsedDescription = this.ConfigStore.getDescription();
 
     this.canvasOperations = [
       {
@@ -78,7 +79,7 @@ class TopPanelController{
       this.parsedDescription = this.state.metadata.description.replace(/\n/g, ' ');
       this.tooltipDescription = this.state.metadata.description.replace(/\n/g, '<br />');
     } else {
-      this.parseDesscription = '';
+      this.parsedDescription = '';
       this.tooltipDescription = '';
     }
     this.metadataExpanded = false;

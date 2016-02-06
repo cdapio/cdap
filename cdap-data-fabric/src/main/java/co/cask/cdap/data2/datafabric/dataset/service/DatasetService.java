@@ -24,7 +24,7 @@ import co.cask.cdap.common.http.CommonNettyHttpServiceBuilder;
 import co.cask.cdap.common.metrics.MetricsReporterHook;
 import co.cask.cdap.common.namespace.AbstractNamespaceClient;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
-import co.cask.cdap.common.service.UnloggedExceptionIdleService;
+import co.cask.cdap.common.service.UncaughtExceptionIdleService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import co.cask.cdap.data2.datafabric.dataset.service.mds.MDSDatasetsRegistry;
 import co.cask.cdap.data2.datafabric.dataset.type.DatasetTypeManager;
@@ -258,7 +258,7 @@ public class DatasetService extends AbstractExecutionThreadService {
       @Override
       public void execute(Runnable runnable) {
         Thread t = new Thread(runnable, name);
-        t.setUncaughtExceptionHandler(UnloggedExceptionIdleService.UNCAUGHT_EXCEPTION_HANDLER);
+        t.setUncaughtExceptionHandler(UncaughtExceptionIdleService.newHandler(LOG));
         t.start();
       }
     };

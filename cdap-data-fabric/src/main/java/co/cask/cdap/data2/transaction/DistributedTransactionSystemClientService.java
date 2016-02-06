@@ -18,7 +18,7 @@ package co.cask.cdap.data2.transaction;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.service.UnloggedExceptionIdleService;
+import co.cask.cdap.common.service.UncaughtExceptionIdleService;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.tephra.InvalidTruncateTimeException;
 import co.cask.tephra.Transaction;
@@ -43,7 +43,7 @@ import java.util.concurrent.TimeoutException;
  * Everything else is just delegated to a TransactionSystemClient.
  */
 public class DistributedTransactionSystemClientService
-  extends UnloggedExceptionIdleService implements TransactionSystemClientService {
+  extends UncaughtExceptionIdleService implements TransactionSystemClientService {
 
   private static final Logger LOG = LoggerFactory.getLogger(DistributedTransactionSystemClientService.class);
   private final CConfiguration cConf;
@@ -164,4 +164,8 @@ public class DistributedTransactionSystemClientService
     return delegate.getInvalidSize();
   }
 
+  @Override
+  protected Logger getUncaughtExceptionLogger() {
+    return LOG;
+  }
 }

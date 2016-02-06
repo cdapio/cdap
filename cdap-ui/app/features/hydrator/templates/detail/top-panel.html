@@ -60,7 +60,7 @@
     <strong>Last Run</strong>
     <div class="clearfix">
       <div class="metric pull-left">
-        <span class="metric-value" ng-if="TopPanelCtrl.lastFinished">{{ TopPanelCtrl.lastFinished.start * 1000 | amDateFormat: 'h:mm:ss A'}} <small>{{ TopPanelCtrl.lastFinished | amDateFormat: 'MM/DD/YYYY'}}</small></span>
+        <span class="metric-value" ng-if="TopPanelCtrl.lastFinished">{{ TopPanelCtrl.lastFinished.start * 1000 | amDateFormat: 'h:mm:ss A'}} <small>{{ TopPanelCtrl.lastFinished.start * 1000 | amDateFormat: 'MM/DD/YYYY'}}</small></span>
         <span class="metric-value" ng-if="!TopPanelCtrl.lastFinished"> &mdash; </span>
         <span class="metric-label">Start</span>
       </div>

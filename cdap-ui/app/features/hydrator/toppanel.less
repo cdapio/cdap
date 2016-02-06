@@ -43,6 +43,7 @@ body.theme-cdap {
         }
         div.pipeline-name {
           margin-left: 10px;
+          min-width: 135px;
           position: relative;
           &:after {
             position: absolute;
@@ -58,34 +59,56 @@ body.theme-cdap {
               .opacity(1);
             }
           }
+          > div {
+            &:before {
+              content: none;
+              color: gray;
+            }
+            &:first-child {
+              font-size: 16px;
+              &.placeholder {
+                &:before {
+                  content: "Name your pipeline";
+                }
+              }
+            }
+            &:last-child {
+              font-size: 12px;
+              &.placeholder {
+                &:before {
+                  content: "Enter a description for your pipeline";
+                }
+              }
+            }
+          }
         }
         input, textarea {
           background-color: transparent;
-          cursor: pointer;
           display: inline-block;
+          font-size: 12px;
           padding: 0;
-          border: 0;
-          text-overflow: ellipsis;
-          white-space: nowrap;
-          overflow: hidden;
+          border: 1px solid @table-border-color;
+          padding: 10px 12px;
           width: 100%;
           max-width: 100%;
-          .border-radius(0);
+          .border-radius(6px);
+          .placeholder-color(@color: gray);
+          &:hover, &:focus {
+            cursor: auto;
+          }
           &:focus {
             outline: 0;
           }
         }
         input {
-          font-size: 16px;
-          .placeholder-color(@color: gray);
+          height: 40px;
         }
         textarea {
-          min-height: 0;
-          font-size: 12px;
           font-weight: 400;
           resize: none;
           margin-bottom: 0;
-          .placeholder-color(@color: gray);
+          margin-top: 10px;
+          min-height: 65px;
         }
         button {
           font-weight: 500;
@@ -109,28 +132,6 @@ body.theme-cdap {
             &:after {
               content: none;
             }
-          }
-          input, textarea {
-            border: 1px solid @table-border-color;
-            font-size: 12px;
-            padding: 10px 12px;
-            white-space: initial;
-            text-overflow: initial;
-            overflow: initial;
-            .border-radius(6px);
-            &:hover, &:focus {
-              cursor: auto;
-            }
-          }
-          input {
-            height: 40px;
-            cursor: default;
-          }
-          textarea {
-            margin-top: 10px;
-            min-height: 65px;
-            resize: none;
-            cursor: default;
           }
           div.btn-group {
             margin: 10px 0;
@@ -404,6 +405,9 @@ body.theme-cdap {
         .tooltip-arrow {
           border-bottom: 5px solid #666;
         }
+      }
+      &.icon-tooltip {
+        width: auto;
       }
       .tooltip-inner {
         background-color: #666;

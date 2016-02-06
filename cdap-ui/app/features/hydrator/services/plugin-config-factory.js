@@ -21,8 +21,8 @@ class PluginConfigFactory {
     this.$state = $state;
     this.data = {};
   }
-  fetchWidgetJson(artifactName, artifactVersion, key) {
-    let cache = this.data[`${artifactName}-${artifactVersion}-${key}`];
+  fetchWidgetJson(artifactName, artifactVersion, artifactScope, key) {
+    let cache = this.data[`${artifactName}-${artifactVersion}-${artifactScope}-${key}`];
     if (cache) {
       return this.$q.when(cache);
     }
@@ -31,6 +31,7 @@ class PluginConfigFactory {
       namespace: this.$state.params.namespace || this.$state.params.nsadmin,
       artifactName,
       artifactVersion,
+      scope: artifactScope,
       keys: key
     })
       .$promise

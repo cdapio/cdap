@@ -98,9 +98,11 @@ class NodeConfigController {
     if (this.state.noproperty) {
       var artifactName = this.myHelpers.objectQuery(this.state.node, 'plugin', 'artifact', 'name');
       var artifactVersion = this.myHelpers.objectQuery(this.state.node, 'plugin', 'artifact', 'version');
+      var artifactScope = this.myHelpers.objectQuery(this.state.node, 'plugin', 'artifact', 'scope');
       this.PluginConfigFactory.fetchWidgetJson(
         artifactName,
         artifactVersion,
+        artifactScope,
         `widgets.${this.state.node.plugin.name}-${this.state.node.type}`
       )
         .then(

@@ -24,7 +24,7 @@ A sample JDBC Driver Plugin configuration:
   
     {
       "parents": [ "cdap-etl-batch[|version|,\ |version|]" ],
-      "config": [
+      "plugins": [
         {
           "name" : "mysql",
           "type" : "jdbc",

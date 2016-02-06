@@ -287,7 +287,9 @@ public class StandaloneMain {
         LOG.error("Failed to start Standalone CDAP: {}", rootCause.getMessage());
         System.err.println("Failed to start Standalone CDAP: " + rootCause.getMessage());
       } else {
-        LOG.error("Failed to start Standalone CDAP", e);
+        // exception stack trace will be logged by
+        // UncaughtExceptionIdleService.UNCAUGHT_EXCEPTION_HANDLER
+        LOG.error("Failed to start Standalone CDAP");
         System.err.println("Failed to start Standalone CDAP");
         e.printStackTrace(System.err);
       }
