@@ -65,7 +65,10 @@
       <div class="form-group" ng-if="NodeConfigController.state.showErrorDataset">
         <label class="control-label">
           Error Dataset
-          <span class="fa fa-info-circle" tooltip="{{NodeConfigController.state.errorDatasetTooltip}}" tooltip-placement="right"></span>
+          <span class="fa fa-info-circle"
+                ng-if="NodeConfigController.state.errorDatasetTooltip" 
+                tooltip="{{NodeConfigController.state.errorDatasetTooltip}}"
+                tooltip-placement="right"></span>
         </label>
         <input type="text" class="form-control" ng-model="NodeConfigController.state.node.errorDatasetName"/>
       </div>
