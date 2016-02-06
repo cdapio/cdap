@@ -337,7 +337,7 @@ public class UpgradeTool {
       }
     } catch (Exception e) {
       System.out.println(String.format("Failed to perform action '%s'. Reason: '%s'.", action, e.getMessage()));
-      e.printStackTrace(System.out);
+      throw e;
     }
   }
 
@@ -411,8 +411,10 @@ public class UpgradeTool {
     try {
       UpgradeTool upgradeTool = new UpgradeTool();
       upgradeTool.doMain(args);
+      LOG.info("Upgrade completed successfully");
     } catch (Throwable t) {
       LOG.error("Failed to upgrade ...", t);
+      System.exit(1);
     }
   }
 
