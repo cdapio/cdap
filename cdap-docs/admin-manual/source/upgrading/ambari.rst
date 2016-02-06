@@ -19,6 +19,11 @@ Package Manager, either RPM or Debian:
 
   :ref:`Upgrading CDAP via Package Managers <admin-upgrading-packages-cdap>`
 
+
 Upgrading Apache Ambari
 =======================
-<TO BE COMPLETED>
+When upgrading Apache Ambari and HDP (Hortonworks Data Platform), please follow our
+instructions for upgrading Hadoop installations that were installed with a Package
+Manager, either RPM or Debian:
+
+  :ref:`Upgrading Hadoop <admin-upgrading-packages-hadoop>`

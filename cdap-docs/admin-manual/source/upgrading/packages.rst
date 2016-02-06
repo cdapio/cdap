@@ -108,6 +108,15 @@ please follow the upgrade instructions for the earlier versions and upgrade firs
 Upgrading Hadoop
 ================
 
+.. _admin-upgrading-packages-hadoop:
+
+Upgrading Hadoop using Packages
+-------------------------------
+
+<TO BE COMPLETED>
+
+.. _admin-upgrading-packages-hadoop-cdh:
+
 Upgrading CDH
 -------------
 These steps cover upgrading the version of CDH of an existing CDAP installation.
@@ -193,3 +202,17 @@ goes wrong, see these troubleshooting instructions for :ref:`problems while upgr
 #. Start CDAP::
 
     $ for i in `ls /etc/init.d/ | grep cdap` ; do sudo service $i start ; done
+
+
+.. _admin-upgrading-packages-hadoop-hdp:
+
+Upgrading HDP
+-------------
+<TO BE COMPLETED>
+
+
+.. _admin-upgrading-packages-hadoop-mapr:
+
+Upgrading MapR
+--------------
+<TO BE COMPLETED>

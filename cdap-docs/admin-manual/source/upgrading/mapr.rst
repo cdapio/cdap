@@ -22,4 +22,7 @@ Package Manager, either RPM or Debian:
 
 Upgrading MapR
 ==============
-<TO BE COMPLETED>
+When upgrading MapR, please follow our instructions for upgrading Hadoop installations that were
+installed with a Package Manager, either RPM or Debian:
+
+  :ref:`Upgrading Hadoop <admin-upgrading-packages-hadoop>`
