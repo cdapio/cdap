@@ -707,17 +707,16 @@ def compare_all_xml(options):
             if file.endswith(".sdl"):
                 print "SDL file from: %s" % file
                 compare_xml_sdl(default_xml_filepath(), f.name, update=update)
-        elif file.endswith(".xml.example"):
-            print "Example XML file: %s" % file
-            compare_xml_files(default_xml_filepath(), os.path.join(SOURCE_PATH, RELATIVE_PATH, file), update=update)
-        elif file.endswith(".xml"):
-            print "XML file: %s" % file
-            compare_xml_files(default_xml_filepath(), os.path.join(SOURCE_PATH, RELATIVE_PATH, file), update=update)
-        elif file.endswith(".sdl"):
-            print "SDL file: %s" % file
-            compare_xml_sdl(default_xml_filepath(), os.path.join(SOURCE_PATH, RELATIVE_PATH, file), update=update)
         else:
-            print "Unknown filetype for: %s" % file
+            f = os.path.join(SOURCE_PATH, RELATIVE_PATH, file)
+            if file.endswith(".xml") or file.endswith(".xml.example"):
+                print "XML file: %s" % file
+                compare_xml_files(default_xml_filepath(), f, update=update)
+            elif file.endswith(".sdl"):
+                print "SDL file: %s" % file
+                compare_xml_sdl(default_xml_filepath(), f, update=update)
+            else:
+                print "Unknown filetype for: %s" % file
             
 def main():
     """ Main program entry point."""
