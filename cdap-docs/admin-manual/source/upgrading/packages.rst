@@ -159,7 +159,8 @@ goes wrong, see these troubleshooting instructions for :ref:`problems while upgr
     
 #. Upgrade to the new version of CDH.
 
-#. Run the CDAP Upgrade Tool, as the user that runs CDAP Master (the CDAP user)::
+#. Run the *Post-CDH Upgrade Tasks* |---| to upgrade CDAP for the new version of CDH |---| by running
+   the *CDAP Upgrade Tool*, as the user that runs CDAP Master (the CDAP user)::
 
     $ /opt/cdap/master/bin/svc-master run co.cask.cdap.data.tools.UpgradeTool upgrade_hbase
     

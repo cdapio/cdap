@@ -39,7 +39,7 @@ The following is the generic procedure for Major/Minor version upgrades:
 
 #. Stop all flows, services, and other programs in all your applications.
 
-#. Stop CDAP services.
+#. Stop all CDAP services.
 
 #. Ensure your installed version of the CSD matches the target version of CDAP. For
    example, CSD version 3.0.* is compatible with CDAP version 3.0.*.  Download `the latest
@@ -48,7 +48,7 @@ The following is the generic procedure for Major/Minor version upgrades:
 #. Use the Cloudera Manager UI to download, distribute, and activate the corresponding
    CDAP parcel version on all cluster hosts.
 
-#. Before starting services, run the *Upgrade Tool* to update CDAP. From the CDAP Service 
+#. Before starting services, run the *CDAP Upgrade Tool* to upgrade CDAP. From the CDAP Service 
    page, select "Run CDAP Upgrade Tool" from the Actions menu.
 
 #. Start the CDAP services.  At this point it may be necessary to correct for any changes in
@@ -56,7 +56,7 @@ The following is the generic procedure for Major/Minor version upgrades:
    remove role instances as necessary. Check the :ref:`release-specific upgrade notes
    <cloudera-release-specific-upgrade-notes>` below for any specific instructions.
    
-#. After CDAP services have started, run the *Post-Upgrade* tool to perform any necessary
+#. After CDAP services have started, run the *CDAP Post-Upgrade Tasks* to perform any necessary
    upgrade steps against the running services.  From the CDAP Service page, select "Run CDAP
    Post-Upgrade Tasks."
 
@@ -110,23 +110,19 @@ goes wrong, see these troubleshooting instructions for :ref:`problems while upgr
 
 #. After upgrading CDAP, start CDAP and check that it is working correctly.
 
-#. Using Cloudera Manager (CM), stop all CDAP application and services::
-   
-    < REPLACE WITH GUI INSTRUCTIONS >
+#. Using Cloudera Manager (CM), stop all CDAP application and services.
 
 #. Disable all CDAP tables; from an HBase shell, run the command::
 
     > disable_all 'cdap.*'
     
 #. Upgrade to the new version of CDH.
-#. Stop all CDAP services, as CM will have (again) auto-started CDAP::
 
-    < REPLACE WITH GUI INSTRUCTIONS >
+#. Stop all CDAP services, as CM will have (again) auto-started CDAP.
 
-#. Run the CDAP Upgrade Tool, as the user that runs CDAP Master (the CDAP user)::
-
-    < REPLACE WITH GUI INSTRUCTIONS >
-    
+#. Run the *Post-CDH Upgrade Tasks* to upgrade CDAP for the new version of CDH. From the CDAP Service 
+   page, select "Run Post-CDH Upgrade Tasks" from the Actions menu.
+       
 #. Check if the coprocessor JARs for all CDAP tables have been upgraded to the correct version
    as listed in the table above by checking that the coprocessor classnames are using the
    correct package |---| for example, if upgrading from CDH 5.3 to 5.4, the new
@@ -153,6 +149,4 @@ goes wrong, see these troubleshooting instructions for :ref:`problems while upgr
 
     > enable_all 'cdap.*'
     
-#. Start CDAP::
-
-    < REPLACE WITH GUI INSTRUCTIONS >
+#. Start CDAP using Cloudera Manager.
