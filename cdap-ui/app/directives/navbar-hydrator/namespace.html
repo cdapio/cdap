@@ -15,8 +15,13 @@
 -->
 
 <ul class="dropdown-menu" role="menu" ng-show="currentUser">
-  <li ng-repeat="ns in namespaces | orderBy : 'name'">
-    <a role="menuitem" ui-sref="hydrator.list({namespace: ns.name})" tabindex="-1" title="{{ns.name}}">
+  <li ng-repeat="ns in namespaces | orderBy : 'name'" >
+    <a role="menuitem"
+        ng-class="{'active': ns.name === namespace}"
+        ui-sref="hydrator.list({namespace: ns.name})"
+        tabindex="-1"
+        title="{{ns.name}}">
+      <i ng-class="{'fa fa-check': ns.name === namespace}"></i>
       <span ng-bind="ns.name | myEllipsis: 32"></span>
     </a>
   </li>
