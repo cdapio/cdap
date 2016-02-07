@@ -35,6 +35,8 @@ consists of four mandatory roles and two optional roles:
      - Metrics and logging transport service, using an embedded version of *Kafka*
    * - CDAP UI Service
      - User interface for managing CDAP applications
+   * - 
+     - 
    * - CDAP Security Auth Service
      - Performs client authentication for CDAP when security is enabled (*optional*)
    * - Gateway
@@ -44,20 +46,20 @@ consists of four mandatory roles and two optional roles:
 
 These roles map to the :ref:`CDAP components <admin-manual-cdap-components>` of the same name.
 
-- Note that the *CDAP Gateway/Router Service* is not a `Cloudera Manager Gateway Role 
-  <http://www.cloudera.com/content/www/en-us/documentation/enterprise/latest/topics/cm_mc_managing_roles.html>`__
-  but is instead another name for the CDAP Router Service.
-
 - As CDAP depends on HDFS, YARN, HBase, ZooKeeper, and (optionally) Hive and Spark, it must be placed
   on a cluster host with full client configurations for these dependent services. 
 
-- The CDAP Master role must be co-located on a cluster host with an HDFS Gateway, a YARN
+- The CDAP Master Service role (or *CDAP Master*) must be co-located on a cluster host with an HDFS Gateway, a YARN
   Gateway, an HBase Gateway, and |---| optionally |---| Hive or Spark Gateways.
 
 - Note that these Gateways are redundant if you are co-locating the CDAP Master role 
   on a cluster host (or hosts, in the case of a deployment with high availability) with
   actual services, such as the HDFS Namenode, the YARN resource manager, or the HBase
   Master.
+
+- Note that the CDAP Gateway/Router Service is not a `Cloudera Manager Gateway Role 
+  <http://www.cloudera.com/content/www/en-us/documentation/enterprise/latest/topics/cm_mc_managing_roles.html>`__
+  but is instead another name for the CDAP Router Service.
 
 - All services run as the ``'cdap'`` user installed by the parcel.
 
