@@ -135,6 +135,18 @@ public abstract class RowColumns<T> {
   }
 
   /**
+   * @deprecated As of CDAP 3.3.1, no parameter {@code #add} method is deprecated. Use either {@link #add(String[])} or
+   * {@link #add(byte[][])}.
+   *
+   * @return the {@link RowColumns} object being defined
+   */
+  @SuppressWarnings("unchecked")
+  public T add() {
+    // here only for backwards compatibility in 3.3.1.
+    return (T) this;
+  }
+
+  /**
    * @return the row that was included
    */
   public byte[] getRow() {
