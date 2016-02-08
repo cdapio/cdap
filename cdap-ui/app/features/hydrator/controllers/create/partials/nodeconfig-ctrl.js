@@ -108,6 +108,11 @@ class NodeConfigController {
         .then(
           (res) => {
             this.state.groupsConfig = this.PluginConfigFactory.generateNodeConfig(this.state.node._backendProperties, res);
+            if (res.errorDataset || this.state.node.errorDatasetName) {
+              this.state.showErrorDataset = true;
+              this.state.errorDatasetTooltip = res.errorDataset && res.errorDataset.errorDatasetTooltip || false;
+              this.state.node.errorDatasetName = this.state.node.errorDatasetName || '';
+            }
             angular.forEach(this.state.groupsConfig.groups, (group) => {
               angular.forEach(group.fields, (field) => {
                 if (field.defaultValue) {
