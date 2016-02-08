@@ -113,6 +113,15 @@ function createrepo_in_repo_staging() {
   rm -rf ${STAGE_DIR}/${__maj_min}/dists/precise{/.refs,} && mv ${STAGE_DIR}/${__maj_min}/dists/precise{-*,} || return 1
 }
 
+function create_definition_file() {
+  [ -f "${STAGE_DIR}/${__maj_min}/cask.list" ] && return
+  echo "Create APT repository definition file"
+  cd ${STAGE_DIR}/${__maj_min}
+  cat <<EOF > cask.list
+deb [ arch=amd64 ] http://${S3_BUCKET}/${S3_REPO_PATH}/${__maj_min} precise cdap
+EOF
+}
+
 function create_repo_tarball() {
   cd ${STAGE_DIR}
   echo "Create APT repository tarball"
@@ -125,6 +134,7 @@ function create_repo_tarball() {
 setup_repo_staging || die "Something went wrong setting up the staging directory"
 add_packages_to_repo_staging || die "Failed copying packages to staging directory"
 createrepo_in_repo_staging || die "Failed to create repository from staging directory"
+create_definition_file || die "Failed to create repository definition file"
 create_repo_tarball || die "Failed to create APT repository tarball"
 
 echo "Complete: cdap-aptrepo-${__maj_min}.tar.gz created"
