@@ -159,7 +159,7 @@ function build_docs() {
   echo "Building \"${doc_type}\" (${javadocs} Javadocs)"
   echo "--------------------------------------------------------"
   echo
-  if [ "${doc_type}" != "${DOCS}" && "${doc_type}" != "${DOCS_OUTER}" ]; then
+  if [[ "${doc_type}" != "${DOCS}" && "${doc_type}" != "${DOCS_OUTER}" ]]; then
     clean_targets
   fi
   clear_messages_set_messages_file

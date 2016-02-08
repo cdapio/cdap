@@ -107,9 +107,9 @@ function download_includes() {
   download_md_doc_file $base_target $hydrator_source core-plugins JavaScript-transform.md
   download_md_doc_file $base_target $hydrator_source core-plugins KVTable-batchsink.md
   download_md_doc_file $base_target $hydrator_source core-plugins KVTable-batchsource.md
-  download_md_doc_file $base_target $hydrator_source core-plugins Kafka-realtimesource.md
   download_md_doc_file $base_target $hydrator_source core-plugins LogParser-transform.md
   download_md_doc_file $base_target $hydrator_source core-plugins Projection-transform.md
+  download_md_doc_file $base_target $hydrator_source core-plugins PythonEvaluator-transform.md
   download_md_doc_file $base_target $hydrator_source core-plugins S3-batchsource.md
   download_md_doc_file $base_target $hydrator_source core-plugins S3Avro-batchsink.md
   download_md_doc_file $base_target $hydrator_source core-plugins S3Parquet-batchsink.md
@@ -148,13 +148,12 @@ function download_includes() {
   download_md_doc_file $base_target $hydrator_source hive-plugins Hive-batchsink.md
   download_md_doc_file $base_target $hydrator_source hive-plugins Hive-batchsource.md
   
+  download_md_doc_file $base_target $hydrator_source kafka-plugins Kafka-realtimesource.md
   download_md_doc_file $base_target $hydrator_source kafka-plugins KafkaProducer-realtimesink.md
   
   download_md_doc_file $base_target $hydrator_source mongodb-plugins MongoDB-batchsink.md
   download_md_doc_file $base_target $hydrator_source mongodb-plugins MongoDB-batchsource.md
   download_md_doc_file $base_target $hydrator_source mongodb-plugins MongoDB-realtimesink.md
-  
-  download_md_doc_file $base_target $hydrator_source python-evaluator-transform PythonEvaluator-transform.md
   
   download_md_doc_file $base_target $hydrator_source transform-plugins CSVFormatter-transform.md
   download_md_doc_file $base_target $hydrator_source transform-plugins CSVParser-transform.md
