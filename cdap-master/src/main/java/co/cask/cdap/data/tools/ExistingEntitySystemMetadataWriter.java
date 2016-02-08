@@ -59,31 +59,30 @@ public class ExistingEntitySystemMetadataWriter {
   private final Store store;
   private final StreamAdmin streamAdmin;
   private final ViewAdmin viewAdmin;
-  private final DatasetFramework dsFramework;
   private final ArtifactStore artifactStore;
-  private final SystemDatasetInstantiatorFactory dsInstantiatorFactory;
+  private final LocationFactory locationFactory;
+  private final CConfiguration cConf;
 
   @Inject
   ExistingEntitySystemMetadataWriter(MetadataStore metadataStore, NamespaceStore nsStore, Store store,
                                      ArtifactStore artifactStore, StreamAdmin streamAdmin, ViewAdmin viewAdmin,
-                                     DatasetFramework dsFramework, LocationFactory locationFactory,
-                                     CConfiguration cConf) {
+                                     LocationFactory locationFactory, CConfiguration cConf) {
     this.metadataStore = metadataStore;
     this.nsStore = nsStore;
     this.store = store;
     this.streamAdmin = streamAdmin;
     this.viewAdmin = viewAdmin;
-    this.dsFramework = dsFramework;
     this.artifactStore = artifactStore;
-    this.dsInstantiatorFactory = new SystemDatasetInstantiatorFactory(locationFactory, this.dsFramework, cConf);
+    this.locationFactory = locationFactory;
+    this.cConf = cConf;
   }
 
-  public void write() throws Exception {
+  public void write(DatasetFramework dsFramework) throws Exception {
     for (NamespaceMeta namespaceMeta : nsStore.list()) {
       Id.Namespace namespace = Id.Namespace.from(namespaceMeta.getName());
       writeSystemMetadataForArtifacts(namespace);
       writeSystemMetadataForApps(namespace);
-      writeSystemMetadataForDatasets(namespace);
+      writeSystemMetadataForDatasets(namespace, dsFramework);
       writeSystemMetadataForStreams(namespace);
     }
   }
@@ -126,12 +125,16 @@ public class ExistingEntitySystemMetadataWriter {
     }
   }
 
-  private void writeSystemMetadataForDatasets(Id.Namespace namespace) throws DatasetManagementException {
+  private void writeSystemMetadataForDatasets(Id.Namespace namespace,
+                                              DatasetFramework dsFramework) throws DatasetManagementException {
+    SystemDatasetInstantiatorFactory systemDatasetInstantiatorFactory =
+      new SystemDatasetInstantiatorFactory(locationFactory, dsFramework, cConf);
     for (DatasetSpecificationSummary summary : dsFramework.getInstances(namespace)) {
       Id.DatasetInstance dsInstance = Id.DatasetInstance.from(namespace, summary.getName());
       DatasetProperties dsProperties = DatasetProperties.builder().addAll(summary.getProperties()).build();
       String dsType = summary.getType();
-      AbstractSystemMetadataWriter writer = new DatasetSystemMetadataWriter(metadataStore, dsInstantiatorFactory,
+      AbstractSystemMetadataWriter writer = new DatasetSystemMetadataWriter(metadataStore,
+                                                                            systemDatasetInstantiatorFactory,
                                                                             dsInstance, dsProperties, dsType);
       writer.write();
     }
