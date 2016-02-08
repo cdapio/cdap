@@ -64,6 +64,14 @@ function myNavbarHydratorDirective (myAuth, MY_CONFIG, $dropdown) {
       $scope.$on (myAuth.logoutSuccess, function () {
         $scope.namespaces = [];
       });
+      // This is here because navbar-hydrator navbar is outside of <main-container/>
+      // So when we switch namesapce this controller is not reloaded. So the $scope.namespace
+      // is not updated. We need to watch until this $scope is alive and change the namespace
+      // This might be redundant right now when we just navigate in hydrator but this is something
+      // we should address this when we unify navbars.
+      $scope.$on('$stateChangeSuccess', function() {
+        $scope.namespace = $state.params.namespace;
+      });
     }
   };
 });
