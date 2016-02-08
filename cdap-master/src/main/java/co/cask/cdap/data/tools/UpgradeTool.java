@@ -113,6 +113,7 @@ public class UpgradeTool {
   private final DatasetInstanceManager datasetInstanceManager;
   private final MetadataStore metadataStore;
   private final ExistingEntitySystemMetadataWriter existingEntitySystemMetadataWriter;
+  private final DatasetServiceManager datasetServiceManager;
 
   /**
    * Set of Action available in this tool.
@@ -124,6 +125,7 @@ public class UpgradeTool {
               "  2. Upgrade Schedule Triggers\n" +
               "  3. Upgrade Business Metadata Dataset\n" +
               "  4. Stream State Store\n" +
+              "  5. Generate system metadata for all existing entities\n" +
               "  Note: Once you run the upgrade tool you cannot rollback to the previous version."),
     UPGRADE_HBASE("After an HBase upgrade, updates the coprocessor jars of all user and \n" +
                     "system HBase tables to a version that is compatible with the new HBase \n" +
@@ -144,7 +146,7 @@ public class UpgradeTool {
   public UpgradeTool() throws Exception {
     this.cConf = CConfiguration.create();
     this.hConf = HBaseConfiguration.create();
-    Injector injector = init();
+    Injector injector = createInjector();
     this.txService = injector.getInstance(TransactionService.class);
     this.zkClientService = injector.getInstance(ZKClientService.class);
     this.dsFramework = injector.getInstance(DatasetFramework.class);
@@ -169,10 +171,11 @@ public class UpgradeTool {
         }
       }
     });
-    existingEntitySystemMetadataWriter = injector.getInstance(ExistingEntitySystemMetadataWriter.class);
+    this.existingEntitySystemMetadataWriter = injector.getInstance(ExistingEntitySystemMetadataWriter.class);
+    this.datasetServiceManager = injector.getInstance(DatasetServiceManager.class);
   }
 
-  private Injector init() throws Exception {
+  private Injector createInjector() throws Exception {
     return Guice.createInjector(
       new ConfigModule(cConf, hConf),
       new LocationRuntimeModule().getDistributedModules(),
@@ -396,8 +399,13 @@ public class UpgradeTool {
     LOG.info("Upgrading stream state store table...");
     streamStateStoreUpgrader.upgrade();
 
+    datasetServiceManager.startUp();
     LOG.info("Writing system metadata to existing entities...");
-    existingEntitySystemMetadataWriter.write();
+    try {
+      existingEntitySystemMetadataWriter.write(datasetServiceManager.getDSFramework());
+    } finally {
+      datasetServiceManager.shutDown();
+    }
   }
 
   private void performHBaseUpgrade() throws Exception {
