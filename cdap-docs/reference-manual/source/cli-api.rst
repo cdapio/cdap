@@ -122,23 +122,18 @@ These are the available commands:
 .. csv-table::
    :header: Command,Description
    :widths: 50, 50
-   
+
    **General**
    ``cli render as <table-renderer>``,"Modifies how table data is rendered. Valid options are ""alt"" (default) and ""csv""."
    ``cli version``,"Prints the CLI version."
-   ``connect <cdap-instance-uri>``,"Connects to a CDAP instance."
+   ``connect <cdap-instance-uri> [<verify-ssl-cert>]``,"Connects to a CDAP instance."
    ``exit``,"Exits the CLI."
    ``quit``,"Exits the CLI."
-   **Namespace**
-   ``create namespace <namespace-name> [<namespace-description>]``,"Creates a namespace in CDAP."
-   ``delete namespace <namespace-name>``,"Deletes a namespace."
-   ``describe namespace <namespace-name>``,"Describes a namespace."
-   ``list namespaces``,"Lists all namespaces."
-   ``use namespace <namespace-name>``,"Changes the current namespace to <namespace-name>."
    **Artifact**
    ``delete artifact <artifact-name> <artifact-version>``,"Deletes an artifact"
    ``describe artifact <artifact-name> <artifact-version> [<scope>]``,"Shows information about an artifact. If no scope is given, the user scope will be used. Includes information about application and plugin classes contained in the artifact."
    ``describe artifact-plugin <artifact-name> <artifact-version> <plugin-type> <plugin-name> [<scope>]``,"Describes all plugins of a specific type and name available to a specific artifact. Can return multiple details if the plugin exists in multiple artifacts. If no scope is given, the user scope will be used."
+   ``get artifact properties <artifact-name> <artifact-version> [<scope>]``,"Gets properties of an artifact. If no scope is given, the user scope will be used. "
    ``list artifact plugin-types <artifact-name> <artifact-version> [<scope>]``,"Lists all plugin types usable by the specified artifact. If no scope is given, the user scope will be used."
    ``list artifact plugins <artifact-name> <artifact-version> <plugin-type> [<scope>]``,"Lists all plugins of a specific type available to a specific artifact. Includes the type, name, classname, and description of the plugin, as well as the artifact the plugin came from. If no scope is given, the user scope will be used."
    ``list artifact versions <artifact-name> [<scope>]``,"Lists all versions of a specific artifact. If no scope is given, the user scope will be used."
@@ -151,18 +146,21 @@ These are the available commands:
     |       ``""name"": ""mysql"",``
     |       ``""className"": ""com.mysql.jdbc.Driver""``
     |     ``}``
-    |   ``]``
+    |   ``],``
+    |   ``""plugins"":{``
+    |     ``""prop1"": ""val1"",``
+    |   ``},``
     | ``}``
-    
-   This config specifies that the artifact contains one JDBC third-party plugin that should be available to the app1 artifact (versions 1.0.0 inclusive to 2.0.0 exclusive) and app2 artifact (versions 1.2.0 inclusive to 1.3.0 inclusive)."
+   This config specifies that the artifact contains one JDBC third-party plugin that should be available to the app1 artifact (versions 1.0.0 inclusive to 2.0.0 exclusive) and app2 artifact (versions 1.2.0 inclusive to 1.3.0 inclusive). The config may also include a 'properties' field specifying properties for the artifact."
+   ``set artifact properties <artifact-name> <artifact-version> <scope> <local-file-path>``,"Sets properties of an artifact. The properties file must contain a JSON Object with a 'properties' key whose value is a JSON Object of the properties for the artifact."
    **Application Lifecycle**
-   ``create app <app-id> <artifact-name> <artifact-version> <scope> [<app-config-file>]``,"Creates an application from an artifact with optional configuration. If configuration is needed, it must be given as a file whose contents are a JSON Object containing the application config. For example, the file contents could contain: 
+   ``create app <app-id> <artifact-name> <artifact-version> <scope> [<app-config-file>]``,"Creates an application from an artifact with optional configuration. If configuration is needed, it must be given as a file whose contents are a JSON object containing the application config. For example, the file contents could contain:
     | ``{``
     |   ``""config"":``
     |     ``{ ""stream"": ""purchases""}``
     | ``}``
-    
-   In this case, the application would receive ``'{ ""stream"": ""purchases"" }'`` as its config object."
+
+   In this case, the application would receive ``'{ ""stream"": ""purchases"" }'`` as its config object."    
    ``delete app <app-id>``,"Deletes an application."
    ``delete preferences app [<app-id>]``,"Deletes the preferences of an application."
    ``delete preferences flow [<app-id.flow-id>]``,"Deletes the preferences of a flow."
@@ -175,6 +173,7 @@ These are the available commands:
    ``delete preferences workflow [<app-id.workflow-id>]``,"Deletes the preferences of a workflow."
    ``deploy app <app-jar-file> [<app-config>]``,"Deploys an application optionally with a serialized configuration string."
    ``describe app <app-id>``,"Shows information about an application."
+   ``get app <app-id> programs status [of type <program-types>]``,"Command to get status of one or more programs of an application. By default, get status of all flows, services, and workers. A comma separated list of program types can be specified, which will start all programs of those types. For example, specifying ""flow,workflow"" will get status of all flows and workflows in the application."
    ``get endpoints service <app-id.service-id>``,"Lists the endpoints that a service exposes."
    ``get flow live <app-id.flow-id>``,"Gets the live info of a flow."
    ``get flow logs <app-id.flow-id> [<start-time>] [<end-time>]``,"Gets the logs of a flow."
@@ -220,6 +219,7 @@ These are the available commands:
    ``get worker runtimeargs <app-id.worker-id>``,"Gets the runtime arguments of a worker."
    ``get worker status <app-id.worker-id>``,"Gets the status of a worker."
    ``get workflow current <app-id.workflow-id> <runid>``,"Gets the currently running nodes of a workflow for a given run id."
+   ``get workflow logs <app-id.workflow-id> [<start-time>] [<end-time>]``,"Gets the logs of a workflow."
    ``get workflow runs <app-id.workflow-id> [<status>] [<start-time>] [<end-time>] [<limit>]``,"Gets the run history of a workflow."
    ``get workflow runtimeargs <app-id.workflow-id>``,"Gets the runtime arguments of a workflow."
    ``get workflow schedules <app-id.workflow-id>``,"Resumes a schedule"
@@ -242,6 +242,7 @@ These are the available commands:
    ``load preferences spark <local-file-path> <content-type> <app-id.spark-id>``,"Sets preferences of a Spark program from a local config file (supported formats = JSON)."
    ``load preferences worker <local-file-path> <content-type> <app-id.worker-id>``,"Sets preferences of a worker from a local config file (supported formats = JSON)."
    ``load preferences workflow <local-file-path> <content-type> <app-id.workflow-id>``,"Sets preferences of a workflow from a local config file (supported formats = JSON)."
+   ``restart app <app-id> programs [of type <program-types>]``,"Command to restart one or more programs of an application. By default, restart all flows, services, and workers. A comma separated list of program types can be specified, which will start all programs of those types. For example, specifying ""flow,workflow"" will restart all flows and workflows in the application."
    ``resume schedule <app-id.schedule-id>``,"Resumes a schedule"
    ``set flow runtimeargs <app-id.flow-id> <runtime-args>``,"Sets the runtime arguments of a flow. <runtime-args> is specified in the format ""key1=a key2=b""."
    ``set flowlet instances <app-id.flow-id.flowlet-id> <num-instances>``,"Sets the instances of a flowlet."
@@ -261,6 +262,7 @@ These are the available commands:
    ``set worker instances <app-id.worker-id> <num-instances>``,"Sets the instances of a worker."
    ``set worker runtimeargs <app-id.worker-id> <runtime-args>``,"Sets the runtime arguments of a worker. <runtime-args> is specified in the format ""key1=a key2=b""."
    ``set workflow runtimeargs <app-id.workflow-id> <runtime-args>``,"Sets the runtime arguments of a workflow. <runtime-args> is specified in the format ""key1=a key2=b""."
+   ``start app <app-id> programs [of type <program-types>]``,"Command to start one or more programs of an application. By default, start all flows, services, and workers. A comma separated list of program types can be specified, which will start all programs of those types. For example, specifying ""flow,workflow"" will start all flows and workflows in the application."
    ``start flow <app-id.flow-id> [<runtime-args>]``,"Starts a flow. <runtime-args> is specified in the format ""key1=a key2=b""."
    ``start mapreduce <app-id.mapreduce-id> [<runtime-args>]``,"Starts a MapReduce program. <runtime-args> is specified in the format ""key1=a key2=b""."
    ``start service <app-id.service-id> [<runtime-args>]``,"Starts a service. <runtime-args> is specified in the format ""key1=a key2=b""."
@@ -273,6 +275,7 @@ These are the available commands:
    ``start-debug spark <app-id.spark-id> [<runtime-args>]``,"Starts a Spark program in debug mode. <runtime-args> is specified in the format ""key1=a key2=b""."
    ``start-debug worker <app-id.worker-id> [<runtime-args>]``,"Starts a worker in debug mode. <runtime-args> is specified in the format ""key1=a key2=b""."
    ``start-debug workflow <app-id.workflow-id> [<runtime-args>]``,"Starts a workflow in debug mode. <runtime-args> is specified in the format ""key1=a key2=b""."
+   ``stop app <app-id> programs [of type <program-types>]``,"Command to stop one or more programs of an application. By default, stop all flows, services, and workers. A comma separated list of program types can be specified, which will start all programs of those types. For example, specifying ""flow,workflow"" will stop all flows and workflows in the application."
    ``stop flow <app-id.flow-id>``,"Stops a flow."
    ``stop mapreduce <app-id.mapreduce-id>``,"Stops a MapReduce program."
    ``stop service <app-id.service-id>``,"Stops a service."
@@ -294,12 +297,10 @@ These are the available commands:
    ``list dataset types``,"Lists all dataset types."
    ``set dataset instance properties <dataset-name> <dataset-properties>``,"Sets properties for a dataset."
    ``truncate dataset instance <dataset-name>``,"Truncates a dataset."
+   **Egress**
+   ``call service <app-id.service-id> <http-method> <endpoint> [headers <headers>] [body <body>] [body:file <local-file-path>]``,"Calls a service endpoint. The <headers> are formatted as ""{'key':'value', ...}"". The request body may be provided either as a string or a file. To provide the body as a string, use ""body <body>"". To provide the body as a file, use ""body:file <local-file-path>""."
    **Explore**
    ``execute <query> [<timeout>]``,"Executes a query with optional <timeout> in minutes (default is no timeout)."
-   **Metrics**
-   ``get metric value <metric-name> [<tags>] [start <start>] [end <end>]``,"Gets the value of a metric. Provide <tags> as a map in the format 'tag1=value1 tag2=value2'."
-   ``search metric names [<tags>]``,"Searches metric names. Provide <tags> as a map in the format 'tag1=value1 tag2=value2'."
-   ``search metric tags [<tags>]``,"Searches metric tags. Provide <tags> as a map in the format 'tag1=value1 tag2=value2'."
    **Ingest**
    ``create stream <new-stream-id>``,"Creates a stream."
    ``create stream-view <stream-id> <view-id> format <format> [schema <schema>] [settings <settings>]``,"Creates or updates a stream-view. Valid <format>s are avro, csv, tsv, text, clf, grok, syslog. <schema> is a sql-like schema ""column_name data_type, ..."" or Avro-like JSON schema and <settings> is specified in the format ""key1=v1 key2=v2""."
@@ -318,6 +319,31 @@ These are the available commands:
    ``set stream properties <stream-id> <local-file-path>``,"Sets the properties of a stream, such as TTL, format, and notification threshold."
    ``set stream ttl <stream-id> <ttl-in-seconds>``,"Sets the time-to-live (TTL) of a stream."
    ``truncate stream <stream-id>``,"Truncates a stream."
-   **Egress**
-   ``call service <app-id.service-id> <http-method> <endpoint> [headers <headers>] [body <body>] [body:file <local-file-path>]``,"Calls a service endpoint. The <headers> are formatted as ""{'key':'value', ...}"". The request body may be provided either as a string or a file. To provide the body as a string, use ""body <body>"". To provide the body as a file, use ""body:file <local-file-path>""."
-
+   **Metadata and Lineage**
+   ``add metadata-properties <entity-id> <properties>``,"Adds metadata properties for an entity"
+   ``add metadata-tags <entity-id> <tags>``,"Adds metadata tags for an entity"
+   ``get lineage dataset <dataset-name> [start <start>] [end <end>] [levels <levels>]``,"Gets the lineage of a dataset"
+   ``get lineage stream <stream-id> [start <start>] [end <end>] [levels <levels>]``,"Gets the lineage of a stream"
+   ``get metadata <entity-id> [scope <scope>]``,"Gets the metadata of an entity"
+   ``get metadata-properties <entity-id> [scope <scope>]``,"Gets the metadata properties of an entity"
+   ``get metadata-tags <entity-id> [scope <scope>]``,"Gets the metadata tags of an entity"
+   ``remove metadata <entity-id>``,"Removes metadata for an entity"
+   ``remove metadata-properties <entity-id>``,"Removes all metadata properties for an entity"
+   ``remove metadata-property <entity-id> <property>``,"Removes a metadata property for an entity"
+   ``remove metadata-tag <entity-id> <tag>``,"Removes a metadata tag for an entity"
+   ``remove metadata-tags <entity-id>``,"Removes all metadata tags for an entity"
+   ``search metadata <search-query> [filtered by target-type <target-type>]``,"Allows users to search CDAP entities based on the metadata annotated on them."
+   **Metrics**
+   ``get metric value <metric-name> [<tags>] [start <start>] [end <end>]``,"Gets the value of a metric. Provide <tags> as a map in the format 'tag1=value1 tag2=value2'."
+   ``search metric names [<tags>]``,"Searches metric names. Provide <tags> as a map in the format 'tag1=value1 tag2=value2'."
+   ``search metric tags [<tags>]``,"Searches metric tags. Provide <tags> as a map in the format 'tag1=value1 tag2=value2'."
+   **Namespace**
+   ``create namespace <namespace-name> [<namespace-description>]``,"Creates a namespace in CDAP."
+   ``delete namespace <namespace-name>``,"Deletes a namespace."
+   ``describe namespace <namespace-name>``,"Describes a namespace."
+   ``list namespaces``,"Lists all namespaces."
+   ``use namespace <namespace-name>``,"Changes the current namespace to <namespace-name>."
+   **Security**
+   ``security access entity <entity-id> user <user> actions <actions>``,"Checks whether a user has permission to perform certain actions on an entity. <actions> is a comma-separated list."
+   ``security grant entity <entity-id> user <user> actions <actions>``,"Grants a user permission to perform certain actions on an entity. <actions> is a comma-separated list."
+   ``security revoke entity <entity-id> [user <user>] [actions <actions>]``,"Revokes a user's permission to perform certain actions on an entity. <actions> is a comma-separated list."

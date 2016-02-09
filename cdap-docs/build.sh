@@ -226,10 +226,12 @@ function build_docs_cli() {
   echo "Building CLI Docs"
   echo "--------------------------------------------------------"
   echo
+  local target_txt=${SCRIPT_PATH}/../cdap-docs-gen/${TARGET}/cdap-docs-cli.txt
   set_version
   set_mvn_environment
   mvn package -pl cdap-docs-gen -am -DskipTests
-  echo "   java -cp cdap-cli/target/cdap-cli-${PROJECT_VERSION}.jar co.cask.cdap.docgen.cli.GenerateCLIDocsTable"
+  java -cp cdap-docs-gen/target/cdap-docs-gen-${PROJECT_VERSION}.jar:cdap-cli/target/cdap-cli-${PROJECT_VERSION}.jar co.cask.cdap.docgen.cli.GenerateCLIDocsTable > ${target_txt}
+  echo "CLI Docs written to ${target_txt}"
   local warnings=$?
   echo "--------------------------------------------------------"
   echo "Completed Build of CLI Docs"
