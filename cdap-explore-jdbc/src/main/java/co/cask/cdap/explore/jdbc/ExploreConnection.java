@@ -165,12 +165,14 @@ public class ExploreConnection implements Connection {
 
   @Override
   public void setAutoCommit(boolean b) throws SQLException {
-    throw new SQLFeatureNotSupportedException();
+    if (!b) {
+      throw new SQLFeatureNotSupportedException("Explore only supports auto commit = true");
+    }
   }
 
   @Override
   public void commit() throws SQLException {
-    throw new SQLFeatureNotSupportedException();
+    // no-op
   }
 
   @Override
@@ -180,7 +182,9 @@ public class ExploreConnection implements Connection {
 
   @Override
   public void setReadOnly(boolean b) throws SQLException {
-    throw new SQLFeatureNotSupportedException();
+    if (!b) {
+      throw new SQLFeatureNotSupportedException("Explore only supports read only = true");
+    }
   }
 
   @Override
