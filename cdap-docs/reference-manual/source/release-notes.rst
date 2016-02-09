@@ -127,6 +127,10 @@ Bug Fixes
 - `CDAP-3901 <https://issues.cask.co/browse/CDAP-3901>`__ - Fixed a problem with remote
   calls for a namespace existence check in CDAP dataset services.
 
+- `CDAP-4117 <https://issues.cask.co/browse/CDAP-4117>`__ - Fixed an issue of not using
+  the correct user to access HDFS when submitting a YARN application through Apache Twill,
+  which caused cleanup failure on application termination.
+
 - `CDAP-4419 <https://issues.cask.co/browse/CDAP-4419>`__ - Fixed a problem with
   intermittent failure of the workflows, as demonstrated with the CDAP workflow guide.
 
@@ -310,10 +314,6 @@ Deprecated and Removed Features
 
 Known Issues
 ------------
-- `CDAP-4117 <https://issues.cask.co/browse/CDAP-4117>`__ - When the master.service twill
-  application doesn't run because of insufficient containers available in the YARN cluster,
-  a confusing error message gets printed during shutdown.
-
 - `CDAP-4789 <https://issues.cask.co/browse/CDAP-4789>`__ - There is an issue with the
   RunRecord corrector setting an incorrect state at the completion of programs.
 
