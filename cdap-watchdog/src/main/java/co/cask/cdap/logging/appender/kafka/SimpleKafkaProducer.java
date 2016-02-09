@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,6 +17,7 @@
 package co.cask.cdap.logging.appender.kafka;
 
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.logging.LoggingConfiguration;
 import kafka.javaapi.producer.Producer;
 import kafka.producer.KeyedMessage;
@@ -36,25 +37,22 @@ public final class SimpleKafkaProducer {
   // Kafka producer is thread safe
   private final Producer<String, byte[]> producer;
 
-  public SimpleKafkaProducer(CConfiguration configuration) {
+  public SimpleKafkaProducer(CConfiguration cConf) {
     Properties props = new Properties();
-    props.setProperty("metadata.broker.list", configuration.get(LoggingConfiguration.KAFKA_SEED_BROKERS));
+    props.setProperty("metadata.broker.list", cConf.get(LoggingConfiguration.KAFKA_SEED_BROKERS));
     props.setProperty("serializer.class", "kafka.serializer.DefaultEncoder");
     props.setProperty("key.serializer.class", "kafka.serializer.StringEncoder");
     props.setProperty("partitioner.class", "co.cask.cdap.logging.appender.kafka.StringPartitioner");
     props.setProperty("request.required.acks", "1");
-    props.setProperty("producer.type", configuration.get(LoggingConfiguration.KAFKA_PRODUCER_TYPE,
-                                                         LoggingConfiguration.DEFAULT_KAFKA_PRODUCER_TYPE));
-    props.setProperty("queue.buffering.max.ms",
-                      configuration.get(LoggingConfiguration.KAFKA_PROCUDER_BUFFER_MS,
-                                        Long.toString(LoggingConfiguration.DEFAULT_KAFKA_PROCUDER_BUFFER_MS)));
-    props.setProperty(LoggingConfiguration.NUM_PARTITIONS,
-                      configuration.get(LoggingConfiguration.NUM_PARTITIONS,
-                                        LoggingConfiguration.DEFAULT_NUM_PARTITIONS));
+    props.setProperty("producer.type", cConf.get(LoggingConfiguration.KAFKA_PRODUCER_TYPE,
+                       LoggingConfiguration.DEFAULT_KAFKA_PRODUCER_TYPE));
+    props.setProperty("queue.buffering.max.ms", cConf.get(LoggingConfiguration.KAFKA_PROCUDER_BUFFER_MS,
+                      Long.toString(LoggingConfiguration.DEFAULT_KAFKA_PROCUDER_BUFFER_MS)));
+    props.setProperty(LoggingConfiguration.NUM_PARTITIONS, cConf.get(LoggingConfiguration.NUM_PARTITIONS,
+                      LoggingConfiguration.DEFAULT_NUM_PARTITIONS));
 
     ProducerConfig config = new ProducerConfig(props);
-
-    kafkaTopic = KafkaTopic.getTopic();
+    kafkaTopic = cConf.get(Constants.Logging.KAFKA_TOPIC);
     producer = new Producer<>(config);
   }
 

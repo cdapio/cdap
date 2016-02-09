@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,9 +18,9 @@ package co.cask.cdap.logging.read;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.logging.LoggingConfiguration;
-import co.cask.cdap.logging.appender.kafka.KafkaTopic;
 import co.cask.cdap.logging.appender.kafka.LoggingEventSerializer;
 import co.cask.cdap.logging.appender.kafka.StringPartitioner;
 import co.cask.cdap.logging.context.LoggingContextHelper;
@@ -52,16 +52,16 @@ public class KafkaLogReader implements LogReader {
 
   /**
    * Creates a Kafka log reader object.
-   * @param cConfig configuration object containing Kafka seed brokers and number of Kafka partitions for log topic.
+   * @param cConf configuration object containing Kafka seed brokers and number of Kafka partitions for log topic.
    */
   @Inject
-  public KafkaLogReader(CConfiguration cConfig, StringPartitioner partitioner) {
+  KafkaLogReader(CConfiguration cConf, StringPartitioner partitioner) {
     try {
       this.seedBrokers = LoggingConfiguration.getKafkaSeedBrokers(
-        cConfig.get(LoggingConfiguration.KAFKA_SEED_BROKERS));
+        cConf.get(LoggingConfiguration.KAFKA_SEED_BROKERS));
       Preconditions.checkArgument(!this.seedBrokers.isEmpty(), "Kafka seed brokers list is empty!");
 
-      this.topic = KafkaTopic.getTopic();
+      this.topic = cConf.get(Constants.Logging.KAFKA_TOPIC);
       Preconditions.checkArgument(!this.topic.isEmpty(), "Kafka topic is emtpty!");
 
       this.partitioner = partitioner;

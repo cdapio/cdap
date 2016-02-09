@@ -100,7 +100,7 @@ public class StandaloneMain {
   private final MetadataService metadataService;
   private final boolean securityEnabled;
   private final boolean sslEnabled;
-  private final CConfiguration configuration;
+  private final CConfiguration cConf;
 
   private ExternalAuthenticationServer externalAuthenticationServer;
   private final DatasetService datasetService;
@@ -108,8 +108,8 @@ public class StandaloneMain {
   private ExploreExecutorService exploreExecutorService;
   private final ExploreClient exploreClient;
 
-  private StandaloneMain(List<Module> modules, CConfiguration configuration) {
-    this.configuration = configuration;
+  private StandaloneMain(List<Module> modules, CConfiguration cConf) {
+    this.cConf = cConf;
 
     Injector injector = Guice.createInjector(modules);
     txService = injector.getInstance(InMemoryTransactionService.class);
@@ -123,19 +123,19 @@ public class StandaloneMain {
     serviceStore = injector.getInstance(ServiceStore.class);
     streamService = injector.getInstance(StreamService.class);
 
-    if (configuration.getBoolean(DISABLE_UI, false)) {
+    if (cConf.getBoolean(DISABLE_UI, false)) {
       userInterfaceService = null;
     } else {
       userInterfaceService = injector.getInstance(UserInterfaceService.class);
     }
 
-    sslEnabled = configuration.getBoolean(Constants.Security.SSL_ENABLED);
-    securityEnabled = configuration.getBoolean(Constants.Security.ENABLED);
+    sslEnabled = cConf.getBoolean(Constants.Security.SSL_ENABLED);
+    securityEnabled = cConf.getBoolean(Constants.Security.ENABLED);
     if (securityEnabled) {
       externalAuthenticationServer = injector.getInstance(ExternalAuthenticationServer.class);
     }
 
-    boolean exploreEnabled = configuration.getBoolean(Constants.Explore.EXPLORE_ENABLED);
+    boolean exploreEnabled = cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED);
     if (exploreEnabled) {
       ExploreServiceUtils.checkHiveSupport(getClass().getClassLoader());
       exploreExecutorService = injector.getInstance(ExploreExecutorService.class);
@@ -168,7 +168,7 @@ public class StandaloneMain {
 
     cleanupTempDir();
 
-    ConfigurationLogger.logImportantConfig(configuration);
+    ConfigurationLogger.logImportantConfig(cConf);
 
     // Start all the services.
     txService.startAndWait();
@@ -204,8 +204,8 @@ public class StandaloneMain {
 
     String protocol = sslEnabled ? "https" : "http";
     int dashboardPort = sslEnabled ?
-      configuration.getInt(Constants.Dashboard.SSL_BIND_PORT) :
-      configuration.getInt(Constants.Dashboard.BIND_PORT);
+      cConf.getInt(Constants.Dashboard.SSL_BIND_PORT) :
+      cConf.getInt(Constants.Dashboard.BIND_PORT);
     System.out.println("Standalone CDAP started successfully.");
     System.out.printf("Connect to the CDAP UI at %s://%s:%d\n", protocol, "localhost", dashboardPort);
   }
@@ -255,8 +255,8 @@ public class StandaloneMain {
   }
 
   private void cleanupTempDir() {
-    File tmpDir = new File(configuration.get(Constants.CFG_LOCAL_DATA_DIR),
-                           configuration.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
+    File tmpDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
+                           cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
 
     if (!tmpDir.isDirectory()) {
       return;
@@ -339,27 +339,27 @@ public class StandaloneMain {
     return new StandaloneMain(modules, cConf);
   }
 
-  private static List<Module> createPersistentModules(CConfiguration configuration, Configuration hConf) {
-    configuration.setIfUnset(Constants.CFG_DATA_LEVELDB_DIR, Constants.DEFAULT_DATA_LEVELDB_DIR);
+  private static List<Module> createPersistentModules(CConfiguration cConf, Configuration hConf) {
+    cConf.setIfUnset(Constants.CFG_DATA_LEVELDB_DIR, Constants.DEFAULT_DATA_LEVELDB_DIR);
 
-    configuration.set(Constants.CFG_DATA_INMEMORY_PERSISTENCE, Constants.InMemoryPersistenceType.LEVELDB.name());
+    cConf.set(Constants.CFG_DATA_INMEMORY_PERSISTENCE, Constants.InMemoryPersistenceType.LEVELDB.name());
 
     // configure all services except for router to bind to 127.0.0.1
-    configuration.set(Constants.AppFabric.SERVER_ADDRESS, "127.0.0.1");
-    configuration.set(Constants.Transaction.Container.ADDRESS, "127.0.0.1");
-    configuration.set(Constants.Dataset.Manager.ADDRESS, "127.0.0.1");
-    configuration.set(Constants.Dataset.Executor.ADDRESS, "127.0.0.1");
-    configuration.set(Constants.Stream.ADDRESS, "127.0.0.1");
-    configuration.set(Constants.Metrics.ADDRESS, "127.0.0.1");
-    configuration.set(Constants.Metrics.SERVER_ADDRESS, "127.0.0.1");
-    configuration.set(Constants.MetricsProcessor.ADDRESS, "127.0.0.1");
-    configuration.set(Constants.LogSaver.ADDRESS, "127.0.0.1");
-    configuration.set(Constants.Security.AUTH_SERVER_BIND_ADDRESS, "127.0.0.1");
-    configuration.set(Constants.Explore.SERVER_ADDRESS, "127.0.0.1");
-    configuration.set(Constants.Metadata.SERVICE_BIND_ADDRESS, "127.0.0.1");
+    cConf.set(Constants.AppFabric.SERVER_ADDRESS, "127.0.0.1");
+    cConf.set(Constants.Transaction.Container.ADDRESS, "127.0.0.1");
+    cConf.set(Constants.Dataset.Manager.ADDRESS, "127.0.0.1");
+    cConf.set(Constants.Dataset.Executor.ADDRESS, "127.0.0.1");
+    cConf.set(Constants.Stream.ADDRESS, "127.0.0.1");
+    cConf.set(Constants.Metrics.ADDRESS, "127.0.0.1");
+    cConf.set(Constants.Metrics.SERVER_ADDRESS, "127.0.0.1");
+    cConf.set(Constants.MetricsProcessor.ADDRESS, "127.0.0.1");
+    cConf.set(Constants.LogSaver.ADDRESS, "127.0.0.1");
+    cConf.set(Constants.Security.AUTH_SERVER_BIND_ADDRESS, "127.0.0.1");
+    cConf.set(Constants.Explore.SERVER_ADDRESS, "127.0.0.1");
+    cConf.set(Constants.Metadata.SERVICE_BIND_ADDRESS, "127.0.0.1");
 
     return ImmutableList.of(
-      new ConfigModule(configuration, hConf),
+      new ConfigModule(cConf, hConf),
       new IOModule(),
       new MetricsHandlerModule(),
       new DiscoveryRuntimeModule().getStandaloneModules(),
