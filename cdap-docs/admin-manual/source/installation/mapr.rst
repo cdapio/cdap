@@ -54,6 +54,23 @@ packages installed, and can be configured using the MapR `configure.sh
 Downloading and Distributing Packages
 =====================================
 
+.. _mapr-compatibility-matrix:
+
++------------------------------------------------+
+| Supported MapR Distributions for Apache Hadoop |
++----------------+-------------------------------+
+| CDAP Series    | MapR Distributions            |
++================+===============================+
+| CDAP 3.3.x     | MapR 4.1, MapR 5.0            |
++----------------+-------------------------------+
+| CDAP 3.2.x     | MapR 4.1, MapR 5.0            |
++----------------+-------------------------------+
+| CDAP 3.1.x     | MapR 4.1                      |
++----------------+-------------------------------+
+
+.. _mapr-compatibility-matrix-end:
+
+
 Preparing Package Managers
 --------------------------
 

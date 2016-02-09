@@ -105,55 +105,54 @@ please follow the upgrade instructions for the earlier versions and upgrade firs
      $ for i in `ls /etc/init.d/ | grep cdap` ; do sudo service $i start ; done
 
 
-Upgrading Hadoop
-================
-
 .. _admin-upgrading-packages-hadoop:
 
-Upgrading Hadoop using Packages
--------------------------------
+Upgrading Hadoop
+================
+These tables list different versions of CDAP and the distributions for which they are
+supported. If your particular distribution is not listed here, you can determine its
+components and from that determine which version of CDAP may be compatible. `Our blog
+lists <http://blog.cask.co/2015/06/hadoop-components-versions-in-distros-matrix/>`__ the
+different components of the main Hadoop distributions.
 
-<TO BE COMPLETED>
+.. CDH
+.. ---
+.. include:: /installation/cloudera.rst
+    :start-after: .. _cloudera-compatibility-matrix:
+    :end-before: .. _cloudera-compatibility-matrix-end:
 
-.. _admin-upgrading-packages-hadoop-cdh:
++----------------+-------------------------------+
+|                |                               |
++----------------+-------------------------------+
 
-Upgrading CDH
+.. HDP
+.. ---
+.. include:: /installation/ambari.rst
+    :start-after: .. _ambari-compatibility-matrix:
+    :end-before: .. _ambari-compatibility-matrix-end:
+
++----------------+-------------------------------+
+|                |                               |
++----------------+-------------------------------+
+
+.. MapR
+.. ----
+.. include:: /installation/mapr.rst
+    :start-after: .. _mapr-compatibility-matrix:
+    :end-before: .. _mapr-compatibility-matrix-end:
+
+
+Upgrade Steps
 -------------
-These steps cover upgrading the version of CDH of an existing CDAP installation.
-As the different versions of CDH can use different versions of HBase, upgrading from
+These steps cover upgrading the version of Hadoop of an existing CDAP installation.
+As the different versions of Hadoop can use different versions of HBase, upgrading from
 one version to the next can require that the HBase coprocessors be upgraded to the correct
-version. The table below lists the different coprocessor package names managed by CDAP
-for each version of CDH. If the version changes, you need to check that the version being
-used has changed as described below.
-
-+-------------+-------------------------------------+
-| CDH Version | CDAP HBase Coprocessor Package Name |
-+=============+=====================================+
-| 5.5         | ``hbase10cdh550``                   |
-+-------------+-------------------------------------+
-| 5.4         | ``hbase10cdh``                      |
-+-------------+-------------------------------------+
-| 5.3         | ``hbase98``                         |
-+-------------+-------------------------------------+
-| 5.2         | ``hbase98``                         |
-+-------------+-------------------------------------+
-| 5.1         | |---|                               |
-+-------------+-------------------------------------+
-
-**For example:** CDH 5.3 ships with HBase 0.98 while CDH 5.4 ships with HBase 1.0. We support
-CDH 5.4 as of CDAP 3.1.0 |---| however, upgrading the underlying CDH version is only supported
-since CDAP 3.2.0. Therefore, before upgrading from CDH 5.3 to CDH 5.4, upgrade CDAP to version
-3.2.0 or greater, following the normal upgrade procedure. Start CDAP at least once to make sure
-it works properly, before you upgrade to CDH 5.4.
+version. The steps below will, if required, update the coprocessors appropriately.
 
 **It is important to perform these steps as described, otherwise the coprocessors may not
-get upgraded correctly and HBase regionservers may crash.** In the case where something
-goes wrong, see these troubleshooting instructions for :ref:`problems while upgrading CDH
-<faqs-cloudera-troubleshooting-upgrade-cdh>`.
+get upgraded correctly and HBase regionservers may crash.**
 
-**Upgrade Steps**
-
-1. Upgrade CDAP to a version that will support the new CDH version, following the usual
+1. Upgrade CDAP to a version that will support the new Hadoop version, following the usual
    :ref:`CDAP upgrade procedure for packages <admin-upgrading-packages-cdap>`. 
 
 #. After upgrading CDAP, start CDAP and check that it is working correctly.
@@ -166,53 +165,18 @@ goes wrong, see these troubleshooting instructions for :ref:`problems while upgr
 
     > disable_all 'cdap.*'
     
-#. Upgrade to the new version of CDH.
+#. Upgrade to the new version of Hadoop.
 
-#. Run the *Post-CDH Upgrade Tasks* |---| to upgrade CDAP for the new version of CDH |---| by running
+#. Run the *Post-Hadoop Upgrade Tasks* |---| to upgrade CDAP for the new version of Hadoop |---| by running
    the *CDAP Upgrade Tool*, as the user that runs CDAP Master (the CDAP user)::
 
     $ /opt/cdap/master/bin/svc-master run co.cask.cdap.data.tools.UpgradeTool upgrade_hbase
-    
-#. Check if the coprocessor JARs for all CDAP tables have been upgraded to the correct version
-   as listed in the table above by checking that the coprocessor classnames are using the
-   correct package |---| for example, if upgrading from CDH 5.3 to 5.4, the new
-   coprocessor package is ``hbase10cdh`` and a classname using it would be
-   ``co.cask.cdap.data2.transaction.coprocessor.hbase10cdh.DefaultTransactionProcessor``.
-  
-   Running this command in an HBase shell will give you table attributes::
-  
-    > describe 'cdap_system:app.meta'
-    
-   The resulting output will show the coprocessor classname; in this case, we are looking for
-   the inclusion of ``hbase10cdh`` in the name::
-  
-    'cdap_system:app.meta', {TABLE_ATTRIBUTES => {coprocessor$1 =>
-    'hdfs://server.example.com/cdap/cdap/lib/
-    coprocessorb5cb1b69834de686a84d513dff009908.jar|co.cask.cdap.data2.transaction.
-    coprocessor.hbase10cdh.DefaultTransactionProcessor|1073741823|', METADATA =>
-    {'cdap.version' => '3.1.0...
-
-   Note that some CDAP tables do not have any coprocessors. You only need to verify tables
-   that **have** coprocessors.
 
 #. Enable all CDAP tables; from an HBase shell, run this command::
 
     > enable_all 'cdap.*'
     
-#. Start CDAP::
+#. Restart CDAP::
 
     $ for i in `ls /etc/init.d/ | grep cdap` ; do sudo service $i start ; done
 
-
-.. _admin-upgrading-packages-hadoop-hdp:
-
-Upgrading HDP
--------------
-<TO BE COMPLETED>
-
-
-.. _admin-upgrading-packages-hadoop-mapr:
-
-Upgrading MapR
---------------
-<TO BE COMPLETED>

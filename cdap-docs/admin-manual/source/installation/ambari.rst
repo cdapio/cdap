@@ -79,6 +79,8 @@ Replace |---| in the commands that follow on this page |---| all references to
 ``"cdap/``\ |literal-short-version|\ ``"`` 
 with the CDAP Repository from the list below that you would like to use:
 
+.. _ambari-compatibility-matrix:
+
 +-----------------------------------------------------------------------+
 | Supported Hortonworks Data Platform (HDP) Distributions               |
 +----------------+-----------------+------------------------------------+
@@ -92,6 +94,8 @@ with the CDAP Repository from the list below that you would like to use:
 +----------------+-----------------+------------------------------------+
 | CDAP 3.0.x     | ``cdap/3.0``    | HDP 2.0, HDP 2.1                   |
 +----------------+-----------------+------------------------------------+
+
+.. _ambari-compatibility-matrix-end:
 
 **Note:** The CDAP Ambari service has been tested on Ambari Server 2.0 and 2.1, as
 supplied from Hortonworks.

@@ -121,6 +121,8 @@ available services which CM can install.
 | 5.1        | no greater than 5.1.x | *Not supported*     | |---|                      | 
 +------------+-----------------------+---------------------+----------------------------+
 
+.. _cloudera-compatibility-matrix-end:
+
 **Notes:**
 
 - Cloudera Manager supports `a version of CDH no greater than its own 
