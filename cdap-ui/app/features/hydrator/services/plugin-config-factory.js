@@ -29,8 +29,8 @@ class PluginConfigFactory {
 
     return this.myPipelineApi.fetchArtifactProperties({
       namespace: this.$state.params.namespace || this.$state.params.nsadmin,
-      artifactName,
-      artifactVersion,
+      artifactName: artifactName,
+      artifactVersion: artifactVersion,
       scope: artifactScope,
       keys: key
     })
@@ -55,11 +55,12 @@ class PluginConfigFactory {
         }
       );
   }
-  fetchDocJson(artifactName, artifactVersion, key) {
+  fetchDocJson(artifactName, artifactVersion, artifactScope, key) {
     return this.myPipelineApi.fetchArtifactProperties({
       namespace: this.$state.params.namespace,
-      artifactName,
-      artifactVersion,
+      artifactName: artifactName,
+      artifactVersion: artifactVersion,
+      scope: artifactScope,
       keys: key
     }).$promise;
   }
