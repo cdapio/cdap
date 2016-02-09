@@ -28,126 +28,34 @@ Cask Data Application Platform Release Notes
 
 Improvements
 ------------
-- `CDAP-3118 <https://issues.cask.co/browse/CDAP-3118>`__ - Added documentation on using
-  SparkSQL with CDAP.
-
-- `CDAP-4257 <https://issues.cask.co/browse/CDAP-4257>`__ - Documented the versions of
-  Spark that CDAP supports and the distributions that support that version.
-
-- `CDAP-4310 <https://issues.cask.co/browse/CDAP-4310>`__ - The documentation for FileSets
-  have been brought up-to-date, with examples of the some of the different formats
-  available.
-
-- `CDAP-4330 <https://issues.cask.co/browse/CDAP-4330>`__ - The installation documentation
-  now described how to obtain and where to install Hadoop and Hbase client libraries.
-
-- `CDAP-4414 <https://issues.cask.co/browse/CDAP-4414>`__ - Descriptions in the
-  cdap-site.xml have been reviewed and updated.
-
-- `CDAP-4602 <https://issues.cask.co/browse/CDAP-4602>`__ - The version of `Tephra
-  <http://tephra.io>`__ used with CDAP has been updated to version 0.6.5.
-
-- `CDAP-4679 <https://issues.cask.co/browse/CDAP-4679>`__ - The Hydrator UI now prevents
-  drafts from being created with a name of an already-existing draft. This prevents
-  overwriting of existing drafts.
-
-- `CDAP-4685 <https://issues.cask.co/browse/CDAP-4685>`__ - Improved the error messaging
-  of the Hydrator Python plugin.
-
-- `CDAP-4688 <https://issues.cask.co/browse/CDAP-4688>`__ - Improved the metadata search
-  to return matching entities from both the specified namespace and the system namespace.
-
-- `CDAP-4690 <https://issues.cask.co/browse/CDAP-4690>`__ - For Hydrator plugins with
-  missing widget JSON files, improved the error message returned in the Hydrator UI and the
-  documentation of how to deal with this in the CDAP FAQs.
-
 - `CDAP-4708 <https://issues.cask.co/browse/CDAP-4708>`__ - Added system metadata to
   existing entities.
 
 - `CDAP-4723 <https://issues.cask.co/browse/CDAP-4723>`__ - Improved the Hydrator plugin
   archetypes to include build steps to build the deployment JSON for the artifact.
 
-- `CDAP-4733 <https://issues.cask.co/browse/CDAP-4733>`__ - Improved the documentation of
-  upgrading CDAP after the underlying CDH version is upgraded.
-
-- `CDAP-4734 <https://issues.cask.co/browse/CDAP-4734>`__ - Documented in the Cloudera
-  Manager installation the location of the parcel repo.
-
-- `CDAP-4740 <https://issues.cask.co/browse/CDAP-4740>`__ - Added validation to the JSON
-  imported in the Hydrator UI.
-
-- `CDAP-4742 <https://issues.cask.co/browse/CDAP-4742>`__ - Replaced all references to
-  "Configuration JSON" with "Widgets JSON" in Cask Hydrator.
-
-- `CDAP-4748 <https://issues.cask.co/browse/CDAP-4748>`__ - Improved the error messages
-  returned when deploying Hydrator applications.
-
-- `CDAP-4751 <https://issues.cask.co/browse/CDAP-4751>`__ - Added a compatibility matrix
-  to the Cloudera Manager documentation.
-
 - `CDAP-4773 <https://issues.cask.co/browse/CDAP-4773>`__ - Improved the error logging for
   the Master Stream service when it can't connect to the CDAP AppFabric server.
 
-- `CDAP-4780 <https://issues.cask.co/browse/CDAP-4780>`__ - The log messages generated
-  during namespace deletion have been improved, and ambiguous messages removed.
-
-- `CDAP-4831 <https://issues.cask.co/browse/CDAP-4831>`__ - Allows user-scoped plugins to
-  surface the correct widget JSON in the Hydrator UI.
-
-- `CDAP-4832 <https://issues.cask.co/browse/CDAP-4832>`__ - Added the ErrorDataset as an
-  option on widget JSON in Hydrator plugins.
-
-- `CDAP-4848 <https://issues.cask.co/browse/CDAP-4848>`__ - Added a new section to the
-  CDAP documentation's Administration Manual on upgrading CDAP.
-
-- `CDAP-4850 <https://issues.cask.co/browse/CDAP-4850>`__ - Documented the steps for
-  upgrading CDAP when the underlying Hbase is upgraded to a version incompatible with the
-  currently-installed version of CDAP.
-
-- `CDAP-4852 <https://issues.cask.co/browse/CDAP-4852>`__ - Documented new steps for
-  upgrading either CDAP or CDH with Cloudera Manager clusters.
-
-- `CDAP-4863 <https://issues.cask.co/browse/CDAP-4863>`__ - Upgraded the version of `Twill
-  <http://twill.incubator.apache.org>`__ in CDAP to version 0.7.0.
-
-- `CDAP-4865 <https://issues.cask.co/browse/CDAP-4865>`__ - Enhanced the CDAP SDK to be
-  able to publish metadata updates to an external Kafka, identified by the configuration
-  property metadata.updates.kafka.broker.list. Publishing can be enabled by setting
-  metadata.updates.publish.enabled to true. Updates are published to the Kafka topic
-  identified by the property metadata.updates.kafka.topic.
-
-- `CDAP-4893 <https://issues.cask.co/browse/CDAP-4893>`__ - Improved the text displayed
-  when deleting a widget in the CDAP UI.
-
-- `CDAP-4902 <https://issues.cask.co/browse/CDAP-4902>`__ - Added an example of using the
-  Error dataset with the Hydrator Python Evaluator to the Hydrator documentation.
 
 Bug Fixes
 ---------
-- `CDAP-3901 <https://issues.cask.co/browse/CDAP-3901>`__ - Fixed a problem with remote
-  calls for a namespace existence check in CDAP dataset services.
-
 - `CDAP-4117 <https://issues.cask.co/browse/CDAP-4117>`__ - Fixed an issue of not using
   the correct user to access HDFS when submitting a YARN application through Apache Twill,
   which caused cleanup failure on application termination.
 
-- `CDAP-4419 <https://issues.cask.co/browse/CDAP-4419>`__ - Fixed a problem with
-  intermittent failure of the workflows, as demonstrated with the CDAP workflow guide.
-
-- `CDAP-4473 <https://issues.cask.co/browse/CDAP-4473>`__ - Fixed a problem with Node.js
-  proxy server and unexpected inputs.
-
-- `CDAP-4476 <https://issues.cask.co/browse/CDAP-4476>`__ - Fixed a problem with switching
-  nodes in the Cask Hydrator UI causing unexpected behaviors on slow machines.
-
 - `CDAP-4613 <https://issues.cask.co/browse/CDAP-4613>`__ - Fixed a problem with tooltips
   not appearing in Flow and Workflow diagrams displayed in the Firefox browser.
 
+- `CDAP-4679 <https://issues.cask.co/browse/CDAP-4679>`__ - The Hydrator UI now prevents
+  drafts from being created with a name of an already-existing draft. This prevents
+  overwriting of existing drafts.
+
+- `CDAP-4688 <https://issues.cask.co/browse/CDAP-4688>`__ - Improved the metadata search
+  to return matching entities from both the specified namespace and the system namespace.
+
 - `CDAP-4689 <https://issues.cask.co/browse/CDAP-4689>`__ - Fixed a problem when using an
   Hbase sink as one of multiple sinks in a Hydrator pipeline.
-
-- `CDAP-4718 <https://issues.cask.co/browse/CDAP-4718>`__ - Corrected problems with the
-  display of success and error messages in the Hydrator UI.
 
 - `CDAP-4720 <https://issues.cask.co/browse/CDAP-4720>`__ - Fixed an issue where system
   metadata updates were not being published to Kafka.
@@ -155,18 +63,8 @@ Bug Fixes
 - `CDAP-4721 <https://issues.cask.co/browse/CDAP-4721>`__ - Fixed an issue where metadata
   updates wouldn't be sent when certain entities were deleted.
 
-- `CDAP-4725 <https://issues.cask.co/browse/CDAP-4725>`__ - Fixed a problem of receiving
-  an erroneous error notification when successfully authenticating against a CDAP cluster
-  with authentication enabled.
-
-- `CDAP-4726 <https://issues.cask.co/browse/CDAP-4726>`__ - Corrected the erroneous
-  display of an error message in the Hydrator validator plugin.
-
-- `CDAP-4727 <https://issues.cask.co/browse/CDAP-4727>`__ - Missing documentation and
-  widgets JSON has been added to Cask Hydrator and the CDAP documentation.
-
-- `CDAP-4729 <https://issues.cask.co/browse/CDAP-4729>`__ - Fixed a problem with searching
-  the CDAP documentation for release notes giving a result of "page not found".
+- `CDAP-4740 <https://issues.cask.co/browse/CDAP-4740>`__ - Added validation to the JSON
+  imported in the Hydrator UI.
 
 - `CDAP-4741 <https://issues.cask.co/browse/CDAP-4741>`__ - Fixed a bug with deleting
   artifact metadata when an artifact was deleted.
@@ -177,27 +75,12 @@ Bug Fixes
 - `CDAP-4745 <https://issues.cask.co/browse/CDAP-4745>`__ - Fixed a bug in the Hydrator
   upgrade tool which caused drafts to not get upgraded.
 
-- `CDAP-4746 <https://issues.cask.co/browse/CDAP-4746>`__ - Fixed a problem with Cask
-  Hydrator plugins not being available in Cloudera Manager clusters.
-
-- `CDAP-4752 <https://issues.cask.co/browse/CDAP-4752>`__ - Fixed problems with the steps
-  described for installing and upgrading CDAP on different distributions.
-
 - `CDAP-4753 <https://issues.cask.co/browse/CDAP-4753>`__ - Fixed the Hydrator Stream
   source to not assume an output schema. This is valid when a pipeline is created outside
   Hydrator UI.
 
 - `CDAP-4754 <https://issues.cask.co/browse/CDAP-4754>`__ - Fixed ObjectStore to work when
   parameterized with custom classes.
-
-- `CDAP-4758 <https://issues.cask.co/browse/CDAP-4758>`__ - Fixed a problem with the
-  display of Workflow diagrams in the CDAP UI.
-
-- `CDAP-4767 <https://issues.cask.co/browse/CDAP-4767>`__ - Fixed a problem with the CDAP
-  Transaction service not being discovered on a secure cluster.
-
-- `CDAP-4768 <https://issues.cask.co/browse/CDAP-4768>`__ - Fixed a problem with the
-  classpath used to start the CDAP Master.
 
 - `CDAP-4770 <https://issues.cask.co/browse/CDAP-4770>`__ - Fixed the Cask Hydrator UI to
   automatically reconnect with the CDAP backend when the backend restarts.
@@ -212,9 +95,6 @@ Bug Fixes
 - `CDAP-4785 <https://issues.cask.co/browse/CDAP-4785>`__ - Fixed a problem in the upgrade
   tool where deleted datasets would cause it to throw a NullPointerException.
 
-- `CDAP-4786 <https://issues.cask.co/browse/CDAP-4786>`__ - Fixed problems with the Spark
-  Page Rank example documentation.
-
 - `CDAP-4790 <https://issues.cask.co/browse/CDAP-4790>`__ - Fixed an issue where the Hbase
   implementation of the Table API returned all rows, when the correct response should have
   been an empty set of columns.
@@ -222,72 +102,36 @@ Bug Fixes
 - `CDAP-4800 <https://issues.cask.co/browse/CDAP-4800>`__ - Fixed a problem with the error
   message returned when loading an artifact with an invalid range.
 
-- `CDAP-4802 <https://issues.cask.co/browse/CDAP-4802>`__ - Fixed a problem with
-  un-scheduled pipelines showing "start" in the next runtime.
-
-- `CDAP-4803 <https://issues.cask.co/browse/CDAP-4803>`__ - Corrected the description of
-  the property app.artifact.dir.
-
 - `CDAP-4806 <https://issues.cask.co/browse/CDAP-4806>`__ - Fixed the PartitionedFileSet's
   DynamicPartitioner to work with Avro OutputFormats.
 
 - `CDAP-4829 <https://issues.cask.co/browse/CDAP-4829>`__ - Fixed a Validator Transform
   function generator in the Hydrator UI.
 
-- `CDAP-4830 <https://issues.cask.co/browse/CDAP-4830>`__ - Corrected the behavior when
-  the bottom panel is minimized in Cask Hydrate UI.
+- `CDAP-4831 <https://issues.cask.co/browse/CDAP-4831>`__ - Allows user-scoped plugins to
+  surface the correct widget JSON in the Hydrator UI.
 
-- `CDAP-4833 <https://issues.cask.co/browse/CDAP-4833>`__ - Fixed a problem with the
-  Hydrator UI overwriting drafts if multiple users are using the UI and security is not
-  enabled.
-
-- `CDAP-4835 <https://issues.cask.co/browse/CDAP-4835>`__ - Fixed problems with the
-  truncation of labels in the Hydrator UI.
+- `CDAP-4832 <https://issues.cask.co/browse/CDAP-4832>`__ - Added the ErrorDataset as an
+  option on widget JSON in Hydrator plugins.
 
 - `CDAP-4836 <https://issues.cask.co/browse/CDAP-4836>`__ - Fixed a spacing issue for
   metrics showing in Pipeline diagrams of the Hydrator UI.
-
-- `CDAP-4837 <https://issues.cask.co/browse/CDAP-4837>`__ - Fixed a problem with the
-  Validator plugin not having a label field.
-
-- `CDAP-4844 <https://issues.cask.co/browse/CDAP-4844>`__ - Fixed a problem with incorrect
-  titles being used when populating multiple metrics in the operations dashboard of the CDAP
-  UI.
-
-- `CDAP-4849 <https://issues.cask.co/browse/CDAP-4849>`__ - Fixed a problem with the
-  Teradata plugin not using a password widget for display of a password field.
 
 - `CDAP-4853 <https://issues.cask.co/browse/CDAP-4853>`__ - Fixed issues with the Hydrator
   UI widgets for the Hydrator Kafka real-time source, JMS real-time source, and CloneRecord
   transform.
 
-- `CDAP-4858 <https://issues.cask.co/browse/CDAP-4858>`__ - Fixed a problem with the CDAP
-  UI not correctly cleaning up upon namespace deletion.
-
-- `CDAP-4868 <https://issues.cask.co/browse/CDAP-4868>`__ - Fixed a problem with the run
-  record history and the last runtime of pipeline not matching.
-
-- `CDAP-4870 <https://issues.cask.co/browse/CDAP-4870>`__ - Fixed a problem with the
-  Teradata plugin not displaying the column case field with a drop-down menu widget.
-
-- `CDAP-4873 <https://issues.cask.co/browse/CDAP-4873>`__ - Fixed a problem with starting
-  the CDAP Standalone SDK under Macintosh OS X in a directory whose path has a space.
+- `CDAP-4865 <https://issues.cask.co/browse/CDAP-4865>`__ - Enhanced the CDAP SDK to be
+  able to publish metadata updates to an external Kafka, identified by the configuration
+  property metadata.updates.kafka.broker.list. Publishing can be enabled by setting
+  metadata.updates.publish.enabled to true. Updates are published to the Kafka topic
+  identified by the property metadata.updates.kafka.topic.
 
 - `CDAP-4877 <https://issues.cask.co/browse/CDAP-4877>`__ - Fixed errors in Cask Hydrator
   Plugins. Two plugin documents (core-plugins/docs/Database-batchsink.md and
   core-plugins/docs/Database-batchsource.md) were removed, as the plugins have been moved
   from core-plugins to database-plugins (to database-plugins/docs/Database-batchsink.md and
   database-plugins/docs/Database-batchsource.md).
-
-- `CDAP-4882 <https://issues.cask.co/browse/CDAP-4882>`__ - Fixed a problem with searching
-  for plugins in the Hydrator plugin causing formatting issues when multiple tabs are open.
-
-- `CDAP-4886 <https://issues.cask.co/browse/CDAP-4886>`__ - Fixed a problem where the
-  suppression of uncaught exceptions resulted in the exception not being logged at all. These
-  exceptions will now be logged, even at the risk of being logged more than once.
-
-- `CDAP-4887 <https://issues.cask.co/browse/CDAP-4887>`__ - Fixed a problem with the CDAP
-  Upgrade Tool raising exceptions when it encountered a non-CDAP table in HBase.
 
 - `CDAP-4889 <https://issues.cask.co/browse/CDAP-4889>`__ - Fixed an issue with upgrading
   HBase tables while using the CDAP Upgrade Tool.
@@ -296,11 +140,11 @@ Bug Fixes
   coprocessors that caused HBase tables to be disabled after upgrading the cluster to a
   highly-available file system.
 
-- `CDAP-4905 <https://issues.cask.co/browse/CDAP-4905>`__ - Fixed a problem in the
-  documentation with the example of using Cask Hydrator with third-party JARs.
-
 - `CDAP-4906 <https://issues.cask.co/browse/CDAP-4906>`__ - Fixed the CDAP Upgrade Tool to
   return a non-zero exit status upon error during upgrade.
+
+- `CDAP-4924 <https://issues.cask.co/browse/CDAP-4924>`__ - Fixed a PermGen memory leak
+  that occurred while deploying multiple applications with database plugins.
 
 Deprecated and Removed Features
 -------------------------------
