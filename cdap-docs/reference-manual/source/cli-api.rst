@@ -70,7 +70,7 @@ the current CLI session.
 Options
 -------
 
-The CLI may be started with command-line options, as detailed below::
+The CLI can be started with command-line options, as detailed below::
 
   usage: cdap-cli.sh [--autoconnect <true|false>] [--debug] [--help]
                      [--verify-ssl <true|false>] [--uri <uri>][--script
@@ -89,11 +89,10 @@ The CLI may be started with command-line options, as detailed below::
    -v,--verify-ssl <arg>    If "true", verify SSL certificate when making
                             requests. Defaults to "true".
 
-
 Settings
 --------
 
-Certain commands (``connect`` and ``cli render as``) affect how CLI works for the duration of a session.
+Certain commands (``connect`` and ``cli render as``) affect how the CLI works for the duration of a session.
 
 The command ``"cli render as <table-renderer>"`` sets how table data is rendered. Valid options are
 either ``"alt"`` (the default) and ``"csv"``. As the ``"alt"`` option may split a cell into multiple
