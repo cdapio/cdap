@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -27,6 +27,8 @@ import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.app.DefaultApplicationContext;
 import co.cask.cdap.app.MockAppConfigurer;
 import co.cask.cdap.app.program.ManifestFields;
+import co.cask.cdap.common.BadRequestException;
+import co.cask.cdap.common.NamespaceNotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.StickyEndpointStrategy;
@@ -94,17 +96,17 @@ public class UnitTestManager implements TestManager {
   private final File tmpDir;
 
   @Inject
-  public UnitTestManager(AppFabricClient appFabricClient,
-                         DatasetFramework datasetFramework,
-                         TransactionSystemClient txSystemClient,
-                         DiscoveryServiceClient discoveryClient,
-                         ApplicationManagerFactory appManagerFactory,
-                         NamespaceAdmin namespaceAdmin,
-                         StreamManagerFactory streamManagerFactory,
-                         LocationFactory locationFactory,
-                         MetricsManager metricsManager,
-                         ArtifactRepository artifactRepository,
-                         CConfiguration cConf) {
+  UnitTestManager(AppFabricClient appFabricClient,
+                  DatasetFramework datasetFramework,
+                  TransactionSystemClient txSystemClient,
+                  DiscoveryServiceClient discoveryClient,
+                  ApplicationManagerFactory appManagerFactory,
+                  NamespaceAdmin namespaceAdmin,
+                  StreamManagerFactory streamManagerFactory,
+                  LocationFactory locationFactory,
+                  MetricsManager metricsManager,
+                  ArtifactRepository artifactRepository,
+                  CConfiguration cConf) {
     this.appFabricClient = appFabricClient;
     this.datasetFramework = datasetFramework;
     this.txSystemClient = txSystemClient;
@@ -173,6 +175,11 @@ public class UnitTestManager implements TestManager {
       requestedArtifact.getName(), requestedArtifact.getVersion());
     ArtifactDetail artifactDetail = artifactRepository.getArtifact(artifactId);
     return appManagerFactory.create(appId, artifactDetail.getDescriptor().getLocation());
+  }
+
+  @Override
+  public void deleteApplication(Id.Application appId) throws Exception {
+    appFabricClient.deleteApplication(appId);
   }
 
   @Override

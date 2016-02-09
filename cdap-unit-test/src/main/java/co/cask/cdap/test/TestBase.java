@@ -121,7 +121,7 @@ import java.util.jar.Manifest;
 
 /**
  * Base class to inherit from for unit-test.
- * It provides testing functionality for {@link co.cask.cdap.api.app.Application}.
+ * It provides testing functionality for {@link Application}.
  * To clean App Fabric state, you can use the {@link #clear} method.
  * <p>
  * Custom configurations for CDAP can be set by using {@link ClassRule} and {@link TestConfiguration}.
@@ -134,7 +134,7 @@ public class TestBase {
   private static final Logger LOG = LoggerFactory.getLogger(TestBase.class);
 
   @ClassRule
-  public static TemporaryFolder tmpFolder = new TemporaryFolder();
+  public static final TemporaryFolder TMP_FOLDER = new TemporaryFolder();
 
   private static CConfiguration cConf;
   private static int startCount;
@@ -159,7 +159,7 @@ public class TestBase {
     if (startCount++ > 0) {
       return;
     }
-    File localDataDir = tmpFolder.newFolder();
+    File localDataDir = TMP_FOLDER.newFolder();
 
     cConf = createCConf(localDataDir);
 
@@ -172,7 +172,7 @@ public class TestBase {
 
     // Windows specific requirements
     if (OSDetector.isWindows()) {
-      File tmpDir = tmpFolder.newFolder();
+      File tmpDir = TMP_FOLDER.newFolder();
       File binDir = new File(tmpDir, "bin");
       Assert.assertTrue(binDir.mkdirs());
 
@@ -223,7 +223,7 @@ public class TestBase {
                     .build(ApplicationManagerFactory.class));
           install(new FactoryModuleBuilder().implement(StreamManager.class, DefaultStreamManager.class)
                     .build(StreamManagerFactory.class));
-          bind(TemporaryFolder.class).toInstance(tmpFolder);
+          bind(TemporaryFolder.class).toInstance(TMP_FOLDER);
         }
       }
     );
@@ -313,7 +313,7 @@ public class TestBase {
 
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, localDataDir.getAbsolutePath());
     cConf.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, true);
-    cConf.set(Constants.Explore.LOCAL_DATA_DIR, tmpFolder.newFolder("hive").getAbsolutePath());
+    cConf.set(Constants.Explore.LOCAL_DATA_DIR, TMP_FOLDER.newFolder("hive").getAbsolutePath());
     return cConf;
   }
 
@@ -441,6 +441,15 @@ public class TestBase {
   }
 
   /**
+   * Delets an {@link Application}.
+   *
+   * @param appId the id of the application to delete
+   */
+  protected static void deleteApplication(Id.Application appId) throws Exception {
+    getTestManager().deleteApplication(appId);
+  }
+
+  /**
    * Add the specified artifact.
    *
    * @param artifactId the id of the artifact to add
@@ -555,6 +564,15 @@ public class TestBase {
   protected static void addPluginArtifact(Id.Artifact artifactId, Set<ArtifactRange> parentArtifacts,
                                           Class<?> pluginClass, Class<?>... pluginClasses) throws Exception {
     getTestManager().addPluginArtifact(artifactId, parentArtifacts, pluginClass, pluginClasses);
+  }
+
+  /**
+   * Delete the specified artifact.
+   *
+   * @param artifactId the artifact to delete
+   */
+  protected static void deleteArtifact(Id.Artifact artifactId) throws Exception {
+    getTestManager().deleteArtifact(artifactId);
   }
 
   /**

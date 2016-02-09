@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -35,7 +35,7 @@ import java.lang.reflect.Type;
 import java.nio.ByteBuffer;
 
 /**
- * A mock implementation of {@link HttpResponder} that only record the response status.
+ * A mock implementation of {@link HttpResponder} for use in unit tests.
  */
 public final class MockResponder extends AbstractHttpResponder {
   private HttpResponseStatus status = null;
@@ -44,6 +44,10 @@ public final class MockResponder extends AbstractHttpResponder {
 
   public HttpResponseStatus getStatus() {
     return status;
+  }
+
+  public ChannelBuffer getContent() {
+    return content;
   }
 
   public <T> T decodeResponseContent(Type type) {
