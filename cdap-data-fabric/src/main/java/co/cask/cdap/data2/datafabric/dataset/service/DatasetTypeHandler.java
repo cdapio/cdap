@@ -16,11 +16,11 @@
 
 package co.cask.cdap.data2.datafabric.dataset.service;
 
+import co.cask.cdap.common.NamespaceNotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.http.AbstractBodyConsumer;
 import co.cask.cdap.common.io.Locations;
-import co.cask.cdap.common.namespace.AbstractNamespaceClient;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.data2.datafabric.dataset.type.DatasetModuleConflictException;
@@ -28,6 +28,7 @@ import co.cask.cdap.data2.datafabric.dataset.type.DatasetTypeManager;
 import co.cask.cdap.proto.DatasetModuleMeta;
 import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.store.NamespaceStore;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.BodyConsumer;
 import co.cask.http.HandlerContext;
@@ -66,16 +67,15 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
   private final DatasetTypeManager manager;
   private final CConfiguration cConf;
   private final NamespacedLocationFactory namespacedLocationFactory;
-  private final AbstractNamespaceClient namespaceClient;
+  private final NamespaceStore namespaceStore;
 
   @Inject
   public DatasetTypeHandler(DatasetTypeManager manager, CConfiguration conf,
-                            NamespacedLocationFactory namespacedLocationFactory,
-                            AbstractNamespaceClient namespaceClient) {
+                            NamespacedLocationFactory namespacedLocationFactory, NamespaceStore namespaceStore) {
     this.manager = manager;
     this.cConf = conf;
     this.namespacedLocationFactory = namespacedLocationFactory;
-    this.namespaceClient = namespaceClient;
+    this.namespaceStore = namespaceStore;
   }
 
   @Override
@@ -326,7 +326,9 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
    */
   private void ensureNamespaceExists(Id.Namespace namespace) throws Exception {
     if (!Id.Namespace.SYSTEM.equals(namespace)) {
-      namespaceClient.get(namespace);
+      if (namespaceStore.get(namespace) == null) {
+        throw new NamespaceNotFoundException(namespace);
+      }
     }
   }
 }

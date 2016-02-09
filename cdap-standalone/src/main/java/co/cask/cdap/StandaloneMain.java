@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -60,6 +60,7 @@ import co.cask.cdap.notifications.feeds.guice.NotificationFeedServiceRuntimeModu
 import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
 import co.cask.cdap.security.guice.SecurityModules;
 import co.cask.cdap.security.server.ExternalAuthenticationServer;
+import co.cask.cdap.store.guice.NamespaceStoreModule;
 import co.cask.tephra.inmemory.InMemoryTransactionService;
 import com.google.common.base.Joiner;
 import com.google.common.base.Throwables;
@@ -382,6 +383,7 @@ public class StandaloneMain {
       new ViewAdminModules().getStandaloneModules(),
       new StreamAdminModules().getStandaloneModules(),
       new NamespaceClientRuntimeModule().getStandaloneModules(),
+      new NamespaceStoreModule().getStandaloneModules(),
       new MetadataServiceModule()
     );
   }
