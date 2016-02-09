@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -26,6 +26,7 @@ import co.cask.cdap.api.dataset.table.Delete;
 import co.cask.cdap.api.dataset.table.Get;
 import co.cask.cdap.api.dataset.table.Increment;
 import co.cask.cdap.api.dataset.table.Put;
+import co.cask.cdap.api.dataset.table.Result;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scan;
 import co.cask.cdap.api.dataset.table.Scanner;
@@ -41,6 +42,8 @@ import co.cask.tephra.TransactionManager;
 import co.cask.tephra.TransactionSystemClient;
 import co.cask.tephra.inmemory.InMemoryTxSystemClient;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSortedMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -52,8 +55,12 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 
 /**
  * Base test for Table.
@@ -169,6 +176,205 @@ public abstract class TableTest<T extends Table> {
       }
     } finally {
       txClient.abort(tx);
+      admin.drop();
+    }
+  }
+
+  @Test
+  public void testEmptyGet() throws Exception {
+    DatasetAdmin admin = getTableAdmin(CONTEXT1, MY_TABLE);
+    admin.create();
+    try {
+      Transaction tx = txClient.startShort();
+      Table myTable = getTable(CONTEXT1, MY_TABLE);
+      ((TransactionAware) myTable).startTx(tx);
+
+      myTable.put(R1, C1, V1);
+      myTable.put(R1, C2, V2);
+      // to be used for validation later
+      TreeMap<byte[], byte[]> expectedColumns = new TreeMap<>(Bytes.BYTES_COMPARATOR);
+      expectedColumns.put(C1, V1);
+      expectedColumns.put(C2, V2);
+      Result expectedResult = new Result(R1, expectedColumns);
+
+      Result emptyResult = new Result(R1, ImmutableMap.<byte[], byte[]>of());
+
+      ((TransactionAware) myTable).commitTx();
+      txClient.commit(tx);
+
+      // start another transaction, so that the buffering table doesn't cache the values; the underlying Table
+      // implementations are tested this way.
+      tx = txClient.startShort();
+      ((TransactionAware) myTable).startTx(tx);
+
+
+      Row row = myTable.get(R1, new byte[][]{ C1, C2 });
+      assertEquals(expectedResult, row);
+
+      // passing in empty columns returns empty result
+      row = myTable.get(R1, new byte[][]{});
+      assertEquals(emptyResult, row);
+
+
+      // test all the Get constructors and their behavior
+
+      // constructors specifying only rowkey retrieve all columns
+      Get get = new Get(R1);
+      Assert.assertNull(get.getColumns());
+      assertEquals(expectedResult, myTable.get(get));
+
+      get = new Get(Bytes.toString(R1));
+      Assert.assertNull(get.getColumns());
+      assertEquals(expectedResult, myTable.get(get));
+
+      get.add(C1);
+      get.add(Bytes.toString(C2));
+      assertEquals(expectedResult, myTable.get(get));
+
+      // constructor specifying columns, but with an empty array/collection retrieve 0 columns
+      get = new Get(R1, new byte[][]{});
+      Assert.assertNotNull(get.getColumns());
+      assertEquals(emptyResult, myTable.get(get));
+
+      get = new Get(R1, ImmutableList.<byte[]>of());
+      Assert.assertNotNull(get.getColumns());
+      assertEquals(emptyResult, myTable.get(get));
+
+      get = new Get(Bytes.toString(R1), new String[]{});
+      Assert.assertNotNull(get.getColumns());
+      assertEquals(emptyResult, myTable.get(get));
+
+      get = new Get(Bytes.toString(R1), ImmutableList.<String>of());
+      Assert.assertNotNull(get.getColumns());
+      assertEquals(emptyResult, myTable.get(get));
+
+      row = myTable.get(R1, new byte[][]{ });
+      assertEquals(emptyResult, row);
+
+      txClient.abort(tx);
+    } finally {
+      admin.drop();
+    }
+  }
+
+  private void assertEquals(Row expected, Row actual) {
+    Assert.assertArrayEquals(expected.getRow(), actual.getRow());
+    Assert.assertTrue(columnsEqual(expected.getColumns(), actual.getColumns()));
+  }
+
+  // AbstractMap#equals doesn't work, because the entries are byte[]
+  private boolean columnsEqual(Map<byte[], byte[]> expected, Map<byte[], byte[]> actual) {
+    if (expected.size() != actual.size()) {
+      return false;
+    }
+
+    for (Map.Entry<byte[], byte[]> entry : expected.entrySet()) {
+      byte[] key = entry.getKey();
+      byte[] value = entry.getValue();
+      if (value == null) {
+        if (!(actual.get(key) == null && actual.containsKey(key))) {
+          return false;
+        }
+      } else {
+        if (!Arrays.equals(value, actual.get(key))) {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+
+  @Test
+  public void testEmptyDelete() throws Exception {
+    DatasetAdmin admin = getTableAdmin(CONTEXT1, MY_TABLE);
+    admin.create();
+    try {
+      Transaction tx = txClient.startShort();
+      Table myTable = getTable(CONTEXT1, MY_TABLE);
+      ((TransactionAware) myTable).startTx(tx);
+
+      myTable.put(R1, C1, V1);
+      myTable.put(R1, C2, V2);
+      myTable.put(R1, C3, V3);
+
+      // specifying empty columns means to delete nothing
+      myTable.delete(R1, new byte[][]{});
+      myTable.delete(new Delete(R1, new byte[][]{}));
+      myTable.delete(new Delete(R1, ImmutableList.<byte[]>of()));
+      myTable.delete(new Delete(Bytes.toString(R1), new String[]{}));
+      myTable.delete(new Delete(Bytes.toString(R1), ImmutableList.<String>of()));
+
+      // verify the above delete calls deleted none of the rows
+      Row row = myTable.get(R1);
+      Assert.assertEquals(3, row.getColumns().size());
+      Assert.assertArrayEquals(R1, row.getRow());
+      Assert.assertArrayEquals(V1, row.get(C1));
+      Assert.assertArrayEquals(V2, row.get(C2));
+      Assert.assertArrayEquals(V3, row.get(C3));
+
+
+      // test deletion of only one column
+      Delete delete = new Delete(R1);
+      Assert.assertNull(delete.getColumns());
+      delete.add(C1);
+      Assert.assertNotNull(delete.getColumns());
+      myTable.delete(delete);
+
+      row = myTable.get(R1);
+      Assert.assertEquals(2, row.getColumns().size());
+      Assert.assertArrayEquals(R1, row.getRow());
+      Assert.assertArrayEquals(V2, row.get(C2));
+      Assert.assertArrayEquals(V3, row.get(C3));
+
+      // test delete of all columns
+      myTable.delete(new Delete(R1));
+      Assert.assertEquals(0, myTable.get(R1).getColumns().size());
+
+      txClient.abort(tx);
+    } finally {
+      admin.drop();
+    }
+  }
+
+  @Test
+  public void testMultiGetWithEmpty() throws Exception {
+    DatasetAdmin admin = getTableAdmin(CONTEXT1, MY_TABLE);
+    admin.create();
+    try {
+      Transaction tx = txClient.startShort();
+      Table myTable = getTable(CONTEXT1, MY_TABLE);
+      ((TransactionAware) myTable).startTx(tx);
+
+      myTable.put(R1, C1, V1);
+      myTable.put(R1, C2, V2);
+      myTable.put(R1, C3, V3);
+      myTable.put(R1, C4, V4);
+
+      List<Get> gets = new ArrayList<>();
+      // the second and fourth Gets are requesting 0 columns. This tests correctness of batch-get logic, when there
+      // is/are empty Gets among them.
+      gets.add(new Get(R1, C1));
+      gets.add(new Get(R1, ImmutableList.<byte[]>of()));
+      gets.add(new Get(R1, C2, C3));
+      gets.add(new Get(R1, ImmutableList.<byte[]>of()));
+      gets.add(new Get(R1, C4));
+
+      List<Row> rows = myTable.get(gets);
+      // first off, the Gets at index two and four should be empty
+      Assert.assertEquals(0, rows.get(1).getColumns().size());
+      Assert.assertEquals(0, rows.get(3).getColumns().size());
+
+      // verify the results of the other Gets
+      Assert.assertEquals(1, rows.get(0).getColumns().size());
+      Assert.assertArrayEquals(V1, rows.get(0).get(C1));
+      Assert.assertEquals(2, rows.get(2).getColumns().size());
+      Assert.assertArrayEquals(V2, rows.get(2).get(C2));
+      Assert.assertArrayEquals(V3, rows.get(2).get(C3));
+      Assert.assertEquals(1, rows.get(4).getColumns().size());
+      Assert.assertArrayEquals(V4, rows.get(4).get(C4));
+
+      txClient.abort(tx);
+    } finally {
       admin.drop();
     }
   }
