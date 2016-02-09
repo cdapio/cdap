@@ -12,7 +12,7 @@ Introduction
 ============
 
 The Command Line Interface (CLI) provides methods to interact with the CDAP server from within a shell,
-similar to HBase shell or ``bash``. It is located within the SDK, at ``bin/cdap-cli`` as either a bash
+similar to the HBase or ``bash`` shells. It is located within the SDK, at ``bin/cdap-cli`` as either a bash
 script or a Windows ``.bat`` file.
 
 The CLI may be used in two ways: interactive mode and non-interactive mode.
@@ -28,25 +28,25 @@ To run the CLI in interactive mode, run the ``cdap-cli.sh`` executable with no a
 
 or, on Windows::
 
-  ~SDK> bin\cdap-cli.bat
+  > bin\cdap-cli.bat
 
 The executable should bring you into a shell, with this prompt::
 
   cdap (http://localhost:10000)>
 
 This indicates that the CLI is currently set to interact with the CDAP server at ``localhost``.
-There are two ways to interact with a different CDAP server:
+To interact with a different CDAP server:
 
 - To interact with a different CDAP server by default, set the environment variable ``CDAP_HOST`` to a hostname.
-- To change the current CDAP server, run the command ``connect example.com``.
-- To connect to an SSL-enabled CDAP server, run the command ``connect https://example.com``.
+- To change the current CDAP server, run the CLI command ``connect example.com``.
+- To connect to an SSL-enabled CDAP server, run the CLI command ``connect https://example.com``.
 
 For example, with ``CDAP_HOST`` set to ``example.com``, the CLI would be interacting with
 a CDAP instance at ``example.com``, port ``10000``::
 
   cdap (http://example.com:10000)>
 
-To list all of the available commands, enter ``help``::
+To list all of the available commands, enter the CLI command ``help``::
 
   cdap (http://localhost:10000)> help
 
@@ -129,30 +129,6 @@ These are the available commands:
    ``connect <cdap-instance-uri> [<verify-ssl-cert>]``,"Connects to a CDAP instance."
    ``exit``,"Exits the CLI."
    ``quit``,"Exits the CLI."
-   **Artifact**
-   ``delete artifact <artifact-name> <artifact-version>``,"Deletes an artifact"
-   ``describe artifact <artifact-name> <artifact-version> [<scope>]``,"Shows information about an artifact. If no scope is given, the user scope will be used. Includes information about application and plugin classes contained in the artifact."
-   ``describe artifact-plugin <artifact-name> <artifact-version> <plugin-type> <plugin-name> [<scope>]``,"Describes all plugins of a specific type and name available to a specific artifact. Can return multiple details if the plugin exists in multiple artifacts. If no scope is given, the user scope will be used."
-   ``get artifact properties <artifact-name> <artifact-version> [<scope>]``,"Gets properties of an artifact. If no scope is given, the user scope will be used. "
-   ``list artifact plugin-types <artifact-name> <artifact-version> [<scope>]``,"Lists all plugin types usable by the specified artifact. If no scope is given, the user scope will be used."
-   ``list artifact plugins <artifact-name> <artifact-version> <plugin-type> [<scope>]``,"Lists all plugins of a specific type available to a specific artifact. Includes the type, name, classname, and description of the plugin, as well as the artifact the plugin came from. If no scope is given, the user scope will be used."
-   ``list artifact versions <artifact-name> [<scope>]``,"Lists all versions of a specific artifact. If no scope is given, the user scope will be used."
-   ``list artifacts [<scope>]``,"Lists all artifacts. If no scope is given, artifacts in all scopes are returned. Otherwise, only artifacts in the specified scope are returned."
-   ``load artifact <local-file-path> [config-file <artifact-config>] [name <artifact-name>] [version <artifact-version>]``,"Loads an artifact into CDAP. If the artifact name and version are not both given, they will be derived from the filename of the artifact. File names are expected to be of the form <name>-<version>.jar. If the artifact contains plugins that extend another artifact, or if it contains third-party plugins, a config file must be given. The config file must contain a JSON object that specifies the parent artifacts and any third-party plugins in the jar. For example, if there is a config file with these contents:
-    | ``{``
-    |   ``""parents"":[ ""app1[1.0.0,2.0.0)"", ""app2[1.2.0,1.3.0] ],``
-    |   ``""plugins"":[``
-    |     ``{ ""type"": ""jdbc"",``
-    |       ``""name"": ""mysql"",``
-    |       ``""className"": ""com.mysql.jdbc.Driver""``
-    |     ``}``
-    |   ``],``
-    |   ``""plugins"":{``
-    |     ``""prop1"": ""val1"",``
-    |   ``},``
-    | ``}``
-   This config specifies that the artifact contains one JDBC third-party plugin that should be available to the app1 artifact (versions 1.0.0 inclusive to 2.0.0 exclusive) and app2 artifact (versions 1.2.0 inclusive to 1.3.0 inclusive). The config may also include a 'properties' field specifying properties for the artifact."
-   ``set artifact properties <artifact-name> <artifact-version> <scope> <local-file-path>``,"Sets properties of an artifact. The properties file must contain a JSON Object with a 'properties' key whose value is a JSON Object of the properties for the artifact."
    **Application Lifecycle**
    ``create app <app-id> <artifact-name> <artifact-version> <scope> [<app-config-file>]``,"Creates an application from an artifact with optional configuration. If configuration is needed, it must be given as a file whose contents are a JSON object containing the application config. For example, the file contents could contain:
     | ``{``
@@ -284,6 +260,31 @@ These are the available commands:
    ``stop workflow <app-id.workflow-id>``,"Stops a workflow."
    ``suspend schedule <app-id.schedule-id>``,"Suspends a schedule"
    ``update app <app-id> <artifact-name> <artifact-version> <scope> [<app-config-file>]``,"Updates an application to use another artifact version and/or configuration."
+   **Artifact**
+   ``delete artifact <artifact-name> <artifact-version>``,"Deletes an artifact"
+   ``describe artifact <artifact-name> <artifact-version> [<scope>]``,"Shows information about an artifact. If no scope is given, the user scope will be used. Includes information about application and plugin classes contained in the artifact."
+   ``describe artifact-plugin <artifact-name> <artifact-version> <plugin-type> <plugin-name> [<scope>]``,"Describes all plugins of a specific type and name available to a specific artifact. Can return multiple details if the plugin exists in multiple artifacts. If no scope is given, the user scope will be used."
+   ``get artifact properties <artifact-name> <artifact-version> [<scope>]``,"Gets properties of an artifact. If no scope is given, the user scope will be used. "
+   ``list artifact plugin-types <artifact-name> <artifact-version> [<scope>]``,"Lists all plugin types usable by the specified artifact. If no scope is given, the user scope will be used."
+   ``list artifact plugins <artifact-name> <artifact-version> <plugin-type> [<scope>]``,"Lists all plugins of a specific type available to a specific artifact. Includes the type, name, classname, and description of the plugin, as well as the artifact the plugin came from. If no scope is given, the user scope will be used."
+   ``list artifact versions <artifact-name> [<scope>]``,"Lists all versions of a specific artifact. If no scope is given, the user scope will be used."
+   ``list artifacts [<scope>]``,"Lists all artifacts. If no scope is given, artifacts in all scopes are returned. Otherwise, only artifacts in the specified scope are returned."
+   ``load artifact <local-file-path> [config-file <artifact-config>] [name <artifact-name>] [version <artifact-version>]``,"Loads an artifact into CDAP. If the artifact name and version are not both given, they will be derived from the filename of the artifact. File names are expected to be of the form <name>-<version>.jar. If the artifact contains plugins that extend another artifact, or if it contains third-party plugins, a config file must be given. The config file must contain a JSON object that specifies the parent artifacts and any third-party plugins in the jar. For example, if there is a config file with these contents:
+    | ``{``
+    |   ``""parents"":[ ""app1[1.0.0,2.0.0)"", ""app2[1.2.0,1.3.0] ],``
+    |   ``""plugins"":[``
+    |     ``{ ""type"": ""jdbc"",``
+    |       ``""name"": ""mysql"",``
+    |       ``""className"": ""com.mysql.jdbc.Driver""``
+    |     ``}``
+    |   ``],``
+    |   ``""plugins"":{``
+    |     ``""prop1"": ""val1"",``
+    |   ``},``
+    | ``}``
+    
+   This config specifies that the artifact contains one JDBC third-party plugin that should be available to the app1 artifact (versions 1.0.0 inclusive to 2.0.0 exclusive) and app2 artifact (versions 1.2.0 inclusive to 1.3.0 inclusive). The config may also include a 'properties' field specifying properties for the artifact."
+   ``set artifact properties <artifact-name> <artifact-version> <scope> <local-file-path>``,"Sets properties of an artifact. The properties file must contain a JSON Object with a 'properties' key whose value is a JSON Object of the properties for the artifact."
    **Dataset**
    ``create dataset instance <dataset-type> <new-dataset-name> [<dataset-properties>]``,"Creates a dataset. <dataset-properties> is in the format ""key1=val1 key2=val2"""
    ``delete dataset instance <dataset-name>``,"Deletes a dataset."
