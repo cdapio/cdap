@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -74,6 +74,7 @@ import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.store.guice.NamespaceStoreModule;
 import co.cask.tephra.Transaction;
 import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionExecutorFactory;
@@ -477,6 +478,7 @@ public class HBaseQueueDebugger extends AbstractIdleService {
       new NotificationServiceRuntimeModule().getDistributedModules(),
       new MetricsClientRuntimeModule().getDistributedModules(),
       new KafkaClientModule(),
+      new NamespaceStoreModule().getDistributedModules(),
       new AbstractModule() {
         @Override
         protected void configure() {

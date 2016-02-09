@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -32,8 +32,6 @@ import co.cask.cdap.common.guice.IOModule;
 import co.cask.cdap.common.guice.KafkaClientModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.guice.ZKClientModule;
-import co.cask.cdap.common.namespace.AbstractNamespaceClient;
-import co.cask.cdap.common.namespace.guice.NamespaceClientRuntimeModule;
 import co.cask.cdap.common.utils.Networks;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
@@ -44,6 +42,8 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
+import co.cask.cdap.store.NamespaceStore;
+import co.cask.cdap.store.guice.NamespaceStoreModule;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpRequests;
 import co.cask.common.http.HttpResponse;
@@ -84,20 +84,20 @@ public class DatasetOpExecutorServiceTest {
   private static final Id.DatasetInstance bob = Id.DatasetInstance.from(namespace, "bob");
 
   @ClassRule
-  public static TemporaryFolder tmpFolder = new TemporaryFolder();
+  public static final TemporaryFolder TMP_FOLDER = new TemporaryFolder();
 
   private DatasetService managerService;
   private DatasetFramework dsFramework;
   private EndpointStrategy endpointStrategy;
   private TransactionManager txManager;
-  private AbstractNamespaceClient namespaceClient;
+  private NamespaceStore nsStore;
 
   @Before
   public void setUp() throws Exception {
     Configuration hConf = new Configuration();
     CConfiguration cConf = CConfiguration.create();
 
-    File datasetDir = new File(tmpFolder.newFolder(), "datasetUser");
+    File datasetDir = new File(TMP_FOLDER.newFolder(), "datasetUser");
     Assert.assertTrue(datasetDir.mkdirs());
 
     cConf.set(Constants.Dataset.Manager.OUTPUT_DIR, datasetDir.getAbsolutePath());
@@ -118,7 +118,7 @@ public class DatasetOpExecutorServiceTest {
       new DataSetServiceModules().getInMemoryModules(),
       new TransactionMetricsModule(),
       new ExploreClientModule(),
-      new NamespaceClientRuntimeModule().getInMemoryModules());
+      new NamespaceStoreModule().getInMemoryModules());
 
     txManager = injector.getInstance(TransactionManager.class);
     txManager.startAndWait();
@@ -132,9 +132,9 @@ public class DatasetOpExecutorServiceTest {
     DiscoveryServiceClient discoveryClient = injector.getInstance(DiscoveryServiceClient.class);
     endpointStrategy = new RandomEndpointStrategy(discoveryClient.discover(Constants.Service.DATASET_MANAGER));
 
-    namespaceClient = injector.getInstance(AbstractNamespaceClient.class);
-    namespaceClient.create(NamespaceMeta.DEFAULT);
-    namespaceClient.create(new NamespaceMeta.Builder().setName(bob.getNamespace()).build());
+    nsStore = injector.getInstance(NamespaceStore.class);
+    nsStore.create(NamespaceMeta.DEFAULT);
+    nsStore.create(new NamespaceMeta.Builder().setName(bob.getNamespace()).build());
   }
 
   @After
@@ -144,8 +144,8 @@ public class DatasetOpExecutorServiceTest {
     managerService.stopAndWait();
     managerService = null;
 
-    namespaceClient.delete(Id.Namespace.DEFAULT);
-    namespaceClient.delete(bob.getNamespace());
+    nsStore.delete(Id.Namespace.DEFAULT);
+    nsStore.delete(bob.getNamespace());
   }
 
   @Test

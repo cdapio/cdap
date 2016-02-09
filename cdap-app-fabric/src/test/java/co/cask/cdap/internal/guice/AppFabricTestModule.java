@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -47,6 +47,7 @@ import co.cask.cdap.notifications.feeds.guice.NotificationFeedServiceRuntimeModu
 import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ScheduledRuntime;
+import co.cask.cdap.store.guice.NamespaceStoreModule;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.AbstractModule;
 import com.google.inject.PrivateModule;
@@ -108,6 +109,7 @@ public final class AppFabricTestModule extends AbstractModule {
     install(new StreamAdminModules().getInMemoryModules());
     install(new StreamServiceRuntimeModule().getInMemoryModules());
     install(new NamespaceClientRuntimeModule().getStandaloneModules());
+    install(new NamespaceStoreModule().getStandaloneModules());
     install(new MetadataServiceModule());
   }
 

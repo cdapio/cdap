@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -25,8 +25,6 @@ import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.IOModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
-import co.cask.cdap.common.namespace.AbstractNamespaceClient;
-import co.cask.cdap.common.namespace.guice.NamespaceClientRuntimeModule;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
@@ -49,6 +47,7 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.store.DefaultNamespaceStore;
 import co.cask.cdap.store.NamespaceStore;
+import co.cask.cdap.store.guice.NamespaceStoreModule;
 import co.cask.tephra.Transaction;
 import co.cask.tephra.TransactionManager;
 import com.google.common.collect.ImmutableList;
@@ -77,7 +76,7 @@ public class ExploreDisabledTest {
   private static DatasetOpExecutor dsOpExecutor;
   private static DatasetService datasetService;
   private static ExploreClient exploreClient;
-  private static AbstractNamespaceClient namespaceClient;
+  private static NamespaceStore namespaceStore;
 
   @BeforeClass
   public static void start() throws Exception {
@@ -96,8 +95,8 @@ public class ExploreDisabledTest {
 
     datasetFramework = injector.getInstance(DatasetFramework.class);
 
-    namespaceClient = injector.getInstance(AbstractNamespaceClient.class);
-    namespaceClient.create(new NamespaceMeta.Builder().setName(namespaceId).build());
+    namespaceStore = injector.getInstance(NamespaceStore.class);
+    namespaceStore.create(new NamespaceMeta.Builder().setName(namespaceId).build());
     // This happens when you create a namespace via REST APIs. However, since we do not start AppFabricServer in
     // Explore tests, simulating that scenario by explicitly calling DatasetFramework APIs.
     datasetFramework.createNamespace(namespaceId);
@@ -106,7 +105,7 @@ public class ExploreDisabledTest {
   @AfterClass
   public static void stop() throws Exception {
     datasetFramework.deleteNamespace(namespaceId);
-    namespaceClient.delete(namespaceId);
+    namespaceStore.delete(namespaceId);
     exploreClient.close();
     datasetService.stopAndWait();
     dsOpExecutor.stopAndWait();
@@ -218,12 +217,11 @@ public class ExploreDisabledTest {
         new ViewAdminModules().getInMemoryModules(),
         new StreamAdminModules().getInMemoryModules(),
         new NotificationServiceRuntimeModule().getInMemoryModules(),
-        new NamespaceClientRuntimeModule().getInMemoryModules(),
+        new NamespaceStoreModule().getInMemoryModules(),
         new AbstractModule() {
           @Override
           protected void configure() {
             bind(NotificationFeedManager.class).to(NoOpNotificationFeedManager.class);
-            bind(NamespaceStore.class).to(DefaultNamespaceStore.class);
           }
         }
     );
