@@ -146,6 +146,10 @@ Bug Fixes
 - `CDAP-4924 <https://issues.cask.co/browse/CDAP-4924>`__ - Fixed a PermGen memory leak
   that occurred while deploying multiple applications with database plugins.
 
+- `CDAP-4927 <https://issues.cask.co/browse/CDAP-4927>`__ - Fixed the CDAP Explore
+  Service JDBC driver to do nothing instead of throwing an exception when a commit is
+  called. 
+  
 Deprecated and Removed Features
 -------------------------------
 
