@@ -35,8 +35,8 @@ public class ClientConfig {
 
   private static final boolean DEFAULT_VERIFY_SSL_CERTIFICATE = true;
 
-  private static final int DEFAULT_UPLOAD_READ_TIMEOUT = 15000;
-  private static final int DEFAULT_UPLOAD_CONNECT_TIMEOUT = 15000;
+  private static final int DEFAULT_UPLOAD_READ_TIMEOUT = 0;
+  private static final int DEFAULT_UPLOAD_CONNECT_TIMEOUT = 0;
   private static final int DEFAULT_SERVICE_UNAVAILABLE_RETRY_LIMIT = 50;
 
   private static final int DEFAULT_READ_TIMEOUT = 15000;
