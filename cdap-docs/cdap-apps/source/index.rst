@@ -9,7 +9,7 @@
 CDAP Applications
 =================
 
-.. rubric: System Artifacts
+.. rubric:: System Artifacts
 
 CDAP comes packaged with several system artifacts to create two types of applications,
 simply by configuring the system artifacts and not writing any code at all:
@@ -33,7 +33,7 @@ extensible: users can write their own artifacts if they so chose, and can
 manage the lifecycle of their custom applications using CDAP.
 
 
-.. rubric: Navigator Integration Application
+.. rubric:: Navigator Integration Application
 
 The Navigator Integration App is an application built by the team at Cask for bridging CDAP Metadata
 with Cloudera's data management tool, Navigator. The Navigator Integration App is a CDAP-native application

@@ -58,7 +58,7 @@ results.
 - |cloudera-ingesting|_ Ingest and explore data using **Impala**
 
 .. |cloudera-navigator| replace:: **Metadata Discovery and Search:**
-.. _cloudera-navigator: /../developers-manual/building-blocks/navigator-integration.html
+.. _cloudera-navigator: /../cdap-apps/navigator-integration.html
 
 - |cloudera-navigator|_ Using CDAP's **Navigator Integration Application** and **Cloudera Navigator**
 
