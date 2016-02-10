@@ -48,7 +48,6 @@ Deploy the JAR using the CDAP CLI:
     .. parsed-literal::
       |$| cdap-cli.sh load artifact target/navigator-|navigator-version|-jar
 
-  > load artifact target/navigator-<version>-jar
 
 **Step 2:** Create an application configuration file that contains:
 
