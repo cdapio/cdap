@@ -174,8 +174,15 @@ public class UpgradeTool {
         for (Map.Entry<String, Map<String, Map<String, PluginTemplate>>> appEntry :
           namespaceEntry.getValue().entrySet()) {
           String appName = appEntry.getKey();
-          PluginArtifactFinder pluginArtifactFinder =
-            appName.equals(BATCH_NAME) ? batchPluginArtifactFinder : realtimePluginArtifactFinder;
+          PluginArtifactFinder pluginArtifactFinder;
+          if (BATCH_NAME.equals(appName)) {
+            pluginArtifactFinder = batchPluginArtifactFinder;
+          } else if (REALTIME_NAME.equals(appName)) {
+            pluginArtifactFinder = realtimePluginArtifactFinder;
+          } else {
+            // don't know what this is, ignore it.
+            continue;
+          }
 
           for (Map.Entry<String, Map<String, PluginTemplate>> pluginTypeEntry : appEntry.getValue().entrySet()) {
 
@@ -326,8 +333,8 @@ public class UpgradeTool {
 
     UpgradeTool upgradeTool = new UpgradeTool(clientConfig);
 
-    upgradeTool.upgradeUIData();
     if (commandLine.hasOption("d")) {
+      upgradeTool.upgradeUIData();
       System.exit(0);
     }
 
@@ -353,6 +360,12 @@ public class UpgradeTool {
     }
 
     printUpgraded(upgradeTool.upgrade());
+
+    try {
+      upgradeTool.upgradeUIData();
+    } catch (Exception e) {
+      LOG.warn("There was an error upgrading UI data. Old pipeline drafts and plugin templates may no longer work.", e);
+    }
   }
 
   private static void printUpgraded(Set<Id.Application> pipelines) {
