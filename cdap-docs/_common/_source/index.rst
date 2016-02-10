@@ -80,7 +80,6 @@ on the installation, monitoring and diagnosing fully distributed CDAP in a Hadoo
   - **Creating Custom ETL Plugins:** For developers of custom ETL plugins 
   - **Data Quality:** An extensible *CDAP Application* to assess the quality of data
     using its out-of-the-box functionality and libraries
-  - **Navigator Integration:** Bridging CDAP Metadata with Cloudera's data management tool, Navigator
   
   
 .. |admin-manual| replace:: **Administration Manual:**
@@ -101,7 +100,8 @@ on the installation, monitoring and diagnosing fully distributed CDAP in a Hadoo
 
 - |integrations|_ 
 
-  - **Cloudera:** Integrating CDAP into Cloudera, using Cloudera Manager, and running interactive queries with Impala
+  - **Cloudera:** Integrating CDAP into Cloudera, using Cloudera Manager, running interactive queries with Impala, and
+    bridging CDAP Metadata with Cloudera's data management tool, Navigator
   - **JDBC:** The CDAP JDBC driver, included with CDAP
   - **Pentaho:** *Pentaho Data Integration*, a business intelligence tool that can be used with CDAP
   - **Squirrel:** *SquirrelSQL*, a simple JDBC client that can be integrated with CDAP

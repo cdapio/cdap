@@ -11,7 +11,7 @@ Integrations
 
 .. rubric:: Cloudera
 
-.. |cloudera-introduction| replace:: **Introduction:**
+.. |cloudera-introduction| replace:: **Overview:**
 .. _cloudera-introduction: partners/cloudera/index.html
 
 - |cloudera-introduction|_ Utilizing CDAP on **Cloudera Enterprise Data Hub**
@@ -29,10 +29,11 @@ Integrations
 - |cloudera-ingesting|_ Ingesting and exploring data using **Impala**
 
 
-.. |cloudera-navigator| replace:: **Metadata Discovery and Search:**
-.. _cloudera-navigator: /../cdap-apps/navigator-integration.html
+.. |cloudera-navigator| replace:: **Navigator Integration:**
+.. _cloudera-navigator: partners/cloudera/navigator-integration.html
 
-- |cloudera-navigator|_ Using CDAP's **Navigator Integration Application** and **Cloudera Navigator**
+- |cloudera-navigator|_ Metadata discovery and search using CDAP's **Navigator Integration
+  Application** and **Cloudera Navigator**
 
 
 .. |cloudera-faq| replace:: **FAQ:**
