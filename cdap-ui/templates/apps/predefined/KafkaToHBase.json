@@ -21,7 +21,7 @@
         "artifact": {
           "name": "core-plugins",
           "scope": "SYSTEM",
-          "version": "1.2.0"
+          "version": "1.2.1-SNAPSHOT"
         }
       }
     },
@@ -39,7 +39,7 @@
           "artifact": {
             "name": "core-plugins",
             "scope": "SYSTEM",
-            "version": "1.2.0"
+            "version": "1.2.1-SNAPSHOT"
           }
         }
       }
@@ -57,7 +57,7 @@
           "artifact": {
             "name": "core-plugins",
             "scope": "SYSTEM",
-            "version": "1.2.0"
+            "version": "1.2.1-SNAPSHOT"
           }
         }
       }
