@@ -38,8 +38,8 @@ the metadata updates. Hence, before using this application, you should enable pu
 Kafka, as described in the CDAP document :ref:`Enable Metadata Update Notifications <metadata-update-notifications>`.
 
 
-Deploying the Navigator Integration App
-=======================================
+Deploying the Application
+=========================
 **Step 1:** Start by deploying the artifact JAR (download the :navigator-jar:`released JAR from Maven <>`, version |navigator-version|).
 Deploy the JAR using the CDAP CLI:
 
@@ -116,8 +116,8 @@ This key contains a property map with these properties:
       |$| cdap-cli.sh create app metaApp navigator |navigator-version| USER appconfig.txt
 
 
-Starting the Navigator Integration App
-======================================
+Starting the Application
+========================
 To start the MetadataFlow:
 
   .. container:: highlight
