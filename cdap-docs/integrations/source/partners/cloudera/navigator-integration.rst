@@ -8,6 +8,7 @@
 Navigator Integration Application
 =================================
 
+
 Introduction
 ============
 
@@ -17,13 +18,10 @@ that uses a real-time flow to fetch the CDAP Metadata and write it to Cloudera N
 
 Resources
 ---------
-- `Overview of CDAP Metadata
-  <http://docs.cask.co/cdap/current/en/developers-manual/building-blocks/metadata-lineage.html#metadata>`__
+- :ref:`Overview of CDAP Metadata <metadata-lineage-metadata>`
 - `Cloudera Navigator <http://www.cloudera.com/products/cloudera-navigator.html>`__
-- `Real-time processing using Flows
-  <http://docs.cask.co/cdap/current/en/developers-manual/building-blocks/flows-flowlets/index.html>`__
-- `Kafka Flowlet Library
-  <https://github.com/caskdata/cdap-packs/tree/develop/cdap-kafka-pack/cdap-kafka-flow>`__
+- :ref:`Real-time processing using Flows <flows-flowlets-index>`
+- :cdap-kafka-flow:`Kafka Flowlet Library <>`
 
 
 Getting Started
@@ -37,15 +35,18 @@ Metadata Publishing to Kafka
 ----------------------------
 The Navigator Integration App contains a flow that subscribes to the Kafka topic to which the CDAP Metadata service publishes
 the metadata updates. Hence, before using this application, you should enable publishing of metadata updates to
-Kafka, as described in the CDAP document `Enable Metadata Update Notifications
-<http://docs.cask.co/cdap/current/en/developers-manual/building-blocks/metadata-lineage.html#metadata-update-notifications>`__.
+Kafka, as described in the CDAP document :ref:`Enable Metadata Update Notifications <metadata-update-notifications>`.
 
 
 Deploying the Navigator Integration App
----------------------------------------
-**Step 1:** Start by deploying the artifact JAR (download the `released JAR from Maven
-<http://search.maven.org/remotecontent?filepath=co/cask/cdap/metadata/navigator/0.1.0/navigator-0.1.0.jar>`__).
-Deploy the JAR using the CDAP CLI::
+=======================================
+**Step 1:** Start by deploying the artifact JAR (download the :navigator-jar:`released JAR from Maven <>`, version |navigator-version|).
+Deploy the JAR using the CDAP CLI:
+
+  .. container:: highlight
+
+    .. parsed-literal::
+      |$| cdap-cli.sh load artifact target/navigator-|navigator-version|-jar
 
   > load artifact target/navigator-<version>-jar
 
@@ -70,53 +71,60 @@ A sample Application Configuration file::
     }
   }
 
-**Metadata Kafka Config:**
+**Metadata Kafka Config**
 
 This key contains a property map with these properties:
 
-Required Properties:
+  Required Properties:
 
-- ``zookeeperString``: Kafka ZooKeeper string that can be used to subscribe to the CDAP metadata updates
-- ``brokerString``: Kafka Broker string to which CDAP metadata is published
+  - ``zookeeperString``: Kafka ZooKeeper string that can be used to subscribe to the CDAP metadata updates
+  - ``brokerString``: Kafka Broker string to which CDAP metadata is published
 
-*Note:* Specify either the ``zookeeperString`` or the ``brokerString``.
+  *Note:* Specify either the ``zookeeperString`` or the ``brokerString``.
 
-Optional Properties:
+  Optional Properties:
 
-- ``topic``: Kafka Topic to which CDAP metadata updates are published; default is ``cdap-metadata-updates`` which
-  corresponds to the default topic used in CDAP for metadata updates
-- ``numPartitions``: Number of Kafka partitions; default is set to ``10``
-- ``offsetDataset``: Name of the dataset where Kafka offsets are stored; default is ``kafkaOffset``
+  - ``topic``: Kafka Topic to which CDAP metadata updates are published; default is ``cdap-metadata-updates`` which
+    corresponds to the default topic used in CDAP for metadata updates
+  - ``numPartitions``: Number of Kafka partitions; default is set to ``10``
+  - ``offsetDataset``: Name of the dataset where Kafka offsets are stored; default is ``kafkaOffset``
 
-**Navigator Config:**
+**Navigator Config**
 
 This key contains a property map with these properties:
 
-Required Properties:
+  Required Properties:
 
-- ``navigatorHostName``: Navigator Metadata Server hostname
-- ``username``: Navigator Metadata Server username
-- ``password``: Navigator Metadata Server password
+  - ``navigatorHostName``: Navigator Metadata Server hostname
+  - ``username``: Navigator Metadata Server username
+  - ``password``: Navigator Metadata Server password
 
-Optional Properties:
+  Optional Properties:
 
-- ``navigatorPort``: Navigator Metadata Server port; default is ``7187``
-- ``autocommit``: Navigator SDK's autocommit property; default is ``true``
-- ``namespace``: Navigator namespace; default is ``CDAP``
-- ``applicationURL``: Navigator Application URL; default is ``http://navigatorHostName``
-- ``fileFormat``: Navigator File Format; default is ``JSON``
-- ``navigatorURL``: Navigator URL; default is ``http://navigatorHostName:navigatorPort/api/v8``
-- ``metadataParentURI``: Navigator Metadata Parent URI; default is ``http://navigatorHostName:navigatorPort/api/v8/metadata/plugin``
+  - ``navigatorPort``: Navigator Metadata Server port; default is ``7187``
+  - ``autocommit``: Navigator SDK's autocommit property; default is ``true``
+  - ``namespace``: Navigator namespace; default is ``CDAP``
+  - ``applicationURL``: Navigator Application URL; default is ``http://navigatorHostName``
+  - ``fileFormat``: Navigator File Format; default is ``JSON``
+  - ``navigatorURL``: Navigator URL; default is ``http://navigatorHostName:navigatorPort/api/v8``
+  - ``metadataParentURI``: Navigator Metadata Parent URI; default is ``http://navigatorHostName:navigatorPort/api/v8/metadata/plugin``
 
-**Step 3:** Create a CDAP Application by providing the configuration file::
+**Step 3:** Create a CDAP Application by providing the configuration file:
 
-  > create app metaApp navigator 0.1.0 USER appconfig.txt
+  .. container:: highlight
+
+    .. parsed-literal::
+      |$| cdap-cli.sh create app metaApp navigator |navigator-version| USER appconfig.txt
+
 
 Starting the Navigator Integration App
---------------------------------------
-To start the MetadataFlow::
+======================================
+To start the MetadataFlow:
 
-  > start flow metaApp.MetadataFlow
+  .. container:: highlight
+
+    .. parsed-literal::
+      |$| cdap-cli.sh start flow metaApp.MetadataFlow
 
 You should now be able to view CDAP Metadata in the Cloudera Navigator UI. Note that all CDAP Entities use ``SDK`` as
 the SourceType and use ``CDAP`` as the namespace (this can be modified). Since the Navigator SDK doesn't allow the adding
