@@ -35,7 +35,6 @@ The executable should bring you into a shell, with this prompt::
   cdap (http://localhost:10000)>
 
 This indicates that the CLI is currently set to interact with the CDAP server at ``localhost``.
-To interact with a different CDAP server:
 
 - To interact with a different CDAP server by default, set the environment variable ``CDAP_HOST`` to a hostname.
 - To change the current CDAP server, run the CLI command ``connect example.com``.
