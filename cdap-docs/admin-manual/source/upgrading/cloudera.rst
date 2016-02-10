@@ -74,29 +74,7 @@ Upgrading CDH
 These steps cover upgrading the version of CDH of an existing CDAP installation.
 As the different versions of CDH can use different versions of HBase, upgrading from
 one version to the next can require that the HBase coprocessors be upgraded to the correct
-version. The table below lists the different coprocessor package names managed by CDAP
-for each version of CDH. If the version changes, you need to check that the version being
-used has changed as described below.
-
-+-------------+-------------------------------------+
-| CDH Version | CDAP HBase Coprocessor Package Name |
-+=============+=====================================+
-| 5.5         | ``hbase10cdh550``                   |
-+-------------+-------------------------------------+
-| 5.4         | ``hbase10cdh``                      |
-+-------------+-------------------------------------+
-| 5.3         | ``hbase98``                         |
-+-------------+-------------------------------------+
-| 5.2         | ``hbase98``                         |
-+-------------+-------------------------------------+
-| 5.1         | |---|                               |
-+-------------+-------------------------------------+
-
-**For example:** CDH 5.3 ships with HBase 0.98 while CDH 5.4 ships with HBase 1.0. We support
-CDH 5.4 as of CDAP 3.1.0 |---| however, upgrading the underlying CDH version is only supported
-since CDAP 3.2.0. Therefore, before upgrading from CDH 5.3 to CDH 5.4, upgrade CDAP to version
-3.2.0 or greater, following the normal upgrade procedure. Start CDAP at least once to make sure
-it works properly, before you upgrade to CDH 5.4.
+version. The steps below will, if required, update the coprocessors appropriately.
 
 **It is important to perform these steps as described, otherwise the coprocessors may not
 get upgraded correctly and HBase regionservers may crash.** In the case where something
@@ -122,28 +100,6 @@ goes wrong, see these troubleshooting instructions for :ref:`problems while upgr
 
 #. Run the *Post-CDH Upgrade Tasks* to upgrade CDAP for the new version of CDH. From the CDAP Service 
    page, select "Run Post-CDH Upgrade Tasks" from the Actions menu.
-       
-#. Check if the coprocessor JARs for all CDAP tables have been upgraded to the correct version
-   as listed in the table above by checking that the coprocessor classnames are using the
-   correct package |---| for example, if upgrading from CDH 5.3 to 5.4, the new
-   coprocessor package is ``hbase10cdh`` and a classname using it would be
-   ``co.cask.cdap.data2.transaction.coprocessor.hbase10cdh.DefaultTransactionProcessor``.
-  
-   Running this command in an HBase shell will give you table attributes::
-  
-    > describe 'cdap_system:app.meta'
-    
-   The resulting output will show the coprocessor classname; in this case, we are looking for
-   the inclusion of ``hbase10cdh`` in the name::
-  
-    'cdap_system:app.meta', {TABLE_ATTRIBUTES => {coprocessor$1 =>
-    'hdfs://server.example.com/cdap/cdap/lib/
-    coprocessorb5cb1b69834de686a84d513dff009908.jar|co.cask.cdap.data2.transaction.
-    coprocessor.hbase10cdh.DefaultTransactionProcessor|1073741823|', METADATA =>
-    {'cdap.version' => '3.1.0...
-
-   Note that some CDAP tables do not have any coprocessors. You only need to verify tables
-   that **have** coprocessors.
 
 #. Enable all CDAP tables; from an HBase shell, run this command::
 
