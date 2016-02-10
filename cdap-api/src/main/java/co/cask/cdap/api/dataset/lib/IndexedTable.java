@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -300,13 +300,13 @@ public class IndexedTable extends AbstractDataset implements Table {
   }
 
   /**
-   * Perform a delete on the data table.  Any index entries referencing the deleted row will also be removed.
+   * Perform a delete on the data table. Any index entries referencing the deleted row will also be removed.
    * 
    * @param delete The delete operation identifying the row and optional columns to remove
    */
   @Override
   public void delete(Delete delete) {
-    if (delete.getColumns().isEmpty()) {
+    if (delete.getColumns() == null) {
       // full row delete
       delete(delete.getRow());
       return;

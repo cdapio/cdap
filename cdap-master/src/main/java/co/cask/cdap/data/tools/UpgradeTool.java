@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,6 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package co.cask.cdap.data.tools;
 
 import co.cask.cdap.api.dataset.DatasetSpecification;
@@ -67,6 +68,7 @@ import co.cask.cdap.metrics.store.MetricDatasetFactory;
 import co.cask.cdap.notifications.feeds.client.NotificationFeedClientModule;
 import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.store.guice.NamespaceStoreModule;
 import co.cask.tephra.distributed.TransactionService;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
@@ -97,7 +99,6 @@ public class UpgradeTool {
 
   private static final Logger LOG = LoggerFactory.getLogger(UpgradeTool.class);
 
-  private final Injector injector;
   private final CConfiguration cConf;
   private final Configuration hConf;
   private final TransactionService txService;
@@ -110,7 +111,9 @@ public class UpgradeTool {
   private final QueueAdmin queueAdmin;
   private final DatasetSpecificationUpgrader dsSpecUpgrader;
   private final DatasetInstanceManager datasetInstanceManager;
-  private MetadataStore metadataStore;
+  private final MetadataStore metadataStore;
+  private final ExistingEntitySystemMetadataWriter existingEntitySystemMetadataWriter;
+  private final DatasetServiceManager datasetServiceManager;
 
   /**
    * Set of Action available in this tool.
@@ -122,6 +125,7 @@ public class UpgradeTool {
               "  2. Upgrade Schedule Triggers\n" +
               "  3. Upgrade Business Metadata Dataset\n" +
               "  4. Stream State Store\n" +
+              "  5. Generate system metadata for all existing entities\n" +
               "  Note: Once you run the upgrade tool you cannot rollback to the previous version."),
     UPGRADE_HBASE("After an HBase upgrade, updates the coprocessor jars of all user and \n" +
                     "system HBase tables to a version that is compatible with the new HBase \n" +
@@ -142,7 +146,7 @@ public class UpgradeTool {
   public UpgradeTool() throws Exception {
     this.cConf = CConfiguration.create();
     this.hConf = HBaseConfiguration.create();
-    this.injector = init();
+    Injector injector = createInjector();
     this.txService = injector.getInstance(TransactionService.class);
     this.zkClientService = injector.getInstance(ZKClientService.class);
     this.dsFramework = injector.getInstance(DatasetFramework.class);
@@ -167,9 +171,11 @@ public class UpgradeTool {
         }
       }
     });
+    this.existingEntitySystemMetadataWriter = injector.getInstance(ExistingEntitySystemMetadataWriter.class);
+    this.datasetServiceManager = injector.getInstance(DatasetServiceManager.class);
   }
 
-  private Injector init() throws Exception {
+  private Injector createInjector() throws Exception {
     return Guice.createInjector(
       new ConfigModule(cConf, hConf),
       new LocationRuntimeModule().getDistributedModules(),
@@ -205,6 +211,7 @@ public class UpgradeTool {
       // don't need real notifications for upgrade, so use the in-memory implementations
       new NotificationServiceRuntimeModule().getInMemoryModules(),
       new KafkaClientModule(),
+      new NamespaceStoreModule().getDistributedModules(),
       new AbstractModule() {
         @Override
         protected void configure() {
@@ -250,11 +257,11 @@ public class UpgradeTool {
   /**
    * Do the start up work
    */
-  private void startUp(boolean includeNewDatasets) throws Exception {
+  private void startUp() throws Exception {
     // Start all the services.
     zkClientService.startAndWait();
     txService.startAndWait();
-    initializeDSFramework(cConf, dsFramework, includeNewDatasets);
+    initializeDSFramework(cConf, dsFramework);
     mdsDatasetsRegistry.startUp();
   }
 
@@ -303,7 +310,7 @@ public class UpgradeTool {
           if (response.equalsIgnoreCase("y") || response.equalsIgnoreCase("yes")) {
             System.out.println("Starting upgrade ...");
             try {
-              startUp(false);
+              startUp();
               performUpgrade();
               System.out.println("\nUpgrade completed successfully.\n");
             } finally {
@@ -320,7 +327,7 @@ public class UpgradeTool {
           if (response.equalsIgnoreCase("y") || response.equalsIgnoreCase("yes")) {
             System.out.println("Starting upgrade ...");
             try {
-              startUp(true);
+              startUp();
               performHBaseUpgrade();
               System.out.println("\nUpgrade completed successfully.\n");
             } finally {
@@ -389,8 +396,16 @@ public class UpgradeTool {
     LOG.info("Upgrading Business Metadata Dataset...");
     metadataStore.upgrade();
 
-    LOG.info("Upgrading stream state store table ...");
+    LOG.info("Upgrading stream state store table...");
     streamStateStoreUpgrader.upgrade();
+
+    datasetServiceManager.startUp();
+    LOG.info("Writing system metadata to existing entities...");
+    try {
+      existingEntitySystemMetadataWriter.write(datasetServiceManager.getDSFramework());
+    } finally {
+      datasetServiceManager.shutDown();
+    }
   }
 
   private void performHBaseUpgrade() throws Exception {
@@ -422,8 +437,7 @@ public class UpgradeTool {
    * Sets up a {@link DatasetFramework} instance for standalone usage.  NOTE: should NOT be used by applications!!!
    */
   private void initializeDSFramework(CConfiguration cConf,
-                                     DatasetFramework datasetFramework,
-                                     boolean includeNewDatasets) throws IOException, DatasetManagementException {
+                                     DatasetFramework datasetFramework) throws IOException, DatasetManagementException {
     // dataset service
     DatasetMetaTableUtil.setupDatasets(datasetFramework);
     // artifacts

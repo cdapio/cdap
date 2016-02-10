@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -33,9 +33,8 @@ import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.IOModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
-import co.cask.cdap.common.namespace.AbstractNamespaceClient;
-import co.cask.cdap.common.namespace.LocalNamespaceClient;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
+import co.cask.cdap.common.namespace.guice.NamespaceClientRuntimeModule;
 import co.cask.cdap.common.utils.Networks;
 import co.cask.cdap.common.utils.OSDetector;
 import co.cask.cdap.data.runtime.DataFabricModules;
@@ -78,6 +77,7 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.artifact.ArtifactRange;
+import co.cask.cdap.store.guice.NamespaceStoreModule;
 import co.cask.cdap.test.internal.ApplicationManagerFactory;
 import co.cask.cdap.test.internal.DefaultApplicationManager;
 import co.cask.cdap.test.internal.DefaultStreamManager;
@@ -200,7 +200,6 @@ public class TestBase {
           bind(StreamHandler.class).in(Scopes.SINGLETON);
           bind(StreamFetchHandler.class).in(Scopes.SINGLETON);
           bind(StreamViewHttpHandler.class).in(Scopes.SINGLETON);
-          bind(AbstractNamespaceClient.class).to(LocalNamespaceClient.class).in(Scopes.SINGLETON);
           bind(StreamFileJanitorService.class).to(LocalStreamFileJanitorService.class).in(Scopes.SINGLETON);
           bind(StreamWriterSizeCollector.class).to(BasicStreamWriterSizeCollector.class).in(Scopes.SINGLETON);
           bind(StreamCoordinatorClient.class).to(InMemoryStreamCoordinatorClient.class).in(Scopes.SINGLETON);
@@ -215,6 +214,8 @@ public class TestBase {
       new ExploreClientModule(),
       new NotificationFeedServiceRuntimeModule().getInMemoryModules(),
       new NotificationServiceRuntimeModule().getInMemoryModules(),
+      new NamespaceClientRuntimeModule().getStandaloneModules(),
+      new NamespaceStoreModule().getStandaloneModules(),
       new AbstractModule() {
         @Override
         @SuppressWarnings("deprecation")

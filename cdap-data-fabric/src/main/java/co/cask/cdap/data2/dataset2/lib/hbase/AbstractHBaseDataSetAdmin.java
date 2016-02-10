@@ -192,7 +192,7 @@ public abstract class AbstractHBaseDataSetAdmin implements DatasetAdmin {
     if (priority == null) {
       priority = Coprocessor.PRIORITY_USER;
     }
-    tableDescriptor.addCoprocessor(coprocessor.getName(), new Path(jarFile.toURI()), priority, null);
+    tableDescriptor.addCoprocessor(coprocessor.getName(), new Path(jarFile.toURI().getPath()), priority, null);
   }
 
   protected abstract CoprocessorJar createCoprocessorJar() throws IOException;

@@ -54,14 +54,13 @@ import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.regionserver.HRegion;
 import org.apache.hadoop.hbase.regionserver.RegionScanner;
-import org.apache.twill.filesystem.LocalLocationFactory;
+import org.apache.twill.filesystem.FileContextLocationFactory;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
-import org.junit.rules.TemporaryFolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -81,8 +80,6 @@ import static org.junit.Assert.fail;
 public class HBaseTableTest extends BufferingTableTest<BufferingTable> {
   private static final Logger LOG = LoggerFactory.getLogger(HBaseTableTest.class);
 
-  @ClassRule
-  public static final TemporaryFolder TMP_FOLDER = new TemporaryFolder();
   @ClassRule
   public static final HBaseTestBase TEST_HBASE = new HBaseTestFactory().get();
 
@@ -121,8 +118,13 @@ public class HBaseTableTest extends BufferingTableTest<BufferingTable> {
   protected HBaseTableAdmin getTableAdmin(DatasetContext datasetContext, String name,
                                           DatasetProperties props) throws IOException {
     DatasetSpecification spec = new HBaseTableDefinition("foo").configure(name, props);
+    return getTableAdmin(datasetContext, spec);
+  }
+
+  protected HBaseTableAdmin getTableAdmin(DatasetContext datasetContext, DatasetSpecification spec)
+    throws IOException {
     return new HBaseTableAdmin(datasetContext, spec, TEST_HBASE.getConfiguration(), hBaseTableUtil,
-                               cConf, new LocalLocationFactory(TMP_FOLDER.newFolder()));
+                               cConf, new FileContextLocationFactory(TEST_HBASE.getConfiguration()));
   }
 
   @Override
@@ -291,9 +293,7 @@ public class HBaseTableTest extends BufferingTableTest<BufferingTable> {
     HBaseTableDefinition tableDefinition = new HBaseTableDefinition("foo");
     String tableName = "testcf";
     DatasetSpecification spec = tableDefinition.configure(tableName, props);
-
-    DatasetAdmin admin = new HBaseTableAdmin(CONTEXT1, spec, TEST_HBASE.getConfiguration(), hBaseTableUtil,
-                                             CConfiguration.create(), new LocalLocationFactory(TMP_FOLDER.newFolder()));
+    DatasetAdmin admin = getTableAdmin(CONTEXT1, spec);
     admin.create();
     final HBaseTable table = new HBaseTable(CONTEXT1, spec, cConf, TEST_HBASE.getConfiguration(), hBaseTableUtil);
 
