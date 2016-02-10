@@ -17,6 +17,7 @@
 package co.cask.cdap.etl.batch.config;
 
 import co.cask.cdap.api.Resources;
+import co.cask.cdap.etl.api.Preconditions;
 import co.cask.cdap.etl.common.Connection;
 import co.cask.cdap.etl.common.ETLConfig;
 import co.cask.cdap.etl.common.ETLStage;
@@ -45,24 +46,27 @@ public final class ETLBatchConfig extends ETLConfig {
   private final String schedule;
   private final List<ETLStage> actions;
   private final Resources driverResources;
+  private final Preconditions preconditions;
 
   private ETLBatchConfig(Engine engine, String schedule,
                          ETLStage source, List<ETLStage> sinks, List<ETLStage> transforms,
                          List<Connection> connections, Resources resources,
                          Resources driverResources,
-                         List<ETLStage> actions) {
+                         List<ETLStage> actions, Preconditions preconditions) {
     super(source, sinks, transforms, connections, resources);
     this.engine = engine;
     this.schedule = schedule;
     this.actions = actions;
     this.driverResources = driverResources;
+    this.preconditions = preconditions;
   }
 
   @Deprecated
   public ETLBatchConfig(Engine engine, String schedule,
                         ETLStage source, List<ETLStage> sinks, List<ETLStage> transforms,
                         List<Connection> connections, @Nullable Resources resources, @Nullable List<ETLStage> actions) {
-    this(engine, schedule, source, sinks, transforms, connections, resources, new Resources(), actions);
+    this(engine, schedule, source, sinks, transforms, connections, resources, new Resources(),
+         actions, new Preconditions());
   }
 
   @Deprecated
@@ -117,6 +121,10 @@ public final class ETLBatchConfig extends ETLConfig {
     return driverResources;
   }
 
+  public Preconditions getPreconditions() {
+    return preconditions == null ? new Preconditions() : preconditions;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -147,6 +155,7 @@ public final class ETLBatchConfig extends ETLConfig {
       ", schedule='" + schedule + '\'' +
       ", actions=" + actions +
       ", driverResources=" + driverResources +
+      ", preconditions=" + preconditions +
       "} " + super.toString();
   }
 
@@ -162,12 +171,14 @@ public final class ETLBatchConfig extends ETLConfig {
     private Engine engine;
     private List<ETLStage> actions;
     private Resources driverResources;
+    private Preconditions preconditions;
 
     public Builder(String schedule) {
       super();
       this.schedule = schedule;
       this.actions = new ArrayList<>();
       this.engine = Engine.MAPREDUCE;
+      this.preconditions = new Preconditions();
     }
 
     public Builder addAction(ETLStage action) {
@@ -190,9 +201,14 @@ public final class ETLBatchConfig extends ETLConfig {
       return this;
     }
 
+    public Builder setPreconditions(Preconditions preconditions) {
+      this.preconditions = preconditions;
+      return this;
+    }
+
     public ETLBatchConfig build() {
       return new ETLBatchConfig(engine, schedule, source, sinks, transforms,
-                                connections, resources, driverResources, actions);
+                                connections, resources, driverResources, actions, preconditions);
     }
   }
 }

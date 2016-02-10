@@ -31,6 +31,7 @@ public final class Constants {
   public static final String ID_SEPARATOR = ":";
   public static final String PIPELINEID = "pipeline";
   public static final String STAGE_LOGGING_ENABLED = "stage.logging.enabled";
+  public static final String PRECONDITIONS = "preconditions";
   public static final Schema ERROR_SCHEMA = Schema.recordOf(
     "error",
     Schema.Field.of(ErrorDataset.ERRCODE, Schema.of(Schema.Type.INT)),

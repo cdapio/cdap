@@ -20,6 +20,8 @@ import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
 import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.etl.api.Condition;
+import co.cask.cdap.etl.api.Preconditions;
 import co.cask.cdap.etl.batch.config.ETLBatchConfig;
 import co.cask.cdap.etl.batch.mapreduce.ETLMapReduce;
 import co.cask.cdap.etl.batch.mock.ErrorTransform;
@@ -70,6 +72,75 @@ public class ETLMapReduceTestRun extends ETLBatchTestBase {
     } catch (Exception e) {
       // expected
     }
+  }
+
+  @Test
+  public void testFailPrecondition() throws Exception {
+    ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
+      .setPreconditions(new Preconditions(0, ImmutableList.of(new Condition(Condition.Type.FALSE))))
+      .setSource(new ETLStage("source", MockSource.getPlugin("daginput")))
+      .addSink(new ETLStage("sink", MockSink.getPlugin("dagoutput")))
+      .addConnection("source", "sink")
+      .build();
+
+    AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(ETLBATCH_ARTIFACT, etlConfig);
+    Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "DagApp");
+    ApplicationManager appManager = deployApplication(appId, appRequest);
+
+    Schema schema = Schema.recordOf(
+      "testRecord",
+      Schema.Field.of("name", Schema.of(Schema.Type.STRING))
+    );
+    StructuredRecord recordSamuel = StructuredRecord.builder(schema).set("name", "samuel").build();
+    StructuredRecord recordBob = StructuredRecord.builder(schema).set("name", "bob").build();
+    StructuredRecord recordJane = StructuredRecord.builder(schema).set("name", "jane").build();
+
+    DataSetManager<Table> inputManager = getDataset(Id.Namespace.DEFAULT, "daginput");
+    MockSource.writeInput(inputManager, ImmutableList.of(recordSamuel, recordBob, recordJane));
+
+    MapReduceManager mrManager = appManager.getMapReduceManager(ETLMapReduce.NAME);
+    mrManager.start();
+    mrManager.waitForFinish(5, TimeUnit.MINUTES);
+
+    DataSetManager<Table> sinkManager = getDataset("dagoutput");
+    Set<StructuredRecord> expected = ImmutableSet.of();
+    Set<StructuredRecord> actual = Sets.newHashSet(MockSink.readOutput(sinkManager));
+    Assert.assertEquals(expected, actual);
+  }
+
+
+  @Test
+  public void testPassPrecondition() throws Exception {
+    ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
+      .setPreconditions(new Preconditions(0, ImmutableList.of(new Condition(Condition.Type.TRUE))))
+      .setSource(new ETLStage("source", MockSource.getPlugin("daginput")))
+      .addSink(new ETLStage("sink", MockSink.getPlugin("dagoutput")))
+      .addConnection("source", "sink")
+      .build();
+
+    AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(ETLBATCH_ARTIFACT, etlConfig);
+    Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "DagApp");
+    ApplicationManager appManager = deployApplication(appId, appRequest);
+
+    Schema schema = Schema.recordOf(
+      "testRecord",
+      Schema.Field.of("name", Schema.of(Schema.Type.STRING))
+    );
+    StructuredRecord recordSamuel = StructuredRecord.builder(schema).set("name", "samuel").build();
+    StructuredRecord recordBob = StructuredRecord.builder(schema).set("name", "bob").build();
+    StructuredRecord recordJane = StructuredRecord.builder(schema).set("name", "jane").build();
+
+    DataSetManager<Table> inputManager = getDataset(Id.Namespace.DEFAULT, "daginput");
+    MockSource.writeInput(inputManager, ImmutableList.of(recordSamuel, recordBob, recordJane));
+
+    MapReduceManager mrManager = appManager.getMapReduceManager(ETLMapReduce.NAME);
+    mrManager.start();
+    mrManager.waitForFinish(5, TimeUnit.MINUTES);
+
+    DataSetManager<Table> sinkManager = getDataset("dagoutput");
+    Set<StructuredRecord> expected = ImmutableSet.of(recordSamuel, recordBob, recordJane);
+    Set<StructuredRecord> actual = Sets.newHashSet(MockSink.readOutput(sinkManager));
+    Assert.assertEquals(expected, actual);
   }
 
   @Test

@@ -20,6 +20,7 @@ import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.schedule.Schedules;
 import co.cask.cdap.etl.batch.config.ETLBatchConfig;
 import co.cask.cdap.etl.batch.mapreduce.ETLMapReduce;
+import co.cask.cdap.etl.batch.mapreduce.ETLPreconditionMapReduce;
 import co.cask.cdap.etl.batch.spark.ETLSpark;
 import com.google.common.base.Joiner;
 
@@ -34,6 +35,10 @@ public class ETLBatchApplication extends AbstractApplication<ETLBatchConfig> {
   public void configure() {
     ETLBatchConfig config = getConfig();
     setDescription(DEFAULT_DESCRIPTION);
+    if (!config.getPreconditions().getConditions().isEmpty()) {
+      addMapReduce(new ETLPreconditionMapReduce(config));
+    }
+
     switch (config.getEngine()) {
       case MAPREDUCE:
         addMapReduce(new ETLMapReduce(config));

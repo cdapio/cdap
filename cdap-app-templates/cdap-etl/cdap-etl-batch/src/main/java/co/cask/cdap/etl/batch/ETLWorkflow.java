@@ -19,6 +19,7 @@ package co.cask.cdap.etl.batch;
 import co.cask.cdap.api.workflow.AbstractWorkflow;
 import co.cask.cdap.etl.batch.config.ETLBatchConfig;
 import co.cask.cdap.etl.batch.mapreduce.ETLMapReduce;
+import co.cask.cdap.etl.batch.mapreduce.ETLPreconditionMapReduce;
 import co.cask.cdap.etl.batch.spark.ETLSpark;
 import co.cask.cdap.etl.common.ETLStage;
 
@@ -40,6 +41,10 @@ public class ETLWorkflow extends AbstractWorkflow {
   protected void configure() {
     setName(NAME);
     setDescription(DESCRIPTION);
+    if (!config.getPreconditions().getConditions().isEmpty()) {
+      addMapReduce(ETLPreconditionMapReduce.NAME);
+    }
+
     switch (config.getEngine()) {
       case MAPREDUCE:
         addMapReduce(ETLMapReduce.NAME);

@@ -27,6 +27,7 @@ import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.mapreduce.MapReduceTaskContext;
 import co.cask.cdap.api.metrics.Metrics;
+import co.cask.cdap.etl.api.Condition;
 import co.cask.cdap.etl.api.InvalidEntry;
 import co.cask.cdap.etl.api.Transform;
 import co.cask.cdap.etl.api.batch.BatchConfigurable;
@@ -77,8 +78,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Queue;
 import java.util.Set;
 
 /**
@@ -148,6 +151,7 @@ public class ETLMapReduce extends AbstractMapReduce {
     Map<String, String> properties = new HashMap<>();
     properties.put(Constants.PIPELINEID, GSON.toJson(pipeline));
     properties.put(Constants.STAGE_LOGGING_ENABLED, String.valueOf(config.isStageLoggingEnabled()));
+    properties.put(Constants.PRECONDITIONS, GSON.toJson(config.getPreconditions()));
     setProperties(properties);
   }
 
@@ -158,8 +162,28 @@ public class ETLMapReduce extends AbstractMapReduce {
     }
     Job job = context.getHadoopJob();
     Configuration hConf = job.getConfiguration();
-
     Map<String, String> properties = context.getSpecification().getProperties();
+
+    // check preconditions
+    co.cask.cdap.etl.api.Preconditions preconditions = GSON.fromJson(
+      properties.get(Constants.PRECONDITIONS), co.cask.cdap.etl.api.Preconditions.class);
+    long timeoutSec = preconditions.getTimeoutSec();
+    long timeStarted = System.currentTimeMillis();
+    Queue<Condition> remainingConditions = new LinkedList<>(preconditions.getConditions());
+    while (!remainingConditions.isEmpty()) {
+      if (System.currentTimeMillis() - timeStarted > timeoutSec) {
+        break;
+      }
+      Condition condition = remainingConditions.peek();
+      if (condition.check(context)) {
+        remainingConditions.poll();
+      }
+      Thread.sleep(1000);
+    }
+    if (!remainingConditions.isEmpty()) {
+      throw new RuntimeException("Failed to pass preconditions: " + GSON.toJson(remainingConditions));
+    }
+
     Pipeline pipeline = GSON.fromJson(properties.get(Constants.PIPELINEID), Pipeline.class);
     // following should never happen
     Preconditions.checkNotNull(pipeline, "Pipeline is null");
