@@ -63,8 +63,7 @@ that uses a real-time flow to fetch the CDAP Metadata and write it to Cloudera N
 .. |cloudera-navigator| replace:: **Navigator Integration:**
 .. _cloudera-navigator: navigator-integration.html
 
-- |cloudera-navigator|_ Metadata discovery and search using CDAP's **Navigator Integration
-  Application** and **Cloudera Navigator**
+- |cloudera-navigator|_ Metadata search and discovery of CDAP entities from **Cloudera Navigator**
 
 
 .. rubric:: CDAP and Cloudera Architecture Schematic

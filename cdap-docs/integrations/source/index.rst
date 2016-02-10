@@ -32,8 +32,7 @@ Integrations
 .. |cloudera-navigator| replace:: **Navigator Integration:**
 .. _cloudera-navigator: partners/cloudera/navigator-integration.html
 
-- |cloudera-navigator|_ Metadata discovery and search using CDAP's **Navigator Integration
-  Application** and **Cloudera Navigator**
+- |cloudera-navigator|_ Metadata search and discovery of CDAP entities from **Cloudera Navigator**
 
 
 .. |cloudera-faq| replace:: **FAQ:**
