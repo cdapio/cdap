@@ -28,6 +28,11 @@ Integrations
 
 - |cloudera-ingesting|_ Ingesting and exploring data using **Impala**
 
+.. |cloudera-navigator| replace:: **Metadata Discovery and Search:**
+.. _cloudera-ingesting: ../developers-manual/building-blocks/navigator-integration.html
+
+- |cloudera-ingesting|_ Metadata Discovery and Search using **Cloudera Navigator**
+
 
 .. |cloudera-faq| replace:: **FAQ:**
 .. _cloudera-faq: ../faqs/cloudera-manager..html
