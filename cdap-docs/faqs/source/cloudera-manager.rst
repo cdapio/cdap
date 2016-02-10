@@ -67,6 +67,7 @@ stored in a directory that does not offer browsing, they are listed here:
 
 .. parsed-literal::
   |http:|//repository.cask.co/parcels/cdap/|short-version|/CDAP-|version|-1-el6.parcel
+  |http:|//repository.cask.co/parcels/cdap/|short-version|/CDAP-|version|-1-el7.parcel
   |http:|//repository.cask.co/parcels/cdap/|short-version|/CDAP-|version|-1-precise.parcel
   |http:|//repository.cask.co/parcels/cdap/|short-version|/CDAP-|version|-1-trusty.parcel
   |http:|//repository.cask.co/parcels/cdap/|short-version|/CDAP-|version|-1-wheezy.parcel
