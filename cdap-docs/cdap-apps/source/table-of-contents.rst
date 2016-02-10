@@ -12,3 +12,4 @@ CDAP Applications Table of Contents
     Introduction <index>
     Cask Hydrator and ETL <hydrator/index>
     Data Quality Application <data-quality/index>
+    Navigator Integration <navigator-integration>

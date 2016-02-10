@@ -80,6 +80,7 @@ on the installation, monitoring and diagnosing fully distributed CDAP in a Hadoo
   - **Creating Custom ETL Plugins:** For developers of custom ETL plugins 
   - **Data Quality:** An extensible *CDAP Application* to assess the quality of data
     using its out-of-the-box functionality and libraries
+  - **Navigator Integration:** Bridging CDAP Metadata with Cloudera's data management tool, Navigator
   
   
 .. |admin-manual| replace:: **Administration Manual:**

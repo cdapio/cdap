@@ -18,6 +18,7 @@ Overview
    
     Ingestion and Exploration <ingesting>
 
+
 .. include:: /_includes/cloudera-certified.rst
   
 Today, Hadoop is frequently used as an offline analytics tool – generating insights that
@@ -47,7 +48,7 @@ results.
 
 
 .. |cloudera-install| replace:: **Configuring and Installing:**
-.. _cloudera-install: ../../../admin-manual/installation/cloudera.html
+.. _cloudera-install: /../admin-manual/installation/cloudera.html
 
 - |cloudera-install|_ Configuring and installing CDAP using **Cloudera Manager** *(Administration Manual)*
 
@@ -55,6 +56,11 @@ results.
 .. _cloudera-ingesting: ingesting.html
 
 - |cloudera-ingesting|_ Ingest and explore data using **Impala**
+
+.. |cloudera-navigator| replace:: **Metadata Discovery and Search:**
+.. _cloudera-navigator: /../developers-manual/building-blocks/navigator-integration.html
+
+- |cloudera-navigator|_ Using CDAP's **Navigator Integration Application** and **Cloudera Navigator**
 
 
 .. rubric:: CDAP and Cloudera Architecture Schematic
