@@ -98,6 +98,20 @@ XML_HEADER = u"""<?xml version="1.0"?>
   -->
 """ % datetime.now().year
 
+XML_CONFIG_OPEN   = '<configuration>\n'
+XML_SECTION_SUB   = "\n  <!-- %s -->\n\n"
+XML_PROP_OPEN     = '  <property>\n'
+XML_NAME_SUB      = "    <name>%s</name>\n"
+XML_VALUE_SUB     = "    <value>%s</value>\n"
+XML_DESCRIP_OPEN  = '    <description>\n'
+XML_DESCRIP_SUB   = "      %s\n"
+XML_DESCRIP_CLOSE = '    </description>\n'
+XML_FINAL         = '    <final>true</final>\n'
+XML_PROP_CLOSE    = '  </property>\n\n'
+XML_CONFIG_CLOSE  = '</configuration>\n'
+
+SDL_CONFIG_NAME   = "      \"configName\": \"%s\","
+SDL_DESCRIPTION   = "      \"description\": \"%s\","
 
 class Item:
     MAX_RST_VALUE_CHAR_LENGTH = 40
@@ -271,6 +285,13 @@ def parse_options():
         dest='compare_all',
         action='store_true',
         help="Compares all files listed in '%s' to '%s'" % (OTHER_CDAP_XML_FILES, CDAP_DEFAULT_XML),
+        default=False)
+
+    parser.add_option(
+        '-u', '--update',
+        dest='compare_all_update',
+        action='store_true',
+        help="If 'comparing all files', displays the updates required to match '%s'" % CDAP_DEFAULT_XML,
         default=False)
 
     parser.add_option(
@@ -453,18 +474,6 @@ def rebuild(filepath=''):
     print "Sections: %d Keys: %d Properties: %d" % (section_counter, len(defaults.keys()), properties_counter)
 
     # Build XML file
-    XML_CONFIG_OPEN   = '<configuration>\n'
-    XML_SECTION_SUB   = "\n  <!-- %s -->\n\n"
-    XML_PROP_OPEN     = '  <property>\n'
-    XML_NAME_SUB      = "    <name>%s</name>\n"
-    XML_VALUE_SUB     = "    <value>%s</value>\n"
-    XML_DESCRIP_OPEN  = '    <description>\n'
-    XML_DESCRIP_SUB   = "      %s\n"
-    XML_DESCRIP_CLOSE = '    </description>\n'
-    XML_FINAL         = '    <final>true</final>\n'
-    XML_PROP_CLOSE    = '  </property>\n\n'
-    XML_CONFIG_CLOSE  = '</configuration>\n'
-
     prop_names = {}
     xml = XML_CONFIG_OPEN
     keys = defaults.keys()
@@ -559,13 +568,22 @@ def load_xml_source(source_title, source):
         items_dict[item.name] = item
     return (source_title, items, items_keys, items_dict)
 
-def compare_xml_files(source, other_source, target=None):
+def compare_xml_files(source, other_source, target=None, update=False):
     # Compares two XML files
     items = load_xml_source('source', source)    
     other_items = load_xml_source('other_source', other_source)
-    compare_items(items, other_items)
-    
-def compare_items(items_list, other_items_list):
+    mis_matches_list = compare_items(items, other_items, update)
+    if update:
+        print "Updates:\n"
+        for name, item_description in mis_matches_list:
+            print name
+            xml = XML_DESCRIP_OPEN
+            for line in textwrap.wrap(item_description):
+                xml += XML_DESCRIP_SUB % line
+            xml += XML_DESCRIP_CLOSE
+            print xml
+            
+def compare_items(items_list, other_items_list, update=False):
     # Compares two lists of source_title, items, items_keys, items_dict
     in_both = []
     items_source_title, items, items_keys, items_dict = items_list
@@ -595,18 +613,18 @@ def compare_items(items_list, other_items_list):
 
     print "In both: %d" % len(in_both)
     # Check if the ones in both match descriptions
-    mis_matches = 0
     matches = 0
+    mis_matches_list = []
     for name in in_both:
         item_description = items_dict[name].description
         other_item_description = other_items_dict[name].description
         if item_description != other_item_description:
             print "  Item '%s' does not match" % name
-            mis_matches += 1
+            mis_matches_list.append((name, item_description))
         else:
             matches += 1
     print "Description matches:     %d" % matches
-    print "Description mis-matches: %d" % mis_matches
+    print "Description mis-matches: %d" % len(mis_matches_list)
     if len(in_both) + len(only_in_other_source) < len(other_items_keys):
         # other_items_keys has a duplicate key
         other_items_copy = []
@@ -621,15 +639,17 @@ def compare_items(items_list, other_items_list):
             for item in other_items_dupes:
                 print "  %s" % item
     print
+    return mis_matches_list
 
-def compare_xml_sdl(source, other_source, target=None):
+def compare_xml_sdl(source, other_source, target=None, update=False):
     # Compares an XML source to an SDL source
     items = load_xml_source('XML source', source)
     
     sdl_source_title = 'SDL other source'
     print "Loading '%s': %s" % (sdl_source_title, other_source)
-    f, f_source= download_to_file(other_source)
-    sdl = json.loads(f_source)
+    f = open(other_source)
+    sdl = json.load(f)
+    f.close()
     # "parameters"
     # "roles": a list; each element has a "parameters"
     # some parameters have a configName and description
@@ -650,8 +670,14 @@ def compare_xml_sdl(source, other_source, target=None):
         other_items_keys.append(item.name)
         other_items_dict[item.name] = item
     other_items = (sdl_source_title, other_items, other_items_keys, other_items_dict)
-    compare_items(items, other_items)
-
+    mis_matches_list = compare_items(items, other_items)
+    if update:
+        print "Updates:\n"
+        for config_name, item_description in mis_matches_list:
+            print SDL_DESCRIPTION % item_description
+            print SDL_CONFIG_NAME % config_name
+            print
+            
 def download_to_file(url):
     # Downloads from a URL to a temp file and returns
     # a filepath and the data downloaded
@@ -665,29 +691,32 @@ def download_to_file(url):
     f.close()
     return f, source
 
-def compare_all_xml():
+def compare_all_xml(options):
     # Compares each file listed in OTHER_CDAP_XML_FILES
     # to CDAP_DEFAULT_XML
+    update = options.compare_all_update
     files = load_xml_files()
     for file in files:
         if not file or file.startswith(' ') or file.startswith('#'):
             continue
         elif file.startswith("http"):
+            f, f_source = download_to_file(file)
             if file.endswith(".xml"):
                 print "XML file from: %s" % file
-                f, f_source = download_to_file(file)
-                compare_xml_files(default_xml_filepath(), f.name)
+                compare_xml_files(default_xml_filepath(), f.name, update=update)
             if file.endswith(".sdl"):
                 print "SDL file from: %s" % file
-                compare_xml_sdl(default_xml_filepath(), file)
-        elif file.endswith(".xml.example"):
-            print "Example XML file: %s" % file
-            compare_xml_files(default_xml_filepath(), os.path.join(SOURCE_PATH, RELATIVE_PATH, file))
-        elif file.endswith(".xml"):
-            print "XML file: %s" % file
-            compare_xml_files(default_xml_filepath(), os.path.join(SOURCE_PATH, RELATIVE_PATH, file))
+                compare_xml_sdl(default_xml_filepath(), f.name, update=update)
         else:
-            print "Unknown filetype for: %s" % file
+            f = os.path.join(SOURCE_PATH, RELATIVE_PATH, file)
+            if file.endswith(".xml") or file.endswith(".xml.example"):
+                print "XML file: %s" % file
+                compare_xml_files(default_xml_filepath(), f, update=update)
+            elif file.endswith(".sdl"):
+                print "SDL file: %s" % file
+                compare_xml_sdl(default_xml_filepath(), f, update=update)
+            else:
+                print "Unknown filetype for: %s" % file
             
 def main():
     """ Main program entry point."""
@@ -697,10 +726,10 @@ def main():
     try:
         options.logger = log
         if options.compare_all:
-            print "\nComparing all XML Files to '%s'...\n" % CDAP_DEFAULT_XML
-            compare_all_xml()
+            print "\nComparing all XML Files (update=%s) to '%s'...\n" % (options.compare_all_update, CDAP_DEFAULT_XML)
+            compare_all_xml(options)
         if options.compare:
-            print "\nComparing XML Files..."
+            print "\nComparing XML Files... "
             compare_xml(options.source, options.other_source, options.target)
         if options.generate:
             print "Generating RST..."
