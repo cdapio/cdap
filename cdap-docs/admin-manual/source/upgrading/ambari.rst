@@ -4,9 +4,9 @@
 
 .. _admin-upgrading-ambari:
 
-================================
-Upgrading CDAP and Apache Ambari
-================================
+==================================
+Upgrading CDAP using Apache Ambari
+==================================
 
 
 Upgrading CDAP

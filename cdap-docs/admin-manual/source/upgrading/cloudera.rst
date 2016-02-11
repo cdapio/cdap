@@ -4,9 +4,9 @@
 
 .. _admin-upgrading-cloudera:
 
-===================================
-Upgrading CDAP and Cloudera Manager
-===================================
+=====================================
+Upgrading CDAP using Cloudera Manager
+=====================================
 
 
 .. _admin-upgrading-cloudera-cdap:
@@ -71,7 +71,7 @@ Upgrading CDH
 
 .. _cloudera-release-specific-upgrade-notes:
 
-These steps cover upgrading the version of CDH of an existing CDAP installation.
+These steps cover what to do when upgrading the version of CDH of an existing CDAP installation.
 As the different versions of CDH can use different versions of HBase, upgrading from
 one version to the next can require that the HBase coprocessors be upgraded to the correct
 version. The steps below will, if required, update the coprocessors appropriately.

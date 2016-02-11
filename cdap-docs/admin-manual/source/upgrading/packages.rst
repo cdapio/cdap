@@ -144,7 +144,7 @@ different components of the main Hadoop distributions.
 
 Upgrade Steps
 -------------
-These steps cover upgrading the version of Hadoop of an existing CDAP installation.
+These steps cover what to do when upgrading the version of Hadoop of an existing CDAP installation.
 As the different versions of Hadoop can use different versions of HBase, upgrading from
 one version to the next can require that the HBase coprocessors be upgraded to the correct
 version. The steps below will, if required, update the coprocessors appropriately.

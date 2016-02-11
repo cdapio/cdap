@@ -4,9 +4,9 @@
 
 .. _admin-upgrading-mapr:
 
-=======================
-Upgrading CDAP and MapR
-=======================
+=========================
+Upgrading CDAP using MapR
+=========================
 
 
 Upgrading CDAP
