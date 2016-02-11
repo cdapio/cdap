@@ -408,8 +408,16 @@ function build_license_dependency_pdfs() {
 }
 
 function build_standalone() {
+  HYDRATOR_PLUGINS_PATH="${PROJECT_PATH}/../${HYDRATOR_PLUGINS}"
+  build_hydrator_plugins
   set_mvn_environment
-  MAVEN_OPTS="-Xmx1024m -XX:MaxPermSize=128m" mvn clean package -pl cdap-standalone,cdap-app-templates/cdap-etl,cdap-app-templates/cdap-data-quality,cdap-examples -am -amd -DskipTests -P examples,templates,dist,release,unit-tests
+  MAVEN_OPTS="-Xmx1024m -XX:MaxPermSize=128m" mvn clean package -pl cdap-standalone,cdap-app-templates/cdap-etl,cdap-app-templates/cdap-data-quality,cdap-examples -am -amd -DskipTests -P examples,templates,dist,release,unit-tests -Dadditional.artifacts.dir=${HYDRATOR_PLUGINS_PATH}
+}
+
+function build_hydrator_plugins() {
+  set_mvn_environment
+  cd ${HYDRATOR_PLUGINS_PATH}
+  mvn clean package -DskipTests
 }
 
 function print_version() {
