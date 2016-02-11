@@ -48,6 +48,7 @@ function usage() {
   echo 
   echo "    clean     Clean up any previous build's target directories"
   echo "    javadocs  Build Javadocs"
+  echo "    docs-cli  Build CLI documentation"
   echo "    licenses  Clean build of License Dependency PDFs"
   echo "    sdk       Build CDAP SDK"
   echo "    version   Print the version information"
@@ -110,6 +111,7 @@ function run_command() {
     
     clean )             clean_targets;;
     javadocs )          build_javadocs;;
+    docs-cli )          build_docs_cli ;;
     licenses )          build_license_dependency_pdfs;;
     sdk )               build_standalone;;
     version )           print_version;;
@@ -217,6 +219,25 @@ function build_javadocs() {
 function build_javadocs_api() {
   set_mvn_environment
   MAVEN_OPTS="-Xmx1024m -XX:MaxPermSize=128m" mvn clean install -P examples,templates,release -DskipTests -Dgpg.skip=true && mvn clean site -DskipTests -P templates -DisOffline=false
+}
+
+function build_docs_cli() {
+  echo "========================================================"
+  echo "Building CLI Docs"
+  echo "--------------------------------------------------------"
+  echo
+  local target_txt=${SCRIPT_PATH}/../cdap-docs-gen/${TARGET}/cdap-docs-cli.txt
+  set_version
+  set_mvn_environment
+  mvn package -pl cdap-docs-gen -am -DskipTests
+  java -cp cdap-docs-gen/target/cdap-docs-gen-${PROJECT_VERSION}.jar:cdap-cli/target/cdap-cli-${PROJECT_VERSION}.jar co.cask.cdap.docgen.cli.GenerateCLIDocsTable > ${target_txt}
+  echo "CLI Docs written to ${target_txt}"
+  local warnings=$?
+  echo "--------------------------------------------------------"
+  echo "Completed Build of CLI Docs"
+  echo "========================================================"
+  echo
+  return ${warnings}
 }
 
 function build_docs_first_pass() {

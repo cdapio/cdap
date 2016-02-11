@@ -56,7 +56,7 @@ are either registered trademarks or trademarks of the
 `Apache Software Foundation <https://www.apache.org>`__ in the United States and/or other
 countries.
 
-Cloudera, Cloudera Impala, and Impala are trademarks of `Cloudera, Inc. <http://www.cloudera.com>`__ 
+Cloudera, Cloudera Impala, Cloudera Navigator, and Impala are trademarks of `Cloudera, Inc. <http://www.cloudera.com>`__ 
 
 Hortonworks is a registered trademark of `Hortonworks, Inc. <http://hortonworks.com>`__
 

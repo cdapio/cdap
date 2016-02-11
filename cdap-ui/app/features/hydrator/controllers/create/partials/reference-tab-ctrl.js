@@ -33,6 +33,7 @@ class ReferenceTabController {
       this.PluginConfigFactory.fetchDocJson(
         this.myHelpers.objectQuery(this.state.node, 'plugin', 'artifact', 'name'),
         this.myHelpers.objectQuery(this.state.node, 'plugin', 'artifact', 'version'),
+        this.myHelpers.objectQuery(this.state.node, 'plugin', 'artifact', 'scope'),
         key
       ).then (
         (res) => {
