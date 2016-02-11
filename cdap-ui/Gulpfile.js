@@ -14,12 +14,15 @@
  * the License.
  */
 
+require('es6-promise').polyfill();
 var gulp = require('gulp'),
     plug = require('gulp-load-plugins')(),
     pkg = require('./package.json'),
     del = require('del'),
     mainBowerFiles = require('main-bower-files'),
-    merge = require('merge-stream');
+    merge = require('merge-stream'),
+    autoprefixer = require('autoprefixer');
+
 
 /*
   library CSS
@@ -62,6 +65,10 @@ gulp.task('fonts', function() {
   application CSS
  */
 gulp.task('css:app', function() {
+  var processor = [
+    autoprefixer({ browsers: ['> 1%'], cascade:true })
+  ];
+
   return gulp.src([
       './app/styles/common.less',
       './app/styles/themes/*.less',
@@ -70,7 +77,7 @@ gulp.task('css:app', function() {
     ])
     .pipe(plug.if('*.less', plug.less()))
     .pipe(plug.concat('app.css'))
-    .pipe(plug.autoprefixer(["> 1%"], {cascade:true}))
+    .pipe(plug.postcss(processor))
     .pipe(gulp.dest('./dist/assets/bundle'));
 });
 
@@ -260,7 +267,9 @@ gulp.task('watch:js:app:babel', function() {
        header: '\n(function (PKG){ /* ${filename} */\n',
        footer: '\n})('+PKG+');\n'
     }))
-    .pipe(plug.babel())
+    .pipe(plug.babel({
+      presets: ['es2015']
+    }))
     .pipe(plug.concat('app.es6.js'))
     // .pipe(plug.sourcemaps.write("."))
     .pipe(gulp.dest('./dist/assets/bundle'));
@@ -285,7 +294,9 @@ gulp.task('js:app', function() {
        header: '\n(function (PKG){ /* ${filename} */\n',
        footer: '\n})('+PKG+');\n'
     }))
-    .pipe(plug.babel())
+    .pipe(plug.babel({
+      presets: ['es2015']
+    }))
     .pipe(plug.concat('app.js'))
     // .pipe(plug.sourcemaps.write("."))
     .pipe(gulp.dest('./dist/assets/bundle'));
@@ -313,7 +324,7 @@ gulp.task('tpl', function() {
     gulp.src([
       './app/directives/**/*.html'
     ])
-      .pipe(plug.minifyHtml({loose: true, quotes: true}))
+      .pipe(plug.htmlmin({ removeComments: true }))
       .pipe(plug.angularTemplatecache({
         module: pkg.name + '.commons'
       })),
@@ -321,7 +332,7 @@ gulp.task('tpl', function() {
     gulp.src([
       './app/features/home/home.html'
     ])
-      .pipe(plug.minifyHtml({loose: true, quotes: true}))
+      .pipe(plug.htmlmin({ removeComments: true }))
       .pipe(plug.angularTemplatecache({
         module: pkg.name + '.features',
         base: __dirname + '/app',
@@ -349,13 +360,13 @@ gulp.task('polyfill', function () {
  */
 gulp.task('html:partials', function() {
   return gulp.src('./app/features/**/*.html')
-      .pipe(plug.minifyHtml({loose: true, quotes: true}))
+      .pipe(plug.htmlmin({ removeComments: true }))
       .pipe(gulp.dest('./dist/assets/features'));
 });
 
 gulp.task('html:main', function() {
   return gulp.src('./app/*.html')
-      .pipe(plug.minifyHtml({loose: true, quotes: true}))
+      .pipe(plug.htmlmin({ removeComments: true }))
       .pipe(gulp.dest('./dist'));
 });
 
@@ -368,7 +379,7 @@ gulp.task('html:main.dev', function () {
     });
 
 gulp.task('html', ['html:main', 'html:partials']);
-gulp.task('html.dev', ['html:main.dev', 'html:partials'])
+gulp.task('html.dev', ['html:main.dev', 'html:partials']);
 
 
 
@@ -393,8 +404,8 @@ gulp.task('hint', ['lint']);
 /*
   clean dist
  */
-gulp.task('clean', function(cb) {
-  del(['./dist/*'], cb);
+gulp.task('clean', function() {
+  return del.sync(['./dist/*']);
 });
 
 
@@ -409,7 +420,7 @@ gulp.task('js:minify', ['js'], function() {
 
 gulp.task('css:minify', ['css'], function() {
   return gulp.src('./dist/assets/bundle/*.css')
-    .pipe(plug.minifyCss({keepBreaks:true}))
+    .pipe(plug.cssnano({ safe: true }))
     .pipe(gulp.dest('./dist/assets/bundle'));
 });
 
@@ -425,7 +436,6 @@ gulp.task('minify', ['js:minify', 'css:minify']);
 gulp.task('rev:manifest', ['minify', 'tpl'], function() {
   return gulp.src(['./dist/assets/bundle/*'])
     .pipe(plug.rev())
-    .pipe(plug.size({showFiles:true, gzip:true, total:true}))
     .pipe(gulp.dest('./dist/assets/bundle'))  // write rev'd assets to build dir
 
     .pipe(plug.rev.manifest({path:'manifest.json'}))
