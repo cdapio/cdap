@@ -78,9 +78,9 @@ please follow the upgrade instructions for the earlier versions and upgrade firs
 
       .. parsed-literal::    
     
-        UpgradeTool - version |short-version|-<build timestamp>.
+        UpgradeTool - version |version|-<build timestamp>.
 
-        upgrade - Upgrades CDAP to |short-version|
+        upgrade - Upgrades CDAP to |version|
           The upgrade tool upgrades the following:
           1. User Datasets
               - Upgrades the coprocessor jars for tables
