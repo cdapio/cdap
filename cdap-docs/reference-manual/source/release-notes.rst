@@ -150,6 +150,13 @@ Bug Fixes
   Service JDBC driver to do nothing instead of throwing an exception when a commit is
   called. 
   
+- `CDAP-4950 <https://issues.cask.co/browse/CDAP-4950>`__ - Added an ``'enableAutoCommit'``
+  property to the Cask Hydrator database plugins to enable the use of JDBC drivers that,
+  similar to the Hive JDBC driver, do not allow commits.
+
+- `CDAP-4951 <https://issues.cask.co/browse/CDAP-4951>`__ - Changed the upload timeout from the
+  CDAP CLI from 15 seconds to unlimited.
+
 Deprecated and Removed Features
 -------------------------------
 
