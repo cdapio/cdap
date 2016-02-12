@@ -8,23 +8,23 @@ This section describes how to configure the CDAP components so they work with yo
 existing Hadoop cluster. Certain Hadoop components may need changes, as described below,
 for CDAP to run successfully.
 
-A. CDAP packages utilize a central configuration, stored by default in ``/etc/cdap``.
+1. CDAP packages utilize a central configuration, stored by default in ``/etc/cdap``.
 
    When you install the CDAP base package, a default configuration is placed in
    ``/etc/cdap/conf.dist``. The ``cdap-site.xml`` file is a placeholder
    where you can define your specific configuration for all CDAP components.
    The ``cdap-site.xml.example`` file shows the properties that usually require customization
    for all installations.
- 
+
    .. _|distribution|-configuration-alternatives:
- 
+
    Similar to Hadoop, CDAP utilizes the ``alternatives`` framework to allow you to
    easily switch between multiple configurations. The ``alternatives`` system is used for ease of
    management and allows you to to choose between different directories to fulfill the
    same purpose.
- 
+
    .. highlight:: console
- 
+
    Simply copy the contents of ``/etc/cdap/conf.dist`` into a directory of your choice
    (such as ``/etc/cdap/conf.mycdap``) and make all of your customizations there.
    Then run the ``alternatives`` command to point the ``/etc/cdap/conf`` symlink
@@ -32,7 +32,7 @@ A. CDAP packages utilize a central configuration, stored by default in ``/etc/cd
    
      $ sudo cp -r /etc/cdap/conf.dist /etc/cdap/conf.mycdap
      $ sudo update-alternatives --install /etc/cdap/conf cdap-conf /etc/cdap/conf.mycdap 10
- 
+
    .. _|distribution|-configuration-options:
 
 #. Configure the ``cdap-site.xml`` after you have installed the CDAP packages.
@@ -48,7 +48,11 @@ A. CDAP packages utilize a central configuration, stored by default in ``/etc/cd
      $ sudo cp -f /etc/cdap/conf.mycdap/cdap-site.xml.example /etc/cdap/conf.mycdap/cdap-site.xml
      $ sudo vi /etc/cdap/conf.mycdap/cdap-site.xml
 
+   .. _|distribution|-configuration-options-may-need:
+
 #. Depending on your installation, you may need to set these properties:
+
+   .. _|distribution|-configuration-options-may-need2:
 
    .. highlight:: xml
 
@@ -85,7 +89,7 @@ A. CDAP packages utilize a central configuration, stored by default in ``/etc/cd
           |$| hdfs dfs -mkdir -p /user/|hdfs-user| && hadoop fs -chown |hdfs-user| /user/|hdfs-user| && hadoop fs -chgrp |hdfs-user| /user/|hdfs-user|
 
    #. If you want to use **an HDFS directory** with a name other than ``/cdap``:
- 
+
       1. Create the HDFS directory you want to use, such as ``/myhadoop/myspace``.
       #. Create an ``hdfs.namespace`` property for the HDFS directory in ``conf/cdap-site.xml``::
   
@@ -98,7 +102,7 @@ A. CDAP packages utilize a central configuration, stored by default in ``/etc/cd
       #. Check that the default HDFS user |hdfs-user| owns that HDFS directory.
   
    #. If you want to use **an HDFS user** other than |hdfs-user|:
- 
+
       1. Check that there is |---| and create if necessary |---| a corresponding user on all machines
          in the cluster on which YARN is running (typically, all of the machines).
       #. Create an ``hdfs.user`` property for that user in ``conf/cdap-site.xml``::
@@ -172,7 +176,7 @@ described in the :ref:`appendix-cdap-site.xml`):
 - ``/var/log/cdap``
 - ``/var/run/cdap``
 - ``/var/tmp/cdap`` 
- 
+
 The CDAP user (the ``cdap`` system user) **must** be able to write to these directories, as they
 are used for deploying applications and for operating CDAP.
 
@@ -244,11 +248,11 @@ A. In order to configure **CDAP for Kerberos authentication:**
    #. Edit ``/etc/cdap/conf/cdap-site.xml`` on each host running a CDAP service, substituting the Kerberos
       primary (user) for ``<cdap-principal>``, and your Kerberos authentication realm for ``EXAMPLE.COM``,
       when adding these two properties:
- 
+
       .. highlight:: xml
- 
+
       ::
- 
+
         <property>
           <name>cdap.master.kerberos.keytab</name>
           <value>/etc/security/keytabs/cdap.service.keytab</value>
@@ -258,12 +262,12 @@ A. In order to configure **CDAP for Kerberos authentication:**
           <name>cdap.master.kerberos.principal</name>
           <value><cdap-principal>/_HOST@EXAMPLE.COM</value>
         </property>
- 
+
    #. The ``<cdap-principal>`` is shown in the commands that follow as ``cdap``;
       however, you are free to use a different appropriate name.
 
       .. highlight:: console
- 
+
    #. The ``/cdap`` directory needs to be owned by the ``<cdap-principal>``; you can set
       that by running the following command as the ``hdfs`` user (change the ownership in the 
       command from ``cdap`` to whatever is the ``<cdap-principal>``)::
@@ -271,15 +275,15 @@ A. In order to configure **CDAP for Kerberos authentication:**
         $ su hdfs && hadoop fs -mkdir -p /cdap && hadoop fs -chown cdap /cdap
      
    #. When running on a secure HBase cluster, as the ``hbase`` user, issue the command::
- 
+
         $ echo "grant 'cdap', 'RWCA'" | hbase shell
- 
+
    #. When CDAP Master is started, it will login using the configured keytab file and principal.
 
 #. In order to configure **CDAP Explore Service for secure Hadoop:**
 
    .. highlight:: xml
- 
+
    i. To allow CDAP to act as a Hive client, it must be given ``proxyuser`` permissions and allowed from all hosts. 
       For example: set the following properties in the configuration file ``core-site.xml``, where ``cdap`` is a system 
       group to which the ``cdap`` user is a member::
@@ -298,7 +302,7 @@ A. In order to configure **CDAP for Kerberos authentication:**
    #. To execute Hive queries on a secure cluster using the CDAP Explore Service, the Hive MetaStore service 
       must be configured for Kerberos authentication. Consult your distribution documentation on the proper 
       configuration of the Hive MetaStore service.
- 
+
    With all these properties set, the CDAP Explore Service will run on secure Hadoop clusters.
 
 .. _|distribution|-configuration-eps:

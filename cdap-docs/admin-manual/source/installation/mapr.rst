@@ -115,6 +115,29 @@ that value instead for ``/cdap/tx.snapshot``.
 .. |hdfs-user| replace:: ``cdap``
 
 .. include:: /../target/_includes/mapr-configuration.rst
+    :end-before:   .. _mapr-configuration-options-may-need
+
+#. Due to an issue with the version of the Kafka ZooKeeper client shipped with MapR, 
+   it is necessary to disable use of the embedded Kafka in CDAP by setting these properties:
+   
+   .. highlight:: xml
+
+   ::
+   
+     <property>
+        <name>master.collect.containers.log</name>
+        <value>false</value>
+      </property>
+
+     <property>
+        <name>master.collect.app.containers.log.level</name>
+        <value>OFF</value>
+      </property>    
+
+#. Depending on your installation, you may need to set these properties:
+
+.. include:: /../target/_includes/mapr-configuration.rst
+    :start-after:   .. _mapr-configuration-options-may-need2:
     :end-before: .. _mapr-configuration-hdp:
 
 .. highlight:: xml
