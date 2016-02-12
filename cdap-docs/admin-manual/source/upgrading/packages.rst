@@ -78,7 +78,7 @@ please follow the upgrade instructions for the earlier versions and upgrade firs
 
       .. parsed-literal::    
     
-        UpgradeTool - version |short-version|-xxxxx.
+        UpgradeTool - version |short-version|-<build timestamp>.
 
         upgrade - Upgrades CDAP to |short-version|
           The upgrade tool upgrades the following:
