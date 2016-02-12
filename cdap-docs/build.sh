@@ -49,7 +49,7 @@ function usage() {
   echo "    clean     Clean up any previous build's target directories"
   echo "    javadocs  Build Javadocs"
   echo "    licenses  Clean build of License Dependency PDFs"
-  echo "    sdk       Build CDAP SDK"
+  echo "    sdk       Build CDAP SDK (requires Hydrator plugins at '${HYDRATOR_PLUGINS_PATH}')"
   echo "    version   Print the version information"
   echo 
   echo "  with"
@@ -67,9 +67,12 @@ function error_usage() {
 
 function set_project_path() {
   if [ "x${ARG_2}" == "x" ]; then
-    PROJECT_PATH="${SCRIPT_PATH}/../"
+    PROJECT_PATH="${SCRIPT_PATH}/.."
   else
     PROJECT_PATH="${SCRIPT_PATH}/../../${ARG_2}"
+  fi
+  if [[ "x${HYDRATOR_PLUGINS_PATH}" == "x" ]]; then
+    HYDRATOR_PLUGINS_PATH="${PROJECT_PATH}/../${HYDRATOR_PLUGINS}"
   fi
 }
 
@@ -415,9 +418,13 @@ function build_standalone() {
 
 function build_hydrator_plugins() {
   set_mvn_environment
-  HYDRATOR_PLUGINS_PATH="${PROJECT_PATH}/../${HYDRATOR_PLUGINS}"
-  cd ${HYDRATOR_PLUGINS_PATH}
-  mvn clean package -DskipTests
+  if [ -d ${HYDRATOR_PLUGINS_PATH} ]; then
+    cd ${HYDRATOR_PLUGINS_PATH}
+    echo "HYDRATOR_PLUGINS_PATH: ${HYDRATOR_PLUGINS_PATH}"
+    mvn clean package -DskipTests
+  else
+    echo "No HYDRATOR_PLUGINS_PATH at ${HYDRATOR_PLUGINS_PATH}"
+  fi
 }
 
 function print_version() {

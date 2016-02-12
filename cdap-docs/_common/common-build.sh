@@ -67,7 +67,7 @@ TARGET_PATH="${SCRIPT_PATH}/${TARGET}"
 SOURCE_PATH="${SCRIPT_PATH}/${SOURCE}"
 
 if [ "x${2}" == "x" ]; then
-  PROJECT_PATH="${SCRIPT_PATH}/../../"
+  PROJECT_PATH="${SCRIPT_PATH}/../.."
 else
   PROJECT_PATH="${SCRIPT_PATH}/../../../${2}"
 fi
@@ -232,7 +232,7 @@ function check_build_rst() {
   local current_directory=$(pwd)
   cd ${PROJECT_PATH}
   # check BUILD.rst for changes
-  BUILD_RST_PATH="${PROJECT_PATH}${BUILD_RST}"
+  BUILD_RST_PATH="${PROJECT_PATH}/${BUILD_RST}"
   test_an_include "${BUILD_RST_HASH}" "${BUILD_RST_PATH}"
   echo
   cd ${current_directory}
