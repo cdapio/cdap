@@ -28,6 +28,9 @@ Cask Data Application Platform Release Notes
 
 Improvements
 ------------
+- `CDAP-4602 <https://issues.cask.co/browse/CDAP-4602>`__ - Updated CDAP to use
+  Tephra 0.6.5.
+
 - `CDAP-4708 <https://issues.cask.co/browse/CDAP-4708>`__ - Added system metadata to
   existing entities.
 
@@ -171,10 +174,6 @@ Known Issues
 ------------
 - `CDAP-4789 <https://issues.cask.co/browse/CDAP-4789>`__ - There is an issue with the
   RunRecord corrector setting an incorrect state at the completion of programs.
-
-- `CDAP-4840 <https://issues.cask.co/browse/CDAP-4840>`__ - There is an intermittent issue 
-  with messages in the log about "datasets not being available" while deploying
-  applications on slower machines.
 
 - See also the *Known Issues* of `version 3.2.0 <#known-issues-320>`_\ .
 
