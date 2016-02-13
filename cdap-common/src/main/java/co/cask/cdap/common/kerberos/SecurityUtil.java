@@ -21,6 +21,7 @@ import co.cask.cdap.common.conf.Constants;
 import com.google.common.base.Preconditions;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.security.authentication.util.KerberosUtil;
+import org.apache.twill.common.Threads;
 import org.apache.zookeeper.client.ZooKeeperSaslClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,6 +32,8 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 import javax.security.auth.login.AppConfigurationEntry;
 import javax.security.auth.login.Configuration;
@@ -145,6 +148,19 @@ public final class SecurityUtil {
     if (UserGroupInformation.isSecurityEnabled()) {
       LOG.info("Logging in as: principal={}, keytab={}", principal, keytabPath);
       UserGroupInformation.loginUserFromKeytab(principal, keytabPath);
+
+      long delaySec = cConf.getLong(Constants.Security.KERBEROS_KEYTAB_RELOGIN_INTERVAL);
+      Executors.newSingleThreadScheduledExecutor(Threads.createDaemonThreadFactory("Kerberos keytab renewal"))
+        .scheduleWithFixedDelay(new Runnable() {
+          @Override
+          public void run() {
+            try {
+              UserGroupInformation.getLoginUser().checkTGTAndReloginFromKeytab();
+            } catch (IOException e) {
+              LOG.error("Failed to relogin from keytab", e);
+            }
+          }
+        }, delaySec, delaySec, TimeUnit.SECONDS);
     }
   }
 }
