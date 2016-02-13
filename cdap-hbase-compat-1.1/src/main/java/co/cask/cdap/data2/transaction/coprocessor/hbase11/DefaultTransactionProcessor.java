@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,13 +16,13 @@
 
 package co.cask.cdap.data2.transaction.coprocessor.hbase11;
 
-import co.cask.cdap.data2.increment.hbase11.IncrementFilter;
+import co.cask.cdap.data2.increment.hbase11.IncrementTxFilter;
 import co.cask.cdap.data2.transaction.coprocessor.DefaultTransactionStateCacheSupplier;
 import co.cask.cdap.data2.util.hbase.HTable11NameConverter;
 import co.cask.tephra.Transaction;
 import co.cask.tephra.coprocessor.TransactionStateCache;
+import co.cask.tephra.hbase11.coprocessor.CellSkipFilter;
 import co.cask.tephra.hbase11.coprocessor.TransactionProcessor;
-import co.cask.tephra.hbase11.coprocessor.TransactionVisibilityFilter;
 import com.google.common.base.Supplier;
 import org.apache.hadoop.hbase.coprocessor.RegionCoprocessorEnvironment;
 import org.apache.hadoop.hbase.filter.Filter;
@@ -41,7 +41,8 @@ public class DefaultTransactionProcessor extends TransactionProcessor {
   }
 
   @Override
-  protected Filter getTransactionFilter(Transaction tx, ScanType scanType) {
-    return new TransactionVisibilityFilter(tx, ttlByFamily, allowEmptyValues, scanType, new IncrementFilter());
+  protected Filter getTransactionFilter(Transaction tx, ScanType scanType, Filter filter) {
+    IncrementTxFilter incrementTxFilter = new IncrementTxFilter(tx, ttlByFamily, allowEmptyValues, scanType, filter);
+    return new CellSkipFilter(incrementTxFilter);
   }
 }
