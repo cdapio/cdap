@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -23,7 +23,7 @@ import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
- * Contains metadata associated with a particular {@link Partition} of a {@link @PartitionedFileSet}
+ * Contains metadata associated with a particular {@link Partition} of a {@link PartitionedFileSet}.
  */
 public class PartitionMetadata implements Iterable<Map.Entry<String, String>> {
   private final Map<String, String> metadata;
@@ -35,9 +35,10 @@ public class PartitionMetadata implements Iterable<Map.Entry<String, String>> {
   }
 
   /**
-   * Perform a get on the underlying map of user-defined metadata.
-   * @param key the key to use in the lookup on the underlying map.
-   * @return the value returned by the underlying map.
+   * Performs a get on the underlying map of user-defined metadata.
+   *
+   * @param key the key to use in the lookup on the underlying map
+   * @return the value returned by the underlying map
    */
   @Nullable
   public String get(String key) {
@@ -45,14 +46,14 @@ public class PartitionMetadata implements Iterable<Map.Entry<String, String>> {
   }
 
   /**
-   * @return the underlying map of user-defined metadata.
+   * @return the underlying map of user-defined metadata
    */
   public Map<String, String> asMap() {
     return metadata;
   }
 
   /**
-   * @return the creation time of the partition, in milliseconds.
+   * @return the creation time of the partition, in milliseconds
    */
   public long getCreationTime() {
     return creationTime;

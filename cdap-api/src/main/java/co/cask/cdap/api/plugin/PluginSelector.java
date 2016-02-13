@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -23,7 +23,7 @@ import java.util.Map;
 import java.util.SortedMap;
 
 /**
- * Represents class for selecting plugin.
+ * Represents a class for selecting a plugin.
  */
 @Beta
 public class PluginSelector {
@@ -31,9 +31,9 @@ public class PluginSelector {
   /**
    * Selects a plugin. The default implementation returns the last entry in the given map.
    *
-   * @param plugins set of available plugins. The {@link ArtifactId} is sorted in ascending order of plugin jar
-   *                name followed by plugin version.
-   * @return a {@link Map.Entry} for the selected plugin.
+   * @param plugins the set of available plugins. The {@link ArtifactId} is sorted in ascending order of plugin JAR
+   *        name followed by the plugin version.
+   * @return a {@link java.util.Map.Entry} for the selected plugin
    */
   public Map.Entry<ArtifactId, PluginClass> select(SortedMap<ArtifactId, PluginClass> plugins) {
     return plugins.tailMap(plugins.lastKey()).entrySet().iterator().next();
