@@ -30,12 +30,14 @@ import java.lang.annotation.Target;
  * <pre>
  *   <code>
  *     public class PurchaseStore extends AbstractFlowlet {
- *     {@literal @}UseDataSet("myTable")
- *     private ObjectStore{@literal <}Purchase> store;
- *
- *     {@literal @}ProcessInput
- *     public void process(Purchase purchase) {
- *       store.write(Bytes.toBytes(purchase.getPurchaseTime()), purchase);
+ *       {@literal @}UseDataSet("myTable")
+ *       private ObjectStore{@literal <}Purchase> store;
+ *       ...
+ *       {@literal @}ProcessInput
+ *       public void process(Purchase purchase) {
+ *         store.write(Bytes.toBytes(purchase.getPurchaseTime()), purchase);
+ *       }
+ *       ...
  *     }
  *   </code>
  * </pre>
