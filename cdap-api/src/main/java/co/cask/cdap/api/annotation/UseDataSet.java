@@ -27,20 +27,18 @@ import java.lang.annotation.Target;
  * <p>
  * Example:
  *
- * <pre>
- *   <code>
- *     public class PurchaseStore extends AbstractFlowlet {
- *       {@literal @}UseDataSet("myTable")
- *       private ObjectStore{@literal <}Purchase> store;
- *       ...
- *       {@literal @}ProcessInput
- *       public void process(Purchase purchase) {
- *         store.write(Bytes.toBytes(purchase.getPurchaseTime()), purchase);
- *       }
- *       ...
+ * <pre><code>
+ *   public class PurchaseStore extends AbstractFlowlet {
+ *     {@literal @}UseDataSet("myTable")
+ *     private ObjectStore{@literal <}Purchase> store;
+ *     ...
+ *     {@literal @}ProcessInput
+ *     public void process(Purchase purchase) {
+ *       store.write(Bytes.toBytes(purchase.getPurchaseTime()), purchase);
  *     }
- *   </code>
- * </pre>
+ *     ...
+ *   }
+ * </code></pre>
  * 
  * <p>
  * See the 
