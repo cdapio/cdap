@@ -45,11 +45,11 @@ import java.util.Map;
  * {@code MapReduceContext} of the {@code beforeSubmit} method to use the Stream as input:
  * </p>
  * <pre><code>
- * class MyMapReduce implements MapReduce {
- *     public void beforeSubmit(MapReduceContext context) {
- *       context.setInput(new StreamBatchReadable("mystream"));
- *     }
- * }
+ *   class MyMapReduce implements MapReduce {
+ *       public void beforeSubmit(MapReduceContext context) {
+ *         context.setInput(new StreamBatchReadable("mystream"));
+ *       }
+ *   }
  * </code></pre>
  *
  */

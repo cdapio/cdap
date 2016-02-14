@@ -34,7 +34,7 @@ package co.cask.cdap.test;
  *   DataSetManager&lt;Table&gt; myTableManager = appManager.getDataset("my_table");
  *   myTableManager = appManager.getDataset("my_table");
  *   String value = myTableManager.get().get(new Get("key1", "column1")).getString("column1");
- * <code></pre>
+ * </code></pre>
  *
  * <p>
  * Typical usage for write:
@@ -45,7 +45,7 @@ package co.cask.cdap.test;
  *   DataSetManager&lt;Table&gt; myTableManager = appManager.getDataset("my_table");
  *   myTableManager.get().put(new Put("key1", "column1", "value1"));
  *   myTableManager.flush();
- * <code></pre>
+ * </code></pre>
  *
  * @param <T> actual type of the dataset
  */
