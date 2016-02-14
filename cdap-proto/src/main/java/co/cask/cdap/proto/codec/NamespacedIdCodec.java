@@ -29,8 +29,10 @@ import com.google.gson.JsonSerializationContext;
 import java.lang.reflect.Type;
 
 /**
- * Codec for {@link Id.NamespacedId}. Currently only supports {@link Id.Application}, {@link Id.Artifact},
- * {@link Id.Program}, {@link Id.DatasetInstance}, {@link Id.Stream} and {@link Id.Stream.View}.
+ * Codec for {@link co.cask.cdap.proto.Id.NamespacedId}. Currently only supports 
+ * {@link co.cask.cdap.proto.Id.Application}, {@link co.cask.cdap.proto.Id.Artifact},
+ * {@link co.cask.cdap.proto.Id.Program}, {@link co.cask.cdap.proto.Id.DatasetInstance}, 
+ * {@link co.cask.cdap.proto.Id.Stream} and {@link co.cask.cdap.proto.Id.Stream.View}.
  * Support for other {@link co.cask.cdap.proto.Id.NamespacedId} objects will be added later.
  */
 public class NamespacedIdCodec extends AbstractSpecificationCodec<Id.NamespacedId> {

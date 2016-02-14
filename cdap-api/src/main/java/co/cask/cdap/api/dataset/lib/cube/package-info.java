@@ -15,7 +15,6 @@
  */
 
 /**
- * Packages for ETL Application Templates.
- *
+ * Implementation of a Cube dataset in CDAP.
  */
-package co.cask.cdap.etl.api.batch;
+package co.cask.cdap.api.dataset.lib.cube;

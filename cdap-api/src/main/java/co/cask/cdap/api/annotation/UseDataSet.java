@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -43,7 +43,7 @@ import java.lang.annotation.Target;
  * See the <i>Cask DAP Developer Guides</i> and the example code for the Purchase application.
  * <p>
  * See the <i><a href="http://cask.co/docs/cdap/current/en/">Cask DAP Developer Guides</a></i>
- * and the <a href="http://cask.co/docs/cdap/current/en/examples/purchase.html">example code for the
+ * and the <a href="http://cask.co/docs/cdap/current/en/examples-manual/examples/purchase.html">example code for the
  * Purchase application</a> for more information.
  * </p>
  *
