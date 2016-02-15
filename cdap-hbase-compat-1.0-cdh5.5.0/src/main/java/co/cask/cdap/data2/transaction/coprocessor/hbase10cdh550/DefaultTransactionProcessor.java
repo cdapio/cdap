@@ -16,13 +16,13 @@
 
 package co.cask.cdap.data2.transaction.coprocessor.hbase10cdh550;
 
-import co.cask.cdap.data2.increment.hbase10cdh550.IncrementFilter;
+import co.cask.cdap.data2.increment.hbase10cdh550.IncrementTxFilter;
 import co.cask.cdap.data2.transaction.coprocessor.DefaultTransactionStateCacheSupplier;
 import co.cask.cdap.data2.util.hbase.HTable10CDH550NameConverter;
 import co.cask.tephra.Transaction;
 import co.cask.tephra.coprocessor.TransactionStateCache;
+import co.cask.tephra.hbase10cdh.coprocessor.CellSkipFilter;
 import co.cask.tephra.hbase10cdh.coprocessor.TransactionProcessor;
-import co.cask.tephra.hbase10cdh.coprocessor.TransactionVisibilityFilter;
 import com.google.common.base.Supplier;
 import org.apache.hadoop.hbase.coprocessor.RegionCoprocessorEnvironment;
 import org.apache.hadoop.hbase.filter.Filter;
@@ -42,7 +42,8 @@ public class DefaultTransactionProcessor extends TransactionProcessor {
   }
 
   @Override
-  protected Filter getTransactionFilter(Transaction tx, ScanType scanType) {
-    return new TransactionVisibilityFilter(tx, ttlByFamily, allowEmptyValues, scanType, new IncrementFilter());
+  protected Filter getTransactionFilter(Transaction tx, ScanType scanType, Filter filter) {
+    IncrementTxFilter incrementTxFilter = new IncrementTxFilter(tx, ttlByFamily, allowEmptyValues, scanType, filter);
+    return new CellSkipFilter(incrementTxFilter);
   }
 }

@@ -20,7 +20,6 @@ import co.cask.cdap.data2.dataset2.lib.table.hbase.HBaseTable;
 import co.cask.cdap.data2.increment.hbase.IncrementHandlerState;
 import co.cask.cdap.data2.increment.hbase.TimestampOracle;
 import co.cask.cdap.data2.util.hbase.HTable10CDH550NameConverter;
-import co.cask.tephra.hbase10cdh.Filters;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Maps;
 import org.apache.hadoop.hbase.Cell;

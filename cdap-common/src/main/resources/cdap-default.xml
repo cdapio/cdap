@@ -1374,6 +1374,14 @@
   </property>
 
   <property>
+    <name>kerberos.auth.relogin.interval.seconds</name>
+    <value>300</value>
+    <description>
+      Relogin interval for Kerberos keytab
+    </description>
+  </property>
+
+  <property>
     <name>security.auth.server.bind.address</name>
     <value>0.0.0.0</value>
     <description>
