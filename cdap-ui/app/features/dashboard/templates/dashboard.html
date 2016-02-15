@@ -41,7 +41,7 @@
         class="dtab">
         <span class="fa fa-caret-down"></span>
         <span class="dtitle"
-              tooltip="{{dashboard.title}}"
+              uib-tooltip="{{dashboard.title}}"
               tooltip-ellipsis="{{dashboard.title}}"
               data-ellipsis="isEllipsis"
               data-offset-value="40"
@@ -50,7 +50,7 @@
               tooltip-append-to-body="true">{{dashboard.title}}</span>
     </a>
     <div is-open="dashboard.isopen"
-          dropdown>
+          uib-dropdown>
         <tab-dd-menu></tab-dd-menu>
     </div>
   </li>

@@ -30,7 +30,7 @@
   <fieldset class="clearfix" ng-disabled="isDisabled">
     <div class="btn-group" ng-if="NodeConfigController.state.node.plugin.properties[watchproperty] !== 'avro'">
       <button class="btn btn-default"
-               tooltip="Propagates schema to all down-stream nodes."
+               uib-tooltip="Propagates schema to all down-stream nodes."
                tooltip-popup-delay="500"
                tooltip-append-to-body="true"
                ng-if="!isDisabled && !NodeConfigController.state.isSink"

@@ -18,7 +18,7 @@
 <div class="btn-group-vertical btn-group-sm zoom-control">
   <button class="btn btn-default"
           ng-click="MyDAGController.zoomIn()"
-          tooltip="Zoom In"
+          uib-tooltip="Zoom In"
           tooltip-append-to-body="true"
           tooltip-placement="left"
           tooltip-popup-delay="500">
@@ -27,7 +27,7 @@
 
   <button class="btn btn-default"
           ng-click="MyDAGController.zoomOut()"
-          tooltip="Zoom Out"
+          uib-tooltip="Zoom Out"
           tooltip-append-to-body="true"
           tooltip-placement="left"
           tooltip-popup-delay="500">
@@ -37,7 +37,7 @@
   <button class="btn btn-default"
           ng-click="MyDAGController.fitToScreen()"
           ng-if="!MyDAGController.isDisabled"
-          tooltip="Fit to screen"
+          uib-tooltip="Fit to screen"
           tooltip-append-to-body="true"
           tooltip-placement="left"
           tooltip-popup-delay="500">
@@ -47,7 +47,7 @@
   <button class="btn btn-default"
           ng-click="MyDAGController.cleanUpGraph()"
           ng-if="!MyDAGController.isDisabled"
-          tooltip="Align"
+          uib-tooltip="Align"
           tooltip-append-to-body="true"
           tooltip-placement="left"
           tooltip-popup-delay="500">
@@ -59,7 +59,7 @@
   <button class="btn btn-default"
           ng-click="MyDAGController.addComment()"
           ng-if="!MyDAGController.isDisabled"
-          tooltip="Add Comments"
+          uib-tooltip="Add Comments"
           tooltip-append-to-body="true"
           tooltip-placement="left"
           tooltip-popup-delay="500">
@@ -88,7 +88,7 @@
             <div ng-if="node.error">
               <div class="error-node-notification"
                    ng-if="node.errorCount > 0"
-                   tooltip="Please see node configuration panel"
+                   uib-tooltip="Please see node configuration panel"
                    tooltip-append-to-body="true"
                    tooltip-class="tooltip-error">
                 <span class="badge badge-danger">
@@ -99,7 +99,7 @@
             <div ng-if="!node.error">
               <div class="error-node-notification"
                    ng-if="node.errorCount > 0"
-                   tooltip="Please see node configuration panel"
+                   uib-tooltip="Please see node configuration panel"
                    tooltip-append-to-body="true"
                    tooltip-class="tooltip-warning">
                 <span class="badge badge-warning">

@@ -15,11 +15,12 @@
  */
 
 class TopPanelController{
-  constructor(GLOBALS, $stateParams, ConfigStore, ConfigActionsFactory, $bootstrapModal, ConsoleActionsFactory, NodesActionsFactory) {
+  constructor(GLOBALS, $stateParams, ConfigStore, ConfigActionsFactory, $uibModal, ConsoleActionsFactory, NodesActionsFactory) {
+
     this.GLOBALS = GLOBALS;
     this.ConfigStore = ConfigStore;
     this.ConfigActionsFactory = ConfigActionsFactory;
-    this.$bootstrapModal = $bootstrapModal;
+    this.$uibModal = $uibModal;
     this.ConsoleActionsFactory = ConsoleActionsFactory;
     this.NodesActionsFactory = NodesActionsFactory;
     this.parsedDescription = this.ConfigStore.getDescription();
@@ -101,7 +102,7 @@ class TopPanelController{
     if (!config) {
       return;
     }
-    this.$bootstrapModal.open({
+    this.$uibModal.open({
       templateUrl: '/assets/features/hydrator/templates/create/popovers/viewconfig.html',
       size: 'lg',
       keyboard: true,
@@ -151,7 +152,7 @@ class TopPanelController{
   }
 }
 
-TopPanelController.$inject = ['GLOBALS', '$stateParams', 'ConfigStore', 'ConfigActionsFactory', '$bootstrapModal', 'ConsoleActionsFactory', 'NodesActionsFactory'];
+TopPanelController.$inject = ['GLOBALS', '$stateParams', 'ConfigStore', 'ConfigActionsFactory', '$uibModal', 'ConsoleActionsFactory', 'NodesActionsFactory'];
 
 angular.module(PKG.name + '.feature.hydrator')
   .controller('TopPanelController', TopPanelController);

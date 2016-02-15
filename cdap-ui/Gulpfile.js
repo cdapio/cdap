@@ -173,15 +173,15 @@ gulp.task('js:aceworkers', function() {
     .pipe(gulp.dest('./dist/assets/bundle/ace-editor-worker-scripts/'));
 });
 
-gulp.task('js:$modal', function() {
-  gulp.src([
-    './bower_components/angular-bootstrap/ui-bootstrap-tpls.js',
-  ])
-  .pipe(plug.replace('$tooltip', '$bootstrapTooltip'))
-  .pipe(plug.ngAnnotate({rename: [{from: '$modal', to: '$bootstrapModal'}]}))
-  .pipe(plug.concat('ui-bootstrap-tpls.js'))
-  .pipe(gulp.dest('./bower_components/angular-bootstrap'));
-});
+// gulp.task('js:$modal', function() {
+//   gulp.src([
+//     './bower_components/angular-bootstrap/ui-bootstrap-tpls.js',
+//   ])
+//   .pipe(plug.replace('$tooltip', '$bootstrapTooltip'))
+//   .pipe(plug.ngAnnotate({rename: [{from: '$modal', to: '$bootstrapModal'}]}))
+//   .pipe(plug.concat('ui-bootstrap-tpls.js'))
+//   .pipe(gulp.dest('./bower_components/angular-bootstrap'));
+// });
 
 function getEs6Features(isNegate) {
   /*
@@ -454,8 +454,8 @@ gulp.task('rev:replace', ['html:main', 'rev:manifest'], function() {
 /*
   alias tasks
  */
-gulp.task('js', ['js:$modal', 'js:lib', 'js:aceworkers', 'js:app', 'polyfill']);
-gulp.task('watch:js', ['js:$modal', 'js:lib', 'js:aceworkers', 'watch:js:app', 'watch:js:app:babel', 'polyfill']);
+gulp.task('js', ['js:lib', 'js:aceworkers', 'js:app', 'polyfill']);
+gulp.task('watch:js', ['js:lib', 'js:aceworkers', 'watch:js:app', 'watch:js:app:babel', 'polyfill']);
 gulp.task('css', ['css:lib', 'css:app']);
 gulp.task('style', ['css']);
 

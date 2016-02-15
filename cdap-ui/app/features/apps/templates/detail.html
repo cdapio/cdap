@@ -20,20 +20,20 @@
       <div class="type-block">
         <span ng-if="DetailController.myHydratorFactory.isCustomApp(DetailController.artifact.name)">
           <span class="icon-app pull-left"
-                tooltip="Type: App"
+                uib-tooltip="Type: App"
                 tooltip-placement="top"
                 tooltip-append-to-body="true"></span>
         </span>
         <span ng-if="DetailController.myHydratorFactory.isETLApp(DetailController.artifact.name)">
           <span ng-if="DetailController.artifact.name === DetailController.GLOBALS.etlBatch">
             <span class="icon-ETLBatch pull-left"
-                  tooltip="Type: ETL Batch"
+                  uib-tooltip="Type: ETL Batch"
                   tooltip-placement="top"
                   tooltip-append-to-body="true"></span>
           </span>
           <span ng-if="DetailController.artifact.name === DetailController.GLOBALS.etlRealtime">
             <span class="icon-ETLRealtime pull-left"
-                  tooltip="Type: ETL Realtime"
+                  uib-tooltip="Type: ETL Realtime"
                   tooltip-placement="top"
                   tooltip-append-to-body="true"></span>
           </span>
@@ -50,8 +50,8 @@
         <span class="icon-hydrator"></span>
         <span>Hydrator</span>
       </a>
-      <div class="btn-group dropdown-right" dropdown>
-        <button type="button" class="btn btn-default dropdown-toggle" dropdown-toggle>
+      <div class="btn-group dropdown-right" uib-dropdown>
+        <button type="button" class="btn btn-default dropdown-toggle" uib-dropdown-toggle>
           Actions <span class="caret"></span>
         </button>
         <ul class="dropdown-menu dropdown-menu-right" role="menu">

@@ -111,7 +111,7 @@ angular.module(PKG.name+'.commons')
       templateUrl: 'program-preferences/program-preferences.html'
     };
   })
-  .service('myProgramPreferencesService', function($bootstrapModal, $rootScope){
+  .service('myProgramPreferencesService', function($uibModal, $rootScope){
     var modalInstance;
 
     this.show = function(type) {
@@ -119,7 +119,7 @@ angular.module(PKG.name+'.commons')
       var scope = $rootScope.$new();
       scope.type = type;
 
-      modalInstance = $bootstrapModal.open({
+      modalInstance = $uibModal.open({
         template: '<my-program-preferences></my-program-preferences>',
         size: 'lg',
         scope: scope

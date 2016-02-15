@@ -31,7 +31,7 @@
     "angular-breadcrumb": "0.3.3",
     "dagre-d3": "0.4.10",
     "angular-moment": "0.10.3",
-    "angular-bootstrap": "0.13.2",
+    "angular-bootstrap": "1.1.2",
     "c3": "0.4.10",
     "angular-ui-ace": "bower",
     "jsPlumb": "2.0.6",
