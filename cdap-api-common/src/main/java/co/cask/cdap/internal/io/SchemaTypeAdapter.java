@@ -24,6 +24,7 @@ import com.google.gson.stream.JsonWriter;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -59,7 +60,7 @@ public final class SchemaTypeAdapter extends TypeAdapter<Schema> {
 
   @Override
   public Schema read(JsonReader reader) throws IOException {
-    return read(reader, new HashSet<String>());
+    return read(reader, new HashMap<String, Schema>());
   }
 
   /**
@@ -70,7 +71,7 @@ public final class SchemaTypeAdapter extends TypeAdapter<Schema> {
    * @return A {@link Schema} reflecting the json.
    * @throws IOException Any error during reading.
    */
-  private Schema read(JsonReader reader, Set<String> knownRecords) throws IOException {
+  private Schema read(JsonReader reader, Map<String, Schema> knownRecords) throws IOException {
     JsonToken token = reader.peek();
     switch (token) {
       case NULL:
@@ -78,8 +79,27 @@ public final class SchemaTypeAdapter extends TypeAdapter<Schema> {
       case STRING: {
         // Simple type or know record type
         String name = reader.nextString();
-        if (knownRecords.contains(name)) {
-          return Schema.recordOf(name);
+        if (knownRecords.containsKey(name)) {
+          Schema schema = knownRecords.get(name);
+          /*
+             schema is null and in the map if this is a recursive reference. For example,
+             if we're looking at the inner 'node' record in the example below:
+             {
+               "type": "record",
+               "name": "node",
+               "fields": [{
+                 "name": "children",
+                 "type": [{
+                   "type": "array",
+                   "items": ["node", "null"]
+                 }, "null"]
+               }, {
+                 "name": "data",
+                 "type": "int"
+               }]
+             }
+           */
+          return schema == null ? Schema.recordOf(name) : schema;
         }
         return Schema.of(Schema.Type.valueOf(name.toUpperCase()));
       }
@@ -126,7 +146,7 @@ public final class SchemaTypeAdapter extends TypeAdapter<Schema> {
    * @return A {@link Schema} of type {@link Schema.Type#UNION UNION}.
    * @throws IOException When fails to construct a valid schema from the input.
    */
-  private Schema readUnion(JsonReader reader, Set<String> knownRecords) throws IOException {
+  private Schema readUnion(JsonReader reader, Map<String, Schema> knownRecords) throws IOException {
     List<Schema> unionSchemas = new ArrayList<>();
     reader.beginArray();
     while (reader.peek() != JsonToken.END_ARRAY) {
@@ -164,7 +184,7 @@ public final class SchemaTypeAdapter extends TypeAdapter<Schema> {
    * @return A {@link Schema} of type {@link Schema.Type#ARRAY ARRAY}.
    * @throws IOException When fails to construct a valid schema from the input.
    */
-  private Schema readArray(JsonReader reader, Set<String> knownRecords) throws IOException {
+  private Schema readArray(JsonReader reader, Map<String, Schema> knownRecords) throws IOException {
     return Schema.arrayOf(readInnerSchema(reader, "items", knownRecords));
   }
 
@@ -176,7 +196,7 @@ public final class SchemaTypeAdapter extends TypeAdapter<Schema> {
    * @return A {@link Schema} of type {@link Schema.Type#MAP MAP}.
    * @throws IOException When fails to construct a valid schema from the input.
    */
-  private Schema readMap(JsonReader reader, Set<String> knownRecords) throws IOException {
+  private Schema readMap(JsonReader reader, Map<String, Schema> knownRecords) throws IOException {
     return Schema.mapOf(readInnerSchema(reader, "keys", knownRecords),
                         readInnerSchema(reader, "values", knownRecords));
   }
@@ -189,7 +209,7 @@ public final class SchemaTypeAdapter extends TypeAdapter<Schema> {
    * @return A {@link Schema} of type {@link Schema.Type#RECORD RECORD}.
    * @throws IOException When fails to construct a valid schema from the input.
    */
-  private Schema readRecord(JsonReader reader, Set<String> knownRecords) throws IOException {
+  private Schema readRecord(JsonReader reader, Map<String, Schema> knownRecords) throws IOException {
     if (!"name".equals(reader.nextName())) {
       throw new IOException("Property \"name\" missing for record.");
     }
@@ -201,7 +221,28 @@ public final class SchemaTypeAdapter extends TypeAdapter<Schema> {
       throw new IOException("Property \"fields\" missing for record.");
     }
 
-    knownRecords.add(recordName);
+    /*
+      put a null schema schema is null and in the map if this is a recursive reference.
+      for example, if we are looking at the outer 'node' reference in the example below,
+      when we get to the inner 'node' reference, we need some way to know that its a record type
+      and not a Schema.Type.
+      {
+        "type": "record",
+        "name": "node",
+        "fields": [{
+          "name": "children",
+          "type": [{
+            "type": "array",
+            "items": ["node", "null"]
+          }, "null"]
+        }, {
+          "name": "data",
+          "type": "int"
+        }]
+      }
+      the full schema will be put in at the end of this method
+    */
+    knownRecords.put(recordName, null);
 
     List<Schema.Field> fieldBuilder = new ArrayList<>();
     reader.beginArray();
@@ -215,7 +256,9 @@ public final class SchemaTypeAdapter extends TypeAdapter<Schema> {
       reader.endObject();
     }
     reader.endArray();
-    return Schema.recordOf(recordName, fieldBuilder);
+    Schema schema = Schema.recordOf(recordName, fieldBuilder);
+    knownRecords.put(recordName, schema);
+    return schema;
   }
 
   /**
@@ -227,7 +270,7 @@ public final class SchemaTypeAdapter extends TypeAdapter<Schema> {
    * @return A {@link Schema} object representing the schema of the json input.
    * @throws IOException When fails to construct a valid schema from the input.
    */
-  private Schema readInnerSchema(JsonReader reader, String key, Set<String> knownRecords) throws IOException {
+  private Schema readInnerSchema(JsonReader reader, String key, Map<String, Schema> knownRecords) throws IOException {
     if (!key.equals(reader.nextName())) {
       throw new IOException("Property \"" + key + "\" missing.");
     }
