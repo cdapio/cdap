@@ -172,10 +172,7 @@ Deprecated and Removed Features
 
 Known Issues
 ------------
-- `CDAP-4789 <https://issues.cask.co/browse/CDAP-4789>`__ - There is an issue with the
-  RunRecord corrector setting an incorrect state at the completion of programs.
-
-- See also the *Known Issues* of `version 3.2.0 <#known-issues-320>`_\ .
+- See the *Known Issues* of `version 3.2.0 <#known-issues-320>`_\ .
 
 
 `Release 3.3.0 <http://docs.cask.co/cdap/3.3.0/index.html>`__
