@@ -35,7 +35,6 @@ gulp.task('css:lib', ['fonts'], function() {
       './bower_components/angular-loading-bar/build/loading-bar.min.css',
       './bower_components/angular-motion/dist/angular-motion.min.css',
       './bower_components/font-awesome/css/font-awesome.min.css',
-      './bower_components/ng-sortable/dist/ng-sortable.min.css',
       './bower_components/c3/c3.min.css',
       './bower_components/angular-gridster/dist/angular-gridster.min.css',
       './bower_components/angular-cron-jobs/dist/angular-cron-jobs.min.css',
@@ -130,8 +129,6 @@ gulp.task('js:lib', function() {
 
       './bower_components/sockjs-client/dist/sockjs.js',
 
-      './bower_components/ng-sortable/dist/ng-sortable.min.js',
-
       './bower_components/d3/d3.min.js',
 
       './bower_components/epoch/epoch.min.js',
@@ -149,7 +146,7 @@ gulp.task('js:lib', function() {
       './app/lib/c3.js',
       './bower_components/ace-builds/src-min-noconflict/ace.js',
       './bower_components/angular-ui-ace/ui-ace.js',
-      './bower_components/jsPlumb/dist/js/jsPlumb-2.0.4-min.js',
+      './bower_components/jsPlumb/dist/js/jsPlumb-2.0.6-min.js',
       './bower_components/angular-gridster/dist/angular-gridster.min.js',
       './bower_components/angular-cron-jobs/dist/angular-cron-jobs.min.js',
       './bower_components/angularjs-dropdown-multiselect/dist/angularjs-dropdown-multiselect.min.js',

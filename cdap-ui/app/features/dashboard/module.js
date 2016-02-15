@@ -15,6 +15,5 @@
  */
 
 angular.module(PKG.name+'.feature.dashboard', [
-  PKG.name+'.commons',
-  'ui.sortable'
+  PKG.name+'.commons'
 ]);
