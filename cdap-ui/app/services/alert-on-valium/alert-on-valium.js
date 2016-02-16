@@ -18,34 +18,37 @@ angular.module(PKG.name + '.services')
   .factory('myAlertOnValium', function($alert, $window) {
     var isAnAlertOpened = false,
         alertObj;
-     function show(obj) {
-       if (!isAnAlertOpened) {
-         isAnAlertOpened = true;
-         alertObj = $alert(obj);
-         alertObj.$scope
-          .$on('alert.hide', function() {
-            isAnAlertOpened = false;
-          });
-       } else {
+    function show(obj) {
+      if (!isAnAlertOpened) {
+        isAnAlertOpened = true;
+
+        obj.duration = obj.type === 'success' ? 3 : false;
+
+        alertObj = $alert(obj);
+        alertObj.$scope
+        .$on('alert.hide', function() {
+          isAnAlertOpened = false;
+        });
+      } else {
         alertObj.$scope.content = obj.content;
         alertObj.$scope.title = obj.title;
-       }
+      }
        // Scroll to top so that user doesn't miss an alert
-       $window.scrollTo(0, 0);
-     }
-     function destroy() {
+      $window.scrollTo(0, 0);
+    }
+    function destroy() {
       if(isAnAlertOpened) {
         alertObj.hide();
         isAnAlertOpened = false;
       }
-     }
-     function getisAnAlertOpened() {
+    }
+    function getisAnAlertOpened() {
       return isAnAlertOpened;
-     }
+    }
 
-     return {
+    return {
       show: show,
       isAnAlertOpened: getisAnAlertOpened,
       destroy: destroy
-     };
+    };
   });

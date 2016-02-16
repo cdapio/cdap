@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -221,15 +221,13 @@ angular.module(PKG.name + '.feature.admin')
 
               .state('admin.namespace.detail.data.streamcreate', {
                 url:'/streams/create',
-                onEnter: function($bootstrapModal, $state) {
+                onEnter: function($bootstrapModal) {
                   $bootstrapModal.open({
                     templateUrl: '/assets/features/admin/templates/namespace/streamscreate.html',
                     size: 'lg',
                     backdrop: true,
                     keyboard: true,
                     controller: 'NamespaceStreamsCreateController'
-                  }).result.finally(function() {
-                    $state.go('admin.namespace.detail.data', {}, { reload: true });
                   });
                 },
                 onExit: function($modalStack) {
