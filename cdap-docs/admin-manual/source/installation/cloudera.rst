@@ -46,8 +46,8 @@ consists of four mandatory roles and two optional roles:
 
 These roles map to the :ref:`CDAP components <admin-manual-cdap-components>` of the same name.
 
-- As CDAP depends on HDFS, YARN, HBase, ZooKeeper, and (optionally) Hive and Spark, it must be placed
-  on a cluster host with full client configurations for these dependent services. 
+- As CDAP depends on HDFS, YARN, HBase, ZooKeeper, and (optionally) Hive and Spark, it must be installed
+  on cluster host(s) with full client configurations for these dependent services. 
 
 - The CDAP Master Service role (or *CDAP Master*) must be co-located on a cluster host with an HDFS Gateway, a YARN
   Gateway, an HBase Gateway, and |---| optionally |---| Hive or Spark Gateways.
@@ -60,6 +60,9 @@ These roles map to the :ref:`CDAP components <admin-manual-cdap-components>` of 
 - Note that the CDAP Gateway/Router Service is not a `Cloudera Manager Gateway Role 
   <http://www.cloudera.com/content/www/en-us/documentation/enterprise/latest/topics/cm_mc_managing_roles.html>`__
   but is instead another name for the CDAP Router Service.
+  
+- CDAP also provides its own Gateway role that can be used to install CDAP client
+  configurations on other hosts of the cluster.
 
 - All services run as the ``'cdap'`` user installed by the parcel.
 

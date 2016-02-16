@@ -132,8 +132,12 @@ that value instead for ``/cdap/tx.snapshot``.
      <property>
         <name>master.collect.app.containers.log.level</name>
         <value>OFF</value>
-      </property>    
-
+      </property>
+      
+    As a consequence of this setting, the container logs will not be streamed back to the
+    master process log file. This issue is due to a `known Kafka issue 
+    <https://issues.apache.org/jira/browse/TWILL-139?focusedCommentId=14598628>`__.   
+    
 #. Depending on your installation, you may need to set these properties:
 
 .. include:: /../target/_includes/mapr-configuration.rst

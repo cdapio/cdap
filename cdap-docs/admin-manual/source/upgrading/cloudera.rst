@@ -43,13 +43,13 @@ The following is the generic procedure for Major/Minor version upgrades:
 
 #. Ensure your installed version of the CSD matches the target version of CDAP. For
    example, CSD version 3.0.* is compatible with CDAP version 3.0.*.  Download `the latest
-   version of the CSD <http://cask.co/resources/#cdap-integrations>`__.
+   version of the CSD <http://cask.co/downloads#integrations>`__.
 
-#. Use the Cloudera Manager UI to download, distribute, and activate the corresponding
+#. Use the Cloudera Manager UI to download, distribute, and activate the target
    CDAP parcel version on all cluster hosts.
 
 #. Before starting services, run the *CDAP Upgrade Tool* to upgrade CDAP. From the CDAP Service 
-   page, select "Run CDAP Upgrade Tool" from the Actions menu.
+   page, select "Run CDAP Upgrade" from the Actions menu.
 
 #. Start the CDAP services.  At this point it may be necessary to correct for any changes in
    the CSD.  For example, if new CDAP services were added or removed, you must add or
@@ -61,7 +61,7 @@ The following is the generic procedure for Major/Minor version upgrades:
    Post-Upgrade Tasks."
 
 #. To upgrade existing ETL applications created using the 3.2.x versions of ``cdap-etl-batch`` or 
-   ``cdap-etl-realtime``, there is are :ref:`separate instructions on doing so <cdap-apps-etl-upgrade>`.
+   ``cdap-etl-realtime``, there are :ref:`separate instructions <cdap-apps-etl-upgrade>`.
 
 #. You must recompile and then redeploy your applications prior to using them.
 
@@ -88,15 +88,16 @@ goes wrong, see these troubleshooting instructions for :ref:`problems while upgr
 
 #. After upgrading CDAP, start CDAP and check that it is working correctly.
 
-#. Using Cloudera Manager (CM), stop all CDAP application and services.
+#. Using Cloudera Manager (CM), stop all CDAP applications and services.
 
 #. Disable all CDAP tables; from an HBase shell, run the command::
 
     > disable_all 'cdap.*'
     
-#. Upgrade to the new version of CDH.
+#. Upgrade to the new version of CDH, following Cloudera's `documentation on upgrading
+   <http://www.cloudera.com/documentation/enterprise/latest/topics/cm_mc_upgrading_cdh.html>`__.
 
-#. Stop all CDAP services, as CM will have (again) auto-started CDAP.
+#. Stop all CDAP services, as CM may have auto-started CDAP.
 
 #. Run the *Post-CDH Upgrade Tasks* to upgrade CDAP for the new version of CDH. From the CDAP Service 
    page, select "Run Post-CDH Upgrade Tasks" from the Actions menu.

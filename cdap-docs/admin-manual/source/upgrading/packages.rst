@@ -29,7 +29,7 @@ please follow the upgrade instructions for the earlier versions and upgrade firs
 
      $ for i in `ls /etc/init.d/ | grep cdap` ; do sudo service $i stop ; done
 
-#. Update the CDAP file definition lists by running either of these methods:
+#. Update the CDAP repository definition by running either of these methods:
  
    - On RPM using Yum:
 
@@ -98,7 +98,7 @@ please follow the upgrade instructions for the earlier versions and upgrade firs
      $ /opt/cdap/master/bin/svc-master run co.cask.cdap.data.tools.UpgradeTool upgrade force
      
 #. To upgrade existing ETL applications created using the 3.2.x versions of ``cdap-etl-batch`` or 
-   ``cdap-etl-realtime``, there is are :ref:`separate instructions on doing so <cdap-apps-etl-upgrade>`.
+   ``cdap-etl-realtime``, there are :ref:`separate instructions on doing so <cdap-apps-etl-upgrade>`.
 
 #. Restart the CDAP processes::
 
@@ -109,11 +109,11 @@ please follow the upgrade instructions for the earlier versions and upgrade firs
 
 Upgrading Hadoop
 ================
-These tables list different versions of CDAP and the distributions for which they are
+These tables list different versions of CDAP and the Hadoop distributions for which they are
 supported. If your particular distribution is not listed here, you can determine its
 components and from that determine which version of CDAP may be compatible. `Our blog
 lists <http://blog.cask.co/2015/06/hadoop-components-versions-in-distros-matrix/>`__ the
-different components of the main Hadoop distributions.
+different components of the common Hadoop distributions.
 
 .. CDH
 .. ---
@@ -157,7 +157,7 @@ get upgraded correctly and HBase regionservers may crash.**
 
 #. After upgrading CDAP, start CDAP and check that it is working correctly.
 
-#. Stop all CDAP application and services::
+#. Stop all CDAP applications and services::
    
     $ for i in `ls /etc/init.d/ | grep cdap` ; do sudo service $i stop ; done
 

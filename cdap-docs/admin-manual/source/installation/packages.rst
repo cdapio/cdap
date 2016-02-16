@@ -23,7 +23,7 @@ This section describes installing CDAP on Hadoop clusters that are:
 Cloudera Manager (CDH), Apache Ambari (HDP), and MapR distributions should be installed
 with our other :ref:`distribution instructions <installation-index>`.
 
-- As CDAP depends on HDFS, YARN, HBase, ZooKeeper, and (optionally) Hive and Spark, it must be placed
+- As CDAP depends on HDFS, YARN, HBase, ZooKeeper, and (optionally) Hive and Spark, it must be installed
   on cluster host(s) with full client configurations for these dependent services. 
 
 - The CDAP Master Service must be co-located on a cluster host with an HDFS client, a YARN

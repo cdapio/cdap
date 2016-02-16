@@ -14,8 +14,8 @@ Upgrading CDAP
 Currently, CDAP **cannot** be upgraded by using Apache Ambari. 
 
 To upgrade CDAP installations that were installed and are managed with Apache Ambari, please
-follow our instructions for upgrading CDAP installations that were installed with a
-Package Manager, either RPM or Debian:
+follow our instructions for upgrading CDAP installations that were installed with
+packages, either RPM or Debian:
 
   :ref:`Upgrading CDAP via Package Managers <admin-upgrading-packages-cdap>`
 
@@ -23,7 +23,7 @@ Package Manager, either RPM or Debian:
 Upgrading Apache Ambari
 =======================
 When upgrading Apache Ambari and HDP (Hortonworks Data Platform), please follow our
-instructions for upgrading Hadoop installations that were installed with a Package
-Manager, either RPM or Debian:
+instructions for upgrading Hadoop installations that were installed with packages, either
+RPM or Debian:
 
   :ref:`Upgrading Hadoop <admin-upgrading-packages-hadoop>`
