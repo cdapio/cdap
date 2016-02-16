@@ -14,7 +14,7 @@
  * the License.
  */
 angular.module(PKG.name + '.feature.hydrator')
-  .controller('HydratorDetailTopPanelController', function(DetailRunsStore, DetailNonRunsStore, PipelineDetailActionFactory, GLOBALS, $state, $alert, myLoadingService, $timeout, $scope, moment, myAlertOnValium) {
+  .controller('HydratorDetailTopPanelController', function(DetailRunsStore, DetailNonRunsStore, PipelineDetailActionFactory, GLOBALS, $state, myLoadingService, $timeout, $scope, moment, myAlertOnValium) {
     this.GLOBALS = GLOBALS;
     this.myAlertOnValium = myAlertOnValium;
     this.config = DetailNonRunsStore.getCloneConfig();

@@ -15,7 +15,7 @@
  */
 
 class TopPanelController{
-  constructor(GLOBALS, $stateParams, $alert, ConfigStore, ConfigActionsFactory, $bootstrapModal, ConsoleActionsFactory, NodesActionsFactory) {
+  constructor(GLOBALS, $stateParams, ConfigStore, ConfigActionsFactory, $bootstrapModal, ConsoleActionsFactory, NodesActionsFactory) {
     this.GLOBALS = GLOBALS;
     this.ConfigStore = ConfigStore;
     this.ConfigActionsFactory = ConfigActionsFactory;
@@ -151,7 +151,7 @@ class TopPanelController{
   }
 }
 
-TopPanelController.$inject = ['GLOBALS', '$stateParams', '$alert', 'ConfigStore', 'ConfigActionsFactory', '$bootstrapModal', 'ConsoleActionsFactory', 'NodesActionsFactory'];
+TopPanelController.$inject = ['GLOBALS', '$stateParams', 'ConfigStore', 'ConfigActionsFactory', '$bootstrapModal', 'ConsoleActionsFactory', 'NodesActionsFactory'];
 
 angular.module(PKG.name + '.feature.hydrator')
   .controller('TopPanelController', TopPanelController);
