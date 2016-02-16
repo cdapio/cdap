@@ -23,7 +23,7 @@ import com.google.common.base.Function;
 import org.jboss.netty.channel.ChannelPipeline;
 
 /**
- * Provides a {@link NettyHttpService.Builder} that has common settings built-in.
+ * Provides a {@link co.cask.http.NettyHttpService.Builder} that has common settings built-in.
  */
 public class CommonNettyHttpServiceBuilder extends NettyHttpService.Builder {
   public CommonNettyHttpServiceBuilder(CConfiguration configuration) {

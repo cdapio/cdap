@@ -26,7 +26,7 @@ import co.cask.cdap.api.dataset.table.Table;
  * Word count sample Application. Includes a configuration class which can be used to pass in a configuration during
  * application deployment time.
  *
- * @see {@link WordCountConfig}
+ * @see WordCount.WordCountConfig
  */
 public class WordCount extends AbstractApplication<WordCount.WordCountConfig> {
 

@@ -49,11 +49,11 @@ public class MultiThreadDatasetCache extends DynamicDatasetCache {
   private final LoadingCache<Thread, SingleThreadDatasetCache> perThreadMap;
 
   /**
-   * See {@link DynamicDatasetCache ).
+   * See {@link DynamicDatasetCache}.
    *
    * @param staticDatasets  if non-null, a map from dataset name to runtime arguments. These datasets will be
    *                        instantiated immediately, and they will participate in every transaction started
-   *                        through {@link #newTransactionContext()}.
+   *                        through {@link #newTransactionContext}.
    */
   public MultiThreadDatasetCache(final SystemDatasetInstantiator instantiator,
                                  final TransactionSystemClient txClient,

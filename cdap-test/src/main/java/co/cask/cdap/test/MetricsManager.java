@@ -99,7 +99,7 @@ public class MetricsManager {
    * @param applicationId
    * @param serviceId
    * @param handlerId
-   * @return
+   * @return {@link co.cask.cdap.api.metrics.RuntimeMetrics}
    */
   public RuntimeMetrics getServiceHandlerMetrics(String namespace, String applicationId, String serviceId,
                                                  String handlerId) {
@@ -115,7 +115,7 @@ public class MetricsManager {
    * get metrics total count value for a given context and metric.
    * @param tags - tags that identify a context
    * @param metricName
-   * @return
+   * @return {@link co.cask.cdap.api.metrics.RuntimeMetrics}
    */
   public long getTotalMetric(Map<String, String> tags, String metricName) {
     MetricDataQuery query = getTotalCounterQuery(tags, metricName);

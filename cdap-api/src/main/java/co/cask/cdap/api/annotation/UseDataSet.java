@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -27,23 +27,23 @@ import java.lang.annotation.Target;
  * <p>
  * Example:
  *
- * <pre>
- *   <code>
- *     public class PurchaseStore extends AbstractFlowlet {
+ * <pre><code>
+ *   public class PurchaseStore extends AbstractFlowlet {
  *     {@literal @}UseDataSet("myTable")
  *     private ObjectStore{@literal <}Purchase> store;
- *
+ *     ...
  *     {@literal @}ProcessInput
  *     public void process(Purchase purchase) {
  *       store.write(Bytes.toBytes(purchase.getPurchaseTime()), purchase);
  *     }
- *   </code>
- * </pre>
+ *     ...
+ *   }
+ * </code></pre>
  * 
- * See the <i>Cask DAP Developer Guides</i> and the example code for the Purchase application.
  * <p>
- * See the <i><a href="http://cask.co/docs/cdap/current/en/">Cask DAP Developer Guides</a></i>
- * and the <a href="http://cask.co/docs/cdap/current/en/examples/purchase.html">example code for the
+ * See the 
+ * <i><a href="http://docs.cask.co/cdap/current/en/developers-manual/index.html">CDAP Developers' Manual</a></i>
+ * and the <a href="http://docs.cask.co/cdap/current/en/examples-manual/examples/purchase.html">example code for the
  * Purchase application</a> for more information.
  * </p>
  *

@@ -29,7 +29,7 @@ public interface Indexer {
    * Creates the indexes for the {@link MetadataEntry}
    *
    * @param entry the {@link MetadataEntry} for which indexes needs to be created
-   * @return a {@link Set<String>} containing indexes for the given {@link MetadataEntry}
+   * @return a {@link Set Set&lt;String&gt;} containing indexes for the given {@link MetadataEntry}
    */
   Set<String> getIndexes(MetadataEntry entry);
 }

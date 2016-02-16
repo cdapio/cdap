@@ -35,7 +35,7 @@ public interface Emitter<T> {
   /**
    * Emit an Error object.
    *
-   * @param invalidEntry {@link InvalidEntry<T>} representing the error.
+   * @param invalidEntry {@link InvalidEntry InvalidEntry&lt;T&gt;} representing the error.
    */
   void emitError(InvalidEntry<T> invalidEntry);
 }
