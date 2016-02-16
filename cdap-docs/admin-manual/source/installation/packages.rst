@@ -23,6 +23,24 @@ This section describes installing CDAP on Hadoop clusters that are:
 Cloudera Manager (CDH), Apache Ambari (HDP), and MapR distributions should be installed
 with our other :ref:`distribution instructions <installation-index>`.
 
+- As CDAP depends on HDFS, YARN, HBase, ZooKeeper, and (optionally) Hive and Spark, it must be installed
+  on cluster host(s) with full client configurations for these dependent services. 
+
+- The CDAP Master Service must be co-located on a cluster host with an HDFS client, a YARN
+  client, an HBase client, and |---| optionally |---| Hive or Spark clients.
+
+- Note that these clients are redundant if you are co-locating the CDAP Master  
+  on a cluster host (or hosts, in the case of a deployment with high availability) with
+  actual services, such as the HDFS Namenode, the YARN resource manager, or the HBase
+  Master.
+  
+- You can download the `Hadoop client <http://hadoop.apache.org/releases.html#Download>`__ 
+  and `HBase client <http://www.apache.org/dyn/closer.cgi/hbase/>`__ libraries, and then
+  install them on the hosts running CDAP services. No Hadoop or HBase services need be running.
+
+- All services run as the ``'cdap'`` user installed by the package manager.
+
+
 Preparing the Cluster
 =============================
 Please review the :ref:`Software Prerequisites <admin-manual-software-requirements>`, 
@@ -77,6 +95,7 @@ Installing CDAP Services
 
 .. _packages-verification:
 
+
 Verification
 ============
 
@@ -100,103 +119,6 @@ Advanced Topics
 .. include:: /../target/_includes/packages-configuration.rst
     :start-after: .. configuration-enabling-kerberos:
     :end-before: .. _packages-configuration-eps:
-
-.. _upgrading-using-packages:
-
-Upgrading CDAP
---------------
-When upgrading an existing CDAP installation from a previous version, you will need
-to make sure the CDAP table definitions in HBase are up-to-date.
-
-These steps will stop CDAP, update the installation, run an upgrade tool for the table definitions,
-and then restart CDAP.
-
-**These steps will upgrade from CDAP 3.2.x to 3.3.x.** If you are on an earlier version of CDAP,
-please follow the upgrade instructions for the earlier versions and upgrade first to 3.2.x before proceeding.
-
-.. highlight:: console
-
-1. Stop all flows, services, and other programs in all your applications.
-
-#. Stop all CDAP processes::
-
-     $ for i in `ls /etc/init.d/ | grep cdap` ; do sudo service $i stop ; done
-
-#. Update the CDAP file definition lists by running either of these methods:
- 
-   - On RPM using Yum:
-
-     .. include:: ../_includes/installation/installation.txt 
-        :start-after: Download the Cask Yum repo definition file:
-        :end-before:  .. end_install-rpm-using-yum
-
-   - On Debian using APT:
-
-     .. include:: ../_includes/installation/installation.txt 
-        :start-after: Download the Cask APT repo definition file:
-        :end-before:  .. end_install-debian-using-apt
-
-#. Update the CDAP packages by running either of these methods:
-
-   - On RPM using Yum (on one line)::
-
-       $ sudo yum install cdap cdap-gateway \
-             cdap-hbase-compat-0.96 cdap-hbase-compat-0.98 cdap-hbase-compat-1.0 \
-             cdap-hbase-compat-1.0-cdh cdap-hbase-compat-1.1 \
-             cdap-kafka cdap-master cdap-security cdap-ui
-
-   - On Debian using APT (on one line)::
-
-       $ sudo apt-get install cdap cdap-gateway \
-             cdap-hbase-compat-0.96 cdap-hbase-compat-0.98 cdap-hbase-compat-1.0 \
-             cdap-hbase-compat-1.0-cdh cdap-hbase-compat-1.1 \
-             cdap-kafka cdap-master cdap-security cdap-ui
-
-#. If you are upgrading a secure Hadoop cluster, you should authenticate with ``kinit``
-   as the user that runs CDAP Master (the CDAP user)
-   before the next step (the running of the upgrade tool)::
-
-     $ kinit -kt <keytab> <principal>
-
-#. Run the upgrade tool, as the user that runs CDAP Master (the CDAP user)::
-
-     $ /opt/cdap/master/bin/svc-master run co.cask.cdap.data.tools.UpgradeTool upgrade
-     
-   Note that once you have upgraded an instance of CDAP, you cannot reverse the process; down-grades
-   to a previous version are not possible.
-   
-   The Upgrade Tool will produce output similar to the following, prompting you to continue with the upgrade:
-   
-    .. container:: highlight
-
-      .. parsed-literal::    
-    
-        UpgradeTool - version |short-version|-xxxxx.
-
-        upgrade - Upgrades CDAP to |short-version|
-          The upgrade tool upgrades the following:
-          1. User Datasets
-              - Upgrades the coprocessor jars for tables
-              - Migrates the metadata for PartitionedFileSets
-          2. System Datasets
-          3. UsageRegistry Dataset Type
-          Note: Once you run the upgrade tool you cannot rollback to the previous version.
-        Do you want to continue (y/n)
-        y
-        Starting upgrade ...
-
-   You can run the tool in a non-interactive fashion by using the ``force`` flag, in which case
-   it will run unattended and not prompt for continuing::
-   
-     $ /opt/cdap/master/bin/svc-master run co.cask.cdap.data.tools.UpgradeTool upgrade force
-     
-#. To upgrade existing ETL applications created using the 3.2.x versions of ``cdap-etl-batch`` or 
-   ``cdap-etl-realtime``, there is are :ref:`separate instructions on doing so <cdap-apps-etl-upgrade>`.
-
-#. Restart the CDAP processes::
-
-     $ for i in `ls /etc/init.d/ | grep cdap` ; do sudo service $i start ; done
-
 
 .. _packages-highly-available:
 

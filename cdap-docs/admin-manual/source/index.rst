@@ -77,6 +77,12 @@ installation and its security configuration.
   **example application** and **health checks**.
 
 
+.. |upgrading| replace:: **Upgrading:**
+.. _upgrading: upgrading/index.html
+
+- |upgrading|_ Instructions for upgrading both CDAP and its underlying Hadoop distribution.
+
+
 .. |security| replace:: **Security:**
 .. _security: security.html
 

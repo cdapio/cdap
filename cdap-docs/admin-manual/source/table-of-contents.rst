@@ -16,6 +16,7 @@ CDAP Administration Manual Table of Contents
     System Requirements <system-requirements>
     Installation <installation/index>
     Verification <verification>
+    Upgrading <upgrading/index>
     Security <security>
     Operations <operations/index>
     Appendices <appendices/index>
