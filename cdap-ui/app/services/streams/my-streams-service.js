@@ -72,13 +72,14 @@ angular.module(PKG.name + '.services')
       var path = '/namespaces/' + $state.params.namespace + '/streams/' + $scope.streamId + '/batch';
 
       function uploadSuccess() {
+        $scope.dismiss();
+        $scope.loading = false;
+
         myAlertOnValium.show({
           type: 'success',
           title: 'Upload success',
           content: 'The file has been uploaded successfully'
         });
-        $scope.dismiss();
-        $scope.loading = false;
       }
       function uploadFailure() {
         myAlertOnValium.show({
