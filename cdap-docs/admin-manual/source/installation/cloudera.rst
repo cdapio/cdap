@@ -137,7 +137,7 @@ available services which CM can install.
 **Steps:**
 
 #. Download the CDAP CSD by `downloading the JAR file 
-   <http://cask.co/resources/#cdap-integrations>`__.
+   <http://cask.co/downloads/#cloudera>`__.
    Details on CSDs and Cloudera Manager Extensions are `available online 
    <https://github.com/cloudera/cm_ext/wiki>`__.
 

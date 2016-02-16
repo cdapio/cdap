@@ -43,7 +43,7 @@ The following is the generic procedure for Major/Minor version upgrades:
 
 #. Ensure your installed version of the CSD matches the target version of CDAP. For
    example, CSD version 3.0.* is compatible with CDAP version 3.0.*.  Download `the latest
-   version of the CSD <http://cask.co/downloads#integrations>`__.
+   version of the CSD <http://cask.co/downloads/#cloudera>`__.
 
 #. Use the Cloudera Manager UI to download, distribute, and activate the target
    CDAP parcel version on all cluster hosts.
