@@ -15,6 +15,6 @@
  */
 
 /**
- * Implementation of partitioned datasets in CDAP.
+ * Implementation of classes which use partitioned datasets (such as partition consumers) in CDAP.
  */
 package co.cask.cdap.api.dataset.lib.partitioned;

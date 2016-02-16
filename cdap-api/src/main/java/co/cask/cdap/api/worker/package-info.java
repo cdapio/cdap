@@ -15,6 +15,6 @@
  */
 
 /**
- * Implementations of workers (data processing logic) in CDAP.
+ * Configuration and specification of workers in CDAP.
  */
 package co.cask.cdap.api.worker;

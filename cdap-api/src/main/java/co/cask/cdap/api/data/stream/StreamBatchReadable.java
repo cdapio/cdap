@@ -38,11 +38,11 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * This class is for using a Stream as input for a MapReduce job. 
+ * This class is for using a Stream as input for a MapReduce program. 
  * 
  * <p>
  * An instance of this class should be set in the
- * {@code MapReduceContext} of the {@code beforeSubmit} method to use the Stream as input:
+ * {@link MapReduceContext} of the {@code beforeSubmit} method to use the Stream as input:
  * </p>
  * <pre><code>
  *   class MyMapReduce implements MapReduce {

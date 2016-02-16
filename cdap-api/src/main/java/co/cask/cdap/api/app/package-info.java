@@ -94,7 +94,7 @@
  * <p>
  * In order to define a {@link co.cask.cdap.api.flow.Flow}, implement
  * the {@link co.cask.cdap.api.flow.Flow} interface and implement the
- * {@link co.cask.cdap.api.flow.Flow#configure configure()} method.
+ * {@link co.cask.cdap.api.flow.Flow#configure} method.
  * </p>
  *
  * <p>
