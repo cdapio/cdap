@@ -195,8 +195,21 @@ public abstract class ResourceBalancerService extends AbstractIdleService {
         @Override
         public void finished(Throwable failureCause) {
           if (service != null) {
-            service.stopAndWait();
-            service = null;
+            try {
+              service.stopAndWait();
+              service = null;
+            } finally {
+              // we need to set completion status for the service, if failure case is non-null set as exception.
+              if (failureCause != null) {
+                LOG.error("No more changes will be notified to the service: {}.", serviceName, failureCause);
+                completion.setException(failureCause);
+              } else {
+                LOG.info("No more changes will be notified to the service: {}.", serviceName);
+                completion.set(null);
+              }
+            }
+          } else {
+            completion.set(null);
           }
         }
       };
