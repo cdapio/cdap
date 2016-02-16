@@ -66,16 +66,17 @@ not have direct network access), the parcels are available by their full URLs. A
 stored in a directory that does not offer browsing, they are listed here:
 
 .. parsed-literal::
-  |http:|//repository.cask.co/parcels/cdap/latest/CDAP-|version|-1-el6.parcel
-  |http:|//repository.cask.co/parcels/cdap/latest/CDAP-|version|-1-precise.parcel
-  |http:|//repository.cask.co/parcels/cdap/latest/CDAP-|version|-1-trusty.parcel
-  |http:|//repository.cask.co/parcels/cdap/latest/CDAP-|version|-1-wheezy.parcel
+  |http:|//repository.cask.co/parcels/cdap/|short-version|/CDAP-|version|-1-el6.parcel
+  |http:|//repository.cask.co/parcels/cdap/|short-version|/CDAP-|version|-1-el7.parcel
+  |http:|//repository.cask.co/parcels/cdap/|short-version|/CDAP-|version|-1-precise.parcel
+  |http:|//repository.cask.co/parcels/cdap/|short-version|/CDAP-|version|-1-trusty.parcel
+  |http:|//repository.cask.co/parcels/cdap/|short-version|/CDAP-|version|-1-wheezy.parcel
   
 If you are hosting your own internal parcel repository, you may also want the
 ``manifest.json``:
 
 .. parsed-literal::
-  |http:|//repository.cask.co/parcels/cdap/latest/manifest.json
+  |http:|//repository.cask.co/parcels/cdap/|short-version|/manifest.json
 
 The ``manifest.json`` can always be referred to for the list of latest available parcels.
 
@@ -87,7 +88,10 @@ Previously released parcels can also be accessed from their version-specific URL
   |http:|//repository.cask.co/parcels/cdap/2.8/CDAP-2.8.0-1-trusty.parcel
   |http:|//repository.cask.co/parcels/cdap/2.8/CDAP-2.8.0-1-wheezy.parcel
   
-
+To host your own parcel repository, you will need to download all the parcels,
+generate a ``manifest.json``, and serve it with the parcels from a webserver. For
+more information on this, see Cloudera's documentation on `parcel repositories
+<https://github.com/cloudera/cm_ext/wiki/The-parcel-repository-format>`__.
 
 .. rubric:: Ask the CDAP Community for assistance
 

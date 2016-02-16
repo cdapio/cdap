@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -94,7 +94,7 @@
  * <p>
  * In order to define a {@link co.cask.cdap.api.flow.Flow}, implement
  * the {@link co.cask.cdap.api.flow.Flow} interface and implement the
- * {@link co.cask.cdap.api.flow.Flow#configure()} method.
+ * {@link co.cask.cdap.api.flow.Flow#configure} method.
  * </p>
  *
  * <p>

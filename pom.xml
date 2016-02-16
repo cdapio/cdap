@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  Copyright © 2014-2015 Cask Data, Inc.
+  Copyright © 2014-2016 Cask Data, Inc.
 
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy of
@@ -130,7 +130,7 @@
     <snappy.version>1.1.1.7</snappy.version>
     <shiro.version>1.2.1</shiro.version>
     <slf4j.version>1.7.5</slf4j.version>
-    <tephra.version>0.6.3</tephra.version>
+    <tephra.version>0.6.5</tephra.version>
     <thrift.version>0.9.0</thrift.version>
     <twill.version>0.6.0-incubating</twill.version>
     <unboundid.version>2.3.6</unboundid.version>
@@ -1616,7 +1616,8 @@
                 </bottom>
                 <doctitle>${project.name} ${project.version}</doctitle>
                 <links>
-                  <link>http://avro.apache.org/docs/current/api/java/</link>
+                  <link>http://jsr-305.googlecode.com/svn/trunk/javadoc/</link>
+                  <link>http://avro.apache.org/docs/${avro.version}/api/java/</link>
                   <link>http://docs.oracle.com/javaee/${jee.version}/api/</link>
                   <link>http://hadoop.apache.org/docs/r${hadoop.version}/api/</link>
                   <link>http://twill.incubator.apache.org/apidocs-${twill.version}/</link>
@@ -1656,6 +1657,7 @@
       </build>
     </profile>
 
+    <!-- Profile for dist -->
     <profile>
       <id>dist</id>
       <properties>
@@ -1899,7 +1901,7 @@
       </build>
     </profile>
 
-    <!-- Profile for prepare rpm package. The "dist" profile must be activated as well. -->
+    <!-- Profile for prepare RPM package. The "dist" profile must be activated as well. -->
     <profile>
       <id>rpm-prepare</id>
       <build>
@@ -1983,7 +1985,7 @@
       </build>
     </profile>
 
-    <!-- Profile for prepare debian package. The "dist" profile must be activated as well. -->
+    <!-- Profile for prepare Debian package. The "dist" profile must be activated as well. -->
     <profile>
       <id>deb-prepare</id>
       <build>
@@ -2333,8 +2335,12 @@
           </bottom>
           <doctitle>${project.name} ${project.version}</doctitle>
           <links>
+            <link>http://jsr-305.googlecode.com/svn/trunk/javadoc/</link>
+            <link>http://avro.apache.org/docs/${avro.version}/api/java/</link>
+            <link>http://docs.oracle.com/javaee/${jee.version}/api/</link>
             <link>http://hadoop.apache.org/docs/r${hadoop.version}/api/</link>
             <link>http://twill.incubator.apache.org/apidocs-${twill.version}/</link>
+            <link>http://twitter4j.org/javadoc/</link>
           </links>
           <quiet>true</quiet>
           <groups>

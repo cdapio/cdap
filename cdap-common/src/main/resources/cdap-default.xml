@@ -711,11 +711,11 @@
     <name>kafka.default.replication.factor</name>
     <value>1</value>
     <description>
-      CDAP Kafka replication factor; used to replicate Kafka messages across
+      CDAP Kafka service replication factor; used to replicate Kafka messages across
       multiple machines to prevent data loss in the event of a hardware
       failure. The recommended setting is to run at least two CDAP Kafka servers.
-      If you are running two Kafka servers, set this value to 2; otherwise,
-      set it to the number of Kafka servers.
+      If you are running two CDAP Kafka servers, set this value to 2; otherwise,
+      set it to the number of CDAP Kafka servers.
     </description>
   </property>
 
@@ -961,7 +961,7 @@
     <name>metadata.updates.kafka.broker.list</name>
     <value>127.0.0.1:${kafka.bind.port}</value>
     <description>
-      CDAP Kafka service broker list to which metadata update notifications are published
+      Apache Kafka broker list to which metadata update notifications are published
     </description>
   </property>
 
@@ -969,7 +969,7 @@
     <name>metadata.updates.kafka.topic</name>
     <value>cdap-metadata-updates</value>
     <description>
-      CDAP Kafka service topic to which metadata update notifications are published
+      Apache Kafka topic to which metadata update notifications are published
     </description>
   </property>
 
@@ -1370,6 +1370,14 @@
     <value>${security.enabled}</value>
     <description>
       Determines if Kerberos authentication is enabled
+    </description>
+  </property>
+
+  <property>
+    <name>kerberos.auth.relogin.interval.seconds</name>
+    <value>300</value>
+    <description>
+      Relogin interval for Kerberos keytab
     </description>
   </property>
 

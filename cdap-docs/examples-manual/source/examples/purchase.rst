@@ -64,8 +64,8 @@ of the application are tied together by the class ``PurchaseApp``:
     :start-after: public class PurchaseApp extends AbstractApplication {
     :dedent: 2
 
-``PurchaseHistory`` and ``Purchase``: ObjectStore Data Storage
---------------------------------------------------------------
+Storing Purchases with the ``Purchase`` ObjectStore Data Storage
+----------------------------------------------------------------
 The raw purchase data is stored in an ``ObjectMappedTable`` dataset, *purchases*,
 with this method defined in ``PurchaseStore.java``:
 

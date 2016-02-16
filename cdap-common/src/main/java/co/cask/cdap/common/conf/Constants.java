@@ -632,6 +632,8 @@ public final class Constants {
     public static final String ENABLED = "security.enabled";
     /** Enables Kerberos authentication. */
     public static final String KERBEROS_ENABLED = "kerberos.auth.enabled";
+    /** Kerberos keytab relogin interval. */
+    public static final String KERBEROS_KEYTAB_RELOGIN_INTERVAL = "kerberos.auth.relogin.interval.seconds";
     /** Algorithm used to generate the digest for access tokens. */
     public static final String TOKEN_DIGEST_ALGO = "security.token.digest.algorithm";
     /** Key length for secret key used by token digest algorithm. */

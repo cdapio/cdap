@@ -17,20 +17,21 @@
 package co.cask.cdap.etl.api;
 
 /**
- * Utility for obtaining an object which implements a set of validator functions, this object
+ * Utility for obtaining an object which implements a set of validator functions; this object
  * is usually assigned to a variable specified by the
  * {@link co.cask.cdap.etl.api.Validator#getValidatorName} value.
  */
 public interface Validator {
 
   /**
-   * Name used as variable name for the Object returned by {@link co.cask.cdap.etl.api.Validator#getValidator}
+   * Name used as variable name for the Object returned by {@link co.cask.cdap.etl.api.Validator#getValidator}.
    */
   String getValidatorName();
 
   /**
-   * get Validator Object, on which the validator function's can be invoked from user-code..
-   * @return
+   * Gets the Validator Object, on which the validator function's can be invoked from user-code.
+   *
+   * @return the validator object
    */
   Object getValidator();
 }

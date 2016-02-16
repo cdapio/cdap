@@ -43,16 +43,18 @@ function usage() {
   echo "    docs-outer        Dirty build of HTML with docs.cask.co code, skipping re-building inner doc, zipping, and Javadocs"
   echo "    docs              Dirty build of HTML with docs.cask.co code, skipping zipping and Javadocs"
   echo 
-  echo "    docs-github  Clean build of HTML and Javadocs, zipped, for placing on GitHub"
-  echo "    docs-web     Clean build of HTML and Javadocs, zipped, for placing on docs.cask.co webserver"
+  echo "    docs-github   Clean build of HTML and Javadocs, zipped, for placing on GitHub"
+  echo "    docs-web      Clean build of HTML and Javadocs, zipped, for placing on docs.cask.co webserver"
   echo 
-  echo "    clean     Clean up any previous build's target directories"
-  echo "    javadocs  Build Javadocs"
-  echo "    licenses  Clean build of License Dependency PDFs"
-  echo "    sdk       Build CDAP SDK (includes the Hydrator plugins if Hydrator plugins source is at"
-  echo "                              '${HYDRATOR_PLUGINS_PATH}'"
-  echo "                              or the environment variable 'HYDRATOR_PLUGINS_PATH' has been set)"
-  echo "    version   Print the version information"
+  echo "    clean         Clean up any previous build's target directories"
+  echo "    docs-cli      Build CLI documentation"
+  echo "    javadocs      Build Javadocs used in documentation"
+  echo "    javadocs-all  Build Javadocs for all modules"
+  echo "    licenses      Clean build of License Dependency PDFs"
+  echo "    sdk           Build CDAP SDK (includes the Hydrator plugins if Hydrator plugins source is at"
+  echo "                                  '${HYDRATOR_PLUGINS_PATH}'"
+  echo "                                  or the environment variable 'HYDRATOR_PLUGINS_PATH' has been set)"
+  echo "    version       Print the version information"
   echo 
   echo "  with"
   echo "    source    Path to ${PROJECT} source, if not '${PROJECT_PATH}'"
@@ -78,6 +80,12 @@ function set_project_path() {
   fi
 }
 
+function set_debug() {
+  if [ "x${DEBUG}" == "x" ]; then
+    DEBUG="${FALSE}"
+  fi
+}
+
 function setup() {
   # Check that we're starting in the correct directory
   local quiet={$1}
@@ -91,6 +99,7 @@ function setup() {
       echo "Check for starting directory: Using \"${MANUAL}\""
     fi
     set_project_path
+    set_debug
     return 0
   else  
     echo "Did not find MANUAL \"${MANUAL}\": are you in the correct directory?"
@@ -114,7 +123,9 @@ function run_command() {
     docs-web-part )     build_docs_web_part;;
     
     clean )             clean_targets;;
-    javadocs )          build_javadocs;;
+    docs-cli )          build_docs_cli ;;
+    javadocs )          build_javadocs ${DOCS};;
+    javadocs-all )      build_javadocs ${ALL};;
     licenses )          build_license_dependency_pdfs;;
     sdk )               build_standalone;;
     version )           print_version;;
@@ -200,14 +211,15 @@ function build_docs() {
 }
 
 function build_javadocs() {
+  local javadoc_type=${1}
   echo "========================================================"
-  echo "Building Javadocs"
+  echo "Building Javadocs: '${javadoc_type}'"
   echo "--------------------------------------------------------"
   echo
   if [ ${NO_JAVADOCS} ]; then
     echo_red_bold "Javadocs disabled."
   else
-    build_javadocs_api
+    build_javadocs_api ${javadoc_type}
     USING_JAVADOCS="true"
     export USING_JAVADOCS
   fi
@@ -220,8 +232,39 @@ function build_javadocs() {
 }
 
 function build_javadocs_api() {
+  local javadoc_type=${1}
   set_mvn_environment
-  MAVEN_OPTS="-Xmx1024m -XX:MaxPermSize=128m" mvn clean install -P examples,templates,release -DskipTests -Dgpg.skip=true && mvn clean site -DskipTests -P templates -DisOffline=false
+  local javadoc_run="mvn javadoc:aggregate -P release"
+  if [ "${javadoc_type}" == "${DOCS}" ]; then
+    javadoc_run="mvn clean site -P templates"
+  fi
+  local debug_flag=""
+  if [ "${DEBUG}" == "${TRUE}" ]; then
+    debug_flag="-X"
+  fi
+  local start=`date`
+  MAVEN_OPTS="-Xmx1024m -XX:MaxPermSize=128m" mvn clean install -P examples,templates,release -DskipTests -Dgpg.skip=true && ${javadoc_run} -DskipTests -DisOffline=false ${debug_flag}
+  echo "Javadocs Build Start: ${start}"
+  echo "                 End: `date`"
+}
+
+function build_docs_cli() {
+  echo "========================================================"
+  echo "Building CLI Docs"
+  echo "--------------------------------------------------------"
+  echo
+  local target_txt=${SCRIPT_PATH}/../cdap-docs-gen/${TARGET}/cdap-docs-cli.txt
+  set_version
+  set_mvn_environment
+  mvn package -pl cdap-docs-gen -am -DskipTests
+  java -cp cdap-docs-gen/target/cdap-docs-gen-${PROJECT_VERSION}.jar:cdap-cli/target/cdap-cli-${PROJECT_VERSION}.jar co.cask.cdap.docgen.cli.GenerateCLIDocsTable > ${target_txt}
+  echo "CLI Docs written to ${target_txt}"
+  local warnings=$?
+  echo "--------------------------------------------------------"
+  echo "Completed Build of CLI Docs"
+  echo "========================================================"
+  echo
+  return ${warnings}
 }
 
 function build_docs_first_pass() {
