@@ -194,7 +194,8 @@ Here is an example JSON message, pretty-printed::
 
 Cloudera Navigator Integration
 ==============================
-CDAP Metadata can be pushed to Cloudera Navigator for metadata discovery and search. Refer to :ref:`Cloudera Navigator Integration <navigator-integration>` for more information.
+CDAP Metadata can be pushed to Cloudera Navigator for metadata discovery and search. 
+Refer to :ref:`Cloudera Navigator Integration <navigator-integration>` for more information.
 
 
 .. _metadata-lineage-lineage:
