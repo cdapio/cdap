@@ -2,7 +2,7 @@
   "artifact": {
     "name": "cdap-etl-realtime",
     "scope": "SYSTEM",
-    "version": "3.3.1-SNAPSHOT"
+    "version": "3.3.1"
   },
   "config": {
     "source": {
@@ -21,7 +21,7 @@
         "artifact": {
           "name": "core-plugins",
           "scope": "SYSTEM",
-          "version": "1.2.1-SNAPSHOT"
+          "version": "1.2.1"
         }
       }
     },
@@ -40,7 +40,7 @@
           "artifact": {
             "name": "core-plugins",
             "scope": "SYSTEM",
-            "version": "1.2.1-SNAPSHOT"
+            "version": "1.2.1"
           }
         }
       }
