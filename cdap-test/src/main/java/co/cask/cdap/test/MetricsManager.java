@@ -113,9 +113,9 @@ public class MetricsManager {
 
   /**
    * get metrics total count value for a given context and metric.
-   * @param tags - tags that identify a context
+   * @param tags that identify a context
    * @param metricName
-   * @return {@link co.cask.cdap.api.metrics.RuntimeMetrics}
+   * @return the total metric
    */
   public long getTotalMetric(Map<String, String> tags, String metricName) {
     MetricDataQuery query = getTotalCounterQuery(tags, metricName);
