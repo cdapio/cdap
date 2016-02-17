@@ -18,11 +18,14 @@ angular.module(PKG.name + '.services')
   .factory('myAlertOnValium', function($alert, $window) {
     var isAnAlertOpened = false,
         alertObj;
+
+    var SUCCESS_ALERT_DURATION = 3; // duration amount in seconds
+
     function show(obj) {
       if (!isAnAlertOpened) {
         isAnAlertOpened = true;
 
-        obj.duration = obj.type === 'success' ? 3 : false;
+        obj.duration = obj.type === 'success' ? SUCCESS_ALERT_DURATION : false;
 
         alertObj = $alert(obj);
         alertObj.$scope
