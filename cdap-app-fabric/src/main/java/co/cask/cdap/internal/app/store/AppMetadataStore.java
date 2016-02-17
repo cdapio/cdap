@@ -30,12 +30,10 @@ import co.cask.cdap.data2.dataset2.lib.table.MetadataStoreDataset;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.DefaultApplicationSpecification;
 import co.cask.cdap.internal.app.runtime.workflow.BasicWorkflowToken;
-import co.cask.cdap.proto.AdapterStatus;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.templates.AdapterDefinition;
 import co.cask.tephra.TxConstants;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Function;
@@ -78,7 +76,6 @@ public class AppMetadataStore extends MetadataStoreDataset {
   private static final String TYPE_RUN_RECORD_SUSPENDED = "runRecordSuspended";
   private static final String TYPE_RUN_RECORD_COMPLETED = "runRecordCompleted";
   private static final String TYPE_NAMESPACE = "namespace";
-  private static final String TYPE_ADAPTER = "adapter";
   private static final String WORKFLOW_TOKEN_PROPERTY_KEY = "workflowToken";
 
   private final CConfiguration cConf;
@@ -484,47 +481,6 @@ public class AppMetadataStore extends MetadataStoreDataset {
 
   public List<NamespaceMeta> listNamespaces() {
     return list(getNamespaceKey(null), NamespaceMeta.class);
-  }
-
-  @Deprecated
-  public void writeAdapter(Id.Namespace id, AdapterDefinition adapterSpec,
-                           AdapterStatus adapterStatus) {
-    write(new MDSKey.Builder().add(TYPE_ADAPTER, id.getId(), adapterSpec.getName()).build(),
-          new AdapterMeta(adapterSpec, adapterStatus));
-  }
-
-  @Nullable
-  @Deprecated
-  public AdapterDefinition getAdapter(Id.Namespace id, String name) {
-    AdapterMeta adapterMeta = getAdapterMeta(id, name);
-    return adapterMeta == null ?  null : adapterMeta.getSpec();
-  }
-
-  @SuppressWarnings("unchecked")
-  @Deprecated
-  private AdapterMeta getAdapterMeta(Id.Namespace id, String name) {
-    return getFirst(new MDSKey.Builder().add(TYPE_ADAPTER, id.getId(), name).build(), AdapterMeta.class);
-  }
-
-  @Deprecated
-  public List<AdapterDefinition> getAllAdapters(Id.Namespace id) {
-    List<AdapterDefinition> adapterSpecs = Lists.newArrayList();
-    List<AdapterMeta> adapterMetas = list(new MDSKey.Builder().add(TYPE_ADAPTER, id.getId()).build(),
-                                          AdapterMeta.class);
-    for (AdapterMeta adapterMeta : adapterMetas) {
-      adapterSpecs.add(adapterMeta.getSpec());
-    }
-    return adapterSpecs;
-  }
-
-  @Deprecated
-  public void deleteAdapter(Id.Namespace id, String name) {
-    deleteAll(new MDSKey.Builder().add(TYPE_ADAPTER, id.getId(), name).build());
-  }
-
-  @Deprecated
-  public void deleteAllAdapters(Id.Namespace id) {
-    deleteAll(new MDSKey.Builder().add(TYPE_ADAPTER, id.getId()).build());
   }
 
   private MDSKey getNamespaceKey(@Nullable String name) {

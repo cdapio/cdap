@@ -251,7 +251,7 @@ public class UsageHandlerTest extends AppFabricTestBase {
                          new TypeToken<Set<Id.Stream>>() { }.getType());
   }
 
-  // dataset/stream -> program/adapter
+  // dataset/stream -> program
 
   private Set<Id.Program> getStreamProgramUsage(Id.Stream stream) throws Exception {
     HttpResponse response = doGet(

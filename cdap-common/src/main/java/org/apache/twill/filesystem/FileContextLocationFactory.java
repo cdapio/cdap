@@ -1,20 +1,21 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
  *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not
- * use this file except in compliance with the License. You may obtain a copy of
- * the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations under
- * the License.
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
-
-package co.cask.cdap.common.io;
+package org.apache.twill.filesystem;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
@@ -22,14 +23,15 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileContext;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.UnsupportedFileSystemException;
-import org.apache.twill.filesystem.Location;
-import org.apache.twill.filesystem.LocationFactory;
 
 import java.net.URI;
 import java.util.Objects;
 
 /**
  * A {@link LocationFactory} implementation that uses {@link FileContext} to create {@link Location}.
+ *
+ * TODO (CDAP-4923): This class is copied from Twill for the fix in TWILL-163.
+ * Should be removed when upgraded to twill-0.8.0
  */
 public class FileContextLocationFactory implements LocationFactory {
 
@@ -51,9 +53,20 @@ public class FileContextLocationFactory implements LocationFactory {
    * @param pathBase base path for all non-absolute location created through this {@link LocationFactory}.
    */
   public FileContextLocationFactory(Configuration configuration, String pathBase) {
+    this(configuration, createFileContext(configuration), pathBase);
+  }
+
+  /**
+   * Creates a new instance with the given {@link FileContext} created from the given {@link Configuration}.
+   *
+   * @param configuration the hadoop configuration
+   * @param fc {@link FileContext} instance created from the given configuration
+   * @param pathBase base path for all non-absolute location created through this (@link LocationFactory}.
+   */
+  public FileContextLocationFactory(Configuration configuration, FileContext fc, String pathBase) {
     this.configuration = configuration;
-    this.fc = createFileContext(configuration);
-    this.pathBase = new Path(pathBase);
+    this.fc = fc;
+    this.pathBase = new Path(pathBase.startsWith("/") ? pathBase : "/" + pathBase);
   }
 
   @Override
@@ -93,6 +106,7 @@ public class FileContextLocationFactory implements LocationFactory {
 
   @Override
   public Location getHomeLocation() {
+    // Fix for TWILL-163. FileContext.getHomeDirectory() uses System.getProperty("user.name") instead of UGI
     return new FileContextLocation(this, fc,
                                    new Path(fc.getHomeDirectory().getParent(), fc.getUgi().getShortUserName()));
   }

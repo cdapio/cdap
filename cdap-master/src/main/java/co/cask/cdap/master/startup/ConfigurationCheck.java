@@ -22,6 +22,8 @@ import com.google.common.base.Joiner;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import com.google.inject.Inject;
+import kafka.common.Topic;
+import org.apache.kafka.common.errors.InvalidTopicException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,6 +52,7 @@ class ConfigurationCheck extends AbstractMasterCheck {
     Set<String> problemKeys = new HashSet<>();
     checkServiceResources(problemKeys);
     checkPotentialPortConflicts();
+    checkKafkaTopic(problemKeys);
 
     if (!problemKeys.isEmpty()) {
       throw new RuntimeException("Invalid configuration settings for keys: " + Joiner.on(',').join(problemKeys));
@@ -118,11 +121,33 @@ class ConfigurationCheck extends AbstractMasterCheck {
     }
   }
 
+  private void checkKafkaTopic(Set<String> problemKeys) {
+    if (!isValidKafkaTopic(Constants.Notification.KAFKA_TOPIC)) {
+      problemKeys.add(Constants.Notification.KAFKA_TOPIC);
+    }
+    if (!isValidKafkaTopic(Constants.Logging.KAFKA_TOPIC)) {
+      problemKeys.add(Constants.Logging.KAFKA_TOPIC);
+    }
+    if (!isValidKafkaTopic(Constants.Metadata.UPDATES_KAFKA_TOPIC)) {
+      problemKeys.add(Constants.Metadata.UPDATES_KAFKA_TOPIC);
+    }
+  }
+
   private boolean isPositiveInteger(String key) {
     try {
       return cConf.getInt(key) > 0;
     } catch (Exception e) {
       return false;
     }
+  }
+
+  private boolean isValidKafkaTopic(String key) {
+    try {
+      Topic.validate(cConf.get(key));
+    } catch (InvalidTopicException e) {
+      LOG.error("  {} key has invalid kafka topic name. {}", key, e.getMessage());
+      return false;
+    }
+    return true;
   }
 }

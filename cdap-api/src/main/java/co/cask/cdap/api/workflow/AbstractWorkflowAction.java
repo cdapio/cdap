@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,6 +15,8 @@
  */
 
 package co.cask.cdap.api.workflow;
+
+import co.cask.cdap.api.dataset.Dataset;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -38,22 +40,18 @@ public abstract class AbstractWorkflowAction implements WorkflowAction {
     this.name = name;
   }
 
+  @Override
   public void configure(WorkflowActionConfigurer configurer) {
     this.configurer = configurer;
-    WorkflowActionSpecification specification = configure();
-    configurer.setName(specification.getName());
-    configurer.setDescription(specification.getDescription());
-    configurer.setProperties(specification.getProperties());
-    configurer.useDatasets(specification.getDatasets());
+    setName(name);
+    configure();
   }
 
-  @Deprecated
-  @Override
-  public WorkflowActionSpecification configure() {
-    return WorkflowActionSpecification.Builder.with()
-      .setName(getName())
-      .setDescription(getDescription())
-      .build();
+  /**
+   * Configure the {@link WorkflowAction}.
+   */
+  protected void configure() {
+
   }
 
   protected void setName(String name) {
@@ -68,6 +66,13 @@ public abstract class AbstractWorkflowAction implements WorkflowAction {
     configurer.setProperties(properties);
   }
 
+  /**
+   * Adds the names of {@link Dataset}s used by this workflow action.
+   *
+   * @deprecated Deprecated as of 3.4.0. Dataset can be requested directly through the method
+   *             {@link WorkflowContext#getDataset(String)} at runtime.
+   */
+  @Deprecated
   protected void useDatasets(String dataset, String...datasets) {
     List<String> datasetList = new ArrayList<>();
     datasetList.add(dataset);
@@ -75,6 +80,13 @@ public abstract class AbstractWorkflowAction implements WorkflowAction {
     useDatasets(datasetList);
   }
 
+  /**
+   * Adds the names of {@link Dataset}s used by this workflow action.
+   *
+   * @deprecated Deprecated as of 3.4.0. Dataset can be requested directly through the method
+   *             {@link WorkflowContext#getDataset(String)} at runtime.
+   */
+  @Deprecated
   protected void useDatasets(Iterable<String> datasets) {
     configurer.useDatasets(datasets);
   }
@@ -91,23 +103,5 @@ public abstract class AbstractWorkflowAction implements WorkflowAction {
 
   protected final WorkflowContext getContext() {
     return context;
-  }
-
-  /**
-   * @return {@link Class#getSimpleName() Simple classname} of this {@link WorkflowAction}.
-   * @deprecated Use {@link AbstractWorkflowAction#setName} instead
-   */
-  @Deprecated
-  protected String getName() {
-    return name;
-  }
-
-  /**
-   * @return A descriptive message about this {@link WorkflowAction}.
-   * @deprecated Use {@link AbstractWorkflowAction#setDescription} instead
-   */
-  @Deprecated
-  protected String getDescription() {
-    return String.format("WorkFlowAction of %s.", getName());
   }
 }

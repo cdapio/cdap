@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -512,8 +512,6 @@ public final class Constants {
       // who emitted: user vs system (scope is historical name)
       public static final String SCOPE = "scp";
 
-      public static final String ADAPTER = "adp";
-
       public static final String PRODUCER = "pr";
       public static final String CONSUMER = "co";
     }
@@ -622,6 +620,7 @@ public final class Constants {
    */
   public static final class Logging {
     public static final String COMPONENT_NAME = "services";
+    public static final String KAFKA_TOPIC = "log.kafka.topic";
   }
 
   /**
@@ -800,6 +799,7 @@ public final class Constants {
    */
   public static final class Notification {
     public static final String TRANSPORT_SYSTEM = "notification.transport.system";
+    public static final String KAFKA_TOPIC = "notification.kafka.topic";
 
     /**
      * Notifications in Streams constants.

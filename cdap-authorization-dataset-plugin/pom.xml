@@ -21,12 +21,11 @@
   <parent>
     <artifactId>cdap</artifactId>
     <groupId>co.cask.cdap</groupId>
-    <version>3.3.1</version>
+    <version>3.4.0-SNAPSHOT</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
   <artifactId>cdap-authorization-dataset-plugin</artifactId>
-  <name>CDAP Authorization Dataset Plugin</name>
 
   <dependencies>
     <dependency>

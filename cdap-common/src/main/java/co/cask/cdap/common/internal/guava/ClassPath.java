@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -36,6 +36,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -201,20 +202,35 @@ public final class ClassPath {
    */
   @Beta
   public static class ResourceInfo {
+    private final URL baseURL;
     private final String resourceName;
     final ClassLoader loader;
 
-    static ResourceInfo of(String resourceName, ClassLoader loader) {
+    static ResourceInfo of(URL baseURL, String resourceName, ClassLoader loader) {
       if (resourceName.endsWith(CLASS_FILE_NAME_EXTENSION)) {
-        return new ClassInfo(resourceName, loader);
+        return new ClassInfo(baseURL, resourceName, loader);
       } else {
-        return new ResourceInfo(resourceName, loader);
+        return new ResourceInfo(baseURL, resourceName, loader);
       }
     }
   
-    ResourceInfo(String resourceName, ClassLoader loader) {
+    ResourceInfo(URL baseURL, String resourceName, ClassLoader loader) {
+      this.baseURL = baseURL;
       this.resourceName = checkNotNull(resourceName);
       this.loader = checkNotNull(loader);
+    }
+
+    /**
+     * Returns the base URL of the resource.
+     * <p>
+     * For resource in local file, {@code url = baseURL + resourceName}.
+     * </p>
+     * <p>
+     * For resource in JAR file, {@code url = "jar:" + baseURL + "!/" + resourceName}
+     * </p>
+     */
+    public final URL baseURL() {
+      return baseURL;
     }
 
     /** Returns the url identifying the resource. */
@@ -256,8 +272,8 @@ public final class ClassPath {
   public static final class ClassInfo extends ResourceInfo {
     private final String className;
 
-    ClassInfo(String resourceName, ClassLoader loader) {
-      super(resourceName, loader);
+    ClassInfo(URL baseURL, String resourceName, ClassLoader loader) {
+      super(baseURL, resourceName, loader);
       this.className = getClassName(resourceName);
     }
 
@@ -409,7 +425,7 @@ public final class ClassPath {
         } else {
           String resourceName = packagePrefix + name;
           if (!resourceName.equals(JarFile.MANIFEST_NAME)) {
-            resources.add(ResourceInfo.of(resourceName, classloader));
+            resources.add(ResourceInfo.of(getFileBaseURL(directory, packagePrefix), resourceName, classloader));
           }
         }
       }
@@ -428,18 +444,26 @@ public final class ClassPath {
           scan(uri, classloader);
         }
         Enumeration<JarEntry> entries = jarFile.entries();
+        URL baseURL = file.toURI().toURL();
         while (entries.hasMoreElements()) {
           JarEntry entry = entries.nextElement();
           if (entry.isDirectory() || entry.getName().equals(JarFile.MANIFEST_NAME)) {
             continue;
           }
-          resources.add(ResourceInfo.of(entry.getName(), classloader));
+          resources.add(ResourceInfo.of(baseURL, entry.getName(), classloader));
         }
       } finally {
         try {
           jarFile.close();
         } catch (IOException ignored) { }
       }
+    }
+
+    private URL getFileBaseURL(File directory, String packagePrefix) throws MalformedURLException {
+      String path = directory.getAbsolutePath();
+      // Compute the directory container the class.
+      int endIdx = path.length() - packagePrefix.length();
+      return new URL("file", "", -1, path.substring(0, endIdx));
     }
   
     /**

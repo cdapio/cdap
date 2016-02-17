@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -92,7 +92,7 @@ angular.module(PKG.name + '.feature.hydrator')
       if (result.error) {
         myAlertOnValium.show({
           type: 'danger',
-          content: 'Imported pre-defined app has issues. Please check the JSON of the imported pre-defined app'
+          content: 'Imported pre-defined app has issues. Please check the JSON of the imported pre-defined app.'
         });
       } else {
         $state.go('hydrator.create.studio', {

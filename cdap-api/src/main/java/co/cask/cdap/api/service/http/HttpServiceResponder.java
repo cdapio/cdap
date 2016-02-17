@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,7 +16,6 @@
 
 package co.cask.cdap.api.service.http;
 
-import com.google.common.collect.Multimap;
 import com.google.gson.Gson;
 import org.apache.twill.filesystem.Location;
 
@@ -84,17 +83,6 @@ public interface HttpServiceResponder {
    * Sends a status code and headers back to client without any content.
    *
    * @param status status of the HTTP response
-   * @param headers headers to be sent back
-   * @deprecated Use {@link #sendStatus(int, Map)} or {@link #sendStatus(int, Iterable)} instead. This method
-   *             will be removed in a future release.
-   */
-  @Deprecated
-  void sendStatus(int status, Multimap<String, String> headers);
-
-  /**
-   * Sends a status code and headers back to client without any content.
-   *
-   * @param status status of the HTTP response
    * @param headers headers to send
    */
   void sendStatus(int status, Map<String, String> headers);
@@ -115,19 +103,6 @@ public interface HttpServiceResponder {
    * @param errorMessage error message sent back to the client
    */
   void sendError(int status, String errorMessage);
-
-  /**
-   * Sends response back to client.
-   *
-   * @param status status of the HTTP response
-   * @param content content to be sent back
-   * @param contentType type of content
-   * @param headers headers to be sent back
-   * @deprecated Use {@link #send(int, ByteBuffer, String, Map)} or {@link #send(int, ByteBuffer, String, Iterable)}
-   *             instead. This method will be removed in a future release.
-   */
-  @Deprecated
-  void send(int status, ByteBuffer content, String contentType, Multimap<String, String> headers);
 
   /**
    * Sends response back to client.
