@@ -219,10 +219,11 @@ public class PipelineRegisterer {
 
   /**
    * Given the DAG and starting point,
-   * return the DAG as a list sorted by topographical order used for configuring the pipeline in that order
+   * returns the DAG as a list, sorted by topographical order; used for configuring the pipeline in that order.
+   *
    * @param connectionsMap - DAG representation in map
    * @param start - starting node name
-   * @return
+   * @return the DAG as a list, sorted by topographical order
    */
   @VisibleForTesting
   static List<String> getStagesAfterTopologicalSorting(Map<String, List<String>> connectionsMap, String start) {

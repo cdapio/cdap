@@ -26,7 +26,7 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * Encapsulates {@link Transformation} list of next stages, current stage name and {@link DefaultEmitter}
+ * Encapsulates {@link Transformation} list of next stages, current stage name, and {@link DefaultEmitter}.
  */
 public class TransformDetail implements Emitter<Object> {
   private final Transformation transformation;
@@ -72,8 +72,7 @@ public class TransformDetail implements Emitter<Object> {
   }
 
   /**
-   * returns the list of next stages from this stage, for sinks this list is empty.
-   * @return
+   * @return the list of next stages from this stage; for sinks this list is empty
    */
   public List<String> getNextStages() {
     return nextStages;

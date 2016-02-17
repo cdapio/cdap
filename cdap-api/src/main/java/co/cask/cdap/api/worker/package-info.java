@@ -15,7 +15,6 @@
  */
 
 /**
- * Packages for ETL Application Templates.
- *
+ * Configuration and specification of workers in CDAP.
  */
-package co.cask.cdap.etl.api.batch;
+package co.cask.cdap.api.worker;

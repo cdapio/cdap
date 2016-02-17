@@ -15,7 +15,6 @@
  */
 
 /**
- * Packages for ETL Application Templates.
- *
+ * Packages for plugins in CDAP.
  */
-package co.cask.cdap.etl.api.batch;
+package co.cask.cdap.api.plugin;

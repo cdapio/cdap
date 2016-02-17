@@ -28,29 +28,29 @@ import javax.ws.rs.Path;
  * to specify the endpoint which that method handles. It can also use the {@link GET @GET}, {@link POST @POST},
  * {@link PUT @PUT}, {@link DELETE @DELETE} annotations to specify the type of HTTP requests that it handles.
  *
+ * <p>
  * Example:
  * <p>
  *   <pre><code>
  *      public class MyHttpHanlder implements HttpServiceHandler {
  *
- *        {@literal@}GET
- *        {@literal@}Path("/ping")
+ *        {@literal @}GET
+ *        {@literal @}Path("/ping")
  *        public void process(HttpServiceRequest request, HttpServiceResponder responder) {
  *          responder.sendString("Hello World");
  *        }
  *
- *        {@literal@}Override
+ *        {@literal @}Override
  *        public void configure(HttpServiceConfigurer configurer) { }
  *
- *        {@literal@}Override
+ *        {@literal @}Override
  *        public void initialize(HttpServiceContext context) throws Exception { }
  *
- *        {@literal@}Override
+ *        {@literal @}Override
  *        public void destroy() { }
  *      }
  *   </code></pre>
- * </p>
- *
+ * <p>
  * To handle HTTP request with large body, it's is better to have the handler method to return
  * a {@link HttpContentConsumer} to avoid running out of memory.
  *

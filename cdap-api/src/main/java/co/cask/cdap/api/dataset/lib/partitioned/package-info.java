@@ -15,7 +15,6 @@
  */
 
 /**
- * Packages for ETL Application Templates.
- *
+ * Implementation of classes which use partitioned datasets (such as partition consumers) in CDAP.
  */
-package co.cask.cdap.etl.api.batch;
+package co.cask.cdap.api.dataset.lib.partitioned;

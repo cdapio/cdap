@@ -178,7 +178,7 @@ function download_includes() {
   
   test_an_include 2c1898253d66d4a2a149d9012aa96328 ../../cdap-examples/WikipediaPipeline/src/main/java/co/cask/cdap/examples/wikipedia/WikipediaPipelineApp.java
   
-  test_an_include c49f911bee9c3dd5046af620edca9f43 ../../cdap-examples/WordCount/src/main/java/co/cask/cdap/examples/wordcount/WordCount.java
+  test_an_include 031d8480890e015158c5281945735d9f ../../cdap-examples/WordCount/src/main/java/co/cask/cdap/examples/wordcount/WordCount.java
 }
 
 run_command ${1}

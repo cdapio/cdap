@@ -21,7 +21,7 @@ dependencies,** which must be running for CDAP system services to operate correc
 **optional dependencies,** which may be required for certain functionality or program types.
 
 The host(s) running the CDAP Master service must have the HBase, HDFS, and YARN clients
-installed as CDAP uses the command line clients of these for initialization and their
+installed, as CDAP uses the command line clients of these for initialization and their
 connectivity information for external service dependencies. If Hadoop system services are
 also running on the same hosts as the CDAP services, they will already have these clients
 installed.
@@ -50,6 +50,8 @@ For a Distributed CDAP cluster, version |release|, you **must** install these Ha
 +----------------+---------------------------------+---------------------------------------+
 | Component      | Source                          | Supported Versions                    |
 +================+=================================+=======================================+
+| **Hadoop**     | *various*                       | 2.0 and higher                        |
++----------------+---------------------------------+---------------------------------------+
 | **HBase**      | Apache                          | 0.96.x, 0.98.x, and 1.0               |
 +                +---------------------------------+---------------------------------------+
 |                | Cloudera Data Hub (CDH)         | 5.0.0 through 5.5.0 (1.0-cdh5.5.0)    |

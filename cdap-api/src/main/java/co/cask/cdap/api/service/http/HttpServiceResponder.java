@@ -91,8 +91,8 @@ public interface HttpServiceResponder {
    * Sends a status code and headers back to client without any content.
    *
    * @param status status of the HTTP response
-   * @param headers headers to send; each {@link Map.Entry} contains the header name and value to be sent, hence
-   *                multiple values for the same header name is allowed.
+   * @param headers headers to send; each {@link java.util.Map.Entry} contains the header name and value to be sent,
+   *                allowing multiple values for the same header name
    */
   void sendStatus(int status, Iterable<? extends Map.Entry<String, String>> headers);
 
@@ -120,8 +120,8 @@ public interface HttpServiceResponder {
    * @param status status of the HTTP response
    * @param content content to be sent back
    * @param contentType type of content
-   * @param headers headers to send; each {@link Map.Entry} contains the header name and value to be sent, hence
-   *                multiple values for the same header name is allowed.
+   * @param headers headers to send; each {@link java.util.Map.Entry} contains the header name and value to be sent,
+   *                allowing multiple values for the same header name
    */
   void send(int status, ByteBuffer content, String contentType, Iterable<? extends Map.Entry<String, String>> headers);
 
@@ -150,8 +150,8 @@ public interface HttpServiceResponder {
    * @param status status of the HTTP response
    * @param producer a {@link HttpContentProducer} to produce content to be sent back
    * @param contentType type of content
-   * @param headers headers to send; each {@link Map.Entry} contains the header name and value to be sent, hence
-   *                multiple values for the same header name is allowed.
+   * @param headers headers to send; each {@link java.util.Map.Entry} contains the header name and value to be sent,
+   *                allowing multiple values for the same header name
    */
   void send(int status, HttpContentProducer producer, String contentType,
             Iterable<? extends Map.Entry<String, String>> headers);
@@ -183,8 +183,8 @@ public interface HttpServiceResponder {
    * @param status status of the HTTP response
    * @param location location containing the response body
    * @param contentType type of content
-   * @param headers headers to send; each {@link Map.Entry} contains the header name and value to be sent, hence
-   *                multiple values for the same header name is allowed.
+   * @param headers headers to send; each {@link java.util.Map.Entry} contains the header name and value to be sent,
+   *                allowing multiple values for the same header name
    * @throws IOException if failed to open an {@link InputStream} from the given {@link Location}.
    */
   void send(int status, Location location, String contentType,

@@ -46,9 +46,10 @@ public final class LiveStreamFileReader extends LiveFileReader<PositionStreamEve
   private long nextCheckTime = 0;
 
   /**
-   * Construct a reader with {@link Constants.Stream#NEW_FILE_CHECK_INTERVAL} as the max interval to check for new file.
+   * Construct a reader with {@link co.cask.cdap.common.conf.Constants.Stream#NEW_FILE_CHECK_INTERVAL}
+   * as the max interval to check for new file.
    *
-   * <p/>
+   * <p>
    * Same as calling
    * {@link #LiveStreamFileReader(StreamConfig, StreamFileOffset, long)
    * LiveStreamFileReader(streamConfig, beginOffset, Constants.Stream.NEW_FILE_CHECK_INTERVAL).

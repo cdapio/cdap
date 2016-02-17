@@ -12,6 +12,7 @@ Installation for MapR
 
 .. include:: ../_includes/installation/installation-steps-images.txt
 
+
 Preparing the Cluster
 =====================
 Please review the :ref:`Software Prerequisites <admin-manual-software-requirements>`, as a
@@ -52,6 +53,23 @@ packages installed, and can be configured using the MapR `configure.sh
 
 Downloading and Distributing Packages
 =====================================
+
+.. _mapr-compatibility-matrix:
+
++------------------------------------------------+
+| Supported MapR Distributions for Apache Hadoop |
++----------------+-------------------------------+
+| CDAP Series    | MapR Distributions            |
++================+===============================+
+| CDAP 3.3.x     | MapR 4.1, MapR 5.0            |
++----------------+-------------------------------+
+| CDAP 3.2.x     | MapR 4.1, MapR 5.0            |
++----------------+-------------------------------+
+| CDAP 3.1.x     | MapR 4.1                      |
++----------------+-------------------------------+
+
+.. _mapr-compatibility-matrix-end:
+
 
 Preparing Package Managers
 --------------------------
@@ -97,6 +115,33 @@ that value instead for ``/cdap/tx.snapshot``.
 .. |hdfs-user| replace:: ``cdap``
 
 .. include:: /../target/_includes/mapr-configuration.rst
+    :end-before:   .. _mapr-configuration-options-may-need
+
+#. Due to an issue with the version of the Kafka ZooKeeper client shipped with MapR, 
+   it is necessary to disable use of the embedded Kafka in CDAP by setting these properties:
+   
+   .. highlight:: xml
+
+   ::
+   
+     <property>
+        <name>master.collect.containers.log</name>
+        <value>false</value>
+      </property>
+
+     <property>
+        <name>master.collect.app.containers.log.level</name>
+        <value>OFF</value>
+      </property>
+      
+    As a consequence of this setting, the container logs will not be streamed back to the
+    master process log file. This issue is due to a `known Kafka issue 
+    <https://issues.apache.org/jira/browse/TWILL-139?focusedCommentId=14598628>`__.   
+    
+#. Depending on your installation, you may need to set these properties:
+
+.. include:: /../target/_includes/mapr-configuration.rst
+    :start-after:   .. _mapr-configuration-options-may-need2:
     :end-before: .. _mapr-configuration-hdp:
 
 .. highlight:: xml
@@ -139,10 +184,12 @@ CDAP requires that an additional entry |---| ``/opt/mapr/lib/*`` |---| be append
 
 .. _mapr-verification:
 
+
 Verification
 ============
 
 .. include:: /_includes/installation/smoke-test-cdap.txt
+
 
 Advanced Topics
 ===============
@@ -164,13 +211,3 @@ Kerberos is currently not supported by CDAP on secure MapR clusters.
 .. .. include:: /../target/_includes/mapr-configuration.rst
 ..     :start-after: .. configuration-enabling-kerberos:
 ..     :end-before: .. _mapr-configuration-eps:
-
-Upgrading CDAP
---------------
-Currently, CDAP **cannot** be upgraded by using the MapR Control System. 
-
-To upgrade CDAP installations that were installed and are managed with MapR, please
-follow our instructions for upgrading CDAP installations that were installed with a
-Package Manager, either RPM or Debian:
-
-  :ref:`Upgrading CDAP via Package Managers <upgrading-using-packages>`

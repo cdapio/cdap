@@ -20,8 +20,6 @@ Installation using Apache Ambari
 - Ambari is for setting up HDP (Hortonworks Data Platform) on bare clusters; it can't be 
   used for clusters with HDP already installed, where the original installation was
   **not** with Ambari.
-- Though you can install CDAP with Apache Ambari, you **currently cannot use** Ambari to upgrade CDAP. 
-  See :ref:`upgrading-using-packages` for how to upgrade CDAP servers managed with Ambari.
 - These features are **currently not included** in the CDAP Apache Ambari Service (though they may in the future):
   
   - `Kerberos-enabled clusters <https://issues.cask.co/browse/CDAP-4109>`__ are currently not supported;
@@ -81,6 +79,8 @@ Replace |---| in the commands that follow on this page |---| all references to
 ``"cdap/``\ |literal-short-version|\ ``"`` 
 with the CDAP Repository from the list below that you would like to use:
 
+.. _ambari-compatibility-matrix:
+
 +-----------------------------------------------------------------------+
 | Supported Hortonworks Data Platform (HDP) Distributions               |
 +----------------+-----------------+------------------------------------+
@@ -94,6 +94,8 @@ with the CDAP Repository from the list below that you would like to use:
 +----------------+-----------------+------------------------------------+
 | CDAP 3.0.x     | ``cdap/3.0``    | HDP 2.0, HDP 2.1                   |
 +----------------+-----------------+------------------------------------+
+
+.. _ambari-compatibility-matrix-end:
 
 **Note:** The CDAP Ambari service has been tested on Ambari Server 2.0 and 2.1, as
 supplied from Hortonworks.
@@ -326,6 +328,7 @@ the address of the node running the CDAP-UI service at port 9999.
 
 .. include:: /_includes/installation/smoke-test-cdap.txt
 
+
 Advanced Topics
 ===============
 
@@ -348,16 +351,6 @@ Enabling Kerberos
 -----------------
 Ambari-managed `Kerberos-enabled clusters <https://issues.cask.co/browse/CDAP-4109>`__ are
 currently not supported in CDAP.
-
-Upgrading CDAP
---------------
-Currently, CDAP **cannot** be upgraded by using Apache Ambari. 
-
-To upgrade CDAP installations that were installed and are managed with Apache Ambari, please
-follow our instructions for upgrading CDAP installations that were installed with a
-Package Manager, either RPM or Debian:
-
-  :ref:`Upgrading CDAP via Package Managers <upgrading-using-packages>`
 
 CDAP HA Setup
 -------------
