@@ -27,7 +27,7 @@ CDAP_TAG=''
 # The CDAP package version passed to Chef
 CDAP_VERSION='3.3.0-1'
 # The version of Chef to install
-CHEF_VERSION='11.18.12'
+CHEF_VERSION='12.7.2'
 # cdap-site.xml configuration parameters
 EXPLORE_ENABLED='false'
 
