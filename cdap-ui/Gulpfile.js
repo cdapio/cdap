@@ -173,16 +173,6 @@ gulp.task('js:aceworkers', function() {
     .pipe(gulp.dest('./dist/assets/bundle/ace-editor-worker-scripts/'));
 });
 
-// gulp.task('js:$modal', function() {
-//   gulp.src([
-//     './bower_components/angular-bootstrap/ui-bootstrap-tpls.js',
-//   ])
-//   .pipe(plug.replace('$tooltip', '$bootstrapTooltip'))
-//   .pipe(plug.ngAnnotate({rename: [{from: '$modal', to: '$bootstrapModal'}]}))
-//   .pipe(plug.concat('ui-bootstrap-tpls.js'))
-//   .pipe(gulp.dest('./bower_components/angular-bootstrap'));
-// });
-
 function getEs6Features(isNegate) {
   /*
     When we move a feature to use es6 all we need to do is add it here for the build/dev process.
