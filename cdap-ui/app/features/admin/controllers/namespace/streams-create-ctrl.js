@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.feature.admin')
-  .controller('NamespaceStreamsCreateController', function($scope, $modalInstance, caskFocusManager, $stateParams, myStreamApi, myAlertOnValium, $timeout) {
+  .controller('NamespaceStreamsCreateController', function($scope, $modalInstance, caskFocusManager, $stateParams, myStreamApi, myAlertOnValium, $state) {
 
     caskFocusManager.focus('streamId');
 
@@ -35,18 +35,17 @@ angular.module(PKG.name + '.feature.admin')
       };
       myStreamApi.create(params, {})
         .$promise
-        .then(function(res) {
-          // FIXME: We reload on state leave. So when we show an alert
-          // here and reload the state we have that flickering in the
-          // alert message. In order to avoid that I am delaying by 100ms
-          $timeout(function() {
-            myAlertOnValium.show({
-              type: 'success',
-              content: 'Stream ' + $scope.streamId + ' created successfully'
-            });
-          }, 100);
+        .then(function() {
           $scope.isSaving = false;
-          $modalInstance.close(res);
+
+          $state.go('admin.namespace.detail.data', {}, { reload: true })
+            .then(function () {
+              myAlertOnValium.show({
+                type: 'success',
+                content: 'Stream ' + $scope.streamId + ' created successfully'
+              });
+            });
+
         }, function (err) {
           $scope.isSaving = false;
           $scope.error = err.data;

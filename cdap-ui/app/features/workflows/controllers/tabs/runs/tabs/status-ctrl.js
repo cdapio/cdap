@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,7 +19,7 @@ var runparams = {},
     params;
 
 class WorkflowsRunsStatusController {
-  constructor($state, $scope, myWorkFlowApi, $filter, $alert, GraphHelpers, MyCDAPDataSource, myMapreduceApi, mySparkApi) {
+  constructor($state, $scope, myWorkFlowApi, $filter, GraphHelpers, MyCDAPDataSource, myMapreduceApi, mySparkApi) {
     this.dataSrc = new MyCDAPDataSource($scope);
     this.$state = $state;
     this.$scope = $scope;
@@ -233,6 +233,6 @@ class WorkflowsRunsStatusController {
 
 }
 
-WorkflowsRunsStatusController.$inject = ['$state', '$scope', 'myWorkFlowApi', '$filter', '$alert', 'GraphHelpers', 'MyCDAPDataSource', 'myMapreduceApi', 'mySparkApi'];
+WorkflowsRunsStatusController.$inject = ['$state', '$scope', 'myWorkFlowApi', '$filter', 'GraphHelpers', 'MyCDAPDataSource', 'myMapreduceApi', 'mySparkApi'];
 angular.module(`${PKG.name}.feature.workflows`)
   .controller('WorkflowsRunsStatusController', WorkflowsRunsStatusController);
