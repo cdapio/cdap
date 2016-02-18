@@ -203,7 +203,7 @@ public class SparkProgramRunnerTest {
         Assert.assertEquals(1, ts.getTimeValues().size());
         return ts.getTimeValues().get(0).getValue();
       }
-    }, 5L, TimeUnit.SECONDS, 50L, TimeUnit.MILLISECONDS);
+    }, 10L, TimeUnit.SECONDS, 50L, TimeUnit.MILLISECONDS);
   }
 
   @Test
