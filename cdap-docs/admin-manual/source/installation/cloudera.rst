@@ -76,6 +76,37 @@ These roles map to the :ref:`CDAP components <admin-manual-cdap-components>` of 
 .. --------------------
 .. include:: ../_includes/installation/hadoop-configuration.txt
 
+#. Set the YARN Application Classpath.
+
+   .. highlight:: console
+
+   If you are running Spark programs, CDAP requires that additional entries be added to the YARN application classpath,
+   as the Spark installed on Cloudera Manager clusters does not include the necessary Hadoop references.
+
+   To resolve this, generate the correct classpath by going to a host in your cluster that has a Spark Gateway, 
+   and go to the Spark configuration directory, located either in::
+ 
+     /opt/cloudera/parcels/CDH/lib/spark/conf
+   
+   or::
+ 
+     /etc/spark/conf
+ 
+   From within that, run this command to create a file with the additional entries required::
+
+     $ cat classpath.txt | grep "jar$" | grep -v "^.*jars\/hive-exec-" | paste -sd, - > add_classpath.txt
+ 
+   (This command removes a Hive JAR with a Guava dependency that will not work with CDAP, and re-formats the
+   file contents from return-delimited to comma-delimited.)
+ 
+   Copy the contents of this file into the YARN Application Classpath for your cluster by going to the
+   CM page for your cluster, clicking on the YARN service, then clicking on the configuration tab, and then entering 
+   "yarn.application.classpath" in the search box.
+ 
+   Add the entries required by scrolling to the last entry in the classpath form, clicking the "+" button to add
+   a new text box entry field at the end. Paste the contents of the file that you created above into that text. CM
+   will parse the contents, and create additional entries in the classpath dialog to match the file contents.
+
 You can make these changes `using Cloudera Manager 
 <http://www.cloudera.com/content/www/en-us/documentation/enterprise/latest/topics/cm_mc_mod_configs.html>`__.
 You will be prompted to restart the stale services after making changes.
