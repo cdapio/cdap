@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -447,9 +447,18 @@ public class PartitionConsumerTest {
         List<PartitionDetail> consumedBy3 = partitionConsumer3.consumePartitions(2).getPartitions();
         Assert.assertEquals(1, consumedBy3.size());
 
-        // partitionConsumers 2 and 3 marks that it succesfully processed the partitions
+        // partitionConsumers 2 and 3 marks that it successfully processed the partitions
         partitionConsumer3.onFinish(consumedBy3, true);
-        partitionConsumer2.onFinish(consumedBy2, true);
+
+        // test onFinishWithKeys API
+        List<PartitionKey> keysConsumedBy2 =
+          Lists.transform(consumedBy2, new Function<PartitionDetail, PartitionKey>() {
+          @Override
+          public PartitionKey apply(PartitionDetail input) {
+            return input.getPartitionKey();
+          }
+        });
+        partitionConsumer2.onFinishWithKeys(keysConsumedBy2, true);
 
         // at this point, all partitions are processed, so no additional partitions are available for consumption
         Assert.assertEquals(0, partitionConsumer3.consumePartitions().getPartitions().size());

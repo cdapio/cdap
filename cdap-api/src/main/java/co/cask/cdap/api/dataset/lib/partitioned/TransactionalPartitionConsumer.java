@@ -22,6 +22,7 @@ import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.dataset.lib.DatasetStatePersistor;
 import co.cask.cdap.api.dataset.lib.Partition;
+import co.cask.cdap.api.dataset.lib.PartitionKey;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
 import co.cask.tephra.TransactionFailureException;
 
@@ -101,6 +102,20 @@ public final class TransactionalPartitionConsumer implements PartitionConsumer {
         @Override
         public void run(DatasetContext context) throws Exception {
           getPartitionConsumer(context).onFinish(partitions, succeeded);
+        }
+      });
+    } catch (TransactionFailureException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  @Override
+  public void onFinishWithKeys(final List<? extends PartitionKey> partitionKeys, final boolean succeeded) {
+    try {
+      transactional.execute(new TxRunnable() {
+        @Override
+        public void run(DatasetContext context) throws Exception {
+          getPartitionConsumer(context).onFinishWithKeys(partitionKeys, succeeded);
         }
       });
     } catch (TransactionFailureException e) {
