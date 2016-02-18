@@ -76,11 +76,11 @@ These roles map to the :ref:`CDAP components <admin-manual-cdap-components>` of 
 .. --------------------
 .. include:: ../_includes/installation/hadoop-configuration.txt
 
-#. Set the YARN Application Classpath.
+#. Add additional jars to the YARN Application Classpath for Spark jobs.
 
    .. highlight:: console
 
-   If you are running Spark programs, CDAP requires that additional entries be added to
+   If you plan on running Spark programs from CDAP, CDAP requires that additional entries be added to
    the YARN application classpath, as the Spark installed on Cloudera Manager clusters
    is a "Hadoop-less" build and does not include Hadoop jars required by Spark.
 
@@ -98,7 +98,7 @@ These roles map to the :ref:`CDAP components <admin-manual-cdap-components>` of 
 
      $ cat classpath.txt | grep "jar$" | grep -v "^.*jars\/hive-exec-" | paste -sd, - > add_classpath.txt
  
-   (This command removes a Hive JAR with a Guava dependency that will not work with CDAP,
+   (This command removes the ``hive-exec`` JAR with a Guava dependency that will not work with CDAP,
    and re-formats the file contents from return-delimited to comma-delimited.)
 
    Copy the contents of this file into the YARN Application Classpath for your cluster by
@@ -107,8 +107,9 @@ These roles map to the :ref:`CDAP components <admin-manual-cdap-components>` of 
  
    Add the entries required by scrolling to the last entry in the classpath form, clicking
    the "+" button to add a new text box entry field at the end. Paste the contents of the
-   file that you created above into that text field. CM will parse the contents, and
-   create additional entries in the classpath dialog to match the file contents.
+   file that you created above into that text field. Once you click on the *Save* button,
+   CM will parse the contents, and create additional entries in the classpath dialog to
+   match the file contents.
 
 You can make these changes `using Cloudera Manager 
 <http://www.cloudera.com/content/www/en-us/documentation/enterprise/latest/topics/cm_mc_mod_configs.html>`__.
