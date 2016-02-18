@@ -82,7 +82,7 @@ These roles map to the :ref:`CDAP components <admin-manual-cdap-components>` of 
 
    If you are running Spark programs, CDAP requires that additional entries be added to
    the YARN application classpath, as the Spark installed on Cloudera Manager clusters
-   does not include the necessary Hadoop references.
+   is a "Hadoop-less" build and does not include Hadoop jars required by Spark.
 
    To resolve this, generate the correct classpath by going to a host in your cluster that
    has a Spark Gateway, and go to the Spark configuration directory, located either in::
