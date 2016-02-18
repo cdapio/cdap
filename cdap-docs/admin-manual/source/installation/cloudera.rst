@@ -98,8 +98,9 @@ These roles map to the :ref:`CDAP components <admin-manual-cdap-components>` of 
 
      $ cat classpath.txt | grep "jar$" | grep -v "^.*jars\/hive-exec-" | paste -sd, - > add_classpath.txt
  
-   (This command removes the ``hive-exec`` JAR with a Guava dependency that will not work with CDAP,
-   and re-formats the file contents from return-delimited to comma-delimited.)
+   (This command removes from the classpath the ``hive-exec`` with a Guava dependency that
+   will not work with CDAP, and re-formats the file contents from return-delimited to
+   comma-delimited.)
 
    Copy the contents of this file into the YARN Application Classpath for your cluster by
    going to the CM page for your cluster, clicking on the YARN service, then clicking on
