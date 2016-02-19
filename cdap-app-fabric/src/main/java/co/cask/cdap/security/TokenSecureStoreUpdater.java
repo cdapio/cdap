@@ -61,19 +61,16 @@ public final class TokenSecureStoreUpdater implements SecureStoreUpdater {
   private final LocationFactory locationFactory;
   private final long updateInterval;
   private final boolean secureExplore;
-  private long nextUpdateTime = -1;
-  private Credentials credentials;
 
   @Inject
   public TokenSecureStoreUpdater(YarnConfiguration hConf, CConfiguration cConf, LocationFactory locationFactory) {
     this.hConf = hConf;
     this.locationFactory = locationFactory;
     secureExplore = cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED) && UserGroupInformation.isSecurityEnabled();
-    credentials = new Credentials();
     updateInterval = calculateUpdateInterval();
   }
 
-  private void refreshCredentials() {
+  private Credentials refreshCredentials() {
     try {
       Credentials refreshedCredentials = new Credentials();
 
@@ -102,7 +99,7 @@ public final class TokenSecureStoreUpdater implements SecureStoreUpdater {
         }
       }
 
-      credentials = refreshedCredentials;
+      return refreshedCredentials;
     } catch (IOException ioe) {
       throw Throwables.propagate(ioe);
     }
@@ -179,11 +176,8 @@ public final class TokenSecureStoreUpdater implements SecureStoreUpdater {
 
   @Override
   public SecureStore update(String application, RunId runId) {
-    long now = System.currentTimeMillis();
-    if (now >= nextUpdateTime) {
-      nextUpdateTime = now + getUpdateInterval();
-      refreshCredentials();
-    }
+    Credentials credentials = refreshCredentials();
+    LOG.info("Updated credentials {}", credentials.getAllTokens());
     return YarnSecureStore.create(credentials);
   }
 }
