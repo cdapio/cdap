@@ -129,15 +129,15 @@ Bug Fixes
 
 - `CDAP-4865 <https://issues.cask.co/browse/CDAP-4865>`__ - Enhanced the CDAP SDK to be
   able to publish metadata updates to an external Kafka, identified by the configuration
-  property metadata.updates.kafka.broker.list. Publishing can be enabled by setting
-  metadata.updates.publish.enabled to true. Updates are published to the Kafka topic
-  identified by the property metadata.updates.kafka.topic.
+  property ``metadata.updates.kafka.broker.list``. Publishing can be enabled by setting
+  ``metadata.updates.publish.enabled`` to true. Updates are published to the Kafka topic
+  identified by the property ``metadata.updates.kafka.topic``.
 
 - `CDAP-4877 <https://issues.cask.co/browse/CDAP-4877>`__ - Fixed errors in Cask Hydrator
-  Plugins. Two plugin documents (core-plugins/docs/Database-batchsink.md and
-  core-plugins/docs/Database-batchsource.md) were removed, as the plugins have been moved
-  from core-plugins to database-plugins (to database-plugins/docs/Database-batchsink.md and
-  database-plugins/docs/Database-batchsource.md).
+  Plugins. Two plugin documents (``core-plugins/docs/Database-batchsink.md`` and
+  ``core-plugins/docs/Database-batchsource.md``) were removed, as the plugins have been moved
+  from *core-plugins* to *database-plugins* (to ``database-plugins/docs/Database-batchsink.md``
+  and ``database-plugins/docs/Database-batchsource.md``).
 
 - `CDAP-4889 <https://issues.cask.co/browse/CDAP-4889>`__ - Fixed an issue with upgrading
   HBase tables while using the CDAP Upgrade Tool.
