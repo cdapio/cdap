@@ -85,6 +85,9 @@ Bug Fixes
 - `CDAP-4754 <https://issues.cask.co/browse/CDAP-4754>`__ - Fixed ObjectStore to work when
   parameterized with custom classes.
 
+- `CDAP-4767 <https://issues.cask.co/browse/CDAP-4767>`__ - Fixed an issue where delegation token
+  cancellation of CDAP program was affecting CDAP master services.
+
 - `CDAP-4770 <https://issues.cask.co/browse/CDAP-4770>`__ - Fixed the Cask Hydrator UI to
   automatically reconnect with the CDAP backend when the backend restarts.
 
@@ -159,6 +162,9 @@ Bug Fixes
 
 - `CDAP-4951 <https://issues.cask.co/browse/CDAP-4951>`__ - Changed the upload timeout from the
   CDAP CLI from 15 seconds to unlimited.
+
+- `CDAP-4975 <https://issues.cask.co/browse/CDAP-4975>`__ - Pass ResourceManager delegation tokens
+  in the proper format in secure Hadoop HA clusters.
 
 Deprecated and Removed Features
 -------------------------------
