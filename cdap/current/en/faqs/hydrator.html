@@ -1,0 +1,252 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta content="Cask Data, Inc." name="author" />
+<meta content="Frequently Asked Questions about starting the Cask Data Application Platform" name="description" />
+<meta content="Copyright © 2016 Cask Data, Inc." name="copyright" />
+<script type="text/javascript">
+
+      var _gaq = _gaq || [];
+      _gaq.push(['_setAccount', 'UA-55081520-2']);
+      _gaq.push(['_trackPageview']);
+
+      (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+      })();
+    </script>
+    
+    <meta name="git_release" content="3.3.1">
+    <meta name="git_hash" content="cd2089bc957935d843e6a3d8531bfd60d53c7a91">
+    <meta name="git_timestamp" content="2016-02-19 11:10:30 -0800">
+    <title>FAQs: Cask Hydrator &mdash; Cask Data Application Platform 3.3.1 Documentation</title>
+    
+    <link rel="stylesheet" href="_static/cdap-faqs.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+
+
+
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '3.3.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    
+    <!-- Amazon SQS Page Usage Logging start-->
+    <script type="text/javascript" src="https://sdk.amazonaws.com/js/aws-sdk-2.1.35.min.js"></script>
+    <script type="text/javascript" src="http://docs.cask.co/resources/scripts/aws-sqs-1.0.0.js"></script>
+    <!-- Amazon SQS Page Usage Logging end-->
+    <link rel="shortcut icon" href="_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 3.3.1 Documentation" href="index.html" />
+    <link rel="prev" title="FAQs: Cloudera Manager" href="cloudera-manager.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="cloudera-manager.html" title="FAQs: Cloudera Manager"
+             accesskey="P">Previous</a> |</li>
+        
+        <script type="text/javascript" src="_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('3.3.1');</script>
+       
+        <li><a href="table-of-contents.html">CDAP FAQs</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="faqs-cask-hydrator">
+<span id="faqs-hydrator"></span><h1>FAQs: Cask Hydrator<a class="headerlink" href="#faqs-cask-hydrator" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="what-should-i-do-if-i-see-any-of-these-errors-in-the-cask-hydrator-user-interface">
+<h2>What should I do if I see any of these errors in the Cask Hydrator User Interface?<a class="headerlink" href="#what-should-i-do-if-i-see-any-of-these-errors-in-the-cask-hydrator-user-interface" title="Permalink to this headline">¶</a></h2>
+<ul>
+<li><p class="first"><strong>Error parsing widgets JSON for the plugin &lt;plugin-name&gt;</strong></p>
+<p>This error means the <a class="reference external" href="source/../../cdap-apps/hydrator/custom.html#cdap-apps-custom-widget-json" title="(in Cask Data Application Platform v3.3.1)"><span class="xref std std-ref">widget JSON file</span></a> for the particular plugin has an error in its JSON, such as:</p>
+<ul class="simple">
+<li>You are missing a comma character (<code class="docutils literal"><span class="pre">,</span></code>) in the JSON</li>
+<li>You have a missing a double quote character (<code class="docutils literal"><span class="pre">&quot;</span></code>) in the JSON</li>
+<li>You have a value for a key that is not a valid JSON value (for instance, <code class="docutils literal"><span class="pre">NaN</span></code>)</li>
+</ul>
+<p>The fastest way to fix these issues is to use <code class="docutils literal"><span class="pre">json-lint</span></code> to identify problems and make sure the widget JSON is valid..</p>
+</li>
+<li><p class="first"><strong>No widgets JSON found for the plugin &lt;plugin-name&gt;</strong></p>
+<p>This error means that the CDAP UI Service could not find the widget JSON for the plugin that you are
+currently working with. As part of plugin deployment, a JAR and a JSON file are deployed with a plugin,
+as described in the <a class="reference external" href="source/../../cdap-apps/hydrator/custom.html#cdap-apps-custom-etl-plugins-plugin-packaging" title="(in Cask Data Application Platform v3.3.1)"><span>Plugin Packaging and Deployment</span></a>.</p>
+</li>
+</ul>
+</div>
+<div class="section" id="in-which-order-do-plugin-properties-appear-in-the-cask-hydrator-ui">
+<h2>In which order do plugin properties appear in the Cask Hydrator UI?<a class="headerlink" href="#in-which-order-do-plugin-properties-appear-in-the-cask-hydrator-ui" title="Permalink to this headline">¶</a></h2>
+<p>The properties are specified as a list inside the configuration groups. Properties of the plugin
+will appear inside the group in the same order as they are listed.</p>
+</div>
+<div class="section" id="what-happens-if-i-don-t-have-a-property-of-the-plugin-in-the-widget-json">
+<h2>What happens if I don&#8217;t have a property of the plugin in the Widget JSON?<a class="headerlink" href="#what-happens-if-i-don-t-have-a-property-of-the-plugin-in-the-widget-json" title="Permalink to this headline">¶</a></h2>
+<p>The Cask Hydrator UI will create a separate group named &#8216;Generic&#8217;, add all properties as
+part of that group, and (by default) display all properties in a textbox widget.</p>
+</div>
+<div class="section" id="what-happens-when-i-use-an-invalid-widget-in-the-widget-json">
+<h2>What happens when I use an invalid widget in the Widget JSON?<a class="headerlink" href="#what-happens-when-i-use-an-invalid-widget-in-the-widget-json" title="Permalink to this headline">¶</a></h2>
+<p>In a case where the Widget JSON includes a non-existent (or unknown) widget,
+the Cask Hydrator UI defaults to a textbox field.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+  <div role="note" aria-label="manuals links">
+    <h3><a href="table-of-contents/../../index.html" rel="nofollow">CDAP Documentation v3.3.1</a></h3>
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="table-of-contents/../../index.html" rel="nofollow">Overview</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../introduction/index.html" rel="nofollow">Introduction to CDAP</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../developers-manual/index.html" rel="nofollow">Developers’ Manual</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../cdap-apps/index.html" rel="nofollow">CDAP Applications</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../admin-manual/index.html" rel="nofollow">Administration Manual</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../integrations/index.html" rel="nofollow">Integrations</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../examples-manual/index.html" rel="nofollow">Examples, Guides, and Tutorials</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../reference-manual/index.html" rel="nofollow">Reference Manual</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../faqs/index.html" rel="nofollow">FAQs</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../reference-manual/release-notes.html" rel="nofollow">Release Notes</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../reference-manual/glossary.html" rel="nofollow">Glossary</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../search.html" rel="nofollow">Search</a></li>
+    </ul>
+  </div><!--
+  Copyright © 2014-2015 Cask Data, Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+-->
+
+
+    
+  <h3 class="pagenavtitle"><a href="table-of-contents.html">FAQs: Table&nbsp;of&nbsp;Contents</a></h3>
+    <nav class="pagenav">
+    <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="index.html"> Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="general.html"> General Questions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cdap.html"> CDAP</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cloudera-manager.html"> Cloudera Manager</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href=""> Hydrator</a><ul class="simple">
+</ul>
+</li>
+</ul>
+ 
+    </nav>
+  <h4>Topics</h4>
+  <ul>
+  <li class="topless"><i>Previous:</i> <a href="cloudera-manager.html"
+                        title="Previous Topic">FAQs: Cloudera Manager</a></li>
+  </ul>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/3.3.1/cdap-docs-3.3.1-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+<div role="note" aria-label="other links">
+    <h3><a href="http://docs.cask.co/" target="_blank">Documentation</a></h3>
+    <ul class="this-page-menu">
+        <li><a href="http://docs.cask.co/cdap/index.html" target="_blank">CDAP</a></li>
+        <li><a href="http://docs.cask.co/coopr/index.html" target="_blank">Coopr</a></li>
+        <li><a href="http://docs.cask.co/tephra/index.html" target="_blank">Tephra</em></a></li>
+        <li><a href="http://docs.cask.co/tigon/index.html" target="_blank">Tigon</a></li>
+    </ul>
+</div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+  <tr>
+    <th class="tg-031e">Previous Topic: 
+    <a title="FAQs: Cloudera Manager" href="cloudera-manager.html" />FAQs: Cloudera Manager</a>&nbsp;&nbsp;
+    
+    </th>
+    <th class="tg-s6z2">
+        Copyright &copy; 2014-2016 Cask Data, Inc.
+    
+    </th>
+    <th class="tg-0ord">
+    
+    </th>
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>
