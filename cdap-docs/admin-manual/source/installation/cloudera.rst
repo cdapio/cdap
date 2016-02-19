@@ -95,14 +95,15 @@ These roles map to the :ref:`CDAP components <admin-manual-cdap-components>` of 
    Copy all the entries to the ``yarn.application.classpath`` configuration for YARN on your Cluster. 
    The ``yarn.application.classpath`` setting can be found by searching as mentioned above.
 
-   Add the entries required by scrolling to the last entry in the class path form,
+   Add the entries required by scrolling to the last entry in the classpath form,
    clicking the "+" button to add a new text box entry field at the end. Once you have
    added all the entries from the ``mapreduce.application.classpath`` to the
    ``yarn.application.classpath``, click on *Save*.
 
 You can make these changes `using Cloudera Manager
 <http://www.cloudera.com/content/www/en-us/documentation/enterprise/latest/topics/cm_mc_mod_configs.html>`__.
-You will be prompted to restart the stale services after making changes.
+Please restart the stale services upon seeing a prompt to do so after making the above
+changes.
 
 .. HDFS Permissions
 .. ----------------
