@@ -84,21 +84,24 @@ function makeApp (authAddress, cdapConfig) {
   app.post('/downloadQuery', function(req, res) {
     var url = req.body.backendUrl;
 
-    try {
-      request({
-        method: 'POST',
-        url: url,
-        rejectUnauthorized: false,
-        requestCert: true,
-        agent: false,
-        headers: req.headers
-      }).pipe(res)
-      .on('error', function (e) {
-        log.error('Error downloading query: ', e);
-      });
-    } catch (e) {
-      res.status(500).send(e);
-    }
+    log.info('Download Start: ', req.body.queryHandle);
+
+    request({
+      method: 'POST',
+      url: url,
+      rejectUnauthorized: false,
+      requestCert: true,
+      agent: false,
+      headers: req.headers
+    })
+    .on('error', function (e) {
+      log.error('Error request: ', e);
+    })
+    .pipe(res)
+    .on('error', function (e) {
+      log.error('Error downloading query: ', e);
+    });
+
   });
 
   /*
@@ -147,6 +150,9 @@ function makeApp (authAddress, cdapConfig) {
     };
 
     req
+      .on('error', function (e) {
+        log.error(e);
+      })
       .pipe(request.post(opts))
         .on('error', function (e) {
           log.error(e);
