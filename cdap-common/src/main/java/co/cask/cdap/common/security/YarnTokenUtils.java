@@ -61,6 +61,8 @@ public final class YarnTokenUtils {
         Text renewer = new Text(UserGroupInformation.getCurrentUser().getShortUserName());
         org.apache.hadoop.yarn.api.records.Token rmDelegationToken = yarnClient.getRMDelegationToken(renewer);
 
+        // TODO: The following logic should be replaced with call to ClientRMProxy.getRMDelegationTokenService after
+        // CDAP-4825 is resolved
         List<String> services = new ArrayList<>();
         if (HAUtil.isHAEnabled(configuration)) {
           // If HA is enabled, we need to enumerate all RM hosts
@@ -78,7 +80,7 @@ public final class YarnTokenUtils {
           services.add(SecurityUtil.buildTokenService(YarnUtils.getRMAddress(configuration)).toString());
         }
 
-        Token<TokenIdentifier> token = ConverterUtils.convertFromYarn(rmDelegationToken, null);
+        Token<TokenIdentifier> token = ConverterUtils.convertFromYarn(rmDelegationToken, (InetSocketAddress) null);
         token.setService(new Text(Joiner.on(',').join(services)));
         credentials.addToken(new Text(token.getService()), token);
 
