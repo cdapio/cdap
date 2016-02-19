@@ -48,7 +48,7 @@
                 <div class="btn-group">
                   <button class="btn btn-default"
                     ng-click="MyExploreCtrl.download(query)"
-                    ng-disabled="query.downloading || query.status !== 'FINISHED'"
+                    ng-disabled="query.downloading || query.status !== 'FINISHED' || !query.is_active"
                     uib-tooltip="Download"
                     tooltip-append-to-body="true">
                     <i class="fa"
