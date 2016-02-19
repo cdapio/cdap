@@ -92,7 +92,10 @@ function makeApp (authAddress, cdapConfig) {
         requestCert: true,
         agent: false,
         headers: req.headers
-      }).pipe(res);
+      }).pipe(res)
+      .on('error', function (e) {
+        log.error('Error downloading query: ', e);
+      });
     } catch (e) {
       res.status(500).send(e);
     }
@@ -143,7 +146,15 @@ function makeApp (authAddress, cdapConfig) {
       url: url
     };
 
-    req.pipe(request.post(opts)).pipe(res);
+    req
+      .pipe(request.post(opts))
+        .on('error', function (e) {
+          log.error(e);
+        })
+      .pipe(res)
+        .on('error', function (e) {
+          log.error(e);
+        });
   });
 
   // serve static assets
