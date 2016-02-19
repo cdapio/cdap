@@ -76,7 +76,7 @@ These roles map to the :ref:`CDAP components <admin-manual-cdap-components>` of 
 .. --------------------
 .. include:: ../_includes/installation/hadoop-configuration.txt
 
-#. Add additional jars to the YARN Application Classpath for Spark jobs.
+#. Add additional entries to the YARN Application Classpath for Spark jobs.
 
    .. highlight:: console
 
@@ -84,37 +84,24 @@ These roles map to the :ref:`CDAP components <admin-manual-cdap-components>` of 
    the YARN application classpath, as the Spark installed on Cloudera Manager clusters
    is a "Hadoop-less" build and does not include Hadoop jars required by Spark.
 
-   To resolve this, generate the correct classpath by going to a host in your cluster that
-   has a Spark Gateway, and go to the Spark configuration directory, located either in::
- 
-     /opt/cloudera/parcels/CDH/lib/spark/conf
-   
-   or::
- 
-     /etc/spark/conf
- 
-   From within that, run this command to create a file with the additional entries
-   required::
+   To resolve this, go to the CM page for your cluster, click on the YARN service, then click on
+   the configuration tab, and then enter "mapreduce.application.classpath" in the search box. You will see entries similar to these:
 
-     $ cat classpath.txt | grep "jar$" | grep -v "^.*jars\/hive-exec-" | paste -sd, - > add_classpath.txt
- 
-   (This command removes from the classpath the ``hive-exec`` with a Guava dependency that
-   will not work with CDAP, and re-formats the file contents from return-delimited to
-   comma-delimited.)
+    $HADOOP_MAPRED_HOME/*
 
-   Copy the contents of this file into the YARN Application Classpath for your cluster by
-   going to the CM page for your cluster, clicking on the YARN service, then clicking on
-   the configuration tab, and then entering "yarn.application.classpath" in the search box.
- 
-   Add the entries required by scrolling to the last entry in the classpath form, clicking
-   the "+" button to add a new text box entry field at the end. Paste the contents of the
-   file that you created above into that text field. Once you click on the *Save* button,
-   CM will parse the contents, and create additional entries in the classpath dialog to
-   match the file contents.
+    $HADOOP_MAPRED_HOME/lib/*
 
-You can make these changes `using Cloudera Manager 
-<http://www.cloudera.com/content/www/en-us/documentation/enterprise/latest/topics/cm_mc_mod_configs.html>`__.
-You will be prompted to restart the stale services after making changes.
+    $MR2_CLASSPATH
+
+
+   Copy all the entries to "yarn.application.classpath" configuration
+   for Yarn on your Cluster. The "yarn.application.classpath" setting can be found the similar way  mentioned above.
+
+   Add the entries required by scrolling to the last entry in the classpath form, clicking the "+" button to add a new text box entry field at the end. Once you have added all the entries from "mapreduce.application.classpath" to "yarn.application.classpath click on Save.
+
+   You can make these changes `using Cloudera Manager
+   <http://www.cloudera.com/content/www/en-us/documentation/enterprise/latest/topics/cm_mc_mod_configs.html>`__.
+   You will be prompted to restart the stale services after making changes.
 
 .. HDFS Permissions
 .. ----------------
