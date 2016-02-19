@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,7 +16,6 @@
 
 package co.cask.cdap.examples.sparkpagerank;
 
-import co.cask.cdap.examples.sparkpagerank.SparkPageRankApp.SparkPageRankServiceHandler;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.MapReduceManager;
 import co.cask.cdap.test.ServiceManager;
@@ -62,14 +61,14 @@ public class SparkPageRankAppTest extends TestBase {
 
     // Start service
     ServiceManager serviceManager = appManager.getServiceManager(SparkPageRankApp.SERVICE_HANDLERS)
-                                                       .start();
+      .start();
 
     // Wait for service to start since the Spark program needs it
     serviceManager.waitForStatus(true);
 
     // Start the SparkPageRankProgram
     SparkManager sparkManager = appManager.getSparkManager(SparkPageRankApp.PageRankSpark.class.getSimpleName())
-                                                                                                              .start();
+      .start();
     sparkManager.waitForFinish(60, TimeUnit.SECONDS);
 
     // Run RanksCounter which will count the number of pages for a pr
@@ -78,18 +77,20 @@ public class SparkPageRankAppTest extends TestBase {
     mapReduceManager.waitForFinish(3, TimeUnit.MINUTES);
 
     //Query for rank
-    URL url = new URL(serviceManager.getServiceURL(15, TimeUnit.SECONDS), SparkPageRankServiceHandler.RANKS_PATH);
+    URL url = new URL(serviceManager.getServiceURL(15, TimeUnit.SECONDS),
+                      SparkPageRankApp.SparkPageRankServiceHandler.RANKS_PATH);
 
-    HttpResponse response = HttpRequests.execute(HttpRequest.post(url)
-                                      .withBody(("{\"" + SparkPageRankServiceHandler.URL_KEY + "\":\"" + URL_1 + "\"}"))
-                                      .build());
+    HttpRequest request = HttpRequest.post(url)
+      .withBody(("{\"" + SparkPageRankApp.SparkPageRankServiceHandler.URL_KEY + "\":\"" + URL_1 + "\"}"))
+      .build();
+    HttpResponse response = HttpRequests.execute(request);
 
     Assert.assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
     Assert.assertEquals(RANK, response.getResponseBodyAsString());
 
     // Request total pages for a page rank and verify it
     url = new URL(serviceManager.getServiceURL(15, TimeUnit.SECONDS),
-                  SparkPageRankServiceHandler.TOTAL_PAGES_PATH + "/" + RANK);
+                  SparkPageRankApp.SparkPageRankServiceHandler.TOTAL_PAGES_PATH + "/" + RANK);
     response = HttpRequests.execute(HttpRequest.get(url).build());
     Assert.assertEquals(TOTAL_PAGES, response.getResponseBodyAsString());
   }
