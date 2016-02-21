@@ -61,20 +61,17 @@ __create_tmpdir() { mkdir -p ${__tmpdir}; };
 # Here on the edgenode we only have 'headnode0' and 'headnode1', so we can only guess and check
 # Sets ${ACTIVEAMBARIHOST} if successful
 setHeadNodeOrDie() {
-  __validateAmbariConnectivity "headnode0" || __validateAmbariConnectivity "headnode1" || die "Could not determine active headnode"
+  __validateAmbariConnectivity 'headnode0' || __validateAmbariConnectivity 'headnode1' || die 'Could not determine active headnode'
 }
 
 # Given a candidate Ambari host, try to perform an API GET
 # Dies if credentials are bad
 __validateAmbariConnectivity() {
     ACTIVEAMBARIHOST=${1}
-    coreSiteContent=$(bash $AMBARICONFIGS_SH -u $USERID -p $PASSWD get ${ACTIVEAMBARIHOST} $CLUSTERNAME core-site)
+    coreSiteContent=$(bash ${AMBARICONFIGS_SH} -u ${USERID} -p ${PASSWD} get ${ACTIVEAMBARIHOST} ${CLUSTERNAME} core-site)
     local __ret=$?
-    echo "ret: ${__ret}"
-    if [[ $coreSiteContent == *"[ERROR]"* && $coreSiteContent == *"Bad credentials"* ]]; then
-        #echo "[ERROR] Username and password are invalid. Exiting!"
-        #exit 134
-        die "[ERROR] Username and password are invalid. Exiting!"
+    if [[ ${coreSiteContent} == *"[ERROR]"* && ${coreSiteContent} == *"Bad credentials"* ]]; then
+        die '[ERROR] Username and password are invalid. Exiting!'
     fi
     return ${__ret}
 }
@@ -85,12 +82,9 @@ setAmbariConfig() {
     local __configtype=${1} # core-site, etc
     local __name=${2}
     local __value=${3}
-    updateResult=$(bash $AMBARICONFIGS_SH -u $USERID -p $PASSWD set $ACTIVEAMBARIHOST $CLUSTERNAME ${__configtype} ${__name} ${__value})
+    updateResult=$(bash ${AMBARICONFIGS_SH} -u ${USERID} -p ${PASSWD} set ${ACTIVEAMBARIHOST} ${CLUSTERNAME} ${__configtype} ${__name} ${__value})
 
-    if [[ $updateResult != *"Tag:version"* ]] && [[ $updateResult == *"[ERROR]"* ]]; then
-        #echo "[ERROR] Failed to update ${__configtype}. Exiting!"
-        #echo $updateResult
-        #exit 135
+    if [[ ${updateResult} != *"Tag:version"* ]] && [[ ${updateResult} == *"[ERROR]"* ]]; then
         die "[ERROR] Failed to update ${__configtype}: ${updateResult}"
     fi
 }
@@ -108,9 +102,7 @@ substituteLocalConfigValue() {
 
 # Fetches value of fs.azure.page.blob.dir, appends '/cdap' to it, updates it via Ambari API, updates the local client configurations, and restarts cluster services
 updateFsAzurePageBlobDirForCDAP() {
-    echo "bash $AMBARICONFIGS_SH -u $USERID -p $PASSWD get $ACTIVEAMBARIHOST $CLUSTERNAME core-site"
-    currentValue=$(bash $AMBARICONFIGS_SH -u $USERID -p $PASSWD get $ACTIVEAMBARIHOST $CLUSTERNAME core-site | grep 'fs.azure.page.blob.dir' | cut -d' ' -f3 | sed -e 's/"\(.*\)"[,]*/\1/')
-    echo "currentValue=${currentValue}"
+    currentValue=$(bash ${AMBARICONFIGS_SH} -u ${USERID} -p ${PASSWD} get ${ACTIVEAMBARIHOST} ${CLUSTERNAME} core-site | grep 'fs.azure.page.blob.dir' | cut -d' ' -f3 | sed -e 's/"\(.*\)"[,]*/\1/')
     if [ -n ${currentValue} ]; then
       if echo ${currentValue} | grep -q '/cdap'; then
         echo "fs.azure.page.blob.dir already contains /cdap"
@@ -121,6 +113,7 @@ updateFsAzurePageBlobDirForCDAP() {
     else
       newValue="/cdap"
     fi
+    echo "Updating fs.azure.page.blob.dir to ${newValue}"
     setAmbariConfig 'core-site' 'fs.azure.page.blob.dir' ${newValue} || die "Could not update Ambari config"
     substituteLocalConfigValue ${currentValue} ${newValue} || die "Could not update Local Hadoop Client config"
     restartCdapDependentClusterServices
@@ -128,31 +121,31 @@ updateFsAzurePageBlobDirForCDAP() {
 
 # Stop an Ambari cluster service
 stopServiceViaRest() {
-    if [ -z "$1" ]; then
+    if [ -z "${1}" ]; then
         echo "Need service name to stop service"
         exit 136
     fi
-    SERVICENAME=$1
-    echo "Stopping $SERVICENAME"
-    curl -u $USERID:$PASSWD -i -H 'X-Requested-By: ambari' -X PUT -d '{"RequestInfo": {"context" :"Stop Service for Hue installation"}, "Body": {"ServiceInfo": {"state": "INSTALLED"}}}' http://$ACTIVEAMBARIHOST:$AMBARIPORT/api/v1/clusters/$CLUSTERNAME/services/$SERVICENAME
+    SERVICENAME=${1}
+    echo "Stopping ${SERVICENAME}"
+    curl -u ${USERID}:${PASSWD} -i -H 'X-Requested-By: ambari' -X PUT -d '{"RequestInfo": {"context" :"Stop Service for Hue installation"}, "Body": {"ServiceInfo": {"state": "INSTALLED"}}}' http://${ACTIVEAMBARIHOST}:${AMBARIPORT}/api/v1/clusters/${CLUSTERNAME}/services/${SERVICENAME}
 }
 
 # Start an Ambari cluster service
 startServiceViaRest() {
-    if [ -z "$1" ]; then
+    if [ -z "${1}" ]; then
         echo "Need service name to start service"
         exit 136
     fi
     sleep 2
-    SERVICENAME=$1
-    echo "Starting $SERVICENAME"
-    startResult=$(curl -u $USERID:$PASSWD -i -H 'X-Requested-By: ambari' -X PUT -d '{"RequestInfo": {"context" :"Start Service for Hue installation"}, "Body": {"ServiceInfo": {"state": "STARTED"}}}' http://$ACTIVEAMBARIHOST:$AMBARIPORT/api/v1/clusters/$CLUSTERNAME/services/$SERVICENAME)
-    if [[ $startResult == *"500 Server Error"* || $startResult == *"internal system exception occurred"* ]]; then
+    SERVICENAME=${1}
+    echo "Starting ${SERVICENAME}"
+    startResult=$(curl -u ${USERID}:${PASSWD} -i -H 'X-Requested-By: ambari' -X PUT -d '{"RequestInfo": {"context" :"Start Service for Hue installation"}, "Body": {"ServiceInfo": {"state": "STARTED"}}}' http://${ACTIVEAMBARIHOST}:${AMBARIPORT}/api/v1/clusters/${CLUSTERNAME}/services/${SERVICENAME})
+    if [[ ${startResult} == *"500 Server Error"* || ${startResult} == *"internal system exception occurred"* ]]; then
         sleep 60
-        echo "Retry starting $SERVICENAME"
-        startResult=$(curl -u $USERID:$PASSWD -i -H 'X-Requested-By: ambari' -X PUT -d '{"RequestInfo": {"context" :"Start Service for Hue installation"}, "Body": {"ServiceInfo": {"state": "STARTED"}}}' http://$ACTIVEAMBARIHOST:$AMBARIPORT/api/v1/clusters/$CLUSTERNAME/services/$SERVICENAME)
+        echo "Retry starting ${SERVICENAME}"
+        startResult=$(curl -u ${USERID}:${PASSWD} -i -H 'X-Requested-By: ambari' -X PUT -d '{"RequestInfo": {"context" :"Start Service for Hue installation"}, "Body": {"ServiceInfo": {"state": "STARTED"}}}' http://${ACTIVEAMBARIHOST}:${AMBARIPORT}/api/v1/clusters/${CLUSTERNAME}/services/${SERVICENAME})
     fi
-    echo $startResult
+    echo ${startResult}
 }
 
 # Restart Ambari cluster services
@@ -229,7 +222,7 @@ rm -f /opt/cdap/kafka/lib/log4j.log4j-1.2.14.jar
 # Start CDAP Services
 for i in /etc/init.d/cdap-*
 do
-  $i start || die "Failed to start $i"
+  ${i} start || die "Failed to start ${i}"
 done
 
 __cleanup_tmpdir
