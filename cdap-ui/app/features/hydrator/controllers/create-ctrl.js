@@ -16,7 +16,7 @@
 
 
 angular.module(PKG.name + '.feature.hydrator')
-  .controller('HydratorCreateController', function($timeout, $state, myPipelineTemplatesApi, GLOBALS, CanvasFactory, myAlertOnValium, NonStorePipelineErrorFactory) {
+  .controller('HydratorCreateController', function($timeout, $state, GLOBALS, myAlertOnValium, NonStorePipelineErrorFactory) {
 
     var vm = this;
     vm.GLOBALS = GLOBALS;
@@ -26,83 +26,6 @@ angular.module(PKG.name + '.feature.hydrator')
     vm.templates = [];
     vm.GLOBALS = GLOBALS;
 
-    vm.typeFilter = '';
-
-
-    myPipelineTemplatesApi.list({
-      apptype: GLOBALS.etlBatch
-    })
-      .$promise
-      .then(function(res) {
-        var plugins = res.map(function(plugin) {
-          return {
-            name: plugin.name,
-            description: plugin.description,
-            type: GLOBALS.etlBatch
-          };
-        });
-
-        angular.forEach(plugins, function (plugin) {
-          myPipelineTemplatesApi.get({
-            apptype: GLOBALS.etlBatch,
-            appname: plugin.name
-          })
-            .$promise
-            .then(function (res) {
-              plugin._properties = res;
-            });
-        });
-
-        vm.templates = vm.templates.concat(plugins);
-      });
-
-    myPipelineTemplatesApi.list({
-      apptype: GLOBALS.etlRealtime
-    })
-      .$promise
-      .then(function(res) {
-        var plugins = res.map(function(plugin) {
-          return {
-            name: plugin.name,
-            label: plugin.name,
-            description: plugin.description,
-            type: GLOBALS.etlRealtime
-          };
-        });
-
-        angular.forEach(plugins, function (plugin) {
-          myPipelineTemplatesApi.get({
-            apptype: GLOBALS.etlRealtime,
-            appname: plugin.name
-          })
-            .$promise
-            .then(function (res) {
-              plugin._properties = res;
-            });
-        });
-
-        vm.templates = vm.templates.concat(plugins);
-      });
-
-    vm.selectTemplate = function (template) {
-      var result = CanvasFactory.parseImportedJson(
-        JSON.stringify(template._properties),
-        template.type
-      );
-      if (result.error) {
-        myAlertOnValium.show({
-          type: 'danger',
-          content: 'Imported pre-defined app has issues. Please check the JSON of the imported pre-defined app.'
-        });
-      } else {
-        $state.go('hydrator.create.studio', {
-          data: result,
-          type: result.artifact.name
-        }).then(function () {
-          vm.preconfigured = false;
-        });
-      }
-    };
 
     this.importFile = function(files) {
       var reader = new FileReader();

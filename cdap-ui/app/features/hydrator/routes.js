@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -37,6 +37,20 @@ angular.module(PKG.name + '.feature.hydrator')
           templateUrl: '/assets/features/hydrator/templates/list.html',
           controller: 'HydratorListController',
           controllerAs: 'ListController'
+        })
+
+        .state('hydrator.preconfigured', {
+          url: '/preconfigured',
+          data: {
+            authorizedRoles: MYAUTH_ROLE.all,
+            highlightTab: 'hydratorStudio'
+          },
+          templateUrl: '/assets/features/hydrator/templates/preconfigured-list.html',
+          controller: 'HydratorPreconfiguredController',
+          controllerAs: 'PreconfiguredController',
+          ncyBreadcrumb: {
+            skip: true
+          }
         })
 
         .state('hydrator.create', {
