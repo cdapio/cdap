@@ -135,7 +135,6 @@ __waitForServiceState() {
     return 1
 }
 
-
 # Stop an Ambari cluster service
 stopServiceViaRest() {
     if [ -z "${1}" ]; then
