@@ -48,8 +48,10 @@
     <div class="schema-propagation-confirm">
       <div class="well well-xs" ng-if="NodeConfigController.showPropagateConfirm">
         Existing schema will be over-written. Continue?
-        <button ng-click="NodeConfigController.propagateSchemaDownStream(); NodeConfigController.showPropagateConfirm=false;" class="btn btn-default">Yes</button>
-        <button ng-click="NodeConfigController.showPropagateConfirm = false" class="btn btn-default">No</button>
+        <div class="row confirmation-button">
+          <button ng-click="NodeConfigController.propagateSchemaDownStream(); NodeConfigController.showPropagateConfirm=false;" class="btn btn-default">Yes</button>
+          <button ng-click="NodeConfigController.showPropagateConfirm = false" class="btn btn-default">No</button>
+        </div>
       </div>
     </div>
     <div ng-if="isDisabled">
