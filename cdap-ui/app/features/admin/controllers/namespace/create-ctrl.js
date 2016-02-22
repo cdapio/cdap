@@ -15,7 +15,8 @@
  */
 
 angular.module(PKG.name + '.feature.admin')
-  .controller('NamespaceCreateController', function ($scope, $modalInstance, MyCDAPDataSource, myNamespace, EventPipe, myAlertOnValium, $state) {
+  .controller('NamespaceCreateController', function ($scope, $uibModalInstance, MyCDAPDataSource, myNamespace, EventPipe, myAlertOnValium, $state) {
+
     $scope.model = {
       name: '',
       description: ''
@@ -60,7 +61,7 @@ angular.module(PKG.name + '.feature.admin')
         );
     };
     $scope.closeModal = function() {
-      $modalInstance.close();
+      $uibModalInstance.close();
 
     };
 

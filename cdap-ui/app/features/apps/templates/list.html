@@ -23,10 +23,10 @@
     <h2> All Applications </h2>
   </div>
   <div class="col-xs-5 col-md-2 h2 text-right">
-    <div class="btn-group dropdown-right" dropdown>
+    <div class="btn-group dropdown-right" uib-dropdown>
       <button type="button"
               class="btn btn-default dropdown-toggle"
-              dropdown-toggle=""
+              uib-dropdown-toggle=""
               aria-haspopup="true"
               aria-expanded="false">
         Add Application <span class="caret"></span>
@@ -78,7 +78,7 @@
           <a ui-sref="apps.detail.overview.programs({ appId: app.name })"
               ng-if="ListController.myHydratorFactory.isCustomApp(app.artifact.name)"
               ng-click="MyOrderings.appClicked(app.name)">
-            <strong tooltip="{{app.name}}"
+            <strong uib-tooltip="{{app.name}}"
                     tooltip-enable="app.name.length > 35"
                     tooltip-append-to-body="true">
               {{ ::app.name | myEllipsis:35 }}
@@ -87,7 +87,7 @@
           <a ui-sref="apps.detail.overview.status({ appId: app.name })"
               ng-if="ListController.myHydratorFactory.isETLApp(app.artifact.name)"
               ng-click="MyOrderings.appClicked(app.name)">
-            <strong tooltip="{{app.name}}"
+            <strong uib-tooltip="{{app.name}}"
                     tooltip-enable="app.name.length > 35"
                     tooltip-append-to-body="true">
               {{ ::app.name | myEllipsis:35 }}
@@ -120,5 +120,5 @@
 </div>
 
 <div class="text-center" ng-if="ListController.filtered.length > 10">
-  <pagination total-items="ListController.filtered.length" ng-model="ListController.currentPage"></pagination>
+  <uib-pagination total-items="ListController.filtered.length" ng-model="ListController.currentPage"></uib-pagination>
 </div>

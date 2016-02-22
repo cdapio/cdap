@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.feature.streams')
-  .controller('StreamsCreateController', function($scope, MyCDAPDataSource, $modalInstance, caskFocusManager) {
+  .controller('StreamsCreateController', function($scope, MyCDAPDataSource, $uibModalInstance, caskFocusManager) {
 
     caskFocusManager.focus('streamId');
 
@@ -30,14 +30,14 @@ angular.module(PKG.name + '.feature.streams')
           method: 'PUT'
         })
         .then(function(res) {
-          $modalInstance.close(res);
+          $uibModalInstance.close(res);
         }, function(err) {
           this.error = err;
         }.bind(this));
     };
 
     this.closeModal = function() {
-      $modalInstance.close();
+      $uibModalInstance.close();
     };
 
   });

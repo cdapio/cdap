@@ -121,8 +121,8 @@ angular.module(PKG.name + '.feature.hydrator')
                 controller: 'BottomPanelController as BottomPanelController'
               }
             },
-            onExit: function($modalStack) {
-              $modalStack.dismissAll();
+            onExit: function($uibModalStack) {
+              $uibModalStack.dismissAll();
             }
           })
 

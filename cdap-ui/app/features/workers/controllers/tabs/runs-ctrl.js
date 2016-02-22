@@ -15,12 +15,12 @@
  */
 
 angular.module(PKG.name + '.feature.worker')
-  .controller('WorkersRunsController', function($scope, $filter, $state, rRuns, $bootstrapModal, rWorkerDetail) {
+  .controller('WorkersRunsController', function($scope, $filter, $state, rRuns, $uibModal, rWorkerDetail) {
   var fFilter = $filter('filter');
 
   this.runs = rRuns;
   this.description = rWorkerDetail.description;
-  this.$bootstrapModal = $bootstrapModal;
+  this.$uibModal = $uibModal;
 
   if ($state.params.runid) {
     var match = fFilter(rRuns, {runid: $state.params.runid});
@@ -68,7 +68,7 @@ angular.module(PKG.name + '.feature.worker')
   };
 
   this.openHistory = function() {
-    this.$bootstrapModal.open({
+    this.$uibModal.open({
       size: 'lg',
       templateUrl: '/assets/features/workers/templates/tabs/history.html',
       controller: ['runs', '$scope', function(runs, $scope) {

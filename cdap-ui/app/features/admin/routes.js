@@ -119,8 +119,8 @@ angular.module(PKG.name + '.feature.admin')
         })
           .state('admin.namespace.create', {
             url: '/create',
-            onEnter: function($bootstrapModal, $state) {
-              $bootstrapModal.open({
+            onEnter: function($uibModal, $state) {
+              $uibModal.open({
                 templateUrl: '/assets/features/admin/templates/namespace/create.html',
                 size: 'lg',
                 backdrop: true,
@@ -130,8 +130,8 @@ angular.module(PKG.name + '.feature.admin')
                 $state.go('admin.overview', {}, { reload: true });
               });
             },
-            onExit: function($modalStack) {
-              $modalStack.dismissAll();
+            onExit: function($uibModalStack) {
+              $uibModalStack.dismissAll();
             },
             ncyBreadcrumb: {
               skip: true
@@ -221,8 +221,8 @@ angular.module(PKG.name + '.feature.admin')
 
               .state('admin.namespace.detail.data.streamcreate', {
                 url:'/streams/create',
-                onEnter: function($bootstrapModal) {
-                  $bootstrapModal.open({
+                onEnter: function($uibModal) {
+                  $uibModal.open({
                     templateUrl: '/assets/features/admin/templates/namespace/streamscreate.html',
                     size: 'lg',
                     backdrop: true,
@@ -230,8 +230,8 @@ angular.module(PKG.name + '.feature.admin')
                     controller: 'NamespaceStreamsCreateController'
                   });
                 },
-                onExit: function($modalStack) {
-                  $modalStack.dismissAll();
+                onExit: function($uibModalStack) {
+                  $uibModalStack.dismissAll();
                 },
                 ncyBreadcrumb: {
                   skip: true

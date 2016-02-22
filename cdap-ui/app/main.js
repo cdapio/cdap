@@ -198,8 +198,8 @@ angular
     });
   })
 
-  .config(function ($bootstrapTooltipProvider) {
-    $bootstrapTooltipProvider.setTriggers({
+  .config(function ($uibTooltipProvider) {
+    $uibTooltipProvider.setTriggers({
       'customShow': 'customHide'
     });
   })

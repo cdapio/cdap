@@ -29,7 +29,7 @@ angular.module(PKG.name + '.commons')
     };
 
 
-    function myExploreCtrl ($scope, myExploreApi, $http, $state, $bootstrapModal, myCdapUrl, $timeout, myAlert, MY_CONFIG) {
+    function myExploreCtrl ($scope, myExploreApi, $http, $state, $uibModal, myCdapUrl, $timeout, myAlert, MY_CONFIG) {
         var vm = this;
 
         vm.queries = [];
@@ -88,7 +88,7 @@ angular.module(PKG.name + '.commons')
         vm.getQueries();
 
         vm.preview = function (query) {
-          $bootstrapModal.open({
+          $uibModal.open({
             templateUrl: 'explore/preview-modal.html',
             size: 'lg',
             resolve: {

@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.feature.admin')
-  .controller('NamespaceStreamsCreateController', function($scope, $modalInstance, caskFocusManager, $stateParams, myStreamApi, myAlertOnValium, $state) {
+  .controller('NamespaceStreamsCreateController', function($scope, $uibModalInstance, caskFocusManager, $stateParams, myStreamApi, myAlertOnValium, $state) {
 
     caskFocusManager.focus('streamId');
 
@@ -53,7 +53,7 @@ angular.module(PKG.name + '.feature.admin')
     };
 
     $scope.closeModal = function() {
-      $modalInstance.close();
+      $uibModalInstance.close();
     };
 
     $scope.enter = function (event) {
