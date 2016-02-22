@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Copyright © 2015 Cask Data, Inc.
+# Copyright © 2016 Cask Data, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -27,7 +27,7 @@ CDAP_TAG=''
 # The CDAP package version passed to Chef
 CDAP_VERSION='3.3.0-1'
 # The version of Chef to install
-CHEF_VERSION='11.18.12'
+CHEF_VERSION='12.7.2'
 # cdap-site.xml configuration parameters
 EXPLORE_ENABLED='false'
 
@@ -81,7 +81,7 @@ sed \
   ${__cdap_site_template} > ${__tmpdir}/generated-conf.json
 
 # Install/Configure ntp, CDAP
-chef-solo -o 'recipe[ntp::default],recipe[cdap::fullstack],recipe[cdap::init]' -j ${__tmpdir}/generated-conf.json
+chef-solo -o 'recipe[ntp::default],recipe[ulimit::default],recipe[cdap::fullstack],recipe[cdap::init]' -j ${__tmpdir}/generated-conf.json
 
 # Temporary Hack to workaround CDAP-4089
 rm -f /opt/cdap/kafka/lib/log4j.log4j-1.2.14.jar
