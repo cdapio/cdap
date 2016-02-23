@@ -1,0 +1,73 @@
+/*
+ * Copyright © 2016 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
+@import '../../styles/variables.less';
+@import '../../../bower_components/bootstrap/less/mixins.less';
+@import '../../styles/themes/cdap/mixins.less';
+
+@tracker-green: #35c853;
+@hydrator-blue: #098cf9;
+@cdap-orange: #ff6600;
+@tracker-banner-font-color: #1f293a;
+@tracker-grey: #65687a;
+
+body.state-tracker {
+  background-color: white;
+
+  .tracker-content {
+    width: 480px;
+    margin: 150px auto;
+  }
+
+  div.tracker-banner {
+    width: 375px;
+    margin: 0 auto;
+    .tracker-title {
+      background: url('@{img-path}/tracker_logo.png') no-repeat left center;
+      h1 {
+        margin: 7px 0 5px 70px;
+        color: @tracker-banner-font-color;
+        font-weight: 600;
+        font-size: 45px;
+        display: inline-block;
+      }
+    }
+
+    p {
+      margin-top: -5px;
+      font-weight: 600;
+      color: @tracker-grey;
+
+      span { color: @cdap-orange; }
+    }
+  }
+
+  .form-group {
+    margin-top: 25px;
+
+    .form-control {
+      height: 45px;
+    }
+
+    span {
+      line-height: 45px;
+      font-size: 18px;
+      color: @tracker-grey;
+      margin-right: 8px;
+    }
+  }
+
+}
