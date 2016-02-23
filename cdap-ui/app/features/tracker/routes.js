@@ -18,8 +18,8 @@ angular.module(PKG.name + '.feature.tracker')
   .config(function($stateProvider, MYAUTH_ROLE) {
 
     $stateProvider
-      .state('tracker', {
-        url: '/tracker',
+      .state('tracker-main', {
+        url: '/tracker/home',
         parent: 'ns',
         data: {
           authorizedRoles: MYAUTH_ROLE.all,
@@ -28,5 +28,24 @@ angular.module(PKG.name + '.feature.tracker')
         templateUrl: '/assets/features/tracker/templates/main.html',
         controller: 'TrackerMainController',
         controllerAs: 'MainController'
-      });
+      })
+
+      .state('tracker', {
+        url: '/tracker/search/:searchQuery',
+        parent: 'ns',
+        data: {
+          authorizedRoles: MYAUTH_ROLE.all,
+          highlightTab: '????'
+        },
+        templateUrl: '/assets/features/tracker/templates/container.html',
+        controller: 'TrackerContainerController',
+        controllerAs: 'ContainerController'
+      })
+
+        .state('tracker.result', {
+          url: '/result',
+          templateUrl: '/assets/features/tracker/templates/results.html',
+          controller: 'TrackerResultsController',
+          controllerAs: 'ResultsController'
+        });
   });

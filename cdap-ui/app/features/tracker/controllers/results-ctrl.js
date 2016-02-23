@@ -14,23 +14,13 @@
  * the License.
  */
 
-class TrackerMainController{
-  constructor($state) {
-    this.$state = $state;
-    this.searchQuery = '';
+class TrackerResultsController {
+  constructor() {
 
-    console.log('test');
-  }
-
-  search(event) {
-    if (event.keyCode === 13 && this.searchQuery) {
-      console.log('search', this.searchQuery);
-      this.$state.go('tracker.result', { searchQuery: this.searchQuery });
-    }
   }
 }
 
-TrackerMainController.$inject = ['$state'];
+TrackerResultsController.$inject = [];
 
 angular.module(PKG.name + '.feature.tracker')
-  .controller('TrackerMainController', TrackerMainController);
+ .controller('TrackerResultsController', TrackerResultsController);

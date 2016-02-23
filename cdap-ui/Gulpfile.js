@@ -488,7 +488,8 @@ gulp.task('watch', ['jshint', 'watch:build'], function() {
     './app/features/search/**/*.js',
     './app/features/flows/**/*.js',
     './app/features/flows/**/*.js',
-    './app/directives/dag/**/*.js'
+    './app/directives/dag/**/*.js',
+    './app/features/tracker/**/*.js'
   ], ['jshint', 'watch:js:app:babel']);
 
   gulp.watch('./app/**/*.{less,css}', ['css']);
