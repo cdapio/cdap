@@ -20,6 +20,7 @@ import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.common.BadRequestException;
+import co.cask.cdap.common.NamespaceNotFoundException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.NotImplementedException;
 import co.cask.cdap.common.conf.Constants;
@@ -93,12 +94,12 @@ public class AppFabricClient {
   private final NamespaceAdmin namespaceAdmin;
 
   @Inject
-  public AppFabricClient(LocationFactory locationFactory,
-                         AppLifecycleHttpHandler appLifecycleHttpHandler,
-                         ProgramLifecycleHttpHandler programLifecycleHttpHandler,
-                         NamespaceHttpHandler namespaceHttpHandler,
-                         NamespaceAdmin namespaceAdmin,
-                         WorkflowHttpHandler workflowHttpHandler) {
+  AppFabricClient(LocationFactory locationFactory,
+                  AppLifecycleHttpHandler appLifecycleHttpHandler,
+                  ProgramLifecycleHttpHandler programLifecycleHttpHandler,
+                  NamespaceHttpHandler namespaceHttpHandler,
+                  NamespaceAdmin namespaceAdmin,
+                  WorkflowHttpHandler workflowHttpHandler) {
     this.locationFactory = locationFactory;
     this.appLifecycleHttpHandler = appLifecycleHttpHandler;
     this.programLifecycleHttpHandler = programLifecycleHttpHandler;
@@ -383,7 +384,8 @@ public class AppFabricClient {
       }
       mockResponder = new MockResponder();
       bodyConsumer.finished(mockResponder);
-      verifyResponse(HttpResponseStatus.OK, mockResponder.getStatus(), "Failed to deploy app");
+      verifyResponse(HttpResponseStatus.OK, mockResponder.getStatus(),
+                     "Failed to deploy app: " + mockResponder.getContent().toString(Charsets.UTF_8));
     }
     return deployedJar;
   }
@@ -405,6 +407,17 @@ public class AppFabricClient {
 
     bodyConsumer.chunk(ChannelBuffers.wrappedBuffer(Bytes.toBytes(GSON.toJson(appRequest))), mockResponder);
     bodyConsumer.finished(mockResponder);
-    verifyResponse(HttpResponseStatus.OK, mockResponder.getStatus(), "Failed to deploy app");
+    verifyResponse(HttpResponseStatus.OK, mockResponder.getStatus(),
+                   "Failed to deploy app: " + mockResponder.getContent().toString(Charsets.UTF_8));
+  }
+
+  public void deleteApplication(Id.Application appId) throws BadRequestException, NamespaceNotFoundException {
+    DefaultHttpRequest request =
+      new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.DELETE,
+                             String.format("%s/apps/%s", getNamespacePath(appId.getNamespaceId()), appId.getId()));
+    MockResponder mockResponder = new MockResponder();
+    appLifecycleHttpHandler.deleteApp(request, mockResponder, appId.getNamespaceId(), appId.getId());
+    verifyResponse(HttpResponseStatus.OK, mockResponder.getStatus(),
+                   "Failed to delete app: " + mockResponder.getContent().toString(Charsets.UTF_8));
   }
 }

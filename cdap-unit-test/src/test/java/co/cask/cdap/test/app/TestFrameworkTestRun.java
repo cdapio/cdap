@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -98,6 +98,7 @@ import java.net.URL;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -150,31 +151,42 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     AppRequest<AppWithDuplicateData.ConfigClass> createRequest = new AppRequest<>(
       new ArtifactSummary(artifactId.getName(), artifactId.getVersion().getVersion()),
       new AppWithDuplicateData.ConfigClass(false, false, false));
-    deployApplication(appId, createRequest);
+    try {
+      deployApplication(appId, createRequest);
+    } finally {
+      deleteApplication(appId);
+    }
   }
 
   @Test
   public void testFlowRuntimeArguments() throws Exception {
     ApplicationManager applicationManager = deployApplication(FilterApp.class);
-    Map<String, String> args = Maps.newHashMap();
-    args.put("threshold", "10");
-    applicationManager.getFlowManager("FilterFlow").start(args);
+    try {
+      Map<String, String> args = new HashMap<>();
+      args.put("threshold", "10");
+      FlowManager filterFlow = applicationManager.getFlowManager("FilterFlow").start(args);
 
-    StreamManager input = getStreamManager("input");
-    input.send("1");
-    input.send("11");
+      StreamManager input = getStreamManager("input");
+      input.send("1");
+      input.send("11");
 
-    ServiceManager serviceManager = applicationManager.getServiceManager("CountService").start();
-    serviceManager.waitForStatus(true, 2, 1);
+      ServiceManager countService = applicationManager.getServiceManager("CountService").start();
+      countService.waitForStatus(true, 2, 1);
 
-    Assert.assertEquals("1", new Gson().fromJson(
-      callServiceGet(serviceManager.getServiceURL(), "result"), String.class));
+      Assert.assertEquals("1", new Gson().fromJson(
+        callServiceGet(countService.getServiceURL(), "result"), String.class));
+      applicationManager.stopAll();
+      filterFlow.waitForFinish(5, TimeUnit.SECONDS);
+      countService.waitForFinish(5, TimeUnit.SECONDS);
+    } finally {
+      deleteApplication(Id.Application.from(Id.Namespace.DEFAULT, FilterApp.class.getSimpleName()));
+    }
   }
 
   @Test
   public void testNewFlowRuntimeArguments() throws Exception {
     ApplicationManager applicationManager = deployApplication(FilterAppWithNewFlowAPI.class);
-    Map<String, String> args = Maps.newHashMap();
+    Map<String, String> args = new HashMap<>();
     args.put("threshold", "10");
     applicationManager.getFlowManager("FilterFlow").start(args);
 
@@ -327,14 +339,21 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
   public void testAppFromArtifact() throws Exception {
     Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "cfg-app", "1.0.0-SNAPSHOT");
     addAppArtifact(artifactId, ConfigTestApp.class);
-
-    Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "AppFromArtifact");
-    AppRequest<ConfigTestApp.ConfigClass> createRequest = new AppRequest<>(
-      new ArtifactSummary(artifactId.getName(), artifactId.getVersion().getVersion()),
-      new ConfigTestApp.ConfigClass("testStream", "testDataset")
-    );
-    ApplicationManager appManager = deployApplication(appId, createRequest);
-    testAppConfig(appId.getId(), appManager, createRequest.getConfig());
+    try {
+      Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "AppFromArtifact");
+      AppRequest<ConfigTestApp.ConfigClass> createRequest = new AppRequest<>(
+        new ArtifactSummary(artifactId.getName(), artifactId.getVersion().getVersion()),
+        new ConfigTestApp.ConfigClass("testStream", "testDataset")
+      );
+      ApplicationManager appManager = deployApplication(appId, createRequest);
+      try {
+        testAppConfig(appId.getId(), appManager, createRequest.getConfig());
+      } finally {
+        deleteApplication(appId);
+      }
+    } finally {
+      deleteArtifact(artifactId);
+    }
   }
 
   private void testAppConfig(String appName, ApplicationManager appManager,
