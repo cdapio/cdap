@@ -119,6 +119,22 @@ updateFsAzurePageBlobDirForCDAP() {
     restartCdapDependentClusterServices
 }
 
+__waitForServiceState() {
+    local __svc=${1}
+    local __state=${2}
+
+    for i in {1..60} ; do
+      __currState=$(curl -s -u ${USERID}:${PASSWD} -i -H 'X-Requested-By: ambari' -X GET http://${ACTIVEAMBARIHOST}:${AMBARIPORT}/api/v1/clusters/${CLUSTERNAME}/services/${__svc} | grep \"state\" | awk '{ print $3}' | sed -e 's/"\(.*\)"[,]*/\1/')
+      if [ "${__state}" == "${__currState}" ]; then
+        return 0
+      else
+        sleep 5
+      fi
+    done
+    echo "ERROR: giving up waiting for ${__svc} state to become ${__state}. Current state: ${__currState}"
+    return 1
+}
+
 # Stop an Ambari cluster service
 stopServiceViaRest() {
     if [ -z "${1}" ]; then
@@ -127,7 +143,7 @@ stopServiceViaRest() {
     fi
     SERVICENAME=${1}
     echo "Stopping ${SERVICENAME}"
-    curl -u ${USERID}:${PASSWD} -i -H 'X-Requested-By: ambari' -X PUT -d '{"RequestInfo": {"context" :"Stop Service for Hue installation"}, "Body": {"ServiceInfo": {"state": "INSTALLED"}}}' http://${ACTIVEAMBARIHOST}:${AMBARIPORT}/api/v1/clusters/${CLUSTERNAME}/services/${SERVICENAME}
+    curl -u ${USERID}:${PASSWD} -i -H 'X-Requested-By: ambari' -X PUT -d '{"RequestInfo": {"context" :"Stop Service for CDAP installation"}, "Body": {"ServiceInfo": {"state": "INSTALLED"}}}' http://${ACTIVEAMBARIHOST}:${AMBARIPORT}/api/v1/clusters/${CLUSTERNAME}/services/${SERVICENAME}
 }
 
 # Start an Ambari cluster service
@@ -139,26 +155,37 @@ startServiceViaRest() {
     sleep 2
     SERVICENAME=${1}
     echo "Starting ${SERVICENAME}"
-    startResult=$(curl -u ${USERID}:${PASSWD} -i -H 'X-Requested-By: ambari' -X PUT -d '{"RequestInfo": {"context" :"Start Service for Hue installation"}, "Body": {"ServiceInfo": {"state": "STARTED"}}}' http://${ACTIVEAMBARIHOST}:${AMBARIPORT}/api/v1/clusters/${CLUSTERNAME}/services/${SERVICENAME})
+    startResult=$(curl -u ${USERID}:${PASSWD} -i -H 'X-Requested-By: ambari' -X PUT -d '{"RequestInfo": {"context" :"Start Service for CDAP installation"}, "Body": {"ServiceInfo": {"state": "STARTED"}}}' http://${ACTIVEAMBARIHOST}:${AMBARIPORT}/api/v1/clusters/${CLUSTERNAME}/services/${SERVICENAME})
     if [[ ${startResult} == *"500 Server Error"* || ${startResult} == *"internal system exception occurred"* ]]; then
         sleep 60
         echo "Retry starting ${SERVICENAME}"
-        startResult=$(curl -u ${USERID}:${PASSWD} -i -H 'X-Requested-By: ambari' -X PUT -d '{"RequestInfo": {"context" :"Start Service for Hue installation"}, "Body": {"ServiceInfo": {"state": "STARTED"}}}' http://${ACTIVEAMBARIHOST}:${AMBARIPORT}/api/v1/clusters/${CLUSTERNAME}/services/${SERVICENAME})
+        startResult=$(curl -u ${USERID}:${PASSWD} -i -H 'X-Requested-By: ambari' -X PUT -d '{"RequestInfo": {"context" :"Start Service for CDAP installation"}, "Body": {"ServiceInfo": {"state": "STARTED"}}}' http://${ACTIVEAMBARIHOST}:${AMBARIPORT}/api/v1/clusters/${CLUSTERNAME}/services/${SERVICENAME})
     fi
     echo ${startResult}
 }
 
 # Restart Ambari cluster services
+# Ambari API is asynchronous, so this implements polling to make it somewhat synchronous
 restartCdapDependentClusterServices() {
     stopServiceViaRest HBASE
     stopServiceViaRest YARN
     stopServiceViaRest MAPREDUCE2
     stopServiceViaRest HDFS
 
+    __waitForServiceState HBASE INSTALLED || die "Could not stop service HBASE"
+    __waitForServiceState YARN INSTALLED || die "Could not stop service YARN"
+    __waitForServiceState MAPREDUCE2 INSTALLED || die "Could not stop service MAPREDUCE2"
+    __waitForServiceState HDFS INSTALLED || die "Could not stop service HDFS"
+
     startServiceViaRest HDFS
     startServiceViaRest MAPREDUCE2
     startServiceViaRest YARN
     startServiceViaRest HBASE
+
+    __waitForServiceState HDFS STARTED || die "Could not start service HDFS"
+    __waitForServiceState MAPREDUCE2 STARTED || die "Could not start service MAPREDUCE2"
+    __waitForServiceState YARN STARTED || die "Could not start service YARN"
+    __waitForServiceState HBASE STARTED || die "Could not start service HBASE"
 }
 
 
