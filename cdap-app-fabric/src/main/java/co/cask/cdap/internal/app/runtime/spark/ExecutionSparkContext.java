@@ -96,7 +96,7 @@ public class ExecutionSparkContext extends AbstractSparkContext {
   // created through the readFromDataset and writeToDataset methods.
   // TODO: (CDAP-3983) The datasets should be managed by the dataset cache. That requires TEPHRA-99.
   private final Map<String, Dataset> datasets;
-  private final Configuration hConf;
+  private final SparkContextConfig contextConfig;
   private final Transaction transaction;
   private final StreamAdmin streamAdmin;
   private final DynamicDatasetCache datasetCache;
@@ -146,7 +146,7 @@ public class ExecutionSparkContext extends AbstractSparkContext {
           runtimeArguments, discoveryServiceClient, metricsContext, loggingContext,
           pluginInstantiator, workflowToken);
     this.datasets = new HashMap<>();
-    this.hConf = hConf;
+    this.contextConfig = new SparkContextConfig(hConf);
     this.transaction = transaction;
     this.streamAdmin = streamAdmin;
     this.datasetCache = new SingleThreadDatasetCache(
@@ -178,7 +178,7 @@ public class ExecutionSparkContext extends AbstractSparkContext {
           (Class<? extends InputFormat>) SparkClassLoader.findFromContext().loadClass(inputFormatName);
 
         // Clone the configuration since it's dataset specification and shouldn't affect the global hConf
-        Configuration configuration = new Configuration(hConf);
+        Configuration configuration = new Configuration(contextConfig.getConfiguration());
         ConfigurationUtil.setAll(inputFormatProvider.getInputFormatConfiguration(), configuration);
         return getSparkFacade().createRDD(inputFormatClass, kClass, vClass, configuration);
       } catch (ClassNotFoundException e) {
@@ -218,7 +218,7 @@ public class ExecutionSparkContext extends AbstractSparkContext {
 
         try {
           // Clone the configuration since it's dataset specification and shouldn't affect the global hConf
-          Configuration configuration = new Configuration(hConf);
+          Configuration configuration = new Configuration(contextConfig.getConfiguration());
           ConfigurationUtil.setAll(outputFormatProvider.getOutputFormatConfiguration(), configuration);
           getSparkFacade().saveAsDataset(rdd, outputFormatClass, kClass, vClass, configuration);
 
@@ -248,7 +248,8 @@ public class ExecutionSparkContext extends AbstractSparkContext {
   public <T> T readFromStream(StreamBatchReadable stream, Class<?> vClass) {
     try {
       // Clone the configuration since it's dataset specification and shouldn't affect the global hConf
-      Configuration configuration = configureStreamInput(new Configuration(hConf), stream, vClass);
+      Configuration configuration = configureStreamInput(new Configuration(contextConfig.getConfiguration()),
+                                                         stream, vClass);
       T streamRDD = getSparkFacade().createRDD(StreamInputFormat.class, LongWritable.class, vClass, configuration);
 
       // Register for stream usage for the Spark program
@@ -414,6 +415,10 @@ public class ExecutionSparkContext extends AbstractSparkContext {
     // This is an internal method.
     // Throwing exception here to avoid being called inside CDAP wrongly, since we shouldn't call this during execution.
     throw new UnsupportedOperationException("getSparkConf shouldn't be called in execution context");
+  }
+
+  public SparkContextConfig getContextConfig() {
+    return contextConfig;
   }
 
   /**

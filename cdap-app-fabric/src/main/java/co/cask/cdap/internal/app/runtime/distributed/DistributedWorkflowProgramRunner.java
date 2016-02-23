@@ -32,7 +32,6 @@ import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.batch.distributed.MapReduceContainerHelper;
 import co.cask.cdap.internal.app.runtime.spark.SparkContextConfig;
@@ -45,12 +44,12 @@ import org.apache.hadoop.yarn.conf.YarnConfiguration;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.TwillController;
 import org.apache.twill.api.TwillRunner;
-import org.apache.twill.common.Threads;
 import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -72,7 +71,7 @@ public final class DistributedWorkflowProgramRunner extends AbstractDistributedP
   @Override
   protected ProgramController launch(Program program, ProgramOptions options,
                                      Map<String, LocalizeResource> localizeResources,
-                                     ApplicationLauncher launcher) {
+                                     File tempDir, ApplicationLauncher launcher) {
     // Extract and verify parameters
     ApplicationSpecification appSpec = program.getApplicationSpecification();
     Preconditions.checkNotNull(appSpec, "Missing application specification.");
@@ -93,7 +92,13 @@ public final class DistributedWorkflowProgramRunner extends AbstractDistributedP
 
     if (driverMeta.hasSpark) {
       File sparkAssemblyJar = SparkUtils.locateSparkAssemblyJar();
-      localizeResources.put(sparkAssemblyJar.getName(), new LocalizeResource(sparkAssemblyJar));
+      try {
+        sparkAssemblyJar = SparkUtils.getRewrittenSparkAssemblyJar(cConf);
+        localizeResources.put(sparkAssemblyJar.getName(), new LocalizeResource(sparkAssemblyJar));
+      } catch (IOException e) {
+        LOG.warn("Failed to locate the rewritten Spark Assembly JAR. Fallback to use the original jar.", e);
+        localizeResources.put(sparkAssemblyJar.getName(), new LocalizeResource(sparkAssemblyJar));
+      }
       extraClassPaths.add(sparkAssemblyJar.getName());
     }
     
@@ -101,13 +106,9 @@ public final class DistributedWorkflowProgramRunner extends AbstractDistributedP
     extraClassPaths.addAll(MapReduceContainerHelper.localizeFramework(hConf, localizeResources));
 
     // TODO(CDAP-3119): Hack for TWILL-144. Need to remove
-    File launcherFile = null;
     if (MapReduceContainerHelper.getFrameworkURI(hConf) != null) {
-      File tempDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
-                              cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
-      tempDir.mkdirs();
       try {
-        launcherFile = File.createTempFile("launcher", ".jar", tempDir);
+        File launcherFile = File.createTempFile("launcher", ".jar", tempDir);
         MapReduceContainerHelper.saveLauncher(hConf, launcherFile, extraClassPaths);
         localizeResources.put("launcher.jar", new LocalizeResource(launcherFile));
       } catch (Exception e) {
@@ -122,22 +123,6 @@ public final class DistributedWorkflowProgramRunner extends AbstractDistributedP
       new WorkflowTwillApplication(program, workflowSpec, localizeResources, eventHandler, driverMeta.resources),
       extraClassPaths
     );
-
-    // TODO(CDAP-3119): Hack for TWILL-144. Need to remove
-    final File cleanupFile = launcherFile;
-    Runnable cleanupTask = new Runnable() {
-      @Override
-      public void run() {
-        if (cleanupFile != null) {
-          cleanupFile.delete();
-        }
-      }
-    };
-    // Cleanup when the app is running. Also add a safe guide to do cleanup on terminate in case there is race
-    // such that the app terminated before onRunning was called
-    controller.onRunning(cleanupTask, Threads.SAME_THREAD_EXECUTOR);
-    controller.onTerminated(cleanupTask, Threads.SAME_THREAD_EXECUTOR);
-    // End Hack for TWILL-144
 
     RunId runId = RunIds.fromString(options.getArguments().getOption(ProgramOptionConstants.RUN_ID));
     return new WorkflowTwillProgramController(program.getId(), controller, runId).startListen();

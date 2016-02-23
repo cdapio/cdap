@@ -41,6 +41,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Map;
 
 /**
@@ -62,7 +63,7 @@ public class DistributedSparkProgramRunner extends AbstractDistributedProgramRun
   @Override
   protected ProgramController launch(Program program, ProgramOptions options,
                                      Map<String, LocalizeResource> localizeResources,
-                                     ApplicationLauncher launcher) {
+                                     File tempDir, ApplicationLauncher launcher) {
     // Extract and verify parameters
     ApplicationSpecification appSpec = program.getApplicationSpecification();
     Preconditions.checkNotNull(appSpec, "Missing application specification for %s", program.getId());
@@ -76,9 +77,15 @@ public class DistributedSparkProgramRunner extends AbstractDistributedProgramRun
     SparkSpecification spec = appSpec.getSpark().get(program.getName());
     Preconditions.checkNotNull(spec, "Missing SparkSpecification for %s", program.getId());
 
-    // Localize the spark-assembly jar
+    // Localize the spark-assembly jar and spark conf zip
     File sparkAssemblyJar = SparkUtils.locateSparkAssemblyJar();
-    localizeResources.put(sparkAssemblyJar.getName(), new LocalizeResource(sparkAssemblyJar));
+    try {
+      sparkAssemblyJar = SparkUtils.getRewrittenSparkAssemblyJar(cConf);
+      localizeResources.put(sparkAssemblyJar.getName(), new LocalizeResource(sparkAssemblyJar));
+    } catch (IOException e) {
+      LOG.warn("Failed to locate the rewritten Spark Assembly JAR. Fallback to use the original jar.", e);
+      localizeResources.put(sparkAssemblyJar.getName(), new LocalizeResource(sparkAssemblyJar));
+    }
 
     LOG.info("Launching Spark program: {}", program.getId());
     TwillController controller = launcher.launch(
