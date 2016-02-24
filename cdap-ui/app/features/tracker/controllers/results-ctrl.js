@@ -22,7 +22,87 @@ class TrackerResultsController {
     this.$q = $q;
 
     this.loading = false;
+    this.fullResults = [];
     this.searchResults = [];
+    this.sortByOptions = [
+      {
+        name: 'Create Date',
+        sort: 'CREATE'
+      },
+      {
+        name: 'A-Z',
+        sort: 'AZ'
+      },
+      {
+        name: 'Z-A',
+        sort: 'ZA'
+      }
+    ];
+
+    this.sortBy = this.sortByOptions[0];
+
+    this.entityFiltersList = [
+      {
+        name: 'Datasets',
+        isActive: true,
+        isHover: false,
+        filter: 'Dataset',
+        count: 0
+      },
+      {
+        name: 'Streams',
+        isActive: true,
+        isHover: false,
+        filter: 'Stream',
+        count: 0
+      },
+      {
+        name: 'Stream Views',
+        isActive: true,
+        isHover: false,
+        filter: 'Stream View',
+        count: 0
+      }
+    ];
+
+    this.metadataFiltersList = [
+      {
+        name: 'Name',
+        isActive: false,
+        isHover: false
+      },
+      {
+        name: 'Description',
+        isActive: false,
+        isHover: false
+      },
+      {
+        name: 'User Tags',
+        isActive: false,
+        isHover: false
+      },
+      {
+        name: 'System Tags',
+        isActive: false,
+        isHover: false
+      },
+      {
+        name: 'User Properties',
+        isActive: false,
+        isHover: false
+      },
+      {
+        name: 'System Properties',
+        isActive: false,
+        isHover: false
+      },
+      {
+        name: 'Schema',
+        isActive: false,
+        isHover: false
+      }
+    ];
+
 
     this.fetchResults();
   }
@@ -45,13 +125,72 @@ class TrackerResultsController {
       this.myTrackerApi.search(streamParams).$promise,
       this.myTrackerApi.search(viewParams).$promise
     ]).then( (res) => {
-      this.searchResults = this.searchResults.concat(res[0], res[1], res[2]);
+      this.fullResults = this.fullResults.concat(res[0], res[1], res[2]);
+      this.fullResults = this.fullResults.map(this.parseResult.bind(this));
+      this.searchResults = angular.copy(this.fullResults);
       this.loading = false;
     }, (err) => {
       console.log('error', err);
       this.loading = false;
     });
 
+  }
+
+  parseResult (entity) {
+    let obj = {};
+    if (entity.entityId.type === 'datasetinstance') {
+      angular.extend(obj, {
+        name: entity.entityId.id.instanceId,
+        type: 'Dataset',
+        icon: 'icon-datasets',
+        description: 'This is some description while waiting for backend to add description to these entities. Meanwhile, you can read this nonsense.',
+        createDate: 1456299781,
+        queryFound: ['User Tags', 'Schema', 'System Tags']
+      });
+      this.entityFiltersList[0].count++;
+    } else if (entity.entityId.type === 'stream') {
+      angular.extend(obj, {
+        name: entity.entityId.id.streamName,
+        type: 'Stream',
+        icon: 'icon-streams',
+        description: 'This is some description while waiting for backend to add description to these entities. Meanwhile, you can read this nonsense.',
+        createDate: 1456299781,
+        queryFound: ['User Tags', 'Schema', 'System Tags']
+      });
+      this.entityFiltersList[1].count++;
+    } else if (entity.entityId.type === 'view') {
+      // THIS SECTION NEEDS TO BE UPDATED
+      angular.extend(obj, {
+        name: entity.entityId.id.streamName,
+        type: 'Stream View',
+        icon: 'icon-streams',
+        description: 'This is some description while waiting for backend to add description to these entities. Meanwhile, you can read this nonsense.',
+        createDate: 1456299781,
+        queryFound: ['User Tags', 'Schema', 'System Tags']
+      });
+      this.entityFiltersList[2].count++;
+    }
+
+    return obj;
+  }
+
+  onlyFilter(event, filter) {
+    event.preventDefault();
+    angular.forEach(this.entityFiltersList, (entity) => {
+      entity.isActive = entity.name === filter.name ? true : false;
+    });
+
+    this.filterResults();
+  }
+
+  filterResults() {
+    let filter = [];
+
+    angular.forEach(this.entityFiltersList, (entity) => {
+      if (entity.isActive) { filter.push(entity.filter); }
+    });
+
+    this.searchResults = this.fullResults.filter( (result) => { return filter.indexOf(result.type) > -1 ? true : false; });
   }
 }
 

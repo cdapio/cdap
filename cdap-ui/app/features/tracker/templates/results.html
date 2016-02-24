@@ -15,7 +15,7 @@
 -->
 
 <div class="tracker-no-result text-center"
-  ng-if="ResultsController.searchResults.length === 0 && !ResultsController.loading">
+  ng-if="ResultsController.fullResults.length === 0 && !ResultsController.loading">
   <p>No result found for "{{ $state.params.searchQuery }}"</p>
 </div>
 
@@ -26,19 +26,109 @@
   </h3>
 </div>
 
-<div class="tracker-container">
+<div class="tracker-container" ng-if="ResultsController.fullResults.length !== 0 && !ResultsController.loading">
   <!-- SIDE BAR -->
   <div class="tracker-filter-sidebar">
     <div class="title-bar">
       <h3>Filter by</h3>
     </div>
 
-    <h3>Entities</h3>
+    <div class="tracker-filters">
+      <h4>Entities</h4>
+
+      <div class="checkbox"
+           ng-class="{'hover': entity.isHover }"
+           ng-repeat="entity in ResultsController.entityFiltersList">
+        <label ng-class="{ 'active': entity.isActive }"
+               ng-mouseenter="entity.isHover = true"
+               ng-mouseleave="entity.isHover = false"
+               ng-click="ResultsController.filterResults()">
+          <input type="checkbox" ng-model="entity.isActive">
+          <span>{{ entity.name }}</span>
+          <span class="pull-right">
+            <span class="only-button"
+                  ng-show="entity.isHover"
+                  ng-click="ResultsController.onlyFilter($event, entity)">only</span>
+            <span>{{ entity.count }}</span>
+          </span>
+        </label>
+      </div>
 
 
+      <h4>Metadata</h4>
+
+      <div class="checkbox"
+           ng-class="{'hover': metadata.isHover }"
+           ng-repeat="metadata in ResultsController.metadataFiltersList">
+        <label ng-class="{ 'active': metadata.isActive }"
+               ng-mouseenter="metadata.isHover = true"
+               ng-mouseleave="metadata.isHover = false">
+          <input type="checkbox" ng-model="metadata.isActive">
+          <span>{{metadata.name}}</span>
+          <span class="pull-right">
+            <span class="only-button" ng-show="metadata.isHover">only</span>
+            <span>????</span>
+          </span>
+        </label>
+      </div>
+
+    </div>
 
   </div>
 
   <!-- MAIN RESULTS -->
+  <div class="tracker-search-results">
+    <div class="title-bar">
+      <h3>Sort by</h3>
+
+      <div class="btn-group" uib-dropdown>
+        <button class="btn btn-grey dropdown-toggle" uib-dropdown-toggle>
+          {{ ResultsController.sortBy.name }} <span class="caret"></span>
+        </button>
+
+        <ul uib-dropdown-menu role="menu">
+          <li role="menuitem" ng-repeat="option in ResultsController.sortByOptions">
+            <a ng-click="ResultsController.sortBy = option">{{ option.name }}</a>
+          </li>
+        </ul>
+      </div>
+
+      <div class="results-count">
+        <span>???</span> of <span>{{ ResultsController.searchResults.length }}</span> results
+      </div>
+    </div>
+
+    <div class="results-list">
+      <div class="row" ng-repeat="entity in ResultsController.searchResults">
+        <div class="col-xs-12">
+          <h4>{{ entity.name }}</h4>
+        </div>
+        <div class="col-xs-6">
+          <h5>
+            <span class="{{entity.icon}}"></span>
+            <span>{{ entity.type }}</span>
+
+            <span class="pull-right">
+              <span class="create-date">Created: </span>
+              <span>{{ entity.createDate * 1000 | amDateFormat:'MMM DD, YYYY' }}</span>
+            </span>
+          </h5>
+
+          <p>{{ entity.description }}</p>
+        </div>
+
+        <div class="col-xs-4">
+          <h5>Query found in:</h5>
+          <span ng-repeat="found in entity.queryFound">{{ found }}<span ng-if="!$last">, </span></span>
+        </div>
+
+        <div class="col-xs-2 text-right">
+          <button class="btn btn-jump">Jump <span class="fa fa-angle-down"></span></button>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
 
 </div>

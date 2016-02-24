@@ -25,6 +25,9 @@
 @tracker-grey: #999999;
 @border-color: #cdcdcd;
 @search-font-color: #666;
+@title-font-color: #333;
+@active-font: #363945;
+@filter-sidebar-background-color: #eeeeee;
 
 body.state-tracker-home {
   background-color: white;
@@ -81,7 +84,6 @@ body.state-tracker {
   main.container {
 
     // TODO: Needs to be updated after top navigation is updated!!
-
     margin-top: 76px; // !!!!!!!!!!
     width: 100%;
     padding: 0 0 15px 0;
@@ -124,15 +126,134 @@ body.state-tracker {
 
   .tracker-container {
 
-    .tracker-filter-sidebar {
+    .title-bar {
+      border-bottom: 1px solid @border-color;
+      height: 50px;
+      line-height: 50px;
+
+      h3 {
+        font-size: 14px;
+        font-weight: bold;
+        color: @title-font-color;
+        margin: 0;
+        display: inline-block;
+      }
+    }
+
+    .tracker-filters, .title-bar {
       padding: 0 20px;
+    }
+
+    .tracker-filter-sidebar {
       width: 300px;
       position: absolute;
-      background-color: #eeeeee;
+      background-color: @filter-sidebar-background-color;
       top: 127px;
       bottom: 53px;
       border-right: 1px solid @border-color;
+
+      h4 {
+        font-size: 13px;
+        font-weight: 500;
+        margin-top: 20px;
+        color: @title-font-color;
+      }
+
+      .tracker-filters {
+        .checkbox {
+          margin: 0 -20px;
+          padding: 3px 20px;
+
+          &.hover {
+            background-color: #dfdfdf;
+          }
+          .only-button {
+            margin-right: 10px;
+            color: @tracker-green;
+            text-decoration: underline;
+          }
+        }
+
+        label {
+          font-weight: 500;
+          color: @tracker-grey;
+          user-select: none;
+          width: 100%;
+
+          &.active { color: @active-font; }
+
+          input[type='checkbox'] {
+            margin-top: 3px;
+          }
+        }
+      }
     }
+
+    .tracker-search-results {
+      position: absolute;
+      top: 127px;
+      bottom: 53px;
+      left: 300px;
+      right: 0;
+      background-color: white;
+
+      .title-bar {
+        background-color: @filter-sidebar-background-color;
+
+        .btn.btn-grey {
+          margin-left: 10px;
+          background-color: #ccc;
+          color: @active-font;
+          padding: 4px 10px 7px; // aligning text with Sort by
+          font-weight: 500;
+          .caret { margin-left: 20px; }
+        }
+
+        .results-count {
+          display: inline-block;
+          margin-left: 20px;
+          color: @tracker-grey;
+          font-size: 12px;
+        }
+      }
+
+      .results-list {
+        overflow-y: auto;
+        max-height: 100%;
+
+        h4, h5, p {
+          font-weight: 500;
+        }
+
+        h4 {
+          font-size: 16px;
+          color: @title-font-color;
+          margin-bottom: 5px;
+        }
+
+        h5 {
+          font-size: 12px;
+          color: @tracker-grey;
+          margin: 0 0 5px 0;
+
+          [class*="icon-"] { font-size: 12px; }
+          .create-date { color: @title-font-color; }
+        }
+
+        .row {
+          border-bottom: 1px solid @border-color;
+          padding: 0 15px;
+        }
+      }
+    }
+  }
+
+  .btn-jump {
+    color: white;
+    background-color: #999;
+    padding: 5px 10px;
+    span.fa { margin-left: 10px; }
+    &:hover { background-color: @tracker-green; }
   }
 
 }
