@@ -27,6 +27,7 @@ import org.slf4j.LoggerFactory;
 import scala.Tuple2;
 
 import java.io.IOException;
+import java.util.Map;
 import java.util.Properties;
 
 /**
@@ -71,6 +72,14 @@ public class SparkProgramWrapper {
     ExecutionSparkContext sparkContext = SparkContextProvider.getSparkContext();
 
     SparkConf sparkConf = new SparkConf();
+
+    // Copy all hadoop configurations to the SparkConf, prefix with "spark.hadoop.". This is
+    // how Spark YARN client get hold of Hadoop configurations if those configurations are not in classpath,
+    // which is true in CM cluster due to private hadoop conf directory and YARN-4727
+    for (Map.Entry<String, String> entry : sparkContext.getContextConfig().getConfiguration()) {
+      sparkConf.set("spark.hadoop." + entry.getKey(), entry.getValue());
+    }
+
     sparkConf.setAppName(sparkContext.getProgramId().getId());
 
     if (!sparkContext.getContextConfig().isLocal()) {
