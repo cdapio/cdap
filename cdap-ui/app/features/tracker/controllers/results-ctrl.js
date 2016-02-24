@@ -164,7 +164,7 @@ class TrackerResultsController {
     } else if (entity.entityId.type === 'view') {
       // THIS SECTION NEEDS TO BE UPDATED
       angular.extend(obj, {
-        name: entity.entityId.id.streamName,
+        name: entity.entityId.id.id,
         type: 'Stream View',
         icon: 'icon-streams',
         description: 'This is some description while waiting for backend to add description to these entities. Meanwhile, you can read this nonsense.',
