@@ -22,14 +22,15 @@
 @hydrator-blue: #098cf9;
 @cdap-orange: #ff6600;
 @tracker-banner-font-color: #1f293a;
-@tracker-grey: #65687a;
-@border-color: #cecece;
+@tracker-grey: #999999;
+@border-color: #cdcdcd;
+@search-font-color: #666;
 
 body.state-tracker-home {
   background-color: white;
 
   .tracker-content {
-    width: 480px;
+    width: 500px;
     margin: 150px auto;
   }
 
@@ -50,6 +51,7 @@ body.state-tracker-home {
     p {
       margin-top: -5px;
       font-weight: 600;
+      font-size: 13px;
       color: @tracker-grey;
 
       span { color: @cdap-orange; }
@@ -60,11 +62,11 @@ body.state-tracker-home {
     margin-top: 25px;
 
     .form-control {
-      height: 45px;
+      height: 40px;
     }
 
     span {
-      line-height: 45px;
+      line-height: 40px;
       font-size: 18px;
       color: @tracker-grey;
       margin-right: 8px;
@@ -89,16 +91,23 @@ body.state-tracker {
     background-color: #dfdfdf;
     border-bottom: 1px solid @border-color;
 
+    .tracker-search-bar {
+      width: 500px;
+      padding: 0 10px;
+    }
+
     .form-group {
       margin: 10px 0;
 
       .form-control {
-        height: 27px;
+        height: 30px;
+        font-size: 14px;
+        color: @search-font-color;
       }
 
       .form-control-feedback {
-        color: @tracker-grey;
-        line-height: 27px;
+        color: @search-font-color;
+        line-height: 30px;
         margin-right: 8px;
       }
     }
