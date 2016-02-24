@@ -49,6 +49,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -70,7 +71,7 @@ public final class DistributedWorkflowProgramRunner extends AbstractDistributedP
   @Override
   protected ProgramController launch(Program program, ProgramOptions options,
                                      Map<String, LocalizeResource> localizeResources,
-                                     ApplicationLauncher launcher) {
+                                     File tempDir, ApplicationLauncher launcher) {
     // Extract and verify parameters
     ApplicationSpecification appSpec = program.getApplicationSpecification();
     Preconditions.checkNotNull(appSpec, "Missing application specification.");
@@ -91,7 +92,13 @@ public final class DistributedWorkflowProgramRunner extends AbstractDistributedP
 
     if (driverMeta.hasSpark) {
       File sparkAssemblyJar = SparkUtils.locateSparkAssemblyJar();
-      localizeResources.put(sparkAssemblyJar.getName(), new LocalizeResource(sparkAssemblyJar));
+      try {
+        sparkAssemblyJar = SparkUtils.getRewrittenSparkAssemblyJar(cConf);
+        localizeResources.put(sparkAssemblyJar.getName(), new LocalizeResource(sparkAssemblyJar));
+      } catch (IOException e) {
+        LOG.warn("Failed to locate the rewritten Spark Assembly JAR. Fallback to use the original jar.", e);
+        localizeResources.put(sparkAssemblyJar.getName(), new LocalizeResource(sparkAssemblyJar));
+      }
       extraClassPaths.add(sparkAssemblyJar.getName());
     }
     

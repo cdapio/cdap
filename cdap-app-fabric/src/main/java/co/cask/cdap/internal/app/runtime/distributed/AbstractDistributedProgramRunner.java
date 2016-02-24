@@ -186,7 +186,7 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
       // Obtains and add the HBase delegation token as well (if in non-secure mode, it's a no-op)
       // Twill would also ignore it if it is not running in secure mode.
       // The HDFS token should already obtained by Twill.
-      return launch(copiedProgram, options, localizeResources, new ApplicationLauncher() {
+      return launch(copiedProgram, options, localizeResources, tempDir, new ApplicationLauncher() {
         @Override
         public TwillController launch(TwillApplication twillApplication, Iterable<String> extraClassPaths) {
           TwillPreparer twillPreparer = twillRunner.prepare(twillApplication);
@@ -295,9 +295,17 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
 
   /**
    * Sub-class overrides this method to launch the twill application.
+   *
+   * @param program the program to launch
+   * @param options the options for the program
+   * @param localizeResources a mutable map for adding extra resources to localize
+   * @param tempDir a temporary directory for this launch. Sub-classes can use it to create resources for localization
+   *                which require cleanup after launching completed
+   * @param launcher an {@link ApplicationLauncher} to actually launching the program
    */
   protected abstract ProgramController launch(Program program, ProgramOptions options,
                                               Map<String, LocalizeResource> localizeResources,
+                                              File tempDir,
                                               ApplicationLauncher launcher);
 
 

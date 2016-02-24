@@ -21,9 +21,15 @@ import co.cask.cdap.api.spark.ScalaSparkProgram;
 import co.cask.cdap.api.spark.SparkContext;
 import co.cask.cdap.api.spark.SparkProgram;
 import com.google.common.base.Preconditions;
+import org.apache.hadoop.yarn.conf.YarnConfiguration;
 import org.apache.spark.SparkConf;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import scala.Tuple2;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.Properties;
 
 /**
  * Class which wraps around user's program class to integrate the spark program with CDAP.
@@ -63,11 +69,23 @@ public class SparkProgramWrapper {
    * Setups the {@link SparkContext} for the user program. It will create the appropriate
    * {@link SparkFacade} to setup the {@link ExecutionSparkContext}.
    */
-  private ExecutionSparkContext setupSparkContext(Class<? extends SparkProgram> sparkProgramClass) {
+  private ExecutionSparkContext setupSparkContext(Class<? extends SparkProgram> sparkProgramClass) throws IOException {
     ExecutionSparkContext sparkContext = SparkContextProvider.getSparkContext();
 
     SparkConf sparkConf = new SparkConf();
     sparkConf.setAppName(sparkContext.getProgramId().getId());
+
+    if (!sparkContext.getContextConfig().isLocal()) {
+      // Create the __spark_conf.zip conf archive. It's for bug CDAP-5019 (SPARK-13441)
+      Properties properties = new Properties();
+      for (Tuple2<String, String> tuple : sparkConf.getAll()) {
+        properties.put(tuple._1(), tuple._2());
+      }
+
+      File confZip = new File(SparkUtils.LOCALIZED_CONF_DIR_ZIP);
+      SparkUtils.createSparkConfZip(new YarnConfiguration(sparkContext.getContextConfig().getConfiguration()),
+                                    properties, confZip);
+    }
 
     if (JavaSparkProgram.class.isAssignableFrom(sparkProgramClass)) {
       sparkContext.setSparkFacade(new JavaSparkFacade(sparkConf));

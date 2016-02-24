@@ -16,13 +16,31 @@
 
 package co.cask.cdap.internal.app.runtime.spark;
 
+import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.internal.asm.Methods;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
+import org.apache.hadoop.yarn.conf.YarnConfiguration;
+import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.ClassVisitor;
+import org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.Type;
+import org.objectweb.asm.commons.GeneratorAdapter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import scala.Option;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.lang.management.ManagementFactory;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -33,6 +51,13 @@ import java.nio.file.PathMatcher;
 import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.Properties;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
+import java.util.jar.JarInputStream;
+import java.util.jar.JarOutputStream;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 /**
  * A utility class to help determine Spark supports and locating Spark jar.
@@ -45,6 +70,14 @@ public final class SparkUtils {
   private static final String SPARK_ASSEMBLY_JAR = "SPARK_ASSEMBLY_JAR";
   // Environment variable name for locating spark home directory
   private static final String SPARK_HOME = "SPARK_HOME";
+
+  // File name of the Spark conf directory as defined by the Spark framework
+  // This is for the Hack to workaround CDAP-5019 (SPARK-13441)
+  public static final String LOCALIZED_CONF_DIR_ZIP = "__spark_conf__.zip";
+  // File entry name of the SparkConf properties file inside the Spark conf zip
+  private static final String SPARK_CONF_FILE = "__spark_conf__.properties";
+
+  private static final String SPARK_CLIENT_RESOURCE_NAME = "org/apache/spark/deploy/yarn/Client.class";
 
   private static File sparkAssemblyJar;
 
@@ -155,6 +188,158 @@ public final class SparkUtils {
     return new URLClassLoader(urls, parentClassLoader);
   }
 
+  /**
+   * Creates a Zip file which contains two files: a "yarn-site.xml", which is serialization of the given
+   * {@link YarnConfiguration}; and a "__spark_conf__.properties", which contains the serialization of the given
+   * spark properties
+   *
+   * @param yarnConf the YARN configuration to serialize
+   * @param sparkProperties the Spark configuration to serialize
+   * @param confZip file the target file to write to
+   * @return the given confZip file
+   * @throws IOException if failed to write to the zip file
+   */
+  public static File createSparkConfZip(YarnConfiguration yarnConf, Properties sparkProperties,
+                                        File confZip) throws IOException {
+    try (ZipOutputStream zipOutput = new ZipOutputStream(new FileOutputStream(confZip))) {
+      zipOutput.putNextEntry(new ZipEntry("yarn-site.xml"));
+      yarnConf.writeXml(zipOutput);
+
+      zipOutput.putNextEntry(new ZipEntry(SPARK_CONF_FILE));
+      sparkProperties.store(zipOutput, "Spark configuration.");
+    }
+    return confZip;
+  }
+
+  /**
+   * Returns the Spark assembly jar file with the Spark Yarn Client rewritten. It is for workaround the bug in
+   * CDAP-5019 (SPARK-13441).
+   *
+   * @param cConf configuration for determine where is the CDAP temp directory.
+   * @return the rewritten Spark assembly JAR file
+   * @throws IOException if failed to create the rewritten jar
+   * @throws IllegalStateException if failed to locate the original Spark assembly JAR file
+   */
+  public static synchronized File getRewrittenSparkAssemblyJar(CConfiguration cConf) throws IOException {
+    File assemblyJar = locateSparkAssemblyJar();
+    File tempDir = getTempDir(cConf);
+    long vmStartTime = ManagementFactory.getRuntimeMXBean().getStartTime();
+    File rewrittenJar = new File(tempDir, vmStartTime + "-" + assemblyJar.getName());
+    if (rewrittenJar.exists()) {
+      return rewrittenJar;
+    }
+
+    File tempFile = File.createTempFile(rewrittenJar.getName(), ".tmp", tempDir);
+    try {
+      try (JarInputStream jarInput = new JarInputStream(new BufferedInputStream(new FileInputStream(assemblyJar)))) {
+        try (
+          JarOutputStream jarOutput = new JarOutputStream(new BufferedOutputStream(new FileOutputStream(tempFile)),
+                                                          jarInput.getManifest())
+        ) {
+          // Use a larger and reusing the bytes make the copying slightly faster than ByteStreams.copy()
+          byte[] buffer = new byte[65536];
+          JarEntry jarEntry;
+          while ((jarEntry = jarInput.getNextJarEntry()) != null) {
+            if (JarFile.MANIFEST_NAME.equals(jarEntry.getName())) {
+              continue;
+            }
+
+            JarEntry newEntry = new JarEntry(jarEntry.getName());
+            jarOutput.putNextEntry(newEntry);
+
+            try {
+              if (jarEntry.isDirectory()) {
+                continue;
+              }
+
+              if (SPARK_CLIENT_RESOURCE_NAME.equals(jarEntry.getName())) {
+                jarOutput.write(rewriteSparkYarnClient(jarInput));
+              } else {
+                int len = jarInput.read(buffer);
+                while (len >= 0) {
+                  jarOutput.write(buffer, 0, len);
+                  len = jarInput.read(buffer);
+                }
+              }
+            } finally {
+              jarOutput.closeEntry();
+            }
+          }
+          if (!tempFile.renameTo(rewrittenJar)) {
+            throw new IOException("Failed to rename " + tempFile + " to " + rewrittenJar);
+          }
+          return rewrittenJar;
+        }
+      }
+    } finally {
+      tempFile.delete();
+    }
+  }
+
+  /**
+   * Rewrites the bytecode of the org.apache.spark.deploy.yarn.Client class to fix the bug in SPARK-13441
+   *
+   * @param input {@link InputStream} for reading the original bytecode of the Client class.
+   * @return The rewritten bytecode
+   * @throws IOException if failed to read from the given input
+   */
+  private static byte[] rewriteSparkYarnClient(InputStream input) throws IOException {
+    ClassReader cr = new ClassReader(input);
+    ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_MAXS);
+    cr.accept(new ClassVisitor(Opcodes.ASM5, cw) {
+      @Override
+      public MethodVisitor visitMethod(final int access, final String name,
+                                       final String desc, String signature, String[] exceptions) {
+        MethodVisitor mv = super.visitMethod(access, name, desc, signature, exceptions);
+
+        // Only rewrite the createConfArchive method
+        if (!"createConfArchive".equals(name)) {
+          return mv;
+        }
+
+        // Generate the method body to just return the hardcode LOCALIZED_CONF_DIR_ZIP file name
+        if (Type.getReturnType(desc).equals(Type.getType(File.class))) {
+          // Spark 1.5+ return type is File
+          // This is what gets generated
+          // return new File(LOCALIZED_CONF_DIR_ZIP);
+          GeneratorAdapter mg = new GeneratorAdapter(mv, access, name, desc);
+          mg.newInstance(Type.getType(File.class));
+          mg.dup();
+          mg.visitLdcInsn(LOCALIZED_CONF_DIR_ZIP);
+          mg.invokeConstructor(Type.getType(File.class), Methods.getMethod(void.class, "<init>", String.class));
+          mg.returnValue();
+          mg.endMethod();
+          return null;
+        } else if (Type.getReturnType(desc).equals(Type.getType(Option.class))) {
+          // Spark 1.4 return type is Option<File>
+          // This is what gets generated
+          // return Option.apply(new File(LOCALIZED_CONF_DIR_ZIP);
+          GeneratorAdapter mg = new GeneratorAdapter(mv, access, name, desc);
+          mg.newInstance(Type.getType(File.class));
+          mg.dup();
+          mg.visitLdcInsn(LOCALIZED_CONF_DIR_ZIP);
+          mg.invokeConstructor(Type.getType(File.class), Methods.getMethod(void.class, "<init>", String.class));
+          mg.invokeStatic(Type.getType(Option.class), Methods.getMethod(Object.class, "apply", Object.class));
+          mg.checkCast(Type.getType(Option.class));
+          mg.returnValue();
+          mg.endMethod();
+          return null;
+        }
+        return mv;
+      }
+    }, 0);
+    return cw.toByteArray();
+  }
+
+  /**
+   * Returns the local temporary directory as specified by the configuration.
+   */
+  private static File getTempDir(CConfiguration cConf) {
+    File tempDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
+                            cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
+    tempDir.mkdirs();
+    return tempDir;
+  }
 
   private SparkUtils() {
   }
