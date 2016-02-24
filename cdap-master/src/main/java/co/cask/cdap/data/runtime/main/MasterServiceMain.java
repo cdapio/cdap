@@ -50,6 +50,7 @@ import co.cask.cdap.explore.client.ExploreClient;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.explore.service.ExploreServiceUtils;
 import co.cask.cdap.hive.ExploreUtils;
+import co.cask.cdap.internal.app.runtime.spark.SparkUtils;
 import co.cask.cdap.internal.app.services.AppFabricServer;
 import co.cask.cdap.logging.appender.LogAppenderInitializer;
 import co.cask.cdap.logging.guice.LoggingModules;
@@ -154,16 +155,18 @@ public class MasterServiceMain extends DaemonMain {
   }
 
   public MasterServiceMain() {
-    this.cConf = CConfiguration.create();
-    this.cConf.set(Constants.Dataset.Manager.ADDRESS, getLocalHost().getCanonicalHostName());
+    CConfiguration cConf = CConfiguration.create();
+    cConf.set(Constants.Dataset.Manager.ADDRESS, getLocalHost().getCanonicalHostName());
 
     // Note: login has to happen before any objects that need Kerberos credentials are instantiated.
-    login();
+    login(cConf);
 
-    this.hConf = HBaseConfiguration.create();
+    Configuration hConf = HBaseConfiguration.create();
 
     Injector injector = createBaseInjector(cConf, hConf);
     this.baseInjector = injector;
+    this.cConf = injector.getInstance(CConfiguration.class);
+    this.hConf = injector.getInstance(Configuration.class);
     this.zkClient = injector.getInstance(ZKClientService.class);
     this.kafkaClient = injector.getInstance(KafkaClientService.class);
     this.metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
@@ -205,6 +208,23 @@ public class MasterServiceMain extends DaemonMain {
     } catch (IOException e) {
       LOG.error("Could not disable caching of URLJarFiles. This may lead to 'too many open files` exception.", e);
     }
+
+    // Create a new daemon thread to start the writing of Spark
+    Thread sparkRewriteThread = new Thread("Spark-Jar-Rewrite") {
+      @Override
+      public void run() {
+        try {
+          SparkUtils.getRewrittenSparkAssemblyJar(cConf);
+        } catch (IllegalArgumentException e) {
+          // It's ok if Spark is not configured at all
+          LOG.debug("Spark library is not available: {}", e.getMessage());
+        } catch (Throwable t) {
+          LOG.warn("Failed to rewrite Spark Assembly JAR", t);
+        }
+      }
+    };
+    sparkRewriteThread.setDaemon(true);
+    sparkRewriteThread.start();
 
     createSystemHBaseNamespace();
     updateConfigurationTable();
@@ -498,7 +518,7 @@ public class MasterServiceMain extends DaemonMain {
   /**
    * Performs kerbose login if security is enabled.
    */
-  private void login() {
+  private void login(CConfiguration cConf) {
     try {
       SecurityUtil.loginForMasterService(cConf);
     } catch (Exception e) {
