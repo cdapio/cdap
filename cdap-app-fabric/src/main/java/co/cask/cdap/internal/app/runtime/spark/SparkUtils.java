@@ -18,10 +18,13 @@ package co.cask.cdap.internal.app.runtime.spark;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.lang.jar.BundleJarUtil;
+import co.cask.cdap.internal.app.runtime.distributed.LocalizeResource;
 import co.cask.cdap.internal.asm.Methods;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
-import org.apache.hadoop.yarn.conf.YarnConfiguration;
+import com.google.common.io.OutputSupplier;
+import org.apache.hadoop.yarn.api.ApplicationConstants;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
@@ -42,6 +45,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.management.ManagementFactory;
 import java.net.MalformedURLException;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.FileVisitResult;
@@ -51,6 +55,7 @@ import java.nio.file.PathMatcher;
 import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.Map;
 import java.util.Properties;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
@@ -73,7 +78,8 @@ public final class SparkUtils {
 
   // File name of the Spark conf directory as defined by the Spark framework
   // This is for the Hack to workaround CDAP-5019 (SPARK-13441)
-  public static final String LOCALIZED_CONF_DIR_ZIP = "__spark_conf__.zip";
+  private static final String LOCALIZED_CONF_DIR = "__spark_conf__";
+  private static final String LOCALIZED_CONF_DIR_ZIP = LOCALIZED_CONF_DIR + ".zip";
   // File entry name of the SparkConf properties file inside the Spark conf zip
   private static final String SPARK_CONF_FILE = "__spark_conf__.properties";
 
@@ -189,33 +195,96 @@ public final class SparkUtils {
   }
 
   /**
-   * Creates a Zip file which contains two files: a "yarn-site.xml", which is serialization of the given
-   * {@link YarnConfiguration}; and a "__spark_conf__.properties", which contains the serialization of the given
-   * spark properties
+   * Prepares the resources that need to be localized to the Spark client container.
    *
-   * @param yarnConf the YARN configuration to serialize
-   * @param sparkProperties the Spark configuration to serialize
-   * @param confZip file the target file to write to
-   * @return the given confZip file
-   * @throws IOException if failed to write to the zip file
+   * @param cConf configuration for determining where is the CDAP data directory.
+   * @param tempDir a temporary directory for temporary files creation
+   * @param localizeResources A map from localized name to {@link LocalizeResource} for this method to update
+   * @return localized name of the Spark assembly jar file
    */
-  public static File createSparkConfZip(YarnConfiguration yarnConf, Properties sparkProperties,
-                                        File confZip) throws IOException {
-    try (ZipOutputStream zipOutput = new ZipOutputStream(new FileOutputStream(confZip))) {
-      zipOutput.putNextEntry(new ZipEntry("yarn-site.xml"));
-      yarnConf.writeXml(zipOutput);
-
-      zipOutput.putNextEntry(new ZipEntry(SPARK_CONF_FILE));
-      sparkProperties.store(zipOutput, "Spark configuration.");
+  public static String prepareSparkResources(CConfiguration cConf, File tempDir,
+                                             Map<String, LocalizeResource> localizeResources) {
+    File sparkAssemblyJar = locateSparkAssemblyJar();
+    try {
+      sparkAssemblyJar = getRewrittenSparkAssemblyJar(cConf);
+    } catch (IOException e) {
+      LOG.warn("Failed to locate the rewritten Spark Assembly JAR. Fallback to use the original jar.", e);
     }
-    return confZip;
+    localizeResources.put(sparkAssemblyJar.getName(), new LocalizeResource(sparkAssemblyJar));
+
+    // Shallow copy all files under directory defined by $HADOOP_CONF_DIR
+    // If $HADOOP_CONF_DIR is not defined, use the location of "yarn-site.xml" to determine the directory
+    // This is part of workaround for CDAP-5019 (SPARK-13441).
+    File hadoopConfDir = null;
+    if (System.getenv().containsKey(ApplicationConstants.Environment.HADOOP_CONF_DIR.key())) {
+      hadoopConfDir = new File(System.getenv(ApplicationConstants.Environment.HADOOP_CONF_DIR.key()));
+    } else {
+      URL yarnSiteLocation = SparkUtils.class.getClassLoader().getResource("yarn-site.xml");
+      if (yarnSiteLocation != null) {
+        try {
+          hadoopConfDir = new File(yarnSiteLocation.toURI()).getParentFile();
+        } catch (URISyntaxException e) {
+          // Shouldn't happen
+          LOG.warn("Failed to derive HADOOP_CONF_DIR from yarn-site.xml");
+        }
+      }
+    }
+    if (hadoopConfDir != null && hadoopConfDir.isDirectory()) {
+      try {
+        final File targetFile = File.createTempFile(LOCALIZED_CONF_DIR, ".zip", tempDir);
+        BundleJarUtil.createArchive(hadoopConfDir, new OutputSupplier<ZipOutputStream>() {
+          @Override
+          public ZipOutputStream getOutput() throws IOException {
+            return new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(targetFile)));
+          }
+        });
+        localizeResources.put(LOCALIZED_CONF_DIR, new LocalizeResource(targetFile, true));
+      } catch (IOException e) {
+        LOG.warn("Failed to create archive from {}", hadoopConfDir, e);
+      }
+    }
+
+    return sparkAssemblyJar.getName();
+  }
+
+  /**
+   * Creates a {@code __spark_conf__.zip} in the local directory by zipping contains from the
+   * {@code __spark_conf__} directory, with the addition of the serialization of the Spark properties.
+   * This method works in conjunction with the {@link #prepareSparkResources(CConfiguration, File, Map)} method and
+   * should only be called from the the Spark client container process.
+   *
+   * @param sparkProperties the Spark properties to serialize
+   */
+  public static void createSparkConfZip(final Properties sparkProperties) {
+    try {
+      BundleJarUtil.createArchive(new File(LOCALIZED_CONF_DIR), new OutputSupplier<ZipOutputStream>() {
+        @Override
+        public ZipOutputStream getOutput() throws IOException {
+          ZipOutputStream zipOutput = new ZipOutputStream(new FileOutputStream(LOCALIZED_CONF_DIR_ZIP));
+          try {
+            zipOutput.putNextEntry(new ZipEntry(SPARK_CONF_FILE));
+            sparkProperties.store(zipOutput, "Spark configuration.");
+            return zipOutput;
+          } catch (IOException e) {
+            zipOutput.close();
+            throw e;
+          }
+        }
+      });
+    } catch (IOException e) {
+      // Don't propagate the exception.
+      // It is possible that the LOCALIZED_CONF_DIR doesn't exist if the prepareSparkResources
+      // cannot locate the HADOOP_CONF_DIR (should be very rare, if not possible).
+      // In that case, will just let SparkSubmit to handle it (depending on the Spark version, some can handle it)
+      LOG.warn("Failed to create {} file", LOCALIZED_CONF_DIR_ZIP, e);
+    }
   }
 
   /**
    * Returns the Spark assembly jar file with the Spark Yarn Client rewritten. It is for workaround the bug in
    * CDAP-5019 (SPARK-13441).
    *
-   * @param cConf configuration for determine where is the CDAP temp directory.
+   * @param cConf configuration for determining where is the CDAP data directory.
    * @return the rewritten Spark assembly JAR file
    * @throws IOException if failed to create the rewritten jar
    * @throws IllegalStateException if failed to locate the original Spark assembly JAR file
