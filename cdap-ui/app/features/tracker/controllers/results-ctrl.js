@@ -15,14 +15,47 @@
  */
 
 class TrackerResultsController {
-  constructor($state) {
+  constructor($state, myTrackerApi, $scope, $q) {
     this.$state = $state;
+    this.$scope = $scope;
+    this.myTrackerApi = myTrackerApi;
+    this.$q = $q;
 
+    this.loading = false;
     this.searchResults = [];
+
+    this.fetchResults();
+  }
+
+  /* Can be updated to use single query once backend supports it */
+  fetchResults () {
+    this.loading = true;
+
+    let paramsBase = {
+      namespace: this.$state.params.namespace,
+      query: this.$state.params.searchQuery,
+      scope: this.$scope
+    };
+    let datasetParams = angular.extend({target: 'dataset'}, paramsBase);
+    let streamParams = angular.extend({target: 'stream'}, paramsBase);
+    let viewParams = angular.extend({target: 'view'}, paramsBase);
+
+    this.$q.all([
+      this.myTrackerApi.search(datasetParams).$promise,
+      this.myTrackerApi.search(streamParams).$promise,
+      this.myTrackerApi.search(viewParams).$promise
+    ]).then( (res) => {
+      this.searchResults = this.searchResults.concat(res[0], res[1], res[2]);
+      this.loading = false;
+    }, (err) => {
+      console.log('error', err);
+      this.loading = false;
+    });
+
   }
 }
 
-TrackerResultsController.$inject = ['$state'];
+TrackerResultsController.$inject = ['$state', 'myTrackerApi', '$scope', '$q'];
 
 angular.module(PKG.name + '.feature.tracker')
  .controller('TrackerResultsController', TrackerResultsController);

@@ -14,6 +14,31 @@
   the License.
 -->
 
-<div class="tracker-no-result text-center" ng-if="ResultsController.searchResults.length === 0">
+<div class="tracker-no-result text-center"
+  ng-if="ResultsController.searchResults.length === 0 && !ResultsController.loading">
   <p>No result found for "{{ $state.params.searchQuery }}"</p>
+</div>
+
+<div class="loading-search" ng-if="ResultsController.loading">
+  <h3>
+    <span class="fa fa-spinner fa-spin"></span>
+    <span>Searching for "{{ $state.params.searchQuery }}"</span>
+  </h3>
+</div>
+
+<div class="tracker-container">
+  <!-- SIDE BAR -->
+  <div class="tracker-filter-sidebar">
+    <div class="title-bar">
+      <h3>Filter by</h3>
+    </div>
+
+    <h3>Entities</h3>
+
+
+
+  </div>
+
+  <!-- MAIN RESULTS -->
+
 </div>

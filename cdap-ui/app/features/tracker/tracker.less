@@ -79,12 +79,12 @@ body.state-tracker {
   background-color: #e5e5e5;
 
   main.container {
-    /*
-      TODO: Needs to be updated after top navigation is updated!!
-    */
+
+    // TODO: Needs to be updated after top navigation is updated!!
+
     margin-top: 76px; // !!!!!!!!!!
     width: 100%;
-    padding: 0 15px 15px 15px;
+    padding: 0 0 15px 0;
   }
 
   .tracker-top-search {
@@ -94,6 +94,7 @@ body.state-tracker {
     .tracker-search-bar {
       width: 500px;
       padding: 0 10px;
+      margin-left: 15px;
     }
 
     .form-group {
@@ -118,6 +119,19 @@ body.state-tracker {
     p {
       font-size: 18px;
       color: @search-font-color;
+    }
+  }
+
+  .tracker-container {
+
+    .tracker-filter-sidebar {
+      padding: 0 20px;
+      width: 300px;
+      position: absolute;
+      background-color: #eeeeee;
+      top: 127px;
+      bottom: 53px;
+      border-right: 1px solid @border-color;
     }
   }
 

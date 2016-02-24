@@ -14,13 +14,20 @@
  * the License.
  */
 
-class myTrackerApi {
-  constructor() {
+function myTrackerApi(myCdapUrl, $resource, myAuth, myHelpers) {
+  var url = myCdapUrl.constructUrl,
+      searchPath = '/namespaces/:namespace/metadata/search';
 
-  }
+
+  return $resource(
+    url({ _cdapPath: searchPath }),
+  {
+    namespace: '@namespace'
+  },
+  {
+    search: myHelpers.getConfig('GET', 'REQUEST', searchPath, true),
+  });
 }
 
-myTrackerApi.$inject = [];
-
 angular.module(PKG.name + '.feature.tracker')
-  .controller('myTrackerApi', myTrackerApi);
+  .factory('myTrackerApi', myTrackerApi);
