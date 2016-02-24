@@ -632,7 +632,7 @@ where:
    * - ``<namespace>``
      - Namespace ID
    * - ``<entity-type>``
-     - One of ``dataset`` or ``stream``
+     - One of ``datasets`` or ``streams``
    * - ``<entity-id>``
      - Name of the ``dataset`` or ``stream``
    * - ``<start-ts>``
