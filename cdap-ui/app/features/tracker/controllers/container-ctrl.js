@@ -15,12 +15,21 @@
  */
 
 class TrackerContainerController {
-  constructor() {
+  constructor($state) {
+    this.$state = $state;
 
+    this.searchQuery = this.$state.params.searchQuery;
+  }
+
+  search(event) {
+    if (event.keyCode === 13 && this.searchQuery) {
+      console.log('search', this.searchQuery);
+      this.$state.go('tracker.result', { searchQuery: this.searchQuery });
+    }
   }
 }
 
-TrackerContainerController.$inject = [];
+TrackerContainerController.$inject = ['$state'];
 
 angular.module(PKG.name + '.feature.tracker')
 .controller('TrackerContainerController', TrackerContainerController);

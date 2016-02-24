@@ -23,8 +23,9 @@
 @cdap-orange: #ff6600;
 @tracker-banner-font-color: #1f293a;
 @tracker-grey: #65687a;
+@border-color: #cecece;
 
-body.state-tracker-main {
+body.state-tracker-home {
   background-color: white;
 
   .tracker-content {
@@ -67,6 +68,39 @@ body.state-tracker-main {
       font-size: 18px;
       color: @tracker-grey;
       margin-right: 8px;
+    }
+  }
+
+}
+
+body.state-tracker {
+  background-color: #e5e5e5;
+
+  main.container {
+    /*
+      TODO: Needs to be updated after top navigation is updated!!
+    */
+    margin-top: 76px; // !!!!!!!!!!
+    width: 100%;
+    padding: 0 15px 15px 15px;
+  }
+
+  .tracker-top-search {
+    background-color: #dfdfdf;
+    border-bottom: 1px solid @border-color;
+
+    .form-group {
+      margin: 10px 0;
+
+      .form-control {
+        height: 27px;
+      }
+
+      .form-control-feedback {
+        color: @tracker-grey;
+        line-height: 27px;
+        margin-right: 8px;
+      }
     }
   }
 

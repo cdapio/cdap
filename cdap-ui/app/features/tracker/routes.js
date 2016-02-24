@@ -18,7 +18,7 @@ angular.module(PKG.name + '.feature.tracker')
   .config(function($stateProvider, MYAUTH_ROLE) {
 
     $stateProvider
-      .state('tracker-main', {
+      .state('tracker-home', {
         url: '/tracker/home',
         parent: 'ns',
         data: {

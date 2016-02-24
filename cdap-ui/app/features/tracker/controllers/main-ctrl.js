@@ -18,8 +18,6 @@ class TrackerMainController{
   constructor($state) {
     this.$state = $state;
     this.searchQuery = '';
-
-    console.log('test');
   }
 
   search(event) {
