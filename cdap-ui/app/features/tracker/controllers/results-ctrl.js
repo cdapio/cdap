@@ -15,12 +15,14 @@
  */
 
 class TrackerResultsController {
-  constructor() {
+  constructor($state) {
+    this.$state = $state;
 
+    this.searchResults = [];
   }
 }
 
-TrackerResultsController.$inject = [];
+TrackerResultsController.$inject = ['$state'];
 
 angular.module(PKG.name + '.feature.tracker')
  .controller('TrackerResultsController', TrackerResultsController);

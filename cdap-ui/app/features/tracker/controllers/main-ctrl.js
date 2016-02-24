@@ -22,7 +22,6 @@ class TrackerMainController{
 
   search(event) {
     if (event.keyCode === 13 && this.searchQuery) {
-      console.log('search', this.searchQuery);
       this.$state.go('tracker.result', { searchQuery: this.searchQuery });
     }
   }
