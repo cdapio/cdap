@@ -22,20 +22,23 @@ class TrackerResultsController {
     this.$q = $q;
 
     this.loading = false;
+    this.entitiesShowAllButton = false;
+    this.metadataShowAllButton = false;
+    this.currentPage = 1;
     this.fullResults = [];
     this.searchResults = [];
     this.sortByOptions = [
       {
         name: 'Create Date',
-        sort: 'CREATE'
+        sort: 'createDate'
       },
       {
         name: 'A-Z',
-        sort: 'AZ'
+        sort: 'name'
       },
       {
         name: 'Z-A',
-        sort: 'ZA'
+        sort: '-name'
       }
     ];
 
@@ -174,9 +177,17 @@ class TrackerResultsController {
     return obj;
   }
 
-  onlyFilter(event, filter) {
+  onlyFilter(event, filter, filterType) {
     event.preventDefault();
-    angular.forEach(this.entityFiltersList, (entity) => {
+
+    let filterObj = [];
+    if (filterType === 'ENTITIES') {
+      filterObj = this.entityFiltersList;
+    } else if (filterType === 'METADATA') {
+      filterObj = this.metadataFiltersList;
+    }
+
+    angular.forEach(filterObj, (entity) => {
       entity.isActive = entity.name === filter.name ? true : false;
     });
 
@@ -191,6 +202,30 @@ class TrackerResultsController {
     });
 
     this.searchResults = this.fullResults.filter( (result) => { return filter.indexOf(result.type) > -1 ? true : false; });
+  }
+
+  showAll (filterType) {
+    let filterArr = [];
+    if (filterType === 'ENTITIES') {
+      filterArr = this.entityFiltersList;
+    } else if (filterType === 'METADATA') {
+      filterArr = this.metadataFiltersList;
+    }
+
+    angular.forEach(filterArr, (filter) => {
+      filter.isActive = true;
+    });
+
+    this.filterResults();
+  }
+
+  evaluateShowResultCount() {
+    let lowerLimit = (this.currentPage - 1) * 10 + 1;
+    let upperLimit = (this.currentPage - 1) * 10 + 10;
+
+    upperLimit = upperLimit > this.searchResults.length ? this.searchResults.length : upperLimit;
+
+    return this.searchResults.length === 0 ? '0' : lowerLimit + '-' + upperLimit;
   }
 }
 
