@@ -71,37 +71,37 @@ class TrackerResultsController {
     this.metadataFiltersList = [
       {
         name: 'Name',
-        isActive: false,
+        isActive: true,
         isHover: false
       },
       {
         name: 'Description',
-        isActive: false,
+        isActive: true,
         isHover: false
       },
       {
         name: 'User Tags',
-        isActive: false,
+        isActive: true,
         isHover: false
       },
       {
         name: 'System Tags',
-        isActive: false,
+        isActive: true,
         isHover: false
       },
       {
         name: 'User Properties',
-        isActive: false,
+        isActive: true,
         isHover: false
       },
       {
         name: 'System Properties',
-        isActive: false,
+        isActive: true,
         isHover: false
       },
       {
         name: 'Schema',
-        isActive: false,
+        isActive: true,
         isHover: false
       }
     ];
