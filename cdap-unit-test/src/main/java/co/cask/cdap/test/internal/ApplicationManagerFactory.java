@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,12 +19,11 @@ package co.cask.cdap.test.internal;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.test.ApplicationManager;
 import com.google.inject.assistedinject.Assisted;
-import org.apache.twill.filesystem.Location;
 
 /**
  *
  */
 public interface ApplicationManagerFactory {
 
-  ApplicationManager create(@Assisted("applicationId") Id.Application applicationId, Location deployedJar);
+  ApplicationManager create(@Assisted("applicationId") Id.Application applicationId);
 }
