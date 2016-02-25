@@ -78,19 +78,11 @@ public class DistributedSparkProgramRunner extends AbstractDistributedProgramRun
     Preconditions.checkNotNull(spec, "Missing SparkSpecification for %s", program.getId());
 
     // Localize the spark-assembly jar and spark conf zip
-    File sparkAssemblyJar = SparkUtils.locateSparkAssemblyJar();
-    try {
-      sparkAssemblyJar = SparkUtils.getRewrittenSparkAssemblyJar(cConf);
-      localizeResources.put(sparkAssemblyJar.getName(), new LocalizeResource(sparkAssemblyJar));
-    } catch (IOException e) {
-      LOG.warn("Failed to locate the rewritten Spark Assembly JAR. Fallback to use the original jar.", e);
-      localizeResources.put(sparkAssemblyJar.getName(), new LocalizeResource(sparkAssemblyJar));
-    }
+    String sparkAssemblyJarName = SparkUtils.prepareSparkResources(cConf, tempDir, localizeResources);
 
     LOG.info("Launching Spark program: {}", program.getId());
     TwillController controller = launcher.launch(
-      new SparkTwillApplication(program, spec, localizeResources, eventHandler),
-      sparkAssemblyJar.getName());
+      new SparkTwillApplication(program, spec, localizeResources, eventHandler), sparkAssemblyJarName);
 
     RunId runId = RunIds.fromString(options.getArguments().getOption(ProgramOptionConstants.RUN_ID));
     return new SparkTwillProgramController(program.getId(), controller, runId).startListen();
