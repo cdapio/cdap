@@ -32,7 +32,9 @@ angular
       PKG.name+'.feature.hydrator',
       PKG.name+'.feature.explore',
       PKG.name +'.feature.search',
-      PKG.name +'.feature.pins'
+      PKG.name +'.feature.pins',
+      PKG.name +'.feature.tracker'
+
     ]).name,
 
     angular.module(PKG.name+'.commons', [
