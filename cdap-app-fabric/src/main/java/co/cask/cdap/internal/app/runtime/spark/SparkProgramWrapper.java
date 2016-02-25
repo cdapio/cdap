@@ -21,14 +21,13 @@ import co.cask.cdap.api.spark.ScalaSparkProgram;
 import co.cask.cdap.api.spark.SparkContext;
 import co.cask.cdap.api.spark.SparkProgram;
 import com.google.common.base.Preconditions;
-import org.apache.hadoop.yarn.conf.YarnConfiguration;
 import org.apache.spark.SparkConf;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scala.Tuple2;
 
-import java.io.File;
 import java.io.IOException;
+import java.util.Map;
 import java.util.Properties;
 
 /**
@@ -73,6 +72,14 @@ public class SparkProgramWrapper {
     ExecutionSparkContext sparkContext = SparkContextProvider.getSparkContext();
 
     SparkConf sparkConf = new SparkConf();
+
+    // Copy all hadoop configurations to the SparkConf, prefix with "spark.hadoop.". This is
+    // how Spark YARN client get hold of Hadoop configurations if those configurations are not in classpath,
+    // which is true in CM cluster due to private hadoop conf directory and YARN-4727
+    for (Map.Entry<String, String> entry : sparkContext.getContextConfig().getConfiguration()) {
+      sparkConf.set("spark.hadoop." + entry.getKey(), entry.getValue());
+    }
+
     sparkConf.setAppName(sparkContext.getProgramId().getId());
 
     if (!sparkContext.getContextConfig().isLocal()) {
@@ -82,9 +89,7 @@ public class SparkProgramWrapper {
         properties.put(tuple._1(), tuple._2());
       }
 
-      File confZip = new File(SparkUtils.LOCALIZED_CONF_DIR_ZIP);
-      SparkUtils.createSparkConfZip(new YarnConfiguration(sparkContext.getContextConfig().getConfiguration()),
-                                    properties, confZip);
+      SparkUtils.createSparkConfZip(properties);
     }
 
     if (JavaSparkProgram.class.isAssignableFrom(sparkProgramClass)) {
