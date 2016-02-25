@@ -372,7 +372,7 @@ function build_docs_outer_level() {
   
   local google_options
   if [ "x${google_code}" != "x" ]; then
-    google_options="-D googleanalytics_id=${google_code} -D googleanalytics_enabled=1"
+    google_options="-A html_google_tag_manager_code=${google_code}"
   fi
   ${SPHINX_BUILD} -w ${TARGET}/${SPHINX_MESSAGES} ${google_options} ${TARGET_PATH}/${SOURCE} ${TARGET_PATH}/${HTML}
   consolidate_messages
