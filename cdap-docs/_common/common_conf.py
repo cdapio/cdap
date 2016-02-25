@@ -398,7 +398,7 @@ def get_manual_titles_bash():
 
 # Add Google Tag Manager Code, or over-ride on the command line with
 # -A html_google_tag_manager_code=GTM-XXXXXX
-html_google_tag_manager_code = 'GTM-XXXXXX'
+html_google_tag_manager_code = ''
 
 # Add any paths that contain custom themes here, relative to this directory.
 html_theme_path = ['_themes','../../_common/_themes']
