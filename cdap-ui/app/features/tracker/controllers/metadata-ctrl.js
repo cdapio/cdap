@@ -14,13 +14,13 @@
  * the License.
  */
 
- class TrackerMetadataController{
-   constructor($state) {
-     this.$state = $state;
-   }
- }
+class TrackerMetadataController{
+  constructor($state) {
+    this.$state = $state;
+  }
+}
 
- TrackerMetadataController.$inject = ['$state'];
+TrackerMetadataController.$inject = ['$state'];
 
- angular.module(PKG.name + '.feature.tracker')
-   .controller('TrackerMetadataController', TrackerMetadataController);
+angular.module(PKG.name + '.feature.tracker')
+  .controller('TrackerMetadataController', TrackerMetadataController);
