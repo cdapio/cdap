@@ -373,12 +373,12 @@ body.state-tracker-entity {
     background-color: @filter-sidebar-background-color;
     h4 { margin-top: 0; }
 
-    .user-tags .tags-container span {
+    .user-tags .tags-container div {
       background-color: @active-font;
       color: white;
     }
 
-    .system-tags .tags-container span {
+    .system-tags .tags-container div {
       background-color: #ccc;
       color: @title-font-color;
     }
@@ -386,25 +386,121 @@ body.state-tracker-entity {
     .tags-container {
       margin-bottom: 40px;
 
-      div { display: inline-block; }
+
+      div {
+        display: inline-block;
+        max-width: 48%;
+        padding: 6px 8px;
+        border-radius: 4px;
+        margin-right: 3px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
 
       span {
-        padding: 6px 10px;
-        margin-right: 3px;
         font-size: 12px;
-        border-radius: 4px;
-        line-height: 30px;
         font-weight: 500;
       }
     }
   }
 
+  .title-bar {
+    height: 50px;
+    border-bottom: 1px solid @border-color;
+    background-color: @filter-sidebar-background-color;
+    line-height: 50px;
+    display: table;
+    width: 100%;
+
+    h4 {
+      margin: 0;
+      vertical-align: middle;
+    }
+  }
+
+  .table {
+    margin-top: 0;
+
+    th, td {
+      font-size: 13px;
+    }
+    span.fa {
+      color: @tracker-grey;
+    }
+
+    td:last-child {
+      width: 20%;
+    }
+
+    tbody tr:nth-child(2n) {
+      background-color: darken(@filter-sidebar-background-color, 1%);
+    }
+  }
+
   .entity-detail-schema-column {
     left: 30%;
+    background-color: @filter-sidebar-background-color;
+
+    .title-bar {
+      h4 {
+        display: table-cell;
+        padding-left: 10px;
+      }
+    }
   }
 
   .entity-detail-properties-column {
     width: 40%;
     right: 0;
+    background-color: @filter-sidebar-background-color;
+
+    .title-bar .title-tab {
+      display: table-cell;
+      vertical-align: middle;
+      width: 50%;
+      cursor: pointer;
+      h4 { color: @tracker-grey; }
+
+      &:first-child {
+        border-right: 1px solid @border-color;
+      }
+
+      &.active {
+        background-color: white;
+        h4 { color: @title-font-color; }
+      }
+    }
+
+    .table {
+      td {
+        &:first-child {
+          color: @title-font-color;
+          font-weight: 500;
+        }
+        pre {
+          background: none;
+          border: none;
+          margin: 0;
+          padding: 0;
+        }
+      }
+    }
+
+    .no-properties-message {
+      margin-top: 150px;
+      h4 { color: @tracker-grey; }
+    }
   }
+}
+
+.tooltip.tracker-tooltip .tooltip-inner {
+  color: @title-font-color;
+  background-color: white;
+  border: none;
+  box-shadow: 0 6px 12px rgba(0,0,0,.175);
+}
+/* Hide arrow */
+.tooltip.customClass .tooltip-arrow {
+  display: none;
 }

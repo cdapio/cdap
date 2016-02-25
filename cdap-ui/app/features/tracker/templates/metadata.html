@@ -22,7 +22,16 @@
 
       <div class="tags-container">
         <div ng-repeat="tag in MetadataController.tags.user">
-          <span>{{ tag }}</span>
+          <span uib-tooltip="{{ tag }}"
+                tooltip-append-to-body="true"
+                tooltip-popup-delay="300"
+                tooltip-ellipsis="{{ tag }}"
+                tooltip-enable="ellipsis"
+                data-ellipsis="ellipsis"
+                data-offset-value="15"
+                tooltip-class="tracker-tooltip">
+            {{ tag }}
+          </span>
         </div>
       </div>
 
@@ -34,7 +43,16 @@
 
       <div class="tags-container">
         <div ng-repeat="tag in MetadataController.tags.system">
-          <span>{{ tag }}</span>
+          <span uib-tooltip="{{ tag }}"
+                tooltip-append-to-body="true"
+                tooltip-popup-delay="300"
+                tooltip-ellipsis="{{ tag }}"
+                tooltip-enable="ellipsis"
+                data-ellipsis="ellipsis"
+                data-offset-value="15"
+                tooltip-class="tracker-tooltip">
+          {{ tag }}
+        </span>
         </div>
       </div>
     </div>
@@ -44,12 +62,83 @@
 
 <!-- SCHEMA -->
 <div class="entity-detail-schema-column">
-  <h3>Schema</h3>
+  <div class="title-bar">
+    <h4>Schema</h4>
+  </div>
+
+  <div class="column-content">
+    <table class="table table-bordered">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>type</th>
+          <th>Null</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr ng-repeat="field in MetadataController.schema">
+          <td>{{ ::field.name }}</td>
+          <td>{{ ::field.type }}</td>
+          <td>
+            <span class="fa fa-check-square" ng-if="field.null"></span>
+            <span class="fa fa-square" ng-if="!field.null"></span>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
 </div>
 
 <!-- PROPERTIES -->
 <div class="entity-detail-properties-column">
-  <h3>Properties</h3>
+  <div class="title-bar">
+    <div class="title-tab text-center"
+         ng-class="{ 'active': MetadataController.activePropertyTab === 0}"
+         ng-click="MetadataController.activePropertyTab = 0">
+      <h4>User Properties</h4>
+    </div>
 
-  <pre>{{ MetadataController.tempResult | json: 4 }}</pre>
+    <div class="title-tab text-center"
+         ng-class="{ 'active': MetadataController.activePropertyTab === 1}"
+         ng-click="MetadataController.activePropertyTab = 1">
+      <h4>System Properties</h4>
+    </div>
+  </div>
+
+  <div class="column-content">
+    <div ng-if="MetadataController.activePropertyTab === 0">
+      <table class="table table-bordered"
+             ng-if="!MetadataController.properties.isUserEmpty">
+        <tbody>
+          <tr ng-repeat="(key, value) in MetadataController.properties.user">
+            <td>{{ key }}</td>
+            <td>{{ value }}</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="no-properties-message text-center"
+           ng-if="MetadataController.properties.isUserEmpty">
+        <h4>There is no user properties</h4>
+      </div>
+    </div>
+
+    <div ng-if="MetadataController.activePropertyTab === 1">
+      <table class="table table-bordered"
+             ng-if="!MetadataController.properties.isSystemEmpty">
+        <tbody>
+          <tr ng-repeat="(key, value) in MetadataController.properties.system">
+            <td>{{ key }}</td>
+            <td>{{ value }}</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="no-properties-message text-center"
+           ng-if="MetadataController.properties.isSystemEmpty">
+        <h4>There is no system properties</h4>
+      </div>
+    </div>
+
+  </div>
 </div>

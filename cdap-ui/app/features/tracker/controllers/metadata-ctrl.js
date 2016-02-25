@@ -42,6 +42,9 @@ class TrackerMetadataController{
     }
 
     this.tags = {};
+    this.schema = [];
+    this.properties = {};
+    this.activePropertyTab = 0;
 
     metadataApi.then( (res) => {
       this.tempResult = res;
@@ -67,7 +70,51 @@ class TrackerMetadataController{
       user: userMetadata.tags
     };
 
+    this.properties = {
+      system: systemMetadata.properties,
+      user: userMetadata.properties,
+      isUserEmpty: false,
+      isSystemEmpty: false
+    };
 
+    if (Object.keys(userMetadata.properties).length === 0) {
+      this.activePropertyTab = 1;
+      this.properties.isUserEmpty = true;
+    }
+
+    this.properties.isSystemEmpty = Object.keys(systemMetadata.properties).length === 0;
+
+    this.schema = this.parseSchema(systemMetadata.properties.schema);
+  }
+
+  parseSchema(schema) {
+    let jsonSchema;
+
+    try {
+      jsonSchema = JSON.parse(schema);
+    } catch (e) {
+      console.log('Error parsing schema JSON');
+      return [];
+    }
+
+    let fieldsArr = [];
+    angular.forEach(jsonSchema.fields, (field) => {
+      let obj = {
+        name: field.name
+      };
+
+      if (angular.isArray(field.type)) {
+        obj.type = field.type[0];
+        obj.null = true;
+      } else {
+        obj.type = field.type;
+        obj.null = false;
+      }
+
+      fieldsArr.push(obj);
+    });
+
+    return fieldsArr;
   }
 }
 
