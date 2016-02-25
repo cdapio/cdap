@@ -359,6 +359,7 @@ body.state-tracker-entity {
     top: 178px;
     bottom: 53px;
     box-sizing: border-box;
+    overflow-y: auto;
   }
 
   .entity-detail-tags-column, .entity-detail-schema-column {
@@ -369,7 +370,33 @@ body.state-tracker-entity {
 
   .entity-detail-tags-column {
     left: 0;
+    background-color: @filter-sidebar-background-color;
     h4 { margin-top: 0; }
+
+    .user-tags .tags-container span {
+      background-color: @active-font;
+      color: white;
+    }
+
+    .system-tags .tags-container span {
+      background-color: #ccc;
+      color: @title-font-color;
+    }
+
+    .tags-container {
+      margin-bottom: 40px;
+
+      div { display: inline-block; }
+
+      span {
+        padding: 6px 10px;
+        margin-right: 3px;
+        font-size: 12px;
+        border-radius: 4px;
+        line-height: 30px;
+        font-weight: 500;
+      }
+    }
   }
 
   .entity-detail-schema-column {

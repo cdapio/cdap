@@ -17,10 +17,27 @@
 <!-- TAGS SIDEBAR -->
 <div class="entity-detail-tags-column">
   <div class="entity-container">
-    <h4>User Tags</h4>
+    <div class="user-tags" ng-if="MetadataController.tags.user.length > 0">
+      <h4>User Tags</h4>
+
+      <div class="tags-container">
+        <div ng-repeat="tag in MetadataController.tags.user">
+          <span>{{ tag }}</span>
+        </div>
+      </div>
+
+    </div>
 
 
-    <h4>System Tags</h4>
+    <div class="system-tags">
+      <h4>System Tags</h4>
+
+      <div class="tags-container">
+        <div ng-repeat="tag in MetadataController.tags.system">
+          <span>{{ tag }}</span>
+        </div>
+      </div>
+    </div>
 
   </div>
 </div>
@@ -33,4 +50,6 @@
 <!-- PROPERTIES -->
 <div class="entity-detail-properties-column">
   <h3>Properties</h3>
+
+  <pre>{{ MetadataController.tempResult | json: 4 }}</pre>
 </div>
