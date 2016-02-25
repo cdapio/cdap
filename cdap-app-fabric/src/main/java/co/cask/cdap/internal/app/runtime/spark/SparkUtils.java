@@ -19,10 +19,12 @@ package co.cask.cdap.internal.app.runtime.spark;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
+import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.internal.app.runtime.distributed.LocalizeResource;
 import co.cask.cdap.internal.asm.Methods;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
+import com.google.common.io.ByteStreams;
 import com.google.common.io.OutputSupplier;
 import org.apache.hadoop.yarn.api.ApplicationConstants;
 import org.objectweb.asm.ClassReader;
@@ -232,12 +234,17 @@ public final class SparkUtils {
     if (hadoopConfDir != null && hadoopConfDir.isDirectory()) {
       try {
         final File targetFile = File.createTempFile(LOCALIZED_CONF_DIR, ".zip", tempDir);
-        BundleJarUtil.createArchive(hadoopConfDir, new OutputSupplier<ZipOutputStream>() {
-          @Override
-          public ZipOutputStream getOutput() throws IOException {
-            return new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(targetFile)));
+        try (
+          ZipOutputStream zipOutput = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(targetFile)))
+        ) {
+          for (File file : DirUtils.listFiles(hadoopConfDir)) {
+            // Shallow copy of files under the hadoop conf dir. Ignore files that cannot be read
+            if (file.isFile() && file.canRead()) {
+              zipOutput.putNextEntry(new ZipEntry(file.getName()));
+              Files.copy(file.toPath(), zipOutput);
+            }
           }
-        });
+        }
         localizeResources.put(LOCALIZED_CONF_DIR, new LocalizeResource(targetFile, true));
       } catch (IOException e) {
         LOG.warn("Failed to create archive from {}", hadoopConfDir, e);
