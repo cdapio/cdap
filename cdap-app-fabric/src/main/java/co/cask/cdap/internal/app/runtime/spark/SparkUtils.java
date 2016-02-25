@@ -198,7 +198,7 @@ public final class SparkUtils {
    * Prepares the resources that need to be localized to the Spark client container.
    *
    * @param cConf configuration for determining where is the CDAP data directory.
-   * @param tempDir a temporary directory for temporary files creation
+   * @param tempDir a temporary directory for file creation
    * @param localizeResources A map from localized name to {@link LocalizeResource} for this method to update
    * @return localized name of the Spark assembly jar file
    */
@@ -274,8 +274,9 @@ public final class SparkUtils {
     } catch (IOException e) {
       // Don't propagate the exception.
       // It is possible that the LOCALIZED_CONF_DIR doesn't exist if the prepareSparkResources
-      // cannot locate the HADOOP_CONF_DIR (should be very rare, if not possible).
-      // In that case, will just let SparkSubmit to handle it (depending on the Spark version, some can handle it)
+      // cannot locate the HADOOP_CONF_DIR (should be very rare, if not impossible).
+      // In that case, will just let the SparkSubmit method handle it
+      // (depending on the Spark version, some can handle it).
       LOG.warn("Failed to create {} file", LOCALIZED_CONF_DIR_ZIP, e);
     }
   }

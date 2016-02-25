@@ -169,7 +169,7 @@ public class BundleJarUtil {
    * is included in the archive.
    *
    * @param input input directory (or file) whose contents needs to be archived
-   * @param outputSupplier An {@link OutputSupplier} for the archive content to write to.
+   * @param outputSupplier An {@link OutputSupplier} for the archive content to be written to.
    * @throws IOException if there is failure in the archive creation
    */
   public static void createArchive(File input,
