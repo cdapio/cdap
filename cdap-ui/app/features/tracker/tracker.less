@@ -426,18 +426,17 @@ body.state-tracker-entity {
 
   .table {
     margin-top: 0;
+    width: 100%;
 
     th, td {
       font-size: 13px;
     }
+    td {
+      word-break: break-word;
+    }
     span.fa {
       color: @tracker-grey;
     }
-
-    td:last-child {
-      width: 20%;
-    }
-
     tbody tr:nth-child(2n) {
       background-color: darken(@filter-sidebar-background-color, 1%);
     }
@@ -451,6 +450,18 @@ body.state-tracker-entity {
       h4 {
         display: table-cell;
         padding-left: 10px;
+      }
+    }
+
+    .table {
+      td:last-child {
+        width: 15%;
+      }
+      td:first-child {
+        width: 45%;
+      }
+      td.nth-child(2) {
+        width: 40%;
       }
     }
   }
@@ -479,15 +490,19 @@ body.state-tracker-entity {
 
     .table {
       td {
+        vertical-align: middle;
+
         &:first-child {
           color: @title-font-color;
           font-weight: 500;
+          width: 30%;
         }
         pre {
           background: none;
           border: none;
           margin: 0;
           padding: 0;
+          width: 70%;
         }
       }
     }
