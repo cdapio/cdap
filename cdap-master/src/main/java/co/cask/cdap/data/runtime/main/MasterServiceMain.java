@@ -215,7 +215,7 @@ public class MasterServiceMain extends DaemonMain {
       public void run() {
         try {
           SparkUtils.getRewrittenSparkAssemblyJar(cConf);
-        } catch (IllegalArgumentException e) {
+        } catch (IllegalStateException e) {
           // It's ok if Spark is not configured at all
           LOG.debug("Spark library is not available: {}", e.getMessage());
         } catch (Throwable t) {
