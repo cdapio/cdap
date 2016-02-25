@@ -145,6 +145,7 @@ class TrackerResultsController {
       angular.extend(obj, {
         name: entity.entityId.id.instanceId,
         type: 'Dataset',
+        entityTypeState: 'datasets',
         icon: 'icon-datasets',
         description: 'This is some description while waiting for backend to add description to these entities. Meanwhile, you can read this nonsense.',
         createDate: 1456299781,
@@ -155,6 +156,7 @@ class TrackerResultsController {
       angular.extend(obj, {
         name: entity.entityId.id.streamName,
         type: 'Stream',
+        entityTypeState: 'streams',
         icon: 'icon-streams',
         description: 'This is some description while waiting for backend to add description to these entities. Meanwhile, you can read this nonsense.',
         createDate: 1456299781,
@@ -166,6 +168,7 @@ class TrackerResultsController {
       angular.extend(obj, {
         name: entity.entityId.id.id,
         type: 'Stream View',
+        entityTypeState: 'views:' + entity.entityId.id.stream.streamName,
         icon: 'icon-streams',
         description: 'This is some description while waiting for backend to add description to these entities. Meanwhile, you can read this nonsense.',
         createDate: 1456299781,

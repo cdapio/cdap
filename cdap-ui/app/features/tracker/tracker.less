@@ -87,6 +87,10 @@ body.state-tracker {
     margin-top: 76px; // !!!!!!!!!!
     width: 100%;
     padding: 0 0 15px 0;
+
+    h1, h2, h3, h4, h5, h6 {
+      font-weight: 500;
+    }
   }
 
   .tracker-top-search {
@@ -238,7 +242,7 @@ body.state-tracker {
           font-weight: 500;
         }
 
-        h4 {
+        h4, h4 a {
           font-size: 16px;
           color: @title-font-color;
           margin-bottom: 5px;
@@ -271,4 +275,71 @@ body.state-tracker {
     &:hover { background-color: @tracker-green; }
   }
 
+}
+
+body.state-tracker-entity {
+  .tracker-entity-top-bar {
+    display: table;
+    height: 50px;
+    width: 100%;
+    border-bottom: 1px solid @border-color;
+    background-color: white;
+
+    .back-button, .entity-detail, .tab-options, .action-button {
+      height: 100%;
+      vertical-align: middle;
+      display: table-cell;
+    }
+
+    .back-button {
+      width: 50px;
+      border-right: 1px solid @border-color;
+      cursor: pointer;
+    }
+
+    .entity-detail {
+      padding-left: 10px;
+      width: 200px;
+      h3 {
+        font-size: 16px;
+        margin: 0;
+      }
+      span {
+        color: @tracker-grey;
+        font-size: 12px;
+      }
+      .entity-type {
+        margin-top: 3px;
+      }
+    }
+
+    .tab-options {
+      ul {
+        margin-bottom: 0;
+        height: 50px;
+      }
+      li {
+        font-size: 14px;
+        font-weight: 500;
+        margin-right: 40px;
+        padding: 0;
+        height: 100%;
+        line-height: 50px;
+
+        &.active {
+          a { color: @title-font-color; }
+          border-bottom: 4px solid @tracker-green;
+        }
+        a {
+          color: @tracker-grey;
+          text-decoration: none;
+          vertical-align: middle;
+        }
+      }
+    }
+
+    .action-button {
+      padding-right: 15px;
+    }
+  }
 }
