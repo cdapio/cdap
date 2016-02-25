@@ -47,8 +47,6 @@ class TrackerMetadataController{
     this.activePropertyTab = 0;
 
     metadataApi.then( (res) => {
-      this.tempResult = res;
-
       this.processResponse(res);
     });
 
