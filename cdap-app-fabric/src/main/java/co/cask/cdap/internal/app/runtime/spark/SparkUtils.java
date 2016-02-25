@@ -389,7 +389,7 @@ public final class SparkUtils {
           mg.dup();
           mg.visitLdcInsn(LOCALIZED_CONF_DIR_ZIP);
           mg.invokeConstructor(Type.getType(File.class), Methods.getMethod(void.class, "<init>", String.class));
-          mg.invokeStatic(Type.getType(Option.class), Methods.getMethod(Object.class, "apply", Object.class));
+          mg.invokeStatic(Type.getType(Option.class), Methods.getMethod(Option.class, "apply", Object.class));
           mg.checkCast(Type.getType(Option.class));
           mg.returnValue();
           mg.endMethod();
