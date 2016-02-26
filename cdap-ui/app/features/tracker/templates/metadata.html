@@ -38,7 +38,7 @@
     </div>
 
 
-    <div class="system-tags">
+    <div class="system-tags" ng-if="MetadataController.tags.system.length > 0">
       <h4>System Tags</h4>
 
       <div class="tags-container">
@@ -55,6 +55,11 @@
         </span>
         </div>
       </div>
+    </div>
+
+    <div class="no-properties-message text-center"
+         ng-if="MetadataController.tags.system.length === 0 && MetadataController.tags.user.length === 0">
+      <h4>There are no tags</h4>
     </div>
 
   </div>
@@ -124,7 +129,7 @@
 
       <div class="no-properties-message text-center"
            ng-if="MetadataController.properties.isUserEmpty">
-        <h4>There is no user properties</h4>
+        <h4>There are no user properties</h4>
       </div>
     </div>
 
@@ -141,7 +146,7 @@
 
       <div class="no-properties-message text-center"
            ng-if="MetadataController.properties.isSystemEmpty">
-        <h4>There is no system properties</h4>
+        <h4>There are no system properties</h4>
       </div>
     </div>
 
