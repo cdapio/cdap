@@ -46,8 +46,14 @@ class TrackerMetadataController{
     this.properties = {};
     this.activePropertyTab = 0;
 
+    this.loading = true;
+
     metadataApi.then( (res) => {
+      this.loading = false;
       this.processResponse(res);
+    }, (err) => {
+      this.loading = false;
+      console.log('Error', err);
     });
 
   }
