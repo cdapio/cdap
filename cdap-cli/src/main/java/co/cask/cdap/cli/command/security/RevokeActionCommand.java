@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,20 +18,18 @@ package co.cask.cdap.cli.command.security;
 
 import co.cask.cdap.cli.ArgumentName;
 import co.cask.cdap.cli.CLIConfig;
-import co.cask.cdap.cli.ElementType;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.client.AuthorizationClient;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.security.Action;
+import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.proto.security.RevokeRequest;
 import co.cask.common.cli.Arguments;
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
-import com.google.common.collect.ImmutableSet;
 import com.google.inject.Inject;
 
 import java.io.PrintStream;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -51,25 +49,31 @@ public class RevokeActionCommand extends AbstractAuthCommand {
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
     EntityId entity = EntityId.fromString(arguments.get(ArgumentName.ENTITY.toString()));
-    String user = arguments.getOptional("user", null);
+    String principalName = arguments.getOptional("principal-name", null);
+    String type = arguments.getOptional("principal-type", null);
+    Principal.PrincipalType principalType =
+      type != null ? Principal.PrincipalType.valueOf(arguments.get("principal-type")) : null;
+    Principal principal = type != null ? new Principal(principalName, principalType) : null;
     String actionsString = arguments.getOptional("actions", null);
     Set<Action> actions = actionsString == null ? null : fromStrings(Splitter.on(",").split(actionsString));
 
-    client.revoke(new RevokeRequest(entity, user, actions));
-    if (user == null) {
-      output.printf("Successfully revoked all actions on entity '%s' for all users", entity.toString());
+    client.revoke(new RevokeRequest(entity, principal, actions));
+    if (principal == null) {
+      output.printf("Successfully revoked all actions on entity '%s' for all principals", entity.toString());
     } else if (actions == null) {
-      output.printf("Successfully revoked all actions on entity '%s' for user '%s'\n",
-                    entity.toString(), user);
+      output.printf("Successfully revoked all actions on entity '%s' for principal '%s'\n",
+                    entity.toString(), principal);
     } else {
-      output.printf("Successfully revoked action(s) '%s' on entity '%s' for user '%s'\n",
-                    Joiner.on(",").join(actions), entity.toString(), user);
+      output.printf("Successfully revoked action(s) '%s' on entity '%s' for principal '%s'\n",
+                    Joiner.on(",").join(actions), entity.toString(), principal);
     }
   }
 
   @Override
   public String getPattern() {
-    return String.format("security revoke entity <%s> [user <user>] [actions <actions>]", ArgumentName.ENTITY);
+    return String.format("security revoke entity <%s> [%s <%s>] [%s <%s>] [actions <actions>]",
+                         ArgumentName.ENTITY, ArgumentName.PRINCIPAL_TYPE, ArgumentName.PRINCIPAL_TYPE,
+                         ArgumentName.PRINCIPAL_NAME, ArgumentName.PRINCIPAL_NAME);
   }
 
   @Override

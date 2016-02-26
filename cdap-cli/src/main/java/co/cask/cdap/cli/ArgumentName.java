@@ -106,7 +106,13 @@ public enum ArgumentName {
    */
   SEARCH_QUERY("search-query"),
   TARGET_TYPE("target-type"),
-  METADATA_SCOPE("scope");
+  METADATA_SCOPE("scope"),
+
+  /**
+   * Authorization
+   */
+  PRINCIPAL_TYPE("principal-type"),
+  PRINCIPAL_NAME("principal-name");
 
   private final String name;
 

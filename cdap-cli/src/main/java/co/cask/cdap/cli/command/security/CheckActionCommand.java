@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,18 +20,17 @@ import co.cask.cdap.cli.ArgumentName;
 import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.client.AuthorizationClient;
+import co.cask.cdap.common.UnauthorizedException;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.security.Action;
+import co.cask.cdap.proto.security.Principal;
 import co.cask.common.cli.Arguments;
-import com.google.common.base.Splitter;
 import com.google.inject.Inject;
 
 import java.io.PrintStream;
-import java.util.HashSet;
-import java.util.Set;
 
 /**
- * Checks whether a user has permission to perform certain actions on an entity.
+ * Checks whether a user has permission to perform the specified action on an entity.
  */
 public class CheckActionCommand extends AbstractAuthCommand {
 
@@ -46,29 +45,28 @@ public class CheckActionCommand extends AbstractAuthCommand {
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
     EntityId entity = EntityId.fromString(arguments.get(ArgumentName.ENTITY.toString()));
-    String user = arguments.get("user");
-    Set<Action> actions = fromStrings(Splitter.on(",").split(arguments.get("actions")));
+    String principalName = arguments.get("principal-name");
+    Principal.PrincipalType principalType = Principal.PrincipalType.valueOf(arguments.get("principal-type"));
+    Principal principal = new Principal(principalName, principalType);
+    Action action = Action.valueOf(arguments.get("action"));
 
-    boolean authorized = client.authorized(entity, user, actions);
-    output.printf("%s\n", authorized);
+    try {
+      client.authorized(entity, principal, action);
+      output.printf("Principal %s is authorized to perform action %s on entity %s\n", principal, action, entity);
+    } catch (UnauthorizedException e) {
+      output.printf("Principal %s is not authorized to perform action %s on entity %s\n", principal, action, entity);
+    }
   }
 
   @Override
   public String getPattern() {
-    return String.format("security access entity <%s> user <user> actions <actions>", ArgumentName.ENTITY);
+    return String.format("security access entity <%s> %s <%s> %s <%s> action <action>",
+                         ArgumentName.ENTITY, ArgumentName.PRINCIPAL_TYPE, ArgumentName.PRINCIPAL_TYPE,
+                         ArgumentName.PRINCIPAL_NAME, ArgumentName.PRINCIPAL_NAME);
   }
 
   @Override
   public String getDescription() {
-    return "Checks whether a user has permission to perform certain actions on an entity. " +
-      "<actions> is a comma-separated list.";
-  }
-
-  private Set<Action> fromStrings(Iterable<String> strings) {
-    Set<Action> result = new HashSet<>();
-    for (String string : strings) {
-      result.add(Action.valueOf(string));
-    }
-    return result;
+    return "Checks whether a principal is authorized to perform an action on an entity.";
   }
 }
