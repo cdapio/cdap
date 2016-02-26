@@ -24,7 +24,7 @@ Let's take a closer look at attaching format and schema on streams.
 .. _stream-exploration-stream-format:
 
 Formats
--------
+=======
 
 A format defines how the bytes in an event body can be read as a higher level object.
 For example, the CSV (comma separated values) format can read each value in comma-delimited text
@@ -39,7 +39,7 @@ HTTP RESTful API or by using the CDAP Command Line Interface (CLI)::
   set stream format mystream csv "f1 int, f2 string"
 
 As mentioned above, a format may support different schemas, which will be discussed in more detail
-in the next section.
+in the :ref:`next section <stream-exploration-stream-schema>`.
 
 It is important to note that formats are applied at read time.
 When events are added to a stream, there are no checks performed to enforce that
@@ -47,18 +47,68 @@ all events added to the stream are readable by the format you have set on a stre
 If any stream event cannot be read by the format you have set, your entire query will fail and you
 will not get any results.
 
-Accepted formats are 
-``avro``, 
-``clf`` (`format <http://www.w3.org/Daemon/User/Config/Logging.html#common-logfile-format>`__),
-``csv`` (comma-separated), 
-``grok`` (`format <https://www.elastic.co/guide/en/logstash/current/plugins-filters-grok.html>`__), 
-``syslog`` (`format <https://tools.ietf.org/html/rfc5424#section-6>`__).
-``text``, 
-and
-``tsv`` (tab-separated). 
+Accepted formats are:
+
+- ``avro`` (:ref:`format <stream-exploration-stream-format-avro>`);
+- ``clf`` (`format <http://www.w3.org/Daemon/User/Config/Logging.html#common-logfile-format>`__, :ref:`schema <stream-exploration-stream-schema-clf>`);
+
+- ``clf`` (`format <https://httpd.apache.org/docs/1.3/logs.html#combined>`__, :ref:`schema <stream-exploration-stream-schema-clf>`);
+
+- ``csv`` (:ref:`comma-separated <stream-exploration-stream-format_csv_tsv>`);
+- ``grok`` (`format <https://www.elastic.co/guide/en/logstash/current/plugins-filters-grok.html>`__);
+- ``syslog`` (`format and schema <https://tools.ietf.org/html/rfc5424#section-6>`__);
+- ``text`` (:ref:`format <stream-exploration-stream-format-text>`); and
+- ``tsv`` (:ref:`tab-separated <stream-exploration-stream-format_csv_tsv>`). 
+
+.. _stream-exploration-stream-format-avro:
+
+Avro Format
+-----------
+The ``avro`` format reads event bodies as binary-encoded Avro. The format requires that a schema be given
+and has no settings.
+
+For example::
+
+  set stream format mystream avro "col1 string, col2 map<string,int> not null, col3 record<x:double, y:float>"
+
+.. _stream-exploration-stream-format_csv_tsv:
+
+CSV and TSV Formats
+-------------------
+The ``csv`` (comma separated values) and ``tsv`` (tab separated values) formats read event bodies as delimited text.
+They have three settings: ``charset`` for the text charset, ``delimiter`` for the delimiter, and ``mapping`` for
+column-index-to-schema-field mapping.
+
+The ``charset`` setting defaults to ``utf-8``. The ``delimiter`` setting defaults to a comma
+for the ``csv`` format and to a tab for the ``tsv`` format. The ``mapping`` setting is optional, and
+is in the zero-based format ``index0:field0,index1:field1``. If provided, the CSV field order will be decided by the mapping
+rather than using the schema field order. For example, if the ``mapping`` is ``1:age,0:name``, then the stream event
+``foo,123,82`` will be parsed as ``{"age":123, "name":"foo"}``.
+
+These formats only support scalars as column types, except for the very last column, which can be an array of strings.
+All types can be nullable. If no schema is given, the default schema is an array of strings.
+
+For example::
+
+  set stream format mystream csv "col1 string, col2 int not null, col3 array<string>"
+
+.. _stream-exploration-stream-format-text:
+
+Text Format
+-----------
+The ``text`` format simply interprets each event body as a string. The format supports a very limited
+schema, namely a record with a single field of type ``string``. The format supports a ``charset`` setting
+that allows you to specify the charset of the text. It defaults to ``utf-8``.
+
+For example::
+
+  set stream format mystream text "data string not null" "charset=ISO-8859-1"
+
+
+.. _stream-exploration-stream-schema:
 
 Schema
-------
+======
 CDAP schemas are adapted from the `Avro Schema Declaration <http://avro.apache.org/docs/1.7.3/spec.html#schemas>`__
 with a few differences:
 
@@ -83,7 +133,7 @@ On top of these general limitations, each format has its own restrictions on the
 of schemas they support. For example, the CSV format does not support maps or records as
 data types.
 
-.. _stream-exploration-stream-schema:
+.. _stream-exploration-stream-schema-syntax:
 
 Schema Syntax
 -------------
@@ -132,48 +182,44 @@ is equivalent to the Avro-like JSON schema::
       }
     ]
   }
+  
+.. _stream-exploration-stream-schema-clf:
 
-Text Format
------------
-The ``text`` format simply interprets each event body as a string. The format supports a very limited
-schema, namely a record with just one field of type ``string``. The format supports a ``charset`` setting
-that allows you to specify the charset of the text. It defaults to ``utf-8``.
+CLF Schema
+----------
 
-For example::
+ * Stream record format that interprets stream body as data in Combined Log Format.
+ * CLF format: remote_host remote_login auth_user [date] "request" status content_length referrer user_agent
+ * Sample CLF data:
+ * 220.181.108.77 - - [01/Feb/2015:06:59:57 +0000] "GET / HTTP/1.1" 301 295 "-"
+ * "Mozilla/5.0 (compatible; Baiduspider/2.0; +http://www.baidu.com/search/spider.html)"
 
-  set stream format mystream text "data string not null" "charset=ISO-8859-1"
+- ``remote_host``: type String
+- ``remote_login``: type String
+- ``auth_user``: type String
+- ``date``: type String
+- ``request``: type String
+- ``status``: type Int
+- ``content_length``: type Int
+- ``referrer``: type String
+- ``user_agent``: type String
 
-.. _stream-exploration-stream-format_csv_tsv:
+.. _stream-exploration-stream-schema-syslog:
 
-CSV and TSV Formats
--------------------
-The ``csv`` (comma separated values) and ``tsv`` (tab separated values) formats read event bodies as delimited text.
-They have three settings: ``charset`` for the text charset, ``delimiter`` for the delimiter, and ``mapping`` for
-column-index-to-schema-field mapping.
-The ``charset`` setting defaults to ``utf-8``. The ``delimiter`` setting defaults to a comma
-for the ``csv`` format and to a tab for the ``tsv`` format. The ``mapping`` setting is optional, and
-is in the zero-based format ``index0:field0,index1:field1``. If provided, the CSV field order will be decided by the mapping
-rather than using the schema field order. For example, if the ``mapping`` is ``1:age,0:name``, then the stream event
-``foo,123,82`` will be parsed as ``{"age":123, "name":"foo"}``.
+Syslog Schema
+-------------
 
-These formats only support scalars as column types, except for the very last column, which can be an array of strings.
-All types can be nullable. If no schema is given, the default schema is an array of strings.
 
-For example::
+- ``timestamp``: type String
+- ``logsource``: type String
+- ``program``: type String
+- ``message``: type String
+- ``pid``: type String
 
-  set stream format mystream csv "col1 string, col2 int not null, col3 array<string>"
 
-Avro Format
------------
-The ``avro`` format reads event bodies as binary encoded Avro. The format requires a schema to be given,
-and has no settings.
-
-For example::
-
-  set stream format mystream avro "col1 string, col2 map<string,int> not null, col3 record<x:double, y:float>"
 
 End-to-End Example
-------------------
+==================
 
 In the following example, we will create a stream, send data to it, attach a format
 and schema to the stream, then query the stream.
@@ -213,7 +259,7 @@ complicated queries::
   +========================================================+
 
 Formulating Queries
--------------------
+===================
 When creating your queries, keep these limitations in mind:
 
 - The query syntax of CDAP is a subset of the variant of SQL that was first defined by Apache Hive.
