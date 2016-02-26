@@ -68,6 +68,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicReference;
@@ -127,7 +128,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
     File tempDir = DirUtils.createTempDir(new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
                                                    cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile());
     tempDir.mkdirs();
-    this.cleanupTask = createCleanupTask(tempDir);
+    this.cleanupTask = createCleanupTask(tempDir, System.getProperties());
     try {
       SparkContextConfig contextConfig = new SparkContextConfig(hConf);
       ClientSparkContext clientContext = sparkContextFactory.getClientContext();
@@ -512,7 +513,14 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
   /**
    * Creates a {@link Runnable} for deleting content for the given directory.
    */
-  private Runnable createCleanupTask(final File directory) {
+  private Runnable createCleanupTask(final File directory, Properties properties) {
+    final Map<String, String> retainingProperties = new HashMap<>();
+    for (String key : properties.stringPropertyNames()) {
+      if (key.startsWith("spark.")) {
+        retainingProperties.put(key, properties.getProperty(key));
+      }
+    }
+
     return new Runnable() {
 
       @Override
@@ -521,8 +529,14 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
         Iterable<String> sparkKeys = Iterables.filter(System.getProperties().stringPropertyNames(),
                                                       Predicates.containsPattern("^spark\\."));
         for (String key : sparkKeys) {
-          LOG.debug("Removing Spark system property: {}", key);
-          System.clearProperty(key);
+          if (retainingProperties.containsKey(key)) {
+            String value = retainingProperties.get(key);
+            LOG.debug("Restoring Spark system property: {} -> {}", key, value);
+            System.setProperty(key, value);
+          } else {
+            LOG.debug("Removing Spark system property: {}", key);
+            System.clearProperty(key);
+          }
         }
 
         try {
