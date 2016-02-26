@@ -24,7 +24,6 @@ import co.cask.cdap.etl.api.LookupProvider;
 import co.cask.cdap.etl.api.batch.BatchRuntimeContext;
 import co.cask.cdap.etl.common.AbstractTransformContext;
 import co.cask.cdap.etl.log.LogContext;
-import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 
 import java.util.Map;
@@ -53,7 +52,8 @@ public class MapReduceRuntimeContext extends AbstractTransformContext implements
     return LogContext.runWithoutLoggingUnchecked(new Callable<Long>() {
       @Override
       public Long call() throws Exception {
-        return context.getLogicalStartTime();
+        String logicalStartTimeStr = runtimeArgs.get("logicalStartTime");
+        return logicalStartTimeStr == null ? context.getLogicalStartTime() : Long.parseLong(logicalStartTimeStr);
       }
     });
   }

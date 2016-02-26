@@ -42,7 +42,8 @@ public class SparkBatchRuntimeContext extends AbstractTransformContext implement
 
   @Override
   public long getLogicalStartTime() {
-    return logicalStartTime;
+    String logicalStartTimeStr = runtimeArguments.get("logicalStartTime");
+    return logicalStartTimeStr == null ? logicalStartTime : Long.parseLong(logicalStartTimeStr);
   }
 
   @Override
