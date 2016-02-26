@@ -21,33 +21,26 @@ import co.cask.cdap.common.utils.ProjectInfo;
 import co.cask.cdap.explore.client.ExploreClient;
 import co.cask.cdap.explore.client.FixedAddressExploreClient;
 import co.cask.cdap.proto.Id;
-import com.google.common.base.Splitter;
-import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Multimap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.net.URI;
 import java.sql.Connection;
 import java.sql.Driver;
 import java.sql.DriverPropertyInfo;
 import java.sql.SQLException;
 import java.sql.SQLFeatureNotSupportedException;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
 import java.util.Properties;
 import java.util.regex.Pattern;
 
 /**
  * Explore JDBC Driver. A proper URL is of the form: jdbc:cdap://<host>:<port>?<param1>=<value1>[&<param2>=<value2>],
  * Where host and port point to CDAP http interface where Explore is enabled, and the additional parameters are from
- * the {@link co.cask.cdap.explore.jdbc.ExploreDriver.ConnectionParams.Info} enum.
+ * the {@link ExploreConnectionParams.Info} enum.
  */
 public class ExploreDriver implements Driver {
   private static final Logger LOG = LoggerFactory.getLogger(ExploreDriver.class);
+
   static {
     try {
       java.sql.DriverManager.registerDriver(new ExploreDriver());
@@ -67,26 +60,26 @@ public class ExploreDriver implements Driver {
       return null;
     }
 
-    ConnectionParams params = parseConnectionUrl(url);
+    ExploreConnectionParams params = ExploreConnectionParams.parseConnectionUrl(url);
 
-    String authToken = getString(params, ConnectionParams.Info.EXPLORE_AUTH_TOKEN, null);
-    String namespace = getString(params, ConnectionParams.Info.NAMESPACE, Id.Namespace.DEFAULT.getId());
-    boolean sslEnabled = getBoolean(params, ConnectionParams.Info.SSL_ENABLED, false);
-    boolean verifySSLCert = getBoolean(params, ConnectionParams.Info.VERIFY_SSL_CERT, true);
+    String authToken = getString(params, ExploreConnectionParams.Info.EXPLORE_AUTH_TOKEN, null);
+    String namespace = getString(params, ExploreConnectionParams.Info.NAMESPACE, Id.Namespace.DEFAULT.getId());
+    boolean sslEnabled = getBoolean(params, ExploreConnectionParams.Info.SSL_ENABLED, false);
+    boolean verifySSLCert = getBoolean(params, ExploreConnectionParams.Info.VERIFY_SSL_CERT, true);
 
     ExploreClient exploreClient =
       new FixedAddressExploreClient(params.getHost(), params.getPort(), authToken, sslEnabled, verifySSLCert);
     if (!exploreClient.isServiceAvailable()) {
       throw new SQLException("Cannot connect to " + url + ", service unavailable");
     }
-    return new ExploreConnection(exploreClient, namespace);
+    return new ExploreConnection(exploreClient, namespace, params);
   }
 
-  private String getString(ConnectionParams params, ConnectionParams.Info param, String defaultValue) {
+  private String getString(ExploreConnectionParams params, ExploreConnectionParams.Info param, String defaultValue) {
     return Iterables.getFirst(params.getExtraInfos().get(param), defaultValue);
   }
 
-  private boolean getBoolean(ConnectionParams params, ConnectionParams.Info param, boolean defaultValue) {
+  private boolean getBoolean(ExploreConnectionParams params, ExploreConnectionParams.Info param, boolean defaultValue) {
     String string = getString(params, param, null);
     return string != null ? Boolean.valueOf(string) : defaultValue;
   }
@@ -142,90 +135,4 @@ public class ExploreDriver implements Driver {
     throw new SQLFeatureNotSupportedException();
   }
 
-  /**
-   * Parse Explore connection url string to retrieve the necessary parameters to connect to CDAP.
-   * Package visibility for testing.
-   */
-  ConnectionParams parseConnectionUrl(String url) {
-    // URI does not accept two semicolons in a URL string, hence the substring
-    URI jdbcURI = URI.create(url.substring(ExploreJDBCUtils.URI_JDBC_PREFIX.length()));
-    String host = jdbcURI.getHost();
-    int port = jdbcURI.getPort();
-    ImmutableMultimap.Builder<ConnectionParams.Info, String>  builder = ImmutableMultimap.builder();
-
-    // get the query params - javadoc for getQuery says that it decodes the query URL with UTF-8 charset.
-    String query = jdbcURI.getQuery();
-    if (query != null) {
-      for (String entry : Splitter.on("&").split(query)) {
-        // Need to do it twice because of error in guava libs Issue: 1577
-        int idx = entry.indexOf('=');
-        if (idx <= 0) {
-          continue;
-        }
-
-        ConnectionParams.Info info = ConnectionParams.Info.fromStr(entry.substring(0, idx));
-        if (info != null) {
-          builder.putAll(info, Splitter.on(',').omitEmptyStrings().split(entry.substring(idx + 1)));
-        }
-      }
-    }
-    return new ConnectionParams(host, port, builder.build());
-  }
-
-  /**
-   * Explore connection parameters.
-   */
-  public static final class ConnectionParams {
-
-    /**
-     * Extra Explore connection parameter.
-     */
-    public enum Info {
-      EXPLORE_AUTH_TOKEN("auth.token"),
-      NAMESPACE("namespace"),
-      SSL_ENABLED("ssl.enabled"),
-      VERIFY_SSL_CERT("verify.ssl.cert");
-
-      private final String name;
-
-      private Info(String name) {
-        this.name = name;
-      }
-
-      public String getName() {
-        return name;
-      }
-
-      public static Info fromStr(String name) {
-        for (Info info : Info.values()) {
-          if (info.getName().equals(name)) {
-            return info;
-          }
-        }
-        return null;
-      }
-    }
-
-    private final String host;
-    private final int port;
-    private final Multimap<Info, String> extraInfos;
-
-    private ConnectionParams(String host, int port, Multimap<Info, String> extraInfos) {
-      this.host = host;
-      this.port = port;
-      this.extraInfos = extraInfos;
-    }
-
-    public Multimap<Info, String> getExtraInfos() {
-      return extraInfos;
-    }
-
-    public int getPort() {
-      return port;
-    }
-
-    public String getHost() {
-      return host;
-    }
-  }
 }
