@@ -28,6 +28,7 @@ import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
+import co.cask.cdap.app.runtime.ProgramRunnerFactory;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.internal.AppFabricTestHelper;
@@ -35,7 +36,6 @@ import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import co.cask.cdap.internal.app.runtime.AbstractListener;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
-import co.cask.cdap.internal.app.runtime.ProgramRunnerFactory;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.test.XSlowTests;
@@ -92,8 +92,6 @@ public class WorkflowTest {
     final Injector injector = AppFabricTestHelper.getInjector();
     ProgramRunnerFactory runnerFactory = injector.getInstance(ProgramRunnerFactory.class);
 
-    ProgramRunner programRunner = runnerFactory.create(ProgramRunnerFactory.Type.WORKFLOW);
-
     final Program program = Iterators.filter(app.getPrograms().iterator(), new Predicate<Program>() {
       @Override
       public boolean apply(Program input) {
@@ -101,6 +99,7 @@ public class WorkflowTest {
       }
     }).next();
 
+    ProgramRunner programRunner = runnerFactory.create(program.getType());
     String inputPath = createInput();
     String outputPath = new File(tmpFolder.newFolder(), "output").getAbsolutePath();
     final String runId = RunIds.generate().getId();
@@ -208,7 +207,6 @@ public class WorkflowTest {
                                                                                          TEMP_FOLDER_SUPPLIER);
     final Injector injector = AppFabricTestHelper.getInjector();
     ProgramRunnerFactory runnerFactory = injector.getInstance(ProgramRunnerFactory.class);
-    ProgramRunner programRunner = runnerFactory.create(ProgramRunnerFactory.Type.WORKFLOW);
 
     final Program program = Iterators.filter(app.getPrograms().iterator(), new Predicate<Program>() {
       @Override
@@ -217,6 +215,7 @@ public class WorkflowTest {
       }
     }).next();
 
+    ProgramRunner programRunner = runnerFactory.create(program.getType());
     final String runId = RunIds.generate().getId();
     BasicArguments systemArgs = new BasicArguments(ImmutableMap.of(ProgramOptionConstants.RUN_ID, runId));
     ProgramOptions options = new SimpleProgramOptions(program.getName(), systemArgs, new BasicArguments());
