@@ -10,7 +10,7 @@ Lifecycle HTTP RESTful API
 ==========================
 
 Use the CDAP Lifecycle HTTP API to deploy or delete applications and manage the lifecycle of 
-flows, MapReduce programs, workflows, workers, and custom services.
+flows, MapReduce and Spark programs, custom services, workers, and workflows.
 
 .. highlight:: console
 
@@ -177,7 +177,7 @@ of the application; the artifact, streams, and datasets that it uses; and all of
 Delete an Application
 ---------------------
 To delete an application |---| together with all of its flows, MapReduce or Spark
-programs, services, workflows, schedules |---| submit an HTTP DELETE::
+programs, schedules, custom services, and workflows |---| submit an HTTP DELETE::
 
   DELETE <base-url>/namespaces/<namespace>/apps/<application-name>
 
@@ -202,12 +202,100 @@ Also, this does not delete the artifact used to create the application.
 Program Lifecycle
 =================
 
+Details of a Program
+--------------------
+After an application is deployed, you can retrieve the details of its flows, MapReduce and Spark programs,
+custom services, schedules, workers, and workflows by submitting an HTTP GET request::
+
+  GET <base-url>/namespaces/<namespace>/apps/<app-id>/<program-type>/<program-id>
+
+To retrieve information about the schedules of the program's workflows, use::
+
+  GET <base-url>/namespaces/<namespace>/apps/<app-id>/workflows/<workflow-id>/schedules
+  
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``<namespace>``
+     - Namespace ID
+   * - ``<app-id>``
+     - Name of the application being called
+   * - ``<program-type>``
+     - One of ``flows``, ``mapreduce``, ``services``, ``spark``, ``workers``, or ``workflows``
+   * - ``<program-id>``
+     - Name of the *flow*, *MapReduce*, *custom service*, *Spark*, *worker*, or *workflow*
+       being called
+   * - ``<workflow-id>``
+     - Name of the *workflow* being called, when retrieving schedules
+  
+The response will be a JSON array containing details about the program. The details returned depend on the
+program type.
+
+For example::
+
+  GET <base-url>/namespaces/default/apps/HelloWorld/flows/WhoFlow
+
+will return in a JSON array information about the *WhoFlow* of the application *HelloWorld*. The results will
+be similar to this (pretty-printed and portions deleted to fit)::
+
+  {
+      "className": "co.cask.cdap.examples.helloworld.HelloWorld$WhoFlow",
+      "name": "WhoFlow",
+      "description": "A flow that collects names",
+      "flowlets": {
+          "saver": {
+              "flowletSpec": {
+                  "className": "co.cask.cdap.examples.helloworld.HelloWorld$NameSaver",
+                  "name": "saver",
+                  "description": "",
+                  "failurePolicy": "RETRY",
+                  "dataSets": [
+                      "whom"
+                  ],
+                  "properties": {
+                  },
+                  "resources": {
+                      "virtualCores": 1,
+                      "memoryMB": 512
+                  }
+              },
+              "streams": {
+              },
+              "datasetModules": {
+              },
+              "datasetSpecs": {
+              },
+              "instances": 1,
+              "datasets": [
+                  "whom"
+              ],
+              "inputs": {
+            
+                . . .
+              
+              },
+              "outputs": {
+              }
+          }
+      },
+      "connections": [
+          {
+              "sourceType": "STREAM",
+              "sourceName": "who",
+              "targetName": "saver"
+          }
+      ]
+  }
+
 .. _http-restful-api-lifecycle-start:
 
 Start a Program
 ---------------
-After an application is deployed, you can start its flows, MapReduce programs, schedules, Spark programs, workflows,
-workers, and custom services by submitting an HTTP POST request::
+After an application is deployed, you can start its flows, MapReduce and Spark programs,
+custom services, workers, and workflows by submitting an HTTP POST request::
 
   POST <base-url>/namespaces/<namespace>/apps/<app-id>/<program-type>/<program-id>/start
 
@@ -225,14 +313,14 @@ CDAP will use these these runtime arguments only for this single invocation of t
    * - ``<app-id>``
      - Name of the application being called
    * - ``<program-type>``
-     - One of ``flows``, ``mapreduce``, ``schedules``, ``spark``, ``workflows``, ``workers``, or ``services``
+     - One of ``flows``, ``mapreduce``, ``services``, ``spark``, ``workers``, or ``workflows``
    * - ``<program-id>``
-     - Name of the *flow*, *MapReduce*, *schedule*, *Spark*, *workflow*, *worker*, or *custom service*
+     - Name of the *flow*, *MapReduce*, *custom service*, *Spark*, *worker*, or *workflow*
        being called
 
-*Flow*, *Spark*, *Worker*, and *Service* programs do not allow concurrent program runs.
+*Flow*, *Service*, *Spark*, and *Worker* programs do not allow concurrent program runs.
 Programs of these types cannot be started unless the program is in the *STOPPED* state.
-*Workflow* and *MapReduce* programs support concurrent runs. If you start one of these programs,
+*MapReduce* and *Workflow* programs support concurrent runs. If you start one of these programs,
 a new run will be started even if other runs of the program have not finished yet.
 
 For example::
@@ -261,9 +349,9 @@ with a JSON array in the request body consisting of multiple JSON objects with t
    * - ``"appId"``
      - Name of the application being called
    * - ``"programType"``
-     - One of ``flow``, ``mapreduce``, ``spark``, ``workflow``, ``worker``, or ``service``
+     - One of ``flow``, ``mapreduce``, ``service``, ``spark``, ``worker``, or ``workflow``
    * - ``"programId"``
-     - Name of the *flow*, *MapReduce*, *Spark*, *workflow*, *worker*, or *custom service*
+     - Name of the *flow*, *MapReduce*, *custom service*, *Spark*, *worker*, or *workflow*
        being called
    * - ``"runtimeargs"``
      - Optional JSON object containing a string to string mapping of runtime arguments to start the program with
@@ -280,9 +368,9 @@ Each JSON object will contain these parameters:
    * - ``"appId"``
      - Name of the application being called
    * - ``"programType"``
-     - One of ``flow``, ``mapreduce``, ``spark``, ``workflow``, ``worker``, or ``service``
+     - One of ``flow``, ``mapreduce``, ``service``, ``spark``, ``worker``, or ``workflow``
    * - ``"programId"``
-     - Name of the *flow*, *MapReduce*, *Spark*, *workflow*, *worker*, or *custom service*
+     - Name of the *flow*, *MapReduce*, *custom service*, *Spark*, *worker*, or *workflow*
        being called
    * - ``"statusCode"``
      - The status code from starting an individual JSON object
@@ -298,7 +386,7 @@ For example::
       {"appId": "App2", "programType": "Flow", "programId": "Flow1", "runtimeargs": { "arg1":"val1" }}
     ]'
 
-will attempt to start the three programs listed in the request body. The response will look like::
+will attempt to start the three programs listed in the request body. It will receive a response such as::
 
   [
     {"appId": "App1", "programType": "Service", "programId": "Service1", "statusCode": 200},
@@ -313,8 +401,8 @@ started, and there was an error starting the last program because the *App2* app
 
 Stop a Program
 --------------
-You can stop the flows, MapReduce programs, schedules, Spark programs, workflows,
-workers, and custom services of an application by submitting an HTTP POST request::
+You can stop the flows, MapReduce and Spark programs, custom services, workers, and
+workflows of an application by submitting an HTTP POST request::
 
   POST <base-url>/namespaces/<namespace>/apps/<app-id>/<program-type>/<program-id>/stop
 
@@ -329,9 +417,9 @@ workers, and custom services of an application by submitting an HTTP POST reques
    * - ``<app-id>``
      - Name of the application being called
    * - ``<program-type>``
-     - One of ``flows``, ``mapreduce``, ``schedules``, ``spark``, ``workflows``, ``workers``, or ``services``
+     - One of ``flows``, ``mapreduce``, ``services``, ``spark``, ``workers``, or ``workflows``
    * - ``<program-id>``
-     - Name of the *flow*, *MapReduce*, *schedule*, *Spark*, *workflow*, *worker*, or *custom service*
+     - Name of the *flow*, *MapReduce*, *custom service*, *Spark*, *worker*, or *workflow*
        being called
 
 A program that is in the STOPPED state cannot be stopped. If there are multiple runs of the program
@@ -363,9 +451,9 @@ You can stop a specific run of a program by submitting an HTTP POST request::
    * - ``<app-id>``
      - Name of the application being called
    * - ``<program-type>``
-     - One of ``flows``, ``mapreduce``, ``schedules``, ``spark``, ``workflows``, ``workers``, or ``services``
+     - One of ``flows``, ``mapreduce``, ``services``, ``spark``, ``workers``, or ``workflows``
    * - ``<program-id>``
-     - Name of the *flow*, *MapReduce*, *schedule*, *Spark*, *workflow*, *worker*, or *custom service*
+     - Name of the *flow*, *MapReduce*, *custom service*, *Spark*, *worker*, or *workflow*
        being called
    * - ``<run-id>``
      - Run id of the run being called
@@ -396,9 +484,9 @@ with a JSON array in the request body consisting of multiple JSON objects with t
    * - ``"appId"``
      - Name of the application being called
    * - ``"programType"``
-     - One of ``flow``, ``mapreduce``, ``spark``, ``workflow``, ``worker``, or ``service``
+     - One of ``flow``, ``mapreduce``, ``service``, ``spark``, ``worker``, or ``workflow``
    * - ``"programId"``
-     - Name of the *flow*, *MapReduce*, *Spark*, *workflow*, *worker*, or *custom service*
+     - Name of the *flow*, *MapReduce*, *custom service*, *Spark*, *worker*, or *workflow*
        being called
 
 The response will be a JSON array containing a JSON object corresponding to each object in the input.
@@ -413,9 +501,9 @@ Each JSON object will contain these parameters:
    * - ``"appId"``
      - Name of the application being called
    * - ``"programType"``
-     - One of ``flow``, ``mapreduce``, ``spark``, ``workflow``, ``worker``, or ``service``
+     - One of ``flow``, ``mapreduce``, ``service``, ``spark``, ``worker``, or ``workflow``
    * - ``"programId"``
-     - Name of the *flow*, *MapReduce*, *Spark*, *workflow*, *worker*, or *custom service*
+     - Name of the *flow*, *MapReduce*, *custom service*, *Spark*, *worker*, or *workflow*
        being called
    * - ``"statusCode"``
      - The status code from stopping an individual JSON object
@@ -431,7 +519,7 @@ For example::
       {"appId": "App2", "programType": "Flow", "programId": "Flow1"}
     ]'
 
-will attempt to stop the three programs listed in the request body. The response will look like::
+will attempt to stop the three programs listed in the request body. It will receive a response such as::
 
   [
     {"appId": "App1", "programType": "Service", "programId": "Service1", "statusCode": 200},
@@ -444,9 +532,9 @@ stopped, and there was an error starting the last program because the *App2* app
 
 .. _http-restful-api-lifecycle-status:
 
-Get Status of a Program
------------------------
-To get the status of a program, submit an HTTP GET request::
+Status of a Program
+-------------------
+To retrieve the status of a program, submit an HTTP GET request::
 
   GET <base-url>/namespaces/<namespace>/apps/<app-id>/<program-type>/<program-id>/status
 
@@ -461,16 +549,26 @@ To get the status of a program, submit an HTTP GET request::
    * - ``<app-id>``
      - Name of the application being called
    * - ``<program-type>``
-     - One of ``flows``, ``mapreduce``, ``schedules``, ``spark``, ``workflows``, ``workers``, or ``services``
+     - One of ``flows``, ``mapreduce``, ``schedules``, ``services``, ``spark``, ``workers``, or ``workflows``
    * - ``<program-id>``
-     - Name of the *flow*, *MapReduce*, *schedule*, *Spark*, *workflow*, *worker*, or *custom service*
+     - Name of the *flow*, *MapReduce*, *schedule*, *custom service*, *Spark*, *worker*, or *workflow*
        being called
+
+The response will be a JSON array with status of the program. For example, retrieving the status of the
+*WhoFlow* of the program *HelloWorld*::
+
+  GET <base-url>/namespaces/default/apps/HelloWorld/flows/WhoFlow/status
+
+will return (pretty-printed) a response such as::
+
+  {
+      "status": "STOPPED"
+  }
 
 .. _http-restful-api-lifecycle-status-multi:
 
-Get Status of Multiple Programs
--------------------------------
-
+Status of Multiple Programs
+---------------------------
 You can retrieve the status of multiple programs from different applications and program types
 by submitting an HTTP POST request::
 
@@ -487,12 +585,12 @@ with a JSON array in the request body consisting of multiple JSON objects with t
    * - ``"appId"``
      - Name of the application being called
    * - ``"programType"``
-     - One of ``flow``, ``mapreduce``, ``schedule``, ``spark``, ``workflow`` or ``service``
+     - One of ``flow``, ``mapreduce``, ``schedule``, ``service``, ``spark``, ``worker``, or ``workflow``
    * - ``"programId"``
-     - Name of the *flow*, *MapReduce*, *schedule*, *Spark*, *workflow*, or *custom service*
+     - Name of the *flow*, *MapReduce*, *schedule*, *custom service*, *Spark*, *worker*, or *workflow*
        being called
 
-The response will be the same JSON array with additional parameters for each of the underlying JSON objects:
+The response will be the same JSON array as submitted with additional parameters for each of the underlying JSON objects:
 
 .. list-table::
    :widths: 20 80
@@ -519,7 +617,7 @@ For example::
       { "appId": "MyApp2", "programType": "service", "programId": "MyService" }
     ]
 
-will get the status of two programs. It will get a response like::
+will retrieve the status of two programs. It will receive a response such as::
 
   [
     { "appId":"MyApp", "programType":"flow", "programId":"MyFlow", "status":"RUNNING", "statusCode":200 },
@@ -547,9 +645,9 @@ CDAP for a flow or service’s live info via an HTTP GET method::
    * - ``<app-id>``
      - Name of the application being called
    * - ``<program-type>``
-     - One of ``flows``, ``workers``, or ``services``
+     - One of ``flows``, ``services``, or  ``workers``
    * - ``<program-id>``
-     - Name of the program (*flow* or *custom service*)
+     - Name of the program (*flow*, *service*, or *worker*)
 
 Example::
 
@@ -595,7 +693,7 @@ with a JSON array in the request body consisting of multiple JSON objects with t
    * - ``"runnableId"``
      - Name of the *flowlet*, only required if the program type is ``flow``
 
-The response will be the same JSON array with additional parameters for each of the underlying JSON objects:
+The response will be the same JSON array as submitted with additional parameters for each of the underlying JSON objects:
 
 .. list-table::
    :widths: 20 80
@@ -761,8 +859,8 @@ with the arguments as a JSON string in the body::
    * - ``<quantity>``
      - Number of instances to be used
 
-Example
-.......
+.. rubric:: Example
+
 .. list-table::
    :widths: 20 80
    :stub-columns: 1
@@ -779,10 +877,10 @@ Example
 Run Records and Schedules
 =========================
 
-To see all the runs of a selected program (flows, MapReduce programs, Spark programs, workflows, and
-services), issue an HTTP GET to the program’s URL with the ``runs`` parameter.
-This will return a JSON list of all runs for the program, each with a start time,
-end time and program status::
+To see all the runs of a selected program (flows, MapReduce programs, Spark programs,
+services, or workflows), issue an HTTP GET to the program’s URL with the ``runs``
+parameter. This will return a JSON list of all runs for the program, each with a start
+time, end time, and program status::
 
   GET <base-url>/namespaces/<namespace>/apps/<app-id>/<program-type>/<program-id>/runs
 
@@ -797,9 +895,9 @@ end time and program status::
    * - ``<app-id>``
      - Name of the application
    * - ``<program-type>``
-     - One of ``flows``, ``mapreduce``, ``spark``, ``workflows`` or ``services``
+     - One of ``flows``, ``mapreduce``, ``services``, ``spark``, or ``workflows``
    * - ``<program-id>``
-     - Name of the program
+     - Name of the *flow*, *MapReduce*, *custom service*, *Spark*, or *workflow* being called
 
 You can filter the runs by the status of a program, the start and end times, 
 and can limit the number of returned records:
@@ -867,9 +965,9 @@ To fetch the run record for a particular run of a program, use::
    * - ``<app-id>``
      - Name of the application
    * - ``<program-type>``
-     - One of ``flows``, ``mapreduce``, ``spark``, ``workflows`` or ``services``
+     - One of ``flows``, ``mapreduce``, ``services``, ``spark``, or ``workflows``
    * - ``<program-id>``
-     - Name of the program
+     - Name of the *flow*, *MapReduce*, *custom service*, *Spark*, or *workflow* being called
    * - ``<run-id>``
      - Run id of the run
 
@@ -996,10 +1094,10 @@ Schedules: Suspend and Resume
 
 For schedules, you can suspend and resume them using the RESTful API.
 
-To *suspend* a schedule means that the program associated with that schedule will not
+**Suspend:** To *suspend* a schedule means that the program associated with that schedule will not
 trigger again until the schedule is resumed.
 
-To *resume* a schedule means that the trigger is reset, and the program associated will
+**Resume:** To *resume* a schedule means that the trigger is reset, and the program associated will
 run again at the next scheduled time.
 
 As a schedule is initially deployed in a *suspended* state, a call to this API is needed to *resume* it.
@@ -1008,8 +1106,6 @@ To suspend or resume a schedule use::
 
   POST <base-url>/namespaces/<namespace>/apps/<app-id>/schedules/<schedule-name>/suspend
   POST <base-url>/namespaces/<namespace>/apps/<app-id>/schedules/<schedule-name>/resume
-
-where:
 
 .. list-table::
    :widths: 20 80
@@ -1055,14 +1151,14 @@ For workflows, in addition to :ref:`starting <http-restful-api-lifecycle-start>`
 :ref:`stopping <http-restful-api-lifecycle-stop>`, you can suspend and resume individual
 runs of a workflow using the RESTful API.
 
-To *suspend* means that the current activity will be taken to completion, but no further 
+**Suspend:** To *suspend* means that the current activity will be taken to completion, but no further 
 programs will be initiated. Programs will not be left partially uncompleted, barring any errors.
 
 In the case of a workflow with multiple MapReduce programs, if one of them is running (first of
 three perhaps) and you suspend the workflow, that first MapReduce will be completed but the
 following two will not be started.
 
-To *resume* means that activity will start up where it was left off, beginning with the start
+**Resume:** To *resume* means that activity will start up where it was left off, beginning with the start
 of the next program in the sequence.
 
 In the case of the workflow mentioned above, resuming it after suspension would start up with the
@@ -1075,8 +1171,6 @@ To suspend or resume a workflow, use::
   
   POST <base-url>/namespaces/<namespace>/apps/<app-id>/workflows/<workflow-name>/runs/<run-id>/suspend
   POST <base-url>/namespaces/<namespace>/apps/<app-id>/workflows/<workflow-name>/runs/<run-id>/resume
-
-where:
 
 .. list-table::
    :widths: 20 80
