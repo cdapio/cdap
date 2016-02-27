@@ -1,6 +1,6 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2014 Cask Data, Inc.
+    :copyright: Copyright © 2014-2016 Cask Data, Inc.
 
 .. _admin-security:
 .. _configuration-security:
@@ -15,11 +15,16 @@ security. Here, we’ll discuss how to setup a secure CDAP instance.
 Additional security information, including client APIs and the authentication process, is covered
 in the Developers’ Manual :ref:`security-index` section.
 
+.. _admin-security-summary-start:
+.. NOTE: INCLUDED IN OTHER FILES
+
 We recommend that in order for CDAP to be secure, CDAP security should always be used in conjunction with
 `secure Hadoop clusters <http://hadoop.apache.org/docs/current/hadoop-project-dist/hadoop-common/SecureMode.html>`__.
 In cases where secure Hadoop is not or cannot be used, it is inherently insecure and any applications
 running on the cluster are effectively "trusted”. Though there is still value in having the perimeter access
 be authenticated in that situation, whenever possible a secure Hadoop cluster should be employed with CDAP security.
+
+.. _admin-security-summary-end:
 
 CDAP Security is configured in ``cdap-site.xml`` and ``cdap-security.xml``:
 
@@ -386,6 +391,34 @@ within your CDAP installation (typically under ``/opt/cdap``).
 The Developers’ Manual :ref:`Custom Authentication <developers-custom-authentication>` section shows
 how to create a Custom Authentication Mechanism.
 
+
+.. _configuring_auth_exemptions:
+
+Configuring Exemptions from Authentication
+..........................................
+
+Sometimes you need to exempt certain URLs from authentication. For example, you may want to secure
+your entire application, except that you want to allow sending data to a stream by unauthenticated clients.
+For this, you can configure the CDAP Router to bypass the authentication for URLs that match a given
+regular expression, by adding the following property in ``cdap-site.xml``:
+
+================================================= ==================== ======================================================
+Property                                          Default Value        Description
+================================================= ==================== ======================================================
+``router.bypass.auth.regex``                      *None*               Regular expression to match URLs that are
+                                                                       exempt from authentication.
+================================================= ==================== ======================================================
+
+
+For example, the following configuration in ``cdap-site.xml`` will allow unauthenticated
+posting to all streams in the default namespace::
+
+  <property>
+    <name>router.bypass.auth.regex</name>
+    <value>/v3/namespaces/default/streams/[^/]+</value>
+  </property>
+
+This must be configured on every node that runs the CDAP Router.
 
 Testing Security
 ----------------

@@ -30,7 +30,8 @@
 
 cdap_apps_version = '0.4.0'
 
-node_js_version = 'greater than v0.10.0'
+node_js_version = 'greater than v0.10.36 through v0.12.*'
+recommended_node_js_version = 'v0.12.*'
 
 import sys
 import os
@@ -188,6 +189,9 @@ rst_epilog = """
 .. |$| replace:: :gp:`$`
 
 .. role:: gp
+.. |#| replace:: :gp:`#`
+
+.. role:: gp
 .. |cdap >| replace:: :gp:`cdap >`
 
 .. |http:| replace:: http:
@@ -210,6 +214,9 @@ if node_js_version:
     rst_epilog = rst_epilog + """
 .. |node-js-version| replace:: %(node_js_version)s
 """ % {'node_js_version': node_js_version}
+    rst_epilog = rst_epilog + """
+.. |recommended_node_js_version| replace:: %(recommended_node_js_version)s
+""" % {'recommended_node_js_version': recommended_node_js_version}
 
 if version:
     rst_epilog = rst_epilog + """
@@ -686,3 +693,24 @@ def set_conf_for_manual():
     intersphinx_mapping.pop(manual_intersphinx_mapping[m], None)
 
     return html_short_title_toc, html_short_title, html_context
+
+# -- Handle Markdown files --------------------------------------------------
+
+def source_read_handler(app, docname, source):
+    doc_path = app.env.doc2path(docname)
+    if doc_path.endswith(".md"):
+        # Cache the self.env.config.rst_epilog and rst_prolog
+        if app.env.config.rst_epilog:
+            app.env.config.rst_epilog_cache = app.env.config.rst_epilog
+            app.env.config.rst_epilog = None
+        if app.env.config.rst_prolog:
+            app.env.config.rst_prolog_cache = app.env.config.rst_prolog
+            app.env.config.rst_prolog = None
+    else:
+        if not app.env.config.rst_epilog and hasattr(app.env.config, 'rst_epilog_cache') and app.env.config.rst_epilog_cache:
+            app.env.config.rst_epilog = app.env.config.rst_epilog_cache
+        if not app.env.config.rst_prolog and hasattr(app.env.config, 'rst_prolog_cache') and app.env.config.rst_prolog_cache:
+            app.env.config.rst_prolog = app.env.config.rst_prolog_cache
+
+def setup(app):
+    app.connect('source-read', source_read_handler)

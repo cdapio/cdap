@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -38,6 +38,9 @@ public interface HttpServiceConfigurer extends DatasetConfigurer, PluginConfigur
    * Adds the names of {@link co.cask.cdap.api.dataset.Dataset DataSets} used by the handler.
    *
    * @param datasets Dataset names.
+   * @deprecated Deprecated as of 3.4.0. Dataset can be requested directly through the method
+   *             {@link HttpServiceContext#getDataset(String)} at runtime.
    */
+  @Deprecated
   void useDatasets(Iterable<String> datasets);
 }

@@ -2,7 +2,7 @@
   "artifact": {
     "name": "cdap-etl-realtime",
     "scope": "SYSTEM",
-    "version": "3.3.0-SNAPSHOT"
+    "version": "3.4.0-SNAPSHOT"
   },
   "config": {
     "source": {
@@ -17,9 +17,9 @@
           "queueName": ""
         },
         "artifact": {
-          "name": "cdap-etl-lib",
+          "name": "core-plugins",
           "scope": "SYSTEM",
-          "version": "3.3.0-SNAPSHOT"
+          "version": "1.3.0-SNAPSHOT"
         }
       }
     },
@@ -34,9 +34,9 @@
             "schema.row.field": ""
           },
           "artifact": {
-            "name": "cdap-etl-lib",
+            "name": "core-plugins",
             "scope": "SYSTEM",
-            "version": "3.3.0-SNAPSHOT"
+            "version": "1.3.0-SNAPSHOT"
           }
         }
       }

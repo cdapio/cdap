@@ -32,7 +32,7 @@
         <tbody>
           <tr ng-repeat="schema in NodeConfigController.state.node.inputSchema" ng-keypress="enter($event, $last)">
             <td class="name" ng-if="!schema.empty">
-              <span tooltip="{{ schema.name }}"
+              <span uib-tooltip="{{ schema.name }}"
                     tooltip-ellipsis="{{ schema.name }}"
                     data-ellipsis="isEllipsis"
                     data-offset-value="20"

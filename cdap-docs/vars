@@ -7,7 +7,9 @@ COMMON_HIGHLEVEL_PY="$COMMON/highlevel_conf.py"
 COMMON_PLACEHOLDER="$COMMON/_source/placeholder_index._rst"
 HTACCESS="htaccess"
 
+ALL="all"
 DOCS="docs"
+DOCS_OUTER="docs-outer"
 GITHUB="github"
 GITHUB_ONLY="Github-only"
 WEB="web"
@@ -19,4 +21,4 @@ WITH_JAVADOCS="$WITHOUT"
 MANUALS="introduction developers-manual cdap-apps admin-manual integrations examples-manual reference-manual faqs"
 
 # This needs to be explicitly set as Git has trouble identifying it.
-GIT_BRANCH_PARENT="release/3.3"
+GIT_BRANCH_PARENT="develop"

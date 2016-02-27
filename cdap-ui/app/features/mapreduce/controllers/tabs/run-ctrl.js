@@ -15,11 +15,11 @@
  */
 
 angular.module(PKG.name + '.feature.mapreduce')
-  .controller('MapreduceRunsController', function($scope, $state, $rootScope, rRuns, $filter, $bootstrapModal, rMapreduceDetail) {
+  .controller('MapreduceRunsController', function($scope, $state, $rootScope, rRuns, $filter, $uibModal, rMapreduceDetail) {
     var fFilter = $filter('filter'),
         match;
     this.runs = rRuns;
-    this.$bootstrapModal = $bootstrapModal;
+    this.$uibModal = $uibModal;
     this.description = rMapreduceDetail.description;
 
     if ($state.params.runid) {
@@ -75,7 +75,7 @@ angular.module(PKG.name + '.feature.mapreduce')
     };
 
     this.openHistory = function() {
-      this.$bootstrapModal.open({
+      this.$uibModal.open({
         size: 'lg',
         templateUrl: '/assets/features/mapreduce/templates/tabs/history.html',
         controller: ['runs', '$scope', function(runs, $scope) {

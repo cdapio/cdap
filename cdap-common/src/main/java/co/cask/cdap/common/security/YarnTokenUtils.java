@@ -16,6 +16,7 @@
 
 package co.cask.cdap.common.security;
 
+import com.google.common.base.Joiner;
 import com.google.common.base.Throwables;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.security.Credentials;
@@ -32,6 +33,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.InetSocketAddress;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Helper class for getting Yarn security delegation token.
@@ -58,9 +61,12 @@ public final class YarnTokenUtils {
         Text renewer = new Text(UserGroupInformation.getCurrentUser().getShortUserName());
         org.apache.hadoop.yarn.api.records.Token rmDelegationToken = yarnClient.getRMDelegationToken(renewer);
 
+        // TODO: The following logic should be replaced with call to ClientRMProxy.getRMDelegationTokenService after
+        // CDAP-4825 is resolved
+        List<String> services = new ArrayList<>();
         if (HAUtil.isHAEnabled(configuration)) {
           // If HA is enabled, we need to enumerate all RM hosts
-          // and add the corresponding service name to the credential store.
+          // and add the corresponding service name to the token service
           // Copy the yarn conf since we need to modify it to get the RM addresses
           YarnConfiguration yarnConf = new YarnConfiguration(configuration);
           for (String rmId : HAUtil.getRMHAIds(configuration)) {
@@ -68,18 +74,19 @@ public final class YarnTokenUtils {
             InetSocketAddress address = yarnConf.getSocketAddr(YarnConfiguration.RM_ADDRESS,
                                                                YarnConfiguration.DEFAULT_RM_ADDRESS,
                                                                YarnConfiguration.DEFAULT_RM_PORT);
-            Token<TokenIdentifier> token = ConverterUtils.convertFromYarn(rmDelegationToken, address);
-            credentials.addToken(new Text(token.getService()), token);
-
-            // OK to log, it won't log the credential, only information about the token.
-            LOG.info("Added RM delegation token: {}", token);
+            services.add(SecurityUtil.buildTokenService(address).toString());
           }
         } else {
-          Token<TokenIdentifier> token = ConverterUtils.convertFromYarn(rmDelegationToken,
-                                                                        YarnUtils.getRMAddress(configuration));
-          credentials.addToken(new Text(token.getService()), token);
-          LOG.info("Added RM delegation token: {}", token);
+          services.add(SecurityUtil.buildTokenService(YarnUtils.getRMAddress(configuration)).toString());
         }
+
+        Token<TokenIdentifier> token = ConverterUtils.convertFromYarn(rmDelegationToken, (InetSocketAddress) null);
+        token.setService(new Text(Joiner.on(',').join(services)));
+        credentials.addToken(new Text(token.getService()), token);
+
+        // OK to log, it won't log the credential, only information about the token.
+        LOG.info("Added RM delegation token: {}", token);
+
       } finally {
         yarnClient.stop();
       }

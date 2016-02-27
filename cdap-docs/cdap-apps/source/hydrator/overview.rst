@@ -8,6 +8,11 @@
 ETL Overview 
 ============
 
+.. toctree::
+    :hidden:
+    :glob:
+
+    **
 
 A Quick Intro to ETL
 ====================
@@ -41,70 +46,7 @@ The batch sources can write to any batch sinks that are available and real-time 
 write to any real-time sinks. Transformations work with either sinks or sources. Transformations
 can use *validators* to test data and check that it follows user-specified rules.
 
-This lists the available sources, sinks, and transformations (transforms):
-
-.. list-table::
-   :widths: 30 40 30
-   :header-rows: 1
-
-   * - Sources
-     - Transformations
-     - Sinks
-   * - - **Batch Sources**
-
-         - :ref:`Database <cdap-apps-etl-plugins-batch-sources-database>`
-         - :ref:`File <cdap-apps-etl-plugins-batch-sources-file>`
-         - :ref:`KVTable <cdap-apps-etl-plugins-batch-sources-kvtable>`
-         - :ref:`Amazon S3 <cdap-apps-etl-plugins-batch-sources-s3>`
-         - :ref:`Stream <cdap-apps-etl-plugins-batch-sources-stream>`
-         - :ref:`Table <cdap-apps-etl-plugins-batch-sources-table>`
-         - :ref:`TPFSAvro <cdap-apps-etl-plugins-batch-sources-tpfsavro>`
-
-     - - **Transforms**
-
-         - :ref:`LogParser <cdap-apps-etl-plugins-transformations-logparser>`
-         - :ref:`Projection <cdap-apps-etl-plugins-transformations-projection>`
-         - :ref:`Script <cdap-apps-etl-plugins-transformations-script>`
-         - :ref:`ScriptFilter <cdap-apps-etl-plugins-transformations-scriptfilter>`
-         - :ref:`StructuredRecordToGenericRecord <cdap-apps-etl-plugins-transformations-structuredrecordtogenericrecord>`
-         - :ref:`Validator <cdap-apps-etl-plugins-transformations-validator>`
-
-     - - **Batch Sinks**
-
-         - :ref:`Cube <cdap-apps-etl-plugins-batch-sinks-cube>`
-         - :ref:`Database <cdap-apps-etl-plugins-batch-sinks-database>`
-         - :ref:`KVTable <cdap-apps-etl-plugins-batch-sinks-kvtable>`
-         - :ref:`S3Avro <cdap-apps-etl-plugins-batch-sinks-s3avro>`
-         - :ref:`S3Parquet <cdap-apps-etl-plugins-batch-sinks-s3parquet>`
-         - :ref:`SnapshotAvro <cdap-apps-etl-plugins-batch-sinks-snapshotavro>`
-         - :ref:`SnapshotParquet <cdap-apps-etl-plugins-batch-sinks-snapshotparquet>`
-         - :ref:`Table <cdap-apps-etl-plugins-batch-sinks-table>`
-         - :ref:`TPFSAvro <cdap-apps-etl-plugins-batch-sinks-tpfsavro>`
-         - :ref:`TPFSParquet <cdap-apps-etl-plugins-batch-sinks-tpfsparquet>`
-
-   * - - **Real-time Sources**
-
-         - :ref:`AmazonSQS <cdap-apps-etl-plugins-real-time-sources-amazonsqs>`
-         - :ref:`DataGenerator <cdap-apps-etl-plugins-real-time-sources-datagenerator>`
-         - :ref:`JMS <cdap-apps-etl-plugins-real-time-sources-jms>`
-         - :ref:`Kafka <cdap-apps-etl-plugins-real-time-sources-kafka>`
-         - :ref:`Twitter <cdap-apps-etl-plugins-real-time-sources-twitter>`
-
-     - - **Transforms**
-
-         - :ref:`LogParser <cdap-apps-etl-plugins-transformations-logparser>`
-         - :ref:`Projection <cdap-apps-etl-plugins-transformations-projection>`
-         - :ref:`Script <cdap-apps-etl-plugins-transformations-script>`
-         - :ref:`ScriptFilter <cdap-apps-etl-plugins-transformations-scriptfilter>`
-         - :ref:`StructuredRecordToGenericRecord <cdap-apps-etl-plugins-transformations-structuredrecordtogenericrecord>`
-         - :ref:`Validator <cdap-apps-etl-plugins-transformations-validator>`
-
-     - - **Real-time Sinks**
-
-         - :ref:`Cube <cdap-apps-etl-plugins-real-time-sinks-cube>`
-         - :ref:`Stream <cdap-apps-etl-plugins-real-time-sinks-stream>`
-         - :ref:`Table <cdap-apps-etl-plugins-real-time-sinks-table>`
-
+The section :doc:`ETL Plugins <hydrator-plugins/index>` lists the available sources, sinks, and transformations (transforms).
 
 
 .. rubric:: ETL Applications
@@ -152,33 +94,6 @@ Application and Plugin Details
 - |etl-custom|_ Intended for developers writing custom ETL plugins.
 
 .. |etl-plugins| replace:: **ETL Plugins:**
-.. _etl-plugins: plugins/index.html
+.. _etl-plugins: hydrator-plugins/index.html
 
 - |etl-plugins|_ Details on ETL plugins and exploring available plugins using RESTful APIs.
-
-Upgrade Procedure
-=================
-
-If you wish to upgrade ETL applications created using the 3.2.x versions of ``cdap-etl-batch`` or ``cdap-etl-realtime``,
-you can use the ETL upgrade tool packaged with the distributed version of CDAP.
-The tool will connect to an instance of CDAP, look for any applications that use 3.2.x versions of the
-``cdap-etl-batch`` or ``cdap-etl-realtime`` artifacts, and then update application to use the |version| version of those artifacts.
-CDAP must be running when you run the command:
-
-.. parsed-literal::
-  java -cp /opt/cdap/master/libexec/cdap-etl-tools-|version|.jar co.cask.cdap.etl.tool.UpgradeTool -u http://<host>:<port> upgrade
-
-You can also upgrade just the ETL applications within a specific namespace:
-
-.. parsed-literal::
-  java -cp /opt/cdap/master/libexec/cdap-etl-tools-|version|.jar co.cask.cdap.etl.tool.UpgradeTool -u http://<host>:<port> -n <namespace> upgrade
-
-Or just one application:
-
-.. parsed-literal::
-  java -cp /opt/cdap/master/libexec/cdap-etl-tools-|version|.jar co.cask.cdap.etl.tool.UpgradeTool -u http://<host>:<port> -n <namespace> -p <app-name> upgrade
-
-If you have authentication turned on, you also need to store an authentication token in a file and pass the file to the tool:
-
-.. parsed-literal::
-  java -cp /opt/cdap/master/libexec/cdap-etl-tools-|version|.jar co.cask.cdap.etl.tool.UpgradeTool -u http://<host>:<port> -a <tokenfile> upgrade

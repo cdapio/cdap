@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.services')
-  .factory('myAppUploader', function(myFileUploader, $state, $alert, myAlert) {
+  .factory('myAppUploader', function(myFileUploader, $state, myAlertOnValium) {
     function upload(files, namespace) {
 
       for (var i = 0; i < files.length; i++) {
@@ -28,17 +28,18 @@ angular.module(PKG.name + '.services')
       }
 
       function success() {
-        $alert({
-          type: 'success',
-          title: 'Upload success',
-          content: 'The application has been uploaded successfully'
-        });
-        $state.reload();
+        $state.reload()
+          .then(function() {
+            myAlertOnValium.show({
+              type: 'success',
+              content: 'Application has been successfully uploaded'
+            });
+          });
       }
 
       // Independent xhr request. Failure case will not be handled by $rootScope.
       function error(err) {
-        myAlert({
+        myAlertOnValium.show({
           type: 'danger',
           title: 'Upload failed',
           content: err || ''

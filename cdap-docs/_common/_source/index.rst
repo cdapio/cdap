@@ -87,7 +87,8 @@ on the installation, monitoring and diagnosing fully distributed CDAP in a Hadoo
 
 - |admin-manual|_ 
 
-  - **Installation:** Putting CDAP into production, with installation and configuration for different distributions
+  - **Installation:** Putting CDAP into production, with installation, configuration and upgrading for
+    different distributions
   - **Security:** CDAP supports securing clusters using a perimeter security model
   - **Operations:** Logging, metrics, monitoring, runtime arguments, scaling instances, resource
     guarantees, transaction service maintenance, troubleshooting and introduces the CDAP UI
@@ -100,7 +101,8 @@ on the installation, monitoring and diagnosing fully distributed CDAP in a Hadoo
 
 - |integrations|_ 
 
-  - **Cloudera:** Integrating CDAP into Cloudera, using Cloudera Manager, and running interactive queries with Impala
+  - **Cloudera:** Integrating CDAP into Cloudera, using Cloudera Manager, running interactive queries with Impala, and
+    bridging CDAP Metadata with Cloudera's data management tool, Navigator
   - **JDBC:** The CDAP JDBC driver, included with CDAP
   - **Pentaho:** *Pentaho Data Integration*, a business intelligence tool that can be used with CDAP
   - **Squirrel:** *SquirrelSQL*, a simple JDBC client that can be integrated with CDAP

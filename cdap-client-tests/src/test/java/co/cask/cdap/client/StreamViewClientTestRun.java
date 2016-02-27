@@ -108,7 +108,7 @@ public class StreamViewClientTestRun extends ClientTestBase {
           Schema.Field.of("one", Schema.of(Schema.Type.STRING)),
           Schema.Field.of("two", Schema.of(Schema.Type.STRING)),
           Schema.Field.of("three", Schema.of(Schema.Type.STRING))));
-      ViewSpecification newViewSpecification = new ViewSpecification(newFormat, "sometable");
+      ViewSpecification newViewSpecification = new ViewSpecification(newFormat, "firsttable");
       LOG.info("Updating view {} with config {}", view1, GSON.toJson(newViewSpecification));
       Assert.assertEquals(false, streamViewClient.createOrUpdate(view1, newViewSpecification));
 
@@ -117,7 +117,7 @@ public class StreamViewClientTestRun extends ClientTestBase {
       Assert.assertEquals(ImmutableList.of(view1.getId()), streamViewClient.list(stream));
 
       ExploreExecutionResult executionResult = queryClient.execute(
-        view1.getNamespace(), "select one,two,three from sometable").get();
+        view1.getNamespace(), "select one,two,three from firsttable").get();
       Assert.assertNotNull(executionResult.getResultSchema());
       Assert.assertEquals(3, executionResult.getResultSchema().size());
       Assert.assertEquals("one", executionResult.getResultSchema().get(0).getName());
@@ -168,9 +168,7 @@ public class StreamViewClientTestRun extends ClientTestBase {
       LOG.info("Creating view {} with config {}", view1, GSON.toJson(viewSpecification));
       Assert.assertEquals(true, streamViewClient.createOrUpdate(view1, viewSpecification));
 
-      streamClient.delete(stream);
     } finally {
-      streamViewClient.delete(view1);
       streamClient.delete(stream);
     }
   }

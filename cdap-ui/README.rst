@@ -2,7 +2,13 @@
 CDAP Angular UI
 ===============
 
+To build UI:
+===========
 
+Install dependencies and build UI::
+
+  npm install && bower install && gulp clean && gulp build
+  
 To install dependencies:
 ========================
 

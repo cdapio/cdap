@@ -35,7 +35,8 @@ angular.module(PKG.name + '.feature.hydrator')
     this.setState();
     BottomPanelStore.registerOnChangeListener(this.setState.bind(this));
     var obj = DetailNonRunsStore.getCloneConfig();
-    NodesActionsFactory.createGraphFromConfig(obj.__ui__.nodes, obj.config.connections);
+
+    NodesActionsFactory.createGraphFromConfig(obj.__ui__.nodes, obj.config.connections, obj.config.comments);
 
     this.updateNodesAndConnections = function () {
       var activeNode = this.NodesStore.getActiveNodeId();

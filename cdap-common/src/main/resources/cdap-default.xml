@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
 <!--
-  Copyright © 2014-2015 Cask Data, Inc.
+  Copyright © 2014-2016 Cask Data, Inc.
 
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy of
@@ -66,7 +66,7 @@
     <value>2</value>
     <description>
       Indicates the maximum number of retries JobClient will make to
-      establish a server connection when retrieving job status and history
+      establish a service connection when retrieving job status and history
     </description>
   </property>
 
@@ -90,11 +90,41 @@
   </property>
 
   <property>
+    <name>master.startup.checks.enabled</name>
+    <value>true</value>
+    <description>
+      Whether checks should be run before startup to determine if the CDAP Master can be run correctly.
+      Which checks are run is determined by the master.startup.checks.packages and master.startup.checks.classes
+      settings. If any checks fail, the CDAP Master will fail to start instead of waiting for the problem to be fixed.
+      This setting only affects Distributed CDAP. It does not apply to Standalone CDAP.
+    </description>
+  </property>
+
+  <property>
+    <name>master.startup.checks.packages</name>
+    <value>co.cask.cdap.master.startup</value>
+    <description>
+      Comma-separated list of packages containing checks that will be run before the CDAP Master starts up.
+      If any of the checks fails, the CDAP Master will not start up.
+      Checks will only be run if master.startup.checks.enabled is set to true.
+    </description>
+  </property>
+
+  <property>
+    <name>master.startup.checks.classes</name>
+    <description>
+      Comma-separated list of classnames for checks that will be run before the CDAP Master starts up.
+      If any of the checks fails, the CDAP Master will not start up.
+      Checks will only be run if master.startup.checks.enabled is set to true.
+    </description>
+  </property>
+
+  <property>
     <name>thrift.max.read.buffer</name>
     <value>16777216</value>
     <description>
       Specifies the maximum read buffer size in bytes used by the Thrift
-      server; value should be set to greater than the maximum frame sent on
+      service; value should be set to greater than the maximum frame sent on
       the RPC channel
     </description>
   </property>
@@ -136,18 +166,11 @@
   </property>
 
   <property>
-    <name>yarn.user</name>
-    <value>yarn</value>
-    <description>
-      User name for running applications in YARN
-    </description>
-  </property>
-
-  <property>
     <name>zookeeper.quorum</name>
     <value>127.0.0.1:2181/${root.namespace}</value>
     <description>
-      ZooKeeper quorum string
+      ZooKeeper quorum string; specifies the ZooKeeper host:port; substitute the quorum
+      (FQDN1:2181,FQDN2:2181,...) for the components shown here
     </description>
   </property>
 
@@ -189,7 +212,8 @@
     <name>app.artifact.dir</name>
     <value>/opt/cdap/master/artifacts</value>
     <description>
-      Directory where all system artifacts and their corresponding config files are stored
+      Semicolon-separated list of local directories scanned for system artifacts
+      to add to the artifact repository
     </description>
   </property>
 
@@ -197,7 +221,7 @@
     <name>app.bind.address</name>
     <value>0.0.0.0</value>
     <description>
-      Host address on which the app fabric server is started
+      App Fabric service bind address
     </description>
   </property>
 
@@ -244,7 +268,7 @@
 
   <property>
     <name>scheduler.max.thread.pool.size</name>
-    <value>30</value>
+    <value>100</value>
     <description>
       Size of the scheduler thread pool
     </description>
@@ -291,7 +315,7 @@
     <name>data.tx.bind.address</name>
     <value>0.0.0.0</value>
     <description>
-      Transaction service inet address
+      Transaction service bind address
     </description>
   </property>
 
@@ -445,7 +469,7 @@
     <name>data.tx.thrift.max.read.buffer</name>
     <value>${thrift.max.read.buffer}</value>
     <description>
-      Maximum read buffer size (in bytes) used by the transaction server;
+      Maximum read buffer size (in bytes) used by the transaction service;
       the value should be set to something greater than the maximum frame
       sent on the RPC channel
     </description>
@@ -477,6 +501,22 @@
   </property>
 
   <property>
+    <name>dataset.executor.container.memory.mb</name>
+    <value>512</value>
+    <description>
+      Size of Memory in megabytes for each dataset executor instance
+    </description>
+  </property>
+
+  <property>
+    <name>dataset.executor.container.num.cores</name>
+    <value>1</value>
+    <description>
+      Number of virtual cores for each dataset executor instance
+    </description>
+  </property>
+
+  <property>
     <name>dataset.executor.max.instances</name>
     <value>${master.service.max.instances}</value>
     <description>
@@ -496,7 +536,7 @@
     <name>dataset.service.bind.address</name>
     <value>0.0.0.0</value>
     <description>
-      Dataset service hostname
+      Dataset service bind address
     </description>
   </property>
 
@@ -538,7 +578,7 @@
 
   <property>
     <name>explore.enabled</name>
-    <value>false</value>
+    <value>true</value>
     <description>
       Determines if the CDAP Explore Service (ad-hoc SQL queries) is enabled
     </description>
@@ -549,6 +589,22 @@
     <value>1</value>
     <description>
       Number of explore executor instances
+    </description>
+  </property>
+
+  <property>
+    <name>explore.executor.container.num.cores</name>
+    <value>1</value>
+    <description>
+      Number of virtual cores for each explore executor instance
+    </description>
+  </property>
+
+  <property>
+    <name>explore.executor.container.memory.mb</name>
+    <value>1024</value>
+    <description>
+      Size of Memory in megabytes for each explore executor instance
     </description>
   </property>
 
@@ -573,7 +629,7 @@
     <name>explore.local.data.dir</name>
     <value>${local.data.dir}/explore</value>
     <description>
-      Data directory for explore service when in standalone mode
+      Data directory for CDAP Explore Service when in Standalone mode
     </description>
   </property>
 
@@ -583,7 +639,7 @@
     <description>
       Determines the start-up of the CDAP Explore Service (ad-hoc SQL
       queries); if false, the explore service starts up when CDAP is
-      started; if true, the explore service will start upon the first query
+      started; if true, the CDAP Explore Service will start upon the first query
       it receives
     </description>
   </property>
@@ -604,7 +660,7 @@
     <name>app.boss.threads</name>
     <value>1</value>
     <description>
-      Number of Netty server boss threads
+      Number of Netty service boss threads
     </description>
   </property>
 
@@ -620,7 +676,7 @@
     <name>app.exec.threads</name>
     <value>20</value>
     <description>
-      Number of Netty server executor threads
+      Number of Netty service executor threads
     </description>
   </property>
 
@@ -628,7 +684,7 @@
     <name>app.worker.threads</name>
     <value>10</value>
     <description>
-      Number of Netty server worker threads
+      Number of Netty service worker threads
     </description>
   </property>
 
@@ -639,7 +695,7 @@
     <name>kafka.bind.address</name>
     <value>0.0.0.0</value>
     <description>
-      Kafka server hostname address
+      CDAP Kafka service bind address
     </description>
   </property>
 
@@ -647,7 +703,7 @@
     <name>kafka.bind.port</name>
     <value>9092</value>
     <description>
-      Kafka server bind port
+      CDAP Kafka service bind port
     </description>
   </property>
 
@@ -655,11 +711,11 @@
     <name>kafka.default.replication.factor</name>
     <value>1</value>
     <description>
-      Kafka replication factor; used to replicate Kafka messages across
+      CDAP Kafka service replication factor; used to replicate Kafka messages across
       multiple machines to prevent data loss in the event of a hardware
-      failure. The recommended setting is to run at least two Kafka servers.
-      If you are running two Kafka servers, set this value to 2; otherwise,
-      set it to the number of Kafka servers.
+      failure. The recommended setting is to run at least two CDAP Kafka servers.
+      If you are running two CDAP Kafka servers, set this value to 2; otherwise,
+      set it to the number of CDAP Kafka servers.
     </description>
   </property>
 
@@ -667,7 +723,7 @@
     <name>kafka.log.dir</name>
     <value>/tmp/kafka-logs</value>
     <description>
-      Kafka log storage directory
+      CDAP Kafka service log storage directory
     </description>
   </property>
 
@@ -680,23 +736,24 @@
   </property>
 
   <property>
+    <name>kafka.seed.brokers</name>
+    <value>127.0.0.1:9092</value>
+    <description>
+      Comma-separated list of CDAP Kafka service brokers; for distributed CDAP, 
+      replace with list of FQDN:port brokers
+    </description>
+  </property>
+
+  <property>
     <name>kafka.zookeeper.namespace</name>
     <value>kafka</value>
     <description>
-      Kafka ZooKeeper namespace
+      CDAP Kafka service ZooKeeper namespace
     </description>
   </property>
 
 
   <!-- Logging Configuration -->
-
-  <property>
-    <name>kafka.seed.brokers</name>
-    <value>127.0.0.1:9092</value>
-    <description>
-      List of Kafka brokers (comma separated)
-    </description>
-  </property>
 
   <property>
     <name>log.base.dir</name>
@@ -723,10 +780,18 @@
   </property>
 
   <property>
+    <name>log.kafka.topic</name>
+    <value>logs.user-v2</value>
+    <description>
+      Kafka topic name used to publish logs
+    </description>
+  </property>
+
+  <property>
     <name>log.publish.num.partitions</name>
     <value>10</value>
     <description>
-      Number of Kafka partitions to publish the logs to
+      Number of CDAP Kafka service partitions to publish the logs to
     </description>
   </property>
 
@@ -763,10 +828,18 @@
   </property>
 
   <property>
+    <name>log.saver.run.num.cores</name>
+    <value>2</value>
+    <description>
+      Number of cores for each log saver instance in YARN
+    </description>
+  </property>
+
+  <property>
     <name>log.saver.status.bind.address</name>
     <value>0.0.0.0</value>
     <description>
-      Default inet address for binding log saver HTTP service
+      Log Saver HTTP service bind address
     </description>
   </property>
 
@@ -777,7 +850,7 @@
     <name>http.service.boss.threads</name>
     <value>1</value>
     <description>
-      Number of Netty server boss threads for master HTTP services
+      Number of Netty service boss threads for master HTTP services
     </description>
   </property>
 
@@ -793,7 +866,7 @@
     <name>http.service.exec.threads</name>
     <value>20</value>
     <description>
-      Number of Netty server executor threads for master HTTP services
+      Number of Netty service executor threads for master HTTP services
     </description>
   </property>
 
@@ -801,7 +874,16 @@
     <name>http.service.worker.threads</name>
     <value>10</value>
     <description>
-      Number of Netty server worker threads for master HTTP services
+      Number of Netty service worker threads for master HTTP services
+    </description>
+  </property>
+
+  <property>
+    <name>master.collect.app.containers.log.level</name>
+    <value>ERROR</value>
+    <description>
+      The log level of application container logs that are streamed back to the CDAP Master process log.
+      The levels supported are [ ALL, TRACE, DEBUG, INFO, WARN, ERROR, OFF ].
     </description>
   </property>
 
@@ -809,7 +891,7 @@
     <name>master.collect.containers.log</name>
     <value>true</value>
     <description>
-      Determines if container logs are streamed back to the CDAP Master process log
+      Determines if master service container logs are streamed back to the CDAP Master process log
     </description>
   </property>
 
@@ -817,7 +899,7 @@
     <name>master.service.max.instances</name>
     <value>5</value>
     <description>
-      Maximum Number of Master Service Instances
+      Maximum number of Master Service instances
     </description>
   </property>
 
@@ -825,7 +907,7 @@
     <name>master.service.memory.mb</name>
     <value>512</value>
     <description>
-      Size of Memory in megabytes for Master Service instance
+      Size of memory in megabytes for Master Service instance
     </description>
   </property>
 
@@ -834,6 +916,18 @@
     <value>2</value>
     <description>
       Number of cores for Master Service instance
+    </description>
+  </property>
+
+  <property>
+    <name>master.startup.service.timeout.seconds</name>
+    <value>600</value>
+    <description>
+      Timeout in seconds for master services to wait for their dependent services to be available.
+      For example, the dataset executor master service requires the transaction service, and will wait for
+      the transaction service to become available while it is starting up.
+      If the timeout is hit, the service will fail to start and the master service will shut itself down.
+      If set to 0 or below, master services will not wait for their dependent services to start before starting themselves.
     </description>
   </property>
 
@@ -851,7 +945,7 @@
     <name>metadata.service.bind.address</name>
     <value>0.0.0.0</value>
     <description>
-      Default inet address for binding metadata HTTP service
+      Metadata HTTP service bind address
     </description>
   </property>
 
@@ -859,7 +953,7 @@
     <name>metadata.service.exec.threads</name>
     <value>${http.service.exec.threads}</value>
     <description>
-      Number of Netty server executor threads for metadata HTTP service
+      Number of Netty service executor threads for metadata HTTP service
     </description>
   </property>
 
@@ -867,7 +961,7 @@
     <name>metadata.service.worker.threads</name>
     <value>${http.service.worker.threads}</value>
     <description>
-      Number of Netty server IO worker threads for metadata HTTP service
+      Number of Netty service IO worker threads for metadata HTTP service
     </description>
   </property>
 
@@ -875,7 +969,7 @@
     <name>metadata.updates.kafka.broker.list</name>
     <value>127.0.0.1:${kafka.bind.port}</value>
     <description>
-      Kafka broker list to which metadata update notifications are published
+      Apache Kafka broker list to which metadata update notifications are published
     </description>
   </property>
 
@@ -883,7 +977,7 @@
     <name>metadata.updates.kafka.topic</name>
     <value>cdap-metadata-updates</value>
     <description>
-      Kafka topic to which metadata update notifications are published
+      Apache Kafka topic to which metadata update notifications are published
     </description>
   </property>
 
@@ -905,7 +999,7 @@
     <name>metrics.boss.threads</name>
     <value>${http.service.boss.threads}</value>
     <description>
-      Number of Netty server boss threads for metrics HTTP services
+      Number of Netty service boss threads for metrics HTTP services
     </description>
   </property>
 
@@ -964,7 +1058,7 @@
     <name>metrics.dataset.hbase.stats.report.interval</name>
     <value>60</value>
     <description>
-      Report interval for hbase stats, in seconds
+      Report interval for HBase stats, in seconds
     </description>
   </property>
 
@@ -972,7 +1066,7 @@
     <name>metrics.dataset.leveldb.stats.report.interval</name>
     <value>60</value>
     <description>
-      Report interval for leveldb stats, in seconds
+      Report interval for LevelDB stats, in seconds
     </description>
   </property>
 
@@ -980,7 +1074,7 @@
     <name>metrics.exec.threads</name>
     <value>${http.service.exec.threads}</value>
     <description>
-      Number of Netty server executor threads for metrics HTTP services
+      Number of Netty service executor threads for metrics HTTP services
     </description>
   </property>
 
@@ -1028,8 +1122,8 @@
     <name>metrics.processor.max.instances</name>
     <value>${master.service.max.instances}</value>
     <description>
-      Maximum number of instances for Metrics Processor Service Apache Twill
-      Runnable
+      Maximum number of instances for metrics processor service Apache Twill
+      runnable
     </description>
   </property>
 
@@ -1037,8 +1131,8 @@
     <name>metrics.processor.memory.mb</name>
     <value>512</value>
     <description>
-      Size of Memory in megabytes for Metrics Processor Service Apache Twill
-      Runnable
+      Size of memory in megabytes for metrics processor service Apache Twill
+      runnable
     </description>
   </property>
 
@@ -1046,7 +1140,7 @@
     <name>metrics.processor.num.cores</name>
     <value>1</value>
     <description>
-      Number of cores for Metrics Processor Service Apache Twill Runnable
+      Number of cores for metrics processor service Apache Twill runnable
     </description>
   </property>
 
@@ -1054,8 +1148,8 @@
     <name>metrics.processor.num.instances</name>
     <value>1</value>
     <description>
-      Number of instances for Metrics Processor Service Apache Twill
-      Runnable
+      Number of instances for metrics processor service Apache Twill
+      runnable
     </description>
   </property>
 
@@ -1063,7 +1157,7 @@
     <name>metrics.processor.status.bind.address</name>
     <value>0.0.0.0</value>
     <description>
-      Default inet address for binding metrics processor HTTP service
+      Metrics Processor HTTP service bind address
     </description>
   </property>
 
@@ -1071,7 +1165,7 @@
     <name>metrics.query.bind.address</name>
     <value>0.0.0.0</value>
     <description>
-      Metrics query server host address
+      Metrics Query service bind address
     </description>
   </property>
 
@@ -1079,7 +1173,7 @@
     <name>metrics.query.bind.port</name>
     <value>45005</value>
     <description>
-      Metrics query server bind port
+      Metrics Query service bind port
     </description>
   </property>
 
@@ -1087,7 +1181,7 @@
     <name>metrics.worker.threads</name>
     <value>${http.service.worker.threads}</value>
     <description>
-      Number of Netty server worker threads for metrics HTTP services
+      Number of Netty service worker threads for metrics HTTP services
     </description>
   </property>
 
@@ -1098,8 +1192,8 @@
     <name>monitor.handler.service.discovery.timeout.seconds</name>
     <value>1</value>
     <description>
-      Timeout in seconds for service discovery used in Monitor Handler
-      Service Status check
+      Timeout in seconds for service discovery used in monitor handler
+      service status check
     </description>
   </property>
 
@@ -1107,10 +1201,18 @@
   <!-- Notification System Configuration -->
 
   <property>
+    <name>notification.kafka.topic</name>
+    <value>notifications</value>
+    <description>
+      Kafka topic name used to publish notifications
+    </description>
+  </property>
+
+  <property>
     <name>notification.transport.system</name>
     <value>kafka</value>
     <description>
-      Transport system used by the Notification system: can be kafka/stream
+      Transport system used by the notification system; can be either 'kafka' or 'stream'
     </description>
   </property>
 
@@ -1150,7 +1252,7 @@
     <name>router.bind.address</name>
     <value>0.0.0.0</value>
     <description>
-      Router server address
+      CDAP Router service bind address
     </description>
   </property>
 
@@ -1158,61 +1260,69 @@
     <name>router.bind.port</name>
     <value>10000</value>
     <description>
-      Port number that the CDAP router should bind to for HTTP connections
+      CDAP Router service bind port
     </description>
   </property>
 
   <property>
     <name>router.client.boss.threads</name>
     <value>1</value>
-    <description>The number of boss threads in the router client</description>
+    <description>The number of boss threads in the CDAP Router service client</description>
   </property>
 
   <property>
     <name>router.client.worker.threads</name>
     <value>10</value>
-    <description>The number of worker threads in the router client</description>
+    <description>The number of worker threads in the CDAP Router service client</description>
   </property>
 
   <property>
     <name>router.connection.backlog</name>
     <value>20000</value>
-    <description>The connection backlog in the router server</description>
+    <description>The connection backlog in the CDAP Router service</description>
   </property>
 
   <property>
     <name>router.connection.idle.timeout.secs</name>
     <value>15</value>
     <description>
-      The number of seconds after an http request completes that idle router connections are closed
+      The number of seconds after an HTTP request completes that idle router connections are closed
+    </description>
+  </property>
+
+  <property>
+    <name>router.server.address</name>
+    <value>127.0.0.1</value>
+    <description>
+      CDAP Router service address to which CDAP UI connects
     </description>
   </property>
 
   <property>
     <name>router.server.boss.threads</name>
     <value>1</value>
-    <description>The number of boss threads in the router server</description>
+    <description>The number of boss threads in the CDAP Router service</description>
   </property>
 
   <property>
     <name>router.server.port</name>
     <value>${router.bind.port}</value>
     <description>
-      Router port to which CDAP UI connects
+      CDAP Router service port to which CDAP UI connects
     </description>
   </property>
 
   <property>
     <name>router.server.worker.threads</name>
     <value>10</value>
-    <description>The number of worker threads in the Router server</description>
+    <description>The number of worker threads in the CDAP Router service</description>
   </property>
 
   <property>
     <name>router.ssl.bind.port</name>
     <value>10443</value>
     <description>
-      Port number that the CDAP router should bind to for HTTPS connections
+      CDAP Router service bind port for HTTPS
     </description>
   </property>
 
@@ -1227,7 +1337,7 @@
     <name>router.ssl.webapp.bind.port</name>
     <value>20443</value>
     <description>
-      Secure router listening port for webapp
+      CDAP Router service bind port for webapp for HTTPS (deprecated)
     </description>
   </property>
 
@@ -1235,7 +1345,7 @@
     <name>router.webapp.bind.port</name>
     <value>20000</value>
     <description>
-      Router listening port for webapp
+      CDAP Router service bind port for webapp (deprecated)
     </description>
   </property>
 
@@ -1243,7 +1353,7 @@
     <name>router.webapp.enabled</name>
     <value>false</value>
     <description>
-      Determines if the webapp listening service should be started at router
+      Determines if the webapp listening service should be started (deprecated)
     </description>
   </property>
 
@@ -1254,7 +1364,7 @@
     <name>cdap.master.kerberos.keytab</name>
     <value></value>
     <description>
-      The full path to the Kerberos keytab file containing the CDAP Master's
+      The full path to the Kerberos keytab file containing the CDAP Master service's
       credentials
     </description>
   </property>
@@ -1264,7 +1374,7 @@
     <value></value>
     <description>
       Example: "CDAP_PRINCIPAL/_HOST@EXAMPLE.COM". The Kerberos primary user
-      that should be used to login to the CDAP Master process. Substitute
+      that should be used to login to the CDAP Master service. Substitute
       the Kerberos primary (user) for CDAP_PRINCIPAL, and your domain for
       EXAMPLE.COM. The string "_HOST" will be substituted with the local
       hostname.
@@ -1280,10 +1390,18 @@
   </property>
 
   <property>
+    <name>kerberos.auth.relogin.interval.seconds</name>
+    <value>300</value>
+    <description>
+      Relogin interval for Kerberos keytab
+    </description>
+  </property>
+
+  <property>
     <name>security.auth.server.bind.address</name>
     <value>0.0.0.0</value>
     <description>
-      IP address that the CDAP Authentication Server should bind to
+      CDAP Authentication service bind address
     </description>
   </property>
 
@@ -1291,7 +1409,7 @@
     <name>security.auth.server.bind.port</name>
     <value>10009</value>
     <description>
-      Port that the CDAP Authentication Server should bind to
+      CDAP Authentication service bind port
     </description>
   </property>
 
@@ -1299,7 +1417,7 @@
     <name>security.auth.server.ssl.bind.port</name>
     <value>10010</value>
     <description>
-      Port to bind to for HTTPS on the CDAP Authentication Server
+      CDAP Authentication service bind port for HTTPS
     </description>
   </property>
 
@@ -1378,7 +1496,7 @@
     <name>security.server.maxthreads</name>
     <value>100</value>
     <description>
-      Maximum number of threads that the CDAP Authentication Server should
+      Maximum number of threads that the CDAP Authentication service should
       use for handling HTTP requests
     </description>
   </property>
@@ -1456,7 +1574,7 @@
     <name>stream.async.queue.size</name>
     <value>100</value>
     <description>
-      Queue size per async worker thread for queuing up async write request
+      Queue size per async worker thread for queuing up async write requests
     </description>
   </property>
 
@@ -1464,7 +1582,7 @@
     <name>stream.async.worker.threads</name>
     <value>${stream.worker.threads}</value>
     <description>
-      Number of async worker threads for handling async write request
+      Number of async worker threads for handling async write requests
     </description>
   </property>
 
@@ -1489,7 +1607,7 @@
     <name>stream.bind.address</name>
     <value>0.0.0.0</value>
     <description>
-      Default inet address for binding stream HTTP service
+      Stream HTTP service bind address
     </description>
   </property>
 
@@ -1505,8 +1623,8 @@
     <name>stream.container.instance.id</name>
     <value>0</value>
     <description>
-      Instance ID for stream service container. The actual value will be set
-      at runtime by the system automatically.
+      Instance ID for the stream service container; the actual value will be set
+      at runtime by the system automatically
     </description>
   </property>
 
@@ -1514,7 +1632,8 @@
     <name>stream.container.instances</name>
     <value>1</value>
     <description>
-      Number of YARN container instances for the stream handler
+      Number of YARN container instances for the stream handler; 
+      in standalone mode, it's always one
     </description>
   </property>
 
@@ -1549,7 +1668,7 @@
     <name>stream.file.cleanup.period</name>
     <value>300000</value>
     <description>
-      How often to run stream file cleanup process in milliseconds
+      Default time interval in milliseconds for running the stream file cleanup process
     </description>
   </property>
 
@@ -1633,6 +1752,15 @@
   </property>
 
   <property>
+    <name>dashboard.router.check.timeout.secs</name>
+    <value>0</value>
+    <description>
+      Amount of time, in seconds, CDAP UI waits before exiting when unable to connect to
+      CDAP Router service on startup; use a timeout of 0 to wait indefinitely
+    </description>
+  </property>
+
+  <property>
     <name>dashboard.ssl.bind.port</name>
     <value>9443</value>
     <description>
@@ -1648,12 +1776,5 @@
     </description>
   </property>
 
-  <property>
-    <name>router.server.address</name>
-    <value>127.0.0.1</value>
-    <description>
-      Router address to which CDAP UI connects
-    </description>
-  </property>
 
 </configuration>

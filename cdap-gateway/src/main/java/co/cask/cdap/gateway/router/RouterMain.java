@@ -16,6 +16,7 @@
 
 package co.cask.cdap.gateway.router;
 
+import co.cask.cdap.common.ServiceBindException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
@@ -48,7 +49,12 @@ public class RouterMain extends DaemonMain {
     try {
       new RouterMain().doMain(args);
     } catch (Throwable e) {
-      LOG.error("Got exception", e);
+      Throwable rootCause = Throwables.getRootCause(e);
+      if (rootCause instanceof ServiceBindException) {
+        LOG.error("Failed to start Router: {}", rootCause.getMessage());
+      } else {
+        LOG.error("Failed to start Router", e);
+      }
     }
   }
 

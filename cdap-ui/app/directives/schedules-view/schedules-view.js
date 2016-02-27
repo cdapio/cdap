@@ -22,7 +22,8 @@ angular.module(PKG.name + '.commons')
         schedules: '=',
         isSchedulesDisabled: '@',
         onScheduleAction: '&',
-        scheduleContext: '='
+        scheduleContext: '=',
+        error: '='
       },
       templateUrl: 'schedules-view/schedules-view.html',
       controller: function($scope) {

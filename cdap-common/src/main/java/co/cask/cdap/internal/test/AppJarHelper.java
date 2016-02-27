@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,15 +17,18 @@
 package co.cask.cdap.internal.test;
 
 import co.cask.cdap.common.lang.ClassLoaders;
-import com.google.common.collect.ImmutableList;
+import co.cask.cdap.common.lang.ProgramResources;
+import co.cask.cdap.proto.ProgramType;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.Files;
+import org.apache.twill.api.ClassAcceptor;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.apache.twill.internal.ApplicationBundler;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URL;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.jar.Attributes;
@@ -46,11 +49,15 @@ public final class AppJarHelper {
   public static Location createDeploymentJar(LocationFactory locationFactory, Class<?> clz, Manifest manifest,
                                              File... bundleEmbeddedJars) throws IOException {
 
-    ApplicationBundler bundler = new ApplicationBundler(ImmutableList.of("co.cask.cdap.api",
-                                                                         "org.apache.hadoop",
-                                                                         "org.apache.hive",
-                                                                         "org.apache.spark"),
-                                                        ImmutableList.of("org.apache.hadoop.hbase"));
+    final Set<String> visibleResources = ProgramResources.getVisibleResources(AppJarHelper.class.getClassLoader(),
+                                                                              ProgramType.SPARK);
+    // Exclude all classes that are visible form the system to the program classloader.
+    ApplicationBundler bundler = new ApplicationBundler(new ClassAcceptor() {
+      @Override
+      public boolean accept(String className, URL classUrl, URL classPathUrl) {
+        return !visibleResources.contains(className.replace('.', '/') + ".class");
+      }
+    });
     Location jarLocation = locationFactory.create(clz.getName()).getTempFile(".jar");
     ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(clz.getClassLoader());
     try {

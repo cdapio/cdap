@@ -31,24 +31,8 @@ import org.slf4j.{Logger, LoggerFactory}
  * Implementation of KMeans Clustering Spark Program.
  */
 class SparkKMeansProgram extends ScalaSparkProgram {
-  private final val LOG: Logger = LoggerFactory.getLogger(classOf[SparkKMeansProgram])
 
-  def pointVector(point: Point): Vector[Double] = {
-    DenseVector(Array(point.getX, point.getX, point.getZ).map(_.doubleValue()))
-  }
-
-  def closestPoint(p: Vector[Double], centers: Array[Vector[Double]]): Int = {
-    var bestIndex = 0
-    var closest = Double.PositiveInfinity
-    for (i <- 0 until centers.length) {
-      val tempDist = squaredDistance(p, centers(i))
-      if (tempDist < closest) {
-        closest = tempDist
-        bestIndex = i
-      }
-    }
-    bestIndex
-  }
+  import SparkKMeansProgram._
 
   override def run(sc: SparkContext) {
 
@@ -69,7 +53,7 @@ class SparkKMeansProgram extends ScalaSparkProgram {
 
     LOG.info("Calculating centers")
 
-    val kPoints = data.takeSample(withReplacement = false, K, 42).toArray
+    val kPoints = data.takeSample(withReplacement = false, K, 42)
     var tempDist = 1.0
     while (tempDist > convergeDist) {
       val closest = data.map(p => (closestPoint(p, kPoints), (p, 1)))
@@ -87,9 +71,9 @@ class SparkKMeansProgram extends ScalaSparkProgram {
       LOG.debug("Finished iteration (delta = {})", tempDist)
     }
 
-    LOG.info("Center count {}", kPoints.size)
+    LOG.info("Center count {}", kPoints.length)
 
-    val centers = new Array[(Array[Byte], String)](kPoints.size)
+    val centers = new Array[(Array[Byte], String)](kPoints.length)
     for (i <- kPoints.indices) {
       LOG.debug("Center {}, {}", i, kPoints(i).toString)
       centers(i) = new Tuple2(i.toString.getBytes, kPoints(i).toArray.mkString(","))
@@ -101,5 +85,27 @@ class SparkKMeansProgram extends ScalaSparkProgram {
     sc.writeToDataset(originalContext.parallelize(centers), "centers", classOf[Array[Byte]], classOf[String])
 
     LOG.info("Done!")
+  }
+}
+
+object SparkKMeansProgram {
+
+  private final val LOG: Logger = LoggerFactory.getLogger(classOf[SparkKMeansProgram])
+
+  private[sparkkmeans] def pointVector(point: Point): Vector[Double] = {
+    DenseVector(Array(point.getX, point.getX, point.getZ).map(_.doubleValue()))
+  }
+
+  private[sparkkmeans] def closestPoint(p: Vector[Double], centers: Array[Vector[Double]]): Int = {
+    var bestIndex = 0
+    var closest = Double.PositiveInfinity
+    for (i <- centers.indices) {
+      val tempDist = squaredDistance(p, centers(i))
+      if (tempDist < closest) {
+        closest = tempDist
+        bestIndex = i
+      }
+    }
+    bestIndex
   }
 }

@@ -40,16 +40,19 @@ function usage() {
   echo 
   echo "    docs-github-only  Clean build of HTML, zipped, with GitHub code, skipping Javadocs"
   echo "    docs-web-only     Clean build of HTML, zipped, with docs.cask.co code, skipping Javadocs"
+  echo "    docs-outer        Dirty build of HTML with docs.cask.co code, skipping re-building inner doc, zipping, and Javadocs"
   echo "    docs              Dirty build of HTML with docs.cask.co code, skipping zipping and Javadocs"
   echo 
   echo "    docs-github  Clean build of HTML and Javadocs, zipped, for placing on GitHub"
   echo "    docs-web     Clean build of HTML and Javadocs, zipped, for placing on docs.cask.co webserver"
   echo 
-  echo "    clean     Clean up any previous build's target directories"
-  echo "    javadocs  Build Javadocs"
-  echo "    licenses  Clean build of License Dependency PDFs"
-  echo "    sdk       Build CDAP SDK"
-  echo "    version   Print the version information"
+  echo "    clean         Clean up any previous build's target directories"
+  echo "    docs-cli      Build CLI documentation"
+  echo "    javadocs      Build Javadocs used in documentation"
+  echo "    javadocs-all  Build Javadocs for all modules"
+  echo "    licenses      Clean build of License Dependency PDFs"
+  echo "    sdk           Build CDAP SDK"
+  echo "    version       Print the version information"
   echo 
   echo "  with"
   echo "    source    Path to ${PROJECT} source, if not '${PROJECT_PATH}'"
@@ -72,6 +75,12 @@ function set_project_path() {
   fi
 }
 
+function set_debug() {
+  if [ "x${DEBUG}" == "x" ]; then
+    DEBUG="${FALSE}"
+  fi
+}
+
 function setup() {
   # Check that we're starting in the correct directory
   local quiet={$1}
@@ -85,6 +94,7 @@ function setup() {
       echo "Check for starting directory: Using \"${MANUAL}\""
     fi
     set_project_path
+    set_debug
     return 0
   else  
     echo "Did not find MANUAL \"${MANUAL}\": are you in the correct directory?"
@@ -97,6 +107,7 @@ function run_command() {
   case ${1} in
     docs-all )          build_all;;
     docs )              build_docs ${DOCS};;
+    docs-outer )        build_docs ${DOCS_OUTER};;
     docs-github-only )  build_docs ${GITHUB_ONLY};;
     docs-web-only )     build_docs ${WEB_ONLY};;
     docs-github )       build_docs ${GITHUB};;
@@ -107,7 +118,9 @@ function run_command() {
     docs-web-part )     build_docs_web_part;;
     
     clean )             clean_targets;;
-    javadocs )          build_javadocs;;
+    docs-cli )          build_docs_cli ;;
+    javadocs )          build_javadocs ${DOCS};;
+    javadocs-all )      build_javadocs ${ALL};;
     licenses )          build_license_dependency_pdfs;;
     sdk )               build_standalone;;
     version )           print_version;;
@@ -157,12 +170,16 @@ function build_docs() {
   echo "Building \"${doc_type}\" (${javadocs} Javadocs)"
   echo "--------------------------------------------------------"
   echo
-  if [ "${doc_type}" != "${DOCS}" ]; then
+  if [[ "${doc_type}" != "${DOCS}" && "${doc_type}" != "${DOCS_OUTER}" ]]; then
     clean_targets
   fi
   clear_messages_set_messages_file
-  run_command docs-first-pass ${source_path}
-  if [ "${doc_type}" == "${DOCS}" ]; then
+  
+  if [ "${doc_type}" != "${DOCS_OUTER}" ]; then
+    run_command docs-first-pass ${source_path}
+  fi
+  
+  if [ "${doc_type}" == "${DOCS}" -o "${doc_type}" == "${DOCS_OUTER}" ]; then
     build_docs_outer_level ${source_path}
     copy_docs_inner_level
   else
@@ -189,14 +206,15 @@ function build_docs() {
 }
 
 function build_javadocs() {
+  local javadoc_type=${1}
   echo "========================================================"
-  echo "Building Javadocs"
+  echo "Building Javadocs: '${javadoc_type}'"
   echo "--------------------------------------------------------"
   echo
   if [ ${NO_JAVADOCS} ]; then
     echo_red_bold "Javadocs disabled."
   else
-    build_javadocs_api
+    build_javadocs_api ${javadoc_type}
     USING_JAVADOCS="true"
     export USING_JAVADOCS
   fi
@@ -209,8 +227,39 @@ function build_javadocs() {
 }
 
 function build_javadocs_api() {
+  local javadoc_type=${1}
   set_mvn_environment
-  MAVEN_OPTS="-Xmx1024m -XX:MaxPermSize=128m" mvn clean install -P examples,templates,release -DskipTests -Dgpg.skip=true && mvn clean site -DskipTests -P templates -DisOffline=false
+  local javadoc_run="mvn javadoc:aggregate -P release"
+  if [ "${javadoc_type}" == "${DOCS}" ]; then
+    javadoc_run="mvn clean site -P templates"
+  fi
+  local debug_flag=""
+  if [ "${DEBUG}" == "${TRUE}" ]; then
+    debug_flag="-X"
+  fi
+  local start=`date`
+  MAVEN_OPTS="-Xmx1024m -XX:MaxPermSize=128m" mvn clean install -P examples,templates,release -DskipTests -Dgpg.skip=true && ${javadoc_run} -DskipTests -DisOffline=false ${debug_flag}
+  echo "Javadocs Build Start: ${start}"
+  echo "                 End: `date`"
+}
+
+function build_docs_cli() {
+  echo "========================================================"
+  echo "Building CLI Docs"
+  echo "--------------------------------------------------------"
+  echo
+  local target_txt=${SCRIPT_PATH}/../cdap-docs-gen/${TARGET}/cdap-docs-cli.txt
+  set_version
+  set_mvn_environment
+  mvn package -pl cdap-docs-gen -am -DskipTests
+  java -cp cdap-docs-gen/target/cdap-docs-gen-${PROJECT_VERSION}.jar:cdap-cli/target/cdap-cli-${PROJECT_VERSION}.jar co.cask.cdap.docgen.cli.GenerateCLIDocsTable > ${target_txt}
+  echo "CLI Docs written to ${target_txt}"
+  local warnings=$?
+  echo "--------------------------------------------------------"
+  echo "Completed Build of CLI Docs"
+  echo "========================================================"
+  echo
+  return ${warnings}
 }
 
 function build_docs_first_pass() {
@@ -312,7 +361,7 @@ function build_docs_outer_level() {
   for i in ${MANUALS}; do
     echo "Copying source for ${i} ..."
     mkdir -p ${TARGET_PATH}/${SOURCE}/${i}
-    rewrite ${SCRIPT_PATH}/${COMMON_PLACEHOLDER} ${TARGET_PATH}/${SOURCE}/${i}/index.rst "<placeholder>" ${i}
+    rewrite ${SCRIPT_PATH}/${COMMON_PLACEHOLDER} ${TARGET_PATH}/${SOURCE}/${i}/index.rst "<placeholder-title>" ${i}
     echo
   done  
 
@@ -320,7 +369,6 @@ function build_docs_outer_level() {
   cp ${SCRIPT_PATH}/${COMMON_HIGHLEVEL_PY}  ${TARGET_PATH}/${SOURCE}/conf.py
   cp -R ${SCRIPT_PATH}/${COMMON_IMAGES}     ${TARGET_PATH}/${SOURCE}/
   cp ${SCRIPT_PATH}/${COMMON_SOURCE}/*.rst  ${TARGET_PATH}/${SOURCE}/
-  cp ${SCRIPT_PATH}/${COMMON_SOURCE}/*.md   ${TARGET_PATH}/${SOURCE}/
   
   local google_options
   if [ "x${google_code}" != "x" ]; then
@@ -375,16 +423,18 @@ function zip_extras() {
 }
 
 function clean_targets() {
-  # Removes all outer- and inner-level build ${TARGET} directories
+  # Removes all outer- and (sometimes) inner-level build ${TARGET} directories
   rm -rf ${TARGET_PATH}
   mkdir ${TARGET_PATH}
   echo "Cleaned ${TARGET_PATH} directory"
   echo
-  for i in ${MANUALS}; do
-    rm -rf ${SCRIPT_PATH}/${i}/${TARGET}/*
-    echo "Cleaned ${SCRIPT_PATH}/${i}/${TARGET} directories"
-    echo
-  done
+  if [ "${doc_type}" != "${DOCS_OUTER}" ]; then
+    for i in ${MANUALS}; do
+      rm -rf ${SCRIPT_PATH}/${i}/${TARGET}/*
+      echo "Cleaned ${SCRIPT_PATH}/${i}/${TARGET} directories"
+      echo
+    done
+  fi
 }
 
 function clean_outer_level() {

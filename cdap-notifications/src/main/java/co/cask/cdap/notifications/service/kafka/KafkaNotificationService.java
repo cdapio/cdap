@@ -1,5 +1,5 @@
 /*
-* Copyright © 2014-2015 Cask Data, Inc.
+* Copyright © 2014-2016 Cask Data, Inc.
 *
 * Licensed under the Apache License, Version 2.0 (the "License"); you may not
 * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,9 @@
 package co.cask.cdap.notifications.service.kafka;
 
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.transaction.TransactionSystemClientService;
 import co.cask.cdap.notifications.feeds.NotificationFeedException;
 import co.cask.cdap.notifications.feeds.NotificationFeedManager;
 import co.cask.cdap.notifications.feeds.NotificationFeedNotFoundException;
@@ -26,7 +28,6 @@ import co.cask.cdap.notifications.service.NotificationException;
 import co.cask.cdap.notifications.service.NotificationHandler;
 import co.cask.cdap.notifications.service.NotificationService;
 import co.cask.cdap.proto.Id;
-import co.cask.tephra.TransactionSystemClient;
 import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
@@ -66,25 +67,28 @@ public class KafkaNotificationService extends AbstractNotificationService {
   private final Map<TopicPartition, KafkaNotificationsCallback> kafkaCallbacks;
   private KafkaPublisher kafkaPublisher;
   private final int nbPartitions;
+  private final String notificationTopic;
 
   // Executor to publish notifications to Kafka
   private ListeningExecutorService publishingExecutor;
 
   @Inject
-  public KafkaNotificationService(CConfiguration cConf, KafkaClient kafkaClient, DatasetFramework dsFramework,
-                                  TransactionSystemClient transactionSystemClient,
-                                  NotificationFeedManager feedManager) {
+  KafkaNotificationService(CConfiguration cConf, KafkaClient kafkaClient, DatasetFramework dsFramework,
+                           TransactionSystemClientService transactionSystemClient,
+                           NotificationFeedManager feedManager) {
     super(dsFramework, transactionSystemClient, feedManager);
     this.kafkaClient = kafkaClient;
     this.feedManager = feedManager;
     this.ack = KafkaPublisher.Ack.LEADER_RECEIVED;
     this.nbPartitions = cConf.getInt("kafka.num.partitions");
-
+    this.notificationTopic = cConf.get(Constants.Notification.KAFKA_TOPIC);
     this.kafkaCallbacks = Maps.newHashMap();
+
   }
 
   @Override
   protected void startUp() throws Exception {
+    super.startUp();
     kafkaPublisher = kafkaClient.getPublisher(ack, Compression.SNAPPY);
     publishingExecutor = MoreExecutors.listeningDecorator(
       Executors.newSingleThreadExecutor(Threads.createDaemonThreadFactory("notification-publisher-%d")));
@@ -93,6 +97,7 @@ public class KafkaNotificationService extends AbstractNotificationService {
   @Override
   protected void shutDown() throws Exception {
     publishingExecutor.shutdownNow();
+    super.shutDown();
   }
 
   @Override
@@ -108,7 +113,7 @@ public class KafkaNotificationService extends AbstractNotificationService {
                                                   createGson().toJsonTree(notification, notificationType));
           ByteBuffer bb = KafkaMessageCodec.encode(message);
 
-          TopicPartition topicPartition = KafkaNotificationUtils.getKafkaTopicPartition(feed);
+          TopicPartition topicPartition = KafkaNotificationUtils.getKafkaTopicPartition(notificationTopic, feed);
           KafkaPublisher.Preparer preparer = kafkaPublisher.prepare(topicPartition.getTopic());
           preparer.add(bb, message.getMessageKey());
 
@@ -132,7 +137,7 @@ public class KafkaNotificationService extends AbstractNotificationService {
     // This call will make sure that the feed exists
     feedManager.getFeed(feed);
 
-    final TopicPartition topicPartition = KafkaNotificationUtils.getKafkaTopicPartition(feed);
+    final TopicPartition topicPartition = KafkaNotificationUtils.getKafkaTopicPartition(notificationTopic, feed);
 
     synchronized (this) {
       KafkaNotificationsCallback kafkaCallback = kafkaCallbacks.get(topicPartition);

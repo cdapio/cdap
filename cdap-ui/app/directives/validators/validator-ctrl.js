@@ -34,15 +34,31 @@
  * }
  **/
 angular.module(PKG.name + '.commons')
-  .controller('MyValidatorsCtrl', function($scope, myHydratorValidatorsApi, EventPipe) {
+  .factory('js_beautify', function ($window) {
+    /**
+     * js_beautify is to format the indentation for javascript code
+     **/
+
+    return $window.js_beautify;
+  });
+
+
+angular.module(PKG.name + '.commons')
+  .controller('MyValidatorsCtrl', function($scope, myHydratorValidatorsApi, EventPipe, NodeConfigStore, myHelpers, NonStorePipelineErrorFactory, GLOBALS, js_beautify, HydratorService) {
     var vm = this;
 
     vm.validators = [];
     vm.isRule = true;
     vm.validationFields = $scope.model.validationFields || {};
     vm.functionMap = {};
+    vm.nodeLabelError = '';
 
     var validatorsList;
+    var classNameList = [];
+
+    // We just need to set the input schema as the output schema
+    $scope.outputSchema = HydratorService.formatOutputSchema($scope.inputSchema);
+
 
     myHydratorValidatorsApi.get()
       .$promise
@@ -53,6 +69,8 @@ angular.module(PKG.name + '.commons')
         validatorsList = Object.keys(res).join(', ');
 
         angular.forEach(res, function (value, key) {
+          classNameList.push(value.classname);
+
           angular.forEach(value.functions, function (v) {
             v.className = value.classname;
             v.validator = key;
@@ -164,7 +182,7 @@ angular.module(PKG.name + '.commons')
           currentBlock += ')) {\n' +
             conditions +
             '} else {\n' +
-            'valid = false;\n' +
+            'isValid = false;\n' +
             'errMsg = "' + emessage + '";\n' +
             'errCode = ' + validation.ecode + ';\n' +
             '}\n';
@@ -177,23 +195,41 @@ angular.module(PKG.name + '.commons')
         conditions = currentBlock;
       }
 
-      conditions += '\n\n';
+      conditions += '\n';
 
-      var initFn = 'function isValid(input) {\n' +
-        'var valid = true;\n' +
+      var initFn = 'function isValid(input, context) {\n' +
+        'var isValid = true;\n' +
         'var errMsg = "";\n' +
-        'var errCode = 0;\n\n';
+        'var errCode = 0;\n';
 
-      var fn = initFn + conditions +
+      // LOAD CONTEXT
+      var context = '';
+      angular.forEach(classNameList, function (className) {
+        context = context + 'var ' + className +
+          ' = context.getValidator("' + className + '");\n';
+      });
+
+
+      var loggerLoad = 'var logger = context.getLogger();\n\n';
+      var loggerEnd = 'if (!isValid) {\n' +
+        'var message = "(" + errCode + ") " + errMsg;\n' +
+        'logger.warn("Validation failed with error {}", message);\n' +
+        '}\n\n';
+
+
+      var fn = initFn + context +
+        loggerLoad + conditions +
+        loggerEnd +
         'return {\n' +
-        '"isValid": valid,\n' +
+        '"isValid": isValid,\n' +
         '"errorCode": errCode,\n' +
         '"errorMsg": errMsg\n' +
         '};\n}\n';
 
+
       var validatorProperties = {
         validators: validatorsList,
-        validationScript: fn
+        validationScript: js_beautify(fn, { indent_size: 2 })
       };
 
       if ($scope.model.properties !== validatorProperties) {
@@ -204,6 +240,24 @@ angular.module(PKG.name + '.commons')
       }
 
     }
+
+    function validateNodesLabels () {
+      var nodes = NodeConfigStore.ConfigStore.getNodes();
+      var nodeName = $scope.model.label;
+
+      if (!nodeName) {
+        return;
+      }
+      NonStorePipelineErrorFactory.isNodeNameUnique(nodeName, nodes, function (err) {
+        if (err) {
+          vm.nodeLabelError = GLOBALS.en.hydrator.studio.error[err];
+        } else {
+          vm.nodeLabelError = '';
+        }
+      });
+    }
+
+    $scope.$watch('model.label', validateNodesLabels);
 
     // Since validation fields is a reference and we overwrite the array
     // reference all the time $watch will not be triggered hence the event communication.

@@ -31,6 +31,7 @@ import javax.annotation.Nullable;
  */
 @Beta
 public abstract class RealtimeSource<T> implements PipelineConfigurable, StageLifecycle<RealtimeContext> {
+  public static final String PLUGIN_TYPE = "realtimesource";
 
   @Override
   public void configurePipeline(PipelineConfigurer pipelineConfigurer) {

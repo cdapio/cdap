@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -35,24 +35,25 @@ public class MetadataRecord {
   private final Set<String> tags;
 
   /**
-   * Returns an empty {@link MetadataRecord}
-   */
-  public MetadataRecord(Id.NamespacedId entityId) {
-    this(entityId, ImmutableMap.<String, String>of(), ImmutableSet.<String>of());
-  }
-
-  /**
-   * Returns an empty {@link MetadataRecord} in the specified {@link MetadataScope}
+   * Returns an empty {@link MetadataRecord} in the specified {@link MetadataScope}.
    */
   public MetadataRecord(Id.NamespacedId entityId, MetadataScope scope) {
     this(entityId, scope, ImmutableMap.<String, String>of(), ImmutableSet.<String>of());
   }
 
+  /**
+   * Returns a new {@link MetadataRecord} from the specified existing {@link MetadataRecord}.
+   */
   public MetadataRecord(MetadataRecord other) {
-    this(other.getEntityId(), other.getProperties(), other.getTags());
+    this(other.getEntityId(), other.getScope(), other.getProperties(), other.getTags());
   }
 
-  // TODO: CDAP-4295 Remove defaulting to USER
+  /**
+   * Returns a new {@link MetadataRecord} in {@link MetadataScope#USER}.
+   * Deprecated as of 3.3.1. Please use {@link #MetadataRecord(Id.NamespacedId, MetadataScope, Map, Set)} instead.
+   * TODO: CDAP-4866 - Remove in 3.5
+   */
+  @Deprecated
   public MetadataRecord(Id.NamespacedId entityId, Map<String, String> properties, Set<String> tags) {
     this(entityId, MetadataScope.USER, properties, tags);
   }

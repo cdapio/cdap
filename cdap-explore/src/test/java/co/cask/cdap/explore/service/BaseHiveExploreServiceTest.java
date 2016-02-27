@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,14 +17,12 @@
 package co.cask.cdap.explore.service;
 
 import co.cask.cdap.api.data.schema.Schema;
-import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.IOModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
-import co.cask.cdap.common.namespace.AbstractNamespaceClient;
 import co.cask.cdap.common.namespace.guice.NamespaceClientRuntimeModule;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
@@ -48,7 +46,6 @@ import co.cask.cdap.explore.executor.ExploreExecutorService;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.explore.guice.ExploreRuntimeModule;
 import co.cask.cdap.gateway.handlers.CommonHandlers;
-import co.cask.cdap.internal.app.store.DefaultStore;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.notifications.feeds.NotificationFeedManager;
@@ -62,8 +59,8 @@ import co.cask.cdap.proto.QueryHandle;
 import co.cask.cdap.proto.QueryResult;
 import co.cask.cdap.proto.QueryStatus;
 import co.cask.cdap.proto.StreamProperties;
-import co.cask.cdap.store.DefaultNamespaceStore;
 import co.cask.cdap.store.NamespaceStore;
+import co.cask.cdap.store.guice.NamespaceStoreModule;
 import co.cask.http.HttpHandler;
 import co.cask.tephra.TransactionManager;
 import co.cask.tephra.TxConstants;
@@ -142,7 +139,7 @@ public class BaseHiveExploreServiceTest {
   protected static ExploreTableManager exploreTableManager;
   private static StreamAdmin streamAdmin;
   private static StreamMetaStore streamMetaStore;
-  private static AbstractNamespaceClient namespaceClient;
+  private static NamespaceStore namespaceStore;
 
   protected static Injector injector;
 
@@ -193,12 +190,12 @@ public class BaseHiveExploreServiceTest {
 
     streamAdmin = injector.getInstance(StreamAdmin.class);
     streamMetaStore = injector.getInstance(StreamMetaStore.class);
-    namespaceClient = injector.getInstance(AbstractNamespaceClient.class);
+    namespaceStore = injector.getInstance(NamespaceStore.class);
 
     // create namespaces
-    namespaceClient.create(new NamespaceMeta.Builder().setName(Id.Namespace.DEFAULT).build());
-    namespaceClient.create(new NamespaceMeta.Builder().setName(NAMESPACE_ID).build());
-    namespaceClient.create(new NamespaceMeta.Builder().setName(OTHER_NAMESPACE_ID).build());
+    namespaceStore.create(new NamespaceMeta.Builder().setName(Id.Namespace.DEFAULT).build());
+    namespaceStore.create(new NamespaceMeta.Builder().setName(NAMESPACE_ID).build());
+    namespaceStore.create(new NamespaceMeta.Builder().setName(OTHER_NAMESPACE_ID).build());
     // This happens when you create a namespace via REST APIs. However, since we do not start AppFabricServer in
     // Explore tests, simulating that scenario by explicitly calling DatasetFramework APIs.
     datasetFramework.createNamespace(Id.Namespace.DEFAULT);
@@ -213,9 +210,9 @@ public class BaseHiveExploreServiceTest {
     }
 
     // Delete namespaces
-    namespaceClient.delete(Id.Namespace.DEFAULT);
-    namespaceClient.delete(NAMESPACE_ID);
-    namespaceClient.delete(OTHER_NAMESPACE_ID);
+    namespaceStore.delete(Id.Namespace.DEFAULT);
+    namespaceStore.delete(NAMESPACE_ID);
+    namespaceStore.delete(OTHER_NAMESPACE_ID);
     datasetFramework.deleteNamespace(Id.Namespace.DEFAULT);
     datasetFramework.deleteNamespace(NAMESPACE_ID);
     datasetFramework.deleteNamespace(OTHER_NAMESPACE_ID);
@@ -351,7 +348,6 @@ public class BaseHiveExploreServiceTest {
   private static List<Module> createInMemoryModules(CConfiguration configuration, Configuration hConf,
                                                     TemporaryFolder tmpFolder) throws IOException {
     configuration.set(Constants.CFG_DATA_INMEMORY_PERSISTENCE, Constants.InMemoryPersistenceType.MEMORY.name());
-    configuration.setBoolean(Constants.Explore.EXPLORE_ENABLED, true);
     configuration.set(Constants.Explore.LOCAL_DATA_DIR, tmpFolder.newFolder("hive").getAbsolutePath());
     configuration.set(TxConstants.Manager.CFG_TX_SNAPSHOT_LOCAL_DIR, tmpFolder.newFolder("tx").getAbsolutePath());
     configuration.setBoolean(TxConstants.Manager.CFG_DO_PERSIST, true);
@@ -371,6 +367,7 @@ public class BaseHiveExploreServiceTest {
       new StreamAdminModules().getInMemoryModules(),
       new NotificationServiceRuntimeModule().getInMemoryModules(),
       new NamespaceClientRuntimeModule().getInMemoryModules(),
+      new NamespaceStoreModule().getInMemoryModules(),
       new AbstractModule() {
         @Override
         protected void configure() {
@@ -382,7 +379,6 @@ public class BaseHiveExploreServiceTest {
           handlerBinder.addBinding().to(StreamFetchHandler.class);
           handlerBinder.addBinding().to(StreamViewHttpHandler.class);
           CommonHandlers.add(handlerBinder);
-          bind(NamespaceStore.class).to(DefaultNamespaceStore.class);
           bind(StreamHttpService.class).in(Scopes.SINGLETON);
 
           // Use LocalFileTransactionStateStorage, so that we can use transaction snapshots for assertions in test
@@ -407,7 +403,6 @@ public class BaseHiveExploreServiceTest {
     File localDataDir = tmpFolder.newFolder();
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, localDataDir.getAbsolutePath());
     cConf.set(Constants.CFG_DATA_INMEMORY_PERSISTENCE, Constants.InMemoryPersistenceType.LEVELDB.name());
-    cConf.setBoolean(Constants.Explore.EXPLORE_ENABLED, true);
     cConf.set(Constants.Explore.LOCAL_DATA_DIR, tmpFolder.newFolder("hive").getAbsolutePath());
 
     hConf.set(Constants.CFG_LOCAL_DATA_DIR, localDataDir.getAbsolutePath());
@@ -430,6 +425,7 @@ public class BaseHiveExploreServiceTest {
       new StreamAdminModules().getStandaloneModules(),
       new NotificationServiceRuntimeModule().getStandaloneModules(),
       new NamespaceClientRuntimeModule().getInMemoryModules(),
+      new NamespaceStoreModule().getStandaloneModules(),
       new AbstractModule() {
         @Override
         protected void configure() {
@@ -440,7 +436,6 @@ public class BaseHiveExploreServiceTest {
           handlerBinder.addBinding().to(StreamHandler.class);
           handlerBinder.addBinding().to(StreamFetchHandler.class);
           CommonHandlers.add(handlerBinder);
-          bind(NamespaceStore.class).to(DefaultNamespaceStore.class);
           bind(StreamHttpService.class).in(Scopes.SINGLETON);
         }
       }

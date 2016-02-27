@@ -2,7 +2,7 @@
     "artifact": {
         "name": "cdap-etl-batch",
         "scope": "SYSTEM",
-        "version": "3.2.1"
+        "version": "3.4.0-SNAPSHOT"
     },
     "config": {
         "source": {
@@ -79,7 +79,7 @@
                     "top": "130px",
                     "left": "528.5454406738281px"
                 },
-                "description": "Executes user-provided Javascript that transforms one record into another.",
+                "description": "Executes user-provided JavaScript that transforms one record into another.",
                 "outputSchema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"ts\",\"type\":\"long\"},{\"name\":\"headers\",\"type\":{\"type\":\"map\",\"keys\":\"string\",\"values\":\"string\"}},{\"name\":\"remote_host\",\"type\":[\"string\",\"null\"]},{\"name\":\"remote_login\",\"type\":[\"string\",\"null\"]},{\"name\":\"auth_user\",\"type\":[\"string\",\"null\"]},{\"name\":\"date\",\"type\":[\"string\",\"null\"]},{\"name\":\"request\",\"type\":[\"string\",\"null\"]},{\"name\":\"status\",\"type\":[\"int\",\"null\"]},{\"name\":\"content_length\",\"type\":[\"int\",\"null\"]},{\"name\":\"referrer\",\"type\":[\"string\",\"null\"]},{\"name\":\"user_agent\",\"type\":[\"string\",\"null\"]},{\"name\":\"count\",\"type\":\"int\"}]}",
                 "pluginTemplate": null,
                 "errorDatasetName": "",

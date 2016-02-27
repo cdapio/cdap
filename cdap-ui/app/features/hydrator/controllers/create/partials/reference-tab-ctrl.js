@@ -27,22 +27,23 @@ class ReferenceTabController {
     this.state = this.state || {};
     this.state.node = this.NodeConfigStore.getState().node;
     if (!this.state.node.plugin) {
-      this.state.docReference = this.GLOBALS.en.hydrator.studio.defaultReferenceInfo;
+      this.state.docReference = this.GLOBALS.en.hydrator.studio.info['DEFAULT-REFERENCE'];
     } else {
       let key = `doc.${this.state.node.plugin.name}-${this.state.node.type}`;
       this.PluginConfigFactory.fetchDocJson(
-        this.myHelpers.objectQuery(this.state.node, 'plugin', 'artifact', 'name') || this.GLOBALS.artifact.default.name,
-        this.myHelpers.objectQuery(this.state.node, 'plugin', 'artifact', 'version') || this.GLOBALS.artifact.default.version,
+        this.myHelpers.objectQuery(this.state.node, 'plugin', 'artifact', 'name'),
+        this.myHelpers.objectQuery(this.state.node, 'plugin', 'artifact', 'version'),
+        this.myHelpers.objectQuery(this.state.node, 'plugin', 'artifact', 'scope'),
         key
       ).then (
         (res) => {
           if (res[key]) {
             this.state.docReference = res[key];
           } else {
-            this.state.docReference = this.GLOBALS.en.hydrator.studio.noReferenceInfo;
+            this.state.docReference = this.GLOBALS.en.hydrator.studio.info['NO-REFERENCE'];
           }
         },
-        () => this.state.docReference = this.GLOBALS.en.hydrator.studio.noReferenceInfo
+        () => this.state.docReference = this.GLOBALS.en.hydrator.studio.info['NO-REFERENCE']
       );
     }
   }

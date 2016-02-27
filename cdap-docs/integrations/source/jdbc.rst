@@ -20,7 +20,7 @@ directory of your SDK installation at::
 
 If you don't have a CDAP SDK and only want to connect to an existing instance of CDAP, 
 you can download the CDAP JDBC driver from `this link 
-<https://repo1.maven.org/maven2/co/cask/cdap/cdap-explore/>`__.
+<https://repo1.maven.org/maven2/co/cask/cdap/cdap-explore-jdbc/>`__.
 Go to the directory matching the version of your running CDAP instance, and download the file 
 with the matching version number::
 

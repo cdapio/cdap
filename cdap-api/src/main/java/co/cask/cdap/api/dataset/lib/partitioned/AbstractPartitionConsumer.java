@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,11 +19,9 @@ package co.cask.cdap.api.dataset.lib.partitioned;
 import co.cask.cdap.api.dataset.lib.Partition;
 import co.cask.cdap.api.dataset.lib.PartitionKey;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
-import com.google.common.base.Function;
-import com.google.common.collect.Lists;
 
+import java.util.AbstractList;
 import java.util.List;
-import javax.annotation.Nullable;
 
 /**
  * Abstract implementation of PartitionConsumer, which manages state persistence and serialization/deserialization
@@ -111,14 +109,29 @@ public abstract class AbstractPartitionConsumer implements PartitionConsumer {
   }
 
   @Override
-  public void onFinish(List<? extends Partition> partitions, boolean succeeded) {
-    List<PartitionKey> partitionKeys = Lists.transform(partitions, new Function<Partition, PartitionKey>() {
-      @Nullable
+  public void onFinish(final List<? extends Partition> partitions, boolean succeeded) {
+    List<PartitionKey> partitionKeys = new AbstractList<PartitionKey>() {
+
       @Override
-      public PartitionKey apply(Partition input) {
-        return input.getPartitionKey();
+      public int size() {
+        return partitions.size();
       }
-    });
+
+      @Override
+      public PartitionKey get(int index) {
+        return partitions.get(index).getPartitionKey();
+      }
+
+      @Override
+      public void clear() {
+        partitions.clear();
+      }
+
+      @Override
+      public PartitionKey remove(int index) {
+        return partitions.remove(index).getPartitionKey();
+      }
+    };
 
     ConsumerWorkingSet workingSet = readState();
 

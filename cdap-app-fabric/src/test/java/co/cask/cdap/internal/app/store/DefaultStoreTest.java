@@ -52,20 +52,18 @@ import co.cask.cdap.app.DefaultApplicationContext;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.common.app.RunIds;
-import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.internal.AppFabricTestHelper;
 import co.cask.cdap.internal.DefaultId;
 import co.cask.cdap.internal.app.Specifications;
+import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.store.DefaultNamespaceStore;
-import co.cask.cdap.templates.AdapterDefinition;
 import com.google.common.base.Function;
-import com.google.common.base.Objects;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -82,8 +80,6 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.util.Collection;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -100,16 +96,20 @@ public class DefaultStoreTest {
   private static final Gson GSON = new Gson();
   private static DefaultStore store;
   private static DefaultNamespaceStore nsStore;
+  private static Scheduler scheduler;
 
   @BeforeClass
   public static void beforeClass() throws Exception {
     Injector injector = AppFabricTestHelper.getInjector();
     store = injector.getInstance(DefaultStore.class);
     nsStore = injector.getInstance(DefaultNamespaceStore.class);
+    scheduler = injector.getInstance(Scheduler.class);
   }
 
   @Before
   public void before() throws Exception {
+    // Delete any schedules that may have been registered with Quartz during app deployment
+    scheduler.deleteAllSchedules(Id.Namespace.DEFAULT);
     store.clear();
     NamespacedLocationFactory namespacedLocationFactory =
       AppFabricTestHelper.getInjector().getInstance(NamespacedLocationFactory.class);
@@ -332,7 +332,7 @@ public class DefaultStoreTest {
 
     Location archiveLocation = store.getApplicationArchiveLocation(id);
     Assert.assertNotNull(archiveLocation);
-    Assert.assertEquals("/foo/path/application1.jar", Locations.toURI(archiveLocation).getPath());
+    Assert.assertEquals("/foo/path/application1.jar", archiveLocation.toURI().getPath());
   }
 
   @Test
@@ -349,7 +349,7 @@ public class DefaultStoreTest {
     Location archiveLocation = store.getApplicationArchiveLocation(id);
     Assert.assertNotNull(archiveLocation);
     Assert.assertEquals("/foo/path/application1_modified.jar",
-                        Locations.toURI(archiveLocation).getPath());
+                        archiveLocation.toURI().getPath());
   }
 
   @Test
@@ -496,7 +496,7 @@ public class DefaultStoreTest {
   public void testServiceInstances() throws Exception {
     AppFabricTestHelper.deployApplication(AppWithServices.class);
     AbstractApplication app = new AppWithServices();
-    DefaultAppConfigurer appConfigurer = new DefaultAppConfigurer(app);
+    DefaultAppConfigurer appConfigurer = new DefaultAppConfigurer(Id.Namespace.DEFAULT, app);
     app.configure(appConfigurer, new DefaultApplicationContext());
 
     ApplicationSpecification appSpec = appConfigurer.createSpecification();
@@ -734,6 +734,28 @@ public class DefaultStoreTest {
   }
 
   @Test
+  public void testRunsLimit() throws Exception {
+    ApplicationSpecification spec = Specifications.from(new AllProgramsApp());
+    Id.Application appId = Id.Application.from("testRunsLimit", spec.getName());
+    store.addApplication(appId, spec, new LocalLocationFactory().create("/allPrograms"));
+
+    Id.Program flowProgramId = Id.Program.from(appId, ProgramType.FLOW, "NoOpFlow");
+
+    Assert.assertNotNull(store.getApplication(appId));
+
+    long now = System.currentTimeMillis();
+    store.setStart(flowProgramId, "flowRun1", now - 3000);
+    store.setStop(flowProgramId, "flowRun1", now - 100, ProgramController.State.COMPLETED.getRunStatus());
+
+    store.setStart(flowProgramId, "flowRun2", now - 2000);
+
+    // even though there's two separate run records (one that's complete and one that's active), only one should be
+    // returned by the query, because the limit parameter of 1 is being passed in.
+    List<RunRecordMeta> history = store.getRuns(flowProgramId, ProgramRunStatus.ALL, 0, Long.MAX_VALUE, 1);
+    Assert.assertEquals(1, history.size());
+  }
+
+  @Test
   public void testCheckDeletedProgramSpecs() throws Exception {
     //Deploy program with all types of programs.
     AppFabricTestHelper.deployApplication(AllProgramsApp.class);
@@ -872,100 +894,6 @@ public class DefaultStoreTest {
     ApplicationSpecification application = store.getApplication(appId);
     Assert.assertNotNull(application);
     return application.getSchedules();
-  }
-
-  @Test
-  public void testAdapterMDSOperations() throws Exception {
-    Id.Namespace namespaceId = new Id.Namespace("testAdapterMDS");
-
-    AdapterDefinition spec1 = AdapterDefinition.builder("spec1", Id.Program.from(namespaceId,
-                                                                                 "template1",
-                                                                                 ProgramType.WORKFLOW,
-                                                                                 "program1"))
-      .setConfig(GSON.toJsonTree(ImmutableMap.of("k1", "v1")).getAsJsonObject())
-      .build();
-
-    TemplateConf templateConf = new TemplateConf(5, "5", ImmutableMap.of("123", "456"));
-    AdapterDefinition spec2 = AdapterDefinition.builder("spec2", Id.Program.from(namespaceId, "template2",
-                                                                                 ProgramType.WORKER, "program2"))
-      .setConfig(GSON.toJsonTree(templateConf).getAsJsonObject())
-      .build();
-
-    store.addAdapter(namespaceId, spec1);
-    store.addAdapter(namespaceId, spec2);
-
-    // check get all adapters
-    Collection<AdapterDefinition> adapters = store.getAllAdapters(namespaceId);
-    Assert.assertEquals(2, adapters.size());
-    // apparently JsonObjects can be equal, but have different hash codes which means we can't just put
-    // them in a set and compare...
-    Iterator<AdapterDefinition> iter = adapters.iterator();
-    AdapterDefinition actual1 = iter.next();
-    AdapterDefinition actual2 = iter.next();
-    // since order is not guaranteed...
-    if (actual1.getName().equals(spec1.getName())) {
-      Assert.assertEquals(actual1, spec1);
-      Assert.assertEquals(actual2, spec2);
-    } else {
-      Assert.assertEquals(actual1, spec2);
-      Assert.assertEquals(actual2, spec1);
-    }
-
-    // Get non existing spec
-    AdapterDefinition retrievedAdapter = store.getAdapter(namespaceId, "nonExistingAdapter");
-    Assert.assertNull(retrievedAdapter);
-
-    //Retrieve specs
-    AdapterDefinition retrievedSpec1 = store.getAdapter(namespaceId, spec1.getName());
-    Assert.assertEquals(spec1, retrievedSpec1);
-    // Remove spec
-    store.removeAdapter(namespaceId, spec1.getName());
-
-    // verify the deleted spec is gone.
-    retrievedAdapter = store.getAdapter(namespaceId, spec1.getName());
-    Assert.assertNull(retrievedAdapter);
-
-    // verify the other adapter still exists
-    AdapterDefinition retrievedSpec2 = store.getAdapter(namespaceId, spec2.getName());
-    Assert.assertEquals(spec2, retrievedSpec2);
-
-    // remove all
-    store.removeAllAdapters(namespaceId);
-
-    // verify all adapters are gone
-    retrievedAdapter = store.getAdapter(namespaceId, spec2.getName());
-    Assert.assertNull(retrievedAdapter);
-  }
-
-  private static class TemplateConf {
-    private final int x;
-    private final String y;
-    private final Map<String, String> z;
-
-    public TemplateConf(int x, String y, Map<String, String> z) {
-      this.x = x;
-      this.y = y;
-      this.z = z;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) {
-        return true;
-      }
-      if (o == null || getClass() != o.getClass()) {
-        return false;
-      }
-
-      TemplateConf that = (TemplateConf) o;
-
-      return Objects.equal(x, that.x) && Objects.equal(y, that.y) && Objects.equal(z, that.z);
-    }
-
-    @Override
-    public int hashCode() {
-      return Objects.hashCode(x, y, z);
-    }
   }
 
   @Test

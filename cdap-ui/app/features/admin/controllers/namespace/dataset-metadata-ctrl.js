@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.feature.admin').controller('NamespaceDatasetMetadataController',
-function ($scope, $state, $alert, $filter, myDatasetApi, myExploreApi, EventPipe) {
+function ($scope, $state, myAlertOnValium, $filter, myDatasetApi, myExploreApi, EventPipe) {
 
   var params = {
     namespace: $state.params.nsadmin,
@@ -56,11 +56,14 @@ function ($scope, $state, $alert, $filter, myDatasetApi, myExploreApi, EventPipe
     myDatasetApi.delete(params, {}, function success() {
       EventPipe.emit('hideLoadingIcon.immediate');
 
-      $state.go('admin.namespace.detail.data', {}, {reload: true});
-      $alert({
-        type: 'success',
-        content: 'Successfully deleted dataset'
-      });
+      $state.go('admin.namespace.detail.data', {}, {reload: true})
+        .then(function () {
+          myAlertOnValium.show({
+            type: 'success',
+            content: 'Successfully deleted dataset'
+          });
+        });
+
     }, function error() {
       EventPipe.emit('hideLoadingIcon.immediate');
     });

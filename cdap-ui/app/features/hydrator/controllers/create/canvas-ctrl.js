@@ -35,7 +35,6 @@ class HydratorCreateCanvasController {
 
     this.updateNodesAndConnections();
     NodesStore.registerOnChangeListener(this.updateNodesAndConnections.bind(this));
-
   }
 
   setStateAndUpdateConfigStore() {
@@ -43,10 +42,10 @@ class HydratorCreateCanvasController {
     this.connections = this.NodesStore.getConnections();
     this.ConfigStore.setNodes(this.nodes);
     this.ConfigStore.setConnections(this.connections);
+    this.ConfigStore.setComments(this.NodesStore.getComments());
   }
 
   updateNodesAndConnections() {
-    this.setStateAndUpdateConfigStore();
     var activeNode = this.NodesStore.getActiveNodeId();
     if (!activeNode) {
       this.deleteNode();
@@ -70,6 +69,7 @@ class HydratorCreateCanvasController {
       pluginNode = nodeFromNodesStore[0];
     }
     this.PipelineNodeConfigActionFactory.choosePlugin(pluginNode);
+    this.setStateAndUpdateConfigStore();
   }
 
   deleteNode() {

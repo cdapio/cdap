@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,9 +16,11 @@
 
 package co.cask.cdap.api.service.http;
 
-import com.google.common.collect.Multimap;
 import com.google.gson.Gson;
+import org.apache.twill.filesystem.Location;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.Type;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
@@ -47,7 +49,7 @@ public interface HttpServiceResponder {
   /**
    * Sends JSON response back to the client using the given {@link Gson} object.
    *
-   * @param status the status of the HTTP response
+   * @param status status of the HTTP response
    * @param object the object that will be serialized into JSON and sent back as content
    * @param type the type of object
    * @param gson the Gson object for serialization
@@ -64,7 +66,7 @@ public interface HttpServiceResponder {
   /**
    * Sends a string response back to the HTTP client.
    *
-   * @param status the status of the HTTP response
+   * @param status status of the HTTP response
    * @param data the data to be sent back
    * @param charset the Charset used to encode the string
    */
@@ -82,17 +84,6 @@ public interface HttpServiceResponder {
    *
    * @param status status of the HTTP response
    * @param headers headers to send
-   * @deprecated Use {@link #sendStatus(int, Map)} or {@link #sendStatus(int, Iterable)} instead. This method
-   *             will be removed in future release.
-   */
-  @Deprecated
-  void sendStatus(int status, Multimap<String, String> headers);
-
-  /**
-   * Sends a status code and headers back to client without any content.
-   *
-   * @param status status of the HTTP response
-   * @param headers headers to send
    */
   void sendStatus(int status, Map<String, String> headers);
 
@@ -100,8 +91,8 @@ public interface HttpServiceResponder {
    * Sends a status code and headers back to client without any content.
    *
    * @param status status of the HTTP response
-   * @param headers headers to send; each {@link Map.Entry} contains the header name and value to be sent, hence
-   *                multiple values for the same header name is allowed.
+   * @param headers headers to send; each {@link java.util.Map.Entry} contains the header name and value to be sent,
+   *                allowing multiple values for the same header name
    */
   void sendStatus(int status, Iterable<? extends Map.Entry<String, String>> headers);
 
@@ -116,20 +107,7 @@ public interface HttpServiceResponder {
   /**
    * Sends response back to client.
    *
-   * @param status status of the response
-   * @param content content to be sent back
-   * @param contentType type of content
-   * @param headers headers to be sent back
-   * @deprecated Use {@link #send(int, ByteBuffer, String, Map)} or {@link #send(int, ByteBuffer, String, Iterable)}
-   *             instead. This method will be removed in future release.
-   */
-  @Deprecated
-  void send(int status, ByteBuffer content, String contentType, Multimap<String, String> headers);
-
-  /**
-   * Sends response back to client.
-   *
-   * @param status status of the response
+   * @param status status of the HTTP response
    * @param content content to be sent back
    * @param contentType type of content
    * @param headers headers to be sent back
@@ -139,11 +117,76 @@ public interface HttpServiceResponder {
   /**
    * Sends response back to client.
    *
-   * @param status status of the response
+   * @param status status of the HTTP response
    * @param content content to be sent back
    * @param contentType type of content
-   * @param headers headers to send; each {@link Map.Entry} contains the header name and value to be sent, hence
-   *                multiple values for the same header name is allowed.
+   * @param headers headers to send; each {@link java.util.Map.Entry} contains the header name and value to be sent,
+   *                allowing multiple values for the same header name
    */
   void send(int status, ByteBuffer content, String contentType, Iterable<? extends Map.Entry<String, String>> headers);
+
+  /**
+   * Sends response back to client with response body produced by the given {@link HttpContentProducer}.
+   *
+   * @param status status of the HTTP response
+   * @param producer a {@link HttpContentProducer} to produce content to be sent back
+   * @param contentType type of content
+   */
+  void send(int status, HttpContentProducer producer, String contentType);
+
+  /**
+   * Sends response back to client with response body produced by the given {@link HttpContentProducer}.
+   *
+   * @param status status of the HTTP response
+   * @param producer a {@link HttpContentProducer} to produce content to be sent back
+   * @param contentType type of content
+   * @param headers headers to be sent back
+   */
+  void send(int status, HttpContentProducer producer, String contentType, Map<String, String> headers);
+
+  /**
+   * Sends response back to client with response body produced by the given {@link HttpContentProducer}.
+   *
+   * @param status status of the HTTP response
+   * @param producer a {@link HttpContentProducer} to produce content to be sent back
+   * @param contentType type of content
+   * @param headers headers to send; each {@link java.util.Map.Entry} contains the header name and value to be sent,
+   *                allowing multiple values for the same header name
+   */
+  void send(int status, HttpContentProducer producer, String contentType,
+            Iterable<? extends Map.Entry<String, String>> headers);
+
+  /**
+   * Sends response back to client using content in the given {@link Location} as the response body.
+   *
+   * @param status status of the HTTP response
+   * @param location location containing the response body
+   * @param contentType type of content
+   * @throws IOException if failed to open an {@link InputStream} from the given {@link Location}.
+   */
+  void send(int status, Location location, String contentType) throws IOException;
+
+  /**
+   * Sends response back to client using content in the given {@link Location} as the response body.
+   *
+   * @param status status of the HTTP response
+   * @param location location containing the response body
+   * @param contentType type of content
+   * @param headers headers to be sent back
+   * @throws IOException if failed to open an {@link InputStream} from the given {@link Location}.
+   */
+  void send(int status, Location location, String contentType, Map<String, String> headers) throws IOException;
+
+  /**
+   * Sends response back to client using content in the given {@link Location} as the response body.
+   *
+   * @param status status of the HTTP response
+   * @param location location containing the response body
+   * @param contentType type of content
+   * @param headers headers to send; each {@link java.util.Map.Entry} contains the header name and value to be sent,
+   *                allowing multiple values for the same header name
+   * @throws IOException if failed to open an {@link InputStream} from the given {@link Location}.
+   */
+  void send(int status, Location location, String contentType,
+            Iterable<? extends Map.Entry<String, String>> headers) throws IOException;
 }

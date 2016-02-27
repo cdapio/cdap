@@ -113,9 +113,22 @@ class NodesActionsFactory {
     this.nodesDispatcher.dispatch('onSetCanvasPanning', panning);
   }
 
-  createGraphFromConfig(nodes, connections) {
+  createGraphFromConfig(nodes, connections, comments) {
     this.NodesStore.setDefaults();
-    this.nodesDispatcher.dispatch('onCreateGraphFromConfig', nodes, connections);
+    this.nodesDispatcher.dispatch('onCreateGraphFromConfig', nodes, connections, comments);
+  }
+
+  addComment(comment) {
+    this.nodesDispatcher.dispatch('onAddComment', comment);
+  }
+  setComments(comments) {
+    this.nodesDispatcher.dispatch('onSetComments', comments);
+  }
+  deleteComment(comment) {
+    this.nodesDispatcher.dispatch('onDeleteComment', comment);
+  }
+  updateComment(commentId, config) {
+    this.nodesDispatcher.dispatch('onUpdateComment', commentId, config);
   }
 
 }

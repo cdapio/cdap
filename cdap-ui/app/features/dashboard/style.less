@@ -31,7 +31,7 @@ body.state-dashboard {
       background-color: #d1d3da;
       padding: 10px 15px;
       margin-top: -10px;
-      div[dropdown] {
+      div[uib-dropdown] {
         display: inline-block;
         position: relative;
         .dropdown-menu {
@@ -194,6 +194,11 @@ body.state-dashboard {
     .modal-body {
       // This is needed for multi-select in ops add widget modal.
       overflow: visible;
+
+      // Increasing the font size so that the label is aligned with the radio button
+      .radio label {
+        font-size: 14px;
+      }
     }
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,7 +16,7 @@
 
 
 angular.module(PKG.name + '.feature.hydrator')
-  .controller('HydratorCreateController', function($timeout, $state, $alert, myPipelineTemplatesApi, GLOBALS, CanvasFactory) {
+  .controller('HydratorCreateController', function($timeout, $state, GLOBALS, myAlertOnValium, NonStorePipelineErrorFactory) {
 
     var vm = this;
     vm.GLOBALS = GLOBALS;
@@ -26,106 +26,49 @@ angular.module(PKG.name + '.feature.hydrator')
     vm.templates = [];
     vm.GLOBALS = GLOBALS;
 
-    vm.typeFilter = '';
-
-
-    myPipelineTemplatesApi.list({
-      apptype: GLOBALS.etlBatch
-    })
-      .$promise
-      .then(function(res) {
-        var plugins = res.map(function(plugin) {
-          return {
-            name: plugin.name,
-            description: plugin.description,
-            type: GLOBALS.etlBatch
-          };
-        });
-
-        angular.forEach(plugins, function (plugin) {
-          myPipelineTemplatesApi.get({
-            apptype: GLOBALS.etlBatch,
-            appname: plugin.name
-          })
-            .$promise
-            .then(function (res) {
-              plugin._properties = res;
-            });
-        });
-
-        vm.templates = vm.templates.concat(plugins);
-      });
-
-    myPipelineTemplatesApi.list({
-      apptype: GLOBALS.etlRealtime
-    })
-      .$promise
-      .then(function(res) {
-        var plugins = res.map(function(plugin) {
-          return {
-            name: plugin.name,
-            label: plugin.name,
-            description: plugin.description,
-            type: GLOBALS.etlRealtime
-          };
-        });
-
-        angular.forEach(plugins, function (plugin) {
-          myPipelineTemplatesApi.get({
-            apptype: GLOBALS.etlRealtime,
-            appname: plugin.name
-          })
-            .$promise
-            .then(function (res) {
-              plugin._properties = res;
-            });
-        });
-
-        vm.templates = vm.templates.concat(plugins);
-      });
-
-    vm.selectTemplate = function (template) {
-      var result = CanvasFactory.parseImportedJson(
-        JSON.stringify(template._properties),
-        template.type
-      );
-      if (result.error) {
-        $alert({
-          type: 'danger',
-          content: 'Imported pre-defined app has issues. Please check the JSON of the imported pre-defined app'
-        });
-      } else {
-        $state.go('hydrator.create.studio', {
-          data: result,
-          type: result.artifact.name
-        }).then(function () {
-          vm.preconfigured = false;
-        });
-      }
-    };
 
     this.importFile = function(files) {
       var reader = new FileReader();
       reader.readAsText(files[0], 'UTF-8');
 
       reader.onload = function (evt) {
-         var data = evt.target.result;
-         var jsonData;
-         try {
-           jsonData = JSON.parse(data);
-         } catch(e) {
-           $alert({
-             type: 'danger',
-             content: 'Error in the JSON imported.'
-           });
-           console.log('ERROR in imported json: ', e);
-           return;
-         }
-         $state.go('hydrator.create.studio', {
-           data: jsonData,
-           type: jsonData.artifact.name
-         });
+        var data = evt.target.result;
+        var jsonData;
+        try {
+          jsonData = JSON.parse(data);
+        } catch(e) {
+          myAlertOnValium.show({
+            type: 'danger',
+            content: 'Syntax Error. Ill-formed pipeline configuration.'
+          });
+          return;
+        }
+        let isNotValid = NonStorePipelineErrorFactory.validateImportJSON(jsonData);
+        if (isNotValid) {
+          myAlertOnValium.show({
+            type: 'danger',
+            content: isNotValid
+          });
+        } else {
+          if (!jsonData.config.connections) {
+            jsonData.config.connections = generateLinearConnections(jsonData.config);
+          }
+          $state.go('hydrator.create.studio', {
+            data: jsonData,
+            type: jsonData.artifact.name
+          });
+        }
       };
+    };
+
+    let generateLinearConnections = (config) => {
+      let nodes = [config.source].concat(config.transforms || []).concat(config.sinks);
+      let connections = [];
+      let i;
+      for (i=0; i<nodes.length - 1 ; i++) {
+        connections.push({ from: nodes[i].name, to: nodes[i+1].name });
+      }
+      return connections;
     };
 
     this.openFileBrowser = function() {

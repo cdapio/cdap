@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.feature.admin')
-  .controller('NamespaceSettingsController', function ($scope, MyCDAPDataSource, $state, $alert, $timeout, myNamespace, EventPipe) {
+  .controller('NamespaceSettingsController', function ($scope, MyCDAPDataSource, $state, myAlertOnValium, myNamespace, EventPipe) {
 
     var dataSrc = new MyCDAPDataSource($scope);
     $scope.loading = false;
@@ -37,7 +37,7 @@ angular.module(PKG.name + '.feature.admin')
         }
       })
       .then(function () {
-        $alert({
+        myAlertOnValium.show({
           type: 'success',
           content: 'Namespace successfully updated'
         });
@@ -56,17 +56,16 @@ angular.module(PKG.name + '.feature.admin')
       .then(function () {
         myNamespace.getList(true).then(function() {
           EventPipe.emit('namespace.update');
+          EventPipe.emit('hideLoadingIcon.immediate');
+          $state.go('admin.overview', {}, {reload: true})
+            .then(function () {
+              myAlertOnValium.show({
+                type: 'success',
+                content: 'You have successfully deleted a namespace'
+              });
+            });
         });
 
-        $timeout(function() {
-          EventPipe.emit('hideLoadingIcon.immediate');
-
-          $state.go('admin.overview', {}, {reload: true});
-          $alert({
-            type: 'success',
-            content: 'You have successfully deleted a namespace'
-          });
-        }, 500);
       }, function error() {
         EventPipe.emit('hideLoadingIcon.immediate');
       });

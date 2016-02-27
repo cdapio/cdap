@@ -23,20 +23,18 @@ import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.io.FileContextLocationFactory;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
-import co.cask.cdap.common.security.YarnTokenUtils;
 import co.cask.cdap.common.twill.AbortOnTimeoutEventHandler;
 import co.cask.cdap.common.twill.HadoopClassExcluder;
 import co.cask.cdap.common.utils.DirUtils;
-import co.cask.cdap.data.security.HBaseTokenUtils;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.internal.app.runtime.codec.ArgumentsCodec;
 import co.cask.cdap.internal.app.runtime.codec.ProgramOptionsCodec;
+import co.cask.cdap.security.TokenSecureStoreUpdater;
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
@@ -50,24 +48,20 @@ import com.google.common.io.Resources;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.security.User;
 import org.apache.hadoop.mapreduce.JobContext;
-import org.apache.hadoop.security.Credentials;
 import org.apache.hadoop.security.UserGroupInformation;
-import org.apache.hadoop.security.token.Token;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
 import org.apache.twill.api.EventHandler;
 import org.apache.twill.api.TwillApplication;
 import org.apache.twill.api.TwillController;
 import org.apache.twill.api.TwillPreparer;
 import org.apache.twill.api.TwillRunner;
+import org.apache.twill.api.logging.LogEntry;
+import org.apache.twill.api.logging.LogHandler;
 import org.apache.twill.api.logging.PrinterLogHandler;
 import org.apache.twill.common.Threads;
-import org.apache.twill.filesystem.HDFSLocationFactory;
 import org.apache.twill.filesystem.LocationFactory;
-import org.apache.twill.internal.yarn.YarnUtils;
-import org.apache.twill.yarn.YarnSecureStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -80,7 +74,6 @@ import java.net.URI;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import javax.annotation.Nullable;
@@ -102,6 +95,7 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
   protected final YarnConfiguration hConf;
   protected final CConfiguration cConf;
   protected final EventHandler eventHandler;
+  private final TokenSecureStoreUpdater secureStoreUpdater;
 
   /**
    * An interface for launching TwillApplication. Used by sub-classes only.
@@ -147,12 +141,14 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
   }
 
   protected AbstractDistributedProgramRunner(TwillRunner twillRunner, LocationFactory locationFactory,
-                                             YarnConfiguration hConf, CConfiguration cConf) {
+                                             YarnConfiguration hConf, CConfiguration cConf,
+                                             TokenSecureStoreUpdater tokenSecureStoreUpdater) {
     this.twillRunner = twillRunner;
     this.locationFactory = locationFactory;
     this.hConf = hConf;
     this.cConf = cConf;
     this.eventHandler = createEventHandler(cConf);
+    this.secureStoreUpdater = tokenSecureStoreUpdater;
   }
 
   protected EventHandler createEventHandler(CConfiguration cConf) {
@@ -190,7 +186,7 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
       // Obtains and add the HBase delegation token as well (if in non-secure mode, it's a no-op)
       // Twill would also ignore it if it is not running in secure mode.
       // The HDFS token should already obtained by Twill.
-      return launch(copiedProgram, options, localizeResources, new ApplicationLauncher() {
+      return launch(copiedProgram, options, localizeResources, tempDir, new ApplicationLauncher() {
         @Override
         public TwillController launch(TwillApplication twillApplication, Iterable<String> extraClassPaths) {
           TwillPreparer twillPreparer = twillRunner.prepare(twillApplication);
@@ -208,13 +204,32 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
             twillPreparer.withResources(logbackURI);
           }
 
-          if (cConf.getBoolean(Constants.COLLECT_CONTAINER_LOGS)) {
-            twillPreparer.addLogHandler(new PrinterLogHandler(new PrintWriter(System.out)));
+          String logLevelConf = cConf.get(Constants.COLLECT_APP_CONTAINER_LOG_LEVEL).toUpperCase();
+          if ("OFF".equals(logLevelConf)) {
+            twillPreparer.addJVMOptions("-Dtwill.disable.kafka=true");
+          } else {
+            LogEntry.Level logLevel = LogEntry.Level.ERROR;
+            if ("ALL".equals(logLevelConf)) {
+              logLevel = LogEntry.Level.TRACE;
+            } else {
+              try {
+                logLevel = LogEntry.Level.valueOf(logLevelConf.toUpperCase());
+              } catch (Exception e) {
+                LOG.warn("Invalid application container log level {}. Defaulting to ERROR.", logLevelConf);
+              }
+            }
+            twillPreparer.addLogHandler(new ApplicationLogHandler(new PrinterLogHandler(new PrintWriter(System.out)),
+                                                                  logLevel));
           }
 
           String yarnAppClassPath = hConf.get(YarnConfiguration.YARN_APPLICATION_CLASSPATH,
                                            Joiner.on(",").join(YarnConfiguration.DEFAULT_YARN_APPLICATION_CLASSPATH));
-          TwillController twillController = addSecureStore(twillPreparer, locationFactory, hConf)
+          // Add secure tokens
+          if (User.isHBaseSecurityEnabled(hConf) || UserGroupInformation.isSecurityEnabled()) {
+            // TokenSecureStoreUpdater.update() ignores parameters
+            twillPreparer.addSecureStore(secureStoreUpdater.update(null, null));
+          }
+          TwillController twillController = twillPreparer
             .withDependencies(HBaseTableUtilFactory.getHBaseTableUtilClass())
             .withClassPaths(Iterables.concat(extraClassPaths, Splitter.on(',').trimResults()
               .split(hConf.get(YarnConfiguration.YARN_APPLICATION_CLASSPATH, ""))))
@@ -280,9 +295,17 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
 
   /**
    * Sub-class overrides this method to launch the twill application.
+   *
+   * @param program the program to launch
+   * @param options the options for the program
+   * @param localizeResources a mutable map for adding extra resources to localize
+   * @param tempDir a temporary directory for this launch. Sub-classes can use it to create resources for localization
+   *                which require cleanup after launching completed
+   * @param launcher an {@link ApplicationLauncher} to actually launching the program
    */
   protected abstract ProgramController launch(Program program, ProgramOptions options,
                                               Map<String, LocalizeResource> localizeResources,
+                                              File tempDir,
                                               ApplicationLauncher launcher);
 
 
@@ -351,45 +374,21 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
     return controller;
   }
 
-  /**
-   * Add secure tokens to the {@link TwillPreparer}.
-   */
-  private TwillPreparer addSecureStore(TwillPreparer preparer, LocationFactory locationFactory,
-                                       YarnConfiguration yarnConf) {
-    Credentials credentials = new Credentials();
+  private static final class ApplicationLogHandler implements LogHandler {
 
-    if (UserGroupInformation.isSecurityEnabled()) {
-      YarnTokenUtils.obtainToken(yarnConf, credentials);
+    private final LogHandler delegate;
+    private final LogEntry.Level logLevel;
+
+    private ApplicationLogHandler(LogHandler delegate, LogEntry.Level logLevel) {
+      this.delegate = delegate;
+      this.logLevel = logLevel;
     }
 
-    if (User.isHBaseSecurityEnabled(hConf)) {
-      HBaseTokenUtils.obtainToken(hConf, credentials);
-    }
-
-    // Perform different logic to get delegation tokens based on the location factory type.
-    // This method is needed because Twill is not able to deal with {@link FileContextLocationFactory} yet.
-    // Remove after (CDAP-3498)
-    try {
-      if (UserGroupInformation.isSecurityEnabled()) {
-        if (locationFactory instanceof HDFSLocationFactory) {
-          YarnUtils.addDelegationTokens(hConf, locationFactory, credentials);
-        } else if (locationFactory instanceof FileContextLocationFactory) {
-          List<Token<?>> tokens = ((FileContextLocationFactory) locationFactory).getFileContext().getDelegationTokens(
-            new Path(Locations.toURI(locationFactory.getHomeLocation())), YarnUtils.getYarnTokenRenewer(hConf)
-          );
-          for (Token<?> token : tokens) {
-            credentials.addToken(token.getService(), token);
-          }
-        }
+    @Override
+    public void onLog(LogEntry logEntry) {
+      if (logEntry.getLogLevel().ordinal() <= logLevel.ordinal()) {
+        delegate.onLog(logEntry);
       }
-    } catch (IOException e) {
-      throw Throwables.propagate(e);
     }
-
-    if (!credentials.getAllTokens().isEmpty()) {
-      preparer.addSecureStore(YarnSecureStore.create(credentials));
-    }
-
-    return preparer;
   }
 }

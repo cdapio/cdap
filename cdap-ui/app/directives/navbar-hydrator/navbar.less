@@ -94,9 +94,6 @@ body {
                 font-size: 11px;
               }
             }
-            &:hover, &:focus {
-              cursor: pointer;
-            }
           }
         }
       }
@@ -111,9 +108,7 @@ body {
         right: 100px;
         li.dropdown {
           list-style-type: none;
-          &:hover {
-            cursor: pointer;
-          }
+
           a.hy-dropdown-toggle {
             display: block;
             min-width: 125px;
@@ -207,6 +202,10 @@ body {
                 background-color: @cdap-header;
                 border: 1px solid @cdap-header;
                 color: white;
+              }
+              &.active {
+                color: #c4c4c4;
+                pointer-events: none;
               }
             }
           }

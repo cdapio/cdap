@@ -38,18 +38,19 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * This class is for using a Stream as input for a MapReduce job. An instance of this class should be set in the
- * {@code MapReduceContext} of the {@code beforeSubmit} method to use the Stream as input.
- *
- * <pre>
- * {@code
- *    class MyMapReduce implements MapReduce {
- *        public void beforeSubmit(MapReduceContext context) {
- *          context.setInput(new StreamBatchReadable("mystream"));
- *        }
- *    }
- * }
- * </pre>
+ * This class is for using a Stream as input for a MapReduce program. 
+ * 
+ * <p>
+ * An instance of this class should be set in the
+ * {@link MapReduceContext} of the {@code beforeSubmit} method to use the Stream as input:
+ * </p>
+ * <pre><code>
+ *   class MyMapReduce implements MapReduce {
+ *       public void beforeSubmit(MapReduceContext context) {
+ *         context.setInput(new StreamBatchReadable("mystream"));
+ *       }
+ *   }
+ * </code></pre>
  *
  */
 public class StreamBatchReadable implements BatchReadable<Long, String> {
@@ -155,13 +156,11 @@ public class StreamBatchReadable implements BatchReadable<Long, String> {
   }
 
   /**
-   * Creates a StreamBatchReadable with the given URI. The URI should be in the form
+   * Creates a StreamBatchReadable with the given URI. The URI should be of the form:
    *
-   * <pre>
-   * {@code
+   * <pre>{@code
    * stream://<stream_name>[?start=<start_time>[&end=<end_time>[&decoder=<decoderClass>[&bodyFormat=<bodyFormat>]]]]
-   * }
-   * </pre>
+   * }</pre>
    */
   public StreamBatchReadable(URI uri) {
     if (!"stream".equals(uri.getScheme())) {

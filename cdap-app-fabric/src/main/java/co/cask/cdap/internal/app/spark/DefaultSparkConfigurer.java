@@ -45,9 +45,9 @@ public final class DefaultSparkConfigurer extends DefaultPluginConfigurer implem
   private Resources driverResources;
   private Resources executorResources;
 
-  public DefaultSparkConfigurer(Spark spark, Id.Artifact artifactId,
+  public DefaultSparkConfigurer(Spark spark, Id.Namespace deployNamespace, Id.Artifact artifactId,
                                 ArtifactRepository artifactRepository, PluginInstantiator pluginInstantiator) {
-    super(artifactId, artifactRepository, pluginInstantiator);
+    super(deployNamespace, artifactId, artifactRepository, pluginInstantiator);
     this.spark = spark;
     this.name = spark.getClass().getSimpleName();
     this.description = "";

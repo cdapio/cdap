@@ -229,6 +229,35 @@ passing all of them will make the deletion faster. Deleting all the columns of a
 also delete the entire row, as the underlying implementation of a Table is a 
 `columnar store. <http://en.wikipedia.org/wiki/Column-oriented_DBMS>`__
 
+Writing from MapReduce
+======================
+Table implements the ``BatchWritable`` interface, using ``byte[]`` as the key and
+``Put`` as the value for each write. To write to a table from MapReduce, use these
+types as the output types of your Reducer (or Mapper in case of a map-only program).
+For example, the Reducer can be defined as follows::
+
+  /**
+   * A reducer that sums up the counts for each key.
+   */
+  public static class Counter extends Reducer<Text, IntWritable, byte[], Put> {
+
+    @Override
+    public void reduce(Text key, Iterable<IntWritable> values, Context context)
+      throws IOException, InterruptedException {
+      long sum = 0L;
+      for (IntWritable value : values) {
+        sum += value.get();
+      }
+      byte[] row = Bytes.toBytes(key.toString());
+      context.write(row, new Put(row).add("count", sum));
+    }
+  }
+
+Note that here, the key is always ignored, because the ``Put`` that is provided as the value also
+contains the row key. It would therefore also be safe to write null for the key::
+
+      context.write(null, new Put(row).add("count", sum));
+
 .. _table-datasets-pre-splitting:
 
 Pre-Splitting a Table into Multiple Regions

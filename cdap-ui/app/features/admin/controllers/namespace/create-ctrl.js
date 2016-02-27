@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,7 +15,8 @@
  */
 
 angular.module(PKG.name + '.feature.admin')
-  .controller('NamespaceCreateController', function ($scope, $alert, $modalInstance, MyCDAPDataSource, myNamespace, EventPipe) {
+  .controller('NamespaceCreateController', function ($scope, $uibModalInstance, MyCDAPDataSource, myNamespace, EventPipe, myAlertOnValium, $state) {
+
     $scope.model = {
       name: '',
       description: ''
@@ -35,21 +36,23 @@ angular.module(PKG.name + '.feature.admin')
         body: {
           name: $scope.model.name,
           description: $scope.model.description
-        }
+        },
+        suppressErrors: true
       })
         .then(
           function success(res) {
             $scope.isSaving = false;
-            $alert({
-              content: res,
-              type: 'success'
-            });
-
             myNamespace.getList(true).then(function() {
               EventPipe.emit('namespace.update');
-               $modalInstance.close();
-            });
 
+              $state.go('admin.overview', {}, { reload: true })
+                .then(function() {
+                  myAlertOnValium.show({
+                    type: 'success',
+                    content: res
+                  });
+                });
+            });
           },
           function error(err) {
             $scope.isSaving = false;
@@ -58,7 +61,7 @@ angular.module(PKG.name + '.feature.admin')
         );
     };
     $scope.closeModal = function() {
-      $modalInstance.close();
+      $uibModalInstance.close();
 
     };
 

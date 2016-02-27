@@ -221,21 +221,10 @@ public class AppWithPartitionConsumers extends AbstractApplication {
       PartitionKey partitionKey = PartitionKey.builder().addLongField("time", context.getLogicalStartTime()).build();
       PartitionedFileSetArguments.setOutputPartitionKey(outputArgs, partitionKey);
 
-      // We know that PartitionedFileSet is an OutputFormatProvider, so we set our own instance of an
-      // OutputFormatProvider (that delegates to the PFS's implementation) as an output to the MapReduce job
-      // to test MapReduceContext#addOutput(String, OutputFormatProvider)
+      // We know that PartitionedFileSet is an OutputFormatProvider, so we set an instance of it as an output to the
+      // MapReduce job to test MapReduceContext#addOutput(String, OutputFormatProvider)
       final PartitionedFileSet outputLines = context.getDataset("outputLines", outputArgs);
-      context.addOutput("outputLines", new OutputFormatProvider() {
-        @Override
-        public String getOutputFormatClassName() {
-          return outputLines.getOutputFormatClassName();
-        }
-
-        @Override
-        public Map<String, String> getOutputFormatConfiguration() {
-          return outputLines.getOutputFormatConfiguration();
-        }
-      });
+      context.addOutput("outputLines", outputLines);
 
       Job job = context.getHadoopJob();
       job.setMapperClass(Tokenizer.class);
@@ -246,17 +235,6 @@ public class AppWithPartitionConsumers extends AbstractApplication {
     @Override
     public void onFinish(boolean succeeded, MapReduceContext context) throws Exception {
       batchPartitionCommitter.onFinish(succeeded);
-
-      // We have to manually call the PFS's onSuccess, because since we only added it as an OutputFormatProvider,
-      // it doesn't get treated as a dataset (its onSuccess method won't be called by our MR framework)
-      Map<String, String> outputArgs = new HashMap<>();
-      PartitionKey partitionKey = PartitionKey.builder().addLongField("time", context.getLogicalStartTime()).build();
-      PartitionedFileSetArguments.setOutputPartitionKey(outputArgs, partitionKey);
-
-      PartitionedFileSet outputLines = context.getDataset("outputLines", outputArgs);
-      ((DatasetOutputCommitter) outputLines).onSuccess();
-
-      super.onFinish(succeeded, context);
     }
 
     /**

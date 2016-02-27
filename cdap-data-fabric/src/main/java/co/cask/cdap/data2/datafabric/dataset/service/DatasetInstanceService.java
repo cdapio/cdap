@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -27,7 +27,6 @@ import co.cask.cdap.common.NamespaceNotFoundException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.namespace.AbstractNamespaceClient;
 import co.cask.cdap.data2.datafabric.dataset.AbstractDatasetProvider;
 import co.cask.cdap.data2.datafabric.dataset.instance.DatasetInstanceManager;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetAdminOpResponse;
@@ -40,6 +39,7 @@ import co.cask.cdap.proto.DatasetInstanceConfiguration;
 import co.cask.cdap.proto.DatasetMeta;
 import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.store.NamespaceStore;
 import co.cask.tephra.TransactionExecutorFactory;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
@@ -65,14 +65,14 @@ public class DatasetInstanceService {
   private final ExploreFacade exploreFacade;
   private final boolean allowDatasetUncheckedUpgrade;
   private final UsageRegistry usageRegistry;
-  private final AbstractNamespaceClient namespaceClient;
+  private final NamespaceStore nsStore;
 
   @Inject
   public DatasetInstanceService(DatasetTypeManager implManager, DatasetInstanceManager instanceManager,
                                 DatasetOpExecutor opExecutorClient, ExploreFacade exploreFacade, CConfiguration conf,
                                 TransactionExecutorFactory txFactory,
                                 DatasetDefinitionRegistryFactory registryFactory,
-                                AbstractNamespaceClient namespaceClient) {
+                                NamespaceStore nsStore) {
     this.opExecutorClient = opExecutorClient;
     this.implManager = implManager;
     this.instanceManager = instanceManager;
@@ -91,7 +91,7 @@ public class DatasetInstanceService {
           new DatasetInstanceConfiguration(type, creationProps.getProperties()));
       }
     });
-    this.namespaceClient = namespaceClient;
+    this.nsStore = nsStore;
     this.allowDatasetUncheckedUpgrade = conf.getBoolean(Constants.Dataset.DATASET_UNCHECKED_UPGRADE);
   }
 
@@ -377,8 +377,9 @@ public class DatasetInstanceService {
    */
   private void ensureNamespaceExists(Id.Namespace namespace) throws Exception {
     if (!Id.Namespace.SYSTEM.equals(namespace)) {
-      namespaceClient.get(namespace);
+      if (nsStore.get(namespace) == null) {
+        throw new NamespaceNotFoundException(namespace);
+      }
     }
   }
-
 }

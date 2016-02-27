@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.commons')
-  .directive('loadingIcon', function(myLoadingService, $bootstrapModal, $timeout, EventPipe, $state, $alert) {
+  .directive('loadingIcon', function(myLoadingService, $uibModal, $timeout, EventPipe, $state, $alert) {
     return {
       restrict: 'EA',
       scope: true,
@@ -28,23 +28,23 @@ angular.module(PKG.name + '.commons')
           scope: $scope,
           windowClass: 'custom-loading-modal'
         }, modal, isBackendDown = false;
-
+        var genericServiceErrorMsg = 'CDAP Services are not available';
+        var genericSubtitle = 'Trying to connect...';
         EventPipe.on('backendDown', function(message, subtitle) {
           if (!isBackendDown) {
             if (modal) {
               modal.close();
             }
             isBackendDown = true;
-            if (!message) {
-              $scope.message = 'Service(s) are offline';
-            } else {
-              $scope.message = message;
-              $scope.subtitle = subtitle;
-            }
-            modal = $bootstrapModal.open(modalObj);
+            $scope.message = message || genericServiceErrorMsg;
+            $scope.subtitle = subtitle || genericSubtitle;
+            modal = $uibModal.open(modalObj);
             modal.result.finally(function() {
-              $state.go('overview', {}, {reload: true});
+              $state.go('overview', {reload: true});
             });
+          } else {
+            $scope.message = message || genericServiceErrorMsg;
+            $scope.subtitle = subtitle || genericSubtitle;
           }
         }.bind($scope));
 
@@ -91,7 +91,7 @@ angular.module(PKG.name + '.commons')
         EventPipe.on('showLoadingIcon', function(message) {
           if(!modal && !isBackendDown) {
             $scope.message = message || '';
-            modal = $bootstrapModal.open(modalObj);
+            modal = $uibModal.open(modalObj);
           }
         }.bind($scope));
       }

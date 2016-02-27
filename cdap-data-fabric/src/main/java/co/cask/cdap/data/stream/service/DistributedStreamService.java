@@ -142,6 +142,7 @@ public class DistributedStreamService extends AbstractStreamService {
 
   @Override
   protected void initialize() throws Exception {
+    LOG.info("Initializing DistributedStreamService.");
     createHeartbeatsFeed();
     heartbeatPublisher.startAndWait();
     resourceCoordinatorClient.startAndWait();
@@ -159,6 +160,7 @@ public class DistributedStreamService extends AbstractStreamService {
     });
 
     performLeaderElection();
+    LOG.info("DistributedStreamService initialized.");
   }
 
   @Override
@@ -308,6 +310,8 @@ public class DistributedStreamService extends AbstractStreamService {
       .setCategory(Constants.Notification.Stream.STREAM_INTERNAL_FEED_CATEGORY)
       .setName(Constants.Notification.Stream.STREAM_HEARTBEAT_FEED_NAME)
       .build();
+
+    boolean isRetry = false;
     while (true) {
       try {
         return notificationService.subscribe(heartbeatsFeed, new NotificationHandler<StreamWriterHeartbeat>() {
@@ -330,6 +334,13 @@ public class DistributedStreamService extends AbstractStreamService {
           }
         }, heartbeatsSubscriptionExecutor);
       } catch (NotificationFeedException e) {
+        if (!isRetry) {
+          LOG.warn("Unable to subscribe to HeartbeatsFeed. Will retry until successfully subscribed. " +
+                     "Retry failures will be logged at debug level.", e);
+        } else {
+          LOG.debug("Unable to subscribe to HeartbeatsFeed. Will retry until successfully subscribed. ", e);
+        }
+        isRetry = true;
         waitBeforeRetryHeartbeatsFeedOperation();
       }
     }
@@ -369,14 +380,28 @@ public class DistributedStreamService extends AbstractStreamService {
       .setDescription("Stream heartbeats feed.")
       .build();
 
+    LOG.debug("Ensuring Stream HeartbeatsFeed exists.");
+    boolean isRetry = false;
     while (true) {
       try {
         feedManager.getFeed(streamHeartbeatsFeed);
+        LOG.debug("Stream HeartbeatsFeed exists.");
         return;
-      } catch (NotificationFeedNotFoundException e) {
+      } catch (NotificationFeedNotFoundException notFoundException) {
+        if (!isRetry) {
+          LOG.debug("Creating Stream HeartbeatsFeed.");
+        }
         feedManager.createFeed(streamHeartbeatsFeed);
+        LOG.info("Stream HeartbeatsFeed created.");
         return;
       } catch (NotificationFeedException e) {
+        if (!isRetry) {
+          LOG.warn("Could not ensure existence of HeartbeatsFeed. Will retry until successful. " +
+                     "Retry failures will be logged at debug level.", e);
+        } else {
+          LOG.debug("Could not ensure existence of HeartbeatsFeed. Will retry until successful.", e);
+        }
+        isRetry = true;
         waitBeforeRetryHeartbeatsFeedOperation();
       }
     }
@@ -384,7 +409,6 @@ public class DistributedStreamService extends AbstractStreamService {
 
   private void waitBeforeRetryHeartbeatsFeedOperation() {
     // Most probably, the dataset service is not up. We retry
-    LOG.info("Could not perform operation on HeartbeatsFeed. Retrying in one second.");
     try {
       TimeUnit.SECONDS.sleep(1);
     } catch (InterruptedException ie) {

@@ -233,6 +233,10 @@ public class ObjectStoreDatasetTest {
     Schema schema = new ReflectionSchemaGenerator().generate(type);
 
     ObjectStoreDataset<Custom> objectStore = new ObjectStoreDataset<>("kv", kvTable, typeRep, schema, loader);
+
+    // need to call this to actually load the Custom class, because the Custom class is no longer used in the
+    // ObjectStoreDataset's constructor, but rather lazily when its actually needed.
+    objectStore.getRecordType();
     objectStore.write("dummy", new Custom(382, Lists.newArrayList("blah")));
     // verify the class name was recorded (the dummy class loader was used).
     Assert.assertEquals(Custom.class.getName(), lastClassLoaded.get());

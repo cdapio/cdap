@@ -26,12 +26,13 @@
     </div>
   </div>
 
-  <div class="tag" ng-repeat="tag in MetadataController.metadataTags | orderBy: tag | limitTo: MetadataController.limit">
+  <div class="tag" ng-repeat="tag in MetadataController.metadataTags | limitTo: MetadataController.limit">
     <span class="btn"
-       ng-click="MetadataController.goToTag($event, tag)">
-      {{tag}}
+       ng-click="MetadataController.goToTag($event, tag.name)">
+      {{tag.name}}
       <span class="fa fa-times"
-            ng-click="MetadataController.deleteMetadata($event, tag)"></span>
+            ng-if="tag.scope === 'USER'"
+            ng-click="MetadataController.deleteMetadata($event, tag.name)"></span>
     </span>
   </div>
 

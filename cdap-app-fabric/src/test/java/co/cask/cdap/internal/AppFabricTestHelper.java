@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -57,6 +57,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 
 /**
  * This is helper class to make calls to AppFabricHttpHandler methods directly.
@@ -72,7 +73,6 @@ public class AppFabricTestHelper {
   public static Injector getInjector() {
     return getInjector(CConfiguration.create());
   }
-
 
   public static synchronized Injector getInjector(CConfiguration conf) {
     if (injector == null) {
@@ -108,25 +108,43 @@ public class AppFabricTestHelper {
     });
   }
 
-  public static void deployApplication(Id.Namespace namespace, Class<?> application) throws Exception {
-    long time = TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS);
-    deployApplication(namespace, application, "app-" + time);
+  public static void deployApplication(Class<?> application) throws Exception {
+    deployApplication(application, CConfiguration.create());
   }
 
-  public static void deployApplication(Class<?> application) throws Exception {
-    deployApplication(Id.Namespace.DEFAULT, application);
+  public static void deployApplication(Id.Namespace namespace, Class<?> application) throws Exception {
+    deployApplication(namespace, application, CConfiguration.create());
+  }
+
+  public static void deployApplication(Class<?> application, CConfiguration cConf) throws Exception {
+    deployApplication(Id.Namespace.DEFAULT, application, cConf);
+  }
+
+  public static void deployApplication(Id.Namespace namespace, Class<?> application,
+                                       CConfiguration cConf) throws Exception {
+    long time = TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS);
+    deployApplication(namespace, application, "app-" + time, null, cConf);
   }
 
   public static void deployApplication(Id.Namespace namespace, Class<?> applicationClz,
-                                       String appName, String config) throws Exception {
-    ensureNamespaceExists(namespace);
-    AppFabricClient appFabricClient = getInjector().getInstance(AppFabricClient.class);
+                                       String appName, @Nullable String config) throws Exception {
+    deployApplication(namespace, applicationClz, appName, config, null);
+  }
+
+  public static void deployApplication(Id.Namespace namespace, Class<?> applicationClz,
+                                       String appName, @Nullable String config, CConfiguration cConf) throws Exception {
+    ensureNamespaceExists(namespace, cConf);
+    AppFabricClient appFabricClient = getInjector(cConf).getInstance(AppFabricClient.class);
     Location deployedJar = appFabricClient.deployApplication(namespace, appName, applicationClz, config);
     deployedJar.delete(true);
   }
 
   public static void ensureNamespaceExists(Id.Namespace namespace) throws Exception {
-    NamespaceAdmin namespaceAdmin = getInjector().getInstance(NamespaceAdmin.class);
+    ensureNamespaceExists(namespace, CConfiguration.create());
+  }
+
+  public static void ensureNamespaceExists(Id.Namespace namespace, CConfiguration cConf) throws Exception {
+    NamespaceAdmin namespaceAdmin = getInjector(cConf).getInstance(NamespaceAdmin.class);
     if (!namespaceAdmin.exists(namespace)) {
       namespaceAdmin.create(new NamespaceMeta.Builder().setName(namespace).build());
     }

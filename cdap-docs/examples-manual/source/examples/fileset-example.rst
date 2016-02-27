@@ -48,7 +48,7 @@ For example, the ``read`` method returns the contents of the requested file for 
 
 .. literalinclude:: /../../../cdap-examples/FileSetExample/src/main/java/co/cask/cdap/examples/fileset/FileSetService.java
     :language: java
-    :lines: 64-89
+    :lines: 62-84
     :dedent: 4
 
 It first instantiates the dataset specified by the first path parameter through its ``HttpServiceContext``.
@@ -71,7 +71,7 @@ and the :ref:`Sport Results Example <examples-sport-results>` for a more detaile
 
 .. literalinclude:: /../../../cdap-examples/FileSetExample/src/main/java/co/cask/cdap/examples/fileset/FileSetService.java
      :language: java
-     :lines: 91-141
+     :lines: 86-135
      :dedent: 4
 
 MapReduce over Files

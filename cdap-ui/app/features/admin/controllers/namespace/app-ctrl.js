@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.feature.admin').controller('NamespaceAppController',
-function ($scope, $state, myAppUploader, MyCDAPDataSource, myNamespace, $alert, GLOBALS, myHydratorFactory) {
+function ($scope, $state, myAppUploader, MyCDAPDataSource, myNamespace, myAlertOnValium, GLOBALS, myHydratorFactory) {
 
   $scope.apps = [];
   $scope.GLOBALS = GLOBALS;
@@ -36,12 +36,14 @@ function ($scope, $state, myAppUploader, MyCDAPDataSource, myNamespace, $alert, 
       _cdapPath: path + '/' + id,
       method: 'DELETE'
     }, function() {
-      $alert({
-        type: 'success',
-        title: id,
-        content: 'Application deleted successfully'
-      });
-      $state.reload();
+      $state.reload()
+        .then(function() {
+          myAlertOnValium.show({
+            type: 'success',
+            title: id,
+            content: 'Application deleted successfully'
+          });
+        });
     });
   };
 

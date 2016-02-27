@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -28,6 +28,7 @@ import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.lang.InstantiatorFactory;
 import co.cask.cdap.common.lang.PropertyFieldSetter;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -37,6 +38,7 @@ import co.cask.cdap.internal.app.runtime.AbstractProgramRunnerWithPlugin;
 import co.cask.cdap.internal.app.runtime.DataSetFieldSetter;
 import co.cask.cdap.internal.app.runtime.MetricsFieldSetter;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
+import co.cask.cdap.internal.app.runtime.ProgramRunners;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.internal.app.runtime.workflow.BasicWorkflowToken;
 import co.cask.cdap.internal.lang.Reflections;
@@ -51,6 +53,7 @@ import com.google.common.util.concurrent.Service;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.twill.api.RunId;
 import org.apache.twill.common.Threads;
 import org.apache.twill.discovery.DiscoveryServiceClient;
@@ -156,7 +159,7 @@ public class SparkProgramRunner extends AbstractProgramRunnerWithPlugin {
         throw Throwables.propagate(e);
       }
 
-      SparkSubmitter submitter = new SparkContextConfig(hConf).isLocal() ? new LocalSparkSubmitter()
+      SparkSubmitter submitter = SparkContextConfig.isLocal(hConf) ? new LocalSparkSubmitter()
         : new DistributedSparkSubmitter();
       Service sparkRuntimeService = new SparkRuntimeService(
         cConf, hConf, spark, new SparkContextFactory(hConf, context, datasetFramework, txSystemClient, streamAdmin),
@@ -169,11 +172,15 @@ public class SparkProgramRunner extends AbstractProgramRunnerWithPlugin {
       ProgramController controller = new SparkProgramController(sparkRuntimeService, context);
 
       LOG.info("Starting Spark Job: {}", context.toString());
-      sparkRuntimeService.start();
+      if (SparkContextConfig.isLocal(hConf) || UserGroupInformation.isSecurityEnabled()) {
+        sparkRuntimeService.start();
+      } else {
+        ProgramRunners.startAsUser(cConf.get(Constants.CFG_HDFS_USER), sparkRuntimeService);
+      }
       return controller;
     } catch (Throwable t) {
       closeAll(closeables);
-      throw t;
+      throw Throwables.propagate(t);
     }
   }
 

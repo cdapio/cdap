@@ -16,6 +16,15 @@
 
 
 <fieldset ng-disabled="isDisabled">
+  <div class="form-group">
+    <label class="control-label">
+      Label
+      <span class="fa fa-asterisk"></span>
+      <small class="text-danger" ng-if="ValidatorsCtrl.nodeLabelError">{{ValidatorsCtrl.nodeLabelError}}</small>
+    </label>
+    <input type="text" class="form-control" ng-model="model.label"/>
+  </div>
+
   <div class="row">
 
     <!-- INPUT SCHEMA -->
@@ -31,7 +40,7 @@
             <a href=""
                 class="list-group-item"
                 ng-repeat="field in inputSchema"
-                ng-click="ValidatorsCtrl.addFieldGroup(field.name)">
+                ng-click="!isDisabled && ValidatorsCtrl.addFieldGroup(field.name)">
               {{field.name}}
             </a>
           </div>
@@ -60,7 +69,7 @@
             <div class="panel-heading">
               <div class="panel-title">
                 <span>{{ key }}</span>
-                <i class="fa fa-times pull-right" ng-click="ValidatorsCtrl.removeFieldGroup(key)"></i>
+                <i class="fa fa-times pull-right" ng-click="!isDisabled && ValidatorsCtrl.removeFieldGroup(key)"></i>
               </div>
             </div>
 
@@ -139,8 +148,11 @@
 
   <div class="row error-dataset">
     <div class="col-xs-12">
-      <label class="label-control">Error Dataset</label>
-      <input type="text" class="form-control" ng-model="model.errorDatasetName">
+      <label class="label-control">
+        Error Dataset
+        <span class="fa fa-info-circle" uib-tooltip="Dataset that stores invalid records that has failed the validation." tooltip-placement="right"></span>
+      </label>
+      <input type="text" class="form-control" ng-model="errorDatasetName">
     </div>
   </div>
 </fieldset>

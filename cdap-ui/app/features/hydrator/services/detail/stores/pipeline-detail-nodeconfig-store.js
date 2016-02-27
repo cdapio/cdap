@@ -114,7 +114,7 @@ angular.module(PKG.name + '.feature.hydrator')
     function configurePluginInfo(pluginDetails) {
       var pluginId = this.state.node.name;
       var input;
-      var sourceConn = $filter('filter')(this.ConfigStore.getConnections(), { to: pluginId });
+      var sourceConn = this.ConfigStore.getSourceNodes(pluginId).filter( node => typeof node.outputSchema === 'string');
       var sourceSchema = null;
       var isStreamSource = false;
 
@@ -124,10 +124,10 @@ angular.module(PKG.name + '.feature.hydrator')
 
       var source;
       if (sourceConn && sourceConn.length) {
-        source = this.ConfigStore.getNode(sourceConn[0].from);
+        source = sourceConn[0];
         sourceSchema = source.outputSchema;
 
-        if (source.name === 'Stream') {
+        if (source.plugin.name === 'Stream') {
           isStreamSource = true;
         }
 
@@ -147,29 +147,6 @@ angular.module(PKG.name + '.feature.hydrator')
         input = null;
       }
 
-      if (isStreamSource) {
-        // Must be in this order!!
-        if (!input) {
-          input = {
-            fields: [{ name: 'body', type: 'string' }]
-          };
-        }
-
-        input.fields.unshift({
-          name: 'headers',
-          type: {
-            type: 'map',
-            keys: 'string',
-            values: 'string'
-          }
-        });
-
-        input.fields.unshift({
-          name: 'ts',
-          type: 'long'
-        });
-      }
-
       this.state.node.inputSchema = input ? input.fields : null;
       angular.forEach(this.state.node.inputSchema, function (field) {
         if (angular.isArray(field.type)) {
@@ -178,11 +155,11 @@ angular.module(PKG.name + '.feature.hydrator')
         } else {
           field.nullable = false;
         }
+        if (isStreamSource) {
+          delete field.readonly;
+        }
       });
 
-      if (!this.state.node.outputSchema && input) {
-        this.state.node.outputSchema = JSON.stringify(input) || null;
-      }
 
       this.state.node._backendProperties = pluginDetails._backendProperties || this.state.node._backendProperties;
       this.state.node.description = pluginDetails.description || this.state.node.description;

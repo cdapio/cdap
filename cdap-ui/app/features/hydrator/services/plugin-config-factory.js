@@ -19,12 +19,19 @@ class PluginConfigFactory {
     this.myHelpers = myHelpers;
     this.myPipelineApi = myPipelineApi;
     this.$state = $state;
+    this.data = {};
   }
-  fetchWidgetJson(artifactName, artifactVersion, key) {
+  fetchWidgetJson(artifactName, artifactVersion, artifactScope, key) {
+    let cache = this.data[`${artifactName}-${artifactVersion}-${artifactScope}-${key}`];
+    if (cache) {
+      return this.$q.when(cache);
+    }
+
     return this.myPipelineApi.fetchArtifactProperties({
-      namespace: this.$state.params.namespace,
-      artifactName,
-      artifactVersion,
+      namespace: this.$state.params.namespace || this.$state.params.nsadmin,
+      artifactName: artifactName,
+      artifactVersion: artifactVersion,
+      scope: artifactScope,
       keys: key
     })
       .$promise
@@ -34,12 +41,13 @@ class PluginConfigFactory {
             let config = res[key];
             if (config) {
               config = JSON.parse(config);
+              this.data[`${artifactName}-${artifactVersion}-${key}`] = config;
               return config;
             } else {
               throw 'NO_JSON_FOUND';
             }
           } catch(e) {
-            throw 'CONFIG_SYNTAX_JSON_ERROR';
+            throw (e && e.name === 'SyntaxError')? 'CONFIG_SYNTAX_JSON_ERROR': e;
           }
         },
         () => {
@@ -47,11 +55,12 @@ class PluginConfigFactory {
         }
       );
   }
-  fetchDocJson(artifactName, artifactVersion, key) {
+  fetchDocJson(artifactName, artifactVersion, artifactScope, key) {
     return this.myPipelineApi.fetchArtifactProperties({
       namespace: this.$state.params.namespace,
-      artifactName,
-      artifactVersion,
+      artifactName: artifactName,
+      artifactVersion: artifactVersion,
+      scope: artifactScope,
       keys: key
     }).$promise;
   }
@@ -74,7 +83,8 @@ class PluginConfigFactory {
         schemaProperties: null,
         outputSchemaProperty: null,
         isOutputSchemaRequired: null,
-        implicitSchema: null
+        implicitSchema: null,
+        watchProperty: null
       },
       groups: []
     };

@@ -131,11 +131,6 @@ public class RouterPathTest {
     httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("GET"), flowPath);
     result = pathLookup.getRoutingService(FALLBACKSERVICE, flowPath, httpRequest);
     Assert.assertEquals(Constants.Service.METRICS, result);
-
-    flowPath = "/v3/namespaces/default/apps/InvalidApp/adapters/Adapter1/runs/7e6adc79-0f5d-b559-70817ea47698/logs/";
-    httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("GET"), flowPath);
-    result = pathLookup.getRoutingService(FALLBACKSERVICE, flowPath, httpRequest);
-    Assert.assertEquals(Constants.Service.METRICS, result);
   }
 
   @Test

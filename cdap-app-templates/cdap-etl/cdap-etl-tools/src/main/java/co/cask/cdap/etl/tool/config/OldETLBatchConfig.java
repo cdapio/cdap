@@ -18,11 +18,9 @@ package co.cask.cdap.etl.tool.config;
 
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.etl.batch.config.ETLBatchConfig;
-import co.cask.cdap.etl.common.ETLConfig;
 import co.cask.cdap.etl.common.ETLStage;
 import co.cask.cdap.etl.common.Plugin;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -39,26 +37,19 @@ public final class OldETLBatchConfig extends OldETLConfig {
     this.actions = actions;
   }
 
-  public ETLBatchConfig getNewConfig() {
-    ETLConfig newConfig = super.getNewConfig();
+  public ETLBatchConfig getNewConfig(PluginArtifactFinder pluginArtifactFinder) {
+    ETLBatchConfig.Builder builder = ETLBatchConfig.builder(schedule);
+    super.buildNewConfig(builder, pluginArtifactFinder);
     int actionId = 1;
-    List<ETLStage> newActions = new ArrayList<>();
     if (actions != null) {
       for (OldETLStage oldAction : actions) {
-        newActions.add(new ETLStage(
+        builder.addAction(new ETLStage(
           oldAction.getName() + "." + actionId,
           new Plugin(oldAction.getName(), oldAction.getProperties()),
           oldAction.getErrorDatasetName()));
         actionId++;
       }
     }
-    return new ETLBatchConfig(
-      schedule,
-      newConfig.getSource(),
-      newConfig.getSinks(),
-      newConfig.getTransforms(),
-      newConfig.getConnections(),
-      newConfig.getResources(),
-      newActions);
+    return builder.build();
   }
 }

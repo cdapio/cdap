@@ -30,6 +30,7 @@ import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.explore.client.ExploreClient;
 import co.cask.cdap.explore.client.MockExploreClient;
+import co.cask.cdap.store.guice.NamespaceStoreModule;
 import co.cask.tephra.TransactionManager;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
@@ -57,6 +58,7 @@ public class MDSViewStoreTest extends ViewStoreTestBase {
       new DataSetsModules().getStandaloneModules(),
       new DataFabricModules().getInMemoryModules(),
       new DiscoveryRuntimeModule().getInMemoryModules(),
+      new NamespaceStoreModule().getInMemoryModules(),
       new LocationRuntimeModule().getInMemoryModules(),
       new AbstractModule() {
         @Override

@@ -49,10 +49,10 @@ body.theme-cdap.state-hydrator-create {
       width: 290px;
       .item .plugin-item {
         text-align: left;
-        width: 130px;
+        width: 48%;
         .name {
           display: inline-block;
-          max-width: 88px;
+          max-width: 81px;
         }
       }
       + .right-wrapper {
@@ -125,6 +125,7 @@ body.theme-cdap.state-hydrator-create {
           position: absolute;
           bottom: 0;
           top: 40px;
+          width: 100%;
         }
       }
       .item-body, .item-heading {
@@ -209,7 +210,7 @@ body.theme-cdap.state-hydrator-create {
         margin-bottom: 6px;
         padding: 0 8px;
         height: 40px;
-        width: 50px;
+        width: 48%;
         .border-radius(4px);
         .transition(all 0.2s ease);
         &:hover, &:focus {
@@ -238,6 +239,10 @@ body.theme-cdap.state-hydrator-create {
 
   .my-cdap-popover {
     padding: 0;
+    outline: none;
+
+    &:focus { outline: none; }
+
     .popover-content {
       padding: 5px;
       .list-group {

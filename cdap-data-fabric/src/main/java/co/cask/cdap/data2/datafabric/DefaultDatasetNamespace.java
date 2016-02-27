@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -25,8 +25,9 @@ import com.google.common.base.Preconditions;
 import javax.annotation.Nullable;
 
 /**
- * Default dataset namespace, which namespaces by configuration setting {@link Constants.Dataset#TABLE_PREFIX} and
- * the {@link Id.Namespace} in which the dataset instance was created
+ * Default dataset namespace, which namespaces by configuration setting 
+ * {@link co.cask.cdap.common.conf.Constants.Dataset#TABLE_PREFIX} and
+ * the {@link Id.Namespace} in which the dataset instance was created.
  */
 public class DefaultDatasetNamespace implements DatasetNamespace {
   private final String rootPrefix;

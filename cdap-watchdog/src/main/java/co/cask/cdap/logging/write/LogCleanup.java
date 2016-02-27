@@ -108,8 +108,8 @@ public final class LogCleanup implements Runnable {
    */
   private void deleteEmptyDirsInNamespace(Location namespacedLogBaseDir, Location dirToDelete) {
     // Don't delete a dir if it is equal to or a parent of logBaseDir
-    URI namespacedLogBaseURI = Locations.toURI(namespacedLogBaseDir);
-    URI dirToDeleteURI = Locations.toURI(dirToDelete);
+    URI namespacedLogBaseURI = namespacedLogBaseDir.toURI();
+    URI dirToDeleteURI = dirToDelete.toURI();
     if (namespacedLogBaseURI.equals(dirToDeleteURI) ||
       !dirToDeleteURI.getRawPath().startsWith(namespacedLogBaseURI.getRawPath())) {
       LOG.debug("{} not deletion candidate.", dirToDelete);

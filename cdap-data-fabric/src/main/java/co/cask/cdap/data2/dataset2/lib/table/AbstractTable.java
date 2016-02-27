@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -83,7 +83,7 @@ public abstract class AbstractTable implements Table, TransactionAware {
 
   @Override
   public Row get(Get get) {
-    return get.getColumns().isEmpty() ?
+    return get.getColumns() == null ?
         get(get.getRow()) :
         get(get.getRow(), get.getColumns().toArray(new byte[get.getColumns().size()][]));
   }
@@ -162,7 +162,7 @@ public abstract class AbstractTable implements Table, TransactionAware {
 
   @Override
   public void delete(Delete delete) {
-    if (delete.getColumns().isEmpty()) {
+    if (delete.getColumns() == null) {
       delete(delete.getRow());
     } else {
       delete(delete.getRow(), delete.getColumns().toArray(new byte[delete.getColumns().size()][]));

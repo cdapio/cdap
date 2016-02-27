@@ -64,7 +64,7 @@
     <div ng-if="AppsSectionCtrl.dataList.length === 0">
       <div class="clearfix">
         <h3> Datasets </h3>
-        <p> You haven't deployed any datasets: add one </p>
+        <p> You haven't deployed any datasets. </p>
       </div>
       <hr />
       <div class="text-left">
@@ -93,8 +93,8 @@
               <span class="icon-hydrator"></span>
                <span>Pipelines</span>
             </a>
-            <div class="btn-group dropdown-right" dropdown>
-              <button type="button" class="btn btn-default dropdown-toggle white-dropdown" dropdown-toggle>
+            <div class="btn-group dropdown-right" uib-dropdown>
+              <button type="button" class="btn btn-default dropdown-toggle white-dropdown" uib-dropdown-toggle>
                 Add Application <span class="caret"></span>
               </button>
               <ul class="dropdown-menu dropdown-menu-right" role="menu">
@@ -149,11 +149,11 @@
     <div ng-if="AppsSectionCtrl.apps.length === 0">
       <div class="clearfix">
         <h3> Applications </h3>
-        <p> You haven't deployed any applications: add one </p>
+        <p> You haven't deployed any applications. </p>
       </div>
       <hr />
-      <div class="btn-group dropdown-right" dropdown>
-        <button type="button" class="btn btn-default dropdown-toggle white-dropdown" dropdown-toggle>
+      <div class="btn-group dropdown-right" uib-dropdown>
+        <button type="button" class="btn btn-default dropdown-toggle white-dropdown" uib-dropdown-toggle>
           Add Application <span class="caret"></span>
         </button>
         <ul class="dropdown-menu dropdown-menu-right" role="menu">

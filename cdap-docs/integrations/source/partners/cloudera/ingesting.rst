@@ -15,10 +15,10 @@ Integrating CDAP with Impala
 
 When using CDAP with Impala:
 
-.. |included-applications| replace:: **Included Applications:**
-.. _included-applications: ../../../included-applications/index.html
+.. |cdap-apps| replace:: **CDAP Applications:**
+.. _cdap-apps: ../../../cdap-apps/hydrator/index.html
 
-- |included-applications|_ Using **ETL** and **custom ETL plugins**
+- |cdap-apps|_ Using **ETL** and **custom ETL plugins**
 
 
 .. |stream| replace:: **Stream Exploration:**
@@ -101,56 +101,78 @@ stream events and writes those events into files on HDFS that can then be querie
 To do this, write the following JSON to a config file::
 
   {
-      "description": "Periodically reads stream data and writes it to a TimePartitionedFileSet",
-      "config": {
-          "schedule": "*/10 * * * *",
-          "source": {
-              "name": "Stream",
-              "properties": {
-                  "name": "trades",
-                  "duration": "10m",
-                  "format": "csv",
-                  "schema": "{
-                      \"type\":\"record\",
-                      \"name\":\"purchase\",
-                      \"fields\":[
-                          {\"name\":\"ticker\",\"type\":\"string\"},
-                          {\"name\":\"price\",\"type\":\"double\"},
-                          {\"name\":\"trades\",\"type\":\"int\"}
-                      ]
-                  }",
-                  "format.setting.delimiter":","
-              }
-          },
-          "transforms": [
-              {
-                  "name": "Projection",
-                  "properties": {
-                      "drop": "headers"
-                  }
-              }
-          ],
-          "sinks": [
-            {
-                "name": "TPFSAvro",
-                "properties": {
-                    "name": "trades_converted",
-                    "schema": "{
-                        \"type\":\"record\",
-                        \"name\":\"purchase\",
-                        \"fields\":[
-                            {\"name\":\"ts\",\"type\":\"long\"},
-                            {\"name\":\"ticker\",\"type\":\"string\"},
-                            {\"name\":\"price\",\"type\":\"double\"},
-                            {\"name\":\"trades\",\"type\":\"int\"}
-                        ]
-                    }",
-                    "basePath": "trades_converted"
-                }
+    "description": "Periodically reads stream data and writes it to a TimePartitionedFileSet",
+    "config": {
+      "schedule": "*/10 * * * *",
+      "source": {
+        "name": "tradeStream",
+        "plugin": {
+          "name": "Stream",
+          "properties": {
+            "name": "trades",
+            "duration": "10m",
+            "format": "csv",
+            "schema": "{
+              \"type\":\"record\",
+              \"name\":\"purchase\",
+              \"fields\":[
+                {\"name\":\"ticker\",\"type\":\"string\"},
+                {\"name\":\"price\",\"type\":\"double\"},
+                {\"name\":\"trades\",\"type\":\"int\"}
+              ]
+            }",
+            "format.setting.delimiter":","
+          }
+        }
+      },
+      "transforms": [
+        {
+          "name": "dropHeadersTransform",
+          "plugin": {
+            "name": "Projection",
+            "properties": {
+              "drop": "headers"
             }
-          ]    
-      }
+          }
+        }
+      ],
+      "sinks": [
+        {
+          "name": "tpfsAvroSink",
+          "plugin": {
+            "name": "TPFSAvro",
+            "properties": {
+              "name": "trades_converted",
+              "schema": "{
+                \"type\":\"record\",
+                \"name\":\"purchase\",
+                \"fields\":[
+                  {\"name\":\"ts\",\"type\":\"long\"},
+                  {\"name\":\"ticker\",\"type\":\"string\"},
+                  {\"name\":\"price\",\"type\":\"double\"},
+                  {\"name\":\"trades\",\"type\":\"int\"}
+                ]
+              }",
+              "basePath": "trades_converted"
+            }
+          }
+        }
+      ],
+      "connections": [
+        {
+          "from": "tradeStream",
+          "to": "dropHeadersTransform"
+        },
+        {
+          "from": "dropHeadersTransform",
+          "to": "tpfsAvroSink"
+        }
+      ]
+    }
   }
+
+**Note:** The above JSON has been re-formatted to fit and requires editing (remove the line endings added to
+the ``schema`` values) to be a conforming JSON file. 
 
 Then use your config file with the ``cdap-etl-batch`` artifact to create an application through the CLI.
 For example, if you wrote the above JSON to a file named ``conversion.json``::

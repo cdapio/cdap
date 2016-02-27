@@ -16,7 +16,9 @@
 
 angular.module(PKG.name + '.services')
   .service('ServiceStatusFactory', function(MyCDAPDataSource, $timeout, EventPipe, $state, myAuth, $rootScope, MYAUTH_EVENT) {
-    this.systemStatus = 'green';
+    this.systemStatus = {
+      color: 'green'
+    };
     // Apart from invalid token there should be no scenario
     // when we should stop this poll.
     var dataSrc = new MyCDAPDataSource();
@@ -28,14 +30,15 @@ angular.module(PKG.name + '.services')
       var serviceStatuses = Object.keys(res).map(function(value) {
         return res[value];
       });
+
       if (serviceStatuses.indexOf('NOTOK') > -1) {
-        this.systemStatus = 'yellow';
+        this.systemStatus.color = 'yellow';
       }
       if (serviceStatuses.indexOf('OK') === -1) {
-        this.systemStatus = 'red';
+        this.systemStatus.color = 'red';
       }
       if (serviceStatuses.indexOf('NOTOK') === -1) {
-        this.systemStatus = 'green';
+        this.systemStatus.color = 'green';
       }
     }.bind(this),
     function error(err) {
@@ -45,8 +48,11 @@ angular.module(PKG.name + '.services')
           EventPipe.emit('backendUp');
           myAuth.logout();
         });
-      } else {
-        EventPipe.emit('backendDown');
+      } else if(err && err.code === 'ECONNREFUSED') {
+        EventPipe.emit('backendDown', 'Unable to connect to CDAP Router', 'Attempting to connect…');
+      } else if (!err) {
+        // Ideally we won't reach here. 
+        EventPipe.emit('backendUp');
       }
     }
     );

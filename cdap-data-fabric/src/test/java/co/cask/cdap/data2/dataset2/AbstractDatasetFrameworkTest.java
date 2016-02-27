@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -29,8 +29,6 @@ import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
-import co.cask.cdap.common.namespace.AbstractNamespaceClient;
-import co.cask.cdap.common.namespace.InMemoryNamespaceClient;
 import co.cask.cdap.data2.dataset2.lib.file.FileSetModule;
 import co.cask.cdap.data2.dataset2.lib.partitioned.PartitionedFileSetModule;
 import co.cask.cdap.data2.dataset2.lib.table.CoreDatasetsModule;
@@ -38,6 +36,7 @@ import co.cask.cdap.data2.dataset2.module.lib.inmemory.InMemoryTableModule;
 import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
+import co.cask.cdap.store.NamespaceStore;
 import co.cask.tephra.DefaultTransactionExecutor;
 import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionExecutor;
@@ -80,12 +79,11 @@ public abstract class AbstractDatasetFrameworkTest {
   private static final Id.DatasetInstance MY_TABLE = Id.DatasetInstance.from(NAMESPACE_ID, "my_table");
   private static final Id.DatasetInstance MY_TABLE2 = Id.DatasetInstance.from(NAMESPACE_ID, "my_table2");
   private static final Id.DatasetInstance MY_DS = Id.DatasetInstance.from(NAMESPACE_ID, "myds");
-  private static final Id.DatasetType IN_MEMORY_TYPE = Id.DatasetType.from(NAMESPACE_ID, "orderedTable");
+  private static final Id.DatasetType IN_MEMORY_TYPE = Id.DatasetType.from(NAMESPACE_ID, "table");
   private static final Id.DatasetType SIMPLE_KV_TYPE = Id.DatasetType.from(NAMESPACE_ID, SimpleKVTable.class.getName());
   private static final Id.DatasetType DOUBLE_KV_TYPE = Id.DatasetType.from(NAMESPACE_ID,
                                                                            DoubleWrappedKVTable.class.getName());
-
-  protected static final AbstractNamespaceClient NAMESPACE_CLIENT = new InMemoryNamespaceClient();
+  protected static final NamespaceStore NAMESPACE_STORE = new InMemoryNamespaceStore();
   protected static DatasetDefinitionRegistryFactory registryFactory;
   protected static CConfiguration cConf;
   protected static TransactionExecutorFactory txExecutorFactory;
@@ -108,7 +106,7 @@ public abstract class AbstractDatasetFrameworkTest {
         return registry;
       }
     };
-    NAMESPACE_CLIENT.create(new NamespaceMeta.Builder().setName(NAMESPACE_ID).build());
+    NAMESPACE_STORE.create(new NamespaceMeta.Builder().setName(NAMESPACE_ID).build());
   }
 
   @Test
@@ -370,8 +368,8 @@ public abstract class AbstractDatasetFrameworkTest {
     // create 2 namespaces
     Id.Namespace namespace1 = Id.Namespace.from("ns1");
     Id.Namespace namespace2 = Id.Namespace.from("ns2");
-    NAMESPACE_CLIENT.create(new NamespaceMeta.Builder().setName(namespace1).build());
-    NAMESPACE_CLIENT.create(new NamespaceMeta.Builder().setName(namespace2).build());
+    NAMESPACE_STORE.create(new NamespaceMeta.Builder().setName(namespace1).build());
+    NAMESPACE_STORE.create(new NamespaceMeta.Builder().setName(namespace2).build());
     framework.createNamespace(namespace1);
     framework.createNamespace(namespace2);
 
@@ -434,8 +432,8 @@ public abstract class AbstractDatasetFrameworkTest {
     // create 2 namespaces
     Id.Namespace namespace1 = Id.Namespace.from("ns1");
     Id.Namespace namespace2 = Id.Namespace.from("ns2");
-    NAMESPACE_CLIENT.create(new NamespaceMeta.Builder().setName(namespace1).build());
-    NAMESPACE_CLIENT.create(new NamespaceMeta.Builder().setName(namespace2).build());
+    NAMESPACE_STORE.create(new NamespaceMeta.Builder().setName(namespace1).build());
+    NAMESPACE_STORE.create(new NamespaceMeta.Builder().setName(namespace2).build());
     framework.createNamespace(namespace1);
     framework.createNamespace(namespace2);
 

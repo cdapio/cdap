@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -262,8 +262,14 @@ public class SchedulerServiceTest {
     checkState(Scheduler.ScheduleState.SUSPENDED, scheduleIds);
 
     List<ScheduledRuntime> oldScheduledRuntimes = schedulerService.nextScheduledRuntime(program, programType);
+    // schedule is paused and thus the nextRuntime should be empty
+    Assert.assertTrue(oldScheduledRuntimes.isEmpty());
 
-    // update an newly created schedule whih is in suspended state
+    schedulerService.resumeSchedule(program, programType, oldSchedule.getName());
+    oldScheduledRuntimes = schedulerService.nextScheduledRuntime(program, programType);
+    schedulerService.suspendSchedule(program, programType, oldSchedule.getName());
+
+    // update a newly created schedule which is in suspended state
     schedulerService.updateSchedule(program, programType, newSchedule);
 
     scheduleIds = schedulerService.getScheduleIds(program, programType);
@@ -274,7 +280,10 @@ public class SchedulerServiceTest {
 
     // time schedules will have nextRuntime associated with it so verify that they are correct after update
     if (oldSchedule instanceof TimeSchedule && newSchedule instanceof TimeSchedule) {
+      // resume schedule before verifying next runtime
+      schedulerService.resumeSchedule(program, programType, newSchedule.getName());
       verifyUpdatedNextRuntime(oldScheduledRuntimes);
+      schedulerService.suspendSchedule(program, programType, newSchedule.getName());
     }
 
     // the state of an resumed schedule should remain resumed even after update

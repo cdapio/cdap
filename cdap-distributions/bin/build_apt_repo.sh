@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Copyright © 2015 Cask Data, Inc.
+# Copyright © 2015-2016 Cask Data, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -47,7 +47,7 @@ STAGE_DIR=${TARGET_DIR}/aptrepo
 
 S3_BUCKET=${S3_BUCKET:-repository.cask.co}
 S3_REPO_PATH=${S3_REPO_PATH:-ubuntu/precise/amd64/cdap} # No leading or trailing slashes
-VERSION=${VERSION:-$(basename ${TARGET_DIR}/cdap_*.deb | cut -d_ -f2 | cut -d- -f1)}
+VERSION=${VERSION:-$(basename ${TARGET_DIR}/*.deb | head -n 1 | cut -d_ -f2 | cut -d- -f1)}
 GPG_KEY_NAME=${GPG_KEY_NAME:-${1}}
 GPG_PASSPHRASE=${GPG_PASSPHRASE:-${2}}
 __version=${VERSION/-SNAPSHOT/}
@@ -113,6 +113,15 @@ function createrepo_in_repo_staging() {
   rm -rf ${STAGE_DIR}/${__maj_min}/dists/precise{/.refs,} && mv ${STAGE_DIR}/${__maj_min}/dists/precise{-*,} || return 1
 }
 
+function create_definition_file() {
+  [ -f "${STAGE_DIR}/${__maj_min}/cask.list" ] && return
+  echo "Create APT repository definition file"
+  cd ${STAGE_DIR}/${__maj_min}
+  cat <<EOF > cask.list
+deb [ arch=amd64 ] http://${S3_BUCKET}/${S3_REPO_PATH}/${__maj_min} precise cdap
+EOF
+}
+
 function create_repo_tarball() {
   cd ${STAGE_DIR}
   echo "Create APT repository tarball"
@@ -125,6 +134,7 @@ function create_repo_tarball() {
 setup_repo_staging || die "Something went wrong setting up the staging directory"
 add_packages_to_repo_staging || die "Failed copying packages to staging directory"
 createrepo_in_repo_staging || die "Failed to create repository from staging directory"
+create_definition_file || die "Failed to create repository definition file"
 create_repo_tarball || die "Failed to create APT repository tarball"
 
 echo "Complete: cdap-aptrepo-${__maj_min}.tar.gz created"

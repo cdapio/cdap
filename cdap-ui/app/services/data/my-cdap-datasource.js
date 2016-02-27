@@ -46,12 +46,12 @@ angular.module(PKG.name + '.services')
       return this.MyDataSource.stopPoll(resourceId);
     };
 
-    MyCDAPDataSource.prototype.config = function(resource) {
+    MyCDAPDataSource.prototype.config = function(resource, cb, errorCb) {
       resource.actionName = 'template-config';
-      return this.MyDataSource.config(resource);
+      return this.MyDataSource.config(resource, cb, errorCb);
     };
 
-    MyCDAPDataSource.prototype.request = function(resource, cb) {
+    MyCDAPDataSource.prototype.request = function(resource, cb, errorCb) {
       if ($rootScope.currentUser && $rootScope.currentUser.token) {
         resource.headers = {
           Authorization: 'Bearer '+ $rootScope.currentUser.token
@@ -63,7 +63,7 @@ angular.module(PKG.name + '.services')
         resource.url = myCdapUrl.constructUrl(resource);
       }
 
-      return this.MyDataSource.request(resource, cb);
+      return this.MyDataSource.request(resource, cb, errorCb);
     };
 
     return MyCDAPDataSource;

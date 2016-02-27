@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -27,6 +27,10 @@ import co.cask.cdap.data2.dataset2.lib.partitioned.PartitionedFileSetDataset;
 import co.cask.cdap.internal.app.runtime.batch.BasicMapReduceTaskContext;
 import co.cask.cdap.internal.app.runtime.batch.MapReduceClassLoader;
 import co.cask.cdap.internal.app.runtime.batch.dataset.MultipleOutputs;
+import com.google.common.base.Supplier;
+import com.google.common.base.Suppliers;
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheLoader;
 import com.google.common.reflect.TypeToken;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
@@ -124,10 +128,22 @@ public class DynamicPartitioningOutputFormat<K, V> extends FileOutputFormat<K, V
     };
   }
 
-  private static TaskAttemptContext getTaskAttemptContext(TaskAttemptContext context,
-                                                          String newOutputName) throws IOException {
+  private boolean isAvroOutputFormat(FileOutputFormat<K, V> fileOutputFormat) {
+    String className = fileOutputFormat.getClass().getName();
+    // use class name String in order avoid having a dependency on the Avro libraries here
+    return "org.apache.avro.mapreduce.AvroKeyOutputFormat".equals(className)
+      || "org.apache.avro.mapreduce.AvroKeyValueOutputFormat".equals(className);
+  }
+
+  private TaskAttemptContext getTaskAttemptContext(TaskAttemptContext context,
+                                                   String newOutputName) throws IOException {
     Job job = new Job(context.getConfiguration());
     FileOutputFormat.setOutputName(job, newOutputName);
+    // CDAP-4806 We must set this parameter in addition to calling FileOutputFormat#setOutputName, because
+    // AvroKeyOutputFormat/AvroKeyValueOutputFormat use a different parameter for the output name than FileOutputFormat.
+    if (isAvroOutputFormat(getFileOutputFormat(context))) {
+      job.getConfiguration().set("avro.mo.config.namedOutput", newOutputName);
+    }
 
     Path jobOutputPath = createJobSpecificPath(FileOutputFormat.getOutputPath(job), context);
     FileOutputFormat.setOutputPath(job, jobOutputPath);
@@ -136,10 +152,14 @@ public class DynamicPartitioningOutputFormat<K, V> extends FileOutputFormat<K, V
   }
 
   /**
-   * @return A RecordWriter object over the given file
+   * @return A RecordWriter object for the given TaskAttemptContext (configured for a particular file name).
    * @throws IOException
    */
   protected RecordWriter<K, V> getBaseRecordWriter(TaskAttemptContext job) throws IOException, InterruptedException {
+    return getFileOutputFormat(job).getRecordWriter(job);
+  }
+
+  private FileOutputFormat<K, V> getFileOutputFormat(TaskAttemptContext job) {
     if (fileOutputFormat == null) {
       Class<? extends FileOutputFormat> delegateOutputFormat = job.getConfiguration()
         .getClass(Constants.Dataset.Partitioned.HCONF_ATTR_OUTPUT_FORMAT_CLASS_NAME, null, FileOutputFormat.class);
@@ -149,7 +169,7 @@ public class DynamicPartitioningOutputFormat<K, V> extends FileOutputFormat<K, V
         new InstantiatorFactory(false).get(TypeToken.of(delegateOutputFormat)).create();
       this.fileOutputFormat = fileOutputFormat;
     }
-    return fileOutputFormat.getRecordWriter(job);
+    return fileOutputFormat;
   }
 
   // suffixes a Path with a job-specific string

@@ -1,5 +1,5 @@
 <!--
-  Copyright © 2014 Cask Data, Inc.
+  Copyright © 2014-2016 Cask Data, Inc.
 
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy of
@@ -14,109 +14,127 @@
   the License.
   -->
 <configuration>
-    <!--
-       Metrics Configuration
-     -->
-    <property>
-        <name>metrics.data.table.retention.resolution.1.seconds</name>
-        <value>7200</value>
-        <description>Retention resolution 1 sec table (in seconds)</description>
-    </property>
 
-    <!--
-        Data Fabric configuration
-    -->
-    <property>
-        <name>data.local.storage.blocksize</name>
-        <value>1024</value>
-        <description>Specifies block size (in bytes)</description>
-    </property>
+  <!-- Global Configuration -->
 
-    <property>
-        <name>data.local.storage.cachesize</name>
-        <value>104857600</value>
-        <description>Specifies cache size (in bytes)</description>
-    </property>
+  <property>
+    <name>enable.unrecoverable.reset</name>
+    <value>true</value>
+    <description>
+      Determines if resetting CDAP should be enabled. **WARNING: Enabling
+      this option makes it possible to delete all applications and data; NO
+      RECOVERY IS POSSIBLE!**
+    </description>
+  </property>
 
-    <!--
-        Router configuration
-    -->
-    <property>
-        <name>router.address</name>
-        <value>127.0.0.1</value>
-        <description>Specifies a common address for both router and UI to bind to</description>
-    </property>
 
-    <property>
-        <name>router.bind.address</name>
-        <value>0.0.0.0</value>
-        <description>Specifies the address for router server to bind to</description>
-    </property>
+  <!-- Applications Configuration -->
+  
+  <property>
+    <name>app.artifact.dir</name>
+    <value>artifacts</value>
+    <description>
+      Semicolon-separated list of local directories scanned for system artifacts
+      to add to the artifact repository
+    </description>
+  </property>
 
-    <property>
-        <name>router.forward.rule</name>
-        <value>10000:gateway,20000:webapp/$HOST</value>
-        <description>Forward rules for router (port:service -> forward port to service)</description>
-    </property>
 
-    <property>
-        <name>router.server.address</name>
-        <value>${router.address}</value>
-        <description>Specifies the address of the router for the UI to bind to</description>
-    </property>
+  <!-- Datasets Configuration -->
+  
+  <property>
+    <name>data.local.storage.blocksize</name>
+    <value>1024</value>
+    <description>
+      Block size in bytes for data fabric when in standalone mode
+    </description>
+  </property>
 
-    <!--
-        Logging Configuration
-    -->
-    <property>
-        <name>log.publish.num.partitions</name>
-        <value>1</value>
-        <description>Number of Kafka partitions to publish the logs to</description>
-    </property>
+  <property>
+    <name>data.local.storage.cachesize</name>
+    <value>104857600</value>
+    <description>
+      Cache size in bytes for data fabric when in standalone mode
+    </description>
+  </property>
 
-    <property>
-        <name>log.base.dir</name>
-        <value>logs/avro</value>
-        <description>Base log directory</description>
-    </property>
 
-    <property>
-        <name>log.retention.duration.days</name>
-        <value>7</value>
-        <description>Log file retention duration (in days)</description>
-    </property>
+  <!-- Logging Configuration -->
+  
+  <property>
+    <name>log.base.dir</name>
+    <value>logs/avro</value>
+    <description>
+      Base log directory
+    </description>
+  </property>
 
-    <property>
-        <name>enable.unrecoverable.reset</name>
-        <value>true</value>
-        <description>
-            WARNING! - Enabling this option enables the deletion of all applications and data.
-            No recovery is possible!
-        </description>
-    </property>
+  <property>
+    <name>log.publish.num.partitions</name>
+    <value>1</value>
+    <description>
+      Number of CDAP Kafka service partitions to publish the logs to
+    </description>
+  </property>
 
-    <property>
-        <name>explore.enabled</name>
-        <value>true</value>
-        <description>Enable Explore functionality</description>
-    </property>
+  <property>
+    <name>log.retention.duration.days</name>
+    <value>7</value>
+    <description>
+      Log file HDFS retention duration in days
+    </description>
+  </property>
 
-    <!--
-        Stream configuration
-    -->
-    <property>
-        <name>stream.container.instances</name>
-        <value>1</value>
-        <description>Number of stream writer instance. In local mode, it's always one</description>
-    </property>
 
-    <!--
-        Artifact configuration
-    -->
-    <property>
-        <name>app.artifact.dir</name>
-        <value>artifacts</value>
-        <description>Directory where system artifacts are stored</description>
-    </property>
+  <!-- Metrics Configuration -->
+  
+  <property>
+    <name>metrics.data.table.retention.resolution.1.seconds</name>
+    <value>7200</value>
+    <description>
+      Retention resolution of the 1-second resolution table in seconds;
+      default retention period is 2 hours
+    </description>
+  </property>
+
+
+  <!-- Router Configuration -->
+  
+  <property>
+    <name>router.address</name>
+    <value>127.0.0.1</value>
+    <description>
+      CDAP Router service address to which CDAP UI connects (deprecated; use router.server.address directly)
+    </description>
+  </property>
+
+  <property>
+    <name>router.bind.address</name>
+    <value>0.0.0.0</value>
+    <description>
+      CDAP Router service bind address
+    </description>
+  </property>
+
+  <property>
+    <name>router.server.address</name>
+    <value>${router.address}</value>
+    <description>
+      CDAP Router service address to which CDAP UI connects
+    </description>
+  </property>
+
+
+  <!-- Stream Configuration -->
+  
+  <property>
+    <name>stream.container.instances</name>
+    <value>1</value>
+    <description>
+      Number of YARN container instances for the stream handler; 
+      in standalone mode, it's always one
+    </description>
+  </property>
+
 
 </configuration>

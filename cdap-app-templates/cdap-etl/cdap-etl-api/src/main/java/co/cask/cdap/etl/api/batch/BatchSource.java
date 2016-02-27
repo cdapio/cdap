@@ -38,6 +38,7 @@ import co.cask.cdap.etl.api.Transformation;
 @Beta
 public abstract class BatchSource<KEY_IN, VAL_IN, OUT> extends BatchConfigurable<BatchSourceContext>
   implements Transformation<KeyValue<KEY_IN, VAL_IN>, OUT>, StageLifecycle<BatchRuntimeContext> {
+  public static final String PLUGIN_TYPE = "batchsource";
 
   /**
    * Initialize the Batch Source stage. Executed inside the Batch Run. This method is guaranteed to be invoked

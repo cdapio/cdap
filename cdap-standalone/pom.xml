@@ -33,6 +33,12 @@
   <packaging>jar</packaging>
 
   <dependencies>
+    <!-- Added to override the embedded guava class in hive-exec -->
+    <dependency>
+      <groupId>com.google.guava</groupId>
+      <artifactId>guava</artifactId>
+    </dependency>
+
     <dependency>
       <groupId>ch.qos.logback</groupId>
       <artifactId>logback-core</artifactId>
@@ -56,11 +62,6 @@
       <artifactId>spark-mllib_2.10</artifactId>
     </dependency>
 
-    <!-- Added to override the embedded guava class in hive-exec -->
-    <dependency>
-      <groupId>com.google.guava</groupId>
-      <artifactId>guava</artifactId>
-    </dependency>
     <dependency>
       <groupId>co.cask.cdap</groupId>
       <artifactId>cdap-api</artifactId>
@@ -187,6 +188,7 @@
         <stage.artifacts.dir>${stage.opt.dir}/artifacts</stage.artifacts.dir>
         <additional.artifacts.jar.pattern>**/target/*.jar</additional.artifacts.jar.pattern>
         <additional.artifacts.config.pattern>**/target/*.json</additional.artifacts.config.pattern>
+        <additional.artifacts.exclude.pattern>**/target/*-tests.jar</additional.artifacts.exclude.pattern>
       </properties>
       <build>
         <plugins>
@@ -211,7 +213,7 @@
                   <overWriteReleases>false</overWriteReleases>
                   <overWriteSnapshots>false</overWriteSnapshots>
                   <overWriteIfNewer>true</overWriteIfNewer>
-                  <excludeGroupIds>org.apache.hbase,asm,org.apache.zookeeper,org.apache.kafka</excludeGroupIds>
+                  <excludeGroupIds>org.apache.hbase,asm,org.apache.zookeeper</excludeGroupIds>
                   <excludeArtifactIds>zkclient,servlet-api,cdap-cli,cdap-explore-jdbc</excludeArtifactIds>
                   <prependGroupId>true</prependGroupId>
                   <silent>true</silent>
@@ -399,23 +401,6 @@
                         <include>cdap-etl-realtime-${project.version}.jar</include>
                       </includes>
                     </resource>
-                    <resource>
-                      <directory>
-                        ${project.parent.basedir}/cdap-app-templates/cdap-etl/cdap-etl-lib/target
-                      </directory>
-                      <includes>
-                        <include>cdap-etl-lib-${project.version}.jar</include>
-                      </includes>
-                    </resource>
-                    <resource>
-                      <directory>
-                        ${project.parent.basedir}/cdap-app-templates/cdap-etl/cdap-etl-lib/target/classes
-                      </directory>
-                      <filtering>true</filtering>
-                      <includes>
-                        <include>cdap-etl-lib.json</include>
-                      </includes>
-                    </resource>
                   </resources>
                 </configuration>
               </execution>
@@ -503,19 +488,6 @@
             <artifactId>maven-antrun-plugin</artifactId>
             <version>1.7</version>
             <executions>
-              <!-- Rename Plugin Artifact JSON Files -->
-              <execution>
-                <id>rename-plugin-json</id>
-                <phase>prepare-package</phase>
-                <goals>
-                  <goal>run</goal>
-                </goals>
-                <configuration>
-                  <target>
-                    <move file="${stage.artifacts.dir}/cdap-etl-lib.json" tofile="${stage.artifacts.dir}/cdap-etl-lib-${project.version}.json" />
-                  </target>
-                </configuration>
-              </execution>
               <!-- Copy any additional system artifacts.
                    For example, if you want to include plugins from hydrator-plugins. -->
               <execution>
@@ -527,6 +499,7 @@
                       <fileset dir="${additional.artifacts.dir}">
                         <include name="${additional.artifacts.jar.pattern}"/>
                         <include name="${additional.artifacts.config.pattern}"/>
+                        <exclude name="${additional.artifacts.exclude.pattern}"/>
                       </fileset>
                     </copy>
                   </target>

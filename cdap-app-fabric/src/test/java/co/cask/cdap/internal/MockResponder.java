@@ -16,6 +16,7 @@
 package co.cask.cdap.internal;
 
 import co.cask.http.AbstractHttpResponder;
+import co.cask.http.BodyProducer;
 import co.cask.http.ChunkResponder;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Charsets;
@@ -90,6 +91,12 @@ public final class MockResponder extends AbstractHttpResponder {
 
   @Override
   public void sendFile(File file, Multimap<String, String> headers) {
+    this.status = HttpResponseStatus.OK;
+  }
+
+  @Override
+  public void sendContent(HttpResponseStatus httpResponseStatus, BodyProducer bodyProducer,
+                          Multimap<String, String> multimap) {
     this.status = HttpResponseStatus.OK;
   }
 }

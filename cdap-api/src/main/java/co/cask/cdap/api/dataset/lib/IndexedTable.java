@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -257,20 +257,22 @@ public class IndexedTable extends AbstractDataset implements Table {
       }
     }
 
-    // first read the existing indexed values to find which have changed and need to be updated
-    Row existingRow = table.get(dataRow, colsToIndex.toArray(new byte[colsToIndex.size()][]));
-    for (Map.Entry<byte[], byte[]> entry : existingRow.getColumns().entrySet()) {
-      if (!Arrays.equals(entry.getValue(), putColumns.get(entry.getKey()))) {
-        index.delete(createIndexKey(dataRow, entry.getKey(), entry.getValue()), IDX_COL);
-      } else {
-        // value already indexed
-        colsToIndex.remove(entry.getKey());
+    if (!colsToIndex.isEmpty()) {
+      // first read the existing indexed values to find which have changed and need to be updated
+      Row existingRow = table.get(dataRow, colsToIndex.toArray(new byte[colsToIndex.size()][]));
+      for (Map.Entry<byte[], byte[]> entry : existingRow.getColumns().entrySet()) {
+        if (!Arrays.equals(entry.getValue(), putColumns.get(entry.getKey()))) {
+          index.delete(createIndexKey(dataRow, entry.getKey(), entry.getValue()), IDX_COL);
+        } else {
+          // value already indexed
+          colsToIndex.remove(entry.getKey());
+        }
       }
-    }
 
-    // add new index entries for all values that have changed or did not exist
-    for (byte[] col : colsToIndex) {
-      index.put(createIndexKey(dataRow, col, putColumns.get(col)), IDX_COL, dataRow);
+      // add new index entries for all values that have changed or did not exist
+      for (byte[] col : colsToIndex) {
+        index.put(createIndexKey(dataRow, col, putColumns.get(col)), IDX_COL, dataRow);
+      }
     }
 
     // store the data row
@@ -298,13 +300,13 @@ public class IndexedTable extends AbstractDataset implements Table {
   }
 
   /**
-   * Perform a delete on the data table.  Any index entries referencing the deleted row will also be removed.
+   * Perform a delete on the data table. Any index entries referencing the deleted row will also be removed.
    * 
    * @param delete The delete operation identifying the row and optional columns to remove
    */
   @Override
   public void delete(Delete delete) {
-    if (delete.getColumns().isEmpty()) {
+    if (delete.getColumns() == null) {
       // full row delete
       delete(delete.getRow());
       return;

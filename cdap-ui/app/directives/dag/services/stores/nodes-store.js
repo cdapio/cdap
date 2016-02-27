@@ -38,12 +38,17 @@ class NodesStore {
     dispatcher.register('onAddTransformCount', this.addTransformCount.bind(this));
     dispatcher.register('onResetPluginCount', this.resetPluginCount.bind(this));
     dispatcher.register('onSetCanvasPanning', this.setCanvasPanning.bind(this));
+    dispatcher.register('onAddComment', this.addComment.bind(this));
+    dispatcher.register('onSetComments', this.setComments.bind(this));
+    dispatcher.register('onDeleteComment', this.deleteComment.bind(this));
+    dispatcher.register('onUpdateComment', this.updateComment.bind(this));
   }
 
   setDefaults() {
     this.state = {
       nodes: [],
       connections: [],
+      comments: [],
       activeNodeId: null,
       currentSourceCount: 0,
       currentTransformCount: 0,
@@ -172,6 +177,9 @@ class NodesStore {
   }
   resetActiveNode() {
     this.state.activeNodeId = null;
+    angular.forEach(this.state.nodes, (node) => {
+      node.selected = false;
+    });
     this.emitChange();
   }
 
@@ -196,10 +204,43 @@ class NodesStore {
     this.emitChange();
   }
 
-  setNodesAndConnections(nodes, connections) {
+  setNodesAndConnections(nodes, connections, comments) {
     this.setNodes(nodes);
     this.state.connections = connections;
+    this.state.comments = comments ? comments : [];
     this.emitChange();
+  }
+
+  addComment(comment) {
+    this.state.comments.push(comment);
+    this.emitChange();
+  }
+
+  setComments(comments) {
+    this.state.comments = comments;
+    this.emitChange();
+  }
+
+  deleteComment(comment) {
+    let index = this.state.comments.indexOf(comment);
+    if (index > -1) {
+      this.state.comments.splice(index, 1);
+      this.emitChange();
+    }
+  }
+
+  updateComment(commentId, config) {
+    let matchComment = this.state.comments.filter( comment => comment.id === commentId);
+    if (!matchComment.length) {
+      return;
+    }
+    matchComment = matchComment[0];
+    angular.extend(matchComment, config);
+    this.emitChange();
+  }
+
+  getComments() {
+    return this.state.comments;
   }
 
 }

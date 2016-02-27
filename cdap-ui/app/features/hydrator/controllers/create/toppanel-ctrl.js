@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,13 +15,15 @@
  */
 
 class TopPanelController{
-  constructor(GLOBALS, $stateParams, $alert, ConfigStore, ConfigActionsFactory, $bootstrapModal, ConsoleActionsFactory, HydratorErrorFactory) {
+  constructor(GLOBALS, $stateParams, ConfigStore, ConfigActionsFactory, $uibModal, ConsoleActionsFactory, NodesActionsFactory) {
+
     this.GLOBALS = GLOBALS;
     this.ConfigStore = ConfigStore;
     this.ConfigActionsFactory = ConfigActionsFactory;
-    this.$bootstrapModal = $bootstrapModal;
+    this.$uibModal = $uibModal;
     this.ConsoleActionsFactory = ConsoleActionsFactory;
-    this.HydratorErrorFactory = HydratorErrorFactory;
+    this.NodesActionsFactory = NodesActionsFactory;
+    this.parsedDescription = this.ConfigStore.getDescription();
 
     this.canvasOperations = [
       {
@@ -74,6 +76,13 @@ class TopPanelController{
   }
   saveMetadata() {
     this.ConfigActionsFactory.setMetadataInfo(this.state.metadata.name, this.state.metadata.description);
+    if (this.state.metadata.description) {
+      this.parsedDescription = this.state.metadata.description.replace(/\n/g, ' ');
+      this.tooltipDescription = this.state.metadata.description.replace(/\n/g, '<br />');
+    } else {
+      this.parsedDescription = '';
+      this.tooltipDescription = '';
+    }
     this.metadataExpanded = false;
   }
   onEnterOnMetadata(event) {
@@ -88,8 +97,12 @@ class TopPanelController{
   }
 
   onExport() {
+    this.NodesActionsFactory.resetSelectedNode();
     let config = angular.copy(this.ConfigStore.getDisplayConfig());
-    this.$bootstrapModal.open({
+    if (!config) {
+      return;
+    }
+    this.$uibModal.open({
       templateUrl: '/assets/features/hydrator/templates/create/popovers/viewconfig.html',
       size: 'lg',
       keyboard: true,
@@ -114,11 +127,11 @@ class TopPanelController{
     });
   }
   onSaveDraft() {
-    var config = this.ConfigStore.getConfigForExport();
+    var config = this.ConfigStore.getState();
     if (!config.name) {
       this.ConsoleActionsFactory.addMessage({
         type: 'error',
-        content: this.GLOBALS.en.hydrator.studio.nameError
+        content: this.GLOBALS.en.hydrator.studio.error['MISSING-NAME']
       });
       return;
     }
@@ -126,20 +139,20 @@ class TopPanelController{
   }
   onValidate() {
     this.ConsoleActionsFactory.resetMessages();
-    if (this.HydratorErrorFactory.isModelValid()) {
+    let isStateValid = this.ConfigStore.validateState(true);
+    if (isStateValid) {
       this.ConsoleActionsFactory.addMessage({
         type: 'success',
         content: 'Validation success! Pipeline ' + this.ConfigStore.getName() + ' is valid.'
       });
     }
-
   }
   onPublish() {
     this.ConfigActionsFactory.publishPipeline();
   }
 }
 
-TopPanelController.$inject = ['GLOBALS', '$stateParams', '$alert', 'ConfigStore', 'ConfigActionsFactory', '$bootstrapModal', 'ConsoleActionsFactory', 'HydratorErrorFactory'];
+TopPanelController.$inject = ['GLOBALS', '$stateParams', 'ConfigStore', 'ConfigActionsFactory', '$uibModal', 'ConsoleActionsFactory', 'NodesActionsFactory'];
 
 angular.module(PKG.name + '.feature.hydrator')
   .controller('TopPanelController', TopPanelController);

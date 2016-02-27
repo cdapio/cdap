@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -45,7 +45,8 @@ import java.util.List;
  * General reflection utils.
  * This is a copy of ReflectionUtils in hadoop-common-2.3.0.jar.
  * This copy has been modified not to cache constructors in method {@link #newInstance(Class, Configuration)}.
- * Caching of constructors causes {@link PluginClassLoader}s to be retained when running adapters, thus causing OOM.
+ * Caching of constructors causes {@link PluginClassLoader}s to be retained when running that use plugins,
+ * thus causing OOM.
  */
 @InterfaceAudience.Public
 @InterfaceStability.Evolving

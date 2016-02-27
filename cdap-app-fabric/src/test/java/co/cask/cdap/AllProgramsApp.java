@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,19 +16,28 @@
 
 package co.cask.cdap;
 
+import co.cask.cdap.api.ProgramLifecycle;
 import co.cask.cdap.api.TxRunnable;
+import co.cask.cdap.api.annotation.Description;
+import co.cask.cdap.api.annotation.Name;
+import co.cask.cdap.api.annotation.Plugin;
 import co.cask.cdap.api.annotation.ProcessInput;
 import co.cask.cdap.api.annotation.UseDataSet;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.DatasetContext;
+import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
+import co.cask.cdap.api.dataset.lib.ObjectMappedTable;
+import co.cask.cdap.api.dataset.lib.ObjectMappedTableProperties;
 import co.cask.cdap.api.flow.AbstractFlow;
 import co.cask.cdap.api.flow.flowlet.AbstractFlowlet;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
+import co.cask.cdap.api.plugin.PluginConfig;
+import co.cask.cdap.api.schedule.Schedules;
 import co.cask.cdap.api.service.AbstractService;
 import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceRequest;
@@ -47,6 +56,7 @@ import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.spark.api.java.JavaPairRDD;
+import org.junit.Assert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -68,6 +78,12 @@ public class AllProgramsApp extends AbstractApplication {
   public static final String NAME = "App";
   public static final String STREAM_NAME = "stream";
   public static final String DATASET_NAME = "kvt";
+  public static final String PLUGIN_DESCRIPTION = "test plugin";
+  public static final String PLUGIN_NAME = "mytestplugin";
+  public static final String PLUGIN_TYPE = "testplugin";
+  public static final String SCHEDULE_NAME = "testschedule";
+  public static final String SCHEDULE_DESCRIPTION = "EveryMinute";
+  public static final String DS_WITH_SCHEMA_NAME = "dsWithSchema";
 
   @Override
   public void configure() {
@@ -81,6 +97,22 @@ public class AllProgramsApp extends AbstractApplication {
     addWorker(new NoOpWorker());
     addSpark(new NoOpSpark());
     addService(new NoOpService());
+    scheduleWorkflow(Schedules.builder(SCHEDULE_NAME)
+                       .setDescription(SCHEDULE_DESCRIPTION)
+                       .createTimeSchedule("* * * * *"),
+                     NoOpWorkflow.NAME);
+    try {
+      createDataset(DS_WITH_SCHEMA_NAME, ObjectMappedTable.class,
+                    ObjectMappedTableProperties.builder().setType(DsSchema.class).build());
+    } catch (UnsupportedTypeException e) {
+      // ignore for test
+    }
+  }
+
+  @SuppressWarnings("unused")
+  public static class DsSchema {
+    String field1;
+    int field2;
   }
 
   /**
@@ -91,7 +123,7 @@ public class AllProgramsApp extends AbstractApplication {
     public static final String NAME = "NoOpFlow";
 
     @Override
-    protected void configureFlow() {
+    protected void configure() {
       setName(NAME);
       setDescription("NoOpflow");
       addFlowlet(A.NAME, new A());
@@ -141,12 +173,24 @@ public class AllProgramsApp extends AbstractApplication {
     }
   }
 
-  public static class NoOpMapper extends Mapper<LongWritable, BytesWritable, Text, Text> {
+  public static class NoOpMapper extends Mapper<LongWritable, BytesWritable, Text, Text>
+    implements ProgramLifecycle<MapReduceContext> {
     @Override
     protected void map(LongWritable key, BytesWritable value,
                        Context context) throws IOException, InterruptedException {
       Text output = new Text(value.copyBytes());
       context.write(output, output);
+    }
+
+    @Override
+    public void initialize(MapReduceContext context) throws Exception {
+      Object obj = context.newPluginInstance("mrid");
+      Assert.assertEquals("value", obj.toString());
+    }
+
+    @Override
+    public void destroy() {
+
     }
   }
 
@@ -272,19 +316,33 @@ public class AllProgramsApp extends AbstractApplication {
     }
 
     public class NoOpHandler extends AbstractHttpServiceHandler {
-      @Override
-      protected void configure() {
-        useDatasets(DATASET_NAME);
-      }
+
+      @UseDataSet(DATASET_NAME)
+      private KeyValueTable table;
 
       @Path(ENDPOINT)
       @GET
       public void handler(HttpServiceRequest request, HttpServiceResponder responder) {
         LOG.info("Endpoint {} called in service {}", ENDPOINT, NAME);
-        KeyValueTable table = getContext().getDataset(DATASET_NAME);
+        table = getContext().getDataset(DATASET_NAME);
         table.write("no-op-service", "no-op-service");
         responder.sendStatus(200);
       }
+    }
+  }
+
+  public static class PConfig extends PluginConfig {
+    private double y;
+  }
+
+  @Plugin(type = PLUGIN_TYPE)
+  @Name(PLUGIN_NAME)
+  @Description(PLUGIN_DESCRIPTION)
+  public static class AppPlugin {
+    private PConfig pluginConf;
+
+    public double doSomething() {
+      return pluginConf.y;
     }
   }
 }

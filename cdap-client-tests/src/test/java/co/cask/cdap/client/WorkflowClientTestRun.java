@@ -21,6 +21,7 @@ import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.client.common.ClientTestBase;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.app.RunIds;
+import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.RunRecord;
@@ -41,6 +42,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -76,9 +78,17 @@ public class WorkflowClientTestRun extends ClientTestBase {
     String outputPath = new File(tmpFolder.newFolder(), "output").getAbsolutePath();
     Map<String, String> runtimeArgs = ImmutableMap.of("inputPath", createInput("input"),
                                                       "outputPath", outputPath);
-    Id.Workflow workflowId = Id.Workflow.from(appId, AppWithWorkflow.SampleWorkflow.NAME);
+    final Id.Workflow workflowId = Id.Workflow.from(appId, AppWithWorkflow.SampleWorkflow.NAME);
     programClient.start(workflowId, false, runtimeArgs);
     programClient.waitForStatus(workflowId, "STOPPED", 60, TimeUnit.SECONDS);
+
+    Tasks.waitFor(1, new Callable<Integer>() {
+      @Override
+      public Integer call() throws Exception {
+        return programClient.getProgramRuns(workflowId,
+                                            ProgramRunStatus.COMPLETED.name(), 0, Long.MAX_VALUE, 10).size();
+      }
+    }, 10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
 
     List<RunRecord> workflowRuns = programClient.getProgramRuns(workflowId, ProgramRunStatus.COMPLETED.name(), 0,
                                                                 Long.MAX_VALUE, 10);

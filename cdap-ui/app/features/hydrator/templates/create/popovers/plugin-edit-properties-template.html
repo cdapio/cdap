@@ -18,7 +18,11 @@
   <fieldset ng-disabled="isDisabled">
       <h4>Configuration</h4>
       <div class="form-group">
-        <label class="control-label">Label</label>
+        <label class="control-label">
+          Label
+          <span class="fa fa-asterisk"></span>
+          <small class="text-danger" ng-if="NodeConfigController.state.nodeLabelError">{{NodeConfigController.state.nodeLabelError}}</small>
+        </label>
         <input type="text" class="form-control" ng-model="NodeConfigController.state.node.plugin.label"/>
       </div>
 
@@ -32,11 +36,12 @@
                 <label class="control-label">
                   <span>{{::field.label}}</span>
                   <span class="fa fa-info-circle"
-                        tooltip="{{::field.description}}"
+                        uib-tooltip="{{::field.description}}"
                         tooltip-placement="right"
                         tooltip-append-to-body="true">
                   </span>
                   <span class="fa fa-asterisk" ng-if="NodeConfigController.state.node._backendProperties[field.name].required"></span>
+                  <small class="text-danger" ng-if="!NodeConfigController.state.node.warning && NodeConfigController.state.node._backendProperties[field.name].required && !NodeConfigController.state.node.plugin.properties[field.name]">{{::NodeConfigController.requiredPropertyError}}</small>
                 </label>
 
                 <div>
@@ -55,6 +60,17 @@
             </div>
           </div>
         </div>
+      </div>
+      <br/>
+      <div class="form-group" ng-if="NodeConfigController.state.showErrorDataset">
+        <label class="control-label">
+          Error Dataset
+          <span class="fa fa-info-circle"
+                ng-if="NodeConfigController.state.errorDatasetTooltip"
+                uib-tooltip="{{NodeConfigController.state.errorDatasetTooltip}}"
+                tooltip-placement="right"></span>
+        </label>
+        <input type="text" class="form-control" ng-model="NodeConfigController.state.node.errorDatasetName"/>
       </div>
 
   </fieldset>

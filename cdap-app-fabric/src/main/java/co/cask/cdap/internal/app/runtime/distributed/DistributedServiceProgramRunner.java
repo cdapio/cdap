@@ -27,6 +27,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.twill.AbortOnTimeoutEventHandler;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.security.TokenSecureStoreUpdater;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
@@ -38,6 +39,7 @@ import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.util.Map;
 
 /**
@@ -49,14 +51,15 @@ public class DistributedServiceProgramRunner extends AbstractDistributedProgramR
 
   @Inject
   DistributedServiceProgramRunner(TwillRunner twillRunner, LocationFactory locationFactory,
-                                  YarnConfiguration hConf, CConfiguration cConf) {
-    super(twillRunner, locationFactory, hConf, cConf);
+                                  YarnConfiguration hConf, CConfiguration cConf,
+                                  TokenSecureStoreUpdater tokenSecureStoreUpdater) {
+    super(twillRunner, locationFactory, hConf, cConf, tokenSecureStoreUpdater);
   }
 
   @Override
   protected ProgramController launch(Program program, ProgramOptions options,
                                      Map<String, LocalizeResource> localizeResources,
-                                     ApplicationLauncher launcher) {
+                                     File tempDir, ApplicationLauncher launcher) {
     // Extract and verify parameters
     ApplicationSpecification appSpec = program.getApplicationSpecification();
     Preconditions.checkNotNull(appSpec, "Missing application specification.");

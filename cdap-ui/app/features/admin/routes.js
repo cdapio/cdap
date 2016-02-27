@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -119,8 +119,8 @@ angular.module(PKG.name + '.feature.admin')
         })
           .state('admin.namespace.create', {
             url: '/create',
-            onEnter: function($bootstrapModal, $state) {
-              $bootstrapModal.open({
+            onEnter: function($uibModal, $state) {
+              $uibModal.open({
                 templateUrl: '/assets/features/admin/templates/namespace/create.html',
                 size: 'lg',
                 backdrop: true,
@@ -130,8 +130,8 @@ angular.module(PKG.name + '.feature.admin')
                 $state.go('admin.overview', {}, { reload: true });
               });
             },
-            onExit: function($modalStack) {
-              $modalStack.dismissAll();
+            onExit: function($uibModalStack) {
+              $uibModalStack.dismissAll();
             },
             ncyBreadcrumb: {
               skip: true
@@ -190,13 +190,6 @@ angular.module(PKG.name + '.feature.admin')
               }
             })
 
-
-            .state('admin.namespace.detail.metadata', {
-              url: '/metadata',
-              templateUrl: '/assets/features/admin/templates/namespace/metadata.html',
-              controller: 'NamespaceMetadataController'
-            })
-
             .state('admin.namespace.detail.settings', {
               url: '/settings',
               templateUrl: '/assets/features/admin/templates/namespace/settings.html',
@@ -228,19 +221,17 @@ angular.module(PKG.name + '.feature.admin')
 
               .state('admin.namespace.detail.data.streamcreate', {
                 url:'/streams/create',
-                onEnter: function($bootstrapModal, $state) {
-                  $bootstrapModal.open({
+                onEnter: function($uibModal) {
+                  $uibModal.open({
                     templateUrl: '/assets/features/admin/templates/namespace/streamscreate.html',
                     size: 'lg',
                     backdrop: true,
                     keyboard: true,
                     controller: 'NamespaceStreamsCreateController'
-                  }).result.finally(function() {
-                    $state.go('admin.namespace.detail.data', {}, { reload: true });
                   });
                 },
-                onExit: function($modalStack) {
-                  $modalStack.dismissAll();
+                onExit: function($uibModalStack) {
+                  $uibModalStack.dismissAll();
                 },
                 ncyBreadcrumb: {
                   skip: true

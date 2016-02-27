@@ -32,7 +32,16 @@ public class RecordPutTransformer {
   private final String rowField;
   private final Schema outputSchema;
   
-  public RecordPutTransformer(String rowField, Schema outputSchema) {
+  public RecordPutTransformer(String rowField, @Nullable Schema outputSchema) {
+    if (outputSchema != null) {
+      validateSchema(rowField, outputSchema);
+    }
+
+    this.rowField = rowField;
+    this.outputSchema = outputSchema;
+  }
+
+  private void validateSchema(String rowField, Schema outputSchema) {
     if (outputSchema.getType() != Schema.Type.RECORD) {
       throw new IllegalArgumentException(
         String.format("Schema must be a record instead of '%s'.", outputSchema.getType()));
@@ -51,8 +60,6 @@ public class RecordPutTransformer {
           "Schema must only contain simple fields (boolean, int, long, float, double, bytes, string)");
       }
     }
-    this.rowField = rowField;
-    this.outputSchema = outputSchema;
   }
 
   public Put toPut(StructuredRecord record) {

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -26,7 +26,6 @@ import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
-import co.cask.cdap.common.namespace.guice.NamespaceClientRuntimeModule;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
@@ -39,6 +38,7 @@ import co.cask.cdap.logging.read.LogReader;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.metrics.guice.MetricsHandlerModule;
 import co.cask.cdap.metrics.query.MetricsQueryService;
+import co.cask.cdap.store.guice.NamespaceStoreModule;
 import co.cask.tephra.TransactionManager;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -168,7 +168,7 @@ public abstract class MetricsSuiteTestBase {
       new DataSetsModules().getStandaloneModules(),
       new DataSetServiceModules().getInMemoryModules(),
       new ExploreClientModule(),
-      new NamespaceClientRuntimeModule().getInMemoryModules()
+      new NamespaceStoreModule().getInMemoryModules()
     ).with(new AbstractModule() {
       @Override
       protected void configure() {
@@ -337,29 +337,14 @@ public abstract class MetricsSuiteTestBase {
       .build();
   }
 
-  protected static Map<String, String> getAdapterContext(String namespaceId, String appName, String jobName,
-                                                         MapReduceMetrics.TaskType type, String runId,
-                                                         String instanceId, String adapterName) {
-    return ImmutableMap.<String, String>builder()
-      .put(Constants.Metrics.Tag.NAMESPACE, namespaceId)
-      .put(Constants.Metrics.Tag.APP, appName)
-      .put(Constants.Metrics.Tag.MAPREDUCE, jobName)
-      .put(Constants.Metrics.Tag.MR_TASK_TYPE, type.getId())
-      .put(Constants.Metrics.Tag.RUN_ID, runId)
-      .put(Constants.Metrics.Tag.INSTANCE_ID, instanceId)
-      .put(Constants.Metrics.Tag.ADAPTER, adapterName)
-      .build();
-  }
-
-  protected static Map<String, String> getWorkerAdapterContext(String namespaceId, String appName, String jobName,
-                                                               String runId, String instanceId, String adapterName) {
+  protected static Map<String, String> getWorkerContext(String namespaceId, String appName, String jobName,
+                                                        String runId, String instanceId) {
     return ImmutableMap.<String, String>builder()
       .put(Constants.Metrics.Tag.NAMESPACE, namespaceId)
       .put(Constants.Metrics.Tag.APP, appName)
       .put(Constants.Metrics.Tag.WORKER, jobName)
       .put(Constants.Metrics.Tag.RUN_ID, runId)
       .put(Constants.Metrics.Tag.INSTANCE_ID, instanceId)
-      .put(Constants.Metrics.Tag.ADAPTER, adapterName)
       .build();
   }
 }

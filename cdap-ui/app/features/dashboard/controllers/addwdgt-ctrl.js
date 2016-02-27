@@ -19,11 +19,12 @@
  */
 
 angular.module(PKG.name+'.feature.dashboard').controller('DashboardAddWdgtCtrl',
-function ($scope, $modalInstance, caskFocusManager, Widget) {
+function ($scope, $uibModalInstance, caskFocusManager, Widget) {
 
   caskFocusManager.focus('addWdgtType');
 
   $scope.model = new Widget();
+  $scope.addType = 'INDIVIDUAL';
 
   $scope.widgetTypes = [
     { name: 'Line',                  type: 'c3-line'},
@@ -40,9 +41,14 @@ function ($scope, $modalInstance, caskFocusManager, Widget) {
     { name: 'Table',                 type: 'table' }
   ];
 
-  $scope.$watch('model.metric.name', function (newVal) {
-    $scope.model.title = newVal;
-  });
+  $scope.addWidget = function () {
+    if ($scope.addType === 'MULTIPLE') {
+      $scope.addMetricsToWidget();
+    } else {
+      $scope.addMetricsToIndividualWidgets();
+    }
+  };
+
 
   $scope.addMetricsToIndividualWidgets = _.debounce(function() {
     var widgets = [];
@@ -50,7 +56,7 @@ function ($scope, $modalInstance, caskFocusManager, Widget) {
       widgets.push(
         new Widget({
           type: $scope.model.type,
-          title: $scope.model.title,
+          title: value,
           metric: {
             context: $scope.model.metric.context,
             names: [value],
@@ -73,7 +79,7 @@ function ($scope, $modalInstance, caskFocusManager, Widget) {
   }, 1000);
 
   $scope.closeModal = function() {
-    $modalInstance.close();
+    $uibModalInstance.close();
   };
 
 });

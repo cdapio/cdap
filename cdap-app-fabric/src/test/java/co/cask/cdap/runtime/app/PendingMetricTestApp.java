@@ -96,6 +96,7 @@ public class PendingMetricTestApp extends AbstractApplication {
 
     @Override
     public void initialize(FlowletContext context) throws Exception {
+      super.initialize(context);
       fileToWaitFor = getTempFile(context, "one");
     }
 
@@ -117,6 +118,7 @@ public class PendingMetricTestApp extends AbstractApplication {
 
     @Override
     public void initialize(FlowletContext context) throws Exception {
+      super.initialize(context);
       fileToWaitForInt = getTempFile(context, "two-i");
       fileToWaitForString = getTempFile(context, "two-s");
     }
@@ -144,6 +146,7 @@ public class PendingMetricTestApp extends AbstractApplication {
 
     @Override
     public void initialize(FlowletContext context) throws Exception {
+      super.initialize(context);
       fileToWaitFor = getTempFile(context, "three");
     }
 

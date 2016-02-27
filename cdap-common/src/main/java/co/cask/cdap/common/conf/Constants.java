@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -23,9 +23,36 @@ import java.util.concurrent.TimeUnit;
  */
 public final class Constants {
 
+  public static final String[] FEATURE_TOGGLE_PROPS = {
+    Security.SSL_ENABLED,
+    Security.ENABLED,
+    Explore.EXPLORE_ENABLED,
+  };
+
+  public static final String[] PORT_PROPS = {
+    Router.ROUTER_PORT,
+    Router.ROUTER_SSL_PORT,
+    Dashboard.BIND_PORT,
+    Dashboard.SSL_BIND_PORT,
+    Security.AUTH_SERVER_BIND_PORT,
+    Security.AuthenticationServer.SSL_PORT,
+  };
+
   public static final String ARCHIVE_DIR = "archive";
   public static final String ROOT_NAMESPACE = "root.namespace";
   public static final String COLLECT_CONTAINER_LOGS = "master.collect.containers.log";
+  public static final String COLLECT_APP_CONTAINER_LOG_LEVEL = "master.collect.app.containers.log.level";
+
+  /**
+   * Configuration for Master startup.
+   */
+  public static final class Startup {
+    public static final String CHECKS_ENABLED = "master.startup.checks.enabled";
+    public static final String CHECK_PACKAGES = "master.startup.checks.packages";
+    public static final String CHECK_CLASSES = "master.startup.checks.classes";
+    public static final String YARN_CONNECT_TIMEOUT_SECONDS = "master.startup.checks.yarn.connect.timeout.seconds";
+    public static final String STARTUP_SERVICE_TIMEOUT = "master.startup.service.timeout.seconds";
+  }
 
   /**
    * Global Service names.
@@ -131,11 +158,6 @@ public final class Constants {
      */
     public static final String QUERY_PARAM_LIMIT = "limit";
 
-    /**
-     * Default history results limit.
-     */
-    public static final int DEFAULT_HISTORY_RESULTS_LIMIT = 100;
-
     public static final String SERVICE_DESCRIPTION = "Service for managing application lifecycle.";
 
     /**
@@ -149,7 +171,6 @@ public final class Constants {
    */
   public class Scheduler {
     public static final String CFG_SCHEDULER_MAX_THREAD_POOL_SIZE = "scheduler.max.thread.pool.size";
-    public static final int DEFAULT_THREAD_POOL_SIZE = 100;
   }
 
   /**
@@ -163,8 +184,6 @@ public final class Constants {
    * Plugin Artifacts constants.
    */
   public static final class Plugin {
-    public static final String DIRECTORY = "artifacts";
-
     // Key to be used in hConf to store location of the plugin artifact jar
     public static final String ARCHIVE = "cdap.program.plugin.archive";
   }
@@ -194,7 +213,6 @@ public final class Constants {
     }
 
     public static final String SERVICE_DESCRIPTION = "Service that maintains transaction states.";
-
   }
 
   /**
@@ -243,15 +261,6 @@ public final class Constants {
     }
 
     /**
-     * Twill Runnable configuration.
-     */
-    public static final class Container {
-      public static final String NUM_INSTANCES = "dataset.service.num.instances";
-      public static final String NUM_CORES = "dataset.service.num.cores";
-      public static final String MEMORY_MB = "dataset.service.memory.mb";
-    }
-
-    /**
      * DatasetUserService configuration.
      */
     public static final class Executor {
@@ -261,9 +270,7 @@ public final class Constants {
       /** for the address (hostname) of the dataset server. */
       public static final String ADDRESS = "dataset.executor.bind.address";
 
-      public static final String BACKLOG_CONNECTIONS = "dataset.executor.connection.backlog";
       public static final String EXEC_THREADS = "dataset.executor.exec.threads";
-      public static final String BOSS_THREADS = "dataset.executor.boss.threads";
       public static final String WORKER_THREADS = "dataset.executor.worker.threads";
       public static final String OUTPUT_DIR = "dataset.executor.output.dir";
 
@@ -505,8 +512,6 @@ public final class Constants {
       // who emitted: user vs system (scope is historical name)
       public static final String SCOPE = "scp";
 
-      public static final String ADAPTER = "adp";
-
       public static final String PRODUCER = "pr";
       public static final String CONSUMER = "co";
     }
@@ -591,6 +596,7 @@ public final class Constants {
   public static final class LogSaver {
     public static final String NUM_INSTANCES = "log.saver.num.instances";
     public static final String MEMORY_MB = "log.saver.run.memory.megs";
+    public static final String NUM_CORES = "log.saver.run.num.cores";
     public static final String MAX_INSTANCES = "log.saver.max.instances";
 
     public static final String LOG_SAVER_STATUS_HANDLER = "log.saver.status.handler";
@@ -614,6 +620,7 @@ public final class Constants {
    */
   public static final class Logging {
     public static final String COMPONENT_NAME = "services";
+    public static final String KAFKA_TOPIC = "log.kafka.topic";
   }
 
   /**
@@ -624,6 +631,8 @@ public final class Constants {
     public static final String ENABLED = "security.enabled";
     /** Enables Kerberos authentication. */
     public static final String KERBEROS_ENABLED = "kerberos.auth.enabled";
+    /** Kerberos keytab relogin interval. */
+    public static final String KERBEROS_KEYTAB_RELOGIN_INTERVAL = "kerberos.auth.relogin.interval.seconds";
     /** Algorithm used to generate the digest for access tokens. */
     public static final String TOKEN_DIGEST_ALGO = "security.token.digest.algorithm";
     /** Key length for secret key used by token digest algorithm. */
@@ -699,6 +708,9 @@ public final class Constants {
 
       /** Default SSL keystore type */
       public static final String DEFAULT_SSL_KEYSTORE_TYPE = "JKS";
+
+      /** Paths to exclude from authentication, given by a single regular expression */
+      public static final String BYPASS_AUTHENTICATION_REGEX = "router.bypass.auth.regex";
     }
 
     /**
@@ -787,6 +799,7 @@ public final class Constants {
    */
   public static final class Notification {
     public static final String TRANSPORT_SYSTEM = "notification.transport.system";
+    public static final String KAFKA_TOPIC = "notification.kafka.topic";
 
     /**
      * Notifications in Streams constants.
@@ -800,7 +813,6 @@ public final class Constants {
   }
 
   public static final String CFG_LOCAL_DATA_DIR = "local.data.dir";
-  public static final String CFG_YARN_USER = "yarn.user";
   public static final String CFG_HDFS_USER = "hdfs.user";
   public static final String CFG_HDFS_NAMESPACE = "hdfs.namespace";
   public static final String CFG_HDFS_LIB_DIR = "hdfs.lib.dir";
@@ -812,7 +824,7 @@ public final class Constants {
   /**
    * Data Fabric.
    */
-  public static enum InMemoryPersistenceType {
+  public enum InMemoryPersistenceType {
     MEMORY,
     LEVELDB,
     HSQLDB
@@ -827,7 +839,6 @@ public final class Constants {
   /**
    * Defaults for Data Fabric.
    */
-  public static final String DEFAULT_DATA_INMEMORY_PERSISTENCE = InMemoryPersistenceType.MEMORY.name();
   public static final String DEFAULT_DATA_LEVELDB_DIR = "data";
   public static final int DEFAULT_DATA_LEVELDB_BLOCKSIZE = 1024;
   public static final long DEFAULT_DATA_LEVELDB_CACHESIZE = 1024 * 1024 * 100;

@@ -78,7 +78,7 @@
               <a ui-sref="hydrator.detail({ pipelineId: pipeline.name })" ng-if="!pipeline.isDraft">
                 {{pipeline.name}}
               </a>
-              <a ui-sref="hydrator.create.studio({ name: pipeline.name, type:pipeline.artifact.name })" ng-if="pipeline.isDraft">
+              <a ui-sref="hydrator.create.studio({ draftId: pipeline.id, type:pipeline.artifact.name })" ng-if="pipeline.isDraft">
                 {{pipeline.name}}
               </a>
             </td>
@@ -123,7 +123,7 @@
               <span class="fa fa-trash text-danger delete-draft"
                 ng-if="pipeline.isDraft"
                 ng-click="caskConfirm()"
-                cask-confirmable="ListController.deleteDraft(pipeline.name)"
+                cask-confirmable="ListController.deleteDraft(pipeline.id)"
                 data-confirmable-content="Are you sure you want to delete this draft?"
               ></span>
               <span class="fa fa-trash text-danger delete-draft"
@@ -139,7 +139,7 @@
     </div>
 
     <div class="text-center" ng-if="ListController.filtered.length > 10">
-      <pagination total-items="ListController.filtered.length" ng-model="ListController.currentPage"></pagination>
+      <uib-pagination total-items="ListController.filtered.length" ng-model="ListController.currentPage"></uib-pagination>
     </div>
 
   </div>

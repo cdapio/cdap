@@ -891,8 +891,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       int oldInstances = store.getWorkerInstances(programId);
       if (oldInstances != instances) {
         store.setWorkerInstances(programId, instances);
-        ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(namespaceId, appId, workerId,
-                                                                        ProgramType.WORKER, runtimeService);
+        ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(programId, runtimeService);
         if (runtimeInfo != null) {
           runtimeInfo.getController().command(ProgramOptionConstants.INSTANCES,
                                               ImmutableMap.of(programId.getId(), String.valueOf(instances))).get();
@@ -967,8 +966,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       int oldInstances = store.getFlowletInstances(programId, flowletId);
       if (oldInstances != instances) {
         FlowSpecification flowSpec = store.setFlowletInstances(programId, flowletId, instances);
-        ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(namespaceId, appId, flowId, ProgramType.FLOW,
-                                                                        runtimeService);
+        ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(programId, runtimeService);
         if (runtimeInfo != null) {
           runtimeInfo.getController()
             .command(ProgramOptionConstants.INSTANCES,
@@ -1094,8 +1092,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       int oldInstances = store.getServiceInstances(programId);
       if (oldInstances != instances) {
         store.setServiceInstances(programId, instances);
-        ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(namespaceId, appId, serviceId,
-                                                                        ProgramType.SERVICE, runtimeService);
+        ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(programId, runtimeService);
         if (runtimeInfo != null) {
           runtimeInfo.getController().command(ProgramOptionConstants.INSTANCES,
                                               ImmutableMap.of(serviceId, String.valueOf(instances))).get();
@@ -1221,7 +1218,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       throw new NotFoundException(Id.Application.from(id.getNamespaceId(), id.getApplicationId()));
     }
 
-    ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(id, null);
+    ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(id, (String) null);
 
     if (runtimeInfo == null) {
       if (id.getType() != ProgramType.WEBAPP) {

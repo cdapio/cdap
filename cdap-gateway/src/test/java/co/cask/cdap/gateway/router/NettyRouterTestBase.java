@@ -23,7 +23,9 @@ import co.cask.http.AbstractHttpHandler;
 import co.cask.http.ChunkResponder;
 import co.cask.http.HttpResponder;
 import co.cask.http.NettyHttpService;
+import com.google.common.base.Charsets;
 import com.google.common.base.Function;
+import com.google.common.base.Splitter;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMultimap;
@@ -65,11 +67,9 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
@@ -403,35 +403,54 @@ public abstract class NettyRouterTestBase {
   // disconnected)
   @Test(timeout = 10000)
   public void testConnectionIdleTimeout() throws Exception {
+    defaultServer2.cancelRegistration();
+
     String path = "/v2/ping";
     URI uri = new URI(resolveURI(Constants.Router.GATEWAY_DISCOVERY_NAME, path));
     Socket socket = getSocketFactory().createSocket(uri.getHost(), uri.getPort());
     PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
+    InputStream inputStream = socket.getInputStream();
+
+    // make a request
+    String firstLine = makeRequest(uri, out, inputStream);
+    Assert.assertEquals("HTTP/1.1 200 OK\r", firstLine);
+
+    // sleep for 500 ms below the configured idle timeout; the connection on server side should not get closed by then
+    TimeUnit.MILLISECONDS.sleep(TimeUnit.SECONDS.toMillis(CONNECTION_IDLE_TIMEOUT_SECS) - 500);
+    firstLine = makeRequest(uri, out, inputStream);
+    Assert.assertEquals("HTTP/1.1 200 OK\r", firstLine);
+
+    // sleep for 500 ms over the configured idle timeout; the connection on server side should get closed by then
+    TimeUnit.MILLISECONDS.sleep(TimeUnit.SECONDS.toMillis(CONNECTION_IDLE_TIMEOUT_SECS) + 500);
+    // Due to timeout the client connection will be closed, and hence this request should not go to the server
+    makeRequest(uri, out, inputStream);
+
+    // assert that the connection is closed on the server side
+    Assert.assertEquals(2, defaultServer1.getNumRequests() + defaultServer2.getNumRequests());
+    Assert.assertEquals(1, defaultServer1.getNumConnectionsOpened() + defaultServer2.getNumConnectionsOpened());
+    Assert.assertEquals(1, defaultServer1.getNumConnectionsClosed() + defaultServer2.getNumConnectionsClosed());
+  }
+
+  private String makeRequest(URI uri, PrintWriter out, InputStream inputStream) throws IOException {
 
     //Send request
-    out.print("GET " + path + " HTTP/1.1\r\n" +
+    out.print("GET " + uri.getPath() + " HTTP/1.1\r\n" +
                 "Host: " + uri.getHost() + "\r\n" +
                 "Connection: keep-alive\r\n\r\n");
     out.flush();
 
-
-    InputStream inputStream = socket.getInputStream();
-    BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
-    String firstLine = reader.readLine();
-    Assert.assertTrue(firstLine.contains("200 OK"));
-
-    while (reader.readLine() != null) {
+    byte[] buffer = new byte[1024];
+    int length = 0;
+    for (int i = 0; i < 20; ++i) {
+      int read = inputStream.read(buffer, length, 1024 - length);
+      length += read < 0 ? 0 : read;
+      // Output returned is 108 bytes in length for /v2/ping
+      if (length >= 108) {
+        break;
+      }
     }
-
-    // sleep for 500 ms over the configured idle timeout; the connection on server side should get closed by then
-    TimeUnit.MILLISECONDS.sleep(TimeUnit.SECONDS.toMillis(CONNECTION_IDLE_TIMEOUT_SECS) + 500);
-
-    // assert that the connection is closed on the client side
-    Assert.assertEquals(-1, reader.read());
-
-    // assert that the connection is closed on the server side
-    Assert.assertEquals(1, defaultServer1.getNumConnectionsOpened() + defaultServer2.getNumConnectionsOpened());
-    Assert.assertEquals(1, defaultServer1.getNumConnectionsClosed() + defaultServer2.getNumConnectionsClosed());
+    // Return only first line of the response
+    return Iterables.getFirst(Splitter.on("\n").split(new String(buffer, Charsets.UTF_8.name())), "");
   }
 
   @Test
@@ -440,7 +459,7 @@ public abstract class NettyRouterTestBase {
 
     URL url = new URL(resolveURI(Constants.Router.GATEWAY_DISCOVERY_NAME, "/v2/ping"));
     HttpURLConnection urlConnection = openURL(url);
-    urlConnection.getResponseCode();
+    Assert.assertEquals(200, urlConnection.getResponseCode());
     urlConnection.getInputStream().close();
     urlConnection.disconnect();
 
@@ -448,17 +467,17 @@ public abstract class NettyRouterTestBase {
     defaultServer1.cancelRegistration();
     defaultServer2.registerServer();
 
-    for (int i = 0; i < 3; i++) {
+    for (int i = 0; i < 4; i++) {
       // this is an assumption that CONNECTION_IDLE_TIMEOUT_SECS is more than 1 second
       TimeUnit.SECONDS.sleep(1);
       url = new URL(resolveURI(Constants.Router.GATEWAY_DISCOVERY_NAME, "/v1/ping/" + i));
       urlConnection = openURL(url);
-      urlConnection.getResponseCode();
+      Assert.assertEquals(200, urlConnection.getResponseCode());
       urlConnection.getInputStream().close();
       urlConnection.disconnect();
     }
 
-    // for the past 3 seconds, we've been making requests to defaultServer2; therefore, defaultServer1 will have closed
+    // for the past 4 seconds, we've been making requests to defaultServer2; therefore, defaultServer1 will have closed
     // its single connection
     Assert.assertEquals(1, defaultServer1.getNumConnectionsOpened());
     Assert.assertEquals(1, defaultServer1.getNumConnectionsClosed());
@@ -466,6 +485,14 @@ public abstract class NettyRouterTestBase {
     // however, the connection to defaultServer2 is not timed out, because we've been making requests to it
     Assert.assertEquals(1, defaultServer2.getNumConnectionsOpened());
     Assert.assertEquals(0, defaultServer2.getNumConnectionsClosed());
+
+    defaultServer2.registerServer();
+    defaultServer1.cancelRegistration();
+    url = new URL(resolveURI(Constants.Router.GATEWAY_DISCOVERY_NAME, "/v2/ping"));
+    urlConnection = openURL(url);
+    Assert.assertEquals(200, urlConnection.getResponseCode());
+    urlConnection.getInputStream().close();
+    urlConnection.disconnect();
   }
 
   @Test
@@ -475,7 +502,7 @@ public abstract class NettyRouterTestBase {
     long timeoutMillis = TimeUnit.SECONDS.toMillis(CONNECTION_IDLE_TIMEOUT_SECS) + 500;
     URL url = new URL(resolveURI(Constants.Router.GATEWAY_DISCOVERY_NAME, "/v1/timeout/" + timeoutMillis));
     HttpURLConnection urlConnection = openURL(url);
-    urlConnection.getResponseCode();
+    Assert.assertEquals(200, urlConnection.getResponseCode());
     urlConnection.disconnect();
   }
 

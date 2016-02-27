@@ -42,4 +42,4 @@ remove software, the admin user and password are both ``cdap``.
    :start-line: 4
    :end-line:   33
 
-.. include:: building-apps.txt
+.. include:: /_includes/building-apps.txt

@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.feature.hydrator')
-  .controller('HydratorListController', function($scope, myPipelineApi, $stateParams, GLOBALS, mySettings, $state, $alert, $timeout, myHelpers, myWorkFlowApi, myWorkersApi, MyCDAPDataSource, myAppsApi) {
+  .controller('HydratorListController', function($scope, myPipelineApi, $stateParams, GLOBALS, mySettings, $state, $timeout, myHelpers, myWorkFlowApi, myWorkersApi, MyCDAPDataSource, myAppsApi, myAlertOnValium) {
     var dataSrc = new MyCDAPDataSource($scope);
 
     var vm = this;
@@ -171,7 +171,7 @@ angular.module(PKG.name + '.feature.hydrator')
     }
 
     function fetchDrafts() {
-      mySettings.get('adapterDrafts')
+      mySettings.get('hydratorDrafts')
         .then(function(res) {
           let draftsList = myHelpers.objectQuery(res, $stateParams.namespace);
           if (!angular.isObject(draftsList)) {
@@ -182,8 +182,8 @@ angular.module(PKG.name + '.feature.hydrator')
               vm.statusCount.draft++;
               vm.pipelineList.push({
                 isDraft: true,
-                name: key,
-                id: key,
+                name: value.name,
+                id: (value.__ui__  && value.__ui__.draftId) ? value.__ui__.draftId : key,
                 artifact: value.artifact,
                 description: myHelpers.objectQuery(value, 'description'),
                 _status: 'Draft',
@@ -197,28 +197,35 @@ angular.module(PKG.name + '.feature.hydrator')
         });
     }
 
-    vm.deleteDraft = function(draftName) {
-      mySettings.get('adapterDrafts')
+    vm.deleteDraft = function(draftId) {
+      let draftName;
+      mySettings.get('hydratorDrafts')
         .then(function(res) {
-          if (myHelpers.objectQuery(res, $stateParams.namespace, draftName)) {
-            delete res[$stateParams.namespace][draftName];
+          let draft = myHelpers.objectQuery(res, $stateParams.namespace, draftId);
+          if (draft) {
+            draftName = draft.name;
+            delete res[$stateParams.namespace][draftId];
           }
-          return mySettings.set('adapterDrafts', res);
+          return mySettings.set('hydratorDrafts', res);
         })
         .then(
           function success() {
-            $alert({
-              type: 'success',
-              content: 'Pipeline draft ' + draftName + ' deleted successfully'
-            });
-            $state.reload();
+            $state.reload()
+              .then(function() {
+                myAlertOnValium.show({
+                  type: 'success',
+                  content: 'Pipeline draft ' + draftName + ' deleted successfully'
+                });
+              });
           },
           function error() {
-            $alert({
-              type: 'danger',
-              content: 'Pipeline draft ' + draftName + ' delete failed'
-            });
-            $state.reload();
+            $state.reload()
+              .then(function() {
+                myAlertOnValium.show({
+                  type: 'danger',
+                  content: 'Pipeline draft ' + draftName + ' delete failed'
+                });
+              });
           });
     };
 
@@ -232,17 +239,21 @@ angular.module(PKG.name + '.feature.hydrator')
       myAppsApi.delete(deleteParams)
         .$promise
         .then(function success () {
-          $alert({
-            type: 'success',
-            content: 'Pipeline ' + appId + ' deleted successfully'
-          });
-          $state.reload();
+          $state.reload()
+            .then(function() {
+              myAlertOnValium.show({
+                type: 'success',
+                content: 'Pipeline ' + appId + ' deleted successfully'
+              });
+            });
         }, function error () {
-          $alert({
-            type: 'danger',
-            content: 'Pipeline ' + appId + ' delete failed'
-          });
-          $state.reload();
+          $state.reload()
+            .then(function() {
+              myAlertOnValium.show({
+                type: 'danger',
+                content:  'Pipeline ' + appId + ' delete failed'
+              });
+            });
         });
     };
 

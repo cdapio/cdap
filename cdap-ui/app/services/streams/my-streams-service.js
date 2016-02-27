@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,13 +15,13 @@
  */
 
 angular.module(PKG.name + '.services')
-  .service('myStreamService', function($bootstrapModal, $rootScope) {
+  .service('myStreamService', function($uibModal, $rootScope) {
     var modalInstance;
 
     this.show = function(streamId) {
 			var scope = $rootScope.$new();
 			scope.streamId = streamId;
-      modalInstance = $bootstrapModal.open({
+      modalInstance = $uibModal.open({
         controller: 'FlowStreamDetailController',
         templateUrl: '/assets/features/flows/templates/tabs/runs/streams/detail.html',
         scope: scope
@@ -38,7 +38,7 @@ angular.module(PKG.name + '.services')
     };
 
   })
-  .controller('FlowStreamDetailController', function($scope, myStreamApi, $state, myFileUploader, $alert) {
+  .controller('FlowStreamDetailController', function($scope, myStreamApi, $state, myFileUploader, myAlertOnValium) {
 
     $scope.loading = false;
 
@@ -72,12 +72,22 @@ angular.module(PKG.name + '.services')
       var path = '/namespaces/' + $state.params.namespace + '/streams/' + $scope.streamId + '/batch';
 
       function uploadSuccess() {
-        $alert({
+        $scope.dismiss();
+        $scope.loading = false;
+
+        myAlertOnValium.show({
           type: 'success',
           title: 'Upload success',
           content: 'The file has been uploaded successfully'
         });
-
+      }
+      function uploadFailure() {
+        myAlertOnValium.show({
+          type: 'danger',
+          title: 'Upload failed',
+          content: 'The file could not be uploaded'
+        });
+        $scope.dismiss();
         $scope.loading = false;
       }
 
@@ -88,7 +98,7 @@ angular.module(PKG.name + '.services')
           path: path,
           file: files[i]
         }, 'text/csv')
-          .then(uploadSuccess);
+          .then(uploadSuccess, uploadFailure);
       }
 
 

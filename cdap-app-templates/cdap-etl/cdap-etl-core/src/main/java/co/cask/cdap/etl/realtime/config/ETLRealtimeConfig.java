@@ -27,42 +27,50 @@ import java.util.List;
 import java.util.Objects;
 
 /**
- * ETL Realtime Configuration.
+ * ETL Realtime Configuration. Public constructors are all deprecated in favor of the builder.
  */
 public final class ETLRealtimeConfig extends ETLConfig {
   private final Integer instances;
 
+  @Deprecated
   public ETLRealtimeConfig(Integer instances, ETLStage source, List<ETLStage> sinks,
                            List<ETLStage> transforms, List<Connection> connections, Resources resources) {
     super(source, sinks, transforms, connections, resources);
     this.instances = instances;
   }
 
+  @Deprecated
   public ETLRealtimeConfig(ETLStage source, List<ETLStage> sinks,
                            List<ETLStage> transforms, List<Connection> connections) {
     this(1, source, sinks, transforms, connections, null);
 
   }
+
+  @Deprecated
   public ETLRealtimeConfig(ETLStage source, ETLStage sinks,
                            List<ETLStage> transforms, List<Connection> connections) {
     this(1, source, sinks, transforms, connections, null);
   }
 
+  @Deprecated
   public ETLRealtimeConfig(Integer instances, ETLStage source, ETLStage sink, List<ETLStage> transforms,
                            List<Connection> connections, Resources resources) {
     super(source, sink, transforms, connections, resources);
     this.instances = instances;
   }
 
+  @Deprecated
   public ETLRealtimeConfig(int instances, ETLStage source, ETLStage sink, List<ETLStage> transforms) {
     this(instances, source, sink, transforms, new ArrayList<Connection>(), null);
   }
 
+  @Deprecated
   @VisibleForTesting
   public ETLRealtimeConfig(ETLStage source, ETLStage sink, List<ETLStage> transforms) {
     this(1, source, sink, transforms);
   }
 
+  @Deprecated
   @VisibleForTesting
   public ETLRealtimeConfig(ETLStage source, ETLStage sink) {
     this(source, sink, null);
@@ -92,5 +100,36 @@ public final class ETLRealtimeConfig extends ETLConfig {
   @Override
   public int hashCode() {
     return Objects.hash(super.hashCode(), instances);
+  }
+
+  @Override
+  public String toString() {
+    return "ETLRealtimeConfig{" +
+      "instances=" + instances +
+      "} " + super.toString();
+  }
+
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  /**
+   * Builder to create realtime etl configs.
+   */
+  public static class Builder extends ETLConfig.Builder<Builder> {
+    private int instances;
+
+    public Builder() {
+      this.instances = 1;
+    }
+
+    public Builder setInstances(int instances) {
+      this.instances = instances;
+      return this;
+    }
+
+    public ETLRealtimeConfig build() {
+      return new ETLRealtimeConfig(instances, source, sinks, transforms, connections, resources);
+    }
   }
 }

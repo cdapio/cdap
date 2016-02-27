@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.feature.admin').controller('NamespaceAppMetadataController',
-function ($scope, $state, $alert, $timeout, MyCDAPDataSource, myHydratorFactory) {
+function ($scope, $state, myAlertOnValium, MyCDAPDataSource, myHydratorFactory) {
 
   var data = new MyCDAPDataSource($scope);
   var path = '/namespaces/' + $state.params.nsadmin + '/apps/' + $state.params.appId;
@@ -32,16 +32,15 @@ function ($scope, $state, $alert, $timeout, MyCDAPDataSource, myHydratorFactory)
     data.request({
       _cdapPath: path,
       method: 'DELETE'
-    }, function() {
-      $alert({
-        type: 'success',
-        title: app,
-        content: 'Application deleted successfully'
-      });
-      // FIXME: Have to avoid $timeout here. Un-necessary.
-      $timeout(function() {
-        $state.go('^.apps');
-      });
+    }).then(function() {
+      $state.go('^.apps')
+        .then(function () {
+          myAlertOnValium.show({
+            type: 'success',
+            title: app,
+            content: 'Application deleted successfully'
+          });
+        });
     });
   };
 

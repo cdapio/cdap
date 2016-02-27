@@ -15,7 +15,7 @@
  */
 
 class HydratorService {
-  constructor(GLOBALS, MyDAGFactory, uuid, $state, $rootScope, myPipelineApi, $q, ConfigStore, IMPLICIT_SCHEMA, NodesStore) {
+  constructor(GLOBALS, MyDAGFactory, uuid, $state, $rootScope, myPipelineApi, $q, IMPLICIT_SCHEMA, NodesStore) {
     this.GLOBALS = GLOBALS;
     this.MyDAGFactory = MyDAGFactory;
     this.uuid = uuid;
@@ -23,7 +23,6 @@ class HydratorService {
     this.$rootScope = $rootScope;
     this.myPipelineApi = myPipelineApi;
     this.$q = $q;
-    this.ConfigStore = ConfigStore;
     this.IMPLICIT_SCHEMA = IMPLICIT_SCHEMA;
     this.NodesStore = NodesStore;
   }
@@ -35,22 +34,22 @@ class HydratorService {
     let artifact = this.GLOBALS.pluginTypes[pipeline.artifact.name];
 
     let source = angular.copy(pipeline.config.source);
-    let transforms = angular.copy(pipeline.config.transforms)
+    let transforms = angular.copy(pipeline.config.transforms || [])
       .map( node => {
         node.type = artifact.transform;
         node.label = node.label || node.name;
-        node.icon = this.MyDAGFactory.getIcon(node.name);
+        node.icon = this.MyDAGFactory.getIcon(node.plugin.name);
         return node;
       });
     let sinks = angular.copy(pipeline.config.sinks)
       .map( node => {
         node.type = artifact.sink;
-        node.icon = this.MyDAGFactory.getIcon(node.name);
+        node.icon = this.MyDAGFactory.getIcon(node.plugin.name);
         return node;
       });
 
     source.type = artifact.source;
-    source.icon = this.MyDAGFactory.getIcon(source.name);
+    source.icon = this.MyDAGFactory.getIcon(source.plugin.name);
     // replace with backend id
     nodes.push(source);
     nodes = nodes.concat(transforms);
@@ -80,17 +79,17 @@ class HydratorService {
     // happening
     var params = {
       namespace: this.$state.params.namespace,
-      pipelineType: appType || this.ConfigStore.getAppType(),
-      version: (node.artifact && node.artifact.version ) || this.$rootScope.cdapVersion,
+      pipelineType: appType,
+      version: this.$rootScope.cdapVersion,
       extensionType: node.type,
       pluginName: node.plugin.name
     };
-
+    let nodeArtifact = node.plugin.artifact;
     return this.myPipelineApi.fetchPluginProperties(params)
       .$promise
-      .then(function(res) {
-
-        var pluginProperties = (res.length? res[0].properties: {});
+      .then(function(res = []) {
+        let match = res.filter(plug => angular.equals(plug.artifact, nodeArtifact));
+        var pluginProperties = (match.length? match[0].properties: {});
         if (res.length && (!node.description || (node.description && !node.description.length))) {
           node.description = res[0].description;
         }
@@ -108,9 +107,9 @@ class HydratorService {
     let jsonSchema;
 
     if (isStreamSource) {
-      if (node.properties.format === 'clf') {
+      if (node.plugin.properties.format === 'clf') {
         jsonSchema = this.IMPLICIT_SCHEMA.clf;
-      } else if (node.properties.format === 'syslog') {
+      } else if (node.plugin.properties.format === 'syslog') {
         jsonSchema = this.IMPLICIT_SCHEMA.syslog;
       } else {
         jsonSchema = node.outputSchema;
@@ -177,7 +176,49 @@ class HydratorService {
     return this.formatSchema(sourceNode);
   }
 
+  formatOutputSchema (schemaArray) {
+    let typeMap = 'map<string, string>';
+    let mapObj = {
+      type: 'map',
+      keys: 'string',
+      values: 'string'
+    };
+
+    let properties = [];
+    angular.forEach(schemaArray, function(p) {
+      if (p.name) {
+        var property;
+        if (p.type === typeMap) {
+          property = angular.copy(mapObj);
+        } else {
+          property = p.type;
+        }
+
+        properties.push({
+          name: p.name,
+          type: p.nullable ? [property, 'null'] : property,
+          readonly: p.readonly
+        });
+      }
+    });
+
+    // do not include properties on the request when schema field is empty
+    if (properties.length !== 0) {
+      let schema = {
+        type: 'record',
+        name: 'etlSchemaBody',
+        fields: properties
+      };
+      // turn schema into JSON string
+      let json = JSON.stringify(schema);
+
+      return json;
+    } else {
+      return null;
+    }
+  }
+
 }
-HydratorService.$inject = ['GLOBALS', 'MyDAGFactory', 'uuid', '$state', '$rootScope', 'myPipelineApi', '$q', 'ConfigStore', 'IMPLICIT_SCHEMA', 'NodesStore'];
+HydratorService.$inject = ['GLOBALS', 'MyDAGFactory', 'uuid', '$state', '$rootScope', 'myPipelineApi', '$q', 'IMPLICIT_SCHEMA', 'NodesStore'];
 angular.module(`${PKG.name}.feature.hydrator`)
   .service('HydratorService', HydratorService);

@@ -141,8 +141,8 @@ its name, version, and scope. Example output for the ``cdap-etl-batch`` artifact
 
 .. _http-restful-api-artifact-detail:
 
-Retrieve Artifact Detail
-========================
+Retrieve an Artifact Detail
+===========================
 To retrieve detail about a specific version of an artifact, submit an HTTP GET request::
 
   GET <base-url>/namespaces/<namespace>/artifacts/<artifact-name>/versions/<artifact-version>[?scope=<scope>]
@@ -156,9 +156,9 @@ To retrieve detail about a specific version of an artifact, submit an HTTP GET r
    * - ``<namespace>``
      - Namespace ID
    * - ``<artifact-name>``
-     - Name of the artifact.
+     - Name of the artifact
    * - ``<artifact-version>``
-     - Version of the artifact.
+     - Version of the artifact
    * - ``<scope>``
      - Optional scope filter. If not specified, defaults to 'user'.
 
@@ -196,6 +196,188 @@ artifact (pretty-printed and reformatted to fit):
       "scope": "USER",
       "version": "|release|"
     }
+
+.. _http-restful-api-artifact-set-properties:
+
+Set Artifact Properties
+=======================
+To set properties for a specific version of an artifact, submit an HTTP PUT request::
+
+  PUT <base-url>/namespaces/<namespace>/artifacts/<artifact-name>/versions/<artifact-version>/properties
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``<namespace>``
+     - Namespace ID
+   * - ``<artifact-name>``
+     - Name of the artifact
+   * - ``<artifact-version>``
+     - Version of the artifact
+
+The request body must be a JSON object that contains the properties for the artifact.
+The keys and values in the object must be strings. If any properties are already
+defined, they will be overwritten.
+
+.. container:: highlight
+
+  .. parsed-literal::
+    |$| PUT <base-url>/namespaces/default/artifact/WordCount/versions/|release|/properties -d 
+    {
+        "author": "samuel",
+        "company": "cask"
+    }
+
+.. _http-restful-api-artifact-set-property:
+
+Set an Artifact Property
+========================
+To set a specific property for a specific version of an artifact, submit an HTTP PUT request::
+
+  PUT <base-url>/namespaces/<namespace>/artifacts/<artifact-name>/versions/<artifact-version>/properties/<property>
+  
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``<namespace>``
+     - Namespace ID
+   * - ``<artifact-name>``
+     - Name of the artifact
+   * - ``<artifact-version>``
+     - Version of the artifact
+   * - ``<property>``
+     - Property to set
+
+The request body must contain the value to set for the property. If the property already exists,
+the previous value will be overwritten.
+
+.. container:: highlight
+
+  .. parsed-literal::
+    |$| PUT <base-url>/namespaces/default/artifact/WordCount/versions/|release|/properties/author -d
+    samuel
+
+.. _http-restful-api-artifact-retrieve-properties:
+
+Retrieve Artifact Properties
+============================
+To retrieve properties for a specific version of an artifact, submit an HTTP GET request::
+
+  GET <base-url>/namespaces/<namespace>/artifacts/<artifact-name>/versions/<artifact-version>/properties[?scope=<scope>&keys=<keys>]
+  
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``<namespace>``
+     - Namespace ID
+   * - ``<artifact-name>``
+     - Name of the artifact
+   * - ``<artifact-version>``
+     - Version of the artifact
+   * - ``<scope>``
+     - Optional scope filter. If not specified, defaults to 'user'.
+   * - ``<keys>``
+     - Optional comma-separated list of property keys to return. If not specified, all keys are returned. 
+
+This will return a JSON object that contains the properties of the artifact.
+
+.. container:: highlight
+
+  .. parsed-literal::
+    |$| GET <base-url>/namespaces/default/artifact/WordCount/versions/|release|/properties?keys=author,company
+    { "author": "samuel", "company": "cask" }
+
+.. _http-restful-api-artifact-retrieve-property:
+
+Retrieve an Artifact Property
+=============================
+To retrieve a specific property for a specific version of an artifact, submit an HTTP GET request::
+
+  GET <base-url>/namespaces/<namespace>/artifacts/<artifact-name>/versions/<artifact-version>/properties/<property>
+  
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``<namespace>``
+     - Namespace ID
+   * - ``<artifact-name>``
+     - Name of the artifact
+   * - ``<artifact-version>``
+     - Version of the artifact
+   * - ``<property>``
+     - Property to retrieve
+
+.. container:: highlight
+
+  .. parsed-literal::
+    |$| GET <base-url>/namespaces/default/artifact/WordCount/versions/|release|/properties/author
+    samuel
+
+.. _http-restful-api-artifact-delete-properties:
+
+Delete Artifact Properties
+==========================
+To delete all properties for a specific version of an artifact, submit an HTTP DELETE request::
+
+  GET <base-url>/namespaces/<namespace>/artifacts/<artifact-name>/versions/<artifact-version>/properties
+  
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``<namespace>``
+     - Namespace ID
+   * - ``<artifact-name>``
+     - Name of the artifact
+   * - ``<artifact-version>``
+     - Version of the artifact
+
+.. container:: highlight
+
+  .. parsed-literal::
+    |$| DELETE <base-url>/namespaces/default/artifact/WordCount/versions/|release|/properties
+
+.. _http-restful-api-artifact-delete-property:
+
+Delete an Artifact Property
+===========================
+To delete a specific property for a specific version of an artifact, submit an HTTP DELETE request::
+
+  GET <base-url>/namespaces/<namespace>/artifacts/<artifact-name>/versions/<artifact-version>/properties/<property>
+  
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``<namespace>``
+     - Namespace ID
+   * - ``<artifact-name>``
+     - Name of the artifact
+   * - ``<artifact-version>``
+     - Version of the artifact
+   * - ``<property>``
+     - Property key to delete
+
+.. container:: highlight
+
+  .. parsed-literal::
+    |$| DELETE <base-url>/namespaces/default/artifact/WordCount/versions/|release|/properties/author
 
 .. _http-restful-api-artifact-extensions:
 
@@ -312,7 +494,7 @@ an HTTP GET request::
    * - ``<namespace>``
      - Namespace ID
    * - ``<artifact-name>``
-     - Name of the artifact.
+     - Name of the artifact
    * - ``<artifact-version>``
      - Version of the artifact
    * - ``<plugin-type>``
@@ -341,11 +523,11 @@ of the ``cdap-etl-batch`` artifact (pretty-printed and reformatted to fit):
             "version": "|release|-batch"
         },
         "className": "co.cask.cdap.etl.transform.ScriptFilterTransform",
-        "description": "A transform plugin that filters records using a custom Javascript provided in the plugin's config.",
+        "description": "A transform plugin that filters records using a custom JavaScript provided in the plugin's config.",
         "name": "ScriptFilter",
         "properties": {
             "script": {
-                "description": "Javascript that must implement a function 'shouldFilter' that takes a JSON object representation of the input record, and returns true if the input record should be filtered and false if not. For example: 'function shouldFilter(input) { return input.count > 100; }' will filter out any records whose 'count' field is greater than 100.",
+                "description": "JavaScript that must implement a function 'shouldFilter' that takes a JSON object representation of the input record, and returns true if the input record should be filtered and false if not. For example: 'function shouldFilter(input) { return input.count > 100; }' will filter out any records whose 'count' field is greater than 100.",
                 "name": "script",
                 "required": true,
                 "type": "string"
@@ -393,8 +575,8 @@ that it finds. Any snapshot artifacts will be re-loaded.
 
 .. _http-restful-api-artifact-system-delete:
 
-Delete System Artifact
-======================
+Delete a System Artifact
+========================
 To delete a system artifact, submit an HTTP DELETE request::
 
   DELETE <base-url>/namespaces/system/artifacts/<artifact-name>/versions/<artifact-version>

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Copyright © 2015 Cask Data, Inc.
+# Copyright © 2015-2016 Cask Data, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -47,7 +47,7 @@ STAGE_DIR=${TARGET_DIR}/yumrepo
 
 S3_BUCKET=${S3_BUCKET:-repository.cask.co}
 S3_REPO_PATH=${S3_REPO_PATH:-centos/6/x86_64/cdap} # No leading or trailing slashes
-VERSION=${VERSION:-$(basename ${TARGET_DIR}/cdap-*.rpm | cut -d- -f2)}
+VERSION=${VERSION:-$(ls -1 ${TARGET_DIR}/*.rpm | head -n 1 | xargs rpm --queryformat "%{VERSION}" -qp)} # query package file
 GPG_KEY_NAME=${GPG_KEY_NAME:-${1}}
 GPG_PASSPHRASE=${GPG_PASSPHRASE:-${2}}
 __version=${VERSION/-SNAPSHOT/}
@@ -123,6 +123,19 @@ function createrepo_in_repo_staging() {
   createrepo ${__maj_min}
 }
 
+function create_definition_file() {
+  [ -f "${STAGE_DIR}/${__maj_min}/cask.repo" ] && return
+  echo "Create YUM repository definition file"
+  cd ${STAGE_DIR}/${__maj_min}
+  cat <<EOF > cask.repo
+[cask]
+name=Cask Packages
+baseurl=http://${S3_BUCKET}/${S3_REPO_PATH}/${__maj_min}
+enabled=1
+gpgcheck=1
+EOF
+}
+
 function create_repo_tarball() {
   cd ${STAGE_DIR}
   echo "Create YUM repository tarball"
@@ -137,6 +150,7 @@ add_packages_to_repo_staging || die "Failed copying packages to staging director
 sign_packages_in_repo_staging
 export_public_key
 createrepo_in_repo_staging || die "Failed to create repository from staging directory"
+create_definition_file || die "Failed to create repository definition file"
 create_repo_tarball || die "Failed to create YUM repository tarball"
 
 echo "Complete: cdap-yumrepo-${__maj_min}.tar.gz created"

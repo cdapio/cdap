@@ -24,14 +24,12 @@ import co.cask.cdap.explore.service.hive.Hive12CDH5ExploreService;
 import co.cask.cdap.explore.service.hive.Hive12ExploreService;
 import co.cask.cdap.explore.service.hive.Hive13ExploreService;
 import co.cask.cdap.explore.service.hive.Hive14ExploreService;
+import co.cask.cdap.hive.ExploreUtils;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
 import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
 import com.google.common.io.ByteStreams;
 import org.apache.hadoop.conf.Configuration;
@@ -56,7 +54,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.net.URLClassLoader;
 import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.LinkedHashSet;
@@ -115,71 +112,10 @@ public class ExploreServiceUtils {
 
   // Caching the dependencies so that we don't trace them twice
   private static Set<File> exploreDependencies = null;
-  // Caching explore class loader
-  private static ClassLoader exploreClassLoader = null;
 
   private static final Pattern HIVE_SITE_FILE_PATTERN = Pattern.compile("^.*/hive-site\\.xml$");
   private static final Pattern YARN_SITE_FILE_PATTERN = Pattern.compile("^.*/yarn-site\\.xml$");
   private static final Pattern MAPRED_SITE_FILE_PATTERN = Pattern.compile("^.*/mapred-site\\.xml$");
-
-  /**
-   * Get all the files contained in a class path.
-   */
-  public static Iterable<File> getClassPathJarsFiles(String hiveClassPath) {
-    if (hiveClassPath == null) {
-      return null;
-    }
-    return Iterables.transform(Splitter.on(':').split(hiveClassPath), STRING_FILE_FUNCTION);
-  }
-
-  private static final Function<String, File> STRING_FILE_FUNCTION =
-    new Function<String, File>() {
-      @Override
-      public File apply(String input) {
-        return new File(input).getAbsoluteFile();
-      }
-    };
-
-  /**
-   * Builds a class loader with the class path provided.
-   */
-  public static ClassLoader getExploreClassLoader() {
-    if (exploreClassLoader != null) {
-      return exploreClassLoader;
-    }
-
-    // EXPLORE_CLASSPATH and EXPLORE_CONF_FILES will be defined in startup scripts if Hive is installed.
-    String exploreClassPathStr = System.getProperty(Constants.Explore.EXPLORE_CLASSPATH);
-    LOG.debug("Explore classpath = {}", exploreClassPathStr);
-    if (exploreClassPathStr == null) {
-      throw new RuntimeException("System property " + Constants.Explore.EXPLORE_CLASSPATH + " is not set.");
-    }
-
-    String exploreConfPathStr = System.getProperty(Constants.Explore.EXPLORE_CONF_FILES);
-    LOG.debug("Explore confPath = {}", exploreConfPathStr);
-    if (exploreConfPathStr == null) {
-      throw new RuntimeException("System property " + Constants.Explore.EXPLORE_CONF_FILES + " is not set.");
-    }
-
-    Iterable<File> hiveClassPath = getClassPathJarsFiles(exploreClassPathStr);
-    Iterable<File> hiveConfFiles = getClassPathJarsFiles(exploreConfPathStr);
-    ImmutableList.Builder<URL> builder = ImmutableList.builder();
-    for (File file : Iterables.concat(hiveClassPath, hiveConfFiles)) {
-      try {
-        if (file.getName().matches(".*\\.xml")) {
-          builder.add(file.getParentFile().toURI().toURL());
-        } else {
-          builder.add(file.toURI().toURL());
-        }
-      } catch (MalformedURLException e) {
-        LOG.error("Jar URL is malformed", e);
-        throw Throwables.propagate(e);
-      }
-    }
-    exploreClassLoader = new URLClassLoader(Iterables.toArray(builder.build(), URL.class),
-                                            ClassLoader.getSystemClassLoader());
-    return exploreClassLoader;
-  }
 
   public static Class<? extends ExploreService> getHiveService() {
     HiveSupport hiveVersion = checkHiveSupport(null);
@@ -187,23 +123,14 @@ public class ExploreServiceUtils {
   }
 
   public static HiveSupport checkHiveSupport() {
-    return checkHiveSupport(getExploreClassLoader());
+    return checkHiveSupport(ExploreUtils.getExploreClassloader());
   }
 
-  /**
-   * Check that Hive is in the class path - with a right version.
-   */
-  public static HiveSupport checkHiveSupport(ClassLoader hiveClassLoader) {
-    // First try to figure which hive support is relevant based on Hadoop distribution name
-    String hadoopVersion = VersionInfo.getVersion();
-    LOG.info("Hadoop version is: {}", hadoopVersion);
-    for (HiveSupport hiveSupport : HiveSupport.values()) {
-      if (hiveSupport.getHadoopVersionPattern() != null &&
-        hiveSupport.getHadoopVersionPattern().matcher(hadoopVersion).matches()) {
-        return hiveSupport;
-      }
-    }
+  public static String getHiveVersion() {
+    return getHiveVersion(ExploreUtils.getExploreClassloader());
+  }
 
+  public static String getHiveVersion(@Nullable ClassLoader hiveClassLoader) {
     ClassLoader usingCL = hiveClassLoader;
     if (usingCL == null) {
       usingCL = ExploreServiceUtils.class.getClassLoader();
@@ -211,20 +138,37 @@ public class ExploreServiceUtils {
 
     try {
       Class<?> hiveVersionInfoClass = usingCL.loadClass("org.apache.hive.common.util.HiveVersionInfo");
-      String hiveVersion = (String) hiveVersionInfoClass.getDeclaredMethod("getVersion").invoke(null);
-      if (hiveVersion.startsWith("0.12.")) {
-        return HiveSupport.HIVE_12;
-      } else if (hiveVersion.startsWith("0.13.")) {
-        return HiveSupport.HIVE_13;
-      } else if (hiveVersion.startsWith("0.14.") || hiveVersion.startsWith("1.0.")) {
-        return HiveSupport.HIVE_14;
-      } else if (hiveVersion.startsWith("1.1.")) {
-        return HiveSupport.HIVE_1_1;
-      }  else if (hiveVersion.startsWith(("1.2"))) {
-        return HiveSupport.HIVE_1_2;
-      }
+      return (String) hiveVersionInfoClass.getDeclaredMethod("getVersion").invoke(null);
     } catch (Exception e) {
       throw Throwables.propagate(e);
+    }
+  }
+
+  /**
+   * Check that Hive is in the class path - with a right version.
+   */
+  public static HiveSupport checkHiveSupport(@Nullable ClassLoader hiveClassLoader) {
+    // First try to figure which hive support is relevant based on Hadoop distribution name
+    String hadoopVersion = VersionInfo.getVersion();
+    for (HiveSupport hiveSupport : HiveSupport.values()) {
+      if (hiveSupport.getHadoopVersionPattern() != null &&
+        hiveSupport.getHadoopVersionPattern().matcher(hadoopVersion).matches()) {
+        return hiveSupport;
+      }
+    }
+
+    String hiveVersion = getHiveVersion(hiveClassLoader);
+    LOG.info("Client Hive version: {}", hiveVersion);
+    if (hiveVersion.startsWith("0.12.")) {
+      return HiveSupport.HIVE_12;
+    } else if (hiveVersion.startsWith("0.13.")) {
+      return HiveSupport.HIVE_13;
+    } else if (hiveVersion.startsWith("0.14.") || hiveVersion.startsWith("1.0.")) {
+      return HiveSupport.HIVE_14;
+    } else if (hiveVersion.startsWith("1.1.")) {
+      return HiveSupport.HIVE_1_1;
+    }  else if (hiveVersion.startsWith(("1.2"))) {
+      return HiveSupport.HIVE_1_2;
     }
 
     throw new RuntimeException("Hive distribution not supported. Set the configuration '" +
@@ -260,7 +204,7 @@ public class ExploreServiceUtils {
       return exploreDependencies;
     }
 
-    ClassLoader classLoader = getExploreClassLoader();
+    ClassLoader classLoader = ExploreUtils.getExploreClassloader();
     return traceExploreDependencies(classLoader, tmpDir);
   }
 
@@ -293,11 +237,8 @@ public class ExploreServiceUtils {
         * */
       @Override
       public boolean accept(String className, URL classUrl, URL classPathUrl) {
-        if (bootstrapClassPaths.contains(classPathUrl.getFile()) ||
-          className.startsWith("com.esotericsoftware.kryo")) {
-          return false;
-        }
-        return true;
+        return !(bootstrapClassPaths.contains(classPathUrl.getFile()) ||
+          className.startsWith("com.esotericsoftware.kryo"));
       }
     };
 

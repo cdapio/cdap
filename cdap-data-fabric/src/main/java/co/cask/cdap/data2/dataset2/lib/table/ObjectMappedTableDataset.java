@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -82,7 +82,7 @@ public class ObjectMappedTableDataset<T> extends AbstractDataset implements Obje
       try {
         // this can throw a runtime exception from a ClassNotFoundException
         Type type = typeRepresentation.toType();
-        this.rowReader = new ReflectionRowReader<>(objectSchema, (TypeToken<T>) TypeToken.of(type));
+        rowReader = new ReflectionRowReader<>(objectSchema, (TypeToken<T>) TypeToken.of(type));
       } catch (RuntimeException e) {
         String missingClass = isClassNotFoundException(e);
         if (missingClass != null) {
@@ -93,7 +93,7 @@ public class ObjectMappedTableDataset<T> extends AbstractDataset implements Obje
         throw e;
       }
     }
-    return this.rowReader;
+    return rowReader;
   }
 
   private String isClassNotFoundException(Throwable e) {

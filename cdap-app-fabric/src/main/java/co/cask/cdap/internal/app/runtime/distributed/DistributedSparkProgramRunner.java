@@ -29,6 +29,7 @@ import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.spark.SparkContextConfig;
 import co.cask.cdap.internal.app.runtime.spark.SparkUtils;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.security.TokenSecureStoreUpdater;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
@@ -40,6 +41,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Map;
 
 /**
@@ -53,14 +55,15 @@ public class DistributedSparkProgramRunner extends AbstractDistributedProgramRun
 
   @Inject
   public DistributedSparkProgramRunner(TwillRunner twillRunner, LocationFactory locationFactory,
-                                       YarnConfiguration hConf, CConfiguration cConf) {
-    super(twillRunner, locationFactory, createConfiguration(hConf), cConf);
+                                       YarnConfiguration hConf, CConfiguration cConf,
+                                       TokenSecureStoreUpdater tokenSecureStoreUpdater) {
+    super(twillRunner, locationFactory, createConfiguration(hConf), cConf, tokenSecureStoreUpdater);
   }
 
   @Override
   protected ProgramController launch(Program program, ProgramOptions options,
                                      Map<String, LocalizeResource> localizeResources,
-                                     ApplicationLauncher launcher) {
+                                     File tempDir, ApplicationLauncher launcher) {
     // Extract and verify parameters
     ApplicationSpecification appSpec = program.getApplicationSpecification();
     Preconditions.checkNotNull(appSpec, "Missing application specification for %s", program.getId());
@@ -74,14 +77,12 @@ public class DistributedSparkProgramRunner extends AbstractDistributedProgramRun
     SparkSpecification spec = appSpec.getSpark().get(program.getName());
     Preconditions.checkNotNull(spec, "Missing SparkSpecification for %s", program.getId());
 
-    // Localize the spark-assembly jar
-    File sparkAssemblyJar = SparkUtils.locateSparkAssemblyJar();
-    localizeResources.put(sparkAssemblyJar.getName(), new LocalizeResource(sparkAssemblyJar));
+    // Localize the spark-assembly jar and spark conf zip
+    String sparkAssemblyJarName = SparkUtils.prepareSparkResources(cConf, tempDir, localizeResources);
 
     LOG.info("Launching Spark program: {}", program.getId());
     TwillController controller = launcher.launch(
-      new SparkTwillApplication(program, spec, localizeResources, eventHandler),
-      sparkAssemblyJar.getName());
+      new SparkTwillApplication(program, spec, localizeResources, eventHandler), sparkAssemblyJarName);
 
     RunId runId = RunIds.fromString(options.getArguments().getOption(ProgramOptionConstants.RUN_ID));
     return new SparkTwillProgramController(program.getId(), controller, runId).startListen();

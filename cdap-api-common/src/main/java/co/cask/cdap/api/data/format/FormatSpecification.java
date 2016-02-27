@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -34,6 +34,7 @@ public final class FormatSpecification {
   private final Map<String, String> settings;
 
   // for Gson deserialization, to make sure settings is an empty map and not null.
+  @SuppressWarnings("unused")
   private FormatSpecification() {
     this(null, null, Collections.<String, String>emptyMap());
   }

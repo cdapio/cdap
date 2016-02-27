@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -32,15 +32,20 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.common.utils.ImmutablePair;
+import co.cask.cdap.data2.metadata.store.MetadataStore;
+import co.cask.cdap.data2.metadata.system.ArtifactSystemMetadataWriter;
 import co.cask.cdap.internal.app.runtime.plugin.PluginNotExistsException;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.artifact.ApplicationClassInfo;
 import co.cask.cdap.proto.artifact.ApplicationClassSummary;
+import co.cask.cdap.proto.artifact.ArtifactInfo;
 import co.cask.cdap.proto.artifact.ArtifactRange;
 import co.cask.cdap.proto.artifact.ArtifactSummary;
+import co.cask.cdap.proto.metadata.MetadataScope;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -71,18 +76,28 @@ public class ArtifactRepository {
   private final ArtifactStore artifactStore;
   private final ArtifactClassLoaderFactory artifactClassLoaderFactory;
   private final ArtifactInspector artifactInspector;
-  private final File systemArtifactDir;
+  private final List<File> systemArtifactDirs;
   private final ArtifactConfigReader configReader;
+  private final MetadataStore metadataStore;
 
   @Inject
-  ArtifactRepository(CConfiguration cConf, ArtifactStore artifactStore) {
+  ArtifactRepository(CConfiguration cConf, ArtifactStore artifactStore, MetadataStore metadataStore) {
     this.artifactStore = artifactStore;
     File baseUnpackDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
       cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
     this.artifactClassLoaderFactory = new ArtifactClassLoaderFactory(cConf, baseUnpackDir);
     this.artifactInspector = new ArtifactInspector(cConf, artifactClassLoaderFactory, baseUnpackDir);
-    this.systemArtifactDir = new File(cConf.get(Constants.AppFabric.SYSTEM_ARTIFACTS_DIR));
+    this.systemArtifactDirs = new ArrayList<>();
+    for (String dir : cConf.get(Constants.AppFabric.SYSTEM_ARTIFACTS_DIR).split(";")) {
+      File file = new File(dir);
+      if (!file.isDirectory()) {
+        LOG.warn("Ignoring {} because it is not a directory.", file);
+        continue;
+      }
+      systemArtifactDirs.add(file);
+    }
     this.configReader = new ArtifactConfigReader();
+    this.metadataStore = metadataStore;
   }
 
   /**
@@ -93,7 +108,9 @@ public class ArtifactRepository {
    * @throws IOException if there was an error making changes in the meta store
    */
   public void clear(Id.Namespace namespace) throws IOException {
-    artifactStore.clear(namespace);
+    for (ArtifactDetail artifactDetail : artifactStore.getArtifacts(namespace)) {
+      deleteArtifact(Id.Artifact.from(namespace, artifactDetail.getDescriptor().getArtifactId()));
+    }
   }
 
   /**
@@ -188,14 +205,15 @@ public class ArtifactRepository {
    * are sorted by the {@link ArtifactDescriptor} for the artifact that contains plugins available to the given
    * artifact.
    *
+   * @param namespace the namespace to get plugins from
    * @param artifactId the id of the artifact to get plugins for
    * @return an unmodifiable sorted map from plugin artifact to plugins in that artifact
    * @throws ArtifactNotFoundException if the given artifact does not exist
    * @throws IOException if there was an exception reading plugin metadata from the artifact store
    */
-  public SortedMap<ArtifactDescriptor, List<PluginClass>> getPlugins(Id.Artifact artifactId)
+  public SortedMap<ArtifactDescriptor, List<PluginClass>> getPlugins(Id.Namespace namespace, Id.Artifact artifactId)
     throws IOException, ArtifactNotFoundException {
-    return artifactStore.getPluginClasses(artifactId);
+    return artifactStore.getPluginClasses(namespace, artifactId);
   }
 
   /**
@@ -203,15 +221,17 @@ public class ArtifactRepository {
    * The keys are sorted by the {@link ArtifactDescriptor} for the artifact that contains plugins available to the given
    * artifact.
    *
+   * @param namespace the namespace to get plugins from
    * @param artifactId the id of the artifact to get plugins for
    * @param pluginType the type of plugins to get
    * @return an unmodifiable sorted map from plugin artifact to plugins in that artifact
    * @throws ArtifactNotFoundException if the given artifact does not exist
    * @throws IOException if there was an exception reading plugin metadata from the artifact store
    */
-  public SortedMap<ArtifactDescriptor, List<PluginClass>> getPlugins(Id.Artifact artifactId, String pluginType)
+  public SortedMap<ArtifactDescriptor, List<PluginClass>> getPlugins(Id.Namespace namespace, Id.Artifact artifactId,
+                                                                     String pluginType)
     throws IOException, ArtifactNotFoundException {
-    return artifactStore.getPluginClasses(artifactId, pluginType);
+    return artifactStore.getPluginClasses(namespace, artifactId, pluginType);
   }
 
   /**
@@ -219,6 +239,7 @@ public class ArtifactRepository {
    * are sorted by the {@link ArtifactDescriptor} for the artifact that contains plugins available to the given
    * artifact.
    *
+   * @param namespace the namespace to get plugins from
    * @param artifactId the id of the artifact to get plugins for
    * @param pluginType the type of plugins to get
    * @param pluginName the name of plugins to get
@@ -226,15 +247,16 @@ public class ArtifactRepository {
    * @throws ArtifactNotFoundException if the given artifact does not exist
    * @throws IOException if there was an exception reading plugin metadata from the artifact store
    */
-  public SortedMap<ArtifactDescriptor, PluginClass> getPlugins(Id.Artifact artifactId, String pluginType,
-                                                               String pluginName)
+  public SortedMap<ArtifactDescriptor, PluginClass> getPlugins(Id.Namespace namespace, Id.Artifact artifactId,
+                                                               String pluginType, String pluginName)
     throws IOException, PluginNotExistsException, ArtifactNotFoundException {
-    return artifactStore.getPluginClasses(artifactId, pluginType, pluginName);
+    return artifactStore.getPluginClasses(namespace, artifactId, pluginType, pluginName);
   }
 
   /**
    * Returns a {@link Map.Entry} representing the plugin information for the plugin being requested.
    *
+   * @param namespace the namespace to get plugins from
    * @param artifactId the id of the artifact to get plugins for
    * @param pluginType plugin type name
    * @param pluginName plugin name
@@ -244,11 +266,12 @@ public class ArtifactRepository {
    * @throws ArtifactNotFoundException if the given artifact does not exist
    * @throws PluginNotExistsException if no plugins of the given type and name are available to the given artifact
    */
-  public Map.Entry<ArtifactDescriptor, PluginClass> findPlugin(Id.Artifact artifactId, String pluginType,
-                                                               String pluginName, PluginSelector selector)
+  public Map.Entry<ArtifactDescriptor, PluginClass> findPlugin(Id.Namespace namespace, Id.Artifact artifactId,
+                                                               String pluginType, String pluginName,
+                                                               PluginSelector selector)
     throws IOException, PluginNotExistsException, ArtifactNotFoundException {
     SortedMap<ArtifactDescriptor, PluginClass> pluginClasses = artifactStore.getPluginClasses(
-      artifactId, pluginType, pluginName);
+      namespace, artifactId, pluginType, pluginName);
     SortedMap<ArtifactId, PluginClass> artifactIds = Maps.newTreeMap();
     for (Map.Entry<ArtifactDescriptor, PluginClass> pluginClassEntry : pluginClasses.entrySet()) {
       artifactIds.put(pluginClassEntry.getKey().getArtifactId(), pluginClassEntry.getValue());
@@ -286,6 +309,9 @@ public class ArtifactRepository {
       ArtifactClasses artifactClasses = inspectArtifact(artifactId, artifactFile, null, parentClassLoader);
       validatePluginSet(artifactClasses.getPlugins());
       ArtifactMeta meta = new ArtifactMeta(artifactClasses, ImmutableSet.<ArtifactRange>of());
+      ArtifactInfo artifactInfo = new ArtifactInfo(artifactId.toArtifactId(), artifactClasses,
+                                                  ImmutableMap.<String, String>of());
+      writeSystemMetadata(artifactId, artifactInfo);
       return artifactStore.write(artifactId, meta, Files.newInputStreamSupplier(artifactFile));
     }
   }
@@ -378,7 +404,14 @@ public class ArtifactRepository {
     try {
       ArtifactClasses artifactClasses = inspectArtifact(artifactId, artifactFile, additionalPlugins, parentClassLoader);
       ArtifactMeta meta = new ArtifactMeta(artifactClasses, parentArtifacts, properties);
-      return artifactStore.write(artifactId, meta, Files.newInputStreamSupplier(artifactFile));
+      ArtifactDetail artifactDetail = artifactStore.write(artifactId, meta, Files.newInputStreamSupplier(artifactFile));
+      ArtifactDescriptor descriptor = artifactDetail.getDescriptor();
+      // info hides some fields that are available in detail, such as the location of the artifact
+      ArtifactInfo artifactInfo = new ArtifactInfo(descriptor.getArtifactId(), artifactDetail.getMeta().getClasses(),
+                                                   artifactDetail.getMeta().getProperties());
+      // add system metadata for artifacts
+      writeSystemMetadata(artifactId, artifactInfo);
+      return artifactDetail;
     } finally {
       parentClassLoader.close();
     }
@@ -493,31 +526,33 @@ public class ArtifactRepository {
 
     // scan the directory for artifact .jar files and config files for those artifacts
     List<SystemArtifactInfo> systemArtifacts = new ArrayList<>();
-    for (File jarFile : DirUtils.listFiles(systemArtifactDir, "jar")) {
-      // parse id from filename
-      Id.Artifact artifactId;
-      try {
-        artifactId = Id.Artifact.parse(Id.Namespace.SYSTEM, jarFile.getName());
-      } catch (IllegalArgumentException e) {
-        LOG.warn(String.format("Skipping system artifact '%s' because the name is invalid: ", e.getMessage()));
-        continue;
-      }
+    for (File systemArtifactDir : systemArtifactDirs) {
+      for (File jarFile : DirUtils.listFiles(systemArtifactDir, "jar")) {
+        // parse id from filename
+        Id.Artifact artifactId;
+        try {
+          artifactId = Id.Artifact.parse(Id.Namespace.SYSTEM, jarFile.getName());
+        } catch (IllegalArgumentException e) {
+          LOG.warn(String.format("Skipping system artifact '%s' because the name is invalid: ", e.getMessage()));
+          continue;
+        }
 
-      // check for a corresponding .json config file
-      String artifactFileName = jarFile.getName();
-      String configFileName = artifactFileName.substring(0, artifactFileName.length() - ".jar".length()) + ".json";
-      File configFile = new File(systemArtifactDir, configFileName);
+        // check for a corresponding .json config file
+        String artifactFileName = jarFile.getName();
+        String configFileName = artifactFileName.substring(0, artifactFileName.length() - ".jar".length()) + ".json";
+        File configFile = new File(systemArtifactDir, configFileName);
 
-      try {
-        // read and parse the config file if it exists. Otherwise use an empty config with the artifact filename
-        ArtifactConfig artifactConfig = configFile.isFile() ?
-          configReader.read(artifactId.getNamespace(), configFile) : new ArtifactConfig();
+        try {
+          // read and parse the config file if it exists. Otherwise use an empty config with the artifact filename
+          ArtifactConfig artifactConfig = configFile.isFile() ?
+            configReader.read(artifactId.getNamespace(), configFile) : new ArtifactConfig();
 
-        validateParentSet(artifactId, artifactConfig.getParents());
-        validatePluginSet(artifactConfig.getPlugins());
-        systemArtifacts.add(new SystemArtifactInfo(artifactId, jarFile, artifactConfig));
-      } catch (InvalidArtifactException e) {
-        LOG.warn(String.format("Could not add system artifact '%s' because it is invalid.", artifactFileName), e);
+          validateParentSet(artifactId, artifactConfig.getParents());
+          validatePluginSet(artifactConfig.getPlugins());
+          systemArtifacts.add(new SystemArtifactInfo(artifactId, jarFile, artifactConfig));
+        } catch (InvalidArtifactException e) {
+          LOG.warn(String.format("Could not add system artifact '%s' because it is invalid.", artifactFileName), e);
+        }
       }
     }
 
@@ -594,6 +629,7 @@ public class ArtifactRepository {
    */
   public void deleteArtifact(Id.Artifact artifactId) throws IOException {
     artifactStore.delete(artifactId);
+    metadataStore.removeMetadata(artifactId);
   }
 
   // convert details to summaries (to hide location and other unnecessary information)
@@ -737,5 +773,11 @@ public class ArtifactRepository {
     if (isInvalid) {
       throw new InvalidArtifactException(errMsg.toString());
     }
+  }
+
+  private void writeSystemMetadata(Id.Artifact artifactId, ArtifactInfo artifactInfo) {
+    // add system metadata for artifacts
+    ArtifactSystemMetadataWriter writer = new ArtifactSystemMetadataWriter(metadataStore, artifactId, artifactInfo);
+    writer.write();
   }
 }

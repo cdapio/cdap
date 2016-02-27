@@ -120,6 +120,20 @@
     {%- endfor %}
     
 {#
+    Code to number sections on pages, by setting in the field list at the top
+:section-numbering: true
+#}
+    {%- set section_numbering = '' %}
+    {%- set section_numbering_key = 'section-numbering' %}
+    {%- if meta is defined %}
+        {%- if section_numbering_key in meta %}
+            {%- set section_numbering = meta[section_numbering_key] %}
+        {%- endif %}
+    {%- endif %}
+    {%- if section_numbering %}
+        <link rel="stylesheet" href="{{ pathto('_static/section-numbering.css', 1) }}" type="text/css" />
+    {%- endif %}
+{#
     Code to hide table-of-contents on pages, by setting in the field list at the top
 :hide-toc: true
 #}

@@ -24,7 +24,7 @@ angular.module(PKG.name + '.services')
         pluginFetchBase = '/namespaces/:namespace/artifacts/:pipelineType/versions/:version/extensions/:extensionType',
         pluginsFetchPath = pluginFetchBase + '?scope=system',
         pluginDetailFetch = pluginFetchBase + '/plugins/:pluginName?scope=system',
-        artifactPropertiesPath = '/namespaces/:namespace/artifacts/:artifactName/versions/:artifactVersion/properties?scope=system';
+        artifactPropertiesPath = '/namespaces/:namespace/artifacts/:artifactName/versions/:artifactVersion/properties';
 
 
     return $resource(

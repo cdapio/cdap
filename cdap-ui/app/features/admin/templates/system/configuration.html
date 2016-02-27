@@ -38,7 +38,7 @@
         </tr>
       </thead>
       <tbody>
-        <tr ng-repeat="row in config | filter: searchText | orderBy:sortable.predicate:sortable.reverse | limitTo: 50">
+        <tr ng-repeat="row in config | filter: searchText | orderBy:sortable.predicate:sortable.reverse">
           <td>{{::row.name}}</td>
           <td>{{::row.value}}</td>
           <td>{{::row.source}}</td>

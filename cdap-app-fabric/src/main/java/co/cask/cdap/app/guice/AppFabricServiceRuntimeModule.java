@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -85,8 +85,6 @@ import co.cask.cdap.metrics.runtime.MetricsProcessorStatusServiceManager;
 import co.cask.cdap.metrics.runtime.MetricsServiceManager;
 import co.cask.cdap.pipeline.PipelineFactory;
 import co.cask.cdap.security.authorization.AuthorizationPlugin;
-import co.cask.cdap.store.DefaultNamespaceStore;
-import co.cask.cdap.store.NamespaceStore;
 import co.cask.http.HttpHandler;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
@@ -285,7 +283,6 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       );
 
       bind(Store.class).to(DefaultStore.class);
-      bind(NamespaceStore.class).to(DefaultNamespaceStore.class);
       bind(ArtifactStore.class).in(Scopes.SINGLETON);
       bind(ProgramLifecycleService.class).in(Scopes.SINGLETON);
       bind(NamespaceAdmin.class).to(DefaultNamespaceAdmin.class).in(Scopes.SINGLETON);
@@ -384,8 +381,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
     private org.quartz.Scheduler getScheduler(JobStore store,
                                               CConfiguration cConf) throws SchedulerException {
 
-      int threadPoolSize = cConf.getInt(Constants.Scheduler.CFG_SCHEDULER_MAX_THREAD_POOL_SIZE,
-                                        Constants.Scheduler.DEFAULT_THREAD_POOL_SIZE);
+      int threadPoolSize = cConf.getInt(Constants.Scheduler.CFG_SCHEDULER_MAX_THREAD_POOL_SIZE);
       ExecutorThreadPool threadPool = new ExecutorThreadPool(threadPoolSize);
       threadPool.initialize();
       String schedulerName = DirectSchedulerFactory.DEFAULT_SCHEDULER_NAME;

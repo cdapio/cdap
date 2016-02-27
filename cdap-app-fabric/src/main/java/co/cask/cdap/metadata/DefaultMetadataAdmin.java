@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -39,11 +39,18 @@ import javax.annotation.Nullable;
  * Implementation of {@link MetadataAdmin} that interacts directly with {@link MetadataStore}.
  */
 public class DefaultMetadataAdmin implements MetadataAdmin {
-  private static final CharMatcher keywordMatcher = CharMatcher.inRange('A', 'Z')
+  private static final CharMatcher KEY_AND_TAG_MATCHER = CharMatcher.inRange('A', 'Z')
     .or(CharMatcher.inRange('a', 'z'))
     .or(CharMatcher.inRange('0', '9'))
-    .or(CharMatcher.is('_')
-          .or(CharMatcher.is('-')));
+    .or(CharMatcher.is('_'))
+    .or(CharMatcher.is('-'));
+
+  private static final CharMatcher VALUE_MATCHER = CharMatcher.inRange('A', 'Z')
+    .or(CharMatcher.inRange('a', 'z'))
+    .or(CharMatcher.inRange('0', '9'))
+    .or(CharMatcher.is('_'))
+    .or(CharMatcher.is('-'))
+    .or(CharMatcher.WHITESPACE);
 
   private final MetadataStore metadataStore;
   private final CConfiguration cConf;
@@ -161,19 +168,19 @@ public class DefaultMetadataAdmin implements MetadataAdmin {
                                   Map<String, String> properties) throws InvalidMetadataException {
     for (Map.Entry<String, String> entry : properties.entrySet()) {
       // validate key
-      validateAllowedFormat(entityId, entry.getKey());
+      validateKeyAndTagsFormat(entityId, entry.getKey());
       validateTagReservedKey(entityId, entry.getKey());
       validateLength(entityId, entry.getKey());
 
       // validate value
-      validateAllowedFormat(entityId, entry.getValue());
+      validateValueFormat(entityId, entry.getValue());
       validateLength(entityId, entry.getValue());
     }
   }
 
-  public void validateTags(Id.NamespacedId entityId, String ... tags) throws InvalidMetadataException {
+  private void validateTags(Id.NamespacedId entityId, String... tags) throws InvalidMetadataException {
     for (String tag : tags) {
-      validateAllowedFormat(entityId, tag);
+      validateKeyAndTagsFormat(entityId, tag);
       validateLength(entityId, tag);
     }
   }
@@ -189,10 +196,19 @@ public class DefaultMetadataAdmin implements MetadataAdmin {
   }
 
   /**
-   * Validate the key matches the {@link #keywordMatcher} character test.
+   * Validate the key matches the {@link #KEY_AND_TAG_MATCHER} character test.
    */
-  private void validateAllowedFormat(Id.NamespacedId entityId, String keyword) throws InvalidMetadataException {
-    if (!keywordMatcher.matchesAllOf(keyword)) {
+  private void validateKeyAndTagsFormat(Id.NamespacedId entityId, String keyword) throws InvalidMetadataException {
+    if (!KEY_AND_TAG_MATCHER.matchesAllOf(keyword)) {
+      throw new InvalidMetadataException(entityId, "Illegal format for the value : " + keyword);
+    }
+  }
+
+  /**
+   * Validate the value of a property matches the {@link #VALUE_MATCHER} character test.
+   */
+  private void validateValueFormat(Id.NamespacedId entityId, String keyword) throws InvalidMetadataException {
+    if (!VALUE_MATCHER.matchesAllOf(keyword)) {
       throw new InvalidMetadataException(entityId, "Illegal format for the value : " + keyword);
     }
   }

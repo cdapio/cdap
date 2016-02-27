@@ -27,14 +27,17 @@ The CDAP SDK runs on Linux, MacOS, and Windows, and has these requirements:
 
 - `JDK 7 or 8 <http://www.oracle.com/technetwork/java/javase/downloads/index.html>`__ 
   (required to run CDAP; note that $JAVA_HOME should be set)
-- `Node.js <http://nodejs.org/dist/>`__ (required to run the CDAP UI; we recommend any version |node-js-version|)
+- `Node.js <http://nodejs.org/dist/>`__ (required to run the CDAP UI; we recommend any 
+  version |node-js-version|, in particular, we recommend |recommended_node_js_version|.)
 - `Apache Maven 3.0+ <http://maven.apache.org>`__ (required to build CDAP applications)
 
 If you are **running under Microsoft Windows**, you will need to have installed the 
 `Microsoft Visual C++ 2010 Redistributable Package
 <http://www.microsoft.com/en-us/download/details.aspx?id=14632>`__ in order to have the
 required DLLs to run Hadoop and CDAP; currently, CDAP is supported only on 64-bit Windows
-platforms.
+platforms. 
+
+.. include:: /_includes/windows-note.txt
 
 .. _recommend-using-an-ide:
 

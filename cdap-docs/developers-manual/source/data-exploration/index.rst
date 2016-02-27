@@ -23,9 +23,8 @@ Data Exploration
 This section covers how you can explore data in CDAP through the use of ad-hoc SQL-like queries.
 Queries can be run over streams and certain types of datasets.
 
-Note that if you are running a secure cluster, additional
-:ref:`configuration for a secure cluster <hadoop-configuration-for-secure-hadoop>`
-is required.
+Note that if you are running a secure cluster, additional :ref:`configuration for a secure
+cluster <packages-configuration-enabling-kerberos>` is required.
 
 
 .. |stream-exploration| replace:: **Stream Exploration:**

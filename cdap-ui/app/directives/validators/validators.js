@@ -20,8 +20,10 @@ angular.module(PKG.name + '.commons')
       restrict: 'E',
       scope: {
         model: '=ngModel',
+        errorDatasetName: '=',
         inputSchema: '=',
-        isDisabled: '='
+        isDisabled: '=',
+        outputSchema: '='
       },
       templateUrl: 'validators/validators.html',
       controller: 'MyValidatorsCtrl',

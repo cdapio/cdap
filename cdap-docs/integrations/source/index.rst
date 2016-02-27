@@ -11,14 +11,14 @@ Integrations
 
 .. rubric:: Cloudera
 
-.. |cloudera-introduction| replace:: **Introduction:**
+.. |cloudera-introduction| replace:: **Overview:**
 .. _cloudera-introduction: partners/cloudera/index.html
 
 - |cloudera-introduction|_ Utilizing CDAP on **Cloudera Enterprise Data Hub**
 
 
 .. |cloudera-install| replace:: **Configuring and Installing:**
-.. _cloudera-install: ../admin-manual/installation/cloudera/index.html
+.. _cloudera-install: /../admin-manual/installation/cloudera.html
 
 - |cloudera-install|_ Configuring and installing CDAP using **Cloudera Manager** *(Administration Manual)*
 
@@ -29,8 +29,14 @@ Integrations
 - |cloudera-ingesting|_ Ingesting and exploring data using **Impala**
 
 
+.. |cloudera-navigator| replace:: **Navigator Integration:**
+.. _cloudera-navigator: partners/cloudera/navigator-integration.html
+
+- |cloudera-navigator|_ Metadata search and discovery of CDAP entities from **Cloudera Navigator**
+
+
 .. |cloudera-faq| replace:: **FAQ:**
-.. _cloudera-faq: partners/cloudera/faq.html
+.. _cloudera-faq: /../faqs/cloudera-manager..html
 
 .. - |cloudera-faq|_ for Cloudera and Impala
 
@@ -38,7 +44,7 @@ Integrations
 .. rubric:: Ambari
 
 .. |ambari| replace:: **Configuring and Installing:**
-.. _ambari: ../admin-manual/installation/ambari/index.html
+.. _ambari: /../admin-manual/installation/ambari.html
 
 - |ambari|_ Configuring and installing CDAP using **Ambari** *(Administration Manual)*
 
@@ -46,7 +52,7 @@ Integrations
 .. rubric:: MapR
 
 .. |mapr| replace:: **Configuring and Installing:**
-.. _mapr: ../admin-manual/installation/mapr/index.html
+.. _mapr: /../admin-manual/installation/mapr.html
 
 - |mapr|_ Configuring and installing CDAP on **MapR** *(Administration Manual)*
 

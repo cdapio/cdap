@@ -26,7 +26,7 @@ import co.cask.cdap.proto.ProgramType;
 // Note: these methods were refactored from MetadataDataset class. Once CDAP-3657 is fixed, these methods will need
 // to be cleaned up CDAP-4291
 public class KeyHelper {
-  public static void addNamespaceIdToKey(MDSKey.Builder builder, Id.NamespacedId namespacedId) {
+  public static void addTargetIdToKey(MDSKey.Builder builder, Id.NamespacedId namespacedId) {
     String type = getTargetType(namespacedId);
     if (type.equals(Id.Program.class.getSimpleName())) {
       Id.Program program = (Id.Program) namespacedId;
@@ -77,7 +77,7 @@ public class KeyHelper {
     }
   }
 
-  public static Id.NamespacedId getNamespaceIdFromKey(MDSKey.Splitter keySplitter, String type) {
+  public static Id.NamespacedId getTargetIdIdFromKey(MDSKey.Splitter keySplitter, String type) {
     if (type.equals(Id.Program.class.getSimpleName())) {
       String namespaceId = keySplitter.getString();
       String appId = keySplitter.getString();
