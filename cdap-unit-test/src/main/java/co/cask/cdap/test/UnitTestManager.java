@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,7 +19,6 @@ package co.cask.cdap.test;
 import co.cask.cdap.api.Config;
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.app.Application;
-import co.cask.cdap.api.artifact.ArtifactScope;
 import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.module.DatasetModule;
@@ -35,7 +34,6 @@ import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.explore.jdbc.ExploreDriver;
 import co.cask.cdap.internal.AppFabricClient;
-import co.cask.cdap.internal.app.runtime.artifact.ArtifactDetail;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.test.AppJarHelper;
 import co.cask.cdap.internal.test.PluginJarHelper;
@@ -43,7 +41,6 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.artifact.ArtifactRange;
-import co.cask.cdap.proto.artifact.ArtifactSummary;
 import co.cask.cdap.test.internal.ApplicationManagerFactory;
 import co.cask.cdap.test.internal.StreamManagerFactory;
 import co.cask.tephra.TransactionAware;
@@ -154,9 +151,8 @@ public class UnitTestManager implements TestManager {
       Application app = applicationClz.newInstance();
       MockAppConfigurer configurer = new MockAppConfigurer(app);
       app.configure(configurer, new DefaultApplicationContext<>(configObject));
-      Location deployedJar = appFabricClient.deployApplication(namespace, configurer.getName(),
-                                                               applicationClz, appConfig, bundleEmbeddedJars);
-      return appManagerFactory.create(Id.Application.from(namespace, configurer.getName()), deployedJar);
+      appFabricClient.deployApplication(namespace, configurer.getName(), applicationClz, appConfig, bundleEmbeddedJars);
+      return appManagerFactory.create(Id.Application.from(namespace, configurer.getName()));
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
@@ -166,13 +162,12 @@ public class UnitTestManager implements TestManager {
   public ApplicationManager deployApplication(Id.Application appId,
                                               AppRequest appRequest) throws Exception {
     appFabricClient.deployApplication(appId, appRequest);
+    return appManagerFactory.create(appId);
+  }
 
-    ArtifactSummary requestedArtifact = appRequest.getArtifact();
-    Id.Artifact artifactId = Id.Artifact.from(
-      ArtifactScope.SYSTEM.equals(requestedArtifact.getScope()) ? Id.Namespace.SYSTEM : appId.getNamespace(),
-      requestedArtifact.getName(), requestedArtifact.getVersion());
-    ArtifactDetail artifactDetail = artifactRepository.getArtifact(artifactId);
-    return appManagerFactory.create(appId, artifactDetail.getDescriptor().getLocation());
+  @Override
+  public ApplicationManager getApplicationManager(Id.Application appId) {
+    return appManagerFactory.create(appId);
   }
 
   @Override
