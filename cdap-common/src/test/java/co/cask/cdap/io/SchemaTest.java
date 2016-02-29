@@ -114,8 +114,34 @@ public class SchemaTest {
   /**
    * More and more node.
    */
-  public final class Node4 {
+  public static final class Node4 {
+    private static final Schema SCHEMA = Schema.recordOf(
+      Node4.class.getName(),
+      Schema.Field.of("data", Schema.nullableOf(Schema.of(Schema.Type.STRING))));
     private String data;
+
+  }
+
+  /**
+   * More and more and more node.
+   */
+  public static final class Node5 {
+    private static final Schema SCHEMA = Schema.recordOf(
+      Node5.class.getName(),
+      Schema.Field.of("x", Schema.nullableOf(Node4.SCHEMA)));
+    private Node4 x;
+  }
+
+  /**
+   * Tests a record as a field, and that record as an inner field of another record.
+   */
+  public static final class Node6 {
+    private static final Schema SCHEMA = Schema.recordOf(
+      Node6.class.getName(),
+      Schema.Field.of("x", Schema.nullableOf(Node4.SCHEMA)),
+      Schema.Field.of("y", Schema.nullableOf(Node5.SCHEMA)));
+    private Node4 x;
+    private Node5 y;
   }
 
   @Test
@@ -141,6 +167,14 @@ public class SchemaTest {
   public void testParseJson() throws IOException, UnsupportedTypeException {
     Schema schema = new ReflectionSchemaGenerator().generate(Node.class);
     Assert.assertEquals(schema, Schema.parseJson(schema.toString()));
+  }
+
+  @Test
+  public void testSameRecordDifferentLevels() throws UnsupportedTypeException, IOException {
+    Schema actual = new ReflectionSchemaGenerator().generate(Node6.class);
+    Assert.assertEquals(Node6.SCHEMA, actual);
+    // check serialization and deserialization.
+    Assert.assertEquals(Node6.SCHEMA, Schema.parseJson(actual.toString()));
   }
 
   @Test
