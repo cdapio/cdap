@@ -31,7 +31,7 @@ angular.module(PKG.name + '.feature.tracker')
       })
 
       .state('tracker', {
-        url: '/tracker/search/:searchQuery',
+        url: '/tracker',
         parent: 'ns',
         data: {
           authorizedRoles: MYAUTH_ROLE.all,
@@ -43,9 +43,26 @@ angular.module(PKG.name + '.feature.tracker')
       })
 
         .state('tracker.result', {
-          url: '/result',
+          url: '/search/:searchQuery/result',
           templateUrl: '/assets/features/tracker/templates/results.html',
           controller: 'TrackerResultsController',
           controllerAs: 'ResultsController'
-        });
+        })
+
+        .state('tracker.entity', {
+          url: '/entity/:entityType/:entityId',
+          templateUrl: '/assets/features/tracker/templates/entity.html',
+          controller: 'TrackerEntityController',
+          controllerAs: 'EntityController'
+        })
+          .state('tracker.entity.metadata', {
+            url: '/metadata',
+            templateUrl: '/assets/features/tracker/templates/metadata.html',
+            controller: 'TrackerMetadataController',
+            controllerAs: 'MetadataController'
+          })
+          .state('tracker.entity.lineage', {
+            url: '/lineage',
+            templateUrl: '/assets/features/tracker/templates/lineage.html'
+          });
   });
