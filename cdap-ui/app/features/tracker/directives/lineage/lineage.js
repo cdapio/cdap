@@ -18,14 +18,23 @@ function LineageController ($scope, jsPlumb, $timeout) {
   var vm = this;
 
   jsPlumb.ready( () => {
-    vm.instance = jsPlumb.getInstance();
     jsPlumb.setContainer('lineage-diagram');
+
+    vm.instance = jsPlumb.getInstance({
+      PaintStyle: {
+        lineWidth: 2,
+        strokeStyle: 'rgba(0,0,0, 1)'
+      },
+      Connector: [ 'Flowchart', {gap: 0, stub: [10, 15], alwaysRespectStubs: true, cornerRadius: 5} ],
+      Endpoints: ['Blank', 'Blank']
+    });
 
     $timeout( () => {
       angular.forEach($scope.connections, (conn) => {
         vm.instance.connect({
           source: conn.source,
-          target: conn.target
+          target: conn.target,
+          anchor: 'AutoDefault'
         });
       });
     });

@@ -30,10 +30,12 @@ class myLineageService {
       uniqueNodes[key] = {
         label: value.entityId.id.id,
         id: key,
-        nodeType: 'PROGRAM',
+        nodeType: 'program',
         applicationId: value.entityId.id.application.applicationId,
-        programId: value.entityId.id.id,
-        programType: this.parseProgramType(value.entityId.id.type),
+        entityId: value.entityId.id.id,
+        entityType: this.parseProgramType(value.entityId.id.type),
+        displayType: value.entityId.id.type,
+        icon: this.getProgramIcon(value.entityId.id.type),
         runs: []
       };
     });
@@ -44,9 +46,11 @@ class myLineageService {
       uniqueNodes[key] = {
         label: data.name,
         id: key,
-        nodeType: 'DATA',
+        nodeType: 'data',
         entityId: data.name,
-        entityType: data.type
+        entityType: data.type,
+        displayType: data.displayType,
+        icon: data.icon
       };
     });
 
@@ -55,17 +59,29 @@ class myLineageService {
     angular.forEach(response.relations, (rel) => {
       let isUnknownOrBoth = rel.access === 'both' || rel.access === 'unknown';
 
-      if (rel.access === 'read' || isUnknownOrBoth) {
+      if (rel.access === 'read') {
         connections.push({
           source: rel.data,
           target: rel.program
         });
-      }
-
-      if (rel.access === 'write' || isUnknownOrBoth) {
+      } else if (rel.access === 'write') {
         connections.push({
           source: rel.program,
           target: rel.data
+        });
+      } else if (isUnknownOrBoth) {
+        connections.push({
+          source: rel.data,
+          target: rel.program
+        });
+
+        // Adding another node
+        uniqueNodes[rel.data + '-2'] = angular.copy(uniqueNodes[rel.data]);
+        uniqueNodes[rel.data + '-2'].id = rel.data + '-2';
+
+        connections.push({
+          source: rel.program,
+          target: rel.data + '-2'
         });
       }
 
@@ -84,7 +100,7 @@ class myLineageService {
   parseProgramType(programType) {
     let program = '';
     switch (programType) {
-      case 'Flows':
+      case 'Flow':
         program = 'flows';
         break;
       case 'Mapreduce':
@@ -112,16 +128,33 @@ class myLineageService {
     if (data.entityId.type === 'datasetinstance') {
       obj = {
         name: data.entityId.id.instanceId,
-        entityType: 'datasets'
+        type: 'datasets',
+        icon: 'icon-datasets',
+        displayType: 'Dataset'
       };
     } else {
       obj = {
         name: data.entityId.id.streamName,
-        type: 'streams'
+        type: 'streams',
+        icon: 'icon-streams',
+        displayType: 'Stream'
       };
     }
 
     return obj;
+  }
+
+  getProgramIcon(programType) {
+    let iconMap = {
+      'Flow': 'icon-tigon',
+      'Mapreduce': 'icon-mapreduce',
+      'Spark': 'icon-spark',
+      'Worker': 'icon-worker',
+      'Workflow': 'icon-workflow',
+      'Service': 'icon-service'
+    };
+
+    return iconMap[programType];
   }
 
   getGraphLayout(nodes, connections) {

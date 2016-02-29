@@ -15,10 +15,14 @@
 -->
 
 <div class="lineage-diagram-container" id="lineage-diagram">
-  <div class="nodes"
+  <div class="nodes {{ node.nodeType }}"
+       id="{{ node.id }}"
        ng-repeat="node in nodes"
-       ng-style="node._uiLocation"
-       id="{{node.id}}">
-    {{node.label}}
+       ng-style="node._uiLocation">
+    <h4 class="entity-name">{{ node.label }}</h4>
+    <div class="entity-type">
+      <span class="{{ node.icon }}"></span>
+      <span>{{ node.displayType }}</span>
+    </div>
   </div>
 </div>

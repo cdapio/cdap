@@ -14,6 +14,9 @@
  * the License.
  */
 
+@grey: #999;
+@font: #3d3d3d;
+
 my-lineage-diagram {
   .lineage-diagram-container {
     position: relative;
@@ -22,9 +25,42 @@ my-lineage-diagram {
   }
 
   .nodes {
-    width: 150px;
-    height: 50px;
+    width: 175px;
+    height: 55px;
     position: absolute;
-    background-color: red;
+    padding: 10px 15px;
+
+    .entity-type {
+      span[class*="icon-"] {
+        font-size: 13px;
+      }
+      margin-top: 3px;
+    }
+
+    h4 {
+      margin: 0;
+      overflow-x: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    &.data {
+      .nodeTypeStyling(white, @font, @grey);
+    }
+
+    &.program {
+      .nodeTypeStyling(@grey, white, white);
+    }
+  }
+}
+
+.nodeTypeStyling(@node-background-color: white, @font-color: black, @entity-type-font-color: black) {
+  background-color: @node-background-color;
+  color: @font-color;
+  h4.entity-name {
+    color: @font-color;
+  }
+  .entity-type {
+    color: @entity-type-font-color;
   }
 }
