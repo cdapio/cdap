@@ -49,7 +49,8 @@ public abstract class AbstractPartitionConsumer implements PartitionConsumer {
    * @param partitionKeys list of partition keys to mark as either succeeded or failed processing
    * @param succeeded whether or not processing of the specified partitions was successful
    */
-  public abstract void doFinish(ConsumerWorkingSet workingSet, List<PartitionKey> partitionKeys, boolean succeeded);
+  public abstract void doFinish(ConsumerWorkingSet workingSet, List<? extends PartitionKey> partitionKeys,
+                                boolean succeeded);
 
 
   /**
@@ -133,6 +134,11 @@ public abstract class AbstractPartitionConsumer implements PartitionConsumer {
       }
     };
 
+    onFinishWithKeys(partitionKeys, succeeded);
+  }
+
+  @Override
+  public void onFinishWithKeys(List<? extends PartitionKey> partitionKeys, boolean succeeded) {
     ConsumerWorkingSet workingSet = readState();
 
     doFinish(workingSet, partitionKeys, succeeded);

@@ -74,7 +74,7 @@ public class ConcurrentPartitionConsumer extends AbstractPartitionConsumer {
   }
 
   @Override
-  public void doFinish(ConsumerWorkingSet workingSet, List<PartitionKey> partitionKeys, boolean succeeded) {
+  public void doFinish(ConsumerWorkingSet workingSet, List<? extends PartitionKey> partitionKeys, boolean succeeded) {
     doExpiry(workingSet);
     if (succeeded) {
       commit(workingSet, partitionKeys);
@@ -86,7 +86,7 @@ public class ConcurrentPartitionConsumer extends AbstractPartitionConsumer {
   /**
    * Removes the given partition keys from the working set, as they have been successfully processed.
    */
-  protected void commit(ConsumerWorkingSet workingSet, List<PartitionKey> partitionKeys) {
+  protected void commit(ConsumerWorkingSet workingSet, List<? extends PartitionKey> partitionKeys) {
     for (PartitionKey key : partitionKeys) {
       ConsumablePartition consumablePartition = workingSet.lookup(key);
       assertInProgress(consumablePartition);
@@ -98,7 +98,7 @@ public class ConcurrentPartitionConsumer extends AbstractPartitionConsumer {
    * Resets the process state of the given partition keys, as they were not successfully processed, or discards the
    * partition if it has already been attempted the configured number of attempts.
    */
-  protected void abort(ConsumerWorkingSet workingSet, List<PartitionKey> partitionKeys) {
+  protected void abort(ConsumerWorkingSet workingSet, List<? extends PartitionKey> partitionKeys) {
     List<PartitionKey> discardedPartitions = new ArrayList<>();
     for (PartitionKey key : partitionKeys) {
       ConsumablePartition consumablePartition = workingSet.lookup(key);
