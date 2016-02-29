@@ -27,7 +27,6 @@ import co.cask.cdap.common.UnauthorizedException;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.proto.ApplicationDetail;
 import co.cask.cdap.proto.ApplicationRecord;
-import co.cask.cdap.proto.BatchProgramStatus;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramType;
@@ -350,7 +349,8 @@ public class ApplicationClient {
     if (responseCode == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new NotFoundException("app or app artifact");
     } else if (responseCode == HttpURLConnection.HTTP_BAD_REQUEST) {
-      throw new BadRequestException(response.getResponseBodyAsString());
+      throw new BadRequestException(String.format("Bad Request. Reason: %s",
+                                                  response.getResponseBodyAsString()));
     }
   }
 
