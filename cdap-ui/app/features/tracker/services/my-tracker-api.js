@@ -28,7 +28,8 @@ function myTrackerApi(myCdapUrl, $resource, myAuth, myHelpers) {
   {
     search: myHelpers.getConfig('GET', 'REQUEST', searchPath, true),
     properties: myHelpers.getConfig('GET', 'REQUEST', basePath + '/metadata', true),
-    viewsProperties: myHelpers.getConfig('GET', 'REQUEST', basePath + '/views/:viewId/metadata', true)
+    viewsProperties: myHelpers.getConfig('GET', 'REQUEST', basePath + '/views/:viewId/metadata', true),
+    getLineage: myHelpers.getConfig('GET', 'REQUEST', basePath + '/lineage')
   });
 }
 
