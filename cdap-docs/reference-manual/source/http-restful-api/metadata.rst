@@ -619,7 +619,7 @@ Viewing Lineages
 ================
 To view the lineage of a dataset or stream, submit an HTTP GET request::
 
-  GET <base-url>/namespaces/<namespace>/<entity-type>/<entity-id>/lineage?start=<start-ts>&end=<end-ts>&maxLevels=<max-levels>
+  GET <base-url>/namespaces/<namespace>/<entity-type>/<entity-id>/lineage?start=<start-ts>&end=<end-ts>&levels=<levels>
 
 where:
 
@@ -639,14 +639,16 @@ where:
      - Starting time-stamp of lineage (inclusive), in seconds. Supports ``now``, ``now-1h``, etc. syntax.
    * - ``<end-ts>``
      - Ending time-stamp of lineage (exclusive), in seconds. Supports ``now``, ``now-1h``, etc. syntax.
-   * - ``<max-levels>``
-     - Maximum number of levels
+   * - ``<levels>``
+     - Number of levels of lineage output to return. Defaults to 10. Determines how far back the provenance
+       of the data in the lineage chain is calculated.
 
 See in the Metrics HTTP RESTful API :ref:`Querying by a Time Range <http-restful-api-metrics-time-range>`
 for examples of the "now" time syntax.
 
-The lineage will be returned as a JSON string in the body of the response. The number of
-levels of the request (``<max-levels>``) determines how far back the provenance of the
+The lineage will be returned as a JSON string in the body of the response. The JSON describes lineage as a graph
+of connections between programs and datasets (or streams) in the specified time range. The number of
+levels of the request (``<levels>``) determines the depth of the graph. This impacts how far back the provenance of the
 data in the lineage chain is calculated, as described in the :ref:`Metadata and Lineage <metadata-lineage-lineage>`.
 
 Lineage JSON consists of three main sections:
