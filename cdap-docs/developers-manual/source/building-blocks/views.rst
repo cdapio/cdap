@@ -41,6 +41,8 @@ before any streams and stream views are created so that a Hive table can be crea
 each view. (See the :ref:`CDAP installation instructions <installation-index>` for your
 particular Hadoop distribution for details.)
 
+.. _stream-views:
+
 Stream View
 ===========
 A stream view is a read-only, schema-based, view of a stream. This feature is intended to
