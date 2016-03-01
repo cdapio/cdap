@@ -263,7 +263,7 @@ cdap_set_hive_classpath() {
     # If Hive classpath is successfully determined, derive explore
     # classpath from it and export it to use it in the launch command
     if [ -n "${HIVE_HOME}" -a -n "${HIVE_CONF_DIR}" -a -n "${HADOOP_CONF_DIR}" ]; then
-      EXPLORE_CONF_FILES=$(ls -1 ${HIVE_CONF_DIR}/* ${HADOOP_CONF_DIR}/* | tr '\n' ':')
+      EXPLORE_CONF_FILES=$(ls -1dF ${HIVE_CONF_DIR}/* ${HADOOP_CONF_DIR}/* | sed -e '/\/$/d' | tr '\n' ':')
       EXPLORE_CLASSPATH=$(ls -1 ${HIVE_HOME}/lib/hive-exec-* ${HIVE_HOME}/lib/*.jar | tr '\n' ':')
       export EXPLORE_CONF_FILES EXPLORE_CLASSPATH
     fi
