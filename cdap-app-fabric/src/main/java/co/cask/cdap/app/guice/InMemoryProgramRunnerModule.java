@@ -18,6 +18,7 @@ package co.cask.cdap.app.guice;
 
 import co.cask.cdap.api.data.stream.StreamWriter;
 import co.cask.cdap.app.runtime.ProgramRunner;
+import co.cask.cdap.app.runtime.ProgramRunnerFactory;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.stream.DefaultStreamWriter;
 import co.cask.cdap.app.stream.StreamWriterFactory;
@@ -27,7 +28,6 @@ import co.cask.cdap.common.discovery.ResolvingDiscoverable;
 import co.cask.cdap.common.logging.common.LocalLogWriter;
 import co.cask.cdap.common.logging.common.LogWriter;
 import co.cask.cdap.internal.app.queue.QueueReaderFactory;
-import co.cask.cdap.internal.app.runtime.ProgramRunnerFactory;
 import co.cask.cdap.internal.app.runtime.batch.MapReduceProgramRunner;
 import co.cask.cdap.internal.app.runtime.flow.FlowProgramRunner;
 import co.cask.cdap.internal.app.runtime.flow.FlowletProgramRunner;
@@ -42,6 +42,7 @@ import co.cask.cdap.internal.app.runtime.webapp.WebappProgramRunner;
 import co.cask.cdap.internal.app.runtime.worker.InMemoryWorkerRunner;
 import co.cask.cdap.internal.app.runtime.worker.WorkerProgramRunner;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramRunner;
+import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import com.google.inject.PrivateModule;
@@ -98,20 +99,21 @@ public final class InMemoryProgramRunnerModule extends PrivateModule {
     bind(QueueReaderFactory.class).in(Scopes.SINGLETON);
 
     // Bind ProgramRunner
-    MapBinder<ProgramRunnerFactory.Type, ProgramRunner> runnerFactoryBinder =
-      MapBinder.newMapBinder(binder(), ProgramRunnerFactory.Type.class, ProgramRunner.class);
-    runnerFactoryBinder.addBinding(ProgramRunnerFactory.Type.FLOW).to(FlowProgramRunner.class);
-    runnerFactoryBinder.addBinding(ProgramRunnerFactory.Type.FLOWLET).to(FlowletProgramRunner.class);
-    runnerFactoryBinder.addBinding(ProgramRunnerFactory.Type.MAPREDUCE).to(MapReduceProgramRunner.class);
-    runnerFactoryBinder.addBinding(ProgramRunnerFactory.Type.SPARK).to(SparkProgramRunner.class);
-    runnerFactoryBinder.addBinding(ProgramRunnerFactory.Type.WORKFLOW).to(WorkflowProgramRunner.class);
-    runnerFactoryBinder.addBinding(ProgramRunnerFactory.Type.WEBAPP).to(WebappProgramRunner.class);
-    runnerFactoryBinder.addBinding(ProgramRunnerFactory.Type.WORKER).to(InMemoryWorkerRunner.class);
-    runnerFactoryBinder.addBinding(ProgramRunnerFactory.Type.WORKER_COMPONENT).to(WorkerProgramRunner.class);
+    MapBinder<ProgramType, ProgramRunner> runnerFactoryBinder =
+      MapBinder.newMapBinder(binder(), ProgramType.class, ProgramRunner.class);
+    runnerFactoryBinder.addBinding(ProgramType.FLOW).to(FlowProgramRunner.class);
+    runnerFactoryBinder.addBinding(ProgramType.MAPREDUCE).to(MapReduceProgramRunner.class);
+    runnerFactoryBinder.addBinding(ProgramType.SPARK).to(SparkProgramRunner.class);
+    runnerFactoryBinder.addBinding(ProgramType.WORKFLOW).to(WorkflowProgramRunner.class);
+    runnerFactoryBinder.addBinding(ProgramType.WEBAPP).to(WebappProgramRunner.class);
+    runnerFactoryBinder.addBinding(ProgramType.WORKER).to(InMemoryWorkerRunner.class);
+    runnerFactoryBinder.addBinding(ProgramType.SERVICE).to(InMemoryServiceProgramRunner.class);
 
-    // Service support in standalone
-    runnerFactoryBinder.addBinding(ProgramRunnerFactory.Type.SERVICE).to(InMemoryServiceProgramRunner.class);
-    runnerFactoryBinder.addBinding(ProgramRunnerFactory.Type.SERVICE_COMPONENT).to(ServiceProgramRunner.class);
+    // Bind these three program runner in private scope
+    // They should only be used by the ProgramRunners in the runnerFactoryBinder
+    bind(FlowletProgramRunner.class);
+    bind(ServiceProgramRunner.class);
+    bind(WorkerProgramRunner.class);
 
     bind(ProgramRunnerFactory.class).to(InMemoryFlowProgramRunnerFactory.class).in(Scopes.SINGLETON);
     // Note: Expose for test cases. Need to refactor test cases.
@@ -142,15 +144,15 @@ public final class InMemoryProgramRunnerModule extends PrivateModule {
   @Singleton
   private static final class InMemoryFlowProgramRunnerFactory implements ProgramRunnerFactory {
 
-    private final Map<ProgramRunnerFactory.Type, Provider<ProgramRunner>> providers;
+    private final Map<ProgramType, Provider<ProgramRunner>> providers;
 
     @Inject
-    private InMemoryFlowProgramRunnerFactory(Map<ProgramRunnerFactory.Type, Provider<ProgramRunner>> providers) {
+    private InMemoryFlowProgramRunnerFactory(Map<ProgramType, Provider<ProgramRunner>> providers) {
       this.providers = providers;
     }
 
     @Override
-    public ProgramRunner create(ProgramRunnerFactory.Type programType) {
+    public ProgramRunner create(ProgramType programType) {
       Provider<ProgramRunner> provider = providers.get(programType);
       Preconditions.checkNotNull(provider, "Unsupported program type: " + programType);
       return provider.get();

@@ -21,6 +21,7 @@ import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramRunner;
+import co.cask.cdap.app.runtime.ProgramRunnerFactory;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -31,7 +32,6 @@ import co.cask.cdap.internal.AppFabricTestHelper;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
-import co.cask.cdap.internal.app.runtime.ProgramRunnerFactory;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.runtime.app.MultiApp;
@@ -83,7 +83,7 @@ public class MultiConsumerTest {
 
     List<ProgramController> controllers = Lists.newArrayList();
     for (final Program program : app.getPrograms()) {
-      ProgramRunner runner = runnerFactory.create(ProgramRunnerFactory.Type.valueOf(program.getType().name()));
+      ProgramRunner runner = runnerFactory.create(program.getType());
       BasicArguments systemArgs = new BasicArguments(ImmutableMap.of(ProgramOptionConstants.RUN_ID,
                                                                      RunIds.generate().getId()));
       controllers.add(runner.run(program, new SimpleProgramOptions(program.getName(), systemArgs,

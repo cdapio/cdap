@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,30 +14,14 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime;
+package co.cask.cdap.app.runtime;
 
-import co.cask.cdap.app.runtime.ProgramRunner;
+import co.cask.cdap.proto.ProgramType;
 
 /**
  * Factory for creating {@link ProgramRunner}.
  */
 public interface ProgramRunnerFactory {
 
-  /**
-   * Types of program that could be created.
-   */
-  enum Type {
-    FLOW,
-    FLOWLET,
-    MAPREDUCE,
-    SPARK,
-    WORKFLOW,
-    WEBAPP,
-    WORKER,
-    WORKER_COMPONENT,
-    SERVICE,
-    SERVICE_COMPONENT
-  }
-
-  ProgramRunner create(Type programType);
+  ProgramRunner create(ProgramType programType);
 }
