@@ -17,6 +17,7 @@
 function LineageController ($scope, jsPlumb, $timeout) {
   var vm = this;
 
+
   jsPlumb.ready( () => {
     jsPlumb.setContainer('lineage-diagram');
 
@@ -25,7 +26,7 @@ function LineageController ($scope, jsPlumb, $timeout) {
         lineWidth: 2,
         strokeStyle: 'rgba(0,0,0, 1)'
       },
-      Connector: [ 'Flowchart', {gap: 0, stub: [10, 15], alwaysRespectStubs: true, cornerRadius: 5} ],
+      Connector: [ 'Flowchart', {gap: 0, stub: [10, 15], alwaysRespectStubs: true, cornerRadius: 3} ],
       Endpoints: ['Blank', 'Blank']
     });
 
@@ -34,7 +35,8 @@ function LineageController ($scope, jsPlumb, $timeout) {
         vm.instance.connect({
           source: conn.source,
           target: conn.target,
-          anchor: 'AutoDefault'
+          detachable: false,
+          anchors: ['Right', 'Left']
         });
       });
     });

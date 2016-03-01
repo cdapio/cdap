@@ -68,7 +68,8 @@ class TrackerLineageController{
       entityId: this.$state.params.entityId,
       scope: this.$scope,
       start: this.timeRange.start,
-      end: this.timeRange.end
+      end: this.timeRange.end,
+      levels: 2
     };
 
     this.myTrackerApi.getLineage(params)

@@ -59,29 +59,19 @@ class myLineageService {
     angular.forEach(response.relations, (rel) => {
       let isUnknownOrBoth = rel.access === 'both' || rel.access === 'unknown';
 
-      if (rel.access === 'read') {
+      if (rel.access === 'read' || isUnknownOrBoth) {
         connections.push({
           source: rel.data,
-          target: rel.program
+          target: rel.program,
+          type: 'read'
         });
-      } else if (rel.access === 'write') {
+      }
+
+      if (rel.access === 'write' || isUnknownOrBoth) {
         connections.push({
           source: rel.program,
-          target: rel.data
-        });
-      } else if (isUnknownOrBoth) {
-        connections.push({
-          source: rel.data,
-          target: rel.program
-        });
-
-        // Adding another node
-        uniqueNodes[rel.data + '-2'] = angular.copy(uniqueNodes[rel.data]);
-        uniqueNodes[rel.data + '-2'].id = rel.data + '-2';
-
-        connections.push({
-          source: rel.program,
-          target: rel.data + '-2'
+          target: rel.data,
+          type: 'write'
         });
       }
 
@@ -89,6 +79,7 @@ class myLineageService {
     });
 
     let graph = this.getGraphLayout(uniqueNodes, connections);
+    console.log('graph', graph);
     this.mapNodesLocation(uniqueNodes, graph);
 
     return {
