@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,6 +18,8 @@ package co.cask.cdap.api.workflow;
 
 import co.cask.cdap.api.Predicate;
 import co.cask.cdap.api.ProgramConfigurer;
+import co.cask.cdap.api.annotation.Beta;
+import co.cask.cdap.api.dataset.DatasetProperties;
 
 /**
  * Configurer for configuring the {@link Workflow}.
@@ -63,4 +65,15 @@ public interface WorkflowConfigurer extends ProgramConfigurer {
    * @return the configurer for the condition
    */
   WorkflowConditionConfigurer<? extends WorkflowConfigurer> condition(Predicate<WorkflowContext> condition);
+
+  /**
+   * Adds a local dataset instance to the {@link Workflow}.
+   * See {@link co.cask.cdap.api.dataset.DatasetDefinition} for details.
+   *
+   * @param datasetName name of the dataset instance
+   * @param typeName name of the dataset type
+   * @param properties dataset instance properties
+   */
+  @Beta
+  void createLocalDataset(String datasetName, String typeName, DatasetProperties properties);
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,6 +17,7 @@
 package co.cask.cdap.api.workflow;
 
 import co.cask.cdap.api.Predicate;
+import co.cask.cdap.api.dataset.DatasetProperties;
 
 import java.util.Map;
 
@@ -125,5 +126,27 @@ public abstract class AbstractWorkflow implements Workflow {
   protected final WorkflowConditionConfigurer<? extends WorkflowConfigurer> condition(
     Predicate<WorkflowContext> predicate) {
     return configurer.condition(predicate);
+  }
+
+  /**
+   * Adds a local dataset instance to the {@link Workflow}.
+   * See {@link co.cask.cdap.api.dataset.DatasetDefinition} for details.
+   *
+   * @param datasetName name of the dataset instance
+   * @param typeName name of the dataset type
+   * @param properties dataset instance properties
+   */
+  protected final void createLocalDataset(String datasetName, String typeName, DatasetProperties properties) {
+    configurer.createLocalDataset(datasetName, typeName, properties);
+  }
+
+  /**
+   * Adds a local dataset instance with {@link DatasetProperties#EMPTY} to the {@link Workflow}.
+   *
+   * @param datasetName name of the dataset instance
+   * @param typeName name of the dataset type
+   */
+  protected final void createLocalDataset(String datasetName, String typeName) {
+    createLocalDataset(datasetName, typeName, DatasetProperties.EMPTY);
   }
 }
