@@ -16,22 +16,32 @@
 
 <div class="lineage-diagram-container" id="lineage-diagram"
      style="height: {{Lineage.graphInfo.height + 55}}px; width: {{Lineage.graphInfo.width + 175}}px;">
-  <div class="nodes {{ uniqueNodes[node.uniqueNodeId].nodeType }}"
+  <div class="nodes {{ Lineage.uniqueNodes[node.uniqueNodeId].nodeType }}"
        id="{{ node.dataId }}"
-       ng-repeat="node in nodes"
+       ng-repeat="node in Lineage.nodes"
        ng-style="node._uiLocation"
+       ng-mouseenter="node.showNavigation = true"
+       ng-mouseleave="Lineage.mouseLeaveNode(node)"
        ng-click="Lineage.nodeClick(node)">
 
-    <div class="navigation-control left" ng-if="node.isLeftEdge">
-      <span class="fa fa-caret-left"></span>
+    <!-- Navigation -->
+    <div class="navigation-control left"
+         ng-if="node.isLeftEdge && node.showNavigation"
+         ng-mouseenter="Lineage.mouseEnterNavigation(node)"
+         ng-mouseleave="node.showNavigation = false">
+      <span class="fa fa-caret-left" ng-click="Lineage.navigationClick($event, node)"></span>
     </div>
-    <div class="navigation-control right" ng-if="node.isRightEdge">
-      <span class="fa fa-caret-right"></span>
+    <div class="navigation-control right"
+         ng-if="node.isRightEdge && node.showNavigation"
+         ng-mouseenter="Lineage.mouseEnterNavigation(node)"
+         ng-mouseleave="node.showNavigation = false">
+      <span class="fa fa-caret-right" ng-click="Lineage.navigationClick($event, node)"></span>
     </div>
-    <h4 class="entity-name">{{ uniqueNodes[node.uniqueNodeId].label }}</h4>
+
+    <h4 class="entity-name">{{ Lineage.uniqueNodes[node.uniqueNodeId].label }}</h4>
     <div class="entity-type">
       <span class="{{ uniqueNodes[node.uniqueNodeId].icon }}"></span>
-      <span>{{ uniqueNodes[node.uniqueNodeId].displayType }}</span>
+      <span>{{ Lineage.uniqueNodes[node.uniqueNodeId].displayType }}</span>
     </div>
   </div>
 </div>

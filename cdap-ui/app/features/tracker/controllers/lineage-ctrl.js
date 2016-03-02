@@ -15,11 +15,11 @@
  */
 
 class TrackerLineageController{
-  constructor($state, myTrackerApi, $scope, myLineageService) {
+  constructor($state, myTrackerApi, $scope, LineageActions) {
     this.$state = $state;
     this.myTrackerApi = myTrackerApi;
     this.$scope = $scope;
-    this.myLineageService = myLineageService;
+    this.LineageActions = LineageActions;
 
     this.timeRangeOptions = [
       {
@@ -57,15 +57,15 @@ class TrackerLineageController{
 
   selectTimeRange (time) {
     this.timeRange = time;
-    this.getLineage();
+    this.getLineage(this.$state.params.entityType, this.$state.params.entityId);
   }
 
-  getLineage() {
+  getLineage(entityType, entityId) {
     this.loading = true;
     let params = {
       namespace: this.$state.params.namespace,
-      entityType: this.$state.params.entityType,
-      entityId: this.$state.params.entityId,
+      entityType: entityType,
+      entityId: entityId,
       scope: this.$scope,
       start: this.timeRange.start,
       end: this.timeRange.end,
@@ -75,7 +75,7 @@ class TrackerLineageController{
     this.myTrackerApi.getLineage(params)
       .$promise
       .then((res) => {
-        this.lineageInfo = this.myLineageService.parseLineageResponse(res, params);
+        this.LineageActions.loadLineageData(res, params);
         this.loading = false;
       }, (err) => {
         console.log('Error', err);
@@ -84,7 +84,7 @@ class TrackerLineageController{
   }
 }
 
-TrackerLineageController.$inject = ['$state', 'myTrackerApi', '$scope', 'myLineageService'];
+TrackerLineageController.$inject = ['$state', 'myTrackerApi', '$scope', 'LineageActions'];
 
 angular.module(PKG.name + '.feature.tracker')
  .controller('TrackerLineageController', TrackerLineageController);

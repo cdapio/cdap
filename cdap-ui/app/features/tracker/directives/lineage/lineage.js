@@ -14,11 +14,35 @@
  * the License.
  */
 
-function LineageController ($scope, jsPlumb, $timeout, $state) {
+function LineageController ($scope, jsPlumb, $timeout, $state, LineageStore) {
   var vm = this;
 
-  vm.graphInfo = $scope.graph.graph();
+  function render() {
+    vm.nodes = LineageStore.getNodes();
+    vm.connections = LineageStore.getConnections();
+    vm.uniqueNodes = LineageStore.getUniqueNodes();
+    vm.graph = LineageStore.getGraph();
 
+
+    vm.graphInfo = vm.graph.graph();
+
+    $timeout( () => {
+      angular.forEach(vm.connections, (conn) => {
+        vm.instance.connect({
+          source: conn.source,
+          target: conn.target,
+          detachable: false,
+          anchors: ['Right', 'Left']
+        });
+      });
+
+      $timeout( () => {
+        vm.instance.repaintEverything();
+      });
+    });
+  }
+
+  LineageStore.registerOnChangeListener(render);
 
   jsPlumb.ready( () => {
     jsPlumb.setContainer('lineage-diagram');
@@ -32,34 +56,41 @@ function LineageController ($scope, jsPlumb, $timeout, $state) {
       Endpoints: ['Blank', 'Blank']
     });
 
-    $timeout( () => {
-      angular.forEach($scope.connections, (conn) => {
-        vm.instance.connect({
-          source: conn.source,
-          target: conn.target,
-          detachable: false,
-          anchors: ['Right', 'Left']
-        });
-      });
-
-      $timeout( () => {
-        vm.instance.repaintEverything();
-      });
-    });
+    render();
   });
 
   vm.nodeClick = (node) => {
-    let nodeInfo = $scope.uniqueNodes[node.uniqueNodeId];
+    let nodeInfo = vm.uniqueNodes[node.uniqueNodeId];
     if (nodeInfo.nodeType === 'data') {
       $state.go('tracker.entity.metadata', { entityType: nodeInfo.entityType, entityId: nodeInfo.entityId });
     }
   };
 
+  vm.mouseLeaveNode = (node) => {
+    node.timeout = $timeout(() => {
+      node.showNavigation = false;
+    }, 300);
+  };
 
+  vm.mouseEnterNavigation = (node) => {
+    $timeout.cancel(node.timeout);
+  };
+
+  vm.mouseLeaveNavigation = (node) => {
+    $timeout(() => {
+      node.showNavigation = false;
+    }, 300);
+  };
+
+  vm.navigationClick = (event, node) => {
+    event.stopPropagation();
+    let unique = vm.uniqueNodes[node.uniqueNodeId];
+    $scope.navigationFunction().call($scope.context, unique.entityType, unique.entityId);
+  };
 
 }
 
-LineageController.$inject = ['$scope', 'jsPlumb', '$timeout', '$state'];
+LineageController.$inject = ['$scope', 'jsPlumb', '$timeout', '$state', 'LineageStore'];
 
 angular.module(PKG.name + '.feature.tracker')
   .directive('myLineageDiagram', () => {
@@ -69,7 +100,9 @@ angular.module(PKG.name + '.feature.tracker')
         nodes: '=',
         connections: '=',
         graph: '=',
-        uniqueNodes: '='
+        uniqueNodes: '=',
+        navigationFunction: '&',
+        context: '='
       },
       templateUrl: '/assets/features/tracker/directives/lineage/lineage.html',
       controller: LineageController,
