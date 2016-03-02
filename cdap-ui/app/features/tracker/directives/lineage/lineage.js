@@ -14,11 +14,16 @@
  * the License.
  */
 
-function LineageController ($scope, jsPlumb, $timeout) {
+function LineageController ($scope, jsPlumb, $timeout, $state) {
   var vm = this;
+
+  vm.graphInfo = $scope.graph.graph();
 
 
   jsPlumb.ready( () => {
+
+    console.log('test', $scope.nodes, $scope.uniqueNodes);
+
     jsPlumb.setContainer('lineage-diagram');
 
     vm.instance = jsPlumb.getInstance({
@@ -39,12 +44,36 @@ function LineageController ($scope, jsPlumb, $timeout) {
           anchors: ['Right', 'Left']
         });
       });
+
+      $timeout( () => {
+        vm.instance.repaintEverything();
+      });
     });
   });
 
+  vm.nodeClick = (node) => {
+    let nodeInfo = $scope.uniqueNodes[node.uniqueNodeId];
+
+    if (nodeInfo.nodeType === 'data') {
+      $state.go('tracker.entity.metadata', { entityType: nodeInfo.entityType, entityId: nodeInfo.entityId });
+    }
+  };
+
+  // let createPopovers = () => {
+  //   angular.forEach($scope.nodes, (node) => {
+  //     if (node.nodeType !== 'program') { return; }
+
+  //     let elem = angular.element(document.getElementById(node.id));
+
+
+
+
+  //   });
+  // };
+
 }
 
-LineageController.$inject = ['$scope', 'jsPlumb', '$timeout'];
+LineageController.$inject = ['$scope', 'jsPlumb', '$timeout', '$state'];
 
 angular.module(PKG.name + '.feature.tracker')
   .directive('myLineageDiagram', () => {
@@ -52,7 +81,9 @@ angular.module(PKG.name + '.feature.tracker')
       restrict: 'E',
       scope: {
         nodes: '=',
-        connections: '='
+        connections: '=',
+        graph: '=',
+        uniqueNodes: '='
       },
       templateUrl: '/assets/features/tracker/directives/lineage/lineage.html',
       controller: LineageController,

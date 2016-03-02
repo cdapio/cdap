@@ -69,13 +69,13 @@ class TrackerLineageController{
       scope: this.$scope,
       start: this.timeRange.start,
       end: this.timeRange.end,
-      levels: 2
+      levels: 1
     };
 
     this.myTrackerApi.getLineage(params)
       .$promise
       .then((res) => {
-        this.lineageInfo = this.myLineageService.parseLineageResponse(res);
+        this.lineageInfo = this.myLineageService.parseLineageResponse(res, params);
         this.loading = false;
       }, (err) => {
         console.log('Error', err);

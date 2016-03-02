@@ -20,14 +20,20 @@ class myLineageService {
    *  Takes in the response from backend, and returns an object with list of
    *  nodes and connections.
    **/
-  parseLineageResponse(response) {
+  parseLineageResponse(response, params) {
+    let currentActiveNode = [
+      params.entityType === 'datasets' ? 'dataset' : 'stream',
+      params.namespace,
+      params.entityId
+    ].join('.');
+
     let connections = [];
     let uniqueNodes = {};
+    let nodes = [];
 
     /* SETTING NODES */
-
     angular.forEach(response.programs, (value, key) => {
-      uniqueNodes[key] = {
+      let nodeObj = {
         label: value.entityId.id.id,
         id: key,
         nodeType: 'program',
@@ -38,12 +44,14 @@ class myLineageService {
         icon: this.getProgramIcon(value.entityId.id.type),
         runs: []
       };
+
+      uniqueNodes[key] = nodeObj;
     });
 
     angular.forEach(response.data, (value, key) => {
       let data = this.parseDataInfo(value);
 
-      uniqueNodes[key] = {
+      let nodeObj = {
         label: data.name,
         id: key,
         nodeType: 'data',
@@ -52,6 +60,8 @@ class myLineageService {
         displayType: data.displayType,
         icon: data.icon
       };
+
+      uniqueNodes[key] = nodeObj;
     });
 
 
@@ -60,31 +70,55 @@ class myLineageService {
       let isUnknownOrBoth = rel.access === 'both' || rel.access === 'unknown';
 
       if (rel.access === 'read' || isUnknownOrBoth) {
+        let dataId = rel.data === currentActiveNode ? rel.data : rel.data + '-read';
+        let programId = rel.data === currentActiveNode ? rel.program + '-read' : rel.program + '-write';
         connections.push({
-          source: rel.data,
-          target: rel.program,
+          source: dataId,
+          target: programId,
           type: 'read'
+        });
+
+        nodes.push({
+          dataId: dataId,
+          uniqueNodeId: rel.data
+        });
+        nodes.push({
+          dataId: programId,
+          uniqueNodeId: rel.program
         });
       }
 
       if (rel.access === 'write' || isUnknownOrBoth) {
+        let dataId = rel.data === currentActiveNode ? rel.data : rel.data + '-write';
+        let programId = rel.data === currentActiveNode ? rel.program + '-write' : rel.program + '-read';
         connections.push({
-          source: rel.program,
-          target: rel.data,
+          source: programId,
+          target: dataId,
           type: 'write'
+        });
+
+        nodes.push({
+          dataId: dataId,
+          uniqueNodeId: rel.data
+        });
+        nodes.push({
+          dataId: programId,
+          uniqueNodeId: rel.program
         });
       }
 
       uniqueNodes[rel.program].runs = uniqueNodes[rel.program].runs.concat(rel.runs);
     });
 
-    let graph = this.getGraphLayout(uniqueNodes, connections);
-    console.log('graph', graph);
-    this.mapNodesLocation(uniqueNodes, graph);
+    nodes = _.uniq(nodes, (n) => { return n.dataId; });
+    let graph = this.getGraphLayout(nodes, connections);
+    this.mapNodesLocation(nodes, graph);
 
     return {
       connections: connections,
-      nodes: uniqueNodes
+      nodes: nodes,
+      uniqueNodes: uniqueNodes,
+      graph: graph
     };
   }
 
@@ -152,16 +186,16 @@ class myLineageService {
     var graph = new dagre.graphlib.Graph();
     graph.setGraph({
       nodesep: 90,
-      ranksep: 150,
+      ranksep: 100,
       rankdir: 'LR',
-      marginx: 0,
-      marginy: 0
+      marginx: 90,
+      marginy: 25
     });
     graph.setDefaultEdgeLabel(function() { return {}; });
 
     angular.forEach(nodes, (node) => {
-      var id = node.id;
-      graph.setNode(id, { label: node.label, width: 150, height: 100 });
+      var id = node.dataId;
+      graph.setNode(id, { width: 175, height: 55 });
     });
 
     angular.forEach(connections, (connection) => {
@@ -174,10 +208,10 @@ class myLineageService {
   }
 
   mapNodesLocation(nodes, graph) {
-    angular.forEach(graph._nodes, (value, key) => {
-      nodes[key]._uiLocation = {
-        top: value.y + 'px',
-        left: value.x + 'px'
+    angular.forEach(nodes, (node) => {
+      node._uiLocation = {
+        top: graph._nodes[node.dataId].y + 'px',
+        left: graph._nodes[node.dataId].x + 'px'
       };
     });
   }

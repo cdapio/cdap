@@ -37,8 +37,8 @@
 <div class="lineage-content" ng-if="!LineageController.loading">
   <my-lineage-diagram
     nodes="LineageController.lineageInfo.nodes"
-    connections="LineageController.lineageInfo.connections">
+    connections="LineageController.lineageInfo.connections"
+    graph="LineageController.lineageInfo.graph"
+    unique-nodes="LineageController.lineageInfo.uniqueNodes">
   </my-lineage-diagram>
 </div>
-
-<!-- <pre>{{ LineageController.lineageInfo | json: 4 }}</pre> -->
