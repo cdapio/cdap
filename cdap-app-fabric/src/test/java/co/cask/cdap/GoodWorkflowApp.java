@@ -143,7 +143,7 @@ public class GoodWorkflowApp extends AbstractApplication {
   }
 
   /**
-   *
+   * Workflow configured with local datasets.
    */
   public class WorkflowWithLocalDatasets extends AbstractWorkflow {
 
