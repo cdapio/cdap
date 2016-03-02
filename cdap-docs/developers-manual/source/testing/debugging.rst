@@ -110,6 +110,14 @@ The corresponding HTTP requests for the ``RetrieveCounts`` service of this appli
 
 Analysis of the response would give you the host names and debugging ports for all instances of the service.
 
+If you are trying to debug a system service, this endpoint gives the container info for a system service::
+
+ GET <base-url>/system/services/<service-name>/live-info
+ 
+Further information is in the :ref:`Lifecycle HTTP RESTful API
+<http-restful-api-lifecycle-container-information>`.
+
+
 .. highlight:: java
 
 Attaching a Debugger

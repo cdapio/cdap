@@ -14,6 +14,8 @@ Service HTTP RESTful API
 This interface supports listing all services and making requests to the methods of an application’s services.
 See the :ref:`http-restful-api-lifecycle` for how to control the lifecycle of services.
 
+.. _http-restful-api-service-listing:
+
 Listing all Services
 --------------------
 
@@ -42,6 +44,8 @@ The response body will contain a JSON-formatted list of the existing services::
       }
       ...
   ]
+
+.. _http-restful-api-service-listing-system:
 
 Listing all System Services
 ---------------------------
