@@ -61,6 +61,17 @@ public class GrokRecordFormatTest {
   }
 
   @Test
+  public void testCustomPattern() throws Exception {
+    FormatSpecification spec = new FormatSpecification(Formats.GROK, null,
+                                                       GrokRecordFormat.settings("(?<body>.*)"));
+    RecordFormat<StreamEvent, StructuredRecord> format = RecordFormats.createInitializedFormat(spec);
+
+    String message = "Oct 17 08:59:00 suod newsyslog[6215]: logfile turned over";
+    StructuredRecord record = format.read(new StreamEvent(ByteBuffer.wrap(Bytes.toBytes(message))));
+    Assert.assertEquals("Oct 17 08:59:00 suod newsyslog[6215]: logfile turned over", record.get("body"));
+  }
+
+  @Test
   public void testSyslog() throws Exception {
     FormatSpecification spec = new FormatSpecification(Formats.SYSLOG, null, Collections.<String, String>emptyMap());
     RecordFormat<StreamEvent, StructuredRecord> format = RecordFormats.createInitializedFormat(spec);
