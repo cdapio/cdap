@@ -89,7 +89,7 @@ public final class MapReduceContextConfig {
                   Map<String, String> localizedUserResources) {
     setRunId(context.getRunId().getId());
     setLogicalStartTime(context.getLogicalStartTime());
-    setWorkflowProgramInfo(context.getWorkflowProramInfo());
+    setWorkflowProgramInfo(context.getWorkflowProgramInfo());
     setPlugins(context.getPlugins());
     setArguments(context.getRuntimeArguments());
     setProgramJarURI(programJarURI);

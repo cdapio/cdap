@@ -83,4 +83,11 @@ public interface MapReduceTaskContext<KEYOUT, VALUEOUT> extends RuntimeContext, 
    */
   @Nullable
   WorkflowToken getWorkflowToken();
+
+  /**
+   * Returns the name of the input configured for this task.
+   * Returns null, if this task is a Reducer or no inputs were configured through CDAP APIs.
+   */
+  @Nullable
+  String getInputName();
 }

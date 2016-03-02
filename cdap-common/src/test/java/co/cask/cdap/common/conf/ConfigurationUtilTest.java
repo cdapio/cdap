@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,35 +14,37 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.batch.dataset;
+package co.cask.cdap.common.conf;
 
 import com.google.common.collect.ImmutableMap;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.mapreduce.Job;
 import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.IOException;
 import java.util.Map;
 
-public class MultipleOutputsTest {
+/**
+ * Tests for {@link ConfigurationUtil}.
+ */
+public class ConfigurationUtilTest {
 
   @Test
   public void testNamedConfigurations() throws IOException {
-    Job job = Job.getInstance(new Configuration());
+    org.apache.hadoop.conf.Configuration conf = new org.apache.hadoop.conf.Configuration();
 
     Map<String, String> name1Config = ImmutableMap.of("key1", "value1",
                                                       "key2", "value2");
     Map<String, String> name2Config = ImmutableMap.of("name2key", "name2value");
     Map<String, String> emptyConfig = ImmutableMap.of();
 
-    MultipleOutputs.setNamedConfigurations(job, "name1", name1Config);
-    MultipleOutputs.setNamedConfigurations(job, "name2", name2Config);
-    MultipleOutputs.setNamedConfigurations(job, "emptyConfig", emptyConfig);
+    ConfigurationUtil.setNamedConfigurations(conf, "name1", name1Config);
+    ConfigurationUtil.setNamedConfigurations(conf, "name2", name2Config);
+    ConfigurationUtil.setNamedConfigurations(conf, "emptyConfig", emptyConfig);
 
 
-    Assert.assertEquals(name1Config, MultipleOutputs.getNamedConfigurations(job, "name1"));
-    Assert.assertEquals(name2Config, MultipleOutputs.getNamedConfigurations(job, "name2"));
-    Assert.assertEquals(emptyConfig, MultipleOutputs.getNamedConfigurations(job, "emptyConfig"));
+    Assert.assertEquals(name1Config, ConfigurationUtil.getNamedConfigurations(conf, "name1"));
+    Assert.assertEquals(name2Config, ConfigurationUtil.getNamedConfigurations(conf, "name2"));
+    Assert.assertEquals(emptyConfig, ConfigurationUtil.getNamedConfigurations(conf, "emptyConfig"));
   }
+
 }

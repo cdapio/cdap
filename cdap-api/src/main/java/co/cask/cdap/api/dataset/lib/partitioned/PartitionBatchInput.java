@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,6 +17,7 @@
 package co.cask.cdap.api.dataset.lib.partitioned;
 
 import co.cask.cdap.api.annotation.Beta;
+import co.cask.cdap.api.data.batch.Input;
 import co.cask.cdap.api.dataset.lib.DatasetStatePersistor;
 import co.cask.cdap.api.dataset.lib.Partition;
 import co.cask.cdap.api.dataset.lib.PartitionDetail;
@@ -74,8 +75,7 @@ public class PartitionBatchInput {
 
     Map<String, String> arguments = new HashMap<>();
     PartitionedFileSetArguments.addInputPartitions(arguments, consumedPartitions);
-
-    mapreduceContext.setInput((PartitionedFileSet) mapreduceContext.getDataset(partitionedFileSetName, arguments));
+    mapreduceContext.addInput(Input.ofDataset(partitionedFileSetName, arguments));
 
     return new BatchPartitionCommitter() {
       @Override
