@@ -217,7 +217,7 @@ on an existing stream ``mystream`` using the CDAP CLI::
 
   $ cdap-cli.sh create stream-view mystream mygrok format grok \
       schema "facility string, priority string, message string" \
-      settings "pattern=<%{\b(?:[0-9]+)\b:facility}.%{\b(?:[0-9]+)\b:priority}> %{.*:message}"
+      settings "pattern=(?<facility>\b(?:[0-9]+)\b).(?<priority>\b(?:[0-9]+)\b) (?<message>.*)"
 
 
 .. _stream-exploration-stream-format-syslog:
