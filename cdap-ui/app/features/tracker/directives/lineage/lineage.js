@@ -21,9 +21,6 @@ function LineageController ($scope, jsPlumb, $timeout, $state) {
 
 
   jsPlumb.ready( () => {
-
-    console.log('test', $scope.nodes, $scope.uniqueNodes);
-
     jsPlumb.setContainer('lineage-diagram');
 
     vm.instance = jsPlumb.getInstance({
@@ -53,23 +50,12 @@ function LineageController ($scope, jsPlumb, $timeout, $state) {
 
   vm.nodeClick = (node) => {
     let nodeInfo = $scope.uniqueNodes[node.uniqueNodeId];
-
     if (nodeInfo.nodeType === 'data') {
       $state.go('tracker.entity.metadata', { entityType: nodeInfo.entityType, entityId: nodeInfo.entityId });
     }
   };
 
-  // let createPopovers = () => {
-  //   angular.forEach($scope.nodes, (node) => {
-  //     if (node.nodeType !== 'program') { return; }
 
-  //     let elem = angular.element(document.getElementById(node.id));
-
-
-
-
-  //   });
-  // };
 
 }
 

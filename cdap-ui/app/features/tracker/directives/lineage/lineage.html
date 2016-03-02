@@ -21,6 +21,13 @@
        ng-repeat="node in nodes"
        ng-style="node._uiLocation"
        ng-click="Lineage.nodeClick(node)">
+
+    <div class="navigation-control left" ng-if="node.isLeftEdge">
+      <span class="fa fa-caret-left"></span>
+    </div>
+    <div class="navigation-control right" ng-if="node.isRightEdge">
+      <span class="fa fa-caret-right"></span>
+    </div>
     <h4 class="entity-name">{{ uniqueNodes[node.uniqueNodeId].label }}</h4>
     <div class="entity-type">
       <span class="{{ uniqueNodes[node.uniqueNodeId].icon }}"></span>

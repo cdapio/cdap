@@ -80,7 +80,8 @@ class myLineageService {
 
         nodes.push({
           dataId: dataId,
-          uniqueNodeId: rel.data
+          uniqueNodeId: rel.data,
+          isLeftEdge: rel.data !== currentActiveNode
         });
         nodes.push({
           dataId: programId,
@@ -99,7 +100,8 @@ class myLineageService {
 
         nodes.push({
           dataId: dataId,
-          uniqueNodeId: rel.data
+          uniqueNodeId: rel.data,
+          isRightEdge: rel.data !== currentActiveNode
         });
         nodes.push({
           dataId: programId,

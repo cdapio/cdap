@@ -54,6 +54,24 @@ my-lineage-diagram {
     &.program {
       .nodeTypeStyling(@grey, white, white);
     }
+
+    .navigation-control {
+      position: absolute;
+
+      span {
+        font-size: 35px;
+        color: #35c853;
+      }
+
+      @offset: 185px;
+
+      &.right {
+        left: @offset;
+      }
+      &.left {
+        right: @offset;
+      }
+    }
   }
 }
 
