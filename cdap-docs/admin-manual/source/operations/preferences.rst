@@ -19,7 +19,7 @@ Order of Preferences
 
 The overriding order of preferences is (from lowest to highest precedence):
 
-CDAP Instance < Namespace < Application < Program < Runtime Arguments (passed in during start of the program)
+  CDAP Instance < Namespace < Application < Program < Runtime Arguments *(passed in during start of the program)*
 
 **Example:** A configuration preference ``SAMPLE_KEY`` is set to 20 at the namespace level and is set to 10 at the
 program level. When the program is started, the value set at the program level overrides the value set at
@@ -119,7 +119,7 @@ the argument will be set for all programs that use ``myTable``. In order to set 
 program ``myMR``, the dataset argument can be nested inside the program scope as
 ``mapreduce.myMR.dataset.myTable.cache.seconds=30``.
 
-Examples of Using Preferences
+Examples of using Preferences
 =============================
 Other examples of using preferences are in these CDAP examples:
 

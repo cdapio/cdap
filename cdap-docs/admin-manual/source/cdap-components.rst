@@ -30,8 +30,8 @@ configuration is set in the ``cdap-site.xml`` file (documented in :ref:`an appen
 installation procedure steps detailed in later sections. You edit a version of this file
 to configure CDAP to your specific requirements prior to starting CDAP services.
 
-CDAP generates log files. The location can be customized, but unless you have changed from
-the default, they will be located in ``/var/log/cdap``.
+CDAP :ref:`generates log files <logging-monitoring>`. The location can be customized, but
+unless you have changed from the default, they will be located in ``/var/log/cdap``.
 
 If you have :ref:`CDAP Security <admin-security>` enabled, then you will have an
 additional file, ``cdap-security.xml`` (documented in :ref:`an appendix
