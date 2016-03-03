@@ -15,7 +15,7 @@
 -->
 
 <div class="lineage-diagram-container" id="lineage-diagram"
-     style="height: {{Lineage.graphInfo.height + 55}}px; width: {{Lineage.graphInfo.width + 175}}px;">
+     style="height: {{Lineage.graphInfo.height + 300}}px; width: {{Lineage.graphInfo.width + 175}}px;">
   <div class="nodes {{ Lineage.uniqueNodes[node.uniqueNodeId].nodeType }}"
        id="{{ node.dataId }}"
        ng-repeat="node in Lineage.nodes"
@@ -42,6 +42,90 @@
     <div class="entity-type">
       <span class="{{ Lineage.uniqueNodes[node.uniqueNodeId].icon }}"></span>
       <span>{{ Lineage.uniqueNodes[node.uniqueNodeId].displayType }}</span>
+    </div>
+
+
+    <!-- PROGRAM POPOVER -->
+    <div class="tracker-program-popover" ng-if="node.showPopover" ng-click="Lineage.preventPropagation($event)">
+      <div class="tracker-popover-content">
+        <div class="top-bar">
+          <div class="row">
+
+            <div class="col-xs-8">
+              <div class="entity-detail">
+                <h4>{{ Lineage.uniqueNodes[node.uniqueNodeId].label }}</h4>
+                <div class="entity-type">
+                  <span class="{{ contentData.icon }}"></span>
+                  <span>{{ Lineage.uniqueNodes[node.uniqueNodeId].displayType }}</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-xs-4">
+              <div class="runs-controller">
+                <h5>Runs</h5>
+                <div class="runs-navigation">
+                  <span class="fa fa-caret-left" ng-click="Lineage.prevRun($event, node)"></span>
+                  <span>{{ node.popover.activeRunIndex + 1 }}/{{ Lineage.uniqueNodes[node.uniqueNodeId].runs.length }}</span>
+                  <span class="fa fa-caret-right" ng-click="Lineage.nextRun($event, node)"></span>
+                </div>
+              </div>
+            </div>
+
+            <div class="close-button">
+              <span class="fa fa-close" ng-click="Lineage.closePopover($event, node)"></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="info-container">
+          <div class="row">
+            <div class="col-xs-12">
+              <div class="inside-column">
+                <h5>Run ID</h5>
+                <div>
+                  <span>{{ node.popover.activeRunId }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="run-detail inside-column">
+              <div class="col-xs-5">
+                <h5>
+                  Started
+                </h5>
+                <div>
+                  <span> {{ node.popover.runInfo.start * 1000 | amDateFormat: 'ddd,  MM/DD/YY h:mm:ss a' }} </span>
+                </div>
+              </div>
+
+              <div class="col-xs-3">
+                <h5>
+                  Duration
+                </h5>
+                <div>
+                  <span>{{ node.popover.runInfo.duration | amDurationFormat }}</span>
+                </div>
+              </div>
+
+              <div class="col-xs-4">
+                <h5>
+                  Status
+                </h5>
+                <div>
+                  <span class="fa fa-circle"
+                        ng-class="{'text-success': node.popover.runInfo.status === 'COMPLETED' || node.popover.runInfo.status === 'RUNNING', 'text-danger': node.popover.runInfo.status !== 'COMPLETED' && node.popover.runInfo.status !== 'RUNNING'}"
+                  ></span>
+                  <span>{{ node.popover.runInfo.status }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
     </div>
   </div>
 </div>

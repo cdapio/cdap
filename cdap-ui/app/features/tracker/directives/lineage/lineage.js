@@ -14,13 +14,12 @@
  * the License.
  */
 
-function LineageController ($scope, jsPlumb, $timeout, $state, LineageStore, $popover, $rootScope, myTrackerApi) {
+function LineageController ($scope, jsPlumb, $timeout, $state, LineageStore, myTrackerApi) {
   'ngInject';
 
   var vm = this;
 
   function render() {
-    hideAllPopovers();
     jsPlumb.reset();
     if (vm.instance) { vm.instance.reset(); }
 
@@ -42,8 +41,6 @@ function LineageController ($scope, jsPlumb, $timeout, $state, LineageStore, $po
           anchors: ['Right', 'Left']
         });
       });
-
-      createAllPopovers();
 
       $timeout( () => {
         vm.instance.repaintEverything();
@@ -72,7 +69,48 @@ function LineageController ($scope, jsPlumb, $timeout, $state, LineageStore, $po
     let nodeInfo = vm.uniqueNodes[node.uniqueNodeId];
     if (nodeInfo.nodeType === 'data') {
       $state.go('tracker.entity.metadata', { entityType: nodeInfo.entityType, entityId: nodeInfo.entityId });
+    } else {
+      node.showPopover = true;
+
+      node.popover = {
+        activeRunIndex: 0,
+        activeRunId: nodeInfo.runs[0],
+        runInfo: {}
+      };
+      fetchRunStatus(nodeInfo, node.popover.activeRunId, node.popover.runInfo);
     }
+  };
+
+  vm.closePopover = (event, node) => {
+    event.stopPropagation();
+    node.showPopover = false;
+  };
+
+  vm.preventPropagation = (event) => {
+    event.stopPropagation();
+  };
+
+  vm.nextRun = (event, node) => {
+    event.stopPropagation();
+    let nodeInfo = vm.uniqueNodes[node.uniqueNodeId];
+    if (node.popover.activeRunIndex === nodeInfo.runs.length - 1) {
+      node.popover.activeRunIndex = 0;
+    } else {
+      node.popover.activeRunIndex++;
+    }
+    node.popover.activeRunId = nodeInfo.runs[node.popover.activeRunIndex];
+    fetchRunStatus(nodeInfo, node.popover.activeRunId, node.popover.runInfo);
+  };
+  vm.prevRun = (event, node) => {
+    event.stopPropagation();
+    let nodeInfo = vm.uniqueNodes[node.uniqueNodeId];
+    if (node.popover.activeRunIndex === 0) {
+      node.popover.activeRunIndex = nodeInfo.runs.length - 1;
+    } else {
+      node.popover.activeRunIndex--;
+    }
+    node.popover.activeRunId = nodeInfo.runs[node.popover.activeRunIndex];
+    fetchRunStatus(nodeInfo, node.popover.activeRunId, node.popover.runInfo);
   };
 
   vm.mouseLeaveNode = (node) => {
@@ -97,55 +135,6 @@ function LineageController ($scope, jsPlumb, $timeout, $state, LineageStore, $po
     $scope.navigationFunction().call($scope.context, unique.entityType, unique.entityId);
   };
 
-  function createAllPopovers () {
-    angular.forEach(vm.nodes, (node) => {
-      let unique = vm.uniqueNodes[node.uniqueNodeId];
-      if (unique.nodeType !== 'program') { return; }
-
-      createPopover(unique, node.dataId);
-    });
-  }
-  function createPopover (node, id) {
-    let elem = angular.element(document.getElementById(id));
-
-    let scope = $rootScope.$new();
-    scope.contentData = node;
-    scope.activeRunIndex = 0;
-    scope.activeRunId = scope.contentData.runs[scope.activeRunIndex];
-    scope.runInfo = {};
-    fetchRunStatus(node, scope.activeRunId, scope.runInfo);
-
-    scope.nextRun = () => {
-      if (scope.activeRunIndex === scope.contentData.runs.length - 1) {
-        scope.activeRunIndex = 0;
-      } else {
-        scope.activeRunIndex++;
-      }
-      scope.activeRunId = scope.contentData.runs[scope.activeRunIndex];
-      fetchRunStatus(node, scope.activeRunId, scope.runInfo);
-    };
-    scope.prevRun = () => {
-      if (scope.activeRunIndex === 0) {
-        scope.activeRunIndex = scope.contentData.runs.length - 1;
-      } else {
-        scope.activeRunIndex--;
-      }
-      scope.activeRunId = scope.contentData.runs[scope.activeRunIndex];
-      fetchRunStatus(node, scope.activeRunId, scope.runInfo);
-    };
-
-    node.popover = $popover(elem, {
-      placement: 'top',
-      trigger: 'click',
-      templateUrl: '/assets/features/tracker/templates/partial/lineage-program-popover-template.html',
-      delay: 300,
-      scope: scope,
-      container: 'body'
-    });
-    node.scope = scope;
-
-  }
-
   function fetchRunStatus(node, runId, runInfo) {
     let params = {
       namespace: $state.params.namespace,
@@ -165,17 +154,7 @@ function LineageController ($scope, jsPlumb, $timeout, $state, LineageStore, $po
       });
   }
 
-  function hideAllPopovers() {
-    angular.forEach(vm.uniqueNodes, (node) => {
-      if (!node.popover) { return; }
-
-      node.popover.destroy();
-      node.scope.$destroy();
-    });
-  }
-
   $scope.$on('$destroy', () => {
-    hideAllPopovers();
     LineageStore.setDefaults();
   });
 }
