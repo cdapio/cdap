@@ -33,13 +33,16 @@ import co.cask.cdap.etl.api.batch.BatchSourceContext;
 import co.cask.cdap.format.StructuredRecordStringConverter;
 import co.cask.cdap.test.DataSetManager;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import javax.annotation.Nullable;
 
 /**
  * Mock source that can be used to write a list of records in a Table and reads them out in a pipeline run.
+ * Can optionally add a 'runtime' column of type long to every record that contains the logical start time of the run.
  */
 @Plugin(type = BatchSource.PLUGIN_TYPE)
 @Name("Mock")
@@ -47,6 +50,7 @@ public class MockSource extends BatchSource<byte[], Row, StructuredRecord> {
   private static final byte[] SCHEMA_COL = Bytes.toBytes("s");
   private static final byte[] RECORD_COL = Bytes.toBytes("r");
   private final Config config;
+  private long runtime;
 
   public MockSource(Config config) {
     this.config = config;
@@ -54,6 +58,14 @@ public class MockSource extends BatchSource<byte[], Row, StructuredRecord> {
 
   public static class Config extends PluginConfig {
     private String tableName;
+
+    @Nullable
+    private Boolean addRuntime;
+
+    public Config() {
+      this.addRuntime = false;
+      this.tableName = "";
+    }
   }
 
   @Override
@@ -65,13 +77,32 @@ public class MockSource extends BatchSource<byte[], Row, StructuredRecord> {
   @Override
   public void initialize(BatchRuntimeContext context) throws Exception {
     super.initialize(context);
+    runtime = context.getLogicalStartTime();
   }
 
   @Override
   public void transform(KeyValue<byte[], Row> input, Emitter<StructuredRecord> emitter) throws Exception {
     Schema schema = Schema.parseJson(input.getValue().getString(SCHEMA_COL));
     String recordStr = input.getValue().getString(RECORD_COL);
-    emitter.emit(StructuredRecordStringConverter.fromJsonString(recordStr, schema));
+    StructuredRecord record = StructuredRecordStringConverter.fromJsonString(recordStr, schema);
+    if (config.addRuntime) {
+      record = addRuntimeColumn(record);
+    }
+
+    emitter.emit(record);
+  }
+
+  private StructuredRecord addRuntimeColumn(StructuredRecord record) {
+    List<Schema.Field> fields = new ArrayList<>();
+    fields.addAll(record.getSchema().getFields());
+    fields.add(Schema.Field.of("runtime", Schema.of(Schema.Type.LONG)));
+    Schema runtimeSchema = Schema.recordOf(record.getSchema().getRecordName(), fields);
+    StructuredRecord.Builder builder = StructuredRecord.builder(runtimeSchema).set("runtime", runtime);
+    for (Schema.Field field : record.getSchema().getFields()) {
+      String fieldName = field.getName();
+      builder.set(fieldName, record.get(fieldName));
+    }
+    return builder.build();
   }
 
   @Override
@@ -80,8 +111,13 @@ public class MockSource extends BatchSource<byte[], Row, StructuredRecord> {
   }
 
   public static co.cask.cdap.etl.common.Plugin getPlugin(String tableName) {
+    return getPlugin(tableName, false);
+  }
+
+  public static co.cask.cdap.etl.common.Plugin getPlugin(String tableName, boolean addRuntime) {
     Map<String, String> properties = new HashMap<>();
     properties.put("tableName", tableName);
+    properties.put("addRuntime", String.valueOf(addRuntime));
     return new co.cask.cdap.etl.common.Plugin("Mock", properties);
   }
 
@@ -103,4 +139,5 @@ public class MockSource extends BatchSource<byte[], Row, StructuredRecord> {
     }
     tableManager.flush();
   }
+
 }
