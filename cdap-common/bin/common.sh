@@ -155,7 +155,7 @@ cdap_set_hbase() {
       0.98*)
         hbasecompat="${CDAP_HOME}/hbase-compat-0.98/lib/*"
         ;;
-      1.0-cdh5.5*)
+      1.0-cdh5.5* | 1.0-cdh5.6*)
         hbasecompat="${CDAP_HOME}/hbase-compat-1.0-cdh5.5.0/lib/*"
         ;;
       1.0-cdh*)
