@@ -18,6 +18,7 @@ package co.cask.cdap.etl.common;
 
 import java.util.List;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * Keeps track of the plugin ids for the source, transforms, and sink of a pipeline
@@ -25,15 +26,26 @@ import java.util.Map;
 public class Pipeline {
   private final String source;
   private final List<SinkInfo> sinks;
+
+  /**
+   * TODO: Currently all transforms occur before the aggregator.
+   */
   private final List<TransformInfo> transforms;
+  private final String aggregator;
   private final Map<String, List<String>> connections;
 
   public Pipeline(String source, List<SinkInfo> sinks, List<TransformInfo> transforms,
-                  Map<String, List<String>> connections) {
+                  String aggregator, Map<String, List<String>> connections) {
     this.source = source;
     this.sinks = sinks;
     this.transforms = transforms;
+    this.aggregator = aggregator;
     this.connections = connections;
+  }
+
+  @Nullable
+  public String getAggregator() {
+    return aggregator;
   }
 
   public String getSource() {

@@ -35,6 +35,7 @@ import co.cask.cdap.etl.api.batch.BatchSink;
 import co.cask.cdap.etl.api.batch.BatchSinkContext;
 import co.cask.cdap.etl.api.batch.BatchSource;
 import co.cask.cdap.etl.api.batch.BatchSourceContext;
+import co.cask.cdap.etl.batch.BatchAggregation;
 import co.cask.cdap.etl.batch.LoggedBatchConfigurable;
 import co.cask.cdap.etl.batch.LoggedBatchSink;
 import co.cask.cdap.etl.batch.LoggedBatchSource;
@@ -53,6 +54,7 @@ import co.cask.cdap.etl.common.TransformExecutor;
 import co.cask.cdap.etl.common.TransformInfo;
 import co.cask.cdap.etl.common.TransformResponse;
 import co.cask.cdap.etl.log.LogStageInjector;
+import co.cask.cdap.etl.batch.GroupByBatchAggregation;
 import co.cask.cdap.format.StructuredRecordStringConverter;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
@@ -68,6 +70,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
+import org.apache.hadoop.mapreduce.Reducer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -138,6 +141,7 @@ public class ETLMapReduce extends AbstractMapReduce {
     Resources resources = config.getResources();
     if (resources != null) {
       setMapperResources(resources);
+      setReducerResources(resources);
     }
     Resources driverResources = config.getDriverResources();
     if (driverResources != null) {
@@ -216,7 +220,14 @@ public class ETLMapReduce extends AbstractMapReduce {
     hConf.set(SINK_OUTPUTS_KEY, GSON.toJson(sinkOutputs));
 
     job.setMapperClass(ETLMapper.class);
-    job.setNumReduceTasks(0);
+
+    if (pipeline.getAggregator() != null) {
+      job.setMapOutputKeyClass(StructuredRecordWritable.class);
+      job.setMapOutputValueClass(StructuredRecordWritable.class);
+      job.setReducerClass(ETLReducer.class);
+    } else {
+      job.setNumReduceTasks(0);
+    }
   }
 
   private void addPropertiesToErrorDataset(String errorDatasetName, MapReduceContext context) {
@@ -350,6 +361,14 @@ public class ETLMapReduce extends AbstractMapReduce {
                                                 new ArrayList<String>()));
       }
 
+      if (pipeline.getAggregator() != null) {
+        String aggregatorPluginId = pipeline.getAggregator();
+        BatchAggregation<?, ?, ?> aggregator = context.newPluginInstance(aggregatorPluginId);
+        transformations.put(aggregatorPluginId,
+                            new TransformDetail(aggregator, new DefaultStageMetrics(mapperMetrics, aggregatorPluginId),
+                                                new ArrayList<String>()));
+      }
+
       transformExecutor = new TransformExecutor<>(transformations, ImmutableList.of(sourcePluginId));
 
     }
@@ -444,6 +463,38 @@ public class ETLMapReduce extends AbstractMapReduce {
         LOG.trace("Destroying sink: {}", sink.sink);
         Destroyables.destroyQuietly(sink.sink);
       }
+    }
+  }
+
+  /**
+   * Reducer Driver for ETL Transforms. This is responsible for performing the aggregation.
+   */
+  public static class ETLReducer extends Reducer implements ProgramLifecycle<MapReduceTaskContext<Object, Object>> {
+
+    private GroupByBatchAggregation aggregator;
+
+    @Override
+    public void initialize(MapReduceTaskContext<Object, Object> context) throws Exception {
+      // get source, transform, sink ids from program properties
+      Map<String, String> properties = context.getSpecification().getProperties();
+      if (Boolean.valueOf(properties.get(Constants.STAGE_LOGGING_ENABLED))) {
+        LogStageInjector.start();
+      }
+
+      Pipeline pipeline = GSON.fromJson(properties.get(Constants.PIPELINEID), Pipeline.class);
+      aggregator = context.newPluginInstance(pipeline.getAggregator());
+
+      LOG.info("Reducer has aggregator {}", GSON.toJson(aggregator));
+    }
+
+    @Override
+    protected void reduce(Object key, Iterable values, Context context) throws IOException, InterruptedException {
+
+    }
+
+    @Override
+    public void destroy() {
+
     }
   }
 

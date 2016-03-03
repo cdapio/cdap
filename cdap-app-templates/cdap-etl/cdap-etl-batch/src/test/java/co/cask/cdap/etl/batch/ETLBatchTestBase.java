@@ -67,7 +67,8 @@ public class ETLBatchTestBase extends TestBase {
 
     // add some test plugins
     addPluginArtifact(Id.Artifact.from(Id.Namespace.DEFAULT, "test-plugins", "1.0.0"), APP_ARTIFACT_ID,
-                      MockSource.class, MockSink.class, StringValueFilterTransform.class);
+                      MockSource.class, MockSink.class, StringValueFilterTransform.class,
+                      GroupByBatchAggregation.class);
   }
 
   protected List<GenericRecord> readOutput(TimePartitionedFileSet fileSet, Schema schema) throws IOException {

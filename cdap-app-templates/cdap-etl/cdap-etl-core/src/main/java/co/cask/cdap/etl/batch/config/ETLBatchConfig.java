@@ -34,6 +34,7 @@ import javax.annotation.Nullable;
  */
 public final class ETLBatchConfig extends ETLConfig {
 
+
   /**
    * Enum for the execution engine to use.
    */
@@ -49,9 +50,10 @@ public final class ETLBatchConfig extends ETLConfig {
   private ETLBatchConfig(Engine engine, String schedule,
                          ETLStage source, List<ETLStage> sinks, List<ETLStage> transforms,
                          List<Connection> connections, Resources resources,
+                         ETLStage aggregator,
                          Resources driverResources,
                          List<ETLStage> actions) {
-    super(source, sinks, transforms, connections, resources);
+    super(source, sinks, transforms, aggregator, connections, resources, true);
     this.engine = engine;
     this.schedule = schedule;
     this.actions = actions;
@@ -62,7 +64,7 @@ public final class ETLBatchConfig extends ETLConfig {
   public ETLBatchConfig(Engine engine, String schedule,
                         ETLStage source, List<ETLStage> sinks, List<ETLStage> transforms,
                         List<Connection> connections, @Nullable Resources resources, @Nullable List<ETLStage> actions) {
-    this(engine, schedule, source, sinks, transforms, connections, resources, new Resources(), actions);
+    this(engine, schedule, source, sinks, transforms, connections, resources, null, new Resources(), actions);
   }
 
   @Deprecated
@@ -161,6 +163,7 @@ public final class ETLBatchConfig extends ETLConfig {
     private final String schedule;
     private Engine engine;
     private List<ETLStage> actions;
+    private ETLStage aggregator;
     private Resources driverResources;
 
     public Builder(String schedule) {
@@ -180,6 +183,11 @@ public final class ETLBatchConfig extends ETLConfig {
       return this;
     }
 
+    public Builder setAggregator(ETLStage aggregator) {
+      this.aggregator = aggregator;
+      return this;
+    }
+
     public Builder setEngine(Engine engine) {
       this.engine = engine;
       return this;
@@ -192,7 +200,7 @@ public final class ETLBatchConfig extends ETLConfig {
 
     public ETLBatchConfig build() {
       return new ETLBatchConfig(engine, schedule, source, sinks, transforms,
-                                connections, resources, driverResources, actions);
+                                connections, resources, aggregator, driverResources, actions);
     }
   }
 }

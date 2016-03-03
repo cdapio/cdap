@@ -24,6 +24,7 @@ import co.cask.cdap.etl.api.PipelineConfigurable;
 import co.cask.cdap.etl.api.PipelineConfigurer;
 import co.cask.cdap.etl.api.Transform;
 import co.cask.cdap.etl.api.Transformation;
+import co.cask.cdap.etl.batch.BatchAggregation;
 import co.cask.cdap.etl.common.guice.TypeResolver;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
@@ -90,12 +91,12 @@ public class PipelineRegisterer {
     String sourcePluginId = sourceConfig.getName();
 
     // instantiate source
-    String pluginName = sourceConfig.getPlugin().getName();
+    String sourcePluginName = sourceConfig.getPlugin().getName();
     PipelineConfigurable source = configurer.usePlugin(sourcePluginType,
-                                                       pluginName,
+                                                       sourcePluginName,
                                                        sourcePluginId, getPluginProperties(sourceConfig),
                                                        sourceConfig.getPlugin()
-                                                         .getPluginSelector(sourcePluginType, pluginName));
+                                                         .getPluginSelector(sourcePluginType, sourcePluginName));
     if (source == null) {
       throw new IllegalArgumentException(String.format("No Plugin of type '%s' named '%s' was found.",
                                                        Constants.Source.PLUGINTYPE,
@@ -112,7 +113,7 @@ public class PipelineRegisterer {
       String transformId = transformConfig.getName();
 
       PluginProperties transformProperties = getPluginProperties(transformConfig);
-      pluginName = transformConfig.getPlugin().getName();
+      String pluginName = transformConfig.getPlugin().getName();
       Transform transformObj = configurer.usePlugin(Constants.Transform.PLUGINTYPE,
                                                     pluginName,
                                                     transformId, transformProperties,
@@ -148,11 +149,11 @@ public class PipelineRegisterer {
       sinksInfo.add(new SinkInfo(sinkPluginId, sinkConfig.getErrorDatasetName()));
 
       // try to instantiate the sink
-      pluginName = sinkConfig.getPlugin().getName();
-      PipelineConfigurable sink = configurer.usePlugin(sinkPluginType, pluginName,
+      String sinkPluginName = sinkConfig.getPlugin().getName();
+      PipelineConfigurable sink = configurer.usePlugin(sinkPluginType, sinkPluginName,
                                                        sinkPluginId, getPluginProperties(sinkConfig),
                                                        sinkConfig.getPlugin()
-                                                         .getPluginSelector(sinkPluginType, pluginName));
+                                                         .getPluginSelector(sinkPluginType, sinkPluginName));
       if (sink == null) {
         throw new IllegalArgumentException(
           String.format(
@@ -165,6 +166,21 @@ public class PipelineRegisterer {
       PipelineConfigurer sinkConfigurer = new DefaultPipelineConfigurer(configurer, sinkPluginId);
       stageToPipelineConfigureDetailMap.put(sinkPluginId, new PipelineConfigureDetail(sink, sinkConfigurer));
       sinks.add(sink);
+    }
+
+    if (config.getAggregator() != null) {
+      ETLStage stage = config.getAggregator();
+      String pluginId = stage.getName();
+      String pluginName = stage.getPlugin().getName();
+      PluginProperties properties = getPluginProperties(config.getAggregator());
+      PipelineConfigurable aggregator = configurer.usePlugin(
+        Constants.Aggregator.PLUGINTYPE, pluginName,
+        pluginId, properties,
+        stage.getPlugin().getPluginSelector(Constants.Aggregator.PLUGINTYPE, pluginName));
+
+      PipelineConfigurer aggregatorConfigurer = new DefaultPipelineConfigurer(configurer, pluginId);
+      stageToPipelineConfigureDetailMap.put(
+        pluginId, new PipelineConfigureDetail(aggregator, aggregatorConfigurer));
     }
 
     // TODO : CDAP-4387 Validate Stages has been removed due to DAG implementation, have to be refactored
@@ -189,14 +205,15 @@ public class PipelineRegisterer {
       if (connectionsMap.containsKey(stageName)) {
         for (String nextStage : connectionsMap.get(stageName)) {
           defaultStageConfigurer = (DefaultStageConfigurer)
-            stageToPipelineConfigureDetailMap.get(nextStage).getPipelineConfigurer().getStageConfigurer();
+            Preconditions.checkNotNull(stageToPipelineConfigureDetailMap.get(nextStage))
+              .getPipelineConfigurer().getStageConfigurer();
           defaultStageConfigurer.setInputSchema(outputSchema);
         }
       }
     }
 
-
-    return new Pipeline(sourcePluginId, sinksInfo, transformInfos, connectionsMap);
+    return new Pipeline(sourcePluginId, sinksInfo, transformInfos,
+                        config.getAggregator() != null ? config.getAggregator().getName() : null, connectionsMap);
   }
 
   private class PipelineConfigureDetail {
@@ -291,6 +308,9 @@ public class PipelineRegisterer {
     }
     for (ETLStage stage : config.getSinks()) {
       stageNamesFromConfig.add(stage.getName());
+    }
+    if (config.getAggregator() != null) {
+      stageNamesFromConfig.add(config.getAggregator().getName());
     }
 
     for (Connection connection : config.getConnections()) {

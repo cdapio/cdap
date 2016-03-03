@@ -29,10 +29,12 @@ import java.util.Objects;
  */
 @Beta
 public class StructuredRecord {
-  private final Schema schema;
-  private final Map<String, Object> fields;
 
-  private StructuredRecord(Schema schema, Map<String, Object> fields) {
+  // TODO: make final again? non-final is needed for StructuredRecordWritable
+  protected Schema schema;
+  protected Map<String, Object> fields;
+
+  protected StructuredRecord(Schema schema, Map<String, Object> fields) {
     this.schema = schema;
     this.fields = fields;
   }
@@ -44,6 +46,10 @@ public class StructuredRecord {
    */
   public Schema getSchema() {
     return schema;
+  }
+
+  public Map<String, Object> getFields() {
+    return fields;
   }
 
   /**

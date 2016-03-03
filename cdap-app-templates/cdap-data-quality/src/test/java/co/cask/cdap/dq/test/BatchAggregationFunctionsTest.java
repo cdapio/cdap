@@ -40,7 +40,7 @@ import java.util.Map;
 /**
  * Test cases for aggregation function logic. Disjoint from actual DataQuality map reduce
  */
-public class AggregationFunctionsTest {
+public class BatchAggregationFunctionsTest {
   private static final Type TOKEN_TYPE_MAP_STRING_INTEGER = new TypeToken<Map<String, Integer>>() { }.getType();
   private static final Gson GSON = new Gson();
 

@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
+import javax.annotation.Nullable;
 
 /**
  * Common ETL Config.
@@ -35,6 +36,7 @@ public class ETLConfig extends Config {
   private final List<ETLStage> sinks;
   private final List<ETLStage> transforms;
   private final List<Connection> connections;
+  private final ETLStage aggregator;
   private final Resources resources;
 
   /**
@@ -43,14 +45,20 @@ public class ETLConfig extends Config {
   @Deprecated
   public ETLConfig(ETLStage source, List<ETLStage> sinks, List<ETLStage> transforms,
                    List<Connection> connections, Resources resources) {
-    this(source, sinks, transforms, connections, resources, true);
+    this(source, sinks, transforms, null, connections, resources, true);
   }
 
-  protected ETLConfig(ETLStage source, List<ETLStage> sinks, List<ETLStage> transforms,
+  protected ETLConfig(ETLConfig config) {
+    this(config.source, config.sinks, config.transforms, config.aggregator, config.connections,
+         config.resources, config.stageLoggingEnabled);
+  }
+
+  protected ETLConfig(ETLStage source, List<ETLStage> sinks, List<ETLStage> transforms, ETLStage aggregator,
                       List<Connection> connections, Resources resources, boolean stageLoggingEnabled) {
     this.source = source;
     this.sinks = sinks;
     this.transforms = transforms;
+    this.aggregator = aggregator;
     this.connections = getValidConnections(connections);
     this.resources = resources;
     this.stageLoggingEnabled = stageLoggingEnabled;
@@ -104,8 +112,12 @@ public class ETLConfig extends Config {
       pluginNum++;
       sinkStages.add(sink.getCompatibleStage("sink." + sink.getName() + "." + pluginNum));
     }
+
+    pluginNum++;
+    ETLStage aggregatorStage = aggregator.getCompatibleStage("aggregator." + aggregator.getName() + "." + pluginNum);
+
     List<Connection> connectionList = connections == null ? new ArrayList<Connection>() : connections;
-    return new ETLConfig(sourceStage, sinkStages, transformStages, connectionList, resources);
+    return new ETLConfig(sourceStage, sinkStages, transformStages, aggregatorStage, connectionList, resources, true);
   }
 
   public ETLStage getSource() {
@@ -132,6 +144,11 @@ public class ETLConfig extends Config {
     return stageLoggingEnabled == null ? true : stageLoggingEnabled;
   }
 
+  @Nullable
+  public ETLStage getAggregator() {
+    return aggregator;
+  }
+
   @Override
   public String toString() {
     return "ETLConfig{" +
@@ -141,6 +158,7 @@ public class ETLConfig extends Config {
       ", transforms=" + transforms +
       ", connections=" + connections +
       ", resources=" + resources +
+      ", aggregator=" + aggregator +
       "} " + super.toString();
   }
 
@@ -160,12 +178,13 @@ public class ETLConfig extends Config {
       Objects.equals(transforms, that.transforms) &&
       Objects.equals(connections, that.connections) &&
       Objects.equals(resources, that.resources) &&
+      Objects.equals(aggregator, that.aggregator) &&
       isStageLoggingEnabled() == that.isStageLoggingEnabled();
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(source, sinks, transforms, connections, resources, isStageLoggingEnabled());
+    return Objects.hash(source, sinks, transforms, connections, aggregator, resources, isStageLoggingEnabled());
   }
 
   /**

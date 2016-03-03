@@ -77,6 +77,17 @@ public final class Constants {
   }
 
   /**
+   * Constants related to Aggregator.
+   */
+  public static final class Aggregator {
+    public static final String PLUGINTYPE = "aggregator";
+
+    private Aggregator() {
+      throw new AssertionError("Suppress default constructor for noninstantiability");
+    }
+  }
+
+  /**
    * Constants related to Realtime ETL Applications.
    */
   public static final class Realtime {

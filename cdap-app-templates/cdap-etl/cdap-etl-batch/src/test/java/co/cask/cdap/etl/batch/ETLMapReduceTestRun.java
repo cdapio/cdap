@@ -73,6 +73,47 @@ public class ETLMapReduceTestRun extends ETLBatchTestBase {
   }
 
   @Test
+  public void testAggregator() throws Exception {
+    ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
+      .setSource(new ETLStage("source", MockSource.getPlugin("daginput")))
+      .addSink(new ETLStage("sink", MockSink.getPlugin("dagoutput")))
+      .addTransform(new ETLStage("filter", StringValueFilterTransform.getPlugin("name", "samuel")))
+      .setAggregator(new ETLStage("agg", GroupByBatchAggregation.getPlugin(
+        "name", ImmutableMap.of(
+          "usd", new FunctionConfig("usd", SumAggregation.getPlugin())))))
+      .addConnection("source", "filter")
+      .addConnection("filter", "agg")
+      .addConnection("agg", "sink")
+      .build();
+
+    AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(ETLBATCH_ARTIFACT, etlConfig);
+    Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "DagApp");
+    ApplicationManager appManager = deployApplication(appId, appRequest);
+
+    Schema schema = Schema.recordOf(
+      "testRecord",
+      Schema.Field.of("name", Schema.of(Schema.Type.STRING))
+    );
+
+    StructuredRecord recordSamuel = StructuredRecord.builder(schema).set("name", "samuel").build();
+    StructuredRecord recordBob = StructuredRecord.builder(schema).set("name", "bob").build();
+    StructuredRecord recordJane = StructuredRecord.builder(schema).set("name", "jane").build();
+
+    DataSetManager<Table> inputManager = getDataset(Id.Namespace.DEFAULT, "daginput");
+    MockSource.writeInput(inputManager, ImmutableList.of(recordSamuel, recordBob, recordJane));
+
+    MapReduceManager mrManager = appManager.getMapReduceManager(ETLMapReduce.NAME);
+    mrManager.start();
+    mrManager.waitForFinish(5, TimeUnit.MINUTES);
+
+    // sink should only get non-samuel records
+    DataSetManager<Table> sink1Manager = getDataset("dagoutput");
+    Set<StructuredRecord> expected = ImmutableSet.of(recordBob, recordJane);
+    Set<StructuredRecord> actual = Sets.newHashSet(MockSink.readOutput(sink1Manager));
+    Assert.assertEquals(expected, actual);
+  }
+
+  @Test
   public void testDAG() throws Exception {
     /*
      *            ----- error transform ------------
