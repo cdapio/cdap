@@ -55,22 +55,29 @@ As mentioned above, a format may support different **schemas**.
 CDAP schemas are adapted from the `Avro Schema Declaration <http://avro.apache.org/docs/1.7.3/spec.html#schemas>`__
 with a few differences:
 
-* Map keys do not have to be strings, but can be of any type.
-* No "name" property for the enum type.
-* No support of "doc" and "aliases" in record and enum types.
-* No support of "doc" and "default" in record fields.
-* No "fixed" type.
+- Map keys do not have to be of type name ``string``, but can be of any type.
+- No "name" property for the ``enum`` type.
+- No support of "doc" and "aliases" in ``record`` and ``enum`` types.
+- No support of "doc" and "default" in ``record`` fields.
+- No ``fixed`` type.
 
 There are a few additional limitations on the types of schemas that can be used for exploration:
 
-* Schemas must be a record of at least one field.
-* Enums are not supported.
-* Unions are not supported, unless it is a union of a null and another type, representing a nullable type.
-* Recursive types are not supported. This means you cannot have a record field that references itself in one of its fields.
+- For all formats:
 
-Data exploration using Impala has additional limitations:
+  - Schemas must be a record of at least one field.
+  
+- For all formats except :ref:`Avro <>`:
 
-* Fields must be a scalar type (no maps, arrays, or records).
+  - Enums are not supported.
+  - Unions are not supported, unless it is a union of a null and another type, representing a nullable type.
+  - Recursive types are not supported. This means you cannot have a record field that references itself in one of its fields.
+
+Data exploration using `Cloudera Impala
+<https://www.cloudera.com/products/apache-hadoop/impala.html>`__ has an additional
+limitation:
+
+- Fields must be a scalar type: no maps, arrays, or records allowed.
 
 On top of these general limitations, each format has its own restrictions on the types of
 schemas they support. For example, the CSV/TSV formats do not support maps or records as
@@ -92,7 +99,7 @@ is equivalent to the Avro-like JSON schema::
 
   {
     "type": "record",
-    "name": "rec",
+    "name": "rec1",
     "fields": [
       {
         "name": "f1",
@@ -116,7 +123,7 @@ is equivalent to the Avro-like JSON schema::
         "name": "f5",
         "type": {
           "type": "record",
-          "name": "rec1",
+          "name": "rec2",
           "fields": [
             { "name": "x", "type": [ "int", "null" ] },
             { "name": "y", "type": [ "double", "null" ] }
@@ -199,7 +206,7 @@ order. For example, if the ``mapping`` is ``1:age,0:name``, then the stream even
 
 These formats only support scalars as column types, except for the very last column, which
 can be an array of strings. All types can be nullable. If no schema is given, the default
-schema is an array of strings.
+schema is an array of strings. Neither maps nor records are supported as data types.
 
 For example::
 
