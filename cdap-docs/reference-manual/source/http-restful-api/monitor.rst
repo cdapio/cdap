@@ -146,6 +146,8 @@ where
      - Description
    * - ``<service-id>``
      - Name of the system service
+     
+**Note:** This returns useful information only for Distributed CDAP installations.
 
 
 Restarting System Service Instances
