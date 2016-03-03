@@ -33,6 +33,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
@@ -121,6 +122,13 @@ public abstract class AbstractSparkSubmitter implements SparkSubmitter {
   protected abstract void triggerShutdown(ExecutionSparkContext sparkContext);
 
   /**
+   * Returns configs that are specific to the submission context.
+   */
+  protected Map<String, String> getSubmitConf() {
+    return Collections.emptyMap();
+  }
+
+  /**
    * Submits the Spark job using {@link SparkSubmit}.
    *
    * @param sparkContext context representing the Spark program
@@ -157,6 +165,10 @@ public abstract class AbstractSparkSubmitter implements SparkSubmitter {
     builder.add("--class").add(SparkProgramWrapper.class.getName());
 
     for (Map.Entry<String, String> entry : configs.entrySet()) {
+      builder.add("--conf").add(entry.getKey() + "=" + entry.getValue());
+    }
+
+    for (Map.Entry<String, String> entry : getSubmitConf().entrySet()) {
       builder.add("--conf").add(entry.getKey() + "=" + entry.getValue());
     }
 
