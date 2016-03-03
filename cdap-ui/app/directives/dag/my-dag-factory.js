@@ -27,7 +27,7 @@ angular.module(PKG.name + '.commons')
       lineWidth: 2
     };
     function createSchemaOnEdge() {
-      return angular.element('<div><div class="label-container text-center"><i class="icon-SchemaEdge"></i></div></div>');
+      return angular.element('<div><div class="label-container text-center"><i class="icon-schemaedge"></i></div></div>');
     }
     var connectorOverlays = {
       connectorOverlays: [
