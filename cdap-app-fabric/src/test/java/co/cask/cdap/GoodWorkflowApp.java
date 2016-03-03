@@ -155,6 +155,9 @@ public class GoodWorkflowApp extends AbstractApplication {
       createLocalDataset("myfile", FileSet.class.getName());
       createLocalDataset("myfile_with_properties", FileSet.class.getName(),
                          DatasetProperties.builder().add("prop_key", "prop_value").build());
+      createLocalDataset("mytablefromtype", Table.class);
+      createLocalDataset("myfilefromtype", FileSet.class,
+                         DatasetProperties.builder().add("another_prop_key", "another_prop_value").build());
       addMapReduce("MR1");
       addSpark("SP1");
     }

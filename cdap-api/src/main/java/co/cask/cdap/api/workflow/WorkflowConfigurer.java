@@ -19,6 +19,7 @@ package co.cask.cdap.api.workflow;
 import co.cask.cdap.api.Predicate;
 import co.cask.cdap.api.ProgramConfigurer;
 import co.cask.cdap.api.annotation.Beta;
+import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetProperties;
 
 /**
@@ -67,7 +68,10 @@ public interface WorkflowConfigurer extends ProgramConfigurer {
   WorkflowConditionConfigurer<? extends WorkflowConfigurer> condition(Predicate<WorkflowContext> condition);
 
   /**
-   * Adds a local dataset instance to the {@link Workflow}.
+   * Adds a local dataset instance to the {@link Workflow}. Local datasets are created at the
+   * start of every {@code Workflow} run and deleted once the run is complete. User can decide to
+   * keep the local datasets even after the run is complete by specifying the appropriate runtime
+   * arguments.
    * See {@link co.cask.cdap.api.dataset.DatasetDefinition} for details.
    *
    * @param datasetName name of the dataset instance
@@ -76,4 +80,18 @@ public interface WorkflowConfigurer extends ProgramConfigurer {
    */
   @Beta
   void createLocalDataset(String datasetName, String typeName, DatasetProperties properties);
+
+  /**
+   * Adds a local dataset instance to the {@link Workflow}. Also deploys the dataset type
+   * represented by the datasetClass parameter in the current namespace. Local datasets are created
+   * at the start of every {@code Workflow} run and deleted once the run is complete. User can decide
+   * to keep the local datasets even after the run is complete by specifying the appropriate runtime
+   * arguments.
+   *
+   * @param datasetName dataset instance name
+   * @param datasetClass dataset class to create the Dataset type from
+   * @param props dataset instance properties
+   */
+  @Beta
+  void createLocalDataset(String datasetName, Class<? extends Dataset> datasetClass, DatasetProperties props);
 }

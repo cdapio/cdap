@@ -17,6 +17,7 @@
 package co.cask.cdap.api.workflow;
 
 import co.cask.cdap.api.Predicate;
+import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetProperties;
 
 import java.util.Map;
@@ -129,8 +130,10 @@ public abstract class AbstractWorkflow implements Workflow {
   }
 
   /**
-   * Adds a local dataset instance to the {@link Workflow}.
-   * See {@link co.cask.cdap.api.dataset.DatasetDefinition} for details.
+   * Adds a local dataset instance to the {@link Workflow}. Local datasets are created at the
+   * start of every {@code Workflow} run and deleted once the run is complete. User can decide to
+   * keep the local datasets even after the run is complete by specifying the appropriate runtime
+   * arguments.
    *
    * @param datasetName name of the dataset instance
    * @param typeName name of the dataset type
@@ -142,11 +145,44 @@ public abstract class AbstractWorkflow implements Workflow {
 
   /**
    * Adds a local dataset instance with {@link DatasetProperties#EMPTY} to the {@link Workflow}.
+   * Local datasets are created at the start of every {@code Workflow} run and deleted once the run
+   * is complete. User can decide to keep the local datasets even after the run is complete by
+   * specifying the appropriate runtime arguments.
    *
    * @param datasetName name of the dataset instance
    * @param typeName name of the dataset type
    */
   protected final void createLocalDataset(String datasetName, String typeName) {
     createLocalDataset(datasetName, typeName, DatasetProperties.EMPTY);
+  }
+
+  /**
+   * Adds a local dataset instance to the {@link Workflow}. Also deploys the dataset type
+   * represented by the datasetClass parameter in the current namespace. Local datasets are created
+   * at the start of every {@code Workflow} run and deleted once the run is complete. User can decide
+   * to keep the local datasets even after the run is complete by specifying the appropriate runtime
+   * arguments.
+   *
+   * @param datasetName name of the dataset instance
+   * @param datasetClass dataset class to create the Dataset type from
+   * @param props dataset instance properties
+   */
+  protected final void createLocalDataset(String datasetName, Class<? extends Dataset> datasetClass,
+                                          DatasetProperties props) {
+    configurer.createLocalDataset(datasetName, datasetClass, props);
+  }
+
+  /**
+   * Adds a local dataset instance with {@link DatasetProperties#EMPTY} to the {@link Workflow}.
+   * Also deploys the dataset type represented by the datasetClass parameter in the current namespace.
+   * Local datasets are created at the start of every {@code Workflow} run and deleted once the run
+   * is complete. User can decide to keep the local datasets even after the run is complete by specifying
+   * the appropriate runtime arguments.
+   *
+   * @param datasetName name of the dataset instance
+   * @param datasetClass dataset class to create the Dataset type from
+   */
+  protected final void createLocalDataset(String datasetName, Class<? extends Dataset> datasetClass) {
+    createLocalDataset(datasetName, datasetClass, DatasetProperties.EMPTY);
   }
 }

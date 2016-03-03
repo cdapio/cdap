@@ -17,6 +17,7 @@
 package co.cask.cdap.internal.app.workflow;
 
 import co.cask.cdap.api.Predicate;
+import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.workflow.Workflow;
@@ -29,6 +30,7 @@ import co.cask.cdap.api.workflow.WorkflowForkConfigurer;
 import co.cask.cdap.api.workflow.WorkflowForkNode;
 import co.cask.cdap.api.workflow.WorkflowNode;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
+import co.cask.cdap.app.DefaultAppConfigurer;
 import co.cask.cdap.internal.dataset.DatasetCreationSpec;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
@@ -48,13 +50,15 @@ public class DefaultWorkflowConfigurer implements WorkflowConfigurer, WorkflowFo
   private Map<String, String> properties;
   private final Map<String, DatasetCreationSpec> localDatasetSpecs = new HashMap<>();
   private int nodeIdentifier = 0;
+  private final DefaultAppConfigurer appConfigurer;
 
   private final List<WorkflowNode> nodes = Lists.newArrayList();
 
-  public DefaultWorkflowConfigurer(Workflow workflow) {
+  public DefaultWorkflowConfigurer(Workflow workflow, DefaultAppConfigurer appConfigurer) {
     this.className = workflow.getClass().getName();
     this.name = workflow.getClass().getSimpleName();
     this.description = "";
+    this.appConfigurer = appConfigurer;
   }
 
   @Override
@@ -119,6 +123,12 @@ public class DefaultWorkflowConfigurer implements WorkflowConfigurer, WorkflowFo
                                                          " instance in the Workflow.", datasetName));
     }
     localDatasetSpecs.put(datasetName, spec);
+  }
+
+  @Override
+  public void createLocalDataset(String datasetName, Class<? extends Dataset> datasetClass, DatasetProperties props) {
+    createLocalDataset(datasetName, datasetClass.getName(), props);
+    appConfigurer.addDatasetType(datasetClass);
   }
 
   public WorkflowSpecification createSpecification() {

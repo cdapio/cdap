@@ -73,7 +73,7 @@ public class WorkflowVerificationTest {
                                                                              "SP1")));
 
     Map<String, DatasetCreationSpec> localDatasetSpecs = spec.getLocalDatasetSpecs();
-    Assert.assertEquals(3, localDatasetSpecs.size());
+    Assert.assertEquals(5, localDatasetSpecs.size());
 
     DatasetCreationSpec datasetCreationSpec = localDatasetSpecs.get("mytable");
     Assert.assertEquals(Table.class.getName(), datasetCreationSpec.getTypeName());
@@ -86,6 +86,21 @@ public class WorkflowVerificationTest {
     datasetCreationSpec = localDatasetSpecs.get("myfile_with_properties");
     Assert.assertEquals(FileSet.class.getName(), datasetCreationSpec.getTypeName());
     Assert.assertEquals("prop_value", datasetCreationSpec.getProperties().getProperties().get("prop_key"));
+
+    datasetCreationSpec = localDatasetSpecs.get("mytablefromtype");
+    Assert.assertEquals(Table.class.getName(), datasetCreationSpec.getTypeName());
+    Assert.assertEquals(0, datasetCreationSpec.getProperties().getProperties().size());
+
+    datasetCreationSpec = localDatasetSpecs.get("myfilefromtype");
+    Assert.assertEquals(FileSet.class.getName(), datasetCreationSpec.getTypeName());
+    Assert.assertEquals("another_prop_value",
+                        datasetCreationSpec.getProperties().getProperties().get("another_prop_key"));
+
+    // Check if the application specification has correct modules
+    Map<String, String> datasetModules = appSpec.getDatasetModules();
+    Assert.assertEquals(2, datasetModules.size());
+    Assert.assertTrue(datasetModules.containsKey(FileSet.class.getName()));
+    Assert.assertTrue(datasetModules.containsKey(Table.class.getName()));
   }
 
   private void verifyAnotherGoodWorkflowSpecification(ApplicationSpecification appSpec) {
