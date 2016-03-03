@@ -59,7 +59,6 @@ import org.apache.twill.filesystem.LocationFactory;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
 /**
@@ -120,37 +119,6 @@ public class AppFabricTestHelper {
     });
   }
 
-  public static void deployApplication(Class<?> application) throws Exception {
-    deployApplication(application, CConfiguration.create());
-  }
-
-  public static void deployApplication(Id.Namespace namespace, Class<?> application) throws Exception {
-    deployApplication(namespace, application, CConfiguration.create());
-  }
-
-  public static void deployApplication(Class<?> application, CConfiguration cConf) throws Exception {
-    deployApplication(Id.Namespace.DEFAULT, application, cConf);
-  }
-
-  public static void deployApplication(Id.Namespace namespace, Class<?> application,
-                                       CConfiguration cConf) throws Exception {
-    long time = TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS);
-    deployApplication(namespace, application, "app-" + time, null, cConf);
-  }
-
-  public static void deployApplication(Id.Namespace namespace, Class<?> applicationClz,
-                                       String appName, @Nullable String config) throws Exception {
-    deployApplication(namespace, applicationClz, appName, config, null);
-  }
-
-  public static void deployApplication(Id.Namespace namespace, Class<?> applicationClz,
-                                       String appName, @Nullable String config, CConfiguration cConf) throws Exception {
-    ensureNamespaceExists(namespace, cConf);
-    AppFabricClient appFabricClient = getInjector(cConf).getInstance(AppFabricClient.class);
-    Location deployedJar = appFabricClient.deployApplication(namespace, appName, applicationClz, config);
-    deployedJar.delete(true);
-  }
-
   public static void ensureNamespaceExists(Id.Namespace namespace) throws Exception {
     ensureNamespaceExists(namespace, CConfiguration.create());
   }
@@ -162,31 +130,34 @@ public class AppFabricTestHelper {
     }
   }
 
-  public static void deployApplication(Id.Namespace namespace, Class<?> applicationClz, String appName)
-    throws Exception {
-    deployApplication(namespace, applicationClz, appName, null);
+  public static void deployApplication(Id.Namespace namespace, Class<?> applicationClz,
+                                       @Nullable String config, CConfiguration cConf) throws Exception {
+    ensureNamespaceExists(namespace, cConf);
+    AppFabricClient appFabricClient = getInjector(cConf).getInstance(AppFabricClient.class);
+    Location deployedJar = appFabricClient.deployApplication(namespace, applicationClz, config);
+    deployedJar.delete(true);
   }
 
-  public static void deployApplication(Class<?> applicationClz, String appName) throws Exception {
-    deployApplication(applicationClz, appName, null);
-  }
-
-  public static void deployApplication(Class<?> applicationClz, String appName, String config) throws Exception {
-    deployApplication(Id.Namespace.DEFAULT, applicationClz, appName, config);
-  }
 
   public static ApplicationWithPrograms deployApplicationWithManager(Class<?> appClass,
                                                                      final Supplier<File> folderSupplier)
     throws Exception {
-    ensureNamespaceExists(Id.Namespace.DEFAULT);
+    return deployApplicationWithManager(Id.Namespace.DEFAULT, appClass, folderSupplier);
+  }
+
+  public static ApplicationWithPrograms deployApplicationWithManager(Id.Namespace namespace, Class<?> appClass,
+                                                                     final Supplier<File> folderSupplier)
+    throws Exception {
+    ensureNamespaceExists(namespace);
     Location deployedJar = createAppJar(appClass);
-    Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, appClass.getSimpleName(),
+    Id.Artifact artifactId = Id.Artifact.from(namespace, appClass.getSimpleName(),
                                               String.format("1.0.%d", System.currentTimeMillis()));
     AppDeploymentInfo info = new AppDeploymentInfo(artifactId, appClass.getName(), deployedJar, null);
-    ApplicationWithPrograms appWithPrograms = getLocalManager().deploy(DefaultId.NAMESPACE, null, info).get();
+    ApplicationWithPrograms appWithPrograms = getLocalManager().deploy(namespace, null, info).get();
     // Transform program to get loadable, as the one created in deploy pipeline is not loadable.
 
-    final List<Program> programs = ImmutableList.copyOf(Iterables.transform(appWithPrograms.getPrograms(),
+    final List<Program> programs = ImmutableList.copyOf(Iterables.transform(
+      appWithPrograms.getPrograms(),
       new Function<Program, Program>() {
         @Override
         public Program apply(Program program) {

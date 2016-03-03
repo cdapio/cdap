@@ -151,7 +151,7 @@ public class UnitTestManager implements TestManager {
       Application app = applicationClz.newInstance();
       MockAppConfigurer configurer = new MockAppConfigurer(app);
       app.configure(configurer, new DefaultApplicationContext<>(configObject));
-      appFabricClient.deployApplication(namespace, configurer.getName(), applicationClz, appConfig, bundleEmbeddedJars);
+      appFabricClient.deployApplication(namespace, applicationClz, appConfig, bundleEmbeddedJars);
       return appManagerFactory.create(Id.Application.from(namespace, configurer.getName()));
     } catch (Exception e) {
       throw Throwables.propagate(e);

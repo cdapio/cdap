@@ -41,11 +41,12 @@ import javax.ws.rs.Path;
  * To test runtimeArgs.
  */
 public class HighPassFilterApp extends AbstractApplication {
+  public static final String NAME = "HighPassFilterApp";
   private static final byte[] highPass = Bytes.toBytes("h");
 
   @Override
   public void configure() {
-    setName("HighPassFilterApp");
+    setName(NAME);
     setDescription("Application for filtering numbers. Test runtimeargs.");
     addStream(new Stream("inputvalue"));
     createDataset("counter", KeyValueTable.class);
