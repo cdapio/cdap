@@ -4,9 +4,9 @@
 
 .. _application-logback:
 
-====================
-Application Logbacks
-====================
+===================
+Application Logback
+===================
 
 .. highlight:: xml
 
