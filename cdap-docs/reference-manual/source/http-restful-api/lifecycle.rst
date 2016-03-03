@@ -549,7 +549,7 @@ CDAP for a flow or service’s live info via an HTTP GET method::
    * - ``<program-type>``
      - One of ``flows``, ``workers``, or ``services``
    * - ``<program-id>``
-     - Name of the program (*flow* or *custom service*)  
+     - Name of the program (*flow* or *custom service*)
 
 Example::
 
