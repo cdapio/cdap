@@ -160,7 +160,7 @@ public class SparkProgramRunner extends AbstractProgramRunnerWithPlugin {
       }
 
       SparkSubmitter submitter = SparkContextConfig.isLocal(hConf) ? new LocalSparkSubmitter()
-        : new DistributedSparkSubmitter();
+        : new DistributedSparkSubmitter(options.getArguments().getOption(Constants.AppFabric.APP_SCHEDULER_QUEUE));
       Service sparkRuntimeService = new SparkRuntimeService(
         cConf, hConf, spark, new SparkContextFactory(hConf, context, datasetFramework, txSystemClient, streamAdmin),
         submitter, program.getJarLocation(), txSystemClient
