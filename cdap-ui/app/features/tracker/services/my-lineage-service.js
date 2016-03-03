@@ -110,6 +110,7 @@ class myLineageService {
       }
 
       uniqueNodes[rel.program].runs = uniqueNodes[rel.program].runs.concat(rel.runs);
+      uniqueNodes[rel.program].runs = _.uniq(uniqueNodes[rel.program].runs);
     });
 
     nodes = _.uniq(nodes, (n) => { return n.dataId; });
@@ -188,7 +189,7 @@ class myLineageService {
     var graph = new dagre.graphlib.Graph();
     graph.setGraph({
       nodesep: 90,
-      ranksep: 100,
+      ranksep: 50,
       rankdir: 'LR',
       marginx: 90,
       marginy: 25

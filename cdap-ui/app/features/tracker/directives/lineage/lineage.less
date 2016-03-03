@@ -16,6 +16,8 @@
 
 @grey: #999;
 @font: #3d3d3d;
+@node-height: 55px;
+@node-width: 175px;
 
 my-lineage-diagram {
   .lineage-diagram-container {
@@ -27,8 +29,8 @@ my-lineage-diagram {
   }
 
   .nodes {
-    width: 175px;
-    height: 55px;
+    width: @node-width;
+    height: @node-height;
     position: absolute;
     padding: 10px 15px;
     cursor: pointer;
@@ -57,13 +59,17 @@ my-lineage-diagram {
 
     .navigation-control {
       position: absolute;
+      top: 0;
+      bottom: 0;
+      line-height: @node-height;
 
       span {
-        font-size: 35px;
+        font-size: 45px;
         color: #35c853;
+        vertical-align: middle;
       }
 
-      @offset: 185px;
+      @offset: 180px; // node width + 5px
 
       &.right {
         left: @offset;
@@ -83,5 +89,74 @@ my-lineage-diagram {
   }
   .entity-type {
     color: @entity-type-font-color;
+  }
+}
+
+.popover.tracker-program-popover {
+  width: 500px;
+  max-width: 500px;
+  border: 0;
+  border-radius: 0;
+
+  h4, h5 {
+    font-weight: 500;
+    margin-bottom: 4px;
+  }
+
+  .popover-content {
+    padding: 5px;
+
+    .inside-column {
+      padding-left: 10px;
+      padding-right: 10px;
+    }
+
+    .top-bar {
+      background-color: #666;
+      color: white;
+      padding-bottom: 5px;
+      h4, h5 { color: white; }
+
+      .entity-detail {
+        padding-left: 10px;
+        span { font-size: 14px; }
+      }
+
+      .runs-controller {
+        font-size: 15px;
+        line-height: 24px;
+
+        span {
+          vertical-align: middle;
+          user-select: none;
+        }
+
+        span.fa {
+          font-size: 24px;
+          margin: 0 5px;
+          cursor: pointer;
+        }
+      }
+
+      .close-button {
+        position: absolute;
+        top: 10px;
+        right: 15px;
+        font-size: 15px;
+        cursor: pointer;
+      }
+    }
+
+    .info-container {
+      background-color: #333;
+      color: white;
+      padding-bottom: 10px;
+
+      h5 {
+        color: #ccc;
+        margin-bottom: 0;
+      }
+    }
+
   }
 }

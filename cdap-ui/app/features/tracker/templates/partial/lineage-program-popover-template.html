@@ -14,7 +14,87 @@
   the License.
 -->
 
-<div>
-  <!-- <pre>{{ contentData | json: 4 }}</pre> -->
-  alskdjflaksjlfdkajsd
+<div class="popover tracker-program-popover">
+  <div class="arrow"></div>
+  <div class="popover-content">
+
+    <div class="top-bar">
+      <div class="row">
+
+        <div class="col-xs-8">
+          <div class="entity-detail">
+            <h4>{{ contentData.label }}</h4>
+            <div class="entity-type">
+              <span class="{{ contentData.icon }}"></span>
+              <span>{{ contentData.displayType }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-xs-4">
+          <div class="runs-controller">
+            <h5>Runs</h5>
+            <div class="runs-navigation">
+              <span class="fa fa-caret-left" ng-click="prevRun()"></span>
+              <span>{{ activeRunIndex + 1 }}/{{ contentData.runs.length }}</span>
+              <span class="fa fa-caret-right" ng-click="nextRun()"></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="close-button">
+          <span class="fa fa-close" ng-click="$hide()"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="info-container">
+      <div class="row">
+        <div class="col-xs-12">
+          <div class="inside-column">
+            <h5>Run ID</h5>
+            <div>
+              <span>{{ activeRunId }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="run-detail inside-column">
+          <div class="col-xs-5">
+            <h5>
+              Started
+            </h5>
+            <div>
+              <span> {{ runInfo.start * 1000 | amDateFormat: 'ddd,  MM/DD/YY h:mm:ss a' }} </span>
+            </div>
+          </div>
+
+          <div class="col-xs-3">
+            <h5>
+              Duration
+            </h5>
+            <div>
+              <span>{{ runInfo.duration | amDurationFormat }}</span>
+            </div>
+          </div>
+
+          <div class="col-xs-4">
+            <h5>
+              Status
+            </h5>
+            <div>
+              <span class="fa fa-circle"
+                    ng-class="{'text-success': runInfo.status === 'COMPLETED' || runInfo.status === 'RUNNING', 'text-danger': runInfo.status !== 'COMPLETED' && runInfo.status !== 'RUNNING'}"
+              ></span>
+              <span>{{ runInfo.status }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
 </div>

@@ -19,8 +19,6 @@ class LineageStore {
     this.myLineageService = myLineageService;
 
     this.state = {};
-    this.changeListeners = [];
-
     this.setDefaults();
   }
   setDefaults() {
@@ -30,6 +28,8 @@ class LineageStore {
       connections: [],
       graph: {}
     };
+
+    this.changeListeners = [];
   }
 
   registerOnChangeListener(callback) {

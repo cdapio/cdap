@@ -27,19 +27,15 @@
   </div>
 </div>
 
-<div class="content-loading text-center" ng-if="LineageController.loading">
+<div class="content-loading text-center" ng-show="LineageController.loading">
   <h3>
     <span class="fa fa-spinner fa-spin"></span>
     <span>Obtaining lineage information</span>
   </h3>
 </div>
 
-<div class="lineage-content" ng-if="!LineageController.loading">
+<div class="lineage-content" ng-hide="LineageController.loading">
   <my-lineage-diagram
-    nodes="LineageController.lineageInfo.nodes"
-    connections="LineageController.lineageInfo.connections"
-    graph="LineageController.lineageInfo.graph"
-    unique-nodes="LineageController.lineageInfo.uniqueNodes"
     navigation-function="LineageController.getLineage"
     context="LineageController">
   </my-lineage-diagram>
