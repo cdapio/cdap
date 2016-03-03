@@ -535,10 +535,6 @@ To find out the address of an program's container host and the container’s deb
 CDAP for a flow or service’s live info via an HTTP GET method::
 
   GET <base-url>/namespaces/<namespace>/apps/<app-id>/<program-type>/<program-id>/live-info
-  
-If you are trying to debug a system service, this endpoint gives the container info for a system service::
-
- GET <base-url>/system/services/<service-id>/live-info
 
 .. list-table::
    :widths: 20 80
@@ -553,10 +549,7 @@ If you are trying to debug a system service, this endpoint gives the container i
    * - ``<program-type>``
      - One of ``flows``, ``workers``, or ``services``
    * - ``<program-id>``
-     - Name of the program (*flow* or *custom service*)
-   * - ``<service-id>``
-     - Name of the system service
-  
+     - Name of the program (*flow* or *custom service*)  
 
 Example::
 
@@ -564,9 +557,6 @@ Example::
 
 The response is formatted in JSON; an example of this is shown in 
 :ref:`CDAP Testing and Debugging. <developers:debugging-distributed>`
-
-The available system services can be listed using the :ref:`Service HTTP RESTful API
-<http-restful-api-service-listing-system>`.
 
 
 .. _http-restful-api-lifecycle-scale:
