@@ -34,6 +34,7 @@ import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.DataSetManager;
 import co.cask.cdap.test.MapReduceManager;
+import co.cask.cdap.test.WorkflowManager;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -70,6 +71,46 @@ public class ETLMapReduceTestRun extends ETLBatchTestBase {
     } catch (Exception e) {
       // expected
     }
+  }
+
+  @Test
+  public void testRuntimeOverride() throws Exception {
+    ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
+      .setSource(new ETLStage("source", MockSource.getPlugin("runtimeInput", true)))
+      .addSink(new ETLStage("sink", MockSink.getPlugin("runtimeOutput")))
+      .addConnection("source", "sink")
+      .build();
+
+    AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(ETLBATCH_ARTIFACT, etlConfig);
+    Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "RuntimeApp");
+    ApplicationManager appManager = deployApplication(appId, appRequest);
+
+    Schema schema = Schema.recordOf(
+      "testRecord",
+      Schema.Field.of("name", Schema.of(Schema.Type.STRING))
+    );
+    StructuredRecord recordSamuel = StructuredRecord.builder(schema).set("name", "samuel").build();
+
+    DataSetManager<Table> inputManager = getDataset(Id.Namespace.DEFAULT, "runtimeInput");
+    MockSource.writeInput(inputManager, ImmutableList.of(recordSamuel));
+
+    WorkflowManager workflowManager = appManager.getWorkflowManager(ETLWorkflow.NAME);
+    workflowManager.start(ImmutableMap.of("logicalStartTime", "100"));
+    workflowManager.waitForFinish(5, TimeUnit.MINUTES);
+
+
+    Schema expectedSchema = Schema.recordOf(
+      "testRecord",
+      Schema.Field.of("name", Schema.of(Schema.Type.STRING)),
+      Schema.Field.of("runtime", Schema.of(Schema.Type.LONG))
+    );
+    Set<StructuredRecord> expectedRecords = ImmutableSet.of(
+      StructuredRecord.builder(expectedSchema).set("name", "samuel").set("runtime", 100L).build()
+    );
+
+    DataSetManager<Table> sinkManager = getDataset("runtimeOutput");
+    Set<StructuredRecord> actualRecords = Sets.newHashSet(MockSink.readOutput(sinkManager));
+    Assert.assertEquals(expectedRecords, actualRecords);
   }
 
   @Test

@@ -52,7 +52,8 @@ public abstract class MapReduceBatchContext extends AbstractTransformContext imp
     return LogContext.runWithoutLoggingUnchecked(new Callable<Long>() {
       @Override
       public Long call() throws Exception {
-        return mrContext.getLogicalStartTime();
+        String logicalStartTimeStr = runtimeArguments.get("logicalStartTime");
+        return logicalStartTimeStr == null ? mrContext.getLogicalStartTime() : Long.parseLong(logicalStartTimeStr);
       }
     });
   }
