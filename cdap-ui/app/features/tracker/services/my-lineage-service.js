@@ -126,50 +126,38 @@ class myLineageService {
   }
 
   parseProgramType(programType) {
-    let program = '';
     switch (programType) {
       case 'Flow':
-        program = 'flows';
-        break;
+        return 'flows';
       case 'Mapreduce':
-        program = 'mapreduce';
-        break;
+        return 'mapreduce';
       case 'Spark':
-        program = 'spark';
-        break;
+        return 'spark';
       case 'Worker':
-        program = 'workers';
-        break;
+        return'workers';
       case 'Workflow':
-        program = 'workflows';
-        break;
+        return 'workflows';
       case 'Service':
-        program = 'services';
-        break;
+        return 'services';
     }
-
-    return program;
   }
 
   parseDataInfo(data) {
-    let obj = {};
     if (data.entityId.type === 'datasetinstance') {
-      obj = {
+      return {
         name: data.entityId.id.instanceId,
         type: 'datasets',
         icon: 'icon-datasets',
         displayType: 'Dataset'
       };
     } else {
-      obj = {
+      return {
         name: data.entityId.id.streamName,
         type: 'streams',
         icon: 'icon-streams',
         displayType: 'Stream'
       };
     }
-
-    return obj;
   }
 
   getProgramIcon(programType) {

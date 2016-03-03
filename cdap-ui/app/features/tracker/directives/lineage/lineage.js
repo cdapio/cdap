@@ -148,7 +148,7 @@ function LineageController ($scope, jsPlumb, $timeout, $state, LineageStore, myT
     myTrackerApi.getProgramRunStatus(params)
       .$promise
       .then((res) => {
-        runInfo.start = res.start;
+        runInfo.start = res.start * 1000;
         runInfo.status = res.status;
         runInfo.duration = res.end ? (res.end - res.start) * 1000 : '-';
       });
