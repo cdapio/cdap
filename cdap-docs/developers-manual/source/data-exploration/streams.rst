@@ -67,7 +67,7 @@ There are a few additional limitations on the types of schemas that can be used 
 
   - Schemas must be a record of at least one field.
   
-- For all formats except :ref:`Avro <>`:
+- For all formats except :ref:`avro <stream-exploration-stream-format-avro>`:
 
   - Enums are not supported.
   - Unions are not supported, unless it is a union of a null and another type, representing a nullable type.
