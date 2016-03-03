@@ -73,13 +73,13 @@ public class RemoteDatasetFramework implements DatasetFramework {
   private final AbstractDatasetProvider instances;
 
   @Inject
-  public RemoteDatasetFramework(CConfiguration cConf, final DiscoveryServiceClient discoveryClient,
+  public RemoteDatasetFramework(final CConfiguration cConf, final DiscoveryServiceClient discoveryClient,
                                 DatasetDefinitionRegistryFactory registryFactory) {
     this.cConf = cConf;
     this.clientCache = CacheBuilder.newBuilder().build(new CacheLoader<Id.Namespace, DatasetServiceClient>() {
       @Override
       public DatasetServiceClient load(Id.Namespace namespace) throws Exception {
-        return new DatasetServiceClient(discoveryClient, namespace);
+        return new DatasetServiceClient(discoveryClient, namespace, cConf);
       }
     });
     this.instances = new AbstractDatasetProvider(registryFactory) {

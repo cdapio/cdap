@@ -82,6 +82,10 @@ abstract class ExploreHttpClient implements Explore {
   private static final Type QUERY_INFO_LIST_TYPE = new TypeToken<List<QueryInfo>>() { }.getType();
   private static final Type ROW_LIST_TYPE = new TypeToken<List<QueryResult>>() { }.getType();
 
+  protected HttpRequestConfig getHttpRequestConfig() {
+    return HttpRequestConfig.DEFAULT;
+  }
+
   protected abstract InetSocketAddress getExploreServiceAddress();
 
   protected abstract String getAuthToken();
@@ -454,8 +458,8 @@ abstract class ExploreHttpClient implements Explore {
   }
 
   private HttpRequestConfig createRequestConfig() {
-    return new HttpRequestConfig(HttpRequestConfig.DEFAULT.getConnectTimeout(),
-                                 HttpRequestConfig.DEFAULT.getReadTimeout(),
+    return new HttpRequestConfig(getHttpRequestConfig().getConnectTimeout(),
+                                 getHttpRequestConfig().getReadTimeout(),
                                  verifySSLCert());
   }
 

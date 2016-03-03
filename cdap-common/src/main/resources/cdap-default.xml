@@ -1760,5 +1760,13 @@
     </description>
   </property>
 
+  <property>
+    <name>http.client.connection.timeout.ms</name>
+    <value>60000</value>
+    <description>
+      Timeout in milliseconds for internal HTTP requests
+    </description>
+  </property>
+
 
 </configuration>

@@ -133,6 +133,10 @@ public class ClientConfig {
     return new HttpRequestConfig(defaultConnectTimeout, defaultReadTimeout, verifySSLCert);
   }
 
+  /**
+   * @return a {@link HttpRequestConfig} used for operations whose duration varies based on the operation, such as
+   * application deployment and query execution.
+   */
   public HttpRequestConfig getUploadRequestConfig() {
     if (connectionConfig == null) {
       throw new DisconnectedException();
