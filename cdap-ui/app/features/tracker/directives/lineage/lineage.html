@@ -14,6 +14,10 @@
   the License.
 -->
 
+<div class="no-content-message text-center" ng-if="Lineage.nodes.length === 0">
+  <h3>No lineage data for the selected time period</h3>
+</div>
+
 <div class="lineage-diagram-container" id="lineage-diagram"
      style="height: {{Lineage.graphInfo.height + 300}}px; width: {{Lineage.graphInfo.width + 175}}px;">
   <div class="nodes {{ Lineage.uniqueNodes[node.uniqueNodeId].nodeType }}"

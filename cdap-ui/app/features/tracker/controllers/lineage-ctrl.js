@@ -15,11 +15,12 @@
  */
 
 class TrackerLineageController{
-  constructor($state, myTrackerApi, $scope, LineageActions) {
+  constructor($state, myTrackerApi, $scope, LineageActions, LineageStore) {
     this.$state = $state;
     this.myTrackerApi = myTrackerApi;
     this.$scope = $scope;
     this.LineageActions = LineageActions;
+    LineageStore.setDefaults();
 
     this.timeRangeOptions = [
       {
@@ -84,7 +85,7 @@ class TrackerLineageController{
   }
 }
 
-TrackerLineageController.$inject = ['$state', 'myTrackerApi', '$scope', 'LineageActions'];
+TrackerLineageController.$inject = ['$state', 'myTrackerApi', '$scope', 'LineageActions', 'LineageStore'];
 
 angular.module(PKG.name + '.feature.tracker')
  .controller('TrackerLineageController', TrackerLineageController);
