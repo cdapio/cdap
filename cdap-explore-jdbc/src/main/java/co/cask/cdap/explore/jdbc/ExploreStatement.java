@@ -43,7 +43,7 @@ import java.util.concurrent.ExecutionException;
 public class ExploreStatement implements Statement {
   private static final Logger LOG = LoggerFactory.getLogger(ExploreStatement.class);
 
-  private int fetchSize = 50;
+  private int fetchSize = 1000;
 
   /**
    * We need to keep a reference to the result set to support the following:
