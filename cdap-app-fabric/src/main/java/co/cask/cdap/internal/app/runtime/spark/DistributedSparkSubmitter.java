@@ -16,10 +16,28 @@
 
 package co.cask.cdap.internal.app.runtime.spark;
 
+import java.util.Collections;
+import java.util.Map;
+import javax.annotation.Nullable;
+
 /**
  * A {@link SparkSubmitter} to submit Spark job that runs on cluster.
  */
 public class DistributedSparkSubmitter extends AbstractSparkSubmitter {
+
+  private final String schedulerQueueName;
+
+  public DistributedSparkSubmitter(@Nullable String schedulerQueueName) {
+    this.schedulerQueueName = schedulerQueueName;
+  }
+
+  @Override
+  protected Map<String, String> getSubmitConf() {
+    if (schedulerQueueName != null && !schedulerQueueName.isEmpty()) {
+      return Collections.singletonMap("spark.yarn.queue", schedulerQueueName);
+    }
+    return Collections.emptyMap();
+  }
 
   @Override
   protected String getMaster() {
