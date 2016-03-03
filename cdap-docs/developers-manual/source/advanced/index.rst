@@ -11,9 +11,9 @@ Advanced Topics
 .. toctree::
    :maxdepth: 1
    
-    Application Logback <application-logback>
     Best Practices <best-practices>
     Class Loading <class-loading>
+    Application Logback <application-logback>
 
 
 This section of the documentation includes articles that cover advanced topics on CDAP that
