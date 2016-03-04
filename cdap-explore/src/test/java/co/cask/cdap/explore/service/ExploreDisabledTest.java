@@ -45,7 +45,6 @@ import co.cask.cdap.notifications.feeds.service.NoOpNotificationFeedManager;
 import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
-import co.cask.cdap.store.DefaultNamespaceStore;
 import co.cask.cdap.store.NamespaceStore;
 import co.cask.cdap.store.guice.NamespaceStoreModule;
 import co.cask.tephra.Transaction;

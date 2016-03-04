@@ -14,16 +14,19 @@
  * the License.
  */
 
-package co.cask.cdap.proto.audit.payload.access;
+package co.cask.cdap.proto.audit;
 
 import co.cask.cdap.api.annotation.Beta;
 
 /**
- * Type of access on a data entity.
+ * Types of {@link AuditMessage}s.
  */
 @Beta
-public enum AccessType {
-  READ,
-  WRITE,
-  UNKNOWN
+public enum AuditType {
+  CREATE,
+  UPDATE,
+  DELETE,
+  TRUNCATE,
+  ACCESS,
+  METADATA_CHANGE
 }

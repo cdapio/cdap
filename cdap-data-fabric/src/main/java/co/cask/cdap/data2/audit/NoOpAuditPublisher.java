@@ -14,16 +14,19 @@
  * the License.
  */
 
-package co.cask.cdap.proto.audit;
+package co.cask.cdap.data2.audit;
+
+import co.cask.cdap.proto.audit.AuditPayload;
+import co.cask.cdap.proto.audit.AuditType;
+import co.cask.cdap.proto.id.EntityId;
 
 /**
- * Types of {@link AuditMessage}s.
+ * No-op audit publisher.
  */
-public enum MessageType {
-  CREATE,
-  UPDATE,
-  DELETE,
-  TRUNCATE,
-  ACCESS,
-  METADATA_CHANGE
+public class NoOpAuditPublisher implements AuditPublisher {
+
+  @Override
+  public void publish(EntityId entityId, AuditType auditType, AuditPayload auditPayload) {
+
+  }
 }

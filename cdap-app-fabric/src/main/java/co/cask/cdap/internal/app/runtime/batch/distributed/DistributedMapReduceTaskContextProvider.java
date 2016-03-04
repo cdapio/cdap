@@ -27,6 +27,7 @@ import co.cask.cdap.common.guice.ZKClientModule;
 import co.cask.cdap.data.runtime.DataFabricDistributedModule;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.TransactionExecutorModule;
+import co.cask.cdap.data2.audit.AuditModule;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.transaction.metrics.TransactionManagerMetricsCollector;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
@@ -145,6 +146,7 @@ public final class DistributedMapReduceTaskContextProvider extends MapReduceTask
       new DataSetsModules().getDistributedModules(),
       new TransactionModules().getDistributedModules(),
       new TransactionExecutorModule(),
+      new AuditModule().getDistributedModules(),
       new AbstractModule() {
         @Override
         protected void configure() {
