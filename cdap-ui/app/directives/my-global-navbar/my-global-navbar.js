@@ -14,7 +14,7 @@
  * the License.
  */
 
-function NavbarController ($scope, $state, myNamespace, EventPipe, MYAUTH_EVENT) {
+function NavbarController ($scope, $state, myNamespace, EventPipe, MYAUTH_EVENT, MY_CONFIG) {
   'ngInject';
 
   let vm = this;
@@ -32,6 +32,7 @@ function NavbarController ($scope, $state, myNamespace, EventPipe, MYAUTH_EVENT)
   vm.toggleSidebar = () => {
     vm.showSidebar = !vm.showSidebar;
   };
+  vm.securityEnabled = MY_CONFIG.securityEnabled;
 
   $scope.$on('$stateChangeSuccess', function(event, toState) {
     vm.highlightTab = toState.data && toState.data.highlightTab;

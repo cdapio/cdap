@@ -73,6 +73,19 @@ my-global-navbar {
       font-size: 17px;
       cursor: pointer;
       float: left;
+      padding: 0 20px;
+
+      &.open {
+        background-color: white;
+        color: #666666;
+        border-bottom: 2px solid #cccccc;
+      }
+
+      ul.dropdown-menu {
+        margin: 1px 0;
+        border: 0;
+        border-radius: 0 0 4px 4px;
+      }
     }
 
     .namespace-dropdown {
@@ -83,21 +96,9 @@ my-global-navbar {
 
       div[disabled] { cursor: not-allowed; }
 
-      &.open {
-        background-color: white;
-        color: #666666;
-        border-bottom: 2px solid #cccccc;
-      }
-
       .fa {
         line-height: 50px;
         font-size: 17px;
-      }
-
-      ul.dropdown-menu {
-        margin: 1px 0;
-        border: 0;
-        border-radius: 0 0 4px 4px;
       }
     }
   }

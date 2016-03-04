@@ -116,12 +116,50 @@
         </form>
       </div> -->
 
-      <!-- <div class="navbar-item">
-        <my-error></my-error>
-      </div> -->
-
       <div class="navbar-item">
-        <span class="fa fa-cog"></span>
+        <my-error></my-error>
+      </div>
+
+      <div class="navbar-item" uib-dropdown>
+        <div uib-dropdown-toggle>
+          <span class="fa fa-cog"></span>
+        </div>
+
+        <ul uib-dropdown-menu>
+          <li>
+            <a href="http://cask.co" target="_blank">
+              <span class="fa fa-fw fa-book"></span>
+              <span>Cask Home</span>
+            </a>
+          </li>
+          <li>
+            <a href="http://cask.co/community">
+              <span class="fa fa-fw fa-support"></span>
+              <span>Support</span>
+            </a>
+          </li>
+
+          <li ng-hide="currentUser" ui-sref-active="disabled">
+            <a ui-sref="login({next:$state.current.url})">
+              <span class="fa fa-fw fa-sign-in"></span>
+              <span>Log In</span>
+            </a>
+          </li>
+
+          <li ng-show="currentUser && securityEnabled" ur-sref-active="disabled">
+            <a ui-sref="userprofile">
+              <span class="fa fa-fw fa-user"></span>
+              <span>Profile</span>
+            </a>
+          </li>
+
+          <li role="presentation" ng-show="currentUser" ng-class="{disabled:!securityEnabled}">
+            <a href="" ng-click="securityEnabled && logout()">
+              <span class="fa fa-fw fa-sign-out"></span>
+              <span>Log Out</span>
+            </a>
+          </li>
+        </ul>
       </div>
 
       <div class="navbar-item namespace-dropdown" uib-dropdown>
