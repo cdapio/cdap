@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -45,11 +45,13 @@ import co.cask.cdap.common.lang.PropertyFieldSetter;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.DataSetFieldSetter;
 import co.cask.cdap.internal.app.runtime.MetricsFieldSetter;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.workflow.DefaultWorkflowActionConfigurer;
+import co.cask.cdap.internal.dataset.DatasetCreationSpec;
 import co.cask.cdap.internal.lang.Reflections;
 import co.cask.cdap.internal.workflow.ProgramWorkflowAction;
 import co.cask.cdap.logging.context.WorkflowLoggingContext;
@@ -73,8 +75,10 @@ import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -117,6 +121,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
   private final RunId runId;
   private final MetricsCollectionService metricsCollectionService;
   private final DatasetFramework datasetFramework;
+  private final Map<String, String> localDatasetNameMapping = new HashMap<>();
   private final DiscoveryServiceClient discoveryServiceClient;
   private final TransactionSystemClient txClient;
   private final Store store;
@@ -145,12 +150,26 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
                                                      arguments.getOption(ProgramOptionConstants.RUN_ID));
     this.runId = RunIds.fromString(options.getArguments().getOption(ProgramOptionConstants.RUN_ID));
     this.metricsCollectionService = metricsCollectionService;
-    this.datasetFramework = datasetFramework;
+    this.datasetFramework
+      = createForWardingDatasetFramework(datasetFramework,
+                                         options.getArguments().getOption(ProgramOptionConstants.RUN_ID));
     this.discoveryServiceClient = discoveryServiceClient;
     this.txClient = txClient;
     this.store = store;
     this.workflowId = Id.Workflow.from(program.getId().getApplication(), workflowSpec.getName());
     this.cConf = cConf;
+  }
+
+  private DatasetFramework createForWardingDatasetFramework(DatasetFramework datasetFramework, String runId) {
+    for (String datasetName : workflowSpec.getLocalDatasetSpecs().keySet()) {
+      localDatasetNameMapping.put(datasetName, getLocalDatasetName(datasetName, runId));
+    }
+
+    return new ForwardingDatasetFramework(datasetFramework, localDatasetNameMapping);
+  }
+
+  private String getLocalDatasetName(String datasetName, String runId) {
+    return datasetName + "." + runId;
   }
 
   @Override
@@ -427,14 +446,39 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     executeAll(iterator, appSpec, instantiator, classLoader, token);
   }
 
+  private void createLocalDatasets() throws IOException, DatasetManagementException {
+    for (Map.Entry<String, DatasetCreationSpec> instanceEntry : workflowSpec.getLocalDatasetSpecs().entrySet()) {
+      String localInstanceName = getLocalDatasetName(instanceEntry.getKey(), runId.getId());
+      Id.DatasetInstance instanceId = Id.DatasetInstance.from(program.getNamespaceId(), localInstanceName);
+      DatasetCreationSpec instanceSpec = instanceEntry.getValue();
+      LOG.info("Adding Workflow local dataset instance: {}", localInstanceName);
+      datasetFramework.addInstance(instanceSpec.getTypeName(), instanceId, instanceSpec.getProperties());
+    }
+  }
+
+  private void deleteLocalDatasets() {
+    for (Map.Entry<String, DatasetCreationSpec> instanceEntry : workflowSpec.getLocalDatasetSpecs().entrySet()) {
+      String localInstanceName = getLocalDatasetName(instanceEntry.getKey(), runId.getId());
+      Id.DatasetInstance instanceId = Id.DatasetInstance.from(program.getNamespaceId(), localInstanceName);
+      LOG.info("Deleting Workflow local dataset instance: {}", localInstanceName);
+      try {
+        datasetFramework.deleteInstance(instanceId);
+      } catch (IOException | DatasetManagementException e) {
+        LOG.warn("Failed to delete the Workflow local dataset instance {}", localInstanceName, e);
+      }
+    }
+  }
+
   @Override
   protected void run() throws Exception {
     LOG.info("Start workflow execution for {}", workflowSpec);
+    createLocalDatasets();
     WorkflowToken token = new BasicWorkflowToken(cConf.getInt(Constants.AppFabric.WORKFLOW_TOKEN_MAX_SIZE_MB));
     executeAll(workflowSpec.getNodes().iterator(), program.getApplicationSpecification(),
                new InstantiatorFactory(false), program.getClassLoader(), token);
 
     LOG.info("Workflow execution succeeded for {}", workflowSpec);
+    deleteLocalDatasets();
   }
 
   private void executeAll(Iterator<WorkflowNode> iterator, ApplicationSpecification appSpec,
@@ -475,7 +519,8 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
   private BasicWorkflowContext createWorkflowContext(WorkflowActionSpecification actionSpec,
                                                      WorkflowToken token, String nodeId) {
     return new BasicWorkflowContext(workflowSpec, actionSpec, logicalStartTime,
-                                    workflowProgramRunnerFactory.getProgramWorkflowRunner(actionSpec, token, nodeId),
+                                    workflowProgramRunnerFactory.getProgramWorkflowRunner(actionSpec, token, nodeId,
+                                                                                          localDatasetNameMapping),
                                     new BasicArguments(runtimeArgs), token, program, runId, metricsCollectionService,
                                     datasetFramework, txClient, discoveryServiceClient);
   }

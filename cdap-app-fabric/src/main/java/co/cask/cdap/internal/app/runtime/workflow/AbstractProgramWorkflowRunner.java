@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -63,10 +63,12 @@ public abstract class AbstractProgramWorkflowRunner implements ProgramWorkflowRu
   protected final ProgramRunnerFactory programRunnerFactory;
   protected final Program workflowProgram;
   protected final WorkflowToken token;
+  protected final Map<String, String> localDatasetNameMapping;
 
   public AbstractProgramWorkflowRunner(Program workflowProgram, ProgramOptions workflowProgramOptions,
                                        ProgramRunnerFactory programRunnerFactory, WorkflowSpecification workflowSpec,
-                                       WorkflowToken token, String nodeId) {
+                                       WorkflowToken token, String nodeId,
+                                       Map<String, String> localDatasetNameMapping) {
     this.userArguments = workflowProgramOptions.getUserArguments();
     this.workflowProgram = workflowProgram;
     this.programRunnerFactory = programRunnerFactory;
@@ -74,6 +76,7 @@ public abstract class AbstractProgramWorkflowRunner implements ProgramWorkflowRu
     this.systemArguments = workflowProgramOptions.getArguments();
     this.token = token;
     this.nodeId = nodeId;
+    this.localDatasetNameMapping = localDatasetNameMapping;
   }
 
   @Override
@@ -102,6 +105,8 @@ public abstract class AbstractProgramWorkflowRunner implements ProgramWorkflowRu
     systemArgumentsMap.put(ProgramOptionConstants.WORKFLOW_NODE_ID, nodeId);
     systemArgumentsMap.put(ProgramOptionConstants.PROGRAM_NAME_IN_WORKFLOW, name);
     systemArgumentsMap.put(ProgramOptionConstants.WORKFLOW_TOKEN, GSON.toJson(token));
+    systemArgumentsMap.put(ProgramOptionConstants.WORKFLOW_LOCAL_DATASET_NAME_MAPPING,
+                           GSON.toJson(localDatasetNameMapping));
 
     final ProgramOptions options = new SimpleProgramOptions(
       program.getName(),

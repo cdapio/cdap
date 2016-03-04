@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -44,8 +44,9 @@ final class MapReduceProgramWorkflowRunner extends AbstractProgramWorkflowRunner
 
   MapReduceProgramWorkflowRunner(WorkflowSpecification workflowSpec, ProgramRunnerFactory programRunnerFactory,
                                  Program workflowProgram, ProgramOptions workflowProgramOptions, WorkflowToken token,
-                                 String nodeId) {
-    super(workflowProgram, workflowProgramOptions, programRunnerFactory, workflowSpec, token, nodeId);
+                                 String nodeId, Map<String, String> localDatasetNameMapping) {
+    super(workflowProgram, workflowProgramOptions, programRunnerFactory, workflowSpec, token, nodeId,
+          localDatasetNameMapping);
   }
 
   /**

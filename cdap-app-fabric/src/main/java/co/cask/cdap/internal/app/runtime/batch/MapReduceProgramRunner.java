@@ -45,6 +45,7 @@ import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.ProgramRunners;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.internal.app.runtime.workflow.BasicWorkflowToken;
+import co.cask.cdap.internal.app.runtime.workflow.ForwardingDatasetFramework;
 import co.cask.cdap.internal.lang.Reflections;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
@@ -69,8 +70,10 @@ import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
 import java.io.File;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
@@ -87,7 +90,7 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
   private final Configuration hConf;
   private final LocationFactory locationFactory;
   private final MetricsCollectionService metricsCollectionService;
-  private final DatasetFramework datasetFramework;
+  private DatasetFramework datasetFramework;
   private final Store store;
   private final TransactionSystemClient txSystemClient;
   private final DiscoveryServiceClient discoveryServiceClient;
@@ -152,6 +155,13 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
     if (arguments.hasOption(ProgramOptionConstants.WORKFLOW_TOKEN)) {
       workflowToken = GSON.fromJson(arguments.getOption(ProgramOptionConstants.WORKFLOW_TOKEN),
                                     BasicWorkflowToken.class);
+    }
+
+    if (arguments.hasOption(ProgramOptionConstants.WORKFLOW_LOCAL_DATASET_NAME_MAPPING)) {
+      Type type = new TypeToken<Map<String, String>>() { }.getType();
+      Map<String, String> localDatasetNameMapping
+        = GSON.fromJson(arguments.getOption(ProgramOptionConstants.WORKFLOW_LOCAL_DATASET_NAME_MAPPING), type);
+      datasetFramework = new ForwardingDatasetFramework(datasetFramework, localDatasetNameMapping);
     }
 
     // Setup dataset framework context, if required

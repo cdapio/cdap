@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -61,6 +61,8 @@ public final class MapReduceContextConfig {
   private static final String HCONF_ATTR_LOGICAL_START_TIME = "hconf.program.logical.start.time";
   private static final String HCONF_ATTR_PROGRAM_NAME_IN_WORKFLOW = "hconf.program.name.in.workflow";
   private static final String HCONF_ATTR_WORKFLOW_TOKEN = "hconf.program.workflow.token";
+  private static final String HCONF_ATTR_WORKFLOW_LOCAL_DATASET_NAME_MAPPING
+    = "hconf.program.workflow.localdatasetnamemapping";
   private static final String HCONF_ATTR_PLUGINS = "hconf.program.plugins.map";
   private static final String HCONF_ATTR_ARGS = "hconf.program.args";
   private static final String HCONF_ATTR_PROGRAM_JAR_URI = "hconf.program.jar.uri";
@@ -93,6 +95,7 @@ public final class MapReduceContextConfig {
     setLogicalStartTime(context.getLogicalStartTime());
     setProgramNameInWorkflow(context.getProgramNameInWorkflow());
     setWorkflowToken(context.getWorkflowToken());
+    setLocalDatasetNameMapping(context.getLocalDatasetNameMapping());
     setPlugins(context.getPlugins());
     setArguments(context.getRuntimeArguments());
     setProgramJarURI(programJarURI);
@@ -171,6 +174,26 @@ public final class MapReduceContextConfig {
     BasicWorkflowToken token = GSON.fromJson(tokenJson, BasicWorkflowToken.class);
     token.disablePut();
     return token;
+  }
+
+  /**
+   * Returns the mapping of the local dataset names to the names assigned to them for the current run of the Workflow.
+   */
+  @Nullable
+  public Map<String, String> getLocalDatasetNameMapping() {
+    String mappingJson = hConf.get(HCONF_ATTR_WORKFLOW_LOCAL_DATASET_NAME_MAPPING);
+    if (mappingJson == null) {
+      return null;
+    }
+
+    Type type = new TypeToken<Map<String, String>>() { }.getType();
+    return GSON.fromJson(mappingJson, type);
+  }
+
+  private void setLocalDatasetNameMapping(@Nullable Map<String, String> localDatasetNameMapping) {
+    if (localDatasetNameMapping != null) {
+      hConf.set(HCONF_ATTR_WORKFLOW_LOCAL_DATASET_NAME_MAPPING, GSON.toJson(localDatasetNameMapping));
+    }
   }
 
   private void setPlugins(Map<String, Plugin> plugins) {
