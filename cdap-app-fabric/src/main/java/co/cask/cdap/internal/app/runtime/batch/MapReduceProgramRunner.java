@@ -43,7 +43,6 @@ import co.cask.cdap.internal.app.runtime.MetricsFieldSetter;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.ProgramRunners;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
-import co.cask.cdap.internal.app.runtime.workflow.BasicWorkflowToken;
 import co.cask.cdap.internal.app.runtime.workflow.NameMappedDatasetFramework;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
 import co.cask.cdap.internal.lang.Reflections;
@@ -142,11 +141,6 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
 
     final RunId runId = RunIds.fromString(arguments.getOption(ProgramOptionConstants.RUN_ID));
 
-    long logicalStartTime = arguments.hasOption(ProgramOptionConstants.LOGICAL_START_TIME)
-                                ? Long.parseLong(arguments
-                                                   .getOption(ProgramOptionConstants.LOGICAL_START_TIME))
-                                : System.currentTimeMillis();
-
     WorkflowProgramInfo workflowInfo = WorkflowProgramInfo.create(arguments);
     DatasetFramework programDatasetFramework = workflowInfo == null ?
       datasetFramework :
@@ -176,7 +170,7 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
 
       final BasicMapReduceContext context =
         new BasicMapReduceContext(program, runId, options.getUserArguments(), spec,
-                                  logicalStartTime, workflowInfo, discoveryServiceClient,
+                                  workflowInfo, discoveryServiceClient,
                                   metricsCollectionService, txSystemClient, programDatasetFramework, streamAdmin,
                                   getPluginArchive(options), pluginInstantiator);
 

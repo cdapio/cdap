@@ -567,6 +567,7 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
 
     runtimeArguments.put("input.path", createInput("ProgramInput"));
     runtimeArguments.put("mapreduce.OneMR.input.path", createInput("OneMRInput"));
+    runtimeArguments.put("mapreduce.OneMR.logical.start.time", "1234567890000");
     runtimeArguments.put("mapreduce.AnotherMR.input.path", createInput("AnotherMRInput"));
     runtimeArguments.put("spark.*.input.path", createInput("SparkInput"));
 

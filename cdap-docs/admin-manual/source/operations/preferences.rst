@@ -89,6 +89,17 @@ or provide Twitter API credentials::
       collector.start();
     }
 
+System Populated Runtime Arguments
+==================================
+
+Every program run, CDAP will populate the runtime arguments with some pre-defined values:
+
+``logical.start.time`` - the start time of the run as a timestamp in milliseconds.
+If the run was started by a schedule, this will be equal the trigger time for the schedule.
+For example, if the schedule was set to run at midnight Jan 1 2016 UTC, the logical start time would be 1451606400000.
+
+If any of these arguments are passed in to start a program run, they will override the system populated value.
+
 Scoped Runtime Arguments for Workflow
 =====================================
 When a workflow is configured, you may want to pass specific runtime arguments to the different programs

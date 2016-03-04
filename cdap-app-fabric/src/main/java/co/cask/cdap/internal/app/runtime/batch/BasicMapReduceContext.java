@@ -68,7 +68,6 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
 
   private final MapReduceSpecification spec;
   private final LoggingContext loggingContext;
-  private final long logicalStartTime;
   private final WorkflowProgramInfo workflowProgramInfo;
   private final Metrics userMetrics;
   private final Map<String, Plugin> plugins;
@@ -88,7 +87,6 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
                                RunId runId,
                                Arguments runtimeArguments,
                                MapReduceSpecification spec,
-                               long logicalStartTime,
                                @Nullable WorkflowProgramInfo workflowProgramInfo,
                                DiscoveryServiceClient discoveryServiceClient,
                                MetricsCollectionService metricsCollectionService,
@@ -100,7 +98,6 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
     super(program, runId, runtimeArguments, Collections.<String>emptySet(),
           getMetricsCollector(program, runId.getId(), metricsCollectionService),
           dsFramework, txClient, discoveryServiceClient, false, pluginInstantiator);
-    this.logicalStartTime = logicalStartTime;
     this.workflowProgramInfo = workflowProgramInfo;
 
     if (metricsCollectionService != null) {
@@ -148,11 +145,6 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
   @Override
   public MapReduceSpecification getSpecification() {
     return spec;
-  }
-
-  @Override
-  public long getLogicalStartTime() {
-    return logicalStartTime;
   }
 
   /**
