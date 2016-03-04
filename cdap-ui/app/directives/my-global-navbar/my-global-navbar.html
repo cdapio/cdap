@@ -26,7 +26,7 @@
 
 <header class="navbar navbar-fixed-top">
   <nav class="navbar {{ Navbar.activeProduct }}">
-    <div class="navbar-header">
+    <div class="brand-header">
       <a href="" class="navbar-brand" ng-click="Navbar.toggleSidebar()">
         <span class="icon-fist" ng-if="Navbar.activeProduct === 'cdap'"></span>
         <span class="icon-hydrator" ng-if="Navbar.activeProduct === 'hydrator'"></span>
@@ -54,7 +54,7 @@
     </div>
 
     <!-- CDAP -->
-    <ul class="nav navbar-nav" ng-if="Navbar.activeProduct === 'cdap'">
+    <ul class="navbar-list" ng-if="Navbar.activeProduct === 'cdap'">
       <li>
         <a ui-sref="dashboard.standard.cdap({namespace: $stateParams.namespace})"
            ng-class="{ 'active': Navbar.highlightTab === 'dashboard' }">
@@ -70,7 +70,7 @@
     </ul>
 
     <!-- HYDRATOR -->
-    <ul class="nav navbar-nav" ng-if="Navbar.activeProduct === 'hydrator'">
+    <ul class="navbar-list" ng-if="Navbar.activeProduct === 'hydrator'">
       <li>
         <a ui-sref="hydrator.list({ namespace: $stateParams.namespace })"
            ng-class="{ 'active': Navbar.highlightTab == 'hydratorList'}">
@@ -86,7 +86,7 @@
     </ul>
 
     <!-- TRACKER -->
-    <ul class="nav navbar-nav" ng-if="Navbar.activeProduct === 'tracker'">
+    <ul class="navbar-list" ng-if="Navbar.activeProduct === 'tracker'">
       <li>
         <a ui-sref="tracker-home({ namespace: $stateParams.namespace })"
            ng-class="{ 'active': Navbar.highlightTab == 'search'}">

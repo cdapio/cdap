@@ -32,8 +32,9 @@ my-global-navbar {
     &.hydrator { .product-navbar-mixins(@hydrator-blue); }
     &.tracker { .product-navbar-mixins(@tracker-green); }
 
-    .navbar-header {
+    .brand-header {
       width: 200px;
+      float: left;
       a { color: white; }
 
       .navbar-brand {
@@ -53,12 +54,17 @@ my-global-navbar {
       font-size: 14px;
     }
 
-    .nav.navbar-nav {
+    .navbar-list {
       margin-left: 15px;
+      float: left;
+      line-height: 50px;
+
+      li { display: inline-block; }
       a {
         padding-left: 0;
         padding-right: 40px;
         color: #cccccc;
+        text-decoration: none;
         &:hover, &:focus { background-color: inherit; }
       }
     }
@@ -173,8 +179,8 @@ my-global-navbar {
 }
 
 .product-navbar-mixins(@product-color) {
-  .navbar-header .navbar-brand { border-color: @product-color; }
-  .nav.navbar-nav {
+  .brand-header .navbar-brand { border-color: @product-color; }
+  .navbar-list {
     a {
       &:hover, &.active {
         color: @product-color;
