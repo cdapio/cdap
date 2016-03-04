@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -30,6 +30,8 @@ import co.cask.cdap.internal.app.runtime.spark.SparkProgramController;
 import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Preconditions;
 
+import java.util.Map;
+
 /**
  * Creates {@link Runnable} for executing {@link Spark} programs from {@link Workflow}.
  */
@@ -37,8 +39,9 @@ final class SparkProgramWorkflowRunner extends AbstractProgramWorkflowRunner {
 
   SparkProgramWorkflowRunner(WorkflowSpecification workflowSpec, ProgramRunnerFactory programRunnerFactory,
                              Program workflowProgram, ProgramOptions workflowProgramOptions, WorkflowToken token,
-                             String nodeId) {
-    super(workflowProgram, workflowProgramOptions, programRunnerFactory, workflowSpec, token, nodeId);
+                             String nodeId, Map<String, String> localDatasetNameMapping) {
+    super(workflowProgram, workflowProgramOptions, programRunnerFactory, workflowSpec, token, nodeId,
+          localDatasetNameMapping);
   }
 
   /**

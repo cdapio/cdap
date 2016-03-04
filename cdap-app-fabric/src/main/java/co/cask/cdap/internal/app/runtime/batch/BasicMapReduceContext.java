@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -42,6 +42,7 @@ import co.cask.cdap.internal.app.runtime.batch.dataset.DatasetInputFormatProvide
 import co.cask.cdap.internal.app.runtime.batch.dataset.DatasetOutputFormatProvider;
 import co.cask.cdap.internal.app.runtime.distributed.LocalizeResource;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
+import co.cask.cdap.internal.app.runtime.workflow.ForwardingDatasetFramework;
 import co.cask.cdap.logging.context.MapReduceLoggingContext;
 import co.cask.cdap.proto.Id;
 import co.cask.tephra.TransactionContext;
@@ -77,6 +78,7 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
   private final StreamAdmin streamAdmin;
   private final File pluginArchive;
   private final Map<String, LocalizeResource> resourcesToLocalize;
+  private final Map<String, String> localDatasetNameMapping;
 
   private InputFormatProvider inputFormatProvider;
 
@@ -101,6 +103,11 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
     super(program, runId, runtimeArguments, Collections.<String>emptySet(),
           getMetricsCollector(program, runId.getId(), metricsCollectionService),
           dsFramework, txClient, discoveryServiceClient, false, pluginInstantiator);
+    if (dsFramework instanceof ForwardingDatasetFramework) {
+      localDatasetNameMapping = ((ForwardingDatasetFramework) dsFramework).getDatasetNameMapping();
+    } else {
+      localDatasetNameMapping = null;
+    }
     this.logicalStartTime = logicalStartTime;
     this.programNameInWorkflow = programNameInWorkflow;
     this.workflowToken = workflowToken;
@@ -342,5 +349,10 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
     }
     return new DatasetInputFormatProvider(datasetName, datasetArgs, getDataset(datasetName, datasetArgs),
                                           splits, MapReduceBatchReadableInputFormat.class);
+  }
+
+  @Nullable
+  public Map<String, String> getLocalDatasetNameMapping() {
+    return localDatasetNameMapping;
   }
 }

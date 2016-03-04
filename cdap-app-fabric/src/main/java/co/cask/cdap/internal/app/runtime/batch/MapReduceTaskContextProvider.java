@@ -23,6 +23,7 @@ import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.program.Programs;
 import co.cask.cdap.common.twill.LocalLocationFactory;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.internal.app.runtime.workflow.ForwardingDatasetFramework;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowMapReduceProgram;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Preconditions;
@@ -44,6 +45,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -172,11 +174,15 @@ public class MapReduceTaskContextProvider extends AbstractIdleService {
 
         TransactionSystemClient txClient = injector.getInstance(TransactionSystemClient.class);
 
+        Map<String, String> localDatasetNameMapping = contextConfig.getLocalDatasetNameMapping();
+        DatasetFramework dsFramework = localDatasetNameMapping == null ? datasetFramework
+          : new ForwardingDatasetFramework(datasetFramework, localDatasetNameMapping);
+
         return new BasicMapReduceTaskContext(
           program, taskType, contextConfig.getRunId(), key.getTaskAttemptID().getTaskID().toString(),
           contextConfig.getArguments(), spec, contextConfig.getLogicalStartTime(),
           contextConfig.getWorkflowToken(), discoveryServiceClient, metricsCollectionService, txClient,
-          contextConfig.getTx(), datasetFramework, classLoader.getPluginInstantiator(),
+          contextConfig.getTx(), dsFramework, classLoader.getPluginInstantiator(),
           contextConfig.getLocalizedResources()
         );
       }
