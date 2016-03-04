@@ -106,6 +106,41 @@
         </a>
       </li>
     </ul>
+
+
+    <!-- RIGHT MENUS -->
+    <div class="pull-right right-menu">
+      <!-- <div class="navbar-item">
+        <form class="navbar-form">
+          <my-search></my-search>
+        </form>
+      </div> -->
+
+      <!-- <div class="navbar-item">
+        <my-error></my-error>
+      </div> -->
+
+      <div class="navbar-item">
+        <span class="fa fa-cog"></span>
+      </div>
+
+      <div class="navbar-item namespace-dropdown" uib-dropdown>
+        <div uib-dropdown-toggle ng-disabled="$state.includes('admin.**')">
+          <span>{{ $state.params.namespace || 'Management' }}</span>
+          <span class="fa fa-angle-down pull-right"></span>
+        </div>
+
+        <ul uib-dropdown-menu>
+          <li ng-repeat="ns in Navbar.namespaces">
+            <a href="" ng-click="Navbar.changeNamespace(ns)">
+              <i ng-class="{'fa fa-check': ns.name === $state.params.namespace}"></i>
+              {{ ns.name }}
+            </a>
+          </li>
+        </ul>
+      </div>
+    </div>
+
   </nav>
 </header>
 
@@ -166,8 +201,5 @@
         <span>Cask Tracker</span>
       </div>
     </a>
-
-
-
   </div>
 </div>

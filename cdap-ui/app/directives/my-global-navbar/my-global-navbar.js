@@ -14,7 +14,7 @@
  * the License.
  */
 
-function NavbarController ($scope, $state) {
+function NavbarController ($scope, $state, myNamespace, EventPipe, MYAUTH_EVENT) {
   'ngInject';
 
   let vm = this;
@@ -28,9 +28,7 @@ function NavbarController ($scope, $state) {
       return 'cdap';
     }
   }
-
   vm.showSidebar = false;
-
   vm.toggleSidebar = () => {
     vm.showSidebar = !vm.showSidebar;
   };
@@ -40,6 +38,35 @@ function NavbarController ($scope, $state) {
     vm.activeProduct = findActiveProduct();
     vm.showSidebar = false;
   });
+
+
+  // NAMESPACE
+  vm.namespaces = [];
+  function updateNamespaceList() {
+    myNamespace.getList()
+      .then(function(list) {
+        vm.namespaces = list;
+      });
+  }
+  // Listening for event from namespace create or namespace delete
+  EventPipe.on('namespace.update', updateNamespaceList);
+
+  $scope.$on (MYAUTH_EVENT.loginSuccess, updateNamespaceList);
+  $scope.$on (MYAUTH_EVENT.logoutSuccess, () => {
+    vm.namespaces = [];
+  });
+
+  vm.changeNamespace = (ns) => {
+    if ($state.includes('hydrator.**')) {
+      $state.go('hydrator.list', { namespace: ns.name });
+    } else if ($state.includes('tracker.**') || $state.is('tracker-home')) {
+      $state.go('tracker-home', { namespace: ns.name });
+    } else if ($state.includes('dashboard.**')){
+      $state.go('dashboard.standard.cdap', { namespace: ns.name });
+    } else {
+      $state.go('overview', { namespace: ns.name });
+    }
+  };
 
 }
 
