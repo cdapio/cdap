@@ -14,3 +14,42 @@
  * the License.
  */
 
+function NavbarController ($scope, $state) {
+  'ngInject';
+
+  let vm = this;
+
+  function findActiveProduct() {
+    if ($state.includes('hydrator.**')) {
+      return 'hydrator';
+    } else if ($state.includes('tracker.**') || $state.is('tracker-home')) {
+      return 'tracker';
+    } else {
+      return 'cdap';
+    }
+  }
+
+  vm.showSidebar = false;
+
+  vm.toggleSidebar = () => {
+    vm.showSidebar = !vm.showSidebar;
+  };
+
+  $scope.$on('$stateChangeSuccess', function(event, toState) {
+    vm.highlightTab = toState.data && toState.data.highlightTab;
+    vm.activeProduct = findActiveProduct();
+    vm.showSidebar = false;
+  });
+
+}
+
+
+angular.module(PKG.name+'.commons')
+  .directive('myGlobalNavbar', () => {
+    return {
+      restrict: 'E',
+      templateUrl: 'my-global-navbar/my-global-navbar.html',
+      controller: NavbarController,
+      controllerAs: 'Navbar'
+    };
+  });
