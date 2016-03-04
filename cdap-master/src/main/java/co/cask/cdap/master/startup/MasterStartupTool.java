@@ -57,6 +57,7 @@ public class MasterStartupTool {
     ConfigurationLogger.logImportantConfig(cConf);
     LOG.info("Hadoop subsystem versions:");
     LOG.info("  Hadoop version: {}", ClientVersions.getHadoopVersion());
+    LOG.info("  HBase version: {}", ClientVersions.getHBaseVersion());
     LOG.info("  ZooKeeper version: {}", ClientVersions.getZooKeeperVersion());
     LOG.info("  Kafka version: {}", ClientVersions.getKafkaVersion());
     if (cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED)) {
