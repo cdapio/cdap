@@ -299,6 +299,10 @@ public abstract class IntegrationTestBase {
     return deployApplication(Id.Namespace.DEFAULT, applicationClz);
   }
 
+  protected ApplicationManager getApplicationManager(Id.Application appId) throws Exception {
+    return getTestManager().getApplicationManager(appId);
+  }
+
   private boolean isUserDataset(DatasetSpecificationSummary specification) {
     final DefaultDatasetNamespace dsNamespace = new DefaultDatasetNamespace(CConfiguration.create());
     return !dsNamespace.contains(specification.getName(), Id.Namespace.SYSTEM.getId());
