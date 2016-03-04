@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -316,7 +316,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
         if (method.isSynthetic() || method.isBridge()) {
           continue;
         }
-        if (!seenMethods.add(new FlowletMethod(method, flowletType))) {
+        if (!seenMethods.add(FlowletMethod.create(method, flowletType.getType()))) {
           // The method is already seen. It can only happen if a children class override a parent class method and
           // is visting the parent method, since the method visiting order is always from the leaf class walking
           // up the class hierarchy.

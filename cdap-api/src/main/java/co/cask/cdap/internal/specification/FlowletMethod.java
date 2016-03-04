@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,10 +16,12 @@
 
 package co.cask.cdap.internal.specification;
 
-import com.google.common.reflect.TypeToken;
+import co.cask.cdap.internal.guava.reflect.TypeToken;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
+import java.util.Arrays;
+import java.util.Objects;
 
 /**
  * Class representing either a {@link co.cask.cdap.api.annotation.ProcessInput}
@@ -27,12 +29,31 @@ import java.lang.reflect.Type;
  * and generic parameter types.
  */
 public final class FlowletMethod {
-  private final Method method;
-  private final TypeToken<?> inspectType;
+  private final String methodName;
+  private final Type returnType;
+  private final Type[] parameterTypes;
 
-  public FlowletMethod(Method method, TypeToken<?> inspectType) {
-    this.method = method;
-    this.inspectType = inspectType;
+  /**
+   * Creates a new instance of {@link FlowletMethod}.
+   *
+   * @param method the method that the flowlet method is representing
+   * @param resolvingType the type used for resolving method return type and parameter types
+   * @return a new instance of {@link FlowletMethod}
+   */
+  public static FlowletMethod create(Method method, Type resolvingType) {
+    TypeToken<?> typeToken = TypeToken.of(resolvingType);
+    Type returnType = typeToken.resolveType(method.getGenericReturnType()).getType();
+    Type[] parameterTypes = method.getGenericParameterTypes();
+    for (int i = 0; i < parameterTypes.length; i++) {
+      parameterTypes[i] = typeToken.resolveType(parameterTypes[i]).getType();
+    }
+    return new FlowletMethod(method.getName(), returnType, parameterTypes);
+  }
+
+  private FlowletMethod(String methodName, Type returnType, Type[] parameterTypes) {
+    this.methodName = methodName;
+    this.returnType = returnType;
+    this.parameterTypes = parameterTypes;
   }
 
   @Override
@@ -47,35 +68,21 @@ public final class FlowletMethod {
     FlowletMethod other = (FlowletMethod) o;
 
     // Method name have to match
-    if (!method.getName().equals(other.method.getName())) {
+    if (!Objects.equals(methodName, other.methodName)) {
       return false;
     }
 
     // Return type has to match
-    if (!isSame(method.getGenericReturnType(), inspectType, other.method.getGenericReturnType(), other.inspectType)) {
+    if (!Objects.equals(returnType, other.returnType)) {
       return false;
     }
 
-    // Parameters has to match
-    Type[] params1 = method.getGenericParameterTypes();
-    Type[] params2 = other.method.getGenericParameterTypes();
-
-    if (params1.length != params2.length) {
-      return false;
-    }
-
-    for (int i = 0; i < params1.length; i++) {
-      if (!isSame(params1[i], inspectType, params2[i], other.inspectType)) {
-        return false;
-      }
-    }
-
-    return true;
+    return Arrays.equals(parameterTypes, other.parameterTypes);
   }
 
   @Override
   public int hashCode() {
-    return method.getName().hashCode();
+    return methodName.hashCode();
   }
 
   private boolean isSame(Type type1, TypeToken<?> inspectType1, Type type2, TypeToken<?> inspectType2) {
