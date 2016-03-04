@@ -58,6 +58,7 @@ function NavbarController ($scope, $state, myNamespace, EventPipe, MYAUTH_EVENT,
   });
 
   vm.changeNamespace = (ns) => {
+    if ($state.params.namespace === ns.name) { return; }
     if ($state.includes('hydrator.**')) {
       $state.go('hydrator.list', { namespace: ns.name });
     } else if ($state.includes('tracker.**') || $state.is('tracker-home')) {
