@@ -599,6 +599,7 @@ public class ArtifactRepository {
       if (!artifactId.getVersion().isSnapshot()) {
         try {
           artifactStore.getArtifact(artifactId);
+          LOG.info("Artifact {} already exists, will not try loading it again.", artifactId);
           return;
         } catch (ArtifactNotFoundException e) {
           // this is fine, means it doesn't exist yet and we should add it
@@ -610,6 +611,7 @@ public class ArtifactRepository {
                   systemArtifactInfo.getConfig().getParents(),
                   systemArtifactInfo.getConfig().getPlugins(),
                   systemArtifactInfo.getConfig().getProperties());
+      LOG.info("Added system artifact {}.", artifactId);
     } catch (ArtifactAlreadyExistsException e) {
       // shouldn't happen... but if it does for some reason it's fine, it means it was added some other way already.
     } catch (ArtifactRangeNotFoundException e) {
