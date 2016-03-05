@@ -28,9 +28,7 @@
   <nav class="navbar {{ Navbar.activeProduct }}">
     <div class="brand-header">
       <a href="" class="navbar-brand" ng-click="Navbar.toggleSidebar()">
-        <span class="icon-fist" ng-if="Navbar.activeProduct === 'cdap'"></span>
-        <span class="icon-hydrator" ng-if="Navbar.activeProduct === 'hydrator'"></span>
-        <span class="icon-tracker" ng-if="Navbar.activeProduct === 'tracker'"></span>
+        <span class="icon-fist"></span>
       </a>
 
       <a ui-sref="overview({namespace: $stateParams.namespace})"
@@ -187,28 +185,10 @@
 </header>
 
 <!-- SIDEBAR MENU -->
-<div class="display-container" ng-if="Navbar.showSidebar">
+<div class="display-container" ng-if="Navbar.showSidebar" ng-click="Navbar.toggleSidebar()">
   <div class="sidebar">
-    <div class="brand sidebar-item top" ng-click="Navbar.toggleSidebar()">
-      <div class="brand-icon text-center {{ Navbar.activeProduct }}">
-        <span class="icon-fist" ng-if="Navbar.activeProduct === 'cdap'"></span>
-        <span class="icon-hydrator" ng-if="Navbar.activeProduct === 'hydrator'"></span>
-        <span class="icon-tracker" ng-if="Navbar.activeProduct === 'tracker'"></span>
-      </div>
-
-      <div class="product-name">
-        <span ng-if="Navbar.activeProduct === 'cdap'">CDAP</span>
-        <span ng-if="Navbar.activeProduct === 'hydrator'">Cask Hydrator</span>
-        <span ng-if="Navbar.activeProduct === 'tracker'">Cask Tracker</span>
-      </div>
-    </div>
-
-    <h5>Extensions:</h5>
-
-    <!-- CDAP -->
     <a ui-sref="overview({namespace: $stateParams.namespace})"
-       class="brand sidebar-item"
-       ng-if="Navbar.activeProduct !== 'cdap'">
+       class="brand sidebar-item top" ng-click="$event.stopPropagation()">
       <div class="brand-icon text-center cdap">
         <span class="icon-fist"></span>
       </div>
@@ -218,10 +198,11 @@
       </div>
     </a>
 
+    <h5>Extensions:</h5>
+
     <!-- HYDRATOR -->
     <a ui-sref="hydrator.list({ namespace: $stateParams.namespace })"
-       class="brand sidebar-item"
-       ng-if="Navbar.activeProduct !== 'hydrator'">
+       class="brand sidebar-item">
       <div class="brand-icon text-center hydrator">
         <span class="icon-hydrator"></span>
       </div>
@@ -233,8 +214,7 @@
 
     <!-- TRACKER -->
     <a ui-sref="tracker-home({ namespace: $stateParams.namespace })"
-       class="brand sidebar-item"
-       ng-if="Navbar.activeProduct !== 'tracker'">
+       class="brand sidebar-item">
       <div class="brand-icon text-center tracker">
         <span class="icon-tracker"></span>
       </div>
