@@ -69,7 +69,10 @@ my-global-navbar {
       }
     }
 
-    .product-title { margin-left: 10px; }
+    .product-title {
+      margin-left: 10px;
+      user-select: none;
+    }
 
     /* RIGHT MENU */
     .right-menu {
@@ -106,8 +109,11 @@ my-global-navbar {
       border-left: 1px solid #666666;
       padding: 0 10px;
       font-size: 14px;
+      user-select: none;
 
       div[disabled] { cursor: not-allowed; }
+
+      .dropdown-toggle { height: 50px; }
 
       .fa.fa-angle-down {
         line-height: 50px;

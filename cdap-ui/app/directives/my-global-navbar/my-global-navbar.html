@@ -186,9 +186,9 @@
 
 <!-- SIDEBAR MENU -->
 <div class="display-container" ng-if="Navbar.showSidebar" ng-click="Navbar.toggleSidebar()">
-  <div class="sidebar">
+  <div class="sidebar" ng-click="$event.stopPropagation()">
     <a ui-sref="overview({namespace: $stateParams.namespace})"
-       class="brand sidebar-item top" ng-click="$event.stopPropagation()">
+       class="brand sidebar-item top">
       <div class="brand-icon text-center cdap">
         <span class="icon-fist"></span>
       </div>
