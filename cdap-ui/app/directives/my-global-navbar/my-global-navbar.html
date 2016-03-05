@@ -27,8 +27,15 @@
 <header class="navbar navbar-fixed-top">
   <nav class="navbar {{ Navbar.activeProduct }}">
     <div class="brand-header">
-      <a href="" class="navbar-brand" ng-click="Navbar.toggleSidebar()">
-        <span class="icon-fist"></span>
+      <a href="" class="navbar-brand" ng-click="Navbar.toggleSidebar()"
+         ng-mouseenter="Navbar.mouseHoverBrand = true"
+         ng-mouseleave="Navbar.mouseHoverBrand = false">
+        <span class="icon-fist"
+              ng-if="Navbar.activeProduct === 'cdap' || Navbar.mouseHoverBrand"></span>
+        <span class="icon-hydrator"
+              ng-if="Navbar.activeProduct === 'hydrator' && !Navbar.mouseHoverBrand"></span>
+        <span class="icon-tracker"
+              ng-if="Navbar.activeProduct === 'tracker' && !Navbar.mouseHoverBrand"></span>
       </a>
 
       <a ui-sref="overview({namespace: $stateParams.namespace})"
