@@ -23,10 +23,6 @@ angular.module(PKG.name+'.commons')
   return {
     restrict: 'E',
     templateUrl: 'breadcrumbs/breadcrumbs.html',
-    controller: 'breadcrumbsCtrl',
-    scope: {
-      hideNsDropdown: '=?'
-    },
     link: function (scope, element, attrs) {
       scope.hideNsDropdown = attrs.hideNsDropdown === 'true';
       scope.element = element;
