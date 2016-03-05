@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -22,23 +22,24 @@ import org.junit.Assert;
 import org.junit.Test;
 
 /**
- *
+ * Tests for {@link CheckAuthorizedRequest}.
  */
 public class CheckAuthorizedRequestTest {
 
   @Test
   public void testValidation() {
-    new CheckAuthorizedRequest(Ids.namespace("foo"), "bob", ImmutableSet.of(Action.READ));
+    Principal bob = new Principal("bob", Principal.PrincipalType.USER);
+    new CheckAuthorizedRequest(Ids.namespace("foo"), bob, ImmutableSet.of(Action.READ));
 
     try {
       new CheckAuthorizedRequest(Ids.namespace("foo"), null, null);
-      Assert.fail();
+      Assert.fail("Expected IllegalArgument");
     } catch (IllegalArgumentException e) {
       // expected
     }
 
     try {
-      new CheckAuthorizedRequest(Ids.namespace("foo"), "bob", null);
+      new CheckAuthorizedRequest(Ids.namespace("foo"), bob, null);
       Assert.fail();
     } catch (IllegalArgumentException e) {
       // expected
@@ -52,7 +53,7 @@ public class CheckAuthorizedRequestTest {
     }
 
     try {
-      new CheckAuthorizedRequest(null, "bob", ImmutableSet.of(Action.READ));
+      new CheckAuthorizedRequest(null, bob, ImmutableSet.of(Action.READ));
       Assert.fail();
     } catch (IllegalArgumentException e) {
       // expected

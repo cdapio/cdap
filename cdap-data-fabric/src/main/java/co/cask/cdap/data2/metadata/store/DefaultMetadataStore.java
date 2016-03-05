@@ -432,9 +432,9 @@ public class DefaultMetadataStore implements MetadataStore {
   }
 
   private void execute(TransactionExecutor.Procedure<MetadataDataset> func, MetadataScope scope) {
-    MetadataDataset metadataScope = newMetadataDataset(scope);
-    TransactionExecutor txExecutor = Transactions.createTransactionExecutor(txExecutorFactory, metadataScope);
-    txExecutor.executeUnchecked(func, metadataScope);
+    MetadataDataset metadataDataset = newMetadataDataset(scope);
+    TransactionExecutor txExecutor = Transactions.createTransactionExecutor(txExecutorFactory, metadataDataset);
+    txExecutor.executeUnchecked(func, metadataDataset);
   }
 
   private MetadataDataset newMetadataDataset(MetadataScope scope) {

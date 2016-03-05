@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,23 +16,21 @@
 
 package co.cask.cdap.proto.security;
 
+import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.proto.id.EntityId;
 import com.google.common.base.Preconditions;
 
 import java.util.Set;
 
 /**
- * Request for checking if a user can perform certain actions on an entity.
+ * Request for checking if a principal can perform certain actions on an entity.
  */
+@Beta
 public class CheckAuthorizedRequest extends AuthorizationRequest {
 
-  public CheckAuthorizedRequest(EntityId entity, String user, Set<Action> actions) {
-    super(entity, user, actions);
-    Preconditions.checkArgument(user != null, "user is required");
+  public CheckAuthorizedRequest(EntityId entity, Principal principal, Set<Action> actions) {
+    super(entity, principal, actions);
+    Preconditions.checkArgument(principal != null, "principal is required");
     Preconditions.checkArgument(actions != null, "actions is required");
-  }
-
-  public CheckAuthorizedRequest(CheckAuthorizedRequest other) {
-    this(other.getEntity(), other.getUser(), other.getActions());
   }
 }

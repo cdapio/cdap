@@ -1562,7 +1562,7 @@
 
   <property>
     <name>security.authorization.pluginClassName</name>
-    <value>co.cask.cdap.security.authorization.DatasetAuthorizationPlugin</value>
+    <value>co.cask.cdap.security.authorization.DatasetBasedAuthorizer</value>
     <description>
       Class name of the AuthorizationPlugin implementation to use
     </description>

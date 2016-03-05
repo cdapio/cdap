@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -36,11 +36,11 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
 /**
- *
+ * Tests for {@link DatasetBasedAuthorizer}.
  */
-public class DatasetAuthorizationPluginTest extends AuthorizationPluginTest {
+public class DatasetBasedAuthorizerTest extends AuthorizerTest {
 
-  private static DatasetAuthorizationPlugin handler;
+  private static DatasetBasedAuthorizer datasetAuthorizer;
   private static TransactionManager txManager;
 
   @BeforeClass
@@ -65,7 +65,7 @@ public class DatasetAuthorizationPluginTest extends AuthorizationPluginTest {
     );
 
     txManager = injector.getInstance(TransactionManager.class);
-    handler = injector.getInstance(DatasetAuthorizationPlugin.class);
+    datasetAuthorizer = injector.getInstance(DatasetBasedAuthorizer.class);
 
     txManager.startAndWait();
   }
@@ -76,7 +76,7 @@ public class DatasetAuthorizationPluginTest extends AuthorizationPluginTest {
   }
 
   @Override
-  protected AuthorizationPlugin get() {
-    return handler;
+  protected Authorizer get() {
+    return datasetAuthorizer;
   }
 }
