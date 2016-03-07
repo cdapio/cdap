@@ -28,9 +28,9 @@ my-global-navbar {
     border: 0;
     font-weight: 500;
 
-    &.cdap { .product-navbar-mixins(@cdap-orange); }
-    &.hydrator { .product-navbar-mixins(@hydrator-blue); }
-    &.tracker { .product-navbar-mixins(@tracker-green); }
+    &.cdap { .product-navbar-mixins(@cdap-orange, @cdap-orange); }
+    &.hydrator { .product-navbar-mixins(@hydrator-blue, #43AAFF); }
+    &.tracker { .product-navbar-mixins(@tracker-green, @tracker-green); }
 
     .brand-header {
       width: 200px;
@@ -199,12 +199,12 @@ my-global-navbar {
   }
 }
 
-.product-navbar-mixins(@product-color) {
-  .brand-header .navbar-brand { border-color: @product-color; }
+.product-navbar-mixins(@border-product-color, @active-link-color) {
+  .brand-header .navbar-brand { border-color: @border-product-color; }
   .navbar-list {
     a {
       &:hover, &.active {
-        color: @product-color;
+        color: @active-link-color;
       }
     }
   }
