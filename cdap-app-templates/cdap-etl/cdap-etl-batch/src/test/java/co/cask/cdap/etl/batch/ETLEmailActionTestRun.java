@@ -17,11 +17,11 @@
 package co.cask.cdap.etl.batch;
 
 import co.cask.cdap.common.utils.Networks;
-import co.cask.cdap.etl.batch.config.ETLBatchConfig;
 import co.cask.cdap.etl.batch.mock.MockSink;
 import co.cask.cdap.etl.batch.mock.MockSource;
-import co.cask.cdap.etl.common.ETLStage;
-import co.cask.cdap.etl.common.Plugin;
+import co.cask.cdap.etl.proto.v1.ETLBatchConfig;
+import co.cask.cdap.etl.proto.v1.ETLStage;
+import co.cask.cdap.etl.proto.v1.Plugin;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.test.ApplicationManager;

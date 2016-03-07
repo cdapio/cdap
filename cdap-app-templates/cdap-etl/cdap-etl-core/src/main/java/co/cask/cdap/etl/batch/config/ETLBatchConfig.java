@@ -31,7 +31,10 @@ import javax.annotation.Nullable;
 
 /**
  * ETL Batch Configuration. Public constructors are deprecated. Use the builder instead.
+ *
+ * @deprecated use ETLBatchConfig in cdap-etl-proto instead
  */
+@Deprecated
 public final class ETLBatchConfig extends ETLConfig {
 
   /**

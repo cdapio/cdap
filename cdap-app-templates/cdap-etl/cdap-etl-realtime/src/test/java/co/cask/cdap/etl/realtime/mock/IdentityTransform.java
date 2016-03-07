@@ -36,7 +36,7 @@ public class IdentityTransform extends Transform<StructuredRecord, StructuredRec
     emitter.emit(input);
   }
 
-  public static co.cask.cdap.etl.common.Plugin getPlugin() {
-    return new co.cask.cdap.etl.common.Plugin("Identity", new HashMap<String, String>());
+  public static co.cask.cdap.etl.proto.v1.Plugin getPlugin() {
+    return new co.cask.cdap.etl.proto.v1.Plugin("Identity", new HashMap<String, String>());
   }
 }
