@@ -1,6 +1,6 @@
 {
   "variables": {
-    "sdk_version": "3.3.1"
+    "sdk_version": "3.3.2"
   },
   "builders": [
     {
