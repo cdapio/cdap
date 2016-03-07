@@ -41,7 +41,7 @@
     "karma": "^0.12.31",
     "karma-chrome-launcher": "^0.1.7",
     "karma-jasmine": "^0.3.5",
-    "main-bower-files": "^2.6.2",
+    "main-bower-files": "2.6.2",
     "merge-stream": "^0.1.7",
     "protractor": "^1.8.0"
   },
