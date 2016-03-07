@@ -63,6 +63,8 @@ angular.module(PKG.name + '.feature.tracker')
           })
           .state('tracker.entity.lineage', {
             url: '/lineage',
-            templateUrl: '/assets/features/tracker/templates/lineage.html'
+            templateUrl: '/assets/features/tracker/templates/lineage.html',
+            controller: 'TrackerLineageController',
+            controllerAs: 'LineageController'
           });
   });
