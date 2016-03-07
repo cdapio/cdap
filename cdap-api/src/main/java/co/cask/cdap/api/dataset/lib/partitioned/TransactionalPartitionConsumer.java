@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -22,11 +22,9 @@ import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.dataset.lib.DatasetStatePersistor;
 import co.cask.cdap.api.dataset.lib.Partition;
-import co.cask.cdap.api.dataset.lib.PartitionDetail;
+import co.cask.cdap.api.dataset.lib.PartitionKey;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
-import co.cask.cdap.api.worker.WorkerContext;
 import co.cask.tephra.TransactionFailureException;
-import com.google.common.base.Throwables;
 
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
@@ -92,7 +90,7 @@ public final class TransactionalPartitionConsumer implements PartitionConsumer {
         }
       });
     } catch (TransactionFailureException e) {
-      Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
     return partitions.get();
   }
@@ -107,7 +105,21 @@ public final class TransactionalPartitionConsumer implements PartitionConsumer {
         }
       });
     } catch (TransactionFailureException e) {
-      Throwables.propagate(e);
+      throw new RuntimeException(e);
+    }
+  }
+
+  @Override
+  public void onFinishWithKeys(final List<? extends PartitionKey> partitionKeys, final boolean succeeded) {
+    try {
+      transactional.execute(new TxRunnable() {
+        @Override
+        public void run(DatasetContext context) throws Exception {
+          getPartitionConsumer(context).onFinishWithKeys(partitionKeys, succeeded);
+        }
+      });
+    } catch (TransactionFailureException e) {
+      throw new RuntimeException(e);
     }
   }
 

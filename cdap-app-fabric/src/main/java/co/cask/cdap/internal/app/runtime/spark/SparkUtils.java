@@ -24,7 +24,6 @@ import co.cask.cdap.internal.app.runtime.distributed.LocalizeResource;
 import co.cask.cdap.internal.asm.Methods;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
-import com.google.common.io.ByteStreams;
 import com.google.common.io.OutputSupplier;
 import org.apache.hadoop.yarn.api.ApplicationConstants;
 import org.objectweb.asm.ClassReader;

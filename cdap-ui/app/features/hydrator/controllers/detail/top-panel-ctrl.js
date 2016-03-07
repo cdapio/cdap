@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,7 +14,7 @@
  * the License.
  */
 angular.module(PKG.name + '.feature.hydrator')
-  .controller('HydratorDetailTopPanelController', function(DetailRunsStore, DetailNonRunsStore, PipelineDetailActionFactory, GLOBALS, $state, $alert, myLoadingService, $timeout, $scope, moment, myAlertOnValium) {
+  .controller('HydratorDetailTopPanelController', function(DetailRunsStore, DetailNonRunsStore, PipelineDetailActionFactory, GLOBALS, $state, myLoadingService, $timeout, $scope, moment, myAlertOnValium) {
     this.GLOBALS = GLOBALS;
     this.myAlertOnValium = myAlertOnValium;
     this.config = DetailNonRunsStore.getCloneConfig();

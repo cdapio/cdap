@@ -66,6 +66,7 @@ Here are the parameters that can be used in the connection URL:
 - ``auth.token``: authentication token for the connection
 - ``ssl.enabled``: boolean; whether SSL is enabled or not
 - ``verify.ssl.cert``: boolean; false to suspend certificate checks and allow self-signed certificates
+- ``fetch.size``: int; number of rows to fetch at a time from the database cursor. Defaults to 1000. 0 means no limit.
 
 JDBC drivers are a standard in the Java ecosystem, with many `resources about them available
 <http://docs.oracle.com/javase/tutorial/jdbc/>`__.

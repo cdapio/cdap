@@ -49,7 +49,7 @@
                   <button class="btn btn-default"
                     ng-click="MyExploreCtrl.download(query)"
                     ng-disabled="query.downloading || query.status !== 'FINISHED'"
-                    tooltip="Download"
+                    uib-tooltip="Download"
                     tooltip-append-to-body="true">
                     <i class="fa"
                       ng-class="{ 'fa-download': !query.downloading, 'fa-spinner fa-spin': query.downloading }">
@@ -60,7 +60,7 @@
                   <button class="btn btn-default"
                     ng-click="MyExploreCtrl.preview(query)"
                     ng-disabled="!query.is_active || query.status !== 'FINISHED'"
-                    tooltip="Preview"
+                    uib-tooltip="Preview"
                     tooltip-append-to-body="true">
                     <i class="fa fa-eye"></i>
                   </button>
@@ -68,7 +68,7 @@
                 <div class="btn-group">
                   <button class="btn btn-default"
                     ng-click="MyExploreCtrl.clone(query)"
-                    tooltip="Clone Query"
+                    uib-tooltip="Clone Query"
                     tooltip-append-to-body="true">
                     <i class="fa fa-files-o"></i>
                   </button>
@@ -81,7 +81,7 @@
     </div>
 
     <div class="text-center" ng-show="MyExploreCtrl.queries.length > 10">
-      <pagination total-items="MyExploreCtrl.queries.length" ng-model="MyExploreCtrl.currentPage"></pagination>
+      <uib-pagination total-items="MyExploreCtrl.queries.length" ng-model="MyExploreCtrl.currentPage"></uib-pagination>
     </div>
   </div>
 </div>

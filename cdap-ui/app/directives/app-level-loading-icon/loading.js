@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.commons')
-  .directive('loadingIcon', function(myLoadingService, $bootstrapModal, $timeout, EventPipe, $state, $alert) {
+  .directive('loadingIcon', function(myLoadingService, $uibModal, $timeout, EventPipe, $state, $alert) {
     return {
       restrict: 'EA',
       scope: true,
@@ -38,7 +38,7 @@ angular.module(PKG.name + '.commons')
             isBackendDown = true;
             $scope.message = message || genericServiceErrorMsg;
             $scope.subtitle = subtitle || genericSubtitle;
-            modal = $bootstrapModal.open(modalObj);
+            modal = $uibModal.open(modalObj);
             modal.result.finally(function() {
               $state.go('overview', {reload: true});
             });
@@ -91,7 +91,7 @@ angular.module(PKG.name + '.commons')
         EventPipe.on('showLoadingIcon', function(message) {
           if(!modal && !isBackendDown) {
             $scope.message = message || '';
-            modal = $bootstrapModal.open(modalObj);
+            modal = $uibModal.open(modalObj);
           }
         }.bind($scope));
       }

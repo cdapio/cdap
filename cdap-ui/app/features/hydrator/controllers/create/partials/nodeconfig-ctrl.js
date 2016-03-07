@@ -86,6 +86,7 @@ class NodeConfigController {
       watchers: [],
       outputSchemaUpdate: 0
     };
+    this.showPropagateConfirm = false;
   }
   propagateSchemaDownStream() {
     this.ConfigActionsFactory.propagateSchemaDownStream(this.state.node.name);

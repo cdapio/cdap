@@ -17,11 +17,11 @@
 package co.cask.cdap.data.stream.service;
 
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.io.FileContextLocationFactory;
 import co.cask.cdap.common.namespace.DefaultNamespacedLocationFactory;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hdfs.MiniDFSCluster;
+import org.apache.twill.filesystem.FileContextLocationFactory;
 import org.apache.twill.filesystem.LocationFactory;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;

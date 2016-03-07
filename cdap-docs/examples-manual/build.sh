@@ -105,7 +105,7 @@ function download_includes() {
   local project_img=$project_source/docs/img
 
   # 1:Includes directory 2:GitHub directory 3:Java filename   4:MD5 hash of file
-  download_file $includes $project_main BounceCountsMapReduce.java 72f01be483fe6aa9a2d07bf2d324594f
+  download_file $includes $project_main BounceCountsMapReduce.java 2f7baace8dd452825e8d47bb54b5e11e
   download_file $includes $project_main BounceCountStore.java      d476c15655c6a6c6cd7fe682dea4a8b7
   download_file $includes $project_main PageViewStore.java         7dc8d2fec04ce89fae4f0356db17e19d
   download_file $includes $project_main WiseApp.java               23371436b588c3262fec14ec5d7aa6df

@@ -27,7 +27,6 @@ import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.internal.app.runtime.AbstractListener;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
-import co.cask.cdap.internal.app.runtime.ProgramRunnerFactory;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactDetail;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
@@ -88,7 +87,7 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
 
   @Override
   public RuntimeInfo run(Program program, ProgramOptions options) {
-    ProgramRunner runner = programRunnerFactory.create(ProgramRunnerFactory.Type.valueOf(program.getType().name()));
+    ProgramRunner runner = programRunnerFactory.create(program.getType());
     Preconditions.checkNotNull(runner, "Fail to get ProgramRunner for type " + program.getType());
     RunId runId = RunIds.generate();
     ProgramOptions optionsWithRunId = addRunId(options, runId);

@@ -32,7 +32,7 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Store program/adapter -> dataset/stream usage information.
+ * Store program -> dataset/stream usage information.
  */
 public class UsageDataset extends MetadataStoreDataset {
   // The following constants are used as row key prefixes. Any changes to these will make existing data unusable.

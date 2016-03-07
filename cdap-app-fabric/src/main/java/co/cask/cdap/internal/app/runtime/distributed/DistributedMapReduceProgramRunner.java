@@ -71,19 +71,6 @@ public final class DistributedMapReduceProgramRunner extends AbstractDistributed
 
     List<String> extraClassPaths = MapReduceContainerHelper.localizeFramework(hConf, localizeResources);
 
-    // TODO(CDAP-3119): Hack for TWILL-144. Need to remove
-    if (MapReduceContainerHelper.getFrameworkURI(hConf) != null) {
-      try {
-        File launcherFile = File.createTempFile("launcher", ".jar", tempDir);
-        MapReduceContainerHelper.saveLauncher(hConf, launcherFile, extraClassPaths);
-        localizeResources.put("launcher.jar", new LocalizeResource(launcherFile));
-      } catch (Exception e) {
-        LOG.warn("Failed to create twill container launcher.jar for TWILL-144 hack. " +
-                   "Still proceed, but the run will likely fail", e);
-      }
-    }
-    // End Hack for TWILL-144
-
     LOG.info("Launching MapReduce program: " + program.getName() + ":" + spec.getName());
     TwillController controller = launcher.launch(
       new MapReduceTwillApplication(program, spec, localizeResources, eventHandler),

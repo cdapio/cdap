@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -23,6 +23,7 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.id.Ids;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.security.Action;
+import co.cask.cdap.proto.security.Principal;
 import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionFailureException;
 import com.google.common.collect.ImmutableSet;
@@ -33,7 +34,7 @@ import org.junit.ClassRule;
 import org.junit.Test;
 
 /**
- *
+ * Tests for {@link ACLDataset}.
  */
 public class ACLDatasetTest {
 
@@ -58,7 +59,7 @@ public class ACLDatasetTest {
   @Test
   public void testSearchAddRemove() throws InterruptedException, TransactionFailureException {
     final NamespaceId namespace = Ids.namespace("foo");
-    final String user = "alice";
+    final Principal user = new Principal("alice", Principal.PrincipalType.USER);
 
     TransactionExecutor txnl = dsFrameworkUtil.newTransactionExecutor(table);
 

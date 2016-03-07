@@ -780,6 +780,14 @@
   </property>
 
   <property>
+    <name>log.kafka.topic</name>
+    <value>logs.user-v2</value>
+    <description>
+      Kafka topic name used to publish logs
+    </description>
+  </property>
+
+  <property>
     <name>log.publish.num.partitions</name>
     <value>10</value>
     <description>
@@ -1193,6 +1201,14 @@
   <!-- Notification System Configuration -->
 
   <property>
+    <name>notification.kafka.topic</name>
+    <value>notifications</value>
+    <description>
+      Kafka topic name used to publish notifications
+    </description>
+  </property>
+
+  <property>
     <name>notification.transport.system</name>
     <value>kafka</value>
     <description>
@@ -1546,7 +1562,7 @@
 
   <property>
     <name>security.authorization.pluginClassName</name>
-    <value>co.cask.cdap.security.authorization.DatasetAuthorizationPlugin</value>
+    <value>co.cask.cdap.security.authorization.DatasetBasedAuthorizer</value>
     <description>
       Class name of the AuthorizationPlugin implementation to use
     </description>

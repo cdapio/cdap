@@ -49,7 +49,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -99,25 +98,11 @@ public final class DistributedWorkflowProgramRunner extends AbstractDistributedP
     // Add classpaths for MR framework
     extraClassPaths.addAll(MapReduceContainerHelper.localizeFramework(hConf, localizeResources));
 
-    // TODO(CDAP-3119): Hack for TWILL-144. Need to remove
-    if (MapReduceContainerHelper.getFrameworkURI(hConf) != null) {
-      try {
-        File launcherFile = File.createTempFile("launcher", ".jar", tempDir);
-        MapReduceContainerHelper.saveLauncher(hConf, launcherFile, extraClassPaths);
-        localizeResources.put("launcher.jar", new LocalizeResource(launcherFile));
-      } catch (Exception e) {
-        LOG.warn("Failed to create twill container launcher.jar for TWILL-144 hack. " +
-                   "Still proceed, but the run will likely fail", e);
-      }
-    }
-    // End Hack for TWILL-144
-
     LOG.info("Launching distributed workflow: " + program.getName() + ":" + workflowSpec.getName());
     TwillController controller = launcher.launch(
       new WorkflowTwillApplication(program, workflowSpec, localizeResources, eventHandler, driverMeta.resources),
       extraClassPaths
     );
-
     RunId runId = RunIds.fromString(options.getArguments().getOption(ProgramOptionConstants.RUN_ID));
     return new WorkflowTwillProgramController(program.getId(), controller, runId).startListen();
   }

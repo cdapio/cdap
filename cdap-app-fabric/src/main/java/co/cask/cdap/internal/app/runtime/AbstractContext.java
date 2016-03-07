@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -70,7 +70,7 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
   protected final DynamicDatasetCache datasetCache;
 
   /**
-   * Constructs a context without application template adapter support.
+   * Constructs a context without plugin support.
    */
   protected AbstractContext(Program program, RunId runId, Arguments arguments,
                             Set<String> datasets, MetricsContext metricsContext,
@@ -81,8 +81,7 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
   }
 
   /**
-   * Constructs a context. To have application template adapter support,
-   * both the {@code adapterSpec} and {@code pluginInstantiator} must not be null.
+   * Constructs a context. To have plugin support, the {@code pluginInstantiator} must not be null.
    */
   protected AbstractContext(Program program, RunId runId, Arguments arguments,
                             Set<String> datasets, MetricsContext metricsContext,
@@ -194,6 +193,7 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
     return program;
   }
 
+  @Override
   public RunId getRunId() {
     return runId;
   }

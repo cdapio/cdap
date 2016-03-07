@@ -441,7 +441,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
   @Test
   public void testDeployWorkflowApp() throws Exception {
     ApplicationManager applicationManager = deployApplication(testSpace, AppWithSchedule.class);
-    WorkflowManager wfmanager = applicationManager.getWorkflowManager("SampleWorkflow");
+    final WorkflowManager wfmanager = applicationManager.getWorkflowManager("SampleWorkflow");
     List<ScheduleSpecification> schedules = wfmanager.getSchedules();
     Assert.assertEquals(1, schedules.size());
     String scheduleName = schedules.get(0).getSchedule().getName();
@@ -449,21 +449,40 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     Assert.assertFalse(scheduleName.isEmpty());
     wfmanager.getSchedule(scheduleName).resume();
 
-    waitForWorkflowRuns(wfmanager, 0);
-
     String status = wfmanager.getSchedule(scheduleName).status(200);
     Assert.assertEquals("SCHEDULED", status);
+
+    // Make sure something ran before suspending
+    Tasks.waitFor(true, new Callable<Boolean>() {
+      @Override
+      public Boolean call() throws Exception {
+        return !wfmanager.getHistory().isEmpty();
+      }
+    }, 10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
 
     wfmanager.getSchedule(scheduleName).suspend();
     waitForScheduleState(scheduleName, wfmanager, Scheduler.ScheduleState.SUSPENDED);
 
-    TimeUnit.SECONDS.sleep(3);
+    // All runs should be completed
+    Tasks.waitFor(true, new Callable<Boolean>() {
+      @Override
+      public Boolean call() throws Exception {
+        for (RunRecord record : wfmanager.getHistory()) {
+          if (record.getStatus() != ProgramRunStatus.COMPLETED) {
+            return false;
+          }
+        }
+        return true;
+      }
+    }, 10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
+
     List<RunRecord> history = wfmanager.getHistory();
     int workflowRuns = history.size();
+    Assert.assertTrue(workflowRuns > 0);
 
     //Sleep for some time and verify there are no more scheduled jobs after the suspend.
-    TimeUnit.SECONDS.sleep(10);
-    int workflowRunsAfterSuspend = wfmanager.getHistory().size();
+    TimeUnit.SECONDS.sleep(5);
+    final int workflowRunsAfterSuspend = wfmanager.getHistory().size();
     Assert.assertEquals(workflowRuns, workflowRunsAfterSuspend);
 
     wfmanager.getSchedule(scheduleName).resume();
@@ -471,7 +490,13 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     //Check that after resume it goes to "SCHEDULED" state
     waitForScheduleState(scheduleName, wfmanager, Scheduler.ScheduleState.SCHEDULED);
 
-    waitForWorkflowRuns(wfmanager, workflowRunsAfterSuspend);
+    // Make sure new runs happens after resume
+    Tasks.waitFor(true, new Callable<Boolean>() {
+      @Override
+      public Boolean call() throws Exception {
+        return wfmanager.getHistory().size() > workflowRunsAfterSuspend;
+      }
+    }, 10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
 
     //check scheduled state
     Assert.assertEquals("SCHEDULED", wfmanager.getSchedule(scheduleName).status(200));

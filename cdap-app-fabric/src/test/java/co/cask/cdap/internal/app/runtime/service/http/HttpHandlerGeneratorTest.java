@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -47,6 +47,7 @@ import com.google.common.io.ByteStreams;
 import com.google.common.io.Closeables;
 import com.google.common.io.Files;
 import com.google.common.reflect.TypeToken;
+import org.apache.twill.api.RunId;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.filesystem.Location;
 import org.junit.Assert;
@@ -555,6 +556,11 @@ public class HttpHandlerGeneratorTest {
 
     @Override
     public String getNamespace() {
+      return null;
+    }
+
+    @Override
+    public RunId getRunId() {
       return null;
     }
 

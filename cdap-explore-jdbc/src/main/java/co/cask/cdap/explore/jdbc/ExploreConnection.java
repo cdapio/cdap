@@ -52,12 +52,14 @@ public class ExploreConnection implements Connection {
   private static final Logger LOG = LoggerFactory.getLogger(ExploreConnection.class);
 
   private final String namespace;
+  private final ExploreConnectionParams connectionParams;
   private ExploreClient exploreClient;
   private boolean isClosed = false;
 
-  ExploreConnection(ExploreClient exploreClient, String namespace) {
+  ExploreConnection(ExploreClient exploreClient, String namespace, ExploreConnectionParams connectionParams) {
     this.exploreClient = exploreClient;
     this.namespace = namespace;
+    this.connectionParams = connectionParams;
   }
 
   @Override
@@ -65,7 +67,9 @@ public class ExploreConnection implements Connection {
     if (isClosed) {
       throw new SQLException("Can't create Statement, connection is closed");
     }
-    return new ExploreStatement(this, exploreClient, namespace);
+    Statement statement = new ExploreStatement(this, exploreClient, namespace);
+    statement.setFetchSize(connectionParams.getFetchSize());
+    return statement;
   }
 
   @Override
@@ -73,7 +77,9 @@ public class ExploreConnection implements Connection {
     if (isClosed) {
       throw new SQLException("Can't create Statement, connection is closed");
     }
-    return new ExplorePreparedStatement(this, exploreClient, sql, namespace);
+    PreparedStatement preparedStatement = new ExplorePreparedStatement(this, exploreClient, sql, namespace);
+    preparedStatement.setFetchSize(connectionParams.getFetchSize());
+    return preparedStatement;
   }
 
   @Override
@@ -194,17 +200,17 @@ public class ExploreConnection implements Connection {
 
   @Override
   public void setTransactionIsolation(int i) throws SQLException {
-    throw new SQLFeatureNotSupportedException();
+    // no-op
   }
 
   @Override
   public SQLWarning getWarnings() throws SQLException {
-    throw new SQLFeatureNotSupportedException();
+    return null;
   }
 
   @Override
   public void clearWarnings() throws SQLException {
-    throw new SQLFeatureNotSupportedException();
+    // no-op
   }
 
   @Override

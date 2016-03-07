@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -67,6 +67,7 @@ import co.cask.cdap.data2.transaction.stream.StreamConsumer;
 import co.cask.cdap.internal.app.queue.QueueReaderFactory;
 import co.cask.cdap.internal.app.queue.RoundRobinQueueReader;
 import co.cask.cdap.internal.app.queue.SimpleQueueSpecificationGenerator;
+import co.cask.cdap.internal.app.runtime.AbstractListener;
 import co.cask.cdap.internal.app.runtime.DataFabricFacade;
 import co.cask.cdap.internal.app.runtime.DataFabricFacadeFactory;
 import co.cask.cdap.internal.app.runtime.DataSetFieldSetter;
@@ -315,7 +316,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
         if (method.isSynthetic() || method.isBridge()) {
           continue;
         }
-        if (!seenMethods.add(new FlowletMethod(method, flowletType))) {
+        if (!seenMethods.add(FlowletMethod.create(method, flowletType.getType()))) {
           // The method is already seen. It can only happen if a children class override a parent class method and
           // is visting the parent method, since the method visiting order is always from the leaf class walking
           // up the class hierarchy.
@@ -772,20 +773,37 @@ public final class FlowletProgramRunner implements ProgramRunner {
     }
 
     private void suspendAndResume() {
-      executor.execute(new Runnable() {
+      // This method only get called from the property change listener, which it won't start listening
+      // until the flowlet runtime service started, which the FlowletProgramRunner guarantee that
+      // the program controller is never null since it sets the program controller reference before
+      // starting the flowlet runtime service.
+      final FlowletProgramController flowletController = controller.get();
+      flowletController.addListener(new AbstractListener() {
         @Override
-        public void run() {
+        public void init(ProgramController.State currentState, @Nullable Throwable cause) {
+          // If the flowlet is already running, perform suspend and resume to close and open consumers
+          // so that it will pickup the right stream file again
+          if (currentState == ProgramController.State.ALIVE) {
+            alive();
+          }
+        }
+
+        @Override
+        public void alive() {
+          // Only do suspend and resume when the flowlet transit into alive state.
+          // It's ok for the flowlet tries to read from entries that are in older stream file (since it's part
+          // of the contract on truncating a stream) before this method gets triggered.
           suspendLock.lock();
           try {
-            controller.get().suspend().get();
-            controller.get().resume().get();
+            flowletController.suspend().get();
+            flowletController.resume().get();
           } catch (Exception e) {
             LOG.error("Failed to suspend and resume flowlet.", e);
           } finally {
             suspendLock.unlock();
           }
         }
-      });
+      }, executor);
     }
   }
 }

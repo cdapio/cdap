@@ -18,7 +18,6 @@ package co.cask.cdap.internal.app.runtime.spark.metrics;
 
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.metrics.MetricsContext;
-import co.cask.cdap.app.metrics.ProgramUserMetrics;
 import co.cask.cdap.internal.app.runtime.spark.ExecutionSparkContext;
 import co.cask.cdap.internal.app.runtime.spark.SparkContextProvider;
 

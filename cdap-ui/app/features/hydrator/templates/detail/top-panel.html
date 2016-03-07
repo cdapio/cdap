@@ -20,19 +20,19 @@
         <div class="pipeline-type">
           <span ng-if="TopPanelCtrl.app.type === TopPanelCtrl.GLOBALS.etlBatch"
                 class="icon-ETLBatch"
-                tooltip="Type: Batch"
+                uib-tooltip="Type: Batch"
                 tooltip-placement="right"
                 tooltip-append-to-body="true"
                 tooltip-class="toppanel-tooltip"></span>
           <span ng-if="TopPanelCtrl.app.type === TopPanelCtrl.GLOBALS.etlRealtime"
                 class="icon-ETLRealtime"
-                tooltip="Type: Realtime"
+                uib-tooltip="Type: Realtime"
                 tooltip-placement="right"
                 tooltip-append-to-body="true"
                 tooltip-class="toppanel-tooltip"></span>
         </div>
         <div class="pipeline-name text-left">
-          <h1 tooltip="{{ TopPanelCtrl.app.name }}"
+          <h1 uib-tooltip="{{ TopPanelCtrl.app.name }}"
               tooltip-placement="right"
               tooltip-enable="TopPanelCtrl.app.name.length > 25"
               tooltip-append-to-body="true"
@@ -43,7 +43,7 @@
              tooltip-enable="TopPanelCtrl.app.description.length > 48"
              tooltip-append-to-body="true"
              tooltip-class="toppanel-tooltip"
-             tooltip-html="TopPanelCtrl.tooltipDescription">
+             uib-tooltip-html="TopPanelCtrl.tooltipDescription">
             {{ ::TopPanelCtrl.app.description | myEllipsis: 48 }}
           </p>
         </div>
@@ -110,7 +110,7 @@
           ng-disabled="TopPanelCtrl.appStatus === 'STARTING'">
           <span ng-if="TopPanelCtrl.appStatus !=='STARTING'">
           <span class="icon-start"
-                  tooltip="Run"
+                  uib-tooltip="Run"
                   tooltip-placement="bottom"
                   tooltip-append-to-body="true"
                   tooltip-class="toppanel-tooltip"></span>
@@ -127,7 +127,7 @@
           ng-disabled="TopPanelCtrl.appStatus === 'STOPPING'">
           <span ng-if="TopPanelCtrl.appStatus !=='STOPPING'">
             <span class="icon-stopped"
-                  tooltip="Stop"
+                  uib-tooltip="Stop"
                   tooltip-placement="bottom"
                   tooltip-append-to-body="true"
                   tooltip-class="toppanel-tooltip"></span>
@@ -147,7 +147,7 @@
             ng-disabled="TopPanelCtrl.scheduleStatus === 'SCHEDULING'">
             <span ng-if="TopPanelCtrl.scheduleStatus === 'SUSPENDED'">
               <span class="icon-calendar"
-                    tooltip="Schedule"
+                    uib-tooltip="Schedule"
                     tooltip-placement="bottom"
                     tooltip-append-to-body="true"
                     tooltip-class="toppanel-tooltip"></span>
@@ -163,7 +163,7 @@
             ng-disabled="TopPanelCtrl.scheduleStatus === 'SUSPENDING'">
             <span ng-if="TopPanelCtrl.scheduleStatus ==='SCHEDULED'">
               <span class="icon-suspend"
-                    tooltip="Suspend"
+                    uib-tooltip="Suspend"
                     tooltip-placement="bottom"
                     tooltip-append-to-body="true"
                     tooltip-class="toppanel-tooltip"></span>
@@ -182,7 +182,7 @@
                ng-disabled="TopPanelCtrl.appStatus === 'STARTING'">
             <span ng-if="TopPanelCtrl.appStatus !== 'STARTING'">
               <span class="icon-start"
-                    tooltip="Run"
+                    uib-tooltip="Run"
                     tooltip-placement="bottom"
                     tooltip-append-to-body="true"
                     tooltip-class="toppanel-tooltip"></span>
@@ -198,7 +198,7 @@
             ng-disabled="TopPanelCtrl.appStatus === 'STOPPING'">
             <span ng-if="TopPanelCtrl.appStatus !== 'STOPPING'">
             <span class="icon-stopped"
-                  tooltip="Stop"
+                  uib-tooltip="Stop"
                   tooltip-placement="bottom"
                   tooltip-append-to-body="true"
                   tooltip-class="toppanel-tooltip"></span>
@@ -213,7 +213,7 @@
       <div class="pull-left">
         <div ui-sref="hydrator.create.studio({data: TopPanelCtrl.config, type: TopPanelCtrl.app.type})" class="btn">
         <span class="icon-clone"
-              tooltip="Clone"
+              uib-tooltip="Clone"
               tooltip-placement="bottom"
               tooltip-append-to-body="true"
               tooltip-class="toppanel-tooltip"></span>
@@ -223,7 +223,7 @@
         <div class="btn"
              ui-sref="apps.detail.overview.status({ appId: TopPanelCtrl.app.name })">
              <span class="icon-fist"
-                   tooltip="View in CDAP"
+                   uib-tooltip="View in CDAP"
                    tooltip-placement="bottom"
                    tooltip-append-to-body="true"
                    tooltip-class="toppanel-tooltip"></span>
@@ -235,7 +235,7 @@
           cask-confirmable="TopPanelCtrl.do('Delete')"
           data-confirmable-content="Are you sure you want to delete this pipeline?">
           <span class="icon-delete"
-                tooltip="Delete"
+                uib-tooltip="Delete"
                 tooltip-placement="bottom"
                 tooltip-append-to-body="true"
                 tooltip-class="toppanel-tooltip"></span>

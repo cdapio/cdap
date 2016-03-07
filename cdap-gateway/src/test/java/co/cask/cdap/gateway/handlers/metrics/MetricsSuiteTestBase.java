@@ -337,29 +337,14 @@ public abstract class MetricsSuiteTestBase {
       .build();
   }
 
-  protected static Map<String, String> getAdapterContext(String namespaceId, String appName, String jobName,
-                                                         MapReduceMetrics.TaskType type, String runId,
-                                                         String instanceId, String adapterName) {
-    return ImmutableMap.<String, String>builder()
-      .put(Constants.Metrics.Tag.NAMESPACE, namespaceId)
-      .put(Constants.Metrics.Tag.APP, appName)
-      .put(Constants.Metrics.Tag.MAPREDUCE, jobName)
-      .put(Constants.Metrics.Tag.MR_TASK_TYPE, type.getId())
-      .put(Constants.Metrics.Tag.RUN_ID, runId)
-      .put(Constants.Metrics.Tag.INSTANCE_ID, instanceId)
-      .put(Constants.Metrics.Tag.ADAPTER, adapterName)
-      .build();
-  }
-
-  protected static Map<String, String> getWorkerAdapterContext(String namespaceId, String appName, String jobName,
-                                                               String runId, String instanceId, String adapterName) {
+  protected static Map<String, String> getWorkerContext(String namespaceId, String appName, String jobName,
+                                                        String runId, String instanceId) {
     return ImmutableMap.<String, String>builder()
       .put(Constants.Metrics.Tag.NAMESPACE, namespaceId)
       .put(Constants.Metrics.Tag.APP, appName)
       .put(Constants.Metrics.Tag.WORKER, jobName)
       .put(Constants.Metrics.Tag.RUN_ID, runId)
       .put(Constants.Metrics.Tag.INSTANCE_ID, instanceId)
-      .put(Constants.Metrics.Tag.ADAPTER, adapterName)
       .build();
   }
 }

@@ -33,7 +33,6 @@ import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceRequest;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
 import co.cask.cdap.api.workflow.AbstractWorkflow;
-import co.cask.cdap.api.workflow.WorkflowActionConfigurer;
 import com.google.common.collect.ImmutableMap;
 import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.mapreduce.Job;
@@ -256,8 +255,7 @@ public class BundleJarApp extends AbstractApplication {
 
     private class SimpleWorkflowAction extends co.cask.cdap.api.workflow.AbstractWorkflowAction {
       @Override
-      public void configure(WorkflowActionConfigurer configurer) {
-        super.configure(configurer);
+      public void configure() {
         setName("SimpleWorkflowAction");
         setDescription("Description");
       }

@@ -14,12 +14,15 @@
  * the License.
  */
 
+require('es6-promise').polyfill();
 var gulp = require('gulp'),
     plug = require('gulp-load-plugins')(),
     pkg = require('./package.json'),
     del = require('del'),
     mainBowerFiles = require('main-bower-files'),
-    merge = require('merge-stream');
+    merge = require('merge-stream'),
+    autoprefixer = require('autoprefixer');
+
 
 /*
   library CSS
@@ -32,7 +35,6 @@ gulp.task('css:lib', ['fonts'], function() {
       './bower_components/angular-loading-bar/build/loading-bar.min.css',
       './bower_components/angular-motion/dist/angular-motion.min.css',
       './bower_components/font-awesome/css/font-awesome.min.css',
-      './bower_components/ng-sortable/dist/ng-sortable.min.css',
       './bower_components/c3/c3.min.css',
       './bower_components/angular-gridster/dist/angular-gridster.min.css',
       './bower_components/angular-cron-jobs/dist/angular-cron-jobs.min.css',
@@ -62,6 +64,10 @@ gulp.task('fonts', function() {
   application CSS
  */
 gulp.task('css:app', function() {
+  var processor = [
+    autoprefixer({ browsers: ['> 1%'], cascade:true })
+  ];
+
   return gulp.src([
       './app/styles/common.less',
       './app/styles/themes/*.less',
@@ -70,7 +76,7 @@ gulp.task('css:app', function() {
     ])
     .pipe(plug.if('*.less', plug.less()))
     .pipe(plug.concat('app.css'))
-    .pipe(plug.autoprefixer(["> 1%"], {cascade:true}))
+    .pipe(plug.postcss(processor))
     .pipe(gulp.dest('./dist/assets/bundle'));
 });
 
@@ -123,8 +129,6 @@ gulp.task('js:lib', function() {
 
       './bower_components/sockjs-client/dist/sockjs.js',
 
-      './bower_components/ng-sortable/dist/ng-sortable.min.js',
-
       './bower_components/d3/d3.min.js',
 
       './bower_components/epoch/epoch.min.js',
@@ -142,7 +146,7 @@ gulp.task('js:lib', function() {
       './app/lib/c3.js',
       './bower_components/ace-builds/src-min-noconflict/ace.js',
       './bower_components/angular-ui-ace/ui-ace.js',
-      './bower_components/jsPlumb/dist/js/jsPlumb-2.0.4-min.js',
+      './bower_components/jsPlumb/dist/js/jsPlumb-2.0.6-min.js',
       './bower_components/angular-gridster/dist/angular-gridster.min.js',
       './bower_components/angular-cron-jobs/dist/angular-cron-jobs.min.js',
       './bower_components/angularjs-dropdown-multiselect/dist/angularjs-dropdown-multiselect.min.js',
@@ -169,16 +173,6 @@ gulp.task('js:aceworkers', function() {
     .pipe(gulp.dest('./dist/assets/bundle/ace-editor-worker-scripts/'));
 });
 
-gulp.task('js:$modal', function() {
-  gulp.src([
-    './bower_components/angular-bootstrap/ui-bootstrap-tpls.js',
-  ])
-  .pipe(plug.replace('$tooltip', '$bootstrapTooltip'))
-  .pipe(plug.ngAnnotate({rename: [{from: '$modal', to: '$bootstrapModal'}]}))
-  .pipe(plug.concat('ui-bootstrap-tpls.js'))
-  .pipe(gulp.dest('./bower_components/angular-bootstrap'));
-});
-
 function getEs6Features(isNegate) {
   /*
     When we move a feature to use es6 all we need to do is add it here for the build/dev process.
@@ -192,7 +186,8 @@ function getEs6Features(isNegate) {
     'apps',
     'search',
     'pins',
-    'hydrator'
+    'hydrator',
+    'tracker'
   ];
   var returnVal = [];
   es6features.forEach(function(feature) {
@@ -260,7 +255,9 @@ gulp.task('watch:js:app:babel', function() {
        header: '\n(function (PKG){ /* ${filename} */\n',
        footer: '\n})('+PKG+');\n'
     }))
-    .pipe(plug.babel())
+    .pipe(plug.babel({
+      presets: ['es2015']
+    }))
     .pipe(plug.concat('app.es6.js'))
     // .pipe(plug.sourcemaps.write("."))
     .pipe(gulp.dest('./dist/assets/bundle'));
@@ -285,7 +282,9 @@ gulp.task('js:app', function() {
        header: '\n(function (PKG){ /* ${filename} */\n',
        footer: '\n})('+PKG+');\n'
     }))
-    .pipe(plug.babel())
+    .pipe(plug.babel({
+      presets: ['es2015']
+    }))
     .pipe(plug.concat('app.js'))
     // .pipe(plug.sourcemaps.write("."))
     .pipe(gulp.dest('./dist/assets/bundle'));
@@ -313,7 +312,7 @@ gulp.task('tpl', function() {
     gulp.src([
       './app/directives/**/*.html'
     ])
-      .pipe(plug.minifyHtml({loose: true, quotes: true}))
+      .pipe(plug.htmlmin({ removeComments: true }))
       .pipe(plug.angularTemplatecache({
         module: pkg.name + '.commons'
       })),
@@ -321,7 +320,7 @@ gulp.task('tpl', function() {
     gulp.src([
       './app/features/home/home.html'
     ])
-      .pipe(plug.minifyHtml({loose: true, quotes: true}))
+      .pipe(plug.htmlmin({ removeComments: true }))
       .pipe(plug.angularTemplatecache({
         module: pkg.name + '.features',
         base: __dirname + '/app',
@@ -349,13 +348,13 @@ gulp.task('polyfill', function () {
  */
 gulp.task('html:partials', function() {
   return gulp.src('./app/features/**/*.html')
-      .pipe(plug.minifyHtml({loose: true, quotes: true}))
+      .pipe(plug.htmlmin({ removeComments: true }))
       .pipe(gulp.dest('./dist/assets/features'));
 });
 
 gulp.task('html:main', function() {
   return gulp.src('./app/*.html')
-      .pipe(plug.minifyHtml({loose: true, quotes: true}))
+      .pipe(plug.htmlmin({ removeComments: true }))
       .pipe(gulp.dest('./dist'));
 });
 
@@ -368,7 +367,7 @@ gulp.task('html:main.dev', function () {
     });
 
 gulp.task('html', ['html:main', 'html:partials']);
-gulp.task('html.dev', ['html:main.dev', 'html:partials'])
+gulp.task('html.dev', ['html:main.dev', 'html:partials']);
 
 
 
@@ -393,8 +392,8 @@ gulp.task('hint', ['lint']);
 /*
   clean dist
  */
-gulp.task('clean', function(cb) {
-  del(['./dist/*'], cb);
+gulp.task('clean', function() {
+  return del.sync(['./dist/*']);
 });
 
 
@@ -409,7 +408,7 @@ gulp.task('js:minify', ['js'], function() {
 
 gulp.task('css:minify', ['css'], function() {
   return gulp.src('./dist/assets/bundle/*.css')
-    .pipe(plug.minifyCss({keepBreaks:true}))
+    .pipe(plug.cssnano({ safe: true }))
     .pipe(gulp.dest('./dist/assets/bundle'));
 });
 
@@ -425,7 +424,6 @@ gulp.task('minify', ['js:minify', 'css:minify']);
 gulp.task('rev:manifest', ['minify', 'tpl'], function() {
   return gulp.src(['./dist/assets/bundle/*'])
     .pipe(plug.rev())
-    .pipe(plug.size({showFiles:true, gzip:true, total:true}))
     .pipe(gulp.dest('./dist/assets/bundle'))  // write rev'd assets to build dir
 
     .pipe(plug.rev.manifest({path:'manifest.json'}))
@@ -447,8 +445,8 @@ gulp.task('rev:replace', ['html:main', 'rev:manifest'], function() {
 /*
   alias tasks
  */
-gulp.task('js', ['js:$modal', 'js:lib', 'js:aceworkers', 'js:app', 'polyfill']);
-gulp.task('watch:js', ['js:$modal', 'js:lib', 'js:aceworkers', 'watch:js:app', 'watch:js:app:babel', 'polyfill']);
+gulp.task('js', ['js:lib', 'js:aceworkers', 'js:app', 'polyfill']);
+gulp.task('watch:js', ['js:lib', 'js:aceworkers', 'watch:js:app', 'watch:js:app:babel', 'polyfill']);
 gulp.task('css', ['css:lib', 'css:app']);
 gulp.task('style', ['css']);
 
@@ -490,7 +488,8 @@ gulp.task('watch', ['jshint', 'watch:build'], function() {
     './app/features/search/**/*.js',
     './app/features/flows/**/*.js',
     './app/features/flows/**/*.js',
-    './app/directives/dag/**/*.js'
+    './app/directives/dag/**/*.js',
+    './app/features/tracker/**/*.js'
   ], ['jshint', 'watch:js:app:babel']);
 
   gulp.watch('./app/**/*.{less,css}', ['css']);

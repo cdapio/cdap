@@ -130,7 +130,7 @@ body.theme-cdap {
     height: 100%;
   }
 
-  &.state-hydrator-create, &.state-hydrator-list {
+  &.state-hydrator-create, &.state-hydrator-list, &.state-hydrator-preconfigured {
     .alerts {
       top: 60px;
       z-index: 1029;
@@ -143,7 +143,7 @@ body.theme-cdap {
     }
   }
 
-  &.state-hydrator-create {
+  &.state-hydrator-create, &.state-hydrator-preconfigured {
     background-color: #e2e3e5;
     main.container {
       background-color: transparent;
@@ -193,7 +193,11 @@ body.theme-cdap {
       margin-top: 140px;
     }
     .hydrator-preconfigured {
-      margin-top: 70px;
+      margin-bottom: 50px;
+
+      .well {
+        padding: 15px;
+      }
     }
 
     .templates-filters {

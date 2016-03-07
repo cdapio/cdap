@@ -20,6 +20,7 @@ package org.apache.twill.internal.appmaster;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.AbstractIdleService;
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.Service;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hdfs.HdfsConfiguration;
@@ -34,6 +35,7 @@ import org.apache.twill.internal.logging.Loggings;
 import org.apache.twill.internal.utils.Networks;
 import org.apache.twill.internal.yarn.VersionDetectYarnAMClientFactory;
 import org.apache.twill.internal.yarn.YarnAMClient;
+import org.apache.twill.zookeeper.OperationFuture;
 import org.apache.twill.zookeeper.ZKClient;
 import org.apache.twill.zookeeper.ZKClientService;
 import org.apache.twill.zookeeper.ZKOperations;
@@ -45,8 +47,10 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -71,7 +75,7 @@ public final class ApplicationMasterMain extends ServiceMain {
     File twillSpec = new File(Constants.Files.TWILL_SPEC);
     RunId runId = RunIds.fromString(System.getenv(EnvKeys.TWILL_RUN_ID));
 
-    ZKClientService zkClientService = createZKClient(zkConnect);
+    ZKClientService zkClientService = createZKClient(zkConnect, System.getenv(EnvKeys.TWILL_APP_NAME));
     Configuration conf = new YarnConfiguration(new HdfsConfiguration(new Configuration()));
     setRMSchedulerAddress(conf);
 
@@ -83,7 +87,7 @@ public final class ApplicationMasterMain extends ServiceMain {
     List<Service> prerequisites = Lists.newArrayList(
       new YarnAMClientService(amClient, trackerService),
       zkClientService,
-      new TwillZKPathService(zkClientService, runId)
+      new AppMasterTwillZKPathService(zkClientService, runId)
     );
 
     // TODO: Temp fix for Kakfa issue in MapR. Will be removed when fixing TWILL-147
@@ -242,6 +246,84 @@ public final class ApplicationMasterMain extends ServiceMain {
         yarnAMClient.stopAndWait();
       } finally {
         trackerService.stopAndWait();
+      }
+    }
+  }
+
+  private static final class AppMasterTwillZKPathService extends TwillZKPathService {
+
+    private static final Logger LOG = LoggerFactory.getLogger(AppMasterTwillZKPathService.class);
+    private final ZKClient zkClient;
+
+    public AppMasterTwillZKPathService(ZKClient zkClient, RunId runId) {
+      super(zkClient, runId);
+      this.zkClient = zkClient;
+    }
+
+    @Override
+    protected void shutDown() throws Exception {
+      super.shutDown();
+
+      // Deletes ZK nodes created for the application execution.
+      // We don't have to worry about a race condition if another instance of the same app starts at the same time
+      // as when removal is performed. This is because we always create nodes with "createParent == true",
+      // which takes care of the parent node recreation if it is removed from here.
+
+      // Try to delete the /instances path. It may throws NotEmptyException if there are other instances of the
+      // same app running, which we can safely ignore and return.
+      if (!delete(Constants.INSTANCES_PATH_PREFIX)) {
+        return;
+      }
+
+      // Try to delete children under /discovery. It may fail with NotEmptyException if there are other instances
+      // of the same app running that has discovery services running.
+      List<String> children = zkClient.getChildren(Constants.DISCOVERY_PATH_PREFIX)
+        .get(TIMEOUT_SECONDS, TimeUnit.SECONDS).getChildren();
+      List<OperationFuture<?>> deleteFutures = new ArrayList<>();
+      for (String child : children) {
+        String path = Constants.DISCOVERY_PATH_PREFIX + "/" + child;
+        LOG.info("Removing ZK path: {}{}", zkClient.getConnectString(), path);
+        deleteFutures.add(zkClient.delete(path));
+      }
+      Futures.successfulAsList(deleteFutures).get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
+      for (OperationFuture<?> future : deleteFutures) {
+        try {
+          future.get();
+        } catch (ExecutionException e) {
+          if (e.getCause() instanceof KeeperException.NotEmptyException) {
+            return;
+          }
+          throw e;
+        }
+      }
+
+      // Delete the /discovery. It may fail with NotEmptyException (due to race between apps),
+      // which can safely ignore and return.
+      if (!delete(Constants.DISCOVERY_PATH_PREFIX)) {
+        return;
+      }
+
+      // Delete the ZK path for the app namespace.
+      delete("/");
+    }
+
+    /**
+     * Deletes the given ZK path.
+     *
+     * @param path path to delete
+     * @return true if the path was deleted, false if failed to delete due to {@link KeeperException.NotEmptyException}.
+     * @throws Exception if failed to delete the path
+     */
+    private boolean delete(String path) throws Exception {
+      try {
+        LOG.info("Removing ZK path: {}{}", zkClient.getConnectString(), path);
+        zkClient.delete(path).get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
+        return true;
+      } catch (ExecutionException e) {
+        if (e.getCause() instanceof KeeperException.NotEmptyException) {
+          return false;
+        }
+        throw e;
       }
     }
   }

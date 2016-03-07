@@ -39,7 +39,7 @@ import java.util.Iterator;
 import java.util.Set;
 
 /**
- * Store program/adapter -> dataset/stream usage information.
+ * Store program -> dataset/stream usage information.
  *
  * TODO: Reduce duplication between this and {@link UsageDataset}.
  */

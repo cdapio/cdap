@@ -166,7 +166,7 @@ public abstract class ConcurrentStreamWriterTestBase {
     }
 
     startLatch.countDown();
-    Assert.assertTrue(completion.await(120, TimeUnit.SECONDS));
+    Assert.assertTrue(completion.await(4, TimeUnit.MINUTES));
 
     // Verify all events are written.
     // There should be only one partition

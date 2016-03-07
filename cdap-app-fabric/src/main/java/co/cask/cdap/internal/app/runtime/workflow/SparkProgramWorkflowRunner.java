@@ -25,8 +25,9 @@ import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
-import co.cask.cdap.internal.app.runtime.ProgramRunnerFactory;
+import co.cask.cdap.app.runtime.ProgramRunnerFactory;
 import co.cask.cdap.internal.app.runtime.spark.SparkProgramController;
+import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Preconditions;
 
 /**
@@ -67,7 +68,7 @@ final class SparkProgramWorkflowRunner extends AbstractProgramWorkflowRunner {
    */
   @Override
   public void runAndWait(Program program, ProgramOptions options) throws Exception {
-    ProgramController controller = programRunnerFactory.create(ProgramRunnerFactory.Type.SPARK).run(program, options);
+    ProgramController controller = programRunnerFactory.create(ProgramType.SPARK).run(program, options);
 
     if (controller instanceof SparkProgramController) {
       SparkContext sparkContext = ((SparkProgramController) controller).getContext();

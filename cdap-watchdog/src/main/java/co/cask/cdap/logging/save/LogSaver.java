@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,8 +18,8 @@ package co.cask.cdap.logging.save;
 
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.metrics.MetricsContext;
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.logging.appender.kafka.KafkaTopic;
 import co.cask.cdap.proto.Id;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
@@ -59,14 +59,15 @@ public final class LogSaver extends AbstractIdleService {
   private final MetricsContext metricsContext;
 
   @Inject
-  public LogSaver(KafkaClientService kafkaClient,
-                  @Named(Constants.LogSaver.MESSAGE_PROCESSORS) Set<KafkaLogProcessor> messageProcessors,
-                  @Assisted Set<Integer> partitions,
-                  MetricsCollectionService metricsCollectionService)
-                  throws Exception {
+  LogSaver(KafkaClientService kafkaClient,
+           CConfiguration cConf,
+           @Named(Constants.LogSaver.MESSAGE_PROCESSORS) Set<KafkaLogProcessor> messageProcessors,
+           @Assisted Set<Integer> partitions,
+           MetricsCollectionService metricsCollectionService)
+    throws Exception {
     LOG.info("Initializing LogSaver...");
 
-    this.topic = KafkaTopic.getTopic();
+    this.topic = cConf.get(Constants.Logging.KAFKA_TOPIC);
     this.partitions = partitions;
     LOG.info(String.format("Kafka topic: %s, partitions: %s", this.topic, this.partitions));
 

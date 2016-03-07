@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,8 +18,6 @@ package co.cask.cdap.security;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.io.FileContextLocationFactory;
-import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.security.YarnTokenUtils;
 import co.cask.cdap.data.security.HBaseTokenUtils;
 import co.cask.cdap.hive.ExploreUtils;
@@ -41,6 +39,7 @@ import org.apache.hadoop.yarn.conf.YarnConfiguration;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.SecureStore;
 import org.apache.twill.api.SecureStoreUpdater;
+import org.apache.twill.filesystem.FileContextLocationFactory;
 import org.apache.twill.filesystem.HDFSLocationFactory;
 import org.apache.twill.filesystem.LocationFactory;
 import org.apache.twill.internal.yarn.YarnUtils;
@@ -93,7 +92,7 @@ public final class TokenSecureStoreUpdater implements SecureStoreUpdater {
         YarnUtils.addDelegationTokens(hConf, locationFactory, refreshedCredentials);
       } else if (locationFactory instanceof FileContextLocationFactory) {
         List<Token<?>> tokens = ((FileContextLocationFactory) locationFactory).getFileContext().getDelegationTokens(
-          new Path(Locations.toURI(locationFactory.getHomeLocation())), YarnUtils.getYarnTokenRenewer(hConf)
+          new Path(locationFactory.getHomeLocation().toURI()), YarnUtils.getYarnTokenRenewer(hConf)
         );
         for (Token<?> token : tokens) {
           refreshedCredentials.addToken(token.getService(), token);

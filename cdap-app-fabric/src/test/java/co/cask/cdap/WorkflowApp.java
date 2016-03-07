@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -24,16 +24,12 @@ import co.cask.cdap.api.spark.JavaSparkProgram;
 import co.cask.cdap.api.spark.SparkContext;
 import co.cask.cdap.api.workflow.AbstractWorkflow;
 import co.cask.cdap.api.workflow.AbstractWorkflowAction;
-import co.cask.cdap.api.workflow.WorkflowAction;
-import co.cask.cdap.api.workflow.WorkflowActionConfigurer;
-import co.cask.cdap.api.workflow.WorkflowActionSpecification;
 import co.cask.cdap.api.workflow.WorkflowContext;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.internal.app.runtime.batch.WordCount;
 import co.cask.cdap.runtime.WorkflowTest;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableMap;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
@@ -71,7 +67,6 @@ public class WorkflowApp extends AbstractApplication {
       setDescription("FunWorkflow description");
       addMapReduce("ClassicWordCount");
       addAction(new CustomAction("verify"));
-      addAction(new LegacyAction("verify-too"));
       addSpark("SparkWorkflowTest");
     }
   }
@@ -159,8 +154,7 @@ public class WorkflowApp extends AbstractApplication {
     }
 
     @Override
-    public void configure(WorkflowActionConfigurer configurer) {
-      super.configure(configurer);
+    public void configure() {
       setName(name);
       setDescription(name);
     }
@@ -189,50 +183,4 @@ public class WorkflowApp extends AbstractApplication {
       LOG.info("Custom run completed.");
     }
   }
-
-  /**
-   * Action to test old-style configuration, implementing WorkflowAction directly.
-   * This can go away as soon as we remove the deprecated builder-style configure method from WorkflowAction.
-   */
-  @Deprecated
-  public static final class LegacyAction implements WorkflowAction {
-
-    private static final Logger LOG = LoggerFactory.getLogger(CustomAction.class);
-
-    private final String name;
-    private WorkflowContext context;
-
-    public LegacyAction(String name) {
-      this.name = name;
-    }
-
-    @Override
-    public WorkflowActionSpecification configure() {
-      return WorkflowActionSpecification.Builder.with()
-        .setName(name)
-        .setDescription(name)
-        .withOptions(ImmutableMap.of("test-option", "this value"))
-        .build();
-    }
-
-    @Override
-    public void initialize(WorkflowContext context) throws Exception {
-      this.context = context;
-      LOG.info("Legacy action initialized: " + context.getSpecification().getName());
-    }
-
-    @Override
-    public void destroy() {
-      LOG.info("Legacy action destroyed: " + context.getSpecification().getName());
-    }
-
-    @Override
-    public void run() {
-      LOG.info("Legacy action run");
-      Preconditions.checkArgument("this value".equals(context.getSpecification().getProperty("test-option")));
-      Preconditions.checkArgument("value".equals(context.getToken().get("tokenKey").toString()));
-      LOG.info("Legacy run completed.");
-    }
-  }
-
 }

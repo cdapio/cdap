@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,34 +18,40 @@ angular.module(PKG.name + '.services')
   .factory('myAlertOnValium', function($alert, $window) {
     var isAnAlertOpened = false,
         alertObj;
-     function show(obj) {
-       if (!isAnAlertOpened) {
-         isAnAlertOpened = true;
-         alertObj = $alert(obj);
-         alertObj.$scope
-          .$on('alert.hide', function() {
-            isAnAlertOpened = false;
-          });
-       } else {
+
+    var SUCCESS_ALERT_DURATION = 3; // duration amount in seconds
+
+    function show(obj) {
+      if (!isAnAlertOpened) {
+        isAnAlertOpened = true;
+
+        obj.duration = obj.type === 'success' ? SUCCESS_ALERT_DURATION : false;
+
+        alertObj = $alert(obj);
+        alertObj.$scope
+        .$on('alert.hide', function() {
+          isAnAlertOpened = false;
+        });
+      } else {
         alertObj.$scope.content = obj.content;
         alertObj.$scope.title = obj.title;
-       }
+      }
        // Scroll to top so that user doesn't miss an alert
-       $window.scrollTo(0, 0);
-     }
-     function destroy() {
+      $window.scrollTo(0, 0);
+    }
+    function destroy() {
       if(isAnAlertOpened) {
         alertObj.hide();
         isAnAlertOpened = false;
       }
-     }
-     function getisAnAlertOpened() {
+    }
+    function getisAnAlertOpened() {
       return isAnAlertOpened;
-     }
+    }
 
-     return {
+    return {
       show: show,
       isAnAlertOpened: getisAnAlertOpened,
       destroy: destroy
-     };
+    };
   });

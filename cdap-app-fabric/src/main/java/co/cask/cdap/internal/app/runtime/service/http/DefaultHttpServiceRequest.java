@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,15 +17,13 @@
 package co.cask.cdap.internal.app.runtime.service.http;
 
 import co.cask.cdap.api.service.http.HttpServiceRequest;
-import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMultimap;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Multimap;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 
 import java.nio.ByteBuffer;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -37,7 +35,7 @@ final class DefaultHttpServiceRequest implements HttpServiceRequest {
 
   private final HttpRequest request;
   private final ByteBuffer content;
-  private final Multimap<String, String> headers;
+  private final Map<String, List<String>> headers;
 
   /**
    * Instantiates the class from a {@link HttpRequest}
@@ -48,11 +46,11 @@ final class DefaultHttpServiceRequest implements HttpServiceRequest {
     this.request = request;
     this.content = request.getContent().toByteBuffer();
 
-    final ImmutableMultimap.Builder<String, String> builder = ImmutableMultimap.builder();
-    for (Map.Entry<String, String> header : request.getHeaders()) {
-      builder.put(header);
+    Map<String, List<String>> headers = new HashMap<>();
+    for (String name : request.getHeaderNames()) {
+      headers.put(name, ImmutableList.copyOf(request.getHeaders(name)));
     }
-    this.headers = builder.build();
+    this.headers = Collections.unmodifiableMap(headers);
   }
 
   /**
@@ -79,22 +77,9 @@ final class DefaultHttpServiceRequest implements HttpServiceRequest {
     return content.duplicate().asReadOnlyBuffer();
   }
 
-  /**
-   * @return the headers of this request; each header name can map to multiple values
-   */
-  @Override
-  public Multimap<String, String> getHeaders() {
-    return headers;
-  }
-
   @Override
   public Map<String, List<String>> getAllHeaders() {
-    return Maps.transformValues(headers.asMap(), new Function<Collection<String>, List<String>>() {
-      @Override
-      public List<String> apply(Collection<String> input) {
-        return ImmutableList.copyOf(input);
-      }
-    });
+    return headers;
   }
 
   /**
@@ -105,7 +90,8 @@ final class DefaultHttpServiceRequest implements HttpServiceRequest {
    */
   @Override
   public List<String> getHeaders(String key) {
-    return ImmutableList.copyOf(headers.get(key));
+    List<String> values = headers.get(key);
+    return values == null ? ImmutableList.<String>of() : values;
   }
 
   /**
@@ -117,7 +103,7 @@ final class DefaultHttpServiceRequest implements HttpServiceRequest {
    */
   @Override
   public String getHeader(String key) {
-    Collection<String> values = headers.get(key);
+    Collection<String> values = getHeaders(key);
     return values.isEmpty() ? null : values.iterator().next();
   }
 }
