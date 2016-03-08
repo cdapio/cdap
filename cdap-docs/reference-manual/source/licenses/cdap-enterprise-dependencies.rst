@@ -1,7 +1,7 @@
 .. meta::
     :author: Cask Data, Inc.
     :copyright: Copyright © 2015 Cask Data, Inc.
-    :version: 3.3.0
+    :version: 3.3.2
 
 =================================================
 Cask Data Application Platform |version|
@@ -24,10 +24,11 @@ Cask Data Application Platform Distributed Dependencies
    "antlr.antlr-2.7.7.jar","2.7.7","\-","ANTLR 3 License (BSD License)","http://www.antlr2.org/license.html"
    "aopalliance.aopalliance-1.0.jar","1.0","\-","Public Domain","http://aopalliance.sourceforge.net/"
    "c3p0.c3p0-0.9.1.1.jar","0.9.1.1","\-","EPL or LGPLv2","http://www.eclipse.org/legal/epl-v10.html"
-   "cdap-data-quality-3.3.0.jar","3.3.0","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
-   "cdap-etl-batch-3.3.0.jar","3.3.0","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
-   "cdap-etl-realtime-3.3.0.jar","3.3.0","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
-   "cdap-etl-tools-3.3.0.jar","3.3.0","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
+   "cassandra-plugins-1.2.1.jar","1.2.1","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
+   "cdap-data-quality-3.3.2.jar","3.3.2","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
+   "cdap-etl-batch-3.3.2.jar","3.3.2","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
+   "cdap-etl-realtime-3.3.2.jar","3.3.2","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
+   "cdap-etl-tools-3.3.2.jar","3.3.2","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "ch.qos.logback.logback-classic-1.0.9.jar","1.0.9","\-","EPL","http://www.eclipse.org/legal/epl-v10.html"
    "ch.qos.logback.logback-core-1.0.9.jar","1.0.9","\-","EPL","http://www.eclipse.org/legal/epl-v10.html"
    "com.101tec.zkclient-0.3.jar","0.3","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
@@ -70,7 +71,14 @@ Cask Data Application Platform Distributed Dependencies
    "commons-lang.commons-lang-2.6.jar","2.6","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "commons-net.commons-net-3.1.jar","3.1","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "commons-pool.commons-pool-1.5.4.jar","1.5.4","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
+   "core-plugins-1.2.1.jar","1.2.1","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
+   "database-plugins-1.2.1.jar","1.2.1","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "eigenbase.eigenbase-properties-1.1.4.jar","1.1.4","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
+   "elasticsearch-plugins-1.2.1.jar","1.2.1","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
+   "hbase-plugins-1.2.1.jar","1.2.1","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
+   "hdfs-plugins-1.2.1.jar","1.2.1","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
+   "hive-plugins-1.2.1.jar","1.2.1","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
+   "hydrator-common-1.2.1.jar","1.2.1","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "io.dropwizard.metrics.metrics-core-3.1.0.jar","3.1.0","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "io.netty.netty-3.6.6.Final.jar","3.6.6","Final","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "io.thekraken.grok-0.1.0.jar","0.1.0","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
@@ -87,10 +95,12 @@ Cask Data Application Platform Distributed Dependencies
    "javax.xml.stream.stax-api-1.0-2.jar","1.0","2","Best of CDDL 1.0 and GPL 2.0","https://glassfish.java.net/nonav/public/CDDL+GPL.html"
    "jline.jline-2.12.jar","2.12","\-","The BSD License","http://www.opensource.org/licenses/bsd-license.php"
    "joda-time.joda-time-2.1.jar","2.1","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
+   "kafka-plugins-1.2.1.jar","1.2.1","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "log4j.apache-log4j-extras-1.2.17.jar","1.2.17","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "log4j.log4j-1.2.14.jar","1.2.14","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "log4j.log4j-1.2.16.jar","1.2.16","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "log4j.log4j-1.2.17.jar","1.2.17","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
+   "mongodb-plugins-1.2.1.jar","1.2.1","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "net.java.dev.jets3t.jets3t-0.9.0.jar","0.9.0","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "net.jcip.jcip-annotations-1.0.jar","1.0","\-","Creative Commons Attribution License","http://creativecommons.org/licenses/by/2.5"
    "net.jpountz.lz4.lz4-1.2.0.jar","1.2.0","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
@@ -179,4 +189,5 @@ Cask Data Application Platform Distributed Dependencies
    "oro.oro-2.0.8.jar","2.0.8","\-","Apache License, Version 1.1","http://www.apache.org/licenses/LICENSE-1.1"
    "stax.stax-api-1.0.1.jar","1.0.1","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "tomcat.jasper-runtime-5.5.23.jar","5.5.23","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
+   "transform-plugins-1.2.1.jar","1.2.1","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "xmlenc.xmlenc-0.52.jar","0.52","\-","BSD 2","http://opensource.org/licenses/bsd-license.php"
