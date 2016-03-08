@@ -4,12 +4,13 @@ CDAP GitHub Pages
 
 Cask Data Application Platform (CDAP) Documentation
 
-`Latest version: 3.3.1 <http://docs.cdap.io/cdap/current>`__
+`Latest version: 3.3.2 <http://docs.cdap.io/cdap/current>`__
 
-- `Version 3.3.1 <http://docs.cdap.io/cdap/3.3.1>`__
+- `Version 3.3.2 <http://docs.cdap.io/cdap/3.3.2>`__
 
 Earlier versions:
 
+- `Version 3.3.1 <http://docs.cdap.io/cdap/3.3.1>`__
 - `Version 3.3.0 <http://docs.cdap.io/cdap/3.3.0>`__
 - `Version 3.2.2 <http://docs.cdap.io/cdap/3.2.2>`__
 - `Version 3.2.1 <http://docs.cdap.io/cdap/3.2.1>`__
