@@ -65,11 +65,12 @@ function LineageController ($scope, jsPlumb, $timeout, $state, LineageStore, myT
     render();
   });
 
-  vm.nodeClick = (node) => {
+  vm.nodeClick = (event, node) => {
     let nodeInfo = vm.uniqueNodes[node.uniqueNodeId];
     if (nodeInfo.nodeType === 'data') {
-      $state.go('tracker.entity.metadata', { entityType: nodeInfo.entityType, entityId: nodeInfo.entityId });
+      return;
     } else {
+      event.preventDefault(); // prevent JS error on nonexistant state
       node.showPopover = true;
 
       node.popover = {
@@ -78,6 +79,18 @@ function LineageController ($scope, jsPlumb, $timeout, $state, LineageStore, myT
         runInfo: {}
       };
       fetchRunStatus(nodeInfo, node.popover.activeRunId, node.popover.runInfo);
+    }
+  };
+
+  // This function is to enable user to click open data nodes in new tab
+  vm.constructNodeLinks = (node) => {
+    let nodeInfo = vm.uniqueNodes[node.uniqueNodeId];
+
+    if (nodeInfo.nodeType === 'data') {
+      return 'tracker.entity.metadata({ entityType:Lineage.uniqueNodes[node.uniqueNodeId].entityType, entityId: Lineage.uniqueNodes[node.uniqueNodeId].entityId })';
+    } else {
+      // when you return non existant state, the href attribute never gets created
+      return '-';
     }
   };
 
@@ -131,6 +144,7 @@ function LineageController ($scope, jsPlumb, $timeout, $state, LineageStore, myT
 
   vm.navigationClick = (event, node) => {
     event.stopPropagation();
+    event.preventDefault();
     let unique = vm.uniqueNodes[node.uniqueNodeId];
     $scope.navigationFunction().call($scope.context, unique.entityType, unique.entityId);
   };

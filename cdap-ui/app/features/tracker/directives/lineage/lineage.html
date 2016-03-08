@@ -20,13 +20,14 @@
 
 <div class="lineage-diagram-container" id="lineage-diagram"
      style="height: {{Lineage.graphInfo.height + 300}}px; width: {{Lineage.graphInfo.width + 175}}px;">
-  <div class="nodes {{ Lineage.uniqueNodes[node.uniqueNodeId].nodeType }}"
+  <a class="nodes {{ Lineage.uniqueNodes[node.uniqueNodeId].nodeType }}"
        id="{{ node.dataId }}"
        ng-repeat="node in Lineage.nodes"
        ng-style="node._uiLocation"
        ng-mouseenter="node.showNavigation = true"
        ng-mouseleave="Lineage.mouseLeaveNode(node)"
-       ng-click="Lineage.nodeClick(node)">
+       ng-click="Lineage.nodeClick($event, node)"
+       ui-sref="{{ Lineage.constructNodeLinks(node) }}">
 
     <!-- Navigation -->
     <div class="navigation-control left"
@@ -131,5 +132,5 @@
         </div>
       </div>
     </div>
-  </div>
+  </a>
 </div>
