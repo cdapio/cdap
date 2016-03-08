@@ -25,7 +25,10 @@ import java.util.Objects;
 /**
  * Part of the etl configuration, used to choose which artifact to use for a plugin. Normally created through
  * deserialization by the CDAP framework. Programmatic creation is only used for unit tests.
+ *
+ * @deprecated use ArtifactSelectorConfig in cdap-etl-proto instead
  */
+@Deprecated
 public class ArtifactSelectorConfig {
   private static final CharMatcher nameMatcher =
     CharMatcher.inRange('A', 'Z')

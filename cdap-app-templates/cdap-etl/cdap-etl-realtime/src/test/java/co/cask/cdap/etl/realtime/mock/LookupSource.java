@@ -85,10 +85,10 @@ public class LookupSource extends RealtimeSource<StructuredRecord> {
     private String lookupName;
   }
 
-  public static co.cask.cdap.etl.common.Plugin getPlugin(Set<String> fields, String lookupName) {
+  public static co.cask.cdap.etl.proto.v1.Plugin getPlugin(Set<String> fields, String lookupName) {
     Map<String, String> properties = new HashMap<>();
     properties.put("fields", Joiner.on(',').join(fields));
     properties.put("lookupName", lookupName);
-    return new co.cask.cdap.etl.common.Plugin("Lookup", properties);
+    return new co.cask.cdap.etl.proto.v1.Plugin("Lookup", properties);
   }
 }

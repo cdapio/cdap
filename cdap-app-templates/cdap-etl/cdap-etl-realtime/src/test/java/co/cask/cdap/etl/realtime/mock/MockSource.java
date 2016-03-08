@@ -82,12 +82,12 @@ public class MockSource extends RealtimeSource<StructuredRecord> {
     }
   }
 
-  public static co.cask.cdap.etl.common.Plugin getPlugin(List<StructuredRecord> records) {
+  public static co.cask.cdap.etl.proto.v1.Plugin getPlugin(List<StructuredRecord> records) {
     if (records == null) {
-      return new co.cask.cdap.etl.common.Plugin("Mock", null);
+      return new co.cask.cdap.etl.proto.v1.Plugin("Mock", null);
     }
     Map<String, String> properties = new HashMap<>();
     properties.put("records", GSON.toJson(records));
-    return new co.cask.cdap.etl.common.Plugin("Mock", properties);
+    return new co.cask.cdap.etl.proto.v1.Plugin("Mock", properties);
   }
 }

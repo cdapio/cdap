@@ -28,7 +28,10 @@ import java.util.Objects;
 
 /**
  * Common ETL Config.
+ *
+ * @deprecated use ETLConfig in cdap-etl-proto instead.
  */
+@Deprecated
 public class ETLConfig extends Config {
   private Boolean stageLoggingEnabled;
   private final ETLStage source;
