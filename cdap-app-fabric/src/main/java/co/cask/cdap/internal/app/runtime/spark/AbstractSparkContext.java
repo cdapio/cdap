@@ -132,7 +132,7 @@ public abstract class AbstractSparkContext implements SparkContext, Closeable {
 
   @Override
   public ServiceDiscoverer getServiceDiscoverer() {
-    return new SparkServiceDiscoverer(getProgramId(), discoveryServiceClient);
+    return new SparkServiceDiscoverer(getProgramId().toEntityId(), discoveryServiceClient);
   }
 
   @Override
@@ -142,7 +142,7 @@ public abstract class AbstractSparkContext implements SparkContext, Closeable {
 
   @Override
   public PluginContext getPluginContext() {
-    return new SparkPluginContext(pluginInstantiator, programId, applicationSpecification.getPlugins());
+    return new SparkPluginContext(pluginInstantiator, programId.toEntityId(), applicationSpecification.getPlugins());
   }
 
   @Override
