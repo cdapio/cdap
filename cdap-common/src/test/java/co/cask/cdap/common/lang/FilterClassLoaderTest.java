@@ -24,7 +24,6 @@ import org.junit.Test;
 import org.slf4j.Logger;
 
 import java.io.IOException;
-import javax.script.ScriptEngineFactory;
 import javax.ws.rs.PUT;
 
 /**

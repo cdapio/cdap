@@ -204,7 +204,7 @@ public class PluginInstantiator implements Closeable {
 
   @Override
   public void close() throws IOException {
-    // Cleanup the ClassLoader cache and the temporary directoy for the expanded plugin jar.
+    // Cleanup the ClassLoader cache and the temporary directory for the expanded plugin jar.
     classLoaders.invalidateAll();
     if (parentClassLoader instanceof Closeable) {
       Closeables.closeQuietly((Closeable) parentClassLoader);
