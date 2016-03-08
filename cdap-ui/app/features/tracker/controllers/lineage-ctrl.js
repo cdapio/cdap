@@ -53,12 +53,20 @@ class TrackerLineageController{
     this.lineageInfo = {};
     this.loading = false;
 
-    this.selectTimeRange(this.timeRangeOptions[0]);
+    this.timeRange = {
+      start: $state.params.start || 'now-7d',
+      end: $state.params.end || 'now'
+    };
+
+    this.selectedTimeRange = this.findTimeRange();
+    this.getLineage(this.$state.params.entityType, this.$state.params.entityId);
   }
 
-  selectTimeRange (time) {
-    this.timeRange = time;
-    this.getLineage(this.$state.params.entityType, this.$state.params.entityId);
+  findTimeRange() {
+    let match = this.timeRangeOptions.filter( (option) => {
+      return option.start === this.timeRange.start && option.end === this.timeRange.end;
+    });
+    return match.length > 0 ? match[0] : { label: 'Custom' };
   }
 
   getLineage(entityType, entityId) {
