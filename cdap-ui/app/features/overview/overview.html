@@ -14,35 +14,39 @@
   the License.
 -->
 
-<my-breadcrumbs></my-breadcrumbs>
-<div ng-hide="OverviewCtrl.welcomeIsHidden">
-  <div class="panel panel-message">
-    <a class="btn-close pull-right" ng-click="OverviewCtrl.hideWelcome()">
-      <span class="fa fa-close"></span>
+<div class="welcome-banner" ng-hide="OverviewCtrl.welcomeIsHidden">
+  <div class="container">
+    <a class="btn-close" ng-click="OverviewCtrl.hideWelcome()">
+      <span class="fa fa-times-circle"></span>
       <span class="sr-only"> Hide Welcome Message </span>
     </a>
-    <div class="panel-body text-left">
 
-      <div class="row">
-        <div class="col-xs-6 hydrator-banner text-center">
-          <img src="/assets/img/hydrator_banner.png" alt="Hydrator">
-        </div>
-
-        <div class="col-xs-6 banner-content">
-          <div>
-            <h4>
-              Cask Hydrator provides self-service ingestion and ETL for the rapid enablement of Hadoop Data Lakes
-            </h4>
-            <a ui-sref="hydrator.create" class="btn btn-blue">Get Started</a>
-          </div>
+    <div class="col-xs-6">
+      <div class="banner-content hydrator-banner">
+        <div class="text-content">
+          <h3 class="banner-title">
+            <span>Cask Hydrator</span>
+            <a ui-sref="hydrator.create" class="btn btn-hydrator">Go!</a>
+          </h3>
+          <p>Self-Service, Extensible Framework for Data Pipelines</p>
         </div>
       </div>
-
+    </div>
+    <div class="col-xs-6">
+      <div class="banner-content tracker-banner">
+        <div class="text-content">
+          <h3 class="banner-title">
+            <span>Cask Tracker</span>
+            <a ui-sref="tracker-home" class="btn btn-tracker">Go!</a>
+          </h3>
+          <p>Data Discovery with Metadata, Audit and Lineage</p>
+        </div>
+      </div>
     </div>
   </div>
 </div>
 
-<h3> System Health </h3>
+<h3 ng-class="{ 'system-health-title-offset': !OverviewCtrl.welcomeIsHidden }"> System Health </h3>
 <section class="system-health"> <!-- ng-show="isEnterprise" -->
   <div class="divider"></div>
   <div>
