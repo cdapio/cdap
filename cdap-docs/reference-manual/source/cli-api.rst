@@ -128,14 +128,53 @@ These are the available commands:
    ``connect <cdap-instance-uri> [<verify-ssl-cert>]``,"Connects to a CDAP instance."
    ``exit``,"Exits the CLI."
    ``quit``,"Exits the CLI."
-   **Application Lifecycle**
-   ``create app <app-id> <artifact-name> <artifact-version> <scope> [<app-config-file>]``,"Creates an application from an artifact with optional configuration. If configuration is needed, it must be given as a file whose contents are a JSON object containing the application config. For example, the file contents could contain:
+   **Namespace**
+   ``create namespace <namespace-name> [<namespace-description>]``,"Creates a namespace in CDAP."
+   ``delete namespace <namespace-name>``,"Deletes a namespace."
+   ``describe namespace <namespace-name>``,"Describes a namespace."
+   ``list namespaces``,"Lists all namespaces."
+   ``use namespace <namespace-name>``,"Changes the current namespace to <namespace-name>."
+   **Artifact**
+   ``delete artifact <artifact-name> <artifact-version>``,"Deletes an artifact"
+   ``describe artifact <artifact-name> <artifact-version> [<scope>]``,"Shows information about an artifact. If no scope is given, the user scope will be used. Includes information about application and plugin classes contained in the artifact."
+   ``describe artifact-plugin <artifact-name> <artifact-version> <plugin-type> <plugin-name> [<scope>]``,"Describes all plugins of a specific type and name available to a specific artifact. Can return multiple details if the plugin exists in multiple artifacts. If no scope is given, the user scope will be used."
+   ``get artifact properties <artifact-name> <artifact-version> [<scope>]``,"Gets properties of an artifact. If no scope is given, the user scope will be used. "
+   ``list artifact plugin-types <artifact-name> <artifact-version> [<scope>]``,"Lists all plugin types usable by the specified artifact. If no scope is given, the user scope will be used."
+   ``list artifact plugins <artifact-name> <artifact-version> <plugin-type> [<scope>]``,"Lists all plugins of a specific type available to a specific artifact. Includes the type, name, classname, and description of the plugin, as well as the artifact the plugin came from. If no scope is given, the user scope will be used."
+   ``list artifact versions <artifact-name> [<scope>]``,"Lists all versions of a specific artifact. If no scope is given, the user scope will be used."
+   ``list artifacts [<scope>]``,"Lists all artifacts. If no scope is given, artifacts in all scopes are returned. Otherwise, only artifacts in the specified scope are returned."
+   ``load artifact <local-file-path> [config-file <artifact-config>] [name <artifact-name>] [version <artifact-version>]``,"Loads an artifact into CDAP. If the artifact name and version are not both given, they will be derived from the filename of the artifact. File names are expected to be of the form <name>-<version>.jar. If the artifact contains plugins that extend another artifact, or if it contains third-party plugins, a config file must be given. The config file must contain a JSON object that specifies the parent artifacts and any third-party plugins in the jar. For example, if there is a config file with these contents:
     | ``{``
-    |   ``""config"":``
-    |     ``{ ""stream"": ""purchases""}``
+    |   ``""parents"":[ ""app1[1.0.0,2.0.0)"", ""app2[1.2.0,1.3.0] ],``
+    |   ``""plugins"":[``
+    |     ``{ ""type"": ""jdbc"",``
+    |       ``""name"": ""mysql"",``
+    |       ``""className"": ""com.mysql.jdbc.Driver""``
+    |     ``}``
+    |   ``],``
+    |   ``""plugins"":{``
+    |     ``""prop1"": ""val1"",``
+    |   ``},``
     | ``}``
 
-   In this case, the application would receive ``'{ ""stream"": ""purchases"" }'`` as its config object."    
+   This config specifies that the artifact contains one JDBC third-party plugin that should be available to the app1 artifact (versions 1.0.0 inclusive to 2.0.0 exclusive) and app2 artifact (versions 1.2.0 inclusive to 1.3.0 inclusive). The config may also include a 'properties' field specifying properties for the artifact."
+   ``set artifact properties <artifact-name> <artifact-version> <scope> <local-file-path>``,"Sets properties of an artifact. The properties file must contain a JSON Object with a 'properties' key whose value is a JSON Object of the properties for the artifact."
+   **Metadata And Lineage**
+   ``add metadata-properties <entity-id> <properties>``,"Adds metadata properties for an entity"
+   ``add metadata-tags <entity-id> <tags>``,"Adds metadata tags for an entity"
+   ``get lineage dataset <dataset-name> [start <start>] [end <end>] [levels <levels>]``,"Gets the lineage of a dataset"
+   ``get lineage stream <stream-id> [start <start>] [end <end>] [levels <levels>]``,"Gets the lineage of a stream"
+   ``get metadata <entity-id> [scope <scope>]``,"Gets the metadata of an entity"
+   ``get metadata-properties <entity-id> [scope <scope>]``,"Gets the metadata properties of an entity"
+   ``get metadata-tags <entity-id> [scope <scope>]``,"Gets the metadata tags of an entity"
+   ``remove metadata <entity-id>``,"Removes metadata for an entity"
+   ``remove metadata-properties <entity-id>``,"Removes all metadata properties for an entity"
+   ``remove metadata-property <entity-id> <property>``,"Removes a metadata property for an entity"
+   ``remove metadata-tag <entity-id> <tag>``,"Removes a metadata tag for an entity"
+   ``remove metadata-tags <entity-id>``,"Removes all metadata tags for an entity"
+   ``search metadata <search-query> [filtered by target-type <target-type>]``,"Allows users to search CDAP entities based on the metadata annotated on them."
+   **Application Lifecycle**
+   ``create app <app-id> <artifact-name> <artifact-version> <scope> [<app-config-file>]``,"Creates an application from an artifact with optional configuration. If configuration is needed, it must be given as a file whose contents are a JSON object containing the application config. For example, the file contents could contain: '{ ""config"": { ""stream"": ""purchases"" } }'. In this case, the application would receive '{ ""stream"": ""purchases"" }' as its config object."
    ``delete app <app-id>``,"Deletes an application."
    ``delete preferences app [<app-id>]``,"Deletes the preferences of an application."
    ``delete preferences flow [<app-id.flow-id>]``,"Deletes the preferences of a flow."
@@ -259,31 +298,6 @@ These are the available commands:
    ``stop workflow <app-id.workflow-id>``,"Stops a workflow."
    ``suspend schedule <app-id.schedule-id>``,"Suspends a schedule"
    ``update app <app-id> <artifact-name> <artifact-version> <scope> [<app-config-file>]``,"Updates an application to use another artifact version and/or configuration."
-   **Artifact**
-   ``delete artifact <artifact-name> <artifact-version>``,"Deletes an artifact"
-   ``describe artifact <artifact-name> <artifact-version> [<scope>]``,"Shows information about an artifact. If no scope is given, the user scope will be used. Includes information about application and plugin classes contained in the artifact."
-   ``describe artifact-plugin <artifact-name> <artifact-version> <plugin-type> <plugin-name> [<scope>]``,"Describes all plugins of a specific type and name available to a specific artifact. Can return multiple details if the plugin exists in multiple artifacts. If no scope is given, the user scope will be used."
-   ``get artifact properties <artifact-name> <artifact-version> [<scope>]``,"Gets properties of an artifact. If no scope is given, the user scope will be used. "
-   ``list artifact plugin-types <artifact-name> <artifact-version> [<scope>]``,"Lists all plugin types usable by the specified artifact. If no scope is given, the user scope will be used."
-   ``list artifact plugins <artifact-name> <artifact-version> <plugin-type> [<scope>]``,"Lists all plugins of a specific type available to a specific artifact. Includes the type, name, classname, and description of the plugin, as well as the artifact the plugin came from. If no scope is given, the user scope will be used."
-   ``list artifact versions <artifact-name> [<scope>]``,"Lists all versions of a specific artifact. If no scope is given, the user scope will be used."
-   ``list artifacts [<scope>]``,"Lists all artifacts. If no scope is given, artifacts in all scopes are returned. Otherwise, only artifacts in the specified scope are returned."
-   ``load artifact <local-file-path> [config-file <artifact-config>] [name <artifact-name>] [version <artifact-version>]``,"Loads an artifact into CDAP. If the artifact name and version are not both given, they will be derived from the filename of the artifact. File names are expected to be of the form <name>-<version>.jar. If the artifact contains plugins that extend another artifact, or if it contains third-party plugins, a config file must be given. The config file must contain a JSON object that specifies the parent artifacts and any third-party plugins in the jar. For example, if there is a config file with these contents:
-    | ``{``
-    |   ``""parents"":[ ""app1[1.0.0,2.0.0)"", ""app2[1.2.0,1.3.0] ],``
-    |   ``""plugins"":[``
-    |     ``{ ""type"": ""jdbc"",``
-    |       ``""name"": ""mysql"",``
-    |       ``""className"": ""com.mysql.jdbc.Driver""``
-    |     ``}``
-    |   ``],``
-    |   ``""plugins"":{``
-    |     ``""prop1"": ""val1"",``
-    |   ``},``
-    | ``}``
-    
-   This config specifies that the artifact contains one JDBC third-party plugin that should be available to the app1 artifact (versions 1.0.0 inclusive to 2.0.0 exclusive) and app2 artifact (versions 1.2.0 inclusive to 1.3.0 inclusive). The config may also include a 'properties' field specifying properties for the artifact."
-   ``set artifact properties <artifact-name> <artifact-version> <scope> <local-file-path>``,"Sets properties of an artifact. The properties file must contain a JSON Object with a 'properties' key whose value is a JSON Object of the properties for the artifact."
    **Dataset**
    ``create dataset instance <dataset-type> <new-dataset-name> [<dataset-properties>]``,"Creates a dataset. <dataset-properties> is in the format ""key1=val1 key2=val2"""
    ``delete dataset instance <dataset-name>``,"Deletes a dataset."
@@ -297,10 +311,12 @@ These are the available commands:
    ``list dataset types``,"Lists all dataset types."
    ``set dataset instance properties <dataset-name> <dataset-properties>``,"Sets properties for a dataset."
    ``truncate dataset instance <dataset-name>``,"Truncates a dataset."
-   **Egress**
-   ``call service <app-id.service-id> <http-method> <endpoint> [headers <headers>] [body <body>] [body:file <local-file-path>]``,"Calls a service endpoint. The <headers> are formatted as ""{'key':'value', ...}"". The request body may be provided either as a string or a file. To provide the body as a string, use ""body <body>"". To provide the body as a file, use ""body:file <local-file-path>""."
    **Explore**
    ``execute <query> [<timeout>]``,"Executes a query with optional <timeout> in minutes (default is no timeout)."
+   **Metrics**
+   ``get metric value <metric-name> [<tags>] [start <start>] [end <end>]``,"Gets the value of a metric. Provide <tags> as a map in the format 'tag1=value1 tag2=value2'."
+   ``search metric names [<tags>]``,"Searches metric names. Provide <tags> as a map in the format 'tag1=value1 tag2=value2'."
+   ``search metric tags [<tags>]``,"Searches metric tags. Provide <tags> as a map in the format 'tag1=value1 tag2=value2'."
    **Ingest**
    ``create stream <new-stream-id>``,"Creates a stream."
    ``create stream-view <stream-id> <view-id> format <format> [schema <schema>] [settings <settings>]``,"Creates or updates a stream-view. Valid <format>s are avro, csv, tsv, text, clf, grok, syslog. <schema> is a sql-like schema ""column_name data_type, ..."" or Avro-like JSON schema and <settings> is specified in the format ""key1=v1 key2=v2""."
@@ -319,30 +335,8 @@ These are the available commands:
    ``set stream properties <stream-id> <local-file-path>``,"Sets the properties of a stream, such as TTL, format, and notification threshold."
    ``set stream ttl <stream-id> <ttl-in-seconds>``,"Sets the time-to-live (TTL) of a stream."
    ``truncate stream <stream-id>``,"Truncates a stream."
-   **Metadata and Lineage**
-   ``add metadata-properties <entity-id> <properties>``,"Adds metadata properties for an entity"
-   ``add metadata-tags <entity-id> <tags>``,"Adds metadata tags for an entity"
-   ``get lineage dataset <dataset-name> [start <start>] [end <end>] [levels <levels>]``,"Gets the lineage of a dataset"
-   ``get lineage stream <stream-id> [start <start>] [end <end>] [levels <levels>]``,"Gets the lineage of a stream"
-   ``get metadata <entity-id> [scope <scope>]``,"Gets the metadata of an entity"
-   ``get metadata-properties <entity-id> [scope <scope>]``,"Gets the metadata properties of an entity"
-   ``get metadata-tags <entity-id> [scope <scope>]``,"Gets the metadata tags of an entity"
-   ``remove metadata <entity-id>``,"Removes metadata for an entity"
-   ``remove metadata-properties <entity-id>``,"Removes all metadata properties for an entity"
-   ``remove metadata-property <entity-id> <property>``,"Removes a metadata property for an entity"
-   ``remove metadata-tag <entity-id> <tag>``,"Removes a metadata tag for an entity"
-   ``remove metadata-tags <entity-id>``,"Removes all metadata tags for an entity"
-   ``search metadata <search-query> [filtered by target-type <target-type>]``,"Allows users to search CDAP entities based on the metadata annotated on them."
-   **Metrics**
-   ``get metric value <metric-name> [<tags>] [start <start>] [end <end>]``,"Gets the value of a metric. Provide <tags> as a map in the format 'tag1=value1 tag2=value2'."
-   ``search metric names [<tags>]``,"Searches metric names. Provide <tags> as a map in the format 'tag1=value1 tag2=value2'."
-   ``search metric tags [<tags>]``,"Searches metric tags. Provide <tags> as a map in the format 'tag1=value1 tag2=value2'."
-   **Namespace**
-   ``create namespace <namespace-name> [<namespace-description>]``,"Creates a namespace in CDAP."
-   ``delete namespace <namespace-name>``,"Deletes a namespace."
-   ``describe namespace <namespace-name>``,"Describes a namespace."
-   ``list namespaces``,"Lists all namespaces."
-   ``use namespace <namespace-name>``,"Changes the current namespace to <namespace-name>."
+   **Egress**
+   ``call service <app-id.service-id> <http-method> <endpoint> [headers <headers>] [body <body>] [body:file <local-file-path>]``,"Calls a service endpoint. The <headers> are formatted as ""{'key':'value', ...}"". The request body may be provided either as a string or a file. To provide the body as a string, use ""body <body>"". To provide the body as a file, use ""body:file <local-file-path>""."
    **Security**
    ``security access entity <entity-id> user <user> actions <actions>``,"Checks whether a user has permission to perform certain actions on an entity. <actions> is a comma-separated list."
    ``security grant entity <entity-id> user <user> actions <actions>``,"Grants a user permission to perform certain actions on an entity. <actions> is a comma-separated list."
