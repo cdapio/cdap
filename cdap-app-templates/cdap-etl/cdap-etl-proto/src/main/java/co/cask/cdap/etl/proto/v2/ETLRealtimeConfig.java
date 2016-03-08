@@ -19,8 +19,8 @@ package co.cask.cdap.etl.proto.v2;
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.etl.proto.Connection;
 
-import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 
 /**
  * ETL Realtime Configuration.
@@ -28,8 +28,8 @@ import java.util.Objects;
 public final class ETLRealtimeConfig extends ETLConfig {
   private final Integer instances;
 
-  private ETLRealtimeConfig(List<ETLStage> stages,
-                            List<Connection> connections,
+  private ETLRealtimeConfig(Set<ETLStage> stages,
+                            Set<Connection> connections,
                             Resources resources,
                             boolean stageLoggingEnabled,
                             int instances) {

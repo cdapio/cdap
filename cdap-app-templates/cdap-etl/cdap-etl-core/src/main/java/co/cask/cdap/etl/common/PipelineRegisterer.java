@@ -53,7 +53,6 @@ public class PipelineRegisterer {
   private final String sourcePluginType;
   private final String sinkPluginType;
 
-
   public PipelineRegisterer(PluginConfigurer configurer, String programType) {
     this.configurer = configurer;
     this.sourcePluginType = programType + "source";

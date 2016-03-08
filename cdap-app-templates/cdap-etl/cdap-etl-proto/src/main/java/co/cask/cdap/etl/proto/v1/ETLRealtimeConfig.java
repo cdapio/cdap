@@ -17,7 +17,11 @@
 package co.cask.cdap.etl.proto.v1;
 
 import co.cask.cdap.api.Resources;
+import co.cask.cdap.etl.api.realtime.RealtimeSink;
+import co.cask.cdap.etl.api.realtime.RealtimeSource;
 import co.cask.cdap.etl.proto.Connection;
+import co.cask.cdap.etl.proto.UpgradeContext;
+import co.cask.cdap.etl.proto.UpgradeableConfig;
 import com.google.common.annotations.VisibleForTesting;
 
 import java.util.ArrayList;
@@ -27,7 +31,8 @@ import java.util.Objects;
 /**
  * ETL Realtime Configuration. Public constructors are all deprecated in favor of the builder.
  */
-public final class ETLRealtimeConfig extends ETLConfig {
+public final class ETLRealtimeConfig extends ETLConfig
+  implements UpgradeableConfig<co.cask.cdap.etl.proto.v2.ETLRealtimeConfig> {
   private final Integer instances;
 
   @Deprecated
@@ -76,6 +81,20 @@ public final class ETLRealtimeConfig extends ETLConfig {
 
   public Integer getInstances() {
     return instances;
+  }
+
+  @Override
+  public boolean canUpgrade() {
+    return true;
+  }
+
+  @Override
+  public co.cask.cdap.etl.proto.v2.ETLRealtimeConfig upgrade(UpgradeContext upgradeContext) {
+    co.cask.cdap.etl.proto.v2.ETLRealtimeConfig.Builder builder =
+      co.cask.cdap.etl.proto.v2.ETLRealtimeConfig.builder()
+        .setInstances(getInstances());
+
+    return upgradeBase(builder, upgradeContext, RealtimeSource.PLUGIN_TYPE, RealtimeSink.PLUGIN_TYPE).build();
   }
 
   @Override

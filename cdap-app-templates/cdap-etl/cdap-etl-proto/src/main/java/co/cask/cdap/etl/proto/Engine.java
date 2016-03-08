@@ -14,23 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.etl.tool.config;
-
-import co.cask.cdap.proto.artifact.ArtifactSummary;
-
-import javax.annotation.Nullable;
+package co.cask.cdap.etl.proto;
 
 /**
- * Used to find the artifact for a specific plugin during upgrade.
+ * Execution engines.
  */
-public interface PluginArtifactFinder {
-
-  @Nullable
-  ArtifactSummary getSourcePluginArtifact(String pluginName);
-
-  @Nullable
-  ArtifactSummary getSinkPluginArtifact(String pluginName);
-
-  @Nullable
-  ArtifactSummary getTransformPluginArtifact(String pluginName);
+public enum Engine {
+  MAPREDUCE,
+  SPARK
 }

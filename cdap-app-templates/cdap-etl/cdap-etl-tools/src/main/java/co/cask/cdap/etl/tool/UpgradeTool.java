@@ -23,16 +23,12 @@ import co.cask.cdap.client.ArtifactClient;
 import co.cask.cdap.client.NamespaceClient;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.config.ConnectionConfig;
-import co.cask.cdap.etl.batch.config.ETLBatchConfig;
-import co.cask.cdap.etl.realtime.config.ETLRealtimeConfig;
-import co.cask.cdap.etl.tool.config.BatchPluginArtifactFinder;
-import co.cask.cdap.etl.tool.config.OldETLBatchConfig;
-import co.cask.cdap.etl.tool.config.OldETLRealtimeConfig;
-import co.cask.cdap.etl.tool.config.PluginArtifactFinder;
-import co.cask.cdap.etl.tool.config.RealtimePluginArtifactFinder;
-import co.cask.cdap.etl.tool.console.ConsoleClient;
-import co.cask.cdap.etl.tool.console.PipelineDraft;
-import co.cask.cdap.etl.tool.console.PluginTemplate;
+import co.cask.cdap.etl.proto.UpgradeContext;
+import co.cask.cdap.etl.proto.UpgradeableConfig;
+import co.cask.cdap.etl.proto.v2.ETLBatchConfig;
+import co.cask.cdap.etl.proto.v2.ETLRealtimeConfig;
+import co.cask.cdap.etl.tool.config.BatchClientBasedUpgradeContext;
+import co.cask.cdap.etl.tool.config.RealtimeClientBasedUpgradeContext;
 import co.cask.cdap.proto.ApplicationDetail;
 import co.cask.cdap.proto.ApplicationRecord;
 import co.cask.cdap.proto.Id;
@@ -44,8 +40,6 @@ import com.google.common.collect.ImmutableSet;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonSyntaxException;
-import com.google.gson.reflect.TypeToken;
 import org.apache.commons.cli.BasicParser;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -61,9 +55,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -77,11 +69,10 @@ public class UpgradeTool {
   private static final int DEFAULT_READ_TIMEOUT_MILLIS = 90 * 1000;
   private final NamespaceClient namespaceClient;
   private final ApplicationClient appClient;
-  private final ConsoleClient consoleClient;
   private final ArtifactSummary batchArtifact;
   private final ArtifactSummary realtimeArtifact;
-  private final BatchPluginArtifactFinder batchPluginArtifactFinder;
-  private final RealtimePluginArtifactFinder realtimePluginArtifactFinder;
+  private final UpgradeContext batchUpgradeContext;
+  private final UpgradeContext realtimeUpgradeContext;
 
   private UpgradeTool(ClientConfig clientConfig) {
     String version = ETLVersion.getVersion();
@@ -89,10 +80,9 @@ public class UpgradeTool {
     this.realtimeArtifact = new ArtifactSummary(REALTIME_NAME, version, ArtifactScope.SYSTEM);
     this.appClient = new ApplicationClient(clientConfig);
     this.namespaceClient = new NamespaceClient(clientConfig);
-    this.consoleClient = new ConsoleClient(clientConfig);
     ArtifactClient artifactClient = new ArtifactClient(clientConfig);
-    this.batchPluginArtifactFinder = new BatchPluginArtifactFinder(artifactClient);
-    this.realtimePluginArtifactFinder = new RealtimePluginArtifactFinder(artifactClient);
+    this.batchUpgradeContext = new BatchClientBasedUpgradeContext(artifactClient);
+    this.realtimeUpgradeContext = new RealtimeClientBasedUpgradeContext(artifactClient);
   }
 
   private Set<Id.Application> upgrade() throws Exception {
@@ -124,159 +114,24 @@ public class UpgradeTool {
     }
 
     LOG.info("Upgrading pipeline: {}", appId);
-    if (BATCH_NAME.equals(appDetail.getArtifact().getName())) {
-      OldETLBatchConfig oldConfig = GSON.fromJson(appDetail.getConfiguration(), OldETLBatchConfig.class);
-      ETLBatchConfig newConfig = oldConfig.getNewConfig(batchPluginArtifactFinder);
-      AppRequest<ETLBatchConfig> updateRequest = new AppRequest<>(batchArtifact, newConfig);
+    String artifactName = appDetail.getArtifact().getName();
+    String artifactVersion = appDetail.getVersion();
+    if (BATCH_NAME.equals(artifactName)) {
+      ETLBatchConfig upgradedConfig =
+        convertBatchConfig(artifactVersion, appDetail.getConfiguration(), batchUpgradeContext);
+      AppRequest<ETLBatchConfig> updateRequest = new AppRequest<>(batchArtifact, upgradedConfig);
+      appClient.update(appId, updateRequest);
+    } else if (REALTIME_NAME.equals(artifactName)) {
+      ETLRealtimeConfig upgradedConfig =
+        convertRealtimeConfig(artifactVersion, appDetail.getConfiguration(), realtimeUpgradeContext);
+      AppRequest<ETLRealtimeConfig> updateRequest = new AppRequest<>(realtimeArtifact, upgradedConfig);
       appClient.update(appId, updateRequest);
     } else {
-      OldETLRealtimeConfig oldConfig = GSON.fromJson(appDetail.getConfiguration(), OldETLRealtimeConfig.class);
-      ETLRealtimeConfig newConfig = oldConfig.getNewConfig(realtimePluginArtifactFinder);
-      AppRequest<ETLRealtimeConfig> updateRequest = new AppRequest<>(realtimeArtifact, newConfig);
-      appClient.update(appId, updateRequest);
+      // should never happen
+      LOG.warn("Unknown app artifact {}. Skipping pipeline.", artifactName);
+      return false;
     }
     return true;
-  }
-
-  // upgrade data the UI stores. None of this should exist ...
-  // UI uses undocumented api in ConsoleSettingsHttpHandler
-  private void upgradeUIData() throws Exception {
-    // UI uses the undocumented console store. this thing stores an arbitrary json object. And its one json object.
-    // UI stores drafts in 'adapterDrafts'
-    // UI stores plugin templates in 'pluginTemplates'
-    // don't know what else is stored in here, so decode the entire blob as a JSONObject to preserve the structure.
-    // then decode adapterDrafts and pluginTemplates separately
-
-    JsonObject consoleData = consoleClient.get().getAsJsonObject("property");
-    boolean upgradedSomething = upgradeUIDrafts(consoleData);
-    upgradedSomething = upgradePluginTemplates(consoleData) || upgradedSomething;
-
-    if (upgradedSomething) {
-      consoleClient.set(consoleData);
-      LOG.info("Successfully upgraded pipeline drafts and plugin templates.");
-    }
-  }
-
-  private boolean upgradePluginTemplates(JsonObject consoleData) {
-    String pluginTemplatesKey = "pluginTemplates";
-    boolean upgradedSomething = false;
-    if (consoleData.has(pluginTemplatesKey)) {
-      // so much nesting...
-      // namespace -> [ cdap-etl-batch | cdap-etl-realtime ] -> plugin type -> template name -> PluginTemplate
-      Map<String, Map<String, Map<String, Map<String, PluginTemplate>>>> pluginTemplates = GSON.fromJson(
-        consoleData.get(pluginTemplatesKey),
-        new TypeToken<Map<String, Map<String, Map<String, Map<String, PluginTemplate>>>>>() { }.getType());
-
-      for (Map.Entry<String, Map<String, Map<String, Map<String, PluginTemplate>>>> namespaceEntry :
-        pluginTemplates.entrySet()) {
-
-        String namespace = namespaceEntry.getKey();
-        for (Map.Entry<String, Map<String, Map<String, PluginTemplate>>> appEntry :
-          namespaceEntry.getValue().entrySet()) {
-          String appName = appEntry.getKey();
-          PluginArtifactFinder pluginArtifactFinder;
-          if (BATCH_NAME.equals(appName)) {
-            pluginArtifactFinder = batchPluginArtifactFinder;
-          } else if (REALTIME_NAME.equals(appName)) {
-            pluginArtifactFinder = realtimePluginArtifactFinder;
-          } else {
-            // don't know what this is, ignore it.
-            continue;
-          }
-
-          for (Map.Entry<String, Map<String, PluginTemplate>> pluginTypeEntry : appEntry.getValue().entrySet()) {
-
-            for (Map.Entry<String, PluginTemplate> pluginTemplateEntry : pluginTypeEntry.getValue().entrySet()) {
-              String templateName = pluginTemplateEntry.getKey();
-              PluginTemplate template = pluginTemplateEntry.getValue();
-
-              if (template.getArtifact() == null) {
-                LOG.info("Upgrading plugin template {} in namespace {}.", templateName, namespace);
-                template.setArtifact(pluginArtifactFinder);
-                upgradedSomething = true;
-              }
-            }
-          }
-        }
-      }
-      consoleData.remove(pluginTemplatesKey);
-      consoleData.add(pluginTemplatesKey, GSON.toJsonTree(pluginTemplates));
-    }
-    return upgradedSomething;
-  }
-
-  private boolean upgradeUIDrafts(JsonObject consoleData) {
-    String adapterDraftsKey = "adapterDrafts";
-    String hydratorDraftsKey = "hydratorDrafts";
-    String isMigratedKey = "isMigrated";
-    if (consoleData.has(adapterDraftsKey)) {
-      // sigh... if the 3.3.x UI has started up and been accessed before this tool has run,
-      // the first layer here will be the default namespace.
-      // If the UI has not started up yet, it will be in the 3.2.x format without namespace.
-      //
-      // to recap, in 3.2:
-      //
-      // "adapterDrafts": {
-      //   "TwitterToHBase": { ... }
-      // }
-      //
-      // but if the 3.3 UI has started already:
-      //
-      // "adapterDrafts": {
-      //   "default": {
-      //     "TwitterToHBase": { ... }
-      //   },
-      //   ...,
-      //   "isMigrated": true
-      // }
-      //
-      // Note the 'isMigrated' at the bottom which is a boolean and not an object like all the other keys...
-      JsonObject draftsJson = consoleData.getAsJsonObject(adapterDraftsKey);
-      Map<String, Map<String, PipelineDraft>> drafts = new HashMap<>();
-      try {
-        // try to deserialize with 3.2 format
-        Map<String, PipelineDraft> defaultDrafts =
-          GSON.fromJson(draftsJson, new TypeToken<Map<String, PipelineDraft>>() { }.getType());
-        drafts.put("default", defaultDrafts);
-      } catch (JsonSyntaxException e) {
-        // try to deserialize with 3.3 format
-        // need to remove 'isMigrated' otherwise this will not work, since a boolean is not a map.
-        draftsJson.remove(isMigratedKey);
-        drafts = GSON.fromJson(draftsJson, new TypeToken<Map<String, Map<String, PipelineDraft>>>() { }.getType());
-      }
-
-      for (Map.Entry<String, Map<String, PipelineDraft>> namespaceEntry : drafts.entrySet()) {
-        String namespace = namespaceEntry.getKey();
-
-        Map<String, PipelineDraft> namespaceDrafts = new HashMap<>();
-        for (Map.Entry<String, PipelineDraft> draft : namespaceEntry.getValue().entrySet()) {
-          String draftName = draft.getKey();
-          PipelineDraft draftSpec = draft.getValue();
-          if (draftSpec.isOldBatch()) {
-            LOG.info("Upgrading draft {} in namespace {}.", draftName, namespace);
-            PipelineDraft upgradedDraft = draftSpec.getUpgradedBatch(batchArtifact, batchPluginArtifactFinder);
-            upgradedDraft.setName(draftName);
-            namespaceDrafts.put(draftName, upgradedDraft);
-          } else if (draftSpec.isOldRealtime()) {
-            LOG.info("Upgrading draft {} in namespace {}.", draftName, namespace);
-            PipelineDraft upgradedDraft = draftSpec.getUpgradedRealtime(realtimeArtifact, realtimePluginArtifactFinder);
-            upgradedDraft.setName(draftName);
-            namespaceDrafts.put(draftName, upgradedDraft);
-          } else {
-            namespaceDrafts.put(draftName, draftSpec);
-          }
-        }
-        drafts.put(namespace, namespaceDrafts);
-      }
-      consoleData.remove(adapterDraftsKey);
-      // writing to 'hydratorDrafts' instead of 'adapterDrafts' now
-      consoleData.add(hydratorDraftsKey, GSON.toJsonTree(drafts));
-      // ... without this, the UI will move everything in hydratorDrafts one level down under 'default'.
-      // this type of logic is not good. what happens if the next version requires migration?
-      consoleData.getAsJsonObject(hydratorDraftsKey).addProperty(isMigratedKey, true);
-      return true;
-    }
-    return false;
   }
 
   public static void main(String[] args) throws Exception {
@@ -293,8 +148,6 @@ public class UpgradeTool {
         "pipelines in all namespaces will be upgraded."))
       .addOption(new Option("p", "pipeline", true, "Name of the pipeline to upgrade. If specified, a namespace " +
         "must also be given."))
-      .addOption(new Option("d", "drafts", false,
-                            "Set this flag if you only want to upgrade pipeline drafts and plugin templates."))
       .addOption(new Option("f", "configfile", true, "File containing old application details to update. " +
         "The file contents are expected to be in the same format as the request body for creating an " +
         "ETL application from one of the etl artifacts. " +
@@ -333,11 +186,6 @@ public class UpgradeTool {
 
     UpgradeTool upgradeTool = new UpgradeTool(clientConfig);
 
-    if (commandLine.hasOption("d")) {
-      upgradeTool.upgradeUIData();
-      System.exit(0);
-    }
-
     String namespace = commandLine.getOptionValue("n");
     String pipelineName = commandLine.getOptionValue("p");
 
@@ -360,12 +208,6 @@ public class UpgradeTool {
     }
 
     printUpgraded(upgradeTool.upgrade());
-
-    try {
-      upgradeTool.upgradeUIData();
-    } catch (Exception e) {
-      LOG.warn("There was an error upgrading UI data. Old pipeline drafts and plugin templates may no longer work.", e);
-    }
   }
 
   private static void printUpgraded(Set<Id.Application> pipelines) {
@@ -438,20 +280,21 @@ public class UpgradeTool {
     String version = ETLVersion.getVersion();
 
     File outputFile = new File(outputFilePath);
+    String oldArtifactVersion = artifactFile.artifact.getVersion();
     if (BATCH_NAME.equals(artifactFile.artifact.getName())) {
       ArtifactSummary artifact = new ArtifactSummary(BATCH_NAME, version, ArtifactScope.SYSTEM);
-      OldETLBatchConfig oldConfig = GSON.fromJson(artifactFile.config, OldETLBatchConfig.class);
-      AppRequest<ETLBatchConfig> updated =
-        new AppRequest<>(artifact, oldConfig.getNewConfig(new BatchPluginArtifactFinder(artifactClient)));
-      System.out.println(GSON.toJson(updated));
+      UpgradeContext upgradeContext = new BatchClientBasedUpgradeContext(artifactClient);
+      ETLBatchConfig config = convertBatchConfig(oldArtifactVersion, artifactFile.config.toString(), upgradeContext);
+      AppRequest<ETLBatchConfig> updated = new AppRequest<>(artifact, config);
       try (BufferedWriter writer = Files.newBufferedWriter(outputFile.toPath(), StandardCharsets.UTF_8)) {
         writer.write(GSON.toJson(updated));
       }
     } else {
       ArtifactSummary artifact = new ArtifactSummary(REALTIME_NAME, version, ArtifactScope.SYSTEM);
-      OldETLRealtimeConfig oldConfig = GSON.fromJson(artifactFile.config, OldETLRealtimeConfig.class);
-      AppRequest<ETLRealtimeConfig> updated =
-        new AppRequest<>(artifact, oldConfig.getNewConfig(new RealtimePluginArtifactFinder(artifactClient)));
+      UpgradeContext upgradeContext = new RealtimeClientBasedUpgradeContext(artifactClient);
+      ETLRealtimeConfig config =
+        convertRealtimeConfig(oldArtifactVersion, artifactFile.config.toString(), upgradeContext);
+      AppRequest<ETLRealtimeConfig> updated = new AppRequest<>(artifact, config);
       try (BufferedWriter writer = Files.newBufferedWriter(outputFile.toPath(), StandardCharsets.UTF_8)) {
         writer.write(GSON.toJson(updated));
       }
@@ -478,10 +321,48 @@ public class UpgradeTool {
       return false;
     }
 
-    // check its 3.2.x versions of etl
+    // check its 3.x.x versions of etl
     ArtifactVersion artifactVersion = new ArtifactVersion(artifactSummary.getVersion());
-    return !(artifactVersion.getMajor() == null || artifactVersion.getMinor() == null) &&
-      artifactVersion.getMajor() == 3 && artifactVersion.getMinor() == 2;
+    Integer majorVersion = artifactVersion.getMajor();
+    Integer minorVersion = artifactVersion.getMinor();
+    return majorVersion != null && majorVersion == 3 && minorVersion != null && minorVersion >= 2;
   }
 
+  private static ETLBatchConfig convertBatchConfig(String artifactVersion, String configStr,
+                                                   UpgradeContext upgradeContext) {
+    UpgradeableConfig config;
+    if (artifactVersion.startsWith("3.2.")) {
+      config = GSON.fromJson(configStr, co.cask.cdap.etl.proto.v0.ETLBatchConfig.class);
+    } else if (artifactVersion.startsWith("3.3.")) {
+      config = GSON.fromJson(configStr, co.cask.cdap.etl.proto.v1.ETLBatchConfig.class);
+    } else {
+      LOG.warn("Unknown artifact version {}. Skipping pipeline.", artifactVersion);
+      // should never happen
+      return null;
+    }
+
+    while (config.canUpgrade()) {
+      config = config.upgrade(upgradeContext);
+    }
+    return (ETLBatchConfig) config;
+  }
+
+  private static ETLRealtimeConfig convertRealtimeConfig(String artifactVersion, String configStr,
+                                                         UpgradeContext upgradeContext) {
+    UpgradeableConfig config;
+    if (artifactVersion.startsWith("3.2.")) {
+      config = GSON.fromJson(configStr, co.cask.cdap.etl.proto.v0.ETLRealtimeConfig.class);
+    } else if (artifactVersion.startsWith("3.3.")) {
+      config = GSON.fromJson(configStr, co.cask.cdap.etl.proto.v1.ETLRealtimeConfig.class);
+    } else {
+      LOG.warn("Unknown artifact version {}. Skipping pipeline.", artifactVersion);
+      // should never happen
+      return null;
+    }
+
+    while (config.canUpgrade()) {
+      config = config.upgrade(upgradeContext);
+    }
+    return (ETLRealtimeConfig) config;
+  }
 }
