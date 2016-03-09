@@ -19,6 +19,7 @@ package co.cask.cdap.internal.app.runtime.spark;
 import co.cask.cdap.api.ServiceDiscoverer;
 import co.cask.cdap.app.services.AbstractServiceDiscoverer;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.ProgramId;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 
 import java.io.Externalizable;
@@ -41,10 +42,10 @@ public class SparkServiceDiscoverer extends AbstractServiceDiscoverer implements
   }
 
   public SparkServiceDiscoverer(ExecutionSparkContext context) {
-    this(context.getProgramId(), context.getDiscoveryServiceClient());
+    this(context.getProgramId().toEntityId(), context.getDiscoveryServiceClient());
   }
 
-  public SparkServiceDiscoverer(Id.Program programId, DiscoveryServiceClient discoveryServiceClient) {
+  public SparkServiceDiscoverer(ProgramId programId, DiscoveryServiceClient discoveryServiceClient) {
     super(programId);
     this.discoveryServiceClient = discoveryServiceClient;
   }

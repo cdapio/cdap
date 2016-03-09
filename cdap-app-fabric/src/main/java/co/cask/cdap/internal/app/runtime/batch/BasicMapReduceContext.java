@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -46,6 +46,8 @@ import co.cask.cdap.logging.context.MapReduceLoggingContext;
 import co.cask.cdap.proto.Id;
 import co.cask.tephra.TransactionContext;
 import co.cask.tephra.TransactionSystemClient;
+import com.google.common.base.Preconditions;
+import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import org.apache.hadoop.mapreduce.Job;
@@ -77,6 +79,7 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
   private final StreamAdmin streamAdmin;
   private final File pluginArchive;
   private final Map<String, LocalizeResource> resourcesToLocalize;
+  private final Supplier<MapReduceTaskContextProvider> taskContextProviderSupplier;
 
   private InputFormatProvider inputFormatProvider;
 
@@ -91,10 +94,10 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
                                long logicalStartTime,
                                @Nullable String programNameInWorkflow,
                                @Nullable WorkflowToken workflowToken,
-                               DiscoveryServiceClient discoveryServiceClient,
-                               MetricsCollectionService metricsCollectionService,
-                               TransactionSystemClient txClient,
-                               DatasetFramework dsFramework,
+                               final DiscoveryServiceClient discoveryServiceClient,
+                               final MetricsCollectionService metricsCollectionService,
+                               final TransactionSystemClient txClient,
+                               final DatasetFramework dsFramework,
                                StreamAdmin streamAdmin,
                                @Nullable File pluginArchive,
                                @Nullable PluginInstantiator pluginInstantiator) {
@@ -126,6 +129,13 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
     this.streamAdmin = streamAdmin;
     this.pluginArchive = pluginArchive;
     this.resourcesToLocalize = new HashMap<>();
+    this.taskContextProviderSupplier = new Supplier<MapReduceTaskContextProvider>() {
+      @Override
+      public MapReduceTaskContextProvider get() {
+        return new MapReduceTaskContextProvider(discoveryServiceClient, dsFramework,
+                                                metricsCollectionService, txClient);
+      }
+    };
   }
 
   public TransactionContext getTransactionContext() {
@@ -329,6 +339,14 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
 
   Map<String, LocalizeResource> getResourcesToLocalize() {
     return resourcesToLocalize;
+  }
+
+  /**
+   * Returns a new instance of {@link MapReduceTaskContextProvider}. This method should only be used
+   * in local mode and called from {@link MapReduceClassLoader}.
+   */
+  MapReduceTaskContextProvider createMapReduceTaskContextProvider() {
+    return taskContextProviderSupplier.get();
   }
 
   @Nullable

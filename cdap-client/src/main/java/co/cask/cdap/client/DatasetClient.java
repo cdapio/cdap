@@ -290,4 +290,21 @@ public class DatasetClient {
                                             String.format("data/datasets/%s/admin/truncate", instance.getId()));
     restClient.execute(HttpMethod.POST, url, config.getAccessToken());
   }
+
+  /**
+   * Retrieve the properties with which a dataset was created or updated.
+   * @param instance the dataset instance
+   * @return the properties as a map
+   */
+  public Map<String, String> getProperties(Id.DatasetInstance instance)
+    throws IOException, UnauthorizedException, NotFoundException {
+    URL url = config.resolveNamespacedURLV3(instance.getNamespace(),
+                                            String.format("data/datasets/%s/properties", instance.getId()));
+    HttpRequest request = HttpRequest.get(url).build();
+    HttpResponse response = restClient.execute(request, config.getAccessToken());
+    if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
+      throw new NotFoundException(instance);
+    }
+    return ObjectResponse.fromJsonBody(response, new TypeToken<Map<String, String>>() { }).getResponseObject();
+  }
 }

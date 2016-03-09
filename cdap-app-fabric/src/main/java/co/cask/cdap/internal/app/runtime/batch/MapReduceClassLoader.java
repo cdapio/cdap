@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -36,7 +36,6 @@ import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Service;
-import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapreduce.MRJobConfig;
@@ -98,14 +97,13 @@ public class MapReduceClassLoader extends CombineClassLoader implements AutoClos
    * followed by plugin Export-Package ClassLoader and with the system ClassLoader last.
    * This constructor should only be called from {@link MapReduceRuntimeService} only.
    */
-  MapReduceClassLoader(final Injector injector, CConfiguration cConf, Configuration hConf,
-                       ClassLoader programClassLoader, Map<String, Plugin> plugins,
-                       @Nullable PluginInstantiator pluginInstantiator) {
-    this(new Parameters(cConf, hConf,
-                        programClassLoader, plugins, pluginInstantiator), new TaskContextProviderFactory() {
+  MapReduceClassLoader(CConfiguration cConf, Configuration hConf, final BasicMapReduceContext context) {
+    this(new Parameters(cConf, hConf, context.getProgram().getClassLoader(),
+                        context.getPlugins(), context.getPluginInstantiator()), new TaskContextProviderFactory() {
       @Override
       public MapReduceTaskContextProvider create(CConfiguration cConf, Configuration hConf) {
-        return new MapReduceTaskContextProvider(injector);
+        Preconditions.checkState(MapReduceTaskContextProvider.isLocal(hConf), "Expected to be in local mode.");
+        return context.createMapReduceTaskContextProvider();
       }
     });
   }

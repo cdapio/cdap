@@ -304,6 +304,7 @@ These are the available commands:
    ``describe dataset instance <dataset-name>``,"Shows information about a dataset."
    ``describe dataset module <dataset-module>``,"Shows information about a dataset module."
    ``describe dataset type <dataset-type>``,"Shows information about a dataset type."
+   ``get dataset instance properties <dataset-name>``,"Gets the properties with which a dataset was created or updated."
    ``list dataset instances``,"Lists all datasets."
    ``list dataset modules``,"Lists all dataset modules."
    ``list dataset types``,"Lists all dataset types."

@@ -25,6 +25,7 @@ import co.cask.cdap.cli.command.DeployDatasetModuleCommand;
 import co.cask.cdap.cli.command.DescribeDatasetInstanceCommand;
 import co.cask.cdap.cli.command.DescribeDatasetModuleCommand;
 import co.cask.cdap.cli.command.DescribeDatasetTypeCommand;
+import co.cask.cdap.cli.command.GetDatasetInstancePropertiesCommand;
 import co.cask.cdap.cli.command.ListDatasetInstancesCommand;
 import co.cask.cdap.cli.command.ListDatasetModulesCommand;
 import co.cask.cdap.cli.command.ListDatasetTypesCommand;
@@ -49,6 +50,7 @@ public class DatasetCommands extends CommandSet<Command> implements Categorized 
         .add(injector.getInstance(ListDatasetModulesCommand.class))
         .add(injector.getInstance(ListDatasetTypesCommand.class))
         .add(injector.getInstance(DescribeDatasetInstanceCommand.class))
+        .add(injector.getInstance(GetDatasetInstancePropertiesCommand.class))
         .add(injector.getInstance(SetDatasetInstancePropertiesCommand.class))
         .add(injector.getInstance(CreateDatasetInstanceCommand.class))
         .add(injector.getInstance(DeleteDatasetInstanceCommand.class))
