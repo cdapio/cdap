@@ -227,10 +227,16 @@ if version:
 """ % {'version': version}
 
 if short_version:
+    previous_short_version = float(short_version) -0.1
     rst_epilog = rst_epilog + """
 .. |short-version| replace:: %(short_version)s
+.. |bold-short-version| replace:: **%(short_version)s**
 .. |literal-short-version| replace:: ``%(short_version)s``
-""" % {'short_version': short_version}
+.. |previous-short-version| replace:: %(previous_short_version)s
+.. |bold-previous-short-version| replace:: **%(previous_short_version)s**
+.. |literal-previous-short-version| replace:: ``%(previous_short_version)s``
+
+""" % {'short_version': short_version, 'previous_short_version': previous_short_version}
 
 if version_tuple:
     rst_epilog = rst_epilog + """
