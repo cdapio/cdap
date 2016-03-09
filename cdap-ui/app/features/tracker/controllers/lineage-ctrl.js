@@ -84,7 +84,7 @@ class TrackerLineageController{
     this.myTrackerApi.getLineage(params)
       .$promise
       .then((res) => {
-        this.LineageActions.loadLineageData(res, params);
+        this.LineageActions.loadLineageData(res, params, this.$state.params.method);
         this.loading = false;
       }, (err) => {
         console.log('Error', err);

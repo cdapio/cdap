@@ -125,6 +125,111 @@ class myLineageService {
     };
   }
 
+  secondLineageParser(response, params) {
+    let currentActiveNode = [
+      params.entityType === 'datasets' ? 'dataset' : 'stream',
+      params.namespace,
+      params.entityId
+    ].join('.');
+
+    let connections = [];
+    let uniqueNodes = {};
+    let nodes = [];
+
+    /* SETTING NODES */
+    angular.forEach(response.programs, (value, key) => {
+      let nodeObj = {
+        label: value.entityId.id.id,
+        id: key,
+        nodeType: 'program',
+        applicationId: value.entityId.id.application.applicationId,
+        entityId: value.entityId.id.id,
+        entityType: this.parseProgramType(value.entityId.id.type),
+        displayType: value.entityId.id.type,
+        icon: this.getProgramIcon(value.entityId.id.type),
+        runs: []
+      };
+
+      uniqueNodes[key] = nodeObj;
+    });
+
+    angular.forEach(response.data, (value, key) => {
+      let data = this.parseDataInfo(value);
+
+      let nodeObj = {
+        label: data.name,
+        id: key,
+        nodeType: 'data',
+        entityId: data.name,
+        entityType: data.type,
+        displayType: data.displayType,
+        icon: data.icon
+      };
+
+      uniqueNodes[key] = nodeObj;
+    });
+
+    /* SETTING CONNECTIONS */
+    angular.forEach(response.relations, (rel) => {
+      let isUnknownOrBoth = rel.access === 'both' || rel.access === 'unknown';
+
+      if (rel.access === 'read' || isUnknownOrBoth) {
+        let dataId = rel.data;
+        let programId = rel.program;
+        connections.push({
+          source: dataId,
+          target: programId,
+          type: 'read'
+        });
+
+        nodes.push({
+          dataId: dataId,
+          uniqueNodeId: rel.data,
+          isLeftEdge: rel.data !== currentActiveNode
+        });
+        nodes.push({
+          dataId: programId,
+          uniqueNodeId: rel.program
+        });
+      }
+
+      if (rel.access === 'write') {
+        let dataId = rel.data;
+        let programId = rel.program;
+        connections.push({
+          source: programId,
+          target: dataId,
+          type: 'write'
+        });
+
+        nodes.push({
+          dataId: dataId,
+          uniqueNodeId: rel.data,
+          isRightEdge: rel.data !== currentActiveNode
+        });
+        nodes.push({
+          dataId: programId,
+          uniqueNodeId: rel.program
+        });
+      }
+
+      uniqueNodes[rel.program].runs = uniqueNodes[rel.program].runs.concat(rel.runs);
+      uniqueNodes[rel.program].runs = _.uniq(uniqueNodes[rel.program].runs);
+    });
+
+    nodes = _.uniq(nodes, (n) => { return n.dataId; });
+    let graph = this.getGraphLayout(nodes, connections);
+    this.mapNodesLocation(nodes, graph);
+
+    return {
+      connections: connections,
+      nodes: nodes,
+      uniqueNodes: uniqueNodes,
+      graph: graph
+    };
+
+  }
+
   parseProgramType(programType) {
     switch (programType) {
       case 'Flow':
@@ -177,7 +282,7 @@ class myLineageService {
     var graph = new dagre.graphlib.Graph();
     graph.setGraph({
       nodesep: 90,
-      ranksep: 50,
+      ranksep: 70,
       rankdir: 'LR',
       marginx: 90,
       marginy: 25

@@ -39,8 +39,13 @@ class LineageStore {
     this.changeListeners.forEach( callback => callback() );
   }
 
-  loadLineageData(data, params) {
-    let obj = this.myLineageService.parseLineageResponse(data, params);
+  loadLineageData(data, params, method) {
+    let obj;
+    if (method === 'duplicate') {
+      obj = this.myLineageService.parseLineageResponse(data, params);
+    } else {
+      obj = this.myLineageService.secondLineageParser(data, params);
+    }
 
     this.state.nodes = obj.nodes;
     this.state.uniqueNodes = obj.uniqueNodes;

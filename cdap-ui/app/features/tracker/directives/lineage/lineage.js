@@ -58,7 +58,8 @@ function LineageController ($scope, jsPlumb, $timeout, $state, LineageStore, myT
         lineWidth: 2,
         strokeStyle: 'rgba(0,0,0, 1)'
       },
-      Connector: [ 'Flowchart', {gap: 0, stub: [10, 15], alwaysRespectStubs: true, cornerRadius: 3} ],
+      // Connector: [ 'Flowchart', {gap: 0, stub: [10, 15], alwaysRespectStubs: true, cornerRadius: 3} ],
+      Connector: [ 'Straight', {gap: 0, stub: 0, alwaysRespectStubs: true, cornerRadius: 3} ],
       Endpoints: ['Blank', 'Blank']
     });
 
@@ -83,7 +84,7 @@ function LineageController ($scope, jsPlumb, $timeout, $state, LineageStore, myT
   };
 
   // This function is to enable user to click open data nodes in new tab
-  vm.constructNodeLinks = (node) => {
+  vm.constructNodeLink = (node) => {
     let nodeInfo = vm.uniqueNodes[node.uniqueNodeId];
 
     if (nodeInfo.nodeType === 'data') {
@@ -92,6 +93,14 @@ function LineageController ($scope, jsPlumb, $timeout, $state, LineageStore, myT
       // when you return non existant state, the href attribute never gets created
       return '-';
     }
+  };
+
+  vm.constructProgramLink = (node) => {
+    let nodeInfo = vm.uniqueNodes[node.uniqueNodeId];
+    console.log('node', nodeInfo);
+    // let link = workflows.detail.run
+    // let link = nodeInfo.entityType + '.detail.run({  })';
+    return 'test';
   };
 
   vm.closePopover = (event, node) => {
@@ -158,7 +167,7 @@ function LineageController ($scope, jsPlumb, $timeout, $state, LineageStore, myT
       runId: runId,
       scope: $scope
     };
-
+console.log('node', node);
     myTrackerApi.getProgramRunStatus(params)
       .$promise
       .then((res) => {

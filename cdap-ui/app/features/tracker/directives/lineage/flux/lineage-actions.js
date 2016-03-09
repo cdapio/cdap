@@ -19,8 +19,8 @@ class LineageActions {
     this.LineageStore = LineageStore;
   }
 
-  loadLineageData (data, params) {
-    this.LineageStore.loadLineageData(data, params);
+  loadLineageData (data, params, method) {
+    this.LineageStore.loadLineageData(data, params, method);
   }
 
 }

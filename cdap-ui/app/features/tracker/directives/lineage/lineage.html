@@ -27,7 +27,7 @@
        ng-mouseenter="node.showNavigation = true"
        ng-mouseleave="Lineage.mouseLeaveNode(node)"
        ng-click="Lineage.nodeClick($event, node)"
-       ui-sref="{{ Lineage.constructNodeLinks(node) }}">
+       ui-sref="{{ Lineage.constructNodeLink(node) }}">
 
     <!-- Navigation -->
     <div class="navigation-control left"
@@ -58,7 +58,9 @@
 
             <div class="col-xs-8">
               <div class="entity-detail">
-                <h4>{{ Lineage.uniqueNodes[node.uniqueNodeId].label }}</h4>
+                <h4>
+                  <a href="">{{ Lineage.uniqueNodes[node.uniqueNodeId].label }}</a>
+                </h4>
                 <div class="entity-type">
                   <span class="{{ contentData.icon }}"></span>
                   <span>{{ Lineage.uniqueNodes[node.uniqueNodeId].displayType }}</span>
