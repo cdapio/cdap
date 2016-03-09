@@ -55,12 +55,14 @@ function LineageController ($scope, jsPlumb, $timeout, $state, LineageStore, myT
 
     vm.instance = jsPlumb.getInstance({
       PaintStyle: {
-        lineWidth: 2,
+        lineWidth: 3,
         strokeStyle: 'rgba(0,0,0, 1)'
       },
       // Connector: [ 'Flowchart', {gap: 0, stub: [10, 15], alwaysRespectStubs: true, cornerRadius: 3} ],
       Connector: [ 'Straight', {gap: 0, stub: 0, alwaysRespectStubs: true, cornerRadius: 3} ],
-      Endpoints: ['Blank', 'Blank']
+      ConnectionOverlays: [ [ 'Arrow', { location: 1, direction: 1, width: 10, length: 10 }] ],
+      Endpoints: ['Blank', 'Blank'],
+      HoverPaintStyle: { strokeStyle: 'rgb(53, 200, 83)' }
     });
 
     render();

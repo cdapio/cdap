@@ -281,7 +281,7 @@ class myLineageService {
   getGraphLayout(nodes, connections) {
     var graph = new dagre.graphlib.Graph();
     graph.setGraph({
-      nodesep: 90,
+      nodesep: 50,
       ranksep: 70,
       rankdir: 'LR',
       marginx: 90,
