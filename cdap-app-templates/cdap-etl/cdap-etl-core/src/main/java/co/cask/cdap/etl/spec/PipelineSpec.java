@@ -25,7 +25,8 @@ import java.util.Objects;
 import java.util.Set;
 
 /**
- * Specification for a pipeline.
+ * Specification for a pipeline. The application should get this from the {@link PipelineSpecGenerator} in order
+ * to ensure that the spec is validated and created correctly.
  *
  * This is like an {@link ETLConfig} but its stages contain additional information calculated at configure time of
  * the application, like input and output schemas of each stage and the artifact selected for each plugin.
