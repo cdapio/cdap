@@ -82,5 +82,15 @@ angular.module(PKG.name + '.feature.tracker')
               authorizedRoles: MYAUTH_ROLE.all,
               highlightTab: 'search'
             }
+          })
+          .state('tracker.entity.audit', {
+            url: '/audit?start&end',
+            templateUrl: '/assets/features/tracker/templates/audit.html',
+            controller: 'TrackerAuditController',
+            controllerAs: 'AuditController',
+            data: {
+              authorizedRoles: MYAUTH_ROLE.all,
+              highlightTab: 'search'
+            }
           });
   });
