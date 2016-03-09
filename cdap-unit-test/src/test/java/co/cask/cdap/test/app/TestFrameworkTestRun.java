@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -95,6 +95,7 @@ import java.io.OutputStreamWriter;
 import java.lang.reflect.Type;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.file.Files;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.util.Collection;
@@ -435,6 +436,61 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     try (InputStream in = fs.getLocation("test").getInputStream()) {
       Assert.assertEquals(42, in.read());
     }
+  }
+
+  @Category(XSlowTests.class)
+  @Test
+  public void testWorkflowLocalDatasets() throws Exception {
+    ApplicationManager applicationManager = deployApplication(testSpace, WorkflowAppWithLocalDatasets.class);
+    final WorkflowManager wfmanager = applicationManager.getWorkflowManager("WorkflowWithLocalDatasets");
+    File waitFile = new File(tmpFolder.newFolder(), "/wait.file");
+    File doneFile = new File(tmpFolder.newFolder(), "/done.file");
+
+    // Write some data to the input file
+    File inputDir = tmpFolder.newFolder();
+
+    File inputFile = new File(inputDir, "/words.txt");
+    try (BufferedWriter writer = Files.newBufferedWriter(inputFile.toPath(), Charsets.UTF_8)) {
+      writer.write("this text has");
+      writer.newLine();
+      writer.write("two words text inside");
+    }
+
+    wfmanager.start(ImmutableMap.of("input.path", inputDir.getAbsolutePath(), "wait.file", waitFile.getAbsolutePath(),
+                                    "done.file", doneFile.getAbsolutePath()));
+
+    // Wait till custom action in the Workflow is triggerred.
+    while (!waitFile.exists()) {
+      TimeUnit.MILLISECONDS.sleep(50);
+    }
+
+    // Now the Workflow should have RUNNING status. Get its runid.
+    List<RunRecord> history = wfmanager.getHistory(ProgramRunStatus.RUNNING);
+    Assert.assertEquals(1, history.size());
+    String runId = history.get(0).getPid();
+
+    // Get the local dataset for this Workflow run
+    DataSetManager<KeyValueTable> localDataset = getDataset(testSpace, WorkflowAppWithLocalDatasets.WORDCOUNT_DATASET
+      + "." + runId);
+    Assert.assertEquals("2", Bytes.toString(localDataset.get().read("text")));
+
+    // Local dataset should not exist at the namespace level
+    localDataset = getDataset(testSpace, WorkflowAppWithLocalDatasets.WORDCOUNT_DATASET);
+    Assert.assertNull(localDataset.get());
+
+    // Signal the Workflow to continue
+    doneFile.createNewFile();
+
+    // Wait for workflow to finish
+    wfmanager.waitForFinish(1, TimeUnit.MINUTES);
+
+    // Once the Workflow run is complete local dataset should not be available
+    localDataset = getDataset(testSpace, WorkflowAppWithLocalDatasets.WORDCOUNT_DATASET + "." + runId);
+    Assert.assertNull(localDataset.get());
+
+    // Dataset which is not local should still be available
+    DataSetManager<KeyValueTable> dataset = getDataset(testSpace, WorkflowAppWithLocalDatasets.RESULT_DATASET);
+    Assert.assertEquals("6", Bytes.toString(dataset.get().read("UniqueWordCount")));
   }
 
   @Category(XSlowTests.class)

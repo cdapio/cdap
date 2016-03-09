@@ -66,7 +66,7 @@ public class ProgramWorkflowRunnerFactory {
     if (actionSpec.getProperties().containsKey(ProgramWorkflowAction.PROGRAM_TYPE)) {
       switch (SchedulableProgramType.valueOf(actionSpec.getProperties().get(ProgramWorkflowAction.PROGRAM_TYPE))) {
         case MAPREDUCE:
-          return new MapReduceProgramWorkflowRunner(workflowSpec, programRunnerFactory, workflowProgram, 
+          return new MapReduceProgramWorkflowRunner(workflowSpec, programRunnerFactory, workflowProgram,
                                                     workflowProgramOptions, token, nodeId);
         case SPARK:
           return new SparkProgramWorkflowRunner(workflowSpec, programRunnerFactory, workflowProgram,
