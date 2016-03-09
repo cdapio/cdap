@@ -97,10 +97,8 @@ function LineageController ($scope, jsPlumb, $timeout, $state, LineageStore, myT
 
   vm.constructProgramLink = (node) => {
     let nodeInfo = vm.uniqueNodes[node.uniqueNodeId];
-    console.log('node', nodeInfo);
-    // let link = workflows.detail.run
-    // let link = nodeInfo.entityType + '.detail.run({  })';
-    return 'test';
+    let link = nodeInfo.entityType + '.detail.run({ appId: Lineage.uniqueNodes[node.uniqueNodeId].applicationId, programId: Lineage.uniqueNodes[node.uniqueNodeId].entityId, runid: node.popover.activeRunId })';
+    return link;
   };
 
   vm.closePopover = (event, node) => {
@@ -167,7 +165,7 @@ function LineageController ($scope, jsPlumb, $timeout, $state, LineageStore, myT
       runId: runId,
       scope: $scope
     };
-console.log('node', node);
+
     myTrackerApi.getProgramRunStatus(params)
       .$promise
       .then((res) => {

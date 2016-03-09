@@ -19,15 +19,14 @@
 </div>
 
 <div class="lineage-diagram-container" id="lineage-diagram"
-     style="height: {{Lineage.graphInfo.height + 300}}px; width: {{Lineage.graphInfo.width + 175}}px;">
-  <a class="nodes {{ Lineage.uniqueNodes[node.uniqueNodeId].nodeType }}"
+     style="height: {{Lineage.graphInfo.height + 300}}px; width: {{Lineage.graphInfo.width + 175 + 200}}px;">
+  <div class="nodes {{ Lineage.uniqueNodes[node.uniqueNodeId].nodeType }}"
        id="{{ node.dataId }}"
        ng-repeat="node in Lineage.nodes"
        ng-style="node._uiLocation"
        ng-mouseenter="node.showNavigation = true"
        ng-mouseleave="Lineage.mouseLeaveNode(node)"
-       ng-click="Lineage.nodeClick($event, node)"
-       ui-sref="{{ Lineage.constructNodeLink(node) }}">
+       ng-click="Lineage.nodeClick($event, node)">
 
     <!-- Navigation -->
     <div class="navigation-control left"
@@ -43,11 +42,13 @@
       <span class="fa fa-caret-right" ng-click="Lineage.navigationClick($event, node)"></span>
     </div>
 
-    <h4 class="entity-name">{{ Lineage.uniqueNodes[node.uniqueNodeId].label }}</h4>
-    <div class="entity-type">
-      <span class="{{ Lineage.uniqueNodes[node.uniqueNodeId].icon }}"></span>
-      <span>{{ Lineage.uniqueNodes[node.uniqueNodeId].displayType }}</span>
-    </div>
+    <a class="entity-link" ui-sref="{{ Lineage.constructNodeLink(node) }}">
+      <h4 class="entity-name">{{ Lineage.uniqueNodes[node.uniqueNodeId].label }}</h4>
+      <div class="entity-type">
+        <span class="{{ Lineage.uniqueNodes[node.uniqueNodeId].icon }}"></span>
+        <span>{{ Lineage.uniqueNodes[node.uniqueNodeId].displayType }}</span>
+      </div>
+    </a>
 
 
     <!-- PROGRAM POPOVER -->
@@ -59,10 +60,12 @@
             <div class="col-xs-8">
               <div class="entity-detail">
                 <h4>
-                  <a href="">{{ Lineage.uniqueNodes[node.uniqueNodeId].label }}</a>
+                  <a ui-sref="{{ Lineage.constructProgramLink(node) }}">
+                    {{ Lineage.uniqueNodes[node.uniqueNodeId].label }}
+                  </a>
                 </h4>
                 <div class="entity-type">
-                  <span class="{{ contentData.icon }}"></span>
+                  <span class="{{ Lineage.uniqueNodes[node.uniqueNodeId].icon }}"></span>
                   <span>{{ Lineage.uniqueNodes[node.uniqueNodeId].displayType }}</span>
                 </div>
               </div>
@@ -134,5 +137,5 @@
         </div>
       </div>
     </div>
-  </a>
+  </div>
 </div>

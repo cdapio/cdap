@@ -33,7 +33,6 @@ my-lineage-diagram {
     position: absolute;
     padding: 10px 15px;
     cursor: pointer;
-    text-decoration: none;
 
     .entity-type {
       span[class*="icon-"] {
@@ -41,6 +40,8 @@ my-lineage-diagram {
       }
       margin-top: 3px;
     }
+
+    .entity-link { text-decoration: none; }
 
     h4 {
       margin: 0;
@@ -107,7 +108,6 @@ my-lineage-diagram {
           color: white;
           padding-bottom: 5px;
           h4, h5 { color: white; }
-
           h4 {
             font-size: 16px;
             margin-top: 10px;
@@ -116,6 +116,7 @@ my-lineage-diagram {
           .entity-detail {
             padding-left: 10px;
             span { font-size: 14px; }
+            a { color: white; }
           }
 
           .runs-controller {
