@@ -207,7 +207,7 @@ public class PipelineSpecGenerator {
       }
     }
 
-    Dag dag = Dag.fromConnections(config.getConnections());
+    Dag dag = new Dag(config.getConnections());
 
     // check source plugins are sources in the dag
     // check sink plugins are sinks in the dag
