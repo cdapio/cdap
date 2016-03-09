@@ -73,7 +73,7 @@ function LineageController ($scope, jsPlumb, $timeout, $state, LineageStore, myT
     if (nodeInfo.nodeType === 'data') {
       return;
     } else {
-      event.preventDefault(); // prevent JS error on nonexistant state
+      event.preventDefault(); // prevent JS error on nonexistent state
       node.showPopover = true;
 
       node.popover = {
