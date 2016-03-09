@@ -18,8 +18,10 @@ to make sure the CDAP table definitions in HBase are up-to-date.
 These steps will stop CDAP, update the installation, run an upgrade tool for the table definitions,
 and then restart CDAP.
 
-**These steps will upgrade from CDAP** |bold-previous-short-version|\ **.x to** |bold-short-version|\ **.x.** If you are on an earlier version of CDAP,
-please follow the upgrade instructions for the earlier versions and upgrade first to |previous-short-version|\.x before proceeding.
+**These steps will upgrade from CDAP** |bold-previous-short-version|\ **.x to**
+|bold-short-version|\ **.x.** If you are on an earlier version of CDAP, please follow the
+upgrade instructions for the earlier versions and upgrade first to
+|previous-short-version|\.x before proceeding.
 
 .. highlight:: console
 

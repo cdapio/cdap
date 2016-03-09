@@ -17,7 +17,7 @@ Upgrading CDAP
 Upgrading CDAP Patch Release Versions
 -------------------------------------
 Upgrading between patch versions of CDAP refers to upgrading from one |short-version|\.x
-version to a higher |short-version| version.
+version to a higher |short-version|\.x version.
 When a new compatible CDAP parcel is released, it will be available via the Parcels page
 in the Cloudera Manager UI.
 
@@ -32,8 +32,8 @@ in the Cloudera Manager UI.
 
 Upgrading CDAP Major/Minor Release Versions
 -------------------------------------------
-Upgrading between major versions of CDAP (for example, from a 3.3.x version to |short-version|\.x)
-involves the additional steps of upgrading the
+Upgrading between major versions of CDAP (for example, from a |previous-short-version|\.x version 
+to |short-version|\.x) involves the additional steps of upgrading the
 CSD, and running the included CDAP Upgrade Tool. Upgrades between multiple Major/Minor
 versions must be done consecutively, and a version cannot be skipped unless otherwise
 noted.
