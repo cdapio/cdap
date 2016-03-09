@@ -16,8 +16,8 @@
 
 package co.cask.cdap.config;
 
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
+import co.cask.cdap.proto.Id;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import org.junit.Assert;
@@ -36,12 +36,12 @@ public class PreferencesStoreTest extends AppFabricTestBase {
     PreferencesStore store = getInjector().getInstance(PreferencesStore.class);
     Assert.assertEquals(emptyMap, store.getProperties());
     Assert.assertEquals(emptyMap, store.getProperties("somenamespace"));
-    Assert.assertEquals(emptyMap, store.getProperties(Constants.DEFAULT_NAMESPACE));
+    Assert.assertEquals(emptyMap, store.getProperties(Id.Namespace.DEFAULT.getId()));
     Assert.assertEquals(emptyMap, store.getResolvedProperties());
     Assert.assertEquals(emptyMap, store.getResolvedProperties("a", "b", "c", "d"));
     // should not throw any exception if try to delete properties without storing anything
     store.deleteProperties();
-    store.deleteProperties(Constants.DEFAULT_NAMESPACE);
+    store.deleteProperties(Id.Namespace.DEFAULT.getId());
     store.deleteProperties("a", "x", "y", "z");
   }
 

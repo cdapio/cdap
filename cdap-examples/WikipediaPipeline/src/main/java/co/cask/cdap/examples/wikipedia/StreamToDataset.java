@@ -77,7 +77,7 @@ public class StreamToDataset extends AbstractMapReduce {
     LOG.info("Using '{}' as the input stream and '{}' as the output dataset.", inputStream, outputDataset);
     job.setMapperClass(mapper);
     StreamBatchReadable.useStreamInput(context, inputStream);
-    context.setOutput(outputDataset);
+    context.addOutput(outputDataset);
   }
 
   @Override

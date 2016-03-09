@@ -18,6 +18,8 @@ package co.cask.cdap.data.runtime;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data2.queue.QueueClientFactory;
+import co.cask.cdap.data2.transaction.DistributedTransactionSystemClientService;
+import co.cask.cdap.data2.transaction.TransactionSystemClientService;
 import co.cask.cdap.data2.transaction.metrics.TransactionManagerMetricsCollector;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.queue.hbase.HBaseQueueAdmin;
@@ -28,7 +30,6 @@ import co.cask.tephra.TxConstants;
 import co.cask.tephra.distributed.PooledClientProvider;
 import co.cask.tephra.distributed.ThreadLocalClientProvider;
 import co.cask.tephra.distributed.ThriftClientProvider;
-import co.cask.tephra.metrics.MetricsCollector;
 import co.cask.tephra.metrics.TxMetricsCollector;
 import co.cask.tephra.runtime.TransactionModules;
 import com.google.inject.AbstractModule;
@@ -61,15 +62,16 @@ public class DataFabricDistributedModule extends AbstractModule {
 
     // bind transactions
     bind(TxMetricsCollector.class).to(TransactionManagerMetricsCollector.class).in(Scopes.SINGLETON);
+    bind(TransactionSystemClientService.class).to(DistributedTransactionSystemClientService.class);
     install(new TransactionModules().getDistributedModules());
-
+    install(new TransactionExecutorModule());
   }
 
   /**
    * Provides implementation of {@link ThriftClientProvider} based on configuration.
    */
   @Singleton
-  private static final class ThriftClientProviderSupplier implements Provider<ThriftClientProvider> {
+  public static final class ThriftClientProviderSupplier implements Provider<ThriftClientProvider> {
 
     private final CConfiguration cConf;
     private final Configuration hConf;

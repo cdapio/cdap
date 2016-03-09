@@ -23,7 +23,7 @@
   <parent>
     <groupId>co.cask.cdap</groupId>
     <artifactId>cdap-etl</artifactId>
-    <version>3.1.0</version>
+    <version>3.3.2</version>
   </parent>
 
   <artifactId>cdap-etl-core</artifactId>
@@ -36,9 +36,13 @@
       <artifactId>cdap-etl-api</artifactId>
       <version>${project.version}</version>
     </dependency>
+    <dependency>
+      <groupId>ch.qos.logback</groupId>
+      <artifactId>logback-classic</artifactId>
+    </dependency>
   </dependencies>
 
-<build>
+  <build>
     <!-- Resource filtering for non xml files only -->
     <resources>
       <resource>
@@ -48,6 +52,6 @@
           <exclude>**/*.xml</exclude>
         </excludes>
       </resource>
-   </resources>
-</build>
+    </resources>
+  </build>
 </project>

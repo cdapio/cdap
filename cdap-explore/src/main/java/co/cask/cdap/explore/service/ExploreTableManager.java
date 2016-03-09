@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,6 +18,7 @@ package co.cask.cdap.explore.service;
 
 import co.cask.cdap.api.data.batch.RecordScannable;
 import co.cask.cdap.api.data.batch.RecordWritable;
+import co.cask.cdap.api.data.format.FormatSpecification;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
@@ -26,6 +27,7 @@ import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.api.dataset.lib.FileSetProperties;
+import co.cask.cdap.api.dataset.lib.ObjectMappedTable;
 import co.cask.cdap.api.dataset.lib.PartitionDetail;
 import co.cask.cdap.api.dataset.lib.PartitionKey;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
@@ -36,15 +38,20 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiatorFactory;
 import co.cask.cdap.data2.dataset2.lib.table.ObjectMappedTableModule;
-import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.explore.table.CreateStatementBuilder;
+import co.cask.cdap.explore.utils.ExploreTableNaming;
+import co.cask.cdap.hive.datasets.DatasetStorageHandler;
 import co.cask.cdap.hive.objectinspector.ObjectInspectorFactory;
+import co.cask.cdap.hive.stream.StreamStorageHandler;
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
+import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.QueryHandle;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.StructField;
@@ -66,51 +73,61 @@ import java.util.Set;
 public class ExploreTableManager {
   private static final Logger LOG = LoggerFactory.getLogger(ExploreTableManager.class);
 
+  // A GSON object that knowns how to serialize Schema type.
+  private static final Gson GSON = new GsonBuilder()
+    .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
+    .create();
+
   private final ExploreService exploreService;
   private final SystemDatasetInstantiatorFactory datasetInstantiatorFactory;
+  private final ExploreTableNaming tableNaming;
 
   @Inject
   public ExploreTableManager(ExploreService exploreService,
-                             SystemDatasetInstantiatorFactory datasetInstantiatorFactory) {
+                             SystemDatasetInstantiatorFactory datasetInstantiatorFactory,
+                             ExploreTableNaming tableNaming) {
     this.exploreService = exploreService;
     this.datasetInstantiatorFactory = datasetInstantiatorFactory;
+    this.tableNaming = tableNaming;
   }
 
   /**
    * Enable exploration on a stream by creating a corresponding Hive table. Enabling exploration on a
    * stream that has already been enabled is a no-op. Assumes the stream actually exists.
    *
+   * @param tableName name of the Hive table to create
    * @param streamID the ID of the stream
-   * @param streamConfig the config for the stream
+   * @param formatSpec the format specification for the table
    * @return query handle for creating the Hive table for the stream
    * @throws UnsupportedTypeException if the stream schema is not compatible with Hive
    * @throws ExploreException if there was an exception submitting the create table statement
    * @throws SQLException if there was a problem with the create table statement
    */
-  public QueryHandle enableStream(Id.Stream streamID, StreamConfig streamConfig)
+  public QueryHandle enableStream(String tableName, Id.Stream streamID, FormatSpecification formatSpec)
     throws UnsupportedTypeException, ExploreException, SQLException {
     String streamName = streamID.getId();
-    Location streamLocation = streamConfig.getLocation();
-    LOG.debug("Enabling explore for stream {} at location {}", streamName, streamLocation.toURI());
+    LOG.debug("Enabling explore for stream {} with table {}", streamID, tableName);
 
     // schema of a stream is always timestamp, headers, and then the schema of the body.
     List<Schema.Field> fields = Lists.newArrayList(
       Schema.Field.of("ts", Schema.of(Schema.Type.LONG)),
       Schema.Field.of("headers", Schema.mapOf(Schema.of(Schema.Type.STRING), Schema.of(Schema.Type.STRING))));
-    fields.addAll(streamConfig.getFormat().getSchema().getFields());
+    if (formatSpec.getSchema() != null) {
+      fields.addAll(formatSpec.getSchema().getFields());
+    }
     Schema schema = Schema.recordOf("streamEvent", fields);
 
     Map<String, String> serdeProperties = ImmutableMap.of(
       Constants.Explore.STREAM_NAME, streamName,
-      Constants.Explore.STREAM_NAMESPACE, streamID.getNamespaceId());
+      Constants.Explore.STREAM_NAMESPACE, streamID.getNamespaceId(),
+      Constants.Explore.FORMAT_SPEC, GSON.toJson(formatSpec));
 
-    String createStatement = new CreateStatementBuilder(streamName, getStreamTableName(streamID))
+    String createStatement = new CreateStatementBuilder(streamName, tableName)
       .setSchema(schema)
-      .setLocation(streamLocation)
       .setTableComment("CDAP Stream")
-      .buildWithStorageHandler(Constants.Explore.STREAM_STORAGE_HANDLER_CLASS, serdeProperties);
+      .buildWithStorageHandler(StreamStorageHandler.class.getName(), serdeProperties);
 
-    LOG.debug("Running create statement for stream {}", streamName);
+    LOG.debug("Running create statement for stream {} with table {}: {}", streamName, tableName, createStatement);
 
     return exploreService.execute(streamID.getNamespace(), createStatement);
   }
@@ -118,14 +135,15 @@ public class ExploreTableManager {
   /**
    * Disable exploration on the given stream by dropping the Hive table for the stream.
    *
+   * @param tableName name of the table to delete
    * @param streamID the ID of the stream to disable
    * @return the query handle for disabling the stream
    * @throws ExploreException if there was an exception dropping the table
    * @throws SQLException if there was a problem with the drop table statement
    */
-  public QueryHandle disableStream(Id.Stream streamID) throws ExploreException, SQLException {
-    LOG.debug("Disabling explore for stream {}", streamID);
-    String deleteStatement = generateDeleteStatement(getStreamTableName(streamID));
+  public QueryHandle disableStream(String tableName, Id.Stream streamID) throws ExploreException, SQLException {
+    LOG.debug("Disabling explore for stream {} with table {}", streamID, tableName);
+    String deleteStatement = generateDeleteTableStatement(tableName);
     return exploreService.execute(streamID.getNamespace(), deleteStatement);
   }
 
@@ -133,7 +151,7 @@ public class ExploreTableManager {
    * Enable ad-hoc exploration on the given dataset by creating a corresponding Hive table. If exploration has
    * already been enabled on the dataset, this will be a no-op. Assumes the dataset actually exists.
    *
-   * @param datasetID the ID of the dataset to enable
+   * @param datasetId the ID of the dataset to enable
    * @param spec the specification for the dataset to enable
    * @return query handle for creating the Hive table for the dataset
    * @throws IllegalArgumentException if some required dataset property like schema is not set
@@ -143,32 +161,22 @@ public class ExploreTableManager {
    * @throws DatasetNotFoundException if the dataset had to be instantiated, but could not be found
    * @throws ClassNotFoundException if the was a missing class when instantiating the dataset
    */
-  public QueryHandle enableDataset(Id.DatasetInstance datasetID, DatasetSpecification spec)
+  public QueryHandle enableDataset(Id.DatasetInstance datasetId, DatasetSpecification spec)
     throws IllegalArgumentException, ExploreException, SQLException,
     UnsupportedTypeException, DatasetNotFoundException, ClassNotFoundException {
 
-    String datasetName = datasetID.getId();
+    String datasetName = datasetId.getId();
     Map<String, String> serdeProperties = ImmutableMap.of(
       Constants.Explore.DATASET_NAME, datasetName,
-      Constants.Explore.DATASET_NAMESPACE, datasetID.getNamespaceId());
+      Constants.Explore.DATASET_NAMESPACE, datasetId.getNamespaceId());
     String createStatement = null;
 
-    // some datasets cannot be instantiated here. For example, ObjectMappedTable is often parameterized with a type
-    // that is only available in a program context and not available here in the system context.
     // explore should only have logic related to exploration and not dataset logic.
     // TODO: refactor exploration (CDAP-1573)
-    String datasetType = spec.getType();
-    // special casing here... but we really should clean this up
-    // there are two ways to refer to each dataset type...
-    if (ObjectMappedTableModule.FULL_NAME.equals(datasetType) ||
-      ObjectMappedTableModule.SHORT_NAME.equals(datasetType)) {
-      return createFromSchemaProperty(spec, datasetID, serdeProperties, true);
-    }
-
     try (SystemDatasetInstantiator datasetInstantiator = datasetInstantiatorFactory.create()) {
-      Dataset dataset = datasetInstantiator.getDataset(datasetID);
+      Dataset dataset = datasetInstantiator.getDataset(datasetId);
       if (dataset == null) {
-        throw new DatasetNotFoundException(datasetID);
+        throw new DatasetNotFoundException(datasetId);
       }
 
       // CDAP-1573: all these instanceofs are a sign that this logic really belongs in each dataset instead of here
@@ -176,7 +184,10 @@ public class ExploreTableManager {
       // or it must be a FileSet or a PartitionedFileSet with explore enabled in it properties.
       if (dataset instanceof Table) {
         // valid for a table not to have a schema property. this logic should really be in Table
-        return createFromSchemaProperty(spec, datasetID, serdeProperties, false);
+        return createFromSchemaProperty(spec, datasetId, serdeProperties, false);
+      }
+      if (dataset instanceof ObjectMappedTable) {
+        return createFromSchemaProperty(spec, datasetId, serdeProperties, true);
       }
 
       boolean isRecordScannable = dataset instanceof RecordScannable;
@@ -186,34 +197,31 @@ public class ExploreTableManager {
           ((RecordScannable) dataset).getRecordType() : ((RecordWritable) dataset).getRecordType();
 
         // if the type is a structured record, use the schema property to create the table
-        if (StructuredRecord.class.equals(recordType)) {
-          // TODO: CDAP-3079 remove this check once RecordWritable<StructuredRecord> is supported
-          if (isRecordWritable && !isRecordScannable) {
-            throw new UnsupportedTypeException("StructuredRecord is not supported as a type for RecordWritable.");
-          }
-          return createFromSchemaProperty(spec, datasetID, serdeProperties, true);
+        // Use == because that's what same class means.
+        if (StructuredRecord.class == recordType) {
+          return createFromSchemaProperty(spec, datasetId, serdeProperties, true);
         }
 
         // otherwise, derive the schema from the record type
         LOG.debug("Enabling explore for dataset instance {}", datasetName);
-        createStatement = new CreateStatementBuilder(datasetName, getDatasetTableName(datasetID))
+        createStatement = new CreateStatementBuilder(datasetName, tableNaming.getTableName(datasetId))
           .setSchema(hiveSchemaFor(recordType))
           .setTableComment("CDAP Dataset")
-          .buildWithStorageHandler(Constants.Explore.DATASET_STORAGE_HANDLER_CLASS, serdeProperties);
+          .buildWithStorageHandler(DatasetStorageHandler.class.getName(), serdeProperties);
       } else if (dataset instanceof FileSet || dataset instanceof PartitionedFileSet) {
         Map<String, String> properties = spec.getProperties();
         if (FileSetProperties.isExploreEnabled(properties)) {
           LOG.debug("Enabling explore for dataset instance {}", datasetName);
-          createStatement = generateFileSetCreateStatement(datasetID, dataset, properties);
+          createStatement = generateFileSetCreateStatement(datasetId, dataset, properties);
         }
       }
     } catch (IOException e) {
-      LOG.error("Exception instantiating dataset {}.", datasetID, e);
-      throw new ExploreException("Exception while trying to instantiate dataset " + datasetID);
+      LOG.error("Exception instantiating dataset {}.", datasetId, e);
+      throw new ExploreException("Exception while trying to instantiate dataset " + datasetId);
     }
 
     if (createStatement != null) {
-      return exploreService.execute(datasetID.getNamespace(), createStatement);
+      return exploreService.execute(datasetId.getNamespace(), createStatement);
     } else {
       // if the dataset is not explorable, this is a no op.
       return QueryHandle.NO_OP;
@@ -238,10 +246,10 @@ public class ExploreTableManager {
 
     try {
       Schema schema = Schema.parseJson(schemaStr);
-      String createStatement = new CreateStatementBuilder(datasetID.getId(), getDatasetTableName(datasetID))
+      String createStatement = new CreateStatementBuilder(datasetID.getId(), tableNaming.getTableName(datasetID))
         .setSchema(schema)
         .setTableComment("CDAP Dataset")
-        .buildWithStorageHandler(Constants.Explore.DATASET_STORAGE_HANDLER_CLASS, serdeProperties);
+        .buildWithStorageHandler(DatasetStorageHandler.class.getName(), serdeProperties);
 
       return exploreService.execute(datasetID.getNamespace(), createStatement);
     } catch (IOException e) {
@@ -265,7 +273,7 @@ public class ExploreTableManager {
     throws ExploreException, SQLException, DatasetNotFoundException, ClassNotFoundException {
     LOG.debug("Disabling explore for dataset instance {}", datasetID);
 
-    String tableName = getDatasetTableName(datasetID);
+    String tableName = tableNaming.getTableName(datasetID);
     // If table does not exist, nothing to be done
     try {
       exploreService.getTableInfo(datasetID.getNamespaceId(), tableName);
@@ -278,7 +286,7 @@ public class ExploreTableManager {
     String datasetType = spec.getType();
     if (ObjectMappedTableModule.FULL_NAME.equals(datasetType) ||
       ObjectMappedTableModule.SHORT_NAME.equals(datasetType)) {
-      deleteStatement = generateDeleteStatement(tableName);
+      deleteStatement = generateDeleteTableStatement(tableName);
       LOG.debug("Running delete statement for dataset {} - {}", datasetID, deleteStatement);
       return exploreService.execute(datasetID.getNamespace(), deleteStatement);
     }
@@ -290,11 +298,11 @@ public class ExploreTableManager {
       }
 
       if (dataset instanceof RecordScannable || dataset instanceof RecordWritable) {
-        deleteStatement = generateDeleteStatement(tableName);
+        deleteStatement = generateDeleteTableStatement(tableName);
       } else if (dataset instanceof FileSet || dataset instanceof PartitionedFileSet) {
         Map<String, String> properties = spec.getProperties();
         if (FileSetProperties.isExploreEnabled(properties)) {
-          deleteStatement = generateDeleteStatement(tableName);
+          deleteStatement = generateDeleteTableStatement(tableName);
         }
       }
     } catch (IOException e) {
@@ -324,7 +332,7 @@ public class ExploreTableManager {
     throws ExploreException, SQLException {
     String addPartitionStatement = String.format(
       "ALTER TABLE %s ADD PARTITION %s LOCATION '%s'",
-      getDatasetTableName(datasetID), generateHivePartitionKey(partitionKey), fsPath);
+      tableNaming.getTableName(datasetID), generateHivePartitionKey(partitionKey), fsPath);
 
     LOG.debug("Add partition for key {} dataset {} - {}", partitionKey, datasetID, addPartitionStatement);
 
@@ -348,7 +356,7 @@ public class ExploreTableManager {
     }
     StringBuilder statement = new StringBuilder()
       .append("ALTER TABLE ")
-      .append(getDatasetTableName(datasetID))
+      .append(tableNaming.getTableName(datasetID))
       .append(" ADD");
     for (PartitionDetail partitionDetail : partitionDetails) {
       statement.append(" PARTITION")
@@ -377,31 +385,17 @@ public class ExploreTableManager {
 
     String dropPartitionStatement = String.format(
       "ALTER TABLE %s DROP PARTITION %s",
-      getDatasetTableName(datasetID), generateHivePartitionKey(partitionKey));
+      tableNaming.getTableName(datasetID), generateHivePartitionKey(partitionKey));
 
     LOG.debug("Drop partition for key {} dataset {} - {}", partitionKey, datasetID, dropPartitionStatement);
 
     return exploreService.execute(datasetID.getNamespace(), dropPartitionStatement);
   }
 
-  private String getStreamTableName(Id.Stream streamId) {
-    return cleanHiveTableName(String.format("stream_%s", streamId.getId()));
-  }
-
-  private String getDatasetTableName(Id.DatasetInstance datasetID) {
-    return cleanHiveTableName(String.format("dataset_%s", datasetID.getId()));
-  }
-
-  private String cleanHiveTableName(String name) {
-    // Instance name is like cdap.user.my_table.
-    // For now replace . with _ and - with _ since Hive tables cannot have . or _ in them.
-    return name.replaceAll("\\.", "_").replaceAll("-", "_").toLowerCase();
-  }
-
   private String generateFileSetCreateStatement(Id.DatasetInstance datasetID, Dataset dataset,
                                                 Map<String, String> properties) throws IllegalArgumentException {
 
-    String tableName = getDatasetTableName(datasetID);
+    String tableName = tableNaming.getTableName(datasetID);
     Map<String, String> tableProperties = FileSetProperties.getTableProperties(properties);
 
     Location baseLocation;
@@ -418,6 +412,7 @@ public class ExploreTableManager {
       .setPartitioning(partitioning)
       .setTableProperties(tableProperties);
 
+    String schema = FileSetProperties.getExploreSchema(properties);
     String format = FileSetProperties.getExploreFormat(properties);
     if (format != null) {
       if ("parquet".equals(format)) {
@@ -427,7 +422,6 @@ public class ExploreTableManager {
       // for text and csv, we know what to do
       Preconditions.checkArgument("text".equals(format) || "csv".equals(format),
         "Only text and csv are supported as native formats");
-      String schema = FileSetProperties.getExploreSchema(properties);
       Preconditions.checkNotNull(schema, "for native formats, explore schema must be given in dataset properties");
       String delimiter = null;
       if ("text".equals(format)) {
@@ -439,6 +433,11 @@ public class ExploreTableManager {
         .setRowFormatDelimited(delimiter, null)
         .buildWithFileFormat("TEXTFILE");
     } else {
+      // for some odd reason, avro tables don't require schema.
+      // They can be created by setting the avro.schema.literal table property
+      if (schema != null) {
+        createStatementBuilder.setSchema(schema);
+      }
       // format not given, look for serde, input format, etc.
       String serde = FileSetProperties.getSerDe(properties);
       String inputFormat = FileSetProperties.getExploreInputFormat(properties);
@@ -451,8 +450,8 @@ public class ExploreTableManager {
     }
   }
 
-  private String generateDeleteStatement(String name) {
-    return String.format("DROP TABLE IF EXISTS %s", cleanHiveTableName(name));
+  private String generateDeleteTableStatement(String name) {
+    return String.format("DROP TABLE IF EXISTS %s", tableNaming.cleanTableName(name));
   }
 
   private String generateHivePartitionKey(PartitionKey key) {

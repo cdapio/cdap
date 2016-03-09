@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -30,21 +30,21 @@ import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scan;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.dataset.table.Table;
-import com.google.common.base.Preconditions;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
-import com.google.common.primitives.Longs;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
 import java.util.Set;
 import java.util.SortedSet;
+import java.util.TreeMap;
+import java.util.TreeSet;
 import javax.annotation.Nullable;
 
 /**
@@ -123,7 +123,7 @@ public class IndexedTable extends AbstractDataset implements Table {
     super(name, table, index);
     this.table = table;
     this.index = index;
-    this.indexedColumns = Sets.newTreeSet(Bytes.BYTES_COMPARATOR);
+    this.indexedColumns = new TreeSet<>(Bytes.BYTES_COMPARATOR);
     this.hasColumnWithDelimiter = hasDelimiterByte(columnsToIndex);
     Collections.addAll(this.indexedColumns, columnsToIndex);
   }
@@ -250,27 +250,29 @@ public class IndexedTable extends AbstractDataset implements Table {
     byte[] dataRow = put.getRow();
     // find which values need to be indexed
     Map<byte[], byte[]> putColumns = put.getValues();
-    Set<byte[]> colsToIndex = Sets.newTreeSet(Bytes.BYTES_COMPARATOR);
+    Set<byte[]> colsToIndex = new TreeSet<>(Bytes.BYTES_COMPARATOR);
     for (Map.Entry<byte[], byte[]> putEntry : putColumns.entrySet()) {
       if (indexedColumns.contains(putEntry.getKey())) {
         colsToIndex.add(putEntry.getKey());
       }
     }
 
-    // first read the existing indexed values to find which have changed and need to be updated
-    Row existingRow = table.get(dataRow, colsToIndex.toArray(new byte[colsToIndex.size()][]));
-    for (Map.Entry<byte[], byte[]> entry : existingRow.getColumns().entrySet()) {
-      if (!Arrays.equals(entry.getValue(), putColumns.get(entry.getKey()))) {
-        index.delete(createIndexKey(dataRow, entry.getKey(), entry.getValue()), IDX_COL);
-      } else {
-        // value already indexed
-        colsToIndex.remove(entry.getKey());
+    if (!colsToIndex.isEmpty()) {
+      // first read the existing indexed values to find which have changed and need to be updated
+      Row existingRow = table.get(dataRow, colsToIndex.toArray(new byte[colsToIndex.size()][]));
+      for (Map.Entry<byte[], byte[]> entry : existingRow.getColumns().entrySet()) {
+        if (!Arrays.equals(entry.getValue(), putColumns.get(entry.getKey()))) {
+          index.delete(createIndexKey(dataRow, entry.getKey(), entry.getValue()), IDX_COL);
+        } else {
+          // value already indexed
+          colsToIndex.remove(entry.getKey());
+        }
       }
-    }
 
-    // add new index entries for all values that have changed or did not exist
-    for (byte[] col : colsToIndex) {
-      index.put(createIndexKey(dataRow, col, putColumns.get(col)), IDX_COL, dataRow);
+      // add new index entries for all values that have changed or did not exist
+      for (byte[] col : colsToIndex) {
+        index.put(createIndexKey(dataRow, col, putColumns.get(col)), IDX_COL, dataRow);
+      }
     }
 
     // store the data row
@@ -298,13 +300,13 @@ public class IndexedTable extends AbstractDataset implements Table {
   }
 
   /**
-   * Perform a delete on the data table.  Any index entries referencing the deleted row will also be removed.
+   * Perform a delete on the data table. Any index entries referencing the deleted row will also be removed.
    * 
    * @param delete The delete operation identifying the row and optional columns to remove
    */
   @Override
   public void delete(Delete delete) {
-    if (delete.getColumns().isEmpty()) {
+    if (delete.getColumns() == null) {
       // full row delete
       delete(delete.getRow());
       return;
@@ -429,11 +431,13 @@ public class IndexedTable extends AbstractDataset implements Table {
    */
   @Override
   public Row incrementAndGet(byte[] row, byte[][] columns, long[] amounts) {
-    Preconditions.checkArgument(columns.length == amounts.length, "Size of columns and amounts arguments must match");
+    if (columns.length != amounts.length) {
+      throw new IllegalArgumentException("Size of columns and amounts arguments must match");
+    }
 
     Row existingRow = table.get(row, columns);
     byte[][] updatedValues = new byte[columns.length][];
-    NavigableMap<byte[], byte[]> result = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
+    NavigableMap<byte[], byte[]> result = new TreeMap<>(Bytes.BYTES_COMPARATOR);
 
     for (int i = 0; i < columns.length; i++) {
       long existingValue = 0L;
@@ -471,9 +475,15 @@ public class IndexedTable extends AbstractDataset implements Table {
   @Override
   public Row incrementAndGet(Increment increment) {
     Map<byte[], Long> incrementValues = increment.getValues();
+    Collection<Long> values = incrementValues.values();
+    long[] longValues = new long[values.size()];
+    int i = 0;
+    for (long value : values) {
+      longValues[i++] = value;
+    }
     return incrementAndGet(increment.getRow(),
                            incrementValues.keySet().toArray(new byte[incrementValues.size()][]),
-                           Longs.toArray(incrementValues.values()));
+                           longValues);
   }
 
 
@@ -548,6 +558,11 @@ public class IndexedTable extends AbstractDataset implements Table {
   @Override
   public Type getRecordType() {
     return table.getRecordType();
+  }
+
+  @Override
+  public void write(StructuredRecord structuredRecord) throws IOException {
+    table.write(structuredRecord);
   }
 
   @Override

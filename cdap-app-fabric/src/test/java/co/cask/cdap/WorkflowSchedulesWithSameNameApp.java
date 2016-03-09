@@ -29,9 +29,11 @@ public class WorkflowSchedulesWithSameNameApp extends AbstractApplication {
     setName("WorkflowSchedulesWithSameNameApp");
     setDescription("Application with Workflow containing multiple schedules with the same name");
     addWorkflow(new WorkflowSchedulesWithSameName());
-    scheduleWorkflow(Schedules.createTimeSchedule("DailySchedule", "", "0 4 * * *"), "WorkflowSchedulesWithSameName");
+    scheduleWorkflow(Schedules.builder("DailySchedule").createTimeSchedule("0 4 * * *"),
+                     "WorkflowSchedulesWithSameName");
     // configuring Workflow with the same schedule name again should fail
-    scheduleWorkflow(Schedules.createTimeSchedule("DailySchedule", "", "0 5 * * *"), "WorkflowSchedulesWithSameName");
+    scheduleWorkflow(Schedules.builder("DailySchedule").createTimeSchedule("0 5 * * *"),
+                     "WorkflowSchedulesWithSameName");
   }
 
   /**

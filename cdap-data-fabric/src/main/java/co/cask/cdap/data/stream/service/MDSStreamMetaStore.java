@@ -19,7 +19,6 @@ import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.table.Table;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.lib.table.MDSKey;
@@ -60,7 +59,7 @@ public final class MDSStreamMetaStore implements StreamMetaStore {
       @Override
       public StreamMds get() {
         try {
-          Id.DatasetInstance streamMetaDatasetInstanceId = Id.DatasetInstance.from(Constants.SYSTEM_NAMESPACE,
+          Id.DatasetInstance streamMetaDatasetInstanceId = Id.DatasetInstance.from(Id.Namespace.SYSTEM,
                                                                                    STREAM_META_TABLE);
           Table mdsTable = DatasetsUtil.getOrCreateDataset(dsFramework, streamMetaDatasetInstanceId, "table",
                                                            DatasetProperties.EMPTY,

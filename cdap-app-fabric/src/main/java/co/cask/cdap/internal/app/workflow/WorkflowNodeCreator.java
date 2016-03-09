@@ -17,6 +17,7 @@
 package co.cask.cdap.internal.app.workflow;
 
 import co.cask.cdap.api.schedule.SchedulableProgramType;
+import co.cask.cdap.api.workflow.AbstractWorkflowAction;
 import co.cask.cdap.api.workflow.ScheduleProgramInfo;
 import co.cask.cdap.api.workflow.WorkflowAction;
 import co.cask.cdap.api.workflow.WorkflowActionNode;
@@ -54,7 +55,12 @@ final class WorkflowNodeCreator {
 
   static WorkflowNode createWorkflowCustomActionNode(WorkflowAction action) {
     Preconditions.checkArgument(action != null, "WorkflowAction is null.");
-    WorkflowActionSpecification spec = new DefaultWorkflowActionSpecification(action);
+    WorkflowActionSpecification spec;
+    if (action instanceof AbstractWorkflowAction) {
+      spec = DefaultWorkflowActionConfigurer.configureAction((AbstractWorkflowAction) action);
+    } else {
+      spec = new DefaultWorkflowActionSpecification(action.configure(), action);
+    }
     return new WorkflowActionNode(spec.getName(), spec);
   }
 

@@ -19,13 +19,11 @@ package co.cask.cdap.common.namespace;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.proto.Id;
-import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 
 import java.io.IOException;
-import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
@@ -33,26 +31,13 @@ import javax.annotation.Nullable;
  */
 public class DefaultNamespacedLocationFactory implements NamespacedLocationFactory {
 
-  private final CConfiguration cConf;
   private final LocationFactory locationFactory;
+  private final String namespaceDir;
 
   @Inject
   public DefaultNamespacedLocationFactory(CConfiguration cConf, LocationFactory locationFactory) {
-    this.cConf = cConf;
+    this.namespaceDir = cConf.get(Constants.Namespace.NAMESPACES_DIR);
     this.locationFactory = locationFactory;
-  }
-
-  @Override
-  public Map<Id.Namespace, Location> list() throws IOException {
-    String namespacesDir = cConf.get(Constants.Namespace.NAMESPACES_DIR);
-    Location namespacesLocation = locationFactory.create(namespacesDir);
-    Map<Id.Namespace, Location> namespaceLocations = Maps.newHashMap();
-    if (namespacesLocation.exists()) {
-      for (Location namespaceLocation : namespacesLocation.list()) {
-        namespaceLocations.put(Id.Namespace.from(namespaceLocation.getName()), namespaceLocation);
-      }
-    }
-    return namespaceLocations;
   }
 
   @Override
@@ -62,8 +47,7 @@ public class DefaultNamespacedLocationFactory implements NamespacedLocationFacto
 
   @Override
   public Location get(Id.Namespace namespaceId, @Nullable String subPath) throws IOException {
-    String namespacesDir = cConf.get(Constants.Namespace.NAMESPACES_DIR);
-    Location namespaceLocation = locationFactory.create(namespacesDir).append(namespaceId.getId());
+    Location namespaceLocation = locationFactory.create(namespaceDir).append(namespaceId.getId());
     if (subPath != null) {
       namespaceLocation = namespaceLocation.append(subPath);
     }

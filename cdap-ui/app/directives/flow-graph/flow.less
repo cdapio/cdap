@@ -1,5 +1,27 @@
+/*
+ * Copyright © 2015 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 @import "../../styles/variables.less";
 @import "../../styles/themes/cdap/mixins.less";
+
+my-flow-graph, my-workflow-graph {
+  .diagram-container div.tooltip .tooltip-inner {
+    max-width: 250px;
+  }
+}
 
 my-flow-graph {
 
@@ -89,6 +111,10 @@ my-flow-graph {
 
 my-workflow-graph {
 
+  @green-outline: darken(@brand-success, 15%);
+  @red-outline: darken(@brand-danger, 15%);
+  @grey-outline: #989898;
+
   .diagram-container {
     border: 1px solid @table-border-color;
     background-color: @table-bg;
@@ -127,8 +153,8 @@ my-workflow-graph {
 
   .job-svg {
     fill: white;
-    stroke: @cdap-darkness;
-    stroke-width: 5px;
+    stroke: @grey-outline;
+    stroke-width: 10px;
     cursor: not-allowed;
 
     + .label text {
@@ -144,44 +170,36 @@ my-workflow-graph {
     }
 
     &.running {
-      stroke: @brand-success;
+      stroke: @green-outline;
     }
 
     &.killed {
       stroke: @brand-danger;
     }
 
-    &.completed, &.failed {
-      + .label text {
-        fill: white;
-      }
-    }
-
     &.completed {
       fill: @brand-success;
+      stroke: @green-outline;
     }
 
     &.failed {
-      fill: @brand-danger;
+      stroke: @red-outline;
     }
   }
 
   .end-svg, .start-svg {
-    stroke: @cdap-darkness;
-    stroke-width: 5px;
-    + .label text {
-      fill: white;
-      font-size: 12px;
-    }
+    stroke-width: 7px;
+    fill: white;
   }
-  .start-svg { fill: @brand-success; }
-  .end-svg { fill: @brand-danger; }
+
+  .start-svg { stroke: @green-outline; }
+  .end-svg { stroke: @brand-primary; }
 
   .conditional-svg {
     fill: white;
     cursor: default;
     stroke: @cdap-orange;
-    stroke-width: 5px;
+    stroke-width: 10px;
   }
 
   .job-events {
@@ -197,38 +215,13 @@ my-workflow-graph {
     stroke-width: 2px;
     cursor: pointer;
   }
-}
 
-.d3-tip {
-  line-height: 1;
-  font-size: 11px;
-  padding: 7px;
-  background: @cdap-header;
-  border: 1px solid @cdap-header;
-  color: white;
-  pointer-events: none;
-  .border-radius(3px);
-}
+  .workflow-token {
+    fill: lighten(@grey-outline, 10%);
+  }
 
-/* Creates a small triangle extender for the tooltip */
-.d3-tip:after {
-  box-sizing: border-box;
-  display: inline;
-  font-size: 10px;
-  width: 100%;
-  line-height: 1;
-  color: @cdap-header;
-  position: absolute;
-  pointer-events: none;
+  .token-label {
+    fill: white;
+    cursor: pointer;
+  }
 }
-
-/* Style northward tooltips differently */
-.d3-tip.n:after {
-  content: "\25BC";
-  margin: -3px 0 0 0;
-  top: 100%;
-  left: 0;
-  text-align: center;
-}
-
-span.tip-node-name { color: @brand-danger; }

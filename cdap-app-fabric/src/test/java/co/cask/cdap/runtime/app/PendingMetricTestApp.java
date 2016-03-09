@@ -20,8 +20,7 @@ import co.cask.cdap.api.annotation.Output;
 import co.cask.cdap.api.annotation.ProcessInput;
 import co.cask.cdap.api.annotation.Tick;
 import co.cask.cdap.api.app.AbstractApplication;
-import co.cask.cdap.api.flow.Flow;
-import co.cask.cdap.api.flow.FlowSpecification;
+import co.cask.cdap.api.flow.AbstractFlow;
 import co.cask.cdap.api.flow.flowlet.AbstractFlowlet;
 import co.cask.cdap.api.flow.flowlet.FlowletContext;
 import co.cask.cdap.api.flow.flowlet.OutputEmitter;
@@ -42,24 +41,20 @@ public class PendingMetricTestApp extends AbstractApplication {
     addFlow(new TestPendingFlow());
   }
 
-  public static class TestPendingFlow implements Flow {
+  public static class TestPendingFlow extends AbstractFlow {
 
     @Override
-    public FlowSpecification configure() {
-      return FlowSpecification.Builder.with()
-        .setName("TestPendingFlow")
-        .setDescription("A flow to test whether queue pending events metrics are emitted correctly.")
-        .withFlowlets()
-        .add("source", new Source())
-        .add("forward-one", new ForwardOne())
-        .add("forward-two", new ForwardTwo())
-        .add("sink", new Sink())
-        .connect()
-        .from("source").to("forward-one")
-        .from("source").to("forward-two")
-        .from("forward-one").to("sink")
-        .from("forward-two").to("sink")
-        .build();
+    protected void configureFlow() {
+      setName("TestPendingFlow");
+      setDescription("A flow to test whether queue pending events metrics are emitted correctly.");
+      addFlowlet("source", new Source());
+      addFlowlet("forward-one", new ForwardOne());
+      addFlowlet("forward-two", new ForwardTwo());
+      addFlowlet("sink", new Sink());
+      connect("source", "forward-one");
+      connect("source", "forward-two");
+      connect("forward-one", "sink");
+      connect("forward-two", "sink");
     }
   }
 
@@ -101,6 +96,7 @@ public class PendingMetricTestApp extends AbstractApplication {
 
     @Override
     public void initialize(FlowletContext context) throws Exception {
+      super.initialize(context);
       fileToWaitFor = getTempFile(context, "one");
     }
 
@@ -122,6 +118,7 @@ public class PendingMetricTestApp extends AbstractApplication {
 
     @Override
     public void initialize(FlowletContext context) throws Exception {
+      super.initialize(context);
       fileToWaitForInt = getTempFile(context, "two-i");
       fileToWaitForString = getTempFile(context, "two-s");
     }
@@ -149,6 +146,7 @@ public class PendingMetricTestApp extends AbstractApplication {
 
     @Override
     public void initialize(FlowletContext context) throws Exception {
+      super.initialize(context);
       fileToWaitFor = getTempFile(context, "three");
     }
 

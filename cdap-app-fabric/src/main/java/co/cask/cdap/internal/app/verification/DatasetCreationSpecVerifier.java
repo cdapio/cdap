@@ -17,10 +17,10 @@
 package co.cask.cdap.internal.app.verification;
 
 import co.cask.cdap.app.verification.AbstractVerifier;
-import co.cask.cdap.data.dataset.DatasetCreationSpec;
+import co.cask.cdap.internal.dataset.DatasetCreationSpec;
 
 /**
- * This class verifies a {@link co.cask.cdap.data.dataset.DatasetCreationSpec}.
+ * This class verifies a {@link DatasetCreationSpec}.
  * <p>
  * Following are the checks that are done.
  * <ul>

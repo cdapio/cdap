@@ -19,6 +19,7 @@ package co.cask.cdap.internal.app.runtime.flow;
 import co.cask.cdap.api.annotation.Batch;
 import co.cask.cdap.api.annotation.ProcessInput;
 import co.cask.cdap.api.annotation.Tick;
+import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 import co.cask.cdap.api.flow.FlowSpecification;
@@ -35,7 +36,6 @@ import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.api.stream.StreamEventData;
-import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.queue.QueueReader;
 import co.cask.cdap.app.queue.QueueSpecification;
@@ -55,6 +55,7 @@ import co.cask.cdap.common.utils.ImmutablePair;
 import co.cask.cdap.data.stream.StreamCoordinatorClient;
 import co.cask.cdap.data.stream.StreamPropertyListener;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.metadata.writer.ProgramContextAware;
 import co.cask.cdap.data2.queue.ConsumerConfig;
 import co.cask.cdap.data2.queue.ConsumerGroupConfig;
 import co.cask.cdap.data2.queue.DequeueStrategy;
@@ -79,6 +80,7 @@ import co.cask.cdap.internal.specification.FlowletMethod;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.common.io.ByteBufferInputStream;
+import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Function;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
@@ -130,6 +132,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
   private final QueueReaderFactory queueReaderFactory;
   private final MetricsCollectionService metricsCollectionService;
   private final DiscoveryServiceClient discoveryServiceClient;
+  private final TransactionSystemClient txClient;
   private final DatasetFramework dsFramework;
   private final UsageRegistry usageRegistry;
 
@@ -141,6 +144,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
                               QueueReaderFactory queueReaderFactory,
                               MetricsCollectionService metricsCollectionService,
                               DiscoveryServiceClient discoveryServiceClient,
+                              TransactionSystemClient txClient,
                               DatasetFramework dsFramework,
                               UsageRegistry usageRegistry) {
     this.schemaGenerator = schemaGenerator;
@@ -150,6 +154,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
     this.queueReaderFactory = queueReaderFactory;
     this.metricsCollectionService = metricsCollectionService;
     this.discoveryServiceClient = discoveryServiceClient;
+    this.txClient = txClient;
     this.dsFramework = dsFramework;
     this.usageRegistry = usageRegistry;
   }
@@ -196,6 +201,14 @@ public final class FlowletProgramRunner implements ProgramRunner {
                                    program.getClassLoader());
       Preconditions.checkArgument(Flowlet.class.isAssignableFrom(clz), "%s is not a Flowlet.", clz);
 
+      // Setup dataset framework context, if required
+      Id.Program programId = program.getId();
+      Id.Flow.Flowlet flowletId = Id.Flow.Flowlet.from(programId.getApplication(), programId.getId(), flowletName);
+      Id.Run run = new Id.Run(programId, runId.getId());
+      if (dsFramework instanceof ProgramContextAware) {
+        ((ProgramContextAware) dsFramework).initContext(run, flowletId);
+      }
+
       Class<? extends Flowlet> flowletClass = (Class<? extends Flowlet>) clz;
 
       // Creates flowlet context
@@ -203,11 +216,14 @@ public final class FlowletProgramRunner implements ProgramRunner {
                                                runId, instanceCount,
                                                flowletDef.getDatasets(),
                                                options.getUserArguments(), flowletDef.getFlowletSpec(),
-                                               metricsCollectionService, discoveryServiceClient, dsFramework);
+                                               metricsCollectionService, discoveryServiceClient, txClient, dsFramework);
 
       // Creates tx related objects
       DataFabricFacade dataFabricFacade =
-        dataFabricFacadeFactory.create(program, flowletContext.getDatasetInstantiator());
+        dataFabricFacadeFactory.create(program, flowletContext.getDatasetCache());
+      if (dataFabricFacade instanceof ProgramContextAware) {
+        ((ProgramContextAware) dataFabricFacade).initContext(run, flowletId);
+      }
 
       // Creates QueueSpecification
       Table<Node, String, Set<QueueSpecification>> queueSpecs =
@@ -223,7 +239,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
 
       // Inject DataSet, OutputEmitter, Metric fields
       ImmutableList.Builder<ProducerSupplier> queueProducerSupplierBuilder = ImmutableList.builder();
-      Reflections.visit(flowlet, TypeToken.of(flowlet.getClass()),
+      Reflections.visit(flowlet, flowlet.getClass(),
                         new PropertyFieldSetter(flowletDef.getFlowletSpec().getProperties()),
                         new DataSetFieldSetter(flowletContext),
                         new MetricsFieldSetter(flowletContext.getMetrics()),
@@ -249,7 +265,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
                                                              createCallback(flowlet, flowletDef.getFlowletSpec()),
                                                              dataFabricFacade, serviceHook);
 
-      FlowletProgramController controller = new FlowletProgramController(program.getName(), flowletName,
+      FlowletProgramController controller = new FlowletProgramController(program.getId(), flowletName,
                                                                          flowletContext, driver,
                                                                          queueProducerSupplierBuilder.build(),
                                                                          consumerSuppliers);

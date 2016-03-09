@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -23,6 +23,7 @@ import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.common.app.RunIds;
+import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.common.queue.QueueName;
@@ -71,13 +72,13 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
- * tests that flowlets and batch jobs close their data sets.
+ * Tests that flowlets and batch jobs close their data sets.
  */
 @Category(XSlowTests.class)
 public class OpenCloseDataSetTest {
 
   @ClassRule
-  public static TemporaryFolder tmpFolder = new TemporaryFolder();
+  public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
   private static Location namespaceHomeLocation;
 
   private static final Supplier<File> TEMP_FOLDER_SUPPLIER = new Supplier<File>() {
@@ -85,7 +86,7 @@ public class OpenCloseDataSetTest {
     @Override
     public File get() {
       try {
-        return tmpFolder.newFolder();
+        return TEMP_FOLDER.newFolder();
       } catch (IOException e) {
         throw Throwables.propagate(e);
       }
@@ -152,15 +153,21 @@ public class OpenCloseDataSetTest {
 
     // get the number of writes to the foo table
     Assert.assertEquals(4, TrackingTable.getTracker(tableName, "write"));
-    // only the flow has started with s single flowlet (service is loaded lazily on 1st request)
-    Assert.assertEquals(1, TrackingTable.getTracker(tableName, "open"));
+    // only 2 "open" calls should be tracked:
+    // 1. the flow has started with single flowlet (service is loaded lazily on 1st request)
+    // 2. DatasetSystemMetadataWriter also instantiates the dataset because it needs to add some system tags
+    // for the dataset
+    Assert.assertEquals(2, TrackingTable.getTracker(tableName, "open"));
 
     // now send a request to the service
     Gson gson = new Gson();
     DiscoveryServiceClient discoveryServiceClient = AppFabricTestHelper.getInjector().
       getInstance(DiscoveryServiceClient.class);
-    Discoverable discoverable = discoveryServiceClient.discover(
-      String.format("service.%s.%s.%s", DefaultId.NAMESPACE.getId(), "dummy", "DummyService")).iterator().next();
+
+    Discoverable discoverable = new RandomEndpointStrategy(discoveryServiceClient.discover(
+      String.format("service.%s.%s.%s", DefaultId.NAMESPACE.getId(), "dummy", "DummyService")))
+      .pick(5, TimeUnit.SECONDS);
+    Assert.assertNotNull(discoverable);
 
     HttpClient client = new DefaultHttpClient();
     HttpGet get = new HttpGet(String.format("http://%s:%d/v3/namespaces/default/apps/%s/services/%s/methods/%s",
@@ -177,14 +184,17 @@ public class OpenCloseDataSetTest {
 
     // now the dataset must have a read and another open operation
     Assert.assertEquals(1, TrackingTable.getTracker(tableName, "read"));
-    Assert.assertEquals(2, TrackingTable.getTracker(tableName, "open"));
-    Assert.assertEquals(0, TrackingTable.getTracker(tableName, "close"));
+    Assert.assertEquals(3, TrackingTable.getTracker(tableName, "open"));
+    // The dataset that was instantiated by the DatasetSystemMetadataWriter should have been closed
+    Assert.assertEquals(1, TrackingTable.getTracker(tableName, "close"));
 
     // stop all programs, they should both close the data set foo
     for (ProgramController controller : controllers) {
       controller.stop().get();
     }
-    Assert.assertEquals(2, TrackingTable.getTracker(tableName, "close"));
+    int timesOpened = TrackingTable.getTracker(tableName, "open");
+    Assert.assertTrue(timesOpened >= 2);
+    Assert.assertEquals(timesOpened, TrackingTable.getTracker(tableName, "close"));
 
     // now start the m/r job
     ProgramController controller = null;
@@ -206,7 +216,7 @@ public class OpenCloseDataSetTest {
     // M/r job is done, one mapper and the m/r client should have opened and closed the data set foo
     // we don't know the exact number of times opened, but it is at least once, and it must be closed the same number
     // of times.
-    Assert.assertTrue(2 < TrackingTable.getTracker(tableName, "open"));
+    Assert.assertTrue(timesOpened < TrackingTable.getTracker(tableName, "open"));
     Assert.assertEquals(TrackingTable.getTracker(tableName, "open"),
                         TrackingTable.getTracker(tableName, "close"));
     Assert.assertTrue(0 < TrackingTable.getTracker("bar", "open"));

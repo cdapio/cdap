@@ -16,41 +16,24 @@
 
 package co.cask.cdap.internal.app.runtime.artifact;
 
-import co.cask.cdap.api.annotation.Beta;
-import co.cask.cdap.internal.artifact.ArtifactVersion;
+import co.cask.cdap.api.artifact.ArtifactId;
 import org.apache.twill.filesystem.Location;
 
-import java.util.Objects;
-
 /**
- * Uniquely describes an artifact. Artifact descriptors are ordered by whether or not they are system artifacts,
+ * Uniquely describes an artifact. Artifact descriptors are ordered by scope,
  * then by name, and finally by version.
- * TODO: move this into cdap-api once everything is ready
  */
-@Beta
 public final class ArtifactDescriptor implements Comparable<ArtifactDescriptor> {
-  private final String name;
-  private final ArtifactVersion version;
-  private final boolean isSystem;
+  private final ArtifactId artifactId;
   private final Location location;
 
-  public ArtifactDescriptor(String name, ArtifactVersion version, boolean isSystem, Location location) {
-    this.name = name;
-    this.version = version;
-    this.isSystem = isSystem;
+  public ArtifactDescriptor(ArtifactId artifactId, Location location) {
+    this.artifactId = artifactId;
     this.location = location;
   }
 
-  public String getName() {
-    return name;
-  }
-
-  public ArtifactVersion getVersion() {
-    return version;
-  }
-
-  public boolean isSystem() {
-    return isSystem;
+  public ArtifactId getArtifactId() {
+    return artifactId;
   }
 
   public Location getLocation() {
@@ -60,9 +43,7 @@ public final class ArtifactDescriptor implements Comparable<ArtifactDescriptor> 
   @Override
   public String toString() {
     return "ArtifactDescriptor{" +
-      "name='" + name + '\'' +
-      ", version=" + version +
-      ", isSystem=" + isSystem +
+      "artifactId=" + artifactId +
       ", location=" + location +
       '}';
   }
@@ -82,19 +63,11 @@ public final class ArtifactDescriptor implements Comparable<ArtifactDescriptor> 
 
   @Override
   public int hashCode() {
-    return Objects.hash(name, version, isSystem);
+    return artifactId.hashCode();
   }
 
   @Override
   public int compareTo(ArtifactDescriptor other) {
-    // system artifacts are 'less than' other artifacts
-    if (isSystem != other.isSystem) {
-      return isSystem ? -1 : 1;
-    }
-    int cmp = name.compareTo(other.name);
-    if (cmp != 0) {
-      return cmp;
-    }
-    return version.compareTo(other.version);
+    return getArtifactId().compareTo(other.getArtifactId());
   }
 }

@@ -26,6 +26,7 @@ import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.guice.ZKClientModule;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.logging.ServiceLoggingContext;
+import co.cask.cdap.common.namespace.guice.NamespaceClientRuntimeModule;
 import co.cask.cdap.common.twill.AbstractMasterTwillRunnable;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
@@ -33,12 +34,14 @@ import co.cask.cdap.data.stream.StreamAdminModules;
 import co.cask.cdap.data.stream.service.StreamHttpService;
 import co.cask.cdap.data.stream.service.StreamService;
 import co.cask.cdap.data.stream.service.StreamServiceRuntimeModule;
+import co.cask.cdap.data.view.ViewAdminModules;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.logging.appender.LogAppenderInitializer;
 import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.notifications.feeds.client.NotificationFeedClientModule;
 import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
+import co.cask.cdap.proto.Id;
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.Guice;
@@ -87,14 +90,15 @@ public class StreamHandlerRunnable extends AbstractMasterTwillRunnable {
         new LoggingModules().getDistributedModules(),
         new ExploreClientModule(),
         new StreamServiceRuntimeModule().getDistributedModules(),
+        new ViewAdminModules().getDistributedModules(),
         new StreamAdminModules().getDistributedModules(),
         new NotificationFeedClientModule(),
         new NotificationServiceRuntimeModule().getDistributedModules(),
-        new StreamAdminModules().getDistributedModules()
+        new NamespaceClientRuntimeModule().getDistributedModules()
       );
 
       injector.getInstance(LogAppenderInitializer.class).initialize();
-      LoggingContextAccessor.setLoggingContext(new ServiceLoggingContext(Constants.SYSTEM_NAMESPACE,
+      LoggingContextAccessor.setLoggingContext(new ServiceLoggingContext(Id.Namespace.SYSTEM.getId(),
                                                                          Constants.Logging.COMPONENT_NAME,
                                                                          Constants.Service.STREAMS));
 

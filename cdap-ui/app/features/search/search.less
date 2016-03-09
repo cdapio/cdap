@@ -1,0 +1,48 @@
+/*
+ * Copyright © 2015 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
+@import "../../styles/variables.less";
+@import "../../../bower_components/bootstrap/less/mixins.less";
+@import '../../styles/themes/cdap/mixins.less';
+
+body.theme-cdap {
+  &.state-search {
+    main.container {
+      .main-search {
+        margin-top: 20px;
+        p.results-count {
+          color: @program-text;
+          font-size: 14px;
+          margin-bottom: 30px;
+        }
+        div.tobject {
+          margin-bottom: 30px;
+          a {
+            display: inline-block;
+            font-size: 15px;
+            margin-bottom: 10px;
+          }
+        }
+        p.tobject-type {
+          margin: 0;
+          span:last-child {
+            padding-left: 5px;
+          }
+        }
+      }
+    }
+  }
+}

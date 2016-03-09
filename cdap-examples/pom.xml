@@ -22,13 +22,17 @@
   <parent>
     <groupId>co.cask.cdap</groupId>
     <artifactId>cdap</artifactId>
-    <version>3.1.0</version>
+    <version>3.3.2</version>
   </parent>
 
   <artifactId>cdap-examples</artifactId>
   <packaging>pom</packaging>
   <name>CDAP Examples</name>
 
+  <!--
+    NOTE: This pom is not the one bundled in the cdap sdk.
+    When adding a new module here, be sure to add it to deploy_pom.xml too.
+  -->
   <modules>
     <module>CountRandom</module>
     <module>CubeService</module>
@@ -46,13 +50,6 @@
     <module>WikipediaPipeline</module>
     <module>WordCount</module>
   </modules>
-
-  <repositories>
-    <repository>
-      <id>continuuity-public</id>
-      <url>https://repository.continuuity.com/content/groups/public</url>
-    </repository>
-  </repositories>
 
   <properties>
     <power.pack.version>[2.0.0,)</power.pack.version>
@@ -76,7 +73,7 @@
                 <excludes>
                   <exclude>build-number.txt</exclude>
                   <exclude>LICENSE*.txt</exclude>
-                  <exclude>README.md</exclude>
+                  <exclude>README.rst</exclude>
                   <exclude>logs/**</exclude>
                   <exclude>docs/**</exclude>
                   <exclude>conf/**</exclude>
@@ -186,6 +183,12 @@
         <groupId>co.cask.common</groupId>
         <artifactId>common-http</artifactId>
         <version>${cask.common.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>org.ow2.asm</groupId>
+            <artifactId>asm-all</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
       <dependency>
         <groupId>co.cask.http</groupId>
@@ -354,11 +357,6 @@
         <groupId>org.apache.ant</groupId>
         <artifactId>ant-compress</artifactId>
         <version>1.2</version>
-      </dependency>
-      <dependency>
-        <groupId>com.sun.jersey</groupId>
-        <artifactId>jersey-core</artifactId>
-        <version>1.18</version>
       </dependency>
       <dependency>
         <groupId>commons-cli</groupId>

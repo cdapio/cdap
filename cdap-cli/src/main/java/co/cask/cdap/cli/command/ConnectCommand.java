@@ -16,11 +16,11 @@
 
 package co.cask.cdap.cli.command;
 
+import co.cask.cdap.cli.ArgumentName;
 import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.CLIConnectionConfig;
 import co.cask.cdap.cli.LaunchOptions;
 import co.cask.cdap.cli.util.InstanceURIParser;
-import co.cask.cdap.client.config.ConnectionConfig;
 import co.cask.common.cli.Arguments;
 import co.cask.common.cli.Command;
 
@@ -46,10 +46,13 @@ public class ConnectCommand implements Command {
 
   @Override
   public void execute(Arguments arguments, PrintStream output) throws Exception {
-    String instanceURI = arguments.get("cdap-instance-uri");
+    String instanceURI = arguments.get(ArgumentName.INSTANCE_URI.toString());
+    String verifySSLCertString = arguments.getOptional(ArgumentName.VERIFY_SSL_CERT.toString());
+    boolean verifySSLCert = verifySSLCertString != null ? Boolean.valueOf(verifySSLCertString) : true;
+
     CLIConnectionConfig connection = instanceURIParser.parse(instanceURI);
     try {
-      cliConfig.tryConnect(connection, output, debug);
+      cliConfig.tryConnect(connection, verifySSLCert, output, debug);
     } catch (Exception e) {
       output.println("Failed to connect to " + instanceURI + ": " + e.getMessage());
       if (debug) {
@@ -60,7 +63,8 @@ public class ConnectCommand implements Command {
 
   @Override
   public String getPattern() {
-    return "connect <cdap-instance-uri>";
+    return String.format("connect <%s> [<%s>]",
+                         ArgumentName.INSTANCE_URI, ArgumentName.VERIFY_SSL_CERT);
   }
 
   @Override

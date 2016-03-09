@@ -1,0 +1,382 @@
+/*
+ * Copyright © 2015 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
+@import "../../styles/variables.less";
+@import "../../../bower_components/bootstrap/less/mixins.less";
+@import "../../styles/themes/cdap/mixins.less";
+
+@light-yellow: lighten(#ffff99, 10%);
+
+my-dag {
+  .zoom-control {
+    z-index: 1023;
+    right: 15px;
+  }
+
+  .my-js-dag {
+    width: inherit;
+    height: inherit;
+
+    #diagram-container {
+      position: relative;
+      width: inherit;
+      height: inherit;
+      overflow: hidden;
+    }
+
+    &.disabled {
+      background-image: none;
+      border: 0;
+      background-color: @table-bg;
+
+      &.normal-cursor #dag-container *{
+        cursor: default;
+      }
+
+      .border-radius(4px);
+      .box {
+        cursor: pointer;
+      }
+    }
+
+    .box {
+      position: absolute;
+      text-align: center;
+      cursor: move;
+      left: 100px;
+      top: 150px;
+      padding: 0;
+      height: 66px;
+      width: 105px;
+      &.selected {
+        &.realtimesource, &.batchsource {
+          .node {
+            background-color: #48c038;
+            border-width: 6px;
+          }
+        }
+        &.transform {
+          .node {
+            background-color: #4586f3;
+            border-width: 6px;
+          }
+        }
+        &.realtimesink, &.batchsink {
+          .node {
+            background-color: #8367df;
+            border-width: 6px;
+          }
+        }
+        .icon.fa, .fa.fa-close {
+          color: white;
+        }
+        .icon.fa {
+          line-height: 34px;
+        }
+        .fa.fa-close {
+          top: 3px;
+        }
+      }
+      .node {
+        background-color: white;
+        margin: 0 auto;
+        height: 46px;
+        width: 56px;
+        .border-radius(6px);
+        .box-shadow(0 10px 18px -9px fade(black, 50%));
+        .transition(background-color 50ms linear);
+        .transition(color 50ms linear);
+        background-clip: border-box;
+        &:hover, &:focus {
+          .fa.fa-close {
+            .opacity(1);
+          }
+        }
+      }
+      &.realtimesource, &.batchsource {
+        color: #48c038;
+        left: 10vw;
+        .node {
+          border: 3px solid #48c038;
+        }
+      }
+      &.transform {
+        color: #4586f3;
+        left: 30vw;
+        .node {
+          border: 3px solid #4586f3;
+        }
+      }
+      &.realtimesink, &.batchsink {
+        color: #8367df;
+        left: 50vw;
+        .node {
+          border: 3px solid #8367df;
+        }
+      }
+
+      .icon.fa, .fa.fa-close {
+        cursor: pointer;
+
+      }
+      .icon.fa {
+        line-height: 40px;
+      }
+      .fa.fa-close {
+        font-size: 13px;
+        position: absolute;
+        right: 28px;
+        .opacity(0);
+        .transition(opacity 0.2s ease);
+      }
+      .plugin-name {
+        font-size: 13px;
+        font-weight: 500;
+        text-overflow: ellipsis;
+        margin-top: 5px;
+        overflow: hidden;
+      }
+
+      .label-as-badge {
+        .border-radius(50%);
+      }
+
+      .error-node-notification {
+        color: white;
+        position: absolute;
+        top: -8px;
+        left: 16px;
+        .badge-warning {
+          background-color: #ffcc00;
+        }
+        .badge-danger {
+          background-color: #e33d3d;
+        }
+      }
+    }
+
+    .comment-box {
+      position: absolute;
+      width: 200px;
+      min-height: 50px;
+      background-color: @light-yellow;
+      border-radius: 4px;
+      cursor: move;
+
+      div.comment-content {
+        padding: 15px;
+        word-break: break-all;
+      }
+
+      textarea.form-control {
+        height: 100px;
+        background-color: @light-yellow;
+        resize: none;
+
+        &:focus {
+          border: none;
+        }
+      }
+
+      .fa.fa-close {
+        position: absolute;
+        right: 3px;
+        top: 3px;
+        cursor: pointer;
+        .opacity(0);
+        .transition(opacity 0.2s ease);
+      }
+      &:hover {
+        .fa.fa-close {
+          .opacity(1);
+        }
+      }
+    }
+
+    .error-container {
+      position: fixed;
+      bottom: 50px;
+      left: 0;
+      right: 0;
+      width: 75%;
+      margin: 0 auto;
+
+      .error-close-icon {
+        cursor: pointer;
+      }
+
+      &.well {
+        background-color: @brand-danger;
+        .border-radius(8px);
+        color: white;
+      }
+    }
+
+    #dag-container {
+      height: 100%;
+      width: inherit;
+      position: absolute;
+    }
+
+    .jsplumb-endpoint {
+      svg {
+        overflow: visible;
+      }
+      circle {
+        fill: white;
+        r: 2px;
+        stroke-width: 8px;
+      }
+      &-anchor-sourceAnchor circle {
+        stroke: #48c038;
+      }
+      &-anchor-transformAnchor circle {
+        stroke: #4586f3;
+      }
+      &-anchor-sinkAnchor circle {
+        stroke: #8367df;
+      }
+    }
+
+    .jsplumb-connector path:last-child {
+      stroke-width: 0;
+    }
+
+    /* metrics overlay */
+    .metric-label-text {
+      color: #397cf1;
+      font-size: 12px;
+    }
+  }
+
+  div.jsplumb-overlay {
+    div.label-container {
+      cursor: pointer;
+      height: 14px;
+      width: 14px;
+      text-align: center;
+      background-color: white;
+      line-height: 14px;
+      font-size: 10px;
+      color: #4f5464;
+      vertical-align: middle;
+      .border-radius(1px);
+      .box-shadow(0 0 0 3px fade(black, 20%));
+      &:hover, &:focus {
+        background-color: #4f5464;
+        color: white;
+      }
+      i.icon-SchemaEdge {
+        font-size: 9px;
+      }
+    }
+  }
+  .metric-label {
+    display: inline-block;
+    width: 100px;
+  }
+
+}
+
+.tooltip .tooltip-inner {
+  ul {
+    padding-left: 20px;
+  }
+}
+.badge-warning {
+  background-color: @brand-warning;
+}
+.badge-error {
+  background-color: @brand-danger;
+}
+.theme-cdap {
+  .tooltip-warning {
+    &.tooltip {
+      &.top {
+        .tooltip-arrow {
+          border-top-color: @brand-warning;
+        }
+      }
+    }
+    .tooltip-inner {
+      background-color: @brand-warning;
+      border-color: @brand-warning;
+    }
+  }
+  .tooltip-error {
+    &.tooltip {
+      &.top {
+        .tooltip-arrow {
+          border-top-color: @brand-danger;
+        }
+      }
+    }
+    .tooltip-inner {
+      background-color: @brand-danger;
+      border-color: @brand-danger;
+    }
+  }
+}
+
+.popover {
+  min-width: 250px;
+  max-width: 400px;
+
+  .popover-title {
+    background-color: white;
+    border-bottom: 0;
+    padding: 11px 10px;
+    h4 span {
+      font-weight: 500;
+    }
+    i.fa.fa-times {
+      color: #b4b4b6;
+      cursor: pointer;
+    }
+  }
+
+  .popover-content {
+    padding: 0 10px 10px;
+
+    .schema-popover {
+      max-height: 400px;
+      overflow-y: auto;
+      overflow-x: hidden;
+
+      .well { margin-bottom: 0; }
+
+      table.table-curved {
+        background-color: transparent;
+        border-left: 1px solid @table-border-color;
+        margin-top: 0;
+        margin-bottom: 0;
+        th, td {
+          border-left: 0;
+        }
+        th {
+          border-bottom: 1px solid @table-border-color;
+          color: #5F6674;
+          font-size: 13px;
+          font-weight: 500;
+        }
+        td {
+          font-size: 13px;
+          padding: 8px;
+        }
+      }
+    }
+  }
+}

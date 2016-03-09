@@ -1,3 +1,19 @@
+/*
+ * Copyright © 2015 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 angular.module(PKG.name + '.feature.dashboard')
   .factory('MyMetricsQueryHelper', function() {
     // 'ns.default.app.foo' -> {'ns': 'default', 'app': 'foo'}
@@ -27,7 +43,7 @@ angular.module(PKG.name + '.feature.dashboard')
     // that is part of the widget, which is not a metric.
     // Right now a chart and a metric is tied together and
     // it needs to be changed.
-    function constructQuery(queryId, tags, metric) {
+    function constructQuery(queryId, tags, metric, isTimeRange, groupBy) {
       var timeRange, retObj;
       timeRange = {
         'start': metric.startTime || 'now-60s',
@@ -39,10 +55,17 @@ angular.module(PKG.name + '.feature.dashboard')
       retObj = {};
       retObj[queryId] = {
         tags: tags,
-        metrics: metric.names,
-        groupBy: [],
-        timeRange: timeRange
+        metrics: metric.names
       };
+      groupBy = groupBy || [];
+      if (groupBy.length) {
+        retObj[queryId].groupBy = groupBy;
+      }
+
+      isTimeRange = (isTimeRange !== false);
+      if (isTimeRange) {
+        retObj[queryId].timeRange = timeRange;
+      }
       return retObj;
     }
 

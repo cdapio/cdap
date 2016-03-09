@@ -18,6 +18,7 @@ package co.cask.cdap.notifications.service.kafka;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.transaction.TransactionSystemClientService;
 import co.cask.cdap.notifications.feeds.NotificationFeedException;
 import co.cask.cdap.notifications.feeds.NotificationFeedManager;
 import co.cask.cdap.notifications.feeds.NotificationFeedNotFoundException;
@@ -26,13 +27,10 @@ import co.cask.cdap.notifications.service.NotificationException;
 import co.cask.cdap.notifications.service.NotificationHandler;
 import co.cask.cdap.notifications.service.NotificationService;
 import co.cask.cdap.proto.Id;
-import co.cask.tephra.TransactionSystemClient;
 import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.common.Threads;
@@ -60,9 +58,6 @@ import java.util.concurrent.Executors;
  */
 public class KafkaNotificationService extends AbstractNotificationService {
   private static final Logger LOG = LoggerFactory.getLogger(KafkaNotificationService.class);
-  private static final Gson GSON = new GsonBuilder()
-    .enableComplexMapKeySerialization()
-    .create();
 
   private final KafkaClient kafkaClient;
   private final NotificationFeedManager feedManager;
@@ -77,7 +72,7 @@ public class KafkaNotificationService extends AbstractNotificationService {
 
   @Inject
   public KafkaNotificationService(CConfiguration cConf, KafkaClient kafkaClient, DatasetFramework dsFramework,
-                                  TransactionSystemClient transactionSystemClient,
+                                  TransactionSystemClientService transactionSystemClient,
                                   NotificationFeedManager feedManager) {
     super(dsFramework, transactionSystemClient, feedManager);
     this.kafkaClient = kafkaClient;
@@ -90,6 +85,7 @@ public class KafkaNotificationService extends AbstractNotificationService {
 
   @Override
   protected void startUp() throws Exception {
+    super.startUp();
     kafkaPublisher = kafkaClient.getPublisher(ack, Compression.SNAPPY);
     publishingExecutor = MoreExecutors.listeningDecorator(
       Executors.newSingleThreadExecutor(Threads.createDaemonThreadFactory("notification-publisher-%d")));
@@ -98,6 +94,7 @@ public class KafkaNotificationService extends AbstractNotificationService {
   @Override
   protected void shutDown() throws Exception {
     publishingExecutor.shutdownNow();
+    super.shutDown();
   }
 
   @Override
@@ -110,7 +107,7 @@ public class KafkaNotificationService extends AbstractNotificationService {
       public N call() throws Exception {
         try {
           KafkaMessage message = new KafkaMessage(KafkaNotificationUtils.getMessageKey(feed),
-                                                  GSON.toJsonTree(notification, notificationType));
+                                                  createGson().toJsonTree(notification, notificationType));
           ByteBuffer bb = KafkaMessageCodec.encode(message);
 
           TopicPartition topicPartition = KafkaNotificationUtils.getKafkaTopicPartition(feed);

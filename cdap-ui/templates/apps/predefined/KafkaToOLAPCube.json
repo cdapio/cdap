@@ -1,0 +1,59 @@
+{
+  "artifact": {
+    "name": "cdap-etl-realtime",
+    "scope": "SYSTEM",
+    "version": "3.3.2"
+  },
+  "config": {
+    "source": {
+      "name": "Kafka-798d85a0-4280-42c5-a00a-c3383abee3cd",
+      "plugin": {
+        "name": "Kafka",
+        "label": "Kafka",
+        "properties": {
+          "schema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"remote_host\",\"type\":\"string\"},{\"name\":\"status\",\"type\":\"int\"}]}",
+          "kafka.topic": "logs",
+          "kafka.initial.offset": 0,
+          "kafka.zookeeper": "localhost:2181",
+          "format": "text",
+          "kafka.partitions": "1"
+        },
+        "artifact": {
+          "name": "core-plugins",
+          "scope": "SYSTEM",
+          "version": "1.2.1"
+        }
+      }
+    },
+    "sinks": [
+      {
+        "name": "Cube-ecabd607-1aaf-4e8b-a5d2-edce7398b149",
+        "plugin": {
+          "name": "Cube",
+          "label": "OLAP Cube",
+          "properties": {
+            "dataset.cube.resolutions": "1",
+            "cubeFact.measurements": "{\"cubeFact.measurement.count\":\"COUNTER\"}",
+            "name": "logcube",
+            "dataset.cube.properties": "{\"dataset.cube.aggregation.agg1.dimensions\":\"remote_host\",\"dataset.cube.aggregation.agg2.dimensions\":\"status\"}"
+          },
+          "artifact": {
+            "name": "core-plugins",
+            "scope": "SYSTEM",
+            "version": "1.2.1"
+          }
+        }
+      }
+    ],
+    "transforms": [],
+    "instances": 1,
+    "connections": [
+      {
+        "from": "Kafka-798d85a0-4280-42c5-a00a-c3383abee3cd",
+        "to": "Cube-ecabd607-1aaf-4e8b-a5d2-edce7398b149"
+      }
+    ]
+  },
+  "description": "Generate an OLAP Cube in real time from Kafka",
+  "name": "KafkaToOLAPCube"
+}

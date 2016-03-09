@@ -1,8 +1,25 @@
+/*
+ * Copyright © 2015 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 angular.module(PKG.name + '.feature.services')
-  .controller('ServicesRunsController', function($scope, $filter, $state, rRuns) {
+  .controller('ServicesRunsController', function($scope, $filter, $state, rRuns, $bootstrapModal, rServiceDetail) {
     var fFilter = $filter('filter');
     this.runs = rRuns;
-
+    this.$bootstrapModal = $bootstrapModal;
+    this.description = rServiceDetail.description;
     if ($state.params.runid) {
       var match = fFilter(rRuns, {runid: $state.params.runid});
       if (match.length) {
@@ -39,6 +56,10 @@ angular.module(PKG.name + '.feature.services')
       {
         title: 'Logs',
         template: '/assets/features/services/templates/tabs/runs/tabs/log.html'
+      },
+      {
+        title: 'Datasets',
+        template: '/assets/features/services/templates/tabs/data.html'
       }
     ];
 
@@ -47,4 +68,28 @@ angular.module(PKG.name + '.feature.services')
     this.selectTab = function(tab) {
       this.activeTab = tab;
     };
+
+    this.openHistory = function() {
+      this.$bootstrapModal.open({
+        size: 'lg',
+        templateUrl: '/assets/features/services/templates/tabs/history.html',
+        controller: ['runs', '$scope', function(runs, $scope) {
+          $scope.runs = runs;
+        }],
+        resolve: {
+          runs: function() {
+            return this.runs;
+          }.bind(this)
+        }
+      });
+    };
+
+    this.metadataParams = {
+      namespace: $state.params.namespace,
+      appId: $state.params.appId,
+      programType: 'services',
+      programId: $state.params.programId,
+      scope: $scope
+    };
+
   });

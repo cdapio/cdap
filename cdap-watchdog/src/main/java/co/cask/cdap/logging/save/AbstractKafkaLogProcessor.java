@@ -36,8 +36,9 @@ public abstract class AbstractKafkaLogProcessor implements KafkaLogProcessor {
   public void init(Set<Integer> partitions, CheckpointManager checkpointManager) {
     partitonCheckpoints.clear();
     try {
-     for (Integer partition : partitions) {
-        partitonCheckpoints.put(partition, checkpointManager.getCheckpoint(partition));
+      Map<Integer, Checkpoint> partitionMap = checkpointManager.getCheckpoint(partitions);
+      for (Map.Entry<Integer, Checkpoint> partition : partitionMap.entrySet()) {
+        partitonCheckpoints.put(partition.getKey(), partition.getValue());
       }
     } catch (Exception e) {
       throw Throwables.propagate(e);

@@ -22,11 +22,12 @@ import co.cask.cdap.api.metrics.MetricsCollector;
 import co.cask.tephra.Transaction;
 import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionAwares;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Handy abstract implementation of {@link Dataset} that acts on a list of underlying datasets and
@@ -40,14 +41,17 @@ public abstract class AbstractDataset implements Dataset, MeteredDataset, Transa
 
   public AbstractDataset(String instanceName, Dataset embedded, Dataset... otherEmbedded) {
     this.instanceName = instanceName;
-    this.underlying = Lists.asList(embedded, otherEmbedded);
-    ImmutableList.Builder<TransactionAware> builder = ImmutableList.builder();
+    this.underlying = new ArrayList<>();
+    this.underlying.add(embedded);
+    Collections.addAll(this.underlying, otherEmbedded);
+
+    List<TransactionAware> txAwares = new ArrayList<>();
     for (Dataset dataset : underlying) {
       if (dataset instanceof TransactionAware) {
-        builder.add((TransactionAware) dataset);
+        txAwares.add((TransactionAware) dataset);
       }
     }
-    this.txAwares = TransactionAwares.of(builder.build());
+    this.txAwares = TransactionAwares.of(txAwares);
   }
 
   @Override

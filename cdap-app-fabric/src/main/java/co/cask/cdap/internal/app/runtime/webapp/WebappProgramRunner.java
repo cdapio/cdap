@@ -130,7 +130,7 @@ public class WebappProgramRunner implements ProgramRunner {
         })));
       }
 
-      return new WebappProgramController(program.getName(), runId, httpService, new Cancellable() {
+      return new WebappProgramController(program.getId(), runId, httpService, new Cancellable() {
         @Override
         public void cancel() {
           for (Cancellable cancellable : cancellables) {

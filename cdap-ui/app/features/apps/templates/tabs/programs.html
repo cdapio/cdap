@@ -1,0 +1,76 @@
+<!--
+  Copyright © 2015 Cask Data, Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+-->
+
+<br />
+<div class="status">
+  <div class="row">
+    <div class="col-xs-12">
+      <h3>Programs</h3>
+      <div class="table-responsive">
+        <table class="table table-curved" cask-sortable>
+          <thead>
+            <tr ng-class="{'sort-enabled': ProgramsController.programs.length>0}">
+              <th data-predicate="name"> Name </th>
+              <th data-predicate="status"> Status </th>
+              <th data-predicate="description"> Description </th>
+              <th data-predicate="type"> Type </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr ng-repeat="program in ProgramsController.programs | orderBy:sortable.predicate:sortable.reverse">
+              <td>
+                <!-- RUNNING is green, SUSPENDED is yellow. All else is grey. -->
+                <span ng-class="{'status-green': program.status === 'RUNNING', 'status-yellow': program.status === 'SUSPENDED', 'status-grey': program.status !== 'RUNNING' && program.status !== 'SUSPENDED'}"> </span>
+
+                <my-program-link
+                  type="program.type"
+                  namespace="$state.params.namespace"
+                  app="$state.params.appId"
+                  program="program.name"
+                  bold="true">
+                </my-program-link>
+
+              </td>
+              <td ng-bind="program.status"></td>
+              <td ng-bind="program.description"></td>
+              <td>
+                <strong ng-if="program.type === 'Spark'"
+                        class="icon-spark">
+                </strong>
+                <strong ng-if="program.type === 'Mapreduce'"
+                        class="icon-mapreduce">
+                </strong>
+                <strong ng-if="program.type === 'Service'"
+                        class="icon-service">
+                </strong>
+                <strong ng-if="program.type === 'Workflow'"
+                        class="icon-workflow">
+                </strong>
+                <strong ng-if="program.type === 'Flow'"
+                        class="icon-tigon">
+                </strong>
+                <strong ng-if="program.type === 'Worker'"
+                        class="icon-worker">
+                </strong>
+                {{program.type}}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>

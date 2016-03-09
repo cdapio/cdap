@@ -28,6 +28,7 @@ import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.api.service.http.HttpServiceHandlerSpecification;
 import co.cask.cdap.api.service.http.ServiceHttpEndpoint;
 import co.cask.cdap.api.workflow.WorkflowActionSpecification;
+import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.data2.queue.ConsumerConfig;
@@ -47,7 +48,6 @@ import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.proto.ServiceInstances;
-import co.cask.cdap.proto.codec.HttpServiceSpecificationCodec;
 import co.cask.cdap.proto.codec.ScheduleSpecificationCodec;
 import co.cask.cdap.proto.codec.WorkflowActionSpecificationCodec;
 import co.cask.cdap.test.SlowTests;
@@ -178,10 +178,10 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
 
     // stop individual runs of the map-reduce program
     String runId = historyRuns.get(0).getPid();
-    stopProgram(dummyMR2, 200, runId);
+    stopProgram(dummyMR2, runId, 200);
 
     runId = historyRuns.get(1).getPid();
-    stopProgram(dummyMR2, 200, runId);
+    stopProgram(dummyMR2, runId, 200);
 
     waitState(dummyMR2, STOPPED);
 
@@ -252,7 +252,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     stopProgram(Id.Program.from(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW, WORDCOUNT_FLOW_NAME), 400);
     // stop run of a program with ill-formed run id
     stopProgram(Id.Program.from(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW, WORDCOUNT_FLOW_NAME),
-                400, "norunid");
+                "norunid", 400);
 
     // start program twice
     startProgram(Id.Program.from(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW, WORDCOUNT_FLOW_NAME));
@@ -278,7 +278,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
 
     // stop run of the program that is not running
     stopProgram(Id.Program.from(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW, WORDCOUNT_FLOW_NAME),
-                404, runId); // active run not found
+                runId, 404); // active run not found
 
     // cleanup
     response = doDelete(getVersionedAPIPath("apps/", Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1));
@@ -384,11 +384,18 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     // Test missing app, programType, etc
     List<JsonObject> returnedBody = readResponse(doPost(statusUrl1, "[{'appId':'NotExist', 'programType':'Flow', " +
       "'programId':'WordCountFlow'}]"), LIST_OF_JSONOBJECT_TYPE);
-    Assert.assertEquals("App: NotExist not found", returnedBody.get(0).get("error").getAsString());
+    Assert.assertEquals(new NotFoundException(Id.Application.from("testnamespace1", "NotExist")).getMessage(),
+                        returnedBody.get(0).get("error").getAsString());
     returnedBody = readResponse(
       doPost(statusUrl1, "[{'appId':'WordCountApp', 'programType':'flow', 'programId':'NotExist'}," +
         "{'appId':'WordCountApp', 'programType':'flow', 'programId':'WordCountFlow'}]"), LIST_OF_JSONOBJECT_TYPE);
-    Assert.assertEquals("Program not found", returnedBody.get(0).get("error").getAsString());
+    Assert.assertEquals(new NotFoundException(Id.Program.from("testnamespace1", "WordCountApp", ProgramType.FLOW,
+                                                              "NotExist")).getMessage(),
+                        returnedBody.get(0).get("error").getAsString());
+    Assert.assertEquals(
+      new NotFoundException(
+        Id.Program.from("testnamespace1", "WordCountApp", ProgramType.FLOW, "NotExist")).getMessage(),
+      returnedBody.get(0).get("error").getAsString());
     // The programType should be consistent. Second object should have proper status
     Assert.assertEquals("Flow", returnedBody.get(1).get("programType").getAsString());
     Assert.assertEquals(STOPPED, returnedBody.get(1).get("status").getAsString());
@@ -444,9 +451,12 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
       "{'appId': 'WordCountApp', 'programType': 'Service', 'programId': 'WordFrequencyService'}," +
       "{'appId': 'WordCountApp', 'programType': 'Mapreduce', 'programId': 'VoidMapReduceJob'}]");
     returnedBody = readResponse(response, LIST_OF_JSONOBJECT_TYPE);
-    Assert.assertEquals("App: WordCountApp not found", returnedBody.get(0).get("error").getAsString());
-    Assert.assertEquals("App: WordCountApp not found", returnedBody.get(1).get("error").getAsString());
-    Assert.assertEquals("App: WordCountApp not found", returnedBody.get(2).get("error").getAsString());
+    Assert.assertEquals(new NotFoundException(Id.Application.from("testnamespace2", "WordCountApp")).getMessage(),
+                        returnedBody.get(0).get("error").getAsString());
+    Assert.assertEquals(new NotFoundException(Id.Application.from("testnamespace2", "WordCountApp")).getMessage(),
+                        returnedBody.get(1).get("error").getAsString());
+    Assert.assertEquals(new NotFoundException(Id.Application.from("testnamespace2", "WordCountApp")).getMessage(),
+                        returnedBody.get(2).get("error").getAsString());
   }
 
   @Test
@@ -615,7 +625,6 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
 
     GsonBuilder gsonBuilder = new GsonBuilder();
     gsonBuilder.registerTypeAdapter(ServiceSpecification.class, new ServiceSpecificationCodec());
-    gsonBuilder.registerTypeAdapter(HttpServiceHandlerSpecification.class, new HttpServiceSpecificationCodec());
     Gson gson = gsonBuilder.create();
     ServiceSpecification specification = readResponse(response, ServiceSpecification.class, gson);
 
@@ -788,6 +797,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
       getServiceInstances(service1);
       Assert.fail("Should not find service in " + TEST_NAMESPACE1);
     } catch (AssertionError expected) {
+      // expected
     }
     ServiceInstances instances = getServiceInstances(service2);
     Assert.assertEquals(1, instances.getRequested());

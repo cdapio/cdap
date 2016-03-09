@@ -31,7 +31,7 @@ public final class SparkProgramController extends ProgramControllerServiceAdapte
   private final SparkContext context;
 
   SparkProgramController(Service sparkRuntimeService, AbstractSparkContext context) {
-    super(sparkRuntimeService, context.getProgramId().getId(), context.getRunId());
+    super(sparkRuntimeService, context.getProgramId(), context.getRunId());
     this.context = context;
   }
 

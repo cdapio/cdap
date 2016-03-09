@@ -31,6 +31,7 @@ import co.cask.cdap.common.twill.AbstractMasterTwillRunnable;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.stream.StreamAdminModules;
+import co.cask.cdap.data.view.ViewAdminModules;
 import co.cask.cdap.explore.executor.ExploreExecutorService;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.explore.guice.ExploreRuntimeModule;
@@ -39,6 +40,9 @@ import co.cask.cdap.logging.appender.LogAppenderInitializer;
 import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.notifications.feeds.client.NotificationFeedClientModule;
+import co.cask.cdap.proto.Id;
+import co.cask.cdap.store.DefaultNamespaceStore;
+import co.cask.cdap.store.NamespaceStore;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
@@ -84,18 +88,20 @@ public class ExploreServiceTwillRunnable extends AbstractMasterTwillRunnable {
       new LoggingModules().getDistributedModules(),
       new ExploreRuntimeModule().getDistributedModules(),
       new ExploreClientModule(),
+      new ViewAdminModules().getDistributedModules(),
       new StreamAdminModules().getDistributedModules(),
       new NotificationFeedClientModule(),
       new AbstractModule() {
         @Override
         protected void configure() {
           bind(Store.class).to(DefaultStore.class);
+          bind(NamespaceStore.class).to(DefaultNamespaceStore.class);
         }
       });
 
     injector.getInstance(LogAppenderInitializer.class).initialize();
 
-    LoggingContextAccessor.setLoggingContext(new ServiceLoggingContext(Constants.SYSTEM_NAMESPACE,
+    LoggingContextAccessor.setLoggingContext(new ServiceLoggingContext(Id.Namespace.SYSTEM.getId(),
                                                                        Constants.Logging.COMPONENT_NAME,
                                                                        Constants.Service.EXPLORE_HTTP_USER_SERVICE));
     LOG.info("Initializing runnable {}", name);

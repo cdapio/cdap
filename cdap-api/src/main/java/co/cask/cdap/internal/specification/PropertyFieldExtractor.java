@@ -17,11 +17,11 @@ package co.cask.cdap.internal.specification;
 
 import co.cask.cdap.api.annotation.Property;
 import co.cask.cdap.internal.lang.FieldVisitor;
-import com.google.common.base.Preconditions;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.internal.Primitives;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Type;
 import java.util.Map;
 
 /**
@@ -40,11 +40,11 @@ public final class PropertyFieldExtractor extends FieldVisitor {
   }
 
   @Override
-  public void visit(Object instance, TypeToken<?> inspectType, TypeToken<?> declareType, Field field) throws Exception {
+  public void visit(Object instance, Type inspectType, Type declareType, Field field) throws Exception {
     if (field.isAnnotationPresent(Property.class)) {
 
       // Key name is "className.fieldName".
-      String key = declareType.getRawType().getName() + '.' + field.getName();
+      String key = TypeToken.of(declareType).getRawType().getName() + '.' + field.getName();
       if (properties.containsKey(key)) {
         return;
       }
@@ -64,11 +64,12 @@ public final class PropertyFieldExtractor extends FieldVisitor {
     Class<?> fieldType = field.getType();
 
     // Only support primitive type, boxed type, String and Enum
-    Preconditions.checkArgument(
-      fieldType.isPrimitive() || Primitives.isWrapperType(fieldType) ||
-        String.class.equals(fieldType) || fieldType.isEnum(),
-      "Unsupported property type %s of field %s in class %s.",
-      fieldType.getName(), field.getName(), field.getDeclaringClass().getName());
+    if (!fieldType.isPrimitive() && !Primitives.isWrapperType(fieldType)
+      && !String.class.equals(fieldType) && !fieldType.isEnum()) {
+      throw new IllegalArgumentException(
+        String.format("Unsupported property type %s of field %s in class %s.",
+                      fieldType.getName(), field.getName(), field.getDeclaringClass().getName()));
+    }
 
     if (!field.isAccessible()) {
       field.setAccessible(true);

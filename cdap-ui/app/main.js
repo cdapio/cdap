@@ -1,3 +1,19 @@
+/*
+ * Copyright © 2015 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 console.time(PKG.name);
 
 angular
@@ -12,9 +28,11 @@ angular
       PKG.name+'.feature.data',
       PKG.name+'.feature.admin',
       PKG.name+'.feature.userprofile',
-      PKG.name+'.feature.foo',
-      PKG.name+'.feature.adapters',
-      PKG.name+'.feature.explore'
+      PKG.name+'.feature.experimental',
+      PKG.name+'.feature.hydrator',
+      PKG.name+'.feature.explore',
+      PKG.name +'.feature.search',
+      PKG.name +'.feature.pins'
     ]).name,
 
     angular.module(PKG.name+'.commons', [
@@ -41,6 +59,10 @@ angular
       'cask-angular-confirmable',
       'cask-angular-promptable',
       'cask-angular-json-edit',
+      'cask-angular-eventpipe',
+      'cask-angular-observable-promise',
+      'cask-angular-socket-datasource',
+      'cask-angular-dispatcher',
 
       'mgcrea.ngStrap.datepicker',
       'mgcrea.ngStrap.timepicker',
@@ -62,7 +84,10 @@ angular
       'ncy-angular-breadcrumb',
       'angularMoment',
       'ui.ace',
-      'gridster'
+      'gridster',
+      'angular-cron-jobs',
+      'angularjs-dropdown-multiselect',
+      'hc.marked'
 
     ]).name,
 
@@ -81,14 +106,21 @@ angular
     window.$go = $state.go;
   })
 
+  .config(function (MyDataSourceProvider) {
+    MyDataSourceProvider.defaultInterval = 5;
+  })
 
   .config(function ($locationProvider) {
     $locationProvider.html5Mode(true);
   })
 
+  .run(function ($rootScope) {
+    $rootScope.defaultPollInterval = 10000;
+  })
+
   .config(function($provide) {
 
-    $provide.decorator('$http', function($delegate, MyDataSource) {
+    $provide.decorator('$http', function($delegate, MyCDAPDataSource) {
 
 
       function newHttp(config) {
@@ -97,13 +129,13 @@ angular
         if (config.options) {
           // Can/Should make use of my<whatever>Api service in another service.
           // So in that case the service will not have a scope. Hence the check
-          if (config.params && config.params.scope) {
-            myDataSrc = MyDataSource(config.params.scope);
+          if (config.params && config.params.scope && angular.isObject(config.params.scope)) {
+            myDataSrc = MyCDAPDataSource(config.params.scope);
             delete config.params.scope;
           } else {
-            myDataSrc = MyDataSource();
+            myDataSrc = MyCDAPDataSource();
           }
-          // We can use MyDataSource directly or through $resource'y way.
+          // We can use MyCDAPDataSource directly or through $resource'y way.
           // If we use $resource'y way then we need to make some changes to
           // the data we get for $resource.
           config.$isResource = true;
@@ -161,8 +193,8 @@ angular
   .config(function ($alertProvider) {
     angular.extend($alertProvider.defaults, {
       animation: 'am-fade-and-scale',
-      container: '#alerts > .container',
-      duration: 3
+      container: '#alerts',
+      duration: false
     });
   })
 
@@ -188,16 +220,48 @@ angular
     ]);
   })
 
-  .run(function ($rootScope, MYSOCKET_EVENT, myAlert) {
-    $rootScope.$on(MYSOCKET_EVENT.closed, function (angEvent, data) {
-      myAlert({
-        title: 'Error',
-        content: data.reason || 'Unable to connect to CDAP',
-        type: 'danger'
-      });
+  .config(['markedProvider', function (markedProvider) {
+    markedProvider.setOptions({
+      gfm: true,
+      tables: true
     });
+  }])
+  /*
+    FIXME: This is a one time only thing. Once all old users who migrated to 3.3 have their drafts moved from global level to
+          namespace level this snippet can be removed. Ideally in 4.* we should be able to remove this.
+  */
+  .run(function(mySettings, EventPipe, $state, $alert, $q) {
+    mySettings.get('hydratorDrafts')
+      .then(
+        function success(res) {
+          var namespacedDrafts = {
+            default: {}
+          };
+          if (res && !res.isMigrated) {
+            angular.forEach(res, function(draft, name) {
+               namespacedDrafts.default[name] = draft;
+            });
 
-    $rootScope.$on(MYSOCKET_EVENT.message, function (angEvent, data) {
+            namespacedDrafts.isMigrated = true;
+            return mySettings.set('hydratorDrafts', namespacedDrafts);
+          } else {
+            return $q.reject(false);
+          }
+        }
+      )
+      .then(
+        function showAlert() {
+          $alert({
+            type: 'info',
+            content: 'All current drafts can be found in Default namespace.'
+          });
+        }
+      );
+  })
+
+  .run(function (MYSOCKET_EVENT, myAlert, EventPipe) {
+
+    EventPipe.on(MYSOCKET_EVENT.message, function (data) {
       if(data.statusCode > 399 && !data.resource.suppressErrors) {
         myAlert({
           title: data.statusCode.toString(),
@@ -225,15 +289,21 @@ angular
    * attached to the <body> tag, mostly responsible for
    *  setting the className based events from $state and caskTheme
    */
-  .controller('BodyCtrl', function ($scope, $cookies, $cookieStore, caskTheme, CASK_THEME_EVENT, $rootScope, $state, $log, MYSOCKET_EVENT, MyDataSource, MY_CONFIG, MYAUTH_EVENT) {
+  .controller('BodyCtrl', function ($scope, $cookies, $cookieStore, caskTheme, CASK_THEME_EVENT, $rootScope, $state, $log, MYSOCKET_EVENT, MyCDAPDataSource, MY_CONFIG, MYAUTH_EVENT, EventPipe, myAuth, $window, myAlertOnValium) {
 
     var activeThemeClass = caskTheme.getClassName();
-    var dataSource = new MyDataSource($scope);
+    var dataSource = new MyCDAPDataSource($scope);
     if (MY_CONFIG.securityEnabled) {
-      $rootScope.$on(MYAUTH_EVENT.loginSuccess, getVersion);
+      if (myAuth.isAuthenticated()) {
+        getVersion();
+      } else {
+        $rootScope.$on(MYAUTH_EVENT.loginSuccess, getVersion);
+      }
     } else {
       getVersion();
     }
+
+    $scope.copyrightYear = new Date().getFullYear();
 
     function getVersion() {
       dataSource.request({
@@ -252,39 +322,50 @@ angular
       }
     });
 
-
-
-
-    $scope.$on('$stateChangeSuccess', function (event, state) {
+    $scope.$on('$stateChangeSuccess', function (event, toState, toParams, fromState) {
       var classes = [];
-      if(state.data && state.data.bodyClass) {
-        classes = [state.data.bodyClass];
+      if(toState.data && toState.data.bodyClass) {
+        classes = [toState.data.bodyClass];
       }
       else {
-        var parts = state.name.split('.'),
+        var parts = toState.name.split('.'),
             count = parts.length + 1;
         while (1<count--) {
           classes.push('state-' + parts.slice(0,count).join('-'));
         }
       }
-
+      if(toState.name !== fromState.name && myAlertOnValium.isAnAlertOpened()) {
+        myAlertOnValium.destroy();
+      }
       classes.push(activeThemeClass);
 
       $scope.bodyClass = classes.join(' ');
+
+
+      /**
+       *  This is to make sure that the sroll position goes back to the top when user
+       *  change state. UI Router has this function ($anchorScroll), but for some
+       *  reason it is not working.
+       **/
+      $window.scrollTo(0, 0);
     });
 
-    $rootScope.$on(MYSOCKET_EVENT.reconnected, function () {
-      $log.log('[DataSource] reconnected, reloading...');
-
-      // https://github.com/angular-ui/ui-router/issues/582
-      $state.transitionTo($state.current, $state.$current.params,
-        { reload: true, inherit: true, notify: true }
-      );
+    EventPipe.on(MYSOCKET_EVENT.reconnected, function () {
+      $log.log('[DataSource] reconnected, reloading to home');
+      /*
+        TL;DR: We need to reload services to check if backend is up and running.
+        LONGER-VERSION : When node server goes down and then later comes up we used to use ui-router's transitionTo api.
+        This, however reloads the controllers but does not reload the services. As a result our poll for
+        backend services got dropped in the previous node server and the new node server is not polling for
+        backend service (system services & backend heartbeat apis). So we need to force reload the entire app
+        to reload services. Ideally we should have one controller that loaded everything so that we can control
+        the polling in services but unfortunately we are polling for stuff in too many places - StatusFactory, ServiceStatusFactory.
+      */
+      $window.location.reload();
     });
 
     $rootScope.$on('$stateChangeError', function () {
       $state.go('login');
     });
-
     console.timeEnd(PKG.name);
   });

@@ -15,20 +15,24 @@
  */
 package co.cask.cdap.common.io;
 
+import co.cask.cdap.common.lang.FunctionWithException;
+import co.cask.cdap.common.twill.LocalLocationFactory;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.common.base.Throwables;
-import com.google.common.collect.Lists;
+import com.google.common.collect.Iterators;
 import com.google.common.io.Closeables;
 import com.google.common.io.InputSupplier;
 import com.google.common.io.OutputSupplier;
 import org.apache.hadoop.fs.FSDataInputStream;
+import org.apache.hadoop.fs.FileContext;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.fs.RemoteIterator;
 import org.apache.hadoop.hdfs.DistributedFileSystem;
+import org.apache.hadoop.hdfs.HAUtil;
 import org.apache.twill.filesystem.HDFSLocationFactory;
-import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
@@ -41,9 +45,11 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.reflect.Method;
 import java.net.URI;
+import java.net.URISyntaxException;
+import java.security.PrivilegedExceptionAction;
 import java.util.Comparator;
-import java.util.Deque;
-import java.util.List;
+import java.util.Iterator;
+import java.util.LinkedList;
 import javax.annotation.Nullable;
 
 /**
@@ -55,11 +61,27 @@ public final class Locations {
 
   // For converting local file into Location.
   private static final LocalLocationFactory LOCAL_LOCATION_FACTORY = new LocalLocationFactory();
+  // For converting FileStatus to LocationStatus
+  private static final FunctionWithException<FileStatus, LocationStatus, IOException> FILE_STATUS_TO_LOCATION_STATUS =
+    new FunctionWithException<FileStatus, LocationStatus, IOException>() {
+      @Override
+      public LocationStatus apply(FileStatus status) throws IOException {
+        return new LocationStatus(status.getPath().toUri(), status.getLen(), status.isDirectory());
+      }
+    };
+  // For converting Location to LocationStatus
+  private static final FunctionWithException<Location, LocationStatus, IOException> LOCATION_TO_LOCATION_STATUS =
+    new FunctionWithException<Location, LocationStatus, IOException>() {
+      @Override
+      public LocationStatus apply(Location location) throws IOException {
+        return new LocationStatus(Locations.toURI(location), location.length(), location.isDirectory());
+      }
+    };
 
   public static final Comparator<Location> LOCATION_COMPARATOR = new Comparator<Location>() {
     @Override
     public int compare(Location o1, Location o2) {
-      return o1.toURI().compareTo(o2.toURI());
+      return Locations.toURI(o1).compareTo(Locations.toURI(o2));
     }
   };
 
@@ -87,6 +109,35 @@ public final class Locations {
   }
 
   /**
+   * Gets an {@link URI} representation of the given {@link Location}.
+   * This method is mainly for dealing with the inconsistency in HDFS {@link FileContext} and {@link FileSystem} URI
+   * handling in HA environment.
+   */
+  public static URI toURI(Location location) {
+    LocationFactory locationFactory = location.getLocationFactory();
+
+    if (locationFactory instanceof FileContextLocationFactory) {
+      // In HA mode, the path URI returned by FileContext is incompatible with the one expected by
+      // DistributedFileSystem. It is due to the fact that FileContext is not HA aware and it always
+      // append "port" to the path URI, while the DistributedFileSystem always use the cluster logical
+      // name, which doesn't have the port in it.
+      URI uri = location.toURI();
+      if (HAUtil.isLogicalUri(((FileContextLocationFactory) locationFactory).getConfiguration(), uri)) {
+        try {
+          // Need to strip out the port if in HA
+          return new URI(uri.getScheme(), uri.getUserInfo(), uri.getHost(),
+                         -1, uri.getPath(), uri.getQuery(), uri.getFragment());
+        } catch (URISyntaxException e) {
+          // Shouldn't happen
+          throw Throwables.propagate(e);
+        }
+      }
+    }
+
+    return location.toURI();
+  }
+
+  /**
    * Creates a new {@link InputSupplier} that can provides {@link SeekableInputStream} from the given location.
    *
    * @param location Location for the input stream.
@@ -105,24 +156,34 @@ public final class Locations {
             FSDataInputStream dataInput = (FSDataInputStream) input;
             LocationFactory locationFactory = location.getLocationFactory();
 
-            // It should be HDFSLocationFactory
+            FileSystem fs = null;
             if (locationFactory instanceof HDFSLocationFactory) {
-              FileSystem fs = ((HDFSLocationFactory) locationFactory).getFileSystem();
-              return new DFSSeekableInputStream(dataInput,
-                                                createDFSStreamSizeProvider(fs, new Path(location.toURI()), dataInput));
-            } else {
-              // This shouldn't happen
-              return new DFSSeekableInputStream(dataInput, new StreamSizeProvider() {
+              fs = ((HDFSLocationFactory) locationFactory).getFileSystem();
+            } else if (locationFactory instanceof FileContextLocationFactory) {
+              final FileContextLocationFactory lf = (FileContextLocationFactory) locationFactory;
+              fs = lf.getFileContext().getUgi().doAs(new PrivilegedExceptionAction<FileSystem>() {
                 @Override
-                public long size() throws IOException {
-                  // Assumption is if the FS is not a HDFS fs, the location length tells the stream size
-                  return location.length();
+                public FileSystem run() throws IOException {
+                  return FileSystem.get(lf.getConfiguration());
                 }
               });
             }
+
+            if (fs != null) {
+              return new DFSSeekableInputStream(dataInput, createDFSStreamSizeProvider(fs, new Path(toURI(location)),
+                                                                                       dataInput));
+            }
+            // This shouldn't happen
+            return new DFSSeekableInputStream(dataInput, new StreamSizeProvider() {
+              @Override
+              public long size() throws IOException {
+                // Assumption is if the FS is not a HDFS fs, the location length tells the stream size
+                return location.length();
+              }
+            });
           }
 
-          throw new IOException("Failed to create SeekableInputStream from location " + location.toURI());
+          throw new IOException("Failed to create SeekableInputStream from location " + location);
         } catch (Throwable t) {
           Closeables.closeQuietly(input);
           Throwables.propagateIfInstanceOf(t, IOException.class);
@@ -149,52 +210,93 @@ public final class Locations {
    */
   public static <R> R processLocations(Location startLocation, boolean recursive,
                                        Processor<LocationStatus, R> processor) throws IOException {
-    // Becomes true after adding the locations under the startLocation to the processing stack
-    boolean firstPass = false;
-    boolean process;
-
-    LocationFactory locationFactory = startLocation.getLocationFactory();
-    if (locationFactory instanceof HDFSLocationFactory) {
-      // Treat the HDFS case
-      FileSystem fs = ((HDFSLocationFactory) locationFactory).getFileSystem();
-      Deque<FileStatus> statusStack = Lists.newLinkedList();
-      statusStack.push(fs.getFileLinkStatus(new Path(startLocation.toURI())));
-      while (!statusStack.isEmpty()) {
-        FileStatus currentStatus = statusStack.poll();
-        process = processor.process(new LocationStatus(currentStatus.getPath().toUri(), currentStatus.getLen(),
-                                                       currentStatus.isDirectory()));
-        if (!process) {
-          return processor.getResult();
-        }
-        if (currentStatus.isDirectory() && (!firstPass || recursive)) {
-          FileStatus[] statuses = fs.listStatus(currentStatus.getPath());
-          for (FileStatus status : statuses) {
-            statusStack.push(status);
-          }
-          firstPass = true;
-        }
+    boolean topLevel = true;
+    LocationFactory lf = startLocation.getLocationFactory();
+    LinkedList<LocationStatus> statusStack = new LinkedList<>();
+    statusStack.push(getLocationStatus(startLocation));
+    while (!statusStack.isEmpty()) {
+      LocationStatus status = statusStack.poll();
+      if (!processor.process(status)) {
+        return processor.getResult();
       }
-    } else {
-      // Treat the local FS case, we can directly use the Location class APIs
-      Deque<Location> locationStack = Lists.newLinkedList();
-      locationStack.push(startLocation);
-      while (!locationStack.isEmpty()) {
-        Location currentLocation = locationStack.poll();
-        process = processor.process(new LocationStatus(currentLocation.toURI(), currentLocation.length(),
-                                                       currentLocation.isDirectory()));
-        if (!process) {
-          return processor.getResult();
-        }
-        if (currentLocation.isDirectory() && (!firstPass || recursive)) {
-          List<Location> locations = currentLocation.list();
-          for (Location location : locations) {
-            locationStack.push(location);
-          }
-          firstPass = true;
+      if (status.isDir() && (topLevel || recursive)) {
+        topLevel = false;
+        RemoteIterator<LocationStatus> itor = listLocationStatus(lf.create(status.getUri()));
+        while (itor.hasNext()) {
+          statusStack.add(0, itor.next());
         }
       }
     }
     return processor.getResult();
+  }
+
+  /**
+   * Returns a {@link LocationStatus} describing the status of the given {@link Location}.
+   */
+  private static LocationStatus getLocationStatus(Location location) throws IOException {
+    LocationFactory lf = location.getLocationFactory();
+    if (lf instanceof HDFSLocationFactory) {
+      return FILE_STATUS_TO_LOCATION_STATUS.apply(
+        ((HDFSLocationFactory) lf).getFileSystem().getFileLinkStatus(new Path(Locations.toURI(location))));
+    }
+    if (lf instanceof FileContextLocationFactory) {
+      return FILE_STATUS_TO_LOCATION_STATUS.apply(
+        ((FileContextLocationFactory) lf).getFileContext().getFileLinkStatus(new Path(Locations.toURI(location))));
+    }
+    return LOCATION_TO_LOCATION_STATUS.apply(location);
+  }
+
+  /**
+   * Returns {@link RemoteIterator} of {@link LocationStatus} under a directory
+   * represented by the given {@link Location}.
+   */
+  private static RemoteIterator<LocationStatus> listLocationStatus(Location location) throws IOException {
+    LocationFactory lf = location.getLocationFactory();
+    if (lf instanceof HDFSLocationFactory) {
+      FileStatus[] fileStatuses = ((HDFSLocationFactory) lf).getFileSystem()
+        .listStatus(new Path(Locations.toURI(location)));
+      return transform(asRemoteIterator(Iterators.forArray(fileStatuses)), FILE_STATUS_TO_LOCATION_STATUS);
+    }
+    if (lf instanceof FileContextLocationFactory) {
+      FileContext fc = ((FileContextLocationFactory) lf).getFileContext();
+      return transform(fc.listStatus(new Path(Locations.toURI(location))), FILE_STATUS_TO_LOCATION_STATUS);
+    }
+    return transform(asRemoteIterator(location.list().iterator()), LOCATION_TO_LOCATION_STATUS);
+  }
+
+  /**
+   * Converts a {@link Iterator} into {@link RemoteIterator}.
+   */
+  private static <E> RemoteIterator<E> asRemoteIterator(final Iterator<? extends E> itor) {
+    return new RemoteIterator<E>() {
+      @Override
+      public boolean hasNext() throws IOException {
+        return itor.hasNext();
+      }
+
+      @Override
+      public E next() throws IOException {
+        return itor.next();
+      }
+    };
+  }
+
+  /**
+   * Transform a {@link RemoteIterator} using a {@link FunctionWithException}.
+   */
+  private static <F, T> RemoteIterator<T> transform(final RemoteIterator<F> itor,
+                                                    final FunctionWithException<F, T, IOException> transform) {
+    return new RemoteIterator<T>() {
+      @Override
+      public boolean hasNext() throws IOException {
+        return itor.hasNext();
+      }
+
+      @Override
+      public T next() throws IOException {
+        return transform.apply(itor.next());
+      }
+    };
   }
 
   /**
@@ -220,7 +322,7 @@ public final class Locations {
    */
   @Nullable
   public static Location getParent(Location location) {
-    URI source = location.toURI();
+    URI source = Locations.toURI(location);
 
     // If it is root, return null
     if ("/".equals(source.getPath())) {
@@ -246,7 +348,7 @@ public final class Locations {
   public static void mkdirsIfNotExists(Location location) throws IOException {
     // Need to check && mkdir && check to deal with race condition
     if (!location.isDirectory() && !location.mkdirs() && !location.isDirectory()) {
-      throw new IOException("Failed to create directory at " + location.toURI());
+      throw new IOException("Failed to create directory at " + location);
     }
   }
 
@@ -258,7 +360,7 @@ public final class Locations {
     try {
       location.delete(recursive);
     } catch (IOException e) {
-      LOG.error("IOException while deleting location {}", location.toURI(), e);
+      LOG.error("IOException while deleting location {}", location, e);
     }
   }
 
@@ -350,5 +452,4 @@ public final class Locations {
 
   private Locations() {
   }
-
 }

@@ -136,7 +136,8 @@ public class DefaultMetricStore implements MetricStore {
       ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.APP,
                        Constants.Metrics.Tag.SERVICE, Constants.Metrics.Tag.DATASET,
                        Constants.Metrics.Tag.RUN_ID, Constants.Metrics.Tag.HANDLER,
-                       Constants.Metrics.Tag.METHOD, Constants.Metrics.Tag.INSTANCE_ID),
+                       Constants.Metrics.Tag.METHOD, Constants.Metrics.Tag.INSTANCE_ID,
+                       Constants.Metrics.Tag.THREAD),
       // i.e. for service only
       ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.APP,
                        Constants.Metrics.Tag.SERVICE)));
@@ -255,7 +256,7 @@ public class DefaultMetricStore implements MetricStore {
   }
 
   @Override
-  public Collection<MetricTimeSeries> query(MetricDataQuery query) throws Exception {
+  public Collection<MetricTimeSeries> query(MetricDataQuery query) {
     Collection<TimeSeries> cubeResult = cube.get().query(buildCubeQuery(query));
     List<MetricTimeSeries> result = Lists.newArrayList();
     for (TimeSeries timeSeries : cubeResult) {

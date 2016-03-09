@@ -31,6 +31,7 @@ import org.junit.ClassRule;
 import java.io.IOException;
 import java.util.Map;
 import java.util.NavigableMap;
+import java.util.SortedMap;
 import java.util.concurrent.Callable;
 import javax.annotation.Nullable;
 
@@ -47,7 +48,7 @@ public class MetricsTableOnTableTest extends MetricsTableTest {
     if (dsFrameworkUtil.getInstance(id) == null) {
       dsFrameworkUtil.createInstance(Table.class.getName(), id, DatasetProperties.EMPTY);
     }
-    Table table = (Table) dsFrameworkUtil.getInstance(id);
+    Table table = dsFrameworkUtil.getInstance(id);
     return new MetricsTableTxnlWrapper(new MetricsTableOnTable(table), table);
   }
 
@@ -82,7 +83,7 @@ public class MetricsTableOnTableTest extends MetricsTableTest {
     }
 
     @Override
-    public void put(final NavigableMap<byte[], NavigableMap<byte[], Long>> updates) {
+    public void put(final SortedMap<byte[], ? extends SortedMap<byte[], Long>> updates) {
       txnl.executeUnchecked(new TransactionExecutor.Subroutine() {
         @Override
         public void apply() {

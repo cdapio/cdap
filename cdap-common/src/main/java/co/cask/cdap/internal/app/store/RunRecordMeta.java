@@ -17,7 +17,6 @@ package co.cask.cdap.internal.app.store;
 
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.RunRecord;
-
 import com.google.common.base.Objects;
 import com.google.gson.annotations.SerializedName;
 
@@ -25,42 +24,44 @@ import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
- * Store the meta information about program runs in CDAP. Extends {@link RunRecord} with additional
- * information about Apache Twill run id.
+ * Store the meta information about program runs in CDAP.
+ * This class contains all information the system needs about a run, which
+ * includes information that should not be exposed to users. {@link RunRecord} contains fields that are exposed
+ * to users, so everything else like the Twill runid should go here.
  */
 public final class RunRecordMeta extends RunRecord {
   @SerializedName("twillrunid")
   private final String twillRunId;
 
+  @SerializedName("systemargs")
+  private final Map<String, String> systemArgs;
+
   public RunRecordMeta(String pid, long startTs, @Nullable Long stopTs, ProgramRunStatus status,
-                       @Nullable String adapterName, @Nullable Map<String, String> properties,
+                       @Nullable Map<String, String> properties, @Nullable Map<String, String> systemArgs,
                        @Nullable String twillRunId) {
-    super(pid, startTs, stopTs, status, adapterName, properties);
+    super(pid, startTs, stopTs, status, properties);
+    this.systemArgs = systemArgs;
     this.twillRunId = twillRunId;
   }
 
-  public RunRecordMeta(String pid, long startTs, @Nullable Long stopTs, ProgramRunStatus status,
-                   @Nullable String adapterName) {
-    this(pid, startTs, stopTs, status, adapterName, null, null);
-  }
-
-  public RunRecordMeta(String pid, long startTs, @Nullable Long stopTs, ProgramRunStatus status) {
-    this(pid, startTs, stopTs, status, null, null, null);
-  }
-
   public RunRecordMeta(RunRecordMeta started, @Nullable Long stopTs, ProgramRunStatus status) {
-    this(started.getPid(), started.getStartTs(), stopTs, status, started.getAdapterName(), started.getProperties(),
-         started.getTwillRunId());
+    this(started.getPid(), started.getStartTs(), stopTs, status, started.getProperties(),
+         started.getSystemArgs(), started.getTwillRunId());
   }
 
   public RunRecordMeta(RunRecordMeta existing, Map<String, String> updatedProperties) {
     this(existing.getPid(), existing.getStartTs(), existing.getStopTs(), existing.getStatus(),
-         existing.getAdapterName(), updatedProperties, existing.getTwillRunId());
+         updatedProperties, existing.getSystemArgs(), existing.getTwillRunId());
   }
 
   @Nullable
   public String getTwillRunId() {
     return twillRunId;
+  }
+
+  @Nullable
+  public Map<String, String> getSystemArgs() {
+    return systemArgs;
   }
 
   @Override
@@ -77,15 +78,13 @@ public final class RunRecordMeta extends RunRecord {
       Objects.equal(this.getStartTs(), that.getStartTs()) &&
       Objects.equal(this.getStopTs(), that.getStopTs()) &&
       Objects.equal(this.getStatus(), that.getStatus()) &&
-      Objects.equal(this.getAdapterName(), that.getAdapterName()) &&
       Objects.equal(this.getProperties(), that.getProperties()) &&
       Objects.equal(this.getTwillRunId(), that.getTwillRunId());
   }
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(twillRunId, getPid(), getStartTs(), getStopTs(), getStatus(), getAdapterName(),
-                            getProperties());
+    return Objects.hashCode(twillRunId, getPid(), getStartTs(), getStopTs(), getStatus(), getProperties());
   }
 
   @Override
@@ -95,7 +94,6 @@ public final class RunRecordMeta extends RunRecord {
       .add("startTs", getStartTs())
       .add("stopTs", getStopTs())
       .add("status", getStatus())
-      .add("adapter", getAdapterName())
       .add("twillrunid", twillRunId)
       .add("properties", getProperties())
       .toString();

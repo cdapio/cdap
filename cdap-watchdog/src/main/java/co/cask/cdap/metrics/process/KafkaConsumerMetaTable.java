@@ -21,7 +21,8 @@ import com.google.common.collect.Maps;
 import org.apache.twill.kafka.client.TopicPartition;
 
 import java.util.Map;
-import java.util.NavigableMap;
+import java.util.SortedMap;
+import java.util.TreeMap;
 
 /**
  * An abstraction on persistent storage of kafka consumer information.
@@ -38,9 +39,11 @@ public final class KafkaConsumerMetaTable {
 
   public synchronized void save(Map<TopicPartition, Long> offsets) throws Exception {
 
-    NavigableMap<byte[], NavigableMap<byte[], Long>> updates = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
+    SortedMap<byte[], SortedMap<byte[], Long>> updates = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
     for (Map.Entry<TopicPartition, Long> entry : offsets.entrySet()) {
-      updates.put(getKey(entry.getKey()), Bytes.immutableSortedMapOf(OFFSET_COLUMN, entry.getValue()));
+      SortedMap<byte[], Long> map = new TreeMap<>(Bytes.BYTES_COMPARATOR);
+      map.put(OFFSET_COLUMN, entry.getValue());
+      updates.put(getKey(entry.getKey()), map);
     }
     metaTable.put(updates);
   }

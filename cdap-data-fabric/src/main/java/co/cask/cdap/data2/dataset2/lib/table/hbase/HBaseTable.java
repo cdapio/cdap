@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -44,6 +44,7 @@ import co.cask.tephra.TransactionCodec;
 import co.cask.tephra.TxConstants;
 import com.google.common.base.Function;
 import com.google.common.base.Objects;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
@@ -60,6 +61,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -127,24 +129,34 @@ public class HBaseTable extends BufferingTable {
 
   @Override
   public List<Map<byte[], byte[]>> getPersisted(List<co.cask.cdap.api.dataset.table.Get> gets) {
-    List<Get> hbaseGets = Lists.transform(gets, new Function<co.cask.cdap.api.dataset.table.Get, Get>() {
-      @Nullable
-      @Override
-      public Get apply(co.cask.cdap.api.dataset.table.Get get) {
-        List<byte[]> cols = get.getColumns();
-        return createGet(get.getRow(), cols == null ? null : cols.toArray(new byte[cols.size()][]));
+    List<Get> hbaseGets = new ArrayList<>();
+    for (co.cask.cdap.api.dataset.table.Get get : gets) {
+      List<byte[]> cols = get.getColumns();
+      // Our Get class (co.cask.cdap.api.dataset.table.Get) with empty array means get nothing, but there is no way to
+      // specify this in an HBase Get (org.apache.hadoop.hbase.client.Get). That's why we don't call createGet for
+      // every get.
+      if (cols == null || !cols.isEmpty()) {
+        hbaseGets.add(createGet(get.getRow(), cols == null ? null : cols.toArray(new byte[cols.size()][])));
       }
-    });
+    }
+
     try {
-      Result[] results = hTable.get(hbaseGets);
-      return Lists.transform(Arrays.asList(results), new Function<Result, Map<byte[], byte[]>>() {
-        @Nullable
-        @Override
-        public Map<byte[], byte[]> apply(Result result) {
-          Map<byte[], byte[]> familyMap = result.getFamilyMap(columnFamily);
-          return familyMap != null ? familyMap : ImmutableMap.<byte[], byte[]>of();
+      Result[] hbaseResults = hTable.get(hbaseGets);
+
+      List<Map<byte[], byte[]>> results = new ArrayList<>(gets.size());
+      int hbaseResultsIndex = 0;
+      for (co.cask.cdap.api.dataset.table.Get get : gets) {
+        List<byte[]> cols = get.getColumns();
+        if (cols == null || !cols.isEmpty()) {
+          Result hbaseResult = hbaseResults[hbaseResultsIndex++];
+          Map<byte[], byte[]> familyMap = hbaseResult.getFamilyMap(columnFamily);
+          results.add(familyMap != null ? familyMap : ImmutableMap.<byte[], byte[]>of());
+        } else {
+          results.add(ImmutableMap.<byte[], byte[]>of());
         }
-      });
+      }
+
+      return results;
     } catch (IOException ioe) {
       throw new DataSetException("Multi-get failed on table " + hTableName, ioe);
     }
@@ -296,7 +308,15 @@ public class HBaseTable extends BufferingTable {
     }
   }
 
+  /**
+   * Creates an {@link Get} for the specified row and columns.
+   *
+   * @param row the rowkey for the Get
+   * @param columns the columns to fetch. null means to retrieve all columns.
+   * @throws IllegalArgumentException if columns has length 0.
+   */
   private Get createGet(byte[] row, @Nullable byte[][] columns) {
+    Preconditions.checkArgument(columns == null || columns.length != 0);
     GetBuilder get = tableUtil.buildGet(row);
     get.addFamily(columnFamily);
     if (columns != null && columns.length > 0) {
@@ -320,7 +340,12 @@ public class HBaseTable extends BufferingTable {
     return get.build();
   }
 
+  // columns being null means to get all rows; empty columns means get no rows.
   private NavigableMap<byte[], byte[]> getInternal(byte[] row, @Nullable byte[][] columns) throws IOException {
+    if (columns != null && columns.length == 0) {
+      return EMPTY_ROW_MAP;
+    }
+
     Get get = createGet(row, columns);
 
     Result result = hTable.get(get);

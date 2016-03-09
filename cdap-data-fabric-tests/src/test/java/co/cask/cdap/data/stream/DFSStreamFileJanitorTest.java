@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,6 +21,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.ZKClientModule;
+import co.cask.cdap.common.io.FileContextLocationFactory;
 import co.cask.cdap.common.namespace.DefaultNamespacedLocationFactory;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.data.file.FileWriter;
@@ -29,20 +30,24 @@ import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.TransactionMetricsModule;
 import co.cask.cdap.data.stream.service.InMemoryStreamMetaStore;
 import co.cask.cdap.data.stream.service.StreamMetaStore;
+import co.cask.cdap.data.view.ViewAdminModules;
+import co.cask.cdap.data2.dataset2.InMemoryNamespaceStore;
+import co.cask.cdap.data2.metadata.store.MetadataStore;
+import co.cask.cdap.data2.metadata.store.NoOpMetadataStore;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
+import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.notifications.feeds.NotificationFeedManager;
 import co.cask.cdap.notifications.feeds.service.NoOpNotificationFeedManager;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.store.NamespaceStore;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Scopes;
 import com.google.inject.util.Modules;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.hdfs.MiniDFSCluster;
-import org.apache.twill.filesystem.HDFSLocationFactory;
 import org.apache.twill.filesystem.LocationFactory;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -60,14 +65,16 @@ public class DFSStreamFileJanitorTest extends StreamFileJanitorTestBase {
   private static MiniDFSCluster dfsCluster;
   private static StreamFileWriterFactory fileWriterFactory;
   private static StreamCoordinatorClient streamCoordinatorClient;
+  private static NamespaceStore namespaceStore;
 
   @BeforeClass
   public static void init() throws IOException {
+
     Configuration hConf = new Configuration();
     hConf.set(MiniDFSCluster.HDFS_MINIDFS_BASEDIR, tmpFolder.newFolder().getAbsolutePath());
     dfsCluster = new MiniDFSCluster.Builder(hConf).numDataNodes(1).build();
-    FileSystem fileSystem = dfsCluster.getFileSystem();
-    final HDFSLocationFactory lf = new HDFSLocationFactory(fileSystem);
+    dfsCluster.waitClusterUp();
+    final LocationFactory lf = new FileContextLocationFactory(dfsCluster.getFileSystem().getConf());
     final NamespacedLocationFactory nlf = new DefaultNamespacedLocationFactory(cConf, lf);
 
     Injector injector = Guice.createInjector(
@@ -83,7 +90,14 @@ public class DFSStreamFileJanitorTest extends StreamFileJanitorTestBase {
       new TransactionMetricsModule(),
       new DiscoveryRuntimeModule().getInMemoryModules(),
       new DataFabricModules().getDistributedModules(),
-      new DataSetsModules().getDistributedModules(),
+      Modules.override(new DataSetsModules().getDistributedModules()).with(new AbstractModule() {
+        @Override
+        protected void configure() {
+          bind(MetadataStore.class).to(NoOpMetadataStore.class);
+        }
+      }),
+      new ExploreClientModule(),
+      new ViewAdminModules().getInMemoryModules(),
       Modules.override(new StreamAdminModules().getDistributedModules()).with(new AbstractModule() {
 
         @Override
@@ -98,12 +112,14 @@ public class DFSStreamFileJanitorTest extends StreamFileJanitorTestBase {
         protected void configure() {
           // We don't need notification in this test, hence inject an no-op one
           bind(NotificationFeedManager.class).to(NoOpNotificationFeedManager.class);
+          bind(NamespaceStore.class).to(InMemoryNamespaceStore.class);
         }
       }
     );
 
     locationFactory = injector.getInstance(LocationFactory.class);
     namespacedLocationFactory = injector.getInstance(NamespacedLocationFactory.class);
+    namespaceStore = injector.getInstance(NamespaceStore.class);
     streamAdmin = injector.getInstance(StreamAdmin.class);
     fileWriterFactory = injector.getInstance(StreamFileWriterFactory.class);
     streamCoordinatorClient = injector.getInstance(StreamCoordinatorClient.class);
@@ -129,6 +145,11 @@ public class DFSStreamFileJanitorTest extends StreamFileJanitorTestBase {
   @Override
   protected StreamAdmin getStreamAdmin() {
     return streamAdmin;
+  }
+
+  @Override
+  protected NamespaceStore getNamespaceStore() {
+    return namespaceStore;
   }
 
   @Override

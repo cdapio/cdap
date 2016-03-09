@@ -2,31 +2,25 @@
     :author: Cask Data, Inc.
     :copyright: Copyright © 2015 Cask Data, Inc.
 
-.. _integrations-index:
-
-==================================================
+.. _integrations:
+ 
+============
 Integrations
-==================================================
+============
 
 
 .. rubric:: Cloudera
 
-.. |cloudera-introduction| replace:: **Introduction:**
+.. |cloudera-introduction| replace:: **Overview:**
 .. _cloudera-introduction: partners/cloudera/index.html
 
 - |cloudera-introduction|_ Utilizing CDAP on **Cloudera Enterprise Data Hub**
 
 
-.. |cloudera-configuring| replace:: **Configuring and Installing:**
-.. _cloudera-configuring: partners/cloudera/configuring.html
+.. |cloudera-install| replace:: **Configuring and Installing:**
+.. _cloudera-install: ../admin-manual/installation/cloudera.html
 
-- |cloudera-configuring|_ Configuring and installing CDAP using Cloudera Manager
-
-
-.. |cloudera-add-service| replace:: **Add Service Wizard:**
-.. _cloudera-add-service: partners/cloudera/step-by-step-cloudera.html
-
-- |cloudera-add-service|_ A **step-by-step guide** to installing CDAP using the Cloudera Manager *Add Service* Wizard
+- |cloudera-install|_ Configuring and installing CDAP using **Cloudera Manager** *(Administration Manual)*
 
 
 .. |cloudera-ingesting| replace:: **Ingestion and Exploration:**
@@ -35,10 +29,32 @@ Integrations
 - |cloudera-ingesting|_ Ingesting and exploring data using **Impala**
 
 
+.. |cloudera-navigator| replace:: **Navigator Integration:**
+.. _cloudera-navigator: partners/cloudera/navigator-integration.html
+
+- |cloudera-navigator|_ Metadata search and discovery of CDAP entities from **Cloudera Navigator**
+
+
 .. |cloudera-faq| replace:: **FAQ:**
-.. _cloudera-faq: partners/cloudera/faq.html
+.. _cloudera-faq: ../faqs/cloudera-manager..html
 
 .. - |cloudera-faq|_ for Cloudera and Impala
+
+
+.. rubric:: Ambari
+
+.. |ambari| replace:: **Configuring and Installing:**
+.. _ambari: ../admin-manual/installation/ambari.html
+
+- |ambari|_ Configuring and installing CDAP using **Ambari** *(Administration Manual)*
+
+
+.. rubric:: MapR
+
+.. |mapr| replace:: **Configuring and Installing:**
+.. _mapr: ../admin-manual/installation/mapr.html
+
+- |mapr|_ Configuring and installing CDAP on **MapR** *(Administration Manual)*
 
 
 .. rubric:: BI Tools: Accessing CDAP Datasets through Business Intelligence Tools
@@ -63,13 +79,13 @@ The example :ref:`cdap-bi-guide` includes the use of Pentaho.
 .. |pentaho| replace:: **Pentaho Data Integration:**
 .. _pentaho: pentaho.html
 
-- |pentaho|_ An advanced, open source business intelligence tool that can execute
+- |pentaho|_ An advanced, open source **business intelligence tool** that can execute
   transformations of data.
 
 
 .. |squirrel| replace:: **SquirrelSQL:**
 .. _squirrel: squirrel.html
 
-- |squirrel|_ A simple JDBC client which executes SQL queries against many different relational databases.
+- |squirrel|_ A simple JDBC client which **executes SQL queries** against many different relational databases.
 
 

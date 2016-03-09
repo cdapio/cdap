@@ -16,17 +16,19 @@
 
 package co.cask.cdap.examples.datacleansing;
 
+import co.cask.cdap.api.ProgramLifecycle;
 import co.cask.cdap.api.Resources;
-import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.data.schema.Schema;
-import co.cask.cdap.api.dataset.lib.BatchPartitionConsumer;
-import co.cask.cdap.api.dataset.lib.KeyValueTable;
+import co.cask.cdap.api.dataset.lib.DynamicPartitioner;
 import co.cask.cdap.api.dataset.lib.PartitionKey;
-import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSetArguments;
+import co.cask.cdap.api.dataset.lib.partitioned.KVTableStatePersistor;
+import co.cask.cdap.api.dataset.lib.partitioned.PartitionBatchInput;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
+import co.cask.cdap.api.mapreduce.MapReduceTaskContext;
 import co.cask.cdap.api.metrics.Metrics;
+import com.google.gson.JsonParser;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
@@ -36,7 +38,6 @@ import org.apache.hadoop.mapreduce.Mapper;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
-import javax.annotation.Nullable;
 
 /**
  * A simple MapReduce that reads records from the rawRecords PartitionedFileSet and writes all records
@@ -48,20 +49,7 @@ public class DataCleansingMapReduce extends AbstractMapReduce {
   protected static final String OUTPUT_PARTITION_KEY = "output.partition.key";
   protected static final String SCHEMA_KEY = "schema.key";
 
-  private final BatchPartitionConsumer partitionConsumer = new BatchPartitionConsumer() {
-    private static final String STATE_KEY = "state.key";
-
-    @Nullable
-    @Override
-    protected byte[] readBytes(DatasetContext datasetContext) {
-      return ((KeyValueTable) datasetContext.getDataset(DataCleansing.CONSUMING_STATE)).read(STATE_KEY);
-    }
-
-    @Override
-    protected void writeBytes(DatasetContext datasetContext, byte[] stateBytes) {
-      ((KeyValueTable) datasetContext.getDataset(DataCleansing.CONSUMING_STATE)).write(STATE_KEY, stateBytes);
-    }
-  };
+  private PartitionBatchInput.BatchPartitionCommitter partitionCommitter;
 
   @Override
   public void configure() {
@@ -72,20 +60,26 @@ public class DataCleansingMapReduce extends AbstractMapReduce {
 
   @Override
   public void beforeSubmit(MapReduceContext context) throws Exception {
-    PartitionedFileSet rawRecords = partitionConsumer.getConfiguredDataset(context, DataCleansing.RAW_RECORDS);
-    context.setInput(DataCleansing.RAW_RECORDS, rawRecords);
+    partitionCommitter =
+      PartitionBatchInput.setInput(context, DataCleansing.RAW_RECORDS,
+                                   new KVTableStatePersistor(DataCleansing.CONSUMING_STATE, "state.key"));
 
     // Each run writes its output to a partition for the league
     Long timeKey = Long.valueOf(context.getRuntimeArguments().get(OUTPUT_PARTITION_KEY));
     PartitionKey outputKey = PartitionKey.builder().addLongField("time", timeKey).build();
-    Map<String, String> outputArgs = new HashMap<>();
-    PartitionedFileSetArguments.setOutputPartitionKey(outputArgs, outputKey);
 
-    PartitionedFileSet outputFileSet = context.getDataset(DataCleansing.CLEAN_RECORDS, outputArgs);
-    context.setOutput(DataCleansing.CLEAN_RECORDS, outputFileSet);
+    // set up two outputs - one for invalid records and one for valid records
+    Map<String, String> invalidRecordsArgs = new HashMap<>();
+    PartitionedFileSetArguments.setOutputPartitionKey(invalidRecordsArgs, outputKey);
+    context.addOutput(DataCleansing.INVALID_RECORDS, invalidRecordsArgs);
+
+    Map<String, String> cleanRecordsArgs = new HashMap<>();
+    PartitionedFileSetArguments.setDynamicPartitioner(cleanRecordsArgs, TimeAndZipPartitioner.class);
+    context.addOutput(DataCleansing.CLEAN_RECORDS, cleanRecordsArgs);
 
     Job job = context.getHadoopJob();
     job.setMapperClass(SchemaMatchingFilter.class);
+    job.setNumReduceTasks(0);
 
     // simply propagate the schema (if any) to be used by the mapper
     String schemaJson = context.getRuntimeArguments().get(SCHEMA_KEY);
@@ -96,15 +90,35 @@ public class DataCleansingMapReduce extends AbstractMapReduce {
 
   @Override
   public void onFinish(boolean succeeded, MapReduceContext context) throws Exception {
-    if (succeeded) {
-      partitionConsumer.persist(context);
+    partitionCommitter.onFinish(succeeded);
+  }
+
+  /**
+   * Partitions the records based upon a runtime argument (time) and a field extracted from the text being written (zip)
+   */
+  public static final class TimeAndZipPartitioner extends DynamicPartitioner<NullWritable, Text> {
+
+    private Long time;
+    private JsonParser jsonParser;
+
+    @Override
+    public void initialize(MapReduceTaskContext<NullWritable, Text> mapReduceTaskContext) {
+      this.time = Long.valueOf(mapReduceTaskContext.getRuntimeArguments().get(OUTPUT_PARTITION_KEY));
+      this.jsonParser = new JsonParser();
+    }
+
+    @Override
+    public PartitionKey getPartitionKey(NullWritable key, Text value) {
+      int zip = jsonParser.parse(value.toString()).getAsJsonObject().get("zip").getAsInt();
+      return PartitionKey.builder().addLongField("time", time).addIntField("zip", zip).build();
     }
   }
 
   /**
    * A Mapper which skips text that doesn't match a given schema.
    */
-  public static class SchemaMatchingFilter extends Mapper<LongWritable, Text, NullWritable, Text> {
+  public static class SchemaMatchingFilter extends Mapper<LongWritable, Text, NullWritable, Text>
+    implements ProgramLifecycle<MapReduceTaskContext<NullWritable, Text>> {
     public static final Schema DEFAULT_SCHEMA = Schema.recordOf("person",
                                                                 Schema.Field.of("pid", Schema.of(Schema.Type.LONG)),
                                                                 Schema.Field.of("name", Schema.of(Schema.Type.STRING)),
@@ -113,6 +127,16 @@ public class DataCleansingMapReduce extends AbstractMapReduce {
 
     private SimpleSchemaMatcher schemaMatcher;
     private Metrics mapMetrics;
+    private MapReduceTaskContext<NullWritable, Text> mapReduceTaskContext;
+
+    @Override
+    public void initialize(MapReduceTaskContext<NullWritable, Text> context) throws Exception {
+      this.mapReduceTaskContext = context;
+    }
+
+    @Override
+    public void destroy() {
+    }
 
     @Override
     protected void setup(Context context) throws IOException, InterruptedException {
@@ -125,13 +149,20 @@ public class DataCleansingMapReduce extends AbstractMapReduce {
       }
     }
 
-    @Override
-    public void map(LongWritable key, Text data, Context context) throws IOException, InterruptedException {
+    public void map(LongWritable key, Text data, MapReduceTaskContext<NullWritable, Text> context)
+      throws IOException, InterruptedException {
       if (!schemaMatcher.matches(data.toString())) {
-        mapMetrics.count("data.invalid", 1);
-        return;
+        context.write(DataCleansing.INVALID_RECORDS, NullWritable.get(), data);
+        mapMetrics.count("records.invalid", 1);
+      } else {
+        context.write(DataCleansing.CLEAN_RECORDS, NullWritable.get(), data);
+        mapMetrics.count("records.valid", 1);
       }
-      context.write(NullWritable.get(), data);
+    }
+
+    @Override
+    protected void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
+      map(key, value, this.mapReduceTaskContext);
     }
   }
 }

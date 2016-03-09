@@ -25,8 +25,6 @@ import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.ExecutorService;
 
-import static co.cask.cdap.explore.service.hive.BaseHiveExploreService.OperationInfo;
-
 /**
  * Takes care of closing operations after they are removed from the cache.
  */
@@ -59,7 +57,7 @@ public class ActiveOperationRemovalHandler implements RemovalListener<QueryHandl
     @Override
     public void run() {
       try {
-        QueryStatus status = exploreService.fetchStatus(opInfo.getOperationHandle());
+        QueryStatus status = exploreService.fetchStatus(opInfo);
 
         // If operation is still not complete, cancel it.
         if (status.getStatus() != QueryStatus.OpStatus.FINISHED && status.getStatus() != QueryStatus.OpStatus.CLOSED &&

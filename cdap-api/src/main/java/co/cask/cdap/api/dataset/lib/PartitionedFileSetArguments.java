@@ -19,7 +19,9 @@ package co.cask.cdap.api.dataset.lib;
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.dataset.lib.Partitioning.FieldType;
 
+import java.util.Collection;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
 
@@ -31,6 +33,7 @@ public class PartitionedFileSetArguments {
 
   public static final String OUTPUT_PARTITION_KEY_PREFIX = "output.partition.key.";
   public static final String OUTPUT_PARTITION_METADATA_PREFIX = "output.partition.metadata.";
+  public static final String DYNAMIC_PARTITIONER_CLASS_NAME = "output.dynamic.partitioner.class.name";
   public static final String INPUT_PARTITION_LOWER_PREFIX = "input.filter.lower.";
   public static final String INPUT_PARTITION_UPPER_PREFIX = "input.filter.upper.";
   public static final String INPUT_PARTITION_VALUE_PREFIX = "input.filter.value.";
@@ -180,10 +183,23 @@ public class PartitionedFileSetArguments {
    * @param arguments the runtime arguments for a partitioned dataset
    * @param partitionIterator the iterator of partitions to add as input
    */
-  public static void addInputPartitions(Map<String, String> arguments, Iterator<Partition> partitionIterator) {
+  public static void addInputPartitions(Map<String, String> arguments,
+                                        Iterator<? extends Partition> partitionIterator) {
     while (partitionIterator.hasNext()) {
       addInputPartition(arguments, partitionIterator.next());
     }
+  }
+
+  /**
+   * Sets partitions as input for a PartitionedFileSet. If both a PartitionFilter and Partition(s) are specified, the
+   * PartitionFilter takes precedence and the specified Partition(s) will be ignored.
+   *
+   * @param arguments the runtime arguments for a partitioned dataset
+   * @param partitions an iterable of partitions to add as input
+   */
+  public static void addInputPartitions(Map<String, String> arguments,
+                                        Iterable<? extends Partition> partitions) {
+    addInputPartitions(arguments, partitions.iterator());
   }
 
   /**
@@ -197,4 +213,36 @@ public class PartitionedFileSetArguments {
     FileSetArguments.addInputPath(arguments, partition.getRelativePath());
   }
 
+  /**
+   * Sets a DynamicPartitioner class to be used during the output of a PartitionedFileSet.
+   *
+   * @param arguments the runtime arguments for a partitioned dataset
+   * @param dynamicPartitionerClass the class to set
+   * @param <K> type of key
+   * @param <V> type of value
+   */
+  public static <K, V> void setDynamicPartitioner(Map<String, String> arguments,
+                                                  Class<? extends DynamicPartitioner<K, V>> dynamicPartitionerClass) {
+    setDynamicPartitioner(arguments, dynamicPartitionerClass.getName());
+  }
+
+  /**
+   * Sets a DynamicPartitioner class to be used during the output of a PartitionedFileSet.
+   *
+   * @param arguments the runtime arguments for a partitioned dataset
+   * @param dynamicPartitionerClassName the name of the class to set
+   */
+  public static void setDynamicPartitioner(Map<String, String> arguments, String dynamicPartitionerClassName) {
+    arguments.put(DYNAMIC_PARTITIONER_CLASS_NAME, dynamicPartitionerClassName);
+  }
+
+  /**
+   * Return the DynamicPartitioner class that was previously assigned onto runtime arguments.
+   *
+   * @param arguments the runtime arguments to get the class from
+   * @return name of the DynamicPartitioner class
+   */
+  public static String getDynamicPartitioner(Map<String, String> arguments) {
+    return arguments.get(DYNAMIC_PARTITIONER_CLASS_NAME);
+  }
 }

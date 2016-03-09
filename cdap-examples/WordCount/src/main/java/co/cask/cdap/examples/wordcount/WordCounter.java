@@ -48,7 +48,7 @@ public class WordCounter extends AbstractFlow {
   }
 
   @Override
-  protected void configureFlow() {
+  protected void configure() {
     setName("WordCounter");
     setDescription("Example Word Count Flow");
     addFlowlet("splitter", new WordSplitter(config.getWordStatsTable()));

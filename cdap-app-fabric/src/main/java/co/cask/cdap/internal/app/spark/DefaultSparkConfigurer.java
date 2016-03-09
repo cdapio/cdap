@@ -20,11 +20,14 @@ import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.spark.Spark;
 import co.cask.cdap.api.spark.SparkConfigurer;
 import co.cask.cdap.api.spark.SparkSpecification;
+import co.cask.cdap.internal.app.DefaultPluginConfigurer;
+import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
+import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.internal.lang.Reflections;
 import co.cask.cdap.internal.specification.PropertyFieldExtractor;
+import co.cask.cdap.proto.Id;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.reflect.TypeToken;
 
 import java.util.Collections;
 import java.util.Map;
@@ -32,7 +35,7 @@ import java.util.Map;
 /**
  * Default implementation of {@link SparkConfigurer}.
  */
-public final class DefaultSparkConfigurer implements SparkConfigurer {
+public final class DefaultSparkConfigurer extends DefaultPluginConfigurer implements SparkConfigurer {
 
   private final Spark spark;
   private String name;
@@ -42,7 +45,9 @@ public final class DefaultSparkConfigurer implements SparkConfigurer {
   private Resources driverResources;
   private Resources executorResources;
 
-  public DefaultSparkConfigurer(Spark spark) {
+  public DefaultSparkConfigurer(Spark spark, Id.Namespace deployNamespace, Id.Artifact artifactId,
+                                ArtifactRepository artifactRepository, PluginInstantiator pluginInstantiator) {
+    super(deployNamespace, artifactId, artifactRepository, pluginInstantiator);
     this.spark = spark;
     this.name = spark.getClass().getSimpleName();
     this.description = "";
@@ -81,8 +86,10 @@ public final class DefaultSparkConfigurer implements SparkConfigurer {
   }
 
   public SparkSpecification createSpecification() {
+    Preconditions.checkArgument(mainClassName != null,
+                                "Spark main class is not set. Make sure setMainClass or setMainClassName is called.");
     // Grab all @Property fields
-    Reflections.visit(spark, TypeToken.of(spark.getClass()), new PropertyFieldExtractor(properties));
+    Reflections.visit(spark, spark.getClass(), new PropertyFieldExtractor(properties));
     return new SparkSpecification(spark.getClass().getName(), name, description,
                                   mainClassName, properties, driverResources, executorResources);
   }

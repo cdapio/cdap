@@ -45,7 +45,7 @@ public final class FilterClassLoader extends ClassLoader {
   }
 
   public static FilterClassLoader create(ProgramType programType, ClassLoader parentClassLoader) {
-    Set<String> visibleResources = ProgramResources.getVisibleResources(programType);
+    Set<String> visibleResources = ProgramResources.getVisibleResources(parentClassLoader, programType);
     ImmutableSet.Builder<String> visiblePackages = ImmutableSet.builder();
     for (String resource : visibleResources) {
       if (resource.endsWith(".class")) {

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -193,7 +193,7 @@ public abstract class BufferingTable extends AbstractTable implements MeteredDat
    * Fetches column->value pairs for set of columns from persistent store.
    * NOTE: persisted store can also be in-memory, it is called "persisted" to distinguish from in-memory buffer.
    * @param row row key defines the row to fetch columns from
-   * @param columns set of columns to fetch, can be null which means fetch everything
+   * @param columns set of columns to fetch. null means fetch everything; empty array which means fetch nothing.
    * @return map of column->value pairs, never null.
    * @throws Exception
    */
@@ -240,7 +240,7 @@ public abstract class BufferingTable extends AbstractTable implements MeteredDat
     List<Map<byte[], byte[]>> results = Lists.newArrayListWithCapacity(gets.size());
     for (Get get : gets) {
       List<byte[]> getColumns = get.getColumns();
-      byte[][] columns = getColumns.isEmpty() ? null : getColumns.toArray(new byte[getColumns.size()][]);
+      byte[][] columns = getColumns == null ? null : getColumns.toArray(new byte[getColumns.size()][]);
       results.add(getPersisted(get.getRow(), columns));
     }
     return results;
@@ -449,7 +449,7 @@ public abstract class BufferingTable extends AbstractTable implements MeteredDat
         // merge what was in the buffer and what was persisted
         if (buffCols != null) {
           List<byte[]> getColumns = get.getColumns();
-          byte[][] columns = getColumns.isEmpty() ? null : getColumns.toArray(new byte[getColumns.size()][]);
+          byte[][] columns = getColumns == null ? null : getColumns.toArray(new byte[getColumns.size()][]);
           mergeToPersisted(rowColumns, buffCols, columns);
         }
 
@@ -496,9 +496,8 @@ public abstract class BufferingTable extends AbstractTable implements MeteredDat
   }
 
   /**
-   * NOTE: Depending on the use-case, calling this method may be much less
-   *       efficient than calling same method with columns as parameters because it may always require round trip to
-   *       persistent store
+   * NOTE: Depending on the use-case, calling this method may be much less efficient than calling same method
+   *       with columns as parameters because it will require a round trip to persistent store.
    */
   @Override
   public void delete(byte[] row) {
@@ -639,7 +638,7 @@ public abstract class BufferingTable extends AbstractTable implements MeteredDat
       @Override
       public Split apply(@Nullable KeyRange input) {
         return new TableSplit(input == null ? null : input.getStart(),
-                                           input == null ? null : input.getStop());
+                              input == null ? null : input.getStop());
       }
     });
   }

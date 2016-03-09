@@ -17,14 +17,13 @@
 package co.cask.cdap.hive.stream;
 
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.data.stream.StreamInputSplitFactory;
 import co.cask.cdap.data.stream.StreamInputSplitFinder;
 import co.cask.cdap.data.stream.StreamUtils;
-import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.hive.context.ContextManager;
 import co.cask.cdap.proto.Id;
-import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
@@ -39,12 +38,16 @@ import org.apache.hadoop.hive.ql.udf.generic.GenericUDFOPEqualOrGreaterThan;
 import org.apache.hadoop.hive.ql.udf.generic.GenericUDFOPEqualOrLessThan;
 import org.apache.hadoop.hive.ql.udf.generic.GenericUDFOPGreaterThan;
 import org.apache.hadoop.hive.ql.udf.generic.GenericUDFOPLessThan;
+import org.apache.hadoop.hive.shims.ShimLoader;
 import org.apache.hadoop.io.ObjectWritable;
 import org.apache.hadoop.mapred.InputFormat;
 import org.apache.hadoop.mapred.InputSplit;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.RecordReader;
 import org.apache.hadoop.mapred.Reporter;
+import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapreduce.JobContext;
+import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -58,13 +61,6 @@ import javax.annotation.Nullable;
  */
 public class HiveStreamInputFormat implements InputFormat<Void, ObjectWritable> {
   private static final Logger LOG = LoggerFactory.getLogger(HiveStreamInputFormat.class);
-  private static final StreamInputSplitFactory<InputSplit> SPLIT_FACTORY = new StreamInputSplitFactory<InputSplit>() {
-    @Override
-    public InputSplit createSplit(Path path, Path indexPath, long startTime, long endTime,
-                                  long start, long length, @Nullable String[] locations) {
-      return new StreamInputSplit(path, indexPath, startTime, endTime, start, length, locations);
-    }
-  };
 
   @Override
   public InputSplit[] getSplits(JobConf conf, int numSplits) throws IOException {
@@ -75,18 +71,8 @@ public class HiveStreamInputFormat implements InputFormat<Void, ObjectWritable> 
     // over when initialize is called. If we set job conf settings there, the settings for one stream get clobbered
     // by the settings for another stream if a join over streams is being performed.
     StreamInputSplitFinder<InputSplit> splitFinder = getSplitFinder(conf);
-    try {
-      List<InputSplit> splits = splitFinder.getSplits(conf);
-      InputSplit[] splitArray = new InputSplit[splits.size()];
-      int i = 0;
-      for (InputSplit split : splits) {
-        splitArray[i] = split;
-        i++;
-      }
-      return splitArray;
-    } catch (InterruptedException e) {
-      throw Throwables.propagate(e);
-    }
+    List<InputSplit> splits = splitFinder.getSplits(conf);
+    return splits.toArray(new InputSplit[splits.size()]);
   }
 
   @Override
@@ -107,8 +93,19 @@ public class HiveStreamInputFormat implements InputFormat<Void, ObjectWritable> 
     Location streamPath = StreamUtils.createGenerationLocation(streamConfig.getLocation(),
                                                                StreamUtils.getGeneration(streamConfig));
 
-    StreamInputSplitFinder.Builder builder = StreamInputSplitFinder.builder(streamPath.toURI());
-    return setupBuilder(conf, streamConfig, builder).build(SPLIT_FACTORY);
+    StreamInputSplitFinder.Builder builder = StreamInputSplitFinder.builder(Locations.toURI(streamPath));
+
+    // Get the Hive table path for the InputSplit created. It is just to satisfy hive. The InputFormat never uses it.
+    JobContext jobContext = ShimLoader.getHadoopShims().newJobContext(Job.getInstance(conf));
+    final Path[] tablePaths = FileInputFormat.getInputPaths(jobContext);
+
+    return setupBuilder(conf, streamConfig, builder).build(new StreamInputSplitFactory<InputSplit>() {
+      @Override
+      public InputSplit createSplit(Path eventPath, Path indexPath, long startTime, long endTime,
+                                    long start, long length, @Nullable String[] locations) {
+        return new StreamInputSplit(tablePaths[0], eventPath, indexPath, startTime, endTime, start, length, locations);
+      }
+    });
   }
 
   /**
@@ -195,7 +192,7 @@ public class HiveStreamInputFormat implements InputFormat<Void, ObjectWritable> 
 
     private final String opClassName;
 
-    private CompareOp(String opClassName) {
+    CompareOp(String opClassName) {
       this.opClassName = opClassName;
     }
 

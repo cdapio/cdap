@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -33,6 +33,8 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -42,6 +44,7 @@ import java.util.concurrent.ExecutionException;
  */
 @Category(XSlowTests.class)
 public class QueryClientTestRun extends ClientTestBase {
+  private static final Logger LOG = LoggerFactory.getLogger(QueryClientTestRun.class);
   private ApplicationClient appClient;
   private QueryClient queryClient;
   private NamespaceClient namespaceClient;
@@ -52,15 +55,16 @@ public class QueryClientTestRun extends ClientTestBase {
   @Before
   public void setUp() throws Throwable {
     super.setUp();
+
     appClient = new ApplicationClient(clientConfig);
     queryClient = new QueryClient(clientConfig);
     programClient = new ProgramClient(clientConfig);
     streamClient = new StreamClient(clientConfig);
     String accessToken = (clientConfig.getAccessToken() == null) ? null : clientConfig.getAccessToken().getValue();
     ConnectionConfig connectionConfig = clientConfig.getConnectionConfig();
-    exploreClient = new FixedAddressExploreClient(connectionConfig.getHostname(),
-                                                  connectionConfig.getPort(),
-                                                  accessToken);
+    exploreClient = new FixedAddressExploreClient(connectionConfig.getHostname(), connectionConfig.getPort(),
+                                                  accessToken, connectionConfig.isSSLEnabled(),
+                                                  clientConfig.isVerifySSLCert());
     namespaceClient = new NamespaceClient(clientConfig);
   }
 
@@ -93,6 +97,7 @@ public class QueryClientTestRun extends ClientTestBase {
         queryClient.execute(dataset.getNamespace(), "select * from " + FakeApp.DS_NAME).get();
         Assert.fail("Explore Query should have thrown an ExecutionException since explore is disabled");
       } catch (ExecutionException e) {
+        // ignored
       }
 
       exploreClient.enableExploreDataset(dataset).get();
@@ -104,7 +109,12 @@ public class QueryClientTestRun extends ClientTestBase {
     } finally {
       programClient.stop(flow);
       assertProgramStopped(programClient, flow);
-      appClient.delete(app);
+
+      try {
+        appClient.delete(app);
+      } catch (Exception e) {
+        LOG.error("Error deleting app {} during test cleanup.", e);
+      }
     }
   }
 

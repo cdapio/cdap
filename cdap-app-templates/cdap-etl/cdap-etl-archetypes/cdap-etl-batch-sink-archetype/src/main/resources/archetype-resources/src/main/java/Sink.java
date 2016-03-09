@@ -20,17 +20,18 @@ import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.annotation.Plugin;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.dataset.lib.KeyValue;
-import co.cask.cdap.template.etl.api.Emitter;
-import co.cask.cdap.template.etl.api.PipelineConfigurer;
-import co.cask.cdap.template.etl.api.batch.BatchSink;
-import co.cask.cdap.template.etl.api.batch.BatchSinkContext;
+import co.cask.cdap.etl.api.Emitter;
+import co.cask.cdap.etl.api.PipelineConfigurer;
+import co.cask.cdap.etl.api.batch.BatchRuntimeContext;
+import co.cask.cdap.etl.api.batch.BatchSink;
+import co.cask.cdap.etl.api.batch.BatchSinkContext;
 import org.apache.hadoop.io.NullWritable;
 
 /**
  * Batch Sink.
  */
 
-@Plugin(type = "sink")
+@Plugin(type = "batchsink")
 @Name("Sink")
 @Description("Batch sink")
 public class Sink extends BatchSink<StructuredRecord, byte[], NullWritable> {
@@ -38,6 +39,14 @@ public class Sink extends BatchSink<StructuredRecord, byte[], NullWritable> {
   @Override
   public void configurePipeline(PipelineConfigurer configurer) {
     // Make sure any properties that are expected are valid
+  }
+
+  @Override
+  public void initialize(BatchRuntimeContext context) throws Exception {
+    super.initialize(context);
+    // Get Config param and use to initialize
+    // String param = config.param
+    // Perform init operations, external operations etc.
   }
 
   @Override

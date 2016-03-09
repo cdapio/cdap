@@ -15,9 +15,9 @@
  */
 package co.cask.cdap.internal.app.runtime.distributed;
 
+import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.flow.Flow;
 import co.cask.cdap.api.flow.FlowSpecification;
-import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
@@ -32,19 +32,22 @@ import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.flow.FlowUtils;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.security.TokenSecureStoreUpdater;
 import co.cask.tephra.TransactionExecutorFactory;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Multimap;
 import com.google.inject.Inject;
-import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.yarn.conf.YarnConfiguration;
 import org.apache.twill.api.EventHandler;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.TwillController;
 import org.apache.twill.api.TwillRunner;
+import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.util.Map;
 
 /**
@@ -59,10 +62,11 @@ public final class DistributedFlowProgramRunner extends AbstractDistributedProgr
   private final TransactionExecutorFactory txExecutorFactory;
 
   @Inject
-  DistributedFlowProgramRunner(TwillRunner twillRunner, Configuration hConfig,
+  DistributedFlowProgramRunner(TwillRunner twillRunner, LocationFactory locationFactory, YarnConfiguration hConf,
                                CConfiguration cConfig, QueueAdmin queueAdmin, StreamAdmin streamAdmin,
-                               TransactionExecutorFactory txExecutorFactory) {
-    super(twillRunner, hConfig, cConfig);
+                               TransactionExecutorFactory txExecutorFactory,
+                               TokenSecureStoreUpdater tokenSecureStoreUpdater) {
+    super(twillRunner, locationFactory, hConf, cConfig, tokenSecureStoreUpdater);
     this.queueAdmin = queueAdmin;
     this.streamAdmin = streamAdmin;
     this.txExecutorFactory = txExecutorFactory;
@@ -71,7 +75,7 @@ public final class DistributedFlowProgramRunner extends AbstractDistributedProgr
   @Override
   protected ProgramController launch(Program program, ProgramOptions options,
                                      Map<String, LocalizeResource> localizeResources,
-                                     ApplicationLauncher launcher) {
+                                     File tempDir, ApplicationLauncher launcher) {
     // Extract and verify parameters
     ApplicationSpecification appSpec = program.getApplicationSpecification();
     Preconditions.checkNotNull(appSpec, "Missing application specification.");
@@ -97,7 +101,7 @@ public final class DistributedFlowProgramRunner extends AbstractDistributedProgr
         new DistributedFlowletInstanceUpdater(program, controller, queueAdmin,
                                               streamAdmin, flowletQueues, txExecutorFactory);
       RunId runId = RunIds.fromString(options.getArguments().getOption(ProgramOptionConstants.RUN_ID));
-      return new FlowTwillProgramController(program.getName(), controller, instanceUpdater, runId).startListen();
+      return new FlowTwillProgramController(program.getId(), controller, instanceUpdater, runId).startListen();
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }

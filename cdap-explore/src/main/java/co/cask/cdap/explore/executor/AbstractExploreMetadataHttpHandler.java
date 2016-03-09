@@ -44,7 +44,8 @@ public class AbstractExploreMetadataHttpHandler extends AbstractHttpHandler {
   private static final Gson GSON = new Gson();
 
   protected void handleResponseEndpointExecution(HttpRequest request, HttpResponder responder,
-                                                 final EndpointCoreExecution<QueryHandle> execution) {
+                                                 final EndpointCoreExecution<QueryHandle> execution)
+    throws ExploreException, IOException {
     genericEndpointExecution(request, responder, new EndpointCoreExecution<Void>() {
       @Override
       public Void execute(HttpRequest request, HttpResponder responder)
@@ -59,7 +60,7 @@ public class AbstractExploreMetadataHttpHandler extends AbstractHttpHandler {
   }
 
   protected void genericEndpointExecution(HttpRequest request, HttpResponder responder,
-                                          EndpointCoreExecution<Void> execution) {
+                                          EndpointCoreExecution<Void> execution) throws ExploreException, IOException {
     try {
       execution.execute(request, responder);
     } catch (IllegalArgumentException e) {
@@ -69,9 +70,6 @@ public class AbstractExploreMetadataHttpHandler extends AbstractHttpHandler {
       LOG.debug("Got exception:", e);
       responder.sendString(HttpResponseStatus.BAD_REQUEST,
                            String.format("[SQLState %s] %s", e.getSQLState(), e.getMessage()));
-    } catch (Throwable e) {
-      LOG.error("Got exception:", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
 

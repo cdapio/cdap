@@ -19,6 +19,7 @@ package co.cask.cdap.data2.util.hbase;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.data.hbase.HBaseTestBase;
 import co.cask.cdap.data.hbase.HBaseTestFactory;
 import co.cask.cdap.data2.util.TableId;
@@ -37,39 +38,35 @@ import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
 /**
  *
  */
 public abstract class AbstractHBaseTableUtilTest {
-  private static final Logger LOG = LoggerFactory.getLogger(AbstractHBaseTableUtilTest.class);
 
   @ClassRule
-  public static TemporaryFolder tmpFolder = new TemporaryFolder();
+  public static final TemporaryFolder TMP_FOLDER = new TemporaryFolder();
+  @ClassRule
+  public static final HBaseTestBase TEST_HBASE = new HBaseTestFactory().get();
 
   protected static CConfiguration cConf;
-  private static HBaseTestBase testHBase;
   private static HBaseAdmin hAdmin;
 
   @BeforeClass
   public static void beforeClass() throws Exception {
-    testHBase = new HBaseTestFactory().get();
-    testHBase.startHBase();
-    hAdmin = new HBaseAdmin(testHBase.getConfiguration());
+    hAdmin = new HBaseAdmin(TEST_HBASE.getConfiguration());
     cConf = CConfiguration.create();
   }
 
   @AfterClass
   public static void afterClass() throws Exception {
     hAdmin.close();
-    testHBase.stopHBase();
   }
 
   protected abstract HBaseTableUtil getTableUtil();
@@ -108,36 +105,60 @@ public abstract class AbstractHBaseTableUtilTest {
     Assert.assertTrue(exists("namespace", "table2"));
     Assert.assertTrue(exists("namespace", "table3"));
 
-    waitForMetricsToUpdate();
-
-    Assert.assertEquals(0, getTableStats("namespace", "table1").getTotalSizeMB());
-    Assert.assertEquals(0, getTableStats("namespace2", "table1").getTotalSizeMB());
-    Assert.assertEquals(0, getTableStats("namespace", "table2").getTotalSizeMB());
-    Assert.assertEquals(0, getTableStats("namespace", "table3").getTotalSizeMB());
+    Tasks.waitFor(true, new Callable<Boolean>() {
+      @Override
+      public Boolean call() throws Exception {
+        try {
+          Assert.assertEquals(0, getTableStats("namespace", "table1").getTotalSizeMB());
+          Assert.assertEquals(0, getTableStats("namespace2", "table1").getTotalSizeMB());
+          Assert.assertEquals(0, getTableStats("namespace", "table2").getTotalSizeMB());
+          Assert.assertEquals(0, getTableStats("namespace", "table3").getTotalSizeMB());
+          return true;
+        } catch (Throwable t) {
+          return false;
+        }
+      }
+    }, 5, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
 
     writeSome("namespace2", "table1");
     writeSome("namespace", "table2");
     writeSome("namespace", "table3");
 
-    waitForMetricsToUpdate();
-
-    Assert.assertEquals(0, getTableStats("namespace", "table1").getTotalSizeMB());
-    Assert.assertTrue(getTableStats("namespace2", "table1").getTotalSizeMB() > 0);
-    Assert.assertTrue(getTableStats("namespace", "table2").getTotalSizeMB() > 0);
-    Assert.assertTrue(getTableStats("namespace", "table3").getTotalSizeMB() > 0);
+    Tasks.waitFor(true, new Callable<Boolean>() {
+      @Override
+      public Boolean call() throws Exception {
+        try {
+          Assert.assertEquals(0, getTableStats("namespace", "table1").getTotalSizeMB());
+          Assert.assertTrue(getTableStats("namespace2", "table1").getTotalSizeMB() > 0);
+          Assert.assertTrue(getTableStats("namespace", "table2").getTotalSizeMB() > 0);
+          Assert.assertTrue(getTableStats("namespace", "table3").getTotalSizeMB() > 0);
+          return true;
+        } catch (Throwable t) {
+          return false;
+        }
+      }
+    }, 5, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
 
     drop("namespace", "table1");
     Assert.assertFalse(exists("namespace", "table1"));
     //TODO: TestHBase methods should eventually accept namespace as a param, but will add them incrementally
-    testHBase.forceRegionFlush(Bytes.toBytes(getTableNameAsString(TableId.from("namespace", "table2"))));
+    TEST_HBASE.forceRegionFlush(Bytes.toBytes(getTableNameAsString(TableId.from("namespace", "table2"))));
     truncate("namespace", "table3");
 
-    waitForMetricsToUpdate();
-
-    Assert.assertNull(getTableStats("namespace", "table1"));
-    Assert.assertTrue(getTableStats("namespace", "table2").getTotalSizeMB() > 0);
-    Assert.assertTrue(getTableStats("namespace", "table2").getStoreFileSizeMB() > 0);
-    Assert.assertEquals(0, getTableStats("namespace", "table3").getTotalSizeMB());
+    Tasks.waitFor(true, new Callable<Boolean>() {
+      @Override
+      public Boolean call() throws Exception {
+        try {
+          Assert.assertNull(getTableStats("namespace", "table1"));
+          Assert.assertTrue(getTableStats("namespace", "table2").getTotalSizeMB() > 0);
+          Assert.assertTrue(getTableStats("namespace", "table2").getStoreFileSizeMB() > 0);
+          Assert.assertEquals(0, getTableStats("namespace", "table3").getTotalSizeMB());
+          return true;
+        } catch (Throwable t) {
+          return false;
+        }
+      }
+    }, 5, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
 
     // modify
     HTableDescriptor desc = getTableDescriptor("namespace2", "table1");
@@ -182,7 +203,7 @@ public abstract class AbstractHBaseTableUtilTest {
     Assert.assertEquals("cdap.user.my.dataset",
                         getNameConverter().getHBaseTableName(tablePrefix, tableId));
     Assert.assertEquals(getTableNameAsString(tableId),
-                        Bytes.toString(tableUtil.createHTable(testHBase.getConfiguration(), tableId).getTableName()));
+                        Bytes.toString(tableUtil.createHTable(TEST_HBASE.getConfiguration(), tableId).getTableName()));
     drop(tableId);
     tableId = TableId.from("default", "system.queue.config");
     create(tableId);
@@ -190,7 +211,7 @@ public abstract class AbstractHBaseTableUtilTest {
     Assert.assertEquals("cdap.system.queue.config",
                         getNameConverter().getHBaseTableName(tablePrefix, tableId));
     Assert.assertEquals(getTableNameAsString(tableId),
-                        Bytes.toString(tableUtil.createHTable(testHBase.getConfiguration(), tableId).getTableName()));
+                        Bytes.toString(tableUtil.createHTable(TEST_HBASE.getConfiguration(), tableId).getTableName()));
     drop(tableId);
     tableId = TableId.from("myspace", "could.be.any.table.name");
     createNamespace("myspace");
@@ -199,7 +220,7 @@ public abstract class AbstractHBaseTableUtilTest {
     Assert.assertEquals("could.be.any.table.name",
                         getNameConverter().getHBaseTableName(tablePrefix, tableId));
     Assert.assertEquals(getTableNameAsString(tableId),
-                        Bytes.toString(tableUtil.createHTable(testHBase.getConfiguration(), tableId).getTableName()));
+                        Bytes.toString(tableUtil.createHTable(TEST_HBASE.getConfiguration(), tableId).getTableName()));
     drop(tableId);
     deleteNamespace("myspace");
   }
@@ -254,7 +275,7 @@ public abstract class AbstractHBaseTableUtilTest {
     create(tableIdInOtherNamespace);
 
     Assert.assertEquals(4, hAdmin.listTables().length);
-    tableUtil.deleteAllInNamespace(hAdmin, Constants.DEFAULT_NAMESPACE_ID);
+    tableUtil.deleteAllInNamespace(hAdmin, Id.Namespace.DEFAULT);
     Assert.assertEquals(1, hAdmin.listTables().length);
 
     drop(tableIdInOtherNamespace);
@@ -295,15 +316,9 @@ public abstract class AbstractHBaseTableUtilTest {
     deleteNamespace("barnamespace");
   }
 
-  private void waitForMetricsToUpdate() throws InterruptedException {
-    // Wait for a bit to allow changes reflect in metrics: metrics updated on master with the heartbeat which
-    // by default happens ~every 3 sec
-    LOG.info("Waiting for metrics to reflect changes");
-    TimeUnit.SECONDS.sleep(4);
-  }
-
   private void writeSome(String namespace, String tableName) throws IOException {
-    try (HTable table = getTableUtil().createHTable(testHBase.getConfiguration(), TableId.from(namespace, tableName))) {
+    try (HTable table = getTableUtil().createHTable(TEST_HBASE.getConfiguration(),
+                                                    TableId.from(namespace, tableName))) {
       // writing at least couple megs to reflect in "megabyte"-based metrics
       for (int i = 0; i < 8; i++) {
         Put put = new Put(Bytes.toBytes("row" + i));

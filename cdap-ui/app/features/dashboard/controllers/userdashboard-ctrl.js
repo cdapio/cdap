@@ -1,9 +1,25 @@
+/*
+ * Copyright © 2015 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 /**
  * DashboardCtrl
  */
 
 angular.module(PKG.name+'.feature.dashboard').controller('UserDashboardCtrl',
-function ($scope, $state, $dropdown, rDashboardsModel, MY_CONFIG, $alert, DashboardHelper) {
+function ($scope, $state, $dropdown, rDashboardsModel, MY_CONFIG, myAlertOnValium, DashboardHelper) {
 
   $scope.unknownBoard = false;
   $scope.liveDashboard = false;
@@ -71,7 +87,7 @@ function ($scope, $state, $dropdown, rDashboardsModel, MY_CONFIG, $alert, Dashbo
     var timeRange = $scope.timeOptions.endMs - $scope.timeOptions.startMs;
     if (timeRange >  limitInDays * millisecondsPerDay) {
       // Note: alternative is to interpolate the many many points we get from the backend (mostly will be 0s?).
-      $alert({
+      myAlertOnValium.show({
         content: 'Please choose a shorter time range. Current time range limit is ' + limitInDays + ' days.',
         type: 'warning'
       });
@@ -104,6 +120,17 @@ function ($scope, $state, $dropdown, rDashboardsModel, MY_CONFIG, $alert, Dashbo
     });
 
     DashboardHelper.startPollDashboard($scope.currentBoard);
+  };
+
+  $scope.$watch('timeOptions.durationMs', function() {
+    if ($scope.liveDashboard) {
+      $scope.updateWithFrequency();
+    }
+  });
+  $scope.updateRefreshInterval =  function() {
+    if ($scope.liveDashboard) {
+      $scope.updateWithFrequency();
+    }
   };
 
   $scope.stopPolling = function() {

@@ -18,8 +18,10 @@ package co.cask.cdap.common.metrics;
 
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.proto.Id;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -30,6 +32,14 @@ public final class MetricsTags {
   private MetricsTags() {
   }
 
+  public static Map<String, String> contextMap(String... tags) {
+    Preconditions.checkArgument(tags.length % 2 == 0);
+    Map<String, String> tagMap = new HashMap<>();
+    for (int i = 0; i < tags.length; i += 2) {
+      tagMap.put(tags[i], tags[i + 1]);
+    }
+    return tagMap;
+  }
   // TODO: Use Id.Flow.Flowlet
   public static Map<String, String> flowlet(Id.Program flowId, String flowletId) {
     return ImmutableMap.of(

@@ -30,13 +30,14 @@ import co.cask.cdap.api.annotation.Output;
 import co.cask.cdap.api.annotation.ProcessInput;
 import co.cask.cdap.api.annotation.UseDataSet;
 import co.cask.cdap.api.app.AbstractApplication;
+import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.lib.IndexedTable;
 import co.cask.cdap.api.dataset.lib.IndexedTableDefinition;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.table.Table;
-import co.cask.cdap.api.flow.FlowSpecification;
+import co.cask.cdap.api.flow.AbstractFlow;
 import co.cask.cdap.api.flow.flowlet.AbstractFlowlet;
 import co.cask.cdap.api.flow.flowlet.OutputEmitter;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
@@ -46,31 +47,37 @@ import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.schedule.Schedules;
 import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.api.workflow.ScheduleProgramInfo;
-import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.DefaultAppConfigurer;
 import co.cask.cdap.app.DefaultApplicationContext;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.common.app.RunIds;
-import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.io.Locations;
+import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.internal.AppFabricTestHelper;
 import co.cask.cdap.internal.DefaultId;
 import co.cask.cdap.internal.app.Specifications;
-import co.cask.cdap.internal.app.namespace.NamespaceAdmin;
+import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.store.DefaultNamespaceStore;
 import co.cask.cdap.templates.AdapterDefinition;
+import com.google.common.base.Function;
 import com.google.common.base.Objects;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.ImmutableSortedSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
 import com.google.gson.Gson;
 import com.google.inject.Injector;
 import org.apache.twill.api.RunId;
 import org.apache.twill.filesystem.LocalLocationFactory;
+import org.apache.twill.filesystem.Location;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -82,6 +89,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -91,21 +100,27 @@ import java.util.concurrent.TimeUnit;
 public class DefaultStoreTest {
   private static final Gson GSON = new Gson();
   private static DefaultStore store;
+  private static DefaultNamespaceStore nsStore;
+  private static Scheduler scheduler;
 
   @BeforeClass
   public static void beforeClass() throws Exception {
     Injector injector = AppFabricTestHelper.getInjector();
     store = injector.getInstance(DefaultStore.class);
+    nsStore = injector.getInstance(DefaultNamespaceStore.class);
+    scheduler = injector.getInstance(Scheduler.class);
   }
 
   @Before
   public void before() throws Exception {
+    // Delete any schedules that may have been registered with Quartz during app deployment
+    scheduler.deleteAllSchedules(Id.Namespace.DEFAULT);
     store.clear();
     NamespacedLocationFactory namespacedLocationFactory =
       AppFabricTestHelper.getInjector().getInstance(NamespacedLocationFactory.class);
-    namespacedLocationFactory.get(Constants.DEFAULT_NAMESPACE_ID).delete(true);
+    namespacedLocationFactory.get(Id.Namespace.DEFAULT).delete(true);
     NamespaceAdmin admin = AppFabricTestHelper.getInjector().getInstance(NamespaceAdmin.class);
-    admin.createNamespace(Constants.DEFAULT_NAMESPACE_META);
+    admin.create(NamespaceMeta.DEFAULT);
   }
 
   @Test
@@ -143,7 +158,7 @@ public class DefaultStoreTest {
     store.setStart(programId2, run2.getId(), runIdToSecs(run2));
     store.setSuspend(programId2, run2.getId());
     store.removeAll(namespaceId);
-    store.deleteNamespace(namespaceId);
+    nsStore.delete(namespaceId);
     Assert.assertTrue(store.getRuns(programId2, ProgramRunStatus.ALL, 0, Long.MAX_VALUE, Integer.MAX_VALUE).isEmpty());
   }
 
@@ -170,48 +185,9 @@ public class DefaultStoreTest {
   }
 
   @Test
-  public void testAdapterLogRunHistory() throws Exception {
-    String adapter = "adapter1";
-    Id.Program programId = Id.Program.from("ns1", "app1", ProgramType.WORKER, "wrk1");
-    long now = System.currentTimeMillis();
-    long nowSecs = TimeUnit.MILLISECONDS.toSeconds(now);
-    RunId run1 = RunIds.generate(now - 20000);
-
-    // Record start through an Adapter but try to stop the run outside of an adapter.
-    store.setStart(programId, run1.getId(), runIdToSecs(run1), adapter, null);
-
-    // RunRecordMeta should be available through RunRecordMeta query for that Program.
-    RunRecordMeta programRun = store.getRun(programId, run1.getId());
-    Assert.assertEquals(run1.getId(), programRun.getPid());
-
-    store.setStop(programId, run1.getId(), nowSecs - 10, ProgramController.State.COMPLETED.getRunStatus());
-
-    RunRecordMeta adapterRun = store.getRun(programId, run1.getId());
-    Assert.assertNotNull(adapterRun);
-    Assert.assertEquals(run1.getId(), adapterRun.getPid());
-
-    // RunRecordMetas query for the Program under different Adapter name should not return anything
-    List<RunRecordMeta> records = store.getRuns(programId, ProgramRunStatus.ALL, 0, Long.MAX_VALUE, Integer.MAX_VALUE,
-                                                "invalidAdapter");
-    Assert.assertTrue(records.isEmpty());
-
-    // RunRecordMetas query for the Program should return the RunRecordMeta
-    List<RunRecordMeta> runRecords = store.getRuns(programId, ProgramRunStatus.ALL, 0, Long.MAX_VALUE,
-                                                   Integer.MAX_VALUE);
-    Assert.assertEquals(1, runRecords.size());
-    Assert.assertEquals(run1.getId(), Iterables.getFirst(runRecords, null).getPid());
-
-    List<RunRecordMeta> adapterRuns = store.getRuns(programId, ProgramRunStatus.ALL, 0, Long.MAX_VALUE,
-                                                    Integer.MAX_VALUE, adapter);
-    List<RunRecordMeta> completedRuns = store.getRuns(programId, ProgramRunStatus.COMPLETED, 0, Long.MAX_VALUE,
-                                                      Integer.MAX_VALUE, adapter);
-    Assert.assertEquals(adapterRuns, completedRuns);
-    Assert.assertEquals(1, adapterRuns.size());
-    Assert.assertEquals(run1.getId(), Iterables.getFirst(adapterRuns, null).getPid());
-  }
-
-  @Test
   public void testLogProgramRunHistory() throws Exception {
+    Map<String, String> noRuntimeArgsProps = ImmutableMap.of("runtimeArgs",
+                                                             GSON.toJson(ImmutableMap.<String, String>of()));
     // record finished flow
     Id.Program programId = Id.Program.from("account1", "application1", ProgramType.FLOW, "flow1");
     long now = System.currentTimeMillis();
@@ -237,6 +213,7 @@ public class DefaultStoreTest {
 
     // For a RunRecordMeta that has not yet been completed, getStopTs should return null
     RunRecordMeta runRecord = store.getRun(programId, run3.getId());
+    Assert.assertNotNull(runRecord);
     Assert.assertNull(runRecord.getStopTs());
 
     // record run of different program
@@ -323,13 +300,13 @@ public class DefaultStoreTest {
 
     // Get run record for run5
     RunRecordMeta expectedRecord5 = new RunRecordMeta(run5.getId(), nowSecs - 8, nowSecs - 4,
-                                                      ProgramRunStatus.COMPLETED, null, null, null);
+                                                      ProgramRunStatus.COMPLETED, noRuntimeArgsProps, null, null);
     RunRecordMeta actualRecord5 = store.getRun(programId, run5.getId());
     Assert.assertEquals(expectedRecord5, actualRecord5);
 
     // Get run record for run6
-    RunRecordMeta expectedRecord6 = new RunRecordMeta(run6.getId(), nowSecs - 2, null, ProgramRunStatus.RUNNING, null,
-                                                      null, null);
+    RunRecordMeta expectedRecord6 = new RunRecordMeta(run6.getId(), nowSecs - 2, null, ProgramRunStatus.RUNNING,
+                                                      noRuntimeArgsProps, null, null);
     RunRecordMeta actualRecord6 = store.getRun(programId, run6.getId());
     Assert.assertEquals(expectedRecord6, actualRecord6);
 
@@ -358,7 +335,9 @@ public class DefaultStoreTest {
     ApplicationSpecification stored = store.getApplication(id);
     assertWordCountAppSpecAndInMetadataStore(stored);
 
-    Assert.assertEquals("/foo/path/application1.jar", store.getApplicationArchiveLocation(id).toURI().getPath());
+    Location archiveLocation = store.getApplicationArchiveLocation(id);
+    Assert.assertNotNull(archiveLocation);
+    Assert.assertEquals("/foo/path/application1.jar", Locations.toURI(archiveLocation).getPath());
   }
 
   @Test
@@ -371,8 +350,11 @@ public class DefaultStoreTest {
 
     ApplicationSpecification stored = store.getApplication(id);
     assertWordCountAppSpecAndInMetadataStore(stored);
+
+    Location archiveLocation = store.getApplicationArchiveLocation(id);
+    Assert.assertNotNull(archiveLocation);
     Assert.assertEquals("/foo/path/application1_modified.jar",
-                        store.getApplicationArchiveLocation(id).toURI().getPath());
+                        Locations.toURI(archiveLocation).getPath());
   }
 
   @Test
@@ -421,7 +403,7 @@ public class DefaultStoreTest {
     }
   }
 
-  private static class FlowImpl implements co.cask.cdap.api.flow.Flow {
+  private static class FlowImpl extends AbstractFlow {
     private String name;
 
     private FlowImpl(String name) {
@@ -429,13 +411,11 @@ public class DefaultStoreTest {
     }
 
     @Override
-    public FlowSpecification configure() {
-      return FlowSpecification.Builder.with()
-        .setName(name)
-        .setDescription("Flow for counting words")
-        .withFlowlets().add(new FlowletImpl("flowlet1"))
-        .connect().from(new co.cask.cdap.api.data.stream.Stream("stream1")).to(new FlowletImpl("flowlet1"))
-        .build();
+    protected void configureFlow() {
+      setName(name);
+      setDescription("Flow for counting words");
+      addFlowlet(new FlowletImpl("flowlet1"));
+      connectStream("stream1", new FlowletImpl("flowlet1"));
     }
   }
 
@@ -443,19 +423,28 @@ public class DefaultStoreTest {
    *
    */
   public static class FlowletImpl extends AbstractFlowlet {
+    private final String name;
+
     @UseDataSet("dataset2")
+    @SuppressWarnings("unused")
     private KeyValueTable counters;
 
     @Output("output")
+    @SuppressWarnings("unused")
     private OutputEmitter<String> output;
 
     protected FlowletImpl(String name) {
-      super(name);
+      this.name = name;
     }
 
     @ProcessInput("process")
     public void bar(String str) {
       output.emit(str);
+    }
+
+    @Override
+    protected void configure() {
+      setName(name);
     }
   }
 
@@ -512,7 +501,7 @@ public class DefaultStoreTest {
   public void testServiceInstances() throws Exception {
     AppFabricTestHelper.deployApplication(AppWithServices.class);
     AbstractApplication app = new AppWithServices();
-    DefaultAppConfigurer appConfigurer = new DefaultAppConfigurer(app);
+    DefaultAppConfigurer appConfigurer = new DefaultAppConfigurer(Id.Namespace.DEFAULT, app);
     app.configure(appConfigurer, new DefaultApplicationContext());
 
     ApplicationSpecification appSpec = appConfigurer.createSpecification();
@@ -529,6 +518,7 @@ public class DefaultStoreTest {
     Assert.assertEquals(10, count);
 
     ApplicationSpecification newSpec = store.getApplication(appId);
+    Assert.assertNotNull(newSpec);
     Map<String, ServiceSpecification> services = newSpec.getServices();
     Assert.assertEquals(1, services.size());
 
@@ -550,11 +540,13 @@ public class DefaultStoreTest {
                               initialInstances + 5);
     // checking that app spec in store was adjusted
     ApplicationSpecification adjustedSpec = store.getApplication(appId);
+    Assert.assertNotNull(adjustedSpec);
     Assert.assertEquals(initialInstances + 5,
                         adjustedSpec.getFlows().get("WordCountFlow").getFlowlets().get("StreamSource").getInstances());
 
     // checking that program spec in program jar was adjsuted
     Program program = store.loadProgram(programId);
+    Assert.assertNotNull(program);
     Assert.assertEquals(initialInstances + 5,
                         program.getApplicationSpecification().
                           getFlows().get("WordCountFlow").getFlowlets().get("StreamSource").getInstances());
@@ -636,20 +628,30 @@ public class DefaultStoreTest {
     Id.Program mapreduceProgramId = new Id.Program(appId, ProgramType.MAPREDUCE, "NoOpMR");
     Id.Program workflowProgramId = new Id.Program(appId, ProgramType.WORKFLOW, "NoOpWorkflow");
 
-    store.storeRunArguments(flowProgramId, ImmutableMap.of("model", "click"));
-    store.storeRunArguments(mapreduceProgramId, ImmutableMap.of("path", "/data"));
-    store.storeRunArguments(workflowProgramId, ImmutableMap.of("whitelist", "cask"));
+    String flowRunId = RunIds.generate().getId();
+    String mapreduceRunId = RunIds.generate().getId();
+    String workflowRunId = RunIds.generate().getId();
 
+    Id.Run flowProgramRunId = new Id.Run(flowProgramId, flowRunId);
+    Id.Run mapreduceProgramRunId = new Id.Run(mapreduceProgramId, mapreduceRunId);
+    Id.Run workflowProgramRunId = new Id.Run(workflowProgramId, workflowRunId);
 
-    Map<String, String> args = store.getRunArguments(flowProgramId);
+    store.setStart(flowProgramId, flowRunId, System.currentTimeMillis(), null,
+                   ImmutableMap.of("model", "click"), null);
+    store.setStart(mapreduceProgramId, mapreduceRunId, System.currentTimeMillis(), null,
+                   ImmutableMap.of("path", "/data"), null);
+    store.setStart(workflowProgramId, workflowRunId, System.currentTimeMillis(), null,
+                   ImmutableMap.of("whitelist", "cask"), null);
+
+    Map<String, String> args = store.getRuntimeArguments(flowProgramRunId);
     Assert.assertEquals(1, args.size());
     Assert.assertEquals("click", args.get("model"));
 
-    args = store.getRunArguments(mapreduceProgramId);
+    args = store.getRuntimeArguments(mapreduceProgramRunId);
     Assert.assertEquals(1, args.size());
     Assert.assertEquals("/data", args.get("path"));
 
-    args = store.getRunArguments(workflowProgramId);
+    args = store.getRuntimeArguments(workflowProgramRunId);
     Assert.assertEquals(1, args.size());
     Assert.assertEquals("cask", args.get("whitelist"));
 
@@ -657,13 +659,13 @@ public class DefaultStoreTest {
     store.removeApplication(appId);
 
     //Check if args are deleted.
-    args = store.getRunArguments(flowProgramId);
+    args = store.getRuntimeArguments(flowProgramRunId);
     Assert.assertEquals(0, args.size());
 
-    args = store.getRunArguments(mapreduceProgramId);
+    args = store.getRuntimeArguments(mapreduceProgramRunId);
     Assert.assertEquals(0, args.size());
 
-    args = store.getRunArguments(workflowProgramId);
+    args = store.getRuntimeArguments(workflowProgramRunId);
     Assert.assertEquals(0, args.size());
   }
 
@@ -699,8 +701,9 @@ public class DefaultStoreTest {
     store.setStart(mapreduceProgramId1, "mrRun1", now - 1000);
     store.setStop(mapreduceProgramId1, "mrRun1", now, ProgramController.State.COMPLETED.getRunStatus());
 
-    store.setStart(workflowProgramId1, "wfRun1", now - 1000);
-    store.setStop(workflowProgramId1, "wfRun1", now, ProgramController.State.COMPLETED.getRunStatus());
+    RunId runId = RunIds.generate(System.currentTimeMillis() - TimeUnit.SECONDS.toMillis(1000));
+    store.setStart(workflowProgramId1, runId.getId(), now - 1000);
+    store.setStop(workflowProgramId1, runId.getId(), now, ProgramController.State.COMPLETED.getRunStatus());
 
     store.setStart(flowProgramId2, "flowRun2", now - 1000);
     store.setStop(flowProgramId2, "flowRun2", now, ProgramController.State.COMPLETED.getRunStatus());
@@ -733,6 +736,28 @@ public class DefaultStoreTest {
     List<RunRecordMeta> history = store.getRuns(programId, ProgramRunStatus.ALL,
                                                 0, Long.MAX_VALUE, Integer.MAX_VALUE);
     Assert.assertEquals(count, history.size());
+  }
+
+  @Test
+  public void testRunsLimit() throws Exception {
+    ApplicationSpecification spec = Specifications.from(new AllProgramsApp());
+    Id.Application appId = Id.Application.from("testRunsLimit", spec.getName());
+    store.addApplication(appId, spec, new LocalLocationFactory().create("/allPrograms"));
+
+    Id.Program flowProgramId = Id.Program.from(appId, ProgramType.FLOW, "NoOpFlow");
+
+    Assert.assertNotNull(store.getApplication(appId));
+
+    long now = System.currentTimeMillis();
+    store.setStart(flowProgramId, "flowRun1", now - 3000);
+    store.setStop(flowProgramId, "flowRun1", now - 100, ProgramController.State.COMPLETED.getRunStatus());
+
+    store.setStart(flowProgramId, "flowRun2", now - 2000);
+
+    // even though there's two separate run records (one that's complete and one that's active), only one should be
+    // returned by the query, because the limit parameter of 1 is being passed in.
+    List<RunRecordMeta> history = store.getRuns(flowProgramId, ProgramRunStatus.ALL, 0, Long.MAX_VALUE, 1);
+    Assert.assertEquals(1, history.size());
   }
 
   @Test
@@ -802,15 +827,19 @@ public class DefaultStoreTest {
     Assert.assertEquals(0, specsToBeDeleted.size());
   }
 
-  private static final Id.Namespace account = new Id.Namespace(Constants.DEFAULT_NAMESPACE);
-  private static final Id.Application appId = new Id.Application(account, AppWithWorkflow.NAME);
+  private static final Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, AppWithWorkflow.NAME);
   private static final Id.Program program = new Id.Program(appId, ProgramType.WORKFLOW,
                                                            AppWithWorkflow.SampleWorkflow.NAME);
   private static final SchedulableProgramType programType = SchedulableProgramType.WORKFLOW;
-  private static final Schedule schedule1 = Schedules.createTimeSchedule("Schedule1", "Every minute", "* * * * ?");
-  private static final Schedule schedule2 = Schedules.createTimeSchedule("Schedule2", "Every Hour", "0 * * * ?");
-  private static final Schedule scheduleWithSameName = Schedules.createTimeSchedule("Schedule2", "Every minute",
-                                                                                    "* * * * ?");
+  private static final Schedule schedule1 = Schedules.builder("Schedule1")
+    .setDescription("Every minute")
+    .createTimeSchedule("* * * * ?");
+  private static final Schedule schedule2 = Schedules.builder("Schedule2")
+    .setDescription("Every Hour")
+    .createTimeSchedule("0 * * * ?");
+  private static final Schedule scheduleWithSameName = Schedules.builder("Schedule2")
+    .setDescription("Every minute")
+    .createTimeSchedule("* * * * ?");
   private static final Map<String, String> properties1 = ImmutableMap.of();
   private static final Map<String, String> properties2 = ImmutableMap.of();
   private static final ScheduleSpecification scheduleSpec1 =
@@ -827,7 +856,7 @@ public class DefaultStoreTest {
   @Test
   public void testDynamicScheduling() throws Exception {
     AppFabricTestHelper.deployApplication(AppWithWorkflow.class);
-    Id.Application appId = Id.Application.from(Constants.DEFAULT_NAMESPACE, AppWithWorkflow.NAME);
+    Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, AppWithWorkflow.NAME);
 
     Map<String, ScheduleSpecification> schedules = getSchedules(appId);
     Assert.assertEquals(0, schedules.size());
@@ -964,5 +993,148 @@ public class DefaultStoreTest {
     public int hashCode() {
       return Objects.hashCode(x, y, z);
     }
+  }
+
+  @Test
+  public void testRunningInRangeSimple() throws Exception {
+    Id.Run run1 = new Id.Run(Id.Program.from("d", "a1", ProgramType.FLOW, "f1"), RunIds.generate(20000).getId());
+    Id.Run run2 = new Id.Run(Id.Program.from("d", "a2", ProgramType.MAPREDUCE, "f2"), RunIds.generate(10000).getId());
+    Id.Run run3 = new Id.Run(Id.Program.from("d", "a3", ProgramType.WORKER, "f3"), RunIds.generate(40000).getId());
+    Id.Run run4 = new Id.Run(Id.Program.from("d", "a4", ProgramType.SERVICE, "f4"), RunIds.generate(70000).getId());
+    Id.Run run5 = new Id.Run(Id.Program.from("d", "a5", ProgramType.SPARK, "f5"), RunIds.generate(30000).getId());
+    Id.Run run6 = new Id.Run(Id.Program.from("d", "a6", ProgramType.WORKFLOW, "f6"), RunIds.generate(60000).getId());
+
+    writeStartRecord(run1);
+    writeStartRecord(run2);
+    writeStartRecord(run3);
+    writeStartRecord(run4);
+    writeStartRecord(run5);
+    writeStartRecord(run6);
+
+    Assert.assertEquals(runsToTime(run1, run2), runIdsToTime(store.getRunningInRange(1, 30)));
+    Assert.assertEquals(runsToTime(run1, run2, run5, run3), runIdsToTime(store.getRunningInRange(30, 50)));
+    Assert.assertEquals(runsToTime(run1, run2, run3, run4, run5, run6),
+                        runIdsToTime(store.getRunningInRange(1, 71)));
+    Assert.assertEquals(runsToTime(run1, run2, run3, run4, run5, run6),
+                        runIdsToTime(store.getRunningInRange(50, 71)));
+    Assert.assertEquals(ImmutableSet.of(), runIdsToTime(store.getRunningInRange(1, 10)));
+
+    writeStopRecord(run1, 45000);
+    writeStopRecord(run3, 55000);
+    writeSuspendedRecord(run5);
+
+    Assert.assertEquals(runsToTime(run2, run3, run4, run5, run6),
+                        runIdsToTime(store.getRunningInRange(50, 71)));
+  }
+
+  @SuppressWarnings("PointlessArithmeticExpression")
+  @Test
+  public void testRunningInRangeMulti() throws Exception {
+    // Add some run records
+    TreeSet<Long> allPrograms = new TreeSet<>();
+    TreeSet<Long> stoppedPrograms = new TreeSet<>();
+    TreeSet<Long> suspendedPrograms = new TreeSet<>();
+    TreeSet<Long> runningPrograms = new TreeSet<>();
+    for (int i = 0; i < 99; ++i) {
+      Id.Application application = Id.Application.from("default", "app" + i);
+      Id.Program program = Id.Program.from(application, ProgramType.values()[i % ProgramType.values().length],
+                                           "program" + i);
+      long startTime = (i + 1) * 10000;
+      RunId runId = RunIds.generate(startTime);
+      allPrograms.add(startTime);
+      Id.Run run = new Id.Run(program, runId.getId());
+      writeStartRecord(run);
+
+      // For every 3rd program starting from 0th, write stop record
+      if ((i % 3) == 0) {
+        writeStopRecord(run, startTime + 10);
+        stoppedPrograms.add(startTime);
+      }
+
+      // For every 3rd program starting from 1st, write suspended record
+      if ((i % 3) == 1) {
+        writeSuspendedRecord(run);
+        suspendedPrograms.add(startTime);
+      }
+
+      // The rest are running programs
+      if ((i % 3) == 2) {
+        runningPrograms.add(startTime);
+      }
+    }
+
+    // In all below assertions, TreeSet and metadataStore both have start time inclusive and end time exclusive.
+    // querying full range should give all programs
+    Assert.assertEquals(allPrograms, runIdsToTime(store.getRunningInRange(0, Long.MAX_VALUE)));
+    Assert.assertEquals(allPrograms, runIdsToTime(store.getRunningInRange(1 * 10, 100 * 10)));
+
+    // querying a range before start time of first program should give empty results
+    Assert.assertEquals(ImmutableSet.of(), runIdsToTime(store.getRunningInRange(1, 1 * 10)));
+
+    // querying a range after the stop time of the last program should return only running and suspended programs
+    Assert.assertEquals(ImmutableSortedSet.copyOf(Iterables.concat(suspendedPrograms, runningPrograms)),
+                        runIdsToTime(store.getRunningInRange(100 * 10, Long.MAX_VALUE)));
+
+    // querying a range completely within the start time of the first program and stop time of the last program
+    // should give all running and suspended programs started after given start time,
+    // and all stopped programs between given start and stop time.
+    Assert.assertEquals(ImmutableSortedSet.copyOf(
+                          Iterables.concat(stoppedPrograms.subSet(30 * 10000L, 60 * 10000L),
+                                           suspendedPrograms.subSet(1 * 10000L, 60 * 10000L),
+                                           runningPrograms.subSet(1 * 10000L, 60 * 10000L))),
+                        runIdsToTime(store.getRunningInRange(30 * 10, 60 * 10)));
+
+    // querying a range after start time of first program to after the stop time of the last program
+    // should give all running and suspended programs after start time of first program
+    // and all stopped programs after the given start time
+    Assert.assertEquals(ImmutableSortedSet.copyOf(
+                          Iterables.concat(stoppedPrograms.subSet(30 * 10000L, 150 * 10000L),
+                                           suspendedPrograms.subSet(1 * 10000L, 150 * 10000L),
+                                           runningPrograms.subSet(1 * 10000L, 150 * 10000L))),
+                        runIdsToTime(store.getRunningInRange(30 * 10, 150 * 10)));
+
+    // querying a range before start time of first program to before the stop time of the last program
+    // should give all running, suspended, and stopped programs from the first program to the given stop time
+    Assert.assertEquals(ImmutableSortedSet.copyOf(
+                          Iterables.concat(stoppedPrograms.subSet(1000L, 45 * 10000L),
+                                           suspendedPrograms.subSet(1000L, 45 * 10000L),
+                                           runningPrograms.subSet(1000L, 45 * 10000L))),
+                        runIdsToTime(store.getRunningInRange(1, 45 * 10)));
+  }
+
+  private void writeStartRecord(Id.Run run) {
+    store.setStart(run.getProgram(), run.getId(), RunIds.getTime(RunIds.fromString(run.getId()), TimeUnit.SECONDS));
+    Assert.assertNotNull(store.getRun(run.getProgram(), run.getId()));
+  }
+
+  private void writeStopRecord(Id.Run run, long stopTimeInMillis) {
+    store.setStop(run.getProgram(), run.getId(), TimeUnit.MILLISECONDS.toSeconds(stopTimeInMillis),
+                  ProgramRunStatus.COMPLETED);
+    Assert.assertNotNull(store.getRun(run.getProgram(), run.getId()));
+  }
+
+  private void writeSuspendedRecord(Id.Run run) {
+    store.setSuspend(run.getProgram(), run.getId());
+    Assert.assertNotNull(store.getRun(run.getProgram(), run.getId()));
+  }
+
+  private Set<Long> runsToTime(Id.Run... runIds) {
+    Iterable<Long> transformedRunIds = Iterables.transform(ImmutableSet.copyOf(runIds), new Function<Id.Run, Long>() {
+      @Override
+      public Long apply(Id.Run input) {
+        return RunIds.getTime(RunIds.fromString(input.getId()), TimeUnit.MILLISECONDS);
+      }
+    });
+    return ImmutableSortedSet.copyOf(transformedRunIds);
+  }
+
+  private SortedSet<Long> runIdsToTime(Set<RunId> runIds) {
+    Iterable<Long> transformedRunIds = Iterables.transform(runIds, new Function<RunId, Long>() {
+      @Override
+      public Long apply(RunId input) {
+        return RunIds.getTime(input, TimeUnit.MILLISECONDS);
+      }
+    });
+    return ImmutableSortedSet.copyOf(transformedRunIds);
   }
 }

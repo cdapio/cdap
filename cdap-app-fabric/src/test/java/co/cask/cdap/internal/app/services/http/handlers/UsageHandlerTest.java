@@ -17,7 +17,6 @@
 package co.cask.cdap.internal.app.services.http.handlers;
 
 import co.cask.cdap.AllProgramsApp;
-import co.cask.cdap.data2.registry.UsageRegistry;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
@@ -214,50 +213,6 @@ public class UsageHandlerTest extends AppFabricTestBase {
     }
   }
 
-  @Test
-  public void testAdapterStreamUsage() throws Exception {
-    final Id.Adapter adapter = Id.Adapter.from("somespace", "noadapter");
-    final Id.Stream stream = Id.Stream.from("somespace", "nostream");
-
-    Assert.assertEquals(0, getAdapterStreamUsage(adapter).size());
-    Assert.assertEquals(0, getStreamAdapterUsage(stream).size());
-
-    // TODO: test actual adapter - adapter isn't easy to test from unit test right now
-    getUsageRegistry().register(adapter, stream);
-
-    Assert.assertEquals(1, getAdapterStreamUsage(adapter).size());
-    Assert.assertEquals(stream, getAdapterStreamUsage(adapter).iterator().next());
-    Assert.assertEquals(1, getStreamAdapterUsage(stream).size());
-    Assert.assertEquals(adapter, getStreamAdapterUsage(stream).iterator().next());
-
-    getUsageRegistry().unregister(adapter);
-  }
-
-  @Test
-  public void testAdapterDatasetUsage() throws Exception {
-    final Id.Adapter adapter = Id.Adapter.from("somespace", "noadapter");
-    final Id.DatasetInstance dataset = Id.DatasetInstance.from("somespace", "nods");
-
-    Assert.assertEquals(0, getAdapterDatasetUsage(adapter).size());
-    Assert.assertEquals(0, getDatasetAdapterUsage(dataset).size());
-
-    // TODO: test actual adapter - adapter isn't easy to test from unit test right now
-    getUsageRegistry().register(adapter, dataset);
-
-    Assert.assertEquals(1, getAdapterDatasetUsage(adapter).size());
-    Assert.assertEquals(dataset, getAdapterDatasetUsage(adapter).iterator().next());
-    Assert.assertEquals(1, getDatasetAdapterUsage(dataset).size());
-    Assert.assertEquals(adapter, getDatasetAdapterUsage(dataset).iterator().next());
-
-    getUsageRegistry().unregister(adapter);
-  }
-
-  private UsageRegistry getUsageRegistry() {
-    return getInjector().getInstance(UsageRegistry.class);
-  }
-
-  // app/program/adapter -> dataset/stream
-
   private Set<Id.DatasetInstance> getAppDatasetUsage(Id.Application app) throws Exception {
     HttpResponse response = doGet(
       String.format("/v3/namespaces/%s/apps/%s/datasets", app.getNamespaceId(), app.getId()));
@@ -296,22 +251,6 @@ public class UsageHandlerTest extends AppFabricTestBase {
                          new TypeToken<Set<Id.Stream>>() { }.getType());
   }
 
-  private Set<Id.DatasetInstance> getAdapterDatasetUsage(Id.Adapter adapter) throws Exception {
-    HttpResponse response = doGet(
-      String.format("/v3/namespaces/%s/adapters/%s/datasets", adapter.getNamespaceId(), adapter.getId()));
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    return GSON.fromJson(EntityUtils.toString(response.getEntity()),
-                         new TypeToken<Set<Id.DatasetInstance>>() { }.getType());
-  }
-
-  private Set<Id.Stream> getAdapterStreamUsage(Id.Adapter adapter) throws Exception {
-    HttpResponse response = doGet(
-      String.format("/v3/namespaces/%s/adapters/%s/streams", adapter.getNamespaceId(), adapter.getId()));
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    return GSON.fromJson(EntityUtils.toString(response.getEntity()),
-                         new TypeToken<Set<Id.Stream>>() { }.getType());
-  }
-
   // dataset/stream -> program/adapter
 
   private Set<Id.Program> getStreamProgramUsage(Id.Stream stream) throws Exception {
@@ -322,28 +261,12 @@ public class UsageHandlerTest extends AppFabricTestBase {
                          new TypeToken<Set<Id.Program>>() { }.getType());
   }
 
-  private Set<Id.Adapter> getStreamAdapterUsage(Id.Stream stream) throws Exception {
-    HttpResponse response = doGet(
-      String.format("/v3/namespaces/%s/streams/%s/adapters", stream.getNamespaceId(), stream.getId()));
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    return GSON.fromJson(EntityUtils.toString(response.getEntity()),
-                         new TypeToken<Set<Id.Adapter>>() { }.getType());
-  }
-
   private Set<Id.Program> getDatasetProgramUsage(Id.DatasetInstance dataset) throws Exception {
     HttpResponse response = doGet(
       String.format("/v3/namespaces/%s/data/datasets/%s/programs", dataset.getNamespaceId(), dataset.getId()));
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     return GSON.fromJson(EntityUtils.toString(response.getEntity()),
                          new TypeToken<Set<Id.Program>>() { }.getType());
-  }
-
-  private Set<Id.Adapter> getDatasetAdapterUsage(Id.DatasetInstance dataset) throws Exception {
-    HttpResponse response = doGet(
-      String.format("/v3/namespaces/%s/data/datasets/%s/adapters", dataset.getNamespaceId(), dataset.getId()));
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    return GSON.fromJson(EntityUtils.toString(response.getEntity()),
-                         new TypeToken<Set<Id.Adapter>>() { }.getType());
   }
 
 }

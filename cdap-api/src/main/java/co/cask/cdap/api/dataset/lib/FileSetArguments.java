@@ -16,11 +16,10 @@
 
 package co.cask.cdap.api.dataset.lib;
 
-import com.google.common.base.Splitter;
-import com.google.common.collect.Lists;
-
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -79,6 +78,21 @@ public class FileSetArguments {
   }
 
   /**
+   * Sets the baseLocation of the file dataset as the output location in the runtime arguments for a file dataset.
+   */
+  public static void setBaseOutputPath(Map<String, String> arguments) {
+    // use null to indicate to use the base location of the file dataset as the output path
+    arguments.put(OUTPUT_PATH, null);
+  }
+
+  /**
+   * @return whether to use the base location of the file dataset as the output location.
+   */
+  public static boolean isBaseOutputPath(Map<String, String> arguments) {
+    return arguments.containsKey(OUTPUT_PATH) && arguments.get(OUTPUT_PATH) == null;
+  }
+
+  /**
    * Sets the output path in the runtime arguments for a file dataset.
    */
   public static void setOutputPath(Map<String, String> arguments, String path) {
@@ -100,8 +114,13 @@ public class FileSetArguments {
     if (pathsArg == null) {
       return Collections.emptyList();
     }
-    Iterable<String> paths = Splitter.on(',').omitEmptyStrings().trimResults().split(pathsArg);
-    return Lists.newArrayList(paths);
+    List<String> paths = new ArrayList<>();
+    for (String path : pathsArg.split("\\s*,\\s*")) {
+      if (!path.isEmpty()) {
+        paths.add(path);
+      }
+    }
+    return paths;
   }
 
 }

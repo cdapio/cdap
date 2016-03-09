@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -43,7 +43,8 @@ import co.cask.cdap.data2.dataset2.SingleTypeModule;
 import co.cask.cdap.data2.dataset2.lib.table.CoreDatasetsModule;
 import co.cask.cdap.data2.dataset2.module.lib.inmemory.InMemoryTableModule;
 import co.cask.cdap.data2.metrics.DatasetMetricsReporter;
-import co.cask.cdap.data2.registry.UsageRegistry;
+import co.cask.cdap.data2.transaction.DelegatingTransactionSystemClientService;
+import co.cask.cdap.data2.transaction.TransactionSystemClientService;
 import co.cask.cdap.explore.client.DiscoveryExploreClient;
 import co.cask.cdap.explore.client.ExploreFacade;
 import co.cask.cdap.proto.Id;
@@ -53,6 +54,7 @@ import co.cask.tephra.inmemory.InMemoryTxSystemClient;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
+import com.google.common.util.concurrent.Futures;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.twill.common.Threads;
@@ -73,7 +75,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 /**
- *
+ * Tests for {@link RemoteDatasetFramework}
  */
 public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
   private TransactionManager txManager;
@@ -101,10 +103,11 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
     txManager = new TransactionManager(txConf);
     txManager.startAndWait();
     InMemoryTxSystemClient txSystemClient = new InMemoryTxSystemClient(txManager);
+    TransactionSystemClientService txSystemClientService = new DelegatingTransactionSystemClientService(txSystemClient);
 
     LocalLocationFactory locationFactory = new LocalLocationFactory(new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR)));
     NamespacedLocationFactory namespacedLocationFactory = new DefaultNamespacedLocationFactory(cConf, locationFactory);
-    framework = new RemoteDatasetFramework(discoveryService, registryFactory);
+    framework = new RemoteDatasetFramework(cConf, discoveryService, registryFactory);
     SystemDatasetInstantiatorFactory datasetInstantiatorFactory =
       new SystemDatasetInstantiatorFactory(locationFactory, framework, cConf);
 
@@ -121,16 +124,19 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
       .build();
 
     InMemoryDatasetFramework mdsFramework = new InMemoryDatasetFramework(registryFactory, modules, cConf);
-    MDSDatasetsRegistry mdsDatasetsRegistry = new MDSDatasetsRegistry(txSystemClient, mdsFramework);
+    MDSDatasetsRegistry mdsDatasetsRegistry = new MDSDatasetsRegistry(txSystemClientService, mdsFramework);
 
-    ExploreFacade exploreFacade = new ExploreFacade(new DiscoveryExploreClient(discoveryService), cConf);
+    ExploreFacade exploreFacade = new ExploreFacade(new DiscoveryExploreClient(cConf, discoveryService), cConf);
     DatasetInstanceService instanceService = new DatasetInstanceService(
       new DatasetTypeManager(cConf, mdsDatasetsRegistry, locationFactory, DEFAULT_MODULES),
       new DatasetInstanceManager(mdsDatasetsRegistry),
       new InMemoryDatasetOpExecutor(framework),
       exploreFacade,
       cConf,
-      new UsageRegistry(txExecutorFactory, framework));
+      txExecutorFactory,
+      registryFactory,
+      NAMESPACE_STORE);
+
     service = new DatasetService(cConf,
                                  namespacedLocationFactory,
                                  discoveryService,
@@ -142,7 +148,8 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
                                  new HashSet<DatasetMetricsReporter>(),
                                  instanceService,
                                  new LocalStorageProviderNamespaceAdmin(cConf, namespacedLocationFactory,
-                                                                        exploreFacade)
+                                                                        exploreFacade),
+                                 NAMESPACE_STORE
     );
     // Start dataset service, wait for it to be discoverable
     service.start();
@@ -158,7 +165,7 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
 
     startLatch.await(5, TimeUnit.SECONDS);
 
-    framework.createNamespace(Constants.SYSTEM_NAMESPACE_ID);
+    framework.createNamespace(Id.Namespace.SYSTEM);
     framework.createNamespace(NAMESPACE_ID);
   }
 
@@ -170,30 +177,33 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
     DatasetFramework framework = getFramework();
     // Adding module to system namespace should fail
     try {
-      framework.addModule(Id.DatasetModule.from(Constants.SYSTEM_NAMESPACE_ID, "keyValue"),
+      framework.addModule(Id.DatasetModule.from(Id.Namespace.SYSTEM, "keyValue"),
                           new SingleTypeModule(SimpleKVTable.class));
       Assert.fail("Should not be able to add a module to system namespace");
     } catch (DatasetManagementException e) {
+      // expected
     }
     Assert.assertTrue(framework.hasSystemType("orderedTable"));
     Assert.assertTrue(framework.hasSystemType(OrderedTable.class.getName()));
     try {
-      framework.deleteModule(Id.DatasetModule.from(Constants.SYSTEM_NAMESPACE_ID, "orderedTable-memory"));
+      framework.deleteModule(Id.DatasetModule.from(Id.Namespace.SYSTEM, "orderedTable-memory"));
       Assert.fail("Should not be able to delete a default module.");
     } catch (DatasetManagementException e) {
+      // expected
     }
     try {
-      framework.deleteAllModules(Constants.SYSTEM_NAMESPACE_ID);
+      framework.deleteAllModules(Id.Namespace.SYSTEM);
       Assert.fail("Should not be able to delete modules from system namespace");
     } catch (DatasetManagementException e) {
+      // expected
     }
   }
 
   @After
   public void after() throws DatasetManagementException {
-    Services.chainStop(service, opExecutorService, txManager);
     framework.deleteNamespace(NAMESPACE_ID);
-    framework.deleteNamespace(Constants.SYSTEM_NAMESPACE_ID);
+    framework.deleteNamespace(Id.Namespace.SYSTEM);
+    Futures.getUnchecked(Services.chainStop(service, opExecutorService, txManager));
   }
 
   @Override

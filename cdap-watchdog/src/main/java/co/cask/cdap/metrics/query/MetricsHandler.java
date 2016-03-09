@@ -51,7 +51,6 @@ import org.jboss.netty.handler.codec.http.QueryStringDecoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -137,7 +136,7 @@ public class MetricsHandler extends AbstractHttpHandler {
   @Path("/search")
   public void search(HttpRequest request, HttpResponder responder,
                      @QueryParam("target") String target,
-                     @QueryParam("tag") List<String> tags) throws IOException {
+                     @QueryParam("tag") List<String> tags) throws Exception {
     if (target == null) {
       responder.sendJson(HttpResponseStatus.BAD_REQUEST, "Required target param is missing");
       return;
@@ -156,15 +155,12 @@ public class MetricsHandler extends AbstractHttpHandler {
     }
   }
 
-  private void searchMetricAndRespond(HttpResponder responder, List<String> tagValues) {
+  private void searchMetricAndRespond(HttpResponder responder, List<String> tagValues) throws Exception {
     try {
       responder.sendJson(HttpResponseStatus.OK, getMetrics(humanToTagNames(parseTagValues(tagValues))));
     } catch (IllegalArgumentException e) {
       LOG.warn("Invalid request", e);
       responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
-    } catch (Exception e) {
-      LOG.warn("Exception while retrieving available metrics", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
 

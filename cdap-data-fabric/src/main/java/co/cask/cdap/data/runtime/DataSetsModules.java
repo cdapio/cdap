@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,21 +17,40 @@
 package co.cask.cdap.data.runtime;
 
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
+import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.runtime.RuntimeModule;
+import co.cask.cdap.data2.datafabric.dataset.DatasetProvider;
+import co.cask.cdap.data2.datafabric.dataset.DefaultDatasetProvider;
 import co.cask.cdap.data2.datafabric.dataset.RemoteDatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DefaultDatasetDefinitionRegistry;
 import co.cask.cdap.data2.dataset2.InMemoryDatasetFramework;
+import co.cask.cdap.data2.metadata.publisher.KafkaMetadataChangePublisher;
+import co.cask.cdap.data2.metadata.publisher.MetadataChangePublisher;
+import co.cask.cdap.data2.metadata.publisher.NoOpMetadataChangePublisher;
+import co.cask.cdap.data2.metadata.store.DefaultMetadataStore;
+import co.cask.cdap.data2.metadata.store.MetadataStore;
+import co.cask.cdap.data2.metadata.store.NoOpMetadataStore;
+import co.cask.cdap.data2.metadata.writer.BasicLineageWriter;
+import co.cask.cdap.data2.metadata.writer.LineageWriter;
+import co.cask.cdap.data2.metadata.writer.LineageWriterDatasetFramework;
+import com.google.inject.Inject;
+import com.google.inject.Injector;
 import com.google.inject.Module;
 import com.google.inject.PrivateModule;
+import com.google.inject.Provider;
 import com.google.inject.Scopes;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
+import com.google.inject.name.Names;
 
 /**
  * DataSets framework bindings
  */
 public class DataSetsModules extends RuntimeModule {
+
+  public static final String BASIC_DATASET_FRAMEWORK = "basicDatasetFramework";
 
   @Override
   public Module getInMemoryModules() {
@@ -41,8 +60,26 @@ public class DataSetsModules extends RuntimeModule {
         install(new FactoryModuleBuilder()
                   .implement(DatasetDefinitionRegistry.class, DefaultDatasetDefinitionRegistry.class)
                   .build(DatasetDefinitionRegistryFactory.class));
-        bind(DatasetFramework.class).to(InMemoryDatasetFramework.class).in(Scopes.SINGLETON);
+
+        bind(MetadataStore.class).to(NoOpMetadataStore.class);
+        expose(MetadataStore.class);
+
+        bind(DatasetFramework.class)
+          .annotatedWith(Names.named(BASIC_DATASET_FRAMEWORK))
+          .to(InMemoryDatasetFramework.class).in(Scopes.SINGLETON);
+        expose(DatasetFramework.class).annotatedWith(Names.named(BASIC_DATASET_FRAMEWORK));
+
+        bind(DatasetProvider.class)
+          .to(DefaultDatasetProvider.class);
+        expose(DatasetProvider.class);
+
+        bind(LineageWriter.class).to(BasicLineageWriter.class);
+        expose(LineageWriter.class);
+        bind(DatasetFramework.class).to(LineageWriterDatasetFramework.class);
         expose(DatasetFramework.class);
+
+        bind(MetadataChangePublisher.class).toProvider(MetadataChangePublisherProvider.class);
+        expose(MetadataChangePublisher.class);
       }
     };
   }
@@ -55,11 +92,28 @@ public class DataSetsModules extends RuntimeModule {
         install(new FactoryModuleBuilder()
                   .implement(DatasetDefinitionRegistry.class, DefaultDatasetDefinitionRegistry.class)
                   .build(DatasetDefinitionRegistryFactory.class));
-        bind(DatasetFramework.class).to(RemoteDatasetFramework.class);
+
+        bind(MetadataStore.class).to(DefaultMetadataStore.class);
+        expose(MetadataStore.class);
+
+        bind(DatasetFramework.class)
+          .annotatedWith(Names.named(BASIC_DATASET_FRAMEWORK))
+          .to(RemoteDatasetFramework.class);
+        expose(DatasetFramework.class).annotatedWith(Names.named(BASIC_DATASET_FRAMEWORK));
+
+        bind(DatasetProvider.class)
+          .to(DefaultDatasetProvider.class);
+        expose(DatasetProvider.class);
+
+        bind(LineageWriter.class).to(BasicLineageWriter.class);
+        expose(LineageWriter.class);
+        bind(DatasetFramework.class).to(LineageWriterDatasetFramework.class);
         expose(DatasetFramework.class);
+
+        bind(MetadataChangePublisher.class).toProvider(MetadataChangePublisherProvider.class);
+        expose(MetadataChangePublisher.class);
       }
     };
-
   }
 
   @Override
@@ -70,9 +124,47 @@ public class DataSetsModules extends RuntimeModule {
         install(new FactoryModuleBuilder()
                   .implement(DatasetDefinitionRegistry.class, DefaultDatasetDefinitionRegistry.class)
                   .build(DatasetDefinitionRegistryFactory.class));
-        bind(DatasetFramework.class).to(RemoteDatasetFramework.class);
+
+        bind(MetadataStore.class).to(DefaultMetadataStore.class);
+        expose(MetadataStore.class);
+
+        bind(DatasetFramework.class)
+          .annotatedWith(Names.named(BASIC_DATASET_FRAMEWORK))
+          .to(RemoteDatasetFramework.class);
+        expose(DatasetFramework.class).annotatedWith(Names.named(BASIC_DATASET_FRAMEWORK));
+
+        bind(DatasetProvider.class)
+          .to(DefaultDatasetProvider.class);
+        expose(DatasetProvider.class);
+
+        bind(LineageWriter.class).to(BasicLineageWriter.class);
+        expose(LineageWriter.class);
+        bind(DatasetFramework.class).to(LineageWriterDatasetFramework.class);
         expose(DatasetFramework.class);
+
+        bind(MetadataChangePublisher.class).toProvider(MetadataChangePublisherProvider.class);
+        expose(MetadataChangePublisher.class);
       }
     };
   }
+
+  private static final class MetadataChangePublisherProvider implements Provider<MetadataChangePublisher> {
+    private final Injector injector;
+    private final CConfiguration cConf;
+
+    @Inject
+    public MetadataChangePublisherProvider(Injector injector, CConfiguration cConf) {
+      this.injector = injector;
+      this.cConf = cConf;
+    }
+
+    @Override
+    public MetadataChangePublisher get() {
+      if (cConf.getBoolean(Constants.Metadata.UPDATES_PUBLISH_ENABLED)) {
+        return injector.getInstance(KafkaMetadataChangePublisher.class);
+      }
+      return injector.getInstance(NoOpMetadataChangePublisher.class);
+    }
+  }
+
 }

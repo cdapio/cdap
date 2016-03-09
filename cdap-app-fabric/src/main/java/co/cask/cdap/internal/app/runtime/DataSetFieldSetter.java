@@ -19,9 +19,9 @@ import co.cask.cdap.api.annotation.UseDataSet;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.internal.lang.FieldVisitor;
-import com.google.common.reflect.TypeToken;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Type;
 
 /**
  * A {@link FieldVisitor} that inject DataSet instance into fields marked with {@link UseDataSet}.
@@ -35,7 +35,7 @@ public final class DataSetFieldSetter extends FieldVisitor {
   }
 
   @Override
-  public void visit(Object instance, TypeToken<?> inspectType, TypeToken<?> declareType, Field field) throws Exception {
+  public void visit(Object instance, Type inspectType, Type declareType, Field field) throws Exception {
     if (Dataset.class.isAssignableFrom(field.getType())) {
       UseDataSet useDataSet = field.getAnnotation(UseDataSet.class);
       if (useDataSet != null && !useDataSet.value().isEmpty()) {

@@ -22,6 +22,7 @@ import com.google.common.base.Optional;
  */
 public final class SecurityRequestContext {
   private static final ThreadLocal<String> userId = new InheritableThreadLocal<>();
+  private static final ThreadLocal<String> userIP = new InheritableThreadLocal<>();
 
   private SecurityRequestContext() {
   }
@@ -34,10 +35,25 @@ public final class SecurityRequestContext {
   }
 
   /**
+   * @return the userIP set on the current thread
+   */
+  public static Optional<String> getUserIP() {
+    return Optional.fromNullable(userIP.get());
+  }
+
+  /**
    * Set the userId on the current thread.
    * @param userIdParam userId to be set
    */
   public static void setUserId(String userIdParam) {
     userId.set(userIdParam);
+  }
+
+  /**
+   * Set the userIP on the current thread.
+   * @param userIPParam userIP to be set
+   */
+  public static void setUserIP(String userIPParam) {
+    userIP.set(userIPParam);
   }
 }

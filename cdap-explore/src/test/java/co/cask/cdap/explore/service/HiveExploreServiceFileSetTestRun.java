@@ -27,6 +27,7 @@ import co.cask.cdap.api.dataset.lib.PartitionedFileSetProperties;
 import co.cask.cdap.api.dataset.lib.Partitioning;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.explore.client.ExploreExecutionResult;
 import co.cask.cdap.proto.ColumnDesc;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.QueryResult;
@@ -70,6 +71,49 @@ public class HiveExploreServiceFileSetTestRun extends BaseHiveExploreServiceTest
   @After
   public void deleteAll() throws Exception {
     datasetFramework.deleteAllInstances(NAMESPACE_ID);
+  }
+
+  @Test
+  public void testOrcFileset() throws Exception {
+    final Id.DatasetInstance datasetInstanceId = Id.DatasetInstance.from(NAMESPACE_ID, "orcfiles");
+    final String tableName = getDatasetHiveName(datasetInstanceId);
+
+    // create a time partitioned file set
+    datasetFramework.addInstance("fileSet", datasetInstanceId, FileSetProperties.builder()
+      .setEnableExploreOnCreate(true)
+      .setSerDe("org.apache.hadoop.hive.ql.io.orc.OrcSerde")
+      .setExploreInputFormat("org.apache.hadoop.hive.ql.io.orc.OrcInputFormat")
+      .setExploreOutputFormat("org.apache.hadoop.hive.ql.io.orc.OrcOutputFormat")
+      .setExploreSchema("id int, name string")
+      .build());
+
+    // verify that the hive table was created for this file set
+    runCommand(NAMESPACE_ID, "show tables", true,
+               Lists.newArrayList(new ColumnDesc("tab_name", "STRING", 1, "from deserializer")),
+               Lists.newArrayList(new QueryResult(Lists.<Object>newArrayList(tableName))));
+
+    // insert data into the table
+
+    ExploreExecutionResult result = exploreClient.submit(
+      NAMESPACE_ID, String.format("insert into table %s values (1, 'samuel'), (2, 'dwayne')", tableName)).get();
+    result.close();
+
+    // verify that we can query the key-values in the file with Hive
+    runCommand(NAMESPACE_ID, "SELECT * FROM " + tableName, true,
+               Lists.newArrayList(
+                 new ColumnDesc(tableName + ".id", "INT", 1, null),
+                 new ColumnDesc(tableName + ".name", "STRING", 2, null)),
+               Lists.newArrayList(
+                 new QueryResult(Lists.<Object>newArrayList(1, "samuel")),
+                 new QueryResult(Lists.<Object>newArrayList(2, "dwayne"))));
+
+    // drop the dataset
+    datasetFramework.deleteInstance(datasetInstanceId);
+
+    // verify the Hive table is gone
+    runCommand(NAMESPACE_ID, "show tables", false,
+               Lists.newArrayList(new ColumnDesc("tab_name", "STRING", 1, "from deserializer")),
+               Collections.<QueryResult>emptyList());
   }
 
   @Test

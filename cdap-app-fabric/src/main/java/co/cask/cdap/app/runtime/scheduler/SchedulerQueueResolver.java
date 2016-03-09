@@ -16,12 +16,13 @@
 
 package co.cask.cdap.app.runtime.scheduler;
 
-import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceConfig;
 import co.cask.cdap.proto.NamespaceMeta;
+import co.cask.cdap.store.NamespaceStore;
+import com.google.common.base.Strings;
 
 import javax.annotation.Nullable;
 
@@ -31,13 +32,13 @@ import javax.annotation.Nullable;
  */
 public class SchedulerQueueResolver {
   private final String defaultQueue;
-  private final Store store;
+  private final NamespaceStore store;
 
   /**
    * Construct SchedulerQueueResolver with CConfiguration and Store.
    */
-  public SchedulerQueueResolver(CConfiguration cConf, Store store) {
-    this.defaultQueue = cConf.get(Constants.AppFabric.APP_SCHEDULER_QUEUE);
+  public SchedulerQueueResolver(CConfiguration cConf, NamespaceStore store) {
+    this.defaultQueue = cConf.get(Constants.AppFabric.APP_SCHEDULER_QUEUE, "");
     this.store = store;
   }
 
@@ -56,10 +57,11 @@ public class SchedulerQueueResolver {
    */
   @Nullable
   public String getQueue(Id.Namespace namespaceId) {
-    NamespaceMeta meta = store.getNamespace(namespaceId);
+    NamespaceMeta meta = store.get(namespaceId);
     if (meta != null) {
       NamespaceConfig config = meta.getConfig();
-      return config.getSchedulerQueueName() != null ? config.getSchedulerQueueName() : getDefaultQueue();
+      String namespaceQueue = config.getSchedulerQueueName();
+      return Strings.isNullOrEmpty(namespaceQueue) ? getDefaultQueue() : namespaceQueue;
     } else {
       return getDefaultQueue();
     }

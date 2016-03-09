@@ -1,0 +1,72 @@
+/*
+ * Copyright © 2015 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
+@import "../../styles/variables.less";
+@import "../../styles/themes/cdap/mixins.less";
+@import "../../../bower_components/bootstrap/less/mixins.less";
+
+@border-color: #d0d0dd;
+my-schedules-view {
+  .schedule-heading {
+    background-color: white;
+    border: 1px solid @border-color;
+    border-top-left-radius: @border-radius-base;
+    border-top-right-radius: @border-radius-base;
+    font-weight: 700;
+    padding: 10px 0;
+  }
+
+  .schedule-content {
+    .schedule-rows {
+      .schedule-row {
+        background-color: white;
+        border: 1px solid @border-color;
+        padding: 5px 0;
+        cursor: pointer;
+        height: 55px;
+        &.active { background-color: #dcdce6; }
+        p, i {
+          vertical-align: middle;
+          font-size: 15px;
+          margin-bottom: 0;
+        }
+      }
+    }
+
+    .schedule-detail {
+      background-color: #9d9fab;
+      padding: 10px 0;
+      .row {
+        p {
+          vertical-align: middle;
+          margin-bottom: 0;
+          color: white;
+        }
+      }
+      .table {
+        width: inherit;
+      }
+    }
+  }
+}
+
+body.state-workflows {
+  my-schedules-view {
+    .container {
+      width: 100%;
+    }
+  }
+}

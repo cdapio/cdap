@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,8 +17,6 @@
 package co.cask.cdap.test.app;
 
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.test.ApplicationManager;
-import co.cask.cdap.test.ConfigurableTestBase;
 import co.cask.cdap.test.DataSetManager;
 import co.cask.cdap.test.SlowTests;
 import co.cask.cdap.test.TestBase;
@@ -44,9 +42,9 @@ public class DatasetUpgradeEnabledTest extends TestBase {
   @Category(XSlowTests.class)
   @Test
   public void testDatasetUncheckedUpgrade() throws Exception {
-    ApplicationManager applicationManager = deployApplication(DatasetUncheckedUpgradeApp.class);
+    deployApplication(DatasetUncheckedUpgradeApp.class);
     DataSetManager<DatasetUncheckedUpgradeApp.RecordDataset> datasetManager =
-      applicationManager.getDataSet(DatasetUncheckedUpgradeApp.DATASET_NAME);
+      getDataset(DatasetUncheckedUpgradeApp.DATASET_NAME);
     DatasetUncheckedUpgradeApp.Record expectedRecord = new DatasetUncheckedUpgradeApp.Record("0AXB", "john", "doe");
     datasetManager.get().writeRecord("key", expectedRecord);
     datasetManager.flush();
@@ -56,15 +54,15 @@ public class DatasetUpgradeEnabledTest extends TestBase {
     Assert.assertEquals(expectedRecord, actualRecord);
 
     // Test compatible upgrade
-    applicationManager = deployApplication(CompatibleDatasetUncheckedUpgradeApp.class);
-    datasetManager = applicationManager.getDataSet(DatasetUncheckedUpgradeApp.DATASET_NAME);
+    deployApplication(CompatibleDatasetUncheckedUpgradeApp.class);
+    datasetManager = getDataset(DatasetUncheckedUpgradeApp.DATASET_NAME);
     CompatibleDatasetUncheckedUpgradeApp.Record compatibleRecord =
       (CompatibleDatasetUncheckedUpgradeApp.Record) datasetManager.get().getRecord("key");
     Assert.assertEquals(new CompatibleDatasetUncheckedUpgradeApp.Record("0AXB", "john", false), compatibleRecord);
 
     // Test in-compatible upgrade
-    applicationManager = deployApplication(IncompatibleDatasetUncheckedUpgradeApp.class);
-    datasetManager = applicationManager.getDataSet(DatasetUncheckedUpgradeApp.DATASET_NAME);
+    deployApplication(IncompatibleDatasetUncheckedUpgradeApp.class);
+    datasetManager = getDataset(DatasetUncheckedUpgradeApp.DATASET_NAME);
     try {
       datasetManager.get().getRecord("key");
       Assert.fail("Expected to throw exception here due to an incompatible Dataset upgrade.");
@@ -73,8 +71,8 @@ public class DatasetUpgradeEnabledTest extends TestBase {
     }
 
     // Revert the upgrade
-    applicationManager = deployApplication(CompatibleDatasetUncheckedUpgradeApp.class);
-    datasetManager = applicationManager.getDataSet(DatasetUncheckedUpgradeApp.DATASET_NAME);
+    deployApplication(CompatibleDatasetUncheckedUpgradeApp.class);
+    datasetManager = getDataset(DatasetUncheckedUpgradeApp.DATASET_NAME);
     CompatibleDatasetUncheckedUpgradeApp.Record revertRecord =
       (CompatibleDatasetUncheckedUpgradeApp.Record) datasetManager.get().getRecord("key");
     Assert.assertEquals(new CompatibleDatasetUncheckedUpgradeApp.Record("0AXB", "john", false), revertRecord);

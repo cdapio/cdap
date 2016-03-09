@@ -16,9 +16,9 @@
 
 package co.cask.cdap.internal.app.runtime.service;
 
+import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.service.ServiceSpecification;
-import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
@@ -26,24 +26,31 @@ import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.metadata.writer.ProgramContextAware;
+import co.cask.cdap.internal.app.runtime.AbstractProgramRunnerWithPlugin;
 import co.cask.cdap.internal.app.runtime.DataFabricFacadeFactory;
 import co.cask.cdap.internal.app.runtime.ProgramControllerServiceAdapter;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
+import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.internal.app.services.ServiceHttpServer;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Preconditions;
+import com.google.common.io.Closeables;
+import com.google.common.util.concurrent.Service;
 import com.google.inject.Inject;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.ServiceAnnouncer;
+import org.apache.twill.common.Threads;
 import org.apache.twill.discovery.DiscoveryServiceClient;
+import org.apache.twill.internal.ServiceListenerAdapter;
 
 /**
  * A {@link ProgramRunner} that runs a component inside a Service (either a HTTP Server or a Worker).
  */
-public class ServiceProgramRunner implements ProgramRunner {
+public class ServiceProgramRunner extends AbstractProgramRunnerWithPlugin {
 
-  private final CConfiguration cConf;
   private final MetricsCollectionService metricsCollectionService;
   private final DatasetFramework datasetFramework;
   private final DiscoveryServiceClient discoveryServiceClient;
@@ -56,7 +63,7 @@ public class ServiceProgramRunner implements ProgramRunner {
                               DatasetFramework datasetFramework, DiscoveryServiceClient discoveryServiceClient,
                               TransactionSystemClient txClient, ServiceAnnouncer serviceAnnouncer,
                               DataFabricFacadeFactory dataFabricFacadeFactory) {
-    this.cConf = cConf;
+    super(cConf);
     this.metricsCollectionService = metricsCollectionService;
     this.datasetFramework = datasetFramework;
     this.discoveryServiceClient = discoveryServiceClient;
@@ -67,10 +74,6 @@ public class ServiceProgramRunner implements ProgramRunner {
 
   @Override
   public ProgramController run(Program program, ProgramOptions options) {
-    // Extract and verify parameters
-    String componentName = options.getName();
-    Preconditions.checkNotNull(componentName, "Missing service component name.");
-
     int instanceId = Integer.parseInt(options.getArguments().getOption(ProgramOptionConstants.INSTANCE_ID, "-1"));
     Preconditions.checkArgument(instanceId >= 0, "Missing instance Id");
 
@@ -93,21 +96,50 @@ public class ServiceProgramRunner implements ProgramRunner {
     String host = options.getArguments().getOption(ProgramOptionConstants.HOST);
     Preconditions.checkArgument(host != null, "No hostname is provided");
 
-    ServiceHttpServer component = new ServiceHttpServer(host, program, spec, runId, options.getUserArguments(),
-                                      instanceId, instanceCount, serviceAnnouncer,
-                                      metricsCollectionService, datasetFramework, dataFabricFacadeFactory,
-                                      txClient, discoveryServiceClient);
+    // Setup dataset framework context, if required
+    if (datasetFramework instanceof ProgramContextAware) {
+      Id.Program programId = program.getId();
+      ((ProgramContextAware) datasetFramework).initContext(new Id.Run(programId, runId.getId()));
+    }
 
-    ProgramControllerServiceAdapter controller = new ServiceProgramControllerAdapter(component, componentName, runId);
-    component.start();
-    return controller;
+    final PluginInstantiator pluginInstantiator = createPluginInstantiator(options, program.getClassLoader());
+    try {
+      ServiceHttpServer component = new ServiceHttpServer(host, program, spec, runId, options.getUserArguments(),
+                                                          instanceId, instanceCount, serviceAnnouncer,
+                                                          metricsCollectionService, datasetFramework,
+                                                          dataFabricFacadeFactory, txClient, discoveryServiceClient,
+                                                          pluginInstantiator);
+
+      // Add a service listener to make sure the plugin instantiator is closed when the worker driver finished.
+      component.addListener(new ServiceListenerAdapter() {
+        @Override
+        public void terminated(Service.State from) {
+          Closeables.closeQuietly(pluginInstantiator);
+        }
+
+        @Override
+        public void failed(Service.State from, Throwable failure) {
+          Closeables.closeQuietly(pluginInstantiator);
+        }
+      }, Threads.SAME_THREAD_EXECUTOR);
+
+
+      ProgramController controller = new ServiceProgramControllerAdapter(component, program.getId(), runId,
+                                                                         spec.getName() + "-" + instanceId);
+      component.start();
+      return controller;
+    } catch (Throwable t) {
+      Closeables.closeQuietly(pluginInstantiator);
+      throw t;
+    }
   }
 
   private static final class ServiceProgramControllerAdapter extends ProgramControllerServiceAdapter {
     private final ServiceHttpServer service;
 
-    public ServiceProgramControllerAdapter(ServiceHttpServer service, String programName, RunId runId) {
-      super(service, programName, runId);
+    public ServiceProgramControllerAdapter(ServiceHttpServer service, Id.Program programId,
+                                           RunId runId, String componentName) {
+      super(service, programId, runId, componentName);
       this.service = service;
     }
 

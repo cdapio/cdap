@@ -16,6 +16,7 @@
 
 package co.cask.cdap.examples.purchase;
 
+import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.annotation.UseDataSet;
 import co.cask.cdap.api.service.AbstractService;
 import co.cask.cdap.api.service.Service;
@@ -41,6 +42,7 @@ public class PurchaseHistoryService extends AbstractService {
     setName(SERVICE_NAME);
     setDescription("A service to retrieve a customer's purchase history");
     addHandler(new PurchaseHistoryServiceHandler());
+    setResources(new Resources(1024));
   }
 
   /**

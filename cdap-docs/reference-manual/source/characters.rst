@@ -10,34 +10,53 @@
 Supported Characters
 ====================
 
-The Cask Data Application Platform (CDAP) has naming conventions for different components of CDAP.
+The Cask Data Application Platform (CDAP) has different naming conventions for different entities in CDAP.
+We distinguish these different character sets, and note which entities use them:
 
-Streams
--------
 
-Stream names can have these characters:
+Alphanumeric Character Set
+--------------------------
+This is the basic character set that all entities support:
+
+- Alphanumeric characters (``a-z A-Z 0-9``)
+
+
+Alphanumeric Extended Character Set
+-----------------------------------
+**Namespace IDs** can use an *alphanumeric extended character set:*
+
+- Alphanumeric characters (``a-z A-Z 0-9``)
+- Underscores (``_``)
+
+
+Alphanumeric Extra Extended Character Set
+-----------------------------------------
+Except as noted on this page, **all other CDAP entities** (such as streams, datasets, flows, apps,
+plugins) support an *alphanumeric extra extended character set:*
 
 - Alphanumeric characters (``a-z A-Z 0-9``)
 - Hyphens (``-``)
 - Underscores (``_``)
 
 
-Datasets
---------
-
-Dataset names can have these characters:
+Dataset Character Set (Deprecated)
+----------------------------------
+In earlier versions of CDAP, **Dataset names** used the alphanumeric extra extended character set, plus periods:
 
 - Alphanumeric characters (``a-z A-Z 0-9``)
 - Hyphens (``-``)
-- Underscores (``_``)
 - Periods (``.``)
+- Underscores (``_``)
+
+We recommend that instead you use the *Alphanumeric Extra Extended Character Set*, as support for this may
+be removed in the future.
 
 
 Hive Limitation and Conversion
 ------------------------------
-
-`Hive 0.12 <https://cwiki.apache.org/confluence/display/Hive/LanguageManual+DDL>`__
-only supports alphanumeric characters (``a-z A-Z 0-9``) and underscores (``_``). 
+`Hive 0.12 <https://cwiki.apache.org/confluence/display/Hive/LanguageManual+DDL#LanguageManualDDL-CreateTable>`__
+only supports the *alphanumeric extended character set:* alphanumeric characters (``a-z
+A-Z 0-9``) and underscores (``_``). 
 
 As a consequence, any hyphens in stream names and any hyphens or periods in dataset names
 will be converted to underscores while creating Hive tables. 

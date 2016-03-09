@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -23,6 +23,7 @@ import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.program.Programs;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.common.utils.Networks;
 import co.cask.cdap.data.stream.StreamCoordinatorClient;
@@ -30,9 +31,8 @@ import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import co.cask.cdap.internal.app.deploy.LocalApplicationManager;
 import co.cask.cdap.internal.app.deploy.ProgramTerminator;
+import co.cask.cdap.internal.app.deploy.pipeline.AppDeploymentInfo;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
-import co.cask.cdap.internal.app.deploy.pipeline.DeploymentInfo;
-import co.cask.cdap.internal.app.namespace.NamespaceAdmin;
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerService;
 import co.cask.cdap.internal.guice.AppFabricTestModule;
 import co.cask.cdap.internal.test.AppJarHelper;
@@ -57,6 +57,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 
 /**
  * This is helper class to make calls to AppFabricHttpHandler methods directly.
@@ -68,19 +69,16 @@ public class AppFabricTestHelper {
 
   public static CConfiguration configuration;
   private static Injector injector;
-  private static File tempFolder = TEMP_FOLDER.newFolder("dest");
 
   public static Injector getInjector() {
     return getInjector(CConfiguration.create());
   }
-
 
   public static synchronized Injector getInjector(CConfiguration conf) {
     if (injector == null) {
       configuration = conf;
       configuration.set(Constants.CFG_LOCAL_DATA_DIR, TEMP_FOLDER.newFolder("data").getAbsolutePath());
       configuration.set(Constants.AppFabric.REST_PORT, Integer.toString(Networks.getRandomPort()));
-      configuration.setBoolean(Constants.Scheduler.SCHEDULERS_LAZY_START, true);
       configuration.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, true);
       injector = Guice.createInjector(new AppFabricTestModule(configuration));
       injector.getInstance(TransactionManager.class).startAndWait();
@@ -97,9 +95,9 @@ public class AppFabricTestHelper {
   /**
    * @return Returns an instance of {@link LocalApplicationManager}
    */
-  public static Manager<DeploymentInfo, ApplicationWithPrograms> getLocalManager() {
-    ManagerFactory<DeploymentInfo, ApplicationWithPrograms> factory =
-      getInjector().getInstance(Key.get(new TypeLiteral<ManagerFactory<DeploymentInfo, ApplicationWithPrograms>>() {
+  public static Manager<AppDeploymentInfo, ApplicationWithPrograms> getLocalManager() {
+    ManagerFactory<AppDeploymentInfo, ApplicationWithPrograms> factory =
+      getInjector().getInstance(Key.get(new TypeLiteral<ManagerFactory<AppDeploymentInfo, ApplicationWithPrograms>>() {
       }));
 
     return factory.create(new ProgramTerminator() {
@@ -110,27 +108,45 @@ public class AppFabricTestHelper {
     });
   }
 
-  public static void deployApplication(Id.Namespace namespace, Class<?> application) throws Exception {
-    long time = TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS);
-    deployApplication(namespace, application, "app-" + time);
+  public static void deployApplication(Class<?> application) throws Exception {
+    deployApplication(application, CConfiguration.create());
   }
 
-  public static void deployApplication(Class<?> application) throws Exception {
-    deployApplication(Constants.DEFAULT_NAMESPACE_ID, application);
+  public static void deployApplication(Id.Namespace namespace, Class<?> application) throws Exception {
+    deployApplication(namespace, application, CConfiguration.create());
+  }
+
+  public static void deployApplication(Class<?> application, CConfiguration cConf) throws Exception {
+    deployApplication(Id.Namespace.DEFAULT, application, cConf);
+  }
+
+  public static void deployApplication(Id.Namespace namespace, Class<?> application,
+                                       CConfiguration cConf) throws Exception {
+    long time = TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS);
+    deployApplication(namespace, application, "app-" + time, null, cConf);
   }
 
   public static void deployApplication(Id.Namespace namespace, Class<?> applicationClz,
-                                       String appName, String config) throws Exception {
-    ensureNamespaceExists(namespace);
-    AppFabricClient appFabricClient = getInjector().getInstance(AppFabricClient.class);
+                                       String appName, @Nullable String config) throws Exception {
+    deployApplication(namespace, applicationClz, appName, config, null);
+  }
+
+  public static void deployApplication(Id.Namespace namespace, Class<?> applicationClz,
+                                       String appName, @Nullable String config, CConfiguration cConf) throws Exception {
+    ensureNamespaceExists(namespace, cConf);
+    AppFabricClient appFabricClient = getInjector(cConf).getInstance(AppFabricClient.class);
     Location deployedJar = appFabricClient.deployApplication(namespace, appName, applicationClz, config);
     deployedJar.delete(true);
   }
 
-  private static void ensureNamespaceExists(Id.Namespace namespace) throws Exception {
-    NamespaceAdmin namespaceAdmin = getInjector().getInstance(NamespaceAdmin.class);
-    if (!namespaceAdmin.hasNamespace(namespace)) {
-      namespaceAdmin.createNamespace(new NamespaceMeta.Builder().setName(namespace).build());
+  public static void ensureNamespaceExists(Id.Namespace namespace) throws Exception {
+    ensureNamespaceExists(namespace, CConfiguration.create());
+  }
+
+  public static void ensureNamespaceExists(Id.Namespace namespace, CConfiguration cConf) throws Exception {
+    NamespaceAdmin namespaceAdmin = getInjector(cConf).getInstance(NamespaceAdmin.class);
+    if (!namespaceAdmin.exists(namespace)) {
+      namespaceAdmin.create(new NamespaceMeta.Builder().setName(namespace).build());
     }
   }
 
@@ -144,7 +160,7 @@ public class AppFabricTestHelper {
   }
 
   public static void deployApplication(Class<?> applicationClz, String appName, String config) throws Exception {
-    deployApplication(Constants.DEFAULT_NAMESPACE_ID, applicationClz, appName, config);
+    deployApplication(Id.Namespace.DEFAULT, applicationClz, appName, config);
   }
 
   public static ApplicationWithPrograms deployApplicationWithManager(Class<?> appClass,
@@ -152,34 +168,30 @@ public class AppFabricTestHelper {
     throws Exception {
     ensureNamespaceExists(Id.Namespace.DEFAULT);
     Location deployedJar = createAppJar(appClass);
-    Location destination = new LocalLocationFactory().create(tempFolder.toURI()).append(deployedJar.getName());
-    DeploymentInfo info = new DeploymentInfo(new File(deployedJar.toURI()), destination, null);
-    try {
-      ApplicationWithPrograms appWithPrograms = getLocalManager().deploy(DefaultId.NAMESPACE, null, info).get();
-      // Transform program to get loadable, as the one created in deploy pipeline is not loadable.
+    Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, appClass.getSimpleName(),
+                                              String.format("1.0.%d", System.currentTimeMillis()));
+    AppDeploymentInfo info = new AppDeploymentInfo(artifactId, appClass.getName(), deployedJar, null);
+    ApplicationWithPrograms appWithPrograms = getLocalManager().deploy(DefaultId.NAMESPACE, null, info).get();
+    // Transform program to get loadable, as the one created in deploy pipeline is not loadable.
 
-      final List<Program> programs = ImmutableList.copyOf(Iterables.transform(appWithPrograms.getPrograms(),
-                                                                              new Function<Program, Program>() {
-            @Override
-            public Program apply(Program program) {
-              try {
-                return Programs.createWithUnpack(program.getJarLocation(), folderSupplier.get());
-              } catch (IOException e) {
-                throw Throwables.propagate(e);
-              }
-            }
-          }
-      ));
-      return new ApplicationWithPrograms(appWithPrograms) {
+    final List<Program> programs = ImmutableList.copyOf(Iterables.transform(appWithPrograms.getPrograms(),
+      new Function<Program, Program>() {
         @Override
-        public Iterable<Program> getPrograms() {
-          return programs;
+        public Program apply(Program program) {
+          try {
+            return Programs.createWithUnpack(configuration, program.getJarLocation(), folderSupplier.get());
+          } catch (IOException e) {
+            throw Throwables.propagate(e);
+          }
         }
-      };
-    } finally {
-      info.getDestination().delete(true);
-      deployedJar.delete(true);
-    }
+      }
+    ));
+    return new ApplicationWithPrograms(appWithPrograms) {
+      @Override
+      public Iterable<Program> getPrograms() {
+        return programs;
+      }
+    };
   }
 
   private static Location createAppJar(Class<?> appClass) throws IOException {

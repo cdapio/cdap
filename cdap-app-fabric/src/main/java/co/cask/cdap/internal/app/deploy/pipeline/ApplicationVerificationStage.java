@@ -17,6 +17,7 @@
 package co.cask.cdap.internal.app.deploy.pipeline;
 
 import co.cask.cdap.api.ProgramSpecification;
+import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.dataset.DataSetException;
 import co.cask.cdap.api.dataset.DatasetSpecification;
@@ -30,27 +31,23 @@ import co.cask.cdap.api.workflow.WorkflowForkNode;
 import co.cask.cdap.api.workflow.WorkflowNode;
 import co.cask.cdap.api.workflow.WorkflowNodeType;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
-import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.app.verification.Verifier;
 import co.cask.cdap.app.verification.VerifyResult;
-import co.cask.cdap.data.dataset.DatasetCreationSpec;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
-import co.cask.cdap.internal.app.runtime.adapter.AdapterService;
-import co.cask.cdap.internal.app.runtime.adapter.ApplicationTemplateInfo;
 import co.cask.cdap.internal.app.verification.ApplicationVerification;
 import co.cask.cdap.internal.app.verification.DatasetCreationSpecVerifier;
 import co.cask.cdap.internal.app.verification.FlowVerification;
 import co.cask.cdap.internal.app.verification.ProgramVerification;
 import co.cask.cdap.internal.app.verification.StreamVerification;
+import co.cask.cdap.internal.dataset.DatasetCreationSpec;
 import co.cask.cdap.internal.schedule.StreamSizeSchedule;
 import co.cask.cdap.pipeline.AbstractStage;
 import co.cask.cdap.proto.Id;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
 import com.google.common.reflect.TypeToken;
 
 import java.util.HashSet;
@@ -68,14 +65,12 @@ public class ApplicationVerificationStage extends AbstractStage<ApplicationDeplo
 
   private final Map<Class<?>, Verifier<?>> verifiers = Maps.newIdentityHashMap();
   private final DatasetFramework dsFramework;
-  private final AdapterService adapterService;
   private final Store store;
 
-  public ApplicationVerificationStage(Store store, DatasetFramework dsFramework, AdapterService adapterService) {
+  public ApplicationVerificationStage(Store store, DatasetFramework dsFramework) {
     super(TypeToken.of(ApplicationDeployable.class));
     this.store = store;
     this.dsFramework = dsFramework;
-    this.adapterService = adapterService;
   }
 
 
@@ -91,14 +86,6 @@ public class ApplicationVerificationStage extends AbstractStage<ApplicationDeplo
 
     ApplicationSpecification specification = input.getSpecification();
     Id.Application appId = input.getId();
-
-    if (ApplicationDeployScope.USER.equals(input.getApplicationDeployScope())) {
-      ApplicationTemplateInfo applicationTemplateInfo = adapterService.getApplicationTemplateInfo(appId.getId());
-      if (applicationTemplateInfo != null) {
-        throw new RuntimeException(String.format(
-          "Cannot deploy Application %s. An ApplicationTemplate exists with a conflicting name.", appId));
-      }
-    }
 
     verifySpec(appId, specification);
     verifyData(appId, specification);

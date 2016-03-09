@@ -1,0 +1,61 @@
+<!--
+  Copyright © 2015 Cask Data, Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+-->
+
+<div class="row" ng-if="NodeConfigController.state.node.plugin.name !== 'Validator'">
+  <div class="col-xs-12">
+    <fieldset ng-disabled="isDisabled">
+      <div ng-if="NodeConfigController.state.noconfig">
+        <div class="well well-lg widget-group-container">
+          <div class="form-group">
+            <label class="control-label">
+              <span>Label</span>
+              <span class="fa fa-asterisk"></span>
+              <small class="text-danger" ng-if="NodeConfigController.state.nodeLabelError">{{::NodeConfigController.state.nodeLabelError}}</small>
+            </label>
+            <input type="text"
+                    class="form-control"
+                    ng-model="NodeConfigController.state.node.plugin.label"/>
+          </div>
+          <div ng-repeat="(name, value) in NodeConfigController.state.node.plugin.properties track by $index">
+            <div class="form-group">
+              <label ng-init="title='info';description=NodeConfigController.state.node._backendProperties[name].description"
+                      class="control-label">
+                <span>{{name}}</span>
+                <span class="fa fa-info-circle"
+                      tooltip="{{description}}"
+                      tooltip-placement="right"
+                      tooltip-append-to-body="true">
+                </span>
+                <span class="fa fa-asterisk" ng-if="NodeConfigController.state.node._backendProperties[name].required"></span>
+                <small class="text-danger" ng-if="!NodeConfigController.state.node.warning && NodeConfigController.state.node._backendProperties[name].required && !NodeConfigController.state.node.plugin.properties[name]">{{::NodeConfigController.requiredPropertyError}}</small>
+              </label>
+              <input type="text"
+                      class="form-control"
+                      ng-model="NodeConfigController.state.node.plugin.properties[name]"
+                      ng-disabled="NodeConfigController.state.node.pluginTemplate && plugin.lock[name]" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </fieldset>
+  </div>
+</div>
+
+<div ng-if="NodeConfigController.state.isTransform && NodeConfigController.state.node.plugin.name === 'Validator'">
+  <div class="col-lg-12">
+    <div ng-include="'/assets/features/hydrator/templates/create/popovers/plugin-edit-validator-transform.html'"></div>
+  </div>
+</div>

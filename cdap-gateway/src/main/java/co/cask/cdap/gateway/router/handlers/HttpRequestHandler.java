@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,7 +20,6 @@ import co.cask.cdap.common.HandlerException;
 import co.cask.cdap.common.discovery.EndpointStrategy;
 import co.cask.cdap.gateway.router.ProxyRule;
 import co.cask.cdap.gateway.router.RouterServiceLookup;
-import com.google.common.collect.Maps;
 import com.google.common.collect.Queues;
 import com.google.common.io.Closeables;
 import org.apache.twill.discovery.Discoverable;
@@ -47,10 +46,12 @@ import org.slf4j.LoggerFactory;
 import java.io.Closeable;
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Handler that handles HTTP requests and forwards to appropriate services. The service discovery is
@@ -66,6 +67,7 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler {
   private final Map<WrappedDiscoverable, MessageSender> discoveryLookup;
   private final List<ProxyRule> proxyRules;
 
+  private final AtomicInteger exceptionsHandled = new AtomicInteger(0);
   private MessageSender chunkSender;
   private volatile boolean channelClosed;
 
@@ -74,12 +76,12 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler {
                             List<ProxyRule> proxyRules) {
     this.clientBootstrap = clientBootstrap;
     this.serviceLookup = serviceLookup;
-    this.discoveryLookup = Maps.newHashMap();
+    this.discoveryLookup = new HashMap<>();
     this.proxyRules = proxyRules;
   }
 
   @Override
-  public void messageReceived(ChannelHandlerContext ctx,
+  public void messageReceived(final ChannelHandlerContext ctx,
                               MessageEvent event) throws Exception {
 
     if (channelClosed) {
@@ -123,10 +125,16 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler {
         outboundChannel.getCloseFuture().addListener(new ChannelFutureListener() {
           @Override
           public void operationComplete(ChannelFuture future) throws Exception {
-            // When the outbound channel closed, close the inbound channel as well if it carries the in-flight request
-            if (outboundChannel.equals(inboundChannel.getAttachment())) {
-              closeOnFlush(inboundChannel);
-            }
+            inboundChannel.getPipeline().execute(new Runnable() {
+              @Override
+              public void run() {
+                // When the outbound channel closed,
+                // close the inbound channel as well if it carries the in-flight request
+                if (outboundChannel.equals(inboundChannel.getAttachment())) {
+                  closeOnFlush(inboundChannel);
+                }
+              }
+            });
           }
         });
       }
@@ -156,6 +164,22 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler {
   @Override
   public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e)  {
     Throwable cause = e.getCause();
+
+    // avoid handling exception more than once from a handler, to avoid a possible infinite recursion
+    switch (exceptionsHandled.incrementAndGet()) {
+      case 1:
+        // if this is the first error, break and handle the error normally (below)
+        break;
+      case 2:
+        // if its the second time, log and return
+        LOG.error("Not handling exception due to already having handled an exception in Request Handler {}",
+                  ctx.getChannel(), cause);
+        // fall through
+      default:
+        // if its the 3rd time or more, simply return. don't log, since even logging can result
+        // in an exception and cause recursion
+        return;
+    }
 
     LOG.error("Exception raised in Request Handler {}", ctx.getChannel(), cause);
     if (ctx.getChannel().isConnected() && !channelClosed) {

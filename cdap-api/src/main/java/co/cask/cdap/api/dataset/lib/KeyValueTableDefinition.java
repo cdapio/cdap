@@ -23,7 +23,6 @@ import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.table.Table;
-import com.google.common.base.Preconditions;
 
 import java.io.IOException;
 import java.util.Map;
@@ -39,7 +38,9 @@ public class KeyValueTableDefinition
 
   public KeyValueTableDefinition(String name, DatasetDefinition<? extends Table, ?> tableDef) {
     super(name);
-    Preconditions.checkArgument(tableDef != null, "Table definition is required");
+    if (tableDef == null) {
+      throw new IllegalArgumentException("Table definition is required");
+    }
     this.tableDef = tableDef;
   }
 

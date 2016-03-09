@@ -17,7 +17,6 @@
 package co.cask.cdap.data.stream.service;
 
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.namespace.DefaultNamespacedLocationFactory;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
@@ -59,7 +58,7 @@ public class StreamFileSizeFetcherTest {
   @Test
   public void testFetchSize() throws Exception {
     final String streamName = "testFetchSize";
-    Id.Stream streamId = Id.Stream.from(Constants.DEFAULT_NAMESPACE, streamName);
+    Id.Stream streamId = Id.Stream.from(Id.Namespace.DEFAULT, streamName);
     final int nbEvents = 100;
     StreamAdmin streamAdmin = new TestStreamAdmin(namespacedLocationFactory, Long.MAX_VALUE, 1000);
 

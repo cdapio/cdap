@@ -28,12 +28,11 @@ import co.cask.cdap.api.metrics.MetricTimeSeries;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramRunner;
-import co.cask.cdap.common.AlreadyExistsException;
-import co.cask.cdap.common.NamespaceCannotBeCreatedException;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.EndpointStrategy;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
+import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.common.stream.StreamEventCodec;
 import co.cask.cdap.data2.queue.QueueClientFactory;
@@ -42,11 +41,11 @@ import co.cask.cdap.data2.queue.QueueProducer;
 import co.cask.cdap.internal.AppFabricTestHelper;
 import co.cask.cdap.internal.DefaultId;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
-import co.cask.cdap.internal.app.namespace.NamespaceAdmin;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.ProgramRunnerFactory;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
+import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.runtime.app.PendingMetricTestApp;
 import co.cask.cdap.test.SlowTests;
@@ -113,9 +112,9 @@ public class FlowTest {
 
 
   @BeforeClass
-  public static void init() throws AlreadyExistsException, NamespaceCannotBeCreatedException {
+  public static void init() throws Exception {
     NamespaceAdmin namespaceAdmin = AppFabricTestHelper.getInjector().getInstance(NamespaceAdmin.class);
-    namespaceAdmin.createNamespace(Constants.DEFAULT_NAMESPACE_META);
+    namespaceAdmin.create(NamespaceMeta.DEFAULT);
     metricStore = AppFabricTestHelper.getInjector().getInstance(MetricStore.class);
   }
 
@@ -295,14 +294,18 @@ public class FlowTest {
       // source emits 4, then forward-one reads 1, hence 3 should be pending
       waitForPending(tagsForSourceToOne, 3, 5000); // wait a little longer as flow needs to start
       waitForPending(tagsForAllToOne, 3, 100); // wait a little longer as flow needs to start
-      // forward-two receives each of the 4 as a sting and an int, but has read only 1
-      // so there should be 3 + 4 = 7 pending, but we don't know which queue has 3 and which has 4
+      // forward-two receives each of the 4 as a string and an int, but could have read 1 per each queue
+      // so there should be either 3 + 4 = 7 pending or 3 + 3 = 6 pending,
+      // but we don't know whether the queue pending count will be 4, 3 or 3, 4 or 3, 3
       long intPending = waitForPending(tagsForSourceToTwoInts, 3, 4L, 1000);
-      waitForPending(tagsForSourceToTwoStrings, 7 - intPending, 1000);
-      waitForPending(tagsForSourceToTwo, 7, 100);
-      waitForPending(tagsForAllToTwo, 7, 100);
-      // neither one nor two have emitted, so the total pending should be 9
-      waitForPending(tagsForAll, 10, 100);
+      long stringPending = waitForPending(tagsForSourceToTwoStrings, 3, 4L, 1000);
+      long totalPending = intPending + stringPending;
+      Assert.assertTrue(totalPending == 6 || totalPending == 7);
+      waitForPending(tagsForSourceToTwo, 7, 6L, 100);
+      waitForPending(tagsForAllToTwo, 7, 6L, 100);
+      // neither one nor two have emitted, so the total pending should be = 12 - 1 (forward-one) - 1 or 2 (forward-two)
+      // => 10 or 9 events
+      waitForPending(tagsForAll, 10, 9L, 100);
 
       // kick on forward-one, it should now consume all its events
       Assert.assertTrue(new File(tempFolder, "one").createNewFile());
@@ -325,7 +328,7 @@ public class FlowTest {
       waitForPending(tagsForTwoToSink, 8, 1000);
       waitForPending(tagsForAllToSink, 11, 100);
 
-      // kick off sink, its penidng events should now go to zero
+      // kick off sink, its pending events should now go to zero
       Assert.assertTrue(new File(tempFolder, "three").createNewFile());
       waitForPending(tagsForOneToSink, 0, 2000);
       waitForPending(tagsForTwoToSink, 0, 2000);

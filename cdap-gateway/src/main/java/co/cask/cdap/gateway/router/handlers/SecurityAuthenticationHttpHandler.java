@@ -53,6 +53,8 @@ import org.slf4j.LoggerFactory;
 
 import java.net.InetSocketAddress;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 /**
  * Security handler that intercept HTTP message and validates the access token in
@@ -68,6 +70,7 @@ public class SecurityAuthenticationHttpHandler extends SimpleChannelHandler {
   private final Iterable<Discoverable> discoverables;
   private final CConfiguration configuration;
   private final String realm;
+  private final Pattern bypassPattern;
 
 
   public SecurityAuthenticationHttpHandler(String realm, TokenValidator tokenValidator,
@@ -80,6 +83,23 @@ public class SecurityAuthenticationHttpHandler extends SimpleChannelHandler {
     this.discoveryServiceClient = discoveryServiceClient;
     this.discoverables = discoveryServiceClient.discover(Constants.Service.EXTERNAL_AUTHENTICATION);
     this.configuration = configuration;
+    this.bypassPattern = createMatcher(configuration.get(Constants.Security.Router.BYPASS_AUTHENTICATION_REGEX));
+  }
+
+  private Pattern createMatcher(String s) {
+    if (s == null) {
+      return null;
+    }
+    try {
+      return Pattern.compile(s);
+    } catch (PatternSyntaxException e) {
+      throw new IllegalArgumentException(String.format("Invalid regular expression for %s",
+                                                       Constants.Security.Router.BYPASS_AUTHENTICATION_REGEX), e);
+    }
+  }
+
+  private boolean matchBypassPattern(HttpRequest req) {
+    return bypassPattern != null && bypassPattern.matcher(req.getUri()).matches();
   }
 
   /**
@@ -91,7 +111,7 @@ public class SecurityAuthenticationHttpHandler extends SimpleChannelHandler {
    * @throws Exception
    */
   private boolean validateSecuredInterception(ChannelHandlerContext ctx, HttpRequest msg,
-                                      Channel inboundChannel, AuditLogEntry logEntry) throws Exception {
+                                              Channel inboundChannel, AuditLogEntry logEntry) throws Exception {
     String auth = msg.getHeader(HttpHeaders.Names.AUTHORIZATION);
     String accessToken = null;
 
@@ -155,6 +175,8 @@ public class SecurityAuthenticationHttpHandler extends SimpleChannelHandler {
                     "CDAP-verified " + accessTokenIdentifierPair.getAccessTokenIdentifierStr());
       msg.setHeader(Constants.Security.Headers.USER_ID,
                     accessTokenIdentifierPair.getAccessTokenIdentifierObj().getUsername());
+      msg.setHeader(Constants.Security.Headers.USER_IP,
+                    ((InetSocketAddress) ctx.getChannel().getRemoteAddress()).getAddress().getHostAddress());
       return true;
     }
   }
@@ -201,12 +223,11 @@ public class SecurityAuthenticationHttpHandler extends SimpleChannelHandler {
     } else {
       AuditLogEntry logEntry = new AuditLogEntry();
       ctx.setAttachment(logEntry);
-      if (validateSecuredInterception(ctx, (HttpRequest) msg, event.getChannel(), logEntry)) {
+      HttpRequest req = (HttpRequest) msg;
+      if (matchBypassPattern(req) || validateSecuredInterception(ctx, req, event.getChannel(), logEntry)) {
         Channels.fireMessageReceived(ctx, msg, event.getRemoteAddress());
-      } else {
-        // we write the response directly for authentication failure, so nothing to do
-        return;
       }
+      // we write the response directly for authentication failure, so nothing to do for else
     }
   }
 

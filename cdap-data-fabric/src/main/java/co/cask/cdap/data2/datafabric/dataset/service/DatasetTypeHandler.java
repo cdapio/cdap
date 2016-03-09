@@ -16,6 +16,7 @@
 
 package co.cask.cdap.data2.datafabric.dataset.service;
 
+import co.cask.cdap.common.NamespaceNotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.http.AbstractBodyConsumer;
@@ -27,6 +28,7 @@ import co.cask.cdap.data2.datafabric.dataset.type.DatasetTypeManager;
 import co.cask.cdap.proto.DatasetModuleMeta;
 import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.store.NamespaceStore;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.BodyConsumer;
 import co.cask.http.HandlerContext;
@@ -65,13 +67,15 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
   private final DatasetTypeManager manager;
   private final CConfiguration cConf;
   private final NamespacedLocationFactory namespacedLocationFactory;
+  private final NamespaceStore namespaceStore;
 
   @Inject
   public DatasetTypeHandler(DatasetTypeManager manager, CConfiguration conf,
-                            NamespacedLocationFactory namespacedLocationFactory) {
+                            NamespacedLocationFactory namespacedLocationFactory, NamespaceStore namespaceStore) {
     this.manager = manager;
     this.cConf = conf;
     this.namespacedLocationFactory = namespacedLocationFactory;
+    this.namespaceStore = namespaceStore;
   }
 
   @Override
@@ -86,9 +90,13 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
 
   @GET
   @Path("/data/modules")
-  public void listModules(HttpRequest request, HttpResponder responder, @PathParam("namespace-id") String namespaceId) {
+  public void listModules(HttpRequest request, HttpResponder responder,
+                          @PathParam("namespace-id") String namespaceId) throws Exception {
+    Id.Namespace namespace = Id.Namespace.from(namespaceId);
+    // Throws NamespaceNotFoundException if the namespace does not exist
+    ensureNamespaceExists(namespace);
     // Sorting by name for convenience
-    List<DatasetModuleMeta> list = Lists.newArrayList(manager.getModules(Id.Namespace.from(namespaceId)));
+    List<DatasetModuleMeta> list = Lists.newArrayList(manager.getModules(namespace));
     Collections.sort(list, new Comparator<DatasetModuleMeta>() {
       @Override
       public int compare(DatasetModuleMeta o1, DatasetModuleMeta o2) {
@@ -101,14 +109,17 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
   @DELETE
   @Path("/data/modules")
   public void deleteModules(HttpRequest request, HttpResponder responder,
-                            @PathParam("namespace-id") String namespaceId) {
-    if (Constants.SYSTEM_NAMESPACE.equals(namespaceId)) {
+                            @PathParam("namespace-id") String namespaceId) throws Exception {
+    Id.Namespace namespace = Id.Namespace.from(namespaceId);
+    if (Id.Namespace.SYSTEM.equals(namespace)) {
       responder.sendString(HttpResponseStatus.FORBIDDEN,
                            String.format("Cannot delete modules from '%s' namespace.", namespaceId));
       return;
     }
+    // Throws NamespaceNotFoundException if the namespace does not exist
+    ensureNamespaceExists(namespace);
     try {
-      manager.deleteModules(Id.Namespace.from(namespaceId));
+      manager.deleteModules(namespace);
       responder.sendStatus(HttpResponseStatus.OK);
     } catch (DatasetModuleConflictException e) {
       responder.sendString(HttpResponseStatus.CONFLICT, e.getMessage());
@@ -119,20 +130,20 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
   @Path("/data/modules/{name}")
   public BodyConsumer addModule(HttpRequest request, HttpResponder responder,
                                 @PathParam("namespace-id") String namespaceId, @PathParam("name") final String name,
-                                @HeaderParam(HEADER_CLASS_NAME) final String className) throws IOException {
-    if (Constants.SYSTEM_NAMESPACE.equals(namespaceId)) {
+                                @HeaderParam(HEADER_CLASS_NAME) final String className) throws Exception {
+    Id.Namespace namespace = Id.Namespace.from(namespaceId);
+    if (Id.Namespace.SYSTEM.equals(namespace)) {
       responder.sendString(HttpResponseStatus.FORBIDDEN,
                            String.format("Cannot add module to '%s' namespace.", namespaceId));
       return null;
     }
-
+    // Throws NamespaceNotFoundException if the namespace does not exist
+    ensureNamespaceExists(namespace);
     // verify namespace directory exists
-    // TODO: CDAP-1366 - should have a namespaceClient to make a REST API call to check if the namespace exists
-    Id.Namespace namespace = Id.Namespace.from(namespaceId);
     final Location namespaceHomeLocation = namespacedLocationFactory.get(namespace);
     if (!namespaceHomeLocation.exists()) {
       String msg = String.format("Home directory %s for namespace %s not found",
-                                 namespaceHomeLocation.toURI().getPath(), namespaceId);
+                                 namespaceHomeLocation, namespaceId);
       LOG.error(msg);
       responder.sendString(HttpResponseStatus.NOT_FOUND, msg);
       return null;
@@ -178,17 +189,17 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
 
           Locations.mkdirsIfNotExists(archiveDir);
 
-          LOG.debug("Copy from {} to {}", uploadedFile, tmpLocation.toURI());
+          LOG.debug("Copy from {} to {}", uploadedFile, tmpLocation);
           Files.copy(uploadedFile, Locations.newOutputSupplier(tmpLocation));
 
           // Check if the module exists one more time to minimize the window of possible conflict
           conflictIfModuleExists(datasetModuleId);
 
           // Finally, move archive to final location
-          LOG.debug("Storing module {} jar at {}", datasetModuleId, archive.toURI());
+          LOG.debug("Storing module {} jar at {}", datasetModuleId, archive);
           if (tmpLocation.renameTo(archive) == null) {
             throw new IOException(String.format("Could not move archive from location: %s, to location: %s",
-                                                tmpLocation.toURI(), archive.toURI()));
+                                                tmpLocation, archive));
           }
 
           manager.addModule(datasetModuleId, className, archive);
@@ -200,7 +211,7 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
           try {
             tmpLocation.delete();
           } catch (IOException ex) {
-            LOG.warn("Failed to cleanup temporary location {}", tmpLocation.toURI());
+            LOG.warn("Failed to cleanup temporary location {}", tmpLocation);
           }
           if (e instanceof DatasetModuleConflictException) {
             responder.sendString(HttpResponseStatus.CONFLICT, e.getMessage());
@@ -216,15 +227,19 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
   @DELETE
   @Path("/data/modules/{name}")
   public void deleteModule(HttpRequest request, HttpResponder responder,
-                           @PathParam("namespace-id") String namespaceId, @PathParam("name") String name) {
-    if (Constants.SYSTEM_NAMESPACE.equals(namespaceId)) {
+                           @PathParam("namespace-id") String namespaceId,
+                           @PathParam("name") String name) throws Exception {
+    Id.Namespace namespace = Id.Namespace.from(namespaceId);
+    if (Id.Namespace.SYSTEM.equals(namespace)) {
       responder.sendString(HttpResponseStatus.FORBIDDEN,
                            String.format("Cannot delete module '%s' from '%s' namespace.", name, namespaceId));
       return;
     }
+    // Throws NamespaceNotFoundException if the namespace does not exist
+    ensureNamespaceExists(namespace);
     boolean deleted;
     try {
-      deleted = manager.deleteModule(Id.DatasetModule.from(namespaceId, name));
+      deleted = manager.deleteModule(Id.DatasetModule.from(namespace, name));
     } catch (DatasetModuleConflictException e) {
       responder.sendString(HttpResponseStatus.CONFLICT, e.getMessage());
       return;
@@ -241,8 +256,12 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
   @GET
   @Path("/data/modules/{name}")
   public void getModuleInfo(HttpRequest request, HttpResponder responder,
-                            @PathParam("namespace-id") String namespaceId, @PathParam("name") String name) {
-    DatasetModuleMeta moduleMeta = manager.getModule(Id.DatasetModule.from(namespaceId, name));
+                            @PathParam("namespace-id") String namespaceId,
+                            @PathParam("name") String name) throws Exception {
+    Id.Namespace namespace = Id.Namespace.from(namespaceId);
+    // Throws NamespaceNotFoundException if the namespace does not exist
+    ensureNamespaceExists(namespace);
+    DatasetModuleMeta moduleMeta = manager.getModule(Id.DatasetModule.from(namespace, name));
     if (moduleMeta == null) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
     } else {
@@ -253,9 +272,12 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
   @GET
   @Path("/data/types")
   public void listTypes(HttpRequest request, HttpResponder responder,
-                        @PathParam("namespace-id") String namespaceId) {
+                        @PathParam("namespace-id") String namespaceId) throws Exception {
+    Id.Namespace namespace = Id.Namespace.from(namespaceId);
+    // Throws NamespaceNotFoundException if the namespace does not exist
+    ensureNamespaceExists(namespace);
     // Sorting by name for convenience
-    List<DatasetTypeMeta> list = Lists.newArrayList(manager.getTypes(Id.Namespace.from(namespaceId)));
+    List<DatasetTypeMeta> list = Lists.newArrayList(manager.getTypes(namespace));
     Collections.sort(list, new Comparator<DatasetTypeMeta>() {
       @Override
       public int compare(DatasetTypeMeta o1, DatasetTypeMeta o2) {
@@ -268,9 +290,12 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
   @GET
   @Path("/data/types/{name}")
   public void getTypeInfo(HttpRequest request, HttpResponder responder,
-                          @PathParam("namespace-id") String namespaceId, @PathParam("name") String name) {
-
-    DatasetTypeMeta typeMeta = manager.getTypeInfo(Id.DatasetType.from(namespaceId, name));
+                          @PathParam("namespace-id") String namespaceId,
+                          @PathParam("name") String name) throws Exception {
+    Id.Namespace namespace = Id.Namespace.from(namespaceId);
+    // Throws NamespaceNotFoundException if the namespace does not exist
+    ensureNamespaceExists(namespace);
+    DatasetTypeMeta typeMeta = manager.getTypeInfo(Id.DatasetType.from(namespace, name));
     if (typeMeta == null) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
     } else {
@@ -293,6 +318,17 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
       String message = String.format("Cannot add module %s: module with same name already exists: %s",
                                      datasetModuleId, existing);
       throw new DatasetModuleConflictException(message);
+    }
+  }
+
+  /**
+   * Throws an exception if the specified namespace is not the system namespace and does not exist
+   */
+  private void ensureNamespaceExists(Id.Namespace namespace) throws Exception {
+    if (!Id.Namespace.SYSTEM.equals(namespace)) {
+      if (namespaceStore.get(namespace) == null) {
+        throw new NamespaceNotFoundException(namespace);
+      }
     }
   }
 }

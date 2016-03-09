@@ -15,7 +15,7 @@
  */
 package co.cask.cdap.internal.app.program;
 
-import co.cask.cdap.app.ApplicationSpecification;
+import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;

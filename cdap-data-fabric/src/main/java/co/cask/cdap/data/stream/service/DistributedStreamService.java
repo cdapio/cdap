@@ -142,6 +142,7 @@ public class DistributedStreamService extends AbstractStreamService {
 
   @Override
   protected void initialize() throws Exception {
+    LOG.info("Initializing DistributedStreamService.");
     createHeartbeatsFeed();
     heartbeatPublisher.startAndWait();
     resourceCoordinatorClient.startAndWait();
@@ -159,6 +160,7 @@ public class DistributedStreamService extends AbstractStreamService {
     });
 
     performLeaderElection();
+    LOG.info("DistributedStreamService initialized.");
   }
 
   @Override
@@ -304,10 +306,12 @@ public class DistributedStreamService extends AbstractStreamService {
   private Cancellable subscribeToHeartbeatsFeed() throws NotificationFeedNotFoundException {
     LOG.debug("Subscribing to stream heartbeats notification feed");
     final Id.NotificationFeed heartbeatsFeed = new Id.NotificationFeed.Builder()
-      .setNamespaceId(Constants.SYSTEM_NAMESPACE)
+      .setNamespaceId(Id.Namespace.SYSTEM.getId())
       .setCategory(Constants.Notification.Stream.STREAM_INTERNAL_FEED_CATEGORY)
       .setName(Constants.Notification.Stream.STREAM_HEARTBEAT_FEED_NAME)
       .build();
+
+    boolean isRetry = false;
     while (true) {
       try {
         return notificationService.subscribe(heartbeatsFeed, new NotificationHandler<StreamWriterHeartbeat>() {
@@ -330,6 +334,13 @@ public class DistributedStreamService extends AbstractStreamService {
           }
         }, heartbeatsSubscriptionExecutor);
       } catch (NotificationFeedException e) {
+        if (!isRetry) {
+          LOG.warn("Unable to subscribe to HeartbeatsFeed. Will retry until successfully subscribed. " +
+                     "Retry failures will be logged at debug level.", e);
+        } else {
+          LOG.debug("Unable to subscribe to HeartbeatsFeed. Will retry until successfully subscribed. ", e);
+        }
+        isRetry = true;
         waitBeforeRetryHeartbeatsFeedOperation();
       }
     }
@@ -363,20 +374,34 @@ public class DistributedStreamService extends AbstractStreamService {
    */
   private void createHeartbeatsFeed() throws NotificationFeedException {
     Id.NotificationFeed streamHeartbeatsFeed = new Id.NotificationFeed.Builder()
-      .setNamespaceId(Constants.SYSTEM_NAMESPACE)
+      .setNamespaceId(Id.Namespace.SYSTEM.getId())
       .setCategory(Constants.Notification.Stream.STREAM_INTERNAL_FEED_CATEGORY)
       .setName(Constants.Notification.Stream.STREAM_HEARTBEAT_FEED_NAME)
       .setDescription("Stream heartbeats feed.")
       .build();
 
+    LOG.debug("Ensuring Stream HeartbeatsFeed exists.");
+    boolean isRetry = false;
     while (true) {
       try {
         feedManager.getFeed(streamHeartbeatsFeed);
+        LOG.debug("Stream HeartbeatsFeed exists.");
         return;
-      } catch (NotificationFeedNotFoundException e) {
+      } catch (NotificationFeedNotFoundException notFoundException) {
+        if (!isRetry) {
+          LOG.debug("Creating Stream HeartbeatsFeed.");
+        }
         feedManager.createFeed(streamHeartbeatsFeed);
+        LOG.info("Stream HeartbeatsFeed created.");
         return;
       } catch (NotificationFeedException e) {
+        if (!isRetry) {
+          LOG.warn("Could not ensure existence of HeartbeatsFeed. Will retry until successful. " +
+                     "Retry failures will be logged at debug level.", e);
+        } else {
+          LOG.debug("Could not ensure existence of HeartbeatsFeed. Will retry until successful.", e);
+        }
+        isRetry = true;
         waitBeforeRetryHeartbeatsFeedOperation();
       }
     }
@@ -384,7 +409,6 @@ public class DistributedStreamService extends AbstractStreamService {
 
   private void waitBeforeRetryHeartbeatsFeedOperation() {
     // Most probably, the dataset service is not up. We retry
-    LOG.info("Could not perform operation on HeartbeatsFeed. Retrying in one second.");
     try {
       TimeUnit.SECONDS.sleep(1);
     } catch (InterruptedException ie) {
@@ -476,7 +500,7 @@ public class DistributedStreamService extends AbstractStreamService {
           for (Map.Entry<Id.Namespace, StreamSpecification> streamSpecEntry : streamMetaStore.listStreams().entries()) {
             Id.Stream streamId = Id.Stream.from(streamSpecEntry.getKey(), streamSpecEntry.getValue().getName());
             LOG.debug("Adding {} stream as a resource to the coordinator to manager streams leaders.", streamId);
-            builder.addPartition(new ResourceRequirement.Partition(streamId.toId(), 1));
+            builder.addPartition(new ResourceRequirement.Partition(streamId.toString(), 1));
           }
           return builder.build();
         } catch (Throwable e) {
@@ -521,7 +545,7 @@ public class DistributedStreamService extends AbstractStreamService {
           @Nullable
           @Override
           public Id.Stream apply(@Nullable PartitionReplica input) {
-            return input != null ? Id.Stream.fromId(input.getName()) : null;
+            return input != null ? Id.Stream.fromString(input.getName(), Id.Stream.class) : null;
           }
         }));
       invokeLeaderListeners(ImmutableSet.copyOf(streamIds));

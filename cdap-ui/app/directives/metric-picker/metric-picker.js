@@ -1,11 +1,32 @@
-angular.module(PKG.name + '.commons')
-  .directive('myMetricPicker', function (MyDataSource, $stateParams, $log, MyMetricsQueryHelper) {
+/*
+ * Copyright © 2015 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
 
-    var dSrc = new MyDataSource();
+angular.module(PKG.name + '.commons')
+  .directive('myMetricPicker', function (MyCDAPDataSource, $stateParams, $log, MyMetricsQueryHelper) {
+
+    var dSrc = new MyCDAPDataSource();
 
     function MetricPickerCtrl ($scope) {
 
       var ns = [$stateParams.namespace,'namespace'].join(' ');
+
+      $scope.metricsSettings = {
+        externalProp: '',
+        closeOnBlur: false
+      };
 
       $scope.available = {
         contexts: [],
@@ -16,22 +37,18 @@ angular.module(PKG.name + '.commons')
       $scope.metric = {
         context: '',
         type: ns,
-        names: [{name: ''}],
+        names: [],
         resetNames: function() {
-          this.names = [{name: ''}];
+          this.names = [];
         },
         getNames: function() {
           return this.names.map(function(value) {
-            return value.name;
+            return value.id;
           });
         },
         getName: function() {
           return this.getNames().join(', ');
         }
-      };
-
-      $scope.addMetricName = function() {
-        $scope.metric.names.push({name: ''});
       };
 
       $scope.deleteMetric = function(idx) {
@@ -50,7 +67,10 @@ angular.module(PKG.name + '.commons')
 
       require: 'ngModel',
 
-      scope: {},
+      scope: {
+        metricsLimit: '=',
+        metricsSlotsFilled: '='
+      },
 
       templateUrl: 'metric-picker/metric-picker.html',
 
@@ -67,6 +87,7 @@ angular.module(PKG.name + '.commons')
             if (t.context && t.context.split('.').length % 2 !== 0) {
               return false;
             }
+
             if (!t || !t.names || !t.names.length) {
               return false;
             }
@@ -139,9 +160,15 @@ angular.module(PKG.name + '.commons')
               _cdapPath: '/metrics/search?target=metric&' + tagQueryParams
             },
             function (res) {
+              var metricsArray = [];
               // 'Add All' option to add all metrics in current context.
-              res.unshift('Add All');
-              scope.available.names = res;
+              res.forEach(function(metric) {
+                metricsArray.push({
+                  id: metric,
+                  label: metric
+                });
+              });
+              scope.available.names = metricsArray;
             }
           );
 
@@ -168,32 +195,16 @@ angular.module(PKG.name + '.commons')
           }
 
           if(newVal.names) {
-            var isAddAll = false;
-            for (var i = 0; i < newVal.names.length; i++) {
-              if (newVal.names[i].name === 'Add All') {
-                isAddAll = true;
-              }
-            }
             var context = getBaseContext();
             if (newVal.context) {
               context += '.' + newVal.context;
             }
-            if (isAddAll) {
-              ngModel.$setViewValue({
-                addAll: true,
-                allMetrics: scope.available.names.slice(1), // Remove 'Add All' option
-                context: context,
-                names: newVal.getNames(),
-                name: newVal.getName()
-              });
-              return;
-            } else {
-              ngModel.$setViewValue({
-                context: context,
-                names: newVal.getNames(),
-                name: newVal.getName()
-              });
-            }
+
+            ngModel.$setViewValue({
+              context: context,
+              names: newVal.getNames(),
+              name: newVal.getName()
+            });
           } else {
             if(ngModel.$dirty) {
               ngModel.$setViewValue(null);
@@ -203,7 +214,6 @@ angular.module(PKG.name + '.commons')
 
         };
         scope.$watch('metric', metricChanged, true);
-
         fetchAhead();
       }
     };

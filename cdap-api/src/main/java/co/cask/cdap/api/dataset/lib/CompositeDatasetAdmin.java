@@ -18,11 +18,14 @@ package co.cask.cdap.api.dataset.lib;
 
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.dataset.DatasetAdmin;
-import com.google.common.collect.ImmutableList;
-import com.google.common.io.Closeables;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -31,6 +34,9 @@ import java.util.List;
  */
 @Beta
 public class CompositeDatasetAdmin implements DatasetAdmin {
+
+  private static final Logger LOG = LoggerFactory.getLogger(CompositeDatasetAdmin.class);
+
   private final List<DatasetAdmin> delegates;
 
   /**
@@ -38,7 +44,7 @@ public class CompositeDatasetAdmin implements DatasetAdmin {
    * @param admins list of dataset admins
    */
   public CompositeDatasetAdmin(Collection<? extends DatasetAdmin> admins) {
-    this.delegates = ImmutableList.copyOf(admins);
+    this.delegates = Collections.unmodifiableList(new ArrayList<>(admins));
   }
 
   /**
@@ -46,7 +52,7 @@ public class CompositeDatasetAdmin implements DatasetAdmin {
    * @param admins list of dataset admins
    */
   public CompositeDatasetAdmin(DatasetAdmin... admins) {
-    this.delegates = ImmutableList.copyOf(admins);
+    this(Arrays.asList(admins));
   }
 
   @Override
@@ -89,7 +95,11 @@ public class CompositeDatasetAdmin implements DatasetAdmin {
   @Override
   public void close() throws IOException {
     for (DatasetAdmin admin : delegates) {
-      Closeables.closeQuietly(admin);
+      try {
+        admin.close();
+      } catch (IOException e) {
+        LOG.warn("Exception raised when calling close() on {} of type {}", admin, admin.getClass(), e);
+      }
     }
   }
 }

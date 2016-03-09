@@ -16,13 +16,14 @@
 
 package co.cask.cdap.templates;
 
-import co.cask.cdap.api.templates.plugins.PluginClass;
-import co.cask.cdap.api.templates.plugins.PluginInfo;
-import co.cask.cdap.api.templates.plugins.PluginProperties;
+import co.cask.cdap.api.plugin.PluginClass;
+import co.cask.cdap.api.plugin.PluginProperties;
 
 /**
- * A container class for holding plugin information for an adapter instance.
+ * A container class for holding plugin information for an adapter instance. Only exists because its part of
+ * AdapterDefinition, which is only around because its needed for upgrade.
  */
+@Deprecated
 public final class AdapterPlugin {
   private final PluginInfo pluginInfo;
   private final PluginClass pluginClass;

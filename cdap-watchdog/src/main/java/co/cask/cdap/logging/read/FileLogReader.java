@@ -88,7 +88,7 @@ public class FileLogReader implements LogReader {
       List<Location> filesInRange = getFilesInRange(sortedFiles, readRange.getFromMillis(), readRange.getToMillis());
       AvroFileReader logReader = new AvroFileReader(schema);
       for (Location file : filesInRange) {
-        LOG.trace("Reading file {}", file.toURI());
+        LOG.trace("Reading file {}", file);
         logReader.readLog(file, logFilter, fromTimeMs, Long.MAX_VALUE, maxEvents - callback.getCount(), callback);
         if (callback.getCount() >= maxEvents) {
           break;
@@ -121,7 +121,7 @@ public class FileLogReader implements LogReader {
       AvroFileReader logReader = new AvroFileReader(schema);
       int count = 0;
       for (Location file : Lists.reverse(filesInRange)) {
-        LOG.trace("Reading file {}", file.toURI());
+        LOG.trace("Reading file {}", file);
         Collection<LogEvent> events = logReader.readLogPrev(file, logFilter, fromTimeMs, maxEvents - count);
         logSegments.add(events);
         count += events.size();
@@ -156,7 +156,7 @@ public class FileLogReader implements LogReader {
       List<Location> filesInRange = getFilesInRange(sortedFiles, fromTimeMs, toTimeMs);
       AvroFileReader avroFileReader = new AvroFileReader(schema);
       for (Location file : filesInRange) {
-        LOG.trace("Reading file {}", file.toURI());
+        LOG.trace("Reading file {}", file);
         avroFileReader.readLog(file, logFilter, fromTimeMs, toTimeMs, Integer.MAX_VALUE, callback);
       }
     } catch (Throwable e) {
@@ -174,6 +174,13 @@ public class FileLogReader implements LogReader {
     Long start = sortedFiles.floorKey(fromTimeMs);
     if (start == null) {
       start = sortedFiles.firstKey();
+
+      // It is possible that the log files for the requested range are already
+      // deleted, in case of old program runs. For such requests both the start and toTimeMs
+      // will fall outside the range sortedFiles. In that case return empty list.
+      if (start > toTimeMs) {
+        return ImmutableList.of();
+      }
     }
     return ImmutableList.copyOf(sortedFiles.subMap(start, toTimeMs).values());
   }

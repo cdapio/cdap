@@ -19,7 +19,6 @@ package co.cask.cdap.gateway.handlers.log;
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.spi.LoggingEvent;
 import co.cask.cdap.common.app.RunIds;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.ApplicationLoggingContext;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.internal.app.store.DefaultStore;
@@ -73,26 +72,26 @@ public class MockLogReader implements LogReader {
 
   public void generateLogs() throws InterruptedException {
     // Add logs for app testApp2, flow testFlow1
-    generateLogs(new FlowletLoggingContext(Constants.DEFAULT_NAMESPACE,
+    generateLogs(new FlowletLoggingContext(Id.Namespace.DEFAULT.getId(),
                                            "testApp2", "testFlow1", "testFlowlet1", "", ""),
-                 Id.Program.from(Constants.DEFAULT_NAMESPACE, "testApp2", ProgramType.FLOW, "testFlow1"),
+                 Id.Program.from(Id.Namespace.DEFAULT.getId(), "testApp2", ProgramType.FLOW, "testFlow1"),
                  ProgramRunStatus.RUNNING);
 
     // Add logs for app testApp3, mapreduce testMapReduce1
-    generateLogs(new MapReduceLoggingContext(Constants.DEFAULT_NAMESPACE,
-                                             "testApp3", "testMapReduce1", "", null),
-                 Id.Program.from(Constants.DEFAULT_NAMESPACE, "testApp3", ProgramType.MAPREDUCE, "testMapReduce1"),
+    generateLogs(new MapReduceLoggingContext(Id.Namespace.DEFAULT.getId(),
+                                             "testApp3", "testMapReduce1", ""),
+                 Id.Program.from(Id.Namespace.DEFAULT.getId(), "testApp3", ProgramType.MAPREDUCE, "testMapReduce1"),
                  ProgramRunStatus.SUSPENDED);
 
     // Add logs for app testApp1, service testService1
-    generateLogs(new UserServiceLoggingContext(Constants.DEFAULT_NAMESPACE,
+    generateLogs(new UserServiceLoggingContext(Id.Namespace.DEFAULT.getId(),
                                                "testApp4", "testService1", "test1", "", ""),
-                 Id.Program.from(Constants.DEFAULT_NAMESPACE, "testApp4", ProgramType.SERVICE, "testService1"),
+                 Id.Program.from(Id.Namespace.DEFAULT.getId(), "testApp4", ProgramType.SERVICE, "testService1"),
                  ProgramRunStatus.RUNNING);
 
-    // Add logs for app testApp1, mapreduce testMapReduce1 run as part of batch adapter adapter1 in testNamespace
+    // Add logs for app testApp1, mapreduce testMapReduce1
     generateLogs(new MapReduceLoggingContext(TEST_NAMESPACE,
-                                             "testTemplate1", "testMapReduce1", "", "testAdapter1"),
+                                             "testTemplate1", "testMapReduce1", ""),
                  Id.Program.from(TEST_NAMESPACE, "testTemplate1", ProgramType.MAPREDUCE, "testMapReduce1"),
                  ProgramRunStatus.COMPLETED);
 
@@ -108,15 +107,15 @@ public class MockLogReader implements LogReader {
                  Id.Program.from(TEST_NAMESPACE, "testApp4", ProgramType.SERVICE, "testService1"),
                  ProgramRunStatus.KILLED);
 
-    // Add logs for testWorkflow1 in testNamespace as part of testAdapter
+    // Add logs for testWorkflow1 in testNamespace
     generateLogs(new WorkflowLoggingContext(TEST_NAMESPACE,
-                                            "testTemplate1", "testWorkflow1", "testRun1", "testAdapter1"),
+                                            "testTemplate1", "testWorkflow1", "testRun1"),
                  Id.Program.from(TEST_NAMESPACE, "testTemplate1", ProgramType.WORKFLOW, "testWorkflow1"),
                  ProgramRunStatus.COMPLETED);
     // Add logs for testWorkflow1 in default namespace
-    generateLogs(new WorkflowLoggingContext(Constants.DEFAULT_NAMESPACE,
-                                            "testTemplate1", "testWorkflow1", "testRun2", null),
-                 Id.Program.from(Constants.DEFAULT_NAMESPACE, "testTemplate1", ProgramType.WORKFLOW, "testWorkflow1"),
+    generateLogs(new WorkflowLoggingContext(Id.Namespace.DEFAULT.getId(),
+                                            "testTemplate1", "testWorkflow1", "testRun2"),
+                 Id.Program.from(Id.Namespace.DEFAULT.getId(), "testTemplate1", ProgramType.WORKFLOW, "testWorkflow1"),
                  ProgramRunStatus.COMPLETED);
   }
 
@@ -243,7 +242,7 @@ public class MockLogReader implements LogReader {
       // Add runid to logging context
       Map<String, String> tagMap = Maps.newHashMap(Maps.transformValues(loggingContext.getSystemTagsMap(),
                                                                          TAG_TO_STRING_FUNCTION));
-      if (runId != null && i % 2 == 0) {
+      if (runId != null && stopTs == null && i % 2 == 0) {
         tagMap.put(ApplicationLoggingContext.TAG_RUNID_ID, runId.getId());
       }
       event.setMDCPropertyMap(tagMap);
@@ -253,7 +252,7 @@ public class MockLogReader implements LogReader {
     long startTs = RunIds.getTime(runId, TimeUnit.SECONDS);
     if (id != null) {
       //noinspection ConstantConditions
-      runRecordMap.put(id, new RunRecord(runId.getId(), startTs, stopTs, runStatus, null, null));
+      runRecordMap.put(id, new RunRecord(runId.getId(), startTs, stopTs, runStatus, null));
       store.setStart(id, runId.getId(), startTs);
       if (stopTs != null) {
         store.setStop(id, runId.getId(), stopTs, runStatus);

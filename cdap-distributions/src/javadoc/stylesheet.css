@@ -86,9 +86,9 @@ ul {
     list-style-type:disc;
 }
 code, tt {
-    font-size:0.9em;
-    line-height: 1.286em; 
-    font-family: "Consolas", "Lucida Console", "Droid Sans Mono", "Andale Mono", "Monaco", "Lucida Sans Typewriter"; 
+  font-size: 14px;
+  line-height: 18px;
+  font-family: monospace;
 }
 a.code {
   text-decoration:underline;
@@ -123,11 +123,11 @@ Document title and Copyright styles
     margin-left:.5em;
 }
 .bar a, .bar a:link, .bar a:visited, .bar a:active {
-    color:#FFFFFF;
+    color:#2c4557;
     text-decoration:none;
 }
 .bar a:hover, .bar a:focus {
-    color:#bb7a2a;
+    color:#ff6600;
 }
 .tab {
     background-color:#0066FF;
@@ -204,7 +204,7 @@ ul.subNavList li{
 }
 .topNav a:hover, .bottomNav a:hover {
     text-decoration:none;
-    color:#bb7a2a;
+    color:#ff6600;
 }
 .navBarCell1Rev {
     background-color:#a88834;

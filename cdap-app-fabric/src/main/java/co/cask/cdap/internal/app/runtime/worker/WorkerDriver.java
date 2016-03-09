@@ -27,10 +27,11 @@ import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.internal.app.runtime.MetricsFieldSetter;
 import co.cask.cdap.internal.lang.Reflections;
 import com.google.common.collect.ImmutableList;
-import com.google.common.io.Closeables;
 import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import com.google.common.util.concurrent.Service;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.Executor;
 
@@ -38,6 +39,7 @@ import java.util.concurrent.Executor;
  * A {@link Service} for executing {@link Worker}s.
  */
 public class WorkerDriver extends AbstractExecutionThreadService {
+  private static final Logger LOG = LoggerFactory.getLogger(WorkerDriver.class);
 
   private final Program program;
   private final WorkerSpecification spec;
@@ -62,9 +64,11 @@ public class WorkerDriver extends AbstractExecutionThreadService {
     worker = new InstantiatorFactory(false).get(workerType).create();
 
     // Fields injection
-    Reflections.visit(worker, workerType,
+    Reflections.visit(worker, workerType.getType(),
                       new MetricsFieldSetter(context.getMetrics()),
                       new PropertyFieldSetter(spec.getProperties()));
+
+    LOG.debug("Starting Worker Program {}", program.getId());
 
     // Initialize worker
     initialize();
@@ -85,14 +89,12 @@ public class WorkerDriver extends AbstractExecutionThreadService {
     if (worker == null) {
       return;
     }
+    LOG.debug("Shutting down Worker Program {}", program.getId());
     ClassLoader classLoader = setContextCombinedClassLoader();
     try {
       worker.destroy();
     } finally {
       ClassLoaders.setContextClassLoader(classLoader);
-      if (context.getPluginInstantiator() != null) {
-        Closeables.closeQuietly(context.getPluginInstantiator());
-      }
       context.close();
     }
   }
@@ -102,6 +104,7 @@ public class WorkerDriver extends AbstractExecutionThreadService {
     if (worker == null) {
       return;
     }
+    LOG.debug("Stopping Worker Program {}", program.getId());
     ClassLoader classLoader = setContextCombinedClassLoader();
     try {
       worker.stop();

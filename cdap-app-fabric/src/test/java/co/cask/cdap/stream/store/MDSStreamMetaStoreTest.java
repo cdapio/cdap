@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -25,6 +25,7 @@ import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
+import co.cask.cdap.common.namespace.guice.NamespaceClientRuntimeModule;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
@@ -35,6 +36,9 @@ import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.internal.app.store.DefaultStore;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
+import co.cask.cdap.store.DefaultNamespaceStore;
+import co.cask.cdap.store.NamespaceStore;
+import co.cask.cdap.store.guice.NamespaceStoreModule;
 import co.cask.tephra.TransactionManager;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
@@ -52,7 +56,7 @@ public class MDSStreamMetaStoreTest extends StreamMetaStoreTestBase {
   private static StreamMetaStore streamMetaStore;
   private static DatasetService datasetService;
   private static TransactionManager transactionManager;
-  private static Store store;
+  private static NamespaceStore store;
 
   @BeforeClass
   public static void init() throws Exception {
@@ -64,6 +68,8 @@ public class MDSStreamMetaStoreTest extends StreamMetaStoreTestBase {
       new ExploreClientModule(),
       new DiscoveryRuntimeModule().getInMemoryModules(),
       new LocationRuntimeModule().getInMemoryModules(),
+      new NamespaceClientRuntimeModule().getInMemoryModules(),
+      new NamespaceStoreModule().getStandaloneModules(),
       new AbstractModule() {
         @Override
         protected void configure() {
@@ -79,7 +85,7 @@ public class MDSStreamMetaStoreTest extends StreamMetaStoreTestBase {
     transactionManager.startAndWait();
     datasetService = injector.getInstance(DatasetService.class);
     datasetService.startAndWait();
-    store = injector.getInstance(Store.class);
+    store = injector.getInstance(NamespaceStore.class);
   }
 
   @AfterClass
@@ -95,14 +101,15 @@ public class MDSStreamMetaStoreTest extends StreamMetaStoreTestBase {
 
   @Override
   protected void createNamespace(String namespace) throws AlreadyExistsException {
-    store.createNamespace(new NamespaceMeta.Builder()
-                            .setName(namespace)
-                            .setDescription(namespace)
-                            .build());
+    store.create(
+      new NamespaceMeta.Builder()
+        .setName(namespace)
+        .setDescription(namespace)
+        .build());
   }
 
   @Override
   protected void deleteNamespace(String namespaceId) throws NotFoundException {
-    store.deleteNamespace(new Id.Namespace(namespaceId));
+    store.delete(new Id.Namespace(namespaceId));
   }
 }

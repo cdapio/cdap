@@ -1,0 +1,18 @@
+
+.. To use this include, define these replacements:
+.. example-service
+.. example-service-italic
+
+Starting the Service
+--------------------
+
+- Using the CDAP-UI, go to the |application-overview|,
+  click |example-service-italic| to get to the service detail page, then click the *Start* button; or
+  
+- From the Standalone CDAP SDK directory, use the Command Line Interface:
+
+  .. container:: highlight
+
+    .. parsed-literal::
+      |$| cdap-cli.sh start service |example|.\ |example-service|
+      Successfully started service '|example-service|' of application '|example|' with stored runtime arguments '{}'

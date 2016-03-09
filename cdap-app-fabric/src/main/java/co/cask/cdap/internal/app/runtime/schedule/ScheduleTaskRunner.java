@@ -16,8 +16,8 @@
 
 package co.cask.cdap.internal.app.runtime.schedule;
 
+import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
-import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.store.Store;
@@ -30,13 +30,11 @@ import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.services.ProgramLifecycleService;
 import co.cask.cdap.internal.app.services.PropertiesResolver;
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.proto.ProgramType;
 import com.google.common.collect.Maps;
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import org.apache.twill.common.Threads;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Map;
@@ -49,12 +47,11 @@ import javax.annotation.Nullable;
  */
 public final class ScheduleTaskRunner {
 
-  private static final Logger LOG = LoggerFactory.getLogger(ScheduleTaskRunner.class);
-
   private final ProgramLifecycleService lifecycleService;
   private final Store store;
   private final ListeningExecutorService executorService;
   private final PropertiesResolver propertiesResolver;
+  private final RunConstraintsChecker requirementsChecker;
 
   public ScheduleTaskRunner(Store store, ProgramLifecycleService lifecycleService,
                             PropertiesResolver propertiesResolver, ListeningExecutorService taskExecutor) {
@@ -62,19 +59,20 @@ public final class ScheduleTaskRunner {
     this.lifecycleService = lifecycleService;
     this.propertiesResolver = propertiesResolver;
     this.executorService = taskExecutor;
+    this.requirementsChecker = new RunConstraintsChecker(store);
   }
 
   /**
-   * Executes the giving program without blocking until its completion.
+   * Checks if all schedule requirements are satisfied,
+   * then executes the given program without blocking until its completion.
    *
    * @param programId Program Id
-   * @param programType Program type.
    * @param systemOverrides Arguments that would be supplied as system runtime arguments for the program.
    * @return a {@link ListenableFuture} object that completes when the program completes
    * @throws TaskExecutionException if program is already running or program is not found.
    * @throws IOException if program failed to start.
    */
-  public ListenableFuture<?> run(Id.Program programId, ProgramType programType, Map<String, String> systemOverrides)
+  public ListenableFuture<?> run(Id.Program programId, Map<String, String> systemOverrides)
     throws TaskExecutionException, IOException {
     Map<String, String> userArgs = Maps.newHashMap();
     Map<String, String> systemArgs = Maps.newHashMap();
@@ -82,10 +80,14 @@ public final class ScheduleTaskRunner {
     String scheduleName = systemOverrides.get(ProgramOptionConstants.SCHEDULE_NAME);
     ApplicationSpecification appSpec = store.getApplication(programId.getApplication());
     if (appSpec == null || appSpec.getSchedules().get(scheduleName) == null) {
-      throw new TaskExecutionException(UserMessages.getMessage(UserErrors.PROGRAM_NOT_FOUND), false);
+      throw new TaskExecutionException(String.format(UserMessages.getMessage(UserErrors.PROGRAM_NOT_FOUND), programId),
+                                       false);
     }
 
     ScheduleSpecification spec = appSpec.getSchedules().get(scheduleName);
+    if (!requirementsChecker.checkSatisfied(programId, spec.getSchedule())) {
+      return Futures.<Void>immediateFuture(null);
+    }
 
     // Schedule properties are overriden by resolved preferences
     userArgs.putAll(spec.getProperties());
@@ -94,7 +96,7 @@ public final class ScheduleTaskRunner {
     systemArgs.putAll(propertiesResolver.getSystemProperties(programId));
     systemArgs.putAll(systemOverrides);
 
-    return execute(programId, programType, systemArgs, userArgs);
+    return execute(programId, systemArgs, userArgs);
   }
 
   /**
@@ -102,13 +104,14 @@ public final class ScheduleTaskRunner {
    *
    * @return a {@link ListenableFuture} object that completes when the program completes
    */
-  private ListenableFuture<?> execute(final Id.Program id, final ProgramType type, Map<String, String> sysArgs,
+  private ListenableFuture<?> execute(final Id.Program id, Map<String, String> sysArgs,
                                       Map<String, String> userArgs) throws IOException, TaskExecutionException {
     ProgramRuntimeService.RuntimeInfo runtimeInfo;
     try {
       runtimeInfo = lifecycleService.start(id, sysArgs, userArgs, false);
     } catch (ProgramNotFoundException | ApplicationNotFoundException e) {
-      throw new TaskExecutionException(UserMessages.getMessage(UserErrors.PROGRAM_NOT_FOUND), e, false);
+      throw new TaskExecutionException(String.format(UserMessages.getMessage(UserErrors.PROGRAM_NOT_FOUND), id),
+                                       e, false);
     }
 
     final ProgramController controller = runtimeInfo.getController();
@@ -123,6 +126,11 @@ public final class ScheduleTaskRunner {
         if (state == ProgramController.State.ERROR) {
           error(controller.getFailureCause());
         }
+      }
+
+      @Override
+      public void killed() {
+        latch.countDown();
       }
 
       @Override

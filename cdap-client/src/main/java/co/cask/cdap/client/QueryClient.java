@@ -22,6 +22,7 @@ import co.cask.cdap.explore.client.ExploreClient;
 import co.cask.cdap.explore.client.ExploreExecutionResult;
 import co.cask.cdap.explore.client.SuppliedAddressExploreClient;
 import co.cask.cdap.proto.Id;
+import co.cask.common.http.HttpRequestConfig;
 import com.google.common.base.Supplier;
 import com.google.common.util.concurrent.ListenableFuture;
 
@@ -33,13 +34,10 @@ import javax.inject.Inject;
 @Beta
 public class QueryClient {
 
-  private final ClientConfig config;
   private final ExploreClient exploreClient;
 
   @Inject
   public QueryClient(final ClientConfig config) {
-    this.config = config;
-
     Supplier<String> hostname = new Supplier<String>() {
       @Override
       public String get() {
@@ -60,12 +58,30 @@ public class QueryClient {
         if (config.getAccessToken() != null) {
           return config.getAccessToken().getValue();
         }
-
         return null;
       }
     };
 
-    exploreClient = new SuppliedAddressExploreClient(hostname, port, accessToken);
+    Supplier<Boolean> sslEnabled = new Supplier<Boolean>() {
+      @Override
+      public Boolean get() {
+        return config.getConnectionConfig().isSSLEnabled();
+      }
+    };
+
+    Supplier<Boolean> verifySSLCert = new Supplier<Boolean>() {
+      @Override
+      public Boolean get() {
+        return config.isVerifySSLCert();
+      }
+    };
+
+    exploreClient = new SuppliedAddressExploreClient(hostname, port, accessToken, sslEnabled, verifySSLCert) {
+      @Override
+      protected HttpRequestConfig getHttpRequestConfig() {
+        return config.getUploadRequestConfig();
+      }
+    };
   }
 
   /**

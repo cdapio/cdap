@@ -12,6 +12,7 @@ Advanced Topics
    :maxdepth: 1
    
     Best Practices <best-practices>
+    Class Loading <class-loading>
     Application Logback <application-logback>
 
 
@@ -24,7 +25,14 @@ will be of interest to developers who want a deeper dive into CDAP:
 - |best-practices|_ Suggestions when developing a CDAP application.
 
 
+.. |class-loading| replace:: **Class Loading:**
+.. _class-loading: class-loading.html
+
+- |class-loading|_ Java Class Loading in CDAP.
+
+
 .. |application-logback| replace:: **Application Logback:**
 .. _application-logback: application-logback.html
 
 - |application-logback|_ Adding a custom logback to a CDAP application.
+

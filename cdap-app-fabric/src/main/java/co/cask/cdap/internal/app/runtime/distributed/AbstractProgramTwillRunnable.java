@@ -40,6 +40,7 @@ import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.stream.StreamAdminModules;
 import co.cask.cdap.data.stream.StreamCoordinatorClient;
+import co.cask.cdap.data.view.ViewAdminModules;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.internal.app.queue.QueueReaderFactory;
 import co.cask.cdap.internal.app.runtime.AbstractListener;
@@ -53,6 +54,8 @@ import co.cask.cdap.logging.appender.LogAppenderInitializer;
 import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.notifications.feeds.client.NotificationFeedClientModule;
+import co.cask.cdap.store.DefaultNamespaceStore;
+import co.cask.cdap.store.NamespaceStore;
 import com.google.common.base.Predicates;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
@@ -101,6 +104,8 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
+import java.security.Permission;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
@@ -174,6 +179,8 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
 
   @Override
   public void initialize(TwillContext context) {
+    System.setSecurityManager(new RunnableSecurityManager(System.getSecurityManager()));
+
     runlatch = new CountDownLatch(1);
     name = context.getSpecification().getName();
     Map<String, String> configs = context.getSpecification().getConfigs();
@@ -189,15 +196,7 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
 
       UserGroupInformation.setConfiguration(hConf);
 
-      cConf = CConfiguration.create();
-      cConf.clear();
-      cConf.addResource(new File(configs.get("cConf")).toURI().toURL());
-
-      // Alter the template directory to only the name part in the container directory.
-      // It works in pair with the ProgramRunner.
-      // See AbstractDistributedProgramRunner
-      File templateDir = new File(cConf.get(Constants.AppFabric.APP_TEMPLATE_DIR));
-      cConf.set(Constants.AppFabric.APP_TEMPLATE_DIR, templateDir.getName());
+      cConf = CConfiguration.create(new File(configs.get("cConf")));
 
       injector = Guice.createInjector(createModule(context));
 
@@ -250,11 +249,14 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
   @Override
   public void stop() {
     try {
-      LOG.info("Stopping runnable: {}", name);
+      LOG.info("Stopping runnable: {}.", name);
       controller.stop().get();
       logAppenderInitializer.close();
+    } catch (InterruptedException e) {
+      LOG.debug("Interrupted while stopping runnable: {}.", name, e);
+      Thread.currentThread().interrupt();
     } catch (Exception e) {
-      LOG.error("Fail to stop: {}", e, e);
+      LOG.error("Failed to stop runnable: {}.", name, e);
       throw Throwables.propagate(e);
     }
   }
@@ -313,11 +315,12 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
 
     try {
       state.get();
-      LOG.info("Program stopped.");
+      LOG.info("Program {} stopped.", name);
     } catch (InterruptedException e) {
-      LOG.warn("Program interrupted.", e);
+      LOG.warn("Program {} interrupted.", name, e);
+      Thread.currentThread().interrupt();
     } catch (ExecutionException e) {
-      LOG.error("Program execution failed.", e);
+      LOG.error("Program {} execution failed.", name, e);
       if (propagateServiceError()) {
         throw Throwables.propagate(Throwables.getRootCause(e));
       }
@@ -394,6 +397,7 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
       new DataFabricModules().getDistributedModules(),
       new DataSetsModules().getDistributedModules(),
       new ExploreClientModule(),
+      new ViewAdminModules().getDistributedModules(),
       new StreamAdminModules().getDistributedModules(),
       new NotificationFeedClientModule(),
       new AbstractModule() {
@@ -419,6 +423,7 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
           });
 
           bind(Store.class).to(DefaultStore.class);
+          bind(NamespaceStore.class).to(DefaultNamespaceStore.class);
 
           // For binding StreamWriter
           install(createStreamFactoryModule());
@@ -457,16 +462,79 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
    */
   private static final class ProgramFactory {
 
+    private final CConfiguration cConf;
     private final LocationFactory locationFactory;
 
     @Inject
-    ProgramFactory(@Named("program.location.factory") LocationFactory locationFactory) {
+    ProgramFactory(CConfiguration cConf, @Named("program.location.factory") LocationFactory locationFactory) {
+      this.cConf = cConf;
       this.locationFactory = locationFactory;
     }
 
     public Program create(String path) throws IOException {
       Location location = locationFactory.create(path);
-      return Programs.createWithUnpack(location, Files.createTempDir());
+      return Programs.createWithUnpack(cConf, location, Files.createTempDir());
+    }
+  }
+
+  /**
+   * A {@link SecurityManager} used by the runnable container. Currently it specifically disabling
+   * Spark classes to call {@link System#exit(int)}, {@link Runtime#halt(int)}
+   * and {@link System#setSecurityManager(SecurityManager)}.
+   * This is to workaround modification done in HDP Spark (CDAP-3014).
+   *
+   * In general, we can use the security manager to restrict what system actions can be performed by program as well.
+   */
+  private static final class RunnableSecurityManager extends SecurityManager {
+
+    private final SecurityManager delegate;
+
+    private RunnableSecurityManager(@Nullable SecurityManager delegate) {
+      this.delegate = delegate;
+    }
+
+    @Override
+    public void checkPermission(Permission perm) {
+      if ("setSecurityManager".equals(perm.getName()) && isFromSpark()) {
+        throw new SecurityException("Set SecurityManager not allowed from Spark class: "
+                                      + Arrays.toString(getClassContext()));
+      }
+      if (delegate != null) {
+        delegate.checkPermission(perm);
+      }
+    }
+
+    @Override
+    public void checkPermission(Permission perm, Object context) {
+      if ("setSecurityManager".equals(perm.getName()) && isFromSpark()) {
+        throw new SecurityException("Set SecurityManager not allowed from Spark class: "
+                                      + Arrays.toString(getClassContext()));
+      }
+      if (delegate != null) {
+        delegate.checkPermission(perm, context);
+      }
+    }
+
+    @Override
+    public void checkExit(int status) {
+      if (isFromSpark()) {
+        throw new SecurityException("Exit not allowed from Spark class: " + Arrays.toString(getClassContext()));
+      }
+      if (delegate != null) {
+        delegate.checkExit(status);
+      }
+    }
+
+    /**
+     * Returns true if the current class context has spark class.
+     */
+    private boolean isFromSpark() {
+      for (Class c : getClassContext()) {
+        if (c.getName().startsWith("org.apache.spark.")) {
+          return true;
+        }
+      }
+      return false;
     }
   }
 }

@@ -1,0 +1,158 @@
+.. _|distribution|-install-node-js:
+
+Node.js Installation
+--------------------
+Node.js must be installed on the node(s) where the CDAP UI service will run. We recommend
+any version of `Node.js <https://nodejs.org/>`__ |node-js-version|; in particular, we
+recommend |recommended_node_js_version|. You can download an appropriate version of
+Node.js from `nodejs.org <http://nodejs.org/dist/>`__. Detailed instructions on installing
+Node.js :ref:`are available <admin-manual-install-node.js>`.
+
+.. _|distribution|-install-packaging:
+
+Preparing Package Managers
+--------------------------
+.. _|distribution|-preparing-package-managers:
+
+.. highlight:: console
+   
+CDAP components are available as either Yum ``.rpm`` or APT ``.deb`` packages. There is
+one package for each CDAP component, and each component may have multiple services.
+Additionally, there is a base CDAP package with three utility packages (for HBase
+compatibility) installed which creates the base configuration and the ``cdap`` user. We
+provide packages for *Ubuntu 12* and *CentOS 6*.
+
+Available packaging types:
+
+- RPM: Yum repo
+- Debian: APT repo
+- Tar: For specialized installations only
+
+**Note:** If you are using `Chef <https://www.getchef.com>`__ to install CDAP, an
+`official cookbook is available <https://supermarket.getchef.com/cookbooks/cdap>`__.
+
+.. _|distribution|-install-rpm-using-yum:
+
+On RPM using Yum
+................
+
+Download the Cask Yum repo definition file:
+   
+.. container:: highlight
+
+  .. parsed-literal::
+    |$| sudo curl -o /etc/yum.repos.d/cask.repo |http:|//repository.cask.co/centos/6/x86_64/cdap/|short-version|/cask.repo
+
+This will create the file ``/etc/yum.repos.d/cask.repo`` with:
+
+.. parsed-literal::
+  [cask]
+  name=Cask Packages
+  baseurl=http://repository.cask.co/centos/6/x86_64/cdap/|short-version|
+  enabled=1
+  gpgcheck=1
+
+Add the Cask Public GPG Key to your repository:
+
+.. container:: highlight
+
+  .. parsed-literal::
+    |$| sudo rpm --import |http:|//repository.cask.co/centos/6/x86_64/cdap/|short-version|/pubkey.gpg
+
+Update your Yum cache::
+
+  $ sudo yum makecache
+
+.. end_install-rpm-using-yum
+
+On Debian using APT
+...................
+Download the Cask APT repo definition file:
+
+.. container:: highlight
+
+  .. parsed-literal::
+    |$| sudo curl -o /etc/apt/sources.list.d/cask.list |http:|//repository.cask.co/ubuntu/precise/amd64/cdap/|short-version|/cask.list
+
+This will create the file ``/etc/apt/sources.list.d/cask.list`` with:
+
+.. parsed-literal::
+  deb [ arch=amd64 ] |http:|//repository.cask.co/ubuntu/precise/amd64/cdap/|short-version| precise cdap
+
+Add the Cask Public GPG Key to your repository:
+
+.. container:: highlight
+
+  .. parsed-literal::
+    |$| curl -s |http:|//repository.cask.co/ubuntu/precise/amd64/cdap/|short-version|/pubkey.gpg | sudo apt-key add -
+
+Update your APT-cache::
+
+  $ sudo apt-get update
+
+.. end_install-debian-using-apt
+
+
+.. _|distribution|-package-installation-title:
+
+Package Installation
+--------------------
+.. _|distribution|-package-installation-text:
+
+.. highlight:: console
+   
+Install the CDAP packages by using one of the following methods. Do this on each of the
+boxes that are being used for the CDAP components; our recommended installation is a
+minimum of two boxes.
+
+This will download and install the latest version of CDAP with all of its dependencies. 
+
+
+Using Chef
+..........
+If you are using `Chef <https://www.getchef.com>`__ to install CDAP, an `official
+cookbook is available <https://supermarket.getchef.com/cookbooks/cdap>`__.
+
+
+On RPM using Yum
+................
+::
+
+  $ sudo yum install cdap-gateway cdap-kafka cdap-master cdap-security cdap-ui
+
+
+On Debian using APT
+...................
+::
+
+  $ sudo apt-get install cdap-gateway cdap-kafka cdap-master cdap-security cdap-ui
+
+.. _|distribution|-create-required-directories:
+
+Create Required Directories
+---------------------------
+
+.. highlight:: console
+   
+To prepare your cluster so that CDAP can write to its default namespace,
+create a top-level ``/cdap`` directory in HDFS, owned by an HDFS user ``yarn``::
+
+  $ su hdfs
+  $ hadoop fs -mkdir -p /cdap && hadoop fs -chown yarn /cdap
+
+In the CDAP packages, the default property ``hdfs.namespace`` is ``/cdap`` and the default
+property ``hdfs.user`` is ``yarn``.
+
+Also, create a ``tx.snapshot`` subdirectory::
+
+  $ su hdfs
+  $ hadoop fs -mkdir -p /cdap/tx.snapshot && hadoop fs -chown yarn /cdap/tx.snapshot
+
+**Note:** If you have customized (or will be customizing) the property
+``data.tx.snapshot.dir`` in your :ref:`CDAP configuration <appendix-cdap-site.xml>`, use
+that value instead for ``/cdap/tx.snapshot``.
+
+.. _|distribution|-install-preparing-the-cluster-defaults:
+
+If your cluster is not setup with these defaults, you'll need to :ref:`edit your CDAP
+configuration <|distribution|-configuration>` prior to starting services.

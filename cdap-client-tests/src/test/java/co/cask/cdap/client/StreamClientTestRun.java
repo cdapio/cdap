@@ -17,16 +17,17 @@
 package co.cask.cdap.client;
 
 import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.api.data.format.FormatSpecification;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.client.common.ClientTestBase;
 import co.cask.cdap.common.BadRequestException;
-import co.cask.cdap.common.CannotBeDeletedException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.StreamNotFoundException;
 import co.cask.cdap.common.UnauthorizedException;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.StreamProperties;
+import co.cask.cdap.proto.ViewSpecification;
 import co.cask.cdap.test.XSlowTests;
 import com.google.common.base.Charsets;
 import com.google.common.base.Stopwatch;
@@ -213,6 +214,27 @@ public class StreamClientTestRun extends ClientTestBase {
     Assert.assertTrue(events.isEmpty());
   }
 
+  @Test
+  public void testStreamDeleteAfterCreatingView() throws Exception {
+    Id.Stream testStream = Id.Stream.from(Id.Namespace.DEFAULT, "testStream");
+    streamClient.create(testStream);
+    // should throw StreamNotFoundException if the stream has not been successfully created in the previous step
+    streamClient.getConfig(testStream);
+    StreamViewClient streamViewClient = new StreamViewClient(clientConfig);
+    Id.Stream.View testView = Id.Stream.View.from(testStream, "testView");
+    ViewSpecification testViewSpec = new ViewSpecification(new FormatSpecification("csv", null, null));
+    Assert.assertTrue(streamViewClient.createOrUpdate(testView, testViewSpec));
+    // test stream delete
+    streamClient.delete(testStream);
+    // recreate the stream and the view
+    streamClient.create(testStream);
+    // should throw StreamNotFoundException if the stream has not been successfully created in the previous step
+    streamClient.getConfig(testStream);
+    Assert.assertTrue(streamViewClient.createOrUpdate(testView, testViewSpec));
+    // test that namespace deletion succeeds
+    namespaceClient.delete(Id.Namespace.DEFAULT);
+  }
+
 
   private void testSendFile(int msgCount) throws Exception {
     Id.Stream streamId = Id.Stream.from(namespaceId, "testSendFile");
@@ -241,7 +263,7 @@ public class StreamClientTestRun extends ClientTestBase {
   }
 
   @After
-  public void tearDown() throws CannotBeDeletedException, UnauthorizedException, NotFoundException, IOException {
-    namespaceClient.delete(namespaceId.getId());
+  public void tearDown() throws Exception {
+    namespaceClient.delete(namespaceId);
   }
 }

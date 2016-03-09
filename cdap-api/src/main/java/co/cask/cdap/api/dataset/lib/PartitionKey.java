@@ -16,10 +16,7 @@
 
 package co.cask.cdap.api.dataset.lib;
 
-import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Maps;
-
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import javax.annotation.Nonnull;
@@ -35,7 +32,7 @@ public class PartitionKey {
    * Private constructor to force use of the builder.
    */
   private PartitionKey(@Nonnull Map<String, Comparable> fields) {
-    this.fields = ImmutableMap.copyOf(fields);
+    this.fields = Collections.unmodifiableMap(new LinkedHashMap<>(fields));
   }
 
   /**
@@ -81,7 +78,7 @@ public class PartitionKey {
    */
   public static class Builder {
 
-    private final LinkedHashMap<String, Comparable> fields = Maps.newLinkedHashMap();
+    private final LinkedHashMap<String, Comparable> fields = new LinkedHashMap<>();
 
     private Builder() { }
 
@@ -95,8 +92,12 @@ public class PartitionKey {
      *         or if the value is null.
      */
     public Builder addField(String name, Comparable value) {
-      Preconditions.checkArgument(name != null && !name.isEmpty(), "field name cannot be null or empty.");
-      Preconditions.checkArgument(value != null, "field name cannot be null.");
+      if (name == null || name.isEmpty()) {
+        throw new IllegalArgumentException("Field name cannot be null or empty.");
+      }
+      if (value == null) {
+        throw new IllegalArgumentException("Field value cannot be null.");
+      }
       if (fields.containsKey(name)) {
         throw new IllegalArgumentException(String.format("Field '%s' already exists in partition key.", name));
       }
@@ -149,7 +150,9 @@ public class PartitionKey {
      * @throws java.lang.IllegalStateException if no fields have been added
      */
     public PartitionKey build() {
-      Preconditions.checkState(!fields.isEmpty(), "Partition key cannot be empty.");
+      if (fields.isEmpty()) {
+        throw new IllegalStateException("Partition key cannot be empty.");
+      }
       return new PartitionKey(fields);
     }
   }

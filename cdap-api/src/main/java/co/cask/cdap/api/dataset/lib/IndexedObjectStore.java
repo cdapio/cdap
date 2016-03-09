@@ -19,11 +19,10 @@ package co.cask.cdap.api.dataset.lib;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Table;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
@@ -86,7 +85,7 @@ public class IndexedObjectStore<T> extends AbstractDataset {
    * @return List of Objects matching the secondaryKey.
    */
   public List<T> readAllByIndex(byte[] secondaryKey) {
-    ImmutableList.Builder<T> resultList = ImmutableList.builder();
+    List<T> resultList = new ArrayList<>();
     //Lookup the secondaryKey and get all the keys in primary
     //Each row with secondaryKey as rowKey contains column named as the primary key
     // of every object that can be looked up using the secondaryKey
@@ -99,11 +98,11 @@ public class IndexedObjectStore<T> extends AbstractDataset {
         resultList.add(obj);
       }
     }
-    return resultList.build();
+    return Collections.unmodifiableList(resultList);
   }
 
   private List<byte[]> secondaryKeysToDelete(Set<byte[]> existingSecondaryKeys, Set<byte[]> newSecondaryKeys) {
-    List<byte[]> secondaryKeysToDelete = Lists.newArrayList();
+    List<byte[]> secondaryKeysToDelete = new ArrayList<>();
     if (existingSecondaryKeys.size() > 0) {
       for (byte[] secondaryKey : existingSecondaryKeys) {
         // If it is not in newSecondaryKeys then it needs to be deleted.
@@ -116,7 +115,7 @@ public class IndexedObjectStore<T> extends AbstractDataset {
   }
 
   private List<byte[]> secondaryKeysToAdd(Set<byte[]> existingSecondaryKeys, Set<byte[]> newSecondaryKeys) {
-    List<byte[]> secondaryKeysToAdd = Lists.newArrayList();
+    List<byte[]> secondaryKeysToAdd = new ArrayList<>();
     if (existingSecondaryKeys.size() > 0) {
       for (byte[] secondaryKey : newSecondaryKeys) {
         // If it is not in existingSecondaryKeys then it needs to be added
@@ -151,13 +150,13 @@ public class IndexedObjectStore<T> extends AbstractDataset {
     //  - Remove the secondaryKeys that are removed
     //  - Add the new keys that are added
     Row row = index.get(getPrefixedPrimaryKey(key));
-    Set<byte[]> existingSecondaryKeys = Sets.newTreeSet(new Bytes.ByteArrayComparator());
+    Set<byte[]> existingSecondaryKeys = new TreeSet<>(Bytes.BYTES_COMPARATOR);
 
     if (!row.isEmpty()) {
       existingSecondaryKeys = row.getColumns().keySet();
     }
 
-    Set<byte[]> newSecondaryKeys = new TreeSet<>(new Bytes.ByteArrayComparator());
+    Set<byte[]> newSecondaryKeys = new TreeSet<>(Bytes.BYTES_COMPARATOR);
     newSecondaryKeys.addAll(Arrays.asList(secondaryKeys));
 
     List<byte[]> secondaryKeysDeleted = secondaryKeysToDelete(existingSecondaryKeys, newSecondaryKeys);

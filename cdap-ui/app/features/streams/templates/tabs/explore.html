@@ -1,3 +1,19 @@
+<!--
+  Copyright © 2015 Cask Data, Inc.
+ 
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+ 
+  http://www.apache.org/licenses/LICENSE-2.0
+ 
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+--> 
+
 <section class="panel-group explore"
      ng-model="ExploreController.activePanel"
      data-allow-multiple="true"
@@ -61,7 +77,7 @@
                 {{event.timestamp | amDateFormat: 'MM/DD/YY h:mm:ss a'}}
               </td>
               <td>{{event.timestamp | amTimeAgo}}</td>
-              <td>{{event.body | json | myEllipsis: 80 }}</td>
+              <td>{{event.body | myEllipsis: 80 }}</td>
             </tr>
           </tbody>
         </table>
@@ -72,43 +88,10 @@
     </div>
   </div>
 
-  <!-- WRITE & EXECUTE SQL -->
-  <div class="panel panel-explore">
-    <div class="panel-heading" bs-collapse-toggle>
-      <h3 class="panel-title">
-        <span
-          ng-class="{'fa-chevron-right': ExploreController.activePanel.indexOf(1) === -1,
-                     'fa-chevron-down': ExploreController.activePanel.indexOf(1) !== -1}"
-          class="fa fa-fw"
-        ></span>Write &amp; Execute SQL
-      </h3>
-    </div>
-    <div class="panel-collapse" bs-collapse-target>
-      <div class="panel-body">
-        <my-sql-query data-type="'stream'" data-name="ExploreController.name"></my-sql-query>
-      </div>
-    </div>
-  </div>
-
-  <!-- VIEW QUERIES -->
-  <div class="panel panel-explore">
-    <div class="panel-heading" bs-collapse-toggle>
-      <h3 class="panel-title">
-        <span
-          ng-class="{'fa-chevron-right': ExploreController.activePanel.indexOf(2) === -1,
-                     'fa-chevron-down': ExploreController.activePanel.indexOf(2) !== -1}"
-          class="fa fa-fw"
-        ></span>View Results
-      </h3>
-    </div>
-    <div class="panel-collapse" bs-collapse-target>
-      <div class="panel-body">
-
-        <my-view-queries></my-view-queries>
-
-      </div>
-    </div>
-  </div>
+  <my-explore
+    data-type="'stream'"
+    data-name="ExploreController.name">
+  </my-explore>
 
 
 </section>

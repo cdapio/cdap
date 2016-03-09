@@ -1,8 +1,26 @@
+/*
+ * Copyright © 2015 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 angular.module(PKG.name + '.feature.overview')
-  .controller('AppsSectionCtrl', function(myAppUploader, myStreamApi, myDatasetApi, MyDataSource, MyOrderings, $scope, $state, myAdapterApi) {
-    var dataSrc = new MyDataSource($scope);
+  .controller('AppsSectionCtrl', function(myAppUploader, myStreamApi, myDatasetApi, MyCDAPDataSource, MyOrderings, $scope, $state, GLOBALS, myHydratorFactory) {
+    var dataSrc = new MyCDAPDataSource($scope);
     this.MyOrderings = MyOrderings;
     this.apps = [];
+    this.GLOBALS = GLOBALS;
+    this.myHydratorFactory = myHydratorFactory;
 
     this.dataList = [];
     dataSrc.request({
@@ -16,18 +34,6 @@ angular.module(PKG.name + '.feature.overview')
       namespace: $state.params.namespace,
       scope: $scope
     };
-
-    myAdapterApi.list(params)
-      .$promise
-      .then(function(res) {
-        if (!res.length) {
-          return;
-        }
-        res.forEach(function(adapter) {
-          adapter.type = 'adapter';
-        });
-        this.apps = this.apps.concat(res);
-      }.bind(this));
 
     myDatasetApi.list(params)
       .$promise

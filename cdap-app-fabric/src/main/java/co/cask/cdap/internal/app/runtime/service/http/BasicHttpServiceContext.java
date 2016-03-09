@@ -19,6 +19,7 @@ package co.cask.cdap.internal.app.runtime.service.http;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.metrics.MetricsContext;
+import co.cask.cdap.api.plugin.Plugin;
 import co.cask.cdap.api.service.http.HttpServiceHandlerSpecification;
 import co.cask.cdap.app.metrics.ProgramUserMetrics;
 import co.cask.cdap.app.program.Program;
@@ -26,6 +27,7 @@ import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.AbstractContext;
+import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.tephra.TransactionContext;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.collect.Maps;
@@ -34,6 +36,7 @@ import org.apache.twill.discovery.DiscoveryServiceClient;
 
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
+import javax.annotation.Nullable;
 
 /**
  * Default implementation of HttpServiceContext which simply stores and retrieves the
@@ -42,10 +45,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class BasicHttpServiceContext extends AbstractContext implements TransactionalHttpServiceContext {
 
   private final HttpServiceHandlerSpecification spec;
-  private final TransactionContext txContext;
   private final Metrics userMetrics;
   private final int instanceId;
   private final AtomicInteger instanceCount;
+  private final Map<String, Plugin> plugins;
 
   /**
    * Creates a BasicHttpServiceContext for the given HttpServiceHandlerSpecification.
@@ -54,27 +57,28 @@ public class BasicHttpServiceContext extends AbstractContext implements Transact
    * @param runId runId of the component.
    * @param instanceId instanceId of the component.
    * @param instanceCount total number of instances of the component.
-   * @param runtimeArgs runtimeArgs for the component.
+   * @param runtimeArgs runtime arguments for the component.
    * @param metricsCollectionService metricsCollectionService to use for emitting metrics.
    * @param dsFramework dsFramework to use for getting datasets.
    * @param discoveryServiceClient discoveryServiceClient used to do service discovery.
    * @param txClient txClient to do transaction operations.
+   * @param pluginInstantiator {@link PluginInstantiator}
    */
   public BasicHttpServiceContext(HttpServiceHandlerSpecification spec,
                                  Program program, RunId runId, int instanceId, AtomicInteger instanceCount,
                                  Arguments runtimeArgs, MetricsCollectionService metricsCollectionService,
                                  DatasetFramework dsFramework, DiscoveryServiceClient discoveryServiceClient,
-                                 TransactionSystemClient txClient) {
+                                 TransactionSystemClient txClient, @Nullable PluginInstantiator pluginInstantiator) {
     super(program, runId, runtimeArgs, spec.getDatasets(),
           getMetricCollector(metricsCollectionService, program, spec.getName(), runId.getId(), instanceId),
-          dsFramework, discoveryServiceClient);
+          dsFramework, txClient, discoveryServiceClient, false, pluginInstantiator);
     this.spec = spec;
     this.instanceId = instanceId;
     this.instanceCount = instanceCount;
-    this.txContext = new TransactionContext(txClient, getDatasetInstantiator().getTransactionAware());
     this.userMetrics =
       new ProgramUserMetrics(getMetricCollector(metricsCollectionService, program,
                                                 spec.getName(), runId.getId(), instanceId));
+    this.plugins = Maps.newHashMap(program.getApplicationSpecification().getPlugins());
   }
 
   /**
@@ -101,10 +105,21 @@ public class BasicHttpServiceContext extends AbstractContext implements Transact
   }
 
   @Override
-  public TransactionContext getTransactionContext() {
-    return txContext;
+  public TransactionContext newTransactionContext() {
+    return getDatasetCache().newTransactionContext();
   }
 
+  @Override
+  public void dismissTransactionContext() {
+    getDatasetCache().dismissTransactionContext();
+  }
+
+  @Override
+  public Map<String, Plugin> getPlugins() {
+    return plugins;
+  }
+
+  @Nullable
   private static MetricsContext getMetricCollector(MetricsCollectionService service,
                                                      Program program, String handlerName,
                                                      String runId, int instanceId) {

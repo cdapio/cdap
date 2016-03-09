@@ -14,7 +14,6 @@ Datasets
     Table API <table>
     File Sets <fileset>
     System and Custom Datasets <system-custom>
-    Datasets and MapReduce <datasets-mapreduce>
     Cube Dataset <cube>
 
 
@@ -64,26 +63,94 @@ For example, to create a DataSet named *myCounters* of type
       createDataset("myCounters", KeyValueTable.class);
       ...
 
-To use the dataset in a program, instruct the runtime
-system to inject an instance of the dataset with the ``@UseDataSet``
-annotation::
+.. _datasets-in-programs:
 
-  class MyFlowlet extends AbstractFlowlet {
-    @UseDataSet("myCounters")
-    private KeyValueTable counters;
-    ...
-    void process(String key) {
-      counters.increment(key.getBytes(), 1L);
-    }
+.. rubric:: Using Datasets in Programs
 
-The runtime system reads the dataset specification for the key/value
-table *myCounters* from the metadata store and injects an
-instance of the dataset class into the application.
+There are two ways to use a dataset in a program:
 
-You can also implement custom datasets by implementing the ``Dataset``
-interface or by extending existing dataset types. See the
-:ref:`Purchase Example<examples-purchase>` for an implementation of a custom dataset.
-For more details, refer to :ref:`custom datasets. <custom-datasets>`
+- **Static Instantiation:** You can instruct the CDAP runtime system to inject the dataset into a class member
+  with the ``@UseDataSet`` annotation::
+
+    class MyFlowlet extends AbstractFlowlet {
+      @UseDataSet("myCounters")
+      private KeyValueTable counters;
+      ...
+      void process(String key) {
+        counters.increment(key.getBytes(), 1L);
+      }
+
+  When starting the program, the runtime system reads the dataset specification from the metadata store and injects
+  an instance of the dataset class into the application. This dataset will participate in every transaction that is
+  executed by the program. If the program is multi-threaded (for example, an HTTP service handler), CDAP will make
+  sure that every thread has its own instance of the dataset.
+
+  The ``@UseDataSet`` annotation is evaluated when your program is compiled. If you don't know the name of the
+  dataset at compile time |---| perhaps because it is given by the application configuration |---| you can still use the
+  ``useDatasets`` method in the ``configure`` method of your program. Note that this will then require knowledge of
+  the dataset at the time that the application is deployed, as that is when the ``configure`` method is executed::
+
+    class MyFlowlet extends AbstractFlowlet {
+
+      @Override
+      public void configure(FlowletConfigurer configurer) {
+        super.configure(configurer);
+        useDatasets("myCounters");
+      }
+
+      void process(String key) {
+        KeyValueTable counters = getContext().getDataset("myCounters");
+        counters.increment(key.getBytes(), 1L);
+      }
+
+  The ``useDatasets()`` call has the effect that the dataset is instantiated when the program
+  starts up, and it remains in the cache for the lifetime of the program and hence never needs
+  to be instantiated again. Note that you still need to call ``getDataset()`` every time you
+  access it.
+
+- **Dynamic Instantiation:** If you don't know the name of the dataset at deploy time (and hence you cannot use
+  static instantiation), or if you want to use a dataset only for a short time, you can dynamically
+  request an instance of the dataset through the program context::
+
+    class MyFlowlet extends AbstractFlowlet {
+      ...
+      void process(String key) {
+        KeyValueTable counters = getContext().getDataset("myCounters");
+        counters.increment(key.getBytes(), 1L);
+      }
+
+  This dataset is instantiated at runtime, in this case every time the method ``process`` is invoked. To reduce the
+  overhead of repeatedly instantiating the same dataset, the CDAP runtime system caches dynamic datasets internally.
+  By default, the cached instance of a dataset will not expire, and it will participate in all transactions initiated
+  by the program.
+
+  However, contrary to static datasets, dynamic datasets allow the release of the resources held by their Java classes
+  after you are done using them. You can do that by calling the ``discardDataset()`` method of the program context:
+  it marks the dataset to be closed and removed from all transactions as soon as the current transaction completes,
+  thereby releasing its resources.
+
+  If you know the dataset name at the time the program starts, you can store a reference to the dataset in a member
+  variable at that time (similar to static datasets, but assigned explicitly by you)::
+
+    class MyFlowlet extends AbstractFlowlet {
+
+      private KeyValueTable counters;
+
+      @Override
+      public void initialize(FlowletContext context) throws Exception {
+        super.initialize(context);
+        counters = context.getDataset("myCounters");
+      }
+
+      void process(String key) {
+        counters.increment(key.getBytes(), 1L);
+      }
+
+  See the :ref:`Word Count <examples-word-count>` for an example of how this can be used to configure
+  the dataset names used by an application.
+
+  Similarly to static datasets, if the program is multi-threaded, CDAP will make
+  sure that every thread has its own instance of the dataset.
 
 .. rubric::  Dataset Time-To-Live (TTL)
 
@@ -206,8 +273,10 @@ such as the format and schema, while abstracting from the actual underlying file
   Cube <cdap-cube-guide>` guide. 
   
 
-.. rubric::  Examples of Using Datasets
+.. .. rubric::  Examples of Using Datasets
 
+Dataset Examples
+================
 Datasets are included in just about every CDAP :ref:`application <apps-and-packs>`,
 :ref:`tutorial <tutorials>`, :ref:`guide <guides-index>` or :ref:`example <examples-index>`.
 

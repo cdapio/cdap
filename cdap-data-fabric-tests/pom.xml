@@ -24,7 +24,7 @@
   <parent>
     <groupId>co.cask.cdap</groupId>
     <artifactId>cdap</artifactId>
-    <version>3.1.0</version>
+    <version>3.3.2</version>
   </parent>
 
   <artifactId>cdap-data-fabric-tests</artifactId>
@@ -32,6 +32,11 @@
   <packaging>jar</packaging>
 
   <dependencies>
+    <dependency>
+      <groupId>co.cask.cdap</groupId>
+      <artifactId>cdap-spi</artifactId>
+      <version>${project.version}</version>
+    </dependency>
     <dependency>
       <groupId>co.cask.cdap</groupId>
       <artifactId>cdap-data-fabric</artifactId>

@@ -15,6 +15,7 @@
  */
 package co.cask.cdap.data.stream;
 
+import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.data.file.FileReader;
 import co.cask.cdap.data.file.PositionReporter;
 import co.cask.cdap.data.file.ReadFilter;
@@ -227,7 +228,8 @@ public final class MultiLiveStreamFileReader implements FileReader<StreamEventOf
       }
 
       // Tie break by file path
-      return getPosition().getEventLocation().toURI().compareTo(other.getPosition().getEventLocation().toURI());
+      return Locations.LOCATION_COMPARATOR.compare(getPosition().getEventLocation(),
+                                                   other.getPosition().getEventLocation());
     }
 
     @Override

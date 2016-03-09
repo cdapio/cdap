@@ -17,9 +17,9 @@
 package co.cask.cdap.hive.datasets;
 
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.ConfigurationUtil;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.hive.context.CConfCodec;
-import co.cask.cdap.hive.context.ConfigurationUtil;
 import com.google.common.base.Throwables;
 import org.apache.hadoop.hive.ql.metadata.DefaultStorageHandler;
 import org.apache.hadoop.hive.ql.plan.TableDesc;
@@ -35,6 +35,11 @@ import java.util.Map;
 
 /**
  * HiveStorageHandler to access Datasets.
+ *
+ * <p>
+ * Referred to by string rather than {@code Class.getName()} in {@code ExploreServiceUtils.traceExploreDependencies()}
+ * because this class extends a Hive class, which isn't present in the {@code ExploreServiceUtils} class loader.
+ * </p>
  */
 public class DatasetStorageHandler extends DefaultStorageHandler {
   private static final Logger LOG = LoggerFactory.getLogger(DatasetStorageHandler.class);

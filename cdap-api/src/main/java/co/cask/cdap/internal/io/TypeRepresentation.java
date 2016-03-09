@@ -17,7 +17,6 @@
 package co.cask.cdap.internal.io;
 
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
-import com.google.common.base.Objects;
 
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
@@ -118,9 +117,13 @@ public final class TypeRepresentation implements ParameterizedType {
   @Override
   public Type getRawType() {
     try {
-      ClassLoader cl = Objects.firstNonNull(classLoader,
-                                            Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
-                                                                 getClass().getClassLoader()));
+      ClassLoader cl = classLoader;
+      if (cl == null) {
+        cl = Thread.currentThread().getContextClassLoader();
+        if (cl == null) {
+          cl = getClass().getClassLoader();
+        }
+      }
       return cl.loadClass(this.rawType);
     } catch (ClassNotFoundException e) {
       throw new RuntimeException("cannot convert " + this.rawType + " to a type. ", e);

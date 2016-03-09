@@ -22,8 +22,6 @@ import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.table.Get;
 import co.cask.cdap.api.dataset.table.Put;
 import co.cask.cdap.api.dataset.table.Table;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.lib.table.CoreDatasetsModule;
 import co.cask.cdap.data2.dataset2.module.lib.inmemory.InMemoryTableModule;
 import co.cask.cdap.data2.transaction.queue.QueueConstants;
@@ -51,14 +49,20 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.net.URL;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * Unit-test for {@link DatasetInstanceHandler}
  */
 public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
+
+  private static final Gson GSON = new Gson();
 
   @Test
   public void testSystemDatasetNotInList() throws Exception {
@@ -67,14 +71,15 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
       deployModule(HBaseConsumerStateStore.class.getSimpleName(), HBaseQueueDatasetModule.class);
       // yes it's weird, you can create one a system dataset, but don't expect to see it in the get all request
       Assert.assertEquals(HttpStatus.SC_OK,
-        createInstance(QueueConstants.STATE_STORE_NAME, HBaseConsumerStateStore.class.getSimpleName()));
+                          createInstance(QueueConstants.STATE_STORE_NAME, HBaseConsumerStateStore.class.getSimpleName())
+                            .getResponseCode());
 
       // nothing has been created, modules and types list is empty
       Assert.assertTrue(getInstances().getResponseObject().isEmpty());
     } finally {
       // cleanup
       deleteInstance(QueueConstants.STATE_STORE_NAME);
-      Assert.assertEquals(HttpStatus.SC_OK, deleteModules());
+      Assert.assertEquals(HttpStatus.SC_OK, deleteModules().getResponseCode());
     }
   }
 
@@ -90,19 +95,19 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
     try {
       // create dataset instance with type that is not yet known to the system should fail
       DatasetProperties props = DatasetProperties.builder().add("prop1", "val1").build();
-      Assert.assertEquals(HttpStatus.SC_NOT_FOUND, createInstance("dataset1", "datasetType2", props));
+      Assert.assertEquals(HttpStatus.SC_NOT_FOUND, createInstance("dataset1", "datasetType2", props).getResponseCode());
 
       // deploy modules
       deployModule("module1", TestModule1.class);
       deployModule("module2", TestModule2.class);
 
       // create dataset instance
-      Assert.assertEquals(HttpStatus.SC_OK, createInstance("dataset1", "datasetType2", props));
+      Assert.assertEquals(HttpStatus.SC_OK, createInstance("dataset1", "datasetType2", props).getResponseCode());
 
       // verify module cannot be deleted which type is used for the dataset
       int modulesBeforeDelete = getModules().getResponseObject().size();
-      Assert.assertEquals(HttpStatus.SC_CONFLICT, deleteModule("module2"));
-      Assert.assertEquals(HttpStatus.SC_CONFLICT, deleteModules());
+      Assert.assertEquals(HttpStatus.SC_CONFLICT, deleteModule("module2").getResponseCode());
+      Assert.assertEquals(HttpStatus.SC_CONFLICT, deleteModules().getResponseCode());
       Assert.assertEquals(modulesBeforeDelete, getModules().getResponseObject().size());
 
       // verify instance was created
@@ -129,25 +134,25 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
       Assert.assertEquals(HttpStatus.SC_NOT_FOUND, getInstance("non-existing-dataset").getResponseCode());
 
       // cannot create instance with same name again
-      Assert.assertEquals(HttpStatus.SC_CONFLICT, createInstance("dataset1", "datasetType2", props));
+      Assert.assertEquals(HttpStatus.SC_CONFLICT, createInstance("dataset1", "datasetType2", props).getResponseCode());
       Assert.assertEquals(1, getInstances().getResponseObject().size());
 
       // cannot delete non-existing dataset instance
-      Assert.assertEquals(HttpStatus.SC_NOT_FOUND, deleteInstance("non-existing-dataset"));
+      Assert.assertEquals(HttpStatus.SC_NOT_FOUND, deleteInstance("non-existing-dataset").getResponseCode());
       Assert.assertEquals(1, getInstances().getResponseObject().size());
 
       // verify creation of dataset instance with null properties
-      Assert.assertEquals(HttpStatus.SC_OK, createInstance("nullPropertiesTable", "datasetType2"));
+      Assert.assertEquals(HttpStatus.SC_OK, createInstance("nullPropertiesTable", "datasetType2").getResponseCode());
 
     } finally {
       // delete dataset instance
-      Assert.assertEquals(HttpStatus.SC_OK, deleteInstance("dataset1"));
-      Assert.assertEquals(HttpStatus.SC_OK, deleteInstance("nullPropertiesTable"));
+      Assert.assertEquals(HttpStatus.SC_OK, deleteInstance("dataset1").getResponseCode());
+      Assert.assertEquals(HttpStatus.SC_OK, deleteInstance("nullPropertiesTable").getResponseCode());
       Assert.assertEquals(0, getInstances().getResponseObject().size());
 
       // delete dataset modules
-      Assert.assertEquals(HttpStatus.SC_OK, deleteModule("module2"));
-      Assert.assertEquals(HttpStatus.SC_OK, deleteModule("module1"));
+      Assert.assertEquals(HttpStatus.SC_OK, deleteModule("module2").getResponseCode());
+      Assert.assertEquals(HttpStatus.SC_OK, deleteModule("module1").getResponseCode());
     }
   }
 
@@ -168,7 +173,7 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
       deployModule("module2", TestModule2.class);
 
       // create dataset instance
-      Assert.assertEquals(HttpStatus.SC_OK, createInstance("dataset1", "datasetType2", props));
+      Assert.assertEquals(HttpStatus.SC_OK, createInstance("dataset1", "datasetType2", props).getResponseCode());
 
       // verify instance was created
       instances = getInstances().getResponseObject();
@@ -177,17 +182,17 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
       Map<String, String> newProps = ImmutableMap.of("prop2", "val2");
 
       // update dataset instance
-      Assert.assertEquals(HttpStatus.SC_OK, updateInstance("dataset1", newProps));
+      Assert.assertEquals(HttpStatus.SC_OK, updateInstance("dataset1", newProps).getResponseCode());
       Assert.assertEquals("val2", getInstanceObject("dataset1").getResponseObject().getSpec().getProperty("prop2"));
       Assert.assertNull(getInstanceObject("dataset1").getResponseObject().getSpec().getProperty("prop1"));
     } finally {
       // delete dataset instance
-      Assert.assertEquals(HttpStatus.SC_OK, deleteInstance("dataset1"));
+      Assert.assertEquals(HttpStatus.SC_OK, deleteInstance("dataset1").getResponseCode());
       Assert.assertEquals(0, getInstances().getResponseObject().size());
 
       // delete dataset modules
-      Assert.assertEquals(HttpStatus.SC_OK, deleteModule("module2"));
-      Assert.assertEquals(HttpStatus.SC_OK, deleteModule("module1"));
+      Assert.assertEquals(HttpStatus.SC_OK, deleteModule("module2").getResponseCode());
+      Assert.assertEquals(HttpStatus.SC_OK, deleteModule("module1").getResponseCode());
     }
   }
 
@@ -198,16 +203,19 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
       deployModule("default-core", CoreDatasetsModule.class);
 
       // cannot create instance with same name again
-      Assert.assertEquals(HttpStatus.SC_OK, createInstance("myTable1", "table", DatasetProperties.EMPTY));
-      Assert.assertEquals(HttpStatus.SC_OK, createInstance("myTable2", "table", DatasetProperties.EMPTY));
+      Assert.assertEquals(HttpStatus.SC_OK,
+                          createInstance("myTable1", "table", DatasetProperties.EMPTY).getResponseCode());
+      Assert.assertEquals(HttpStatus.SC_OK,
+                          createInstance("myTable2", "table", DatasetProperties.EMPTY).getResponseCode());
       Assert.assertEquals(2, getInstances().getResponseObject().size());
 
       // we want to verify that data is also gone, so we write smth to tables first
-      // using default namespace here since this is testing v2 APIs right now. TODO: add tests for v3 APIs
-      final Table table1 = dsFramework.getDataset(Id.DatasetInstance.from(Constants.DEFAULT_NAMESPACE, "myTable1"),
+      final Table table1 = dsFramework.getDataset(Id.DatasetInstance.from(Id.Namespace.DEFAULT, "myTable1"),
                                                   DatasetDefinition.NO_ARGUMENTS, null);
-      final Table table2 = dsFramework.getDataset(Id.DatasetInstance.from(Constants.DEFAULT_NAMESPACE, "myTable2"),
+      final Table table2 = dsFramework.getDataset(Id.DatasetInstance.from(Id.Namespace.DEFAULT, "myTable2"),
                                                   DatasetDefinition.NO_ARGUMENTS, null);
+      Assert.assertNotNull(table1);
+      Assert.assertNotNull(table2);
       TransactionExecutor txExecutor =
         new DefaultTransactionExecutor(new InMemoryTxSystemClient(txManager),
                                        ImmutableList.of((TransactionAware) table1, (TransactionAware) table2));
@@ -230,11 +238,12 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
       });
 
       // delete table, check that it is deleted, create again and verify that it is empty
-      Assert.assertEquals(HttpStatus.SC_OK, deleteInstance("myTable1"));
+      Assert.assertEquals(HttpStatus.SC_OK, deleteInstance("myTable1").getResponseCode());
       ObjectResponse<List<DatasetSpecificationSummary>> instances = getInstances();
       Assert.assertEquals(1, instances.getResponseObject().size());
       Assert.assertEquals("myTable2", instances.getResponseObject().get(0).getName());
-      Assert.assertEquals(HttpStatus.SC_OK, createInstance("myTable1", "table", DatasetProperties.EMPTY));
+      Assert.assertEquals(HttpStatus.SC_OK,
+                          createInstance("myTable1", "table", DatasetProperties.EMPTY).getResponseCode());
       Assert.assertEquals(2, getInstances().getResponseObject().size());
 
       // verify that table1 is empty. Note: it is ok for test purpose to re-use the table clients
@@ -251,8 +260,10 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
       // delete all tables, check that they deleted, create again and verify that they are empty
       deleteInstances();
       Assert.assertEquals(0, getInstances().getResponseObject().size());
-      Assert.assertEquals(HttpStatus.SC_OK, createInstance("myTable1", "table", DatasetProperties.EMPTY));
-      Assert.assertEquals(HttpStatus.SC_OK, createInstance("myTable2", "table", DatasetProperties.EMPTY));
+      Assert.assertEquals(HttpStatus.SC_OK,
+                          createInstance("myTable1", "table", DatasetProperties.EMPTY).getResponseCode());
+      Assert.assertEquals(HttpStatus.SC_OK,
+                          createInstance("myTable2", "table", DatasetProperties.EMPTY).getResponseCode());
       Assert.assertEquals(2, getInstances().getResponseObject().size());
 
       // verify that tables are empty. Note: it is ok for test purpose to re-use the table clients
@@ -266,40 +277,90 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
     } finally {
       // cleanup
       deleteInstances();
-      Assert.assertEquals(HttpStatus.SC_OK, deleteModules());
+      Assert.assertEquals(HttpStatus.SC_OK, deleteModules().getResponseCode());
     }
   }
 
+  @Test
+  public void testNotFound() throws IOException {
+    Id.Namespace nonExistent = Id.Namespace.from("nonexistent");
+    Id.DatasetInstance datasetInstance = Id.DatasetInstance.from(nonExistent, "ds");
 
-  private int createInstance(String instanceName, String typeName,
-                             DatasetProperties props) throws IOException {
-    DatasetInstanceConfiguration creationProperties = new DatasetInstanceConfiguration(typeName, props.getProperties());
-    HttpRequest request = HttpRequest.put(getUrl("/data/datasets/" + instanceName))
-      .withBody(new Gson().toJson(creationProperties)).build();
-    return HttpRequests.execute(request).getResponseCode();
+    HttpResponse response = makeInstancesRequest(nonExistent.getId());
+    assertNamespaceNotFound(response, nonExistent);
+
+    // TODO: commented out for now until we add back namespace checks on get dataset CDAP-3901
+//    response = getInstance(datasetInstance);
+//    assertNamespaceNotFound(response, nonExistent);
+
+    response = createInstance(datasetInstance, Table.class.getName(), null);
+    assertNamespaceNotFound(response, nonExistent);
+
+    response = updateInstance(datasetInstance, new HashMap<String, String>());
+    assertNamespaceNotFound(response, nonExistent);
+
+    response = deleteInstance(datasetInstance);
+    assertNamespaceNotFound(response, nonExistent);
+
+    // it should be ok to use system
+    response = getInstances(Id.Namespace.SYSTEM.getId());
+    Assert.assertEquals(200, response.getResponseCode());
   }
 
-  private int createInstance(String instanceName, String typeName) throws IOException {
-    DatasetInstanceConfiguration creationProperties = new DatasetInstanceConfiguration(typeName, null);
-    HttpRequest request = HttpRequest.put(getUrl("/data/datasets/" + instanceName))
-      .withBody(new Gson().toJson(creationProperties)).build();
-    return HttpRequests.execute(request).getResponseCode();
+  private HttpResponse createInstance(String instanceName, String typeName,
+                                      DatasetProperties props) throws IOException {
+    return createInstance(Id.DatasetInstance.from(Id.Namespace.DEFAULT, instanceName), typeName, props);
   }
 
-  private int updateInstance(String instanceName, Map<String, String> props) throws IOException {
-    HttpRequest request = HttpRequest.put(getUrl("/data/datasets/" + instanceName + "/properties"))
-      .withBody(new Gson().toJson(props)).build();
-    return HttpRequests.execute(request).getResponseCode();
+  private HttpResponse createInstance(String instanceName, String typeName) throws IOException {
+    return createInstance(Id.DatasetInstance.from(Id.Namespace.DEFAULT, instanceName), typeName, null);
+  }
+
+  private HttpResponse createInstance(Id.DatasetInstance instance, String typeName,
+                                      @Nullable DatasetProperties props) throws IOException {
+    DatasetInstanceConfiguration creationProperties;
+    if (props != null) {
+      creationProperties = new DatasetInstanceConfiguration(typeName, props.getProperties());
+    } else {
+      creationProperties = new DatasetInstanceConfiguration(typeName, null);
+    }
+    HttpRequest request = HttpRequest.put(getUrl(instance.getNamespaceId(), "/data/datasets/" + instance.getId()))
+      .withBody(GSON.toJson(creationProperties)).build();
+    return HttpRequests.execute(request);
+  }
+
+  private HttpResponse updateInstance(String instanceName, Map<String, String> props) throws IOException {
+    return updateInstance(Id.DatasetInstance.from(Id.Namespace.DEFAULT, instanceName), props);
+  }
+
+  private HttpResponse updateInstance(Id.DatasetInstance instance, Map<String, String> props) throws IOException {
+    HttpRequest request = HttpRequest.put(getUrl(instance.getNamespaceId(),
+                                                 "/data/datasets/" + instance.getId() + "/properties"))
+      .withBody(GSON.toJson(props)).build();
+    return HttpRequests.execute(request);
   }
 
   private ObjectResponse<List<DatasetSpecificationSummary>> getInstances() throws IOException {
-    HttpRequest request = HttpRequest.get(getUrl("/data/datasets")).build();
-    return ObjectResponse.fromJsonBody(HttpRequests.execute(request),
+    return getInstances(Id.Namespace.DEFAULT.getId());
+  }
+
+  private ObjectResponse<List<DatasetSpecificationSummary>> getInstances(String namespace) throws IOException {
+    return ObjectResponse.fromJsonBody(makeInstancesRequest(namespace),
                                        new TypeToken<List<DatasetSpecificationSummary>>() { }.getType());
   }
 
+  private HttpResponse makeInstancesRequest(String namespace) throws IOException {
+    HttpRequest request = HttpRequest.get(getUrl(namespace, "/data/datasets")).build();
+    return HttpRequests.execute(request);
+  }
+
   private HttpResponse getInstance(String instanceName) throws IOException {
-    HttpRequest request = HttpRequest.get(getUrl("/data/datasets/" + instanceName)).build();
+    return getInstance(Id.DatasetInstance.from(Id.Namespace.DEFAULT, instanceName));
+  }
+
+  private HttpResponse getInstance(Id.DatasetInstance instance) throws IOException {
+    URL instanceUrl = getUrl(instance.getNamespaceId(), "/data/datasets/" + instance.getId());
+    HttpRequest request = HttpRequest.get(instanceUrl).build();
     return HttpRequests.execute(request);
   }
 
@@ -309,9 +370,14 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
     return ObjectResponse.fromJsonBody(response, DatasetMeta.class);
   }
 
-  private int deleteInstance(String instanceName) throws IOException {
-    HttpRequest request = HttpRequest.delete(getUrl("/data/datasets/" + instanceName)).build();
-    return HttpRequests.execute(request).getResponseCode();
+  private HttpResponse deleteInstance(String instanceName) throws IOException {
+    return deleteInstance(Id.DatasetInstance.from(Id.Namespace.DEFAULT, instanceName));
+  }
+
+  private HttpResponse deleteInstance(Id.DatasetInstance instance) throws IOException {
+    HttpRequest request = HttpRequest.delete(getUrl(instance.getNamespaceId(),
+                                                    "/data/datasets/" + instance.getId())).build();
+    return HttpRequests.execute(request);
   }
 
   private void deleteInstances() throws IOException {
@@ -330,4 +396,95 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
   private DatasetSpecificationSummary spec2Summary(DatasetSpecification spec) {
     return new DatasetSpecificationSummary(spec.getName(), spec.getType(), spec.getProperties());
   }
+
+  @Test
+  public void testErrorResponses() throws Exception {
+    try {
+      // we need at least one valid type to test
+      deployModule("default-table", InMemoryTableModule.class);
+
+      validateGet(getUrl("/data/datasets"), 200);
+      validateGet(getUrl("nosuchnamespace", "/data/datasets"), 404);
+      validateGet(getUrl("inval+d", "/data/datasets"), 400);
+      validatePut(getUrl("/data/datasets"), "", 405);
+      validatePost(getUrl("/data/datasets"), "", 405);
+      validateDelete(getUrl("/data/datasets"), 405);
+
+      validateGet(getUrl("/data/datasets/nusuch"), 404);
+      validateGet(getUrl("/data/datasets/nusüch"), 400);
+      validateGet(getUrl("nosuchnamespace", "/data/datasets/nusuch"), 404);
+      validateGet(getUrl("nosuchnamespace", "/data/datasets/nusüch"), 400, 404);
+      validateGet(getUrl("inval+d", "/data/datasets/nusuch"), 400);
+      validatePost(getUrl("/data/datasets/nusuch"), "", 405);
+      validatePost(getUrl("/data/datasets/nusüch"), "", 405);
+      validatePost(getUrl("nosuchnamespace", "/data/datasets/nusuch"), "", 405);
+      validatePost(getUrl("inval+d", "/data/datasets/nusuch"), "", 405);
+      validateDelete(getUrl("/data/datasets/nusuch"), 404);
+      validateDelete(getUrl("/data/datasets/nusüch"), 400);
+      validateDelete(getUrl("nosuchnamespace", "/data/datasets/nusuch"), 404);
+      validateDelete(getUrl("inval+d", "/data/datasets/nusuch"), 400);
+      validatePut(getUrl("/data/datasets/xü"), "{'typeName':'table'}", 400);
+      validatePut(getUrl("/data/datasets/x"), "{'typeName':'tablü'}", 400);
+      validatePut(getUrl("/data/datasets/x"), "{'type':'table'}", 400);
+      validatePut(getUrl("/data/datasets/x"), "{'type':'tab", 400);
+      validatePut(getUrl("/data/datasets/x"), "", 400);
+      validatePut(getUrl("nusuchns", "/data/datasets/xü"), "{'typeName':'table'}", 400, 404);
+      validatePut(getUrl("nusuchns", "/data/datasets/x"), "{'typeName':'tablü'}", 400, 404);
+      validatePut(getUrl("nusuchns", "/data/datasets/x"), "{'type':'table'}", 400, 404);
+      validatePut(getUrl("nusuchns", "/data/datasets/x"), "{'type':'tab", 400, 404);
+      validatePut(getUrl("nusuchns", "/data/datasets/x"), "", 400, 404);
+      validatePut(getUrl("inval+d", "/data/datasets/xü"), "{'typeName':'table'}", 400);
+      validatePut(getUrl("inval+d", "/data/datasets/x"), "{'typeName':'tablü'}", 400);
+      validatePut(getUrl("inval+d", "/data/datasets/x"), "{'type':'table'}", 400);
+      validatePut(getUrl("inval+d", "/data/datasets/x"), "{'type':'tab", 400);
+      validatePut(getUrl("inval+d", "/data/datasets/x"), "", 400);
+
+      // create one dataset to test PUT .../properties on it
+      validatePut(getUrl("/data/datasets/x"), "{'typeName':'table'}", 200);
+
+      // TODO (CDAP-4420): commented because netty-http throws "response already sent" for these and request times out
+      // TODO: debug this in netty-http (this is not an issue with DatasetInstanceHandler, it never gets called)
+      //validateGet(getUrl("/data/datasets/y/properties"), 405);
+      //validatePost(getUrl("/data/datasets/x/properties"), "", 405);
+      //validateDelete(getUrl("/data/datasets/x/properties"), 405);
+
+      validatePut(getUrl("/data/datasets/y/properties"), "{'x':'y'}", 404);
+      validatePut(getUrl("/data/datasets/y/properties"), "{'x':'}", 400, 404);
+      validatePut(getUrl("/data/datasets/ü/properties"), "{'x':'y'}", 400);
+      validatePut(getUrl("/data/datasets/ü/properties"), "{'x':'y", 400);
+      validatePut(getUrl("nosuchns", "/data/datasets/x/properties"), "{}", 404);
+      validatePut(getUrl("nosuchns", "/data/datasets/x/properties"), "{", 400, 404);
+      validatePut(getUrl("inval+dns", "/data/datasets/x/properties"), "{'x':'y'}", 400);
+    } finally {
+      // cleanup
+      deleteInstance("x");
+      Assert.assertEquals(HttpStatus.SC_OK, deleteModules().getResponseCode());
+    }
+  }
+
+  private void validateGet(URL url, Integer ... expected) throws IOException {
+    HttpRequest request = HttpRequest.get(url).build();
+    assertStatus(HttpRequests.execute(request).getResponseCode(), url, expected);
+  }
+
+  private void validateDelete(URL url, Integer ... expected) throws IOException {
+    HttpRequest request = HttpRequest.delete(url).build();
+    assertStatus(HttpRequests.execute(request).getResponseCode(), url, expected);
+  }
+
+  private void validatePut(URL url, String body, Integer ... expected) throws IOException {
+    HttpRequest request = HttpRequest.put(url).withBody(body).build();
+    assertStatus(HttpRequests.execute(request).getResponseCode(), url, expected);
+  }
+
+  private void validatePost(URL url, String body, Integer ... expected) throws IOException {
+    HttpRequest request = HttpRequest.post(url).withBody(body).build();
+    assertStatus(HttpRequests.execute(request).getResponseCode(), url, expected);
+  }
+
+  private void assertStatus(int status, URL url, Integer ... expected) {
+    Assert.assertTrue(String.format("Expected %s for %s but got %d", Arrays.toString(expected), url, status),
+                      Arrays.asList(expected).contains(status));
+  }
+
 }

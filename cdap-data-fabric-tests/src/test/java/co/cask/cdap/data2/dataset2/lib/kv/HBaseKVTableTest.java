@@ -40,23 +40,21 @@ import org.junit.rules.TemporaryFolder;
 @Category(SlowTests.class)
 public class HBaseKVTableTest extends NoTxKeyValueTableTest {
   @ClassRule
-  public static TemporaryFolder tmpFolder = new TemporaryFolder();
+  public static final TemporaryFolder TMP_FOLDER = new TemporaryFolder();
+  @ClassRule
+  public static final HBaseTestBase TEST_HBASE = new HBaseTestFactory().get();
 
-  private static HBaseTestBase testHBase;
   private static HBaseTableUtil hBaseTableUtil = new HBaseTableUtilFactory(CConfiguration.create()).get();
 
   @BeforeClass
   public static void beforeClass() throws Exception {
-    testHBase = new HBaseTestFactory().get();
-    testHBase.startHBase();
-    hBaseTableUtil.createNamespaceIfNotExists(testHBase.getHBaseAdmin(), NAMESPACE_ID);
+    hBaseTableUtil.createNamespaceIfNotExists(TEST_HBASE.getHBaseAdmin(), NAMESPACE_ID);
   }
 
   @AfterClass
   public static void afterClass() throws Exception {
-    hBaseTableUtil.deleteAllInNamespace(testHBase.getHBaseAdmin(), NAMESPACE_ID);
-    hBaseTableUtil.deleteNamespaceIfExists(testHBase.getHBaseAdmin(), NAMESPACE_ID);
-    testHBase.stopHBase();
+    hBaseTableUtil.deleteAllInNamespace(TEST_HBASE.getHBaseAdmin(), NAMESPACE_ID);
+    hBaseTableUtil.deleteNamespaceIfExists(TEST_HBASE.getHBaseAdmin(), NAMESPACE_ID);
   }
 
   @Override
@@ -65,7 +63,7 @@ public class HBaseKVTableTest extends NoTxKeyValueTableTest {
       @Override
       protected void configure() {
         bind(CConfiguration.class).toInstance(CConfiguration.create());
-        bind(Configuration.class).toInstance(testHBase.getConfiguration());
+        bind(Configuration.class).toInstance(TEST_HBASE.getConfiguration());
         bind(HBaseTableUtil.class).toInstance(hBaseTableUtil);
       }
     });

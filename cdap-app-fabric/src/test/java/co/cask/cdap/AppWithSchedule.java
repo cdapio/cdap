@@ -29,7 +29,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Application with workflow scheduling.
@@ -50,8 +49,11 @@ public class AppWithSchedule extends AbstractApplication {
       scheduleProperties.put("anotherKey", "anotherValue");
       scheduleProperties.put("someKey", "someValue");
 
-      scheduleWorkflow(Schedules.createTimeSchedule("SampleSchedule", "Sample schedule", "0/1 * * * * ?"),
-                       "SampleWorkflow", scheduleProperties);
+      scheduleWorkflow(Schedules.builder("SampleSchedule")
+                         .setDescription("Sample schedule")
+                         .createTimeSchedule("0/15 * * * * ?"),
+                       "SampleWorkflow",
+                       scheduleProperties);
     } catch (UnsupportedTypeException e) {
       throw Throwables.propagate(e);
     }
@@ -77,16 +79,11 @@ public class AppWithSchedule extends AbstractApplication {
     private static final Logger LOG = LoggerFactory.getLogger(DummyAction.class);
     @Override
     public void run() {
+      Preconditions.checkArgument(getContext().getRuntimeArguments().get("oneKey").equals("oneValue"));
+      Preconditions.checkArgument(getContext().getRuntimeArguments().get("anotherKey").equals("anotherValue"));
+      Preconditions.checkArgument(getContext().getRuntimeArguments().get("someKey").equals("someWorkflowValue"));
+      Preconditions.checkArgument(getContext().getRuntimeArguments().get("workflowKey").equals("workflowValue"));
       LOG.info("Ran dummy action");
-      try {
-        TimeUnit.MILLISECONDS.sleep(500);
-        Preconditions.checkArgument(getContext().getRuntimeArguments().get("oneKey").equals("oneValue"));
-        Preconditions.checkArgument(getContext().getRuntimeArguments().get("anotherKey").equals("anotherValue"));
-        Preconditions.checkArgument(getContext().getRuntimeArguments().get("someKey").equals("someWorkflowValue"));
-        Preconditions.checkArgument(getContext().getRuntimeArguments().get("workflowKey").equals("workflowValue"));
-      } catch (InterruptedException e) {
-        LOG.info("Interrupted");
-      }
     }
   }
 }

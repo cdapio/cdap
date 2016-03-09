@@ -21,7 +21,7 @@
   <parent>
     <artifactId>cdap-examples</artifactId>
     <groupId>co.cask.cdap</groupId>
-    <version>3.1.0</version>
+    <version>3.3.2</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
@@ -34,10 +34,6 @@
   </properties>
 
   <dependencies>
-    <dependency>
-      <groupId>org.apache.hadoop</groupId>
-      <artifactId>hadoop-mapreduce-client-app</artifactId>
-    </dependency>
     <dependency>
       <groupId>org.apache.hadoop</groupId>
       <artifactId>hadoop-mapreduce-client-core</artifactId>

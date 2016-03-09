@@ -51,12 +51,12 @@ The ``Flow`` interface allows you to specify the flow’s metadata, :doc:`flowle
 <flowlets>` :doc:`flowlet connections, <connecting-flowlets>` (either stream to flowlet,
 or flowlet to flowlet), and any :ref:`Datasets <datasets-index>` used in the flow.
 
-To create a flow, extend ``AbstractFlow`` and override the ``configureFlow`` method::
+To create a flow, extend ``AbstractFlow`` and override the ``configure`` method::
 
-  class MyExampleFlow extends AbstractFlow {
+  public class MyExampleFlow extends AbstractFlow {
 
     @Override
-    public void configureFlow() {
+    public void configure() {
       setName("mySampleFlow");
       setDescription("Flow for showing examples");
       addFlowlet("flowlet1", new MyExampleFlowlet());
@@ -70,8 +70,8 @@ In this example, the *name*, *description*, *with* (or *without*)
 flowlets, and *connections* are specified before building the flow.
 
 
-.. rubric::  Examples of Using Flows and Flowlets
-
+Flow and Flowlet Examples
+=========================
 Flows and flowlets are included in just about every CDAP :ref:`application <apps-and-packs>`,
 :ref:`tutorial <tutorials>`, :ref:`guide <guides-index>` or :ref:`example <examples-index>`.
 
@@ -82,4 +82,11 @@ Flows and flowlets are included in just about every CDAP :ref:`application <apps
   <examples-count-random>` example.
 
 - For examples of **flows with multiple flowlets,** see the :ref:`Purchase
-  <examples-purchase>` and :ref:`Count Random <examples-count-random>` examples.
+  <examples-purchase>`, :ref:`Count Random <examples-count-random>`, and
+  :ref:`Word Count <examples-word-count>` examples.
+  
+- The :ref:`Web Analytics <examples-web-analytics>` example uses a single flowlet to
+  perform analytics using access logs.
+  
+- The :ref:`Purchase <examples-purchase>` example demonstrates :ref:`setting the resources
+  <flows-flowlets-resources>` used by an individual instance of a flowlet.

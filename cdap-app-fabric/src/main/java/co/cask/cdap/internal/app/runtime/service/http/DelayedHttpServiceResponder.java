@@ -17,22 +17,25 @@
 package co.cask.cdap.internal.app.runtime.service.http;
 
 import co.cask.cdap.api.metrics.MetricsContext;
+import co.cask.cdap.api.service.http.HttpContentProducer;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableMultimap;
+import com.google.common.collect.LinkedListMultimap;
 import com.google.common.collect.Multimap;
-import com.google.common.collect.Multimaps;
-import com.google.gson.Gson;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBuffers;
+import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.lang.reflect.Type;
-import java.nio.ByteBuffer;
-import java.nio.charset.Charset;
+import java.io.Closeable;
+import java.io.IOException;
+import javax.annotation.Nullable;
 
 /**
  * Implementation of {@link HttpServiceResponder} which delegates calls to
@@ -40,159 +43,134 @@ import java.nio.charset.Charset;
  * A response is buffered until execute() is called. This allows you to send the correct response upon
  * a transaction failure, and to not always delegating to the user response.
  */
-public final class DelayedHttpServiceResponder implements HttpServiceResponder {
+public class DelayedHttpServiceResponder extends AbstractHttpServiceResponder implements Closeable {
   private static final Logger LOG = LoggerFactory.getLogger(DelayedHttpServiceResponder.class);
-  private static final Gson GSON = new Gson();
+
   private final HttpResponder responder;
+  private final BodyProducerFactory bodyProducerFactory;
+  private final TransactionalHttpServiceContext serviceContext;
   private final MetricsContext metricsContext;
   private BufferedResponse bufferedResponse;
+  private boolean closed;
 
   /**
    * Instantiates the class from a {@link HttpResponder}
    *
    * @param responder the responder which will be bound to
    */
-  public DelayedHttpServiceResponder(HttpResponder responder, MetricsContext metricsContext) {
+  public DelayedHttpServiceResponder(HttpResponder responder, BodyProducerFactory bodyProducerFactory,
+                                     TransactionalHttpServiceContext serviceContext, MetricsContext metricsContext) {
     this.responder = responder;
+    this.serviceContext = serviceContext;
     this.metricsContext = metricsContext;
+    this.bodyProducerFactory = bodyProducerFactory;
   }
 
   /**
-   * Sends JSON response back to the client with status code 200 OK.
-   *
-   * @param object the object that will be serialized into JSON and sent back as content
+   * Intantiates the class from another {@link DelayedHttpServiceResponder}
+   * with a different {@link BodyProducerFactory}.
    */
-  @Override
-  public void sendJson(Object object) {
-    sendJson(HttpResponseStatus.OK.getCode(), object);
+  DelayedHttpServiceResponder(DelayedHttpServiceResponder other, BodyProducerFactory bodyProducerFactory) {
+    this.responder = other.responder;
+    this.bodyProducerFactory = bodyProducerFactory;
+    this.serviceContext = other.serviceContext;
+    this.metricsContext = other.metricsContext;
+    this.bufferedResponse = other.bufferedResponse;
   }
 
-  /**
-   * Sends JSON response back to the client.
-   *
-   * @param status the status of the HTTP response
-   * @param object the object that will be serialized into JSON and sent back as content
-   */
   @Override
-  public void sendJson(int status, Object object) {
-    sendJson(status, object, object.getClass(), GSON);
-  }
+  protected void doSend(int status, String contentType,
+                        @Nullable ChannelBuffer content,
+                        @Nullable HttpContentProducer contentProducer,
+                        @Nullable Multimap<String, String> headers) {
+    Preconditions.checkState(!closed,
+     "Responder is already closed. " +
+       "This may due to either using a HttpServiceResponder inside HttpContentProducer or " +
+       "not using HttpServiceResponder provided to the HttpContentConsumer onFinish/onError method.");
 
-   /**
-    * Sends JSON response back to the client using the given {@link Gson} object.
-    *
-    * @param status the status of the HTTP response
-    * @param object the object that will be serialized into JSON and sent back as content
-    * @param type the type of object
-    * @param gson the Gson object for serialization
-   */
-  @Override
-  public void sendJson(int status, Object object, Type type, Gson gson) {
-    send(status, Charsets.UTF_8.encode(gson.toJson(object, type)), "application/json", null, false);
-  }
-
-  /**
-   * Sends a UTF-8 encoded string response back to the HTTP client with a default response status.
-   *
-   * @param data the data to be sent back
-   */
-  @Override
-  public void sendString(String data) {
-    sendString(HttpResponseStatus.OK.getCode(), data, Charsets.UTF_8);
-  }
-
-  /**
-   * Sends a string response back to the HTTP client.
-   *
-   * @param status the status of the HTTP response
-   * @param data the data to be sent back
-   * @param charset the Charset used to encode the string
-   */
-  @Override
-  public void sendString(int status, String data, Charset charset) {
-    send(status, charset.encode(data), "text/plain; charset=" + charset.name(), null, false);
-  }
-
-  /**
-   * Sends only a status code back to the client without any content.
-   *
-   * @param status the status of the HTTP response
-   */
-  @Override
-  public void sendStatus(int status) {
-    sendStatus(status, null);
-  }
-
-  /**
-   * Sends a status code and headers back to client without any content.
-   *
-   * @param status the status of the HTTP response
-   * @param headers the headers to send
-   */
-  @Override
-  public void sendStatus(int status, Multimap<String, String> headers) {
-    send(status, null, null, headers, false);
-  }
-
-  /**
-   * Sends error message back to the client with the specified status code.
-   *
-   * @param status the status of the response
-   * @param errorMessage the error message sent back to the client
-   */
-  @Override
-  public void sendError(int status, String errorMessage) {
-    sendString(status, errorMessage, Charsets.UTF_8);
-  }
-
-  /**
-   * Sends response back to client.
-   *
-   * @param status the status of the response
-   * @param content the content to be sent back
-   * @param contentType the type of content
-   * @param headers the headers to be sent back
-   */
-  @Override
-  public void send(int status, ByteBuffer content, String contentType, Multimap<String, String> headers) {
-    send(status, content, contentType, headers, true);
-  }
-
-  private void send(int status, ByteBuffer content, String contentType,
-                    Multimap<String, String> headers, boolean copy) {
     if (bufferedResponse != null) {
       LOG.warn("Multiple calls to one of the 'send*' methods has been made. Only the last response will be sent.");
     }
+    bufferedResponse = new BufferedResponse(status, contentType, content, contentProducer, headers);
+  }
 
-    ChannelBuffer channelBuffer = null;
-    if (content != null) {
-      channelBuffer = copy ? ChannelBuffers.copiedBuffer(content) : ChannelBuffers.wrappedBuffer(content);
-    }
+  /**
+   * Returns {@code true} if there is a buffered response. This means any of the send methods was called.
+   */
+  public boolean hasBufferedResponse() {
+    return bufferedResponse != null;
+  }
 
-    bufferedResponse = new BufferedResponse(status, channelBuffer, contentType, headers);
+  /**
+   * Returns {@code true} if a {@link HttpContentProducer} will be used to produce response body.
+   */
+  public boolean hasContentProducer() {
+    return hasBufferedResponse() && bufferedResponse.getContentProducer() != null;
   }
 
   /**
    * Since calling one of the send methods multiple times logs a warning, upon transaction failures this
    * method is called to allow setting the failure response without an additional warning.
    */
-  public void setTransactionFailureResponse() {
-    ByteBuffer buffer = Charsets.UTF_8.encode("Transaction failure when committing changes. Aborted transaction.");
+  public void setTransactionFailureResponse(Throwable t) {
+    LOG.error("Exception occurred while handling request:", t);
+    @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
+    ChannelBuffer content = ChannelBuffers.copiedBuffer("Exception occurred while handling request: "
+                                                          + Throwables.getRootCause(t).getMessage(), Charsets.UTF_8);
+
     bufferedResponse = new BufferedResponse(HttpResponseStatus.INTERNAL_SERVER_ERROR.getCode(),
-                                            ChannelBuffers.wrappedBuffer(buffer),
-                                            "text/plain; charset=" + Charsets.UTF_8.name(), null);
+                                            "text/plain; charset=" + Charsets.UTF_8.name(),
+                                            content, null, null);
+  }
+
+  /**
+   * Same as calling {@link #execute(boolean) execute(true)}.
+   */
+  public void execute() {
+    execute(true);
   }
 
   /**
    * Calls to other responder methods in this class only cache the response to be sent. The response is actually
    * sent only when this method is called.
+   *
+   * @param keepAlive {@code true} to keep the connection open; {@code false} otherwise
    */
-  public void execute() {
+  public void execute(boolean keepAlive) {
     Preconditions.checkState(bufferedResponse != null,
                              "Can not call execute before one of the other responder methods are called.");
-    responder.sendContent(HttpResponseStatus.valueOf(bufferedResponse.getStatus()), bufferedResponse.getChannelBuffer(),
-                          bufferedResponse.getContentType(), bufferedResponse.getHeaders());
-    emitMetrics(bufferedResponse.getStatus());
+
+    try {
+      HttpContentProducer contentProducer = bufferedResponse.getContentProducer();
+
+      if (contentProducer == null) {
+        // If content producer is not used, we can dismiss the transaction context since all
+        // transactional operations are completed at this point.
+        // If content producer is used, the user provided content producer might have closure over datasets so that
+        // we cannot dismiss the transaction context here. The dismissal will be done on the completion of
+        // the content producer.
+        serviceContext.dismissTransactionContext();
+      }
+
+      Multimap<String, String> headers = LinkedListMultimap.create(bufferedResponse.getHeaders());
+      headers.put(HttpHeaders.Names.CONNECTION, keepAlive ? HttpHeaders.Values.KEEP_ALIVE : HttpHeaders.Values.CLOSE);
+      if (!headers.containsKey(HttpHeaders.Names.CONTENT_TYPE)) {
+        headers.put(HttpHeaders.Names.CONTENT_TYPE, bufferedResponse.getContentType());
+      }
+
+      if (contentProducer != null) {
+        responder.sendContent(HttpResponseStatus.valueOf(bufferedResponse.getStatus()),
+                              bodyProducerFactory.create(contentProducer, serviceContext),
+                              headers);
+      } else {
+        responder.sendContent(HttpResponseStatus.valueOf(bufferedResponse.getStatus()),
+                              bufferedResponse.getContentBuffer(),
+                              bufferedResponse.getContentType(), headers);
+      }
+      emitMetrics(bufferedResponse.getStatus());
+    } finally {
+      close();
+    }
   }
 
   private void emitMetrics(int status) {
@@ -219,27 +197,42 @@ public final class DelayedHttpServiceResponder implements HttpServiceResponder {
     metricsContext.increment("requests.count", 1);
   }
 
+  @Override
+  public void close() {
+    closed = true;
+  }
+
   private static final class BufferedResponse {
 
     private final int status;
-    private final ChannelBuffer channelBuffer;
+    private final ChannelBuffer contentBuffer;
+    private final HttpContentProducer contentProducer;
     private final String contentType;
     private final Multimap<String, String> headers;
 
-    private BufferedResponse(int status, ChannelBuffer channelBuffer,
-                             String contentType, Multimap<String, String> headers) {
+    private BufferedResponse(int status, String contentType,
+                             @Nullable ChannelBuffer contentBuffer,
+                             @Nullable HttpContentProducer contentProducer,
+                             @Nullable Multimap<String, String> headers) {
       this.status = status;
-      this.channelBuffer = channelBuffer;
       this.contentType = contentType;
-      this.headers = headers == null ? null : Multimaps.unmodifiableMultimap(headers);
+      this.contentBuffer = contentBuffer;
+      this.contentProducer = contentProducer;
+      this.headers = headers == null ? ImmutableMultimap.<String, String>of() : ImmutableMultimap.copyOf(headers);
     }
 
     public int getStatus() {
       return status;
     }
 
-    public ChannelBuffer getChannelBuffer() {
-      return channelBuffer;
+    @Nullable
+    public ChannelBuffer getContentBuffer() {
+      return contentBuffer;
+    }
+
+    @Nullable
+    public HttpContentProducer getContentProducer() {
+      return contentProducer;
     }
 
     public String getContentType() {

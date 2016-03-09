@@ -1,17 +1,34 @@
+/*
+ * Copyright © 2015 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 @import "../../variables.less";
 @import "../../../../bower_components/bootstrap/less/mixins.less";
+@import "mixins.less";
 
 body.theme-cdap {
 
   //
   // Full width for Dashboard
   // --------------------------------------------------
-  &.state-dashboard, &.state-adapters-create {
+  &.state-dashboard, &.state-hydrator-create-studio {
     main.container {
       width: 100%;
     }
   }
-  &.state-adapters-create {
+  &.state-hydrator-create {
     main.container {
       padding: 0;
     }
@@ -21,24 +38,78 @@ body.theme-cdap {
   // Alerts
   // --------------------------------------------------
 
+  > div.alerts {
+    button.close {
+      font-size: 34px;
+    }
+  }
   // Common styles
   .alert {
+    border: 0;
+    color: white;
     text-shadow: 0 1px 0 rgba(255,255,255,.2);
+    width: 100%;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+    margin-bottom: 0;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    .border-radius(0);
     @shadow: inset 0 1px 0 rgba(255,255,255,.25), 0 1px 2px rgba(0,0,0,.05);
     .box-shadow(@shadow);
-  }
-
-  // Mixin for generating new styles
-  .alert-styles(@color) {
-    #gradient > .vertical(@start-color: @color; @end-color: darken(@color, 7.5%));
-    border-color: darken(@color, 15%);
+    button.close {
+      font-weight: 400;
+      line-height: 12px;
+      margin-left: 10px;
+      text-shadow: none;
+      .opacity(0.4);
+      &:focus {
+        outline: 0;
+      }
+    }
   }
 
   // Apply the mixin to the alerts
-  .alert-success    { .alert-styles(@alert-success-bg); }
-  .alert-info       { .alert-styles(@alert-info-bg); }
-  .alert-warning    { .alert-styles(@alert-warning-bg); }
-  .alert-danger     { .alert-styles(@alert-danger-bg); }
+  .alert-success    { background-color: @alert-success-bg; }
+  .alert-info       { background-color: @alert-info-bg; }
+  .alert-warning    { background-color: @alert-warning-bg; }
+  .alert-danger     { background-color: @alert-danger-bg; }
+
+  //
+  // Status text
+  // --------------------------------------------------
+  .text-success { color: @brand-success; }
+  .text-danger { color: @brand-danger; }
+
+  //
+  // Status background-color
+  // --------------------------------------------------
+  .bg-success { background-color: @brand-success; }
+  .bg-danger { background-color: @brand-danger; }
+
+  //
+  // Progress bars
+  // --------------------------------------------------
+
+  .pagination {
+    > li {
+      > a, > span {
+        color: @cdap-header;
+      }
+    }
+    > .active {
+      > a, > span {
+        background-color: @cdap-header;
+        border-color: @cdap-header;
+        color: white;
+        &:hover, &:focus {
+          background-color: @cdap-header;
+          border-color: @cdap-header;
+        }
+      }
+    }
+  }
 
   //
   // Progress bars
@@ -82,8 +153,13 @@ body.theme-cdap {
     tbody {
       color: @cdap-darkness;
       a {
-        color: @cdap-bluegray;
-        &:hover, &:focus { text-decoration: none; }
+        &:not(.btn-success) {
+          color: @cdap-bluegray;
+        }
+        &:hover, &:focus {
+          cursor: pointer;
+          text-decoration: none;
+        }
         &.btn-danger { .cask-btn(@background: transparent, @border: 0, @border-radius: 0, @color: @brand-danger, @padding: 0); }
       }
     }
@@ -108,7 +184,7 @@ body.theme-cdap {
   // Add table-curved class for curved table edges
   .table-curved {
     border-collapse: separate;
-    border: solid @table-border-color 1px;
+    border: 1px solid @table-border-color;
     .border-radius(8px);
     border-left: 0;
     thead {
@@ -280,146 +356,196 @@ body.theme-cdap {
   }
 
   //
-  // Breadcrumbs
-  // --------------------------------------------------
-
-  .breadcrumb {
-    background-color: transparent;
-    padding-left: 0px;
-    font-weight: 500;
-    > li {
-      color: @cdap-gray;
-      a { color: @cdap-header; }
-      + li:before {
-        content: ">";
-        padding: 0 3px;
-        color: @cdap-gray;
-      }
-    }
-  }
-
-  //
   // Modals
   // --------------------------------------------------
   .modal {
-    // Styling for all modals
-    h3, h4 { color: white; }
-    h3 small {
-      color: white;
-      display: block;
-      padding-top: 5px;
+  // Modal layout styles (container elements)
+    &.center {
+      .modal-dialog {
+        max-width: 80%;
+        @media (min-width: @screen-md-min) {
+          width: 900px;
+        }
+      }
+      .modal-sm {
+        max-width: 630px;
+      }
+    }
+
+    .modal-dialog {
+      margin-top: 100px;
+      .border-radius(4px);
+    }
+    // Large modals
+    .modal-lg {
+      .panel {
+        background-color: transparent;
+      }
+      .fa-plus {
+        padding-top: 2px;
+      }
+      .modal-footer {
+        text-align: right;
+      }
+    }
+    // Small modals (ie, cask-confirmable, cask-promptable)
+    .modal-sm {
+      // max-width: 630px;
+      text-align: center;
+      .modal-footer {
+        text-align: center;
+      }
     }
     .modal-header {
-      border-bottom: 0;
-      .btn, button {
-        .cask-btn(@color: @cdap-header, @background: white, @border: 0, @border-radius: 16px, @font-size: 18px, @padding: 5px 7px);
-        line-height: 1;
-        opacity: 1;
+      background-color: @body-bg;
+      border-bottom: 1px solid @modal-table-border-color;
+      height: 60px;
+      margin-bottom: 5px;
+      padding: 0;
+      .border-radius(4px 4px 0 0);
+      .box-shadow(0 0 10px fade(black, 50%));
+      > div {
+        margin: 0;
+        padding-left: 15px;
+        @media (max-width: @screen-sm-max) {
+          max-width: 200px;
+        }
+        h3, p {
+          @media (max-width: @screen-sm-max) {
+            white-space: nowrap;
+            text-overflow: ellipsis;
+            overflow: hidden;
+          }
+        }
+        h3 {
+          padding-top: 5px;
+          &:only-child {
+            line-height: 60px;
+            padding-top: 0;
+          }
+        }
+      }
+      > h3 {
+        line-height: 60px;
+        padding-left: 15px;
+        @media (max-width: @screen-sm-max) {
+          max-width: 200px;
+          white-space: nowrap;
+          text-overflow: ellipsis;
+          overflow: hidden;
+        }
+      }
+      h3 {
+        color: @cdap-header;
+        font-weight: 500;
+        margin: 0;
+        &:only-child {
+          line-height: 60px;
+          padding-top: 0;
+        }
+      }
+      p {
+        color: @cdap-lightgray;
+        margin: 0;
+        max-width: 740px;
+      }
+      > a.btn {
+        .cask-btn(@background: transparent, @border: 1px solid transparent, @border-radius: 0, @color: @cdap-header, @font-size: 18px, @padding: 0);
+        border-left: 1px solid @modal-table-border-color;
+        width: 60px;
+        height: 60px;
+        line-height: 60px;
+        .transition(all 0.2s ease);
+        &:hover, &:focus {
+          background-color: @cdap-header;
+          border: 1px solid @cdap-header;
+          color: white;
+          .border-radius(0 4px 0 0);
+        }
       }
     }
-    .modal-dialog { .border-radius(4px); }
     .modal-content {
-      color: white;
-      background-color: fade(#343841, 85%);
-      button.form-control {
-        &:focus { outline: none; }
-      }
-      table > thead {
-        color: @text-color;
+      color: @cdap-header;
+      background-color: white;
+    }
+    .modal-body {
+      padding: 10px;
+      width: 100%;
+      div.alerts {
+        top: 60px;
       }
     }
     .modal-footer {
       border-top: 0;
-      .btn-default { .cask-btn(@color: white, @background: @cdap-gray, @border: 0, @padding: 10px 20px); }
-      .btn-primary, .btn-success {
-        .cask-btn(@color: white, @background: @brand-success, @border: 0, @padding: 10px 20px);
-        margin-left: 30px;
-      }
+    }
+
+  // Modal content styling (headings, forms, tables, etc.)
+    h3, h4 {
+      color: @cdap-header;
+    }
+    .control-label {
+      font-weight: 400;
     }
     .form-control {
-      border: 0;
       .border-radius(4px);
       .box-shadow(none);
       text-align: left;
+      border: 1px solid @modal-table-border-color;
       &:focus {
-        border-color: transparent;
         .box-shadow(none);
       }
 
       // Metric picker specific styles.
       &.mp-dropdown-toggle {
-        border-radius: 4px 0px 0px 4px;
+        .border-radius(4px 0 0 4px);
         border-right: 1px solid #ccc;
       }
 
       &.mp-input-group-input {
-        border-radius: 0px 4px 4px 0px;
+        .border-radius(0 4px 4px 0);
       }
     }
     .input-group-addon + .form-control {
       border-left: 1px solid lightgray;
-      .border-radius(0);
-     }
-    textarea.form-control { min-height: 100px; }
-    select.form-control {
-      background-color: @cdap-darkness;
-      color: white;
+      .border-radius(0 4px 4px 0);
     }
-
-    .h4-margin {
-      margin-top: 9px;
-      margin-bottom: 9px;
+    textarea.form-control {
+      min-height: 100px;
+      resize: none;
     }
-
-    // caskConfirm modal styling (no modal-lg or modal-sm class present)
-    &.center {
-      .close { display: none; }
-      .modal-content, .modal-footer { text-align: center; }
-      .modal-content {
-        color: white;
-        border: 0;
-        .box-shadow(none);
+    button.form-control:focus {
+      outline: none;
+    }
+    .btn[disabled] {
+      background-color: rgb(192, 192, 192);
+      color: @cdap-header;
+    }
+    .table {
+      background-color: white;
+      border: 1px solid @modal-table-border-color;
+      margin: 0;
+      thead th {
+        border-right: 1px solid @modal-table-border-color;
+        border-bottom-width: 1px;
+        color: @cdap-header;
       }
-      .modal-footer {
-        .btn-primary { .cask-btn(@color: white, @background: @brand-danger, @border: 0, @padding: 10px 20px); }
+      tbody {
+        text-align: left;
+        td {
+          border-right: 1px solid @modal-table-border-color;
+          padding-right: 8px;
+          padding-left: 8px;
+        }
       }
     }
-    .modal-dialog {
-      margin-top: 100px;
-      .modal-header {
-        .btn {
-          .cask-btn(@color: @cdap-header, @background: white, @border: 0, @border-radius: 16px, @padding: 5px 7px);
-          font-size: 18px;
-          line-height: 1;
-        }
-      }
-      // Small and large modal styling
-      &.modal-sm, &.modal-lg {
-        color: white;
-
-        .modal-footer {
-          .btn-primary, .btn-success {
-            .cask-btn(@color: white, @background: @brand-success, @border: 0, @padding: 10px 20px);
-            margin-left: 30px;
-          }
-        }
-      }
-      // Small modal styling
-      &.modal-sm {
-        text-align: center;
-        .modal-footer { text-align: center; }
-      }
-      // Large modal styling
-      &.modal-lg {
-        .modal-content {
-          .fa-plus { padding-top: 2px }
-          a.fa-times { .cask-btn(@color: @brand-danger, @background: @brand-danger, @border: 0, @padding: 15px 15px); }
-          .btn-danger {}
-        }
-        .modal-footer { text-align: right; }
-        .panel {
-          background-color: transparent;
-        }
+    .pagination {
+      margin: 0 0 10px;
+    }
+    .alert.alert-danger.alert-dismissible {
+      padding: 5px;
+      margin-bottom: 0;
+      .close {
+        right: 0;
       }
     }
   }
@@ -451,6 +577,17 @@ body.theme-cdap {
         border-right: 5px solid @cdap-header;
       }
     }
+    &.bottom {
+      margin-top: -2px;
+      .tooltip-arrow {
+        top: 0;
+        left: 50%;
+        margin-left: -5px;
+        border-left: 5px solid transparent;
+        border-right: 5px solid transparent;
+        border-bottom: 5px solid @cdap-header;
+      }
+    }
     &.left {
       margin-left: -2px;
       .tooltip-arrow {
@@ -472,4 +609,5 @@ body.theme-cdap {
     text-align: left;
     .border-radius(3px);
   }
+
 }

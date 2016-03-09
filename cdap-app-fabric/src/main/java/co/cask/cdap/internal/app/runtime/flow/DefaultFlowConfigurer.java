@@ -24,6 +24,7 @@ import co.cask.cdap.api.flow.FlowletDefinition;
 import co.cask.cdap.api.flow.flowlet.Flowlet;
 import co.cask.cdap.internal.UserErrors;
 import co.cask.cdap.internal.UserMessages;
+import co.cask.cdap.internal.api.DefaultDatasetConfigurer;
 import co.cask.cdap.internal.flow.DefaultFlowSpecification;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
@@ -35,8 +36,7 @@ import java.util.Map;
 /**
  * Default implementation of {@link FlowConfigurer}.
  */
-public class DefaultFlowConfigurer implements FlowConfigurer {
-
+public class DefaultFlowConfigurer extends DefaultDatasetConfigurer implements FlowConfigurer {
   private String className;
   private String name;
   private String description;
@@ -91,6 +91,9 @@ public class DefaultFlowConfigurer implements FlowConfigurer {
     Preconditions.checkArgument(!flowlets.containsKey(flowletName),
                                 UserMessages.getMessage(UserErrors.INVALID_FLOWLET_EXISTS), flowletName);
     flowlets.put(flowletName, flowletDef);
+    addStreams(flowletDef.getStreams());
+    addDatasetSpecs(flowletDef.getDatasetSpecs());
+    addDatasetModules(flowletDef.getDatasetModules());
   }
 
   @Override
@@ -102,8 +105,10 @@ public class DefaultFlowConfigurer implements FlowConfigurer {
   @Override
   public void connect(String from, String to) {
     Preconditions.checkArgument(from != null && to != null, UserMessages.getMessage(UserErrors.INVALID_FLOWLET_NULL));
-    Preconditions.checkArgument(flowlets.containsKey(from) && flowlets.containsKey(to),
-                                UserMessages.getMessage(UserErrors.INVALID_FLOWLET_NAME));
+    Preconditions.checkArgument(flowlets.containsKey(from),
+                                UserMessages.getMessage(UserErrors.INVALID_FLOWLET_NAME), from);
+    Preconditions.checkArgument(flowlets.containsKey(to),
+                                UserMessages.getMessage(UserErrors.INVALID_FLOWLET_NAME), to);
     connections.add(new FlowletConnection(FlowletConnection.Type.FLOWLET, from, to));
   }
 
@@ -127,10 +132,10 @@ public class DefaultFlowConfigurer implements FlowConfigurer {
 
   @Override
   public void connectStream(String stream, String flowlet) {
-    Preconditions.checkArgument(stream != null, UserMessages.getMessage(UserErrors.INVALID_STREAM_NAME));
+    Preconditions.checkArgument(stream != null, UserMessages.getMessage(UserErrors.INVALID_STREAM_NULL));
     Preconditions.checkArgument(flowlet != null, UserMessages.getMessage(UserErrors.INVALID_FLOWLET_NULL));
     Preconditions.checkArgument(flowlets.containsKey(flowlet),
-                                UserMessages.getMessage(UserErrors.INVALID_FLOWLET_NAME));
+                                UserMessages.getMessage(UserErrors.INVALID_FLOWLET_NAME), flowlet);
     connections.add(new FlowletConnection(FlowletConnection.Type.STREAM, stream, flowlet));
   }
 

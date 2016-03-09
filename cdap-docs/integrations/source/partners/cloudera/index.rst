@@ -6,16 +6,17 @@
 
 .. _cloudera-index:
 
-==================================================
+========
 Cloudera
-==================================================
+========
 
 .. toctree::
    :maxdepth: 1
    
-    Configuring and Installing <configuring>
-    Add Service Wizard <step-by-step-cloudera>
     Ingestion and Exploration <ingesting>
+    Navigator Integration <navigator-integration>
+
+.. rubric:: Overview
 
 .. include:: /_includes/cloudera-certified.rst
   
@@ -42,30 +43,27 @@ Configurations that include Cloudera Manager can be easily configured to ingest 
 a cluster, specify schema, or run interactive queries using Impala with CDAP for faster
 results.
 
+The Navigator Integration App is an application built by the team at Cask for bridging CDAP Metadata
+with Cloudera's data management tool, Navigator. The Navigator Integration App is a CDAP-native application
+that uses a real-time flow to fetch the CDAP Metadata and write it to Cloudera Navigator.
+
 **CDAP** |bold-version| is certified on Cloudera 5.
 
-.. |cloudera-configuring| replace:: **Configuring and Installing:**
-.. _cloudera-configuring: configuring.html
 
-- |cloudera-configuring|_ Configuring and installing CDAP using Cloudera Manager
+.. |cloudera-install| replace:: **Configuring and Installing:**
+.. _cloudera-install: ../../../admin-manual/installation/cloudera.html
 
-
-.. |cloudera-add-service| replace:: **Add Service Wizard:**
-.. _cloudera-add-service: step-by-step-cloudera.html
-
-- |cloudera-add-service|_ A **step-by-step guide** to installing CDAP using the Cloudera Manager *Add Service* Wizard
-
+- |cloudera-install|_ Configuring and installing CDAP using **Cloudera Manager** *(Administration Manual)*
 
 .. |cloudera-ingesting| replace:: **Ingesting and Exploration:**
 .. _cloudera-ingesting: ingesting.html
 
 - |cloudera-ingesting|_ Ingest and explore data using **Impala**
 
+.. |cloudera-navigator| replace:: **Navigator Integration:**
+.. _cloudera-navigator: navigator-integration.html
 
-.. .. |cloudera-faq| replace:: **FAQ:**
-.. .. _cloudera-faq: faq.html
-
-.. .. - |cloudera-faq|_ for Cloudera and Impala
+- |cloudera-navigator|_ Metadata search and discovery of CDAP entities from **Cloudera Navigator**
 
 
 .. rubric:: CDAP and Cloudera Architecture Schematic
@@ -75,4 +73,3 @@ results.
    :width: 800px
    :align: center
    :class: bordered-image
-

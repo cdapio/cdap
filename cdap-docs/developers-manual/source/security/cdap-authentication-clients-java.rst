@@ -4,4 +4,4 @@
 
 .. highlight:: console
 
-.. include:: ../../build/_includes/cdap-authentication-clients-java.rst
+.. include:: ../../target/_includes/cdap-authentication-clients-java.rst

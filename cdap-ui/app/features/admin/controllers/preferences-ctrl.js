@@ -1,5 +1,21 @@
+/*
+ * Copyright © 2015 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 angular.module(PKG.name + '.feature.admin')
-  .controller('PreferencesController', function ($scope, $filter, $alert, $state, rSource, myPreferenceApi) {
+  .controller('PreferencesController', function ($scope, $filter, $state, rSource, myPreferenceApi, myAlertOnValium) {
     var filterFilter = $filter('filter');
 
     $scope.parentPreferences = [];
@@ -25,7 +41,7 @@ angular.module(PKG.name + '.feature.admin')
 
     } else if (rSource === 'NAMESPACE') {
       $scope.heading = 'Namespace Preferences: ' + $state.params.nsadmin;
-      $scope.messages = 'Specify new or override system configurations that will be accessible in all applications & datasets within this namespace.';
+      $scope.messages = 'Specify new or override existing system configurations that will be accessible in all applications and datasets within this namespace';
 
       parentParams = {
         scope: $scope,
@@ -42,7 +58,7 @@ angular.module(PKG.name + '.feature.admin')
 
     } else if (rSource === 'APPLICATION') {
       $scope.heading = 'Application Preferences: ' + $state.params.appId;
-      $scope.messages = 'Specify new or override namespace configurations that will be accessible in all programs within this application.';
+      $scope.messages = 'Specify new or override existing namespace configurations that will be accessible in all programs within this application';
 
       parentParams = {
         namespace: $state.params.nsadmin,
@@ -106,7 +122,7 @@ angular.module(PKG.name + '.feature.admin')
 
       setPreference(params, obj,
         function () {
-          $alert({
+          myAlertOnValium.show({
             content: 'Your preferences have been successfully saved',
             type: 'success'
           });

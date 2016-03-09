@@ -1,3 +1,19 @@
+/*
+ * Copyright © 2015 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 /**
  * DashboardAddWdgtCtrl
  */
@@ -8,6 +24,7 @@ function ($scope, $modalInstance, caskFocusManager, Widget) {
   caskFocusManager.focus('addWdgtType');
 
   $scope.model = new Widget();
+  $scope.addType = 'INDIVIDUAL';
 
   $scope.widgetTypes = [
     { name: 'Line',                  type: 'c3-line'},
@@ -24,36 +41,42 @@ function ($scope, $modalInstance, caskFocusManager, Widget) {
     { name: 'Table',                 type: 'table' }
   ];
 
-  $scope.$watch('model.metric.name', function (newVal) {
-    if(newVal) {
-      $scope.model.title = newVal;
-    }
-  });
-
-  $scope.doAddWidget = _.once(function () {
-
-    if ($scope.model.metric.addAll) {
-      var widgets = [];
-      // If the user chooses 'Add All' option, add all the metrics in the current context.
-      angular.forEach($scope.model.metric.allMetrics, function(value) {
-        widgets.push(
-          new Widget({
-            type: $scope.model.type,
-            title: $scope.model.metric.title,
-            metric: {
-              context: $scope.model.metric.context,
-              names: [value],
-              name: value
-            }
-          })
-        );
-      });
-      $scope.currentBoard.addWidget(widgets);
+  $scope.addWidget = function () {
+    if ($scope.addType === 'MULTIPLE') {
+      $scope.addMetricsToWidget();
     } else {
-      $scope.currentBoard.addWidget($scope.model);
+      $scope.addMetricsToIndividualWidgets();
     }
+  };
+
+
+  $scope.addMetricsToIndividualWidgets = _.debounce(function() {
+    var widgets = [];
+    angular.forEach($scope.model.metric.names, function(value) {
+      widgets.push(
+        new Widget({
+          type: $scope.model.type,
+          title: value,
+          metric: {
+            context: $scope.model.metric.context,
+            names: [value],
+            name: value
+          }
+        })
+      );
+    });
+    $scope.currentBoard.addWidget(widgets);
     $scope.$close();
-  });
+  }, 1000);
+
+  $scope.addMetricsToWidget = _.debounce(function () {
+    var metrics = $scope.model.metric;
+    if (!metrics) {
+      return;
+    }
+    $scope.currentBoard.addWidget($scope.model);
+    $scope.$close();
+  }, 1000);
 
   $scope.closeModal = function() {
     $modalInstance.close();

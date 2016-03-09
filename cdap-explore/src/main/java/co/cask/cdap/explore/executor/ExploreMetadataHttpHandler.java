@@ -54,7 +54,7 @@ public class ExploreMetadataHttpHandler extends AbstractExploreMetadataHttpHandl
 
   @POST
   @Path("jdbc/catalogs")
-  public void getJDBCCatalogs(HttpRequest request, HttpResponder responder) {
+  public void getJDBCCatalogs(HttpRequest request, HttpResponder responder) throws ExploreException, IOException {
     handleResponseEndpointExecution(request, responder, new EndpointCoreExecution<QueryHandle>() {
       @Override
       public QueryHandle execute(HttpRequest request, HttpResponder responder)
@@ -67,7 +67,8 @@ public class ExploreMetadataHttpHandler extends AbstractExploreMetadataHttpHandl
 
   @GET
   @Path("jdbc/info/{type}")
-  public void getJDBCInfo(HttpRequest request, HttpResponder responder, @PathParam("type") final String type) {
+  public void getJDBCInfo(HttpRequest request, HttpResponder responder,
+                          @PathParam("type") final String type) throws ExploreException, IOException {
     genericEndpointExecution(request, responder, new EndpointCoreExecution<Void>() {
       @Override
       public Void execute(HttpRequest request, HttpResponder responder)
@@ -83,7 +84,7 @@ public class ExploreMetadataHttpHandler extends AbstractExploreMetadataHttpHandl
 
   @POST
   @Path("jdbc/tableTypes")
-  public void getJDBCTableTypes(HttpRequest request, HttpResponder responder) {
+  public void getJDBCTableTypes(HttpRequest request, HttpResponder responder) throws ExploreException, IOException {
     handleResponseEndpointExecution(request, responder, new EndpointCoreExecution<QueryHandle>() {
       @Override
       public QueryHandle execute(HttpRequest request, HttpResponder responder)
@@ -96,7 +97,7 @@ public class ExploreMetadataHttpHandler extends AbstractExploreMetadataHttpHandl
 
   @POST
   @Path("jdbc/types")
-  public void getJDBCTypes(HttpRequest request, HttpResponder responder) {
+  public void getJDBCTypes(HttpRequest request, HttpResponder responder) throws ExploreException, IOException {
     handleResponseEndpointExecution(request, responder, new EndpointCoreExecution<QueryHandle>() {
       @Override
       public QueryHandle execute(HttpRequest request, HttpResponder responder)
@@ -115,7 +116,7 @@ public class ExploreMetadataHttpHandler extends AbstractExploreMetadataHttpHandl
   @PUT
   @Path("namespaces/{namespace-id}")
   public void create(HttpRequest request, HttpResponder responder,
-                     @PathParam("namespace-id") final String namespaceId) {
+                     @PathParam("namespace-id") final String namespaceId) throws ExploreException, IOException {
     handleResponseEndpointExecution(request, responder, new EndpointCoreExecution<QueryHandle>() {
       @Override
       public QueryHandle execute(HttpRequest request, HttpResponder responder)
@@ -128,7 +129,7 @@ public class ExploreMetadataHttpHandler extends AbstractExploreMetadataHttpHandl
   @DELETE
   @Path("namespaces/{namespace-id}")
   public void delete(HttpRequest request, HttpResponder responder,
-                     @PathParam("namespace-id") final String namespaceId) {
+                     @PathParam("namespace-id") final String namespaceId) throws ExploreException, IOException {
     handleResponseEndpointExecution(request, responder, new EndpointCoreExecution<QueryHandle>() {
       @Override
       public QueryHandle execute(HttpRequest request, HttpResponder responder)

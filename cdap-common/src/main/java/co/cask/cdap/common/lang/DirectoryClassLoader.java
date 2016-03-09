@@ -17,6 +17,7 @@
 package co.cask.cdap.common.lang;
 
 import co.cask.cdap.common.utils.DirUtils;
+import com.google.common.base.Splitter;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
@@ -55,11 +56,15 @@ public class DirectoryClassLoader extends URLClassLoader {
   private final Manifest manifest;
 
   public DirectoryClassLoader(File dir, ClassLoader parent, String...libDirs) {
-    this(dir, parent, ImmutableSet.copyOf(libDirs));
+    this(dir, "", parent, ImmutableSet.copyOf(libDirs));
   }
 
-  public DirectoryClassLoader(File dir, ClassLoader parent, Iterable<String> libDirs) {
-    super(getClassPathURLs(dir, ImmutableSet.copyOf(libDirs)), parent);
+  public DirectoryClassLoader(File dir, String extraClassPath, ClassLoader parent, String...libDirs) {
+    this(dir, extraClassPath, parent, ImmutableSet.copyOf(libDirs));
+  }
+
+  public DirectoryClassLoader(File dir, String extraClassPath, ClassLoader parent, Iterable<String> libDirs) {
+    super(getClassPathURLs(dir, extraClassPath, ImmutableSet.copyOf(libDirs)), parent);
 
     // Try to load the Manifest from the unpacked directory
     Manifest manifest = null;
@@ -84,7 +89,7 @@ public class DirectoryClassLoader extends URLClassLoader {
     return manifest;
   }
 
-  private static URL[] getClassPathURLs(File dir, Set<String> libDirs) {
+  private static URL[] getClassPathURLs(File dir, String extraClassPath, Set<String> libDirs) {
     try {
       List<URL> urls = Lists.newArrayList(dir.toURI().toURL());
       addJarURLs(dir, urls);
@@ -92,6 +97,19 @@ public class DirectoryClassLoader extends URLClassLoader {
       for (String libDir : libDirs) {
         addJarURLs(new File(dir, libDir), urls);
       }
+
+      if (extraClassPath != null) {
+        for (String path : Splitter.on(File.pathSeparatorChar).omitEmptyStrings().split(extraClassPath)) {
+          String wildcardSuffix = File.separator + "*";
+
+          if (path.endsWith(wildcardSuffix)) {
+            addJarURLs(new File(path.substring(0, path.length() - wildcardSuffix.length())), urls);
+          } else {
+            urls.add(new File(path).toURI().toURL());
+          }
+        }
+      }
+
       return urls.toArray(new URL[urls.size()]);
     } catch (MalformedURLException e) {
       // Should never happen

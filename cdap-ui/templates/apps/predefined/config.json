@@ -1,0 +1,42 @@
+{
+  "cdap-etl-realtime": [
+    {
+      "name": "Kafka to HBase",
+      "file": "KafkaToHBase.json",
+      "description" : "Ingests in real time from Kafka into an HBase table"
+    },
+    {
+      "name": "Kafka to Stream",
+      "file": "KafkaToStream.json",
+      "description" : "Ingests in real time from Kafka into a stream"
+    },
+    {
+      "name": "Kafka to OLAP Cube",
+      "file": "KafkaToOLAPCube.json",
+      "description" : "Generate an OLAP Cube in real time from Kafka"
+    },
+    {
+      "name": "Twitter to HBase",
+      "file": "TwitterToHBase.json",
+      "description": "Ingest real-time Twitter Stream into an HBase table"
+    },
+    {
+      "name": "Twitter to Stream",
+      "file": "TwitterToStream.json",
+      "description": "Ingest real-time Twitter Stream into a stream"
+    },
+    {
+      "name": "Amazon SQS to HBase",
+      "file": "AmazonSQSToHBase.json",
+      "description" : "Real-time updates from Amazon Simple Queue Service into an HBase table"
+    }
+  ],
+  "cdap-etl-batch" : [
+     {
+       "name" : "Stream to HBase",
+       "description" : "Periodically ingest from a stream into an HBase table",
+       "file" : "StreamToHBase.json"
+     }
+  ]
+}
+

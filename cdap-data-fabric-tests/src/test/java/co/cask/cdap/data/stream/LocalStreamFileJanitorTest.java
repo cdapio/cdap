@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,6 +20,7 @@ import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
+import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.data.file.FileWriter;
@@ -29,11 +30,15 @@ import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
 import co.cask.cdap.data.runtime.TransactionMetricsModule;
 import co.cask.cdap.data.stream.service.InMemoryStreamMetaStore;
 import co.cask.cdap.data.stream.service.StreamMetaStore;
+import co.cask.cdap.data.view.ViewAdminModules;
+import co.cask.cdap.data2.dataset2.InMemoryNamespaceStore;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
+import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.notifications.feeds.NotificationFeedManager;
 import co.cask.cdap.notifications.feeds.service.NoOpNotificationFeedManager;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.store.NamespaceStore;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -54,6 +59,7 @@ public class LocalStreamFileJanitorTest extends StreamFileJanitorTestBase {
   private static StreamAdmin streamAdmin;
   private static StreamFileWriterFactory fileWriterFactory;
   private static StreamCoordinatorClient streamCoordinatorClient;
+  private static NamespaceStore namespaceStore;
 
   @BeforeClass
   public static void init() throws IOException {
@@ -66,6 +72,9 @@ public class LocalStreamFileJanitorTest extends StreamFileJanitorTestBase {
       new DataSetsModules().getInMemoryModules(),
       new TransactionMetricsModule(),
       new DataFabricLevelDBModule(),
+      new DiscoveryRuntimeModule().getInMemoryModules(),
+      new ExploreClientModule(),
+      new ViewAdminModules().getInMemoryModules(),
       Modules.override(new StreamAdminModules().getStandaloneModules()).with(new AbstractModule() {
         @Override
         protected void configure() {
@@ -77,12 +86,14 @@ public class LocalStreamFileJanitorTest extends StreamFileJanitorTestBase {
         protected void configure() {
           // We don't need notification in this test, hence inject an no-op one
           bind(NotificationFeedManager.class).to(NoOpNotificationFeedManager.class);
+          bind(NamespaceStore.class).to(InMemoryNamespaceStore.class);
         }
       }
     );
 
     locationFactory = injector.getInstance(LocationFactory.class);
     namespacedLocationFactory = injector.getInstance(NamespacedLocationFactory.class);
+    namespaceStore = injector.getInstance(NamespaceStore.class);
     streamAdmin = injector.getInstance(StreamAdmin.class);
     fileWriterFactory = injector.getInstance(StreamFileWriterFactory.class);
     streamCoordinatorClient = injector.getInstance(StreamCoordinatorClient.class);
@@ -107,6 +118,11 @@ public class LocalStreamFileJanitorTest extends StreamFileJanitorTestBase {
   @Override
   protected StreamAdmin getStreamAdmin() {
     return streamAdmin;
+  }
+
+  @Override
+  protected NamespaceStore getNamespaceStore() {
+    return namespaceStore;
   }
 
   @Override

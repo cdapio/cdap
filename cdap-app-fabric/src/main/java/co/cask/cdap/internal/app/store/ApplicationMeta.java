@@ -16,7 +16,7 @@
 
 package co.cask.cdap.internal.app.store;
 
-import co.cask.cdap.app.ApplicationSpecification;
+import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
 import com.google.common.base.Objects;

@@ -17,6 +17,7 @@ package co.cask.cdap.internal.app.runtime.distributed;
 
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.internal.app.runtime.AbstractProgramController;
+import co.cask.cdap.proto.Id;
 import com.google.common.util.concurrent.Futures;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.TwillController;
@@ -31,13 +32,13 @@ abstract class AbstractTwillProgramController extends AbstractProgramController 
 
   private static final Logger LOG = LoggerFactory.getLogger(AbstractTwillProgramController.class);
 
-  protected final String programName;
+  protected final Id.Program programId;
   protected final TwillController twillController;
   private volatile boolean stopRequested;
 
-  protected AbstractTwillProgramController(String programName, TwillController twillController, RunId runId) {
-    super(programName, runId);
-    this.programName = programName;
+  protected AbstractTwillProgramController(Id.Program programId, TwillController twillController, RunId runId) {
+    super(programId, runId);
+    this.programId = programId;
     this.twillController = twillController;
   }
 
@@ -59,7 +60,7 @@ abstract class AbstractTwillProgramController extends AbstractProgramController 
     twillController.onRunning(new Runnable() {
       @Override
       public void run() {
-        LOG.info("Twill program running: {} {}", programName, twillController.getRunId());
+        LOG.info("Twill program running: {} {}", programId, twillController.getRunId());
         started();
       }
     }, Threads.SAME_THREAD_EXECUTOR);
@@ -67,7 +68,7 @@ abstract class AbstractTwillProgramController extends AbstractProgramController 
     twillController.onTerminated(new Runnable() {
       @Override
       public void run() {
-        LOG.info("Twill program terminated: {} {}", programName, twillController.getRunId());
+        LOG.info("Twill program terminated: {} {}", programId, twillController.getRunId());
         if (stopRequested) {
           // Service was killed
           stop();

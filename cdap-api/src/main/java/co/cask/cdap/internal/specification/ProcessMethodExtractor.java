@@ -22,16 +22,15 @@ import co.cask.cdap.api.flow.FlowletDefinition;
 import co.cask.cdap.api.flow.flowlet.InputContext;
 import co.cask.cdap.internal.lang.MethodVisitor;
 import co.cask.cdap.internal.lang.Reflections;
-import com.google.common.base.Preconditions;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
 import com.google.common.reflect.TypeToken;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -46,14 +45,14 @@ public final class ProcessMethodExtractor extends MethodVisitor {
 
   public ProcessMethodExtractor(Map<String, Set<Type>> inputTypes) {
     this.inputTypes = inputTypes;
-    this.seenMethods = Sets.newHashSet();
+    this.seenMethods = new HashSet<>();
   }
 
   @Override
-  public void visit(Object instance, TypeToken<?> inspectType,
-                    TypeToken<?> declareType, Method method) throws Exception {
+  public void visit(Object instance, Type inspectType, Type declareType, Method method) throws Exception {
+    TypeToken<?> inspectTypeToken = TypeToken.of(inspectType);
 
-    if (!seenMethods.add(new FlowletMethod(method, inspectType))) {
+    if (!seenMethods.add(new FlowletMethod(method, inspectTypeToken))) {
       // The method is already seen. It can only happen if a children class override a parent class method and
       // is visting the parent method, since the method visiting order is always from the leaf class walking
       // up the class hierarchy.
@@ -69,34 +68,34 @@ public final class ProcessMethodExtractor extends MethodVisitor {
 
     // Check for tick method
     if (tickAnnotation != null) {
-      Preconditions.checkArgument(processInputAnnotation == null,
-                                  "Tick method %s.%s should not have ProcessInput.",
-                                  inspectType.getRawType().getName(), method);
-      Preconditions.checkArgument(method.getParameterTypes().length == 0,
-                                  "Tick method %s.%s cannot have parameters.",
-                                  inspectType.getRawType().getName(), method);
+      checkArgument(processInputAnnotation == null,
+                    "Tick method %s.%s should not have ProcessInput.",
+                    inspectTypeToken.getRawType().getName(), method);
+      checkArgument(method.getParameterTypes().length == 0,
+                    "Tick method %s.%s cannot have parameters.",
+                    inspectTypeToken.getRawType().getName(), method);
       return;
     }
 
     Type[] methodParams = method.getGenericParameterTypes();
-    Preconditions.checkArgument(methodParams.length > 0 && methodParams.length <= 2,
-                                "Parameter missing from process method %s.%s.",
-                                inspectType.getRawType().getName(), method);
+    checkArgument(methodParams.length > 0 && methodParams.length <= 2,
+                  "Parameter missing from process method %s.%s.",
+                  inspectTypeToken.getRawType().getName(), method);
 
     // If there is more than one parameter there can only be exactly two; the second one must be InputContext type
     if (methodParams.length == 2) {
-      Preconditions.checkArgument(InputContext.class.equals(TypeToken.of(methodParams[1]).getRawType()),
-                                  "Second parameter must be InputContext type for process method %s.%s.",
-                                  inspectType.getRawType().getName(), method);
+      checkArgument(InputContext.class.equals(TypeToken.of(methodParams[1]).getRawType()),
+                    "Second parameter must be InputContext type for process method %s.%s.",
+                    inspectTypeToken.getRawType().getName(), method);
     }
 
     // Extract the Input type from the first parameter of the process method
-    Type inputType = getInputType(inspectType, method, inspectType.resolveType(methodParams[0]).getType());
-    Preconditions.checkArgument(Reflections.isResolved(inputType),
-                                "Invalid type in %s.%s. Only Class or ParameterizedType are supported.",
-                                inspectType.getRawType().getName(), method);
+    Type inputType = getInputType(inspectTypeToken, method, inspectTypeToken.resolveType(methodParams[0]).getType());
+    checkArgument(Reflections.isResolved(inputType),
+                  "Invalid type in %s.%s. Only Class or ParameterizedType are supported.",
+                  inspectTypeToken.getRawType().getName(), method);
 
-    List<String> inputNames = Lists.newLinkedList();
+    List<String> inputNames = new LinkedList<>();
     if (processInputAnnotation.value().length == 0) {
       inputNames.add(FlowletDefinition.ANY_INPUT);
     } else {
@@ -106,12 +105,12 @@ public final class ProcessMethodExtractor extends MethodVisitor {
     for (String inputName : inputNames) {
       Set<Type> types = inputTypes.get(inputName);
       if (types == null) {
-        types = Sets.newHashSet();
+        types = new HashSet<>();
         inputTypes.put(inputName, types);
       }
-      Preconditions.checkArgument(types.add(inputType),
-                                  "Same type already defined for the same input name %s in process method %s.%s.",
-                                  inputName, inspectType.getRawType().getName(), method);
+      checkArgument(types.add(inputType),
+                    "Same type already defined for the same input name %s in process method %s.%s.",
+                    inputName, inspectTypeToken.getRawType().getName(), method);
     }
   }
 
@@ -130,11 +129,17 @@ public final class ProcessMethodExtractor extends MethodVisitor {
       // This check is needed because we don't support type projection with iterator.
       if (methodParam instanceof ParameterizedType) {
         ParameterizedType pType = (ParameterizedType) methodParam;
-        Preconditions.checkArgument(!pType.getRawType().equals(Iterator.class),
-                                    "Iterator type should only be used with Batch annotation for process method %s.%s",
-                                    type.getRawType().getName(), method.getName());
+        checkArgument(!pType.getRawType().equals(Iterator.class),
+                      "Iterator type should only be used with Batch annotation for process method %s.%s",
+                      type.getRawType().getName(), method.getName());
       }
     }
     return methodParam;
+  }
+
+  private void checkArgument(boolean condition, String template, Object...args) {
+    if (!condition) {
+      throw new IllegalArgumentException(String.format(template, args));
+    }
   }
 }

@@ -16,6 +16,7 @@
 
 package co.cask.cdap.api.flow.flowlet;
 
+import co.cask.cdap.api.DatasetConfigurer;
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.dataset.Dataset;
 
@@ -24,7 +25,7 @@ import java.util.Map;
 /**
  * Configurer for configuring {@link Flowlet}.
  */
-public interface FlowletConfigurer {
+public interface FlowletConfigurer extends DatasetConfigurer {
 
   /**
    * Sets the name of the {@link Flowlet}.
@@ -55,7 +56,7 @@ public interface FlowletConfigurer {
   void setFailurePolicy(FailurePolicy failurePolicy);
 
   /**
-   * Sets a set of properties that will be available through {@link FlowletSpecification} at runtime.
+   * Sets a map of properties that will be available through {@link FlowletSpecification} at runtime.
    *
    * @param properties properties
    */

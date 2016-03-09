@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
 <!--
-  ~ Copyright © 2015 Cask Data, Inc.
+  ~ Copyright © 2015-2016 Cask Data, Inc.
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License"); you may not
   ~ use this file except in compliance with the License. You may obtain a copy of
@@ -20,7 +20,10 @@
   <property>
     <name>stream.notification.threshold</name>
     <value>1</value>
-    <description>Default size of data, in MB, to be ingested by a Stream before a notification is published</description>
+    <description>
+      Size of data, in megabytes, to be ingested by a stream before a
+      notification is published
+    </description>
   </property>
 
 </configuration>

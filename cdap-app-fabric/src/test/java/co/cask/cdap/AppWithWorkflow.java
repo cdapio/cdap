@@ -25,7 +25,7 @@ import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.workflow.AbstractWorkflow;
 import co.cask.cdap.api.workflow.AbstractWorkflowAction;
 import co.cask.cdap.api.workflow.Value;
-import co.cask.cdap.api.workflow.WorkflowActionSpecification;
+import co.cask.cdap.api.workflow.WorkflowActionConfigurer;
 import co.cask.cdap.api.workflow.WorkflowContext;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.internal.app.runtime.batch.WordCount;
@@ -89,11 +89,9 @@ public class AppWithWorkflow extends AbstractApplication {
     }
 
     @Override
-    public WorkflowActionSpecification configure() {
-      return WorkflowActionSpecification.Builder.with()
-        .setName(name)
-        .setDescription(getDescription())
-        .build();
+    public void configure(WorkflowActionConfigurer configurer) {
+      super.configure(configurer);
+      setName(name);
     }
 
     @Override

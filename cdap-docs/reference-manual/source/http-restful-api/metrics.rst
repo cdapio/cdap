@@ -65,7 +65,15 @@ Available Contexts
 The context of a metric is typically enclosed into a hierarchy of contexts. For example,
 the flowlet context is enclosed in the flow context, which in turn is enclosed in the
 application context. A metric can always be queried (and aggregated) relative to any
-enclosing context. These are the available application contexts of CDAP:
+enclosing context. 
+
+The *consumer* context relates to entities that are a recipient of events, typically a
+flowlet. A consumer flowlet is the recipient of a queue. Conversely, *producers* are
+entities that emits events, such as a stream or a flowlet. Flowlets can at the same time
+be both consumers and producers. The difference between the total of a producer's events and the
+consumed events is the :ref:`pending events <http-restful-api-metrics-pending>`.
+
+These are the available application contexts of CDAP:
 
 .. list-table::
    :header-rows: 1
@@ -886,7 +894,7 @@ Query Tips
                 "data":[{"time":0,"value":5}]}
               ]
     }
-    
+
 - User-defined metrics are always prefixed with the word ``user``, and must be queried by 
   using that prefix with the metric name.
 
@@ -896,4 +904,16 @@ Query Tips
     POST '<base-url>/metrics/query?tag=namespace:default&tag=app:HelloWorld
       &tag=flow:WhoFlow&tag=flowlet:saver&metric=user.names.bytes&aggregate=true'
 
+.. _http-restful-api-metrics-pending:
 
+- The point-in-time pending metric is the difference between the number of events added to
+  the queue and the number of events consumed, within a given interval.  For example, if the
+  first flowlet in a flow emits 750 events in one second, and the second flowlet consumes
+  500, the pending count is 250 events.
+
+  To retrieve the cumulative pending count, you can run a metrics query without a start and end time range. 
+  By default, metrics are aggregated across all available time. Your query (using the CDAP example
+  :ref:`Count Random <examples-count-random>`) could look like::
+
+    POST '<base-url>/metrics/query?tag=namespace:default&tag=app:CountRandom&tag=flow:CountRandom
+      &tag=consumer:counter&tag=producer:splitter&tag=queue:queue&metric=system.queue.pending'

@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.batch;
 
+import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.annotation.UseDataSet;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.common.Bytes;
@@ -35,7 +36,6 @@ public class AppWithMapReduce extends AbstractApplication {
   public void configure() {
     setName("AppWithMapReduce");
     setDescription("Application with MapReduce job");
-    createDataset("jobConfig", KeyValueTable.class);
     createDataset("beforeSubmit", KeyValueTable.class);
     createDataset("onFinish", KeyValueTable.class);
     createDataset("timeSeries", TimeseriesTable.class);
@@ -49,8 +49,16 @@ public class AppWithMapReduce extends AbstractApplication {
    *
    */
   public static final class ClassicWordCount extends AbstractMapReduce {
+    public static final int MEMORY_MB = 1024;
+
     @UseDataSet("jobConfig")
     private KeyValueTable table;
+
+    @Override
+    protected void configure() {
+      createDataset("jobConfig", KeyValueTable.class);
+      setDriverResources(new Resources(MEMORY_MB));
+    }
 
     @Override
     public void beforeSubmit(MapReduceContext context) throws Exception {

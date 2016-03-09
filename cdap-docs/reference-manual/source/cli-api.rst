@@ -12,7 +12,7 @@ Introduction
 ============
 
 The Command Line Interface (CLI) provides methods to interact with the CDAP server from within a shell,
-similar to HBase shell or ``bash``. It is located within the SDK, at ``bin/cdap-cli`` as either a bash
+similar to the HBase or ``bash`` shells. It is located within the SDK, at ``bin/cdap-cli`` as either a bash
 script or a Windows ``.bat`` file.
 
 The CLI may be used in two ways: interactive mode and non-interactive mode.
@@ -24,29 +24,28 @@ Interactive Mode
 
 To run the CLI in interactive mode, run the ``cdap-cli.sh`` executable with no arguments from the terminal::
 
-  $ /bin/cdap-cli.sh
+  $ ./bin/cdap-cli.sh
 
 or, on Windows::
 
-  ~SDK> bin\cdap-cli.bat
+  > bin\cdap-cli.bat
 
 The executable should bring you into a shell, with this prompt::
 
   cdap (http://localhost:10000)>
 
 This indicates that the CLI is currently set to interact with the CDAP server at ``localhost``.
-There are two ways to interact with a different CDAP server:
 
 - To interact with a different CDAP server by default, set the environment variable ``CDAP_HOST`` to a hostname.
-- To change the current CDAP server, run the command ``connect example.com``.
-- To connect to an SSL-enabled CDAP server, run the command ``connect https://example.com``.
+- To change the current CDAP server, run the CLI command ``connect example.com``.
+- To connect to an SSL-enabled CDAP server, run the CLI command ``connect https://example.com``.
 
 For example, with ``CDAP_HOST`` set to ``example.com``, the CLI would be interacting with
 a CDAP instance at ``example.com``, port ``10000``::
 
   cdap (http://example.com:10000)>
 
-To list all of the available commands, enter ``help``::
+To list all of the available commands, enter the CLI command ``help``::
 
   cdap (http://localhost:10000)> help
 
@@ -56,7 +55,7 @@ Non-Interactive Mode
 To run the CLI in non-interactive mode, run the ``cdap-cli.sh`` executable, passing the command you want executed
 as the argument. For example, to list all applications currently deployed to CDAP, execute::
 
-  cdap-cli.sh list apps
+  $ cdap-cli.sh list apps
 
 Connecting to Secure CDAP Instances
 -----------------------------------
@@ -70,7 +69,7 @@ the current CLI session.
 Options
 -------
 
-The CLI may be started with command-line options, as detailed below::
+The CLI can be started with command-line options, as detailed below::
 
   usage: cdap-cli.sh [--autoconnect <true|false>] [--debug] [--help]
                      [--verify-ssl <true|false>] [--uri <uri>][--script
@@ -89,11 +88,10 @@ The CLI may be started with command-line options, as detailed below::
    -v,--verify-ssl <arg>    If "true", verify SSL certificate when making
                             requests. Defaults to "true".
 
-
 Settings
 --------
 
-Certain commands (``connect`` and ``cli render as``) affect how CLI works for the duration of a session.
+Certain commands (``connect`` and ``cli render as``) affect how the CLI works for the duration of a session.
 
 The command ``"cli render as <table-renderer>"`` sets how table data is rendered. Valid options are
 either ``"alt"`` (the default) and ``"csv"``. As the ``"alt"`` option may split a cell into multiple
@@ -127,7 +125,7 @@ These are the available commands:
    **General**
    ``cli render as <table-renderer>``,"Modifies how table data is rendered. Valid options are ""alt"" (default) and ""csv""."
    ``cli version``,"Prints the CLI version."
-   ``connect <cdap-instance-uri>``,"Connects to a CDAP instance."
+   ``connect <cdap-instance-uri> [<verify-ssl-cert>]``,"Connects to a CDAP instance."
    ``exit``,"Exits the CLI."
    ``quit``,"Exits the CLI."
    **Namespace**
@@ -136,8 +134,47 @@ These are the available commands:
    ``describe namespace <namespace-name>``,"Describes a namespace."
    ``list namespaces``,"Lists all namespaces."
    ``use namespace <namespace-name>``,"Changes the current namespace to <namespace-name>."
+   **Artifact**
+   ``delete artifact <artifact-name> <artifact-version>``,"Deletes an artifact"
+   ``describe artifact <artifact-name> <artifact-version> [<scope>]``,"Shows information about an artifact. If no scope is given, the user scope will be used. Includes information about application and plugin classes contained in the artifact."
+   ``describe artifact-plugin <artifact-name> <artifact-version> <plugin-type> <plugin-name> [<scope>]``,"Describes all plugins of a specific type and name available to a specific artifact. Can return multiple details if the plugin exists in multiple artifacts. If no scope is given, the user scope will be used."
+   ``get artifact properties <artifact-name> <artifact-version> [<scope>]``,"Gets properties of an artifact. If no scope is given, the user scope will be used. "
+   ``list artifact plugin-types <artifact-name> <artifact-version> [<scope>]``,"Lists all plugin types usable by the specified artifact. If no scope is given, the user scope will be used."
+   ``list artifact plugins <artifact-name> <artifact-version> <plugin-type> [<scope>]``,"Lists all plugins of a specific type available to a specific artifact. Includes the type, name, classname, and description of the plugin, as well as the artifact the plugin came from. If no scope is given, the user scope will be used."
+   ``list artifact versions <artifact-name> [<scope>]``,"Lists all versions of a specific artifact. If no scope is given, the user scope will be used."
+   ``list artifacts [<scope>]``,"Lists all artifacts. If no scope is given, artifacts in all scopes are returned. Otherwise, only artifacts in the specified scope are returned."
+   ``load artifact <local-file-path> [config-file <artifact-config>] [name <artifact-name>] [version <artifact-version>]``,"Loads an artifact into CDAP. If the artifact name and version are not both given, they will be derived from the filename of the artifact. File names are expected to be of the form <name>-<version>.jar. If the artifact contains plugins that extend another artifact, or if it contains third-party plugins, a config file must be given. The config file must contain a JSON object that specifies the parent artifacts and any third-party plugins in the jar. For example, if there is a config file with these contents:
+    | ``{``
+    |   ``""parents"":[ ""app1[1.0.0,2.0.0)"", ""app2[1.2.0,1.3.0] ],``
+    |   ``""plugins"":[``
+    |     ``{ ""type"": ""jdbc"",``
+    |       ``""name"": ""mysql"",``
+    |       ``""className"": ""com.mysql.jdbc.Driver""``
+    |     ``}``
+    |   ``],``
+    |   ``""plugins"":{``
+    |     ``""prop1"": ""val1"",``
+    |   ``},``
+    | ``}``
+
+   This config specifies that the artifact contains one JDBC third-party plugin that should be available to the app1 artifact (versions 1.0.0 inclusive to 2.0.0 exclusive) and app2 artifact (versions 1.2.0 inclusive to 1.3.0 inclusive). The config may also include a 'properties' field specifying properties for the artifact."
+   ``set artifact properties <artifact-name> <artifact-version> <scope> <local-file-path>``,"Sets properties of an artifact. The properties file must contain a JSON Object with a 'properties' key whose value is a JSON Object of the properties for the artifact."
+   **Metadata And Lineage**
+   ``add metadata-properties <entity-id> <properties>``,"Adds metadata properties for an entity"
+   ``add metadata-tags <entity-id> <tags>``,"Adds metadata tags for an entity"
+   ``get lineage dataset <dataset-name> [start <start>] [end <end>] [levels <levels>]``,"Gets the lineage of a dataset"
+   ``get lineage stream <stream-id> [start <start>] [end <end>] [levels <levels>]``,"Gets the lineage of a stream"
+   ``get metadata <entity-id> [scope <scope>]``,"Gets the metadata of an entity"
+   ``get metadata-properties <entity-id> [scope <scope>]``,"Gets the metadata properties of an entity"
+   ``get metadata-tags <entity-id> [scope <scope>]``,"Gets the metadata tags of an entity"
+   ``remove metadata <entity-id>``,"Removes metadata for an entity"
+   ``remove metadata-properties <entity-id>``,"Removes all metadata properties for an entity"
+   ``remove metadata-property <entity-id> <property>``,"Removes a metadata property for an entity"
+   ``remove metadata-tag <entity-id> <tag>``,"Removes a metadata tag for an entity"
+   ``remove metadata-tags <entity-id>``,"Removes all metadata tags for an entity"
+   ``search metadata <search-query> [filtered by target-type <target-type>]``,"Allows users to search CDAP entities based on the metadata annotated on them."
    **Application Lifecycle**
-   ``create stream <new-stream-id>``,"Creates a stream."
+   ``create app <app-id> <artifact-name> <artifact-version> <scope> [<app-config-file>]``,"Creates an application from an artifact with optional configuration. If configuration is needed, it must be given as a file whose contents are a JSON object containing the application config. For example, the file contents could contain: '{ ""config"": { ""stream"": ""purchases"" } }'. In this case, the application would receive '{ ""stream"": ""purchases"" }' as its config object."
    ``delete app <app-id>``,"Deletes an application."
    ``delete preferences app [<app-id>]``,"Deletes the preferences of an application."
    ``delete preferences flow [<app-id.flow-id>]``,"Deletes the preferences of a flow."
@@ -148,12 +185,9 @@ These are the available commands:
    ``delete preferences spark [<app-id.spark-id>]``,"Deletes the preferences of a Spark program."
    ``delete preferences worker [<app-id.worker-id>]``,"Deletes the preferences of a worker."
    ``delete preferences workflow [<app-id.workflow-id>]``,"Deletes the preferences of a workflow."
-   ``delete stream <stream-id>``,"Deletes a stream."
    ``deploy app <app-jar-file> [<app-config>]``,"Deploys an application optionally with a serialized configuration string."
    ``describe app <app-id>``,"Shows information about an application."
-   ``describe app-template <app-template-id>``,"Lists all application templates."
-   ``describe stream <stream-id>``,"Shows information about a stream."
-   ``get app-template plugins <app-template-id> <plugin-type>``,"Lists plugins for an application template."
+   ``get app <app-id> programs status [of type <program-types>]``,"Command to get status of one or more programs of an application. By default, get status of all flows, services, and workers. A comma separated list of program types can be specified, which will start all programs of those types. For example, specifying ""flow,workflow"" will get status of all flows and workflows in the application."
    ``get endpoints service <app-id.service-id>``,"Lists the endpoints that a service exposes."
    ``get flow live <app-id.flow-id>``,"Gets the live info of a flow."
    ``get flow logs <app-id.flow-id> [<start-time>] [<end-time>]``,"Gets the logs of a flow."
@@ -192,8 +226,6 @@ These are the available commands:
    ``get spark runs <app-id.spark-id> [<status>] [<start-time>] [<end-time>] [<limit>]``,"Gets the run history of a Spark program."
    ``get spark runtimeargs <app-id.spark-id>``,"Gets the runtime arguments of a Spark program."
    ``get spark status <app-id.spark-id>``,"Gets the status of a Spark program."
-   ``get stream <stream-id> [<start-time>] [<end-time>] [<limit>]``,"Gets events from a stream. The time format for <start-time> and <end-time> can be a timestamp in milliseconds or a relative time in the form of [+|-][0-9][d|h|m|s]. <start-time> is relative to current time; <end-time> is relative to <start-time>. Special constants ""min"" and ""max"" can be used to represent ""0"" and ""max timestamp"" respectively."
-   ``get stream-stats <stream-id> [limit <limit>] [start <start-time>] [end <end-time>]``,"Gets statistics for a stream. The <limit> limits how many Stream events to analyze; default is 100. The time format for <start-time> and <end-time> can be a timestamp in milliseconds or a relative time in the form of [+|-][0-9][d|h|m|s]. <start-time> is relative to current time; <end-time> is relative to <start-time>. Special constants ""min"" and ""max"" can be used to represent ""0"" and ""max timestamp"" respectively."
    ``get worker instances <app-id.worker-id>``,"Gets the instances of a worker."
    ``get worker live <app-id.worker-id>``,"Gets the live info of a worker."
    ``get worker logs <app-id.worker-id> [<start-time>] [<end-time>]``,"Gets the logs of a worker."
@@ -201,19 +233,18 @@ These are the available commands:
    ``get worker runtimeargs <app-id.worker-id>``,"Gets the runtime arguments of a worker."
    ``get worker status <app-id.worker-id>``,"Gets the status of a worker."
    ``get workflow current <app-id.workflow-id> <runid>``,"Gets the currently running nodes of a workflow for a given run id."
+   ``get workflow logs <app-id.workflow-id> [<start-time>] [<end-time>]``,"Gets the logs of a workflow."
    ``get workflow runs <app-id.workflow-id> [<status>] [<start-time>] [<end-time>] [<limit>]``,"Gets the run history of a workflow."
    ``get workflow runtimeargs <app-id.workflow-id>``,"Gets the runtime arguments of a workflow."
    ``get workflow schedules <app-id.workflow-id>``,"Resumes a schedule"
    ``get workflow status <app-id.workflow-id>``,"Gets the status of a workflow."
    ``get workflow token <app-id.workflow-id> <runid> [at node <workflow-node>] [scope <workflow-token-scope>] [key <workflow-token-key>]``,"Gets the workflow token of a workflow for a given run id."
-   ``list app-templates``,"Lists all application templates."
-   ``list apps``,"Lists all applications."
+   ``list apps [<artifact-name>] [<artifact-version>]``,"Lists all applications, optionally filtered by artifact name and version."
    ``list flows``,"Lists all flows."
    ``list mapreduce``,"Lists all MapReduce programs."
    ``list programs``,"Lists all programs."
    ``list services``,"Lists all services."
    ``list spark``,"Lists all Spark programs."
-   ``list streams``,"Lists all streams."
    ``list workers``,"Lists all workers."
    ``list workflows``,"Lists all workflows."
    ``load preferences app <local-file-path> <content-type> <app-id>``,"Sets preferences of an application from a local config file (supported formats = JSON)."
@@ -225,6 +256,7 @@ These are the available commands:
    ``load preferences spark <local-file-path> <content-type> <app-id.spark-id>``,"Sets preferences of a Spark program from a local config file (supported formats = JSON)."
    ``load preferences worker <local-file-path> <content-type> <app-id.worker-id>``,"Sets preferences of a worker from a local config file (supported formats = JSON)."
    ``load preferences workflow <local-file-path> <content-type> <app-id.workflow-id>``,"Sets preferences of a workflow from a local config file (supported formats = JSON)."
+   ``restart app <app-id> programs [of type <program-types>]``,"Command to restart one or more programs of an application. By default, restart all flows, services, and workers. A comma separated list of program types can be specified, which will start all programs of those types. For example, specifying ""flow,workflow"" will restart all flows and workflows in the application."
    ``resume schedule <app-id.schedule-id>``,"Resumes a schedule"
    ``set flow runtimeargs <app-id.flow-id> <runtime-args>``,"Sets the runtime arguments of a flow. <runtime-args> is specified in the format ""key1=a key2=b""."
    ``set flowlet instances <app-id.flow-id.flowlet-id> <num-instances>``,"Sets the instances of a flowlet."
@@ -241,13 +273,10 @@ These are the available commands:
    ``set service instances <app-id.service-id> <num-instances>``,"Sets the instances of a service."
    ``set service runtimeargs <app-id.service-id> <runtime-args>``,"Sets the runtime arguments of a service. <runtime-args> is specified in the format ""key1=a key2=b""."
    ``set spark runtimeargs <app-id.spark-id> <runtime-args>``,"Sets the runtime arguments of a Spark program. <runtime-args> is specified in the format ""key1=a key2=b""."
-   ``set stream format <stream-id> <format> [<schema>] [<settings>]``,"Sets the format of a stream. <schema> is a sql-like schema ""column_name data_type, ..."" or Avro-like JSON schema and <settings> is specified in the format ""key1=v1 key2=v2""."
-   ``set stream notification-threshold <stream-id> <notification-threshold-mb>``,"Sets the notification threshold of a stream."
-   ``set stream properties <stream-id> <local-file-path>``,"Sets the properties of a stream, such as TTL, format, and notification threshold."
-   ``set stream ttl <stream-id> <ttl-in-seconds>``,"Sets the time-to-live (TTL) of a stream."
    ``set worker instances <app-id.worker-id> <num-instances>``,"Sets the instances of a worker."
    ``set worker runtimeargs <app-id.worker-id> <runtime-args>``,"Sets the runtime arguments of a worker. <runtime-args> is specified in the format ""key1=a key2=b""."
    ``set workflow runtimeargs <app-id.workflow-id> <runtime-args>``,"Sets the runtime arguments of a workflow. <runtime-args> is specified in the format ""key1=a key2=b""."
+   ``start app <app-id> programs [of type <program-types>]``,"Command to start one or more programs of an application. By default, start all flows, services, and workers. A comma separated list of program types can be specified, which will start all programs of those types. For example, specifying ""flow,workflow"" will start all flows and workflows in the application."
    ``start flow <app-id.flow-id> [<runtime-args>]``,"Starts a flow. <runtime-args> is specified in the format ""key1=a key2=b""."
    ``start mapreduce <app-id.mapreduce-id> [<runtime-args>]``,"Starts a MapReduce program. <runtime-args> is specified in the format ""key1=a key2=b""."
    ``start service <app-id.service-id> [<runtime-args>]``,"Starts a service. <runtime-args> is specified in the format ""key1=a key2=b""."
@@ -260,23 +289,15 @@ These are the available commands:
    ``start-debug spark <app-id.spark-id> [<runtime-args>]``,"Starts a Spark program in debug mode. <runtime-args> is specified in the format ""key1=a key2=b""."
    ``start-debug worker <app-id.worker-id> [<runtime-args>]``,"Starts a worker in debug mode. <runtime-args> is specified in the format ""key1=a key2=b""."
    ``start-debug workflow <app-id.workflow-id> [<runtime-args>]``,"Starts a workflow in debug mode. <runtime-args> is specified in the format ""key1=a key2=b""."
+   ``stop app <app-id> programs [of type <program-types>]``,"Command to stop one or more programs of an application. By default, stop all flows, services, and workers. A comma separated list of program types can be specified, which will start all programs of those types. For example, specifying ""flow,workflow"" will stop all flows and workflows in the application."
    ``stop flow <app-id.flow-id>``,"Stops a flow."
    ``stop mapreduce <app-id.mapreduce-id>``,"Stops a MapReduce program."
    ``stop service <app-id.service-id>``,"Stops a service."
    ``stop spark <app-id.spark-id>``,"Stops a Spark program."
    ``stop worker <app-id.worker-id>``,"Stops a worker."
+   ``stop workflow <app-id.workflow-id>``,"Stops a workflow."
    ``suspend schedule <app-id.schedule-id>``,"Suspends a schedule"
-   ``truncate stream <stream-id>``,"Truncates a stream."
-   **Adapter Lifecycle**
-   ``create adapter <adapter-name> <adapter-spec-file>``,"Creates an adapter."
-   ``delete adapter <adapter-name>``,"Deletes an adapter."
-   ``describe adapter <adapter-name>``,"Shows information about an adapter."
-   ``get adapter logs <adapter-name>``,"Gets the logs of an adapter."
-   ``get adapter runs <adapter-name> [status <status>]``,"Gets the runs of an adapter."
-   ``get adapter status <adapter-name>``,"Gets the status of an adapter."
-   ``list adapters``,"Lists all adapters."
-   ``start adapter <adapter-name>``,"Starts an adapter."
-   ``stop adapter <adapter-name>``,"Stops an adapter."
+   ``update app <app-id> <artifact-name> <artifact-version> <scope> [<app-config-file>]``,"Updates an application to use another artifact version and/or configuration."
    **Dataset**
    ``create dataset instance <dataset-type> <new-dataset-name> [<dataset-properties>]``,"Creates a dataset. <dataset-properties> is in the format ""key1=val1 key2=val2"""
    ``delete dataset instance <dataset-name>``,"Deletes a dataset."
@@ -297,7 +318,26 @@ These are the available commands:
    ``search metric names [<tags>]``,"Searches metric names. Provide <tags> as a map in the format 'tag1=value1 tag2=value2'."
    ``search metric tags [<tags>]``,"Searches metric tags. Provide <tags> as a map in the format 'tag1=value1 tag2=value2'."
    **Ingest**
+   ``create stream <new-stream-id>``,"Creates a stream."
+   ``create stream-view <stream-id> <view-id> format <format> [schema <schema>] [settings <settings>]``,"Creates or updates a stream-view. Valid <format>s are avro, csv, tsv, text, clf, grok, syslog. <schema> is a sql-like schema ""column_name data_type, ..."" or Avro-like JSON schema and <settings> is specified in the format ""key1=v1 key2=v2""."
+   ``delete stream <stream-id>``,"Deletes a stream."
+   ``delete stream-view <stream-id> <view-id>``,"Deletes a stream-view."
+   ``describe stream <stream-id>``,"Shows information about a stream."
+   ``describe stream-view <stream-id> <view-id>``,"Describes a stream-view."
+   ``get stream <stream-id> [<start-time>] [<end-time>] [<limit>]``,"Gets events from a stream. The time format for <start-time> and <end-time> can be a timestamp in milliseconds or a relative time in the form of [+|-][0-9][d|h|m|s]. <start-time> is relative to current time; <end-time> is relative to <start-time>. Special constants ""min"" and ""max"" can be used to represent ""0"" and ""max timestamp"" respectively."
+   ``get stream-stats <stream-id> [limit <limit>] [start <start-time>] [end <end-time>]``,"Gets statistics for a stream. The <limit> limits how many Stream events to analyze; default is 100. The time format for <start-time> and <end-time> can be a timestamp in milliseconds or a relative time in the form of [+|-][0-9][d|h|m|s]. <start-time> is relative to current time; <end-time> is relative to <start-time>. Special constants ""min"" and ""max"" can be used to represent ""0"" and ""max timestamp"" respectively."
+   ``list stream-views <stream-id>``,"Lists all stream-views."
+   ``list streams``,"Lists all streams."
    ``load stream <stream-id> <local-file-path> [<content-type>]``,"Loads a file to a stream. The contents of the file will become multiple events in the stream, based on the content type (avro/binary, text/csv, text/plain, text/tsv). If <content-type> is not provided, it will be detected by the file extension. Supported file extensions: avro, csv, log, tsv, txt."
    ``send stream <stream-id> <stream-event>``,"Sends an event to a stream."
+   ``set stream format <stream-id> <format> [<schema>] [<settings>]``,"Sets the format of a stream. Valid <format>s are avro, csv, tsv, text, clf, grok, syslog. <schema> is a sql-like schema ""column_name data_type, ..."" or Avro-like JSON schema and <settings> is specified in the format ""key1=v1 key2=v2""."
+   ``set stream notification-threshold <stream-id> <notification-threshold-mb>``,"Sets the notification threshold of a stream."
+   ``set stream properties <stream-id> <local-file-path>``,"Sets the properties of a stream, such as TTL, format, and notification threshold."
+   ``set stream ttl <stream-id> <ttl-in-seconds>``,"Sets the time-to-live (TTL) of a stream."
+   ``truncate stream <stream-id>``,"Truncates a stream."
    **Egress**
    ``call service <app-id.service-id> <http-method> <endpoint> [headers <headers>] [body <body>] [body:file <local-file-path>]``,"Calls a service endpoint. The <headers> are formatted as ""{'key':'value', ...}"". The request body may be provided either as a string or a file. To provide the body as a string, use ""body <body>"". To provide the body as a file, use ""body:file <local-file-path>""."
+   **Security**
+   ``security access entity <entity-id> user <user> actions <actions>``,"Checks whether a user has permission to perform certain actions on an entity. <actions> is a comma-separated list."
+   ``security grant entity <entity-id> user <user> actions <actions>``,"Grants a user permission to perform certain actions on an entity. <actions> is a comma-separated list."
+   ``security revoke entity <entity-id> [user <user>] [actions <actions>]``,"Revokes a user's permission to perform certain actions on an entity. <actions> is a comma-separated list."

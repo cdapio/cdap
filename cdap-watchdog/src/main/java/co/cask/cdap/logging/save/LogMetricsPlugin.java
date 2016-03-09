@@ -23,6 +23,7 @@ import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.logging.appender.kafka.KafkaTopic;
 import co.cask.cdap.logging.context.LoggingContextHelper;
 import co.cask.cdap.logging.kafka.KafkaLogEvent;
+import co.cask.cdap.proto.Id;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Maps;
@@ -71,8 +72,9 @@ public class LogMetricsPlugin extends AbstractKafkaLogProcessor {
 
     partitionCheckpoints.clear();
     try {
-      for (Integer partition : partitions) {
-        partitionCheckpoints.put(partition, checkpointManager.getCheckpoint(partition));
+      Map<Integer, Checkpoint> partitionMap = checkpointManager.getCheckpoint(partitions);
+      for (Map.Entry<Integer, Checkpoint> partition : partitionMap.entrySet()) {
+        partitionCheckpoints.put(partition.getKey(), partition.getValue());
       }
     } catch (Exception e) {
       LOG.error("Caught exception while reading checkpoint", e);
@@ -80,7 +82,7 @@ public class LogMetricsPlugin extends AbstractKafkaLogProcessor {
     }
 
     checkPointWriter = new CheckPointWriter(checkpointManager, partitionCheckpoints);
-    scheduledExecutor.scheduleWithFixedDelay(checkPointWriter, 100, 200, TimeUnit.MILLISECONDS);
+    scheduledExecutor.scheduleWithFixedDelay(checkPointWriter, 100, 500, TimeUnit.MILLISECONDS);
   }
 
   @Override
@@ -104,7 +106,7 @@ public class LogMetricsPlugin extends AbstractKafkaLogProcessor {
   }
 
   private String getMetricName(String namespace, String logLevel) {
-    return namespace.equals(Constants.SYSTEM_NAMESPACE) ?
+    return namespace.equals(Id.Namespace.SYSTEM.getId()) ?
            String.format("%s.%s", SYSTEM_METRIC_PREFIX, logLevel) :
            String.format("%s.%s", APP_METRIC_PREFIX, logLevel);
   }

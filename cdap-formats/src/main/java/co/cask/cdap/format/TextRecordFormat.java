@@ -21,6 +21,7 @@ import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
+import co.cask.cdap.spi.stream.AbstractStreamEventRecordFormat;
 import com.google.common.base.Charsets;
 
 import java.nio.charset.Charset;
@@ -30,7 +31,7 @@ import java.util.Map;
 /**
  * Stream record format that interprets the entire body as a single string.
  */
-public class TextRecordFormat extends StreamEventRecordFormat<StructuredRecord> {
+public class TextRecordFormat extends AbstractStreamEventRecordFormat<StructuredRecord> {
   public static final String CHARSET = "charset";
   private Charset charset = Charsets.UTF_8;
   private String fieldName = "body";

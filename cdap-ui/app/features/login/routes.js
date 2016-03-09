@@ -1,3 +1,19 @@
+/*
+ * Copyright © 2015 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 angular.module(PKG.name+'.feature.login')
   .config(function ($stateProvider) {
 
@@ -7,7 +23,7 @@ angular.module(PKG.name+'.feature.login')
     $stateProvider
 
       .state('login', {
-        url: '/login?next',
+        url: '/login?next&nextParams',
         templateUrl: '/assets/features/login/login.html',
         controller: 'LoginCtrl',
         onEnter: function(MY_CONFIG, myLoadingService, myAuth, $rootScope, MYAUTH_EVENT) {
@@ -28,7 +44,7 @@ angular.module(PKG.name+'.feature.login')
         }
       });
   })
-  .run(function ($rootScope, $state, $alert, $location, MYAUTH_EVENT, myNamespace, $q, myHelpers) {
+  .run(function ($rootScope, $state, $location, MYAUTH_EVENT, myNamespace, $q, myHelpers, myAlert) {
 
     $rootScope.$on(MYAUTH_EVENT.loginSuccess, function onLoginSuccess() {
       // General case: User logs in and we emit login success event.
@@ -51,14 +67,13 @@ angular.module(PKG.name+'.feature.login')
         .then(
           function onValidToken() {
             var next = $state.is('login') && $state.params.next;
-            if(next && next.path) {
-              next = angular.fromJson(next);
+            var nextParams = $state.params.nextParams;
+            myAlert.clear();
+            if(next) {
               console.log('After login, will redirect to:', next);
-              $location
-              .path(next.path);
-              // FIXME: This has un-certain behavior. Need to fix this
-              // .search(next.search)
-              // .replace();
+
+              $state.go(next, JSON.parse(decodeURIComponent(nextParams)));
+
             } else {
               $state.go('overview');
             }
@@ -73,14 +88,14 @@ angular.module(PKG.name+'.feature.login')
     });
 
   })
-  .run(function ($rootScope, $state, $alert, MYAUTH_EVENT, MY_CONFIG, myAlert, myAuth) {
+  .run(function ($rootScope, $state, myAlertOnValium, MYAUTH_EVENT, MY_CONFIG, myAlert, myAuth) {
 
     $rootScope.$on(MYAUTH_EVENT.logoutSuccess, function () {
       $state.go('login');
     });
 
     $rootScope.$on(MYAUTH_EVENT.sessionTimeout, function() {
-      $alert({
+      myAlertOnValium.show({
         type: 'danger',
         title: 'Session Timeout',
         message: 'Your current session has timed out. Please login again.'
@@ -105,7 +120,7 @@ angular.module(PKG.name+'.feature.login')
         ],
         function (v) {
           $rootScope.$on(v.event, function () {
-            $alert({
+            myAlertOnValium.show({
               title: v.title,
               content: v.message,
               type: v.eventType

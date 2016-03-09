@@ -26,7 +26,6 @@ import co.cask.cdap.client.StreamClient;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.StreamProperties;
 import co.cask.common.cli.Arguments;
-
 import com.google.inject.Inject;
 
 import java.io.PrintStream;

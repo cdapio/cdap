@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,7 +19,7 @@ package co.cask.cdap.api.dataset.table;
 import java.util.Collection;
 
 /**
- * A Delete removes one or more or all columns from a row.
+ * A Delete removes one, multiple, or all columns from a row.
  */
 public class Delete extends RowColumns<Delete> {
   /**
@@ -66,6 +66,15 @@ public class Delete extends RowColumns<Delete> {
    */
   public Delete(String row, String... columns) {
     super(row, columns);
+  }
+
+  /**
+   * Delete a set of columns from a row.
+   * @param row Row to delete from.
+   * @param columns Columns to delete.
+   */
+  public Delete(String row, Collection<String> columns) {
+    super(row, columns.toArray(new String[columns.size()]));
   }
 }
 

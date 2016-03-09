@@ -21,7 +21,7 @@
   <parent>
     <artifactId>cdap</artifactId>
     <groupId>co.cask.cdap</groupId>
-    <version>3.1.0</version>
+    <version>3.3.2</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
@@ -35,6 +35,11 @@
       <artifactId>cdap-api</artifactId>
       <version>${project.version}</version>
       <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>co.cask.cdap</groupId>
+      <artifactId>cdap-spi</artifactId>
+      <version>${project.version}</version>
     </dependency>
     <dependency>
       <groupId>io.thekraken</groupId>

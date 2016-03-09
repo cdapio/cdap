@@ -1,0 +1,158 @@
+<!--
+  Copyright © 2015 Cask Data, Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+-->
+
+
+<fieldset ng-disabled="isDisabled">
+  <div class="form-group">
+    <label class="control-label">
+      Label
+      <span class="fa fa-asterisk"></span>
+      <small class="text-danger" ng-if="ValidatorsCtrl.nodeLabelError">{{ValidatorsCtrl.nodeLabelError}}</small>
+    </label>
+    <input type="text" class="form-control" ng-model="model.label"/>
+  </div>
+
+  <div class="row">
+
+    <!-- INPUT SCHEMA -->
+    <div class="col-xs-3">
+      <div class="panel panel-default">
+        <div class="panel-heading">
+          <div class="panel-title">
+            Fields
+          </div>
+        </div>
+        <div class="panel-body">
+          <div class="list-group">
+            <a href=""
+                class="list-group-item"
+                ng-repeat="field in inputSchema"
+                ng-click="!isDisabled && ValidatorsCtrl.addFieldGroup(field.name)">
+              {{field.name}}
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RULES BODY -->
+    <div class="col-xs-9">
+      <div class="panel panel-default">
+        <div class="panel-heading">
+          <div class="panel-title">
+            <span>Rules</span>
+            <span class="pull-right" ng-click="ValidatorsCtrl.isRule = !ValidatorsCtrl.isRule">
+              <i class="fa fa-code" ng-if="ValidatorsCtrl.isRule"></i>
+              <i class="fa fa-list" ng-if="!ValidatorsCtrl.isRule"></i>
+            </span>
+
+
+          </div>
+        </div>
+
+        <div class="panel-body" ng-if="ValidatorsCtrl.isRule">
+
+          <div class="panel panel-default panel-nested" ng-repeat="(key, value) in ValidatorsCtrl.validationFields">
+            <div class="panel-heading">
+              <div class="panel-title">
+                <span>{{ key }}</span>
+                <i class="fa fa-times pull-right" ng-click="!isDisabled && ValidatorsCtrl.removeFieldGroup(key)"></i>
+              </div>
+            </div>
+
+            <div class="panel-body">
+              <div class="row" ng-repeat="rule in value">
+                <div class="rule-box">
+
+                  <div class="onoffswitch">
+                    <!-- to maintain the spacing for first element -->
+                    <div ng-if="!$first">
+                      <input type="checkbox"
+                        name="onoffswitch-{{key}}{{rule}}{{$index}}"
+                        class="onoffswitch-checkbox"
+                        id="myonoffswitch-{{key}}{{rule}}{{$index}}"
+                        ng-model="rule.operation">
+                      <label class="onoffswitch-label" for="myonoffswitch-{{key}}{{rule}}{{$index}}">
+                          <span class="onoffswitch-inner"></span>
+                          <span class="onoffswitch-switch"></span>
+                      </label>
+                    </div>
+                  </div>
+
+                  <div class="main-rule">
+                    <div class="select-wrapper">
+                      <select class="form-control"
+                        ng-options="validator.validationKey as validator.displayName for validator in ValidatorsCtrl.validators"
+                        ng-model="rule.validation"></select>
+                    </div>
+                  </div>
+
+                  <div class="rule-arguments"
+                    ng-if="ValidatorsCtrl.functionMap[rule.validation].arguments.length > 1 && !argument.startsWith('<field:1>')"
+                    ng-repeat="argument in ValidatorsCtrl.functionMap[rule.validation].arguments">
+                    <div ng-if="!argument.startsWith('<field:1>') && !argument.startsWith('<field:')">
+                      <input type="text" class="form-control" ng-model="rule.arguments[argument]" placeholder="{{argument}}">
+                    </div>
+                    <div ng-if="!argument.startsWith('<field:1>') && argument.startsWith('<field:')">
+                      <div class="select-wrapper">
+                        <select class="form-control" ng-model="rule.arguments[argument]">
+                          <option value="" disabled selected>{{ argument }}</option>
+                          <option ng-repeat="schema in inputSchema" value="input.{{schema.name}}">
+                            {{schema.name}}
+                          </option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="trash">
+                    <button class="btn btn-danger pull-right" ng-click="ValidatorsCtrl.removeRule(key, rule)">
+                      <i class="fa fa-trash"></i>
+                    </button>
+                  </div>
+                </div>
+
+              </div>
+
+              <div class="row add-rule">
+                <button class="btn btn-default" ng-click="ValidatorsCtrl.addRule(key)">
+                  <i class="fa fa-plus"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="panel-body" ng-if="!ValidatorsCtrl.isRule">
+          <fieldset disabled>
+            <div my-ace-editor ng-model="model.properties.validationScript"></div>
+          </fieldset>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row error-dataset">
+    <div class="col-xs-12">
+      <label class="label-control">
+        Error Dataset
+        <span class="fa fa-info-circle" tooltip="Dataset that stores invalid records that has failed the validation." tooltip-placement="right"></span>
+      </label>
+      <input type="text" class="form-control" ng-model="errorDatasetName">
+    </div>
+  </div>
+</fieldset>

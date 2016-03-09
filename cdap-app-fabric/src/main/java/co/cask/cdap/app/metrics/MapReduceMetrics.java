@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,6 +15,11 @@
  */
 
 package co.cask.cdap.app.metrics;
+
+import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableMap;
+
+import java.util.Map;
 
 /**
  * Metrics collector for MapReduce job.
@@ -40,14 +45,32 @@ public final class MapReduceMetrics {
     Mapper("m"),
     Reducer("r");
 
+    private static final Map<org.apache.hadoop.mapreduce.TaskType, TaskType> LOOKUP_BY_MAP =
+      ImmutableMap.of(org.apache.hadoop.mapreduce.TaskType.MAP, Mapper,
+                      org.apache.hadoop.mapreduce.TaskType.REDUCE, Reducer);
+
     private final String id;
 
-    private TaskType(String id) {
+    TaskType(String id) {
       this.id = id;
     }
 
     public String getId() {
       return id;
+    }
+
+    public static boolean hasType(org.apache.hadoop.mapreduce.TaskType hadoopTaskType) {
+      return LOOKUP_BY_MAP.containsKey(hadoopTaskType);
+    }
+
+    /**
+     * @return the corresponding {@link TaskType} for the given {@link org.apache.hadoop.mapreduce.TaskType}, or throws
+     * IllegalArgumentException if there is no corresponding TaskType.
+     */
+    public static TaskType from(org.apache.hadoop.mapreduce.TaskType hadoopTaskType) {
+      Preconditions.checkArgument(LOOKUP_BY_MAP.containsKey(hadoopTaskType),
+                                  "No TaskType for value: %s.", hadoopTaskType);
+      return LOOKUP_BY_MAP.get(hadoopTaskType);
     }
   }
 

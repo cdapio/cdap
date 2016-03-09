@@ -18,6 +18,7 @@ package co.cask.cdap.metrics.store;
 
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.common.ServiceUnavailableException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
@@ -116,12 +117,12 @@ public class DefaultMetricDatasetFactory implements MetricDatasetFactory {
   private MetricsTable getOrCreateMetricsTable(String tableName, DatasetProperties props) {
     MetricsTable table = null;
     // metrics tables are in the system namespace
-    Id.DatasetInstance metricsDatasetInstanceId = Id.DatasetInstance.from(Constants.SYSTEM_NAMESPACE, tableName);
+    Id.DatasetInstance metricsDatasetInstanceId = Id.DatasetInstance.from(Id.Namespace.SYSTEM, tableName);
     while (table == null) {
       try {
         table = DatasetsUtil.getOrCreateDataset(dsFramework, metricsDatasetInstanceId,
                                                 MetricsTable.class.getName(), props, null, null);
-      } catch (DatasetManagementException e) {
+      } catch (DatasetManagementException | ServiceUnavailableException e) {
         // dataset service may be not up yet
         // todo: seems like this logic applies everywhere, so should we move it to DatasetsUtil?
         LOG.warn("Cannot access or create table {}, will retry in 1 sec.", tableName);

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -29,48 +29,20 @@ import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSetArguments;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Table;
-import co.cask.cdap.app.program.Program;
-import co.cask.cdap.app.runtime.Arguments;
-import co.cask.cdap.app.runtime.ProgramController;
-import co.cask.cdap.app.runtime.ProgramRunner;
-import co.cask.cdap.common.app.RunIds;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.data.dataset.DatasetInstantiator;
-import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.internal.AppFabricTestHelper;
-import co.cask.cdap.internal.DefaultId;
+import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
-import co.cask.cdap.internal.app.runtime.AbstractListener;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
-import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
-import co.cask.cdap.internal.app.runtime.ProgramRunnerFactory;
-import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
-import co.cask.cdap.proto.DatasetSpecificationSummary;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.test.XSlowTests;
+import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionExecutor;
-import co.cask.tephra.TransactionExecutorFactory;
-import co.cask.tephra.TransactionManager;
-import co.cask.tephra.TxConstants;
-import com.google.common.base.Supplier;
-import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
-import com.google.inject.Injector;
-import org.apache.twill.common.Threads;
-import org.junit.After;
-import org.junit.AfterClass;
 import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
-import org.junit.rules.TemporaryFolder;
 
-import java.io.IOException;
 import java.text.DateFormat;
 import java.util.Map;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import static co.cask.cdap.internal.app.runtime.batch.AppWithPartitionedFileSet.PARTITIONED;
@@ -83,69 +55,16 @@ import static co.cask.cdap.internal.app.runtime.batch.AppWithTimePartitionedFile
  * or that its partitions are registered correctly in the Hive meta store. That is because here in the
  * app-fabric tests, explore is disabled.
  */
-public class MapReduceWithPartitionedTest {
-
-  private static Injector injector;
-  private static TransactionExecutorFactory txExecutorFactory;
-
-  private static TransactionManager txService;
-  private static DatasetFramework dsFramework;
-  private static DatasetInstantiator datasetInstantiator;
-
-  @ClassRule
-  public static TemporaryFolder tmpFolder = new TemporaryFolder();
-
-  private static final Supplier<java.io.File> TEMP_FOLDER_SUPPLIER = new Supplier<java.io.File>() {
-    @Override
-    public java.io.File get() {
-      try {
-        return tmpFolder.newFolder();
-      } catch (IOException e) {
-        throw Throwables.propagate(e);
-      }
-    }
-  };
-
-  @BeforeClass
-  public static void beforeClass() {
-    // we are only gonna do long-running transactions here. Set the tx timeout to a ridiculously low value.
-    // that will test that the long-running transactions actually bypass that timeout.
-    CConfiguration conf = CConfiguration.create();
-    conf.setInt(TxConstants.Manager.CFG_TX_TIMEOUT, 1);
-    conf.setInt(TxConstants.Manager.CFG_TX_CLEANUP_INTERVAL, 2);
-    injector = AppFabricTestHelper.getInjector(conf);
-    txService = injector.getInstance(TransactionManager.class);
-    txExecutorFactory = injector.getInstance(TransactionExecutorFactory.class);
-    dsFramework = injector.getInstance(DatasetFramework.class);
-    datasetInstantiator = new DatasetInstantiator(DefaultId.NAMESPACE, dsFramework,
-                                                  MapReduceWithPartitionedTest.class.getClassLoader(),
-                                                  null, null);
-
-    txService.startAndWait();
-  }
-
-  @AfterClass
-  public static void afterClass() throws Exception {
-    txService.stopAndWait();
-  }
-
-  @After
-  public void after() throws Exception {
-    // cleanup user data (only user datasets)
-    for (DatasetSpecificationSummary spec : dsFramework.getInstances(DefaultId.NAMESPACE)) {
-      dsFramework.deleteInstance(Id.DatasetInstance.from(DefaultId.NAMESPACE, spec.getName()));
-    }
-  }
+public class MapReduceWithPartitionedTest extends MapReduceRunnerTestBase {
 
   @Test
   public void testTimePartitionedWithMR() throws Exception {
 
-    final ApplicationWithPrograms app =
-      AppFabricTestHelper.deployApplicationWithManager(AppWithTimePartitionedFileSet.class, TEMP_FOLDER_SUPPLIER);
+    final ApplicationWithPrograms app = deployApp(AppWithTimePartitionedFileSet.class);
 
     // write a value to the input table
-    final Table table = datasetInstantiator.getDataset(AppWithTimePartitionedFileSet.INPUT);
-    txExecutorFactory.createExecutor(datasetInstantiator.getTransactionAware()).execute(
+    final Table table = datasetCache.getDataset(AppWithTimePartitionedFileSet.INPUT);
+    Transactions.createTransactionExecutor(txExecutorFactory, (TransactionAware) table).execute(
       new TransactionExecutor.Subroutine() {
         @Override
         public void apply() {
@@ -169,8 +88,8 @@ public class MapReduceWithPartitionedTest {
     runProgram(app, AppWithTimePartitionedFileSet.PartitionWriter.class, new BasicArguments(runtimeArguments));
 
     // this should have created a partition in the tpfs
-    final TimePartitionedFileSet tpfs = datasetInstantiator.getDataset(TIME_PARTITIONED);
-    txExecutorFactory.createExecutor(datasetInstantiator.getTransactionAware()).execute(
+    final TimePartitionedFileSet tpfs = datasetCache.getDataset(TIME_PARTITIONED);
+    Transactions.createTransactionExecutor(txExecutorFactory, (TransactionAware) tpfs).execute(
       new TransactionExecutor.Subroutine() {
         @Override
         public void apply() {
@@ -184,7 +103,7 @@ public class MapReduceWithPartitionedTest {
       });
 
     // delete the data in the input table and write a new row
-    txExecutorFactory.createExecutor(datasetInstantiator.getTransactionAware()).execute(
+    Transactions.createTransactionExecutor(txExecutorFactory, (TransactionAware) table).execute(
       new TransactionExecutor.Subroutine() {
         @Override
         public void apply() {
@@ -201,7 +120,7 @@ public class MapReduceWithPartitionedTest {
     runProgram(app, AppWithTimePartitionedFileSet.PartitionWriter.class, new BasicArguments(runtimeArguments));
 
     // this should have created a partition in the tpfs
-    txExecutorFactory.createExecutor(datasetInstantiator.getTransactionAware()).execute(
+    Transactions.createTransactionExecutor(txExecutorFactory, (TransactionAware) tpfs).execute(
       new TransactionExecutor.Subroutine() {
         @Override
         public void apply() {
@@ -223,8 +142,8 @@ public class MapReduceWithPartitionedTest {
     runProgram(app, AppWithTimePartitionedFileSet.PartitionReader.class, new BasicArguments(runtimeArguments));
 
     // this should have read both partitions - and written both x and y to row a
-    final Table output = datasetInstantiator.getDataset(AppWithTimePartitionedFileSet.OUTPUT);
-    txExecutorFactory.createExecutor(datasetInstantiator.getTransactionAware()).execute(
+    final Table output = datasetCache.getDataset(AppWithTimePartitionedFileSet.OUTPUT);
+    Transactions.createTransactionExecutor(txExecutorFactory, (TransactionAware) output).execute(
       new TransactionExecutor.Subroutine() {
         @Override
         public void apply() {
@@ -242,7 +161,7 @@ public class MapReduceWithPartitionedTest {
     runProgram(app, AppWithTimePartitionedFileSet.PartitionReader.class, new BasicArguments(runtimeArguments));
 
     // this should have read the first partition only - and written only x to row b
-    txExecutorFactory.createExecutor(datasetInstantiator.getTransactionAware()).execute(
+    Transactions.createTransactionExecutor(txExecutorFactory, (TransactionAware) output).execute(
       new TransactionExecutor.Subroutine() {
         @Override
         public void apply() {
@@ -260,7 +179,7 @@ public class MapReduceWithPartitionedTest {
     runProgram(app, AppWithTimePartitionedFileSet.PartitionReader.class, new BasicArguments(runtimeArguments));
 
     // this should have read no partitions - and written nothing to row n
-    txExecutorFactory.createExecutor(datasetInstantiator.getTransactionAware()).execute(
+    Transactions.createTransactionExecutor(txExecutorFactory, (TransactionAware) output).execute(
       new TransactionExecutor.Subroutine() {
         @Override
         public void apply() {
@@ -273,12 +192,11 @@ public class MapReduceWithPartitionedTest {
   @Test
   public void testPartitionedFileSetWithMR() throws Exception {
 
-    final ApplicationWithPrograms app =
-      AppFabricTestHelper.deployApplicationWithManager(AppWithPartitionedFileSet.class, TEMP_FOLDER_SUPPLIER);
+    final ApplicationWithPrograms app = deployApp(AppWithPartitionedFileSet.class);
 
     // write a value to the input table
-    final Table table = datasetInstantiator.getDataset(AppWithPartitionedFileSet.INPUT);
-    txExecutorFactory.createExecutor(datasetInstantiator.getTransactionAware()).execute(
+    final Table table = datasetCache.getDataset(AppWithPartitionedFileSet.INPUT);
+    Transactions.createTransactionExecutor(txExecutorFactory, (TransactionAware) table).execute(
       new TransactionExecutor.Subroutine() {
         @Override
         public void apply() {
@@ -300,8 +218,8 @@ public class MapReduceWithPartitionedTest {
     runProgram(app, AppWithPartitionedFileSet.PartitionWriter.class, new BasicArguments(runtimeArguments));
 
     // this should have created a partition in the tpfs
-    final PartitionedFileSet dataset = datasetInstantiator.getDataset(PARTITIONED);
-    txExecutorFactory.createExecutor(datasetInstantiator.getTransactionAware()).execute(
+    final PartitionedFileSet dataset = datasetCache.getDataset(PARTITIONED);
+    Transactions.createTransactionExecutor(txExecutorFactory, (TransactionAware) dataset).execute(
       new TransactionExecutor.Subroutine() {
         @Override
         public void apply() {
@@ -314,7 +232,7 @@ public class MapReduceWithPartitionedTest {
       });
 
     // delete the data in the input table and write a new row
-    txExecutorFactory.createExecutor(datasetInstantiator.getTransactionAware()).execute(
+    Transactions.createTransactionExecutor(txExecutorFactory, (TransactionAware) table).execute(
       new TransactionExecutor.Subroutine() {
         @Override
         public void apply() {
@@ -335,7 +253,7 @@ public class MapReduceWithPartitionedTest {
     runProgram(app, AppWithPartitionedFileSet.PartitionWriter.class, new BasicArguments(runtimeArguments));
 
     // this should have created a partition in the tpfs
-    txExecutorFactory.createExecutor(datasetInstantiator.getTransactionAware()).execute(
+    Transactions.createTransactionExecutor(txExecutorFactory, (TransactionAware) dataset).execute(
       new TransactionExecutor.Subroutine() {
         @Override
         public void apply() {
@@ -362,8 +280,8 @@ public class MapReduceWithPartitionedTest {
     runProgram(app, AppWithPartitionedFileSet.PartitionReader.class, new BasicArguments(runtimeArguments));
 
     // this should have read both partitions - and written both x and y to row a
-    final Table output = datasetInstantiator.getDataset(AppWithPartitionedFileSet.OUTPUT);
-    txExecutorFactory.createExecutor(datasetInstantiator.getTransactionAware()).execute(
+    final Table output = datasetCache.getDataset(AppWithPartitionedFileSet.OUTPUT);
+    Transactions.createTransactionExecutor(txExecutorFactory, (TransactionAware) output).execute(
       new TransactionExecutor.Subroutine() {
         @Override
         public void apply() {
@@ -387,7 +305,7 @@ public class MapReduceWithPartitionedTest {
     runProgram(app, AppWithPartitionedFileSet.PartitionReader.class, new BasicArguments(runtimeArguments));
 
     // this should have read the first partition only - and written only x to row b
-    txExecutorFactory.createExecutor(datasetInstantiator.getTransactionAware()).execute(
+    Transactions.createTransactionExecutor(txExecutorFactory, (TransactionAware) output).execute(
       new TransactionExecutor.Subroutine() {
         @Override
         public void apply() {
@@ -410,7 +328,7 @@ public class MapReduceWithPartitionedTest {
     runProgram(app, AppWithPartitionedFileSet.PartitionReader.class, new BasicArguments(runtimeArguments));
 
     // this should have read no partitions - and written nothing to row n
-    txExecutorFactory.createExecutor(datasetInstantiator.getTransactionAware()).execute(
+    Transactions.createTransactionExecutor(txExecutorFactory, (TransactionAware) output).execute(
       new TransactionExecutor.Subroutine() {
         @Override
         public void apply() {
@@ -418,48 +336,5 @@ public class MapReduceWithPartitionedTest {
           Assert.assertTrue(row.isEmpty());
         }
       });
-  }
-
-  private void runProgram(ApplicationWithPrograms app, Class<?> programClass, Arguments args)
-    throws Exception {
-    waitForCompletion(submit(app, programClass, args));
-  }
-
-  private void waitForCompletion(ProgramController controller) throws InterruptedException {
-    final CountDownLatch completion = new CountDownLatch(1);
-    controller.addListener(new AbstractListener() {
-      @Override
-      public void completed() {
-        completion.countDown();
-      }
-
-      @Override
-      public void error(Throwable cause) {
-        completion.countDown();
-      }
-    }, Threads.SAME_THREAD_EXECUTOR);
-
-    // MR tests can run for long time.
-    completion.await(5, TimeUnit.MINUTES);
-  }
-
-  private ProgramController submit(ApplicationWithPrograms app, Class<?> programClass, Arguments userArgs)
-    throws ClassNotFoundException {
-    ProgramRunnerFactory runnerFactory = injector.getInstance(ProgramRunnerFactory.class);
-    final Program program = getProgram(app, programClass);
-    ProgramRunner runner = runnerFactory.create(ProgramRunnerFactory.Type.valueOf(program.getType().name()));
-    BasicArguments systemArgs = new BasicArguments(ImmutableMap.of(ProgramOptionConstants.RUN_ID,
-                                                                   RunIds.generate().getId()));
-
-    return runner.run(program, new SimpleProgramOptions(program.getName(), systemArgs, userArgs));
-  }
-
-  private Program getProgram(ApplicationWithPrograms app, Class<?> programClass) throws ClassNotFoundException {
-    for (Program p : app.getPrograms()) {
-      if (programClass.getCanonicalName().equals(p.getMainClass().getCanonicalName())) {
-        return p;
-      }
-    }
-    return null;
   }
 }

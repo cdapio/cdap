@@ -1,0 +1,56 @@
+{
+  "artifact": {
+    "name": "cdap-etl-batch",
+    "scope": "SYSTEM",
+    "version": "3.3.2"
+  },
+  "config": {
+    "source": {
+      "name": "Stream-1aee6cb8-44d7-4110-b411-4d3bc3c7c7d7",
+      "plugin": {
+        "name": "Stream",
+        "properties": {
+          "schema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"fname\",\"type\":\"string\"},{\"name\":\"lname\",\"type\":\"string\"},{\"name\":\"address\",\"type\":\"string\"},{\"name\":\"city\",\"type\":\"string\"},{\"name\":\"state\",\"type\":\"string\"},{\"name\":\"country\",\"type\":\"string\"},{\"name\":\"zipcode\",\"type\":\"int\"}]}",
+          "duration": "1h",
+          "name": "contacts",
+          "format": "csv"
+        },
+        "label": "Stream",
+        "artifact": {
+          "name": "core-plugins",
+          "scope": "SYSTEM",
+          "version": "1.2.1"
+        }
+      }
+    },
+    "sinks": [
+      {
+        "name": "Table-afa8ef03-7610-4902-8e7f-3258873ab449",
+        "plugin": {
+          "name": "Table",
+          "properties": {
+            "schema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"fname\",\"type\":\"string\"},{\"name\":\"lname\",\"type\":\"string\"},{\"name\":\"address\",\"type\":\"string\"},{\"name\":\"city\",\"type\":\"string\"},{\"name\":\"state\",\"type\":\"string\"},{\"name\":\"country\",\"type\":\"string\"},{\"name\":\"zipcode\",\"type\":\"int\"}]}",
+            "name": "contacts_hbase",
+            "schema.row.field": "fname"
+          },
+          "label": "Table",
+          "artifact": {
+            "name": "core-plugins",
+            "scope": "SYSTEM",
+            "version": "1.2.1"
+          }
+        }
+      }
+    ],
+    "transforms": [],
+    "schedule": "* * * * *",
+    "connections": [
+      {
+        "from": "Stream-1aee6cb8-44d7-4110-b411-4d3bc3c7c7d7",
+        "to": "Table-afa8ef03-7610-4902-8e7f-3258873ab449"
+      }
+    ]
+  },
+  "description": "Periodically ingest from a stream into an HBase table",
+  "name": "StreamToHBase"
+}

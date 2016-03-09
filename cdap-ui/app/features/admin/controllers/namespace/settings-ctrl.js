@@ -1,7 +1,23 @@
-angular.module(PKG.name + '.feature.admin')
-  .controller('NamespaceSettingsController', function ($scope, MyDataSource, $state, $alert, $timeout, myNamespace, EventPipe) {
+/*
+ * Copyright © 2015 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
 
-    var dataSrc = new MyDataSource($scope);
+angular.module(PKG.name + '.feature.admin')
+  .controller('NamespaceSettingsController', function ($scope, MyCDAPDataSource, $state, myAlertOnValium, $timeout, myNamespace, EventPipe) {
+
+    var dataSrc = new MyCDAPDataSource($scope);
     $scope.loading = false;
 
     dataSrc.request({
@@ -21,7 +37,7 @@ angular.module(PKG.name + '.feature.admin')
         }
       })
       .then(function () {
-        $alert({
+        myAlertOnValium.show({
           type: 'success',
           content: 'Namespace successfully updated'
         });
@@ -46,9 +62,9 @@ angular.module(PKG.name + '.feature.admin')
           EventPipe.emit('hideLoadingIcon.immediate');
 
           $state.go('admin.overview', {}, {reload: true});
-          $alert({
+          myAlertOnValium.show({
             type: 'success',
-            content: 'You have successfully deleted a namespace.'
+            content: 'You have successfully deleted a namespace'
           });
         }, 500);
       }, function error() {

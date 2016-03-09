@@ -23,7 +23,6 @@ import co.cask.cdap.cli.english.Article;
 import co.cask.cdap.cli.english.Fragment;
 import co.cask.cdap.cli.util.AbstractCommand;
 import co.cask.cdap.client.NamespaceClient;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.proto.Id;
 import co.cask.common.cli.Arguments;
 import co.cask.common.cli.Command;
@@ -52,13 +51,13 @@ public class DeleteNamespaceCommand extends AbstractCommand {
     Id.Namespace namespaceId = Id.Namespace.from(arguments.get(ArgumentName.NAMESPACE_NAME.toString()));
 
     ConsoleReader consoleReader = new ConsoleReader();
-    if (Constants.DEFAULT_NAMESPACE_ID.equals(namespaceId)) {
+    if (Id.Namespace.DEFAULT.equals(namespaceId)) {
       out.println("WARNING: Deleting contents of a namespace is an unrecoverable operation");
       String prompt = String.format("Are you sure you want to delete contents of namespace '%s' [y/N]? ",
                                     namespaceId.getId());
       String userConfirm = consoleReader.readLine(prompt);
       if ("y".equalsIgnoreCase(userConfirm)) {
-        namespaceClient.delete(namespaceId.getId());
+        namespaceClient.delete(namespaceId);
         out.printf("Contents of namespace '%s' were deleted successfully", namespaceId.getId());
         out.println();
       }
@@ -68,11 +67,11 @@ public class DeleteNamespaceCommand extends AbstractCommand {
                                     namespaceId.getId());
       String userConfirm = consoleReader.readLine(prompt);
       if ("y".equalsIgnoreCase(userConfirm)) {
-        namespaceClient.delete(namespaceId.getId());
+        namespaceClient.delete(namespaceId);
         out.println(String.format(SUCCESS_MSG, namespaceId));
         if (cliConfig.getCurrentNamespace().equals(namespaceId)) {
-          cliConfig.setNamespace(Constants.DEFAULT_NAMESPACE_ID);
-          out.printf("Now using namespace '%s'", Constants.DEFAULT_NAMESPACE_ID.getId());
+          cliConfig.setNamespace(Id.Namespace.DEFAULT);
+          out.printf("Now using namespace '%s'", Id.Namespace.DEFAULT.getId());
           out.println();
         }
       }

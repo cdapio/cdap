@@ -25,7 +25,6 @@ import co.cask.cdap.api.metrics.Metrics;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpRequests;
 import co.cask.common.http.HttpResponse;
-import com.google.common.base.Charsets;
 import com.google.gson.Gson;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
@@ -50,7 +49,7 @@ public class PurchaseHistoryBuilder extends AbstractMapReduce {
   public void configure() {
     setDescription("Purchase History Builder");
     setInputDataset("purchases");
-    setOutputDataset("history");
+    setDriverResources(new Resources(1024));
     setMapperResources(new Resources(1024));
     setReducerResources(new Resources(1024));
   }
@@ -60,6 +59,7 @@ public class PurchaseHistoryBuilder extends AbstractMapReduce {
     Job job = context.getHadoopJob();
     job.setMapperClass(PurchaseMapper.class);
     job.setReducerClass(PerUserReducer.class);
+    context.addOutput("history");
 
     // override default memory usage if the corresponding runtime arguments are set.
     Map<String, String> runtimeArgs = context.getRuntimeArguments();

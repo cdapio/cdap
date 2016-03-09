@@ -1,3 +1,19 @@
+/*
+ * Copyright © 2015 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 angular.module(PKG.name + '.services')
   .service('myStreamService', function($bootstrapModal, $rootScope) {
     var modalInstance;
@@ -22,7 +38,9 @@ angular.module(PKG.name + '.services')
     };
 
   })
-  .controller('FlowStreamDetailController', function($scope, myStreamApi, $state) {
+  .controller('FlowStreamDetailController', function($scope, myStreamApi, $state, myFileUploader, myAlertOnValium) {
+
+    $scope.loading = false;
 
     $scope.doInject = function () {
       if(!$scope.userInput) {
@@ -35,12 +53,53 @@ angular.module(PKG.name + '.services')
         streamId: $scope.streamId,
         scope: $scope
       };
-      myStreamApi.sendEvent(params, $scope.userInput);
+
+      var lines = $scope.userInput.replace(/\r\n/g, '\n').split('\n');
+
+      angular.forEach(lines, function (line) {
+        myStreamApi.sendEvent(params, line);
+      });
 
       $scope.userInput = null;
     };
 
     $scope.dismiss = function() {
       $scope.$dismiss();
+    };
+
+    $scope.uploadFile = function (files) {
+      $scope.loading = true;
+      var path = '/namespaces/' + $state.params.namespace + '/streams/' + $scope.streamId + '/batch';
+
+      function uploadSuccess() {
+        myAlertOnValium.show({
+          type: 'success',
+          title: 'Upload success',
+          content: 'The file has been uploaded successfully'
+        });
+        $scope.dismiss();
+        $scope.loading = false;
+      }
+      function uploadFailure() {
+        myAlertOnValium.show({
+          type: 'danger',
+          title: 'Upload failed',
+          content: 'The file could not be uploaded'
+        });
+        $scope.dismiss();
+        $scope.loading = false;
+      }
+
+      for (var i = 0; i < files.length; i++) {
+        // TODO: support other file types
+
+        myFileUploader.upload({
+          path: path,
+          file: files[i]
+        }, 'text/csv')
+          .then(uploadSuccess, uploadFailure);
+      }
+
+
     };
   });

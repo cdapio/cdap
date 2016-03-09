@@ -41,6 +41,7 @@ import co.cask.cdap.metrics.process.MetricsMessageCallbackFactory;
 import co.cask.cdap.metrics.process.MetricsProcessorStatusService;
 import co.cask.cdap.metrics.store.DefaultMetricDatasetFactory;
 import co.cask.cdap.metrics.store.MetricDatasetFactory;
+import co.cask.cdap.proto.Id;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.Service;
@@ -67,10 +68,10 @@ public final class MetricsProcessorTwillRunnable extends AbstractMasterTwillRunn
   private static final Logger LOG = LoggerFactory.getLogger(MetricsProcessorTwillRunnable.class);
 
   public static final ImmutableMap<String, String> METRICS_PROCESSOR_CONTEXT =
-    ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, Constants.SYSTEM_NAMESPACE,
+    ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, Id.Namespace.SYSTEM.getId(),
                     Constants.Metrics.Tag.COMPONENT, Constants.Service.METRICS_PROCESSOR);
 
-  private KafkaMetricsProcessorService kafkaMetricsProcessorService;
+  private MetricsProcessorService metricsProcessorService;
   private ZKClientService zkClientService;
   private KafkaClientService kafkaClientService;
   private MetricsProcessorStatusService metricsProcessorStatusService;
@@ -86,7 +87,7 @@ public final class MetricsProcessorTwillRunnable extends AbstractMasterTwillRunn
       getCConfiguration().set(Constants.MetricsProcessor.ADDRESS, context.getHost().getCanonicalHostName());
       Injector injector = createGuiceInjector(getCConfiguration(), getConfiguration());
       injector.getInstance(LogAppenderInitializer.class).initialize();
-      LoggingContextAccessor.setLoggingContext(new ServiceLoggingContext(Constants.SYSTEM_NAMESPACE,
+      LoggingContextAccessor.setLoggingContext(new ServiceLoggingContext(Id.Namespace.SYSTEM.getId(),
                                                                          Constants.Logging.COMPONENT_NAME,
                                                                          Constants.Service.METRICS_PROCESSOR));
 
@@ -100,8 +101,8 @@ public final class MetricsProcessorTwillRunnable extends AbstractMasterTwillRunn
 
       MetricsContext metricsContext = metricsCollectionService.getContext(METRICS_PROCESSOR_CONTEXT);
 
-      kafkaMetricsProcessorService = injector.getInstance(KafkaMetricsProcessorService.class);
-      kafkaMetricsProcessorService.setMetricsContext(metricsContext);
+      metricsProcessorService = injector.getInstance(MetricsProcessorService.class);
+      metricsProcessorService.setMetricsContext(metricsContext);
       metricsProcessorStatusService = injector.getInstance(MetricsProcessorStatusService.class);
       LOG.info("Runnable initialized {}", name);
     } catch (Throwable t) {
@@ -115,7 +116,7 @@ public final class MetricsProcessorTwillRunnable extends AbstractMasterTwillRunn
     services.add(zkClientService);
     services.add(kafkaClientService);
     services.add(metricsCollectionService);
-    services.add(kafkaMetricsProcessorService);
+    services.add(metricsProcessorService);
     services.add(metricsProcessorStatusService);
   }
 
@@ -146,6 +147,8 @@ public final class MetricsProcessorTwillRunnable extends AbstractMasterTwillRunn
 
       expose(KafkaMetricsProcessorServiceFactory.class);
     }
+
+    @SuppressWarnings("unused")
     @Provides
     @Named(Constants.Metrics.KAFKA_CONSUMER_PERSIST_THRESHOLD)
     public int providesConsumerPersistThreshold(CConfiguration cConf) {
@@ -153,6 +156,7 @@ public final class MetricsProcessorTwillRunnable extends AbstractMasterTwillRunn
                           Constants.Metrics.DEFAULT_KAFKA_CONSUMER_PERSIST_THRESHOLD);
     }
 
+    @SuppressWarnings("unused")
     @Provides
     @Named(Constants.Metrics.KAFKA_TOPIC_PREFIX)
     public String providesKafkaTopicPrefix(CConfiguration cConf) {

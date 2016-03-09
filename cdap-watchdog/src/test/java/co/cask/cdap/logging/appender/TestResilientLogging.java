@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -44,6 +44,7 @@ import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.logging.read.FileLogReader;
 import co.cask.cdap.logging.read.LogEvent;
 import co.cask.cdap.logging.read.ReadRange;
+import co.cask.cdap.store.guice.NamespaceStoreModule;
 import co.cask.tephra.TransactionManager;
 import com.google.common.collect.Iterables;
 import com.google.inject.Guice;
@@ -104,7 +105,8 @@ public class TestResilientLogging {
       new DataSetServiceModules().getInMemoryModules(),
       new TransactionMetricsModule(),
       new ExploreClientModule(),
-      new LoggingModules().getInMemoryModules());
+      new LoggingModules().getInMemoryModules(),
+      new NamespaceStoreModule().getInMemoryModules());
 
     TransactionManager txManager = injector.getInstance(TransactionManager.class);
     txManager.startAndWait();

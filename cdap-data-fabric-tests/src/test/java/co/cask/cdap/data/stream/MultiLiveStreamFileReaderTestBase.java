@@ -16,7 +16,6 @@
 package co.cask.cdap.data.stream;
 
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data.file.FileWriter;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.proto.Id;
@@ -32,6 +31,8 @@ import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
+import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -46,9 +47,56 @@ public abstract class MultiLiveStreamFileReaderTestBase {
   protected abstract LocationFactory getLocationFactory();
 
   @Test
+  public void testLiveFileReader() throws Exception {
+    String streamName = "liveReader";
+    Id.Stream streamId = Id.Stream.from(Id.Namespace.DEFAULT, streamName);
+    Location location = getLocationFactory().create(streamName);
+    location.mkdirs();
+
+    // Create a stream with 5 seconds partition.
+    StreamConfig config = new StreamConfig(streamId, 5000, 1000, Long.MAX_VALUE, location, null, 1000);
+
+    // Write 5 events in the first partition
+    try (FileWriter<StreamEvent> writer = createWriter(config, "live.0")) {
+      for (int i = 0; i < 5; i++) {
+        writer.append(StreamFileTestUtils.createEvent(i, "Testing " + i));
+      }
+    }
+
+    // Writer 5 events in the forth partition (ts = 15 to 19)
+    try (FileWriter<StreamEvent> writer = createWriter(config, "live.0")) {
+      for (int i = 0; i < 5; i++) {
+        writer.append(StreamFileTestUtils.createEvent(i + 15, "Testing " + (i + 15)));
+      }
+    }
+
+    // Create a LiveStreamFileReader to read 10 events. It should be able to read them all.
+    Location partitionLocation = StreamUtils.createPartitionLocation(config.getLocation(), 0,
+                                                                     config.getPartitionDuration());
+    Location eventLocation = StreamUtils.createStreamLocation(partitionLocation, "live.0", 0, StreamFileType.EVENT);
+    List<StreamEvent> events = new ArrayList<>();
+    try (LiveStreamFileReader reader = new LiveStreamFileReader(config, new StreamFileOffset(eventLocation, 0, 0))) {
+      while (events.size() < 10) {
+        // It shouldn't have empty read.
+        Assert.assertTrue(reader.read(events, Integer.MAX_VALUE, 0, TimeUnit.SECONDS) > 0);
+      }
+    }
+    Assert.assertEquals(10, events.size());
+    // First 5 events must have timestamps 0-4
+    Iterator<StreamEvent> itor = events.iterator();
+    for (int i = 0; i < 5; i++) {
+      Assert.assertEquals(i, itor.next().getTimestamp());
+    }
+    // Next 5 events must have timestamps 15-19
+    for (int i = 15; i < 20; i++) {
+      Assert.assertEquals(i, itor.next().getTimestamp());
+    }
+  }
+
+  @Test
   public void testMultiFileReader() throws Exception {
     String streamName = "multiReader";
-    Id.Stream streamId = Id.Stream.from(Constants.DEFAULT_NAMESPACE, streamName);
+    Id.Stream streamId = Id.Stream.from(Id.Namespace.DEFAULT, streamName);
     Location location = getLocationFactory().create(streamName);
     location.mkdirs();
 
@@ -129,7 +177,7 @@ public abstract class MultiLiveStreamFileReaderTestBase {
   @Test
   public void testOffsets() throws Exception {
     String streamName = "offsets";
-    Id.Stream streamId = Id.Stream.from(Constants.DEFAULT_NAMESPACE, streamName);
+    Id.Stream streamId = Id.Stream.from(Id.Namespace.DEFAULT, streamName);
     Location location = getLocationFactory().create(streamName);
     location.mkdirs();
 

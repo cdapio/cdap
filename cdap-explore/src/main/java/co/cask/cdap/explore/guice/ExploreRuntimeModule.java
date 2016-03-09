@@ -211,6 +211,9 @@ public class ExploreRuntimeModule extends RuntimeModule {
         System.setProperty(MRConfig.FRAMEWORK_NAME, "local");
 
         // Disable security
+        // Also need to disable security by making HiveAuthFactory.loginFromKeytab a no-op, since Hive >=0.14
+        // ignores the HIVE_SERVER2_AUTHENTICATION property and instead uses UserGroupInformation.isSecurityEnabled()
+        // (rewrite to HiveAuthFactory.loginFromKeytab bytecode is done in ExploreServiceUtils.traceDependencies)
         System.setProperty(HiveConf.ConfVars.HIVE_SERVER2_AUTHENTICATION.toString(), "NONE");
         System.setProperty(HiveConf.ConfVars.HIVE_SERVER2_ENABLE_DOAS.toString(), "false");
         System.setProperty(HiveConf.ConfVars.METASTORE_USE_THRIFT_SASL.toString(), "false");
@@ -226,7 +229,11 @@ public class ExploreRuntimeModule extends RuntimeModule {
     @Override
     protected void configure() {
       try {
-        setupClasspath();
+        CConfiguration cConf = CConfiguration.create();
+        File tmpDir = new File(new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR)),
+                               cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
+        tmpDir.mkdirs();
+        setupClasspath(tmpDir);
 
         // Set local tmp dir to an absolute location in the twill runnable otherwise Hive complains
         String localScratchPath = System.getProperty("java.io.tmpdir") + File.separator +
@@ -255,7 +262,7 @@ public class ExploreRuntimeModule extends RuntimeModule {
     }
   }
 
-  private static void setupClasspath() throws IOException {
+  private static void setupClasspath(File tmpDir) throws IOException {
     // Here we find the transitive dependencies and remove all paths that come from the boot class path -
     // those paths are not needed because the new JVM will have them in its boot class path.
     // It could even be wrong to keep them because in the target container, the boot class path may be different
@@ -281,18 +288,16 @@ public class ExploreRuntimeModule extends RuntimeModule {
     };
 
     Set<File> hBaseTableDeps = ExploreServiceUtils.traceDependencies(
-      HBaseTableUtilFactory.getHBaseTableUtilClass().getName(), null, classAcceptor);
+      null, classAcceptor, tmpDir, HBaseTableUtilFactory.getHBaseTableUtilClass().getName());
 
     // Note the order of dependency jars is important so that HBase jars come first in the classpath order
     // LinkedHashSet maintains insertion order while removing duplicate entries.
     Set<File> orderedDependencies = new LinkedHashSet<>();
     orderedDependencies.addAll(hBaseTableDeps);
-    orderedDependencies.addAll(ExploreServiceUtils.traceDependencies(RemoteDatasetFramework.class.getName(),
-                                                                     null, classAcceptor));
-    orderedDependencies.addAll(ExploreServiceUtils.traceDependencies(DatasetStorageHandler.class.getName(),
-                                                                     null, classAcceptor));
-    orderedDependencies.addAll(ExploreServiceUtils.traceDependencies(RecordFormats.class.getName(),
-                                                                     null, classAcceptor));
+    orderedDependencies.addAll(ExploreServiceUtils.traceDependencies(null, classAcceptor, tmpDir,
+                                                                     RemoteDatasetFramework.class.getName(),
+                                                                     DatasetStorageHandler.class.getName(),
+                                                                     RecordFormats.class.getName()));
 
     // Note: the class path entries need to be prefixed with "file://" for the jars to work when
     // Hive starts local map-reduce job.
@@ -319,7 +324,7 @@ public class ExploreRuntimeModule extends RuntimeModule {
 
     //TODO: Setup HADOOP_CLASSPATH hack, more info on why this is needed, see CDAP-9
     LocalMapreduceClasspathSetter classpathSetter =
-      new LocalMapreduceClasspathSetter(new HiveConf(), System.getProperty("java.io.tmpdir"),
+      new LocalMapreduceClasspathSetter(new HiveConf(), tmpDir.getAbsolutePath(),
                                         orderedDependenciesWithHiveJar);
     for (File jar : hBaseTableDeps) {
       classpathSetter.accept(jar.getAbsolutePath());

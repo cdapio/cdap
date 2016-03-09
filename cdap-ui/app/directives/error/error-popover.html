@@ -1,3 +1,19 @@
+<!--
+  Copyright © 2015 Cask Data, Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+-->
+
 <div class="popover" ng-controller="myErrorController">
   <div class="arrow"></div>
   <div class="popover-title">
@@ -6,24 +22,36 @@
         <h4>Errors</h4>
       </div>
       <div class="col-xs-6">
-        <button class="btn btn-sm btn-default pull-right" ng-click="clear()">Clear All</button>
+        <div ng-if="alerts.length">
+          <button class="btn btn-sm btn-default pull-right" ng-click="clear()">Clear All</button>
+        </div>
       </div>
     </div>
   </div>
   <div class="popover-content">
 
-    <div class="clearfix">
-
-      <div class="row bg-danger" ng-repeat="alert in alerts">
+    <div ng-if="alerts.length" class="clearfix">
+      <div class="row alert-danger" ng-repeat="alert in alerts track by $index">
         <div class="col-xs-10">
           <span class="badge" ng-if="alert.count > 1">{{alert.count}}</span>
           <strong>{{ alert.title }}</strong>  {{ alert.content }}
+          <p>
+            <small>{{ alert.time | amCalendar }}</small>
+          </p>
         </div>
         <div class="col-xs-2">
           <span class="pull-right" ng-click="remove(alert)"><i class="fa fa-times"></i></span>
         </div>
       </div>
-
     </div>
+
+    <div ng-if="!alerts.length">
+      <div class="row alert-muted">
+        <div class="col-xs-12">
+          <span>No errors to display.</span>
+        </div>
+      </div>
+    </div>
+
   </div>
 </div>

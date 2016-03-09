@@ -16,7 +16,6 @@
 package co.cask.cdap.data.stream;
 
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
@@ -56,14 +55,14 @@ public abstract class StreamCoordinatorTestBase {
   protected static void setupNamespaces(NamespacedLocationFactory namespacedLocationFactory) throws IOException {
     // FileStreamAdmin expects namespace directory to exist.
     // Simulate namespace create
-    namespacedLocationFactory.get(Constants.DEFAULT_NAMESPACE_ID).mkdirs();
+    namespacedLocationFactory.get(Id.Namespace.DEFAULT).mkdirs();
   }
 
   @Test
   public void testGeneration() throws Exception {
     final StreamAdmin streamAdmin = getStreamAdmin();
     final String streamName = "testGen";
-    final Id.Stream streamId = Id.Stream.from(Constants.DEFAULT_NAMESPACE, streamName);
+    final Id.Stream streamId = Id.Stream.from(Id.Namespace.DEFAULT, streamName);
     streamAdmin.create(streamId);
 
     StreamCoordinatorClient coordinator = getStreamCoordinator();
@@ -103,7 +102,7 @@ public abstract class StreamCoordinatorTestBase {
   public void testConfig() throws Exception {
     final StreamAdmin streamAdmin = getStreamAdmin();
     final String streamName = "testConfig";
-    final Id.Stream streamId = Id.Stream.from(Constants.DEFAULT_NAMESPACE, streamName);
+    final Id.Stream streamId = Id.Stream.from(Id.Namespace.DEFAULT, streamName);
     streamAdmin.create(streamId);
 
 
@@ -162,7 +161,7 @@ public abstract class StreamCoordinatorTestBase {
 
   @Test
   public void testDeleteStream() throws Exception {
-    final Id.Stream streamId = Id.Stream.from(Constants.DEFAULT_NAMESPACE, "test");
+    final Id.Stream streamId = Id.Stream.from(Id.Namespace.DEFAULT, "test");
 
     StreamAdmin streamAdmin = getStreamAdmin();
     streamAdmin.create(streamId);

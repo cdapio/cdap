@@ -16,12 +16,8 @@
 
 package co.cask.cdap.api.dataset;
 
-import com.google.common.base.Joiner;
-import com.google.common.base.Objects;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Maps;
-
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -32,8 +28,7 @@ public final class DatasetProperties {
   /**
    * Empty properties.
    */
-  public static final DatasetProperties EMPTY =
-    new DatasetProperties(Collections.<String, String>emptyMap());
+  public static final DatasetProperties EMPTY = builder().build();
 
   /**
    * Schema property. Not all datasets support schema.
@@ -43,7 +38,7 @@ public final class DatasetProperties {
   private final Map<String, String> properties;
 
   private DatasetProperties(Map<String, String> properties) {
-    this.properties = ImmutableMap.copyOf(properties);
+    this.properties = properties;
   }
 
   public static Builder builder() {
@@ -59,16 +54,16 @@ public final class DatasetProperties {
 
   @Override
   public String toString() {
-    return Objects.toStringHelper(this)
-      .add("properties", Joiner.on(",").withKeyValueSeparator("=").join(properties))
-      .toString();
+    return "DatasetProperties{" +
+      "properties=" + properties +
+      '}';
   }
 
   /**
    * A Builder to construct DatasetProperties instances.
    */
   public static class Builder {
-    private Map<String, String> properties = Maps.newHashMap();
+    private Map<String, String> properties = new HashMap<>();
 
     protected Builder() {
     }
@@ -110,7 +105,7 @@ public final class DatasetProperties {
      * constructor.
      */
     public DatasetProperties build() {
-      return new DatasetProperties(this.properties);
+      return new DatasetProperties(Collections.unmodifiableMap(this.properties));
     }
   }
 }

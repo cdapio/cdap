@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,16 +16,15 @@
 
 package co.cask.cdap.internal.app.runtime.batch;
 
+import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.mapreduce.MapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.workflow.WorkflowToken;
-import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
-import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -36,25 +35,28 @@ import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.logging.common.LogWriter;
 import co.cask.cdap.common.logging.logback.CAppender;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.metadata.writer.ProgramContextAware;
 import co.cask.cdap.data2.registry.UsageRegistry;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
+import co.cask.cdap.internal.app.runtime.AbstractProgramRunnerWithPlugin;
 import co.cask.cdap.internal.app.runtime.DataSetFieldSetter;
 import co.cask.cdap.internal.app.runtime.MetricsFieldSetter;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
-import co.cask.cdap.internal.app.runtime.adapter.PluginInstantiator;
+import co.cask.cdap.internal.app.runtime.ProgramRunners;
+import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.internal.app.runtime.workflow.BasicWorkflowToken;
 import co.cask.cdap.internal.lang.Reflections;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.templates.AdapterDefinition;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.io.Closeables;
 import com.google.common.reflect.TypeToken;
-import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.Service;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
+import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.twill.api.RunId;
@@ -65,17 +67,21 @@ import org.apache.twill.internal.ServiceListenerAdapter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.security.PrivilegedExceptionAction;
+import java.io.Closeable;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
 /**
  * Runs {@link MapReduce} programs.
  */
-public class MapReduceProgramRunner implements ProgramRunner {
+public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
   private static final Logger LOG = LoggerFactory.getLogger(MapReduceProgramRunner.class);
   private static final Gson GSON = new Gson();
 
+  private final Injector injector;
   private final StreamAdmin streamAdmin;
   private final CConfiguration cConf;
   private final Configuration hConf;
@@ -88,7 +94,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
   private final UsageRegistry usageRegistry;
 
   @Inject
-  public MapReduceProgramRunner(CConfiguration cConf, Configuration hConf,
+  public MapReduceProgramRunner(Injector injector, CConfiguration cConf, Configuration hConf,
                                 LocationFactory locationFactory,
                                 StreamAdmin streamAdmin,
                                 DatasetFramework datasetFramework,
@@ -96,6 +102,8 @@ public class MapReduceProgramRunner implements ProgramRunner {
                                 MetricsCollectionService metricsCollectionService,
                                 DiscoveryServiceClient discoveryServiceClient, Store store,
                                 UsageRegistry usageRegistry) {
+    super(cConf);
+    this.injector = injector;
     this.cConf = cConf;
     this.hConf = hConf;
     this.locationFactory = locationFactory;
@@ -146,7 +154,11 @@ public class MapReduceProgramRunner implements ProgramRunner {
                                     BasicWorkflowToken.class);
     }
 
-    final AdapterDefinition adapterSpec = getAdapterSpecification(arguments);
+    // Setup dataset framework context, if required
+    if (datasetFramework instanceof ProgramContextAware) {
+      Id.Program programId = program.getId();
+      ((ProgramContextAware) datasetFramework).initContext(new Id.Run(programId, runId.getId()));
+    }
 
     MapReduce mapReduce;
     try {
@@ -156,16 +168,21 @@ public class MapReduceProgramRunner implements ProgramRunner {
       throw Throwables.propagate(e);
     }
 
-    final PluginInstantiator pluginInstantiator = createPluginInstantiator(adapterSpec, program.getClassLoader());
+    // List of all Closeable resources that needs to be cleanup
+    List<Closeable> closeables = new ArrayList<>();
     try {
-      final DynamicMapReduceContext context =
-        new DynamicMapReduceContext(program, null, runId, null, options.getUserArguments(), spec,
-                                    logicalStartTime, programNameInWorkflow, workflowToken, discoveryServiceClient,
-                                    metricsCollectionService, txSystemClient, datasetFramework, adapterSpec,
-                                    pluginInstantiator);
+      PluginInstantiator pluginInstantiator = createPluginInstantiator(options, program.getClassLoader());
+      if (pluginInstantiator != null) {
+        closeables.add(pluginInstantiator);
+      }
 
+      final BasicMapReduceContext context =
+        new BasicMapReduceContext(program, runId, options.getUserArguments(), spec,
+                                  logicalStartTime, programNameInWorkflow, workflowToken, discoveryServiceClient,
+                                  metricsCollectionService, txSystemClient, datasetFramework, streamAdmin,
+                                  getPluginArchive(options), pluginInstantiator);
 
-      Reflections.visit(mapReduce, TypeToken.of(mapReduce.getClass()),
+      Reflections.visit(mapReduce, mapReduce.getClass(),
                         new PropertyFieldSetter(context.getSpecification().getProperties()),
                         new MetricsFieldSetter(context.getMetrics()),
                         new DataSetFieldSetter(context));
@@ -173,12 +190,13 @@ public class MapReduceProgramRunner implements ProgramRunner {
       // note: this sets logging context on the thread level
       LoggingContextAccessor.setLoggingContext(context.getLoggingContext());
 
-      final Service mapReduceRuntimeService = new MapReduceRuntimeService(cConf, hConf, mapReduce, spec, context,
-                                                                          program.getJarLocation(), locationFactory,
-                                                                          streamAdmin, txSystemClient, usageRegistry);
-      mapReduceRuntimeService.addListener(createRuntimeServiceListener(program, runId, adapterSpec,
-                                                                       pluginInstantiator, arguments),
-                                          Threads.SAME_THREAD_EXECUTOR);
+      final Service mapReduceRuntimeService = new MapReduceRuntimeService(injector, cConf, hConf, mapReduce, spec,
+                                                                          context, program.getJarLocation(),
+                                                                          locationFactory, streamAdmin,
+                                                                          txSystemClient, usageRegistry);
+      mapReduceRuntimeService.addListener(
+        createRuntimeServiceListener(program, runId, closeables, arguments, options.getUserArguments()),
+        Threads.SAME_THREAD_EXECUTOR);
 
       final ProgramController controller = new MapReduceProgramController(mapReduceRuntimeService, context);
 
@@ -188,28 +206,14 @@ public class MapReduceProgramRunner implements ProgramRunner {
       // runner, which is probably the yarn user. This may cause permissions issues if the program
       // tries to access cdap data. For example, writing to a FileSet will fail, as the yarn user will
       // be running the job, but the data directory will be owned by cdap.
-      if (!MapReduceContextProvider.isLocal(hConf) && !UserGroupInformation.isSecurityEnabled()) {
-        String runAs = cConf.get(Constants.CFG_HDFS_USER);
-        try {
-          UserGroupInformation.createRemoteUser(runAs)
-            .doAs(new PrivilegedExceptionAction<ListenableFuture<Service.State>>() {
-              @Override
-              public ListenableFuture<Service.State> run() throws Exception {
-                return mapReduceRuntimeService.start();
-              }
-            });
-        } catch (Exception e) {
-          LOG.error("Exception running mapreduce job as user {}.", runAs, e);
-          throw Throwables.propagate(e);
-        }
-      } else {
+      if (MapReduceTaskContextProvider.isLocal(hConf) || UserGroupInformation.isSecurityEnabled()) {
         mapReduceRuntimeService.start();
+      } else {
+        ProgramRunners.startAsUser(cConf.get(Constants.CFG_HDFS_USER), mapReduceRuntimeService);
       }
       return controller;
     } catch (Exception e) {
-      if (pluginInstantiator != null) {
-        Closeables.closeQuietly(pluginInstantiator);
-      }
+      closeAllQuietly(closeables);
       throw Throwables.propagate(e);
     }
   }
@@ -218,9 +222,8 @@ public class MapReduceProgramRunner implements ProgramRunner {
    * Creates a service listener to reactor on state changes on {@link MapReduceRuntimeService}.
    */
   private Service.Listener createRuntimeServiceListener(final Program program, final RunId runId,
-                                                        final AdapterDefinition adapterSpec,
-                                                        final PluginInstantiator pluginInstantiator,
-                                                        Arguments arguments) {
+                                                        final Iterable<Closeable> closeables,
+                                                        final Arguments arguments, final Arguments userArgs) {
 
     final String twillRunId = arguments.getOption(ProgramOptionConstants.TWILL_RUN_ID);
     final String workflowName = arguments.getOption(ProgramOptionConstants.WORKFLOW_NAME);
@@ -236,21 +239,19 @@ public class MapReduceProgramRunner implements ProgramRunner {
           // If RunId is not time-based, use current time as start time
           startTimeInSeconds = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
         }
-        String adapterName = adapterSpec == null ? null : adapterSpec.getName();
         if (workflowName == null) {
-          store.setStart(program.getId(), runId.getId(), startTimeInSeconds, adapterName, twillRunId);
+          store.setStart(program.getId(), runId.getId(), startTimeInSeconds, twillRunId,
+                         userArgs.asMap(), arguments.asMap());
         } else {
           // Program started by Workflow
           store.setWorkflowProgramStart(program.getId(), runId.getId(), workflowName, workflowRunId, workflowNodeId,
-                                        startTimeInSeconds, adapterName, twillRunId);
+                                        startTimeInSeconds, twillRunId);
         }
       }
 
       @Override
       public void terminated(Service.State from) {
-        if (pluginInstantiator != null) {
-          Closeables.closeQuietly(pluginInstantiator);
-        }
+        closeAllQuietly(closeables);
         if (from == Service.State.STOPPING) {
           // Service was killed
           store.setStop(program.getId(), runId.getId(), TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
@@ -264,29 +265,24 @@ public class MapReduceProgramRunner implements ProgramRunner {
 
       @Override
       public void failed(Service.State from, Throwable failure) {
-        if (pluginInstantiator != null) {
-          Closeables.closeQuietly(pluginInstantiator);
-        }
+        closeAllQuietly(closeables);
         store.setStop(program.getId(), runId.getId(), TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
                       ProgramController.State.ERROR.getRunStatus());
       }
     };
   }
 
-  @Nullable
-  private AdapterDefinition getAdapterSpecification(Arguments arguments) {
-    if (!arguments.hasOption(ProgramOptionConstants.ADAPTER_SPEC)) {
-      return null;
+  private void closeAllQuietly(Iterable<Closeable> closeables) {
+    for (Closeable c : closeables) {
+      Closeables.closeQuietly(c);
     }
-    return GSON.fromJson(arguments.getOption(ProgramOptionConstants.ADAPTER_SPEC), AdapterDefinition.class);
   }
 
   @Nullable
-  private PluginInstantiator createPluginInstantiator(@Nullable AdapterDefinition adapterSpec,
-                                                      ClassLoader programClassLoader) {
-    if (adapterSpec == null) {
+  private File getPluginArchive(ProgramOptions options) {
+    if (!options.getArguments().hasOption(ProgramOptionConstants.PLUGIN_ARCHIVE)) {
       return null;
     }
-    return new PluginInstantiator(cConf, adapterSpec.getTemplate(), programClassLoader);
+    return new File(options.getArguments().getOption(ProgramOptionConstants.PLUGIN_ARCHIVE));
   }
 }

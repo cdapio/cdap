@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,13 +18,13 @@ package co.cask.cdap.metrics.collect;
 import co.cask.cdap.api.metrics.MetricValue;
 
 /**
- * A MetricsEmitter is a class that is able to emit {@link co.cask.cdap.api.metrics.MetricValue}.
+ * A MetricsEmitter is a class that emits a {@link co.cask.cdap.api.metrics.MetricValue}.
  */
 public interface MetricsEmitter {
 
   /**
    * Emits metric
-   * @return A {@link co.cask.cdap.api.metrics.MetricValue} representing metrics for the given timestamp.
+   * @return A {@link co.cask.cdap.api.metrics.MetricValue} representing metrics for the given timestamp
    */
   MetricValue emit();
 }

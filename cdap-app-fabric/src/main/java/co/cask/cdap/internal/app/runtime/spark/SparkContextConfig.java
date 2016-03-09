@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,11 +16,13 @@
 
 package co.cask.cdap.internal.app.runtime.spark;
 
+import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.spark.SparkSpecification;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.runtime.workflow.BasicWorkflowToken;
+import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
 import co.cask.cdap.proto.Id;
 import co.cask.tephra.Transaction;
 import com.google.common.reflect.TypeToken;
@@ -41,10 +43,12 @@ public class SparkContextConfig {
   private static final Gson GSON = ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder()).create();
   private static final Type ARGS_TYPE = new TypeToken<Map<String, String>>() { }.getType();
 
-  public static final String HCONF_ATTR_EXECUTION_MODE = "cdap.spark.execution.mode";
-  public static final String LOCAL_EXECUTION_MODE = "local";
-  public static final String YARN_EXECUTION_MODE = "yarn-client";
+  /**
+   * Configuration key for boolean value to tell whether Spark program is executed on a cluster or not.
+   */
+  public static final String HCONF_ATTR_CLUSTER_MODE = "cdap.spark.cluster.mode";
 
+  private static final String HCONF_ATTR_APP_SPEC = "cdap.spark.app.spec";
   private static final String HCONF_ATTR_PROGRAM_SPEC = "cdap.spark.program.spec";
   private static final String HCONF_ATTR_PROGRAM_ID = "cdap.spark.program.id";
   private static final String HCONF_ATTR_RUN_ID = "cdap.spark.run.id";
@@ -54,12 +58,18 @@ public class SparkContextConfig {
   private static final String HCONF_ATTR_WORKFLOW_TOKEN = "hconf.program.workflow.token";
 
   private final Configuration hConf;
+  private final ApplicationSpecificationAdapter appSpecAdapter;
+
+  public static boolean isLocal(Configuration hConf) {
+    return !hConf.getBoolean(HCONF_ATTR_CLUSTER_MODE, false);
+  }
 
   /**
    * Creates an instance by copying from the given configuration.
    */
   public SparkContextConfig(Configuration hConf) {
     this.hConf = new Configuration(hConf);
+    this.appSpecAdapter = ApplicationSpecificationAdapter.create(new ReflectionSchemaGenerator());
   }
 
   /**
@@ -73,13 +83,14 @@ public class SparkContextConfig {
    * Returns true if in local mode.
    */
   public boolean isLocal() {
-    return LOCAL_EXECUTION_MODE.equals(getExecutionMode());
+    return isLocal(hConf);
   }
 
   /**
    * Sets configurations based on the given context.
    */
   public SparkContextConfig set(ExecutionSparkContext context) {
+    setApplicationSpecification(context.getApplicationSpecification());
     setSpecification(context.getSpecification());
     setProgramId(context.getProgramId());
     setRunId(context.getRunId().getId());
@@ -91,8 +102,8 @@ public class SparkContextConfig {
     return this;
   }
 
-  public String getExecutionMode() {
-    return hConf.get(HCONF_ATTR_EXECUTION_MODE, LOCAL_EXECUTION_MODE);
+  public ApplicationSpecification getApplicationSpecification() {
+    return appSpecAdapter.fromJson(hConf.get(HCONF_ATTR_APP_SPEC));
   }
 
   /**
@@ -145,6 +156,10 @@ public class SparkContextConfig {
     return GSON.fromJson(hConf.get(HCONF_ATTR_WORKFLOW_TOKEN), BasicWorkflowToken.class);
   }
 
+  private void setApplicationSpecification(ApplicationSpecification spec) {
+    hConf.set(HCONF_ATTR_APP_SPEC, appSpecAdapter.toJson(spec));
+  }
+
   private void setSpecification(SparkSpecification spec) {
     hConf.set(HCONF_ATTR_PROGRAM_SPEC, GSON.toJson(spec));
   }
@@ -169,7 +184,7 @@ public class SparkContextConfig {
     hConf.set(HCONF_ATTR_NEW_TX, GSON.toJson(tx));
   }
 
-  public void setWorkflowToken(@Nullable WorkflowToken workflowToken) {
+  private void setWorkflowToken(@Nullable WorkflowToken workflowToken) {
     hConf.set(HCONF_ATTR_WORKFLOW_TOKEN, GSON.toJson(workflowToken));
   }
 }

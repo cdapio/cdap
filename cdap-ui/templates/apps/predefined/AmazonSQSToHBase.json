@@ -1,0 +1,55 @@
+{
+  "artifact": {
+    "name": "cdap-etl-realtime",
+    "scope": "SYSTEM",
+    "version": "3.3.2"
+  },
+  "config": {
+    "source": {
+      "name": "AmazonSQS-3d6d835a-7441-49af-b356-d54cd72f9060",
+      "plugin": {
+        "name": "AmazonSQS",
+        "label": "Amazon SQS",
+        "properties": {
+          "region": "",
+          "accessKey": "",
+          "accessID": "",
+          "queueName": ""
+        },
+        "artifact": {
+          "name": "core-plugins",
+          "scope": "SYSTEM",
+          "version": "1.2.1"
+        }
+      }
+    },
+    "sinks": [
+      {
+        "name": "Table-cfbffc9b-e336-4819-8e9f-e6a3f4553beb",
+        "plugin": {
+          "name": "Table",
+          "label": "HBase",
+          "properties": {
+            "name": "",
+            "schema.row.field": ""
+          },
+          "artifact": {
+            "name": "core-plugins",
+            "scope": "SYSTEM",
+            "version": "1.2.1"
+          }
+        }
+      }
+    ],
+    "transforms": [],
+    "instances": 1,
+    "connections": [
+      {
+        "from": "AmazonSQS-3d6d835a-7441-49af-b356-d54cd72f9060",
+        "to": "Table-cfbffc9b-e336-4819-8e9f-e6a3f4553beb"
+      }
+    ]
+  },
+  "description": "Real-time updates from Amazon Simple Queue Service into an HBase table",
+  "name": "AmazonSQSToHBase"
+}

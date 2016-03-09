@@ -17,8 +17,8 @@
 package co.cask.cdap.internal.app.deploy.pipeline;
 
 import co.cask.cdap.api.ProgramSpecification;
+import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.webapp.WebappSpecification;
-import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.program.Programs;
 import co.cask.cdap.archive.ArchiveBundler;
@@ -80,7 +80,7 @@ public class ProgramGenerationStage extends AbstractStage<ApplicationDeployable>
 
     // Check exists, create, check exists again to avoid failure due to race condition.
     if (!appFabricDir.exists() && !appFabricDir.mkdirs() && !appFabricDir.exists()) {
-      throw new IOException(String.format("Failed to create directory %s", appFabricDir.toURI().getPath()));
+      throw new IOException(String.format("Failed to create directory %s", appFabricDir));
     }
 
     // Now, we iterate through all ProgramSpecification and generate programs
@@ -133,19 +133,45 @@ public class ProgramGenerationStage extends AbstractStage<ApplicationDeployable>
       executorService.shutdown();
     }
 
-    // moves the <appfabricdir>/archive/<app-name>.jar to <appfabricdir>/<app-name>/archive/<app-name>.jar
-    // Cannot do this before starting the deploy pipeline because appId could be null at that time.
-    // However, it is guaranteed to be non-null from VerificationsStage onwards
-    Location newArchiveLocation = appFabricDir.append(applicationName).append(Constants.ARCHIVE_DIR);
-    moveAppArchiveUnderAppDirectory(input.getLocation(), newArchiveLocation);
-    Location programLocation = newArchiveLocation.append(input.getLocation().getName());
-    ApplicationDeployable updatedAppDeployable = new ApplicationDeployable(input.getId(), input.getSpecification(),
-                                                                           input.getExistingAppSpec(),
-                                                                           input.getApplicationDeployScope(),
-                                                                           programLocation);
+    // TODO: (CDAP-2662) remove after app templates are gone
+    if (input.getSpecification().getArtifactId() == null) {
+      // moves the <appfabricdir>/archive/<app-name>.jar to <appfabricdir>/<app-name>/archive/<app-name>.jar
+      // Cannot do this before starting the deploy pipeline because appId could be null at that time.
+      // However, it is guaranteed to be non-null from VerificationsStage onwards
+      Id.Application appId = Id.Application.from(namespaceId, applicationName);
+      Location newArchiveLocation = getAppArchiveDirLocation(configuration, appId, namespacedLocationFactory);
+      moveAppArchiveUnderAppDirectory(input.getLocation(), newArchiveLocation);
+      Location programLocation = newArchiveLocation.append(input.getLocation().getName());
+      ApplicationDeployable updatedAppDeployable = new ApplicationDeployable(input.getId(), input.getSpecification(),
+        input.getExistingAppSpec(),
+        input.getApplicationDeployScope(),
+        programLocation);
+      // Emits the received specification with programs.
+      emit(new ApplicationWithPrograms(updatedAppDeployable, programs.build()));
+    } else {
+      emit(new ApplicationWithPrograms(input, programs.build()));
+    }
 
-    // Emits the received specification with programs.
-    emit(new ApplicationWithPrograms(updatedAppDeployable, programs.build()));
+  }
+
+  /**
+   * Legacy method to get the location of the directory of an application jar. This is used for cdap upgrades.
+   * New Apps use the artifact repository instead of this.
+   *
+   * @param configuration the cdap configuration
+   * @param appId the id of the application
+   * @param namespacedLocationFactory the namespaced location factory to generate locations
+   * @return the expected location of the application jar
+   * @throws IOException
+   */
+  public static Location getAppArchiveDirLocation(CConfiguration configuration, Id.Application appId,
+                                                  NamespacedLocationFactory namespacedLocationFactory)
+    throws IOException {
+    Location namespacedLocation = namespacedLocationFactory.get(appId.getNamespace());
+    // Note: deployApplication/deployAdapters have already checked for namespaceDir existence, so not checking again
+    // Make sure we have a directory to store the original artifact.
+    final Location appFabricDir = namespacedLocation.append(configuration.get(Constants.AppFabric.OUTPUT_DIR));
+    return appFabricDir.append(appId.getId()).append(Constants.ARCHIVE_DIR);
   }
 
   private void moveAppArchiveUnderAppDirectory(Location origArchiveLocation,
@@ -164,7 +190,7 @@ public class ProgramGenerationStage extends AbstractStage<ApplicationDeployable>
     }
     if (oldArchiveDir.renameTo(newArchiveLocation) == null) {
       throw new IOException(String.format("Could not move archive from location: %s, to location: %s",
-                                          oldArchiveDir.toURI(), newArchiveLocation.toURI()));
+                                          oldArchiveDir, newArchiveLocation));
     }
   }
 

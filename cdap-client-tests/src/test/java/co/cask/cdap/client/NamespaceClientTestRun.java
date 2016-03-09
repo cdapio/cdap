@@ -19,10 +19,8 @@ package co.cask.cdap.client;
 import co.cask.cdap.client.common.ClientTestBase;
 import co.cask.cdap.common.AlreadyExistsException;
 import co.cask.cdap.common.BadRequestException;
-import co.cask.cdap.common.CannotBeDeletedException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.UnauthorizedException;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import org.junit.Assert;
@@ -62,12 +60,12 @@ public class NamespaceClientTestRun extends ClientTestBase {
     NamespaceMeta.Builder builder = new NamespaceMeta.Builder();
     builder.setName(TEST_NAMESPACE_NAME).setDescription(TEST_DESCRIPTION);
     namespaceClient.create(builder.build());
-    waitForNamespaceCreation(TEST_NAMESPACE_NAME.getId());
+    waitForNamespaceCreation(TEST_NAMESPACE_NAME);
 
     // verify that the namespace got created correctly
     namespaces = namespaceClient.list();
     Assert.assertEquals(initialNamespaceCount + 1, namespaces.size());
-    NamespaceMeta meta = namespaceClient.get(TEST_NAMESPACE_NAME.getId());
+    NamespaceMeta meta = namespaceClient.get(TEST_NAMESPACE_NAME);
     Assert.assertEquals(TEST_NAMESPACE_NAME.getId(), meta.getName());
     Assert.assertEquals(TEST_DESCRIPTION, meta.getDescription());
 
@@ -77,9 +75,10 @@ public class NamespaceClientTestRun extends ClientTestBase {
       namespaceClient.create(builder.build());
       Assert.fail("Should not be able to re-create an existing namespace");
     } catch (AlreadyExistsException e) {
+      // expected
     }
     // verify that the existing namespace was not updated
-    meta = namespaceClient.get(TEST_NAMESPACE_NAME.getId());
+    meta = namespaceClient.get(TEST_NAMESPACE_NAME);
     Assert.assertEquals(TEST_NAMESPACE_NAME.getId(), meta.getName());
     Assert.assertEquals(TEST_DESCRIPTION, meta.getDescription());
 
@@ -89,13 +88,13 @@ public class NamespaceClientTestRun extends ClientTestBase {
     namespaceClient.create(builder.build());
     namespaces = namespaceClient.list();
     Assert.assertEquals(initialNamespaceCount + 2, namespaces.size());
-    meta = namespaceClient.get(TEST_DEFAULT_FIELDS.getId());
+    meta = namespaceClient.get(TEST_DEFAULT_FIELDS);
     Assert.assertEquals(TEST_DEFAULT_FIELDS.getId(), meta.getName());
     Assert.assertEquals("", meta.getDescription());
 
     // cleanup
-    namespaceClient.delete(TEST_NAMESPACE_NAME.getId());
-    namespaceClient.delete(TEST_DEFAULT_FIELDS.getId());
+    namespaceClient.delete(TEST_NAMESPACE_NAME);
+    namespaceClient.delete(TEST_DEFAULT_FIELDS);
 
     Assert.assertEquals(initialNamespaceCount, namespaceClient.list().size());
   }
@@ -106,67 +105,72 @@ public class NamespaceClientTestRun extends ClientTestBase {
     NamespaceMeta.Builder builder = new NamespaceMeta.Builder();
     builder.setName(TEST_NAMESPACE_NAME).setDescription(TEST_DESCRIPTION);
     namespaceClient.create(builder.build());
-    waitForNamespaceCreation(TEST_NAMESPACE_NAME.getId());
+    waitForNamespaceCreation(TEST_NAMESPACE_NAME);
 
     // create another namespace
     builder = new NamespaceMeta.Builder();
     builder.setName(TEST_DEFAULT_FIELDS);
     namespaceClient.create(builder.build());
-    waitForNamespaceCreation(TEST_DEFAULT_FIELDS.getId());
+    waitForNamespaceCreation(TEST_DEFAULT_FIELDS);
 
     // cleanup
     namespaceClient.deleteAll();
 
     // verify that only the default namespace is left
     Assert.assertEquals(1, namespaceClient.list().size());
-    Assert.assertEquals(Constants.DEFAULT_NAMESPACE, namespaceClient.list().get(0).getName());
+    Assert.assertEquals(Id.Namespace.DEFAULT.getId(), namespaceClient.list().get(0).getName());
   }
 
   private void verifyDoesNotExist(Id.Namespace namespaceId)
-    throws IOException, UnauthorizedException, CannotBeDeletedException {
+    throws Exception {
 
     try {
-      namespaceClient.get(namespaceId.getId());
+      namespaceClient.get(namespaceId);
       Assert.fail(String.format("Namespace '%s' must not be found", namespaceId));
     } catch (NotFoundException e) {
+      // expected
     }
 
     try {
-      namespaceClient.delete(namespaceId.getId());
+      namespaceClient.delete(namespaceId);
       Assert.fail(String.format("Namespace '%s' must not be found", namespaceId));
     } catch (NotFoundException e) {
+      // expected
     }
   }
 
   private void verifyReservedCreate() throws Exception {
     NamespaceMeta.Builder builder = new NamespaceMeta.Builder();
-    builder.setName(Constants.DEFAULT_NAMESPACE_ID);
+    builder.setName(Id.Namespace.DEFAULT);
     try {
       namespaceClient.create(builder.build());
-      Assert.fail(String.format("Must not create '%s' namespace", Constants.DEFAULT_NAMESPACE_ID));
+      Assert.fail(String.format("Must not create '%s' namespace", Id.Namespace.DEFAULT));
     } catch (BadRequestException e) {
+      // expected
     }
-    builder.setName(Constants.SYSTEM_NAMESPACE_ID);
+    builder.setName(Id.Namespace.SYSTEM);
     try {
       namespaceClient.create(builder.build());
-      Assert.fail(String.format("Must not create '%s' namespace", Constants.SYSTEM_NAMESPACE_ID));
+      Assert.fail(String.format("Must not create '%s' namespace", Id.Namespace.SYSTEM));
     } catch (BadRequestException e) {
+      // expected
     }
   }
 
   private void verifyReservedDelete() throws Exception {
     // For the purposes of NamespaceClientTestRun, deleting default namespace has no effect.
     // Its lifecycle is already tested in NamespaceHttpHandlerTest
-    namespaceClient.delete(Constants.DEFAULT_NAMESPACE);
-    namespaceClient.get(Constants.DEFAULT_NAMESPACE);
+    namespaceClient.delete(Id.Namespace.DEFAULT);
+    namespaceClient.get(Id.Namespace.DEFAULT);
     try {
-      namespaceClient.delete(Constants.SYSTEM_NAMESPACE);
-      Assert.fail(String.format("'%s' namespace must not exist", Constants.SYSTEM_NAMESPACE));
+      namespaceClient.delete(Id.Namespace.SYSTEM);
+      Assert.fail(String.format("'%s' namespace must not exist", Id.Namespace.SYSTEM.getId()));
     } catch (NotFoundException e) {
+      // expected
     }
   }
 
-  private void waitForNamespaceCreation(String namespace) throws IOException, UnauthorizedException,
+  private void waitForNamespaceCreation(Id.Namespace namespace) throws IOException, UnauthorizedException,
     InterruptedException {
     int count = 0;
     while (count < 10) {

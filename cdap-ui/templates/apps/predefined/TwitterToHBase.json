@@ -1,0 +1,56 @@
+{
+  "artifact": {
+    "name": "cdap-etl-realtime",
+    "scope": "SYSTEM",
+    "version": "3.3.2"
+  },
+  "config": {
+    "source": {
+      "name": "Twitter-149b9ce8-10f8-488a-8a16-a34e09367527",
+      "plugin": {
+        "name": "Twitter",
+        "label": "Twitter Stream",
+        "properties": {
+          "AccessToken": "",
+          "AccessTokenSecret": "",
+          "ConsumerSecret": "",
+          "ConsumerKey": ""
+        },
+        "artifact": {
+          "name": "core-plugins",
+          "scope": "SYSTEM",
+          "version": "1.2.1"
+        }
+      }
+    },
+    "sinks": [
+      {
+        "name": "Table-2046427c-9be1-426e-a1e0-675fccfcb3d5",
+        "plugin": {
+          "name": "Table",
+          "label": "HBase Table",
+          "properties": {
+            "schema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"message\",\"type\":\"string\"},{\"name\":\"lang\",\"type\":\"string\"},{\"name\":\"time\",\"type\":\"long\"},{\"name\":\"favCount\",\"type\":\"int\"},{\"name\":\"rtCount\",\"type\":\"int\"},{\"name\":\"source\",\"type\":\"string\"},{\"name\":\"id\",\"type\":\"long\"}]}",
+            "name": "",
+            "schema.row.field": ""
+          },
+          "artifact": {
+            "name": "core-plugins",
+            "scope": "SYSTEM",
+            "version": "1.2.1"
+          }
+        }
+      }
+    ],
+    "transforms": [],
+    "instances": 1,
+    "connections": [
+      {
+        "from": "Twitter-149b9ce8-10f8-488a-8a16-a34e09367527",
+        "to": "Table-2046427c-9be1-426e-a1e0-675fccfcb3d5"
+      }
+    ]
+  },
+  "description": "Ingest real-time Twitter Stream into an HBase table",
+  "name": "TwitterToHBase"
+}

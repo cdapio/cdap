@@ -24,7 +24,7 @@
   <parent>
     <groupId>co.cask.cdap</groupId>
     <artifactId>cdap</artifactId>
-    <version>3.1.0</version>
+    <version>3.3.2</version>
   </parent>
 
   <artifactId>cdap-hbase-compat-1.0</artifactId>
@@ -104,6 +104,12 @@
       <version>${hbase10.version}</version>
       <type>test-jar</type>
       <scope>test</scope>
+      <exclusions>
+        <exclusion>
+          <groupId>asm</groupId>
+          <artifactId>asm</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <dependency>
       <groupId>org.apache.hbase</groupId>

@@ -7,15 +7,17 @@ import os
 # Note that paths in the common config are interpreted as if they were 
 # in the location of this file
 
+# Setup the config
 sys.path.insert(0, os.path.abspath('../../_common'))
 from common_conf import * 
 
-# Override the common config
+html_short_title_toc, html_short_title, html_context = set_conf_for_manual()
 
-html_short_title_toc = manuals_dict["integrations"]
-html_short_title = u'CDAP %s' % html_short_title_toc
+navigator_version = '0.1.0'
 
-html_context = {"html_short_title_toc":html_short_title_toc}
+extlinks['cdap-kafka-flow'] = ('https://github.com/caskdata/cdap-packs/tree/release/cdap-%s-compatible/cdap-kafka-pack/cdap-kafka-flow%%s' % short_version, None)
+extlinks['navigator-jar'] = ('http://search.maven.org/remotecontent?filepath=co/cask/cdap/metadata/navigator/%(navigator_version)s/navigator-%(navigator_version)s.jar%%s' % {'navigator_version': navigator_version}, None)
 
-# Remove this guide from the mapping as it will fail as it has been deleted by clean
-intersphinx_mapping.pop("integrations", None)
+rst_epilog +=  """
+.. |navigator-version| replace:: %(navigator_version)s
+""" % {'navigator_version': navigator_version}

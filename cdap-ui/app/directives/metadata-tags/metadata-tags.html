@@ -1,0 +1,45 @@
+<!--
+  Copyright © 2015 Cask Data, Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+-->
+
+<div class="program-tags">
+  <div class="add-tag" ng-if="!MetadataController.metadataAddOpen">
+    <a class="btn add" ng-click="MetadataController.metadataAddOpen = true">
+      <span class="fa fa-plus"></span>
+    </a>
+  </div>
+  <div class="tag-input" ng-if="MetadataController.metadataAddOpen">
+    <div my-escape-close="MetadataController.escapeMetadata()" ng-keypress="$event.keyCode === 13 && MetadataController.addMetadata()">
+      <input placeholder="new tag" type="text" class="form-control" ng-model="MetadataController.tag" cask-focus="metadataInput" ng-blur="MetadataController.escapeMetadata()">
+    </div>
+  </div>
+
+  <div class="tag" ng-repeat="tag in MetadataController.metadataTags | limitTo: MetadataController.limit">
+    <span class="btn"
+       ng-click="MetadataController.goToTag($event, tag.name)">
+      {{tag.name}}
+      <span class="fa fa-times"
+            ng-if="tag.scope === 'USER'"
+            ng-click="MetadataController.deleteMetadata($event, tag.name)"></span>
+    </span>
+  </div>
+
+  <a ng-if="MetadataController.metadataTags.length > MetadataController.tagLimit && MetadataController.limit === MetadataController.tagLimit"
+     class="tag-toggle"
+     ng-click="MetadataController.limit = null">show more</a>
+  <a ng-if="MetadataController.metadataTags.length > MetadataController.tagLimit && MetadataController.limit === null"
+     class="tag-toggle"
+     ng-click="MetadataController.limit = MetadataController.tagLimit">show less</a>
+</div>

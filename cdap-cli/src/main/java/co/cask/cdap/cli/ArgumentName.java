@@ -1,5 +1,5 @@
 /*
- * Copyright © 2012-2015 Cask Data, Inc.
+ * Copyright © 2012-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -32,6 +32,7 @@ public enum ArgumentName {
   SPARK("app-id.spark-id"),
 
   APP_CONFIG("app-config"),
+  APP_CONFIG_FILE("app-config-file"),
   RUNTIME_ARGS("runtime-args"),
   HOSTNAME("hostname"),
   DATASET_TYPE("dataset-type"),
@@ -59,31 +60,53 @@ public enum ArgumentName {
   DATASET_MODULE_JAR_CLASSNAME("module-jar-classname"),
   QUERY("query"),
   APP("app-id"),
-  APP_TEMPLATE("app-template-id"),
+  PROGRAM_TYPES("program-types"),
+  VIEW("view-id"),
   HTTP_METHOD("http-method"),
   ENDPOINT("endpoint"),
   HEADERS("headers"),
   HTTP_BODY("body"),
+  /**
+   * stream format
+   */
   FORMAT("format"),
   SCHEMA("schema"),
   SETTINGS("settings"),
   FREQUENCY("frequency"),
-  PLUGIN_TYPE("plugin-type"),
 
   NAMESPACE_NAME("namespace-name"),
   NAMESPACE_DESCRIPTION("namespace-description"),
 
   INSTANCE("instance-id"),
-  ADAPTER_TYPE("adapter-type"),
-  ADAPTER("adapter-name"),
-  ADAPTER_SPEC("adapter-spec-file"),
   COMMAND_CATEGORY("command-category"),
 
   TABLE_RENDERER("table-renderer"),
 
   WORKFLOW_NODE("workflow-node"),
   WORKFLOW_TOKEN_SCOPE("workflow-token-scope"),
-  WORKFLOW_TOKEN_KEY("workflow-token-key");
+  WORKFLOW_TOKEN_KEY("workflow-token-key"),
+
+  /**
+   * Artifacts
+   */
+  ARTIFACT_NAME("artifact-name"),
+  ARTIFACT_VERSION("artifact-version"),
+  ARTIFACT_PARENTS("artifact-parents"),
+  ARTIFACT_CONFIG_FILE("artifact-config"),
+  SCOPE("scope"),
+  PLUGIN_TYPE("plugin-type"),
+  PLUGIN_NAME("plugin-name"),
+
+  INSTANCE_URI("cdap-instance-uri"),
+  VERIFY_SSL_CERT("verify-ssl-cert"),
+  ENTITY("entity-id"),
+
+  /**
+   * Metadata
+   */
+  SEARCH_QUERY("search-query"),
+  TARGET_TYPE("target-type"),
+  METADATA_SCOPE("scope");
 
   private final String name;
 

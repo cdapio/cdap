@@ -25,14 +25,18 @@ import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.ProgramNotFoundException;
 import co.cask.cdap.common.UnauthorizedException;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.io.CaseInsensitiveEnumTypeAdapterFactory;
 import co.cask.cdap.common.utils.Tasks;
+import co.cask.cdap.proto.BatchProgram;
+import co.cask.cdap.proto.BatchProgramResult;
+import co.cask.cdap.proto.BatchProgramStart;
+import co.cask.cdap.proto.BatchProgramStatus;
 import co.cask.cdap.proto.DistributedProgramLiveInfo;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.Instances;
 import co.cask.cdap.proto.ProgramLiveInfo;
 import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramRunStatus;
-import co.cask.cdap.proto.ProgramStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.proto.codec.WorkflowActionSpecificationCodec;
@@ -47,6 +51,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.List;
@@ -66,7 +71,11 @@ public class ProgramClient {
 
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(WorkflowActionSpecification.class, new WorkflowActionSpecificationCodec())
+    .registerTypeAdapterFactory(new CaseInsensitiveEnumTypeAdapterFactory())
     .create();
+  private static final Type BATCH_STATUS_RESPONSE_TYPE = new TypeToken<List<BatchProgramStatus>>() { }.getType();
+  private static final Type BATCH_RESULTS_TYPE = new TypeToken<List<BatchProgramResult>>() { }.getType();
+  private static final Type MAP_STRING_STRING_TYPE = new TypeToken<Map<String, String>>() { }.getType();
 
   private final RESTClient restClient;
   private final ClientConfig config;
@@ -85,412 +94,6 @@ public class ProgramClient {
 
   public ProgramClient(ClientConfig config, RESTClient restClient) {
     this(config, restClient, new ApplicationClient(config, restClient));
-  }
-
-
-  /**
-   * Starts a program using specified runtime arguments.
-   *
-   * @param appId ID of the application that the program belongs to
-   * @param programType type of the program
-   * @param programName name of the program
-   * @param debug true to start in debug mode
-   * @param runtimeArgs runtime arguments to pass to the program
-   * @throws IOException if a network error occurred
-   * @throws ProgramNotFoundException if the program with the specified name could not be found
-   * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
-   *
-   * @deprecated As of 3.1, use {@link #start(Id.Program, boolean, Map)} instead.
-   */
-  @Deprecated
-  public void start(String appId, ProgramType programType, String programName,
-                    boolean debug, @Nullable Map<String, String> runtimeArgs)
-    throws IOException, ProgramNotFoundException, UnauthorizedException {
-
-    start(Id.Program.from(config.getNamespace(), appId, programType, programName), debug, runtimeArgs);
-  }
-
-  /**
-   * Starts a program, giving debug mode, using the stored runtime arguments.
-   *
-   * @param appId ID of the application that the program belongs to
-   * @param programType type of the program
-   * @param programName name of the program
-   * @param debug true to start in debug mode
-   * @throws IOException if a network error occurred
-   * @throws ProgramNotFoundException if the program with the specified name could not be found
-   * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
-   *
-   * @deprecated As of 3.1, use {@link #start(Id.Program, boolean)} instead.
-   */
-  @Deprecated
-  public void start(String appId, ProgramType programType, String programName, boolean debug)
-    throws IOException, ProgramNotFoundException, UnauthorizedException {
-
-    start(Id.Program.from(config.getNamespace(), appId, programType, programName), debug);
-  }
-
-  /**
-   * Starts a program using the stored runtime arguments.
-   *
-   * @param appId ID of the application that the program belongs to
-   * @param programType type of the program
-   * @param programName name of the program
-   * @throws IOException if a network error occurred
-   * @throws ProgramNotFoundException if the program with the specified name could not be found
-   * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
-   *
-   * @deprecated As of 3.1, use {@link #start(Id.Program)} instead.
-   */
-  @Deprecated
-  public void start(String appId, ProgramType programType, String programName)
-    throws IOException, ProgramNotFoundException, UnauthorizedException {
-
-    start(Id.Program.from(config.getNamespace(), appId, programType, programName));
-  }
-
-  /**
-   * Stops a program.
-   *
-   * @param appId ID of the application that the program belongs to
-   * @param programType type of the program
-   * @param programName name of the program
-   * @throws IOException if a network error occurred
-   * @throws ProgramNotFoundException if the program with the specified name could not be found
-   * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
-   *
-   * @deprecated As of 3.1, use {@link #stop(Id.Program)} instead.
-   */
-  @Deprecated
-  public void stop(String appId, ProgramType programType, String programName)
-    throws IOException, ProgramNotFoundException, UnauthorizedException {
-
-    stop(Id.Program.from(config.getNamespace(), appId, programType, programName));
-  }
-
-  /**
-   * Stops all currently running programs.
-   *
-   * @throws IOException
-   * @throws UnauthorizedException
-   * @throws InterruptedException
-   * @throws TimeoutException
-   *
-   * @deprecated As of 3.1, use {@link #stopAll(Id.Namespace)} instead.
-   */
-  @Deprecated
-  public void stopAll() throws IOException, UnauthorizedException, InterruptedException, TimeoutException {
-    stopAll(config.getNamespace());
-  }
-
-  /**
-   * Gets the status of a program.
-   *
-   * @param appId ID of the application that the program belongs to
-   * @param programType type of the program
-   * @param programName name of the program
-   * @return the status of the program (e.g. STOPPED, STARTING, RUNNING)
-   * @throws IOException if a network error occurred
-   * @throws ProgramNotFoundException if the program with the specified name could not be found
-   * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
-   *
-   * @deprecated As of 3.1, use {@link #getStatus(Id.Program)} instead.
-   */
-  @Deprecated
-  public String getStatus(String appId, ProgramType programType, String programName)
-    throws IOException, ProgramNotFoundException, UnauthorizedException {
-
-    return getStatus(Id.Program.from(config.getNamespace(), appId, programType, programName));
-  }
-
-  /**
-   * Waits for a program to have a certain status.
-   *
-   * @param appId ID of the application that the program belongs to
-   * @param programType type of the program
-   * @param programName name of the program
-   * @param status the desired status
-   * @param timeout how long to wait in milliseconds until timing out
-   * @throws IOException if a network error occurred
-   * @throws ProgramNotFoundException if the program with the specified name could not be found
-   * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
-   * @throws TimeoutException if the program did not achieve the desired program status before the timeout
-   * @throws InterruptedException if interrupted while waiting for the desired program status
-   *
-   * @deprecated As of 3.1, use {@link #waitForStatus(Id.Program, String, long, TimeUnit)} instead.
-   */
-  @Deprecated
-  public void waitForStatus(final String appId, final ProgramType programType, final String programName,
-                            String status, long timeout, TimeUnit timeoutUnit)
-    throws UnauthorizedException, IOException, ProgramNotFoundException,
-    TimeoutException, InterruptedException {
-
-    waitForStatus(Id.Program.from(config.getNamespace(), appId, programType, programName),
-                  status, timeout, timeoutUnit);
-  }
-
-  /**
-   * Gets the live information of a program. In distributed CDAP,
-   * this will contain IDs of the YARN applications that are running the program.
-   *
-   * @param appId ID of the application that the program belongs to
-   * @param programType type of the program
-   * @param programName name of the program
-   * @return {@link ProgramLiveInfo} of the program
-   * @throws IOException if a network error occurred
-   * @throws ProgramNotFoundException if the program with the specified name could not be found
-   * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
-   *
-   * @deprecated As of 3.1, use {@link #getLiveInfo(Id.Program)} instead.
-   */
-  @Deprecated
-  public DistributedProgramLiveInfo getLiveInfo(String appId, ProgramType programType, String programName)
-    throws IOException, ProgramNotFoundException, UnauthorizedException {
-
-    return getLiveInfo(Id.Program.from(config.getNamespace(), appId, programType, programName));
-  }
-
-  /**
-   * Gets the number of instances that a flowlet is currently running on.
-   *
-   * @param appId ID of the application that the flowlet belongs to
-   * @param flowId ID of the flow that the flowlet belongs to
-   * @param flowletId ID of the flowlet
-   * @return number of instances that the flowlet is currently running on
-   * @throws IOException if a network error occurred
-   * @throws NotFoundException if the application, flow, or flowlet could not be found
-   * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
-   *
-   * @deprecated As of 3.1, use {@link #getFlowletInstances(Id.Flow.Flowlet)} instead.
-   */
-  @Deprecated
-  public int getFlowletInstances(String appId, String flowId, String flowletId)
-    throws IOException, NotFoundException, UnauthorizedException {
-
-    return getFlowletInstances(Id.Flow.Flowlet.from(Id.Flow.from(config.getNamespace(), appId, flowId), flowletId));
-  }
-
-  /**
-   * Sets the number of instances that a flowlet will run on.
-   *
-   * @param appId ID of the application that the flowlet belongs to
-   * @param flowId ID of the flow that the flowlet belongs to
-   * @param flowletId ID of the flowlet
-   * @param instances number of instances for the flowlet to run on
-   * @throws IOException if a network error occurred
-   * @throws NotFoundException if the application, flow, or flowlet could not be found
-   * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
-   *
-   * @deprecated As of 3.1, use {@link #setFlowletInstances(Id.Flow.Flowlet, int)} instead.
-   */
-  @Deprecated
-  public void setFlowletInstances(String appId, String flowId, String flowletId, int instances)
-    throws IOException, NotFoundException, UnauthorizedException {
-
-    setFlowletInstances(Id.Flow.Flowlet.from(Id.Flow.from(config.getNamespace(), appId, flowId), flowletId),
-                        instances);
-  }
-
-  /**
-   * Gets the number of instances that a worker is currently running on.
-   *
-   * @param appId ID of the application that the worker belongs to
-   * @param workerId ID of the worker
-   * @return number of instances that the worker is currently running on
-   * @throws IOException if a network error occurred
-   * @throws NotFoundException if the application or worker could not be found
-   * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
-   *
-   * @deprecated As of 3.1, use {@link #getWorkerInstances(Id.Worker)} instead.
-   */
-  @Deprecated
-  public int getWorkerInstances(String appId, String workerId) throws IOException, NotFoundException,
-    UnauthorizedException {
-
-    return getWorkerInstances(Id.Worker.from(config.getNamespace(), appId, workerId));
-  }
-
-  /**
-   * Sets the number of instances that a worker will run on.
-   *
-   * @param appId ID of the application that the worker belongs to
-   * @param workerId ID of the worker
-   * @param instances number of instances for the worker to run on
-   * @throws IOException if a network error occurred
-   * @throws NotFoundException if the application or worker could not be found
-   * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
-   *
-   * @deprecated As of 3.1, use {@link #setWorkerInstances(Id.Worker, int)} instead.
-   */
-  @Deprecated
-  public void setWorkerInstances(String appId, String workerId, int instances) throws IOException, NotFoundException,
-    UnauthorizedException {
-
-    setWorkerInstances(Id.Worker.from(config.getNamespace(), appId, workerId), instances);
-  }
-
-  /**
-   * Gets the number of instances of a service.
-   *
-   * @param appId ID of the application that the service belongs to
-   * @param serviceId Id of the service
-   * @return number of instances of the service handler
-   * @throws IOException if a network error occurred
-   * @throws NotFoundException if the application or service could not found
-   * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
-   *
-   * @deprecated As of 3.1, use {@link #getServiceInstances(Id.Service)} instead.
-   */
-  @Deprecated
-  public int getServiceInstances(String appId, String serviceId)
-    throws IOException, NotFoundException, UnauthorizedException {
-
-    return getServiceInstances(Id.Service.from(config.getNamespace(), appId, serviceId));
-  }
-
-  /**
-   * Sets the number of instances of a service.
-   *
-   * @param appId ID of the application that the service belongs to
-   * @param serviceId ID of the service
-   * @param instances number of instances for the service
-   * @throws IOException if a network error occurred
-   * @throws NotFoundException if the application or service could not be found
-   * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
-   *
-   * @deprecated As of 3.1, use {@link #setServiceInstances(Id.Service, int)} instead.
-   */
-  @Deprecated
-  public void setServiceInstances(String appId, String serviceId, int instances)
-    throws IOException, NotFoundException, UnauthorizedException {
-
-    setServiceInstances(Id.Service.from(config.getNamespace(), appId, serviceId), instances);
-  }
-
-  /**
-   * Get the current run information for the Workflow based on the runid
-   * @param appId ID of the application
-   * @param workflowId ID of the workflow
-   * @param runId ID of the run for which the details are to be returned
-   * @return list of {@link WorkflowActionNode} currently running for the given runid
-   * @throws IOException if a network error occurred
-   * @throws NotFoundException if the application, workflow, or runid could not be found
-   * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
-   *
-   * @deprecated As of 3.1, use {@link #getWorkflowCurrent(Id.Application, String, String)} instead.
-   */
-  @Deprecated
-  public List<WorkflowActionNode> getWorkflowCurrent(String appId, String workflowId, String runId)
-    throws IOException, NotFoundException, UnauthorizedException {
-
-    return getWorkflowCurrent(Id.Application.from(config.getNamespace(), appId), workflowId, runId);
-  }
-
-  /**
-   * Gets the run records of a program.
-   *
-   * @param appId ID of the application that the program belongs to
-   * @param programType type of the program
-   * @param programId ID of the program
-   * @param state - filter by status of the program
-   * @return the run records of the program
-   * @throws IOException if a network error occurred
-   * @throws NotFoundException if the application or program could not be found
-   * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
-   *
-   * @deprecated As of 3.1, use {@link #getProgramRuns(Id.Program, String, long, long, int)} instead.
-   */
-  @Deprecated
-  public List<RunRecord> getProgramRuns(String appId, ProgramType programType, String programId, String state,
-                                        long startTime, long endTime, int limit)
-    throws IOException, NotFoundException, UnauthorizedException {
-
-    return getProgramRuns(Id.Program.from(config.getNamespace(), appId, programType, programId),
-                          state, startTime, endTime, limit);
-  }
-
-  /**
-   * Gets the run records of a program.
-   *
-   * @param appId ID of the application that the program belongs to
-   * @param programType type of the program
-   * @param programId ID of the program
-   * @return the run records of the program
-   * @throws IOException if a network error occurred
-   * @throws NotFoundException if the application or program could not be found
-   * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
-   *
-   * @deprecated As of 3.1, use {@link #getAllProgramRuns(Id.Program, long, long, int)} instead.
-   */
-  @Deprecated
-  public List<RunRecord> getAllProgramRuns(String appId, ProgramType programType, String programId,
-                                           long startTime, long endTime, int limit)
-    throws IOException, NotFoundException, UnauthorizedException {
-
-    return getAllProgramRuns(Id.Program.from(config.getNamespace(), appId, programType, programId),
-                             startTime, endTime, limit);
-  }
-
-  /**
-   * Gets the logs of a program.
-   *
-   * @param appId ID of the application that the program belongs to
-   * @param programType type of the program
-   * @param programId ID of the program
-   * @param start start time of the time range of desired logs
-   * @param stop end time of the time range of desired logs
-   * @return the logs of the program
-   * @throws IOException if a network error occurred
-   * @throws NotFoundException if the application or program could not be found
-   * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
-   *
-   * @deprecated As of 3.1, use {@link #getProgramLogs(Id.Program, long, long)} instead.
-   */
-  @Deprecated
-  public String getProgramLogs(String appId, ProgramType programType, String programId, long start, long stop)
-    throws IOException, NotFoundException, UnauthorizedException {
-
-    return getProgramLogs(Id.Program.from(config.getNamespace(), appId, programType, programId), start, stop);
-  }
-
-  /**
-   * Gets the runtime args of a program.
-   *
-   * @param appId ID of the application that the program belongs to
-   * @param programType type of the program
-   * @param programId ID of the program
-   * @return runtime args of the program
-   * @throws IOException if a network error occurred
-   * @throws ProgramNotFoundException if the application or program could not be found
-   * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
-   *
-   * @deprecated As of 3.1, use {@link #getRuntimeArgs(Id.Program)} instead.
-   */
-  @Deprecated
-  public Map<String, String> getRuntimeArgs(String appId, ProgramType programType, String programId)
-    throws IOException, UnauthorizedException, ProgramNotFoundException {
-
-    return getRuntimeArgs(Id.Program.from(config.getNamespace(), appId, programType, programId));
-  }
-
-  /**
-   * Sets the runtime args of a program.
-   *
-   * @param appId ID of the application that the program belongs to
-   * @param programType type of the program
-   * @param programId ID of the program
-   * @param runtimeArgs args of the program
-   * @throws IOException if a network error occurred
-   * @throws ProgramNotFoundException if the application or program could not be found
-   * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
-   *
-   * @deprecated As of 3.1, use {@link #setRuntimeArgs(Id.Program, Map)} instead.
-   */
-  @Deprecated
-  public void setRuntimeArgs(String appId, ProgramType programType, String programId, Map<String, String> runtimeArgs)
-    throws IOException, UnauthorizedException, ProgramNotFoundException {
-
-    setRuntimeArgs(Id.Program.from(config.getNamespace(), appId, programType, programId), runtimeArgs);
   }
 
   /**
@@ -551,6 +154,27 @@ public class ProgramClient {
   }
 
   /**
+   * Starts a batch of programs in the same call.
+   *
+   * @param namespace the namespace of the programs
+   * @param programs the programs to start, including any runtime arguments to start them with
+   * @return the result of starting each program
+   * @throws IOException if a network error occurred
+   * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
+   */
+  public List<BatchProgramResult> start(Id.Namespace namespace, List<BatchProgramStart> programs)
+    throws IOException, UnauthorizedException {
+
+    URL url = config.resolveNamespacedURLV3(namespace, "start");
+    HttpRequest request = HttpRequest.builder(HttpMethod.POST, url)
+      .withBody(GSON.toJson(programs), Charsets.UTF_8).build();
+
+    HttpResponse response = restClient.execute(request, config.getAccessToken());
+    return ObjectResponse.<List<BatchProgramResult>>fromJsonBody(response, BATCH_RESULTS_TYPE, GSON)
+      .getResponseObject();
+  }
+
+  /**
    * Stops a program.
    *
    * @param program the program to stop
@@ -567,6 +191,27 @@ public class ProgramClient {
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new ProgramNotFoundException(program);
     }
+  }
+
+  /**
+   * Stops a batch of programs in the same call.
+   *
+   * @param namespace the namespace of the programs
+   * @param programs the programs to stop
+   * @return the result of stopping each program
+   * @throws IOException if a network error occurred
+   * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
+   */
+  public List<BatchProgramResult> stop(Id.Namespace namespace, List<BatchProgram> programs)
+    throws IOException, UnauthorizedException {
+
+    URL url = config.resolveNamespacedURLV3(namespace, "stop");
+    HttpRequest request = HttpRequest.builder(HttpMethod.POST, url)
+      .withBody(GSON.toJson(programs), Charsets.UTF_8).build();
+
+    HttpResponse response = restClient.execute(request, config.getAccessToken());
+    return ObjectResponse.<List<BatchProgramResult>>fromJsonBody(response, BATCH_RESULTS_TYPE, GSON)
+      .getResponseObject();
   }
 
   /**
@@ -621,7 +266,28 @@ public class ProgramClient {
       throw new ProgramNotFoundException(program);
     }
 
-    return ObjectResponse.fromJsonBody(response, ProgramStatus.class).getResponseObject().getStatus();
+    Map<String, String> responseObject
+      = ObjectResponse.<Map<String, String>>fromJsonBody(response, MAP_STRING_STRING_TYPE, GSON).getResponseObject();
+    return responseObject.get("status");
+  }
+
+  /**
+   * Gets the status of multiple programs.
+   *
+   * @param namespace the namespace of the programs
+   * @param programs the list of programs to get status for
+   * @return the status of each program
+   */
+  public List<BatchProgramStatus> getStatus(Id.Namespace namespace, List<BatchProgram> programs)
+    throws IOException, UnauthorizedException {
+
+    URL url = config.resolveNamespacedURLV3(namespace, "status");
+
+    HttpRequest request = HttpRequest.post(url).withBody(GSON.toJson(programs)).build();
+    HttpResponse response = restClient.execute(request, config.getAccessToken());
+
+    return ObjectResponse.<List<BatchProgramStatus>>fromJsonBody(response, BATCH_STATUS_RESPONSE_TYPE, GSON)
+      .getResponseObject();
   }
 
   /**

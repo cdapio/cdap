@@ -16,11 +16,13 @@
 
 package co.cask.cdap.data2.dataset2.lib.partitioned;
 
+import co.cask.cdap.api.Predicate;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.batch.DatasetOutputCommitter;
 import co.cask.cdap.api.dataset.DataSetException;
 import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetSpecification;
+import co.cask.cdap.api.dataset.PartitionNotFoundException;
 import co.cask.cdap.api.dataset.lib.AbstractDataset;
 import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.api.dataset.lib.FileSetArguments;
@@ -41,12 +43,13 @@ import co.cask.cdap.api.dataset.lib.Partitioning.FieldType;
 import co.cask.cdap.api.dataset.table.Put;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
+import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.explore.client.ExploreFacade;
 import co.cask.cdap.proto.Id;
 import co.cask.tephra.Transaction;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Iterators;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -59,10 +62,10 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.annotation.Nullable;
@@ -201,24 +204,118 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
 
   @Override
   public PartitionConsumerResult consumePartitions(PartitionConsumerState partitionConsumerState) {
+    return consumePartitions(partitionConsumerState, Integer.MAX_VALUE, new Predicate<PartitionDetail>() {
+      @Override
+      public boolean apply(@Nullable PartitionDetail input) {
+        return true;
+      }
+    });
+  }
+
+  /**
+   * While applying a partition filter and a limit, parse partitions from the rows of a scanner and add them to a list.
+   * Note that multiple partitions can have the same transaction write pointer. For each set of partitions with the same
+   * write pointer, we either add the entire set or exclude the entire set. The limit is applied after adding each such
+   * set of partitions to the list.
+   *
+   * @param scanner the scanner on the partitions table from which to read partitions
+   * @param partitions list to add the qualifying partitions to
+   * @param limit limit, which once reached, partitions committed by other transactions will not be added.
+   *              The limit is checked after adding consuming all partitions of a transaction, so
+   *              the total number of consumed partitions may be greater than this limit.
+   * @param predicate predicate to apply before adding to the partitions list
+   * @return Transaction ID of the partition that we reached in the scanner, but did not add to the list. This value
+   *         can be useful in future scans.
+   */
+  @Nullable
+  private Long scannerToPartitions(Scanner scanner, List<PartitionDetail> partitions, int limit,
+                                   Predicate<PartitionDetail> predicate) {
+    Long prevTxId = null;
+    Row row;
+    while ((row = scanner.next()) != null) {
+      PartitionKey key = parseRowKey(row.getRow(), partitioning);
+
+      String relativePath = Bytes.toString(row.get(RELATIVE_PATH));
+      Long txId = Bytes.toLong(row.get(WRITE_PTR_COL));
+
+      // if we are on a partition written by a different transaction, check if we are over the limit
+      // we don't want to do a check on every partition because we want to either add all partitions written
+      // by a transaction or none, since we keep our marker based upon transaction id.
+      if (prevTxId != null && !prevTxId.equals(txId)) {
+        if (partitions.size() >= limit) {
+          return txId;
+        }
+      }
+      prevTxId = txId;
+
+      BasicPartitionDetail partitionDetail =
+        new BasicPartitionDetail(PartitionedFileSetDataset.this, relativePath, key, metadataFromRow(row));
+
+      if (!predicate.apply(partitionDetail)) {
+        continue;
+      }
+      partitions.add(partitionDetail);
+    }
+    return null;
+  }
+
+  // PartitionConsumerState consists of two things:
+  //   1) A list of transaction IDs representing the list of transactions in progress during the previous call.
+  //      Each of these transaction IDs need to be checked for new partitions because there may be partitions created by
+  //      those partitions since the previous call.
+  //   2) A transaction ID from which to start scanning for new partitions. This is an exclusive end range that the
+  //      previous call stopped scanning partitions at.
+  //   Note that each of the transactions IDs in (1) will be smaller than the transactionId in (2).
+  @Override
+  public PartitionConsumerResult consumePartitions(PartitionConsumerState partitionConsumerState, int limit,
+                                                   Predicate<PartitionDetail> predicate) {
     List<Long> previousInProgress = partitionConsumerState.getVersionsToCheck();
     Set<Long> noLongerInProgress = setDiff(previousInProgress, tx.getInProgress());
 
-    List<Iterator<Partition>> partitionIterators = Lists.newArrayList();
-    for (Long txId : noLongerInProgress) {
+    List<PartitionDetail> partitions = Lists.newArrayList();
+
+    Iterator<Long> iter = noLongerInProgress.iterator();
+    while (iter.hasNext()) {
+      Long txId = iter.next();
+      if (partitions.size() >= limit) {
+        break;
+      }
       Scanner scanner = partitionsTable.readByIndex(WRITE_PTR_COL, Bytes.toBytes(txId));
-      partitionIterators.add(new PartitionIterator(scanner));
+      try {
+        scannerToPartitions(scanner, partitions, limit, predicate);
+      } finally {
+        scanner.close();
+      }
+      // remove the txIds as they are added to the partitions list already
+      // if they're not removed, they will be persisted in the state for the next scan
+      iter.remove();
     }
 
-    // exclusive scan end
-    long scanUpTo = Math.min(tx.getWritePointer(), tx.getReadPointer() + 1);
-    // no read your own writes (partitions)
-    Scanner scanner = partitionsTable.scanByIndex(WRITE_PTR_COL,
-                                                  Bytes.toBytes(partitionConsumerState.getStartVersion()),
-                                                  Bytes.toBytes(scanUpTo));
-    partitionIterators.add(new PartitionIterator(scanner));
+    // exclusive scan end, to be used as the start for a next call to consumePartitions
+    long scanUpTo;
+    if (partitions.size() < limit) {
+      // no read your own writes (partitions)
+      scanUpTo = Math.min(tx.getWritePointer(), tx.getReadPointer() + 1);
+      Scanner scanner = partitionsTable.scanByIndex(WRITE_PTR_COL,
+                                                    Bytes.toBytes(partitionConsumerState.getStartVersion()),
+                                                    Bytes.toBytes(scanUpTo));
+      Long endTxId;
+      try {
+        endTxId = scannerToPartitions(scanner, partitions, limit, predicate);
+      } finally {
+        scanner.close();
+      }
+      if (endTxId != null) {
+        // nonnull means that the scanner was not exhausted
+        scanUpTo = endTxId;
+      }
+    } else {
+      // if we have already hit the limit, don't scan; instead, use the startVersion as the startVersion to the next
+      // call to consumePartitions
+      scanUpTo = partitionConsumerState.getStartVersion();
+    }
 
-    List<Long> inProgressBeforeScanEnd = Lists.newArrayList();
+    List<Long> inProgressBeforeScanEnd = Lists.newArrayList(noLongerInProgress);
     for (long txId : tx.getInProgress()) {
       if (txId >= scanUpTo) {
         break;
@@ -226,56 +323,16 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
       inProgressBeforeScanEnd.add(txId);
     }
     return new PartitionConsumerResult(new PartitionConsumerState(scanUpTo, inProgressBeforeScanEnd),
-                                       Iterators.concat(partitionIterators.iterator()));
+                                       partitions);
   }
 
   // returns the set of Longs that are in oldLongs, but not in newLongs (oldLongs - newLongs)
   private Set<Long> setDiff(List<Long> oldLongs, long[] newLongs) {
-    Set<Long> oldLongsSet = Sets.newHashSet(oldLongs);
+    Set<Long> oldLongsSet = new HashSet<>(oldLongs);
     for (long newLong : newLongs) {
       oldLongsSet.remove(newLong);
     }
     return oldLongsSet;
-  }
-
-  private final class PartitionIterator implements Iterator<Partition> {
-    private final Scanner scanner;
-    private Partition partition;
-
-    public PartitionIterator(Scanner scanner) {
-      this.scanner = scanner;
-      this.partition = getNextPartition();
-    }
-
-    @Override
-    public boolean hasNext() {
-      return partition != null;
-    }
-
-    @Override
-    public Partition next() {
-      if (partition == null) {
-        throw new NoSuchElementException();
-      }
-      Partition partitionToReturn = partition;
-      partition = getNextPartition();
-      return partitionToReturn;
-    }
-
-    @Override
-    public void remove() {
-      throw new UnsupportedOperationException();
-    }
-
-    private Partition getNextPartition() {
-      Row row = scanner.next();
-      if (row == null) {
-        return null;
-      }
-      PartitionKey key = parseRowKey(row.getRow(), partitioning);
-      String relativePath = Bytes.toString(row.get(RELATIVE_PATH));
-      return new BasicPartitionDetail(PartitionedFileSetDataset.this, relativePath, key, metadataFromRow(row));
-    }
   }
 
   @Override
@@ -288,7 +345,7 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
     final byte[] rowKey = generateRowKey(key, partitioning);
     Row row = partitionsTable.get(rowKey);
     if (row.isEmpty()) {
-      throw new DataSetException(String.format("Dataset '%s' does not have a partition for key: %s", getName(), key));
+      throw new PartitionNotFoundException(key, getName());
     }
 
     // ensure that none of the entries already exist in the metadata
@@ -317,7 +374,7 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
       ExploreFacade exploreFacade = exploreFacadeProvider.get();
       if (exploreFacade != null) {
         try {
-          exploreFacade.addPartition(datasetInstanceId, key, files.getLocation(path).toURI().getPath());
+          exploreFacade.addPartition(datasetInstanceId, key, Locations.toURI(files.getLocation(path)).getPath());
         } catch (Exception e) {
           throw new DataSetException(String.format(
             "Unable to add partition for key %s with path %s to explore table.", key.toString(), path), e);
@@ -340,12 +397,12 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
           boolean deleteSuccess = partition.getLocation().delete(true);
           if (!deleteSuccess) {
             throw new DataSetException(String.format("Error deleting file(s) for partition %s at path %s.",
-                                                     key, partition.getLocation().toURI().getPath()));
+                                                     key, partition.getLocation()));
           }
         }
       } catch (IOException e) {
         throw new DataSetException(String.format("Error deleting file(s) for partition %s at path %s: %s.",
-                                                 key, partition.getLocation().toURI().getPath(), e.getMessage()), e);
+                                                 key, partition.getLocation(), e.getMessage()), e);
       }
     }
     partitionsTable.delete(rowKey);
@@ -373,7 +430,7 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
       throw new UnsupportedOperationException(
         "Output is not supported for external partitioned file set '" + spec.getName() + "'");
     }
-    return new BasicPartitionOutput(this, getOutputPath(partitioning, key), key);
+    return new BasicPartitionOutput(this, getOutputPath(key), key);
   }
 
   @Override
@@ -401,8 +458,7 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
         if (metadata == null) {
           metadata = new PartitionMetadata(Collections.<String, String>emptyMap(), 0L);
         }
-        partitionDetails.add(new BasicPartitionDetail(PartitionedFileSetDataset.this, path, key, metadata
-        ));
+        partitionDetails.add(new BasicPartitionDetail(PartitionedFileSetDataset.this, path, key, metadata));
       }
     });
     return partitionDetails;
@@ -482,11 +538,16 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
     return Bytes.add(METADATA_PREFIX, Bytes.toBytes(metadataKey));
   }
 
+
   /**
    * Generate an output path for a given partition key.
    */
   // package visible for PartitionedFileSetDefinition
-  static String getOutputPath(Partitioning partitioning, PartitionKey key) {
+  String getOutputPath(PartitionKey key) {
+    return getOutputPath(key, partitioning);
+  }
+
+  public static String getOutputPath(PartitionKey key, Partitioning partitioning) {
     StringBuilder builder = new StringBuilder();
     String sep = "";
     for (String fieldName : partitioning.getFields().keySet()) {
@@ -524,7 +585,6 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
   @Override
   public Map<String, String> getInputFormatConfiguration() {
     Collection<String> inputPaths = filterInputPaths();
-    ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
     if (inputPaths == null) {
       return files.getInputFormatConfiguration();
     }
@@ -567,6 +627,14 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
 
   @Override
   public String getOutputFormatClassName() {
+    if (isExternal) {
+      throw new UnsupportedOperationException(
+        "Output is not supported for external partitioned file set '" + spec.getName() + "'");
+    }
+    PartitionKey outputKey = PartitionedFileSetArguments.getOutputPartitionKey(runtimeArguments, getPartitioning());
+    if (outputKey == null) {
+      return "co.cask.cdap.internal.app.runtime.batch.dataset.partitioned.DynamicPartitioningOutputFormat";
+    }
     return files.getOutputFormatClassName();
   }
 
@@ -576,33 +644,44 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
       throw new UnsupportedOperationException(
         "Output is not supported for external partitioned file set '" + spec.getName() + "'");
     }
+
+    // copy the output properties of the embedded file set to the output arguments
+    Map<String, String> outputArgs = Maps.newHashMap(files.getOutputFormatConfiguration());
+
     // we set the file set's output path in the definition's getDataset(), so there is no need to configure it again.
-    // here we just want to validate that an output partition key was specified in the arguments.
+    // here we just want to validate that an output partition key or dynamic partitioner was specified in the arguments.
     PartitionKey outputKey = PartitionedFileSetArguments.getOutputPartitionKey(runtimeArguments, getPartitioning());
-    if (outputKey == null) {
-      throw new DataSetException("Partition key must be given for the new output partition as a runtime argument.");
+    if (outputKey != null) {
+      PartitionedFileSetArguments.setOutputPartitionKey(outputArgs, outputKey);
+    } else {
+      String dynamicPartitionerClassName = PartitionedFileSetArguments.getDynamicPartitioner(runtimeArguments);
+      if (dynamicPartitionerClassName == null) {
+        throw new DataSetException(
+          "Either a Partition key or a DynamicPartitioner class must be given as a runtime argument.");
+      }
+      PartitionedFileSetArguments.setDynamicPartitioner(outputArgs, dynamicPartitionerClassName);
+      outputArgs.put(Constants.Dataset.Partitioned.HCONF_ATTR_OUTPUT_FORMAT_CLASS_NAME,
+                     files.getOutputFormatClassName());
+      outputArgs.put(Constants.Dataset.Partitioned.HCONF_ATTR_OUTPUT_DATASET, getName());
     }
-    // copy the output partition key to the output arguments of the embedded file set
-    // this will be needed by the output format to register the new partition.
-    Map<String, String> config = files.getOutputFormatConfiguration();
-    Map<String, String> outputArgs = Maps.newHashMap();
-    outputArgs.putAll(config);
-    PartitionedFileSetArguments.setOutputPartitionKey(outputArgs, outputKey);
     return ImmutableMap.copyOf(outputArgs);
   }
 
   @Override
   public void onSuccess() throws DataSetException {
     String outputPath = FileSetArguments.getOutputPath(runtimeArguments);
-    // if there if no output path, the batch job probably would have failed
+    // if there is no output path, the batch job probably would have failed
     // we definitely can't do much here if we don't know the output path
     if (outputPath == null) {
       return;
     }
-    // we know for sure there is an output partition key (checked in getOutputFormatConfig())
+    // its possible that there is no output key, if using the DynamicPartitioner, in which case
+    // DynamicPartitioningOutputFormat is responsible for registering the partitions
     PartitionKey outputKey = PartitionedFileSetArguments.getOutputPartitionKey(runtimeArguments, getPartitioning());
-    Map<String, String> metadata = PartitionedFileSetArguments.getOutputPartitionMetadata(runtimeArguments);
-    addPartition(outputKey, outputPath, metadata);
+    if (outputKey != null) {
+      Map<String, String> metadata = PartitionedFileSetArguments.getOutputPartitionMetadata(runtimeArguments);
+      addPartition(outputKey, outputPath, metadata);
+    }
   }
 
   @Override

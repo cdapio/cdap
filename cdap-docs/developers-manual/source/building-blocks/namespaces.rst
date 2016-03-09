@@ -10,7 +10,7 @@ Namespaces
 
 Overview
 ========
-A *Namespace* is a physical grouping of application, data and its metadata in CDAP. Conceptually,
+A *Namespace* is a logical grouping of application, data and its metadata in CDAP. Conceptually,
 namespaces can be thought of as a partitioning of a CDAP instance. Any application or data
 (referred to here as an “entity”) can exist independently in multiple namespaces at the
 same time. The data and metadata of an entity is stored independent of another instance of
@@ -94,8 +94,8 @@ namespaces. It can only be done if all programs of the namespace have been stopp
 the ``cdap-site.xml`` parameter ``enable.unrecoverable.reset`` has been enabled.
 
 
-.. rubric::  Examples of Using Namespaces
-
+Namespace Examples
+==================
 - All examples, starting with :ref:`Hello World <examples-hello-world>`, demonstrate using
   namespaces when using the CDAP HTTP RESTful API.
   

@@ -25,6 +25,8 @@ import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.guice.ZKClientModule;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
+import co.cask.cdap.common.namespace.AbstractNamespaceClient;
+import co.cask.cdap.common.namespace.InMemoryNamespaceClient;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.data.runtime.DataFabricModules;
@@ -35,6 +37,7 @@ import co.cask.cdap.data.stream.StreamAdminModules;
 import co.cask.cdap.data.stream.StreamFileWriterFactory;
 import co.cask.cdap.data.stream.service.heartbeat.HeartbeatPublisher;
 import co.cask.cdap.data.stream.service.heartbeat.StreamWriterHeartbeat;
+import co.cask.cdap.data.view.ViewAdminModules;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.transaction.stream.FileStreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
@@ -126,13 +129,16 @@ public class DFSStreamHeartbeatsTest {
         new NotificationFeedServiceRuntimeModule().getInMemoryModules(),
         new NotificationServiceRuntimeModule().getInMemoryModules(),
         new MetricsClientRuntimeModule().getInMemoryModules(),
+        new ViewAdminModules().getInMemoryModules(),
         // We need the distributed modules here to get the distributed stream service, which is the only one
         // that performs heartbeats aggregation
         new StreamServiceRuntimeModule().getDistributedModules(),
         new StreamAdminModules().getInMemoryModules()).with(new AbstractModule() {
+
         @Override
         protected void configure() {
           bind(MetricsCollectionService.class).to(NoOpMetricsCollectionService.class);
+          bind(AbstractNamespaceClient.class).to(InMemoryNamespaceClient.class);
 
           bind(StreamConsumerStateStoreFactory.class).to(LevelDBStreamConsumerStateStoreFactory.class)
             .in(Singleton.class);
@@ -166,12 +172,12 @@ public class DFSStreamHeartbeatsTest {
     hostname = streamHttpService.getBindAddress().getHostName();
     port = streamHttpService.getBindAddress().getPort();
 
-    Locations.mkdirsIfNotExists(namespacedLocationFactory.get(Constants.DEFAULT_NAMESPACE_ID));
+    Locations.mkdirsIfNotExists(namespacedLocationFactory.get(Id.Namespace.DEFAULT));
   }
 
   @AfterClass
   public static void afterClass() throws IOException {
-    Locations.deleteQuietly(namespacedLocationFactory.get(Constants.DEFAULT_NAMESPACE_ID), true);
+    Locations.deleteQuietly(namespacedLocationFactory.get(Id.Namespace.DEFAULT), true);
 
     notificationService.startAndWait();
     datasetService.startAndWait();
@@ -193,7 +199,7 @@ public class DFSStreamHeartbeatsTest {
   public void streamPublishesHeartbeatTest() throws Exception {
     final int entries = 10;
     final String streamName = "test_stream";
-    final Id.Stream streamId = Id.Stream.from(Constants.DEFAULT_NAMESPACE, streamName);
+    final Id.Stream streamId = Id.Stream.from(Id.Namespace.DEFAULT, streamName);
     // Create a new stream.
     streamAdmin.create(streamId);
 

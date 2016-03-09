@@ -23,7 +23,7 @@ The |cdap-apps-repository|_ contains data applications built using CDAP:
 - |wise|_ Web Insights Engine analyzes the behavior of users of a website by processing
   Apache web logs.
   This application is also the basis for the online tutorial of the same name,
-  `WISE: Web Analytics <http://docs.cask.co/tutorial/current/en/tutorial2.html>`__;
+  :ref:`WISE: Web Analytics <cdap-tutorial-wise>`;
   refer to it for step-by-step instructions on creating the application from scratch.
   Download or clone the app at `GitHub. <https://github.com/caskdata/cdap-apps>`__
 
@@ -62,14 +62,6 @@ CDAP Packs Repository
 The |cdap-packs-repository|_ is a collection of useful and reusable building blocks for
 your data applications. They are libraries of common data patterns and other programs
 useful when building big data applications:
-
-
-.. |etl-pack| replace:: **ETL-pack** *for ETL (extract, transform, and load):*
-.. _etl-pack: https://github.com/caskdata/cdap-packs/blob/develop/cdap-etl-pack
-
-- |etl-pack|_ The ETL-pack library is designed to ease the development of common ETL
-  solutions and provide powerful extension capabilities. Download or clone the library at
-  `GitHub. <https://github.com/caskdata/cdap-packs/>`__
 
 
 .. |twitter-pack| replace:: **Twitter-pack** *for Twitter Integration:*

@@ -22,6 +22,7 @@ import co.cask.cdap.app.runtime.ProgramRuntimeService.RuntimeInfo;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
 import co.cask.cdap.internal.app.store.DefaultStore;
 import co.cask.cdap.internal.app.store.RunRecordMeta;
@@ -29,7 +30,6 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
-
 import com.google.common.collect.Sets;
 import org.apache.http.HttpResponse;
 import org.junit.Assert;
@@ -38,6 +38,7 @@ import org.junit.Test;
 
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
 
@@ -63,7 +64,7 @@ public class ProgramLifecycleServiceTest extends AppFabricTestBase {
     HttpResponse response = deploy(WordCountApp.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
-    Id.Program wordcountFlow1 =
+    final Id.Program wordcountFlow1 =
       Id.Program.from(TEST_NAMESPACE1, "WordCountApp", ProgramType.FLOW, "WordCountFlow");
 
     // flow is stopped initially
@@ -72,6 +73,14 @@ public class ProgramLifecycleServiceTest extends AppFabricTestBase {
     // start a flow and check the status
     startProgram(wordcountFlow1);
     waitState(wordcountFlow1, ProgramRunStatus.RUNNING.toString());
+
+    // Wait until we have a run record
+    Tasks.waitFor(1, new Callable<Integer>() {
+      @Override
+      public Integer call() throws Exception {
+        return getProgramRuns(wordcountFlow1, ProgramRunStatus.RUNNING.toString()).size();
+      }
+    }, 5, TimeUnit.SECONDS);
 
     // Get the RunRecord
     List<RunRecord> runRecords = getProgramRuns(wordcountFlow1, ProgramRunStatus.RUNNING.toString());

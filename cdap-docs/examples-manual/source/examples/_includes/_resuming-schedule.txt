@@ -1,0 +1,29 @@
+
+.. To use this include, define these replacements:
+.. example-schedule
+.. example-workflow
+.. example-workflow-italic
+
+Resuming the Schedule
+---------------------
+
+The only thing you need to do to start the application is resume the schedule,
+as the schedule is in a *suspended* state when the application is deployed.
+
+- Using the CDAP-UI, go to the |application-overview|,
+
+  - click |example-workflow-italic| to get to the workflow detail page, 
+  - click on the *More* button in the upper-right to display an additional menu, 
+  - click on the *Schedules* menu-item to show the schedule, and then 
+  - click the *Play* button (**>**) so that the status shows as *scheduled*; or
+  
+..
+
+- From the Standalone CDAP SDK directory, use the Command Line Interface:
+
+  .. container:: highlight
+
+    .. parsed-literal::
+      |$| cdap-cli.sh resume schedule |example|.\ |example-schedule|
+      Successfully resumed schedule '|example-schedule|' in app '|example|'
+      

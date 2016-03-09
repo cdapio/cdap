@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -28,13 +28,11 @@ import co.cask.cdap.common.guice.ZKClientModule;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.logging.LoggingConfiguration;
-import co.cask.cdap.logging.guice.LogSaverStatusServiceModule;
+import co.cask.cdap.logging.guice.LogSaverServiceModule;
 import co.cask.cdap.logging.guice.LoggingModules;
-import co.cask.cdap.logging.save.LogSaver;
+import co.cask.cdap.logging.save.KafkaLogSaverService;
 import co.cask.cdap.logging.service.LogSaverStatusService;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
-import co.cask.cdap.watchdog.election.MultiLeaderElection;
-import co.cask.cdap.watchdog.election.PartitionChangeHandler;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.Futures;
@@ -56,7 +54,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
 /**
@@ -65,7 +62,6 @@ import java.util.concurrent.ExecutionException;
 public final class LogSaverTwillRunnable extends AbstractTwillRunnable {
   private static final Logger LOG = LoggerFactory.getLogger(LogSaverTwillRunnable.class);
 
-  private LogSaver logSaver;
   private SettableFuture<?> completion;
 
   private String name;
@@ -73,7 +69,7 @@ public final class LogSaverTwillRunnable extends AbstractTwillRunnable {
   private String cConfName;
   private ZKClientService zkClientService;
   private KafkaClientService kafkaClientService;
-  private MultiLeaderElection multiElection;
+  private KafkaLogSaverService logSaverService;
   private LogSaverStatusService logSaverStatusService;
   private MetricsCollectionService metricsCollectionService;
 
@@ -111,28 +107,25 @@ public final class LogSaverTwillRunnable extends AbstractTwillRunnable {
 
       UserGroupInformation.setConfiguration(hConf);
 
-      CConfiguration cConf = CConfiguration.create();
-      cConf.clear();
-      cConf.addResource(new File(configs.get("cConf")).toURI().toURL());
+      CConfiguration cConf = CConfiguration.create(new File(configs.get("cConf")));
+
       cConf.set(Constants.LogSaver.ADDRESS, context.getHost().getCanonicalHostName());
 
       // Initialize ZK client
       String zookeeper = cConf.get(Constants.Zookeeper.QUORUM);
       if (zookeeper == null) {
-        LOG.error("No zookeeper quorum provided.");
-        throw new IllegalStateException("No zookeeper quorum provided.");
+        LOG.error("No ZooKeeper quorum provided.");
+        throw new IllegalStateException("No ZooKeeper quorum provided.");
       }
 
       Injector injector = createGuiceInjector(cConf, hConf);
       zkClientService = injector.getInstance(ZKClientService.class);
       kafkaClientService = injector.getInstance(KafkaClientService.class);
-      logSaver = injector.getInstance(LogSaver.class);
+      logSaverService = injector.getInstance(KafkaLogSaverService.class);
 
       int numPartitions = Integer.parseInt(cConf.get(LoggingConfiguration.NUM_PARTITIONS,
                                                      LoggingConfiguration.DEFAULT_NUM_PARTITIONS));
       LOG.info("Num partitions = {}", numPartitions);
-      multiElection = new MultiLeaderElection(zkClientService, "log-saver-partitions", numPartitions,
-                                              createPartitionChangeHandler(logSaver));
 
       logSaverStatusService = injector.getInstance(LogSaverStatusService.class);
       metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
@@ -156,9 +149,8 @@ public final class LogSaverTwillRunnable extends AbstractTwillRunnable {
       }
     }, FileSystem.SHUTDOWN_HOOK_PRIORITY + 1);
 
-    Futures.getUnchecked(Services.chainStart(zkClientService, kafkaClientService, metricsCollectionService, logSaver,
-                                             multiElection, logSaverStatusService));
-
+    Futures.getUnchecked(Services.chainStart(zkClientService, kafkaClientService, metricsCollectionService,
+                                             logSaverService, logSaverStatusService));
     LOG.info("Runnable started " + name);
 
     try {
@@ -180,23 +172,9 @@ public final class LogSaverTwillRunnable extends AbstractTwillRunnable {
   public void stop() {
     LOG.info("Stopping runnable " + name);
 
-    Futures.getUnchecked(Services.chainStop(logSaverStatusService, multiElection, logSaver,
+    Futures.getUnchecked(Services.chainStop(logSaverStatusService, logSaverService,
                                             metricsCollectionService, kafkaClientService, zkClientService));
     completion.set(null);
-  }
-
-  private PartitionChangeHandler createPartitionChangeHandler(final PartitionChangeHandler delegate) {
-    return new PartitionChangeHandler() {
-      @Override
-      public void partitionsChanged(Set<Integer> partitions) {
-        try {
-          delegate.partitionsChanged(partitions);
-        } catch (Throwable t) {
-          LOG.error("Exception while changing partition. Terminating.", t);
-          completion.setException(t);
-        }
-      }
-    };
   }
 
   private static Injector createGuiceInjector(CConfiguration cConf, Configuration hConf) {
@@ -210,7 +188,7 @@ public final class LogSaverTwillRunnable extends AbstractTwillRunnable {
       new LocationRuntimeModule().getDistributedModules(),
       new DataFabricModules().getDistributedModules(),
       new DataSetsModules().getDistributedModules(),
-      new LogSaverStatusServiceModule(),
+      new LogSaverServiceModule(),
       new LoggingModules().getDistributedModules()
     );
   }

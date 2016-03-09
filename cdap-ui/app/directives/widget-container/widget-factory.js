@@ -1,3 +1,19 @@
+/*
+ * Copyright © 2015 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 angular.module(PKG.name + '.commons')
   .service('WidgetFactory', function() {
     this.registry = {
@@ -14,7 +30,7 @@ angular.module(PKG.name + '.commons')
           'class': 'form-control',
           'data-ng-trim': 'false',
           'ng-model': 'model',
-          placeholder: '{{myconfig.properties.default || ""}}'
+          placeholder: '{{myconfig.properties.default || myconfig["widget-attributes"].default || ""}}'
         }
       },
       'password': {
@@ -37,7 +53,7 @@ angular.module(PKG.name + '.commons')
         element: '<my-dsv></my-dsv>',
         attributes: {
           'ng-model': 'model',
-          'data-delimiter': '{{ myconfig.properties.delimiter }}',
+          'data-delimiter': '{{ myconfig.properties.delimiter || myconfig["widget-attributes"].delimiter }}',
           'data-type': 'csv'
         }
       },
@@ -45,7 +61,7 @@ angular.module(PKG.name + '.commons')
         element: '<my-dsv></my-dsv>',
         attributes: {
           'ng-model': 'model',
-          'data-delimiter': '{{ myconfig.properties.delimiter }}',
+          'data-delimiter': '{{ myconfig.properties.delimiter || myconfig["widget-attributes"].delimiter }}',
           'data-type': 'dsv'
         }
       },
@@ -53,7 +69,7 @@ angular.module(PKG.name + '.commons')
         element: '<my-json-textbox></my-json-textbox>',
         attributes: {
           'ng-model': 'model',
-          placeholder: 'myconfig.properties.default'
+          placeholder: 'myconfig.properties.default || myconfig["widget-attributes"].default'
         }
       },
       'javascript-editor': {
@@ -61,7 +77,17 @@ angular.module(PKG.name + '.commons')
         attributes: {
           'ng-model': 'model',
           'config': 'myconfig',
-          placeholder: '{{myconfig.properties.default || ""}}'
+          'mode': 'javascript',
+          placeholder: '{{myconfig.properties.default || myconfig["widget-attributes"].default || ""}}'
+        }
+      },
+      'python-editor': {
+        element: '<div my-ace-editor></div>',
+        attributes: {
+          'ng-model': 'model',
+          'config': 'myconfig',
+          'mode': 'python',
+          placeholder: '{{myconfig.properties.default || myconfig["widget-attributes"].default || ""}}'
         }
       },
       'schema': {
@@ -78,6 +104,14 @@ angular.module(PKG.name + '.commons')
           'data-config': 'myconfig'
         }
       },
+      'keyvalue-dropdown': {
+        element: '<my-key-value></my-key-value>',
+        attributes: {
+          'ng-model': 'model',
+          'data-config': 'myconfig',
+          'is-dropdown': 'true'
+        }
+      },
       'schedule': {
         element: '<my-schedule></my-schedule>',
         attributes: {
@@ -90,16 +124,22 @@ angular.module(PKG.name + '.commons')
         attributes: {
           'ng-model': 'model',
           'class': 'form-control',
-          'ng-options': 'item as item for item in myconfig.properties.values',
-          'ng-init': 'model = model.length ? model : myconfig.properties.default'
+          'ng-options': 'item as item for item in (myconfig.properties.values || myconfig["widget-attributes"].values)',
+          'ng-init': 'model = model.length ? model : (myconfig.properties.default || myconfig["widget-attributes"].default)'
         }
       },
-      'stream-properties': {
-        element: '<my-stream-properties></my-stream-properties>',
+      'stream-selector': {
+        element: '<my-dataset-selector></my-dataset-selector>',
         attributes: {
           'ng-model': 'model',
-          'data-plugins': 'properties',
-          'data-config': 'myconfig'
+          'data-dataset-type': 'stream'
+        }
+      },
+      'dataset-selector': {
+        element: '<my-dataset-selector></my-dataset-selector>',
+        attributes: {
+          'ng-model': 'model',
+          'data-dataset-type': 'dataset'
         }
       }
     };

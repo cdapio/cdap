@@ -17,6 +17,7 @@
 package co.cask.cdap;
 
 import co.cask.cdap.api.app.AbstractApplication;
+import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.service.BasicService;
 import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
@@ -33,8 +34,8 @@ public class AppWithDataset extends AbstractApplication {
 
   @Override
   public void configure() {
-    setName("AppWithDataSet");
     setDescription("Application with Dataset");
+    addStream(new Stream("mystream"));
     createDataset("myds", KeyValueTable.class);
     addService(new BasicService("PingService", new PingHandler()));
   }
@@ -47,4 +48,3 @@ public class AppWithDataset extends AbstractApplication {
     }
   }
 }
-

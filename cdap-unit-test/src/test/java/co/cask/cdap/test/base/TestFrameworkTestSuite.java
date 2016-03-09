@@ -20,14 +20,14 @@ import co.cask.cdap.batch.stream.BatchStreamIntegrationTestRun;
 import co.cask.cdap.flow.stream.FlowStreamIntegrationTestRun;
 import co.cask.cdap.mapreduce.MapReduceStreamInputTestRun;
 import co.cask.cdap.mapreduce.service.MapReduceServiceIntegrationTestRun;
-import co.cask.cdap.partitioned.MapReducePartitionConsumingTestRun;
+import co.cask.cdap.partitioned.PartitionConsumingTestRun;
 import co.cask.cdap.spark.metrics.SparkMetricsIntegrationTestRun;
 import co.cask.cdap.spark.service.SparkServiceIntegrationTestRun;
 import co.cask.cdap.spark.stream.SparkStreamIntegrationTestRun;
 import co.cask.cdap.test.XSlowTests;
 import co.cask.cdap.test.app.DummyBaseCloneTestRun;
 import co.cask.cdap.test.app.DummyBaseTestRun;
-import co.cask.cdap.test.app.TestAdapterFrameworkTestRun;
+import co.cask.cdap.test.app.ServiceLifeCycleTestRun;
 import co.cask.cdap.test.app.TestFrameworkTestRun;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
@@ -45,12 +45,12 @@ import org.junit.runners.Suite;
   FlowStreamIntegrationTestRun.class,
   MapReduceStreamInputTestRun.class,
   MapReduceServiceIntegrationTestRun.class,
-  MapReducePartitionConsumingTestRun.class,
+  PartitionConsumingTestRun.class,
+  ServiceLifeCycleTestRun.class,
   SparkMetricsIntegrationTestRun.class,
   SparkServiceIntegrationTestRun.class,
   SparkStreamIntegrationTestRun.class,
-  TestFrameworkTestRun.class,
-  TestAdapterFrameworkTestRun.class
+  TestFrameworkTestRun.class
 })
 public class TestFrameworkTestSuite extends TestFrameworkTestBase {
 }

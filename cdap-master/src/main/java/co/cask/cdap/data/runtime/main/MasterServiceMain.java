@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -32,6 +32,7 @@ import co.cask.cdap.common.guice.TwillModule;
 import co.cask.cdap.common.guice.ZKClientModule;
 import co.cask.cdap.common.io.URLConnections;
 import co.cask.cdap.common.kerberos.SecurityUtil;
+import co.cask.cdap.common.namespace.guice.NamespaceClientRuntimeModule;
 import co.cask.cdap.common.runtime.DaemonMain;
 import co.cask.cdap.common.service.RetryOnStartFailureService;
 import co.cask.cdap.common.service.RetryStrategies;
@@ -41,18 +42,24 @@ import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.stream.StreamAdminModules;
+import co.cask.cdap.data.view.ViewAdminModules;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.util.hbase.ConfigurationTable;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.explore.client.ExploreClient;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.explore.service.ExploreServiceUtils;
+import co.cask.cdap.hive.ExploreUtils;
+import co.cask.cdap.internal.app.runtime.spark.SparkUtils;
 import co.cask.cdap.internal.app.services.AppFabricServer;
 import co.cask.cdap.logging.appender.LogAppenderInitializer;
 import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.notifications.feeds.guice.NotificationFeedServiceRuntimeModule;
 import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
+import co.cask.cdap.proto.Id;
+import co.cask.cdap.security.TokenSecureStoreUpdater;
+import co.cask.cdap.store.guice.NamespaceStoreModule;
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
@@ -64,6 +71,7 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.common.io.Closeables;
 import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -78,9 +86,12 @@ import org.apache.twill.api.TwillApplication;
 import org.apache.twill.api.TwillController;
 import org.apache.twill.api.TwillPreparer;
 import org.apache.twill.api.TwillRunnerService;
+import org.apache.twill.api.logging.LogEntry;
+import org.apache.twill.api.logging.LogHandler;
 import org.apache.twill.api.logging.PrinterLogHandler;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.common.Threads;
+import org.apache.twill.internal.ServiceListenerAdapter;
 import org.apache.twill.internal.zookeeper.LeaderElection;
 import org.apache.twill.kafka.client.KafkaClientService;
 import org.apache.twill.zookeeper.ZKClientService;
@@ -130,7 +141,6 @@ public class MasterServiceMain extends DaemonMain {
   private final Configuration hConf;
   private final Injector baseInjector;
   private final ZKClientService zkClient;
-  private final TwillRunnerService twillRunner;
   private final KafkaClientService kafkaClient;
   private final MetricsCollectionService metricsCollectionService;
   private final ServiceStore serviceStore;
@@ -145,19 +155,42 @@ public class MasterServiceMain extends DaemonMain {
   }
 
   public MasterServiceMain() {
-    this.cConf = CConfiguration.create();
-    this.cConf.set(Constants.Dataset.Manager.ADDRESS, getLocalHost().getCanonicalHostName());
-    this.hConf = HBaseConfiguration.create();
+    CConfiguration cConf = CConfiguration.create();
+    cConf.set(Constants.Dataset.Manager.ADDRESS, getLocalHost().getCanonicalHostName());
+
+    // Note: login has to happen before any objects that need Kerberos credentials are instantiated.
+    login(cConf);
+
+    Configuration hConf = HBaseConfiguration.create();
 
     Injector injector = createBaseInjector(cConf, hConf);
     this.baseInjector = injector;
+    this.cConf = injector.getInstance(CConfiguration.class);
+    this.hConf = injector.getInstance(Configuration.class);
     this.zkClient = injector.getInstance(ZKClientService.class);
-    this.twillRunner = injector.getInstance(TwillRunnerService.class);
     this.kafkaClient = injector.getInstance(KafkaClientService.class);
     this.metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
     this.serviceStore = injector.getInstance(ServiceStore.class);
     this.secureStoreUpdater = baseInjector.getInstance(TokenSecureStoreUpdater.class);
     this.leaderElection = createLeaderElection();
+    // leader election will normally stay running. Will only stop if there was some issue starting up.
+    this.leaderElection.addListener(new ServiceListenerAdapter() {
+      @Override
+      public void terminated(Service.State from) {
+        if (!stopped) {
+          LOG.error("CDAP Master failed to start");
+          System.exit(1);
+        }
+      }
+
+      @Override
+      public void failed(Service.State from, Throwable failure) {
+        if (!stopped) {
+          LOG.error("CDAP Master failed to start");
+          System.exit(1);
+        }
+      }
+    }, MoreExecutors.sameThreadExecutor());
   }
 
   @Override
@@ -165,7 +198,6 @@ public class MasterServiceMain extends DaemonMain {
     cleanupTempDir();
 
     checkExploreRequirements();
-    login();
   }
 
   @Override
@@ -176,6 +208,23 @@ public class MasterServiceMain extends DaemonMain {
     } catch (IOException e) {
       LOG.error("Could not disable caching of URLJarFiles. This may lead to 'too many open files` exception.", e);
     }
+
+    // Create a new daemon thread to start the writing of Spark
+    Thread sparkRewriteThread = new Thread("Spark-Jar-Rewrite") {
+      @Override
+      public void run() {
+        try {
+          SparkUtils.getRewrittenSparkAssemblyJar(cConf);
+        } catch (IllegalStateException e) {
+          // It's ok if Spark is not configured at all
+          LOG.debug("Spark library is not available: {}", e.getMessage());
+        } catch (Throwable t) {
+          LOG.warn("Failed to rewrite Spark Assembly JAR", t);
+        }
+      }
+    };
+    sparkRewriteThread.setDaemon(true);
+    sparkRewriteThread.start();
 
     createSystemHBaseNamespace();
     updateConfigurationTable();
@@ -188,8 +237,6 @@ public class MasterServiceMain extends DaemonMain {
     Futures.getUnchecked(ZKOperations.ignoreError(zkClient.create("/", null, CreateMode.PERSISTENT),
                                                   KeeperException.NodeExistsException.class, null));
 
-    twillRunner.start();
-
     kafkaClient.startAndWait();
     metricsCollectionService.startAndWait();
     serviceStore.startAndWait();
@@ -201,11 +248,14 @@ public class MasterServiceMain extends DaemonMain {
     LOG.info("Stopping {}", Constants.Service.MASTER_SERVICES);
     stopped = true;
 
-    stopQuietly(leaderElection);
+    // if leader election failed to start, its listener will stop the master.
+    // In that case, we don't want to try stopping it again, as it will log confusing exceptions
+    if (leaderElection.isRunning()) {
+      stopQuietly(leaderElection);
+    }
     stopQuietly(serviceStore);
     stopQuietly(metricsCollectionService);
     stopQuietly(kafkaClient);
-    stopQuietly(twillRunner);
     stopQuietly(zkClient);
 
     if (cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED)) {
@@ -314,7 +364,6 @@ public class MasterServiceMain extends DaemonMain {
       new LoggingModules().getDistributedModules(),
       new IOModule(),
       new KafkaClientModule(),
-      new TwillModule(),
       new DiscoveryRuntimeModule().getDistributedModules(),
       new DataSetServiceModules().getDistributedModules(),
       new DataFabricModules().getDistributedModules(),
@@ -324,7 +373,10 @@ public class MasterServiceMain extends DaemonMain {
       new ExploreClientModule(),
       new NotificationFeedServiceRuntimeModule().getDistributedModules(),
       new NotificationServiceRuntimeModule().getDistributedModules(),
-      new StreamAdminModules().getDistributedModules()
+      new ViewAdminModules().getDistributedModules(),
+      new StreamAdminModules().getDistributedModules(),
+      new NamespaceClientRuntimeModule().getDistributedModules(),
+      new NamespaceStoreModule().getDistributedModules()
     );
   }
 
@@ -340,15 +392,20 @@ public class MasterServiceMain extends DaemonMain {
       private Cancellable secureStoreUpdateCancellable;
       // Executor for re-running master twill app if it gets terminated.
       private ScheduledExecutorService executor;
+      private TwillRunnerService twillRunner;
 
       @Override
       public void leader() {
         LOG.info("Became leader for master services");
 
         final Injector injector = baseInjector.createChildInjector(
+          new TwillModule(),
           new AppFabricServiceRuntimeModule().getDistributedModules(),
           new ProgramRunnerRuntimeModule().getDistributedModules()
         );
+
+        twillRunner = injector.getInstance(TwillRunnerService.class);
+        twillRunner.start();
 
         // Schedule secure store update.
         if (User.isHBaseSecurityEnabled(hConf) || UserGroupInformation.isSecurityEnabled()) {
@@ -369,18 +426,31 @@ public class MasterServiceMain extends DaemonMain {
         executor = Executors.newSingleThreadScheduledExecutor(Threads.createDaemonThreadFactory("master-runner"));
 
         // Start monitoring twill application
-        monitorTwillApplication(executor, 0, controller);
+        monitorTwillApplication(executor, 0, controller, twillRunner);
 
         // Start app-fabric and dataset services
         for (Service service : services) {
           LOG.info("Starting service in master: {}", service);
-          service.startAndWait();
+          try {
+            service.startAndWait();
+          } catch (Throwable t) {
+            // shut down the executor and stop the twill app,
+            // then throw an exception to cause the leader election service to stop
+            // leaderelection's listener will then shutdown the master
+            stop(true);
+            throw new RuntimeException(String.format("Unable to start service %s: %s", service, t.getMessage()));
+          }
         }
+        LOG.info("CDAP Master started successfully.");
       }
 
       @Override
       public void follower() {
         LOG.info("Became follower for master services");
+        stop(stopped);
+      }
+
+      private void stop(boolean shouldTerminateApp) {
         // Shutdown the retry executor so that no re-run of the twill app will be attempted
         if (executor != null) {
           executor.shutdownNow();
@@ -390,7 +460,7 @@ public class MasterServiceMain extends DaemonMain {
           secureStoreUpdateCancellable.cancel();
         }
         // If the master process has been explcitly stopped, stop the twill application as well.
-        if (stopped) {
+        if (shouldTerminateApp) {
           LOG.info("Stopping master twill application");
           TwillController twillController = controller.get();
           if (twillController != null) {
@@ -400,10 +470,17 @@ public class MasterServiceMain extends DaemonMain {
         // Stop local services last since DatasetService is running locally
         // and remote services need it to preserve states.
         for (Service service : Lists.reverse(services)) {
-          LOG.info("Stopping service in master: {}", service);
-          stopQuietly(service);
+          // service may not be running if there was an error in startup
+          if (service.isRunning()) {
+            LOG.info("Stopping service in master: {}", service);
+            stopQuietly(service);
+          }
         }
         services.clear();
+
+        if (twillRunner != null) {
+          stopQuietly(twillRunner);
+        }
       }
     });
   }
@@ -414,6 +491,11 @@ public class MasterServiceMain extends DaemonMain {
   private void cleanupTempDir() {
     File tmpDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
                            cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
+
+    if (!tmpDir.isDirectory()) {
+      return;
+    }
+
     try {
       DirUtils.deleteDirectoryContents(tmpDir, true);
     } catch (IOException e) {
@@ -436,7 +518,7 @@ public class MasterServiceMain extends DaemonMain {
   /**
    * Performs kerbose login if security is enabled.
    */
-  private void login() {
+  private void login(CConfiguration cConf) {
     try {
       SecurityUtil.loginForMasterService(cConf);
     } catch (Exception e) {
@@ -451,7 +533,7 @@ public class MasterServiceMain extends DaemonMain {
   private void createSystemHBaseNamespace() {
     HBaseTableUtil tableUtil = baseInjector.getInstance(HBaseTableUtil.class);
     try (HBaseAdmin admin = new HBaseAdmin(hConf)) {
-      tableUtil.createNamespaceIfNotExists(admin, Constants.SYSTEM_NAMESPACE_ID);
+      tableUtil.createNamespaceIfNotExists(admin, Id.Namespace.SYSTEM);
     } catch (IOException e) {
       throw Throwables.propagate(e);
     }
@@ -477,18 +559,24 @@ public class MasterServiceMain extends DaemonMain {
    * @param serviceController the reference to be updated with the active {@link TwillController}
    */
   private void monitorTwillApplication(final ScheduledExecutorService executor, final int failures,
-                                       final AtomicReference<TwillController> serviceController) {
+                                       final AtomicReference<TwillController> serviceController,
+                                       final TwillRunnerService twillRunner) {
     if (executor.isShutdown()) {
       return;
     }
 
     // Determines if the application is running. If not, starts a new one.
     final long startTime;
-    TwillController controller = getCurrentTwillController();
+    TwillController controller = getCurrentTwillController(twillRunner);
     if (controller != null) {
       startTime = 0L;
     } else {
-      controller = startTwillApplication();
+      try {
+        controller = startTwillApplication(twillRunner);
+      } catch (Exception e) {
+        LOG.error("Failed to start master twill application", e);
+        throw e;
+      }
       startTime = System.currentTimeMillis();
     }
 
@@ -510,7 +598,7 @@ public class MasterServiceMain extends DaemonMain {
           executor.execute(new Runnable() {
             @Override
             public void run() {
-              monitorTwillApplication(executor, 0, serviceController);
+              monitorTwillApplication(executor, 0, serviceController, twillRunner);
             }
           });
           return;
@@ -520,7 +608,7 @@ public class MasterServiceMain extends DaemonMain {
         executor.schedule(new Runnable() {
           @Override
           public void run() {
-            monitorTwillApplication(executor, failures + 1, serviceController);
+            monitorTwillApplication(executor, failures + 1, serviceController, twillRunner);
           }
         }, nextRunTime, TimeUnit.MILLISECONDS);
       }
@@ -531,7 +619,7 @@ public class MasterServiceMain extends DaemonMain {
    * Returns the {@link TwillController} for the current master service or {@code null} if none is running.
    */
   @Nullable
-  private TwillController getCurrentTwillController() {
+  private TwillController getCurrentTwillController(TwillRunnerService twillRunner) {
     int count = 100;
     long sleepMs = LOOKUP_ATTEMPT_TIMEOUT_MS / count;
 
@@ -568,7 +656,7 @@ public class MasterServiceMain extends DaemonMain {
    *
    * @return The {@link TwillController} for the application.
    */
-  private TwillController startTwillApplication() {
+  private TwillController startTwillApplication(TwillRunnerService twillRunner) {
     try {
       // Create a temp dir for the run to hold temporary files created to run the application
       Path tempPath = Files.createDirectories(new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
@@ -581,10 +669,28 @@ public class MasterServiceMain extends DaemonMain {
 
         TwillPreparer preparer = twillRunner.prepare(new MasterTwillApplication(cConf, cConfFile.toFile(),
                                                                                 hConfFile.toFile(),
-                                                                                getSystemServiceInstances()))
-          .addLogHandler(new PrinterLogHandler(new PrintWriter(System.out)));
+                                                                                getSystemServiceInstances()));
+
+        if (cConf.getBoolean(Constants.COLLECT_CONTAINER_LOGS)) {
+          if (LOG instanceof ch.qos.logback.classic.Logger) {
+            preparer.addLogHandler(new LogHandler() {
+              @Override
+              public void onLog(LogEntry entry) {
+                ch.qos.logback.classic.Logger logger = (ch.qos.logback.classic.Logger) LOG;
+                logger.callAppenders(new TwillLogEntryAdapter(entry));
+              }
+            });
+          } else {
+            LOG.warn("Unsupported logger binding ({}) for container log collection. Falling back to System.out.",
+                     LOG.getClass().getName());
+            preparer.addLogHandler(new PrinterLogHandler(new PrintWriter(System.out)));
+          }
+        } else {
+          preparer.addJVMOptions("-Dtwill.disable.kafka=true");
+        }
+
         // Add logback xml
-        if (logbackFile.toFile().isFile()) {
+        if (Files.exists(logbackFile)) {
           preparer.withResources().withResources(logbackFile.toUri());
         }
 
@@ -655,13 +761,12 @@ public class MasterServiceMain extends DaemonMain {
    * runnable.
    */
   private TwillPreparer prepareExploreContainer(TwillPreparer preparer) {
-    File tempDir = DirUtils.createTempDir(new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
-                                                   cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile());
-
     try {
       // Put jars needed by Hive in the containers classpath. Those jars are localized in the Explore
       // container by MasterTwillApplication, so they are available for ExploreServiceTwillRunnable
-      Set<File> jars = ExploreServiceUtils.traceExploreDependencies();
+      File tempDir = DirUtils.createTempDir(new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
+                                                     cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile());
+      Set<File> jars = ExploreServiceUtils.traceExploreDependencies(tempDir);
       for (File jarFile : jars) {
         LOG.trace("Adding jar file to classpath: {}", jarFile.getName());
         preparer = preparer.withClassPaths(jarFile.getName());
@@ -678,7 +783,9 @@ public class MasterServiceMain extends DaemonMain {
     }
 
     // Add all the conf files needed by hive as resources available to containers
-    Iterable<File> hiveConfFilesFiles = ExploreServiceUtils.getClassPathJarsFiles(hiveConfFiles);
+    File tempDir = DirUtils.createTempDir(new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
+                                                   cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile());
+    Iterable<File> hiveConfFilesFiles = ExploreUtils.getClassPathJarsFiles(hiveConfFiles);
     Set<String> addedFiles = Sets.newHashSet();
     for (File file : hiveConfFilesFiles) {
       if (file.getName().matches(".*\\.xml") && !file.getName().equals("logback.xml")) {

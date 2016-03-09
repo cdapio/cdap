@@ -18,12 +18,9 @@ package co.cask.cdap.app;
 
 import co.cask.cdap.api.app.Application;
 import co.cask.cdap.api.app.ApplicationConfigurer;
-import co.cask.cdap.api.data.stream.Stream;
-import co.cask.cdap.api.data.stream.StreamSpecification;
-import co.cask.cdap.api.dataset.Dataset;
-import co.cask.cdap.api.dataset.DatasetProperties;
-import co.cask.cdap.api.dataset.module.DatasetModule;
-import co.cask.cdap.api.flow.AbstractFlow;
+import co.cask.cdap.api.app.ApplicationSpecification;
+import co.cask.cdap.api.artifact.ArtifactId;
+import co.cask.cdap.api.artifact.ArtifactScope;
 import co.cask.cdap.api.flow.Flow;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.mapreduce.MapReduce;
@@ -31,7 +28,6 @@ import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
-import co.cask.cdap.api.schedule.Schedules;
 import co.cask.cdap.api.service.Service;
 import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.api.spark.Spark;
@@ -41,48 +37,63 @@ import co.cask.cdap.api.worker.WorkerSpecification;
 import co.cask.cdap.api.workflow.ScheduleProgramInfo;
 import co.cask.cdap.api.workflow.Workflow;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
-import co.cask.cdap.data.dataset.DatasetCreationSpec;
 import co.cask.cdap.internal.app.DefaultApplicationSpecification;
+import co.cask.cdap.internal.app.DefaultPluginConfigurer;
 import co.cask.cdap.internal.app.mapreduce.DefaultMapReduceConfigurer;
+import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.flow.DefaultFlowConfigurer;
+import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.internal.app.services.DefaultServiceConfigurer;
 import co.cask.cdap.internal.app.spark.DefaultSparkConfigurer;
 import co.cask.cdap.internal.app.worker.DefaultWorkerConfigurer;
 import co.cask.cdap.internal.app.workflow.DefaultWorkflowConfigurer;
-import co.cask.cdap.internal.flow.DefaultFlowSpecification;
 import co.cask.cdap.internal.schedule.StreamSizeSchedule;
+import co.cask.cdap.proto.Id;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.Maps;
 
+import java.util.HashMap;
 import java.util.Map;
 
 /**
  * Default implementation of {@link ApplicationConfigurer}.
  */
-public class DefaultAppConfigurer implements ApplicationConfigurer {
+public class DefaultAppConfigurer extends DefaultPluginConfigurer implements ApplicationConfigurer {
   private String name;
   private String description;
   private String configuration;
-  private final Map<String, StreamSpecification> streams = Maps.newHashMap();
-  private final Map<String, String> dataSetModules = Maps.newHashMap();
-  private final Map<String, DatasetCreationSpec> dataSetInstances = Maps.newHashMap();
-  private final Map<String, FlowSpecification> flows = Maps.newHashMap();
-  private final Map<String, MapReduceSpecification> mapReduces = Maps.newHashMap();
-  private final Map<String, SparkSpecification> sparks = Maps.newHashMap();
-  private final Map<String, WorkflowSpecification> workflows = Maps.newHashMap();
-  private final Map<String, ServiceSpecification> services = Maps.newHashMap();
-  private final Map<String, ScheduleSpecification> schedules = Maps.newHashMap();
-  private final Map<String, WorkerSpecification> workers = Maps.newHashMap();
+  private Id.Artifact artifactId;
+  private ArtifactRepository artifactRepository;
+  private PluginInstantiator pluginInstantiator;
+  private final Map<String, FlowSpecification> flows = new HashMap<>();
+  private final Map<String, MapReduceSpecification> mapReduces = new HashMap<>();
+  private final Map<String, SparkSpecification> sparks = new HashMap<>();
+  private final Map<String, WorkflowSpecification> workflows = new HashMap<>();
+  private final Map<String, ServiceSpecification> services = new HashMap<>();
+  private final Map<String, ScheduleSpecification> schedules = new HashMap<>();
+  private final Map<String, WorkerSpecification> workers = new HashMap<>();
 
   // passed app to be used to resolve default name and description
-  public DefaultAppConfigurer(Application app) {
+  public DefaultAppConfigurer(Id.Namespace namespace, Application app) {
+    super(namespace, null, null, null);
     this.name = app.getClass().getSimpleName();
     this.description = "";
   }
 
-  public DefaultAppConfigurer(Application app, String configuration) {
-    this(app);
+  // TODO: Remove this constructor when app templates are removed and when all applications are created from artifacts
+  public DefaultAppConfigurer(Id.Namespace namespace, Application app, String configuration) {
+    this(namespace, app);
     this.configuration = configuration;
+  }
+
+  public DefaultAppConfigurer(Id.Namespace namespace, Id.Artifact artifactId, Application app, String configuration,
+                              ArtifactRepository artifactRepository, PluginInstantiator pluginInstantiator) {
+    super(namespace, artifactId, artifactRepository, pluginInstantiator);
+    this.name = app.getClass().getSimpleName();
+    this.description = "";
+    this.configuration = configuration;
+    this.artifactId = artifactId;
+    this.artifactRepository = artifactRepository;
+    this.pluginInstantiator = pluginInstantiator;
   }
 
   @Override
@@ -96,68 +107,29 @@ public class DefaultAppConfigurer implements ApplicationConfigurer {
   }
 
   @Override
-  public void addStream(Stream stream) {
-    Preconditions.checkArgument(stream != null, "Stream cannot be null.");
-    StreamSpecification spec = stream.configure();
-    streams.put(spec.getName(), spec);
-  }
-
-  @Override
-  public void addDatasetModule(String moduleName, Class<? extends DatasetModule> moduleClass) {
-    Preconditions.checkArgument(moduleName != null, "Dataset module name cannot be null.");
-    Preconditions.checkArgument(moduleClass != null, "Dataset module class cannot be null.");
-    dataSetModules.put(moduleName, moduleClass.getName());
-  }
-
-  @Override
-  public void addDatasetType(Class<? extends Dataset> datasetClass) {
-    Preconditions.checkArgument(datasetClass != null, "Dataset class cannot be null.");
-    dataSetModules.put(datasetClass.getName(), datasetClass.getName());
-  }
-
-  @Override
-  public void createDataset(String datasetInstanceName, String typeName, DatasetProperties properties) {
-    Preconditions.checkArgument(datasetInstanceName != null, "Dataset instance name cannot be null.");
-    Preconditions.checkArgument(typeName != null, "Dataset type name cannot be null.");
-    Preconditions.checkArgument(properties != null, "Instance properties name cannot be null.");
-    dataSetInstances.put(datasetInstanceName,
-                         new DatasetCreationSpec(datasetInstanceName, typeName, properties));
-  }
-
-  @Override
-  public void createDataset(String datasetInstanceName,
-                            Class<? extends Dataset> datasetClass,
-                            DatasetProperties properties) {
-
-    Preconditions.checkArgument(datasetInstanceName != null, "Dataset instance name cannot be null.");
-    Preconditions.checkArgument(datasetClass != null, "Dataset class name cannot be null.");
-    Preconditions.checkArgument(properties != null, "Instance properties name cannot be null.");
-    dataSetInstances.put(datasetInstanceName,
-                         new DatasetCreationSpec(datasetInstanceName, datasetClass.getName(), properties));
-    dataSetModules.put(datasetClass.getName(), datasetClass.getName());
-  }
-
-  @Override
   public void addFlow(Flow flow) {
     Preconditions.checkArgument(flow != null, "Flow cannot be null.");
     DefaultFlowConfigurer configurer = new DefaultFlowConfigurer(flow);
-    FlowSpecification spec = flow.configure();
-    if (spec == null && flow instanceof AbstractFlow) {
-      AbstractFlow abstractFlow = (AbstractFlow) flow;
-      abstractFlow.configure(configurer);
-      spec = configurer.createSpecification();
-    } else {
-      spec = new DefaultFlowSpecification(flow.getClass().getName(), spec);
-    }
+    flow.configure(configurer);
+    FlowSpecification spec = configurer.createSpecification();
+    addStreams(configurer.getStreams());
+    addDatasetModules(configurer.getDatasetModules());
+    addDatasetSpecs(configurer.getDatasetSpecs());
     flows.put(spec.getName(), spec);
   }
 
   @Override
   public void addMapReduce(MapReduce mapReduce) {
     Preconditions.checkArgument(mapReduce != null, "MapReduce cannot be null.");
-    DefaultMapReduceConfigurer configurer = new DefaultMapReduceConfigurer(mapReduce);
+    DefaultMapReduceConfigurer configurer = new DefaultMapReduceConfigurer(mapReduce, deployNamespace, artifactId,
+                                                                           artifactRepository,
+                                                                           pluginInstantiator);
     mapReduce.configure(configurer);
 
+    addStreams(configurer.getStreams());
+    addDatasetModules(configurer.getDatasetModules());
+    addDatasetSpecs(configurer.getDatasetSpecs());
+    addPlugins(configurer.getPlugins());
     MapReduceSpecification spec = configurer.createSpecification();
     mapReduces.put(spec.getName(), spec);
   }
@@ -165,8 +137,15 @@ public class DefaultAppConfigurer implements ApplicationConfigurer {
   @Override
   public void addSpark(Spark spark) {
     Preconditions.checkArgument(spark != null, "Spark cannot be null.");
-    DefaultSparkConfigurer configurer = new DefaultSparkConfigurer(spark);
+    DefaultSparkConfigurer configurer = new DefaultSparkConfigurer(spark, deployNamespace, artifactId,
+                                                                   artifactRepository,
+                                                                   pluginInstantiator);
     spark.configure(configurer);
+
+    addStreams(configurer.getStreams());
+    addDatasetModules(configurer.getDatasetModules());
+    addDatasetSpecs(configurer.getDatasetSpecs());
+    addPlugins(configurer.getPlugins());
     SparkSpecification spec = configurer.createSpecification();
     sparks.put(spec.getName(), spec);
   }
@@ -182,18 +161,30 @@ public class DefaultAppConfigurer implements ApplicationConfigurer {
 
   public void addService(Service service) {
     Preconditions.checkArgument(service != null, "Service cannot be null.");
-    DefaultServiceConfigurer configurer = new DefaultServiceConfigurer(service);
+    DefaultServiceConfigurer configurer = new DefaultServiceConfigurer(service, deployNamespace, artifactId,
+                                                                       artifactRepository, pluginInstantiator);
     service.configure(configurer);
 
     ServiceSpecification spec = configurer.createSpecification();
+    addStreams(configurer.getStreams());
+    addDatasetModules(configurer.getDatasetModules());
+    addDatasetSpecs(configurer.getDatasetSpecs());
+    addPlugins(configurer.getPlugins());
     services.put(spec.getName(), spec);
   }
 
   @Override
   public void addWorker(Worker worker) {
     Preconditions.checkArgument(worker != null, "Worker cannot be null.");
-    DefaultWorkerConfigurer configurer = new DefaultWorkerConfigurer(worker);
+    DefaultWorkerConfigurer configurer = new DefaultWorkerConfigurer(worker, deployNamespace, artifactId,
+                                                                     artifactRepository,
+                                                                     pluginInstantiator);
     worker.configure(configurer);
+
+    addStreams(configurer.getStreams());
+    addDatasetModules(configurer.getDatasetModules());
+    addDatasetSpecs(configurer.getDatasetSpecs());
+    addPlugins(configurer.getPlugins());
     WorkerSpecification spec = configurer.createSpecification();
     workers.put(spec.getName(), spec);
   }
@@ -208,30 +199,25 @@ public class DefaultAppConfigurer implements ApplicationConfigurer {
     Preconditions.checkArgument(!programName.isEmpty(), "Program name cannot be empty.");
     Preconditions.checkArgument(!schedules.containsKey(schedule.getName()), "Schedule with the name '" +
       schedule.getName()  + "' already exists.");
-    Schedule realSchedule = schedule;
-    if (schedule.getClass().equals(Schedule.class)) {
-      realSchedule = Schedules.createTimeSchedule(schedule.getName(), schedule.getDescription(),
-                                                  schedule.getCronEntry());
-    }
-    if (realSchedule instanceof StreamSizeSchedule) {
+    if (schedule instanceof StreamSizeSchedule) {
       Preconditions.checkArgument(((StreamSizeSchedule) schedule).getDataTriggerMB() > 0,
                                   "Schedule data trigger must be greater than 0.");
     }
 
     ScheduleSpecification spec =
-      new ScheduleSpecification(realSchedule, new ScheduleProgramInfo(programType, programName), properties);
+      new ScheduleSpecification(schedule, new ScheduleProgramInfo(programType, programName), properties);
 
     schedules.put(schedule.getName(), spec);
   }
 
-  public ApplicationSpecification createSpecification(String version) {
-    return new DefaultApplicationSpecification(name, version, description, configuration, streams,
-                                               dataSetModules, dataSetInstances,
-                                               flows, mapReduces, sparks, workflows, services,
-                                               schedules, workers);
-  }
-
   public ApplicationSpecification createSpecification() {
-    return createSpecification("");
+    // can be null only for apps before 3.2 that were not upgraded
+    ArtifactId id = artifactId == null ? null :
+      new ArtifactId(artifactId.getName(), artifactId.getVersion(),
+                     artifactId.getNamespace().equals(Id.Namespace.SYSTEM) ? ArtifactScope.SYSTEM : ArtifactScope.USER);
+    return new DefaultApplicationSpecification(name, description, configuration, id, getStreams(),
+                                               getDatasetModules(), getDatasetSpecs(),
+                                               flows, mapReduces, sparks, workflows, services,
+                                               schedules, workers, getPlugins());
   }
 }

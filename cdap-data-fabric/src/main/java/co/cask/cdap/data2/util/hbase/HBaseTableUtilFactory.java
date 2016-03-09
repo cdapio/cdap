@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -62,5 +62,15 @@ public class HBaseTableUtilFactory extends HBaseVersionSpecificFactory<HBaseTabl
   @Override
   protected String getHBase10CDHClassname() {
     return "co.cask.cdap.data2.util.hbase.HBase10CDHTableUtil";
+  }
+
+  @Override
+  protected String getHBase11Classname() {
+    return "co.cask.cdap.data2.util.hbase.HBase11TableUtil";
+  }
+
+  @Override
+  protected String getHBase10CHD550ClassName() {
+    return "co.cask.cdap.data2.util.hbase.HBase10CDH550TableUtil";
   }
 }

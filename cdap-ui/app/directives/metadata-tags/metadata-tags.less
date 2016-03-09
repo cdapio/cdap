@@ -1,0 +1,85 @@
+/*
+ * Copyright © 2015 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
+@import "../../styles/variables.less";
+@import "../../styles/themes/cdap/mixins.less";
+@import "../../../bower_components/bootstrap/less/mixins.less";
+
+my-metadata-tags {
+  div.program-tags {
+    margin-top: 10px;
+    margin-bottom: 20px;
+    .add-tag, .tag {
+      display: inline;
+      margin-bottom: 2px;
+    }
+
+    .tag-input {
+      width: 150px;
+      display: inline-block;
+      vertical-align: top;
+
+      .form-control {
+        background-color: transparent;
+        height: 29px;
+        .border-radius(0);
+        &:focus {
+          border-color: @brand-primary;
+          .box-shadow(none);
+        }
+      }
+    }
+    a.tag-toggle {
+      font-size: 11px;
+      font-weight: 500;
+      padding-left: 5px;
+      white-space: nowrap;
+      overflow: hidden;
+      &:hover, &:focus {
+        cursor: pointer;
+        text-decoration: none;
+      }
+    }
+    div.add-tag {
+      a.btn {
+        .cask-btn(@background: transparent, @border: 1px solid @brand-primary, @border-radius: 0, @color: @brand-primary, @font-size: 11px, @padding: 6px 8px);
+        &:hover {
+          background-color: lighten(@brand-primary, 30%);
+        }
+      }
+    }
+    div.tag {
+      span.btn {
+        .cask-btn(@background: transparent, @border: 1px solid lightgray, @border-radius: 0, @color: gray, @font-size: 11px, @padding: 6px 8px);
+        &:hover {
+          background-color: @cdap-header;
+          color: white;
+        }
+        span.fa {
+          font-size: 9px;
+          position: relative;
+          bottom: 1px;
+        }
+      }
+    }
+    .btn {
+      font-weight: 500;
+      margin-right: 3px;
+      margin-bottom: 5px;
+      .transition(all 0.2s ease);
+    }
+  }
+}

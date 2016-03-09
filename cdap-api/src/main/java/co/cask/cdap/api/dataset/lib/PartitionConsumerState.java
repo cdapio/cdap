@@ -16,12 +16,10 @@
 
 package co.cask.cdap.api.dataset.lib;
 
-import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
-import com.google.common.primitives.Longs;
+import co.cask.cdap.api.common.Bytes;
 
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -34,9 +32,9 @@ public class PartitionConsumerState {
   public static final PartitionConsumerState FROM_BEGINNING =
     new PartitionConsumerState(0, Collections.<Long>emptyList());
 
-  // Read pointer of the transaction from the previous query of partitions. This is used to scan for new partitions
-  // created since then.
+  // Write pointer of a transaction, to be used as the start of the next scan for partitions.
   private final long startVersion;
+
   // The list of in progress transactions from the previous query of partitions that are smaller than the startVersion.
   // We do not need to include the in-progress transaction Ids that are larger than the startVersion because those will
   // be picked up in the next scan anyways, since we will start the scan from the startVersion.
@@ -45,9 +43,11 @@ public class PartitionConsumerState {
   private final List<Long> versionsToCheck;
 
   public PartitionConsumerState(long startVersion, List<Long> versionsToCheck) {
-    Preconditions.checkNotNull(versionsToCheck);
+    if (versionsToCheck == null) {
+      throw new IllegalArgumentException("List of versions cannot be null");
+    }
     this.startVersion = startVersion;
-    this.versionsToCheck = ImmutableList.copyOf(versionsToCheck);
+    this.versionsToCheck = Collections.unmodifiableList(new ArrayList<>(versionsToCheck));
   }
 
   public long getStartVersion() {
@@ -59,14 +59,17 @@ public class PartitionConsumerState {
   }
 
   public static PartitionConsumerState fromBytes(byte[] bytes) {
-    Preconditions.checkArgument((bytes.length - 1) % Longs.BYTES == 0,
-                                "bytes does not have length divisible by Longs.BYTES");
+    if (((bytes.length - 1) % Bytes.SIZEOF_LONG) != 0) {
+      throw new IllegalArgumentException("bytes does not have length divisible by " + Bytes.SIZEOF_LONG);
+    }
+
     ByteBuffer bb = ByteBuffer.wrap(bytes);
     byte serializationFormatVersion = bb.get();
-    Preconditions.checkArgument(serializationFormatVersion == 0,
-                                "Unsupported serialization format: {}", serializationFormatVersion);
+    if (serializationFormatVersion != 0) {
+      throw new IllegalArgumentException("Unsupported serialization format: " + serializationFormatVersion);
+    }
     long startVersion = bb.getLong();
-    List<Long> versionsToCheck = Lists.newArrayList();
+    List<Long> versionsToCheck = new ArrayList<>();
     while (bb.hasRemaining()) {
       versionsToCheck.add(bb.getLong());
     }
@@ -76,7 +79,7 @@ public class PartitionConsumerState {
   public byte[] toBytes() {
     int numLongs = 1 + versionsToCheck.size();
     // first byte for serialization format version
-    ByteBuffer bb = ByteBuffer.allocate(1 + Longs.BYTES * numLongs);
+    ByteBuffer bb = ByteBuffer.allocate(1 + Bytes.SIZEOF_LONG * numLongs);
     // currently, serialization format is 0
     bb.put((byte) 0);
     bb.putLong(startVersion);

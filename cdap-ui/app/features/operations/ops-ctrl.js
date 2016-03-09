@@ -1,3 +1,19 @@
+/*
+ * Copyright © 2015 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 /**
  * Operation 2.8
  */
@@ -10,7 +26,7 @@ angular.module(PKG.name+'.feature.dashboard')
    // Format:
    // [ Widget Title, context, [metricNames], line-type (options are in addwdgt-ctrl.js ]
       [
-        'Router requests',
+        'Router Requests',
         '',
         ['system.request.received','system.response.client-error', 'system.response.successful'], 'c3-scatter',
         { sizeX: 4, sizeY: 2, row: 0, col: 0 }
@@ -21,7 +37,7 @@ angular.module(PKG.name+'.feature.dashboard')
         { sizeX: 2, sizeY: 2, row: 0, col: 4 }
       ],
       [
-        'Transaction Commit',
+        'Transaction Commits',
         '',
         ['system.canCommit', 'system.commit', 'system.start.long', 'system.start.short'], 'c3-area-spline',
         { sizeX: 2, sizeY: 1, row: 2, col: 0 }
@@ -34,7 +50,7 @@ angular.module(PKG.name+'.feature.dashboard')
         { sizeX: 2, sizeY: 1, row: 2, col: 2 }
       ],
       [
-        'System Error and Warnings',
+        'System Errors and Warnings',
         '',
         ['system.services.log.error', 'system.services.log.warn'],
         'c3-area-step',
@@ -55,16 +71,16 @@ angular.module(PKG.name+'.feature.dashboard')
         { sizeX: 4, sizeY: 1, row: 3, col: 2 }
       ],
       [
-        'Bytes Store',
+        'Bytes Stored',
         'namespace.*',
         ['system.dataset.store.bytes'],
         'c3-line',
         { sizeX: 2, sizeY: 1, row: 4, col: 0 }
       ],
       [
-        'Dataset Read/Writes',
+        'Dataset Reads and Writes',
         'namespace.*',
-        ['system.dataset.store.writes' ,'system.dataset.store.reads'],
+        ['system.dataset.store.reads' ,'system.dataset.store.writes'],
         'c3-area-spline',
         { sizeX: 2, sizeY: 1, row: 4, col: 2 }
       ],
@@ -109,9 +125,9 @@ angular.module(PKG.name+'.feature.dashboard')
   })
 
   .controller('OpsAppsCtrl',
-  function ($scope, $state, myHelpers, MyDataSource) {
+  function ($scope, $state, myHelpers, MyCDAPDataSource) {
 
-    var dataSrc = new MyDataSource($scope);
+    var dataSrc = new MyCDAPDataSource($scope);
 
     $scope.apps = [];
 
@@ -158,8 +174,8 @@ angular.module(PKG.name+'.feature.dashboard')
 
 /* ------------------------------------------------------ */
 
-  .factory('opshelper', function (Widget, MyDataSource, MyMetricsQueryHelper, MyChartHelpers) {
-    var dataSrc = new MyDataSource();
+  .factory('opshelper', function (Widget, MyCDAPDataSource, MyMetricsQueryHelper, MyChartHelpers) {
+    var dataSrc = new MyCDAPDataSource();
 
     function createWidget(title, context, metricNames, type) {
       return new Widget({
@@ -187,7 +203,7 @@ angular.module(PKG.name+'.feature.dashboard')
         widgets.push(widget);
       });
       // Note: title is not currently used in the view
-      return {title : 'System metrics', columns : widgets};
+      return {title : 'System Metrics', columns : widgets};
     }
 
     function startPolling (widget) {

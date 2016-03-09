@@ -17,9 +17,9 @@
 package co.cask.cdap.api.dataset.lib;
 
 import co.cask.cdap.api.dataset.DatasetProperties;
-import com.google.common.collect.Maps;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -209,7 +209,7 @@ public class FileSetProperties {
    * @return a map of all properties whose key begins with the given prefix, without that prefix.
    */
   public static Map<String, String> propertiesWithPrefix(Map<String, String> properties, String prefix) {
-    Map<String, String> result = Maps.newHashMap();
+    Map<String, String> result = new HashMap<>();
     for (Map.Entry<String, String> entry : properties.entrySet()) {
       if (entry.getKey().startsWith(prefix)) {
         result.put(entry.getKey().substring(prefix.length()), entry.getValue());

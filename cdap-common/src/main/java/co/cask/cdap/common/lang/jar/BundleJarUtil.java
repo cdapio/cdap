@@ -22,20 +22,31 @@ import com.google.common.io.ByteStreams;
 import com.google.common.io.Closeables;
 import com.google.common.io.Files;
 import com.google.common.io.InputSupplier;
+import com.google.common.io.OutputSupplier;
 import org.apache.twill.filesystem.Location;
 
 import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
+import java.nio.file.FileVisitOption;
+import java.nio.file.FileVisitResult;
+import java.nio.file.Path;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.util.EnumSet;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.jar.JarInputStream;
+import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
+import java.util.zip.ZipOutputStream;
 
 /**
  * Utility functions that operate on bundle jars.
@@ -51,7 +62,7 @@ public class BundleJarUtil {
    * @throws IOException if failed to load the manifest.
    */
   public static Manifest getManifest(Location jarLocation) throws IOException {
-    URI uri = jarLocation.toURI();
+    URI uri = Locations.toURI(jarLocation);
 
     // Small optimization if the location is local
     if ("file".equals(uri.getScheme())) {
@@ -95,7 +106,7 @@ public class BundleJarUtil {
                                                     final String entryName) throws IOException {
     Preconditions.checkArgument(jarLocation != null);
     Preconditions.checkArgument(entryName != null);
-    final URI uri = jarLocation.toURI();
+    final URI uri = Locations.toURI(jarLocation);
 
     // Small optimization if the location is local
     if ("file".equals(uri.getScheme())) {
@@ -141,6 +152,60 @@ public class BundleJarUtil {
   }
 
   /**
+   * Creates an JAR including all the files present in the given input. Same as calling
+   * {@link #createArchive(File, OutputSupplier)} with a {@link JarOutputStream} created in the {@link OutputSupplier}.
+   */
+  public static void createJar(File input, final File output) throws IOException {
+    createArchive(input, new OutputSupplier<JarOutputStream>() {
+      @Override
+      public JarOutputStream getOutput() throws IOException {
+        return new JarOutputStream(new BufferedOutputStream(new FileOutputStream(output)));
+      }
+    });
+  }
+
+  /**
+   * Creates an archive including all the files present in the given input. If the given input is a file, then it alone
+   * is included in the archive.
+   *
+   * @param input input directory (or file) whose contents needs to be archived
+   * @param outputSupplier An {@link OutputSupplier} for the archive content to be written to.
+   * @throws IOException if there is failure in the archive creation
+   */
+  public static void createArchive(File input,
+                                   OutputSupplier<? extends ZipOutputStream> outputSupplier) throws IOException {
+    final URI baseURI = input.toURI();
+    try (ZipOutputStream output = outputSupplier.getOutput()) {
+      java.nio.file.Files.walkFileTree(input.toPath(), EnumSet.of(FileVisitOption.FOLLOW_LINKS), Integer.MAX_VALUE,
+                                       new SimpleFileVisitor<Path>() {
+        @Override
+        public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+          URI uri = baseURI.relativize(dir.toUri());
+          if (!uri.getPath().isEmpty()) {
+            output.putNextEntry(new ZipEntry(uri.getPath()));
+            output.closeEntry();
+          }
+          return FileVisitResult.CONTINUE;
+        }
+
+        @Override
+        public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+          URI uri = baseURI.relativize(file.toUri());
+          if (uri.getPath().isEmpty()) {
+            // Only happen if the given "input" is a file.
+            output.putNextEntry(new ZipEntry(file.toFile().getName()));
+          } else {
+            output.putNextEntry(new ZipEntry(uri.getPath()));
+          }
+          java.nio.file.Files.copy(file, output);
+          output.closeEntry();
+          return FileVisitResult.CONTINUE;
+        }
+      });
+    }
+  }
+
+  /**
    * Unpack a jar file in the given location to a directory.
    *
    * @param jarLocation Location containing the jar file
@@ -148,9 +213,9 @@ public class BundleJarUtil {
    * @return The {@code destinationFolder}
    * @throws IOException If failed to expand the jar
    */
-  public static File unpackProgramJar(Location jarLocation, File destinationFolder) throws IOException {
+  public static File unJar(Location jarLocation, File destinationFolder) throws IOException {
     Preconditions.checkArgument(jarLocation != null);
-    return unpackProgramJar(Locations.newInputSupplier(jarLocation), destinationFolder);
+    return unJar(Locations.newInputSupplier(jarLocation), destinationFolder);
   }
 
   /**
@@ -161,8 +226,8 @@ public class BundleJarUtil {
    * @return The {@code destinationFolder}
    * @throws IOException If failed to expand the jar
    */
-  public static File unpackProgramJar(InputSupplier<? extends InputStream> inputSupplier,
-                                      File destinationFolder) throws IOException {
+  public static File unJar(InputSupplier<? extends InputStream> inputSupplier,
+                           File destinationFolder) throws IOException {
     Preconditions.checkArgument(inputSupplier != null);
     Preconditions.checkArgument(destinationFolder != null);
     Preconditions.checkArgument(destinationFolder.canWrite());

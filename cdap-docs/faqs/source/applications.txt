@@ -1,0 +1,106 @@
+.. meta::
+    :author: Cask Data, Inc.
+    :copyright: Copyright © 2015 Cask Data, Inc.
+
+:titles-only-global-toc: true
+
+.. _faq-applications:
+
+======================
+CDAP FAQ: Applications
+======================
+
+.. contents::
+   :depth: 2
+   :local:
+   :backlinks: entry
+   :class: faq
+
+
+General
+=======
+
+How do I build an Analytics Pipeline with Hive, Spark, and CDAP?
+----------------------------------------------------------------
+We are planning to build an anlytics pipeline with these stages:
+
+- Data Ingestion
+- Data Transformation
+- Data Analytics
+
+In the Data Transformation stage, we are planning to use the CDAP Explore Service to transform the
+data using JOIN, GROUP BY and ORDER BY queries.
+
+We have an analytics pipeline in place, which uses Hive and Spark for processing. Now, we
+want to port our pipeline using CDAP.
+
+In Hive, we have queries which perform JOINs on multiple tables, GROUP BY and ORDER BY
+queries. We understand that an application can't connect to the Explore Service and make
+requests to it. Instead, we are planning to run our queries from outside the application
+and once all queries are completed trigger the Spark program.
+
+Are there better ways to use Hive and Spark together with CDAP?
+
+
+The problem you have is to get the output of the Hive stage into CDAP.
+For this, there are a couple of approaches that you can try. The ETL module in CDAP has a
+database source which is described with an example:
+https://github.com/cdap-guides/cdap-etl-adapter-guide/tree/develop/DBTableToHBaseTable.
+Currently, this has not been tested with Hive, but it would be good to try it out with
+Hive JDBC.
+
+You can use this to get data into a CDAP Table. From then on, it becomes a dataset like
+any other in CDAP, and can be accessed using Spark.
+
+You can also set up an ETL pipeline (using the CDAP-UI) with Hive as a source and a CDAP Table as a
+sink. Please see the `DBTableToHBaseTable example 
+<https://github.com/cdap-guides/cdap-etl-adapter-guide/tree/develop/DBTableToHBaseTable>`__
+for an example of database-to-CDAP Table. You will need to change the JDBC properties in the example
+provided on that page. Alternatively, you can provide all of this information in the
+CDAP-UI. 
+
+
+Spark
+=====
+
+How do I debug Spark jobs running in CDAP Distributed Mode?
+-----------------------------------------------------------
+There are a number of ways to solve problems with Spark:
+
+1. First, can you run a simple Spark job on YARN directly? Specifically, submit a Spark
+   job using ``spark-submit —master yarn``. The shell script used to launch Spark containers on
+   YARN is controlled by ``spark-submit``, not by CDAP. If that is unsuccessful, solving that is
+   a pre-requisite to having CDAP working with Spark.
+
+#. If you are seeing an exception such as::
+
+      Exception message:
+      /hadoop/yarn/local/usercache/yarn/appcache/application_1438676756737_0070/
+      container_e03_1438676756737_0070_02_000005/launch_container.sh: line 26:
+      $PWD/cdap-spark.jar/lib/*:...:$PWD/mr-framework/hadoop/share/hadoop/hdfs/lib/*:/
+      usr/hdp/${hdp.version}/hadoop/lib/hadoop-lzo-0.6.0.${hdp.version}.jar:/etc/hadoop/conf/
+      secure:$PWD/__app__.jar:$PWD/*: bad substitution
+
+   The error message can be caused by the ``hdp.version`` property not being set for the
+   YARN containers. This can be resolved by adding theses configurations to the
+   ``cdap-site.xml`` file (usually located inside ``/etc/cdap/conf/``)::
+
+      <property>
+          <name>app.program.jvm.opts</name>
+          <value>-Dhdp.version=${hdp.version} -XX:MaxPermSize=128M ${twill.jvm.gc.opts}</value>
+          <description>Java options for all program containers</description>
+      </property>
+    
+#. To further debug: when launching a Spark program, CDAP will first launch a YARN
+   application to act as the client for submitting the actual Spark job. You can look at the 
+   log files from that client container; usually the container-id ends with ``00002``,
+   since ``00001`` is the YARN application.
+
+
+Additional Resources
+====================
+
+Ask the CDAP Community for assistance
+-------------------------------------
+
+.. include:: cdap-user-googlegroups.txt

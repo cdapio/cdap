@@ -173,7 +173,20 @@ public interface WorkflowToken {
   Map<String, List<NodeValue>> getAll(Scope scope);
 
   /**
-   * This method is deprecated as of release 3.1.
+   * @deprecated As of release 3.1, MapReduce counters are now stored
+   * under the key counter group name, followed by ".", followed by the counter name.
+   * <p/>
+   * For example: to access the the number of input records to the map method of
+   * the ``PurchaseHistoryBuilder`` MapReduce program:
+   * <pre>
+   * <code>
+   * String counterGroupName = "org.apache.hadoop.mapreduce.TaskCounter";
+   * String counterName = "MAP_INPUT_RECORDS";
+   * String counterKey = counterGroupName + "." + counterName;
+   * String counterValue = workflowToken.get(counterKey, "PurchaseHistoryBuilder", WorkflowToken.Scope.SYSTEM);
+   * </code>
+   * </pre>
+   * <p/>
    * Get the Hadoop counters from the previous MapReduce program in the Workflow.
    * The method returns null if the counters are not set.
    * @return the Hadoop MapReduce counters set by the previous MapReduce program

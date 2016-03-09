@@ -16,6 +16,8 @@
 
 package co.cask.cdap.internal.app.runtime.spark;
 
+import co.cask.cdap.api.TaskLocalizationContext;
+import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.common.RuntimeArguments;
 import co.cask.cdap.api.common.Scope;
 import co.cask.cdap.api.data.DatasetInstantiationException;
@@ -33,21 +35,30 @@ import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.api.spark.SparkContext;
 import co.cask.cdap.api.spark.SparkProgram;
 import co.cask.cdap.api.spark.SparkSpecification;
-import co.cask.cdap.api.stream.StreamEventDecoder;
 import co.cask.cdap.api.workflow.WorkflowToken;
+import co.cask.cdap.common.conf.ConfigurationUtil;
+import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.logging.LoggingContext;
-import co.cask.cdap.data.dataset.DatasetInstantiator;
+import co.cask.cdap.common.options.UnsupportedOptionTypeException;
+import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
 import co.cask.cdap.data.stream.StreamInputFormat;
 import co.cask.cdap.data.stream.StreamUtils;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.dataset2.DynamicDatasetCache;
+import co.cask.cdap.data2.dataset2.SingleThreadDatasetCache;
+import co.cask.cdap.data2.metadata.lineage.AccessType;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
-import co.cask.cdap.internal.app.runtime.spark.dataset.CloseableBatchWritable;
-import co.cask.cdap.internal.app.runtime.spark.dataset.SparkDatasetInputFormat;
-import co.cask.cdap.internal.app.runtime.spark.dataset.SparkDatasetOutputFormat;
+import co.cask.cdap.internal.app.runtime.batch.dataset.CloseableBatchWritable;
+import co.cask.cdap.internal.app.runtime.batch.dataset.DatasetInputFormatProvider;
+import co.cask.cdap.internal.app.runtime.batch.dataset.DatasetOutputFormatProvider;
+import co.cask.cdap.internal.app.runtime.batch.dataset.ForwardingSplitReader;
+import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.tephra.Transaction;
 import co.cask.tephra.TransactionAware;
+import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableSortedMap;
@@ -64,8 +75,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
+import java.io.File;
 import java.io.IOException;
-import java.util.Collections;
+import java.net.URI;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -82,133 +94,137 @@ public class ExecutionSparkContext extends AbstractSparkContext {
   // Cache of Dataset instances that are created through this context
   // for closing all datasets when closing this context. This list does not includes datasets
   // created through the readFromDataset and writeToDataset methods.
+  // TODO: (CDAP-3983) The datasets should be managed by the dataset cache. That requires TEPHRA-99.
   private final Map<String, Dataset> datasets;
-  private final Configuration hConf;
+  private final SparkContextConfig contextConfig;
   private final Transaction transaction;
   private final StreamAdmin streamAdmin;
-  private final DatasetInstantiator datasetInstantiator;
+  private final DynamicDatasetCache datasetCache;
+  private final Map<String, File> localizedResources;
+
   private boolean stopped;
   private SparkFacade sparkFacade;
 
-  public ExecutionSparkContext(SparkSpecification specification, Id.Program programId, RunId runId,
+  /**
+   * This constructor is to create instance to be used in Spark executor.
+   */
+  public ExecutionSparkContext(ApplicationSpecification appSpec,
+                               SparkSpecification specification, Id.Program programId, RunId runId,
                                ClassLoader programClassLoader, long logicalStartTime,
                                Map<String, String> runtimeArguments,
                                Transaction transaction, DatasetFramework datasetFramework,
+                               TransactionSystemClient txClient,
                                DiscoveryServiceClient discoveryServiceClient,
                                MetricsCollectionService metricsCollectionService,
-                               Configuration hConf, StreamAdmin streamAdmin, @Nullable WorkflowToken workflowToken) {
-    this(specification, programId, runId, programClassLoader, logicalStartTime, runtimeArguments,
-         transaction, datasetFramework, discoveryServiceClient,
+                               Configuration hConf, StreamAdmin streamAdmin,
+                               Map<String, File> localizedResources,
+                               @Nullable PluginInstantiator pluginInstantiator,
+                               @Nullable WorkflowToken workflowToken) {
+    this(appSpec, specification, programId, runId, programClassLoader, logicalStartTime, runtimeArguments,
+         transaction, datasetFramework, txClient, discoveryServiceClient,
          createMetricsContext(metricsCollectionService, programId, runId),
-         createLoggingContext(programId, runId), hConf, streamAdmin, workflowToken);
+         createLoggingContext(programId, runId), hConf, streamAdmin, localizedResources, pluginInstantiator,
+         workflowToken);
   }
 
-  public ExecutionSparkContext(SparkSpecification specification, Id.Program programId, RunId runId,
+  /**
+   * This constructor is to create instance to be used in the Spark driver.
+   */
+  public ExecutionSparkContext(ApplicationSpecification appSpec,
+                               SparkSpecification specification, Id.Program programId, RunId runId,
                                ClassLoader programClassLoader, long logicalStartTime,
                                Map<String, String> runtimeArguments,
                                Transaction transaction, DatasetFramework datasetFramework,
-                               DiscoveryServiceClient discoveryServiceClient, MetricsContext metricsContext,
-                               LoggingContext loggingContext, Configuration hConf, StreamAdmin streamAdmin,
-                               WorkflowToken workflowToken) {
-    super(specification, programId, runId, programClassLoader, logicalStartTime,
-          runtimeArguments, discoveryServiceClient, metricsContext, loggingContext, workflowToken);
-
+                               TransactionSystemClient txClient,
+                               DiscoveryServiceClient discoveryServiceClient,
+                               MetricsContext metricsContext, LoggingContext loggingContext,
+                               Configuration hConf, StreamAdmin streamAdmin,
+                               Map<String, File> localizedResources,
+                               @Nullable PluginInstantiator pluginInstantiator,
+                               @Nullable WorkflowToken workflowToken) {
+    super(appSpec, specification, programId, runId, programClassLoader, logicalStartTime,
+          runtimeArguments, discoveryServiceClient, metricsContext, loggingContext,
+          pluginInstantiator, workflowToken);
     this.datasets = new HashMap<>();
-    this.hConf = hConf;
+    this.contextConfig = new SparkContextConfig(hConf);
     this.transaction = transaction;
     this.streamAdmin = streamAdmin;
-    this.datasetInstantiator = new DatasetInstantiator(programId.getNamespace(), datasetFramework,
-                                                       programClassLoader, getOwners(), getMetricsContext());
+    this.datasetCache = new SingleThreadDatasetCache(
+      new SystemDatasetInstantiator(datasetFramework, programClassLoader, getOwners()),
+      txClient, new NamespaceId(programId.getNamespace().getId()), runtimeArguments, getMetricsContext(), null);
+    this.localizedResources = localizedResources;
   }
 
   @Override
   public <T> T readFromDataset(String datasetName, Class<?> kClass, Class<?> vClass, Map<String, String> userDsArgs) {
-    // Clone the configuration since it's dataset specification and shouldn't affect the global hConf
-    Configuration configuration = new Configuration(hConf);
-
-    // first try if it is InputFormatProvider
     Map<String, String> dsArgs = RuntimeArguments.extractScope(Scope.DATASET, datasetName, getRuntimeArguments());
     dsArgs.putAll(userDsArgs);
     Dataset dataset = instantiateDataset(datasetName, dsArgs);
+
     try {
-      if (dataset instanceof InputFormatProvider) {
-        // get the input format and its configuration from the dataset
-        String inputFormatName = ((InputFormatProvider) dataset).getInputFormatClassName();
-        // load the input format class
-        if (inputFormatName == null) {
-          throw new DatasetInstantiationException(
-            String.format("Dataset '%s' provided null as the input format class name", datasetName));
-        }
-        Class<? extends InputFormat> inputFormatClass;
-        try {
-          @SuppressWarnings("unchecked")
-          Class<? extends InputFormat> ifClass =
-            (Class<? extends InputFormat>) SparkClassLoader.findFromContext().loadClass(inputFormatName);
-          inputFormatClass = ifClass;
-          Map<String, String> inputConfig = ((InputFormatProvider) dataset).getInputFormatConfiguration();
-          if (inputConfig != null) {
-            for (Map.Entry<String, String> entry : inputConfig.entrySet()) {
-              configuration.set(entry.getKey(), entry.getValue());
-            }
-          }
-        } catch (ClassNotFoundException e) {
-          throw new DatasetInstantiationException(String.format(
-            "Cannot load input format class %s provided by dataset '%s'", inputFormatName, datasetName), e);
-        } catch (ClassCastException e) {
-          throw new DatasetInstantiationException(String.format(
-            "Input format class %s provided by dataset '%s' is not an input format", inputFormatName, datasetName), e);
-        }
+      InputFormatProvider inputFormatProvider = new DatasetInputFormatProvider(datasetName, dsArgs, dataset, null,
+                                                                               SparkBatchReadableInputFormat.class);
+
+      // get the input format and its configuration from the dataset
+      String inputFormatName = inputFormatProvider.getInputFormatClassName();
+      // load the input format class
+      if (inputFormatName == null) {
+        throw new DatasetInstantiationException(
+          String.format("Dataset '%s' provided null as the input format class name", datasetName));
+      }
+      try {
+        @SuppressWarnings("unchecked")
+        Class<? extends InputFormat> inputFormatClass =
+          (Class<? extends InputFormat>) SparkClassLoader.findFromContext().loadClass(inputFormatName);
+
+        // Clone the configuration since it's dataset specification and shouldn't affect the global hConf
+        Configuration configuration = new Configuration(contextConfig.getConfiguration());
+        ConfigurationUtil.setAll(inputFormatProvider.getInputFormatConfiguration(), configuration);
         return getSparkFacade().createRDD(inputFormatClass, kClass, vClass, configuration);
+      } catch (ClassNotFoundException e) {
+        throw new DatasetInstantiationException(String.format(
+          "Cannot load input format class %s provided by dataset '%s'", inputFormatName, datasetName), e);
+      } catch (ClassCastException e) {
+        throw new DatasetInstantiationException(String.format(
+          "Input format class %s provided by dataset '%s' is not an input format", inputFormatName, datasetName), e);
       }
     } finally {
       commitAndClose(datasetName, dataset);
     }
-
-    // it must be supported by SparkDatasetInputFormat
-    SparkDatasetInputFormat.setDataset(configuration, datasetName, dsArgs);
-    return getSparkFacade().createRDD(SparkDatasetInputFormat.class, kClass, vClass, configuration);
   }
 
   @Override
   public <T> void writeToDataset(T rdd, String datasetName, Class<?> kClass, Class<?> vClass,
                                  Map<String, String> userDsArgs) {
-    // Clone the configuration since it's dataset specification and shouldn't affect the global hConf
-    Configuration configuration = new Configuration(hConf);
-
-    // first try if it is OutputFormatProvider
     Map<String, String> dsArgs = RuntimeArguments.extractScope(Scope.DATASET, datasetName, getRuntimeArguments());
     dsArgs.putAll(userDsArgs);
     Dataset dataset = instantiateDataset(datasetName, dsArgs);
+
     try {
-      if (dataset instanceof OutputFormatProvider) {
-        // get the output format and its configuration from the dataset
-        String outputFormatName = ((OutputFormatProvider) dataset).getOutputFormatClassName();
-        // load the output format class
-        if (outputFormatName == null) {
-          throw new DatasetInstantiationException(
-            String.format("Dataset '%s' provided null as the output format class name", datasetName));
-        }
-        Class<? extends OutputFormat> outputFormatClass;
+      OutputFormatProvider outputFormatProvider = new DatasetOutputFormatProvider(datasetName, dsArgs, dataset,
+                                                                                  SparkBatchWritableOutputFormat.class);
+      // get the output format and its configuration from the dataset
+      String outputFormatName = outputFormatProvider.getOutputFormatClassName();
+      // load the output format class
+      if (outputFormatName == null) {
+        throw new DatasetInstantiationException(
+          String.format("Dataset '%s' provided null as the output format class name", datasetName));
+      }
+
+      try {
+        @SuppressWarnings("unchecked")
+        Class<? extends OutputFormat> outputFormatClass =
+          (Class<? extends OutputFormat>) SparkClassLoader.findFromContext().loadClass(outputFormatName);
+
         try {
-          @SuppressWarnings("unchecked")
-          Class<? extends OutputFormat> ofClass =
-            (Class<? extends OutputFormat>) SparkClassLoader.findFromContext().loadClass(outputFormatName);
-          outputFormatClass = ofClass;
-          Map<String, String> outputConfig = ((OutputFormatProvider) dataset).getOutputFormatConfiguration();
-          if (outputConfig != null) {
-            for (Map.Entry<String, String> entry : outputConfig.entrySet()) {
-              configuration.set(entry.getKey(), entry.getValue());
-            }
-          }
-        } catch (ClassNotFoundException e) {
-          throw new DatasetInstantiationException(String.format(
-            "Cannot load input format class %s provided by dataset '%s'", outputFormatName, datasetName), e);
-        } catch (ClassCastException e) {
-          throw new DatasetInstantiationException(String.format(
-            "Input format class %s provided by dataset '%s' is not an input format", outputFormatName, datasetName), e);
-        }
-        try {
+          // Clone the configuration since it's dataset specification and shouldn't affect the global hConf
+          Configuration configuration = new Configuration(contextConfig.getConfiguration());
+          ConfigurationUtil.setAll(outputFormatProvider.getOutputFormatConfiguration(), configuration);
           getSparkFacade().saveAsDataset(rdd, outputFormatClass, kClass, vClass, configuration);
+
+          if (dataset instanceof DatasetOutputCommitter) {
+            ((DatasetOutputCommitter) dataset).onSuccess();
+          }
         } catch (Throwable t) {
           // whatever went wrong, give the dataset a chance to handle the failure
           if (dataset instanceof DatasetOutputCommitter) {
@@ -216,37 +232,31 @@ public class ExecutionSparkContext extends AbstractSparkContext {
           }
           throw t;
         }
-        if (dataset instanceof DatasetOutputCommitter) {
-          ((DatasetOutputCommitter) dataset).onSuccess();
-        }
-        return;
+      } catch (ClassNotFoundException e) {
+        throw new DatasetInstantiationException(String.format(
+          "Cannot load output format class %s provided by dataset '%s'", outputFormatName, datasetName), e);
+      } catch (ClassCastException e) {
+        throw new DatasetInstantiationException(String.format(
+          "Output format class %s provided by dataset '%s' is not an output format", outputFormatName, datasetName), e);
       }
     } finally {
       commitAndClose(datasetName, dataset);
     }
-
-    // it must be supported by SparkDatasetOutputFormat
-    SparkDatasetOutputFormat.setDataset(hConf, datasetName, dsArgs);
-    getSparkFacade().saveAsDataset(rdd, SparkDatasetOutputFormat.class, kClass, vClass, new Configuration(hConf));
   }
 
   @Override
-  public <T> T readFromStream(String streamName, Class<?> vClass,
-                              long startTime, long endTime, Class<? extends StreamEventDecoder> decoderType) {
-
-    StreamBatchReadable stream = (decoderType == null)
-      ? new StreamBatchReadable(streamName, startTime, endTime)
-      : new StreamBatchReadable(streamName, startTime, endTime, decoderType);
-
+  public <T> T readFromStream(StreamBatchReadable stream, Class<?> vClass) {
     try {
       // Clone the configuration since it's dataset specification and shouldn't affect the global hConf
-      Configuration configuration = configureStreamInput(new Configuration(hConf), stream, vClass);
+      Configuration configuration = configureStreamInput(new Configuration(contextConfig.getConfiguration()),
+                                                         stream, vClass);
       T streamRDD = getSparkFacade().createRDD(StreamInputFormat.class, LongWritable.class, vClass, configuration);
 
       // Register for stream usage for the Spark program
-      Id.Stream streamId = Id.Stream.from(getProgramId().getNamespace(), streamName);
+      Id.Stream streamId = Id.Stream.from(getProgramId().getNamespace(), stream.getStreamName());
       try {
         streamAdmin.register(getOwners(), streamId);
+        streamAdmin.addAccess(new Id.Run(getProgramId(), getRunId().getId()), streamId, AccessType.READ);
       } catch (Exception e) {
         LOG.warn("Failed to registry usage of {} -> {}", streamId, getOwners(), e);
       }
@@ -263,18 +273,26 @@ public class ExecutionSparkContext extends AbstractSparkContext {
 
   @Override
   public synchronized <T extends Dataset> T getDataset(String name, Map<String, String> arguments) {
-    Map<String, String> datasetArgs = RuntimeArguments.extractScope(Scope.DATASET, name, getRuntimeArguments());
-    datasetArgs.putAll(arguments);
 
-    String key = name + ImmutableSortedMap.copyOf(datasetArgs).toString();
+    String key = name + ImmutableSortedMap.copyOf(arguments).toString();
 
     @SuppressWarnings("unchecked")
     T dataset = (T) datasets.get(key);
     if (dataset == null) {
-      dataset = instantiateDataset(name, datasetArgs);
+      dataset = instantiateDataset(name, arguments);
       datasets.put(key, dataset);
     }
     return dataset;
+  }
+
+  @Override
+  public void releaseDataset(Dataset dataset) {
+    // nop-op: all datasets have to participate until the transaction (that is, the program) finishes
+  }
+
+  @Override
+  public void discardDataset(Dataset dataset) {
+    // nop-op: all datasets have to participate until the transaction (that is, the program) finishes
   }
 
   @Override
@@ -283,12 +301,15 @@ public class ExecutionSparkContext extends AbstractSparkContext {
       return;
     }
     stopped = true;
-    if (sparkFacade != null) {
-      sparkFacade.stop();
-    }
-    // No need to flush datasets, just close them
-    for (Dataset dataset : datasets.values()) {
-      Closeables.closeQuietly(dataset);
+    try {
+      if (sparkFacade != null) {
+        sparkFacade.stop();
+      }
+    } finally {
+      // No need to flush datasets, just close them
+      for (Dataset dataset : datasets.values()) {
+        Closeables.closeQuietly(dataset);
+      }
     }
   }
 
@@ -313,7 +334,7 @@ public class ExecutionSparkContext extends AbstractSparkContext {
 
   /**
    * Returns a {@link BatchReadable} that is implemented by the given dataset. This method is expected to be
-   * called by {@link SparkDatasetInputFormat}.
+   * called by {@link SparkBatchReadableInputFormat}.
    *
    * @param datasetName name of the dataset
    * @param arguments arguments for the dataset
@@ -323,7 +344,7 @@ public class ExecutionSparkContext extends AbstractSparkContext {
    * @throws DatasetInstantiationException if cannot find the dataset
    * @throws IllegalArgumentException if the dataset does not implement BatchReadable
    */
-  public <K, V> BatchReadable<K, V> getBatchReadable(final String datasetName, Map<String, String> arguments) {
+  <K, V> BatchReadable<K, V> getBatchReadable(final String datasetName, Map<String, String> arguments) {
     final Dataset dataset = instantiateDataset(datasetName, arguments);
     Preconditions.checkArgument(dataset instanceof BatchReadable, "Dataset %s of type %s does not implements %s",
                                 datasetName, dataset.getClass().getName(), BatchReadable.class.getName());
@@ -359,7 +380,7 @@ public class ExecutionSparkContext extends AbstractSparkContext {
   /**
    * Returns a {@link BatchWritable} that is implemented by the given dataset. The {@link BatchWritable} returned
    * is also {@link Closeable}. Caller of this method is responsible for calling {@link Closeable#close()}} of
-   * the returned object. This method is expected to be called by {@link SparkDatasetOutputFormat}.
+   * the returned object. This method is expected to be called by {@link SparkBatchWritableOutputFormat}.
    *
    * @param datasetName name of the dataset
    * @param arguments arguments for the dataset
@@ -369,7 +390,7 @@ public class ExecutionSparkContext extends AbstractSparkContext {
    * @throws DatasetInstantiationException if cannot find the dataset
    * @throws IllegalArgumentException if the dataset does not implement BatchWritable
    */
-  public <K, V> CloseableBatchWritable<K, V> getBatchWritable(final String datasetName, Map<String, String> arguments) {
+  <K, V> CloseableBatchWritable<K, V> getBatchWritable(final String datasetName, Map<String, String> arguments) {
     final Dataset dataset = instantiateDataset(datasetName, arguments);
     Preconditions.checkArgument(dataset instanceof BatchWritable, "Dataset %s of type %s does not implements %s",
                                 datasetName, dataset.getClass().getName(), BatchWritable.class.getName());
@@ -394,6 +415,10 @@ public class ExecutionSparkContext extends AbstractSparkContext {
     // This is an internal method.
     // Throwing exception here to avoid being called inside CDAP wrongly, since we shouldn't call this during execution.
     throw new UnsupportedOperationException("getSparkConf shouldn't be called in execution context");
+  }
+
+  public SparkContextConfig getContextConfig() {
+    return contextConfig;
   }
 
   /**
@@ -456,7 +481,7 @@ public class ExecutionSparkContext extends AbstractSparkContext {
     Location streamPath = StreamUtils.createGenerationLocation(streamConfig.getLocation(),
                                                                StreamUtils.getGeneration(streamConfig));
     StreamInputFormat.setTTL(configuration, streamConfig.getTTL());
-    StreamInputFormat.setStreamPath(configuration, streamPath.toURI());
+    StreamInputFormat.setStreamPath(configuration, Locations.toURI(streamPath));
     StreamInputFormat.setTimeRange(configuration, stream.getStartTime(), stream.getEndTime());
 
     String decoderType = stream.getDecoderType();
@@ -473,15 +498,28 @@ public class ExecutionSparkContext extends AbstractSparkContext {
    * Creates a new instance of dataset.
    */
   private <T extends Dataset> T instantiateDataset(String datasetName, Map<String, String> arguments) {
-    T dataset = datasetInstantiator.getDataset(datasetName, arguments);
+    // bypass = true, so that the dataset is not added to the factory's cache etc.
+    T dataset = datasetCache.getDataset(datasetName, arguments, true);
 
     // Provide the current long running transaction to the given dataset.
-    // Remove it from the transaction aware list from the dataset instantiator, since we won't use it in this context
-    // Need to remove it to avoid memory leak.
     if (dataset instanceof TransactionAware) {
       ((TransactionAware) dataset).startTx(transaction);
-      datasetInstantiator.removeTransactionAware((TransactionAware) dataset);
     }
     return dataset;
+  }
+
+  @Override
+  public TaskLocalizationContext getTaskLocalizationContext() {
+    return new SparkLocalizationContext(localizedResources);
+  }
+
+  @Override
+  public void localize(String name, URI uri) {
+    throw new UnsupportedOptionTypeException("Resources cannot be localized in Spark closures.");
+  }
+
+  @Override
+  public void localize(String name, URI uri, boolean archive) {
+    throw new UnsupportedOptionTypeException("Resources cannot be localized in Spark closures.");
   }
 }

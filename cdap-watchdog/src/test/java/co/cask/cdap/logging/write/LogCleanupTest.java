@@ -24,6 +24,7 @@ import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
+import co.cask.cdap.data.runtime.TransactionExecutorModule;
 import co.cask.cdap.logging.LoggingConfiguration;
 import co.cask.cdap.logging.context.FlowletLoggingContext;
 import co.cask.tephra.TransactionManager;
@@ -79,6 +80,7 @@ public class LogCleanupTest {
       new ConfigModule(cConf, hConf),
       new LocationRuntimeModule().getInMemoryModules(),
       new TransactionModules().getInMemoryModules(),
+      new TransactionExecutorModule(),
       new DataSetsModules().getInMemoryModules(),
       new SystemDatasetRuntimeModule().getInMemoryModules()
     );
@@ -152,16 +154,16 @@ public class LogCleanupTest {
     logCleanup.run();
 
     for (Location location : toDelete) {
-      Assert.assertFalse("Location " + location.toURI() + " is not deleted!", location.exists());
+      Assert.assertFalse("Location " + location + " is not deleted!", location.exists());
     }
 
     for (Location location : notDelete) {
-      Assert.assertTrue("Location " + location.toURI() + " is deleted!", location.exists());
+      Assert.assertTrue("Location " + location + " is deleted!", location.exists());
     }
 
     for (int i = 0; i < 5; ++i) {
       Location delDir = contextDir.append("2012-12-1" + i);
-      Assert.assertFalse("Location " + delDir.toURI() + " is not deleted!", delDir.exists());
+      Assert.assertFalse("Location " + delDir + " is not deleted!", delDir.exists());
     }
   }
 
@@ -215,12 +217,12 @@ public class LogCleanupTest {
 
     // Assert non-empty dirs (and their files) are still present
     for (Location location : files) {
-      Assert.assertTrue("Location " + location.toURI() + " is deleted!", location.exists());
+      Assert.assertTrue("Location " + location + " is deleted!", location.exists());
     }
 
     // Assert empty dirs are deleted
     for (Location location : emptyDirs) {
-      Assert.assertFalse("Dir " + location.toURI() + " is still present!", location.exists());
+      Assert.assertFalse("Dir " + location + " is still present!", location.exists());
     }
 
     // Assert base dir and namespaced log dirs exist
@@ -287,7 +289,7 @@ public class LogCleanupTest {
     new Function<Location, URI>() {
       @Override
       public URI apply(Location input) {
-        return input.toURI();
+        return Locations.toURI(input);
       }
     };
 }

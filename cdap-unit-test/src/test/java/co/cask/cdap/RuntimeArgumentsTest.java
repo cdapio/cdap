@@ -22,8 +22,6 @@ import co.cask.cdap.internal.app.runtime.BasicArguments;
 import com.google.common.collect.Maps;
 import org.junit.Assert;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
 import java.util.Map;
@@ -32,7 +30,6 @@ import java.util.Map;
  * Test RuntimeArguments class.
  */
 public class RuntimeArgumentsTest {
-  private static final Logger LOG = LoggerFactory.getLogger(RuntimeArgumentsTest.class);
 
   @Test
   public void testMaptoString() {

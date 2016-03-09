@@ -27,7 +27,6 @@ import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpRequests;
 import co.cask.common.http.HttpResponse;
 import co.cask.common.http.ObjectResponse;
-import com.google.common.base.Charsets;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.common.reflect.TypeToken;

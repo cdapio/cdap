@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,27 +16,22 @@
 
 package co.cask.cdap.test;
 
-import co.cask.cdap.api.data.stream.Stream;
-import co.cask.cdap.api.flow.Flow;
-import co.cask.cdap.api.flow.FlowSpecification;
+import co.cask.cdap.api.flow.AbstractFlow;
 
 /**
  *
  */
-public final class TestFlow implements Flow {
+public final class TestFlow extends AbstractFlow {
 
   public static final String NAME = "SomeFlow";
   public static final String INPUT_STREAM = "someStream";
 
+
   @Override
-  public FlowSpecification configure() {
-    return FlowSpecification.Builder.with()
-      .setName(NAME)
-      .setDescription("SomeDescription")
-      .withFlowlets()
-      .add("theFlowlet", new TestFlowlet())
-      .connect()
-      .from(new Stream(INPUT_STREAM)).to("theFlowlet")
-      .build();
+  protected void configureFlow() {
+    setName(NAME);
+    setDescription("SomeDescription");
+    addFlowlet(TestFlowlet.NAME, new TestFlowlet());
+    connectStream(INPUT_STREAM, "theFlowlet");
   }
 }

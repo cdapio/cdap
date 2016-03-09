@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,6 +16,7 @@
 
 package co.cask.cdap.data2.datafabric.dataset.service.executor;
 
+import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.table.Get;
@@ -40,6 +41,9 @@ import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.NamespaceMeta;
+import co.cask.cdap.store.NamespaceStore;
+import co.cask.cdap.store.guice.NamespaceStoreModule;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpRequests;
 import co.cask.common.http.HttpResponse;
@@ -80,20 +84,21 @@ public class DatasetOpExecutorServiceTest {
   private static final Id.DatasetInstance bob = Id.DatasetInstance.from(namespace, "bob");
 
   @ClassRule
-  public static TemporaryFolder tmpFolder = new TemporaryFolder();
+  public static final TemporaryFolder TMP_FOLDER = new TemporaryFolder();
 
   private DatasetService managerService;
   private DatasetFramework dsFramework;
   private EndpointStrategy endpointStrategy;
   private TransactionManager txManager;
+  private NamespaceStore nsStore;
 
   @Before
-  public void setUp() throws IOException {
+  public void setUp() throws Exception {
     Configuration hConf = new Configuration();
     CConfiguration cConf = CConfiguration.create();
 
-    File datasetDir = new File(tmpFolder.newFolder(), "datasetUser");
-    datasetDir.mkdirs();
+    File datasetDir = new File(TMP_FOLDER.newFolder(), "datasetUser");
+    Assert.assertTrue(datasetDir.mkdirs());
 
     cConf.set(Constants.Dataset.Manager.OUTPUT_DIR, datasetDir.getAbsolutePath());
     cConf.set(Constants.Dataset.Manager.ADDRESS, "localhost");
@@ -112,7 +117,8 @@ public class DatasetOpExecutorServiceTest {
       new DataSetsModules().getStandaloneModules(),
       new DataSetServiceModules().getInMemoryModules(),
       new TransactionMetricsModule(),
-      new ExploreClientModule());
+      new ExploreClientModule(),
+      new NamespaceStoreModule().getInMemoryModules());
 
     txManager = injector.getInstance(TransactionManager.class);
     txManager.startAndWait();
@@ -125,14 +131,21 @@ public class DatasetOpExecutorServiceTest {
     // find host
     DiscoveryServiceClient discoveryClient = injector.getInstance(DiscoveryServiceClient.class);
     endpointStrategy = new RandomEndpointStrategy(discoveryClient.discover(Constants.Service.DATASET_MANAGER));
+
+    nsStore = injector.getInstance(NamespaceStore.class);
+    nsStore.create(NamespaceMeta.DEFAULT);
+    nsStore.create(new NamespaceMeta.Builder().setName(bob.getNamespace()).build());
   }
 
   @After
-  public void tearDown() {
+  public void tearDown() throws Exception {
     dsFramework = null;
 
     managerService.stopAndWait();
     managerService = null;
+
+    nsStore.delete(Id.Namespace.DEFAULT);
+    nsStore.delete(bob.getNamespace());
   }
 
   @Test
@@ -148,6 +161,7 @@ public class DatasetOpExecutorServiceTest {
 
     // check truncate
     final Table table = dsFramework.getDataset(bob, DatasetDefinition.NO_ARGUMENTS, null);
+    Assert.assertNotNull(table);
     TransactionExecutor txExecutor =
       new DefaultTransactionExecutor(new InMemoryTxSystemClient(txManager),
                                      ImmutableList.of((TransactionAware) table));
@@ -206,7 +220,7 @@ public class DatasetOpExecutorServiceTest {
 
   private void testAdminOp(String instanceName, String opName, int expectedStatus, Object expectedResult)
     throws URISyntaxException, IOException {
-    testAdminOp(Id.DatasetInstance.from(Constants.DEFAULT_NAMESPACE, instanceName), opName, expectedStatus,
+    testAdminOp(Id.DatasetInstance.from(Id.Namespace.DEFAULT, instanceName), opName, expectedStatus,
                 expectedResult);
   }
 
@@ -224,14 +238,14 @@ public class DatasetOpExecutorServiceTest {
   }
 
   private URL resolve(String path) throws URISyntaxException, MalformedURLException {
+    @SuppressWarnings("ConstantConditions")
     InetSocketAddress socketAddress = endpointStrategy.pick(1, TimeUnit.SECONDS).getSocketAddress();
     return new URL(String.format("http://%s:%d%s%s", socketAddress.getHostName(),
                                  socketAddress.getPort(), Constants.Gateway.API_VERSION_3, path));
   }
 
   private DatasetAdminOpResponse getResponse(byte[] body) {
-    return Objects.firstNonNull(GSON.fromJson(new String(body), DatasetAdminOpResponse.class),
+    return Objects.firstNonNull(GSON.fromJson(Bytes.toString(body), DatasetAdminOpResponse.class),
                                 new DatasetAdminOpResponse(null, null));
   }
-
 }

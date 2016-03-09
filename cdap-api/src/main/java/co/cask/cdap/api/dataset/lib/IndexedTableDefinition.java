@@ -24,10 +24,10 @@ import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.table.Table;
-import com.google.common.base.Preconditions;
-import com.google.common.collect.Lists;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -47,7 +47,9 @@ public class IndexedTableDefinition
 
   public IndexedTableDefinition(String name, DatasetDefinition<? extends Table, ?> tableDef) {
     super(name);
-    Preconditions.checkArgument(tableDef != null, "Table definition is required");
+    if (tableDef == null) {
+      throw new IllegalArgumentException("Table definition is required");
+    }
     this.tableDef = tableDef;
   }
 
@@ -63,10 +65,10 @@ public class IndexedTableDefinition
   @Override
   public DatasetAdmin getAdmin(DatasetContext datasetContext, DatasetSpecification spec,
                                ClassLoader classLoader) throws IOException {
-    return new CompositeDatasetAdmin(Lists.newArrayList(
-      tableDef.getAdmin(datasetContext, spec.getSpecification("d"), classLoader),
-      tableDef.getAdmin(datasetContext, spec.getSpecification("i"), classLoader)
-    ));
+    List<DatasetAdmin> admins = new ArrayList<>();
+    admins.add(tableDef.getAdmin(datasetContext, spec.getSpecification("d"), classLoader));
+    admins.add(tableDef.getAdmin(datasetContext, spec.getSpecification("i"), classLoader));
+    return new CompositeDatasetAdmin(admins);
   }
 
   @Override
@@ -79,7 +81,9 @@ public class IndexedTableDefinition
     Table index = tableDef.getDataset(datasetContext, indexTableInstance, arguments, classLoader);
 
     String columnNamesToIndex = spec.getProperty(INDEX_COLUMNS_CONF_KEY);
-    Preconditions.checkNotNull(columnNamesToIndex, "columnsToIndex must be specified");
+    if (columnNamesToIndex == null) {
+      throw new IllegalArgumentException("columnsToIndex must be specified");
+    }
     String[] columns = columnNamesToIndex.split(",");
     byte[][] columnsToIndex = new byte[columns.length][];
     for (int i = 0; i < columns.length; i++) {

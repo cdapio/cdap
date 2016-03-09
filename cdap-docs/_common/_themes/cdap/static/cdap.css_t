@@ -50,6 +50,10 @@ div.body {
     min-height: 1300px;
 }
 
+div.figure.align-left {
+    float: none;
+}
+
 div.footer {
     color: #ccc;
     padding: 13px 0 13px 270px;
@@ -195,16 +199,17 @@ div.body h6 {
 
 div.body h1 { border-top: 20px solid white; margin-top: 0; font-size: 180%; font-weight:bold;}
 div.body h2 { font-size: 150%; font-weight:bold;}
-div.body h3 { font-size: 120%; }
+div.body h3 { font-size: 120%; font-weight:bold;}
 div.body h4 { font-size: 110%; font-weight:normal;}
-div.body h5 { font-size: 100%; font-weight:normal; background-color: #F2F2F2; }
-div.body h6 { font-size: 100%; font-weight:normal; background-color: #F2F2F2; }
+div.body h5 { font-size: 100%; font-weight:normal;}
+div.body h6 { font-size: 100%; font-weight:normal;}
 
 div.body h1 { background-color: #E0E0E0; }
 div.body h2 { background-color: #E0E0E0; }
 div.body h3 { background-color: #E0E0E0; margin: 30px 0px 10px 0px; }
-div.body h4 { background-color: #F2F2F2; margin: 30px 0px 10px 0px; }
+div.body h4 { background-color: #EDEDED; margin: 30px 0px 10px 0px; }
 div.body h5 { background-color: #F2F2F2; margin: 30px 0px 10px 0px; }
+div.body h6 { background-color: #F2F2F2; }
 
 a.headerlink {
     color: #c60f0f;
@@ -217,6 +222,10 @@ a.headerlink {
 a.headerlink:hover {
     background-color: #c60f0f;
     color: white;
+}
+
+a.toc-backref {
+    color: black;
 }
 
 h2>a.reference.external {
@@ -233,7 +242,6 @@ div.admonition p.admonition-title + p {
 
 div.highlight{
     background-color: white;
-    background-color: #ecf0f3;
     margin-left: 0px;
     margin-right: 0px;
 }
@@ -326,7 +334,7 @@ pre {
     line-height: 1.2em;
     border: 1px solid #C6C9CB;
     font-size: 1.1em;
-    margin: 1.5em 0 1.5em 0;
+    margin: 1.5em 0 1.5em 15px;
     -webkit-box-shadow: 1px 1px 1px #d8d8d8;
     -moz-box-shadow: 1px 1px 1px #d8d8d8;
 }
@@ -359,6 +367,10 @@ img.bordered-image {
 
 ul.first.last.simple {
   padding-left: 20px;
+}
+
+ul.simple {
+  margin-bottom: 1em;
 }
 
 /* -- Table styles used in Introduction page -------------------------------------- */
@@ -425,7 +437,7 @@ div.table-block-example.container table.docutils tr.row-odd {
   background-color: #E0E0E0;
 }
 
-/* Triple-table: Make even row with white border */
+/* -- Triple-table: Make even row with white border --------------------------- */
 
 div.table-block-example.container table.triple-table.docutils tr.row-even td {
   border-bottom: 1px solid white;
@@ -455,7 +467,36 @@ div.table-block-example.container table.triple-table.docutils tr:first-of-type t
   border-bottom: 1px solid #aaa;
 }
 
-/* -- Styles to hide navigation --- */
+/* -- FAQ --------------------------------------------------------------------- */
+
+table.faq-table.docutils tr.row-odd {
+  background-color: #F9FAFB;
+ }
+
+table.faq-table.docutils tr.row-odd th.stub {
+    padding-bottom: 5px;
+}
+
+table.faq-table.docutils tr.row-odd td {
+    padding-bottom: 5px;
+}
+
+table.faq-table.docutils tr.row-even th.stub {
+    padding-top: 5px;
+    border-bottom: 0px;
+}
+
+table.faq-table.docutils tr.row-even td {
+    padding-top: 5px;
+    border-bottom: 0px;
+}
+
+table.faq-table.docutils tr.row-odd div.highlight pre {
+    background-color: white;
+}
+
+
+/* -- Styles to hide navigation ----------------------------------------------- */
 
 div.documentwrapper-hidden {
     margin-top: 0px;

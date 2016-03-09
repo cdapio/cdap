@@ -59,8 +59,7 @@ public class MonitorClient {
   }
 
   public MonitorClient(ClientConfig config) {
-    this.config = config;
-    this.restClient = new RESTClient(config);
+    this(config, new RESTClient(config));
   }
 
   /**

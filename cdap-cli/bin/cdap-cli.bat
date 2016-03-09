@@ -22,7 +22,7 @@ SET CDAP_HOME=%~dp0
 SET CDAP_HOME=%CDAP_HOME:~0,-5%
 SET JAVACMD=%JAVA_HOME%\bin\java.exe
 
-SET CLASSPATH=%CDAP_HOME%\lib\co.cask.cdap.cdap-cli-@@project.version@@.jar;%CDAP_HOME%\conf
+SET CLASSPATH=%CDAP_HOME%\libexec\co.cask.cdap.cdap-cli-@@project.version@@.jar;%CDAP_HOME%\lib\co.cask.cdap.cdap-cli-@@project.version@@.jar;%CDAP_HOME%\conf
 
 REM Check for 64-bit version of OS. Currently not supporting 32-bit Windows
 IF NOT EXIST "%PROGRAMFILES(X86)%" (
@@ -46,9 +46,9 @@ for /f "tokens=* delims= " %%f in ('"%JAVACMD%" -version 2^>^&1') do @(
 )
 set line=%line:java version "1.=!!%
 set line=%line:~0,1%
-if NOT "%line%" == "6" (
-  if NOT "%line%" == "7" (
-    echo ERROR: Java version not supported. Please install Java 6 or 7 - other versions of Java are not yet supported.
+if NOT "%line%" == "7" (
+  if NOT "%line%" == "8" (
+    echo ERROR: Java version not supported. Please install Java 7 or 8 - other versions of Java are not supported.
     GOTO :FINALLY
   )
 )

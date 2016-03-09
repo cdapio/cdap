@@ -22,6 +22,7 @@ import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetSpecification;
+import co.cask.cdap.common.ServiceUnavailableException;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
@@ -103,6 +104,12 @@ public class DatasetSerDe implements SerDe {
   private void getDatasetSchema(Configuration conf, Id.DatasetInstance datasetId) throws SerDeException {
 
     try (ContextManager.Context hiveContext = ContextManager.getContext(conf)) {
+      // apparently the conf can be null in some versions of Hive?
+      // Because it calls initialize just to get the object inspector
+      if (hiveContext == null) {
+        LOG.info("Hive provided a null conf, will not be able to get dataset schema.");
+        return;
+      }
 
       // some datasets like Table and ObjectMappedTable have schema in the dataset properties
       try {
@@ -112,7 +119,7 @@ public class DatasetSerDe implements SerDe {
           schema = Schema.parseJson(schemaStr);
           return;
         }
-      } catch (DatasetManagementException e) {
+      } catch (DatasetManagementException | ServiceUnavailableException e) {
         throw new SerDeException("Could not instantiate dataset " + datasetId, e);
       } catch (IOException e) {
         throw new SerDeException("Exception getting schema for dataset " + datasetId, e);

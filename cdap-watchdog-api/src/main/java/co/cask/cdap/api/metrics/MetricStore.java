@@ -47,9 +47,8 @@ public interface MetricStore {
    * Queries metrics data.
    * @param query query to execute
    * @return time series that satisfy the query
-   * @throws Exception
    */
-  Collection<MetricTimeSeries> query(MetricDataQuery query) throws Exception;
+  Collection<MetricTimeSeries> query(MetricDataQuery query);
 
   /**
    * Deletes all metric data before given timestamp. Used for applying TTL policy.

@@ -16,8 +16,8 @@
 
 package co.cask.cdap.data2.util.hbase;
 
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.util.TableId;
+import co.cask.cdap.proto.Id;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableName;
 
@@ -28,7 +28,7 @@ public class HTable96NameConverter extends HTableNameConverter {
 
   @Override
   public String getSysConfigTablePrefix(HTableDescriptor htd) {
-    return getNamespacePrefix(htd) + "_" + Constants.SYSTEM_NAMESPACE + ":";
+    return getNamespacePrefix(htd) + "_" + Id.Namespace.SYSTEM.getId() + ":";
   }
 
   @Override

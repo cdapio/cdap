@@ -22,6 +22,7 @@ import co.cask.cdap.api.metrics.MetricDataQuery;
 import co.cask.cdap.api.metrics.MetricDeleteQuery;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.utils.TimeMathParser;
+import co.cask.cdap.proto.Id;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
@@ -167,10 +168,10 @@ final class MetricQueryParser {
     if (index != -1) {
       String strippedPath = uriPath.substring(0, index);
       if (strippedPath.startsWith("/system/cluster")) {
-        builder.setSliceByTagValues(ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, Constants.SYSTEM_NAMESPACE));
+        builder.setSliceByTagValues(ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, Id.Namespace.SYSTEM.getId()));
         builder.setScope("system");
       } else if (strippedPath.startsWith("/system/transactions")) {
-        builder.setSliceByTagValues(ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, Constants.SYSTEM_NAMESPACE,
+        builder.setSliceByTagValues(ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, Id.Namespace.SYSTEM.getId(),
                                                     Constants.Metrics.Tag.COMPONENT, TRANSACTION_METRICS_CONTEXT));
         builder.setScope("system");
       } else {
@@ -228,13 +229,13 @@ final class MetricQueryParser {
     switch (pathType) {
       case APPS:
         // Note: If v3 APIs use this class, we may have to get namespaceId from higher up
-        tagValues.put(Constants.Metrics.Tag.NAMESPACE, Constants.DEFAULT_NAMESPACE);
+        tagValues.put(Constants.Metrics.Tag.NAMESPACE, Id.Namespace.DEFAULT.getId());
         tagValues.put(Constants.Metrics.Tag.APP, urlDecode(pathParts.next()));
         parseSubContext(pathParts, tagValues);
         break;
       case STREAMS:
         // Note: If v3 APIs use this class, we may have to get namespaceId from higher up
-        tagValues.put(Constants.Metrics.Tag.NAMESPACE, Constants.DEFAULT_NAMESPACE);
+        tagValues.put(Constants.Metrics.Tag.NAMESPACE, Id.Namespace.DEFAULT.getId());
         if (!pathParts.hasNext()) {
           throw new MetricsPathException("'streams' must be followed by a stream name");
         }
@@ -242,7 +243,7 @@ final class MetricQueryParser {
         break;
       case DATASETS:
         // Note: If v3 APIs use this class, we may have to get namespaceId from higher up
-        tagValues.put(Constants.Metrics.Tag.NAMESPACE, Constants.DEFAULT_NAMESPACE);
+        tagValues.put(Constants.Metrics.Tag.NAMESPACE, Id.Namespace.DEFAULT.getId());
         if (!pathParts.hasNext()) {
           throw new MetricsPathException("'datasets' must be followed by a dataset name");
         }
@@ -258,7 +259,7 @@ final class MetricQueryParser {
         break;
       case SERVICES:
         // Note: If v3 APIs use this class, we may have to get namespaceId from higher up
-        tagValues.put(Constants.Metrics.Tag.NAMESPACE, Constants.SYSTEM_NAMESPACE);
+        tagValues.put(Constants.Metrics.Tag.NAMESPACE, Id.Namespace.SYSTEM.getId());
         parseSystemService(pathParts, tagValues);
         break;
     }

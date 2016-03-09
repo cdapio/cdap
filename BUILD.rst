@@ -24,15 +24,15 @@ Standalone and Distributed CDAP
     
 - Build all modules::
 
-    mvn package
+    mvn clean package
 
 - Run checkstyle, skipping tests::
 
-    mvn package -DskipTests
+    mvn clean package -DskipTests
 
 - Build a particular module::
 
-    mvn package -pl [module] -am
+    mvn clean package -pl [module] -am
 
 - Run selected test::
 
@@ -46,12 +46,18 @@ Standalone and Distributed CDAP
 
 - Build all examples::
 
-    MAVEN_OPTS="-Xmx512m -XX:MaxPermSize=128m" mvn package -DskipTests -pl cdap-examples -am -amd -P examples
+    MAVEN_OPTS="-Xmx512m -XX:MaxPermSize=128m" mvn clean package -DskipTests -pl cdap-examples -am -amd -P examples
 
 - Build Standalone distribution ZIP::
 
-    MAVEN_OPTS="-Xmx1024m -XX:MaxPermSize=128m" mvn package -pl cdap-standalone,cdap-app-templates/cdap-etl,cdap-examples -am -amd -DskipTests -P examples,templates,dist,release,unit-tests
-    
+    MAVEN_OPTS="-Xmx1024m -XX:MaxPermSize=128m" mvn clean package -pl cdap-standalone,cdap-app-templates/cdap-etl,cdap-app-templates/cdap-data-quality,cdap-examples -am -amd -DskipTests -P examples,templates,dist,release,unit-tests
+
+- Build Standalone distribution ZIP with additional system artifacts::
+
+    MAVEN_OPTS="-Xmx1024m -XX:MaxPermSize=128m" mvn clean package -pl cdap-standalone,cdap-app-templates/cdap-etl,cdap-app-templates/cdap-data-quality,cdap-examples -am -amd -DskipTests -P examples,templates,dist,release,unit-tests -Dadditional.artifacts.dir=</path/to/additional/artifacts>
+
+  This will copy any .jar and .json files in any 'target' directories under the specified path to the artifacts directory.
+
 - Build the limited set of Javadocs used in distribution ZIP::
 
     mvn clean package javadoc:javadoc -pl cdap-api -am -DskipTests -P release
@@ -66,11 +72,11 @@ Standalone and Distributed CDAP
     
 - Build distributions (rpm, deb, tgz)::
 
-    MAVEN_OPTS="-Xmx1024m -XX:MaxPermSize=128m" mvn package -DskipTests -P examples,templates,dist,release,rpm-prepare,rpm,deb-prepare,deb,tgz,unit-tests
+    MAVEN_OPTS="-Xmx1024m -XX:MaxPermSize=128m" mvn clean package -DskipTests -P examples,templates,dist,release,rpm-prepare,rpm,deb-prepare,deb,tgz,unit-tests
 
 - Build Cloudera Manager parcel::
 
-    MAVEN_OPTS="-Xmx1024m -XX:MaxPermSize=128m" mvn package -DskipTests -P templates,dist,tgz && ./cdap-distributions/bin/build_parcel.sh
+    MAVEN_OPTS="-Xmx1024m -XX:MaxPermSize=128m" mvn clean package -DskipTests -P templates,dist,tgz && ./cdap-distributions/bin/build_parcel.sh
 
 - Show dependency tree::
 
@@ -101,7 +107,7 @@ Standalone and Distributed CDAP
     cd cdap-ui
     bower install && npm install && gulp build
     
-  (Whenever there is a change in the UI packages)
+  (Whenever there is a change in the UI packages.)
     
   Then, run standalone from IDE.
     

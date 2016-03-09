@@ -1,7 +1,7 @@
 .. meta::
     :author: Cask Data, Inc.
     :copyright: Copyright © 2015 Cask Data, Inc.
-    :version: 3.1.0
+    :version: 3.3.2
 
 =================================================
 Cask Data Application Platform |version|
@@ -31,6 +31,7 @@ Cask Data Application Platform Level 1 Dependencies
    "com.google.inject","guice","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "com.googlecode.concurrent-trees","concurrent-trees","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "com.ning","async-http-client","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
+   "com.sun.jersey","jersey-servlet","Common Development and Distribution License(CDDL)","http://glassfish.java.net/public/CDDL+GPL_1_1.html"
    "commons-cli","commons-cli","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "commons-codec","commons-codec","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "commons-lang","commons-lang","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
@@ -43,15 +44,18 @@ Cask Data Application Platform Level 1 Dependencies
    "org.apache.avro","avro","The Apache Software License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.txt"
    "org.apache.avro","avro-ipc","The Apache Software License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.txt"
    "org.apache.avro","avro-mapred","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
+   "org.apache.commons","commons-compress","The Apache Software License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.txt"
    "org.apache.flume","flume-ng-core","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.apache.flume","flume-ng-sdk","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.apache.geronimo.components","geronimo-jaspi","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.apache.hadoop","hadoop-common","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.apache.hadoop","hadoop-hdfs","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
+   "org.apache.hadoop","hadoop-mapreduce-client-app","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.apache.hadoop","hadoop-mapreduce-client-common","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.apache.hadoop","hadoop-mapreduce-client-core","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.apache.hadoop","hadoop-mapreduce-client-jobclient","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
-   "org.apache.hadoop","hadoop-minicluster","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
+   "org.apache.hbase","hbase-client","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
+   "org.apache.hbase","hbase-client","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.apache.hbase","hbase-client","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.apache.hbase","hbase-client","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.apache.hbase","hbase-client","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
@@ -60,10 +64,16 @@ Cask Data Application Platform Level 1 Dependencies
    "org.apache.hbase","hbase-common","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.apache.hbase","hbase-common","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.apache.hbase","hbase-common","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
+   "org.apache.hbase","hbase-common","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
+   "org.apache.hbase","hbase-common","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.apache.hbase","hbase-protocol","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.apache.hbase","hbase-protocol","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.apache.hbase","hbase-protocol","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.apache.hbase","hbase-protocol","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
+   "org.apache.hbase","hbase-protocol","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
+   "org.apache.hbase","hbase-protocol","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
+   "org.apache.hbase","hbase-server","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
+   "org.apache.hbase","hbase-server","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.apache.hbase","hbase-server","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.apache.hbase","hbase-server","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.apache.hbase","hbase-server","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
@@ -76,6 +86,7 @@ Cask Data Application Platform Level 1 Dependencies
    "org.apache.httpcomponents","httpcore","The Apache Software License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.txt"
    "org.apache.kafka","kafka_2.10","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.apache.spark","spark-core_2.10","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
+   "org.apache.spark","spark-mllib_2.10","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.apache.spark","spark-sql_2.10","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.apache.thrift","libthrift","The Apache Software License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.txt"
    "org.apache.twill","twill-api","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"

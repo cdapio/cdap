@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,11 +20,13 @@ import co.cask.cdap.api.data.DatasetInstantiationException;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetDefinition;
+import co.cask.cdap.data2.datafabric.dataset.type.ConstantClassLoaderProvider;
 import co.cask.cdap.data2.datafabric.dataset.type.DatasetClassLoaderProvider;
 import co.cask.cdap.data2.datafabric.dataset.type.DirectoryClassLoaderProvider;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.DatasetId;
 import com.google.common.base.Objects;
 
 import java.io.Closeable;
@@ -46,6 +48,12 @@ public class SystemDatasetInstantiator implements Closeable {
   private final Iterable<? extends Id> owners;
   private final ClassLoader parentClassLoader;
 
+  public SystemDatasetInstantiator(DatasetFramework datasetFramework,
+                                   @Nullable ClassLoader classLoader,
+                                   @Nullable Iterable<? extends Id> owners) {
+    this(datasetFramework, classLoader, new ConstantClassLoaderProvider(classLoader), owners);
+  }
+
   SystemDatasetInstantiator(DatasetFramework datasetFramework,
                             @Nullable ClassLoader parentClassLoader,
                             DatasetClassLoaderProvider classLoaderProvider,
@@ -59,8 +67,8 @@ public class SystemDatasetInstantiator implements Closeable {
   }
 
   @Nullable
-  public <T extends DatasetAdmin> T getDatasetAdmin(Id.DatasetInstance datasetId)
-    throws DatasetManagementException, IOException {
+  public <T extends DatasetAdmin> T getDatasetAdmin(Id.DatasetInstance datasetId) throws DatasetManagementException,
+    IOException {
     return datasetFramework.getAdmin(datasetId, parentClassLoader, classLoaderProvider);
   }
 
@@ -70,22 +78,24 @@ public class SystemDatasetInstantiator implements Closeable {
   }
 
   @SuppressWarnings("unchecked")
-  public <T extends Dataset> T getDataset(Id.DatasetInstance datasetId, Map<String, String> arguments)
+  public <T extends Dataset> T getDataset(DatasetId datasetId, Map<String, String> arguments)
+    throws DatasetInstantiationException {
+    return getDataset((Id.DatasetInstance) datasetId.toId(), arguments);
+  }
+
+  @SuppressWarnings("unchecked")
+    public <T extends Dataset> T getDataset(Id.DatasetInstance datasetId, Map<String, String> arguments)
     throws DatasetInstantiationException {
 
-    T dataset;
     try {
-
-      dataset = datasetFramework.getDataset(datasetId, arguments, parentClassLoader, classLoaderProvider, owners);
+      T dataset = datasetFramework.getDataset(datasetId, arguments, parentClassLoader, classLoaderProvider, owners);
       if (dataset == null) {
         throw new DatasetInstantiationException("Trying to access dataset that does not exist: " + datasetId);
       }
-
+      return dataset;
     } catch (Exception e) {
       throw new DatasetInstantiationException("Failed to access dataset: " + datasetId, e);
     }
-
-    return dataset;
   }
 
   @Override

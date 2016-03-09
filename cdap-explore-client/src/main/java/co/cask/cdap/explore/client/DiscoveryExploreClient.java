@@ -16,9 +16,12 @@
 
 package co.cask.cdap.explore.client;
 
+import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.EndpointStrategy;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.explore.service.Explore;
+import co.cask.common.http.HttpRequestConfig;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.inject.Inject;
@@ -36,15 +39,24 @@ import static co.cask.cdap.common.conf.Constants.Service;
  */
 public class DiscoveryExploreClient extends AbstractExploreClient {
   private final Supplier<EndpointStrategy> endpointStrategySupplier;
+  private final HttpRequestConfig httpRequestConfig;
 
   @Inject
-  public DiscoveryExploreClient(final DiscoveryServiceClient discoveryClient) {
+  public DiscoveryExploreClient(CConfiguration cConf, final DiscoveryServiceClient discoveryClient) {
     this.endpointStrategySupplier = Suppliers.memoize(new Supplier<EndpointStrategy>() {
       @Override
       public EndpointStrategy get() {
         return new RandomEndpointStrategy(discoveryClient.discover(Service.EXPLORE_HTTP_USER_SERVICE));
       }
     });
+
+    int httpClientTimeoutMs = cConf.getInt(Constants.HTTP_CLIENT_TIMEOUT_MS);
+    this.httpRequestConfig = new HttpRequestConfig(httpClientTimeoutMs, httpClientTimeoutMs);
+  }
+
+  @Override
+  protected HttpRequestConfig getHttpRequestConfig() {
+    return httpRequestConfig;
   }
 
   @Override
@@ -57,8 +69,22 @@ public class DiscoveryExploreClient extends AbstractExploreClient {
       String.format("Cannot discover service %s", Service.EXPLORE_HTTP_USER_SERVICE));
   }
 
+  // This class is only used internally.
+  // It does not go through router, so it doesn't ever need an auth token, sslEnabled, or verifySSLCert.
+
   @Override
-  protected String getAuthorizationToken() {
+  protected String getAuthToken() {
     return null;
+  }
+
+
+  @Override
+  protected boolean isSSLEnabled() {
+    return false;
+  }
+
+  @Override
+  protected boolean verifySSLCert() {
+    return false;
   }
 }

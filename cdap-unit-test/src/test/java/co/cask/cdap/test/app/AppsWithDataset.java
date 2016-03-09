@@ -23,7 +23,6 @@ import co.cask.cdap.api.data.batch.RecordScannable;
 import co.cask.cdap.api.data.batch.RecordScanner;
 import co.cask.cdap.api.data.batch.Scannables;
 import co.cask.cdap.api.data.batch.Split;
-import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetDefinition;
@@ -203,7 +202,7 @@ public class AppsWithDataset {
 
       public KeyValueTable(DatasetSpecification spec,
                            @EmbeddedDataset("data") Table table) {
-        super(spec.getName(), (Dataset) table);
+        super(spec.getName(), table);
         this.table = table;
       }
 

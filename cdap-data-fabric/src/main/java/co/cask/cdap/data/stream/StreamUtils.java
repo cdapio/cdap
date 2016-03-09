@@ -15,7 +15,6 @@
  */
 package co.cask.cdap.data.stream;
 
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Decoder;
 import co.cask.cdap.common.io.Encoder;
 import co.cask.cdap.common.io.LocationStatus;
@@ -94,7 +93,7 @@ public final class StreamUtils {
    * @see StreamInputFormat
    */
   public static String getPartitionName(Location eventLocation) {
-    URI uri = eventLocation.toURI();
+    URI uri = Locations.toURI(eventLocation);
     String path = uri.getPath();
     int endIdx = path.lastIndexOf('/');
     Preconditions.checkArgument(endIdx >= 0,
@@ -437,7 +436,7 @@ public final class StreamUtils {
    */
   public static TableId getStateStoreTableId(Id.Namespace namespace) {
     String tableName = String.format("%s.%s.state.store",
-                                     Constants.SYSTEM_NAMESPACE, QueueConstants.QueueType.STREAM.toString());
+                                     Id.Namespace.SYSTEM.getId(), QueueConstants.QueueType.STREAM.toString());
     return TableId.from(namespace.getId(), tableName);
   }
 
@@ -480,7 +479,7 @@ public final class StreamUtils {
     return Iterables.filter(streamRootLocation.list(), new Predicate<Location>() {
       @Override
       public boolean apply(Location location) {
-        // Any directories started with "." is special system directory, which is not regular stream directory
+        // Any directories started with "." is special system file, which is not regular stream directory
         return !location.getName().startsWith(".");
       }
     });

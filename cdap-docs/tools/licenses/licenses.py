@@ -171,8 +171,15 @@ def parse_options():
     parser.add_option(
         '-m', '--master_print',
         action='store_true',
-        dest='master_print',
+        dest='master_print_terminal',
         help='Prints to terminal the master dependency file',
+        default=False)
+
+    parser.add_option(
+        '-p', '--print',
+        action='store_true',
+        dest='master_print_file',
+        help='Prints to file a new master dependency file',
         default=False)
 
     (options, args) = parser.parse_args()
@@ -249,7 +256,7 @@ def process_master():
     return master_libs_dict
 
     
-def master_print():
+def master_print_terminal():
     master_libs_dict = process_master()
     # Print out the results
     keys = master_libs_dict.keys()
@@ -287,7 +294,8 @@ def process_cdap_ui(options):
     # Make a list of the references for which links are missing and need to be added to the master
     # Currently does not create a new master list
     # Return a list:
-    #   'Dependency','Version','homepage','License','License URL','type'    
+    #   'Dependency','Version','homepage','License','License URL','type'
+    # Versioning syntax: see https://nodesource.com/blog/semver-tilde-and-caret
     master_libs_dict = process_master()
     cdap_ui_dict = {}
     missing_libs_dict = {}
@@ -295,7 +303,7 @@ def process_cdap_ui(options):
     
     import json
     from pprint import pprint
-    
+
     for type in CDAP_UI_SOURCES.keys():
         source = CDAP_UI_SOURCES[type][0]
         json_path = os.path.join(SCRIPT_DIR_PATH, source)
@@ -311,11 +319,15 @@ def process_cdap_ui(options):
                         # Look up reference in dictionary
                         cdap_ui_dict[dependency] = master_libs_dict[dependency]
                         # Compare versions
+                        # TO-DO: if versions differ by a prefix (~ or ^) this comparison fails
+                        # need to strip off the prefix for the comparison but retain it
+                        # perhaps add a function that does the comparison
                         if master_libs_dict[dependency].version != version:
                             if new_versions_dict.has_key(dependency):
                                 print "Dependency already in new versions: %s current: %s new: %s newer: %s" % (dependency, 
                                     master_libs_dict[dependency].version, new_versions_dict[dependency], version)
                             else:
+                                print "New version: %s for %s (old %s)" % (version, dependency, master_libs_dict[dependency].version)
                                 new_versions_dict[dependency]=version
                     else:
                         missing_libs_dict[dependency] = (type, version)
@@ -531,11 +543,26 @@ def write_new_master_csv_file(lib_dict):
     import csv
     csv.register_dialect('masterCSV', delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL, lineterminator='\n')
 
-    csv_path = os.path.join(SCRIPT_DIR_PATH, MASTER_CSV + '.new.csv')
+    csv_path = os.path.join(SCRIPT_DIR_PATH, MASTER_CSV)
+    backup_csv_path = os.path.join(SCRIPT_DIR_PATH, MASTER_CSV + '.bu.csv')
+    if os.path.isfile(backup_csv_path):
+        print "Backup Master CSV: Exiting, as backup Master file already exists: %s" % backup_csv_path
+        return
+    if os.path.isfile(csv_path):
+        try:
+            import shutil
+            shutil.move(csv_path, backup_csv_path)
+            print "Created Backup Master CSV at: %s" % backup_csv_path
+        except:
+            print "Backup Master CSV: Exiting, as unable to create backup Master: %s" % backup_csv_path
+            return
+    
     if os.path.isfile(csv_path):
         print "New Master CSV: Exiting, as new Master file already exists: %s" % csv_path
     else:
-        with open(csv_path, 'w') as csv_file:
+        csv_file = None
+        try:
+            csv_file = open(csv_path, 'w')
             csv_writer = csv.writer(csv_file, 'masterCSV')
             keys = lib_dict.keys()
             keys.sort()
@@ -548,8 +575,16 @@ def write_new_master_csv_file(lib_dict):
                     if row_type == type:
                         i += 1
                         csv_writer.writerow(r)
+        finally:
+            if csv_file is not None:
+                csv_file.close()
+            
         print "New Master CSV: wrote %s records of %s to: %s" % (i, len(keys), csv_path)
 
+def master_print_file():
+    master_libs_dict = process_master()
+    write_new_master_csv_file(master_libs_dict)
+    
 def print_rst_level_1(input_file, options):
     title = 'Level 1'
     file_base = LEVEL_1
@@ -774,8 +809,11 @@ def main():
         elif options.rst_cdap_ui:
             print_rst_cdap_ui(options)
             
-        elif options.master_print:
-            master_print()
+        elif options.master_print_terminal:
+            master_print_terminal()
+
+        elif options.master_print_file:
+            master_print_file()
 
         else:
             print "Unknown test type: %s" % options.test

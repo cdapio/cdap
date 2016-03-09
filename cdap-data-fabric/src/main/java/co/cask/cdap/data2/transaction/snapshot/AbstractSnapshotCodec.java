@@ -19,6 +19,7 @@ package co.cask.cdap.data2.transaction.snapshot;
 import co.cask.tephra.ChangeId;
 import co.cask.tephra.TransactionManager;
 import co.cask.tephra.persist.TransactionSnapshot;
+import co.cask.tephra.persist.TransactionVisibilityState;
 import co.cask.tephra.snapshot.BinaryDecoder;
 import co.cask.tephra.snapshot.BinaryEncoder;
 import co.cask.tephra.snapshot.SnapshotCodec;
@@ -94,6 +95,25 @@ public abstract class AbstractSnapshotCodec implements SnapshotCodec {
 
       return new TransactionSnapshot(timestamp, readPointer, writePointer, invalid, inProgress,
                                      committing, committed);
+    } catch (IOException e) {
+      LOG.error("Unable to deserialize transaction state: ", e);
+      throw Throwables.propagate(e);
+    }
+  }
+
+  @Override
+  public TransactionVisibilityState decodeTransactionVisibilityState(InputStream in) {
+    BinaryDecoder decoder = new BinaryDecoder(in);
+    try {
+      long timestamp = decoder.readLong();
+      long readPointer = decoder.readLong();
+      long writePointer = decoder.readLong();
+      // some attributes where removed during format change, luckily those stored at the end, so we just give a chance
+      // to skip them
+      decodeObsoleteAttributes(decoder);
+      Collection<Long> invalid = decodeInvalid(decoder);
+      NavigableMap<Long, TransactionManager.InProgressTx> inProgress = decodeInProgress(decoder);
+      return new TransactionSnapshot(timestamp, readPointer, writePointer, invalid, inProgress);
     } catch (IOException e) {
       LOG.error("Unable to deserialize transaction state: ", e);
       throw Throwables.propagate(e);

@@ -35,5 +35,4 @@ public class ArtifactDetail {
   public ArtifactMeta getMeta() {
     return meta;
   }
-
 }

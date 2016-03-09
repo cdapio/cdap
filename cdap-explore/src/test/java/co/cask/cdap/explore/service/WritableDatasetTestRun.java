@@ -40,7 +40,6 @@ import org.junit.rules.TemporaryFolder;
 import java.io.File;
 import java.net.URL;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 /**
  *
@@ -69,8 +68,6 @@ public class WritableDatasetTestRun extends BaseHiveExploreServiceTest {
   @BeforeClass
   public static void start() throws Exception {
     initialize(tmpFolder);
-
-    waitForCompletionStatus(exploreService.createNamespace(OTHER_NAMESPACE_ID), 200, TimeUnit.MILLISECONDS, 200);
 
     datasetFramework.addModule(KEY_STRUCT_VALUE, new KeyStructValueTableDefinition.KeyStructValueTableModule());
     datasetFramework.addModule(OTHER_KEY_STRUCT_VALUE, new KeyStructValueTableDefinition.KeyStructValueTableModule());
@@ -109,7 +106,6 @@ public class WritableDatasetTestRun extends BaseHiveExploreServiceTest {
 
   @AfterClass
   public static void stop() throws Exception {
-    waitForCompletionStatus(exploreService.deleteNamespace(OTHER_NAMESPACE_ID), 200, TimeUnit.MILLISECONDS, 200);
     datasetFramework.deleteModule(KEY_STRUCT_VALUE);
     datasetFramework.deleteModule(OTHER_KEY_STRUCT_VALUE);
   }
@@ -279,6 +275,7 @@ public class WritableDatasetTestRun extends BaseHiveExploreServiceTest {
         datasetFramework.getDataset(writableTable, DatasetDefinition.NO_ARGUMENTS, null);
       Assert.assertNotNull(table);
       Transaction tx = transactionManager.startShort(100);
+      Assert.assertNotNull(table2);
       table2.startTx(tx);
 
       Assert.assertEquals(new KeyStructValueTableDefinition.KeyValue.Value("ten", Lists.newArrayList(10, 11, 12)),

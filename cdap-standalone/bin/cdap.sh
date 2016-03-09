@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 #
-# Copyright © 2014-2015 Cask Data, Inc.
+# Copyright © 2014-2016 Cask Data, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -22,7 +22,7 @@ if [ -d /opt/cdap ]; then
  CDAP_HOME=/opt/cdap; export CDAP_HOME
  DEFAULT_JVM_OPTS="-Xmx3072m -XX:MaxPermSize=128m"
 else
- DEFAULT_JVM_OPTS="-Xmx1024m -XX:MaxPermSize=128m"
+ DEFAULT_JVM_OPTS="-Xmx2048m -XX:MaxPermSize=128m"
 fi
 
 # Add default JVM options here. You can also use JAVA_OPTS and CDAP_OPTS to pass JVM options to this script.
@@ -68,11 +68,13 @@ while [ -h "$PRG" ] ; do
         PRG=`dirname "$PRG"`"/$link"
     fi
 done
-SAVED="`pwd`"
 cd "`dirname \"$PRG\"`/.." >&-
 APP_HOME="`pwd -P`"
 
-CLASSPATH="$APP_HOME/lib/*":"$APP_HOME/conf/"
+# In order to ensure that we can do hacks, need to make sure classpath is sorted
+# so that cdap jars are placed earlier in the classpath than twill or hadoop jars
+CLASSPATH=$(find "${APP_HOME}/lib" -type f | sort | tr '\n' ':')
+CLASSPATH="${CLASSPATH}:${APP_HOME}/conf/"
 
 # Determine the Java command to use to start the JVM.
 if [ -n "$JAVA_HOME" ] ; then
@@ -98,23 +100,24 @@ fi
 
 # java version check
 JAVA_VERSION=`$JAVACMD -version 2>&1 | grep "java version" | awk '{print $3}' | awk -F '.' '{print $2}'`
-if [ $JAVA_VERSION -ne 6 ] && [ $JAVA_VERSION -ne 7 ]; then
+if [ $JAVA_VERSION -ne 7 ] && [ $JAVA_VERSION -ne 8 ]; then
   die "ERROR: Java version not supported
-Please install Java 6 or 7 - other versions of Java are not yet supported."
+Please install Java 7 or 8 - other versions of Java are not supported."
 fi
 
 # Check Node.js installation
 NODE_INSTALL_STATUS=$(program_is_installed node)
 if [ "x$NODE_INSTALL_STATUS" == "x1" ]; then
   die "Node.js is not installed
-Please install Node.js - the minimum version supported v0.10.0."
+Please install Node.js - we recommend any version of Node.js greater than v0.10.0."
 fi
 
 # Check Node.js version
 NODE_VERSION=`node -v 2>&1`
-NODE_VERSION_MAJOR=`echo $NODE_VERSION | awk -F '.' ' { print $2 } '`
-NODE_VERSION_MINOR=`echo $NODE_VERSION | awk -F '.' ' { print $3 } '`
-if [ $NODE_VERSION_MAJOR -lt 10 ]; then
+
+NODE_VERSION_MAJOR=`echo $NODE_VERSION | awk -F'[\\\.v]*' ' { print $2 } '`
+NODE_VERSION_MINOR=`echo $NODE_VERSION | awk -F'[\\\.v]*' ' { print $3 } '`
+if [ "$NODE_VERSION_MAJOR" -lt 1 ] && [ "$NODE_VERSION_MINOR" -lt 10 ] ; then
   die "ERROR: Node.js version is not supported
 The minimum version supported is v0.10.0."
 fi

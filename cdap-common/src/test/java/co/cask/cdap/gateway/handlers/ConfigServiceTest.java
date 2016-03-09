@@ -33,11 +33,6 @@ public class ConfigServiceTest {
 
   @Test
   public void testConfig() {
-
-    // cConf
-    CConfiguration cConf = CConfiguration.create();
-    cConf.clear();
-
     String cConfResourceString =
       "<configuration>\n" +
         "\n" +
@@ -49,7 +44,7 @@ public class ConfigServiceTest {
         "\n" +
         "</configuration>";
     ReaderInputStream cConfResource = new ReaderInputStream(new StringReader(cConfResourceString));
-    cConf.addResource(cConfResource);
+    CConfiguration cConf = CConfiguration.create(cConfResource);
 
     ConfigEntry cConfEntry = new ConfigEntry(
       "stream.zz.threshold", "1", cConfResource.toString());

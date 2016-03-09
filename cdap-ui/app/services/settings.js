@@ -1,15 +1,39 @@
+/*
+ * Copyright © 2015 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 angular.module(PKG.name + '.services')
 
   .factory('mySettings', function (MyPersistentStorage) {
     return new MyPersistentStorage('user');
   })
 
-  .factory('MyPersistentStorage', function MyPersistentStorageFactory($q, MyDataSource, myHelpers) {
+  .factory('MyPersistentStorage', function MyPersistentStorageFactory($q, MyCDAPDataSource, myHelpers, $rootScope, myAuth, MYAUTH_EVENT, MY_CONFIG) {
 
-    var data = new MyDataSource();
-
+    var data = new MyCDAPDataSource();
     function MyPersistentStorage (type) {
-      this.endpoint = '/configuration/'+type;
+      this.endpoint = '/configuration/' + type;
+      this.headers = {
+        'Content-Type': 'application/json'
+      };
+      if (MY_CONFIG.securityEnabled) {
+        $rootScope.$on (MYAUTH_EVENT.logoutSuccess, function () {
+          this.data = [];
+          delete this.headers['Authorization'];
+        }.bind(this));
+      }
 
       // our cache of the server-side data
       this.data = {};
@@ -27,11 +51,14 @@ angular.module(PKG.name + '.services')
     MyPersistentStorage.prototype.set = function (key, value) {
 
       myHelpers.deepSet(this.data, key, value);
-
+      if (myAuth.isAuthenticated()) {
+        this.headers['Authorization'] = ($rootScope.currentUser.token ? 'Bearer ' + $rootScope.currentUser.token: null);
+      }
       return data.request(
         {
           method: 'PUT',
           _cdapPath: this.endpoint,
+          headers: this.headers,
           body: this.data
         }
       );
@@ -47,7 +74,10 @@ angular.module(PKG.name + '.services')
      */
     MyPersistentStorage.prototype.get = function (key, force) {
 
-      var val = myHelpers.deepGet(this.data, key);
+      var val = myHelpers.deepGet(this.data, key, true);
+      if (myAuth.isAuthenticated()) {
+        this.headers['Authorization'] = ($rootScope.currentUser.token ? 'Bearer ' + $rootScope.currentUser.token: null);
+      }
 
       if (!force && val) {
         return $q.when(val);
@@ -59,7 +89,7 @@ angular.module(PKG.name + '.services')
         var deferred = $q.defer();
         this.pending.promise.then(function () {
           deferred.resolve(
-            myHelpers.deepGet(self.data, key)
+            myHelpers.deepGet(self.data, key, true)
           );
         });
         return deferred.promise;
@@ -70,13 +100,17 @@ angular.module(PKG.name + '.services')
       data.request(
         {
           method: 'GET',
+          headers: this.headers,
           _cdapPath: this.endpoint
         },
         function (res) {
           self.data = res.property;
           self.pending.resolve(
-            myHelpers.deepGet(self.data, key)
+            myHelpers.deepGet(self.data, key, true)
           );
+        },
+        function () {
+          self.pending = null;
         }
       );
 

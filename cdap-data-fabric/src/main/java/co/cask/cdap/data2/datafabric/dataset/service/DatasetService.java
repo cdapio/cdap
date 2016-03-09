@@ -23,11 +23,12 @@ import co.cask.cdap.common.discovery.ResolvingDiscoverable;
 import co.cask.cdap.common.http.CommonNettyHttpServiceBuilder;
 import co.cask.cdap.common.metrics.MetricsReporterHook;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
+import co.cask.cdap.common.service.UncaughtExceptionIdleService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import co.cask.cdap.data2.datafabric.dataset.service.mds.MDSDatasetsRegistry;
 import co.cask.cdap.data2.datafabric.dataset.type.DatasetTypeManager;
 import co.cask.cdap.data2.metrics.DatasetMetricsReporter;
-import co.cask.cdap.data2.registry.UsageRegistry;
+import co.cask.cdap.store.NamespaceStore;
 import co.cask.http.NettyHttpService;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
@@ -47,6 +48,7 @@ import org.slf4j.LoggerFactory;
 import java.net.InetSocketAddress;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -61,11 +63,10 @@ public class DatasetService extends AbstractExecutionThreadService {
   private final DiscoveryServiceClient discoveryServiceClient;
   private final DatasetOpExecutor opExecutorClient;
   private final Set<DatasetMetricsReporter> metricReporters;
-  private Cancellable cancelDiscovery;
-
   private final DatasetTypeManager typeManager;
   private final MDSDatasetsRegistry mdsDatasets;
 
+  private Cancellable cancelDiscovery;
   private Cancellable opExecutorServiceWatch;
   private SettableFuture<ServiceDiscovered> opExecutorDiscovered;
   private volatile boolean stopping = false;
@@ -81,17 +82,19 @@ public class DatasetService extends AbstractExecutionThreadService {
                         MDSDatasetsRegistry mdsDatasets,
                         Set<DatasetMetricsReporter> metricReporters,
                         DatasetInstanceService datasetInstanceService,
-                        StorageProviderNamespaceAdmin storageProviderNamespaceAdmin) throws Exception {
+                        StorageProviderNamespaceAdmin storageProviderNamespaceAdmin,
+                        NamespaceStore namespaceStore) throws Exception {
 
     this.typeManager = typeManager;
-    DatasetTypeHandler datasetTypeHandler = new DatasetTypeHandler(typeManager, cConf, namespacedLocationFactory);
+    DatasetTypeHandler datasetTypeHandler = new DatasetTypeHandler(typeManager, cConf, namespacedLocationFactory,
+                                                                   namespaceStore);
     DatasetInstanceHandler datasetInstanceHandler = new DatasetInstanceHandler(datasetInstanceService);
-    UnderlyingSystemNamespaceHandler underlyingSystemNamespaceHandler =
-      new UnderlyingSystemNamespaceHandler(storageProviderNamespaceAdmin);
+    StorageProviderNamespaceHandler storageProviderNamespaceHandler =
+      new StorageProviderNamespaceHandler(storageProviderNamespaceAdmin);
     NettyHttpService.Builder builder = new CommonNettyHttpServiceBuilder(cConf);
     builder.addHttpHandlers(ImmutableList.of(datasetTypeHandler,
                                              datasetInstanceHandler,
-                                             underlyingSystemNamespaceHandler));
+                                             storageProviderNamespaceHandler));
 
     builder.setHandlerHooks(ImmutableList.of(new MetricsReporterHook(metricsCollectionService,
                                                                      Constants.Service.DATASET_MANAGER)));
@@ -243,5 +246,21 @@ public class DatasetService extends AbstractExecutionThreadService {
     return Objects.toStringHelper(this)
       .add("bindAddress", httpService.getBindAddress())
       .toString();
+  }
+
+  // in case there is an exception thrown during startup, don't want the thread to print to system.err
+  // instead, the caller should handler the error messaging.
+  @SuppressWarnings("NullableProblems")
+  @Override
+  protected Executor executor() {
+    final String name = getClass().getSimpleName();
+    return new Executor() {
+      @Override
+      public void execute(Runnable runnable) {
+        Thread t = new Thread(runnable, name);
+        t.setUncaughtExceptionHandler(UncaughtExceptionIdleService.newHandler(LOG));
+        t.start();
+      }
+    };
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -32,6 +32,7 @@ import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.dataset.table.TableSplit;
+import co.cask.cdap.format.RecordPutTransformer;
 import co.cask.cdap.internal.io.ReflectionRowRecordReader;
 import co.cask.tephra.TransactionAware;
 import com.google.common.base.Preconditions;
@@ -64,10 +65,14 @@ public abstract class AbstractTable implements Table, TransactionAware {
   private final Schema tableSchema;
   // the name of the row field in the table schema, if it is present
   private final String rowFieldName;
+  // converts records into puts if the table has a schema
+  private final RecordPutTransformer recordPutTransformer;
 
   protected AbstractTable(@Nullable Schema tableSchema, @Nullable String rowFieldName) {
     this.tableSchema = tableSchema;
     this.rowFieldName = rowFieldName;
+    this.recordPutTransformer = (tableSchema == null || rowFieldName == null) ?
+      null : new RecordPutTransformer(rowFieldName, tableSchema);
   }
 
   @Override
@@ -78,7 +83,7 @@ public abstract class AbstractTable implements Table, TransactionAware {
 
   @Override
   public Row get(Get get) {
-    return get.getColumns().isEmpty() ?
+    return get.getColumns() == null ?
         get(get.getRow()) :
         get(get.getRow(), get.getColumns().toArray(new byte[get.getColumns().size()][]));
   }
@@ -157,7 +162,7 @@ public abstract class AbstractTable implements Table, TransactionAware {
 
   @Override
   public void delete(Delete delete) {
-    if (delete.getColumns().isEmpty()) {
+    if (delete.getColumns() == null) {
       delete(delete.getRow());
     } else {
       delete(delete.getRow(), delete.getColumns().toArray(new byte[delete.getColumns().size()][]));
@@ -190,6 +195,16 @@ public abstract class AbstractTable implements Table, TransactionAware {
   public RecordScanner<StructuredRecord> createSplitRecordScanner(Split split) {
     Preconditions.checkArgument(tableSchema != null, "Table has no schema and is not record scannable.");
     return new StructuredRecordScanner(createSplitReader(split));
+  }
+
+  @Override
+  public void write(StructuredRecord structuredRecord) throws IOException {
+    if (recordPutTransformer == null) {
+      throw new IllegalStateException(String.format("Table must have both '%s' and '%s' properties set in " +
+        "order to be used as a RecordWritable.", Table.PROPERTY_SCHEMA, Table.PROPERTY_SCHEMA_ROW_FIELD));
+    }
+    Put put = recordPutTransformer.toPut(structuredRecord);
+    put(put);
   }
 
   private class StructuredRecordScanner extends RecordScanner<StructuredRecord> {

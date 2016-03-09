@@ -30,11 +30,6 @@ import javax.annotation.Nullable;
 public interface NamespacedLocationFactory {
 
   /**
-   * @return a Map of {@link Id.Namespace} to its {@link Location} on the filesystem
-   */
-  Map<Id.Namespace, Location> list() throws IOException;
-
-  /**
    * Returns the base {@link Location} for the specified namespace on the filesystem
    *
    * @param namespaceId the namespace for which base location is desired
@@ -52,8 +47,7 @@ public interface NamespacedLocationFactory {
   Location get(Id.Namespace namespaceId, @Nullable String subPath) throws IOException;
 
   /**
-   * Returns the base {@link Location} for all CDAP data. This location contains all
-   * the namespace locations.
+   * Returns the base {@link Location} for all CDAP data.
    */
   Location getBaseLocation() throws IOException;
 

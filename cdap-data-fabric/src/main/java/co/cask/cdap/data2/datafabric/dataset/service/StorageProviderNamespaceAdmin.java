@@ -59,15 +59,15 @@ public class StorageProviderNamespaceAdmin {
     Location namespaceHome = namespacedLocationFactory.get(namespaceId);
     if (namespaceHome.exists()) {
       LOG.warn("Home directory '{}' for namespace '{}' already exists. Deleting it.",
-               namespaceHome.toURI().toString(), namespaceId);
+               namespaceHome, namespaceId);
       if (!namespaceHome.delete(true)) {
         throw new IOException(String.format("Error while deleting home directory '%s' for namespace '%s'",
-                                            namespaceHome.toURI().toString(), namespaceId.getId()));
+                                            namespaceHome, namespaceId.getId()));
       }
     }
     if (!namespaceHome.mkdirs()) {
       throw new IOException(String.format("Error while creating home directory '%s' for namesapce '%s'",
-                                          namespaceHome.toURI().toString(), namespaceId));
+                                          namespaceHome, namespaceId));
     }
 
     if (cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED)) {
@@ -87,13 +87,15 @@ public class StorageProviderNamespaceAdmin {
   protected void delete(Id.Namespace namespaceId) throws IOException, ExploreException, SQLException {
     // TODO: CDAP-1581: Implement soft delete
     Location namespaceHome = namespacedLocationFactory.get(namespaceId);
-    if (namespaceHome.exists() && !namespaceHome.delete(true)) {
+    if (namespaceHome.exists()) {
+      if (!namespaceHome.delete(true)) {
         throw new IOException(String.format("Error while deleting home directory '%s' for namespace '%s'",
-                                            namespaceHome.toURI().toString(), namespaceId.getId()));
+                                            namespaceHome, namespaceId.getId()));
+      }
     } else {
       // warn that namespace home was not found and skip delete step
       LOG.warn(String.format("Home directory '%s' for namespace '%s' does not exist.",
-                             namespaceHome.toURI().toString(), namespaceId));
+                             namespaceHome, namespaceId));
     }
 
     if (cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED)) {

@@ -13,12 +13,12 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package co.cask.cdap.examples.helloworld;
 
 import co.cask.cdap.api.metrics.RuntimeMetrics;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.FlowManager;
-import co.cask.cdap.test.RuntimeStats;
 import co.cask.cdap.test.ServiceManager;
 import co.cask.cdap.test.StreamManager;
 import co.cask.cdap.test.TestBase;
@@ -60,7 +60,7 @@ public class HelloWorldTest extends TestBase {
 
     try {
       // Wait for the last Flowlet processing 5 events, or at most 5 seconds
-      RuntimeMetrics metrics = RuntimeStats.getFlowletMetrics("HelloWorld", "WhoFlow", "saver");
+      RuntimeMetrics metrics = flowManager.getFlowletMetrics("saver");
       metrics.waitForProcessed(5, 5, TimeUnit.SECONDS);
     } finally {
       flowManager.stop();
@@ -73,7 +73,7 @@ public class HelloWorldTest extends TestBase {
     // Wait service startup
     serviceManager.waitForStatus(true);
 
-    URL url = new URL(serviceManager.getServiceURL(15, TimeUnit.SECONDS), "greet");
+    URL url = new URL(serviceManager.getServiceURL(), "greet");
     HttpURLConnection connection = (HttpURLConnection) url.openConnection();
     Assert.assertEquals(HttpURLConnection.HTTP_OK, connection.getResponseCode());
     String response;

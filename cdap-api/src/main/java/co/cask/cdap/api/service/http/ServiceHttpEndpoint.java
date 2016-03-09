@@ -17,7 +17,8 @@
 package co.cask.cdap.api.service.http;
 
 import co.cask.cdap.api.service.Service;
-import com.google.common.base.Objects;
+
+import java.util.Objects;
 
 /**
  * Describes an endpoint that a {@link Service} exposes.
@@ -47,7 +48,7 @@ public final class ServiceHttpEndpoint {
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(method, path);
+    return Objects.hash(method, path);
   }
 
   @Override
@@ -59,6 +60,6 @@ public final class ServiceHttpEndpoint {
       return false;
     }
     ServiceHttpEndpoint other = (ServiceHttpEndpoint) obj;
-    return Objects.equal(this.method, other.method) && Objects.equal(this.path, other.path);
+    return Objects.equals(this.method, other.method) && Objects.equals(this.path, other.path);
   }
 }

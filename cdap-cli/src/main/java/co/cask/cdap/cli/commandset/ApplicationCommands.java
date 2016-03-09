@@ -18,10 +18,16 @@ package co.cask.cdap.cli.commandset;
 
 import co.cask.cdap.cli.Categorized;
 import co.cask.cdap.cli.CommandCategory;
-import co.cask.cdap.cli.command.DeleteAppCommand;
-import co.cask.cdap.cli.command.DeployAppCommand;
-import co.cask.cdap.cli.command.DescribeAppCommand;
-import co.cask.cdap.cli.command.ListAppsCommand;
+import co.cask.cdap.cli.command.app.CreateAppCommand;
+import co.cask.cdap.cli.command.app.DeleteAppCommand;
+import co.cask.cdap.cli.command.app.DeployAppCommand;
+import co.cask.cdap.cli.command.app.DescribeAppCommand;
+import co.cask.cdap.cli.command.app.ListAppsCommand;
+import co.cask.cdap.cli.command.app.RestartProgramsCommand;
+import co.cask.cdap.cli.command.app.StartProgramsCommand;
+import co.cask.cdap.cli.command.app.StatusProgramsCommand;
+import co.cask.cdap.cli.command.app.StopProgramsCommand;
+import co.cask.cdap.cli.command.app.UpdateAppCommand;
 import co.cask.common.cli.Command;
 import co.cask.common.cli.CommandSet;
 import com.google.common.collect.ImmutableList;
@@ -37,10 +43,16 @@ public class ApplicationCommands extends CommandSet<Command> implements Categori
   public ApplicationCommands(Injector injector) {
     super(
       ImmutableList.<Command>builder()
-        .add(injector.getInstance(ListAppsCommand.class))
+        .add(injector.getInstance(CreateAppCommand.class))
         .add(injector.getInstance(DeleteAppCommand.class))
         .add(injector.getInstance(DeployAppCommand.class))
         .add(injector.getInstance(DescribeAppCommand.class))
+        .add(injector.getInstance(ListAppsCommand.class))
+        .add(injector.getInstance(RestartProgramsCommand.class))
+        .add(injector.getInstance(StartProgramsCommand.class))
+        .add(injector.getInstance(StatusProgramsCommand.class))
+        .add(injector.getInstance(StopProgramsCommand.class))
+        .add(injector.getInstance(UpdateAppCommand.class))
         .build());
   }
 

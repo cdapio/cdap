@@ -1,0 +1,224 @@
+/*
+ * Copyright © 2015 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
+@import "../../styles/variables.less";
+@import "../../../bower_components/bootstrap/less/mixins.less";
+@import "../../styles/themes/cdap/mixins.less";
+
+body {
+  [my-navbar-hydrator] {
+    @media (max-width: @screen-xs-max) {
+      padding-left: 0;
+    }
+    div.navbar-header {
+      float: left;
+    }
+    a.navbar-brand {
+      margin-top:12px;
+      margin-bottom:12px;
+      max-width: 188px;
+      max-height: 34px;
+      padding: 0 15px;
+      @media (max-width: @screen-xs-max) {
+        padding: 0;
+      }
+      &:focus {
+        outline: none;
+      }
+      > strong {
+        visibility: hidden;
+      }
+    }
+    span.hydrator-logo {
+      display: inline-block;
+      width: 100%;
+      height: 100%;
+      vertical-align: middle;
+    }
+    a.cdap-link {
+      position: absolute;
+      top: 14px;
+      right: 0;
+      width: 65px;
+      height: 30px;
+      line-height: 30px;
+      span {
+        display: inline-block;
+        width: 42px;
+        height: 15px;
+        vertical-align: middle;
+      }
+    }
+
+    nav {
+      position: relative;
+      text-align: center;
+      ul.navbar-nav {
+        float: none;
+        margin: 0 auto;
+        max-width: 300px;
+        li {
+          @media (max-width: @screen-xs-max) {
+            display: inline-block;
+            float: none;
+          }
+          @media (min-width: @screen-sm-min) {
+            float: left;
+          }
+          a {
+            height: 58px;
+            line-height: 60px;
+            padding: 0 10px;
+            margin: 0 15px;
+            @media (max-width: @screen-xs-max) {
+              padding: 0 6px;
+              margin: 0 auto;
+            }
+            span {
+              font-size: 14px;
+              font-weight: 500;
+              @media (max-width: @screen-xs-max) {
+                font-size: 11px;
+              }
+            }
+          }
+        }
+      }
+      ul.navbar-namespace {
+        @media (max-width: @screen-xs-max) {
+          display: none;
+        }
+        margin: 0;
+        padding: 0;
+        position: absolute;
+        top: 14px;
+        right: 100px;
+        li.dropdown {
+          list-style-type: none;
+
+          a.hy-dropdown-toggle {
+            display: block;
+            min-width: 125px;
+            padding: 6px 10px;
+            span:first-child {
+              font-weight: 500;
+              padding-right: 15px;
+            }
+            span.fa-angle-down {
+              line-height: 18px;
+            }
+          }
+        }
+
+        ul.dropdown-menu {
+          margin-top: 2px;
+          max-height: 360px;
+          overflow-y: scroll;
+          padding: 0;
+          z-index: 9999;
+          li a {
+            font-weight: 500;
+            padding-top: 8px;
+            padding-bottom: 8px;
+            &:focus {
+              outline: 0;
+            }
+          }
+        }
+      }
+    }
+
+    // TODO: Remove?
+    my-error {
+      display: none;
+    }
+  }
+
+  &.theme-cdap {
+    [my-navbar-hydrator] {
+      span.hydrator-logo {
+        background: url('@{img-path}/cdap_sprite.png') 0 -120px no-repeat;
+      }
+
+      nav {
+        ul.navbar-nav {
+          li {
+            a {
+              background-color: transparent;
+              color: fade(white, 45%);
+            }
+            &.active, &:active, &:hover, &:focus {
+              a {
+                background-color: transparent;
+                border-bottom: 4px solid #397cf1;
+                color: white;
+              }
+            }
+          }
+        }
+        ul.navbar-namespace {
+          li.dropdown {
+            a.hy-dropdown-toggle {
+              background-color: white;
+              color: #666;
+              .border-radius(4px);
+              .transition(all 0.2s ease);
+              &:hover, &:focus {
+                text-decoration: none;
+              }
+            }
+            &.open {
+              a.hy-dropdown-toggle {
+                background-color: rgb(111, 111, 113);
+                color: white;
+              }
+              ul.dropdown-menu {
+                .border-radius(0);
+                @box-shadow: 0 7px 7px fade(black, 10%), 0 19px 59px fade(black, 20%);
+                .box-shadow(@box-shadow);
+              }
+            }
+          }
+
+          ul.dropdown-menu {
+            border: 0;
+            li a {
+              border: 1px solid transparent;
+              border-top: 1px solid #ddd;
+              &:hover {
+                background-color: @cdap-header;
+                border: 1px solid @cdap-header;
+                color: white;
+              }
+              &.active {
+                color: #c4c4c4;
+                pointer-events: none;
+              }
+            }
+          }
+        }
+      }
+
+      a.cdap-link {
+        background-color: @cdap-orange;
+        .border-radius(10px 0 0 10px);
+        span {
+          background: url('@{img-path}/cdap_sprite.png') -360px -120px no-repeat;
+        }
+      }
+    }
+  }
+}

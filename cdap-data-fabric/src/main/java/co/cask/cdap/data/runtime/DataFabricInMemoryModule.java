@@ -16,6 +16,8 @@
 package co.cask.cdap.data.runtime;
 
 import co.cask.cdap.data2.queue.QueueClientFactory;
+import co.cask.cdap.data2.transaction.DelegatingTransactionSystemClientService;
+import co.cask.cdap.data2.transaction.TransactionSystemClientService;
 import co.cask.cdap.data2.transaction.metrics.TransactionManagerMetricsCollector;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.queue.inmemory.InMemoryQueueAdmin;
@@ -40,6 +42,8 @@ public class DataFabricInMemoryModule extends AbstractModule {
 
     // bind transactions
     bind(TxMetricsCollector.class).to(TransactionManagerMetricsCollector.class).in(Scopes.SINGLETON);
+    bind(TransactionSystemClientService.class).to(DelegatingTransactionSystemClientService.class);
     install(new TransactionModules().getInMemoryModules());
+    install(new TransactionExecutorModule());
   }
 }

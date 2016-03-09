@@ -15,7 +15,6 @@
  */
 package co.cask.cdap.internal.app.runtime.distributed;
 
-import co.cask.cdap.api.templates.plugins.PluginInfo;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.program.Programs;
 import co.cask.cdap.app.runtime.Arguments;
@@ -25,38 +24,44 @@ import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
+import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.common.twill.AbortOnTimeoutEventHandler;
 import co.cask.cdap.common.twill.HadoopClassExcluder;
 import co.cask.cdap.common.utils.DirUtils;
-import co.cask.cdap.data.security.HBaseTokenUtils;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
+import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
+import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.internal.app.runtime.codec.ArgumentsCodec;
 import co.cask.cdap.internal.app.runtime.codec.ProgramOptionsCodec;
-import co.cask.cdap.templates.AdapterDefinition;
+import co.cask.cdap.security.TokenSecureStoreUpdater;
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Maps;
 import com.google.common.io.Files;
 import com.google.common.io.InputSupplier;
 import com.google.common.io.Resources;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.security.User;
 import org.apache.hadoop.mapreduce.JobContext;
-import org.apache.hadoop.security.Credentials;
+import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
 import org.apache.twill.api.EventHandler;
 import org.apache.twill.api.TwillApplication;
 import org.apache.twill.api.TwillController;
 import org.apache.twill.api.TwillPreparer;
 import org.apache.twill.api.TwillRunner;
+import org.apache.twill.api.logging.LogEntry;
+import org.apache.twill.api.logging.LogHandler;
 import org.apache.twill.api.logging.PrinterLogHandler;
 import org.apache.twill.common.Threads;
-import org.apache.twill.yarn.YarnSecureStore;
+import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -70,9 +75,9 @@ import java.net.URL;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import javax.annotation.Nullable;
+
 
 /**
  * Defines the base framework for starting {@link Program} in the cluster.
@@ -86,9 +91,11 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
     .create();
 
   private final TwillRunner twillRunner;
-  protected final Configuration hConf;
+  private final LocationFactory locationFactory;
+  protected final YarnConfiguration hConf;
   protected final CConfiguration cConf;
   protected final EventHandler eventHandler;
+  private final TokenSecureStoreUpdater secureStoreUpdater;
 
   /**
    * An interface for launching TwillApplication. Used by sub-classes only.
@@ -133,11 +140,15 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
     public abstract TwillController launch(TwillApplication twillApplication, Iterable<String> extraClassPaths);
   }
 
-  protected AbstractDistributedProgramRunner(TwillRunner twillRunner, Configuration hConf, CConfiguration cConf) {
+  protected AbstractDistributedProgramRunner(TwillRunner twillRunner, LocationFactory locationFactory,
+                                             YarnConfiguration hConf, CConfiguration cConf,
+                                             TokenSecureStoreUpdater tokenSecureStoreUpdater) {
     this.twillRunner = twillRunner;
+    this.locationFactory = locationFactory;
     this.hConf = hConf;
     this.cConf = cConf;
     this.eventHandler = createEventHandler(cConf);
+    this.secureStoreUpdater = tokenSecureStoreUpdater;
   }
 
   protected EventHandler createEventHandler(CConfiguration cConf) {
@@ -145,8 +156,8 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
   }
 
   @Override
-  public final ProgramController run(final Program program, final ProgramOptions options) {
-    final String schedulerQueueName = options.getArguments().getOption(Constants.AppFabric.APP_SCHEDULER_QUEUE);
+  public final ProgramController run(final Program program, final ProgramOptions oldOptions) {
+    final String schedulerQueueName = oldOptions.getArguments().getOption(Constants.AppFabric.APP_SCHEDULER_QUEUE);
     final File tempDir = DirUtils.createTempDir(new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
                                                          cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile());
     try {
@@ -155,8 +166,9 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
         LOG.info("Setting scheduler queue to {}", schedulerQueueName);
       }
 
-      Map<String, LocalizeResource> localizeResources = addAdapterPluginFiles(options,
-                                                                              new HashMap<String, LocalizeResource>());
+      Map<String, LocalizeResource> localizeResources = new HashMap<>();
+      final ProgramOptions options = addArtifactPluginFiles(oldOptions, localizeResources,
+                                                            DirUtils.createTempDir(tempDir));
 
       // Copy config files and program jar to local temp, and ask Twill to localize it to container.
       // What Twill does is to save those files in HDFS and keep using them during the lifetime of application.
@@ -174,7 +186,7 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
       // Obtains and add the HBase delegation token as well (if in non-secure mode, it's a no-op)
       // Twill would also ignore it if it is not running in secure mode.
       // The HDFS token should already obtained by Twill.
-      return launch(copiedProgram, options, localizeResources, new ApplicationLauncher() {
+      return launch(copiedProgram, options, localizeResources, tempDir, new ApplicationLauncher() {
         @Override
         public TwillController launch(TwillApplication twillApplication, Iterable<String> extraClassPaths) {
           TwillPreparer twillPreparer = twillRunner.prepare(twillApplication);
@@ -192,14 +204,35 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
             twillPreparer.withResources(logbackURI);
           }
 
+          String logLevelConf = cConf.get(Constants.COLLECT_APP_CONTAINER_LOG_LEVEL).toUpperCase();
+          if ("OFF".equals(logLevelConf)) {
+            twillPreparer.addJVMOptions("-Dtwill.disable.kafka=true");
+          } else {
+            LogEntry.Level logLevel = LogEntry.Level.ERROR;
+            if ("ALL".equals(logLevelConf)) {
+              logLevel = LogEntry.Level.TRACE;
+            } else {
+              try {
+                logLevel = LogEntry.Level.valueOf(logLevelConf.toUpperCase());
+              } catch (Exception e) {
+                LOG.warn("Invalid application container log level {}. Defaulting to ERROR.", logLevelConf);
+              }
+            }
+            twillPreparer.addLogHandler(new ApplicationLogHandler(new PrinterLogHandler(new PrintWriter(System.out)),
+                                                                  logLevel));
+          }
+
           String yarnAppClassPath = hConf.get(YarnConfiguration.YARN_APPLICATION_CLASSPATH,
                                            Joiner.on(",").join(YarnConfiguration.DEFAULT_YARN_APPLICATION_CLASSPATH));
+          // Add secure tokens
+          if (User.isHBaseSecurityEnabled(hConf) || UserGroupInformation.isSecurityEnabled()) {
+            // TokenSecureStoreUpdater.update() ignores parameters
+            twillPreparer.addSecureStore(secureStoreUpdater.update(null, null));
+          }
           TwillController twillController = twillPreparer
             .withDependencies(HBaseTableUtilFactory.getHBaseTableUtilClass())
-            .addLogHandler(new PrinterLogHandler(new PrintWriter(System.out)))
-            .addSecureStore(YarnSecureStore.create(HBaseTokenUtils.obtainToken(hConf, new Credentials())))
             .withClassPaths(Iterables.concat(extraClassPaths, Splitter.on(',').trimResults()
-                              .split(hConf.get(YarnConfiguration.YARN_APPLICATION_CLASSPATH, ""))))
+              .split(hConf.get(YarnConfiguration.YARN_APPLICATION_CLASSPATH, ""))))
             .withApplicationClassPaths(Splitter.on(",").trimResults().split(yarnAppClassPath))
             .withBundlerClassAcceptor(new HadoopClassExcluder())
             .withApplicationArguments(
@@ -215,54 +248,30 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
     }
   }
 
-  /**
-   * Gets plugin files that needs to be localized for the adapter. If the given run is not an adapter, no
-   * modification will be done to the map.
-   */
-  private Map<String, LocalizeResource> addAdapterPluginFiles(ProgramOptions options,
-                                                              Map<String, LocalizeResource> localizeResources) {
-    Arguments arguments = options.getArguments();
-    if (!arguments.hasOption(ProgramOptionConstants.ADAPTER_SPEC)) {
-      return localizeResources;
+  private ProgramOptions addArtifactPluginFiles(ProgramOptions options, Map<String, LocalizeResource> localizeResources,
+                                                File tempDir) throws IOException {
+    Arguments systemArgs = options.getArguments();
+    if (!systemArgs.hasOption(ProgramOptionConstants.PLUGIN_DIR)) {
+      return options;
     }
 
-    // Decode the adapter spec from program system argument
-    AdapterDefinition adapterSpec = GSON.fromJson(arguments.getOption(ProgramOptionConstants.ADAPTER_SPEC),
-                                                     AdapterDefinition.class);
+    File localDir = new File(systemArgs.getOption(ProgramOptionConstants.PLUGIN_DIR));
+    File archiveFile = new File(tempDir, "artifacts.jar");
+    BundleJarUtil.createJar(localDir, archiveFile);
 
-    // Get all unique PluginInfo from the adapter spec
-    Set<PluginInfo> plugins = adapterSpec.getPluginInfos();
+    // Localize plugins to two files, one expanded into a directory, one not.
+    localizeResources.put("artifacts", new LocalizeResource(archiveFile, true));
+    localizeResources.put("artifacts_archive.jar", new LocalizeResource(archiveFile, false));
 
-    // If there is no plugin used by the adapter, nothing need to be localized
-    if (plugins.isEmpty()) {
-      return localizeResources;
-    }
-
-    File templateDir = new File(cConf.get(Constants.AppFabric.APP_TEMPLATE_DIR));
-    File templatePluginDir = new File(cConf.get(Constants.AppFabric.APP_TEMPLATE_PLUGIN_DIR),
-                                      adapterSpec.getTemplate());
-
-    String localizePrefix = templateDir.getName() + "/" +
-                            templateDir.toURI().relativize(templatePluginDir.toURI()).getPath();
-
-    // Localize all required plugin jars and maintain the template plugin directory structure
-    // The AbstractProgramTwillRunnable will set the APP_TEMPLATE_DIR correspondingly.
-    for (PluginInfo plugin : plugins) {
-      String localizedName = String.format("%s/%s", localizePrefix, plugin.getFileName());
-      localizeResources.put(localizedName, new LocalizeResource(new File(templatePluginDir, plugin.getFileName())));
-    }
-
-    // Localize all files under template plugin "lib" directory
-    for (File libJar : DirUtils.listFiles(new File(templatePluginDir, "lib"), "jar")) {
-      String localizedName = String.format("%s/lib/%s", localizePrefix, libJar.getName());
-      localizeResources.put(localizedName, new LocalizeResource(libJar));
-    }
-
-    return localizeResources;
+    Map<String, String> newSystemArgs = Maps.newHashMap(systemArgs.asMap());
+    newSystemArgs.put(ProgramOptionConstants.PLUGIN_DIR, "artifacts");
+    newSystemArgs.put(ProgramOptionConstants.PLUGIN_ARCHIVE, "artifacts_archive.jar");
+    return new SimpleProgramOptions(options.getName(), new BasicArguments(newSystemArgs),
+                                    options.getUserArguments(), options.isDebug());
   }
 
   /**
-   * Returns a {@link URI} for the logback.xml file to be localized to container and avaiable in the container
+   * Returns a {@link URI} for the logback.xml file to be localized to container and available in the container
    * classpath.
    */
   @Nullable
@@ -286,9 +295,17 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
 
   /**
    * Sub-class overrides this method to launch the twill application.
+   *
+   * @param program the program to launch
+   * @param options the options for the program
+   * @param localizeResources a mutable map for adding extra resources to localize
+   * @param tempDir a temporary directory for this launch. Sub-classes can use it to create resources for localization
+   *                which require cleanup after launching completed
+   * @param launcher an {@link ApplicationLauncher} to actually launching the program
    */
   protected abstract ProgramController launch(Program program, ProgramOptions options,
                                               Map<String, LocalizeResource> localizeResources,
+                                              File tempDir,
                                               ApplicationLauncher launcher);
 
 
@@ -318,7 +335,7 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
         return program.getJarLocation().getInputStream();
       }
     }, tempJar);
-    return Programs.createWithUnpack(Locations.toLocation(tempJar), programDir);
+    return Programs.createWithUnpack(cConf, Locations.toLocation(tempJar), programDir);
   }
 
   /**
@@ -355,5 +372,23 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
     controller.onRunning(cleanup, Threads.SAME_THREAD_EXECUTOR);
     controller.onTerminated(cleanup, Threads.SAME_THREAD_EXECUTOR);
     return controller;
+  }
+
+  private static final class ApplicationLogHandler implements LogHandler {
+
+    private final LogHandler delegate;
+    private final LogEntry.Level logLevel;
+
+    private ApplicationLogHandler(LogHandler delegate, LogEntry.Level logLevel) {
+      this.delegate = delegate;
+      this.logLevel = logLevel;
+    }
+
+    @Override
+    public void onLog(LogEntry logEntry) {
+      if (logEntry.getLogLevel().ordinal() <= logLevel.ordinal()) {
+        delegate.onLog(logEntry);
+      }
+    }
   }
 }

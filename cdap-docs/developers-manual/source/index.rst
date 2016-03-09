@@ -21,17 +21,17 @@ CDAP Developers’ Manual
 .. _overview: overview/index.html
 
 - |overview|_ Covers the **overall architecture and technology behind CDAP,** including
-  the abstraction of *Data* and *Applications*, CDAP concepts, components and their
-  interactions, and the anatomy of a Big Data application.
+  the abstraction of *Data* and *Applications*, CDAP modes and components, and the anatomy
+  of a Big Data application.
 
 
 .. |building-blocks| replace:: **Building Blocks:**
 .. _building-blocks: building-blocks/index.html
 
-- |building-blocks|_ This section covers **the two core abstractions in the Cask Data
-  Application Platform: **Data** and **Applications**.** *Data* abstractions include *Streams* and
-  *Datasets*. *Application* abstraction is accomplished using *Flows*, *MapReduce*, *Spark*,
-  *Workflows*, and *Services*. Details are provided on working with these abstractions to
+- |building-blocks|_ This section covers the **two core abstractions** in the Cask Data
+  Application Platform: **Data** and **Applications**. *Data* abstractions include *streams*,
+  *datasets*, and *views*. *Application* abstraction is accomplished using *flows* and *flowlets*, *MapReduce*, *Spark*,
+  *workers*, *workflows*, *schedules*, and *services*. Details are provided on working with these abstractions to
   build Big Data applications.
 
 
@@ -68,6 +68,6 @@ CDAP Developers’ Manual
 .. _advanced: advanced/index.html
 
 - |advanced|_ Covers **advanced topics on CDAP** that will be of interest to
-  developers who want a deeper dive into CDAP, with presentations on suggested **best
-  practices for CDAP development,** and on **adding a custom logback** to a CDAP
-  application.
+  developers who want a deeper dive into CDAP, including suggested **best practices for
+  CDAP development**, **class loading in CDAP**, and on **adding a custom logback** to a
+  CDAP application.

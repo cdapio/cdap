@@ -24,7 +24,7 @@
   <parent>
     <groupId>co.cask.cdap</groupId>
     <artifactId>cdap</artifactId>
-    <version>3.1.0</version>
+    <version>3.3.2</version>
   </parent>
 
 
@@ -33,6 +33,12 @@
   <packaging>jar</packaging>
 
   <dependencies>
+    <!-- Added to override the embedded guava class in hive-exec -->
+    <dependency>
+      <groupId>com.google.guava</groupId>
+      <artifactId>guava</artifactId>
+    </dependency>
+
     <dependency>
       <groupId>ch.qos.logback</groupId>
       <artifactId>logback-core</artifactId>
@@ -56,11 +62,6 @@
       <artifactId>spark-mllib_2.10</artifactId>
     </dependency>
 
-    <!-- Added to override the embedded guava class in hive-exec -->
-    <dependency>
-      <groupId>com.google.guava</groupId>
-      <artifactId>guava</artifactId>
-    </dependency>
     <dependency>
       <groupId>co.cask.cdap</groupId>
       <artifactId>cdap-api</artifactId>
@@ -75,6 +76,20 @@
       <groupId>co.cask.cdap</groupId>
       <artifactId>cdap-cli</artifactId>
       <version>${project.version}</version>
+      <!--
+        Excludes unnecessary transitive dependencies from cdap-cli.
+        cli is added as dependency is because we want to copy the fat jar.
+      -->
+      <exclusions>
+        <exclusion>
+          <groupId>jline</groupId>
+          <artifactId>jline</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>com.googlecode.concurrent-trees</groupId>
+          <artifactId>concurrent-trees</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <dependency>
       <groupId>co.cask.cdap</groupId>
@@ -169,7 +184,11 @@
         <sdk.dir>${project.build.directory}/sdk</sdk.dir>
         <stage.opt.dir>${sdk.dir}/cdap-sdk-${project.version}</stage.opt.dir>
         <stage.lib.dir>${stage.opt.dir}/lib</stage.lib.dir>
-        <stage.plugins.dir>${stage.opt.dir}/plugins</stage.plugins.dir>
+        <stage.libexec.dir>${stage.opt.dir}/libexec</stage.libexec.dir>
+        <stage.artifacts.dir>${stage.opt.dir}/artifacts</stage.artifacts.dir>
+        <additional.artifacts.jar.pattern>**/target/*.jar</additional.artifacts.jar.pattern>
+        <additional.artifacts.config.pattern>**/target/*.json</additional.artifacts.config.pattern>
+        <additional.artifacts.exclude.pattern>**/target/*-tests.jar</additional.artifacts.exclude.pattern>
       </properties>
       <build>
         <plugins>
@@ -194,8 +213,26 @@
                   <overWriteReleases>false</overWriteReleases>
                   <overWriteSnapshots>false</overWriteSnapshots>
                   <overWriteIfNewer>true</overWriteIfNewer>
-                  <excludeGroupIds>org.apache.hbase,asm,org.apache.zookeeper,org.apache.kafka</excludeGroupIds>
-                  <excludeArtifactIds>zkclient,servlet-api</excludeArtifactIds>
+                  <excludeGroupIds>org.apache.hbase,asm,org.apache.zookeeper</excludeGroupIds>
+                  <excludeArtifactIds>zkclient,servlet-api,cdap-cli,cdap-explore-jdbc</excludeArtifactIds>
+                  <prependGroupId>true</prependGroupId>
+                  <silent>true</silent>
+                  <includeScope>runtime</includeScope>
+                </configuration>
+              </execution>
+              <execution>
+                <!-- This is for copying CDAP fat jars: cdap-cli and cdap-explore-jdbc -->
+                <id>copy-libexec-dependencies</id>
+                <phase>prepare-package</phase>
+                <goals>
+                  <goal>copy-dependencies</goal>
+                </goals>
+                <configuration combine.self="override">
+                  <outputDirectory>${stage.libexec.dir}</outputDirectory>
+                  <overWriteReleases>false</overWriteReleases>
+                  <overWriteSnapshots>false</overWriteSnapshots>
+                  <overWriteIfNewer>true</overWriteIfNewer>
+                  <includeArtifactIds>cdap-cli,cdap-explore-jdbc</includeArtifactIds>
                   <prependGroupId>true</prependGroupId>
                   <silent>true</silent>
                   <includeScope>runtime</includeScope>
@@ -314,6 +351,13 @@
                       <targetPath>examples</targetPath>
                       <includes>
                         <include>README*</include>
+                      </includes>
+                      <filtering>true</filtering>
+                    </resource>
+                    <resource>
+                      <directory>${project.parent.basedir}/cdap-examples</directory>
+                      <targetPath>examples</targetPath>
+                      <includes>
                         <include>resources/**</include>
                         <include>**/src/**</include>
                         <include>**/bin/**</include>
@@ -325,19 +369,21 @@
                         <exclude>pom.xml</exclude>
                         <exclude>build.gradle</exclude>
                         <exclude>**/target/original*.jar</exclude>
+                        <exclude>**/target/apidocs/**</exclude>
+                        <exclude>**/target/stage-packaging*/**</exclude>
                       </excludes>
                     </resource>
                   </resources>
                 </configuration>
               </execution>
               <execution>
-                <id>copy-templates</id>
+                <id>copy-etl</id>
                 <phase>prepare-package</phase>
                 <goals>
                   <goal>copy-resources</goal>
                 </goals>
                 <configuration combine.self="override">
-                  <outputDirectory>${stage.opt.dir}/templates</outputDirectory>
+                  <outputDirectory>${stage.artifacts.dir}</outputDirectory>
                   <resources>
                     <resource>
                       <directory>
@@ -359,36 +405,20 @@
                 </configuration>
               </execution>
               <execution>
-                <id>copy-realtime-plugins</id>
+                <id>copy-dq</id>
                 <phase>prepare-package</phase>
                 <goals>
                   <goal>copy-resources</goal>
                 </goals>
                 <configuration combine.self="override">
-                  <outputDirectory>${stage.opt.dir}/templates/plugins/${etl.realtime.plugin.name}</outputDirectory>
+                  <outputDirectory>${stage.artifacts.dir}</outputDirectory>
                   <resources>
                     <resource>
-                      <directory>${project.parent.basedir}/cdap-app-templates/cdap-etl/cdap-etl-lib/target</directory>
+                      <directory>
+                        ${project.parent.basedir}/cdap-app-templates/cdap-data-quality/target
+                      </directory>
                       <includes>
-                        <include>cdap-etl-lib-${project.version}-realtime.jar</include>
-                      </includes>
-                    </resource>
-                  </resources>
-                </configuration>
-              </execution>
-              <execution>
-                <id>copy-batch-plugins</id>
-                <phase>prepare-package</phase>
-                <goals>
-                  <goal>copy-resources</goal>
-                </goals>
-                <configuration combine.self="override">
-                  <outputDirectory>${stage.opt.dir}/templates/plugins/${etl.batch.plugin.name}</outputDirectory>
-                  <resources>
-                    <resource>
-                      <directory>${project.parent.basedir}/cdap-app-templates/cdap-etl/cdap-etl-lib/target</directory>
-                      <includes>
-                        <include>cdap-etl-lib-${project.version}-batch.jar</include>
+                        <include>cdap-data-quality-${project.version}.jar</include>
                       </includes>
                     </resource>
                   </resources>
@@ -458,6 +488,26 @@
             <artifactId>maven-antrun-plugin</artifactId>
             <version>1.7</version>
             <executions>
+              <!-- Copy any additional system artifacts.
+                   For example, if you want to include plugins from hydrator-plugins. -->
+              <execution>
+                <id>copy-additional-system-artifacts</id>
+                <phase>prepare-package</phase>
+                <configuration>
+                  <target if="additional.artifacts.dir">
+                    <copy todir="${stage.artifacts.dir}" flatten="true">
+                      <fileset dir="${additional.artifacts.dir}">
+                        <include name="${additional.artifacts.jar.pattern}"/>
+                        <include name="${additional.artifacts.config.pattern}"/>
+                        <exclude name="${additional.artifacts.exclude.pattern}"/>
+                      </fileset>
+                    </copy>
+                  </target>
+                </configuration>
+                <goals>
+                  <goal>run</goal>
+                </goals>
+              </execution>
               <!-- Rename CLI jar and make CLI scripts executable -->
               <execution>
                 <id>copy-cli-bash</id>

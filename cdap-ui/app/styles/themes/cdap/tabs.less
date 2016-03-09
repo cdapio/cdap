@@ -1,3 +1,19 @@
+/*
+ * Copyright © 2015 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 @import "../../variables.less";
 @import "../../../../bower_components/bootstrap/less/mixins.less";
 
@@ -16,17 +32,30 @@ body.theme-cdap {
             color: @cdap-orange;
             cursor: pointer;
           }
+          &:focus {
+            outline: none;
+          }
         }
-        &.active > a {
-          border-right: 0;
-          &:hover {
-            background-color: #ebecf1;
-            border-right: 1px solid #d1d3da;
-            border-top: 1px solid #d1d3da;
-            border-left: 1px solid #d1d3da;
-            border-bottom: 1px solid transparent;
-            color: @cdap-gray;
-            cursor: default;
+        &.active {
+          > a {
+            border-right: 1px solid transparent;
+            &:hover {
+              background-color: @subnav-background;
+              border-right: 1px solid transparent;
+              border-top: 1px solid @nav-tabs-border-color;
+              border-left: 1px solid @nav-tabs-border-color;
+              border-bottom: 1px solid transparent;
+              color: @cdap-gray;
+              cursor: default;
+            }
+          }
+          &.bottom-border-tab {
+            > a, > a:hover, &:after {
+              border-bottom: 1px solid @nav-tabs-border-color;
+            }
+            > a, > a:hover {
+              border-right: 0;
+            }
           }
         }
       }
@@ -34,13 +63,13 @@ body.theme-cdap {
         content: '';
         height: 100%;
         width: 15%;
-        border-right: 1px solid #d1d3da;
-        border-top: 1px solid #d1d3da;
+        border-right: 1px solid @nav-tabs-border-color;
+        border-top: 1px solid @nav-tabs-border-color;
         .skew(15deg, 0);
         position: absolute;
         top: 0;
         right: -5px;
-        background-color: #ebecf1;
+        background-color: @subnav-background;
       }
     }
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,6 +16,7 @@
 
 package co.cask.cdap.explore.client;
 
+import co.cask.cdap.api.data.format.FormatSpecification;
 import co.cask.cdap.api.dataset.lib.PartitionKey;
 import co.cask.cdap.explore.service.Explore;
 import co.cask.cdap.explore.service.ExploreException;
@@ -54,7 +55,7 @@ import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
 /**
- * A base for an Explore Client that talks to a server implementing {@link Explore} over HTTP.
+ * A base for an Explore Client that talks to a server implementing {@link Explore} over HTTP/HTTPS.
  */
 public abstract class AbstractExploreClient extends ExploreHttpClient implements ExploreClient {
   private static final Gson GSON = new Gson();
@@ -105,11 +106,12 @@ public abstract class AbstractExploreClient extends ExploreHttpClient implements
   }
 
   @Override
-  public ListenableFuture<Void> enableExploreStream(final Id.Stream stream) {
+  public ListenableFuture<Void> enableExploreStream(final Id.Stream stream, final String tableName,
+                                                    final FormatSpecification format) {
     ListenableFuture<ExploreExecutionResult> futureResults = getResultsFuture(new HandleProducer() {
       @Override
       public QueryHandle getHandle() throws ExploreException, SQLException {
-        return doEnableExploreStream(stream);
+        return doEnableExploreStream(stream, tableName, format);
       }
     });
 
@@ -118,11 +120,11 @@ public abstract class AbstractExploreClient extends ExploreHttpClient implements
   }
 
   @Override
-  public ListenableFuture<Void> disableExploreStream(final Id.Stream stream) {
+  public ListenableFuture<Void> disableExploreStream(final Id.Stream stream, final String tableName) {
     ListenableFuture<ExploreExecutionResult> futureResults = getResultsFuture(new HandleProducer() {
       @Override
       public QueryHandle getHandle() throws ExploreException, SQLException {
-        return doDisableExploreStream(stream);
+        return doDisableExploreStream(stream, tableName);
       }
     });
 
@@ -537,12 +539,12 @@ public abstract class AbstractExploreClient extends ExploreHttpClient implements
           try {
             exploreClient.close(handle);
           } catch (ExploreException e) {
-            LOG.error("Caught exception during cancel operation", e);
+            LOG.error("Caught exception during close operation", e);
             throw Throwables.propagate(e);
           } catch (HandleNotFoundException e) {
             // Don't need to throw an exception in that case -
             // if the handle is not found, the query is already closed
-            LOG.warn("Caught exception when closing execution", e);
+            LOG.warn("Caught exception during close operation", e);
           }
         }
 

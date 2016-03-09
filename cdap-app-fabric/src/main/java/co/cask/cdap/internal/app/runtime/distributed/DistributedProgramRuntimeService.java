@@ -36,7 +36,7 @@ import co.cask.cdap.internal.app.program.ProgramTypeMetricTag;
 import co.cask.cdap.internal.app.queue.SimpleQueueSpecificationGenerator;
 import co.cask.cdap.internal.app.runtime.AbstractResourceReporter;
 import co.cask.cdap.internal.app.runtime.ProgramRunnerFactory;
-import co.cask.cdap.internal.app.runtime.flow.FlowUtils;
+import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.service.SimpleRuntimeInfo;
 import co.cask.cdap.internal.app.store.RunRecordMeta;
 import co.cask.cdap.proto.Containers;
@@ -46,7 +46,6 @@ import co.cask.cdap.proto.NotRunningProgramLiveInfo;
 import co.cask.cdap.proto.ProgramLiveInfo;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.proto.RunRecord;
 import co.cask.tephra.TransactionExecutorFactory;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
@@ -64,13 +63,6 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.ContentSummary;
-import org.apache.hadoop.fs.FileStatus;
-import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.FsStatus;
-import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.fs.PathFilter;
-import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
 import org.apache.twill.api.ResourceReport;
 import org.apache.twill.api.RunId;
@@ -123,14 +115,15 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
                                    Store store, QueueAdmin queueAdmin, StreamAdmin streamAdmin,
                                    MetricsCollectionService metricsCollectionService,
                                    Configuration hConf, CConfiguration cConf,
-                                   TransactionExecutorFactory txExecutorFactory) {
-    super(programRunnerFactory);
+                                   TransactionExecutorFactory txExecutorFactory,
+                                   ArtifactRepository artifactRepository) {
+    super(cConf, programRunnerFactory, artifactRepository);
     this.twillRunner = twillRunner;
     this.store = store;
     this.queueAdmin = queueAdmin;
     this.streamAdmin = streamAdmin;
     this.txExecutorFactory = txExecutorFactory;
-    this.resourceReporter = new ClusterResourceReporter(metricsCollectionService, hConf, cConf);
+    this.resourceReporter = new ClusterResourceReporter(metricsCollectionService, hConf);
   }
 
   @Override
@@ -281,11 +274,11 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
 
   private ProgramController createController(Program program, TwillController controller, RunId runId) {
     AbstractTwillProgramController programController = null;
-    String programId = program.getId().getId();
+    Id.Program programId = program.getId();
 
     switch (program.getType()) {
       case FLOW: {
-        FlowSpecification flowSpec = program.getApplicationSpecification().getFlows().get(programId);
+        FlowSpecification flowSpec = program.getApplicationSpecification().getFlows().get(programId.getId());
         DistributedFlowletInstanceUpdater instanceUpdater = new DistributedFlowletInstanceUpdater(
           program, controller, queueAdmin, streamAdmin, getFlowletQueues(program, flowSpec), txExecutorFactory
         );
@@ -335,9 +328,6 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
     // Loop through each flowlet
     for (Map.Entry<String, FlowletDefinition> entry : flowSpec.getFlowlets().entrySet()) {
       String flowletId = entry.getKey();
-      long groupId = FlowUtils.generateConsumerGroupId(program, flowletId);
-      int instances = entry.getValue().getInstances();
-
       // For each queue that the flowlet is a consumer, store the number of instances for this flowlet
       for (QueueSpecification queueSpec : Iterables.concat(queueSpecs.column(flowletId).values())) {
         resultBuilder.put(flowletId, queueSpec.getQueueName());
@@ -391,28 +381,11 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
    */
   private class ClusterResourceReporter extends AbstractResourceReporter {
     private static final String RM_CLUSTER_METRICS_PATH = "/ws/v1/cluster/metrics";
-    private final Path hbasePath;
-    private final Path namedspacedPath;
-    private final PathFilter namespacedFilter;
     private final List<URL> rmUrls;
-    private final String namespace;
-    private FileSystem hdfs;
 
-    public ClusterResourceReporter(MetricsCollectionService metricsCollectionService, Configuration hConf,
-                                   CConfiguration cConf) {
-      super(metricsCollectionService.getContext(
-        ImmutableMap.<String, String>of()));
-      try {
-        this.hdfs = FileSystem.get(hConf);
-      } catch (IOException e) {
-        LOG.error("unable to get hdfs, cluster storage metrics will be unavailable");
-        this.hdfs = null;
-      }
+    public ClusterResourceReporter(MetricsCollectionService metricsCollectionService, Configuration hConf) {
+      super(metricsCollectionService.getContext(ImmutableMap.<String, String>of()));
 
-      this.namespace = cConf.get(Constants.CFG_HDFS_NAMESPACE);
-      this.namedspacedPath = new Path(namespace);
-      this.hbasePath = new Path(hConf.get(HConstants.HBASE_DIR));
-      this.namespacedFilter = new NamespacedPathFilter();
       List<URL> rmUrls = Collections.emptyList();
       try {
         rmUrls = getResourceManagerURLs(hConf);
@@ -492,7 +465,6 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
           sendMetrics(runContext, 1, memory, vcores);
         }
       }
-      reportClusterStorage();
       boolean reported = false;
       // if we have HA resourcemanager, need to cycle through possible webapps in case one is down.
       for (URL url : rmUrls) {
@@ -538,57 +510,19 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
         }
         return false;
       } catch (Exception e) {
-        LOG.error("Exception getting cluster memory from ", e);
+        LOG.warn("Exception getting cluster memory from ", e);
         return false;
       } finally {
         if (reader != null) {
           try {
             reader.close();
           } catch (IOException e) {
-            LOG.error("Exception closing reader", e);
+            LOG.warn("Exception closing reader", e);
           }
         }
         if (conn != null) {
           conn.disconnect();
         }
-      }
-    }
-
-    private void reportClusterStorage() {
-      try {
-        ContentSummary summary = hdfs.getContentSummary(namedspacedPath);
-        long totalUsed = summary.getSpaceConsumed();
-        long totalFiles = summary.getFileCount();
-        long totalDirectories = summary.getDirectoryCount();
-
-        // cdap hbase tables
-        for (FileStatus fileStatus : hdfs.listStatus(hbasePath, namespacedFilter)) {
-          summary = hdfs.getContentSummary(fileStatus.getPath());
-          totalUsed += summary.getSpaceConsumed();
-          totalFiles += summary.getFileCount();
-          totalDirectories += summary.getDirectoryCount();
-        }
-
-        FsStatus hdfsStatus = hdfs.getStatus();
-        long storageCapacity = hdfsStatus.getCapacity();
-        long storageAvailable = hdfsStatus.getRemaining();
-
-        MetricsContext collector = getCollector();
-        LOG.trace("total cluster storage = " + storageCapacity + " total used = " + totalUsed);
-        collector.gauge("resources.total.storage", (storageCapacity / 1024 / 1024));
-        collector.gauge("resources.available.storage", (storageAvailable / 1024 / 1024));
-        collector.gauge("resources.used.storage", (totalUsed / 1024 / 1024));
-        collector.gauge("resources.used.files", totalFiles);
-        collector.gauge("resources.used.directories", totalDirectories);
-      } catch (IOException e) {
-        LOG.warn("Exception getting hdfs metrics", e);
-      }
-    }
-
-    private class NamespacedPathFilter implements PathFilter {
-      @Override
-      public boolean accept(Path path) {
-        return path.getName().startsWith(namespace);
       }
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -55,9 +55,19 @@ public class IntegrationTestBaseTest extends IntegrationTestBase {
     Assert.assertEquals(0, new ApplicationClient(defaultClientConfig).list(Id.Namespace.DEFAULT).size());
 
     ApplicationClient applicationClient = new ApplicationClient(clientConfig);
-    Assert.assertEquals("TestApplication", applicationClient.list(namespace).get(0).getName());
-    applicationClient.delete(Id.Application.from(namespace, "TestApplication"));
+    Assert.assertEquals(TestApplication.NAME, applicationClient.list(namespace).get(0).getName());
+    applicationClient.delete(Id.Application.from(namespace, TestApplication.NAME));
     Assert.assertEquals(0, new ApplicationClient(clientConfig).list(namespace).size());
+
+  }
+
+  @Test
+  public void testGetApplicationManager() throws Exception {
+    ApplicationManager applicationManager = deployApplication(TestApplication.class);
+    ApplicationManager testApplicationManager = getApplicationManager(Id.Application.from(Id.Namespace.DEFAULT,
+                                                                                          TestApplication.NAME));
+    Assert.assertEquals(applicationManager.getFlowManager(TestFlow.NAME).getFlowletInstances(TestFlowlet.NAME),
+                        testApplicationManager.getFlowManager(TestFlow.NAME).getFlowletInstances(TestFlowlet.NAME));
 
   }
 }

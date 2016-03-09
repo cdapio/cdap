@@ -20,6 +20,8 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import co.cask.http.ChunkResponder;
 import co.cask.http.HttpResponder;
+import co.cask.tephra.InvalidTruncateTimeException;
+import co.cask.tephra.TransactionCouldNotTakeSnapshotException;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
@@ -32,6 +34,7 @@ import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Type;
 import java.util.Map;
@@ -63,29 +66,25 @@ public class TransactionHttpHandler extends AbstractAppFabricHttpHandler {
    */
   @Path("/transactions/state")
   @GET
-  public void getTxManagerSnapshot(HttpRequest request, HttpResponder responder) {
-    try {
-      LOG.trace("Taking transaction manager snapshot at time {}", System.currentTimeMillis());
-      LOG.trace("Took and retrieved transaction manager snapshot successfully.");
-      try (InputStream in = txClient.getSnapshotInputStream()) {
-        ChunkResponder chunkResponder = responder.sendChunkStart(HttpResponseStatus.OK,
-                                                                 ImmutableMultimap.<String, String>of());
-        while (true) {
-          // netty doesn't copy the readBytes buffer, so we have to reallocate a new buffer
-          byte[] readBytes = new byte[4096];
-          int res = in.read(readBytes, 0, 4096);
-          if (res == -1) {
-            break;
-          }
-          // If failed to send chunk, IOException will be raised.
-          // It'll just propagated to the netty-http library to handle it
-          chunkResponder.sendChunk(ChannelBuffers.wrappedBuffer(readBytes, 0, res));
+  public void getTxManagerSnapshot(HttpRequest request, HttpResponder responder)
+    throws TransactionCouldNotTakeSnapshotException, IOException {
+    LOG.trace("Taking transaction manager snapshot at time {}", System.currentTimeMillis());
+    LOG.trace("Took and retrieved transaction manager snapshot successfully.");
+    try (InputStream in = txClient.getSnapshotInputStream()) {
+      ChunkResponder chunkResponder = responder.sendChunkStart(HttpResponseStatus.OK,
+                                                               ImmutableMultimap.<String, String>of());
+      while (true) {
+        // netty doesn't copy the readBytes buffer, so we have to reallocate a new buffer
+        byte[] readBytes = new byte[4096];
+        int res = in.read(readBytes, 0, 4096);
+        if (res == -1) {
+          break;
         }
-        Closeables.closeQuietly(chunkResponder);
+        // If failed to send chunk, IOException will be raised.
+        // It'll just propagated to the netty-http library to handle it
+        chunkResponder.sendChunk(ChannelBuffers.wrappedBuffer(readBytes, 0, res));
       }
-    } catch (Exception e) {
-      LOG.error("Could not take transaction manager snapshot", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+      Closeables.closeQuietly(chunkResponder);
     }
   }
 
@@ -115,66 +114,52 @@ public class TransactionHttpHandler extends AbstractAppFabricHttpHandler {
 
   @Path("/transactions/invalid/remove/until")
   @POST
-  public void truncateInvalidTxBefore(HttpRequest request, HttpResponder responder) {
+  public void truncateInvalidTxBefore(HttpRequest request,
+                                      HttpResponder responder) throws InvalidTruncateTimeException {
+    Map<String, Long> body;
     try {
-      Map<String, Long> body;
-      try {
-        body = parseBody(request, STRING_LONG_MAP_TYPE);
-      } catch (IllegalArgumentException e) {
-        responder.sendString(HttpResponseStatus.BAD_REQUEST, "Invalid time value in request");
-        return;
-      }
-
-      if (body == null || !body.containsKey("time")) {
-        responder.sendString(HttpResponseStatus.BAD_REQUEST, "Time not specified");
-        return;
-      }
-
-      long time = body.get("time");
-      txClient.truncateInvalidTxBefore(time);
-      responder.sendStatus(HttpResponseStatus.OK);
-    } catch (Exception e) {
-      LOG.error("Got exception: ", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+      body = parseBody(request, STRING_LONG_MAP_TYPE);
+    } catch (IllegalArgumentException e) {
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, "Invalid time value in request");
+      return;
     }
+
+    if (body == null || !body.containsKey("time")) {
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, "Time not specified");
+      return;
+    }
+
+    long time = body.get("time");
+    txClient.truncateInvalidTxBefore(time);
+    responder.sendStatus(HttpResponseStatus.OK);
   }
 
   @Path("/transactions/invalid/remove/ids")
   @POST
   public void truncateInvalidTx(HttpRequest request, HttpResponder responder) {
+    Map<String, Set<Long>> body;
     try {
-      Map<String, Set<Long>> body;
-      try {
-        body = parseBody(request, STRING_LONG_SET_MAP_TYPE);
-      } catch (IllegalArgumentException e) {
-        responder.sendString(HttpResponseStatus.BAD_REQUEST, "Invalid ids specified in request");
-        return;
-      }
-
-      if (body == null || !body.containsKey("ids")) {
-        responder.sendString(HttpResponseStatus.BAD_REQUEST, "Transaction ids not specified");
-        return;
-      }
-
-      Set<Long> txIds = body.get("ids");
-      txClient.truncateInvalidTx(txIds);
-      responder.sendStatus(HttpResponseStatus.OK);
-    } catch (Exception e) {
-      LOG.error("Got exception: ", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+      body = parseBody(request, STRING_LONG_SET_MAP_TYPE);
+    } catch (IllegalArgumentException e) {
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, "Invalid ids specified in request");
+      return;
     }
+
+    if (body == null || !body.containsKey("ids")) {
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, "Transaction ids not specified");
+      return;
+    }
+
+    Set<Long> txIds = body.get("ids");
+    txClient.truncateInvalidTx(txIds);
+    responder.sendStatus(HttpResponseStatus.OK);
   }
 
   @Path("/transactions/invalid/size")
   @GET
   public void invalidTxSize(HttpRequest request, HttpResponder responder) {
-    try {
-      int invalidSize = txClient.getInvalidSize();
-      responder.sendJson(HttpResponseStatus.OK, ImmutableMap.of("size", invalidSize));
-    } catch (Exception e) {
-      LOG.error("Got exception: ", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-    }
+    int invalidSize = txClient.getInvalidSize();
+    responder.sendJson(HttpResponseStatus.OK, ImmutableMap.of("size", invalidSize));
   }
 
   /**

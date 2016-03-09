@@ -18,16 +18,23 @@ package co.cask.cdap.internal.app.services.http.handlers;
 
 import co.cask.cdap.AppWithDataset;
 import co.cask.cdap.AppWithDatasetDuplicate;
+import co.cask.cdap.AppWithNoServices;
 import co.cask.cdap.BloatedWordCountApp;
 import co.cask.cdap.ConfigTestApp;
 import co.cask.cdap.WordCountApp;
+import co.cask.cdap.api.Config;
+import co.cask.cdap.common.NamespaceNotFoundException;
+import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.gateway.handlers.AppLifecycleHttpHandler;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.artifact.AppRequest;
+import co.cask.cdap.proto.artifact.ArtifactSummary;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import com.google.gson.reflect.TypeToken;
 import org.apache.http.HttpResponse;
 import org.junit.Assert;
 import org.junit.Test;
@@ -48,7 +55,8 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
   public void testDeployNonExistingNamespace() throws Exception {
     HttpResponse response = deploy(WordCountApp.class, Constants.Gateway.API_VERSION_3_TOKEN, "random");
     Assert.assertEquals(404, response.getStatusLine().getStatusCode());
-    Assert.assertEquals("Deploy failed - namespace 'random' not found.", readResponse(response));
+    NotFoundException nfe = new NamespaceNotFoundException(Id.Namespace.from("random"));
+    Assert.assertEquals(nfe.getMessage(), readResponse(response));
   }
 
   /**
@@ -63,12 +71,46 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
   }
 
   @Test
+  public void testDeployWithExtraConfig() throws Exception {
+    ExtraConfig extraConfig = new ExtraConfig();
+    HttpResponse response = deploy(AppWithNoServices.class, "ExtraConfigApp", extraConfig);
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+  }
+
+  @Test
   public void testAppWithConfig() throws Exception {
     ConfigTestApp.ConfigClass config = new ConfigTestApp.ConfigClass("abc", "def");
     HttpResponse response = deploy(ConfigTestApp.class, "ConfigApp", config);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    JsonObject appDetails = getAppDetails(Constants.DEFAULT_NAMESPACE, "ConfigApp");
+    JsonObject appDetails = getAppDetails(Id.Namespace.DEFAULT.getId(), "ConfigApp");
     Assert.assertEquals(GSON.toJson(config), appDetails.get("configuration").getAsString());
+  }
+
+  @Test
+  public void testDeployUsingNonexistantArtifact404() throws Exception {
+    Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "badapp");
+    AppRequest<Config> appRequest =
+      new AppRequest<>(new ArtifactSummary("something", "1.0.0"), null);
+    HttpResponse response = deploy(appId, appRequest);
+    Assert.assertEquals(404, response.getStatusLine().getStatusCode());
+  }
+
+  @Test
+  public void testDeployUsingArtifact() throws Exception {
+    Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "configapp", "1.0.0");
+    addAppArtifact(artifactId, ConfigTestApp.class);
+
+    Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "cfgApp");
+    ConfigTestApp.ConfigClass config = new ConfigTestApp.ConfigClass("abc", "def");
+    AppRequest<ConfigTestApp.ConfigClass> request = new AppRequest<>(
+      new ArtifactSummary(artifactId.getName(), artifactId.getVersion().getVersion()), config);
+    Assert.assertEquals(200, deploy(appId, request).getStatusLine().getStatusCode());
+
+    JsonObject appDetails = getAppDetails(Id.Namespace.DEFAULT.getId(), appId.getId());
+    Assert.assertEquals(GSON.toJson(config), appDetails.get("configuration").getAsString());
+
+    Assert.assertEquals(200,
+      doDelete(getVersionedAPIPath("apps/" + appId.getId(), appId.getNamespaceId())).getStatusLine().getStatusCode());
   }
 
   @Test
@@ -106,6 +148,13 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     response = deploy(AppWithDatasetDuplicate.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
     Assert.assertEquals(400, response.getStatusLine().getStatusCode());
     Assert.assertNotNull(response.getEntity());
+  }
+
+  @Test
+  public void testListNonExistentNamespace() throws Exception {
+    HttpResponse response = doGet(getVersionedAPIPath("apps/", Constants.Gateway.API_VERSION_3_TOKEN,
+                                                      NONEXISTENT_NAMESPACE));
+    Assert.assertEquals(404, response.getStatusLine().getStatusCode());
   }
 
   @Test
@@ -228,5 +277,18 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     response = doDelete(getVersionedAPIPath("apps/WordCountApp/", Constants.Gateway.API_VERSION_3_TOKEN,
                                             TEST_NAMESPACE1));
     Assert.assertEquals(404, response.getStatusLine().getStatusCode());
+
+    // deleting the app should not delete the artifact
+    response = doGet(getVersionedAPIPath("artifacts/WordCountApp", Constants.Gateway.API_VERSION_3_TOKEN,
+                                         TEST_NAMESPACE1));
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+
+    List<ArtifactSummary> summaries = readResponse(response, new TypeToken<List<ArtifactSummary>>() { }.getType());
+    Assert.assertFalse(summaries.isEmpty());
+  }
+
+  private static class ExtraConfig extends Config {
+    @SuppressWarnings("unused")
+    private final int x = 5;
   }
 }

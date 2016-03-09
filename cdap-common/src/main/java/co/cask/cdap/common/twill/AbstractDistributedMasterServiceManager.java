@@ -146,11 +146,12 @@ public abstract class AbstractDistributedMasterServiceManager implements MasterS
 
   @Override
   public boolean isServiceAvailable() {
+    String url = null;
     try {
-      Iterable<Discoverable> discoverables = this.discoveryServiceClient.discover(serviceName);
+      Iterable<Discoverable> discoverables = this.discoveryServiceClient.discover(getDiscoverableName());
       for (Discoverable discoverable : discoverables) {
         //Ping the discovered service to check its status.
-        String url = String.format("http://%s:%d/ping", discoverable.getSocketAddress().getHostName(),
+        url = String.format("http://%s:%d/ping", discoverable.getSocketAddress().getHostName(),
                                    discoverable.getSocketAddress().getPort());
         if (checkGetStatus(url).equals(HttpResponseStatus.OK)) {
           return true;
@@ -160,9 +161,13 @@ public abstract class AbstractDistributedMasterServiceManager implements MasterS
     } catch (IllegalArgumentException e) {
       return false;
     } catch (Exception e) {
-      LOG.warn("Unable to ping {} : Reason : {}", serviceName, e.getMessage());
+      LOG.warn("Unable to ping {} at {} : Reason : {}", serviceName, url, e.getMessage());
       return false;
     }
+  }
+
+  protected String getDiscoverableName() {
+    return serviceName;
   }
 
   protected final HttpResponseStatus checkGetStatus(String url) throws Exception {

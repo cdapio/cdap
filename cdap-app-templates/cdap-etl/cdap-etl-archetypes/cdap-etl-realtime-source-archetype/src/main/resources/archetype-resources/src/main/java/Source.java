@@ -19,19 +19,18 @@ import co.cask.cdap.api.annotation.Description;
 import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.annotation.Plugin;
 import co.cask.cdap.api.data.format.StructuredRecord;
-import co.cask.cdap.api.templates.plugins.PluginConfig;
-import co.cask.cdap.template.etl.api.Emitter;
-import co.cask.cdap.template.etl.api.PipelineConfigurer;
-import co.cask.cdap.template.etl.api.realtime.RealtimeContext;
-import co.cask.cdap.template.etl.api.realtime.RealtimeSource;
-import co.cask.cdap.template.etl.api.realtime.SourceState;
+import co.cask.cdap.api.plugin.PluginConfig;
+import co.cask.cdap.etl.api.Emitter;
+import co.cask.cdap.etl.api.realtime.RealtimeContext;
+import co.cask.cdap.etl.api.realtime.RealtimeSource;
+import co.cask.cdap.etl.api.realtime.SourceState;
 
 import javax.annotation.Nullable;
 
 /**
  * Realtime Source to poll data from external sources.
  */
-@Plugin(type = "source")
+@Plugin(type = "realtimesource")
 @Name("Source")
 @Description("Realtime Source")
 public class Source extends RealtimeSource<StructuredRecord> {

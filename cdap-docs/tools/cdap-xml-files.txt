@@ -1,0 +1,13 @@
+# Line starting with a # or space are ignored
+
+cdap-distributions/src/etc/cdap/conf.dist/cdap-site.xml.example
+cdap-examples/Purchase/src/test/resources/cdap-site.xml
+cdap-standalone/src/main/resources/cdap-site.xml
+
+../cdap-ambari-service/configuration/cdap-site.xml
+https://raw.githubusercontent.com/caskdata/cdap-ambari-service/develop/configuration/cdap-site.xml
+https://raw.githubusercontent.com/caskdata/cdap-ambari-service/release/3.3/configuration/cdap-site.xml
+
+../cm_csd/src/descriptor/service.sdl
+https://raw.githubusercontent.com/caskdata/cm_csd/develop/src/descriptor/service.sdl
+https://raw.githubusercontent.com/caskdata/cm_csd/release/3.3/src/descriptor/service.sdl

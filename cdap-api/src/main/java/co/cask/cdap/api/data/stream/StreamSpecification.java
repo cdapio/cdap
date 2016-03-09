@@ -16,7 +16,7 @@
 
 package co.cask.cdap.api.data.stream;
 
-import com.google.common.base.Objects;
+import java.util.Objects;
 
 /**
  * Specification for {@link Stream}.
@@ -56,8 +56,7 @@ public final class StreamSpecification {
      * @return Instance of {@code StreamSpecification}
      */
     public StreamSpecification create() {
-      StreamSpecification specification = new StreamSpecification(name);
-      return specification;
+      return new StreamSpecification(name);
     }
   }
 
@@ -76,6 +75,6 @@ public final class StreamSpecification {
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(name);
+    return Objects.hash(name);
   }
 }

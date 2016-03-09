@@ -1,0 +1,84 @@
+<!--
+  Copyright © 2015 Cask Data, Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+-->
+
+<div class="side-panel top text-center">
+  <div class="row nomargin">
+    <div class="col-xs-12 col-sm-6 text-left nopadding">
+      <div class="hydrator-metadata" ng-class="{'expanded': TopPanelController.metadataExpanded}">
+        <div ng-click="TopPanelController.openMetadata()" class="clearfix">
+          <div class="pipeline-type">
+            <span ng-if="TopPanelController.state.artifact.name === TopPanelController.GLOBALS.etlBatch"
+                  tooltip="Type: Batch"
+                  tooltip-placement="right"
+                  tooltip-class="toppanel-tooltip icon-tooltip"
+                  class="icon-ETLBatch"></span>
+            <span ng-if="TopPanelController.state.artifact.name === TopPanelController.GLOBALS.etlRealtime"
+                  tooltip="Type: Realtime"
+                  tooltip-placement="right"
+                  tooltip-class="toppanel-tooltip icon-tooltip"
+                  class="icon-ETLRealtime"></span>
+          </div>
+          <div class="pipeline-name pull-left">
+            <div ng-class="{'placeholder': !TopPanelController.state.metadata.name.length}"
+                 ng-if="!TopPanelController.metadataExpanded"
+                 ng-bind="TopPanelController.state.metadata['name'] | myEllipsis: 28"
+                 tooltip="{{ TopPanelController.state.metadata.name }}"
+                 tooltip-placement="right"
+                 tooltip-enable="TopPanelController.state.metadata.name.length > 27"
+                 tooltip-class="toppanel-tooltip"></div>
+            <input type="text"
+                   ng-if="TopPanelController.metadataExpanded"
+                   ng-model="TopPanelController.state.metadata['name']"
+                   my-maxlength="64"
+                   placeholder="Name your pipeline"
+                   ng-keyup="TopPanelController.onEnterOnMetadata($event)" />
+            <div ng-class="{'placeholder': !TopPanelController.state.metadata['description'].length}"
+                 ng-if="!TopPanelController.metadataExpanded"
+                 ng-bind="TopPanelController.parsedDescription | myEllipsis: 65"
+                 tooltip-html="TopPanelController.tooltipDescription"
+                 tooltip-placement="right"
+                 tooltip-enable="TopPanelController.tooltipDescription.length > 64"
+                 tooltip-class="toppanel-tooltip"
+                 ng-if="!TopPanelController.metadataExpanded"
+                 tooltip-append-to-body="true"></div>
+            <textarea ng-model="TopPanelController.state.metadata['description']"
+                      placeholder="Enter a description for your pipeline."
+                      ng-if="TopPanelController.metadataExpanded"></textarea>
+          </div>
+        </div>
+
+        <div class="btn-group pull-right">
+          <button type="button" class="btn btn-default" ng-click="TopPanelController.resetMetadata()">Cancel</button>
+          <button type="button" class="btn btn-success" ng-click="TopPanelController.saveMetadata()">Save</button>
+        </div>
+      </div>
+    </div>
+    <div class="col-sm-3 col-sm-offset-3 text-right nopadding">
+      <div class="btn-group action-buttons">
+        <div class="btn"
+             ng-repeat="action in TopPanelController.canvasOperations"
+             ng-click="action.fn()"
+             tooltip="{{action.name}}"
+             tooltip-placement="bottom"
+             tooltip-append-to-body="true"
+             tooltip-class="toppanel-tooltip">
+          <span class="fa {{action.icon}}"></span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>

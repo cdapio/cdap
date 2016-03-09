@@ -18,7 +18,6 @@ package co.cask.cdap.examples.wordcount;
 import co.cask.cdap.api.annotation.ProcessInput;
 import co.cask.cdap.api.annotation.Property;
 import co.cask.cdap.api.flow.flowlet.AbstractFlowlet;
-import co.cask.cdap.api.flow.flowlet.FlowletConfigurer;
 import co.cask.cdap.api.flow.flowlet.FlowletContext;
 
 /**
@@ -30,12 +29,6 @@ public class UniqueCounter extends AbstractFlowlet {
   private final String uniqueCountTableName;
 
   private UniqueCountTable uniqueCountTable;
-
-  @Override
-  public void configure(FlowletConfigurer configurer) {
-    super.configure(configurer);
-    useDatasets(uniqueCountTableName);
-  }
 
   public UniqueCounter(String uniqueCountTableName) {
     this.uniqueCountTableName = uniqueCountTableName;

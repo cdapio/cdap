@@ -18,8 +18,6 @@ package co.cask.cdap.logging.context;
 
 import co.cask.cdap.common.logging.ApplicationLoggingContext;
 
-import javax.annotation.Nullable;
-
 /**
  *
  */
@@ -33,15 +31,10 @@ public class MapReduceLoggingContext extends ApplicationLoggingContext {
    * @param applicationId application id
    * @param mapReduceId mapreduce job id
    * @param runId run id
-   * @param adapterId adapter id
    */
-  public MapReduceLoggingContext(String namespaceId, String applicationId, String mapReduceId,
-                                 String runId, @Nullable String adapterId) {
+  public MapReduceLoggingContext(String namespaceId, String applicationId, String mapReduceId, String runId) {
     super(namespaceId, applicationId, runId);
     setSystemTag(TAG_MAP_REDUCE_JOB_ID, mapReduceId);
-    if (adapterId != null) {
-      setAdapterId(adapterId);
-    }
   }
 
   @Override

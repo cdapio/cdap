@@ -16,16 +16,20 @@
 
 package co.cask.cdap.test.app;
 
+import co.cask.cdap.AppUsingNamespace;
 import co.cask.cdap.ConfigTestApp;
 import co.cask.cdap.api.app.Application;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.lib.CloseableIterator;
+import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.lib.cube.AggregationFunction;
 import co.cask.cdap.api.dataset.table.Get;
 import co.cask.cdap.api.dataset.table.Put;
+import co.cask.cdap.api.dataset.table.Row;
+import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.api.metrics.MetricDataQuery;
@@ -41,17 +45,21 @@ import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.proto.WorkflowTokenDetail;
 import co.cask.cdap.proto.WorkflowTokenNodeDetail;
+import co.cask.cdap.proto.artifact.AppRequest;
+import co.cask.cdap.proto.artifact.ArtifactSummary;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.DataSetManager;
 import co.cask.cdap.test.FlowManager;
 import co.cask.cdap.test.MapReduceManager;
-import co.cask.cdap.test.RuntimeStats;
 import co.cask.cdap.test.ServiceManager;
 import co.cask.cdap.test.SlowTests;
+import co.cask.cdap.test.SparkManager;
 import co.cask.cdap.test.StreamManager;
 import co.cask.cdap.test.WorkerManager;
 import co.cask.cdap.test.WorkflowManager;
 import co.cask.cdap.test.XSlowTests;
+import co.cask.cdap.test.artifacts.AppWithPlugin;
+import co.cask.cdap.test.artifacts.plugins.ToStringPlugin;
 import co.cask.cdap.test.base.TestFrameworkTestBase;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpRequests;
@@ -81,6 +89,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.lang.reflect.Type;
@@ -113,6 +122,35 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
   @Before
   public void setUp() throws Exception {
     createNamespace(testSpace);
+  }
+
+  @Test
+  public void testInvalidAppWithDuplicateDatasets() throws Exception {
+    Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "invalid-app", "1.0.0-SNAPSHOT");
+    addAppArtifact(artifactId, AppWithDuplicateData.class);
+
+    Id.Artifact pluginArtifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "test-plugin", "1.0.0-SNAPSHOT");
+    addPluginArtifact(pluginArtifactId, artifactId, ToStringPlugin.class);
+
+    Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "InvalidApp");
+
+    for (int choice = 4; choice > 0; choice /= 2) {
+      try {
+        AppRequest<AppWithDuplicateData.ConfigClass> createRequest = new AppRequest<>(
+          new ArtifactSummary(artifactId.getName(), artifactId.getVersion().getVersion()),
+          new AppWithDuplicateData.ConfigClass((choice == 4), (choice == 2), (choice == 1)));
+        deployApplication(appId, createRequest);
+        // fail if we succeed with application deployment
+        Assert.fail();
+      } catch (IllegalStateException e) {
+        // expected
+      }
+    }
+
+    AppRequest<AppWithDuplicateData.ConfigClass> createRequest = new AppRequest<>(
+      new ArtifactSummary(artifactId.getName(), artifactId.getVersion().getVersion()),
+      new AppWithDuplicateData.ConfigClass(false, false, false));
+    deployApplication(appId, createRequest);
   }
 
   @Test
@@ -154,41 +192,157 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
   @Test
   public void testServiceManager() throws Exception {
     ApplicationManager applicationManager = deployApplication(FilterApp.class);
-    ServiceManager countService = applicationManager.getServiceManager("CountService");
+    final ServiceManager countService = applicationManager.getServiceManager("CountService");
     countService.setInstances(2);
     Assert.assertEquals(0, countService.getProvisionedInstances());
     Assert.assertEquals(2, countService.getRequestedInstances());
     Assert.assertFalse(countService.isRunning());
+
+    List<RunRecord> history = countService.getHistory();
+    Assert.assertEquals(0, history.size());
+
     countService.start();
     Assert.assertTrue(countService.isRunning());
     Assert.assertEquals(2, countService.getProvisionedInstances());
+
+    // requesting with ProgramRunStatus.KILLED returns empty list
+    history = countService.getHistory(ProgramRunStatus.KILLED);
+    Assert.assertEquals(0, history.size());
+
+    // requesting with either RUNNING or ALL will return one record
+    Tasks.waitFor(1, new Callable<Integer>() {
+      @Override
+      public Integer call() throws Exception {
+        return countService.getHistory(ProgramRunStatus.RUNNING).size();
+      }
+    }, 5, TimeUnit.SECONDS);
+
+    history = countService.getHistory(ProgramRunStatus.RUNNING);
+    Assert.assertEquals(ProgramRunStatus.RUNNING, history.get(0).getStatus());
+
+    history = countService.getHistory(ProgramRunStatus.ALL);
+    Assert.assertEquals(1, history.size());
+    Assert.assertEquals(ProgramRunStatus.RUNNING, history.get(0).getStatus());
+  }
+
+  @Test
+  public void testNamespaceAvailableAtRuntime() throws Exception {
+    ApplicationManager applicationManager = deployApplication(testSpace, AppUsingNamespace.class);
+    ServiceManager serviceManager = applicationManager.getServiceManager(AppUsingNamespace.SERVICE_NAME);
+    serviceManager.start();
+    serviceManager.waitForStatus(true, 1, 10);
+
+    URL serviceURL = serviceManager.getServiceURL(10, TimeUnit.SECONDS);
+    Assert.assertEquals(testSpace.getId(), callServiceGet(serviceURL, "ns"));
+
+    serviceManager.stop();
+    serviceManager.waitForStatus(false, 1, 10);
   }
 
   @Test
   public void testAppConfigWithNull() throws Exception {
-    testAppConfig(null);
+    testAppConfig(ConfigTestApp.NAME, deployApplication(ConfigTestApp.class), null);
   }
 
   @Test
   public void testAppConfig() throws Exception {
-    testAppConfig(new ConfigTestApp.ConfigClass("testStream", "testDataset"));
+    ConfigTestApp.ConfigClass conf = new ConfigTestApp.ConfigClass("testStream", "testDataset");
+    testAppConfig(ConfigTestApp.NAME, deployApplication(ConfigTestApp.class, conf), conf);
   }
 
-  private void testAppConfig(ConfigTestApp.ConfigClass object) throws Exception {
-    String streamName = ConfigTestApp.DEFAULT_STREAM;
-    String datasetName = ConfigTestApp.DEFAULT_TABLE;
+  @Test
+  public void testAppWithPlugin() throws Exception {
+    Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "app-with-plugin", "1.0.0-SNAPSHOT");
+    addAppArtifact(artifactId, AppWithPlugin.class);
 
-    ApplicationManager appManager;
-    if (object != null) {
-      streamName = object.getStreamName();
-      datasetName = object.getTableName();
-      appManager = deployApplication(ConfigTestApp.class, object);
-    } else {
-      appManager = deployApplication(ConfigTestApp.class);
+    Id.Artifact pluginArtifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "test-plugin", "1.0.0-SNAPSHOT");
+    addPluginArtifact(pluginArtifactId, artifactId, ToStringPlugin.class);
+
+    Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "AppWithPlugin");
+    AppRequest createRequest = new AppRequest(
+      new ArtifactSummary(artifactId.getName(), artifactId.getVersion().getVersion()));
+
+    ApplicationManager appManager = deployApplication(appId, createRequest);
+
+    final WorkerManager workerManager = appManager.getWorkerManager(AppWithPlugin.WORKER);
+    workerManager.start();
+    workerManager.waitForStatus(false, 5, 1);
+    Tasks.waitFor(false, new Callable<Boolean>() {
+      @Override
+      public Boolean call() throws Exception {
+        return workerManager.getHistory(ProgramRunStatus.COMPLETED).isEmpty();
+      }
+    }, 5, TimeUnit.SECONDS, 10, TimeUnit.MILLISECONDS);
+
+    final ServiceManager serviceManager = appManager.getServiceManager(AppWithPlugin.SERVICE);
+    serviceManager.start();
+    serviceManager.waitForStatus(true, 1, 10);
+    URL serviceURL = serviceManager.getServiceURL(5, TimeUnit.SECONDS);
+    callServiceGet(serviceURL, "dummy");
+    serviceManager.stop();
+    serviceManager.waitForStatus(false, 1, 10);
+    Tasks.waitFor(false, new Callable<Boolean>() {
+      @Override
+      public Boolean call() throws Exception {
+        return serviceManager.getHistory(ProgramRunStatus.KILLED).isEmpty();
+      }
+    }, 5, TimeUnit.SECONDS, 10, TimeUnit.MILLISECONDS);
+
+    MapReduceManager mrManager = appManager.getMapReduceManager(AppWithPlugin.MAPREDUCE);
+    mrManager.start();
+    mrManager.waitForFinish(10, TimeUnit.MINUTES);
+    List<RunRecord> runRecords = mrManager.getHistory();
+    Assert.assertNotEquals(ProgramRunStatus.FAILED, runRecords.get(0).getStatus());
+
+    // Testing Spark Plugins. First send some data to stream for the Spark program to process
+    StreamManager streamManager = getStreamManager(AppWithPlugin.SPARK_STREAM);
+    for (int i = 0; i < 5; i++) {
+      streamManager.send("Message " + i);
     }
 
-    FlowManager flowManager = appManager.getFlowManager(ConfigTestApp.FLOW_NAME);
-    flowManager.start();
+    SparkManager sparkManager = appManager.getSparkManager(AppWithPlugin.SPARK).start();
+    sparkManager.waitForFinish(2, TimeUnit.MINUTES);
+
+    // Verify the Spark result.
+    DataSetManager<Table> dataSetManager = getDataset(AppWithPlugin.SPARK_TABLE);
+    Table table = dataSetManager.get();
+    Scanner scanner = table.scan(null, null);
+    try {
+      for (int i = 0; i < 5; i++) {
+        Row row = scanner.next();
+        Assert.assertNotNull(row);
+        String expected = "Message " + i + " " + AppWithPlugin.TEST;
+        Assert.assertEquals(expected, Bytes.toString(row.getRow()));
+        Assert.assertEquals(expected, Bytes.toString(row.get(expected)));
+      }
+      // There shouldn't be any more rows in the table.
+      Assert.assertNull(scanner.next());
+
+    } finally {
+      scanner.close();
+    }
+  }
+
+  @Test
+  public void testAppFromArtifact() throws Exception {
+    Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "cfg-app", "1.0.0-SNAPSHOT");
+    addAppArtifact(artifactId, ConfigTestApp.class);
+
+    Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "AppFromArtifact");
+    AppRequest<ConfigTestApp.ConfigClass> createRequest = new AppRequest<>(
+      new ArtifactSummary(artifactId.getName(), artifactId.getVersion().getVersion()),
+      new ConfigTestApp.ConfigClass("testStream", "testDataset")
+    );
+    ApplicationManager appManager = deployApplication(appId, createRequest);
+    testAppConfig(appId.getId(), appManager, createRequest.getConfig());
+  }
+
+  private void testAppConfig(String appName, ApplicationManager appManager,
+                             ConfigTestApp.ConfigClass conf) throws Exception {
+    String streamName = conf == null ? ConfigTestApp.DEFAULT_STREAM : conf.getStreamName();
+    String datasetName = conf == null ? ConfigTestApp.DEFAULT_TABLE : conf.getTableName();
+
+    FlowManager flowManager = appManager.getFlowManager(ConfigTestApp.FLOW_NAME).start();
     StreamManager streamManager = getStreamManager(streamName);
     streamManager.send("abcd");
     streamManager.send("xyz");
@@ -197,8 +351,8 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     flowManager.stop();
     DataSetManager<KeyValueTable> dsManager = getDataset(datasetName);
     KeyValueTable table = dsManager.get();
-    Assert.assertEquals("abcd", Bytes.toString(table.read("abcd")));
-    Assert.assertEquals("xyz", Bytes.toString(table.read("xyz")));
+    Assert.assertEquals("abcd", Bytes.toString(table.read(appName + ".abcd")));
+    Assert.assertEquals("xyz", Bytes.toString(table.read(appName + ".xyz")));
   }
 
   @Category(SlowTests.class)
@@ -223,11 +377,9 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     Assert.assertEquals("world", Bytes.toString(outputTable.read("hello")));
 
     // Verify dataset metrics
-    // Currently the RuntimeStats doesn't provide easy to use method to query metrics,
-    // hence need to operate on MetricsStore directly to get the metrics
     String readCountName = "system." + Constants.Metrics.Name.Dataset.READ_COUNT;
     String writeCountName = "system." + Constants.Metrics.Name.Dataset.WRITE_COUNT;
-    Collection<MetricTimeSeries> metrics = RuntimeStats.metricStore.query(
+    Collection<MetricTimeSeries> metrics = getMetricsManager().query(
       new MetricDataQuery(
         0, System.currentTimeMillis() / 1000, Integer.MAX_VALUE,
         ImmutableMap.of(
@@ -262,7 +414,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
   @Test
   public void testCustomActionDatasetAccess() throws Exception {
     addDatasetInstance("keyValueTable", DatasetWithCustomActionApp.CUSTOM_TABLE).create();
-    addDatasetInstance("keyValueTable", DatasetWithCustomActionApp.CUSTOM_TABLE1).create();
+    addDatasetInstance("fileSet", DatasetWithCustomActionApp.CUSTOM_FILESET).create();
 
     ApplicationManager appManager = deployApplication(DatasetWithCustomActionApp.class);
     ServiceManager serviceManager = appManager.getServiceManager(DatasetWithCustomActionApp.CUSTOM_SERVICE).start();
@@ -275,12 +427,14 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     DataSetManager<KeyValueTable> outTableManager = getDataset(DatasetWithCustomActionApp.CUSTOM_TABLE);
     KeyValueTable outputTable = outTableManager.get();
 
-    DataSetManager<KeyValueTable> outTableManager1 = getDataset(DatasetWithCustomActionApp.CUSTOM_TABLE1);
-    KeyValueTable outputTable1 = outTableManager1.get();
-
     Assert.assertEquals("world", Bytes.toString(outputTable.read("hello")));
     Assert.assertEquals("service", Bytes.toString(outputTable.read("hi")));
-    Assert.assertEquals("another", Bytes.toString(outputTable1.read("test")));
+
+    DataSetManager<FileSet> outFileSetManager = getDataset(DatasetWithCustomActionApp.CUSTOM_FILESET);
+    FileSet fs = outFileSetManager.get();
+    try (InputStream in = fs.getLocation("test").getInputStream()) {
+      Assert.assertEquals(42, in.read());
+    }
   }
 
   @Category(XSlowTests.class)
@@ -418,7 +572,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
   // TODO: Investigate why this fails in Bamboo, but not locally
   public void testMultiInput() throws Exception {
     ApplicationManager applicationManager = deployApplication(JoinMultiStreamApp.class);
-    applicationManager.getFlowManager("JoinMultiFlow").start();
+    FlowManager flowManager = applicationManager.getFlowManager("JoinMultiFlow").start();
 
     StreamManager s1 = getStreamManager("s1");
     StreamManager s2 = getStreamManager("s2");
@@ -428,8 +582,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     s2.send("testing 2");
     s3.send("testing 3");
 
-    RuntimeMetrics terminalMetrics = RuntimeStats.getFlowletMetrics("JoinMulti",
-                                                                    "JoinMultiFlow", "Terminal");
+    RuntimeMetrics terminalMetrics = flowManager.getFlowletMetrics("Terminal");
     terminalMetrics.waitForProcessed(3, 60, TimeUnit.SECONDS);
     TimeUnit.SECONDS.sleep(1);
 
@@ -473,7 +626,13 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
 
     serviceManager.stop();
 
-    pingingWorker.stop();
+    // Program manager is not notified when worker stops on its own, hence suppressing the exception.
+    // JIRA - CDAP-3656
+    try {
+      pingingWorker.stop();
+    } catch (Throwable e) {
+      LOG.error("Got exception while stopping pinging worker", e);
+    }
     pingingWorker.waitForStatus(false);
 
     centralServiceManager.stop();
@@ -481,22 +640,38 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
   }
 
   /**
-   * Checks to ensure that a particular runnable of the {@param serviceManager} has {@param expected} number of
-   * instances. If the initial check fails, it performs {@param retries} more attempts, sleeping 1 second before each
-   * successive attempt.
+   * Checks to ensure that a particular  {@param workerManager} has {@param expected} number of
+   * instances while retrying every 50 ms for 15 seconds.
+   *
+   * @throws Exception if the worker does not have the specified number of instances after 15 seconds.
    */
-  private void workerInstancesCheck(WorkerManager workerManager, int expected,
-                                    int retries) throws InterruptedException {
-    for (int i = 0; i <= retries; i++) {
-      int actualInstances = workerManager.getInstances();
-      if (actualInstances == expected) {
-        return;
+  private void workerInstancesCheck(final WorkerManager workerManager, int expected) throws Exception {
+    Tasks.waitFor(expected, new Callable<Integer>() {
+      @Override
+      public Integer call() throws Exception {
+        return workerManager.getInstances();
       }
-      if (i == retries) {
-        Assert.assertEquals(expected, actualInstances);
+    }, 15, TimeUnit.SECONDS);
+  }
+
+  /**
+   * Checks to ensure that a particular key is present in a {@link KeyValueTable}
+   * @param namespace {@link Id.Namespace}
+   * @param datasetName name of the dataset
+   * @param expectedKey expected key byte array
+   *
+   * @throws Exception if the key is not found even after 15 seconds of timeout
+   */
+  private void kvTableKeyCheck(final Id.Namespace namespace, final String datasetName, final byte[] expectedKey)
+    throws Exception {
+    Tasks.waitFor(true, new Callable<Boolean>() {
+      @Override
+      public Boolean call() throws Exception {
+        DataSetManager<KeyValueTable> datasetManager = getDataset(namespace, datasetName);
+        KeyValueTable kvTable = datasetManager.get();
+        return kvTable.read(expectedKey) != null;
       }
-      TimeUnit.SECONDS.sleep(1);
-    }
+    }, 15, TimeUnit.SECONDS);
   }
 
   @Category(SlowTests.class)
@@ -506,22 +681,20 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     WorkerManager workerManager = applicationManager.getWorkerManager(AppUsingGetServiceURL.PINGING_WORKER).start();
     workerManager.waitForStatus(true);
 
-    int retries = 5;
-
     // Should be 5 instances when first started.
-    workerInstancesCheck(workerManager, 5, retries);
+    workerInstancesCheck(workerManager, 5);
 
     // Test increasing instances.
     workerManager.setInstances(10);
-    workerInstancesCheck(workerManager, 10, retries);
+    workerInstancesCheck(workerManager, 10);
 
     // Test decreasing instances.
     workerManager.setInstances(2);
-    workerInstancesCheck(workerManager, 2, retries);
+    workerInstancesCheck(workerManager, 2);
 
     // Test requesting same number of instances.
     workerManager.setInstances(2);
-    workerInstancesCheck(workerManager, 2, retries);
+    workerInstancesCheck(workerManager, 2);
 
     WorkerManager lifecycleWorkerManager =
       applicationManager.getWorkerManager(AppUsingGetServiceURL.LIFECYCLE_WORKER).start();
@@ -529,7 +702,13 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
 
     // Set 5 instances for the LifecycleWorker
     lifecycleWorkerManager.setInstances(5);
-    workerInstancesCheck(lifecycleWorkerManager, 5, retries);
+    workerInstancesCheck(lifecycleWorkerManager, 5);
+
+    // Make sure all the keys have been written before stopping the worker
+    for (int i = 0; i < 5; i++) {
+      kvTableKeyCheck(testSpace, AppUsingGetServiceURL.WORKER_INSTANCES_DATASET,
+                      Bytes.toBytes(String.format("init.%d", i)));
+    }
 
     lifecycleWorkerManager.stop();
     lifecycleWorkerManager.waitForStatus(false);
@@ -540,25 +719,25 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     workerManager.waitForStatus(false);
 
     // Should be same instances after being stopped.
-    workerInstancesCheck(lifecycleWorkerManager, 5, retries);
-    workerInstancesCheck(workerManager, 2, retries);
+    workerInstancesCheck(lifecycleWorkerManager, 5);
+    workerInstancesCheck(workerManager, 2);
 
     // Assert the LifecycleWorker dataset writes
     // 3 workers should have started with 3 total instances. 2 more should later start with 5 total instances.
-    assertWorkerDatasetWrites(applicationManager, Bytes.toBytes("init"),
+    assertWorkerDatasetWrites(Bytes.toBytes("init"),
                               Bytes.stopKeyForPrefix(Bytes.toBytes("init.2")), 3, 3);
-    assertWorkerDatasetWrites(applicationManager, Bytes.toBytes("init.3"),
+    assertWorkerDatasetWrites(Bytes.toBytes("init.3"),
                               Bytes.stopKeyForPrefix(Bytes.toBytes("init")), 2, 5);
 
     // Test that the worker had 5 instances when stopped, and each knew that there were 5 instances
     byte[] startRow = Bytes.toBytes("stop");
-    assertWorkerDatasetWrites(applicationManager, startRow, Bytes.stopKeyForPrefix(startRow), 5, 5);
+    assertWorkerDatasetWrites(startRow, Bytes.stopKeyForPrefix(startRow), 5, 5);
   }
 
-  private void assertWorkerDatasetWrites(ApplicationManager applicationManager, byte[] startRow, byte[] endRow,
+  private void assertWorkerDatasetWrites(byte[] startRow, byte[] endRow,
                                          int expectedCount, int expectedTotalCount) throws Exception {
-    DataSetManager<KeyValueTable> datasetManager = applicationManager.getDataSet(
-      AppUsingGetServiceURL.WORKER_INSTANCES_DATASET);
+    DataSetManager<KeyValueTable> datasetManager =
+      getDataset(testSpace, AppUsingGetServiceURL.WORKER_INSTANCES_DATASET);
     KeyValueTable instancesTable = datasetManager.get();
     CloseableIterator<KeyValue<byte[], byte[]>> instancesIterator = instancesTable.scan(startRow, endRow);
     try {
@@ -574,8 +753,9 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     }
   }
 
+  // AppFabricClient returns IllegalStateException if the app fails to deploy
   @Category(SlowTests.class)
-  @Test(expected = IllegalArgumentException.class)
+  @Test(expected = IllegalStateException.class)
   public void testServiceWithInvalidHandler() throws Exception {
     deployApplication(AppWithInvalidHandler.class);
   }
@@ -586,14 +766,30 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     ApplicationManager applicationManager = deployApplication(testSpace, AppWithWorker.class);
     LOG.info("Deployed.");
     WorkerManager manager = applicationManager.getWorkerManager(AppWithWorker.WORKER).start();
-    TimeUnit.MILLISECONDS.sleep(200);
+
+    // Wait for initialize and run states
+    Tasks.waitFor(true, new Callable<Boolean>() {
+      @Override
+      public Boolean call() throws Exception {
+        DataSetManager<KeyValueTable> dataSetManager = getDataset(testSpace, AppWithWorker.DATASET);
+        KeyValueTable table = dataSetManager.get();
+        return AppWithWorker.INITIALIZE.equals(Bytes.toString(table.read(AppWithWorker.INITIALIZE))) &&
+          AppWithWorker.RUN.equals(Bytes.toString(table.read(AppWithWorker.RUN)));
+      }
+    }, 10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
+
     manager.stop();
     applicationManager.stopAll();
-    DataSetManager<KeyValueTable> dataSetManager = getDataset(testSpace, AppWithWorker.DATASET);
-    KeyValueTable table = dataSetManager.get();
-    Assert.assertEquals(AppWithWorker.INITIALIZE, Bytes.toString(table.read(AppWithWorker.INITIALIZE)));
-    Assert.assertEquals(AppWithWorker.RUN, Bytes.toString(table.read(AppWithWorker.RUN)));
-    Assert.assertEquals(AppWithWorker.STOP, Bytes.toString(table.read(AppWithWorker.STOP)));
+
+    // Wait for stop state
+    Tasks.waitFor(true, new Callable<Boolean>() {
+      @Override
+      public Boolean call() throws Exception {
+        DataSetManager<KeyValueTable> dataSetManager = getDataset(testSpace, AppWithWorker.DATASET);
+        KeyValueTable table = dataSetManager.get();
+        return AppWithWorker.STOP.equals(Bytes.toString(table.read(AppWithWorker.STOP)));
+      }
+    }, 10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
   }
 
   @Test
@@ -629,7 +825,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     request = HttpRequest.get(url).build();
     response = HttpRequests.execute(request);
     Assert.assertEquals(500, response.getResponseCode());
-    Assert.assertTrue(response.getResponseBodyAsString().contains("Transaction failure"));
+    Assert.assertTrue(response.getResponseBodyAsString().contains("Exception"));
 
     // Call the verify ClassLoader endpoint
     url = new URL(serviceURL, "verifyClassLoader");
@@ -637,23 +833,23 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     response = HttpRequests.execute(request);
     Assert.assertEquals(200, response.getResponseCode());
 
-    RuntimeMetrics serviceMetrics = RuntimeStats.getServiceMetrics(AppWithServices.APP_NAME,
-                                                                   AppWithServices.SERVICE_NAME);
+    RuntimeMetrics serviceMetrics = serviceManager.getMetrics();
     serviceMetrics.waitForinput(3, 5, TimeUnit.SECONDS);
     Assert.assertEquals(3, serviceMetrics.getInput());
     Assert.assertEquals(2, serviceMetrics.getProcessed());
     Assert.assertEquals(1, serviceMetrics.getException());
 
     // in the AppWithServices the handlerName is same as the serviceName - "ServerService" handler
-    RuntimeMetrics handlerMetrics = RuntimeStats.getServiceHandlerMetrics(AppWithServices.APP_NAME,
-                                                                          AppWithServices.SERVICE_NAME,
-                                                                          AppWithServices.SERVICE_NAME);
+    RuntimeMetrics handlerMetrics = getMetricsManager().getServiceHandlerMetrics(Id.Namespace.DEFAULT.getId(),
+                                                                                 AppWithServices.APP_NAME,
+                                                                                 AppWithServices.SERVICE_NAME,
+                                                                                 AppWithServices.SERVICE_NAME);
     handlerMetrics.waitForinput(3, 5, TimeUnit.SECONDS);
     Assert.assertEquals(3, handlerMetrics.getInput());
     Assert.assertEquals(2, handlerMetrics.getProcessed());
     Assert.assertEquals(1, handlerMetrics.getException());
 
-    // we can verify metrics, by adding getServiceMetrics in RuntimeStats and then disabling the system scope test in
+    // we can verify metrics, by adding getServiceMetrics in MetricsManager and then disabling the system scope test in
     // TestMetricsCollectionService
 
     LOG.info("DatasetUpdateService Started");
@@ -673,9 +869,10 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     String decodedResult = new Gson().fromJson(result, String.class);
     Assert.assertEquals(AppWithServices.DATASET_TEST_VALUE, decodedResult);
 
-    handlerMetrics = RuntimeStats.getServiceHandlerMetrics(AppWithServices.APP_NAME,
-                                                                          "NoOpService",
-                                                                          "NoOpHandler");
+    handlerMetrics = getMetricsManager().getServiceHandlerMetrics(Id.Namespace.DEFAULT.getId(),
+                                                                  AppWithServices.APP_NAME,
+                                                                  "NoOpService",
+                                                                  "NoOpHandler");
     handlerMetrics.waitForinput(1, 5, TimeUnit.SECONDS);
     Assert.assertEquals(1, handlerMetrics.getInput());
     Assert.assertEquals(1, handlerMetrics.getProcessed());
@@ -710,12 +907,11 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
   public void testTransactionHandlerService() throws Exception {
     ApplicationManager applicationManager = deployApplication(testSpace, AppWithServices.class);
     LOG.info("Deployed.");
+
     ServiceManager serviceManager =
       applicationManager.getServiceManager(AppWithServices.TRANSACTIONS_SERVICE_NAME).start();
     serviceManager.waitForStatus(true);
-
     LOG.info("Service Started");
-
 
     final URL baseUrl = serviceManager.getServiceURL(15, TimeUnit.SECONDS);
     Assert.assertNotNull(baseUrl);
@@ -772,7 +968,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
   private void testApp(Class<? extends Application> app, String streamName) throws Exception {
 
     ApplicationManager applicationManager = deployApplication(app);
-    applicationManager.getFlowManager("WordCountFlow").start();
+    FlowManager flowManager = applicationManager.getFlowManager("WordCountFlow").start();
 
     // Send some inputs to streams
     StreamManager streamManager = getStreamManager(streamName);
@@ -781,9 +977,8 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     }
 
     // Check the flowlet metrics
-    RuntimeMetrics flowletMetrics = RuntimeStats.getFlowletMetrics("WordCountApp",
-                                                                   "WordCountFlow",
-                                                                   "CountByField");
+    RuntimeMetrics flowletMetrics = flowManager.getFlowletMetrics("CountByField");
+
     flowletMetrics.waitForProcessed(500, 10, TimeUnit.SECONDS);
     Assert.assertEquals(0L, flowletMetrics.getException());
 
@@ -795,10 +990,11 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     Type resultType = new TypeToken<Map<String, Long>>() { }.getType();
     Map<String, Long> result = new Gson().fromJson(
       callServiceGet(serviceManager.getServiceURL(), "wordfreq/" + streamName + ":testing"), resultType);
+    Assert.assertNotNull(result);
     Assert.assertEquals(100L, result.get(streamName + ":testing").longValue());
 
     // check the metrics
-    RuntimeMetrics serviceMetrics = RuntimeStats.getServiceMetrics("WordCountApp", "WordFrequency");
+    RuntimeMetrics serviceMetrics = serviceManager.getMetrics();
     serviceMetrics.waitForProcessed(1, 5, TimeUnit.SECONDS);
     Assert.assertEquals(0L, serviceMetrics.getException());
 
@@ -820,29 +1016,24 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
 
     DataSetManager<MyKeyValueTableDefinition.KeyValueTable> mydatasetManager = getDataset("mydataset");
     Assert.assertEquals(100L, Long.valueOf(mydatasetManager.get().get("title:title")).longValue());
+
+    // also test the deprecated version of getDataset(). This can be removed when we remove the method
+    mydatasetManager = getDataset("mydataset");
+    Assert.assertEquals(100L, Long.valueOf(mydatasetManager.get().get("title:title")).longValue());
   }
 
   @Category(SlowTests.class)
   @Test
   public void testGenerator() throws InterruptedException, IOException, TimeoutException {
     ApplicationManager applicationManager = deployApplication(testSpace, GenSinkApp2.class);
-    applicationManager.getFlowManager("GenSinkFlow").start();
+    FlowManager flowManager = applicationManager.getFlowManager("GenSinkFlow").start();
 
     // Check the flowlet metrics
-    RuntimeMetrics genMetrics = RuntimeStats.getFlowletMetrics(testSpace.getId(),
-                                                               "GenSinkApp",
-                                                               "GenSinkFlow",
-                                                               "GenFlowlet");
+    RuntimeMetrics genMetrics = flowManager.getFlowletMetrics("GenFlowlet");
 
-    RuntimeMetrics sinkMetrics = RuntimeStats.getFlowletMetrics(testSpace.getId(),
-                                                                "GenSinkApp",
-                                                                "GenSinkFlow",
-                                                                "SinkFlowlet");
+    RuntimeMetrics sinkMetrics = flowManager.getFlowletMetrics("SinkFlowlet");
 
-    RuntimeMetrics batchSinkMetrics = RuntimeStats.getFlowletMetrics(testSpace.getId(),
-                                                                     "GenSinkApp",
-                                                                     "GenSinkFlow",
-                                                                     "BatchSinkFlowlet");
+    RuntimeMetrics batchSinkMetrics = flowManager.getFlowletMetrics("BatchSinkFlowlet");
 
     // Generator generators 99 events + 99 batched events
     sinkMetrics.waitFor("system.process.events.in", 198, 5, TimeUnit.SECONDS);
@@ -884,11 +1075,11 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
   public void testFlowletMetricsReset() throws Exception {
     ApplicationManager appManager = deployApplication(DataSetInitApp.class);
     FlowManager flowManager = appManager.getFlowManager("DataSetFlow").start();
-    RuntimeMetrics flowletMetrics = RuntimeStats.getFlowletMetrics("DataSetInitApp", "DataSetFlow", "Consumer");
+    RuntimeMetrics flowletMetrics = flowManager.getFlowletMetrics("Consumer");
     flowletMetrics.waitForProcessed(1, 5, TimeUnit.SECONDS);
     flowManager.stop();
     Assert.assertEquals(1, flowletMetrics.getProcessed());
-    RuntimeStats.resetAll();
+    getMetricsManager().resetAll();
     // check the metrics were deleted after reset
     Assert.assertEquals(0, flowletMetrics.getProcessed());
   }
@@ -898,8 +1089,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     ApplicationManager appManager = deployApplication(testSpace, DataSetInitApp.class);
     FlowManager flowManager = appManager.getFlowManager("DataSetFlow").start();
 
-    RuntimeMetrics flowletMetrics = RuntimeStats.getFlowletMetrics(testSpace.getId(), "DataSetInitApp",
-                                                                   "DataSetFlow", "Consumer");
+    RuntimeMetrics flowletMetrics = flowManager.getFlowletMetrics("Consumer");
 
     flowletMetrics.waitForProcessed(1, 5, TimeUnit.SECONDS);
 
@@ -1029,7 +1219,6 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     }
   }
 
-
   @Category(XSlowTests.class)
   @Test
   public void testByteCodeClassLoader() throws Exception {
@@ -1039,8 +1228,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     FlowManager flowManager = appManager.getFlowManager("BasicFlow").start();
 
     // Wait for at least 10 records being generated
-    RuntimeMetrics flowMetrics = RuntimeStats.getFlowletMetrics(testSpace.getId(), "ClassLoaderTestApp",
-                                                                "BasicFlow", "Sink");
+    RuntimeMetrics flowMetrics = flowManager.getFlowletMetrics("Sink");
     flowMetrics.waitForProcessed(10, 5000, TimeUnit.MILLISECONDS);
     flowManager.stop();
 
@@ -1077,9 +1265,9 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     HttpURLConnection connection = (HttpURLConnection) new URL(serviceURL.toString() + path).openConnection();
     connection.setDoOutput(true);
     connection.setRequestMethod("PUT");
-    OutputStreamWriter out = new OutputStreamWriter(connection.getOutputStream());
-    out.write(body);
-    out.close();
+    try (OutputStreamWriter out = new OutputStreamWriter(connection.getOutputStream())) {
+      out.write(body);
+    }
     try (
       BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream(), Charsets.UTF_8))
     ) {
@@ -1088,4 +1276,3 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     }
   }
 }
-

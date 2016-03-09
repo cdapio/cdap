@@ -1,0 +1,136 @@
+/*
+ * Copyright © 2015 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
+my-validators {
+  .row {
+    margin-top: 5px;
+  }
+
+  .form-group {
+    margin-top: 10px;
+  }
+
+  .panel.panel-default {
+    .panel-heading {
+      cursor: pointer;
+    }
+    .panel-body {
+      .row .rule-box {
+        .form-control {
+          height: 30px;
+        }
+      }
+
+      .panel.panel-default.panel-nested {
+        margin-bottom: 10px;
+
+        .panel-body, .panel-heading {
+          padding: 5px 15px;
+        }
+
+        .panel-title {
+          span, i {
+            line-height: 23px;
+            vertical-align: middle;
+          }
+        }
+      }
+    }
+  }
+
+  .rule-box {
+    padding: 0 10px;
+    display: flex;
+
+    .main-rule, .rule-arguments {
+      flex-grow: 1;
+      max-width: 200px;
+      margin-right: 10px;
+    }
+
+    .trash {
+      margin-left: auto;
+
+      & > button.btn.btn-danger {
+        height: 30px;
+      }
+    }
+
+    .rule-arguments {
+      margin-right: 10px;
+      max-width: 150px;
+    }
+  }
+
+  .add-rule {
+    padding: 0 10px;
+  }
+
+  .error-dataset {
+    margin-bottom: 25px;
+  }
+
+
+  /* AND/OR SWITCH */
+
+  .onoffswitch {
+    height: 27px;
+    margin-right: 5px;
+      position: relative; width: 73px;
+      -webkit-user-select:none; -moz-user-select:none; -ms-user-select: none;
+  }
+  .onoffswitch-checkbox {
+      display: none;
+  }
+  .onoffswitch-label {
+      display: block; overflow: hidden; cursor: pointer;
+      border: 2px solid #999999; border-radius: 4px;
+  }
+  .onoffswitch-inner {
+      display: block; width: 200%; margin-left: -100%;
+      transition: margin 0.3s ease-in 0s;
+  }
+  .onoffswitch-inner:before, .onoffswitch-inner:after {
+      display: block; float: left; width: 50%; height: 25px; padding: 0; line-height: 25px;
+      font-size: 13px; color: white; font-family: Trebuchet, Arial, sans-serif; font-weight: bold;
+      box-sizing: border-box;
+  }
+  .onoffswitch-inner:before {
+      content: "AND";
+      padding-left: 10px;
+      background-color: #FF6600; color: #FFFFFF;
+  }
+  .onoffswitch-inner:after {
+      content: "OR";
+      padding-right: 10px;
+      background-color: #FF6600; color: #FFFFFF;
+      text-align: right;
+  }
+  .onoffswitch-switch {
+      display: block; width: 23px; margin: 1px;
+      background: #FFFFFF;
+      position: absolute; top: 2px; bottom: 0;
+      right: 44px;
+      border: 2px solid #999999; border-radius: 4px;
+      transition: all 0.3s ease-in 0s;
+  }
+  .onoffswitch-checkbox:checked + .onoffswitch-label .onoffswitch-inner {
+      margin-left: 0;
+  }
+  .onoffswitch-checkbox:checked + .onoffswitch-label .onoffswitch-switch {
+      right: 0px;
+  }
+}

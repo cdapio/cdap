@@ -42,9 +42,6 @@ import org.junit.rules.TemporaryFolder;
  */
 public class LevelDBMetricsTableTest extends MetricsTableTest {
 
-  private static final Id.DatasetModule metricsLevelDBModule =
-    Id.DatasetModule.from(Constants.SYSTEM_NAMESPACE_ID, "metrics-inmemory");
-
   private static DatasetFramework dsFramework;
 
   @ClassRule
@@ -68,7 +65,7 @@ public class LevelDBMetricsTableTest extends MetricsTableTest {
 
   @Override
   protected MetricsTable getTable(String name) throws Exception {
-    Id.DatasetInstance metricsDatasetInstanceId = Id.DatasetInstance.from(Constants.SYSTEM_NAMESPACE_ID, name);
+    Id.DatasetInstance metricsDatasetInstanceId = Id.DatasetInstance.from(Id.Namespace.SYSTEM, name);
     return DatasetsUtil.getOrCreateDataset(dsFramework, metricsDatasetInstanceId, MetricsTable.class.getName(),
                                            DatasetProperties.EMPTY, null, null);
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,22 +16,22 @@
 
 package co.cask.cdap.explore.service;
 
-import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.IOModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
+import co.cask.cdap.common.namespace.guice.NamespaceClientRuntimeModule;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.stream.StreamAdminModules;
+import co.cask.cdap.data.view.ViewAdminModules;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.explore.guice.ExploreRuntimeModule;
-import co.cask.cdap.internal.app.store.DefaultStore;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.notifications.feeds.NotificationFeedManager;
 import co.cask.cdap.notifications.feeds.service.NoOpNotificationFeedManager;
@@ -40,6 +40,9 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.QueryHandle;
 import co.cask.cdap.proto.QueryResult;
 import co.cask.cdap.proto.QueryStatus;
+import co.cask.cdap.store.DefaultNamespaceStore;
+import co.cask.cdap.store.NamespaceStore;
+import co.cask.cdap.store.guice.NamespaceStoreModule;
 import co.cask.cdap.test.SlowTests;
 import co.cask.tephra.TransactionManager;
 import com.google.common.collect.ImmutableList;
@@ -74,8 +77,6 @@ public class InMemoryExploreServiceTest {
   private static DatasetOpExecutor dsOpService;
   private static DatasetService datasetService;
 
-  private final String otherNamespace = "otherNamespace";
-
   @BeforeClass
   public static void start() throws Exception {
     CConfiguration configuration = CConfiguration.create();
@@ -94,12 +95,14 @@ public class InMemoryExploreServiceTest {
         new MetricsClientRuntimeModule().getInMemoryModules(),
         new ExploreRuntimeModule().getInMemoryModules(),
         new ExploreClientModule(),
+        new ViewAdminModules().getInMemoryModules(),
         new StreamAdminModules().getInMemoryModules(),
+        new NamespaceClientRuntimeModule().getInMemoryModules(),
+        new NamespaceStoreModule().getStandaloneModules(),
         new AbstractModule() {
           @Override
           protected void configure() {
             bind(NotificationFeedManager.class).to(NoOpNotificationFeedManager.class);
-            bind(Store.class).to(DefaultStore.class);
           }
         });
     transactionManager = injector.getInstance(TransactionManager.class);
@@ -125,14 +128,15 @@ public class InMemoryExploreServiceTest {
 
   @Test
   public void testHiveIntegration() throws Exception {
+    String otherNamespace = "otherNamespace";
     waitForCompletionStatus(exploreService.createNamespace(Id.Namespace.from(otherNamespace)));
 
-    runCleanup(ImmutableList.of(Constants.DEFAULT_NAMESPACE, otherNamespace));
+    runCleanup(ImmutableList.of(Id.Namespace.DEFAULT.getId(), otherNamespace));
 
-    runNamespacedTest(Constants.DEFAULT_NAMESPACE);
+    runNamespacedTest(Id.Namespace.DEFAULT.getId());
     runNamespacedTest(otherNamespace);
 
-    runCleanup(ImmutableList.of(Constants.DEFAULT_NAMESPACE, otherNamespace));
+    runCleanup(ImmutableList.of(Id.Namespace.DEFAULT.getId(), otherNamespace));
 
     waitForCompletionStatus(exploreService.deleteNamespace(Id.Namespace.from(otherNamespace)));
   }
