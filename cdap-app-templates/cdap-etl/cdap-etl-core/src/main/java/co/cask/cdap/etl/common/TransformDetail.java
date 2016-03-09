@@ -23,17 +23,16 @@ import co.cask.cdap.etl.api.StageMetrics;
 import co.cask.cdap.etl.api.Transformation;
 
 import java.util.Collection;
-import java.util.List;
 
 /**
  * Encapsulates {@link Transformation} list of next stages, current stage name, and {@link DefaultEmitter}.
  */
 public class TransformDetail implements Emitter<Object> {
   private final Transformation transformation;
-  private final List<String> nextStages;
+  private final Collection<String> nextStages;
   private final DefaultEmitter defaultEmitter;
 
-  public TransformDetail(Transformation transformation, StageMetrics metrics, List<String> nextStages) {
+  public TransformDetail(Transformation transformation, StageMetrics metrics, Collection<String> nextStages) {
     this.transformation = new TrackedTransform<>(transformation, metrics);
     this.nextStages = nextStages;
     this.defaultEmitter = new DefaultEmitter<>(metrics);
@@ -74,7 +73,7 @@ public class TransformDetail implements Emitter<Object> {
   /**
    * @return the list of next stages from this stage; for sinks this list is empty
    */
-  public List<String> getNextStages() {
+  public Collection<String> getNextStages() {
     return nextStages;
   }
 

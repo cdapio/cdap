@@ -25,6 +25,7 @@ import co.cask.cdap.etl.api.PipelineConfigurer;
 import co.cask.cdap.etl.api.Transform;
 import co.cask.cdap.etl.api.Transformation;
 import co.cask.cdap.etl.common.guice.TypeResolver;
+import co.cask.cdap.etl.planner.StageInfo;
 import co.cask.cdap.etl.proto.Connection;
 import co.cask.cdap.etl.proto.v1.ETLConfig;
 import co.cask.cdap.etl.proto.v1.ETLStage;
@@ -68,8 +69,9 @@ public class PipelineRegisterer {
    * @param sinkWithErrorDataset boolean flag to indicate if the sinks uses error dataset
    * @return the ids of each plugin used in the pipeline
    */
-  public Pipeline registerPlugins(ETLConfig config, Class errorDatasetType, DatasetProperties errorDatasetProperties,
-                                  boolean sinkWithErrorDataset) {
+  public PipelinePhase registerPlugins(ETLConfig config, Class errorDatasetType,
+                                       DatasetProperties errorDatasetProperties,
+                                       boolean sinkWithErrorDataset) {
     config = config.getCompatibleConfig();
     ETLStage sourceConfig = config.getSource();
     List<ETLStage> transformConfigs = config.getTransforms();
@@ -85,7 +87,7 @@ public class PipelineRegisterer {
     validateStageNames(sourceConfig, config.getTransforms(), config.getSinks());
 
     // validate connections, there are no-cycles, all sinks are reachable, etc.
-    Map<String, List<String>> connectionsMap = validateConnections(config);
+    Map<String, Set<String>> connectionsMap = validateConnections(config);
     List<String> stageTopologicalSortedOrder = getStagesAfterTopologicalSorting(connectionsMap,
                                                                                 sourceConfig.getName());
     Map<String, PipelineConfigureDetail> stageToPipelineConfigureDetailMap = new HashMap<>();
@@ -109,8 +111,8 @@ public class PipelineRegisterer {
     stageToPipelineConfigureDetailMap.put(sourcePluginId, new PipelineConfigureDetail(source, sourceConfigurer));
 
     // transform id list will eventually be serialized and passed to the driver program
-    List<TransformInfo> transformInfos = new ArrayList<>(transformConfigs.size());
-    List<Transformation> transforms = new ArrayList<>(transformConfigs.size());
+    Set<StageInfo> transformInfos = new HashSet<>(transformConfigs.size());
+    Set<Transformation> transforms = new HashSet<>(transformConfigs.size());
     for (ETLStage transformConfig : transformConfigs) {
       String transformId = transformConfig.getName();
 
@@ -134,11 +136,11 @@ public class PipelineRegisterer {
       PipelineConfigurer transformConfigurer = new DefaultPipelineConfigurer(configurer, transformId);
       stageToPipelineConfigureDetailMap.put(transformId,
                                             new PipelineConfigureDetail(transformObj, transformConfigurer));
-      transformInfos.add(new TransformInfo(transformId, transformConfig.getErrorDatasetName()));
+      transformInfos.add(new StageInfo(transformId, transformConfig.getErrorDatasetName(), false));
       transforms.add(transformObj);
     }
 
-    List<SinkInfo> sinksInfo = new ArrayList<>();
+    Set<StageInfo> sinksInfo = new HashSet<>();
     List<PipelineConfigurable> sinks = new ArrayList<>();
     for (ETLStage sinkConfig : sinkConfigs) {
       String sinkPluginId = sinkConfig.getName();
@@ -148,7 +150,7 @@ public class PipelineRegisterer {
         configurer.createDataset(sinkConfig.getErrorDatasetName(), errorDatasetType, errorDatasetProperties);
       }
 
-      sinksInfo.add(new SinkInfo(sinkPluginId, sinkConfig.getErrorDatasetName()));
+      sinksInfo.add(new StageInfo(sinkPluginId, sinkConfig.getErrorDatasetName(), false));
 
       // try to instantiate the sink
       pluginName = sinkConfig.getPlugin().getName();
@@ -199,7 +201,8 @@ public class PipelineRegisterer {
     }
 
 
-    return new Pipeline(sourcePluginId, sinksInfo, transformInfos, connectionsMap);
+    return new PipelinePhase(new StageInfo(sourcePluginId, null, false),
+                             null, sinksInfo, transformInfos, connectionsMap);
   }
 
   private class PipelineConfigureDetail {
@@ -229,14 +232,14 @@ public class PipelineRegisterer {
    * @return the DAG as a list, sorted by topographical order
    */
   @VisibleForTesting
-  static List<String> getStagesAfterTopologicalSorting(Map<String, List<String>> connectionsMap, String start) {
+  static List<String> getStagesAfterTopologicalSorting(Map<String, Set<String>> connectionsMap, String start) {
 
     // store the reverse of connectionsMap, where we maintain the inLinks for each node
-    Map<String, List<String>> inLinksMap = new HashMap<>();
-    for (Map.Entry<String, List<String>> connectionEntry : connectionsMap.entrySet()) {
+    Map<String, Set<String>> inLinksMap = new HashMap<>();
+    for (Map.Entry<String, Set<String>> connectionEntry : connectionsMap.entrySet()) {
       for (String destinationNode : connectionEntry.getValue()) {
         if (!inLinksMap.containsKey(destinationNode)) {
-          inLinksMap.put(destinationNode, new ArrayList<String>());
+          inLinksMap.put(destinationNode, new HashSet<String>());
         }
         inLinksMap.get(destinationNode).add(connectionEntry.getKey());
       }
@@ -265,7 +268,7 @@ public class PipelineRegisterer {
       }
     }
 
-    for (List<String> inLinksEntryList : inLinksMap.values()) {
+    for (Set<String> inLinksEntryList : inLinksMap.values()) {
       if (!inLinksEntryList.isEmpty()) {
         // should not happen, as we have checked for cycle before.
         throw new IllegalArgumentException("Cycle exists in the graph.");
@@ -275,8 +278,8 @@ public class PipelineRegisterer {
   }
 
   @VisibleForTesting
-  static Map<String, List<String>> validateConnections(ETLConfig config) {
-    Map<String, List<String>> stageConnections = new HashMap<>();
+  static Map<String, Set<String>> validateConnections(ETLConfig config) {
+    Map<String, Set<String>> stageConnections = new HashMap<>();
 
     // 1) basic validation, # of connections >= (source + #transform + sink - 1)
     if (config.getConnections().size() < (config.getTransforms().size() + config.getSinks().size())) {
@@ -311,7 +314,7 @@ public class PipelineRegisterer {
       if (stageConnections.containsKey(connection.getFrom())) {
         stageConnections.get(connection.getFrom()).add(connection.getTo());
       } else {
-        List<String> destinations = new ArrayList<>();
+        Set<String> destinations = new HashSet<>();
         destinations.add(connection.getTo());
         stageConnections.put(connection.getFrom(), destinations);
       }
@@ -341,7 +344,7 @@ public class PipelineRegisterer {
   }
 
   private static void connectionsReachabilityValidation(
-    Map<String, List<String>> mapStageToConnections, ETLConfig config,
+    Map<String, Set<String>> mapStageToConnections, ETLConfig config,
     String stageName, Set<String> visited, Set<String> sinksVisited, Set<String> sinksFromConfig) {
 
     if (mapStageToConnections.get(stageName) == null) {

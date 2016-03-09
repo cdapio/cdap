@@ -27,12 +27,11 @@ import co.cask.cdap.etl.api.batch.BatchSink;
 import co.cask.cdap.etl.api.batch.BatchSource;
 import co.cask.cdap.etl.common.Constants;
 import co.cask.cdap.etl.common.DefaultStageMetrics;
-import co.cask.cdap.etl.common.Pipeline;
-import co.cask.cdap.etl.common.SinkInfo;
+import co.cask.cdap.etl.common.PipelinePhase;
 import co.cask.cdap.etl.common.TransformDetail;
 import co.cask.cdap.etl.common.TransformExecutor;
-import co.cask.cdap.etl.common.TransformInfo;
 import co.cask.cdap.etl.common.TransformResponse;
+import co.cask.cdap.etl.planner.StageInfo;
 import com.google.common.collect.ImmutableList;
 import com.google.gson.Gson;
 import org.apache.spark.api.java.JavaPairRDD;
@@ -49,6 +48,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Spark program to run an ETL pipeline.
@@ -72,9 +72,10 @@ public class ETLSparkProgram implements JavaSparkProgram {
     JavaPairRDD<Object, Object> rdd = sourceFactory.createRDD(context, Object.class, Object.class);
     JavaPairRDD<String, Object> resultRDD = rdd.flatMapToPair(new MapFunction(context)).cache();
 
-    Pipeline pipeline = GSON.fromJson(context.getSpecification().getProperty(Constants.PIPELINEID), Pipeline.class);
-    for (SinkInfo sinkInfo : pipeline.getSinks()) {
-      final String sinkId = sinkInfo.getSinkId();
+    PipelinePhase pipeline = GSON.fromJson(context.getSpecification().getProperty(Constants.PIPELINEID),
+                                           PipelinePhase.class);
+    for (StageInfo sinkInfo : pipeline.getSinks()) {
+      final String sinkId = sinkInfo.getName();
 
       JavaPairRDD<Object, Object> sinkRDD = resultRDD
         .filter(new Function<Tuple2<String, Object>, Boolean>() {
@@ -141,10 +142,10 @@ public class ETLSparkProgram implements JavaSparkProgram {
     }
 
     private TransformExecutor<KeyValue<Object, Object>> initialize() throws Exception {
-      Pipeline pipeline = GSON.fromJson(pipelineStr, Pipeline.class);
-      Map<String, List<String>> connections = pipeline.getConnections();
+      PipelinePhase pipeline = GSON.fromJson(pipelineStr, PipelinePhase.class);
+      Map<String, Set<String>> connections = pipeline.getConnections();
       // get source, transform, sink ids from program properties
-      String sourcePluginId = pipeline.getSource();
+      String sourcePluginId = pipeline.getSource().getName();
       BatchSource source = pluginContext.newPluginInstance(sourcePluginId);
       BatchRuntimeContext runtimeContext = new SparkBatchRuntimeContext(pluginContext, metrics, logicalStartTime,
                                                                         runtimeArgs, sourcePluginId);
@@ -155,25 +156,25 @@ public class ETLSparkProgram implements JavaSparkProgram {
         source, new DefaultStageMetrics(metrics, sourcePluginId), connections.get(sourcePluginId)));
       addTransforms(transformations, pipeline.getTransforms(), connections);
 
-      List<SinkInfo> sinkInfos = pipeline.getSinks();
-      for (SinkInfo sinkInfo : sinkInfos) {
-        String sinkId = sinkInfo.getSinkId();
+      Set<StageInfo> sinkInfos = pipeline.getSinks();
+      for (StageInfo sinkInfo : sinkInfos) {
+        String sinkId = sinkInfo.getName();
         BatchSink<Object, Object, Object> batchSink = pluginContext.newPluginInstance(sinkId);
         BatchRuntimeContext sinkContext = new SparkBatchRuntimeContext(pluginContext, metrics, logicalStartTime,
                                                                        runtimeArgs, sinkId);
         batchSink.initialize(sinkContext);
-        transformations.put(sinkInfo.getSinkId(), new TransformDetail(
-          batchSink, new DefaultStageMetrics(metrics, sinkInfo.getSinkId()), new ArrayList<String>()));
+        transformations.put(sinkInfo.getName(), new TransformDetail(
+          batchSink, new DefaultStageMetrics(metrics, sinkInfo.getName()), new ArrayList<String>()));
       }
 
       return new TransformExecutor<>(transformations, ImmutableList.of(sourcePluginId));
     }
 
     private void addTransforms(Map<String, TransformDetail> transformations,
-                               List<TransformInfo> transformInfos,
-                               Map<String, List<String>> connections) throws Exception {
-      for (TransformInfo transformInfo : transformInfos) {
-        String transformId = transformInfo.getTransformId();
+                               Set<StageInfo> transformInfos,
+                               Map<String, Set<String>> connections) throws Exception {
+      for (StageInfo transformInfo : transformInfos) {
+        String transformId = transformInfo.getName();
         Transform transform = pluginContext.newPluginInstance(transformId);
         BatchRuntimeContext transformContext = new SparkBatchRuntimeContext(pluginContext, metrics,
                                                                             logicalStartTime, runtimeArgs, transformId);
