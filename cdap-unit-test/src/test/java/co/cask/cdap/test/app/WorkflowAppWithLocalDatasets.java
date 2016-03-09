@@ -16,28 +16,42 @@
 
 package co.cask.cdap.test.app;
 
+import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.annotation.UseDataSet;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.lib.CloseableIterator;
+import co.cask.cdap.api.dataset.lib.FileSet;
+import co.cask.cdap.api.dataset.lib.FileSetArguments;
+import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
+import co.cask.cdap.api.spark.AbstractSpark;
+import co.cask.cdap.api.spark.JavaSparkProgram;
+import co.cask.cdap.api.spark.SparkContext;
 import co.cask.cdap.api.workflow.AbstractWorkflow;
 import co.cask.cdap.api.workflow.AbstractWorkflowAction;
-import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.IntWritable;
+import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
-import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
+import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
+import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
+import org.apache.spark.api.java.JavaPairRDD;
+import org.apache.spark.api.java.function.PairFunction;
+import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import scala.Tuple2;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.StringTokenizer;
 import java.util.concurrent.TimeUnit;
@@ -48,11 +62,13 @@ import java.util.concurrent.TimeUnit;
 public class WorkflowAppWithLocalDatasets extends AbstractApplication {
   public static final String WORDCOUNT_DATASET = "wordcount";
   public static final String RESULT_DATASET = "result";
+  public static final String CSV_FILESET_DATASET = "csvfileset";
   @Override
   public void configure() {
     setName("WorkflowAppWithLocalDatasets");
     setDescription("App to test the local dataset functionality for the Workflow.");
 
+    addSpark(new JavaSparkCSVToSpaceConverter());
     addMapReduce(new WordCount());
     addWorkflow(new WorkflowWithLocalDatasets());
     createDataset(RESULT_DATASET, KeyValueTable.class);
@@ -68,8 +84,89 @@ public class WorkflowAppWithLocalDatasets extends AbstractApplication {
       setName("WorkflowWithLocalDatasets");
       setDescription("Workflow program with local datasets.");
       createLocalDataset(WORDCOUNT_DATASET, KeyValueTable.class);
+      createLocalDataset(CSV_FILESET_DATASET, FileSet.class, FileSetProperties.builder()
+        .setInputFormat(TextInputFormat.class)
+        .setOutputFormat(TextOutputFormat.class)
+        .build());
+      addAction(new LocalDatasetWriter());
+      addSpark("JavaSparkCSVToSpaceConverter");
       addMapReduce("WordCount");
       addAction(new LocalDatasetReader());
+    }
+  }
+
+  /**
+   * Custom action writing to the local file set dataset.
+   */
+  public static class LocalDatasetWriter extends AbstractWorkflowAction {
+
+    private static final Logger LOG = LoggerFactory.getLogger(LocalDatasetWriter.class);
+
+    @Override
+    public void run() {
+      String inputPath = getContext().getRuntimeArguments().get("input.path");
+      FileSet fileSetDataset = getContext().getDataset(CSV_FILESET_DATASET);
+      Location inputLocation = fileSetDataset.getLocation(inputPath);
+
+      try {
+        try (PrintWriter writer = new PrintWriter(inputLocation.getOutputStream())) {
+          writer.write("this,text,has");
+          writer.println();
+          writer.write("two,words,text,inside");
+        }
+      } catch (Throwable t) {
+        LOG.info ("Exception occurred while running custom action ", t);
+      }
+    }
+  }
+
+  /**
+   * Spark program to convert comma separated file into space separated file.
+   */
+  public static final class JavaSparkCSVToSpaceConverter extends AbstractSpark {
+    @Override
+    protected void configure() {
+      setName("JavaSparkCSVToSpaceConverter");
+      setMainClass(SparkCSVToSpaceProgram.class);
+      setDriverResources(new Resources(2048));
+      setExecutorResources(new Resources(2048));
+    }
+  }
+
+
+  /**
+   * Main class for the Spark program to convert comma separated file into space separated file.
+   */
+  public static final class SparkCSVToSpaceProgram implements JavaSparkProgram {
+
+    @Override
+    public void run(SparkContext context) throws Exception {
+      Map<String, String> fileSetArgs = new HashMap<>();
+      FileSetArguments.addInputPath(fileSetArgs, context.getRuntimeArguments().get("input.path"));
+      JavaPairRDD<LongWritable, Text> input = context.readFromDataset(CSV_FILESET_DATASET, LongWritable.class,
+                                                                      Text.class, fileSetArgs);
+
+      JavaPairRDD<LongWritable, String> converted = input.mapToPair(new PairFunction<Tuple2<LongWritable, Text>,
+        LongWritable, String>() {
+        @Override
+        public Tuple2<LongWritable, String> call(Tuple2<LongWritable, Text> input) throws Exception {
+          String line = input._2().toString();
+          line = line.replaceAll(",", " ");
+          return new Tuple2<>(input._1(), line);
+        }
+      });
+
+      Map<String, String> args = context.getRuntimeArguments();
+      String outputPath = args.get("output.path");
+      fileSetArgs = new HashMap<>();
+      FileSetArguments.setOutputPath(fileSetArgs, outputPath);
+      FileSet fileSet = context.getDataset(CSV_FILESET_DATASET, fileSetArgs);
+      try (PrintWriter writer = new PrintWriter(fileSet.getOutputLocation().getOutputStream())) {
+        for (String line : converted.values().collect()) {
+          writer.write(line);
+          writer.println();
+        }
+      }
     }
   }
 
@@ -79,15 +176,16 @@ public class WorkflowAppWithLocalDatasets extends AbstractApplication {
   public static class WordCount extends AbstractMapReduce {
     @Override
     public void beforeSubmit(MapReduceContext context) throws Exception {
-      Map<String, String> args = context.getRuntimeArguments();
-      String inputPath = args.get("input.path");
+      String inputPath = context.getRuntimeArguments().get("output.path");
+      Map<String, String> fileSetArgs = new HashMap<>();
+      FileSetArguments.addInputPath(fileSetArgs, inputPath);
+      context.setInput(CSV_FILESET_DATASET, fileSetArgs);
       context.addOutput(WORDCOUNT_DATASET);
       Job job = context.getHadoopJob();
       job.setMapperClass(TokenizerMapper.class);
       job.setReducerClass(IntSumReducer.class);
 
       job.setNumReduceTasks(1);
-      FileInputFormat.addInputPath(job, new Path(inputPath));
     }
   }
 
