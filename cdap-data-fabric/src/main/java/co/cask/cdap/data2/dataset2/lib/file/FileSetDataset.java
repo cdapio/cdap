@@ -52,7 +52,7 @@ public final class FileSetDataset implements FileSet {
 
   private static final Logger LOG = LoggerFactory.getLogger(FileSetDataset.class);
 
-  static final String FILESET_VERSION_PROPERTY = "fileset.version";
+  public static final String FILESET_VERSION_PROPERTY = "fileset.version";
   static final String FILESET_VERSION = "2";
 
   private final DatasetSpecification spec;
