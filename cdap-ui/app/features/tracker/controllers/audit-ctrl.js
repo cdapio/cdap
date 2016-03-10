@@ -15,8 +15,11 @@
  */
 
 class TrackerAuditController {
-  constructor($state) {
+  constructor($state, $scope, myTrackerApi) {
+
     this.$state = $state;
+    this.$scope = $scope;
+    this.myTrackerApi = myTrackerApi;
 
     this.timeRangeOptions = [
       {
@@ -53,6 +56,9 @@ class TrackerAuditController {
 
     this.selectedTimeRange = this.findTimeRange();
 
+    this.currentPage = 1;
+    this.auditLogs = [];
+    this.fetchAuditLogs(this.currentPage);
   }
 
   findTimeRange() {
@@ -61,9 +67,29 @@ class TrackerAuditController {
     });
     return match.length > 0 ? match[0] : { label: 'Custom' };
   }
+
+  fetchAuditLogs(currentPage) {
+    let params = {
+      namespace: this.$state.params.namespace,
+      type: this.$state.params.entityType === 'streams' ? 'stream' : 'dataset',
+      name: this.$state.params.entityId,
+      startTime: this.timeRange.start,
+      endTime: this.timeRange.end,
+      offset: (currentPage - 1) * 10,
+      scope: this.$scope
+    };
+
+    this.myTrackerApi.getAuditLogs(params)
+      .$promise
+      .then((response) => {
+        this.auditLogs = response;
+      }, (err) => {
+        console.log('Error: ', err);
+      });
+  }
 }
 
-TrackerAuditController.$inject = ['$state'];
+TrackerAuditController.$inject = ['$state', '$scope', 'myTrackerApi'];
 
 angular.module(PKG.name + '.feature.tracker')
 .controller('TrackerAuditController', TrackerAuditController);

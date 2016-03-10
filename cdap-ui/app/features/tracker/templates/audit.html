@@ -20,9 +20,44 @@
       {{ AuditController.selectedTimeRange.label }} <span class="caret"></span>
     </button>
     <ul uib-dropdown-menu role="menu" aria-labelledby="single-button">
-      <li role="menuitem" ng-repeat="time in LineageController.timeRangeOptions">
-        <a ui-sref="tracker.entity.lineage({ start: time.start, end: time.end })">{{ time.label }}</a>
+      <li role="menuitem" ng-repeat="time in AuditController.timeRangeOptions">
+        <a ui-sref="tracker.entity.audit({ start: time.start, end: time.end })">{{ time.label }}</a>
       </li>
     </ul>
   </div>
+
+  <div class="audit-logs-table-container" ng-if="AuditController.auditLogs.results.length > 0">
+    <table class="table table-bordered">
+      <thead>
+        <tr>
+          <th>Time</th>
+          <th>Program</th>
+          <th>Program Type</th>
+          <th>Access</th>
+          <th>User</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        <tr ng-repeat="log in AuditController.auditLogs.results">
+          <td>{{ log.time | amDateFormat: 'MM/DD/YYYY  h:mm:ss a' }}</td>
+          <td>{{ log.payload.accessor.program || log.payload.accessor.service || '-' }}</td>
+          <td>{{ log.payload.accessor.type || log.payload.accessor.entity || '-' }}</td>
+          <td>{{ log.type }}</td>
+          <td>{{ log.user }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="tracker-no-result text-center"
+    ng-if="AuditController.auditLogs.results.length === 0 && !AuditController.loading">
+    <p>No audit logs for the time period specified</p>
+  </div>
+
+  <uib-pagination total-items="AuditController.auditLogs.totalResults"
+                  ng-model="this.currentPage"
+                  ng-change="AuditController.fetchAuditLogs(this.currentPage)"
+                  ng-if="AuditController.auditLogs.totalResults > 10">
+  </uib-pagination>
 </div>
