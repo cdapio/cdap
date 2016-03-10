@@ -42,6 +42,8 @@ import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.spark.api.java.JavaPairRDD;
+import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.api.java.function.Function;
 import org.apache.spark.api.java.function.PairFunction;
 import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
@@ -63,6 +65,7 @@ public class WorkflowAppWithLocalDatasets extends AbstractApplication {
   public static final String WORDCOUNT_DATASET = "wordcount";
   public static final String RESULT_DATASET = "result";
   public static final String CSV_FILESET_DATASET = "csvfileset";
+  public static final String WORKFLOW_NAME = "WorkflowWithLocalDatasets";
   @Override
   public void configure() {
     setName("WorkflowAppWithLocalDatasets");
@@ -81,7 +84,7 @@ public class WorkflowAppWithLocalDatasets extends AbstractApplication {
 
     @Override
     protected void configure() {
-      setName("WorkflowWithLocalDatasets");
+      setName(WORKFLOW_NAME);
       setDescription("Workflow program with local datasets.");
       createLocalDataset(WORDCOUNT_DATASET, KeyValueTable.class);
       createLocalDataset(CSV_FILESET_DATASET, FileSet.class, FileSetProperties.builder()
@@ -115,7 +118,7 @@ public class WorkflowAppWithLocalDatasets extends AbstractApplication {
           writer.write("two,words,text,inside");
         }
       } catch (Throwable t) {
-        LOG.info ("Exception occurred while running custom action ", t);
+        LOG.error("Exception occurred while running custom action ", t);
       }
     }
   }
@@ -128,8 +131,6 @@ public class WorkflowAppWithLocalDatasets extends AbstractApplication {
     protected void configure() {
       setName("JavaSparkCSVToSpaceConverter");
       setMainClass(SparkCSVToSpaceProgram.class);
-      setDriverResources(new Resources(2048));
-      setExecutorResources(new Resources(2048));
     }
   }
 
@@ -146,13 +147,11 @@ public class WorkflowAppWithLocalDatasets extends AbstractApplication {
       JavaPairRDD<LongWritable, Text> input = context.readFromDataset(CSV_FILESET_DATASET, LongWritable.class,
                                                                       Text.class, fileSetArgs);
 
-      JavaPairRDD<LongWritable, String> converted = input.mapToPair(new PairFunction<Tuple2<LongWritable, Text>,
-        LongWritable, String>() {
+      JavaRDD<String> converted = input.values().map(new Function<Text, String>() {
         @Override
-        public Tuple2<LongWritable, String> call(Tuple2<LongWritable, Text> input) throws Exception {
-          String line = input._2().toString();
-          line = line.replaceAll(",", " ");
-          return new Tuple2<>(input._1(), line);
+        public String call(Text input) throws Exception {
+          String line = input.toString();
+          return line.replaceAll(",", " ");
         }
       });
 
@@ -162,7 +161,7 @@ public class WorkflowAppWithLocalDatasets extends AbstractApplication {
       FileSetArguments.setOutputPath(fileSetArgs, outputPath);
       FileSet fileSet = context.getDataset(CSV_FILESET_DATASET, fileSetArgs);
       try (PrintWriter writer = new PrintWriter(fileSet.getOutputLocation().getOutputStream())) {
-        for (String line : converted.values().collect()) {
+        for (String line : converted.collect()) {
           writer.write(line);
           writer.println();
         }
