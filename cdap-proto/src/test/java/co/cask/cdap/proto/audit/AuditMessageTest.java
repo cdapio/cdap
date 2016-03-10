@@ -25,14 +25,17 @@ import co.cask.cdap.proto.codec.EntityIdTypeAdapter;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.Ids;
 import co.cask.cdap.proto.metadata.MetadataScope;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.Set;
 
 /**
  *
@@ -87,19 +90,35 @@ public class AuditMessageTest {
         "\"SYSTEM\":{\"properties\":{\"sk\":\"sv\"},\"tags\":[]}}," +
         "\"additions\":{\"SYSTEM\":{\"properties\":{\"sk\":\"sv\"},\"tags\":[\"t1\",\"t2\"]}}," +
         "\"deletions\":{\"USER\":{\"properties\":{\"uk\":\"uv\"},\"tags\":[\"ut1\"]}}}}";
-    Map<MetadataScope, MetadataAuditRecord> previous = ImmutableMap.of(MetadataScope.USER,
-                                                                  new MetadataAuditRecord(ImmutableMap.of("uk", "uv",
-                                                                                                     "uk1", "uv2"),
-                                                                                     ImmutableSet.of("ut1", "ut2")),
-                                                                  MetadataScope.SYSTEM,
-                                                                  new MetadataAuditRecord(ImmutableMap.of("sk", "sv"),
-                                                                                     ImmutableSet.<String>of()));
-    Map<MetadataScope, MetadataAuditRecord> additions = ImmutableMap.of(MetadataScope.SYSTEM,
-                                                                  new MetadataAuditRecord(ImmutableMap.of("sk", "sv"),
-                                                                                     ImmutableSet.of("t1", "t2")));
-    Map<MetadataScope, MetadataAuditRecord> deletions = ImmutableMap.of(MetadataScope.USER,
-                                                                  new MetadataAuditRecord(ImmutableMap.of("uk", "uv"),
-                                                                                     ImmutableSet.of("ut1")));
+    Map<String, String> userProperties = new HashMap<>();
+    userProperties.put("uk", "uv");
+    userProperties.put("uk1", "uv2");
+    Map<String, String> systemProperties = new HashMap<>();
+    systemProperties.put("sk", "sv");
+    Set<String> userTags = new LinkedHashSet<>();
+    userTags.add("ut1");
+    userTags.add("ut2");
+    Map<MetadataScope, MetadataAuditRecord> previous = new LinkedHashMap<>();
+    previous.put(MetadataScope.USER, new MetadataAuditRecord(Collections.unmodifiableMap(userProperties),
+                                                             Collections.unmodifiableSet(userTags)));
+    previous.put(MetadataScope.SYSTEM, new MetadataAuditRecord(Collections.unmodifiableMap(systemProperties),
+                                                               Collections.unmodifiableSet(
+                                                                 new LinkedHashSet<String>())));
+    Map<String, String> sysPropertiesAdded = new HashMap<>();
+    sysPropertiesAdded.put("sk", "sv");
+    Set<String> systemTagsAdded = new LinkedHashSet<>();
+    systemTagsAdded.add("t1");
+    systemTagsAdded.add("t2");
+    Map<MetadataScope, MetadataAuditRecord> additions = new HashMap<>();
+    additions.put(MetadataScope.SYSTEM, new MetadataAuditRecord(Collections.unmodifiableMap(sysPropertiesAdded),
+                                                                Collections.unmodifiableSet(systemTagsAdded)));
+    Map<String, String> userPropertiesDeleted = new HashMap<>();
+    userPropertiesDeleted.put("uk", "uv");
+    Set<String> userTagsDeleted = new LinkedHashSet<>();
+    userTagsDeleted.add("ut1");
+    Map<MetadataScope, MetadataAuditRecord> deletions = new HashMap<>();
+    deletions.put(MetadataScope.USER, new MetadataAuditRecord(Collections.unmodifiableMap(userPropertiesDeleted),
+                                                              Collections.unmodifiableSet(userTagsDeleted)));
     AuditMessage metadataChange =
       new AuditMessage(3000L, Ids.namespace("ns1").app("app1"), "user1", AuditType.METADATA_CHANGE,
                        new MetadataPayload(previous, additions, deletions));

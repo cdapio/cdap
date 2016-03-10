@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,14 +17,13 @@ package co.cask.cdap.proto.id;
 
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.element.EntityType;
-import com.google.common.base.Joiner;
-import com.google.common.base.Preconditions;
-import com.google.common.base.Splitter;
-import com.google.common.collect.Iterables;
 
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Objects;
 import java.util.Vector;
+import java.util.regex.Pattern;
+import javax.annotation.Nullable;
 
 /**
  * Uniquely identifies a particular instance of an element.
@@ -62,6 +61,7 @@ public abstract class EntityId implements IdCompatible {
 
   private static final String IDSTRING_TYPE_SEPARATOR = ":";
   private static final String IDSTRING_PART_SEPARATOR = ".";
+  private static final Pattern IDSTRING_PART_SEPARATOR_PATTERN = Pattern.compile("\\.");
 
   private final EntityType entity;
   private Vector<EntityId> hierarchy;
@@ -83,57 +83,44 @@ public abstract class EntityId implements IdCompatible {
   }
 
   public static <T extends EntityId> T fromString(String string) {
-    String[] typeAndId = string.split(IDSTRING_TYPE_SEPARATOR, 2);
-    Preconditions.checkArgument(
-      typeAndId.length == 2,
-      "Expected type separator '%s' to be in the ID string: %s", IDSTRING_TYPE_SEPARATOR, string);
-
-    String typeString = typeAndId[0];
-    EntityType type = EntityType.valueOf(typeString.toUpperCase());
-    Preconditions.checkArgument(type != null, "Invalid element type: " + typeString);
-
-    String idString = typeAndId[1];
-    try {
-      return type.fromIdParts(Splitter.on(IDSTRING_PART_SEPARATOR).split(idString));
-    } catch (IllegalArgumentException e) {
-      throw new IllegalArgumentException(
-        String.format("Invalid ID: %s", string), e);
-    }
+    return fromString(string, null);
   }
 
-  protected static <T extends EntityId> T fromString(String string, Class<T> idClass) {
+  protected static <T extends EntityId> T fromString(String string, @Nullable Class<T> idClass) {
     String[] typeAndId = string.split(IDSTRING_TYPE_SEPARATOR, 2);
-    Preconditions.checkArgument(
-      typeAndId.length == 2,
-      "Expected type separator '%s' to be in the ID string: %s", IDSTRING_TYPE_SEPARATOR, string);
+    if (typeAndId.length != 2) {
+      throw new IllegalArgumentException(
+        String.format("Expected type separator '%s' to be in the ID string: %s", IDSTRING_TYPE_SEPARATOR, string));
+    }
 
     String typeString = typeAndId[0];
     EntityType type = EntityType.valueOf(typeString.toUpperCase());
-    Preconditions.checkArgument(type != null, "Invalid element type: " + typeString);
-    Preconditions.checkArgument(
-      type.getIdClass().equals(idClass),
-      "Expected EntityId of class '%s' but got '%s'",
-      idClass.getName(), type.getIdClass().getName());
-
+    if (type == null) {
+      throw new IllegalArgumentException("Invalid element type: " + typeString);
+    }
+    if (idClass != null && !type.getIdClass().equals(idClass)) {
+        throw new IllegalArgumentException(String.format("Expected EntityId of class '%s' but got '%s'",
+                                                         idClass.getName(), type.getIdClass().getName()));
+    }
     String idString = typeAndId[1];
     try {
-      return type.fromIdParts(Splitter.on(IDSTRING_PART_SEPARATOR).split(idString));
+      return type.fromIdParts(Arrays.asList(IDSTRING_PART_SEPARATOR_PATTERN.split(idString)));
     } catch (IllegalArgumentException e) {
-      throw new IllegalArgumentException(
-        String.format("Invalid ID for type '%s': %s", idClass.getName(), string), e);
+      String message = idClass == null ? String.format("Invalid ID: %s", string) :
+        String.format("Invalid ID for type '%s': %s", idClass.getName(), string);
+      throw new IllegalArgumentException(message, e);
     }
   }
 
   @Override
   public final String toString() {
     StringBuilder result = new StringBuilder();
-    result.append(entity.name().toLowerCase()).append(IDSTRING_TYPE_SEPARATOR);
-    Iterable<String> idParts = toIdParts();
-    for (String part : idParts) {
-      result.append(part).append(IDSTRING_PART_SEPARATOR);
-    }
-    if (!Iterables.isEmpty(idParts)) {
-      result.deleteCharAt(result.length() - 1);
+    result.append(entity.name().toLowerCase());
+
+    String separator = IDSTRING_TYPE_SEPARATOR;
+    for (String part : toIdParts()) {
+      result.append(separator).append(part);
+      separator = IDSTRING_PART_SEPARATOR;
     }
     return result.toString();
   }
@@ -156,7 +143,9 @@ public abstract class EntityId implements IdCompatible {
   }
 
   protected static String next(Iterator<String> iterator, String fieldName) {
-    Preconditions.checkArgument(iterator.hasNext(), "Missing field: %s", fieldName);
+    if (!iterator.hasNext()) {
+      throw new IllegalArgumentException("Missing field: " + fieldName);
+    }
     return iterator.next();
   }
 
@@ -169,20 +158,21 @@ public abstract class EntityId implements IdCompatible {
     return result;
   }
 
-  protected static String remaining(Iterator<String> iterator, String fieldName) {
-    Preconditions.checkArgument(iterator.hasNext(), "Missing field: %s", fieldName);
-    StringBuilder result = new StringBuilder();
-    while (iterator.hasNext()) {
-      result.append(iterator.next()).append(IDSTRING_PART_SEPARATOR);
+  protected static String remaining(Iterator<String> iterator, @Nullable String fieldName) {
+    if (fieldName != null && !iterator.hasNext()) {
+      throw new IllegalArgumentException("Missing field: " + fieldName);
     }
-    if (result.length() != 0) {
-      result.deleteCharAt(result.length() - 1);
+    StringBuilder result = new StringBuilder();
+    String separator = "";
+    while (iterator.hasNext()) {
+      result.append(separator).append(iterator.next());
+      separator = IDSTRING_PART_SEPARATOR;
     }
     return result.toString();
   }
 
   private static String remaining(Iterator<String> iterator) {
-    return Joiner.on(IDSTRING_PART_SEPARATOR).join(iterator);
+    return remaining(iterator, null);
   }
 
   public Iterable<EntityId> getHierarchy() {

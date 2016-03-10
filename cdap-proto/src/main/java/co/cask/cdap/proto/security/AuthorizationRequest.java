@@ -18,9 +18,9 @@ package co.cask.cdap.proto.security;
 
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.proto.id.EntityId;
-import com.google.common.base.Preconditions;
-import com.google.common.collect.Sets;
 
+import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.Set;
 import javax.annotation.Nullable;
 
@@ -35,10 +35,12 @@ public class AuthorizationRequest {
   private final Set<Action> actions;
 
   protected AuthorizationRequest(EntityId entity, @Nullable Principal principal, @Nullable Set<Action> actions) {
-    Preconditions.checkArgument(entity != null, "entity is required");
+    if (entity == null) {
+      throw new IllegalArgumentException("entity is required");
+    }
     this.entity = entity;
     this.principal = principal;
-    this.actions = (actions != null) ? Sets.newHashSet(actions) : null;
+    this.actions = (actions != null) ? Collections.unmodifiableSet(new LinkedHashSet<>(actions)) : null;
   }
 
   public EntityId getEntity() {

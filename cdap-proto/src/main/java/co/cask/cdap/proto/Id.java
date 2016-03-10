@@ -37,9 +37,9 @@ import co.cask.cdap.proto.id.ScheduleId;
 import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.proto.id.StreamViewId;
 import co.cask.cdap.proto.id.SystemServiceId;
-import com.google.common.base.CharMatcher;
-import com.google.common.base.Charsets;
-import com.google.common.base.Preconditions;
+
+import java.nio.charset.Charset;
+import java.util.regex.Pattern;
 
 /**
  * Contains collection of classes representing different types of Ids.
@@ -53,29 +53,26 @@ public abstract class Id implements EntityIdCompatible {
     return type.getSimpleName().toLowerCase();
   }
 
-  private static final CharMatcher namespaceMatcher =
-    CharMatcher.inRange('A', 'Z')
-    .or(CharMatcher.inRange('a', 'z'))
-    .or(CharMatcher.inRange('0', '9'))
-    .or(CharMatcher.is('_'));
+  // Only allow alphanumeric and _ character for namespace
+  private static final Pattern namespacePattern = Pattern.compile("[a-zA-Z0-9_]+");
   // Allow hyphens for other ids.
-  private static final CharMatcher idMatcher = namespaceMatcher.or(CharMatcher.is('-'));
+  private static final Pattern idPattern = Pattern.compile("[a-zA-Z0-9_-]+");
   // Allow '.' and '$' for dataset ids since they can be fully qualified class names
-  private static final CharMatcher datasetIdCharMatcher = idMatcher.or(CharMatcher.is('.')).or(CharMatcher.is('$'));
-
-  private static boolean isValidNamespaceId(String name) {
-    return namespaceMatcher.matchesAllOf(name);
-  }
+  private static final Pattern datasetIdPattern = Pattern.compile("[$\\.a-zA-Z0-9_-]+");
 
   private transient String toString;
   private transient Integer hashCode;
 
+  private static boolean isValidNamespaceId(String name) {
+    return namespacePattern.matcher(name).matches();
+  }
+
   private static boolean isValidId(String name) {
-    return idMatcher.matchesAllOf(name);
+    return idPattern.matcher(name).matches();
   }
 
   private static boolean isValidDatasetId(String datasetId) {
-    return datasetIdCharMatcher.matchesAllOf(datasetId);
+    return datasetIdPattern.matcher(datasetId).matches();
   }
 
   public String getIdType() {
@@ -137,7 +134,9 @@ public abstract class Id implements EntityIdCompatible {
     private final String id;
 
     private QueryHandle(String id) {
-      Preconditions.checkNotNull(id, "id cannot be null.");
+      if (id == null) {
+        throw new NullPointerException("id cannot be null.");
+      }
       this.id = id;
     }
 
@@ -165,7 +164,9 @@ public abstract class Id implements EntityIdCompatible {
     private final String id;
 
     private SystemService(String id) {
-      Preconditions.checkNotNull(id, "id cannot be null.");
+      if (id == null) {
+        throw new NullPointerException("id cannot be null.");
+      }
       this.id = id;
     }
 
@@ -198,8 +199,12 @@ public abstract class Id implements EntityIdCompatible {
     private final String id;
 
     public Namespace(String id) {
-      Preconditions.checkNotNull(id, "Namespace '" + id + "' cannot be null.");
-      Preconditions.checkArgument(isValidNamespaceId(id), "Namespace '" + id + "' has an incorrect format.");
+      if (id == null) {
+        throw new NullPointerException("Namespace cannot be null.");
+      }
+      if (!isValidNamespaceId(id)) {
+        throw new IllegalArgumentException("Namespace '" + id + "' has an incorrect format.");
+      }
       this.id = id;
     }
 
@@ -229,9 +234,15 @@ public abstract class Id implements EntityIdCompatible {
     private final String applicationId;
 
     public Application(final Namespace namespace, final String applicationId) {
-      Preconditions.checkNotNull(namespace, "Namespace cannot be null.");
-      Preconditions.checkNotNull(applicationId, "Application cannot be null.");
-      Preconditions.checkArgument(isValidId(applicationId), "Invalid Application ID.");
+      if (namespace == null) {
+        throw new NullPointerException("Namespace cannot be null.");
+      }
+      if (applicationId == null) {
+        throw new NullPointerException("Application cannot be null.");
+      }
+      if (!isValidId(applicationId)) {
+        throw new IllegalArgumentException("Invalid Application ID.");
+      }
       this.namespace = namespace;
       this.applicationId = applicationId;
     }
@@ -314,9 +325,15 @@ public abstract class Id implements EntityIdCompatible {
     private final String id;
 
     public Program(Application application, ProgramType type, final String id) {
-      Preconditions.checkNotNull(application, "application cannot be null.");
-      Preconditions.checkNotNull(application, "type cannot be null.");
-      Preconditions.checkNotNull(id, "id cannot be null.");
+      if (application == null) {
+        throw new NullPointerException("Application cannot be null.");
+      }
+      if (type == null) {
+        throw new NullPointerException("Program type cannot be null.");
+      }
+      if (id == null) {
+        throw new NullPointerException("Program id cannot be null.");
+      }
       this.application = application;
       this.type = type;
       this.id = id;
@@ -468,8 +485,12 @@ public abstract class Id implements EntityIdCompatible {
       private final String id;
 
       private Flowlet(Flow flow, String id) {
-        Preconditions.checkArgument(flow != null, "flow cannot be null");
-        Preconditions.checkArgument(id != null, "id cannot be null");
+        if (flow == null) {
+          throw new IllegalArgumentException("flow cannot be null");
+        }
+        if (id == null) {
+          throw new IllegalArgumentException("id cannot be null");
+        }
         this.flow = flow;
         this.id = id;
       }
@@ -551,8 +572,12 @@ public abstract class Id implements EntityIdCompatible {
     private final String id;
 
     private Schedule(Application application, String id) {
-      Preconditions.checkArgument(application != null, "application cannot be null.");
-      Preconditions.checkArgument(id != null && !id.isEmpty(), "id cannot be null or empty.");
+      if (application == null) {
+        throw new IllegalArgumentException("application cannot be null");
+      }
+      if (id == null || id.isEmpty()) {
+        throw new IllegalArgumentException("id cannot be null or empty");
+      }
       this.application = application;
       this.id = id;
     }
@@ -619,13 +644,18 @@ public abstract class Id implements EntityIdCompatible {
     }
 
     private NotificationFeed(String namespace, String category, String name, String description) {
-      Preconditions.checkArgument(namespace != null && !namespace.isEmpty(),
-                                  "Namespace value cannot be null or empty.");
-      Preconditions.checkArgument(category != null && !category.isEmpty(),
-                                  "Category value cannot be null or empty.");
-      Preconditions.checkArgument(name != null && !name.isEmpty(), "Name value cannot be null or empty.");
-      Preconditions.checkArgument(isValidId(namespace) && isValidId(category) && isValidId(name),
-                                  "Namespace, category or name has a wrong format.");
+      if (namespace == null || namespace.isEmpty()) {
+        throw new IllegalArgumentException("Namespace value cannot be null or empty.");
+      }
+      if (category == null || category.isEmpty()) {
+        throw new IllegalArgumentException("Category value cannot be null or empty.");
+      }
+      if (name == null || name.isEmpty()) {
+        throw new IllegalArgumentException("Name value cannot be null or empty.");
+      }
+      if (!isValidId(namespace) || !isValidId(category) || !isValidId(name)) {
+        throw new IllegalArgumentException("Namespace, category or name has a wrong format.");
+      }
 
       this.namespace = Namespace.from(namespace);
       this.category = category;
@@ -734,11 +764,16 @@ public abstract class Id implements EntityIdCompatible {
     private transient byte[] idBytes;
 
     private Stream(final Namespace namespace, final String streamName) {
-      Preconditions.checkNotNull(namespace, "Namespace cannot be null.");
-      Preconditions.checkNotNull(streamName, "Stream name cannot be null.");
-
-      Preconditions.checkArgument(isValidId(streamName), "Stream name can only contain alphanumeric, " +
-                                    "'-' and '_' characters: %s", streamName);
+      if (namespace == null) {
+        throw new NullPointerException("Namespace cannot be null.");
+      }
+      if (streamName == null) {
+        throw new IllegalArgumentException("Stream name cannot be null.");
+      }
+      if (!isValidId(streamName)) {
+        throw new IllegalArgumentException(String.format("Stream name can only contain alphanumeric, " +
+                                                           "'-' and '_' characters: %s", streamName));
+      }
 
       this.namespace = namespace;
       this.streamName = streamName;
@@ -760,7 +795,7 @@ public abstract class Id implements EntityIdCompatible {
 
     public byte[] toBytes() {
       if (idBytes == null) {
-        idBytes = toString().getBytes(Charsets.US_ASCII);
+        idBytes = toString().getBytes(Charset.forName("US-ASCII"));
       }
       return idBytes;
     }
@@ -789,9 +824,13 @@ public abstract class Id implements EntityIdCompatible {
       private final String id;
 
       public View(Stream stream, String id) {
-        Preconditions.checkNotNull(id, "ID cannot be null.");
-        Preconditions.checkArgument(isValidId(id), "ID can only contain alphanumeric, " +
-          "'-' and '_' characters: %s", id);
+        if (id == null) {
+          throw new NullPointerException("ID cannot be null.");
+        }
+        if (!isValidId(id)) {
+          throw new IllegalArgumentException(String.format("ID can only contain alphanumeric, " +
+                                                             "'-' and '_' characters: %s", id));
+        }
         this.stream = stream;
         this.id = id;
       }
@@ -848,10 +887,16 @@ public abstract class Id implements EntityIdCompatible {
     private final String typeName;
 
     private DatasetType(Namespace namespace, String typeName) {
-      Preconditions.checkNotNull(namespace, "Namespace cannot be null.");
-      Preconditions.checkNotNull(typeName, "Dataset type name cannot be null.");
-      Preconditions.checkArgument(isValidDatasetId(typeName), "Invalid characters found in dataset type name '" +
-        typeName + "'. Allowed characters are ASCII letters, numbers, and _, -, ., or $.");
+      if (namespace == null) {
+        throw new NullPointerException("Namespace cannot be null.");
+      }
+      if (typeName == null) {
+        throw new NullPointerException("Dataset type name cannot be null.");
+      }
+      if (!isValidDatasetId(typeName)) {
+        throw new IllegalArgumentException("Invalid characters found in dataset type name '" + typeName +
+                                             "'. Allowed characters are ASCII letters, numbers, and _, -, ., or $.");
+      }
       this.namespace = namespace;
       this.typeName = typeName;
     }
@@ -899,10 +944,16 @@ public abstract class Id implements EntityIdCompatible {
     private final String moduleId;
 
     private DatasetModule(Namespace namespace, String moduleId) {
-      Preconditions.checkNotNull(namespace, "Namespace cannot be null.");
-      Preconditions.checkNotNull(moduleId, "Dataset module id cannot be null.");
-      Preconditions.checkArgument(isValidDatasetId(moduleId), "Invalid characters found in dataset module Id. '" +
-        moduleId + "'. Module id can contain ASCII letters, numbers, and _, -, ., or $ characters.");
+      if (namespace == null) {
+        throw new NullPointerException("Namespace cannot be null.");
+      }
+      if (moduleId == null) {
+        throw new NullPointerException("Dataset module id cannot be null.");
+      }
+      if (!isValidDatasetId(moduleId)) {
+        throw new IllegalArgumentException("Invalid characters found in dataset module Id '" + moduleId +
+                                             "'. Allowed characters are ASCII letters, numbers, and _, -, ., or $.");
+      }
       this.namespace = namespace;
       this.moduleId = moduleId;
     }
@@ -945,10 +996,16 @@ public abstract class Id implements EntityIdCompatible {
     private final String instanceId;
 
     private DatasetInstance(Namespace namespace, String instanceId) {
-      Preconditions.checkNotNull(namespace, "Namespace cannot be null.");
-      Preconditions.checkNotNull(instanceId, "Dataset instance id cannot be null.");
-      Preconditions.checkArgument(isValidDatasetId(instanceId), "Invalid characters found in dataset instance id. '" +
-        instanceId + "'. Instance id can contain ASCII letters, numbers, and _, -, ., or $.");
+      if (namespace == null) {
+        throw new NullPointerException("Namespace cannot be null.");
+      }
+      if (instanceId == null) {
+        throw new NullPointerException("Dataset instance id cannot be null.");
+      }
+      if (!isValidDatasetId(instanceId)) {
+        throw new IllegalArgumentException("Invalid characters found in dataset instance Id '" + instanceId +
+                                             "'. Allowed characters are ASCII letters, numbers, and _, -, ., or $.");
+      }
       this.namespace = namespace;
       this.instanceId = instanceId;
     }
@@ -992,11 +1049,21 @@ public abstract class Id implements EntityIdCompatible {
     private final ArtifactVersion version;
 
     public Artifact(Namespace namespace, String name, ArtifactVersion version) {
-      Preconditions.checkNotNull(namespace, "Namespace cannot be null.");
-      Preconditions.checkNotNull(name, "Name cannot be null.");
-      Preconditions.checkArgument(isValidId(name), "Invalid artifact name.");
-      Preconditions.checkNotNull(version, "Version cannot be null.");
-      Preconditions.checkNotNull(version.getVersion(), "Invalid artifact version.");
+      if (namespace == null) {
+        throw new NullPointerException("Namespace cannot be null.");
+      }
+      if (name == null) {
+        throw new NullPointerException("Name cannot be null.");
+      }
+      if (!isValidId(name)) {
+        throw new IllegalArgumentException("Invalid artifact name.");
+      }
+      if (version == null) {
+        throw new NullPointerException("Version cannot be null.");
+      }
+      if (version.getVersion() == null) {
+        throw new NullPointerException("Invalid artifact version.");
+      }
       this.namespace = namespace;
       this.name = name;
       this.version = version;
@@ -1091,5 +1158,4 @@ public abstract class Id implements EntityIdCompatible {
       return new NamespacedArtifactId(namespace.getId(), name, version.getVersion());
     }
   }
-
 }

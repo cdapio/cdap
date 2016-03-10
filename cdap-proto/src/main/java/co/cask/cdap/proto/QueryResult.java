@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,11 +16,10 @@
 
 package co.cask.cdap.proto;
 
-import com.google.common.base.Objects;
-
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Represents query result.
@@ -59,7 +58,7 @@ public class QueryResult {
         if (!Arrays.equals((byte[]) thisCol, (byte[]) thatCol)) {
           return false;
         }
-      } else if (!Objects.equal(thisCol, thatCol)) {
+      } else if (!Objects.equals(thisCol, thatCol)) {
         return false;
       }
     }
@@ -68,13 +67,13 @@ public class QueryResult {
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(columns);
+    return Objects.hash(columns);
   }
 
   @Override
   public String toString() {
-    return Objects.toStringHelper(this)
-      .add("columns", columns)
-      .toString();
+    return "QueryResult{" +
+      "columns=" + columns +
+      '}';
   }
 }

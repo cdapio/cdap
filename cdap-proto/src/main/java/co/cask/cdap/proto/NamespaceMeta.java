@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,8 +16,7 @@
 
 package co.cask.cdap.proto;
 
-import com.google.common.base.Objects;
-import com.google.common.base.Preconditions;
+import java.util.Objects;
 
 /**
  * Represents metadata for namespaces
@@ -89,7 +88,9 @@ public final class NamespaceMeta {
     }
 
     public NamespaceMeta build() {
-      Preconditions.checkArgument(name != null, "Namespace id cannot be null.");
+      if (name == null) {
+        throw new IllegalArgumentException("Namespace id cannot be null.");
+      }
       if (description == null) {
         description = "";
       }
@@ -110,22 +111,22 @@ public final class NamespaceMeta {
       return false;
     }
     NamespaceMeta other = (NamespaceMeta) o;
-    return Objects.equal(name, other.name)
-      && Objects.equal(description, other.description)
-      && Objects.equal(config, other.config);
+    return Objects.equals(name, other.name)
+      && Objects.equals(description, other.description)
+      && Objects.equals(config, other.config);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(name, description, config);
+    return Objects.hash(name, description, config);
   }
 
   @Override
   public String toString() {
-    return Objects.toStringHelper(this)
-      .add("name", name)
-      .add("description", description)
-      .add("config", getConfig())
-      .toString();
+    return "NamespaceMeta{" +
+      "name='" + name + '\'' +
+      ", description='" + description + '\'' +
+      ", config=" + getConfig() +
+      '}';
   }
 }
