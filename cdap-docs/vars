@@ -20,6 +20,11 @@ WITH_JAVADOCS="$WITHOUT"
 
 MANUALS="introduction developers-manual cdap-apps admin-manual integrations examples-manual reference-manual faqs"
 
+# BUILD.rst
+BUILD_RST="BUILD.rst"
+BUILD_RST_HASH_LOCATION="cdap-docs/vars"
+BUILD_RST_HASH="cb6279ac3ecd199cdfa2f6e914403f69"
+
 # This needs to be explicitly set as Git has trouble identifying it.
 GIT_BRANCH_PARENT="develop"
 
