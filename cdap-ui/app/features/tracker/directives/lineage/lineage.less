@@ -41,6 +41,11 @@ my-lineage-diagram {
       margin-top: 3px;
     }
 
+    .entity-link {
+      text-decoration: none;
+      user-select: none;
+    }
+
     h4 {
       margin: 0;
       overflow-x: hidden;
@@ -96,6 +101,7 @@ my-lineage-diagram {
       }
 
       .tracker-popover-content {
+        cursor: default;
         .inside-column {
           padding-left: 10px;
           padding-right: 10px;
@@ -106,7 +112,6 @@ my-lineage-diagram {
           color: white;
           padding-bottom: 5px;
           h4, h5 { color: white; }
-
           h4 {
             font-size: 16px;
             margin-top: 10px;
@@ -115,6 +120,7 @@ my-lineage-diagram {
           .entity-detail {
             padding-left: 10px;
             span { font-size: 14px; }
+            a { color: white; }
           }
 
           .runs-controller {

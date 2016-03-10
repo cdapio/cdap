@@ -58,18 +58,22 @@ function LineageController ($scope, jsPlumb, $timeout, $state, LineageStore, myT
         lineWidth: 2,
         strokeStyle: 'rgba(0,0,0, 1)'
       },
-      Connector: [ 'Flowchart', {gap: 0, stub: [10, 15], alwaysRespectStubs: true, cornerRadius: 3} ],
-      Endpoints: ['Blank', 'Blank']
+      // Connector: [ 'Flowchart', {gap: 0, stub: [10, 15], alwaysRespectStubs: true, cornerRadius: 3} ],
+      Connector: [ 'Straight', {gap: 0} ],
+      ConnectionOverlays: [ [ 'Arrow', { location: 1, direction: 1, width: 10, length: 10 }] ],
+      Endpoints: ['Blank', 'Blank'],
+      HoverPaintStyle: { strokeStyle: 'rgb(53, 200, 83)' }
     });
 
     render();
   });
 
-  vm.nodeClick = (node) => {
+  vm.nodeClick = (event, node) => {
     let nodeInfo = vm.uniqueNodes[node.uniqueNodeId];
     if (nodeInfo.nodeType === 'data') {
-      $state.go('tracker.entity.metadata', { entityType: nodeInfo.entityType, entityId: nodeInfo.entityId });
+      return;
     } else {
+      event.preventDefault(); // prevent JS error on nonexistent state
       node.showPopover = true;
 
       node.popover = {
@@ -79,6 +83,24 @@ function LineageController ($scope, jsPlumb, $timeout, $state, LineageStore, myT
       };
       fetchRunStatus(nodeInfo, node.popover.activeRunId, node.popover.runInfo);
     }
+  };
+
+  // This function is to enable user to click open data nodes in new tab
+  vm.constructNodeLink = (node) => {
+    let nodeInfo = vm.uniqueNodes[node.uniqueNodeId];
+
+    if (nodeInfo.nodeType === 'data') {
+      return 'tracker.entity.metadata({ entityType:Lineage.uniqueNodes[node.uniqueNodeId].entityType, entityId: Lineage.uniqueNodes[node.uniqueNodeId].entityId })';
+    } else {
+      // when you return non existant state, the href attribute never gets created
+      return '-';
+    }
+  };
+
+  vm.constructProgramLink = (node) => {
+    let nodeInfo = vm.uniqueNodes[node.uniqueNodeId];
+    let link = nodeInfo.entityType + '.detail.run({ appId: Lineage.uniqueNodes[node.uniqueNodeId].applicationId, programId: Lineage.uniqueNodes[node.uniqueNodeId].entityId, runid: node.popover.activeRunId })';
+    return link;
   };
 
   vm.closePopover = (event, node) => {
@@ -131,6 +153,7 @@ function LineageController ($scope, jsPlumb, $timeout, $state, LineageStore, myT
 
   vm.navigationClick = (event, node) => {
     event.stopPropagation();
+    event.preventDefault();
     let unique = vm.uniqueNodes[node.uniqueNodeId];
     $scope.navigationFunction().call($scope.context, unique.entityType, unique.entityId);
   };

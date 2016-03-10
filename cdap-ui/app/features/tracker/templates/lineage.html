@@ -17,11 +17,11 @@
 <div class="time-range-container">
   <div class="btn-group" uib-dropdown>
     <button class="btn " uib-dropdown-toggle>
-      {{ LineageController.timeRange.label }} <span class="caret"></span>
+      {{ LineageController.selectedTimeRange.label }} <span class="caret"></span>
     </button>
     <ul uib-dropdown-menu role="menu" aria-labelledby="single-button">
       <li role="menuitem" ng-repeat="time in LineageController.timeRangeOptions">
-        <a href="" ng-click="LineageController.selectTimeRange(time)">{{ time.label }}</a>
+        <a ui-sref="tracker.entity.lineage({ start: time.start, end: time.end })">{{ time.label }}</a>
       </li>
     </ul>
   </div>
