@@ -32,7 +32,8 @@ function myTrackerApi(myCdapUrl, $resource, myAuth, myHelpers) {
     viewsProperties: myHelpers.getConfig('GET', 'REQUEST', basePath + '/views/:viewId/metadata', true),
     getLineage: myHelpers.getConfig('GET', 'REQUEST', basePath + '/lineage'),
     getProgramRunStatus: myHelpers.getConfig('GET', 'REQUEST', programPath),
-    getAuditLogs: myHelpers.getConfig('GET', 'REQUEST', auditPath)
+    getAuditLogs: myHelpers.getConfig('GET', 'REQUEST', auditPath),
+    getStreamProperties: myHelpers.getConfig('GET', 'REQUEST', '/namespaces/:namespace/streams/:entityId')
   });
 }
 
