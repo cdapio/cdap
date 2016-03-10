@@ -446,17 +446,8 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     File waitFile = new File(tmpFolder.newFolder(), "/wait.file");
     File doneFile = new File(tmpFolder.newFolder(), "/done.file");
 
-    // Write some data to the input file
-    File inputDir = tmpFolder.newFolder();
-
-    File inputFile = new File(inputDir, "/words.txt");
-    try (BufferedWriter writer = Files.newBufferedWriter(inputFile.toPath(), Charsets.UTF_8)) {
-      writer.write("this text has");
-      writer.newLine();
-      writer.write("two words text inside");
-    }
-
-    wfmanager.start(ImmutableMap.of("input.path", inputDir.getAbsolutePath(), "wait.file", waitFile.getAbsolutePath(),
+    wfmanager.start(ImmutableMap.of("input.path", "input", "output.path", "output",
+                                    "wait.file", waitFile.getAbsolutePath(),
                                     "done.file", doneFile.getAbsolutePath()));
 
     // Wait till custom action in the Workflow is triggerred.
@@ -469,14 +460,21 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     Assert.assertEquals(1, history.size());
     String runId = history.get(0).getPid();
 
-    // Get the local dataset for this Workflow run
+    // Get the local datasets for this Workflow run
     DataSetManager<KeyValueTable> localDataset = getDataset(testSpace, WorkflowAppWithLocalDatasets.WORDCOUNT_DATASET
       + "." + runId);
     Assert.assertEquals("2", Bytes.toString(localDataset.get().read("text")));
 
-    // Local dataset should not exist at the namespace level
+    DataSetManager<FileSet> fileSetDataset = getDataset(testSpace, WorkflowAppWithLocalDatasets.CSV_FILESET_DATASET
+      + "." + runId);
+    Assert.assertNotNull(fileSetDataset.get());
+
+    // Local datasets should not exist at the namespace level
     localDataset = getDataset(testSpace, WorkflowAppWithLocalDatasets.WORDCOUNT_DATASET);
     Assert.assertNull(localDataset.get());
+
+    fileSetDataset = getDataset(testSpace, WorkflowAppWithLocalDatasets.CSV_FILESET_DATASET);
+    Assert.assertNull(fileSetDataset.get());
 
     // Signal the Workflow to continue
     doneFile.createNewFile();
@@ -484,9 +482,12 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     // Wait for workflow to finish
     wfmanager.waitForFinish(1, TimeUnit.MINUTES);
 
-    // Once the Workflow run is complete local dataset should not be available
+    // Once the Workflow run is complete local datasets should not be available
     localDataset = getDataset(testSpace, WorkflowAppWithLocalDatasets.WORDCOUNT_DATASET + "." + runId);
     Assert.assertNull(localDataset.get());
+
+    fileSetDataset = getDataset(testSpace, WorkflowAppWithLocalDatasets.CSV_FILESET_DATASET + "." + runId);
+    Assert.assertNull(fileSetDataset.get());
 
     // Dataset which is not local should still be available
     DataSetManager<KeyValueTable> dataset = getDataset(testSpace, WorkflowAppWithLocalDatasets.RESULT_DATASET);
