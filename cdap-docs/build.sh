@@ -174,12 +174,13 @@ function build_docs() {
     clean_targets
   fi
   clear_messages_set_messages_file
-  
   if [ "${doc_type}" != "${DOCS_OUTER}" ]; then
     run_command docs-first-pass ${source_path}
   fi
-  
   if [ "${doc_type}" == "${DOCS}" -o "${doc_type}" == "${DOCS_OUTER}" ]; then
+    if [ "${javadocs}" != "${WITH}" ]; then
+      check_build_rst
+    fi
     build_docs_outer_level ${source_path}
     copy_docs_inner_level
   else
@@ -187,6 +188,8 @@ function build_docs() {
   fi
   if [ "${javadocs}" == "${WITH}" ]; then
     run_command javadocs
+  else
+    check_build_rst
   fi
   if [ "${doc_type}" == "${GITHUB}" -o "${doc_type}" == "${GITHUB_ONLY}" ]; then
     run_command docs-github-part ${source_path}
