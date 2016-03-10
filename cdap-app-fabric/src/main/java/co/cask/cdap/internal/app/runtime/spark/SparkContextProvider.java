@@ -32,6 +32,7 @@ import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.stream.StreamAdminModules;
 import co.cask.cdap.data.stream.StreamCoordinatorClient;
 import co.cask.cdap.data.view.ViewAdminModules;
+import co.cask.cdap.data2.audit.AuditModule;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.explore.guice.ExploreClientModule;
@@ -226,7 +227,8 @@ public final class SparkContextProvider {
       new ExploreClientModule(),
       new ViewAdminModules().getDistributedModules(),
       new StreamAdminModules().getDistributedModules(),
-      new NotificationFeedServiceRuntimeModule().getDistributedModules()
+      new NotificationFeedServiceRuntimeModule().getDistributedModules(),
+      new AuditModule().getDistributedModules()
     );
   }
 

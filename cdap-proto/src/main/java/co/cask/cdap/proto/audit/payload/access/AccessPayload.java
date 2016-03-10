@@ -16,29 +16,31 @@
 
 package co.cask.cdap.proto.audit.payload.access;
 
+import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.proto.audit.AuditPayload;
-import co.cask.cdap.proto.id.ProgramRunId;
+import co.cask.cdap.proto.id.EntityId;
 
 import java.util.Objects;
 
 /**
  * Represents the access that happened on a data entity.
  */
+@Beta
 public class AccessPayload extends AuditPayload {
   private final AccessType accessType;
-  private final ProgramRunId programRun;
+  private final EntityId accessor;
 
-  public AccessPayload(AccessType accessType, ProgramRunId programRun) {
+  public AccessPayload(AccessType accessType, EntityId accessor) {
     this.accessType = accessType;
-    this.programRun = programRun;
+    this.accessor = accessor;
   }
 
   public AccessType getAccessType() {
     return accessType;
   }
 
-  public ProgramRunId getProgramRun() {
-    return programRun;
+  public EntityId getAccessor() {
+    return accessor;
   }
 
   @Override
@@ -51,19 +53,19 @@ public class AccessPayload extends AuditPayload {
     }
     AccessPayload that = (AccessPayload) o;
     return Objects.equals(accessType, that.accessType) &&
-      Objects.equals(programRun, that.programRun);
+      Objects.equals(accessor, that.accessor);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(accessType, programRun);
+    return Objects.hash(accessType, accessor);
   }
 
   @Override
   public String toString() {
     return "AccessPayload{" +
       "accessType=" + accessType +
-      ", programRun=" + programRun +
+      ", accessor=" + accessor +
       "} " + super.toString();
   }
 }

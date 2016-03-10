@@ -14,16 +14,25 @@
  * the License.
  */
 
-package co.cask.cdap.proto.audit.payload.access;
+package co.cask.cdap.data2.audit;
 
 import co.cask.cdap.api.annotation.Beta;
+import co.cask.cdap.proto.audit.AuditPayload;
+import co.cask.cdap.proto.audit.AuditType;
+import co.cask.cdap.proto.id.EntityId;
 
 /**
- * Type of access on a data entity.
+ * AuditPublisher is used to publish non-data changes to entities that need to be logged for audit purpose.
  */
 @Beta
-public enum AccessType {
-  READ,
-  WRITE,
-  UNKNOWN
+public interface AuditPublisher {
+
+  /**
+   * Publish audit log for a change.
+   *
+   * @param entityId entity affected by the change
+   * @param auditType type of change
+   * @param auditPayload information on the change
+   */
+  void publish(EntityId entityId, AuditType auditType, AuditPayload auditPayload);
 }

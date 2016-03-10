@@ -40,8 +40,6 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.QueryHandle;
 import co.cask.cdap.proto.QueryResult;
 import co.cask.cdap.proto.QueryStatus;
-import co.cask.cdap.store.DefaultNamespaceStore;
-import co.cask.cdap.store.NamespaceStore;
 import co.cask.cdap.store.guice.NamespaceStoreModule;
 import co.cask.cdap.test.SlowTests;
 import co.cask.tephra.TransactionManager;

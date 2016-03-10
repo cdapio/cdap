@@ -16,6 +16,8 @@
 
 package co.cask.cdap.proto.audit.payload.metadata;
 
+import co.cask.cdap.api.annotation.Beta;
+
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -23,11 +25,12 @@ import java.util.Set;
 /**
  * Represents metadata (properties and tags) of an entity.
  */
-public class MetadataRecord {
+@Beta
+public class MetadataAuditRecord {
   private final Map<String, String> properties;
   private final Set<String> tags;
 
-  public MetadataRecord(Map<String, String> properties, Set<String> tags) {
+  public MetadataAuditRecord(Map<String, String> properties, Set<String> tags) {
     this.properties = properties;
     this.tags = tags;
   }
@@ -45,10 +48,10 @@ public class MetadataRecord {
     if (this == o) {
       return true;
     }
-    if (!(o instanceof MetadataRecord)) {
+    if (!(o instanceof MetadataAuditRecord)) {
       return false;
     }
-    MetadataRecord that = (MetadataRecord) o;
+    MetadataAuditRecord that = (MetadataAuditRecord) o;
     return Objects.equals(properties, that.properties) &&
       Objects.equals(tags, that.tags);
   }
@@ -60,7 +63,7 @@ public class MetadataRecord {
 
   @Override
   public String toString() {
-    return "MetadataRecord{" +
+    return "MetadataAuditRecord{" +
       "properties=" + properties +
       ", tags=" + tags +
       '}';

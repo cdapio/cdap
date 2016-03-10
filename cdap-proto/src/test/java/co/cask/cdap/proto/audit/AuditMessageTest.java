@@ -18,8 +18,8 @@ package co.cask.cdap.proto.audit;
 
 import co.cask.cdap.proto.audit.payload.access.AccessPayload;
 import co.cask.cdap.proto.audit.payload.access.AccessType;
+import co.cask.cdap.proto.audit.payload.metadata.MetadataAuditRecord;
 import co.cask.cdap.proto.audit.payload.metadata.MetadataPayload;
-import co.cask.cdap.proto.audit.payload.metadata.MetadataRecord;
 import co.cask.cdap.proto.codec.AuditMessageTypeAdapter;
 import co.cask.cdap.proto.codec.EntityIdTypeAdapter;
 import co.cask.cdap.proto.id.EntityId;
@@ -49,23 +49,33 @@ public class AuditMessageTest {
       "{\"time\":1000,\"entityId\":{\"namespace\":\"ns1\",\"dataset\":\"ds1\",\"entity\":\"DATASET\"}," +
         "\"user\":\"user1\",\"type\":\"CREATE\",\"payload\":{}}";
     AuditMessage dsCreate = new AuditMessage(1000L, Ids.namespace("ns1").dataset("ds1"), "user1",
-                                             MessageType.CREATE, AuditPayload.EMPTY_PAYLOAD);
+                                             AuditType.CREATE, AuditPayload.EMPTY_PAYLOAD);
     Assert.assertEquals(dsCreateJson, GSON.toJson(dsCreate));
     Assert.assertEquals(dsCreate, GSON.fromJson(dsCreateJson, AuditMessage.class));
   }
 
   @Test
   public void testAccessMessage() throws Exception {
-    String accessJson =
+    String flowAccessJson =
       "{\"time\":2000,\"entityId\":{\"namespace\":\"ns1\",\"stream\":\"stream1\",\"entity\":\"STREAM\"}," +
         "\"user\":\"user1\",\"type\":\"ACCESS\",\"payload\":{\"accessType\":\"WRITE\"," +
-        "\"programRun\":{\"namespace\":\"ns1\",\"application\":\"app1\",\"type\":\"Flow\",\"program\":\"flow1\"," +
+        "\"accessor\":{\"namespace\":\"ns1\",\"application\":\"app1\",\"type\":\"Flow\",\"program\":\"flow1\"," +
         "\"run\":\"run1\",\"entity\":\"PROGRAM_RUN\"}}}";
-    AuditMessage access =
-      new AuditMessage(2000L, Ids.namespace("ns1").stream("stream1"), "user1", MessageType.ACCESS,
+    AuditMessage flowAccess =
+      new AuditMessage(2000L, Ids.namespace("ns1").stream("stream1"), "user1", AuditType.ACCESS,
                        new AccessPayload(AccessType.WRITE, Ids.namespace("ns1").app("app1").flow("flow1").run("run1")));
-    Assert.assertEquals(accessJson, GSON.toJson(access));
-    Assert.assertEquals(access, GSON.fromJson(accessJson, AuditMessage.class));
+    Assert.assertEquals(flowAccessJson, GSON.toJson(flowAccess));
+    Assert.assertEquals(flowAccess, GSON.fromJson(flowAccessJson, AuditMessage.class));
+
+    String exploreAccessJson =
+      "{\"time\":2500,\"entityId\":{\"namespace\":\"ns1\",\"dataset\":\"ds1\",\"entity\":\"DATASET\"}," +
+        "\"user\":\"user1\",\"type\":\"ACCESS\",\"payload\":{\"accessType\":\"UNKNOWN\"," +
+        "\"accessor\":{\"service\":\"explore\",\"entity\":\"SYSTEM_SERVICE\"}}}";
+    AuditMessage exploreAccess =
+      new AuditMessage(2500L, Ids.namespace("ns1").dataset("ds1"), "user1", AuditType.ACCESS,
+                       new AccessPayload(AccessType.UNKNOWN, Ids.systemService("explore")));
+    Assert.assertEquals(exploreAccessJson, GSON.toJson(exploreAccess));
+    Assert.assertEquals(exploreAccess, GSON.fromJson(exploreAccessJson, AuditMessage.class));
   }
 
   @Test
@@ -77,21 +87,21 @@ public class AuditMessageTest {
         "\"SYSTEM\":{\"properties\":{\"sk\":\"sv\"},\"tags\":[]}}," +
         "\"additions\":{\"SYSTEM\":{\"properties\":{\"sk\":\"sv\"},\"tags\":[\"t1\",\"t2\"]}}," +
         "\"deletions\":{\"USER\":{\"properties\":{\"uk\":\"uv\"},\"tags\":[\"ut1\"]}}}}";
-    Map<MetadataScope, MetadataRecord> previous = ImmutableMap.of(MetadataScope.USER,
-                                                                  new MetadataRecord(ImmutableMap.of("uk", "uv",
+    Map<MetadataScope, MetadataAuditRecord> previous = ImmutableMap.of(MetadataScope.USER,
+                                                                  new MetadataAuditRecord(ImmutableMap.of("uk", "uv",
                                                                                                      "uk1", "uv2"),
                                                                                      ImmutableSet.of("ut1", "ut2")),
                                                                   MetadataScope.SYSTEM,
-                                                                  new MetadataRecord(ImmutableMap.of("sk", "sv"),
+                                                                  new MetadataAuditRecord(ImmutableMap.of("sk", "sv"),
                                                                                      ImmutableSet.<String>of()));
-    Map<MetadataScope, MetadataRecord> additions = ImmutableMap.of(MetadataScope.SYSTEM,
-                                                                  new MetadataRecord(ImmutableMap.of("sk", "sv"),
+    Map<MetadataScope, MetadataAuditRecord> additions = ImmutableMap.of(MetadataScope.SYSTEM,
+                                                                  new MetadataAuditRecord(ImmutableMap.of("sk", "sv"),
                                                                                      ImmutableSet.of("t1", "t2")));
-    Map<MetadataScope, MetadataRecord> deletions = ImmutableMap.of(MetadataScope.USER,
-                                                                  new MetadataRecord(ImmutableMap.of("uk", "uv"),
+    Map<MetadataScope, MetadataAuditRecord> deletions = ImmutableMap.of(MetadataScope.USER,
+                                                                  new MetadataAuditRecord(ImmutableMap.of("uk", "uv"),
                                                                                      ImmutableSet.of("ut1")));
     AuditMessage metadataChange =
-      new AuditMessage(3000L, Ids.namespace("ns1").app("app1"), "user1", MessageType.METADATA_CHANGE,
+      new AuditMessage(3000L, Ids.namespace("ns1").app("app1"), "user1", AuditType.METADATA_CHANGE,
                        new MetadataPayload(previous, additions, deletions));
     Assert.assertEquals(metadataJson, GSON.toJson(metadataChange));
     Assert.assertEquals(metadataChange, GSON.fromJson(metadataJson, AuditMessage.class));
