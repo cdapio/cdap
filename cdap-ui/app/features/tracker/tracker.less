@@ -525,6 +525,28 @@ body.state-tracker-entity-audit {
   }
 }
 
+body.state-tracker-help {
+  .help-container {
+    padding: 0 25px;
+    color: @search-font-color;
+    h2 { margin-bottom: 20px; }
+
+    marked {
+      font-size: 14px;
+      font-weight: 500;
+
+      strong { color: @active-font; }
+      ul { padding-left: 20px; }
+      code {
+        font-size: 14px;
+        color: inherit;
+        background-color: inherit;
+      }
+      &>p { margin-top: 25px; }
+    }
+  }
+}
+
 .tooltip.tracker-tooltip .tooltip-inner {
   color: @title-font-color;
   background-color: white;

@@ -1,0 +1,48 @@
+<!--
+  Copyright © 2016 Cask Data, Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+-->
+
+<div class="help-container">
+  <h2>Property and Tag Search Tips</h2>
+
+  <marked>
+    - Specify a complete property key-value pair, separated by a colon:
+
+       ex. __type:production__
+
+    - Specify a complete property key with a partial value:
+
+      ex. __type:prod*__
+
+    - Specify a complete tags key with a complete or partial value:
+
+      ex. __production or tags:prod*__
+
+    - Searching for tags with only a complete or partial value (ex. __prod*__) will return both properties and tags.
+
+    - Multiple search terms separated by space (ex. __type:prod* author:joe__) will return entities having either of the terms in their metadata.
+
+
+    Since CDAP also annotates system metadata to entities by default as mentioned in [System Metadata](http://docs.cask.co/cdap/current/en/developers-manual/building-blocks/metadata-lineage.html?highlight=system%20metadata), the following special search queries are also supported:
+
+    - datasets, streams or views with schema field:
+      - field name only: ``` &lt;field-name&gt; ```
+      - field name with a type: ``` &lt;field-name&gt;:&lt;field-type&gt; ```
+      - where field-type can be simple types:
+        - int, long, boolean, float, double, bytes, string, enum array, map, record or union
+  </marked>
+
+
+</div>
