@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -132,7 +132,7 @@ public abstract class AbstractSparkContext implements SparkContext, Closeable {
 
   @Override
   public ServiceDiscoverer getServiceDiscoverer() {
-    return new SparkServiceDiscoverer(getProgramId(), discoveryServiceClient);
+    return new SparkServiceDiscoverer(getProgramId().toEntityId(), discoveryServiceClient);
   }
 
   @Override
@@ -142,7 +142,7 @@ public abstract class AbstractSparkContext implements SparkContext, Closeable {
 
   @Override
   public PluginContext getPluginContext() {
-    return new SparkPluginContext(pluginInstantiator, programId, applicationSpecification.getPlugins());
+    return new SparkPluginContext(pluginInstantiator, programId.toEntityId(), applicationSpecification.getPlugins());
   }
 
   @Override
@@ -218,6 +218,7 @@ public abstract class AbstractSparkContext implements SparkContext, Closeable {
   /**
    * Returns the {@link RunId} of the run represented by this context.
    */
+  @Override
   public RunId getRunId() {
     return runId;
   }

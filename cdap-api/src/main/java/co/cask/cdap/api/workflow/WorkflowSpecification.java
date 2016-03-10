@@ -17,6 +17,7 @@ package co.cask.cdap.api.workflow;
 
 import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.common.PropertyProvider;
+import co.cask.cdap.internal.dataset.DatasetCreationSpec;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -36,9 +37,11 @@ public final class WorkflowSpecification implements ProgramSpecification, Proper
   private final Map<String, String> properties;
   private final List<WorkflowNode> nodes;
   private final Map<String, WorkflowNode> nodeIdMap;
+  private final Map<String, DatasetCreationSpec> localDatasetSpecs;
 
   public WorkflowSpecification(String className, String name, String description,
-                               Map<String, String> properties, List<WorkflowNode> nodes) {
+                               Map<String, String> properties, List<WorkflowNode> nodes,
+                               Map<String, DatasetCreationSpec> localDatasetSpecs) {
     this.className = className;
     this.name = name;
     this.description = description;
@@ -46,6 +49,7 @@ public final class WorkflowSpecification implements ProgramSpecification, Proper
                                            Collections.unmodifiableMap(new HashMap<>(properties));
     this.nodes = Collections.unmodifiableList(new ArrayList<>(nodes));
     this.nodeIdMap = Collections.unmodifiableMap(generateNodeIdMap(nodes));
+    this.localDatasetSpecs = Collections.unmodifiableMap(new HashMap<>(localDatasetSpecs));
   }
 
   /**
@@ -105,12 +109,25 @@ public final class WorkflowSpecification implements ProgramSpecification, Proper
     return properties.get(key);
   }
 
+  /**
+   * Return the list of nodes in the {@link Workflow}.
+   */
   public List<WorkflowNode> getNodes() {
     return nodes;
   }
 
+  /**
+   * Return the map of the node id to the {@link WorkflowNode}.
+   */
   public Map<String, WorkflowNode> getNodeIdMap() {
     return nodeIdMap;
+  }
+
+  /**
+   * Return the map of local dataset names and associated specifications required for dataset instance creation.
+   */
+  public Map<String, DatasetCreationSpec> getLocalDatasetSpecs() {
+    return localDatasetSpecs;
   }
 
   @Override
@@ -121,6 +138,7 @@ public final class WorkflowSpecification implements ProgramSpecification, Proper
     sb.append(", description='").append(description).append('\'');
     sb.append(", properties=").append(properties);
     sb.append(", nodes=").append(nodes);
+    sb.append(", localDatasetSpecs=").append(localDatasetSpecs);
     sb.append('}');
     return sb.toString();
   }

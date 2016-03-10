@@ -52,7 +52,7 @@ import co.cask.cdap.etl.common.TransformInfo;
 import co.cask.cdap.etl.common.TransformResponse;
 import co.cask.cdap.etl.common.TxLookupProvider;
 import co.cask.cdap.etl.log.LogStageInjector;
-import co.cask.cdap.etl.realtime.config.ETLRealtimeConfig;
+import co.cask.cdap.etl.proto.v1.ETLRealtimeConfig;
 import co.cask.cdap.format.StructuredRecordStringConverter;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;

@@ -35,7 +35,8 @@ public class RuntimeArgumentTestRun extends GatewayTestBase {
 
   @Test
   public void testFlowRuntimeArgs() throws Exception {
-    HttpResponse response = GatewayFastTestsSuite.deploy(HighPassFilterApp.class, "HighPassFilterApp");
+    HttpResponse response = GatewayFastTestsSuite.deploy(HighPassFilterApp.class, "HighPassFilterApp",
+                                                         TEMP_FOLDER.newFolder());
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
     //Set flow runtime arg threshold to 30
     JsonObject json = new JsonObject();

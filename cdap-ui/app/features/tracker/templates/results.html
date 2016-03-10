@@ -134,7 +134,9 @@
       <div class="row"
            ng-repeat="entity in ResultsController.searchResults | orderBy: ResultsController.sortBy.sort | myPaginate: ResultsController.currentPage">
         <div class="col-xs-12">
-          <h4>{{ entity.name }}</h4>
+          <h4>
+            <a ui-sref="tracker.entity.metadata({ entityType: entity.entityTypeState, entityId: entity.name })">{{ entity.name }}</a>
+          </h4>
         </div>
         <div class="col-xs-6">
           <h5>
@@ -151,7 +153,7 @@
         </div>
 
         <div class="col-xs-4">
-          <h5><span class="text-dark">Query found in:</span></h5>
+          <h5><span class="text-dark">Search term found in:</span></h5>
           <span ng-repeat="found in entity.queryFound">{{ found }}<span ng-if="!$last">, </span></span>
         </div>
 

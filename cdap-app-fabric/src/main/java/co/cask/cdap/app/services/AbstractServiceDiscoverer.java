@@ -19,7 +19,7 @@ package co.cask.cdap.app.services;
 import co.cask.cdap.api.ServiceDiscoverer;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.ProgramId;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.discovery.ServiceDiscovered;
@@ -41,12 +41,12 @@ public abstract class AbstractServiceDiscoverer implements ServiceDiscoverer {
 
   private static final Logger LOG = LoggerFactory.getLogger(AbstractServiceDiscoverer.class);
 
-  protected String namespaceId;
-  protected String applicationId;
+  private final String namespaceId;
+  private final String applicationId;
 
-  public AbstractServiceDiscoverer(Id.Program programId) {
-    this.namespaceId = programId.getNamespaceId();
-    this.applicationId = programId.getApplicationId();
+  public AbstractServiceDiscoverer(ProgramId programId) {
+    this.namespaceId = programId.getNamespace();
+    this.applicationId = programId.getApplication();
   }
 
   @Override

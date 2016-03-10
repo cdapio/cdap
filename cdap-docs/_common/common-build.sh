@@ -1,4 +1,4 @@
-# Copyright © 2014-2015 Cask Data, Inc.
+# Copyright © 2014-2016 Cask Data, Inc.
 # 
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -100,11 +100,11 @@ ZIP="${ZIP_FILE_NAME}.zip"
 # Set Google Analytics Codes
 
 # Corporate Docs Code
-GOOGLE_ANALYTICS_WEB="UA-55077523-3"
+GOOGLE_TAG_MANAGER_CODE_WEB="GTM-KWLFGH"
 WEB="web"
 
 # CDAP Project Code
-GOOGLE_ANALYTICS_GITHUB="UA-55081520-2"
+GOOGLE_TAG_MANAGER_CODE_GITHUB="GTM-PBZ3JL"
 GITHUB="github"
 
 # BUILD.rst
@@ -156,7 +156,7 @@ function build_docs_google() {
   clean
   cd ${SCRIPT_PATH}
   check_includes
-  ${SPHINX_BUILD} -w ${TARGET}/${SPHINX_MESSAGES} -D googleanalytics_id=$1 -D googleanalytics_enabled=1 ${SOURCE} ${TARGET}/html
+  ${SPHINX_BUILD} -w ${TARGET}/${SPHINX_MESSAGES} -A html_google_tag_manager_code=$1 ${SOURCE} ${TARGET}/html
   consolidate_messages
 }
 
@@ -203,12 +203,12 @@ function build() {
 }
 
 function build_github() {
-  build_docs_google ${GOOGLE_ANALYTICS_GITHUB}
+  build_docs_google ${GOOGLE_TAG_MANAGER_CODE_GITHUB}
   build_extras
 }
 
 function build_web() {
-  build_docs_google ${GOOGLE_ANALYTICS_WEB}
+  build_docs_google ${GOOGLE_TAG_MANAGER_CODE_WEB}
   build_extras
 }
 

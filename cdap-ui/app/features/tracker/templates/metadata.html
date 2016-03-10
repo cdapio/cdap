@@ -1,0 +1,165 @@
+<!--
+  Copyright © 2016 Cask Data, Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+-->
+
+<div class="content-loading text-center" ng-if="MetadataController.loading">
+  <h3>
+    <span class="fa fa-spinner fa-spin"></span>
+    <span>Loading metadata</span>
+  </h3>
+</div>
+
+<div ng-if="!MetadataController.loading">
+  <!-- TAGS SIDEBAR -->
+  <div class="entity-detail-tags-column">
+    <div class="entity-container">
+      <div class="user-tags" ng-if="MetadataController.tags.user.length > 0">
+        <h4>User Tags</h4>
+
+        <div class="tags-container">
+          <div ng-repeat="tag in MetadataController.tags.user">
+            <span uib-tooltip="{{ tag }}"
+                  tooltip-append-to-body="true"
+                  tooltip-popup-delay="300"
+                  tooltip-ellipsis="{{ tag }}"
+                  tooltip-enable="ellipsis"
+                  data-ellipsis="ellipsis"
+                  data-offset-value="15"
+                  tooltip-class="tracker-tooltip">
+              {{ tag }}
+            </span>
+          </div>
+        </div>
+
+      </div>
+
+
+      <div class="system-tags" ng-if="MetadataController.tags.system.length > 0">
+        <h4>System Tags</h4>
+
+        <div class="tags-container">
+          <div ng-repeat="tag in MetadataController.tags.system">
+            <span uib-tooltip="{{ tag }}"
+                  tooltip-append-to-body="true"
+                  tooltip-popup-delay="300"
+                  tooltip-ellipsis="{{ tag }}"
+                  tooltip-enable="ellipsis"
+                  data-ellipsis="ellipsis"
+                  data-offset-value="15"
+                  tooltip-class="tracker-tooltip">
+            {{ tag }}
+          </span>
+          </div>
+        </div>
+      </div>
+
+      <div class="no-properties-message text-center"
+           ng-if="MetadataController.tags.system.length === 0 && MetadataController.tags.user.length === 0">
+        <h4>There are no tags</h4>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- SCHEMA -->
+  <div class="entity-detail-schema-column">
+    <div class="title-bar">
+      <h4>Schema</h4>
+    </div>
+
+    <div class="column-content">
+      <table class="table table-bordered" ng-if="MetadataController.schema.length > 0">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Null</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr ng-repeat="field in MetadataController.schema">
+            <td>{{ ::field.name }}</td>
+            <td>{{ ::field.type }}</td>
+            <td>
+              <span class="fa fa-check-square" ng-if="field.null"></span>
+              <span class="fa fa-square" ng-if="!field.null"></span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="no-properties-message text-center"
+           ng-if="MetadataController.schema.length === 0">
+        <h4>There is no schema</h4>
+      </div>
+    </div>
+  </div>
+
+  <!-- PROPERTIES -->
+  <div class="entity-detail-properties-column">
+    <div class="title-bar">
+      <div class="title-tab text-center"
+           ng-class="{ 'active': MetadataController.activePropertyTab === 0}"
+           ng-click="MetadataController.activePropertyTab = 0">
+        <h4>User Properties</h4>
+      </div>
+
+      <div class="title-tab text-center"
+           ng-class="{ 'active': MetadataController.activePropertyTab === 1}"
+           ng-click="MetadataController.activePropertyTab = 1">
+        <h4>System Properties</h4>
+      </div>
+    </div>
+
+    <div class="column-content">
+      <!-- USER PROPERTIES -->
+      <div ng-if="MetadataController.activePropertyTab === 0">
+        <table class="table table-bordered"
+               ng-if="!MetadataController.properties.isUserEmpty">
+          <tbody>
+            <tr ng-repeat="(key, value) in MetadataController.properties.user">
+              <td>{{ key }}</td>
+              <td>{{ value }}</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="no-properties-message text-center"
+             ng-if="MetadataController.properties.isUserEmpty">
+          <h4>There are no user properties</h4>
+        </div>
+      </div>
+
+      <!-- SYSTEM PROPERTIES -->
+      <div ng-if="MetadataController.activePropertyTab === 1">
+        <table class="table table-bordered"
+               ng-if="!MetadataController.properties.isSystemEmpty">
+          <tbody>
+            <tr ng-repeat="(key, value) in MetadataController.properties.system" ng-if="key !== 'schema'">
+              <td>{{ key }}</td>
+              <td>{{ value }}</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="no-properties-message text-center"
+             ng-if="MetadataController.properties.isSystemEmpty">
+          <h4>There are no system properties</h4>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>

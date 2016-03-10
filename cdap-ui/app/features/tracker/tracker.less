@@ -32,23 +32,19 @@
 body.state-tracker-home {
   background-color: white;
 
+  main.container { margin-top: 50px; }
+
   .tracker-content {
     width: 500px;
     margin: 150px auto;
   }
 
   div.tracker-banner {
-    width: 375px;
+    width: 425px;
     margin: 0 auto;
     .tracker-title {
-      background: url('@{img-path}/tracker_logo.png') no-repeat left center;
-      h1 {
-        margin: 7px 0 5px 70px;
-        color: @tracker-banner-font-color;
-        font-weight: 600;
-        font-size: 45px;
-        display: inline-block;
-      }
+      background: url('@{img-path}/CaskTracker_logo.png') no-repeat left center;
+      height: 64px;
     }
 
     p {
@@ -82,11 +78,17 @@ body.state-tracker {
   background-color: #e5e5e5;
 
   main.container {
-
-    // TODO: Needs to be updated after top navigation is updated!!
-    margin-top: 76px; // !!!!!!!!!!
+    margin-top: 50px;
     width: 100%;
     padding: 0 0 15px 0;
+
+    h1, h2, h3, h4, h5, h6 {
+      font-weight: 500;
+    }
+  }
+
+  .content-loading {
+    margin-top: 150px;
   }
 
   .tracker-top-search {
@@ -148,7 +150,7 @@ body.state-tracker {
       width: 300px;
       position: absolute;
       background-color: @filter-sidebar-background-color;
-      top: 127px;
+      top: 101px;
       bottom: 53px;
       border-right: 1px solid @border-color;
 
@@ -198,7 +200,7 @@ body.state-tracker {
 
     .tracker-search-results {
       position: absolute;
-      top: 127px;
+      top: 101px;
       bottom: 53px;
       left: 300px;
       right: 0;
@@ -238,7 +240,7 @@ body.state-tracker {
           font-weight: 500;
         }
 
-        h4 {
+        h4, h4 a {
           font-size: 16px;
           color: @title-font-color;
           margin-bottom: 5px;
@@ -271,4 +273,253 @@ body.state-tracker {
     &:hover { background-color: @tracker-green; }
   }
 
+}
+
+body.state-tracker-entity {
+  .tracker-entity-top-bar {
+    display: table;
+    height: 50px;
+    width: 100%;
+    border-bottom: 1px solid @border-color;
+    background-color: white;
+
+    .back-button, .entity-detail, .tab-options, .action-button {
+      height: 100%;
+      vertical-align: middle;
+      display: table-cell;
+    }
+
+    .back-button {
+      width: 50px;
+      border-right: 1px solid @border-color;
+      cursor: pointer;
+    }
+
+    .entity-detail {
+      padding-left: 10px;
+      width: 200px;
+      h3 {
+        font-size: 16px;
+        margin: 0;
+      }
+      span {
+        color: @tracker-grey;
+        font-size: 12px;
+      }
+      .entity-type {
+        margin-top: 3px;
+      }
+    }
+
+    .tab-options {
+      ul {
+        margin-bottom: 0;
+        height: 50px;
+      }
+      li {
+        font-size: 14px;
+        font-weight: 500;
+        margin-right: 40px;
+        padding: 0;
+        height: 100%;
+        line-height: 50px;
+
+        &.active {
+          a { color: @title-font-color; }
+          border-bottom: 4px solid @tracker-green;
+        }
+        a {
+          color: @tracker-grey;
+          text-decoration: none;
+          vertical-align: middle;
+        }
+      }
+    }
+
+    .action-button {
+      padding-right: 15px;
+    }
+  }
+
+  main.container {
+    h4 {
+      font-size: 14px;
+      color: @title-font-color;
+    }
+
+    .no-properties-message {
+      margin-top: 150px;
+      h4 { color: @tracker-grey; }
+    }
+  }
+
+  .entity-container {
+    padding: 20px;
+  }
+
+  .entity-detail-tags-column, .entity-detail-schema-column, .entity-detail-properties-column {
+    position: absolute;
+    top: 152px;
+    bottom: 53px;
+    box-sizing: border-box;
+    overflow-y: auto;
+  }
+
+  .entity-detail-tags-column, .entity-detail-schema-column {
+    width: 30%;
+    border-right: 4px solid @border-color;
+
+  }
+
+  .entity-detail-tags-column {
+    left: 0;
+    background-color: @filter-sidebar-background-color;
+    h4 { margin-top: 0; }
+
+    .user-tags .tags-container div {
+      background-color: @active-font;
+      color: white;
+    }
+
+    .system-tags .tags-container div {
+      background-color: #ccc;
+      color: @title-font-color;
+    }
+
+    .tags-container {
+      margin-bottom: 40px;
+
+
+      div {
+        display: inline-block;
+        max-width: 48%;
+        padding: 6px 8px;
+        border-radius: 4px;
+        margin-right: 3px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      span {
+        font-size: 12px;
+        font-weight: 500;
+      }
+    }
+  }
+
+  .title-bar {
+    height: 50px;
+    border-bottom: 1px solid @border-color;
+    background-color: @filter-sidebar-background-color;
+    line-height: 50px;
+    display: table;
+    width: 100%;
+
+    h4 {
+      margin: 0;
+      vertical-align: middle;
+    }
+  }
+
+  .table {
+    margin-top: 0;
+    width: 100%;
+
+    th, td {
+      font-size: 13px;
+    }
+    td {
+      word-break: break-word;
+    }
+    span.fa {
+      color: @tracker-grey;
+    }
+    tbody tr:nth-child(2n) {
+      background-color: darken(@filter-sidebar-background-color, 1%);
+    }
+  }
+
+  .entity-detail-schema-column {
+    left: 30%;
+    background-color: @filter-sidebar-background-color;
+
+    .title-bar {
+      h4 {
+        display: table-cell;
+        padding-left: 10px;
+      }
+    }
+
+    .table {
+      td:last-child {
+        width: 15%;
+      }
+      td:first-child {
+        width: 45%;
+      }
+      td.nth-child(2) {
+        width: 40%;
+      }
+    }
+  }
+
+  .entity-detail-properties-column {
+    width: 40%;
+    right: 0;
+    background-color: @filter-sidebar-background-color;
+
+    .title-bar .title-tab {
+      display: table-cell;
+      vertical-align: middle;
+      width: 50%;
+      cursor: pointer;
+      h4 { color: @tracker-grey; }
+
+      &:first-child {
+        border-right: 1px solid @border-color;
+      }
+
+      &.active {
+        background-color: white;
+        h4 { color: @title-font-color; }
+      }
+    }
+
+    .table {
+      td {
+        vertical-align: middle;
+
+        &:first-child {
+          color: @title-font-color;
+          font-weight: 500;
+          width: 30%;
+        }
+        pre {
+          background: none;
+          border: none;
+          margin: 0;
+          padding: 0;
+          width: 70%;
+        }
+      }
+    }
+  }
+}
+
+body.state-tracker-entity-lineage {
+  .time-range-container {
+    padding: 20px;
+  }
+}
+
+.tooltip.tracker-tooltip .tooltip-inner {
+  color: @title-font-color;
+  background-color: white;
+  border: none;
+  box-shadow: 0 6px 12px rgba(0,0,0,.175);
+}
+/* Hide arrow */
+.tooltip.customClass .tooltip-arrow {
+  display: none;
 }

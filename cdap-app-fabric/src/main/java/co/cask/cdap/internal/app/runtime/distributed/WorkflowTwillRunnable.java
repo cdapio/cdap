@@ -16,10 +16,11 @@
 package co.cask.cdap.internal.app.runtime.distributed;
 
 import co.cask.cdap.app.runtime.ProgramRunner;
-import co.cask.cdap.internal.app.runtime.ProgramRunnerFactory;
+import co.cask.cdap.app.runtime.ProgramRunnerFactory;
 import co.cask.cdap.internal.app.runtime.batch.MapReduceProgramRunner;
 import co.cask.cdap.internal.app.runtime.spark.SparkProgramRunner;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramRunner;
+import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import com.google.inject.Module;
@@ -59,10 +60,10 @@ final class WorkflowTwillRunnable extends AbstractProgramTwillRunnable<WorkflowP
       @Override
       protected void configure() {
         // Bind ProgramRunner for MR and Spark, which is used by Workflow
-        MapBinder<ProgramRunnerFactory.Type, ProgramRunner> runnerFactoryBinder =
-          MapBinder.newMapBinder(binder(), ProgramRunnerFactory.Type.class, ProgramRunner.class);
-        runnerFactoryBinder.addBinding(ProgramRunnerFactory.Type.MAPREDUCE).to(MapReduceProgramRunner.class);
-        runnerFactoryBinder.addBinding(ProgramRunnerFactory.Type.SPARK).to(SparkProgramRunner.class);
+        MapBinder<ProgramType, ProgramRunner> runnerFactoryBinder =
+          MapBinder.newMapBinder(binder(), ProgramType.class, ProgramRunner.class);
+        runnerFactoryBinder.addBinding(ProgramType.MAPREDUCE).to(MapReduceProgramRunner.class);
+        runnerFactoryBinder.addBinding(ProgramType.SPARK).to(SparkProgramRunner.class);
 
         bind(ProgramRunnerFactory.class).to(WorkflowProgramRunnerFactory.class).in(Scopes.SINGLETON);
         expose(ProgramRunnerFactory.class);
@@ -79,15 +80,15 @@ final class WorkflowTwillRunnable extends AbstractProgramTwillRunnable<WorkflowP
   @Singleton
   private static final class WorkflowProgramRunnerFactory implements ProgramRunnerFactory {
 
-    private final Map<Type, Provider<ProgramRunner>> providers;
+    private final Map<ProgramType, Provider<ProgramRunner>> providers;
 
     @Inject
-    private WorkflowProgramRunnerFactory(Map<ProgramRunnerFactory.Type, Provider<ProgramRunner>> providers) {
+    private WorkflowProgramRunnerFactory(Map<ProgramType, Provider<ProgramRunner>> providers) {
       this.providers = providers;
     }
 
     @Override
-    public ProgramRunner create(ProgramRunnerFactory.Type programType) {
+    public ProgramRunner create(ProgramType programType) {
       Provider<ProgramRunner> provider = providers.get(programType);
       Preconditions.checkNotNull(provider, "Unsupported program type: " + programType);
       return provider.get();

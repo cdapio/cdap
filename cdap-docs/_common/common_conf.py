@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright © 2014-2015 Cask Data, Inc.
+# Copyright © 2014-2016 Cask Data, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -115,7 +115,6 @@ needs_sphinx = '1.3'
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    'sphinxcontrib.googleanalytics',
     'sphinx.ext.ifconfig',
     'sphinx.ext.intersphinx',
     'sphinx.ext.extlinks',
@@ -228,10 +227,16 @@ if version:
 """ % {'version': version}
 
 if short_version:
+    previous_short_version = float(short_version) -0.1
     rst_epilog = rst_epilog + """
 .. |short-version| replace:: %(short_version)s
+.. |bold-short-version| replace:: **%(short_version)s**
 .. |literal-short-version| replace:: ``%(short_version)s``
-""" % {'short_version': short_version}
+.. |previous-short-version| replace:: %(previous_short_version)s
+.. |bold-previous-short-version| replace:: **%(previous_short_version)s**
+.. |literal-previous-short-version| replace:: ``%(previous_short_version)s``
+
+""" % {'short_version': short_version, 'previous_short_version': previous_short_version}
 
 if version_tuple:
     rst_epilog = rst_epilog + """
@@ -309,15 +314,6 @@ highlight_language = 'java'
 
 # If true, keep warnings as "system message" paragraphs in the built documents.
 #keep_warnings = False
-
-# Add Google Analytics ID, or over-ride on the command line with
-# -D googleanalytics_id=UA-999-999-999
-googleanalytics_id = 'UA-123-123-123'
-
-# True by default, use it to turn off tracking.
-# -D googleanalytics_enabled=1
-# Turned off so unless the code and flag are passed on the command line, tracking is off.
-googleanalytics_enabled = False
 
 # -- Options for HTML output ----------------------------------------------
 
@@ -405,6 +401,10 @@ def get_manual_titles_bash():
         manual_titles += "'%s'" % title
     manual_titles += SUFFIX
     return manual_titles
+
+# Add Google Tag Manager Code, or over-ride on the command line with
+# -A html_google_tag_manager_code=GTM-XXXXXX
+html_google_tag_manager_code = ''
 
 # Add any paths that contain custom themes here, relative to this directory.
 html_theme_path = ['_themes','../../_common/_themes']

@@ -18,6 +18,9 @@ package co.cask.cdap;
 
 import co.cask.cdap.api.Predicate;
 import co.cask.cdap.api.app.AbstractApplication;
+import co.cask.cdap.api.dataset.DatasetProperties;
+import co.cask.cdap.api.dataset.lib.FileSet;
+import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.workflow.AbstractWorkflow;
 import co.cask.cdap.api.workflow.AbstractWorkflowAction;
@@ -37,6 +40,7 @@ public class GoodWorkflowApp extends AbstractApplication {
     addMapReduce(new DummyMR());
     addWorkflow(new GoodWorkflow());
     addWorkflow(new AnotherGoodWorkflow());
+    addWorkflow(new WorkflowWithLocalDatasets());
   }
 
   /**
@@ -135,6 +139,27 @@ public class GoodWorkflowApp extends AbstractApplication {
      .end();
 
      addSpark("SP7");
+    }
+  }
+
+  /**
+   * Workflow configured with local datasets.
+   */
+  public class WorkflowWithLocalDatasets extends AbstractWorkflow {
+
+    @Override
+    protected void configure() {
+      setName("WorkflowWithLocalDatasets");
+      setDescription("Workflow containing local datasets.");
+      createLocalDataset("mytable", Table.class.getName());
+      createLocalDataset("myfile", FileSet.class.getName());
+      createLocalDataset("myfile_with_properties", FileSet.class.getName(),
+                         DatasetProperties.builder().add("prop_key", "prop_value").build());
+      createLocalDataset("mytablefromtype", Table.class);
+      createLocalDataset("myfilefromtype", FileSet.class,
+                         DatasetProperties.builder().add("another_prop_key", "another_prop_value").build());
+      addMapReduce("MR1");
+      addSpark("SP1");
     }
   }
 

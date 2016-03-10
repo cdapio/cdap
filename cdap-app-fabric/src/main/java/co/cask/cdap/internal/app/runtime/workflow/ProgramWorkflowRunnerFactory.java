@@ -24,7 +24,7 @@ import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramOptions;
-import co.cask.cdap.internal.app.runtime.ProgramRunnerFactory;
+import co.cask.cdap.app.runtime.ProgramRunnerFactory;
 import co.cask.cdap.internal.workflow.ProgramWorkflowAction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -66,7 +66,7 @@ public class ProgramWorkflowRunnerFactory {
     if (actionSpec.getProperties().containsKey(ProgramWorkflowAction.PROGRAM_TYPE)) {
       switch (SchedulableProgramType.valueOf(actionSpec.getProperties().get(ProgramWorkflowAction.PROGRAM_TYPE))) {
         case MAPREDUCE:
-          return new MapReduceProgramWorkflowRunner(workflowSpec, programRunnerFactory, workflowProgram, 
+          return new MapReduceProgramWorkflowRunner(workflowSpec, programRunnerFactory, workflowProgram,
                                                     workflowProgramOptions, token, nodeId);
         case SPARK:
           return new SparkProgramWorkflowRunner(workflowSpec, programRunnerFactory, workflowProgram,

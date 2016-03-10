@@ -102,13 +102,13 @@ public class MockSink extends RealtimeSink<StructuredRecord> {
   }
 
   // should pass in a temporary directory to ensure proper cleanup
-  public static co.cask.cdap.etl.common.Plugin getPlugin(File dir) {
+  public static co.cask.cdap.etl.proto.v1.Plugin getPlugin(File dir) {
     if (dir == null) {
-      return new co.cask.cdap.etl.common.Plugin("Mock", null);
+      return new co.cask.cdap.etl.proto.v1.Plugin("Mock", null);
     }
     Map<String, String> properties = new HashMap<>();
     properties.put("dir", dir.getAbsolutePath());
-    return new co.cask.cdap.etl.common.Plugin("Mock", properties);
+    return new co.cask.cdap.etl.proto.v1.Plugin("Mock", properties);
   }
 
   /**

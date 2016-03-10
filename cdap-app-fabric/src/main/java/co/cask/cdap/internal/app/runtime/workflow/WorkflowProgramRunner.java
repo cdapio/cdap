@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -29,17 +29,20 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.metadata.writer.ProgramContextAware;
+import co.cask.cdap.data2.registry.UsageRegistry;
+import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
-import co.cask.cdap.internal.app.runtime.ProgramRunnerFactory;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.ServiceAnnouncer;
 import org.apache.twill.discovery.DiscoveryServiceClient;
+import org.apache.twill.filesystem.LocationFactory;
 
 import java.net.InetAddress;
 
@@ -47,7 +50,6 @@ import java.net.InetAddress;
  * A {@link ProgramRunner} that runs a {@link Workflow}.
  */
 public class WorkflowProgramRunner implements ProgramRunner {
-  private final ProgramRunnerFactory programRunnerFactory;
   private final ServiceAnnouncer serviceAnnouncer;
   private final InetAddress hostname;
   private final MetricsCollectionService metricsCollectionService;
@@ -55,16 +57,19 @@ public class WorkflowProgramRunner implements ProgramRunner {
   private final DiscoveryServiceClient discoveryServiceClient;
   private final TransactionSystemClient txClient;
   private final Store store;
+  private final StreamAdmin streamAdmin;
   private final CConfiguration cConf;
+  private final Configuration hConf;
+  private final LocationFactory locationFactory;
+  private final UsageRegistry usageRegistry;
 
   @Inject
-  public WorkflowProgramRunner(ProgramRunnerFactory programRunnerFactory,
-                               ServiceAnnouncer serviceAnnouncer,
+  public WorkflowProgramRunner(ServiceAnnouncer serviceAnnouncer,
                                @Named(Constants.AppFabric.SERVER_ADDRESS) InetAddress hostname,
                                MetricsCollectionService metricsCollectionService, DatasetFramework datasetFramework,
                                DiscoveryServiceClient discoveryServiceClient, TransactionSystemClient txClient,
-                               Store store, CConfiguration cConf) {
-    this.programRunnerFactory = programRunnerFactory;
+                               Store store, CConfiguration cConf, Configuration hConf, StreamAdmin streamAdmin,
+                               LocationFactory locationFactory, UsageRegistry usageRegistry) {
     this.serviceAnnouncer = serviceAnnouncer;
     this.hostname = hostname;
     this.metricsCollectionService = metricsCollectionService;
@@ -73,6 +78,10 @@ public class WorkflowProgramRunner implements ProgramRunner {
     this.txClient = txClient;
     this.store = store;
     this.cConf = cConf;
+    this.hConf = hConf;
+    this.locationFactory = locationFactory;
+    this.streamAdmin = streamAdmin;
+    this.usageRegistry = usageRegistry;
   }
 
   @Override
@@ -96,9 +105,9 @@ public class WorkflowProgramRunner implements ProgramRunner {
       ((ProgramContextAware) datasetFramework).initContext(new Id.Run(programId, runId.getId()));
     }
 
-    WorkflowDriver driver = new WorkflowDriver(program, options, hostname, workflowSpec, programRunnerFactory,
-                                               metricsCollectionService, datasetFramework,
-                                               discoveryServiceClient, txClient, store, cConf);
+    WorkflowDriver driver = new WorkflowDriver(program, options, hostname, workflowSpec, metricsCollectionService,
+                                               datasetFramework, discoveryServiceClient, txClient, store, cConf, hConf,
+                                               locationFactory, streamAdmin, usageRegistry);
 
     // Controller needs to be created before starting the driver so that the state change of the driver
     // service can be fully captured by the controller.

@@ -166,4 +166,11 @@ public final class DatasetFrameworkTestUtil extends ExternalResource {
   public TransactionManager getTxManager() {
     return txManager;
   }
+
+  // helper to make this method accessible to DatasetInstanceServiceTest
+  public static DatasetDefinition getDatasetDefinition(InMemoryDatasetFramework framework,
+                                                       Id.Namespace namespace, String type) {
+    return framework.getDefinitionForType(namespace, type);
+  }
+
 }

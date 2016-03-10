@@ -28,6 +28,7 @@ import co.cask.cdap.api.metrics.MetricTimeSeries;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramRunner;
+import co.cask.cdap.app.runtime.ProgramRunnerFactory;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.EndpointStrategy;
@@ -43,7 +44,6 @@ import co.cask.cdap.internal.DefaultId;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
-import co.cask.cdap.internal.app.runtime.ProgramRunnerFactory;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramType;
@@ -127,7 +127,7 @@ public class FlowTest {
     // Only running flow is good. But, in case of service, we need to send something to service as it's lazy loading
     List<ProgramController> controllers = Lists.newArrayList();
     for (final Program program : app.getPrograms()) {
-      ProgramRunner runner = runnerFactory.create(ProgramRunnerFactory.Type.valueOf(program.getType().name()));
+      ProgramRunner runner = runnerFactory.create(program.getType());
       BasicArguments systemArgs = new BasicArguments(ImmutableMap.of(ProgramOptionConstants.RUN_ID,
                                                                      RunIds.generate().getId()));
       BasicArguments userArgs = new BasicArguments(ImmutableMap.of("arg", "test"));
@@ -170,7 +170,7 @@ public class FlowTest {
       if (program.getType() == ProgramType.MAPREDUCE) {
         continue;
       }
-      ProgramRunner runner = runnerFactory.create(ProgramRunnerFactory.Type.valueOf(program.getType().name()));
+      ProgramRunner runner = runnerFactory.create(program.getType());
       BasicArguments systemArgs = new BasicArguments(ImmutableMap.of(ProgramOptionConstants.RUN_ID,
                                                                      RunIds.generate().getId()));
       controllers.add(runner.run(program, new SimpleProgramOptions(program.getName(), systemArgs,
@@ -266,7 +266,7 @@ public class FlowTest {
     for (final Program program : app.getPrograms()) {
       // running mapreduce is out of scope of this tests (there's separate unit-test for that)
       if (program.getType() == ProgramType.FLOW) {
-        ProgramRunner runner = runnerFactory.create(ProgramRunnerFactory.Type.valueOf(program.getType().name()));
+        ProgramRunner runner = runnerFactory.create(program.getType());
         BasicArguments systemArgs = new BasicArguments(ImmutableMap.of(ProgramOptionConstants.RUN_ID,
                                                                        RunIds.generate().getId()));
         controller = runner.run(program, new SimpleProgramOptions(

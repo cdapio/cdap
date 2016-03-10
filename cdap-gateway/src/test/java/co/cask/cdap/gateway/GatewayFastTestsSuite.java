@@ -16,16 +16,19 @@
 
 package co.cask.cdap.gateway;
 
-import co.cask.cdap.app.program.ManifestFields;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.io.Locations;
+import co.cask.cdap.common.lang.jar.BundleJarUtil;
+import co.cask.cdap.common.twill.LocalLocationFactory;
+import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.gateway.handlers.PingHandlerTestRun;
 import co.cask.cdap.gateway.handlers.RuntimeArgumentTestRun;
 import co.cask.cdap.gateway.handlers.hooks.MetricsReporterHookTestRun;
 import co.cask.cdap.gateway.run.StreamWriterTestRun;
+import co.cask.cdap.internal.test.AppJarHelper;
 import com.google.common.base.Charsets;
-import com.google.common.base.Throwables;
 import com.google.common.collect.ObjectArrays;
-import com.google.common.io.ByteStreams;
+import com.google.common.io.Files;
 import org.apache.http.Header;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpDelete;
@@ -34,24 +37,18 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.methods.HttpUriRequest;
-import org.apache.http.entity.ByteArrayEntity;
+import org.apache.http.entity.FileEntity;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.twill.api.ClassAcceptor;
-import org.apache.twill.internal.utils.Dependencies;
+import org.apache.twill.filesystem.Location;
+import org.apache.twill.filesystem.LocationFactory;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.InputStream;
-import java.net.URL;
-import java.util.jar.JarEntry;
-import java.util.jar.JarOutputStream;
-import java.util.jar.Manifest;
-import java.util.zip.ZipEntry;
+import java.io.File;
+import java.io.IOException;
 import javax.annotation.Nullable;
 
 /**
@@ -151,48 +148,19 @@ public class GatewayFastTestsSuite {
     return client.execute(delete);
   }
 
-  public static HttpResponse deploy(Class<?> application, @Nullable String appName) throws Exception {
-    Manifest manifest = new Manifest();
-    manifest.getMainAttributes().put(ManifestFields.MANIFEST_VERSION, "1.0");
-    manifest.getMainAttributes().put(ManifestFields.MAIN_CLASS, application.getName());
+  public static HttpResponse deploy(Class<?> application,
+                                    @Nullable String appName,
+                                    File tmpFolder) throws Exception {
 
-    ByteArrayOutputStream bos = new ByteArrayOutputStream();
-    final JarOutputStream jarOut = new JarOutputStream(bos, manifest);
-    final String pkgName = application.getPackage().getName();
+    File artifactJar = buildAppArtifact(application, application.getSimpleName(), tmpFolder);
+    File expandDir = DirUtils.createTempDir(tmpFolder);
+    BundleJarUtil.unJar(Locations.toLocation(artifactJar), expandDir);
 
-    // Grab every classes under the application class package.
-    try {
-      ClassLoader classLoader = application.getClassLoader();
-      if (classLoader == null) {
-        classLoader = ClassLoader.getSystemClassLoader();
-      }
-      Dependencies.findClassDependencies(classLoader, new ClassAcceptor() {
-        @Override
-        public boolean accept(String className, URL classUrl, URL classPathUrl) {
-          try {
-            if (className.startsWith(pkgName)) {
-              jarOut.putNextEntry(new JarEntry(className.replace('.', '/') + ".class"));
-              InputStream in = classUrl.openStream();
-              try {
-                ByteStreams.copy(in, jarOut);
-              } finally {
-                in.close();
-              }
-              return true;
-            }
-            return false;
-          } catch (Exception e) {
-            throw Throwables.propagate(e);
-          }
-        }
-      }, application.getName());
-
-      // Add webapp
-      jarOut.putNextEntry(new ZipEntry("webapp/default/netlens/src/1.txt"));
-      ByteStreams.copy(new ByteArrayInputStream("dummy data".getBytes(Charsets.UTF_8)), jarOut);
-    } finally {
-      jarOut.close();
-    }
+    // Add webapp
+    File webAppFile = new File(expandDir, "webapp/default/netlens/src/1.txt");
+    webAppFile.getParentFile().mkdirs();
+    Files.write("dummy data", webAppFile, Charsets.UTF_8);
+    BundleJarUtil.createJar(expandDir, artifactJar);
 
     HttpEntityEnclosingRequestBase request;
     if (appName == null) {
@@ -203,7 +171,7 @@ public class GatewayFastTestsSuite {
     request.setHeader(Constants.Gateway.API_KEY, "api-key-example");
     request.setHeader("X-Archive-Name",
                       String.format("%s-1.0.%d.jar", application.getSimpleName(), System.currentTimeMillis()));
-    request.setEntity(new ByteArrayEntity(bos.toByteArray()));
+    request.setEntity(new FileEntity(artifactJar));
     return execute(request);
   }
 
@@ -220,4 +188,17 @@ public class GatewayFastTestsSuite {
     GatewayTestBase.runAfter = true;
     GatewayTestBase.afterClass();
   }
+
+  private static File buildAppArtifact(Class<?> cls, String name, File tmpFolder) throws IOException {
+    if (!name.endsWith(".jar")) {
+      name += ".jar";
+    }
+
+    LocationFactory locationFactory = new LocalLocationFactory(tmpFolder);
+    Location appJar = AppJarHelper.createDeploymentJar(locationFactory, cls);
+    File destination = new File(DirUtils.createTempDir(tmpFolder), name);
+    Files.copy(Locations.newInputSupplier(appJar), destination);
+    return destination;
+  }
+
 }

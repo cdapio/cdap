@@ -27,9 +27,8 @@ subsequent programs in the sequence are executed.
 
 The control flow of a workflow can be described as a directed, acyclic graph (DAG) of actions.
 To be more precise, we require that it be a series-parallel graph. This is a graph with a
-single start node and a single finish node. As described below, execution can be either
-sequential (the default) or :ref:`concurrent <workflow-concurrent>`, and the graph can be 
-either a simple series of nodes or a more complicated :ref:`parallel workflow <workflow_parallel>`.
+single start node and a single finish node; in between, the graph can be either a simple
+series of nodes or a more complicated :ref:`parallel workflow <workflow_parallel>`.
 
 Workflows can be controlled by the :ref:`CDAP CLI <cli>` and the :ref:`Lifecycle HTTP
 RESTful API <http-restful-api-lifecycle>`. The :ref:`status of a workflow
@@ -181,9 +180,9 @@ The workflow itself uses the same names in its configuration::
 
 Concurrent Workflows
 --------------------
-By default, a workflow runs sequentially. Multiple instances of a workflow can be run
-concurrently. To enable concurrent runs for a workflow, set its runtime argument
-``concurrent.runs.enabled`` to ``true``.
+By default, a workflow runs concurrently, allowing multiple instances of a workflow to be
+run simultaneously. However, for scheduled workflows, the number of concurrent runs can be
+controlled by :ref:`setting a maximum number <run-constraints>` of runs.
 
 
 .. _workflow_token:

@@ -16,8 +16,9 @@
 
 function myTrackerApi(myCdapUrl, $resource, myAuth, myHelpers) {
   var url = myCdapUrl.constructUrl,
-      searchPath = '/namespaces/:namespace/metadata/search';
-
+      searchPath = '/namespaces/:namespace/metadata/search',
+      basePath = '/namespaces/:namespace/:entityType/:entityId',
+      programPath = '/namespaces/:namespace/apps/:appId/:programType/:programId/runs/:runId';
 
   return $resource(
     url({ _cdapPath: searchPath }),
@@ -26,6 +27,10 @@ function myTrackerApi(myCdapUrl, $resource, myAuth, myHelpers) {
   },
   {
     search: myHelpers.getConfig('GET', 'REQUEST', searchPath, true),
+    properties: myHelpers.getConfig('GET', 'REQUEST', basePath + '/metadata', true),
+    viewsProperties: myHelpers.getConfig('GET', 'REQUEST', basePath + '/views/:viewId/metadata', true),
+    getLineage: myHelpers.getConfig('GET', 'REQUEST', basePath + '/lineage'),
+    getProgramRunStatus: myHelpers.getConfig('GET', 'REQUEST', programPath)
   });
 }
 

@@ -1562,7 +1562,7 @@
 
   <property>
     <name>security.authorization.pluginClassName</name>
-    <value>co.cask.cdap.security.authorization.DatasetAuthorizationPlugin</value>
+    <value>co.cask.cdap.security.authorization.DatasetBasedAuthorizer</value>
     <description>
       Class name of the AuthorizationPlugin implementation to use
     </description>
@@ -1773,6 +1773,14 @@
     <value>false</value>
     <description>
       True to disable SSL certificate check from the CDAP UI
+    </description>
+  </property>
+
+  <property>
+    <name>http.client.connection.timeout.ms</name>
+    <value>60000</value>
+    <description>
+      Timeout in milliseconds for internal HTTP requests
     </description>
   </property>
 

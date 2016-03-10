@@ -84,10 +84,10 @@ public class MockSink extends BatchSink<StructuredRecord, byte[], Put> {
     emitter.emit(new KeyValue<>(rowkey, put));
   }
 
-  public static co.cask.cdap.etl.common.Plugin getPlugin(String tableName) {
+  public static co.cask.cdap.etl.proto.v1.Plugin getPlugin(String tableName) {
     Map<String, String> properties = new HashMap<>();
     properties.put("tableName", tableName);
-    return new co.cask.cdap.etl.common.Plugin("Mock", properties);
+    return new co.cask.cdap.etl.proto.v1.Plugin("Mock", properties);
   }
 
   /**

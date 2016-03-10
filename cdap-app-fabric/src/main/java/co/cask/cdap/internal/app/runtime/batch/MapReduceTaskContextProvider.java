@@ -31,7 +31,6 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.util.concurrent.AbstractIdleService;
-import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.MRConfig;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
@@ -53,7 +52,7 @@ import java.util.concurrent.atomic.AtomicReference;
 public class MapReduceTaskContextProvider extends AbstractIdleService {
 
   private static final Logger LOG = LoggerFactory.getLogger(MapReduceTaskContextProvider.class);
-  private final Injector injector;
+
   // Maintain a cache of taskId to MapReduceTaskContext
   // Each task should have it's own instance of MapReduceTaskContext so that different dataset instance will
   // be created for different task, which is needed in local mode since job runs with multiple threads
@@ -69,15 +68,14 @@ public class MapReduceTaskContextProvider extends AbstractIdleService {
   }
 
   /**
-   * Creates an instance with the given {@link Injector} that will be used for getting service instances.
+   * Creates an instance with the given providers.
    */
-  protected MapReduceTaskContextProvider(Injector injector) {
-    this.injector = injector;
-    this.taskContexts = CacheBuilder.newBuilder().build(createCacheLoader(injector));
-  }
-
-  protected Injector getInjector() {
-    return injector;
+  protected MapReduceTaskContextProvider(DiscoveryServiceClient discoveryServiceClient,
+                                         DatasetFramework datasetFramework,
+                                         MetricsCollectionService metricsCollectionService,
+                                         TransactionSystemClient transactionSystemClient) {
+    this.taskContexts = CacheBuilder.newBuilder().build(
+      createCacheLoader(discoveryServiceClient, datasetFramework, metricsCollectionService, transactionSystemClient));
   }
 
   @Override
@@ -143,9 +141,12 @@ public class MapReduceTaskContextProvider extends AbstractIdleService {
   /**
    * Creates a {@link CacheLoader} for the task context cache.
    */
-  private CacheLoader<ContextCacheKey, BasicMapReduceTaskContext> createCacheLoader(final Injector injector) {
-    final DiscoveryServiceClient discoveryServiceClient = injector.getInstance(DiscoveryServiceClient.class);
-    final DatasetFramework datasetFramework = injector.getInstance(DatasetFramework.class);
+  private CacheLoader<ContextCacheKey, BasicMapReduceTaskContext> createCacheLoader(
+    final DiscoveryServiceClient discoveryServiceClient,
+    final DatasetFramework datasetFramework,
+    final MetricsCollectionService metricsCollectionService,
+    final TransactionSystemClient transactionSystemClient) {
+
     // Multiple instances of BasicMapReduceTaskContext can shares the same program.
     final AtomicReference<Program> programRef = new AtomicReference<>();
 
@@ -167,15 +168,14 @@ public class MapReduceTaskContextProvider extends AbstractIdleService {
           taskType = MapReduceMetrics.TaskType.from(key.getTaskAttemptID().getTaskType());
         }
         // if this is not for a mapper or a reducer, we don't need the metrics collection service
-        MetricsCollectionService metricsCollectionService =
-          (taskType == null) ? null : injector.getInstance(MetricsCollectionService.class);
-
-        TransactionSystemClient txClient = injector.getInstance(TransactionSystemClient.class);
+        MetricsCollectionService metricsCollector =
+          (taskType == null) ? null : metricsCollectionService;
 
         return new BasicMapReduceTaskContext(
           program, taskType, contextConfig.getRunId(), key.getTaskAttemptID().getTaskID().toString(),
           contextConfig.getArguments(), spec, contextConfig.getLogicalStartTime(),
-          contextConfig.getWorkflowToken(), discoveryServiceClient, metricsCollectionService, txClient,
+          contextConfig.getWorkflowToken(), discoveryServiceClient,
+          metricsCollector, transactionSystemClient,
           contextConfig.getTx(), datasetFramework, classLoader.getPluginInstantiator(),
           contextConfig.getLocalizedResources()
         );

@@ -23,7 +23,7 @@ angular.module(PKG.name + '.feature.tracker')
         parent: 'ns',
         data: {
           authorizedRoles: MYAUTH_ROLE.all,
-          highlightTab: '????'
+          highlightTab: 'search'
         },
         templateUrl: '/assets/features/tracker/templates/main.html',
         controller: 'TrackerMainController',
@@ -31,11 +31,11 @@ angular.module(PKG.name + '.feature.tracker')
       })
 
       .state('tracker', {
-        url: '/tracker/search/:searchQuery',
+        url: '/tracker',
         parent: 'ns',
         data: {
           authorizedRoles: MYAUTH_ROLE.all,
-          highlightTab: '????'
+          highlightTab: 'search'
         },
         templateUrl: '/assets/features/tracker/templates/container.html',
         controller: 'TrackerContainerController',
@@ -43,9 +43,44 @@ angular.module(PKG.name + '.feature.tracker')
       })
 
         .state('tracker.result', {
-          url: '/result',
+          url: '/search/:searchQuery/result',
           templateUrl: '/assets/features/tracker/templates/results.html',
           controller: 'TrackerResultsController',
-          controllerAs: 'ResultsController'
-        });
+          controllerAs: 'ResultsController',
+          data: {
+            authorizedRoles: MYAUTH_ROLE.all,
+            highlightTab: 'search'
+          }
+        })
+
+        .state('tracker.entity', {
+          url: '/entity/:entityType/:entityId',
+          templateUrl: '/assets/features/tracker/templates/entity.html',
+          controller: 'TrackerEntityController',
+          controllerAs: 'EntityController',
+          data: {
+            authorizedRoles: MYAUTH_ROLE.all,
+            highlightTab: 'search'
+          }
+        })
+          .state('tracker.entity.metadata', {
+            url: '/metadata',
+            templateUrl: '/assets/features/tracker/templates/metadata.html',
+            controller: 'TrackerMetadataController',
+            controllerAs: 'MetadataController',
+            data: {
+              authorizedRoles: MYAUTH_ROLE.all,
+              highlightTab: 'search'
+            }
+          })
+          .state('tracker.entity.lineage', {
+            url: '/lineage?start&end&method',
+            templateUrl: '/assets/features/tracker/templates/lineage.html',
+            controller: 'TrackerLineageController',
+            controllerAs: 'LineageController',
+            data: {
+              authorizedRoles: MYAUTH_ROLE.all,
+              highlightTab: 'search'
+            }
+          });
   });

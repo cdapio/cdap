@@ -37,7 +37,7 @@ public class DoubleTransform extends Transform<StructuredRecord, StructuredRecor
     emitter.emit(input);
   }
 
-  public static co.cask.cdap.etl.common.Plugin getPlugin() {
-    return new co.cask.cdap.etl.common.Plugin("Double", new HashMap<String, String>());
+  public static co.cask.cdap.etl.proto.v1.Plugin getPlugin() {
+    return new co.cask.cdap.etl.proto.v1.Plugin("Double", new HashMap<String, String>());
   }
 }

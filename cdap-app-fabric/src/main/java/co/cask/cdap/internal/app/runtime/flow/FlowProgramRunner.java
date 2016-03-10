@@ -31,7 +31,6 @@ import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.internal.app.runtime.AbstractProgramController;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
-import co.cask.cdap.internal.app.runtime.ProgramRunnerFactory;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.tephra.TransactionExecutorFactory;
@@ -48,6 +47,7 @@ import com.google.common.collect.Table;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import org.apache.twill.api.RunId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -65,16 +65,16 @@ public final class FlowProgramRunner implements ProgramRunner {
 
   private static final Logger LOG = LoggerFactory.getLogger(FlowProgramRunner.class);
 
-  private final ProgramRunnerFactory programRunnerFactory;
+  private final Provider<FlowletProgramRunner> flowletProgramRunnerProvider;
   private final Map<RunId, ProgramOptions> programOptions = Maps.newHashMap();
   private final StreamAdmin streamAdmin;
   private final QueueAdmin queueAdmin;
   private final TransactionExecutorFactory txExecutorFactory;
 
   @Inject
-  public FlowProgramRunner(ProgramRunnerFactory programRunnerFactory, StreamAdmin streamAdmin,
+  public FlowProgramRunner(Provider<FlowletProgramRunner> flowletProgramRunnerProvider, StreamAdmin streamAdmin,
                            QueueAdmin queueAdmin, TransactionExecutorFactory txExecutorFactory) {
-    this.programRunnerFactory = programRunnerFactory;
+    this.flowletProgramRunnerProvider = flowletProgramRunnerProvider;
     this.streamAdmin = streamAdmin;
     this.queueAdmin = queueAdmin;
     this.txExecutorFactory = txExecutorFactory;
@@ -144,8 +144,7 @@ public final class FlowProgramRunner implements ProgramRunner {
   }
 
   private ProgramController startFlowlet(Program program, ProgramOptions options) {
-    return programRunnerFactory.create(ProgramRunnerFactory.Type.FLOWLET)
-                               .run(program, options);
+    return flowletProgramRunnerProvider.get().run(program, options);
   }
 
   private ProgramOptions createFlowletOptions(String name, int instanceId, int instances, RunId runId) {

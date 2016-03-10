@@ -22,6 +22,7 @@ import co.cask.cdap.api.plugin.PluginProperties;
 import co.cask.cdap.internal.app.runtime.DefaultPluginContext;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.ProgramId;
 
 import java.io.Externalizable;
 import java.io.IOException;
@@ -44,11 +45,12 @@ public class SparkPluginContext implements PluginContext, Externalizable {
   }
 
   public SparkPluginContext(ExecutionSparkContext context) {
-    this(context.getPluginInstantiator(), context.getProgramId(), context.getApplicationSpecification().getPlugins());
+    this(context.getPluginInstantiator(), context.getProgramId().toEntityId(),
+         context.getApplicationSpecification().getPlugins());
   }
 
   public SparkPluginContext(@Nullable PluginInstantiator pluginInstantiator,
-                            Id.Program programId, Map<String, Plugin> plugins) {
+                            ProgramId programId, Map<String, Plugin> plugins) {
     this.delegate = new DefaultPluginContext(pluginInstantiator, programId, plugins);
   }
 

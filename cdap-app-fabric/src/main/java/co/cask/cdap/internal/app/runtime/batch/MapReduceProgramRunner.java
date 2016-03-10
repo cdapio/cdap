@@ -56,7 +56,6 @@ import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.Service;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
-import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.twill.api.RunId;
@@ -81,7 +80,6 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
   private static final Logger LOG = LoggerFactory.getLogger(MapReduceProgramRunner.class);
   private static final Gson GSON = new Gson();
 
-  private final Injector injector;
   private final StreamAdmin streamAdmin;
   private final CConfiguration cConf;
   private final Configuration hConf;
@@ -94,7 +92,7 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
   private final UsageRegistry usageRegistry;
 
   @Inject
-  public MapReduceProgramRunner(Injector injector, CConfiguration cConf, Configuration hConf,
+  public MapReduceProgramRunner(CConfiguration cConf, Configuration hConf,
                                 LocationFactory locationFactory,
                                 StreamAdmin streamAdmin,
                                 DatasetFramework datasetFramework,
@@ -103,7 +101,6 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
                                 DiscoveryServiceClient discoveryServiceClient, Store store,
                                 UsageRegistry usageRegistry) {
     super(cConf);
-    this.injector = injector;
     this.cConf = cConf;
     this.hConf = hConf;
     this.locationFactory = locationFactory;
@@ -190,7 +187,7 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
       // note: this sets logging context on the thread level
       LoggingContextAccessor.setLoggingContext(context.getLoggingContext());
 
-      final Service mapReduceRuntimeService = new MapReduceRuntimeService(injector, cConf, hConf, mapReduce, spec,
+      final Service mapReduceRuntimeService = new MapReduceRuntimeService(cConf, hConf, mapReduce, spec,
                                                                           context, program.getJarLocation(),
                                                                           locationFactory, streamAdmin,
                                                                           txSystemClient, usageRegistry);

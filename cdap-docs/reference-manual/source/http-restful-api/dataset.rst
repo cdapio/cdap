@@ -107,6 +107,48 @@ with JSON-formatted name of the dataset type and properties in a body::
 
 .. _http-restful-api-dataset-updating:
 
+Properties of an Existing Dataset
+---------------------------------
+
+You can retrieve the properties with which a dataset was created or last updated by issuing an HTTP GET request to
+the URL::
+
+	GET <base-url>/namespaces/<namespace>/data/datasets/<dataset-name>/properties
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``<namespace>``
+     - Namespace ID
+   * - ``<dataset-name>``
+     - Name of the existing dataset
+
+.. rubric:: HTTP Responses
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Status Codes
+     - Description
+   * - ``200 OK``
+     - Requested dataset was successfully updated
+   * - ``404 Not Found``
+     - Requested dataset instance was not found
+
+The response |---| if successful |---| will contain the JSON-formatted properties::
+
+  {
+     "key1":"value1",
+     "key2":"value2"
+  }
+
+Note that this will return the original properties that were submitted when the dataset was created or updated.
+You can use these properties to create a clone of the dataset, or as a basis for updating some properties of this
+dataset without modifying the remaining properties.
+
 Updating an Existing Dataset
 ----------------------------
 

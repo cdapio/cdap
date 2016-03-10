@@ -50,6 +50,7 @@ public abstract class HBaseVersionSpecificFactory<T> implements Provider<T> {
           instance = createInstance(getHBase11Classname());
           break;
         case HBASE_10_CDH55:
+        case HBASE_10_CDH56:
           instance = createInstance(getHBase10CHD550ClassName());
           break;
         case UNKNOWN:

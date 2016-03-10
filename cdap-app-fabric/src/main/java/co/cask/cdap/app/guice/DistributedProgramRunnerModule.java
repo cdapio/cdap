@@ -16,8 +16,8 @@
 package co.cask.cdap.app.guice;
 
 import co.cask.cdap.app.runtime.ProgramRunner;
+import co.cask.cdap.app.runtime.ProgramRunnerFactory;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
-import co.cask.cdap.internal.app.runtime.ProgramRunnerFactory;
 import co.cask.cdap.internal.app.runtime.distributed.DistributedFlowProgramRunner;
 import co.cask.cdap.internal.app.runtime.distributed.DistributedMapReduceProgramRunner;
 import co.cask.cdap.internal.app.runtime.distributed.DistributedProgramRuntimeService;
@@ -26,6 +26,7 @@ import co.cask.cdap.internal.app.runtime.distributed.DistributedSparkProgramRunn
 import co.cask.cdap.internal.app.runtime.distributed.DistributedWebappProgramRunner;
 import co.cask.cdap.internal.app.runtime.distributed.DistributedWorkerProgramRunner;
 import co.cask.cdap.internal.app.runtime.distributed.DistributedWorkflowProgramRunner;
+import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Preconditions;
 import com.google.inject.PrivateModule;
 import com.google.inject.Provider;
@@ -44,15 +45,15 @@ final class DistributedProgramRunnerModule extends PrivateModule {
   @Override
   protected void configure() {
     // Bind ProgramRunner
-    MapBinder<ProgramRunnerFactory.Type, ProgramRunner> runnerFactoryBinder =
-      MapBinder.newMapBinder(binder(), ProgramRunnerFactory.Type.class, ProgramRunner.class);
-    runnerFactoryBinder.addBinding(ProgramRunnerFactory.Type.FLOW).to(DistributedFlowProgramRunner.class);
-    runnerFactoryBinder.addBinding(ProgramRunnerFactory.Type.MAPREDUCE).to(DistributedMapReduceProgramRunner.class);
-    runnerFactoryBinder.addBinding(ProgramRunnerFactory.Type.WORKFLOW).to(DistributedWorkflowProgramRunner.class);
-    runnerFactoryBinder.addBinding(ProgramRunnerFactory.Type.WEBAPP).to(DistributedWebappProgramRunner.class);
-    runnerFactoryBinder.addBinding(ProgramRunnerFactory.Type.SERVICE).to(DistributedServiceProgramRunner.class);
-    runnerFactoryBinder.addBinding(ProgramRunnerFactory.Type.WORKER).to(DistributedWorkerProgramRunner.class);
-    runnerFactoryBinder.addBinding(ProgramRunnerFactory.Type.SPARK).to(DistributedSparkProgramRunner.class);
+    MapBinder<ProgramType, ProgramRunner> runnerFactoryBinder =
+      MapBinder.newMapBinder(binder(), ProgramType.class, ProgramRunner.class);
+    runnerFactoryBinder.addBinding(ProgramType.FLOW).to(DistributedFlowProgramRunner.class);
+    runnerFactoryBinder.addBinding(ProgramType.MAPREDUCE).to(DistributedMapReduceProgramRunner.class);
+    runnerFactoryBinder.addBinding(ProgramType.WORKFLOW).to(DistributedWorkflowProgramRunner.class);
+    runnerFactoryBinder.addBinding(ProgramType.WEBAPP).to(DistributedWebappProgramRunner.class);
+    runnerFactoryBinder.addBinding(ProgramType.SERVICE).to(DistributedServiceProgramRunner.class);
+    runnerFactoryBinder.addBinding(ProgramType.WORKER).to(DistributedWorkerProgramRunner.class);
+    runnerFactoryBinder.addBinding(ProgramType.SPARK).to(DistributedSparkProgramRunner.class);
 
     // Bind and expose ProgramRuntimeService
     bind(ProgramRuntimeService.class).to(DistributedProgramRuntimeService.class).in(Scopes.SINGLETON);
@@ -61,12 +62,11 @@ final class DistributedProgramRunnerModule extends PrivateModule {
 
   @Singleton
   @Provides
-  private ProgramRunnerFactory provideProgramRunnerFactory(final Map<ProgramRunnerFactory.Type,
-                                                                     Provider<ProgramRunner>> providers) {
+  private ProgramRunnerFactory provideProgramRunnerFactory(final Map<ProgramType, Provider<ProgramRunner>> providers) {
 
     return new ProgramRunnerFactory() {
       @Override
-      public ProgramRunner create(Type programType) {
+      public ProgramRunner create(ProgramType programType) {
         Provider<ProgramRunner> provider = providers.get(programType);
         Preconditions.checkNotNull(provider, "Unsupported program type: " + programType);
         return provider.get();
