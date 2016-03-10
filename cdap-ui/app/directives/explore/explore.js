@@ -106,7 +106,7 @@ angular.module(PKG.name + '.commons')
                   angular.forEach(res, function(column) {
                     // check for '.' in the name, before splitting on it, because in the case that specific columns are
                     // queried, the column names in the schema are not prefixed by the dataset name
-                    if (column.name.indexOf('.') != -1) {
+                    if (column.name.indexOf('.') !== -1) {
                       column.name = column.name.split('.')[1];
                     }
                   });
