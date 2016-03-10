@@ -51,41 +51,7 @@ class TrackerEntityController{
   }
 
   jump() {
-    // let data = {
-    //   'artifact': {
-    //     'name': 'cdap-etl-batch',
-    //     'scope': 'SYSTEM',
-    //     'version': '3.4.0-SNAPSHOT'
-    //   },
-    //   'config': {
-    //     'source': {
-    //       'name': this.$state.params.entityId,
-    //       'plugin': {
-    //         'name': 'Stream',
-    //         'properties': {
-    //           'schema': '{ "name": "undefinedBody", "type": "record", "fields": [{"name": "something", "type": "string"}, { "name": "field2", "type": ["string", "null"] }] }',
-    //           'name': this.$state.params.entityId,
-    //           'format': 'csv'
-    //         },
-    //         'label': this.$state.params.entityId,
-    //         'artifact': {
-    //           'name': 'core-plugins',
-    //           'scope': 'SYSTEM',
-    //           'version': '1.3.0-SNAPSHOT'
-    //         }
-    //       }
-    //     },
-    //     'sinks': [],
-    //     'transforms': [],
-    //     'connections': []
-    //   }
-    // };
-
-    // this.$state.go('hydrator.create.studio', {
-    //   data: data,
-    //   type: 'cdap-etl-batch'
-    // });
-    this.myJumpFactory.streamSource(this.$state.params.entityId);
+    this.myJumpFactory.streamBatchSource(this.$state.params.entityId);
   }
 }
 

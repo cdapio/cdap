@@ -14,10 +14,22 @@
  * the License.
  */
 
-function myJumpFactory($state, myTrackerApi) {
+function myJumpFactory($state, myTrackerApi, $rootScope) {
   'ngInject';
 
-  function streamSource(streamName) {
+  let batchArtifact = {
+    name: 'cdap-etl-batch',
+    scope: 'SYSTEM',
+    version: $rootScope.cdapVersion
+  };
+
+  let realtimeArtifact = {
+    name: 'cdap-etl-realtime',
+    scope: 'SYSTEM',
+    version: $rootScope.cdapVersion
+  };
+
+  function streamBatchSource(streamName) {
     let params = {
       namespace: $state.params.namespace,
       entityId: streamName
@@ -27,32 +39,28 @@ function myJumpFactory($state, myTrackerApi) {
       .$promise
       .then((res) => {
         let data = {
-          'artifact': {
-            'name': 'cdap-etl-batch',
-            'scope': 'SYSTEM',
-            'version': '3.4.0-SNAPSHOT'
-          },
-          'config': {
-            'source': {
-              'name': streamName,
-              'plugin': {
-                'name': 'Stream',
-                'properties': {
-                  'schema': JSON.stringify(res.format.schema),
-                  'name': streamName,
-                  'format': res.format.name
+          artifact: batchArtifact,
+          config: {
+            source: {
+              name: streamName,
+              plugin: {
+                name: 'Stream',
+                label: streamName,
+                artifact: {
+                  name: 'core-plugins',
+                  scope: 'SYSTEM',
+                  version: '1.3.0-SNAPSHOT'
                 },
-                'label': streamName,
-                'artifact': {
-                  'name': 'core-plugins',
-                  'scope': 'SYSTEM',
-                  'version': '1.3.0-SNAPSHOT'
-                }
+                properties: {
+                  schema: JSON.stringify(res.format.schema),
+                  name: streamName,
+                  format: res.format.name
+                },
               }
             },
-            'sinks': [],
-            'transforms': [],
-            'connections': []
+            sinks: [],
+            transforms: [],
+            connections: []
           }
         };
 
@@ -63,9 +71,43 @@ function myJumpFactory($state, myTrackerApi) {
       });
   }
 
+  function streamRealtimeSink(streamName) {
+    let data = {
+      artifact: realtimeArtifact,
+      config: {
+        source: {},
+        transforms: [],
+        sinks: [
+          {
+            name: streamName,
+            plugin: {
+              name: 'Stream',
+              label: streamName,
+              artifact: {
+                name: 'core-plugins',
+                scope: 'SYSTEM',
+                version: '1.3.0-SNAPSHOT'
+              },
+              properties: {
+                name: streamName
+              }
+            }
+          }
+        ],
+        connections: []
+      }
+    };
+
+    $state.go('hydrator.create.studio', {
+      data: data,
+      type: 'cdap-etl-realtime'
+    });
+  }
+
 
   return {
-    streamSource: streamSource
+    streamBatchSource: streamBatchSource,
+    streamRealtimeSink: streamRealtimeSink
   };
 
 }
