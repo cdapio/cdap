@@ -22,6 +22,7 @@ import co.cask.tephra.TransactionManager;
 import co.cask.tephra.TransactionSystemClient;
 import co.cask.tephra.inmemory.InMemoryTxSystemClient;
 import co.cask.tephra.persist.TransactionSnapshot;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.io.ByteStreams;
 import org.apache.hadoop.conf.Configuration;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
@@ -160,6 +161,43 @@ public class SparkTransactionServiceTest {
 
     // Should be able to commit the transaction
     Assert.assertTrue(txClient.commit(transaction));
+  }
+
+  /**
+   * Tests the case where starting of transaction failed.
+   */
+  @Test
+  public void testFailureTransaction() throws IOException {
+    TransactionManager txManager = new TransactionManager(new Configuration()) {
+      @Override
+      public Transaction startLong() {
+        throw new IllegalStateException("Cannot start long transaction");
+      }
+    };
+    txManager.startAndWait();
+    try {
+      SparkTransactionService sparkTxService = new SparkTransactionService(new InMemoryTxSystemClient(txManager));
+      sparkTxService.startAndWait();
+      try {
+        // Start a job
+        sparkTxService.jobStarted(1, ImmutableSet.of(2));
+
+        // Make a call to the stage transaction endpoint, it should get a 410 Gone response.
+        HttpURLConnection urlConn = open(sparkTxService.getBaseURI().resolve("/spark/stages/2/transaction"));
+        try {
+          Assert.assertEquals(HttpResponseStatus.GONE.getCode(), urlConn.getResponseCode());
+        } finally {
+          urlConn.disconnect();
+        }
+
+        // End the job
+        sparkTxService.jobEnded(1, false);
+      } finally {
+        sparkTxService.stopAndWait();
+      }
+    } finally {
+      txManager.stopAndWait();
+    }
   }
 
   /**
