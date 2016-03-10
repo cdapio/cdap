@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -57,6 +57,10 @@ public class ConcurrentPartitionConsumer extends AbstractPartitionConsumer {
         continue;
       }
       PartitionDetail partition = getPartitionedFileSet().getPartition(consumablePartition.getPartitionKey());
+      if (partition == null) {
+        // no longer exists
+        continue;
+      }
       PartitionAcceptor.Return accept = acceptor.accept(partition);
       switch (accept) {
         case ACCEPT:

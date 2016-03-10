@@ -52,10 +52,10 @@ public class IntValueFilterTransform extends Transform<StructuredRecord, Structu
     private int value;
   }
 
-  public static co.cask.cdap.etl.common.Plugin getPlugin(String field, int value) {
+  public static co.cask.cdap.etl.proto.v1.Plugin getPlugin(String field, int value) {
     Map<String, String> properties = new HashMap<>();
     properties.put("field", field);
     properties.put("value", String.valueOf(value));
-    return new co.cask.cdap.etl.common.Plugin("IntValueFilter", properties);
+    return new co.cask.cdap.etl.proto.v1.Plugin("IntValueFilter", properties);
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -88,7 +88,7 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
                             DatasetFramework dsFramework, TransactionSystemClient txClient,
                             DiscoveryServiceClient discoveryServiceClient, boolean multiThreaded,
                             @Nullable PluginInstantiator pluginInstantiator) {
-    super(program.getId());
+    super(program.getId().toEntityId());
     this.program = program;
     this.runId = runId;
     this.runtimeArguments = ImmutableMap.copyOf(arguments.asMap());
@@ -103,9 +103,9 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
     SystemDatasetInstantiator instantiator =
       new SystemDatasetInstantiator(dsFramework, program.getClassLoader(), owners);
     this.datasetCache = multiThreaded
-      ? new MultiThreadDatasetCache(instantiator, txClient, new NamespaceId(namespaceId),
+      ? new MultiThreadDatasetCache(instantiator, txClient, program.getId().getNamespace().toEntityId(),
                                     runtimeArguments, programMetrics, staticDatasets)
-      : new SingleThreadDatasetCache(instantiator, txClient, new NamespaceId(namespaceId),
+      : new SingleThreadDatasetCache(instantiator, txClient, program.getId().getNamespace().toEntityId(),
                                      runtimeArguments, programMetrics, staticDatasets);
     this.pluginInstantiator = pluginInstantiator;
     this.pluginContext = new DefaultPluginContext(pluginInstantiator, program.getId(),
@@ -193,6 +193,7 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
     return program;
   }
 
+  @Override
   public RunId getRunId() {
     return runId;
   }

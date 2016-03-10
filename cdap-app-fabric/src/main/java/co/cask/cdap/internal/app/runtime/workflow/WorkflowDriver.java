@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -45,11 +45,15 @@ import co.cask.cdap.common.lang.PropertyFieldSetter;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.dataset2.DatasetManagementException;
+import co.cask.cdap.data2.registry.UsageRegistry;
+import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.DataSetFieldSetter;
 import co.cask.cdap.internal.app.runtime.MetricsFieldSetter;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.workflow.DefaultWorkflowActionConfigurer;
+import co.cask.cdap.internal.dataset.DatasetCreationSpec;
 import co.cask.cdap.internal.lang.Reflections;
 import co.cask.cdap.internal.workflow.ProgramWorkflowAction;
 import co.cask.cdap.logging.context.WorkflowLoggingContext;
@@ -68,13 +72,17 @@ import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.DiscoveryServiceClient;
+import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -124,10 +132,10 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
   private final CConfiguration cConf;
 
   WorkflowDriver(Program program, ProgramOptions options, InetAddress hostname,
-                 WorkflowSpecification workflowSpec, ProgramRunnerFactory programRunnerFactory,
-                 MetricsCollectionService metricsCollectionService, DatasetFramework datasetFramework,
-                 DiscoveryServiceClient discoveryServiceClient, TransactionSystemClient txClient,
-                 Store store, CConfiguration cConf) {
+                 WorkflowSpecification workflowSpec, MetricsCollectionService metricsCollectionService,
+                 DatasetFramework datasetFramework, DiscoveryServiceClient discoveryServiceClient,
+                 TransactionSystemClient txClient, Store store, CConfiguration cConf, Configuration hConf,
+                 LocationFactory locationFactory, StreamAdmin streamAdmin, UsageRegistry usageRegistry) {
     this.program = program;
     this.hostname = hostname;
     this.runtimeArgs = createRuntimeArgs(options.getUserArguments());
@@ -136,21 +144,40 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     this.logicalStartTime = arguments.hasOption(ProgramOptionConstants.LOGICAL_START_TIME)
       ? Long.parseLong(arguments.getOption(ProgramOptionConstants.LOGICAL_START_TIME))
       : System.currentTimeMillis();
-    this.workflowProgramRunnerFactory = new ProgramWorkflowRunnerFactory(workflowSpec, programRunnerFactory, program,
-                                                                         options);
     this.lock = new ReentrantLock();
     this.condition = lock.newCondition();
-    this.loggingContext = new WorkflowLoggingContext(program.getNamespaceId(), program.getApplicationId(),
-                                                     program.getName(),
-                                                     arguments.getOption(ProgramOptionConstants.RUN_ID));
     this.runId = RunIds.fromString(options.getArguments().getOption(ProgramOptionConstants.RUN_ID));
+    this.loggingContext = new WorkflowLoggingContext(program.getNamespaceId(), program.getApplicationId(),
+                                                     program.getName(), runId.getId());
+
     this.metricsCollectionService = metricsCollectionService;
-    this.datasetFramework = datasetFramework;
+    this.datasetFramework = createWorkflowDatasetFramework(datasetFramework, runId.getId());
     this.discoveryServiceClient = discoveryServiceClient;
     this.txClient = txClient;
     this.store = store;
     this.workflowId = Id.Workflow.from(program.getId().getApplication(), workflowSpec.getName());
     this.cConf = cConf;
+
+    ProgramRunnerFactory programRunnerFactory = new WorkflowProgramRunnerFactory(cConf, hConf, locationFactory,
+                                                                                 streamAdmin, this.datasetFramework,
+                                                                                 txClient, metricsCollectionService,
+                                                                                 discoveryServiceClient, store,
+                                                                                 usageRegistry);
+    this.workflowProgramRunnerFactory = new ProgramWorkflowRunnerFactory(workflowSpec, programRunnerFactory,
+                                                                         program, options);
+  }
+
+  private DatasetFramework createWorkflowDatasetFramework(DatasetFramework datasetFramework, String runId) {
+    Map<String, String> localDatasetNameMapping = new HashMap<>();
+    for (String datasetName : workflowSpec.getLocalDatasetSpecs().keySet()) {
+      localDatasetNameMapping.put(datasetName, getLocalDatasetName(datasetName, runId));
+    }
+
+    return new WorkflowDatasetFramework(datasetFramework, localDatasetNameMapping);
+  }
+
+  private String getLocalDatasetName(String datasetName, String runId) {
+    return datasetName + "." + runId;
   }
 
   @Override
@@ -168,6 +195,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
 
     httpService.startAndWait();
     runningThread = Thread.currentThread();
+    createLocalDatasets();
   }
 
   private void blockIfSuspended() {
@@ -216,6 +244,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
   @Override
   protected void shutDown() throws Exception {
     httpService.stopAndWait();
+    deleteLocalDatasets();
   }
 
   private void executeAction(WorkflowActionNode node,
@@ -425,6 +454,29 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     // condition node are also persisted.
     store.updateWorkflowToken(workflowId, runId.getId(), token);
     executeAll(iterator, appSpec, instantiator, classLoader, token);
+  }
+
+  private void createLocalDatasets() throws IOException, DatasetManagementException {
+    for (Map.Entry<String, DatasetCreationSpec> instanceEntry : workflowSpec.getLocalDatasetSpecs().entrySet()) {
+      String localInstanceName = getLocalDatasetName(instanceEntry.getKey(), runId.getId());
+      Id.DatasetInstance instanceId = Id.DatasetInstance.from(program.getNamespaceId(), localInstanceName);
+      DatasetCreationSpec instanceSpec = instanceEntry.getValue();
+      LOG.debug("Adding Workflow local dataset instance: {}", localInstanceName);
+      datasetFramework.addInstance(instanceSpec.getTypeName(), instanceId, instanceSpec.getProperties());
+    }
+  }
+
+  private void deleteLocalDatasets() {
+    for (Map.Entry<String, DatasetCreationSpec> instanceEntry : workflowSpec.getLocalDatasetSpecs().entrySet()) {
+      String localInstanceName = getLocalDatasetName(instanceEntry.getKey(), runId.getId());
+      Id.DatasetInstance instanceId = Id.DatasetInstance.from(program.getNamespaceId(), localInstanceName);
+      LOG.debug("Deleting Workflow local dataset instance: {}", localInstanceName);
+      try {
+        datasetFramework.deleteInstance(instanceId);
+      } catch (Throwable t) {
+        LOG.warn("Failed to delete the Workflow local dataset instance {}", localInstanceName, t);
+      }
+    }
   }
 
   @Override

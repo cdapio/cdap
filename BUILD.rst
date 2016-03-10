@@ -104,8 +104,7 @@ Standalone and Distributed CDAP
     
 - Running from IDE (Intellij and Eclipse)::
 
-    cd cdap-ui
-    bower install && npm install && gulp build
+    mvn clean package -pl cdap-ui -am -DskipTests -P dist
     
   (Whenever there is a change in the UI packages.)
     

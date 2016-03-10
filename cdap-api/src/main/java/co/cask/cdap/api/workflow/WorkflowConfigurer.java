@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,6 +18,9 @@ package co.cask.cdap.api.workflow;
 
 import co.cask.cdap.api.Predicate;
 import co.cask.cdap.api.ProgramConfigurer;
+import co.cask.cdap.api.annotation.Beta;
+import co.cask.cdap.api.dataset.Dataset;
+import co.cask.cdap.api.dataset.DatasetProperties;
 
 /**
  * Configurer for configuring the {@link Workflow}.
@@ -63,4 +66,33 @@ public interface WorkflowConfigurer extends ProgramConfigurer {
    * @return the configurer for the condition
    */
   WorkflowConditionConfigurer<? extends WorkflowConfigurer> condition(Predicate<WorkflowContext> condition);
+
+  /**
+   * Adds a local dataset instance to the {@link Workflow}.
+   * <p>
+   * Local datasets are created at the start of every {@code Workflow} run and deleted once the run
+   * is complete. User can decide to keep the local datasets even after the run is complete by specifying
+   * the runtime arguments - <code>dataset.dataset_name.keep.local=true</code>.
+   *
+   * @param datasetName name of the dataset instance
+   * @param typeName name of the dataset type
+   * @param properties dataset instance properties
+   */
+  @Beta
+  void createLocalDataset(String datasetName, String typeName, DatasetProperties properties);
+
+  /**
+   * Adds a local dataset instance to the {@link Workflow}. Also deploys the dataset type
+   * represented by the datasetClass parameter in the current namespace.
+   * <p>
+   * Local datasets are created at the start of every {@code Workflow} run and deleted once the run
+   * is complete. User can decide to keep the local datasets even after the run is complete by specifying
+   * the runtime arguments - <code>dataset.dataset_name.keep.local=true</code>.
+   *
+   * @param datasetName dataset instance name
+   * @param datasetClass dataset class to create the Dataset type from
+   * @param props dataset instance properties
+   */
+  @Beta
+  void createLocalDataset(String datasetName, Class<? extends Dataset> datasetClass, DatasetProperties props);
 }

@@ -71,7 +71,6 @@ final class BasicFlowletContext extends AbstractContext implements FlowletContex
     super(program, runId, runtimeArguments, datasets,
           getMetricCollector(metricsCollectionService, program, flowletId, runId.getId(), instanceId),
           dsFramework, txClient, discoveryServiceClient, false);
-    this.namespaceId = program.getNamespaceId();
     this.flowId = program.getName();
     this.flowletId = flowletId;
     this.groupId = FlowUtils.generateConsumerGroupId(program, flowletId);

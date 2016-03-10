@@ -84,7 +84,7 @@
         <thead>
           <tr>
             <th>Name</th>
-            <th>type</th>
+            <th>Type</th>
             <th>Null</th>
           </tr>
         </thead>
@@ -124,6 +124,7 @@
     </div>
 
     <div class="column-content">
+      <!-- USER PROPERTIES -->
       <div ng-if="MetadataController.activePropertyTab === 0">
         <table class="table table-bordered"
                ng-if="!MetadataController.properties.isUserEmpty">
@@ -141,11 +142,12 @@
         </div>
       </div>
 
+      <!-- SYSTEM PROPERTIES -->
       <div ng-if="MetadataController.activePropertyTab === 1">
         <table class="table table-bordered"
                ng-if="!MetadataController.properties.isSystemEmpty">
           <tbody>
-            <tr ng-repeat="(key, value) in MetadataController.properties.system">
+            <tr ng-repeat="(key, value) in MetadataController.properties.system" ng-if="key !== 'schema'">
               <td>{{ key }}</td>
               <td>{{ value }}</td>
             </tr>

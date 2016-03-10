@@ -42,6 +42,7 @@ public final class Constants {
   public static final String ROOT_NAMESPACE = "root.namespace";
   public static final String COLLECT_CONTAINER_LOGS = "master.collect.containers.log";
   public static final String COLLECT_APP_CONTAINER_LOG_LEVEL = "master.collect.app.containers.log.level";
+  public static final String HTTP_CLIENT_TIMEOUT_MS = "http.client.connection.timeout.ms";
 
   /**
    * Configuration for Master startup.
@@ -925,5 +926,13 @@ public final class Constants {
     public static final String UPDATES_PUBLISH_ENABLED = "metadata.updates.publish.enabled";
     public static final String UPDATES_KAFKA_BROKER_LIST = "metadata.updates.kafka.broker.list";
     public static final String MAX_CHARS_ALLOWED = "metadata.max.allowed.chars";
+  }
+
+  /**
+   * Constants for publishing audit
+   */
+  public static final class Audit {
+    public static final String ENABLED = "audit.enabled";
+    public static final String KAFKA_TOPIC = "audit.kafka.topic";
   }
 }

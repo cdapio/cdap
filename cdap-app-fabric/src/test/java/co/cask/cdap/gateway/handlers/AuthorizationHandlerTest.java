@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,14 +19,17 @@ package co.cask.cdap.gateway.handlers;
 import co.cask.cdap.client.AuthorizationClient;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.config.ConnectionConfig;
+import co.cask.cdap.common.FeatureDisabledException;
 import co.cask.cdap.common.UnauthorizedException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.http.CommonNettyHttpServiceBuilder;
+import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.Ids;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.security.Action;
-import co.cask.cdap.security.authorization.AuthorizationPlugin;
-import co.cask.cdap.security.authorization.InMemoryAuthorizationPlugin;
+import co.cask.cdap.proto.security.Principal;
+import co.cask.cdap.security.authorization.Authorizer;
 import co.cask.http.NettyHttpService;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
@@ -36,23 +39,23 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.net.UnknownHostException;
 
 /**
- *
+ * Tests for {@link AuthorizationHandler}.
  */
 public class AuthorizationHandlerTest {
 
-  private InMemoryAuthorizationPlugin auth;
   private NettyHttpService service;
   private AuthorizationClient client;
 
   @Before
-  public void setUp() {
+  public void setUp() throws UnknownHostException {
     CConfiguration conf = CConfiguration.create();
     conf.setBoolean(Constants.Security.Authorization.ENABLED, true);
 
-    auth = new InMemoryAuthorizationPlugin();
-    service = NettyHttpService.builder()
+    Authorizer auth = new InMemoryAuthorizer();
+    service = new CommonNettyHttpServiceBuilder(conf)
       .addHttpHandlers(ImmutableList.of(new AuthorizationHandler(auth, conf)))
       .build();
     service.startAndWait();
@@ -78,8 +81,8 @@ public class AuthorizationHandlerTest {
     CConfiguration conf = CConfiguration.create();
     conf.setBoolean(Constants.Security.Authorization.ENABLED, false);
 
-    AuthorizationPlugin auth = new InMemoryAuthorizationPlugin();
-    NettyHttpService service = NettyHttpService.builder()
+    Authorizer auth = new InMemoryAuthorizer();
+    NettyHttpService service = new CommonNettyHttpServiceBuilder(conf)
       .addHttpHandlers(ImmutableList.of(new AuthorizationHandler(auth, conf)))
       .build();
     service.startAndWait();
@@ -95,69 +98,91 @@ public class AuthorizationHandlerTest {
         .build());
 
     NamespaceId ns1 = Ids.namespace("ns1");
+    Principal admin = new Principal("admin", Principal.PrincipalType.USER);
     try {
-      client.authorized(ns1, "admin", ImmutableSet.of(Action.READ));
+      client.authorized(ns1, admin, Action.READ);
       Assert.fail();
-    } catch (IOException e) {
-      Assert.assertTrue(e.getMessage().contains("404"));
+    } catch (FeatureDisabledException expected) {
+      Assert.assertEquals("Authorization", expected.getFeature());
     }
 
     try {
-      client.grant(ns1, "admin", ImmutableSet.of(Action.READ));
+      client.grant(ns1, admin, ImmutableSet.of(Action.READ));
       Assert.fail();
-    } catch (IOException e) {
-      Assert.assertTrue(e.getMessage().contains("404"));
+    } catch (FeatureDisabledException expected) {
+      Assert.assertEquals(Constants.Security.Authorization.ENABLED, expected.getEnableConfigKey());
+      Assert.assertEquals("true", expected.getEnableConfigValue());
     }
 
     try {
-      client.revoke(ns1, "admin", ImmutableSet.of(Action.READ));
+      client.revoke(ns1, admin, ImmutableSet.of(Action.READ));
       Assert.fail();
-    } catch (IOException e) {
-      Assert.assertTrue(e.getMessage().contains("404"));
+    } catch (FeatureDisabledException expected) {
+      Assert.assertEquals("cdap-site.xml", expected.getConfigFile());
     }
   }
 
   @Test
-  public void testRevokeEntityUserActions() throws IOException, UnauthorizedException {
+  public void testRevokeEntityUserActions() throws IOException, UnauthorizedException, FeatureDisabledException {
     NamespaceId ns1 = Ids.namespace("ns1");
+    Principal admin = new Principal("admin", Principal.PrincipalType.ROLE);
 
     // grant() and revoke(EntityId, String, Set<Action>)
-    Assert.assertEquals(false, client.authorized(ns1, "admin", ImmutableSet.of(Action.READ)));
-    client.grant(ns1, "admin", ImmutableSet.of(Action.READ));
-    Assert.assertEquals(true, client.authorized(ns1, "admin", ImmutableSet.of(Action.READ)));
-    client.revoke(ns1, "admin", ImmutableSet.of(Action.READ));
-    Assert.assertEquals(false, client.authorized(ns1, "admin", ImmutableSet.of(Action.READ)));
+    verifyAuthFailure(ns1, admin, Action.READ);
+
+    client.grant(ns1, admin, ImmutableSet.of(Action.READ));
+    client.authorized(ns1, admin, Action.READ);
+
+    client.revoke(ns1, admin, ImmutableSet.of(Action.READ));
+    verifyAuthFailure(ns1, admin, Action.READ);
   }
 
   @Test
-  public void testRevokeEntityUser() throws IOException, UnauthorizedException {
+  public void testRevokeEntityUser() throws IOException, UnauthorizedException, FeatureDisabledException {
     NamespaceId ns1 = Ids.namespace("ns1");
+    Principal admin = new Principal("admin", Principal.PrincipalType.GROUP);
+    Principal bob = new Principal("bob", Principal.PrincipalType.USER);
 
     // grant() and revoke(EntityId, String)
-    client.grant(ns1, "admin", ImmutableSet.of(Action.READ));
-    client.grant(ns1, "bob", ImmutableSet.of(Action.READ));
-    Assert.assertEquals(true, client.authorized(ns1, "admin", ImmutableSet.of(Action.READ)));
-    Assert.assertEquals(true, client.authorized(ns1, "bob", ImmutableSet.of(Action.READ)));
-    client.revoke(ns1, "admin");
-    Assert.assertEquals(false, client.authorized(ns1, "admin", ImmutableSet.of(Action.READ)));
-    Assert.assertEquals(true, client.authorized(ns1, "bob", ImmutableSet.of(Action.READ)));
+    client.grant(ns1, admin, ImmutableSet.of(Action.READ));
+    client.grant(ns1, bob, ImmutableSet.of(Action.READ));
+    client.authorized(ns1, admin, Action.READ);
+    client.authorized(ns1, bob, Action.READ);
+
+    client.revoke(ns1, admin);
+    verifyAuthFailure(ns1, admin, Action.READ);
+    client.authorized(ns1, bob, Action.READ);
   }
 
   @Test
-  public void testRevokeEntity() throws IOException, UnauthorizedException {
+  public void testRevokeEntity() throws IOException, UnauthorizedException, FeatureDisabledException {
     NamespaceId ns1 = Ids.namespace("ns1");
     NamespaceId ns2 = Ids.namespace("ns2");
+    Principal admin = new Principal("admin", Principal.PrincipalType.GROUP);
+    Principal bob = new Principal("bob", Principal.PrincipalType.USER);
 
     // grant() and revoke(EntityId)
-    client.grant(ns1, "admin", ImmutableSet.of(Action.READ));
-    client.grant(ns1, "bob", ImmutableSet.of(Action.READ));
-    client.grant(ns2, "admin", ImmutableSet.of(Action.READ));
-    Assert.assertEquals(true, client.authorized(ns1, "admin", ImmutableSet.of(Action.READ)));
-    Assert.assertEquals(true, client.authorized(ns1, "bob", ImmutableSet.of(Action.READ)));
-    Assert.assertEquals(true, client.authorized(ns2, "admin", ImmutableSet.of(Action.READ)));
+    client.grant(ns1, admin, ImmutableSet.of(Action.READ));
+    client.grant(ns1, bob, ImmutableSet.of(Action.READ));
+    client.grant(ns2, admin, ImmutableSet.of(Action.READ));
+    client.authorized(ns1, admin, Action.READ);
+    client.authorized(ns1, bob, Action.READ);
+    client.authorized(ns2, admin, Action.READ);
+
     client.revoke(ns1);
-    Assert.assertEquals(false, client.authorized(ns1, "admin", ImmutableSet.of(Action.READ)));
-    Assert.assertEquals(false, client.authorized(ns1, "bob", ImmutableSet.of(Action.READ)));
-    Assert.assertEquals(true, client.authorized(ns2, "admin", ImmutableSet.of(Action.READ)));
+    verifyAuthFailure(ns1, admin, Action.READ);
+    verifyAuthFailure(ns1, bob, Action.READ);
+    client.authorized(ns2, admin, Action.READ);
+  }
+
+  private void verifyAuthFailure(EntityId entity, Principal principal,
+                                 Action action) throws IOException, FeatureDisabledException {
+    try {
+      client.authorized(entity, principal, action);
+      Assert.fail(String.format("Expected authorization failure, but it succeeded for entity %s, principal %s," +
+                                  " action %s", entity, principal, action));
+    } catch (UnauthorizedException expected) {
+      // expected
+    }
   }
 }

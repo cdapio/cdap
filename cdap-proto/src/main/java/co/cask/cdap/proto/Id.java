@@ -150,7 +150,7 @@ public abstract class Id implements EntityIdCompatible {
     }
 
     @Override
-    public EntityId toEntityId() {
+    public QueryId toEntityId() {
       return new QueryId(id);
     }
   }
@@ -179,7 +179,7 @@ public abstract class Id implements EntityIdCompatible {
     }
 
     @Override
-    public EntityId toEntityId() {
+    public SystemServiceId toEntityId() {
       return new SystemServiceId(id);
     }
   }
@@ -213,7 +213,7 @@ public abstract class Id implements EntityIdCompatible {
     }
 
     @Override
-    public EntityId toEntityId() {
+    public NamespaceId toEntityId() {
       return new NamespaceId(id);
     }
   }
@@ -259,7 +259,7 @@ public abstract class Id implements EntityIdCompatible {
     }
 
     @Override
-    public EntityId toEntityId() {
+    public ApplicationId toEntityId() {
       return new ApplicationId(namespace.getId(), applicationId);
     }
   }
@@ -296,7 +296,7 @@ public abstract class Id implements EntityIdCompatible {
     }
 
     @Override
-    public EntityId toEntityId() {
+    public ProgramRunId toEntityId() {
       return new ProgramRunId(program.getNamespaceId(), program.getApplicationId(), program.getType(),
                               program.getId(), id);
     }
@@ -360,7 +360,7 @@ public abstract class Id implements EntityIdCompatible {
     }
 
     @Override
-    public EntityId toEntityId() {
+    public ProgramId toEntityId() {
       return new ProgramId(application.getNamespaceId(), application.getId(), type, id);
     }
   }
@@ -497,7 +497,7 @@ public abstract class Id implements EntityIdCompatible {
       }
 
       @Override
-      public EntityId toEntityId() {
+      public FlowletId toEntityId() {
         return new FlowletId(flow.getNamespaceId(), flow.getApplicationId(), flow.getId(), id);
       }
 
@@ -531,7 +531,7 @@ public abstract class Id implements EntityIdCompatible {
         }
 
         @Override
-        public EntityId toEntityId() {
+        public FlowletQueueId toEntityId() {
           return new FlowletQueueId(producer.getNamespace().getId(), producer.getFlow().getApplicationId(),
                                     producer.getFlow().getId(), producer.getId(), id);
         }
@@ -580,7 +580,7 @@ public abstract class Id implements EntityIdCompatible {
     }
 
     @Override
-    public EntityId toEntityId() {
+    public ScheduleId toEntityId() {
       return new ScheduleId(application.getNamespaceId(), application.getId(), id);
     }
   }
@@ -664,7 +664,7 @@ public abstract class Id implements EntityIdCompatible {
     }
 
     @Override
-    public EntityId toEntityId() {
+    public NotificationFeedId toEntityId() {
       return new NotificationFeedId(namespace.getId(), category, name);
     }
 
@@ -774,7 +774,7 @@ public abstract class Id implements EntityIdCompatible {
     }
 
     @Override
-    public EntityId toEntityId() {
+    public StreamId toEntityId() {
       return new StreamId(namespace.getId(), streamName);
     }
 
@@ -831,7 +831,7 @@ public abstract class Id implements EntityIdCompatible {
       }
 
       @Override
-      public EntityId toEntityId() {
+      public StreamViewId toEntityId() {
         return new StreamViewId(stream.getNamespaceId(), stream.getId(), id);
       }
     }
@@ -883,7 +883,7 @@ public abstract class Id implements EntityIdCompatible {
     }
 
     @Override
-    public EntityId toEntityId() {
+    public DatasetTypeId toEntityId() {
       return new DatasetTypeId(namespace.getId(), typeName);
     }
   }
@@ -929,7 +929,7 @@ public abstract class Id implements EntityIdCompatible {
     }
 
     @Override
-    public EntityId toEntityId() {
+    public DatasetModuleId toEntityId() {
       return new DatasetModuleId(namespace.getId(), moduleId);
     }
   }
@@ -975,7 +975,7 @@ public abstract class Id implements EntityIdCompatible {
     }
 
     @Override
-    public EntityId toEntityId() {
+    public DatasetId toEntityId() {
       return new DatasetId(namespace.getId(), instanceId);
     }
   }
@@ -1087,7 +1087,7 @@ public abstract class Id implements EntityIdCompatible {
     }
 
     @Override
-    public EntityId toEntityId() {
+    public NamespacedArtifactId toEntityId() {
       return new NamespacedArtifactId(namespace.getId(), name, version.getVersion());
     }
   }

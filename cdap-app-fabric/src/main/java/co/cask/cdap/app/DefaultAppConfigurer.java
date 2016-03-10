@@ -149,7 +149,7 @@ public class DefaultAppConfigurer extends DefaultPluginConfigurer implements App
   @Override
   public void addWorkflow(Workflow workflow) {
     Preconditions.checkArgument(workflow != null, "Workflow cannot be null.");
-    DefaultWorkflowConfigurer configurer = new DefaultWorkflowConfigurer(workflow);
+    DefaultWorkflowConfigurer configurer = new DefaultWorkflowConfigurer(workflow, this);
     workflow.configure(configurer);
     WorkflowSpecification spec = configurer.createSpecification();
     workflows.put(spec.getName(), spec);

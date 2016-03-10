@@ -20,7 +20,7 @@ import co.cask.cdap.api.workflow.AbstractWorkflowAction;
 import co.cask.cdap.api.workflow.WorkflowActionNode;
 import co.cask.cdap.api.workflow.WorkflowContext;
 import co.cask.cdap.api.workflow.WorkflowToken;
-import co.cask.cdap.etl.common.ETLStage;
+import co.cask.cdap.etl.proto.v1.ETLStage;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 

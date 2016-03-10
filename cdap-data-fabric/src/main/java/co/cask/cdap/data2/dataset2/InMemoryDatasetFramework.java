@@ -212,14 +212,14 @@ public class InMemoryDatasetFramework implements DatasetFramework {
         throw new InstanceConflictException(String.format("Dataset instance '%s' already exists.", datasetInstanceId));
       }
 
-      DatasetDefinitionRegistry registry = getRegistryForType(datasetInstanceId.getNamespace(), datasetType);
-      if (registry == null) {
+      DatasetDefinition def = getDefinitionForType(datasetInstanceId.getNamespace(), datasetType);
+      if (def == null) {
         throw new DatasetManagementException(
           String.format("Dataset type '%s' is neither registered in the '%s' namespace nor in the system namespace",
                         datasetType, datasetInstanceId.getNamespaceId()));
       }
-      DatasetDefinition def = registry.get(datasetType);
       DatasetSpecification spec = def.configure(datasetInstanceId.getId(), props);
+      spec = spec.setOriginalProperties(props);
       def.getAdmin(DatasetContext.from(datasetInstanceId.getNamespaceId()), spec, null).create();
       instances.put(datasetInstanceId.getNamespace(), datasetInstanceId, spec);
       LOG.info("Created dataset {} of type {}", datasetInstanceId, datasetType);
@@ -237,15 +237,14 @@ public class InMemoryDatasetFramework implements DatasetFramework {
       if (oldSpec == null) {
         throw new InstanceConflictException(String.format("Dataset instance '%s' does not exist.", datasetInstanceId));
       }
-      String datasetType = oldSpec.getType();
-      DatasetDefinitionRegistry registry = getRegistryForType(datasetInstanceId.getNamespace(), datasetType);
-      if (registry == null) {
+      DatasetDefinition def = getDefinitionForType(datasetInstanceId.getNamespace(), oldSpec.getType());
+      if (def == null) {
         throw new DatasetManagementException(
           String.format("Dataset type '%s' is neither registered in the '%s' namespace nor in the system namespace",
-                        datasetType, datasetInstanceId.getNamespaceId()));
+                        oldSpec.getType(), datasetInstanceId.getNamespaceId()));
       }
-      DatasetDefinition def = registry.get(datasetType);
       DatasetSpecification spec = def.configure(datasetInstanceId.getId(), props);
+      spec = spec.setOriginalProperties(props);
       instances.put(datasetInstanceId.getNamespace(), datasetInstanceId, spec);
       def.getAdmin(DatasetContext.from(datasetInstanceId.getNamespaceId()), spec, null).upgrade();
     } finally {
@@ -309,14 +308,12 @@ public class InMemoryDatasetFramework implements DatasetFramework {
     writeLock.lock();
     try {
       DatasetSpecification spec = instances.remove(datasetInstanceId.getNamespace(), datasetInstanceId);
-      String datasetType = spec.getType();
-      DatasetDefinitionRegistry registry = getRegistryForType(datasetInstanceId.getNamespace(), datasetType);
-      if (registry == null) {
+      DatasetDefinition def = getDefinitionForType(datasetInstanceId.getNamespace(), spec.getType());
+      if (def == null) {
         throw new DatasetManagementException(
           String.format("Dataset type '%s' is neither registered in the '%s' namespace nor in the system namespace",
-                        datasetType, datasetInstanceId.getNamespaceId()));
+                        spec.getType(), datasetInstanceId.getNamespaceId()));
       }
-      DatasetDefinition def = registry.get(datasetType);
       def.getAdmin(DatasetContext.from(datasetInstanceId.getNamespaceId()), spec, null).drop();
     } finally {
       writeLock.unlock();
@@ -328,14 +325,12 @@ public class InMemoryDatasetFramework implements DatasetFramework {
     writeLock.lock();
     try {
       for (DatasetSpecification spec : instances.row(namespaceId).values()) {
-        String datasetType = spec.getType();
-        DatasetDefinitionRegistry registry = getRegistryForType(namespaceId, datasetType);
-        if (registry == null) {
+        DatasetDefinition def = getDefinitionForType(namespaceId, spec.getType());
+        if (def == null) {
           throw new DatasetManagementException(
             String.format("Dataset type '%s' is neither registered in the '%s' namespace nor in the system namespace",
-                          datasetType, namespaceId));
+                          spec.getType(), namespaceId));
         }
-        DatasetDefinition def = registry.get(spec.getType());
         def.getAdmin(DatasetContext.from(namespaceId.getId()), spec, null).drop();
       }
       instances.row(namespaceId).clear();
@@ -491,14 +486,15 @@ public class InMemoryDatasetFramework implements DatasetFramework {
   }
 
   @Nullable
-  private DatasetDefinitionRegistry getRegistryForType(Id.Namespace namespaceId, String datasetType) {
+  @VisibleForTesting
+  DatasetDefinition getDefinitionForType(Id.Namespace namespaceId, String datasetType) {
     DatasetDefinitionRegistry registry = registries.get(namespaceId);
     if (registry != null && registry.hasType(datasetType)) {
-      return registry;
+      return registry.get(datasetType);
     }
     registry = registries.get(Id.Namespace.SYSTEM);
     if (registry != null && registry.hasType(datasetType)) {
-      return registry;
+      return registry.get(datasetType);
     }
     return null;
   }
@@ -509,11 +505,11 @@ public class InMemoryDatasetFramework implements DatasetFramework {
 
     private final List<String> types = Lists.newArrayList();
 
-    public TypesTrackingRegistry(DatasetDefinitionRegistry delegate) {
+    TypesTrackingRegistry(DatasetDefinitionRegistry delegate) {
       this.delegate = delegate;
     }
 
-    public List<String> getTypes() {
+    List<String> getTypes() {
       return types;
     }
 

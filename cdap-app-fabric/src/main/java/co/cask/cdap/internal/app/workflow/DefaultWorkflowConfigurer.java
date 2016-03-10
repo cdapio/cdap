@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,7 +16,10 @@
 
 package co.cask.cdap.internal.app.workflow;
 
+import co.cask.cdap.api.DatasetConfigurer;
 import co.cask.cdap.api.Predicate;
+import co.cask.cdap.api.dataset.Dataset;
+import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.workflow.Workflow;
 import co.cask.cdap.api.workflow.WorkflowAction;
@@ -28,9 +31,12 @@ import co.cask.cdap.api.workflow.WorkflowForkConfigurer;
 import co.cask.cdap.api.workflow.WorkflowForkNode;
 import co.cask.cdap.api.workflow.WorkflowNode;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
+import co.cask.cdap.app.DefaultAppConfigurer;
+import co.cask.cdap.internal.dataset.DatasetCreationSpec;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -43,14 +49,17 @@ public class DefaultWorkflowConfigurer implements WorkflowConfigurer, WorkflowFo
   private String name;
   private String description;
   private Map<String, String> properties;
+  private final Map<String, DatasetCreationSpec> localDatasetSpecs = new HashMap<>();
   private int nodeIdentifier = 0;
+  private final DatasetConfigurer datasetConfigurer;
 
   private final List<WorkflowNode> nodes = Lists.newArrayList();
 
-  public DefaultWorkflowConfigurer(Workflow workflow) {
+  public DefaultWorkflowConfigurer(Workflow workflow, DatasetConfigurer datasetConfigurer) {
     this.className = workflow.getClass().getName();
     this.name = workflow.getClass().getSimpleName();
     this.description = "";
+    this.datasetConfigurer = datasetConfigurer;
   }
 
   @Override
@@ -94,8 +103,38 @@ public class DefaultWorkflowConfigurer implements WorkflowConfigurer, WorkflowFo
                                                     predicate.getClass().getName());
   }
 
+  private void checkArgument(boolean condition, String template, Object...args) {
+    if (!condition) {
+      throw new IllegalArgumentException(String.format(template, args));
+    }
+  }
+
+  @Override
+  public void createLocalDataset(String datasetName, String typeName, DatasetProperties properties) {
+    checkArgument(datasetName != null, "Dataset instance name cannot be null.");
+    checkArgument(typeName != null, "Dataset type name cannot be null.");
+    checkArgument(properties != null, "Instance properties name cannot be null.");
+
+    DatasetCreationSpec spec = new DatasetCreationSpec(datasetName, typeName, properties);
+    DatasetCreationSpec existingSpec = localDatasetSpecs.get(datasetName);
+    if (existingSpec != null && !existingSpec.equals(spec)) {
+      throw new IllegalArgumentException(String.format("DatasetInstance '%s' was added multiple times with" +
+                                                         " different specifications. Please resolve the conflict so" +
+                                                         " that there is only one specification for the local dataset" +
+                                                         " instance in the Workflow.", datasetName));
+    }
+    localDatasetSpecs.put(datasetName, spec);
+  }
+
+  @Override
+  public void createLocalDataset(String datasetName, Class<? extends Dataset> datasetClass, DatasetProperties props) {
+    createLocalDataset(datasetName, datasetClass.getName(), props);
+    datasetConfigurer.addDatasetType(datasetClass);
+  }
+
   public WorkflowSpecification createSpecification() {
-    return new WorkflowSpecification(className, name, description, properties, createNodesWithId(nodes));
+    return new WorkflowSpecification(className, name, description, properties, createNodesWithId(nodes),
+                                     localDatasetSpecs);
   }
 
   private List<WorkflowNode> createNodesWithId(List<WorkflowNode> nodes) {

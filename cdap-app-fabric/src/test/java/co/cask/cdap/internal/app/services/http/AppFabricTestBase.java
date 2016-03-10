@@ -26,6 +26,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.EndpointStrategy;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.common.io.Locations;
+import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.data.stream.service.StreamService;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
@@ -68,6 +69,7 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.entity.ByteArrayEntity;
+import org.apache.http.entity.FileEntity;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicHeader;
@@ -430,41 +432,17 @@ public abstract class AppFabricTestBase {
     appVersion = appVersion == null ? String.format("1.0.%d", System.currentTimeMillis()) : appVersion;
 
     Manifest manifest = new Manifest();
-    manifest.getMainAttributes().put(ManifestFields.MANIFEST_VERSION, "1.0");
-    manifest.getMainAttributes().put(ManifestFields.MAIN_CLASS, application.getName());
     manifest.getMainAttributes().put(ManifestFields.BUNDLE_VERSION, appVersion);
 
-    ByteArrayOutputStream bos = new ByteArrayOutputStream();
-    final String pkgName = application.getPackage().getName();
+    File artifactJar = buildAppArtifact(application, application.getSimpleName(), manifest);
+    File expandDir = tmpFolder.newFolder();
+    BundleJarUtil.unJar(Locations.toLocation(artifactJar), expandDir);
 
-    // Grab every classes under the application class package.
-    try (JarOutputStream jarOut = new JarOutputStream(bos, manifest)) {
-      ClassLoader classLoader = application.getClassLoader();
-      if (classLoader == null) {
-        classLoader = ClassLoader.getSystemClassLoader();
-      }
-      Dependencies.findClassDependencies(classLoader, new ClassAcceptor() {
-        @Override
-        public boolean accept(String className, URL classUrl, URL classPathUrl) {
-          try {
-            if (className.startsWith(pkgName)) {
-              jarOut.putNextEntry(new JarEntry(className.replace('.', '/') + ".class"));
-              try (InputStream in = classUrl.openStream()) {
-                ByteStreams.copy(in, jarOut);
-              }
-              return true;
-            }
-            return false;
-          } catch (Exception e) {
-            throw Throwables.propagate(e);
-          }
-        }
-      }, application.getName());
-
-      // Add webapp
-      jarOut.putNextEntry(new ZipEntry("webapp/default/netlens/src/1.txt"));
-      ByteStreams.copy(new ByteArrayInputStream("dummy data".getBytes(Charsets.UTF_8)), jarOut);
-    }
+    // Add webapp
+    File webAppFile = new File(expandDir, "webapp/default/netlens/src/1.txt");
+    webAppFile.getParentFile().mkdirs();
+    Files.write("dummy data", webAppFile, Charsets.UTF_8);
+    BundleJarUtil.createJar(expandDir, artifactJar);
 
     HttpEntityEnclosingRequestBase request;
     String versionedApiPath = getVersionedAPIPath("apps/", apiVersion, namespace);
@@ -478,7 +456,7 @@ public abstract class AppFabricTestBase {
     if (appConfig != null) {
       request.setHeader("X-App-Config", GSON.toJson(appConfig));
     }
-    request.setEntity(new ByteArrayEntity(bos.toByteArray()));
+    request.setEntity(new FileEntity(artifactJar));
     return execute(request);
   }
 
@@ -812,8 +790,15 @@ public abstract class AppFabricTestBase {
                  GSON.toJson(meta));
   }
 
-  protected File buildAppArtifact(Class cls, String name) throws IOException {
-    Location appJar = AppJarHelper.createDeploymentJar(locationFactory, cls, new Manifest());
+  protected File buildAppArtifact(Class<?> cls, String name) throws IOException {
+    return buildAppArtifact(cls, name, new Manifest());
+  }
+
+  protected File buildAppArtifact(Class<?> cls, String name, Manifest manifest) throws IOException {
+    if (!name.endsWith(".jar")) {
+      name += ".jar";
+    }
+    Location appJar = AppJarHelper.createDeploymentJar(locationFactory, cls, manifest);
     File destination = new File(tmpFolder.newFolder(), name);
     Files.copy(Locations.newInputSupplier(appJar), destination);
     return destination;

@@ -22,3 +22,6 @@ MANUALS="introduction developers-manual cdap-apps admin-manual integrations exam
 
 # This needs to be explicitly set as Git has trouble identifying it.
 GIT_BRANCH_PARENT="develop"
+
+# Used by cdap-apps for Hydrator documentation
+GIT_BRANCH_CDAP_HYDRATOR="develop"

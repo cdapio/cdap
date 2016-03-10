@@ -179,12 +179,26 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
       instances = getInstances().getResponseObject();
       Assert.assertEquals(1, instances.size());
 
+      DatasetMeta meta = getInstanceObject("dataset1").getResponseObject();
+      Map<String, String> storedOriginalProps = meta.getSpec().getOriginalProperties();
+      Assert.assertEquals(props.getProperties(), storedOriginalProps);
+
+      Map<String, String> retrievedProps = getInstanceProperties("dataset1").getResponseObject();
+      Assert.assertEquals(props.getProperties(), retrievedProps);
+
       Map<String, String> newProps = ImmutableMap.of("prop2", "val2");
 
       // update dataset instance
       Assert.assertEquals(HttpStatus.SC_OK, updateInstance("dataset1", newProps).getResponseCode());
-      Assert.assertEquals("val2", getInstanceObject("dataset1").getResponseObject().getSpec().getProperty("prop2"));
-      Assert.assertNull(getInstanceObject("dataset1").getResponseObject().getSpec().getProperty("prop1"));
+
+      meta = getInstanceObject("dataset1").getResponseObject();
+      Assert.assertEquals(newProps, meta.getSpec().getOriginalProperties());
+      Assert.assertEquals("val2", meta.getSpec().getProperty("prop2"));
+      Assert.assertNull(meta.getSpec().getProperty("prop1"));
+
+      retrievedProps = getInstanceProperties("dataset1").getResponseObject();
+      Assert.assertEquals(newProps, retrievedProps);
+
     } finally {
       // delete dataset instance
       Assert.assertEquals(HttpStatus.SC_OK, deleteInstance("dataset1").getResponseCode());
@@ -346,7 +360,8 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
 
   private ObjectResponse<List<DatasetSpecificationSummary>> getInstances(String namespace) throws IOException {
     return ObjectResponse.fromJsonBody(makeInstancesRequest(namespace),
-                                       new TypeToken<List<DatasetSpecificationSummary>>() { }.getType());
+                                       new TypeToken<List<DatasetSpecificationSummary>>() {
+                                       }.getType());
   }
 
   private HttpResponse makeInstancesRequest(String namespace) throws IOException {
@@ -368,6 +383,12 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
     HttpRequest request = HttpRequest.get(getUrl("/data/datasets/" + instanceName)).build();
     HttpResponse response = HttpRequests.execute(request);
     return ObjectResponse.fromJsonBody(response, DatasetMeta.class);
+  }
+
+  private ObjectResponse<Map<String, String>> getInstanceProperties(String instanceName) throws IOException {
+    HttpRequest request = HttpRequest.get(getUrl("/data/datasets/" + instanceName + "/properties")).build();
+    HttpResponse response = HttpRequests.execute(request);
+    return ObjectResponse.fromJsonBody(response, new TypeToken<Map<String, String>>() { }.getType());
   }
 
   private HttpResponse deleteInstance(String instanceName) throws IOException {

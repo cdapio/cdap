@@ -110,6 +110,7 @@ public abstract class DatasetServiceTestBase {
   private NamespaceStore namespaceStore;
   protected TransactionManager txManager;
   protected RemoteDatasetFramework dsFramework;
+  protected InMemoryDatasetFramework inMemoryDatasetFramework;
 
   private int port = -1;
 
@@ -175,10 +176,10 @@ public abstract class DatasetServiceTestBase {
 
     TransactionExecutorFactory txExecutorFactory = injector.getInstance(TransactionExecutorFactory.class);
 
-    MDSDatasetsRegistry mdsDatasetsRegistry =
-      new MDSDatasetsRegistry(txSystemClientService, new InMemoryDatasetFramework(registryFactory, modules, cConf));
+    inMemoryDatasetFramework = new InMemoryDatasetFramework(registryFactory, modules, cConf);
+    MDSDatasetsRegistry mdsDatasetsRegistry = new MDSDatasetsRegistry(txSystemClientService, inMemoryDatasetFramework);
 
-    ExploreFacade exploreFacade = new ExploreFacade(new DiscoveryExploreClient(discoveryService), cConf);
+    ExploreFacade exploreFacade = new ExploreFacade(new DiscoveryExploreClient(cConf, discoveryService), cConf);
     namespaceStore = new InMemoryNamespaceStore();
     namespaceStore.create(NamespaceMeta.DEFAULT);
     DatasetInstanceService instanceService = new DatasetInstanceService(

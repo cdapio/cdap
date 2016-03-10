@@ -135,7 +135,10 @@ angular.module(PKG.name + '.feature.admin')
           });
 
         }, function (err) {
-          $scope.error = err;
+          myAlertOnValium.show({
+            type: 'danger',
+            content: err.data
+          });
         });
     };
 

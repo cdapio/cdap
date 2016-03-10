@@ -37,7 +37,7 @@ public class ErrorTransform extends Transform<StructuredRecord, StructuredRecord
     emitter.emitError(new InvalidEntry<>(500, "msg", input));
   }
 
-  public static co.cask.cdap.etl.common.Plugin getPlugin() {
-    return new co.cask.cdap.etl.common.Plugin("Error", new HashMap<String, String>());
+  public static co.cask.cdap.etl.proto.v1.Plugin getPlugin() {
+    return new co.cask.cdap.etl.proto.v1.Plugin("Error", new HashMap<String, String>());
   }
 }

@@ -43,7 +43,6 @@ import org.junit.ClassRule;
 import org.junit.Test;
 
 import java.lang.reflect.Type;
-import java.util.List;
 
 /**
  * Tests for verifying that system metadata gets published to Kafka when publishing is enabled

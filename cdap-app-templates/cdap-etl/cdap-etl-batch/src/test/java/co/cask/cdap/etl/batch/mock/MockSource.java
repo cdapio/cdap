@@ -79,10 +79,10 @@ public class MockSource extends BatchSource<byte[], Row, StructuredRecord> {
     context.setInput(config.tableName);
   }
 
-  public static co.cask.cdap.etl.common.Plugin getPlugin(String tableName) {
+  public static co.cask.cdap.etl.proto.v1.Plugin getPlugin(String tableName) {
     Map<String, String> properties = new HashMap<>();
     properties.put("tableName", tableName);
-    return new co.cask.cdap.etl.common.Plugin("Mock", properties);
+    return new co.cask.cdap.etl.proto.v1.Plugin("Mock", properties);
   }
 
   /**

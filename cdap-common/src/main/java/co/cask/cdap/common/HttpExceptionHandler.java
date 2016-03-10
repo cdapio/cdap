@@ -54,7 +54,12 @@ public class HttpExceptionHandler extends ExceptionHandler {
       responder.sendStatus(HttpResponseStatus.METHOD_NOT_ALLOWED);
     } else if (t instanceof UnauthorizedException) {
       logWithTrace(request, t);
-      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+      HttpResponseStatus status = ((UnauthorizedException) t).isAuthenticationError() ?
+        HttpResponseStatus.UNAUTHORIZED : HttpResponseStatus.FORBIDDEN;
+      responder.sendStatus(status);
+    } else if (t instanceof FeatureDisabledException) {
+      logWithTrace(request, t);
+      responder.sendString(HttpResponseStatus.NOT_IMPLEMENTED, t.getMessage());
     } else {
       LOG.error("Unexpected error: request={} {} user={}:", request.getMethod().getName(), request.getUri(),
                 SecurityRequestContext.getUserId().or("<null>"), t);
