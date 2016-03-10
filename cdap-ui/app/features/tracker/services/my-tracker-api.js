@@ -19,7 +19,7 @@ function myTrackerApi(myCdapUrl, $resource, myAuth, myHelpers) {
       searchPath = '/namespaces/:namespace/metadata/search',
       basePath = '/namespaces/:namespace/:entityType/:entityId',
       programPath = '/namespaces/:namespace/apps/:appId/:programType/:programId/runs/:runId',
-      auditPath = '/namespaces/:namespace/apps/Tracker/services/AuditLog/methods/auditlog';
+      auditPath = '/namespaces/:namespace/apps/Tracker/services/AuditLog/methods/auditlog/:entityType/:entityId';
 
   return $resource(
     url({ _cdapPath: searchPath }),

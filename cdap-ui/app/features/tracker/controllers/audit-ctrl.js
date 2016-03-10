@@ -71,8 +71,8 @@ class TrackerAuditController {
   fetchAuditLogs(currentPage) {
     let params = {
       namespace: this.$state.params.namespace,
-      type: this.$state.params.entityType === 'streams' ? 'stream' : 'dataset',
-      name: this.$state.params.entityId,
+      entityType: this.$state.params.entityType === 'streams' ? 'stream' : 'dataset',
+      entityId: this.$state.params.entityId,
       startTime: this.timeRange.start,
       endTime: this.timeRange.end,
       offset: (currentPage - 1) * 10,
