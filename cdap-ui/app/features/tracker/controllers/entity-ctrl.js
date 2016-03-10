@@ -49,10 +49,6 @@ class TrackerEntityController{
   goBack() {
     this.$window.history.back();
   }
-
-  jump() {
-    this.myJumpFactory.streamBatchSource(this.$state.params.entityId);
-  }
 }
 
 TrackerEntityController.$inject = ['$state', '$window', 'myJumpFactory'];
