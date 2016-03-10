@@ -55,9 +55,11 @@
     <p>No audit logs for the time period specified</p>
   </div>
 
-  <uib-pagination total-items="AuditController.auditLogs.totalResults"
-                  ng-model="this.currentPage"
-                  ng-change="AuditController.fetchAuditLogs(this.currentPage)"
-                  ng-if="AuditController.auditLogs.totalResults > 10">
-  </uib-pagination>
+  <div class="text-center">
+    <uib-pagination total-items="AuditController.auditLogs.totalResults"
+                    ng-model="this.currentPage"
+                    ng-change="AuditController.fetchAuditLogs(this.currentPage)"
+                    ng-if="AuditController.auditLogs.totalResults > 10">
+    </uib-pagination>
+  </div>
 </div>
