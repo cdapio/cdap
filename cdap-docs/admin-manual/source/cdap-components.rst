@@ -30,8 +30,9 @@ configuration is set in the ``cdap-site.xml`` file (documented in :ref:`an appen
 installation procedure steps detailed in later sections. You edit a version of this file
 to configure CDAP to your specific requirements prior to starting CDAP services.
 
-CDAP generates log files. The location can be customized, but unless you have changed from
-the default, they will be located in ``/var/log/cdap``.
+CDAP generates log files, following the settings in the configuration file ``logback.xml``, using
+`Logback <http://logback.qos.ch/>`__. Logs (for Distributed CDAP) are located in ``/var/log/cdap``.
+For Standalone CDAP, they are located in ``<CDAP-SDK-HOME>/logs``.
 
 If you have :ref:`CDAP Security <admin-security>` enabled, then you will have an
 additional file, ``cdap-security.xml`` (documented in :ref:`an appendix
