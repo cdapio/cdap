@@ -25,6 +25,7 @@ import com.google.inject.Module;
 import com.google.inject.PrivateModule;
 import com.google.inject.Provider;
 import com.google.inject.Scopes;
+import com.google.inject.Singleton;
 
 /**
  * Guice bindings for publishing audit.
@@ -35,8 +36,10 @@ public class AuditModule extends RuntimeModule {
     return new PrivateModule() {
       @Override
       protected void configure() {
-        bind(AuditPublisher.class).to(NoOpAuditPublisher.class);
+        bind(AuditPublisher.class).to(InMemoryAuditPublisher.class);
+        bind(InMemoryAuditPublisher.class).in(Singleton.class);
         expose(AuditPublisher.class);
+        expose(InMemoryAuditPublisher.class);
       }
     };
   }

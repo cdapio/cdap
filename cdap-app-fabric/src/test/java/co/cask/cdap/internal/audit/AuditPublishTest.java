@@ -109,6 +109,7 @@ public class AuditPublishTest {
 
     Multimap<AuditType, EntityId> expectedAuditEntities = HashMultimap.create();
     expectedAuditEntities.putAll(AuditType.METADATA_CHANGE, expectedMetadataChangeEntities);
+    expectedAuditEntities.put(AuditType.CREATE, Ids.namespace(defaultNs).stream("text"));
 
     AppFabricTestHelper.deployApplication(WordCountApp.class);
     List<AuditMessage> publishedMessages =
