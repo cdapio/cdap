@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.commons')
-  .directive('loadingIcon', function(myLoadingService, $uibModal, $timeout, EventPipe, $state, $alert) {
+  .directive('loadingIcon', function(myLoadingService, $uibModal, $timeout, EventPipe, $state, myAlertOnValium) {
     return {
       restrict: 'EA',
       scope: true,
@@ -54,7 +54,7 @@ angular.module(PKG.name + '.commons')
             modal = null;
             isBackendDown = false;
 
-            $alert({
+            myAlertOnValium.show({
               type: 'success',
               content: message ? message : 'Services are online'
             });
