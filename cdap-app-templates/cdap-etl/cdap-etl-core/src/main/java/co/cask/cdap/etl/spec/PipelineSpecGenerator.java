@@ -242,9 +242,6 @@ public class PipelineSpecGenerator {
       }
       stages.put(stageName, new StageConnections(stage, stageInputs, stageOutputs));
     }
-    if (dag.getSources().size() > 1) {
-      throw new IllegalArgumentException("Multiple sources are not allowed at this time.");
-    }
 
     List<StageConnections> traversalOrder = new ArrayList<>(stages.size());
     for (String stageName : dag.getTopologicalOrder()) {

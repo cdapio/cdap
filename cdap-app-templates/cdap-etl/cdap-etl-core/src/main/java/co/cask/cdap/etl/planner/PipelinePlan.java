@@ -42,6 +42,10 @@ public class PipelinePlan {
     return phases;
   }
 
+  public PipelinePhase getPhase(String name) {
+    return phases.get(name);
+  }
+
   public Set<Connection> getPhaseConnections() {
     return phaseConnections;
   }
