@@ -69,7 +69,8 @@ final class SparkContextFactory {
                                      transaction, datasetFramework, txClient, clientContext.getDiscoveryServiceClient(),
                                      clientContext.getMetricsContext(), clientContext.getLoggingContext(),
                                      hConf, streamAdmin, localizedResources,
-                                     clientContext.getPluginInstantiator(), clientContext.getWorkflowToken());
+                                     clientContext.getPluginInstantiator(), clientContext.getWorkflowToken(),
+                                     clientContext.getWorkflowLocalDatasetNameMapping());
   }
 
   private SparkSpecification updateSpecExecutorResources(SparkSpecification originalSpec, Resources executorResources) {

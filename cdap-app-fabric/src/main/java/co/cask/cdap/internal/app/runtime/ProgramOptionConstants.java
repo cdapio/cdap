@@ -39,6 +39,8 @@ public final class ProgramOptionConstants {
 
   public static final String WORKFLOW_TOKEN = "workflowToken";
 
+  public static final String WORKFLOW_LOCAL_DATASET_NAME_MAPPING = "workflowLocalDatasetNameMapping";
+
   public static final String WORKFLOW_RUN_ID = "workflowRunId";
 
   public static final String WORKFLOW_NODE_ID = "workflowNodeId";

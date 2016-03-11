@@ -77,6 +77,7 @@ public abstract class AbstractSparkContext implements SparkContext, Closeable {
   private final LoggingContext loggingContext;
   private final PluginInstantiator pluginInstantiator;
   private final WorkflowToken workflowToken;
+  private final Map<String, String> workflowLocalDatasetNameMapping;
 
   private Resources executorResources;
   private SparkConf sparkConf;
@@ -87,7 +88,8 @@ public abstract class AbstractSparkContext implements SparkContext, Closeable {
                                  Map<String, String> runtimeArguments, DiscoveryServiceClient discoveryServiceClient,
                                  MetricsContext metricsContext, LoggingContext loggingContext,
                                  @Nullable PluginInstantiator pluginInstantiator,
-                                 @Nullable WorkflowToken workflowToken) {
+                                 @Nullable WorkflowToken workflowToken,
+                                 @Nullable Map<String, String> workflowLocalDatasetNameMapping) {
     this.applicationSpecification = applicationSpecification;
     this.specification = specification;
     this.programId = programId;
@@ -103,6 +105,7 @@ public abstract class AbstractSparkContext implements SparkContext, Closeable {
     this.sparkConf = new SparkConf();
     this.pluginInstantiator = pluginInstantiator;
     this.workflowToken = workflowToken;
+    this.workflowLocalDatasetNameMapping = workflowLocalDatasetNameMapping;
   }
 
   @Override
@@ -191,6 +194,15 @@ public abstract class AbstractSparkContext implements SparkContext, Closeable {
   @Override
   public WorkflowToken getWorkflowToken() {
     return workflowToken;
+  }
+
+  /**
+   * Return the map of local dataset names to the names assigned to the for the current run of the Workflow,
+   * if Spark is running inside Workflow. Otherwise {@code null} is returned.
+   */
+  @Nullable
+  public Map<String, String> getWorkflowLocalDatasetNameMapping() {
+    return workflowLocalDatasetNameMapping;
   }
 
   @Override

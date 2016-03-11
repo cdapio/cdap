@@ -68,8 +68,10 @@ import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
 import java.io.File;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
@@ -151,6 +153,13 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
                                     BasicWorkflowToken.class);
     }
 
+    Map<String, String> workflowLocalDatasetNameMapping = null;
+    if (arguments.hasOption(ProgramOptionConstants.WORKFLOW_LOCAL_DATASET_NAME_MAPPING)) {
+      Type type = new TypeToken<Map<String, String>>() { }.getType();
+      String mappingJson = arguments.getOption(ProgramOptionConstants.WORKFLOW_LOCAL_DATASET_NAME_MAPPING);
+      workflowLocalDatasetNameMapping = GSON.fromJson(arguments.getOption(mappingJson), type);
+    }
+
     // Setup dataset framework context, if required
     if (datasetFramework instanceof ProgramContextAware) {
       Id.Program programId = program.getId();
@@ -175,7 +184,8 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
 
       final BasicMapReduceContext context =
         new BasicMapReduceContext(program, runId, options.getUserArguments(), spec,
-                                  logicalStartTime, programNameInWorkflow, workflowToken, discoveryServiceClient,
+                                  logicalStartTime, programNameInWorkflow, workflowToken,
+                                  workflowLocalDatasetNameMapping, discoveryServiceClient,
                                   metricsCollectionService, txSystemClient, datasetFramework, streamAdmin,
                                   getPluginArchive(options), pluginInstantiator);
 

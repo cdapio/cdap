@@ -61,13 +61,15 @@ public final class ClientSparkContext extends AbstractSparkContext {
                             MetricsCollectionService metricsCollectionService,
                             @Nullable File pluginArchive,
                             @Nullable PluginInstantiator pluginInstantiator,
-                            @Nullable WorkflowToken workflowToken) {
+                            @Nullable WorkflowToken workflowToken,
+                            @Nullable Map<String, String> workflowLocalDatasetNameMapping) {
     super(program.getApplicationSpecification(),
           program.getApplicationSpecification().getSpark().get(program.getName()),
           program.getId(), runId, program.getClassLoader(), logicalStartTime,
           runtimeArguments, discoveryServiceClient,
           createMetricsContext(metricsCollectionService, program.getId(), runId),
-          createLoggingContext(program.getId(), runId), pluginInstantiator, workflowToken);
+          createLoggingContext(program.getId(), runId), pluginInstantiator, workflowToken,
+          workflowLocalDatasetNameMapping);
 
     this.datasetCache = new SingleThreadDatasetCache(
       new SystemDatasetInstantiator(datasetFramework, program.getClassLoader(), getOwners()),

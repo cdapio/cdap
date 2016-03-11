@@ -54,10 +54,12 @@ import javax.annotation.Nullable;
  */
 public final class MapReduceContextConfig {
 
+  public static final String HCONF_ATTR_RUN_ID = "hconf.program.run.id";
+  public static final String HCONF_ATTR_WORKFLOW_LOCAL_DATASET_NAME_MAPPING
+    = "hconf.program.workflow.local.dataset.name.mapping";
+
   private static final Logger LOG = LoggerFactory.getLogger(MapReduceContextConfig.class);
   private static final Gson GSON = new Gson();
-
-  private static final String HCONF_ATTR_RUN_ID = "hconf.program.run.id";
   private static final String HCONF_ATTR_LOGICAL_START_TIME = "hconf.program.logical.start.time";
   private static final String HCONF_ATTR_PROGRAM_NAME_IN_WORKFLOW = "hconf.program.name.in.workflow";
   private static final String HCONF_ATTR_WORKFLOW_TOKEN = "hconf.program.workflow.token";
@@ -93,6 +95,7 @@ public final class MapReduceContextConfig {
     setLogicalStartTime(context.getLogicalStartTime());
     setProgramNameInWorkflow(context.getProgramNameInWorkflow());
     setWorkflowToken(context.getWorkflowToken());
+    setWorkflowLocalDatasetNameMapping(context.getWorkflowLocalDatasetNameMapping());
     setPlugins(context.getPlugins());
     setArguments(context.getRuntimeArguments());
     setProgramJarURI(programJarURI);
@@ -171,6 +174,12 @@ public final class MapReduceContextConfig {
     BasicWorkflowToken token = GSON.fromJson(tokenJson, BasicWorkflowToken.class);
     token.disablePut();
     return token;
+  }
+
+  private void setWorkflowLocalDatasetNameMapping(@Nullable Map<String, String> localDatasetNameMapping) {
+    if (localDatasetNameMapping != null) {
+      hConf.set(HCONF_ATTR_WORKFLOW_LOCAL_DATASET_NAME_MAPPING, GSON.toJson(localDatasetNameMapping));
+    }
   }
 
   private void setPlugins(Map<String, Plugin> plugins) {

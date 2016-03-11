@@ -118,12 +118,13 @@ public class ExecutionSparkContext extends AbstractSparkContext {
                                Configuration hConf, StreamAdmin streamAdmin,
                                Map<String, File> localizedResources,
                                @Nullable PluginInstantiator pluginInstantiator,
-                               @Nullable WorkflowToken workflowToken) {
+                               @Nullable WorkflowToken workflowToken,
+                               @Nullable Map<String, String> workflowLocalDatasetNameMapping) {
     this(appSpec, specification, programId, runId, programClassLoader, logicalStartTime, runtimeArguments,
          transaction, datasetFramework, txClient, discoveryServiceClient,
          createMetricsContext(metricsCollectionService, programId, runId),
          createLoggingContext(programId, runId), hConf, streamAdmin, localizedResources, pluginInstantiator,
-         workflowToken);
+         workflowToken, workflowLocalDatasetNameMapping);
   }
 
   /**
@@ -140,10 +141,11 @@ public class ExecutionSparkContext extends AbstractSparkContext {
                                Configuration hConf, StreamAdmin streamAdmin,
                                Map<String, File> localizedResources,
                                @Nullable PluginInstantiator pluginInstantiator,
-                               @Nullable WorkflowToken workflowToken) {
+                               @Nullable WorkflowToken workflowToken,
+                               @Nullable Map<String, String> workflowLocalDatasetNameMapping) {
     super(appSpec, specification, programId, runId, programClassLoader, logicalStartTime,
           runtimeArguments, discoveryServiceClient, metricsContext, loggingContext,
-          pluginInstantiator, workflowToken);
+          pluginInstantiator, workflowToken, workflowLocalDatasetNameMapping);
     this.datasets = new HashMap<>();
     this.contextConfig = new SparkContextConfig(hConf);
     this.transaction = transaction;
