@@ -131,6 +131,8 @@ function myJumpFactory($state, myTrackerApi, $rootScope) {
 
         if (datasetType === 'Table') {
           _addTableBatchSource(datasetName);
+        } else if (datasetType === 'KeyValueTable') {
+          _addKVTableBatchSource(datasetName);
         }
       });
   }
@@ -149,6 +151,8 @@ function myJumpFactory($state, myTrackerApi, $rootScope) {
 
         if (datasetType === 'Table') {
           _addTableBatchSink(datasetName);
+        } else if (datasetType === 'KeyValueTable') {
+          _addKVTableBatchSink(datasetName);
         }
       });
   }
@@ -211,6 +215,45 @@ function myJumpFactory($state, myTrackerApi, $rootScope) {
           type: 'cdap-etl-batch'
         });
       });
+  }
+
+  function _addKVTableBatchSource(datasetName) {
+    let data = angular.copy(batchSourceTemplate);
+    data.config.source = {
+      name: datasetName,
+      plugin: {
+        name: 'KVTable',
+        label: datasetName,
+        artifact: corePluginsArtifacts,
+        properties: {
+          name: datasetName
+        }
+      }
+    };
+
+    $state.go('hydrator.create.studio', {
+      data: data,
+      type: 'cdap-etl-batch'
+    });
+  }
+  function _addKVTableBatchSink(datasetName) {
+    let data = angular.copy(batchSinkTemplate);
+    data.config.sinks = [{
+      name: datasetName,
+      plugin: {
+        name: 'KVTable',
+        label: datasetName,
+        artifact: corePluginsArtifacts,
+        properties: {
+          name: datasetName
+        }
+      }
+    }];
+
+    $state.go('hydrator.create.studio', {
+      data: data,
+      type: 'cdap-etl-batch'
+    });
   }
 
   return {
