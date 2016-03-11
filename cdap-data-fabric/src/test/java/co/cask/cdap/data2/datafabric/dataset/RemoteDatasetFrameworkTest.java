@@ -29,6 +29,7 @@ import co.cask.cdap.data2.datafabric.dataset.service.DatasetInstanceService;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.LocalStorageProviderNamespaceAdmin;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetAdminOpHTTPHandler;
+import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetAdminService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutorService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.InMemoryDatasetOpExecutor;
 import co.cask.cdap.data2.datafabric.dataset.service.mds.MDSDatasetsRegistry;
@@ -110,8 +111,10 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
     SystemDatasetInstantiatorFactory datasetInstantiatorFactory =
       new SystemDatasetInstantiatorFactory(locationFactory, framework, cConf);
 
-    ImmutableSet<HttpHandler> handlers = ImmutableSet.<HttpHandler>of(
-      new DatasetAdminOpHTTPHandler(framework, cConf, locationFactory, datasetInstantiatorFactory));
+    DatasetAdminService datasetAdminService = new DatasetAdminService(framework, cConf, locationFactory,
+                                                                      datasetInstantiatorFactory);
+    ImmutableSet<HttpHandler> handlers =
+      ImmutableSet.<HttpHandler>of(new DatasetAdminOpHTTPHandler(datasetAdminService));
     opExecutorService = new DatasetOpExecutorService(cConf, discoveryService, metricsCollectionService, handlers);
 
     opExecutorService.startAndWait();
