@@ -28,9 +28,9 @@ import co.cask.cdap.etl.api.batch.BatchSinkContext;
 import co.cask.cdap.etl.api.batch.BatchSourceContext;
 import co.cask.cdap.etl.common.Constants;
 import co.cask.cdap.etl.common.DatasetContextLookupProvider;
-import co.cask.cdap.etl.common.Pipeline;
+import co.cask.cdap.etl.common.PipelinePhase;
 import co.cask.cdap.etl.common.PipelineRegisterer;
-import co.cask.cdap.etl.common.SinkInfo;
+import co.cask.cdap.etl.planner.StageInfo;
 import co.cask.cdap.etl.proto.v1.ETLBatchConfig;
 import com.google.gson.Gson;
 import org.apache.avro.mapreduce.AvroKeyInputFormat;
@@ -45,6 +45,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Configures and sets up runs of {@link ETLSparkProgram}.
@@ -69,7 +70,7 @@ public class ETLSpark extends AbstractSpark {
 
     PipelineRegisterer pipelineRegisterer = new PipelineRegisterer(getConfigurer(), "batch");
 
-    Pipeline pipelineIds =
+    PipelinePhase pipelineIds =
       pipelineRegisterer.registerPlugins(
         config, TimePartitionedFileSet.class,
         FileSetProperties.builder()
@@ -103,8 +104,8 @@ public class ETLSpark extends AbstractSpark {
     finishers = new ArrayList<>();
 
     Map<String, String> properties = context.getSpecification().getProperties();
-    Pipeline pipeline = GSON.fromJson(properties.get(Constants.PIPELINEID), Pipeline.class);
-    String sourcePluginId = pipeline.getSource();
+    PipelinePhase pipeline = GSON.fromJson(properties.get(Constants.PIPELINEID), PipelinePhase.class);
+    String sourcePluginId = pipeline.getSource().getName();
 
     PluginContext pluginContext = context.getPluginContext();
     BatchConfigurable<BatchSourceContext> batchSource = pluginContext.newPluginInstance(sourcePluginId);
@@ -122,10 +123,10 @@ public class ETLSpark extends AbstractSpark {
     addFinisher(batchSource, sourceContext, finishers);
 
     SparkBatchSinkFactory sinkFactory = new SparkBatchSinkFactory();
-    List<SinkInfo> sinkInfos = pipeline.getSinks();
-    for (SinkInfo sinkInfo : sinkInfos) {
-      BatchConfigurable<BatchSinkContext> batchSink = pluginContext.newPluginInstance(sinkInfo.getSinkId());
-      BatchSinkContext sinkContext = new SparkBatchSinkContext(sinkFactory, context, null, sinkInfo.getSinkId());
+    Set<StageInfo> sinkInfos = pipeline.getSinks();
+    for (StageInfo sinkInfo : sinkInfos) {
+      BatchConfigurable<BatchSinkContext> batchSink = pluginContext.newPluginInstance(sinkInfo.getName());
+      BatchSinkContext sinkContext = new SparkBatchSinkContext(sinkFactory, context, null, sinkInfo.getName());
       batchSink.prepareRun(sinkContext);
       addFinisher(batchSink, sinkContext, finishers);
     }

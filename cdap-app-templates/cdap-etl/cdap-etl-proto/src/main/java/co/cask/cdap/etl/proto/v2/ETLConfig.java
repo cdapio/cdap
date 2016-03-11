@@ -57,8 +57,20 @@ public class ETLConfig extends Config {
     return resources == null ? new Resources() : resources;
   }
 
-  public Boolean isStageLoggingEnabled() {
+  public boolean isStageLoggingEnabled() {
     return stageLoggingEnabled == null ? true : stageLoggingEnabled;
+  }
+
+  /**
+   * Validate correctness. Since this object is created through deserialization, some fields that should not be null
+   * may be null. Only validates field correctness, not logical correctness.
+   *
+   * @throws IllegalArgumentException if the object is invalid
+   */
+  public void validate() {
+    for (ETLStage stage : stages) {
+      stage.validate();
+    }
   }
 
   @Override

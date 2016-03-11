@@ -85,8 +85,7 @@ public class TransformExecutor<IN> implements Destroyable {
       transformation.transform(inputEntry, transformDetail);
     }
 
-    List<String> nextStages = transformDetail.getNextStages();
-    for (String nextStage : nextStages) {
+    for (String nextStage : transformDetail.getNextStages()) {
       executeTransformation(nextStage, transformDetail.getEntries());
     }
 
