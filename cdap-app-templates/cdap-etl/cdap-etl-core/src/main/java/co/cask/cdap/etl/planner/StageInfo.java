@@ -25,12 +25,14 @@ import javax.annotation.Nullable;
 public class StageInfo {
   private final String name;
   private final String errorDatasetName;
-  private final boolean isConnector;
 
-  public StageInfo(String name, @Nullable String errorDatasetName, boolean isConnector) {
+  public StageInfo(String name) {
+    this(name, null);
+  }
+
+  public StageInfo(String name, @Nullable String errorDatasetName) {
     this.name = name;
     this.errorDatasetName = errorDatasetName;
-    this.isConnector = isConnector;
   }
 
   public String getName() {
@@ -40,10 +42,6 @@ public class StageInfo {
   @Nullable
   public String getErrorDatasetName() {
     return errorDatasetName;
-  }
-
-  public boolean isConnector() {
-    return isConnector;
   }
 
   @Override
@@ -58,13 +56,12 @@ public class StageInfo {
     StageInfo that = (StageInfo) o;
 
     return Objects.equals(name, that.name) &&
-      Objects.equals(errorDatasetName, that.errorDatasetName) &&
-      isConnector == that.isConnector;
+      Objects.equals(errorDatasetName, that.errorDatasetName);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(name, errorDatasetName, isConnector);
+    return Objects.hash(name, errorDatasetName);
   }
 
   @Override
@@ -72,7 +69,6 @@ public class StageInfo {
     return "StageInfo{" +
       "name='" + name + '\'' +
       ", errorDatasetName='" + errorDatasetName + '\'' +
-      ", isConnector=" + isConnector +
       '}';
   }
 }

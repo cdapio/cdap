@@ -176,28 +176,28 @@ public class ETLWorker extends AbstractWorker {
       }
     });
 
+    PipelinePhase pipeline = GSON.fromJson(properties.get(Constants.PIPELINEID), PipelinePhase.class);
+
     Map<String, Set<String>> connectionsMap =
       GSON.fromJson(properties.get(Constants.PIPELINEID), PipelinePhase.class).getConnections();
     Map<String, TransformDetail> transformationMap = new HashMap<>();
-    DefaultEmitter defaultEmitter = new DefaultEmitter(metrics);
 
-    initializeSource(context);
+    initializeSource(context, pipeline);
 
-    initializeTransforms(context, transformationMap, connectionsMap);
-    initializeSinks(context, transformationMap);
-    List<String> startStages = new ArrayList<>();
+    initializeTransforms(context, transformationMap, pipeline);
+    initializeSinks(context, transformationMap, pipeline);
+    Set<String> startStages = new HashSet<>();
     startStages.addAll(connectionsMap.get(sourceStageName));
     transformExecutor = new TransformExecutor(transformationMap, startStages);
   }
 
-  private void initializeSource(WorkerContext context) throws Exception {
-    String sourcePluginId = GSON.fromJson(
-      context.getSpecification().getProperty(Constants.PIPELINEID), PipelinePhase.class).getSource().getName();
-    source = context.newPluginInstance(sourcePluginId);
-    source = new LoggedRealtimeSource<>(sourcePluginId, source);
+  private void initializeSource(WorkerContext context, PipelinePhase pipeline) throws Exception {
+    String sourceName = pipeline.getStagesOfType(RealtimeSource.PLUGIN_TYPE).iterator().next().getName();
+    source = context.newPluginInstance(sourceName);
+    source = new LoggedRealtimeSource<>(sourceName, source);
     WorkerRealtimeContext sourceContext = new WorkerRealtimeContext(
-      context, metrics, new TxLookupProvider(context), sourcePluginId);
-    sourceStageName = sourcePluginId;
+      context, metrics, new TxLookupProvider(context), sourceName);
+    sourceStageName = sourceName;
     LOG.debug("Source Class : {}", source.getClass().getName());
     source.initialize(sourceContext);
     sourceEmitter = new DefaultEmitter(sourceContext.getMetrics());
@@ -205,9 +205,9 @@ public class ETLWorker extends AbstractWorker {
 
   @SuppressWarnings("unchecked")
   private void initializeSinks(WorkerContext context,
-                               Map<String, TransformDetail> transformationMap) throws Exception {
-    Set<StageInfo> sinkInfos = GSON.fromJson(context.getSpecification().getProperty(Constants.PIPELINEID),
-                                             PipelinePhase.class).getSinks();
+                               Map<String, TransformDetail> transformationMap,
+                               PipelinePhase pipeline) throws Exception {
+    Set<StageInfo> sinkInfos = pipeline.getStagesOfType(RealtimeSink.PLUGIN_TYPE);
     sinks = new HashMap<>(sinkInfos.size());
     for (StageInfo sinkInfo : sinkInfos) {
       String sinkName = sinkInfo.getName();
@@ -238,26 +238,25 @@ public class ETLWorker extends AbstractWorker {
 
   private void initializeTransforms(WorkerContext context,
                                     Map<String, TransformDetail> transformDetailMap,
-                                    Map<String, Set<String>> connectionsMap) throws Exception {
-    Set<StageInfo> transformInfos =
-      GSON.fromJson(context.getSpecification().getProperty(Constants.PIPELINEID), PipelinePhase.class).getTransforms();
+                                    PipelinePhase pipeline) throws Exception {
+    Set<StageInfo> transformInfos = pipeline.getStagesOfType(Transform.PLUGIN_TYPE);
     Preconditions.checkArgument(transformInfos != null);
     tranformIdToDatasetName = new HashMap<>(transformInfos.size());
 
     for (StageInfo transformInfo : transformInfos) {
-      String transformId = transformInfo.getName();
+      String transformName = transformInfo.getName();
       try {
-        Transform<?, ?> transform = context.newPluginInstance(transformId);
-        transform = new LoggedTransform<>(transformId, transform);
+        Transform<?, ?> transform = context.newPluginInstance(transformName);
+        transform = new LoggedTransform<>(transformName, transform);
         WorkerRealtimeContext transformContext = new WorkerRealtimeContext(
-          context, metrics, new TxLookupProvider(context), transformId);
+          context, metrics, new TxLookupProvider(context), transformName);
         LOG.debug("Transform Class : {}", transform.getClass().getName());
         transform.initialize(transformContext);
-        transformDetailMap.put(transformId,
-                               new TransformDetail(transform, new DefaultStageMetrics(metrics, transformId),
-                                                   connectionsMap.get(transformId)));
+        transformDetailMap.put(transformName,
+                               new TransformDetail(transform, new DefaultStageMetrics(metrics, transformName),
+                                                   pipeline.getStageOutputs(transformName)));
         if (transformInfo.getErrorDatasetName() != null) {
-          tranformIdToDatasetName.put(transformId, transformInfo.getErrorDatasetName());
+          tranformIdToDatasetName.put(transformName, transformInfo.getErrorDatasetName());
         }
       } catch (InstantiationException e) {
         LOG.error("Unable to instantiate Transform", e);

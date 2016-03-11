@@ -21,12 +21,17 @@ import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.plugin.PluginContext;
 import co.cask.cdap.api.spark.JavaSparkProgram;
 import co.cask.cdap.api.spark.SparkContext;
+import co.cask.cdap.etl.api.Transform;
+import co.cask.cdap.etl.api.batch.BatchSink;
+import co.cask.cdap.etl.api.batch.BatchSource;
+import co.cask.cdap.etl.batch.BatchPhaseSpec;
+import co.cask.cdap.etl.batch.PipelinePluginInstantiator;
 import co.cask.cdap.etl.batch.TransformExecutorFactory;
 import co.cask.cdap.etl.common.Constants;
 import co.cask.cdap.etl.common.PipelinePhase;
 import co.cask.cdap.etl.common.TransformExecutor;
 import co.cask.cdap.etl.common.TransformResponse;
-import co.cask.cdap.etl.planner.StageInfo;
+import com.google.common.collect.ImmutableSet;
 import com.google.gson.Gson;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.function.Function;
@@ -64,16 +69,15 @@ public class ETLSparkProgram implements JavaSparkProgram {
     JavaPairRDD<Object, Object> rdd = sourceFactory.createRDD(context, Object.class, Object.class);
     JavaPairRDD<String, Object> resultRDD = rdd.flatMapToPair(new MapFunction(context)).cache();
 
-    PipelinePhase pipeline = GSON.fromJson(context.getSpecification().getProperty(Constants.PIPELINEID),
-                                           PipelinePhase.class);
-    for (StageInfo sinkInfo : pipeline.getSinks()) {
-      final String sinkId = sinkInfo.getName();
+    BatchPhaseSpec phaseSpec = GSON.fromJson(context.getSpecification().getProperty(Constants.PIPELINEID),
+                                             BatchPhaseSpec.class);
+    for (final String sinkName : phaseSpec.getPhase().getSinks()) {
 
       JavaPairRDD<Object, Object> sinkRDD = resultRDD
         .filter(new Function<Tuple2<String, Object>, Boolean>() {
           @Override
           public Boolean call(Tuple2<String, Object> v1) throws Exception {
-            return v1._1().equals(sinkId);
+            return v1._1().equals(sinkName);
           }
         })
         .flatMapToPair(new PairFlatMapFunction<Tuple2<String, Object>, Object, Object>() {
@@ -85,7 +89,7 @@ public class ETLSparkProgram implements JavaSparkProgram {
             return result;
           }
         });
-      sinkFactory.writeFromRDD(sinkRDD, context, sinkId, Object.class, Object.class);
+      sinkFactory.writeFromRDD(sinkRDD, context, sinkName, Object.class, Object.class);
     }
   }
 
@@ -134,10 +138,14 @@ public class ETLSparkProgram implements JavaSparkProgram {
     }
 
     private TransformExecutor<KeyValue<Object, Object>> initialize() throws Exception {
+      BatchPhaseSpec phaseSpec = GSON.fromJson(pipelineStr, BatchPhaseSpec.class);
+      PipelinePluginInstantiator pluginInstantiator = new PipelinePluginInstantiator(pluginContext, phaseSpec);
       TransformExecutorFactory<KeyValue<Object, Object>> transformExecutorFactory =
-        new SparkTransformExecutorFactory<>(pluginContext, metrics, logicalStartTime, runtimeArgs);
-      PipelinePhase pipeline = GSON.fromJson(pipelineStr, PipelinePhase.class);
-      return transformExecutorFactory.create(pipeline);
+        new SparkTransformExecutorFactory<>(pluginContext, pluginInstantiator, metrics, logicalStartTime, runtimeArgs);
+      return transformExecutorFactory.create(
+        phaseSpec.getPhase(),
+        ImmutableSet.of(BatchSource.PLUGIN_TYPE, BatchSink.PLUGIN_TYPE,
+                        Transform.PLUGIN_TYPE, Constants.CONNECTOR_TYPE));
     }
   }
 }

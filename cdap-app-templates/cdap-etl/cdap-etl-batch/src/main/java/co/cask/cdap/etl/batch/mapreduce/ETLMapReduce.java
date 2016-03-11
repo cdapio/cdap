@@ -17,44 +17,44 @@
 package co.cask.cdap.etl.batch.mapreduce;
 
 import co.cask.cdap.api.ProgramLifecycle;
-import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.api.dataset.lib.KeyValue;
-import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSetArguments;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.mapreduce.MapReduceTaskContext;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.etl.api.InvalidEntry;
+import co.cask.cdap.etl.api.Transform;
 import co.cask.cdap.etl.api.batch.BatchConfigurable;
+import co.cask.cdap.etl.api.batch.BatchSink;
 import co.cask.cdap.etl.api.batch.BatchSinkContext;
+import co.cask.cdap.etl.api.batch.BatchSource;
 import co.cask.cdap.etl.api.batch.BatchSourceContext;
+import co.cask.cdap.etl.batch.BatchPhaseSpec;
 import co.cask.cdap.etl.batch.CompositeFinisher;
 import co.cask.cdap.etl.batch.Finisher;
 import co.cask.cdap.etl.batch.LoggedBatchConfigurable;
+import co.cask.cdap.etl.batch.PipelinePluginInstantiator;
 import co.cask.cdap.etl.common.Constants;
 import co.cask.cdap.etl.common.DatasetContextLookupProvider;
 import co.cask.cdap.etl.common.Destroyables;
 import co.cask.cdap.etl.common.PipelinePhase;
-import co.cask.cdap.etl.common.PipelineRegisterer;
 import co.cask.cdap.etl.common.TransformExecutor;
 import co.cask.cdap.etl.common.TransformResponse;
 import co.cask.cdap.etl.log.LogStageInjector;
 import co.cask.cdap.etl.planner.StageInfo;
-import co.cask.cdap.etl.proto.v1.ETLBatchConfig;
 import co.cask.cdap.format.StructuredRecordStringConverter;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.generic.GenericRecordBuilder;
 import org.apache.avro.mapred.AvroKey;
-import org.apache.avro.mapreduce.AvroKeyInputFormat;
-import org.apache.avro.mapreduce.AvroKeyOutputFormat;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.mapreduce.Job;
@@ -85,52 +85,41 @@ public class ETLMapReduce extends AbstractMapReduce {
   private Metrics mrMetrics;
 
   // this is only visible at configure time, not at runtime
-  private final ETLBatchConfig config;
+  private final BatchPhaseSpec phaseSpec;
 
-  public ETLMapReduce(ETLBatchConfig config) {
-    this.config = config;
+  public ETLMapReduce(BatchPhaseSpec phaseSpec) {
+    this.phaseSpec = phaseSpec;
   }
 
   @Override
   public void configure() {
-    setName(NAME);
-    setDescription("MapReduce Driver for ETL Batch Applications");
+    setName(phaseSpec.getPhaseName());
 
-    PipelineRegisterer pipelineRegisterer = new PipelineRegisterer(getConfigurer(), "batch");
+    StringBuilder description = new StringBuilder("DataFlow MapReduce phase executor. Sources");
 
-    PipelinePhase pipeline =
-      pipelineRegisterer.registerPlugins(
-        config, TimePartitionedFileSet.class,
-        FileSetProperties.builder()
-          .setInputFormat(AvroKeyInputFormat.class)
-          .setOutputFormat(AvroKeyOutputFormat.class)
-          .setEnableExploreOnCreate(true)
-          .setSerDe("org.apache.hadoop.hive.serde2.avro.AvroSerDe")
-          .setExploreInputFormat("org.apache.hadoop.hive.ql.io.avro.AvroContainerInputFormat")
-          .setExploreOutputFormat("org.apache.hadoop.hive.ql.io.avro.AvroContainerOutputFormat")
-          .setTableProperty("avro.schema.literal", Constants.ERROR_SCHEMA.toString())
-          .build(), true);
-
-    Resources resources = config.getResources();
-    if (resources != null) {
-      setMapperResources(resources);
+    for (String sourceName : phaseSpec.getPhase().getSources()) {
+      description.append(" '").append(sourceName).append("'");
     }
-    Resources driverResources = config.getDriverResources();
-    if (driverResources != null) {
-      setDriverResources(driverResources);
-    }
+    description.append(" to sinks");
 
-    // following should never happen
-    Preconditions.checkNotNull(pipeline, "Pipeline is null");
-    Preconditions.checkNotNull(pipeline.getSinks(), "Sinks could not be found in program properties");
-    // empty transform list is created during pipeline register
-    Preconditions.checkNotNull(pipeline.getTransforms());
-    Preconditions.checkNotNull(pipeline.getConnections(), "Connections could not be found in program properties");
+    for (StageInfo sinkInfo : phaseSpec.getPhase().getStagesOfType(BatchSink.PLUGIN_TYPE)) {
+      description.append(" '").append(sinkInfo.getName()).append("'");
+    }
+    setDescription(description.toString());
+
+    setMapperResources(phaseSpec.getResources());
+    setDriverResources(phaseSpec.getResources());
+
+    if (phaseSpec.getPhase().getSources().size() != 1) {
+      throw new IllegalArgumentException("Pipeline must contain exactly one source.");
+    }
+    if (phaseSpec.getPhase().getSinks().isEmpty()) {
+      throw new IllegalArgumentException("Pipeline must contain at least one sink.");
+    }
 
     // add source, sink, transform ids to the properties. These are needed at runtime to instantiate the plugins
     Map<String, String> properties = new HashMap<>();
-    properties.put(Constants.PIPELINEID, GSON.toJson(pipeline));
-    properties.put(Constants.STAGE_LOGGING_ENABLED, String.valueOf(config.isStageLoggingEnabled()));
+    properties.put(Constants.PIPELINEID, GSON.toJson(phaseSpec));
     setProperties(properties);
   }
 
@@ -140,6 +129,7 @@ public class ETLMapReduce extends AbstractMapReduce {
       LogStageInjector.start();
     }
     CompositeFinisher.Builder finishers = CompositeFinisher.builder();
+
     Job job = context.getHadoopJob();
     Configuration hConf = job.getConfiguration();
 
@@ -147,23 +137,33 @@ public class ETLMapReduce extends AbstractMapReduce {
     Map<String, Map<String, String>> runtimeArgs = new HashMap<>();
 
     Map<String, String> properties = context.getSpecification().getProperties();
-    PipelinePhase pipeline = GSON.fromJson(properties.get(Constants.PIPELINEID), PipelinePhase.class);
-    String sourcePluginId = pipeline.getSource().getName();
+    BatchPhaseSpec phaseSpec = GSON.fromJson(properties.get(Constants.PIPELINEID), BatchPhaseSpec.class);
+    PipelinePhase phase = phaseSpec.getPhase();
+    PipelinePluginInstantiator pluginInstantiator = new PipelinePluginInstantiator(context, phaseSpec);
 
-    BatchConfigurable<BatchSourceContext> batchSource = context.newPluginInstance(sourcePluginId);
-    batchSource = new LoggedBatchConfigurable<>(sourcePluginId, batchSource);
+    // we checked at configure time that there is exactly one source
+    String sourceName = phaseSpec.getPhase().getSources().iterator().next();
+
+    BatchConfigurable<BatchSourceContext> batchSource = pluginInstantiator.newPluginInstance(sourceName);
+    batchSource = new LoggedBatchConfigurable<>(sourceName, batchSource);
     BatchSourceContext sourceContext = new MapReduceSourceContext(context, mrMetrics,
                                                                   new DatasetContextLookupProvider(context),
-                                                                  sourcePluginId, context.getRuntimeArguments());
+                                                                  sourceName, context.getRuntimeArguments());
     batchSource.prepareRun(sourceContext);
-    runtimeArgs.put(sourcePluginId, sourceContext.getRuntimeArguments());
+    runtimeArgs.put(sourceName, sourceContext.getRuntimeArguments());
     finishers.add(batchSource, sourceContext);
 
     Map<String, SinkOutput> sinkOutputs = new HashMap<>();
 
-    for (StageInfo sinkInfo : pipeline.getSinks()) {
-      String sinkName = sinkInfo.getName();
-      BatchConfigurable<BatchSinkContext> batchSink = context.newPluginInstance(sinkName);
+    for (StageInfo stageInfo : Sets.union(phase.getStagesOfType(Constants.CONNECTOR_TYPE),
+                                          phase.getStagesOfType(BatchSink.PLUGIN_TYPE))) {
+      String sinkName = stageInfo.getName();
+      // todo: add a better way to get info for all sinks
+      if (!phase.getSinks().contains(sinkName)) {
+        continue;
+      }
+
+      BatchConfigurable<BatchSinkContext> batchSink = pluginInstantiator.newPluginInstance(sinkName);
       batchSink = new LoggedBatchConfigurable<>(sinkName, batchSink);
       MapReduceSinkContext sinkContext = new MapReduceSinkContext(context, mrMetrics,
                                                                   new DatasetContextLookupProvider(context),
@@ -171,13 +171,15 @@ public class ETLMapReduce extends AbstractMapReduce {
       batchSink.prepareRun(sinkContext);
       runtimeArgs.put(sinkName, sinkContext.getRuntimeArguments());
       finishers.add(batchSink, sinkContext);
-      sinkOutputs.put(sinkName, new SinkOutput(sinkContext.getOutputNames(), sinkInfo.getErrorDatasetName()));
+
+      sinkOutputs.put(sinkName, new SinkOutput(sinkContext.getOutputNames(), stageInfo.getErrorDatasetName()));
     }
     finisher = finishers.build();
     hConf.set(ETLMapper.SINK_OUTPUTS_KEY, GSON.toJson(sinkOutputs));
 
     // setup time partition for each error dataset
-    for (StageInfo stageInfo : Sets.union(pipeline.getTransforms(), pipeline.getSinks())) {
+    for (StageInfo stageInfo : Sets.union(phase.getStagesOfType(Transform.PLUGIN_TYPE),
+                                          phase.getStagesOfType(BatchSink.PLUGIN_TYPE))) {
       if (stageInfo.getErrorDatasetName() != null) {
         Map<String, String> args = new HashMap<>();
         args.put(FileSetProperties.OUTPUT_PROPERTIES_PREFIX + "avro.schema.output.key",
@@ -207,6 +209,8 @@ public class ETLMapReduce extends AbstractMapReduce {
     public static final String SINK_OUTPUTS_KEY = "cdap.etl.sink.outputs";
     private static final Type RUNTIME_ARGS_TYPE = new TypeToken<Map<String, Map<String, String>>>() { }.getType();
     private static final Type SINK_OUTPUTS_TYPE = new TypeToken<Map<String, SinkOutput>>() { }.getType();
+    private static final Set<String> PLUGIN_TYPES = ImmutableSet.of(
+      BatchSource.PLUGIN_TYPE, BatchSink.PLUGIN_TYPE, Transform.PLUGIN_TYPE, Constants.CONNECTOR_TYPE);
     private static final Logger LOG = LoggerFactory.getLogger(ETLMapper.class);
     private static final Gson GSON = new Gson();
 
@@ -232,14 +236,16 @@ public class ETLMapReduce extends AbstractMapReduce {
       Configuration hConf = hadoopContext.getConfiguration();
       transformsWithoutErrorDataset = new HashSet<>();
 
-      PipelinePhase pipeline = GSON.fromJson(properties.get(Constants.PIPELINEID), PipelinePhase.class);
+      BatchPhaseSpec phaseSpec = GSON.fromJson(properties.get(Constants.PIPELINEID), BatchPhaseSpec.class);
       Map<String, Map<String, String>> runtimeArgs = GSON.fromJson(hConf.get(RUNTIME_ARGS_KEY), RUNTIME_ARGS_TYPE);
+      PipelinePluginInstantiator pluginInstantiator = new PipelinePluginInstantiator(context, phaseSpec);
+
       MapReduceTransformExecutorFactory<KeyValue<Object, Object>> transformExecutorFactory =
-        new MapReduceTransformExecutorFactory<>(context, mapperMetrics, context.getLogicalStartTime(), runtimeArgs);
-      transformExecutor = transformExecutorFactory.create(pipeline);
+        new MapReduceTransformExecutorFactory<>(context, pluginInstantiator, mapperMetrics, runtimeArgs);
+      transformExecutor = transformExecutorFactory.create(phaseSpec.getPhase(), PLUGIN_TYPES);
 
       transformErrorSinkMap = new HashMap<>();
-      for (StageInfo transformInfo : pipeline.getTransforms()) {
+      for (StageInfo transformInfo : phaseSpec.getPhase().getStagesOfType(Transform.PLUGIN_TYPE)) {
         String errorDatasetName = transformInfo.getErrorDatasetName();
         if (errorDatasetName != null) {
           transformErrorSinkMap.put(transformInfo.getName(), new ErrorSink<>(context, errorDatasetName));
@@ -251,7 +257,7 @@ public class ETLMapReduce extends AbstractMapReduce {
       Preconditions.checkNotNull(sinkOutputsStr, "Sink outputs not found in Hadoop conf.");
       Map<String, SinkOutput> sinkOutputs = GSON.fromJson(sinkOutputsStr, SINK_OUTPUTS_TYPE);
 
-      sinkWriter = hasOneOutput(pipeline.getTransforms(), sinkOutputs) ?
+      sinkWriter = hasOneOutput(phaseSpec.getPhase().getStagesOfType(Transform.PLUGIN_TYPE), sinkOutputs) ?
         new SingleOutputWriter<>(context) : new MultiOutputWriter<>(context, sinkOutputs);
     }
 

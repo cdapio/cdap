@@ -23,7 +23,6 @@ import co.cask.cdap.api.plugin.PluginProperties;
 import co.cask.cdap.etl.api.PipelineConfigurable;
 import co.cask.cdap.etl.api.PipelineConfigurer;
 import co.cask.cdap.etl.api.Transform;
-import co.cask.cdap.etl.api.Transformation;
 import co.cask.cdap.etl.common.guice.TypeResolver;
 import co.cask.cdap.etl.planner.StageInfo;
 import co.cask.cdap.etl.proto.Connection;
@@ -31,6 +30,7 @@ import co.cask.cdap.etl.proto.v1.ETLConfig;
 import co.cask.cdap.etl.proto.v1.ETLStage;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.reflect.TypeToken;
 
@@ -111,7 +111,6 @@ public class PipelineRegisterer {
 
     // transform id list will eventually be serialized and passed to the driver program
     Set<StageInfo> transformInfos = new HashSet<>(transformConfigs.size());
-    Set<Transformation> transforms = new HashSet<>(transformConfigs.size());
     for (ETLStage transformConfig : transformConfigs) {
       String transformId = transformConfig.getName();
 
@@ -135,12 +134,10 @@ public class PipelineRegisterer {
       PipelineConfigurer transformConfigurer = new DefaultPipelineConfigurer(configurer, transformId);
       stageToPipelineConfigureDetailMap.put(transformId,
                                             new PipelineConfigureDetail(transformObj, transformConfigurer));
-      transformInfos.add(new StageInfo(transformId, transformConfig.getErrorDatasetName(), false));
-      transforms.add(transformObj);
+      transformInfos.add(new StageInfo(transformId, transformConfig.getErrorDatasetName()));
     }
 
     Set<StageInfo> sinksInfo = new HashSet<>();
-    List<PipelineConfigurable> sinks = new ArrayList<>();
     for (ETLStage sinkConfig : sinkConfigs) {
       String sinkPluginId = sinkConfig.getName();
 
@@ -149,7 +146,7 @@ public class PipelineRegisterer {
         configurer.createDataset(sinkConfig.getErrorDatasetName(), errorDatasetType, errorDatasetProperties);
       }
 
-      sinksInfo.add(new StageInfo(sinkPluginId, sinkConfig.getErrorDatasetName(), false));
+      sinksInfo.add(new StageInfo(sinkPluginId, sinkConfig.getErrorDatasetName()));
 
       // try to instantiate the sink
       pluginName = sinkConfig.getPlugin().getName();
@@ -168,7 +165,6 @@ public class PipelineRegisterer {
       // run configure pipeline on sink to let it add datasets, etc.
       PipelineConfigurer sinkConfigurer = new DefaultPipelineConfigurer(configurer, sinkPluginId);
       stageToPipelineConfigureDetailMap.put(sinkPluginId, new PipelineConfigureDetail(sink, sinkConfigurer));
-      sinks.add(sink);
     }
 
     // TODO : CDAP-4387 Validate Stages has been removed due to DAG implementation, have to be refactored
@@ -199,9 +195,12 @@ public class PipelineRegisterer {
       }
     }
 
-
-    return new PipelinePhase(new StageInfo(sourcePluginId, null, false),
-                             null, sinksInfo, transformInfos, connectionsMap);
+    return PipelinePhase.builder(ImmutableSet.of(sourcePluginType, sinkPluginType, Transform.PLUGIN_TYPE))
+      .addStage(sourcePluginType, new StageInfo(sourcePluginId))
+      .addStages(sinkPluginType, sinksInfo)
+      .addStages(Transform.PLUGIN_TYPE, transformInfos)
+      .addConnections(connectionsMap)
+      .build();
   }
 
   private class PipelineConfigureDetail {

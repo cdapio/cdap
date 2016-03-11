@@ -59,7 +59,7 @@ public class PipelineSpec {
     return resources;
   }
 
-  public boolean getStageLoggingEnabled() {
+  public boolean isStageLoggingEnabled() {
     return stageLoggingEnabled;
   }
 

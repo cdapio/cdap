@@ -16,7 +16,7 @@
 
 package co.cask.cdap.etl.planner;
 
-import co.cask.cdap.etl.api.Transform;
+import co.cask.cdap.etl.common.Constants;
 import co.cask.cdap.etl.common.PipelinePhase;
 import co.cask.cdap.etl.proto.Connection;
 import co.cask.cdap.etl.spec.PipelineSpec;
@@ -36,14 +36,12 @@ import java.util.TreeSet;
  * Takes a {@link PipelineSpec} and creates an execution plan from it.
  */
 public class PipelinePlanner {
-  private final String sourceType;
-  private final String sinkType;
   private final Set<String> reduceTypes;
+  private final Set<String> supportedPluginTypes;
 
-  public PipelinePlanner(String sourceType, String sinkType, Set<String> reduceTypes) {
-    this.sourceType = sourceType;
-    this.sinkType = sinkType;
+  public PipelinePlanner(Set<String> supportedPluginTypes, Set<String> reduceTypes) {
     this.reduceTypes = ImmutableSet.copyOf(reduceTypes);
+    this.supportedPluginTypes = ImmutableSet.copyOf(supportedPluginTypes);
   }
 
   /**
@@ -130,63 +128,28 @@ public class PipelinePlanner {
    * @return the converted dag
    */
   private PipelinePhase dagToPipeline(Dag dag, Set<String> connectors, Map<String, StageSpec> specs) {
-    Set<StageInfo> sinks = new HashSet<>();
-    Set<StageInfo> transforms = new HashSet<>();
-    Map<String, Set<String>> connections = new HashMap<>();
-    StageInfo source = null;
-    StageInfo aggregator = null;
+    PipelinePhase.Builder phaseBuilder = PipelinePhase.builder(supportedPluginTypes);
 
     for (String stageName : dag.getTopologicalOrder()) {
       Set<String> outputs = dag.getNodeOutputs(stageName);
       if (!outputs.isEmpty()) {
-        connections.put(stageName, dag.getNodeOutputs(stageName));
+        phaseBuilder.addConnections(stageName, outputs);
       }
 
-      // if its a connector, figure out if its a source or a sink
+      // add connectors
       if (connectors.contains(stageName)) {
-        StageInfo stageInfo = new StageInfo(stageName, null, true);
-        if (dag.getSources().contains(stageName)) {
-          source = stageInfo;
-        } else {
-          sinks.add(stageInfo);
-        }
+        phaseBuilder.addStage(Constants.CONNECTOR_TYPE, new StageInfo(stageName, null));
         continue;
       }
 
+      // add other plugin types
       StageSpec spec = specs.get(stageName);
       String pluginType = spec.getPlugin().getType();
-
-      StageInfo stageInfo = new StageInfo(stageName, spec.getErrorDatasetName(), connectors.contains(stageName));
-      if (sinkType.equals(pluginType)) {
-        sinks.add(stageInfo);
-      } else if (Transform.PLUGIN_TYPE.equals(pluginType)) {
-        transforms.add(stageInfo);
-      } else if (sourceType.equals(pluginType)) {
-        if (source != null) {
-          // should never happen
-          throw new IllegalStateException(String.format(
-            "There was an error during pipeline planning. " +
-              "A pipeline phase should not have multiple sources, but %s and %s are in the same phase.",
-            source.getName(), stageName));
-        }
-        source = stageInfo;
-      } else if ("aggregator".equals(pluginType)) {
-        if (aggregator != null) {
-          // should never happen
-          throw new IllegalStateException(String.format(
-            "There was an error during pipeline planning. " +
-              "A pipeline phase should not have multiple aggregators, but %s and %s are in the same phase.",
-            aggregator.getName(), stageName));
-        }
-        aggregator = stageInfo;
-      } else {
-        // should never happen
-        throw new IllegalStateException(
-          String.format("Stage %s uses an unknown plugin type %s", stageName, pluginType));
-      }
+      StageInfo stageInfo = new StageInfo(stageName, spec.getErrorDatasetName());
+      phaseBuilder.addStage(pluginType, stageInfo);
     }
 
-    return new PipelinePhase(source, aggregator, sinks, transforms, connections);
+    return phaseBuilder.build();
   }
 
   @VisibleForTesting

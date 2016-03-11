@@ -19,6 +19,7 @@ package co.cask.cdap.etl.batch.mapreduce;
 import co.cask.cdap.api.mapreduce.MapReduceTaskContext;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.etl.api.batch.BatchRuntimeContext;
+import co.cask.cdap.etl.batch.PipelinePluginInstantiator;
 import co.cask.cdap.etl.batch.TransformExecutorFactory;
 import co.cask.cdap.etl.common.DatasetContextLookupProvider;
 
@@ -34,9 +35,11 @@ public class MapReduceTransformExecutorFactory<T> extends TransformExecutorFacto
   private final Map<String, Map<String, String>> pluginRuntimeArgs;
   private final MapReduceTaskContext taskContext;
 
-  public MapReduceTransformExecutorFactory(MapReduceTaskContext taskContext, Metrics metrics, long logicalStartTime,
+  public MapReduceTransformExecutorFactory(MapReduceTaskContext taskContext,
+                                           PipelinePluginInstantiator pluginInstantiator,
+                                           Metrics metrics,
                                            Map<String, Map<String, String>> pluginRuntimeArgs) {
-    super(taskContext, metrics, logicalStartTime);
+    super(pluginInstantiator, metrics);
     this.taskContext = taskContext;
     this.pluginRuntimeArgs = pluginRuntimeArgs;
   }
