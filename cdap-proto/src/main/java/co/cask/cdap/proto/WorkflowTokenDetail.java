@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,10 +18,11 @@ package co.cask.cdap.proto;
 import co.cask.cdap.api.workflow.NodeValue;
 import co.cask.cdap.api.workflow.Value;
 import co.cask.cdap.api.workflow.WorkflowToken;
-import com.google.common.collect.ImmutableMap;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -33,11 +34,19 @@ public class WorkflowTokenDetail {
   private final Map<String, List<NodeValueDetail>> tokenData;
 
   public WorkflowTokenDetail(Map<String, List<NodeValueDetail>> tokenData) {
-    this.tokenData = ImmutableMap.copyOf(tokenData);
+    this.tokenData = deepCopy(tokenData);
   }
 
   public Map<String, List<NodeValueDetail>> getTokenData() {
     return tokenData;
+  }
+
+  private static Map<String, List<NodeValueDetail>> deepCopy(Map<String, List<NodeValueDetail>> tokenData) {
+    Map<String, List<NodeValueDetail>> tokenDataCopy = new LinkedHashMap<>();
+    for (Map.Entry<String, List<NodeValueDetail>> entry : tokenData.entrySet()) {
+      tokenDataCopy.put(entry.getKey(), Collections.unmodifiableList(new ArrayList<>(entry.getValue())));
+    }
+    return Collections.unmodifiableMap(tokenDataCopy);
   }
 
   /**

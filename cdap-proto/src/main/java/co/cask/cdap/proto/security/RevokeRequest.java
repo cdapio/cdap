@@ -18,7 +18,6 @@ package co.cask.cdap.proto.security;
 
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.proto.id.EntityId;
-import com.google.common.base.Preconditions;
 
 import java.util.Set;
 import javax.annotation.Nullable;
@@ -31,7 +30,8 @@ public class RevokeRequest extends AuthorizationRequest {
 
   public RevokeRequest(EntityId entity, @Nullable Principal principal, @Nullable Set<Action> actions) {
     super(entity, principal, actions);
-    Preconditions.checkArgument(actions == null || (principal != null),
-                                "Principal is required when actions is provided");
+    if (actions != null && principal == null) {
+      throw new IllegalArgumentException("Principal is required when actions is provided");
+    }
   }
 }
