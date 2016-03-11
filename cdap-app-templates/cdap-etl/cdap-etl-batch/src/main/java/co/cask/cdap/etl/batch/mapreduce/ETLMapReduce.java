@@ -117,6 +117,8 @@ public class ETLMapReduce extends AbstractMapReduce {
       throw new IllegalArgumentException("Pipeline must contain at least one sink.");
     }
 
+    setMapperResources(phaseSpec.getResources());
+    setDriverResources(phaseSpec.getResources());
     // add source, sink, transform ids to the properties. These are needed at runtime to instantiate the plugins
     Map<String, String> properties = new HashMap<>();
     properties.put(Constants.PIPELINEID, GSON.toJson(phaseSpec));

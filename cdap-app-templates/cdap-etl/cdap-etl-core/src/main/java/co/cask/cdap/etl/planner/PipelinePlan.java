@@ -38,8 +38,8 @@ public class PipelinePlan {
     this.phaseConnections = ImmutableSet.copyOf(phaseConnections);
   }
 
-  public Map<String, PipelinePhase> getPhases() {
-    return phases;
+  public PipelinePhase getPhase(String name) {
+    return phases.get(name);
   }
 
   public Set<Connection> getPhaseConnections() {
