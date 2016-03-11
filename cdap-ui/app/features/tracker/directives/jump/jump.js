@@ -26,6 +26,13 @@ function JumpController ($scope, myJumpFactory) {
     myJumpFactory.streamRealtimeSink($scope.entityId);
   };
 
+  vm.datasetBatchSource = () => {
+    myJumpFactory.datasetBatchSource($scope.entityId);
+  };
+  vm.datasetBatchSink = () => {
+    myJumpFactory.datasetBatchSink($scope.entityId);
+  };
+
 }
 
 angular.module(PKG.name + '.feature.tracker')
@@ -34,7 +41,8 @@ angular.module(PKG.name + '.feature.tracker')
       restrict: 'E',
       scope: {
         entityType: '=',
-        entityId: '='
+        entityId: '=',
+        tableType: '=?'
       },
       templateUrl: '/assets/features/tracker/directives/jump/jump.html',
       controller: JumpController,

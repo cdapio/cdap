@@ -29,6 +29,41 @@ function myJumpFactory($state, myTrackerApi, $rootScope) {
     version: $rootScope.cdapVersion
   };
 
+  let corePluginsArtifacts = {
+    name: 'core-plugins',
+    scope: 'SYSTEM',
+    version: '1.3.0-SNAPSHOT'
+  };
+
+  let batchSourceTemplate = {
+    artifact: batchArtifact,
+    config: {
+      sinks: [],
+      transforms: [],
+      connections: []
+    }
+  };
+
+  let batchSinkTemplate = {
+    artifact: batchArtifact,
+    config: {
+      source: {},
+      transforms: [],
+      connections: []
+    }
+  };
+
+  let realtimeSinkTemplate = {
+    artifact: realtimeArtifact,
+    config: {
+      source: {},
+      transforms: [],
+      connections: []
+    }
+  };
+
+
+
   function streamBatchSource(streamName) {
     let params = {
       namespace: $state.params.namespace,
@@ -38,29 +73,18 @@ function myJumpFactory($state, myTrackerApi, $rootScope) {
     myTrackerApi.getStreamProperties(params)
       .$promise
       .then((res) => {
-        let data = {
-          artifact: batchArtifact,
-          config: {
-            source: {
+        let data = angular.copy(batchSourceTemplate);
+        data.config.source = {
+          name: streamName,
+          plugin: {
+            name: 'Stream',
+            label: streamName,
+            artifact: corePluginsArtifacts,
+            properties: {
+              schema: JSON.stringify(res.format.schema),
               name: streamName,
-              plugin: {
-                name: 'Stream',
-                label: streamName,
-                artifact: {
-                  name: 'core-plugins',
-                  scope: 'SYSTEM',
-                  version: '1.3.0-SNAPSHOT'
-                },
-                properties: {
-                  schema: JSON.stringify(res.format.schema),
-                  name: streamName,
-                  format: res.format.name
-                },
-              }
+              format: res.format.name
             },
-            sinks: [],
-            transforms: [],
-            connections: []
           }
         };
 
@@ -72,31 +96,20 @@ function myJumpFactory($state, myTrackerApi, $rootScope) {
   }
 
   function streamRealtimeSink(streamName) {
-    let data = {
-      artifact: realtimeArtifact,
-      config: {
-        source: {},
-        transforms: [],
-        sinks: [
-          {
-            name: streamName,
-            plugin: {
-              name: 'Stream',
-              label: streamName,
-              artifact: {
-                name: 'core-plugins',
-                scope: 'SYSTEM',
-                version: '1.3.0-SNAPSHOT'
-              },
-              properties: {
-                name: streamName
-              }
-            }
+    let data = angular.copy(realtimeSinkTemplate);
+    data.config.sinks = [
+      {
+        name: streamName,
+        plugin: {
+          name: 'Stream',
+          label: streamName,
+          artifact: corePluginsArtifacts,
+          properties: {
+            name: streamName
           }
-        ],
-        connections: []
+        }
       }
-    };
+    ];
 
     $state.go('hydrator.create.studio', {
       data: data,
@@ -104,10 +117,107 @@ function myJumpFactory($state, myTrackerApi, $rootScope) {
     });
   }
 
+  function datasetBatchSource(datasetName) {
+    let params = {
+      namespace: $state.params.namespace,
+      entityType: 'datasets',
+      entityId: datasetName
+    };
+    myTrackerApi.getDatasetSystemProperties(params)
+      .$promise
+      .then((res) => {
+        let datasetType = res.type.split('.');
+        datasetType = datasetType[datasetType.length - 1];
+
+        if (datasetType === 'Table') {
+          _addTableBatchSource(datasetName);
+        }
+      });
+  }
+
+  function datasetBatchSink(datasetName) {
+    let params = {
+      namespace: $state.params.namespace,
+      entityType: 'datasets',
+      entityId: datasetName
+    };
+    myTrackerApi.getDatasetSystemProperties(params)
+      .$promise
+      .then((res) => {
+        let datasetType = res.type.split('.');
+        datasetType = datasetType[datasetType.length - 1];
+
+        if (datasetType === 'Table') {
+          _addTableBatchSink(datasetName);
+        }
+      });
+  }
+
+  function _addTableBatchSource(datasetName) {
+    let params = {
+      namespace: $state.params.namespace,
+      entityId: datasetName
+    };
+    myTrackerApi.getDatasetDetail(params)
+      .$promise
+      .then((res) => {
+        let data = angular.copy(batchSourceTemplate);
+        data.config.source = {
+          name: datasetName,
+          plugin: {
+            name: 'Table',
+            label: datasetName,
+            artifact: corePluginsArtifacts,
+            properties: {
+              name: datasetName,
+              schema: res.spec.properties.schema,
+              'schema.row.field': res.spec.properties['schema.row.field']
+            }
+          }
+        };
+
+        $state.go('hydrator.create.studio', {
+          data: data,
+          type: 'cdap-etl-batch'
+        });
+      });
+  }
+
+  function _addTableBatchSink(datasetName) {
+    let params = {
+      namespace: $state.params.namespace,
+      entityId: datasetName
+    };
+    myTrackerApi.getDatasetDetail(params)
+      .$promise
+      .then((res) => {
+        let data = angular.copy(batchSinkTemplate);
+        data.config.sinks = [{
+          name: datasetName,
+          plugin: {
+            name: 'Table',
+            label: datasetName,
+            artifact: corePluginsArtifacts,
+            properties: {
+              name: datasetName,
+              schema: res.spec.properties.schema,
+              'schema.row.field': res.spec.properties['schema.row.field']
+            }
+          }
+        }];
+
+        $state.go('hydrator.create.studio', {
+          data: data,
+          type: 'cdap-etl-batch'
+        });
+      });
+  }
 
   return {
     streamBatchSource: streamBatchSource,
-    streamRealtimeSink: streamRealtimeSink
+    streamRealtimeSink: streamRealtimeSink,
+    datasetBatchSource: datasetBatchSource,
+    datasetBatchSink: datasetBatchSink
   };
 
 }
