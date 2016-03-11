@@ -31,7 +31,7 @@ import scala.reflect.ClassTag
 /**
   * Spark program execution context. User Spark program can interact with CDAP through this context.
   */
-trait SparkExecutionContext extends RuntimeContext {
+trait SparkExecutionContext extends RuntimeContext with DatasetContext {
 
   /**
     * @return The specification used to configure this Spark job instance.
@@ -46,14 +46,6 @@ trait SparkExecutionContext extends RuntimeContext {
     * @return Time in milliseconds since epoch time (00:00:00 January 1, 1970 UTC).
     */
   def getLogicalStartTime: Long
-
-  /**
-    * Returns a [[co.cask.cdap.api.data.DatasetContext]] to provide access to [[co.cask.cdap.api.dataset.Dataset]]
-    * which can be passed in Spark program's closures.
-    *
-    * @return A [[scala.Serializable]] [[co.cask.cdap.api.data.DatasetContext]]
-    */
-  def getDatasetContext : DatasetContext
 
   /**
     * Returns a [[scala.Serializable]] [[co.cask.cdap.api.ServiceDiscoverer]] for Service Discovery
