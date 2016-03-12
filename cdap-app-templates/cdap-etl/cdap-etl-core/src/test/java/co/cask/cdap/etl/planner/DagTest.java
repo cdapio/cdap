@@ -161,6 +161,7 @@ public class DagTest {
       Assert.fail();
     } catch (IllegalStateException e) {
       // expected
+      Assert.assertTrue(e.getMessage().startsWith("Invalid DAG. There is an island"));
     }
 
     /*
@@ -181,6 +182,7 @@ public class DagTest {
       Assert.fail();
     } catch (IllegalStateException e) {
       // expected
+      Assert.assertTrue(e.getMessage().startsWith("Invalid DAG. There is an island"));
     }
   }
 

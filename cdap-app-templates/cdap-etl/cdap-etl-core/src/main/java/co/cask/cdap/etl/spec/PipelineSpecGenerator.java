@@ -62,6 +62,21 @@ public class PipelineSpecGenerator {
     this.errorDatasetProperties = errorDatasetProperties;
   }
 
+  /**
+   * Validate the user provided ETL config and generate a pipeline specification from it.
+   * It will also register all plugins used by the pipeline and create any error datasets used by the pipeline.
+   *
+   * A valid pipeline has the following properties:
+   *
+   * All stages in the pipeline have a unique name.
+   * Source stages have at least one output and no inputs.
+   * Sink stages have at least one input and no outputs.
+   * There are no cycles in the pipeline.
+   * All inputs into a stage have the same schema.
+   *
+   * @param config user provided ETL config
+   * @return the pipeline specification
+   */
   public PipelineSpec generateSpec(ETLConfig config) {
     // validate the config and determine the order we should configure the stages in.
     List<StageConnections> traversalOrder = validateConfig(config);

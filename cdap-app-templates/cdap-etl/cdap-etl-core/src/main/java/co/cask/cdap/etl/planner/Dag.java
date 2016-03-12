@@ -59,10 +59,6 @@ public class Dag {
     return dag;
   }
 
-  public static Dag clone(Dag dag) {
-    return new Dag(dag.sources, dag.sinks, dag.outgoingConnections, dag.incomingConnections);
-  }
-
   private Dag(SetMultimap<String, String> outgoingConnections,
               SetMultimap<String, String> incomingConnections) {
     this(calculateSources(outgoingConnections, incomingConnections),
@@ -137,7 +133,7 @@ public class Dag {
       // if this is empty, no sources were added to the island. That means the island really is an island.
       if (sourcesAdded.isEmpty()) {
         throw new IllegalStateException(
-          String.format("Invalid DAG. Stages %s form an island (no other stages connect to them).",
+          String.format("Invalid DAG. There is an island made up of stages %s (no other stages connect to them).",
                         Joiner.on(',').join(islandNodes)));
       }
       potentialIslandSources.removeAll(sourcesAdded);
@@ -268,7 +264,7 @@ public class Dag {
   public List<String> linearize() {
     List<String> linearized = new ArrayList<>();
 
-    Dag copy = Dag.clone(this);
+    Dag copy = new Dag(sources, sinks, outgoingConnections, incomingConnections);
     String removed;
     while ((removed = copy.removeSource()) != null) {
       linearized.add(removed);
