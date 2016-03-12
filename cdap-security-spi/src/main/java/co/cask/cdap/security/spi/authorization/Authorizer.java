@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.security.authorization;
+package co.cask.cdap.security.spi.authorization;
 
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.security.Action;
@@ -26,7 +26,18 @@ import java.util.Set;
  * Interface to grant/revoke {@link Principal principals} authorization for {@link Action actions} on
  * {@link EntityId CDAP entities}.
  */
-public interface Authorizer extends AuthorizationEnforcer {
+public interface Authorizer {
+  /**
+   * Enforces authorization for the specified {@link Principal} for the specified {@link Action} on the specified
+   * {@link EntityId}.
+   *
+   * @param entity the {@link EntityId} on which authorization is to be enforced
+   * @param principal the {@link Principal} that performs the actions
+   * @param action the {@link Action} being performed
+   * @throws UnauthorizedException if the principal is not authorized to perform action on the entity
+   */
+  void enforce(EntityId entity, Principal principal, Action action) throws UnauthorizedException;
+
   /**
    * Grants a {@link Principal} authorization to perform a set of {@link Action actions} on an {@link EntityId}.
    *

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,22 +14,20 @@
  * the License.
  */
 
-package co.cask.cdap.common;
+package co.cask.cdap.security.spi.authorization;
+
+import co.cask.cdap.proto.id.EntityId;
+import co.cask.cdap.proto.security.Action;
+import co.cask.cdap.proto.security.Principal;
 
 /**
- * Thrown when a user is not authorized to perform an operation.
+ * Exception thrown when Authentication is successful, but a {@link Principal} is not authorized to perform an
+ * {@link Action} on an {@link EntityId}.
  */
 public class UnauthorizedException extends Exception {
 
-  public UnauthorizedException() {
-    super();
-  }
-
-  public UnauthorizedException(String msg, Throwable throwable) {
-    super(msg, throwable);
-  }
-
-  public UnauthorizedException(String message) {
-    super(message);
+  public UnauthorizedException(Principal principal, Action action, EntityId entityId) {
+    super(String.format("Principal '%s' is not authorized to perform action '%s' on entity '%s'",
+                        principal, action, entityId));
   }
 }
