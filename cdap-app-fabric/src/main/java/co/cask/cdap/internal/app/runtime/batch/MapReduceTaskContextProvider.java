@@ -173,9 +173,8 @@ public class MapReduceTaskContextProvider extends AbstractIdleService {
         MetricsCollectionService metricsCollector =
           (taskType == null) ? null : metricsCollectionService;
 
-        DatasetFramework dsFramework = datasetFramework;
-        if (dsFramework instanceof ProgramContextAware) {
-          ((ProgramContextAware) dsFramework).initContext(new Id.Run(program.getId(),
+        if (datasetFramework instanceof ProgramContextAware) {
+          ((ProgramContextAware) datasetFramework).initContext(new Id.Run(program.getId(),
                                                                      contextConfig.getRunId().getId()));
         }
 
@@ -184,7 +183,7 @@ public class MapReduceTaskContextProvider extends AbstractIdleService {
           contextConfig.getArguments(), spec, contextConfig.getLogicalStartTime(),
           contextConfig.getWorkflowToken(), discoveryServiceClient,
           metricsCollector, transactionSystemClient,
-          contextConfig.getTx(), dsFramework, classLoader.getPluginInstantiator(),
+          contextConfig.getTx(), datasetFramework, classLoader.getPluginInstantiator(),
           contextConfig.getLocalizedResources()
         );
       }

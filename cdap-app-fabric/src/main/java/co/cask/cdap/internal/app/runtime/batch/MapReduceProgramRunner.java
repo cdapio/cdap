@@ -157,7 +157,7 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
     if (arguments.hasOption(ProgramOptionConstants.WORKFLOW_LOCAL_DATASET_NAME_MAPPING)) {
       Type type = new TypeToken<Map<String, String>>() { }.getType();
       String mappingJson = arguments.getOption(ProgramOptionConstants.WORKFLOW_LOCAL_DATASET_NAME_MAPPING);
-      workflowLocalDatasetNameMapping = GSON.fromJson(arguments.getOption(mappingJson), type);
+      workflowLocalDatasetNameMapping = GSON.fromJson(mappingJson, type);
     }
 
     // Setup dataset framework context, if required
