@@ -50,7 +50,7 @@ public class DatasetModuleId extends EntityId implements NamespacedId, ParentedI
   }
 
   @Override
-  public Id toId() {
+  public Id.DatasetModule toId() {
     return Id.DatasetModule.from(namespace, module);
   }
 

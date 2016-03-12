@@ -73,7 +73,7 @@ public class NotificationFeedId extends EntityId implements NamespacedId, Parent
   }
 
   @Override
-  public Id toId() {
+  public Id.NotificationFeed toId() {
     return Id.NotificationFeed.from(namespace, category, feed);
   }
 

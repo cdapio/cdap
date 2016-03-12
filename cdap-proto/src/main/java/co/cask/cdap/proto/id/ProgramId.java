@@ -95,7 +95,7 @@ public class ProgramId extends EntityId implements NamespacedId, ParentedId<Appl
   }
 
   @Override
-  public Id toId() {
+  public Id.Program toId() {
     return Id.Program.from(namespace, application, type, program);
   }
 

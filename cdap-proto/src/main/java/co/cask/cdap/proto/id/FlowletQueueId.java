@@ -101,7 +101,7 @@ public class FlowletQueueId extends EntityId implements NamespacedId, ParentedId
   }
 
   @Override
-  public Id toId() {
+  public Id.Flow.Flowlet.Queue toId() {
     return new Id.Flow.Flowlet.Queue(
       Id.Flow.Flowlet.from(Id.Application.from(namespace, application), flow, flowlet), queue);
   }

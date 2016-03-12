@@ -72,7 +72,7 @@ public class ScheduleId extends EntityId implements NamespacedId, ParentedId<App
   }
 
   @Override
-  public Id toId() {
+  public Id.Schedule toId() {
     return Id.Schedule.from(Id.Application.from(namespace, application), schedule);
   }
 

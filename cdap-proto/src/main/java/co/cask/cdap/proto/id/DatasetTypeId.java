@@ -76,7 +76,7 @@ public class DatasetTypeId extends EntityId implements NamespacedId, ParentedId<
   }
 
   @Override
-  public Id toId() {
+  public Id.DatasetType toId() {
     return Id.DatasetType.from(namespace, type);
   }
 
