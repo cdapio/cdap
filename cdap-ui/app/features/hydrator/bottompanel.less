@@ -122,13 +122,14 @@ body.theme-cdap.state-hydrator {
     // Styling for maximized bottom panel
     &.maximized {
       position: fixed;
-      top: 120px;
+      top: 110px;
       right: 0;
       left: 0;
       bottom: 53px;
       overflow-y: scroll;
       overflow-x: hidden;
       z-index: 1029;
+      backface-visibility: hidden;
       div.console-tabs {
         border-top: 0;
         .box-shadow(0 7px 7px fade(black, 10%), 0 19px 59px fade(black, 25%););
