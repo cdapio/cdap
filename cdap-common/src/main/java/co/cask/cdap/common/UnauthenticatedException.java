@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2016 Cask Data, Inc.
+ * Copyright © 2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,20 +17,20 @@
 package co.cask.cdap.common;
 
 /**
- * Exception thrown when a user is not authenticated to perform an operation.
- * @deprecated since 3.4.0. Please use {@link UnauthenticatedException} instead.
+ * Thrown when a user is not authenticated.
+ * Note: This extends {@link UnauthorizedException} for backwards compatibility.
  */
-@Deprecated
-public class UnauthorizedException extends Exception {
-  public UnauthorizedException() {
+public class UnauthenticatedException extends UnauthorizedException {
+
+  public UnauthenticatedException() {
     super();
   }
 
-  public UnauthorizedException(String msg, Throwable throwable) {
+  public UnauthenticatedException(String msg, Throwable throwable) {
     super(msg, throwable);
   }
 
-  public UnauthorizedException(String message) {
+  public UnauthenticatedException(String message) {
     super(message);
   }
 }

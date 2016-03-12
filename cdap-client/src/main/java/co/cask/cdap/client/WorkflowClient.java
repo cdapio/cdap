@@ -20,7 +20,7 @@ import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.util.RESTClient;
 import co.cask.cdap.common.NotFoundException;
-import co.cask.cdap.common.UnauthorizedException;
+import co.cask.cdap.common.UnauthenticatedException;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.WorkflowTokenDetail;
 import co.cask.cdap.proto.WorkflowTokenNodeDetail;
@@ -68,7 +68,7 @@ public class WorkflowClient {
    * @return {@link WorkflowTokenDetail} for the specified workflow run
    */
   public WorkflowTokenDetail getWorkflowToken(Id.Run workflowRunId)
-    throws UnauthorizedException, IOException, NotFoundException {
+    throws UnauthenticatedException, IOException, NotFoundException {
     return getWorkflowToken(workflowRunId, null, null);
   }
 
@@ -81,7 +81,7 @@ public class WorkflowClient {
    * for the specified workflow run
    */
   public WorkflowTokenDetail getWorkflowToken(Id.Run workflowRunId, WorkflowToken.Scope scope)
-    throws UnauthorizedException, IOException, NotFoundException {
+    throws UnauthenticatedException, IOException, NotFoundException {
     return getWorkflowToken(workflowRunId, scope, null);
   }
 
@@ -93,7 +93,7 @@ public class WorkflowClient {
    * @return {@link WorkflowTokenDetail} containing all the values for the specified key
    */
   public WorkflowTokenDetail getWorkflowToken(Id.Run workflowRunId, String key)
-    throws UnauthorizedException, IOException, NotFoundException {
+    throws UnauthenticatedException, IOException, NotFoundException {
     return getWorkflowToken(workflowRunId, null, key);
   }
 
@@ -109,7 +109,7 @@ public class WorkflowClient {
    */
   public WorkflowTokenDetail getWorkflowToken(Id.Run workflowRunId, @Nullable WorkflowToken.Scope scope,
                                               @Nullable String key)
-    throws IOException, UnauthorizedException, NotFoundException {
+    throws IOException, UnauthenticatedException, NotFoundException {
     String path = String.format("apps/%s/workflows/%s/runs/%s/token",
                                 workflowRunId.getProgram().getApplicationId(), workflowRunId.getProgram().getId(),
                                 workflowRunId.getId());
@@ -135,7 +135,7 @@ public class WorkflowClient {
    * specified workflow run's {@link WorkflowToken}
    */
   public WorkflowTokenNodeDetail getWorkflowTokenAtNode(Id.Run workflowRunId, String nodeName)
-    throws UnauthorizedException, IOException, NotFoundException {
+    throws UnauthenticatedException, IOException, NotFoundException {
     return getWorkflowTokenAtNode(workflowRunId, nodeName, null, null);
   }
 
@@ -151,7 +151,7 @@ public class WorkflowClient {
    */
   public WorkflowTokenNodeDetail getWorkflowTokenAtNode(Id.Run workflowRunId, String nodeName,
                                                         WorkflowToken.Scope scope)
-    throws UnauthorizedException, IOException, NotFoundException {
+    throws UnauthenticatedException, IOException, NotFoundException {
     return getWorkflowTokenAtNode(workflowRunId, nodeName, scope, null);
   }
 
@@ -165,7 +165,7 @@ public class WorkflowClient {
    * specified {@link WorkflowToken.Scope}in the specified workflow run's {@link WorkflowToken}
    */
   public WorkflowTokenNodeDetail getWorkflowTokenAtNode(Id.Run workflowRunId, String nodeName, String key)
-    throws UnauthorizedException, IOException, NotFoundException {
+    throws UnauthenticatedException, IOException, NotFoundException {
     return getWorkflowTokenAtNode(workflowRunId, nodeName, null, key);
   }
 
@@ -181,7 +181,7 @@ public class WorkflowClient {
    */
   public WorkflowTokenNodeDetail getWorkflowTokenAtNode(Id.Run workflowRunId, String nodeName,
                                                         @Nullable WorkflowToken.Scope scope, @Nullable String key)
-    throws IOException, UnauthorizedException, NotFoundException {
+    throws IOException, UnauthenticatedException, NotFoundException {
     String path = String.format("apps/%s/workflows/%s/runs/%s/nodes/%s/token",
                                 workflowRunId.getProgram().getApplicationId(), workflowRunId.getProgram().getId(),
                                 workflowRunId.getId(), nodeName);

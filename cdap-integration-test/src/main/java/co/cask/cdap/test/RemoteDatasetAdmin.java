@@ -21,7 +21,7 @@ import co.cask.cdap.client.DatasetClient;
 import co.cask.cdap.common.DatasetAlreadyExistsException;
 import co.cask.cdap.common.DatasetNotFoundException;
 import co.cask.cdap.common.DatasetTypeNotFoundException;
-import co.cask.cdap.common.UnauthorizedException;
+import co.cask.cdap.common.UnauthenticatedException;
 import co.cask.cdap.proto.DatasetInstanceConfiguration;
 import co.cask.cdap.proto.Id;
 import com.google.common.base.Throwables;
@@ -53,7 +53,7 @@ public final class RemoteDatasetAdmin implements DatasetAdmin {
   public boolean exists() throws IOException {
     try {
       return datasetClient.exists(datasetInstance);
-    } catch (UnauthorizedException e) {
+    } catch (UnauthenticatedException e) {
       throw Throwables.propagate(e);
     }
   }
@@ -62,7 +62,7 @@ public final class RemoteDatasetAdmin implements DatasetAdmin {
   public void create() throws IOException {
     try {
       datasetClient.create(datasetInstance, dsConfiguration);
-    } catch (DatasetTypeNotFoundException | DatasetAlreadyExistsException | UnauthorizedException e) {
+    } catch (DatasetTypeNotFoundException | DatasetAlreadyExistsException | UnauthenticatedException e) {
       throw Throwables.propagate(e);
     }
   }
@@ -71,7 +71,7 @@ public final class RemoteDatasetAdmin implements DatasetAdmin {
   public void drop() throws IOException {
     try {
       datasetClient.delete(datasetInstance);
-    } catch (DatasetNotFoundException | UnauthorizedException e) {
+    } catch (DatasetNotFoundException | UnauthenticatedException e) {
       throw Throwables.propagate(e);
     }
   }
@@ -80,7 +80,7 @@ public final class RemoteDatasetAdmin implements DatasetAdmin {
   public void truncate() throws IOException {
     try {
       datasetClient.truncate(datasetInstance);
-    } catch (UnauthorizedException e) {
+    } catch (UnauthenticatedException e) {
       throw Throwables.propagate(e);
     }
   }

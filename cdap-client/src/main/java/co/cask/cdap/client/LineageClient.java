@@ -20,7 +20,7 @@ import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.util.RESTClient;
 import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.NotFoundException;
-import co.cask.cdap.common.UnauthorizedException;
+import co.cask.cdap.common.UnauthenticatedException;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.codec.NamespacedIdCodec;
 import co.cask.cdap.proto.metadata.lineage.LineageRecord;
@@ -68,7 +68,7 @@ public class LineageClient {
    */
   public LineageRecord getLineage(Id.DatasetInstance datasetInstance, long startTime, long endTime,
                                   @Nullable Integer levels)
-    throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
+    throws IOException, UnauthenticatedException, NotFoundException, BadRequestException {
     return getLineage(datasetInstance, Long.toString(startTime), Long.toString(endTime), levels);
   }
 
@@ -83,7 +83,7 @@ public class LineageClient {
    */
   public LineageRecord getLineage(Id.DatasetInstance datasetInstance, String startTime, String endTime,
                                   @Nullable Integer levels)
-    throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
+    throws IOException, UnauthenticatedException, NotFoundException, BadRequestException {
     String path = String.format("datasets/%s/lineage?start=%s&end=%s", datasetInstance.getId(),
                                 URLEncoder.encode(startTime, "UTF-8"), URLEncoder.encode(endTime, "UTF-8"));
     if (levels != null) {
@@ -102,7 +102,7 @@ public class LineageClient {
    * @return {@link LineageRecord} for the specified stream.
    */
   public LineageRecord getLineage(Id.Stream streamId, long startTime, long endTime, @Nullable Integer levels)
-    throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
+    throws IOException, UnauthenticatedException, NotFoundException, BadRequestException {
     return getLineage(streamId, Long.toString(startTime), Long.toString(endTime), levels);
   }
 
@@ -116,7 +116,7 @@ public class LineageClient {
    * @return {@link LineageRecord} for the specified stream.
    */
   public LineageRecord getLineage(Id.Stream streamId, String startTime, String endTime, @Nullable Integer levels)
-    throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
+    throws IOException, UnauthenticatedException, NotFoundException, BadRequestException {
     String path = String.format("streams/%s/lineage?start=%s&end=%s", streamId.getId(),
                                 URLEncoder.encode(startTime, "UTF-8"), URLEncoder.encode(endTime, "UTF-8"));
     if (levels != null) {
@@ -126,7 +126,7 @@ public class LineageClient {
   }
 
   private LineageRecord getLineage(Id.NamespacedId namespacedId, String path)
-    throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
+    throws IOException, UnauthenticatedException, NotFoundException, BadRequestException {
     URL lineageURL = config.resolveNamespacedURLV3(namespacedId.getNamespace(), path);
     HttpResponse response = restClient.execute(HttpRequest.get(lineageURL).build(),
                                                config.getAccessToken(),

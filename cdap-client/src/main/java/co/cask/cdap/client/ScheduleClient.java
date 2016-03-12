@@ -22,9 +22,8 @@ import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.util.RESTClient;
 import co.cask.cdap.common.NotFoundException;
-import co.cask.cdap.common.UnauthorizedException;
+import co.cask.cdap.common.UnauthenticatedException;
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.proto.ProgramStatus;
 import co.cask.cdap.proto.ScheduledRuntime;
 import co.cask.cdap.proto.codec.ScheduleSpecificationCodec;
 import co.cask.common.http.HttpMethod;
@@ -69,7 +68,7 @@ public class ScheduleClient {
   }
 
   public List<ScheduleSpecification> list(Id.Workflow workflow)
-    throws IOException, UnauthorizedException, NotFoundException {
+    throws IOException, UnauthenticatedException, NotFoundException {
 
     String path = String.format("apps/%s/workflows/%s/schedules", workflow.getApplicationId(), workflow.getId());
     URL url = config.resolveNamespacedURLV3(workflow.getNamespace(), path);
@@ -94,7 +93,7 @@ public class ScheduleClient {
    * @return list of Scheduled runtimes for the Workflow. Empty list if there are no schedules.
    */
   public List<ScheduledRuntime> nextRuntimes(Id.Workflow workflow)
-    throws IOException, UnauthorizedException, NotFoundException {
+    throws IOException, UnauthenticatedException, NotFoundException {
 
     String path = String.format("apps/%s/workflows/%s/nextruntime", workflow.getApplicationId(), workflow.getId());
     URL url = config.resolveNamespacedURLV3(workflow.getNamespace(), path);
@@ -109,7 +108,7 @@ public class ScheduleClient {
     return objectResponse.getResponseObject();
   }
 
-  public void suspend(Id.Schedule schedule) throws IOException, UnauthorizedException, NotFoundException {
+  public void suspend(Id.Schedule schedule) throws IOException, UnauthenticatedException, NotFoundException {
     String path = String.format("apps/%s/schedules/%s/suspend", schedule.getApplication().getId(), schedule.getId());
     URL url = config.resolveNamespacedURLV3(schedule.getNamespace(), path);
     HttpResponse response = restClient.execute(HttpMethod.POST, url, config.getAccessToken(),
@@ -119,7 +118,7 @@ public class ScheduleClient {
     }
   }
 
-  public void resume(Id.Schedule schedule) throws IOException, UnauthorizedException, NotFoundException {
+  public void resume(Id.Schedule schedule) throws IOException, UnauthenticatedException, NotFoundException {
     String path = String.format("apps/%s/schedules/%s/resume", schedule.getApplication().getId(), schedule.getId());
     URL url = config.resolveNamespacedURLV3(schedule.getNamespace(), path);
     HttpResponse response = restClient.execute(HttpMethod.POST, url, config.getAccessToken(),
@@ -129,7 +128,7 @@ public class ScheduleClient {
     }
   }
 
-  public String getStatus(Id.Schedule schedule) throws IOException, UnauthorizedException, NotFoundException {
+  public String getStatus(Id.Schedule schedule) throws IOException, UnauthenticatedException, NotFoundException {
     String path = String.format("apps/%s/schedules/%s/status", schedule.getApplication().getId(), schedule.getId());
     URL url = config.resolveNamespacedURLV3(schedule.getNamespace(), path);
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
