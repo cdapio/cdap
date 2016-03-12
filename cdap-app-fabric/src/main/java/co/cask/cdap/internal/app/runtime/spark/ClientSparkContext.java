@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -23,7 +23,6 @@ import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.spark.Spark;
 import co.cask.cdap.api.spark.SparkContext;
-import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DynamicDatasetCache;
@@ -31,6 +30,7 @@ import co.cask.cdap.data2.dataset2.SingleThreadDatasetCache;
 import co.cask.cdap.internal.app.runtime.DefaultAdmin;
 import co.cask.cdap.internal.app.runtime.distributed.LocalizeResource;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
+import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.tephra.TransactionContext;
 import co.cask.tephra.TransactionSystemClient;
@@ -62,14 +62,14 @@ public final class ClientSparkContext extends AbstractSparkContext {
                             MetricsCollectionService metricsCollectionService,
                             @Nullable File pluginArchive,
                             @Nullable PluginInstantiator pluginInstantiator,
-                            @Nullable WorkflowToken workflowToken) {
+                            @Nullable WorkflowProgramInfo workflowProgramInfo) {
     super(program.getApplicationSpecification(),
           program.getApplicationSpecification().getSpark().get(program.getName()),
           program.getId(), runId, program.getClassLoader(), logicalStartTime,
           runtimeArguments, discoveryServiceClient,
           createMetricsContext(metricsCollectionService, program.getId(), runId),
           createLoggingContext(program.getId(), runId),
-          datasetFramework, pluginInstantiator, workflowToken);
+          datasetFramework, pluginInstantiator, workflowProgramInfo);
 
     NamespaceId namespaceId = program.getId().getNamespace().toEntityId();
     this.datasetCache = new SingleThreadDatasetCache(systemDatasetInstantiator, txClient, namespaceId,

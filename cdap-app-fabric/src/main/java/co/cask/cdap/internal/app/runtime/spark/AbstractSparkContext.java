@@ -44,6 +44,7 @@ import co.cask.cdap.internal.app.program.ProgramTypeMetricTag;
 import co.cask.cdap.internal.app.runtime.DefaultAdmin;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.internal.app.runtime.spark.metrics.SparkUserMetrics;
+import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
 import co.cask.cdap.logging.context.SparkLoggingContext;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
@@ -80,9 +81,9 @@ public abstract class AbstractSparkContext implements SparkContext, Closeable {
   private final MetricsContext metricsContext;
   private final LoggingContext loggingContext;
   private final PluginInstantiator pluginInstantiator;
-  private final WorkflowToken workflowToken;
   private final Admin admin;
   protected final SystemDatasetInstantiator systemDatasetInstantiator;
+  private final WorkflowProgramInfo workflowProgramInfo;
 
 
   private Resources executorResources;
@@ -95,7 +96,7 @@ public abstract class AbstractSparkContext implements SparkContext, Closeable {
                                  MetricsContext metricsContext, LoggingContext loggingContext,
                                  DatasetFramework dsFramework,
                                  @Nullable PluginInstantiator pluginInstantiator,
-                                 @Nullable WorkflowToken workflowToken) {
+                                 @Nullable WorkflowProgramInfo workflowProgramInfo) {
     this.applicationSpecification = applicationSpecification;
     this.specification = specification;
     this.programId = programId;
@@ -110,7 +111,7 @@ public abstract class AbstractSparkContext implements SparkContext, Closeable {
     this.executorResources = Objects.firstNonNull(specification.getExecutorResources(), new Resources());
     this.sparkConf = new SparkConf();
     this.pluginInstantiator = pluginInstantiator;
-    this.workflowToken = workflowToken;
+    this.workflowProgramInfo = workflowProgramInfo;
     this.systemDatasetInstantiator = new SystemDatasetInstantiator(dsFramework, programClassLoader, getOwners());
     this.admin = new DefaultAdmin(dsFramework, programId.getNamespace().toEntityId());
   }
@@ -200,7 +201,7 @@ public abstract class AbstractSparkContext implements SparkContext, Closeable {
   @Nullable
   @Override
   public WorkflowToken getWorkflowToken() {
-    return workflowToken;
+    return workflowProgramInfo == null ? null : workflowProgramInfo.getWorkflowToken();
   }
 
   @Override
@@ -268,6 +269,14 @@ public abstract class AbstractSparkContext implements SparkContext, Closeable {
   @Nullable
   public PluginInstantiator getPluginInstantiator() {
     return pluginInstantiator;
+  }
+
+  /**
+   * Returns the {@link WorkflowProgramInfo} for this context or null if not running inside workflow.
+   */
+  @Nullable
+  public WorkflowProgramInfo getWorkflowProgramInfo() {
+    return workflowProgramInfo;
   }
 
   /**

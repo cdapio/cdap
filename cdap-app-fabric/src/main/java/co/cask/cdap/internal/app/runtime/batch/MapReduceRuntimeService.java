@@ -67,6 +67,7 @@ import com.google.common.io.ByteStreams;
 import com.google.common.io.Files;
 import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
+import com.google.inject.Injector;
 import com.google.inject.ProvisionException;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.InputFormat;
@@ -133,6 +134,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
   // Hadoop 2.3.0 and before has a typo as 'programatically', while it is fixed later as 'programmatically'.
   private static final Pattern PROGRAMATIC_SOURCE_PATTERN = Pattern.compile("program{1,2}atically");
 
+  private final Injector injector;
   private final CConfiguration cConf;
   private final Configuration hConf;
   private final MapReduce mapReduce;
@@ -153,12 +155,13 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
   private ClassLoader classLoader;
   private volatile boolean stopRequested;
 
-  MapReduceRuntimeService(CConfiguration cConf, Configuration hConf,
+  MapReduceRuntimeService(Injector injector, CConfiguration cConf, Configuration hConf,
                           MapReduce mapReduce, MapReduceSpecification specification,
                           BasicMapReduceContext context,
                           Location programJarLocation, LocationFactory locationFactory,
                           StreamAdmin streamAdmin, TransactionSystemClient txClient,
                           UsageRegistry usageRegistry) {
+    this.injector = injector;
     this.cConf = cConf;
     this.hConf = hConf;
     this.mapReduce = mapReduce;
@@ -186,7 +189,9 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
       Job job = createJob(new File(tempDir, "mapreduce"));
       Configuration mapredConf = job.getConfiguration();
 
-      classLoader = new MapReduceClassLoader(cConf, mapredConf, context);
+      classLoader = new MapReduceClassLoader(injector, cConf, mapredConf, context.getProgram().getClassLoader(),
+                                             context.getPlugins(),
+                                             context.getPluginInstantiator());
       cleanupTask = createCleanupTask(cleanupTask, classLoader);
 
       mapredConf.setClassLoader(new WeakReferenceDelegatorClassLoader(classLoader));

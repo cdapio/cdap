@@ -15,33 +15,66 @@
  */
 package co.cask.cdap.internal.app.runtime.workflow;
 
+import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
-import co.cask.cdap.api.workflow.Workflow;
 import co.cask.cdap.data2.datafabric.dataset.type.DatasetClassLoaderProvider;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.ForwardingProgramContextAwareDatasetFramework;
 import co.cask.cdap.proto.Id;
+import com.google.common.base.Function;
 
 import java.io.IOException;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import javax.annotation.Nullable;
 
 /**
- * Implementation of the {@link DatasetFramework} which forwards all calls to the underlying
- * dataset framework. Before forwarding the calls, local dataset names are mapped to the names
- * assigned to them for the current run of the {@link Workflow}.
+ * Implementation of the {@link DatasetFramework} that supports renaming datasets before forwarding calls to
+ * the underlying dataset framework.
  */
-public class WorkflowDatasetFramework extends ForwardingProgramContextAwareDatasetFramework {
+public class NameMappedDatasetFramework extends ForwardingProgramContextAwareDatasetFramework {
 
   private final Map<String, String> datasetNameMapping;
 
-  public WorkflowDatasetFramework(DatasetFramework delegate, Map<String, String> datasetNameMapping) {
+  /**
+   * Creates a new instance based on the given {@link WorkflowProgramInfo}.
+   */
+  public static NameMappedDatasetFramework createFromWorkflowProgramInfo(DatasetFramework datasetFramework,
+                                                                         WorkflowProgramInfo info,
+                                                                         ApplicationSpecification appSpec) {
+    Set<String> localDatasets = appSpec.getWorkflows().get(info.getWorkflowName()).getLocalDatasetSpecs().keySet();
+    return new NameMappedDatasetFramework(datasetFramework, localDatasets, info.getWorkflowRunId().getId());
+  }
+
+  /**
+   * Creates a new instance which maps the given set of dataset names by appending ("." + nameSuffix).
+   */
+  public NameMappedDatasetFramework(DatasetFramework delegate, Set<String> datasets, final String nameSuffix) {
+    this(delegate, datasets, new Function<String, String>() {
+      @Override
+      public String apply(String dataset) {
+        return dataset + "." + nameSuffix;
+      }
+    });
+  }
+
+  /**
+   * Creates a new instance which maps the given set of dataset names by applying the transform function.
+   */
+  public NameMappedDatasetFramework(DatasetFramework delegate, Set<String> datasets,
+                                    Function<String, String> nameTransformer) {
     super(delegate);
-    this.datasetNameMapping = datasetNameMapping;
+    Map<String, String> nameMapping = new HashMap<>();
+    for (String dataset : datasets) {
+      nameMapping.put(dataset, nameTransformer.apply(dataset));
+    }
+    this.datasetNameMapping = Collections.unmodifiableMap(nameMapping);
   }
 
   /**

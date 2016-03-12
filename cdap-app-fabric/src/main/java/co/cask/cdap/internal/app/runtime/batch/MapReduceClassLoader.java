@@ -36,6 +36,7 @@ import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Service;
+import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapreduce.MRJobConfig;
@@ -97,13 +98,14 @@ public class MapReduceClassLoader extends CombineClassLoader implements AutoClos
    * followed by plugin Export-Package ClassLoader and with the system ClassLoader last.
    * This constructor should only be called from {@link MapReduceRuntimeService} only.
    */
-  MapReduceClassLoader(CConfiguration cConf, Configuration hConf, final BasicMapReduceContext context) {
-    this(new Parameters(cConf, hConf, context.getProgram().getClassLoader(),
-                        context.getPlugins(), context.getPluginInstantiator()), new TaskContextProviderFactory() {
+  MapReduceClassLoader(final Injector injector, CConfiguration cConf, Configuration hConf,
+                       ClassLoader programClassLoader, Map<String, Plugin> plugins,
+                       @Nullable PluginInstantiator pluginInstantiator) {
+    this(new Parameters(cConf, hConf,
+                        programClassLoader, plugins, pluginInstantiator), new TaskContextProviderFactory() {
       @Override
       public MapReduceTaskContextProvider create(CConfiguration cConf, Configuration hConf) {
-        Preconditions.checkState(MapReduceTaskContextProvider.isLocal(hConf), "Expected to be in local mode.");
-        return context.createMapReduceTaskContextProvider();
+        return new MapReduceTaskContextProvider(injector);
       }
     });
   }

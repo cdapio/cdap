@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -35,7 +35,6 @@ import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.api.spark.SparkContext;
 import co.cask.cdap.api.spark.SparkProgram;
 import co.cask.cdap.api.spark.SparkSpecification;
-import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.common.conf.ConfigurationUtil;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.common.options.UnsupportedOptionTypeException;
@@ -52,6 +51,7 @@ import co.cask.cdap.internal.app.runtime.batch.dataset.DatasetInputFormatProvide
 import co.cask.cdap.internal.app.runtime.batch.dataset.DatasetOutputFormatProvider;
 import co.cask.cdap.internal.app.runtime.batch.dataset.ForwardingSplitReader;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
+import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.tephra.Transaction;
@@ -117,12 +117,12 @@ public class ExecutionSparkContext extends AbstractSparkContext {
                                Configuration hConf, StreamAdmin streamAdmin,
                                Map<String, File> localizedResources,
                                @Nullable PluginInstantiator pluginInstantiator,
-                               @Nullable WorkflowToken workflowToken) {
+                               @Nullable WorkflowProgramInfo workflowProgramInfo) {
     this(appSpec, specification, programId, runId, programClassLoader, logicalStartTime, runtimeArguments,
          transaction, datasetFramework, txClient, discoveryServiceClient,
          createMetricsContext(metricsCollectionService, programId, runId),
          createLoggingContext(programId, runId), hConf, streamAdmin, localizedResources, pluginInstantiator,
-         workflowToken);
+         workflowProgramInfo);
   }
 
   /**
@@ -139,10 +139,10 @@ public class ExecutionSparkContext extends AbstractSparkContext {
                                Configuration hConf, StreamAdmin streamAdmin,
                                Map<String, File> localizedResources,
                                @Nullable PluginInstantiator pluginInstantiator,
-                               @Nullable WorkflowToken workflowToken) {
+                               @Nullable WorkflowProgramInfo workflowProgramInfo) {
     super(appSpec, specification, programId, runId, programClassLoader, logicalStartTime,
           runtimeArguments, discoveryServiceClient, metricsContext, loggingContext, datasetFramework,
-          pluginInstantiator, workflowToken);
+          pluginInstantiator, workflowProgramInfo);
     this.datasets = new HashMap<>();
     this.contextConfig = new SparkContextConfig(hConf);
     this.transaction = transaction;

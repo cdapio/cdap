@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -43,6 +43,7 @@ import co.cask.cdap.internal.app.runtime.batch.dataset.CloseableBatchWritable;
 import co.cask.cdap.internal.app.runtime.batch.dataset.ForwardingSplitReader;
 import co.cask.cdap.internal.app.runtime.batch.dataset.MultipleOutputs;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
+import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
 import co.cask.cdap.logging.context.MapReduceLoggingContext;
 import co.cask.cdap.proto.Id;
 import co.cask.tephra.Transaction;
@@ -79,7 +80,7 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
   private final MapReduceSpecification spec;
   private final LoggingContext loggingContext;
   private final long logicalStartTime;
-  private final WorkflowToken workflowToken;
+  private final WorkflowProgramInfo workflowProgramInfo;
   private final Metrics userMetrics;
   private final Map<String, Plugin> plugins;
   private final Transaction transaction;
@@ -99,7 +100,7 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
                                    Arguments runtimeArguments,
                                    MapReduceSpecification spec,
                                    long logicalStartTime,
-                                   @Nullable WorkflowToken workflowToken,
+                                   @Nullable WorkflowProgramInfo workflowProgramInfo,
                                    DiscoveryServiceClient discoveryServiceClient,
                                    MetricsCollectionService metricsCollectionService,
                                    TransactionSystemClient txClient,
@@ -111,7 +112,7 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
           getMetricCollector(program, runId.getId(), taskId, metricsCollectionService, type),
           dsFramework, txClient, discoveryServiceClient, false, pluginInstantiator);
     this.logicalStartTime = logicalStartTime;
-    this.workflowToken = workflowToken;
+    this.workflowProgramInfo = workflowProgramInfo;
     this.transaction = transaction;
 
     if (metricsCollectionService != null) {
@@ -194,7 +195,7 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
   @Override
   @Nullable
   public WorkflowToken getWorkflowToken() {
-    return workflowToken;
+    return workflowProgramInfo == null ? null : workflowProgramInfo.getWorkflowToken();
   }
 
   @Nullable
