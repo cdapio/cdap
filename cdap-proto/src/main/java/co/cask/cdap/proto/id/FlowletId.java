@@ -98,7 +98,7 @@ public class FlowletId extends EntityId implements NamespacedId, ParentedId<Prog
   }
 
   @Override
-  public Id toId() {
+  public Id.Flow.Flowlet toId() {
     return Id.Flow.Flowlet.from(Id.Application.from(namespace, application), flow, flowlet);
   }
 

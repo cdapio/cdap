@@ -53,7 +53,7 @@ public class SystemServiceId extends EntityId {
   }
 
   @Override
-  public Id toId() {
+  public Id.SystemService toId() {
     return Id.SystemService.from(service);
   }
 

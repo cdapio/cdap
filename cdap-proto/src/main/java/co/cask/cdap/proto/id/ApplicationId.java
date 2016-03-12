@@ -79,7 +79,7 @@ public class ApplicationId extends EntityId implements NamespacedId, ParentedId<
   }
 
   @Override
-  public Id toId() {
+  public Id.Application toId() {
     return Id.Application.from(namespace, application);
   }
 

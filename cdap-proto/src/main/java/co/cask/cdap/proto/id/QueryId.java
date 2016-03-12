@@ -53,7 +53,7 @@ public class QueryId extends EntityId {
   }
 
   @Override
-  public Id toId() {
+  public Id.QueryHandle toId() {
     return Id.QueryHandle.from(handle);
   }
 

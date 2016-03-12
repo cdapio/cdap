@@ -87,7 +87,7 @@ public class ProgramRunId extends EntityId implements NamespacedId, ParentedId<P
   }
 
   @Override
-  public Id toId() {
+  public Id.Program.Run toId() {
     return new Id.Program.Run(Id.Program.from(namespace, application, type, program), run);
   }
 

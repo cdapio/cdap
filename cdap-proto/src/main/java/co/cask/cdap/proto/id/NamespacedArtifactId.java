@@ -73,7 +73,7 @@ public class NamespacedArtifactId extends EntityId implements NamespacedId, Pare
   }
 
   @Override
-  public Id toId() {
+  public Id.Artifact toId() {
     return Id.Artifact.from(Id.Namespace.from(namespace), artifact, version);
   }
 

@@ -72,7 +72,7 @@ public class StreamViewId extends EntityId implements NamespacedId, ParentedId<S
   }
 
   @Override
-  public Id toId() {
+  public Id.Stream.View toId() {
     return Id.Stream.View.from(namespace, stream, view);
   }
 

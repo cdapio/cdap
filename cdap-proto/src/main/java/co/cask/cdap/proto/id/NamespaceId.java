@@ -65,7 +65,7 @@ public class NamespaceId extends EntityId {
   }
 
   @Override
-  public Id toId() {
+  public Id.Namespace toId() {
     return Id.Namespace.from(namespace);
   }
 
