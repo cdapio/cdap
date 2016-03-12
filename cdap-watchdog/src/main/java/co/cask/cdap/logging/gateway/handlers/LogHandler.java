@@ -329,7 +329,7 @@ public class LogHandler extends AbstractHttpHandler {
     private final long fromMillis;
     private final long toMillis;
 
-    public TimeRange(long fromMillis, long toMillis) {
+    private TimeRange(long fromMillis, long toMillis) {
       this.fromMillis = fromMillis;
       this.toMillis = toMillis;
     }
@@ -344,9 +344,10 @@ public class LogHandler extends AbstractHttpHandler {
   }
 
   private static TimeRange parseTime(long fromTimeSecsParam, long toTimeSecsParam, HttpResponder responder) {
+    long currentTimeMillis =  System.currentTimeMillis();
     long fromMillis = fromTimeSecsParam < 0 ?
-      System.currentTimeMillis() - TimeUnit.HOURS.toMillis(1) : TimeUnit.SECONDS.toMillis(fromTimeSecsParam);
-    long toMillis = toTimeSecsParam < 0 ? System.currentTimeMillis() : TimeUnit.SECONDS.toMillis(toTimeSecsParam);
+      currentTimeMillis - TimeUnit.HOURS.toMillis(1) : TimeUnit.SECONDS.toMillis(fromTimeSecsParam);
+    long toMillis = toTimeSecsParam < 0 ? currentTimeMillis : TimeUnit.SECONDS.toMillis(toTimeSecsParam);
 
     if (toMillis <= fromMillis) {
       responder.sendString(HttpResponseStatus.BAD_REQUEST, "Invalid time range. " +

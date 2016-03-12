@@ -44,6 +44,7 @@ import java.util.List;
 public class AvroFileReader {
   private static final Logger LOG = LoggerFactory.getLogger(AvroFileReader.class);
   private static final long DEFAULT_SKIP_LEN = 50 * 1024;
+  public static final int AVRO_SYNC_SIZE = 16;
 
   private final Schema schema;
 
@@ -117,53 +118,43 @@ public class AvroFileReader {
           return ImmutableList.of();
         }
 
-        GenericRecord datum;
         List<List<LogEvent>> logSegments = Lists.newArrayList();
         int count = 0;
 
         // Calculate skipLen based on fileLength
-        long skipLen = file.length() / 10;
+        long length = file.length();
+        LOG.trace("Got file Length {}", length);
+        long skipLen = length / 10;
         if (skipLen > DEFAULT_SKIP_LEN) {
           skipLen = DEFAULT_SKIP_LEN;
         } else if (skipLen <= 0) {
           skipLen = DEFAULT_SKIP_LEN;
         }
 
+        // For open file, start from file length and Read till the actual eof
+        dataFileReader.sync(length);
+        long finalSync = dataFileReader.tell();
         List<LogEvent> logSegment = Lists.newArrayList();
+        count = readToNextSync(logFilter, fromTimeMs, dataFileReader, logSegments, count, logSegment, -1);
 
-        long lastSeekPos;
-        long seekPos = file.length();
-        while (seekPos > 0) {
-          lastSeekPos = seekPos;
-          seekPos = seekPos < skipLen ? 0 : seekPos - skipLen;
-          dataFileReader.sync(seekPos);
+        // Avro pastSync() adds SYNC_SIZE = 16, so we subtract it before using it to get correct past sync point
+        long endPosition = finalSync - AVRO_SYNC_SIZE;
+        long startPosition = endPosition;
+
+        while (startPosition > 0 && count < maxEvents) {
+          // Get prev Sync point by skipping skipLen number of positions backwards from startPoint in each iteration
+          startPosition = startPosition < skipLen ? 0 : startPosition - skipLen;
+          LOG.trace("Start position calculated {}", startPosition);
+          dataFileReader.sync(startPosition);
+          long currentSync = dataFileReader.tell();
+          LOG.trace("Starting sync position {}", dataFileReader.tell());
 
           logSegment = logSegment.isEmpty() ? logSegment : Lists.<LogEvent>newArrayList();
-          // read all the elements in the current segment (seekPos up to lastSeekPos)
-          while (dataFileReader.hasNext() && !dataFileReader.pastSync(lastSeekPos)) {
-            datum = dataFileReader.next();
+          // read all the elements in the current segment (startPosition up to endPosition + AVRO_SYNC_SIZE)
+          count = readToNextSync(logFilter, fromTimeMs, dataFileReader, logSegments, count, logSegment, endPosition);
 
-            ILoggingEvent loggingEvent = LoggingEvent.decode(datum);
-
-            // Stop when reached fromTimeMs
-            if (loggingEvent.getTimeStamp() > fromTimeMs) {
-              break;
-            }
-
-            if (logFilter.match(loggingEvent)) {
-              ++count;
-              logSegment.add(new LogEvent(loggingEvent,
-                                          new LogOffset(LogOffset.INVALID_KAFKA_OFFSET, loggingEvent.getTimeStamp())));
-            }
-          }
-
-          if (!logSegment.isEmpty()) {
-            logSegments.add(logSegment);
-          }
-
-          if (count > maxEvents) {
-            break;
-          }
+          endPosition = currentSync - AVRO_SYNC_SIZE;
+          LOG.trace("Changed end position to {}", endPosition);
         }
 
         int skip = count >= maxEvents ? count - maxEvents : 0;
@@ -181,9 +172,36 @@ public class AvroFileReader {
     }
   }
 
+  private int readToNextSync(Filter logFilter, long fromTimeMs, DataFileReader<GenericRecord> dataFileReader,
+                             List<List<LogEvent>> logSegments, int count, List<LogEvent> logSegment,
+                             long endPosition) throws IOException {
+    GenericRecord datum;
+    // Read till the end if stopPoint = -1 or read until stopPoint has reached
+    while (dataFileReader.hasNext() && (endPosition == -1 || !dataFileReader.pastSync(endPosition))) {
+      datum = dataFileReader.next();
+      ILoggingEvent loggingEvent = LoggingEvent.decode(datum);
+
+      // Stop when reached fromTimeMs
+      if (loggingEvent.getTimeStamp() > fromTimeMs) {
+        break;
+      }
+
+      if (logFilter.match(loggingEvent)) {
+        ++count;
+        logSegment.add(new LogEvent(loggingEvent,
+                                    new LogOffset(LogOffset.INVALID_KAFKA_OFFSET, loggingEvent.getTimeStamp())));
+      }
+    }
+
+    if (!logSegment.isEmpty()) {
+      logSegments.add(logSegment);
+    }
+    return count;
+  }
+
   private DataFileReader<GenericRecord> createReader(Location location) throws IOException {
     return new DataFileReader<>(new LocationSeekableInput(location),
-                                             new GenericDatumReader<GenericRecord>(schema));
+                                new GenericDatumReader<GenericRecord>(schema));
 
   }
 
