@@ -131,11 +131,14 @@ public class AvroFileReader {
 
         List<LogEvent> logSegment = Lists.newArrayList();
 
-        long lastSeekPos;
+        long lastSeekPos = 0;
         long seekPos = file.length();
         while (seekPos > 0) {
+          System.out.println("lastSeekPos: " + lastSeekPos);
           lastSeekPos = seekPos;
+          System.out.println("changed lastSeekPos: " + lastSeekPos);
           seekPos = seekPos < skipLen ? 0 : seekPos - skipLen;
+          System.out.println("seekPos: " + seekPos);
           dataFileReader.sync(seekPos);
 
           logSegment = logSegment.isEmpty() ? logSegment : Lists.<LogEvent>newArrayList();
@@ -144,6 +147,7 @@ public class AvroFileReader {
             datum = dataFileReader.next();
 
             ILoggingEvent loggingEvent = LoggingEvent.decode(datum);
+            System.out.println("Read LoggingEvent loggername: " + loggingEvent.getLoggerName());
 
             // Stop when reached fromTimeMs
             if (loggingEvent.getTimeStamp() > fromTimeMs) {
@@ -152,6 +156,7 @@ public class AvroFileReader {
 
             if (logFilter.match(loggingEvent)) {
               ++count;
+              System.out.println("Read LoggingEvent timestamp(): " + loggingEvent.getTimeStamp());
               logSegment.add(new LogEvent(loggingEvent,
                                           new LogOffset(LogOffset.INVALID_KAFKA_OFFSET, loggingEvent.getTimeStamp())));
             }
