@@ -44,8 +44,9 @@ final class MapReduceProgramWorkflowRunner extends AbstractProgramWorkflowRunner
 
   MapReduceProgramWorkflowRunner(WorkflowSpecification workflowSpec, ProgramRunnerFactory programRunnerFactory,
                                  Program workflowProgram, ProgramOptions workflowProgramOptions, WorkflowToken token,
-                                 String nodeId) {
-    super(workflowProgram, workflowProgramOptions, programRunnerFactory, workflowSpec, token, nodeId);
+                                 String nodeId, Map<String, String> localDatasetNameMapping) {
+    super(workflowProgram, workflowProgramOptions, programRunnerFactory, workflowSpec, token, nodeId,
+          localDatasetNameMapping);
   }
 
   /**

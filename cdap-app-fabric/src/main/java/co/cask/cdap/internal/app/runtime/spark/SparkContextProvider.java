@@ -17,6 +17,8 @@
 package co.cask.cdap.internal.app.runtime.spark;
 
 import co.cask.cdap.api.metrics.MetricsCollectionService;
+import co.cask.cdap.app.program.Program;
+import co.cask.cdap.app.services.Data;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
@@ -34,13 +36,16 @@ import co.cask.cdap.data.stream.StreamCoordinatorClient;
 import co.cask.cdap.data.view.ViewAdminModules;
 import co.cask.cdap.data2.audit.AuditModule;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.metadata.writer.ProgramContextAware;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
+import co.cask.cdap.internal.app.runtime.workflow.WorkflowDatasetFramework;
 import co.cask.cdap.logging.appender.LogAppenderInitializer;
 import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.notifications.feeds.guice.NotificationFeedServiceRuntimeModule;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Preconditions;
@@ -53,12 +58,14 @@ import com.google.gson.Gson;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.internal.Services;
 import org.apache.twill.kafka.client.KafkaClientService;
 import org.apache.twill.zookeeper.ZKClientService;
 
 import java.io.File;
+import java.lang.reflect.Type;
 import java.net.MalformedURLException;
 import java.util.HashMap;
 import java.util.List;
@@ -164,20 +171,37 @@ public final class SparkContextProvider {
       PluginInstantiator pluginInstantiator = createPluginInstantiator(cConf, hConf, classLoader);
       Map<String, File> localizedResources = createLocalResources(hConf);
       // Create the context object
+      DatasetFramework dsFrameWork = getWrappedDatasetFramework(injector.getInstance(DatasetFramework.class), hConf,
+                                                                contextConfig.getProgramId(), contextConfig.getRunId());
       sparkContext = new ExecutionSparkContext(
         contextConfig.getApplicationSpecification(),
         contextConfig.getSpecification(), contextConfig.getProgramId(), contextConfig.getRunId(),
         classLoader, contextConfig.getLogicalStartTime(), contextConfig.getArguments(),
-        contextConfig.getTransaction(), injector.getInstance(DatasetFramework.class),
-        injector.getInstance(TransactionSystemClient.class),
+        contextConfig.getTransaction(), dsFrameWork, injector.getInstance(TransactionSystemClient.class),
         injector.getInstance(DiscoveryServiceClient.class), metricsCollectionService, hConf,
-        injector.getInstance(StreamAdmin.class), localizedResources,
-        pluginInstantiator, contextConfig.getWorkflowToken()
+        injector.getInstance(StreamAdmin.class), localizedResources, pluginInstantiator,
+        contextConfig.getWorkflowToken(), contextConfig.getWorkflowLocalDatasetNameMapping()
       );
       return sparkContext;
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
+  }
+
+  private static DatasetFramework getWrappedDatasetFramework(DatasetFramework datasetFramework, Configuration hConf,
+                                                             Id.Program program, RunId runId) {
+    DatasetFramework wrappedDatasetFramework = datasetFramework;
+    String mappingJson = hConf.get(SparkContextConfig.HCONF_ATTR_WORKFLOW_LOCAL_DATASET_NAME_MAPPING);
+    if (mappingJson != null) {
+      Type type = new TypeToken<Map<String, String>>() { }.getType();
+      Map<String, String> localDatasetNameMapping = new Gson().fromJson(mappingJson, type);
+      wrappedDatasetFramework = new WorkflowDatasetFramework(datasetFramework, localDatasetNameMapping);
+    }
+
+    if (wrappedDatasetFramework instanceof ProgramContextAware) {
+      ((ProgramContextAware) wrappedDatasetFramework).initContext(new Id.Run(program, runId.getId()));
+    }
+    return wrappedDatasetFramework;
   }
 
   private static CConfiguration createCConf() throws MalformedURLException {

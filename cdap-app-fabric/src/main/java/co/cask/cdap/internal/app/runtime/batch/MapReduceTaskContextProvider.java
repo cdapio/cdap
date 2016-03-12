@@ -23,7 +23,9 @@ import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.program.Programs;
 import co.cask.cdap.common.twill.LocalLocationFactory;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.metadata.writer.ProgramContextAware;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowMapReduceProgram;
+import co.cask.cdap.proto.Id;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
@@ -170,6 +172,11 @@ public class MapReduceTaskContextProvider extends AbstractIdleService {
         // if this is not for a mapper or a reducer, we don't need the metrics collection service
         MetricsCollectionService metricsCollector =
           (taskType == null) ? null : metricsCollectionService;
+
+        if (datasetFramework instanceof ProgramContextAware) {
+          ((ProgramContextAware) datasetFramework).initContext(new Id.Run(program.getId(),
+                                                                     contextConfig.getRunId().getId()));
+        }
 
         return new BasicMapReduceTaskContext(
           program, taskType, contextConfig.getRunId(), key.getTaskAttemptID().getTaskID().toString(),

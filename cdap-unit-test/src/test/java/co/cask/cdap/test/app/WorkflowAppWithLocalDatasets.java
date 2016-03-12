@@ -134,7 +134,6 @@ public class WorkflowAppWithLocalDatasets extends AbstractApplication {
     }
   }
 
-
   /**
    * Main class for the Spark program to convert comma separated file into space separated file.
    */

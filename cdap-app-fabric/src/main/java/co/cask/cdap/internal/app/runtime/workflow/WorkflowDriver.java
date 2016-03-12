@@ -132,6 +132,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
   private final Store store;
   private final Id.Workflow workflowId;
   private final CConfiguration cConf;
+  private final Map<String, String> localDatasetNameMapping = new HashMap<>();
 
   WorkflowDriver(Program program, ProgramOptions options, InetAddress hostname,
                  WorkflowSpecification workflowSpec, MetricsCollectionService metricsCollectionService,
@@ -170,7 +171,6 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
   }
 
   private DatasetFramework createWorkflowDatasetFramework(DatasetFramework datasetFramework, String runId) {
-    Map<String, String> localDatasetNameMapping = new HashMap<>();
     for (String datasetName : workflowSpec.getLocalDatasetSpecs().keySet()) {
       localDatasetNameMapping.put(datasetName, getLocalDatasetName(datasetName, runId));
     }
@@ -534,8 +534,10 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
 
   private BasicWorkflowContext createWorkflowContext(WorkflowActionSpecification actionSpec,
                                                      WorkflowToken token, String nodeId) {
-    return new BasicWorkflowContext(workflowSpec, actionSpec, logicalStartTime,
-                                    workflowProgramRunnerFactory.getProgramWorkflowRunner(actionSpec, token, nodeId),
+    ProgramWorkflowRunner runner = workflowProgramRunnerFactory.getProgramWorkflowRunner(actionSpec, token, nodeId,
+                                                                                         localDatasetNameMapping);
+
+    return new BasicWorkflowContext(workflowSpec, actionSpec, logicalStartTime, runner,
                                     new BasicArguments(runtimeArgs), token, program, runId, metricsCollectionService,
                                     datasetFramework, txClient, discoveryServiceClient);
   }

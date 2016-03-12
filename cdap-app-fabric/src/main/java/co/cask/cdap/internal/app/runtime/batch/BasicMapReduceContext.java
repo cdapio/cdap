@@ -72,6 +72,7 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
   private final long logicalStartTime;
   private final String programNameInWorkflow;
   private final WorkflowToken workflowToken;
+  private final Map<String, String> workflowLocalDatasetNameMapping;
   private final Metrics userMetrics;
   private final Map<String, Plugin> plugins;
   private final Map<String, OutputFormatProvider> outputFormatProviders;
@@ -94,6 +95,7 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
                                long logicalStartTime,
                                @Nullable String programNameInWorkflow,
                                @Nullable WorkflowToken workflowToken,
+                               @Nullable Map<String, String> workflowLocalDatasetNameMapping,
                                final DiscoveryServiceClient discoveryServiceClient,
                                final MetricsCollectionService metricsCollectionService,
                                final TransactionSystemClient txClient,
@@ -107,6 +109,7 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
     this.logicalStartTime = logicalStartTime;
     this.programNameInWorkflow = programNameInWorkflow;
     this.workflowToken = workflowToken;
+    this.workflowLocalDatasetNameMapping = workflowLocalDatasetNameMapping;
 
     if (metricsCollectionService != null) {
       this.userMetrics = new ProgramUserMetrics(getProgramMetrics());
@@ -182,6 +185,15 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
   @Nullable
   public WorkflowToken getWorkflowToken() {
     return workflowToken;
+  }
+
+  /**
+   * Return the map of local dataset names to the names assigned to the for the current run of the Workflow,
+   * if MapReduce is running inside Workflow. Otherwise {@code null} is returned.
+   */
+  @Nullable
+  public Map<String, String> getWorkflowLocalDatasetNameMapping() {
+    return workflowLocalDatasetNameMapping;
   }
 
   public void setJob(Job job) {

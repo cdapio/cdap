@@ -34,7 +34,9 @@ import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.internal.app.runtime.batch.MapReduceClassLoader;
+import co.cask.cdap.internal.app.runtime.batch.MapReduceContextConfig;
 import co.cask.cdap.internal.app.runtime.batch.MapReduceTaskContextProvider;
+import co.cask.cdap.internal.app.runtime.workflow.WorkflowDatasetFramework;
 import co.cask.cdap.logging.appender.LogAppender;
 import co.cask.cdap.logging.appender.LogAppenderInitializer;
 import co.cask.cdap.logging.appender.kafka.KafkaLogAppender;
@@ -44,7 +46,9 @@ import co.cask.tephra.distributed.ThriftClientProvider;
 import co.cask.tephra.metrics.TxMetricsCollector;
 import co.cask.tephra.runtime.TransactionModules;
 import com.google.common.base.Preconditions;
+import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.gson.Gson;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -55,7 +59,9 @@ import org.apache.twill.internal.Services;
 import org.apache.twill.kafka.client.KafkaClientService;
 import org.apache.twill.zookeeper.ZKClientService;
 
+import java.lang.reflect.Type;
 import java.util.List;
+import java.util.Map;
 
 /**
  * A {@link MapReduceTaskContextProvider} used in distributed mode. It creates a separate injector
@@ -70,12 +76,12 @@ public final class DistributedMapReduceTaskContextProvider extends MapReduceTask
   private final LogAppenderInitializer logAppenderInitializer;
 
   public DistributedMapReduceTaskContextProvider(CConfiguration cConf, Configuration hConf) {
-    this(createInjector(cConf, hConf));
+    this(createInjector(cConf, hConf), hConf);
   }
 
-  private DistributedMapReduceTaskContextProvider(Injector injector) {
+  private DistributedMapReduceTaskContextProvider(Injector injector, Configuration hConf) {
     super(injector.getInstance(DiscoveryServiceClient.class),
-          injector.getInstance(DatasetFramework.class),
+          getWrappedDatasetFramework(injector.getInstance(DatasetFramework.class), hConf),
           injector.getInstance(MetricsCollectionService.class),
           injector.getInstance(TransactionSystemClient.class));
 
@@ -83,6 +89,17 @@ public final class DistributedMapReduceTaskContextProvider extends MapReduceTask
     this.kafkaClientService = injector.getInstance(KafkaClientService.class);
     this.metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
     this.logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
+  }
+
+  private static DatasetFramework getWrappedDatasetFramework(DatasetFramework datasetFramework, Configuration hConf) {
+    DatasetFramework wrappedDatasetFramework = datasetFramework;
+    String mappingJson = hConf.get(MapReduceContextConfig.HCONF_ATTR_WORKFLOW_LOCAL_DATASET_NAME_MAPPING);
+    if (mappingJson != null) {
+      Type type = new TypeToken<Map<String, String>>() { }.getType();
+      Map<String, String> localDatasetNameMapping = new Gson().fromJson(mappingJson, type);
+      wrappedDatasetFramework = new WorkflowDatasetFramework(datasetFramework, localDatasetNameMapping);
+    }
+    return wrappedDatasetFramework;
   }
 
   @Override

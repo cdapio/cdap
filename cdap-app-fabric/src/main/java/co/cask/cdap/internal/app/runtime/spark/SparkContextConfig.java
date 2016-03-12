@@ -47,11 +47,13 @@ public class SparkContextConfig {
    * Configuration key for boolean value to tell whether Spark program is executed on a cluster or not.
    */
   public static final String HCONF_ATTR_CLUSTER_MODE = "cdap.spark.cluster.mode";
+  public static final String HCONF_ATTR_RUN_ID = "cdap.spark.run.id";
+  public static final String HCONF_ATTR_WORKFLOW_LOCAL_DATASET_NAME_MAPPING
+    = "hconf.program.workflow.local.dataset.name.mapping";
 
   private static final String HCONF_ATTR_APP_SPEC = "cdap.spark.app.spec";
   private static final String HCONF_ATTR_PROGRAM_SPEC = "cdap.spark.program.spec";
   private static final String HCONF_ATTR_PROGRAM_ID = "cdap.spark.program.id";
-  private static final String HCONF_ATTR_RUN_ID = "cdap.spark.run.id";
   private static final String HCONF_ATTR_LOGICAL_START_TIME = "hconf.program.logical.start.time";
   private static final String HCONF_ATTR_ARGS = "hconf.program.args";
   private static final String HCONF_ATTR_NEW_TX = "hconf.program.newtx.tx";
@@ -98,7 +100,7 @@ public class SparkContextConfig {
     setArguments(context.getRuntimeArguments());
     setTransaction(context.getTransaction());
     setWorkflowToken(context.getWorkflowToken());
-
+    setWorkflowLocalDatasetNameMapping(context.getWorkflowLocalDatasetNameMapping());
     return this;
   }
 
@@ -186,5 +188,25 @@ public class SparkContextConfig {
 
   private void setWorkflowToken(@Nullable WorkflowToken workflowToken) {
     hConf.set(HCONF_ATTR_WORKFLOW_TOKEN, GSON.toJson(workflowToken));
+  }
+
+  private void setWorkflowLocalDatasetNameMapping(@Nullable Map<String, String> localDatasetNameMapping) {
+    if (localDatasetNameMapping != null) {
+      hConf.set(HCONF_ATTR_WORKFLOW_LOCAL_DATASET_NAME_MAPPING, GSON.toJson(localDatasetNameMapping));
+    }
+  }
+
+  /**
+   * Return the map of local dataset names to the names assigned to the for the current run of the Workflow,
+   * if Spark is running inside Workflow. Otherwise {@code null} is returned.
+   */
+  @Nullable
+  public Map<String, String> getWorkflowLocalDatasetNameMapping() {
+    String mappingJson = hConf.get(HCONF_ATTR_WORKFLOW_LOCAL_DATASET_NAME_MAPPING);
+    if (mappingJson == null) {
+      return null;
+    }
+    Type type = new TypeToken<Map<String, String>>() { }.getType();
+    return GSON.fromJson(mappingJson, type);
   }
 }
