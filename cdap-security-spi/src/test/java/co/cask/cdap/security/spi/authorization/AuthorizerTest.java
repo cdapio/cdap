@@ -13,19 +13,18 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.security.authorization;
+package co.cask.cdap.security.spi.authorization;
 
-import co.cask.cdap.common.UnauthorizedException;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.Ids;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
-import com.google.common.collect.ImmutableSet;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.util.Collections;
 import java.util.EnumSet;
 
 /**
@@ -44,10 +43,10 @@ public abstract class AuthorizerTest {
 
     verifyAuthFailure(namespace, user, Action.READ);
 
-    authorizer.grant(namespace, user, ImmutableSet.of(Action.READ));
+    authorizer.grant(namespace, user, Collections.singleton(Action.READ));
     authorizer.enforce(namespace, user, Action.READ);
 
-    authorizer.revoke(namespace, user, ImmutableSet.of(Action.READ));
+    authorizer.revoke(namespace, user, Collections.singleton(Action.READ));
     verifyAuthFailure(namespace, user, Action.READ);
   }
 
@@ -73,7 +72,7 @@ public abstract class AuthorizerTest {
 
     verifyAuthFailure(namespace, user, Action.READ);
 
-    authorizer.grant(namespace, user, ImmutableSet.of(Action.ALL));
+    authorizer.grant(namespace, user, Collections.singleton(Action.ALL));
     authorizer.enforce(namespace, user, Action.READ);
     authorizer.enforce(namespace, user, Action.WRITE);
     authorizer.enforce(namespace, user, Action.ADMIN);
@@ -83,8 +82,8 @@ public abstract class AuthorizerTest {
     verifyAuthFailure(namespace, user, Action.READ);
 
     Principal role = new Principal("admins", Principal.PrincipalType.ROLE);
-    authorizer.grant(namespace, user, ImmutableSet.of(Action.READ));
-    authorizer.grant(namespace, role, ImmutableSet.of(Action.ALL));
+    authorizer.grant(namespace, user, Collections.singleton(Action.READ));
+    authorizer.grant(namespace, role, Collections.singleton(Action.ALL));
     authorizer.revoke(namespace);
     verifyAuthFailure(namespace, user, Action.READ);
     verifyAuthFailure(namespace, role, Action.ALL);
@@ -98,13 +97,13 @@ public abstract class AuthorizerTest {
 
     verifyAuthFailure(namespace, user, Action.READ);
 
-    authorizer.grant(namespace, user, ImmutableSet.of(Action.READ));
+    authorizer.grant(namespace, user, Collections.singleton(Action.READ));
     authorizer.enforce(dataset, user, Action.READ);
 
-    authorizer.grant(dataset, user, ImmutableSet.of(Action.WRITE));
+    authorizer.grant(dataset, user, Collections.singleton(Action.WRITE));
     verifyAuthFailure(namespace, user, Action.WRITE);
 
-    authorizer.revoke(namespace, user, ImmutableSet.of(Action.READ));
+    authorizer.revoke(namespace, user, Collections.singleton(Action.READ));
     verifyAuthFailure(namespace, user, Action.READ);
   }
 

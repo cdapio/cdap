@@ -63,12 +63,7 @@
     </dependency>
     <dependency>
       <groupId>co.cask.cdap</groupId>
-      <artifactId>cdap-security</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>co.cask.cdap</groupId>
-      <artifactId>cdap-authorization-dataset-plugin</artifactId>
+      <artifactId>cdap-security-spi</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>

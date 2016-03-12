@@ -24,6 +24,8 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DefaultDatasetDefinitionRegistry;
 import co.cask.cdap.data2.dataset2.InMemoryDatasetFramework;
 import co.cask.cdap.data2.dataset2.module.lib.inmemory.InMemoryTableModule;
+import co.cask.cdap.security.spi.authorization.Authorizer;
+import co.cask.cdap.security.spi.authorization.AuthorizerTest;
 import co.cask.tephra.TransactionManager;
 import co.cask.tephra.runtime.TransactionInMemoryModule;
 import com.google.inject.AbstractModule;

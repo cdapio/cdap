@@ -54,9 +54,10 @@ public class HttpExceptionHandler extends ExceptionHandler {
       responder.sendStatus(HttpResponseStatus.METHOD_NOT_ALLOWED);
     } else if (t instanceof UnauthorizedException) {
       logWithTrace(request, t);
-      HttpResponseStatus status = ((UnauthorizedException) t).isAuthenticationError() ?
-        HttpResponseStatus.UNAUTHORIZED : HttpResponseStatus.FORBIDDEN;
-      responder.sendStatus(status);
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } else if (t instanceof co.cask.cdap.security.spi.authorization.UnauthorizedException) {
+      logWithTrace(request, t);
+      responder.sendStatus(HttpResponseStatus.FORBIDDEN);
     } else if (t instanceof FeatureDisabledException) {
       logWithTrace(request, t);
       responder.sendString(HttpResponseStatus.NOT_IMPLEMENTED, t.getMessage());

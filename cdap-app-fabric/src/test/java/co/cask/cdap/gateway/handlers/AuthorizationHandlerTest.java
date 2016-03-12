@@ -20,7 +20,6 @@ import co.cask.cdap.client.AuthorizationClient;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.config.ConnectionConfig;
 import co.cask.cdap.common.FeatureDisabledException;
-import co.cask.cdap.common.UnauthorizedException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.http.CommonNettyHttpServiceBuilder;
@@ -29,7 +28,8 @@ import co.cask.cdap.proto.id.Ids;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
-import co.cask.cdap.security.authorization.Authorizer;
+import co.cask.cdap.security.spi.authorization.Authorizer;
+import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.http.NettyHttpService;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
@@ -38,7 +38,6 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.IOException;
 import java.net.UnknownHostException;
 
 /**
@@ -77,7 +76,7 @@ public class AuthorizationHandlerTest {
   }
 
   @Test
-  public void testDisabled() throws IOException, UnauthorizedException {
+  public void testDisabled() throws Exception {
     CConfiguration conf = CConfiguration.create();
     conf.setBoolean(Constants.Security.Authorization.ENABLED, false);
 
@@ -123,7 +122,7 @@ public class AuthorizationHandlerTest {
   }
 
   @Test
-  public void testRevokeEntityUserActions() throws IOException, UnauthorizedException, FeatureDisabledException {
+  public void testRevokeEntityUserActions() throws Exception {
     NamespaceId ns1 = Ids.namespace("ns1");
     Principal admin = new Principal("admin", Principal.PrincipalType.ROLE);
 
@@ -138,7 +137,7 @@ public class AuthorizationHandlerTest {
   }
 
   @Test
-  public void testRevokeEntityUser() throws IOException, UnauthorizedException, FeatureDisabledException {
+  public void testRevokeEntityUser() throws Exception {
     NamespaceId ns1 = Ids.namespace("ns1");
     Principal admin = new Principal("admin", Principal.PrincipalType.GROUP);
     Principal bob = new Principal("bob", Principal.PrincipalType.USER);
@@ -155,7 +154,7 @@ public class AuthorizationHandlerTest {
   }
 
   @Test
-  public void testRevokeEntity() throws IOException, UnauthorizedException, FeatureDisabledException {
+  public void testRevokeEntity() throws Exception {
     NamespaceId ns1 = Ids.namespace("ns1");
     NamespaceId ns2 = Ids.namespace("ns2");
     Principal admin = new Principal("admin", Principal.PrincipalType.GROUP);
@@ -175,8 +174,7 @@ public class AuthorizationHandlerTest {
     client.authorized(ns2, admin, Action.READ);
   }
 
-  private void verifyAuthFailure(EntityId entity, Principal principal,
-                                 Action action) throws IOException, FeatureDisabledException {
+  private void verifyAuthFailure(EntityId entity, Principal principal, Action action) throws Exception {
     try {
       client.authorized(entity, principal, action);
       Assert.fail(String.format("Expected authorization failure, but it succeeded for entity %s, principal %s," +

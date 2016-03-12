@@ -63,8 +63,8 @@ public class AuthorizationClient {
     this(config, new RESTClient(config));
   }
 
-  public void authorized(EntityId entity, Principal principal, Action action)
-    throws IOException, UnauthorizedException, FeatureDisabledException {
+  public void authorized(EntityId entity, Principal principal, Action action) throws IOException, UnauthorizedException,
+    FeatureDisabledException, co.cask.cdap.security.spi.authorization.UnauthorizedException {
 
     CheckAuthorizedRequest checkRequest = new CheckAuthorizedRequest(entity, principal, ImmutableSet.of(action));
 
@@ -73,8 +73,8 @@ public class AuthorizationClient {
     executeAuthorizationRequest(request, principal, action, entity);
   }
 
-  public void grant(EntityId entity, Principal principal, Set<Action> actions)
-    throws IOException, UnauthorizedException, FeatureDisabledException {
+  public void grant(EntityId entity, Principal principal, Set<Action> actions) throws IOException,
+    UnauthorizedException, FeatureDisabledException, co.cask.cdap.security.spi.authorization.UnauthorizedException {
 
     GrantRequest grantRequest = new GrantRequest(entity, principal, actions);
 
@@ -83,21 +83,23 @@ public class AuthorizationClient {
     executeAuthorizationRequest(request, principal, Action.ADMIN, entity);
   }
 
-  public void revoke(EntityId entity, Principal principal, Set<Action> actions)
-    throws IOException, UnauthorizedException, FeatureDisabledException {
+  public void revoke(EntityId entity, Principal principal, Set<Action> actions) throws IOException,
+    UnauthorizedException, FeatureDisabledException, co.cask.cdap.security.spi.authorization.UnauthorizedException {
     revoke(new RevokeRequest(entity, principal, actions));
   }
 
-  public void revoke(EntityId entity, Principal principal)
-    throws IOException, UnauthorizedException, FeatureDisabledException {
+  public void revoke(EntityId entity, Principal principal) throws IOException, UnauthorizedException,
+    FeatureDisabledException, co.cask.cdap.security.spi.authorization.UnauthorizedException {
     revoke(new RevokeRequest(entity, principal, null));
   }
 
-  public void revoke(EntityId entity) throws IOException, UnauthorizedException, FeatureDisabledException {
+  public void revoke(EntityId entity) throws IOException, UnauthorizedException, FeatureDisabledException,
+    co.cask.cdap.security.spi.authorization.UnauthorizedException {
     revoke(new RevokeRequest(entity, null, null));
   }
 
-  public void revoke(RevokeRequest revokeRequest) throws IOException, UnauthorizedException, FeatureDisabledException {
+  public void revoke(RevokeRequest revokeRequest) throws IOException, UnauthorizedException, FeatureDisabledException,
+    co.cask.cdap.security.spi.authorization.UnauthorizedException {
     URL url = config.resolveURLV3("security/revoke");
     HttpRequest request = HttpRequest.post(url).withBody(GSON.toJson(revokeRequest)).build();
     executeAuthorizationRequest(request, revokeRequest.getPrincipal(), Action.ADMIN,
@@ -105,11 +107,12 @@ public class AuthorizationClient {
   }
 
   private void executeAuthorizationRequest(HttpRequest request, Principal principal, Action action, EntityId entity)
-    throws IOException, UnauthorizedException, FeatureDisabledException {
+    throws IOException, UnauthorizedException, FeatureDisabledException,
+    co.cask.cdap.security.spi.authorization.UnauthorizedException {
     HttpResponse response = restClient.execute(request, config.getAccessToken(), HttpURLConnection.HTTP_FORBIDDEN,
                                                HttpURLConnection.HTTP_NOT_IMPLEMENTED);
     if (HttpURLConnection.HTTP_FORBIDDEN == response.getResponseCode()) {
-      throw new UnauthorizedException(principal, action, entity);
+      throw new co.cask.cdap.security.spi.authorization.UnauthorizedException(principal, action, entity);
     }
     if (HttpURLConnection.HTTP_NOT_IMPLEMENTED == response.getResponseCode()) {
       throw new FeatureDisabledException("Authorization", "cdap-site.xml", Constants.Security.Authorization.ENABLED,

@@ -28,7 +28,7 @@ import co.cask.cdap.proto.security.AuthorizationRequest;
 import co.cask.cdap.proto.security.CheckAuthorizedRequest;
 import co.cask.cdap.proto.security.GrantRequest;
 import co.cask.cdap.proto.security.RevokeRequest;
-import co.cask.cdap.security.authorization.Authorizer;
+import co.cask.cdap.security.spi.authorization.Authorizer;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;

@@ -16,11 +16,11 @@
 
 package co.cask.cdap.gateway.handlers;
 
-import co.cask.cdap.common.UnauthorizedException;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
-import co.cask.cdap.security.authorization.Authorizer;
+import co.cask.cdap.security.spi.authorization.Authorizer;
+import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Table;
 
