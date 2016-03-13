@@ -22,9 +22,14 @@ import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.namespace.guice.NamespaceClientRuntimeModule;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
+import co.cask.cdap.data2.audit.AuditModule;
+import co.cask.cdap.data2.audit.InMemoryAuditPublisher;
+import co.cask.cdap.data2.audit.payload.builder.MetadataPayloadBuilder;
 import co.cask.cdap.kafka.KafkaTester;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.audit.AuditMessage;
+import co.cask.cdap.proto.audit.AuditType;
 import co.cask.cdap.proto.codec.NamespacedIdCodec;
 import co.cask.cdap.proto.metadata.MetadataChangeRecord;
 import co.cask.cdap.proto.metadata.MetadataRecord;
@@ -32,6 +37,7 @@ import co.cask.cdap.proto.metadata.MetadataScope;
 import co.cask.cdap.proto.metadata.MetadataSearchResultRecord;
 import co.cask.tephra.TransactionManager;
 import co.cask.tephra.runtime.TransactionInMemoryModule;
+import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -44,6 +50,7 @@ import com.google.inject.Injector;
 import com.google.inject.util.Modules;
 import org.junit.AfterClass;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -77,7 +84,8 @@ public class MetadataStoreTest {
       new LocationRuntimeModule().getInMemoryModules(),
       new TransactionInMemoryModule(),
       new SystemDatasetRuntimeModule().getInMemoryModules(),
-      new NamespaceClientRuntimeModule().getInMemoryModules()
+      new NamespaceClientRuntimeModule().getInMemoryModules(),
+      new AuditModule().getInMemoryModules()
     ),
     1,
     Constants.Metadata.UPDATES_KAFKA_BROKER_LIST
@@ -191,6 +199,7 @@ public class MetadataStoreTest {
 
   private static TransactionManager txManager;
   private static MetadataStore store;
+  private static InMemoryAuditPublisher auditPublisher;
 
   @BeforeClass
   public static void setup() throws IOException {
@@ -198,6 +207,12 @@ public class MetadataStoreTest {
     txManager = injector.getInstance(TransactionManager.class);
     txManager.startAndWait();
     store = injector.getInstance(MetadataStore.class);
+    auditPublisher = injector.getInstance(InMemoryAuditPublisher.class);
+  }
+
+  @Before
+  public void clearAudit() throws Exception {
+    auditPublisher.popMessages();
   }
 
   @Test
@@ -214,6 +229,23 @@ public class MetadataStoreTest {
     }
     // note kafka offset
     kafkaOffset += publishedChanges.size();
+
+    // Verify audit publishing for the metadata changes
+    Function<MetadataChangeRecord, AuditMessage> metadataChangeRecordToAuditMessage =
+      new Function<MetadataChangeRecord, AuditMessage>() {
+        @Override
+        public AuditMessage apply(MetadataChangeRecord input) {
+          MetadataPayloadBuilder builder = new MetadataPayloadBuilder();
+          builder.addPrevious(input.getPrevious());
+          builder.addAdditions(input.getChanges().getAdditions());
+          builder.addDeletions(input.getChanges().getDeletions());
+          return new AuditMessage(0, input.getPrevious().getEntityId().toEntityId(), "",
+                                  AuditType.METADATA_CHANGE, builder.build());
+        }
+      };
+    // Audit messages for metadata changes
+    List<AuditMessage> expectedAuditMessages = Lists.transform(expectedChanges, metadataChangeRecordToAuditMessage);
+    Assert.assertEquals(expectedAuditMessages, auditPublisher.popMessages());
   }
 
   @Test

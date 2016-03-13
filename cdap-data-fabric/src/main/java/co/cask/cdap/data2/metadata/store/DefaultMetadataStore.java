@@ -100,6 +100,7 @@ public class DefaultMetadataStore implements MetadataStore {
   }
 
 
+  @SuppressWarnings("unused")
   @Inject(optional = true)
   public void setAuditPublisher(AuditPublisher auditPublisher) {
     this.auditPublisher = auditPublisher;
