@@ -17,7 +17,7 @@
 package co.cask.cdap.cli.util;
 
 import co.cask.cdap.cli.CLIConfig;
-import co.cask.cdap.common.UnauthorizedException;
+import co.cask.cdap.common.UnauthenticatedException;
 import co.cask.common.cli.Arguments;
 import co.cask.common.cli.Command;
 
@@ -38,7 +38,7 @@ public abstract class AbstractAuthCommand implements Command {
   public void execute(Arguments arguments, PrintStream printStream) throws Exception {
     try {
       perform(arguments, printStream);
-    } catch (UnauthorizedException e) {
+    } catch (UnauthenticatedException e) {
       cliConfig.updateAccessToken(printStream);
       perform(arguments, printStream);
     }

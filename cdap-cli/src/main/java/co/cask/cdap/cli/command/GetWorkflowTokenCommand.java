@@ -26,7 +26,7 @@ import co.cask.cdap.cli.util.RowMaker;
 import co.cask.cdap.cli.util.table.Table;
 import co.cask.cdap.client.WorkflowClient;
 import co.cask.cdap.common.NotFoundException;
-import co.cask.cdap.common.UnauthorizedException;
+import co.cask.cdap.common.UnauthenticatedException;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.WorkflowTokenDetail;
 import co.cask.cdap.proto.WorkflowTokenNodeDetail;
@@ -98,7 +98,7 @@ public class GetWorkflowTokenCommand extends AbstractCommand {
   }
 
   private Table getWorkflowToken(Id.Run runId, WorkflowToken.Scope workflowTokenScope,
-                                 String key) throws UnauthorizedException, IOException, NotFoundException {
+                                 String key) throws UnauthenticatedException, IOException, NotFoundException {
     WorkflowTokenDetail workflowToken = workflowClient.getWorkflowToken(runId, workflowTokenScope, key);
     List<Map.Entry<String, List<WorkflowTokenDetail.NodeValueDetail>>> tokenKeys = new ArrayList<>();
     tokenKeys.addAll(workflowToken.getTokenData().entrySet());
@@ -115,7 +115,7 @@ public class GetWorkflowTokenCommand extends AbstractCommand {
   }
 
   private Table getWorkflowToken(Id.Run runId, WorkflowToken.Scope workflowTokenScope, String key,
-                                 String nodeName) throws UnauthorizedException, IOException, NotFoundException {
+                                 String nodeName) throws UnauthenticatedException, IOException, NotFoundException {
     WorkflowTokenNodeDetail workflowToken = workflowClient.getWorkflowTokenAtNode(runId, nodeName,
                                                                                   workflowTokenScope, key);
     List<Map.Entry<String, String>> tokenKeys = new ArrayList<>();

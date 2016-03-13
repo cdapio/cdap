@@ -18,7 +18,7 @@ package co.cask.cdap.etl.tool.console;
 
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.util.RESTClient;
-import co.cask.cdap.common.UnauthorizedException;
+import co.cask.cdap.common.UnauthenticatedException;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpResponse;
 import co.cask.common.http.ObjectResponse;
@@ -90,7 +90,7 @@ public class ConsoleClient {
     this.restClient = new RESTClient(config);
   }
 
-  public JsonObject get() throws IOException, UnauthorizedException {
+  public JsonObject get() throws IOException, UnauthenticatedException {
     URL url = config.resolveURLV3("/configuration/user");
     HttpRequest request = HttpRequest.get(url).build();
 
@@ -98,7 +98,7 @@ public class ConsoleClient {
     return ObjectResponse.fromJsonBody(response, JsonObject.class).getResponseObject();
   }
 
-  public void set(JsonObject val) throws IOException, UnauthorizedException {
+  public void set(JsonObject val) throws IOException, UnauthenticatedException {
     URL url = config.resolveURLV3("/configuration/user");
     HttpRequest request = HttpRequest.put(url).withBody(GSON.toJson(val)).build();
 

@@ -20,7 +20,7 @@ import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.util.RESTClient;
 import co.cask.cdap.common.FeatureDisabledException;
-import co.cask.cdap.common.UnauthorizedException;
+import co.cask.cdap.common.UnauthenticatedException;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.proto.codec.EntityIdTypeAdapter;
 import co.cask.cdap.proto.id.EntityId;
@@ -29,6 +29,7 @@ import co.cask.cdap.proto.security.CheckAuthorizedRequest;
 import co.cask.cdap.proto.security.GrantRequest;
 import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.proto.security.RevokeRequest;
+import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpResponse;
 import com.google.common.collect.ImmutableSet;
@@ -63,8 +64,8 @@ public class AuthorizationClient {
     this(config, new RESTClient(config));
   }
 
-  public void authorized(EntityId entity, Principal principal, Action action) throws IOException, UnauthorizedException,
-    FeatureDisabledException, co.cask.cdap.security.spi.authorization.UnauthorizedException {
+  public void authorized(EntityId entity, Principal principal, Action action)
+    throws IOException, UnauthenticatedException, FeatureDisabledException, UnauthorizedException {
 
     CheckAuthorizedRequest checkRequest = new CheckAuthorizedRequest(entity, principal, ImmutableSet.of(action));
 
@@ -74,7 +75,7 @@ public class AuthorizationClient {
   }
 
   public void grant(EntityId entity, Principal principal, Set<Action> actions) throws IOException,
-    UnauthorizedException, FeatureDisabledException, co.cask.cdap.security.spi.authorization.UnauthorizedException {
+    UnauthenticatedException, FeatureDisabledException, UnauthorizedException {
 
     GrantRequest grantRequest = new GrantRequest(entity, principal, actions);
 
@@ -84,22 +85,22 @@ public class AuthorizationClient {
   }
 
   public void revoke(EntityId entity, Principal principal, Set<Action> actions) throws IOException,
-    UnauthorizedException, FeatureDisabledException, co.cask.cdap.security.spi.authorization.UnauthorizedException {
+    UnauthenticatedException, FeatureDisabledException, UnauthorizedException {
     revoke(new RevokeRequest(entity, principal, actions));
   }
 
-  public void revoke(EntityId entity, Principal principal) throws IOException, UnauthorizedException,
-    FeatureDisabledException, co.cask.cdap.security.spi.authorization.UnauthorizedException {
+  public void revoke(EntityId entity, Principal principal) throws IOException, UnauthenticatedException,
+    FeatureDisabledException, UnauthorizedException {
     revoke(new RevokeRequest(entity, principal, null));
   }
 
-  public void revoke(EntityId entity) throws IOException, UnauthorizedException, FeatureDisabledException,
-    co.cask.cdap.security.spi.authorization.UnauthorizedException {
+  public void revoke(EntityId entity) throws IOException, UnauthenticatedException, FeatureDisabledException,
+    UnauthorizedException {
     revoke(new RevokeRequest(entity, null, null));
   }
 
-  public void revoke(RevokeRequest revokeRequest) throws IOException, UnauthorizedException, FeatureDisabledException,
-    co.cask.cdap.security.spi.authorization.UnauthorizedException {
+  public void revoke(RevokeRequest revokeRequest)
+    throws IOException, UnauthenticatedException, FeatureDisabledException, UnauthorizedException {
     URL url = config.resolveURLV3("security/revoke");
     HttpRequest request = HttpRequest.post(url).withBody(GSON.toJson(revokeRequest)).build();
     executeAuthorizationRequest(request, revokeRequest.getPrincipal(), Action.ADMIN,
@@ -107,12 +108,11 @@ public class AuthorizationClient {
   }
 
   private void executeAuthorizationRequest(HttpRequest request, Principal principal, Action action, EntityId entity)
-    throws IOException, UnauthorizedException, FeatureDisabledException,
-    co.cask.cdap.security.spi.authorization.UnauthorizedException {
+    throws IOException, UnauthenticatedException, FeatureDisabledException, UnauthorizedException {
     HttpResponse response = restClient.execute(request, config.getAccessToken(), HttpURLConnection.HTTP_FORBIDDEN,
                                                HttpURLConnection.HTTP_NOT_IMPLEMENTED);
     if (HttpURLConnection.HTTP_FORBIDDEN == response.getResponseCode()) {
-      throw new co.cask.cdap.security.spi.authorization.UnauthorizedException(principal, action, entity);
+      throw new UnauthorizedException(principal, action, entity);
     }
     if (HttpURLConnection.HTTP_NOT_IMPLEMENTED == response.getResponseCode()) {
       throw new FeatureDisabledException("Authorization", "cdap-site.xml", Constants.Security.Authorization.ENABLED,

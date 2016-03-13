@@ -29,7 +29,7 @@ import co.cask.cdap.client.StreamClient;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.config.ConnectionConfig;
 import co.cask.cdap.client.util.RESTClient;
-import co.cask.cdap.common.UnauthorizedException;
+import co.cask.cdap.common.UnauthenticatedException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
@@ -117,7 +117,7 @@ public abstract class IntegrationTestBase {
       checkServicesWithRetry(cdapAvailable, errorMessage);
     } catch (Throwable e) {
       Throwable rootCause = Throwables.getRootCause(e);
-      if (rootCause instanceof UnauthorizedException) {
+      if (rootCause instanceof UnauthenticatedException) {
         // security is enabled, we need to get access token before checking system services
         try {
           accessToken = fetchAccessToken();
@@ -173,7 +173,7 @@ public abstract class IntegrationTestBase {
         // Also suppress and retry if the root cause is IOException
         Throwable rootCause = Throwables.getRootCause(e);
         if (!(rootCause instanceof IOException)) {
-          // Throw if root cause is any other exception e.g. UnauthorizedException
+          // Throw if root cause is any other exception e.g. UnauthenticatedException
           throw Throwables.propagate(rootCause);
         }
       }
@@ -184,7 +184,7 @@ public abstract class IntegrationTestBase {
     throw new TimeoutException(exceptionMessage);
   }
 
-  private void assertUnrecoverableResetEnabled() throws IOException, UnauthorizedException {
+  private void assertUnrecoverableResetEnabled() throws IOException, UnauthenticatedException {
     ConfigEntry configEntry = getMetaClient().getCDAPConfig().get(Constants.Dangerous.UNRECOVERABLE_RESET);
     Preconditions.checkNotNull(configEntry,
                                "Missing key from CDAP Configuration: {}", Constants.Dangerous.UNRECOVERABLE_RESET);

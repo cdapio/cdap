@@ -20,7 +20,7 @@ import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.NamespaceAlreadyExistsException;
 import co.cask.cdap.common.NamespaceCannotBeDeletedException;
 import co.cask.cdap.common.NamespaceNotFoundException;
-import co.cask.cdap.common.UnauthorizedException;
+import co.cask.cdap.common.UnauthenticatedException;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.common.http.HttpRequest;
@@ -43,7 +43,7 @@ public abstract class AbstractNamespaceClient implements NamespaceAdmin {
   /**
    * Executes an HTTP request.
    */
-  protected abstract HttpResponse execute(HttpRequest request) throws IOException, UnauthorizedException;
+  protected abstract HttpResponse execute(HttpRequest request) throws IOException, UnauthenticatedException;
 
   /**
    * Resolves the specified URL.

@@ -21,9 +21,8 @@ import co.cask.cdap.api.data.format.FormatSpecification;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.client.common.ClientTestBase;
 import co.cask.cdap.common.BadRequestException;
-import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.StreamNotFoundException;
-import co.cask.cdap.common.UnauthorizedException;
+import co.cask.cdap.common.UnauthenticatedException;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.StreamProperties;
@@ -88,7 +87,7 @@ public class StreamClientTestRun extends ClientTestBase {
    */
   @Test
   public void testStreamEvents() throws IOException, BadRequestException,
-    StreamNotFoundException, UnauthorizedException {
+    StreamNotFoundException, UnauthenticatedException {
 
     Id.Stream streamId = Id.Stream.from(namespaceId, "testEvents");
     streamClient.create(streamId);
