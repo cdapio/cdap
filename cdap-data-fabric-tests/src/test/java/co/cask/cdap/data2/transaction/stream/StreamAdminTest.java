@@ -33,7 +33,11 @@ import co.cask.cdap.proto.audit.AuditMessage;
 import co.cask.cdap.proto.audit.AuditPayload;
 import co.cask.cdap.proto.audit.AuditType;
 import co.cask.cdap.proto.audit.payload.access.AccessPayload;
+import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.NamespacedId;
 import com.google.common.base.Charsets;
+import com.google.common.base.Predicate;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import org.apache.twill.filesystem.Location;
 import org.junit.Assert;
@@ -121,7 +125,7 @@ public abstract class StreamAdminTest {
     // clear existing all messages
     getInMemoryAuditPublisher().popMessages();
 
-    List<AuditMessage> expectedMessages = new ArrayList<>();
+    final List<AuditMessage> expectedMessages = new ArrayList<>();
     StreamAdmin streamAdmin = getStreamAdmin();
 
     Id.Stream stream1 = Id.Stream.from(FOO_NAMESPACE, "stream1");
@@ -156,8 +160,19 @@ public abstract class StreamAdminTest {
     expectedMessages.add(new AuditMessage(0, stream2.toEntityId(), "", AuditType.DELETE,
                                           AuditPayload.EMPTY_PAYLOAD));
 
-    List<AuditMessage> actualMessages = getInMemoryAuditPublisher().popMessages();
-    Assert.assertEquals(expectedMessages, actualMessages);
+    // Ignore audit messages for system namespace (creation of system datasets, etc)
+    final String systemNs = NamespaceId.SYSTEM.getNamespace();
+    final Iterable<AuditMessage> actualMessages =
+      Iterables.filter(getInMemoryAuditPublisher().popMessages(),
+                       new Predicate<AuditMessage>() {
+                         @Override
+                         public boolean apply(AuditMessage input) {
+                           return !(input.getEntityId() instanceof NamespacedId &&
+                             ((NamespacedId) input.getEntityId()).getNamespace().equals(systemNs));
+                         }
+                       });
+
+    Assert.assertEquals(expectedMessages, Lists.newArrayList(actualMessages));
   }
 
   private long getStreamSize(Id.Stream streamId) throws IOException {
