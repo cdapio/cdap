@@ -48,7 +48,6 @@ import co.cask.cdap.proto.StreamProperties;
 import co.cask.cdap.proto.ViewSpecification;
 import co.cask.cdap.proto.audit.AuditPayload;
 import co.cask.cdap.proto.audit.AuditType;
-import co.cask.cdap.proto.id.Ids;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
@@ -135,6 +134,7 @@ public class FileStreamAdmin implements StreamAdmin {
     this.exploreFacade = exploreFacade;
   }
 
+  @SuppressWarnings("unused")
   @Inject(optional = true)
   public void setAuditPublisher(AuditPublisher auditPublisher) {
     this.auditPublisher = auditPublisher;
@@ -616,11 +616,6 @@ public class FileStreamAdmin implements StreamAdmin {
   }
 
   private void publishAudit(Id.Stream stream, AuditType auditType) {
-    if (auditPublisher == null) {
-      return;
-    }
-
-    auditPublisher.publish(Ids.namespace(stream.getNamespaceId()).stream(stream.getId()), auditType,
-                           AuditPayload.EMPTY_PAYLOAD);
+    AuditPublishers.publishAudit(auditPublisher, stream, auditType, AuditPayload.EMPTY_PAYLOAD);
   }
 }

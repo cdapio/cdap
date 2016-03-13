@@ -34,7 +34,6 @@ import co.cask.cdap.proto.StreamProperties;
 import co.cask.cdap.proto.ViewSpecification;
 import co.cask.cdap.proto.audit.AuditPayload;
 import co.cask.cdap.proto.audit.AuditType;
-import co.cask.cdap.proto.id.Ids;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -73,6 +72,7 @@ public class InMemoryStreamAdmin extends InMemoryQueueAdmin implements StreamAdm
     this.viewAdmin = viewAdmin;
   }
 
+  @SuppressWarnings("unused")
   @Inject(optional = true)
   public void setAuditPublisher(AuditPublisher auditPublisher) {
     this.auditPublisher = auditPublisher;
@@ -189,11 +189,6 @@ public class InMemoryStreamAdmin extends InMemoryQueueAdmin implements StreamAdm
   }
 
   private void publishAudit(Id.Stream stream, AuditType auditType) {
-    if (auditPublisher == null) {
-      return;
-    }
-
-    auditPublisher.publish(Ids.namespace(stream.getNamespaceId()).stream(stream.getId()), auditType,
-                           AuditPayload.EMPTY_PAYLOAD);
+    AuditPublishers.publishAudit(auditPublisher, stream, auditType, AuditPayload.EMPTY_PAYLOAD);
   }
 }
