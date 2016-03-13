@@ -37,6 +37,7 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DynamicDatasetCache;
 import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
 import co.cask.cdap.data2.dataset2.SingleThreadDatasetCache;
+import co.cask.cdap.data2.metadata.lineage.AccessType;
 import co.cask.cdap.internal.app.program.ProgramTypeMetricTag;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.proto.Id;
@@ -170,7 +171,12 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
   @Override
   public <T extends Dataset> T getDataset(String name, Map<String, String> arguments)
     throws DatasetInstantiationException {
-    return datasetCache.getDataset(name, arguments);
+    return getDataset(name, arguments, AccessType.UNKNOWN);
+  }
+
+  protected <T extends Dataset> T getDataset(String name, Map<String, String> arguments, AccessType accessType)
+    throws DatasetInstantiationException {
+    return datasetCache.getDataset(name, arguments, accessType);
   }
 
   @Override

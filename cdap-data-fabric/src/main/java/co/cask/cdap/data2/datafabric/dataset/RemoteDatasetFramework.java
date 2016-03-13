@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -32,6 +32,7 @@ import co.cask.cdap.data2.datafabric.dataset.type.DatasetClassLoaderProvider;
 import co.cask.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.SingleTypeModule;
+import co.cask.cdap.data2.metadata.lineage.AccessType;
 import co.cask.cdap.proto.DatasetMeta;
 import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.DatasetTypeMeta;
@@ -251,6 +252,17 @@ public class RemoteDatasetFramework implements DatasetFramework {
     DatasetClassLoaderProvider classLoaderProvider,
     @Nullable Iterable<? extends Id> owners) throws DatasetManagementException, IOException {
 
+    return getDataset(datasetInstanceId, arguments, classLoader, classLoaderProvider, owners, AccessType.UNKNOWN);
+  }
+
+  @Nullable
+  @Override
+  public <T extends Dataset> T getDataset(Id.DatasetInstance datasetInstanceId, @Nullable Map<String, String> arguments,
+                                          @Nullable ClassLoader classLoader,
+                                          DatasetClassLoaderProvider classLoaderProvider,
+                                          @Nullable Iterable<? extends Id> owners, AccessType accessType)
+    throws DatasetManagementException, IOException {
+
     DatasetMeta instanceInfo = clientCache.getUnchecked(datasetInstanceId.getNamespace())
       .getInstance(datasetInstanceId.getId(), owners);
     if (instanceInfo == null) {
@@ -260,6 +272,11 @@ public class RemoteDatasetFramework implements DatasetFramework {
     return (T) instances.get(
       datasetInstanceId, instanceInfo.getType(), instanceInfo.getSpec(),
       classLoaderProvider, classLoader, arguments);
+  }
+
+  @Override
+  public void writeLineage(Id.DatasetInstance datasetInstanceId, AccessType accessType) {
+    // no-op. The RemoteDatasetFramework doesn't need to do anything. The lineage should be recorded before this point.
   }
 
   @Override

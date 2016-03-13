@@ -167,11 +167,40 @@ public class LineageWriterDatasetFramework extends ForwardingDatasetFramework im
     return dataset;
   }
 
-  private <T extends Dataset> void writeLineage(Id.DatasetInstance datasetInstanceId, T dataset) {
-    if (dataset != null && programContext.getRun() != null) {
-      lineageWriter.addAccess(programContext.getRun(), datasetInstanceId, AccessType.UNKNOWN,
+  @Nullable
+  @Override
+  public <T extends Dataset> T getDataset(Id.DatasetInstance datasetInstanceId, @Nullable Map<String, String> arguments,
+                                          @Nullable ClassLoader classLoader,
+                                          DatasetClassLoaderProvider classLoaderProvider,
+                                          @Nullable Iterable<? extends Id> owners, AccessType accessType)
+    throws DatasetManagementException, IOException {
+    T dataset = super.getDataset(datasetInstanceId, arguments, classLoader, classLoaderProvider, owners, accessType);
+    writeLineage(datasetInstanceId, dataset, accessType);
+    return dataset;
+  }
+
+  @Override
+  public void writeLineage(Id.DatasetInstance datasetInstanceId, AccessType accessType) {
+    super.writeLineage(datasetInstanceId, accessType);
+    doWriteLineage(datasetInstanceId, accessType);
+  }
+
+  private <T extends Dataset> void writeLineage(Id.DatasetInstance datasetInstanceId, @Nullable T dataset) {
+    writeLineage(datasetInstanceId, dataset, AccessType.UNKNOWN);
+  }
+
+  private <T extends Dataset> void writeLineage(Id.DatasetInstance datasetInstanceId, @Nullable T dataset,
+                                                AccessType accessType) {
+    if (dataset != null) {
+      doWriteLineage(datasetInstanceId, accessType);
+    }
+  }
+
+  private void doWriteLineage(Id.DatasetInstance datasetInstanceId, AccessType accessType) {
+    if (programContext.getRun() != null) {
+      lineageWriter.addAccess(programContext.getRun(), datasetInstanceId, accessType,
                               programContext.getComponentId());
-      AuditPublishers.publishAccess(auditPublisher, datasetInstanceId, AccessType.UNKNOWN, programContext.getRun());
+      AuditPublishers.publishAccess(auditPublisher, datasetInstanceId, accessType, programContext.getRun());
     }
   }
 }

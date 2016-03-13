@@ -157,7 +157,8 @@ public class ExecutionSparkContext extends AbstractSparkContext {
   public <T> T readFromDataset(String datasetName, Class<?> kClass, Class<?> vClass, Map<String, String> userDsArgs) {
     Map<String, String> dsArgs = RuntimeArguments.extractScope(Scope.DATASET, datasetName, getRuntimeArguments());
     dsArgs.putAll(userDsArgs);
-    Dataset dataset = instantiateDataset(datasetName, dsArgs);
+
+    Dataset dataset = instantiateDataset(datasetName, dsArgs, AccessType.READ);
 
     try {
       InputFormatProvider inputFormatProvider = new DatasetInputFormatProvider(datasetName, dsArgs, dataset, null,
@@ -175,7 +176,7 @@ public class ExecutionSparkContext extends AbstractSparkContext {
         Class<? extends InputFormat> inputFormatClass =
           (Class<? extends InputFormat>) SparkClassLoader.findFromContext().loadClass(inputFormatName);
 
-        // Clone the configuration since it's dataset specification and shouldn't affect the global hConf
+        // Clone the configuration since its dataset specification and shouldn't affect the global hConf
         Configuration configuration = new Configuration(contextConfig.getConfiguration());
         ConfigurationUtil.setAll(inputFormatProvider.getInputFormatConfiguration(), configuration);
         return getSparkFacade().createRDD(inputFormatClass, kClass, vClass, configuration);
@@ -196,7 +197,8 @@ public class ExecutionSparkContext extends AbstractSparkContext {
                                  Map<String, String> userDsArgs) {
     Map<String, String> dsArgs = RuntimeArguments.extractScope(Scope.DATASET, datasetName, getRuntimeArguments());
     dsArgs.putAll(userDsArgs);
-    Dataset dataset = instantiateDataset(datasetName, dsArgs);
+
+    Dataset dataset = instantiateDataset(datasetName, dsArgs, AccessType.WRITE);
 
     try {
       OutputFormatProvider outputFormatProvider = new DatasetOutputFormatProvider(datasetName, dsArgs, dataset,
@@ -215,7 +217,7 @@ public class ExecutionSparkContext extends AbstractSparkContext {
           (Class<? extends OutputFormat>) SparkClassLoader.findFromContext().loadClass(outputFormatName);
 
         try {
-          // Clone the configuration since it's dataset specification and shouldn't affect the global hConf
+          // Clone the configuration since its dataset specification and shouldn't affect the global hConf
           Configuration configuration = new Configuration(contextConfig.getConfiguration());
           ConfigurationUtil.setAll(outputFormatProvider.getOutputFormatConfiguration(), configuration);
           getSparkFacade().saveAsDataset(rdd, outputFormatClass, kClass, vClass, configuration);
@@ -245,7 +247,7 @@ public class ExecutionSparkContext extends AbstractSparkContext {
   @Override
   public <T> T readFromStream(StreamBatchReadable stream, Class<?> vClass) {
     try {
-      // Clone the configuration since it's dataset specification and shouldn't affect the global hConf
+      // Clone the configuration since its dataset specification and shouldn't affect the global hConf
       Configuration configuration = configureStreamInput(new Configuration(contextConfig.getConfiguration()),
                                                          stream, vClass);
       T streamRDD = getSparkFacade().createRDD(StreamInputFormat.class, LongWritable.class, vClass, configuration);
@@ -343,7 +345,7 @@ public class ExecutionSparkContext extends AbstractSparkContext {
    * @throws IllegalArgumentException if the dataset does not implement BatchReadable
    */
   <K, V> BatchReadable<K, V> getBatchReadable(final String datasetName, Map<String, String> arguments) {
-    final Dataset dataset = instantiateDataset(datasetName, arguments);
+    final Dataset dataset = instantiateDataset(datasetName, arguments, AccessType.READ);
     Preconditions.checkArgument(dataset instanceof BatchReadable, "Dataset %s of type %s does not implements %s",
                                 datasetName, dataset.getClass().getName(), BatchReadable.class.getName());
 
@@ -389,7 +391,7 @@ public class ExecutionSparkContext extends AbstractSparkContext {
    * @throws IllegalArgumentException if the dataset does not implement BatchWritable
    */
   <K, V> CloseableBatchWritable<K, V> getBatchWritable(final String datasetName, Map<String, String> arguments) {
-    final Dataset dataset = instantiateDataset(datasetName, arguments);
+    final Dataset dataset = instantiateDataset(datasetName, arguments, AccessType.WRITE);
     Preconditions.checkArgument(dataset instanceof BatchWritable, "Dataset %s of type %s does not implements %s",
                                 datasetName, dataset.getClass().getName(), BatchWritable.class.getName());
 
@@ -496,8 +498,16 @@ public class ExecutionSparkContext extends AbstractSparkContext {
    * Creates a new instance of dataset.
    */
   private <T extends Dataset> T instantiateDataset(String datasetName, Map<String, String> arguments) {
+    return instantiateDataset(datasetName, arguments, AccessType.UNKNOWN);
+  }
+
+  /**
+   * Creates a new instance of dataset, with the specified accessType.
+   */
+  private <T extends Dataset> T instantiateDataset(String datasetName, Map<String, String> arguments,
+                                                   AccessType accessType) {
     // bypass = true, so that the dataset is not added to the factory's cache etc.
-    T dataset = datasetCache.getDataset(datasetName, arguments, true);
+    T dataset = datasetCache.getDataset(datasetName, arguments, true, accessType);
 
     // Provide the current long running transaction to the given dataset.
     if (dataset instanceof TransactionAware) {

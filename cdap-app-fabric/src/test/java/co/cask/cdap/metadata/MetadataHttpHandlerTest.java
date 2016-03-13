@@ -675,6 +675,8 @@ public class MetadataHttpHandlerTest extends MetadataTestBase {
              AllProgramsApp.NoOpFlow.NAME)
         .put(ProgramType.MAPREDUCE.getPrettyName() + MetadataDataset.KEYVALUE_SEPARATOR + AllProgramsApp.NoOpMR.NAME,
              AllProgramsApp.NoOpMR.NAME)
+        .put(ProgramType.MAPREDUCE.getPrettyName() + MetadataDataset.KEYVALUE_SEPARATOR + AllProgramsApp.NoOpMR2.NAME,
+             AllProgramsApp.NoOpMR2.NAME)
         .put(ProgramType.SERVICE.getPrettyName() + MetadataDataset.KEYVALUE_SEPARATOR +
                AllProgramsApp.NoOpService.NAME, AllProgramsApp.NoOpService.NAME)
         .put(ProgramType.SPARK.getPrettyName() + MetadataDataset.KEYVALUE_SEPARATOR + AllProgramsApp.NoOpSpark.NAME,
@@ -957,9 +959,12 @@ public class MetadataHttpHandlerTest extends MetadataTestBase {
     Assert.assertEquals(
       ImmutableSet.of(
         new MetadataSearchResultRecord(Id.Program.from(app, ProgramType.MAPREDUCE, AllProgramsApp.NoOpMR.NAME)),
+        new MetadataSearchResultRecord(Id.Program.from(app, ProgramType.MAPREDUCE, AllProgramsApp.NoOpMR2.NAME)),
         new MetadataSearchResultRecord(Id.Program.from(app, ProgramType.WORKFLOW, AllProgramsApp.NoOpWorkflow.NAME)),
         new MetadataSearchResultRecord(Id.Program.from(app, ProgramType.SPARK, AllProgramsApp.NoOpSpark.NAME)),
         new MetadataSearchResultRecord(Id.DatasetInstance.from(Id.Namespace.DEFAULT, AllProgramsApp.DATASET_NAME)),
+        new MetadataSearchResultRecord(Id.DatasetInstance.from(Id.Namespace.DEFAULT, AllProgramsApp.DATASET_NAME2)),
+        new MetadataSearchResultRecord(Id.DatasetInstance.from(Id.Namespace.DEFAULT, AllProgramsApp.DATASET_NAME3)),
         new MetadataSearchResultRecord(
           Id.DatasetInstance.from(Id.Namespace.DEFAULT, AllProgramsApp.DS_WITH_SCHEMA_NAME)),
         new MetadataSearchResultRecord(myds)
@@ -1010,7 +1015,8 @@ public class MetadataHttpHandlerTest extends MetadataTestBase {
       searchMetadata(Id.Namespace.DEFAULT, ProgramType.FLOW.getPrettyName(), MetadataSearchTargetType.PROGRAM));
     Assert.assertEquals(
       ImmutableSet.of(
-        new MetadataSearchResultRecord(Id.Program.from(app, ProgramType.MAPREDUCE, AllProgramsApp.NoOpMR.NAME))),
+        new MetadataSearchResultRecord(Id.Program.from(app, ProgramType.MAPREDUCE, AllProgramsApp.NoOpMR.NAME)),
+        new MetadataSearchResultRecord(Id.Program.from(app, ProgramType.MAPREDUCE, AllProgramsApp.NoOpMR2.NAME))),
       searchMetadata(Id.Namespace.DEFAULT, ProgramType.MAPREDUCE.getPrettyName(), MetadataSearchTargetType.PROGRAM));
     Assert.assertEquals(
       ImmutableSet.of(
@@ -1033,6 +1039,8 @@ public class MetadataHttpHandlerTest extends MetadataTestBase {
 
   private void assertDataEntitySearch() throws Exception {
     Id.DatasetInstance datasetInstance = Id.DatasetInstance.from(Id.Namespace.DEFAULT, AllProgramsApp.DATASET_NAME);
+    Id.DatasetInstance datasetInstance2 = Id.DatasetInstance.from(Id.Namespace.DEFAULT, AllProgramsApp.DATASET_NAME2);
+    Id.DatasetInstance datasetInstance3 = Id.DatasetInstance.from(Id.Namespace.DEFAULT, AllProgramsApp.DATASET_NAME3);
     Id.DatasetInstance dsWithSchema = Id.DatasetInstance.from(Id.Namespace.DEFAULT, AllProgramsApp.DS_WITH_SCHEMA_NAME);
     Id.Stream streamId = Id.Stream.from(Id.Namespace.DEFAULT, AllProgramsApp.STREAM_NAME);
     Id.Stream.View view = Id.Stream.View.from(streamId, "view");
@@ -1087,7 +1095,8 @@ public class MetadataHttpHandlerTest extends MetadataTestBase {
 
     // search dataset
     ImmutableSet<MetadataSearchResultRecord> expectedKvTables = ImmutableSet.of(
-      new MetadataSearchResultRecord(datasetInstance), new MetadataSearchResultRecord(myds)
+      new MetadataSearchResultRecord(datasetInstance), new MetadataSearchResultRecord(datasetInstance2),
+      new MetadataSearchResultRecord(datasetInstance3), new MetadataSearchResultRecord(myds)
     );
     ImmutableSet<MetadataSearchResultRecord> expectedAllDatasets = ImmutableSet.<MetadataSearchResultRecord>builder()
       .addAll(expectedKvTables)
