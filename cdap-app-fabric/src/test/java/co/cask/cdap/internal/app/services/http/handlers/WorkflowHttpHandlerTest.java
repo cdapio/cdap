@@ -24,6 +24,7 @@ import co.cask.cdap.ConditionalWorkflowApp;
 import co.cask.cdap.PauseResumeWorklowApp;
 import co.cask.cdap.WorkflowAppWithErrorRuns;
 import co.cask.cdap.WorkflowAppWithFork;
+import co.cask.cdap.WorkflowAppWithLocalDatasets;
 import co.cask.cdap.WorkflowAppWithScopedParameters;
 import co.cask.cdap.WorkflowFailureInForkApp;
 import co.cask.cdap.WorkflowTokenTestPutApp;
@@ -35,6 +36,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.gateway.handlers.WorkflowHttpHandler;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
+import co.cask.cdap.internal.dataset.DatasetCreationSpec;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramStatus;
@@ -48,6 +50,7 @@ import co.cask.cdap.proto.codec.ScheduleSpecificationCodec;
 import co.cask.cdap.proto.codec.WorkflowActionSpecificationCodec;
 import co.cask.cdap.proto.codec.WorkflowTokenDetailCodec;
 import co.cask.cdap.proto.codec.WorkflowTokenNodeDetailCodec;
+import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.test.XSlowTests;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
@@ -183,6 +186,84 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
                                               program.getNamespaceId());
     HttpResponse response = doGet(versionedUrl);
     return readResponse(response, new TypeToken<List<ScheduledRuntime>>() { }.getType());
+  }
+
+  private String getLocalDatasetPath(ProgramId workflowId, String runId) {
+    String path = String.format("apps/%s/workflows/%s/runs/%s/localdatasets", workflowId.getApplication(),
+                                workflowId.getProgram(), runId);
+
+    return getVersionedAPIPath(path, Constants.Gateway.API_VERSION_3_TOKEN, workflowId.getNamespace());
+  }
+
+  private Map<String, DatasetCreationSpec> getWorkflowLocalDatasets(ProgramId workflowId, String runId)
+    throws Exception {
+    HttpResponse response = doGet(getLocalDatasetPath(workflowId, runId));
+    return readResponse(response, new TypeToken<Map<String, DatasetCreationSpec>>() { }.getType());
+  }
+
+  private void deleteWorkflowLocalDatasets(ProgramId workflowId, String runId) throws Exception {
+    doDelete(getLocalDatasetPath(workflowId, runId));
+  }
+
+  @Test
+  public void testLocalDatasetDeletion() throws Exception {
+    HttpResponse response = deploy(WorkflowAppWithLocalDatasets.class,
+                                   Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2);
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+
+    File waitFile = new File(tmpFolder.newFolder() + "/wait.file");
+    File doneFile = new File(tmpFolder.newFolder() + "/done.file");
+
+    ProgramId workflowId = new ProgramId(TEST_NAMESPACE2, WorkflowAppWithLocalDatasets.NAME, ProgramType.WORKFLOW,
+                                         WorkflowAppWithLocalDatasets.WORKFLOW_NAME);
+
+    startProgram(workflowId.toId(), ImmutableMap.of("wait.file", waitFile.getAbsolutePath(),
+                                                    "done.file", doneFile.getAbsolutePath(),
+                                                    "dataset.*.keep.local", "true"));
+
+    while (!waitFile.exists()) {
+      TimeUnit.MILLISECONDS.sleep(50);
+    }
+
+    String runId = getRunIdOfRunningProgram(workflowId.toId());
+
+    doneFile.createNewFile();
+
+    waitState(workflowId.toId(), ProgramStatus.STOPPED.name());
+
+    Map<String, DatasetCreationSpec> localDatasets = getWorkflowLocalDatasets(workflowId, runId);
+    Assert.assertEquals(2, localDatasets.size());
+    Assert.assertEquals("MyTable", localDatasets.get("MyTable." + runId).getInstanceName());
+    Assert.assertEquals("MyFile", localDatasets.get("MyFile." + runId).getInstanceName());
+
+    deleteWorkflowLocalDatasets(workflowId, runId);
+
+    localDatasets = getWorkflowLocalDatasets(workflowId, runId);
+    Assert.assertEquals(0, localDatasets.size());
+
+    waitFile = new File(tmpFolder.newFolder() + "/wait.file");
+    doneFile = new File(tmpFolder.newFolder() + "/done.file");
+
+    startProgram(workflowId.toId(), ImmutableMap.of("wait.file", waitFile.getAbsolutePath(),
+                                                    "done.file", doneFile.getAbsolutePath(),
+                                                    "dataset.MyTable.keep.local", "true"));
+
+    while (!waitFile.exists()) {
+      TimeUnit.MILLISECONDS.sleep(50);
+    }
+
+    runId = getRunIdOfRunningProgram(workflowId.toId());
+
+    doneFile.createNewFile();
+
+    waitState(workflowId.toId(), ProgramStatus.STOPPED.name());
+    localDatasets = getWorkflowLocalDatasets(workflowId, runId);
+    Assert.assertEquals(1, localDatasets.size());
+    Assert.assertEquals("MyTable", localDatasets.get("MyTable." + runId).getInstanceName());
+    deleteWorkflowLocalDatasets(workflowId, runId);
+
+    localDatasets = getWorkflowLocalDatasets(workflowId, runId);
+    Assert.assertEquals(0, localDatasets.size());
   }
 
   @Test

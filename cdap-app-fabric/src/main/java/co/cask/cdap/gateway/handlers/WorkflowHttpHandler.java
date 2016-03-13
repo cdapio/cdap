@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,11 +18,14 @@ package co.cask.cdap.gateway.handlers;
 
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.api.dataset.DatasetManagementException;
+import co.cask.cdap.api.dataset.InstanceNotFoundException;
 import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.workflow.NodeValue;
 import co.cask.cdap.api.workflow.Value;
+import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.mapreduce.MRJobInfoFetcher;
 import co.cask.cdap.app.runtime.ProgramController;
@@ -36,11 +39,13 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.config.PreferencesStore;
+import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerException;
 import co.cask.cdap.internal.app.services.ProgramLifecycleService;
 import co.cask.cdap.internal.app.services.PropertiesResolver;
+import co.cask.cdap.internal.dataset.DatasetCreationSpec;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.ScheduledRuntime;
@@ -49,7 +54,11 @@ import co.cask.cdap.proto.WorkflowTokenNodeDetail;
 import co.cask.cdap.proto.codec.ScheduleSpecificationCodec;
 import co.cask.cdap.proto.codec.WorkflowTokenDetailCodec;
 import co.cask.cdap.proto.codec.WorkflowTokenNodeDetailCodec;
+import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.http.HttpResponder;
+import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Lists;
@@ -61,12 +70,18 @@ import com.google.inject.Singleton;
 import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -80,6 +95,7 @@ import javax.ws.rs.QueryParam;
 @Singleton
 @Path(Constants.Gateway.API_VERSION_3 + "/namespaces/{namespace-id}")
 public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
+  private static final Logger LOG = LoggerFactory.getLogger(WorkflowHttpHandler.class);
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(ScheduleSpecification.class, new ScheduleSpecificationCodec())
     .registerTypeAdapter(WorkflowTokenDetail.class, new WorkflowTokenDetailCodec())
@@ -87,6 +103,7 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
     .create();
 
   private final WorkflowClient workflowClient;
+  private final DatasetFramework datasetFramework;
 
   @Inject
   public WorkflowHttpHandler(Store store, WorkflowClient workflowClient,
@@ -94,10 +111,11 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
                              QueueAdmin queueAdmin, Scheduler scheduler, PreferencesStore preferencesStore,
                              NamespacedLocationFactory namespacedLocationFactory, MRJobInfoFetcher mrJobInfoFetcher,
                              ProgramLifecycleService lifecycleService, PropertiesResolver resolver,
-                             MetricStore metricStore) {
+                             MetricStore metricStore, DatasetFramework datasetFramework) {
     super(store, configuration, runtimeService, lifecycleService, queueAdmin, scheduler,
           preferencesStore, namespacedLocationFactory, mrJobInfoFetcher, resolver, metricStore);
     this.workflowClient = workflowClient;
+    this.datasetFramework = datasetFramework;
   }
 
   @POST
@@ -322,5 +340,86 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
       throw new NotFoundException(new Id.Run(workflowId, runId));
     }
     return store.getWorkflowToken(workflowId, runId);
+  }
+
+  @GET
+  @Path("/apps/{app-id}/workflows/{workflow-id}/runs/{run-id}/localdatasets")
+  public void getWorkflowLocalDatasets(HttpRequest request, HttpResponder responder,
+                                       @PathParam("namespace-id") String namespaceId,
+                                       @PathParam("app-id") String applicationId,
+                                       @PathParam("workflow-id") String workflowId,
+                                       @PathParam("run-id") String runId)
+    throws NotFoundException, DatasetManagementException {
+    WorkflowSpecification workflowSpec = getWorkflowSpecForValidRun(namespaceId, applicationId, workflowId, runId);
+    Map<String, DatasetCreationSpec> localDatasets = new HashMap<>();
+    for (Map.Entry<String, DatasetCreationSpec> localDatasetEntry : workflowSpec.getLocalDatasetSpecs().entrySet()) {
+      String mappedDatasetName = localDatasetEntry.getKey() + "." + runId;
+      if (datasetFramework.hasInstance(Id.DatasetInstance.from(namespaceId, mappedDatasetName))) {
+        localDatasets.put(mappedDatasetName, localDatasetEntry.getValue());
+      }
+    }
+
+    responder.sendJson(HttpResponseStatus.OK, localDatasets);
+  }
+
+  @DELETE
+  @Path("/apps/{app-id}/workflows/{workflow-id}/runs/{run-id}/localdatasets")
+  public void deleteWorkflowLocalDatasets(HttpRequest request, HttpResponder responder,
+                                       @PathParam("namespace-id") String namespaceId,
+                                       @PathParam("app-id") String applicationId,
+                                       @PathParam("workflow-id") String workflowId,
+                                       @PathParam("run-id") String runId) throws NotFoundException {
+    WorkflowSpecification workflowSpec = getWorkflowSpecForValidRun(namespaceId, applicationId, workflowId, runId);
+    Set<String> errorOnDelete = new HashSet<>();
+    for (Map.Entry<String, DatasetCreationSpec> localDatasetEntry : workflowSpec.getLocalDatasetSpecs().entrySet()) {
+      String mappedDatasetName = localDatasetEntry.getKey() + "." + runId;
+      // try best to delete the local datasets.
+      try {
+        datasetFramework.deleteInstance(Id.DatasetInstance.from(namespaceId, mappedDatasetName));
+      } catch (InstanceNotFoundException e) {
+        // Dataset instance is already deleted. so its no-op.
+      } catch (Throwable t) {
+        errorOnDelete.add(mappedDatasetName);
+        LOG.error("Failed to delete the Workflow local dataset {}. Reason - {}", mappedDatasetName, t.getMessage());
+      }
+    }
+
+    if (errorOnDelete.isEmpty()) {
+      responder.sendStatus(HttpResponseStatus.OK);
+      return;
+    }
+
+    String errorMessage = "Failed to delete Workflow local datasets - " + Joiner.on(",").join(errorOnDelete);
+    throw new RuntimeException(errorMessage);
+  }
+
+  /**
+   * Get the {@link WorkflowSpecification} if valid application id, workflow id, and runid are provided.
+   * @param namespaceId the namespace id
+   * @param applicationId the application id
+   * @param workflowId the workflow id
+   * @param runId the runid of the workflow
+   * @return the specifications for the Workflow
+   * @throws NotFoundException is thrown when the application, workflow, or runid is not found
+   */
+  private WorkflowSpecification getWorkflowSpecForValidRun(String namespaceId, String applicationId,
+                                                           String workflowId, String runId) throws NotFoundException {
+    ApplicationId appId = new ApplicationId(namespaceId, applicationId);
+    ApplicationSpecification appSpec = store.getApplication(appId.toId());
+    if (appSpec == null) {
+      throw new NotFoundException(appId);
+    }
+
+    WorkflowSpecification workflowSpec = appSpec.getWorkflows().get(workflowId);
+    ProgramId programId = new ProgramId(namespaceId, applicationId, ProgramType.WORKFLOW, workflowId);
+    if (workflowSpec == null) {
+      throw new NotFoundException(programId);
+    }
+
+    if (store.getRun(programId.toId(), runId) == null) {
+      throw new NotFoundException(new ProgramRunId(programId.getNamespace(), programId.getApplication(),
+                                                   programId.getType(), programId.getProgram(), runId));
+    }
+    return workflowSpec;
   }
 }
