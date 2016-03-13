@@ -22,6 +22,7 @@ import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.lib.IndexedTableDefinition;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data2.audit.AuditPublisher;
+import co.cask.cdap.data2.audit.AuditPublishers;
 import co.cask.cdap.data2.audit.payload.builder.MetadataPayloadBuilder;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -438,15 +439,11 @@ public class DefaultMetadataStore implements MetadataStore {
   }
 
   private void publishAudit(MetadataRecord previous, MetadataRecord additions, MetadataRecord deletions) {
-    if (auditPublisher == null) {
-      return;
-    }
-
     MetadataPayloadBuilder builder = new MetadataPayloadBuilder();
     builder.addPrevious(previous);
     builder.addAdditions(additions);
     builder.addDeletions(deletions);
-    auditPublisher.publish(previous.getEntityId().toEntityId(), AuditType.METADATA_CHANGE, builder.build());
+    AuditPublishers.publishAudit(auditPublisher, previous.getEntityId(), AuditType.METADATA_CHANGE, builder.build());
   }
 
   private <T> T execute(TransactionExecutor.Function<MetadataDataset, T> func, MetadataScope scope) {

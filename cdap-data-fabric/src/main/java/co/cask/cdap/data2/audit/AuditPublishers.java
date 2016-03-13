@@ -17,26 +17,40 @@
 package co.cask.cdap.data2.audit;
 
 import co.cask.cdap.data2.metadata.lineage.AccessType;
+import co.cask.cdap.proto.audit.AuditPayload;
 import co.cask.cdap.proto.audit.AuditType;
 import co.cask.cdap.proto.audit.payload.access.AccessPayload;
 import co.cask.cdap.proto.id.EntityIdCompatible;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.concurrent.atomic.AtomicBoolean;
+import javax.annotation.Nullable;
 
 /**
  * Helper class to publish audit.
  */
 public final class AuditPublishers {
+  private static final Logger LOG = LoggerFactory.getLogger(AuditPublishers.class);
+  private static final AtomicBoolean WARNING_LOGGED = new AtomicBoolean(false);
+
   private AuditPublishers() {}
 
   /**
-   * Publish access audit information.
+   * Publish access audit information using {@link AuditPublisher}.
    *
-   * @param publisher instance of {@link AuditPublisher}
+   * @param publisher audit publisher, if null no audit information is published
    * @param entityId entity id for which audit information is being published
    * @param accessType access type
    * @param accessor the entity accessing entityId
    */
-  public static void publishAccess(AuditPublisher publisher, EntityIdCompatible entityId, AccessType accessType,
-                                   EntityIdCompatible accessor) {
+  public static void publishAccess(@Nullable AuditPublisher publisher, EntityIdCompatible entityId,
+                                   AccessType accessType, EntityIdCompatible accessor) {
+    if (publisher == null) {
+      logWarning();
+      return;
+    }
+
     switch (accessType) {
       case READ:
         publisher.publish(entityId.toEntityId(), AuditType.ACCESS,
@@ -61,6 +75,34 @@ public final class AuditPublishers {
                           new AccessPayload(co.cask.cdap.proto.audit.payload.access.AccessType.UNKNOWN,
                                             accessor.toEntityId()));
         break;
+    }
+  }
+
+  /**
+   * Publish audit information using {@link AuditPublisher}.
+   *
+   * @param publisher audit publisher, if null no audit information is published
+   * @param entityId entity id for which audit information is being published
+   * @param auditType audit type
+   * @param auditPayload audit payload
+   */
+  public static void publishAudit(@Nullable AuditPublisher publisher, EntityIdCompatible entityId,
+                                  AuditType auditType, AuditPayload auditPayload) {
+    if (publisher == null) {
+      logWarning();
+      return;
+    }
+
+    publisher.publish(entityId.toEntityId(), auditType, auditPayload);
+  }
+
+  /**
+   * Logs warning about not having audit publisher. The warning is logged only once.
+   */
+  private static void logWarning() {
+    if (!WARNING_LOGGED.get()) {
+      LOG.warn("Audit publisher is null, audit information will not be published");
+      WARNING_LOGGED.set(true);
     }
   }
 }
