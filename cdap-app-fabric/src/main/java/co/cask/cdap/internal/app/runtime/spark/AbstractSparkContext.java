@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.spark;
 
+import co.cask.cdap.api.Admin;
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.ServiceDiscoverer;
 import co.cask.cdap.api.app.ApplicationSpecification;
@@ -37,7 +38,10 @@ import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.metrics.ProgramUserMetrics;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.LoggingContext;
+import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
+import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.program.ProgramTypeMetricTag;
+import co.cask.cdap.internal.app.runtime.DefaultAdmin;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.internal.app.runtime.spark.metrics.SparkUserMetrics;
 import co.cask.cdap.logging.context.SparkLoggingContext;
@@ -77,6 +81,9 @@ public abstract class AbstractSparkContext implements SparkContext, Closeable {
   private final LoggingContext loggingContext;
   private final PluginInstantiator pluginInstantiator;
   private final WorkflowToken workflowToken;
+  private final Admin admin;
+  protected final SystemDatasetInstantiator systemDatasetInstantiator;
+
 
   private Resources executorResources;
   private SparkConf sparkConf;
@@ -86,6 +93,7 @@ public abstract class AbstractSparkContext implements SparkContext, Closeable {
                                  ClassLoader programClassLoader, long logicalStartTime,
                                  Map<String, String> runtimeArguments, DiscoveryServiceClient discoveryServiceClient,
                                  MetricsContext metricsContext, LoggingContext loggingContext,
+                                 DatasetFramework dsFramework,
                                  @Nullable PluginInstantiator pluginInstantiator,
                                  @Nullable WorkflowToken workflowToken) {
     this.applicationSpecification = applicationSpecification;
@@ -103,6 +111,8 @@ public abstract class AbstractSparkContext implements SparkContext, Closeable {
     this.sparkConf = new SparkConf();
     this.pluginInstantiator = pluginInstantiator;
     this.workflowToken = workflowToken;
+    this.systemDatasetInstantiator = new SystemDatasetInstantiator(dsFramework, programClassLoader, getOwners());
+    this.admin = new DefaultAdmin(dsFramework, programId.getNamespace().toEntityId());
   }
 
   @Override
@@ -313,4 +323,10 @@ public abstract class AbstractSparkContext implements SparkContext, Closeable {
     return new SparkLoggingContext(programId.getNamespaceId(), programId.getApplicationId(),
                                    programId.getId(), runId.getId());
   }
+
+  @Override
+  public Admin getAdmin() {
+    return admin;
+  }
+
 }

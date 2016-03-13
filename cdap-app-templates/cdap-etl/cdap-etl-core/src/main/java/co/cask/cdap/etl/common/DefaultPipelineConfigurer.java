@@ -116,7 +116,7 @@ public class DefaultPipelineConfigurer implements PipelineConfigurer {
   }
 
   @Override
-  public StageConfigurer getStageConfigurer() {
+  public DefaultStageConfigurer getStageConfigurer() {
     return stageConfigurer;
   }
 }

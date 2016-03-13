@@ -16,6 +16,7 @@
 
 package co.cask.cdap.proto.audit;
 
+import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.proto.id.EntityId;
 
 import java.util.Objects;
@@ -23,14 +24,15 @@ import java.util.Objects;
 /**
  * Represents a change on an entity that needs to be audited.
  */
+@Beta
 public class AuditMessage {
   private final long time;
   private final EntityId entityId;
   private final String user;
-  private final MessageType type;
+  private final AuditType type;
   private final AuditPayload payload;
 
-  public AuditMessage(long time, EntityId entityId, String user, MessageType type, AuditPayload payload) {
+  public AuditMessage(long time, EntityId entityId, String user, AuditType type, AuditPayload payload) {
     this.time = time;
     this.entityId = entityId;
     this.user = user;
@@ -50,7 +52,7 @@ public class AuditMessage {
     return user;
   }
 
-  public MessageType getType() {
+  public AuditType getType() {
     return type;
   }
 

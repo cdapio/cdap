@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,8 +16,9 @@
 package co.cask.cdap.proto;
 
 import co.cask.cdap.api.data.format.FormatSpecification;
-import com.google.common.base.Objects;
 import com.google.gson.annotations.SerializedName;
+
+import java.util.Objects;
 
 /**
  * Represents the properties of a stream.
@@ -69,22 +70,22 @@ public class StreamProperties {
 
     StreamProperties that = (StreamProperties) o;
 
-    return Objects.equal(ttl, that.ttl) &&
-      Objects.equal(format, that.format) &
-      Objects.equal(notificationThresholdMB, that.notificationThresholdMB);
+    return Objects.equals(ttl, that.ttl) &&
+      Objects.equals(format, that.format) &
+      Objects.equals(notificationThresholdMB, that.notificationThresholdMB);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(ttl, format, notificationThresholdMB);
+    return Objects.hash(ttl, format, notificationThresholdMB);
   }
 
   @Override
   public String toString() {
-    return Objects.toStringHelper(this)
-      .add("ttl", ttl)
-      .add("format", format)
-      .add("notificationThresholdMB", notificationThresholdMB)
-      .toString();
+    return "StreamProperties{" +
+      "ttl=" + ttl +
+      ", format=" + format +
+      ", notificationThresholdMB=" + notificationThresholdMB +
+      '}';
   }
 }

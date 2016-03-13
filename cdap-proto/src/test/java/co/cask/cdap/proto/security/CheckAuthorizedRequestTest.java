@@ -17,9 +17,12 @@
 package co.cask.cdap.proto.security;
 
 import co.cask.cdap.proto.id.Ids;
-import com.google.common.collect.ImmutableSet;
+
 import org.junit.Assert;
 import org.junit.Test;
+
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 /**
  * Tests for {@link CheckAuthorizedRequest}.
@@ -29,7 +32,9 @@ public class CheckAuthorizedRequestTest {
   @Test
   public void testValidation() {
     Principal bob = new Principal("bob", Principal.PrincipalType.USER);
-    new CheckAuthorizedRequest(Ids.namespace("foo"), bob, ImmutableSet.of(Action.READ));
+    Set<Action> actions = new LinkedHashSet<>();
+    actions.add(Action.READ);
+    new CheckAuthorizedRequest(Ids.namespace("foo"), bob, actions);
 
     try {
       new CheckAuthorizedRequest(Ids.namespace("foo"), null, null);
@@ -46,14 +51,14 @@ public class CheckAuthorizedRequestTest {
     }
 
     try {
-      new CheckAuthorizedRequest(Ids.namespace("foo"), null, ImmutableSet.of(Action.READ));
+      new CheckAuthorizedRequest(Ids.namespace("foo"), null, actions);
       Assert.fail();
     } catch (IllegalArgumentException e) {
       // expected
     }
 
     try {
-      new CheckAuthorizedRequest(null, bob, ImmutableSet.of(Action.READ));
+      new CheckAuthorizedRequest(null, bob, actions);
       Assert.fail();
     } catch (IllegalArgumentException e) {
       // expected

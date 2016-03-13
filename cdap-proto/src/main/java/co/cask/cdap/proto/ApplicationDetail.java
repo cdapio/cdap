@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,8 +21,8 @@ import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.internal.dataset.DatasetCreationSpec;
 import co.cask.cdap.proto.artifact.ArtifactSummary;
-import com.google.common.collect.Lists;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -94,7 +94,7 @@ public class ApplicationDetail {
   }
 
   public static ApplicationDetail fromSpec(ApplicationSpecification spec) {
-    List<ProgramRecord> programs = Lists.newArrayList();
+    List<ProgramRecord> programs = new ArrayList<>();
     for (ProgramSpecification programSpec : spec.getFlows().values()) {
       programs.add(new ProgramRecord(ProgramType.FLOW, spec.getName(),
                                      programSpec.getName(), programSpec.getDescription()));
@@ -120,12 +120,12 @@ public class ApplicationDetail {
                                      programSpec.getName(), programSpec.getDescription()));
     }
 
-    List<StreamDetail> streams = Lists.newArrayList();
+    List<StreamDetail> streams = new ArrayList<>();
     for (StreamSpecification streamSpec : spec.getStreams().values()) {
       streams.add(new StreamDetail(streamSpec.getName()));
     }
 
-    List<DatasetDetail> datasets = Lists.newArrayList();
+    List<DatasetDetail> datasets = new ArrayList<>();
     for (DatasetCreationSpec datasetSpec : spec.getDatasets().values()) {
       datasets.add(new DatasetDetail(datasetSpec.getInstanceName(), datasetSpec.getTypeName()));
     }

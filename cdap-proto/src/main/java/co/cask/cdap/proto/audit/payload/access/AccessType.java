@@ -16,9 +16,12 @@
 
 package co.cask.cdap.proto.audit.payload.access;
 
+import co.cask.cdap.api.annotation.Beta;
+
 /**
  * Type of access on a data entity.
  */
+@Beta
 public enum AccessType {
   READ,
   WRITE,

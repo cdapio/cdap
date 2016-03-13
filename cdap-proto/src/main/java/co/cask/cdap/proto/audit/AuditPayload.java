@@ -16,9 +16,12 @@
 
 package co.cask.cdap.proto.audit;
 
+import co.cask.cdap.api.annotation.Beta;
+
 /**
- * Paylod of {@link AuditMessage} based on {@link MessageType}.
+ * Paylod of {@link AuditMessage} based on {@link AuditType}.
  */
+@Beta
 public class AuditPayload {
   public static final AuditPayload EMPTY_PAYLOAD = new AuditPayload();
 

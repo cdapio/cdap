@@ -1784,5 +1784,22 @@
     </description>
   </property>
 
+  <!-- Audit configuration -->
+
+  <property>
+    <name>audit.enabled</name>
+    <value>false</value>
+    <description>
+      Determines whether to publish audit messages
+    </description>
+  </property>
+
+  <property>
+    <name>audit.kafka.topic</name>
+    <value>audit</value>
+    <description>
+      Kafka topic to publish the audit messages
+    </description>
+  </property>
 
 </configuration>

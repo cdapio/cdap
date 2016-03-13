@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,19 +19,19 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.codec.EntityIdTypeAdapter;
 import co.cask.cdap.proto.codec.IdTypeAdapter;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 /**
- *
+ * Tests for {@link EntityId}.
  */
 public class EntityIdTest {
 
@@ -40,106 +40,108 @@ public class EntityIdTest {
     .registerTypeAdapter(EntityId.class, new EntityIdTypeAdapter())
     .create();
 
-  private final List<? extends EntityId> ids = ImmutableList.<EntityId>builder()
-    .add(Ids.namespace("foo"))
-    .add(Ids.namespace("foo").artifact("art", "1.2.3"))
-    .add(Ids.namespace("foo").dataset("zoo"))
-    .add(Ids.namespace("foo").datasetModule("moo"))
-    .add(Ids.namespace("foo").datasetType("typ"))
-    .add(Ids.namespace("foo").stream("t"))
-    .add(Ids.namespace("foo").app("app"))
-    .add(Ids.namespace("foo").app("app").program(ProgramType.FLOW, "flo"))
-    .add(Ids.namespace("foo").app("app").program(ProgramType.FLOW, "flo").run("run1"))
-    .add(Ids.namespace("foo").app("app").program(ProgramType.FLOW, "flo").flowlet("flol"))
-    .add(Ids.namespace("foo").app("app").program(ProgramType.FLOW, "flo").flowlet("flol").queue("q"))
-    .add(Ids.namespace("foo").app("app").flow("flo"))
-    .add(Ids.namespace("foo").app("app").workflow("flo"))
-    .add(Ids.namespace("foo").app("app").mr("flo"))
-    .add(Ids.namespace("foo").app("app").spark("flo"))
-    .add(Ids.namespace("foo").app("app").worker("flo"))
-    .add(Ids.namespace("foo").app("app").service("flo"))
+  private static final List<EntityId> ids = new ArrayList<>();
+  static {
+    ids.add(Ids.namespace("foo"));
+    ids.add(Ids.namespace("foo").artifact("art", "1.2.3"));
+    ids.add(Ids.namespace("foo").dataset("zoo"));
+    ids.add(Ids.namespace("foo").datasetModule("moo"));
+    ids.add(Ids.namespace("foo").datasetType("typ"));
+    ids.add(Ids.namespace("foo").stream("t"));
+    ids.add(Ids.namespace("foo").app("app"));
+    ids.add(Ids.namespace("foo").app("app").program(ProgramType.FLOW, "flo"));
+    ids.add(Ids.namespace("foo").app("app").program(ProgramType.FLOW, "flo").run("run1"));
+    ids.add(Ids.namespace("foo").app("app").program(ProgramType.FLOW, "flo").flowlet("flol"));
+    ids.add(Ids.namespace("foo").app("app").program(ProgramType.FLOW, "flo").flowlet("flol").queue("q"));
+    ids.add(Ids.namespace("foo").app("app").flow("flo"));
+    ids.add(Ids.namespace("foo").app("app").workflow("flo"));
+    ids.add(Ids.namespace("foo").app("app").mr("flo"));
+    ids.add(Ids.namespace("foo").app("app").spark("flo"));
+    ids.add(Ids.namespace("foo").app("app").worker("flo"));
+    ids.add(Ids.namespace("foo").app("app").service("flo"));
     // components mostly the same
-    .add(Ids.namespace("zzz"))
-    .add(Ids.namespace("zzz").artifact("zzz", "1.2.3"))
-    .add(Ids.namespace("zzz").dataset("zzz"))
-    .add(Ids.namespace("zzz").datasetModule("zzz"))
-    .add(Ids.namespace("zzz").datasetType("zzz"))
-    .add(Ids.namespace("zzz").stream("zzz"))
-    .add(Ids.namespace("zzz").app("zzz"))
-    .add(Ids.namespace("zzz").app("zzz").program(ProgramType.FLOW, "zzz"))
-    .add(Ids.namespace("zzz").app("zzz").program(ProgramType.FLOW, "zzz").run("zzz"))
-    .add(Ids.namespace("zzz").app("zzz").program(ProgramType.FLOW, "zzz").flowlet("zzz"))
-    .add(Ids.namespace("zzz").app("zzz").program(ProgramType.FLOW, "zzz").flowlet("zzz").queue("zzz"))
-    .add(Ids.namespace("zzz").app("zzz").flow("zzz"))
-    .add(Ids.namespace("zzz").app("zzz").workflow("zzz"))
-    .add(Ids.namespace("zzz").app("zzz").mr("zzz"))
-    .add(Ids.namespace("zzz").app("zzz").spark("zzz"))
-    .add(Ids.namespace("zzz").app("zzz").worker("zzz"))
-    .add(Ids.namespace("zzz").app("zzz").service("zzz"))
-    .build();
+    ids.add(Ids.namespace("zzz"));
+    ids.add(Ids.namespace("zzz").artifact("zzz", "1.2.3"));
+    ids.add(Ids.namespace("zzz").dataset("zzz"));
+    ids.add(Ids.namespace("zzz").datasetModule("zzz"));
+    ids.add(Ids.namespace("zzz").datasetType("zzz"));
+    ids.add(Ids.namespace("zzz").stream("zzz"));
+    ids.add(Ids.namespace("zzz").app("zzz"));
+    ids.add(Ids.namespace("zzz").app("zzz").program(ProgramType.FLOW, "zzz"));
+    ids.add(Ids.namespace("zzz").app("zzz").program(ProgramType.FLOW, "zzz").run("zzz"));
+    ids.add(Ids.namespace("zzz").app("zzz").program(ProgramType.FLOW, "zzz").flowlet("zzz"));
+    ids.add(Ids.namespace("zzz").app("zzz").program(ProgramType.FLOW, "zzz").flowlet("zzz").queue("zzz"));
+    ids.add(Ids.namespace("zzz").app("zzz").flow("zzz"));
+    ids.add(Ids.namespace("zzz").app("zzz").workflow("zzz"));
+    ids.add(Ids.namespace("zzz").app("zzz").mr("zzz"));
+    ids.add(Ids.namespace("zzz").app("zzz").spark("zzz"));
+    ids.add(Ids.namespace("zzz").app("zzz").worker("zzz"));
+    ids.add(Ids.namespace("zzz").app("zzz").service("zzz"));
+  }
 
   /**
    * To maintain backwards compatibility, don't change this.
    */
-  private final Map<? extends EntityId, String> idsToString = ImmutableMap.<EntityId, String>builder()
-    .put(Ids.namespace("foo"), "namespace:foo")
-    .put(Ids.namespace("foo").artifact("art", "1.2.3"), "artifact:foo.art.1.2.3")
-    .put(Ids.namespace("foo").dataset("zoo"), "dataset:foo.zoo")
-    .put(Ids.namespace("foo").datasetModule("moo"), "dataset_module:foo.moo")
-    .put(Ids.namespace("foo").datasetType("typ"), "dataset_type:foo.typ")
-    .put(Ids.namespace("foo").stream("sdf"), "stream:foo.sdf")
-    .put(Ids.namespace("foo").app("app"), "application:foo.app")
-    .put(Ids.namespace("foo").app("app").program(ProgramType.FLOW, "flo"), "program:foo.app.flow.flo")
-    .put(
-      Ids.namespace("foo").app("app").program(ProgramType.FLOW, "flo").run("run1"),
-      "program_run:foo.app.flow.flo.run1")
-    .put(
-      Ids.namespace("foo").app("app").program(ProgramType.FLOW, "flo").flowlet("flol"),
-      "flowlet:foo.app.flo.flol")
-    .put(
-      Ids.namespace("foo").app("app").program(ProgramType.FLOW, "flo").flowlet("flol").queue("q"),
-      "flowlet_queue:foo.app.flo.flol.q")
-    .build();
-
-  /**
-   * To maintain backwards compatibility, don't change this.
-   */
-  private final Map<? extends EntityId, String> idsToJson =
-    ImmutableMap.<EntityId, String>builder()
-      .put(Ids.namespace("foo"), "{\"namespace\":\"foo\",\"entity\":\"NAMESPACE\"}")
-      .put(
-        Ids.namespace("foo").artifact("art", "1.2.3"),
-        "{\"namespace\":\"foo\",\"artifact\":\"art\",\"version\":\"1.2.3\",\"entity\":\"ARTIFACT\"}")
-      .put(
-        Ids.namespace("foo").dataset("zoo"),
-        "{\"namespace\":\"foo\",\"dataset\":\"zoo\",\"entity\":\"DATASET\"}")
-      .put(
-        Ids.namespace("foo").datasetModule("moo"),
-        "{\"namespace\":\"foo\",\"module\":\"moo\",\"entity\":\"DATASET_MODULE\"}")
-      .put(
-        Ids.namespace("foo").datasetType("typ"),
-        "{\"namespace\":\"foo\",\"type\":\"typ\",\"entity\":\"DATASET_TYPE\"}")
-      .put(
-        Ids.namespace("foo").stream("t"),
-        "{\"namespace\":\"foo\",\"stream\":\"t\",\"entity\":\"STREAM\"}")
-      .put(
-        Ids.namespace("foo").app("app"),
-        "{\"namespace\":\"foo\",\"application\":\"app\",\"entity\":\"APPLICATION\"}")
-      .put(
-        Ids.namespace("foo").app("app").program(ProgramType.FLOW, "flo"),
-        "{\"namespace\":\"foo\",\"application\":\"app\",\"type\":\"Flow\",\"program\":\"flo\",\"entity\":\"PROGRAM\"}")
-      .put(
+  private static final Map<EntityId, String> idsToString = new HashMap<>();
+  static {
+    idsToString.put(Ids.namespace("foo"), "namespace:foo");
+    idsToString.put(Ids.namespace("foo").artifact("art", "1.2.3"), "artifact:foo.art.1.2.3");
+    idsToString.put(Ids.namespace("foo").dataset("zoo"), "dataset:foo.zoo");
+    idsToString.put(Ids.namespace("foo").datasetModule("moo"), "dataset_module:foo.moo");
+    idsToString.put(Ids.namespace("foo").datasetType("typ"), "dataset_type:foo.typ");
+    idsToString.put(Ids.namespace("foo").stream("sdf"), "stream:foo.sdf");
+    idsToString.put(Ids.namespace("foo").app("app"), "application:foo.app");
+    idsToString.put(Ids.namespace("foo").app("app").program(ProgramType.FLOW, "flo"), "program:foo.app.flow.flo");
+    idsToString.put(
         Ids.namespace("foo").app("app").program(ProgramType.FLOW, "flo").run("run1"),
-        "{\"namespace\":\"foo\",\"application\":\"app\",\"type\":\"Flow\",\"program\":\"flo\"," +
-          "\"run\":\"run1\",\"entity\":\"PROGRAM_RUN\"}")
-      .put(
+        "program_run:foo.app.flow.flo.run1");
+    idsToString.put(
         Ids.namespace("foo").app("app").program(ProgramType.FLOW, "flo").flowlet("flol"),
-        "{\"namespace\":\"foo\",\"application\":\"app\",\"flow\":\"flo\",\"flowlet\":\"flol\",\"entity\":\"FLOWLET\"}")
-      .put(
+        "flowlet:foo.app.flo.flol");
+    idsToString.put(
         Ids.namespace("foo").app("app").program(ProgramType.FLOW, "flo").flowlet("flol").queue("q"),
-        "{\"namespace\":\"foo\",\"application\":\"app\",\"flow\":\"flo\"," +
-          "\"flowlet\":\"flol\",\"queue\":\"q\",\"entity\":\"FLOWLET_QUEUE\"}")
-      .build();
+        "flowlet_queue:foo.app.flo.flol.q");
+  }
+
+  /**
+   * To maintain backwards compatibility, don't change this.
+   */
+  private static final Map<EntityId, String> idsToJson = new HashMap<>();
+  static {
+    idsToJson.put(Ids.namespace("foo"), "{\"namespace\":\"foo\",\"entity\":\"NAMESPACE\"}");
+    idsToJson.put(
+      Ids.namespace("foo").artifact("art", "1.2.3"),
+      "{\"namespace\":\"foo\",\"artifact\":\"art\",\"version\":\"1.2.3\",\"entity\":\"ARTIFACT\"}");
+    idsToJson.put(
+      Ids.namespace("foo").dataset("zoo"),
+      "{\"namespace\":\"foo\",\"dataset\":\"zoo\",\"entity\":\"DATASET\"}");
+    idsToJson.put(
+      Ids.namespace("foo").datasetModule("moo"),
+      "{\"namespace\":\"foo\",\"module\":\"moo\",\"entity\":\"DATASET_MODULE\"}");
+    idsToJson.put(
+      Ids.namespace("foo").datasetType("typ"),
+      "{\"namespace\":\"foo\",\"type\":\"typ\",\"entity\":\"DATASET_TYPE\"}");
+    idsToJson.put(
+      Ids.namespace("foo").stream("t"),
+      "{\"namespace\":\"foo\",\"stream\":\"t\",\"entity\":\"STREAM\"}");
+    idsToJson.put(
+      Ids.namespace("foo").app("app"),
+      "{\"namespace\":\"foo\",\"application\":\"app\",\"entity\":\"APPLICATION\"}");
+    idsToJson.put(
+      Ids.namespace("foo").app("app").program(ProgramType.FLOW, "flo"),
+      "{\"namespace\":\"foo\",\"application\":\"app\",\"type\":\"Flow\",\"program\":\"flo\",\"entity\":\"PROGRAM\"}");
+    idsToJson.put(
+      Ids.namespace("foo").app("app").program(ProgramType.FLOW, "flo").run("run1"),
+      "{\"namespace\":\"foo\",\"application\":\"app\",\"type\":\"Flow\",\"program\":\"flo\"," +
+        "\"run\":\"run1\",\"entity\":\"PROGRAM_RUN\"}");
+    idsToJson.put(
+      Ids.namespace("foo").app("app").program(ProgramType.FLOW, "flo").flowlet("flol"),
+      "{\"namespace\":\"foo\",\"application\":\"app\",\"flow\":\"flo\",\"flowlet\":\"flol\",\"entity\":\"FLOWLET\"}");
+    idsToJson.put(
+      Ids.namespace("foo").app("app").program(ProgramType.FLOW, "flo").flowlet("flol").queue("q"),
+      "{\"namespace\":\"foo\",\"application\":\"app\",\"flow\":\"flo\"," +
+        "\"flowlet\":\"flol\",\"queue\":\"q\",\"entity\":\"FLOWLET_QUEUE\"}");
+  }
 
   @Test
   public void testToFromString() {
@@ -215,9 +217,13 @@ public class EntityIdTest {
     ApplicationId app = namespace.app("bar");
     ProgramId program = app.flow("foo");
 
-    Assert.assertEquals(ImmutableList.of(namespace), ImmutableList.copyOf(namespace.getHierarchy()));
-    Assert.assertEquals(ImmutableList.of(namespace, app), ImmutableList.copyOf(app.getHierarchy()));
-    Assert.assertEquals(ImmutableList.of(namespace, app, program), ImmutableList.copyOf(program.getHierarchy()));
+    List<EntityId> expectedHierarchy = new ArrayList<>();
+    expectedHierarchy.add(namespace);
+    Assert.assertEquals(expectedHierarchy, namespace.getHierarchy());
+    expectedHierarchy.add(app);
+    Assert.assertEquals(expectedHierarchy, app.getHierarchy());
+    expectedHierarchy.add(program);
+    Assert.assertEquals(expectedHierarchy, program.getHierarchy());
   }
 
   @Test

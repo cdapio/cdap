@@ -107,10 +107,6 @@ WEB="web"
 GOOGLE_TAG_MANAGER_CODE_GITHUB="GTM-PBZ3JL"
 GITHUB="github"
 
-# BUILD.rst
-BUILD_RST="BUILD.rst"
-BUILD_RST_HASH="cb6279ac3ecd199cdfa2f6e914403f69"
-
 
 function usage() {
   echo "Build script for '${PROJECT_CAPS}' docs"
@@ -232,7 +228,7 @@ function check_build_rst() {
   cd ${PROJECT_PATH}
   # check BUILD.rst for changes
   BUILD_RST_PATH="${PROJECT_PATH}${BUILD_RST}"
-  test_an_include "${BUILD_RST_HASH}" "${BUILD_RST_PATH}"
+  test_an_include "${BUILD_RST_HASH}" "${BUILD_RST_PATH}" "${BUILD_RST_HASH_LOCATION}"
   echo
   cd ${current_directory}
 }
@@ -267,6 +263,7 @@ function test_an_include() {
   # Uses md5 hashes to monitor if any files have changed.
   local md5_hash=${1}
   local target=${2}
+  local location=${3}
   local new_md5_hash
   local m
   local m_display  
@@ -281,12 +278,15 @@ function test_an_include() {
     fi
   
     if [[ "${new_md5_hash}" == "${NOT_FOUND_HASH}" ]]; then
-      m="${WARNING} ${RED_BOLD}${file_name} not found!${NO_COLOR} "  
-      m="${m}\nfile: ${target}"  
+      m="${WARNING} ${RED_BOLD}${file_name} not found!${NO_COLOR}"
+      m="${m}\nfile: ${target}"
     elif [[ "${new_md5_hash}" != "${md5_hash}" ]]; then
-      m="${WARNING} ${RED_BOLD}${file_name} has changed! Compare files and update hash!${NO_COLOR} "   
-      m="${m}\nfile: ${target}"   
-      m="${m}\nOld MD5 Hash: ${md5_hash} New MD5 Hash: ${new_md5_hash}"   
+      m="${WARNING} ${RED_BOLD}${file_name} has changed! Compare files and update hash!${NO_COLOR}"
+      m="${m}\nfile: ${target}"
+      m="${m}\nOld MD5 Hash: ${md5_hash} New MD5 Hash: ${new_md5_hash}"
+      if [[ "x${location}" != "x" ]]; then
+        m="${m}\nHash location: ${location}"
+      fi
     fi
   else  
     m="No target is set for test_an_include"

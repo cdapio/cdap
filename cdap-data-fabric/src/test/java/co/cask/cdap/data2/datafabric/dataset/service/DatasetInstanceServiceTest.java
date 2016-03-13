@@ -19,6 +19,7 @@ package co.cask.cdap.data2.datafabric.dataset.service;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 import co.cask.cdap.api.dataset.DatasetDefinition;
+import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.lib.FileSet;
@@ -29,8 +30,8 @@ import co.cask.cdap.api.dataset.lib.ObjectMappedTableProperties;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
 import co.cask.cdap.api.dataset.table.ConflictDetection;
 import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFrameworkTestUtil;
-import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.data2.dataset2.TestObject;
 import co.cask.cdap.data2.metadata.lineage.LineageDataset;
 import co.cask.cdap.data2.registry.UsageDataset;
@@ -81,9 +82,7 @@ public class DatasetInstanceServiceTest extends DatasetServiceTestBase {
       inMemoryDatasetFramework, Id.Namespace.DEFAULT, "fileSet");
     Assert.assertNotNull(def);
     DatasetSpecification spec = def.configure("nn", props);
-    Map<String, String> originalProperties = DatasetInstanceService.fixOriginalProperties(spec);
+    Map<String, String> originalProperties = DatasetsUtil.fixOriginalProperties(spec).getOriginalProperties();
     Assert.assertEquals(props.getProperties(), originalProperties);
   }
-
-
 }

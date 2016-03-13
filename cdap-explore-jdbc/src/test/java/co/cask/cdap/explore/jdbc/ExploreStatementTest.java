@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -26,32 +26,35 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.sql.ResultSet;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
- *
+ * Tests for {@link ExploreStatement}.
  */
 public class ExploreStatementTest {
 
   @Test
   public void executeTest() throws Exception {
+    List<ColumnDesc> columnDescriptions = Lists.newArrayList(new ColumnDesc("column1", "STRING", 1, ""));
+    List<QueryResult> queryResults = Lists.newArrayList();
     ExploreClient exploreClient = new MockExploreClient(
         ImmutableMap.of(
-          "mock_query_1", (List<ColumnDesc>) Lists.newArrayList(new ColumnDesc("column1", "STRING", 1, "")),
-          "mock_query_2", (List<ColumnDesc>) Lists.newArrayList(new ColumnDesc("column1", "STRING", 1, "")),
-          "mock_query_3", (List<ColumnDesc>) Lists.newArrayList(new ColumnDesc("column1", "STRING", 1, "")),
-          "mock_query_4", (List<ColumnDesc>) Lists.newArrayList(new ColumnDesc("column1", "STRING", 1, ""))
+          "mock_query_1", columnDescriptions,
+          "mock_query_2", columnDescriptions,
+          "mock_query_3", columnDescriptions,
+          "mock_query_4", columnDescriptions
         ),
         ImmutableMap.of(
-          "mock_query_1", (List<QueryResult>) Lists.<QueryResult>newArrayList(),
-          "mock_query_2", (List<QueryResult>) Lists.<QueryResult>newArrayList(),
-          "mock_query_3", (List<QueryResult>) Lists.<QueryResult>newArrayList(),
-          "mock_query_4", (List<QueryResult>) Lists.<QueryResult>newArrayList()
+          "mock_query_1", queryResults,
+          "mock_query_2", queryResults,
+          "mock_query_3", queryResults,
+          "mock_query_4", queryResults
           )
     );
 
     // Make sure an empty query still has a ResultSet associated to it
-    ExploreStatement statement = new ExploreStatement(null, exploreClient, "");
+    ExploreStatement statement = new ExploreStatement(null, exploreClient, "ns1");
     Assert.assertTrue(statement.execute("mock_query_1"));
     ResultSet rs = statement.getResultSet();
     Assert.assertNotNull(rs);

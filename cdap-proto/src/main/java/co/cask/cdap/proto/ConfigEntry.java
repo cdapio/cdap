@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,7 +16,7 @@
 
 package co.cask.cdap.proto;
 
-import com.google.common.base.Objects;
+import java.util.Objects;
 
 /**
  * Represents an entry in {@link org.apache.hadoop.conf.Configuration}
@@ -47,7 +47,7 @@ public final class ConfigEntry {
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(name, value, source);
+    return Objects.hash(name, value, source);
   }
 
   @Override
@@ -59,13 +59,17 @@ public final class ConfigEntry {
       return false;
     }
     final ConfigEntry other = (ConfigEntry) obj;
-    return Objects.equal(this.name, other.name) &&
-      Objects.equal(this.value, other.value) &&
-      Objects.equal(this.source, other.source);
+    return Objects.equals(this.name, other.name) &&
+      Objects.equals(this.value, other.value) &&
+      Objects.equals(this.source, other.source);
   }
 
   @Override
   public String toString() {
-    return Objects.toStringHelper(this).add("name", name).add("value", value).add("source", source).toString();
+    return "ConfigEntry{" +
+      "name='" + name + '\'' +
+      ", value='" + value + '\'' +
+      ", source='" + source + '\'' +
+      '}';
   }
 }

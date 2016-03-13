@@ -16,8 +16,7 @@
 
 package co.cask.cdap.proto;
 
-import com.google.common.base.Joiner;
-
+import java.util.Arrays;
 import java.util.Objects;
 
 /**
@@ -60,7 +59,7 @@ public class BatchProgram {
       throw new IllegalArgumentException("'appId' must be specified.");
     }
     if (programType == null) {
-      throw new IllegalArgumentException("'programType' must be one of " + Joiner.on(",").join(ProgramType.values()));
+      throw new IllegalArgumentException("'programType' must be one of " + Arrays.toString(ProgramType.values()));
     }
     if (programId == null || programId.isEmpty()) {
       throw new IllegalArgumentException("'programId' must be specified.");

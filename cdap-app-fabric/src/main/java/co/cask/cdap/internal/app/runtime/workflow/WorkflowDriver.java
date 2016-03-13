@@ -17,6 +17,9 @@ package co.cask.cdap.internal.app.runtime.workflow;
 
 import co.cask.cdap.api.Predicate;
 import co.cask.cdap.api.app.ApplicationSpecification;
+import co.cask.cdap.api.common.RuntimeArguments;
+import co.cask.cdap.api.common.Scope;
+import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.workflow.ScheduleProgramInfo;
@@ -45,7 +48,6 @@ import co.cask.cdap.common.lang.PropertyFieldSetter;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.data2.registry.UsageRegistry;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
@@ -468,6 +470,12 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
 
   private void deleteLocalDatasets() {
     for (Map.Entry<String, DatasetCreationSpec> instanceEntry : workflowSpec.getLocalDatasetSpecs().entrySet()) {
+      Map<String, String> datasetArguments = RuntimeArguments.extractScope(Scope.DATASET, instanceEntry.getKey(),
+                                                                           runtimeArgs);
+      if (Boolean.parseBoolean(datasetArguments.get("keep.local"))) {
+        continue;
+      }
+
       String localInstanceName = getLocalDatasetName(instanceEntry.getKey(), runId.getId());
       Id.DatasetInstance instanceId = Id.DatasetInstance.from(program.getNamespaceId(), localInstanceName);
       LOG.debug("Deleting Workflow local dataset instance: {}", localInstanceName);

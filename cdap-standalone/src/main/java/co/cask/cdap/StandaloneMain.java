@@ -40,6 +40,7 @@ import co.cask.cdap.data.stream.StreamAdminModules;
 import co.cask.cdap.data.stream.service.StreamService;
 import co.cask.cdap.data.stream.service.StreamServiceRuntimeModule;
 import co.cask.cdap.data.view.ViewAdminModules;
+import co.cask.cdap.data2.audit.AuditModule;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.explore.client.ExploreClient;
 import co.cask.cdap.explore.executor.ExploreExecutorService;
@@ -384,7 +385,8 @@ public class StandaloneMain {
       new StreamAdminModules().getStandaloneModules(),
       new NamespaceClientRuntimeModule().getStandaloneModules(),
       new NamespaceStoreModule().getStandaloneModules(),
-      new MetadataServiceModule()
+      new MetadataServiceModule(),
+      new AuditModule().getStandaloneModules()
     );
   }
 }

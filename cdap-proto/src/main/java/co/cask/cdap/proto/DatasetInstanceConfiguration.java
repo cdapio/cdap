@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,8 +16,7 @@
 
 package co.cask.cdap.proto;
 
-import com.google.common.collect.ImmutableMap;
-
+import java.util.Collections;
 import java.util.Map;
 
 /**
@@ -37,7 +36,7 @@ public final class DatasetInstanceConfiguration {
   }
 
   public Map<String, String> getProperties() {
-    return properties == null ? ImmutableMap.<String, String>of() : properties;
+    return properties == null ? Collections.<String, String>emptyMap() : properties;
   }
 
 }

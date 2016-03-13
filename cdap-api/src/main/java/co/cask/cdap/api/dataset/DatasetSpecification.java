@@ -60,13 +60,6 @@ public final class DatasetSpecification {
   }
 
   /**
-   * @return a new spec that is the same as this one, with the original properties set to the provided properties.
-   */
-  public DatasetSpecification setOriginalProperties(DatasetProperties originalProps) {
-    return new DatasetSpecification(name, type, originalProps.getProperties(), properties, datasetSpecs);
-  }
-
-  /**
    * Private constructor, only to be used by the builder.
    * @param name the name of the dataset
    * @param type the type of the dataset
@@ -190,6 +183,20 @@ public final class DatasetSpecification {
     return datasetSpecs;
   }
 
+  /**
+   * @return a new spec that is the same as this one, with the original properties set to the provided properties.
+   */
+  public DatasetSpecification setOriginalProperties(DatasetProperties originalProps) {
+    return setOriginalProperties(originalProps.getProperties());
+  }
+
+  /**
+   * @return a new spec that is the same as this one, with the original properties set to the provided properties.
+   */
+  public DatasetSpecification setOriginalProperties(Map<String, String> originalProps) {
+    return new DatasetSpecification(name, type, originalProps, properties, datasetSpecs);
+  }
+
   @Override
   public boolean equals(Object other) {
     if (this == other) {
@@ -202,13 +209,14 @@ public final class DatasetSpecification {
     DatasetSpecification that = (DatasetSpecification) other;
     return Objects.equals(name, that.name) &&
       Objects.equals(type, that.type) &&
+      Objects.equals(originalProperties, that.originalProperties) &&
       Objects.equals(properties, that.properties) &&
       Objects.equals(datasetSpecs, that.datasetSpecs);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(name, type, properties, datasetSpecs);
+    return Objects.hash(name, type, originalProperties, properties, datasetSpecs);
   }
 
   /**
@@ -245,6 +253,7 @@ public final class DatasetSpecification {
       "datasetSpecs=" + datasetSpecs +
       ", name='" + name + '\'' +
       ", type='" + type + '\'' +
+      ", originalProperties=" + originalProperties +
       ", properties=" + properties +
       '}';
   }

@@ -39,7 +39,6 @@ import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.common.conf.ConfigurationUtil;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.common.options.UnsupportedOptionTypeException;
-import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
 import co.cask.cdap.data.stream.StreamInputFormat;
 import co.cask.cdap.data.stream.StreamUtils;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -142,15 +141,15 @@ public class ExecutionSparkContext extends AbstractSparkContext {
                                @Nullable PluginInstantiator pluginInstantiator,
                                @Nullable WorkflowToken workflowToken) {
     super(appSpec, specification, programId, runId, programClassLoader, logicalStartTime,
-          runtimeArguments, discoveryServiceClient, metricsContext, loggingContext,
+          runtimeArguments, discoveryServiceClient, metricsContext, loggingContext, datasetFramework,
           pluginInstantiator, workflowToken);
     this.datasets = new HashMap<>();
     this.contextConfig = new SparkContextConfig(hConf);
     this.transaction = transaction;
     this.streamAdmin = streamAdmin;
-    this.datasetCache = new SingleThreadDatasetCache(
-      new SystemDatasetInstantiator(datasetFramework, programClassLoader, getOwners()),
-      txClient, new NamespaceId(programId.getNamespace().getId()), runtimeArguments, getMetricsContext(), null);
+    this.datasetCache = new SingleThreadDatasetCache(systemDatasetInstantiator, txClient,
+                                                     new NamespaceId(programId.getNamespace().getId()),
+                                                     runtimeArguments, getMetricsContext(), null);
     this.localizedResources = localizedResources;
   }
 

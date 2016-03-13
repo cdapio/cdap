@@ -16,39 +16,20 @@
 
 package co.cask.cdap.common;
 
-import co.cask.cdap.proto.id.EntityId;
-import co.cask.cdap.proto.security.Action;
-import co.cask.cdap.proto.security.Principal;
-
 /**
  * Thrown when a user is not authorized to perform an operation.
  */
 public class UnauthorizedException extends Exception {
 
-  private final boolean authenticationError;
-
   public UnauthorizedException() {
     super();
-    this.authenticationError = true;
   }
 
   public UnauthorizedException(String msg, Throwable throwable) {
     super(msg, throwable);
-    this.authenticationError = true;
   }
 
   public UnauthorizedException(String message) {
     super(message);
-    this.authenticationError = true;
-  }
-
-  public UnauthorizedException(Principal principal, Action action, EntityId entityId) {
-    super(String.format("Principal '%s' is not authorized to perform action '%s' on entity '%s'",
-                        principal, action, entityId));
-    this.authenticationError = false;
-  }
-
-  public boolean isAuthenticationError() {
-    return authenticationError;
   }
 }
