@@ -20,7 +20,7 @@ import co.cask.cdap.cli.ArgumentName;
 import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.client.AuthorizationClient;
-import co.cask.cdap.common.UnauthorizedException;
+import co.cask.cdap.common.UnauthenticatedException;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
@@ -53,7 +53,7 @@ public class CheckActionCommand extends AbstractAuthCommand {
     try {
       client.authorized(entity, principal, action);
       output.printf("Principal %s is authorized to perform action %s on entity %s\n", principal, action, entity);
-    } catch (UnauthorizedException e) {
+    } catch (UnauthenticatedException e) {
       output.printf("Principal %s is not authorized to perform action %s on entity %s\n", principal, action, entity);
     }
   }

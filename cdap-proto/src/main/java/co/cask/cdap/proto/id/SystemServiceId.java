@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,8 +17,8 @@ package co.cask.cdap.proto.id;
 
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.element.EntityType;
-import com.google.common.collect.ImmutableList;
 
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.Objects;
 
@@ -53,7 +53,7 @@ public class SystemServiceId extends EntityId {
   }
 
   @Override
-  public Id toId() {
+  public Id.SystemService toId() {
     return Id.SystemService.from(service);
   }
 
@@ -65,7 +65,7 @@ public class SystemServiceId extends EntityId {
 
   @Override
   protected Iterable<String> toIdParts() {
-    return ImmutableList.of(service);
+    return Collections.singletonList(service);
   }
 
   public static SystemServiceId fromString(String string) {

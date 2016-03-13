@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,11 +16,8 @@
 
 package co.cask.cdap.proto;
 
-import com.google.common.base.Joiner;
-import com.google.common.base.Objects;
-import com.google.common.collect.Lists;
-
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -54,9 +51,9 @@ public class DatasetModuleMeta {
     this.name = name;
     this.className = className;
     this.jarLocation = jarLocation;
-    this.types = Collections.unmodifiableList(types);
-    this.usesModules = Collections.unmodifiableList(usesModules);
-    this.usedByModules = Lists.newArrayList();
+    this.types = Collections.unmodifiableList(new ArrayList<>(types));
+    this.usesModules = Collections.unmodifiableList(new ArrayList<>(usesModules));
+    this.usedByModules = new ArrayList<>();
   }
 
   /**
@@ -121,12 +118,13 @@ public class DatasetModuleMeta {
 
   @Override
   public String toString() {
-    return Objects.toStringHelper(this)
-      .add("name", name)
-      .add("className", className)
-      .add("jarLocation", jarLocation)
-      .add("usesModules", Joiner.on(",").skipNulls().join(usesModules))
-      .add("usedByModules", Joiner.on(",").skipNulls().join(usedByModules))
-      .toString();
+    return "DatasetModuleMeta{" +
+      "name='" + name + '\'' +
+      ", className='" + className + '\'' +
+      ", jarLocation=" + jarLocation +
+      ", types=" + types +
+      ", usesModules=" + usesModules +
+      ", usedByModules=" + usedByModules +
+      '}';
   }
 }

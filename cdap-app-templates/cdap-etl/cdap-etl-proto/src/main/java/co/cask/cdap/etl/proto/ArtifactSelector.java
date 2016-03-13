@@ -30,7 +30,7 @@ import javax.annotation.Nullable;
 
 /**
  * Selects which plugin to use based on optional artifact scope, name, and version fields.
- * Will select the first artifact that matches all non-null fields.
+ * Will select the greatest artifact that matches all non-null fields.
  */
 public class ArtifactSelector extends PluginSelector {
   private final ArtifactScope scope;

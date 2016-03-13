@@ -17,6 +17,9 @@ package co.cask.cdap.internal.app.runtime.workflow;
 
 import co.cask.cdap.api.Predicate;
 import co.cask.cdap.api.app.ApplicationSpecification;
+import co.cask.cdap.api.common.RuntimeArguments;
+import co.cask.cdap.api.common.Scope;
+import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.workflow.ScheduleProgramInfo;
@@ -45,7 +48,6 @@ import co.cask.cdap.common.lang.PropertyFieldSetter;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.data2.registry.UsageRegistry;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
@@ -72,17 +74,14 @@ import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -124,7 +123,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
   private Condition condition;
   private final RunId runId;
   private final MetricsCollectionService metricsCollectionService;
-  private final DatasetFramework datasetFramework;
+  private final NameMappedDatasetFramework datasetFramework;
   private final DiscoveryServiceClient discoveryServiceClient;
   private final TransactionSystemClient txClient;
   private final Store store;
@@ -132,10 +131,10 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
   private final CConfiguration cConf;
 
   WorkflowDriver(Program program, ProgramOptions options, InetAddress hostname,
-                 WorkflowSpecification workflowSpec, MetricsCollectionService metricsCollectionService,
+                 WorkflowSpecification workflowSpec, ProgramRunnerFactory programRunnerFactory,
+                 MetricsCollectionService metricsCollectionService,
                  DatasetFramework datasetFramework, DiscoveryServiceClient discoveryServiceClient,
-                 TransactionSystemClient txClient, Store store, CConfiguration cConf, Configuration hConf,
-                 LocationFactory locationFactory, StreamAdmin streamAdmin, UsageRegistry usageRegistry) {
+                 TransactionSystemClient txClient, Store store, CConfiguration cConf) {
     this.program = program;
     this.hostname = hostname;
     this.runtimeArgs = createRuntimeArgs(options.getUserArguments());
@@ -151,33 +150,16 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
                                                      program.getName(), runId.getId());
 
     this.metricsCollectionService = metricsCollectionService;
-    this.datasetFramework = createWorkflowDatasetFramework(datasetFramework, runId.getId());
+    this.datasetFramework = new NameMappedDatasetFramework(datasetFramework,
+                                                           workflowSpec.getLocalDatasetSpecs().keySet(),
+                                                           runId.getId());
     this.discoveryServiceClient = discoveryServiceClient;
     this.txClient = txClient;
     this.store = store;
     this.workflowId = Id.Workflow.from(program.getId().getApplication(), workflowSpec.getName());
     this.cConf = cConf;
-
-    ProgramRunnerFactory programRunnerFactory = new WorkflowProgramRunnerFactory(cConf, hConf, locationFactory,
-                                                                                 streamAdmin, this.datasetFramework,
-                                                                                 txClient, metricsCollectionService,
-                                                                                 discoveryServiceClient, store,
-                                                                                 usageRegistry);
     this.workflowProgramRunnerFactory = new ProgramWorkflowRunnerFactory(workflowSpec, programRunnerFactory,
                                                                          program, options);
-  }
-
-  private DatasetFramework createWorkflowDatasetFramework(DatasetFramework datasetFramework, String runId) {
-    Map<String, String> localDatasetNameMapping = new HashMap<>();
-    for (String datasetName : workflowSpec.getLocalDatasetSpecs().keySet()) {
-      localDatasetNameMapping.put(datasetName, getLocalDatasetName(datasetName, runId));
-    }
-
-    return new WorkflowDatasetFramework(datasetFramework, localDatasetNameMapping);
-  }
-
-  private String getLocalDatasetName(String datasetName, String runId) {
-    return datasetName + "." + runId;
   }
 
   @Override
@@ -457,18 +439,23 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
   }
 
   private void createLocalDatasets() throws IOException, DatasetManagementException {
-    for (Map.Entry<String, DatasetCreationSpec> instanceEntry : workflowSpec.getLocalDatasetSpecs().entrySet()) {
-      String localInstanceName = getLocalDatasetName(instanceEntry.getKey(), runId.getId());
+    for (Map.Entry<String, String> entry : datasetFramework.getDatasetNameMapping().entrySet()) {
+      String localInstanceName = entry.getValue();
       Id.DatasetInstance instanceId = Id.DatasetInstance.from(program.getNamespaceId(), localInstanceName);
-      DatasetCreationSpec instanceSpec = instanceEntry.getValue();
+      DatasetCreationSpec instanceSpec = workflowSpec.getLocalDatasetSpecs().get(entry.getKey());
       LOG.debug("Adding Workflow local dataset instance: {}", localInstanceName);
       datasetFramework.addInstance(instanceSpec.getTypeName(), instanceId, instanceSpec.getProperties());
     }
   }
 
   private void deleteLocalDatasets() {
-    for (Map.Entry<String, DatasetCreationSpec> instanceEntry : workflowSpec.getLocalDatasetSpecs().entrySet()) {
-      String localInstanceName = getLocalDatasetName(instanceEntry.getKey(), runId.getId());
+    for (Map.Entry<String, String> entry : datasetFramework.getDatasetNameMapping().entrySet()) {
+      Map<String, String> datasetArguments = RuntimeArguments.extractScope(Scope.DATASET, entry.getKey(), runtimeArgs);
+      if (Boolean.parseBoolean(datasetArguments.get("keep.local"))) {
+        continue;
+      }
+
+      String localInstanceName = entry.getValue();
       Id.DatasetInstance instanceId = Id.DatasetInstance.from(program.getNamespaceId(), localInstanceName);
       LOG.debug("Deleting Workflow local dataset instance: {}", localInstanceName);
       try {

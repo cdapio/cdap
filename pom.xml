@@ -2426,6 +2426,8 @@
         <module>cdap-data-fabric</module>
         <module>cdap-watchdog</module>
         <module>cdap-app-fabric</module>
+        <module>cdap-spark-core</module>
+        <module>cdap-security-spi</module>
         <module>cdap-security</module>
         <module>cdap-authorization-dataset-plugin</module>
         <module>cdap-gateway</module>

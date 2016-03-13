@@ -17,9 +17,11 @@
 package co.cask.cdap.proto.security;
 
 import co.cask.cdap.proto.id.Ids;
-import com.google.common.collect.ImmutableSet;
 import org.junit.Assert;
 import org.junit.Test;
+
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 /**
  * Tests for {@link RevokeRequest}.
@@ -29,19 +31,21 @@ public class RevokeRequestTest {
   @Test
   public void testValidation() {
     Principal bob = new Principal("bob", Principal.PrincipalType.USER);
-    new RevokeRequest(Ids.namespace("foo"), bob, ImmutableSet.of(Action.READ));
+    Set<Action> actions = new LinkedHashSet<>();
+    actions.add(Action.READ);
+    new RevokeRequest(Ids.namespace("foo"), bob, actions);
     new RevokeRequest(Ids.namespace("foo"), bob, null);
     new RevokeRequest(Ids.namespace("foo"), null, null);
 
     try {
-      new RevokeRequest(Ids.namespace("foo"), null, ImmutableSet.of(Action.READ));
+      new RevokeRequest(Ids.namespace("foo"), null, actions);
       Assert.fail();
     } catch (IllegalArgumentException e) {
       // expected
     }
 
     try {
-      new RevokeRequest(null, null, ImmutableSet.of(Action.READ));
+      new RevokeRequest(null, null, actions);
       Assert.fail();
     } catch (IllegalArgumentException e) {
       // expected

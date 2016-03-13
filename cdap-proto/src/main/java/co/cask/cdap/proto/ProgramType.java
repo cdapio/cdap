@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,6 @@
 package co.cask.cdap.proto;
 
 import co.cask.cdap.api.schedule.SchedulableProgramType;
-import com.google.common.base.Preconditions;
 import com.google.gson.annotations.SerializedName;
 
 import java.util.HashMap;
@@ -102,7 +101,7 @@ public enum ProgramType {
   private final int index;
   private final Parameters parameters;
 
-  private ProgramType(int type, Parameters parameters) {
+  ProgramType(int type, Parameters parameters) {
     this.index = type;
     this.parameters = parameters;
   }
@@ -167,9 +166,15 @@ public enum ProgramType {
 
     public Parameters(String prettyName, Boolean listable, String categoryName,
                       @Nullable SchedulableProgramType schedulableType) {
-      Preconditions.checkArgument(prettyName != null, "prettyName cannot be null");
-      Preconditions.checkArgument(listable != null, "listable cannot be null");
-      Preconditions.checkArgument(categoryName != null, "categoryName cannot be null");
+      if (prettyName == null) {
+        throw new IllegalArgumentException("prettyName cannot be null");
+      }
+      if (listable == null) {
+        throw new IllegalArgumentException("listable cannot be null");
+      }
+      if (categoryName == null) {
+        throw new IllegalArgumentException("categoryName cannot be null");
+      }
       this.prettyName = prettyName;
       this.listable = listable;
       this.categoryName = categoryName;

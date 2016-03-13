@@ -27,6 +27,7 @@ import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.guice.ZKClientModule;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
+import co.cask.cdap.data2.audit.AuditModule;
 import co.cask.cdap.logging.LoggingConfiguration;
 import co.cask.cdap.logging.guice.LogSaverServiceModule;
 import co.cask.cdap.logging.guice.LoggingModules;
@@ -189,7 +190,8 @@ public final class LogSaverTwillRunnable extends AbstractTwillRunnable {
       new DataFabricModules().getDistributedModules(),
       new DataSetsModules().getDistributedModules(),
       new LogSaverServiceModule(),
-      new LoggingModules().getDistributedModules()
+      new LoggingModules().getDistributedModules(),
+      new AuditModule().getDistributedModules()
     );
   }
 }

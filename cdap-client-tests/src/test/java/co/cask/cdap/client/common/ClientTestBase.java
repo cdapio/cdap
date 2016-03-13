@@ -23,7 +23,7 @@ import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.config.ConnectionConfig;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.ProgramNotFoundException;
-import co.cask.cdap.common.UnauthorizedException;
+import co.cask.cdap.common.UnauthenticatedException;
 import co.cask.cdap.internal.test.AppJarHelper;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRecord;
@@ -87,7 +87,7 @@ public abstract class ClientTestBase {
   }
 
   protected void assertFlowletInstances(ProgramClient programClient, Id.Flow.Flowlet flowlet, int numInstances)
-    throws IOException, NotFoundException, UnauthorizedException {
+    throws IOException, NotFoundException, UnauthenticatedException {
 
     int actualInstances;
     int numTries = 0;
@@ -100,19 +100,19 @@ public abstract class ClientTestBase {
   }
 
   protected void assertProgramRunning(ProgramClient programClient, Id.Program program)
-    throws IOException, ProgramNotFoundException, UnauthorizedException, InterruptedException {
+    throws IOException, ProgramNotFoundException, UnauthenticatedException, InterruptedException {
 
     assertProgramStatus(programClient, program, "RUNNING");
   }
 
   protected void assertProgramStopped(ProgramClient programClient, Id.Program program)
-    throws IOException, ProgramNotFoundException, UnauthorizedException, InterruptedException {
+    throws IOException, ProgramNotFoundException, UnauthenticatedException, InterruptedException {
 
     assertProgramStatus(programClient, program, "STOPPED");
   }
 
   protected void assertProgramStatus(ProgramClient programClient, Id.Program program, String programStatus)
-    throws IOException, ProgramNotFoundException, UnauthorizedException, InterruptedException {
+    throws IOException, ProgramNotFoundException, UnauthenticatedException, InterruptedException {
 
     try {
       programClient.waitForStatus(program, programStatus, 60, TimeUnit.SECONDS);

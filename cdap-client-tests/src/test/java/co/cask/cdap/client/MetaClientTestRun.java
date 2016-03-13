@@ -17,7 +17,7 @@
 package co.cask.cdap.client;
 
 import co.cask.cdap.client.common.ClientTestBase;
-import co.cask.cdap.common.UnauthorizedException;
+import co.cask.cdap.common.UnauthenticatedException;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.proto.ConfigEntry;
 import co.cask.cdap.proto.Version;
@@ -38,7 +38,7 @@ import java.util.Map;
 public class MetaClientTestRun extends ClientTestBase {
 
   @Test
-  public void testAll() throws IOException, UnauthorizedException {
+  public void testAll() throws IOException, UnauthenticatedException {
     MetaClient metaClient = new MetaClient(clientConfig);
     metaClient.ping();
 

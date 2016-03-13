@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,8 +17,9 @@ package co.cask.cdap.proto.id;
 
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.element.EntityType;
-import com.google.common.collect.ImmutableList;
 
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.Objects;
 
@@ -49,7 +50,7 @@ public class DatasetId extends EntityId implements NamespacedId, ParentedId<Name
   }
 
   @Override
-  public Id toId() {
+  public Id.DatasetInstance toId() {
     return Id.DatasetInstance.from(namespace, dataset);
   }
 
@@ -76,7 +77,7 @@ public class DatasetId extends EntityId implements NamespacedId, ParentedId<Name
 
   @Override
   protected Iterable<String> toIdParts() {
-    return ImmutableList.of(namespace, dataset);
+    return Collections.unmodifiableList(Arrays.asList(namespace, dataset));
   }
 
   public static DatasetId fromString(String string) {

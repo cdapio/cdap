@@ -26,6 +26,7 @@ import co.cask.cdap.etl.proto.v1.ETLStage;
 import co.cask.cdap.etl.proto.v1.Plugin;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.reflect.TypeToken;
 import org.apache.avro.generic.GenericRecord;
@@ -38,6 +39,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Testing the Validation of etl stage hookups.
@@ -218,32 +220,32 @@ public class PipelineRegistererTest {
   public void testTopologySorting() throws Exception {
 
     // linear
-    Map<String, List<String>> connectionsMap = new HashMap<>();
-    connectionsMap.put("source", ImmutableList.of("trA"));
-    connectionsMap.put("trA", ImmutableList.of("trB"));
-    connectionsMap.put("trB", ImmutableList.of("trC"));
-    connectionsMap.put("trC", ImmutableList.of("sink"));
+    Map<String, Set<String>> connectionsMap = new HashMap<>();
+    connectionsMap.put("source", ImmutableSet.of("trA"));
+    connectionsMap.put("trA", ImmutableSet.of("trB"));
+    connectionsMap.put("trB", ImmutableSet.of("trC"));
+    connectionsMap.put("trC", ImmutableSet.of("sink"));
 
     Assert.assertEquals(ImmutableList.of("source", "trA", "trB", "trC", "sink") ,
                         PipelineRegisterer.getStagesAfterTopologicalSorting(connectionsMap, "source"));
 
 
     connectionsMap.clear();
-    connectionsMap.put("sourceA", ImmutableList.of("transformB", "transformC"));
-    connectionsMap.put("transformB", ImmutableList.of("transformD"));
-    connectionsMap.put("transformC", ImmutableList.of("transformB", "transformD"));
-    connectionsMap.put("transformD", ImmutableList.of("sinkE"));
+    connectionsMap.put("sourceA", ImmutableSet.of("transformB", "transformC"));
+    connectionsMap.put("transformB", ImmutableSet.of("transformD"));
+    connectionsMap.put("transformC", ImmutableSet.of("transformB", "transformD"));
+    connectionsMap.put("transformD", ImmutableSet.of("sinkE"));
 
     Assert.assertEquals(ImmutableList.of("sourceA", "transformC", "transformB", "transformD", "sinkE") ,
                         PipelineRegisterer.getStagesAfterTopologicalSorting(connectionsMap, "sourceA"));
 
 
     connectionsMap.clear();
-    connectionsMap.put("sourceA", ImmutableList.of("transformB", "transformC", "transformD"));
-    connectionsMap.put("transformB", ImmutableList.of("transformD", "sink1"));
-    connectionsMap.put("transformC", ImmutableList.of("transformB", "transformE"));
-    connectionsMap.put("transformD", ImmutableList.of("sink1"));
-    connectionsMap.put("transformE", ImmutableList.of("transformB", "sink1"));
+    connectionsMap.put("sourceA", ImmutableSet.of("transformB", "transformC", "transformD"));
+    connectionsMap.put("transformB", ImmutableSet.of("transformD", "sink1"));
+    connectionsMap.put("transformC", ImmutableSet.of("transformB", "transformE"));
+    connectionsMap.put("transformD", ImmutableSet.of("sink1"));
+    connectionsMap.put("transformE", ImmutableSet.of("transformB", "sink1"));
 
 
     Assert.assertEquals(ImmutableList.of("sourceA", "transformC", "transformE", "transformB", "transformD", "sink1") ,
@@ -254,11 +256,11 @@ public class PipelineRegistererTest {
   public void testCycleInTopologySorting() throws Exception {
 
     // linear
-    Map<String, List<String>> connectionsMap = new HashMap<>();
-    connectionsMap.put("source", ImmutableList.of("trA", "trB"));
-    connectionsMap.put("trA", ImmutableList.of("trB", "sink1"));
-    connectionsMap.put("trB", ImmutableList.of("trC"));
-    connectionsMap.put("trC", ImmutableList.of("trB", "sink2"));
+    Map<String, Set<String>> connectionsMap = new HashMap<>();
+    connectionsMap.put("source", ImmutableSet.of("trA", "trB"));
+    connectionsMap.put("trA", ImmutableSet.of("trB", "sink1"));
+    connectionsMap.put("trB", ImmutableSet.of("trC"));
+    connectionsMap.put("trC", ImmutableSet.of("trB", "sink2"));
     PipelineRegisterer.getStagesAfterTopologicalSorting(connectionsMap, "source");
 
   }

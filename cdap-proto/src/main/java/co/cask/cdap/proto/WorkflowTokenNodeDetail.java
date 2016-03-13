@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,9 +17,10 @@ package co.cask.cdap.proto;
 
 import co.cask.cdap.api.workflow.Value;
 import co.cask.cdap.api.workflow.WorkflowToken;
-import com.google.common.collect.ImmutableMap;
 
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
@@ -30,7 +31,7 @@ public class WorkflowTokenNodeDetail {
   private final Map<String, String> tokenDataAtNode;
 
   public WorkflowTokenNodeDetail(Map<String, String> tokenDataAtNode) {
-    this.tokenDataAtNode = ImmutableMap.copyOf(tokenDataAtNode);
+    this.tokenDataAtNode = Collections.unmodifiableMap(new LinkedHashMap<>(tokenDataAtNode));
   }
 
   public Map<String, String> getTokenDataAtNode() {

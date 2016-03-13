@@ -40,7 +40,7 @@ public class StreamDecoderDetectionTest {
   public void testDecoderDetection() throws IOException {
     // For testing purpose, we don't need all those parameters
     Configuration hConf = new Configuration();
-    MapReduceRuntimeService runtimeService = new MapReduceRuntimeService(
+    MapReduceRuntimeService runtimeService = new MapReduceRuntimeService(null,
       CConfiguration.create(), hConf, null, null, null, null, null, null, null, null);
 
     hConf.setClass(Job.MAP_CLASS_ATTR, IdentityMapper.class, Mapper.class);

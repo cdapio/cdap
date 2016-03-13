@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime;
 
+import co.cask.cdap.api.Admin;
 import co.cask.cdap.api.RuntimeContext;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.common.RuntimeArguments;
@@ -39,7 +40,6 @@ import co.cask.cdap.data2.dataset2.SingleThreadDatasetCache;
 import co.cask.cdap.internal.app.program.ProgramTypeMetricTag;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -67,6 +67,7 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
   private final DiscoveryServiceClient discoveryServiceClient;
   private final PluginInstantiator pluginInstantiator;
   private final PluginContext pluginContext;
+  private final Admin admin;
   protected final DynamicDatasetCache datasetCache;
 
   /**
@@ -110,6 +111,7 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
     this.pluginInstantiator = pluginInstantiator;
     this.pluginContext = new DefaultPluginContext(pluginInstantiator, program.getId(),
                                                   program.getApplicationSpecification().getPlugins());
+    this.admin = new DefaultAdmin(dsFramework, program.getId().getNamespace().toEntityId());
   }
 
   private List<Id> createOwners(Id.Program programId) {
@@ -240,5 +242,10 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
   @Override
   public <T> T newPluginInstance(String pluginId) throws InstantiationException {
     return pluginContext.newPluginInstance(pluginId);
+  }
+
+  @Override
+  public Admin getAdmin() {
+    return admin;
   }
 }

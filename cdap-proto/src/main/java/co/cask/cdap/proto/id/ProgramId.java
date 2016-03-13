@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,13 +15,12 @@
  */
 package co.cask.cdap.proto.id;
 
-
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.element.EntityType;
-import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableList;
 
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.Objects;
 
@@ -68,7 +67,9 @@ public class ProgramId extends EntityId implements NamespacedId, ParentedId<Appl
   }
 
   public FlowletId flowlet(String flowlet) {
-    Preconditions.checkArgument(type == ProgramType.FLOW);
+    if (type != ProgramType.FLOW) {
+      throw new IllegalArgumentException("Expected program type for flowlet to be " + ProgramType.FLOW);
+    }
     return new FlowletId(namespace, application, program, flowlet);
   }
 
@@ -94,7 +95,7 @@ public class ProgramId extends EntityId implements NamespacedId, ParentedId<Appl
   }
 
   @Override
-  public Id toId() {
+  public Id.Program toId() {
     return Id.Program.from(namespace, application, type, program);
   }
 
@@ -109,7 +110,9 @@ public class ProgramId extends EntityId implements NamespacedId, ParentedId<Appl
 
   @Override
   protected Iterable<String> toIdParts() {
-    return ImmutableList.of(namespace, application, type.getPrettyName().toLowerCase(), program);
+    return Collections.unmodifiableList(
+      Arrays.asList(namespace, application, type.getPrettyName().toLowerCase(), program)
+    );
   }
 
   public static ProgramId fromString(String string) {

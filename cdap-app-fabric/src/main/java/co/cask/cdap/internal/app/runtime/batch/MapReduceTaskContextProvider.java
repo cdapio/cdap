@@ -23,7 +23,11 @@ import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.program.Programs;
 import co.cask.cdap.common.twill.LocalLocationFactory;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.metadata.writer.ProgramContextAware;
+import co.cask.cdap.internal.app.runtime.workflow.NameMappedDatasetFramework;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowMapReduceProgram;
+import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
+import co.cask.cdap.proto.Id;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
@@ -31,6 +35,7 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.util.concurrent.AbstractIdleService;
+import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.MRConfig;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
@@ -52,7 +57,7 @@ import java.util.concurrent.atomic.AtomicReference;
 public class MapReduceTaskContextProvider extends AbstractIdleService {
 
   private static final Logger LOG = LoggerFactory.getLogger(MapReduceTaskContextProvider.class);
-
+  private final Injector injector;
   // Maintain a cache of taskId to MapReduceTaskContext
   // Each task should have it's own instance of MapReduceTaskContext so that different dataset instance will
   // be created for different task, which is needed in local mode since job runs with multiple threads
@@ -68,14 +73,15 @@ public class MapReduceTaskContextProvider extends AbstractIdleService {
   }
 
   /**
-   * Creates an instance with the given providers.
+   * Creates an instance with the given {@link Injector} that will be used for getting service instances.
    */
-  protected MapReduceTaskContextProvider(DiscoveryServiceClient discoveryServiceClient,
-                                         DatasetFramework datasetFramework,
-                                         MetricsCollectionService metricsCollectionService,
-                                         TransactionSystemClient transactionSystemClient) {
-    this.taskContexts = CacheBuilder.newBuilder().build(
-      createCacheLoader(discoveryServiceClient, datasetFramework, metricsCollectionService, transactionSystemClient));
+  protected MapReduceTaskContextProvider(Injector injector) {
+    this.injector = injector;
+    this.taskContexts = CacheBuilder.newBuilder().build(createCacheLoader(injector));
+  }
+
+  protected Injector getInjector() {
+    return injector;
   }
 
   @Override
@@ -123,10 +129,11 @@ public class MapReduceTaskContextProvider extends AbstractIdleService {
     }
     try {
       Program program = Programs.create(programLocation, programClassLoader);
-      String mapReduceName = contextConfig.getProgramNameInWorkflow();
+      WorkflowProgramInfo workflowProgramInfo = contextConfig.getWorkflowProgramInfo();
 
       // See if it was launched from Workflow; if it was, change the Program.
-      if (mapReduceName != null) {
+      if (workflowProgramInfo != null) {
+        String mapReduceName = workflowProgramInfo.getProgramNameInWorkflow();
         MapReduceSpecification mapReduceSpec = program.getApplicationSpecification().getMapReduce().get(mapReduceName);
         Preconditions.checkArgument(mapReduceSpec != null, "Cannot find MapReduceSpecification for %s in %s.",
                                     mapReduceName, program.getId());
@@ -141,12 +148,9 @@ public class MapReduceTaskContextProvider extends AbstractIdleService {
   /**
    * Creates a {@link CacheLoader} for the task context cache.
    */
-  private CacheLoader<ContextCacheKey, BasicMapReduceTaskContext> createCacheLoader(
-    final DiscoveryServiceClient discoveryServiceClient,
-    final DatasetFramework datasetFramework,
-    final MetricsCollectionService metricsCollectionService,
-    final TransactionSystemClient transactionSystemClient) {
-
+  private CacheLoader<ContextCacheKey, BasicMapReduceTaskContext> createCacheLoader(final Injector injector) {
+    final DiscoveryServiceClient discoveryServiceClient = injector.getInstance(DiscoveryServiceClient.class);
+    final DatasetFramework datasetFramework = injector.getInstance(DatasetFramework.class);
     // Multiple instances of BasicMapReduceTaskContext can shares the same program.
     final AtomicReference<Program> programRef = new AtomicReference<>();
 
@@ -162,21 +166,35 @@ public class MapReduceTaskContextProvider extends AbstractIdleService {
           programRef.compareAndSet(null, createProgram(contextConfig, classLoader));
           program = programRef.get();
         }
+
+        WorkflowProgramInfo workflowInfo = contextConfig.getWorkflowProgramInfo();
+        DatasetFramework programDatasetFramework = workflowInfo == null ?
+          datasetFramework :
+          NameMappedDatasetFramework.createFromWorkflowProgramInfo(datasetFramework, workflowInfo,
+                                                                   program.getApplicationSpecification());
+
+        // Setup dataset framework context, if required
+        if (programDatasetFramework instanceof ProgramContextAware) {
+          Id.Run id = new Id.Run(program.getId(), contextConfig.getRunId().getId());
+          ((ProgramContextAware) programDatasetFramework).initContext(id);
+        }
+
         MapReduceSpecification spec = program.getApplicationSpecification().getMapReduce().get(program.getName());
         MapReduceMetrics.TaskType taskType = null;
         if (MapReduceMetrics.TaskType.hasType(key.getTaskAttemptID().getTaskType())) {
           taskType = MapReduceMetrics.TaskType.from(key.getTaskAttemptID().getTaskType());
         }
         // if this is not for a mapper or a reducer, we don't need the metrics collection service
-        MetricsCollectionService metricsCollector =
-          (taskType == null) ? null : metricsCollectionService;
+        MetricsCollectionService metricsCollectionService =
+          (taskType == null) ? null : injector.getInstance(MetricsCollectionService.class);
+
+        TransactionSystemClient txClient = injector.getInstance(TransactionSystemClient.class);
 
         return new BasicMapReduceTaskContext(
           program, taskType, contextConfig.getRunId(), key.getTaskAttemptID().getTaskID().toString(),
           contextConfig.getArguments(), spec, contextConfig.getLogicalStartTime(),
-          contextConfig.getWorkflowToken(), discoveryServiceClient,
-          metricsCollector, transactionSystemClient,
-          contextConfig.getTx(), datasetFramework, classLoader.getPluginInstantiator(),
+          workflowInfo, discoveryServiceClient, metricsCollectionService, txClient,
+          contextConfig.getTx(), programDatasetFramework, classLoader.getPluginInstantiator(),
           contextConfig.getLocalizedResources()
         );
       }

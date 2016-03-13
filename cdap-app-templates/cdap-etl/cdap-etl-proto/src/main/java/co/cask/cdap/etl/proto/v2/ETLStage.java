@@ -45,8 +45,25 @@ public final class ETLStage {
     return plugin;
   }
 
+  @Nullable
   public String getErrorDatasetName() {
     return errorDatasetName;
+  }
+
+  /**
+   * Validate correctness. Since this object is created through deserialization, some fields that should not be null
+   * may be null.
+   *
+   * @throws IllegalArgumentException if the object is invalid
+   */
+  public void validate() {
+    if (name == null || name.isEmpty()) {
+      throw new IllegalArgumentException("Invalid stage " + toString() + ": name must be specified.");
+    }
+    if (plugin == null) {
+      throw new IllegalArgumentException("Invalid stage " + toString() + ": plugin must be specified.");
+    }
+    plugin.validate();
   }
 
   @Override
@@ -78,4 +95,5 @@ public final class ETLStage {
   public int hashCode() {
     return Objects.hash(name, plugin, errorDatasetName);
   }
+
 }

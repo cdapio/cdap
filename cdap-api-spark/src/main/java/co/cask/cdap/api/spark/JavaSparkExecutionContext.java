@@ -42,7 +42,7 @@ import javax.annotation.Nullable;
 /**
  * Spark program execution context. User Spark program can interact with CDAP through this context.
  */
-public abstract class JavaSparkExecutionContext implements RuntimeContext {
+public abstract class JavaSparkExecutionContext implements RuntimeContext, DatasetContext {
 
   /**
    * @return The specification used to configure this {@link Spark} job instance.
@@ -57,14 +57,6 @@ public abstract class JavaSparkExecutionContext implements RuntimeContext {
    * @return Time in milliseconds since epoch time (00:00:00 January 1, 1970 UTC).
    */
   public abstract long getLogicalStartTime();
-
-  /**
-   * Returns a {@link DatasetContext} to provide access to {@link Dataset}
-   * which can be passed in Spark program's closures.
-   *
-   * @return A {@link Serializable} {@link DatasetContext}
-   */
-  public abstract DatasetContext getDatasetContext();
 
   /**
    * Returns a {@link Serializable} {@link ServiceDiscoverer} for Service Discovery in Spark Program which can be

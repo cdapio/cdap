@@ -24,7 +24,7 @@ import co.cask.cdap.client.WorkflowClient;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.util.RESTClient;
 import co.cask.cdap.common.NotFoundException;
-import co.cask.cdap.common.UnauthorizedException;
+import co.cask.cdap.common.UnauthenticatedException;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.WorkflowTokenDetail;
 import co.cask.cdap.proto.WorkflowTokenNodeDetail;
@@ -70,7 +70,7 @@ public class RemoteWorkflowManager extends AbstractProgramManager<WorkflowManage
                                       @Nullable String key) throws NotFoundException {
     try {
       return workflowClient.getWorkflowToken(new Id.Run(workflowId, runId), scope, key);
-    } catch (IOException | UnauthorizedException e) {
+    } catch (IOException | UnauthenticatedException e) {
       throw Throwables.propagate(e);
     }
   }
@@ -80,7 +80,7 @@ public class RemoteWorkflowManager extends AbstractProgramManager<WorkflowManage
                                                 @Nullable String key) throws NotFoundException {
     try {
       return workflowClient.getWorkflowTokenAtNode(new Id.Run(workflowId, runId), nodeName, scope, key);
-    } catch (IOException | UnauthorizedException e) {
+    } catch (IOException | UnauthenticatedException e) {
       throw Throwables.propagate(e);
     }
   }

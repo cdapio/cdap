@@ -21,6 +21,8 @@ import co.cask.cdap.common.StreamNotFoundException;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.data.stream.service.StreamMetaStore;
 import co.cask.cdap.data.view.ViewAdmin;
+import co.cask.cdap.data2.audit.AuditPublisher;
+import co.cask.cdap.data2.audit.AuditPublishers;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.data2.metadata.writer.LineageWriter;
@@ -30,6 +32,8 @@ import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.StreamProperties;
 import co.cask.cdap.proto.ViewSpecification;
+import co.cask.cdap.proto.audit.AuditPayload;
+import co.cask.cdap.proto.audit.AuditType;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -51,6 +55,8 @@ public class InMemoryStreamAdmin extends InMemoryQueueAdmin implements StreamAdm
   private final MetadataStore metadataStore;
   private final ViewAdmin viewAdmin;
 
+  private AuditPublisher auditPublisher;
+
   @Inject
   public InMemoryStreamAdmin(InMemoryQueueService queueService,
                              UsageRegistry usageRegistry,
@@ -64,6 +70,12 @@ public class InMemoryStreamAdmin extends InMemoryQueueAdmin implements StreamAdm
     this.lineageWriter = lineageWriter;
     this.metadataStore = metadataStore;
     this.viewAdmin = viewAdmin;
+  }
+
+  @SuppressWarnings("unused")
+  @Inject(optional = true)
+  public void setAuditPublisher(AuditPublisher auditPublisher) {
+    this.auditPublisher = auditPublisher;
   }
 
   @Override
@@ -104,6 +116,7 @@ public class InMemoryStreamAdmin extends InMemoryQueueAdmin implements StreamAdm
   @Override
   public StreamConfig create(Id.Stream streamId) throws Exception {
     create(QueueName.fromStream(streamId));
+    publishAudit(streamId, AuditType.CREATE);
     return null;
   }
 
@@ -111,6 +124,7 @@ public class InMemoryStreamAdmin extends InMemoryQueueAdmin implements StreamAdm
   public StreamConfig create(Id.Stream streamId, @Nullable Properties props) throws Exception {
     create(QueueName.fromStream(streamId), props);
     streamMetaStore.addStream(streamId);
+    publishAudit(streamId, AuditType.CREATE);
     return null;
   }
 
@@ -118,6 +132,7 @@ public class InMemoryStreamAdmin extends InMemoryQueueAdmin implements StreamAdm
   public void truncate(Id.Stream streamId) throws Exception {
     Preconditions.checkArgument(exists(streamId), "Stream '%s' does not exist.", streamId);
     truncate(QueueName.fromStream(streamId));
+    publishAudit(streamId, AuditType.TRUNCATE);
   }
 
   @Override
@@ -127,6 +142,7 @@ public class InMemoryStreamAdmin extends InMemoryQueueAdmin implements StreamAdm
     metadataStore.removeMetadata(streamId);
     drop(QueueName.fromStream(streamId));
     streamMetaStore.removeStream(streamId);
+    publishAudit(streamId, AuditType.DELETE);
   }
 
   @Override
@@ -169,5 +185,10 @@ public class InMemoryStreamAdmin extends InMemoryQueueAdmin implements StreamAdm
   @Override
   public void addAccess(Id.Run run, Id.Stream streamId, AccessType accessType) {
     lineageWriter.addAccess(run, streamId, accessType);
+    AuditPublishers.publishAccess(auditPublisher, streamId, accessType, run);
+  }
+
+  private void publishAudit(Id.Stream stream, AuditType auditType) {
+    AuditPublishers.publishAudit(auditPublisher, stream, auditType, AuditPayload.EMPTY_PAYLOAD);
   }
 }

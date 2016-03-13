@@ -36,7 +36,7 @@ import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.config.ConnectionConfig;
 import co.cask.cdap.common.DatasetTypeNotFoundException;
 import co.cask.cdap.common.ProgramNotFoundException;
-import co.cask.cdap.common.UnauthorizedException;
+import co.cask.cdap.common.UnauthenticatedException;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.internal.test.AppJarHelper;
 import co.cask.cdap.proto.DatasetTypeMeta;
@@ -658,7 +658,7 @@ public class CLIMainTest {
   }
 
   protected void assertProgramStatus(ProgramClient programClient, Id.Program programId, String programStatus, int tries)
-    throws IOException, ProgramNotFoundException, UnauthorizedException {
+    throws IOException, ProgramNotFoundException, UnauthenticatedException {
 
     String status;
     int numTries = 0;
@@ -675,7 +675,7 @@ public class CLIMainTest {
   }
 
   protected void assertProgramStatus(ProgramClient programClient, Id.Program programId, String programStatus)
-    throws IOException, ProgramNotFoundException, UnauthorizedException {
+    throws IOException, ProgramNotFoundException, UnauthenticatedException {
 
     assertProgramStatus(programClient, programId, programStatus, 180);
   }

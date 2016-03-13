@@ -17,9 +17,11 @@
 package co.cask.cdap.proto.security;
 
 import co.cask.cdap.proto.id.Ids;
-import com.google.common.collect.ImmutableSet;
 import org.junit.Assert;
 import org.junit.Test;
+
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 /**
  * Tests for {@link GrantRequest}.
@@ -29,7 +31,9 @@ public class GrantRequestTest {
   @Test
   public void testValidation() {
     Principal bob = new Principal("bob", Principal.PrincipalType.USER);
-    new GrantRequest(Ids.namespace("foo"), bob, ImmutableSet.of(Action.READ));
+    Set<Action> actions = new LinkedHashSet<>();
+    actions.add(Action.READ);
+    new GrantRequest(Ids.namespace("foo"), bob, actions);
 
     try {
       new GrantRequest(Ids.namespace("foo"), null, null);
@@ -46,14 +50,14 @@ public class GrantRequestTest {
     }
 
     try {
-      new GrantRequest(Ids.namespace("foo"), null, ImmutableSet.of(Action.READ));
+      new GrantRequest(Ids.namespace("foo"), null, actions);
       Assert.fail();
     } catch (IllegalArgumentException e) {
       // expected
     }
 
     try {
-      new GrantRequest(null, bob, ImmutableSet.of(Action.READ));
+      new GrantRequest(null, bob, actions);
       Assert.fail();
     } catch (IllegalArgumentException e) {
       // expected

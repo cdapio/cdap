@@ -22,6 +22,7 @@ import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.runtime.workflow.BasicWorkflowToken;
+import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
 import co.cask.cdap.proto.Id;
 import co.cask.tephra.Transaction;
@@ -55,7 +56,7 @@ public class SparkContextConfig {
   private static final String HCONF_ATTR_LOGICAL_START_TIME = "hconf.program.logical.start.time";
   private static final String HCONF_ATTR_ARGS = "hconf.program.args";
   private static final String HCONF_ATTR_NEW_TX = "hconf.program.newtx.tx";
-  private static final String HCONF_ATTR_WORKFLOW_TOKEN = "hconf.program.workflow.token";
+  private static final String HCONF_ATTR_WORKFLOW_INFO = "hconf.program.workflow.info";
 
   private final Configuration hConf;
   private final ApplicationSpecificationAdapter appSpecAdapter;
@@ -97,7 +98,7 @@ public class SparkContextConfig {
     setLogicalStartTime(context.getLogicalStartTime());
     setArguments(context.getRuntimeArguments());
     setTransaction(context.getTransaction());
-    setWorkflowToken(context.getWorkflowToken());
+    setWorkflowProgramInfo(context.getWorkflowProgramInfo());
 
     return this;
   }
@@ -149,11 +150,17 @@ public class SparkContextConfig {
   }
 
   /**
-   * @return the {@link WorkflowToken} stored in the configuration.
+   * Returns the {@link WorkflowProgramInfo} if it is running inside Workflow or {@code null} if not.
    */
   @Nullable
-  public WorkflowToken getWorkflowToken() {
-    return GSON.fromJson(hConf.get(HCONF_ATTR_WORKFLOW_TOKEN), BasicWorkflowToken.class);
+  public WorkflowProgramInfo getWorkflowProgramInfo() {
+    String info = hConf.get(HCONF_ATTR_WORKFLOW_INFO);
+    if (info == null) {
+      return null;
+    }
+    WorkflowProgramInfo workflowProgramInfo = GSON.fromJson(info, WorkflowProgramInfo.class);
+    workflowProgramInfo.getWorkflowToken().disablePut();
+    return workflowProgramInfo;
   }
 
   private void setApplicationSpecification(ApplicationSpecification spec) {
@@ -184,7 +191,9 @@ public class SparkContextConfig {
     hConf.set(HCONF_ATTR_NEW_TX, GSON.toJson(tx));
   }
 
-  private void setWorkflowToken(@Nullable WorkflowToken workflowToken) {
-    hConf.set(HCONF_ATTR_WORKFLOW_TOKEN, GSON.toJson(workflowToken));
+  private void setWorkflowProgramInfo(@Nullable WorkflowProgramInfo info) {
+    if (info != null) {
+      hConf.set(HCONF_ATTR_WORKFLOW_INFO, GSON.toJson(info));
+    }
   }
 }

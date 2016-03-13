@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -32,14 +32,19 @@ import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.stream.StreamAdminModules;
 import co.cask.cdap.data.stream.StreamCoordinatorClient;
 import co.cask.cdap.data.view.ViewAdminModules;
+import co.cask.cdap.data2.audit.AuditModule;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.metadata.writer.ProgramContextAware;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
+import co.cask.cdap.internal.app.runtime.workflow.NameMappedDatasetFramework;
+import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
 import co.cask.cdap.logging.appender.LogAppenderInitializer;
 import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.notifications.feeds.guice.NotificationFeedServiceRuntimeModule;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Preconditions;
@@ -160,6 +165,20 @@ public final class SparkContextProvider {
         }
       });
 
+      DatasetFramework datasetFramework = injector.getInstance(DatasetFramework.class);
+      WorkflowProgramInfo workflowInfo = contextConfig.getWorkflowProgramInfo();
+      DatasetFramework programDatasetFramework = workflowInfo == null ?
+        datasetFramework :
+        NameMappedDatasetFramework.createFromWorkflowProgramInfo(datasetFramework, workflowInfo,
+                                                                 contextConfig.getApplicationSpecification());
+
+      // Setup dataset framework context, if required
+      if (programDatasetFramework instanceof ProgramContextAware) {
+        Id.Run id = new Id.Run(contextConfig.getProgramId(), contextConfig.getRunId().getId());
+        ((ProgramContextAware) programDatasetFramework).initContext(id);
+      }
+
+
       PluginInstantiator pluginInstantiator = createPluginInstantiator(cConf, hConf, classLoader);
       Map<String, File> localizedResources = createLocalResources(hConf);
       // Create the context object
@@ -167,11 +186,11 @@ public final class SparkContextProvider {
         contextConfig.getApplicationSpecification(),
         contextConfig.getSpecification(), contextConfig.getProgramId(), contextConfig.getRunId(),
         classLoader, contextConfig.getLogicalStartTime(), contextConfig.getArguments(),
-        contextConfig.getTransaction(), injector.getInstance(DatasetFramework.class),
+        contextConfig.getTransaction(), programDatasetFramework,
         injector.getInstance(TransactionSystemClient.class),
         injector.getInstance(DiscoveryServiceClient.class), metricsCollectionService, hConf,
         injector.getInstance(StreamAdmin.class), localizedResources,
-        pluginInstantiator, contextConfig.getWorkflowToken()
+        pluginInstantiator, workflowInfo
       );
       return sparkContext;
     } catch (Exception e) {
@@ -226,7 +245,8 @@ public final class SparkContextProvider {
       new ExploreClientModule(),
       new ViewAdminModules().getDistributedModules(),
       new StreamAdminModules().getDistributedModules(),
-      new NotificationFeedServiceRuntimeModule().getDistributedModules()
+      new NotificationFeedServiceRuntimeModule().getDistributedModules(),
+      new AuditModule().getDistributedModules()
     );
   }
 

@@ -16,6 +16,7 @@ package co.cask.cdap.internal.app.runtime.batch;
  * the License.
  */
 
+import co.cask.cdap.api.Admin;
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.data.DatasetInstantiationException;
@@ -254,5 +255,10 @@ public class MapReduceLifecycleContext<KEY, VALUE> implements MapReduceTaskConte
   @Override
   public Map<String, File> getAllLocalFiles() {
     return delegate.getAllLocalFiles();
+  }
+
+  @Override
+  public Admin getAdmin() {
+    return delegate.getAdmin();
   }
 }

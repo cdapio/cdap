@@ -16,10 +16,13 @@
 
 package co.cask.cdap.etl.proto.v2;
 
+import co.cask.cdap.api.plugin.PluginProperties;
 import co.cask.cdap.api.plugin.PluginSelector;
 import co.cask.cdap.etl.proto.ArtifactSelector;
 import co.cask.cdap.etl.proto.ArtifactSelectorConfig;
 
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import javax.annotation.Nullable;
@@ -39,7 +42,7 @@ public class ETLPlugin {
                    @Nullable ArtifactSelectorConfig artifact) {
     this.name = name;
     this.type = type;
-    this.properties = properties;
+    this.properties = Collections.unmodifiableMap(properties);
     this.artifact = artifact;
   }
 
@@ -52,7 +55,29 @@ public class ETLPlugin {
   }
 
   public Map<String, String> getProperties() {
-    return properties;
+    return Collections.unmodifiableMap(properties == null ? new HashMap<String, String>() : properties);
+  }
+
+  public PluginProperties getPluginProperties() {
+    if (properties == null || properties.isEmpty()) {
+      return PluginProperties.builder().build();
+    }
+    return PluginProperties.builder().addAll(properties).build();
+  }
+
+  /**
+   * Validate correctness. Since this object is created through deserialization, some fields that should not be null
+   * may be null.
+   *
+   * @throws IllegalArgumentException if the object is invalid
+   */
+  public void validate() {
+    if (name == null || name.isEmpty()) {
+      throw new IllegalArgumentException("Invalid plugin " + toString() + ": name must be specified.");
+    }
+    if (type == null || type.isEmpty()) {
+      throw new IllegalArgumentException("Invalid plugin " + toString() + ": type must be specified.");
+    }
   }
 
   /**

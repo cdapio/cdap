@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,39 +16,21 @@
 
 package co.cask.cdap.common;
 
-import co.cask.cdap.proto.id.EntityId;
-import co.cask.cdap.proto.security.Action;
-import co.cask.cdap.proto.security.Principal;
-
 /**
- * Thrown when a user is not authorized to perform an operation.
+ * Exception thrown when a user is not authenticated to perform an operation.
+ * @deprecated since 3.4.0. Please use {@link UnauthenticatedException} instead.
  */
+@Deprecated
 public class UnauthorizedException extends Exception {
-
-  private final boolean authenticationError;
-
   public UnauthorizedException() {
     super();
-    this.authenticationError = true;
   }
 
   public UnauthorizedException(String msg, Throwable throwable) {
     super(msg, throwable);
-    this.authenticationError = true;
   }
 
   public UnauthorizedException(String message) {
     super(message);
-    this.authenticationError = true;
-  }
-
-  public UnauthorizedException(Principal principal, Action action, EntityId entityId) {
-    super(String.format("Principal '%s' is not authorized to perform action '%s' on entity '%s'",
-                        principal, action, entityId));
-    this.authenticationError = false;
-  }
-
-  public boolean isAuthenticationError() {
-    return authenticationError;
   }
 }

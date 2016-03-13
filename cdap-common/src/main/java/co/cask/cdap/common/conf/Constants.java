@@ -927,4 +927,12 @@ public final class Constants {
     public static final String UPDATES_KAFKA_BROKER_LIST = "metadata.updates.kafka.broker.list";
     public static final String MAX_CHARS_ALLOWED = "metadata.max.allowed.chars";
   }
+
+  /**
+   * Constants for publishing audit
+   */
+  public static final class Audit {
+    public static final String ENABLED = "audit.enabled";
+    public static final String KAFKA_TOPIC = "audit.kafka.topic";
+  }
 }

@@ -411,7 +411,8 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
 
   private static DatasetSpecification createSpec(String instanceName, String typeName,
                                                  DatasetProperties properties) {
-    return DatasetSpecification.builder(instanceName, typeName).properties(properties.getProperties()).build();
+    return DatasetSpecification.builder(instanceName, typeName).properties(properties.getProperties()).build()
+      .setOriginalProperties(properties);
   }
 
   private DatasetSpecificationSummary spec2Summary(DatasetSpecification spec) {

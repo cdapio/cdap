@@ -18,7 +18,6 @@ package co.cask.cdap.proto.security;
 
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.proto.id.EntityId;
-import com.google.common.base.Preconditions;
 
 import java.util.Set;
 
@@ -30,7 +29,11 @@ public class CheckAuthorizedRequest extends AuthorizationRequest {
 
   public CheckAuthorizedRequest(EntityId entity, Principal principal, Set<Action> actions) {
     super(entity, principal, actions);
-    Preconditions.checkArgument(principal != null, "principal is required");
-    Preconditions.checkArgument(actions != null, "actions is required");
+    if (principal == null) {
+      throw new IllegalArgumentException("principal is required");
+    }
+    if (actions == null) {
+      throw new IllegalArgumentException("actions is required");
+    }
   }
 }

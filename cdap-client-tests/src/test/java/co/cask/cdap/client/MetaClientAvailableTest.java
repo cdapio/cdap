@@ -18,7 +18,7 @@ package co.cask.cdap.client;
 
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.config.ConnectionConfig;
-import co.cask.cdap.common.UnauthorizedException;
+import co.cask.cdap.common.UnauthenticatedException;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
 import co.cask.http.NettyHttpService;
@@ -80,13 +80,13 @@ public class MetaClientAvailableTest {
   }
 
   @Test
-  public void testAvailable() throws IOException, UnauthorizedException {
+  public void testAvailable() throws IOException, UnauthenticatedException {
     handler.setResponse(HttpResponseStatus.OK, "OK.\n");
     metaClient.ping();
   }
 
   @Test
-  public void testUnavailable() throws IOException, UnauthorizedException {
+  public void testUnavailable() throws IOException, UnauthenticatedException {
     try {
       fakeMetaClient.ping();
       Assert.fail();
@@ -96,7 +96,7 @@ public class MetaClientAvailableTest {
   }
 
   @Test
-  public void testWrongCode() throws UnauthorizedException {
+  public void testWrongCode() throws UnauthenticatedException {
     try {
       handler.setResponse(HttpResponseStatus.CONFLICT, "HI");
       metaClient.ping();
@@ -109,7 +109,7 @@ public class MetaClientAvailableTest {
   }
 
   @Test
-  public void testWrongBody() throws UnauthorizedException {
+  public void testWrongBody() throws UnauthenticatedException {
     try {
       handler.setResponse(HttpResponseStatus.OK, "???");
       metaClient.ping();

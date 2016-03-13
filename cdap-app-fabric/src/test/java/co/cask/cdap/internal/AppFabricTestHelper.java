@@ -45,10 +45,13 @@ import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
+import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Key;
+import com.google.inject.Module;
 import com.google.inject.TypeLiteral;
+import com.google.inject.util.Modules;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
@@ -74,13 +77,22 @@ public class AppFabricTestHelper {
     return getInjector(CConfiguration.create());
   }
 
-  public static synchronized Injector getInjector(CConfiguration conf) {
+  public static Injector getInjector(CConfiguration conf) {
+    return getInjector(conf, new AbstractModule() {
+      @Override
+      protected void configure() {
+        // no overrides
+      }
+    });
+  }
+
+  public static synchronized Injector getInjector(CConfiguration conf, Module overrides) {
     if (injector == null) {
       configuration = conf;
       configuration.set(Constants.CFG_LOCAL_DATA_DIR, TEMP_FOLDER.newFolder("data").getAbsolutePath());
       configuration.set(Constants.AppFabric.REST_PORT, Integer.toString(Networks.getRandomPort()));
       configuration.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, true);
-      injector = Guice.createInjector(new AppFabricTestModule(configuration));
+      injector = Guice.createInjector(Modules.override(new AppFabricTestModule(configuration)).with(overrides));
       injector.getInstance(TransactionManager.class).startAndWait();
       injector.getInstance(DatasetOpExecutor.class).startAndWait();
       injector.getInstance(DatasetService.class).startAndWait();
