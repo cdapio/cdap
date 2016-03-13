@@ -16,9 +16,12 @@
 
 package co.cask.cdap.proto.metadata;
 
+import co.cask.cdap.api.annotation.Beta;
+
 /**
  * Represents the scope of metadata for an entity.
  */
+@Beta
 public enum MetadataScope {
   USER,
   SYSTEM

@@ -15,22 +15,37 @@
  */
 package co.cask.cdap.proto.metadata;
 
+import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.proto.Id;
 
+import java.util.Collections;
+import java.util.Map;
 import java.util.Objects;
 
 /**
  * Represent the Metadata search result record.
  */
+@Beta
 public class MetadataSearchResultRecord {
   private final Id.NamespacedId entityId;
+  private final Map<MetadataScope, Metadata> metadata;
 
   public MetadataSearchResultRecord(Id.NamespacedId entityId) {
     this.entityId = entityId;
+    this.metadata = Collections.emptyMap();
+  }
+
+  public MetadataSearchResultRecord(Id.NamespacedId entityId, Map<MetadataScope, Metadata> metadata) {
+    this.entityId = entityId;
+    this.metadata = metadata;
   }
 
   public Id.NamespacedId getEntityId() {
     return entityId;
+  }
+
+  public Map<MetadataScope, Metadata> getMetadata() {
+    return metadata;
   }
 
   @Override
@@ -42,18 +57,20 @@ public class MetadataSearchResultRecord {
       return false;
     }
     MetadataSearchResultRecord that = (MetadataSearchResultRecord) o;
-    return Objects.equals(entityId, that.entityId);
+    return Objects.equals(entityId, that.entityId) &&
+      Objects.equals(metadata, that.metadata);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(entityId);
+    return Objects.hash(entityId, metadata);
   }
 
   @Override
   public String toString() {
     return "MetadataSearchResultRecord{" +
       "entityId=" + entityId +
+      ", metadata=" + metadata +
       '}';
   }
 }

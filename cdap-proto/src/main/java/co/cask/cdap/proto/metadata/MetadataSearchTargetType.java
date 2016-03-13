@@ -15,9 +15,12 @@
  */
 package co.cask.cdap.proto.metadata;
 
+import co.cask.cdap.api.annotation.Beta;
+
 /**
  * Supported types for metadata search.
  */
+@Beta
 public enum MetadataSearchTargetType {
   // the custom values are required because these value match the entity-type stored as
   // a part of MDS key.

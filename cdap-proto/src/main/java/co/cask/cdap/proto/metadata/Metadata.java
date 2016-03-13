@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.proto.audit.payload.metadata;
+package co.cask.cdap.proto.metadata;
 
 import co.cask.cdap.api.annotation.Beta;
 
@@ -26,11 +26,11 @@ import java.util.Set;
  * Represents metadata (properties and tags) of an entity.
  */
 @Beta
-public class MetadataAuditRecord {
+public class Metadata {
   private final Map<String, String> properties;
   private final Set<String> tags;
 
-  public MetadataAuditRecord(Map<String, String> properties, Set<String> tags) {
+  public Metadata(Map<String, String> properties, Set<String> tags) {
     this.properties = properties;
     this.tags = tags;
   }
@@ -48,10 +48,10 @@ public class MetadataAuditRecord {
     if (this == o) {
       return true;
     }
-    if (!(o instanceof MetadataAuditRecord)) {
+    if (!(o instanceof Metadata)) {
       return false;
     }
-    MetadataAuditRecord that = (MetadataAuditRecord) o;
+    Metadata that = (Metadata) o;
     return Objects.equals(properties, that.properties) &&
       Objects.equals(tags, that.tags);
   }
@@ -63,7 +63,7 @@ public class MetadataAuditRecord {
 
   @Override
   public String toString() {
-    return "MetadataAuditRecord{" +
+    return "Metadata{" +
       "properties=" + properties +
       ", tags=" + tags +
       '}';

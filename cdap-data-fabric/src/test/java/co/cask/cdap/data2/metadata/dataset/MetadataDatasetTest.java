@@ -438,6 +438,62 @@ public class MetadataDatasetTest {
   }
 
   @Test
+  public void testMultiGet() throws Exception {
+    Map<Id.NamespacedId, Metadata> allMetadata = new HashMap<>();
+    allMetadata.put(flow1, new Metadata(flow1,
+                                        ImmutableMap.of("key1", "value1", "key2", "value2"),
+                                        ImmutableSet.of("tag1", "tag2", "tag3")));
+    allMetadata.put(dataset1, new Metadata(dataset1,
+                                 ImmutableMap.of("key10", "value10", "key11", "value11"),
+                                 ImmutableSet.<String>of()));
+    allMetadata.put(app1, new Metadata(app1,
+                                 ImmutableMap.of("key20", "value20", "key21", "value21"),
+                                 ImmutableSet.<String>of()));
+    allMetadata.put(stream1, new Metadata(stream1,
+                                 ImmutableMap.of("key30", "value30", "key31", "value31", "key32", "value32"),
+                                 ImmutableSet.<String>of()));
+    allMetadata.put(artifact1, new Metadata(artifact1,
+                                 ImmutableMap.of("key40", "value41"),
+                                 ImmutableSet.<String>of()));
+    allMetadata.put(view1, new Metadata(view1,
+                                 ImmutableMap.of("key50", "value50", "key51", "value51"),
+                                 ImmutableSet.of("tag51")));
+
+    for (Map.Entry<Id.NamespacedId, Metadata> entry : allMetadata.entrySet()) {
+      Metadata metadata = entry.getValue();
+      for (Map.Entry<String, String> props : metadata.getProperties().entrySet()) {
+        dataset.setProperty(metadata.getEntityId(), props.getKey(), props.getValue());
+      }
+      dataset.addTags(metadata.getEntityId(), metadata.getTags().toArray(new String[metadata.getTags().size()]));
+    }
+
+    ImmutableSet<Metadata> expected =
+      ImmutableSet.<Metadata>builder()
+        .add(allMetadata.get(flow1))
+        .add(allMetadata.get(app1))
+        .build();
+    Assert.assertEquals(expected, dataset.getMetadata(ImmutableSet.of(flow1, app1)));
+
+    expected =
+      ImmutableSet.<Metadata>builder()
+        .add(allMetadata.get(view1))
+        .add(allMetadata.get(stream1))
+        .add(allMetadata.get(dataset1))
+        .add(allMetadata.get(artifact1))
+        .build();
+    Assert.assertEquals(expected, dataset.getMetadata(ImmutableSet.of(view1, stream1, dataset1, artifact1)));
+
+    expected =
+      ImmutableSet.<Metadata>builder()
+        .add(allMetadata.get(artifact1))
+        .build();
+    Assert.assertEquals(expected, dataset.getMetadata(ImmutableSet.of(artifact1)));
+
+    expected = ImmutableSet.of();
+    Assert.assertEquals(expected, dataset.getMetadata(ImmutableSet.<Id.NamespacedId>of()));
+  }
+
+  @Test
   public void testHistory() throws Exception {
     MetadataDataset dataset =
       getDataset(Id.DatasetInstance.from(DatasetFrameworkTestUtil.NAMESPACE_ID, "testHistory"));
