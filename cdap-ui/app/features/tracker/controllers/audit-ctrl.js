@@ -15,11 +15,12 @@
  */
 
 class TrackerAuditController {
-  constructor($state, $scope, myTrackerApi) {
+  constructor($state, $scope, myTrackerApi, myAlertOnValium) {
 
     this.$state = $state;
     this.$scope = $scope;
     this.myTrackerApi = myTrackerApi;
+    this.myAlertOnValium = myAlertOnValium;
 
     this.timeRangeOptions = [
       {
@@ -85,11 +86,15 @@ class TrackerAuditController {
         this.auditLogs = response;
       }, (err) => {
         console.log('Error: ', err);
+        this.myAlertOnValium.show({
+          type: 'danger',
+          content: 'Enable the Tracker extension to view audit logs.'
+        });
       });
   }
 }
 
-TrackerAuditController.$inject = ['$state', '$scope', 'myTrackerApi'];
+TrackerAuditController.$inject = ['$state', '$scope', 'myTrackerApi', 'myAlertOnValium'];
 
 angular.module(PKG.name + '.feature.tracker')
 .controller('TrackerAuditController', TrackerAuditController);
