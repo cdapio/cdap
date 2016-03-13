@@ -17,21 +17,16 @@ package co.cask.cdap.internal.app.runtime.workflow;
 
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetAdmin;
+import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
-import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.api.workflow.Workflow;
 import co.cask.cdap.data2.datafabric.dataset.type.DatasetClassLoaderProvider;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.data2.dataset2.ForwardingProgramContextAwareDatasetFramework;
-import co.cask.cdap.data2.metadata.writer.ProgramContextAware;
-import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.Id;
-import org.apache.twill.filesystem.Location;
 
 import java.io.IOException;
-import java.util.Collection;
 import java.util.Map;
 import javax.annotation.Nullable;
 

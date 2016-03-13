@@ -20,13 +20,17 @@ import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetDefinition;
+import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
+import co.cask.cdap.api.dataset.InstanceConflictException;
+import co.cask.cdap.api.dataset.InstanceNotFoundException;
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.lang.ClassLoaders;
+import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.datafabric.dataset.type.ConstantClassLoaderProvider;
 import co.cask.cdap.data2.datafabric.dataset.type.DatasetClassLoaderProvider;
 import co.cask.cdap.data2.dataset2.module.lib.DatasetModules;
@@ -235,7 +239,7 @@ public class InMemoryDatasetFramework implements DatasetFramework {
     try {
       DatasetSpecification oldSpec = instances.get(datasetInstanceId.getNamespace(), datasetInstanceId);
       if (oldSpec == null) {
-        throw new InstanceConflictException(String.format("Dataset instance '%s' does not exist.", datasetInstanceId));
+        throw new InstanceNotFoundException(datasetInstanceId.getId());
       }
       DatasetDefinition def = getDefinitionForType(datasetInstanceId.getNamespace(), oldSpec.getType());
       if (def == null) {
@@ -274,7 +278,8 @@ public class InMemoryDatasetFramework implements DatasetFramework {
   public DatasetSpecification getDatasetSpec(Id.DatasetInstance datasetInstanceId) {
     readLock.lock();
     try {
-      return instances.get(datasetInstanceId.getNamespace(), datasetInstanceId);
+      DatasetSpecification spec = instances.get(datasetInstanceId.getNamespace(), datasetInstanceId);
+      return DatasetsUtil.fixOriginalProperties(spec);
     } finally {
       readLock.unlock();
     }
@@ -303,18 +308,42 @@ public class InMemoryDatasetFramework implements DatasetFramework {
   }
 
   @Override
-  public void deleteInstance(Id.DatasetInstance datasetInstanceId)
+  public void truncateInstance(Id.DatasetInstance instanceId)
     throws DatasetManagementException, IOException {
     writeLock.lock();
     try {
-      DatasetSpecification spec = instances.remove(datasetInstanceId.getNamespace(), datasetInstanceId);
-      DatasetDefinition def = getDefinitionForType(datasetInstanceId.getNamespace(), spec.getType());
+      DatasetSpecification spec = instances.get(instanceId.getNamespace(), instanceId);
+      if (spec == null) {
+        throw new InstanceNotFoundException(instanceId.getId());
+      }
+      DatasetDefinition def = getDefinitionForType(instanceId.getNamespace(), spec.getType());
       if (def == null) {
         throw new DatasetManagementException(
           String.format("Dataset type '%s' is neither registered in the '%s' namespace nor in the system namespace",
-                        spec.getType(), datasetInstanceId.getNamespaceId()));
+                        spec.getType(), instanceId.getNamespaceId()));
       }
-      def.getAdmin(DatasetContext.from(datasetInstanceId.getNamespaceId()), spec, null).drop();
+      def.getAdmin(DatasetContext.from(instanceId.getNamespaceId()), spec, null).truncate();
+    } finally {
+      writeLock.unlock();
+    }
+  }
+
+  @Override
+  public void deleteInstance(Id.DatasetInstance instanceId)
+    throws DatasetManagementException, IOException {
+    writeLock.lock();
+    try {
+      DatasetSpecification spec = instances.remove(instanceId.getNamespace(), instanceId);
+      if (spec == null) {
+        throw new InstanceNotFoundException(instanceId.getId());
+      }
+      DatasetDefinition def = getDefinitionForType(instanceId.getNamespace(), spec.getType());
+      if (def == null) {
+        throw new DatasetManagementException(
+          String.format("Dataset type '%s' is neither registered in the '%s' namespace nor in the system namespace",
+                        spec.getType(), instanceId.getNamespaceId()));
+      }
+      def.getAdmin(DatasetContext.from(instanceId.getNamespaceId()), spec, null).drop();
     } finally {
       writeLock.unlock();
     }

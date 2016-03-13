@@ -96,7 +96,7 @@ public class StreamAdminModules extends RuntimeModule {
       if (factoryName != null) {
         try {
           factoryClass = (Class<? extends AbstractStreamFileConsumerFactory>) Class.forName(factoryName.trim());
-        } catch (ClassCastException|ClassNotFoundException ex) {
+        } catch (ClassCastException | ClassNotFoundException ex) {
           // Guice frowns on throwing exceptions from Providers, but if necesary use RuntimeException
           throw new RuntimeException("Unable to obtain stream consumer factory extension class", ex);
         }

@@ -17,6 +17,7 @@ package co.cask.cdap.data2.dataset2;
 
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetAdmin;
+import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.module.DatasetModule;
@@ -100,6 +101,11 @@ public class ForwardingDatasetFramework implements DatasetFramework {
   @Override
   public boolean hasType(Id.DatasetType datasetTypeId) throws DatasetManagementException {
     return delegate.hasType(datasetTypeId);
+  }
+
+  @Override
+  public void truncateInstance(Id.DatasetInstance datasetInstanceId) throws DatasetManagementException, IOException {
+    delegate.truncateInstance(datasetInstanceId);
   }
 
   @Override

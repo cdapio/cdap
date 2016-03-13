@@ -16,14 +16,8 @@
 
 package co.cask.cdap.data2.datafabric.dataset.service;
 
-import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
-import co.cask.cdap.api.dataset.lib.FileSet;
-import co.cask.cdap.api.dataset.lib.ObjectMappedTable;
-import co.cask.cdap.api.dataset.lib.PartitionedFileSetProperties;
-import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
-import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.DatasetAlreadyExistsException;
 import co.cask.cdap.common.DatasetNotFoundException;
@@ -34,14 +28,12 @@ import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.datafabric.dataset.AbstractDatasetProvider;
+import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.datafabric.dataset.instance.DatasetInstanceManager;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetAdminOpResponse;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import co.cask.cdap.data2.datafabric.dataset.type.DatasetTypeManager;
 import co.cask.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
-import co.cask.cdap.data2.dataset2.lib.file.FileSetDataset;
-import co.cask.cdap.data2.metadata.lineage.LineageDataset;
-import co.cask.cdap.data2.registry.UsageDataset;
 import co.cask.cdap.data2.registry.UsageRegistry;
 import co.cask.cdap.explore.client.ExploreFacade;
 import co.cask.cdap.proto.DatasetInstanceConfiguration;
@@ -50,7 +42,6 @@ import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.store.NamespaceStore;
 import co.cask.tephra.TransactionExecutorFactory;
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
@@ -61,8 +52,6 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.TreeMap;
 import javax.annotation.Nullable;
 
 /**
@@ -136,6 +125,7 @@ public class DatasetInstanceService {
     if (spec == null) {
       throw new NotFoundException(instance);
     }
+    spec = DatasetsUtil.fixOriginalProperties(spec);
 
     Id.DatasetType datasetTypeId = Id.DatasetType.from(instance.getNamespace(), spec.getType());
     DatasetTypeMeta typeMeta = getTypeInfo(instance.getNamespace(), spec.getType());
@@ -160,56 +150,7 @@ public class DatasetInstanceService {
     if (spec == null) {
       throw new NotFoundException(instance);
     }
-    Map<String, String> originalProperties = spec.getOriginalProperties();
-    if (originalProperties != null) {
-      return originalProperties;
-    }
-    return fixOriginalProperties(spec);
-  }
-
-  /**
-   * For a dataset spec that does not contain the original properties, we attempt to reconstruct them from
-   * the properties at the top-level of the spec. For most datasets, these will be identical, however, there
-   * are a few known dataset types whose {@link DatasetDefinition#configure(String, DatasetProperties)} method
-   * adds additional properties. As of release 3.3, the set of built-in such dataset types is known. Any dataset
-   * created or reconfigured beginning with 3.4 will have the original properties stored in the spec.
-   * @param spec a dataset spec that does not contain the original properties
-   * @return the properties with which this dataset was created or reconfigured, at best effort.
-   */
-  @VisibleForTesting
-  static Map<String, String> fixOriginalProperties(DatasetSpecification spec) {
-    Map<String, String> props = new TreeMap<>(spec.getProperties());
-    if (props.isEmpty()) {
-      return props;
-    }
-    String type = spec.getType();
-
-    // file sets add a fileset version indicating how to handle absolute base paths
-    if (FileSet.class.getName().equals(type) || "fileSet".equals(type)) {
-      props.remove(FileSetDataset.FILESET_VERSION_PROPERTY);
-
-    // TPFS adds the partitioning
-    } else if (TimePartitionedFileSet.class.getName().equals(type) || "timePartitionedFileSet".equals(type)) {
-      props.remove(PartitionedFileSetProperties.PARTITIONING_FIELDS);
-      Set<String> keys = props.keySet();
-      for (String key : keys) {
-        if (key.startsWith(PartitionedFileSetProperties.PARTITIONING_FIELD_PREFIX)) {
-          keys.remove(key);
-        }
-      }
-
-    // ObjectMappedTable adds the table schema and its row field name
-    } else if (ObjectMappedTable.class.getName().endsWith(type) || "objectMappedTable".equals(type)) {
-      props.remove(Table.PROPERTY_SCHEMA);
-      props.remove(Table.PROPERTY_SCHEMA_ROW_FIELD);
-
-      // LineageDataset and UsageDataset add the conflict level of none
-    } else if (UsageDataset.class.getSimpleName().equals(type) ||
-               LineageDataset.class.getName().equals(type) || "lineageDataset".equals(type)) {
-      props.remove(Table.PROPERTY_CONFLICT_LEVEL);
-    }
-
-    return props;
+    return DatasetsUtil.fixOriginalProperties(spec).getOriginalProperties();
   }
 
   private void registerUsage(Id.DatasetInstance instance, List<? extends Id> owners) {

@@ -17,6 +17,7 @@
 package co.cask.cdap.metadata;
 
 import co.cask.cdap.api.app.ApplicationSpecification;
+import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.ApplicationNotFoundException;
 import co.cask.cdap.common.DatasetNotFoundException;
@@ -27,7 +28,6 @@ import co.cask.cdap.common.StreamNotFoundException;
 import co.cask.cdap.common.ViewNotFoundException;
 import co.cask.cdap.common.namespace.AbstractNamespaceClient;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactStore;
 import co.cask.cdap.proto.Id;

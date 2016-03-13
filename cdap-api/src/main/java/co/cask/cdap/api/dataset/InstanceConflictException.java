@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.data2.dataset2;
+package co.cask.cdap.api.dataset;
 
 /**
  * Thrown when operation conflicts with existing dataset instances available in the system.

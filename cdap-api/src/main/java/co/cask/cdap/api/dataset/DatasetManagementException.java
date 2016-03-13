@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.data2.dataset2;
+package co.cask.cdap.api.dataset;
 
 /**
- * Thrown when there's an error during dataset modules, types or instances management exception
+ * Thrown when there's an error during dataset modules, types or instances management operations.
  */
 public class DatasetManagementException extends Exception {
   public DatasetManagementException(String message) {

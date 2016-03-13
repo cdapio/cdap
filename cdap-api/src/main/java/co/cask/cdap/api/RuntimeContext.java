@@ -45,4 +45,9 @@ public interface RuntimeContext {
    * @return The {@link RunId} of the current run
    */
   RunId getRunId();
+
+  /**
+   * @return an {@link Admin} to perform admin operations.
+   */
+  Admin getAdmin();
 }
