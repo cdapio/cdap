@@ -1,0 +1,64 @@
+<!--
+  Copyright © 2016 Cask Data, Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+-->
+
+<div class="audit-container">
+  <div class="btn-group" uib-dropdown>
+    <button class="btn " uib-dropdown-toggle>
+      {{ AuditController.selectedTimeRange.label }} <span class="caret"></span>
+    </button>
+    <ul uib-dropdown-menu role="menu" aria-labelledby="single-button">
+      <li role="menuitem" ng-repeat="time in AuditController.timeRangeOptions">
+        <a ui-sref="tracker.entity.audit({ start: time.start, end: time.end })">{{ time.label }}</a>
+      </li>
+    </ul>
+  </div>
+
+  <div class="audit-logs-table-container" ng-if="AuditController.auditLogs.results.length > 0">
+    <table class="table table-bordered">
+      <thead>
+        <tr>
+          <th>Time</th>
+          <th>Program</th>
+          <th>Program Type</th>
+          <th>Access</th>
+          <th>User</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        <tr ng-repeat="log in AuditController.auditLogs.results">
+          <td>{{ log.time | amDateFormat: 'MM/DD/YYYY  h:mm:ss a' }}</td>
+          <td>{{ log.payload.accessor.program || log.payload.accessor.service || '-' }}</td>
+          <td>{{ log.payload.accessor.type || log.payload.accessor.entity || '-' }}</td>
+          <td>{{ log.type }}</td>
+          <td>{{ log.user }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="tracker-no-result text-center"
+    ng-if="AuditController.auditLogs.results.length === 0 && !AuditController.loading">
+    <p>No audit logs for the time period specified</p>
+  </div>
+
+  <div class="text-center" ng-if="AuditController.auditLogs.totalResults > 10">
+    <uib-pagination total-items="AuditController.auditLogs.totalResults"
+                    ng-model="this.currentPage"
+                    ng-change="AuditController.fetchAuditLogs(this.currentPage)">
+    </uib-pagination>
+  </div>
+</div>

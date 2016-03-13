@@ -77,6 +77,8 @@ body.state-tracker-home {
 body.state-tracker {
   background-color: #e5e5e5;
 
+  .alerts { top: 50px; }
+
   main.container {
     margin-top: 50px;
     width: 100%;
@@ -510,6 +512,40 @@ body.state-tracker-entity {
 body.state-tracker-entity-lineage {
   .time-range-container {
     padding: 20px;
+  }
+}
+
+body.state-tracker-entity-audit {
+  .audit-container {
+    padding: 20px;
+  }
+
+  .audit-logs-table-container {
+    margin-top: 20px;
+
+    .table th { cursor: default; }
+  }
+}
+
+body.state-tracker-help {
+  .help-container {
+    padding: 0 25px;
+    color: #777;
+    h2 { margin-bottom: 20px; }
+
+    marked {
+      font-size: 14px;
+      font-weight: 500;
+
+      strong { color: @active-font; }
+      ul { padding-left: 20px; }
+      code {
+        font-size: 14px;
+        color: inherit;
+        background-color: inherit;
+      }
+      &>p { margin-top: 25px; }
+    }
   }
 }
 
