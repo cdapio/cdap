@@ -18,7 +18,11 @@ package co.cask.cdap.etl.proto.v1;
 
 import co.cask.cdap.api.Config;
 import co.cask.cdap.api.Resources;
+import co.cask.cdap.etl.api.Transform;
+import co.cask.cdap.etl.api.batch.BatchSink;
+import co.cask.cdap.etl.api.batch.BatchSource;
 import co.cask.cdap.etl.proto.Connection;
+import co.cask.cdap.etl.proto.UpgradeContext;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 
@@ -131,6 +135,26 @@ public class ETLConfig extends Config {
 
   public Boolean isStageLoggingEnabled() {
     return stageLoggingEnabled == null ? true : stageLoggingEnabled;
+  }
+
+  protected <T extends co.cask.cdap.etl.proto.v2.ETLConfig.Builder> T upgradeBase(T builder,
+                                                                                  UpgradeContext upgradeContext,
+                                                                                  String sourceType,
+                                                                                  String sinkType) {
+    builder.setResources(resources).addConnections(connections);
+
+    if (!stageLoggingEnabled) {
+      builder.disableStageLogging();
+    }
+
+    builder.addStage(getSource().upgradeStage(sourceType, upgradeContext));
+    for (ETLStage transformStage : getTransforms()) {
+      builder.addStage(transformStage.upgradeStage(Transform.PLUGIN_TYPE, upgradeContext));
+    }
+    for (ETLStage sinkStage : getSinks()) {
+      builder.addStage(sinkStage.upgradeStage(sinkType, upgradeContext));
+    }
+    return builder;
   }
 
   @Override

@@ -95,4 +95,5 @@ public final class ETLStage {
   public int hashCode() {
     return Objects.hash(name, plugin, errorDatasetName);
   }
+
 }

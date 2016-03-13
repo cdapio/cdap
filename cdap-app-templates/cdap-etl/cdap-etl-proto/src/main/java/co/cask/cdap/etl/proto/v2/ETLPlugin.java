@@ -42,7 +42,7 @@ public class ETLPlugin {
                    @Nullable ArtifactSelectorConfig artifact) {
     this.name = name;
     this.type = type;
-    this.properties = properties;
+    this.properties = Collections.unmodifiableMap(properties);
     this.artifact = artifact;
   }
 

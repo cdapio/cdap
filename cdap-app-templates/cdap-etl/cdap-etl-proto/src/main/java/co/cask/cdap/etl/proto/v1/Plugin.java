@@ -20,6 +20,8 @@ import co.cask.cdap.api.plugin.PluginSelector;
 import co.cask.cdap.etl.proto.ArtifactSelector;
 import co.cask.cdap.etl.proto.ArtifactSelectorConfig;
 
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import javax.annotation.Nullable;
@@ -47,7 +49,11 @@ public class Plugin {
   }
 
   public Map<String, String> getProperties() {
-    return properties;
+    return properties == null ? Collections.unmodifiableMap(new HashMap<String, String>()) : properties;
+  }
+
+  public ArtifactSelectorConfig getArtifact() {
+    return artifact == null ? new ArtifactSelectorConfig() : artifact;
   }
 
   /**

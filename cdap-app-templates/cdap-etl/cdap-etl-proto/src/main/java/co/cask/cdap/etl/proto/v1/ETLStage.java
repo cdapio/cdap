@@ -16,6 +16,9 @@
 
 package co.cask.cdap.etl.proto.v1;
 
+import co.cask.cdap.etl.proto.ArtifactSelectorConfig;
+import co.cask.cdap.etl.proto.UpgradeContext;
+
 import java.util.Map;
 import java.util.Objects;
 import javax.annotation.Nullable;
@@ -89,5 +92,15 @@ public final class ETLStage {
   @Override
   public int hashCode() {
     return Objects.hash(name, plugin, errorDatasetName);
+  }
+
+  co.cask.cdap.etl.proto.v2.ETLStage upgradeStage(String type, UpgradeContext upgradeContext) {
+    ArtifactSelectorConfig artifactSelectorConfig = upgradeContext.getPluginArtifact(type, plugin.getName());
+    if (artifactSelectorConfig == null) {
+      artifactSelectorConfig = plugin.getArtifact();
+    }
+    co.cask.cdap.etl.proto.v2.ETLPlugin etlPlugin = new co.cask.cdap.etl.proto.v2.ETLPlugin(
+      plugin.getName(), type, plugin.getProperties(), artifactSelectorConfig);
+    return new co.cask.cdap.etl.proto.v2.ETLStage(name, etlPlugin, errorDatasetName);
   }
 }

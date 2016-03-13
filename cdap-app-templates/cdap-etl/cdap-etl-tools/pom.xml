@@ -37,7 +37,7 @@
     </dependency>
     <dependency>
       <groupId>co.cask.cdap</groupId>
-      <artifactId>cdap-etl-core</artifactId>
+      <artifactId>cdap-etl-proto</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>

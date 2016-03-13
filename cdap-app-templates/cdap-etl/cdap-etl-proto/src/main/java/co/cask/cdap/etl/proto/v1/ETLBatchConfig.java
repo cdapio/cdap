@@ -17,7 +17,11 @@
 package co.cask.cdap.etl.proto.v1;
 
 import co.cask.cdap.api.Resources;
+import co.cask.cdap.etl.api.batch.BatchSink;
+import co.cask.cdap.etl.api.batch.BatchSource;
 import co.cask.cdap.etl.proto.Connection;
+import co.cask.cdap.etl.proto.UpgradeContext;
+import co.cask.cdap.etl.proto.UpgradeableConfig;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 
@@ -30,7 +34,8 @@ import javax.annotation.Nullable;
 /**
  * ETL Batch Configuration. Public constructors are deprecated. Use the builder instead.
  */
-public final class ETLBatchConfig extends ETLConfig {
+public final class ETLBatchConfig extends ETLConfig
+  implements UpgradeableConfig<co.cask.cdap.etl.proto.v2.ETLBatchConfig> {
 
   /**
    * Enum for the execution engine to use.
@@ -113,6 +118,21 @@ public final class ETLBatchConfig extends ETLConfig {
 
   public Resources getDriverResources() {
     return driverResources;
+  }
+
+  @Override
+  public boolean canUpgrade() {
+    return true;
+  }
+
+  @Override
+  public co.cask.cdap.etl.proto.v2.ETLBatchConfig upgrade(UpgradeContext upgradeContext) {
+    co.cask.cdap.etl.proto.v2.ETLBatchConfig.Builder builder =
+      co.cask.cdap.etl.proto.v2.ETLBatchConfig.builder(schedule)
+        .setEngine(co.cask.cdap.etl.proto.Engine.valueOf(getEngine().name()))
+        .setDriverResources(getDriverResources());
+
+    return upgradeBase(builder, upgradeContext, BatchSource.PLUGIN_TYPE, BatchSink.PLUGIN_TYPE).build();
   }
 
   @Override

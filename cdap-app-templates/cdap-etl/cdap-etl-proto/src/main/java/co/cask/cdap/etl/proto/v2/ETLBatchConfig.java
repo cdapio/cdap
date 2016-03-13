@@ -18,28 +18,22 @@ package co.cask.cdap.etl.proto.v2;
 
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.etl.proto.Connection;
+import co.cask.cdap.etl.proto.Engine;
+import co.cask.cdap.etl.proto.UpgradeableConfig;
 
-import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 
 /**
  * ETL Batch Configuration.
  */
 public final class ETLBatchConfig extends ETLConfig {
-
-  /**
-   * Enum for the execution engine to use.
-   */
-  public enum Engine {
-    MAPREDUCE, SPARK
-  }
-
   private final Engine engine;
   private final String schedule;
   private final Resources driverResources;
 
-  private ETLBatchConfig(List<ETLStage> stages,
-                         List<Connection> connections,
+  private ETLBatchConfig(Set<ETLStage> stages,
+                         Set<Connection> connections,
                          Resources resources,
                          boolean stageLoggingEnabled,
                          Engine engine,

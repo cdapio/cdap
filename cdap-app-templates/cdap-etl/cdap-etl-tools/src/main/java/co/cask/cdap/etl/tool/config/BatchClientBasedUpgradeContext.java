@@ -17,28 +17,16 @@
 package co.cask.cdap.etl.tool.config;
 
 import co.cask.cdap.client.ArtifactClient;
-import co.cask.cdap.etl.api.batch.BatchSink;
-import co.cask.cdap.etl.api.batch.BatchSource;
 import co.cask.cdap.etl.tool.ETLVersion;
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.proto.artifact.ArtifactSummary;
 
 /**
- * Uses an ArtifactClient to get the artifact for batch sources and sinks.
+ * Uses an ArtifactClient to get the artifact for a specific plugin.
  */
-public class BatchPluginArtifactFinder extends ClientBasedPluginArtifactFinder {
+public class BatchClientBasedUpgradeContext extends ClientBasedUpgradeContext {
 
-  public BatchPluginArtifactFinder(ArtifactClient artifactClient) {
-    super(artifactClient, Id.Artifact.from(Id.Namespace.DEFAULT, "cdap-etl-batch", ETLVersion.getVersion()));
+  public BatchClientBasedUpgradeContext(ArtifactClient artifactClient) {
+    super(artifactClient, Id.Artifact.from(Id.Namespace.SYSTEM, "cdap-etl-batch", ETLVersion.getVersion()));
   }
 
-  @Override
-  public ArtifactSummary getSourcePluginArtifact(String pluginName) {
-    return getArtifact(BatchSource.PLUGIN_TYPE, pluginName);
-  }
-
-  @Override
-  public ArtifactSummary getSinkPluginArtifact(String pluginName) {
-    return getArtifact(BatchSink.PLUGIN_TYPE, pluginName);
-  }
 }

@@ -78,7 +78,8 @@ public class PipelineSpecGeneratorTest {
   public void testUniqueStageNames() {
     ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
       .addStage(new ETLStage("source", MOCK_SOURCE))
-      .addStage(new ETLStage("sink", MOCK_SINK))
+      .addStage(new ETLStage("t1", MOCK_TRANSFORM_A))
+      .addStage(new ETLStage("t1", MOCK_TRANSFORM_B))
       .addStage(new ETLStage("sink", MOCK_SINK))
       .addConnection("source", "sink")
       .build();
