@@ -464,6 +464,11 @@ body.state-tracker-entity {
         width: 40%;
       }
     }
+
+    .complex-type {
+      cursor: pointer;
+      text-decoration: underline;
+    }
   }
 
   .entity-detail-properties-column {
@@ -558,4 +563,18 @@ body.state-tracker-help {
 /* Hide arrow */
 .tooltip.customClass .tooltip-arrow {
   display: none;
+}
+
+.popover.complex-schema {
+  .popover-content {
+    max-height: 450px;
+    overflow-y: auto;
+    padding: 10px;
+
+    .close-button {
+      position: absolute;
+      right: 15px;
+      top: 15px;
+    }
+  }
 }
