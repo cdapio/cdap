@@ -102,7 +102,7 @@ public class PipelineRegisterer {
                                                          .getPluginSelector(sourcePluginType, pluginName));
     if (source == null) {
       throw new IllegalArgumentException(String.format("No Plugin of type '%s' named '%s' was found.",
-                                                       Constants.Source.PLUGINTYPE,
+                                                       sourcePluginType,
                                                        sourceConfig.getPlugin().getName()));
     }
     // configure source, allowing it to add datasets, streams, etc
@@ -117,14 +117,14 @@ public class PipelineRegisterer {
 
       PluginProperties transformProperties = getPluginProperties(transformConfig);
       pluginName = transformConfig.getPlugin().getName();
-      Transform transformObj = configurer.usePlugin(Constants.Transform.PLUGINTYPE,
+      Transform transformObj = configurer.usePlugin(Transform.PLUGIN_TYPE,
                                                     pluginName,
                                                     transformId, transformProperties,
                                                     transformConfig.getPlugin()
-                                                      .getPluginSelector(Constants.Transform.PLUGINTYPE, pluginName));
+                                                      .getPluginSelector(Transform.PLUGIN_TYPE, pluginName));
       if (transformObj == null) {
         throw new IllegalArgumentException(String.format("No Plugin of type '%s' named '%s' was found",
-                                                         Constants.Transform.PLUGINTYPE,
+                                                         Transform.PLUGIN_TYPE,
                                                          transformConfig.getPlugin().getName()));
       }
       // if the transformation is configured to write filtered records to error dataset, we create that dataset.
@@ -163,7 +163,7 @@ public class PipelineRegisterer {
             "No Plugin of type '%s' named '%s' was found" +
               "Please check that an artifact containing the plugin exists, " +
               "and that it extends the etl application.",
-            Constants.Sink.PLUGINTYPE, sinkConfig.getPlugin().getName()));
+            sinkPluginType, sinkConfig.getPlugin().getName()));
       }
       // run configure pipeline on sink to let it add datasets, etc.
       PipelineConfigurer sinkConfigurer = new DefaultPipelineConfigurer(configurer, sinkPluginId);

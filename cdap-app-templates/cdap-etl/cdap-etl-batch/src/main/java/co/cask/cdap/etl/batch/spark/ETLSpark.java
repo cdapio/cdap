@@ -23,9 +23,10 @@ import co.cask.cdap.api.plugin.PluginContext;
 import co.cask.cdap.api.spark.AbstractSpark;
 import co.cask.cdap.api.spark.SparkContext;
 import co.cask.cdap.etl.api.batch.BatchConfigurable;
-import co.cask.cdap.etl.api.batch.BatchContext;
 import co.cask.cdap.etl.api.batch.BatchSinkContext;
 import co.cask.cdap.etl.api.batch.BatchSourceContext;
+import co.cask.cdap.etl.batch.CompositeFinisher;
+import co.cask.cdap.etl.batch.Finisher;
 import co.cask.cdap.etl.common.Constants;
 import co.cask.cdap.etl.common.DatasetContextLookupProvider;
 import co.cask.cdap.etl.common.PipelinePhase;
@@ -56,7 +57,7 @@ public class ETLSpark extends AbstractSpark {
 
   private final ETLBatchConfig config;
 
-  private List<Finisher> finishers;
+  private Finisher finisher;
   private List<File> cleanupFiles;
 
   public ETLSpark(ETLBatchConfig config) {
@@ -101,7 +102,7 @@ public class ETLSpark extends AbstractSpark {
   @Override
   public void beforeSubmit(SparkContext context) throws Exception {
     cleanupFiles = new ArrayList<>();
-    finishers = new ArrayList<>();
+    CompositeFinisher.Builder finishers = CompositeFinisher.builder();
 
     Map<String, String> properties = context.getSpecification().getProperties();
     PipelinePhase pipeline = GSON.fromJson(properties.get(Constants.PIPELINEID), PipelinePhase.class);
@@ -120,7 +121,7 @@ public class ETLSpark extends AbstractSpark {
       throw new IllegalArgumentException("No input was set. Please make sure the source plugin calls setInput when " +
                                            "preparing the run.");
     }
-    addFinisher(batchSource, sourceContext, finishers);
+    finishers.add(batchSource, sourceContext);
 
     SparkBatchSinkFactory sinkFactory = new SparkBatchSinkFactory();
     Set<StageInfo> sinkInfos = pipeline.getSinks();
@@ -128,7 +129,7 @@ public class ETLSpark extends AbstractSpark {
       BatchConfigurable<BatchSinkContext> batchSink = pluginContext.newPluginInstance(sinkInfo.getName());
       BatchSinkContext sinkContext = new SparkBatchSinkContext(sinkFactory, context, null, sinkInfo.getName());
       batchSink.prepareRun(sinkContext);
-      addFinisher(batchSink, sinkContext, finishers);
+      finishers.add(batchSink, sinkContext);
     }
 
     File configFile = File.createTempFile("ETLSpark", ".config");
@@ -138,14 +139,13 @@ public class ETLSpark extends AbstractSpark {
       sinkFactory.serialize(os);
     }
 
+    finisher = finishers.build();
     context.localize("ETLSpark.config", configFile.toURI());
   }
 
   @Override
   public void onFinish(boolean succeeded, SparkContext context) throws Exception {
-    for (Finisher finisher : finishers) {
-      finisher.onFinish(succeeded);
-    }
+    finisher.onFinish(succeeded);
     for (File file : cleanupFiles) {
       if (!file.delete()) {
         LOG.warn("Failed to clean up resource {} ", file);
@@ -153,17 +153,4 @@ public class ETLSpark extends AbstractSpark {
     }
   }
 
-  private <T extends BatchContext> void addFinisher(final BatchConfigurable<T> configurable,
-                                                    final T context, List<Finisher> finishers) {
-    finishers.add(new Finisher() {
-      @Override
-      public void onFinish(boolean succeeded) {
-        configurable.onRunFinish(succeeded, context);
-      }
-    });
-  }
-
-  private interface Finisher {
-    void onFinish(boolean succeeded);
-  }
 }

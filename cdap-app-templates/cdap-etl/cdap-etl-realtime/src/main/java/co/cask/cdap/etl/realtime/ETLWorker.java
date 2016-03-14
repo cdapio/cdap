@@ -86,6 +86,7 @@ public class ETLWorker extends AbstractWorker {
     Schema.Field.of(Constants.ErrorDataset.ERRMSG, Schema.unionOf(Schema.of(Schema.Type.STRING),
                                                                   Schema.of(Schema.Type.NULL))),
     Schema.Field.of(Constants.ErrorDataset.INVALIDENTRY, Schema.of(Schema.Type.STRING)));
+  private static final String UNIQUE_ID = "uniqueid";
 
   // only visible at configure time
   private final ETLRealtimeConfig config;
@@ -130,7 +131,7 @@ public class ETLWorker extends AbstractWorker {
     Map<String, String> properties = new HashMap<>();
     properties.put(Constants.PIPELINEID, GSON.toJson(pipeline));
     // Generate unique id for this app creation.
-    properties.put(Constants.Realtime.UNIQUE_ID, String.valueOf(System.currentTimeMillis()));
+    properties.put(UNIQUE_ID, String.valueOf(System.currentTimeMillis()));
     properties.put(Constants.STAGE_LOGGING_ENABLED, String.valueOf(config.isStageLoggingEnabled()));
     setProperties(properties);
   }
@@ -145,9 +146,9 @@ public class ETLWorker extends AbstractWorker {
     Map<String, String> properties = context.getSpecification().getProperties();
     appName = context.getApplicationSpecification().getName();
     Preconditions.checkArgument(properties.containsKey(Constants.PIPELINEID));
-    Preconditions.checkArgument(properties.containsKey(Constants.Realtime.UNIQUE_ID));
+    Preconditions.checkArgument(properties.containsKey(UNIQUE_ID));
 
-    String uniqueId = properties.get(Constants.Realtime.UNIQUE_ID);
+    String uniqueId = properties.get(UNIQUE_ID);
 
     // Each worker instance should have its own unique state.
     final String appName = context.getApplicationSpecification().getName();
