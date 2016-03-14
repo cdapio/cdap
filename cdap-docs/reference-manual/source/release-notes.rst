@@ -23,6 +23,143 @@ Cask Data Application Platform Release Notes
    :backlinks: none
    :depth: 2
 
+
+`Release 3.4.0 <http://docs.cask.co/cdap/3.4.0/index.html>`__
+=============================================================
+
+New Features
+------------
+- `CDAP-9999 <https://issues.cask.co/browse/CDAP-9999>`__ - Added...
+
+
+Improvements
+------------
+- `CDAP-9999 <https://issues.cask.co/browse/CDAP-9999>`__ - Added...
+
+
+Bug Fixes
+---------
+- `CDAP-9999 <https://issues.cask.co/browse/CDAP-9999>`__ - Fixed a problem with...
+
+
+API Changes
+-----------
+- `CDAP-9999 <https://issues.cask.co/browse/CDAP-9999>`__ - Added...
+
+
+Deprecated and Removed Features
+-------------------------------
+- See the :ref:`CDAP 3.4.0 Javadocs <javadocs>` for a list of deprecated and removed APIs.
+- `CDAP-9999 <https://issues.cask.co/browse/CDAP-9999>`__ - Added...
+
+
+.. _known-issues-340:
+
+Known Issues
+------------
+
+- After upgrading CDAP from a pre-3.0 version, any unprocessed metrics data in Kafka will
+  be lost and *WARN* log messages will be logged that tell about the inability to process
+  old data in the old format.
+
+- `CDAP-797 <https://issues.cask.co/browse/CDAP-797>`__ - 
+  When running secure Hadoop clusters, debug logs from MapReduce programs are not
+  available.
+
+- `CDAP-1007 <https://issues.cask.co/browse/CDAP-1007>`__ -
+  If the Hive Metastore is restarted while the CDAP Explore Service is running, the
+  Explore Service remains alive, but becomes unusable. To correct, restart the CDAP Master
+  |---| which will restart all services |---| as described under "Starting CDAP Services"
+  for your particular Hadoop distribution in the :ref:`Installation documentation <installation-index>`.
+
+- `CDAP-1587 <https://issues.cask.co/browse/CDAP-1587>`__ - 
+  User datasets with names starting with ``"system"`` can potentially cause conflicts.
+
+- `CDAP-2632 <https://issues.cask.co/browse/CDAP-2632>`__ -
+  The application in the `cdap-kafka-ingest-guide 
+  <https://github.com/cdap-guides/cdap-kafka-ingest-guide/tree/release/cdap-3.0-compatible>`__ 
+  does not run on Ubuntu 14.x as of CDAP 3.0.x.
+
+- `CDAP-2721 <https://issues.cask.co/browse/CDAP-2721>`__ -
+  Metrics for :ref:`TimePartitionedFileSets <datasets-timepartitioned-fileset>` can show 
+  zero values even if there is data present.
+  
+- `CDAP-2831 <https://issues.cask.co/browse/CDAP-2831>`__ -
+  A workflow that is scheduled by time will not be run between the failure of the primary
+  master and the time that the secondary takes over. This scheduled run will not be
+  triggered at all. There is no warnings or messages about the missed run of the
+  workflow.
+
+- `CDAP-2945 <https://issues.cask.co/browse/CDAP-2945>`__ -
+  There is a problem in the PartitionedFileSet causing MapReduce to fail if the input
+  partition filter does not match any partitions.
+
+- `CDAP-3000 <https://issues.cask.co/browse/CDAP-3000>`__ -
+  There is a problem with the Workflow token being in inconsistent state for nodes in a
+  fork while the fork is still running. It becomes consistent after the join.
+
+- `CDAP-3221 <https://issues.cask.co/browse/CDAP-3221>`__ -
+  There is a problem when running Standalone mode: if an adapter is configured incorrectly
+  such that it leads to a MapReduce job to fail repeatedly, then the SDK hits an OOM exception due to perm gen.
+  The Standalone needs restarting at this point.
+
+- `CDAP-3262 <https://issues.cask.co/browse/CDAP-3262>`__ -
+  There is a problem under Microsoft Windows and using the CDAP Standalone scripts when  
+  JAVA_HOME is defined as a path with spaces in it. A workaround is to use a definition of 
+  JAVA_HOME that does not include spaces.
+
+- `CDAP-3492 <https://issues.cask.co/browse/CDAP-3492>`__ -
+  In CDAP-CLI, executing 'select \*' from a dataset with many fields generates an error.
+  
+- `CDAP-3641 <https://issues.cask.co/browse/CDAP-3641>`__ -
+  WorkflowStatsSLAHttpHandler hangs if units not provided.
+
+- `CDAP-3697 <https://issues.cask.co/browse/CDAP-3697>`__ -
+  CDAP Explore is broken on secure CDH 5.1.
+  
+- `CDAP-3698 <https://issues.cask.co/browse/CDAP-3698>`__ -
+  CDAP Explore is unable to get a delegation token while fetching next results on HDP2.0.
+  
+- `CDAP-3750 <https://issues.cask.co/browse/CDAP-3750>`__ -
+  If a table schema contains a field name that is a reserved word in Hive DDL, 'enable explore' fails.
+
+
+`Release 3.3.2 <http://docs.cask.co/cdap/3.3.2/index.html>`__
+=============================================================
+
+Improvements
+------------
+- `CDAP-5047 <https://issues.cask.co/browse/CDAP-5047>`__ - Added a :ref:`Batch Source
+  Plugin <cdap-apps-etl-plugins-batchsources>` to read from Microsoft Azure Blob Storage.
+
+- `CDAP-5134 <https://issues.cask.co/browse/CDAP-5134>`__ - Added support for CDH 5.6 to CDAP.
+
+Bug Fixes
+---------
+- `CDAP-4967 <https://issues.cask.co/browse/CDAP-4967>`__ - Fixed a schema-parsing bug
+  that prevented the use of schemas where a record is used both as a top-level field and
+  also used inside a different record field.
+
+- `CDAP-5019 <https://issues.cask.co/browse/CDAP-5019>`__ - Worked around two issues
+  (`SPARK-13441 <https://issues.apache.org/jira/browse/SPARK-13441>`__
+  and `YARN-4727 <https://issues.apache.org/jira/browse/YARN-4727>`__) that prevented
+  launching Spark jobs on Cloudera Data Hub clusters managed with Cloudera Manager 
+  when using Spark 1.4 or greater.
+
+- `CDAP-5063 <https://issues.cask.co/browse/CDAP-5063>`__ - Fixed a problem with 
+  the CDAP Master not starting when CDAP and the HiveServer2 services are running on the
+  same node in an Ambari cluster.
+
+- `CDAP-5076 <https://issues.cask.co/browse/CDAP-5076>`__ - Fixed a problem with the CDAP
+  CLI command "update app" that was parsing the application config incorrectly.
+  
+- `CDAP-5094 <https://issues.cask.co/browse/CDAP-5094>`__ - Fixed a problem where the explore
+  schema fileset property was being ignored unless an explore format was also present.
+
+- `CDAP-5137 <https://issues.cask.co/browse/CDAP-5137>`__ - Fix a problem with Spark jobs
+  not being submitted to the appropriate YARN scheduler queue set for the namespace.
+
+
 `Release 3.3.1 <http://docs.cask.co/cdap/3.3.1/index.html>`__
 =============================================================
 
