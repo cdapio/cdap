@@ -28,25 +28,17 @@ import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.mapreduce.MapReduceTaskContext;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.etl.api.InvalidEntry;
-import co.cask.cdap.etl.api.Transform;
 import co.cask.cdap.etl.api.batch.BatchConfigurable;
-import co.cask.cdap.etl.api.batch.BatchRuntimeContext;
-import co.cask.cdap.etl.api.batch.BatchSink;
 import co.cask.cdap.etl.api.batch.BatchSinkContext;
-import co.cask.cdap.etl.api.batch.BatchSource;
 import co.cask.cdap.etl.api.batch.BatchSourceContext;
+import co.cask.cdap.etl.batch.CompositeFinisher;
+import co.cask.cdap.etl.batch.Finisher;
 import co.cask.cdap.etl.batch.LoggedBatchConfigurable;
-import co.cask.cdap.etl.batch.LoggedBatchSink;
-import co.cask.cdap.etl.batch.LoggedBatchSource;
 import co.cask.cdap.etl.common.Constants;
 import co.cask.cdap.etl.common.DatasetContextLookupProvider;
-import co.cask.cdap.etl.common.DefaultEmitter;
-import co.cask.cdap.etl.common.DefaultStageMetrics;
 import co.cask.cdap.etl.common.Destroyables;
-import co.cask.cdap.etl.common.LoggedTransform;
 import co.cask.cdap.etl.common.PipelinePhase;
 import co.cask.cdap.etl.common.PipelineRegisterer;
-import co.cask.cdap.etl.common.TransformDetail;
 import co.cask.cdap.etl.common.TransformExecutor;
 import co.cask.cdap.etl.common.TransformResponse;
 import co.cask.cdap.etl.log.LogStageInjector;
@@ -55,7 +47,7 @@ import co.cask.cdap.etl.proto.v1.ETLBatchConfig;
 import co.cask.cdap.format.StructuredRecordStringConverter;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Sets;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import org.apache.avro.generic.GenericRecord;
@@ -72,11 +64,9 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -86,22 +76,9 @@ import java.util.Set;
 public class ETLMapReduce extends AbstractMapReduce {
   public static final String NAME = ETLMapReduce.class.getSimpleName();
   private static final Logger LOG = LoggerFactory.getLogger(ETLMapReduce.class);
-  private static final String SINK_OUTPUTS_KEY = "cdap.etl.sink.outputs";
-  private static final Type SINK_OUTPUTS_TYPE = new TypeToken<List<SinkOutput>>() { }.getType();
-  private static final Type RUNTIME_ARGS_TYPE = new TypeToken<Map<String, String>>() { }.getType();
-  private static final String RUNTIME_ARGS_KEY_PREFIX = "cdap.etl.runtime.args.";
-
-
   private static final Gson GSON = new Gson();
 
-  private static final org.apache.avro.Schema AVRO_ERROR_SCHEMA =
-    new org.apache.avro.Schema.Parser().parse(Constants.ERROR_SCHEMA.toString());
-
-  private BatchConfigurable<BatchSourceContext> batchSource;
-  private MapReduceSourceContext sourceContext;
-
-  private Map<String, BatchConfigurable<BatchSinkContext>> batchSinks;
-  private Map<String, MapReduceSinkContext> sinkContexts;
+  private Finisher finisher;
 
   // injected by CDAP
   @SuppressWarnings("unused")
@@ -143,6 +120,13 @@ public class ETLMapReduce extends AbstractMapReduce {
       setDriverResources(driverResources);
     }
 
+    // following should never happen
+    Preconditions.checkNotNull(pipeline, "Pipeline is null");
+    Preconditions.checkNotNull(pipeline.getSinks(), "Sinks could not be found in program properties");
+    // empty transform list is created during pipeline register
+    Preconditions.checkNotNull(pipeline.getTransforms());
+    Preconditions.checkNotNull(pipeline.getConnections(), "Connections could not be found in program properties");
+
     // add source, sink, transform ids to the properties. These are needed at runtime to instantiate the plugins
     Map<String, String> properties = new HashMap<>();
     properties.put(Constants.PIPELINEID, GSON.toJson(pipeline));
@@ -155,126 +139,84 @@ public class ETLMapReduce extends AbstractMapReduce {
     if (Boolean.valueOf(context.getSpecification().getProperty(Constants.STAGE_LOGGING_ENABLED))) {
       LogStageInjector.start();
     }
+    CompositeFinisher.Builder finishers = CompositeFinisher.builder();
     Job job = context.getHadoopJob();
     Configuration hConf = job.getConfiguration();
 
+    // plugin name -> runtime args for that plugin
+    Map<String, Map<String, String>> runtimeArgs = new HashMap<>();
+
     Map<String, String> properties = context.getSpecification().getProperties();
     PipelinePhase pipeline = GSON.fromJson(properties.get(Constants.PIPELINEID), PipelinePhase.class);
-    // following should never happen
-    Preconditions.checkNotNull(pipeline, "Pipeline is null");
-    Preconditions.checkNotNull(pipeline.getSinks(), "Sinks could not be found in program properties");
-    // empty transform list is created during pipeline register
-    Preconditions.checkNotNull(pipeline.getTransforms());
-    Preconditions.checkNotNull(pipeline.getConnections(), "Connections could not be found in program properties");
-
     String sourcePluginId = pipeline.getSource().getName();
 
-    batchSource = context.newPluginInstance(sourcePluginId);
+    BatchConfigurable<BatchSourceContext> batchSource = context.newPluginInstance(sourcePluginId);
     batchSource = new LoggedBatchConfigurable<>(sourcePluginId, batchSource);
-    sourceContext = new MapReduceSourceContext(context, mrMetrics, new DatasetContextLookupProvider(context),
-                                               sourcePluginId, context.getRuntimeArguments());
+    BatchSourceContext sourceContext = new MapReduceSourceContext(context, mrMetrics,
+                                                                  new DatasetContextLookupProvider(context),
+                                                                  sourcePluginId, context.getRuntimeArguments());
     batchSource.prepareRun(sourceContext);
+    runtimeArgs.put(sourcePluginId, sourceContext.getRuntimeArguments());
+    finishers.add(batchSource, sourceContext);
 
-    hConf.set(RUNTIME_ARGS_KEY_PREFIX + sourcePluginId,
-              GSON.toJson(sourceContext.getRuntimeArguments(), RUNTIME_ARGS_TYPE));
+    Map<String, SinkOutput> sinkOutputs = new HashMap<>();
 
-
-    Set<StageInfo> transformInfos = pipeline.getTransforms();
-
-    // setup time partition for each error dataset
-    for (StageInfo transformInfo : transformInfos) {
-      if (transformInfo.getErrorDatasetName() != null) {
-        addPropertiesToErrorDataset(transformInfo.getErrorDatasetName(), context);
-      }
-    }
-
-    List<SinkOutput> sinkOutputs = new ArrayList<>();
-
-    Set<StageInfo> sinkInfos = pipeline.getSinks();
-    batchSinks = new HashMap<>(sinkInfos.size());
-    sinkContexts = new HashMap<>(sinkInfos.size());
-    for (StageInfo sinkInfo : sinkInfos) {
-      BatchConfigurable<BatchSinkContext> batchSink = context.newPluginInstance(sinkInfo.getName());
-      batchSink = new LoggedBatchConfigurable<>(sinkInfo.getName(), batchSink);
+    for (StageInfo sinkInfo : pipeline.getSinks()) {
+      String sinkName = sinkInfo.getName();
+      BatchConfigurable<BatchSinkContext> batchSink = context.newPluginInstance(sinkName);
+      batchSink = new LoggedBatchConfigurable<>(sinkName, batchSink);
       MapReduceSinkContext sinkContext = new MapReduceSinkContext(context, mrMetrics,
                                                                   new DatasetContextLookupProvider(context),
-                                                                  sinkInfo.getName(), context.getRuntimeArguments());
-      sinkContexts.put(sinkInfo.getName(), sinkContext);
-      batchSinks.put(sinkInfo.getName(), batchSink);
-
+                                                                  sinkName, context.getRuntimeArguments());
       batchSink.prepareRun(sinkContext);
-      sinkOutputs.add(new SinkOutput(sinkInfo.getName(), sinkContext.getOutputNames(),
-                                     sinkInfo.getErrorDatasetName()));
-
-      if (sinkInfo.getErrorDatasetName() != null) {
-        addPropertiesToErrorDataset(sinkInfo.getErrorDatasetName(), context);
-      }
-      hConf.set(RUNTIME_ARGS_KEY_PREFIX + sinkInfo.getName(),
-                GSON.toJson(sinkContext.getRuntimeArguments(), RUNTIME_ARGS_TYPE));
+      runtimeArgs.put(sinkName, sinkContext.getRuntimeArguments());
+      finishers.add(batchSink, sinkContext);
+      sinkOutputs.put(sinkName, new SinkOutput(sinkContext.getOutputNames(), sinkInfo.getErrorDatasetName()));
     }
-    hConf.set(SINK_OUTPUTS_KEY, GSON.toJson(sinkOutputs));
+    finisher = finishers.build();
+    hConf.set(ETLMapper.SINK_OUTPUTS_KEY, GSON.toJson(sinkOutputs));
+
+    // setup time partition for each error dataset
+    for (StageInfo stageInfo : Sets.union(pipeline.getTransforms(), pipeline.getSinks())) {
+      if (stageInfo.getErrorDatasetName() != null) {
+        Map<String, String> args = new HashMap<>();
+        args.put(FileSetProperties.OUTPUT_PROPERTIES_PREFIX + "avro.schema.output.key",
+                 Constants.ERROR_SCHEMA.toString());
+        TimePartitionedFileSetArguments.setOutputPartitionTime(args, context.getLogicalStartTime());
+        context.addOutput(stageInfo.getErrorDatasetName(), args);
+      }
+    }
 
     job.setMapperClass(ETLMapper.class);
     job.setNumReduceTasks(0);
-  }
 
-  private void addPropertiesToErrorDataset(String errorDatasetName, MapReduceContext context) {
-    Map<String, String> args = new HashMap<>();
-    args.put(FileSetProperties.OUTPUT_PROPERTIES_PREFIX + "avro.schema.output.key",
-             Constants.ERROR_SCHEMA.toString());
-    TimePartitionedFileSetArguments.setOutputPartitionTime(args, context.getLogicalStartTime());
-    context.addOutput(errorDatasetName, args);
+    hConf.set(ETLMapper.RUNTIME_ARGS_KEY, GSON.toJson(runtimeArgs));
   }
 
   @Override
   public void onFinish(boolean succeeded, MapReduceContext context) throws Exception {
-    onRunFinishSource(succeeded);
-    onRunFinishSinks(context, succeeded);
+    finisher.onFinish(succeeded);
     LOG.info("Batch Run finished : succeeded = {}", succeeded);
-  }
-
-
-  private void onRunFinishSource(boolean succeeded) {
-
-    LOG.info("On RunFinish Source : {}", batchSource.getClass().getName());
-    try {
-      batchSource.onRunFinish(succeeded, sourceContext);
-    } catch (Throwable t) {
-      LOG.warn("Exception when calling onRunFinish on {}", batchSource, t);
-    }
-  }
-
-
-  private void onRunFinishSinks(MapReduceContext context, boolean succeeded) {
-    String pipelineStr = context.getSpecification().getProperty(Constants.PIPELINEID);
-    // should never happen
-    Preconditions.checkNotNull(pipelineStr, "pipeline could not be found in program properties.");
-
-    Set<StageInfo> sinkInfos = GSON.fromJson(pipelineStr, PipelinePhase.class).getSinks();
-    for (StageInfo sinkInfo : sinkInfos) {
-      BatchConfigurable<BatchSinkContext> batchSink = batchSinks.get(sinkInfo.getName());
-      MapReduceSinkContext sinkContext = sinkContexts.get(sinkInfo.getName());
-      try {
-        batchSink.onRunFinish(succeeded, sinkContext);
-      } catch (Throwable t) {
-        LOG.warn("Exception when calling onRunFinish on {}", batchSink, t);
-      }
-    }
   }
 
   /**
    * Mapper Driver for ETL Transforms.
    */
   public static class ETLMapper extends Mapper implements ProgramLifecycle<MapReduceTaskContext<Object, Object>> {
+    public static final String RUNTIME_ARGS_KEY = "cdap.etl.runtime.args";
+    public static final String SINK_OUTPUTS_KEY = "cdap.etl.sink.outputs";
+    private static final Type RUNTIME_ARGS_TYPE = new TypeToken<Map<String, Map<String, String>>>() { }.getType();
+    private static final Type SINK_OUTPUTS_TYPE = new TypeToken<Map<String, SinkOutput>>() { }.getType();
     private static final Logger LOG = LoggerFactory.getLogger(ETLMapper.class);
     private static final Gson GSON = new Gson();
+
     private Set<String> transformsWithoutErrorDataset;
 
-    private TransformExecutor<KeyValue> transformExecutor;
+    private TransformExecutor<KeyValue<Object, Object>> transformExecutor;
     // injected by CDAP
     @SuppressWarnings("unused")
     private Metrics mapperMetrics;
-    private Map<String, WrappedSink<Object, Object, Object>> sinks;
+    private SinkWriter<Object, Object> sinkWriter;
     private Map<String, ErrorSink<Object, Object>> transformErrorSinkMap;
 
     @Override
@@ -288,74 +230,33 @@ public class ETLMapReduce extends AbstractMapReduce {
       // get the list of sinks, and the names of the outputs each sink writes to
       Context hadoopContext = context.getHadoopContext();
       Configuration hConf = hadoopContext.getConfiguration();
+      transformsWithoutErrorDataset = new HashSet<>();
 
       PipelinePhase pipeline = GSON.fromJson(properties.get(Constants.PIPELINEID), PipelinePhase.class);
-      // following should never happen
-      Preconditions.checkNotNull(pipeline, "Pipeline is null");
-      Preconditions.checkNotNull(pipeline.getSinks(), "Sinks could not be found in program properties");
-      // empty transform list is created during pipeline register
-      Preconditions.checkNotNull(pipeline.getTransforms());
-      Preconditions.checkNotNull(pipeline.getConnections(), "Connections could not be found in program properties");
-
-      String sourcePluginId = pipeline.getSource().getName();
-      DefaultEmitter defaultEmitter = new DefaultEmitter(mapperMetrics);
-
-      Set<StageInfo> transformInfos = pipeline.getTransforms();
-      Map<String, Set<String>> connectionsMap = pipeline.getConnections();
-      Map<String, TransformDetail> transformations = new HashMap<>();
-
-      BatchSource source = context.newPluginInstance(sourcePluginId);
-      source = new LoggedBatchSource(sourcePluginId, source);
-      BatchRuntimeContext runtimeContext = new MapReduceRuntimeContext(
-        context, mapperMetrics, new DatasetContextLookupProvider(context), sourcePluginId,
-        GSON.<Map<String, String>>fromJson(hConf.get(RUNTIME_ARGS_KEY_PREFIX + sourcePluginId), RUNTIME_ARGS_TYPE));
-      source.initialize(runtimeContext);
-      transformations.put(sourcePluginId,
-                          new TransformDetail(source, new DefaultStageMetrics(mapperMetrics, sourcePluginId),
-                                              connectionsMap.get(sourcePluginId)));
+      Map<String, Map<String, String>> runtimeArgs = GSON.fromJson(hConf.get(RUNTIME_ARGS_KEY), RUNTIME_ARGS_TYPE);
+      MapReduceTransformExecutorFactory<KeyValue<Object, Object>> transformExecutorFactory =
+        new MapReduceTransformExecutorFactory<>(context, mapperMetrics, context.getLogicalStartTime(), runtimeArgs);
+      transformExecutor = transformExecutorFactory.create(pipeline);
 
       transformErrorSinkMap = new HashMap<>();
-      transformsWithoutErrorDataset = new HashSet<>();
-      addTransforms(transformations, connectionsMap, transformInfos, context);
+      for (StageInfo transformInfo : pipeline.getTransforms()) {
+        String errorDatasetName = transformInfo.getErrorDatasetName();
+        if (errorDatasetName != null) {
+          transformErrorSinkMap.put(transformInfo.getName(), new ErrorSink<>(context, errorDatasetName));
+        }
+      }
 
       String sinkOutputsStr = hadoopContext.getConfiguration().get(SINK_OUTPUTS_KEY);
       // should never happen, this is set in beforeSubmit
       Preconditions.checkNotNull(sinkOutputsStr, "Sink outputs not found in Hadoop conf.");
+      Map<String, SinkOutput> sinkOutputs = GSON.fromJson(sinkOutputsStr, SINK_OUTPUTS_TYPE);
 
-      List<SinkOutput> sinkOutputs = GSON.fromJson(sinkOutputsStr, SINK_OUTPUTS_TYPE);
-
-      // should never happen, this is checked and set in beforeSubmit
-      Preconditions.checkArgument(!sinkOutputs.isEmpty(), "Sink outputs not found in Hadoop conf.");
-
-      boolean hasOneOutput = hasOneOutput(transformInfos, sinkOutputs);
-      sinks = new HashMap<>(sinkOutputs.size());
-      for (SinkOutput sinkOutput : sinkOutputs) {
-        String sinkPluginId = sinkOutput.getSinkPluginId();
-        Set<String> sinkOutputNames = sinkOutput.getSinkOutputs();
-
-        BatchSink<Object, Object, Object> sink = context.newPluginInstance(sinkPluginId);
-        sink = new LoggedBatchSink<>(sinkPluginId, sink);
-        runtimeContext = new MapReduceRuntimeContext(
-          context, mapperMetrics, new DatasetContextLookupProvider(context), sinkPluginId,
-          GSON.<Map<String, String>>fromJson(hConf.get(RUNTIME_ARGS_KEY_PREFIX + sinkPluginId), RUNTIME_ARGS_TYPE));
-        sink.initialize(runtimeContext);
-        if (hasOneOutput) {
-          sinks.put(sinkPluginId, new SingleOutputSink<>(sink, context));
-        } else {
-          sinks.put(sinkPluginId, new MultiOutputSink<>(sink, context, sinkOutputNames));
-        }
-        transformations.put(sinkPluginId,
-                            new TransformDetail(sink, new DefaultStageMetrics(mapperMetrics, sinkPluginId),
-                                                new HashSet<String>()));
-      }
-
-      transformExecutor = new TransformExecutor<>(transformations, ImmutableList.of(sourcePluginId));
-
+      sinkWriter = hasOneOutput(pipeline.getTransforms(), sinkOutputs) ?
+        new SingleOutputWriter<>(context) : new MultiOutputWriter<>(context, sinkOutputs);
     }
 
-
     // this is needed because we need to write to the context differently depending on the number of outputs
-    private boolean hasOneOutput(Set<StageInfo> transformInfos, List<SinkOutput> sinkOutputs) {
+    private boolean hasOneOutput(Set<StageInfo> transformInfos, Map<String, SinkOutput> sinkOutputs) {
       // if there are any error datasets, we know we have at least one sink, and one error dataset
       for (StageInfo info : transformInfos) {
         if (info.getErrorDatasetName() != null) {
@@ -365,7 +266,7 @@ public class ETLMapReduce extends AbstractMapReduce {
       // if no error datasets, check if we have more than one sink
       Set<String> allOutputs = new HashSet<>();
 
-      for (SinkOutput sinkOutput : sinkOutputs) {
+      for (SinkOutput sinkOutput : sinkOutputs.values()) {
         if (sinkOutput.getErrorDatasetName() != null) {
           return false;
         }
@@ -374,39 +275,14 @@ public class ETLMapReduce extends AbstractMapReduce {
       return allOutputs.size() == 1;
     }
 
-    private void addTransforms(Map<String, TransformDetail> pipeline,
-                               Map<String, Set<String>> connectionsMap,
-                               Set<StageInfo> transformInfos,
-                               MapReduceTaskContext context) throws Exception {
-
-      for (StageInfo transformInfo : transformInfos) {
-        String transformId = transformInfo.getName();
-        Transform<?, ?> transform = context.newPluginInstance(transformId);
-        transform = new LoggedTransform<>(transformId, transform);
-        BatchRuntimeContext transformContext = new MapReduceRuntimeContext(
-          context, mapperMetrics, new DatasetContextLookupProvider(context), transformId,
-          context.getRuntimeArguments());
-        LOG.debug("Transform Class : {}", transform.getClass().getName());
-        transform.initialize(transformContext);
-        pipeline.put(transformId,
-                     new TransformDetail(transform, new DefaultStageMetrics(mapperMetrics, transformId),
-                                         connectionsMap.get(transformId)));
-        if (transformInfo.getErrorDatasetName() != null) {
-          transformErrorSinkMap.put(transformId,
-                                    new ErrorSink<>(context, transformInfo.getErrorDatasetName()));
-        }
-      }
-    }
-
     @Override
     public void map(Object key, Object value, Context context) throws IOException, InterruptedException {
       try {
         KeyValue<Object, Object> input = new KeyValue<>(key, value);
         TransformResponse transformResponse = transformExecutor.runOneIteration(input);
         for (Map.Entry<String, Collection<Object>> transformedEntry : transformResponse.getSinksResults().entrySet()) {
-          WrappedSink<Object, Object, Object> sink = sinks.get(transformedEntry.getKey());
           for (Object transformedRecord : transformedEntry.getValue()) {
-            sink.write((KeyValue<Object, Object>) transformedRecord);
+            sinkWriter.write(transformedEntry.getKey(), (KeyValue<Object, Object>) transformedRecord);
           }
         }
 
@@ -435,18 +311,15 @@ public class ETLMapReduce extends AbstractMapReduce {
 
     @Override
     public void destroy() {
-      // BatchSource implements Transform, hence is inside the transformExecutor as well
+      // BatchSource and BatchSink both implement Transform, hence are inside the transformExecutor as well
       Destroyables.destroyQuietly(transformExecutor);
-      // Cleanup BatchSinks separately, since they are not part of the transformExecutor
-      LOG.debug("Number of sinks to destroy: {}", sinks.size());
-      for (WrappedSink<Object, Object, Object> sink : sinks.values()) {
-        LOG.trace("Destroying sink: {}", sink.sink);
-        Destroyables.destroyQuietly(sink.sink);
-      }
     }
+
   }
 
   private static class ErrorSink<KEY_OUT, VAL_OUT> {
+    private static final org.apache.avro.Schema AVRO_ERROR_SCHEMA =
+      new org.apache.avro.Schema.Parser().parse(Constants.ERROR_SCHEMA.toString());
     private final MapReduceTaskContext<KEY_OUT, VAL_OUT> context;
     private final String errorDatasetName;
 
@@ -461,98 +334,71 @@ public class ETLMapReduce extends AbstractMapReduce {
                       NullWritable.get());
       }
     }
+
+    private GenericRecord getGenericRecordForInvalidEntry(InvalidEntry invalidEntry) {
+      GenericRecordBuilder recordBuilder = new GenericRecordBuilder(AVRO_ERROR_SCHEMA);
+      recordBuilder.set(Constants.ErrorDataset.ERRCODE, invalidEntry.getErrorCode());
+      recordBuilder.set(Constants.ErrorDataset.ERRMSG, invalidEntry.getErrorMsg());
+
+      String errorMsg;
+      if (invalidEntry.getInvalidRecord() instanceof StructuredRecord) {
+        StructuredRecord record = (StructuredRecord) invalidEntry.getInvalidRecord();
+        try {
+          errorMsg = StructuredRecordStringConverter.toJsonString(record);
+        } catch (IOException e) {
+          errorMsg = "Exception while converting StructuredRecord to String, " + e.getCause();
+        }
+      } else {
+        errorMsg = String.format("Error Entry is of type %s, only a record of type %s is supported currently",
+                                 invalidEntry.getInvalidRecord().getClass().getName(),
+                                 StructuredRecord.class.getName());
+      }
+      recordBuilder.set(Constants.ErrorDataset.INVALIDENTRY, errorMsg);
+      return recordBuilder.build();
+    }
   }
 
   // wrapper around sinks to help writing sink output to the correct named output
-  private abstract static class WrappedSink<IN, KEY_OUT, VAL_OUT> {
-    protected final BatchSink<IN, KEY_OUT, VAL_OUT> sink;
+  // would not be needed if you could always do context.write(name, key, value)
+  // but if there is just one output, you must do context.write(key, value) instead of context.write(name, key, value)
+  // see CDAP-3628 for more detail
+  private abstract static class SinkWriter<KEY_OUT, VAL_OUT> {
     protected final MapReduceTaskContext<KEY_OUT, VAL_OUT> context;
 
-    protected WrappedSink(BatchSink<IN, KEY_OUT, VAL_OUT> sink,
-                          MapReduceTaskContext<KEY_OUT, VAL_OUT> context) {
-      this.sink = sink;
+    public SinkWriter(MapReduceTaskContext<KEY_OUT, VAL_OUT> context) {
       this.context = context;
     }
 
-    protected abstract void write(KeyValue<KEY_OUT, VAL_OUT> output) throws Exception;
+    protected abstract void write(String sinkName, KeyValue<KEY_OUT, VAL_OUT> output) throws Exception;
   }
 
-  // need to write with a different method if there is only one output for the mapreduce
-  // TODO: remove if the fix to CDAP-3628 allows us to write using the same method
-  private static class SingleOutputSink<IN, KEY_OUT, VAL_OUT> extends WrappedSink<IN, KEY_OUT, VAL_OUT> {
+  // needed because we have to do context.write(key, value) if there is only one output.
+  // see CDAP-3628 for more detail
+  private static class SingleOutputWriter<KEY_OUT, VAL_OUT> extends SinkWriter<KEY_OUT, VAL_OUT> {
 
-    protected SingleOutputSink(BatchSink<IN, KEY_OUT, VAL_OUT> sink,
-                               MapReduceTaskContext<KEY_OUT, VAL_OUT> context) {
-      super(sink, context);
+    protected SingleOutputWriter(MapReduceTaskContext<KEY_OUT, VAL_OUT> context) {
+      super(context);
     }
 
-    public void write(KeyValue<KEY_OUT, VAL_OUT> output) throws Exception {
+    public void write(String sinkName, KeyValue<KEY_OUT, VAL_OUT> output) throws Exception {
       context.write(output.getKey(), output.getValue());
     }
   }
 
   // writes sink output to the correct named output
-  private static class MultiOutputSink<IN, KEY_OUT, VAL_OUT> extends WrappedSink<IN, KEY_OUT, VAL_OUT> {
-    private final Set<String> outputNames;
+  private static class MultiOutputWriter<KEY_OUT, VAL_OUT> extends SinkWriter<KEY_OUT, VAL_OUT> {
+    // sink name -> outputs for that sink
+    private final Map<String, SinkOutput> sinkOutputs;
 
-    private MultiOutputSink(BatchSink<IN, KEY_OUT, VAL_OUT> sink,
-                            MapReduceTaskContext<KEY_OUT, VAL_OUT> context,
-                            Set<String> outputNames) {
-      super(sink, context);
-      this.outputNames = outputNames;
+    public MultiOutputWriter(MapReduceTaskContext<KEY_OUT, VAL_OUT> context, Map<String, SinkOutput> sinkOutputs) {
+      super(context);
+      this.sinkOutputs = sinkOutputs;
     }
 
-    public void write(KeyValue<KEY_OUT, VAL_OUT> output) throws Exception {
-      for (String outputName : outputNames) {
+    public void write(String sinkName, KeyValue<KEY_OUT, VAL_OUT> output) throws Exception {
+      for (String outputName : sinkOutputs.get(sinkName).getSinkOutputs()) {
         context.write(outputName, output.getKey(), output.getValue());
       }
     }
-  }
-
-  private static GenericRecord getGenericRecordForInvalidEntry(InvalidEntry invalidEntry) {
-    GenericRecordBuilder recordBuilder = new GenericRecordBuilder(AVRO_ERROR_SCHEMA);
-    recordBuilder.set(Constants.ErrorDataset.ERRCODE, invalidEntry.getErrorCode());
-    recordBuilder.set(Constants.ErrorDataset.ERRMSG, invalidEntry.getErrorMsg());
-
-    String errorMsg;
-    if (invalidEntry.getInvalidRecord() instanceof StructuredRecord) {
-      StructuredRecord record = (StructuredRecord) invalidEntry.getInvalidRecord();
-      try {
-        errorMsg = StructuredRecordStringConverter.toJsonString(record);
-      } catch (IOException e) {
-        errorMsg = "Exception while converting StructuredRecord to String, " + e.getCause();
-      }
-    } else {
-      errorMsg = String.format("Error Entry is of type %s, only a record of type %s is supported currently",
-                               invalidEntry.getInvalidRecord().getClass().getName(),
-                               StructuredRecord.class.getName());
-    }
-    recordBuilder.set(Constants.ErrorDataset.INVALIDENTRY, errorMsg);
-    return recordBuilder.build();
-  }
-
-  private static class SinkOutput {
-    private String sinkPluginId;
-    private Set<String> sinkOutputs;
-    private String errorDatasetName;
-
-    private SinkOutput(String sinkPluginId, Set<String> sinkOutputs, String errorDatasetName) {
-      this.sinkPluginId = sinkPluginId;
-      this.sinkOutputs = sinkOutputs;
-      this.errorDatasetName = errorDatasetName;
-    }
-
-    public String getSinkPluginId() {
-      return sinkPluginId;
-    }
-
-    public Set<String> getSinkOutputs() {
-      return sinkOutputs;
-    }
-
-    public String getErrorDatasetName() {
-      return errorDatasetName;
-    }
-
   }
 }
