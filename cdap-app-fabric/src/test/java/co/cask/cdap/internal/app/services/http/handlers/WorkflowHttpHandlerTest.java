@@ -36,7 +36,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.gateway.handlers.WorkflowHttpHandler;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
-import co.cask.cdap.internal.dataset.DatasetCreationSpec;
+import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramStatus;
@@ -195,10 +195,10 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     return getVersionedAPIPath(path, Constants.Gateway.API_VERSION_3_TOKEN, workflowId.getNamespace());
   }
 
-  private Map<String, DatasetCreationSpec> getWorkflowLocalDatasets(ProgramId workflowId, String runId)
+  private Map<String, DatasetSpecificationSummary> getWorkflowLocalDatasets(ProgramId workflowId, String runId)
     throws Exception {
     HttpResponse response = doGet(getLocalDatasetPath(workflowId, runId));
-    return readResponse(response, new TypeToken<Map<String, DatasetCreationSpec>>() { }.getType());
+    return readResponse(response, new TypeToken<Map<String, DatasetSpecificationSummary>>() { }.getType());
   }
 
   private void deleteWorkflowLocalDatasets(ProgramId workflowId, String runId) throws Exception {
@@ -231,10 +231,12 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
 
     waitState(workflowId.toId(), ProgramStatus.STOPPED.name());
 
-    Map<String, DatasetCreationSpec> localDatasets = getWorkflowLocalDatasets(workflowId, runId);
+    Map<String, DatasetSpecificationSummary> localDatasets = getWorkflowLocalDatasets(workflowId, runId);
     Assert.assertEquals(2, localDatasets.size());
-    Assert.assertEquals("MyTable", localDatasets.get("MyTable." + runId).getInstanceName());
-    Assert.assertEquals("MyFile", localDatasets.get("MyFile." + runId).getInstanceName());
+    Assert.assertEquals("MyTable." + runId, localDatasets.get("MyTable." + runId).getName());
+    Assert.assertEquals("co.cask.cdap.api.dataset.lib.KeyValueTable", localDatasets.get("MyTable." + runId).getType());
+    Assert.assertEquals("MyFile." + runId, localDatasets.get("MyFile." + runId).getName());
+    Assert.assertEquals("co.cask.cdap.api.dataset.lib.FileSet", localDatasets.get("MyFile." + runId).getType());
 
     deleteWorkflowLocalDatasets(workflowId, runId);
 
@@ -259,7 +261,8 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     waitState(workflowId.toId(), ProgramStatus.STOPPED.name());
     localDatasets = getWorkflowLocalDatasets(workflowId, runId);
     Assert.assertEquals(1, localDatasets.size());
-    Assert.assertEquals("MyTable", localDatasets.get("MyTable." + runId).getInstanceName());
+    Assert.assertEquals("MyTable." + runId, localDatasets.get("MyTable." + runId).getName());
+    Assert.assertEquals("co.cask.cdap.api.dataset.lib.KeyValueTable", localDatasets.get("MyTable." + runId).getType());
     deleteWorkflowLocalDatasets(workflowId, runId);
 
     localDatasets = getWorkflowLocalDatasets(workflowId, runId);

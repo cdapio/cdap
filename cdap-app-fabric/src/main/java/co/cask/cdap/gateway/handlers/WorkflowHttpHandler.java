@@ -46,6 +46,7 @@ import co.cask.cdap.internal.app.runtime.schedule.SchedulerException;
 import co.cask.cdap.internal.app.services.ProgramLifecycleService;
 import co.cask.cdap.internal.app.services.PropertiesResolver;
 import co.cask.cdap.internal.dataset.DatasetCreationSpec;
+import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.ScheduledRuntime;
@@ -351,11 +352,14 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
                                        @PathParam("run-id") String runId)
     throws NotFoundException, DatasetManagementException {
     WorkflowSpecification workflowSpec = getWorkflowSpecForValidRun(namespaceId, applicationId, workflowId, runId);
-    Map<String, DatasetCreationSpec> localDatasets = new HashMap<>();
+    Map<String, DatasetSpecificationSummary> localDatasets = new HashMap<>();
     for (Map.Entry<String, DatasetCreationSpec> localDatasetEntry : workflowSpec.getLocalDatasetSpecs().entrySet()) {
       String mappedDatasetName = localDatasetEntry.getKey() + "." + runId;
+      String datasetType = localDatasetEntry.getValue().getTypeName();
+      Map<String, String> datasetProperties = localDatasetEntry.getValue().getProperties().getProperties();
       if (datasetFramework.hasInstance(Id.DatasetInstance.from(namespaceId, mappedDatasetName))) {
-        localDatasets.put(mappedDatasetName, localDatasetEntry.getValue());
+        localDatasets.put(mappedDatasetName, new DatasetSpecificationSummary(mappedDatasetName, datasetType,
+                                                                             datasetProperties));
       }
     }
 
@@ -407,13 +411,13 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
     ApplicationId appId = new ApplicationId(namespaceId, applicationId);
     ApplicationSpecification appSpec = store.getApplication(appId.toId());
     if (appSpec == null) {
-      throw new NotFoundException(appId);
+      throw new ApplicationNotFoundException(appId.toId());
     }
 
     WorkflowSpecification workflowSpec = appSpec.getWorkflows().get(workflowId);
     ProgramId programId = new ProgramId(namespaceId, applicationId, ProgramType.WORKFLOW, workflowId);
     if (workflowSpec == null) {
-      throw new NotFoundException(programId);
+      throw new ProgramNotFoundException(programId.toId());
     }
 
     if (store.getRun(programId.toId(), runId) == null) {
