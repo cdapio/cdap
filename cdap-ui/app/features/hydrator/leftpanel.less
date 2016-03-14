@@ -45,6 +45,16 @@ body.theme-cdap.state-hydrator-create {
       position: relative;
       .transition(all 0.2s ease);
     }
+    .left-panel {
+      select.form-control {
+        width: 87%;
+        margin-top: 10px;
+      }
+      my-side-panel {
+        display: block;
+        margin-top: 10px;
+      }
+    }
     &.expanded {
       width: 290px;
       .item .plugin-item {
@@ -95,7 +105,7 @@ body.theme-cdap.state-hydrator-create {
       }
     }
     .hydrator-filter {
-      padding: 20px 0 20px 10px;
+      padding: 0 0 0 5px;
       input {
         background-color: fade(@gray-dark, 25%);
         background-image: url('@{img-path}/hydrator_bg_pattern.png');
@@ -257,4 +267,5 @@ body.theme-cdap.state-hydrator-create {
       }
     }
   }
+
 }

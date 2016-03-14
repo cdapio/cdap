@@ -54,9 +54,6 @@ class TopPanelController{
   setMetadata(metadata) {
     this.state.metadata = metadata;
   }
-  setArtifact(artifact) {
-    this.state.artifact = artifact;
-  }
   setState() {
     this.state = {
       metadata: {

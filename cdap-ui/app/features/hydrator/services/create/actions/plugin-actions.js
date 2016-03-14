@@ -22,6 +22,15 @@ class PluginActionsFactory {
     this.GLOBALS = GLOBALS;
     this.mySettings = mySettings;
   }
+  fetchArtifacts(params) {
+    this.api
+        .fetchArtifacts(params)
+        .$promise
+        .then(
+          res => this.dispatcher.dispatch('onArtifactsFetch', res),
+          err => console.log('ERR: Fetching list of artifacts failed', err)
+        );
+  }
   fetchSources(params) {
     let type = this.GLOBALS.pluginTypes[params.pipelineType]['source'];
     params.extensionType = type;

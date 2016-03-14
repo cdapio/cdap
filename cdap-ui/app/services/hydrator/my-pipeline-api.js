@@ -20,7 +20,7 @@ angular.module(PKG.name + '.services')
         pipelinePath = '/namespaces/:namespace/apps/:pipeline',
 
         listPath = '/namespaces/:namespace/apps?artifactName=' + GLOBALS.etlBatch + ',' + GLOBALS.etlRealtime,
-
+        artifactsPath = '/namespaces/:namespace/artifacts?scope=SYSTEM',
         pluginFetchBase = '/namespaces/:namespace/artifacts/:pipelineType/versions/:version/extensions/:extensionType',
         pluginsFetchPath = pluginFetchBase + '?scope=system',
         pluginDetailFetch = pluginFetchBase + '/plugins/:pluginName?scope=system',
@@ -34,6 +34,7 @@ angular.module(PKG.name + '.services')
       },
       {
         save: myHelpers.getConfig('PUT', 'REQUEST', pipelinePath, false, {contentType: 'application/json'}),
+        fetchArtifacts: myHelpers.getConfig('GET', 'REQUEST', artifactsPath, true),
         fetchTemplates: myHelpers.getConfig('GET', 'REQUEST', templatePath, true),
         fetchSources: myHelpers.getConfig('GET', 'REQUEST', pluginsFetchPath, true),
         fetchSinks: myHelpers.getConfig('GET', 'REQUEST', pluginsFetchPath, true),

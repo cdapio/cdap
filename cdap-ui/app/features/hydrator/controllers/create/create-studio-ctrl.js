@@ -20,15 +20,6 @@ class HydratorCreateStudioController {
     // This is required because before we fireup the actions related to the store, the store has to be initialized to register for any events.
 
     this.LeftPanelActionsFactory = LeftPanelActionsFactory;
-
-    ConfigStore.setDefaults();
-    if ($stateParams.type) {
-      ConfigActionsFactory.setArtifact({
-        version: $rootScope.cdapVersion,
-        name: $stateParams.type,
-        scope: 'SYSTEM'
-      });
-    }
     this.isExpanded = LeftPanelStore.getState();
     LeftPanelStore.registerOnChangeListener( () => {
       this.isExpanded = LeftPanelStore.getState();
@@ -39,8 +30,7 @@ class HydratorCreateStudioController {
       NodeConfigStore.reset();
       ConsoleActionsFactory.resetMessages();
     });
-    // FIXME: This should essentially be moved to a scaffolding service that will do stuff for a state/view
-    NodeConfigStore.init();
+
     if (rConfig) {
       ConfigActionsFactory.initializeConfigStore(rConfig);
       let configJson = rConfig;
@@ -59,6 +49,8 @@ class HydratorCreateStudioController {
       }
 
       NodesActionsFactory.createGraphFromConfig(configJson.__ui__.nodes, configJson.config.connections, configJson.config.comments);
+    } else {
+      ConfigActionsFactory.initializeConfigStore({});
     }
   }
 

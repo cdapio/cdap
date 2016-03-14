@@ -15,7 +15,8 @@
  */
 
 class LeftPanelController {
-  constructor($scope, $stateParams, rVersion, GLOBALS, LeftPanelStore, LeftPanelActionsFactory, PluginActionsFactory, ConfigStore, ConfigActionsFactory, MyDAGFactory, NodesActionsFactory, NonStorePipelineErrorFactory, HydratorService) {
+  constructor($scope, $stateParams, rVersion, GLOBALS, LeftPanelStore, LeftPanelActionsFactory, PluginActionsFactory, ConfigStore, ConfigActionsFactory, MyDAGFactory, NodesActionsFactory, NonStorePipelineErrorFactory, HydratorService, $rootScope) {
+    this.$rootScope = $rootScope;
     this.$scope = $scope;
     this.$stateParams = $stateParams;
     this.LeftPanelStore = LeftPanelStore;
@@ -28,6 +29,7 @@ class LeftPanelController {
     this.NodesActionsFactory = NodesActionsFactory;
     this.NonStorePipelineErrorFactory = NonStorePipelineErrorFactory;
     this.HydratorService = HydratorService;
+    this.rVersion = rVersion;
 
     this.pluginTypes = [
       {
@@ -51,15 +53,29 @@ class LeftPanelController {
     this.sinksToVersionMap = {};
 
     this.LeftPanelStore.registerOnChangeListener(() => {
+      this.artifacts = this.LeftPanelStore.getArtifacts();
+      if (!this.selectedArtifact) {
+        this.selectedArtifact = this.artifacts[0];
+        this.ConfigActionsFactory.setArtifact(this.selectedArtifact);
+        console.log('selectedArticact', this.selectedArtifact);
+        this.onArtifactChange();
+        return;
+      }
       this.pluginTypes[0].plugins = this.LeftPanelStore.getSources();
       this.pluginTypes[1].plugins = this.LeftPanelStore.getTransforms();
       this.pluginTypes[2].plugins = this.LeftPanelStore.getSinks();
     });
 
+    this.PluginActionsFactory.fetchArtifacts({namespace: $stateParams.namespace});
+  }
+
+  onArtifactChange() {
+    console.log('On change selectedArticact', this.selectedArtifact);
+    this.ConfigActionsFactory.setArtifact(this.selectedArtifact);
     let params = {
       namespace: this.$stateParams.namespace,
-      pipelineType: ConfigStore.getArtifact().name,
-      version: rVersion.version,
+      pipelineType: this.ConfigStore.getArtifact().name,
+      version: this.rVersion.version,
       scope: this.$scope
     };
     this.PluginActionsFactory.fetchSources(params);
@@ -114,6 +130,6 @@ class LeftPanelController {
   }
 }
 
-LeftPanelController.$inject = ['$scope', '$stateParams', 'rVersion', 'GLOBALS', 'LeftPanelStore', 'LeftPanelActionsFactory', 'PluginActionsFactory', 'ConfigStore', 'ConfigActionsFactory', 'MyDAGFactory', 'NodesActionsFactory', 'NonStorePipelineErrorFactory', 'HydratorService'];
+LeftPanelController.$inject = ['$scope', '$stateParams', 'rVersion', 'GLOBALS', 'LeftPanelStore', 'LeftPanelActionsFactory', 'PluginActionsFactory', 'ConfigStore', 'ConfigActionsFactory', 'MyDAGFactory', 'NodesActionsFactory', 'NonStorePipelineErrorFactory', 'HydratorService', '$rootScope'];
 angular.module(PKG.name + '.feature.hydrator')
   .controller('LeftPanelController', LeftPanelController);

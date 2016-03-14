@@ -14,6 +14,12 @@
   the License.
 -->
 
+<select class="form-control center-block"
+        ng-change="LeftPanelController.onArtifactChange()"
+        ng-model="LeftPanelController.selectedArtifact"
+        ng-options="artifact as artifact.name for artifact in LeftPanelController.artifacts">
+</select>
+
 <my-side-panel
   data-panel-groups="LeftPanelController.pluginTypes"
 

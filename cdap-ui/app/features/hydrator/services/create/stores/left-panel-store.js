@@ -88,6 +88,7 @@ class LeftPanelStore {
     dispatcher.register('toggleLeftPanelState', this.togglePanelState.bind(this));
 
     let pluginsDispatcher = PluginsDispatcher.getDispatcher();
+    pluginsDispatcher.register('onArtifactsFetch', this.setArtifacts.bind(this));
     pluginsDispatcher.register('onSourcesFetch', this.setSources.bind(this));
     pluginsDispatcher.register('onTransformsFetch', this.setTransforms.bind(this));
     pluginsDispatcher.register('onSinksFetch', this.setSinks.bind(this));
@@ -97,6 +98,7 @@ class LeftPanelStore {
     this.state = {
       panelState: true,
       plugins: {},
+      artifacts: [],
       defaultArtifactMap: {},
       pluginTemplates: {
         source: [],
@@ -159,6 +161,15 @@ class LeftPanelStore {
     let sinks = angular.copy(this.state.plugins.sinks) || [];
     let templates = angular.copy(this.state.pluginTemplates.sink);
     return sinks.concat(templates);
+  }
+
+  setArtifacts(artifacts) {
+    this.state.artifacts = artifacts;
+    this.emitChange();
+  }
+  getArtifacts() {
+    let UISupportedArtifacts = ['cdap-etl-batch', 'cdap-etl-realtime'];
+    return this.state.artifacts.filter(artifact => UISupportedArtifacts.indexOf(artifact.name) !== -1);
   }
 
   checkAndUpdateDefaultVersion(pluginsList) {
