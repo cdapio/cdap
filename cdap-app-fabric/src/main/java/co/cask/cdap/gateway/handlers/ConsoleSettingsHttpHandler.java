@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,13 +17,14 @@
 package co.cask.cdap.gateway.handlers;
 
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.http.SecurityRequestContext;
 import co.cask.cdap.config.Config;
 import co.cask.cdap.config.ConfigNotFoundException;
 import co.cask.cdap.config.ConsoleSettingsStore;
+import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Charsets;
+import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -61,7 +62,7 @@ public class ConsoleSettingsHttpHandler extends AbstractHttpHandler {
   @Path("/")
   @GET
   public void get(HttpRequest request, HttpResponder responder) throws Exception {
-    String userId = SecurityRequestContext.getUserId().or("");
+    String userId = Objects.firstNonNull(SecurityRequestContext.getUserId(), "");
     Config userConfig;
     try {
       userConfig = store.get(userId);
@@ -81,7 +82,7 @@ public class ConsoleSettingsHttpHandler extends AbstractHttpHandler {
   @Path("/")
   @DELETE
   public void delete(HttpRequest request, HttpResponder responder) throws Exception {
-    String userId = SecurityRequestContext.getUserId().or("");
+    String userId = Objects.firstNonNull(SecurityRequestContext.getUserId(), "");
     try {
       store.delete(userId);
     } catch (ConfigNotFoundException e) {
@@ -104,7 +105,7 @@ public class ConsoleSettingsHttpHandler extends AbstractHttpHandler {
     //Config Properties : Map (Key = CONFIG_PROPERTY, Value = Serialized JSON string of properties)
     //User Settings configurations are stored under empty NAMESPACE.
     Map<String, String> propMap = ImmutableMap.of(CONFIG_PROPERTY, data);
-    String userId = SecurityRequestContext.getUserId().or("");
+    String userId = Objects.firstNonNull(SecurityRequestContext.getUserId(), "");
     Config userConfig = new Config(userId, propMap);
     store.put(userConfig);
     responder.sendStatus(HttpResponseStatus.OK);

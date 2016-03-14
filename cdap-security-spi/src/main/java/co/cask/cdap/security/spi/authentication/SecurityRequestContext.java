@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,9 +13,9 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.common.http;
+package co.cask.cdap.security.spi.authentication;
 
-import com.google.common.base.Optional;
+import javax.annotation.Nullable;
 
 /**
  * RequestContext that maintains a ThreadLocal with references to {@code AccessTokenIdentifier}.
@@ -28,21 +28,24 @@ public final class SecurityRequestContext {
   }
 
   /**
-   * @return the userId set on the current thread
+   * @return the userId set on the current thread or null if userId is not set
    */
-  public static Optional<String> getUserId() {
-    return Optional.fromNullable(userId.get());
+  @Nullable
+  public static String getUserId() {
+    return userId.get();
   }
 
   /**
-   * @return the userIP set on the current thread
+   * @return the userIP set on the current thread or null if userIP is not set
    */
-  public static Optional<String> getUserIP() {
-    return Optional.fromNullable(userIP.get());
+  @Nullable
+  public static String getUserIP() {
+    return userIP.get();
   }
 
   /**
    * Set the userId on the current thread.
+   *
    * @param userIdParam userId to be set
    */
   public static void setUserId(String userIdParam) {
@@ -51,6 +54,7 @@ public final class SecurityRequestContext {
 
   /**
    * Set the userIP on the current thread.
+   *
    * @param userIPParam userIP to be set
    */
   public static void setUserIP(String userIPParam) {

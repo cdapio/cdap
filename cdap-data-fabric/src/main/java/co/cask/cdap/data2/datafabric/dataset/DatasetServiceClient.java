@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -25,7 +25,6 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.EndpointStrategy;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
-import co.cask.cdap.common.http.SecurityRequestContext;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.data2.dataset2.ModuleConflictException;
 import co.cask.cdap.proto.DatasetInstanceConfiguration;
@@ -34,6 +33,7 @@ import co.cask.cdap.proto.DatasetModuleMeta;
 import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
 import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpRequestConfig;
@@ -327,8 +327,8 @@ class DatasetServiceClient {
   }
 
   private HttpRequest.Builder processBuilder(HttpRequest.Builder builder) {
-    if (SecurityRequestContext.getUserId().isPresent()) {
-      builder.addHeader(Constants.Security.Headers.USER_ID, SecurityRequestContext.getUserId().get());
+    if (SecurityRequestContext.getUserId() != null) {
+      builder.addHeader(Constants.Security.Headers.USER_ID, SecurityRequestContext.getUserId());
     }
     return builder;
   }
