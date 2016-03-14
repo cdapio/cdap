@@ -106,10 +106,11 @@ Please install Java 7 or 8 - other versions of Java are not supported."
 fi
 
 # Check Node.js installation
+NODE_VERSION_MINIMUM="v0.10.36"
 NODE_INSTALL_STATUS=$(program_is_installed node)
 if [ "x$NODE_INSTALL_STATUS" == "x1" ]; then
   die "Node.js is not installed
-Please install Node.js - we recommend any version of Node.js from v0.10.36 through v0.12.*"
+Please install Node.js: we recommend any version of Node.js starting with $NODE_VERSION_MINIMUM."
 fi
 
 # Check Node.js version
@@ -119,7 +120,7 @@ NODE_VERSION_MAJOR=`echo $NODE_VERSION | awk -F'[\\\.v]*' ' { print $2 } '`
 NODE_VERSION_MINOR=`echo $NODE_VERSION | awk -F'[\\\.v]*' ' { print $3 } '`
 NODE_VERSION_PATCH=`echo $NODE_VERSION | awk -F'[\\\.v]*' ' { print $4 } '`
 if [ "$NODE_VERSION_MAJOR" -lt 1 ] && [ "$NODE_VERSION_MINOR" -lt 11 ] && [ "$NODE_VERSION_PATCH" -lt 36 ]; then
-  die "ERROR: Node.js $NODE_VERSION is not supported. The minimum version supported is v0.10.36."
+  die "ERROR: Node.js $NODE_VERSION is not supported. The minimum version supported is $NODE_VERSION_MINIMUM."
 else
   echo "Node.js version: $NODE_VERSION"
 fi

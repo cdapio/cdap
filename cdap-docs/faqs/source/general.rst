@@ -38,7 +38,8 @@ in your environment; we recommend the Oracle JDK.
 
 What version of Node.js is required by CDAP?
 --------------------------------------------
-We recommend any version of `Node.js <https://nodejs.org/>`__ |node-js-version|.
+We recommend any version of `Node.js <https://nodejs.org/>`__ |node-js-min-version|.
+We support Node.js up to |node-js-max-version|.
 
 I have a Hadoop cluster in my data center, can I run CDAP that uses my Hadoop cluster?
 --------------------------------------------------------------------------------------

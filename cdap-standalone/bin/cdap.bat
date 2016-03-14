@@ -107,8 +107,10 @@ if NOT "%line%" == "7" (
 endlocal
 
 REM Check if Node.js is installed
+set nodejs_minimum=v0.10.36
 for %%x in (node.exe) do if [%%~$PATH:x]==[] (
-  echo Node.js Standalone CDAP requires Node.js but it's either not installed or not in path. Exiting. 1>&2
+  echo Standalone CDAP requires Node.js but it's either not installed or not in path. 1>&2
+  echo We recommend any version of Node.js starting with %nodejs_minimum%. Exiting. 1>&2
   GOTO :FINALLY
 )
 
@@ -121,7 +123,7 @@ set line=%line:v=!!%
 
 for /F "delims=.,v tokens=1,2,3" %%a in ('echo %line%') do (
   if %%a LSS 1 if %%b LSS 11 if %%c LSS 36 (
-    echo Node.js v%line% is not supported. We recommend any version of Node.js from v0.10.36 through v0.12.*.
+    echo Node.js v%line% is not supported. The minimum version supported is %nodejs_minimum%.
     GOTO :FINALLY
   ) else (
     echo Node.js version: v%line% 

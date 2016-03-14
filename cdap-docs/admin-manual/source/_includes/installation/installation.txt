@@ -3,10 +3,10 @@
 Node.js Installation
 --------------------
 Node.js must be installed on the node(s) where the CDAP UI service will run. We recommend
-any version of `Node.js <https://nodejs.org/>`__ |node-js-version|; in particular, we
-recommend |recommended_node_js_version|. You can download an appropriate version of
-Node.js from `nodejs.org <http://nodejs.org/dist/>`__. Detailed instructions on installing
-Node.js :ref:`are available <admin-manual-install-node.js>`.
+any version of `Node.js <https://nodejs.org/>`__ |node-js-min-version|. We support Node.js
+up to |node-js-max-version|. You can download an appropriate version of Node.js from
+`nodejs.org <http://nodejs.org/dist/>`__. Detailed instructions on installing Node.js
+:ref:`are available <admin-manual-install-node.js>`.
 
 .. _|distribution|-install-packaging:
 
