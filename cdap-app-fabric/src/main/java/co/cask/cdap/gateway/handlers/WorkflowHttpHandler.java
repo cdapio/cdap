@@ -353,13 +353,14 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
                                        @PathParam("run-id") String runId)
     throws NotFoundException, DatasetManagementException {
     WorkflowSpecification workflowSpec = getWorkflowSpecForValidRun(namespaceId, applicationId, workflowId, runId);
-    List<DatasetSpecificationSummary> localDatasetSummaries = new ArrayList<>();
+    Map<String, DatasetSpecificationSummary> localDatasetSummaries = new HashMap<>();
     for (Map.Entry<String, DatasetCreationSpec> localDatasetEntry : workflowSpec.getLocalDatasetSpecs().entrySet()) {
       String mappedDatasetName = localDatasetEntry.getKey() + "." + runId;
       String datasetType = localDatasetEntry.getValue().getTypeName();
       Map<String, String> datasetProperties = localDatasetEntry.getValue().getProperties().getProperties();
       if (datasetFramework.hasInstance(Id.DatasetInstance.from(namespaceId, mappedDatasetName))) {
-        localDatasetSummaries.add(new DatasetSpecificationSummary(mappedDatasetName, datasetType, datasetProperties));
+        localDatasetSummaries.put(localDatasetEntry.getKey(),
+                                  new DatasetSpecificationSummary(mappedDatasetName, datasetType, datasetProperties));
       }
     }
 
