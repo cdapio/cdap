@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,11 +15,8 @@
  */
 package co.cask.cdap.proto.codec;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.reflect.TypeParameter;
-import com.google.common.reflect.TypeToken;
+import co.cask.cdap.internal.guava.reflect.TypeParameter;
+import co.cask.cdap.internal.guava.reflect.TypeToken;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonElement;
@@ -27,6 +24,7 @@ import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
 
 import java.lang.reflect.Type;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -50,7 +48,7 @@ public abstract class AbstractSpecificationCodec<T> implements JsonSerializer<T>
                                                     Class<V> valueType) {
     Type type = new TypeToken<Map<String, V>>() { }.where(new TypeParameter<V>() { }, valueType).getType();
     Map<String, V> map = context.deserialize(json, type);
-    return map == null ? ImmutableMap.<String, V>of() : map;
+    return map == null ? Collections.<String, V>emptyMap() : map;
   }
 
   protected final <V> JsonElement serializeSet(Set<V> set, JsonSerializationContext context, Class<V> valueType) {
@@ -61,7 +59,7 @@ public abstract class AbstractSpecificationCodec<T> implements JsonSerializer<T>
   protected final <V> Set<V> deserializeSet(JsonElement json, JsonDeserializationContext context, Class<V> valueType) {
     Type type = new TypeToken<Set<V>>() { }.where(new TypeParameter<V>() { }, valueType).getType();
     Set<V> set = context.deserialize(json, type);
-    return set == null ? ImmutableSet.<V>of() : set;
+    return set == null ? Collections.<V>emptySet() : set;
   }
 
   protected final <V> JsonElement serializeList(List<V> list, JsonSerializationContext context, Class<V> valueType) {
@@ -73,6 +71,6 @@ public abstract class AbstractSpecificationCodec<T> implements JsonSerializer<T>
                                               JsonDeserializationContext context, Class<V> valueType) {
     Type type = new TypeToken<List<V>>() { }.where(new TypeParameter<V>() { }, valueType).getType();
     List<V> list = context.deserialize(json, type);
-    return list == null ? ImmutableList.<V>of() : list;
+    return list == null ? Collections.<V>emptyList() : list;
   }
 }

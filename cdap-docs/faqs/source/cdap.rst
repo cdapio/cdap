@@ -201,7 +201,7 @@ The CDAP Master log shows an error about the dataset service not being found.
 If you see an error such as::
 
     2015-05-15 12:15:53,028 - ERROR [heartbeats-scheduler:c.c.c.d.s.s.MDSStreamMetaStore$1@71] 
-    - Failed to access app.meta table co.cask.cdap.data2.dataset2.DatasetManagementException: 
+    - Failed to access app.meta table co.cask.cdap.api.dataset.DatasetManagementException:
     Cannot retrieve dataset instance app.meta info, details: Response code: 407, 
     message:'Proxy Authentication Required', 
     body: '<HTML><HEAD> <TITLE>Access Denied</TITLE> </HEAD>

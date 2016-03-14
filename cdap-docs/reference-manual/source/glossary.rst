@@ -114,6 +114,13 @@ Glossary
    CDAP Console
       See :term:`CDAP UI`.
 
+   CDAP CLI
+      See :term:`Command Line Interface`.
+
+   Command Line Interface
+      The :ref:`Command Line Interface (CLI) <cli>` provides methods to interact with CDAP
+      from within a shell, similar to the HBase or ``bash`` shells.
+
    Apache Spark
       See :term:`Spark Program <spark>`.
 

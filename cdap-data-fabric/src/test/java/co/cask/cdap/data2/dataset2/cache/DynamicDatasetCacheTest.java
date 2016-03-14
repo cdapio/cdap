@@ -16,11 +16,11 @@
 
 package co.cask.cdap.data2.dataset2.cache;
 
+import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetFrameworkTestUtil;
-import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.data2.dataset2.DynamicDatasetCache;
 import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.proto.Id;

@@ -35,6 +35,7 @@
     <module>cdap-etl-core</module>
     <module>cdap-etl-realtime</module>
     <module>cdap-etl-archetypes</module>
+    <module>cdap-etl-proto</module>
     <module>cdap-etl-tools</module>
   </modules>
 

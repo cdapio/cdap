@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,19 +16,22 @@
 
 package co.cask.cdap.proto.security;
 
+import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.proto.id.EntityId;
-import com.google.common.base.Preconditions;
 
 import java.util.Set;
 import javax.annotation.Nullable;
 
 /**
- * Request for revoking a user's permission to perform certain actions on an entity.
+ * Request for revoking a principal's permission to perform certain actions on an entity.
  */
+@Beta
 public class RevokeRequest extends AuthorizationRequest {
 
-  public RevokeRequest(EntityId entity, @Nullable String user, @Nullable Set<Action> actions) {
-    super(entity, user, actions);
-    Preconditions.checkArgument(actions == null || (user != null), "user is required when actions is provided");
+  public RevokeRequest(EntityId entity, @Nullable Principal principal, @Nullable Set<Action> actions) {
+    super(entity, principal, actions);
+    if (actions != null && principal == null) {
+      throw new IllegalArgumentException("Principal is required when actions is provided");
+    }
   }
 }

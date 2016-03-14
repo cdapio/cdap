@@ -17,12 +17,15 @@
 package co.cask.cdap.data2.metadata.store;
 
 import co.cask.cdap.api.dataset.DatasetDefinition;
+import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.lib.IndexedTableDefinition;
 import co.cask.cdap.data.runtime.DataSetsModules;
+import co.cask.cdap.data2.audit.AuditPublisher;
+import co.cask.cdap.data2.audit.AuditPublishers;
+import co.cask.cdap.data2.audit.payload.builder.MetadataPayloadBuilder;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.data2.metadata.dataset.Metadata;
 import co.cask.cdap.data2.metadata.dataset.MetadataDataset;
 import co.cask.cdap.data2.metadata.dataset.MetadataEntry;
@@ -30,6 +33,7 @@ import co.cask.cdap.data2.metadata.indexer.Indexer;
 import co.cask.cdap.data2.metadata.publisher.MetadataChangePublisher;
 import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.audit.AuditType;
 import co.cask.cdap.proto.metadata.MetadataChangeRecord;
 import co.cask.cdap.proto.metadata.MetadataRecord;
 import co.cask.cdap.proto.metadata.MetadataScope;
@@ -84,6 +88,7 @@ public class DefaultMetadataStore implements MetadataStore {
   private final TransactionExecutorFactory txExecutorFactory;
   private final DatasetFramework dsFramework;
   private final MetadataChangePublisher changePublisher;
+  private AuditPublisher auditPublisher;
 
   @Inject
   DefaultMetadataStore(TransactionExecutorFactory txExecutorFactory,
@@ -92,6 +97,13 @@ public class DefaultMetadataStore implements MetadataStore {
     this.txExecutorFactory = txExecutorFactory;
     this.dsFramework = dsFramework;
     this.changePublisher = changePublisher;
+  }
+
+
+  @SuppressWarnings("unused")
+  @Inject(optional = true)
+  public void setAuditPublisher(AuditPublisher auditPublisher) {
+    this.auditPublisher = auditPublisher;
   }
 
   @Override
@@ -423,6 +435,16 @@ public class DefaultMetadataStore implements MetadataStore {
     MetadataChangeRecord.MetadataDiffRecord diff = new MetadataChangeRecord.MetadataDiffRecord(additions, deletions);
     MetadataChangeRecord changeRecord = new MetadataChangeRecord(previous, diff, System.currentTimeMillis());
     changePublisher.publish(changeRecord);
+
+    publishAudit(previous, additions, deletions);
+  }
+
+  private void publishAudit(MetadataRecord previous, MetadataRecord additions, MetadataRecord deletions) {
+    MetadataPayloadBuilder builder = new MetadataPayloadBuilder();
+    builder.addPrevious(previous);
+    builder.addAdditions(additions);
+    builder.addDeletions(deletions);
+    AuditPublishers.publishAudit(auditPublisher, previous.getEntityId(), AuditType.METADATA_CHANGE, builder.build());
   }
 
   private <T> T execute(TransactionExecutor.Function<MetadataDataset, T> func, MetadataScope scope) {
@@ -432,9 +454,9 @@ public class DefaultMetadataStore implements MetadataStore {
   }
 
   private void execute(TransactionExecutor.Procedure<MetadataDataset> func, MetadataScope scope) {
-    MetadataDataset metadataScope = newMetadataDataset(scope);
-    TransactionExecutor txExecutor = Transactions.createTransactionExecutor(txExecutorFactory, metadataScope);
-    txExecutor.executeUnchecked(func, metadataScope);
+    MetadataDataset metadataDataset = newMetadataDataset(scope);
+    TransactionExecutor txExecutor = Transactions.createTransactionExecutor(txExecutorFactory, metadataDataset);
+    txExecutor.executeUnchecked(func, metadataDataset);
   }
 
   private MetadataDataset newMetadataDataset(MetadataScope scope) {

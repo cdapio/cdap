@@ -22,6 +22,7 @@ import co.cask.cdap.explore.client.ExploreClient;
 import co.cask.cdap.explore.client.ExploreExecutionResult;
 import co.cask.cdap.explore.client.SuppliedAddressExploreClient;
 import co.cask.cdap.proto.Id;
+import co.cask.common.http.HttpRequestConfig;
 import com.google.common.base.Supplier;
 import com.google.common.util.concurrent.ListenableFuture;
 
@@ -75,7 +76,12 @@ public class QueryClient {
       }
     };
 
-    exploreClient = new SuppliedAddressExploreClient(hostname, port, accessToken, sslEnabled, verifySSLCert);
+    exploreClient = new SuppliedAddressExploreClient(hostname, port, accessToken, sslEnabled, verifySSLCert) {
+      @Override
+      protected HttpRequestConfig getHttpRequestConfig() {
+        return config.getUploadRequestConfig();
+      }
+    };
   }
 
   /**

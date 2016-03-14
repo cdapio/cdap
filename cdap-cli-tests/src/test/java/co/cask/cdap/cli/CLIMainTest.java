@@ -36,7 +36,7 @@ import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.config.ConnectionConfig;
 import co.cask.cdap.common.DatasetTypeNotFoundException;
 import co.cask.cdap.common.ProgramNotFoundException;
-import co.cask.cdap.common.UnauthorizedException;
+import co.cask.cdap.common.UnauthenticatedException;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.internal.test.AppJarHelper;
 import co.cask.cdap.proto.DatasetTypeMeta;
@@ -283,9 +283,10 @@ public class CLIMainTest {
 
     DatasetTypeClient datasetTypeClient = new DatasetTypeClient(cliConfig.getClientConfig());
     DatasetTypeMeta datasetType = datasetTypeClient.list(Id.Namespace.DEFAULT).get(0);
-    testCommandOutputContains(cli, "create dataset instance " + datasetType.getName() + " " + datasetName,
+    testCommandOutputContains(cli, "create dataset instance " + datasetType.getName() + " " + datasetName + " \"a=1\"",
                               "Successfully created dataset");
     testCommandOutputContains(cli, "list dataset instances", FakeDataset.class.getSimpleName());
+    testCommandOutputContains(cli, "get dataset instance properties " + datasetName, "\"a\":\"1\"");
 
     NamespaceClient namespaceClient = new NamespaceClient(cliConfig.getClientConfig());
     Id.Namespace barspace = Id.Namespace.from("bar");
@@ -657,7 +658,7 @@ public class CLIMainTest {
   }
 
   protected void assertProgramStatus(ProgramClient programClient, Id.Program programId, String programStatus, int tries)
-    throws IOException, ProgramNotFoundException, UnauthorizedException {
+    throws IOException, ProgramNotFoundException, UnauthenticatedException {
 
     String status;
     int numTries = 0;
@@ -674,7 +675,7 @@ public class CLIMainTest {
   }
 
   protected void assertProgramStatus(ProgramClient programClient, Id.Program programId, String programStatus)
-    throws IOException, ProgramNotFoundException, UnauthorizedException {
+    throws IOException, ProgramNotFoundException, UnauthenticatedException {
 
     assertProgramStatus(programClient, programId, programStatus, 180);
   }

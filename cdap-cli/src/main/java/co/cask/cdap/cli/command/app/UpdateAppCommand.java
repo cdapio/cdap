@@ -31,16 +31,19 @@ import co.cask.cdap.proto.artifact.ArtifactSummary;
 import co.cask.common.cli.Arguments;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
+import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
 
 import java.io.File;
 import java.io.FileReader;
 import java.io.PrintStream;
+import java.lang.reflect.Type;
 
 /**
  * Deploys an application from an existing artifact.
  */
 public class UpdateAppCommand extends AbstractAuthCommand {
+  private static final Type CONFIG_TYPE = new TypeToken<AppRequest<JsonObject>>() { }.getType();
   private static final Gson GSON = new Gson();
   private final ApplicationClient applicationClient;
   private final FilePathResolver resolver;
@@ -67,7 +70,8 @@ public class UpdateAppCommand extends AbstractAuthCommand {
     if (configPath != null) {
       File configFile = resolver.resolvePathToFile(configPath);
       try (FileReader reader = new FileReader(configFile)) {
-        config = GSON.fromJson(reader, JsonObject.class);
+        AppRequest<JsonObject> appRequest = GSON.fromJson(reader, CONFIG_TYPE);
+        config = appRequest.getConfig();
       }
     }
 

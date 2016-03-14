@@ -18,7 +18,7 @@ package co.cask.cdap.client.util;
 
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.exception.DisconnectedException;
-import co.cask.cdap.common.UnauthorizedException;
+import co.cask.cdap.common.UnauthenticatedException;
 import co.cask.cdap.security.authentication.client.AccessToken;
 import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpRequest;
@@ -64,12 +64,12 @@ public class RESTClient {
   }
 
   public HttpResponse execute(HttpRequest request, AccessToken accessToken, int... allowedErrorCodes)
-    throws IOException, UnauthorizedException, DisconnectedException {
+    throws IOException, UnauthenticatedException, DisconnectedException {
     return execute(HttpRequest.builder(request).addHeaders(getAuthHeaders(accessToken)).build(), allowedErrorCodes);
   }
 
   public HttpResponse execute(HttpMethod httpMethod, URL url, AccessToken accessToken, int... allowedErrorCodes)
-    throws IOException, UnauthorizedException, DisconnectedException {
+    throws IOException, UnauthenticatedException, DisconnectedException {
     return execute(HttpRequest.builder(httpMethod, url)
                      .addHeaders(getAuthHeaders(accessToken))
                      .build(), allowedErrorCodes);
@@ -77,7 +77,7 @@ public class RESTClient {
 
   public HttpResponse execute(HttpMethod httpMethod, URL url, Map<String, String> headers, AccessToken accessToken,
                               int... allowedErrorCodes)
-    throws IOException, UnauthorizedException, DisconnectedException {
+    throws IOException, UnauthenticatedException, DisconnectedException {
     return execute(HttpRequest.builder(httpMethod, url)
                      .addHeaders(headers)
                      .addHeaders(getAuthHeaders(accessToken))
@@ -86,7 +86,7 @@ public class RESTClient {
 
   public HttpResponse execute(HttpMethod httpMethod, URL url, String body, Map<String, String> headers,
                               AccessToken accessToken, int... allowedErrorCodes)
-    throws IOException, UnauthorizedException, DisconnectedException {
+    throws IOException, UnauthenticatedException, DisconnectedException {
     return execute(HttpRequest.builder(httpMethod, url)
                      .addHeaders(headers)
                      .addHeaders(getAuthHeaders(accessToken))
@@ -94,7 +94,7 @@ public class RESTClient {
   }
 
   private HttpResponse execute(HttpRequest request, int... allowedErrorCodes)
-    throws IOException, UnauthorizedException, DisconnectedException {
+    throws IOException, UnauthenticatedException, DisconnectedException {
 
     int currentTry = 0;
     HttpResponse response;
@@ -119,7 +119,7 @@ public class RESTClient {
 
     int responseCode = response.getResponseCode();
     if (responseCode == HttpURLConnection.HTTP_UNAUTHORIZED) {
-      throw new UnauthorizedException("Unauthorized status code received from the server.");
+      throw new UnauthenticatedException("Unauthorized status code received from the server.");
     }
     if (!isSuccessful(responseCode) && !ArrayUtils.contains(allowedErrorCodes, responseCode)) {
       throw new IOException(responseCode + ": " + response.getResponseBodyAsString());
@@ -140,7 +140,7 @@ public class RESTClient {
   }
 
   public HttpResponse upload(HttpRequest request, AccessToken accessToken, int... allowedErrorCodes)
-    throws IOException, UnauthorizedException, DisconnectedException {
+    throws IOException, UnauthenticatedException, DisconnectedException {
 
     HttpResponse response = HttpRequests.execute(
       HttpRequest.builder(request).addHeaders(getAuthHeaders(accessToken)).build(),
@@ -148,7 +148,7 @@ public class RESTClient {
     int responseCode = response.getResponseCode();
     if (!isSuccessful(responseCode) && !ArrayUtils.contains(allowedErrorCodes, responseCode)) {
       if (responseCode == HttpURLConnection.HTTP_UNAUTHORIZED) {
-        throw new UnauthorizedException("Unauthorized status code received from the server.");
+        throw new UnauthenticatedException("Unauthorized status code received from the server.");
       }
       throw new IOException(response.getResponseBodyAsString());
     }

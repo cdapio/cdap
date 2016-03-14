@@ -4,7 +4,7 @@
 
     Master layout template for Sphinx themes.
     Modified by Cask Data, Inc.
-    Portions Copyright © 2014-2015 Cask Data, Inc.
+    Portions Copyright © 2014-2016 Cask Data, Inc.
     
     :copyright: Copyright 2007-2013 by the Sphinx team, see AUTHORS.
     :license: BSD, see LICENSE for details.
@@ -105,11 +105,18 @@
     <script type="text/javascript" src="{{ pathto(scriptfile, 1) }}"></script>
     {%- endfor %}
     
-    <!-- Amazon SQS Page Usage Logging start-->
-    <script type="text/javascript" src="https://sdk.amazonaws.com/js/aws-sdk-2.1.35.min.js"></script>
-    <script type="text/javascript" src="http://docs.cask.co/resources/scripts/aws-sqs-1.0.0.js"></script>
-    <!-- Amazon SQS Page Usage Logging end-->
-    
+    <!-- Google Tag Manager start -->
+    {%- if html_google_tag_manager_code is defined %}
+    <script>dataLayer = [];</script>
+    <noscript><iframe src="//www.googletagmanager.com/ns.html?id={{ html_google_tag_manager_code }}"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    '//www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','{{ html_google_tag_manager_code }}');</script>
+    {%- endif %}
+    <!-- Google Tag Manager end -->
 {%- endmacro %}
 
 {%- macro css() %}
@@ -118,7 +125,6 @@
     {%- for cssfile in css_files %}
     <link rel="stylesheet" href="{{ pathto(cssfile, 1) }}" type="text/css" />
     {%- endfor %}
-    
 {#
     Code to number sections on pages, by setting in the field list at the top
 :section-numbering: true
@@ -147,11 +153,9 @@
     {%- if hidetoc %}
         <link rel="stylesheet" href="{{ pathto('_static/hide-toc.css', 1) }}" type="text/css" />
     {%- endif %}
-
 {#  Code to hide sidebar navigation on certain pages, by setting in the field list at the top
 :hide-nav: true
 #}
- 
     {%- set hidenav = '' %}
     {%- set hidenav_key = 'hide-nav' %}
     {%- if meta is defined %}
@@ -162,7 +166,6 @@
     {%- if hidenav %}
         <link rel="stylesheet" href="{{ pathto('_static/hide-nav.css', 1) }}" type="text/css" />
     {%- endif %}
-   
 {%- endmacro %}
 
 <html xmlns="http://www.w3.org/1999/xhtml">
@@ -170,6 +173,7 @@
     <meta http-equiv="Content-Type" content="text/html; charset={{ encoding }}" />
     {{ metatags }}
     {# Code to add custom theme values as meta_tags #}
+    {# Used to add the Git release, hash, timestamp values #}
     {%- for tag, tag_value in theme_meta_git.iteritems() %}
     <meta name="{{ tag }}" content="{{ tag_value }}">
     {%- endfor %}

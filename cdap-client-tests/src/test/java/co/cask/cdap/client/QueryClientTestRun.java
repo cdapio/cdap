@@ -55,6 +55,7 @@ public class QueryClientTestRun extends ClientTestBase {
   @Before
   public void setUp() throws Throwable {
     super.setUp();
+
     appClient = new ApplicationClient(clientConfig);
     queryClient = new QueryClient(clientConfig);
     programClient = new ProgramClient(clientConfig);

@@ -19,8 +19,10 @@ package co.cask.cdap.data2.datafabric.dataset;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetContext;
+import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
+import co.cask.cdap.api.dataset.InstanceConflictException;
 import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
@@ -29,8 +31,6 @@ import co.cask.cdap.data2.datafabric.dataset.type.ConstantClassLoaderProvider;
 import co.cask.cdap.data2.datafabric.dataset.type.DatasetClassLoaderProvider;
 import co.cask.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.data2.dataset2.DatasetManagementException;
-import co.cask.cdap.data2.dataset2.InstanceConflictException;
 import co.cask.cdap.data2.dataset2.SingleTypeModule;
 import co.cask.cdap.proto.DatasetMeta;
 import co.cask.cdap.proto.DatasetSpecificationSummary;
@@ -73,13 +73,13 @@ public class RemoteDatasetFramework implements DatasetFramework {
   private final AbstractDatasetProvider instances;
 
   @Inject
-  public RemoteDatasetFramework(CConfiguration cConf, final DiscoveryServiceClient discoveryClient,
+  public RemoteDatasetFramework(final CConfiguration cConf, final DiscoveryServiceClient discoveryClient,
                                 DatasetDefinitionRegistryFactory registryFactory) {
     this.cConf = cConf;
     this.clientCache = CacheBuilder.newBuilder().build(new CacheLoader<Id.Namespace, DatasetServiceClient>() {
       @Override
       public DatasetServiceClient load(Id.Namespace namespace) throws Exception {
-        return new DatasetServiceClient(discoveryClient, namespace);
+        return new DatasetServiceClient(discoveryClient, namespace, cConf);
       }
     });
     this.instances = new AbstractDatasetProvider(registryFactory) {
@@ -183,6 +183,11 @@ public class RemoteDatasetFramework implements DatasetFramework {
   @Override
   public boolean hasType(Id.DatasetType datasetTypeId) throws DatasetManagementException {
     return clientCache.getUnchecked(datasetTypeId.getNamespace()).getType(datasetTypeId.getTypeName()) != null;
+  }
+
+  @Override
+  public void truncateInstance(Id.DatasetInstance datasetInstanceId) throws DatasetManagementException {
+    clientCache.getUnchecked(datasetInstanceId.getNamespace()).truncateInstance(datasetInstanceId.getId());
   }
 
   @Override

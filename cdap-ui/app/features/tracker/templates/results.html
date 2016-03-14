@@ -1,0 +1,176 @@
+<!--
+  Copyright © 2016 Cask Data, Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+-->
+
+<div class="tracker-no-result text-center"
+  ng-if="ResultsController.fullResults.length === 0 && !ResultsController.loading">
+  <p>No results found for "{{ $state.params.searchQuery }}"</p>
+</div>
+
+<div class="loading-search" ng-if="ResultsController.loading">
+  <div class="container-fluid">
+    <h3>
+      <span class="fa fa-spinner fa-spin"></span>
+      <span>Searching for "{{ $state.params.searchQuery }}"</span>
+    </h3>
+  </div>
+</div>
+
+<div class="tracker-container" ng-if="ResultsController.fullResults.length !== 0 && !ResultsController.loading">
+  <!-- SIDE BAR -->
+  <div class="tracker-filter-sidebar">
+    <div class="title-bar">
+      <h3>Filter by</h3>
+    </div>
+
+    <div class="tracker-filters">
+      <h4 ng-mouseenter="ResultsController.entitiesShowAllButton = true"
+          ng-mouseleave="ResultsController.entitiesShowAllButton = false">
+        <span>Entities</span>
+        <span class="filter-show-all pull-right"
+              ng-click="ResultsController.showAll('ENTITIES')"
+              ng-show="ResultsController.entitiesShowAllButton">
+          show all
+        </span>
+      </h4>
+
+      <div class="checkbox"
+           ng-class="{'hover': entity.isHover }"
+           ng-repeat="entity in ResultsController.entityFiltersList"
+           ng-if="entity.count > 0">
+        <label ng-class="{ 'active': entity.isActive }"
+               ng-mouseenter="entity.isHover = true"
+               ng-mouseleave="entity.isHover = false"
+               ng-click="ResultsController.filterResults()">
+          <input type="checkbox" ng-model="entity.isActive">
+          <span>{{ entity.name }}</span>
+          <span class="pull-right">
+            <span class="only-button"
+                  ng-show="entity.isHover"
+                  ng-click="ResultsController.onlyFilter($event, entity, 'ENTITIES')">
+              only
+            </span>
+            <span>{{ entity.count }}</span>
+          </span>
+        </label>
+      </div>
+
+
+      <h4 ng-mouseenter="ResultsController.metadataShowAllButton = true"
+          ng-mouseleave="ResultsController.metadataShowAllButton = false">
+        <span>Metadata</span>
+        <span class="filter-show-all pull-right"
+              ng-click="ResultsController.showAll('METADATA')"
+              ng-show="ResultsController.metadataShowAllButton">
+          show all
+        </span>
+      </h4>
+
+      <div class="checkbox"
+           ng-class="{'hover': metadata.isHover }"
+           ng-repeat="metadata in ResultsController.metadataFiltersList">
+        <label ng-class="{ 'active': metadata.isActive }"
+               ng-mouseenter="metadata.isHover = true"
+               ng-mouseleave="metadata.isHover = false">
+          <input type="checkbox" ng-model="metadata.isActive">
+          <span>{{metadata.name}}</span>
+          <span class="pull-right">
+            <span class="only-button"
+                  ng-show="metadata.isHover"
+                  ng-click="ResultsController.onlyFilter($event, metadata, 'METADATA')">
+              only
+            </span>
+            <span>????</span>
+          </span>
+        </label>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- MAIN RESULTS -->
+  <div class="tracker-search-results">
+    <div class="title-bar">
+      <h3>Sort by</h3>
+
+      <div class="btn-group" uib-dropdown>
+        <button class="btn btn-grey dropdown-toggle" uib-dropdown-toggle>
+          {{ ResultsController.sortBy.name }} <span class="caret"></span>
+        </button>
+
+        <ul uib-dropdown-menu role="menu">
+          <li role="menuitem" ng-repeat="option in ResultsController.sortByOptions">
+            <a ng-click="ResultsController.sortBy = option">{{ option.name }}</a>
+          </li>
+        </ul>
+      </div>
+
+      <div class="results-count">
+        <span>{{ ResultsController.evaluateShowResultCount() }}</span>
+        <span> of {{ ResultsController.searchResults.length }}</span>
+        <span ng-if="ResultsController.searchResults.length > 1">results</span>
+        <span ng-if="ResultsController.searchResults.length <= 1">result</span>
+      </div>
+    </div>
+
+    <div class="no-search-results text-center" ng-if="ResultsController.searchResults.length === 0">
+      <h4>No results match your filter settings</h4>
+    </div>
+
+    <div class="results-list" ng-if="ResultsController.searchResults.length > 0">
+      <div class="row"
+           ng-repeat="entity in ResultsController.searchResults | orderBy: ResultsController.sortBy.sort | myPaginate: ResultsController.currentPage">
+        <div class="col-xs-12">
+          <h4>
+            <a ui-sref="tracker.entity.metadata({ entityType: entity.entityTypeState, entityId: entity.name })">{{ entity.name }}</a>
+          </h4>
+        </div>
+        <div class="col-xs-6">
+          <h5>
+            <span class="{{entity.icon}}"></span>
+            <span>{{ entity.type }}</span>
+
+            <span class="pull-right">
+              <span class="text-dark">Created: </span>
+              <span>{{ entity.createDate * 1000 | amDateFormat:'MMM DD, YYYY' }}</span>
+            </span>
+          </h5>
+
+          <p>{{ entity.description }}</p>
+        </div>
+
+        <div class="col-xs-4">
+          <h5><span class="text-dark">Search term found in:</span></h5>
+          <span ng-repeat="found in entity.queryFound">{{ found }}<span ng-if="!$last">, </span></span>
+        </div>
+
+        <div class="col-xs-2 text-right">
+          <button class="btn btn-jump">Jump <span class="fa fa-angle-down"></span></button>
+        </div>
+      </div>
+
+      <div class="col-xs-12 text-center" ng-show="ResultsController.searchResults.length > 10">
+        <uib-pagination
+          total-items="ResultsController.searchResults.length"
+          ng-model="ResultsController.currentPage">
+        </uib-pagination>
+      </div>
+
+    </div>
+
+  </div>
+
+</div>

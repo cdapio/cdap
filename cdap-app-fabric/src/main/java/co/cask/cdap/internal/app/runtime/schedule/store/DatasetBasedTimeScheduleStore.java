@@ -17,9 +17,9 @@
 package co.cask.cdap.internal.app.runtime.schedule.store;
 
 import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Table;
-import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionExecutorFactory;

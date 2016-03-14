@@ -18,6 +18,7 @@ package co.cask.cdap.data2.dataset2;
 
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetDefinition;
+import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
@@ -166,4 +167,11 @@ public final class DatasetFrameworkTestUtil extends ExternalResource {
   public TransactionManager getTxManager() {
     return txManager;
   }
+
+  // helper to make this method accessible to DatasetInstanceServiceTest
+  public static DatasetDefinition getDatasetDefinition(InMemoryDatasetFramework framework,
+                                                       Id.Namespace namespace, String type) {
+    return framework.getDefinitionForType(namespace, type);
+  }
+
 }

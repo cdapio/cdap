@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,26 +19,31 @@ package co.cask.cdap.client;
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.util.RESTClient;
-import co.cask.cdap.common.UnauthorizedException;
+import co.cask.cdap.common.FeatureDisabledException;
+import co.cask.cdap.common.UnauthenticatedException;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.proto.codec.EntityIdTypeAdapter;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.CheckAuthorizedRequest;
-import co.cask.cdap.proto.security.CheckAuthorizedResponse;
 import co.cask.cdap.proto.security.GrantRequest;
+import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.proto.security.RevokeRequest;
+import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpResponse;
+import com.google.common.collect.ImmutableSet;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 import java.io.IOException;
+import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Set;
 import javax.inject.Inject;
 
 /**
- * Provides ways to interact with CDAP stream views.
+ * Provides ways to interact with the CDAP authorization system.
  */
 @Beta
 public class AuthorizationClient {
@@ -59,45 +64,59 @@ public class AuthorizationClient {
     this(config, new RESTClient(config));
   }
 
-  public boolean authorized(EntityId entity, String user, Set<Action> actions)
-    throws IOException, UnauthorizedException {
+  public void authorized(EntityId entity, Principal principal, Action action)
+    throws IOException, UnauthenticatedException, FeatureDisabledException, UnauthorizedException {
 
-    CheckAuthorizedRequest checkRequest = new CheckAuthorizedRequest(entity, user, actions);
+    CheckAuthorizedRequest checkRequest = new CheckAuthorizedRequest(entity, principal, ImmutableSet.of(action));
 
     URL url = config.resolveURLV3("security/authorized");
     HttpRequest request = HttpRequest.post(url).withBody(GSON.toJson(checkRequest)).build();
-    HttpResponse response = restClient.execute(request, config.getAccessToken());
-
-    CheckAuthorizedResponse checkResponse = GSON.fromJson(
-      response.getResponseBodyAsString(), CheckAuthorizedResponse.class);
-    return checkResponse.isAuthorized();
+    executeAuthorizationRequest(request, principal, action, entity);
   }
 
-  public void grant(EntityId entity, String user, Set<Action> actions)
-    throws IOException, UnauthorizedException {
+  public void grant(EntityId entity, Principal principal, Set<Action> actions) throws IOException,
+    UnauthenticatedException, FeatureDisabledException, UnauthorizedException {
 
-    GrantRequest grantRequest = new GrantRequest(entity, user, actions);
+    GrantRequest grantRequest = new GrantRequest(entity, principal, actions);
 
     URL url = config.resolveURLV3("security/grant");
     HttpRequest request = HttpRequest.post(url).withBody(GSON.toJson(grantRequest)).build();
-    restClient.execute(request, config.getAccessToken());
+    executeAuthorizationRequest(request, principal, Action.ADMIN, entity);
   }
 
-  public void revoke(EntityId entity, String user, Set<Action> actions) throws IOException, UnauthorizedException {
-    revoke(new RevokeRequest(entity, user, actions));
+  public void revoke(EntityId entity, Principal principal, Set<Action> actions) throws IOException,
+    UnauthenticatedException, FeatureDisabledException, UnauthorizedException {
+    revoke(new RevokeRequest(entity, principal, actions));
   }
 
-  public void revoke(EntityId entity, String user) throws IOException, UnauthorizedException {
-    revoke(new RevokeRequest(entity, user, null));
+  public void revoke(EntityId entity, Principal principal) throws IOException, UnauthenticatedException,
+    FeatureDisabledException, UnauthorizedException {
+    revoke(new RevokeRequest(entity, principal, null));
   }
 
-  public void revoke(EntityId entity) throws IOException, UnauthorizedException {
+  public void revoke(EntityId entity) throws IOException, UnauthenticatedException, FeatureDisabledException,
+    UnauthorizedException {
     revoke(new RevokeRequest(entity, null, null));
   }
 
-  public void revoke(RevokeRequest revokeRequest) throws IOException, UnauthorizedException {
+  public void revoke(RevokeRequest revokeRequest)
+    throws IOException, UnauthenticatedException, FeatureDisabledException, UnauthorizedException {
     URL url = config.resolveURLV3("security/revoke");
     HttpRequest request = HttpRequest.post(url).withBody(GSON.toJson(revokeRequest)).build();
-    restClient.execute(request, config.getAccessToken());
+    executeAuthorizationRequest(request, revokeRequest.getPrincipal(), Action.ADMIN,
+                                revokeRequest.getEntity());
+  }
+
+  private void executeAuthorizationRequest(HttpRequest request, Principal principal, Action action, EntityId entity)
+    throws IOException, UnauthenticatedException, FeatureDisabledException, UnauthorizedException {
+    HttpResponse response = restClient.execute(request, config.getAccessToken(), HttpURLConnection.HTTP_FORBIDDEN,
+                                               HttpURLConnection.HTTP_NOT_IMPLEMENTED);
+    if (HttpURLConnection.HTTP_FORBIDDEN == response.getResponseCode()) {
+      throw new UnauthorizedException(principal, action, entity);
+    }
+    if (HttpURLConnection.HTTP_NOT_IMPLEMENTED == response.getResponseCode()) {
+      throw new FeatureDisabledException("Authorization", "cdap-site.xml", Constants.Security.Authorization.ENABLED,
+                                         "true");
+    }
   }
 }

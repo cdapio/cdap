@@ -186,7 +186,8 @@ function getEs6Features(isNegate) {
     'apps',
     'search',
     'pins',
-    'hydrator'
+    'hydrator',
+    'tracker'
   ];
   var returnVal = [];
   es6features.forEach(function(feature) {
@@ -200,7 +201,8 @@ function getEs6Features(isNegate) {
 
 function getEs6Directives(isNegate) {
   var es6directives = [
-    (isNegate ? '!' : '') + './app/directives/dag/**/*.js'
+    (isNegate ? '!' : '') + './app/directives/dag/**/*.js',
+    (isNegate ? '!' : '') + './app/directives/my-global-navbar/*.js'
   ];
 
   return es6directives;
@@ -477,6 +479,8 @@ gulp.task('watch', ['jshint', 'watch:build'], function() {
     '!./app/features/pins/**/*.js',
     '!./app/features/flows/**/*.js',
     '!./app/directives/dag/**/*.js',
+    '!./app/features/tracker/**/*.js',
+    '!./app/directives/my-global-navbar/**/*.js',
     '!./app/**/*-test.js'
   ], ['jshint', 'watch:js:app']);
   gulp.watch([
@@ -487,7 +491,9 @@ gulp.task('watch', ['jshint', 'watch:build'], function() {
     './app/features/search/**/*.js',
     './app/features/flows/**/*.js',
     './app/features/flows/**/*.js',
-    './app/directives/dag/**/*.js'
+    './app/directives/dag/**/*.js',
+    './app/features/tracker/**/*.js',
+    './app/directives/my-global-navbar/**/*.js'
   ], ['jshint', 'watch:js:app:babel']);
 
   gulp.watch('./app/**/*.{less,css}', ['css']);

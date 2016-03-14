@@ -84,7 +84,8 @@ import co.cask.cdap.logging.run.LogSaverStatusServiceManager;
 import co.cask.cdap.metrics.runtime.MetricsProcessorStatusServiceManager;
 import co.cask.cdap.metrics.runtime.MetricsServiceManager;
 import co.cask.cdap.pipeline.PipelineFactory;
-import co.cask.cdap.security.authorization.AuthorizationPlugin;
+import co.cask.cdap.security.spi.authorization.Authorizer;
+import co.cask.cdap.security.spi.authorization.NoOpAuthorizer;
 import co.cask.http.HttpHandler;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
@@ -313,27 +314,27 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
         handlerBinder.addBinding().to(handlerClass);
       }
 
-      bind(AuthorizationPlugin.class).toProvider(AuthorizationPluginProvider.class);
+      bind(Authorizer.class).toProvider(AuthorizerProvider.class);
     }
 
-    @Provides
-    private Class<? extends AuthorizationPlugin> providePluginClass(CConfiguration conf) throws ClassNotFoundException {
-      return conf.getClass(Constants.Security.Authorization.HANDLER_CLASS, null, AuthorizationPlugin.class);
-    }
-
-    private static final class AuthorizationPluginProvider implements Provider<AuthorizationPlugin> {
+    private static final class AuthorizerProvider implements Provider<Authorizer> {
       private final Injector injector;
-      private final Class<? extends AuthorizationPlugin> pluginClass;
+      private final CConfiguration cConf;
 
       @Inject
-      private AuthorizationPluginProvider(Injector injector, Class<? extends AuthorizationPlugin> pluginClass) {
+      private AuthorizerProvider(Injector injector, CConfiguration cConf) {
         this.injector = injector;
-        this.pluginClass = pluginClass;
+        this.cConf = cConf;
       }
 
       @Override
-      public AuthorizationPlugin get() {
-        return injector.getInstance(pluginClass);
+      public Authorizer get() {
+        if (!cConf.getBoolean(Constants.Security.Authorization.ENABLED)) {
+          return injector.getInstance(NoOpAuthorizer.class);
+        }
+        Class<? extends Authorizer> authorizerClass =
+          cConf.getClass(Constants.Security.Authorization.HANDLER_CLASS, null, Authorizer.class);
+        return injector.getInstance(authorizerClass);
       }
     }
 

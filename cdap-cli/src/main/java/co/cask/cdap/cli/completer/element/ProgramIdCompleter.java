@@ -19,7 +19,7 @@ package co.cask.cdap.cli.completer.element;
 import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.completer.StringsCompleter;
 import co.cask.cdap.client.ApplicationClient;
-import co.cask.cdap.common.UnauthorizedException;
+import co.cask.cdap.common.UnauthenticatedException;
 import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Supplier;
@@ -49,7 +49,7 @@ public class ProgramIdCompleter extends StringsCompleter {
           return programIds;
         } catch (IOException e) {
           return Lists.newArrayList();
-        } catch (UnauthorizedException e) {
+        } catch (UnauthenticatedException e) {
           return Lists.newArrayList();
         }
       }

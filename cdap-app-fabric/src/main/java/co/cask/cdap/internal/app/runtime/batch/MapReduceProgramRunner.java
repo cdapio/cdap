@@ -20,7 +20,6 @@ import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.mapreduce.MapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
-import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.runtime.ProgramController;
@@ -45,6 +44,8 @@ import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.ProgramRunners;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.internal.app.runtime.workflow.BasicWorkflowToken;
+import co.cask.cdap.internal.app.runtime.workflow.NameMappedDatasetFramework;
+import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
 import co.cask.cdap.internal.lang.Reflections;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
@@ -146,18 +147,15 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
                                                    .getOption(ProgramOptionConstants.LOGICAL_START_TIME))
                                 : System.currentTimeMillis();
 
-    String programNameInWorkflow = arguments.getOption(ProgramOptionConstants.PROGRAM_NAME_IN_WORKFLOW);
-
-    WorkflowToken workflowToken = null;
-    if (arguments.hasOption(ProgramOptionConstants.WORKFLOW_TOKEN)) {
-      workflowToken = GSON.fromJson(arguments.getOption(ProgramOptionConstants.WORKFLOW_TOKEN),
-                                    BasicWorkflowToken.class);
-    }
+    WorkflowProgramInfo workflowInfo = WorkflowProgramInfo.create(arguments);
+    DatasetFramework programDatasetFramework = workflowInfo == null ?
+      datasetFramework :
+      NameMappedDatasetFramework.createFromWorkflowProgramInfo(datasetFramework, workflowInfo, appSpec);
 
     // Setup dataset framework context, if required
-    if (datasetFramework instanceof ProgramContextAware) {
+    if (programDatasetFramework instanceof ProgramContextAware) {
       Id.Program programId = program.getId();
-      ((ProgramContextAware) datasetFramework).initContext(new Id.Run(programId, runId.getId()));
+      ((ProgramContextAware) programDatasetFramework).initContext(new Id.Run(programId, runId.getId()));
     }
 
     MapReduce mapReduce;
@@ -178,8 +176,8 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
 
       final BasicMapReduceContext context =
         new BasicMapReduceContext(program, runId, options.getUserArguments(), spec,
-                                  logicalStartTime, programNameInWorkflow, workflowToken, discoveryServiceClient,
-                                  metricsCollectionService, txSystemClient, datasetFramework, streamAdmin,
+                                  logicalStartTime, workflowInfo, discoveryServiceClient,
+                                  metricsCollectionService, txSystemClient, programDatasetFramework, streamAdmin,
                                   getPluginArchive(options), pluginInstantiator);
 
       Reflections.visit(mapReduce, mapReduce.getClass(),

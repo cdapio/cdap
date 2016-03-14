@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.namespace;
 
+import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.metrics.MetricDeleteQuery;
 import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
@@ -30,7 +31,6 @@ import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.config.DashboardStore;
 import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;

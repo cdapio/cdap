@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime;
 
+import co.cask.cdap.api.Admin;
 import co.cask.cdap.api.RuntimeContext;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.common.RuntimeArguments;
@@ -39,7 +40,6 @@ import co.cask.cdap.data2.dataset2.SingleThreadDatasetCache;
 import co.cask.cdap.internal.app.program.ProgramTypeMetricTag;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -67,6 +67,7 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
   private final DiscoveryServiceClient discoveryServiceClient;
   private final PluginInstantiator pluginInstantiator;
   private final PluginContext pluginContext;
+  private final Admin admin;
   protected final DynamicDatasetCache datasetCache;
 
   /**
@@ -88,7 +89,7 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
                             DatasetFramework dsFramework, TransactionSystemClient txClient,
                             DiscoveryServiceClient discoveryServiceClient, boolean multiThreaded,
                             @Nullable PluginInstantiator pluginInstantiator) {
-    super(program.getId());
+    super(program.getId().toEntityId());
     this.program = program;
     this.runId = runId;
     this.runtimeArguments = ImmutableMap.copyOf(arguments.asMap());
@@ -103,13 +104,14 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
     SystemDatasetInstantiator instantiator =
       new SystemDatasetInstantiator(dsFramework, program.getClassLoader(), owners);
     this.datasetCache = multiThreaded
-      ? new MultiThreadDatasetCache(instantiator, txClient, new NamespaceId(namespaceId),
+      ? new MultiThreadDatasetCache(instantiator, txClient, program.getId().getNamespace().toEntityId(),
                                     runtimeArguments, programMetrics, staticDatasets)
-      : new SingleThreadDatasetCache(instantiator, txClient, new NamespaceId(namespaceId),
+      : new SingleThreadDatasetCache(instantiator, txClient, program.getId().getNamespace().toEntityId(),
                                      runtimeArguments, programMetrics, staticDatasets);
     this.pluginInstantiator = pluginInstantiator;
     this.pluginContext = new DefaultPluginContext(pluginInstantiator, program.getId(),
                                                   program.getApplicationSpecification().getPlugins());
+    this.admin = new DefaultAdmin(dsFramework, program.getId().getNamespace().toEntityId());
   }
 
   private List<Id> createOwners(Id.Program programId) {
@@ -193,6 +195,7 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
     return program;
   }
 
+  @Override
   public RunId getRunId() {
     return runId;
   }
@@ -239,5 +242,10 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
   @Override
   public <T> T newPluginInstance(String pluginId) throws InstantiationException {
     return pluginContext.newPluginInstance(pluginId);
+  }
+
+  @Override
+  public Admin getAdmin() {
+    return admin;
   }
 }

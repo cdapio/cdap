@@ -20,7 +20,6 @@ import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.spark.Spark;
 import co.cask.cdap.api.spark.SparkSpecification;
-import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.runtime.ProgramController;
@@ -40,7 +39,8 @@ import co.cask.cdap.internal.app.runtime.MetricsFieldSetter;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.ProgramRunners;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
-import co.cask.cdap.internal.app.runtime.workflow.BasicWorkflowToken;
+import co.cask.cdap.internal.app.runtime.workflow.NameMappedDatasetFramework;
+import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
 import co.cask.cdap.internal.lang.Reflections;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
@@ -120,16 +120,15 @@ public class SparkProgramRunner extends AbstractProgramRunnerWithPlugin {
     long logicalStartTime = arguments.hasOption(ProgramOptionConstants.LOGICAL_START_TIME)
       ? Long.parseLong(arguments.getOption(ProgramOptionConstants.LOGICAL_START_TIME)) : System.currentTimeMillis();
 
-    WorkflowToken workflowToken = null;
-    if (arguments.hasOption(ProgramOptionConstants.WORKFLOW_TOKEN)) {
-      workflowToken = GSON.fromJson(arguments.getOption(ProgramOptionConstants.WORKFLOW_TOKEN),
-                                    BasicWorkflowToken.class);
-    }
+    WorkflowProgramInfo workflowInfo = WorkflowProgramInfo.create(arguments);
+    DatasetFramework programDatasetFramework = workflowInfo == null ?
+      datasetFramework :
+      NameMappedDatasetFramework.createFromWorkflowProgramInfo(datasetFramework, workflowInfo, appSpec);
 
     // Setup dataset framework context, if required
-    if (datasetFramework instanceof ProgramContextAware) {
+    if (programDatasetFramework instanceof ProgramContextAware) {
       Id.Program programId = program.getId();
-      ((ProgramContextAware) datasetFramework).initContext(new Id.Run(programId, runId.getId()));
+      ((ProgramContextAware) programDatasetFramework).initContext(new Id.Run(programId, runId.getId()));
     }
 
     List<Closeable> closeables = new ArrayList<>();
@@ -141,9 +140,9 @@ public class SparkProgramRunner extends AbstractProgramRunnerWithPlugin {
 
       ClientSparkContext context = new ClientSparkContext(program, runId, logicalStartTime,
                                                           options.getUserArguments().asMap(),
-                                                          txSystemClient, datasetFramework,
+                                                          txSystemClient, programDatasetFramework,
                                                           discoveryServiceClient, metricsCollectionService,
-                                                          getPluginArchive(options), pluginInstantiator, workflowToken);
+                                                          getPluginArchive(options), pluginInstantiator, workflowInfo);
       closeables.add(context);
       Spark spark;
       try {
@@ -160,9 +159,10 @@ public class SparkProgramRunner extends AbstractProgramRunnerWithPlugin {
       }
 
       SparkSubmitter submitter = SparkContextConfig.isLocal(hConf) ? new LocalSparkSubmitter()
-        : new DistributedSparkSubmitter();
+        : new DistributedSparkSubmitter(options.getArguments().getOption(Constants.AppFabric.APP_SCHEDULER_QUEUE));
       Service sparkRuntimeService = new SparkRuntimeService(
-        cConf, hConf, spark, new SparkContextFactory(hConf, context, datasetFramework, txSystemClient, streamAdmin),
+        cConf, hConf, spark, new SparkContextFactory(hConf, context, programDatasetFramework,
+                                                     txSystemClient, streamAdmin),
         submitter, program.getJarLocation(), txSystemClient
       );
 

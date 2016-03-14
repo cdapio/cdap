@@ -41,6 +41,7 @@ import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.stream.StreamAdminModules;
 import co.cask.cdap.data.stream.StreamCoordinatorClient;
 import co.cask.cdap.data.view.ViewAdminModules;
+import co.cask.cdap.data2.audit.AuditModule;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.internal.app.queue.QueueReaderFactory;
 import co.cask.cdap.internal.app.runtime.AbstractListener;
@@ -400,6 +401,7 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
       new ViewAdminModules().getDistributedModules(),
       new StreamAdminModules().getDistributedModules(),
       new NotificationFeedClientModule(),
+      new AuditModule().getDistributedModules(),
       new AbstractModule() {
         @Override
         protected void configure() {

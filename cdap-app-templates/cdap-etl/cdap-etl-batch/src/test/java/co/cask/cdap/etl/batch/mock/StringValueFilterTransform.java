@@ -52,10 +52,10 @@ public class StringValueFilterTransform extends Transform<StructuredRecord, Stru
     private String value;
   }
 
-  public static co.cask.cdap.etl.common.Plugin getPlugin(String field, String value) {
+  public static co.cask.cdap.etl.proto.v1.Plugin getPlugin(String field, String value) {
     Map<String, String> properties = new HashMap<>();
     properties.put("field", field);
     properties.put("value", value);
-    return new co.cask.cdap.etl.common.Plugin("StringValueFilter", properties);
+    return new co.cask.cdap.etl.proto.v1.Plugin("StringValueFilter", properties);
   }
 }

@@ -1,7 +1,7 @@
 package co.cask.cdap.internal.app.runtime.batch;
 
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,6 +16,7 @@ package co.cask.cdap.internal.app.runtime.batch;
  * the License.
  */
 
+import co.cask.cdap.api.Admin;
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.data.DatasetInstantiationException;
@@ -29,6 +30,7 @@ import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.mapreduce.MapReduceTaskContext;
 import co.cask.cdap.api.plugin.PluginProperties;
 import co.cask.cdap.api.workflow.WorkflowToken;
+import org.apache.twill.api.RunId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -140,6 +142,11 @@ public class MapReduceLifecycleContext<KEY, VALUE> implements MapReduceTaskConte
   }
 
   @Override
+  public RunId getRunId() {
+    return delegate.getRunId();
+  }
+
+  @Override
   public URL getServiceURL(String applicationId, String serviceId) {
     return delegate.getServiceURL(applicationId, serviceId);
   }
@@ -248,5 +255,10 @@ public class MapReduceLifecycleContext<KEY, VALUE> implements MapReduceTaskConte
   @Override
   public Map<String, File> getAllLocalFiles() {
     return delegate.getAllLocalFiles();
+  }
+
+  @Override
+  public Admin getAdmin() {
+    return delegate.getAdmin();
   }
 }

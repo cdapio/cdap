@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -23,6 +23,7 @@ import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
+import co.cask.cdap.app.runtime.ProgramRunnerFactory;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -30,7 +31,6 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.metadata.writer.ProgramContextAware;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
-import co.cask.cdap.internal.app.runtime.ProgramRunnerFactory;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.tephra.TransactionSystemClient;
@@ -47,6 +47,7 @@ import java.net.InetAddress;
  * A {@link ProgramRunner} that runs a {@link Workflow}.
  */
 public class WorkflowProgramRunner implements ProgramRunner {
+
   private final ProgramRunnerFactory programRunnerFactory;
   private final ServiceAnnouncer serviceAnnouncer;
   private final InetAddress hostname;
@@ -58,8 +59,7 @@ public class WorkflowProgramRunner implements ProgramRunner {
   private final CConfiguration cConf;
 
   @Inject
-  public WorkflowProgramRunner(ProgramRunnerFactory programRunnerFactory,
-                               ServiceAnnouncer serviceAnnouncer,
+  public WorkflowProgramRunner(ProgramRunnerFactory programRunnerFactory, ServiceAnnouncer serviceAnnouncer,
                                @Named(Constants.AppFabric.SERVER_ADDRESS) InetAddress hostname,
                                MetricsCollectionService metricsCollectionService, DatasetFramework datasetFramework,
                                DiscoveryServiceClient discoveryServiceClient, TransactionSystemClient txClient,
@@ -96,10 +96,10 @@ public class WorkflowProgramRunner implements ProgramRunner {
       ((ProgramContextAware) datasetFramework).initContext(new Id.Run(programId, runId.getId()));
     }
 
-    WorkflowDriver driver = new WorkflowDriver(program, options, hostname, workflowSpec, programRunnerFactory,
-                                               metricsCollectionService, datasetFramework,
-                                               discoveryServiceClient, txClient, store, cConf);
 
+    WorkflowDriver driver = new WorkflowDriver(program, options, hostname, workflowSpec, programRunnerFactory,
+                                               metricsCollectionService, datasetFramework, discoveryServiceClient,
+                                               txClient, store, cConf);
     // Controller needs to be created before starting the driver so that the state change of the driver
     // service can be fully captured by the controller.
     ProgramController controller = new WorkflowProgramController(program, driver, serviceAnnouncer, runId);

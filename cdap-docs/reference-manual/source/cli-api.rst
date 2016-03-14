@@ -1,6 +1,6 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2014-2015 Cask Data, Inc.
+    :copyright: Copyright © 2014-2016 Cask Data, Inc.
 
 .. _cli:
 
@@ -15,6 +15,10 @@ The Command Line Interface (CLI) provides methods to interact with the CDAP serv
 similar to the HBase or ``bash`` shells. It is located within the SDK, at ``bin/cdap-cli`` as either a bash
 script or a Windows ``.bat`` file.
 
+It can be :ref:`installed on Distributed CDAP <packages-cli-package-installation>`, in
+which case it will be installed either in ``/opt/cdap/cli`` or, in the case of Cloudera
+Manager, ``opt/cloudera/parcels/cdap/cli/``.
+
 The CLI may be used in two ways: interactive mode and non-interactive mode.
 
 Interactive Mode
@@ -26,13 +30,21 @@ To run the CLI in interactive mode, run the ``cdap-cli.sh`` executable with no a
 
   $ ./bin/cdap-cli.sh
 
-or, on Windows::
+On Windows::
 
   > bin\cdap-cli.bat
+  
+On Distributed CDAP::
 
-The executable should bring you into a shell, with this prompt::
+  $ ./opt/cdap/cli/bin/cdap-cli.sh
 
-  cdap (http://localhost:10000)>
+On Cloudera Manager clusters::
+
+  $ ./opt/cloudera/parcels/cdap/cli/bin/cdap-cli.sh
+
+The executable should bring you into a shell, with a prompt similar to::
+
+  cdap (http://localhost:10000/namespace:default)>
 
 This indicates that the CLI is currently set to interact with the CDAP server at ``localhost``.
 
@@ -43,11 +55,11 @@ This indicates that the CLI is currently set to interact with the CDAP server at
 For example, with ``CDAP_HOST`` set to ``example.com``, the CLI would be interacting with
 a CDAP instance at ``example.com``, port ``10000``::
 
-  cdap (http://example.com:10000)>
+  cdap (http://example.com:10000/namespace:default)>
 
 To list all of the available commands, enter the CLI command ``help``::
 
-  cdap (http://localhost:10000)> help
+  cdap (http://localhost:10000/namespace:default)> help
 
 Non-Interactive Mode
 --------------------
@@ -292,6 +304,7 @@ These are the available commands:
    ``describe dataset instance <dataset-name>``,"Shows information about a dataset."
    ``describe dataset module <dataset-module>``,"Shows information about a dataset module."
    ``describe dataset type <dataset-type>``,"Shows information about a dataset type."
+   ``get dataset instance properties <dataset-name>``,"Gets the properties with which a dataset was created or updated."
    ``list dataset instances``,"Lists all datasets."
    ``list dataset modules``,"Lists all dataset modules."
    ``list dataset types``,"Lists all dataset types."

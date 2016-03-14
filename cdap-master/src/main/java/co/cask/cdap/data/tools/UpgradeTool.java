@@ -16,6 +16,7 @@
 
 package co.cask.cdap.data.tools;
 
+import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.api.metrics.MetricStore;
@@ -43,7 +44,6 @@ import co.cask.cdap.data2.datafabric.dataset.instance.DatasetInstanceManager;
 import co.cask.cdap.data2.datafabric.dataset.service.mds.MDSDatasetsRegistry;
 import co.cask.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.data2.dataset2.DefaultDatasetDefinitionRegistry;
 import co.cask.cdap.data2.dataset2.InMemoryDatasetFramework;
 import co.cask.cdap.data2.dataset2.lib.hbase.AbstractHBaseDataSetAdmin;

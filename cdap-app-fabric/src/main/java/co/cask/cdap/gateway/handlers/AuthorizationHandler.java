@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,18 +17,20 @@
 package co.cask.cdap.gateway.handlers;
 
 import co.cask.cdap.common.BadRequestException;
+import co.cask.cdap.common.FeatureDisabledException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.http.SecurityRequestContext;
 import co.cask.cdap.common.logging.AuditLogEntry;
 import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
+import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.AuthorizationRequest;
 import co.cask.cdap.proto.security.CheckAuthorizedRequest;
-import co.cask.cdap.proto.security.CheckAuthorizedResponse;
 import co.cask.cdap.proto.security.GrantRequest;
 import co.cask.cdap.proto.security.RevokeRequest;
-import co.cask.cdap.security.authorization.AuthorizationPlugin;
+import co.cask.cdap.security.spi.authorization.Authorizer;
 import co.cask.http.HttpResponder;
+import com.google.common.base.Optional;
 import com.google.inject.Inject;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
@@ -37,28 +39,31 @@ import org.slf4j.LoggerFactory;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.Set;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 
 /**
- * Exposes {@link AuthorizationPlugin} operations via HTTP.
+ * Exposes {@link Authorizer} operations via HTTP.
  */
 @Path(Constants.Gateway.API_VERSION_3 + "/security")
 public class AuthorizationHandler extends AbstractAppFabricHttpHandler {
 
   private static final Logger AUDIT_LOG = LoggerFactory.getLogger("authorization-access");
-  private final AuthorizationPlugin auth;
+  private final Authorizer authorizer;
   private final boolean enabled;
 
   @Inject
-  public AuthorizationHandler(AuthorizationPlugin auth, CConfiguration conf) {
-    this.auth = auth;
+  AuthorizationHandler(Authorizer authorizer, CConfiguration conf) {
+    this.authorizer = authorizer;
     this.enabled = conf.getBoolean(Constants.Security.Authorization.ENABLED);
   }
 
   private void createLogEntry(HttpRequest httpRequest, AuthorizationRequest request,
                               HttpResponseStatus responseStatus) throws UnknownHostException {
-    String reqBody = String.format("[%s %s %s]", request.getUser(), request.getEntity(), request.getActions());
+    String reqBody = String.format("[%s %s %s]", request.getPrincipal(), request.getEntity(), request.getActions());
     AuditLogEntry logEntry = new AuditLogEntry();
     logEntry.setUserName(SecurityRequestContext.getUserId().or("-"));
     logEntry.setClientIP(InetAddress.getByName(SecurityRequestContext.getUserIP().or("0.0.0.0")));
@@ -71,40 +76,34 @@ public class AuthorizationHandler extends AbstractAppFabricHttpHandler {
   @Path("/authorized")
   @POST
   public void authorized(HttpRequest httpRequest, HttpResponder httpResponder) throws Exception {
-    if (!enabled) {
-      httpResponder.sendStatus(HttpResponseStatus.NOT_FOUND);
+    ensureAuthorizationEnabled();
+
+    CheckAuthorizedRequest request = parseBody(httpRequest, CheckAuthorizedRequest.class);
+    verifyAuthRequest(request);
+
+    Set<Action> actions = Optional.fromNullable(request.getActions()).or(Collections.<Action>emptySet());
+    if (actions.isEmpty()) {
+      httpResponder.sendString(HttpResponseStatus.OK, "No actions to check for authorization in request");
       return;
     }
 
-    CheckAuthorizedRequest request = parseBody(httpRequest, CheckAuthorizedRequest.class);
-    if (request == null) {
-      throw new BadRequestException("Missing request body");
+    for (Action action : request.getActions()) {
+      authorizer.enforce(request.getEntity(), request.getPrincipal(), action);
     }
-
-    CheckAuthorizedResponse response = new CheckAuthorizedResponse(
-      auth.authorized(request.getEntity(), request.getUser(), request.getActions()));
-    httpResponder.sendJson(HttpResponseStatus.OK, response);
+    httpResponder.sendStatus(HttpResponseStatus.OK);
     createLogEntry(httpRequest, request, HttpResponseStatus.OK);
   }
 
   @Path("/grant")
   @POST
   public void grant(HttpRequest httpRequest, HttpResponder httpResponder) throws Exception {
-    if (!enabled) {
-      httpResponder.sendStatus(HttpResponseStatus.NOT_FOUND);
-      return;
-    }
+    ensureAuthorizationEnabled();
 
     GrantRequest request = parseBody(httpRequest, GrantRequest.class);
-    if (request == null) {
-      throw new BadRequestException("Missing request body");
-    }
+    verifyAuthRequest(request);
 
-    if (request.getActions() == null) {
-      auth.grant(request.getEntity(), request.getUser());
-    } else {
-      auth.grant(request.getEntity(), request.getUser(), request.getActions());
-    }
+    Set<Action> actions = request.getActions() == null ? EnumSet.allOf(Action.class) : request.getActions();
+    authorizer.grant(request.getEntity(), request.getPrincipal(), actions);
 
     httpResponder.sendStatus(HttpResponseStatus.OK);
     createLogEntry(httpRequest, request, HttpResponseStatus.OK);
@@ -113,26 +112,32 @@ public class AuthorizationHandler extends AbstractAppFabricHttpHandler {
   @Path("/revoke")
   @POST
   public void revoke(HttpRequest httpRequest, HttpResponder httpResponder) throws Exception {
-    if (!enabled) {
-      httpResponder.sendStatus(HttpResponseStatus.NOT_FOUND);
-      return;
-    }
+    ensureAuthorizationEnabled();
 
     RevokeRequest request = parseBody(httpRequest, RevokeRequest.class);
-    if (request == null) {
-      throw new BadRequestException("Missing request body");
-    }
+    verifyAuthRequest(request);
 
-    if (request.getUser() == null && request.getActions() == null) {
-      auth.revoke(request.getEntity());
-    } else if (request.getActions() == null) {
-      auth.revoke(request.getEntity(), request.getUser());
+    if (request.getPrincipal() == null && request.getActions() == null) {
+      authorizer.revoke(request.getEntity());
     } else {
-      auth.revoke(request.getEntity(), request.getUser(), request.getActions());
+      Set<Action> actions = request.getActions() == null ? EnumSet.allOf(Action.class) : request.getActions();
+      authorizer.revoke(request.getEntity(), request.getPrincipal(), actions);
     }
 
     httpResponder.sendStatus(HttpResponseStatus.OK);
     createLogEntry(httpRequest, request, HttpResponseStatus.OK);
   }
 
+  private void ensureAuthorizationEnabled() throws FeatureDisabledException {
+    if (!enabled) {
+      throw new FeatureDisabledException("Authorization", "cdap-site.xml", Constants.Security.Authorization.ENABLED,
+                                         "true");
+    }
+  }
+
+  private void verifyAuthRequest(AuthorizationRequest request) throws BadRequestException {
+    if (request == null) {
+      throw new BadRequestException("Missing request body");
+    }
+  }
 }

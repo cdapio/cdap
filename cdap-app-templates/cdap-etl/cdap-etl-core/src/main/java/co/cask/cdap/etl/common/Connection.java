@@ -19,8 +19,11 @@ package co.cask.cdap.etl.common;
 import java.util.Objects;
 
 /**
- *  Represents a connection between two {@link ETLStage}
+ * Represents a connection between two {@link ETLStage}
+ *
+ * @deprecated use Connection from cdap-etl-proto instead
  */
+@Deprecated
 public class Connection {
   private final String from;
   private final String to;

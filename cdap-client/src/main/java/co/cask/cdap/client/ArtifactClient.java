@@ -27,7 +27,7 @@ import co.cask.cdap.common.ArtifactNotFoundException;
 import co.cask.cdap.common.ArtifactRangeNotFoundException;
 import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.NotFoundException;
-import co.cask.cdap.common.UnauthorizedException;
+import co.cask.cdap.common.UnauthenticatedException;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.artifact.ApplicationClassInfo;
@@ -51,7 +51,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Type;
 import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.List;
 import java.util.Map;
@@ -94,11 +93,11 @@ public class ArtifactClient {
    * @param namespace the namespace to list artifacts in
    * @return list of {@link ArtifactSummary}
    * @throws IOException if a network error occurred
-   * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
+   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    * @throws NotFoundException if the namespace could not be found
    */
   public List<ArtifactSummary> list(Id.Namespace namespace)
-    throws IOException, UnauthorizedException, NotFoundException {
+    throws IOException, UnauthenticatedException, NotFoundException {
     return list(namespace, null);
   }
 
@@ -109,11 +108,11 @@ public class ArtifactClient {
    * @param scope the scope of the artifacts to get. If null, both user and system artifacts are listed
    * @return list of {@link ArtifactSummary}
    * @throws IOException if a network error occurred
-   * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
+   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    * @throws NotFoundException if the namespace could not be found
    */
   public List<ArtifactSummary> list(Id.Namespace namespace, @Nullable ArtifactScope scope)
-    throws IOException, UnauthorizedException, NotFoundException {
+    throws IOException, UnauthenticatedException, NotFoundException {
 
     URL url = scope == null ? config.resolveNamespacedURLV3(namespace, "artifacts") :
       config.resolveNamespacedURLV3(namespace, String.format("artifacts?scope=%s", scope.name()));
@@ -133,11 +132,11 @@ public class ArtifactClient {
    * @param artifactName the name of the artifact
    * @return list of {@link ArtifactSummary}
    * @throws IOException if a network error occurred
-   * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
+   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    * @throws ArtifactNotFoundException if the given artifact does not exist
    */
   public List<ArtifactSummary> listVersions(Id.Namespace namespace, String artifactName)
-    throws UnauthorizedException, IOException, ArtifactNotFoundException {
+    throws UnauthenticatedException, IOException, ArtifactNotFoundException {
     return listVersions(namespace, artifactName, null);
   }
 
@@ -149,11 +148,11 @@ public class ArtifactClient {
    * @param scope the scope of artifacts to get. If none is given, the scope defaults to the user scope
    * @return list of {@link ArtifactSummary}
    * @throws IOException if a network error occurred
-   * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
+   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    * @throws ArtifactNotFoundException if the given artifact does not exist
    */
   public List<ArtifactSummary> listVersions(Id.Namespace namespace, String artifactName, @Nullable ArtifactScope scope)
-    throws UnauthorizedException, IOException, ArtifactNotFoundException {
+    throws UnauthenticatedException, IOException, ArtifactNotFoundException {
 
     URL url = scope == null ? config.resolveNamespacedURLV3(namespace, String.format("artifacts/%s", artifactName)) :
       config.resolveNamespacedURLV3(namespace, String.format("artifacts/%s?scope=%s", artifactName, scope.name()));
@@ -172,11 +171,11 @@ public class ArtifactClient {
    * @param artifactId the id of the artifact to get
    * @return information about the given artifact
    * @throws IOException if a network error occurred
-   * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
+   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    * @throws ArtifactNotFoundException if the given artifact does not exist
    */
   public ArtifactInfo getArtifactInfo(Id.Artifact artifactId)
-    throws IOException, UnauthorizedException, ArtifactNotFoundException {
+    throws IOException, UnauthenticatedException, ArtifactNotFoundException {
     return getArtifactInfo(artifactId, ArtifactScope.USER);
   }
 
@@ -187,11 +186,11 @@ public class ArtifactClient {
    * @param scope the scope of the artifact
    * @return information about the given artifact
    * @throws IOException if a network error occurred
-   * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
+   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    * @throws ArtifactNotFoundException if the given artifact does not exist
    */
   public ArtifactInfo getArtifactInfo(Id.Artifact artifactId, ArtifactScope scope)
-    throws IOException, UnauthorizedException, ArtifactNotFoundException {
+    throws IOException, UnauthenticatedException, ArtifactNotFoundException {
 
     String path = String.format("artifacts/%s/versions/%s?scope=%s",
       artifactId.getName(), artifactId.getVersion().getVersion(), scope.name());
@@ -211,10 +210,10 @@ public class ArtifactClient {
    * @param namespace the namespace to list application classes from
    * @return summaries of all application classes in the given namespace, including classes from system artifacts
    * @throws IOException if a network error occurred
-   * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
+   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    */
   public List<ApplicationClassSummary> getApplicationClasses(Id.Namespace namespace)
-    throws IOException, UnauthorizedException {
+    throws IOException, UnauthenticatedException {
     return getApplicationClasses(namespace, (ArtifactScope) null);
   }
 
@@ -226,11 +225,11 @@ public class ArtifactClient {
    * @param scope the scope to list application classes in. If null, classes from all scopes are returned
    * @return summaries of all application classes in the given namespace, including classes from system artifacts
    * @throws IOException if a network error occurred
-   * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
+   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    */
   public List<ApplicationClassSummary> getApplicationClasses(Id.Namespace namespace,
                                                              @Nullable ArtifactScope scope)
-    throws IOException, UnauthorizedException {
+    throws IOException, UnauthenticatedException {
 
     String path = scope == null ? "classes/apps" : String.format("classes/apps?scope=%s", scope.name());
     URL url = config.resolveNamespacedURLV3(namespace, path);
@@ -246,10 +245,10 @@ public class ArtifactClient {
    * @param namespace the namespace to list application classes from
    * @return summaries of all application classes in the given namespace, including classes from system artifacts
    * @throws IOException if a network error occurred
-   * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
+   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    */
   public List<ApplicationClassInfo> getApplicationClasses(Id.Namespace namespace, String className)
-    throws IOException, UnauthorizedException {
+    throws IOException, UnauthenticatedException {
     return getApplicationClasses(namespace, className, ArtifactScope.USER);
   }
 
@@ -260,10 +259,10 @@ public class ArtifactClient {
    * @param scope the scope to list application classes in
    * @return summaries of all application classes in the given namespace, including classes from system artifacts
    * @throws IOException if a network error occurred
-   * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
+   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    */
   public List<ApplicationClassInfo> getApplicationClasses(Id.Namespace namespace, String className, ArtifactScope scope)
-    throws IOException, UnauthorizedException {
+    throws IOException, UnauthenticatedException {
 
     String path = String.format("classes/apps/%s?scope=%s", className, scope.name());
     URL url = config.resolveNamespacedURLV3(namespace, path);
@@ -280,10 +279,10 @@ public class ArtifactClient {
    * @return list of plugin types available to the given artifact.
    * @throws ArtifactNotFoundException if the given artifact does not exist
    * @throws IOException if a network error occurred
-   * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
+   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    */
   public List<String> getPluginTypes(Id.Artifact artifactId)
-    throws IOException, UnauthorizedException, ArtifactNotFoundException {
+    throws IOException, UnauthenticatedException, ArtifactNotFoundException {
     return getPluginTypes(artifactId, ArtifactScope.USER);
   }
 
@@ -295,10 +294,10 @@ public class ArtifactClient {
    * @return list of plugin types available to the given artifact.
    * @throws ArtifactNotFoundException if the given artifact does not exist
    * @throws IOException if a network error occurred
-   * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
+   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    */
   public List<String> getPluginTypes(Id.Artifact artifactId, ArtifactScope scope)
-    throws IOException, UnauthorizedException, ArtifactNotFoundException {
+    throws IOException, UnauthenticatedException, ArtifactNotFoundException {
 
     String path = String.format("artifacts/%s/versions/%s/extensions?scope=%s",
       artifactId.getName(), artifactId.getVersion().getVersion(), scope.name());
@@ -320,10 +319,10 @@ public class ArtifactClient {
    * @return list of {@link PluginSummary}
    * @throws ArtifactNotFoundException if the given artifact does not exist
    * @throws IOException if a network error occurred
-   * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
+   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    */
   public List<PluginSummary> getPluginSummaries(Id.Artifact artifactId, String pluginType)
-    throws IOException, UnauthorizedException, ArtifactNotFoundException {
+    throws IOException, UnauthenticatedException, ArtifactNotFoundException {
     return getPluginSummaries(artifactId, pluginType, ArtifactScope.USER);
   }
 
@@ -336,10 +335,10 @@ public class ArtifactClient {
    * @return list of {@link PluginSummary}
    * @throws ArtifactNotFoundException if the given artifact does not exist
    * @throws IOException if a network error occurred
-   * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
+   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    */
   public List<PluginSummary> getPluginSummaries(Id.Artifact artifactId, String pluginType, ArtifactScope scope)
-    throws IOException, UnauthorizedException, ArtifactNotFoundException {
+    throws IOException, UnauthenticatedException, ArtifactNotFoundException {
 
     String path = String.format("artifacts/%s/versions/%s/extensions/%s?scope=%s",
       artifactId.getName(), artifactId.getVersion().getVersion(), pluginType, scope.name());
@@ -362,10 +361,10 @@ public class ArtifactClient {
    * @return list of {@link PluginInfo}
    * @throws NotFoundException if the given artifact does not exist or plugins for that artifact do not exist
    * @throws IOException if a network error occurred
-   * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
+   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    */
   public List<PluginInfo> getPluginInfo(Id.Artifact artifactId, String pluginType, String pluginName)
-    throws IOException, UnauthorizedException, NotFoundException {
+    throws IOException, UnauthenticatedException, NotFoundException {
     return getPluginInfo(artifactId, pluginType, pluginName, ArtifactScope.USER);
   }
 
@@ -379,11 +378,11 @@ public class ArtifactClient {
    * @return list of {@link PluginInfo}
    * @throws NotFoundException if the given artifact does not exist or plugins for that artifact do not exist
    * @throws IOException if a network error occurred
-   * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
+   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    */
   public List<PluginInfo> getPluginInfo(Id.Artifact artifactId, String pluginType, String pluginName,
                                         ArtifactScope scope)
-    throws IOException, UnauthorizedException, NotFoundException {
+    throws IOException, UnauthenticatedException, NotFoundException {
 
     String path = String.format("artifacts/%s/versions/%s/extensions/%s/plugins/%s?scope=%s",
       artifactId.getName(), artifactId.getVersion().getVersion(), pluginType, pluginName, scope.name());
@@ -407,11 +406,11 @@ public class ArtifactClient {
    * @throws BadRequestException if the request is invalid. For example, if the artifact name or version is invalid
    * @throws ArtifactRangeNotFoundException if the parent artifacts do not exist
    * @throws IOException if a network error occurred
-   * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
+   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    */
   public void add(Id.Artifact artifactId, @Nullable Set<ArtifactRange> parentArtifacts,
                   InputSupplier<? extends InputStream> artifactContents)
-    throws UnauthorizedException, BadRequestException, ArtifactRangeNotFoundException,
+    throws UnauthenticatedException, BadRequestException, ArtifactRangeNotFoundException,
     ArtifactAlreadyExistsException, IOException {
 
     add(artifactId.getNamespace(), artifactId.getName(), artifactContents,
@@ -430,13 +429,13 @@ public class ArtifactClient {
    * @throws BadRequestException if the request is invalid. For example, if the artifact name or version is invalid
    * @throws ArtifactRangeNotFoundException if the parent artifacts do not exist
    * @throws IOException if a network error occurred
-   * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
+   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    */
   public void add(Id.Namespace namespace, String artifactName,
                   InputSupplier<? extends InputStream> artifactContents,
                   @Nullable String artifactVersion)
     throws ArtifactAlreadyExistsException, BadRequestException, IOException,
-    UnauthorizedException, ArtifactRangeNotFoundException {
+    UnauthenticatedException, ArtifactRangeNotFoundException {
 
     add(namespace, artifactName, artifactContents, artifactVersion, null, null);
   }
@@ -454,12 +453,12 @@ public class ArtifactClient {
    * @throws BadRequestException if the request is invalid. For example, if the artifact name or version is invalid
    * @throws ArtifactRangeNotFoundException if the parent artifacts do not exist
    * @throws IOException if a network error occurred
-   * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
+   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    */
   public void add(Id.Namespace namespace, String artifactName, InputSupplier<? extends InputStream> artifactContents,
                   @Nullable String artifactVersion, @Nullable Set<ArtifactRange> parentArtifacts)
     throws ArtifactAlreadyExistsException, BadRequestException, IOException,
-    UnauthorizedException, ArtifactRangeNotFoundException {
+    UnauthenticatedException, ArtifactRangeNotFoundException {
 
     add(namespace, artifactName, artifactContents, artifactVersion, parentArtifacts, null);
   }
@@ -481,7 +480,7 @@ public class ArtifactClient {
    * @throws BadRequestException if the request is invalid. For example, if the artifact name or version is invalid
    * @throws ArtifactRangeNotFoundException if the parent artifacts do not exist
    * @throws IOException if a network error occurred
-   * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
+   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    */
   public void add(Id.Namespace namespace, String artifactName,
                   InputSupplier<? extends InputStream> artifactContents,
@@ -489,7 +488,7 @@ public class ArtifactClient {
                   @Nullable Set<ArtifactRange> parentArtifacts,
                   @Nullable Set<PluginClass> additionalPlugins)
     throws ArtifactAlreadyExistsException, BadRequestException, IOException,
-    UnauthorizedException, ArtifactRangeNotFoundException {
+    UnauthenticatedException, ArtifactRangeNotFoundException {
 
     URL url = config.resolveNamespacedURLV3(namespace, String.format("artifacts/%s", artifactName));
     HttpRequest.Builder requestBuilder = HttpRequest.post(url);
@@ -524,9 +523,9 @@ public class ArtifactClient {
    *
    * @throws BadRequestException if the request is invalid. For example, if the artifact name or version is invalid
    * @throws IOException if a network error occurred
-   * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
+   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    */
-  public void delete(Id.Artifact artifactId) throws IOException, UnauthorizedException, BadRequestException {
+  public void delete(Id.Artifact artifactId) throws IOException, UnauthenticatedException, BadRequestException {
     URL url = config.resolveNamespacedURLV3(artifactId.getNamespace(),
       String.format("artifacts/%s/versions/%s", artifactId.getName(), artifactId.getVersion().getVersion()));
 
@@ -546,12 +545,12 @@ public class ArtifactClient {
    * @param artifactId the artifact to add properties to
    * @param properties the properties to add
    * @throws BadRequestException if the request is invalid. For example, if the artifact name or version is invalid
-   * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
+   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    * @throws ArtifactNotFoundException if the artifact does not exist
    * @throws IOException if a network error occurred
    */
   public void writeProperties(Id.Artifact artifactId, Map<String, String> properties)
-    throws IOException, UnauthorizedException, ArtifactNotFoundException, BadRequestException {
+    throws IOException, UnauthenticatedException, ArtifactNotFoundException, BadRequestException {
     String path = String.format("artifacts/%s/versions/%s/properties",
                                 artifactId.getName(),
                                 artifactId.getVersion().getVersion());
@@ -575,12 +574,12 @@ public class ArtifactClient {
    *
    * @param artifactId the artifact to delete properties from
    * @throws BadRequestException if the request is invalid. For example, if the artifact name or version is invalid
-   * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
+   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    * @throws ArtifactNotFoundException if the artifact does not exist
    * @throws IOException if a network error occurred
    */
   public void deleteProperties(Id.Artifact artifactId)
-    throws IOException, UnauthorizedException, ArtifactNotFoundException, BadRequestException {
+    throws IOException, UnauthenticatedException, ArtifactNotFoundException, BadRequestException {
     String path = String.format("artifacts/%s/versions/%s/properties",
                                 artifactId.getName(),
                                 artifactId.getVersion().getVersion());
@@ -607,12 +606,12 @@ public class ArtifactClient {
    * @param key the property key to write
    * @param value the property value to write
    * @throws BadRequestException if the request is invalid. For example, if the artifact name or version is invalid
-   * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
+   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    * @throws ArtifactNotFoundException if the artifact does not exist
    * @throws IOException if a network error occurred
    */
   public void writeProperty(Id.Artifact artifactId, String key, String value)
-    throws IOException, UnauthorizedException, ArtifactNotFoundException, BadRequestException {
+    throws IOException, UnauthenticatedException, ArtifactNotFoundException, BadRequestException {
     String path = String.format("artifacts/%s/versions/%s/properties/%s",
                                 artifactId.getName(),
                                 artifactId.getVersion().getVersion(),
@@ -638,12 +637,12 @@ public class ArtifactClient {
    * @param artifactId the artifact to delete a property from
    * @param key the property to delete
    * @throws BadRequestException if the request is invalid. For example, if the artifact name or version is invalid
-   * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
+   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    * @throws ArtifactNotFoundException if the artifact does not exist
    * @throws IOException if a network error occurred
    */
   public void deleteProperty(Id.Artifact artifactId, String key)
-    throws IOException, UnauthorizedException, ArtifactNotFoundException, BadRequestException {
+    throws IOException, UnauthenticatedException, ArtifactNotFoundException, BadRequestException {
     String path = String.format("artifacts/%s/versions/%s/properties/%s",
                                 artifactId.getName(),
                                 artifactId.getVersion().getVersion(),

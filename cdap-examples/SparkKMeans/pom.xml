@@ -38,14 +38,6 @@
     </repository>
   </repositories>
 
-  <pluginRepositories>
-    <pluginRepository>
-      <id>scala-tools.org</id>
-      <name>Scala-tools Maven2 Repository</name>
-      <url>http://scala-tools.org/repo-releases</url>
-    </pluginRepository>
-  </pluginRepositories>
-
   <dependencies>
     <dependency>
       <groupId>org.scalanlp</groupId>
@@ -66,37 +58,11 @@
   </dependencies>
 
   <build>
-    <pluginManagement>
-      <plugins>
-        <plugin>
-          <groupId>org.scala-tools</groupId>
-          <artifactId>maven-scala-plugin</artifactId>
-          <version>2.15.2</version>
-        </plugin>
-      </plugins>
-    </pluginManagement>
-
     <plugins>
       <plugin>
-        <groupId>org.scala-tools</groupId>
-        <artifactId>maven-scala-plugin</artifactId>
-        <executions>
-          <execution>
-            <id>scala-compile-first</id>
-            <phase>process-resources</phase>
-            <goals>
-              <goal>add-source</goal>
-              <goal>compile</goal>
-            </goals>
-          </execution>
-          <execution>
-            <id>scala-test-compile</id>
-            <phase>process-test-resources</phase>
-            <goals>
-              <goal>testCompile</goal>
-            </goals>
-          </execution>
-        </executions>
+        <groupId>net.alchim31.maven</groupId>
+        <artifactId>scala-maven-plugin</artifactId>
+        <version>3.2.2</version>
       </plugin>
     </plugins>
   </build>

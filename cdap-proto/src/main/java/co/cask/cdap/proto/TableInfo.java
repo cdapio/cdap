@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,12 +16,13 @@
 
 package co.cask.cdap.proto;
 
-import com.google.common.base.Objects;
-import com.google.common.collect.ImmutableMap;
 import com.google.gson.annotations.SerializedName;
 
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * Schema and other extended information about a Hive table.
@@ -90,7 +91,7 @@ public class TableInfo {
     this.lastAccessTime = lastAccessTime;
     this.retention = retention;
     this.partitionKeys = partitionKeys;
-    this.parameters = ImmutableMap.copyOf(parameters);
+    this.parameters = Collections.unmodifiableMap(new LinkedHashMap<>(parameters));
     this.tableType = tableType;
     this.schema = schema;
     this.location = location;
@@ -99,7 +100,7 @@ public class TableInfo {
     this.compressed = compressed;
     this.numBuckets = numBuckets;
     this.serde = serde;
-    this.serdeParameters = ImmutableMap.copyOf(serdeParameters);
+    this.serdeParameters = Collections.unmodifiableMap(new LinkedHashMap<>(serdeParameters));
     this.isBackedByDataset = isBackedByDataset;
   }
 
@@ -150,55 +151,55 @@ public class TableInfo {
 
     TableInfo that = (TableInfo) o;
 
-    return Objects.equal(this.tableName, that.tableName) &&
-      Objects.equal(this.dbName, that.dbName) &&
-      Objects.equal(this.owner, that.owner) &&
-      Objects.equal(this.creationTime, that.creationTime) &&
-      Objects.equal(this.lastAccessTime, that.lastAccessTime) &&
-      Objects.equal(this.retention, that.retention) &&
-      Objects.equal(this.partitionKeys, that.partitionKeys) &&
-      Objects.equal(this.parameters, that.parameters) &&
-      Objects.equal(this.tableType, that.tableType) &&
-      Objects.equal(this.schema, that.schema) &&
-      Objects.equal(this.location, that.location) &&
-      Objects.equal(this.inputFormat, that.inputFormat) &&
-      Objects.equal(this.outputFormat, that.outputFormat) &&
-      Objects.equal(this.compressed, that.compressed) &&
-      Objects.equal(this.numBuckets, that.numBuckets) &&
-      Objects.equal(this.serde, that.serde) &&
-      Objects.equal(this.serdeParameters, that.serdeParameters) &&
-      Objects.equal(this.isBackedByDataset, that.isBackedByDataset);
+    return Objects.equals(this.tableName, that.tableName) &&
+      Objects.equals(this.dbName, that.dbName) &&
+      Objects.equals(this.owner, that.owner) &&
+      Objects.equals(this.creationTime, that.creationTime) &&
+      Objects.equals(this.lastAccessTime, that.lastAccessTime) &&
+      Objects.equals(this.retention, that.retention) &&
+      Objects.equals(this.partitionKeys, that.partitionKeys) &&
+      Objects.equals(this.parameters, that.parameters) &&
+      Objects.equals(this.tableType, that.tableType) &&
+      Objects.equals(this.schema, that.schema) &&
+      Objects.equals(this.location, that.location) &&
+      Objects.equals(this.inputFormat, that.inputFormat) &&
+      Objects.equals(this.outputFormat, that.outputFormat) &&
+      Objects.equals(this.compressed, that.compressed) &&
+      Objects.equals(this.numBuckets, that.numBuckets) &&
+      Objects.equals(this.serde, that.serde) &&
+      Objects.equals(this.serdeParameters, that.serdeParameters) &&
+      Objects.equals(this.isBackedByDataset, that.isBackedByDataset);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(tableName, dbName, owner, creationTime, lastAccessTime, retention, partitionKeys,
-                            parameters, tableType, schema, location, inputFormat, outputFormat, compressed,
-                            numBuckets, serde, serdeParameters, isBackedByDataset);
+    return Objects.hash(tableName, dbName, owner, creationTime, lastAccessTime, retention, partitionKeys,
+                        parameters, tableType, schema, location, inputFormat, outputFormat, compressed,
+                        numBuckets, serde, serdeParameters, isBackedByDataset);
   }
 
   @Override
   public String toString() {
-    return Objects.toStringHelper(this)
-      .add("tableName", tableName)
-      .add("dbName", dbName)
-      .add("owner", owner)
-      .add("creationTime", creationTime)
-      .add("lastAccessTime", lastAccessTime)
-      .add("retention", retention)
-      .add("partitionKeys", partitionKeys)
-      .add("parameters", parameters)
-      .add("tableType", tableType)
-      .add("schema", schema)
-      .add("location", location)
-      .add("inputFormat", inputFormat)
-      .add("outputFormat", outputFormat)
-      .add("compressed", compressed)
-      .add("numBuckets", numBuckets)
-      .add("serde", serde)
-      .add("serdeParameters", serdeParameters)
-      .add("isBackedByDataset", isBackedByDataset)
-      .toString();
+    return "TableInfo{" +
+      "tableName='" + tableName + '\'' +
+      ", dbName='" + dbName + '\'' +
+      ", owner='" + owner + '\'' +
+      ", creationTime=" + creationTime +
+      ", lastAccessTime=" + lastAccessTime +
+      ", retention=" + retention +
+      ", partitionKeys=" + partitionKeys +
+      ", parameters=" + parameters +
+      ", tableType='" + tableType + '\'' +
+      ", schema=" + schema +
+      ", location='" + location + '\'' +
+      ", inputFormat='" + inputFormat + '\'' +
+      ", outputFormat='" + outputFormat + '\'' +
+      ", compressed=" + compressed +
+      ", numBuckets=" + numBuckets +
+      ", serde='" + serde + '\'' +
+      ", serdeParameters=" + serdeParameters +
+      ", isBackedByDataset=" + isBackedByDataset +
+      '}';
   }
 
   /**
@@ -226,23 +227,23 @@ public class TableInfo {
 
       ColumnInfo that = (ColumnInfo) o;
 
-      return Objects.equal(this.name, that.name) &&
-        Objects.equal(this.type, that.type) &&
-        Objects.equal(this.comment, that.comment);
+      return Objects.equals(this.name, that.name) &&
+        Objects.equals(this.type, that.type) &&
+        Objects.equals(this.comment, that.comment);
     }
 
     @Override
     public int hashCode() {
-      return Objects.hashCode(name, type, comment);
+      return Objects.hash(name, type, comment);
     }
 
     @Override
     public String toString() {
-      return Objects.toStringHelper(this)
-        .add("name", name)
-        .add("type", type)
-        .add("comment", comment)
-        .toString();
+      return "ColumnInfo{" +
+        "name='" + name + '\'' +
+        ", type='" + type + '\'' +
+        ", comment='" + comment + '\'' +
+        '}';
     }
   }
 }

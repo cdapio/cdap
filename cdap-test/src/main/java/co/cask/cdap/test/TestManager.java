@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -73,6 +73,14 @@ public interface TestManager {
    * @return An {@link ApplicationManager} to manage the deployed application.
    */
   ApplicationManager deployApplication(Id.Application appId, AppRequest appRequest) throws Exception;
+
+  /**
+   * Gets an Application Manager for an {@link Application}.
+   *
+   * @param appId the id of deployed application
+   * @return An {@link ApplicationManager} to manage the deployed application.
+   */
+  ApplicationManager getApplicationManager(Id.Application appId) throws Exception;
 
   /**
    * Add the specified artifact.

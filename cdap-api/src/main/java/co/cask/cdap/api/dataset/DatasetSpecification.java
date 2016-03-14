@@ -22,6 +22,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.SortedMap;
 import java.util.TreeMap;
+import javax.annotation.Nullable;
 
 /**
  * A {@link DatasetSpecification} is a hierarchical meta data object that contains all
@@ -45,6 +46,8 @@ public final class DatasetSpecification {
   private final String name;
   // the name of the type of the dataset
   private final String type;
+  // the properties of the dataset as passed in when the dataset was created or reconfigured
+  private final Map<String, String> originalProperties;
   // the custom properties of the dataset.
   // NOTE: we need the map to be ordered because we compare serialized to JSON form as Strings during deploy validation
   private final SortedMap<String, String> properties;
@@ -54,11 +57,6 @@ public final class DatasetSpecification {
 
   public static Builder builder(String name, String typeName) {
     return new Builder(name, typeName);
-  }
-
-  public static DatasetSpecification changeName(DatasetSpecification spec, String newName) {
-    return new DatasetSpecification(newName, spec.type,
-                                    spec.properties, spec.datasetSpecs);
   }
 
   /**
@@ -72,9 +70,26 @@ public final class DatasetSpecification {
                                String type,
                                SortedMap<String, String> properties,
                                SortedMap<String, DatasetSpecification> datasetSpecs) {
+    this(name, type, null, properties, datasetSpecs);
+  }
+
+  /**
+   * Private constructor, only to be used by static method setOriginalProperties.
+   * @param name the name of the dataset
+   * @param type the type of the dataset
+   * @param properties the custom properties
+   * @param datasetSpecs the specs of embedded datasets
+   */
+  private DatasetSpecification(String name,
+                               String type,
+                               @Nullable Map<String, String> originalProperties,
+                               SortedMap<String, String> properties,
+                               SortedMap<String, DatasetSpecification> datasetSpecs) {
     this.name = name;
     this.type = type;
     this.properties = Collections.unmodifiableSortedMap(new TreeMap<>(properties));
+    this.originalProperties = originalProperties == null ? null :
+      Collections.unmodifiableMap(new TreeMap<String, String>(originalProperties));
     this.datasetSpecs = Collections.unmodifiableSortedMap(new TreeMap<>(datasetSpecs));
   }
 
@@ -134,6 +149,15 @@ public final class DatasetSpecification {
   }
 
   /**
+   * Return the original properties with which the dataset was created/reconfigured.
+   * @return an immutable map. For embedded datasets, this will always return null.
+   */
+  @Nullable
+  public Map<String, String> getOriginalProperties() {
+    return originalProperties;
+  }
+
+  /**
    * Return map of all properties set in this specification.
    * @return an immutable map.
    */
@@ -159,6 +183,20 @@ public final class DatasetSpecification {
     return datasetSpecs;
   }
 
+  /**
+   * @return a new spec that is the same as this one, with the original properties set to the provided properties.
+   */
+  public DatasetSpecification setOriginalProperties(DatasetProperties originalProps) {
+    return setOriginalProperties(originalProps.getProperties());
+  }
+
+  /**
+   * @return a new spec that is the same as this one, with the original properties set to the provided properties.
+   */
+  public DatasetSpecification setOriginalProperties(Map<String, String> originalProps) {
+    return new DatasetSpecification(name, type, originalProps, properties, datasetSpecs);
+  }
+
   @Override
   public boolean equals(Object other) {
     if (this == other) {
@@ -171,35 +209,37 @@ public final class DatasetSpecification {
     DatasetSpecification that = (DatasetSpecification) other;
     return Objects.equals(name, that.name) &&
       Objects.equals(type, that.type) &&
+      Objects.equals(originalProperties, that.originalProperties) &&
       Objects.equals(properties, that.properties) &&
       Objects.equals(datasetSpecs, that.datasetSpecs);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(name, type, properties, datasetSpecs);
+    return Objects.hash(name, type, originalProperties, properties, datasetSpecs);
   }
 
   /**
-   * Returns true if the tableName corresponds to the dataset specification.
-   * @param tableName
-   * @return <code>true</code> if the tableName represents the dataset spec;
+   * Returns true if the datasetName is the name of a non-composite dataset represented by this spec.
+   * That is, it is represented by one of the leaf-nodes of this dataset spec.
+   * @param datasetName the name of a dataset
+   * @return <code>true</code> if the datasetName is represented by the dataset spec;
    *         <code>false</code> otherwise
    */
-  public boolean isParent(String tableName) {
-    return isParent(tableName, this);
+  public boolean isParent(String datasetName) {
+    return isParent(datasetName, this);
   }
 
-  private boolean isParent(String tableName, DatasetSpecification specification) {
-    if (tableName == null) {
+  private boolean isParent(String datasetName, DatasetSpecification specification) {
+    if (datasetName == null) {
       return false;
     }
-    if (specification.getSpecifications().size() == 0 && specification.getName().equals(tableName)) {
+    if (specification.getSpecifications().size() == 0 && specification.getName().equals(datasetName)) {
       return true;
     }
-    if (tableName.startsWith(specification.getName())) {
+    if (datasetName.startsWith(specification.getName())) {
       for (DatasetSpecification spec : specification.getSpecifications().values()) {
-        if (isParent(tableName, spec)) {
+        if (isParent(datasetName, spec)) {
           return true;
         }
       }
@@ -213,6 +253,7 @@ public final class DatasetSpecification {
       "datasetSpecs=" + datasetSpecs +
       ", name='" + name + '\'' +
       ", type='" + type + '\'' +
+      ", originalProperties=" + originalProperties +
       ", properties=" + properties +
       '}';
   }

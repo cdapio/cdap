@@ -1,0 +1,224 @@
+<!--
+  Copyright © 2016 Cask Data, Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+-->
+
+<header class="navbar navbar-fixed-top">
+  <nav class="navbar {{ Navbar.activeProduct }}">
+    <div class="brand-header">
+      <a href="" class="navbar-brand" ng-click="Navbar.toggleSidebar()"
+         ng-mouseenter="Navbar.mouseHoverBrand = true"
+         ng-mouseleave="Navbar.mouseHoverBrand = false">
+        <span class="icon-fist"
+              ng-if="Navbar.activeProduct === 'cdap' || Navbar.mouseHoverBrand"></span>
+        <span class="icon-hydrator"
+              ng-if="Navbar.activeProduct === 'hydrator' && !Navbar.mouseHoverBrand"></span>
+        <span class="icon-tracker"
+              ng-if="Navbar.activeProduct === 'tracker' && !Navbar.mouseHoverBrand"></span>
+      </a>
+
+      <a ui-sref="overview({namespace: $stateParams.namespace})"
+         class="menu-item product-title"
+         ng-if="Navbar.activeProduct === 'cdap'">
+        CDAP
+      </a>
+
+      <a ui-sref="hydrator.list({ namespace: $stateParams.namespace })"
+         class="menu-item product-title"
+         ng-if="Navbar.activeProduct === 'hydrator'">
+        Cask Hydrator
+      </a>
+
+      <a ui-sref="tracker-home({ namespace: $stateParams.namespace })"
+         class="menu-item product-title"
+         ng-if="Navbar.activeProduct === 'tracker'">
+        Cask Tracker
+      </a>
+
+    </div>
+
+    <!-- CDAP -->
+    <ul class="navbar-list" ng-if="Navbar.activeProduct === 'cdap'">
+      <li>
+        <a ui-sref="dashboard.standard.cdap({namespace: $stateParams.namespace})"
+           ng-class="{ 'active': Navbar.highlightTab === 'dashboard' }">
+          Dashboard
+        </a>
+      </li>
+      <li>
+        <a ui-sref="admin.overview"
+           ng-class="{ 'active': Navbar.highlightTab === 'management' }">
+          Management
+        </a>
+      </li>
+    </ul>
+
+    <!-- HYDRATOR -->
+    <ul class="navbar-list" ng-if="Navbar.activeProduct === 'hydrator'">
+      <li>
+        <a ui-sref="hydrator.list({ namespace: $stateParams.namespace })"
+           ng-class="{ 'active': Navbar.highlightTab === 'hydratorList'}">
+          My Pipelines
+        </a>
+      </li>
+      <li>
+        <a ui-sref="hydrator.create({ namespace: $stateParams.namespace })"
+           ng-class="{ 'active': Navbar.highlightTab === 'hydratorStudio'}">
+          Create Pipeline
+        </a>
+      </li>
+    </ul>
+
+    <!-- TRACKER -->
+    <ul class="navbar-list" ng-if="Navbar.activeProduct === 'tracker'">
+      <li>
+        <a ui-sref="tracker-home({ namespace: $stateParams.namespace })"
+           ng-class="{ 'active': Navbar.highlightTab === 'search'}">
+          Search
+        </a>
+      </li>
+      <li>
+        <a href=""
+           ng-class="{ 'active': Navbar.highlightTab === 'integration'}">
+          Integrations
+        </a>
+      </li>
+      <li>
+        <a ui-sref="tracker.help"
+           ng-class="{ 'active': Navbar.highlightTab === 'help'}">
+          Help
+        </a>
+      </li>
+    </ul>
+
+
+    <!-- RIGHT MENUS -->
+    <div class="pull-right right-menu">
+      <!-- <div class="navbar-item">
+        <form class="navbar-form">
+          <my-search></my-search>
+        </form>
+      </div> -->
+
+      <div class="navbar-item">
+        <my-error></my-error>
+      </div>
+
+      <div class="navbar-item" uib-dropdown>
+        <div uib-dropdown-toggle>
+          <span class="fa fa-cog"></span>
+        </div>
+
+        <ul uib-dropdown-menu>
+          <li>
+            <a href="http://cask.co" target="_blank">
+              <span class="fa fa-fw fa-book"></span>
+              <span>Cask Home</span>
+            </a>
+          </li>
+          <li>
+            <a href="http://cask.co/community">
+              <span class="fa fa-fw fa-support"></span>
+              <span>Support</span>
+            </a>
+          </li>
+
+          <li ng-hide="currentUser" ui-sref-active="disabled">
+            <a ui-sref="login({next:$state.current.url})">
+              <span class="fa fa-fw fa-sign-in"></span>
+              <span>Log In</span>
+            </a>
+          </li>
+
+          <li ng-show="currentUser && securityEnabled" ur-sref-active="disabled">
+            <a ui-sref="userprofile">
+              <span class="fa fa-fw fa-user"></span>
+              <span>Profile</span>
+            </a>
+          </li>
+
+          <li role="presentation" ng-show="currentUser" ng-class="{disabled:!securityEnabled}">
+            <a href="" ng-click="securityEnabled && logout()">
+              <span class="fa fa-fw fa-sign-out"></span>
+              <span>Log Out</span>
+            </a>
+          </li>
+        </ul>
+      </div>
+
+      <div class="navbar-item namespace-dropdown" uib-dropdown>
+        <div uib-dropdown-toggle ng-disabled="$state.includes('admin.**')">
+          <div class="namespace-display">
+            <span>{{ $state.params.namespace || 'Management' }}</span>
+          </div>
+          <div class="namespace-caret pull-right">
+            <span class="fa fa-angle-down"></span>
+          </div>
+        </div>
+
+        <ul uib-dropdown-menu>
+          <li ng-repeat="ns in Navbar.namespaces | orderBy: 'name'">
+            <a href="" ng-click="Navbar.changeNamespace(ns)">
+              <span ng-class="{'fa fa-check': ns.name === $state.params.namespace}"></span>
+              {{ ns.name | myEllipsis: 15 }}
+            </a>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+  </nav>
+</header>
+
+<!-- SIDEBAR MENU -->
+<div class="display-container" ng-if="Navbar.showSidebar" ng-click="Navbar.toggleSidebar()">
+  <div class="sidebar" ng-click="$event.stopPropagation()">
+    <a ui-sref="overview({namespace: $stateParams.namespace})"
+       class="brand sidebar-item top">
+      <div class="brand-icon text-center cdap">
+        <span class="icon-fist"></span>
+      </div>
+
+      <div class="product-name">
+        <span>CDAP</span>
+      </div>
+    </a>
+
+    <h5>Extensions:</h5>
+
+    <!-- HYDRATOR -->
+    <a ui-sref="hydrator.list({ namespace: $stateParams.namespace })"
+       class="brand sidebar-item">
+      <div class="brand-icon text-center hydrator">
+        <span class="icon-hydrator"></span>
+      </div>
+
+      <div class="product-name">
+        <span>Cask Hydrator</span>
+      </div>
+    </a>
+
+    <!-- TRACKER -->
+    <a ui-sref="tracker-home({ namespace: $stateParams.namespace })"
+       class="brand sidebar-item">
+      <div class="brand-icon text-center tracker">
+        <span class="icon-tracker"></span>
+      </div>
+
+      <div class="product-name">
+        <span>Cask Tracker</span>
+      </div>
+    </a>
+  </div>
+</div>

@@ -49,7 +49,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -91,15 +90,9 @@ public final class DistributedWorkflowProgramRunner extends AbstractDistributedP
                                                 program.getApplicationSpecification().getMapReduce(), workflowSpec);
 
     if (driverMeta.hasSpark) {
-      File sparkAssemblyJar = SparkUtils.locateSparkAssemblyJar();
-      try {
-        sparkAssemblyJar = SparkUtils.getRewrittenSparkAssemblyJar(cConf);
-        localizeResources.put(sparkAssemblyJar.getName(), new LocalizeResource(sparkAssemblyJar));
-      } catch (IOException e) {
-        LOG.warn("Failed to locate the rewritten Spark Assembly JAR. Fallback to use the original jar.", e);
-        localizeResources.put(sparkAssemblyJar.getName(), new LocalizeResource(sparkAssemblyJar));
-      }
-      extraClassPaths.add(sparkAssemblyJar.getName());
+      // Localize the spark-assembly jar and spark conf zip
+      String sparkAssemblyJarName = SparkUtils.prepareSparkResources(cConf, tempDir, localizeResources);
+      extraClassPaths.add(sparkAssemblyJarName);
     }
     
     // Add classpaths for MR framework

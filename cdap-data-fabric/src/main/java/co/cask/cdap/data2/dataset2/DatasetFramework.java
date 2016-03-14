@@ -18,8 +18,11 @@ package co.cask.cdap.data2.dataset2;
 
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetAdmin;
+import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
+import co.cask.cdap.api.dataset.InstanceConflictException;
+import co.cask.cdap.api.dataset.InstanceNotFoundException;
 import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.common.ServiceUnavailableException;
 import co.cask.cdap.data2.datafabric.dataset.type.DatasetClassLoaderProvider;
@@ -185,10 +188,22 @@ public interface DatasetFramework {
   boolean hasType(Id.DatasetType datasetTypeId) throws DatasetManagementException;
 
   /**
+   * Truncates a dataset instance.
+   *
+   * @param datasetInstanceId dataset instance name
+   * @throws InstanceNotFoundException if dataset instance does not exist
+   * @throws IOException when truncation of dataset instance using its admin fails
+   * @throws DatasetManagementException
+   * @throws ServiceUnavailableException when the dataset service is not running
+   */
+  void truncateInstance(Id.DatasetInstance datasetInstanceId) throws DatasetManagementException, IOException;
+
+  /**
    * Deletes dataset instance from the system.
    *
    * @param datasetInstanceId dataset instance name
    * @throws InstanceConflictException if dataset instance cannot be deleted because of its dependencies
+   * @throws InstanceNotFoundException if dataset instance does not exist
    * @throws IOException when deletion of dataset instance using its admin fails
    * @throws DatasetManagementException
    * @throws ServiceUnavailableException when the dataset service is not running

@@ -30,6 +30,8 @@ import co.cask.cdap.data.stream.StreamFileOffset;
 import co.cask.cdap.data.stream.StreamUtils;
 import co.cask.cdap.data.stream.service.StreamMetaStore;
 import co.cask.cdap.data.view.ViewAdmin;
+import co.cask.cdap.data2.audit.AuditPublisher;
+import co.cask.cdap.data2.audit.AuditPublishers;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.data2.metadata.system.AbstractSystemMetadataWriter;
@@ -44,6 +46,8 @@ import co.cask.cdap.notifications.feeds.NotificationFeedManager;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.StreamProperties;
 import co.cask.cdap.proto.ViewSpecification;
+import co.cask.cdap.proto.audit.AuditPayload;
+import co.cask.cdap.proto.audit.AuditType;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
@@ -95,6 +99,7 @@ public class FileStreamAdmin implements StreamAdmin {
   private final MetadataStore metadataStore;
 
   private ExploreFacade exploreFacade;
+  private AuditPublisher auditPublisher;
 
   @Inject
   public FileStreamAdmin(NamespacedLocationFactory namespacedLocationFactory,
@@ -127,6 +132,12 @@ public class FileStreamAdmin implements StreamAdmin {
   public void setExploreFacade(ExploreFacade exploreFacade) {
     // Optional injection is used to simplify Guice injection since ExploreFacade is only need when explore is enabled
     this.exploreFacade = exploreFacade;
+  }
+
+  @SuppressWarnings("unused")
+  @Inject(optional = true)
+  public void setAuditPublisher(AuditPublisher auditPublisher) {
+    this.auditPublisher = auditPublisher;
   }
 
   @Override
@@ -268,6 +279,7 @@ public class FileStreamAdmin implements StreamAdmin {
               }
             }
 
+            publishAudit(streamId, AuditType.UPDATE);
             return new CoordinatorStreamProperties(properties.getTTL(), properties.getFormat(),
                                                    properties.getNotificationThresholdMB(), null);
           }
@@ -322,6 +334,7 @@ public class FileStreamAdmin implements StreamAdmin {
         createStreamFeeds(config);
         alterExploreStream(streamId, true, config.getFormat());
         streamMetaStore.addStream(streamId);
+        publishAudit(streamId, AuditType.CREATE);
         AbstractSystemMetadataWriter systemMetadataWriter = new StreamSystemMetadataWriter(metadataStore, streamId,
                                                                                            config);
         systemMetadataWriter.write();
@@ -427,6 +440,7 @@ public class FileStreamAdmin implements StreamAdmin {
   @Override
   public void addAccess(Id.Run run, Id.Stream streamId, AccessType accessType) {
     lineageWriter.addAccess(run, streamId, accessType);
+    AuditPublishers.publishAccess(auditPublisher, streamId, accessType, run);
   }
 
   /**
@@ -450,12 +464,13 @@ public class FileStreamAdmin implements StreamAdmin {
     return namespacedLocationFactory.get(namespace).append(streamBaseDirPath);
   }
 
-  private void doTruncate(Id.Stream streamId, final Location streamLocation) throws Exception {
+  private void doTruncate(final Id.Stream streamId, final Location streamLocation) throws Exception {
     streamCoordinatorClient.updateProperties(streamId, new Callable<CoordinatorStreamProperties>() {
       @Override
       public CoordinatorStreamProperties call() throws Exception {
         int newGeneration = StreamUtils.getGeneration(streamLocation) + 1;
         Locations.mkdirsIfNotExists(StreamUtils.createGenerationLocation(streamLocation, newGeneration));
+        publishAudit(streamId, AuditType.TRUNCATE);
         return new CoordinatorStreamProperties(null, null, null, newGeneration);
       }
     });
@@ -496,6 +511,7 @@ public class FileStreamAdmin implements StreamAdmin {
           streamLocation.renameTo(deleted.append(streamId.getId() + System.currentTimeMillis()));
           streamMetaStore.removeStream(streamId);
           metadataStore.removeMetadata(streamId);
+          publishAudit(streamId, AuditType.DELETE);
         } catch (Exception e) {
           throw Throwables.propagate(e);
         }
@@ -597,5 +613,9 @@ public class FileStreamAdmin implements StreamAdmin {
         LOG.error(msg, e);
       }
     }
+  }
+
+  private void publishAudit(Id.Stream stream, AuditType auditType) {
+    AuditPublishers.publishAudit(auditPublisher, stream, auditType, AuditPayload.EMPTY_PAYLOAD);
   }
 }

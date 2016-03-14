@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,6 +17,9 @@ package co.cask.cdap.internal.app.runtime.workflow;
 
 import co.cask.cdap.api.Predicate;
 import co.cask.cdap.api.app.ApplicationSpecification;
+import co.cask.cdap.api.common.RuntimeArguments;
+import co.cask.cdap.api.common.Scope;
+import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.workflow.ScheduleProgramInfo;
@@ -33,6 +36,7 @@ import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.runtime.ProgramOptions;
+import co.cask.cdap.app.runtime.ProgramRunnerFactory;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -44,12 +48,14 @@ import co.cask.cdap.common.lang.PropertyFieldSetter;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.registry.UsageRegistry;
+import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.DataSetFieldSetter;
 import co.cask.cdap.internal.app.runtime.MetricsFieldSetter;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
-import co.cask.cdap.internal.app.runtime.ProgramRunnerFactory;
 import co.cask.cdap.internal.app.workflow.DefaultWorkflowActionConfigurer;
+import co.cask.cdap.internal.dataset.DatasetCreationSpec;
 import co.cask.cdap.internal.lang.Reflections;
 import co.cask.cdap.internal.workflow.ProgramWorkflowAction;
 import co.cask.cdap.logging.context.WorkflowLoggingContext;
@@ -73,6 +79,7 @@ import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.Iterator;
@@ -116,7 +123,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
   private Condition condition;
   private final RunId runId;
   private final MetricsCollectionService metricsCollectionService;
-  private final DatasetFramework datasetFramework;
+  private final NameMappedDatasetFramework datasetFramework;
   private final DiscoveryServiceClient discoveryServiceClient;
   private final TransactionSystemClient txClient;
   private final Store store;
@@ -125,9 +132,9 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
 
   WorkflowDriver(Program program, ProgramOptions options, InetAddress hostname,
                  WorkflowSpecification workflowSpec, ProgramRunnerFactory programRunnerFactory,
-                 MetricsCollectionService metricsCollectionService, DatasetFramework datasetFramework,
-                 DiscoveryServiceClient discoveryServiceClient, TransactionSystemClient txClient,
-                 Store store, CConfiguration cConf) {
+                 MetricsCollectionService metricsCollectionService,
+                 DatasetFramework datasetFramework, DiscoveryServiceClient discoveryServiceClient,
+                 TransactionSystemClient txClient, Store store, CConfiguration cConf) {
     this.program = program;
     this.hostname = hostname;
     this.runtimeArgs = createRuntimeArgs(options.getUserArguments());
@@ -136,21 +143,23 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     this.logicalStartTime = arguments.hasOption(ProgramOptionConstants.LOGICAL_START_TIME)
       ? Long.parseLong(arguments.getOption(ProgramOptionConstants.LOGICAL_START_TIME))
       : System.currentTimeMillis();
-    this.workflowProgramRunnerFactory = new ProgramWorkflowRunnerFactory(workflowSpec, programRunnerFactory, program,
-                                                                         options);
     this.lock = new ReentrantLock();
     this.condition = lock.newCondition();
-    this.loggingContext = new WorkflowLoggingContext(program.getNamespaceId(), program.getApplicationId(),
-                                                     program.getName(),
-                                                     arguments.getOption(ProgramOptionConstants.RUN_ID));
     this.runId = RunIds.fromString(options.getArguments().getOption(ProgramOptionConstants.RUN_ID));
+    this.loggingContext = new WorkflowLoggingContext(program.getNamespaceId(), program.getApplicationId(),
+                                                     program.getName(), runId.getId());
+
     this.metricsCollectionService = metricsCollectionService;
-    this.datasetFramework = datasetFramework;
+    this.datasetFramework = new NameMappedDatasetFramework(datasetFramework,
+                                                           workflowSpec.getLocalDatasetSpecs().keySet(),
+                                                           runId.getId());
     this.discoveryServiceClient = discoveryServiceClient;
     this.txClient = txClient;
     this.store = store;
     this.workflowId = Id.Workflow.from(program.getId().getApplication(), workflowSpec.getName());
     this.cConf = cConf;
+    this.workflowProgramRunnerFactory = new ProgramWorkflowRunnerFactory(workflowSpec, programRunnerFactory,
+                                                                         program, options);
   }
 
   @Override
@@ -168,6 +177,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
 
     httpService.startAndWait();
     runningThread = Thread.currentThread();
+    createLocalDatasets();
   }
 
   private void blockIfSuspended() {
@@ -216,6 +226,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
   @Override
   protected void shutDown() throws Exception {
     httpService.stopAndWait();
+    deleteLocalDatasets();
   }
 
   private void executeAction(WorkflowActionNode node,
@@ -425,6 +436,34 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     // condition node are also persisted.
     store.updateWorkflowToken(workflowId, runId.getId(), token);
     executeAll(iterator, appSpec, instantiator, classLoader, token);
+  }
+
+  private void createLocalDatasets() throws IOException, DatasetManagementException {
+    for (Map.Entry<String, String> entry : datasetFramework.getDatasetNameMapping().entrySet()) {
+      String localInstanceName = entry.getValue();
+      Id.DatasetInstance instanceId = Id.DatasetInstance.from(program.getNamespaceId(), localInstanceName);
+      DatasetCreationSpec instanceSpec = workflowSpec.getLocalDatasetSpecs().get(entry.getKey());
+      LOG.debug("Adding Workflow local dataset instance: {}", localInstanceName);
+      datasetFramework.addInstance(instanceSpec.getTypeName(), instanceId, instanceSpec.getProperties());
+    }
+  }
+
+  private void deleteLocalDatasets() {
+    for (Map.Entry<String, String> entry : datasetFramework.getDatasetNameMapping().entrySet()) {
+      Map<String, String> datasetArguments = RuntimeArguments.extractScope(Scope.DATASET, entry.getKey(), runtimeArgs);
+      if (Boolean.parseBoolean(datasetArguments.get("keep.local"))) {
+        continue;
+      }
+
+      String localInstanceName = entry.getValue();
+      Id.DatasetInstance instanceId = Id.DatasetInstance.from(program.getNamespaceId(), localInstanceName);
+      LOG.debug("Deleting Workflow local dataset instance: {}", localInstanceName);
+      try {
+        datasetFramework.deleteInstance(instanceId);
+      } catch (Throwable t) {
+        LOG.warn("Failed to delete the Workflow local dataset instance {}", localInstanceName, t);
+      }
+    }
   }
 
   @Override

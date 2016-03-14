@@ -32,7 +32,6 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
-import com.google.gson.JsonSyntaxException;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBufferInputStream;
 import org.jboss.netty.handler.codec.http.HttpRequest;
@@ -82,65 +81,6 @@ public class ExploreDriverTest {
   public static void stop() throws Exception {
     httpService.stopAndWait();
   }
-
-  @Test
-  public void parseConnectionUrlTest() throws Exception {
-    ExploreDriver driver = new ExploreDriver();
-
-    String baseUrl = String.format("%s%s:%d", Constants.Explore.Jdbc.URL_PREFIX, "foobar", 10000);
-    ExploreDriver.ConnectionParams connectionParams;
-
-    connectionParams = driver.parseConnectionUrl(baseUrl);
-    Assert.assertEquals("foobar", connectionParams.getHost());
-    Assert.assertEquals(10000, connectionParams.getPort());
-    Assert.assertEquals(ImmutableMultimap.of(), connectionParams.getExtraInfos());
-
-    connectionParams = driver.parseConnectionUrl(baseUrl + "?auth.token=foo");
-    Assert.assertEquals("foobar", connectionParams.getHost());
-    Assert.assertEquals(10000, connectionParams.getPort());
-    Assert.assertEquals(
-      ImmutableMultimap.of(ExploreDriver.ConnectionParams.Info.EXPLORE_AUTH_TOKEN, "foo"),
-      connectionParams.getExtraInfos());
-
-    connectionParams = driver.parseConnectionUrl(baseUrl + "?auth.token=foo&foo2=bar2");
-    Assert.assertEquals("foobar", connectionParams.getHost());
-    Assert.assertEquals(10000, connectionParams.getPort());
-    Assert.assertEquals(
-      ImmutableMultimap.of(ExploreDriver.ConnectionParams.Info.EXPLORE_AUTH_TOKEN, "foo"),
-      connectionParams.getExtraInfos());
-
-    connectionParams =
-      driver.parseConnectionUrl(baseUrl + "?foo2=bar2&auth.token=foo&ssl.enabled=true&verify.ssl.cert=false");
-    Assert.assertEquals("foobar", connectionParams.getHost());
-    Assert.assertEquals(10000, connectionParams.getPort());
-    Assert.assertEquals(
-      ImmutableMultimap.of(ExploreDriver.ConnectionParams.Info.EXPLORE_AUTH_TOKEN, "foo",
-                           ExploreDriver.ConnectionParams.Info.SSL_ENABLED, "true",
-                           ExploreDriver.ConnectionParams.Info.VERIFY_SSL_CERT, "false"),
-      connectionParams.getExtraInfos());
-
-    connectionParams = driver.parseConnectionUrl(baseUrl + "?foo2=bar2&auth.token");
-    Assert.assertEquals("foobar", connectionParams.getHost());
-    Assert.assertEquals(10000, connectionParams.getPort());
-    Assert.assertEquals(ImmutableMultimap.of(), connectionParams.getExtraInfos());
-
-    connectionParams = driver.parseConnectionUrl(baseUrl + "?foo2=bar2&auth.token=foo,bar");
-    Assert.assertEquals("foobar", connectionParams.getHost());
-    Assert.assertEquals(10000, connectionParams.getPort());
-    Assert.assertEquals(
-      ImmutableMultimap.of(ExploreDriver.ConnectionParams.Info.EXPLORE_AUTH_TOKEN, "foo",
-                           ExploreDriver.ConnectionParams.Info.EXPLORE_AUTH_TOKEN, "bar"),
-      connectionParams.getExtraInfos());
-
-    // Test that we don't decode URL more than once
-    connectionParams = driver.parseConnectionUrl(baseUrl + "?" +
-                                                 ExploreDriver.ConnectionParams.Info.EXPLORE_AUTH_TOKEN.getName() +
-                                                 "=AgxqdWxpZW4AyIOOuPRRyJPy%2BPhR4o%2B35wl%3DAA3");
-    Assert.assertEquals(
-      ImmutableMultimap.of(ExploreDriver.ConnectionParams.Info.EXPLORE_AUTH_TOKEN,
-                           "AgxqdWxpZW4AyIOOuPRRyJPy+PhR4o+35wl=AA3"),
-      connectionParams.getExtraInfos());
- }
 
   @Test
   public void testDriverConnection() throws Exception {

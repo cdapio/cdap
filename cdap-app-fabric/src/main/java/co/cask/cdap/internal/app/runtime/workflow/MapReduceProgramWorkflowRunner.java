@@ -24,8 +24,9 @@ import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
-import co.cask.cdap.internal.app.runtime.ProgramRunnerFactory;
+import co.cask.cdap.app.runtime.ProgramRunnerFactory;
 import co.cask.cdap.internal.app.runtime.batch.MapReduceProgramController;
+import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
 import org.apache.hadoop.mapreduce.Counter;
@@ -74,8 +75,7 @@ final class MapReduceProgramWorkflowRunner extends AbstractProgramWorkflowRunner
    */
   @Override
   public void runAndWait(Program program, ProgramOptions options) throws Exception {
-    ProgramController controller = programRunnerFactory.create(ProgramRunnerFactory.Type.MAPREDUCE).run(program,
-                                                                                                        options);
+    ProgramController controller = programRunnerFactory.create(ProgramType.MAPREDUCE).run(program, options);
     if (controller instanceof MapReduceProgramController) {
       MapReduceContext context = ((MapReduceProgramController) controller).getContext();
       executeProgram(controller, context);

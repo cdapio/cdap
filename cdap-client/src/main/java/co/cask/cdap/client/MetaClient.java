@@ -19,7 +19,7 @@ package co.cask.cdap.client;
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.util.RESTClient;
-import co.cask.cdap.common.UnauthorizedException;
+import co.cask.cdap.common.UnauthenticatedException;
 import co.cask.cdap.proto.ConfigEntry;
 import co.cask.cdap.proto.Version;
 import co.cask.common.http.HttpMethod;
@@ -53,7 +53,7 @@ public class MetaClient {
     this(config, new RESTClient(config));
   }
 
-  public void ping() throws IOException, UnauthorizedException {
+  public void ping() throws IOException, UnauthenticatedException {
     HttpResponse response = restClient.execute(
       HttpMethod.GET, config.resolveURLNoVersion("ping"), config.getAccessToken());
     if (!Objects.equals(response.getResponseBodyAsString(), "OK.\n")) {
@@ -61,20 +61,20 @@ public class MetaClient {
     }
   }
 
-  public Version getVersion() throws IOException, UnauthorizedException {
+  public Version getVersion() throws IOException, UnauthenticatedException {
     HttpResponse response = restClient.execute(HttpMethod.GET, config.resolveURL("version"), config.getAccessToken());
     return ObjectResponse.fromJsonBody(response, Version.class).getResponseObject();
   }
 
-  public Map<String, ConfigEntry> getCDAPConfig() throws IOException, UnauthorizedException {
+  public Map<String, ConfigEntry> getCDAPConfig() throws IOException, UnauthenticatedException {
     return getConfig("config/cdap");
   }
 
-  public Map<String, ConfigEntry> getHadoopConfig() throws IOException, UnauthorizedException {
+  public Map<String, ConfigEntry> getHadoopConfig() throws IOException, UnauthenticatedException {
     return getConfig("config/hadoop");
   }
 
-  private Map<String, ConfigEntry> getConfig(String url) throws IOException, UnauthorizedException {
+  private Map<String, ConfigEntry> getConfig(String url) throws IOException, UnauthenticatedException {
     HttpResponse response = restClient.execute(HttpMethod.GET, config.resolveURL(url), config.getAccessToken());
     List<ConfigEntry> responseObject =
       ObjectResponse.fromJsonBody(response, new TypeToken<List<ConfigEntry>>() { }).getResponseObject();

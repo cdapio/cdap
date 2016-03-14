@@ -20,5 +20,13 @@ WITH_JAVADOCS="$WITHOUT"
 
 MANUALS="introduction developers-manual cdap-apps admin-manual integrations examples-manual reference-manual faqs"
 
+# BUILD.rst
+BUILD_RST="BUILD.rst"
+BUILD_RST_HASH_LOCATION="cdap-docs/vars"
+BUILD_RST_HASH="99c0076f03dae5c014417a00d5e04b5e"
+
 # This needs to be explicitly set as Git has trouble identifying it.
 GIT_BRANCH_PARENT="develop"
+
+# Used by cdap-apps for Hydrator documentation
+GIT_BRANCH_CDAP_HYDRATOR="develop"

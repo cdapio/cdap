@@ -412,6 +412,7 @@ public class ExploreTableManager {
       .setPartitioning(partitioning)
       .setTableProperties(tableProperties);
 
+    String schema = FileSetProperties.getExploreSchema(properties);
     String format = FileSetProperties.getExploreFormat(properties);
     if (format != null) {
       if ("parquet".equals(format)) {
@@ -421,7 +422,6 @@ public class ExploreTableManager {
       // for text and csv, we know what to do
       Preconditions.checkArgument("text".equals(format) || "csv".equals(format),
         "Only text and csv are supported as native formats");
-      String schema = FileSetProperties.getExploreSchema(properties);
       Preconditions.checkNotNull(schema, "for native formats, explore schema must be given in dataset properties");
       String delimiter = null;
       if ("text".equals(format)) {
@@ -433,6 +433,11 @@ public class ExploreTableManager {
         .setRowFormatDelimited(delimiter, null)
         .buildWithFileFormat("TEXTFILE");
     } else {
+      // for some odd reason, avro tables don't require schema.
+      // They can be created by setting the avro.schema.literal table property
+      if (schema != null) {
+        createStatementBuilder.setSchema(schema);
+      }
       // format not given, look for serde, input format, etc.
       String serde = FileSetProperties.getSerDe(properties);
       String inputFormat = FileSetProperties.getExploreInputFormat(properties);

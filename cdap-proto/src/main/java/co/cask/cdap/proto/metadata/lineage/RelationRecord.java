@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,8 +16,8 @@
 
 package co.cask.cdap.proto.metadata.lineage;
 
-import com.google.common.collect.ImmutableSet;
-
+import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.Objects;
 import java.util.Set;
 
@@ -35,8 +35,8 @@ public class RelationRecord {
     this.data = data;
     this.program = program;
     this.access = access;
-    this.runs = ImmutableSet.copyOf(runs);
-    this.components = ImmutableSet.copyOf(components);
+    this.runs = Collections.unmodifiableSet(new LinkedHashSet<>(runs));
+    this.components = Collections.unmodifiableSet(new LinkedHashSet<>(components));
   }
 
   public String getData() {

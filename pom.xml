@@ -126,6 +126,7 @@
     <rs-api.version>2.0</rs-api.version>
     <quartz.version>2.2.0</quartz.version>
     <resteasy.version>3.0.8.Final</resteasy.version>
+    <scala.version>2.10.4</scala.version>
     <servlet.api.version>3.0.1</servlet.api.version>
     <snappy.version>1.1.1.7</snappy.version>
     <shiro.version>1.2.1</shiro.version>
@@ -1140,6 +1141,10 @@
           </exclusion>
           <exclusion>
             <groupId>asm</groupId>
+            <artifactId>asm</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>asm</groupId>
             <artifactId>asm-commons</artifactId>
           </exclusion>
           <exclusion>
@@ -1309,6 +1314,11 @@
         </exclusions>
       </dependency>
       <dependency>
+        <groupId>org.scala-lang</groupId>
+        <artifactId>scala-library</artifactId>
+        <version>${scala.version}</version>
+      </dependency>
+      <dependency>
         <groupId>org.apache.spark</groupId>
         <artifactId>spark-sql_2.10</artifactId>
         <version>${spark.version}</version>
@@ -1318,6 +1328,11 @@
             <artifactId>scala-compiler</artifactId>
           </exclusion>
         </exclusions>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.spark</groupId>
+        <artifactId>spark-streaming_2.10</artifactId>
+        <version>${spark.version}</version>
       </dependency>
       <dependency>
         <groupId>org.apache.spark</groupId>
@@ -1522,6 +1537,42 @@
               </configuration>
               <goals>
                 <goal>check</goal>
+              </goals>
+            </execution>
+          </executions>
+        </plugin>
+
+        <!-- Scala code compilation -->
+        <plugin>
+          <groupId>net.alchim31.maven</groupId>
+          <artifactId>scala-maven-plugin</artifactId>
+          <version>3.2.2</version>
+          <configuration>
+            <args>
+              <arg>-target:jvm-1.7</arg>
+            </args>
+          </configuration>
+          <executions>
+            <execution>
+              <id>scala-add-source</id>
+              <goals>
+                <goal>add-source</goal>
+              </goals>
+            </execution>
+            <execution>
+              <id>scala-compile</id>
+              <!-- Needs to be before the compile phase -->
+              <phase>process-resources</phase>
+              <goals>
+                <goal>compile</goal>
+              </goals>
+            </execution>
+            <execution>
+              <id>scala-test-compile</id>
+              <!-- Needs to be before the test-compile phase -->
+              <phase>process-test-resources</phase>
+              <goals>
+                <goal>testCompile</goal>
               </goals>
             </execution>
           </executions>
@@ -2360,6 +2411,7 @@
         <module>cdap-api-common</module>
         <module>cdap-spi</module>
         <module>cdap-api</module>
+        <module>cdap-api-spark</module>
         <module>cdap-formats</module>
         <module>cdap-hbase-compat-0.96</module>
         <module>cdap-hbase-compat-0.98</module>
@@ -2374,6 +2426,8 @@
         <module>cdap-data-fabric</module>
         <module>cdap-watchdog</module>
         <module>cdap-app-fabric</module>
+        <module>cdap-spark-core</module>
+        <module>cdap-security-spi</module>
         <module>cdap-security</module>
         <module>cdap-authorization-dataset-plugin</module>
         <module>cdap-gateway</module>

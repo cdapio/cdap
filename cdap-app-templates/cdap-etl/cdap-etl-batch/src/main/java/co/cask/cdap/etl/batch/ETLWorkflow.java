@@ -17,10 +17,10 @@
 package co.cask.cdap.etl.batch;
 
 import co.cask.cdap.api.workflow.AbstractWorkflow;
-import co.cask.cdap.etl.batch.config.ETLBatchConfig;
 import co.cask.cdap.etl.batch.mapreduce.ETLMapReduce;
 import co.cask.cdap.etl.batch.spark.ETLSpark;
-import co.cask.cdap.etl.common.ETLStage;
+import co.cask.cdap.etl.proto.v1.ETLBatchConfig;
+import co.cask.cdap.etl.proto.v1.ETLStage;
 
 /**
  * Workflow for scheduling Batch ETL MapReduce Driver.

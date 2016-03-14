@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -98,6 +98,7 @@ import java.net.URL;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -435,6 +436,109 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     try (InputStream in = fs.getLocation("test").getInputStream()) {
       Assert.assertEquals(42, in.read());
     }
+  }
+
+  @Category(XSlowTests.class)
+  @Test
+  public void testWorkflowLocalDatasets() throws Exception {
+    ApplicationManager applicationManager = deployApplication(testSpace, WorkflowAppWithLocalDatasets.class);
+
+    // Execute Workflow without keeping the local datasets after run
+    Map<String, String> additionalParams = new HashMap<>();
+    String runId = executeWorkflow(applicationManager, additionalParams);
+    verifyWorkflowRun(runId, false, false);
+
+
+    additionalParams.put("dataset.wordcount.keep.local", "true");
+    runId = executeWorkflow(applicationManager, additionalParams);
+    verifyWorkflowRun(runId, true, false);
+
+    additionalParams.clear();
+    additionalParams.put("dataset.*.keep.local", "true");
+    runId = executeWorkflow(applicationManager, additionalParams);
+    verifyWorkflowRun(runId, true, true);
+  }
+
+  private void verifyWorkflowRun(String runId, boolean shouldKeepWordCountDataset, boolean shouldKeepCSVFilesetDataset)
+    throws Exception {
+
+    // Once the Workflow run is complete local datasets should not be available
+    DataSetManager<KeyValueTable> localKeyValueDataset = getDataset(testSpace,
+                                                                    WorkflowAppWithLocalDatasets.WORDCOUNT_DATASET
+                                                                      + "." + runId);
+
+    if (shouldKeepWordCountDataset) {
+      Assert.assertNotNull(localKeyValueDataset.get());
+    } else {
+      Assert.assertNull(localKeyValueDataset.get());
+    }
+
+    DataSetManager<FileSet> localFileSetDataset = getDataset(testSpace, WorkflowAppWithLocalDatasets.CSV_FILESET_DATASET
+      + "." + runId);
+
+    if (shouldKeepCSVFilesetDataset) {
+      Assert.assertNotNull(localFileSetDataset.get());
+    } else {
+      Assert.assertNull(localFileSetDataset.get());
+    }
+
+    // Dataset which is not local should still be available
+    DataSetManager<KeyValueTable> nonLocalKeyValueDataset = getDataset(testSpace,
+                                                                       WorkflowAppWithLocalDatasets.RESULT_DATASET);
+    Assert.assertEquals("6", Bytes.toString(nonLocalKeyValueDataset.get().read("UniqueWordCount")));
+
+    // There should not be any local copy of the non local dataset
+    nonLocalKeyValueDataset = getDataset(testSpace, WorkflowAppWithLocalDatasets.RESULT_DATASET + "." + runId);
+    Assert.assertNull(nonLocalKeyValueDataset.get());
+  }
+
+  private String executeWorkflow(ApplicationManager applicationManager, Map<String, String> additionalParams)
+    throws Exception {
+    WorkflowManager wfManager = applicationManager.getWorkflowManager(WorkflowAppWithLocalDatasets.WORKFLOW_NAME);
+    Map<String, String> runtimeArgs = new HashMap<>();
+    File waitFile = new File(tmpFolder.newFolder(), "/wait.file");
+    File doneFile = new File(tmpFolder.newFolder(), "/done.file");
+
+    runtimeArgs.put("input.path", "input");
+    runtimeArgs.put("output.path", "output");
+    runtimeArgs.put("wait.file", waitFile.getAbsolutePath());
+    runtimeArgs.put("done.file", doneFile.getAbsolutePath());
+    runtimeArgs.putAll(additionalParams);
+    wfManager.start(runtimeArgs);
+
+    // Wait till custom action in the Workflow is triggerred.
+    while (!waitFile.exists()) {
+      TimeUnit.MILLISECONDS.sleep(50);
+    }
+
+    // Now the Workflow should have RUNNING status. Get its runid.
+    List<RunRecord> history = wfManager.getHistory(ProgramRunStatus.RUNNING);
+    Assert.assertEquals(1, history.size());
+    String runId = history.get(0).getPid();
+
+    // Get the local datasets for this Workflow run
+    DataSetManager<KeyValueTable> localDataset = getDataset(testSpace, WorkflowAppWithLocalDatasets.WORDCOUNT_DATASET
+      + "." + runId);
+    Assert.assertEquals("2", Bytes.toString(localDataset.get().read("text")));
+
+    DataSetManager<FileSet> fileSetDataset = getDataset(testSpace, WorkflowAppWithLocalDatasets.CSV_FILESET_DATASET
+      + "." + runId);
+    Assert.assertNotNull(fileSetDataset.get());
+
+    // Local datasets should not exist at the namespace level
+    localDataset = getDataset(testSpace, WorkflowAppWithLocalDatasets.WORDCOUNT_DATASET);
+    Assert.assertNull(localDataset.get());
+
+    fileSetDataset = getDataset(testSpace, WorkflowAppWithLocalDatasets.CSV_FILESET_DATASET);
+    Assert.assertNull(fileSetDataset.get());
+
+    // Signal the Workflow to continue
+    doneFile.createNewFile();
+
+    // Wait for workflow to finish
+    wfManager.waitForFinish(1, TimeUnit.MINUTES);
+
+    return runId;
   }
 
   @Category(XSlowTests.class)

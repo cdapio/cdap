@@ -17,6 +17,7 @@
 package co.cask.cdap.common;
 
 import co.cask.cdap.common.http.SecurityRequestContext;
+import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.http.ExceptionHandler;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Throwables;
@@ -52,9 +53,15 @@ public class HttpExceptionHandler extends ExceptionHandler {
     } else if (t instanceof MethodNotAllowedException) {
       logWithTrace(request, t);
       responder.sendStatus(HttpResponseStatus.METHOD_NOT_ALLOWED);
-    } else if (t instanceof UnauthorizedException) {
+    } else if (t instanceof UnauthenticatedException) {
       logWithTrace(request, t);
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } else if (t instanceof UnauthorizedException) {
+      logWithTrace(request, t);
+      responder.sendStatus(HttpResponseStatus.FORBIDDEN);
+    } else if (t instanceof FeatureDisabledException) {
+      logWithTrace(request, t);
+      responder.sendString(HttpResponseStatus.NOT_IMPLEMENTED, t.getMessage());
     } else {
       LOG.error("Unexpected error: request={} {} user={}:", request.getMethod().getName(), request.getUri(),
                 SecurityRequestContext.getUserId().or("<null>"), t);

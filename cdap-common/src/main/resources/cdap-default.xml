@@ -1562,7 +1562,7 @@
 
   <property>
     <name>security.authorization.pluginClassName</name>
-    <value>co.cask.cdap.security.authorization.DatasetAuthorizationPlugin</value>
+    <value>co.cask.cdap.security.authorization.DatasetBasedAuthorizer</value>
     <description>
       Class name of the AuthorizationPlugin implementation to use
     </description>
@@ -1776,5 +1776,30 @@
     </description>
   </property>
 
+  <property>
+    <name>http.client.connection.timeout.ms</name>
+    <value>60000</value>
+    <description>
+      Timeout in milliseconds for internal HTTP requests
+    </description>
+  </property>
+
+  <!-- Audit configuration -->
+
+  <property>
+    <name>audit.enabled</name>
+    <value>false</value>
+    <description>
+      Determines whether to publish audit messages
+    </description>
+  </property>
+
+  <property>
+    <name>audit.kafka.topic</name>
+    <value>audit</value>
+    <description>
+      Kafka topic to publish the audit messages
+    </description>
+  </property>
 
 </configuration>

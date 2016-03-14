@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -33,12 +33,12 @@ import co.cask.cdap.proto.id.ScheduleId;
 import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.proto.id.StreamViewId;
 import co.cask.cdap.proto.id.SystemServiceId;
-import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableMap;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
@@ -71,14 +71,14 @@ public enum EntityType {
   private static final Map<Class<? extends EntityId>, EntityType> byIdClass;
   private static final Map<Class<? extends Id>, EntityType> byOldIdClass;
   static {
-    ImmutableMap.Builder<Class<? extends EntityId>, EntityType> builder = ImmutableMap.builder();
-    ImmutableMap.Builder<Class<? extends Id>, EntityType> builderOld = ImmutableMap.builder();
+    Map<Class<? extends EntityId>, EntityType> byIdClassMap = new LinkedHashMap<>();
+    Map<Class<? extends Id>, EntityType> byOldIdClassMap = new LinkedHashMap<>();
     for (EntityType type : EntityType.values()) {
-      builder.put(type.getIdClass(), type);
-      builderOld.put(type.getOldIdClass(), type);
+      byIdClassMap.put(type.getIdClass(), type);
+      byOldIdClassMap.put(type.getOldIdClass(), type);
     }
-    byIdClass = builder.build();
-    byOldIdClass = builderOld.build();
+    byIdClass = Collections.unmodifiableMap(byIdClassMap);
+    byOldIdClass = Collections.unmodifiableMap(byOldIdClassMap);
   }
 
   private final Class<? extends EntityId> idClass;
@@ -121,8 +121,10 @@ public enum EntityType {
   public <T extends EntityId> T fromIdParts(Iterable<String> idParts) {
     try {
       return (T) fromIdParts.invoke(idParts);
+    } catch (RuntimeException t) {
+      throw t;
     } catch (Throwable t) {
-      throw Throwables.propagate(t);
+      throw new RuntimeException(t);
     }
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -42,6 +42,7 @@ import co.cask.cdap.internal.app.runtime.batch.dataset.DatasetInputFormatProvide
 import co.cask.cdap.internal.app.runtime.batch.dataset.DatasetOutputFormatProvider;
 import co.cask.cdap.internal.app.runtime.distributed.LocalizeResource;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
+import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
 import co.cask.cdap.logging.context.MapReduceLoggingContext;
 import co.cask.cdap.proto.Id;
 import co.cask.tephra.TransactionContext;
@@ -68,8 +69,7 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
   private final MapReduceSpecification spec;
   private final LoggingContext loggingContext;
   private final long logicalStartTime;
-  private final String programNameInWorkflow;
-  private final WorkflowToken workflowToken;
+  private final WorkflowProgramInfo workflowProgramInfo;
   private final Metrics userMetrics;
   private final Map<String, Plugin> plugins;
   private final Map<String, OutputFormatProvider> outputFormatProviders;
@@ -89,8 +89,7 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
                                Arguments runtimeArguments,
                                MapReduceSpecification spec,
                                long logicalStartTime,
-                               @Nullable String programNameInWorkflow,
-                               @Nullable WorkflowToken workflowToken,
+                               @Nullable WorkflowProgramInfo workflowProgramInfo,
                                DiscoveryServiceClient discoveryServiceClient,
                                MetricsCollectionService metricsCollectionService,
                                TransactionSystemClient txClient,
@@ -102,8 +101,7 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
           getMetricsCollector(program, runId.getId(), metricsCollectionService),
           dsFramework, txClient, discoveryServiceClient, false, pluginInstantiator);
     this.logicalStartTime = logicalStartTime;
-    this.programNameInWorkflow = programNameInWorkflow;
-    this.workflowToken = workflowToken;
+    this.workflowProgramInfo = workflowProgramInfo;
 
     if (metricsCollectionService != null) {
       this.userMetrics = new ProgramUserMetrics(getProgramMetrics());
@@ -158,20 +156,12 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
   }
 
   /**
-   * Returns the name of the Batch job when running inside workflow. Otherwise, return null.
-   */
-  @Nullable
-  public String getProgramNameInWorkflow() {
-    return programNameInWorkflow;
-  }
-
-  /**
    * Returns the WorkflowToken if the MapReduce program is executed as a part of the Workflow.
    */
   @Override
   @Nullable
   public WorkflowToken getWorkflowToken() {
-    return workflowToken;
+    return workflowProgramInfo == null ? null : workflowProgramInfo.getWorkflowToken();
   }
 
   public void setJob(Job job) {
@@ -315,6 +305,15 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
 
   public File getPluginArchive() {
     return pluginArchive;
+  }
+
+  /**
+   * Returns the information about Workflow if the MapReduce program is executed
+   * as a part of it, otherwise {@code null} is returned.
+   */
+  @Nullable
+  public WorkflowProgramInfo getWorkflowProramInfo() {
+    return workflowProgramInfo;
   }
 
   @Override

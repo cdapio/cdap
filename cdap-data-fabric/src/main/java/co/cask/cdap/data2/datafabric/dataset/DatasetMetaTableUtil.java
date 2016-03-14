@@ -16,12 +16,12 @@
 
 package co.cask.cdap.data2.datafabric.dataset;
 
+import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.data2.datafabric.dataset.service.mds.DatasetInstanceMDS;
 import co.cask.cdap.data2.datafabric.dataset.service.mds.DatasetTypeMDS;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.data2.dataset2.SingleTypeModule;
 import co.cask.cdap.proto.Id;
 import com.google.common.collect.ImmutableMap;

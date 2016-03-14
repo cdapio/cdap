@@ -24,7 +24,7 @@ import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.DatasetModuleAlreadyExistsException;
 import co.cask.cdap.common.DatasetModuleCannotBeDeletedException;
 import co.cask.cdap.common.DatasetModuleNotFoundException;
-import co.cask.cdap.common.UnauthorizedException;
+import co.cask.cdap.common.UnauthenticatedException;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.proto.DatasetModuleMeta;
 import co.cask.cdap.proto.Id;
@@ -72,9 +72,9 @@ public class DatasetModuleClient {
    *
    * @return list of {@link DatasetModuleMeta}s.
    * @throws IOException if a network error occurred
-   * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
+   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    */
-  public List<DatasetModuleMeta> list(Id.Namespace namespace) throws IOException, UnauthorizedException {
+  public List<DatasetModuleMeta> list(Id.Namespace namespace) throws IOException, UnauthenticatedException {
     URL url = config.resolveNamespacedURLV3(namespace, "data/modules");
     return ObjectResponse.fromJsonBody(restClient.execute(HttpMethod.GET, url, config.getAccessToken()),
                                        new TypeToken<List<DatasetModuleMeta>>() { }).getResponseObject();
@@ -91,7 +91,7 @@ public class DatasetModuleClient {
    * @throws IOException if a network error occurred
    */
   public void add(Id.DatasetModule module, String className, File moduleJarFile)
-    throws BadRequestException, AlreadyExistsException, IOException, UnauthorizedException {
+    throws BadRequestException, AlreadyExistsException, IOException, UnauthenticatedException {
 
     URL url = config.resolveNamespacedURLV3(module.getNamespace(), String.format("data/modules/%s", module.getId()));
     Map<String, String> headers = ImmutableMap.of("X-Class-Name", className);
@@ -115,10 +115,11 @@ public class DatasetModuleClient {
    * usually due to other dataset modules or dataset instances using the dataset module
    * @throws DatasetModuleNotFoundException if the dataset module with the specified name was not found
    * @throws IOException if a network error occurred
-   * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
+   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    */
   public void delete(Id.DatasetModule module)
-    throws DatasetModuleCannotBeDeletedException, DatasetModuleNotFoundException, IOException, UnauthorizedException {
+    throws DatasetModuleCannotBeDeletedException, DatasetModuleNotFoundException,
+    IOException, UnauthenticatedException {
 
     URL url = config.resolveNamespacedURLV3(module.getNamespace(), String.format("data/modules/%s", module.getId()));
     HttpResponse response = restClient.execute(HttpMethod.DELETE, url, config.getAccessToken(),
@@ -136,9 +137,9 @@ public class DatasetModuleClient {
    *
    * @param module the dataset module to check
    * @throws IOException if a network error occurred
-   * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
+   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    */
-  public boolean exists(Id.DatasetModule module) throws IOException, UnauthorizedException {
+  public boolean exists(Id.DatasetModule module) throws IOException, UnauthenticatedException {
     URL url = config.resolveNamespacedURLV3(module.getNamespace(), String.format("data/modules/%s", module.getId()));
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
@@ -152,12 +153,12 @@ public class DatasetModuleClient {
    * @param timeout time to wait before timing out
    * @param timeoutUnit time unit of timeout
    * @throws IOException if a network error occurred
-   * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
+   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    * @throws TimeoutException if the dataset module was not yet existent before {@code timeout} milliseconds
    * @throws InterruptedException if interrupted while waiting
    */
   public void waitForExists(final Id.DatasetModule module, long timeout, TimeUnit timeoutUnit)
-    throws IOException, UnauthorizedException, TimeoutException, InterruptedException {
+    throws IOException, UnauthenticatedException, TimeoutException, InterruptedException {
 
     try {
       Tasks.waitFor(true, new Callable<Boolean>() {
@@ -167,7 +168,7 @@ public class DatasetModuleClient {
         }
       }, timeout, timeoutUnit, 1, TimeUnit.SECONDS);
     } catch (ExecutionException e) {
-      Throwables.propagateIfPossible(e.getCause(), IOException.class, UnauthorizedException.class);
+      Throwables.propagateIfPossible(e.getCause(), IOException.class, UnauthenticatedException.class);
     }
   }
 
@@ -178,12 +179,12 @@ public class DatasetModuleClient {
    * @param timeout time to wait before timing out
    * @param timeoutUnit time unit of timeout
    * @throws IOException if a network error occurred
-   * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
+   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    * @throws TimeoutException if the dataset module was not yet deleted before {@code timeout} milliseconds
    * @throws InterruptedException if interrupted while waiting
    */
   public void waitForDeleted(final Id.DatasetModule module, long timeout, TimeUnit timeoutUnit)
-    throws IOException, UnauthorizedException, TimeoutException, InterruptedException {
+    throws IOException, UnauthenticatedException, TimeoutException, InterruptedException {
 
     try {
       Tasks.waitFor(false, new Callable<Boolean>() {
@@ -193,7 +194,7 @@ public class DatasetModuleClient {
         }
       }, timeout, timeoutUnit, 1, TimeUnit.SECONDS);
     } catch (ExecutionException e) {
-      Throwables.propagateIfPossible(e.getCause(), IOException.class, UnauthorizedException.class);
+      Throwables.propagateIfPossible(e.getCause(), IOException.class, UnauthenticatedException.class);
     }
   }
 
@@ -203,10 +204,10 @@ public class DatasetModuleClient {
    * @throws DatasetModuleCannotBeDeletedException if one of the dataset modules cannot be deleted,
    * usually due to existing dataset instances using the dataset module
    * @throws IOException if a network error occurred
-   * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
+   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    */
   public void deleteAll(Id.Namespace namespace)
-    throws DatasetModuleCannotBeDeletedException, IOException, UnauthorizedException {
+    throws DatasetModuleCannotBeDeletedException, IOException, UnauthenticatedException {
 
     URL url = config.resolveNamespacedURLV3(namespace, "data/modules");
     HttpResponse response = restClient.execute(HttpMethod.DELETE, url, config.getAccessToken(),
@@ -224,10 +225,10 @@ public class DatasetModuleClient {
    * @return {@link DatasetModuleMeta} of the dataset module
    * @throws DatasetModuleNotFoundException if the dataset module with the specified name was not found
    * @throws IOException if a network error occurred
-   * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
+   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    */
   public DatasetModuleMeta get(Id.DatasetModule module)
-    throws DatasetModuleNotFoundException, IOException, UnauthorizedException {
+    throws DatasetModuleNotFoundException, IOException, UnauthenticatedException {
 
     URL url = config.resolveNamespacedURLV3(module.getNamespace(), String.format("data/modules/%s", module.getId()));
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),

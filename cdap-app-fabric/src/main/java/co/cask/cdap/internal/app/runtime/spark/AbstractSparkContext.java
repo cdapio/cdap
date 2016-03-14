@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.spark;
 
+import co.cask.cdap.api.Admin;
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.ServiceDiscoverer;
 import co.cask.cdap.api.app.ApplicationSpecification;
@@ -37,9 +38,13 @@ import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.metrics.ProgramUserMetrics;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.LoggingContext;
+import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
+import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.program.ProgramTypeMetricTag;
+import co.cask.cdap.internal.app.runtime.DefaultAdmin;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.internal.app.runtime.spark.metrics.SparkUserMetrics;
+import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
 import co.cask.cdap.logging.context.SparkLoggingContext;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
@@ -76,7 +81,10 @@ public abstract class AbstractSparkContext implements SparkContext, Closeable {
   private final MetricsContext metricsContext;
   private final LoggingContext loggingContext;
   private final PluginInstantiator pluginInstantiator;
-  private final WorkflowToken workflowToken;
+  private final Admin admin;
+  protected final SystemDatasetInstantiator systemDatasetInstantiator;
+  private final WorkflowProgramInfo workflowProgramInfo;
+
 
   private Resources executorResources;
   private SparkConf sparkConf;
@@ -86,8 +94,9 @@ public abstract class AbstractSparkContext implements SparkContext, Closeable {
                                  ClassLoader programClassLoader, long logicalStartTime,
                                  Map<String, String> runtimeArguments, DiscoveryServiceClient discoveryServiceClient,
                                  MetricsContext metricsContext, LoggingContext loggingContext,
+                                 DatasetFramework dsFramework,
                                  @Nullable PluginInstantiator pluginInstantiator,
-                                 @Nullable WorkflowToken workflowToken) {
+                                 @Nullable WorkflowProgramInfo workflowProgramInfo) {
     this.applicationSpecification = applicationSpecification;
     this.specification = specification;
     this.programId = programId;
@@ -102,7 +111,9 @@ public abstract class AbstractSparkContext implements SparkContext, Closeable {
     this.executorResources = Objects.firstNonNull(specification.getExecutorResources(), new Resources());
     this.sparkConf = new SparkConf();
     this.pluginInstantiator = pluginInstantiator;
-    this.workflowToken = workflowToken;
+    this.workflowProgramInfo = workflowProgramInfo;
+    this.systemDatasetInstantiator = new SystemDatasetInstantiator(dsFramework, programClassLoader, getOwners());
+    this.admin = new DefaultAdmin(dsFramework, programId.getNamespace().toEntityId());
   }
 
   @Override
@@ -132,7 +143,7 @@ public abstract class AbstractSparkContext implements SparkContext, Closeable {
 
   @Override
   public ServiceDiscoverer getServiceDiscoverer() {
-    return new SparkServiceDiscoverer(getProgramId(), discoveryServiceClient);
+    return new SparkServiceDiscoverer(getProgramId().toEntityId(), discoveryServiceClient);
   }
 
   @Override
@@ -142,7 +153,7 @@ public abstract class AbstractSparkContext implements SparkContext, Closeable {
 
   @Override
   public PluginContext getPluginContext() {
-    return new SparkPluginContext(pluginInstantiator, programId, applicationSpecification.getPlugins());
+    return new SparkPluginContext(pluginInstantiator, programId.toEntityId(), applicationSpecification.getPlugins());
   }
 
   @Override
@@ -190,7 +201,7 @@ public abstract class AbstractSparkContext implements SparkContext, Closeable {
   @Nullable
   @Override
   public WorkflowToken getWorkflowToken() {
-    return workflowToken;
+    return workflowProgramInfo == null ? null : workflowProgramInfo.getWorkflowToken();
   }
 
   @Override
@@ -218,6 +229,7 @@ public abstract class AbstractSparkContext implements SparkContext, Closeable {
   /**
    * Returns the {@link RunId} of the run represented by this context.
    */
+  @Override
   public RunId getRunId() {
     return runId;
   }
@@ -257,6 +269,14 @@ public abstract class AbstractSparkContext implements SparkContext, Closeable {
   @Nullable
   public PluginInstantiator getPluginInstantiator() {
     return pluginInstantiator;
+  }
+
+  /**
+   * Returns the {@link WorkflowProgramInfo} for this context or null if not running inside workflow.
+   */
+  @Nullable
+  public WorkflowProgramInfo getWorkflowProgramInfo() {
+    return workflowProgramInfo;
   }
 
   /**
@@ -312,4 +332,10 @@ public abstract class AbstractSparkContext implements SparkContext, Closeable {
     return new SparkLoggingContext(programId.getNamespaceId(), programId.getApplicationId(),
                                    programId.getId(), runId.getId());
   }
+
+  @Override
+  public Admin getAdmin() {
+    return admin;
+  }
+
 }

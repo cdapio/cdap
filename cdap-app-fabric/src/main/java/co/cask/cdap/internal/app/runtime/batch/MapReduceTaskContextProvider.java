@@ -23,7 +23,11 @@ import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.program.Programs;
 import co.cask.cdap.common.twill.LocalLocationFactory;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.metadata.writer.ProgramContextAware;
+import co.cask.cdap.internal.app.runtime.workflow.NameMappedDatasetFramework;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowMapReduceProgram;
+import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
+import co.cask.cdap.proto.Id;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
@@ -125,10 +129,11 @@ public class MapReduceTaskContextProvider extends AbstractIdleService {
     }
     try {
       Program program = Programs.create(programLocation, programClassLoader);
-      String mapReduceName = contextConfig.getProgramNameInWorkflow();
+      WorkflowProgramInfo workflowProgramInfo = contextConfig.getWorkflowProgramInfo();
 
       // See if it was launched from Workflow; if it was, change the Program.
-      if (mapReduceName != null) {
+      if (workflowProgramInfo != null) {
+        String mapReduceName = workflowProgramInfo.getProgramNameInWorkflow();
         MapReduceSpecification mapReduceSpec = program.getApplicationSpecification().getMapReduce().get(mapReduceName);
         Preconditions.checkArgument(mapReduceSpec != null, "Cannot find MapReduceSpecification for %s in %s.",
                                     mapReduceName, program.getId());
@@ -161,6 +166,19 @@ public class MapReduceTaskContextProvider extends AbstractIdleService {
           programRef.compareAndSet(null, createProgram(contextConfig, classLoader));
           program = programRef.get();
         }
+
+        WorkflowProgramInfo workflowInfo = contextConfig.getWorkflowProgramInfo();
+        DatasetFramework programDatasetFramework = workflowInfo == null ?
+          datasetFramework :
+          NameMappedDatasetFramework.createFromWorkflowProgramInfo(datasetFramework, workflowInfo,
+                                                                   program.getApplicationSpecification());
+
+        // Setup dataset framework context, if required
+        if (programDatasetFramework instanceof ProgramContextAware) {
+          Id.Run id = new Id.Run(program.getId(), contextConfig.getRunId().getId());
+          ((ProgramContextAware) programDatasetFramework).initContext(id);
+        }
+
         MapReduceSpecification spec = program.getApplicationSpecification().getMapReduce().get(program.getName());
         MapReduceMetrics.TaskType taskType = null;
         if (MapReduceMetrics.TaskType.hasType(key.getTaskAttemptID().getTaskType())) {
@@ -175,8 +193,8 @@ public class MapReduceTaskContextProvider extends AbstractIdleService {
         return new BasicMapReduceTaskContext(
           program, taskType, contextConfig.getRunId(), key.getTaskAttemptID().getTaskID().toString(),
           contextConfig.getArguments(), spec, contextConfig.getLogicalStartTime(),
-          contextConfig.getWorkflowToken(), discoveryServiceClient, metricsCollectionService, txClient,
-          contextConfig.getTx(), datasetFramework, classLoader.getPluginInstantiator(),
+          workflowInfo, discoveryServiceClient, metricsCollectionService, txClient,
+          contextConfig.getTx(), programDatasetFramework, classLoader.getPluginInstantiator(),
           contextConfig.getLocalizedResources()
         );
       }

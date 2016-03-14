@@ -107,11 +107,17 @@ minimum of two boxes.
 
 This will download and install the latest version of CDAP with all of its dependencies. 
 
+.. _|distribution|-cli-package-installation:
+
+To install the optional :ref:`CDAP-CLI <cli>` on a node, add the ``cdap-cli`` package to
+the list of packages in the commands below.
 
 Using Chef
 ..........
 If you are using `Chef <https://www.getchef.com>`__ to install CDAP, an `official
 cookbook is available <https://supermarket.getchef.com/cookbooks/cdap>`__.
+
+To install the optional :ref:`CDAP-CLI <cli>` on a node, use the ``fullstack`` recipe.
 
 
 On RPM using Yum
