@@ -31,6 +31,8 @@ import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.audit.AuditMessage;
 import co.cask.cdap.proto.audit.AuditType;
 import co.cask.cdap.proto.codec.NamespacedIdCodec;
+import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.NamespacedId;
 import co.cask.cdap.proto.metadata.MetadataChangeRecord;
 import co.cask.cdap.proto.metadata.MetadataRecord;
 import co.cask.cdap.proto.metadata.MetadataScope;
@@ -57,6 +59,7 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -243,9 +246,20 @@ public class MetadataStoreTest {
                                   AuditType.METADATA_CHANGE, builder.build());
         }
       };
+
     // Audit messages for metadata changes
     List<AuditMessage> expectedAuditMessages = Lists.transform(expectedChanges, metadataChangeRecordToAuditMessage);
-    Assert.assertEquals(expectedAuditMessages, auditPublisher.popMessages());
+    List<AuditMessage> actualAuditMessages = new ArrayList<>();
+    for (AuditMessage auditMessage : auditPublisher.popMessages()) {
+      // Ignore system audit messages
+      if (auditMessage.getEntityId() instanceof NamespacedId) {
+        String systemNs = NamespaceId.SYSTEM.getNamespace();
+        if (!((NamespacedId) auditMessage.getEntityId()).getNamespace().equals(systemNs)) {
+          actualAuditMessages.add(auditMessage);
+        }
+      }
+    }
+    Assert.assertEquals(expectedAuditMessages, actualAuditMessages);
   }
 
   @Test

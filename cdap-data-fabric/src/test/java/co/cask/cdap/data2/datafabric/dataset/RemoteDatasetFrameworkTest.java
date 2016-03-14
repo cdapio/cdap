@@ -138,6 +138,7 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
       txExecutorFactory,
       registryFactory,
       NAMESPACE_STORE);
+    instanceService.setAuditPublisher(inMemoryAuditPublisher);
 
     service = new DatasetService(cConf,
                                  namespacedLocationFactory,

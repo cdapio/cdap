@@ -32,6 +32,7 @@ import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.Ids;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.NamespacedArtifactId;
+import co.cask.cdap.proto.id.NamespacedId;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -97,6 +98,8 @@ public class AuditPublishTest {
   public void testPublish() throws Exception {
     String defaultNs = NamespaceId.DEFAULT.getNamespace();
     String appName = WordCountApp.class.getSimpleName();
+
+    // Define expected values
     Set<? extends EntityId> expectedMetadataChangeEntities =
       ImmutableSet.of(Ids.namespace(defaultNs).artifact("app", "1"),
                       Ids.namespace(defaultNs).app(appName),
@@ -109,9 +112,13 @@ public class AuditPublishTest {
 
     Multimap<AuditType, EntityId> expectedAuditEntities = HashMultimap.create();
     expectedAuditEntities.putAll(AuditType.METADATA_CHANGE, expectedMetadataChangeEntities);
-    expectedAuditEntities.put(AuditType.CREATE, Ids.namespace(defaultNs).stream("text"));
+    expectedAuditEntities.putAll(AuditType.CREATE, ImmutableSet.of(Ids.namespace(defaultNs).dataset("mydataset"),
+                                                                   Ids.namespace(defaultNs).stream("text")));
 
+    // Deploy application
     AppFabricTestHelper.deployApplication(WordCountApp.class);
+
+    // Verify audit messages
     List<AuditMessage> publishedMessages =
       KAFKA_TESTER.getPublishedMessages(KAFKA_TESTER.getCConf().get(Constants.Audit.KAFKA_TOPIC), 11,
                                         AuditMessage.class, GSON);
@@ -119,7 +126,13 @@ public class AuditPublishTest {
     Multimap<AuditType, EntityId> actualAuditEntities = HashMultimap.create();
     for (AuditMessage message : publishedMessages) {
       EntityId entityId = message.getEntityId();
-      if (entityId.getEntity() == EntityType.ARTIFACT) {
+      if (entityId instanceof NamespacedId) {
+        if (((NamespacedId) entityId).getNamespace().equals(NamespaceId.SYSTEM.getNamespace())) {
+          // Ignore system audit messages
+          continue;
+        }
+      }
+      if (entityId.getEntity() == EntityType.ARTIFACT && entityId instanceof NamespacedArtifactId) {
         NamespacedArtifactId artifactId = (NamespacedArtifactId) entityId;
         // Version is dynamic for deploys in test cases
         entityId = Ids.namespace(artifactId.getNamespace()).artifact(artifactId.getArtifact(), "1");
