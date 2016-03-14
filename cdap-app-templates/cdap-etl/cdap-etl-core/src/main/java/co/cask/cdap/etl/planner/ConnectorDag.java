@@ -70,11 +70,30 @@ public class ConnectorDag extends Dag {
     // none of this is particularly efficient, but this should never be a bottleneck
     // unless we're dealing with very very large dags
 
-    // node to insert in front of -> new connector node
     Set<String> addedAlready = new HashSet<>();
 
-    // first pass, find sections of the dag where a source is writing to both a sink and a reduce node
-    // or to multiple reduce nodes. a connector counts as both a source and a sink.
+    /*
+        Find sections of the dag where a source is writing to both a sink and a reduce node
+        or to multiple reduce nodes. a connector counts as both a source and a sink.
+
+        for example, if a source is writing to both a sink and a reduce:
+
+                    |---> sink1
+          source ---|
+                    |---> reduce ---> sink2
+
+        we need to split this up into:
+
+                    |---> sink1
+          source ---|                    =>     connector ---> reduce ---> sink2
+                    |---> connector
+
+        The same logic applies if a source is writing to multiple reduce nodes. So if we run into this scenario,
+        we will add a connector in front of all reduce nodes accessible from the source.
+        When trying to find a path from a source to multiple reduce nodes, we also need to stop searching
+        once we see a reduce node or a connector. Otherwise, every single reduce node would end up
+        with a connector in front of it.
+     */
     for (String node : linearize()) {
       if (!sources.contains(node) && !connectors.contains(node)) {
         continue;
@@ -92,12 +111,33 @@ public class ConnectorDag extends Dag {
       }
     }
 
-    // next pass, find nodes that have input from multiple sources and add them to the connectors set.
-    // a connector counts as a source
+    /*
+        Find nodes that have input from multiple sources and add them to the connectors set.
+        We can probably remove this part once we support multiple sources. Even though we don't support
+        multiple sources today, the fact that we support forks means we have to deal with the multi-input case
+        and break it down into separate phases. For example:
 
-    // traverse the graph and keep track of sources that have a path to each node
-    // mapping of node -> sources that have a path to the node.
-    // a connector node is considered a source
+                    |---> reduce1 ---|
+          source ---|                |---> sink
+                    |---> reduce2 ---|
+
+        From the previous section, both reduces will get a connector inserted in front:
+
+                    |---> reduce1.connector               reduce1.connector ---> reduce1 ---|
+          source ---|                              =>                                       |---> sink
+                    |---> reduce2.connector               reduce2.connector ---> reduce2 ---|
+
+        Since we don't support multi-input yet, we need to convert that further into 3 phases:
+
+          connector1 ---> reduce1 ---> sink.connector
+                                                            =>       sink.connector ---> sink
+          connector2 ---> reduce2 ---> sink.connector
+
+        To find these nodes, we traverse the graph in order and keep track of sources that have a path to each node
+        with a map of node -> [ sources that have a path to the node ]
+        if we find that a node is accessible by more than one source, we insert a connector in front of it and
+        reset all sources for that node to its connector
+     */
     SetMultimap<String, String> nodeSources = HashMultimap.create();
     for (String source : sources) {
       nodeSources.put(source, source);
@@ -128,7 +168,15 @@ public class ConnectorDag extends Dag {
       }
     }
 
-    // next pass, find reduce nodes that are connected to other reduce nodes
+    /*
+        Find reduce nodes that are accessible from other reduce nodes. For example:
+
+          source ---> reduce1 ---> reduce2 ---> sink
+
+        Needs to be broken down into:
+
+          source ---> reduce1 ---> reduce2.connector      =>     reduce2.connector ---> reduce2 ---> sink
+     */
     for (String reduceNode : reduceNodes) {
       Set<String> accessibleByNode = accessibleFrom(reduceNode, Sets.union(connectors, reduceNodes));
       Set<String> accessibleReduceNodes = Sets.intersection(accessibleByNode, reduceNodes);
@@ -165,6 +213,7 @@ public class ConnectorDag extends Dag {
     return dags;
   }
 
+  // add a connector in front of the specified node if one doesn't already exist there
   private void addConnectorInFrontOf(String inFrontOf, Set<String> addedAlready) {
     if (!addedAlready.add(inFrontOf)) {
       return;
@@ -177,6 +226,7 @@ public class ConnectorDag extends Dag {
     insertNode(connectorName, inFrontOf);
     connectors.add(connectorName);
   }
+
   /**
    * Inserts a node in front of the specified node.
    *
@@ -186,7 +236,7 @@ public class ConnectorDag extends Dag {
   private void insertNode(String name, String inFrontOf) {
     if (!nodes.contains(inFrontOf)) {
       throw new IllegalArgumentException(
-        String.format("Cannot insert in front node %s because it does not exist.", inFrontOf));
+        String.format("Cannot insert in front of node %s because it does not exist.", inFrontOf));
     }
     if (!nodes.add(name)) {
       throw new IllegalArgumentException(

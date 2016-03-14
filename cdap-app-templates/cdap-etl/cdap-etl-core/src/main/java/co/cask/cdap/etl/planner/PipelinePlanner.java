@@ -17,8 +17,6 @@
 package co.cask.cdap.etl.planner;
 
 import co.cask.cdap.etl.api.Transform;
-import co.cask.cdap.etl.api.batch.BatchSink;
-import co.cask.cdap.etl.api.batch.BatchSource;
 import co.cask.cdap.etl.common.PipelinePhase;
 import co.cask.cdap.etl.proto.Connection;
 import co.cask.cdap.etl.spec.PipelineSpec;
@@ -38,9 +36,13 @@ import java.util.TreeSet;
  * Takes a {@link PipelineSpec} and creates an execution plan from it.
  */
 public class PipelinePlanner {
+  private final String sourceType;
+  private final String sinkType;
   private final Set<String> reduceTypes;
 
-  public PipelinePlanner(Set<String> reduceTypes) {
+  public PipelinePlanner(String sourceType, String sinkType, Set<String> reduceTypes) {
+    this.sourceType = sourceType;
+    this.sinkType = sinkType;
     this.reduceTypes = ImmutableSet.copyOf(reduceTypes);
   }
 
@@ -154,11 +156,11 @@ public class PipelinePlanner {
       String pluginType = spec.getPlugin().getType();
 
       StageInfo stageInfo = new StageInfo(stageName, spec.getErrorDatasetName(), connectors.contains(stageName));
-      if (BatchSink.PLUGIN_TYPE.equals(pluginType)) {
+      if (sinkType.equals(pluginType)) {
         sinks.add(stageInfo);
       } else if (Transform.PLUGIN_TYPE.equals(pluginType)) {
         transforms.add(stageInfo);
-      } else if (BatchSource.PLUGIN_TYPE.equals(pluginType)) {
+      } else if (sourceType.equals(pluginType)) {
         if (source != null) {
           // should never happen
           throw new IllegalStateException(String.format(

@@ -139,7 +139,8 @@ public class PipelinePlannerTest {
       new Connection("n9", "n11")
     );
 
-    PipelinePlanner planner = new PipelinePlanner(ImmutableSet.of(AGGREGATOR));
+    PipelinePlanner planner = new PipelinePlanner(BatchSource.PLUGIN_TYPE, BatchSink.PLUGIN_TYPE,
+                                                  ImmutableSet.of(AGGREGATOR));
     PipelineSpec pipelineSpec = new PipelineSpec(stageSpecs, connections, new Resources(), true);
 
     Map<String, PipelinePhase> phases = new HashMap<>();
