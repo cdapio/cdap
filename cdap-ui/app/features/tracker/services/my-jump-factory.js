@@ -62,6 +62,10 @@ function myJumpFactory($state, myTrackerApi, $rootScope) {
     }
   };
 
+  let cdapDatasetTypes = {
+    Table: 'co.cask.cdap.api.dataset.table.Table',
+    KVTable: 'co.cask.cdap.api.dataset.lib.KeyValueTable'
+  };
 
 
   function streamBatchSource(streamName) {
@@ -126,12 +130,11 @@ function myJumpFactory($state, myTrackerApi, $rootScope) {
     myTrackerApi.getDatasetSystemProperties(params)
       .$promise
       .then((res) => {
-        let datasetType = res.type.split('.');
-        datasetType = datasetType[datasetType.length - 1];
+        let datasetType = res.type;
 
-        if (datasetType === 'Table') {
+        if (datasetType === cdapDatasetTypes.Table) {
           _addTableBatchSource(datasetName);
-        } else if (datasetType === 'KeyValueTable') {
+        } else if (datasetType === cdapDatasetTypes.KVTable) {
           _addKVTableBatchSource(datasetName);
         }
       });
@@ -146,12 +149,11 @@ function myJumpFactory($state, myTrackerApi, $rootScope) {
     myTrackerApi.getDatasetSystemProperties(params)
       .$promise
       .then((res) => {
-        let datasetType = res.type.split('.');
-        datasetType = datasetType[datasetType.length - 1];
+        let datasetType = res.type;
 
-        if (datasetType === 'Table') {
+        if (datasetType === cdapDatasetTypes.Table) {
           _addTableBatchSink(datasetName);
-        } else if (datasetType === 'KeyValueTable') {
+        } else if (datasetType === cdapDatasetTypes.KVTable) {
           _addKVTableBatchSink(datasetName);
         }
       });
