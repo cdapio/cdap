@@ -17,6 +17,7 @@
 package co.cask.cdap;
 
 import co.cask.cdap.api.app.AbstractApplication;
+import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.workflow.AbstractWorkflow;
@@ -53,8 +54,9 @@ public class WorkflowAppWithLocalDatasets extends AbstractApplication {
     protected void configure() {
       setName(WORKFLOW_NAME);
       setDescription("Workflow which creates the local datasets.");
-      createLocalDataset(TABLE_DATASET, KeyValueTable.class);
-      createLocalDataset(FILE_DATASET, FileSet.class);
+      createLocalDataset(TABLE_DATASET, KeyValueTable.class, DatasetProperties.builder().add("foo", "bar").build());
+      createLocalDataset(FILE_DATASET, FileSet.class,
+                         DatasetProperties.builder().add("anotherFoo", "anotherBar").build());
       addAction(new MyWorkflowAction());
     }
   }

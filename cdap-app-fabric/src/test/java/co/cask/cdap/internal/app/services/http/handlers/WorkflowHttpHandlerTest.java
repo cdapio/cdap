@@ -195,10 +195,10 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     return getVersionedAPIPath(path, Constants.Gateway.API_VERSION_3_TOKEN, workflowId.getNamespace());
   }
 
-  private Map<String, DatasetSpecificationSummary> getWorkflowLocalDatasets(ProgramId workflowId, String runId)
+  private List<DatasetSpecificationSummary> getWorkflowLocalDatasets(ProgramId workflowId, String runId)
     throws Exception {
     HttpResponse response = doGet(getLocalDatasetPath(workflowId, runId));
-    return readResponse(response, new TypeToken<Map<String, DatasetSpecificationSummary>>() { }.getType());
+    return readResponse(response, new TypeToken<List<DatasetSpecificationSummary>>() { }.getType());
   }
 
   private void deleteWorkflowLocalDatasets(ProgramId workflowId, String runId) throws Exception {
@@ -207,6 +207,11 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
 
   @Test
   public void testLocalDatasetDeletion() throws Exception {
+    String keyValueTableType = "co.cask.cdap.api.dataset.lib.KeyValueTable";
+    String filesetType = "co.cask.cdap.api.dataset.lib.FileSet";
+    Map<String, String> keyValueTableProperties = ImmutableMap.of("foo", "bar");
+    Map<String, String> filesetProperties = ImmutableMap.of("anotherFoo", "anotherBar");
+
     HttpResponse response = deploy(WorkflowAppWithLocalDatasets.class,
                                    Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
@@ -231,17 +236,20 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
 
     waitState(workflowId.toId(), ProgramStatus.STOPPED.name());
 
-    Map<String, DatasetSpecificationSummary> localDatasets = getWorkflowLocalDatasets(workflowId, runId);
-    Assert.assertEquals(2, localDatasets.size());
-    Assert.assertEquals("MyTable." + runId, localDatasets.get("MyTable." + runId).getName());
-    Assert.assertEquals("co.cask.cdap.api.dataset.lib.KeyValueTable", localDatasets.get("MyTable." + runId).getType());
-    Assert.assertEquals("MyFile." + runId, localDatasets.get("MyFile." + runId).getName());
-    Assert.assertEquals("co.cask.cdap.api.dataset.lib.FileSet", localDatasets.get("MyFile." + runId).getType());
+    List<DatasetSpecificationSummary> localDatasetSummaries = getWorkflowLocalDatasets(workflowId, runId);
+    Assert.assertEquals(2, localDatasetSummaries.size());
+    DatasetSpecificationSummary keyValueTableSummary = new DatasetSpecificationSummary("MyTable." + runId,
+                                                                                       keyValueTableType,
+                                                                                       keyValueTableProperties);
+    Assert.assertTrue(localDatasetSummaries.contains(keyValueTableSummary));
+    DatasetSpecificationSummary filesetSummary = new DatasetSpecificationSummary("MyFile." + runId, filesetType,
+                                                                                 filesetProperties);
+    Assert.assertTrue(localDatasetSummaries.contains(filesetSummary));
 
     deleteWorkflowLocalDatasets(workflowId, runId);
 
-    localDatasets = getWorkflowLocalDatasets(workflowId, runId);
-    Assert.assertEquals(0, localDatasets.size());
+    localDatasetSummaries = getWorkflowLocalDatasets(workflowId, runId);
+    Assert.assertEquals(0, localDatasetSummaries.size());
 
     waitFile = new File(tmpFolder.newFolder() + "/wait.file");
     doneFile = new File(tmpFolder.newFolder() + "/done.file");
@@ -259,14 +267,16 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     doneFile.createNewFile();
 
     waitState(workflowId.toId(), ProgramStatus.STOPPED.name());
-    localDatasets = getWorkflowLocalDatasets(workflowId, runId);
-    Assert.assertEquals(1, localDatasets.size());
-    Assert.assertEquals("MyTable." + runId, localDatasets.get("MyTable." + runId).getName());
-    Assert.assertEquals("co.cask.cdap.api.dataset.lib.KeyValueTable", localDatasets.get("MyTable." + runId).getType());
+    localDatasetSummaries = getWorkflowLocalDatasets(workflowId, runId);
+    Assert.assertEquals(1, localDatasetSummaries.size());
+    keyValueTableSummary = new DatasetSpecificationSummary("MyTable." + runId, keyValueTableType,
+                                                           keyValueTableProperties);
+
+    Assert.assertTrue(localDatasetSummaries.contains(keyValueTableSummary));
     deleteWorkflowLocalDatasets(workflowId, runId);
 
-    localDatasets = getWorkflowLocalDatasets(workflowId, runId);
-    Assert.assertEquals(0, localDatasets.size());
+    localDatasetSummaries = getWorkflowLocalDatasets(workflowId, runId);
+    Assert.assertEquals(0, localDatasetSummaries.size());
   }
 
   @Test

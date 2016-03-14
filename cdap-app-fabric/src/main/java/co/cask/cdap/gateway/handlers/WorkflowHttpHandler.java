@@ -76,6 +76,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -352,18 +353,17 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
                                        @PathParam("run-id") String runId)
     throws NotFoundException, DatasetManagementException {
     WorkflowSpecification workflowSpec = getWorkflowSpecForValidRun(namespaceId, applicationId, workflowId, runId);
-    Map<String, DatasetSpecificationSummary> localDatasets = new HashMap<>();
+    List<DatasetSpecificationSummary> localDatasetSummaries = new ArrayList<>();
     for (Map.Entry<String, DatasetCreationSpec> localDatasetEntry : workflowSpec.getLocalDatasetSpecs().entrySet()) {
       String mappedDatasetName = localDatasetEntry.getKey() + "." + runId;
       String datasetType = localDatasetEntry.getValue().getTypeName();
       Map<String, String> datasetProperties = localDatasetEntry.getValue().getProperties().getProperties();
       if (datasetFramework.hasInstance(Id.DatasetInstance.from(namespaceId, mappedDatasetName))) {
-        localDatasets.put(mappedDatasetName, new DatasetSpecificationSummary(mappedDatasetName, datasetType,
-                                                                             datasetProperties));
+        localDatasetSummaries.add(new DatasetSpecificationSummary(mappedDatasetName, datasetType, datasetProperties));
       }
     }
 
-    responder.sendJson(HttpResponseStatus.OK, localDatasets);
+    responder.sendJson(HttpResponseStatus.OK, localDatasetSummaries);
   }
 
   @DELETE
