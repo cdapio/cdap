@@ -39,70 +39,92 @@ angular.module(PKG.name + '.feature.hydrator')
           controllerAs: 'ListController'
         })
 
-
-        .state('hydrator.create', {
-          url: '/studio?draftId',
-          params: {
-            data: null
-          },
+        .state('hydrator.preconfigured', {
+          url: '/preconfigured',
           data: {
             authorizedRoles: MYAUTH_ROLE.all,
             highlightTab: 'hydratorStudio'
           },
-          resolve: {
-            rConfig: function($stateParams, mySettings, $q, myHelpers) {
-              var defer = $q.defer();
-              if ($stateParams.draftId) {
-                mySettings.get('hydratorDrafts', true)
-                  .then(function(res) {
-                    var draft = myHelpers.objectQuery(res, $stateParams.namespace, $stateParams.draftId);
-                    if (angular.isObject(draft)) {
-                      defer.resolve(draft);
-                    } else {
-                      defer.resolve(false);
-                    }
-                  });
-              } else if ($stateParams.data){
-                defer.resolve($stateParams.data);
-              } else {
-                defer.resolve(false);
-              }
-              return defer.promise;
-            },
-            rVersion: function($state, MyCDAPDataSource) {
-              var dataSource = new MyCDAPDataSource();
-              return dataSource.request({
-                _cdapPath: '/version'
-              });
-            }
-          },
-          views: {
-            '': {
-              templateUrl: '/assets/features/hydrator/templates/create/studio.html',
-              controller: 'HydratorCreateStudioController as HydratorCreateStudioController'
-            },
-            'canvas@hydrator.create': {
-              templateUrl: '/assets/features/hydrator/templates/create/canvas.html',
-              controller: 'HydratorCreateCanvasController',
-              controllerAs: 'CanvasCtrl'
-            },
-            'leftpanel@hydrator.create': {
-              templateUrl: '/assets/features/hydrator/templates/create/leftpanel.html',
-              controller: 'LeftPanelController as LeftPanelController'
-            },
-            'toppanel@hydrator.create': {
-              templateUrl: '/assets/features/hydrator/templates/create/toppanel.html',
-              controller: 'TopPanelController as TopPanelController'
-            },
-            'bottompanel@hydrator.create': {
-              templateUrl: '/assets/features/hydrator/templates/create/bottompanel.html',
-              controller: 'BottomPanelController as BottomPanelController'
-            }
-          },
-          onExit: function($uibModalStack) {
-            $uibModalStack.dismissAll();
+          templateUrl: '/assets/features/hydrator/templates/preconfigured-list.html',
+          controller: 'HydratorPreconfiguredController',
+          controllerAs: 'PreconfiguredController',
+          ncyBreadcrumb: {
+            skip: true
           }
         })
+
+        .state('hydrator.create', {
+          url: '/create',
+          data: {
+            authorizedRoles: MYAUTH_ROLE.all,
+            highlightTab: 'hydratorStudio'
+          },
+          templateUrl: '/assets/features/hydrator/templates/create.html',
+          controller: 'HydratorCreateController',
+          controllerAs: 'HydratorCreateController',
+          ncyBreadcrumb: {
+            skip: true
+          }
+        })
+          .state('hydrator.create.studio', {
+            url: '/studio?draftId&type',
+            params: {
+              data: null
+            },
+            resolve: {
+              rConfig: function($stateParams, mySettings, $q, myHelpers) {
+                var defer = $q.defer();
+                if ($stateParams.draftId) {
+                  mySettings.get('hydratorDrafts', true)
+                    .then(function(res) {
+                      var draft = myHelpers.objectQuery(res, $stateParams.namespace, $stateParams.draftId);
+                      if (angular.isObject(draft)) {
+                        defer.resolve(draft);
+                      } else {
+                        defer.resolve(false);
+                      }
+                    });
+                } else if ($stateParams.data){
+                  defer.resolve($stateParams.data);
+                } else {
+                  defer.resolve(false);
+                }
+                return defer.promise;
+              },
+              rVersion: function($state, MyCDAPDataSource) {
+                var dataSource = new MyCDAPDataSource();
+                return dataSource.request({
+                  _cdapPath: '/version'
+                });
+              }
+            },
+            views: {
+              '': {
+                templateUrl: '/assets/features/hydrator/templates/create/studio.html',
+                controller: 'HydratorCreateStudioController as HydratorCreateStudioController'
+              },
+              'canvas@hydrator.create.studio': {
+                templateUrl: '/assets/features/hydrator/templates/create/canvas.html',
+                controller: 'HydratorCreateCanvasController',
+                controllerAs: 'CanvasCtrl'
+              },
+              'leftpanel@hydrator.create.studio': {
+                templateUrl: '/assets/features/hydrator/templates/create/leftpanel.html',
+                controller: 'LeftPanelController as LeftPanelController'
+              },
+              'toppanel@hydrator.create.studio': {
+                templateUrl: '/assets/features/hydrator/templates/create/toppanel.html',
+                controller: 'TopPanelController as TopPanelController'
+              },
+              'bottompanel@hydrator.create.studio': {
+                templateUrl: '/assets/features/hydrator/templates/create/bottompanel.html',
+                controller: 'BottomPanelController as BottomPanelController'
+              }
+            },
+            onExit: function($uibModalStack) {
+              $uibModalStack.dismissAll();
+            }
+          })
 
         .state('hydrator.detail', {
           url: '/view/:pipelineId',
