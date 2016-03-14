@@ -48,10 +48,13 @@ class HydratorService {
         return node;
       });
 
-    source.type = artifact.source;
-    source.icon = this.MyDAGFactory.getIcon(source.plugin.name);
-    // replace with backend id
-    nodes.push(source);
+    if (Object.keys(source).length > 0) {
+      source.type = artifact.source;
+      source.icon = this.MyDAGFactory.getIcon(source.plugin.name);
+      // replace with backend id
+      nodes.push(source);
+    }
+
     nodes = nodes.concat(transforms);
     nodes = nodes.concat(sinks);
 

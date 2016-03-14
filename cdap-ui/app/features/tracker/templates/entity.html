@@ -43,7 +43,10 @@
   </div>
 
   <div class="action-button text-right">
-    <button class="btn btn-jump">Jump <span class="fa fa-angle-down"></span></button>
+    <my-jump-button
+      entity-type="$state.params.entityType"
+      entity-id="$state.params.entityId">
+    </my-jump-button>
   </div>
 
 
