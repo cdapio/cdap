@@ -24,7 +24,6 @@ import co.cask.cdap.proto.audit.AuditType;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
 import com.google.common.base.Charsets;
-import com.google.common.base.Objects;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.gson.Gson;
@@ -60,7 +59,7 @@ public class KafkaAuditPublisher implements AuditPublisher {
 
   @Override
   public void publish(EntityId entityId, AuditType auditType, AuditPayload auditPayload) {
-    String userId = Objects.firstNonNull(SecurityRequestContext.getUserId(), "");
+    String userId = SecurityRequestContext.getUserId();
     AuditMessage auditMessage = new AuditMessage(System.currentTimeMillis(), entityId, userId, auditType, auditPayload);
     LOG.trace("Publishing audit message {}", auditMessage);
 
