@@ -29,10 +29,20 @@
 @active-font: #363945;
 @filter-sidebar-background-color: #eeeeee;
 
+body[class*='state-tracker']{
+  main.container {
+    margin-top: 50px;
+    width: 100%;
+    padding: 0 0 15px 0;
+
+    h1, h2, h3, h4, h5, h6 {
+      font-weight: 500;
+    }
+  }
+}
+
 body.state-tracker-home {
   background-color: white;
-
-  main.container { margin-top: 50px; }
 
   .tracker-content {
     width: 500px;
@@ -71,23 +81,12 @@ body.state-tracker-home {
       margin-right: 8px;
     }
   }
-
 }
 
 body.state-tracker {
   background-color: #e5e5e5;
 
   .alerts { top: 50px; }
-
-  main.container {
-    margin-top: 50px;
-    width: 100%;
-    padding: 0 0 15px 0;
-
-    h1, h2, h3, h4, h5, h6 {
-      font-weight: 500;
-    }
-  }
 
   .content-loading {
     margin-top: 150px;
@@ -541,6 +540,40 @@ body.state-tracker-help {
         background-color: inherit;
       }
       &>p { margin-top: 25px; }
+    }
+  }
+}
+
+body.state-tracker-integrations {
+  background-color: white;
+
+  .integration-item {
+    margin: 0;
+    padding: 10px 25px;
+    border-bottom: 2px solid @border-color;
+    height: 80px;
+    width: 100%;
+    display: table;
+
+    .integration-information {
+      width: 80%;
+      display: table-cell;
+      vertical-align: middle;
+
+      h3 {
+        margin: 5px 0;
+      }
+      p { margin: 0; }
+    }
+
+    .integration-setup {
+      width: 20%;
+      display: table-cell;
+      vertical-align: middle;
+
+      .btn {
+        padding: 7px 25px;
+      }
     }
   }
 }

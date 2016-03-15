@@ -22,7 +22,7 @@ function NavbarController ($scope, $state, myNamespace, EventPipe, MYAUTH_EVENT,
   function findActiveProduct() {
     if ($state.includes('hydrator.**')) {
       return 'hydrator';
-    } else if ($state.includes('tracker.**') || $state.is('tracker-home')) {
+    } else if ($state.includes('tracker.**') || $state.is('tracker-home') || $state.is('tracker-integrations')) {
       return 'tracker';
     } else {
       return 'cdap';
