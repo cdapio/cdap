@@ -117,7 +117,7 @@ Node.js Runtime
 ---------------
 You can download an appropriate version of Node.js from `nodejs.org
 <http://nodejs.org>`__. We recommend any version of `Node.js <https://nodejs.org/>`__
-|node-js-version|; in particular, we recommend |recommended_node_js_version|.
+|node-js-min-version|. We support Node.js up to |node-js-max-version|.
    
 **Installing Node.js on RPM using Yum**
 
