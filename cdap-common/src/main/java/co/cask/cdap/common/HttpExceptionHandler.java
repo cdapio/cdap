@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,10 +16,11 @@
 
 package co.cask.cdap.common;
 
-import co.cask.cdap.common.http.SecurityRequestContext;
+import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.http.ExceptionHandler;
 import co.cask.http.HttpResponder;
+import com.google.common.base.Objects;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Iterables;
 import org.jboss.netty.handler.codec.http.HttpRequest;
@@ -64,13 +65,13 @@ public class HttpExceptionHandler extends ExceptionHandler {
       responder.sendString(HttpResponseStatus.NOT_IMPLEMENTED, t.getMessage());
     } else {
       LOG.error("Unexpected error: request={} {} user={}:", request.getMethod().getName(), request.getUri(),
-                SecurityRequestContext.getUserId().or("<null>"), t);
+                Objects.firstNonNull(SecurityRequestContext.getUserId(), "<null>"), t);
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, Throwables.getRootCause(t).getMessage());
     }
   }
 
   private void logWithTrace(HttpRequest request, Throwable t) {
     LOG.trace("Error in handling request={} {} for user={}:", request.getMethod().getName(), request.getUri(),
-              SecurityRequestContext.getUserId().or("<null>"), t);
+              Objects.firstNonNull(SecurityRequestContext.getUserId(), "<null>"), t);
   }
 }
