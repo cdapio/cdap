@@ -23,7 +23,60 @@
     </div>
 
     <div class="integration-setup text-right">
-      <button class="btn btn-default">Setup</button>
+      <button class="btn btn-default btn-setup"
+              ng-click="IntegrationsController.navigatorSetup.isOpen = true">
+        Setup
+      </button>
+
+      <div class="integration-setup-popup text-left"
+           ng-if="IntegrationsController.navigatorSetup.isOpen">
+        <h3>Configuration</h3>
+        <h4>
+          Cloudera
+        </h4>
+        <form class="form-horizontal">
+          <div class="form-group">
+            <label class="control-label col-xs-3">Hostname</label>
+            <div class="col-xs-9">
+              <input type="text" class="form-control">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="control-label col-xs-3">Username</label>
+            <div class="col-xs-9">
+              <input type="text" class="form-control">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="control-label col-xs-3">Password</label>
+            <div class="col-xs-9">
+              <input type="password" class="form-control">
+            </div>
+          </div>
+        </form>
+
+        <h4>
+          Kafka
+        </h4>
+        <form class="form-horizontal">
+          <div class="form-group">
+            <label class="control-label col-xs-3">Broker List</label>
+            <div class="col-xs-9">
+              <input type="text" class="form-control">
+            </div>
+          </div>
+        </form>
+
+        <div>
+          <button class="btn btn-default pull-left"
+                  ng-click="IntegrationsController.navigatorSetup.isOpen = false">
+            Cancel
+          </button>
+          <button class="btn btn-success pull-right">Save</button>
+        </div>
+      </div>
     </div>
   </div>
 </div>

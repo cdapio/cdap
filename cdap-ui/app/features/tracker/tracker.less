@@ -550,7 +550,7 @@ body.state-tracker-integrations {
   .integration-item {
     margin: 0;
     padding: 10px 25px;
-    border-bottom: 2px solid @border-color;
+    border-bottom: 1px solid @border-color;
     height: 80px;
     width: 100%;
     display: table;
@@ -560,10 +560,13 @@ body.state-tracker-integrations {
       display: table-cell;
       vertical-align: middle;
 
-      h3 {
-        margin: 5px 0;
+      h3, p { font-weight: 500; }
+
+      h3 { margin: 5px 0; }
+      p {
+        margin: 0;
+        color: @tracker-grey;
       }
-      p { margin: 0; }
     }
 
     .integration-setup {
@@ -573,6 +576,35 @@ body.state-tracker-integrations {
 
       .btn {
         padding: 7px 25px;
+        font-weight: 500;
+      }
+
+      .btn.btn-setup {
+        border: 2px solid @border-color;
+        color: darken(@border-color, 20%);
+      }
+
+      .integration-setup-popup {
+        padding: 15px;
+        background-color: white;
+        position: absolute;
+        width: 400px;
+        right: 25px;
+        border-radius: 5px;
+        transform: translateY(-36px);
+        .box-shadow(0 0 20px 1px rgba(0,0,0,0.5));
+
+        h3, h4 {
+          margin-bottom: 15px;
+        }
+        h3 {
+          font-size: 22px;
+          margin-top: 5px;
+        }
+
+        .control-label {
+          color: #888;
+        }
       }
     }
   }

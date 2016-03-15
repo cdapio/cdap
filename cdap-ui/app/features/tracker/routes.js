@@ -31,7 +31,8 @@ angular.module(PKG.name + '.feature.tracker')
       })
 
       .state('tracker-integrations', {
-        url: '/integrations',
+        url: '/tracker/integrations',
+        parent: 'ns',
         templateUrl: '/assets/features/tracker/templates/integrations.html',
         controller: 'TrackerIntegrationsController',
         controllerAs: 'IntegrationsController',
