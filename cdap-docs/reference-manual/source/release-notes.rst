@@ -84,8 +84,9 @@ Known Issues
   does not run on Ubuntu 14.x as of CDAP 3.0.x.
 
 - `CDAP-2721 <https://issues.cask.co/browse/CDAP-2721>`__ -
-  Metrics for :ref:`TimePartitionedFileSets <datasets-timepartitioned-fileset>` can show 
-  zero values even if there is data present.
+  Metrics for :ref:`FileSets <datasets-fileset>` can show zero values even if there is
+  data present, because FileSets do not emit metrics (`CDAP-587
+  <https://issues.cask.co/browse/CDAP-587>`).
   
 - `CDAP-2831 <https://issues.cask.co/browse/CDAP-2831>`__ -
   A workflow that is scheduled by time will not be run between the failure of the primary
@@ -93,8 +94,8 @@ Known Issues
   triggered at all.
 
 - `CDAP-2945 <https://issues.cask.co/browse/CDAP-2945>`__ -
-  There is a problem in the PartitionedFileSet causing MapReduce to fail if the input
-  partition filter does not match any partitions.
+  If the input partition filter for a PartitionedFileSet does not match any partitions,
+  MapReduce jobs can fail.
 
 - `CDAP-3000 <https://issues.cask.co/browse/CDAP-3000>`__ -
   The Workflow token is in an inconsistent state for nodes in a fork while the nodes of
@@ -108,7 +109,8 @@ Known Issues
 - `CDAP-3262 <https://issues.cask.co/browse/CDAP-3262>`__ -
   For Microsoft Windows, the CDAP Standalone scripts can fail when used with a JAVA_HOME
   that is defined as a path with spaces in it. A workaround is to use a definition of
-  JAVA_HOME that does not include spaces.
+  JAVA_HOME that does not include spaces, such as ``C:\PROGRA~1\Java\jdk1.7.0_79\bin`` or
+  ``C:\ProgramData\Oracle\Java\javapath``.
 
 - `CDAP-3492 <https://issues.cask.co/browse/CDAP-3492>`__ -
   In the CDAP CLI, executing ``'select *'`` from a dataset with many fields generates an error.
