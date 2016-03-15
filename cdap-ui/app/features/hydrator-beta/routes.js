@@ -47,7 +47,7 @@ angular.module(PKG.name + '.feature.hydrator-beta')
           },
           data: {
             authorizedRoles: MYAUTH_ROLE.all,
-            highlightTab: 'hydratorStudio'
+            highlightTab: 'hydratorStudioBeta'
           },
           resolve: {
             rConfig: function($stateParams, mySettings, $q, myHelpers) {
