@@ -95,33 +95,33 @@ Known Issues
   partition filter does not match any partitions.
 
 - `CDAP-3000 <https://issues.cask.co/browse/CDAP-3000>`__ -
-  There is a problem with the Workflow token being in inconsistent state for nodes in a
+  There is a problem with the Workflow token being in an inconsistent state for nodes in a
   fork while the fork is still running. It becomes consistent after the join.
 
 - `CDAP-3221 <https://issues.cask.co/browse/CDAP-3221>`__ -
   There is a problem when running Standalone mode: if an adapter is configured incorrectly
-  such that it leads to a MapReduce job to fail repeatedly, then the SDK hits an OOM exception due to perm gen.
+  such that it leads to a MapReduce job to fail repeatedly, then the SDK hits an OOM exception due to ``perm gen``.
   The Standalone needs restarting at this point.
 
 - `CDAP-3262 <https://issues.cask.co/browse/CDAP-3262>`__ -
-  There is a problem under Microsoft Windows and using the CDAP Standalone scripts when  
-  JAVA_HOME is defined as a path with spaces in it. A workaround is to use a definition of 
+  There is a problem under Microsoft Windows when using the CDAP Standalone scripts with a  
+  JAVA_HOME that is defined as a path with spaces in it. A workaround is to use a definition of 
   JAVA_HOME that does not include spaces.
 
 - `CDAP-3492 <https://issues.cask.co/browse/CDAP-3492>`__ -
-  In CDAP-CLI, executing 'select \*' from a dataset with many fields generates an error.
+  In the CDAP CLI, executing ``'select *'`` from a dataset with many fields generates an error.
   
 - `CDAP-3641 <https://issues.cask.co/browse/CDAP-3641>`__ -
-  WorkflowStatsSLAHttpHandler hangs if units not provided.
+  ``WorkflowStatsSLAHttpHandler`` hangs if units are not provided.
 
 - `CDAP-3697 <https://issues.cask.co/browse/CDAP-3697>`__ -
-  CDAP Explore is broken on secure CDH 5.1.
+  CDAP Explore is broken on secure CDH 5.1 clusters.
   
 - `CDAP-3698 <https://issues.cask.co/browse/CDAP-3698>`__ -
-  CDAP Explore is unable to get a delegation token while fetching next results on HDP2.0.
+  CDAP Explore is unable to get a delegation token while fetching next results on HDP 2.0 clusters.
   
 - `CDAP-3750 <https://issues.cask.co/browse/CDAP-3750>`__ -
-  If a table schema contains a field name that is a reserved word in Hive DDL, 'enable explore' fails.
+  If a table schema contains a field name that is a reserved word in the Hive DDL, ``'enable explore'`` fails.
 
 
 `Release 3.3.2 <http://docs.cask.co/cdap/3.3.2/index.html>`__
@@ -156,7 +156,7 @@ Bug Fixes
 - `CDAP-5094 <https://issues.cask.co/browse/CDAP-5094>`__ - Fixed a problem where the explore
   schema fileset property was being ignored unless an explore format was also present.
 
-- `CDAP-5137 <https://issues.cask.co/browse/CDAP-5137>`__ - Fix a problem with Spark jobs
+- `CDAP-5137 <https://issues.cask.co/browse/CDAP-5137>`__ - Fixed a problem with Spark jobs
   not being submitted to the appropriate YARN scheduler queue set for the namespace.
 
 
