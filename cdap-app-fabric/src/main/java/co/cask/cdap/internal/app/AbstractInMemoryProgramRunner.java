@@ -106,7 +106,7 @@ public abstract class AbstractInMemoryProgramRunner implements ProgramRunner {
   }
 
   private ProgramOptions createComponentOptions(String name, int instanceId, int instances, RunId runId,
-                                                           ProgramOptions options) {
+                                                ProgramOptions options) {
     Map<String, String> systemOptions = Maps.newHashMap();
     systemOptions.putAll(options.getArguments().asMap());
     systemOptions.put(ProgramOptionConstants.INSTANCE_ID, Integer.toString(instanceId));

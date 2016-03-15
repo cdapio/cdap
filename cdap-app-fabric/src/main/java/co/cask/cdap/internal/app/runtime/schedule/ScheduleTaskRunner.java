@@ -68,12 +68,13 @@ public final class ScheduleTaskRunner {
    *
    * @param programId Program Id
    * @param systemOverrides Arguments that would be supplied as system runtime arguments for the program.
+   * @param userOverrides Arguments to add to the user runtime arguments for the program.
    * @return a {@link ListenableFuture} object that completes when the program completes
    * @throws TaskExecutionException if program is already running or program is not found.
    * @throws IOException if program failed to start.
    */
-  public ListenableFuture<?> run(Id.Program programId, Map<String, String> systemOverrides)
-    throws TaskExecutionException, IOException {
+  public ListenableFuture<?> run(Id.Program programId, Map<String, String> systemOverrides,
+                                 Map<String, String> userOverrides) throws TaskExecutionException, IOException {
     Map<String, String> userArgs = Maps.newHashMap();
     Map<String, String> systemArgs = Maps.newHashMap();
 
@@ -92,6 +93,7 @@ public final class ScheduleTaskRunner {
     // Schedule properties are overriden by resolved preferences
     userArgs.putAll(spec.getProperties());
     userArgs.putAll(propertiesResolver.getUserProperties(programId));
+    userArgs.putAll(userOverrides);
 
     systemArgs.putAll(propertiesResolver.getSystemProperties(programId));
     systemArgs.putAll(systemOverrides);
