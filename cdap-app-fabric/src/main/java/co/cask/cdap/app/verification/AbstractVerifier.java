@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -25,7 +25,7 @@ import com.google.common.base.CharMatcher;
  */
 public abstract class AbstractVerifier<T> implements Verifier<T> {
 
-  protected boolean isId(final String name) {
+  public static boolean isId(final String name) {
     return !name.isEmpty() && CharMatcher.inRange('A', 'Z')
              .or(CharMatcher.inRange('a', 'z'))
              .or(CharMatcher.is('-'))
