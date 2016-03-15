@@ -24,6 +24,7 @@ import co.cask.cdap.ConditionalWorkflowApp;
 import co.cask.cdap.PauseResumeWorklowApp;
 import co.cask.cdap.WorkflowAppWithErrorRuns;
 import co.cask.cdap.WorkflowAppWithFork;
+import co.cask.cdap.WorkflowAppWithLocalDatasets;
 import co.cask.cdap.WorkflowAppWithScopedParameters;
 import co.cask.cdap.WorkflowFailureInForkApp;
 import co.cask.cdap.WorkflowTokenTestPutApp;
@@ -35,6 +36,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.gateway.handlers.WorkflowHttpHandler;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
+import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramStatus;
@@ -48,6 +50,7 @@ import co.cask.cdap.proto.codec.ScheduleSpecificationCodec;
 import co.cask.cdap.proto.codec.WorkflowActionSpecificationCodec;
 import co.cask.cdap.proto.codec.WorkflowTokenDetailCodec;
 import co.cask.cdap.proto.codec.WorkflowTokenNodeDetailCodec;
+import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.test.XSlowTests;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
@@ -183,6 +186,97 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
                                               program.getNamespaceId());
     HttpResponse response = doGet(versionedUrl);
     return readResponse(response, new TypeToken<List<ScheduledRuntime>>() { }.getType());
+  }
+
+  private String getLocalDatasetPath(ProgramId workflowId, String runId) {
+    String path = String.format("apps/%s/workflows/%s/runs/%s/localdatasets", workflowId.getApplication(),
+                                workflowId.getProgram(), runId);
+
+    return getVersionedAPIPath(path, Constants.Gateway.API_VERSION_3_TOKEN, workflowId.getNamespace());
+  }
+
+  private Map<String, DatasetSpecificationSummary> getWorkflowLocalDatasets(ProgramId workflowId, String runId)
+    throws Exception {
+    HttpResponse response = doGet(getLocalDatasetPath(workflowId, runId));
+    return readResponse(response, new TypeToken<Map<String, DatasetSpecificationSummary>>() { }.getType());
+  }
+
+  private void deleteWorkflowLocalDatasets(ProgramId workflowId, String runId) throws Exception {
+    doDelete(getLocalDatasetPath(workflowId, runId));
+  }
+
+  @Test
+  public void testLocalDatasetDeletion() throws Exception {
+    String keyValueTableType = "co.cask.cdap.api.dataset.lib.KeyValueTable";
+    String filesetType = "co.cask.cdap.api.dataset.lib.FileSet";
+    Map<String, String> keyValueTableProperties = ImmutableMap.of("foo", "bar");
+    Map<String, String> filesetProperties = ImmutableMap.of("anotherFoo", "anotherBar");
+
+    HttpResponse response = deploy(WorkflowAppWithLocalDatasets.class,
+                                   Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2);
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+
+    File waitFile = new File(tmpFolder.newFolder() + "/wait.file");
+    File doneFile = new File(tmpFolder.newFolder() + "/done.file");
+
+    ProgramId workflowId = new ProgramId(TEST_NAMESPACE2, WorkflowAppWithLocalDatasets.NAME, ProgramType.WORKFLOW,
+                                         WorkflowAppWithLocalDatasets.WORKFLOW_NAME);
+
+    startProgram(workflowId.toId(), ImmutableMap.of("wait.file", waitFile.getAbsolutePath(),
+                                                    "done.file", doneFile.getAbsolutePath(),
+                                                    "dataset.*.keep.local", "true"));
+
+    while (!waitFile.exists()) {
+      TimeUnit.MILLISECONDS.sleep(50);
+    }
+
+    String runId = getRunIdOfRunningProgram(workflowId.toId());
+
+    doneFile.createNewFile();
+
+    waitState(workflowId.toId(), ProgramStatus.STOPPED.name());
+
+    Map<String, DatasetSpecificationSummary> localDatasetSummaries = getWorkflowLocalDatasets(workflowId, runId);
+    Assert.assertEquals(2, localDatasetSummaries.size());
+    DatasetSpecificationSummary keyValueTableSummary = new DatasetSpecificationSummary("MyTable." + runId,
+                                                                                       keyValueTableType,
+                                                                                       keyValueTableProperties);
+    Assert.assertEquals(keyValueTableSummary, localDatasetSummaries.get("MyTable"));
+    DatasetSpecificationSummary filesetSummary = new DatasetSpecificationSummary("MyFile." + runId, filesetType,
+                                                                                 filesetProperties);
+    Assert.assertEquals(filesetSummary, localDatasetSummaries.get("MyFile"));
+
+    deleteWorkflowLocalDatasets(workflowId, runId);
+
+    localDatasetSummaries = getWorkflowLocalDatasets(workflowId, runId);
+    Assert.assertEquals(0, localDatasetSummaries.size());
+
+    waitFile = new File(tmpFolder.newFolder() + "/wait.file");
+    doneFile = new File(tmpFolder.newFolder() + "/done.file");
+
+    startProgram(workflowId.toId(), ImmutableMap.of("wait.file", waitFile.getAbsolutePath(),
+                                                    "done.file", doneFile.getAbsolutePath(),
+                                                    "dataset.MyTable.keep.local", "true"));
+
+    while (!waitFile.exists()) {
+      TimeUnit.MILLISECONDS.sleep(50);
+    }
+
+    runId = getRunIdOfRunningProgram(workflowId.toId());
+
+    doneFile.createNewFile();
+
+    waitState(workflowId.toId(), ProgramStatus.STOPPED.name());
+    localDatasetSummaries = getWorkflowLocalDatasets(workflowId, runId);
+    Assert.assertEquals(1, localDatasetSummaries.size());
+    keyValueTableSummary = new DatasetSpecificationSummary("MyTable." + runId, keyValueTableType,
+                                                           keyValueTableProperties);
+
+    Assert.assertEquals(keyValueTableSummary, localDatasetSummaries.get("MyTable"));
+    deleteWorkflowLocalDatasets(workflowId, runId);
+
+    localDatasetSummaries = getWorkflowLocalDatasets(workflowId, runId);
+    Assert.assertEquals(0, localDatasetSummaries.size());
   }
 
   @Test
@@ -1129,8 +1223,8 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     List<WorkflowTokenDetail.NodeValueDetail> nodeValueDetails =
       workflowTokenDetail.getTokenData().get(AppWithWorkflow.DummyAction.TOKEN_KEY);
     Assert.assertEquals(2, nodeValueDetails.size());
-    Assert.assertEquals(AppWithWorkflow.SampleWorkflow.firstActionName, nodeValueDetails.get(0).getNode());
-    Assert.assertEquals(AppWithWorkflow.SampleWorkflow.secondActionName, nodeValueDetails.get(1).getNode());
+    Assert.assertEquals(AppWithWorkflow.SampleWorkflow.FIRST_ACTION, nodeValueDetails.get(0).getNode());
+    Assert.assertEquals(AppWithWorkflow.SampleWorkflow.SECOND_ACTION, nodeValueDetails.get(1).getNode());
     Assert.assertEquals(AppWithWorkflow.DummyAction.TOKEN_VALUE, nodeValueDetails.get(0).getValue());
     Assert.assertEquals(AppWithWorkflow.DummyAction.TOKEN_VALUE, nodeValueDetails.get(1).getValue());
     // Verify entire workflow token by passing in the scope and key in the request
@@ -1138,20 +1232,20 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
                                            AppWithWorkflow.DummyAction.TOKEN_KEY);
     nodeValueDetails = workflowTokenDetail.getTokenData().get(AppWithWorkflow.DummyAction.TOKEN_KEY);
     Assert.assertEquals(2, nodeValueDetails.size());
-    Assert.assertEquals(AppWithWorkflow.SampleWorkflow.firstActionName, nodeValueDetails.get(0).getNode());
-    Assert.assertEquals(AppWithWorkflow.SampleWorkflow.secondActionName, nodeValueDetails.get(1).getNode());
+    Assert.assertEquals(AppWithWorkflow.SampleWorkflow.FIRST_ACTION, nodeValueDetails.get(0).getNode());
+    Assert.assertEquals(AppWithWorkflow.SampleWorkflow.SECOND_ACTION, nodeValueDetails.get(1).getNode());
     Assert.assertEquals(AppWithWorkflow.DummyAction.TOKEN_VALUE, nodeValueDetails.get(0).getValue());
     Assert.assertEquals(AppWithWorkflow.DummyAction.TOKEN_VALUE, nodeValueDetails.get(1).getValue());
 
     // Verify workflow token at a given node
     WorkflowTokenNodeDetail tokenAtNode = getWorkflowToken(workflowId, pid,
-                                                           AppWithWorkflow.SampleWorkflow.firstActionName, null, null);
+                                                           AppWithWorkflow.SampleWorkflow.FIRST_ACTION, null, null);
     Map<String, String> tokenDataAtNode = tokenAtNode.getTokenDataAtNode();
     Assert.assertEquals(1, tokenDataAtNode.size());
     Assert.assertEquals(AppWithWorkflow.DummyAction.TOKEN_VALUE,
                         tokenDataAtNode.get(AppWithWorkflow.DummyAction.TOKEN_KEY));
     // Verify workflow token at a given node by passing in a scope and a key
-    tokenAtNode = getWorkflowToken(workflowId, pid, AppWithWorkflow.SampleWorkflow.firstActionName,
+    tokenAtNode = getWorkflowToken(workflowId, pid, AppWithWorkflow.SampleWorkflow.FIRST_ACTION,
                                    WorkflowToken.Scope.USER, AppWithWorkflow.DummyAction.TOKEN_KEY);
     tokenDataAtNode = tokenAtNode.getTokenDataAtNode();
     Assert.assertEquals(1, tokenDataAtNode.size());
