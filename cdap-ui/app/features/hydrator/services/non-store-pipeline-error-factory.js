@@ -46,6 +46,9 @@ let countUnFilledRequiredFields = (node) => {
       }
     });
   }
+  if (!node.plugin.label) {
+    requiredFieldCount++;
+  }
   return requiredFieldCount;
 };
 
@@ -71,6 +74,11 @@ let isUniqueNodeNames = (myHelpers, nodes, cb) => {
   }
   let nodesIdMap = {};
   angular.forEach(nodes, function (node) {
+    // Check for multiple nodes with empty labels
+    // Multiple empty labels shouldn't be considered duplicates
+    if (!node.plugin.label) {
+      return;
+    }
     if (!nodesIdMap[node.plugin.label]) {
       nodesIdMap[node.plugin.label] = [];
     }
