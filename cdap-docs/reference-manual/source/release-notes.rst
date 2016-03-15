@@ -73,7 +73,10 @@ Known Issues
   for your particular Hadoop distribution in the :ref:`Installation documentation <installation-index>`.
 
 - `CDAP-1587 <https://issues.cask.co/browse/CDAP-1587>`__ - 
-  User datasets with names starting with ``"system"`` can potentially cause conflicts.
+  CDAP internally creates tables in the "user" space that begin with the word
+  ``"system"``. User datasets with names starting with ``"system"`` can conflict if they
+  were to match one of those names. To avoid this, do not start any datasets with the word
+  ``"system"``. 
 
 - `CDAP-2632 <https://issues.cask.co/browse/CDAP-2632>`__ -
   The application in the `cdap-kafka-ingest-guide 
@@ -87,39 +90,33 @@ Known Issues
 - `CDAP-2831 <https://issues.cask.co/browse/CDAP-2831>`__ -
   A workflow that is scheduled by time will not be run between the failure of the primary
   master and the time that the secondary takes over. This scheduled run will not be
-  triggered at all. There is no warnings or messages about the missed run of the
-  workflow.
+  triggered at all.
 
 - `CDAP-2945 <https://issues.cask.co/browse/CDAP-2945>`__ -
   There is a problem in the PartitionedFileSet causing MapReduce to fail if the input
   partition filter does not match any partitions.
 
 - `CDAP-3000 <https://issues.cask.co/browse/CDAP-3000>`__ -
-  There is a problem with the Workflow token being in an inconsistent state for nodes in a
-  fork while the fork is still running. It becomes consistent after the join.
+  The Workflow token is in an inconsistent state for nodes in a fork while the nodes of
+  the fork are still running. It becomes consistent after the join.
 
 - `CDAP-3221 <https://issues.cask.co/browse/CDAP-3221>`__ -
-  There is a problem when running Standalone mode: if an adapter is configured incorrectly
-  such that it leads to a MapReduce job to fail repeatedly, then the SDK hits an OOM exception due to ``perm gen``.
-  The Standalone needs restarting at this point.
+  When running in CDAP Standalone mode, if a MapReduce job fails repeatedly, then the SDK
+  hits an out-of-memory exception due to ``perm gen``. The Standalone needs restarting at
+  this point.
 
 - `CDAP-3262 <https://issues.cask.co/browse/CDAP-3262>`__ -
-  There is a problem under Microsoft Windows when using the CDAP Standalone scripts with a  
-  JAVA_HOME that is defined as a path with spaces in it. A workaround is to use a definition of 
+  For Microsoft Windows, the CDAP Standalone scripts can fail when used with a JAVA_HOME
+  that is defined as a path with spaces in it. A workaround is to use a definition of
   JAVA_HOME that does not include spaces.
 
 - `CDAP-3492 <https://issues.cask.co/browse/CDAP-3492>`__ -
   In the CDAP CLI, executing ``'select *'`` from a dataset with many fields generates an error.
   
 - `CDAP-3641 <https://issues.cask.co/browse/CDAP-3641>`__ -
-  ``WorkflowStatsSLAHttpHandler`` hangs if units are not provided.
+  A RESTful API call to retrieve workflow statistics hangs if units (such as "s" for
+  seconds) are not provided as part of the query.
 
-- `CDAP-3697 <https://issues.cask.co/browse/CDAP-3697>`__ -
-  CDAP Explore is broken on secure CDH 5.1 clusters.
-  
-- `CDAP-3698 <https://issues.cask.co/browse/CDAP-3698>`__ -
-  CDAP Explore is unable to get a delegation token while fetching next results on HDP 2.0 clusters.
-  
 - `CDAP-3750 <https://issues.cask.co/browse/CDAP-3750>`__ -
   If a table schema contains a field name that is a reserved word in the Hive DDL, ``'enable explore'`` fails.
 
