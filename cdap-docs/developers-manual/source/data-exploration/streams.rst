@@ -19,18 +19,21 @@ a format and schema of their own. For example, event bodies may be comma-delimit
 text or Avro-encoded binary data. In those cases, it is possible to set a format and schema
 on a stream, enabling more powerful queries.
 
+Some formats have a schema that describes the structure of data the format can read. A
+format such as the Avro format requires that a schema be explicitly given. Other formats,
+such as the CSV format, do not have a schema. CDAP supplies a default schema for formats
+such as CSV that you can |---| and usually will need to |---| replace with a custom schema
+to match your data's structure.
+
 Let's take a closer look at attaching format and schema on streams.
 
 .. _stream-exploration-stream-format:
 
 Formats
 -------
-
-A format defines how the bytes in an event body can be read as a higher level object.
-For example, the CSV (comma separated values) format can read each value in comma-delimited text
-as a separate column of some given type. Each format has
-a schema that describes the structure of data the format can read. Some formats, such as the Avro format,
-require a schema to be explicitly given. Other formats, such as the CSV format, have a default schema.
+A format defines how the bytes in an event body can be read as a higher level object. For
+example, the CSV (comma separated values) format can read each value in comma-delimited
+text as a separate column of some given type.
 
 Format is a configuration setting that can be set on a stream. This can be done either through the
 HTTP RESTful API or by using the CDAP Command Line Interface (CLI)::
