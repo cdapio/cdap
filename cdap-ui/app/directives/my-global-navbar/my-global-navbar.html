@@ -78,6 +78,13 @@
           Create Pipeline
         </a>
       </li>
+      <li>
+        <a ui-sref="hydrator-beta.create({ namespace: $stateParams.namespace })"
+           ng-class="{ 'active': Navbar.highlightTab === 'hydratorStudio'}">
+          Create Pipeline
+          <small class="txt-green">beta</small>
+        </a>
+      </li>
     </ul>
 
     <!-- TRACKER -->

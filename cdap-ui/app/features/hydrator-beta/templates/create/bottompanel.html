@@ -1,0 +1,74 @@
+<!--
+  Copyright © 2015 Cask Data, Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+-->
+
+<div class="console" ng-class="{'minimized': BottomPanelController.bottomPanelState === 0, 'maximized': BottomPanelController.bottomPanelState === 2}">
+  <div class="console-tabs clearfix">
+    <ul class="nav nav-tabs pull-left" role="tablist">
+      <li ng-repeat="tab in BottomPanelController.tabs"
+          ng-click="BottomPanelController.selectTab($index, true);"
+          ng-class="{'active': tab.title == BottomPanelController.activeTab.title, 'bg-danger': BottomPanelController.dangerBg && tab.title === 'Console', 'bg-primary': BottomPanelController.infoBg && tab.title === 'Console', 'bg-success': BottomPanelController.successBg && tab.title === 'Console'}"
+          role="presentation"
+          data-toggle="tab">
+          {{ tab.title }}
+          <span ng-show="tab.title === 'Console' && BottomPanelController.messageCount">
+            <span class="badge">{{BottomPanelController.messageCount}}</span>
+          </span>
+      </li>
+    </ul>
+    <div class="btn-group pull-right">
+      <a ng-click="BottomPanelController.toggleCollapse(BottomPanelController.bottomPanelState)">
+        <span ng-if="BottomPanelController.bottomPanelState !== 0"
+              class="fa fa-minus"
+              uib-tooltip="Minimize"
+              tooltip-class="tooltip-pane"
+              tooltip-placement="top"
+              tooltip-append-to-body="true">
+        </span>
+        <span ng-if="BottomPanelController.bottomPanelState === 0"
+              class="fa fa-expand"
+              uib-tooltip="Grow"
+              tooltip-class="tooltip-pane"
+              tooltip-placement="top"
+              tooltip-append-to-body="true">
+        </span>
+      </a>
+      <a ng-click="BottomPanelController.toggleMaximized(BottomPanelController.bottomPanelState)">
+        <span ng-if="BottomPanelController.bottomPanelState !== 2"
+              class="fa fa-arrows-alt"
+              uib-tooltip="Maximize"
+              tooltip-class="tooltip-pane"
+              tooltip-placement="top"
+              tooltip-append-to-body="true">
+        </span>
+        <span ng-if="BottomPanelController.bottomPanelState === 2"
+              class="fa fa-compress"
+              uib-tooltip="Shrink"
+              tooltip-class="tooltip-pane"
+              tooltip-placement="top"
+              tooltip-append-to-body="true">
+        </span>
+      </a>
+    </div>
+
+  </div>
+  <div class="console-type">
+    <div ng-repeat="tab in BottomPanelController.tabs"
+         ng-include="tab.template"
+         ng-show="BottomPanelController.activeTab.title === tab.title"
+         ng-class="{'node-config': tab.title === 'Node Configuration'}">
+      </div>
+  </div>
+</div>
