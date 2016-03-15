@@ -10,10 +10,10 @@ Logging and Monitoring
 
 Logs and Metrics
 ================
-CDAP collects logs and metrics for all of its internal services. Being able to view these
-details can be very helpful in debugging CDAP applications as well as analyzing their
-performance. CDAP gives access to its logs, metrics, and other monitoring information
-through RESTful APIs as well as a Java Client.
+CDAP collects logs and metrics for all of its internal services and and user applications.
+Being able to view these details can be very helpful in debugging CDAP applications as
+well as analyzing their performance. CDAP gives access to its logs, metrics, and other
+monitoring information through RESTful APIs as well as a Java Client.
 
 See the :ref:`Logging <http-restful-api-logging>`, :ref:`Metrics <http-restful-api-metrics>`, 
 and :ref:`Monitoring <http-restful-api-monitor>` HTTP RESTful APIs, the :ref:`Java Client
