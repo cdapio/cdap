@@ -180,7 +180,7 @@ For example, if you wrote the above JSON to a file named ``conversion.json``:
 .. container:: highlight
 
   .. parsed-literal::
-    cdap > create app trades_conversion cdap-etl-batch |version| system <path-to-conversion.json>
+    cdap > create app trades_conversion cdap-etl-batch |release| system <path-to-conversion.json>
 
 
 This will create and configure an application. The application's schedule (named, by default, to ``etlWorkflow``)
