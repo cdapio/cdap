@@ -890,15 +890,15 @@ Transforming Your Data
                                   \"name\":\"logEvent\",
                                   \"fields\":[
                                       {\"name\":\"ts\",\"type\":\"long\"},
-                                      {\"name\":\"remotehost\",\"type\":[\"string\",\"null\"]},
-                                      {\"name\":\"remotelogname\",\"type\":[\"string\",\"null\"]},
-                                      {\"name\":\"authuser\",\"type\":[\"string\",\"null\"]},
+                                      {\"name\":\"remote_host\",\"type\":[\"string\",\"null\"]},
+                                      {\"name\":\"remote_login\",\"type\":[\"string\",\"null\"]},
+                                      {\"name\":\"auth_user\",\"type\":[\"string\",\"null\"]},
                                       {\"name\":\"date\",\"type\":[\"string\",\"null\"]},
                                       {\"name\":\"request\",\"type\":[\"string\",\"null\"]},
                                       {\"name\":\"status\",\"type\":[\"int\",\"null\"]},
-                                      {\"name\":\"contentlength\",\"type\":[\"int\",\"null\"]},
+                                      {\"name\":\"content_length\",\"type\":[\"int\",\"null\"]},
                                       {\"name\":\"referrer\",\"type\":[\"string\",\"null\"]},
-                                      {\"name\":\"useragent\",\"type\":[\"string\",\"null\"]}
+                                      {\"name\":\"user_agent\",\"type\":[\"string\",\"null\"]}
                                   ]
                               }",
                               "basePath": "logEventStream_converted"
@@ -1095,15 +1095,15 @@ Transforming Your Data
             | col_name: STRING        | data_type: STRING    | comment: STRING      |
             +=======================================================================+
             | ts                      | bigint               | from deserializer    |
-            | remotehost              | string               | from deserializer    |
-            | remotelogname           | string               | from deserializer    |
-            | authuser                | string               | from deserializer    |
+            | remote_host             | string               | from deserializer    |
+            | remote_login            | string               | from deserializer    |
+            | auth_user               | string               | from deserializer    |
             | date                    | string               | from deserializer    |
             | request                 | string               | from deserializer    |
             | status                  | int                  | from deserializer    |
-            | contentlength           | int                  | from deserializer    |
+            | content_length          | int                  | from deserializer    |
             | referrer                | string               | from deserializer    |
-            | useragent               | string               | from deserializer    |
+            | user_agent              | string               | from deserializer    |
             | year                    | int                  |                      |
             | month                   | int                  |                      |
             | day                     | int                  |                      |
@@ -1149,7 +1149,8 @@ Transforming Your Data
 
             |cdap >| start workflow logEventStreamConverter.ETLWorkflow
             
-            Successfully started workflow 'ETLWorkflow' of application 'logEventStreamConverter' with stored runtime arguments '{}'            
+            Successfully started workflow 'ETLWorkflow' of application 'logEventStreamConverter'
+            with stored runtime arguments '{}'            
             
             |cdap >| get workflow status logEventStreamConverter.ETLWorkflow
             
@@ -1307,7 +1308,8 @@ Building Real World Applications
 
             |cdap >| start flow Wise.WiseFlow
           
-            Successfully started flow 'WiseFlow' of application 'Wise' with stored runtime arguments '{}'
+            Successfully started flow 'WiseFlow' of application 'Wise'
+            with stored runtime arguments '{}'
 
 .. container:: table-block
 
@@ -1441,7 +1443,8 @@ Building Real World Applications
 
             |cdap >| start workflow Wise.WiseWorkflow
           
-            Successfully started workflow 'WiseWorkflow' of application 'Wise' with stored runtime arguments '{}'
+            Successfully started workflow 'WiseWorkflow' of application 'Wise' 
+            with stored runtime arguments '{}'
 
 .. container:: table-block
 
@@ -1497,7 +1500,8 @@ Building Real World Applications
 
             |cdap >| start service Wise.WiseService
           
-            Successfully started service 'WiseService' of application 'Wise' with stored runtime arguments '{}'
+            Successfully started service 'WiseService' of application 'Wise' 
+            with stored runtime arguments '{}'
 
 .. container:: table-block
 

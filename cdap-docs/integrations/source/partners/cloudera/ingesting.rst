@@ -175,7 +175,7 @@ To do this, write the following JSON to a config file::
 the ``schema`` values) to be a conforming JSON file. 
 
 Then use your config file with the ``cdap-etl-batch`` artifact to create an application through the CLI.
-For example, if you wrote the above JSON to a file named ``conversion.json``::
+For example, if you wrote the above JSON to a file named ``conversion.json``:
 
   .. container:: highlight
 
