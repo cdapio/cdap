@@ -33,7 +33,7 @@
     <div ng-if="alerts.length" class="clearfix">
       <div class="row alert-danger" ng-repeat="alert in alerts track by $index">
         <div class="col-xs-10">
-          <span class="badge" ng-if="alert.count > 1">{{alert.count}}</span>
+          <span class="badge pull-left" ng-if="alert.count > 1">{{alert.count}}</span>
           <strong>{{ alert.title }}</strong>  {{ alert.content }}
           <p>
             <small>{{ alert.time | amCalendar }}</small>
