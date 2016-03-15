@@ -211,13 +211,13 @@ Data Exploration
        
             |cdap >| execute 'describe stream_logEventStream'
 
-            +=========================================================================================================+
-            | col_name: STRING                 | data_type: STRING                | comment: STRING                   |
-            +=========================================================================================================+
-            | ts                               | bigint                           | from deserializer                 |
-            | headers                          | map<string,string>               | from deserializer                 |
-            | body                             | string                           | from deserializer                 |
-            +=========================================================================================================+
+            +===========================================================+
+            | col_name: STRING | data_type: STRING  | comment: STRING   |
+            +===========================================================+
+            | ts               | bigint             | from deserializer |
+            | headers          | map<string,string> | from deserializer |
+            | body             | string             | from deserializer |
+            +===========================================================+
             Fetched 3 rows
 
 .. container:: table-block
@@ -916,7 +916,7 @@ Transforming Your Data
      
           .. parsed-literal::
 
-            |cdap >| create app logEventStreamConverter cdap-etl-batch |version| system examples/resources/app-config.json
+            |cdap >| create app logEventStreamConverter cdap-etl-batch |release| system examples/resources/app-config.json
             Successfully created application
           
             |cdap >| resume schedule logEventStreamConverter.etlWorkflow
@@ -950,7 +950,7 @@ Transforming Your Data
             | id                      | descript | artifactName   | artifactVersion | artifactScope |
             |                         | ion      |                |                 |               |
             +=======================================================================================+
-            | logEventStreamConverter | Batch Ex | cdap-etl-batch | 3.2.0           | SYSTEM        |
+            | logEventStreamConverter | Batch Ex | cdap-etl-batch | |version|           | SYSTEM        |
             |                         | tract-Tr |                |                 |               |
             |                         | ansform- |                |                 |               |
             |                         | Load (ET |                |                 |               |
@@ -999,7 +999,7 @@ Transforming Your Data
             +=================================================================================================================+
             | application | program     | program type | name        | type        | description | properties  | runtime args |
             +=================================================================================================================+
-            | logEventStr | ETLWorkflow | WORKFLOW     | etlWorkflow | co.cask.cda | batch etl s | cron entry: | {}           |
+            | logEventStr | ETLWorkflow | WORKFLOW     | etlWorkflow | co.cask.cda | ETL Batch s | cron entry: | {}           |
             | eamConverte |             |              |             | p.internal. | chedule     |  \*/5 * * *  |              |
             | r           |             |              |             | schedule.Ti |             | *           |              |
             |             |             |              |             | meSchedule  |             |             |              |
@@ -1275,10 +1275,10 @@ Building Real World Applications
             +=====================================================================+
             | type      | id                    | description                     |
             +=====================================================================+
-            | Flow      | WiseFlow              | Wise flow                       |
+            | Flow      | WiseFlow              | Wise Flow                       |
             | MapReduce | BounceCountsMapReduce | Bounce Counts MapReduce Program |
             | Service   | WiseService           |                                 |
-            | workflow  | WiseWorkflow          | Wise workflow                   |
+            | workflow  | WiseWorkflow          | Wise Workflow                   |
             +=====================================================================+
 
 .. container:: table-block
