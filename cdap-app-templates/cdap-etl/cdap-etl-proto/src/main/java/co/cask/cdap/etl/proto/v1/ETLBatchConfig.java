@@ -53,8 +53,9 @@ public final class ETLBatchConfig extends ETLConfig
                          ETLStage source, List<ETLStage> sinks, List<ETLStage> transforms,
                          List<Connection> connections, Resources resources,
                          Resources driverResources,
-                         List<ETLStage> actions) {
-    super(source, sinks, transforms, connections, resources);
+                         List<ETLStage> actions,
+                         @Nullable  ETLStage aggregator) {
+    super(source, sinks, transforms, connections, resources, true, aggregator);
     this.engine = engine;
     this.schedule = schedule;
     this.actions = actions;
@@ -65,7 +66,7 @@ public final class ETLBatchConfig extends ETLConfig
   public ETLBatchConfig(Engine engine, String schedule,
                         ETLStage source, List<ETLStage> sinks, List<ETLStage> transforms,
                         List<Connection> connections, @Nullable Resources resources, @Nullable List<ETLStage> actions) {
-    this(engine, schedule, source, sinks, transforms, connections, resources, new Resources(), actions);
+    this(engine, schedule, source, sinks, transforms, connections, resources, new Resources(), actions, null);
   }
 
   @Deprecated
@@ -210,7 +211,7 @@ public final class ETLBatchConfig extends ETLConfig
 
     public ETLBatchConfig build() {
       return new ETLBatchConfig(engine, schedule, source, sinks, transforms,
-                                connections, resources, driverResources, actions);
+                                connections, resources, driverResources, actions, aggregator);
     }
   }
 }

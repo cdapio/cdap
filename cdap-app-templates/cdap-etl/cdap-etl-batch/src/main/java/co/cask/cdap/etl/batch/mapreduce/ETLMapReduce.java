@@ -110,6 +110,9 @@ public class ETLMapReduce extends AbstractMapReduce {
     Map<String, String> properties = new HashMap<>();
     properties.put(Constants.PIPELINEID, GSON.toJson(pipeline));
     properties.put(Constants.STAGE_LOGGING_ENABLED, String.valueOf(config.isStageLoggingEnabled()));
+    if (config.getAggregator() != null) {
+      properties.put(Constants.AGGREGATOR_CONFIG, GSON.toJson(config.getAggregator().getPlugin().getProperties()));
+    }
     setProperties(properties);
   }
 
@@ -166,8 +169,16 @@ public class ETLMapReduce extends AbstractMapReduce {
       }
     }
 
-    job.setMapperClass(ETLMapper.class);
-    job.setNumReduceTasks(0);
+    if (pipeline.getAggregator() != null) {
+      hConf.set(Constants.AGGREGATOR_CONFIG, properties.get(Constants.AGGREGATOR_CONFIG));
+      job.setMapperClass(ETLAggregatingMapper.class);
+      job.setReducerClass(ETLAggregatingReducer.class);
+      job.setMapOutputKeyClass(SinkAndStructuredRecord.class);
+      job.setMapOutputValueClass(SinkAndStructuredRecord.class);
+    } else {
+      job.setMapperClass(ETLMapper.class);
+      job.setNumReduceTasks(0);
+    }
 
     hConf.set(ETLMapper.RUNTIME_ARGS_KEY, GSON.toJson(runtimeArgs));
   }

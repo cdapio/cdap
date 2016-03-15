@@ -23,6 +23,7 @@ import com.google.common.collect.ImmutableSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import javax.annotation.Nullable;
 
 /**
  * Keeps track of the plugin ids for the source, transforms, and sink of a pipeline phase.
@@ -47,6 +48,7 @@ public class PipelinePhase {
     return source;
   }
 
+  @Nullable
   public StageInfo getAggregator() {
     return aggregator;
   }

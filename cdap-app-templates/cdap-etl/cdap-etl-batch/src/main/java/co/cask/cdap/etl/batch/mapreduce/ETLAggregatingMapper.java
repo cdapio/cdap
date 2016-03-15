@@ -1,10 +1,12 @@
 package co.cask.cdap.etl.batch.mapreduce;
 
 import co.cask.cdap.api.ProgramLifecycle;
+import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.api.mapreduce.MapReduceTaskContext;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.etl.api.InvalidEntry;
+import co.cask.cdap.etl.api.batch.BatchAggregation;
 import co.cask.cdap.etl.common.Constants;
 import co.cask.cdap.etl.common.Destroyables;
 import co.cask.cdap.etl.common.PipelinePhase;
@@ -30,14 +32,16 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Mapper Driver for ETL Transforms.
+ * Mapper Driver for ETL Transforms with an aggregator.
  */
-public class ETLMapper extends Mapper implements ProgramLifecycle<MapReduceTaskContext<Object, Object>> {
+public class ETLAggregatingMapper extends Mapper implements ProgramLifecycle<MapReduceTaskContext<Object, Object>> {
+
   public static final String RUNTIME_ARGS_KEY = "cdap.etl.runtime.args";
   public static final String SINK_OUTPUTS_KEY = "cdap.etl.sink.outputs";
   private static final Type RUNTIME_ARGS_TYPE = new TypeToken<Map<String, Map<String, String>>>() { }.getType();
   private static final Type SINK_OUTPUTS_TYPE = new TypeToken<Map<String, SinkOutput>>() { }.getType();
-  private static final Logger LOG = LoggerFactory.getLogger(ETLMapper.class);
+  private static final Type AGGREGATOR_CONFIG_TYPE = new TypeToken<Map<String, String>>() { }.getType();
+  private static final Logger LOG = LoggerFactory.getLogger(ETLAggregatingMapper.class);
   private static final Gson GSON = new Gson();
 
   private Set<String> transformsWithoutErrorDataset;
@@ -45,9 +49,9 @@ public class ETLMapper extends Mapper implements ProgramLifecycle<MapReduceTaskC
   private TransformExecutor<KeyValue<Object, Object>> transformExecutor;
   // injected by CDAP
   @SuppressWarnings("unused")
-  private Metrics mapperMetrics;
-  private SinkWriter<Object, Object> sinkWriter;
+  private Metrics metrics;
   private Map<String, ErrorSink<Object, Object>> transformErrorSinkMap;
+  private String groupByKey;
 
   @Override
   public void initialize(MapReduceTaskContext<Object, Object> context) throws Exception {
@@ -65,7 +69,7 @@ public class ETLMapper extends Mapper implements ProgramLifecycle<MapReduceTaskC
     PipelinePhase pipeline = GSON.fromJson(properties.get(Constants.PIPELINEID), PipelinePhase.class);
     Map<String, Map<String, String>> runtimeArgs = GSON.fromJson(hConf.get(RUNTIME_ARGS_KEY), RUNTIME_ARGS_TYPE);
     MapReduceTransformExecutorFactory<KeyValue<Object, Object>> transformExecutorFactory =
-      new MapReduceTransformExecutorFactory<>(context, mapperMetrics, context.getLogicalStartTime(), runtimeArgs);
+      new MapReduceTransformExecutorFactory<>(context, metrics, context.getLogicalStartTime(), runtimeArgs);
     transformExecutor = transformExecutorFactory.create(pipeline);
 
     transformErrorSinkMap = new HashMap<>();
@@ -81,8 +85,9 @@ public class ETLMapper extends Mapper implements ProgramLifecycle<MapReduceTaskC
     Preconditions.checkNotNull(sinkOutputsStr, "Sink outputs not found in Hadoop conf.");
     Map<String, SinkOutput> sinkOutputs = GSON.fromJson(sinkOutputsStr, SINK_OUTPUTS_TYPE);
 
-    sinkWriter = hasOneOutput(pipeline.getTransforms(), sinkOutputs) ?
-      new SingleOutputWriter<>(context) : new MultiOutputWriter<>(context, sinkOutputs);
+    Map<String, String> aggregatorConfig =
+      GSON.fromJson(hConf.get(Constants.AGGREGATOR_CONFIG), AGGREGATOR_CONFIG_TYPE);
+    groupByKey = aggregatorConfig.get(BatchAggregation.PROP_GROUP_BY);
   }
 
   // this is needed because we need to write to the context differently depending on the number of outputs
@@ -112,7 +117,11 @@ public class ETLMapper extends Mapper implements ProgramLifecycle<MapReduceTaskC
       TransformResponse transformResponse = transformExecutor.runOneIteration(input);
       for (Map.Entry<String, Collection<Object>> transformedEntry : transformResponse.getSinksResults().entrySet()) {
         for (Object transformedRecord : transformedEntry.getValue()) {
-          sinkWriter.write(transformedEntry.getKey(), (KeyValue<Object, Object>) transformedRecord);
+          // TODO: multiple sinks
+          Preconditions.checkArgument(transformedRecord instanceof StructuredRecord);
+          StructuredRecord sRecord = (StructuredRecord) transformedRecord;
+          Preconditions.checkArgument(sRecord.get(groupByKey) != null);
+          context.write(sRecord.get(groupByKey), transformedRecord);
         }
       }
 

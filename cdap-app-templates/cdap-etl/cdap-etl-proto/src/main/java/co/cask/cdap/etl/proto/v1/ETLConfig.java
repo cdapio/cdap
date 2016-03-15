@@ -19,8 +19,6 @@ package co.cask.cdap.etl.proto.v1;
 import co.cask.cdap.api.Config;
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.etl.api.Transform;
-import co.cask.cdap.etl.api.batch.BatchSink;
-import co.cask.cdap.etl.api.batch.BatchSource;
 import co.cask.cdap.etl.proto.Connection;
 import co.cask.cdap.etl.proto.UpgradeContext;
 import com.google.common.collect.ImmutableList;
@@ -30,6 +28,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
+import javax.annotation.Nullable;
 
 /**
  * Common ETL Config.
@@ -41,6 +40,7 @@ public class ETLConfig extends Config {
   private final List<ETLStage> transforms;
   private final List<Connection> connections;
   private final Resources resources;
+  private final ETLStage aggregator;
 
   /**
    * @deprecated use builders from subclasses instead.
@@ -48,17 +48,19 @@ public class ETLConfig extends Config {
   @Deprecated
   public ETLConfig(ETLStage source, List<ETLStage> sinks, List<ETLStage> transforms,
                    List<Connection> connections, Resources resources) {
-    this(source, sinks, transforms, connections, resources, true);
+    this(source, sinks, transforms, connections, resources, true, null);
   }
 
   protected ETLConfig(ETLStage source, List<ETLStage> sinks, List<ETLStage> transforms,
-                      List<Connection> connections, Resources resources, boolean stageLoggingEnabled) {
+                      List<Connection> connections, Resources resources, boolean stageLoggingEnabled,
+                      @Nullable ETLStage aggregator) {
     this.source = source;
     this.sinks = sinks;
     this.transforms = transforms;
     this.connections = getValidConnections(connections);
     this.resources = resources;
     this.stageLoggingEnabled = stageLoggingEnabled;
+    this.aggregator = aggregator;
   }
 
   private List<Connection> getValidConnections(List<Connection> connections) {
@@ -133,6 +135,10 @@ public class ETLConfig extends Config {
     return resources;
   }
 
+  public ETLStage getAggregator() {
+    return aggregator;
+  }
+
   public Boolean isStageLoggingEnabled() {
     return stageLoggingEnabled == null ? true : stageLoggingEnabled;
   }
@@ -205,12 +211,16 @@ public class ETLConfig extends Config {
     protected Resources resources;
     protected Boolean stageLoggingEnabled;
 
+    @Nullable
+    protected ETLStage aggregator;
+
     protected Builder() {
       this.sinks = new ArrayList<>();
       this.transforms = new ArrayList<>();
       this.connections = new ArrayList<>();
       this.resources = new Resources();
       this.stageLoggingEnabled = true;
+      this.aggregator = null;
     }
 
     public T setSource(ETLStage source) {
@@ -260,6 +270,11 @@ public class ETLConfig extends Config {
 
     public T disableStageLogging() {
       this.stageLoggingEnabled = false;
+      return (T) this;
+    }
+
+    public T setAggregator(ETLStage aggregator) {
+      this.aggregator = aggregator;
       return (T) this;
     }
   }

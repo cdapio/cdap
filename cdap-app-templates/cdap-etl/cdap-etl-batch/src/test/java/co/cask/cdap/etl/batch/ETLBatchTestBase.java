@@ -20,6 +20,8 @@ import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
 import co.cask.cdap.etl.api.PipelineConfigurable;
 import co.cask.cdap.etl.api.batch.BatchSource;
+import co.cask.cdap.etl.batch.mapreduce.SumAggregation;
+import co.cask.cdap.etl.batch.mock.GroupByBatchAggregation;
 import co.cask.cdap.etl.batch.mock.MockSink;
 import co.cask.cdap.etl.batch.mock.MockSource;
 import co.cask.cdap.etl.batch.mock.StringValueFilterTransform;
@@ -67,7 +69,8 @@ public class ETLBatchTestBase extends TestBase {
 
     // add some test plugins
     addPluginArtifact(Id.Artifact.from(Id.Namespace.DEFAULT, "test-plugins", "1.0.0"), APP_ARTIFACT_ID,
-                      MockSource.class, MockSink.class, StringValueFilterTransform.class);
+                      MockSource.class, MockSink.class, StringValueFilterTransform.class,
+                      GroupByBatchAggregation.class, SumAggregation.class);
   }
 
   protected List<GenericRecord> readOutput(TimePartitionedFileSet fileSet, Schema schema) throws IOException {

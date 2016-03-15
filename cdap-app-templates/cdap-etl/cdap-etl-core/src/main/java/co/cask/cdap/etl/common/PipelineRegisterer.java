@@ -52,6 +52,7 @@ public class PipelineRegisterer {
   private final PluginConfigurer configurer;
   private final String sourcePluginType;
   private final String sinkPluginType;
+  private final String aggregatorPluginType = "aggregation";
 
   public PipelineRegisterer(PluginConfigurer configurer, String programType) {
     this.configurer = configurer;
@@ -71,7 +72,7 @@ public class PipelineRegisterer {
   public PipelinePhase registerPlugins(ETLConfig config, Class errorDatasetType,
                                        DatasetProperties errorDatasetProperties,
                                        boolean sinkWithErrorDataset) {
-    config = config.getCompatibleConfig();
+
     ETLStage sourceConfig = config.getSource();
     List<ETLStage> transformConfigs = config.getTransforms();
     List<ETLStage> sinkConfigs = config.getSinks();
@@ -171,6 +172,24 @@ public class PipelineRegisterer {
       sinks.add(sink);
     }
 
+    StageInfo aggregatorInfo = null;
+    if (config.getAggregator() != null) {
+      ETLStage stage = config.getAggregator();
+      String pluginId = stage.getName();
+      pluginName = stage.getPlugin().getName();
+      PluginProperties properties = getPluginProperties(config.getAggregator());
+      PipelineConfigurable aggregator = configurer.usePlugin(
+        aggregatorPluginType, pluginName,
+        pluginId, properties,
+        stage.getPlugin().getPluginSelector(aggregatorPluginType, pluginName));
+
+      PipelineConfigurer aggregatorConfigurer = new DefaultPipelineConfigurer(configurer, pluginId);
+      stageToPipelineConfigureDetailMap.put(
+        pluginId, new PipelineConfigureDetail(aggregator, aggregatorConfigurer));
+
+      aggregatorInfo = new StageInfo(pluginId, null, true);
+    }
+
     // TODO : CDAP-4387 Validate Stages has been removed due to DAG implementation, have to be refactored
 
     for (String stageName : stageTopologicalSortedOrder) {
@@ -201,7 +220,7 @@ public class PipelineRegisterer {
 
 
     return new PipelinePhase(new StageInfo(sourcePluginId, null, false),
-                             null, sinksInfo, transformInfos, connectionsMap);
+                             aggregatorInfo, sinksInfo, transformInfos, connectionsMap);
   }
 
   private class PipelineConfigureDetail {
@@ -296,6 +315,10 @@ public class PipelineRegisterer {
     }
     for (ETLStage stage : config.getSinks()) {
       stageNamesFromConfig.add(stage.getName());
+    }
+
+    if (config.getAggregator() != null) {
+      stageNamesFromConfig.add(config.getAggregator().getName());
     }
 
     for (Connection connection : config.getConnections()) {

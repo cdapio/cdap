@@ -23,6 +23,7 @@ import co.cask.cdap.etl.proto.UpgradeableConfig;
 
 import java.util.Objects;
 import java.util.Set;
+import javax.annotation.Nullable;
 
 /**
  * ETL Batch Configuration.

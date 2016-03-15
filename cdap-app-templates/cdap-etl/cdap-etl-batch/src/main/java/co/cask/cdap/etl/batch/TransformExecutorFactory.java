@@ -19,6 +19,7 @@ package co.cask.cdap.etl.batch;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.plugin.PluginContext;
 import co.cask.cdap.etl.api.Transform;
+import co.cask.cdap.etl.api.batch.BatchAggregation;
 import co.cask.cdap.etl.api.batch.BatchRuntimeContext;
 import co.cask.cdap.etl.api.batch.BatchSink;
 import co.cask.cdap.etl.api.batch.BatchSource;
@@ -83,6 +84,19 @@ public abstract class TransformExecutorFactory<T> {
       batchSink.initialize(sinkContext);
       transformations.put(sinkInfo.getName(), new TransformDetail(
         batchSink, new DefaultStageMetrics(metrics, sinkInfo.getName()), new ArrayList<String>()));
+    }
+
+    if (pipeline.getAggregator() != null) {
+      String aggregatorName = pipeline.getAggregator().getName();
+      Object plugin = pluginContext.newPluginInstance(aggregatorName);
+      ClassLoader loader1 = plugin.getClass().getClassLoader();
+      Class<?> cls = BatchAggregation.class;
+      ClassLoader loader2 = cls.getClassLoader();
+      BatchAggregation<?, ?, ?> batchAggregation = pluginContext.newPluginInstance(aggregatorName);
+      BatchRuntimeContext context = createRuntimeContext(aggregatorName);
+      batchAggregation.initialize(context);
+      transformations.put(aggregatorName, new TransformDetail(
+        batchAggregation, new DefaultStageMetrics(metrics, aggregatorName), connections.get(aggregatorName)));
     }
 
     return new TransformExecutor<>(transformations, ImmutableList.of(sourceName));
