@@ -99,6 +99,7 @@ function download_includes() {
   download_md_doc_file $base_target $hydrator_source cassandra-plugins Cassandra-realtimesink.md 
 
   download_md_doc_file $base_target $hydrator_source core-plugins AmazonSQS-realtimesource.md
+  download_md_doc_file $base_target $hydrator_source core-plugins AzureBlobStore-batchsource.md
   download_md_doc_file $base_target $hydrator_source core-plugins Cube-batchsink.md
   download_md_doc_file $base_target $hydrator_source core-plugins Cube-realtimesink.md
   download_md_doc_file $base_target $hydrator_source core-plugins DataGenerator-realtimesource.md
