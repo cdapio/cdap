@@ -18,7 +18,7 @@ package co.cask.cdap.security.spi.authentication;
 import javax.annotation.Nullable;
 
 /**
- * RequestContext that maintains a ThreadLocal with references to {@code AccessTokenIdentifier}.
+ * RequestContext that maintains a ThreadLocal {@link #userId} and {@link #userIP} of the authenticated user.
  */
 public final class SecurityRequestContext {
   private static final ThreadLocal<String> userId = new InheritableThreadLocal<>();
