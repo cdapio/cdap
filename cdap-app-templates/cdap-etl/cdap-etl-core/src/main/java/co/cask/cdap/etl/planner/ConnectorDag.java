@@ -33,6 +33,7 @@ import java.util.UUID;
 /**
  * A special DAG that can insert connector nodes into a normal dag based on some rules.
  * A connector node is a boundary at which the dag can be split into smaller dags.
+ * A connector basically translates to a local dataset in between mapreduce jobs in the final workflow.
  */
 public class ConnectorDag extends Dag {
   private final Set<String> reduceNodes;
@@ -60,9 +61,13 @@ public class ConnectorDag extends Dag {
    * A connector is inserted in front of a reduce node (aggregator plugin type, etc)
    * when there is a path from some source to one or more reduce nodes or sinks.
    * This is required because in a single mapper, we can't write to both a sink and do a reduce.
-   * We also can't reduce on multiple keys in the same mapper.
+   * We also can't have 2 reducers in a single mapreduce job.
    * A connector is also inserted in front of any node if the inputs into the node come from multiple sources.
    * A connector is also inserted in front of a reduce node that has another reduce node as its input.
+   *
+   * After splitting, the result will be a collection of subdags, with each subdag representing a single
+   * mapreduce job (or possibly map-only job). Or in spark, each subdag would be a series of operations from
+   * one rdd to another rdd.
    *
    * @return the connectors added
    */
@@ -94,7 +99,7 @@ public class ConnectorDag extends Dag {
         once we see a reduce node or a connector. Otherwise, every single reduce node would end up
         with a connector in front of it.
      */
-    for (String node : linearize()) {
+    for (String node : getTopologicalOrder()) {
       if (!sources.contains(node) && !connectors.contains(node)) {
         continue;
       }
@@ -129,9 +134,9 @@ public class ConnectorDag extends Dag {
 
         Since we don't support multi-input yet, we need to convert that further into 3 phases:
 
-          connector1 ---> reduce1 ---> sink.connector
-                                                            =>       sink.connector ---> sink
-          connector2 ---> reduce2 ---> sink.connector
+          reduce1.connector ---> reduce1 ---> sink.connector
+                                                                    =>       sink.connector ---> sink
+          reduce2.connector ---> reduce2 ---> sink.connector
 
         To find these nodes, we traverse the graph in order and keep track of sources that have a path to each node
         with a map of node -> [ sources that have a path to the node ]
@@ -142,28 +147,28 @@ public class ConnectorDag extends Dag {
     for (String source : sources) {
       nodeSources.put(source, source);
     }
-    for (String connector : connectors) {
-      nodeSources.put(connector, connector);
-    }
-    for (String node : linearize()) {
+    for (String node : getTopologicalOrder()) {
       if (sinks.contains(node)) {
         continue;
       }
+
       Set<String> connectedSources = nodeSources.get(node);
-      // if more than one source is connected to this node, then this node is a connector.
-      // keep track of it, and wipe its node sources to just contain itself
-      if (connectedSources.size() > 1) {
-        addConnectorInFrontOf(node, addedAlready);
+      // if this node is a connector, replace all sources for this node with itself, since a connector is a source
+      if (connectors.contains(node)) {
         connectedSources = new HashSet<>();
         connectedSources.add(node);
         nodeSources.replaceValues(node, connectedSources);
       }
+      // if more than one source is connected to this node, then this node is a connector.
+      // keep track of it, and wipe its node sources to just contain itself
+      if (connectedSources.size() > 1) {
+        String connectorNode = addConnectorInFrontOf(node, addedAlready);
+        connectedSources = new HashSet<>();
+        connectedSources.add(connectorNode);
+        nodeSources.replaceValues(node, connectedSources);
+      }
       for (String nodeOutput : getNodeOutputs(node)) {
-        // don't propagate to connectors, since they are counted as source and replace any inputs they may have
-        if (connectors.contains(nodeOutput)) {
-          continue;
-        }
-        // propagate sources connected to me to all my outputs
+        // propagate the source connected to me to all my outputs
         nodeSources.putAll(nodeOutput, connectedSources);
       }
     }
@@ -183,7 +188,7 @@ public class ConnectorDag extends Dag {
 
       // Sets.difference because we don't want to add ourselves
       accessibleReduceNodes = Sets.difference(accessibleReduceNodes, ImmutableSet.of(reduceNode));
-      for (String accessibleReduceNode : Sets.difference(accessibleReduceNodes, ImmutableSet.of(reduceNode))) {
+      for (String accessibleReduceNode : accessibleReduceNodes) {
         addConnectorInFrontOf(accessibleReduceNode, addedAlready);
       }
     }
@@ -214,9 +219,10 @@ public class ConnectorDag extends Dag {
   }
 
   // add a connector in front of the specified node if one doesn't already exist there
-  private void addConnectorInFrontOf(String inFrontOf, Set<String> addedAlready) {
+  // returns the node in front of the specified node.
+  private String addConnectorInFrontOf(String inFrontOf, Set<String> addedAlready) {
     if (!addedAlready.add(inFrontOf)) {
-      return;
+      return getNodeInputs(inFrontOf).iterator().next();
     }
 
     String connectorName = inFrontOf + ".connector";
@@ -225,6 +231,7 @@ public class ConnectorDag extends Dag {
     }
     insertNode(connectorName, inFrontOf);
     connectors.add(connectorName);
+    return connectorName;
   }
 
   /**

@@ -88,7 +88,7 @@ public class Dag {
     }
 
     // check for cycles
-    linearize();
+    getTopologicalOrder();
 
     // check for sections of the dag that are on an island by themselves
 
@@ -205,14 +205,16 @@ public class Dag {
   }
 
   /**
-   * Linearize the dag. The returned list guarantees that for each item in the list, that item has no path to an
+   * Get the dag in topological order.
+   * The returned list guarantees that for each item in the list, that item has no path to an
    * item that comes before it in the list. In the process, if a cycle is found, an exception will be thrown.
-   * This is a destructive operation and will result in an empty dag.
+   * Topological sort means we pop off a source from the dag, re-calculate sources, and continue until there
+   * are no more nodes left. Popping will be done on a copy of the dag so that this is not a destructive operation.
    *
-   * @return the linearized dag
+   * @return the dag in topological order
    * @throws IllegalStateException if there is a cycle in the dag
    */
-  public List<String> linearize() {
+  public List<String> getTopologicalOrder() {
     List<String> linearized = new ArrayList<>();
 
     Dag copy = new Dag(outgoingConnections, incomingConnections);

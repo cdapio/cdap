@@ -247,7 +247,7 @@ public class PipelineSpecGenerator {
     }
 
     List<StageConnections> traversalOrder = new ArrayList<>(stages.size());
-    for (String stageName : dag.linearize()) {
+    for (String stageName : dag.getTopologicalOrder()) {
       traversalOrder.add(stages.get(stageName));
     }
 

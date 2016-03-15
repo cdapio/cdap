@@ -30,11 +30,11 @@ import java.util.Set;
 public class DagTest {
 
   @Test
-  public void testLinearize() {
+  public void testTopologicalOrder() {
     // n1 -> n2 -> n3 -> n4
     Dag dag = new Dag(ImmutableSet.of(
       new Connection("n1", "n2"), new Connection("n2", "n3"), new Connection("n3", "n4")));
-    Assert.assertEquals(ImmutableList.of("n1", "n2", "n3", "n4"), dag.linearize());
+    Assert.assertEquals(ImmutableList.of("n1", "n2", "n3", "n4"), dag.getTopologicalOrder());
 
     /*
              |--- n2 ---|
@@ -48,7 +48,7 @@ public class DagTest {
       new Connection("n3", "n4")));
     // could be n1 -> n2 -> n3 -> n4
     // or it could be n1 -> n3 -> n2 -> n4
-    List<String> linearized = dag.linearize();
+    List<String> linearized = dag.getTopologicalOrder();
     Assert.assertEquals("n1", linearized.get(0));
     Assert.assertEquals("n4", linearized.get(3));
     assertBefore(linearized, "n1", "n2");
@@ -64,7 +64,7 @@ public class DagTest {
       new Connection("n2", "n3")));
     // could be n1 -> n2 -> n3
     // or it could be n2 -> n1 -> n3
-    linearized = dag.linearize();
+    linearized = dag.getTopologicalOrder();
     Assert.assertEquals("n3", linearized.get(2));
     assertBefore(linearized, "n1", "n3");
     assertBefore(linearized, "n2", "n3");
@@ -91,7 +91,7 @@ public class DagTest {
       new Connection("n4", "n6"),
       new Connection("n6", "n3"),
       new Connection("n6", "n5")));
-    linearized = dag.linearize();
+    linearized = dag.getTopologicalOrder();
     Assert.assertEquals("n1", linearized.get(0));
     Assert.assertEquals("n2", linearized.get(1));
     Assert.assertEquals("n4", linearized.get(2));
@@ -120,7 +120,7 @@ public class DagTest {
       new Connection("n3", "n4"),
       new Connection("n4", "n2"),
       new Connection("n3", "n5")));
-    dag.linearize();
+    dag.getTopologicalOrder();
   }
 
   @Test

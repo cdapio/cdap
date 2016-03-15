@@ -92,6 +92,11 @@ public class ControlDag extends Dag {
    *  branch endpoint connects to.
    */
   public void flatten() {
+    // this should never be the case, as it should be checked when the dag is created.
+    if (sources.isEmpty()) {
+      throw new IllegalStateException("There are no sources in the graph, which means there is a cycle.");
+    }
+
     trim();
     String source;
     // if we have multiple sources, insert a fork node as the new source
@@ -123,13 +128,12 @@ public class ControlDag extends Dag {
     // can't just use branchEndpointOutputs.keySet(),
     // because that won't track branch endpoints that had no output (sinks)
     Set<String> branchEndpoints = new HashSet<>();
-    if (outputs.size() > 1) {
-      for (String output : outputs) {
-        String branchEndpoint = findBranchEnd(output);
-        branchEndpoints.add(branchEndpoint);
-        branchEndpointOutputs.putAll(branchEndpoint, outgoingConnections.get(branchEndpoint));
-      }
+    for (String output : outputs) {
+      String branchEndpoint = findBranchEnd(output);
+      branchEndpoints.add(branchEndpoint);
+      branchEndpointOutputs.putAll(branchEndpoint, outgoingConnections.get(branchEndpoint));
     }
+
     // if all the branch endpoints connect to a single node, there is no need to add a join node
     Set<String> endpointOutputs = new HashSet<>(branchEndpointOutputs.values());
     if (endpointOutputs.size() == 1) {

@@ -47,7 +47,8 @@ public class PipelinePlanner {
   }
 
   /**
-   * Create an execution plan for the given logical pipeline.
+   * Create an execution plan for the given logical pipeline. This is used for batch pipelines.
+   * Though it may eventually be useful to mark windowing points for realtime pipelines.
    *
    * A plan consists of one or more phases, with connections between phases.
    * A connection between a phase indicates control flow, and not necessarily
@@ -135,7 +136,7 @@ public class PipelinePlanner {
     StageInfo source = null;
     StageInfo aggregator = null;
 
-    for (String stageName : dag.linearize()) {
+    for (String stageName : dag.getTopologicalOrder()) {
       Set<String> outputs = dag.getNodeOutputs(stageName);
       if (!outputs.isEmpty()) {
         connections.put(stageName, dag.getNodeOutputs(stageName));
