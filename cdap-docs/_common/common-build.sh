@@ -25,6 +25,7 @@ APIS="apis"
 BUILD_PDF="build-pdf"
 CDAP_DOCS="cdap-docs"
 HTML="html"
+HYDRATOR_PLUGINS="hydrator-plugins"
 INCLUDES="_includes"
 JAVADOCS="javadocs"
 LICENSES="licenses"
@@ -66,7 +67,7 @@ TARGET_PATH="${SCRIPT_PATH}/${TARGET}"
 SOURCE_PATH="${SCRIPT_PATH}/${SOURCE}"
 
 if [ "x${2}" == "x" ]; then
-  PROJECT_PATH="${SCRIPT_PATH}/../../"
+  PROJECT_PATH="${SCRIPT_PATH}/../.."
 else
   PROJECT_PATH="${SCRIPT_PATH}/../../../${2}"
 fi
@@ -227,7 +228,7 @@ function check_build_rst() {
   local current_directory=$(pwd)
   cd ${PROJECT_PATH}
   # check BUILD.rst for changes
-  BUILD_RST_PATH="${PROJECT_PATH}${BUILD_RST}"
+  BUILD_RST_PATH="${PROJECT_PATH}/${BUILD_RST}"
   test_an_include "${BUILD_RST_HASH}" "${BUILD_RST_PATH}" "${BUILD_RST_HASH_LOCATION}"
   echo
   cd ${current_directory}
@@ -351,6 +352,7 @@ function display_version() {
   echo "GIT_BRANCH: ${GIT_BRANCH}"
   echo "GIT_BRANCH_TYPE: ${GIT_BRANCH_TYPE}"
   echo "GIT_BRANCH_PARENT: ${GIT_BRANCH_PARENT}"
+  echo "GIT_BRANCH_CDAP_HYDRATOR: ${GIT_BRANCH_CDAP_HYDRATOR}"
 }
 
 function clear_messages_set_messages_file() {
