@@ -15,11 +15,13 @@
  */
 
 class TrackerIntegrationsController {
-  constructor($state, myTrackerApi, $scope, myAlertOnValium, MyCDAPDataSource) {
+  constructor($state, myTrackerApi, $scope, myAlertOnValium, MyCDAPDataSource, MyChartHelpers, MyMetricsQueryHelper) {
     this.$state = $state;
     this.myTrackerApi = myTrackerApi;
     this.$scope = $scope;
     this.myAlertOnValium = myAlertOnValium;
+    this.MyChartHelpers = MyChartHelpers;
+    this.MyMetricsQueryHelper = MyMetricsQueryHelper;
 
     this.dataSrc = new MyCDAPDataSource($scope);
 
@@ -136,14 +138,55 @@ class TrackerIntegrationsController {
   }
 
   fetchMetrics() {
-    let path = '/metrics/query?tag=namespace:' + this.$state.params.namespace +
-      '&tag=app:ClouderaNavigator&tag=flow:MetadataFlow&metric=system.process.events.processed&startTime=now-1h&endTime=now';
-    this.dataSrc.poll({
-      _cdapPath: path,
-      method: 'POST'
-    }, (res) => {
-      console.log('res', res);
-    });
+    // let path = '/metrics/query?tag=namespace:' + this.$state.params.namespace +
+    //   '&tag=app:ClouderaNavigator&tag=flow:MetadataFlow&metric=system.process.events.processed&startTime=now-1h&endTime=now';
+    // this.dataSrc.poll({
+    //   _cdapPath: path,
+    //   method: 'POST'
+    // }, (res) => {
+    //   console.log('res', res);
+    // });
+
+    let metric = {
+       startTime: 'now-1h',
+       endTime: 'now',
+       resolution: '1m',
+       names: ['system.process.events.processed']
+     };
+
+     let tags = {
+       namespace: this.$state.params.namespace,
+       app: 'ClouderaNavigator',
+       flow: 'MetadataFlow'
+     };
+
+    dataSrc
+      .poll({
+        _cdapPath: '/metrics/query',
+        method: 'POST',
+        interval: 2000,
+        body: this.MyMetricsQueryHelper.constructQuery('qid', tags, metric)
+      },  (res) => {
+        let processedData = this.MyChartHelpers.processData(
+          res,
+          'qid',
+          metric.names,
+          metric.resolution
+        );
+
+        processedData = this.MyChartHelpers.c3ifyData(processedData, metric, metric.names);
+        this.chartData = {
+          x: 'x',
+          columns: processedData.columns,
+          keys: {
+            x: 'x'
+          }
+        };
+
+        console.log('data', this.chartData);
+
+      });
+
   }
 
   saveNavigatorSetup() {
@@ -185,7 +228,7 @@ class TrackerIntegrationsController {
 
 }
 
-TrackerIntegrationsController.$inject = ['$state', 'myTrackerApi', '$scope', 'myAlertOnValium', 'MyCDAPDataSource'];
+TrackerIntegrationsController.$inject = ['$state', 'myTrackerApi', '$scope', 'myAlertOnValium', 'MyCDAPDataSource', 'MyChartHelpers', 'MyMetricsQueryHelper'];
 
 angular.module(PKG.name + '.feature.tracker')
   .controller('TrackerIntegrationsController', TrackerIntegrationsController);
