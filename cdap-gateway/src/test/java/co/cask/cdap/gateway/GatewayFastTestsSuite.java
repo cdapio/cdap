@@ -49,7 +49,6 @@ import org.junit.runners.Suite;
 
 import java.io.File;
 import java.io.IOException;
-import javax.annotation.Nullable;
 
 /**
  * Test Suite for running all API tests.
@@ -149,7 +148,6 @@ public class GatewayFastTestsSuite {
   }
 
   public static HttpResponse deploy(Class<?> application,
-                                    @Nullable String appName,
                                     File tmpFolder) throws Exception {
 
     File artifactJar = buildAppArtifact(application, application.getSimpleName(), tmpFolder);
@@ -163,11 +161,7 @@ public class GatewayFastTestsSuite {
     BundleJarUtil.createJar(expandDir, artifactJar);
 
     HttpEntityEnclosingRequestBase request;
-    if (appName == null) {
-      request = getPost("/v3/namespaces/default/apps");
-    } else {
-      request = getPut("/v3/namespaces/default/apps/" + appName);
-    }
+    request = getPost("/v3/namespaces/default/apps");
     request.setHeader(Constants.Gateway.API_KEY, "api-key-example");
     request.setHeader("X-Archive-Name",
                       String.format("%s-1.0.%d.jar", application.getSimpleName(), System.currentTimeMillis()));

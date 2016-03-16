@@ -76,7 +76,7 @@ public class SystemMetadataKafkaPublishTest {
   @Test
   public void testPublishing() throws Exception {
     CConfiguration cConf = KAFKA_TESTER.getCConf();
-    AppFabricTestHelper.deployApplication(AllProgramsApp.class, cConf);
+    AppFabricTestHelper.deployApplication(Id.Namespace.DEFAULT, AllProgramsApp.class, null, cConf);
     String topic = cConf.get(Constants.Metadata.UPDATES_KAFKA_TOPIC);
     Type metadataChangeRecordType = new TypeToken<MetadataChangeRecord>() { }.getType();
     // Expect 17 messages to be generated for system metadata additions:

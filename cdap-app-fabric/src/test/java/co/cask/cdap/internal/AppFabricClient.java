@@ -69,7 +69,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import javax.annotation.Nullable;
-import javax.ws.rs.core.MediaType;
 
 /**
  * Client tool for AppFabricHttpHandler.
@@ -347,12 +346,7 @@ public class AppFabricClient {
     }
   }
 
-  public Location deployApplication(Id.Namespace namespace, String appName, Class<?> applicationClz,
-                                    File ...bundleEmbeddedJars) throws Exception {
-    return deployApplication(namespace, appName, applicationClz, null, bundleEmbeddedJars);
-  }
-
-  public Location deployApplication(Id.Namespace namespace, String appName, Class<?> applicationClz,
+  public Location deployApplication(Id.Namespace namespace, Class<?> applicationClz,
                                     String config, File...bundleEmbeddedJars) throws Exception {
 
     Preconditions.checkNotNull(applicationClz, "Application cannot be null.");
@@ -360,7 +354,7 @@ public class AppFabricClient {
     Location deployedJar = AppJarHelper.createDeploymentJar(locationFactory, applicationClz, bundleEmbeddedJars);
     LOG.info("Created deployedJar at {}", deployedJar);
 
-    String archiveName = String.format("%s-1.0.%d.jar", appName, System.currentTimeMillis());
+    String archiveName = String.format("%s-1.0.%d.jar", applicationClz.getSimpleName(), System.currentTimeMillis());
     DefaultHttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST,
                                                         String.format("/v3/namespaces/%s/apps", namespace.getId()));
     request.setHeader(Constants.Gateway.API_KEY, "api-key-example");
@@ -393,14 +387,12 @@ public class AppFabricClient {
     DefaultHttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.PUT,
       String.format("/v3/namespaces/%s/apps/%s", appId.getNamespaceId(), appId.getId()));
     request.setHeader(Constants.Gateway.API_KEY, "api-key-example");
+    request.setContent(ChannelBuffers.wrappedBuffer(Bytes.toBytes(GSON.toJson(appRequest.getConfig()))));
 
     MockResponder mockResponder = new MockResponder();
 
-    BodyConsumer bodyConsumer = appLifecycleHttpHandler.deploy(request, mockResponder,
-      appId.getNamespaceId(), appId.getId(),
-      appRequest.getArtifact().getName(),
-      GSON.toJson(appRequest.getConfig()),
-      MediaType.APPLICATION_JSON);
+    BodyConsumer bodyConsumer = appLifecycleHttpHandler.create(request, mockResponder,
+                                                               appId.getNamespaceId(), appId.getId());
     Preconditions.checkNotNull(bodyConsumer, "BodyConsumer from deploy call should not be null");
 
     bodyConsumer.chunk(ChannelBuffers.wrappedBuffer(Bytes.toBytes(GSON.toJson(appRequest))), mockResponder);
