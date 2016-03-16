@@ -15,16 +15,20 @@
  */
 
 class TrackerIntegrationsController {
-  constructor($state, myTrackerApi, $scope) {
+  constructor($state, myTrackerApi, $scope, myAlertOnValium, MyCDAPDataSource) {
     this.$state = $state;
     this.myTrackerApi = myTrackerApi;
     this.$scope = $scope;
+    this.myAlertOnValium = myAlertOnValium;
+
+    this.dataSrc = new MyCDAPDataSource($scope);
 
     this.navigatorSetup = {
       isOpen: false,
       isSetup: false,
       isEnabled: false
     };
+    this.showConfig = false;
 
     this.navigatorInfo = {
       brokerString: '',
@@ -37,6 +41,17 @@ class TrackerIntegrationsController {
 
     this.getNavigatorApp();
 
+  }
+
+  showConfigPopup(event) {
+    event.stopPropagation();
+    this.showConfig = true;
+
+    let hideConfigPopup = () => {
+      this.showConfig = false;
+      document.removeEventListener('click', hideConfigPopup);
+    };
+    document.addEventListener('click', hideConfigPopup);
   }
 
   getKafkaBrokerList() {
@@ -91,14 +106,17 @@ class TrackerIntegrationsController {
 
           if (res[0].status === 'RUNNING') {
             this.navigatorSetup.isEnabled = true;
+            this.fetchMetrics();
           }
+        } else {
+          this.navigatorState = {
+            status: 'DISABLED'
+          };
         }
       });
   }
 
   toggleNavigator() {
-    console.log('this', this.navigatorSetup.isEnabled);
-
     let params = {
       namespace: this.$state.params.namespace,
       action: this.navigatorSetup.isEnabled ? 'start' : 'stop',
@@ -109,7 +127,23 @@ class TrackerIntegrationsController {
       .$promise
       .then( () => {
         this.getNavigatorStatus();
+      }, (err) => {
+        this.myAlertOnValium.show({
+          type: 'danger',
+          content: err.data
+        });
       });
+  }
+
+  fetchMetrics() {
+    let path = '/metrics/query?tag=namespace:' + this.$state.params.namespace +
+      '&tag=app:ClouderaNavigator&tag=flow:MetadataFlow&metric=system.process.events.processed&startTime=now-1h&endTime=now';
+    this.dataSrc.poll({
+      _cdapPath: path,
+      method: 'POST'
+    }, (res) => {
+      console.log('res', res);
+    });
   }
 
   saveNavigatorSetup() {
@@ -138,19 +172,20 @@ class TrackerIntegrationsController {
 
     this.myTrackerApi.deployNavigator(params, config)
       .$promise
-      .then( (res) => {
-        console.log('res', res);
+      .then( () => {
         this.navigatorSetup.isOpen = false;
+        this.getNavigatorApp();
       }, (err) => {
-        console.log('err', err);
+        this.myAlertOnValium.show({
+          type: 'danger',
+          content: err.data
+        });
       });
-
-
   }
 
 }
 
-TrackerIntegrationsController.$inject = ['$state', 'myTrackerApi', '$scope'];
+TrackerIntegrationsController.$inject = ['$state', 'myTrackerApi', '$scope', 'myAlertOnValium', 'MyCDAPDataSource'];
 
 angular.module(PKG.name + '.feature.tracker')
   .controller('TrackerIntegrationsController', TrackerIntegrationsController);

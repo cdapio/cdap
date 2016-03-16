@@ -86,8 +86,8 @@
       </div>
     </div>
 
-    <div class="integration-status">
-      <div class="status">
+    <div class="integration-status" ng-if="IntegrationsController.navigatorSetup.isSetup">
+      <div class="status status-item">
         <p>
           <span>Status: </span>
           <span class="fa fa-circle"
@@ -96,9 +96,9 @@
         </p>
       </div>
 
-      <div class="date">
-        <p>
-          <span ng-if="IntegrationsController.navigatorState.status !== 'RUNNING'">
+      <div class="date status-item">
+        <p class="status-information">
+          <span ng-if="IntegrationsController.navigatorState.status !== 'RUNNING' && IntegrationsController.navigatorState.end">
             <span>Disabled: </span>
             <span>{{ IntegrationsController.navigatorState.end * 1000 | amDateFormat: 'MMM.DD.YY h:mm:ss a'}}</span>
           </span>
@@ -109,12 +109,18 @@
 
         </p>
       </div>
-      <div class="config">
-        <button class="btn btn-default btn-setup">
+      <div class="config status-item">
+        <button class="btn btn-default btn-setup"
+                uib-popover-template="'/assets/features/tracker/templates/partial/integrations-setup-popover.html'"
+                popover-placement="bottom"
+                popover-class="config-popover"
+                popover-trigger="outsideClick">
           View Config
         </button>
+
       </div>
-      <div class="enable-control">
+
+      <div class="enable-control status-item">
         <div class="integrations-onoffswitch">
             <input type="checkbox"
                    name="onoffswitch"

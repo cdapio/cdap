@@ -583,28 +583,30 @@ body.state-tracker-integrations {
         border: 2px solid @border-color;
         color: darken(@border-color, 20%);
       }
+    }
 
-      .integration-setup-popup {
-        padding: 15px;
-        background-color: white;
-        position: absolute;
-        width: 400px;
-        right: 25px;
-        border-radius: 5px;
-        transform: translateY(-36px);
-        .box-shadow(0 0 20px 1px rgba(0,0,0,0.5));
+    .integration-setup-popup {
+      padding: 15px;
+      background-color: white;
+      position: absolute;
+      width: 400px;
+      right: 25px;
+      border-radius: 5px;
+      transform: translateY(-36px);
+      z-index: 950;
+      line-height: normal;
+      .box-shadow(0 0 20px 1px rgba(0,0,0,0.5));
 
-        h3, h4 {
-          margin-bottom: 15px;
-        }
-        h3 {
-          font-size: 22px;
-          margin-top: 5px;
-        }
+      h3, h4 {
+        margin-bottom: 15px;
+      }
+      h3 {
+        font-size: 22px;
+        margin-top: 5px;
+      }
 
-        .control-label {
-          color: #888;
-        }
+      .control-label {
+        color: #888;
       }
     }
 
@@ -612,14 +614,25 @@ body.state-tracker-integrations {
       line-height: 60px;
       float: right;
 
-      div {
+      .status-item {
         display: inline-block;
         margin-left: 10px;
       }
 
-      p {
+      .status > p { margin-bottom: 0; }
+
+      .status-information {
         margin: 0;
         font-weight: 500;
+      }
+
+      .enable-control { vertical-align: middle; }
+
+      .config-popover {
+        width: 400px;
+        transform: translate(-153px, -43px);
+
+        div.arrow { display: none; }
       }
 
 
@@ -632,6 +645,7 @@ body.state-tracker-integrations {
           -webkit-user-select:none;
           -moz-user-select:none;
           -ms-user-select: none;
+          z-index: 900;
 
           label { margin-bottom: 0; }
       }
