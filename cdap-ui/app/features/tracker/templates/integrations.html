@@ -136,4 +136,18 @@
       </div>
     </div>
   </div>
+
+  <div class="navigator-metrics row"
+       ng-if="IntegrationsController.navigatorState.status === 'RUNNING'">
+    <div class="col-xs-12">
+      <h4 class="events-sent-title">Events Sent</h4>
+      <c3-area-spline
+        chart-metric="IntegrationsController.chartData"
+        chart-settings="IntegrationsController.chartSettings"
+        chart-size="{height: 150}"
+      ></c3-area-spline>
+
+      <h5 class="total-events">Total Events Sent: 500000</h5>
+    </div>
+  </div>
 </div>

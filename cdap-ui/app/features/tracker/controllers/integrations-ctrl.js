@@ -39,6 +39,23 @@ class TrackerIntegrationsController {
       password: ''
     };
 
+    this.chartSettings = {
+      chartMetadata: {
+        showx: false,
+        showy: false,
+        legend: {
+          show: false,
+          position: 'inset'
+        }
+      },
+      color: {
+        pattern: ['#35c853']
+      },
+      isLive: true,
+      interval: 1000,
+      aggregate: 5
+    };
+
     this.navigatorState = {};
 
     this.getNavigatorApp();
@@ -138,33 +155,24 @@ class TrackerIntegrationsController {
   }
 
   fetchMetrics() {
-    // let path = '/metrics/query?tag=namespace:' + this.$state.params.namespace +
-    //   '&tag=app:ClouderaNavigator&tag=flow:MetadataFlow&metric=system.process.events.processed&startTime=now-1h&endTime=now';
-    // this.dataSrc.poll({
-    //   _cdapPath: path,
-    //   method: 'POST'
-    // }, (res) => {
-    //   console.log('res', res);
-    // });
 
     let metric = {
-       startTime: 'now-1h',
-       endTime: 'now',
-       resolution: '1m',
-       names: ['system.process.events.processed']
-     };
+      startTime: 'now-1h',
+      endTime: 'now',
+      resolution: '1m',
+      names: ['system.process.events.processed']
+    };
 
-     let tags = {
-       namespace: this.$state.params.namespace,
-       app: 'ClouderaNavigator',
-       flow: 'MetadataFlow'
-     };
+    let tags = {
+      namespace: this.$state.params.namespace,
+      app: 'ClouderaNavigator',
+      flow: 'MetadataFlow'
+    };
 
-    dataSrc
+    this.dataSrc
       .poll({
         _cdapPath: '/metrics/query',
         method: 'POST',
-        interval: 2000,
         body: this.MyMetricsQueryHelper.constructQuery('qid', tags, metric)
       },  (res) => {
         let processedData = this.MyChartHelpers.processData(
@@ -182,9 +190,6 @@ class TrackerIntegrationsController {
             x: 'x'
           }
         };
-
-        console.log('data', this.chartData);
-
       });
 
   }

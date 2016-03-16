@@ -68,6 +68,7 @@ ngC3.controller('c3Controller', function ($scope, c3, $filter, $timeout) {
     $scope.options.showx = $scope.chartSettings.chartMetadata.showx;
     $scope.options.showy = $scope.chartSettings.chartMetadata.showy;
     $scope.options.legend = $scope.chartSettings.chartMetadata.legend;
+    $scope.options.grid = $scope.chartSettings.chartMetadata.grid || null;
     $scope.options.color = $scope.chartSettings.color;
 
     $scope.$watch('chartSize', function(newVal) {
@@ -122,10 +123,11 @@ ngC3.controller('c3Controller', function ($scope, c3, $filter, $timeout) {
     chartConfig.axis = { x: { show: $scope.options.showx,
                               tick : xTick },
                          y: { show: $scope.options.showy,
-                              padding: { bottom: 0 } } };
+                              padding: { bottom: 10 } } };
     chartConfig.color = $scope.options.color;
     chartConfig.legend = $scope.options.legend;
     chartConfig.point = { show: false };
+    chartConfig.grid = $scope.options.grid || null;
     if ($scope.options.subchart) {
       chartConfig.subchart = $scope.options.subchart;
     }
