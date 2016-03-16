@@ -16,10 +16,13 @@
 
 package co.cask.cdap.common;
 
+import co.cask.cdap.api.common.exceptions.HttpResponseException;
+import org.jboss.netty.handler.codec.http.HttpResponseStatus;
+
 /**
  * Exception thrown when a feature is disabled.
  */
-public class FeatureDisabledException extends Exception {
+public class FeatureDisabledException extends Exception implements HttpResponseException {
   private final String feature;
   private final String configFile;
   private final String enableConfigKey;
@@ -48,5 +51,10 @@ public class FeatureDisabledException extends Exception {
 
   public String getEnableConfigValue() {
     return enableConfigValue;
+  }
+
+  @Override
+  public int getStatusCode() {
+    return HttpResponseStatus.NOT_IMPLEMENTED.getCode();
   }
 }

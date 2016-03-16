@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,22 +14,18 @@
  * the License.
  */
 
-package co.cask.cdap.common;
-
-import co.cask.cdap.api.common.exceptions.HttpResponseException;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
+package co.cask.cdap.api.common.exceptions;
 
 /**
- * Thrown when some operation is not implemented.
+ * CDAP HTTP Response Exception
  */
-public class NotImplementedException extends Exception implements HttpResponseException {
+public interface HttpResponseException {
 
-  public NotImplementedException(String message) {
-    super(message);
-  }
-
-  @Override
-  public int getStatusCode() {
-    return HttpResponseStatus.NOT_IMPLEMENTED.getCode();
-  }
+  /**
+   * Gives the HTTP status code for this exception if one needs to be returned. All exception classes which needs to
+   * return a HTTP status code should override this.
+   *
+   * @return int which is the HTTP status code of this exceptions
+   */
+  int getStatusCode();
 }
