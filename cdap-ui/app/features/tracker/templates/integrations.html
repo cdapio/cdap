@@ -22,7 +22,7 @@
       <p>some definition of Cloudera Navigator</p>
     </div>
 
-    <div class="integration-setup text-right">
+    <div class="integration-setup text-right" ng-if="!IntegrationsController.navigatorSetup.isSetup">
       <button class="btn btn-default btn-setup"
               ng-click="IntegrationsController.navigatorSetup.isOpen = true">
         Setup
@@ -38,21 +38,24 @@
           <div class="form-group">
             <label class="control-label col-xs-3">Hostname</label>
             <div class="col-xs-9">
-              <input type="text" class="form-control">
+              <input type="text" class="form-control"
+                     ng-model="IntegrationsController.navigatorInfo.hostname">
             </div>
           </div>
 
           <div class="form-group">
             <label class="control-label col-xs-3">Username</label>
             <div class="col-xs-9">
-              <input type="text" class="form-control">
+              <input type="text" class="form-control"
+                     ng-model="IntegrationsController.navigatorInfo.username">
             </div>
           </div>
 
           <div class="form-group">
             <label class="control-label col-xs-3">Password</label>
             <div class="col-xs-9">
-              <input type="password" class="form-control">
+              <input type="password" class="form-control"
+                     ng-model="IntegrationsController.navigatorInfo.password">
             </div>
           </div>
         </form>
@@ -64,7 +67,8 @@
           <div class="form-group">
             <label class="control-label col-xs-3">Broker List</label>
             <div class="col-xs-9">
-              <input type="text" class="form-control">
+              <input type="text" class="form-control"
+                     ng-model="IntegrationsController.navigatorInfo.brokerString">
             </div>
           </div>
         </form>
@@ -74,7 +78,54 @@
                   ng-click="IntegrationsController.navigatorSetup.isOpen = false">
             Cancel
           </button>
-          <button class="btn btn-success pull-right">Save</button>
+          <button class="btn btn-success pull-right"
+                  ng-click="IntegrationsController.saveNavigatorSetup()">
+            Save
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="integration-status">
+      <div class="status">
+        <p>
+          <span>Status: </span>
+          <span class="fa fa-circle"
+                ng-class="{ 'text-success': IntegrationsController.navigatorState.status === 'RUNNING', 'text-danger': IntegrationsController.navigatorState.status !== 'RUNNING' }"></span>
+          <span>{{ IntegrationsController.navigatorState.status }}</span>
+        </p>
+      </div>
+
+      <div class="date">
+        <p>
+          <span ng-if="IntegrationsController.navigatorState.status !== 'RUNNING'">
+            <span>Disabled: </span>
+            <span>{{ IntegrationsController.navigatorState.end * 1000 | amDateFormat: 'MMM.DD.YY h:mm:ss a'}}</span>
+          </span>
+          <span ng-if="IntegrationsController.navigatorState.status === 'RUNNING'">
+            <span>Enabled: </span>
+            <span>{{ IntegrationsController.navigatorState.start * 1000 | amDateFormat: 'MMM.DD.YY h:mm:ss a'}}</span>
+          </span>
+
+        </p>
+      </div>
+      <div class="config">
+        <button class="btn btn-default btn-setup">
+          View Config
+        </button>
+      </div>
+      <div class="enable-control">
+        <div class="integrations-onoffswitch">
+            <input type="checkbox"
+                   name="onoffswitch"
+                   class="onoffswitch-checkbox"
+                   id="myonoffswitch"
+                   ng-model="IntegrationsController.navigatorSetup.isEnabled"
+                   ng-change="IntegrationsController.toggleNavigator()">
+            <label class="onoffswitch-label" for="myonoffswitch">
+                <span class="onoffswitch-inner"></span>
+                <span class="onoffswitch-switch"></span>
+            </label>
         </div>
       </div>
     </div>

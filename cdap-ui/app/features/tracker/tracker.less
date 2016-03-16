@@ -556,7 +556,7 @@ body.state-tracker-integrations {
     display: table;
 
     .integration-information {
-      width: 80%;
+      width: 50%;
       display: table-cell;
       vertical-align: middle;
 
@@ -570,7 +570,7 @@ body.state-tracker-integrations {
     }
 
     .integration-setup {
-      width: 20%;
+      width: 50%;
       display: table-cell;
       vertical-align: middle;
 
@@ -606,6 +606,93 @@ body.state-tracker-integrations {
           color: #888;
         }
       }
+    }
+
+    .integration-status {
+      line-height: 60px;
+      float: right;
+
+      div {
+        display: inline-block;
+        margin-left: 10px;
+      }
+
+      p {
+        margin: 0;
+        font-weight: 500;
+      }
+
+
+
+      /* ON OF SWITCH GENERATED */
+      .integrations-onoffswitch {
+          position: relative;
+          width: 85px;
+          vertical-align: middle;
+          -webkit-user-select:none;
+          -moz-user-select:none;
+          -ms-user-select: none;
+
+          label { margin-bottom: 0; }
+      }
+      .onoffswitch-checkbox {
+          display: none;
+      }
+      .onoffswitch-label {
+          display: block;
+          overflow: hidden;
+          cursor: pointer;
+          border-radius: 15px;
+      }
+      .onoffswitch-inner {
+          display: block;
+          width: 200%;
+          margin-left: -100%;
+          transition: margin 0.3s ease-in 0s;
+      }
+      .onoffswitch-inner:before, .onoffswitch-inner:after {
+          display: block;
+          float: left;
+          width: 50%;
+          height: 28px;
+          padding: 0;
+          line-height: 28px;
+          font-size: 11px;
+          color: white;
+          font-family: Trebuchet, Arial, sans-serif;
+          font-weight: bold;
+          box-sizing: border-box;
+      }
+      .onoffswitch-inner:before {
+          content: "Enabled";
+          padding-left: 10px;
+          background-color: #35C853;
+          color: #FFFFFF;
+      }
+      .onoffswitch-inner:after {
+          content: "Disabled";
+          padding-right: 10px;
+          background-color: #999999;
+          color: #FFFFFF;
+          text-align: right;
+      }
+      .onoffswitch-switch {
+          display: block; width: 22px;
+          margin: 3px;
+          background: #FFFFFF;
+          position: absolute; top: 0;
+          bottom: 0;
+          right: 57px;
+          border-radius: 20px;
+          transition: all 0.3s ease-in 0s;
+      }
+      .onoffswitch-checkbox:checked + .onoffswitch-label .onoffswitch-inner {
+          margin-left: 0;
+      }
+      .onoffswitch-checkbox:checked + .onoffswitch-label .onoffswitch-switch {
+          right: 0px;
+      }
+      /* SWITCH STYLING END */
     }
   }
 }
