@@ -51,7 +51,8 @@ be the trademarks of their respective owners. Where the ownership or registratio
 the addition of appropriate symbols has been made.
 
 Apache®, `Apache Hadoop <https://hadoop.apache.org>`__, `Hadoop®
-<https://hadoop.apache.org>`__, and `Apache ZooKeeper <https://zookeeper.apache.org/>`__, 
+<https://hadoop.apache.org>`__, Avro, `Apache Avro <http://avro.apache.org/>`__,
+and `Apache ZooKeeper <https://zookeeper.apache.org/>`__, 
 are either registered trademarks or trademarks of the
 `Apache Software Foundation <https://www.apache.org>`__ in the United States and/or other
 countries.
