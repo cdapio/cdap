@@ -122,21 +122,21 @@ public class ConnectorDag extends Dag {
         multiple sources today, the fact that we support forks means we have to deal with the multi-input case
         and break it down into separate phases. For example:
 
-                    |---> reduce1 ---|
-          source ---|                |---> sink
-                    |---> reduce2 ---|
+                |---> reduce1 ---|
+          n1 ---|                |---> n2
+                |---> reduce2 ---|
 
         From the previous section, both reduces will get a connector inserted in front:
 
-                    |---> reduce1.connector               reduce1.connector ---> reduce1 ---|
-          source ---|                              =>                                       |---> sink
-                    |---> reduce2.connector               reduce2.connector ---> reduce2 ---|
+                |---> reduce1.connector               reduce1.connector ---> reduce1 ---|
+          n1 ---|                              =>                                       |---> n2
+                |---> reduce2.connector               reduce2.connector ---> reduce2 ---|
 
         Since we don't support multi-input yet, we need to convert that further into 3 phases:
 
-          reduce1.connector ---> reduce1 ---> sink.connector
-                                                                    =>       sink.connector ---> sink
-          reduce2.connector ---> reduce2 ---> sink.connector
+          reduce1.connector ---> reduce1 ---> n2.connector
+                                                                    =>       sink.connector ---> n2
+          reduce2.connector ---> reduce2 ---> n2.connector
 
         To find these nodes, we traverse the graph in order and keep track of sources that have a path to each node
         with a map of node -> [ sources that have a path to the node ]
@@ -153,14 +153,27 @@ public class ConnectorDag extends Dag {
       }
 
       Set<String> connectedSources = nodeSources.get(node);
-      // if this node is a connector, replace all sources for this node with itself, since a connector is a source
+      /*
+          If this node is a connector, replace all sources for this node with itself, since a connector is a source
+          Taking the example above, we end up with:
+
+            reduce1.connector ---> reduce1 ---|
+                                              |---> n2
+            reduce2.connector ---> reduce2 ---|
+
+          When we get to n2, we need it to see that it has 2 sources: reduce1.connector and reduce2.connector
+          So when get to reduce1.connector, we need to replace its source (n1) with itself.
+          Similarly, when we get to reduce2.connector, we need to replaces its source (n1) with itself.
+          If we didn't, when we got to n2, it would think its only source is n1, and we would
+          miss the connector that should be inserted in front of it.
+       */
       if (connectors.contains(node)) {
         connectedSources = new HashSet<>();
         connectedSources.add(node);
         nodeSources.replaceValues(node, connectedSources);
       }
-      // if more than one source is connected to this node, then this node is a connector.
-      // keep track of it, and wipe its node sources to just contain itself
+      // if more than one source is connected to this node, then we need to insert a connector in front of this node.
+      // its source should then be changed to the connector that was inserted in front of it.
       if (connectedSources.size() > 1) {
         String connectorNode = addConnectorInFrontOf(node, addedAlready);
         connectedSources = new HashSet<>();
