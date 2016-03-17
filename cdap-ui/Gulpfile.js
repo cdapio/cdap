@@ -203,6 +203,7 @@ function getEs6Features(isNegate) {
 function getEs6Directives(isNegate) {
   var es6directives = [
     (isNegate ? '!' : '') + './app/directives/dag/**/*.js',
+    (isNegate ? '!' : '') + './app/directives/dag-beta/**/*.js',
     (isNegate ? '!' : '') + './app/directives/my-global-navbar/*.js'
   ];
 
