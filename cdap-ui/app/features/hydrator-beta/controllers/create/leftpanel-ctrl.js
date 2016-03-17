@@ -54,8 +54,13 @@ class LeftPanelControllerBeta {
 
     this.LeftPanelStoreBeta.registerOnChangeListener(() => {
       this.artifacts = this.LeftPanelStoreBeta.getArtifacts();
+      let artifactFromConfigStore = this.ConfigStoreBeta.getArtifact();
       if (!this.selectedArtifact) {
-        this.selectedArtifact = this.artifacts[0];
+        if (artifactFromConfigStore.name.length) {
+          this.selectedArtifact = this.artifacts.filter(artifact => angular.equals(artifact, artifactFromConfigStore))[0];
+        } else {
+          this.selectedArtifact =  this.artifacts[0];
+        }
         this.ConfigActionsFactoryBeta.setArtifact(this.selectedArtifact);
         console.log('selectedArticact', this.selectedArtifact);
         this.onArtifactChange();

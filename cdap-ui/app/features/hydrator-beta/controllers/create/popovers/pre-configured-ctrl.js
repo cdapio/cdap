@@ -1,5 +1,5 @@
 class PreConfiguredControllerBeta {
-  constructor (rTemplateType, GLOBALS, myPipelineTemplatesApi, ConfigStoreBeta, ConfigActionsFactoryBeta, HydratorServiceBeta, CanvasFactoryBeta, NodesActionsFactoryBeta) {
+  constructor (rTemplateType, GLOBALS, myPipelineTemplatesApi, ConfigStoreBeta, ConfigActionsFactoryBeta, HydratorServiceBeta, CanvasFactoryBeta, NodesActionsFactoryBeta, $state) {
     this.currentPage = 1;
     this.templates = [];
     this.ConfigActionsFactoryBeta = ConfigActionsFactoryBeta;
@@ -7,6 +7,7 @@ class PreConfiguredControllerBeta {
     this.CanvasFactoryBeta = CanvasFactoryBeta;
     this.myPipelineTemplatesApi = myPipelineTemplatesApi;
     this.NodesActionsFactoryBeta = NodesActionsFactoryBeta;
+    this.$state = $state;
 
     this.typeFilter = (rTemplateType === GLOBALS.etlBatch? GLOBALS.etlBatch: GLOBALS.etlRealtime);
     this.fetchTemplates().then((plugins) => {
@@ -25,22 +26,9 @@ class PreConfiguredControllerBeta {
         content: 'Imported pre-defined app has issues. Please check the JSON of the imported pre-defined app.'
       });
     } else {
-      this.ConfigActionsFactoryBeta.initializeConfigStore(result);
-      let configJson = result;
-      if (!result.__ui__) {
-        configJson = this.HydratorServiceBeta.getNodesAndConnectionsFromConfig(result);
-        configJson['__ui__'] = {
-          nodes: configJson.nodes.map( (node) => {
-            node.properties = node.plugin.properties;
-            node.label = node.plugin.label;
-            return node;
-          })
-        };
-        configJson.config = {
-          connections : configJson.connections
-        };
-      }
-      this.NodesActionsFactoryBeta.createGraphFromConfig(configJson.__ui__.nodes, configJson.config.connections, configJson.config.comments);
+      this.$state.go('hydrator-beta.create', {
+        data: result
+      });
     }
   }
 
@@ -75,6 +63,6 @@ class PreConfiguredControllerBeta {
 
 }
 
-PreConfiguredControllerBeta.$inject = ['rTemplateType', 'GLOBALS', 'myPipelineTemplatesApi', 'ConfigStoreBeta', 'ConfigActionsFactoryBeta', 'HydratorServiceBeta', 'CanvasFactoryBeta', 'NodesActionsFactoryBeta'];
+PreConfiguredControllerBeta.$inject = ['rTemplateType', 'GLOBALS', 'myPipelineTemplatesApi', 'ConfigStoreBeta', 'ConfigActionsFactoryBeta', 'HydratorServiceBeta', 'CanvasFactoryBeta', 'NodesActionsFactoryBeta', '$state'];
 angular.module(`${PKG.name}.feature.hydrator-beta`)
   .controller('PreConfiguredControllerBeta', PreConfiguredControllerBeta);
