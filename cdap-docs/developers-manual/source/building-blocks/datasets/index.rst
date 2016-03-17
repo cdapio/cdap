@@ -266,8 +266,8 @@ such as the format and schema, while abstracting from the actual underlying file
   (Online Analytical Processing) applications. A Cube dataset stores multidimensional facts,
   provides a querying interface for retrieval of data and allows exploring of the stored data.
 
-  See `Cube Dataset <datasets-cube>` for: details on configuring a Cube dataset; writing to and
-  reading from it; and querying and exploring the data in a cube.
+  See :ref:`Cube Dataset <datasets-cube>` for: details on configuring a Cube dataset;
+  writing to and reading from it; and querying and exploring the data in a cube.
   
   An example of using the Cube dataset is provided in the :ref:`Data Analysis with OLAP
   Cube <cdap-cube-guide>` guide. 
