@@ -16,7 +16,7 @@
 
 package co.cask.cdap.common;
 
-import co.cask.cdap.api.common.exceptions.HttpResponseException;
+import co.cask.cdap.api.common.HttpResponseStatusProvider;
 import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
 import co.cask.http.ExceptionHandler;
 import co.cask.http.HttpResponder;
@@ -41,9 +41,10 @@ public class HttpExceptionHandler extends ExceptionHandler {
     if (Iterables.size(Iterables.filter(Throwables.getCausalChain(t), ServiceUnavailableException.class)) > 0) {
       // no need to log ServiceUnavailableException because at master startup we are waiting for services to come up
       responder.sendString(HttpResponseStatus.SERVICE_UNAVAILABLE, t.getMessage());
-    } else if (t instanceof HttpResponseException) {
+    } else if (t instanceof HttpResponseStatusProvider) {
       logWithTrace(request, t);
-      responder.sendString(HttpResponseStatus.valueOf(((HttpResponseException) t).getStatusCode()), t.getMessage());
+      responder.sendString(HttpResponseStatus.valueOf(((HttpResponseStatusProvider) t).getStatusCode()),
+                           t.getMessage());
     } else {
       LOG.error("Unexpected error: request={} {} user={}:", request.getMethod().getName(), request.getUri(),
                 Objects.firstNonNull(SecurityRequestContext.getUserId(), "<null>"), t);

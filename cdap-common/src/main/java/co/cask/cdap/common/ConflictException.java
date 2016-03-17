@@ -16,13 +16,13 @@
 
 package co.cask.cdap.common;
 
-import co.cask.cdap.api.common.exceptions.HttpResponseException;
+import co.cask.cdap.api.common.HttpResponseStatusProvider;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 
 /**
  * Thrown when there was a conflict.
  */
-public class ConflictException extends Exception implements HttpResponseException {
+public class ConflictException extends Exception implements HttpResponseStatusProvider {
 
   public ConflictException() {
     super();

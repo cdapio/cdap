@@ -16,13 +16,13 @@
 
 package co.cask.cdap.common;
 
-import co.cask.cdap.api.common.exceptions.HttpResponseException;
+import co.cask.cdap.api.common.HttpResponseStatusProvider;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 
 /**
  * Exception thrown when the service is not running.
  */
-public class ServiceUnavailableException extends RuntimeException implements HttpResponseException {
+public class ServiceUnavailableException extends RuntimeException implements HttpResponseStatusProvider {
   private final String serviceName;
 
   public ServiceUnavailableException(String serviceName) {

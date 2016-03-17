@@ -16,14 +16,14 @@
 
 package co.cask.cdap.common;
 
-import co.cask.cdap.api.common.exceptions.HttpResponseException;
+import co.cask.cdap.api.common.HttpResponseStatusProvider;
 import org.jboss.netty.handler.codec.http.HttpMethod;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 
 /**
  * Thrown when some method is not allowed.
  */
-public class MethodNotAllowedException extends Exception implements HttpResponseException {
+public class MethodNotAllowedException extends Exception implements HttpResponseStatusProvider {
 
   private final HttpMethod method;
   private final String apiPath;

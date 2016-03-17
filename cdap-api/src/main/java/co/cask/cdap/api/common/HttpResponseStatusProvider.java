@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.api.common.exceptions;
+package co.cask.cdap.api.common;
 
 /**
  * CDAP HTTP Response Exception
  */
-public interface HttpResponseException {
+public interface HttpResponseStatusProvider {
 
   /**
    * Gives the HTTP status code for this exception if one needs to be returned. All exception classes which needs to

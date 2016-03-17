@@ -16,13 +16,13 @@
 
 package co.cask.cdap.common;
 
-import co.cask.cdap.api.common.exceptions.HttpResponseException;
+import co.cask.cdap.api.common.HttpResponseStatusProvider;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 
 /**
  * Thrown when the input was bad.
  */
-public class BadRequestException extends Exception implements HttpResponseException {
+public class BadRequestException extends Exception implements HttpResponseStatusProvider {
 
   public BadRequestException(String message) {
     super(message);

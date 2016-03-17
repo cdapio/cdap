@@ -16,7 +16,7 @@
 
 package co.cask.cdap.security.spi.authorization;
 
-import co.cask.cdap.api.common.exceptions.HttpResponseException;
+import co.cask.cdap.api.common.HttpResponseStatusProvider;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
@@ -27,7 +27,7 @@ import java.net.HttpURLConnection;
  * Exception thrown when Authentication is successful, but a {@link Principal} is not authorized to perform an
  * {@link Action} on an {@link EntityId}.
  */
-public class UnauthorizedException extends Exception implements HttpResponseException {
+public class UnauthorizedException extends Exception implements HttpResponseStatusProvider {
 
   public UnauthorizedException(Principal principal, Action action, EntityId entityId) {
     super(String.format("Principal '%s' is not authorized to perform action '%s' on entity '%s'",
