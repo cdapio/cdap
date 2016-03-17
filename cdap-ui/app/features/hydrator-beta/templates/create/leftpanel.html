@@ -22,7 +22,7 @@
 
 <div class="import-section">
   <a href="" class="btn btn-primary btn-xs" ng-click="LeftPanelControllerBeta.showTemplates()">Templates</a>
-  <a href="" class="btn btn-primary btn-xs"  ng-click="LeftPanelControllerBeta.import()">Import</a>
+  <a href="" class="btn btn-primary btn-xs"  ng-click="LeftPanelControllerBeta.openFileBrowser()">Import</a>
 </div>
 
 <my-side-panel
@@ -34,3 +34,10 @@
   data-on-panel-item-click-context="LeftPanelControllerBeta"
   data-on-panel-item-click="LeftPanelControllerBeta.onLeftSidePanelItemClicked">
 </my-side-panel>
+
+<my-file-select class="sr-only"
+                id="pipeline-import-config-link"
+                data-button-icon="fa-upload"
+                on-file-select="LeftPanelControllerBeta.importFile($files)"
+                data-button-label="Import">
+</my-file-select>

@@ -15,7 +15,8 @@
  */
 
 class LeftPanelControllerBeta {
-  constructor($scope, $stateParams, rVersion, GLOBALS, LeftPanelStoreBeta, LeftPanelActionsFactoryBeta, PluginActionsFactoryBeta, ConfigStoreBeta, ConfigActionsFactoryBeta, MyDAGFactoryBeta, NodesActionsFactoryBeta, NonStorePipelineErrorFactory, HydratorServiceBeta, $rootScope, $uibModal) {
+  constructor($scope, $stateParams, rVersion, GLOBALS, LeftPanelStoreBeta, LeftPanelActionsFactoryBeta, PluginActionsFactoryBeta, ConfigStoreBeta, ConfigActionsFactoryBeta, MyDAGFactoryBeta, NodesActionsFactoryBeta, NonStorePipelineErrorFactory, HydratorServiceBeta, $rootScope, $uibModal, $timeout, myAlertOnValium, $state) {
+    this.$state = $state;
     this.$rootScope = $rootScope;
     this.$scope = $scope;
     this.$stateParams = $stateParams;
@@ -30,6 +31,8 @@ class LeftPanelControllerBeta {
     this.NonStorePipelineErrorFactory = NonStorePipelineErrorFactory;
     this.HydratorServiceBeta = HydratorServiceBeta;
     this.rVersion = rVersion;
+    this.$timeout = $timeout;
+    this.myAlertOnValium = myAlertOnValium;
 
     this.pluginTypes = [
       {
@@ -88,6 +91,63 @@ class LeftPanelControllerBeta {
     this.PluginActionsFactoryBeta.fetchSinks(params);
     this.PluginActionsFactoryBeta.fetchTemplates(params);
 
+  }
+
+  openFileBrowser() {
+    this.$timeout(function() {
+      document.getElementById('pipeline-import-config-link').click();
+    });
+  }
+
+  importFile(files) {
+
+    let generateLinearConnections = (config) => {
+      let nodes = [config.source].concat(config.transforms || []).concat(config.sinks);
+      let connections = [];
+      let i;
+      for (i=0; i<nodes.length - 1 ; i++) {
+        connections.push({ from: nodes[i].name, to: nodes[i+1].name });
+      }
+      return connections;
+    };
+
+    let isValidArtifact = (importArtifact) => {
+      return this.artifacts.filter( artifact => angular.equals(artifact, importArtifact)).length;
+    };
+
+    var reader = new FileReader();
+    reader.readAsText(files[0], 'UTF-8');
+
+    reader.onload =  (evt) => {
+      var data = evt.target.result;
+      var jsonData;
+      try {
+        jsonData = JSON.parse(data);
+      } catch(e) {
+        this.myAlertOnValium.show({
+          type: 'danger',
+          content: 'Syntax Error. Ill-formed pipeline configuration.'
+        });
+        return;
+      }
+      let isNotValid = this.NonStorePipelineErrorFactory.validateImportJSON(jsonData);
+      if (isNotValid) {
+        this.myAlertOnValium.show({
+          type: 'danger',
+          content: isNotValid
+        });
+      } else if (!isValidArtifact(jsonData.artifact)) {
+        this.myAlertOnValium.show({
+          type: 'danger',
+          content: 'Temporary message indicating invalid artifact. This should be fixed.'
+        });
+      } else {
+        if (!jsonData.config.connections) {
+          jsonData.config.connections = generateLinearConnections(jsonData.config);
+        }
+        this.$state.go('hydrator-beta.create', { data: jsonData });
+      }
+    };
   }
 
   showTemplates() {
@@ -150,6 +210,6 @@ class LeftPanelControllerBeta {
   }
 }
 
-LeftPanelControllerBeta.$inject = ['$scope', '$stateParams', 'rVersion', 'GLOBALS', 'LeftPanelStoreBeta', 'LeftPanelActionsFactoryBeta', 'PluginActionsFactoryBeta', 'ConfigStoreBeta', 'ConfigActionsFactoryBeta', 'MyDAGFactoryBeta', 'NodesActionsFactoryBeta', 'NonStorePipelineErrorFactory', 'HydratorServiceBeta', '$rootScope', '$uibModal'];
+LeftPanelControllerBeta.$inject = ['$scope', '$stateParams', 'rVersion', 'GLOBALS', 'LeftPanelStoreBeta', 'LeftPanelActionsFactoryBeta', 'PluginActionsFactoryBeta', 'ConfigStoreBeta', 'ConfigActionsFactoryBeta', 'MyDAGFactoryBeta', 'NodesActionsFactoryBeta', 'NonStorePipelineErrorFactory', 'HydratorServiceBeta', '$rootScope', '$uibModal', '$timeout', 'myAlertOnValium', '$state'];
 angular.module(PKG.name + '.feature.hydrator-beta')
   .controller('LeftPanelControllerBeta', LeftPanelControllerBeta);
