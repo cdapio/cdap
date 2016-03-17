@@ -72,9 +72,9 @@
                   ng-blur="activeCell = false" />
               </td>
               <td class="text-center trash" ng-if="!property.empty">
-                <a href="" class="btn" ng-click="removeProperty(property)" ng-disabled="property.readonly">
+                <button href="" class="btn" ng-click="removeProperty(property)" ng-disabled="property.readonly">
                   <span class="fa fa-fw fa-trash"> </span>
-                </a>
+                </button>
               </td>
 
               <td class="name" ng-if="property.empty"></td>

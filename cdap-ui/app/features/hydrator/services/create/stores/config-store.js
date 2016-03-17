@@ -266,26 +266,6 @@ class ConfigStore {
       return false;
     }
     var stateCopy = this.getConfigForExport();
-    var source = stateCopy.config.source;
-    var sinks = stateCopy.config.sinks;
-    var transforms = stateCopy.config.transforms;
-
-    if (source.plugin) {
-      delete source.outputSchema;
-      delete source.inputSchema;
-    }
-    angular.forEach(sinks, (sink) => {
-      if (sink.plugin) {
-        delete sink.outputSchema;
-        delete sink.inputSchema;
-      }
-    });
-    angular.forEach(transforms, (transform) =>  {
-      if (transform.plugin) {
-        delete transform.outputSchema;
-        delete transform.inputSchema;
-      }
-    });
     delete stateCopy.__ui__;
 
     angular.forEach(stateCopy.config.comments, (comment) => {

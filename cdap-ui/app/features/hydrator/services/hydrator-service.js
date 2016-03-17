@@ -104,7 +104,7 @@ class HydratorService {
 
   formatSchema (node) {
 
-    let isStreamSource = node.name === 'Stream';
+    let isStreamSource = node.plugin.name === 'Stream';
     let schema;
     let input;
     let jsonSchema;
@@ -133,21 +133,40 @@ class HydratorService {
         input = {
           fields: [{ name: 'body', type: 'string' }]
         };
+        input.fields.unshift({
+          name: 'headers',
+          type: {
+            type: 'map',
+            keys: 'string',
+            values: 'string'
+          }
+        });
+
+        input.fields.unshift({
+          name: 'ts',
+          type: 'long'
+        });
+      } else {
+        let isTimeStamp = input.fields.filter(field => field.name === 'ts');
+        let isHeaders = input.fields.filter(field => field.name === 'headers');
+        if (!isHeaders.length) {
+          input.fields.unshift({
+            name: 'headers',
+            type: {
+              type: 'map',
+              keys: 'string',
+              values: 'string'
+            }
+          });
+        }
+        if (!isTimeStamp.length) {
+          input.fields.unshift({
+            name: 'ts',
+            type: 'long'
+          });
+        }
       }
 
-      input.fields.unshift({
-        name: 'headers',
-        type: {
-          type: 'map',
-          keys: 'string',
-          values: 'string'
-        }
-      });
-
-      input.fields.unshift({
-        name: 'ts',
-        type: 'long'
-      });
 
     }
 
