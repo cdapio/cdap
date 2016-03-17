@@ -60,9 +60,7 @@ of the application are tied together by the class ``PurchaseApp``:
 
 .. literalinclude:: /../../../cdap-examples/Purchase/src/main/java/co/cask/cdap/examples/purchase/PurchaseApp.java
     :language: java
-    :prepend: public class PurchaseApp extends AbstractApplication {
-    :start-after: public class PurchaseApp extends AbstractApplication {
-    :dedent: 2
+    :lines: 31-
 
 Storing Purchases with the ``Purchase`` ObjectStore Data Storage
 ----------------------------------------------------------------
@@ -99,7 +97,7 @@ default values used in configuration and as runtime arguments:
 
 .. literalinclude:: /../../../cdap-examples/Purchase/src/main/java/co/cask/cdap/examples/purchase/PurchaseHistoryBuilder.java
    :language: java
-   :lines: 44-74
+   :lines: 47-78
 
 ``PurchaseHistoryService`` Service
 ----------------------------------
