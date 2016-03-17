@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,10 +17,10 @@
 package co.cask.cdap.internal.app.runtime.batch;
 
 import co.cask.cdap.api.app.AbstractApplication;
+import co.cask.cdap.api.data.batch.Input;
 import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
-import com.google.common.base.Throwables;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
@@ -41,43 +41,37 @@ public class AppWithMapReduceUsingFileSet extends AbstractApplication {
 
   @Override
   public void configure() {
-    try {
-      setName("AppWithMapReduceUsingFile");
-      setDescription("Application with MapReduce job using file as dataset");
-      createDataset(inputDataset, "fileSet", FileSetProperties.builder()
+    setName("AppWithMapReduceUsingFile");
+    setDescription("Application with MapReduce job using file as dataset");
+    createDataset(inputDataset, "fileSet", FileSetProperties.builder()
+      .setInputFormat(TextInputFormat.class)
+      .setOutputFormat(TextOutputFormat.class)
+      .setOutputProperty(TextOutputFormat.SEPERATOR, ":")
+      .build());
+    if (!outputDataset.equals(inputDataset)) {
+      createDataset(outputDataset, "fileSet", FileSetProperties.builder()
+        .setBasePath("foo/my-file-output")
         .setInputFormat(TextInputFormat.class)
         .setOutputFormat(TextOutputFormat.class)
         .setOutputProperty(TextOutputFormat.SEPERATOR, ":")
         .build());
-      if (!outputDataset.equals(inputDataset)) {
-        createDataset(outputDataset, "fileSet", FileSetProperties.builder()
-          .setBasePath("foo/my-file-output")
-          .setInputFormat(TextInputFormat.class)
-          .setOutputFormat(TextOutputFormat.class)
-          .setOutputProperty(TextOutputFormat.SEPERATOR, ":")
-          .build());
-      }
-      addMapReduce(new ComputeSum());
-    } catch (Throwable t) {
-      throw Throwables.propagate(t);
     }
+    addMapReduce(new ComputeSum());
   }
 
   /**
    *
    */
   public static final class ComputeSum extends AbstractMapReduce {
-    @Override
-    public void configure() {
-      setInputDataset(inputDataset);
-      setOutputDataset(outputDataset);
-    }
 
     @Override
     public void beforeSubmit(MapReduceContext context) throws Exception {
       Job job = context.getHadoopJob();
-      job.setMapperClass(FileMapper.class);
       job.setReducerClass(FileReducer.class);
+
+      // user can opt to define the mapper class through our APIs, instead of directly on the job
+      context.addInput(Input.ofDataset(inputDataset), FileMapper.class);
+      context.addOutput(outputDataset);
     }
   }
 
@@ -91,8 +85,9 @@ public class AppWithMapReduceUsingFileSet extends AbstractApplication {
   }
 
   public static class FileReducer extends Reducer<Text, LongWritable, String, Long> {
-    public void reduce(Text key, Iterable<LongWritable> values, Context context)
-                              throws IOException, InterruptedException  {
+    @Override
+    public void reduce(Text key, Iterable<LongWritable> values,
+                       Context context) throws IOException, InterruptedException  {
       long sum = 0L;
       for (LongWritable value : values) {
         sum += value.get();

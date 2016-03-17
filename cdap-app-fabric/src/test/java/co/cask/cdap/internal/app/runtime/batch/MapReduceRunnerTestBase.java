@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.batch;
 
+import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.app.program.Program;
@@ -26,11 +27,15 @@ import co.cask.cdap.app.runtime.ProgramRunnerFactory;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
+import co.cask.cdap.data.runtime.LocationStreamFileWriterFactory;
+import co.cask.cdap.data.stream.StreamFileWriterFactory;
+import co.cask.cdap.data.stream.service.StreamHandler;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DynamicDatasetCache;
 import co.cask.cdap.data2.dataset2.SingleThreadDatasetCache;
 import co.cask.cdap.internal.AppFabricTestHelper;
 import co.cask.cdap.internal.DefaultId;
+import co.cask.cdap.internal.MockResponder;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import co.cask.cdap.internal.app.runtime.AbstractListener;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
@@ -47,8 +52,17 @@ import co.cask.tephra.TxConstants;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
+import com.google.inject.AbstractModule;
 import com.google.inject.Injector;
 import org.apache.twill.common.Threads;
+import org.jboss.netty.buffer.ChannelBuffer;
+import org.jboss.netty.buffer.ChannelBuffers;
+import org.jboss.netty.handler.codec.http.DefaultHttpRequest;
+import org.jboss.netty.handler.codec.http.HttpHeaders;
+import org.jboss.netty.handler.codec.http.HttpMethod;
+import org.jboss.netty.handler.codec.http.HttpRequest;
+import org.jboss.netty.handler.codec.http.HttpResponseStatus;
+import org.jboss.netty.handler.codec.http.HttpVersion;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -59,8 +73,10 @@ import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import javax.annotation.Nullable;
 
 @Category(XSlowTests.class)
@@ -71,6 +87,7 @@ public class MapReduceRunnerTestBase {
 
   private static Injector injector;
   private static TransactionManager txService;
+  private static StreamHandler streamHandler;
 
   protected static TransactionExecutorFactory txExecutorFactory;
   protected static DatasetFramework dsFramework;
@@ -98,7 +115,12 @@ public class MapReduceRunnerTestBase {
     CConfiguration conf = CConfiguration.create();
     conf.setInt(TxConstants.Manager.CFG_TX_TIMEOUT, 1);
     conf.setInt(TxConstants.Manager.CFG_TX_CLEANUP_INTERVAL, 2);
-    injector = AppFabricTestHelper.getInjector(conf);
+    injector = AppFabricTestHelper.getInjector(conf, new AbstractModule() {
+      @Override
+      protected void configure() {
+        bind(StreamFileWriterFactory.class).to(LocationStreamFileWriterFactory.class);
+      }
+    });
     txService = injector.getInstance(TransactionManager.class);
     txExecutorFactory = injector.getInstance(TransactionExecutorFactory.class);
     dsFramework = injector.getInstance(DatasetFramework.class);
@@ -109,6 +131,7 @@ public class MapReduceRunnerTestBase {
 
     metricStore = injector.getInstance(MetricStore.class);
     txService.startAndWait();
+    streamHandler = injector.getInstance(StreamHandler.class);
   }
 
   @AfterClass
@@ -124,19 +147,46 @@ public class MapReduceRunnerTestBase {
     }
   }
 
+  protected void writeToStream(String streamName, String body) throws IOException {
+    writeToStream(Id.Stream.from(Id.Namespace.DEFAULT, streamName), body);
+  }
+
+  protected void writeToStream(Id.Stream streamId, String body) throws IOException {
+    String path = String.format("/v3/namespaces/%s/streams/%s", streamId.getNamespaceId(), streamId.getId());
+    HttpRequest httpRequest = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, path);
+
+    ChannelBuffer content = ChannelBuffers.wrappedBuffer(ByteBuffer.wrap(Bytes.toBytes(body)));
+    httpRequest.setContent(content);
+    httpRequest.setHeader(HttpHeaders.Names.CONTENT_LENGTH, content.readableBytes());
+
+    MockResponder responder = new MockResponder();
+    try {
+      streamHandler.enqueue(httpRequest, responder, streamId.getNamespaceId(), streamId.getId());
+    } catch (Exception e) {
+      Throwables.propagateIfPossible(e, IOException.class);
+      throw Throwables.propagate(e);
+    }
+    if (responder.getStatus() != HttpResponseStatus.OK) {
+      throw new IOException("Failed to write to stream. Status = " + responder.getStatus());
+    }
+  }
+
   protected ApplicationWithPrograms deployApp(Class<?> appClass) throws Exception {
     return AppFabricTestHelper.deployApplicationWithManager(appClass, TEMP_FOLDER_SUPPLIER);
   }
 
-  protected void runProgram(ApplicationWithPrograms app, Class<?> programClass, Arguments args) throws Exception {
-    waitForCompletion(submit(app, programClass, args));
+  // returns true if the program ran successfully
+  protected boolean runProgram(ApplicationWithPrograms app, Class<?> programClass, Arguments args) throws Exception {
+    return waitForCompletion(submit(app, programClass, args));
   }
 
-  private void waitForCompletion(ProgramController controller) throws InterruptedException {
+  private boolean waitForCompletion(ProgramController controller) throws InterruptedException {
+    final AtomicBoolean success = new AtomicBoolean(false);
     final CountDownLatch completion = new CountDownLatch(1);
     controller.addListener(new AbstractListener() {
       @Override
       public void completed() {
+        success.set(true);
         completion.countDown();
       }
 
@@ -148,6 +198,7 @@ public class MapReduceRunnerTestBase {
 
     // MR tests can run for long time.
     completion.await(5, TimeUnit.MINUTES);
+    return success.get();
   }
 
   protected ProgramController submit(ApplicationWithPrograms app, Class<?> programClass, Arguments userArgs)

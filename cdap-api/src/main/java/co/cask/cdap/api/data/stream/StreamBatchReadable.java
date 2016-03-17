@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,10 +13,12 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package co.cask.cdap.api.data.stream;
 
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.data.batch.BatchReadable;
+import co.cask.cdap.api.data.batch.Input;
 import co.cask.cdap.api.data.batch.Split;
 import co.cask.cdap.api.data.batch.SplitReader;
 import co.cask.cdap.api.data.format.FormatSpecification;
@@ -47,12 +49,14 @@ import java.util.Map;
  * <pre><code>
  *   class MyMapReduce implements MapReduce {
  *       public void beforeSubmit(MapReduceContext context) {
- *         context.setInput(new StreamBatchReadable("mystream"));
+ *         context.addInput(Input.ofStream("mystream"));
  *       }
  *   }
  * </code></pre>
  *
+ * @deprecated as of version 3.4.0. Use {@link MapReduceContext#addInput(Input)}
  */
+@Deprecated
 public class StreamBatchReadable implements BatchReadable<Long, String> {
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())

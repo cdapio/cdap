@@ -17,8 +17,8 @@
 package co.cask.cdap.internal.app.runtime.batch.dataset;
 
 import co.cask.cdap.app.metrics.MapReduceMetrics;
+import co.cask.cdap.common.conf.ConfigurationUtil;
 import co.cask.cdap.common.lang.ClassLoaders;
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Lists;
 import org.apache.hadoop.conf.Configuration;
@@ -58,7 +58,6 @@ public class MultipleOutputs implements Closeable {
   private static final String FORMAT = ".format";
   private static final String KEY = ".key";
   private static final String VALUE = ".value";
-  private static final String CONF = ".conf";
 
   /**
    * Cache for the taskContexts
@@ -105,25 +104,6 @@ public class MultipleOutputs implements Closeable {
     return job.getConfiguration().getClass(MO_PREFIX + namedOutput + VALUE, null, Object.class);
   }
 
-  static Map<String, String> getNamedConfigurations(JobContext job, String namedOutput) {
-    Map<String, String> namedConf = new HashMap<>();
-
-    String confKeyPrefix = MO_PREFIX + namedOutput + CONF;
-    Map<String, String> properties = job.getConfiguration().getValByRegex(confKeyPrefix + ".*");
-    for (Map.Entry<String, String> entry : properties.entrySet()) {
-      namedConf.put(entry.getKey().substring(confKeyPrefix.length()), entry.getValue());
-    }
-    return namedConf;
-  }
-
-  @VisibleForTesting
-  static void setNamedConfigurations(Job job, String namedOutput, Map<String, String> namedConf) {
-    String confKeyPrefix = MO_PREFIX + namedOutput + CONF;
-    for (Map.Entry<String, String> entry : namedConf.entrySet()) {
-      job.getConfiguration().set(confKeyPrefix + entry.getKey(), entry.getValue());
-    }
-  }
-
   /**
    * Adds a named output for the job.
    *
@@ -145,7 +125,7 @@ public class MultipleOutputs implements Closeable {
     conf.set(MO_PREFIX + namedOutput + FORMAT, outputFormatClass);
     conf.setClass(MO_PREFIX + namedOutput + KEY, keyClass, Object.class);
     conf.setClass(MO_PREFIX + namedOutput + VALUE, valueClass, Object.class);
-    setNamedConfigurations(job, namedOutput, outputConfigs);
+    ConfigurationUtil.setNamedConfigurations(conf, namedOutput, outputConfigs);
   }
 
   /**
@@ -199,7 +179,7 @@ public class MultipleOutputs implements Closeable {
 
       try {
         // We use ReflectionUtils to instantiate the OutputFormat, because it also calls setConf on the object, if it
-        // is a Configurable.
+        // is a org.apache.hadoop.conf.Configurable.
         OutputFormat<?, ?> outputFormat =
           ReflectionUtils.newInstance(outputFormatClass, taskContext.getConfiguration());
         writer = new MeteredRecordWriter<>(outputFormat.getRecordWriter(taskContext), context);
@@ -248,10 +228,9 @@ public class MultipleOutputs implements Closeable {
     job.setOutputValueClass(getNamedOutputValueClass(context, namedOutput));
 
     Configuration conf = job.getConfiguration();
-    Map<String, String> namedConfigurations = getNamedConfigurations(context, namedOutput);
-    for (Map.Entry<String, String> entry : namedConfigurations.entrySet()) {
-      conf.set(entry.getKey(), entry.getValue());
-    }
+    Map<String, String> namedConfigurations = ConfigurationUtil.getNamedConfigurations(context.getConfiguration(),
+                                                                                       namedOutput);
+    ConfigurationUtil.setAll(namedConfigurations, conf);
     return job;
   }
 
