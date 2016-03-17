@@ -49,7 +49,7 @@ class TrackerIntegrationsController {
         }
       },
       color: {
-        pattern: ['#35c853']
+        pattern: ['#35c853'] // @tracker-green
       },
       isLive: true,
       interval: 1000,
@@ -197,9 +197,6 @@ class TrackerIntegrationsController {
 
       this.eventsSentAggregate = _.sum(this.chartData.columns[0]);
     });
-
-    console.log('asdf', this.pollId);
-
   }
 
   saveNavigatorSetup() {
