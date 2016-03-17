@@ -16,13 +16,13 @@
 
 package co.cask.cdap.common;
 
-import co.cask.cdap.api.common.HttpResponseStatusProvider;
+import co.cask.cdap.api.common.HttpErrorStatusProvider;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 
 /**
  * Exception thrown when a feature is disabled.
  */
-public class FeatureDisabledException extends Exception implements HttpResponseStatusProvider {
+public class FeatureDisabledException extends Exception implements HttpErrorStatusProvider {
   private final String feature;
   private final String configFile;
   private final String enableConfigKey;

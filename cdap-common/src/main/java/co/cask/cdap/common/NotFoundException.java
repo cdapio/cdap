@@ -16,14 +16,14 @@
 
 package co.cask.cdap.common;
 
-import co.cask.cdap.api.common.HttpResponseStatusProvider;
+import co.cask.cdap.api.common.HttpErrorStatusProvider;
 import co.cask.cdap.proto.Id;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 
 /**
  * Thrown when an element is not found
  */
-public class NotFoundException extends Exception implements HttpResponseStatusProvider {
+public class NotFoundException extends Exception implements HttpErrorStatusProvider {
 
   private final Object object;
 

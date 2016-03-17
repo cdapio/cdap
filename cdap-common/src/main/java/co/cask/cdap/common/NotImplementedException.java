@@ -16,13 +16,13 @@
 
 package co.cask.cdap.common;
 
-import co.cask.cdap.api.common.HttpResponseStatusProvider;
+import co.cask.cdap.api.common.HttpErrorStatusProvider;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 
 /**
  * Thrown when some operation is not implemented.
  */
-public class NotImplementedException extends Exception implements HttpResponseStatusProvider {
+public class NotImplementedException extends Exception implements HttpErrorStatusProvider {
 
   public NotImplementedException(String message) {
     super(message);

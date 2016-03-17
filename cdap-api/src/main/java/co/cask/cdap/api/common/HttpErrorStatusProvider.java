@@ -19,7 +19,7 @@ package co.cask.cdap.api.common;
 /**
  * CDAP HTTP Response Exception
  */
-public interface HttpResponseStatusProvider {
+public interface HttpErrorStatusProvider {
 
   /**
    * Gives the HTTP status code for this exception if one needs to be returned. All exception classes which needs to
@@ -28,4 +28,12 @@ public interface HttpResponseStatusProvider {
    * @return int which is the HTTP status code of this exceptions
    */
   int getStatusCode();
+
+  /**
+   * Gives the exception message. For sub-classes of {@link Exception} it will use {@link Exception#getMessage()}
+   * unless overridden.
+   *
+   * @return exception message
+   */
+  String getMessage();
 }
