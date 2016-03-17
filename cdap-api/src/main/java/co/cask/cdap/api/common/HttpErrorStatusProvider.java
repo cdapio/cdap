@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,22 +14,25 @@
  * the License.
  */
 
-package co.cask.cdap.common;
-
-import co.cask.cdap.api.common.HttpErrorStatusProvider;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
+package co.cask.cdap.api.common;
 
 /**
- * Thrown when some operation is not implemented.
+ * Interface to be used by all error related classes which needs to provide a status code.
  */
-public class NotImplementedException extends Exception implements HttpErrorStatusProvider {
+public interface HttpErrorStatusProvider {
 
-  public NotImplementedException(String message) {
-    super(message);
-  }
+  /**
+   * Gives the HTTP status code for this error. All classes which needs to return a HTTP status code for an error
+   * should override this.
+   *
+   * @return int which is the HTTP status code of this error
+   */
+  int getStatusCode();
 
-  @Override
-  public int getStatusCode() {
-    return HttpResponseStatus.NOT_IMPLEMENTED.getCode();
-  }
+  /**
+   * Gives the error message.
+   *
+   * @return error message
+   */
+  String getMessage();
 }

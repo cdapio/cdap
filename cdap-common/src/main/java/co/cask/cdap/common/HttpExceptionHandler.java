@@ -16,8 +16,8 @@
 
 package co.cask.cdap.common;
 
+import co.cask.cdap.api.common.HttpErrorStatusProvider;
 import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
-import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.http.ExceptionHandler;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Objects;
@@ -37,32 +37,14 @@ public class HttpExceptionHandler extends ExceptionHandler {
 
   @Override
   public void handle(Throwable t, HttpRequest request, HttpResponder responder) {
+    // Check if the exception is caused by Service being unavailable: this will happen during master startup
     if (Iterables.size(Iterables.filter(Throwables.getCausalChain(t), ServiceUnavailableException.class)) > 0) {
+      // no need to log ServiceUnavailableException because at master startup we are waiting for services to come up
       responder.sendString(HttpResponseStatus.SERVICE_UNAVAILABLE, t.getMessage());
-    } else if (t instanceof BadRequestException) {
+    } else if (t instanceof HttpErrorStatusProvider) {
       logWithTrace(request, t);
-      responder.sendString(HttpResponseStatus.BAD_REQUEST, t.getMessage());
-    } else if (t instanceof ConflictException) {
-      logWithTrace(request, t);
-      responder.sendString(HttpResponseStatus.CONFLICT, t.getMessage());
-    } else if (t instanceof NotFoundException) {
-      logWithTrace(request, t);
-      responder.sendString(HttpResponseStatus.NOT_FOUND, t.getMessage());
-    } else if (t instanceof NotImplementedException) {
-      logWithTrace(request, t);
-      responder.sendString(HttpResponseStatus.NOT_IMPLEMENTED, t.getMessage());
-    } else if (t instanceof MethodNotAllowedException) {
-      logWithTrace(request, t);
-      responder.sendStatus(HttpResponseStatus.METHOD_NOT_ALLOWED);
-    } else if (t instanceof UnauthenticatedException) {
-      logWithTrace(request, t);
-      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
-    } else if (t instanceof UnauthorizedException) {
-      logWithTrace(request, t);
-      responder.sendStatus(HttpResponseStatus.FORBIDDEN);
-    } else if (t instanceof FeatureDisabledException) {
-      logWithTrace(request, t);
-      responder.sendString(HttpResponseStatus.NOT_IMPLEMENTED, t.getMessage());
+      responder.sendString(HttpResponseStatus.valueOf(((HttpErrorStatusProvider) t).getStatusCode()),
+                           t.getMessage());
     } else {
       LOG.error("Unexpected error: request={} {} user={}:", request.getMethod().getName(), request.getUri(),
                 Objects.firstNonNull(SecurityRequestContext.getUserId(), "<null>"), t);

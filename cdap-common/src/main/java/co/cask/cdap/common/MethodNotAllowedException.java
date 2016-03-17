@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,12 +16,14 @@
 
 package co.cask.cdap.common;
 
+import co.cask.cdap.api.common.HttpErrorStatusProvider;
 import org.jboss.netty.handler.codec.http.HttpMethod;
+import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 
 /**
  * Thrown when some method is not allowed.
  */
-public class MethodNotAllowedException extends Exception {
+public class MethodNotAllowedException extends Exception implements HttpErrorStatusProvider {
 
   private final HttpMethod method;
   private final String apiPath;
@@ -38,5 +40,10 @@ public class MethodNotAllowedException extends Exception {
 
   public String getApiPath() {
     return apiPath;
+  }
+
+  @Override
+  public int getStatusCode() {
+    return HttpResponseStatus.METHOD_NOT_ALLOWED.getCode();
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,12 +16,14 @@
 
 package co.cask.cdap.common;
 
+import co.cask.cdap.api.common.HttpErrorStatusProvider;
 import co.cask.cdap.proto.Id;
+import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 
 /**
  * Thrown when an element is not found
  */
-public class NotFoundException extends Exception {
+public class NotFoundException extends Exception implements HttpErrorStatusProvider {
 
   private final Object object;
 
@@ -48,5 +50,10 @@ public class NotFoundException extends Exception {
 
   public Object getObject() {
     return object;
+  }
+
+  @Override
+  public int getStatusCode() {
+    return HttpResponseStatus.NOT_FOUND.getCode();
   }
 }
