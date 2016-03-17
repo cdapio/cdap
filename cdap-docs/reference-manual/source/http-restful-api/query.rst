@@ -473,10 +473,8 @@ For streams::
   POST <base-url>/namespaces/<namespace>/data/explore/streams/<stream-name>/tables/<table-name>/enable
   POST <base-url>/namespaces/<namespace>/data/explore/streams/<stream-name>/tables/<table-name>/disable
 
-Each of these endpoints returns a query handle that can be used |---| in the case of
-``enable`` |---| to :ref:`submit queries <http-restful-api-query-submitting>` and explore
-the dataset/stream or |---| in the case of ``disable`` |---| to retrieve the
-:ref:`status of the query <http-restful-api-query-status>`.
+Each of these endpoints returns a query handle that can be used to submit requests
+tracking the :ref:`status of the query <http-restful-api-query-status>`.
 
 .. list-table::
    :widths: 20 80
@@ -508,7 +506,7 @@ the dataset/stream or |---| in the case of ``disable`` |---| to retrieve the
 
 .. rubric:: Comments
 
-If the query execution was successful, the body will contain a query handle that can be used to
+If the request was successful, the body will contain a query handle that can be used to
 identify the query in subsequent requests, such as a :ref:`status request
 <http-restful-api-query-status>`::
 
@@ -524,5 +522,6 @@ identify the query in subsequent requests, such as a :ref:`status request
    * - HTTP Response
      - ``{"handle":"57cf1b01-8dba-423a-a8b4-66cd29dd75e2"}``
    * - Description
-     - Submits a query in the namespace *default* to disable the
-       dataset *logEventStream_converted* from being explored. The handle can be used to check the status.
+     - Submits a request in the namespace *default* to disable the dataset
+       *logEventStream_converted* from being explored. The handle can be used to check the
+       status.
