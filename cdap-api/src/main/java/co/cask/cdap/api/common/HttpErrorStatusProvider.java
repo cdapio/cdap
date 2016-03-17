@@ -17,23 +17,22 @@
 package co.cask.cdap.api.common;
 
 /**
- * CDAP HTTP Response Exception
+ * Interface to be used by all error related classes which needs to provide a status code.
  */
 public interface HttpErrorStatusProvider {
 
   /**
-   * Gives the HTTP status code for this exception if one needs to be returned. All exception classes which needs to
-   * return a HTTP status code should override this.
+   * Gives the HTTP status code for this error. All classes which needs to return a HTTP status code for an error
+   * should override this.
    *
-   * @return int which is the HTTP status code of this exceptions
+   * @return int which is the HTTP status code of this error
    */
   int getStatusCode();
 
   /**
-   * Gives the exception message. For sub-classes of {@link Exception} it will use {@link Exception#getMessage()}
-   * unless overridden.
+   * Gives the error message.
    *
-   * @return exception message
+   * @return error message
    */
   String getMessage();
 }
