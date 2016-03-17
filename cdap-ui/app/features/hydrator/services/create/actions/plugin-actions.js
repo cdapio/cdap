@@ -84,6 +84,9 @@ class PluginActionsFactory {
         });
 
   }
+  resetLeftPanelStore() {
+    this.dispatcher.dispatch('onLeftPanelStoreReset');
+  }
 }
 
 PluginActionsFactory.$inject = ['PluginsDispatcher', 'myPipelineApi', 'PluginConfigFactory', 'GLOBALS', 'mySettings'];
