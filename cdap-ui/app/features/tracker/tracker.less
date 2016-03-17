@@ -712,21 +712,24 @@ body.state-tracker-integrations {
 
   .navigator-metrics {
     background-color: #464a56;
+    padding-top: 10px;
 
-
-    .events-sent-title, .total-events {
+    .events-sent-title, .total-events, .time-label {
       color: white;
       position: absolute;
       display: inline-block;
     }
 
-    .events-sent-title {
-      top: 0;
+    .time-label {
+      bottom: 0;
       left: 25px;
     }
-
+    .events-sent-title {
+      top: -10px;
+      left: 25px;
+    }
     .total-events {
-      top: 0;
+      top: -10px;
       right: 25px;
     }
   }

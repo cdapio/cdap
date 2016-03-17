@@ -60,6 +60,8 @@ class TrackerIntegrationsController {
 
     this.getNavigatorApp();
 
+    this.pollId = null;
+
   }
 
   showConfigPopup(event) {
@@ -126,6 +128,8 @@ class TrackerIntegrationsController {
           if (res[0].status === 'RUNNING') {
             this.navigatorSetup.isEnabled = true;
             this.fetchMetrics();
+          } else {
+            this.dataSrc.stopPoll(this.pollId.__pollId__);
           }
         } else {
           this.navigatorState = {
@@ -169,28 +173,32 @@ class TrackerIntegrationsController {
       flow: 'MetadataFlow'
     };
 
-    this.dataSrc
-      .poll({
-        _cdapPath: '/metrics/query',
-        method: 'POST',
-        body: this.MyMetricsQueryHelper.constructQuery('qid', tags, metric)
-      },  (res) => {
-        let processedData = this.MyChartHelpers.processData(
-          res,
-          'qid',
-          metric.names,
-          metric.resolution
-        );
+    // fetch timeseries metrics
+    this.pollId = this.dataSrc.poll({
+      _cdapPath: '/metrics/query',
+      method: 'POST',
+      body: this.MyMetricsQueryHelper.constructQuery('qid', tags, metric)
+    }, (res) => {
+      let processedData = this.MyChartHelpers.processData(
+        res,
+        'qid',
+        metric.names,
+        metric.resolution
+      );
 
-        processedData = this.MyChartHelpers.c3ifyData(processedData, metric, metric.names);
-        this.chartData = {
-          x: 'x',
-          columns: processedData.columns,
-          keys: {
-            x: 'x'
-          }
-        };
-      });
+      processedData = this.MyChartHelpers.c3ifyData(processedData, metric, metric.names);
+      this.chartData = {
+        x: 'x',
+        columns: processedData.columns,
+        keys: {
+          x: 'x'
+        }
+      };
+
+      this.eventsSentAggregate = _.sum(this.chartData.columns[0]);
+    });
+
+    console.log('asdf', this.pollId);
 
   }
 

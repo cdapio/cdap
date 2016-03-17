@@ -147,7 +147,8 @@
         chart-size="{height: 150}"
       ></c3-area-spline>
 
-      <h5 class="total-events">Total Events Sent: 500000</h5>
+      <h5 class="time-label">Time(last hour)</h5>
+      <h5 class="total-events">Total Events Sent: {{ IntegrationsController.eventsSentAggregate }}</h5>
     </div>
   </div>
 </div>
