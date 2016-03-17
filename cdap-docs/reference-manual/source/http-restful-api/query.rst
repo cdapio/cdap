@@ -448,7 +448,7 @@ if results for the ``query-handle`` are attempted to be downloaded again.
 
 Enabling and Disabling Querying
 -------------------------------
-Querying (or exploring) of datasets and stream views can be enabled and disabled using these endpoints.
+Querying (or exploring) of datasets and streams can be enabled and disabled using these endpoints.
 
 Exploration of data in CDAP is governed by a combination of enabling the CDAP Explore
 Service and then creating datasets and streams that are explorable. The CDAP Explore
