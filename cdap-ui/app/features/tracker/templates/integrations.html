@@ -14,9 +14,8 @@
   the License.
 -->
 
-<div class="integrations-container">
-  <div class="row integration-item">
-
+<div class="row">
+  <div class="integration-item">
     <div class="integration-information">
       <h3>Cloudera Navigator</h3>
       <p>some definition of Cloudera Navigator</p>
@@ -136,10 +135,12 @@
       </div>
     </div>
   </div>
+</div>
 
-  <div class="navigator-metrics row"
-       ng-if="IntegrationsController.navigatorState.status === 'RUNNING'">
-    <div class="col-xs-12">
+<div class="row"
+     ng-if="IntegrationsController.navigatorState.status === 'RUNNING'">
+  <div class="col-xs-12">
+    <div class="navigator-metrics">
       <h4 class="events-sent-title">Events Sent</h4>
       <c3-area-spline
         chart-metric="IntegrationsController.chartData"
