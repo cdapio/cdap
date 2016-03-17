@@ -20,8 +20,6 @@ import co.cask.cdap.api.dataset.lib.AbstractDataset;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.dataset.table.Table;
-import co.cask.cdap.data2.dataset2.lib.table.MDSKey;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
@@ -32,22 +30,29 @@ import java.util.Set;
 
 /**
  * System dataset for storing ACLs for authorization.
+ *
+ * Key format:
+ * [entity][principal-type][principal-name][action].
+ *
+ * E.g.
+ * [NAMESPACE:myspace][ROLE][admins][READ]
  */
 class ACLDataset extends AbstractDataset {
 
-  private static final String NAME = "acls";
+  static final String TABLE_NAME = "acls";
   private static final byte[] VALUE_COLUMN = new byte[0];
-
-  static final Id.DatasetInstance ID = Id.DatasetInstance.from(Id.Namespace.SYSTEM, NAME);
 
   private final Table table;
 
   ACLDataset(Table table) {
-    super(NAME, table);
+    super(TABLE_NAME, table);
     this.table = table;
   }
 
   /**
+   * Search the dataset to retrieve the set of allowed {@link Action} for the given {@link EntityId} and
+   * {@link Principal}.
+   *
    * @param entity the entity
    * @param principal the principal
    * @return the set of actions allowed for the user on the entity
@@ -55,7 +60,7 @@ class ACLDataset extends AbstractDataset {
   public Set<Action> search(EntityId entity, Principal principal) {
     Set<Action> result = new HashSet<>();
 
-    MDSKey mdsKey = getKey(entity, principal);
+    ACLDatasetKey mdsKey = getKey(entity, principal);
     byte[] startKey = mdsKey.getKey();
     byte[] stopKey = Bytes.stopKeyForPrefix(startKey);
     Scanner scan = table.scan(startKey, stopKey);
@@ -76,17 +81,26 @@ class ACLDataset extends AbstractDataset {
     return result;
   }
 
+  /**
+   * Add an {@link Action} on the specified {@link EntityId} for the given {@link Principal}.
+   */
   public void add(EntityId entity, Principal principal, Action action) {
     table.put(getKey(entity, principal, action).getKey(), VALUE_COLUMN, Bytes.toBytes(action.name()));
   }
 
+  /**
+   * Remove an {@link Action} on the specified {@link EntityId} from the given {@link Principal}.
+   */
   public void remove(EntityId entity, Principal principal, Action action) {
     table.delete(getKey(entity, principal, action).getKey());
   }
 
+  /**
+   * Remove all {@link Action actions} on the specified {@link EntityId} for the given {@link Principal}.
+   */
   public void remove(EntityId entity, Principal principal) {
-    MDSKey mdsKey = getKey(entity, principal);
-    byte[] startKey = mdsKey.getKey();
+    ACLDatasetKey aclDatasetKey = getKey(entity, principal);
+    byte[] startKey = aclDatasetKey.getKey();
     byte[] stopKey = Bytes.stopKeyForPrefix(startKey);
     Scanner scan = table.scan(startKey, stopKey);
 
@@ -100,9 +114,12 @@ class ACLDataset extends AbstractDataset {
     }
   }
 
+  /**
+   * Remove all {@link Action actions} for all {@link Principal principals} on the specified {@link EntityId}.
+   */
   public void remove(EntityId entity) {
-    MDSKey mdsKey = getKey(entity);
-    byte[] startKey = mdsKey.getKey();
+    ACLDatasetKey aclDatasetKey = getKey(entity);
+    byte[] startKey = aclDatasetKey.getKey();
     byte[] stopKey = Bytes.stopKeyForPrefix(startKey);
     Scanner scan = table.scan(startKey, stopKey);
 
@@ -116,6 +133,9 @@ class ACLDataset extends AbstractDataset {
     }
   }
 
+  /**
+   * List all the {@link Privilege privileges} for the specified {@link Principal}.
+   */
   public Set<Privilege> listPrivileges(Principal principal) {
     Set<Privilege> privileges = new HashSet<>();
     // scan the whole table
@@ -138,38 +158,38 @@ class ACLDataset extends AbstractDataset {
     return privileges;
   }
 
-  private MDSKey getKey(EntityId entity) {
+  private ACLDatasetKey getKey(EntityId entity) {
     return getKeyBuilder(entity).build();
   }
 
-  private MDSKey getKey(EntityId entity, Principal principal) {
+  private ACLDatasetKey getKey(EntityId entity, Principal principal) {
     return getKeyBuilder(entity, principal).build();
   }
 
-  private MDSKey getKey(EntityId entity, Principal principal, Action action) {
+  private ACLDatasetKey getKey(EntityId entity, Principal principal, Action action) {
     return getKeyBuilder(entity, principal, action).build();
   }
 
-  private MDSKey.Builder getKeyBuilder(EntityId entity, Principal principal, Action action) {
+  private ACLDatasetKey.Builder getKeyBuilder(EntityId entity, Principal principal, Action action) {
     return getKeyBuilder(entity, principal).add(action.name());
   }
 
-  private MDSKey.Builder getKeyBuilder(EntityId entity, Principal principal) {
+  private ACLDatasetKey.Builder getKeyBuilder(EntityId entity, Principal principal) {
     return getKeyBuilder(entity).add(principal.getType().name()).add(principal.getName());
   }
 
-  private MDSKey.Builder getKeyBuilder(EntityId entity) {
-    return new MDSKey.Builder().add(entity.toString());
+  private ACLDatasetKey.Builder getKeyBuilder(EntityId entity) {
+    return new ACLDatasetKey.Builder().add(entity.toString());
   }
 
   private EntityId getEntity(byte[] rowKey) {
-    MDSKey.Splitter keySplitter = new MDSKey(rowKey).split();
+    ACLDatasetKey.Splitter keySplitter = new ACLDatasetKey(rowKey).split();
     // The rowkey is [entity][principal-type][principal-name][action-name]
     return EntityId.fromString(keySplitter.getString());
   }
 
   private Principal getPrincipal(byte[] rowKey) {
-    MDSKey.Splitter keySplitter = new MDSKey(rowKey).split();
+    ACLDatasetKey.Splitter keySplitter = new ACLDatasetKey(rowKey).split();
     // The rowkey is [entity][principal-type][principal-name][action-name]
     keySplitter.skipString(); // skip the entity
     String principalType = keySplitter.getString();

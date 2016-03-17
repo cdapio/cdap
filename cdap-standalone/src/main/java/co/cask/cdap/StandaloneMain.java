@@ -18,6 +18,7 @@ package co.cask.cdap;
 
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.app.guice.AppFabricServiceRuntimeModule;
+import co.cask.cdap.app.guice.AuthorizationModule;
 import co.cask.cdap.app.guice.ProgramRunnerRuntimeModule;
 import co.cask.cdap.app.guice.ServiceStoreModules;
 import co.cask.cdap.app.store.ServiceStore;
@@ -386,7 +387,8 @@ public class StandaloneMain {
       new NamespaceClientRuntimeModule().getStandaloneModules(),
       new NamespaceStoreModule().getStandaloneModules(),
       new MetadataServiceModule(),
-      new AuditModule().getStandaloneModules()
+      new AuditModule().getStandaloneModules(),
+      new AuthorizationModule()
     );
   }
 }

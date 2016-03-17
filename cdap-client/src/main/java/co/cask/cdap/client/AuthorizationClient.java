@@ -17,6 +17,7 @@
 package co.cask.cdap.client;
 
 import co.cask.cdap.api.annotation.Beta;
+import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.util.RESTClient;
 import co.cask.cdap.common.FeatureDisabledException;
@@ -38,11 +39,14 @@ import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpResponse;
 import co.cask.common.http.ObjectResponse;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.io.ByteStreams;
+import com.google.common.io.InputSupplier;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Set;
@@ -203,8 +207,12 @@ public class AuthorizationClient {
     HttpResponse response = restClient.execute(request, config.getAccessToken(), allowedErrorCodes);
     if (HttpURLConnection.HTTP_FORBIDDEN == response.getResponseCode()) {
       // TODO:(CDAP-5302) Include the logged in username here
-      throw new UnauthorizedException(String.format("Unauthorized to perform %s %s with body %s",
-                                                    request.getMethod(), request.getURL(), request.getBody()));
+      InputSupplier<? extends InputStream> requestBody = request.getBody();
+      String msg = requestBody == null ?
+        String.format("Unauthorized to perform %s %s", request.getMethod(), request.getURL()) :
+        String.format("Unauthorized to perform %s %s with body %s",
+                      request.getMethod(), request.getURL(), Bytes.toString(ByteStreams.toByteArray(requestBody)));
+      throw new UnauthorizedException(msg);
     }
     if (HttpURLConnection.HTTP_NOT_IMPLEMENTED == response.getResponseCode()) {
       throw new FeatureDisabledException("Authorization", "cdap-site.xml", Constants.Security.Authorization.ENABLED,

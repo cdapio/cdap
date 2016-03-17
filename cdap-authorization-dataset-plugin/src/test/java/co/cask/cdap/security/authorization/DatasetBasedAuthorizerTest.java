@@ -16,21 +16,37 @@
 
 package co.cask.cdap.security.authorization;
 
+import co.cask.cdap.api.Admin;
+import co.cask.cdap.api.Transactional;
+import co.cask.cdap.api.TxRunnable;
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.api.dataset.module.DatasetModule;
+import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.common.guice.ConfigModule;
+import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
+import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
 import co.cask.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DefaultDatasetDefinitionRegistry;
+import co.cask.cdap.data2.dataset2.DynamicDatasetCache;
 import co.cask.cdap.data2.dataset2.InMemoryDatasetFramework;
+import co.cask.cdap.data2.dataset2.SingleThreadDatasetCache;
 import co.cask.cdap.data2.dataset2.module.lib.inmemory.InMemoryTableModule;
+import co.cask.cdap.internal.app.runtime.DefaultAdmin;
+import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.security.spi.authorization.AuthorizationContext;
 import co.cask.cdap.security.spi.authorization.Authorizer;
 import co.cask.cdap.security.spi.authorization.AuthorizerTest;
+import co.cask.tephra.TransactionContext;
+import co.cask.tephra.TransactionFailureException;
 import co.cask.tephra.TransactionManager;
+import co.cask.tephra.TransactionSystemClient;
 import co.cask.tephra.runtime.TransactionInMemoryModule;
+import com.google.common.collect.ImmutableMap;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.Scopes;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.multibindings.MapBinder;
 import com.google.inject.name.Names;
@@ -38,16 +54,18 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.util.Properties;
+
 /**
  * Tests for {@link DatasetBasedAuthorizer}.
  */
 public class DatasetBasedAuthorizerTest extends AuthorizerTest {
 
-  private static DatasetBasedAuthorizer datasetAuthorizer;
+  private static final DatasetBasedAuthorizer datasetAuthorizer = new DatasetBasedAuthorizer();
   private static TransactionManager txManager;
 
   @BeforeClass
-  public static void setUpClass() {
+  public static void setUpClass() throws Exception {
     Injector injector = Guice.createInjector(
       new TransactionInMemoryModule(),
       new ConfigModule(),
@@ -62,19 +80,43 @@ public class DatasetBasedAuthorizerTest extends AuthorizerTest {
             binder(), String.class, DatasetModule.class, Names.named("defaultDatasetModules"));
           mapBinder.addBinding("orderedTable-memory").toInstance(new InMemoryTableModule());
 
-          bind(DatasetFramework.class).to(InMemoryDatasetFramework.class);
+          bind(DatasetFramework.class).to(InMemoryDatasetFramework.class).in(Scopes.SINGLETON);
+          bind(MetricsCollectionService.class).to(NoOpMetricsCollectionService.class);
         }
       }
     );
 
     txManager = injector.getInstance(TransactionManager.class);
-    datasetAuthorizer = injector.getInstance(DatasetBasedAuthorizer.class);
-
     txManager.startAndWait();
+
+    DatasetFramework dsFramework = injector.getInstance(DatasetFramework.class);
+    SystemDatasetInstantiator instantiator = new SystemDatasetInstantiator(dsFramework, null, null);
+    TransactionSystemClient txClient = injector.getInstance(TransactionSystemClient.class);
+    final DynamicDatasetCache dsCache = new SingleThreadDatasetCache(instantiator, txClient, NamespaceId.DEFAULT,
+                                                                     ImmutableMap.<String, String>of(), null, null);
+    Admin admin = new DefaultAdmin(dsFramework, NamespaceId.DEFAULT);
+    Transactional txnl = new Transactional() {
+      @Override
+      public void execute(TxRunnable runnable) throws TransactionFailureException {
+        TransactionContext transactionContext = dsCache.get();
+        transactionContext.start();
+        try {
+          runnable.run(dsCache);
+        } catch (TransactionFailureException e) {
+          transactionContext.abort(e);
+        } catch (Throwable t) {
+          transactionContext.abort(new TransactionFailureException("Exception raised from TxRunnable.run()", t));
+        }
+        transactionContext.finish();
+      }
+    };
+    AuthorizationContext authContext = new DefaultAuthorizationContext(new Properties(), dsCache, admin, txnl);
+    datasetAuthorizer.initialize(authContext);
   }
 
   @AfterClass
-  public static void tearDownClass() {
+  public static void tearDownClass() throws Exception {
+    datasetAuthorizer.destroy();
     txManager.stopAndWait();
   }
 

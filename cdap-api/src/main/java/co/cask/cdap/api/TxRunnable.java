@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -26,7 +26,7 @@ import co.cask.cdap.api.dataset.Dataset;
 public interface TxRunnable {
 
   /**
-   * Provides a {@link co.cask.cdap.api.data.DatasetContext} to get instances of {@link Dataset}s.
+   * Provides a {@link DatasetContext} to get instances of {@link Dataset}s.
    *
    * <p>
    *   Operations executed on a dataset within the execution of this method are committed as a single transaction.
@@ -34,8 +34,8 @@ public interface TxRunnable {
    *   Exceptions thrown while committing the transaction or thrown by user-code result in a rollback of the
    *   transaction.
    * </p>
-   * @param context to get datasets from.
-   * @throws Exception
+   *
+   * @param context to get datasets from
    */
   void run(DatasetContext context) throws Exception;
 }

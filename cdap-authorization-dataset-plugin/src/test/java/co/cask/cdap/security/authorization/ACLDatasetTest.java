@@ -19,7 +19,7 @@ package co.cask.cdap.security.authorization;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.data2.dataset2.DatasetFrameworkTestUtil;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.Ids;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.security.Action;
@@ -42,19 +42,18 @@ public class ACLDatasetTest {
   @ClassRule
   public static DatasetFrameworkTestUtil dsFrameworkUtil = new DatasetFrameworkTestUtil();
 
-  private static final Id.DatasetInstance tabInstance =
-    Id.DatasetInstance.from(DatasetFrameworkTestUtil.NAMESPACE_ID, "tab");
+  private static final DatasetId tabInstance = new DatasetId("myspace", "tab");
   private static ACLDataset table;
 
   @BeforeClass
   public static void beforeClass() throws Exception {
-    dsFrameworkUtil.createInstance("table", tabInstance, DatasetProperties.EMPTY);
-    table = new ACLDataset((Table) dsFrameworkUtil.getInstance(tabInstance));
+    dsFrameworkUtil.createInstance("table", tabInstance.toId(), DatasetProperties.EMPTY);
+    table = new ACLDataset((Table) dsFrameworkUtil.getInstance(tabInstance.toId()));
   }
 
   @AfterClass
   public static void afterClass() throws Exception {
-    dsFrameworkUtil.deleteInstance(tabInstance);
+    dsFrameworkUtil.deleteInstance(tabInstance.toId());
   }
 
   @Test

@@ -22,12 +22,14 @@ import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.proto.security.Privilege;
 import co.cask.cdap.proto.security.Role;
 
+import java.util.Properties;
 import java.util.Set;
 
 /**
  * A no-op authorizer to use when authorization is disabled.
  */
-public class NoOpAuthorizer implements Authorizer {
+public class NoOpAuthorizer extends AbstractAuthorizer {
+
   @Override
   public void enforce(EntityId entity, Principal principal, Action action) throws UnauthorizedException {
     // no-op
