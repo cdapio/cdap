@@ -25,6 +25,7 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
+import co.cask.cdap.proto.security.Privilege;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -115,6 +116,28 @@ class ACLDataset extends AbstractDataset {
     }
   }
 
+  public Set<Privilege> listPrivileges(Principal principal) {
+    Set<Privilege> privileges = new HashSet<>();
+    // scan the whole table
+    Scanner scan = table.scan(null, null);
+    try {
+      Row next;
+      while ((next = scan.next()) != null) {
+        Principal curPrincipal = getPrincipal(next.getRow());
+        if (curPrincipal.equals(principal)) {
+          byte[] value = next.get(VALUE_COLUMN);
+          if (value == null) {
+            continue;
+          }
+          privileges.add(new Privilege(getEntity(next.getRow()), Action.valueOf(Bytes.toString(value))));
+        }
+      }
+    } finally {
+      scan.close();
+    }
+    return privileges;
+  }
+
   private MDSKey getKey(EntityId entity) {
     return getKeyBuilder(entity).build();
   }
@@ -137,5 +160,20 @@ class ACLDataset extends AbstractDataset {
 
   private MDSKey.Builder getKeyBuilder(EntityId entity) {
     return new MDSKey.Builder().add(entity.toString());
+  }
+
+  private EntityId getEntity(byte[] rowKey) {
+    MDSKey.Splitter keySplitter = new MDSKey(rowKey).split();
+    // The rowkey is [entity][principal-type][principal-name][action-name]
+    return EntityId.fromString(keySplitter.getString());
+  }
+
+  private Principal getPrincipal(byte[] rowKey) {
+    MDSKey.Splitter keySplitter = new MDSKey(rowKey).split();
+    // The rowkey is [entity][principal-type][principal-name][action-name]
+    keySplitter.skipString(); // skip the entity
+    String principalType = keySplitter.getString();
+    String principalName = keySplitter.getString();
+    return new Principal(principalName, Principal.PrincipalType.valueOf(principalType.toUpperCase()));
   }
 }

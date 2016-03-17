@@ -23,8 +23,12 @@ import co.cask.cdap.internal.test.AppJarHelper;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
+import co.cask.cdap.proto.security.Privilege;
+import co.cask.cdap.proto.security.Role;
 import co.cask.cdap.security.spi.authorization.Authorizer;
 import co.cask.cdap.security.spi.authorization.NoOpAuthorizer;
+import co.cask.cdap.security.spi.authorization.RoleAlreadyExistsException;
+import co.cask.cdap.security.spi.authorization.RoleNotFoundException;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.UncheckedExecutionException;
@@ -299,6 +303,41 @@ public class AuthorizerInstantiatorServiceTest {
     }
 
     @Override
+    public Set<Privilege> listPrivileges(Principal principal) {
+      return null;
+    }
+
+    @Override
+    public void createRole(Role role) throws RoleAlreadyExistsException {
+      // no-op
+    }
+
+    @Override
+    public void dropRole(Role role) throws RoleNotFoundException {
+      // no-op
+    }
+
+    @Override
+    public void addRoleToPrincipal(Role role, Principal principal) throws RoleNotFoundException {
+      // no-op
+    }
+
+    @Override
+    public void removeRoleFromPrincipal(Role role, Principal principal) throws RoleNotFoundException {
+      // no-op
+    }
+
+    @Override
+    public Set<Role> listRoles(Principal principal) {
+      return null;
+    }
+
+    @Override
+    public Set<Role> listAllRoles() {
+      return null;
+    }
+
+    @Override
     public void enforce(EntityId entity, Principal principal, Action action) throws UnauthorizedException {
       // no-op
     }
@@ -332,6 +371,41 @@ public class AuthorizerInstantiatorServiceTest {
     public void revoke(EntityId entity) {
       // no-op
     }
+
+    @Override
+    public Set<Privilege> listPrivileges(Principal principal) {
+      return null;
+    }
+
+    @Override
+    public void createRole(Role role) throws RoleAlreadyExistsException {
+      // no-op
+    }
+
+    @Override
+    public void dropRole(Role role) throws RoleNotFoundException {
+      // no-op
+    }
+
+    @Override
+    public void addRoleToPrincipal(Role role, Principal principal) throws RoleNotFoundException {
+      // no-op
+    }
+
+    @Override
+    public void removeRoleFromPrincipal(Role role, Principal principal) throws RoleNotFoundException {
+      // no-op
+    }
+
+    @Override
+    public Set<Role> listRoles(Principal principal) {
+      return null;
+    }
+
+    @Override
+    public Set<Role> listAllRoles() {
+      return null;
+    }
   }
 
   private static final class ConstructorNotVisible implements Authorizer {
@@ -359,6 +433,41 @@ public class AuthorizerInstantiatorServiceTest {
     @Override
     public void revoke(EntityId entity) {
       // no-op
+    }
+
+    @Override
+    public Set<Privilege> listPrivileges(Principal principal) {
+      return null;
+    }
+
+    @Override
+    public void createRole(Role role) throws RoleAlreadyExistsException {
+      // no-op
+    }
+
+    @Override
+    public void dropRole(Role role) throws RoleNotFoundException {
+      // no-op
+    }
+
+    @Override
+    public void addRoleToPrincipal(Role role, Principal principal) throws RoleNotFoundException {
+      // no-op
+    }
+
+    @Override
+    public void removeRoleFromPrincipal(Role role, Principal principal) throws RoleNotFoundException {
+      // no-op
+    }
+
+    @Override
+    public Set<Role> listRoles(Principal principal) {
+      return null;
+    }
+
+    @Override
+    public Set<Role> listAllRoles() {
+      return null;
     }
   }
 }
