@@ -29,16 +29,18 @@
 
       <div class="integration-setup-popup text-left"
            ng-if="IntegrationsController.navigatorSetup.isOpen">
+
         <h3>Configuration</h3>
-        <h4>
-          Cloudera
-        </h4>
-        <form class="form-horizontal">
+        <form name="navigatorConfiguration" class="form-horizontal">
+          <h4>
+            Cloudera
+          </h4>
           <div class="form-group">
             <label class="control-label col-xs-3">Hostname</label>
             <div class="col-xs-9">
               <input type="text" class="form-control"
-                     ng-model="IntegrationsController.navigatorInfo.hostname">
+                     ng-model="IntegrationsController.navigatorInfo.hostname"
+                     required>
             </div>
           </div>
 
@@ -46,7 +48,8 @@
             <label class="control-label col-xs-3">Username</label>
             <div class="col-xs-9">
               <input type="text" class="form-control"
-                     ng-model="IntegrationsController.navigatorInfo.username">
+                     ng-model="IntegrationsController.navigatorInfo.username"
+                     required>
             </div>
           </div>
 
@@ -54,20 +57,20 @@
             <label class="control-label col-xs-3">Password</label>
             <div class="col-xs-9">
               <input type="password" class="form-control"
-                     ng-model="IntegrationsController.navigatorInfo.password">
+                     ng-model="IntegrationsController.navigatorInfo.password"
+                     required>
             </div>
           </div>
-        </form>
 
-        <h4>
-          Kafka
-        </h4>
-        <form class="form-horizontal">
+          <h4>
+            Kafka
+          </h4>
           <div class="form-group">
             <label class="control-label col-xs-3">Broker List</label>
             <div class="col-xs-9">
               <input type="text" class="form-control"
-                     ng-model="IntegrationsController.navigatorInfo.brokerString">
+                     ng-model="IntegrationsController.navigatorInfo.brokerString"
+                     required>
             </div>
           </div>
         </form>
@@ -78,6 +81,7 @@
             Cancel
           </button>
           <button class="btn btn-success pull-right"
+                  ng-disabled="navigatorConfiguration.$invalid"
                   ng-click="IntegrationsController.saveNavigatorSetup()">
             Save
           </button>
