@@ -47,7 +47,7 @@ body.theme-cdap {
       }
     }
 
-    my-dag {
+    my-dag-beta {
       width: 100%;
       // Dag-Height 60% on smaller screen
       height: 60vh;
@@ -96,6 +96,23 @@ body.theme-cdap {
     .col-xs-12.text-right {
       > .btn.btn-default { margin-bottom: 20px; }
     }
+
+    .hydrator-template-modal {
+      .modal-content {
+        padding: 20px;
+
+        .heading {
+          margin-top: 5px;
+          margin-bottom: 10px;
+          h3 {
+            font-weight: 500;
+            margin-bottom: 0;
+            font-size: 21px;
+            letter-spacing: 0.5px;
+          }
+        }
+      }
+    }
   }
 
   &.state-hydrator-detail, &.state-hydrator-beta-create {
@@ -143,7 +160,7 @@ body.theme-cdap {
     }
   }
 
-  &.state-hydrator-beta-create, &.state-hydrator-preconfigured {
+  &.state-hydrator-beta-create {
     background-color: #e2e3e5;
     main.container {
       background-color: transparent;
@@ -160,21 +177,6 @@ body.theme-cdap {
 
       a:hover {
         text-decoration: none;
-      }
-
-      .heading {
-        margin-top: 5px;
-        margin-bottom: 10px;
-        h3 {
-          font-weight: 500;
-          margin-bottom: 0;
-          font-size: 21px;
-          letter-spacing: 0.5px;
-        }
-
-        &.preconfigured {
-          margin-bottom: 50px;
-        }
       }
 
       .info {

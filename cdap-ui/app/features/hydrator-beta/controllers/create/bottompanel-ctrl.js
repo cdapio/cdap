@@ -14,8 +14,8 @@
  * the License.
  */
 
-class BottomPanelController {
-  constructor(PipelineDetailBottomPanelActionFactory, BottomPanelStore, NodeConfigStore, ConsoleStore) {
+class BottomPanelControllerBeta {
+  constructor(PipelineDetailBottomPanelActionFactoryBeta, BottomPanelStoreBeta, NodeConfigStoreBeta, ConsoleStoreBeta) {
     this.tabs = [
       {
         title: 'Console',
@@ -34,17 +34,17 @@ class BottomPanelController {
         template: '/assets/features/hydrator-beta/templates/partial/reference-tab.html'
       }
     ];
-    this.PipelineDetailBottomPanelActionFactory = PipelineDetailBottomPanelActionFactory;
-    this.NodeConfigStore = NodeConfigStore;
-    this.BottomPanelStore = BottomPanelStore;
+    this.PipelineDetailBottomPanelActionFactoryBeta = PipelineDetailBottomPanelActionFactoryBeta;
+    this.NodeConfigStoreBeta = NodeConfigStoreBeta;
+    this.BottomPanelStoreBeta = BottomPanelStoreBeta;
 
-    this.BottomPanelStore.registerOnChangeListener(this.setIsCollapsed.bind(this));
-    NodeConfigStore.registerOnChangeListener( () => {
-      if (this.NodeConfigStore.getState().isValidPlugin) {
+    this.BottomPanelStoreBeta.registerOnChangeListener(this.setIsCollapsed.bind(this));
+    NodeConfigStoreBeta.registerOnChangeListener( () => {
+      if (this.NodeConfigStoreBeta.getState().isValidPlugin) {
         this.selectTab(2);
       }
     } );
-    ConsoleStore.registerOnChangeListener( () => { this.selectTab(0); } );
+    ConsoleStoreBeta.registerOnChangeListener( () => { this.selectTab(0); } );
 
     this.selectTab(0);
   }
@@ -52,24 +52,24 @@ class BottomPanelController {
     this.activeTab = this.tabs[tab];
   }
   setIsCollapsed() {
-    this.bottomPanelState = this.BottomPanelStore.getPanelState();
+    this.bottomPanelState = this.BottomPanelStoreBeta.getPanelState();
   }
   toggleCollapse(expanded) {
     if(expanded) {
-      this.PipelineDetailBottomPanelActionFactory.collapse();
+      this.PipelineDetailBottomPanelActionFactoryBeta.collapse();
     } else {
-      this.PipelineDetailBottomPanelActionFactory.expand();
+      this.PipelineDetailBottomPanelActionFactoryBeta.expand();
     }
   }
   toggleMaximized(maximized) {
     if (maximized !== 2) {
-      this.PipelineDetailBottomPanelActionFactory.maximize();
+      this.PipelineDetailBottomPanelActionFactoryBeta.maximize();
     } else {
-      this.PipelineDetailBottomPanelActionFactory.expand();
+      this.PipelineDetailBottomPanelActionFactoryBeta.expand();
     }
   }
 }
 
-BottomPanelController.$inject = ['PipelineDetailBottomPanelActionFactory', 'BottomPanelStore', 'NodeConfigStore', 'ConsoleStore'];
+BottomPanelControllerBeta.$inject = ['PipelineDetailBottomPanelActionFactoryBeta', 'BottomPanelStoreBeta', 'NodeConfigStoreBeta', 'ConsoleStoreBeta'];
 angular.module(PKG.name + '.feature.hydrator-beta')
-  .controller('BottomPanelController', BottomPanelController);
+  .controller('BottomPanelControllerBeta', BottomPanelControllerBeta);

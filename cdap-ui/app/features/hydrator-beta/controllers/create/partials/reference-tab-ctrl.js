@@ -14,23 +14,23 @@
  * the License.
  */
 
-class ReferenceTabController {
-  constructor(PluginConfigFactory, NodeConfigStore, GLOBALS, myHelpers) {
+class ConsoleTabControllerBeta {
+  constructor(PluginConfigFactoryBeta, NodeConfigStoreBeta, GLOBALS, myHelpers) {
     this.GLOBALS = GLOBALS;
-    this.NodeConfigStore = NodeConfigStore;
-    this.PluginConfigFactory = PluginConfigFactory;
+    this.NodeConfigStoreBeta = NodeConfigStoreBeta;
+    this.PluginConfigFactoryBeta = PluginConfigFactoryBeta;
     this.myHelpers = myHelpers;
-    this.NodeConfigStore.registerOnChangeListener(this.setState.bind(this));
+    this.NodeConfigStoreBeta.registerOnChangeListener(this.setState.bind(this));
     this.setState();
   }
   setState() {
     this.state = this.state || {};
-    this.state.node = this.NodeConfigStore.getState().node;
+    this.state.node = this.NodeConfigStoreBeta.getState().node;
     if (!this.state.node.plugin) {
       this.state.docReference = this.GLOBALS.en.hydrator.studio.info['DEFAULT-REFERENCE'];
     } else {
       let key = `doc.${this.state.node.plugin.name}-${this.state.node.type}`;
-      this.PluginConfigFactory.fetchDocJson(
+      this.PluginConfigFactoryBeta.fetchDocJson(
         this.myHelpers.objectQuery(this.state.node, 'plugin', 'artifact', 'name'),
         this.myHelpers.objectQuery(this.state.node, 'plugin', 'artifact', 'version'),
         this.myHelpers.objectQuery(this.state.node, 'plugin', 'artifact', 'scope'),
@@ -49,6 +49,6 @@ class ReferenceTabController {
   }
 }
 
-ReferenceTabController.$inject = ['PluginConfigFactory', 'NodeConfigStore', 'GLOBALS', 'myHelpers'];
+ConsoleTabControllerBeta.$inject = ['PluginConfigFactoryBeta', 'NodeConfigStoreBeta', 'GLOBALS', 'myHelpers'];
 angular.module(`${PKG.name}.feature.hydrator-beta`)
-  .controller('ReferenceTabController', ReferenceTabController);
+  .controller('ReferenceTabControllerBeta', ConsoleTabControllerBeta);

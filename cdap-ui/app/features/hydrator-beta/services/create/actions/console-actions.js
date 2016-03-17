@@ -15,19 +15,19 @@
  */
 
 class ConsoleActionsFactory {
-  constructor(ConsoleDispatcher) {
-    this.consoleDispatcher = ConsoleDispatcher.getDispatcher();
+  constructor(ConsoleDispatcherBeta) {
+    this.ConsoleDispatcherBeta = ConsoleDispatcherBeta.getDispatcher();
   }
 
   addMessage(message) {
-    this.consoleDispatcher.dispatch('onAddMessage', message);
+    this.ConsoleDispatcherBeta.dispatch('onAddMessage', message);
   }
 
   resetMessages() {
-    this.consoleDispatcher.dispatch('onResetMessages');
+    this.ConsoleDispatcherBeta.dispatch('onResetMessages');
   }
 
 }
-ConsoleActionsFactory.$inject = ['ConsoleDispatcher'];
+ConsoleActionsFactory.$inject = ['ConsoleDispatcherBeta'];
 angular.module(`${PKG.name}.feature.hydrator-beta`)
   .service('ConsoleActionsFactory', ConsoleActionsFactory);

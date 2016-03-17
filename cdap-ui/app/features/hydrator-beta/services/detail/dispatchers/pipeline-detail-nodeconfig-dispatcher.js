@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.feature.hydrator')
-  .service('PipelineNodeConfigDispatcher-beta', function(CaskAngularDispatcher) {
+  .service('PipelineNodeConfigDispatcherBeta', function(CaskAngularDispatcher) {
     this.__dispatcher__ = null;
     this.destroyDispatcher = function() {
       delete this.__dispatcher__;

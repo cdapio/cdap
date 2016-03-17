@@ -14,24 +14,24 @@
   the License.
 -->
 
-<div class="row" ng-if="NodeConfigController.state.node.plugin.name !== 'Validator'">
+<div class="row" ng-if="NodeConfigControllerBeta.state.node.plugin.name !== 'Validator'">
   <div class="col-xs-12">
     <fieldset ng-disabled="isDisabled">
-      <div ng-if="NodeConfigController.state.noconfig">
+      <div ng-if="NodeConfigControllerBeta.state.noconfig">
         <div class="well well-lg widget-group-container">
           <div class="form-group">
             <label class="control-label">
               <span>Label</span>
               <span class="fa fa-asterisk"></span>
-              <small class="text-danger" ng-if="NodeConfigController.state.nodeLabelError">{{::NodeConfigController.state.nodeLabelError}}</small>
+              <small class="text-danger" ng-if="NodeConfigControllerBeta.state.nodeLabelError">{{::NodeConfigControllerBeta.state.nodeLabelError}}</small>
             </label>
             <input type="text"
                     class="form-control"
-                    ng-model="NodeConfigController.state.node.plugin.label"/>
+                    ng-model="NodeConfigControllerBeta.state.node.plugin.label"/>
           </div>
-          <div ng-repeat="(name, value) in NodeConfigController.state.node.plugin.properties track by $index">
+          <div ng-repeat="(name, value) in NodeConfigControllerBeta.state.node.plugin.properties track by $index">
             <div class="form-group">
-              <label ng-init="title='info';description=NodeConfigController.state.node._backendProperties[name].description"
+              <label ng-init="title='info';description=NodeConfigControllerBeta.state.node._backendProperties[name].description"
                       class="control-label">
                 <span>{{name}}</span>
                 <span class="fa fa-info-circle"
@@ -39,13 +39,13 @@
                       tooltip-placement="right"
                       tooltip-append-to-body="true">
                 </span>
-                <span class="fa fa-asterisk" ng-if="NodeConfigController.state.node._backendProperties[name].required"></span>
-                <small class="text-danger" ng-if="!NodeConfigController.state.node.warning && NodeConfigController.state.node._backendProperties[name].required && !NodeConfigController.state.node.plugin.properties[name]">{{::NodeConfigController.requiredPropertyError}}</small>
+                <span class="fa fa-asterisk" ng-if="NodeConfigControllerBeta.state.node._backendProperties[name].required"></span>
+                <small class="text-danger" ng-if="!NodeConfigControllerBeta.state.node.warning && NodeConfigControllerBeta.state.node._backendProperties[name].required && !NodeConfigControllerBeta.state.node.plugin.properties[name]">{{::NodeConfigControllerBeta.requiredPropertyError}}</small>
               </label>
               <input type="text"
                       class="form-control"
-                      ng-model="NodeConfigController.state.node.plugin.properties[name]"
-                      ng-disabled="NodeConfigController.state.node.pluginTemplate && plugin.lock[name]" />
+                      ng-model="NodeConfigControllerBeta.state.node.plugin.properties[name]"
+                      ng-disabled="NodeConfigControllerBeta.state.node.pluginTemplate && plugin.lock[name]" />
             </div>
           </div>
         </div>
@@ -54,8 +54,8 @@
   </div>
 </div>
 
-<div ng-if="NodeConfigController.state.isTransform && NodeConfigController.state.node.plugin.name === 'Validator'">
+<div ng-if="NodeConfigControllerBeta.state.isTransform && NodeConfigControllerBeta.state.node.plugin.name === 'Validator'">
   <div class="col-lg-12">
-    <div ng-include="'/assets/features/hydrator/templates/create/popovers/plugin-edit-validator-transform.html'"></div>
+    <div ng-include="'/assets/features/hydrator-beta/templates/create/popovers/plugin-edit-validator-transform.html'"></div>
   </div>
 </div>

@@ -17,59 +17,59 @@
 <div class="side-panel top text-center">
   <div class="row nomargin">
     <div class="col-xs-12 col-sm-6 text-left nopadding">
-      <div class="hydrator-metadata" ng-class="{'expanded': TopPanelController.metadataExpanded}">
-        <div ng-click="TopPanelController.openMetadata()" class="clearfix">
+      <div class="hydrator-metadata" ng-class="{'expanded': TopPanelControllerBeta.metadataExpanded}">
+        <div ng-click="TopPanelControllerBeta.openMetadata()" class="clearfix">
           <div class="pipeline-type">
-            <span ng-if="TopPanelController.state.artifact.name === TopPanelController.GLOBALS.etlBatch"
+            <span ng-if="TopPanelControllerBeta.state.artifact.name === TopPanelControllerBeta.GLOBALS.etlBatch"
                   uib-tooltip="Type: Batch"
                   tooltip-placement="right"
                   tooltip-class="toppanel-tooltip icon-tooltip"
                   class="icon-ETLBatch"></span>
-            <span ng-if="TopPanelController.state.artifact.name === TopPanelController.GLOBALS.etlRealtime"
+            <span ng-if="TopPanelControllerBeta.state.artifact.name === TopPanelControllerBeta.GLOBALS.etlRealtime"
                   uib-tooltip="Type: Realtime"
                   tooltip-placement="right"
                   tooltip-class="toppanel-tooltip icon-tooltip"
                   class="icon-ETLRealtime"></span>
           </div>
           <div class="pipeline-name pull-left">
-            <div ng-class="{'placeholder': !TopPanelController.state.metadata.name.length}"
-                 ng-if="!TopPanelController.metadataExpanded"
-                 ng-bind="TopPanelController.state.metadata['name'] | myEllipsis: 28"
-                 uib-tooltip="{{ TopPanelController.state.metadata.name }}"
+            <div ng-class="{'placeholder': !TopPanelControllerBeta.state.metadata.name.length}"
+                 ng-if="!TopPanelControllerBeta.metadataExpanded"
+                 ng-bind="TopPanelControllerBeta.state.metadata['name'] | myEllipsis: 28"
+                 uib-tooltip="{{ TopPanelControllerBeta.state.metadata.name }}"
                  tooltip-placement="right"
-                 tooltip-enable="TopPanelController.state.metadata.name.length > 27"
+                 tooltip-enable="TopPanelControllerBeta.state.metadata.name.length > 27"
                  tooltip-class="toppanel-tooltip"></div>
             <input type="text"
-                   ng-if="TopPanelController.metadataExpanded"
-                   ng-model="TopPanelController.state.metadata['name']"
+                   ng-if="TopPanelControllerBeta.metadataExpanded"
+                   ng-model="TopPanelControllerBeta.state.metadata['name']"
                    my-maxlength="64"
                    placeholder="Name your pipeline"
-                   ng-keyup="TopPanelController.onEnterOnMetadata($event)" />
-            <div ng-class="{'placeholder': !TopPanelController.state.metadata['description'].length}"
-                 ng-if="!TopPanelController.metadataExpanded"
-                 ng-bind="TopPanelController.parsedDescription | myEllipsis: 65"
-                 uib-tooltip-html="TopPanelController.tooltipDescription"
+                   ng-keyup="TopPanelControllerBeta.onEnterOnMetadata($event)" />
+            <div ng-class="{'placeholder': !TopPanelControllerBeta.state.metadata['description'].length}"
+                 ng-if="!TopPanelControllerBeta.metadataExpanded"
+                 ng-bind="TopPanelControllerBeta.parsedDescription | myEllipsis: 65"
+                 uib-tooltip-html="TopPanelControllerBeta.tooltipDescription"
                  tooltip-placement="right"
-                 tooltip-enable="TopPanelController.tooltipDescription.length > 64"
+                 tooltip-enable="TopPanelControllerBeta.tooltipDescription.length > 64"
                  tooltip-class="toppanel-tooltip"
-                 ng-if="!TopPanelController.metadataExpanded"
+                 ng-if="!TopPanelControllerBeta.metadataExpanded"
                  tooltip-append-to-body="true"></div>
-            <textarea ng-model="TopPanelController.state.metadata['description']"
+            <textarea ng-model="TopPanelControllerBeta.state.metadata['description']"
                       placeholder="Enter a description for your pipeline."
-                      ng-if="TopPanelController.metadataExpanded"></textarea>
+                      ng-if="TopPanelControllerBeta.metadataExpanded"></textarea>
           </div>
         </div>
 
         <div class="btn-group pull-right">
-          <button type="button" class="btn btn-default" ng-click="TopPanelController.resetMetadata()">Cancel</button>
-          <button type="button" class="btn btn-success" ng-click="TopPanelController.saveMetadata()">Save</button>
+          <button type="button" class="btn btn-default" ng-click="TopPanelControllerBeta.resetMetadata()">Cancel</button>
+          <button type="button" class="btn btn-success" ng-click="TopPanelControllerBeta.saveMetadata()">Save</button>
         </div>
       </div>
     </div>
     <div class="col-sm-3 col-sm-offset-3 text-right nopadding">
       <div class="btn-group action-buttons">
         <div class="btn"
-             ng-repeat="action in TopPanelController.canvasOperations"
+             ng-repeat="action in TopPanelControllerBeta.canvasOperations"
              ng-click="action.fn()"
              uib-tooltip="{{action.name}}"
              tooltip-placement="bottom"

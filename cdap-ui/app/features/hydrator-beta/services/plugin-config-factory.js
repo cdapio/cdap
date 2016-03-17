@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-class PluginConfigFactory {
+class PluginConfigFactoryBeta {
   constructor ($q, myHelpers, myPipelineApi, $state) {
     this.$q = $q;
     this.myHelpers = myHelpers;
@@ -246,6 +246,6 @@ class PluginConfigFactory {
   }
 }
 
-PluginConfigFactory.$inject = ['$q', 'myHelpers', 'myPipelineApi', '$state'];
+PluginConfigFactoryBeta.$inject = ['$q', 'myHelpers', 'myPipelineApi', '$state'];
 angular.module(PKG.name + '.feature.hydrator-beta')
-  .service('PluginConfigFactory', PluginConfigFactory);
+  .service('PluginConfigFactoryBeta', PluginConfigFactoryBeta);

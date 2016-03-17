@@ -15,12 +15,12 @@
  */
 
 angular.module(PKG.name + '.feature.hydrator-beta')
-  .controller('HydratorDetailCanvasController', function(rPipelineDetail, BottomPanelStore, NodesActionsFactory, HydratorService, NodesStore, ConfigStore, PipelineNodeConfigActionFactory, DetailNonRunsStore, MetricsStore) {
-    this.ConfigStore = ConfigStore;
+  .controller('HydratorDetailCanvasControllerBeta', function(rPipelineDetail, BottomPanelStoreBeta, NodesActionsFactory, HydratorServiceBeta, NodesStore, ConfigStoreBeta, PipelineNodeConfigActionFactoryBeta, DetailNonRunsStore, MetricsStore) {
+    this.ConfigStoreBeta = ConfigStoreBeta;
     this.NodesStore = NodesStore;
     this.DetailNonRunsStore = DetailNonRunsStore;
-    this.PipelineNodeConfigActionFactory = PipelineNodeConfigActionFactory;
-    this.HydratorService = HydratorService;
+    this.PipelineNodeConfigActionFactoryBeta = PipelineNodeConfigActionFactoryBeta;
+    this.HydratorServiceBeta = HydratorServiceBeta;
     this.MetricsStore = MetricsStore;
 
     try{
@@ -30,10 +30,10 @@ angular.module(PKG.name + '.feature.hydrator-beta')
       return;
     }
     this.setState = function() {
-      this.setScroll = (BottomPanelStore.getPanelState() === 0 ? false: true);
+      this.setScroll = (BottomPanelStoreBeta.getPanelState() === 0 ? false: true);
     };
     this.setState();
-    BottomPanelStore.registerOnChangeListener(this.setState.bind(this));
+    BottomPanelStoreBeta.registerOnChangeListener(this.setState.bind(this));
     var obj = DetailNonRunsStore.getCloneConfig();
 
     NodesActionsFactory.createGraphFromConfig(obj.__ui__.nodes, obj.config.connections, obj.config.comments);
@@ -52,15 +52,15 @@ angular.module(PKG.name + '.feature.hydrator-beta')
       if (!nodeId) {
         return;
       }
-      this.PipelineNodeConfigActionFactory.choosePlugin(this.DetailNonRunsStore.getPluginObject(nodeId));
+      this.PipelineNodeConfigActionFactoryBeta.choosePlugin(this.DetailNonRunsStore.getPluginObject(nodeId));
     };
 
     this.deleteNode = function() {
-      this.PipelineNodeConfigActionFactory.removePlugin();
+      this.PipelineNodeConfigActionFactoryBeta.removePlugin();
     };
 
     this.generateSchemaOnEdge = function (sourceId) {
-      return this.HydratorService.generateSchemaOnEdge(sourceId);
+      return this.HydratorServiceBeta.generateSchemaOnEdge(sourceId);
     };
 
     function convertMetricsArrayIntoObject(arr) {

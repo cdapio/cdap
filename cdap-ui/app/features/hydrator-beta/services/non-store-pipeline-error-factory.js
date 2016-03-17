@@ -19,7 +19,7 @@
   Not sure why a error factory should not be dependent on a store and vice-versa at the same time (store<->errorfactory)
   These utility functions should have been in HydratorErrorFactory.
   Its not there because of this reason,
-    [$injector:cdep] Circular dependency found: ConfigStore <- HydratorErrorFactory <- ConfigStore <- LeftPanelStore
+    [$injector:cdep] Circular dependency found: ConfigStore <- HydratorErrorFactory <- ConfigStore <- LeftPanelStoreBeta
 
   The only valid (sortof) justification I have as of now for creating this factory is all these functions are sort of pure functions
   in a way you give it an input it gives back an output. No store dependency.

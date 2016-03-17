@@ -21,16 +21,16 @@
         <label class="control-label">
           Label
           <span class="fa fa-asterisk"></span>
-          <small class="text-danger" ng-if="NodeConfigController.state.nodeLabelError">{{NodeConfigController.state.nodeLabelError}}</small>
+          <small class="text-danger" ng-if="NodeConfigControllerBeta.state.nodeLabelError">{{NodeConfigControllerBeta.state.nodeLabelError}}</small>
         </label>
-        <input type="text" class="form-control" ng-model="NodeConfigController.state.node.plugin.label"/>
+        <input type="text" class="form-control" ng-model="NodeConfigControllerBeta.state.node.plugin.label"/>
       </div>
 
-      <div ng-repeat="group in NodeConfigController.state.groupsConfig.groups">
+      <div ng-repeat="group in NodeConfigControllerBeta.state.groupsConfig.groups">
         <div class="widget-group-container">
           <h4>{{::group.display}}</h4>
           <div ng-repeat="field in group.fields">
-            <div ng-if="field.name !== NodeConfigController.state.groupsConfig.outputSchema.schemaProperty">
+            <div ng-if="field.name !== NodeConfigControllerBeta.state.groupsConfig.outputSchema.schemaProperty">
 
               <div class="form-group">
                 <label class="control-label">
@@ -40,18 +40,18 @@
                         tooltip-placement="right"
                         tooltip-append-to-body="true">
                   </span>
-                  <span class="fa fa-asterisk" ng-if="NodeConfigController.state.node._backendProperties[field.name].required"></span>
-                  <small class="text-danger" ng-if="!NodeConfigController.state.node.warning && NodeConfigController.state.node._backendProperties[field.name].required && !NodeConfigController.state.node.plugin.properties[field.name]">{{::NodeConfigController.requiredPropertyError}}</small>
+                  <span class="fa fa-asterisk" ng-if="NodeConfigControllerBeta.state.node._backendProperties[field.name].required"></span>
+                  <small class="text-danger" ng-if="!NodeConfigControllerBeta.state.node.warning && NodeConfigControllerBeta.state.node._backendProperties[field.name].required && !NodeConfigControllerBeta.state.node.plugin.properties[field.name]">{{::NodeConfigControllerBeta.requiredPropertyError}}</small>
                 </label>
 
                 <div>
                   <div data-name="field"
                        class="my-widget-container"
                        ng-class="{'select-wrapper': field.widget === 'select'}"
-                       data-model="NodeConfigController.state.node.plugin.properties[field.name]"
+                       data-model="NodeConfigControllerBeta.state.node.plugin.properties[field.name]"
                        data-myconfig="field"
-                       data-properties="NodeConfigController.state.node.plugin.properties"
-                       widget-disabled="NodeConfigController.state.node.pluginTemplate && NodeConfigController.state.node.lock[field.name]"
+                       data-properties="NodeConfigControllerBeta.state.node.plugin.properties"
+                       widget-disabled="NodeConfigControllerBeta.state.node.pluginTemplate && NodeConfigControllerBeta.state.node.lock[field.name]"
                        widget-container>
                   </div>
                 </div>
@@ -62,15 +62,15 @@
         </div>
       </div>
       <br/>
-      <div class="form-group" ng-if="NodeConfigController.state.showErrorDataset">
+      <div class="form-group" ng-if="NodeConfigControllerBeta.state.showErrorDataset">
         <label class="control-label">
           Error Dataset
           <span class="fa fa-info-circle"
-                ng-if="NodeConfigController.state.errorDatasetTooltip"
-                uib-tooltip="{{NodeConfigController.state.errorDatasetTooltip}}"
+                ng-if="NodeConfigControllerBeta.state.errorDatasetTooltip"
+                uib-tooltip="{{NodeConfigControllerBeta.state.errorDatasetTooltip}}"
                 tooltip-placement="right"></span>
         </label>
-        <input type="text" class="form-control" ng-model="NodeConfigController.state.node.errorDatasetName"/>
+        <input type="text" class="form-control" ng-model="NodeConfigControllerBeta.state.node.errorDatasetName"/>
       </div>
 
   </fieldset>

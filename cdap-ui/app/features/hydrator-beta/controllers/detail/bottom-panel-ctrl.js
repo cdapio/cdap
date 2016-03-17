@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.feature.hydrator-beta')
-  .controller('HydratorDetailBottomPanelController', function(BottomPanelStore, PipelineDetailBottomPanelActionFactory, NodeConfigStore, $scope) {
+  .controller('HydratorDetailBottomPanelControllerBeta', function(BottomPanelStoreBeta, PipelineDetailBottomPanelActionFactoryBeta, NodeConfigStoreBeta, $scope) {
     this.tabs = [
       {
         title: 'History',
@@ -44,36 +44,36 @@ angular.module(PKG.name + '.feature.hydrator-beta')
     ];
 
     this.setIsCollapsed = function() {
-      this.bottomPanelState = BottomPanelStore.getPanelState();
+      this.bottomPanelState = BottomPanelStoreBeta.getPanelState();
     };
     this.setIsCollapsed();
     this.selectTab = function(tab) {
       this.activeTab = this.tabs[tab];
-      PipelineDetailBottomPanelActionFactory.expand();
+      PipelineDetailBottomPanelActionFactoryBeta.expand();
     };
     this.selectTab(0);
 
     this.toggleCollapse = function(expanded) {
       if(expanded) {
-        PipelineDetailBottomPanelActionFactory.collapse();
+        PipelineDetailBottomPanelActionFactoryBeta.collapse();
       } else {
-        PipelineDetailBottomPanelActionFactory.expand();
+        PipelineDetailBottomPanelActionFactoryBeta.expand();
       }
     };
     this.toggleMaximized = function(maximized) {
       if (maximized !== 2) {
-        PipelineDetailBottomPanelActionFactory.maximize();
+        PipelineDetailBottomPanelActionFactoryBeta.maximize();
       } else {
-        PipelineDetailBottomPanelActionFactory.expand();
+        PipelineDetailBottomPanelActionFactoryBeta.expand();
       }
     };
-    BottomPanelStore.registerOnChangeListener(this.setIsCollapsed.bind(this));
-    PipelineDetailBottomPanelActionFactory.expand();
-    NodeConfigStore.registerOnChangeListener(function() {
+    BottomPanelStoreBeta.registerOnChangeListener(this.setIsCollapsed.bind(this));
+    PipelineDetailBottomPanelActionFactoryBeta.expand();
+    NodeConfigStoreBeta.registerOnChangeListener(function() {
       this.selectTab(5);
     }.bind(this));
 
     $scope.$on('$destroy', function() {
-      PipelineDetailBottomPanelActionFactory.reset();
+      PipelineDetailBottomPanelActionFactoryBeta.reset();
     });
   });

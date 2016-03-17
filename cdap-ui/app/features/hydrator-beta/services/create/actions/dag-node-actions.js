@@ -15,19 +15,19 @@
  */
 
 class PipelineCreateDAGActionsFactory{
-  constructor(NodeConfigDispatcher) {
-    this.nodeConfigDispatcher = NodeConfigDispatcher.getDispatcher();
+  constructor(NodeConfigDispatcherBeta) {
+    this.NodeConfigDispatcherBeta = NodeConfigDispatcherBeta.getDispatcher();
   }
   addNode(node) {
-    this.nodeConfigDispatcher.dispatch('onPluginAdd', node);
+    this.NodeConfigDispatcherBeta.dispatch('onPluginAdd', node);
   }
   removeNode(node) {
-    this.nodeConfigDispatcher.dispatch('onPluginRemove', node);
+    this.NodeConfigDispatcherBeta.dispatch('onPluginRemove', node);
   }
   choosNode(node) {
-    this.nodeConfigDispatcher.dispatch('onPluginChoose', node);
+    this.NodeConfigDispatcherBeta.dispatch('onPluginChoose', node);
   }
 }
-PipelineCreateDAGActionsFactory.$inject = ['NodeConfigDispatcher'];
+PipelineCreateDAGActionsFactory.$inject = ['NodeConfigDispatcherBeta'];
 angular.module(`${PKG.name}.feature.hydrator-beta`)
   .service('PipelineCreateDAGActionsFactory', PipelineCreateDAGActionsFactory);

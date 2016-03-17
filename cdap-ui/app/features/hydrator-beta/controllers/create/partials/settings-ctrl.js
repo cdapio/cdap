@@ -14,16 +14,16 @@
  * the License.
  */
 
-class HydratorSettingsController {
-  constructor(GLOBALS, ConfigStore, ConfigActionsFactory, $scope) {
+class HydratorSettingsControllerBeta {
+  constructor(GLOBALS, ConfigStoreBeta, ConfigActionsFactoryBeta, $scope) {
     this.GLOBALS = GLOBALS;
 
-    this.templateType = ConfigStore.getArtifact().name;
+    this.templateType = ConfigStoreBeta.getArtifact().name;
 
     // If ETL Batch
     if (this.templateType === GLOBALS.etlBatch) {
       // Initialiting ETL Batch Schedule
-      this.initialCron = ConfigStore.getSchedule();
+      this.initialCron = ConfigStoreBeta.getSchedule();
       this.cron = this.initialCron;
 
       this.isBasic = this.checkCron(this.initialCron);
@@ -31,7 +31,7 @@ class HydratorSettingsController {
 
       // Debounce method for setting schedule
       var setSchedule = _.debounce( () => {
-        ConfigActionsFactory.setSchedule(this.cron);
+        ConfigActionsFactoryBeta.setSchedule(this.cron);
       }, 1000);
 
       $scope.$watch( () => {
@@ -41,11 +41,11 @@ class HydratorSettingsController {
     // If ETL Realtime
     else if (this.templateType === GLOBALS.etlRealtime) {
       // Initializing ETL Realtime Instance
-      this.instance = ConfigStore.getInstance();
+      this.instance = ConfigStoreBeta.getInstance();
 
       // Debounce method for setting instance
       var setInstance = _.debounce( () => {
-        ConfigActionsFactory.setInstance(this.instance);
+        ConfigActionsFactoryBeta.setInstance(this.instance);
       }, 1000);
 
       $scope.$watch( () => {
@@ -82,76 +82,6 @@ class HydratorSettingsController {
   }
 }
 
-HydratorSettingsController.$inject = ['GLOBALS', 'ConfigStore', 'ConfigActionsFactory', '$scope'];
+HydratorSettingsControllerBeta.$inject = ['GLOBALS', 'ConfigStoreBeta', 'ConfigActionsFactoryBeta', '$scope'];
 angular.module(PKG.name + '.feature.hydrator-beta')
-  .controller('HydratorSettingsController', HydratorSettingsController);
-  // .controller('HydratorSettingsController', function() {
-    //GLOBALS, EventPipe, $timeout, myHelpers, $scope
-    // this.GLOBALS = GLOBALS;
-    // this.metadata = MyAppDAGService.metadata;
-    // this.initialCron = MyAppDAGService.metadata.template.schedule.cron || '* * * * *';
-    //
-    // this.cron = myHelpers.objectQuery(MyAppDAGService, 'metadata', 'template', 'schedule', 'cron') || '';
-    // this.instance = myHelpers.objectQuery(MyAppDAGService, 'metadata', 'template', 'instance');
-    // this.saveDisabled = true;
-    //
-    // if (MyAppDAGService.metadata.template.type === GLOBALS.etlBatch) {
-    //   $scope.$watch(function () {
-    //     return this.cron;
-    //   }.bind(this), function () {
-    //     var initialCron = myHelpers.objectQuery(MyAppDAGService, 'metadata', 'template', 'schedule', 'cron') || '';
-    //     if (this.cron !== initialCron) {
-    //       this.saveDisabled = false;
-    //     } else {
-    //       this.saveDisabled = true;
-    //     }
-    //   }.bind(this));
-    // }
-    //
-    // function checkCron(cron) {
-    //   var pattern = /^[0-9\*\s]*$/g;
-    //   var parse = cron.split('');
-    //   for (var i = 0; i < parse.length; i++) {
-    //     if (!parse[i].match(pattern)) {
-    //       return false;
-    //     }
-    //   }
-    //   return true;
-    // }
-    //
-    // this.isBasic = checkCron(this.initialCron);
-    //
-    // this.changeScheduler = function (type) {
-    //   if (type === 'BASIC') {
-    //     this.initialCron = this.cron;
-    //     var check = true;
-    //     if (!checkCron(this.initialCron)) {
-    //       check = confirm('You have advanced configuration that is not available in basic mode. Are you sure you want to go to basic scheduler?');
-    //     }
-    //     if (check) {
-    //       this.isBasic = true;
-    //     }
-    //   } else {
-    //     this.isBasic = false;
-    //   }
-    // };
-    //
-    // this.save = function () {
-    //   this.saveDisabled = true;
-    //   MyAppDAGService.metadata.template.schedule.cron = this.cron;
-    //   MyAppDAGService.metadata.template.instance = this.instance;
-    // };
-    //
-    // // Will be used once we figure out how to reset a bottom panel tab content.
-    // this.reset = function() {
-    //   $timeout(function () {
-    //     this.initialCron = myHelpers.objectQuery(MyAppDAGService, 'metadata', 'template', 'schedule', 'cron') || '* * * * *';
-    //   }.bind(this));
-    //
-    //   this.saveDisabled = true;
-    //   this.instance = myHelpers.objectQuery(MyAppDAGService, 'metadata', 'template', 'instance');
-    //
-    //   EventPipe.emit('plugin.reset');
-    // };
-
-  // });
+  .controller('HydratorSettingsControllerBeta', HydratorSettingsControllerBeta);

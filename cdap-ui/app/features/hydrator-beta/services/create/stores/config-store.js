@@ -14,34 +14,34 @@
  * the License.
  */
 
-class ConfigStore {
-  constructor(ConfigDispatcher, CanvasFactory, GLOBALS, mySettings, ConsoleActionsFactory, $stateParams, myHelpers, NonStorePipelineErrorFactory, HydratorService, $q, PluginConfigFactory, uuid, $state){
+class ConfigStoreBeta {
+  constructor(ConfigDispatcherBeta, CanvasFactoryBeta, GLOBALS, mySettings, ConsoleActionsFactory, $stateParams, myHelpers, NonStorePipelineErrorFactory, HydratorServiceBeta, $q, PluginConfigFactoryBeta, uuid, $state){
     this.state = {};
     this.mySettings = mySettings;
     this.ConsoleActionsFactory = ConsoleActionsFactory;
-    this.CanvasFactory = CanvasFactory;
+    this.CanvasFactoryBeta = CanvasFactoryBeta;
     this.GLOBALS = GLOBALS;
     this.$stateParams = $stateParams;
     this.myHelpers = myHelpers;
     this.NonStorePipelineErrorFactory = NonStorePipelineErrorFactory;
-    this.HydratorService = HydratorService;
+    this.HydratorServiceBeta = HydratorServiceBeta;
     this.$q = $q;
-    this.PluginConfigFactory = PluginConfigFactory;
+    this.PluginConfigFactoryBeta = PluginConfigFactoryBeta;
     this.uuid = uuid;
     this.$state = $state;
 
     this.changeListeners = [];
     this.setDefaults();
-    this.configDispatcher = ConfigDispatcher.getDispatcher();
-    this.configDispatcher.register('onArtifactSave', this.setArtifact.bind(this));
-    this.configDispatcher.register('onMetadataInfoSave', this.setMetadataInformation.bind(this));
-    this.configDispatcher.register('onPluginAdd', this.setConfig.bind(this));
-    this.configDispatcher.register('onPluginEdit', this.editNodeProperties.bind(this));
-    this.configDispatcher.register('onSetSchedule', this.setSchedule.bind(this));
-    this.configDispatcher.register('onSetInstance', this.setInstance.bind(this));
-    this.configDispatcher.register('onSaveAsDraft', this.saveAsDraft.bind(this));
-    this.configDispatcher.register('onInitialize', this.init.bind(this));
-    this.configDispatcher.register('onSchemaPropagationDownStream', this.propagateIOSchemas.bind(this));
+    this.configDispatcherBeta = ConfigDispatcherBeta.getDispatcher();
+    this.configDispatcherBeta.register('onArtifactSave', this.setArtifact.bind(this));
+    this.configDispatcherBeta.register('onMetadataInfoSave', this.setMetadataInformation.bind(this));
+    this.configDispatcherBeta.register('onPluginAdd', this.setConfig.bind(this));
+    this.configDispatcherBeta.register('onPluginEdit', this.editNodeProperties.bind(this));
+    this.configDispatcherBeta.register('onSetSchedule', this.setSchedule.bind(this));
+    this.configDispatcherBeta.register('onSetInstance', this.setInstance.bind(this));
+    this.configDispatcherBeta.register('onSaveAsDraft', this.saveAsDraft.bind(this));
+    this.configDispatcherBeta.register('onInitialize', this.init.bind(this));
+    this.configDispatcherBeta.register('onSchemaPropagationDownStream', this.propagateIOSchemas.bind(this));
   }
   registerOnChangeListener(callback) {
     this.changeListeners.push(callback);
@@ -186,7 +186,7 @@ class ConfigStore {
       delete nodesMap[id];
     };
 
-    var connections = this.CanvasFactory.orderConnections(
+    var connections = this.CanvasFactoryBeta.orderConnections(
       angular.copy(this.state.config.connections),
       this.state.artifact.name,
       this.state.__ui__.nodes
@@ -235,7 +235,7 @@ class ConfigStore {
     // Stripping of uuids and generating configs is what is going on here.
 
     var config = angular.copy(this.generateConfigFromState());
-    this.CanvasFactory.pruneProperties(config);
+    this.CanvasFactoryBeta.pruneProperties(config);
     state.config = angular.copy(config);
 
     var nodes = angular.copy(this.getNodes()).map( node => {
@@ -361,7 +361,7 @@ class ConfigStore {
       node => !angular.isObject(node._backendProperties)
     );
     let parseNodeConfig = (node, res) => {
-      let nodeConfig = this.PluginConfigFactory.generateNodeConfig(node._backendProperties, res);
+      let nodeConfig = this.PluginConfigFactoryBeta.generateNodeConfig(node._backendProperties, res);
       node.implicitSchema = nodeConfig.outputSchema.implicitSchema;
       node.outputSchemaProperty = nodeConfig.outputSchema.outputSchemaProperty;
       if (angular.isArray(node.outputSchemaProperty)) {
@@ -385,7 +385,7 @@ class ConfigStore {
     };
     if (nodesWOutBackendProps) {
       nodesWOutBackendProps.forEach( n => {
-        listOfPromises.push(this.HydratorService.fetchBackendProperties(n, this.getAppType()));
+        listOfPromises.push(this.HydratorServiceBeta.fetchBackendProperties(n, this.getAppType()));
       });
 
     } else {
@@ -405,7 +405,7 @@ class ConfigStore {
             // This could happen when the user doesn't provide an artifact information for a plugin & deploys it
             // using CLI or REST and opens up in UI and clones it. Without this check it will throw a JS error.
             if (!n.plugin.artifact) { return; }
-            this.PluginConfigFactory.fetchWidgetJson(
+            this.PluginConfigFactoryBeta.fetchWidgetJson(
               n.plugin.artifact.name,
               n.plugin.artifact.version,
               n.plugin.artifact.scope,
@@ -701,6 +701,6 @@ class ConfigStore {
   }
 }
 
-ConfigStore.$inject = ['ConfigDispatcher', 'CanvasFactory', 'GLOBALS', 'mySettings', 'ConsoleActionsFactory', '$stateParams', 'myHelpers', 'NonStorePipelineErrorFactory', 'HydratorService', '$q', 'PluginConfigFactory', 'uuid', '$state'];
+ConfigStoreBeta.$inject = ['ConfigDispatcherBeta', 'CanvasFactoryBeta', 'GLOBALS', 'mySettings', 'ConsoleActionsFactory', '$stateParams', 'myHelpers', 'NonStorePipelineErrorFactory', 'HydratorServiceBeta', '$q', 'PluginConfigFactoryBeta', 'uuid', '$state'];
 angular.module(`${PKG.name}.feature.hydrator-beta`)
-  .service('ConfigStore', ConfigStore);
+  .service('ConfigStoreBeta', ConfigStoreBeta);

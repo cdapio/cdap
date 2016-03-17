@@ -14,9 +14,9 @@
  * the License.
  */
 
-class LeftPanelActionsFactory {
-  constructor(LeftPanelDispatcher) {
-    this.dispatcher = LeftPanelDispatcher.getDispatcher();
+class LeftPanelActionsFactoryBeta {
+  constructor(LeftPanelDispatcherBeta) {
+    this.dispatcher = LeftPanelDispatcherBeta.getDispatcher();
   }
   expand() {
     this.dispatcher.dispatch('OnLeftPanelToggled', {panelState: true});
@@ -29,6 +29,6 @@ class LeftPanelActionsFactory {
   }
 }
 
-LeftPanelActionsFactory.$inject = ['LeftPanelDispatcher'];
+LeftPanelActionsFactoryBeta.$inject = ['LeftPanelDispatcherBeta'];
 angular.module(`${PKG.name}.feature.hydrator-beta`)
-  .service('LeftPanelActionsFactory', LeftPanelActionsFactory);
+  .service('LeftPanelActionsFactoryBeta', LeftPanelActionsFactoryBeta);

@@ -14,11 +14,11 @@
  * the License.
  */
 
-class PluginActionsFactory {
-  constructor(PluginsDispatcher, myPipelineApi, PluginConfigFactory, GLOBALS, mySettings) {
-    this.dispatcher = PluginsDispatcher.getDispatcher();
+class PluginActionsFactoryBeta {
+  constructor(PluginsDispatcherBeta, myPipelineApi, PluginConfigFactoryBeta, GLOBALS, mySettings) {
+    this.dispatcher = PluginsDispatcherBeta.getDispatcher();
     this.api = myPipelineApi;
-    this.pluginConfigApi = PluginConfigFactory;
+    this.pluginConfigApi = PluginConfigFactoryBeta;
     this.GLOBALS = GLOBALS;
     this.mySettings = mySettings;
   }
@@ -95,6 +95,6 @@ class PluginActionsFactory {
   }
 }
 
-PluginActionsFactory.$inject = ['PluginsDispatcher', 'myPipelineApi', 'PluginConfigFactory', 'GLOBALS', 'mySettings'];
+PluginActionsFactoryBeta.$inject = ['PluginsDispatcherBeta', 'myPipelineApi', 'PluginConfigFactoryBeta', 'GLOBALS', 'mySettings'];
 angular.module(`${PKG.name}.feature.hydrator-beta`)
-  .service('PluginActionsFactory', PluginActionsFactory);
+  .service('PluginActionsFactoryBeta', PluginActionsFactoryBeta);

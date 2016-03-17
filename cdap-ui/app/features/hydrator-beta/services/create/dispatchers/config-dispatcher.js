@@ -14,7 +14,7 @@
  * the License.
  */
 
-class ConfigDispatcher {
+class ConfigDispatcherBeta {
   constructor(CaskAngularDispatcher) {
     this.baseDispatcher = CaskAngularDispatcher;
     this.__dispatcher__ = null;
@@ -29,6 +29,6 @@ class ConfigDispatcher {
     delete this.__dispatcher__;
   }
 }
-ConfigDispatcher.$inject = ['CaskAngularDispatcher'];
+ConfigDispatcherBeta.$inject = ['CaskAngularDispatcher'];
 angular.module(`${PKG.name}.feature.hydrator-beta`)
-  .service('ConfigDispatcher', ConfigDispatcher);
+  .service('ConfigDispatcherBeta', ConfigDispatcherBeta);

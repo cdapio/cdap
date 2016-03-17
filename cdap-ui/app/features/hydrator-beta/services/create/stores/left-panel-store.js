@@ -38,10 +38,10 @@ var updateDefaultVersion = (pluginsList, defaultArtifactMap = {}) => {
   });
 };
 
-var mapPluginsWithMoreInfo = (type, typeMap, MyDAGFactory, popoverTemplate) => {
+var mapPluginsWithMoreInfo = (type, typeMap, MyDAGFactoryBeta, popoverTemplate) => {
   return (plugin) => {
     plugin.type = type;
-    plugin.icon = MyDAGFactory.getIcon(plugin.name);
+    plugin.icon = MyDAGFactoryBeta.getIcon(plugin.name);
     plugin.template = popoverTemplate;
     plugin.defaultArtifact = typeMap[plugin.name][0].artifact;
     plugin.allArtifacts = typeMap[plugin.name].map( (plugin) => plugin.artifact);
@@ -49,28 +49,28 @@ var mapPluginsWithMoreInfo = (type, typeMap, MyDAGFactory, popoverTemplate) => {
   };
 };
 
-var mapPluginTemplatesWithMoreInfo = (type, MyDAGFactory, popoverTemplate) => {
+var mapPluginTemplatesWithMoreInfo = (type, MyDAGFactoryBeta, popoverTemplate) => {
   return (plugin) => {
     plugin.type = type;
-    plugin.icon = MyDAGFactory.getIcon(plugin.pluginName);
+    plugin.icon = MyDAGFactoryBeta.getIcon(plugin.pluginName);
     plugin.template = popoverTemplate;
 
     return plugin;
   };
 };
 
-class LeftPanelStore {
-  constructor(LeftPanelDispatcher, PluginsDispatcher, MyDAGFactory, GLOBALS, ConfigStore, mySettings, $q, $timeout) {
+class LeftPanelStoreBeta {
+  constructor(LeftPanelDispatcherBeta, PluginsDispatcherBeta, MyDAGFactoryBeta, GLOBALS, ConfigStoreBeta, mySettings, $q, $timeout) {
     this.state = {};
     this.setDefaults();
-    this.MyDAGFactory = MyDAGFactory;
+    this.MyDAGFactoryBeta = MyDAGFactoryBeta;
     this.changeListeners = [];
     this.sourcesToVersionMap = {};
     this.transformsToVersionMap = {};
     this.sinksToVersionMap = {};
     this.popoverTemplate = '/assets/features/hydrator-beta/templates/create/popovers/leftpanel-plugin-popover.html';
     this.GLOBALS = GLOBALS;
-    this.ConfigStore = ConfigStore;
+    this.ConfigStoreBeta = ConfigStoreBeta;
     this.mySettings = mySettings;
     this.$q = $q;
     this.$timeout = $timeout;
@@ -83,16 +83,16 @@ class LeftPanelStore {
         })
         .then(this.cleanupNonExistantPlugins.bind(this));
 
-    let dispatcher = LeftPanelDispatcher.getDispatcher();
+    let dispatcher = LeftPanelDispatcherBeta.getDispatcher();
     dispatcher.register('onLeftPanelToggled', this.setState.bind(this));
     dispatcher.register('toggleLeftPanelState', this.togglePanelState.bind(this));
 
-    let pluginsDispatcher = PluginsDispatcher.getDispatcher();
-    pluginsDispatcher.register('onArtifactsFetch', this.setArtifacts.bind(this));
-    pluginsDispatcher.register('onSourcesFetch', this.setSources.bind(this));
-    pluginsDispatcher.register('onTransformsFetch', this.setTransforms.bind(this));
-    pluginsDispatcher.register('onSinksFetch', this.setSinks.bind(this));
-    pluginsDispatcher.register('onPluginTemplatesFetch', this.updatePluginTemplates.bind(this));
+    let pluginsDispatcherBeta = PluginsDispatcherBeta.getDispatcher();
+    pluginsDispatcherBeta.register('onArtifactsFetch', this.setArtifacts.bind(this));
+    pluginsDispatcherBeta.register('onSourcesFetch', this.setSources.bind(this));
+    pluginsDispatcherBeta.register('onTransformsFetch', this.setTransforms.bind(this));
+    pluginsDispatcherBeta.register('onSinksFetch', this.setSinks.bind(this));
+    pluginsDispatcherBeta.register('onPluginTemplatesFetch', this.updatePluginTemplates.bind(this));
   }
   setDefaults() {
     this.state = {
@@ -129,7 +129,7 @@ class LeftPanelStore {
 
   setSources(plugins, type) {
     this.sourcesToVersionMap = {};
-    this.state.plugins.sources = plugins.filter(uniquePluginFilter(this.sourcesToVersionMap)).map(mapPluginsWithMoreInfo(type, this.sourcesToVersionMap, this.MyDAGFactory, this.popoverTemplate));
+    this.state.plugins.sources = plugins.filter(uniquePluginFilter(this.sourcesToVersionMap)).map(mapPluginsWithMoreInfo(type, this.sourcesToVersionMap, this.MyDAGFactoryBeta, this.popoverTemplate));
     this.checkAndUpdateDefaultVersion(this.state.plugins.sources);
     this.emitChange();
   }
@@ -141,7 +141,7 @@ class LeftPanelStore {
 
   setTransforms(plugins, type) {
     this.transformsToVersionMap = {};
-    this.state.plugins.transforms = plugins.filter(uniquePluginFilter(this.transformsToVersionMap)).map(mapPluginsWithMoreInfo(type, this.transformsToVersionMap, this.MyDAGFactory, this.popoverTemplate));
+    this.state.plugins.transforms = plugins.filter(uniquePluginFilter(this.transformsToVersionMap)).map(mapPluginsWithMoreInfo(type, this.transformsToVersionMap, this.MyDAGFactoryBeta, this.popoverTemplate));
     this.checkAndUpdateDefaultVersion(this.state.plugins.transforms);
     this.emitChange();
   }
@@ -153,7 +153,7 @@ class LeftPanelStore {
 
   setSinks(plugins, type) {
     this.sinksToVersionMap = {};
-    this.state.plugins.sinks = plugins.filter(uniquePluginFilter(this.sinksToVersionMap)).map(mapPluginsWithMoreInfo(type, this.sinksToVersionMap, this.MyDAGFactory, this.popoverTemplate));
+    this.state.plugins.sinks = plugins.filter(uniquePluginFilter(this.sinksToVersionMap)).map(mapPluginsWithMoreInfo(type, this.sinksToVersionMap, this.MyDAGFactoryBeta, this.popoverTemplate));
     this.checkAndUpdateDefaultVersion(this.state.plugins.sinks);
     this.emitChange();
   }
@@ -202,7 +202,7 @@ class LeftPanelStore {
     }
 
     var typeMap;
-    var pluginTypes = this.GLOBALS.pluginTypes[this.ConfigStore.getAppType()];
+    var pluginTypes = this.GLOBALS.pluginTypes[this.ConfigStoreBeta.getAppType()];
     switch(plugin.type) {
       case pluginTypes.source:
         typeMap = this.sourcesToVersionMap;
@@ -250,7 +250,7 @@ class LeftPanelStore {
       angular.forEach(defaultVersionsMap, (pluginArtifact, pluginKey) => {
         delete this.state.defaultVersionsMap[pluginKey];
       });
-      let pipelineType = this.ConfigStore.getAppType();
+      let pipelineType = this.ConfigStoreBeta.getAppType();
       this.mySettings.set('plugin-default-version', this.state.defaultVersionsMap);
       this.setSources(this.state.plugins.sources, this.GLOBALS.pluginTypes[pipelineType]['source']);
       this.setSinks(this.state.plugins.sinks, this.GLOBALS.pluginTypes[pipelineType]['sink']);
@@ -259,18 +259,18 @@ class LeftPanelStore {
   }
 
   updatePluginTemplates(plugins, params) {
-    let pipelineType = this.ConfigStore.getAppType();
+    let pipelineType = this.ConfigStoreBeta.getAppType();
     if (!plugins || !plugins[params.namespace] || !plugins[params.namespace][pipelineType]) { return; }
 
     let pluginsList = plugins[params.namespace][pipelineType];
     angular.forEach(pluginsList, (plugins, key) => {
-      this.state.pluginTemplates[this.GLOBALS.pluginConvert[key]] = _.values(plugins).map(mapPluginTemplatesWithMoreInfo(key, this.MyDAGFactory, this.popoverTemplate));
+      this.state.pluginTemplates[this.GLOBALS.pluginConvert[key]] = _.values(plugins).map(mapPluginTemplatesWithMoreInfo(key, this.MyDAGFactoryBeta, this.popoverTemplate));
     });
 
     this.emitChange();
   }
 }
 
-LeftPanelStore.$inject = ['LeftPanelDispatcher', 'PluginsDispatcher', 'MyDAGFactory', 'GLOBALS', 'ConfigStore', 'mySettings', '$q', '$timeout'];
+LeftPanelStoreBeta.$inject = ['LeftPanelDispatcherBeta', 'PluginsDispatcherBeta', 'MyDAGFactoryBeta', 'GLOBALS', 'ConfigStoreBeta', 'mySettings', '$q', '$timeout'];
 angular.module(`${PKG.name}.feature.hydrator-beta`)
-  .service('LeftPanelStore', LeftPanelStore);
+  .service('LeftPanelStoreBeta', LeftPanelStoreBeta);

@@ -14,13 +14,13 @@
  * the License.
  */
 
-class ConsoleStore {
-  constructor(ConsoleDispatcher) {
+class ConsoleStoreBeta {
+  constructor(ConsoleDispatcherBeta) {
     this.state = {};
     this.setDefaults();
     this.changeListeners = [];
 
-    let dispatcher = ConsoleDispatcher.getDispatcher();
+    let dispatcher = ConsoleDispatcherBeta.getDispatcher();
     dispatcher.register('onAddMessage', this.addMessage.bind(this));
     dispatcher.register('onResetMessages', this.resetMessages.bind(this));
   }
@@ -56,6 +56,6 @@ class ConsoleStore {
 
 }
 
-ConsoleStore.$inject = ['ConsoleDispatcher'];
+ConsoleStoreBeta.$inject = ['ConsoleDispatcherBeta'];
 angular.module(`${PKG.name}.feature.hydrator-beta`)
-  .service('ConsoleStore', ConsoleStore);
+  .service('ConsoleStoreBeta', ConsoleStoreBeta);

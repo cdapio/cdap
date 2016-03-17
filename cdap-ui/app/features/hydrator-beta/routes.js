@@ -79,24 +79,24 @@ angular.module(PKG.name + '.feature.hydrator-beta')
           views: {
             '': {
               templateUrl: '/assets/features/hydrator-beta/templates/create/studio.html',
-              controller: 'HydratorCreateStudioController as HydratorCreateStudioController'
+              controller: 'HydratorCreateStudioControllerBeta as HydratorCreateStudioControllerBeta'
             },
             'canvas@hydrator-beta.create': {
               templateUrl: '/assets/features/hydrator-beta/templates/create/canvas.html',
-              controller: 'HydratorCreateCanvasController',
+              controller: 'HydratorCreateCanvasControllerBeta',
               controllerAs: 'CanvasCtrl'
             },
             'leftpanel@hydrator-beta.create': {
               templateUrl: '/assets/features/hydrator-beta/templates/create/leftpanel.html',
-              controller: 'LeftPanelController as LeftPanelController'
+              controller: 'LeftPanelControllerBeta as LeftPanelControllerBeta'
             },
             'toppanel@hydrator-beta.create': {
               templateUrl: '/assets/features/hydrator-beta/templates/create/toppanel.html',
-              controller: 'TopPanelController as TopPanelController'
+              controller: 'TopPanelControllerBeta as TopPanelControllerBeta'
             },
             'bottompanel@hydrator-beta.create': {
               templateUrl: '/assets/features/hydrator-beta/templates/create/bottompanel.html',
-              controller: 'BottomPanelController as BottomPanelController'
+              controller: 'BottomPanelControllerBeta as BottomPanelControllerBeta'
             }
           },
           onExit: function($uibModalStack) {
@@ -127,7 +127,7 @@ angular.module(PKG.name + '.feature.hydrator-beta')
           views: {
             '': {
               templateUrl: '/assets/features/hydrator-beta/templates/detail.html',
-              controller: 'HydratorDetailController'
+              controller: 'HydratorDetailControllerBeta'
             },
             'toppanel@hydrator-beta.detail': {
               templateUrl: '/assets/features/hydrator-beta/templates/detail/top-panel.html',
@@ -136,12 +136,12 @@ angular.module(PKG.name + '.feature.hydrator-beta')
             },
             'bottompanel@hydrator-beta.detail': {
               templateUrl: '/assets/features/hydrator-beta/templates/detail/bottom-panel.html',
-              controller: 'HydratorDetailBottomPanelController',
+              controller: 'HydratorDetailBottomPanelControllerBeta',
               controllerAs: 'BottomPanelCtrl'
             },
             'canvas@hydrator-beta.detail': {
               templateUrl: '/assets/features/hydrator-beta/templates/detail/canvas.html',
-              controller: 'HydratorDetailCanvasController',
+              controller: 'HydratorDetailCanvasControllerBeta',
               controllerAs: 'CanvasCtrl'
             }
           }

@@ -14,16 +14,16 @@
  * the License.
  */
 
-class TopPanelController{
-  constructor(GLOBALS, $stateParams, ConfigStore, ConfigActionsFactory, $uibModal, ConsoleActionsFactory, NodesActionsFactory) {
+class TopPanelControllerBeta{
+  constructor(GLOBALS, $stateParams, ConfigStoreBeta, ConfigActionsFactoryBeta, $uibModal, ConsoleActionsFactory, NodesActionsFactoryBeta) {
 
     this.GLOBALS = GLOBALS;
-    this.ConfigStore = ConfigStore;
-    this.ConfigActionsFactory = ConfigActionsFactory;
+    this.ConfigStoreBeta = ConfigStoreBeta;
+    this.ConfigActionsFactoryBeta = ConfigActionsFactoryBeta;
     this.$uibModal = $uibModal;
     this.ConsoleActionsFactory = ConsoleActionsFactory;
-    this.NodesActionsFactory = NodesActionsFactory;
-    this.parsedDescription = this.ConfigStore.getDescription();
+    this.NodesActionsFactoryBeta = NodesActionsFactoryBeta;
+    this.parsedDescription = this.ConfigStoreBeta.getDescription();
 
     this.canvasOperations = [
       {
@@ -49,7 +49,7 @@ class TopPanelController{
     ];
     this.$stateParams = $stateParams;
     this.setState();
-    ConfigStore.registerOnChangeListener(this.setState.bind(this));
+    this.ConfigStoreBeta.registerOnChangeListener(this.setState.bind(this));
   }
   setMetadata(metadata) {
     this.state.metadata = metadata;
@@ -57,10 +57,10 @@ class TopPanelController{
   setState() {
     this.state = {
       metadata: {
-        name: this.ConfigStore.getName(),
-        description: this.ConfigStore.getDescription()
+        name: this.ConfigStoreBeta.getName(),
+        description: this.ConfigStoreBeta.getDescription()
       },
-      artifact: this.ConfigStore.getArtifact()
+      artifact: this.ConfigStoreBeta.getArtifact()
     };
   }
 
@@ -72,7 +72,7 @@ class TopPanelController{
     this.metadataExpanded = false;
   }
   saveMetadata() {
-    this.ConfigActionsFactory.setMetadataInfo(this.state.metadata.name, this.state.metadata.description);
+    this.ConfigActionsFactoryBeta.setMetadataInfo(this.state.metadata.name, this.state.metadata.description);
     if (this.state.metadata.description) {
       this.parsedDescription = this.state.metadata.description.replace(/\n/g, ' ');
       this.tooltipDescription = this.state.metadata.description.replace(/\n/g, '<br />');
@@ -94,8 +94,8 @@ class TopPanelController{
   }
 
   onExport() {
-    this.NodesActionsFactory.resetSelectedNode();
-    let config = angular.copy(this.ConfigStore.getDisplayConfig());
+    this.NodesActionsFactoryBeta.resetSelectedNode();
+    let config = angular.copy(this.ConfigStoreBeta.getDisplayConfig());
     if (!config) {
       return;
     }
@@ -119,12 +119,12 @@ class TopPanelController{
       }],
       resolve: {
         config: () => config,
-        exportConfig: () => this.ConfigStore.getConfigForExport()
+        exportConfig: () => this.ConfigStoreBeta.getConfigForExport()
       }
     });
   }
   onSaveDraft() {
-    var config = this.ConfigStore.getState();
+    var config = this.ConfigStoreBeta.getState();
     if (!config.name) {
       this.ConsoleActionsFactory.addMessage({
         type: 'error',
@@ -132,24 +132,24 @@ class TopPanelController{
       });
       return;
     }
-    this.ConfigActionsFactory.saveAsDraft(config);
+    this.ConfigActionsFactoryBeta.saveAsDraft(config);
   }
   onValidate() {
     this.ConsoleActionsFactory.resetMessages();
-    let isStateValid = this.ConfigStore.validateState(true);
+    let isStateValid = this.ConfigStoreBeta.validateState(true);
     if (isStateValid) {
       this.ConsoleActionsFactory.addMessage({
         type: 'success',
-        content: 'Validation success! Pipeline ' + this.ConfigStore.getName() + ' is valid.'
+        content: 'Validation success! Pipeline ' + this.ConfigStoreBeta.getName() + ' is valid.'
       });
     }
   }
   onPublish() {
-    this.ConfigActionsFactory.publishPipeline();
+    this.ConfigActionsFactoryBeta.publishPipeline();
   }
 }
 
-TopPanelController.$inject = ['GLOBALS', '$stateParams', 'ConfigStore', 'ConfigActionsFactory', '$uibModal', 'ConsoleActionsFactory', 'NodesActionsFactory'];
+TopPanelControllerBeta.$inject = ['GLOBALS', '$stateParams', 'ConfigStoreBeta', 'ConfigActionsFactoryBeta', '$uibModal', 'ConsoleActionsFactory', 'NodesActionsFactoryBeta'];
 
 angular.module(PKG.name + '.feature.hydrator-beta')
-  .controller('TopPanelController', TopPanelController);
+  .controller('TopPanelControllerBeta', TopPanelControllerBeta);

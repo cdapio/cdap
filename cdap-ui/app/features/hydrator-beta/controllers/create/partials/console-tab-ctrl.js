@@ -14,19 +14,19 @@
  * the License.
  */
 
-class ConsoleTabController {
-  constructor(ConsoleStore) {
-    this.ConsoleStore = ConsoleStore;
+class ConsoleTabControllerBeta {
+  constructor(ConsoleStoreBeta) {
+    this.ConsoleStoreBeta = ConsoleStoreBeta;
 
     this.setMessages();
-    this.ConsoleStore.registerOnChangeListener( this.setMessages.bind(this) );
+    this.ConsoleStoreBeta.registerOnChangeListener( this.setMessages.bind(this) );
   }
 
   setMessages() {
-    this.messages = this.ConsoleStore.getMessages();
+    this.messages = this.ConsoleStoreBeta.getMessages();
   }
 }
 
-ConsoleTabController.$inject = ['ConsoleStore'];
+ConsoleTabControllerBeta.$inject = ['ConsoleStoreBeta'];
 angular.module(PKG.name + '.feature.hydrator-beta')
-  .controller('ConsoleTabController', ConsoleTabController);
+  .controller('ConsoleTabControllerBeta', ConsoleTabControllerBeta);

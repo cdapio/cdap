@@ -14,18 +14,23 @@
   the License.
 -->
 
-<select class="form-control center-block"
-        ng-change="LeftPanelController.onArtifactChange()"
-        ng-model="LeftPanelController.selectedArtifact"
-        ng-options="artifact as artifact.name for artifact in LeftPanelController.artifacts">
+<select class="form-control"
+        ng-change="LeftPanelControllerBeta.onArtifactChange()"
+        ng-model="LeftPanelControllerBeta.selectedArtifact"
+        ng-options="artifact as artifact.name for artifact in LeftPanelControllerBeta.artifacts">
 </select>
 
+<div class="import-section">
+  <a href="" class="btn btn-primary btn-xs" ng-click="LeftPanelControllerBeta.showTemplates()">Templates</a>
+  <a href="" class="btn btn-primary btn-xs"  ng-click="LeftPanelControllerBeta.import()">Import</a>
+</div>
+
 <my-side-panel
-  data-panel-groups="LeftPanelController.pluginTypes"
+  data-panel-groups="LeftPanelControllerBeta.pluginTypes"
 
   data-placement="left"
   data-is-sub-menu="true"
 
-  data-on-panel-item-click-context="LeftPanelController"
-  data-on-panel-item-click="LeftPanelController.onLeftSidePanelItemClicked">
+  data-on-panel-item-click-context="LeftPanelControllerBeta"
+  data-on-panel-item-click="LeftPanelControllerBeta.onLeftSidePanelItemClicked">
 </my-side-panel>

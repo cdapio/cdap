@@ -14,66 +14,66 @@
   the License.
 -->
 
-<div class="output-schema" ng-init="watchproperty=NodeConfigController.state.groupsConfig.outputSchema.schemaProperties['property-watch']">
+<div class="output-schema" ng-init="watchproperty=NodeConfigControllerBeta.state.groupsConfig.outputSchema.schemaProperties['property-watch']">
 
   <div class="schema-error">
     <ul>
-      <li class="text-danger" ng-repeat="error in NodeConfigController.state.errors">{{ error }}</li>
+      <li class="text-danger" ng-repeat="error in NodeConfigControllerBeta.state.errors">{{ error }}</li>
     </ul>
   </div>
   <h4>
-    <span ng-if="!NodeConfigController.state.isSink">Output Schema</span>
-    <span ng-if="NodeConfigController.state.isSink">Schema</span>
+    <span ng-if="!NodeConfigControllerBeta.state.isSink">Output Schema</span>
+    <span ng-if="NodeConfigControllerBeta.state.isSink">Schema</span>
 
-    <span class="fa fa-asterisk ng-scope" ng-if="NodeConfigController.state.groupsConfig.outputSchema.isOutputSchemaRequired"></span>
+    <span class="fa fa-asterisk ng-scope" ng-if="NodeConfigControllerBeta.state.groupsConfig.outputSchema.isOutputSchemaRequired"></span>
   </h4>
   <fieldset class="clearfix" ng-disabled="isDisabled">
-    <div class="btn-group" ng-if="NodeConfigController.state.node.plugin.properties[watchproperty] !== 'avro'">
+    <div class="btn-group" ng-if="NodeConfigControllerBeta.state.node.plugin.properties[watchproperty] !== 'avro'">
       <button class="btn btn-default"
                uib-tooltip="Propagates schema to all down-stream nodes."
                tooltip-popup-delay="500"
                tooltip-append-to-body="true"
-               ng-if="!isDisabled && !NodeConfigController.state.isSink"
-               ng-click="NodeConfigController.showPropagateConfirm = true">
+               ng-if="!isDisabled && !NodeConfigControllerBeta.state.isSink"
+               ng-click="NodeConfigControllerBeta.showPropagateConfirm = true">
         Propagate
       </button>
       <button
         class="btn btn-default"
-        ng-click="NodeConfigController.schemaClear()"
-        ng-if="(!NodeConfigController.state.groupsConfig.outputSchema.implicitSchema && !isDisabled)"
-        ng-disabled="NodeConfigController.state.groupsConfig.outputSchema.implicitSchema || NodeConfigController.state.node.plugin.properties[watchproperty] === 'clf' || NodeConfigController.state.node.plugin.properties[watchproperty] === 'syslog'">
+        ng-click="NodeConfigControllerBeta.schemaClear()"
+        ng-if="(!NodeConfigControllerBeta.state.groupsConfig.outputSchema.implicitSchema && !isDisabled)"
+        ng-disabled="NodeConfigControllerBeta.state.groupsConfig.outputSchema.implicitSchema || NodeConfigControllerBeta.state.node.plugin.properties[watchproperty] === 'clf' || NodeConfigControllerBeta.state.node.plugin.properties[watchproperty] === 'syslog'">
         Clear
       </button>
     </div>
     <div class="schema-propagation-confirm">
-      <div class="well well-xs" ng-if="NodeConfigController.showPropagateConfirm">
+      <div class="well well-xs" ng-if="NodeConfigControllerBeta.showPropagateConfirm">
         Existing schema will be over-written. Continue?
         <div class="row confirmation-button">
-          <button ng-click="NodeConfigController.propagateSchemaDownStream(); NodeConfigController.showPropagateConfirm=false;" class="btn btn-default">Yes</button>
-          <button ng-click="NodeConfigController.showPropagateConfirm = false" class="btn btn-default">No</button>
+          <button ng-click="NodeConfigControllerBeta.propagateSchemaDownStream(); NodeConfigControllerBeta.showPropagateConfirm=false;" class="btn btn-default">Yes</button>
+          <button ng-click="NodeConfigControllerBeta.showPropagateConfirm = false" class="btn btn-default">No</button>
         </div>
       </div>
     </div>
     <div ng-if="isDisabled">
       <my-schema-editor
-        ng-model="NodeConfigController.state.node.outputSchema"
-        ng-if="NodeConfigController.state.node.outputSchema"
-        data-disabled="NodeConfigController.state.groupsConfig.outputSchema.implicitSchema || isDisabled"
-        plugin-properties="NodeConfigController.state.node.plugin.properties"
-        config="NodeConfigController.state.groupsConfig.outputSchema.schemaProperties">
+        ng-model="NodeConfigControllerBeta.state.node.outputSchema"
+        ng-if="NodeConfigControllerBeta.state.node.outputSchema"
+        data-disabled="NodeConfigControllerBeta.state.groupsConfig.outputSchema.implicitSchema || isDisabled"
+        plugin-properties="NodeConfigControllerBeta.state.node.plugin.properties"
+        config="NodeConfigControllerBeta.state.groupsConfig.outputSchema.schemaProperties">
       </my-schema-editor>
     </div>
     <div ng-if="!isDisabled">
       <my-schema-editor
-        ng-model="NodeConfigController.state.node.outputSchema"
-        data-disabled="NodeConfigController.state.groupsConfig.outputSchema.implicitSchema"
-        plugin-properties="NodeConfigController.state.node.plugin.properties"
-        config="NodeConfigController.state.groupsConfig.outputSchema.schemaProperties">
+        ng-model="NodeConfigControllerBeta.state.node.outputSchema"
+        data-disabled="NodeConfigControllerBeta.state.groupsConfig.outputSchema.implicitSchema"
+        plugin-properties="NodeConfigControllerBeta.state.node.plugin.properties"
+        config="NodeConfigControllerBeta.state.groupsConfig.outputSchema.schemaProperties">
       </my-schema-editor>
     </div>
   </fieldset>
 
-  <div ng-if="!NodeConfigController.state.node.outputSchema && isDisabled && NodeConfigController.state.node.plugin.properties.format !== 'clf' && NodeConfigController.state.node.plugin.properties.format !== 'syslog'">
+  <div ng-if="!NodeConfigControllerBeta.state.node.outputSchema && isDisabled && NodeConfigControllerBeta.state.node.plugin.properties.format !== 'clf' && NodeConfigControllerBeta.state.node.plugin.properties.format !== 'syslog'">
     <div class="well well-lg">
       <h4>There is no output schema</h4>
     </div>

@@ -14,7 +14,7 @@
  * the License.
  */
 
-class LeftPanelDispatcher {
+class LeftPanelDispatcherBeta {
   constructor(CaskAngularDispatcher) {
     this.__dispatcher__ = null;
     this.baseDispatcher = CaskAngularDispatcher;
@@ -29,6 +29,6 @@ class LeftPanelDispatcher {
     delete this.__dispatcher__;
   }
 }
-LeftPanelDispatcher.$inject = ['CaskAngularDispatcher'];
+LeftPanelDispatcherBeta.$inject = ['CaskAngularDispatcher'];
 angular.module(`${PKG.name}.feature.hydrator-beta`)
-  .service('LeftPanelDispatcher', LeftPanelDispatcher);
+  .service('LeftPanelDispatcherBeta', LeftPanelDispatcherBeta);

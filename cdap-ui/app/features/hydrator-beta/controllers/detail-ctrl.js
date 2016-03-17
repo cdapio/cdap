@@ -15,11 +15,11 @@
  */
 
 angular.module(PKG.name + '.feature.hydrator-beta')
-  .controller('HydratorDetailController', function(DetailRunsStore, rPipelineDetail, PipelineDetailActionFactory, $scope, DetailNonRunsStore, NodeConfigStore, PipelineDetailMetricsActionFactory) {
+  .controller('HydratorDetailControllerBeta', function(DetailRunsStore, rPipelineDetail, PipelineDetailActionFactory, $scope, DetailNonRunsStore, NodeConfigStoreBeta, PipelineDetailMetricsActionFactory) {
     // FIXME: This should essentially be moved to a scaffolding service that will do stuff for a state/view
     DetailRunsStore.init(rPipelineDetail);
     DetailNonRunsStore.init(rPipelineDetail);
-    NodeConfigStore.init();
+    NodeConfigStoreBeta.init();
 
     var params = angular.copy(DetailRunsStore.getParams());
     params.scope = $scope;
@@ -60,7 +60,7 @@ angular.module(PKG.name + '.feature.hydrator-beta')
       // FIXME: This should essentially be moved to a scaffolding service that will do stuff for a state/view
       DetailRunsStore.reset();
       DetailNonRunsStore.reset();
-      NodeConfigStore.reset();
+      NodeConfigStoreBeta.reset();
       PipelineDetailMetricsActionFactory.reset();
     });
   });

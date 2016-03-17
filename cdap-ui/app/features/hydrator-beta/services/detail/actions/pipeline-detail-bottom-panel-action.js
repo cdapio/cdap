@@ -15,8 +15,8 @@
  */
 
 angular.module(PKG.name + '.feature.hydrator-beta')
-  .service('PipelineDetailBottomPanelActionFactory', function(PipelineDetailBottomPanelDispatcher) {
-    var dispatcher = PipelineDetailBottomPanelDispatcher.getDispatcher();
+  .service('PipelineDetailBottomPanelActionFactoryBeta', function(PipelineDetailBottomPanelDispatcherBeta) {
+    var dispatcher = PipelineDetailBottomPanelDispatcherBeta.getDispatcher();
     this.collapse = function() {
       dispatcher.dispatch('onBottomPanelToggled', {state: 0});
     };

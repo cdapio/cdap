@@ -14,39 +14,39 @@
  * the License.
  */
 
-class HydratorCreateCanvasController {
-  constructor(BottomPanelStore, NodesStore, NodesActionsFactory, ConfigStore, PipelineNodeConfigActionFactory, HydratorService) {
-    this.NodesStore = NodesStore;
-    this.ConfigStore = ConfigStore;
-    this.PipelineNodeConfigActionFactory = PipelineNodeConfigActionFactory;
-    this.NodesActionsFactory = NodesActionsFactory;
-    this.HydratorService = HydratorService;
+class HydratorCreateCanvasControllerBeta {
+  constructor(BottomPanelStoreBeta, NodesStoreBeta, NodesActionsFactoryBeta, ConfigStoreBeta, PipelineNodeConfigActionFactoryBeta, HydratorServiceBeta) {
+    this.NodesStoreBeta = NodesStoreBeta;
+    this.ConfigStoreBeta = ConfigStoreBeta;
+    this.PipelineNodeConfigActionFactoryBeta = PipelineNodeConfigActionFactoryBeta;
+    this.NodesActionsFactoryBeta = NodesActionsFactoryBeta;
+    this.HydratorServiceBeta = HydratorServiceBeta;
 
     this.setState = () => {
       this.state = {
-        setScroll: (BottomPanelStore.getPanelState() === 0? false: true)
+        setScroll: (BottomPanelStoreBeta.getPanelState() === 0? false: true)
       };
     };
     this.setState();
-    BottomPanelStore.registerOnChangeListener(this.setState.bind(this));
+    BottomPanelStoreBeta.registerOnChangeListener(this.setState.bind(this));
 
     this.nodes = [];
     this.connections = [];
 
     this.updateNodesAndConnections();
-    NodesStore.registerOnChangeListener(this.updateNodesAndConnections.bind(this));
+    NodesStoreBeta.registerOnChangeListener(this.updateNodesAndConnections.bind(this));
   }
 
   setStateAndUpdateConfigStore() {
-    this.nodes = this.NodesStore.getNodes();
-    this.connections = this.NodesStore.getConnections();
-    this.ConfigStore.setNodes(this.nodes);
-    this.ConfigStore.setConnections(this.connections);
-    this.ConfigStore.setComments(this.NodesStore.getComments());
+    this.nodes = this.NodesStoreBeta.getNodes();
+    this.connections = this.NodesStoreBeta.getConnections();
+    this.ConfigStoreBeta.setNodes(this.nodes);
+    this.ConfigStoreBeta.setConnections(this.connections);
+    this.ConfigStoreBeta.setComments(this.NodesStoreBeta.getComments());
   }
 
   updateNodesAndConnections() {
-    var activeNode = this.NodesStore.getActiveNodeId();
+    var activeNode = this.NodesStoreBeta.getActiveNodeId();
     if (!activeNode) {
       this.deleteNode();
     } else {
@@ -55,34 +55,34 @@ class HydratorCreateCanvasController {
   }
 
   setActiveNode() {
-    var nodeId = this.NodesStore.getActiveNodeId();
+    var nodeId = this.NodesStoreBeta.getActiveNodeId();
     if (!nodeId) {
       return;
     }
     var pluginNode;
     var nodeFromNodesStore;
-    var nodeFromConfigStore = this.ConfigStore.getNodes().filter( node => node.name === nodeId );
+    var nodeFromConfigStore = this.ConfigStoreBeta.getNodes().filter( node => node.name === nodeId );
     if (nodeFromConfigStore.length) {
       pluginNode = nodeFromConfigStore[0];
     } else {
-      nodeFromNodesStore = this.NodesStore.getNodes().filter(node => node.name === nodeId);
+      nodeFromNodesStore = this.NodesStoreBeta.getNodes().filter(node => node.name === nodeId);
       pluginNode = nodeFromNodesStore[0];
     }
-    this.PipelineNodeConfigActionFactory.choosePlugin(pluginNode);
+    this.PipelineNodeConfigActionFactoryBeta.choosePlugin(pluginNode);
     this.setStateAndUpdateConfigStore();
   }
 
   deleteNode() {
     this.setStateAndUpdateConfigStore();
-    this.PipelineNodeConfigActionFactory.removePlugin();
+    this.PipelineNodeConfigActionFactoryBeta.removePlugin();
   }
 
   generateSchemaOnEdge(sourceId) {
-    return this.HydratorService.generateSchemaOnEdge(sourceId);
+    return this.HydratorServiceBeta.generateSchemaOnEdge(sourceId);
   }
 }
 
 
-HydratorCreateCanvasController.$inject = ['BottomPanelStore', 'NodesStore', 'NodesActionsFactory', 'ConfigStore', 'PipelineNodeConfigActionFactory', 'HydratorService'];
+HydratorCreateCanvasControllerBeta.$inject = ['BottomPanelStoreBeta', 'NodesStoreBeta', 'NodesActionsFactoryBeta', 'ConfigStoreBeta', 'PipelineNodeConfigActionFactoryBeta', 'HydratorServiceBeta'];
 angular.module(PKG.name + '.feature.hydrator-beta')
-  .controller('HydratorCreateCanvasController', HydratorCreateCanvasController);
+  .controller('HydratorCreateCanvasControllerBeta', HydratorCreateCanvasControllerBeta);

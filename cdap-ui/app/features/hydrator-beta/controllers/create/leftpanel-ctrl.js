@@ -14,21 +14,21 @@
  * the License.
  */
 
-class LeftPanelController {
-  constructor($scope, $stateParams, rVersion, GLOBALS, LeftPanelStore, LeftPanelActionsFactory, PluginActionsFactory, ConfigStore, ConfigActionsFactory, MyDAGFactory, NodesActionsFactory, NonStorePipelineErrorFactory, HydratorService, $rootScope) {
+class LeftPanelControllerBeta {
+  constructor($scope, $stateParams, rVersion, GLOBALS, LeftPanelStoreBeta, LeftPanelActionsFactoryBeta, PluginActionsFactoryBeta, ConfigStoreBeta, ConfigActionsFactoryBeta, MyDAGFactoryBeta, NodesActionsFactoryBeta, NonStorePipelineErrorFactory, HydratorServiceBeta, $rootScope, $uibModal) {
     this.$rootScope = $rootScope;
     this.$scope = $scope;
     this.$stateParams = $stateParams;
-    this.LeftPanelStore = LeftPanelStore;
-    this.LeftPanelActionsFactory = LeftPanelActionsFactory;
-    this.PluginActionsFactory = PluginActionsFactory;
-    this.ConfigActionsFactory = ConfigActionsFactory;
+    this.LeftPanelStoreBeta = LeftPanelStoreBeta;
+    this.LeftPanelActionsFactoryBeta = LeftPanelActionsFactoryBeta;
+    this.PluginActionsFactoryBeta = PluginActionsFactoryBeta;
+    this.ConfigActionsFactoryBeta = ConfigActionsFactoryBeta;
     this.GLOBALS = GLOBALS;
-    this.ConfigStore = ConfigStore;
-    this.MyDAGFactory = MyDAGFactory;
-    this.NodesActionsFactory = NodesActionsFactory;
+    this.ConfigStoreBeta = ConfigStoreBeta;
+    this.MyDAGFactoryBeta = MyDAGFactoryBeta;
+    this.NodesActionsFactoryBeta = NodesActionsFactoryBeta;
     this.NonStorePipelineErrorFactory = NonStorePipelineErrorFactory;
-    this.HydratorService = HydratorService;
+    this.HydratorServiceBeta = HydratorServiceBeta;
     this.rVersion = rVersion;
 
     this.pluginTypes = [
@@ -52,48 +52,63 @@ class LeftPanelController {
     this.transformsToVersionMap = {};
     this.sinksToVersionMap = {};
 
-    this.LeftPanelStore.registerOnChangeListener(() => {
-      this.artifacts = this.LeftPanelStore.getArtifacts();
+    this.LeftPanelStoreBeta.registerOnChangeListener(() => {
+      this.artifacts = this.LeftPanelStoreBeta.getArtifacts();
       if (!this.selectedArtifact) {
         this.selectedArtifact = this.artifacts[0];
-        this.ConfigActionsFactory.setArtifact(this.selectedArtifact);
+        this.ConfigActionsFactoryBeta.setArtifact(this.selectedArtifact);
         console.log('selectedArticact', this.selectedArtifact);
         this.onArtifactChange();
         return;
       }
-      this.pluginTypes[0].plugins = this.LeftPanelStore.getSources();
-      this.pluginTypes[1].plugins = this.LeftPanelStore.getTransforms();
-      this.pluginTypes[2].plugins = this.LeftPanelStore.getSinks();
+      this.pluginTypes[0].plugins = this.LeftPanelStoreBeta.getSources();
+      this.pluginTypes[1].plugins = this.LeftPanelStoreBeta.getTransforms();
+      this.pluginTypes[2].plugins = this.LeftPanelStoreBeta.getSinks();
     });
-
-    this.PluginActionsFactory.fetchArtifacts({namespace: $stateParams.namespace});
+    this.$uibModal = $uibModal;
+    this.PluginActionsFactoryBeta.fetchArtifacts({namespace: $stateParams.namespace});
   }
 
   onArtifactChange() {
     console.log('On change selectedArticact', this.selectedArtifact);
-    this.ConfigActionsFactory.setArtifact(this.selectedArtifact);
+    this.ConfigActionsFactoryBeta.setArtifact(this.selectedArtifact);
     let params = {
       namespace: this.$stateParams.namespace,
-      pipelineType: this.ConfigStore.getArtifact().name,
+      pipelineType: this.ConfigStoreBeta.getArtifact().name,
       version: this.rVersion.version,
       scope: this.$scope
     };
-    this.PluginActionsFactory.fetchSources(params);
-    this.PluginActionsFactory.fetchTransforms(params);
-    this.PluginActionsFactory.fetchSinks(params);
-    this.PluginActionsFactory.fetchTemplates(params);
+    this.PluginActionsFactoryBeta.fetchSources(params);
+    this.PluginActionsFactoryBeta.fetchTransforms(params);
+    this.PluginActionsFactoryBeta.fetchSinks(params);
+    this.PluginActionsFactoryBeta.fetchTemplates(params);
 
   }
 
+  showTemplates() {
+    let templateType = this.ConfigStoreBeta.getArtifact().name;
+    this.$uibModal.open({
+      templateUrl: '/assets/features/hydrator-beta/templates/create/popovers/pre-configured-batch-list.html',
+      size: 'lg',
+      backdrop: true,
+      keyboard: true,
+      controller: 'PreConfiguredControllerBeta',
+      controllerAs: 'PreConfiguredControllerBeta',
+      windowTopClass: 'hydrator-template-modal',
+      resolve: {
+        rTemplateType: () => templateType
+      }
+    });
+  }
   onLeftSidePanelItemClicked(event, node) {
     event.stopPropagation();
-    var item = this.LeftPanelStore.getSpecificPluginVersion(node);
-    this.NodesActionsFactory.resetSelectedNode();
-    this.LeftPanelStore.updatePluginDefaultVersion(item);
+    var item = this.LeftPanelStoreBeta.getSpecificPluginVersion(node);
+    this.NodesActionsFactoryBeta.resetSelectedNode();
+    this.LeftPanelStoreBeta.updatePluginDefaultVersion(item);
 
     let name = item.name || item.pluginTemplate;
 
-    let filteredNodes = this.ConfigStore
+    let filteredNodes = this.ConfigStoreBeta
                     .getNodes()
                     .filter( node => (node.plugin.label ? node.plugin.label.includes(name) : false) );
     let config;
@@ -105,7 +120,7 @@ class LeftPanelController {
           artifact: item.artifact,
           properties: item.properties,
         },
-        icon: this.MyDAGFactory.getIcon(item.pluginName),
+        icon: this.MyDAGFactoryBeta.getIcon(item.pluginName),
         type: item.pluginType,
         outputSchema: item.outputSchema,
         inputSchema: item.inputSchema,
@@ -126,10 +141,10 @@ class LeftPanelController {
         warning: true
       };
     }
-    this.NodesActionsFactory.addNode(config);
+    this.NodesActionsFactoryBeta.addNode(config);
   }
 }
 
-LeftPanelController.$inject = ['$scope', '$stateParams', 'rVersion', 'GLOBALS', 'LeftPanelStore', 'LeftPanelActionsFactory', 'PluginActionsFactory', 'ConfigStore', 'ConfigActionsFactory', 'MyDAGFactory', 'NodesActionsFactory', 'NonStorePipelineErrorFactory', 'HydratorService', '$rootScope'];
+LeftPanelControllerBeta.$inject = ['$scope', '$stateParams', 'rVersion', 'GLOBALS', 'LeftPanelStoreBeta', 'LeftPanelActionsFactoryBeta', 'PluginActionsFactoryBeta', 'ConfigStoreBeta', 'ConfigActionsFactoryBeta', 'MyDAGFactoryBeta', 'NodesActionsFactoryBeta', 'NonStorePipelineErrorFactory', 'HydratorServiceBeta', '$rootScope', '$uibModal'];
 angular.module(PKG.name + '.feature.hydrator-beta')
-  .controller('LeftPanelController', LeftPanelController);
+  .controller('LeftPanelControllerBeta', LeftPanelControllerBeta);

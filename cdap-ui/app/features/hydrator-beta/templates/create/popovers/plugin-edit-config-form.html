@@ -14,49 +14,49 @@
   the License.
 -->
 
-<div class="config-table source-table" ng-if="NodeConfigController.state.isSource">
+<div class="config-table source-table" ng-if="NodeConfigControllerBeta.state.isSource">
   <div>
-    <div ng-include="'/assets/features/hydrator/templates/create/popovers/plugin-edit-properties-template.html'"></div>
+    <div ng-include="'/assets/features/hydrator-beta/templates/create/popovers/plugin-edit-properties-template.html'"></div>
   </div>
 
   <div>
-    <div ng-include="'/assets/features/hydrator/templates/create/popovers/plugin-edit-output-schema.html'"></div>
-  </div>
-</div>
-
-<div class="config-table transform-table" ng-if="NodeConfigController.state.isTransform && NodeConfigController.state.node.plugin.name !== 'Validator'">
-  <div>
-    <div ng-include="'/assets/features/hydrator/templates/create/popovers/plugin-edit-input-schema.html'"></div>
-  </div>
-
-  <div>
-    <div ng-include="'/assets/features/hydrator/templates/create/popovers/plugin-edit-properties-template.html'"></div>
-  </div>
-
-  <div>
-    <div ng-include="'/assets/features/hydrator/templates/create/popovers/plugin-edit-output-schema.html'"></div>
+    <div ng-include="'/assets/features/hydrator-beta/templates/create/popovers/plugin-edit-output-schema.html'"></div>
   </div>
 </div>
 
-<div class="validator-plugin" ng-if="NodeConfigController.state.isTransform && NodeConfigController.state.node.plugin.name === 'Validator'">
+<div class="config-table transform-table" ng-if="NodeConfigControllerBeta.state.isTransform && NodeConfigControllerBeta.state.node.plugin.name !== 'Validator'">
   <div>
-    <div ng-include="'/assets/features/hydrator/templates/create/popovers/plugin-edit-validator-transform.html'"></div>
+    <div ng-include="'/assets/features/hydrator-beta/templates/create/popovers/plugin-edit-input-schema.html'"></div>
+  </div>
+
+  <div>
+    <div ng-include="'/assets/features/hydrator-beta/templates/create/popovers/plugin-edit-properties-template.html'"></div>
+  </div>
+
+  <div>
+    <div ng-include="'/assets/features/hydrator-beta/templates/create/popovers/plugin-edit-output-schema.html'"></div>
   </div>
 </div>
 
-<div class="config-table sink-table" ng-if="NodeConfigController.state.isSink">
+<div class="validator-plugin" ng-if="NodeConfigControllerBeta.state.isTransform && NodeConfigControllerBeta.state.node.plugin.name === 'Validator'">
   <div>
-    <div ng-include="'/assets/features/hydrator/templates/create/popovers/plugin-edit-input-schema.html'"></div>
+    <div ng-include="'/assets/features/hydrator-beta/templates/create/popovers/plugin-edit-validator-transform.html'"></div>
+  </div>
+</div>
+
+<div class="config-table sink-table" ng-if="NodeConfigControllerBeta.state.isSink">
+  <div>
+    <div ng-include="'/assets/features/hydrator-beta/templates/create/popovers/plugin-edit-input-schema.html'"></div>
   </div>
 
   <div>
     <div class="row">
       <div class="col-xs-12">
-        <div ng-include="'/assets/features/hydrator/templates/create/popovers/plugin-edit-properties-template.html'"></div>
+        <div ng-include="'/assets/features/hydrator-beta/templates/create/popovers/plugin-edit-properties-template.html'"></div>
       </div>
 
-      <div class="col-xs-12 sink-output-schema" ng-if="NodeConfigController.state.groupsConfig.outputSchema.isOutputSchemaExists || NodeConfigController.state.groupsConfig.implicitSchema">
-        <div ng-include="'/assets/features/hydrator/templates/create/popovers/plugin-edit-output-schema.html'"></div>
+      <div class="col-xs-12 sink-output-schema" ng-if="NodeConfigControllerBeta.state.groupsConfig.outputSchema.isOutputSchemaExists || NodeConfigControllerBeta.state.groupsConfig.implicitSchema">
+        <div ng-include="'/assets/features/hydrator-beta/templates/create/popovers/plugin-edit-output-schema.html'"></div>
       </div>
     </div>
   </div>

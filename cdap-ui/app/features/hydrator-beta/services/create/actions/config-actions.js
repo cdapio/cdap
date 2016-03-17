@@ -14,9 +14,9 @@
  * the License.
  */
 
-class ConfigActionsFactory {
-  constructor(ConfigDispatcher, myPipelineApi, $state, ConfigStore, mySettings, ConsoleActionsFactory, EventPipe, myAppsApi, GLOBALS, myHelpers, $stateParams) {
-    this.ConfigStore = ConfigStore;
+class ConfigActionsFactoryBeta {
+  constructor(ConfigDispatcherBeta, myPipelineApi, $state, ConfigStoreBeta, mySettings, ConsoleActionsFactory, EventPipe, myAppsApi, GLOBALS, myHelpers, $stateParams) {
+    this.ConfigStoreBeta = ConfigStoreBeta;
     this.mySettings = mySettings;
     this.$state = $state;
     this.myPipelineApi = myPipelineApi;
@@ -27,7 +27,7 @@ class ConfigActionsFactory {
     this.myHelpers = myHelpers;
     this.$stateParams = $stateParams;
 
-    this.dispatcher = ConfigDispatcher.getDispatcher();
+    this.dispatcher = ConfigDispatcherBeta.getDispatcher();
   }
   initializeConfigStore(config) {
     this.dispatcher.dispatch('onInitialize', config);
@@ -67,13 +67,13 @@ class ConfigActionsFactory {
   }
   publishPipeline() {
     this.ConsoleActionsFactory.resetMessages();
-    let error = this.ConfigStore.validateState(true);
+    let error = this.ConfigStoreBeta.validateState(true);
 
     if (!error) { return; }
     this.EventPipe.emit('showLoadingIcon', 'Publishing Pipeline to CDAP');
 
     let removeFromUserDrafts = (adapterName) => {
-      let draftId = this.ConfigStore.getState().__ui__.draftId;
+      let draftId = this.ConfigStoreBeta.getState().__ui__.draftId;
       this.mySettings
         .get('hydratorDrafts', true)
         .then(
@@ -122,7 +122,7 @@ class ConfigActionsFactory {
     };
 
 
-    var config = this.ConfigStore.getConfigForExport();
+    var config = this.ConfigStoreBeta.getConfigForExport();
 
     // Checking if Pipeline name already exist
     this.myAppsApi
@@ -145,6 +145,6 @@ class ConfigActionsFactory {
   }
 }
 
-ConfigActionsFactory.$inject = ['ConfigDispatcher', 'myPipelineApi', '$state', 'ConfigStore', 'mySettings', 'ConsoleActionsFactory', 'EventPipe', 'myAppsApi', 'GLOBALS', 'myHelpers', '$stateParams'];
+ConfigActionsFactoryBeta.$inject = ['ConfigDispatcherBeta', 'myPipelineApi', '$state', 'ConfigStoreBeta', 'mySettings', 'ConsoleActionsFactory', 'EventPipe', 'myAppsApi', 'GLOBALS', 'myHelpers', '$stateParams'];
 angular.module(`${PKG.name}.feature.hydrator-beta`)
-  .service('ConfigActionsFactory', ConfigActionsFactory);
+  .service('ConfigActionsFactoryBeta', ConfigActionsFactoryBeta);
