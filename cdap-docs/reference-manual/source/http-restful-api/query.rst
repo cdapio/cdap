@@ -468,14 +468,14 @@ For datasets::
   POST <base-url>/namespaces/<namespace>/data/explore/datasets/<dataset-name>/enable
   POST <base-url>/namespaces/<namespace>/data/explore/datasets/<dataset-name>/disable
 
-For stream views::
+For streams::
 
   POST <base-url>/namespaces/<namespace>/data/explore/streams/<stream-name>/tables/<table-name>/enable
   POST <base-url>/namespaces/<namespace>/data/explore/streams/<stream-name>/tables/<table-name>/disable
 
 Each of these endpoints returns a query handle that can be used |---| in the case of
 ``enable`` |---| to :ref:`submit queries <http-restful-api-query-submitting>` and explore
-the dataset/stream view or |---| in the case of ``disable`` |---| to retrieve the
+the dataset/stream or |---| in the case of ``disable`` |---| to retrieve the
 :ref:`status of the query <http-restful-api-query-status>`.
 
 .. list-table::
