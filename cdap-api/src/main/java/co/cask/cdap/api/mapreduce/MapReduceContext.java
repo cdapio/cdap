@@ -173,7 +173,8 @@ public interface MapReduceContext
   void addOutput(String datasetName, Map<String, String> arguments);
 
   /**
-   * Updates the output configuration of this MapReduce job to also allow writing using the given OutputFormatProvider.
+   * Updates the output configuration of this MapReduce job to also allow writing using the given 
+   * {@link OutputFormatProvider}.
    *
    * @param outputName the name of the output
    * @param outputFormatProvider the outputFormatProvider which specifies an OutputFormat and configuration to be used
