@@ -482,6 +482,7 @@ gulp.task('watch', ['jshint', 'watch:build'], function() {
     '!./app/features/pins/**/*.js',
     '!./app/features/flows/**/*.js',
     '!./app/directives/dag/**/*.js',
+    '!./app/directives/dag-beta/**/*.js',
     '!./app/features/tracker/**/*.js',
     '!./app/directives/my-global-navbar/**/*.js',
     '!./app/**/*-test.js'
@@ -496,6 +497,7 @@ gulp.task('watch', ['jshint', 'watch:build'], function() {
     './app/features/flows/**/*.js',
     './app/features/flows/**/*.js',
     './app/directives/dag/**/*.js',
+    '!./app/directives/dag-beta/**/*.js',
     './app/features/tracker/**/*.js',
     './app/directives/my-global-navbar/**/*.js'
   ], ['jshint', 'watch:js:app:babel']);
