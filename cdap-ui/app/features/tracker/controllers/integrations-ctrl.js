@@ -15,13 +15,14 @@
  */
 
 class TrackerIntegrationsController {
-  constructor($state, myTrackerApi, $scope, myAlertOnValium, MyCDAPDataSource, MyChartHelpers, MyMetricsQueryHelper) {
+  constructor($state, myTrackerApi, $scope, myAlertOnValium, MyCDAPDataSource, MyChartHelpers, MyMetricsQueryHelper, $uibModal) {
     this.$state = $state;
     this.myTrackerApi = myTrackerApi;
     this.$scope = $scope;
     this.myAlertOnValium = myAlertOnValium;
     this.MyChartHelpers = MyChartHelpers;
     this.MyMetricsQueryHelper = MyMetricsQueryHelper;
+    this.$uibModal = $uibModal;
 
     this.dataSrc = new MyCDAPDataSource($scope);
 
@@ -140,9 +141,29 @@ class TrackerIntegrationsController {
   }
 
   toggleNavigator() {
+    if (this.navigatorSetup.isEnabled) {
+      let modal = this.$uibModal.open({
+        templateUrl: '/assets/features/tracker/templates/partial/navigator-confirm-modal.html',
+        size: 'sm',
+        windowClass: 'navigator-confirm-modal'
+      });
+
+      modal.result.then((check) => {
+        if (check === 'disable') {
+          this.navigatorSetup.isEnabled = false;
+          this.navigatorFlowAction('stop');
+        }
+      });
+    } else {
+      this.navigatorFlowAction('start');
+      this.navigatorSetup.isEnabled = true;
+    }
+  }
+
+  navigatorFlowAction(action) {
     let params = {
       namespace: this.$state.params.namespace,
-      action: this.navigatorSetup.isEnabled ? 'start' : 'stop',
+      action: action,
       scope: this.$scope
     };
 
@@ -238,7 +259,7 @@ class TrackerIntegrationsController {
 
 }
 
-TrackerIntegrationsController.$inject = ['$state', 'myTrackerApi', '$scope', 'myAlertOnValium', 'MyCDAPDataSource', 'MyChartHelpers', 'MyMetricsQueryHelper'];
+TrackerIntegrationsController.$inject = ['$state', 'myTrackerApi', '$scope', 'myAlertOnValium', 'MyCDAPDataSource', 'MyChartHelpers', 'MyMetricsQueryHelper', '$uibModal'];
 
 angular.module(PKG.name + '.feature.tracker')
   .controller('TrackerIntegrationsController', TrackerIntegrationsController);

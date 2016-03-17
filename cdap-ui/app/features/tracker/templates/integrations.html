@@ -18,7 +18,7 @@
   <div class="integration-item">
     <div class="integration-information">
       <h3>Cloudera Navigator</h3>
-      <p>some definition of Cloudera Navigator</p>
+      <p>Bridging CDAP Metadata with Cloudera’s data management tool</p>
     </div>
 
     <div class="integration-setup text-right" ng-if="!IntegrationsController.navigatorSetup.isSetup">
@@ -120,17 +120,10 @@
       </div>
 
       <div class="enable-control status-item">
-        <div class="integrations-onoffswitch">
-            <input type="checkbox"
-                   name="onoffswitch"
-                   class="onoffswitch-checkbox"
-                   id="myonoffswitch"
-                   ng-model="IntegrationsController.navigatorSetup.isEnabled"
-                   ng-change="IntegrationsController.toggleNavigator()">
-            <label class="onoffswitch-label" for="myonoffswitch">
-                <span class="onoffswitch-inner"></span>
-                <span class="onoffswitch-switch"></span>
-            </label>
+        <div class="integrations-switch"
+             ng-class="{'enabled': IntegrationsController.navigatorSetup.isEnabled, 'disabled': !IntegrationsController.navigatorSetup.isEnabled }"
+             ng-click="IntegrationsController.toggleNavigator()">
+            <span class="switch-button"></span>
         </div>
       </div>
     </div>
