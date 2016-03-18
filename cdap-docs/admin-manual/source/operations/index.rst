@@ -13,20 +13,22 @@ Operations
 .. toctree::
    :maxdepth: 1
    
-    Logging <logging>
+    Logging and Monitoring <logging>
     Metrics <metrics>
-    Monitoring <monitoring>
     Preferences and Runtime Arguments <preferences>
     Scaling Instances <scaling-instances>
     Resource Guarantees in YARN <resource-guarantees>
-    CDAP UI <cdap-ui>
-    Master Services Logback <logback>
     Transaction Service Maintenance <tx-maintenance>
+    CDAP UI <cdap-ui>
 
-.. |logging| replace:: **Logging:**
+
+.. |logging| replace:: **Logging and Monitoring:**
 .. _logging: logging.html
 
-- |logging|_ Covers **CDAP support for logging** through standard SLF4J (Simple Logging Facade for Java) APIs.
+- |logging|_ CDAP collects **logs** for all of its internal services and user
+  applications; at the same time, CDAP can be **monitored through external systems**. Covers
+  **log location**, **logging messages**, the **master services logback configuration** and
+  **CDAP support for logging** through standard SLF4J (Simple Logging Facade for Java) APIs.
 
 
 .. |metrics| replace:: **Metrics:**
@@ -35,24 +37,17 @@ Operations
 - |metrics|_ CDAP collects **metrics about the application’s behavior and performance**.
   
 
-.. |monitoring| replace:: **Monitoring:**
-.. _monitoring: monitoring.html
-
-- |monitoring|_ CDAP collects **logs and metrics** for all of its internal services. 
-  This section provides links to the relevant APIs for accessing these logs and metrics,
-  and an overview of available monitoring utilities.
-
 .. |preferences| replace:: **Preferences and Runtime Arguments:**
 .. _preferences: preferences.html
 
 - |preferences|_ **Preferences** provide the ability to save configuration information. 
-  Flows, MapReduce and Spark programs, services, workflows, and workers can receive **runtime arguments.**
+  Flows, MapReduce and Spark programs, services, workers, and workflows can receive **runtime arguments.**
 
 
 .. |scaling-instances| replace:: **Scaling Instances:**
 .. _scaling-instances: scaling-instances.html
 
-- |scaling-instances|_ Covers **querying and setting the number of instances of flowlets.** 
+- |scaling-instances|_ Covers **querying and setting the number of instances of flowlets and services.** 
 
 
 .. |resource-guarantees| replace:: **Resource Guarantees:**
@@ -61,22 +56,16 @@ Operations
 - |resource-guarantees|_ Providing resource guarantees **for CDAP programs in YARN.**
 
 
-.. |cdap-ui| replace:: **CDAP UI:**
-.. _cdap-ui: cdap-ui.html
-
-- |cdap-ui|_ The CDAP UI is available for **deploying, querying and managing CDAP.** 
-
-
-.. |logback| replace:: **Master Services Logging Configuration:**
-.. _logback: logback.html
-
-- |logback|_ This section describes the logging configuration used by CDAP Master Services.
-
-
 .. |tx-maintenance| replace:: **Transaction Service Maintenance:**
 .. _tx-maintenance: tx-maintenance.html
 
 - |tx-maintenance|_ Periodic maintenance of the **Transaction Service.**
+
+
+.. |cdap-ui| replace:: **CDAP UI:**
+.. _cdap-ui: cdap-ui.html
+
+- |cdap-ui|_ The CDAP UI is available for **deploying, querying, and managing CDAP.** 
 
 
 .. rubric:: Command Line Interface
