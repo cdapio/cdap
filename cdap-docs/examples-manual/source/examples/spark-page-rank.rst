@@ -34,8 +34,8 @@ It will send back a string result with page rank based on the ``url`` query para
 
 Let's look at some of these components, and then run the application and see the results.
 
-The SparkPageRank Application
------------------------------
+The *SparkPageRank* Application
+-------------------------------
 
 As in the other `examples <index.html>`__, the components
 of the application are tied together by the class ``SparkPageRankApp``:
@@ -44,14 +44,14 @@ of the application are tied together by the class ``SparkPageRankApp``:
    :language: java
    :lines: 50-97
 
-The ``ranks`` and ``rankscount`` ObjectStore Data Storage
----------------------------------------------------------
+The *ranks* and *rankscount* ObjectStore Data Storage
+-----------------------------------------------------
 
 The calculated page rank data is stored in an ObjectStore dataset, *ranks*,
 with the total number of pages for a page rank stored in an additional ObjectStore dataset, *rankscount*.
 
-The SparkPageRankService Service
---------------------------------------------------------
+The *SparkPageRankService* Service
+----------------------------------
 
 This ``SparkPageRankService`` service has a ``rank`` endpoint to obtain the page rank of a given URL.
 It also has a ``total`` endpoint to obtain the total number of pages with a given page rank.

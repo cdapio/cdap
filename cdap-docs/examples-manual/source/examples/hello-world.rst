@@ -20,16 +20,16 @@ This application uses one stream, one dataset, one flow, and one service to impl
 - A flow with a single flowlet that reads the stream and stores in a dataset each name in a ``KeyValueTable``; and
 - A service that reads the name from the ``KeyValueTable`` and responds with ``"Hello [Name]!"``
 
-The ``HelloWorld`` Application
-------------------------------
+The *HelloWorld* Application
+----------------------------
 .. literalinclude:: /../../../cdap-examples/HelloWorld/src/main/java/co/cask/cdap/examples/helloworld/HelloWorld.java
    :language: java
    :lines: 47-57
    
 The application uses a stream called *who* to ingest data through a flow *WhoFlow* to a dataset *whom*.
 
-The ``WhoFlow``
----------------
+The *WhoFlow*
+-------------
 This is a trivial flow with a single flowlet named *saver* of type ``NameSaver``:
 
 .. literalinclude:: /../../../cdap-examples/HelloWorld/src/main/java/co/cask/cdap/examples/helloworld/HelloWorld.java
@@ -51,8 +51,8 @@ the counter ``names.longnames`` is incremented by one, and the metric ``names.by
 by the length of the name. We will see below how to retrieve these metrics using the 
 :ref:`http-restful-api-metrics`.
 
-The ``Greeting`` Service
-------------------------
+The *Greeting* Service
+----------------------
 This service has a single endpoint called ``greet`` that does not accept arguments. When invoked, it
 reads the name stored by the ``NameSaver`` from the key-value table. It return a simple greeting with that name:
 

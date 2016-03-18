@@ -376,8 +376,7 @@ ul.simple {
 /* -- Literals ---------------------------------------------------------- */
 
 .docutils.literal {
-  background: #f5f5f5;
-  border: 1px solid #ccc;
+  background: #F3F3F3;
   border-radius: 3px;
   padding: 1px 3px;
 }
@@ -386,7 +385,7 @@ td .docutils.literal {
   background: #ffffff;
   border: 0px;
   border-radius: 0px;
-  padding: 0px 0px;
+  padding: 0px;
 }
 
 /* -- Table styles used in Introduction page -------------------------------------- */

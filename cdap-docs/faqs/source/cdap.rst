@@ -231,11 +231,11 @@ Router on port 11015. Another solution is to simply run the CDAP Router on a dif
 host than HiveServer2.
 
 
-CDAP services on distributed CDAP aren't starting up due to ``java.lang.ClassNotFoundException``. What should I do?
--------------------------------------------------------------------------------------------------------------------
-If the CDAP services on a distributed CDAP environment wouldn't start up, you will see errors
-in the logs. You will find in the logs for ``cdap-master`` under ``/var/log/cdap/master*.log``
-errors such as these::
+CDAP services on distributed CDAP aren't starting up due to an exception. What should I do?
+-------------------------------------------------------------------------------------------
+If the CDAP services on a distributed CDAP environment wouldn't start up due to a
+``java.lang.ClassNotFoundException``, you will see errors in the logs. You will find in
+the logs for ``cdap-master`` under ``/var/log/cdap/master*.log`` errors such as these::
 
  "Exception in thread "main" java.lang.NoClassDefFoundError:
    co.cask.cdap.data.runtime.main.MasterServiceMain

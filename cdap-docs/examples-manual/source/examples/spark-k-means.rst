@@ -28,8 +28,8 @@ of the *CentersService*. It will respond with the center's coordinates based on 
 
 Let's look at some of these components, and then run the application and see the results.
 
-The SparkKMeans Application
----------------------------
+The *SparkKMeans* Application
+-----------------------------
 As in the other `examples <index.html>`__, the components
 of the application are tied together by the class ``SparkKMeansApp``:
 
@@ -37,13 +37,13 @@ of the application are tied together by the class ``SparkKMeansApp``:
    :language: java
    :lines: 51-82
 
-The ``points`` and ``centers`` ObjectStore Data Storage
--------------------------------------------------------
+The *points* and *centers* ObjectStore Data Storage
+---------------------------------------------------
 The raw points data is stored in an ObjectStore dataset, *points*.
 The calculated centers data is stored in a second ObjectStore dataset, *centers*.
 
-The ``CentersService`` Service
-------------------------------
+The *CentersService* Service
+----------------------------
 This service has a ``centers/{index}`` endpoint to obtain the center's coordinates of a given index.
 
 
