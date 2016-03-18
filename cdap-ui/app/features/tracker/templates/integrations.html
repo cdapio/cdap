@@ -77,13 +77,18 @@
 
         <div>
           <button class="btn btn-default pull-left"
+                  ng-disabled="IntegrationsController.saving"
                   ng-click="IntegrationsController.navigatorSetup.isOpen = false">
             Cancel
           </button>
           <button class="btn btn-success pull-right"
-                  ng-disabled="navigatorConfiguration.$invalid"
+                  ng-disabled="navigatorConfiguration.$invalid || IntegrationsController.saving"
                   ng-click="IntegrationsController.saveNavigatorSetup()">
-            Save
+            <span ng-if="!IntegrationsController.saving">Save</span>
+            <span ng-if="IntegrationsController.saving">
+              <span class="fa fa-spin fa-refresh"></span>
+              <span>Saving</span>
+            </span>
           </button>
         </div>
       </div>
@@ -95,7 +100,12 @@
           <span>Status: </span>
           <span class="fa fa-circle"
                 ng-class="{ 'text-success': IntegrationsController.navigatorState.status === 'RUNNING', 'text-danger': IntegrationsController.navigatorState.status !== 'RUNNING' }"></span>
-          <span>{{ IntegrationsController.navigatorState.status }}</span>
+          <span ng-if="IntegrationsController.navigatorState.status !== 'KILLED'">
+            {{ IntegrationsController.navigatorState.status }}
+          </span>
+          <span ng-if="IntegrationsController.navigatorState.status === 'KILLED'">
+            STOPPED
+          </span>
         </p>
       </div>
 

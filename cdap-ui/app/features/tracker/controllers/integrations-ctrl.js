@@ -65,17 +65,6 @@ class TrackerIntegrationsController {
 
   }
 
-  showConfigPopup(event) {
-    event.stopPropagation();
-    this.showConfig = true;
-
-    let hideConfigPopup = () => {
-      this.showConfig = false;
-      document.removeEventListener('click', hideConfigPopup);
-    };
-    document.addEventListener('click', hideConfigPopup);
-  }
-
   getKafkaBrokerList() {
     this.myTrackerApi.getCDAPConfig({ scope: this.$scope })
       .$promise
@@ -151,10 +140,12 @@ class TrackerIntegrationsController {
       modal.result.then((check) => {
         if (check === 'disable') {
           this.navigatorSetup.isEnabled = false;
+          this.navigatorState.status = 'STOPPING';
           this.navigatorFlowAction('stop');
         }
       });
     } else {
+      this.navigatorState.status = 'STARTING';
       this.navigatorFlowAction('start');
       this.navigatorSetup.isEnabled = true;
     }
@@ -221,6 +212,7 @@ class TrackerIntegrationsController {
   }
 
   saveNavigatorSetup() {
+    this.saving = true;
     let params = {
       namespace: this.$state.params.namespace,
       scope: this.$scope
@@ -248,8 +240,10 @@ class TrackerIntegrationsController {
       .$promise
       .then( () => {
         this.navigatorSetup.isOpen = false;
+        this.saving = false;
         this.getNavigatorApp();
       }, (err) => {
+        this.saving = false;
         this.myAlertOnValium.show({
           type: 'danger',
           content: err.data
