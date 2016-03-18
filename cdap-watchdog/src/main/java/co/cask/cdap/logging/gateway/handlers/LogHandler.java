@@ -344,7 +344,7 @@ public class LogHandler extends AbstractHttpHandler {
   }
 
   private static TimeRange parseTime(long fromTimeSecsParam, long toTimeSecsParam, HttpResponder responder) {
-    long currentTimeMillis =  System.currentTimeMillis();
+    long currentTimeMillis = System.currentTimeMillis();
     long fromMillis = fromTimeSecsParam < 0 ?
       currentTimeMillis - TimeUnit.HOURS.toMillis(1) : TimeUnit.SECONDS.toMillis(fromTimeSecsParam);
     long toMillis = toTimeSecsParam < 0 ? currentTimeMillis : TimeUnit.SECONDS.toMillis(toTimeSecsParam);
