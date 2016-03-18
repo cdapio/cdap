@@ -84,18 +84,14 @@ import co.cask.cdap.logging.run.LogSaverStatusServiceManager;
 import co.cask.cdap.metrics.runtime.MetricsProcessorStatusServiceManager;
 import co.cask.cdap.metrics.runtime.MetricsServiceManager;
 import co.cask.cdap.pipeline.PipelineFactory;
-import co.cask.cdap.security.spi.authorization.Authorizer;
-import co.cask.cdap.security.spi.authorization.NoOpAuthorizer;
+import co.cask.cdap.security.authorization.AuthorizerInstantiatorService;
 import co.cask.http.HttpHandler;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.AbstractModule;
 import com.google.inject.Binder;
-import com.google.inject.Inject;
-import com.google.inject.Injector;
 import com.google.inject.Module;
-import com.google.inject.Provider;
 import com.google.inject.Provides;
 import com.google.inject.Scopes;
 import com.google.inject.TypeLiteral;
@@ -314,28 +310,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
         handlerBinder.addBinding().to(handlerClass);
       }
 
-      bind(Authorizer.class).toProvider(AuthorizerProvider.class);
-    }
-
-    private static final class AuthorizerProvider implements Provider<Authorizer> {
-      private final Injector injector;
-      private final CConfiguration cConf;
-
-      @Inject
-      private AuthorizerProvider(Injector injector, CConfiguration cConf) {
-        this.injector = injector;
-        this.cConf = cConf;
-      }
-
-      @Override
-      public Authorizer get() {
-        if (!cConf.getBoolean(Constants.Security.Authorization.ENABLED)) {
-          return injector.getInstance(NoOpAuthorizer.class);
-        }
-        Class<? extends Authorizer> authorizerClass =
-          cConf.getClass(Constants.Security.Authorization.HANDLER_CLASS, null, Authorizer.class);
-        return injector.getInstance(authorizerClass);
-      }
+      bind(AuthorizerInstantiatorService.class).in(Scopes.SINGLETON);
     }
 
     @Provides

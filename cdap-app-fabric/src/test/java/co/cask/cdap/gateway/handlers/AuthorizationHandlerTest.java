@@ -28,6 +28,8 @@ import co.cask.cdap.proto.id.Ids;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
+import co.cask.cdap.security.authorization.AuthorizerInstantiatorService;
+import co.cask.cdap.security.authorization.InvalidAuthorizerException;
 import co.cask.cdap.security.spi.authorization.Authorizer;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.http.NettyHttpService;
@@ -38,6 +40,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.io.IOException;
 import java.net.UnknownHostException;
 
 /**
@@ -53,9 +56,14 @@ public class AuthorizationHandlerTest {
     CConfiguration conf = CConfiguration.create();
     conf.setBoolean(Constants.Security.Authorization.ENABLED, true);
 
-    Authorizer auth = new InMemoryAuthorizer();
+    final InMemoryAuthorizer auth = new InMemoryAuthorizer();
     service = new CommonNettyHttpServiceBuilder(conf)
-      .addHttpHandlers(ImmutableList.of(new AuthorizationHandler(auth, conf)))
+      .addHttpHandlers(ImmutableList.of(new AuthorizationHandler(new AuthorizerInstantiatorService(conf) {
+        @Override
+        public Authorizer get() throws IOException, InvalidAuthorizerException {
+          return auth;
+        }
+      }, conf)))
       .build();
     service.startAndWait();
 
@@ -80,9 +88,13 @@ public class AuthorizationHandlerTest {
     CConfiguration conf = CConfiguration.create();
     conf.setBoolean(Constants.Security.Authorization.ENABLED, false);
 
-    Authorizer auth = new InMemoryAuthorizer();
     NettyHttpService service = new CommonNettyHttpServiceBuilder(conf)
-      .addHttpHandlers(ImmutableList.of(new AuthorizationHandler(auth, conf)))
+      .addHttpHandlers(ImmutableList.of(new AuthorizationHandler(new AuthorizerInstantiatorService(conf) {
+        @Override
+        public Authorizer get() throws IOException, InvalidAuthorizerException {
+          return new InMemoryAuthorizer();
+        }
+      }, conf)))
       .build();
     service.startAndWait();
 

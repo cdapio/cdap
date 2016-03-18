@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -27,6 +27,7 @@ import co.cask.cdap.internal.app.runtime.artifact.SystemArtifactLoader;
 import co.cask.cdap.internal.app.runtime.flow.FlowUtils;
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerService;
 import co.cask.cdap.notifications.service.NotificationService;
+import co.cask.cdap.security.authorization.AuthorizerInstantiatorService;
 import co.cask.http.HttpHandler;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
@@ -62,11 +63,12 @@ public class StandaloneAppFabricServer extends AppFabricServer {
                                    @Named("appfabric.handler.hooks") Set<String> handlerHookNames,
                                    DefaultNamespaceEnsurer defaultNamespaceEnsurer,
                                    MetricStore metricStore,
-                                   SystemArtifactLoader systemArtifactLoader) {
+                                   SystemArtifactLoader systemArtifactLoader,
+                                   AuthorizerInstantiatorService authorizerInstantiatorService) {
     super(configuration, discoveryService, schedulerService, notificationService, hostname, handlers,
           metricsCollectionService, programRuntimeService, applicationLifecycleService,
           programLifecycleService, streamCoordinatorClient, servicesNames, handlerHookNames, defaultNamespaceEnsurer,
-          systemArtifactLoader);
+          systemArtifactLoader, authorizerInstantiatorService);
     this.metricStore = metricStore;
   }
 

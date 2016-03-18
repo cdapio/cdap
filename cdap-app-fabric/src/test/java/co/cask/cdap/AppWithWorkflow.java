@@ -19,6 +19,9 @@ package co.cask.cdap;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 import co.cask.cdap.api.data.stream.Stream;
+import co.cask.cdap.api.dataset.DatasetProperties;
+import co.cask.cdap.api.dataset.lib.FileSet;
+import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.lib.ObjectStores;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
@@ -61,15 +64,19 @@ public class AppWithWorkflow extends AbstractApplication {
    */
   public static class SampleWorkflow extends AbstractWorkflow {
     public static final String NAME = "SampleWorkflow";
-    public static String firstActionName = "firstAction";
-    public static String secondActionName = "secondAction";
+    public static final String FIRST_ACTION = "firstAction";
+    public static final String SECOND_ACTION = "secondAction";
+    public static final String TABLE_NAME = "MyTable";
+    public static final String FILE_NAME = "MyFile";
 
     @Override
     public void configure() {
       setName(NAME);
       setDescription("SampleWorkflow description");
-      addAction(new DummyAction(firstActionName));
-      addAction(new DummyAction(secondActionName));
+      createLocalDataset(TABLE_NAME, KeyValueTable.class, DatasetProperties.builder().add("foo", "bar").build());
+      createLocalDataset(FILE_NAME, FileSet.class, DatasetProperties.builder().add("anotherFoo", "anotherBar").build());
+      addAction(new DummyAction(FIRST_ACTION));
+      addAction(new DummyAction(SECOND_ACTION));
       addMapReduce(WordCountMapReduce.class.getSimpleName());
     }
   }

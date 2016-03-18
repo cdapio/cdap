@@ -185,7 +185,7 @@ public final class SparkContextProvider {
       sparkContext = new ExecutionSparkContext(
         contextConfig.getApplicationSpecification(),
         contextConfig.getSpecification(), contextConfig.getProgramId(), contextConfig.getRunId(),
-        classLoader, contextConfig.getLogicalStartTime(), contextConfig.getArguments(),
+        classLoader, contextConfig.getArguments(),
         contextConfig.getTransaction(), programDatasetFramework,
         injector.getInstance(TransactionSystemClient.class),
         injector.getInstance(DiscoveryServiceClient.class), metricsCollectionService, hConf,

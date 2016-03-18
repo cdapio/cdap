@@ -68,6 +68,7 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
   private final PluginInstantiator pluginInstantiator;
   private final PluginContext pluginContext;
   private final Admin admin;
+  private final long logicalStartTime;
   protected final DynamicDatasetCache datasetCache;
 
   /**
@@ -92,11 +93,25 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
     super(program.getId().toEntityId());
     this.program = program;
     this.runId = runId;
-    this.runtimeArguments = ImmutableMap.copyOf(arguments.asMap());
     this.discoveryServiceClient = discoveryServiceClient;
     this.owners = createOwners(program.getId());
     this.programMetrics = metricsContext;
-
+    ImmutableMap.Builder runtimeArgsBuilder = ImmutableMap.builder().putAll(arguments.asMap());
+    String logicalStartTimeStr = arguments.getOption(ProgramOptionConstants.LOGICAL_START_TIME);
+    if (logicalStartTimeStr == null || logicalStartTimeStr.isEmpty()) {
+      // this should only happen in some unit tests
+      logicalStartTime = System.currentTimeMillis();
+      runtimeArgsBuilder.put(ProgramOptionConstants.LOGICAL_START_TIME, Long.toString(logicalStartTime));
+    } else {
+      try {
+        logicalStartTime = Long.parseLong(logicalStartTimeStr);
+      } catch (NumberFormatException e) {
+        throw new IllegalArgumentException(String.format(
+          "%s is set to an invalid value %s. Please ensure it is a timestamp in milliseconds.",
+          ProgramOptionConstants.LOGICAL_START_TIME, logicalStartTimeStr));
+      }
+    }
+    this.runtimeArguments = runtimeArgsBuilder.build();
     Map<String, Map<String, String>> staticDatasets = new HashMap<>();
     for (String name : datasets) {
       staticDatasets.put(name, runtimeArguments);
@@ -203,6 +218,10 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
   @Override
   public Map<String, String> getRuntimeArguments() {
     return runtimeArguments;
+  }
+
+  public long getLogicalStartTime() {
+    return logicalStartTime;
   }
 
   /**

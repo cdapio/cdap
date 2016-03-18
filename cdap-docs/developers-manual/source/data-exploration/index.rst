@@ -26,6 +26,18 @@ Queries can be run over streams and certain types of datasets.
 Note that if you are running a secure cluster, additional :ref:`configuration for a secure
 cluster <packages-configuration-enabling-kerberos>` is required.
 
+Exploration of data in CDAP is governed by a combination of enabling the CDAP Explore
+Service and then creating datasets and streams that are explorable. The CDAP Explore
+Service is enabled by a :ref:`setting in the CDAP configuration file
+<appendix-cdap-default-explore-service>` (``cdap-site.xml`` file).
+
+Datasets and streams (that were created before the Explore Service was enabled) can be
+enabled for exploration by using the :ref:`Query RESTful API <http-restful-api-query-enable-disable>`. 
+
+You can use the same Query RESTful API to disable exploration of a specific dataset or
+stream. The dataset or stream will still be accessible programmatically; it just won't
+respond to queries through the RESTful API or be available for exploration using the CDAP UI.
+
 
 .. |stream-exploration| replace:: **Stream Exploration:**
 .. _stream-exploration: streams.html

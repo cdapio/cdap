@@ -23,7 +23,7 @@ The HTTP RESTful API is divided into these sections:
 
 - :ref:`metadata properties <http-restful-api-metadata-properties>`
 - :ref:`metadata tags <http-restful-api-metadata-tags>`
-- :ref:`searching properties <http-restful-api-metadata-searching>`
+- :ref:`searching metadata <http-restful-api-metadata-searching>`
 - :ref:`viewing lineage <http-restful-api-metadata-lineage>`
 - :ref:`metadata for a run of a program <http-restful-api-metadata-run>`
 
@@ -536,7 +536,7 @@ Entities with the specified terms are returned as list of entity IDs::
    * - ``<namespace>``
      - Namespace ID
    * - ``<entity-type>``
-     - One of ``artifact``, ``app``, ``dataset``, ``program``, ``stream`` or ``view``
+     - One of ``all``, ``artifact``, ``app``, ``dataset``, ``program``, ``stream`` or ``view``
    * - ``<term>``
      - Query term, as described below. Query terms are case-insensitive
 
@@ -755,7 +755,7 @@ Retrieving Metadata for a Program Run
 At every run of a program, the metadata associated with the program, the application it is part of, and any datasets
 and streams used by the program run are recorded. To retrieve the metadata for a program run, submit an HTTP GET request::
 
-  GET <base-url>/namespaces/<namespace>/apps/<app-id>/<program-type>/<program-id>/runs/<run-id>/metadata/tags
+  GET <base-url>/namespaces/<namespace>/apps/<app-id>/<program-type>/<program-id>/runs/<run-id>/metadata
 
 with the metadata returned as a JSON string in the return body::
 

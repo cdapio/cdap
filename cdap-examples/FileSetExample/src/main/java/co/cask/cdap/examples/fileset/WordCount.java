@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,6 +17,7 @@
 package co.cask.cdap.examples.fileset;
 
 import co.cask.cdap.api.Resources;
+import co.cask.cdap.api.data.batch.Input;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
 import org.apache.hadoop.io.IntWritable;
@@ -40,7 +41,6 @@ public class WordCount extends AbstractMapReduce {
 
   @Override
   public void configure() {
-    setInputDataset("lines");
     setMapperResources(new Resources(1024));
     setReducerResources(new Resources(1024));
   }
@@ -51,6 +51,8 @@ public class WordCount extends AbstractMapReduce {
     job.setMapperClass(Tokenizer.class);
     job.setReducerClass(Counter.class);
     job.setNumReduceTasks(1);
+
+    context.addInput(Input.ofDataset("lines"));
     context.addOutput("counts");
   }
 

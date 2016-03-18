@@ -22,7 +22,10 @@ import co.cask.cdap.api.dataset.lib.IndexedTable;
 import co.cask.cdap.api.dataset.table.Delete;
 import co.cask.cdap.api.dataset.table.Put;
 import co.cask.cdap.api.dataset.table.Row;
+import co.cask.cdap.api.dataset.table.Scan;
 import co.cask.cdap.api.dataset.table.Scanner;
+import co.cask.cdap.common.utils.ImmutablePair;
+import co.cask.cdap.data2.dataset2.lib.table.FuzzyRowFilter;
 import co.cask.cdap.data2.dataset2.lib.table.MDSKey;
 import co.cask.cdap.data2.metadata.indexer.DefaultValueIndexer;
 import co.cask.cdap.data2.metadata.indexer.Indexer;
@@ -33,8 +36,10 @@ import com.google.common.base.Joiner;
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
 import com.google.common.base.Splitter;
+import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -43,6 +48,9 @@ import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -66,6 +74,15 @@ public class MetadataDataset extends AbstractDataset {
   private static final String HISTORY_COLUMN = "h"; // column for metadata history
   private static final String VALUE_COLUMN = "v";  // column for metadata value
   private static final String TAGS_SEPARATOR = ",";
+
+  // Fuzzy key is of form <row key, key mask>. We want to compare row keys.
+  private static final Comparator<ImmutablePair<byte[], byte[]>> FUZZY_KEY_COMPARATOR =
+    new Comparator<ImmutablePair<byte[], byte[]>>() {
+      @Override
+      public int compare(ImmutablePair<byte[], byte[]> o1, ImmutablePair<byte[], byte[]> o2) {
+        return Bytes.compareTo(o1.getFirst(), o2.getFirst());
+      }
+    };
 
   //TODO: (UPG-3.3): Make this public after 3.3
   public static final String INDEX_COLUMN = "i";          // column for metadata indexes
@@ -238,7 +255,11 @@ public class MetadataDataset extends AbstractDataset {
     if (tags == null) {
       return new HashSet<>();
     }
-    return Sets.newHashSet(Splitter.on(TAGS_SEPARATOR).omitEmptyStrings().trimResults().split(tags.getValue()));
+    return splitTags(tags.getValue());
+  }
+
+  private static HashSet<String> splitTags(String tags) {
+    return Sets.newHashSet(Splitter.on(TAGS_SEPARATOR).omitEmptyStrings().trimResults().split(tags));
   }
 
   /**
@@ -413,6 +434,78 @@ public class MetadataDataset extends AbstractDataset {
   }
 
   /**
+   * Returns metadata for a given set of entities
+   *
+   * @param targetIds entities for which metadata is required
+   * @return map of entitiyId to set of metadata for that entity
+   */
+  public Set<Metadata> getMetadata(Set<? extends Id.NamespacedId> targetIds) {
+    List<ImmutablePair<byte [], byte []>> fuzzyKeys = new ArrayList<>();
+    for (Id.NamespacedId targetId : targetIds) {
+      fuzzyKeys.add(getFuzzyKeyFor(targetId));
+    }
+
+    // Sort fuzzy keys
+    Collections.sort(fuzzyKeys, FUZZY_KEY_COMPARATOR);
+
+    // Scan using fuzzy filter. Scan returns one row per property.
+    // Group the rows on entityId
+    Multimap<Id.NamespacedId, MetadataEntry> metadataMap = HashMultimap.create();
+    Scanner scan = indexedTable.scan(new Scan(null, null, new FuzzyRowFilter(fuzzyKeys)));
+    try {
+      Row next;
+      while ((next = scan.next()) != null) {
+        MetadataEntry metadataEntry = convertRow(next);
+        if (metadataEntry != null) {
+          metadataMap.put(metadataEntry.getTargetId(), metadataEntry);
+        }
+      }
+    } finally {
+      scan.close();
+    }
+
+    // Create metadata objects for each entity from grouped rows
+    Set<Metadata> metadataSet = new HashSet<>();
+    for (Map.Entry<Id.NamespacedId, Collection<MetadataEntry>> entry : metadataMap.asMap().entrySet()) {
+      Map<String, String> properties = new HashMap<>();
+      Set<String> tags = Collections.emptySet();
+      for (MetadataEntry metadataEntry : entry.getValue()) {
+        if (TAGS_KEY.equals(metadataEntry.getKey())) {
+          tags = splitTags(metadataEntry.getValue());
+        } else {
+          properties.put(metadataEntry.getKey(), metadataEntry.getValue());
+        }
+      }
+      metadataSet.add(new Metadata(entry.getKey(), properties, tags));
+    }
+    return metadataSet;
+  }
+
+  @Nullable
+  private MetadataEntry convertRow(Row row) {
+    byte[] rowKey = row.getRow();
+    String targetType = MdsKey.getTargetType(rowKey);
+    Id.NamespacedId namespacedId = MdsKey.getNamespacedIdFromKey(targetType, rowKey);
+    String key = MdsKey.getMetadataKey(targetType, rowKey);
+    byte[] value = row.get(VALUE_COLUMN);
+    if (key == null || value == null) {
+      return null;
+    }
+    return new MetadataEntry(namespacedId, key, Bytes.toString(value));
+  }
+
+  private ImmutablePair<byte[], byte[]> getFuzzyKeyFor(Id.NamespacedId targetId) {
+    // We need to create fuzzy pairs to match the first part of the key containing targetId
+    MDSKey mdsKey = MdsKey.getMDSValueKey(targetId, null);
+    byte[] keyBytes = mdsKey.getKey();
+    // byte array is automatically initialized to 0, which implies fixed match in fuzzy info
+    // the row key after targetId doesn't need to be a match.
+    byte[] infoBytes = new byte[keyBytes.length];
+
+    return new ImmutablePair<>(keyBytes, infoBytes);
+  }
+
+  /**
    * Searches entities that match the specified search query in the specified namespace and {@link Id.Namespace#SYSTEM}
    * for the specified {@link MetadataSearchTargetType}.
    *
@@ -451,7 +544,7 @@ public class MetadataDataset extends AbstractDataset {
             continue;
           }
 
-          Id.NamespacedId targetId = MdsKey.getNamespaceIdFromKey(targetType, rowKey);
+          Id.NamespacedId targetId = MdsKey.getNamespacedIdFromKey(targetType, rowKey);
           String key = MdsKey.getMetadataKey(targetType, rowKey);
           MetadataEntry entry = getMetadata(targetId, key);
           results.add(entry);
@@ -576,7 +669,7 @@ public class MetadataDataset extends AbstractDataset {
             // if case insensitive column has value then this is an old entry from 3.2 which needs to be updated.
             final byte[] rowKey = next.getRow();
             String targetType = MdsKey.getTargetType(rowKey);
-            Id.NamespacedId targetId = MdsKey.getNamespaceIdFromKey(targetType, rowKey);
+            Id.NamespacedId targetId = MdsKey.getNamespacedIdFromKey(targetType, rowKey);
             String key = getMetadataKeyFromOldFormat(targetType, rowKey);
             MetadataEntry metadataEntry = new MetadataEntry(targetId, key, Bytes.toString(value));
             indexedTable.delete(new Delete(rowKey));            // remove the old metadata entry

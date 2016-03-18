@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -27,7 +27,6 @@ import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Throwables;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
@@ -53,25 +52,21 @@ public class AppWithTimePartitionedFileSet extends AbstractApplication {
 
   @Override
   public void configure() {
-    try {
-      setName("AppWithMapReduceUsingFile");
-      setDescription("Application with MapReduce job using file as dataset");
-      createDataset(INPUT, "table");
-      createDataset(OUTPUT, "table");
+    setName("AppWithMapReduceUsingFile");
+    setDescription("Application with MapReduce job using file as dataset");
+    createDataset(INPUT, "table");
+    createDataset(OUTPUT, "table");
 
-      createDataset(TIME_PARTITIONED, "timePartitionedFileSet", FileSetProperties.builder()
-        // properties for file set
-        .setBasePath("partitioned")
-        .setInputFormat(TextInputFormat.class)
-        .setOutputFormat(TextOutputFormat.class)
-        .setOutputProperty(TextOutputFormat.SEPERATOR, SEPARATOR)
-        // don't configure properties for the Hive table - this is used in a context where explore is disabled
-        .build());
-      addMapReduce(new PartitionWriter());
-      addMapReduce(new PartitionReader());
-    } catch (Throwable t) {
-      throw Throwables.propagate(t);
-    }
+    createDataset(TIME_PARTITIONED, "timePartitionedFileSet", FileSetProperties.builder()
+      // properties for file set
+      .setBasePath("partitioned")
+      .setInputFormat(TextInputFormat.class)
+      .setOutputFormat(TextOutputFormat.class)
+      .setOutputProperty(TextOutputFormat.SEPERATOR, SEPARATOR)
+      // don't configure properties for the Hive table - this is used in a context where explore is disabled
+      .build());
+    addMapReduce(new PartitionWriter());
+    addMapReduce(new PartitionReader());
   }
 
   /**

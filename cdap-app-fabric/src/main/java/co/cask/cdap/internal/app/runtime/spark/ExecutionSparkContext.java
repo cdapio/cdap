@@ -108,7 +108,7 @@ public class ExecutionSparkContext extends AbstractSparkContext {
    */
   public ExecutionSparkContext(ApplicationSpecification appSpec,
                                SparkSpecification specification, Id.Program programId, RunId runId,
-                               ClassLoader programClassLoader, long logicalStartTime,
+                               ClassLoader programClassLoader,
                                Map<String, String> runtimeArguments,
                                Transaction transaction, DatasetFramework datasetFramework,
                                TransactionSystemClient txClient,
@@ -118,7 +118,7 @@ public class ExecutionSparkContext extends AbstractSparkContext {
                                Map<String, File> localizedResources,
                                @Nullable PluginInstantiator pluginInstantiator,
                                @Nullable WorkflowProgramInfo workflowProgramInfo) {
-    this(appSpec, specification, programId, runId, programClassLoader, logicalStartTime, runtimeArguments,
+    this(appSpec, specification, programId, runId, programClassLoader, runtimeArguments,
          transaction, datasetFramework, txClient, discoveryServiceClient,
          createMetricsContext(metricsCollectionService, programId, runId),
          createLoggingContext(programId, runId), hConf, streamAdmin, localizedResources, pluginInstantiator,
@@ -130,7 +130,7 @@ public class ExecutionSparkContext extends AbstractSparkContext {
    */
   public ExecutionSparkContext(ApplicationSpecification appSpec,
                                SparkSpecification specification, Id.Program programId, RunId runId,
-                               ClassLoader programClassLoader, long logicalStartTime,
+                               ClassLoader programClassLoader,
                                Map<String, String> runtimeArguments,
                                Transaction transaction, DatasetFramework datasetFramework,
                                TransactionSystemClient txClient,
@@ -140,7 +140,7 @@ public class ExecutionSparkContext extends AbstractSparkContext {
                                Map<String, File> localizedResources,
                                @Nullable PluginInstantiator pluginInstantiator,
                                @Nullable WorkflowProgramInfo workflowProgramInfo) {
-    super(appSpec, specification, programId, runId, programClassLoader, logicalStartTime,
+    super(appSpec, specification, programId, runId, programClassLoader,
           runtimeArguments, discoveryServiceClient, metricsContext, loggingContext, datasetFramework,
           pluginInstantiator, workflowProgramInfo);
     this.datasets = new HashMap<>();

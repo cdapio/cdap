@@ -23,6 +23,7 @@ import co.cask.cdap.common.guice.ZKClientModule;
 import co.cask.cdap.data2.audit.AuditModule;
 import co.cask.cdap.internal.AppFabricTestHelper;
 import co.cask.cdap.kafka.KafkaTester;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.audit.AuditMessage;
 import co.cask.cdap.proto.audit.AuditType;
 import co.cask.cdap.proto.codec.AuditMessageTypeAdapter;
@@ -101,7 +102,7 @@ public class AuditPublishTest {
 
     // Define expected values
     Set<? extends EntityId> expectedMetadataChangeEntities =
-      ImmutableSet.of(Ids.namespace(defaultNs).artifact("app", "1"),
+      ImmutableSet.of(Ids.namespace(defaultNs).artifact(WordCountApp.class.getSimpleName(), "1"),
                       Ids.namespace(defaultNs).app(appName),
                       Ids.namespace(defaultNs).app(appName).flow(WordCountApp.WordCountFlow.class.getSimpleName()),
                       Ids.namespace(defaultNs).app(appName).mr(WordCountApp.VoidMapReduceJob.class.getSimpleName()),
@@ -116,7 +117,7 @@ public class AuditPublishTest {
                                                                    Ids.namespace(defaultNs).stream("text")));
 
     // Deploy application
-    AppFabricTestHelper.deployApplication(WordCountApp.class);
+    AppFabricTestHelper.deployApplication(Id.Namespace.DEFAULT, WordCountApp.class, null, KAFKA_TESTER.getCConf());
 
     // Verify audit messages
     List<AuditMessage> publishedMessages =

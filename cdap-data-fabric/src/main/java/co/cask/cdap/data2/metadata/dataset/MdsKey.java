@@ -115,7 +115,7 @@ public class MdsKey {
     return builder;
   }
 
-  public static Id.NamespacedId getNamespaceIdFromKey(String type, byte[] rowKey) {
+  public static Id.NamespacedId getNamespacedIdFromKey(String type, byte[] rowKey) {
     MDSKey.Splitter keySplitter = new MDSKey(rowKey).split();
 
     // The rowkey is

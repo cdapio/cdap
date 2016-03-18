@@ -40,15 +40,18 @@ import co.cask.cdap.proto.ViewSpecification;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.artifact.ArtifactRange;
 import co.cask.cdap.proto.artifact.ArtifactSummary;
+import co.cask.cdap.proto.metadata.Metadata;
 import co.cask.cdap.proto.metadata.MetadataRecord;
 import co.cask.cdap.proto.metadata.MetadataScope;
 import co.cask.cdap.proto.metadata.MetadataSearchResultRecord;
 import co.cask.cdap.proto.metadata.MetadataSearchTargetType;
 import co.cask.common.http.HttpRequest;
+import com.google.common.base.Function;
 import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Sets;
 import com.google.gson.JsonObject;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.junit.After;
@@ -59,6 +62,7 @@ import org.junit.Test;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -99,6 +103,7 @@ public class MetadataHttpHandlerTest extends MetadataTestBase {
   public void after() throws Exception {
     deleteApp(application, 200);
     deleteArtifact(artifactId, 200);
+    deleteNamespace(Id.Namespace.DEFAULT.getId());
   }
 
   @Test
@@ -766,6 +771,55 @@ public class MetadataHttpHandlerTest extends MetadataTestBase {
     getInjector().getInstance(StreamAdmin.class).drop(Id.Stream.from(Id.Namespace.DEFAULT, "text"));
   }
 
+  @Test
+  public void testSearchMetadata() throws Exception {
+    deploy(AllProgramsApp.class);
+
+    Map<Id.NamespacedId, Metadata> expectedUserMetadata = new HashMap<>();
+
+    // Add metadata to app
+    Map<String, String> props = ImmutableMap.of("key1", "value1");
+    Set<String> tags = ImmutableSet.of("tag1", "tag2");
+    Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, AllProgramsApp.NAME);
+    addProperties(appId, props);
+    addTags(appId, tags);
+    expectedUserMetadata.put(appId, new Metadata(props, tags));
+
+    // Add metadata to stream
+    props = ImmutableMap.of("key10", "value10", "key11", "value11");
+    tags = ImmutableSet.of("tag11");
+    Id.Stream streamId = Id.Stream.from(Id.Namespace.DEFAULT, AllProgramsApp.STREAM_NAME);
+    addProperties(streamId, props);
+    addTags(streamId, tags);
+    expectedUserMetadata.put(streamId, new Metadata(props, tags));
+
+    Set<MetadataSearchResultRecord> results =
+      super.searchMetadata(Id.Namespace.DEFAULT, "value*", MetadataSearchTargetType.ALL);
+
+    // Verify results
+    Assert.assertEquals(expectedUserMetadata.keySet(), getEntities(results));
+    for (MetadataSearchResultRecord result : results) {
+      // User metadata has to match exactly since we know what we have set
+      Assert.assertEquals(expectedUserMetadata.get(result.getEntityId()), result.getMetadata().get(MetadataScope.USER));
+      // Make sure system metadata is returned, we cannot check for exact match since we haven't set it
+      Metadata systemMetadata = result.getMetadata().get(MetadataScope.SYSTEM);
+      Assert.assertNotNull(systemMetadata);
+      Assert.assertFalse(systemMetadata.getProperties().isEmpty());
+      Assert.assertFalse(systemMetadata.getTags().isEmpty());
+    }
+  }
+
+  private Set<Id.NamespacedId> getEntities(Set<MetadataSearchResultRecord> results) {
+    return Sets.newHashSet(
+      Iterables.transform(results, new Function<MetadataSearchResultRecord, Id.NamespacedId>() {
+        @Override
+        public Id.NamespacedId apply(MetadataSearchResultRecord input) {
+          return input.getEntityId();
+        }
+      })
+    );
+  }
+
   private void assertProgramSystemMetadata(Id.Program programId, String mode) throws Exception {
     Assert.assertTrue(getProperties(programId, MetadataScope.SYSTEM).isEmpty());
     Set<String> expected = ImmutableSet.of(programId.getId(), programId.getType().getPrettyName(), mode);
@@ -1076,5 +1130,18 @@ public class MetadataHttpHandlerTest extends MetadataTestBase {
     JsonObject allProgramsArtifact = Iterables.getOnlyElement(filtered);
     return Id.Artifact.from(Id.Namespace.DEFAULT, allProgramsArtifact.get("name").getAsString(),
                             allProgramsArtifact.get("version").getAsString());
+  }
+
+  /**
+   * strips metadata from search results
+   */
+  protected Set<MetadataSearchResultRecord> searchMetadata(Id.Namespace namespaceId, String query,
+                                                           @Nullable MetadataSearchTargetType target) throws Exception {
+    Set<MetadataSearchResultRecord> results = super.searchMetadata(namespaceId, query, target);
+    Set<MetadataSearchResultRecord> transformed = new HashSet<>();
+    for (MetadataSearchResultRecord result : results) {
+      transformed.add(new MetadataSearchResultRecord(result.getEntityId()));
+    }
+    return transformed;
   }
 }

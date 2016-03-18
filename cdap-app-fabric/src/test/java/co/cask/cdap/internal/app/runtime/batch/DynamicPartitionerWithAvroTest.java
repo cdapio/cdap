@@ -69,7 +69,7 @@ public class DynamicPartitionerWithAvroTest extends MapReduceRunnerTestBase {
 
   @Test
   public void testDynamicPartitionerWithAvro() throws Exception {
-    final ApplicationWithPrograms app = deployApp(AppWithMapReduceUsingAvroDynamicPartitioner.class);
+    ApplicationWithPrograms app = deployApp(AppWithMapReduceUsingAvroDynamicPartitioner.class);
 
     final GenericRecord record1 = createRecord("bob", 95111);
     final GenericRecord record2 = createRecord("sally", 98123);
@@ -84,7 +84,7 @@ public class DynamicPartitionerWithAvroTest extends MapReduceRunnerTestBase {
     final PartitionKey key3 = PartitionKey.builder().addLongField("time", now).addIntField("zip", 84125).build();
     final Set<PartitionKey> expectedKeys = ImmutableSet.of(key1, key2, key3);
 
-    // write a value to the input kvTable
+    // write values to the input kvTable
     final KeyValueTable kvTable = datasetCache.getDataset(INPUT_DATASET);
     Transactions.createTransactionExecutor(txExecutorFactory, kvTable).execute(
       new TransactionExecutor.Subroutine() {

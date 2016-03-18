@@ -143,7 +143,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
         deployApplication(appId, createRequest);
         // fail if we succeed with application deployment
         Assert.fail();
-      } catch (IllegalStateException e) {
+      } catch (Exception e) {
         // expected
       }
     }

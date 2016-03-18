@@ -18,12 +18,12 @@ package co.cask.cdap.proto.audit;
 
 import co.cask.cdap.proto.audit.payload.access.AccessPayload;
 import co.cask.cdap.proto.audit.payload.access.AccessType;
-import co.cask.cdap.proto.audit.payload.metadata.MetadataAuditRecord;
 import co.cask.cdap.proto.audit.payload.metadata.MetadataPayload;
 import co.cask.cdap.proto.codec.AuditMessageTypeAdapter;
 import co.cask.cdap.proto.codec.EntityIdTypeAdapter;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.Ids;
+import co.cask.cdap.proto.metadata.Metadata;
 import co.cask.cdap.proto.metadata.MetadataScope;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -98,10 +98,10 @@ public class AuditMessageTest {
     Set<String> userTags = new LinkedHashSet<>();
     userTags.add("ut1");
     userTags.add("ut2");
-    Map<MetadataScope, MetadataAuditRecord> previous = new LinkedHashMap<>();
-    previous.put(MetadataScope.USER, new MetadataAuditRecord(Collections.unmodifiableMap(userProperties),
+    Map<MetadataScope, Metadata> previous = new LinkedHashMap<>();
+    previous.put(MetadataScope.USER, new Metadata(Collections.unmodifiableMap(userProperties),
                                                              Collections.unmodifiableSet(userTags)));
-    previous.put(MetadataScope.SYSTEM, new MetadataAuditRecord(Collections.unmodifiableMap(systemProperties),
+    previous.put(MetadataScope.SYSTEM, new Metadata(Collections.unmodifiableMap(systemProperties),
                                                                Collections.unmodifiableSet(
                                                                  new LinkedHashSet<String>())));
     Map<String, String> sysPropertiesAdded = new HashMap<>();
@@ -109,15 +109,15 @@ public class AuditMessageTest {
     Set<String> systemTagsAdded = new LinkedHashSet<>();
     systemTagsAdded.add("t1");
     systemTagsAdded.add("t2");
-    Map<MetadataScope, MetadataAuditRecord> additions = new HashMap<>();
-    additions.put(MetadataScope.SYSTEM, new MetadataAuditRecord(Collections.unmodifiableMap(sysPropertiesAdded),
+    Map<MetadataScope, Metadata> additions = new HashMap<>();
+    additions.put(MetadataScope.SYSTEM, new Metadata(Collections.unmodifiableMap(sysPropertiesAdded),
                                                                 Collections.unmodifiableSet(systemTagsAdded)));
     Map<String, String> userPropertiesDeleted = new HashMap<>();
     userPropertiesDeleted.put("uk", "uv");
     Set<String> userTagsDeleted = new LinkedHashSet<>();
     userTagsDeleted.add("ut1");
-    Map<MetadataScope, MetadataAuditRecord> deletions = new HashMap<>();
-    deletions.put(MetadataScope.USER, new MetadataAuditRecord(Collections.unmodifiableMap(userPropertiesDeleted),
+    Map<MetadataScope, Metadata> deletions = new HashMap<>();
+    deletions.put(MetadataScope.USER, new Metadata(Collections.unmodifiableMap(userPropertiesDeleted),
                                                               Collections.unmodifiableSet(userTagsDeleted)));
     AuditMessage metadataChange =
       new AuditMessage(3000L, Ids.namespace("ns1").app("app1"), "user1", AuditType.METADATA_CHANGE,

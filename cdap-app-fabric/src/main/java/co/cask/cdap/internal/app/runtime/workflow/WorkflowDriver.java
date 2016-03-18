@@ -112,7 +112,6 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
   private final InetAddress hostname;
   private final Map<String, String> runtimeArgs;
   private final WorkflowSpecification workflowSpec;
-  private final long logicalStartTime;
   private final ProgramWorkflowRunnerFactory workflowProgramRunnerFactory;
   private final Map<String, WorkflowActionNode> status = new ConcurrentHashMap<>();
   private final LoggingContext loggingContext;
@@ -139,10 +138,6 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     this.hostname = hostname;
     this.runtimeArgs = createRuntimeArgs(options.getUserArguments());
     this.workflowSpec = workflowSpec;
-    Arguments arguments = options.getArguments();
-    this.logicalStartTime = arguments.hasOption(ProgramOptionConstants.LOGICAL_START_TIME)
-      ? Long.parseLong(arguments.getOption(ProgramOptionConstants.LOGICAL_START_TIME))
-      : System.currentTimeMillis();
     this.lock = new ReentrantLock();
     this.condition = lock.newCondition();
     this.runId = RunIds.fromString(options.getArguments().getOption(ProgramOptionConstants.RUN_ID));
@@ -419,7 +414,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     Predicate<WorkflowContext> predicate = instantiator.get(
       TypeToken.of((Class<? extends Predicate<WorkflowContext>>) clz)).create();
 
-    WorkflowContext context = new BasicWorkflowContext(workflowSpec, null, logicalStartTime, null,
+    WorkflowContext context = new BasicWorkflowContext(workflowSpec, null, null,
                                                        new BasicArguments(runtimeArgs), token,
                                                        program, runId, metricsCollectionService,
                                                        datasetFramework, txClient, discoveryServiceClient);
@@ -513,7 +508,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
 
   private BasicWorkflowContext createWorkflowContext(WorkflowActionSpecification actionSpec,
                                                      WorkflowToken token, String nodeId) {
-    return new BasicWorkflowContext(workflowSpec, actionSpec, logicalStartTime,
+    return new BasicWorkflowContext(workflowSpec, actionSpec,
                                     workflowProgramRunnerFactory.getProgramWorkflowRunner(actionSpec, token, nodeId),
                                     new BasicArguments(runtimeArgs), token, program, runId, metricsCollectionService,
                                     datasetFramework, txClient, discoveryServiceClient);

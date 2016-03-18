@@ -20,7 +20,7 @@
     <h2 ng-if="TemplatesController.isEdit">Edit Template</h2>
   </div>
   <div class="col-xs-6 text-right">
-    <button class="btn btn-success" ng-click="TemplatesController.save()">Save</button>
+    <button class="btn btn-success" ng-disabled="TemplatesController.pluginConfig.pluginTemplate.length === 0" ng-click="TemplatesController.save()">Save</button>
   </div>
 </div>
 <div ng-if="!TemplatesController.isEdit">
@@ -76,7 +76,10 @@
 <div ng-if="TemplatesController.configFetched">
   <h3>Plugin Properties</h3>
 
-  <label class="label-control">Template Name</label>
+  <label class="label-control">
+    Template Name
+    <i class="fa fa-asterisk text-danger"></i>
+  </label>
   <input type="text" class="form-control" ng-model="TemplatesController.pluginConfig.pluginTemplate">
 
   <label class="label-control">Template Description</label>

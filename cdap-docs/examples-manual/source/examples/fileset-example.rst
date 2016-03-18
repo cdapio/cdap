@@ -81,7 +81,8 @@ MapReduce over Files
 
 .. literalinclude:: /../../../cdap-examples/FileSetExample/src/main/java/co/cask/cdap/examples/fileset/WordCount.java
     :language: java
-    :lines: 39-55
+    :lines: 40-57
+    :append: ...
 
 It is worth mentioning that nothing in ``WordCount`` is specifically programmed to use a FileSet. Instead of
 *lines* and *counts*, it could use any other dataset as long as the key and value types match.

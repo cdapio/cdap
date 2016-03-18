@@ -235,7 +235,7 @@ body.state-tracker {
 
       .results-list {
         overflow-y: auto;
-        max-height: 100%;
+        height: 100%;
         padding-bottom: 51px; // This is to offset the top sort panel
 
         h4, h5, p {
@@ -266,15 +266,6 @@ body.state-tracker {
       }
     }
   }
-
-  .btn-jump {
-    color: white;
-    background-color: #999;
-    padding: 5px 10px;
-    span.fa { margin-left: 10px; }
-    &:hover { background-color: @tracker-green; }
-  }
-
 }
 
 body.state-tracker-entity {
@@ -464,6 +455,11 @@ body.state-tracker-entity {
         width: 40%;
       }
     }
+
+    .complex-type {
+      cursor: pointer;
+      text-decoration: underline;
+    }
   }
 
   .entity-detail-properties-column {
@@ -558,4 +554,22 @@ body.state-tracker-help {
 /* Hide arrow */
 .tooltip.customClass .tooltip-arrow {
   display: none;
+}
+
+.popover.complex-schema {
+  .popover-content {
+    padding: 10px;
+
+    .close-button {
+      position: absolute;
+      right: 15px;
+      top: 15px;
+    }
+
+    pre {
+      max-height: 450px;
+      overflow-y: auto;
+      margin: 0;
+    }
+  }
 }

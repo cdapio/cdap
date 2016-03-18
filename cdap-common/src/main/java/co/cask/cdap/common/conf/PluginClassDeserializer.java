@@ -21,6 +21,7 @@ import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.api.plugin.PluginPropertyField;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.reflect.TypeToken;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonElement;
@@ -28,7 +29,10 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 
 import java.lang.reflect.Type;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * A Gson deserializater for creating {@link PluginClass} object from external plugin config file.
@@ -53,11 +57,18 @@ public class PluginClassDeserializer implements JsonDeserializer<PluginClass> {
     String description = jsonObj.has("description") ? jsonObj.get("description").getAsString() : "";
     String className = getRequired(jsonObj, "className").getAsString();
 
+    JsonArray endpoints = getRequired(jsonObj, "endpoints").getAsJsonArray();
+    Set<String> endpointsSet = new HashSet<>();
+    Iterator<JsonElement> iterator = endpoints.iterator();
+    while (iterator.hasNext()) {
+      endpointsSet.add(iterator.next().getAsString());
+    }
+
     Map<String, PluginPropertyField> properties = jsonObj.has("properties")
       ? context.<Map<String, PluginPropertyField>>deserialize(jsonObj.get("properties"), PROPERTIES_TYPE)
       : ImmutableMap.<String, PluginPropertyField>of();
 
-    return new PluginClass(type, name, description, className, null, properties);
+    return new PluginClass(type, name, description, className, null, properties, endpointsSet);
   }
 
   private JsonElement getRequired(JsonObject jsonObj, String name) {

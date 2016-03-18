@@ -30,25 +30,25 @@ import java.util.Set;
 public class DagTest {
 
   @Test
-  public void testLinearize() {
+  public void testTopologicalOrder() {
     // n1 -> n2 -> n3 -> n4
-    Dag dag = Dag.fromConnections(ImmutableSet.of(
+    Dag dag = new Dag(ImmutableSet.of(
       new Connection("n1", "n2"), new Connection("n2", "n3"), new Connection("n3", "n4")));
-    Assert.assertEquals(ImmutableList.of("n1", "n2", "n3", "n4"), dag.linearize());
+    Assert.assertEquals(ImmutableList.of("n1", "n2", "n3", "n4"), dag.getTopologicalOrder());
 
     /*
              |--- n2 ---|
         n1 --|          |-- n4
              |--- n3 ---|
      */
-    dag = Dag.fromConnections(ImmutableSet.of(
+    dag = new Dag(ImmutableSet.of(
       new Connection("n1", "n2"),
       new Connection("n1", "n3"),
       new Connection("n2", "n4"),
       new Connection("n3", "n4")));
     // could be n1 -> n2 -> n3 -> n4
     // or it could be n1 -> n3 -> n2 -> n4
-    List<String> linearized = dag.linearize();
+    List<String> linearized = dag.getTopologicalOrder();
     Assert.assertEquals("n1", linearized.get(0));
     Assert.assertEquals("n4", linearized.get(3));
     assertBefore(linearized, "n1", "n2");
@@ -59,12 +59,12 @@ public class DagTest {
              |--- n3
         n2 --|
      */
-    dag = Dag.fromConnections(ImmutableSet.of(
+    dag = new Dag(ImmutableSet.of(
       new Connection("n1", "n3"),
       new Connection("n2", "n3")));
     // could be n1 -> n2 -> n3
     // or it could be n2 -> n1 -> n3
-    linearized = dag.linearize();
+    linearized = dag.getTopologicalOrder();
     Assert.assertEquals("n3", linearized.get(2));
     assertBefore(linearized, "n1", "n3");
     assertBefore(linearized, "n2", "n3");
@@ -79,7 +79,7 @@ public class DagTest {
 
         vertical arrows are pointing down
      */
-    dag = Dag.fromConnections(ImmutableSet.of(
+    dag = new Dag(ImmutableSet.of(
       new Connection("n1", "n2"),
       new Connection("n1", "n4"),
       new Connection("n1", "n6"),
@@ -91,7 +91,7 @@ public class DagTest {
       new Connection("n4", "n6"),
       new Connection("n6", "n3"),
       new Connection("n6", "n5")));
-    linearized = dag.linearize();
+    linearized = dag.getTopologicalOrder();
     Assert.assertEquals("n1", linearized.get(0));
     Assert.assertEquals("n2", linearized.get(1));
     Assert.assertEquals("n4", linearized.get(2));
@@ -114,13 +114,13 @@ public class DagTest {
         n1 --|      |     n3 --> n5
              |---> n4 <---|
      */
-    Dag dag = Dag.fromConnections(ImmutableSet.of(
+    Dag dag = new Dag(ImmutableSet.of(
       new Connection("n1", "n2"),
       new Connection("n2", "n3"),
       new Connection("n3", "n4"),
       new Connection("n4", "n2"),
       new Connection("n3", "n5")));
-    dag.linearize();
+    dag.getTopologicalOrder();
   }
 
   @Test
@@ -130,7 +130,7 @@ public class DagTest {
         n1 --|          |-- n4
              |--- n3 ---|
      */
-    Dag dag = Dag.fromConnections(ImmutableSet.of(
+    Dag dag = new Dag(ImmutableSet.of(
       new Connection("n1", "n2"),
       new Connection("n1", "n3"),
       new Connection("n2", "n4"),
@@ -155,7 +155,7 @@ public class DagTest {
         n3 -- n4
      */
     try {
-      Dag.fromConnections(ImmutableSet.of(
+      new Dag(ImmutableSet.of(
         new Connection("n1", "n2"),
         new Connection("n3", "n4")));
       Assert.fail();
@@ -173,7 +173,7 @@ public class DagTest {
         n5----|   n6 -- n7
      */
     try {
-      Dag.fromConnections(ImmutableSet.of(
+      new Dag(ImmutableSet.of(
         new Connection("n1", "n2"),
         new Connection("n2", "n4"),
         new Connection("n3", "n4"),
@@ -197,7 +197,7 @@ public class DagTest {
               |
         n5-------- n6 -- n7
      */
-    Dag dag = Dag.fromConnections(ImmutableSet.of(
+    Dag dag = new Dag(ImmutableSet.of(
       new Connection("n1", "n2"),
       new Connection("n2", "n4"),
       new Connection("n3", "n4"),
@@ -238,7 +238,7 @@ public class DagTest {
               |
         n5-------- n6 -- n7
      */
-    Dag fulldag = Dag.fromConnections(ImmutableSet.of(
+    Dag fulldag = new Dag(ImmutableSet.of(
       new Connection("n1", "n2"),
       new Connection("n2", "n4"),
       new Connection("n3", "n4"),
@@ -247,26 +247,26 @@ public class DagTest {
       new Connection("n5", "n6"),
       new Connection("n6", "n7")));
 
-    Dag expected = Dag.fromConnections(ImmutableSet.of(
+    Dag expected = new Dag(ImmutableSet.of(
       new Connection("n1", "n2"),
       new Connection("n2", "n4"),
       new Connection("n4", "n8")));
     Dag actual = fulldag.subsetFrom("n1");
     Assert.assertEquals(expected, actual);
 
-    expected = Dag.fromConnections(ImmutableSet.of(
+    expected = new Dag(ImmutableSet.of(
       new Connection("n2", "n4"),
       new Connection("n4", "n8")));
     actual = fulldag.subsetFrom("n2");
     Assert.assertEquals(expected, actual);
 
-    expected = Dag.fromConnections(ImmutableSet.of(
+    expected = new Dag(ImmutableSet.of(
       new Connection("n3", "n4"),
       new Connection("n4", "n8")));
     actual = fulldag.subsetFrom("n3");
     Assert.assertEquals(expected, actual);
 
-    expected = Dag.fromConnections(ImmutableSet.of(
+    expected = new Dag(ImmutableSet.of(
       new Connection("n4", "n8"),
       new Connection("n5", "n4"),
       new Connection("n5", "n6"),
@@ -274,17 +274,17 @@ public class DagTest {
     actual = fulldag.subsetFrom("n5");
     Assert.assertEquals(expected, actual);
 
-    expected = Dag.fromConnections(ImmutableSet.of(
+    expected = new Dag(ImmutableSet.of(
       new Connection("n6", "n7")));
     actual = fulldag.subsetFrom("n6");
     Assert.assertEquals(expected, actual);
 
     // test subsets with stop nodes
-    expected = Dag.fromConnections(ImmutableSet.of(new Connection("n1", "n2")));
+    expected = new Dag(ImmutableSet.of(new Connection("n1", "n2")));
     actual = fulldag.subsetFrom("n1", ImmutableSet.of("n2"));
     Assert.assertEquals(expected, actual);
 
-    expected = Dag.fromConnections(ImmutableSet.of(
+    expected = new Dag(ImmutableSet.of(
       new Connection("n5", "n4"),
       new Connection("n5", "n6")));
     actual = fulldag.subsetFrom("n5", ImmutableSet.of("n4", "n6"));
@@ -299,7 +299,7 @@ public class DagTest {
              |--- n4 ----------|
 
      */
-    fulldag = Dag.fromConnections(ImmutableSet.of(
+    fulldag = new Dag(ImmutableSet.of(
       new Connection("n1", "n2"),
       new Connection("n1", "n3"),
       new Connection("n1", "n4"),
@@ -313,7 +313,7 @@ public class DagTest {
       new Connection("n9", "n10"),
       new Connection("n9", "n11")));
 
-    expected = Dag.fromConnections(ImmutableSet.of(
+    expected = new Dag(ImmutableSet.of(
       new Connection("n3", "n5"),
       new Connection("n5", "n6"),
       new Connection("n6", "n7"),
@@ -322,7 +322,7 @@ public class DagTest {
     actual = fulldag.subsetFrom("n3", ImmutableSet.of("n4", "n9"));
     Assert.assertEquals(expected, actual);
 
-    expected = Dag.fromConnections(ImmutableSet.of(
+    expected = new Dag(ImmutableSet.of(
       new Connection("n2", "n6"),
       new Connection("n6", "n7"),
       new Connection("n7", "n8")));

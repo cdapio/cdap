@@ -43,7 +43,10 @@ public class TestModule1 implements DatasetModule {
     return new AbstractDatasetDefinition(name) {
       @Override
       public DatasetSpecification configure(String instanceName, DatasetProperties properties) {
-        return createSpec(instanceName, getName(), properties);
+        return DatasetSpecification
+          .builder(instanceName, getName())
+          .properties(properties.getProperties())
+          .build();
       }
 
       @Override
@@ -58,10 +61,6 @@ public class TestModule1 implements DatasetModule {
         return null;
       }
     };
-  }
-  private DatasetSpecification createSpec(String instanceName, String typeName,
-                                          DatasetProperties properties) {
-    return DatasetSpecification.builder(instanceName, typeName).properties(properties.getProperties()).build();
   }
 }
 

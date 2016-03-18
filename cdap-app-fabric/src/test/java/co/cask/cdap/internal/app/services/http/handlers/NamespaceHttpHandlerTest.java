@@ -164,8 +164,7 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
     response = createNamespace(METADATA_VALID, Id.Namespace.SYSTEM.getId());
     assertResponseCode(400, response);
     // we allow deleting the contents in default namespace. However, the namespace itself should never be deleted
-    deploy(AppWithDataset.class, Constants.Gateway.API_VERSION_3_TOKEN, Id.Namespace.DEFAULT.getId(),
-           AppWithDataset.class.getSimpleName());
+    deploy(AppWithDataset.class);
     response = deleteNamespace(Id.Namespace.DEFAULT.getId());
     assertResponseCode(200, response);
     response = getNamespace(Id.Namespace.DEFAULT.getId());

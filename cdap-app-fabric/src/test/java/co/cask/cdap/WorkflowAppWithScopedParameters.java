@@ -60,7 +60,9 @@ public class WorkflowAppWithScopedParameters extends AbstractApplication {
     public void beforeSubmit(MapReduceContext context) throws Exception {
       Map<String, String> args = context.getRuntimeArguments();
 
-      Preconditions.checkArgument(args.size() == 16);
+      Preconditions.checkArgument(args.size() == 18);
+      Preconditions.checkArgument(context.getLogicalStartTime() == 1234567890000L);
+      Preconditions.checkArgument(args.get("logical.start.time").equals("1234567890000"));
       Preconditions.checkArgument(args.get("input.path").contains("OneMRInput"));
       Preconditions.checkArgument(args.get("output.path").contains("OneMROutput"));
 
@@ -79,7 +81,7 @@ public class WorkflowAppWithScopedParameters extends AbstractApplication {
     public void beforeSubmit(MapReduceContext context) throws Exception {
       Map<String, String> args = context.getRuntimeArguments();
 
-      Preconditions.checkArgument(args.size() == 16);
+      Preconditions.checkArgument(args.size() == 18);
       Preconditions.checkArgument(args.get("input.path").contains("AnotherMRInput"));
       Preconditions.checkArgument(args.get("output.path").contains("ProgramOutput"));
 
@@ -97,7 +99,7 @@ public class WorkflowAppWithScopedParameters extends AbstractApplication {
     public void beforeSubmit(SparkContext context) throws Exception {
       Map<String, String> args = context.getRuntimeArguments();
 
-      Preconditions.checkArgument(args.size() == 15);
+      Preconditions.checkArgument(args.size() == 17);
       Preconditions.checkArgument(args.get("input.path").contains("SparkInput"));
       Preconditions.checkArgument(args.get("output.path").contains("ProgramOutput"));
     }
@@ -115,7 +117,7 @@ public class WorkflowAppWithScopedParameters extends AbstractApplication {
     @Override
     public void beforeSubmit(SparkContext context) throws Exception {
       Map<String, String> args = context.getRuntimeArguments();
-      Preconditions.checkArgument(args.size() == 15);
+      Preconditions.checkArgument(args.size() == 17);
       Preconditions.checkArgument(args.get("input.path").contains("SparkInput"));
       Preconditions.checkArgument(args.get("output.path").contains("AnotherSparkOutput"));
     }

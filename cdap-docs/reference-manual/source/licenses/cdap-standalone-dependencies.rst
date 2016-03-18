@@ -1,7 +1,7 @@
 .. meta::
     :author: Cask Data, Inc.
     :copyright: Copyright © 2015 Cask Data, Inc.
-    :version: 3.3.0
+    :version: 3.3.2
 
 =================================================
 Cask Data Application Platform |version|
@@ -157,6 +157,8 @@ Cask Data Application Platform Standalone Dependencies
    "org.apache.httpcomponents.httpclient-4.2.5.jar","4.2.5","\-","The Apache Software License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.txt"
    "org.apache.httpcomponents.httpcore-4.2.5.jar","4.2.5","\-","The Apache Software License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.txt"
    "org.apache.ivy.ivy-2.4.0.jar","2.4.0","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
+   "org.apache.kafka.kafka-clients-0.8.2.2.jar","0.8.2.2","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
+   "org.apache.kafka.kafka_2.10-0.8.2.2.jar","0.8.2.2","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.apache.mesos.mesos-0.21.0-shaded-protobuf.jar","0.21.0","shaded-protobuf","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.apache.spark.spark-catalyst_2.10-1.3.1.jar","1.3.1","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.apache.spark.spark-core_2.10-1.3.1.jar","1.3.1","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"

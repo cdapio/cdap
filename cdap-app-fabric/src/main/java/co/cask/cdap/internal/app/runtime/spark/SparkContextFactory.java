@@ -65,7 +65,7 @@ final class SparkContextFactory {
                                                           clientContext.getExecutorResources());
     return new ExecutionSparkContext(clientContext.getApplicationSpecification(), spec, clientContext.getProgramId(),
                                      clientContext.getRunId(), clientContext.getProgramClassLoader(),
-                                     clientContext.getLogicalStartTime(), clientContext.getRuntimeArguments(),
+                                     clientContext.getRuntimeArguments(),
                                      transaction, datasetFramework, txClient, clientContext.getDiscoveryServiceClient(),
                                      clientContext.getMetricsContext(), clientContext.getLoggingContext(),
                                      hConf, streamAdmin, localizedResources,

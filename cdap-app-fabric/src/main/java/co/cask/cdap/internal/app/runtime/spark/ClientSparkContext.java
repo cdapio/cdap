@@ -56,7 +56,7 @@ public final class ClientSparkContext extends AbstractSparkContext {
   private final File pluginArchive;
   private final Map<String, LocalizeResource> resourcesToLocalize;
 
-  public ClientSparkContext(Program program, RunId runId, long logicalStartTime, Map<String, String> runtimeArguments,
+  public ClientSparkContext(Program program, RunId runId, Map<String, String> runtimeArguments,
                             TransactionSystemClient txClient, DatasetFramework datasetFramework,
                             DiscoveryServiceClient discoveryServiceClient,
                             MetricsCollectionService metricsCollectionService,
@@ -65,7 +65,7 @@ public final class ClientSparkContext extends AbstractSparkContext {
                             @Nullable WorkflowProgramInfo workflowProgramInfo) {
     super(program.getApplicationSpecification(),
           program.getApplicationSpecification().getSpark().get(program.getName()),
-          program.getId(), runId, program.getClassLoader(), logicalStartTime,
+          program.getId(), runId, program.getClassLoader(),
           runtimeArguments, discoveryServiceClient,
           createMetricsContext(metricsCollectionService, program.getId(), runId),
           createLoggingContext(program.getId(), runId),

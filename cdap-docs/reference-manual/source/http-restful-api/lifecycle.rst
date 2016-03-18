@@ -31,7 +31,7 @@ and an optional application configuration. For example:
 .. container:: highlight
 
   .. parsed-literal::
-    |$| PUT <base-url>/namespaces/default/apps/purchaseWordCount -H "Content-Type: application/json" -d
+    |$| PUT <base-url>/namespaces/default/apps/purchaseWordCount -d
     {
       "artifact": {
         "name": "WordCount",
@@ -46,10 +46,6 @@ and an optional application configuration. For example:
 will create an application named ``purchaseWordCount`` from the example ``WordCount`` artifact. The application
 will receive the specified config, which will configure the application to create a stream named
 ``purchaseStream`` instead of using the default stream name. 
-
-Note that the ``Content-Type`` header must be set to ``application/json``. If not, the API will
-revert to a deprecated API which expects the request body to contain the contents
-of a JAR file. 
 
 Update an Application
 ---------------------

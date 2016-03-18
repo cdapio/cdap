@@ -34,6 +34,7 @@ import co.cask.cdap.internal.app.runtime.artifact.Artifacts;
 import co.cask.cdap.internal.lang.FieldVisitor;
 import co.cask.cdap.internal.lang.Fields;
 import co.cask.cdap.internal.lang.Reflections;
+import co.cask.cdap.proto.Id;
 import com.google.common.base.Throwables;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
@@ -78,13 +79,13 @@ public class PluginInstantiator implements Closeable {
   public PluginInstantiator(CConfiguration cConf, ClassLoader parentClassLoader, File pluginDir) {
     this.instantiatorFactory = new InstantiatorFactory(false);
     File tmpDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
-      cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
+                           cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
 
     this.pluginDir = pluginDir;
     this.tmpDir = DirUtils.createTempDir(tmpDir);
     this.classLoaders = CacheBuilder.newBuilder()
-                                    .removalListener(new ClassLoaderRemovalListener())
-                                    .build(new ClassLoaderCacheLoader());
+      .removalListener(new ClassLoaderRemovalListener())
+      .build(new ClassLoaderCacheLoader());
     this.parentClassLoader = PluginClassLoader.createParent(parentClassLoader);
   }
 
@@ -129,6 +130,20 @@ public class PluginInstantiator implements Closeable {
   @SuppressWarnings("unchecked")
   public <T> Class<T> loadClass(Plugin plugin) throws IOException, ClassNotFoundException {
     return (Class<T>) getArtifactClassLoader(plugin.getArtifactId()).loadClass(plugin.getPluginClass().getClassName());
+  }
+
+  /**
+   * Create a new instance of plugin class without any config, config will be null in the instantiated plugin.
+   * @param artifact artifact of the plugin
+   * @param pluginClass information about plugin class
+   * @param <T> Type of plugin
+   * @return a new plugin instance
+   */
+  public <T> T newInstanceWithoutConfig(ArtifactId artifact,
+                                        PluginClass pluginClass) throws IOException, ClassNotFoundException {
+    ClassLoader pluginClassLoader = getArtifactClassLoader(artifact);
+    Class pluginClassLoaded = pluginClassLoader.loadClass(pluginClass.getClassName());
+    return (T) instantiatorFactory.get(TypeToken.of(pluginClassLoaded)).create();
   }
 
   /**
@@ -204,7 +219,7 @@ public class PluginInstantiator implements Closeable {
 
   @Override
   public void close() throws IOException {
-    // Cleanup the ClassLoader cache and the temporary directoy for the expanded plugin jar.
+    // Cleanup the ClassLoader cache and the temporary directory for the expanded plugin jar.
     classLoaders.invalidateAll();
     if (parentClassLoader instanceof Closeable) {
       Closeables.closeQuietly((Closeable) parentClassLoader);

@@ -33,6 +33,16 @@ angular.module(PKG.name + '.commons')
           placeholder: '{{myconfig.properties.default || myconfig["widget-attributes"].default || ""}}'
         }
       },
+      'textarea': {
+        element: '<textarea></textarea>',
+        attributes: {
+          'class': 'form-control',
+          'data-ng-trim': 'false',
+          'ng-model': 'model',
+          'rows': '{{myconfig["widget-attributes"].rows}}',
+          placeholder: '{{myconfig.properties.default || myconfig["widget-attributes"].default || ""}}'
+        }
+      },
       'password': {
         element: '<input/>',
         attributes: {

@@ -88,6 +88,7 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
 
   private MultipleOutputs multipleOutputs;
   private TaskInputOutputContext<?, ?, KEYOUT, VALUEOUT> context;
+  private String inputName;
 
   // keeps track of all tx-aware datasets to perform the transaction lifecycle for them. Note that
   // the transaction is already started, and it will be committed or aborted outside of this task.
@@ -170,6 +171,10 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
     this.context = context;
   }
 
+  public void setInputName(String inputName) {
+    this.inputName = inputName;
+  }
+
   /**
    * Closes the {@link MultipleOutputs} contained inside this context.
    */
@@ -196,6 +201,12 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
   @Nullable
   public WorkflowToken getWorkflowToken() {
     return workflowProgramInfo == null ? null : workflowProgramInfo.getWorkflowToken();
+  }
+
+  @Nullable
+  @Override
+  public String getInputName() {
+    return inputName;
   }
 
   @Nullable

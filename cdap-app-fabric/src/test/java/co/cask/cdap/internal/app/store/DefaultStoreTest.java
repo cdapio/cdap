@@ -64,6 +64,7 @@ import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.store.DefaultNamespaceStore;
 import com.google.common.base.Function;
+import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -78,8 +79,12 @@ import org.apache.twill.filesystem.Location;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -97,6 +102,20 @@ public class DefaultStoreTest {
   private static DefaultStore store;
   private static DefaultNamespaceStore nsStore;
   private static Scheduler scheduler;
+
+  @ClassRule
+  public static TemporaryFolder tmpFolder = new TemporaryFolder();
+
+  private static final Supplier<File> TEMP_FOLDER_SUPPLIER = new Supplier<File>() {
+    @Override
+    public File get() {
+      try {
+        return tmpFolder.newFolder();
+      } catch (IOException e) {
+        throw Throwables.propagate(e);
+      }
+    }
+  };
 
   @BeforeClass
   public static void beforeClass() throws Exception {
@@ -120,7 +139,7 @@ public class DefaultStoreTest {
 
   @Test
   public void testLoadingProgram() throws Exception {
-    AppFabricTestHelper.deployApplication(ToyApp.class);
+    AppFabricTestHelper.deployApplicationWithManager(ToyApp.class, TEMP_FOLDER_SUPPLIER);
     Program program = store.loadProgram(Id.Program.from(DefaultId.NAMESPACE.getId(), "ToyApp",
                                                         ProgramType.FLOW, "ToyFlow"));
     Assert.assertNotNull(program);
@@ -494,7 +513,7 @@ public class DefaultStoreTest {
 
   @Test
   public void testServiceInstances() throws Exception {
-    AppFabricTestHelper.deployApplication(AppWithServices.class);
+    AppFabricTestHelper.deployApplicationWithManager(AppWithServices.class, TEMP_FOLDER_SUPPLIER);
     AbstractApplication app = new AppWithServices();
     DefaultAppConfigurer appConfigurer = new DefaultAppConfigurer(Id.Namespace.DEFAULT, app);
     app.configure(appConfigurer, new DefaultApplicationContext());
@@ -523,7 +542,7 @@ public class DefaultStoreTest {
 
   @Test
   public void testSetFlowletInstances() throws Exception {
-    AppFabricTestHelper.deployApplication(WordCountApp.class);
+    AppFabricTestHelper.deployApplicationWithManager(WordCountApp.class, TEMP_FOLDER_SUPPLIER);
 
     ApplicationSpecification spec = Specifications.from(new WordCountApp());
     int initialInstances = spec.getFlows().get("WordCountFlow").getFlowlets().get("StreamSource").getInstances();
@@ -549,7 +568,7 @@ public class DefaultStoreTest {
 
   @Test
   public void testWorkerInstances() throws Exception {
-    AppFabricTestHelper.deployApplication(AppWithWorker.class);
+    AppFabricTestHelper.deployApplicationWithManager(AppWithWorker.class, TEMP_FOLDER_SUPPLIER);
     ApplicationSpecification spec = Specifications.from(new AppWithWorker());
 
     Id.Application appId = Id.Application.from(DefaultId.NAMESPACE.getId(), spec.getName());
@@ -758,7 +777,7 @@ public class DefaultStoreTest {
   @Test
   public void testCheckDeletedProgramSpecs() throws Exception {
     //Deploy program with all types of programs.
-    AppFabricTestHelper.deployApplication(AllProgramsApp.class);
+    AppFabricTestHelper.deployApplicationWithManager(AllProgramsApp.class, TEMP_FOLDER_SUPPLIER);
     ApplicationSpecification spec = Specifications.from(new AllProgramsApp());
 
     Set<String> specsToBeVerified = Sets.newHashSet();
@@ -796,7 +815,7 @@ public class DefaultStoreTest {
   @Test
   public void testCheckDeletedWorkflow() throws Exception {
     //Deploy program with all types of programs.
-    AppFabricTestHelper.deployApplication(AllProgramsApp.class);
+    AppFabricTestHelper.deployApplicationWithManager(AllProgramsApp.class, TEMP_FOLDER_SUPPLIER);
     ApplicationSpecification spec = Specifications.from(new AllProgramsApp());
 
     Set<String> specsToBeDeleted = Sets.newHashSet();
@@ -850,7 +869,7 @@ public class DefaultStoreTest {
 
   @Test
   public void testDynamicScheduling() throws Exception {
-    AppFabricTestHelper.deployApplication(AppWithWorkflow.class);
+    AppFabricTestHelper.deployApplicationWithManager(AppWithWorkflow.class, TEMP_FOLDER_SUPPLIER);
     Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, AppWithWorkflow.NAME);
 
     Map<String, ScheduleSpecification> schedules = getSchedules(appId);

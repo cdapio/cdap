@@ -23,7 +23,6 @@ Cask Data Application Platform Release Notes
    :backlinks: none
    :depth: 2
 
-
 `Release 3.4.0 <http://docs.cask.co/cdap/3.4.0/index.html>`__
 =============================================================
 
@@ -117,6 +116,7 @@ Known Issues
 
 
 `Release 3.3.2 <http://docs.cask.co/cdap/3.3.2/index.html>`__
+
 =============================================================
 
 Improvements
@@ -148,76 +148,10 @@ Bug Fixes
 - `CDAP-5094 <https://issues.cask.co/browse/CDAP-5094>`__ - Fixed a problem where the explore
   schema fileset property was being ignored unless an explore format was also present.
 
-- `CDAP-5137 <https://issues.cask.co/browse/CDAP-5137>`__ - Fixed a problem with Spark jobs
+- `CDAP-5137 <https://issues.cask.co/browse/CDAP-5137>`__ - Fix a problem with Spark jobs
   not being submitted to the appropriate YARN scheduler queue set for the namespace.
 
-Known Issues
-------------
-- After upgrading CDAP from a pre-3.0 version, any unprocessed metrics data in Kafka will
-  be lost and *WARN* log messages will be logged that tell about the inability to process
-  old data in the old format.
 
-- `CDAP-797 <https://issues.cask.co/browse/CDAP-797>`__ - 
-  When running secure Hadoop clusters, debug logs from MapReduce programs are not
-  available.
-
-- `CDAP-1007 <https://issues.cask.co/browse/CDAP-1007>`__ -
-  If the Hive Metastore is restarted while the CDAP Explore Service is running, the
-  Explore Service remains alive, but becomes unusable. To correct, restart the CDAP Master
-  |---| which will restart all services |---| as described under "Starting CDAP Services"
-  for your particular Hadoop distribution in the :ref:`Installation documentation <installation-index>`.
-
-- `CDAP-1587 <https://issues.cask.co/browse/CDAP-1587>`__ - 
-  CDAP internally creates tables in the "user" space that begin with the word
-  ``"system"``. User datasets with names starting with ``"system"`` can conflict if they
-  were to match one of those names. To avoid this, do not start any datasets with the word
-  ``"system"``. 
-
-- `CDAP-2632 <https://issues.cask.co/browse/CDAP-2632>`__ -
-  The application in the `cdap-kafka-ingest-guide 
-  <https://github.com/cdap-guides/cdap-kafka-ingest-guide/tree/release/cdap-3.0-compatible>`__ 
-  does not run on Ubuntu 14.x as of CDAP 3.0.x.
-
-- `CDAP-2721 <https://issues.cask.co/browse/CDAP-2721>`__ -
-  Metrics for :ref:`FileSets <datasets-fileset>` can show zero values even if there is
-  data present, because FileSets do not emit metrics (`CDAP-587
-  <https://issues.cask.co/browse/CDAP-587>`).
-  
-- `CDAP-2831 <https://issues.cask.co/browse/CDAP-2831>`__ -
-  A workflow that is scheduled by time will not be run between the failure of the primary
-  master and the time that the secondary takes over. This scheduled run will not be
-  triggered at all.
-
-- `CDAP-2945 <https://issues.cask.co/browse/CDAP-2945>`__ -
-  If the input partition filter for a PartitionedFileSet does not match any partitions,
-  MapReduce jobs can fail.
-
-- `CDAP-3000 <https://issues.cask.co/browse/CDAP-3000>`__ -
-  The Workflow token is in an inconsistent state for nodes in a fork while the nodes of
-  the fork are still running. It becomes consistent after the join.
-
-- `CDAP-3221 <https://issues.cask.co/browse/CDAP-3221>`__ -
-  When running in CDAP Standalone mode, if a MapReduce job fails repeatedly, then the SDK
-  hits an out-of-memory exception due to ``perm gen``. The Standalone needs restarting at
-  this point.
-
-- `CDAP-3262 <https://issues.cask.co/browse/CDAP-3262>`__ -
-  For Microsoft Windows, the CDAP Standalone scripts can fail when used with a JAVA_HOME
-  that is defined as a path with spaces in it. A workaround is to use a definition of
-  JAVA_HOME that does not include spaces, such as ``C:\PROGRA~1\Java\jdk1.7.0_79\bin`` or
-  ``C:\ProgramData\Oracle\Java\javapath``.
-
-- `CDAP-3492 <https://issues.cask.co/browse/CDAP-3492>`__ -
-  In the CDAP CLI, executing ``'select *'`` from a dataset with many fields generates an error.
-  
-- `CDAP-3641 <https://issues.cask.co/browse/CDAP-3641>`__ -
-  A RESTful API call to retrieve workflow statistics hangs if units (such as "s" for
-  seconds) are not provided as part of the query.
-
-- `CDAP-3750 <https://issues.cask.co/browse/CDAP-3750>`__ -
-  If a table schema contains a field name that is a reserved word in the Hive DDL, ``'enable explore'`` fails.
-  
-  
 `Release 3.3.1 <http://docs.cask.co/cdap/3.3.1/index.html>`__
 =============================================================
 
@@ -234,7 +168,6 @@ Improvements
 
 - `CDAP-4773 <https://issues.cask.co/browse/CDAP-4773>`__ - Improved the error logging for
   the Master Stream service when it can't connect to the CDAP AppFabric server.
-
 
 Bug Fixes
 ---------

@@ -20,11 +20,27 @@ import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
 
+import java.util.Properties;
 import java.util.Set;
+import java.util.jar.Attributes;
 
 /**
  * Interface to grant/revoke {@link Principal principals} authorization for {@link Action actions} on
- * {@link EntityId CDAP entities}.
+ * {@link EntityId CDAP entities}. Authorization extensions must implement this interface to delegate authorization
+ * to appropriate authorization backends. The contract with Authorization extensions is as below:
+ *
+ * <ul>
+ *   <li>Authorization is enabled setting the parameter {@code security.authorization.enabled} to true in
+ *   {@code cdap-site.xml}.</li>
+ *   <li>The path to the extension jar bundled with all its dependencies must be specified by
+ *   {@code security.authorization.extension.jar.path} in cdap-site.xml</li>
+ *   <li>The extension jar must contain a class that implements {@link Authorizer}. This class must be specified as
+ *   the {@link Attributes.Name#MAIN_CLASS} in the extension jar's manifest file.</li>
+ *   <li>The contract with the class that implements {@link Authorizer} is that it must have a public constructor that
+ *   accepts a single {@link Properties} object as parameter. This constructor is invoked with a {@link Properties}
+ *   object that is populated with all configuration settings from {@code cdap-site.xml} that have keys with the prefix
+ *   {@code security.authorization.extension.config}.</li>
+ * </ul>
  */
 public interface Authorizer {
   /**

@@ -21,7 +21,6 @@ import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Multimap;
 import com.google.common.collect.SetMultimap;
 import com.google.common.collect.Sets;
 
@@ -39,45 +38,37 @@ import java.util.Set;
  * A DAG (directed acyclic graph).
  */
 public class Dag {
-  private final Set<String> nodes;
-  private final Set<String> sources;
-  private final Set<String> sinks;
+  protected final Set<String> nodes;
+  protected final Set<String> sources;
+  protected final Set<String> sinks;
   // stage -> outputs of that stage
-  private final SetMultimap<String, String> outgoingConnections;
+  protected final SetMultimap<String, String> outgoingConnections;
   // stage -> inputs for that stage
-  private final SetMultimap<String, String> incomingConnections;
+  protected final SetMultimap<String, String> incomingConnections;
 
-  public static Dag fromConnections(Collection<Connection> connections) {
-    SetMultimap<String, String> outgoingConnections = HashMultimap.create();
-    SetMultimap<String, String> incomingConnections = HashMultimap.create();
+  public Dag(Collection<Connection> connections) {
+    Preconditions.checkArgument(!connections.isEmpty(), "Cannot create a DAG without any connections");
+    this.outgoingConnections = HashMultimap.create();
+    this.incomingConnections = HashMultimap.create();
     for (Connection connection : connections) {
       outgoingConnections.put(connection.getFrom(), connection.getTo());
       incomingConnections.put(connection.getTo(), connection.getFrom());
     }
-    Dag dag = new Dag(outgoingConnections, incomingConnections);
-    dag.validate();
-    return dag;
+    this.sources = new HashSet<>();
+    this.sinks = new HashSet<>();
+    this.nodes = new HashSet<>();
+    init();
+    validate();
   }
 
   private Dag(SetMultimap<String, String> outgoingConnections,
               SetMultimap<String, String> incomingConnections) {
-    this(calculateSources(outgoingConnections, incomingConnections),
-         calculateSinks(outgoingConnections, incomingConnections),
-         outgoingConnections, incomingConnections);
-  }
-
-  private Dag(Set<String> sources, Set<String> sinks,
-              SetMultimap<String, String> outgoingConnections,
-              SetMultimap<String, String> incomingConnections) {
-    Preconditions.checkArgument(!outgoingConnections.isEmpty(), "Cannot create a DAG without any connections");
-    Preconditions.checkArgument(!incomingConnections.isEmpty(), "Cannot create a DAG without any connections");
-    this.sources = new HashSet<>(sources);
-    this.sinks = new HashSet<>(sinks);
     this.outgoingConnections = HashMultimap.create(outgoingConnections);
     this.incomingConnections = HashMultimap.create(incomingConnections);
+    this.sources = new HashSet<>();
+    this.sinks = new HashSet<>();
     this.nodes = new HashSet<>();
-    nodes.addAll(outgoingConnections.keySet());
-    nodes.addAll(outgoingConnections.values());
+    init();
   }
 
   /**
@@ -97,7 +88,7 @@ public class Dag {
     }
 
     // check for cycles
-    linearize();
+    getTopologicalOrder();
 
     // check for sections of the dag that are on an island by themselves
 
@@ -210,61 +201,23 @@ public class Dag {
         }
       }
     }
-    return Dag.fromConnections(connections);
+    return new Dag(connections);
   }
 
   /**
-   * Inserts a node in front of the specified node.
-   *
-   * @param name the name of the new node
-   * @param inFrontOf the node to insert in front of
-   */
-  public void insertNode(String name, String inFrontOf) {
-    if (!nodes.contains(inFrontOf)) {
-      throw new IllegalArgumentException(
-        String.format("Cannot insert in front node %s because it does not exist.", inFrontOf));
-    }
-    if (!nodes.add(name)) {
-      throw new IllegalArgumentException(
-        String.format("Cannot insert node %s because it already exists.", name));
-    }
-
-    Set<String> inputs = incomingConnections.get(inFrontOf);
-    incomingConnections.putAll(name, inputs);
-    for (String input : inputs) {
-      outgoingConnections.get(input).remove(inFrontOf);
-      outgoingConnections.put(input, name);
-    }
-    outgoingConnections.put(name, inFrontOf);
-    incomingConnections.replaceValues(inFrontOf, ImmutableSet.of(name));
-  }
-
-  /**
-   * Remove a source from the dag. New sources will be re-calculated after the source is removed.
-   *
-   * @return the removed source, or null if there were no sources to remove.
-   */
-  public String removeSource() {
-    if (sources.isEmpty()) {
-      return null;
-    }
-    String source = sources.iterator().next();
-    removeNode(source);
-    return source;
-  }
-
-  /**
-   * Linearize the dag. The returned list guarantees that for each item in the list, that item has no path to an
+   * Get the dag in topological order.
+   * The returned list guarantees that for each item in the list, that item has no path to an
    * item that comes before it in the list. In the process, if a cycle is found, an exception will be thrown.
-   * This is a destructive operation and will result in an empty dag.
+   * Topological sort means we pop off a source from the dag, re-calculate sources, and continue until there
+   * are no more nodes left. Popping will be done on a copy of the dag so that this is not a destructive operation.
    *
-   * @return the linearized dag
+   * @return the dag in topological order
    * @throws IllegalStateException if there is a cycle in the dag
    */
-  public List<String> linearize() {
+  public List<String> getTopologicalOrder() {
     List<String> linearized = new ArrayList<>();
 
-    Dag copy = new Dag(sources, sinks, outgoingConnections, incomingConnections);
+    Dag copy = new Dag(outgoingConnections, incomingConnections);
     String removed;
     while ((removed = copy.removeSource()) != null) {
       linearized.add(removed);
@@ -280,6 +233,29 @@ public class Dag {
     Set<String> cycle = accessibleFrom(copy.outgoingConnections.keySet().iterator().next());
     throw new IllegalStateException(
       String.format("Invalid DAG. Stages %s form a cycle.", Joiner.on(',').join(cycle)));
+  }
+
+  /**
+   * Remove a source from the dag. New sources will be re-calculated after the source is removed.
+   *
+   * @return the removed source, or null if there were no sources to remove.
+   */
+  protected String removeSource() {
+    if (sources.isEmpty()) {
+      return null;
+    }
+    String source = sources.iterator().next();
+    removeNode(source);
+    return source;
+  }
+
+  /**
+   * Remove the specified connection. Does not check that the connection actually exists.
+   * It is possible to break apart the dag with this call.
+   */
+  protected void removeConnection(String from, String to) {
+    outgoingConnections.remove(from, to);
+    incomingConnections.remove(to, from);
   }
 
   /**
@@ -339,28 +315,20 @@ public class Dag {
     return sink;
   }
 
-  private static Set<String> calculateSources(Multimap<String, String> outgoingConnections,
-                                              Multimap<String, String> incomingConnections) {
-    Set<String> sources = new HashSet<>();
-    // a source is any stage that doesn't have any inputs but has at least one output
-    for (String stageWithOutput : outgoingConnections.keySet()) {
-      if (incomingConnections.get(stageWithOutput).isEmpty()) {
-        sources.add(stageWithOutput);
+  private void init() {
+    nodes.clear();
+    sources.clear();
+    sinks.clear();
+    nodes.addAll(outgoingConnections.keySet());
+    nodes.addAll(outgoingConnections.values());
+    for (String node : nodes) {
+      if (outgoingConnections.get(node).isEmpty()) {
+        sinks.add(node);
+      }
+      if (incomingConnections.get(node).isEmpty()) {
+        sources.add(node);
       }
     }
-    return sources;
-  }
-
-  private static Set<String> calculateSinks(Multimap<String, String> outgoingConnections,
-                                            Multimap<String, String> incomingConnections) {
-    Set<String> sinks = new HashSet<>();
-    // a sink is any stage that doesn't have any outputs but has at least one input
-    for (String stageWithInput : incomingConnections.keySet()) {
-      if (outgoingConnections.get(stageWithInput).isEmpty()) {
-        sinks.add(stageWithInput);
-      }
-    }
-    return sinks;
   }
 
   @Override

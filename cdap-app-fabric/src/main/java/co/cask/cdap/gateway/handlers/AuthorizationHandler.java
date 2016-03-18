@@ -20,7 +20,6 @@ import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.FeatureDisabledException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.http.SecurityRequestContext;
 import co.cask.cdap.common.logging.AuditLogEntry;
 import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import co.cask.cdap.proto.security.Action;
@@ -28,8 +27,11 @@ import co.cask.cdap.proto.security.AuthorizationRequest;
 import co.cask.cdap.proto.security.CheckAuthorizedRequest;
 import co.cask.cdap.proto.security.GrantRequest;
 import co.cask.cdap.proto.security.RevokeRequest;
+import co.cask.cdap.security.authorization.AuthorizerInstantiatorService;
+import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
 import co.cask.cdap.security.spi.authorization.Authorizer;
 import co.cask.http.HttpResponder;
+import com.google.common.base.Objects;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
 import org.jboss.netty.handler.codec.http.HttpRequest;
@@ -52,12 +54,12 @@ import javax.ws.rs.Path;
 public class AuthorizationHandler extends AbstractAppFabricHttpHandler {
 
   private static final Logger AUDIT_LOG = LoggerFactory.getLogger("authorization-access");
-  private final Authorizer authorizer;
+  private final AuthorizerInstantiatorService authorizerInstantiatorService;
   private final boolean enabled;
 
   @Inject
-  AuthorizationHandler(Authorizer authorizer, CConfiguration conf) {
-    this.authorizer = authorizer;
+  AuthorizationHandler(AuthorizerInstantiatorService authorizerInstantiatorService, CConfiguration conf) {
+    this.authorizerInstantiatorService = authorizerInstantiatorService;
     this.enabled = conf.getBoolean(Constants.Security.Authorization.ENABLED);
   }
 
@@ -65,8 +67,8 @@ public class AuthorizationHandler extends AbstractAppFabricHttpHandler {
                               HttpResponseStatus responseStatus) throws UnknownHostException {
     String reqBody = String.format("[%s %s %s]", request.getPrincipal(), request.getEntity(), request.getActions());
     AuditLogEntry logEntry = new AuditLogEntry();
-    logEntry.setUserName(SecurityRequestContext.getUserId().or("-"));
-    logEntry.setClientIP(InetAddress.getByName(SecurityRequestContext.getUserIP().or("0.0.0.0")));
+    logEntry.setUserName(Objects.firstNonNull(SecurityRequestContext.getUserId(), "-"));
+    logEntry.setClientIP(InetAddress.getByName(Objects.firstNonNull(SecurityRequestContext.getUserIP(), "0.0.0.0")));
     logEntry.setRequestLine(httpRequest.getMethod(), httpRequest.getUri(), httpRequest.getProtocolVersion());
     logEntry.setRequestBody(reqBody);
     logEntry.setResponseCode(responseStatus.getCode());
@@ -88,7 +90,7 @@ public class AuthorizationHandler extends AbstractAppFabricHttpHandler {
     }
 
     for (Action action : request.getActions()) {
-      authorizer.enforce(request.getEntity(), request.getPrincipal(), action);
+      authorizerInstantiatorService.get().enforce(request.getEntity(), request.getPrincipal(), action);
     }
     httpResponder.sendStatus(HttpResponseStatus.OK);
     createLogEntry(httpRequest, request, HttpResponseStatus.OK);
@@ -103,7 +105,7 @@ public class AuthorizationHandler extends AbstractAppFabricHttpHandler {
     verifyAuthRequest(request);
 
     Set<Action> actions = request.getActions() == null ? EnumSet.allOf(Action.class) : request.getActions();
-    authorizer.grant(request.getEntity(), request.getPrincipal(), actions);
+    authorizerInstantiatorService.get().grant(request.getEntity(), request.getPrincipal(), actions);
 
     httpResponder.sendStatus(HttpResponseStatus.OK);
     createLogEntry(httpRequest, request, HttpResponseStatus.OK);
@@ -118,10 +120,10 @@ public class AuthorizationHandler extends AbstractAppFabricHttpHandler {
     verifyAuthRequest(request);
 
     if (request.getPrincipal() == null && request.getActions() == null) {
-      authorizer.revoke(request.getEntity());
+      authorizerInstantiatorService.get().revoke(request.getEntity());
     } else {
       Set<Action> actions = request.getActions() == null ? EnumSet.allOf(Action.class) : request.getActions();
-      authorizer.revoke(request.getEntity(), request.getPrincipal(), actions);
+      authorizerInstantiatorService.get().revoke(request.getEntity(), request.getPrincipal(), actions);
     }
 
     httpResponder.sendStatus(HttpResponseStatus.OK);
