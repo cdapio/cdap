@@ -158,7 +158,7 @@ public class Dag {
    * @return all stages accessible from that stage
    */
   public Set<String> accessibleFrom(String stage) {
-    return traverse(stage, new HashSet<String>(), new HashSet<String>());
+    return accessibleFrom(stage, ImmutableSet.<String>of());
   }
 
   /**
@@ -169,7 +169,22 @@ public class Dag {
    * @return all stages accessible from that stage
    */
   public Set<String> accessibleFrom(String stage, Set<String> stopNodes) {
-    return traverse(stage, new HashSet<String>(), stopNodes);
+    return accessibleFrom(ImmutableSet.of(stage), stopNodes);
+  }
+
+  /**
+   * Return all stages accessible from the specified stage, without going past any node in stopNodes.
+   *
+   * @param stages the stages to start at
+   * @param stopNodes set of nodes to stop traversal on
+   * @return all stages accessible from that stage
+   */
+  public Set<String> accessibleFrom(Set<String> stages, Set<String> stopNodes) {
+    Set<String> accessible = new HashSet<>();
+    for (String stage : stages) {
+      accessible.addAll(traverse(stage, accessible, stopNodes));
+    }
+    return accessible;
   }
 
   /**
@@ -192,7 +207,30 @@ public class Dag {
    * @return a dag created from the nodes accessible from the specified stage
    */
   public Dag subsetFrom(String stage, Set<String> stopNodes) {
-    Set<String> nodes = accessibleFrom(stage, stopNodes);
+    return subsetFrom(ImmutableSet.of(stage), stopNodes);
+  }
+
+  /**
+   * Return a subset of this dag starting from the specified stages.
+   * This is equivalent to calling {@link #subsetFrom(Set, Set)} with an empty set for stop nodes
+   *
+   * @param stages the stage to start at
+   * @return a dag created from the nodes accessible from the specified stage
+   */
+  public Dag subsetFrom(Set<String> stages) {
+    return subsetFrom(stages, ImmutableSet.<String>of());
+  }
+
+  /**
+   * Return a subset of this dag starting from the specified stage, without going past any node in stopNodes.
+   * This is equivalent to taking the nodes from {@link #accessibleFrom(Set, Set)} and building a dag from them.
+   *
+   * @param stages the stages to start at
+   * @param stopNodes set of nodes to stop traversal on
+   * @return a dag created from the nodes accessible from the specified stage
+   */
+  public Dag subsetFrom(Set<String> stages, Set<String> stopNodes) {
+    Set<String> nodes = accessibleFrom(stages, stopNodes);
     Set<Connection> connections = new HashSet<>();
     for (String node : nodes) {
       for (String outputNode : outgoingConnections.get(node)) {

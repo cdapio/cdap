@@ -21,17 +21,16 @@ import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.plugin.PluginContext;
 import co.cask.cdap.api.spark.JavaSparkProgram;
 import co.cask.cdap.api.spark.SparkContext;
-import co.cask.cdap.etl.api.Transform;
-import co.cask.cdap.etl.api.batch.BatchSink;
-import co.cask.cdap.etl.api.batch.BatchSource;
 import co.cask.cdap.etl.batch.BatchPhaseSpec;
 import co.cask.cdap.etl.batch.PipelinePluginInstantiator;
 import co.cask.cdap.etl.batch.TransformExecutorFactory;
 import co.cask.cdap.etl.common.Constants;
+import co.cask.cdap.etl.common.SetMultimapCodec;
 import co.cask.cdap.etl.common.TransformExecutor;
 import co.cask.cdap.etl.common.TransformResponse;
-import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.SetMultimap;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.function.Function;
 import org.apache.spark.api.java.function.PairFlatMapFunction;
@@ -53,7 +52,8 @@ public class ETLSparkProgram implements JavaSparkProgram {
 
   private static final Logger LOG = LoggerFactory.getLogger(ETLSparkProgram.class);
 
-  private static final Gson GSON = new Gson();
+  private static final Gson GSON = new GsonBuilder()
+    .registerTypeAdapter(SetMultimap.class, new SetMultimapCodec<>()).create();
 
 
   @Override
@@ -141,10 +141,7 @@ public class ETLSparkProgram implements JavaSparkProgram {
       PipelinePluginInstantiator pluginInstantiator = new PipelinePluginInstantiator(pluginContext, phaseSpec);
       TransformExecutorFactory<KeyValue<Object, Object>> transformExecutorFactory =
         new SparkTransformExecutorFactory<>(pluginContext, pluginInstantiator, metrics, logicalStartTime, runtimeArgs);
-      return transformExecutorFactory.create(
-        phaseSpec.getPhase(),
-        ImmutableSet.of(BatchSource.PLUGIN_TYPE, BatchSink.PLUGIN_TYPE,
-                        Transform.PLUGIN_TYPE, Constants.CONNECTOR_TYPE));
+      return transformExecutorFactory.create(phaseSpec.getPhase());
     }
   }
 }

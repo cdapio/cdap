@@ -28,7 +28,6 @@ import co.cask.cdap.etl.planner.StageInfo;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * Helps create {@link TransformExecutor TransformExecutors}.
@@ -46,27 +45,30 @@ public abstract class TransformExecutorFactory<T> {
 
   protected abstract BatchRuntimeContext createRuntimeContext(String stageName);
 
+  protected Transformation getTransformation(String pluginType, String stageName) throws Exception {
+    return getInitializedTransformation(stageName);
+  }
+
   /**
    * Create a transform executor for the specified pipeline. Will instantiate and initialize all sources,
    * transforms, and sinks in the pipeline.
    *
    * @param pipeline the pipeline to create a transform executor for
-   * @param pluginTypes which plugin types are Transforms
    * @return executor for the pipeline
    * @throws InstantiationException if there was an error instantiating a plugin
    * @throws Exception if there was an error initializing a plugin
    */
-  public TransformExecutor<T> create(PipelinePhase pipeline, Set<String> pluginTypes) throws Exception {
+  public TransformExecutor<T> create(PipelinePhase pipeline) throws Exception {
 
     Map<String, TransformDetail> transformations = new HashMap<>();
-    for (String pluginType : pluginTypes) {
-      for (StageInfo transformInfo : pipeline.getStagesOfType(pluginType)) {
-        String transformName = transformInfo.getName();
-        TransformDetail transformDetail = new TransformDetail(
-          getInitializedTransformation(transformName),
-          new DefaultStageMetrics(metrics, transformName),
-          pipeline.getStageOutputs(transformName));
-        transformations.put(transformName, transformDetail);
+    for (String pluginType : pipeline.getPluginTypes()) {
+      for (StageInfo stageInfo : pipeline.getStagesOfType(pluginType)) {
+        String stageName = stageInfo.getName();
+        transformations.put(stageName,
+                            new TransformDetail(
+                              getTransformation(pluginType, stageName),
+                              new DefaultStageMetrics(metrics, stageName),
+                              pipeline.getStageOutputs(stageName)));
       }
     }
 
@@ -81,11 +83,12 @@ public abstract class TransformExecutorFactory<T> {
    * @throws InstantiationException if the plugin for the stage could not be instantiated
    * @throws Exception if there was a problem initializing the plugin
    */
-  private <T extends Transformation & StageLifecycle<BatchRuntimeContext>> Transformation
+  protected <T extends Transformation & StageLifecycle<BatchRuntimeContext>> Transformation
   getInitializedTransformation(String stageName) throws Exception {
     BatchRuntimeContext runtimeContext = createRuntimeContext(stageName);
     T plugin = pluginInstantiator.newPluginInstance(stageName);
     plugin.initialize(runtimeContext);
     return plugin;
   }
+
 }

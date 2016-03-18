@@ -19,7 +19,6 @@ package co.cask.cdap.etl.common;
 import co.cask.cdap.etl.api.InvalidEntry;
 
 import java.util.Collection;
-import java.util.List;
 import java.util.Map;
 
 /**

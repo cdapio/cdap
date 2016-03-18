@@ -16,16 +16,21 @@
 
 package co.cask.cdap.etl.common;
 
+import co.cask.cdap.etl.planner.Dag;
 import co.cask.cdap.etl.planner.StageInfo;
+import co.cask.cdap.etl.proto.Connection;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Sets;
+import com.google.common.collect.Iterators;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -33,22 +38,14 @@ import java.util.Set;
 /**
  * Keeps track of the plugin ids for the source, transforms, and sink of a pipeline phase.
  */
-public class PipelinePhase {
+public class PipelinePhase implements Iterable<StageInfo> {
   // plugin type -> stage info
   private final Map<String, Set<StageInfo>> stages;
-  private final Map<String, Set<String>> connections;
-  private final Set<String> sources;
-  private final Set<String> sinks;
+  private final Dag dag;
 
-  private PipelinePhase(Map<String, Set<StageInfo>> stages, Map<String, Set<String>> connections) {
+  private PipelinePhase(Map<String, Set<StageInfo>> stages, Dag dag) {
     this.stages = ImmutableMap.copyOf(stages);
-    this.connections = ImmutableMap.copyOf(connections);
-    Set<String> stagesWithOutput = new HashSet<>();
-    for (Set<String> outputStages : connections.values()) {
-      stagesWithOutput.addAll(outputStages);
-    }
-    this.sources = Sets.difference(connections.keySet(), stagesWithOutput);
-    this.sinks = Sets.difference(stagesWithOutput, connections.keySet());
+    this.dag = dag;
   }
 
   /**
@@ -62,21 +59,58 @@ public class PipelinePhase {
     return Collections.unmodifiableSet(stageInfos == null ? new HashSet<StageInfo>() : stageInfos);
   }
 
-  public Map<String, Set<String>> getConnections() {
-    return connections;
-  }
-
   public Set<String> getStageOutputs(String stage) {
-    Set<String> outputs = connections.get(stage);
+    Set<String> outputs = dag.getNodeOutputs(stage);
     return Collections.unmodifiableSet(outputs == null ? new HashSet<String>() : outputs);
   }
 
+  public Set<String> getPluginTypes() {
+    return stages.keySet();
+  }
+
   public Set<String> getSources() {
-    return sources;
+    return dag.getSources();
   }
 
   public Set<String> getSinks() {
-    return sinks;
+    return dag.getSinks();
+  }
+
+  /**
+   * Get a subset of the pipeline phase, starting from the sources and going to the specified nodes that will
+   * be the new sinks of the pipeline subset.
+   *
+   * @param newSinks the new sinks to go to
+   * @return subset of the pipeline, starting from current sources and going to the new sinks
+   */
+  public PipelinePhase subsetTo(Set<String> newSinks) {
+    return getSubset(dag.subsetFrom(dag.getSources(), newSinks));
+  }
+
+  /**
+   * Get a subset of the pipeline phase, starting from the specified new sources and going to the current sinks.
+   *
+   * @param newSources the new sources to start from
+   * @return subset of the pipeline, starting from specified new sources and going to the current sinks
+   */
+  public PipelinePhase subsetFrom(Set<String> newSources) {
+    return getSubset(dag.subsetFrom(newSources));
+  }
+
+  private PipelinePhase getSubset(Dag subsetDag) {
+    Map<String, Set<StageInfo>> subsetStages = new HashMap<>();
+    for (Map.Entry<String, Set<StageInfo>> stagesEntry : stages.entrySet()) {
+      Set<StageInfo> stagesOfType = new HashSet<>();
+      for (StageInfo stageInfo : stagesEntry.getValue()) {
+        if (subsetDag.getNodes().contains(stageInfo.getName())) {
+          stagesOfType.add(stageInfo);
+        }
+      }
+      if (!stagesOfType.isEmpty()) {
+        subsetStages.put(stagesEntry.getKey(), stagesOfType);
+      }
+    }
+    return new PipelinePhase(subsetStages, subsetDag);
   }
 
   @Override
@@ -91,23 +125,19 @@ public class PipelinePhase {
     PipelinePhase that = (PipelinePhase) o;
 
     return Objects.equals(stages, that.stages) &&
-      Objects.equals(connections, that.connections) &&
-      Objects.equals(sources, that.sources) &&
-      Objects.equals(sinks, that.sinks);
+      Objects.equals(dag, that.dag);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(stages, connections, sources, sinks);
+    return Objects.hash(stages, dag);
   }
 
   @Override
   public String toString() {
     return "PipelinePhase{" +
       "stages=" + stages +
-      ", connections=" + connections +
-      ", sources=" + sources +
-      ", sinks=" + sinks +
+      ", dag=" + dag +
       '}';
   }
 
@@ -121,18 +151,27 @@ public class PipelinePhase {
     return new Builder(supportedPluginTypes);
   }
 
+  @Override
+  public Iterator<StageInfo> iterator() {
+    List<Iterator<StageInfo>> iterators = new ArrayList<>(stages.size());
+    for (Map.Entry<String, Set<StageInfo>> stagesEntry : stages.entrySet()) {
+      iterators.add(stagesEntry.getValue().iterator());
+    }
+    return Iterators.concat(iterators.iterator());
+  }
+
   /**
    * Builder to create a {@link PipelinePhase}.
    */
   public static class Builder {
     private final Set<String> supportedPluginTypes;
     private final Map<String, Set<StageInfo>> stages;
-    private final Map<String, Set<String>> connections;
+    private final Set<co.cask.cdap.etl.proto.Connection> connections;
 
     public Builder(Set<String> supportedPluginTypes) {
       this.supportedPluginTypes = supportedPluginTypes;
       this.stages = new HashMap<>();
-      this.connections = new HashMap<>();
+      this.connections = new HashSet<>();
     }
 
     public Builder addStage(String pluginType, StageInfo stageInfo) {
@@ -159,22 +198,21 @@ public class PipelinePhase {
     }
 
     public Builder addConnections(String from, Collection<String> to) {
-      Set<String> existingOutputs = connections.get(from);
-      if (existingOutputs == null) {
-        existingOutputs = new HashSet<>();
-        connections.put(from, existingOutputs);
+      for (String toStage : to) {
+        connections.add(new Connection(from, toStage));
       }
-      existingOutputs.addAll(to);
       return this;
     }
 
     public Builder addConnections(Map<String, Set<String>> connections) {
-      this.connections.putAll(connections);
+      for (Map.Entry<String, Set<String>> entry : connections.entrySet()) {
+        addConnections(entry.getKey(), entry.getValue());
+      }
       return this;
     }
 
     public PipelinePhase build() {
-      return new PipelinePhase(stages, connections);
+      return new PipelinePhase(stages, new Dag(connections));
     }
   }
 }

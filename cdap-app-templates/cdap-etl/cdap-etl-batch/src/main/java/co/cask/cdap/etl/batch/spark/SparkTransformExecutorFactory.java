@@ -48,4 +48,5 @@ public class SparkTransformExecutorFactory<T> extends TransformExecutorFactory<T
   protected BatchRuntimeContext createRuntimeContext(String stageName) {
     return new SparkBatchRuntimeContext(pluginContext, metrics, logicalStartTime, runtimeArgs, stageName);
   }
+
 }
