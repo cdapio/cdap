@@ -21,6 +21,8 @@ angular.module(PKG.name + '.commons')
     vm.showSearchBox = false;
     vm.searchTerm = '';
     vm.searchResults = [];
+    vm.searchEntered = false;
+    vm.loading = false;
 
     vm.showSearch = function () {
       vm.showSearchBox = true;
@@ -31,6 +33,8 @@ angular.module(PKG.name + '.commons')
 
     vm.onBlur = function () {
       vm.showSearchBox = false;
+      vm.searchEntered = false;
+      vm.loading = false;
       vm.searchTerm = '';
       vm.searchResults = [];
     };
@@ -38,7 +42,8 @@ angular.module(PKG.name + '.commons')
     vm.search = function (event) {
       event.stopPropagation();
       if (!vm.searchTerm.length || event.keyCode !== 13) { return; }
-
+      vm.searchEntered = true;
+      vm.loading = true;
       var params = {
         namespaceId: $stateParams.namespace || $stateParams.nsadmin,
         query: vm.searchTerm
@@ -46,7 +51,7 @@ angular.module(PKG.name + '.commons')
       myTagsApi.searchTags(params)
         .$promise
         .then(function (res) {
-
+          vm.loading = false;
           var parsedSearch = [];
           angular.forEach(res, function (entity) {
             parsedSearch.push(parseEntity(entity.entityId));

@@ -14,7 +14,7 @@
   the License.
 -->
 
-<div class="navbar-item" ng-class="{ 'has-results': SearchCtrl.searchResults.length > 0 }">
+<div class="navbar-item" ng-class="{ 'has-results': SearchCtrl.searchEntered }">
   <span class="fa fa-search"
         ng-click="SearchCtrl.showSearch()"
         ng-if="!SearchCtrl.showSearchBox"></span>
@@ -94,6 +94,21 @@
             <span class="entity-type">{{ result.type }}</span>
           </span>
         </div>
+      </div>
+    </div>
+
+    <div class="search-results" ng-if="SearchCtrl.searchEntered && SearchCtrl.searchResults.length === 0">
+      <div class="text-center" ng-if="SearchCtrl.loading">
+        <h4>
+          <span class="fa fa-spin fa-refresh"></span>
+          <span>Searching</span>
+        </h4>
+      </div>
+
+      <div class="text-center" ng-if="SearchCtrl.searchResults.length === 0 && !SearchCtrl.loading">
+        <h4>
+          <span>No result</span>
+        </h4>
       </div>
     </div>
   </div>
