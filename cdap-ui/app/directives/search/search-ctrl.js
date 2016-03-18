@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.commons')
-  .controller('MySearchCtrl', function($stateParams, myTagsApi, $timeout, $scope) {
+  .controller('MySearchCtrl', function($stateParams, myTagsApi, $timeout, $scope, $document) {
     var vm = this;
 
     vm.showSearchBox = false;
@@ -41,7 +41,12 @@ angular.module(PKG.name + '.commons')
 
     vm.search = function (event) {
       event.stopPropagation();
+      if (event.keyCode === 27) {
+        vm.onBlur();
+      }
+
       if (!vm.searchTerm.length || event.keyCode !== 13) { return; }
+
       vm.searchEntered = true;
       vm.loading = true;
       var params = {
@@ -63,6 +68,18 @@ angular.module(PKG.name + '.commons')
     };
 
     $scope.$on('$stateChangeSuccess', vm.onBlur);
+
+    // trigger on pressing keyboard '?'
+    $document.bind('keypress', function (event) {
+      if (event.keyCode === 63) {
+        vm.showSearch();
+
+        // for some reason the focus on showSearch() does not trigger the focus
+        $timeout(function () {
+          angular.element(document.getElementById('global-search'))[0].focus();
+        });
+      }
+    });
 
 
     function parseEntity(entityObj) {
