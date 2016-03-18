@@ -27,6 +27,7 @@ import java.util.Set;
  * Represents the complete metadata of a {@link Id.NamespacedId} including its properties, tags in a given
  * {@link MetadataScope}
  */
+@Deprecated
 public class MetadataRecord {
   private final Id.NamespacedId entityId;
   private final MetadataScope scope;
