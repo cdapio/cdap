@@ -166,14 +166,14 @@ public class ProgramLifecycleService extends AbstractIdleService {
         public void completed() {
           LOG.debug("Program {} {} {} completed successfully.", id.getNamespaceId(), id.getApplicationId(), id.getId());
           store.setStop(id, runId, TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
-                        ProgramController.State.COMPLETED.getRunStatus());
+                        ProgramController.State.COMPLETED.getRunStatus(), null);
         }
 
         @Override
         public void killed() {
           LOG.debug("Program {} {} {} killed.", id.getNamespaceId(), id.getApplicationId(), id.getId());
           store.setStop(id, runId, TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
-                        ProgramController.State.KILLED.getRunStatus());
+                        ProgramController.State.KILLED.getRunStatus(), null);
         }
 
         @Override
@@ -192,7 +192,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
         public void error(Throwable cause) {
           LOG.info("Program stopped with error {}, {}", id, runId, cause);
           store.setStop(id, runId, TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
-                        ProgramController.State.ERROR.getRunStatus());
+                        ProgramController.State.ERROR.getRunStatus(), cause);
         }
       }, Threads.SAME_THREAD_EXECUTOR);
     }
