@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.commons')
-  .controller('MySearchCtrl', function($stateParams, myTagsApi, $timeout) {
+  .controller('MySearchCtrl', function($stateParams, myTagsApi, $timeout, $scope) {
     var vm = this;
 
     vm.showSearchBox = false;
@@ -56,6 +56,8 @@ angular.module(PKG.name + '.commons')
         });
 
     };
+
+    $scope.$on('$stateChangeSuccess', vm.onBlur);
 
 
     function parseEntity(entityObj) {
