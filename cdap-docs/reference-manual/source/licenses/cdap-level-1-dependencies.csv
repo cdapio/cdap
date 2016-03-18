@@ -8,6 +8,7 @@ com.google.inject.extensions.guice-multibindings-3.0.jar,com.google.inject.exten
 com.google.inject.guice-3.0.jar,com.google.inject,guice
 com.googlecode.concurrent-trees.concurrent-trees-2.4.0.jar,com.googlecode.concurrent-trees,concurrent-trees
 com.ning.async-http-client-1.7.18.jar,com.ning,async-http-client
+com.sun.jersey.jersey-servlet-1.18.jar,com.sun.jersey,jersey-servlet
 commons-cli.commons-cli-1.2.jar,commons-cli,commons-cli
 commons-codec.commons-codec-1.6.jar,commons-codec,commons-codec
 commons-lang.commons-lang-2.6.jar,commons-lang,commons-lang

@@ -1,7 +1,7 @@
 .. meta::
     :author: Cask Data, Inc.
     :copyright: Copyright © 2015 Cask Data, Inc.
-    :version: 3.3.0
+    :version: 3.3.2
 
 =================================================
 Cask Data Application Platform |version|
@@ -31,6 +31,7 @@ Cask Data Application Platform Level 1 Dependencies
    "com.google.inject","guice","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "com.googlecode.concurrent-trees","concurrent-trees","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "com.ning","async-http-client","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
+   "com.sun.jersey","jersey-servlet","Common Development and Distribution License(CDDL)","http://glassfish.java.net/public/CDDL+GPL_1_1.html"
    "commons-cli","commons-cli","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "commons-codec","commons-codec","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "commons-lang","commons-lang","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
