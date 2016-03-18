@@ -25,10 +25,10 @@ Operations
 .. |logging| replace:: **Logging and Monitoring:**
 .. _logging: logging.html
 
-- |logging|_ CDAP collects **logs and metrics** for all of its internal services, while CDAP itself
-  can be **monitored through external systems**. Covers **log location**, **logging
-  messages**, the **master services logback configuration** and **CDAP support for
-  logging** through standard SLF4J (Simple Logging Facade for Java) APIs.
+- |logging|_ CDAP collects **logs** for all of its internal services and user
+  applications; at the same time, CDAP can be **monitored through external systems**. Covers
+  **log location**, **logging messages**, the **master services logback configuration** and
+  **CDAP support for logging** through standard SLF4J (Simple Logging Facade for Java) APIs.
 
 
 .. |metrics| replace:: **Metrics:**
