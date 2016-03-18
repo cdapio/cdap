@@ -133,23 +133,22 @@
               <span>Support</span>
             </a>
           </li>
-
-          <li ng-hide="currentUser" ui-sref-active="disabled">
-            <a ui-sref="login({next:$state.current.url})">
+          <li ng-if="Navbar.securityEnabled && !Navbar.currentUser">
+            <a ui-sref="login({next:Navbar.$state.current.url})">
               <span class="fa fa-fw fa-sign-in"></span>
               <span>Log In</span>
             </a>
           </li>
 
-          <li ng-show="currentUser && securityEnabled" ur-sref-active="disabled">
+          <li ng-show="Navbar.securityEnabled && Navbar.currentUser" ur-sref-active="disabled">
             <a ui-sref="userprofile">
               <span class="fa fa-fw fa-user"></span>
               <span>Profile</span>
             </a>
           </li>
 
-          <li role="presentation" ng-show="currentUser" ng-class="{disabled:!securityEnabled}">
-            <a href="" ng-click="securityEnabled && logout()">
+          <li role="presentation" ng-show="Navbar.securityEnabled && Navbar.currentUser">
+            <a href="" ng-click="Navbar.securityEnabled && Navbar.logout()">
               <span class="fa fa-fw fa-sign-out"></span>
               <span>Log Out</span>
             </a>

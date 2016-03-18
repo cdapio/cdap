@@ -14,7 +14,7 @@
  * the License.
  */
 
-function NavbarController ($scope, $state, myNamespace, EventPipe, MYAUTH_EVENT, MY_CONFIG) {
+function NavbarController ($scope, $state, myNamespace, EventPipe, MYAUTH_EVENT, myAuth, MY_CONFIG) {
   'ngInject';
 
   let vm = this;
@@ -52,11 +52,17 @@ function NavbarController ($scope, $state, myNamespace, EventPipe, MYAUTH_EVENT,
   // Listening for event from namespace create or namespace delete
   EventPipe.on('namespace.update', updateNamespaceList);
 
-  $scope.$on (MYAUTH_EVENT.loginSuccess, updateNamespaceList);
+  vm.currentUser = myAuth.isAuthenticated();
+  $scope.$on (MYAUTH_EVENT.loginSuccess, () => {
+    vm.currentUser = myAuth.isAuthenticated();
+    updateNamespaceList();
+  });
   $scope.$on (MYAUTH_EVENT.logoutSuccess, () => {
+    vm.currentUser = myAuth.isAuthenticated();
     vm.namespaces = [];
   });
 
+  vm.logout = myAuth.logout.bind(myAuth);
   vm.changeNamespace = (ns) => {
     if ($state.params.namespace === ns.name) { return; }
     if ($state.includes('hydrator.**')) {
