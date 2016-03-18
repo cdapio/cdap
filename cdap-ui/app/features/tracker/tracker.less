@@ -723,6 +723,43 @@ body.state-tracker-integrations {
       h4 { font-weight: 500; }
     }
   }
+
+  .integrations-log-viewer {
+    .navigator-flow-title {
+      padding-left: 10px;
+      line-height: 1;
+      vertical-align: middle;
+      display: inline-block;
+
+      h3, p { margin: 0; }
+      p {
+        margin-left: 2px;
+        margin-top: 3px;
+        color: @search-font-color;
+      }
+    }
+
+    & > .col-xs-10, & > .col-xs-2 {
+      height: 60px;
+      line-height: 60px;
+      background-color: #dddddd;
+
+      .btn {
+        margin-right: 10px;
+        font-weight: 500;
+        background-color: white;
+
+        .fa {
+          margin-left: 15px;
+        }
+      }
+
+      ul.dropdown-menu {
+        top: 45px;
+        right: 9px;
+      }
+    }
+  }
 }
 
 .tooltip.tracker-tooltip .tooltip-inner {

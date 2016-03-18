@@ -118,6 +118,14 @@ class TrackerIntegrationsController {
           if (res[0].status === 'RUNNING') {
             this.navigatorSetup.isEnabled = true;
             this.fetchMetrics();
+
+            this.logsParams = {
+              namespace: this.$state.params.namespace,
+              appId: 'ClouderaNavigator',
+              programType: 'flows',
+              programId: 'MetadataFlow',
+              runId: res[0].runid
+            };
           } else {
             this.dataSrc.stopPoll(this.pollId.__pollId__);
           }

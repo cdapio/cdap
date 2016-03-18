@@ -99,7 +99,7 @@
         <p>
           <span>Status: </span>
           <span class="fa fa-circle"
-                ng-class="{ 'text-success': IntegrationsController.navigatorState.status === 'RUNNING', 'text-danger': IntegrationsController.navigatorState.status !== 'RUNNING' }"></span>
+                ng-class="{ 'text-success': IntegrationsController.navigatorState.status === 'RUNNING' || IntegrationsController.navigatorState.status === 'STARTING', 'text-danger': IntegrationsController.navigatorState.status !== 'RUNNING' && IntegrationsController.navigatorState.status !== 'STARTING' }"></span>
           <span ng-if="IntegrationsController.navigatorState.status !== 'KILLED'">
             {{ IntegrationsController.navigatorState.status }}
           </span>
@@ -113,11 +113,11 @@
         <p class="status-information">
           <span ng-if="IntegrationsController.navigatorState.status !== 'RUNNING' && IntegrationsController.navigatorState.end">
             <span>Disabled: </span>
-            <span>{{ IntegrationsController.navigatorState.end * 1000 | amDateFormat: 'MMM.DD.YY h:mm:ss a'}}</span>
+            <span>{{ IntegrationsController.navigatorState.end * 1000 | amDateFormat: 'MMM.DD.YYYY h:mm A'}}</span>
           </span>
           <span ng-if="IntegrationsController.navigatorState.status === 'RUNNING'">
             <span>Enabled: </span>
-            <span>{{ IntegrationsController.navigatorState.start * 1000 | amDateFormat: 'MMM.DD.YY h:mm:ss a'}}</span>
+            <span>{{ IntegrationsController.navigatorState.start * 1000 | amDateFormat: 'MMM.DD.YYYY h:mm A'}}</span>
           </span>
 
         </p>
@@ -160,3 +160,41 @@
     </div>
   </div>
 </div>
+
+<div class="row"
+     ng-if="IntegrationsController.navigatorState.status === 'RUNNING'">
+  <div class="integrations-log-viewer">
+    <div class="col-xs-10">
+      <div class="navigator-flow-title">
+        <h3>
+          <span class="icon-tigon"></span>
+          <span>MetadataFlow</span>
+        </h3>
+        <p>
+          Flow that subscribes to Metadata changes and propagates the same to Navigator
+        </p>
+      </div>
+    </div>
+    <div class="col-xs-2 text-right">
+      <div uib-dropdown>
+        <button class="btn" uib-dropdown-toggle>
+          <span>Jump</span>
+          <span class="fa fa-angle-down"></span>
+        </button>
+
+        <ul class="pull-right" uib-dropdown-menu>
+          <li>
+            <a ui-sref="flows.detail({ appId: 'ClouderaNavigator', programId: 'MetadataFlow'})">
+              View in CDAP
+            </a>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="col-xs-12">
+      <my-log-viewer params="IntegrationsController.logsParams"></my-log-viewer>
+    </div>
+  </div>
+</div>
+
