@@ -15,21 +15,96 @@
  */
 
 angular.module(PKG.name + '.commons')
-  .controller('MySearchCtrl', function($state) {
-    this.searchTxt = '';
-    this.displaySearchBox = false;
+  .controller('MySearchCtrl', function($stateParams, myTagsApi, $timeout) {
+    var vm = this;
 
-    this.onSearch = function(event) {
-      if (event.keyCode === 13) {
-        $state.go('search.objectswithtags', {tag: this.searchTxt});
-        this.searchTxt = '';
-        this.displaySearchBox = false;
-      }
+    vm.showSearchBox = false;
+    vm.searchTerm = '';
+    vm.searchResults = [];
+
+    vm.showSearch = function () {
+      vm.showSearchBox = true;
+      $timeout(function () {
+        angular.element(document.getElementById('global-search'))[0].focus();
+      });
     };
-    this.escapeSearch = function () {
-      if (this.searchTxt === '') {
-        this.displaySearchBox = false;
-      }
+
+    vm.onBlur = function () {
+      vm.showSearchBox = false;
+      vm.searchTerm = '';
+      vm.searchResults = [];
     };
+
+    vm.search = function (event) {
+      event.stopPropagation();
+      if (!vm.searchTerm.length || event.keyCode !== 13) { return; }
+
+      var params = {
+        namespaceId: $stateParams.namespace || $stateParams.nsadmin,
+        query: vm.searchTerm
+      };
+      myTagsApi.searchTags(params)
+        .$promise
+        .then(function (res) {
+
+          var parsedSearch = [];
+          angular.forEach(res, function (entity) {
+            parsedSearch.push(parseEntity(entity.entityId));
+          });
+
+          vm.searchResults = parsedSearch;
+        });
+
+    };
+
+
+    function parseEntity(entityObj) {
+      switch (entityObj.type) {
+        case 'stream':
+          return {
+            name: entityObj.id.streamName,
+            stateParams: {
+              namespaceId: entityObj.id.namespace.id,
+              streamId: entityObj.id.streamName,
+            },
+            type: 'Stream',
+            icon: 'icon-streams'
+          };
+        case 'datasetinstance':
+          return {
+            name: entityObj.id.instanceId,
+            stateParams: {
+              namespaceId: entityObj.id.namespace.id,
+              datasetId: entityObj.id.instanceId,
+            },
+            type: 'Dataset',
+            icon: 'icon-datasets'
+          };
+        case 'application':
+          return {
+            name: entityObj.id.applicationId,
+            stateParams: {
+              namespaceId: entityObj.id.namespace.id,
+              appId: entityObj.id.applicationId,
+            },
+            type: 'App',
+            icon: 'icon-app'
+          };
+        case 'program':
+          return {
+            name: entityObj.id.id,
+            stateParams: {
+              namespaceId: entityObj.id.application.namespace.id,
+              appId: entityObj.id.application.applicationId,
+              programId: entityObj.id.id,
+            },
+            programType: entityObj.id.type,
+            type: entityObj.id.type,
+            icon: (entityObj.id.type.toLowerCase() === 'flow'? 'icon-tigon' : 'icon-' + entityObj.id.type.toLowerCase())
+          };
+        default:
+          return;
+      }
+    }
 
   });

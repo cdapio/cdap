@@ -13,12 +13,12 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
- 
+
 angular.module(PKG.name + '.commons')
   .directive('mySearch', function() {
     return {
       controller: 'MySearchCtrl',
-      controllerAs: 'MySearchCtrl',
+      controllerAs: 'SearchCtrl',
       templateUrl: 'search/search.html'
     };
   });

@@ -14,19 +14,89 @@
   the License.
 -->
 
-<div class="search-box">
-  <div class="input-group"
-       ng-class="{'search-active': MySearchCtrl.displaySearchBox || MySearchCtrl.searchTxt.length}"
-       ng-mouseover="MySearchCtrl.displaySearchBox = true"
-       ng-mouseleave="MySearchCtrl.escapeSearch()">
-    <input ng-model="MySearchCtrl.searchTxt"
-           ng-keyup="MySearchCtrl.onSearch($event)"
-           type="text"
-           class="form-control"
-           placeholder="Search Metadata"
-           my-escape-close="MySearchCtrl.escapeSearch()" />
-    <div class="input-group-addon">
-      <span class="fa fa-search"></span>
+<div class="navbar-item" ng-class="{ 'has-results': SearchCtrl.searchResults.length > 0 }">
+  <span class="fa fa-search"
+        ng-click="SearchCtrl.showSearch()"
+        ng-if="!SearchCtrl.showSearchBox"></span>
+
+  <div class="blank-click-handler" ng-click="SearchCtrl.onBlur()" ng-if="SearchCtrl.showSearchBox"></div>
+  <div class="search-box" ng-if="SearchCtrl.showSearchBox"
+    ng-focus="SearchCtrl.focusSearch()">
+    <div class="form-group has-feedback" ng-keyup="SearchCtrl.search($event)">
+      <input type="text"
+             class="form-control"
+             id="global-search"
+             ng-model="SearchCtrl.searchTerm">
+      <span class="fa fa-search form-control-feedback"></span>
+    </div>
+
+    <div class="search-results" ng-if="SearchCtrl.searchResults.length > 0">
+      <div ng-repeat="result in SearchCtrl.searchResults">
+        <div class="col-xs-8">
+          <a class="entity-name"
+             ui-sref="streams.detail.overview.status(result.stateParams)"
+             ng-if="result.type === 'Stream'">
+            {{ result.name }}
+          </a>
+
+          <a class="entity-name"
+             ui-sref="datasets.detail.overview.status(result.stateParams)"
+             ng-if="result.type === 'Dataset'">
+            {{ result.name }}
+          </a>
+
+          <a class="entity-name"
+             ui-sref="workflows.detail(result.stateParams)"
+             ng-if="result.type === 'Workflow'">
+            {{ result.name }}
+          </a>
+
+          <a class="entity-name"
+             ui-sref="mapreduce.detail(result.stateParams)"
+             ng-if="result.type === 'Mapreduce'">
+            {{ result.name }}
+          </a>
+
+          <a class="entity-name"
+             ui-sref="flows.detail(result.stateParams)"
+             ng-if="result.type === 'Flow'">
+            {{ result.name }}
+          </a>
+
+          <a class="entity-name"
+             ui-sref="services.detail(result.stateParams)"
+             ng-if="result.type === 'Service'">
+            {{ result.name }}
+          </a>
+
+          <a class="entity-name"
+             ui-sref="spark.detail(result.stateParams)"
+             ng-if="result.type === 'Spark'">
+            {{ result.name }}
+          </a>
+
+          <a class="entity-name"
+             ui-sref="worker.detail(result.stateParams)"
+             ng-if="result.type === 'Worker'">
+            {{ result.name }}
+          </a>
+
+          <a class="entity-name"
+             ui-sref="apps.detail.overview.programs(result.stateParams)"
+             ng-if="result.type === 'App'">
+            {{ result.name }}
+          </a>
+
+        </div>
+        <div class="col-xs-4">
+          <span class="entity-details">
+            <span class="{{ result.icon }}"></span>
+            <span class="entity-type">{{ result.type }}</span>
+          </span>
+        </div>
+      </div>
     </div>
   </div>
+
+
 </div>
