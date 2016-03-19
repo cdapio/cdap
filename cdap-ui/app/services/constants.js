@@ -85,7 +85,11 @@ angular.module(PKG.name + '.services')
       admin: {
         templateNameExistsError: 'This template name already exists! Please choose another name.',
         pluginSameNameError: 'There is already a plugin with this name.',
-        templateNameMissingError: 'Please enter a template name.'
+        templateNameMissingError: 'Please enter a template name.',
+        pluginTypeMissingError: 'Please choose a plugin type.',
+        templateTypeMissingError: 'Please choose a template type.',
+        pluginMissingError: 'Please choose a plugin.',
+        pluginVersionMissingError: 'Please choose artifact version for the plugin.'
       }
     }
   });
