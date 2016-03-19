@@ -79,7 +79,6 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
 
   private final MapReduceSpecification spec;
   private final LoggingContext loggingContext;
-  private final long logicalStartTime;
   private final WorkflowProgramInfo workflowProgramInfo;
   private final Metrics userMetrics;
   private final Map<String, Plugin> plugins;
@@ -100,7 +99,6 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
                                    RunId runId, String taskId,
                                    Arguments runtimeArguments,
                                    MapReduceSpecification spec,
-                                   long logicalStartTime,
                                    @Nullable WorkflowProgramInfo workflowProgramInfo,
                                    DiscoveryServiceClient discoveryServiceClient,
                                    MetricsCollectionService metricsCollectionService,
@@ -112,7 +110,6 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
     super(program, runId, runtimeArguments, ImmutableSet.<String>of(),
           getMetricCollector(program, runId.getId(), taskId, metricsCollectionService, type),
           dsFramework, txClient, discoveryServiceClient, false, pluginInstantiator);
-    this.logicalStartTime = logicalStartTime;
     this.workflowProgramInfo = workflowProgramInfo;
     this.transaction = transaction;
 
@@ -187,11 +184,6 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
   @Override
   public MapReduceSpecification getSpecification() {
     return spec;
-  }
-
-  @Override
-  public long getLogicalStartTime() {
-    return logicalStartTime;
   }
 
   /**

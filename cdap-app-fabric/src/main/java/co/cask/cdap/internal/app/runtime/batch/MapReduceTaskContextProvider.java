@@ -192,7 +192,7 @@ public class MapReduceTaskContextProvider extends AbstractIdleService {
 
         return new BasicMapReduceTaskContext(
           program, taskType, contextConfig.getRunId(), key.getTaskAttemptID().getTaskID().toString(),
-          contextConfig.getArguments(), spec, contextConfig.getLogicalStartTime(),
+          contextConfig.getArguments(), spec,
           workflowInfo, discoveryServiceClient, metricsCollectionService, txClient,
           contextConfig.getTx(), programDatasetFramework, classLoader.getPluginInstantiator(),
           contextConfig.getLocalizedResources()

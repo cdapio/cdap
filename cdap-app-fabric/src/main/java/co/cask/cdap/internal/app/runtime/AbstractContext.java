@@ -42,11 +42,11 @@ import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.proto.Id;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -96,22 +96,11 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
     this.discoveryServiceClient = discoveryServiceClient;
     this.owners = createOwners(program.getId());
     this.programMetrics = metricsContext;
-    ImmutableMap.Builder runtimeArgsBuilder = ImmutableMap.builder().putAll(arguments.asMap());
-    String logicalStartTimeStr = arguments.getOption(ProgramOptionConstants.LOGICAL_START_TIME);
-    if (logicalStartTimeStr == null || logicalStartTimeStr.isEmpty()) {
-      // this should only happen in some unit tests
-      logicalStartTime = System.currentTimeMillis();
-      runtimeArgsBuilder.put(ProgramOptionConstants.LOGICAL_START_TIME, Long.toString(logicalStartTime));
-    } else {
-      try {
-        logicalStartTime = Long.parseLong(logicalStartTimeStr);
-      } catch (NumberFormatException e) {
-        throw new IllegalArgumentException(String.format(
-          "%s is set to an invalid value %s. Please ensure it is a timestamp in milliseconds.",
-          ProgramOptionConstants.LOGICAL_START_TIME, logicalStartTimeStr));
-      }
-    }
-    this.runtimeArguments = runtimeArgsBuilder.build();
+
+    Map<String, String> runtimeArgs = new HashMap<>(arguments.asMap());
+    this.logicalStartTime = ProgramRunners.updateLogicalStartTime(runtimeArgs);
+    this.runtimeArguments = Collections.unmodifiableMap(runtimeArgs);
+
     Map<String, Map<String, String>> staticDatasets = new HashMap<>();
     for (String name : datasets) {
       staticDatasets.put(name, runtimeArguments);
