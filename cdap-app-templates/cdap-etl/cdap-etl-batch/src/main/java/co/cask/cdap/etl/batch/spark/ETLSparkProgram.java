@@ -28,7 +28,6 @@ import co.cask.cdap.etl.batch.BatchPhaseSpec;
 import co.cask.cdap.etl.batch.PipelinePluginInstantiator;
 import co.cask.cdap.etl.batch.TransformExecutorFactory;
 import co.cask.cdap.etl.common.Constants;
-import co.cask.cdap.etl.common.PipelinePhase;
 import co.cask.cdap.etl.common.TransformExecutor;
 import co.cask.cdap.etl.common.TransformResponse;
 import com.google.common.collect.ImmutableSet;
