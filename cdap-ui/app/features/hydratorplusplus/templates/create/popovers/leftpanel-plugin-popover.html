@@ -31,6 +31,18 @@
     </li>
     <li class="list-group-item">
       <h6>
+        <a ng-if="contentData.pluginTemplate"
+           href="#"
+           ng-click="delayClose(1) && popoverContext.onItemClicked($event, {action: 'editTemplate', contentData: contentData})">
+           Edit
+        </a>
+        <a ng-if="contentData.pluginTemplate"
+           href="#"
+           ng-click="delayClose(1) && popoverContext.onItemClicked($event, {action: 'deleteTemplate', contentData: contentData})">
+           Delete
+        </a>
+      </h6>
+      <h6>
         {{contentData.defaultArtifact['version']}}
         <small ng-if="!contentData.showAllVersion && contentData.allArtifacts.length > 1">
           <a href="#" ng-click="contentData.showAllVersion = !contentData.showAllVersion">Change</a>
@@ -39,6 +51,7 @@
     </li>
     <li class="list-group-item" ng-if="!contentData.showAllVersion">
       {{::contentData.description}}
+      <span ng-if="!contentData.description.length">No Description available</span>
     </li>
     <!-- on click is a little f**&ed up. Have to revisit this -->
     <a  ng-if="contentData.showAllVersion"
