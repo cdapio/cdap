@@ -21,7 +21,6 @@ import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
 import co.cask.cdap.api.schedule.Schedules;
 import co.cask.cdap.etl.api.Transform;
-import co.cask.cdap.etl.api.batch.BatchAggregator;
 import co.cask.cdap.etl.api.batch.BatchSink;
 import co.cask.cdap.etl.api.batch.BatchSource;
 import co.cask.cdap.etl.batch.mapreduce.ETLMapReduce;
@@ -34,6 +33,7 @@ import co.cask.cdap.etl.proto.Engine;
 import co.cask.cdap.etl.proto.v2.ETLBatchConfig;
 import co.cask.cdap.etl.spec.PipelineSpec;
 import co.cask.cdap.etl.spec.PipelineSpecGenerator;
+import co.cask.cdap.etl.spec.StageSpec;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableSet;
 import org.apache.avro.mapreduce.AvroKeyInputFormat;
@@ -49,8 +49,7 @@ public class ETLBatchApplication extends AbstractApplication<ETLBatchConfig> {
   public static final String SCHEDULE_NAME = "etlWorkflow";
   public static final String DEFAULT_DESCRIPTION = "Extract-Transform-Load (ETL) Batch Application";
   private static final Set<String> SUPPORTED_PLUGIN_TYPES = ImmutableSet.of(
-    BatchSource.PLUGIN_TYPE, BatchSink.PLUGIN_TYPE, Transform.PLUGIN_TYPE,
-    Constants.CONNECTOR_TYPE, BatchAggregator.PLUGIN_TYPE);
+    BatchSource.PLUGIN_TYPE, BatchSink.PLUGIN_TYPE, Transform.PLUGIN_TYPE);
 
   @Override
   public void configure() {
@@ -71,8 +70,24 @@ public class ETLBatchApplication extends AbstractApplication<ETLBatchConfig> {
                                   .build());
 
     PipelineSpec spec = specGenerator.generateSpec(config);
-    PipelinePlanner planner = new PipelinePlanner(SUPPORTED_PLUGIN_TYPES, ImmutableSet.of("aggregator"));
+
+    int sourceCount = 0;
+    for (StageSpec stageSpec : spec.getStages()) {
+      if (BatchSource.PLUGIN_TYPE.equals(stageSpec.getPlugin().getType())) {
+        sourceCount++;
+      }
+    }
+    if (sourceCount != 1) {
+      throw new IllegalArgumentException("Invalid pipeline. There must only be one source.");
+    }
+
+    PipelinePlanner planner = new PipelinePlanner(SUPPORTED_PLUGIN_TYPES, ImmutableSet.<String>of());
     PipelinePlan plan = planner.plan(spec);
+
+    if (plan.getPhases().size() != 1) {
+      // should never happen if there is only one source
+      throw new IllegalArgumentException("There was an error planning the pipeline. There should only be one phase.");
+    }
 
     PipelinePhase pipeline = plan.getPhases().values().iterator().next();
 

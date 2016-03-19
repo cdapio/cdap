@@ -55,6 +55,7 @@ import co.cask.cdap.etl.planner.StageInfo;
 import co.cask.cdap.etl.proto.v2.ETLRealtimeConfig;
 import co.cask.cdap.etl.spec.PipelineSpec;
 import co.cask.cdap.etl.spec.PipelineSpecGenerator;
+import co.cask.cdap.etl.spec.StageSpec;
 import co.cask.cdap.format.StructuredRecordStringConverter;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import com.google.common.base.Preconditions;
@@ -141,10 +142,20 @@ public class ETLWorker extends AbstractWorker {
                                   .add(Table.PROPERTY_SCHEMA, ERROR_SCHEMA.toString())
                                   .build());
     PipelineSpec spec = specGenerator.generateSpec(config);
+    int sourceCount = 0;
+    for (StageSpec stageSpec : spec.getStages()) {
+      if (RealtimeSource.PLUGIN_TYPE.equals(stageSpec.getPlugin().getType())) {
+        sourceCount++;
+      }
+    }
+    if (sourceCount != 1) {
+      throw new IllegalArgumentException("Invalid pipeline. There must only be one source.");
+    }
     PipelinePlanner planner = new PipelinePlanner(SUPPORTED_PLUGIN_TYPES, ImmutableSet.<String>of());
     PipelinePlan plan = planner.plan(spec);
-    if (plan.getPhases().size() > 1) {
-      throw new IllegalArgumentException("Only one source is supported at this time.");
+    if (plan.getPhases().size() != 1) {
+      // should never happen
+      throw new IllegalArgumentException("There was an error planning the pipeline. There should only be one phase.");
     }
     PipelinePhase pipeline = plan.getPhases().values().iterator().next();
 

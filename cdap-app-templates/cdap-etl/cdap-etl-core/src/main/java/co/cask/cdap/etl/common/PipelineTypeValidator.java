@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -29,6 +29,8 @@ import java.util.List;
 
 /**
  * Validates types passed between pipeline stages.
+ *
+ * TODO : CDAP-4387 Validate Stages has been removed due to DAG implementation, have to be refactored
  */
 public class PipelineTypeValidator {
 
@@ -39,7 +41,6 @@ public class PipelineTypeValidator {
    *     And the assignability will be checked : String --> String && List<String> --> List<String>
    *     which is true in the case above.
    */
-  // TODO : CDAP-4387 Validate Stages has been removed due to DAG implementation, have to be refactored
   @VisibleForTesting
   static void validateTypes(List<Type> unresTypeList) {
     Preconditions.checkArgument(unresTypeList.size() % 2 == 0, "ETL Stages validation expects even number of types");
