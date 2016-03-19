@@ -31,16 +31,32 @@ import javax.annotation.Nullable;
 public class StreamSystemMetadataWriter extends AbstractSystemMetadataWriter {
 
   private final StreamConfig config;
+  private final long creationTime;
+  private final String description;
 
-  public StreamSystemMetadataWriter(MetadataStore metadataStore, Id.Stream streamId, StreamConfig config) {
+  public StreamSystemMetadataWriter(MetadataStore metadataStore, Id.Stream streamId, StreamConfig config,
+                                    @Nullable String description) {
+    this(metadataStore, streamId, config, -1, description);
+  }
+
+  public StreamSystemMetadataWriter(MetadataStore metadataStore, Id.Stream streamId, StreamConfig config,
+                                    long creationTime, @Nullable String description) {
     super(metadataStore, streamId);
     this.config = config;
+    this.creationTime = creationTime;
+    this.description = description;
   }
 
   @Override
   Map<String, String> getSystemPropertiesToAdd() {
     ImmutableMap.Builder<String, String> properties = ImmutableMap.builder();
     properties.put(TTL_KEY, String.valueOf(config.getTTL()));
+    if (creationTime > 0) {
+      properties.put(CREATE_TIME, String.valueOf(creationTime));
+    }
+    if (description != null) {
+      properties.put(DESCRIPTION, description);
+    }
     return properties.build();
   }
 

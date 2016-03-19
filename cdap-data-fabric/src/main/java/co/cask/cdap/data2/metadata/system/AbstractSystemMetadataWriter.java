@@ -37,6 +37,8 @@ public abstract class AbstractSystemMetadataWriter {
   private static final String PLUGIN_KEY_PREFIX = "plugin";
   private static final String PLUGIN_VERSION_KEY_PREFIX = "pluginversion";
   protected static final String TTL_KEY = "ttl";
+  protected static final String DESCRIPTION = "description";
+  protected static final String CREATE_TIME = "createtime";
 
   private final MetadataStore metadataStore;
   private final Id.NamespacedId entityId;

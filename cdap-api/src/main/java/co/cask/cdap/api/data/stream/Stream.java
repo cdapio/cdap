@@ -18,7 +18,7 @@ package co.cask.cdap.api.data.stream;
 
 /**
  *  Streams are the primary means for pushing data from external systems
- *  into the AppFabric. Each individual event or signal sent to a Stream
+ *  into CDAP. Each individual event or signal sent to a Stream
  *  is stored as an Event, which is comprised of a body (blob of arbitrary
  *  binary data) and headers (map of strings for metadata).Within the system,
  *  Streams are identified by a Unique ID string and must be explicitly created
@@ -26,10 +26,15 @@ package co.cask.cdap.api.data.stream;
  */
 public final class Stream {
   private final String name;
-
+  private final String description;
 
   public Stream(final String name) {
+    this(name, null);
+  }
+
+  public Stream(String name, String description) {
     this.name = name;
+    this.description = description;
   }
 
  /**
@@ -39,6 +44,6 @@ public final class Stream {
   *
   */
   public StreamSpecification configure() {
-    return new StreamSpecification.Builder().setName(this.name).create();
+    return new StreamSpecification.Builder().setName(name).setDescription(description).create();
   }
 }

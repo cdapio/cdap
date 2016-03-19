@@ -318,6 +318,7 @@ public class FileStreamAdmin implements StreamAdmin {
           return null;
         }
 
+        long createTime = System.currentTimeMillis();
         Properties properties = (props == null) ? new Properties() : props;
         long partitionDuration = Long.parseLong(properties.getProperty(
           Constants.Stream.PARTITION_DURATION, cConf.get(Constants.Stream.PARTITION_DURATION)));
@@ -327,6 +328,7 @@ public class FileStreamAdmin implements StreamAdmin {
           Constants.Stream.TTL, cConf.get(Constants.Stream.TTL)));
         int threshold = Integer.parseInt(properties.getProperty(
           Constants.Stream.NOTIFICATION_THRESHOLD, cConf.get(Constants.Stream.NOTIFICATION_THRESHOLD)));
+        String description = properties.getProperty(Constants.Stream.DESCRIPTION);
 
         StreamConfig config = new StreamConfig(streamId, partitionDuration, indexInterval,
                                                ttl, streamLocation, null, threshold);
@@ -335,8 +337,8 @@ public class FileStreamAdmin implements StreamAdmin {
         alterExploreStream(streamId, true, config.getFormat());
         streamMetaStore.addStream(streamId);
         publishAudit(streamId, AuditType.CREATE);
-        AbstractSystemMetadataWriter systemMetadataWriter = new StreamSystemMetadataWriter(metadataStore, streamId,
-                                                                                           config);
+        AbstractSystemMetadataWriter systemMetadataWriter =
+          new StreamSystemMetadataWriter(metadataStore, streamId, config, createTime, description);
         systemMetadataWriter.write();
         return config;
       }

@@ -89,7 +89,7 @@ public class AllProgramsApp extends AbstractApplication {
   public void configure() {
     setName(NAME);
     setDescription("Application which has everything");
-    addStream(new Stream(STREAM_NAME));
+    addStream(new Stream(STREAM_NAME, "test stream"));
     createDataset(DATASET_NAME, KeyValueTable.class);
     addFlow(new NoOpFlow());
     addMapReduce(new NoOpMR());

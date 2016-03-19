@@ -17,15 +17,19 @@
 package co.cask.cdap.api.data.stream;
 
 import java.util.Objects;
+import javax.annotation.Nullable;
 
 /**
  * Specification for {@link Stream}.
  */
 public final class StreamSpecification {
   private final String name;
+  @Nullable
+  private final String description;
 
-  private StreamSpecification(final String name) {
+  private StreamSpecification(String name, String description) {
     this.name = name;
+    this.description = description;
   }
 
   /**
@@ -35,11 +39,19 @@ public final class StreamSpecification {
     return name;
   }
 
- /**
+  /**
+   * Returns the description of the Stream.
+   */
+  public String getDescription() {
+    return description;
+  }
+
+  /**
   * {@code StreamSpecification} builder used to build specification of stream.
   */
   public static final class Builder {
     private String name;
+    private String description;
 
     /**
      * Adds name parameter to Streams.
@@ -51,12 +63,17 @@ public final class StreamSpecification {
       return this;
     }
 
+    public Builder setDescription(String description) {
+      this.description = description;
+      return this;
+    }
+
     /**
      * Create {@code StreamSpecification}.
      * @return Instance of {@code StreamSpecification}
      */
     public StreamSpecification create() {
-      return new StreamSpecification(name);
+      return new StreamSpecification(name, description);
     }
   }
 
@@ -65,16 +82,16 @@ public final class StreamSpecification {
     if (this == o) {
       return true;
     }
-    if (o == null || getClass() != o.getClass()) {
+    if (!(o instanceof StreamSpecification)) {
       return false;
     }
-
     StreamSpecification that = (StreamSpecification) o;
-    return name.equals(that.name);
+    return Objects.equals(name, that.name) &&
+      Objects.equals(description, that.description);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(name);
+    return Objects.hash(name, description);
   }
 }
