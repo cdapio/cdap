@@ -19,6 +19,7 @@ package co.cask.cdap.etl.batch.spark;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.plugin.PluginContext;
 import co.cask.cdap.etl.api.batch.BatchRuntimeContext;
+import co.cask.cdap.etl.batch.PipelinePluginInstantiator;
 import co.cask.cdap.etl.batch.TransformExecutorFactory;
 
 import java.util.Map;
@@ -29,11 +30,17 @@ import java.util.Map;
  * @param <T> the type of input for the created transform executors
  */
 public class SparkTransformExecutorFactory<T> extends TransformExecutorFactory<T> {
+  private final PluginContext pluginContext;
+  private final long logicalStartTime;
   private final Map<String, String> runtimeArgs;
 
-  public SparkTransformExecutorFactory(PluginContext pluginContext, Metrics metrics, long logicalStartTime,
+  public SparkTransformExecutorFactory(PluginContext pluginContext,
+                                       PipelinePluginInstantiator pluginInstantiator,
+                                       Metrics metrics, long logicalStartTime,
                                        Map<String, String> runtimeArgs) {
-    super(pluginContext, metrics, logicalStartTime);
+    super(pluginInstantiator, metrics);
+    this.pluginContext = pluginContext;
+    this.logicalStartTime = logicalStartTime;
     this.runtimeArgs = runtimeArgs;
   }
 

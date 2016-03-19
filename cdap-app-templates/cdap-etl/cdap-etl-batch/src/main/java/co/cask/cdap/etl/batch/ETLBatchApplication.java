@@ -17,11 +17,20 @@
 package co.cask.cdap.etl.batch;
 
 import co.cask.cdap.api.app.AbstractApplication;
+import co.cask.cdap.api.dataset.lib.FileSetProperties;
+import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
 import co.cask.cdap.api.schedule.Schedules;
 import co.cask.cdap.etl.batch.mapreduce.ETLMapReduce;
 import co.cask.cdap.etl.batch.spark.ETLSpark;
+import co.cask.cdap.etl.common.Constants;
+import co.cask.cdap.etl.common.PipelinePhase;
+import co.cask.cdap.etl.common.PipelineRegisterer;
 import co.cask.cdap.etl.proto.v1.ETLBatchConfig;
 import com.google.common.base.Joiner;
+import org.apache.avro.mapreduce.AvroKeyInputFormat;
+import org.apache.avro.mapreduce.AvroKeyOutputFormat;
+
+import java.util.HashMap;
 
 /**
  * ETL Batch Application.
@@ -34,12 +43,36 @@ public class ETLBatchApplication extends AbstractApplication<ETLBatchConfig> {
   public void configure() {
     ETLBatchConfig config = getConfig();
     setDescription(DEFAULT_DESCRIPTION);
+
+    PipelineRegisterer pipelineRegisterer = new PipelineRegisterer(getConfigurer(), "batch");
+
+    PipelinePhase pipeline =
+      pipelineRegisterer.registerPlugins(
+        config, TimePartitionedFileSet.class,
+        FileSetProperties.builder()
+          .setInputFormat(AvroKeyInputFormat.class)
+          .setOutputFormat(AvroKeyOutputFormat.class)
+          .setEnableExploreOnCreate(true)
+          .setSerDe("org.apache.hadoop.hive.serde2.avro.AvroSerDe")
+          .setExploreInputFormat("org.apache.hadoop.hive.ql.io.avro.AvroContainerInputFormat")
+          .setExploreOutputFormat("org.apache.hadoop.hive.ql.io.avro.AvroContainerOutputFormat")
+          .setTableProperty("avro.schema.literal", Constants.ERROR_SCHEMA.toString())
+          .build(), true);
+
     switch (config.getEngine()) {
       case MAPREDUCE:
-        addMapReduce(new ETLMapReduce(config));
+        BatchPhaseSpec batchPhaseSpec = new BatchPhaseSpec(ETLMapReduce.NAME, pipeline,
+                                                           config.getResources(),
+                                                           config.isStageLoggingEnabled(),
+                                                           new HashMap<String, String>());
+        addMapReduce(new ETLMapReduce(batchPhaseSpec));
         break;
       case SPARK:
-        addSpark(new ETLSpark(config));
+        batchPhaseSpec = new BatchPhaseSpec(ETLSpark.class.getSimpleName(), pipeline,
+                                            config.getResources(),
+                                            config.isStageLoggingEnabled(),
+                                            new HashMap<String, String>());
+        addSpark(new ETLSpark(batchPhaseSpec));
         break;
       default:
         throw new IllegalArgumentException(
