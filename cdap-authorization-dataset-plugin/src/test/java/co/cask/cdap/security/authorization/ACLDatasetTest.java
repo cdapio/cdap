@@ -24,6 +24,7 @@ import co.cask.cdap.proto.id.Ids;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
+import co.cask.cdap.proto.security.Privilege;
 import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionFailureException;
 import com.google.common.collect.ImmutableSet;
@@ -75,6 +76,7 @@ public class ACLDatasetTest {
       public void apply() throws Exception {
         table.add(namespace, user, Action.READ);
         Assert.assertEquals(ImmutableSet.of(Action.READ), table.search(namespace, user));
+        Assert.assertEquals(ImmutableSet.of(new Privilege(namespace, Action.READ)), table.listPrivileges(user));
         table.remove(namespace, user, Action.READ);
         Assert.assertEquals(ImmutableSet.of(), table.search(namespace, user));
       }

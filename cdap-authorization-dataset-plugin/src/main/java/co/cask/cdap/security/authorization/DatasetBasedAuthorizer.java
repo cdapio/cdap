@@ -29,7 +29,11 @@ import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
+import co.cask.cdap.proto.security.Privilege;
+import co.cask.cdap.proto.security.Role;
 import co.cask.cdap.security.spi.authorization.Authorizer;
+import co.cask.cdap.security.spi.authorization.RoleAlreadyExistsException;
+import co.cask.cdap.security.spi.authorization.RoleNotFoundException;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionExecutor;
@@ -136,6 +140,16 @@ public class DatasetBasedAuthorizer implements Authorizer {
   }
 
   @Override
+  public Set<Privilege> listPrivileges(final Principal principal) {
+    return aclsTx.get().executeUnchecked(new TransactionExecutor.Function<ACLDataset, Set<Privilege>>() {
+      @Override
+      public Set<Privilege> apply(ACLDataset acls) throws Exception {
+        return acls.listPrivileges(principal);
+      }
+    }, acls.get());
+  }
+
+  @Override
   public void revoke(final EntityId entity) {
     aclsTx.get().executeUnchecked(new TransactionExecutor.Procedure<ACLDataset>() {
       @Override
@@ -143,5 +157,35 @@ public class DatasetBasedAuthorizer implements Authorizer {
         acls.remove(entity);
       }
     }, acls.get());
+  }
+
+  @Override
+  public void createRole(Role role) throws RoleAlreadyExistsException {
+    throw new UnsupportedOperationException("Role based operation is not supported.");
+  }
+
+  @Override
+  public void dropRole(Role role) throws RoleNotFoundException {
+    throw new UnsupportedOperationException("Role based operation is not supported.");
+  }
+
+  @Override
+  public void addRoleToPrincipal(Role role, Principal principal) throws RoleNotFoundException {
+    throw new UnsupportedOperationException("Role based operation is not supported.");
+  }
+
+  @Override
+  public void removeRoleFromPrincipal(Role role, Principal principal) throws RoleNotFoundException {
+    throw new UnsupportedOperationException("Role based operation is not supported.");
+  }
+
+  @Override
+  public Set<Role> listRoles(Principal principal) {
+    throw new UnsupportedOperationException("Role based operation is not supported.");
+  }
+
+  @Override
+  public Set<Role> listAllRoles() {
+    throw new UnsupportedOperationException("Role based operation is not supported.");
   }
 }

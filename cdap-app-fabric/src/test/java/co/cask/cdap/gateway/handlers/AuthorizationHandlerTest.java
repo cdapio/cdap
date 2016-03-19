@@ -28,13 +28,18 @@ import co.cask.cdap.proto.id.Ids;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
+import co.cask.cdap.proto.security.Privilege;
+import co.cask.cdap.proto.security.Role;
 import co.cask.cdap.security.authorization.AuthorizerInstantiatorService;
 import co.cask.cdap.security.authorization.InvalidAuthorizerException;
 import co.cask.cdap.security.spi.authorization.Authorizer;
+import co.cask.cdap.security.spi.authorization.RoleAlreadyExistsException;
+import co.cask.cdap.security.spi.authorization.RoleNotFoundException;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.http.NettyHttpService;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Sets;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -42,6 +47,8 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.net.UnknownHostException;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Tests for {@link AuthorizationHandler}.
@@ -192,6 +199,97 @@ public class AuthorizationHandlerTest {
       Assert.fail(String.format("Expected authorization failure, but it succeeded for entity %s, principal %s," +
                                   " action %s", entity, principal, action));
     } catch (UnauthorizedException expected) {
+      // expected
+    }
+  }
+
+  @Test
+  public void testRBAC() throws Exception {
+    Role admins = new Role("admins");
+    Role engineers = new Role("engineers");
+    // create a role
+    client.createRole(admins);
+    // add another role
+    client.createRole(engineers);
+
+    // listing role should show the added role
+    Set<Role> roles = client.listAllRoles();
+    Assert.assertEquals(Sets.newHashSet(admins, engineers), roles);
+
+    // creating a role which already exists should throw an exception
+    try {
+      client.createRole(admins);
+      Assert.fail(String.format("Created a role %s which already exists. Should have failed.", admins.getName()));
+    } catch (RoleAlreadyExistsException expected) {
+      // expected
+    }
+
+    // drop an existing role
+    client.dropRole(admins);
+
+    // the list should not have the dropped role
+    roles = client.listAllRoles();
+    Assert.assertEquals(Sets.newHashSet(engineers), roles);
+
+    // dropping a non-existing role should throw exception
+    try {
+      client.dropRole(admins);
+      Assert.fail(String.format("Dropped a role %s which does not exists. Should have failed.", admins.getName()));
+    } catch (RoleNotFoundException expected) {
+      // expected
+    }
+
+    // add an user to an existing role
+    Principal spiderman = new Principal("spiderman", Principal.PrincipalType.USER);
+    client.addRoleToPrincipal(engineers, spiderman);
+
+    // add an user to an non-existing role should throw an exception
+    try {
+      client.addRoleToPrincipal(admins, spiderman);
+      Assert.fail(String.format("Added role %s to principal %s. Should have failed.", admins, spiderman));
+    } catch (RoleNotFoundException expected) {
+      // expected
+    }
+
+    // check listing roles for spiderman have engineers role
+    Assert.assertEquals(Sets.newHashSet(engineers), client.listRoles(spiderman));
+
+    // authorization checks with roles
+    NamespaceId ns1 = Ids.namespace("ns1");
+
+    // check that spiderman who has engineers roles cannot read from ns1
+    verifyAuthFailure(ns1, spiderman, Action.READ);
+
+    // give a permission to engineers role
+    client.grant(ns1, engineers, ImmutableSet.of(Action.READ));
+
+    // check that a spiderman who has engineers role has access
+    client.authorized(ns1, spiderman, Action.READ);
+
+    // list privileges for spiderman should have read action on ns1
+    Assert.assertEquals(Sets.newHashSet(new Privilege(ns1, Action.READ)), client.listPrivileges(spiderman));
+
+    // revoke action from the role
+    client.revoke(ns1, engineers, ImmutableSet.of(Action.READ));
+
+    // now the privileges for spiderman should be empty
+    Assert.assertEquals(new HashSet<>(), client.listPrivileges(spiderman));
+
+    // check that the user of this role is not authorized to do the revoked operation
+    verifyAuthFailure(ns1, spiderman, Action.READ);
+
+    // remove an user from a existing role
+    client.removeRoleFromPrincipal(engineers, spiderman);
+
+    // check listing roles for spiderman should be empty
+    Assert.assertEquals(new HashSet<>(), client.listRoles(spiderman));
+
+    // remove an user from a non-existing role should throw exception
+    try {
+      client.removeRoleFromPrincipal(admins, spiderman);
+      Assert.fail(String.format("Removed non-existing role %s from principal %s. Should have failed.", admins,
+                                spiderman));
+    } catch (RoleNotFoundException expected) {
       // expected
     }
   }

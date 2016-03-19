@@ -19,12 +19,19 @@ package co.cask.cdap.gateway.handlers;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
+import co.cask.cdap.proto.security.Privilege;
+import co.cask.cdap.proto.security.Role;
 import co.cask.cdap.security.spi.authorization.Authorizer;
+import co.cask.cdap.security.spi.authorization.RoleAlreadyExistsException;
+import co.cask.cdap.security.spi.authorization.RoleNotFoundException;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import com.google.common.collect.HashBasedTable;
+import com.google.common.collect.Sets;
 import com.google.common.collect.Table;
 
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import javax.annotation.concurrent.NotThreadSafe;
 
@@ -35,10 +42,18 @@ import javax.annotation.concurrent.NotThreadSafe;
 public class InMemoryAuthorizer implements Authorizer {
 
   private final Table<EntityId, Principal, Set<Action>> table = HashBasedTable.create();
+  private final Map<Role, Set<Principal>> roleToPrincipals = new HashMap<>();
 
   @Override
   public void enforce(EntityId entity, Principal principal, Action action) throws UnauthorizedException {
-    Set<Action> allowed = get(entity, principal);
+    // actions allowed to this principal
+    Set<Action> allowed = Sets.newHashSet(getActions(entity, principal));
+    // actions allowed to any of the roles to which this principal belongs if its not a role
+    if (principal.getType() != Principal.PrincipalType.ROLE) {
+      for (Role role : listRoles(principal)) {
+        allowed.addAll(getActions(entity, role));
+      }
+    }
     if (!(allowed.contains(Action.ALL) || allowed.contains(action))) {
       throw new UnauthorizedException(principal, action, entity);
     }
@@ -46,22 +61,96 @@ public class InMemoryAuthorizer implements Authorizer {
 
   @Override
   public void grant(EntityId entity, Principal principal, Set<Action> actions) {
-    get(entity, principal).addAll(actions);
+    getActions(entity, principal).addAll(actions);
   }
 
   @Override
   public void revoke(EntityId entity, Principal principal, Set<Action> actions) {
-    get(entity, principal).removeAll(actions);
+    getActions(entity, principal).removeAll(actions);
   }
 
   @Override
   public void revoke(EntityId entity) {
     for (Principal principal : table.row(entity).keySet()) {
-      get(entity, principal).clear();
+      getActions(entity, principal).clear();
     }
   }
 
-  private Set<Action> get(EntityId entity, Principal principal) {
+  @Override
+  public void createRole(Role role) throws RoleAlreadyExistsException {
+    if (roleToPrincipals.containsKey(role)) {
+      throw new RoleAlreadyExistsException(role);
+    }
+    roleToPrincipals.put(role, new HashSet<Principal>());
+  }
+
+  @Override
+  public void dropRole(Role role) throws RoleNotFoundException {
+    if (!roleToPrincipals.containsKey(role)) {
+      throw new RoleNotFoundException(role);
+    }
+    roleToPrincipals.remove(role);
+  }
+
+  @Override
+  public void addRoleToPrincipal(Role role, Principal principal) throws RoleNotFoundException {
+    if (!roleToPrincipals.containsKey(role)) {
+      throw new RoleNotFoundException(role);
+    }
+    roleToPrincipals.get(role).add(principal);
+  }
+
+  @Override
+  public void removeRoleFromPrincipal(Role role, Principal principal) throws RoleNotFoundException {
+    if (!roleToPrincipals.containsKey(role)) {
+      throw new RoleNotFoundException(role);
+    }
+    roleToPrincipals.get(role).remove(principal);
+  }
+
+  @Override
+  public Set<Role> listRoles(Principal principal) {
+    Set<Role> roles = new HashSet<>();
+    for (Map.Entry<Role, Set<Principal>> roleSetEntry : roleToPrincipals.entrySet()) {
+      if (roleSetEntry.getValue().contains(principal)) {
+        roles.add(roleSetEntry.getKey());
+      }
+    }
+    return roles;
+  }
+
+  @Override
+  public Set<Role> listAllRoles() {
+    return roleToPrincipals.keySet();
+  }
+
+  @Override
+  public Set<Privilege> listPrivileges(Principal principal) {
+    Set<Privilege> privileges = new HashSet<>();
+    // privileges for this principal
+    privileges.addAll(getPrivileges(principal));
+
+    // privileges for the role to which this principal belongs to if its not a role
+    if (principal.getType() != Principal.PrincipalType.ROLE) {
+      for (Role role : listRoles(principal)) {
+        privileges.addAll(getPrivileges(role));
+      }
+    }
+    return privileges;
+  }
+
+  private Set<Privilege> getPrivileges(Principal principal) {
+    Set<Privilege> privileges = new HashSet<>();
+    Set<Map.Entry<EntityId, Set<Action>>> entries = table.column(principal).entrySet();
+    for (Map.Entry<EntityId, Set<Action>> entry : entries) {
+      for (Action action : entry.getValue()) {
+        privileges.add(new Privilege(entry.getKey(), action));
+      }
+    }
+    return privileges;
+  }
+
+  private Set<Action> getActions(EntityId entity, Principal principal) {
     if (!table.contains(entity, principal)) {
       table.put(entity, principal, new HashSet<Action>());
     }
