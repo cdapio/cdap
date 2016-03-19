@@ -276,4 +276,36 @@ body.theme-cdap.state-hydrator-beta-create {
     }
   }
 
+  .modal {
+    &.plugin-templates-modal {
+      plugin-templates {
+        margin: 10px;
+        display: block;
+        max-height: 75vh;
+        overflow-y: auto;
+        overflow-x: hidden;
+
+        h3 {
+          strong {
+            word-break: break-all;
+          }
+        }
+      }
+      .modal-dialog {
+        .modal-content {
+          padding: 5px;
+        }
+      }
+    }
+    &.plugin-template-delete-confirm-modal {
+      .modal-dialog {
+        margin-top: 40vh;
+        max-width: 630px;
+        text-align: center;
+        .modal-footer {
+          text-align: center;
+        }
+      }
+    }
+  }
 }
