@@ -108,7 +108,7 @@ public final class Locations {
   }
 
   /**
-   * Creates a new {@link InputSupplier} that can provides {@link SeekableInputStream} from the given location.
+   * Creates a new {@link InputSupplier} that can provide {@link SeekableInputStream} from the given location.
    *
    * @param location Location for the input stream.
    * @return A {@link InputSupplier}.
