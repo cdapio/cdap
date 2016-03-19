@@ -203,6 +203,7 @@ function getEs6Features(isNegate) {
 function getEs6Directives(isNegate) {
   var es6directives = [
     (isNegate ? '!' : '') + './app/directives/dag/**/*.js',
+    (isNegate ? '!' : '') + './app/directives/plugin-templates/**/*.js',
     (isNegate ? '!' : '') + './app/directives/dag-beta/**/*.js',
     (isNegate ? '!' : '') + './app/directives/my-global-navbar/*.js'
   ];
@@ -482,6 +483,7 @@ gulp.task('watch', ['jshint', 'watch:build'], function() {
     '!./app/features/pins/**/*.js',
     '!./app/features/flows/**/*.js',
     '!./app/directives/dag/**/*.js',
+    '!./app/directives/plugin-templates/**/*.js',
     '!./app/directives/dag-beta/**/*.js',
     '!./app/features/tracker/**/*.js',
     '!./app/directives/my-global-navbar/**/*.js',
@@ -497,7 +499,8 @@ gulp.task('watch', ['jshint', 'watch:build'], function() {
     './app/features/flows/**/*.js',
     './app/features/flows/**/*.js',
     './app/directives/dag/**/*.js',
-    '!./app/directives/dag-beta/**/*.js',
+    './app/directives/plugin-templates/**/*.js',
+    './app/directives/dag-beta/**/*.js',
     './app/features/tracker/**/*.js',
     './app/directives/my-global-navbar/**/*.js'
   ], ['jshint', 'watch:js:app:babel']);
