@@ -43,7 +43,9 @@ import java.util.UUID;
 import javax.annotation.Nullable;
 
 /**
- * Duplicate of twill {@link FileContextLocation} with overridden toString(). Workaround for TWILL-167
+ * An implementation of {@link Location} using {@link FileContext}.
+ * TODO (CDAP-5328): This class is copied from Twill for the fix in TWILL-163.
+ * Should be removed when toSting() is overridden in Twill (TWILL-167)
  */
 final class FileContextLocation implements Location {
 
