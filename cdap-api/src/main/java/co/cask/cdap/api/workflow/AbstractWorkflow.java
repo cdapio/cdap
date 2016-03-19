@@ -44,6 +44,7 @@ import java.util.Map;
 public abstract class AbstractWorkflow implements Workflow {
 
   private WorkflowConfigurer configurer;
+  private WorkflowContext context;
 
   @Override
   public final void configure(WorkflowConfigurer configurer) {
@@ -188,5 +189,22 @@ public abstract class AbstractWorkflow implements Workflow {
    */
   protected final void createLocalDataset(String datasetName, Class<? extends Dataset> datasetClass) {
     createLocalDataset(datasetName, datasetClass, DatasetProperties.EMPTY);
+  }
+
+  @Override
+  public void initialize(WorkflowContext context) throws Exception {
+    this.context = context;
+  }
+
+  @Override
+  public void destroy() {
+    // Do nothing
+  }
+
+  /**
+   * Return an instance of the {@link WorkflowContext}.
+   */
+  protected final WorkflowContext getContext() {
+    return context;
   }
 }

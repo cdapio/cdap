@@ -16,10 +16,10 @@
 
 package co.cask.cdap.test.app;
 
-import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.annotation.UseDataSet;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.api.dataset.lib.FileSetArguments;
@@ -33,6 +33,7 @@ import co.cask.cdap.api.spark.JavaSparkProgram;
 import co.cask.cdap.api.spark.SparkContext;
 import co.cask.cdap.api.workflow.AbstractWorkflow;
 import co.cask.cdap.api.workflow.AbstractWorkflowAction;
+import co.cask.cdap.api.workflow.WorkflowContext;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
@@ -44,11 +45,9 @@ import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.Function;
-import org.apache.spark.api.java.function.PairFunction;
 import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import scala.Tuple2;
 
 import java.io.File;
 import java.io.IOException;
@@ -66,6 +65,8 @@ public class WorkflowAppWithLocalDatasets extends AbstractApplication {
   public static final String RESULT_DATASET = "result";
   public static final String CSV_FILESET_DATASET = "csvfileset";
   public static final String WORKFLOW_NAME = "WorkflowWithLocalDatasets";
+  public static final String WORKFLOW_RUNS_DATASET = "workflowruns";
+
   @Override
   public void configure() {
     setName("WorkflowAppWithLocalDatasets");
@@ -75,12 +76,35 @@ public class WorkflowAppWithLocalDatasets extends AbstractApplication {
     addMapReduce(new WordCount());
     addWorkflow(new WorkflowWithLocalDatasets());
     createDataset(RESULT_DATASET, KeyValueTable.class);
+    createDataset(WORKFLOW_RUNS_DATASET, KeyValueTable.class);
   }
 
   /**
    * Workflow which configures the local dataset.
    */
   public static class WorkflowWithLocalDatasets extends AbstractWorkflow {
+
+    @Override
+    public void initialize(WorkflowContext context) throws Exception {
+      super.initialize(context);
+      KeyValueTable workflowRuns = context.getDataset(WORKFLOW_RUNS_DATASET);
+      workflowRuns.write(context.getRunId().getId(), "STARTED");
+    }
+
+    @Override
+    public void destroy() {
+      KeyValueTable workflowRuns = getContext().getDataset(WORKFLOW_RUNS_DATASET);
+      String status = Bytes.toString(workflowRuns.read(getContext().getRunId().getId()));
+      if (!"STARTED".equals(status)) {
+        return;
+      }
+
+      if (getContext().getRuntimeArguments().containsKey("destroy.throw.exception")) {
+        // throw exception from destroy. should not affect the Workflow run status
+        throw new RuntimeException("destroy");
+      }
+      workflowRuns.write(getContext().getRunId().getId(), "COMPLETED");
+    }
 
     @Override
     protected void configure() {

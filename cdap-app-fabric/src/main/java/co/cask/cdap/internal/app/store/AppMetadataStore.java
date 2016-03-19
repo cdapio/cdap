@@ -34,6 +34,7 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.tephra.TxConstants;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Function;
@@ -528,22 +529,23 @@ public class AppMetadataStore extends MetadataStoreDataset {
                                  ImmutableMap.of("workflowrunid", workflowRunId), null, twillRunId));
   }
 
-  public void updateWorkflowToken(Id.Workflow workflowId, String workflowRunId,
-                                  WorkflowToken workflowToken) throws NotFoundException {
-    RunRecordMeta runRecordMeta = getUnfinishedRun(workflowId, TYPE_RUN_RECORD_STARTED, workflowRunId);
+  public void updateWorkflowToken(ProgramRunId workflowRunId, WorkflowToken workflowToken) throws NotFoundException {
+    RunRecordMeta runRecordMeta = getUnfinishedRun(workflowRunId.getParent().toId(), TYPE_RUN_RECORD_STARTED,
+                                                   workflowRunId.getRun());
     if (runRecordMeta == null) {
       // Even if a run is suspended, the currently running node runs to completion.
       // This node also updates the workflow token at the end.
       // For such a scenario, check for a suspended run record too.
-      runRecordMeta = getUnfinishedRun(workflowId, TYPE_RUN_RECORD_SUSPENDED, workflowRunId);
+      runRecordMeta = getUnfinishedRun(workflowRunId.getParent().toId(), TYPE_RUN_RECORD_SUSPENDED,
+                                       workflowRunId.getRun());
       if (runRecordMeta == null) {
-        throw new NotFoundException(new Id.Run(workflowId, workflowRunId));
+        throw new NotFoundException(workflowRunId);
       }
     }
     Map<String, String> propertiesToUpdate = runRecordMeta.getProperties();
     propertiesToUpdate.put(WORKFLOW_TOKEN_PROPERTY_KEY, GSON.toJson(workflowToken));
 
-    write(getWorkflowRunRecordKey(workflowId, workflowRunId),
+    write(getWorkflowRunRecordKey(workflowRunId.getParent().toId(), workflowRunId.getRun()),
           new RunRecordMeta(runRecordMeta, propertiesToUpdate));
   }
 
@@ -562,7 +564,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
     return GSON.fromJson(workflowToken, BasicWorkflowToken.class);
   }
 
-  private MDSKey getWorkflowRunRecordKey(Id.Workflow workflowId, String workflowRunId) {
+  private MDSKey getWorkflowRunRecordKey(Id.Program workflowId, String workflowRunId) {
     return new MDSKey.Builder()
       .add(TYPE_RUN_RECORD_STARTED)
       .add(workflowId.getNamespaceId())
