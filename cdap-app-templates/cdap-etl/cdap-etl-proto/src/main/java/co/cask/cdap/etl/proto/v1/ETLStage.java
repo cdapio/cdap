@@ -94,7 +94,7 @@ public final class ETLStage {
     return Objects.hash(name, plugin, errorDatasetName);
   }
 
-  co.cask.cdap.etl.proto.v2.ETLStage upgradeStage(String type, UpgradeContext upgradeContext) {
+  public co.cask.cdap.etl.proto.v2.ETLStage upgradeStage(String type, UpgradeContext upgradeContext) {
     ArtifactSelectorConfig artifactSelectorConfig = upgradeContext.getPluginArtifact(type, plugin.getName());
     if (artifactSelectorConfig == null) {
       artifactSelectorConfig = plugin.getArtifact();

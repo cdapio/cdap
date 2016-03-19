@@ -24,6 +24,7 @@ import co.cask.cdap.api.data.schema.Schema;
 public final class Constants {
   public static final String ID_SEPARATOR = ":";
   public static final String PIPELINEID = "pipeline";
+  public static final String PIPELINE_SPEC_KEY = "pipeline.spec";
   public static final String STAGE_LOGGING_ENABLED = "stage.logging.enabled";
   public static final String CONNECTOR_TYPE = "connector";
   public static final Schema ERROR_SCHEMA = Schema.recordOf(
