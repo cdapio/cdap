@@ -18,10 +18,8 @@ package co.cask.cdap.internal.app.runtime.spark;
 
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.spark.SparkSpecification;
-import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
-import co.cask.cdap.internal.app.runtime.workflow.BasicWorkflowToken;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
 import co.cask.cdap.proto.Id;
@@ -53,7 +51,6 @@ public class SparkContextConfig {
   private static final String HCONF_ATTR_PROGRAM_SPEC = "cdap.spark.program.spec";
   private static final String HCONF_ATTR_PROGRAM_ID = "cdap.spark.program.id";
   private static final String HCONF_ATTR_RUN_ID = "cdap.spark.run.id";
-  private static final String HCONF_ATTR_LOGICAL_START_TIME = "hconf.program.logical.start.time";
   private static final String HCONF_ATTR_ARGS = "hconf.program.args";
   private static final String HCONF_ATTR_NEW_TX = "hconf.program.newtx.tx";
   private static final String HCONF_ATTR_WORKFLOW_INFO = "hconf.program.workflow.info";
@@ -95,7 +92,6 @@ public class SparkContextConfig {
     setSpecification(context.getSpecification());
     setProgramId(context.getProgramId());
     setRunId(context.getRunId().getId());
-    setLogicalStartTime(context.getLogicalStartTime());
     setArguments(context.getRuntimeArguments());
     setTransaction(context.getTransaction());
     setWorkflowProgramInfo(context.getWorkflowProgramInfo());
@@ -133,13 +129,6 @@ public class SparkContextConfig {
    */
   public Map<String, String> getArguments() {
     return GSON.fromJson(hConf.get(HCONF_ATTR_ARGS), ARGS_TYPE);
-  }
-
-  /**
-   * @return the logical start time stored in the configuration.
-   */
-  public long getLogicalStartTime() {
-    return hConf.getLong(HCONF_ATTR_LOGICAL_START_TIME, System.currentTimeMillis());
   }
 
   /**
@@ -181,10 +170,6 @@ public class SparkContextConfig {
 
   private void setArguments(Map<String, String> runtimeArgs) {
     hConf.set(HCONF_ATTR_ARGS, GSON.toJson(runtimeArgs, ARGS_TYPE));
-  }
-
-  private void setLogicalStartTime(long startTime) {
-    hConf.setLong(HCONF_ATTR_LOGICAL_START_TIME, startTime);
   }
 
   private void setTransaction(Transaction tx) {

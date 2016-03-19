@@ -17,12 +17,14 @@
 package co.cask.cdap.internal.app.runtime;
 
 import co.cask.cdap.app.runtime.ProgramRunner;
+import com.google.common.base.Strings;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.Service;
 import org.apache.hadoop.security.UserGroupInformation;
 
 import java.io.IOException;
 import java.security.PrivilegedExceptionAction;
+import java.util.Map;
 import java.util.concurrent.Callable;
 
 /**
@@ -59,6 +61,26 @@ public final class ProgramRunners {
           return callable.call();
         }
       });
+  }
+
+  /**
+   * Updates the given arguments to always have the logical start time set.
+   *
+   * @param arguments the runtime arguments
+   * @return the logical start time
+   */
+  public static long updateLogicalStartTime(Map<String, String> arguments) {
+    String value = arguments.get(ProgramOptionConstants.LOGICAL_START_TIME);
+    try {
+      // value is only empty/null in in some unit tests
+      long logicalStartTime = Strings.isNullOrEmpty(value) ? System.currentTimeMillis() : Long.parseLong(value);
+      arguments.put(ProgramOptionConstants.LOGICAL_START_TIME, Long.toString(logicalStartTime));
+      return logicalStartTime;
+    } catch (NumberFormatException e) {
+      throw new IllegalArgumentException(String.format(
+        "%s is set to an invalid value %s. Please ensure it is a timestamp in milliseconds.",
+        ProgramOptionConstants.LOGICAL_START_TIME, value));
+    }
   }
 
   private ProgramRunners() {

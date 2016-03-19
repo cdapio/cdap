@@ -42,7 +42,7 @@ import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.program.ProgramTypeMetricTag;
 import co.cask.cdap.internal.app.runtime.DefaultAdmin;
-import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
+import co.cask.cdap.internal.app.runtime.ProgramRunners;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.internal.app.runtime.spark.metrics.SparkUserMetrics;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
@@ -52,7 +52,6 @@ import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import org.apache.spark.SparkConf;
 import org.apache.twill.api.RunId;
@@ -60,6 +59,7 @@ import org.apache.twill.discovery.DiscoveryServiceClient;
 
 import java.io.Closeable;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -113,22 +113,11 @@ public abstract class AbstractSparkContext implements SparkContext, Closeable {
     this.workflowProgramInfo = workflowProgramInfo;
     this.systemDatasetInstantiator = new SystemDatasetInstantiator(dsFramework, programClassLoader, getOwners());
     this.admin = new DefaultAdmin(dsFramework, programId.getNamespace().toEntityId());
-    ImmutableMap.Builder runtimeArgsBuilder = ImmutableMap.builder().putAll(runtimeArguments);
-    String logicalStartTimeStr = runtimeArguments.get(ProgramOptionConstants.LOGICAL_START_TIME);
-    if (logicalStartTimeStr == null || logicalStartTimeStr.isEmpty()) {
-      // this should only happen in some unit tests
-      logicalStartTime = System.currentTimeMillis();
-      runtimeArgsBuilder.put(ProgramOptionConstants.LOGICAL_START_TIME, Long.toString(logicalStartTime));
-    } else {
-      try {
-        logicalStartTime = Long.parseLong(logicalStartTimeStr);
-      } catch (NumberFormatException e) {
-        throw new IllegalArgumentException(String.format(
-          "%s is set to an invalid value %s. Please ensure it is a timestamp in milliseconds.",
-          ProgramOptionConstants.LOGICAL_START_TIME, logicalStartTimeStr));
-      }
-    }
-    this.runtimeArguments = runtimeArgsBuilder.build();
+
+
+    Map<String, String> runtimeArgs = new HashMap<>(runtimeArguments);
+    this.logicalStartTime = ProgramRunners.updateLogicalStartTime(runtimeArgs);
+    this.runtimeArguments = Collections.unmodifiableMap(runtimeArgs);
   }
 
   @Override
