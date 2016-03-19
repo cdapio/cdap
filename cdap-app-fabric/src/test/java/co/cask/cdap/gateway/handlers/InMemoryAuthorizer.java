@@ -32,6 +32,7 @@ import com.google.common.collect.Table;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
 import javax.annotation.concurrent.NotThreadSafe;
 
@@ -43,6 +44,10 @@ public class InMemoryAuthorizer implements Authorizer {
 
   private final Table<EntityId, Principal, Set<Action>> table = HashBasedTable.create();
   private final Map<Role, Set<Principal>> roleToPrincipals = new HashMap<>();
+
+  public InMemoryAuthorizer(@SuppressWarnings("unused") Properties properties) {
+
+  }
 
   @Override
   public void enforce(EntityId entity, Principal principal, Action action) throws UnauthorizedException {

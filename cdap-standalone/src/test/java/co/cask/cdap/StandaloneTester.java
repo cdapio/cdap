@@ -18,9 +18,13 @@ package co.cask.cdap;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.twill.LocalLocationFactory;
 import co.cask.cdap.common.utils.Networks;
 import co.cask.cdap.common.utils.Tasks;
+import co.cask.cdap.gateway.handlers.InMemoryAuthorizer;
+import co.cask.cdap.internal.test.AppJarHelper;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.twill.filesystem.Location;
 import org.junit.rules.ExternalResource;
 import org.junit.rules.TemporaryFolder;
 import org.slf4j.Logger;
@@ -62,7 +66,10 @@ public class StandaloneTester extends ExternalResource {
     cConf.setBoolean(Constants.Explore.EXPLORE_ENABLED, true);
     cConf.setBoolean(Constants.Explore.START_ON_DEMAND, true);
     cConf.setBoolean(StandaloneMain.DISABLE_UI, true);
-
+    cConf.setBoolean(Constants.Security.Authorization.ENABLED, true);
+    Location authExtensionJar = AppJarHelper.createDeploymentJar(new LocalLocationFactory(tmpFolder.newFolder()),
+                                                             InMemoryAuthorizer.class);
+    cConf.set(Constants.Security.Authorization.EXTENSION_JAR_PATH, authExtensionJar.toURI().getPath());
     this.cConf = cConf;
 
     // Start standalone

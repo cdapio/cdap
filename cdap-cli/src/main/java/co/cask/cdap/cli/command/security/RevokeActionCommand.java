@@ -34,9 +34,9 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- * Revokes a user's permission to perform certain actions on an entity.
+ * Revoke command base class
  */
-public class RevokeActionCommand extends AbstractAuthCommand {
+public abstract class RevokeActionCommand extends AbstractAuthCommand {
 
   private final AuthorizationClient client;
 
@@ -58,27 +58,12 @@ public class RevokeActionCommand extends AbstractAuthCommand {
     Set<Action> actions = actionsString == null ? null : fromStrings(Splitter.on(",").split(actionsString));
 
     client.revoke(new RevokeRequest(entity, principal, actions));
-    if (principal == null) {
+    if (principal == null && actions == null) {
       output.printf("Successfully revoked all actions on entity '%s' for all principals", entity.toString());
-    } else if (actions == null) {
-      output.printf("Successfully revoked all actions on entity '%s' for principal '%s'\n",
-                    entity.toString(), principal);
     } else {
-      output.printf("Successfully revoked action(s) '%s' on entity '%s' for principal '%s'\n",
-                    Joiner.on(",").join(actions), entity.toString(), principal);
+      output.printf("Successfully revoked action(s) '%s' on entity '%s' for '%s' '%s'\n",
+                    Joiner.on(",").join(actions), entity.toString(), principal.getType(), principal.getName());
     }
-  }
-
-  @Override
-  public String getPattern() {
-    return String.format("security revoke entity <%s> [%s <%s>] [%s <%s>] [actions <actions>]",
-                         ArgumentName.ENTITY, ArgumentName.PRINCIPAL_TYPE, ArgumentName.PRINCIPAL_TYPE,
-                         ArgumentName.PRINCIPAL_NAME, ArgumentName.PRINCIPAL_NAME);
-  }
-
-  @Override
-  public String getDescription() {
-    return "Revokes a user's permission to perform certain actions on an entity. <actions> is a comma-separated list.";
   }
 
   private Set<Action> fromStrings(Iterable<String> strings) {
