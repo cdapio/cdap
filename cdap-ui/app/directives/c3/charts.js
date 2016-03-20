@@ -132,6 +132,9 @@ ngC3.controller('c3Controller', function ($scope, c3, $filter, $timeout) {
     chartConfig.zoom = { enabled: false };
     chartConfig.transition = { duration: 1000 };
     chartConfig.donut = { width: 45 };
+    chartConfig.spline = {
+      interpolation: { type: 'monotone' }
+    };
     $scope.chart = c3.generate(chartConfig);
   }
 

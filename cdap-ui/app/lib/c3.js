@@ -14,6 +14,12 @@
  * the License.
  */
 
+/*
+    Changes added:
+    - https://github.com/masayuki0812/c3/pull/860
+    - https://github.com/masayuki0812/c3/pull/1268
+*/
+
 (function (window) {
     'use strict';
 
@@ -338,7 +344,7 @@
                 withTransitionForAxis: false
             });
         }
-        
+
         // export element of the chart
         $$.api.element = $$.selectChart.node();
     };
@@ -1191,6 +1197,8 @@
             donut_width: undefined,
             donut_expand: true,
             donut_title: "",
+            // spline
+            spline_interpolation_type: 'cardinal',
             // region - region to change style
             regions: [],
             // tooltip - show when mouseover on each data
@@ -2740,7 +2748,8 @@
 
     c3_chart_internal_fn.getInterpolate = function (d) {
         var $$ = this;
-        return $$.isSplineType(d) ? "cardinal" : $$.isStepType(d) ? $$.config.line_step_type : "linear";
+        var interpolation = $$.isInterpolationType() ? $$.config.spline_interpolation_type : 'cardinal';
+        return $$.isSplineType(d) ? interpolation : $$.isStepType(d) ? $$.config.line_step_type : "linear";
     };
 
     c3_chart_internal_fn.initLine = function () {
@@ -3465,6 +3474,9 @@
     };
     c3_chart_internal_fn.barOrLineData = function (d) {
         return this.isBarType(d) || this.isLineType(d) ? d.values : [];
+    };
+    c3_chart_internal_fn.isInterpolationType = function () {
+        return ['linear', 'linear-closed', 'basis', 'basis-open', 'basis-closed', 'bundle', 'cardinal', 'cardinal-open', 'cardinal-closed', 'monotone'].indexOf(this.config.spline_interpolation_type) >= 0;
     };
 
     c3_chart_internal_fn.initGrid = function () {
