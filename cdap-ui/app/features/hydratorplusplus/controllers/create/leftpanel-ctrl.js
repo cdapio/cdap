@@ -74,7 +74,13 @@ class HydratorPlusPlusLeftPanelCtrl {
         this.onArtifactChange();
         return;
       }
-      let addPlugin = {name: 'Plugin Template', icon: 'fa-plus', nodeType: 'ADDPLUGINTEMPLATE', templateType: this.selectedArtifact.name};
+      let addPlugin = {
+        name: 'Plugin Template',
+        icon: 'fa-plus',
+        nodeClass: 'add-plugin-template',
+        nodeType: 'ADDPLUGINTEMPLATE',
+        templateType: this.selectedArtifact.name
+      };
       let getPluginTemplateNode = (type, getter) => {
         return [
           angular
