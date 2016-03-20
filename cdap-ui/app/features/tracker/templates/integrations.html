@@ -97,7 +97,7 @@
     <div class="integration-status" ng-if="IntegrationsController.navigatorSetup.isSetup">
       <div class="status status-item">
         <p>
-          <span>Status: </span>
+          <strong>Status: </strong>
           <span class="fa fa-circle"
                 ng-class="{ 'text-success': IntegrationsController.navigatorState.status === 'RUNNING' || IntegrationsController.navigatorState.status === 'STARTING', 'text-danger': IntegrationsController.navigatorState.status !== 'RUNNING' && IntegrationsController.navigatorState.status !== 'STARTING' }"></span>
           <span ng-if="IntegrationsController.navigatorState.status !== 'KILLED'">
@@ -112,12 +112,12 @@
       <div class="date status-item">
         <p class="status-information">
           <span ng-if="IntegrationsController.navigatorState.status !== 'RUNNING' && IntegrationsController.navigatorState.end">
-            <span>Disabled: </span>
-            <span>{{ IntegrationsController.navigatorState.end * 1000 | amDateFormat: 'MMM.DD.YYYY h:mm A'}}</span>
+            <strong>Disabled: </strong>
+            <span>{{ IntegrationsController.navigatorState.end * 1000 | amDateFormat: 'MMM DD, YYYY h:mm A'}}</span>
           </span>
           <span ng-if="IntegrationsController.navigatorState.status === 'RUNNING'">
-            <span>Enabled: </span>
-            <span>{{ IntegrationsController.navigatorState.start * 1000 | amDateFormat: 'MMM.DD.YYYY h:mm A'}}</span>
+            <strong>Enabled: </strong>
+            <span>{{ IntegrationsController.navigatorState.start * 1000 | amDateFormat: 'MMM DD, YYYY h:mm A'}}</span>
           </span>
 
         </p>
