@@ -1,5 +1,5 @@
 angular.module(`${PKG.name}.feature.hydrator-beta`)
-  .controller('PluginTemplatesCreateEditCtrl', function ($scope, PluginTemplateStoreBeta, PluginTemplateActionBeta, PluginActionsFactoryBeta, $stateParams) {
+  .controller('PluginTemplatesCreateEditCtrl', function ($scope, PluginTemplateStoreBeta, PluginTemplateActionBeta, PluginActionsFactoryBeta, $stateParams, myAlertOnValium) {
       $scope.closeTemplateCreationModal = ()=> {
         PluginTemplateActionBeta.reset();
         $scope.$close();
@@ -13,6 +13,10 @@ angular.module(`${PKG.name}.feature.hydrator-beta`)
         if (getIsSaveSuccessfull) {
           PluginTemplateActionBeta.reset();
           PluginActionsFactoryBeta.fetchTemplates({namespace: $stateParams.namespace});
+          myAlertOnValium.show({
+            type: 'success',
+            content: 'Plugin template creation successfull'
+          });
           $scope.$close();
         }
       });
