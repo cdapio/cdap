@@ -17,6 +17,8 @@
 package co.cask.cdap.etl.proto.v2;
 
 import co.cask.cdap.api.Resources;
+import co.cask.cdap.etl.api.realtime.RealtimeSink;
+import co.cask.cdap.etl.api.realtime.RealtimeSource;
 import co.cask.cdap.etl.proto.Connection;
 
 import java.util.Objects;
@@ -35,6 +37,23 @@ public final class ETLRealtimeConfig extends ETLConfig {
                             int instances) {
     super(stages, connections, resources, stageLoggingEnabled);
     this.instances = instances;
+  }
+
+  /**
+   * If this has the old v1 fields (source, sinks, transforms), convert them all to stages and create a proper
+   * v2 config. If this is already a v2 config, just returns itself.
+   * This method is only here to support backwards compatibility.
+   *
+   * @return A v2 config.
+   */
+  public ETLRealtimeConfig convertOldConfig() {
+    if (!getStages().isEmpty()) {
+      return this;
+    }
+
+    ETLRealtimeConfig.Builder builder = builder()
+      .setInstances(getInstances());
+    return convertStages(builder, RealtimeSource.PLUGIN_TYPE, RealtimeSink.PLUGIN_TYPE).build();
   }
 
   public int getInstances() {

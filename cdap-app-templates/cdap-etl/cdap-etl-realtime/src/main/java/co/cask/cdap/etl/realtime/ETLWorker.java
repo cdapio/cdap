@@ -44,19 +44,26 @@ import co.cask.cdap.etl.common.Destroyables;
 import co.cask.cdap.etl.common.LoggedTransform;
 import co.cask.cdap.etl.common.NoopMetrics;
 import co.cask.cdap.etl.common.PipelinePhase;
-import co.cask.cdap.etl.common.PipelineRegisterer;
 import co.cask.cdap.etl.common.TransformDetail;
 import co.cask.cdap.etl.common.TransformExecutor;
 import co.cask.cdap.etl.common.TransformResponse;
 import co.cask.cdap.etl.common.TxLookupProvider;
 import co.cask.cdap.etl.log.LogStageInjector;
+import co.cask.cdap.etl.planner.PipelinePlan;
+import co.cask.cdap.etl.planner.PipelinePlanner;
 import co.cask.cdap.etl.planner.StageInfo;
-import co.cask.cdap.etl.proto.v1.ETLRealtimeConfig;
+import co.cask.cdap.etl.proto.v2.ETLRealtimeConfig;
+import co.cask.cdap.etl.spec.PipelineSpec;
+import co.cask.cdap.etl.spec.PipelineSpecGenerator;
+import co.cask.cdap.etl.spec.StageSpec;
 import co.cask.cdap.format.StructuredRecordStringConverter;
+import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -77,7 +84,9 @@ import java.util.UUID;
 public class ETLWorker extends AbstractWorker {
   public static final String NAME = ETLWorker.class.getSimpleName();
   private static final Logger LOG = LoggerFactory.getLogger(ETLWorker.class);
-  private static final Gson GSON = new Gson();
+  private static final Gson GSON = new GsonBuilder()
+    .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
+    .create();
   private static final String SEPARATOR = ":";
   private static final Schema ERROR_SCHEMA = Schema.recordOf(
     "error",
@@ -87,6 +96,8 @@ public class ETLWorker extends AbstractWorker {
                                                                   Schema.of(Schema.Type.NULL))),
     Schema.Field.of(Constants.ErrorDataset.INVALIDENTRY, Schema.of(Schema.Type.STRING)));
   private static final String UNIQUE_ID = "uniqueid";
+  private static final Set<String> SUPPORTED_PLUGIN_TYPES = ImmutableSet.of(
+    RealtimeSource.PLUGIN_TYPE, RealtimeSink.PLUGIN_TYPE, Transform.PLUGIN_TYPE);
 
   // only visible at configure time
   private final ETLRealtimeConfig config;
@@ -113,7 +124,7 @@ public class ETLWorker extends AbstractWorker {
   public void configure() {
     setName(NAME);
     setDescription("Worker Driver for Realtime ETL Pipelines");
-    int instances = config.getInstances() != null ? config.getInstances() : 1;
+    int instances = config.getInstances();
     if (instances < 1) {
       throw new IllegalArgumentException("instances must be greater than 0.");
     }
@@ -122,13 +133,34 @@ public class ETLWorker extends AbstractWorker {
       setResources(config.getResources());
     }
 
-    PipelineRegisterer registerer = new PipelineRegisterer(getConfigurer(), "realtime");
-    // using table dataset type for error dataset
-    PipelinePhase pipeline = registerer.registerPlugins(config, Table.class, DatasetProperties.builder()
-      .add(Table.PROPERTY_SCHEMA, ERROR_SCHEMA.toString())
-      .build(), false);
+    PipelineSpecGenerator specGenerator =
+      new PipelineSpecGenerator(getConfigurer(),
+                                RealtimeSource.PLUGIN_TYPE,
+                                RealtimeSink.PLUGIN_TYPE,
+                                Table.class,
+                                DatasetProperties.builder()
+                                  .add(Table.PROPERTY_SCHEMA, ERROR_SCHEMA.toString())
+                                  .build());
+    PipelineSpec spec = specGenerator.generateSpec(config);
+    int sourceCount = 0;
+    for (StageSpec stageSpec : spec.getStages()) {
+      if (RealtimeSource.PLUGIN_TYPE.equals(stageSpec.getPlugin().getType())) {
+        sourceCount++;
+      }
+    }
+    if (sourceCount != 1) {
+      throw new IllegalArgumentException("Invalid pipeline. There must only be one source.");
+    }
+    PipelinePlanner planner = new PipelinePlanner(SUPPORTED_PLUGIN_TYPES, ImmutableSet.<String>of());
+    PipelinePlan plan = planner.plan(spec);
+    if (plan.getPhases().size() != 1) {
+      // should never happen
+      throw new IllegalArgumentException("There was an error planning the pipeline. There should only be one phase.");
+    }
+    PipelinePhase pipeline = plan.getPhases().values().iterator().next();
 
     Map<String, String> properties = new HashMap<>();
+    properties.put(Constants.PIPELINE_SPEC_KEY, GSON.toJson(spec));
     properties.put(Constants.PIPELINEID, GSON.toJson(pipeline));
     // Generate unique id for this app creation.
     properties.put(UNIQUE_ID, String.valueOf(System.currentTimeMillis()));
