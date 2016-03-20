@@ -153,6 +153,7 @@
         chart-metric="IntegrationsController.chartData"
         chart-settings="IntegrationsController.chartSettings"
         chart-size="{height: 150}"
+        chart-padding="{ bottom: -6 }"
       ></c3-area-spline>
 
       <h5 class="time-label">Time(last hour)</h5>
@@ -161,8 +162,7 @@
   </div>
 </div>
 
-<div class="row"
-     ng-if="IntegrationsController.navigatorState.status === 'RUNNING'">
+<div ng-if="IntegrationsController.navigatorState.status === 'RUNNING'">
   <div class="integrations-log-viewer">
     <div class="col-xs-10">
       <div class="navigator-flow-title">
