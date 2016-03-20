@@ -263,24 +263,10 @@ class HydratorPlusPlusLeftPanelCtrl {
         backdrop: 'static',
         keyboard: false,
         windowTopClass: 'plugin-template-delete-confirm-modal',
-        controller: ['$scope', 'mySettings', '$stateParams', 'myAlertOnValium', 'HydratorPlusPlusPluginActions', function($scope, mySettings, $stateParams, myAlertOnValium, HydratorPlusPlusPluginActions) {
-          $scope.templateName = node.pluginTemplate;
-          $scope.ok = () => {
-            mySettings.get('pluginTemplates', true)
-              .then( (res) => {
-                delete res[$stateParams.namespace][node.templateType][node.pluginType][node.pluginTemplate];
-                return mySettings.set('pluginTemplates', res);
-              })
-              .then( () => {
-                myAlertOnValium.show({
-                  type: 'success',
-                  content: 'Successfully deleted template ' + node.pluginTemplate
-                });
-                HydratorPlusPlusPluginActions.fetchTemplates({namespace: $stateParams.namespace});
-              });
-            $scope.$close();
-          };
-        }]
+        controller: 'PluginTemplatesDeleteCtrl',
+        resolve: {
+          rNode: () => node
+        }
       });
   }
 
@@ -292,24 +278,7 @@ class HydratorPlusPlusLeftPanelCtrl {
         backdrop: 'static',
         keyboard: false,
         windowTopClass: 'plugin-templates-modal',
-        controller: ['$scope', 'PluginTemplateStoreBeta', 'PluginTemplateActionBeta', 'HydratorPlusPlusPluginActions', ($scope, PluginTemplateStoreBeta, PluginTemplateActionBeta, HydratorPlusPlusPluginActions) => {
-          $scope.closeTemplateCreationModal = ()=> {
-            PluginTemplateActionBeta.reset();
-            $scope.$close();
-          };
-          $scope.saveAndClose = () => {
-            PluginTemplateActionBeta.triggerSave();
-          };
-          $scope.pluginTemplateSaveError = null;
-          PluginTemplateStoreBeta.registerOnChangeListener(() => {
-            let getIsSaveSuccessfull = PluginTemplateStoreBeta.getIsSaveSuccessfull();
-            if (getIsSaveSuccessfull) {
-              PluginTemplateActionBeta.reset();
-              HydratorPlusPlusPluginActions.fetchTemplates({namespace: this.$stateParams.namespace});
-              $scope.$close();
-            }
-          });
-        }],
+        controller: 'PluginTemplatesCreateEditCtrl'
       })
       .rendered
       .then(() => {
