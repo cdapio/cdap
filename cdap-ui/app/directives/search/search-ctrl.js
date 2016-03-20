@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.commons')
-  .controller('MySearchCtrl', function($stateParams, myTagsApi, $timeout, $scope, $document, caskFocusManager) {
+  .controller('MySearchCtrl', function($stateParams, myTagsApi, $scope, $document, caskFocusManager) {
     var vm = this;
 
     vm.showSearchBox = false;
