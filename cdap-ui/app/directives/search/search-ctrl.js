@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.commons')
-  .controller('MySearchCtrl', function($stateParams, myTagsApi, $timeout, $scope, $document) {
+  .controller('MySearchCtrl', function($stateParams, myTagsApi, $timeout, $scope, $document, caskFocusManager) {
     var vm = this;
 
     vm.showSearchBox = false;
@@ -26,9 +26,7 @@ angular.module(PKG.name + '.commons')
 
     vm.showSearch = function () {
       vm.showSearchBox = true;
-      $timeout(function () {
-        angular.element(document.getElementById('global-search'))[0].focus();
-      });
+      caskFocusManager.focus('globalSearch');
     };
 
     vm.onBlur = function () {
@@ -59,7 +57,12 @@ angular.module(PKG.name + '.commons')
           vm.loading = false;
           var parsedSearch = [];
           angular.forEach(res, function (entity) {
-            parsedSearch.push(parseEntity(entity.entityId));
+            var parsedData = parseEntity(entity.entityId);
+
+            // Checking the return value is something we can display
+            if (parsedData) {
+              parsedSearch.push(parsedData);
+            }
           });
 
           vm.searchResults = parsedSearch;
@@ -73,11 +76,6 @@ angular.module(PKG.name + '.commons')
     $document.bind('keypress', function (event) {
       if (event.keyCode === 63) {
         vm.showSearch();
-
-        // for some reason the focus on showSearch() does not trigger the focus
-        $timeout(function () {
-          angular.element(document.getElementById('global-search'))[0].focus();
-        });
       }
     });
 
@@ -91,6 +89,7 @@ angular.module(PKG.name + '.commons')
               namespaceId: entityObj.id.namespace.id,
               streamId: entityObj.id.streamName,
             },
+            stateLink: 'streams.detail.overview.status(result.stateParams)',
             type: 'Stream',
             icon: 'icon-streams'
           };
@@ -101,6 +100,7 @@ angular.module(PKG.name + '.commons')
               namespaceId: entityObj.id.namespace.id,
               datasetId: entityObj.id.instanceId,
             },
+            stateLink: 'datasets.detail.overview.status(result.stateParams)',
             type: 'Dataset',
             icon: 'icon-datasets'
           };
@@ -111,6 +111,7 @@ angular.module(PKG.name + '.commons')
               namespaceId: entityObj.id.namespace.id,
               appId: entityObj.id.applicationId,
             },
+            stateLink: 'apps.detail.overview.programs(result.stateParams)',
             type: 'App',
             icon: 'icon-app'
           };
@@ -122,12 +123,30 @@ angular.module(PKG.name + '.commons')
               appId: entityObj.id.application.applicationId,
               programId: entityObj.id.id,
             },
+            stateLink: getProgramLink(entityObj.id.type),
             programType: entityObj.id.type,
             type: entityObj.id.type,
             icon: (entityObj.id.type.toLowerCase() === 'flow'? 'icon-tigon' : 'icon-' + entityObj.id.type.toLowerCase())
           };
         default:
           return;
+      }
+    }
+
+    function getProgramLink(programType) {
+      switch (programType) {
+        case 'Flow':
+          return 'flows.detail(result.stateParams)';
+        case 'Mapreduce':
+          return 'mapreduce.detail(result.stateParams)';
+        case 'Service':
+          return 'services.detail(result.stateParams)';
+        case 'Spark':
+          return 'spark.detail(result.stateParams)';
+        case 'Worker':
+          return 'worker.detail(result.stateParams)';
+        case 'Workflow':
+          return 'workflows.detail(result.stateParams)';
       }
     }
 
