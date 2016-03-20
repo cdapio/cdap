@@ -135,22 +135,6 @@ function LineageController ($scope, jsPlumb, $timeout, $state, LineageStore, myT
     fetchRunStatus(nodeInfo, node.popover.activeRunId, node.popover.runInfo);
   };
 
-  vm.mouseLeaveNode = (node) => {
-    node.timeout = $timeout(() => {
-      node.showNavigation = false;
-    }, 300);
-  };
-
-  vm.mouseEnterNavigation = (node) => {
-    $timeout.cancel(node.timeout);
-  };
-
-  vm.mouseLeaveNavigation = (node) => {
-    $timeout(() => {
-      node.showNavigation = false;
-    }, 300);
-  };
-
   vm.navigationClick = (event, node) => {
     event.stopPropagation();
     event.preventDefault();
