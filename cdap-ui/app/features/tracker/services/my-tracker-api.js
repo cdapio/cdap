@@ -19,7 +19,8 @@ function myTrackerApi(myCdapUrl, $resource, myAuth, myHelpers) {
       searchPath = '/namespaces/:namespace/metadata/search',
       basePath = '/namespaces/:namespace/:entityType/:entityId',
       programPath = '/namespaces/:namespace/apps/:appId/:programType/:programId/runs/:runId',
-      auditPath = '/namespaces/:namespace/apps/Tracker/services/AuditLog/methods/auditlog/:entityType/:entityId';
+      auditPath = '/namespaces/:namespace/apps/Tracker/services/AuditLog/methods/auditlog/:entityType/:entityId',
+      navigatorPath = '/namespaces/:namespace/apps/ClouderaNavigator';
 
   return $resource(
     url({ _cdapPath: searchPath }),
@@ -35,7 +36,12 @@ function myTrackerApi(myCdapUrl, $resource, myAuth, myHelpers) {
     getAuditLogs: myHelpers.getConfig('GET', 'REQUEST', auditPath),
     getStreamProperties: myHelpers.getConfig('GET', 'REQUEST', '/namespaces/:namespace/streams/:entityId'),
     getDatasetSystemProperties: myHelpers.getConfig('GET', 'REQUEST', basePath + '/metadata/properties?scope=SYSTEM'),
-    getDatasetDetail: myHelpers.getConfig('GET', 'REQUEST', '/namespaces/:namespace/data/datasets/:entityId')
+    getDatasetDetail: myHelpers.getConfig('GET', 'REQUEST', '/namespaces/:namespace/data/datasets/:entityId'),
+    deployNavigator: myHelpers.getConfig('PUT', 'REQUEST', navigatorPath, false, { contentType: 'application/json' }),
+    getCDAPConfig: myHelpers.getConfig('GET', 'REQUEST', '/config/cdap', true),
+    getNavigatorApp: myHelpers.getConfig('GET', 'REQUEST', navigatorPath, false, { suppressErrors: true }),
+    getNavigatorStatus: myHelpers.getConfig('GET', 'REQUEST', navigatorPath + '/flows/MetadataFlow/runs', true),
+    toggleNavigator: myHelpers.getConfig('POST', 'REQUEST', navigatorPath + '/flows/MetadataFlow/:action', false)
   });
 }
 

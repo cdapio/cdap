@@ -30,6 +30,18 @@ angular.module(PKG.name + '.feature.tracker')
         controllerAs: 'MainController'
       })
 
+      .state('tracker-integrations', {
+        url: '/tracker/integrations',
+        parent: 'ns',
+        templateUrl: '/assets/features/tracker/templates/integrations.html',
+        controller: 'TrackerIntegrationsController',
+        controllerAs: 'IntegrationsController',
+        data: {
+          authorizedRoles: MYAUTH_ROLE.all,
+          highlightTab: 'integrations'
+        }
+      })
+
       .state('tracker', {
         url: '/tracker',
         parent: 'ns',

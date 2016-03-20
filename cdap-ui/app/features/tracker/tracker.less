@@ -29,10 +29,21 @@
 @active-font: #363945;
 @filter-sidebar-background-color: #eeeeee;
 
+body[class*='state-tracker']{
+  main.container {
+    margin-top: 50px;
+    width: 100%;
+    padding: 0 0 15px 0;
+
+    h1, h2, h3, h4, h5, h6 {
+      font-weight: 500;
+    }
+  }
+  .alerts { top: 50px; }
+}
+
 body.state-tracker-home {
   background-color: white;
-
-  main.container { margin-top: 50px; }
 
   .tracker-content {
     width: 500px;
@@ -71,23 +82,10 @@ body.state-tracker-home {
       margin-right: 8px;
     }
   }
-
 }
 
 body.state-tracker {
   background-color: #e5e5e5;
-
-  .alerts { top: 50px; }
-
-  main.container {
-    margin-top: 50px;
-    width: 100%;
-    padding: 0 0 15px 0;
-
-    h1, h2, h3, h4, h5, h6 {
-      font-weight: 500;
-    }
-  }
 
   .content-loading {
     margin-top: 150px;
@@ -541,6 +539,225 @@ body.state-tracker-help {
         background-color: inherit;
       }
       &>p { margin-top: 25px; }
+    }
+  }
+}
+
+body.state-tracker-integrations {
+  background-color: white;
+
+  .integration-item {
+    margin: 0;
+    padding: 10px 40px;
+    border-bottom: 1px solid @border-color;
+    height: 80px;
+    width: 100%;
+    display: table;
+
+    .integration-information {
+      width: 50%;
+      display: table-cell;
+      vertical-align: middle;
+
+      h3, p { font-weight: 500; }
+
+      h3 { margin: 5px 0; }
+      p {
+        margin: 0;
+        color: @tracker-grey;
+      }
+    }
+
+    .integration-setup {
+      width: 50%;
+      display: table-cell;
+      vertical-align: middle;
+
+      .btn {
+        padding: 7px 25px;
+        font-weight: 500;
+      }
+
+      .btn.btn-setup {
+        border: 2px solid @border-color;
+        color: darken(@border-color, 20%);
+      }
+    }
+
+    .integration-setup-popup {
+      padding: 15px;
+      background-color: white;
+      position: absolute;
+      width: 400px;
+      right: 25px;
+      border-radius: 5px;
+      transform: translateY(-36px);
+      z-index: 950;
+      line-height: normal;
+      .box-shadow(0 0 20px 1px rgba(0,0,0,0.5));
+
+      h3, h4 {
+        margin-bottom: 15px;
+      }
+      h3 {
+        font-size: 22px;
+        margin-top: 5px;
+      }
+
+      .control-label {
+        color: #888;
+      }
+    }
+
+    .integration-status {
+      line-height: 60px;
+      float: right;
+
+      .status-item {
+        display: inline-block;
+        margin-left: 10px;
+      }
+
+      .status > p { margin-bottom: 0; }
+
+      .status-information {
+        margin: 0;
+        font-weight: 500;
+      }
+
+      .enable-control { vertical-align: middle; }
+
+      .config-popover {
+        width: 400px;
+        transform: translate(-153px, -43px);
+
+        div.arrow { display: none; }
+      }
+
+
+
+      /* SWITCH STYLING */
+      .integrations-switch {
+        height: 32px;
+        width: 85px;
+        position: relative;
+        vertical-align: middle;
+        border-radius: 16px;
+        font-weight: 500;
+        color: white;
+        user-select: none;
+        cursor: pointer;
+
+        .switch-button {
+          position: absolute;
+          top: 2px;
+          display: block;
+          width: 28px;
+          height: 28px;
+          background-color: white;
+          border-radius: 50%;
+          transition: all 0.3s ease-in 0s;
+
+          &:after, &:before {
+            display: block;
+            font-size: 11px;
+            position: absolute;
+            top: -16px;
+          }
+        }
+
+        &.enabled {
+          background-color: @tracker-green;
+          .switch-button {
+            left: 2px;
+            &:after {
+              content: 'Enabled';
+              left: 32px;
+            }
+          }
+
+        }
+        &.disabled {
+          background-color: @tracker-grey;
+          .switch-button {
+            right: 2px;
+            &:before {
+              content: 'Disabled';
+              right: 32px;
+            }
+          }
+        }
+      }
+      /* SWITCH STYLING END */
+    }
+  }
+
+  .navigator-metrics {
+    background-color: #464a56;
+    padding-top: 10px;
+
+    .events-sent-title, .total-events, .time-label {
+      color: white;
+      position: absolute;
+      display: inline-block;
+    }
+
+    .time-label {
+      bottom: 0;
+      left: 40px;
+    }
+    .events-sent-title {
+      top: 0;
+      left: 40px;
+    }
+    .total-events {
+      top: 0;
+      right: 40px;
+    }
+  }
+
+  .navigator-confirm-modal {
+    .modal-body {
+      padding-top: 40px;
+
+      h4 { font-weight: 500; }
+    }
+  }
+
+  .integrations-log-viewer {
+    .navigator-flow-title {
+      padding-left: 10px;
+      line-height: 1;
+      vertical-align: middle;
+      display: inline-block;
+
+      h3, p { margin: 0; }
+      p {
+        margin-left: 2px;
+        margin-top: 3px;
+        color: @search-font-color;
+      }
+    }
+
+    & > .col-xs-10, & > .col-xs-2 {
+      height: 60px;
+      line-height: 60px;
+      background-color: #dddddd;
+
+      .btn {
+        margin-right: 10px;
+        font-weight: 500;
+        background-color: white;
+
+        .fa {
+          margin-left: 15px;
+        }
+      }
+
+      ul.dropdown-menu {
+        top: 45px;
+        right: 9px;
+      }
     }
   }
 }
