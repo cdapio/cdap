@@ -53,14 +53,6 @@ angular.module(PKG.name + '.feature.tracker')
         controller: 'TrackerContainerController',
         controllerAs: 'ContainerController'
       })
-        .state('tracker.help', {
-          url: '/help',
-          templateUrl: '/assets/features/tracker/templates/help.html',
-          data: {
-            authorizedRoles: MYAUTH_ROLE.all,
-            highlightTab: 'help'
-          }
-        })
 
         .state('tracker.result', {
           url: '/search/:searchQuery/result',
