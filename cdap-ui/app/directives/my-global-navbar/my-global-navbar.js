@@ -20,7 +20,7 @@ function NavbarController ($scope, $state, myNamespace, EventPipe, MYAUTH_EVENT,
   let vm = this;
 
   function findActiveProduct() {
-    if ($state.includes('hydrator.**')) {
+    if ($state.includes('hydrator.**') || $state.includes('hydrator-beta.**')) {
       return 'hydrator';
     } else if ($state.includes('tracker.**') || $state.is('tracker-home') || $state.is('tracker-integrations')) {
       return 'tracker';
