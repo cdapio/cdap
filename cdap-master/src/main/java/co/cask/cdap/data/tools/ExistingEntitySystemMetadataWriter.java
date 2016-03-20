@@ -27,12 +27,12 @@ import co.cask.cdap.data.dataset.SystemDatasetInstantiatorFactory;
 import co.cask.cdap.data.view.ViewAdmin;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
-import co.cask.cdap.data2.metadata.system.AbstractSystemMetadataWriter;
 import co.cask.cdap.data2.metadata.system.AppSystemMetadataWriter;
 import co.cask.cdap.data2.metadata.system.ArtifactSystemMetadataWriter;
 import co.cask.cdap.data2.metadata.system.DatasetSystemMetadataWriter;
 import co.cask.cdap.data2.metadata.system.ProgramSystemMetadataWriter;
 import co.cask.cdap.data2.metadata.system.StreamSystemMetadataWriter;
+import co.cask.cdap.data2.metadata.system.SystemMetadataWriter;
 import co.cask.cdap.data2.metadata.system.ViewSystemMetadataWriter;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactDetail;
@@ -93,7 +93,7 @@ public class ExistingEntitySystemMetadataWriter {
                                                    artifactDetail.getMeta().getClasses(),
                                                    artifactDetail.getMeta().getProperties());
       Id.Artifact artifactId = Id.Artifact.from(namespace, artifactDetail.getDescriptor().getArtifactId());
-      AbstractSystemMetadataWriter writer = new ArtifactSystemMetadataWriter(metadataStore, artifactId, artifactInfo);
+      SystemMetadataWriter writer = new ArtifactSystemMetadataWriter(metadataStore, artifactId, artifactInfo);
       writer.write();
     }
   }
@@ -101,7 +101,7 @@ public class ExistingEntitySystemMetadataWriter {
   private void writeSystemMetadataForApps(Id.Namespace namespace) {
     for (ApplicationSpecification appSpec : store.getAllApplications(namespace)) {
       Id.Application app = Id.Application.from(namespace, appSpec.getName());
-      AbstractSystemMetadataWriter writer = new AppSystemMetadataWriter(metadataStore, app, appSpec);
+      SystemMetadataWriter writer = new AppSystemMetadataWriter(metadataStore, app, appSpec);
       writer.write();
       writeSystemMetadataForPrograms(app, appSpec);
     }
@@ -120,7 +120,7 @@ public class ExistingEntitySystemMetadataWriter {
                                               Collection<? extends ProgramSpecification> programSpecs) {
     for (ProgramSpecification programSpec : programSpecs) {
       Id.Program programId = Id.Program.from(app, programType, programSpec.getName());
-      AbstractSystemMetadataWriter writer = new ProgramSystemMetadataWriter(metadataStore, programId, programSpec);
+      SystemMetadataWriter writer = new ProgramSystemMetadataWriter(metadataStore, programId, programSpec);
       writer.write();
     }
   }
@@ -133,7 +133,7 @@ public class ExistingEntitySystemMetadataWriter {
       Id.DatasetInstance dsInstance = Id.DatasetInstance.from(namespace, summary.getName());
       DatasetProperties dsProperties = DatasetProperties.builder().addAll(summary.getProperties()).build();
       String dsType = summary.getType();
-      AbstractSystemMetadataWriter writer = new DatasetSystemMetadataWriter(metadataStore,
+      SystemMetadataWriter writer = new DatasetSystemMetadataWriter(metadataStore,
                                                                             systemDatasetInstantiatorFactory,
                                                                             dsInstance, dsProperties, dsType);
       writer.write();
@@ -143,7 +143,7 @@ public class ExistingEntitySystemMetadataWriter {
   private void writeSystemMetadataForStreams(Id.Namespace namespace) throws Exception {
     for (StreamSpecification streamSpec : store.getAllStreams(namespace)) {
       Id.Stream streamId = Id.Stream.from(namespace, streamSpec.getName());
-      AbstractSystemMetadataWriter writer =
+      SystemMetadataWriter writer =
         new StreamSystemMetadataWriter(metadataStore, streamId, streamAdmin.getConfig(streamId),
                                        streamSpec.getDescription());
       writer.write();

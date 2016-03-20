@@ -34,8 +34,8 @@ import co.cask.cdap.data2.audit.AuditPublisher;
 import co.cask.cdap.data2.audit.AuditPublishers;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
-import co.cask.cdap.data2.metadata.system.AbstractSystemMetadataWriter;
 import co.cask.cdap.data2.metadata.system.StreamSystemMetadataWriter;
+import co.cask.cdap.data2.metadata.system.SystemMetadataWriter;
 import co.cask.cdap.data2.metadata.writer.LineageWriter;
 import co.cask.cdap.data2.registry.UsageRegistry;
 import co.cask.cdap.explore.client.ExploreFacade;
@@ -337,7 +337,7 @@ public class FileStreamAdmin implements StreamAdmin {
         alterExploreStream(streamId, true, config.getFormat());
         streamMetaStore.addStream(streamId);
         publishAudit(streamId, AuditType.CREATE);
-        AbstractSystemMetadataWriter systemMetadataWriter =
+        SystemMetadataWriter systemMetadataWriter =
           new StreamSystemMetadataWriter(metadataStore, streamId, config, createTime, description);
         systemMetadataWriter.write();
         return config;

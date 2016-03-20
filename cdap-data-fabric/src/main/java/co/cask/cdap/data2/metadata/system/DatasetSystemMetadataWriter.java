@@ -60,7 +60,7 @@ public class DatasetSystemMetadataWriter extends AbstractSystemMetadataWriter {
   }
 
   @Override
-  Map<String, String> getSystemPropertiesToAdd() {
+  protected Map<String, String> getSystemPropertiesToAdd() {
     ImmutableMap.Builder<String, String> properties = ImmutableMap.builder();
     Map<String, String> datasetProperties = dsProperties.getProperties();
     if (dsType != null) {
@@ -73,7 +73,7 @@ public class DatasetSystemMetadataWriter extends AbstractSystemMetadataWriter {
   }
 
   @Override
-  String[] getSystemTagsToAdd() {
+  protected String[] getSystemTagsToAdd() {
     List<String> tags = new ArrayList<>();
     tags.add(dsInstance.getId());
     try (SystemDatasetInstantiator dsInstantiator = dsInstantiatorFactory.create();
@@ -92,7 +92,7 @@ public class DatasetSystemMetadataWriter extends AbstractSystemMetadataWriter {
 
   @Nullable
   @Override
-  String getSchemaToAdd() {
+  protected String getSchemaToAdd() {
     Map<String, String> datasetProperties = dsProperties.getProperties();
     String schemaStr = null;
     if (datasetProperties.containsKey(DatasetProperties.SCHEMA)) {

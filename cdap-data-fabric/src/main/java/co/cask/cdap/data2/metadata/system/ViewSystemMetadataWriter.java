@@ -40,13 +40,13 @@ public class ViewSystemMetadataWriter extends AbstractSystemMetadataWriter {
   }
 
   @Override
-  Map<String, String> getSystemPropertiesToAdd() {
+  protected  Map<String, String> getSystemPropertiesToAdd() {
     ImmutableMap.Builder<String, String> properties = ImmutableMap.builder();
     return properties.build();
   }
 
   @Override
-  String[] getSystemTagsToAdd() {
+  protected String[] getSystemTagsToAdd() {
     return new String[] {
       viewId.getId(),
       viewId.getStreamId()
@@ -55,7 +55,7 @@ public class ViewSystemMetadataWriter extends AbstractSystemMetadataWriter {
 
   @Nullable
   @Override
-  String getSchemaToAdd() {
+  protected String getSchemaToAdd() {
     Schema schema = viewSpec.getFormat().getSchema();
     return schema == null ? null : schema.toString();
   }
