@@ -61,7 +61,7 @@ function NavbarController ($scope, $state, myNamespace, EventPipe, MYAUTH_EVENT,
     if ($state.params.namespace === ns.name) { return; }
     if ($state.includes('hydrator.**')) {
       $state.go('hydrator.list', { namespace: ns.name });
-    } else if ($state.includes('tracker.**') || $state.is('tracker-home')) {
+    } else if ($state.includes('tracker.**') || $state.is('tracker-home') || $state.is('tracker-integrations')) {
       $state.go('tracker-home', { namespace: ns.name });
     } else if ($state.includes('dashboard.**')){
       $state.go('dashboard.standard.cdap', { namespace: ns.name });
