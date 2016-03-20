@@ -24,10 +24,9 @@ import javax.annotation.Nullable;
  */
 public final class StreamSpecification {
   private final String name;
-  @Nullable
   private final String description;
 
-  private StreamSpecification(String name, String description) {
+  private StreamSpecification(String name, @Nullable String description) {
     this.name = name;
     this.description = description;
   }
@@ -42,6 +41,7 @@ public final class StreamSpecification {
   /**
    * Returns the description of the Stream.
    */
+  @Nullable
   public String getDescription() {
     return description;
   }
@@ -82,7 +82,7 @@ public final class StreamSpecification {
     if (this == o) {
       return true;
     }
-    if (!(o instanceof StreamSpecification)) {
+    if (o == null || getClass() != o.getClass()) {
       return false;
     }
     StreamSpecification that = (StreamSpecification) o;

@@ -535,7 +535,14 @@ public class FileStreamAdmin implements StreamAdmin {
       builder.setNotificationThreshold(properties.getNotificationThresholdMB());
     }
 
-    writeConfig(builder.build());
+    StreamConfig newConfig = builder.build();
+    writeConfig(newConfig);
+
+    // Update system metadata for stream
+    SystemMetadataWriter systemMetadataWriter =
+      new StreamSystemMetadataWriter(metadataStore, streamId, newConfig, null);
+    systemMetadataWriter.write();
+
     return new StreamProperties(config.getTTL(), config.getFormat(), config.getNotificationThresholdMB());
   }
 

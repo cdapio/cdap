@@ -36,6 +36,7 @@ import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.StreamProperties;
 import co.cask.cdap.proto.ViewSpecification;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.artifact.ArtifactRange;
@@ -610,6 +611,22 @@ public class MetadataHttpHandlerTest extends MetadataTestBase {
           return !"createtime".equals(input.getKey());
         }
       }));
+
+    // Update stream properties and verify metadata got updated
+    long newTtl = 100000L;
+    setStreamProperties(streamId, new StreamProperties(newTtl, null, null));
+    streamSystemProperties = getProperties(streamId, MetadataScope.SYSTEM);
+    Assert.assertEquals(
+      ImmutableMap.of("schema",
+                      Schema.recordOf("stringBody",
+                                      Schema.Field.of("body",
+                                                      Schema.of(Schema.Type.STRING))).toString(),
+                      "ttl", String.valueOf(newTtl * 1000),
+                      "description", "test stream",
+                      "createtime", String.valueOf(createTime)
+      ),
+      streamSystemProperties
+    );
 
     Set<MetadataRecord> streamSystemMetadata = getMetadata(streamId, MetadataScope.SYSTEM);
     Assert.assertEquals(

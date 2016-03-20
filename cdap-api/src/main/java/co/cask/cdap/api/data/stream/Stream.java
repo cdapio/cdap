@@ -16,6 +16,8 @@
 
 package co.cask.cdap.api.data.stream;
 
+import javax.annotation.Nullable;
+
 /**
  *  Streams are the primary means for pushing data from external systems
  *  into CDAP. Each individual event or signal sent to a Stream
@@ -28,11 +30,11 @@ public final class Stream {
   private final String name;
   private final String description;
 
-  public Stream(final String name) {
+  public Stream(String name) {
     this(name, null);
   }
 
-  public Stream(String name, String description) {
+  public Stream(String name, @Nullable String description) {
     this.name = name;
     this.description = description;
   }
@@ -44,6 +46,11 @@ public final class Stream {
   *
   */
   public StreamSpecification configure() {
-    return new StreamSpecification.Builder().setName(name).setDescription(description).create();
+    StreamSpecification.Builder builder = new StreamSpecification.Builder();
+    builder.setName(name);
+    if (description != null) {
+      builder.setDescription(description);
+    }
+    return builder.create();
   }
 }

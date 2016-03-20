@@ -21,6 +21,10 @@ import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.app.program.ManifestFields;
 import co.cask.cdap.app.store.ServiceStore;
+import co.cask.cdap.client.StreamClient;
+import co.cask.cdap.client.StreamViewClient;
+import co.cask.cdap.client.config.ClientConfig;
+import co.cask.cdap.client.config.ConnectionConfig;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.EndpointStrategy;
@@ -31,7 +35,6 @@ import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.data.stream.service.StreamService;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
-import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.internal.app.services.AppFabricServer;
 import co.cask.cdap.internal.guice.AppFabricTestModule;
 import co.cask.cdap.internal.test.AppJarHelper;
@@ -41,6 +44,7 @@ import co.cask.cdap.metrics.query.MetricsQueryService;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.RunRecord;
+import co.cask.cdap.proto.StreamProperties;
 import co.cask.cdap.proto.ViewSpecification;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.artifact.ArtifactRange;
@@ -49,7 +53,6 @@ import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ObjectArrays;
 import com.google.common.io.ByteStreams;
@@ -74,12 +77,11 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.util.EntityUtils;
-import org.apache.twill.api.ClassAcceptor;
+import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.discovery.ServiceDiscovered;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
-import org.apache.twill.internal.utils.Dependencies;
 import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -87,7 +89,6 @@ import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.rules.TemporaryFolder;
 
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
@@ -95,16 +96,12 @@ import java.io.InputStream;
 import java.lang.reflect.Type;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.URL;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
-import java.util.jar.JarEntry;
-import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
-import java.util.zip.ZipEntry;
 import javax.annotation.Nullable;
 import javax.ws.rs.core.MediaType;
 
@@ -148,10 +145,11 @@ public abstract class AppFabricTestBase {
   private static DatasetService datasetService;
   private static TransactionSystemClient txClient;
   private static StreamService streamService;
-  private static StreamAdmin streamAdmin;
   private static ServiceStore serviceStore;
   private static MetadataService metadataService;
   private static LocationFactory locationFactory;
+  private static StreamClient streamClient;
+  private static StreamViewClient streamViewClient;
 
   @ClassRule
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
@@ -189,10 +187,11 @@ public abstract class AppFabricTestBase {
     streamService.startAndWait();
     serviceStore = injector.getInstance(ServiceStore.class);
     serviceStore.startAndWait();
-    streamAdmin = injector.getInstance(StreamAdmin.class);
     metadataService = injector.getInstance(MetadataService.class);
     metadataService.startAndWait();
     locationFactory = getInjector().getInstance(LocationFactory.class);
+    streamClient = createStreamClient();
+    streamViewClient = createStreamViewClient();
     createNamespaces();
   }
 
@@ -728,12 +727,12 @@ public abstract class AppFabricTestBase {
     return dsOpService.exists(datasetID);
   }
 
-  protected boolean streamExists(Id.Stream streamID) throws Exception {
-    return streamAdmin.exists(streamID);
+  protected boolean createOrUpdateView(Id.Stream.View viewId, ViewSpecification spec) throws Exception {
+    return streamViewClient.createOrUpdate(viewId, spec);
   }
 
-  protected boolean createOrUpdateView(Id.Stream.View viewId, ViewSpecification spec) throws Exception {
-    return streamAdmin.createOrUpdateView(viewId, spec);
+  protected void setStreamProperties(Id.Stream stream, StreamProperties props) throws Exception {
+    streamClient.setStreamProperties(stream, props);
   }
 
   protected HttpResponse createNamespace(String id) throws Exception {
@@ -778,5 +777,31 @@ public abstract class AppFabricTestBase {
     File destination = new File(tmpFolder.newFolder(), name);
     Files.copy(Locations.newInputSupplier(appJar), destination);
     return destination;
+  }
+
+  private static StreamClient createStreamClient() {
+    DiscoveryServiceClient discoveryClient = getInjector().getInstance(DiscoveryServiceClient.class);
+    EndpointStrategy endpointStrategy =
+      new RandomEndpointStrategy(discoveryClient.discover(Constants.Service.STREAMS));
+    Discoverable discoverable = endpointStrategy.pick(1, TimeUnit.SECONDS);
+    Assert.assertNotNull(discoverable);
+    String host = "127.0.0.1";
+    int port = discoverable.getSocketAddress().getPort();
+    ConnectionConfig connectionConfig = ConnectionConfig.builder().setHostname(host).setPort(port).build();
+    ClientConfig clientConfig = ClientConfig.builder().setConnectionConfig(connectionConfig).build();
+    return new StreamClient(clientConfig);
+  }
+
+  private static StreamViewClient createStreamViewClient() {
+    DiscoveryServiceClient discoveryClient = getInjector().getInstance(DiscoveryServiceClient.class);
+    EndpointStrategy endpointStrategy =
+      new RandomEndpointStrategy(discoveryClient.discover(Constants.Service.STREAMS));
+    Discoverable discoverable = endpointStrategy.pick(1, TimeUnit.SECONDS);
+    Assert.assertNotNull(discoverable);
+    String host = "127.0.0.1";
+    int port = discoverable.getSocketAddress().getPort();
+    ConnectionConfig connectionConfig = ConnectionConfig.builder().setHostname(host).setPort(port).build();
+    ClientConfig clientConfig = ClientConfig.builder().setConnectionConfig(connectionConfig).build();
+    return new StreamViewClient(clientConfig);
   }
 }
