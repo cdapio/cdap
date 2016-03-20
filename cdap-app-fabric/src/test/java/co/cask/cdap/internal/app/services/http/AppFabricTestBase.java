@@ -21,6 +21,7 @@ import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.app.program.ManifestFields;
 import co.cask.cdap.app.store.ServiceStore;
+import co.cask.cdap.client.DatasetClient;
 import co.cask.cdap.client.StreamClient;
 import co.cask.cdap.client.StreamViewClient;
 import co.cask.cdap.client.config.ClientConfig;
@@ -150,6 +151,7 @@ public abstract class AppFabricTestBase {
   private static LocationFactory locationFactory;
   private static StreamClient streamClient;
   private static StreamViewClient streamViewClient;
+  private static DatasetClient datasetClient;
 
   @ClassRule
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
@@ -192,6 +194,7 @@ public abstract class AppFabricTestBase {
     locationFactory = getInjector().getInstance(LocationFactory.class);
     streamClient = createStreamClient();
     streamViewClient = createStreamViewClient();
+    datasetClient = createDatasetClient();
     createNamespaces();
   }
 
@@ -723,16 +726,24 @@ public abstract class AppFabricTestBase {
     return GSON.fromJson(json, LIST_RUNRECORD_TYPE);
   }
 
-  protected boolean datasetExists(Id.DatasetInstance datasetID) throws Exception {
-    return dsOpService.exists(datasetID);
-  }
-
   protected boolean createOrUpdateView(Id.Stream.View viewId, ViewSpecification spec) throws Exception {
     return streamViewClient.createOrUpdate(viewId, spec);
   }
 
+  protected void deleteStream(Id.Stream stream) throws Exception {
+    streamClient.delete(stream);
+  }
+
+  protected void deleteView(Id.Stream.View view) throws Exception {
+    streamViewClient.delete(view);
+  }
+
   protected void setStreamProperties(Id.Stream stream, StreamProperties props) throws Exception {
     streamClient.setStreamProperties(stream, props);
+  }
+
+  protected void deleteDataset(Id.DatasetInstance datasetInstance) throws Exception {
+    datasetClient.delete(datasetInstance);
   }
 
   protected HttpResponse createNamespace(String id) throws Exception {
@@ -803,5 +814,18 @@ public abstract class AppFabricTestBase {
     ConnectionConfig connectionConfig = ConnectionConfig.builder().setHostname(host).setPort(port).build();
     ClientConfig clientConfig = ClientConfig.builder().setConnectionConfig(connectionConfig).build();
     return new StreamViewClient(clientConfig);
+  }
+
+  private static DatasetClient createDatasetClient() {
+    DiscoveryServiceClient discoveryClient = getInjector().getInstance(DiscoveryServiceClient.class);
+    EndpointStrategy endpointStrategy =
+      new RandomEndpointStrategy(discoveryClient.discover(Constants.Service.DATASET_MANAGER));
+    Discoverable discoverable = endpointStrategy.pick(1, TimeUnit.SECONDS);
+    Assert.assertNotNull(discoverable);
+    String host = "127.0.0.1";
+    int port = discoverable.getSocketAddress().getPort();
+    ConnectionConfig connectionConfig = ConnectionConfig.builder().setHostname(host).setPort(port).build();
+    ClientConfig clientConfig = ClientConfig.builder().setConnectionConfig(connectionConfig).build();
+    return new DatasetClient(clientConfig);
   }
 }
