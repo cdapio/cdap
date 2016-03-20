@@ -18,10 +18,16 @@ package co.cask.cdap.cli.commandset;
 
 import co.cask.cdap.cli.Categorized;
 import co.cask.cdap.cli.CommandCategory;
-import co.cask.cdap.cli.command.CreateStreamCommand;
+import co.cask.cdap.cli.command.security.AddRoleToPrincipalCommand;
 import co.cask.cdap.cli.command.security.CheckActionCommand;
+import co.cask.cdap.cli.command.security.CreateRoleCommand;
+import co.cask.cdap.cli.command.security.DropRoleCommand;
 import co.cask.cdap.cli.command.security.GrantActionCommand;
-import co.cask.cdap.cli.command.security.RevokeActionCommand;
+import co.cask.cdap.cli.command.security.ListPrivilegesCommand;
+import co.cask.cdap.cli.command.security.ListRolesCommand;
+import co.cask.cdap.cli.command.security.RemoveRoleFromPrincipalCommand;
+import co.cask.cdap.cli.command.security.RevokeActionForPrincipalCommand;
+import co.cask.cdap.cli.command.security.RevokeEntityCommand;
 import co.cask.common.cli.Command;
 import co.cask.common.cli.CommandSet;
 import com.google.common.collect.ImmutableList;
@@ -39,7 +45,15 @@ public class SecurityCommands extends CommandSet<Command> implements Categorized
       ImmutableList.<Command>builder()
         .add(injector.getInstance(CheckActionCommand.class))
         .add(injector.getInstance(GrantActionCommand.class))
-        .add(injector.getInstance(RevokeActionCommand.class))
+        .add(injector.getInstance(RevokeActionForPrincipalCommand.class))
+        .add(injector.getInstance(RevokeEntityCommand.class))
+        .add(injector.getInstance(ListPrivilegesCommand.class))
+        //role management commands
+        .add(injector.getInstance(CreateRoleCommand.class))
+        .add(injector.getInstance(DropRoleCommand.class))
+        .add(injector.getInstance(ListRolesCommand.class))
+        .add(injector.getInstance(AddRoleToPrincipalCommand.class))
+        .add(injector.getInstance(RemoveRoleFromPrincipalCommand.class))
         .build());
   }
 

@@ -44,6 +44,10 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.WorkflowTokenDetail;
+import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.security.Action;
+import co.cask.cdap.proto.security.Principal;
+import co.cask.cdap.proto.security.Role;
 import co.cask.cdap.test.XSlowTests;
 import co.cask.common.cli.CLI;
 import com.google.common.base.Charsets;
@@ -426,12 +430,11 @@ public class CLIMainTest {
     testCommandOutputContains(cli, "load preferences instance " + file.getAbsolutePath() + " json", "invalid");
     testCommandOutputContains(cli, "load preferences instance " + file.getAbsolutePath() + " xml", "Unsupported");
 
-    testCommandOutputContains(cli, "set preferences namespace 'k1=v1'",
-            "successfully");
+    testCommandOutputContains(cli, "set preferences namespace 'k1=v1'", "successfully");
     testCommandOutputContains(cli, "set preferences namespace 'k1=v1' name",
-            "Error: Expected format: set preferences namespace <runtime-args>");
+                              "Error: Expected format: set preferences namespace <runtime-args>");
     testCommandOutputContains(cli, "set preferences instance 'k1=v1' name",
-            "Error: Expected format: set preferences instance <runtime-args>");
+                              "Error: Expected format: set preferences instance <runtime-args>");
 
   }
 
@@ -505,7 +508,7 @@ public class CLIMainTest {
     assertProgramStatus(programClient, fakeWorkflowId, "STOPPED");
     testCommandOutputContains(cli, "cli render as csv", "Now rendering as CSV");
     String commandOutput = getCommandOutput(cli, "get workflow runs " + workflow);
-    String [] lines = commandOutput.split("\\r?\\n");
+    String[] lines = commandOutput.split("\\r?\\n");
     Assert.assertEquals(2, lines.length);
     String[] split = lines[1].split(",");
     String runId = split[0];
@@ -608,6 +611,73 @@ public class CLIMainTest {
                                 prefixedEchoHandlerId.toString());
     Assert.assertTrue(lines.containsAll(expected) && expected.containsAll(lines));
   }
+
+  @Test
+  public void testAuthorizer() throws Exception {
+    Role role = new Role("admins");
+    Principal principal = new Principal("spiderman", Principal.PrincipalType.USER);
+    NamespaceId namespaceId = new NamespaceId("ns1");
+
+    // test creating role
+    testCommandOutputContains(cli, "create role " + role.getName(), String.format("Successfully created role '%s'",
+                                                                                  role.getName()));
+
+    // test add role to principal
+    testCommandOutputContains(cli, String.format("add role %s to %s %s", role.getName(), principal.getType(),
+                                                 principal.getName()),
+                              String.format("Successfully added role '%s' to '%s' '%s'", role.getName(),
+                                            principal.getType(), principal.getName()));
+
+    // test listing all roles
+    String output = getCommandOutput(cli, "list roles");
+    List<String> lines = Arrays.asList(output.split("\\r?\\n"));
+    Assert.assertEquals(2, lines.size());
+    Assert.assertEquals(role.getName(), lines.get(1)); // 0 is just the table headers
+
+    // test listing roles for a principal
+    output = getCommandOutput(cli, String.format("list roles for %s %s", principal.getType(), principal.getName()));
+    lines = Arrays.asList(output.split("\\r?\\n"));
+    Assert.assertEquals(2, lines.size());
+    Assert.assertEquals(role.getName(), lines.get(1));
+
+    // test grant action
+    testCommandOutputContains(cli, String.format("grant actions %s on entity %s to %s %s", Action.READ,
+                                                 namespaceId.toString(), principal.getType(), principal.getName()),
+                              String.format("Successfully granted action(s) '%s' on entity '%s' to principal '%s' '%s'",
+                                            Action.READ, namespaceId.toString(), principal.getType(),
+                                            principal.getName()));
+
+    // test listing privilege
+    output = getCommandOutput(cli, String.format("list privileges for %s %s", principal.getType(),
+                                                 principal.getName()));
+    lines = Arrays.asList(output.split("\\r?\\n"));
+    Assert.assertEquals(2, lines.size());
+    Assert.assertArrayEquals(new String[]{namespaceId.toString(), Action.READ.name()}, lines.get(1).split(","));
+
+
+    // test revoke actions
+    testCommandOutputContains(cli, String.format("revoke actions %s on entity %s from %s %s", Action.READ,
+                                                 namespaceId.toString(), principal.getType(), principal.getName()),
+                              String.format("Successfully revoked action(s) '%s' on entity '%s' for '%s' '%s'",
+                                            Action.READ, namespaceId.toString(), principal.getType(),
+                                            principal.getName()));
+
+    // grant and perform revoke on the entity
+    output = getCommandOutput(cli, String.format("grant actions %s on entity %s to %s %s", Action.READ,
+                                                 namespaceId.toString(), principal.getType(), principal.getName()));
+
+    testCommandOutputContains(cli, String.format("revoke all on entity %s ", namespaceId.toString()),
+                              String.format("Successfully revoked all actions on entity '%s' for all principals",
+                                            namespaceId.toString()));
+
+
+    // test remove role from principal
+    testCommandOutputContains(cli, String.format("remove role %s from %s %s", role.getName(), principal.getType(),
+                                                 principal.getName()),
+                              String.format("Successfully removed role '%s' from '%s' '%s'", role.getName(),
+                                            principal.getType(), principal.getName()));
+  }
+
 
   private static File createAppJarFile(Class<?> cls) throws IOException {
     File tmpFolder = TMP_FOLDER.newFolder();

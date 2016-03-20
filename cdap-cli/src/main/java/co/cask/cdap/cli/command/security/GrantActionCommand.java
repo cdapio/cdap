@@ -54,15 +54,14 @@ public class GrantActionCommand extends AbstractAuthCommand {
     Set<Action> actions = fromStrings(Splitter.on(",").split(arguments.get("actions")));
 
     client.grant(entity, principal, actions);
-    output.printf("Successfully granted action(s) '%s' on entity '%s' for principal '%s'\n",
-                  Joiner.on(",").join(actions), entity.toString(), principal);
+    output.printf("Successfully granted action(s) '%s' on entity '%s' to principal '%s' '%s'\n",
+                  Joiner.on(",").join(actions), entity.toString(), principal.getType(), principal.getName());
   }
 
   @Override
   public String getPattern() {
-    return String.format("security grant entity <%s> %s <%s> %s <%s> actions <actions>",
-                         ArgumentName.ENTITY, ArgumentName.PRINCIPAL_TYPE, ArgumentName.PRINCIPAL_TYPE,
-                         ArgumentName.PRINCIPAL_NAME, ArgumentName.PRINCIPAL_NAME);
+    return String.format("grant actions <actions> on entity <%s> to <%s> <%s>", ArgumentName.ENTITY,
+                         ArgumentName.PRINCIPAL_TYPE, ArgumentName.PRINCIPAL_NAME);
   }
 
   @Override

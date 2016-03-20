@@ -112,7 +112,8 @@ public enum ArgumentName {
    * Authorization
    */
   PRINCIPAL_TYPE("principal-type"),
-  PRINCIPAL_NAME("principal-name");
+  PRINCIPAL_NAME("principal-name"),
+  ROLE_NAME("role-name");
 
   private final String name;
 

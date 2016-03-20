@@ -48,6 +48,7 @@ import org.junit.Test;
 import java.io.IOException;
 import java.net.UnknownHostException;
 import java.util.HashSet;
+import java.util.Properties;
 import java.util.Set;
 
 /**
@@ -57,13 +58,14 @@ public class AuthorizationHandlerTest {
 
   private NettyHttpService service;
   private AuthorizationClient client;
+  private static final Properties properties = new Properties();
 
   @Before
   public void setUp() throws UnknownHostException {
     CConfiguration conf = CConfiguration.create();
     conf.setBoolean(Constants.Security.Authorization.ENABLED, true);
 
-    final InMemoryAuthorizer auth = new InMemoryAuthorizer();
+    final InMemoryAuthorizer auth = new InMemoryAuthorizer(properties);
     service = new CommonNettyHttpServiceBuilder(conf)
       .addHttpHandlers(ImmutableList.of(new AuthorizationHandler(new AuthorizerInstantiatorService(conf) {
         @Override
@@ -99,7 +101,7 @@ public class AuthorizationHandlerTest {
       .addHttpHandlers(ImmutableList.of(new AuthorizationHandler(new AuthorizerInstantiatorService(conf) {
         @Override
         public Authorizer get() throws IOException, InvalidAuthorizerException {
-          return new InMemoryAuthorizer();
+          return new InMemoryAuthorizer(properties);
         }
       }, conf)))
       .build();
