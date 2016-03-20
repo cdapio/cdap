@@ -22,23 +22,19 @@ class PluginTemplateStoreBeta {
 
     let dispatcher = PluginTemplateDispatcherBeta.getDispatcher();
     dispatcher.register('onInit', this.initStore.bind(this));
-    dispatcher.register('onSaveTriggered', this.setIsSaveTriggered.bind(this, true, true));
-    dispatcher.register('onSaveTriggerCancel', this.setIsSaveTriggered.bind(this, false, false));
     dispatcher.register('onSaveSuccessfull', this.setIsSaveSuccessfull.bind(this));
-    dispatcher.register('onSaveFailure', this.setIsSaveFailure.bind(this));
+    dispatcher.register('onCloseCommand', this.setIsCloseCommand.bind(this));
     dispatcher.register('onReset', this.setDefaults.bind(this));
   }
 
   setDefaults() {
     console.log('Templates Store reset');
     this.state = {
-      isSaveTriggered: false,
       templateType: null,
       pluginType: null,
       pluginName: null,
       mode: null,
-      isSaveSuccessful: null,
-      isSaveFailure: null
+      isSaveSuccessful: null
     };
     this.changeListeners = [];
   }
@@ -60,26 +56,16 @@ class PluginTemplateStoreBeta {
   setTemplateName(pluginName) { this.state.templateName = pluginName; }
   getMode() {return this.state.mode;}
   setMode(mode) {this.state.mode = mode;}
-  getIsSaveTriggered() {return this.state.isSaveTriggered;}
-  setIsSaveTriggered(trigger, emitChange) {
-    this.state.isSaveTriggered = trigger;
-    if(emitChange){
-      this.emitChange();
-    }
-  }
   getIsSaveSuccessfull() {return this.state.isSaveSuccessful;}
   setIsSaveSuccessfull() {
-    this.state.isSaveTriggered = false;
     this.state.isSaveSuccessful = true;
     this.emitChange();
   }
-  getIsSaveFailure() {return this.state.isSaveFailure;}
-  setIsSaveFailure(err) {
-    this.state.isSaveTriggered = false;
-    this.state.isSaveFailure = err;
+  getIsCloseCommand() { return this.state.isCloseCommand;}
+  setIsCloseCommand(isCloseCommand) {
+    this.state.isCloseCommand = isCloseCommand;
     this.emitChange();
   }
-
   registerOnChangeListener(callback) {
     this.changeListeners.push(callback);
   }

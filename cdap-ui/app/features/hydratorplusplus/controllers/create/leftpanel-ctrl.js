@@ -15,9 +15,8 @@
  */
 
 class HydratorPlusPlusLeftPanelCtrl {
-  constructor($scope, $stateParams, rVersion, GLOBALS, HydratorPlusPlusLeftPanelStore, HydratorPlusPlusPluginActions, HydratorPlusPlusConfigStore, HydratorPlusPlusConfigActions, DAGPlusPlusFactory, DAGPlusPlusNodesActionsFactory, NonStorePipelineErrorFactory, HydratorPlusPlusHydratorService, $rootScope, $uibModal, myAlertOnValium, $state, $q, rArtifacts, $timeout, PluginTemplateActionBeta) {
+  constructor($scope, $stateParams, rVersion, GLOBALS, HydratorPlusPlusLeftPanelStore, HydratorPlusPlusPluginActions, HydratorPlusPlusConfigStore, HydratorPlusPlusConfigActions, DAGPlusPlusFactory, DAGPlusPlusNodesActionsFactory, NonStorePipelineErrorFactory, $uibModal, myAlertOnValium, $state, $q, rArtifacts, $timeout, PluginTemplateActionBeta) {
     this.$state = $state;
-    this.$rootScope = $rootScope;
     this.$scope = $scope;
     this.$stateParams = $stateParams;
     this.HydratorPlusPlusLeftPanelStore = HydratorPlusPlusLeftPanelStore;
@@ -28,7 +27,6 @@ class HydratorPlusPlusLeftPanelCtrl {
     this.DAGPlusPlusFactory = DAGPlusPlusFactory;
     this.DAGPlusPlusNodesActionsFactory = DAGPlusPlusNodesActionsFactory;
     this.NonStorePipelineErrorFactory = NonStorePipelineErrorFactory;
-    this.HydratorPlusPlusHydratorService = HydratorPlusPlusHydratorService;
     this.PluginTemplateActionBeta = PluginTemplateActionBeta;
     this.rVersion = rVersion;
     this.$timeout = $timeout;

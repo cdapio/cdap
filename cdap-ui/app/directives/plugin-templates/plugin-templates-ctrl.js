@@ -45,25 +45,16 @@ angular.module(`${PKG.name}.commons`)
 
     var plugin;
 
-    vm.resetErrors = function() {
-      vm.pluginTypeError = null;
-      vm.pluingTemplateTypeError = null;
-      vm.pluginNameError = null;
-      vm.pluginTemplateNameError = null;
-      vm.pluginVersionError = null;
-      vm.pluginTemplateNameError = null;
-    };
-
     vm.onPipelineTypeChange = function () {
+      vm.submitted = false;
       vm.pluginList = [];
       vm.pluginVersions = [];
       vm.pluginType = null;
       vm.pluginTypeOptions = vm.templateType === vm.GLOBALS.etlBatch ? batchOptions : realtimeOptions;
-      vm.resetErrors();
     };
 
     vm.getPluginsList = function () {
-      vm.resetErrors();
+      vm.submitted = false;
       vm.pluginName = null;
       vm.pluginVersions = [];
       plugin = null;
@@ -96,7 +87,7 @@ angular.module(`${PKG.name}.commons`)
     };
 
     vm.onPluginSelect = function () {
-      vm.resetErrors();
+      vm.submitted = false;
       initialize();
     };
 
@@ -144,7 +135,7 @@ angular.module(`${PKG.name}.commons`)
 
 
     vm.onPluginVersionSelect = function () {
-      vm.resetErrors();
+      vm.submitted = false;
       if (!vm.plugin) { return; }
 
       if (!vm.pluginConfig) {
@@ -206,13 +197,11 @@ angular.module(`${PKG.name}.commons`)
 
     PluginTemplateStoreBeta.registerOnChangeListener(() => {
       let mode = PluginTemplateStoreBeta.getMode();
-      let isSaveTriggered = PluginTemplateStoreBeta.getIsSaveTriggered();
-      console.log('Called for :', mode);
-      if (isSaveTriggered) {
-        vm.save();
+      let isCloseCommand = PluginTemplateStoreBeta.getIsCloseCommand();
+      let isSaveSuccessfull = PluginTemplateStoreBeta.getIsSaveSuccessfull();
+      if (isCloseCommand || isSaveSuccessfull) {
         return;
       }
-
       if (mode === 'edit') {
         vm.templateType = PluginTemplateStoreBeta.getTemplateType();
         vm.pluginType = PluginTemplateStoreBeta.getPluginType();
@@ -257,47 +246,18 @@ angular.module(`${PKG.name}.commons`)
       }
     });
 
+    vm.cancel = function() {
+      PluginTemplateActionBeta.templateClose(true);
+    };
 
-    vm.save = function () {
-      let validateForm = () => {
-        let isValid = true;
-        if (!vm.pluginType) {
-          vm.pluginTypeError = GLOBALS.en.admin.pluginTypeMissingError;
-          isValid = false;
-          PluginTemplateActionBeta.cancelTriggerSave();
-        }
-        if (!vm.templateType) {
-          vm.pluingTemplateTypeError = GLOBALS.en.admin.templateTypeMissingError;
-          isValid = false;
-          PluginTemplateActionBeta.cancelTriggerSave();
-        }
-        if (!vm.pluginName) {
-          vm.pluginNameError = GLOBALS.en.admin.pluginMissingError;
-          isValid = false;
-          PluginTemplateActionBeta.cancelTriggerSave();
-        }
-
-        if (!vm.pluginConfig || !vm.pluginConfig.pluginTemplate) {
-          vm.pluginTemplateNameError = GLOBALS.en.admin.templateNameMissingError;
-          isValid = false;
-          PluginTemplateActionBeta.cancelTriggerSave();
-        }
-        if (!myHelpers.objectQuery(vm.plugin, 'artifact', 'version')) {
-          vm.pluginVersionError = GLOBALS.en.admin.pluginVersionMissingError;
-          isValid = false;
-          PluginTemplateActionBeta.cancelTriggerSave();
-        }
-        return isValid;
-      };
-
-      if (!validateForm()) {
+    vm.save = function (isValid) {
+      if (!isValid) {
         return;
       }
 
       var list = vm.pluginList.map(function (p) { return p.name; });
       if (list.indexOf(vm.pluginConfig.pluginTemplate) !== -1) {
         vm.pluginTemplateNameError = GLOBALS.en.admin.pluginSameNameError;
-        PluginTemplateActionBeta.cancelTriggerSave();
         return;
       }
 
@@ -335,7 +295,6 @@ angular.module(`${PKG.name}.commons`)
           if (config && !vm.isEdit) {
             vm.pluginTemplateNameError = GLOBALS.en.admin.templateNameExistsError;
             vm.loading = false;
-            PluginTemplateActionBeta.cancelTriggerSave();
             return;
           }
 
@@ -343,7 +302,6 @@ angular.module(`${PKG.name}.commons`)
             if (config) {
               vm.pluginTemplateNameError = GLOBALS.en.admin.templateNameExistsError;
               vm.loading = false;
-              PluginTemplateActionBeta.cancelTriggerSave();
               return;
             } else {
               delete res[namespace][properties.templateType][properties.pluginType][oldTemplateName];

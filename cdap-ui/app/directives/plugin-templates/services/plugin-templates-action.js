@@ -38,6 +38,9 @@ class PluginTemplateActionBeta {
   templateSavedSuccesfully() {
     this.PluginTemplateDispatcherBeta.dispatch('onSaveSuccessfull');
   }
+  templateClose(isCloseCommand) {
+    this.PluginTemplateDispatcherBeta.dispatch('onCloseCommand', isCloseCommand);
+  }
 
   templateSaveFailed(err) {
     this.PluginTemplateDispatcherBeta.dispatch('onSaveFailure', err);
