@@ -16,7 +16,7 @@
 <div class="row">
   <div class="col-xs-12">
     <h3 ng-if="!PluginTemplatesCtrl.isEdit">
-      <strong>Create {{PluginTemplatesCtrl.templateType}} Template</strong>
+      <strong>Create {{PluginTemplatesCtrl.pluginType}} plugin template</strong>
     </h3>
     <h3 ng-if="PluginTemplatesCtrl.isEdit">
       <strong>Edit {{PluginTemplatesCtrl.pluginConfig.pluginTemplate}} Template</strong>
@@ -26,38 +26,6 @@
 
 
 <div>
-  <label class="label-control">
-    <span>Choose Template</span>
-    <span class="fa fa-asterisk text-danger"></span>
-    <span class="text-danger"> {{PluginTemplatesCtrl.templateTypeError}}</span>
-  </label>
-  <div class="select-wrapper">
-    <select ng-model="PluginTemplatesCtrl.templateType"
-            data-ng-options="o for o in PluginTemplatesCtrl.pipelineTypeOptions"
-            ng-change="PluginTemplatesCtrl.onPipelineTypeChange()"
-            ng-if="!PluginTemplatesCtrl.prefill.templateType"
-            class="form-control">
-    </select>
-    <input class="form-control" ng-model="PluginTemplatesCtrl.templateType" ng-if="PluginTemplatesCtrl.prefill.templateType" disabled/>
-  </div>
-
-  <div ng-if="PluginTemplatesCtrl.templateType">
-    <label class="label-control">
-      <span>Choose Plugin Type</span>
-      <span class="fa fa-asterisk text-danger"></span>
-      <span class="text-danger"> {{PluginTemplatesCtrl.pluginTypeError}}</span>
-    </label>
-    <div class="select-wrapper">
-      <select ng-model="PluginTemplatesCtrl.pluginType"
-              data-ng-options="o for o in PluginTemplatesCtrl.pluginTypeOptions"
-              ng-change="PluginTemplatesCtrl.getPluginsList()"
-              ng-if="!PluginTemplatesCtrl.prefill.pluginType"
-              class="form-control">
-      </select>
-      <input class="form-control" ng-model="PluginTemplatesCtrl.pluginType" ng-if="PluginTemplatesCtrl.prefill.pluginType" disabled/>
-    </div>
-  </div>
-
   <div ng-if="PluginTemplatesCtrl.pluginType">
     <label class="label-control">
       <span>Choose Plugin</span>
