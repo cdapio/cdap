@@ -141,7 +141,7 @@ class TrackerIntegrationsController {
     if (this.navigatorSetup.isEnabled) {
       let modal = this.$uibModal.open({
         templateUrl: '/assets/features/tracker/templates/partial/navigator-confirm-modal.html',
-        size: 'sm',
+        size: 'md',
         windowClass: 'navigator-confirm-modal'
       });
 
