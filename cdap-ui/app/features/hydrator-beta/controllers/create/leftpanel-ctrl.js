@@ -201,24 +201,10 @@ class LeftPanelControllerBeta {
         backdrop: 'static',
         keyboard: false,
         windowTopClass: 'plugin-template-delete-confirm-modal',
-        controller: ['$scope', 'mySettings', '$stateParams', 'myAlertOnValium', 'PluginActionsFactoryBeta', function($scope, mySettings, $stateParams, myAlertOnValium, PluginActionsFactoryBeta) {
-          $scope.templateName = node.pluginTemplate;
-          $scope.ok = () => {
-            mySettings.get('pluginTemplates', true)
-              .then( (res) => {
-                delete res[$stateParams.namespace][node.templateType][node.pluginType][node.pluginTemplate];
-                return mySettings.set('pluginTemplates', res);
-              })
-              .then( () => {
-                myAlertOnValium.show({
-                  type: 'success',
-                  content: 'Successfully deleted template ' + node.pluginTemplate
-                });
-                PluginActionsFactoryBeta.fetchTemplates({namespace: $stateParams.namespace});
-              });
-            $scope.$close();
-          };
-        }]
+        controller: 'PluginTemplatesDeleteCtrl',
+        resolve: {
+          rNode: () => node
+        }
       });
   }
 
@@ -230,24 +216,7 @@ class LeftPanelControllerBeta {
         backdrop: 'static',
         keyboard: false,
         windowTopClass: 'plugin-templates-modal',
-        controller: ['$scope', 'PluginTemplateStoreBeta', 'PluginTemplateActionBeta', 'PluginActionsFactoryBeta', ($scope, PluginTemplateStoreBeta, PluginTemplateActionBeta, PluginActionsFactoryBeta) => {
-          $scope.closeTemplateCreationModal = ()=> {
-            PluginTemplateActionBeta.reset();
-            $scope.$close();
-          };
-          $scope.saveAndClose = () => {
-            PluginTemplateActionBeta.triggerSave();
-          };
-          $scope.pluginTemplateSaveError = null;
-          PluginTemplateStoreBeta.registerOnChangeListener(() => {
-            let getIsSaveSuccessfull = PluginTemplateStoreBeta.getIsSaveSuccessfull();
-            if (getIsSaveSuccessfull) {
-              PluginTemplateActionBeta.reset();
-              PluginActionsFactoryBeta.fetchTemplates({namespace: this.$stateParams.namespace});
-              $scope.$close();
-            }
-          });
-        }],
+        controller: 'PluginTemplatesCreateEditCtrl'
       })
       .rendered
       .then(() => {
