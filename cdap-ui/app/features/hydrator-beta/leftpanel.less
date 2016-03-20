@@ -231,10 +231,14 @@ body.theme-cdap.state-hydrator-beta-create {
         width: 48%;
         .border-radius(4px);
         .transition(all 0.2s ease);
-        &:hover, &:focus {
+        &.add-plugin-template:hover, &.add-plugin-template:focus, &:hover, &:focus {
           background-color: fade(black, 45%);
           border: 1px dashed #999;
           color: white;
+        }
+        &.add-plugin-template {
+          background: transparent;
+          border: dashed 1px;
         }
         > .fa {
           font-size: 12px;

@@ -35,7 +35,7 @@
            ng-show="MySidePanel.openedGroup === null || MySidePanel.openedGroup === group.name">
         <div class="item-body">
           <div ng-repeat="plugin in group.filtered = (group.plugins | filter: {name: MySidePanel.searchText}) track by $index"
-               class="plugin-item"
+               class="plugin-item {{plugin.nodeClass}}"
                my-popover
                data-placement="right"
                data-template="plugin.template"
