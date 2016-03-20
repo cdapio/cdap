@@ -749,10 +749,15 @@ body.state-tracker-integrations {
       .btn {
         margin-right: 10px;
         font-weight: 500;
-        background-color: white;
+        background-color: @tracker-green;
+        color: white;
+
+        &:hover, &:focus {
+          background-color: darken(@tracker-green, 10%);
+        }
 
         .fa {
-          margin-left: 15px;
+          margin-left: 10px;
         }
       }
 
