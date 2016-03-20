@@ -107,9 +107,17 @@ public class ETLConfig extends Config implements UpgradeableConfig {
         return null;
       }
     };
+    if (source == null) {
+      throw new IllegalArgumentException("Pipeline does not contain a source.");
+    }
     builder.addStage(source.upgradeStage(sourceType, dummyUpgradeContext));
-    for (co.cask.cdap.etl.proto.v1.ETLStage v1Stage : transforms) {
-      builder.addStage(v1Stage.upgradeStage(Transform.PLUGIN_TYPE, dummyUpgradeContext));
+    if (transforms != null) {
+      for (co.cask.cdap.etl.proto.v1.ETLStage v1Stage : transforms) {
+        builder.addStage(v1Stage.upgradeStage(Transform.PLUGIN_TYPE, dummyUpgradeContext));
+      }
+    }
+    if (sinks == null || sinks.isEmpty()) {
+      throw new IllegalArgumentException("Pipeline does not contain any sinks.");
     }
     for (co.cask.cdap.etl.proto.v1.ETLStage v1Stage : sinks) {
       builder.addStage(v1Stage.upgradeStage(sinkType, dummyUpgradeContext));
