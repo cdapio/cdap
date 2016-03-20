@@ -51,7 +51,7 @@ that uses a real-time flow to fetch the CDAP Metadata and write it to Cloudera N
 
 
 .. |cloudera-install| replace:: **Configuring and Installing:**
-.. _cloudera-install: /../admin-manual/installation/cloudera.html
+.. _cloudera-install: ../../../admin-manual/installation/cloudera.html
 
 - |cloudera-install|_ Configuring and installing CDAP using **Cloudera Manager** *(Administration Manual)*
 

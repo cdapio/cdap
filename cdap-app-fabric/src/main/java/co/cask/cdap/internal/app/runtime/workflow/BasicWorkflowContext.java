@@ -45,14 +45,13 @@ final class BasicWorkflowContext extends AbstractContext implements WorkflowCont
 
   private final WorkflowSpecification workflowSpec;
   private final WorkflowActionSpecification specification;
-  private final long logicalStartTime;
   private final ProgramWorkflowRunner programWorkflowRunner;
   private final Map<String, String> runtimeArgs;
   private final WorkflowToken token;
   private final Metrics userMetrics;
 
   BasicWorkflowContext(WorkflowSpecification workflowSpec, @Nullable WorkflowActionSpecification spec,
-                       long logicalStartTime, @Nullable ProgramWorkflowRunner programWorkflowRunner,
+                       @Nullable ProgramWorkflowRunner programWorkflowRunner,
                        Arguments arguments, WorkflowToken token, Program program, RunId runId,
                        MetricsCollectionService metricsCollectionService,
                        DatasetFramework datasetFramework, TransactionSystemClient txClient,
@@ -63,7 +62,6 @@ final class BasicWorkflowContext extends AbstractContext implements WorkflowCont
           datasetFramework, txClient, discoveryServiceClient, false);
     this.workflowSpec = workflowSpec;
     this.specification = spec;
-    this.logicalStartTime = logicalStartTime;
     this.programWorkflowRunner = programWorkflowRunner;
     this.runtimeArgs = ImmutableMap.copyOf(arguments.asMap());
     this.token = token;
@@ -96,11 +94,6 @@ final class BasicWorkflowContext extends AbstractContext implements WorkflowCont
       throw new UnsupportedOperationException("Operation not allowed.");
     }
     return specification;
-  }
-
-  @Override
-  public long getLogicalStartTime() {
-    return logicalStartTime;
   }
 
   @Override

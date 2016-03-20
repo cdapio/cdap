@@ -36,6 +36,7 @@ import com.google.inject.multibindings.MapBinder;
 import com.google.inject.name.Names;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.Test;
 
 /**
  * Tests for {@link DatasetBasedAuthorizer}.
@@ -80,5 +81,12 @@ public class DatasetBasedAuthorizerTest extends AuthorizerTest {
   @Override
   protected Authorizer get() {
     return datasetAuthorizer;
+  }
+
+  @Override
+  @Test(expected = UnsupportedOperationException.class)
+  public void testRBAC() throws Exception {
+    // DatasetBasedAuthorizer currently does not support role based access control
+    super.testRBAC();
   }
 }

@@ -17,15 +17,14 @@ Here is a screen-capture of the CDAP UI running on a Distributed CDAP:
 
 .. figure:: ../_images/console/console_01_overview.png
    :figwidth: 100%
-   :height: 714px
    :width: 800px
    :align: center
    :class: bordered-image
 
-   **CDAP UI:** Showing started-up with applications deployed
+   **CDAP UI:** Showing started-up page
 
 
-Across the top, are three buttons: *Development*, *Operations, and *Management.* These
+Across the top, are three buttons: *Development*, *Operations*, and *Management*. These
 buttons gives you access to CDAP UI facilities for managing each of the categories.
 
 In the upper-left is a menu for setting the namespace. In the upper-right is a menu

@@ -27,16 +27,29 @@ import co.cask.cdap.api.dataset.lib.Partitioning;
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
+import co.cask.cdap.data2.audit.AuditModule;
+import co.cask.cdap.data2.audit.InMemoryAuditPublisher;
 import co.cask.cdap.data2.dataset2.lib.file.FileSetModule;
 import co.cask.cdap.data2.dataset2.lib.partitioned.PartitionedFileSetModule;
 import co.cask.cdap.data2.dataset2.lib.table.CoreDatasetsModule;
 import co.cask.cdap.data2.dataset2.module.lib.inmemory.InMemoryTableModule;
+import co.cask.cdap.data2.metadata.store.NoOpMetadataStore;
+import co.cask.cdap.data2.metadata.writer.LineageWriterDatasetFramework;
+import co.cask.cdap.data2.metadata.writer.NoOpLineageWriter;
 import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
+import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.audit.AuditMessage;
+import co.cask.cdap.proto.audit.AuditPayload;
+import co.cask.cdap.proto.audit.AuditType;
+import co.cask.cdap.proto.audit.payload.access.AccessPayload;
+import co.cask.cdap.proto.audit.payload.access.AccessType;
 import co.cask.cdap.store.NamespaceStore;
 import co.cask.tephra.DefaultTransactionExecutor;
 import co.cask.tephra.TransactionAware;
@@ -47,12 +60,16 @@ import co.cask.tephra.runtime.TransactionInMemoryModule;
 import com.google.common.collect.Maps;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import org.apache.twill.filesystem.LocalLocationFactory;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -88,6 +105,7 @@ public abstract class AbstractDatasetFrameworkTest {
   protected static DatasetDefinitionRegistryFactory registryFactory;
   protected static CConfiguration cConf;
   protected static TransactionExecutorFactory txExecutorFactory;
+  protected static InMemoryAuditPublisher inMemoryAuditPublisher;
 
   @BeforeClass
   public static void setup() throws Exception {
@@ -96,7 +114,8 @@ public abstract class AbstractDatasetFrameworkTest {
     final Injector injector = Guice.createInjector(
       new ConfigModule(cConf),
       new LocationRuntimeModule().getInMemoryModules(),
-      new TransactionInMemoryModule());
+      new TransactionInMemoryModule(),
+      new AuditModule().getInMemoryModules());
 
     txExecutorFactory = injector.getInstance(TransactionExecutorFactory.class);
     registryFactory = new DatasetDefinitionRegistryFactory() {
@@ -107,6 +126,7 @@ public abstract class AbstractDatasetFrameworkTest {
         return registry;
       }
     };
+    inMemoryAuditPublisher = injector.getInstance(InMemoryAuditPublisher.class);
     NAMESPACE_STORE.create(new NamespaceMeta.Builder().setName(NAMESPACE_ID).build());
   }
 
@@ -497,5 +517,56 @@ public abstract class AbstractDatasetFrameworkTest {
     } catch (Exception e) {
       // expected
     }
+  }
+
+  @Test
+  public void testAuditPublish() throws Exception {
+    // Clear all audit messages
+    inMemoryAuditPublisher.popMessages();
+    List<AuditMessage> expectedMessages = new ArrayList<>();
+
+    // Adding modules
+    DatasetFramework framework = getFramework();
+    framework.addModule(IN_MEMORY, new InMemoryTableModule());
+
+    // Creating instances
+    framework.addInstance(Table.class.getName(), MY_TABLE, DatasetProperties.EMPTY);
+    expectedMessages.add(new AuditMessage(0, MY_TABLE.toEntityId(), "", AuditType.CREATE, AuditPayload.EMPTY_PAYLOAD));
+    framework.addInstance(Table.class.getName(), MY_TABLE2, DatasetProperties.EMPTY);
+    expectedMessages.add(new AuditMessage(0, MY_TABLE2.toEntityId(), "", AuditType.CREATE, AuditPayload.EMPTY_PAYLOAD));
+
+    // Update instance
+    framework.updateInstance(MY_TABLE, DatasetProperties.EMPTY);
+    expectedMessages.add(new AuditMessage(0, MY_TABLE.toEntityId(), "", AuditType.UPDATE, AuditPayload.EMPTY_PAYLOAD));
+
+    // Access instance
+    Id.Run runId = new Id.Run(Id.Program.from("ns", "app", ProgramType.FLOW, "flow"), RunIds.generate().getId());
+    LineageWriterDatasetFramework lineageFramework =
+      new LineageWriterDatasetFramework(framework, new NoOpLineageWriter(), new NoOpMetadataStore(),
+                                        new LocalLocationFactory(new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR))),
+                                        cConf);
+    lineageFramework.initContext(runId);
+    lineageFramework.setAuditPublisher(inMemoryAuditPublisher);
+    lineageFramework.getDataset(MY_TABLE, null, getClass().getClassLoader());
+    expectedMessages.add(new AuditMessage(0, MY_TABLE.toEntityId(), "", AuditType.ACCESS,
+                                          new AccessPayload(AccessType.UNKNOWN, runId.toEntityId())));
+
+    // Truncate instance
+    framework.truncateInstance(MY_TABLE);
+    expectedMessages.add(new AuditMessage(0, MY_TABLE.toEntityId(), "", AuditType.TRUNCATE,
+                                          AuditPayload.EMPTY_PAYLOAD));
+
+    // Delete instance
+    framework.deleteInstance(MY_TABLE);
+    expectedMessages.add(new AuditMessage(0, MY_TABLE.toEntityId(), "", AuditType.DELETE, AuditPayload.EMPTY_PAYLOAD));
+
+    // Delete all instances in a namespace
+    framework.deleteAllInstances(MY_TABLE2.getNamespace());
+    expectedMessages.add(new AuditMessage(0, MY_TABLE2.toEntityId(), "", AuditType.DELETE, AuditPayload.EMPTY_PAYLOAD));
+
+    Assert.assertEquals(expectedMessages, inMemoryAuditPublisher.popMessages());
+
+    // cleanup
+    framework.deleteModule(IN_MEMORY);
   }
 }

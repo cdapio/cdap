@@ -23,6 +23,42 @@ Cask Data Application Platform Release Notes
    :backlinks: none
    :depth: 2
 
+`Release 3.3.2 <http://docs.cask.co/cdap/3.3.2/index.html>`__
+=============================================================
+
+Bug Fix
+-------
+- `CDAP-4967 <https://issues.cask.co/browse/CDAP-4967>`__ - Fixed a schema-parsing bug
+  that prevented the use of schemas where a record is used both as a top-level field and
+  also used inside a different record field.
+
+- `CDAP-5019 <https://issues.cask.co/browse/CDAP-5019>`__ - Worked around two issues
+  (`SPARK-13441 <https://issues.apache.org/jira/browse/SPARK-13441>`__
+  and `YARN-4727 <https://issues.apache.org/jira/browse/YARN-4727>`__) that prevented
+  launching Spark jobs on Cloudera Data Hub clusters managed with Cloudera Manager 
+  when using Spark 1.4 or greater.
+
+- `CDAP-5063 <https://issues.cask.co/browse/CDAP-5063>`__ - Fixed a problem with 
+  the CDAP Master not starting when CDAP and the HiveServer2 services are running on the
+  same node in an Ambari cluster.
+
+- `CDAP-5076 <https://issues.cask.co/browse/CDAP-5076>`__ - Fixed a problem with the CDAP
+  CLI command "update app" that was parsing the application config incorrectly.
+  
+- `CDAP-5094 <https://issues.cask.co/browse/CDAP-5094>`__ - Fixed a problem where the explore
+  schema fileset property was being ignored unless an explore format was also present.
+
+- `CDAP-5137 <https://issues.cask.co/browse/CDAP-5137>`__ - Fix a problem with Spark jobs
+  not being submitted to the appropriate YARN scheduler queue set for the namespace.
+
+Improvements
+------------
+- `CDAP-5047 <https://issues.cask.co/browse/CDAP-5047>`__ - Added a :ref:`Batch Source
+  Plugin <cdap-apps-etl-plugins-batchsources>` to read from Microsoft Azure Blob Storage.
+
+- `CDAP-5134 <https://issues.cask.co/browse/CDAP-5134>`__ - Added support for CDH 5.6 to CDAP.
+
+
 `Release 3.3.1 <http://docs.cask.co/cdap/3.3.1/index.html>`__
 =============================================================
 
@@ -39,7 +75,6 @@ Improvements
 
 - `CDAP-4773 <https://issues.cask.co/browse/CDAP-4773>`__ - Improved the error logging for
   the Master Stream service when it can't connect to the CDAP AppFabric server.
-
 
 Bug Fixes
 ---------

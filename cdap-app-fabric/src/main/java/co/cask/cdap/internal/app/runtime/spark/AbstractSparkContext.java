@@ -42,6 +42,7 @@ import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.program.ProgramTypeMetricTag;
 import co.cask.cdap.internal.app.runtime.DefaultAdmin;
+import co.cask.cdap.internal.app.runtime.ProgramRunners;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.internal.app.runtime.spark.metrics.SparkUserMetrics;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
@@ -51,7 +52,6 @@ import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import org.apache.spark.SparkConf;
 import org.apache.twill.api.RunId;
@@ -59,6 +59,7 @@ import org.apache.twill.discovery.DiscoveryServiceClient;
 
 import java.io.Closeable;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -91,7 +92,7 @@ public abstract class AbstractSparkContext implements SparkContext, Closeable {
 
   protected AbstractSparkContext(ApplicationSpecification applicationSpecification,
                                  SparkSpecification specification, Id.Program programId, RunId runId,
-                                 ClassLoader programClassLoader, long logicalStartTime,
+                                 ClassLoader programClassLoader,
                                  Map<String, String> runtimeArguments, DiscoveryServiceClient discoveryServiceClient,
                                  MetricsContext metricsContext, LoggingContext loggingContext,
                                  DatasetFramework dsFramework,
@@ -102,8 +103,6 @@ public abstract class AbstractSparkContext implements SparkContext, Closeable {
     this.programId = programId;
     this.runId = runId;
     this.programClassLoader = programClassLoader;
-    this.logicalStartTime = logicalStartTime;
-    this.runtimeArguments = ImmutableMap.copyOf(runtimeArguments);
     this.discoveryServiceClient = discoveryServiceClient;
     this.userMetrics = new ProgramUserMetrics(metricsContext);
     this.metricsContext = metricsContext;
@@ -114,6 +113,11 @@ public abstract class AbstractSparkContext implements SparkContext, Closeable {
     this.workflowProgramInfo = workflowProgramInfo;
     this.systemDatasetInstantiator = new SystemDatasetInstantiator(dsFramework, programClassLoader, getOwners());
     this.admin = new DefaultAdmin(dsFramework, programId.getNamespace().toEntityId());
+
+
+    Map<String, String> runtimeArgs = new HashMap<>(runtimeArguments);
+    this.logicalStartTime = ProgramRunners.updateLogicalStartTime(runtimeArgs);
+    this.runtimeArguments = Collections.unmodifiableMap(runtimeArgs);
   }
 
   @Override

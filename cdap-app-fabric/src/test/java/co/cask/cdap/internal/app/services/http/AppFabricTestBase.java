@@ -383,31 +383,12 @@ public abstract class AppFabricTestBase {
    * Deploys an application.
    */
   protected HttpResponse deploy(Class<?> application) throws Exception {
-    return deploy(application, null);
-  }
-
-  protected HttpResponse deploy(Class<?> application, @Nullable String appName) throws Exception {
-    return deploy(application, null, null, appName, null, null);
-  }
-
-  protected HttpResponse deploy(Class<?> application, @Nullable String appName, @Nullable Config appConfig)
-    throws Exception {
-    return deploy(application, null, null, appName, null, appConfig);
+    return deploy(application, null, null);
   }
 
   protected HttpResponse deploy(Class<?> application, @Nullable String apiVersion, @Nullable String namespace)
     throws Exception {
-    return deploy(application, apiVersion, namespace, null, null, null);
-  }
-
-  protected HttpResponse deploy(Class<?> application, @Nullable String apiVersion, @Nullable String namespace,
-                                @Nullable String appName) throws Exception {
-    return deploy(application, apiVersion, namespace, appName, null, null);
-  }
-
-  protected HttpResponse deploy(Class<?> application, @Nullable String apiVersion, @Nullable String namespace,
-                                @Nullable String appName, @Nullable String appVersion) throws Exception {
-    return deploy(application, apiVersion, namespace, appName, appVersion, null);
+    return deploy(application, apiVersion, namespace, null, null);
   }
 
   protected HttpResponse deploy(Id.Application appId,
@@ -425,8 +406,7 @@ public abstract class AppFabricTestBase {
    * Deploys an application with (optionally) a defined app name and app version
    */
   protected HttpResponse deploy(Class<?> application, @Nullable String apiVersion, @Nullable String namespace,
-                                @Nullable String appName, @Nullable String appVersion,
-                                @Nullable Config appConfig) throws Exception {
+                                @Nullable String appVersion, @Nullable Config appConfig) throws Exception {
     namespace = namespace == null ? Id.Namespace.DEFAULT.getId() : namespace;
     apiVersion = apiVersion == null ? Constants.Gateway.API_VERSION_3_TOKEN : apiVersion;
     appVersion = appVersion == null ? String.format("1.0.%d", System.currentTimeMillis()) : appVersion;
@@ -446,11 +426,7 @@ public abstract class AppFabricTestBase {
 
     HttpEntityEnclosingRequestBase request;
     String versionedApiPath = getVersionedAPIPath("apps/", apiVersion, namespace);
-    if (appName == null) {
-      request = getPost(versionedApiPath);
-    } else {
-      request = getPut(versionedApiPath + appName);
-    }
+    request = getPost(versionedApiPath);
     request.setHeader(Constants.Gateway.API_KEY, "api-key-example");
     request.setHeader("X-Archive-Name", String.format("%s-%s.jar", application.getSimpleName(), appVersion));
     if (appConfig != null) {

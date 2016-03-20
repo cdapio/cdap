@@ -40,7 +40,7 @@ public interface MapReduceTaskContext<KEYOUT, VALUEOUT> extends RuntimeContext, 
 
   /**
    * Write key and value to the named output Dataset. This method must only be used if the MapReduce writes to
-   * more than one output. If there is a single output, {@link #write(Object, Object)} must be used, or else
+   * more than one output. If there is a single output, {@link #write(Object, Object)} must be used, or the
    * data may not be written correctly.
    *
    * @param namedOutput the name of the output Dataset
@@ -50,8 +50,8 @@ public interface MapReduceTaskContext<KEYOUT, VALUEOUT> extends RuntimeContext, 
   <K, V> void write(String namedOutput, K key, V value) throws IOException, InterruptedException;
 
   /**
-   * Write key and value to the hadoop context. This method must only be used in the MapReduce writes to a single
-   * output. If there is more than one outputs, {@link #write(String, Object, Object)} must be used.
+   * Write key and value to the Hadoop context. This method must only be used if the MapReduce writes to a single
+   * output. If there is more than one output, {@link #write(String, Object, Object)} must be used instead.
    *
    * @param key         the key
    * @param value       the value
@@ -65,7 +65,7 @@ public interface MapReduceTaskContext<KEYOUT, VALUEOUT> extends RuntimeContext, 
 
   /**
    * Returns the logical start time of this MapReduce job. Logical start time is the time when this MapReduce
-   * job is supposed to start if this job is started by the scheduler. Otherwise it would be the current time when the
+   * job is supposed to start if this job is started by the scheduler. Otherwise, it is the current time when the
    * job runs.
    *
    * @return Time in milliseconds since epoch time (00:00:00 January 1, 1970 UTC).
@@ -83,4 +83,11 @@ public interface MapReduceTaskContext<KEYOUT, VALUEOUT> extends RuntimeContext, 
    */
   @Nullable
   WorkflowToken getWorkflowToken();
+
+  /**
+   * Returns the name of the input configured for this task.
+   * Returns null, if this task is a Reducer or no inputs were configured through CDAP APIs.
+   */
+  @Nullable
+  String getInputName();
 }

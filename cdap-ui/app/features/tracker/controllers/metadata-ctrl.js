@@ -115,6 +115,11 @@ class TrackerMetadataController{
         obj.null = false;
       }
 
+      if (angular.isObject(obj.type)) {
+        obj.fullSchema = angular.copy(obj.type);
+        obj.type = obj.type.type;
+      }
+
       fieldsArr.push(obj);
     });
 

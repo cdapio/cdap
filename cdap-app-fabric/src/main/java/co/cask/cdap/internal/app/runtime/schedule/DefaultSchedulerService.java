@@ -73,9 +73,11 @@ public class DefaultSchedulerService {
       LOG.debug("Schedule execute {}", key);
       ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
 
-      builder.put(ProgramOptionConstants.LOGICAL_START_TIME, Long.toString(context.getScheduledFireTime().getTime()));
       builder.put(ProgramOptionConstants.RETRY_COUNT, Integer.toString(context.getRefireCount()));
       builder.put(ProgramOptionConstants.SCHEDULE_NAME, scheduleName);
+
+      Map<String, String> userOverrides = ImmutableMap.of(ProgramOptionConstants.LOGICAL_START_TIME,
+                                                          Long.toString(context.getScheduledFireTime().getTime()));
 
       JobDataMap jobDataMap = trigger.getJobDataMap();
       for (Map.Entry<String, Object> entry : jobDataMap.entrySet()) {
@@ -83,7 +85,8 @@ public class DefaultSchedulerService {
       }
 
       try {
-        taskRunner.run(Id.Program.from(namespaceId, applicationId, programType, programId), builder.build()).get();
+        taskRunner.run(Id.Program.from(namespaceId, applicationId, programType, programId),
+                       builder.build(), userOverrides).get();
       } catch (TaskExecutionException e) {
         throw new JobExecutionException(e.getMessage(), e.getCause(), e.isRefireImmediately());
       } catch (Throwable t) {

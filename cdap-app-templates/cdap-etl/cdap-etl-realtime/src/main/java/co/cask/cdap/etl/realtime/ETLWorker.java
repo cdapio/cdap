@@ -44,19 +44,26 @@ import co.cask.cdap.etl.common.Destroyables;
 import co.cask.cdap.etl.common.LoggedTransform;
 import co.cask.cdap.etl.common.NoopMetrics;
 import co.cask.cdap.etl.common.PipelinePhase;
-import co.cask.cdap.etl.common.PipelineRegisterer;
 import co.cask.cdap.etl.common.TransformDetail;
 import co.cask.cdap.etl.common.TransformExecutor;
 import co.cask.cdap.etl.common.TransformResponse;
 import co.cask.cdap.etl.common.TxLookupProvider;
 import co.cask.cdap.etl.log.LogStageInjector;
+import co.cask.cdap.etl.planner.PipelinePlan;
+import co.cask.cdap.etl.planner.PipelinePlanner;
 import co.cask.cdap.etl.planner.StageInfo;
-import co.cask.cdap.etl.proto.v1.ETLRealtimeConfig;
+import co.cask.cdap.etl.proto.v2.ETLRealtimeConfig;
+import co.cask.cdap.etl.spec.PipelineSpec;
+import co.cask.cdap.etl.spec.PipelineSpecGenerator;
+import co.cask.cdap.etl.spec.StageSpec;
 import co.cask.cdap.format.StructuredRecordStringConverter;
+import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -77,7 +84,9 @@ import java.util.UUID;
 public class ETLWorker extends AbstractWorker {
   public static final String NAME = ETLWorker.class.getSimpleName();
   private static final Logger LOG = LoggerFactory.getLogger(ETLWorker.class);
-  private static final Gson GSON = new Gson();
+  private static final Gson GSON = new GsonBuilder()
+    .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
+    .create();
   private static final String SEPARATOR = ":";
   private static final Schema ERROR_SCHEMA = Schema.recordOf(
     "error",
@@ -86,6 +95,9 @@ public class ETLWorker extends AbstractWorker {
     Schema.Field.of(Constants.ErrorDataset.ERRMSG, Schema.unionOf(Schema.of(Schema.Type.STRING),
                                                                   Schema.of(Schema.Type.NULL))),
     Schema.Field.of(Constants.ErrorDataset.INVALIDENTRY, Schema.of(Schema.Type.STRING)));
+  private static final String UNIQUE_ID = "uniqueid";
+  private static final Set<String> SUPPORTED_PLUGIN_TYPES = ImmutableSet.of(
+    RealtimeSource.PLUGIN_TYPE, RealtimeSink.PLUGIN_TYPE, Transform.PLUGIN_TYPE);
 
   // only visible at configure time
   private final ETLRealtimeConfig config;
@@ -112,7 +124,7 @@ public class ETLWorker extends AbstractWorker {
   public void configure() {
     setName(NAME);
     setDescription("Worker Driver for Realtime ETL Pipelines");
-    int instances = config.getInstances() != null ? config.getInstances() : 1;
+    int instances = config.getInstances();
     if (instances < 1) {
       throw new IllegalArgumentException("instances must be greater than 0.");
     }
@@ -121,16 +133,37 @@ public class ETLWorker extends AbstractWorker {
       setResources(config.getResources());
     }
 
-    PipelineRegisterer registerer = new PipelineRegisterer(getConfigurer(), "realtime");
-    // using table dataset type for error dataset
-    PipelinePhase pipeline = registerer.registerPlugins(config, Table.class, DatasetProperties.builder()
-      .add(Table.PROPERTY_SCHEMA, ERROR_SCHEMA.toString())
-      .build(), false);
+    PipelineSpecGenerator specGenerator =
+      new PipelineSpecGenerator(getConfigurer(),
+                                RealtimeSource.PLUGIN_TYPE,
+                                RealtimeSink.PLUGIN_TYPE,
+                                Table.class,
+                                DatasetProperties.builder()
+                                  .add(Table.PROPERTY_SCHEMA, ERROR_SCHEMA.toString())
+                                  .build());
+    PipelineSpec spec = specGenerator.generateSpec(config);
+    int sourceCount = 0;
+    for (StageSpec stageSpec : spec.getStages()) {
+      if (RealtimeSource.PLUGIN_TYPE.equals(stageSpec.getPlugin().getType())) {
+        sourceCount++;
+      }
+    }
+    if (sourceCount != 1) {
+      throw new IllegalArgumentException("Invalid pipeline. There must only be one source.");
+    }
+    PipelinePlanner planner = new PipelinePlanner(SUPPORTED_PLUGIN_TYPES, ImmutableSet.<String>of());
+    PipelinePlan plan = planner.plan(spec);
+    if (plan.getPhases().size() != 1) {
+      // should never happen
+      throw new IllegalArgumentException("There was an error planning the pipeline. There should only be one phase.");
+    }
+    PipelinePhase pipeline = plan.getPhases().values().iterator().next();
 
     Map<String, String> properties = new HashMap<>();
+    properties.put(Constants.PIPELINE_SPEC_KEY, GSON.toJson(spec));
     properties.put(Constants.PIPELINEID, GSON.toJson(pipeline));
     // Generate unique id for this app creation.
-    properties.put(Constants.Realtime.UNIQUE_ID, String.valueOf(System.currentTimeMillis()));
+    properties.put(UNIQUE_ID, String.valueOf(System.currentTimeMillis()));
     properties.put(Constants.STAGE_LOGGING_ENABLED, String.valueOf(config.isStageLoggingEnabled()));
     setProperties(properties);
   }
@@ -145,9 +178,9 @@ public class ETLWorker extends AbstractWorker {
     Map<String, String> properties = context.getSpecification().getProperties();
     appName = context.getApplicationSpecification().getName();
     Preconditions.checkArgument(properties.containsKey(Constants.PIPELINEID));
-    Preconditions.checkArgument(properties.containsKey(Constants.Realtime.UNIQUE_ID));
+    Preconditions.checkArgument(properties.containsKey(UNIQUE_ID));
 
-    String uniqueId = properties.get(Constants.Realtime.UNIQUE_ID);
+    String uniqueId = properties.get(UNIQUE_ID);
 
     // Each worker instance should have its own unique state.
     final String appName = context.getApplicationSpecification().getName();
@@ -175,28 +208,28 @@ public class ETLWorker extends AbstractWorker {
       }
     });
 
+    PipelinePhase pipeline = GSON.fromJson(properties.get(Constants.PIPELINEID), PipelinePhase.class);
+
     Map<String, Set<String>> connectionsMap =
       GSON.fromJson(properties.get(Constants.PIPELINEID), PipelinePhase.class).getConnections();
     Map<String, TransformDetail> transformationMap = new HashMap<>();
-    DefaultEmitter defaultEmitter = new DefaultEmitter(metrics);
 
-    initializeSource(context);
+    initializeSource(context, pipeline);
 
-    initializeTransforms(context, transformationMap, connectionsMap);
-    initializeSinks(context, transformationMap);
-    List<String> startStages = new ArrayList<>();
+    initializeTransforms(context, transformationMap, pipeline);
+    initializeSinks(context, transformationMap, pipeline);
+    Set<String> startStages = new HashSet<>();
     startStages.addAll(connectionsMap.get(sourceStageName));
     transformExecutor = new TransformExecutor(transformationMap, startStages);
   }
 
-  private void initializeSource(WorkerContext context) throws Exception {
-    String sourcePluginId = GSON.fromJson(
-      context.getSpecification().getProperty(Constants.PIPELINEID), PipelinePhase.class).getSource().getName();
-    source = context.newPluginInstance(sourcePluginId);
-    source = new LoggedRealtimeSource<>(sourcePluginId, source);
+  private void initializeSource(WorkerContext context, PipelinePhase pipeline) throws Exception {
+    String sourceName = pipeline.getStagesOfType(RealtimeSource.PLUGIN_TYPE).iterator().next().getName();
+    source = context.newPluginInstance(sourceName);
+    source = new LoggedRealtimeSource<>(sourceName, source);
     WorkerRealtimeContext sourceContext = new WorkerRealtimeContext(
-      context, metrics, new TxLookupProvider(context), sourcePluginId);
-    sourceStageName = sourcePluginId;
+      context, metrics, new TxLookupProvider(context), sourceName);
+    sourceStageName = sourceName;
     LOG.debug("Source Class : {}", source.getClass().getName());
     source.initialize(sourceContext);
     sourceEmitter = new DefaultEmitter(sourceContext.getMetrics());
@@ -204,9 +237,9 @@ public class ETLWorker extends AbstractWorker {
 
   @SuppressWarnings("unchecked")
   private void initializeSinks(WorkerContext context,
-                               Map<String, TransformDetail> transformationMap) throws Exception {
-    Set<StageInfo> sinkInfos = GSON.fromJson(context.getSpecification().getProperty(Constants.PIPELINEID),
-                                             PipelinePhase.class).getSinks();
+                               Map<String, TransformDetail> transformationMap,
+                               PipelinePhase pipeline) throws Exception {
+    Set<StageInfo> sinkInfos = pipeline.getStagesOfType(RealtimeSink.PLUGIN_TYPE);
     sinks = new HashMap<>(sinkInfos.size());
     for (StageInfo sinkInfo : sinkInfos) {
       String sinkName = sinkInfo.getName();
@@ -237,26 +270,25 @@ public class ETLWorker extends AbstractWorker {
 
   private void initializeTransforms(WorkerContext context,
                                     Map<String, TransformDetail> transformDetailMap,
-                                    Map<String, Set<String>> connectionsMap) throws Exception {
-    Set<StageInfo> transformInfos =
-      GSON.fromJson(context.getSpecification().getProperty(Constants.PIPELINEID), PipelinePhase.class).getTransforms();
+                                    PipelinePhase pipeline) throws Exception {
+    Set<StageInfo> transformInfos = pipeline.getStagesOfType(Transform.PLUGIN_TYPE);
     Preconditions.checkArgument(transformInfos != null);
     tranformIdToDatasetName = new HashMap<>(transformInfos.size());
 
     for (StageInfo transformInfo : transformInfos) {
-      String transformId = transformInfo.getName();
+      String transformName = transformInfo.getName();
       try {
-        Transform<?, ?> transform = context.newPluginInstance(transformId);
-        transform = new LoggedTransform<>(transformId, transform);
+        Transform<?, ?> transform = context.newPluginInstance(transformName);
+        transform = new LoggedTransform<>(transformName, transform);
         WorkerRealtimeContext transformContext = new WorkerRealtimeContext(
-          context, metrics, new TxLookupProvider(context), transformId);
+          context, metrics, new TxLookupProvider(context), transformName);
         LOG.debug("Transform Class : {}", transform.getClass().getName());
         transform.initialize(transformContext);
-        transformDetailMap.put(transformId,
-                               new TransformDetail(transform, new DefaultStageMetrics(metrics, transformId),
-                                                   connectionsMap.get(transformId)));
+        transformDetailMap.put(transformName,
+                               new TransformDetail(transform, new DefaultStageMetrics(metrics, transformName),
+                                                   pipeline.getStageOutputs(transformName)));
         if (transformInfo.getErrorDatasetName() != null) {
-          tranformIdToDatasetName.put(transformId, transformInfo.getErrorDatasetName());
+          tranformIdToDatasetName.put(transformName, transformInfo.getErrorDatasetName());
         }
       } catch (InstantiationException e) {
         LOG.error("Unable to instantiate Transform", e);

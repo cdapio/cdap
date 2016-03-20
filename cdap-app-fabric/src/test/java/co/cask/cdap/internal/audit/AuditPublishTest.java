@@ -23,6 +23,7 @@ import co.cask.cdap.common.guice.ZKClientModule;
 import co.cask.cdap.data2.audit.AuditModule;
 import co.cask.cdap.internal.AppFabricTestHelper;
 import co.cask.cdap.kafka.KafkaTester;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.audit.AuditMessage;
 import co.cask.cdap.proto.audit.AuditType;
 import co.cask.cdap.proto.codec.AuditMessageTypeAdapter;
@@ -32,6 +33,7 @@ import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.Ids;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.NamespacedArtifactId;
+import co.cask.cdap.proto.id.NamespacedId;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -97,8 +99,10 @@ public class AuditPublishTest {
   public void testPublish() throws Exception {
     String defaultNs = NamespaceId.DEFAULT.getNamespace();
     String appName = WordCountApp.class.getSimpleName();
+
+    // Define expected values
     Set<? extends EntityId> expectedMetadataChangeEntities =
-      ImmutableSet.of(Ids.namespace(defaultNs).artifact("app", "1"),
+      ImmutableSet.of(Ids.namespace(defaultNs).artifact(WordCountApp.class.getSimpleName(), "1"),
                       Ids.namespace(defaultNs).app(appName),
                       Ids.namespace(defaultNs).app(appName).flow(WordCountApp.WordCountFlow.class.getSimpleName()),
                       Ids.namespace(defaultNs).app(appName).mr(WordCountApp.VoidMapReduceJob.class.getSimpleName()),
@@ -109,9 +113,13 @@ public class AuditPublishTest {
 
     Multimap<AuditType, EntityId> expectedAuditEntities = HashMultimap.create();
     expectedAuditEntities.putAll(AuditType.METADATA_CHANGE, expectedMetadataChangeEntities);
-    expectedAuditEntities.put(AuditType.CREATE, Ids.namespace(defaultNs).stream("text"));
+    expectedAuditEntities.putAll(AuditType.CREATE, ImmutableSet.of(Ids.namespace(defaultNs).dataset("mydataset"),
+                                                                   Ids.namespace(defaultNs).stream("text")));
 
-    AppFabricTestHelper.deployApplication(WordCountApp.class);
+    // Deploy application
+    AppFabricTestHelper.deployApplication(Id.Namespace.DEFAULT, WordCountApp.class, null, KAFKA_TESTER.getCConf());
+
+    // Verify audit messages
     List<AuditMessage> publishedMessages =
       KAFKA_TESTER.getPublishedMessages(KAFKA_TESTER.getCConf().get(Constants.Audit.KAFKA_TOPIC), 11,
                                         AuditMessage.class, GSON);
@@ -119,7 +127,13 @@ public class AuditPublishTest {
     Multimap<AuditType, EntityId> actualAuditEntities = HashMultimap.create();
     for (AuditMessage message : publishedMessages) {
       EntityId entityId = message.getEntityId();
-      if (entityId.getEntity() == EntityType.ARTIFACT) {
+      if (entityId instanceof NamespacedId) {
+        if (((NamespacedId) entityId).getNamespace().equals(NamespaceId.SYSTEM.getNamespace())) {
+          // Ignore system audit messages
+          continue;
+        }
+      }
+      if (entityId.getEntity() == EntityType.ARTIFACT && entityId instanceof NamespacedArtifactId) {
         NamespacedArtifactId artifactId = (NamespacedArtifactId) entityId;
         // Version is dynamic for deploys in test cases
         entityId = Ids.namespace(artifactId.getNamespace()).artifact(artifactId.getArtifact(), "1");

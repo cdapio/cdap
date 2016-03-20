@@ -143,7 +143,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
         deployApplication(appId, createRequest);
         // fail if we succeed with application deployment
         Assert.fail();
-      } catch (IllegalStateException e) {
+      } catch (Exception e) {
         // expected
       }
     }
@@ -446,20 +446,33 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     // Execute Workflow without keeping the local datasets after run
     Map<String, String> additionalParams = new HashMap<>();
     String runId = executeWorkflow(applicationManager, additionalParams);
-    verifyWorkflowRun(runId, false, false);
-
+    verifyWorkflowRun(runId, false, false, "COMPLETED");
 
     additionalParams.put("dataset.wordcount.keep.local", "true");
     runId = executeWorkflow(applicationManager, additionalParams);
-    verifyWorkflowRun(runId, true, false);
+    verifyWorkflowRun(runId, true, false, "COMPLETED");
 
     additionalParams.clear();
     additionalParams.put("dataset.*.keep.local", "true");
     runId = executeWorkflow(applicationManager, additionalParams);
-    verifyWorkflowRun(runId, true, true);
+    verifyWorkflowRun(runId, true, true, "COMPLETED");
+
+    additionalParams.clear();
+    additionalParams.put("dataset.*.keep.local", "true");
+    additionalParams.put("destroy.throw.exception", "true");
+    runId = executeWorkflow(applicationManager, additionalParams);
+    verifyWorkflowRun(runId, true, true, "STARTED");
+
+    WorkflowManager wfManager = applicationManager.getWorkflowManager(WorkflowAppWithLocalDatasets.WORKFLOW_NAME);
+    List<RunRecord> history = wfManager.getHistory();
+    Assert.assertEquals(4, history.size());
+    for (RunRecord record : history) {
+      Assert.assertEquals(ProgramRunStatus.COMPLETED, record.getStatus());
+    }
   }
 
-  private void verifyWorkflowRun(String runId, boolean shouldKeepWordCountDataset, boolean shouldKeepCSVFilesetDataset)
+  private void verifyWorkflowRun(String runId, boolean shouldKeepWordCountDataset, boolean shouldKeepCSVFilesetDataset,
+                                 String expectedRunStatus)
     throws Exception {
 
     // Once the Workflow run is complete local datasets should not be available
@@ -490,6 +503,11 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     // There should not be any local copy of the non local dataset
     nonLocalKeyValueDataset = getDataset(testSpace, WorkflowAppWithLocalDatasets.RESULT_DATASET + "." + runId);
     Assert.assertNull(nonLocalKeyValueDataset.get());
+
+    DataSetManager<KeyValueTable> workflowRuns
+      = getDataset(testSpace, WorkflowAppWithLocalDatasets.WORKFLOW_RUNS_DATASET);
+
+    Assert.assertEquals(expectedRunStatus, Bytes.toString(workflowRuns.get().read(runId)));
   }
 
   private String executeWorkflow(ApplicationManager applicationManager, Map<String, String> additionalParams)

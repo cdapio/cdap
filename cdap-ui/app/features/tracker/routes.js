@@ -41,6 +41,14 @@ angular.module(PKG.name + '.feature.tracker')
         controller: 'TrackerContainerController',
         controllerAs: 'ContainerController'
       })
+        .state('tracker.help', {
+          url: '/help',
+          templateUrl: '/assets/features/tracker/templates/help.html',
+          data: {
+            authorizedRoles: MYAUTH_ROLE.all,
+            highlightTab: 'help'
+          }
+        })
 
         .state('tracker.result', {
           url: '/search/:searchQuery/result',
@@ -78,6 +86,16 @@ angular.module(PKG.name + '.feature.tracker')
             templateUrl: '/assets/features/tracker/templates/lineage.html',
             controller: 'TrackerLineageController',
             controllerAs: 'LineageController',
+            data: {
+              authorizedRoles: MYAUTH_ROLE.all,
+              highlightTab: 'search'
+            }
+          })
+          .state('tracker.entity.audit', {
+            url: '/audit?start&end',
+            templateUrl: '/assets/features/tracker/templates/audit.html',
+            controller: 'TrackerAuditController',
+            controllerAs: 'AuditController',
             data: {
               authorizedRoles: MYAUTH_ROLE.all,
               highlightTab: 'search'

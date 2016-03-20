@@ -284,6 +284,24 @@
   </property>
 
 
+  <!-- Audit Configuration -->
+
+  <property>
+    <name>audit.enabled</name>
+    <value>false</value>
+    <description>
+      Determines whether to publish audit messages to Apache Kafka
+    </description>
+  </property>
+
+  <property>
+    <name>audit.kafka.topic</name>
+    <value>audit</value>
+    <description>
+      Apache Kafka topic name to which audit messages are published
+    </description>
+  </property>
+
   <!-- Datasets Configuration -->
 
   <property>
@@ -977,7 +995,7 @@
     <name>metadata.updates.kafka.topic</name>
     <value>cdap-metadata-updates</value>
     <description>
-      Apache Kafka topic to which metadata update notifications are published
+      Apache Kafka topic name to which metadata update notifications are published
     </description>
   </property>
 
@@ -1453,7 +1471,18 @@
     <name>security.authorization.enabled</name>
     <value>false</value>
     <description>
-      Determines if authorization checks are enabled
+      When set to true, all operations in CDAP are authorized using the authorizer implementation found at the
+      property security.authorization.extension.jar.path.
+    </description>
+  </property>
+
+  <property>
+    <name>security.authorization.extension.jar.path</name>
+    <value></value>
+    <description>
+      If an external authorization system is used for authorizing operations on CDAP entities, this property sets
+      the path to the bundled JAR file containing the extension code. This jar is only used when
+      authorization is enabled by setting security.authorization.enabled to true.
     </description>
   </property>
 
@@ -1549,22 +1578,6 @@
     <value>false</value>
     <description>
       Determines if SSL is enabled
-    </description>
-  </property>
-
-  <property>
-    <name>security.authorization.enabled</name>
-    <value>false</value>
-    <description>
-      Determines if authorization is enabled
-    </description>
-  </property>
-
-  <property>
-    <name>security.authorization.pluginClassName</name>
-    <value>co.cask.cdap.security.authorization.DatasetBasedAuthorizer</value>
-    <description>
-      Class name of the AuthorizationPlugin implementation to use
     </description>
   </property>
 
@@ -1781,24 +1794,6 @@
     <value>60000</value>
     <description>
       Timeout in milliseconds for internal HTTP requests
-    </description>
-  </property>
-
-  <!-- Audit configuration -->
-
-  <property>
-    <name>audit.enabled</name>
-    <value>false</value>
-    <description>
-      Determines whether to publish audit messages
-    </description>
-  </property>
-
-  <property>
-    <name>audit.kafka.topic</name>
-    <value>audit</value>
-    <description>
-      Kafka topic to publish the audit messages
     </description>
   </property>
 

@@ -91,7 +91,17 @@
         <tbody>
           <tr ng-repeat="field in MetadataController.schema">
             <td>{{ ::field.name }}</td>
-            <td>{{ ::field.type }}</td>
+            <td uib-popover-template="'/assets/features/tracker/templates/partial/complex-schema-popover.html'"
+                popover-append-to-body="true"
+                popover-placement="right"
+                popover-class="complex-schema"
+                popover-enable="field.fullSchema"
+                popover-trigger="outsideClick"
+                popover-is-open="field.popoverOpen"
+                ng-class="{'complex-type': field.fullSchema }"
+                >
+              {{ ::field.type }}
+            </td>
             <td>
               <span class="fa fa-check-square" ng-if="field.null"></span>
               <span class="fa fa-square" ng-if="!field.null"></span>

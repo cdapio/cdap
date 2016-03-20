@@ -20,10 +20,12 @@ import co.cask.cdap.api.workflow.AbstractWorkflowAction;
 import co.cask.cdap.api.workflow.WorkflowActionNode;
 import co.cask.cdap.api.workflow.WorkflowContext;
 import co.cask.cdap.api.workflow.WorkflowToken;
-import co.cask.cdap.etl.proto.v1.ETLStage;
+import co.cask.cdap.etl.proto.v2.ETLBatchConfig;
+import co.cask.cdap.etl.proto.v2.ETLStage;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 import javax.mail.Authenticator;
@@ -41,8 +43,7 @@ import javax.mail.internet.MimeMessage;
  * a host and port (defaults to localhost:25), a protocol (defaults to SMTP), and a username and password.
  * <p>
  * The action must be specified as a the only action in a list of actions in the
- * {@link co.cask.cdap.etl.batch.config.ETLBatchConfig}. It must have the name "Email"
- * or an IllegalArgumentException will be thrown.
+ * {@link ETLBatchConfig}. It must have the plugin name "Email" or an IllegalArgumentException will be thrown.
  * </p>
  */
 public class EmailAction extends AbstractWorkflowAction {
@@ -67,7 +68,7 @@ public class EmailAction extends AbstractWorkflowAction {
 
   public EmailAction(ETLStage action) {
     super(action.getPlugin().getName());
-    properties = action.getPlugin().getProperties();
+    properties = new HashMap<>(action.getPlugin().getProperties());
   }
 
   @Override

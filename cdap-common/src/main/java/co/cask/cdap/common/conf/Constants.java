@@ -680,8 +680,11 @@ public final class Constants {
     public static final class Authorization {
       /** Enables authorization */
       public static final String ENABLED = "security.authorization.enabled";
-      /** AuthorizationPlugin class name */
-      public static final String HANDLER_CLASS = "security.authorization.pluginClassName";
+      /** Extension jar path */
+      public static final String EXTENSION_JAR_PATH = "security.authorization.extension.jar.path";
+      /** Prefix for extension properties */
+      public static final String EXTENSION_CONFIG_PREFIX =
+        "security.authorization.extension.config.";
     }
 
     /**

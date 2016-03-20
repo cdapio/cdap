@@ -100,6 +100,7 @@ public class DefaultMetadataStore implements MetadataStore {
   }
 
 
+  @SuppressWarnings("unused")
   @Inject(optional = true)
   public void setAuditPublisher(AuditPublisher auditPublisher) {
     this.auditPublisher = auditPublisher;
@@ -376,7 +377,7 @@ public class DefaultMetadataStore implements MetadataStore {
                                                               final String searchQuery,
                                                               final MetadataSearchTargetType type) {
     // Execute search query
-    Iterable<MetadataEntry> metadataEntries = execute(new TransactionExecutor.Function<MetadataDataset,
+    Iterable<MetadataEntry> results = execute(new TransactionExecutor.Function<MetadataDataset,
       Iterable<MetadataEntry>>() {
       @Override
       public Iterable<MetadataEntry> apply(MetadataDataset input) throws Exception {
@@ -385,8 +386,8 @@ public class DefaultMetadataStore implements MetadataStore {
     }, scope);
 
     // Score results
-    Map<Id.NamespacedId, Integer> weightedResults = new HashMap<>();
-    for (MetadataEntry metadataEntry : metadataEntries) {
+    final Map<Id.NamespacedId, Integer> weightedResults = new HashMap<>();
+    for (MetadataEntry metadataEntry : results) {
       Integer score = weightedResults.get(metadataEntry.getTargetId());
       score = score == null ? 0 : score;
       weightedResults.put(metadataEntry.getTargetId(), score + 1);
@@ -396,9 +397,52 @@ public class DefaultMetadataStore implements MetadataStore {
     List<Map.Entry<Id.NamespacedId, Integer>> resultList = new ArrayList<>(weightedResults.entrySet());
     Collections.sort(resultList, SEARCH_RESULT_DESC_SCORE_COMPARATOR);
 
+    // Fetch metadata for entities in the result list
+    // Note: since the fetch is happening in a different transaction, the metadata for entities may have been
+    // removed. It is okay not to have metadata for some results in case this happens.
+    Map<Id.NamespacedId, Metadata> systemMetadata = fetchMetadata(weightedResults.keySet(), MetadataScope.SYSTEM);
+    Map<Id.NamespacedId, Metadata> userMetadata = fetchMetadata(weightedResults.keySet(), MetadataScope.USER);
+
+    return addMetadataToResults(resultList, systemMetadata, userMetadata);
+  }
+
+  private Map<Id.NamespacedId, Metadata> fetchMetadata(final Set<Id.NamespacedId> entityIds, MetadataScope scope) {
+    Set<Metadata> metadataSet =
+      execute(new TransactionExecutor.Function<MetadataDataset, Set<Metadata>>() {
+        @Override
+        public Set<Metadata> apply(MetadataDataset input) throws Exception {
+          return input.getMetadata(entityIds);
+        }
+      }, scope);
+    Map<Id.NamespacedId, Metadata> metadataMap = new HashMap<>();
+    for (Metadata m : metadataSet) {
+      metadataMap.put(m.getEntityId(), m);
+    }
+    return metadataMap;
+  }
+
+  Set<MetadataSearchResultRecord> addMetadataToResults(List<Map.Entry<Id.NamespacedId, Integer>> results,
+                                                       Map<Id.NamespacedId, Metadata> systemMetadata,
+                                                       Map<Id.NamespacedId, Metadata> userMetadata) {
     Set<MetadataSearchResultRecord> result = new LinkedHashSet<>();
-    for (Map.Entry<Id.NamespacedId, Integer> entry : resultList) {
-      result.add(new MetadataSearchResultRecord(entry.getKey()));
+    for (Map.Entry<Id.NamespacedId, Integer> entry : results) {
+      ImmutableMap.Builder<MetadataScope, co.cask.cdap.proto.metadata.Metadata> builder = ImmutableMap.builder();
+      // Add system metadata
+      Metadata metadata = systemMetadata.get(entry.getKey());
+      if (metadata != null) {
+        builder.put(MetadataScope.SYSTEM,
+                    new co.cask.cdap.proto.metadata.Metadata(metadata.getProperties(), metadata.getTags()));
+      }
+
+      // Add user metadata
+      metadata = userMetadata.get(entry.getKey());
+      if (metadata != null) {
+        builder.put(MetadataScope.USER,
+                    new co.cask.cdap.proto.metadata.Metadata(metadata.getProperties(), metadata.getTags()));
+      }
+
+      // Create result
+      result.add(new MetadataSearchResultRecord(entry.getKey(), builder.build()));
     }
     return result;
   }

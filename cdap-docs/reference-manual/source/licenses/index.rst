@@ -51,7 +51,8 @@ be the trademarks of their respective owners. Where the ownership or registratio
 the addition of appropriate symbols has been made.
 
 Apache®, `Apache Hadoop <https://hadoop.apache.org>`__, `Hadoop®
-<https://hadoop.apache.org>`__, and `Apache ZooKeeper <https://zookeeper.apache.org/>`__, 
+<https://hadoop.apache.org>`__, Avro, `Apache Avro <http://avro.apache.org/>`__,
+and `Apache ZooKeeper <https://zookeeper.apache.org/>`__, 
 are either registered trademarks or trademarks of the
 `Apache Software Foundation <https://www.apache.org>`__ in the United States and/or other
 countries.
@@ -119,6 +120,30 @@ with `this license: <http://jodd.org/license.html>`__
   INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
   LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+The library `js-beautify <https://github.com/beautify-web/js-beautify>`__ is included in
+CDAP in binary format, with `this license:
+<https://raw.githubusercontent.com/beautify-web/js-beautify/master/LICENSE>`__
+
+  The MIT License (MIT)
+
+  Copyright (c) 2007-2013 Einar Lielmanis and contributors.
+
+  Permission is hereby granted, free of charge, to any person obtaining a copy of this
+  software and associated documentation files (the "Software"), to deal in the Software
+  without restriction, including without limitation the rights to use, copy, modify, merge,
+  publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons
+  to whom the Software is furnished to do so, subject to the following conditions:
+
+  The above copyright notice and this permission notice shall be included in all copies or
+  substantial portions of the Software.
+
+  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+  INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+  PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
+  FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+  OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+  DEALINGS IN THE SOFTWARE.
 
 The library `leveldbjni <https://github.com/fusesource/leveldbjni>`__ is included in CDAP in binary format,
 with `this license: <https://raw.githubusercontent.com/fusesource/leveldbjni/master/license.txt>`__

@@ -36,6 +36,14 @@ import co.cask.cdap.gateway.handlers.ArtifactHttpHandler;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.artifact.plugin.Plugin1;
 import co.cask.cdap.internal.app.runtime.artifact.plugin.Plugin2;
+import co.cask.cdap.internal.app.runtime.artifact.plugin.endpointtest.PluginEndpointContextTestPlugin;
+import co.cask.cdap.internal.app.runtime.artifact.plugin.invalid.InvalidPlugin;
+import co.cask.cdap.internal.app.runtime.artifact.plugin.invalid2.InvalidPluginMethodParams;
+import co.cask.cdap.internal.app.runtime.artifact.plugin.invalid3.InvalidPluginMethodParamType;
+import co.cask.cdap.internal.app.runtime.artifact.plugin.p3.CallablePlugin;
+import co.cask.cdap.internal.app.runtime.artifact.plugin.p4.CallingPlugin;
+import co.cask.cdap.internal.app.runtime.artifact.plugin.p5.PluginWithPojo;
+import co.cask.cdap.internal.app.runtime.artifact.plugin.p5.TestData;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
@@ -47,7 +55,10 @@ import co.cask.cdap.proto.artifact.PluginInfo;
 import co.cask.cdap.proto.artifact.PluginSummary;
 import co.cask.cdap.proto.metadata.MetadataRecord;
 import co.cask.cdap.proto.metadata.MetadataScope;
+import co.cask.common.http.HttpRequest;
+import co.cask.common.http.HttpRequests;
 import com.google.common.base.Charsets;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
@@ -73,7 +84,9 @@ import java.lang.reflect.Type;
 import java.net.HttpURLConnection;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -402,6 +415,119 @@ public class ArtifactHttpHandlerTest extends AppFabricTestBase {
   }
 
   @Test
+  public void testPluginWithEndpoints() throws Exception {
+    // add an app for plugins to extend
+    Id.Artifact wordCount1Id = Id.Artifact.from(Id.Namespace.DEFAULT, "wordcount", "1.0.0");
+    Assert.assertEquals(HttpResponseStatus.OK.getCode(),
+                        addAppArtifact(wordCount1Id, WordCountApp.class).getStatusLine().getStatusCode());
+
+    // add some plugins.
+    // plugins-3.0.0 extends wordcount[1.0.0,2.0.0)
+    Manifest manifest = new Manifest();
+    manifest.getMainAttributes().put(ManifestFields.EXPORT_PACKAGE, CallablePlugin.class.getPackage().getName());
+    Id.Artifact plugins3Id = Id.Artifact.from(Id.Namespace.DEFAULT, "plugins3", "1.0.0");
+    Set<ArtifactRange> plugins3Parents = Sets.newHashSet(new ArtifactRange(
+      Id.Namespace.DEFAULT, "wordcount", new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0")));
+    Assert.assertEquals(HttpResponseStatus.OK.getCode(),
+                        addPluginArtifact(plugins3Id, CallablePlugin.class, manifest,
+                                          plugins3Parents).getStatusLine().getStatusCode());
+
+    // test plugin with endpoint
+    Assert.assertEquals("hello",
+                         GSON.fromJson(callPluginMethod(plugins3Id, "interactive",
+                                          "CallablePlugin", "ping", "user",
+                                          ArtifactScope.USER, 200).getResponseBodyAsString(), String.class));
+
+    manifest = new Manifest();
+    manifest.getMainAttributes().put(ManifestFields.EXPORT_PACKAGE, CallingPlugin.class.getPackage().getName());
+    Id.Artifact plugins4Id = Id.Artifact.from(Id.Namespace.DEFAULT, "plugins4", "1.0.0");
+    Set<ArtifactRange> plugins4Parents = Sets.newHashSet(new ArtifactRange(
+      Id.Namespace.DEFAULT, "wordcount", new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0")));
+    Assert.assertEquals(HttpResponseStatus.OK.getCode(),
+                        addPluginArtifact(plugins4Id, CallingPlugin.class, manifest,
+                                          plugins4Parents).getStatusLine().getStatusCode());
+
+    // test plugin with endpoint having endpoint-context parameter
+    Assert.assertEquals("hi user",
+                        GSON.fromJson(callPluginMethod(plugins4Id, "interactive", "CallingPlugin", "ping", "user",
+                                         ArtifactScope.USER, 200).getResponseBodyAsString(), String.class));
+
+    // test plugin that accepts list of data and aggregates and returns result map
+    manifest = new Manifest();
+    manifest.getMainAttributes().put(ManifestFields.EXPORT_PACKAGE, PluginWithPojo.class.getPackage().getName());
+    Id.Artifact plugins5Id = Id.Artifact.from(Id.Namespace.DEFAULT, "aggregator", "1.0.0");
+    Set<ArtifactRange> plugins5Parents = Sets.newHashSet(new ArtifactRange(
+      Id.Namespace.DEFAULT, "wordcount", new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0")));
+    Assert.assertEquals(HttpResponseStatus.OK.getCode(),
+                        addPluginArtifact(plugins5Id, PluginWithPojo.class, manifest,
+                                          plugins5Parents).getStatusLine().getStatusCode());
+
+    // test plugin with endpoint having endpoint-context parameter
+    List<TestData> data = ImmutableList.of(new TestData(1, 10), new TestData(1, 20),
+                                           new TestData(3, 15), new TestData(4, 5), new TestData(3, 15));
+    Map<Long, Long> expectedResult = new HashMap<>();
+    expectedResult.put(1L, 30L);
+    expectedResult.put(3L, 30L);
+    expectedResult.put(4L, 5L);
+    String response = callPluginMethod(plugins5Id, "interactive", "aggregator", "aggregate",
+                                       GSON.toJson(data),
+                                       ArtifactScope.USER, 200).getResponseBodyAsString();
+    Assert.assertEquals(expectedResult,
+                        GSON.fromJson(response, new TypeToken<Map<Long, Long>>() { }.getType()));
+
+
+    // test calling a non-existent plugin method "bing"
+    callPluginMethod(plugins4Id, "interactive", "CallingPlugin", "bing", "user", ArtifactScope.USER, 404);
+
+
+    manifest = new Manifest();
+    manifest.getMainAttributes().put(ManifestFields.EXPORT_PACKAGE, InvalidPlugin.class.getPackage().getName());
+    Id.Artifact invalidPluginId = Id.Artifact.from(Id.Namespace.DEFAULT, "invalid", "1.0.0");
+    Set<ArtifactRange> invalidPluginParents = Sets.newHashSet(new ArtifactRange(
+      Id.Namespace.DEFAULT, "wordcount", new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0")));
+    Assert.assertEquals(HttpResponseStatus.BAD_REQUEST.getCode(),
+                        addPluginArtifact(invalidPluginId, InvalidPlugin.class, manifest,
+                                          invalidPluginParents).getStatusLine().getStatusCode());
+
+    // test adding plugin artifact which has endpoint method containing 3 params (invalid)
+    manifest = new Manifest();
+    manifest.getMainAttributes().put(ManifestFields.EXPORT_PACKAGE,
+                                     InvalidPluginMethodParams.class.getPackage().getName());
+    invalidPluginId = Id.Artifact.from(Id.Namespace.DEFAULT, "invalidParams", "1.0.0");
+    invalidPluginParents = Sets.newHashSet(new ArtifactRange(
+      Id.Namespace.DEFAULT, "wordcount", new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0")));
+    Assert.assertEquals(HttpResponseStatus.BAD_REQUEST.getCode(),
+                        addPluginArtifact(invalidPluginId, InvalidPluginMethodParams.class, manifest,
+                                          invalidPluginParents).getStatusLine().getStatusCode());
+
+    // test adding plugin artifact which has endpoint method containing 2 params
+    // but 2nd param is not EndpointPluginContext (invalid)
+    manifest = new Manifest();
+    manifest.getMainAttributes().put(ManifestFields.EXPORT_PACKAGE,
+                                     InvalidPluginMethodParamType.class.getPackage().getName());
+    invalidPluginId = Id.Artifact.from(Id.Namespace.DEFAULT, "invalidParamType", "1.0.0");
+    invalidPluginParents = Sets.newHashSet(new ArtifactRange(
+      Id.Namespace.DEFAULT, "wordcount", new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0")));
+    Assert.assertEquals(HttpResponseStatus.BAD_REQUEST.getCode(),
+                        addPluginArtifact(invalidPluginId, InvalidPluginMethodParamType.class, manifest,
+                                          invalidPluginParents).getStatusLine().getStatusCode());
+
+
+    // test adding plugin artifact which has endpoint methods containing 2 params
+    // but 2nd param is implementation and extensions of EndpointPluginContext, should succeed
+    manifest = new Manifest();
+    manifest.getMainAttributes().put(ManifestFields.EXPORT_PACKAGE,
+                                     PluginEndpointContextTestPlugin.class.getPackage().getName());
+    Id.Artifact validPluginId = Id.Artifact.from(Id.Namespace.DEFAULT, "extender", "1.0.0");
+    Set<ArtifactRange> validPluginParents = Sets.newHashSet(new ArtifactRange(
+      Id.Namespace.DEFAULT, "wordcount", new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0")));
+    Assert.assertEquals(HttpResponseStatus.OK.getCode(),
+                        addPluginArtifact(validPluginId, PluginEndpointContextTestPlugin.class, manifest,
+                                          validPluginParents).getStatusLine().getStatusCode());
+  }
+
+
+  @Test
   public void testGetPlugins() throws Exception {
     // add an app for plugins to extend
     Id.Artifact wordCount1Id = Id.Artifact.from(Id.Namespace.DEFAULT, "wordcount", "1.0.0");
@@ -419,14 +545,16 @@ public class ArtifactHttpHandlerTest extends AppFabricTestBase {
     Set<ArtifactRange> plugins1Parents = Sets.newHashSet(new ArtifactRange(
       Id.Namespace.DEFAULT, "wordcount", new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0")));
     Assert.assertEquals(HttpResponseStatus.OK.getCode(),
-      addPluginArtifact(pluginsId1, Plugin1.class, manifest, plugins1Parents).getStatusLine().getStatusCode());
+                        addPluginArtifact(pluginsId1, Plugin1.class, manifest,
+                                          plugins1Parents).getStatusLine().getStatusCode());
 
     // plugin-2.0.0 extends wordcount[1.0.0,3.0.0)
     Id.Artifact pluginsId2 = Id.Artifact.from(Id.Namespace.DEFAULT, "plugins", "2.0.0");
     Set<ArtifactRange> plugins2Parents = Sets.newHashSet(new ArtifactRange(
       Id.Namespace.DEFAULT, "wordcount", new ArtifactVersion("1.0.0"), new ArtifactVersion("3.0.0")));
     Assert.assertEquals(HttpResponseStatus.OK.getCode(),
-      addPluginArtifact(pluginsId2, Plugin1.class, manifest, plugins2Parents).getStatusLine().getStatusCode());
+                        addPluginArtifact(pluginsId2, Plugin1.class, manifest,
+                                          plugins2Parents).getStatusLine().getStatusCode());
 
     ArtifactSummary plugins1Artifact = new ArtifactSummary("plugins", "1.0.0");
     ArtifactSummary plugins2Artifact = new ArtifactSummary("plugins", "2.0.0");
@@ -518,7 +646,7 @@ public class ArtifactHttpHandlerTest extends AppFabricTestBase {
       return getArtifacts(namespace);
     }
     URL endpoint = getEndPoint(String.format("%s/namespaces/%s/artifacts?scope=%s",
-      Constants.Gateway.API_VERSION_3, namespace.getId(), scope.name())).toURL();
+                                             Constants.Gateway.API_VERSION_3, namespace.getId(), scope.name())).toURL();
     return getResults(endpoint, ARTIFACTS_TYPE);
   }
 
@@ -543,15 +671,16 @@ public class ArtifactHttpHandlerTest extends AppFabricTestBase {
     throws URISyntaxException, IOException {
 
     URL endpoint = getEndPoint(String.format("%s/namespaces/%s/artifacts/%s?scope=%s",
-      Constants.Gateway.API_VERSION_3, namespace.getId(), name, scope.name())).toURL();
+                                             Constants.Gateway.API_VERSION_3,
+                                             namespace.getId(), name, scope.name())).toURL();
     return getResults(endpoint, ARTIFACTS_TYPE);
   }
 
   // get /artifacts/{name}/versions/{version}
   private ArtifactInfo getArtifact(Id.Artifact artifactId) throws URISyntaxException, IOException {
     URL endpoint = getEndPoint(String.format("%s/namespaces/%s/artifacts/%s/versions/%s",
-      Constants.Gateway.API_VERSION_3, artifactId.getNamespace().getId(),
-      artifactId.getName(), artifactId.getVersion().getVersion()))
+                                             Constants.Gateway.API_VERSION_3, artifactId.getNamespace().getId(),
+                                             artifactId.getName(), artifactId.getVersion().getVersion()))
       .toURL();
 
     return getResults(endpoint, ArtifactInfo.class);
@@ -560,8 +689,8 @@ public class ArtifactHttpHandlerTest extends AppFabricTestBase {
   // get /artifacts/{name}/versions/{version}?scope={scope}
   private ArtifactInfo getArtifact(Id.Artifact artifactId, ArtifactScope scope) throws URISyntaxException, IOException {
     URL endpoint = getEndPoint(String.format("%s/namespaces/%s/artifacts/%s/versions/%s?scope=%s",
-      Constants.Gateway.API_VERSION_3, artifactId.getNamespace().getId(),
-      artifactId.getName(), artifactId.getVersion().getVersion(), scope.name()))
+                                             Constants.Gateway.API_VERSION_3, artifactId.getNamespace().getId(),
+                                             artifactId.getName(), artifactId.getVersion().getVersion(), scope.name()))
       .toURL();
 
     return getResults(endpoint, ArtifactInfo.class);
@@ -626,8 +755,9 @@ public class ArtifactHttpHandlerTest extends AppFabricTestBase {
   private Set<PluginInfo> getPluginInfos(Id.Artifact artifactId,
                                          String pluginType, String pluginName) throws URISyntaxException, IOException {
     URL endpoint = getEndPoint(String.format("%s/namespaces/%s/artifacts/%s/versions/%s/extensions/%s/plugins/%s",
-      Constants.Gateway.API_VERSION_3, artifactId.getNamespace().getId(),
-      artifactId.getName(), artifactId.getVersion().getVersion(), pluginType, pluginName))
+                                             Constants.Gateway.API_VERSION_3, artifactId.getNamespace().getId(),
+                                             artifactId.getName(),
+                                             artifactId.getVersion().getVersion(), pluginType, pluginName))
       .toURL();
 
     return getResults(endpoint, PLUGIN_INFOS_TYPE);
@@ -650,6 +780,27 @@ public class ArtifactHttpHandlerTest extends AppFabricTestBase {
       .toURL();
 
     return getResults(endpoint, PLUGIN_INFOS_TYPE);
+  }
+
+
+  private co.cask.common.http.HttpResponse callPluginMethod(
+    Id.Artifact plugins3Id, String pluginType, String pluginName, String pluginMethod,
+    String body, ArtifactScope scope, int expectedResponseCode) throws URISyntaxException, IOException {
+    URL endpoint = getEndPoint(
+      String.format("%s/namespaces/%s/artifacts/%s/versions/%s/plugintypes/%s/plugins/%s/methods/%s?scope=%s",
+                    Constants.Gateway.API_VERSION_3,
+                    plugins3Id.getNamespace().getId(),
+                    plugins3Id.getName(),
+                    plugins3Id.getVersion().getVersion(),
+                    pluginType,
+                    pluginName,
+                    pluginMethod,
+                    scope.name()))
+      .toURL();
+    HttpRequest request = HttpRequest.post(endpoint).withBody(body).build();
+    co.cask.common.http.HttpResponse response = HttpRequests.execute(request);
+    Assert.assertEquals(expectedResponseCode, response.getResponseCode());
+    return response;
   }
 
   // gets the contents from doing a get on the given url as the given type, or null if a 404 is returned

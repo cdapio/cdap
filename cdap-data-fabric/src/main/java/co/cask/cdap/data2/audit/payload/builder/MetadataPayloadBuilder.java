@@ -16,8 +16,8 @@
 
 package co.cask.cdap.data2.audit.payload.builder;
 
-import co.cask.cdap.proto.audit.payload.metadata.MetadataAuditRecord;
 import co.cask.cdap.proto.audit.payload.metadata.MetadataPayload;
+import co.cask.cdap.proto.metadata.Metadata;
 import co.cask.cdap.proto.metadata.MetadataRecord;
 import co.cask.cdap.proto.metadata.MetadataScope;
 
@@ -28,9 +28,9 @@ import java.util.Map;
  * Builder for {@link MetadataPayload}.
  */
 public class MetadataPayloadBuilder {
-  private final Map<MetadataScope, MetadataAuditRecord> previous = new HashMap<>();
-  private final Map<MetadataScope, MetadataAuditRecord> additions = new HashMap<>();
-  private final Map<MetadataScope, MetadataAuditRecord> deletions = new HashMap<>();
+  private final Map<MetadataScope, Metadata> previous = new HashMap<>();
+  private final Map<MetadataScope, Metadata> additions = new HashMap<>();
+  private final Map<MetadataScope, Metadata> deletions = new HashMap<>();
 
   /**
    * Add the previous value of metadata.
@@ -39,7 +39,7 @@ public class MetadataPayloadBuilder {
    * @return the builder object
    */
   public MetadataPayloadBuilder addPrevious(MetadataRecord record) {
-    previous.put(record.getScope(), new MetadataAuditRecord(record.getProperties(), record.getTags()));
+    previous.put(record.getScope(), new Metadata(record.getProperties(), record.getTags()));
     return this;
   }
 
@@ -50,7 +50,7 @@ public class MetadataPayloadBuilder {
    * @return the builder object
    */
   public MetadataPayloadBuilder addAdditions(MetadataRecord record) {
-    additions.put(record.getScope(), new MetadataAuditRecord(record.getProperties(), record.getTags()));
+    additions.put(record.getScope(), new Metadata(record.getProperties(), record.getTags()));
     return this;
   }
 
@@ -61,7 +61,7 @@ public class MetadataPayloadBuilder {
    * @return the builder object
    */
   public MetadataPayloadBuilder addDeletions(MetadataRecord record) {
-    deletions.put(record.getScope(), new MetadataAuditRecord(record.getProperties(), record.getTags()));
+    deletions.put(record.getScope(), new Metadata(record.getProperties(), record.getTags()));
     return this;
   }
 

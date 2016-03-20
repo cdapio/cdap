@@ -21,21 +21,28 @@ import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.util.RESTClient;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.UnauthenticatedException;
+import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.WorkflowTokenDetail;
 import co.cask.cdap.proto.WorkflowTokenNodeDetail;
 import co.cask.cdap.proto.codec.WorkflowTokenDetailCodec;
 import co.cask.cdap.proto.codec.WorkflowTokenNodeDetailCodec;
+import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpResponse;
 import co.cask.common.http.ObjectResponse;
+import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.List;
+import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
@@ -209,5 +216,44 @@ public class WorkflowClient {
       output.append(String.format("?key=%s", key));
     }
     return output.toString();
+  }
+
+  /**
+   * Get the local datasets associated with the Workflow run.
+   * @param workflowRunId run id for the Workflow
+   * @return the map of local datasets to the {@link DatasetSpecificationSummary}
+   * @throws IOException if the error occurred during executing the http request
+   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   * @throws NotFoundException if the workflow with given runid not found
+   */
+  public Map<String, DatasetSpecificationSummary> getWorkflowLocalDatasets(ProgramRunId workflowRunId)
+    throws IOException, UnauthenticatedException, NotFoundException {
+    HttpResponse response = restClient.execute(HttpMethod.GET, getWorkflowLocalDatasetURL(workflowRunId),
+                                               config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND);
+
+    if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
+      throw new NotFoundException(workflowRunId);
+    }
+
+    return ObjectResponse.fromJsonBody(response, new TypeToken<Map<String, DatasetSpecificationSummary>>() { })
+      .getResponseObject();
+  }
+
+  public void deleteWorkflowLocalDatasets(ProgramRunId workflowRunId)
+    throws IOException, UnauthenticatedException, NotFoundException {
+    HttpResponse response = restClient.execute(HttpMethod.DELETE, getWorkflowLocalDatasetURL(workflowRunId),
+                                               config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND);
+
+    if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
+      throw new NotFoundException(workflowRunId);
+    }
+  }
+
+  private URL getWorkflowLocalDatasetURL(ProgramRunId workflowRunId) throws MalformedURLException {
+    String path = String.format("apps/%s/workflows/%s/runs/%s/localdatasets", workflowRunId.getApplication(),
+                                workflowRunId.getProgram(), workflowRunId.getRun());
+
+    NamespaceId namespaceId = workflowRunId.getParent().getNamespaceId();
+    return config.resolveNamespacedURLV3(namespaceId.toId(), path);
   }
 }

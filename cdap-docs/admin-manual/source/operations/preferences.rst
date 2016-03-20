@@ -19,7 +19,7 @@ Order of Preferences
 
 The overriding order of preferences is (from lowest to highest precedence):
 
-CDAP Instance < Namespace < Application < Program < Runtime Arguments (passed in during start of the program)
+  CDAP Instance < Namespace < Application < Program < Runtime Arguments *(passed in during start of the program)*
 
 **Example:** A configuration preference ``SAMPLE_KEY`` is set to 20 at the namespace level and is set to 10 at the
 program level. When the program is started, the value set at the program level overrides the value set at
@@ -89,6 +89,17 @@ or provide Twitter API credentials::
       collector.start();
     }
 
+System-populated Runtime Arguments
+==================================
+
+On each program run, CDAP populates the runtime arguments with pre-defined values (currently, one):
+
+- ``logical.start.time``: the start time of the run as a timestamp in milliseconds.
+  If the run was started by a schedule, this will be equal to the trigger time for the schedule.
+  For example, if the schedule was set to run at midnight on Jan 1, 2016 UTC, the logical start time would be ``1451606400000``.
+
+If an argument is passed in to start a program run, it will override the system-populated value.
+
 Scoped Runtime Arguments for Workflow
 =====================================
 When a workflow is configured, you may want to pass specific runtime arguments to the different programs
@@ -119,7 +130,7 @@ the argument will be set for all programs that use ``myTable``. In order to set 
 program ``myMR``, the dataset argument can be nested inside the program scope as
 ``mapreduce.myMR.dataset.myTable.cache.seconds=30``.
 
-Examples of Using Preferences
+Examples of using Preferences
 =============================
 Other examples of using preferences are in these CDAP examples:
 

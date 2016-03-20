@@ -22,15 +22,11 @@ import co.cask.cdap.api.data.schema.Schema;
  * Constants used in ETL Applications.
  */
 public final class Constants {
-  public static final String BATCH_SOURCE_TYPE = "batchsource";
-  public static final String BATCH_SINK_TYPE = "batchsink";
-  public static final String REALTIME_SOURCE_TYPE = "realtimesource";
-  public static final String REALTIME_SINK_TYPE = "realtimesink";
-  public static final String TRANSFORM_TYPE = "transform";
-
   public static final String ID_SEPARATOR = ":";
   public static final String PIPELINEID = "pipeline";
+  public static final String PIPELINE_SPEC_KEY = "pipeline.spec";
   public static final String STAGE_LOGGING_ENABLED = "stage.logging.enabled";
+  public static final String CONNECTOR_TYPE = "connector";
   public static final Schema ERROR_SCHEMA = Schema.recordOf(
     "error",
     Schema.Field.of(ErrorDataset.ERRCODE, Schema.of(Schema.Type.INT)),
@@ -41,50 +37,6 @@ public final class Constants {
 
   private Constants() {
     throw new AssertionError("Suppress default constructor for noninstantiability");
-  }
-
-  /**
-   * Constants related to Source.
-   */
-  public static final class Source {
-    public static final String PLUGINTYPE = "source";
-
-    private Source() {
-      throw new AssertionError("Suppress default constructor for noninstantiability");
-    }
-  }
-
-  /**
-   * Constants related to Sink.
-   */
-  public static final class Sink {
-    public static final String PLUGINTYPE = "sink";
-
-    private Sink() {
-      throw new AssertionError("Suppress default constructor for noninstantiability");
-    }
-  }
-
-  /**
-   * Constants related to Transform.
-   */
-  public static final class Transform {
-    public static final String PLUGINTYPE = "transform";
-
-    private Transform() {
-      throw new AssertionError("Suppress default constructor for noninstantiability");
-    }
-  }
-
-  /**
-   * Constants related to Realtime ETL Applications.
-   */
-  public static final class Realtime {
-    public static final String UNIQUE_ID = "uniqueid";
-
-    private Realtime() {
-      throw new AssertionError("Suppress default constructor for noninstantiability");
-    }
   }
 
   /**

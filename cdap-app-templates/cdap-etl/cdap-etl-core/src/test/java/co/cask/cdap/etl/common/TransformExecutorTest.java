@@ -21,6 +21,7 @@ import co.cask.cdap.etl.api.InvalidEntry;
 import co.cask.cdap.etl.api.Transform;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -42,7 +43,7 @@ public class TransformExecutorTest {
                                                       new ArrayList<String>()));
 
     TransformExecutor executor =
-      new TransformExecutor(transformationMap, ImmutableList.of("sink"));
+      new TransformExecutor(transformationMap, ImmutableSet.of("sink"));
     TransformResponse transformResponse = executor.runOneIteration(1d);
     Map<String, Collection<Object>> sinkResult = transformResponse.getSinksResults();
     Assert.assertTrue(sinkResult.containsKey("sink"));
@@ -75,7 +76,7 @@ public class TransformExecutorTest {
                                                        new DefaultStageMetrics(mockMetrics, "sink2"),
                                                        ImmutableList.<String>of()));
 
-    TransformExecutor<Integer> executor = new TransformExecutor<>(transformationMap, ImmutableList.of("transform1"));
+    TransformExecutor<Integer> executor = new TransformExecutor<>(transformationMap, ImmutableSet.of("transform1"));
 
     TransformResponse transformResponse = executor.runOneIteration(1);
 
@@ -166,7 +167,7 @@ public class TransformExecutorTest {
 
 
     TransformExecutor<Integer> executor = new TransformExecutor<>(transformationMap,
-                                                                  ImmutableList.of("conversion"));
+                                                                  ImmutableSet.of("conversion"));
 
     TransformResponse transformResponse = executor.runOneIteration(200);
     assertResults(transformResponse.getSinksResults(), ImmutableMap.of("sink1", 3, "sink2", 2, "sink3", 3));
@@ -219,7 +220,7 @@ public class TransformExecutorTest {
 
 
     TransformExecutor<Double> executor = new TransformExecutor<>(transformationMap,
-                                                                 ImmutableList.of("filter1", "filter2"));
+                                                                 ImmutableSet.of("filter1", "filter2"));
 
     executor.runOneIteration(200d);
     executor.runOneIteration(2000d);

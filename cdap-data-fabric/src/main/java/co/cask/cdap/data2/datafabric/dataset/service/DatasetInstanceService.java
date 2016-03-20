@@ -27,6 +27,8 @@ import co.cask.cdap.common.NamespaceNotFoundException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.data2.audit.AuditPublisher;
+import co.cask.cdap.data2.audit.AuditPublishers;
 import co.cask.cdap.data2.datafabric.dataset.AbstractDatasetProvider;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.datafabric.dataset.instance.DatasetInstanceManager;
@@ -40,6 +42,8 @@ import co.cask.cdap.proto.DatasetInstanceConfiguration;
 import co.cask.cdap.proto.DatasetMeta;
 import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.audit.AuditPayload;
+import co.cask.cdap.proto.audit.AuditType;
 import co.cask.cdap.store.NamespaceStore;
 import co.cask.tephra.TransactionExecutorFactory;
 import com.google.common.collect.ImmutableList;
@@ -68,6 +72,8 @@ public class DatasetInstanceService {
   private final UsageRegistry usageRegistry;
   private final NamespaceStore nsStore;
 
+  private AuditPublisher auditPublisher;
+
   @Inject
   public DatasetInstanceService(DatasetTypeManager implManager, DatasetInstanceManager instanceManager,
                                 DatasetOpExecutor opExecutorClient, ExploreFacade exploreFacade, CConfiguration conf,
@@ -94,6 +100,12 @@ public class DatasetInstanceService {
     });
     this.nsStore = nsStore;
     this.allowDatasetUncheckedUpgrade = conf.getBoolean(Constants.Dataset.DATASET_UNCHECKED_UPGRADE);
+  }
+
+  @SuppressWarnings("unused")
+  @Inject(optional = true)
+  public void setAuditPublisher(AuditPublisher auditPublisher) {
+    this.auditPublisher = auditPublisher;
   }
 
   /**
@@ -207,6 +219,7 @@ public class DatasetInstanceService {
                                                           .addAll(props.getProperties())
                                                           .build());
     instanceManager.add(namespace, spec);
+    publishAudit(newInstance, AuditType.CREATE);
 
     // Enable explore
     enableExplore(newInstance, props);
@@ -261,6 +274,8 @@ public class DatasetInstanceService {
     enableExplore(instance, creationProperties);
 
     //caling admin upgrade, after updating specification
+    // Note: audit information for upgrade is published in executeAdmin() method. Since executeAdmin() method can
+    // be called directly too.
     executeAdmin(instance, "upgrade");
   }
 
@@ -281,6 +296,7 @@ public class DatasetInstanceService {
     }
     LOG.info("Deleting dataset {}.{}", instance.getNamespaceId(), instance.getId());
     dropDataset(instance, spec);
+    publishAudit(instance, AuditType.DELETE);
   }
 
   /**
@@ -306,9 +322,11 @@ public class DatasetInstanceService {
         break;
       case "truncate":
         opExecutorClient.truncate(instance);
+        publishAudit(instance, AuditType.TRUNCATE);
         break;
       case "upgrade":
         opExecutorClient.upgrade(instance);
+        publishAudit(instance, AuditType.UPDATE);
         break;
       default:
         throw new HandlerException(HttpResponseStatus.NOT_FOUND, "Invalid admin operation: " + method);
@@ -398,5 +416,10 @@ public class DatasetInstanceService {
         throw new NamespaceNotFoundException(namespace);
       }
     }
+  }
+
+  private void publishAudit(Id.DatasetInstance datasetInstance, AuditType auditType) {
+    // TODO: Add properties to Audit Payload (CDAP-5220)
+    AuditPublishers.publishAudit(auditPublisher, datasetInstance, auditType, AuditPayload.EMPTY_PAYLOAD);
   }
 }

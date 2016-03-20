@@ -22,6 +22,8 @@ import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiatorFactory;
 import co.cask.cdap.data.runtime.DataSetsModules;
+import co.cask.cdap.data2.audit.AuditPublisher;
+import co.cask.cdap.data2.audit.AuditPublishers;
 import co.cask.cdap.data2.datafabric.dataset.type.DatasetClassLoaderProvider;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.ForwardingDatasetFramework;
@@ -49,14 +51,23 @@ public class LineageWriterDatasetFramework extends ForwardingDatasetFramework im
   private final MetadataStore metadataStore;
   private final SystemDatasetInstantiatorFactory dsInstantiatorFactory;
 
+  private AuditPublisher auditPublisher;
+
   @Inject
-  LineageWriterDatasetFramework(@Named(DataSetsModules.BASIC_DATASET_FRAMEWORK) DatasetFramework datasetFramework,
-                                LineageWriter lineageWriter, MetadataStore metadataStore,
-                                LocationFactory locationFactory, CConfiguration cConf) {
+  public LineageWriterDatasetFramework(
+    @Named(DataSetsModules.BASIC_DATASET_FRAMEWORK) DatasetFramework datasetFramework,
+    LineageWriter lineageWriter, MetadataStore metadataStore,
+    LocationFactory locationFactory, CConfiguration cConf) {
     super(datasetFramework);
     this.lineageWriter = lineageWriter;
     this.metadataStore = metadataStore;
     this.dsInstantiatorFactory = new SystemDatasetInstantiatorFactory(locationFactory, datasetFramework, cConf);
+  }
+
+  @SuppressWarnings("unused")
+  @Inject(optional = true)
+  public void setAuditPublisher(AuditPublisher auditPublisher) {
+    this.auditPublisher = auditPublisher;
   }
 
   @Override
@@ -160,6 +171,7 @@ public class LineageWriterDatasetFramework extends ForwardingDatasetFramework im
     if (dataset != null && programContext.getRun() != null) {
       lineageWriter.addAccess(programContext.getRun(), datasetInstanceId, AccessType.UNKNOWN,
                               programContext.getComponentId());
+      AuditPublishers.publishAccess(auditPublisher, datasetInstanceId, AccessType.UNKNOWN, programContext.getRun());
     }
   }
 }

@@ -67,6 +67,9 @@ class LeftPanelController {
     this.PluginActionsFactory.fetchSinks(params);
     this.PluginActionsFactory.fetchTemplates(params);
 
+    $scope.$on('$destroy', ()=> {
+      this.PluginActionsFactory.resetLeftPanelStore();
+    });
   }
 
   onLeftSidePanelItemClicked(event, node) {

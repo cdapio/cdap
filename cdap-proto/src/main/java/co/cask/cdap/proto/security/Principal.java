@@ -54,14 +54,14 @@ public class Principal {
     if (this == o) {
       return true;
     }
-    if (o == null || getClass() != o.getClass()) {
+    // check here for instance not the classes so that it can match Role class which extends Principal
+    if (!(o instanceof Principal)) {
       return false;
     }
 
     Principal principal = (Principal) o;
 
     return name.equals(principal.name) && type == principal.type;
-
   }
 
   @Override

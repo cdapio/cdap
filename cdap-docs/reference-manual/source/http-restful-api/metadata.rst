@@ -23,7 +23,7 @@ The HTTP RESTful API is divided into these sections:
 
 - :ref:`metadata properties <http-restful-api-metadata-properties>`
 - :ref:`metadata tags <http-restful-api-metadata-tags>`
-- :ref:`searching properties <http-restful-api-metadata-searching>`
+- :ref:`searching metadata <http-restful-api-metadata-searching>`
 - :ref:`viewing lineage <http-restful-api-metadata-lineage>`
 - :ref:`metadata for a run of a program <http-restful-api-metadata-run>`
 
@@ -491,40 +491,60 @@ or, for a particular view of a stream::
 
 Searching for Metadata
 ======================
-CDAP supports searching metadata of entities. To find which applications, datasets, or streams have a particular
+CDAP supports searching metadata of entities. To find which applications, datasets, streams, etc. have a particular
 metadata property or metadata tag, submit an HTTP GET request::
 
   GET <base-url>/namespaces/<namespace>/metadata/search?query=<term>&target=<entity-type>
 
-Entities with the specified terms are returned as list of entity IDs::
+Entities that match the specified query and entity type are returned in the body of the response in JSON format::
 
   [
-      {
-          "entityId": {
-              "id": {
-                  "applicationId": "PurchaseHistory",
-                  "namespace": {
-                      "id": "default"
-                  }
+     {
+        "entityId":{
+           "id":{
+              "applicationId":"PurchaseHistory",
+              "namespace":{
+                 "id":"default"
+              }
+           },
+           "type":"application"
+        },
+        "metadata":{
+           "SYSTEM":{
+              "properties":{
+                 "Flow:PurchaseFlow":"PurchaseFlow",
+                 "MapReduce:PurchaseHistoryBuilder":"PurchaseHistoryBuilder"
               },
-              "type": "application"
-          }
-      },
-      {
-          "entityId": {
-              "id": {
-                  "application": {
-                      "applicationId": "PurchaseHistory",
-                      "namespace": {
-                          "id": "default"
-                      }
-                  },
-                  "id": "PurchaseFlow",
-                  "type": "Flow"
+              "tags":[
+                 "Purchase",
+                 "PurchaseHistory"
+              ]
+           }
+        }
+     },
+     {
+        "entityId":{
+           "id":{
+              "instanceId":"history",
+              "namespace":{
+                 "id":"default"
+              }
+           },
+           "type":"datasetinstance"
+        },
+        "metadata":{
+           "SYSTEM":{
+              "properties":{
+                 "type":"co.cask.cdap.examples.purchase.PurchaseHistoryStore"
               },
-              "type": "program"
-          }
-      }
+              "tags":[
+                 "history",
+                 "explore",
+                 "batch"
+              ]
+           }
+        }
+     }
   ]
 
 .. list-table::
@@ -536,7 +556,7 @@ Entities with the specified terms are returned as list of entity IDs::
    * - ``<namespace>``
      - Namespace ID
    * - ``<entity-type>``
-     - One of ``artifact``, ``app``, ``dataset``, ``program``, ``stream`` or ``view``
+     - One of ``all``, ``artifact``, ``app``, ``dataset``, ``program``, ``stream`` or ``view``
    * - ``<term>``
      - Query term, as described below. Query terms are case-insensitive
 
@@ -549,8 +569,7 @@ Entities with the specified terms are returned as list of entity IDs::
    * - Status Codes
      - Description
    * - ``200 OK``
-     - Entity IDs of entities with the metadata properties specified were returned as a
-       list of strings in the body of the response
+     - Entity ID and metadata of entities that match the query and entity type are returned in the body of the response
 
 .. rubric:: Query Terms
 
@@ -755,7 +774,7 @@ Retrieving Metadata for a Program Run
 At every run of a program, the metadata associated with the program, the application it is part of, and any datasets
 and streams used by the program run are recorded. To retrieve the metadata for a program run, submit an HTTP GET request::
 
-  GET <base-url>/namespaces/<namespace>/apps/<app-id>/<program-type>/<program-id>/runs/<run-id>/metadata/tags
+  GET <base-url>/namespaces/<namespace>/apps/<app-id>/<program-type>/<program-id>/runs/<run-id>/metadata
 
 with the metadata returned as a JSON string in the return body::
 

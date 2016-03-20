@@ -16,6 +16,7 @@
 
 package co.cask.cdap.gateway.handlers;
 
+import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.artifact.ArtifactScope;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.plugin.PluginClass;
@@ -25,6 +26,7 @@ import co.cask.cdap.common.ArtifactNotFoundException;
 import co.cask.cdap.common.ArtifactRangeNotFoundException;
 import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.NamespaceNotFoundException;
+import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.conf.PluginClassDeserializer;
@@ -34,7 +36,9 @@ import co.cask.cdap.internal.app.runtime.artifact.ArtifactDescriptor;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactDetail;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.artifact.WriteConflictException;
+import co.cask.cdap.internal.app.runtime.plugin.PluginEndpoint;
 import co.cask.cdap.internal.app.runtime.plugin.PluginNotExistsException;
+import co.cask.cdap.internal.app.runtime.plugin.PluginService;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.artifact.ApplicationClassInfo;
@@ -71,6 +75,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.List;
@@ -114,6 +119,7 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
   private final ArtifactRepository artifactRepository;
   private final NamespaceAdmin namespaceAdmin;
   private final File tmpDir;
+  private final CConfiguration cConf;
 
   @Inject
   public ArtifactHttpHandler(CConfiguration cConf,
@@ -121,7 +127,8 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
     this.namespaceAdmin = namespaceAdmin;
     this.artifactRepository = artifactRepository;
     this.tmpDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
-      cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
+                           cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
+    this.cConf = cConf;
   }
 
   @POST
@@ -133,7 +140,7 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
     } catch (IOException e) {
       LOG.error("Error while refreshing system artifacts.", e);
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR,
-        "There was an IO error while refreshing system artifacts, please try again.");
+                           "There was an IO error while refreshing system artifacts, please try again.");
     } catch (WriteConflictException e) {
       LOG.error("Error while refreshing system artifacts.", e);
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
@@ -403,7 +410,7 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
     } catch (IOException e) {
       LOG.error("Exception looking up plugins for artifact {}", artifactId, e);
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR,
-        "Error reading plugins for the artifact from the store.");
+                           "Error reading plugins for the artifact from the store.");
     }
   }
 
@@ -440,13 +447,57 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
     } catch (IOException e) {
       LOG.error("Exception looking up plugins for artifact {}", artifactId, e);
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR,
-        "Error reading plugins for the artifact from the store.");
+                           "Error reading plugins for the artifact from the store.");
+    }
+  }
+
+  @Beta
+  @POST
+  @Path("/namespaces/{namespace-id}/artifacts/{artifact-name}/" +
+    "versions/{artifact-version}/plugintypes/{plugin-type}/plugins/{plugin-name}/methods/{plugin-method}")
+  public void callArtifactPluginMethod(HttpRequest request, HttpResponder responder,
+                                       @PathParam("namespace-id") String namespaceId,
+                                       @PathParam("artifact-name") String artifactName,
+                                       @PathParam("artifact-version") String artifactVersion,
+                                       @PathParam("plugin-name") String pluginName,
+                                       @PathParam("plugin-type") String pluginType,
+                                       @PathParam("plugin-method") String methodName,
+                                       @QueryParam("scope") @DefaultValue("user") String scope)
+    throws NotFoundException, BadRequestException, IOException, ClassNotFoundException, IllegalAccessException {
+
+    String requestBody = request.getContent().toString(Charsets.UTF_8);
+    Id.Namespace namespace = Id.Namespace.from(namespaceId);
+    Id.Namespace artifactNamespace = validateAndGetScopedNamespace(namespace, scope);
+    Id.Artifact artifactId = validateAndGetArtifactId(artifactNamespace, artifactName, artifactVersion);
+
+    if (requestBody.isEmpty()) {
+      throw new BadRequestException("Request body is used as plugin method parameter, " +
+                                      "Received empty request body.");
+    }
+
+    try (PluginService pluginService = new PluginService(artifactRepository, tmpDir, cConf)) {
+      PluginEndpoint pluginEndpoint =
+        pluginService.getPluginEndpoint(namespace, artifactId, pluginType, pluginName, methodName);
+
+      Object response = pluginEndpoint.invoke(GSON.fromJson(requestBody, pluginEndpoint.getMethodParameterType()));
+      responder.sendString(HttpResponseStatus.OK, GSON.toJson(response));
+    } catch (JsonSyntaxException e) {
+      responder.sendString(HttpResponseStatus.BAD_REQUEST,
+                           "Unable to deserialize request body to method parameter type");
+    } catch (InvocationTargetException e) {
+      if (e.getCause() instanceof javax.ws.rs.NotFoundException) {
+        throw new NotFoundException(e.getCause());
+      } else if (e.getCause() instanceof javax.ws.rs.BadRequestException) {
+        throw new BadRequestException(e.getCause());
+      } else {
+        responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Error while invoking plugin method");
+      }
     }
   }
 
   @GET
   @Path("/namespaces/{namespace-id}/artifacts/{artifact-name}/" +
-        "versions/{artifact-version}/extensions/{plugin-type}/plugins/{plugin-name}")
+    "versions/{artifact-version}/extensions/{plugin-type}/plugins/{plugin-name}")
   public void getArtifactPlugin(HttpRequest request, HttpResponder responder,
                                 @PathParam("namespace-id") String namespaceId,
                                 @PathParam("artifact-name") String artifactName,
@@ -481,7 +532,7 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
     } catch (IOException e) {
       LOG.error("Exception looking up plugins for artifact {}", artifactId, e);
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR,
-        "Error reading plugins for the artifact from the store.");
+                           "Error reading plugins for the artifact from the store.");
     }
   }
 
@@ -496,11 +547,11 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
       if (scope == null) {
         Id.Namespace namespace = validateAndGetNamespace(namespaceId);
         responder.sendJson(HttpResponseStatus.OK, artifactRepository.getApplicationClasses(namespace, true),
-          APPCLASS_SUMMARIES_TYPE, GSON);
+                           APPCLASS_SUMMARIES_TYPE, GSON);
       } else {
         Id.Namespace namespace = validateAndGetScopedNamespace(Id.Namespace.from(namespaceId), scope);
         responder.sendJson(HttpResponseStatus.OK, artifactRepository.getApplicationClasses(namespace, false),
-          APPCLASS_SUMMARIES_TYPE, GSON);
+                           APPCLASS_SUMMARIES_TYPE, GSON);
       }
     } catch (IOException e) {
       LOG.error("Error getting app classes for namespace {}.", namespaceId, e);
@@ -521,11 +572,11 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
 
     try {
       responder.sendJson(HttpResponseStatus.OK, artifactRepository.getApplicationClasses(namespace, className),
-        APPCLASS_INFOS_TYPE, GSON);
+                         APPCLASS_INFOS_TYPE, GSON);
     } catch (IOException e) {
       LOG.error("Error getting app classes for namespace {}.", namespaceId, e);
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR,
-        "Error reading app class information from store, please try again.");
+                           "Error reading app class information from store, please try again.");
     }
   }
 
@@ -584,11 +635,11 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
             responder.sendString(HttpResponseStatus.CONFLICT, e.getMessage());
           } catch (WriteConflictException e) {
             responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR,
-              "Conflict while writing artifact, please try again.");
+                                 "Conflict while writing artifact, please try again.");
           } catch (IOException e) {
             LOG.error("Exception while trying to write artifact {}-{}.", artifactName, artifactVersion, e);
             responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR,
-              "Error performing IO while writing artifact.");
+                                 "Error performing IO while writing artifact.");
           } catch (BadRequestException e) {
             responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
           }
@@ -710,7 +761,7 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
           range = ArtifactRange.parse(parent);
           // only support extending an artifact that is in the same namespace, or system namespace
           if (!range.getNamespace().equals(Id.Namespace.SYSTEM) &&
-              !range.getNamespace().equals(namespace)) {
+            !range.getNamespace().equals(namespace)) {
             throw new BadRequestException(
               String.format("Parent artifact %s must be in the same namespace or a system artifact.", parent));
           }

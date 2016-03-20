@@ -18,6 +18,7 @@ package co.cask.cdap.proto.audit.payload.metadata;
 
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.proto.audit.AuditPayload;
+import co.cask.cdap.proto.metadata.Metadata;
 import co.cask.cdap.proto.metadata.MetadataScope;
 
 import java.util.Map;
@@ -28,27 +29,27 @@ import java.util.Objects;
  */
 @Beta
 public class MetadataPayload extends AuditPayload {
-  private final Map<MetadataScope, MetadataAuditRecord> previous;
-  private final Map<MetadataScope, MetadataAuditRecord> additions;
-  private final Map<MetadataScope, MetadataAuditRecord> deletions;
+  private final Map<MetadataScope, Metadata> previous;
+  private final Map<MetadataScope, Metadata> additions;
+  private final Map<MetadataScope, Metadata> deletions;
 
-  public MetadataPayload(Map<MetadataScope, MetadataAuditRecord> previous,
-                         Map<MetadataScope, MetadataAuditRecord> additions,
-                         Map<MetadataScope, MetadataAuditRecord> deletions) {
+  public MetadataPayload(Map<MetadataScope, Metadata> previous,
+                         Map<MetadataScope, Metadata> additions,
+                         Map<MetadataScope, Metadata> deletions) {
     this.previous = previous;
     this.additions = additions;
     this.deletions = deletions;
   }
 
-  public Map<MetadataScope, MetadataAuditRecord> getPrevious() {
+  public Map<MetadataScope, Metadata> getPrevious() {
     return previous;
   }
 
-  public Map<MetadataScope, MetadataAuditRecord> getAdditions() {
+  public Map<MetadataScope, Metadata> getAdditions() {
     return additions;
   }
 
-  public Map<MetadataScope, MetadataAuditRecord> getDeletions() {
+  public Map<MetadataScope, Metadata> getDeletions() {
     return deletions;
   }
 

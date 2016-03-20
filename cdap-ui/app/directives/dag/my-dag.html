@@ -112,7 +112,7 @@
                  ng-click="MyDAGController.onNodeDelete($event, node)"></div>
             <div class="icon fa {{node.icon}}"></div>
           </div>
-          <div class="plugin-name" ng-bind="node.plugin.label || node.name | myEllipsis: 25"></div>
+          <div class="plugin-name" ng-bind="node.plugin.label | myEllipsis: 25"></div>
         </div>
 
         <div ng-repeat="comment in MyDAGController.comments"

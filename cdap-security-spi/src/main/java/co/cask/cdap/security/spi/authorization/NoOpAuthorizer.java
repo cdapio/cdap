@@ -19,6 +19,8 @@ package co.cask.cdap.security.spi.authorization;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
+import co.cask.cdap.proto.security.Privilege;
+import co.cask.cdap.proto.security.Role;
 
 import java.util.Set;
 
@@ -44,5 +46,40 @@ public class NoOpAuthorizer implements Authorizer {
   @Override
   public void revoke(EntityId entity) {
     //no-op
+  }
+
+  @Override
+  public void createRole(Role role) {
+    //no-op
+  }
+
+  @Override
+  public void dropRole(Role role) {
+    //no-op
+  }
+
+  @Override
+  public void addRoleToPrincipal(Role role, Principal principal) {
+    //no-op
+  }
+
+  @Override
+  public void removeRoleFromPrincipal(Role role, Principal principal) {
+    //no-op
+  }
+
+  @Override
+  public Set<Role> listRoles(Principal principal) {
+    return null;
+  }
+
+  @Override
+  public Set<Role> listAllRoles() {
+    return null;
+  }
+
+  @Override
+  public Set<Privilege> listPrivileges(Principal principal) {
+    return null;
   }
 }

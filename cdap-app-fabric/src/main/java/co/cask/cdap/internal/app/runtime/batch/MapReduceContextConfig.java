@@ -57,7 +57,6 @@ public final class MapReduceContextConfig {
   private static final Gson GSON = new Gson();
 
   private static final String HCONF_ATTR_RUN_ID = "hconf.program.run.id";
-  private static final String HCONF_ATTR_LOGICAL_START_TIME = "hconf.program.logical.start.time";
   private static final String HCONF_ATTR_WORKFLOW_INFO = "hconf.program.workflow.info";
   private static final String HCONF_ATTR_PLUGINS = "hconf.program.plugins.map";
   private static final String HCONF_ATTR_ARGS = "hconf.program.args";
@@ -88,8 +87,7 @@ public final class MapReduceContextConfig {
   public void set(BasicMapReduceContext context, CConfiguration conf, Transaction tx, URI programJarURI,
                   Map<String, String> localizedUserResources) {
     setRunId(context.getRunId().getId());
-    setLogicalStartTime(context.getLogicalStartTime());
-    setWorkflowProgramInfo(context.getWorkflowProramInfo());
+    setWorkflowProgramInfo(context.getWorkflowProgramInfo());
     setPlugins(context.getPlugins());
     setArguments(context.getRuntimeArguments());
     setProgramJarURI(programJarURI);
@@ -120,20 +118,6 @@ public final class MapReduceContextConfig {
    */
   public RunId getRunId() {
     return RunIds.fromString(hConf.get(HCONF_ATTR_RUN_ID));
-  }
-
-  private void setLogicalStartTime(long startTime) {
-    hConf.setLong(HCONF_ATTR_LOGICAL_START_TIME, startTime);
-  }
-
-  /**
-   * Returns the logical start time for the MapReduce program.
-   */
-  public long getLogicalStartTime() {
-    long startTime = hConf.getLong(HCONF_ATTR_LOGICAL_START_TIME, -1L);
-    // It shouldn't happen
-    Preconditions.checkArgument(startTime >= 0, "Logical start time is not present.");
-    return startTime;
   }
 
   private void setWorkflowProgramInfo(@Nullable WorkflowProgramInfo info) {

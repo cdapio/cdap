@@ -19,12 +19,30 @@ package co.cask.cdap.security.spi.authorization;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
+import co.cask.cdap.proto.security.Privilege;
+import co.cask.cdap.proto.security.Role;
 
+import java.util.Properties;
 import java.util.Set;
+import java.util.jar.Attributes;
 
 /**
  * Interface to grant/revoke {@link Principal principals} authorization for {@link Action actions} on
- * {@link EntityId CDAP entities}.
+ * {@link EntityId CDAP entities}. Authorization extensions must implement this interface to delegate authorization
+ * to appropriate authorization backends. The contract with Authorization extensions is as below:
+ *
+ * <ul>
+ *   <li>Authorization is enabled setting the parameter {@code security.authorization.enabled} to true in
+ *   {@code cdap-site.xml}.</li>
+ *   <li>The path to the extension jar bundled with all its dependencies must be specified by
+ *   {@code security.authorization.extension.jar.path} in cdap-site.xml</li>
+ *   <li>The extension jar must contain a class that implements {@link Authorizer}. This class must be specified as
+ *   the {@link Attributes.Name#MAIN_CLASS} in the extension jar's manifest file.</li>
+ *   <li>The contract with the class that implements {@link Authorizer} is that it must have a public constructor that
+ *   accepts a single {@link Properties} object as parameter. This constructor is invoked with a {@link Properties}
+ *   object that is populated with all configuration settings from {@code cdap-site.xml} that have keys with the prefix
+ *   {@code security.authorization.extension.config}.</li>
+ * </ul>
  */
 public interface Authorizer {
   /**
@@ -42,7 +60,7 @@ public interface Authorizer {
    * Grants a {@link Principal} authorization to perform a set of {@link Action actions} on an {@link EntityId}.
    *
    * @param entity the {@link EntityId} to whom {@link Action actions} are to be granted
-   * @param principal the {@link Principal} that performs the actions. This could be a user, group or a role
+   * @param principal the {@link Principal} that performs the actions. This could be a user, or role
    * @param actions the set of {@link Action actions} to grant.
    */
   void grant(EntityId entity, Principal principal, Set<Action> actions);
@@ -52,7 +70,7 @@ public interface Authorizer {
    * an {@link EntityId}.
    *
    * @param entity the {@link EntityId} whose {@link Action actions} are to be revoked
-   * @param principal the {@link Principal} that performs the actions. This could be a user, group or a role
+   * @param principal the {@link Principal} that performs the actions. This could be a user, group or role
    * @param actions the set of {@link Action actions} to revoke
    */
   void revoke(EntityId entity, Principal principal, Set<Action> actions);
@@ -64,4 +82,62 @@ public interface Authorizer {
    * @param entity the {@link EntityId} on which all {@link Action actions} are to be revoked
    */
   void revoke(EntityId entity);
+
+  /**
+   * Returns all the {@link Privilege} for the specified {@link Principal}.
+   *
+   * @param principal the {@link Principal} for which to return privileges
+   * @return a {@link Set} of {@link Privilege} for the specified principal
+   */
+  Set<Privilege> listPrivileges(Principal principal) throws Exception;
+
+  /********************************* Role Management: APIs for Role Based Access Control ******************************/
+  /**
+   * Create a role.
+   *
+   * @param role the {@link Role} to create
+   * @throws RoleAlreadyExistsException if the the role to be created already exists
+   */
+  void createRole(Role role) throws Exception;
+
+  /**
+   * Drop a role.
+   *
+   * @param role the {@link Role} to drop
+   * @throws RoleNotFoundException if the role to be dropped is not found
+   */
+  void dropRole(Role role) throws Exception;
+
+  /**
+   * Add a role to the specified {@link Principal}.
+   *
+   * @param role the {@link Role} to add to the specified group
+   * @param principal the {@link Principal} to add the role to
+   * @throws RoleNotFoundException if the role to be added to the principals is not found
+   */
+  void addRoleToPrincipal(Role role, Principal principal) throws Exception;
+
+  /**
+   * Delete a role from the specified {@link Principal}.
+   *
+   * @param role the {@link Role} to remove from the specified group
+   * @param principal the {@link Principal} to remove the role from
+   * @throws RoleNotFoundException if the role to be removed to the principals is not found
+   */
+  void removeRoleFromPrincipal(Role role, Principal principal) throws Exception;
+
+  /**
+   * Returns a set of all {@link Role roles} for the specified {@link Principal}.
+   *
+   * @param principal the {@link Principal} to look up roles for
+   * @return Set of {@link Role} for the specified {@link Principal}
+   */
+  Set<Role> listRoles(Principal principal) throws Exception;
+
+  /**
+   * Returns all available {@link Role}. Only a super user can perform this operation.
+   *
+   * @return a set of all available {@link Role} in the system.
+   */
+  Set<Role> listAllRoles() throws Exception;
 }

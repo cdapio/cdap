@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -29,10 +29,14 @@ import javax.annotation.Nullable;
 
 /**
  * Has methods to set/get objects into Configuration object.
+ * Also has methods for prefixing a set of configurations with a name and also for extracting the prefixed parameters.
  */
 public final class ConfigurationUtil {
 
   private static final Logger LOG = LoggerFactory.getLogger(ConfigurationUtil.class);
+
+  private static final String PREFIXED_CONF_PREFIX = "hconf.namedConf.";
+  private static final String CONF = ".conf";
 
   public static <T> void set(Configuration conf, String key, Codec<T> codec, T obj) throws IOException {
     String value = new String(codec.encode(obj), Charsets.UTF_8);
@@ -86,6 +90,41 @@ public final class ConfigurationUtil {
       conf.set(entry.getKey(), entry.getValue());
     }
     return conf;
+  }
+
+
+  /**
+   * Prefixes the specified configurations with the name, and sets them onto the job's configuration.
+   *
+   * @param conf the Configuration object on which the configurations will be set on
+   * @param name the name to use to prefix the keys of the configuration
+   * @param namedConf the configuration values to be set
+   */
+  public static void setNamedConfigurations(Configuration conf, String name, Map<String, String> namedConf) {
+    String confKeyPrefix = PREFIXED_CONF_PREFIX + name + CONF + ".";
+    for (Map.Entry<String, String> entry : namedConf.entrySet()) {
+      conf.set(confKeyPrefix + entry.getKey(), entry.getValue());
+    }
+  }
+
+  /**
+   * Retrieves all configurations that are prefixed with a particular name.
+   *
+   * @see {@link #setNamedConfigurations(Configuration, String, Map)}.
+   *
+   * @param conf the Configuration from which to get the configurations
+   * @param name the prefix to
+   * @return a map of key-value pairs, representing the requested configurations, after removing the prefix
+   */
+  public static Map<String, String> getNamedConfigurations(Configuration conf, String name) {
+    Map<String, String> namedConf = new HashMap<>();
+
+    String confKeyPrefix = PREFIXED_CONF_PREFIX + name + CONF;
+    Map<String, String> properties = conf.getValByRegex(confKeyPrefix + "\\..*");
+    for (Map.Entry<String, String> entry : properties.entrySet()) {
+      namedConf.put(entry.getKey().substring(confKeyPrefix.length() + 1), entry.getValue());
+    }
+    return namedConf;
   }
 
   private ConfigurationUtil() {

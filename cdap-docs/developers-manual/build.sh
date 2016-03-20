@@ -23,10 +23,9 @@
 # Targets for both a limited and complete set of javadocs
 # Targets not included in usage are intended for internal usage by script
 
+source ../vars
 source ../_common/common-build.sh
 
-CDAP_CLIENTS_RELEASE_VERSION="1.2.0"
-CDAP_INGEST_RELEASE_VERSION="1.3.0"
 CHECK_INCLUDES=${TRUE}
 
 function download_readme_file_and_test() {
@@ -82,7 +81,7 @@ function download_includes() {
   download_readme_file_and_test ${includes_dir} ${ingest_url} 5fc88ec3a658062775403f5be30afbe9 cdap-stream-clients/ruby
 
   echo_red_bold "Check included example files for changes"
-  test_an_include b53dd493c4e9c2cb89b593baa4139087 ../../cdap-examples/Purchase/src/main/java/co/cask/cdap/examples/purchase/PurchaseHistoryBuilder.java
+  test_an_include 26e904a0a4524ab5dd97c4b3072d26fc ../../cdap-examples/Purchase/src/main/java/co/cask/cdap/examples/purchase/PurchaseHistoryBuilder.java
   test_an_include 80216a08a2b3d480e4a081722408222f ../../cdap-examples/Purchase/src/main/java/co/cask/cdap/examples/purchase/PurchaseHistoryService.java
   test_an_include 29fe1471372678115e643b0ad431b28d ../../cdap-examples/Purchase/src/main/java/co/cask/cdap/examples/purchase/PurchaseStore.java
   test_an_include 7f83b852a8e7b4594094d4e88d80a0b4 ../../cdap-examples/SparkPageRank/src/main/java/co/cask/cdap/examples/sparkpagerank/SparkPageRankApp.java

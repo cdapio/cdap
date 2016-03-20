@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,11 +13,14 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package co.cask.cdap.examples.purchase;
 
 import co.cask.cdap.api.ProgramLifecycle;
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.annotation.UseDataSet;
+import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.api.data.batch.Input;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
@@ -48,7 +51,6 @@ public class PurchaseHistoryBuilder extends AbstractMapReduce {
   @Override
   public void configure() {
     setDescription("Purchase History Builder");
-    setInputDataset("purchases");
     setDriverResources(new Resources(1024));
     setMapperResources(new Resources(1024));
     setReducerResources(new Resources(1024));
@@ -57,8 +59,10 @@ public class PurchaseHistoryBuilder extends AbstractMapReduce {
   @Override
   public void beforeSubmit(MapReduceContext context) throws Exception {
     Job job = context.getHadoopJob();
-    job.setMapperClass(PurchaseMapper.class);
     job.setReducerClass(PerUserReducer.class);
+
+    context.addInput(Input.ofDataset("purchases"), PurchaseMapper.class);
+    context.addInput(Input.ofDataset("oldPurchases"), OldPurchaseMapper.class);
     context.addOutput("history");
 
     // override default memory usage if the corresponding runtime arguments are set.
@@ -81,8 +85,28 @@ public class PurchaseHistoryBuilder extends AbstractMapReduce {
     private Metrics mapMetrics;
 
     @Override
-    public void map(byte[] key, Purchase purchase, Context context)
+    public void map(byte[] key, Purchase purchase, Context context) throws IOException, InterruptedException {
+      String user = purchase.getCustomer();
+      if (purchase.getPrice() > 100000) {
+        mapMetrics.count("purchases.large", 1);
+      }
+      context.write(new Text(user), purchase);
+    }
+  }
+
+  /**
+   * Mapper class to emit user and corresponding purchase information. The input value to this mapper is byte[],
+   * instead of a Purchase object, and so it first must deserialize the byte[] before acting on it.
+   */
+  public static class OldPurchaseMapper extends Mapper<byte[], byte[], Text, Purchase> {
+
+    private static final Gson GSON = new Gson();
+    private Metrics mapMetrics;
+
+    @Override
+    public void map(byte[] key, byte[] purchaseBytes, Context context)
       throws IOException, InterruptedException {
+      Purchase purchase = GSON.fromJson(Bytes.toString(purchaseBytes), Purchase.class);
       String user = purchase.getCustomer();
       if (purchase.getPrice() > 100000) {
         mapMetrics.count("purchases.large", 1);

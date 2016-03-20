@@ -79,7 +79,6 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
 
   private final MapReduceSpecification spec;
   private final LoggingContext loggingContext;
-  private final long logicalStartTime;
   private final WorkflowProgramInfo workflowProgramInfo;
   private final Metrics userMetrics;
   private final Map<String, Plugin> plugins;
@@ -88,6 +87,7 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
 
   private MultipleOutputs multipleOutputs;
   private TaskInputOutputContext<?, ?, KEYOUT, VALUEOUT> context;
+  private String inputName;
 
   // keeps track of all tx-aware datasets to perform the transaction lifecycle for them. Note that
   // the transaction is already started, and it will be committed or aborted outside of this task.
@@ -99,7 +99,6 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
                                    RunId runId, String taskId,
                                    Arguments runtimeArguments,
                                    MapReduceSpecification spec,
-                                   long logicalStartTime,
                                    @Nullable WorkflowProgramInfo workflowProgramInfo,
                                    DiscoveryServiceClient discoveryServiceClient,
                                    MetricsCollectionService metricsCollectionService,
@@ -111,7 +110,6 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
     super(program, runId, runtimeArguments, ImmutableSet.<String>of(),
           getMetricCollector(program, runId.getId(), taskId, metricsCollectionService, type),
           dsFramework, txClient, discoveryServiceClient, false, pluginInstantiator);
-    this.logicalStartTime = logicalStartTime;
     this.workflowProgramInfo = workflowProgramInfo;
     this.transaction = transaction;
 
@@ -170,6 +168,10 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
     this.context = context;
   }
 
+  public void setInputName(String inputName) {
+    this.inputName = inputName;
+  }
+
   /**
    * Closes the {@link MultipleOutputs} contained inside this context.
    */
@@ -184,11 +186,6 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
     return spec;
   }
 
-  @Override
-  public long getLogicalStartTime() {
-    return logicalStartTime;
-  }
-
   /**
    * Returns the WorkflowToken if the MapReduce program is executed as a part of the Workflow.
    */
@@ -196,6 +193,12 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
   @Nullable
   public WorkflowToken getWorkflowToken() {
     return workflowProgramInfo == null ? null : workflowProgramInfo.getWorkflowToken();
+  }
+
+  @Nullable
+  @Override
+  public String getInputName() {
+    return inputName;
   }
 
   @Nullable

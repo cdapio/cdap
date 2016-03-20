@@ -18,15 +18,20 @@ package co.cask.cdap.etl.proto.v2;
 
 import co.cask.cdap.api.Config;
 import co.cask.cdap.api.Resources;
+import co.cask.cdap.etl.api.Transform;
+import co.cask.cdap.etl.proto.ArtifactSelectorConfig;
 import co.cask.cdap.etl.proto.Connection;
 import co.cask.cdap.etl.proto.UpgradeContext;
 import co.cask.cdap.etl.proto.UpgradeableConfig;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import javax.annotation.Nullable;
 
 /**
  * Common ETL Config.
@@ -38,6 +43,10 @@ public class ETLConfig extends Config implements UpgradeableConfig {
   private final Set<Connection> connections;
   private final Resources resources;
   private final Boolean stageLoggingEnabled;
+  // v1 fields to support backwards compatibility
+  private final co.cask.cdap.etl.proto.v1.ETLStage source;
+  private final List<co.cask.cdap.etl.proto.v1.ETLStage> sinks;
+  private final List<co.cask.cdap.etl.proto.v1.ETLStage> transforms;
 
   protected ETLConfig(Set<ETLStage> stages, Set<Connection> connections,
                       Resources resources, boolean stageLoggingEnabled) {
@@ -45,6 +54,10 @@ public class ETLConfig extends Config implements UpgradeableConfig {
     this.connections = Collections.unmodifiableSet(connections);
     this.resources = resources;
     this.stageLoggingEnabled = stageLoggingEnabled;
+    // these fields are only here for backwards compatibility
+    this.source = null;
+    this.sinks = new ArrayList<>();
+    this.transforms = new ArrayList<>();
   }
 
   public Set<ETLStage> getStages() {
@@ -70,9 +83,38 @@ public class ETLConfig extends Config implements UpgradeableConfig {
    * @throws IllegalArgumentException if the object is invalid
    */
   public void validate() {
-    for (ETLStage stage : stages) {
+    for (ETLStage stage : getStages()) {
       stage.validate();
     }
+  }
+
+  /**
+   * Converts the source, transforms, sinks, connections and resources from old style config into their
+   * new forms.
+   */
+  protected <T extends Builder> T convertStages(T builder, String sourceType, String sinkType) {
+    builder
+      .setResources(getResources())
+      .addConnections(getConnections());
+    if (!isStageLoggingEnabled()) {
+      builder.disableStageLogging();
+    }
+
+    UpgradeContext dummyUpgradeContext = new UpgradeContext() {
+      @Nullable
+      @Override
+      public ArtifactSelectorConfig getPluginArtifact(String pluginType, String pluginName) {
+        return null;
+      }
+    };
+    builder.addStage(source.upgradeStage(sourceType, dummyUpgradeContext));
+    for (co.cask.cdap.etl.proto.v1.ETLStage v1Stage : transforms) {
+      builder.addStage(v1Stage.upgradeStage(Transform.PLUGIN_TYPE, dummyUpgradeContext));
+    }
+    for (co.cask.cdap.etl.proto.v1.ETLStage v1Stage : sinks) {
+      builder.addStage(v1Stage.upgradeStage(sinkType, dummyUpgradeContext));
+    }
+    return builder;
   }
 
   @Override

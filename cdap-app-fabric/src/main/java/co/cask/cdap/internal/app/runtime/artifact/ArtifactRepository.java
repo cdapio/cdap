@@ -83,7 +83,7 @@ public class ArtifactRepository {
   ArtifactRepository(CConfiguration cConf, ArtifactStore artifactStore, MetadataStore metadataStore) {
     this.artifactStore = artifactStore;
     File baseUnpackDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
-      cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
+                                  cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
     this.artifactClassLoaderFactory = new ArtifactClassLoaderFactory(cConf, baseUnpackDir);
     this.artifactInspector = new ArtifactInspector(cConf, artifactClassLoaderFactory, baseUnpackDir);
     this.systemArtifactDirs = new ArrayList<>();
@@ -159,6 +159,17 @@ public class ArtifactRepository {
   }
 
   /**
+   * Get all artifacts that match artifacts in the given ranges.
+   *
+   * @param range the range to match artifacts in
+   * @return an unmodifiable list of all artifacts that match the given ranges. If none exist, an empty list
+   *         is returned
+   */
+  public List<ArtifactDetail> getArtifacts(final ArtifactRange range) {
+    return artifactStore.getArtifacts(range);
+  }
+
+  /**
    * Get all application classes in the given namespace, optionally including classes from system artifacts as well.
    * Will never return null. If no artifacts exist, an empty list is returned. Namespace existence is not checked.
    *
@@ -198,6 +209,7 @@ public class ArtifactRepository {
     }
     return Collections.unmodifiableList(infos);
   }
+
 
   /**
    * Returns a {@link SortedMap} of plugin artifact to all plugins available for the given artifact. The keys
@@ -309,7 +321,7 @@ public class ArtifactRepository {
       validatePluginSet(artifactClasses.getPlugins());
       ArtifactMeta meta = new ArtifactMeta(artifactClasses, ImmutableSet.<ArtifactRange>of());
       ArtifactInfo artifactInfo = new ArtifactInfo(artifactId.toArtifactId(), artifactClasses,
-                                                  ImmutableMap.<String, String>of());
+                                                   ImmutableMap.<String, String>of());
       writeSystemMetadata(artifactId, artifactInfo);
       return artifactStore.write(artifactId, meta, Files.newInputStreamSupplier(artifactFile));
     }
@@ -616,7 +628,7 @@ public class ArtifactRepository {
       // shouldn't happen... but if it does for some reason it's fine, it means it was added some other way already.
     } catch (ArtifactRangeNotFoundException e) {
       LOG.warn(String.format("Could not add system artifact '%s' because it extends artifacts that do not exist.",
-        fileName), e);
+                             fileName), e);
     } catch (InvalidArtifactException e) {
       LOG.warn(String.format("Could not add system artifact '%s' because it is invalid.", fileName), e);
     }
@@ -661,7 +673,7 @@ public class ArtifactRepository {
 
     if (parents.isEmpty()) {
       throw new ArtifactRangeNotFoundException(String.format("Artifact %s extends artifacts '%s' that do not exist",
-        artifactId, Joiner.on('/').join(parentArtifacts)));
+                                                             artifactId, Joiner.on('/').join(parentArtifacts)));
     }
 
     // check if any of the parents also have parents, which is not allowed. This is to simplify things

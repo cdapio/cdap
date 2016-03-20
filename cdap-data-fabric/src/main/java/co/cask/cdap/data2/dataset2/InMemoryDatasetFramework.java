@@ -30,12 +30,16 @@ import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.lang.ClassLoaders;
+import co.cask.cdap.data2.audit.AuditPublisher;
+import co.cask.cdap.data2.audit.AuditPublishers;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.datafabric.dataset.type.ConstantClassLoaderProvider;
 import co.cask.cdap.data2.datafabric.dataset.type.DatasetClassLoaderProvider;
 import co.cask.cdap.data2.dataset2.module.lib.DatasetModules;
 import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.audit.AuditPayload;
+import co.cask.cdap.proto.audit.AuditType;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Supplier;
@@ -95,6 +99,8 @@ public class InMemoryDatasetFramework implements DatasetFramework {
   // NOTE: We maintain one DatasetDefinitionRegistry per namespace
   private final Map<Id.Namespace, DatasetDefinitionRegistry> registries;
 
+  private AuditPublisher auditPublisher;
+
   public InMemoryDatasetFramework(DatasetDefinitionRegistryFactory registryFactory, CConfiguration configuration) {
     this(registryFactory, new HashMap<String, DatasetModule>(), configuration);
   }
@@ -139,6 +145,12 @@ public class InMemoryDatasetFramework implements DatasetFramework {
     ReadWriteLock readWriteLock = new ReentrantReadWriteLock();
     readLock = readWriteLock.readLock();
     writeLock = readWriteLock.writeLock();
+  }
+
+  @SuppressWarnings("unused")
+  @Inject(optional = true)
+  public void setAuditPublisher(AuditPublisher auditPublisher) {
+    this.auditPublisher = auditPublisher;
   }
 
   @Override
@@ -226,6 +238,7 @@ public class InMemoryDatasetFramework implements DatasetFramework {
       spec = spec.setOriginalProperties(props);
       def.getAdmin(DatasetContext.from(datasetInstanceId.getNamespaceId()), spec, null).create();
       instances.put(datasetInstanceId.getNamespace(), datasetInstanceId, spec);
+      publishAudit(datasetInstanceId, AuditType.CREATE);
       LOG.info("Created dataset {} of type {}", datasetInstanceId, datasetType);
     } finally {
       writeLock.unlock();
@@ -251,6 +264,7 @@ public class InMemoryDatasetFramework implements DatasetFramework {
       spec = spec.setOriginalProperties(props);
       instances.put(datasetInstanceId.getNamespace(), datasetInstanceId, spec);
       def.getAdmin(DatasetContext.from(datasetInstanceId.getNamespaceId()), spec, null).upgrade();
+      publishAudit(datasetInstanceId, AuditType.UPDATE);
     } finally {
       writeLock.unlock();
     }
@@ -323,6 +337,7 @@ public class InMemoryDatasetFramework implements DatasetFramework {
                         spec.getType(), instanceId.getNamespaceId()));
       }
       def.getAdmin(DatasetContext.from(instanceId.getNamespaceId()), spec, null).truncate();
+      publishAudit(instanceId, AuditType.TRUNCATE);
     } finally {
       writeLock.unlock();
     }
@@ -344,6 +359,7 @@ public class InMemoryDatasetFramework implements DatasetFramework {
                         spec.getType(), instanceId.getNamespaceId()));
       }
       def.getAdmin(DatasetContext.from(instanceId.getNamespaceId()), spec, null).drop();
+      publishAudit(instanceId, AuditType.DELETE);
     } finally {
       writeLock.unlock();
     }
@@ -361,6 +377,7 @@ public class InMemoryDatasetFramework implements DatasetFramework {
                           spec.getType(), namespaceId));
         }
         def.getAdmin(DatasetContext.from(namespaceId.getId()), spec, null).drop();
+        publishAudit(Id.DatasetInstance.from(namespaceId, spec.getName()), AuditType.DELETE);
       }
       instances.row(namespaceId).clear();
     } finally {
@@ -569,5 +586,9 @@ public class InMemoryDatasetFramework implements DatasetFramework {
     public boolean hasType(String datasetTypeName) {
       return delegate.hasType(datasetTypeName);
     }
+  }
+
+  private void publishAudit(Id.DatasetInstance datasetInstance, AuditType auditType) {
+    AuditPublishers.publishAudit(auditPublisher, datasetInstance, auditType, AuditPayload.EMPTY_PAYLOAD);
   }
 }

@@ -25,6 +25,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 
 /**
@@ -36,10 +37,10 @@ import java.util.Map;
  */
 public class TransformExecutor<IN> implements Destroyable {
 
-  private final List<String> startingPoints;
+  private final Set<String> startingPoints;
   private final Map<String, TransformDetail> transformDetailMap;
 
-  public TransformExecutor(Map<String, TransformDetail> transformDetailMap, List<String> startingPoints) {
+  public TransformExecutor(Map<String, TransformDetail> transformDetailMap, Set<String> startingPoints) {
     this.transformDetailMap = transformDetailMap;
     this.startingPoints = startingPoints;
   }

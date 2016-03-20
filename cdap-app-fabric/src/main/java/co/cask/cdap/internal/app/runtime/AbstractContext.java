@@ -42,11 +42,11 @@ import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.proto.Id;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -68,6 +68,7 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
   private final PluginInstantiator pluginInstantiator;
   private final PluginContext pluginContext;
   private final Admin admin;
+  private final long logicalStartTime;
   protected final DynamicDatasetCache datasetCache;
 
   /**
@@ -92,10 +93,13 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
     super(program.getId().toEntityId());
     this.program = program;
     this.runId = runId;
-    this.runtimeArguments = ImmutableMap.copyOf(arguments.asMap());
     this.discoveryServiceClient = discoveryServiceClient;
     this.owners = createOwners(program.getId());
     this.programMetrics = metricsContext;
+
+    Map<String, String> runtimeArgs = new HashMap<>(arguments.asMap());
+    this.logicalStartTime = ProgramRunners.updateLogicalStartTime(runtimeArgs);
+    this.runtimeArguments = Collections.unmodifiableMap(runtimeArgs);
 
     Map<String, Map<String, String>> staticDatasets = new HashMap<>();
     for (String name : datasets) {
@@ -203,6 +207,10 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
   @Override
   public Map<String, String> getRuntimeArguments() {
     return runtimeArguments;
+  }
+
+  public long getLogicalStartTime() {
+    return logicalStartTime;
   }
 
   /**

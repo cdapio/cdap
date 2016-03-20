@@ -13,13 +13,13 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package co.cask.cdap.internal.app.runtime.batch;
 
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.data.batch.DatasetOutputCommitter;
 import co.cask.cdap.api.data.batch.InputFormatProvider;
 import co.cask.cdap.api.data.batch.OutputFormatProvider;
-import co.cask.cdap.api.dataset.DataSetException;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.api.mapreduce.MapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
@@ -47,6 +47,8 @@ import co.cask.cdap.internal.app.runtime.LocalizationUtils;
 import co.cask.cdap.internal.app.runtime.batch.dataset.MultipleOutputs;
 import co.cask.cdap.internal.app.runtime.batch.dataset.MultipleOutputsMainOutputWrapper;
 import co.cask.cdap.internal.app.runtime.batch.dataset.UnsupportedOutputFormat;
+import co.cask.cdap.internal.app.runtime.batch.dataset.input.MapperInput;
+import co.cask.cdap.internal.app.runtime.batch.dataset.input.MultipleInputs;
 import co.cask.cdap.internal.app.runtime.batch.distributed.ContainerLauncherGenerator;
 import co.cask.cdap.internal.app.runtime.batch.distributed.MapReduceContainerHelper;
 import co.cask.cdap.internal.app.runtime.batch.distributed.MapReduceContainerLauncher;
@@ -97,6 +99,7 @@ import java.lang.reflect.TypeVariable;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -226,9 +229,6 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
           mapredConf.set(Constants.Plugin.ARCHIVE, pluginArchive.getName());
         }
       }
-
-      setOutputClassesIfNeeded(job);
-      setMapOutputClassesIfNeeded(job);
 
       // set resources for the job
       TaskType.MAP.setResources(mapredConf, context.getMapperResources());
@@ -460,7 +460,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
 
   /**
    * Calls the {@link MapReduce#beforeSubmit(MapReduceContext)} method and
-   * also setup the Input/Output dataset within the same transaction.
+   * also setup the Input/Output within the same transaction.
    */
   private void beforeSubmit(final Job job) throws TransactionFailureException {
     TransactionContext txContext = context.getTransactionContext();
@@ -471,9 +471,12 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
         try {
           mapReduce.beforeSubmit(context);
 
-          // set input/output datasets info
-          setInputDatasetIfNeeded(job);
-          setOutputDatasetsIfNeeded(job);
+          // set input/outputs info, and get one of the configured mapper's TypeToken
+          TypeToken<?> mapperTypeToken = setInputsIfNeeded(job);
+          setOutputsIfNeeded(job);
+
+          setOutputClassesIfNeeded(job, mapperTypeToken);
+          setMapOutputClassesIfNeeded(job, mapperTypeToken);
 
           return null;
         } finally {
@@ -486,11 +489,11 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
   /**
    * Commit a single output after the MR has finished, if it is an OutputFormatCommitter.
    * @param succeeded whether the run was successful
-   * @param datasetName the name of the dataset
+   * @param outputName the name of the output
    * @param outputFormatProvider the output format provider to commit
    * @return whether the action was successful (it did not throw an exception)
    */
-  private boolean commitOutput(boolean succeeded, String datasetName, OutputFormatProvider outputFormatProvider) {
+  private boolean commitOutput(boolean succeeded, String outputName, OutputFormatProvider outputFormatProvider) {
     if (outputFormatProvider instanceof DatasetOutputCommitter) {
       try {
         if (succeeded) {
@@ -500,7 +503,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
         }
       } catch (Throwable t) {
         LOG.error(String.format("Error from %s method of output dataset %s.",
-                                succeeded ? "onSuccess" : "onFailure", datasetName), t);
+                                succeeded ? "onSuccess" : "onFailure", outputName), t);
         return false;
       }
     }
@@ -534,47 +537,108 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     });
   }
 
-  private void setInputDatasetIfNeeded(Job job) throws IOException {
-    InputFormatProvider provider = context.getInputFormatProvider();
-
-    // If input format is not set during beforeSubmit, use the one from the spec if it exists.
-    if (provider == null && specification.getInputDataSet() != null) {
-      context.setInput(specification.getInputDataSet());
-      provider = context.getInputFormatProvider();
+  private void assertConsistentTypes(Class<? extends Mapper> firstMapperClass,
+                                     Map.Entry<Class, Class> firstMapperClassOutputTypes,
+                                     Class<? extends Mapper> secondMapperClass) {
+    Map.Entry<Class, Class> mapperOutputKeyValueTypes = getMapperOutputKeyValueTypes(secondMapperClass);
+    if (!firstMapperClassOutputTypes.getKey().equals(mapperOutputKeyValueTypes.getKey())
+      || !firstMapperClassOutputTypes.getValue().equals(mapperOutputKeyValueTypes.getValue())) {
+      throw new IllegalArgumentException(
+        String.format("Type mismatch in output type of mappers: %s and %s. " +
+                        "Map output key types: %s and %s. " +
+                        "Map output value types: %s and %s.",
+                      firstMapperClass, secondMapperClass,
+                      firstMapperClassOutputTypes.getKey(), mapperOutputKeyValueTypes.getKey(),
+                      firstMapperClassOutputTypes.getValue(), mapperOutputKeyValueTypes.getValue()));
     }
+  }
 
-    if (provider != null) {
-      Configuration jobConf = job.getConfiguration();
-      ConfigurationUtil.setAll(provider.getInputFormatConfiguration(), jobConf);
-      jobConf.set(Job.INPUT_FORMAT_CLASS_ATTR, provider.getInputFormatClassName());
+  private Map.Entry<Class, Class> getMapperOutputKeyValueTypes(Class<? extends Mapper> mapperClass) {
+    TypeToken<Mapper> firstType = resolveClass(mapperClass, Mapper.class);
+    Type[] firstTypeArgs = ((ParameterizedType) firstType.getType()).getActualTypeArguments();
+    return new AbstractMap.SimpleEntry<Class, Class>(TypeToken.of(firstTypeArgs[2]).getRawType(),
+                                                     TypeToken.of(firstTypeArgs[3]).getRawType());
+  }
+
+  /**
+   * Sets the configurations used for inputs.
+   * Multiple mappers could be defined, so we first check that their output types are consistent.
+   *
+   * @return the TypeToken for one of the mappers (doesn't matter which one, since we check that all of their output
+   * key/value types are consistent. Returns null if the mapper class was not configured directly on the job and the
+   * job's mapper class is to be used.
+   * @throws IllegalArgumentException if any of the configured mapper output types are inconsistent.
+   */
+  @Nullable
+  private TypeToken<Mapper> setInputsIfNeeded(Job job) throws IOException, ClassNotFoundException {
+    Class<? extends Mapper> jobMapperClass = job.getMapperClass();
+
+    Class<? extends Mapper> firstMapperClass = null;
+    Map.Entry<Class, Class> firstMapperOutputTypes = null;
+
+    for (Map.Entry<String, MapperInput> mapperInputEntry : context.getMapperInputs().entrySet()) {
+      MapperInput mapperInput = mapperInputEntry.getValue();
+      InputFormatProvider provider = mapperInput.getInputFormatProvider();
+      Map<String, String> inputFormatConfiguration = new HashMap<>(provider.getInputFormatConfiguration());
+
+      // default to what is configured on the job, if user didn't specify a mapper for an input
+      Class<? extends Mapper> mapperClass = mapperInput.getMapper() == null ? jobMapperClass : mapperInput.getMapper();
+
+      // check output key/value type consistency, except for the first input
+      if (firstMapperClass == null) {
+        firstMapperClass = mapperClass;
+        firstMapperOutputTypes = getMapperOutputKeyValueTypes(mapperClass);
+      } else {
+        assertConsistentTypes(firstMapperClass, firstMapperOutputTypes, mapperClass);
+      }
 
       // A bit hacky for stream.
-      // For stream, we need to do two extra steps.
-      // 1. stream usage registration since it only happens on client side.
-      // 2. Infer the stream event decoder from Mapper/Reducer
       if (provider instanceof StreamInputFormatProvider) {
-        StreamInputFormatProvider streamProvider = (StreamInputFormatProvider) provider;
-        Type inputValueType = getInputValueType(jobConf, StreamEvent.class);
-        ConfigurationUtil.setAll(streamProvider.setDecoderType(new HashMap<String, String>(), inputValueType), jobConf);
-
-        Id.Stream streamId = streamProvider.getStreamId();
-        try {
-          usageRegistry.register(context.getProgram().getId(), streamId);
-          streamAdmin.addAccess(new Id.Run(context.getProgram().getId(), context.getRunId().getId()),
-                                streamId, AccessType.READ);
-        } catch (Exception e) {
-          LOG.warn("Failed to register usage {} -> {}", context.getProgram().getId(), streamId, e);
-        }
+        // pass in mapperInput.getMapper() instead of mapperClass, because mapperClass defaults to the Identity Mapper
+        setDecoderForStream((StreamInputFormatProvider) provider, job, inputFormatConfiguration,
+                            mapperInput.getMapper());
       }
+
+      MultipleInputs.addInput(job, mapperInputEntry.getKey(),
+                              provider.getInputFormatClassName(), inputFormatConfiguration, mapperClass);
+    }
+
+    // if firstMapperClass is null, then, user is not going through our APIs to add input; leave the job's input format
+    // to user and simply return the mapper output types of the mapper configured on the job.
+    // if firstMapperClass == jobMapperClass, return null if the user didn't configure the mapper class explicitly
+    if (firstMapperClass == null || firstMapperClass == jobMapperClass) {
+      return resolveClass(job.getConfiguration(), MRJobConfig.MAP_CLASS_ATTR, Mapper.class);
+    }
+    return resolveClass(firstMapperClass, Mapper.class);
+  }
+
+
+
+  private void setDecoderForStream(StreamInputFormatProvider streamProvider, Job job,
+                                   Map<String, String> inputFormatConfiguration, Class<? extends Mapper> mapperClass) {
+    // For stream, we need to do two extra steps.
+    // 1. stream usage registration since it only happens on client side.
+    // 2. Infer the stream event decoder from Mapper/Reducer
+    TypeToken<?> mapperTypeToken = mapperClass == null ? null : resolveClass(mapperClass, Mapper.class);
+    Type inputValueType = getInputValueType(job.getConfiguration(), StreamEvent.class, mapperTypeToken);
+    streamProvider.setDecoderType(inputFormatConfiguration, inputValueType);
+
+    Id.Stream streamId = streamProvider.getStreamId();
+    try {
+      usageRegistry.register(context.getProgram().getId(), streamId);
+      streamAdmin.addAccess(new Id.Run(context.getProgram().getId(), context.getRunId().getId()),
+                            streamId, AccessType.READ);
+    } catch (Exception e) {
+      LOG.warn("Failed to register usage {} -> {}", context.getProgram().getId(), streamId, e);
     }
   }
 
   /**
-   * Sets the configurations for Datasets used for output.
+   * Sets the configurations used for outputs.
    */
-  private void setOutputDatasetsIfNeeded(Job job) {
+  private void setOutputsIfNeeded(Job job) {
     Map<String, OutputFormatProvider> outputFormatProviders = context.getOutputFormatProviders();
-    LOG.debug("Using Datasets as output for MapReduce Job: {}", outputFormatProviders.keySet());
+    LOG.debug("Using as output for MapReduce Job: {}", outputFormatProviders.keySet());
 
     if (outputFormatProviders.isEmpty()) {
       // user is not going through our APIs to add output; leave the job's output format to user
@@ -594,16 +658,16 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     job.setOutputFormatClass(MultipleOutputsMainOutputWrapper.class);
 
     for (Map.Entry<String, OutputFormatProvider> entry : outputFormatProviders.entrySet()) {
-      String outputDatasetName = entry.getKey();
+      String outputName = entry.getKey();
       OutputFormatProvider outputFormatProvider = entry.getValue();
 
       String outputFormatClassName = outputFormatProvider.getOutputFormatClassName();
       if (outputFormatClassName == null) {
-        throw new DataSetException("Output dataset '" + outputDatasetName + "' provided null as the output format");
+        throw new IllegalArgumentException("Output '" + outputName + "' provided null as the output format");
       }
 
       Map<String, String> outputConfig = outputFormatProvider.getOutputFormatConfiguration();
-      MultipleOutputs.addNamedOutput(job, outputDatasetName, outputFormatClassName,
+      MultipleOutputs.addNamedOutput(job, outputName, outputFormatClassName,
                                      job.getOutputKeyClass(), job.getOutputValueClass(), outputConfig);
 
     }
@@ -614,16 +678,26 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
    * It does so by inspecting the Mapper/Reducer type parameters to figure out what the input type is.
    * If the job has Mapper, then it's the Mapper IN_VALUE type, otherwise it would be the Reducer IN_VALUE type.
    * If the cannot determine the input value type, then return the given default type.
+   *
+   * @param hConf the Configuration to use to resolve the class TypeToken
+   * @param defaultType the defaultType to return
+   * @param mapperTypeToken the mapper type token for the configured input (not resolved by the job's mapper class)
    */
   @VisibleForTesting
-  Type getInputValueType(Configuration hConf, Type defaultType) {
-    // Try to see if there is mapper
-    TypeToken<?> type = resolveClass(hConf, MRJobConfig.MAP_CLASS_ATTR, Mapper.class);
-    if (type == null) {
+  static Type getInputValueType(Configuration hConf, Type defaultType, @Nullable TypeToken<?> mapperTypeToken) {
+    TypeToken<?> type;
+    if (mapperTypeToken == null) {
+      // if the input's mapper is null, first try resolving a from the job
+      mapperTypeToken = resolveClass(hConf, MRJobConfig.MAP_CLASS_ATTR, Mapper.class);
+    }
+
+    if (mapperTypeToken == null) {
       // If there is no Mapper, it's a Reducer only job, hence get the value type from Reducer class
       type = resolveClass(hConf, MRJobConfig.REDUCE_CLASS_ATTR, Reducer.class);
+    } else {
+      type = mapperTypeToken;
     }
-    Preconditions.checkArgument(type != null, "No Mapper and Reducer for the MapReduce job.");
+    Preconditions.checkArgument(type != null, "Neither a Mapper nor a Reducer is configured for the MapReduce job.");
 
     if (!(type.getType() instanceof ParameterizedType)) {
       return defaultType;
@@ -742,12 +816,26 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
    * @return A resolved {@link TypeToken} or {@code null} if no such class in the job configuration
    */
   @SuppressWarnings("unchecked")
-  private <V> TypeToken<V> resolveClass(Configuration conf, String typeAttr, Class<V> superType) {
+  @VisibleForTesting
+  @Nullable
+  static <V> TypeToken<V> resolveClass(Configuration conf, String typeAttr, Class<V> superType) {
     Class<? extends V> userClass = conf.getClass(typeAttr, null, superType);
     if (userClass == null) {
       return null;
     }
+    return resolveClass(userClass, superType);
+  }
 
+  /**
+   * Returns a resolved {@link TypeToken} of the given super type of the class.
+   *
+   * @param userClass the user class of which we want the TypeToken
+   * @param superType Super type of the class
+   * @param <V> Type of the super type
+   * @return A resolved {@link TypeToken}
+   */
+  @SuppressWarnings("unchecked")
+  private static <V> TypeToken<V> resolveClass(Class<? extends V> userClass, Class<V> superType) {
     return (TypeToken<V>) TypeToken.of(userClass).getSupertype(superType);
   }
 
@@ -756,8 +844,10 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
    * if it is not set by the user.
    *
    * @param job the MapReduce job
+   * @param mapperTypeToken TypeToken of a configured mapper (may not be configured on the job). Has already been
+   *                        resolved from the job's mapper class.
    */
-  private void setOutputClassesIfNeeded(Job job) {
+  private void setOutputClassesIfNeeded(Job job, @Nullable TypeToken<?> mapperTypeToken) {
     Configuration conf = job.getConfiguration();
 
     // Try to get the type from reducer
@@ -765,7 +855,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
 
     if (type == null) {
       // Map only job
-      type = resolveClass(conf, MRJobConfig.MAP_CLASS_ATTR, Mapper.class);
+      type = mapperTypeToken;
     }
 
     // If not able to detect type, nothing to set
@@ -794,13 +884,15 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
    * if it is not set by the user.
    *
    * @param job the MapReduce job
+   * @param mapperTypeToken TypeToken of a configured mapper (may not be configured on the job). Has already been
+   *                        resolved from the job's mapper class.
    */
-  private void setMapOutputClassesIfNeeded(Job job) {
+  private void setMapOutputClassesIfNeeded(Job job, @Nullable TypeToken<?> mapperTypeToken) {
     Configuration conf = job.getConfiguration();
 
+    TypeToken<?> type = mapperTypeToken;
     int keyIdx = 2;
     int valueIdx = 3;
-    TypeToken<?> type = resolveClass(conf, MRJobConfig.MAP_CLASS_ATTR, Mapper.class);
 
     if (type == null) {
       // Reducer only job. Use the Reducer input types as the key/value classes.

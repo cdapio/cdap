@@ -56,6 +56,7 @@ import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.WorkflowStatistics;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionExecutorFactory;
@@ -889,12 +890,12 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public void updateWorkflowToken(final Id.Workflow workflowId, final String workflowRunId, final WorkflowToken token) {
+  public void updateWorkflowToken(final ProgramRunId workflowRunId, final WorkflowToken token) {
     appsTx.get().executeUnchecked(
       new TransactionExecutor.Function<AppMetadataStore, Void>() {
         @Override
         public Void apply(AppMetadataStore mds) throws Exception {
-          mds.updateWorkflowToken(workflowId, workflowRunId, token);
+          mds.updateWorkflowToken(workflowRunId, token);
           return null;
         }
       }, apps.get());

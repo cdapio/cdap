@@ -17,11 +17,30 @@
 package co.cask.cdap.etl.batch;
 
 import co.cask.cdap.api.app.AbstractApplication;
+import co.cask.cdap.api.dataset.lib.FileSetProperties;
+import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
 import co.cask.cdap.api.schedule.Schedules;
+import co.cask.cdap.etl.api.Transform;
+import co.cask.cdap.etl.api.batch.BatchSink;
+import co.cask.cdap.etl.api.batch.BatchSource;
 import co.cask.cdap.etl.batch.mapreduce.ETLMapReduce;
 import co.cask.cdap.etl.batch.spark.ETLSpark;
-import co.cask.cdap.etl.proto.v1.ETLBatchConfig;
+import co.cask.cdap.etl.common.Constants;
+import co.cask.cdap.etl.common.PipelinePhase;
+import co.cask.cdap.etl.planner.PipelinePlan;
+import co.cask.cdap.etl.planner.PipelinePlanner;
+import co.cask.cdap.etl.proto.Engine;
+import co.cask.cdap.etl.proto.v2.ETLBatchConfig;
+import co.cask.cdap.etl.spec.PipelineSpec;
+import co.cask.cdap.etl.spec.PipelineSpecGenerator;
+import co.cask.cdap.etl.spec.StageSpec;
 import com.google.common.base.Joiner;
+import com.google.common.collect.ImmutableSet;
+import org.apache.avro.mapreduce.AvroKeyInputFormat;
+import org.apache.avro.mapreduce.AvroKeyOutputFormat;
+
+import java.util.HashMap;
+import java.util.Set;
 
 /**
  * ETL Batch Application.
@@ -29,22 +48,68 @@ import com.google.common.base.Joiner;
 public class ETLBatchApplication extends AbstractApplication<ETLBatchConfig> {
   public static final String SCHEDULE_NAME = "etlWorkflow";
   public static final String DEFAULT_DESCRIPTION = "Extract-Transform-Load (ETL) Batch Application";
+  private static final Set<String> SUPPORTED_PLUGIN_TYPES = ImmutableSet.of(
+    BatchSource.PLUGIN_TYPE, BatchSink.PLUGIN_TYPE, Transform.PLUGIN_TYPE);
 
   @Override
   public void configure() {
-    ETLBatchConfig config = getConfig();
+    ETLBatchConfig config = getConfig().convertOldConfig();
     setDescription(DEFAULT_DESCRIPTION);
+
+    PipelineSpecGenerator specGenerator =
+      new PipelineSpecGenerator(getConfigurer(), BatchSource.PLUGIN_TYPE, BatchSink.PLUGIN_TYPE,
+                                TimePartitionedFileSet.class,
+                                FileSetProperties.builder()
+                                  .setInputFormat(AvroKeyInputFormat.class)
+                                  .setOutputFormat(AvroKeyOutputFormat.class)
+                                  .setEnableExploreOnCreate(true)
+                                  .setSerDe("org.apache.hadoop.hive.serde2.avro.AvroSerDe")
+                                  .setExploreInputFormat("org.apache.hadoop.hive.ql.io.avro.AvroContainerInputFormat")
+                                  .setExploreOutputFormat("org.apache.hadoop.hive.ql.io.avro.AvroContainerOutputFormat")
+                                  .setTableProperty("avro.schema.literal", Constants.ERROR_SCHEMA.toString())
+                                  .build());
+
+    PipelineSpec spec = specGenerator.generateSpec(config);
+
+    int sourceCount = 0;
+    for (StageSpec stageSpec : spec.getStages()) {
+      if (BatchSource.PLUGIN_TYPE.equals(stageSpec.getPlugin().getType())) {
+        sourceCount++;
+      }
+    }
+    if (sourceCount != 1) {
+      throw new IllegalArgumentException("Invalid pipeline. There must only be one source.");
+    }
+
+    PipelinePlanner planner = new PipelinePlanner(SUPPORTED_PLUGIN_TYPES, ImmutableSet.<String>of());
+    PipelinePlan plan = planner.plan(spec);
+
+    if (plan.getPhases().size() != 1) {
+      // should never happen if there is only one source
+      throw new IllegalArgumentException("There was an error planning the pipeline. There should only be one phase.");
+    }
+
+    PipelinePhase pipeline = plan.getPhases().values().iterator().next();
+
     switch (config.getEngine()) {
       case MAPREDUCE:
-        addMapReduce(new ETLMapReduce(config));
+        BatchPhaseSpec batchPhaseSpec = new BatchPhaseSpec(ETLMapReduce.NAME, pipeline,
+                                                           config.getResources(),
+                                                           config.isStageLoggingEnabled(),
+                                                           new HashMap<String, String>());
+        addMapReduce(new ETLMapReduce(batchPhaseSpec));
         break;
       case SPARK:
-        addSpark(new ETLSpark(config));
+        batchPhaseSpec = new BatchPhaseSpec(ETLSpark.class.getSimpleName(), pipeline,
+                                            config.getResources(),
+                                            config.isStageLoggingEnabled(),
+                                            new HashMap<String, String>());
+        addSpark(new ETLSpark(batchPhaseSpec));
         break;
       default:
         throw new IllegalArgumentException(
           String.format("Invalid execution engine '%s'. Must be one of %s.",
-                        config.getEngine(), Joiner.on(',').join(ETLBatchConfig.Engine.values())));
+                        config.getEngine(), Joiner.on(',').join(Engine.values())));
     }
 
     addWorkflow(new ETLWorkflow(config));

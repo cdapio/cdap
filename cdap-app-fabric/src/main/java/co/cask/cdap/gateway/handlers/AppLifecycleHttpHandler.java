@@ -120,31 +120,19 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   /**
-   * Deploys an application with the specified name.
+   * Creates an application with the specified name from an artifact.
    */
   @PUT
   @Path("/apps/{app-id}")
-  public BodyConsumer deploy(HttpRequest request, HttpResponder responder,
+  public BodyConsumer create(HttpRequest request, HttpResponder responder,
                              @PathParam("namespace-id") final String namespaceId,
-                             @PathParam("app-id") final String appId,
-                             @HeaderParam(ARCHIVE_NAME_HEADER) final String archiveName,
-                             @HeaderParam(APP_CONFIG_HEADER) String configString,
-                             @HeaderParam(HttpHeaders.Names.CONTENT_TYPE) String contentType)
+                             @PathParam("app-id") final String appId)
     throws BadRequestException, NamespaceNotFoundException {
 
     Id.Application applicationId = validateApplicationId(namespaceId, appId);
 
-    // yes this is weird... here for backwards compatibility. If content type is json, use the preferred method
-    // of creating an app from an artifact. Otherwise use the old method where the body is the jar contents.
-    boolean createFromArtifact = MediaType.APPLICATION_JSON.equals(contentType);
-
     try {
-      if (createFromArtifact) {
-        return deployAppFromArtifact(applicationId);
-      } else {
-        return deployApplication(responder, applicationId.getNamespace(),
-                                 applicationId.getId(), archiveName, configString);
-      }
+      return deployAppFromArtifact(applicationId);
     } catch (Exception ex) {
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Deploy failed: {}" + ex.getMessage());
       return null;
@@ -357,10 +345,8 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     if (archiveName == null || archiveName.isEmpty()) {
       responder.sendString(HttpResponseStatus.BAD_REQUEST,
                            String.format(
-                             "%s header not present. Please include the header and set its value to the jar name. " +
-                               "If you are trying to create an app from an artifact that has already been deployed," +
-                               " set the %s header to %s.",
-                             ARCHIVE_NAME_HEADER, HttpHeaders.Names.CONTENT_TYPE,  MediaType.APPLICATION_JSON),
+                             "%s header not present. Please include the header and set its value to the jar name.",
+                             ARCHIVE_NAME_HEADER),
                            ImmutableMultimap.of(HttpHeaders.Names.CONNECTION, HttpHeaders.Values.CLOSE));
       return null;
     }

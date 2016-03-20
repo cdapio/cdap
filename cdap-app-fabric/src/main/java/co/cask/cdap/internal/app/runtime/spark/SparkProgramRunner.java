@@ -117,9 +117,6 @@ public class SparkProgramRunner extends AbstractProgramRunnerWithPlugin {
     Arguments arguments = options.getArguments();
     RunId runId = RunIds.fromString(arguments.getOption(ProgramOptionConstants.RUN_ID));
 
-    long logicalStartTime = arguments.hasOption(ProgramOptionConstants.LOGICAL_START_TIME)
-      ? Long.parseLong(arguments.getOption(ProgramOptionConstants.LOGICAL_START_TIME)) : System.currentTimeMillis();
-
     WorkflowProgramInfo workflowInfo = WorkflowProgramInfo.create(arguments);
     DatasetFramework programDatasetFramework = workflowInfo == null ?
       datasetFramework :
@@ -138,7 +135,7 @@ public class SparkProgramRunner extends AbstractProgramRunnerWithPlugin {
         closeables.add(pluginInstantiator);
       }
 
-      ClientSparkContext context = new ClientSparkContext(program, runId, logicalStartTime,
+      ClientSparkContext context = new ClientSparkContext(program, runId,
                                                           options.getUserArguments().asMap(),
                                                           txSystemClient, programDatasetFramework,
                                                           discoveryServiceClient, metricsCollectionService,

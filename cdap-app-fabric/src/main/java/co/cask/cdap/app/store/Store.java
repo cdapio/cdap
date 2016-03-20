@@ -31,6 +31,7 @@ import co.cask.cdap.internal.app.store.WorkflowDataset;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.WorkflowStatistics;
+import co.cask.cdap.proto.id.ProgramRunId;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Predicate;
 import org.apache.twill.api.RunId;
@@ -356,11 +357,10 @@ public interface Store {
   /**
    * Updates the {@link WorkflowToken} for a specified run of a workflow.
    *
-   * @param workflowId {@link Id.Workflow} of the workflow whose {@link WorkflowToken} is to be updated
-   * @param workflowRunId Run Id of the workflow for which the {@link WorkflowToken} is to be updated
+   * @param workflowRunId workflow run for which the {@link WorkflowToken} is to be updated
    * @param token the {@link WorkflowToken} to update
    */
-  void updateWorkflowToken(Id.Workflow workflowId, String workflowRunId, WorkflowToken token);
+  void updateWorkflowToken(ProgramRunId workflowRunId, WorkflowToken token);
 
   /**
    * Retrieves the {@link WorkflowToken} for a specified run of a workflow.
