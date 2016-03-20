@@ -500,6 +500,8 @@
                         <include name="${additional.artifacts.jar.pattern}"/>
                         <include name="${additional.artifacts.config.pattern}"/>
                         <exclude name="${additional.artifacts.exclude.pattern}"/>
+                        <exclude name="*:sources"/>
+                        <exclude name="*:javadoc"/>
                       </fileset>
                     </copy>
                   </target>
