@@ -4,12 +4,10 @@ angular.module(`${PKG.name}.feature.hydrator-beta`)
         PluginTemplateActionBeta.reset();
         $scope.$close();
       };
-      $scope.saveAndClose = () => {
-        PluginTemplateActionBeta.triggerSave();
-      };
       $scope.pluginTemplateSaveError = null;
       PluginTemplateStoreBeta.registerOnChangeListener(() => {
         let getIsSaveSuccessfull = PluginTemplateStoreBeta.getIsSaveSuccessfull();
+        let getIsCloseCommand = PluginTemplateStoreBeta.getIsCloseCommand();
         if (getIsSaveSuccessfull) {
           PluginTemplateActionBeta.reset();
           PluginActionsFactoryBeta.fetchTemplates({namespace: $stateParams.namespace});
@@ -17,6 +15,10 @@ angular.module(`${PKG.name}.feature.hydrator-beta`)
             type: 'success',
             content: 'Plugin template creation successfull'
           });
+          $scope.$close();
+        }
+        if (getIsCloseCommand) {
+          PluginTemplateActionBeta.reset();
           $scope.$close();
         }
       });

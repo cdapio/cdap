@@ -15,13 +15,11 @@
  */
 
 class LeftPanelControllerBeta {
-  constructor($scope, $stateParams, rVersion, GLOBALS, LeftPanelStoreBeta, LeftPanelActionsFactoryBeta, PluginActionsFactoryBeta, ConfigStoreBeta, ConfigActionsFactoryBeta, MyDAGFactoryBeta, NodesActionsFactoryBeta, NonStorePipelineErrorFactory, HydratorServiceBeta, $rootScope, $uibModal, $timeout, myAlertOnValium, $state, PluginTemplateActionBeta, mySettings) {
+  constructor($scope, $stateParams, rVersion, GLOBALS, LeftPanelStoreBeta, PluginActionsFactoryBeta, ConfigStoreBeta, ConfigActionsFactoryBeta, MyDAGFactoryBeta, NodesActionsFactoryBeta, NonStorePipelineErrorFactory, $uibModal, $timeout, myAlertOnValium, $state, PluginTemplateActionBeta) {
     this.$state = $state;
-    this.$rootScope = $rootScope;
     this.$scope = $scope;
     this.$stateParams = $stateParams;
     this.LeftPanelStoreBeta = LeftPanelStoreBeta;
-    this.LeftPanelActionsFactoryBeta = LeftPanelActionsFactoryBeta;
     this.PluginActionsFactoryBeta = PluginActionsFactoryBeta;
     this.ConfigActionsFactoryBeta = ConfigActionsFactoryBeta;
     this.GLOBALS = GLOBALS;
@@ -29,12 +27,10 @@ class LeftPanelControllerBeta {
     this.MyDAGFactoryBeta = MyDAGFactoryBeta;
     this.NodesActionsFactoryBeta = NodesActionsFactoryBeta;
     this.NonStorePipelineErrorFactory = NonStorePipelineErrorFactory;
-    this.HydratorServiceBeta = HydratorServiceBeta;
     this.PluginTemplateActionBeta = PluginTemplateActionBeta;
     this.rVersion = rVersion;
     this.$timeout = $timeout;
     this.myAlertOnValium = myAlertOnValium;
-    this.mySettings = mySettings;
 
     this.pluginTypes = [
       {
@@ -279,6 +275,6 @@ class LeftPanelControllerBeta {
   }
 }
 
-LeftPanelControllerBeta.$inject = ['$scope', '$stateParams', 'rVersion', 'GLOBALS', 'LeftPanelStoreBeta', 'LeftPanelActionsFactoryBeta', 'PluginActionsFactoryBeta', 'ConfigStoreBeta', 'ConfigActionsFactoryBeta', 'MyDAGFactoryBeta', 'NodesActionsFactoryBeta', 'NonStorePipelineErrorFactory', 'HydratorServiceBeta', '$rootScope', '$uibModal', '$timeout', 'myAlertOnValium', '$state', 'PluginTemplateActionBeta', 'mySettings'];
+LeftPanelControllerBeta.$inject = ['$scope', '$stateParams', 'rVersion', 'GLOBALS', 'LeftPanelStoreBeta', 'PluginActionsFactoryBeta', 'ConfigStoreBeta', 'ConfigActionsFactoryBeta', 'MyDAGFactoryBeta', 'NodesActionsFactoryBeta', 'NonStorePipelineErrorFactory', '$uibModal', '$timeout', 'myAlertOnValium', '$state', 'PluginTemplateActionBeta'];
 angular.module(PKG.name + '.feature.hydrator-beta')
   .controller('LeftPanelControllerBeta', LeftPanelControllerBeta);
