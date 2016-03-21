@@ -19,18 +19,26 @@ angular.module(`${PKG.name}.feature.hydrator-beta`)
     let node = rNode;
     $scope.templateName = node.pluginTemplate;
     $scope.ok = () => {
+      $scope.disableOKButton = true;
       mySettings.get('pluginTemplates', true)
         .then( (res) => {
           delete res[$stateParams.namespace][node.templateType][node.pluginType][node.pluginTemplate];
           return mySettings.set('pluginTemplates', res);
         })
-        .then( () => {
-          myAlertOnValium.show({
-            type: 'success',
-            content: 'Successfully deleted template ' + node.pluginTemplate
-          });
-          PluginActionsFactoryBeta.fetchTemplates({namespace: $stateParams.namespace});
-        });
-      $scope.$close();
+        .then(
+          () => {
+            $scope.disableOKButton = false;
+            myAlertOnValium.show({
+              type: 'success',
+              content: 'Successfully deleted template ' + node.pluginTemplate
+            });
+            PluginActionsFactoryBeta.fetchTemplates({namespace: $stateParams.namespace});
+            $scope.$close();
+          },
+          (err) => {
+            $scope.disableButtons = false;
+            $scope.error = err;
+          }
+        );
     };
   });

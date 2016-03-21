@@ -13,15 +13,15 @@
   License for the specific language governing permissions and limitations under
   the License.
 -->
-<div class="row">
-  <div class="col-xs-12">
+<div class="modal-header">
+  <h3 class="modal-title">
     <h3 ng-if="!PluginTemplatesCtrl.isEdit">
       <strong>Create {{PluginTemplatesCtrl.pluginType}} plugin template</strong>
     </h3>
     <h3 ng-if="PluginTemplatesCtrl.isEdit">
       <strong>Edit {{PluginTemplatesCtrl.pluginConfig.pluginTemplate}} Template</strong>
     </h3>
-  </div>
+  </h3>
 </div>
 <form name="templateCreateEditForm" ng-submit="PluginTemplatesCtrl.save(templateCreateEditForm.$valid)" novalidation>
   <div class="form-content">
@@ -164,12 +164,12 @@
 
   </div>
   <div class="form-buttons text-right">
-    <div class="btn btn-default" ng-click="PluginTemplatesCtrl.cancel()">
-      Cancel
-    </div>
     <button type="submit" ng-click="PluginTemplatesCtrl.submitted = true" class="btn btn-success">
       Save & Close
     </button>
+    <div class="btn btn-default" ng-click="PluginTemplatesCtrl.cancel()">
+      Cancel
+    </div>
   </div>
 
 </form>

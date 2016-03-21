@@ -19,6 +19,7 @@
 </div>
 <div class="modal-body">Are you sure you want to delete the "<strong>{{::templateName}}</strong>" plugin </div>
 <div class="modal-footer">
-  <button type="button" class="btn btn-default" ng-click="$close()">Cancel</button>
-  <button type="button" class="btn btn-danger" ng-click="ok()">OK</button>
+  <span class="text-danger">{{error}}</span>
+  <button type="button" class="btn btn-danger" ng-disabled="disableButtons" ng-click="ok()">OK</button>
+  <button type="button" class="btn btn-default" ng-disabled="disableButtons" ng-click="$close()">Cancel</button>
 </div>
