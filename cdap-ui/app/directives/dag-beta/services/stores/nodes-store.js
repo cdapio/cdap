@@ -14,15 +14,15 @@
  * the License.
  */
 
-class NodesStore {
-  constructor(NodesDispatcherBeta, uuid, GLOBALS) {
+class DAGPlusPlusNodesStore {
+  constructor(DAGPlusPlusNodesDispatcher, uuid, GLOBALS) {
     this.state = {};
     this.setDefaults();
     this.changeListeners = [];
     this.uuid = uuid;
     this.GLOBALS = GLOBALS;
 
-    let dispatcher = NodesDispatcherBeta.getDispatcher();
+    let dispatcher = DAGPlusPlusNodesDispatcher.getDispatcher();
     dispatcher.register('onNodeAdd', this.addNode.bind(this));
     dispatcher.register('onRemoveNode', this.removeNode.bind(this));
     dispatcher.register('onConnect', this.addConnection.bind(this));
@@ -245,6 +245,6 @@ class NodesStore {
 
 }
 
-NodesStore.$inject = ['NodesDispatcherBeta', 'uuid', 'GLOBALS'];
+DAGPlusPlusNodesStore.$inject = ['DAGPlusPlusNodesDispatcher', 'uuid', 'GLOBALS'];
 angular.module(`${PKG.name}.commons`)
-  .service('NodesStoreBeta', NodesStore);
+  .service('DAGPlusPlusNodesStore', DAGPlusPlusNodesStore);

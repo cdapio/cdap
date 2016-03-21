@@ -14,11 +14,11 @@
  * the License.
  */
 
-class PluginActionsFactoryBeta {
-  constructor(PluginsDispatcherBeta, myPipelineApi, PluginConfigFactoryBeta, GLOBALS, mySettings) {
-    this.dispatcher = PluginsDispatcherBeta.getDispatcher();
+class HydratorPlusPlusPluginActions {
+  constructor(HydratorPlusPlusPluginsDispatcher, myPipelineApi, HydratorPlusPlusPluginConfigFactory, GLOBALS, mySettings) {
+    this.dispatcher = HydratorPlusPlusPluginsDispatcher.getDispatcher();
     this.api = myPipelineApi;
-    this.pluginConfigApi = PluginConfigFactoryBeta;
+    this.pluginConfigApi = HydratorPlusPlusPluginConfigFactory;
     this.GLOBALS = GLOBALS;
     this.mySettings = mySettings;
   }
@@ -95,6 +95,6 @@ class PluginActionsFactoryBeta {
   }
 }
 
-PluginActionsFactoryBeta.$inject = ['PluginsDispatcherBeta', 'myPipelineApi', 'PluginConfigFactoryBeta', 'GLOBALS', 'mySettings'];
+HydratorPlusPlusPluginActions.$inject = ['HydratorPlusPlusPluginsDispatcher', 'myPipelineApi', 'HydratorPlusPlusPluginConfigFactory', 'GLOBALS', 'mySettings'];
 angular.module(`${PKG.name}.feature.hydrator-beta`)
-  .service('PluginActionsFactoryBeta', PluginActionsFactoryBeta);
+  .service('HydratorPlusPlusPluginActions', HydratorPlusPlusPluginActions);

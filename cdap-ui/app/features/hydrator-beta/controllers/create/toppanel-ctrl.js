@@ -14,16 +14,16 @@
  * the License.
  */
 
-class TopPanelControllerBeta{
-  constructor(GLOBALS, $stateParams, ConfigStoreBeta, ConfigActionsFactoryBeta, $uibModal, ConsoleActionsFactoryBeta, NodesActionsFactoryBeta) {
+class HydratorPlusPlusTopPanelCtrl{
+  constructor(GLOBALS, $stateParams, HydratorPlusPlusConfigStore, HydratorPlusPlusConfigActions, $uibModal, HydratorPlusPlusConsoleActions, DAGPlusPlusNodesActionsFactory) {
 
     this.GLOBALS = GLOBALS;
-    this.ConfigStoreBeta = ConfigStoreBeta;
-    this.ConfigActionsFactoryBeta = ConfigActionsFactoryBeta;
+    this.HydratorPlusPlusConfigStore = HydratorPlusPlusConfigStore;
+    this.HydratorPlusPlusConfigActions = HydratorPlusPlusConfigActions;
     this.$uibModal = $uibModal;
-    this.ConsoleActionsFactoryBeta = ConsoleActionsFactoryBeta;
-    this.NodesActionsFactoryBeta = NodesActionsFactoryBeta;
-    this.parsedDescription = this.ConfigStoreBeta.getDescription();
+    this.HydratorPlusPlusConsoleActions = HydratorPlusPlusConsoleActions;
+    this.DAGPlusPlusNodesActionsFactory = DAGPlusPlusNodesActionsFactory;
+    this.parsedDescription = this.HydratorPlusPlusConfigStore.getDescription();
 
     this.canvasOperations = [
       {
@@ -49,7 +49,7 @@ class TopPanelControllerBeta{
     ];
     this.$stateParams = $stateParams;
     this.setState();
-    this.ConfigStoreBeta.registerOnChangeListener(this.setState.bind(this));
+    this.HydratorPlusPlusConfigStore.registerOnChangeListener(this.setState.bind(this));
   }
   setMetadata(metadata) {
     this.state.metadata = metadata;
@@ -57,10 +57,10 @@ class TopPanelControllerBeta{
   setState() {
     this.state = {
       metadata: {
-        name: this.ConfigStoreBeta.getName(),
-        description: this.ConfigStoreBeta.getDescription()
+        name: this.HydratorPlusPlusConfigStore.getName(),
+        description: this.HydratorPlusPlusConfigStore.getDescription()
       },
-      artifact: this.ConfigStoreBeta.getArtifact()
+      artifact: this.HydratorPlusPlusConfigStore.getArtifact()
     };
   }
 
@@ -72,7 +72,7 @@ class TopPanelControllerBeta{
     this.metadataExpanded = false;
   }
   saveMetadata() {
-    this.ConfigActionsFactoryBeta.setMetadataInfo(this.state.metadata.name, this.state.metadata.description);
+    this.HydratorPlusPlusConfigActions.setMetadataInfo(this.state.metadata.name, this.state.metadata.description);
     if (this.state.metadata.description) {
       this.parsedDescription = this.state.metadata.description.replace(/\n/g, ' ');
       this.tooltipDescription = this.state.metadata.description.replace(/\n/g, '<br />');
@@ -94,8 +94,8 @@ class TopPanelControllerBeta{
   }
 
   onExport() {
-    this.NodesActionsFactoryBeta.resetSelectedNode();
-    let config = angular.copy(this.ConfigStoreBeta.getDisplayConfig());
+    this.DAGPlusPlusNodesActionsFactory.resetSelectedNode();
+    let config = angular.copy(this.HydratorPlusPlusConfigStore.getDisplayConfig());
     if (!config) {
       return;
     }
@@ -119,37 +119,37 @@ class TopPanelControllerBeta{
       }],
       resolve: {
         config: () => config,
-        exportConfig: () => this.ConfigStoreBeta.getConfigForExport()
+        exportConfig: () => this.HydratorPlusPlusConfigStore.getConfigForExport()
       }
     });
   }
   onSaveDraft() {
-    var config = this.ConfigStoreBeta.getState();
+    var config = this.HydratorPlusPlusConfigStore.getState();
     if (!config.name) {
-      this.ConsoleActionsFactoryBeta.addMessage({
+      this.HydratorPlusPlusConsoleActions.addMessage({
         type: 'error',
         content: this.GLOBALS.en.hydrator.studio.error['MISSING-NAME']
       });
       return;
     }
-    this.ConfigActionsFactoryBeta.saveAsDraft(config);
+    this.HydratorPlusPlusConfigActions.saveAsDraft(config);
   }
   onValidate() {
-    this.ConsoleActionsFactoryBeta.resetMessages();
-    let isStateValid = this.ConfigStoreBeta.validateState(true);
+    this.HydratorPlusPlusConsoleActions.resetMessages();
+    let isStateValid = this.HydratorPlusPlusConfigStore.validateState(true);
     if (isStateValid) {
-      this.ConsoleActionsFactoryBeta.addMessage({
+      this.HydratorPlusPlusConsoleActions.addMessage({
         type: 'success',
-        content: 'Validation success! Pipeline ' + this.ConfigStoreBeta.getName() + ' is valid.'
+        content: 'Validation success! Pipeline ' + this.HydratorPlusPlusConfigStore.getName() + ' is valid.'
       });
     }
   }
   onPublish() {
-    this.ConfigActionsFactoryBeta.publishPipeline();
+    this.HydratorPlusPlusConfigActions.publishPipeline();
   }
 }
 
-TopPanelControllerBeta.$inject = ['GLOBALS', '$stateParams', 'ConfigStoreBeta', 'ConfigActionsFactoryBeta', '$uibModal', 'ConsoleActionsFactoryBeta', 'NodesActionsFactoryBeta'];
+HydratorPlusPlusTopPanelCtrl.$inject = ['GLOBALS', '$stateParams', 'HydratorPlusPlusConfigStore', 'HydratorPlusPlusConfigActions', '$uibModal', 'HydratorPlusPlusConsoleActions', 'DAGPlusPlusNodesActionsFactory'];
 
 angular.module(PKG.name + '.feature.hydrator-beta')
-  .controller('TopPanelControllerBeta', TopPanelControllerBeta);
+  .controller('HydratorPlusPlusTopPanelCtrl', HydratorPlusPlusTopPanelCtrl);

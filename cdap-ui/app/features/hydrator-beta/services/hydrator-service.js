@@ -14,17 +14,17 @@
  * the License.
  */
 
-class HydratorServiceBeta {
-  constructor(GLOBALS, MyDAGFactoryBeta, uuid, $state, $rootScope, myPipelineApi, $q, IMPLICIT_SCHEMA, NodesStoreBeta) {
+class HydratorPlusPlusHydratorService {
+  constructor(GLOBALS, DAGPlusPlusFactory, uuid, $state, $rootScope, myPipelineApi, $q, IMPLICIT_SCHEMA, DAGPlusPlusNodesStore) {
     this.GLOBALS = GLOBALS;
-    this.MyDAGFactoryBeta = MyDAGFactoryBeta;
+    this.DAGPlusPlusFactory = DAGPlusPlusFactory;
     this.uuid = uuid;
     this.$state = $state;
     this.$rootScope = $rootScope;
     this.myPipelineApi = myPipelineApi;
     this.$q = $q;
     this.IMPLICIT_SCHEMA = IMPLICIT_SCHEMA;
-    this.NodesStoreBeta = NodesStoreBeta;
+    this.DAGPlusPlusNodesStore = DAGPlusPlusNodesStore;
   }
 
   getNodesAndConnectionsFromConfig(pipeline) {
@@ -38,18 +38,18 @@ class HydratorServiceBeta {
       .map( node => {
         node.type = artifact.transform;
         node.label = node.label || node.name;
-        node.icon = this.MyDAGFactoryBeta.getIcon(node.plugin.name);
+        node.icon = this.DAGPlusPlusFactory.getIcon(node.plugin.name);
         return node;
       });
     let sinks = angular.copy(pipeline.config.sinks)
       .map( node => {
         node.type = artifact.sink;
-        node.icon = this.MyDAGFactoryBeta.getIcon(node.plugin.name);
+        node.icon = this.DAGPlusPlusFactory.getIcon(node.plugin.name);
         return node;
       });
 
     source.type = artifact.source;
-    source.icon = this.MyDAGFactoryBeta.getIcon(source.plugin.name);
+    source.icon = this.DAGPlusPlusFactory.getIcon(source.plugin.name);
     // replace with backend id
     nodes.push(source);
     nodes = nodes.concat(transforms);
@@ -58,7 +58,7 @@ class HydratorServiceBeta {
     connections = pipeline.config.connections;
 
     // Obtaining layout of graph with Dagre
-    var graph = this.MyDAGFactoryBeta.getGraphLayout(nodes, connections);
+    var graph = this.DAGPlusPlusFactory.getGraphLayout(nodes, connections);
     angular.forEach(nodes, function (node) {
       node._uiPosition = {
         'top': graph._nodes[node.name].y + 'px' ,
@@ -163,7 +163,7 @@ class HydratorServiceBeta {
   }
 
   generateSchemaOnEdge(sourceId) {
-    var nodes = this.NodesStoreBeta.getNodes();
+    var nodes = this.DAGPlusPlusNodesStore.getNodes();
     var sourceNode;
 
     for (var i = 0; i<nodes.length; i++) {
@@ -219,6 +219,6 @@ class HydratorServiceBeta {
   }
 
 }
-HydratorServiceBeta.$inject = ['GLOBALS', 'MyDAGFactoryBeta', 'uuid', '$state', '$rootScope', 'myPipelineApi', '$q', 'IMPLICIT_SCHEMA', 'NodesStoreBeta'];
+HydratorPlusPlusHydratorService.$inject = ['GLOBALS', 'DAGPlusPlusFactory', 'uuid', '$state', '$rootScope', 'myPipelineApi', '$q', 'IMPLICIT_SCHEMA', 'DAGPlusPlusNodesStore'];
 angular.module(`${PKG.name}.feature.hydrator-beta`)
-  .service('HydratorServiceBeta', HydratorServiceBeta);
+  .service('HydratorPlusPlusHydratorService', HydratorPlusPlusHydratorService);

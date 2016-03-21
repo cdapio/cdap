@@ -14,34 +14,34 @@
  * the License.
  */
 
-class ConfigStoreBeta {
-  constructor(ConfigDispatcherBeta, CanvasFactoryBeta, GLOBALS, mySettings, ConsoleActionsFactoryBeta, $stateParams, myHelpers, NonStorePipelineErrorFactory, HydratorServiceBeta, $q, PluginConfigFactoryBeta, uuid, $state){
+class HydratorPlusPlusConfigStore {
+  constructor(HydratorPlusPlusConfigDispatcher, HydratorPlusPlusCanvasFactory, GLOBALS, mySettings, HydratorPlusPlusConsoleActions, $stateParams, myHelpers, NonStorePipelineErrorFactory, HydratorPlusPlusHydratorService, $q, HydratorPlusPlusPluginConfigFactory, uuid, $state){
     this.state = {};
     this.mySettings = mySettings;
-    this.ConsoleActionsFactoryBeta = ConsoleActionsFactoryBeta;
-    this.CanvasFactoryBeta = CanvasFactoryBeta;
+    this.HydratorPlusPlusConsoleActions = HydratorPlusPlusConsoleActions;
+    this.HydratorPlusPlusCanvasFactory = HydratorPlusPlusCanvasFactory;
     this.GLOBALS = GLOBALS;
     this.$stateParams = $stateParams;
     this.myHelpers = myHelpers;
     this.NonStorePipelineErrorFactory = NonStorePipelineErrorFactory;
-    this.HydratorServiceBeta = HydratorServiceBeta;
+    this.HydratorPlusPlusHydratorService = HydratorPlusPlusHydratorService;
     this.$q = $q;
-    this.PluginConfigFactoryBeta = PluginConfigFactoryBeta;
+    this.HydratorPlusPlusPluginConfigFactory = HydratorPlusPlusPluginConfigFactory;
     this.uuid = uuid;
     this.$state = $state;
 
     this.changeListeners = [];
     this.setDefaults();
-    this.configDispatcherBeta = ConfigDispatcherBeta.getDispatcher();
-    this.configDispatcherBeta.register('onArtifactSave', this.setArtifact.bind(this));
-    this.configDispatcherBeta.register('onMetadataInfoSave', this.setMetadataInformation.bind(this));
-    this.configDispatcherBeta.register('onPluginAdd', this.setConfig.bind(this));
-    this.configDispatcherBeta.register('onPluginEdit', this.editNodeProperties.bind(this));
-    this.configDispatcherBeta.register('onSetSchedule', this.setSchedule.bind(this));
-    this.configDispatcherBeta.register('onSetInstance', this.setInstance.bind(this));
-    this.configDispatcherBeta.register('onSaveAsDraft', this.saveAsDraft.bind(this));
-    this.configDispatcherBeta.register('onInitialize', this.init.bind(this));
-    this.configDispatcherBeta.register('onSchemaPropagationDownStream', this.propagateIOSchemas.bind(this));
+    this.hydratorPlusPlusConfigDispatcher = HydratorPlusPlusConfigDispatcher.getDispatcher();
+    this.hydratorPlusPlusConfigDispatcher.register('onArtifactSave', this.setArtifact.bind(this));
+    this.hydratorPlusPlusConfigDispatcher.register('onMetadataInfoSave', this.setMetadataInformation.bind(this));
+    this.hydratorPlusPlusConfigDispatcher.register('onPluginAdd', this.setConfig.bind(this));
+    this.hydratorPlusPlusConfigDispatcher.register('onPluginEdit', this.editNodeProperties.bind(this));
+    this.hydratorPlusPlusConfigDispatcher.register('onSetSchedule', this.setSchedule.bind(this));
+    this.hydratorPlusPlusConfigDispatcher.register('onSetInstance', this.setInstance.bind(this));
+    this.hydratorPlusPlusConfigDispatcher.register('onSaveAsDraft', this.saveAsDraft.bind(this));
+    this.hydratorPlusPlusConfigDispatcher.register('onInitialize', this.init.bind(this));
+    this.hydratorPlusPlusConfigDispatcher.register('onSchemaPropagationDownStream', this.propagateIOSchemas.bind(this));
   }
   registerOnChangeListener(callback) {
     this.changeListeners.push(callback);
@@ -186,7 +186,7 @@ class ConfigStoreBeta {
       delete nodesMap[id];
     };
 
-    var connections = this.CanvasFactoryBeta.orderConnections(
+    var connections = this.HydratorPlusPlusCanvasFactory.orderConnections(
       angular.copy(this.state.config.connections),
       this.state.artifact.name,
       this.state.__ui__.nodes
@@ -235,7 +235,7 @@ class ConfigStoreBeta {
     // Stripping of uuids and generating configs is what is going on here.
 
     var config = angular.copy(this.generateConfigFromState());
-    this.CanvasFactoryBeta.pruneProperties(config);
+    this.HydratorPlusPlusCanvasFactory.pruneProperties(config);
     state.config = angular.copy(config);
 
     var nodes = angular.copy(this.getNodes()).map( node => {
@@ -249,7 +249,7 @@ class ConfigStoreBeta {
   getDisplayConfig() {
     let uniqueNodeNames = {};
     let ERROR_MESSAGES = this.GLOBALS.en.hydrator.studio.error;
-    this.ConsoleActionsFactoryBeta.resetMessages();
+    this.HydratorPlusPlusConsoleActions.resetMessages();
     this.NonStorePipelineErrorFactory.isUniqueNodeNames(this.getNodes(), (err, node) => {
       if (err) {
         uniqueNodeNames[node.plugin.label] = err;
@@ -258,7 +258,7 @@ class ConfigStoreBeta {
 
     if (Object.keys(uniqueNodeNames).length > 0) {
       angular.forEach(uniqueNodeNames, (err, nodeName) => {
-        this.ConsoleActionsFactoryBeta.addMessage({
+        this.HydratorPlusPlusConsoleActions.addMessage({
           type: 'error',
           content: nodeName + ': ' + ERROR_MESSAGES[err]
         });
@@ -361,7 +361,7 @@ class ConfigStoreBeta {
       node => !angular.isObject(node._backendProperties)
     );
     let parseNodeConfig = (node, res) => {
-      let nodeConfig = this.PluginConfigFactoryBeta.generateNodeConfig(node._backendProperties, res);
+      let nodeConfig = this.HydratorPlusPlusPluginConfigFactory.generateNodeConfig(node._backendProperties, res);
       node.implicitSchema = nodeConfig.outputSchema.implicitSchema;
       node.outputSchemaProperty = nodeConfig.outputSchema.outputSchemaProperty;
       if (angular.isArray(node.outputSchemaProperty)) {
@@ -385,7 +385,7 @@ class ConfigStoreBeta {
     };
     if (nodesWOutBackendProps) {
       nodesWOutBackendProps.forEach( n => {
-        listOfPromises.push(this.HydratorServiceBeta.fetchBackendProperties(n, this.getAppType()));
+        listOfPromises.push(this.HydratorPlusPlusHydratorService.fetchBackendProperties(n, this.getAppType()));
       });
 
     } else {
@@ -405,7 +405,7 @@ class ConfigStoreBeta {
             // This could happen when the user doesn't provide an artifact information for a plugin & deploys it
             // using CLI or REST and opens up in UI and clones it. Without this check it will throw a JS error.
             if (!n.plugin.artifact) { return; }
-            this.PluginConfigFactoryBeta.fetchWidgetJson(
+            this.HydratorPlusPlusPluginConfigFactory.fetchWidgetJson(
               n.plugin.artifact.name,
               n.plugin.artifact.version,
               n.plugin.artifact.scope,
@@ -551,7 +551,7 @@ class ConfigStoreBeta {
     let ERROR_MESSAGES = this.GLOBALS.en.hydrator.studio.error;
     let showConsoleMessage = (errObj) => {
       if (isShowConsoleMessage) {
-        this.ConsoleActionsFactoryBeta.addMessage(errObj);
+        this.HydratorPlusPlusConsoleActions.addMessage(errObj);
       }
     };
     let setErrorWarningFlagOnNode = (node) => {
@@ -649,7 +649,7 @@ class ConfigStoreBeta {
   }
 
   saveAsDraft() {
-    this.ConsoleActionsFactoryBeta.resetMessages();
+    this.HydratorPlusPlusConsoleActions.resetMessages();
     if(!this.getDraftId()) {
       this.setDraftId(this.uuid.v4());
       this.$stateParams.draftId = this.getDraftId();
@@ -687,13 +687,13 @@ class ConfigStoreBeta {
       })
       .then(
         () => {
-          this.ConsoleActionsFactoryBeta.addMessage({
+          this.HydratorPlusPlusConsoleActions.addMessage({
             type: 'success',
             content: `Draft ${config.name} saved successfully.`
           });
         },
         err => {
-          this.ConsoleActionsFactoryBeta.addMessage({
+          this.HydratorPlusPlusConsoleActions.addMessage({
             type: 'error',
             content: err
           });
@@ -702,6 +702,6 @@ class ConfigStoreBeta {
   }
 }
 
-ConfigStoreBeta.$inject = ['ConfigDispatcherBeta', 'CanvasFactoryBeta', 'GLOBALS', 'mySettings', 'ConsoleActionsFactoryBeta', '$stateParams', 'myHelpers', 'NonStorePipelineErrorFactory', 'HydratorServiceBeta', '$q', 'PluginConfigFactoryBeta', 'uuid', '$state'];
+HydratorPlusPlusConfigStore.$inject = ['HydratorPlusPlusConfigDispatcher', 'HydratorPlusPlusCanvasFactory', 'GLOBALS', 'mySettings', 'HydratorPlusPlusConsoleActions', '$stateParams', 'myHelpers', 'NonStorePipelineErrorFactory', 'HydratorPlusPlusHydratorService', '$q', 'HydratorPlusPlusPluginConfigFactory', 'uuid', '$state'];
 angular.module(`${PKG.name}.feature.hydrator-beta`)
-  .service('ConfigStoreBeta', ConfigStoreBeta);
+  .service('HydratorPlusPlusConfigStore', HydratorPlusPlusConfigStore);

@@ -38,10 +38,10 @@ var updateDefaultVersion = (pluginsList, defaultArtifactMap = {}) => {
   });
 };
 
-var mapPluginsWithMoreInfo = (type, typeMap, MyDAGFactoryBeta, popoverTemplate) => {
+var mapPluginsWithMoreInfo = (type, typeMap, DAGPlusPlusFactory, popoverTemplate) => {
   return (plugin) => {
     plugin.type = type;
-    plugin.icon = MyDAGFactoryBeta.getIcon(plugin.name);
+    plugin.icon = DAGPlusPlusFactory.getIcon(plugin.name);
     plugin.template = popoverTemplate;
     plugin.defaultArtifact = typeMap[plugin.name][0].artifact;
     plugin.allArtifacts = typeMap[plugin.name].map( (plugin) => plugin.artifact);
@@ -49,28 +49,28 @@ var mapPluginsWithMoreInfo = (type, typeMap, MyDAGFactoryBeta, popoverTemplate) 
   };
 };
 
-var mapPluginTemplatesWithMoreInfo = (type, MyDAGFactoryBeta, popoverTemplate) => {
+var mapPluginTemplatesWithMoreInfo = (type, DAGPlusPlusFactory, popoverTemplate) => {
   return (plugin) => {
     plugin.type = type;
-    plugin.icon = MyDAGFactoryBeta.getIcon(plugin.pluginName);
+    plugin.icon = DAGPlusPlusFactory.getIcon(plugin.pluginName);
     plugin.template = popoverTemplate;
 
     return plugin;
   };
 };
 
-class LeftPanelStoreBeta {
-  constructor(LeftPanelDispatcherBeta, PluginsDispatcherBeta, MyDAGFactoryBeta, GLOBALS, ConfigStoreBeta, mySettings, $q, $timeout) {
+class HydratorPlusPlusLeftPanelStore {
+  constructor(HydratorPlusPlusLeftPanelDispatcher, HydratorPlusPlusPluginsDispatcher, DAGPlusPlusFactory, GLOBALS, HydratorPlusPlusConfigStore, mySettings, $q, $timeout) {
     this.state = {};
     this.setDefaults();
-    this.MyDAGFactoryBeta = MyDAGFactoryBeta;
+    this.DAGPlusPlusFactory = DAGPlusPlusFactory;
     this.changeListeners = [];
     this.sourcesToVersionMap = {};
     this.transformsToVersionMap = {};
     this.sinksToVersionMap = {};
     this.popoverTemplate = '/assets/features/hydrator-beta/templates/create/popovers/leftpanel-plugin-popover.html';
     this.GLOBALS = GLOBALS;
-    this.ConfigStoreBeta = ConfigStoreBeta;
+    this.HydratorPlusPlusConfigStore = HydratorPlusPlusConfigStore;
     this.mySettings = mySettings;
     this.$q = $q;
     this.$timeout = $timeout;
@@ -83,16 +83,16 @@ class LeftPanelStoreBeta {
         })
         .then(this.cleanupNonExistantPlugins.bind(this));
 
-    let dispatcher = LeftPanelDispatcherBeta.getDispatcher();
+    let dispatcher = HydratorPlusPlusLeftPanelDispatcher.getDispatcher();
     dispatcher.register('onLeftPanelToggled', this.setState.bind(this));
     dispatcher.register('toggleLeftPanelState', this.togglePanelState.bind(this));
 
-    let pluginsDispatcherBeta = PluginsDispatcherBeta.getDispatcher();
-    pluginsDispatcherBeta.register('onArtifactsFetch', this.setArtifacts.bind(this));
-    pluginsDispatcherBeta.register('onSourcesFetch', this.setSources.bind(this));
-    pluginsDispatcherBeta.register('onTransformsFetch', this.setTransforms.bind(this));
-    pluginsDispatcherBeta.register('onSinksFetch', this.setSinks.bind(this));
-    pluginsDispatcherBeta.register('onPluginTemplatesFetch', this.updatePluginTemplates.bind(this));
+    let hydratorPlusPlusPluginsDispatcher = HydratorPlusPlusPluginsDispatcher.getDispatcher();
+    hydratorPlusPlusPluginsDispatcher.register('onArtifactsFetch', this.setArtifacts.bind(this));
+    hydratorPlusPlusPluginsDispatcher.register('onSourcesFetch', this.setSources.bind(this));
+    hydratorPlusPlusPluginsDispatcher.register('onTransformsFetch', this.setTransforms.bind(this));
+    hydratorPlusPlusPluginsDispatcher.register('onSinksFetch', this.setSinks.bind(this));
+    hydratorPlusPlusPluginsDispatcher.register('onPluginTemplatesFetch', this.updatePluginTemplates.bind(this));
   }
   setDefaults() {
     this.state = {
@@ -129,7 +129,7 @@ class LeftPanelStoreBeta {
 
   setSources(plugins, type) {
     this.sourcesToVersionMap = {};
-    this.state.plugins.sources = plugins.filter(uniquePluginFilter(this.sourcesToVersionMap)).map(mapPluginsWithMoreInfo(type, this.sourcesToVersionMap, this.MyDAGFactoryBeta, this.popoverTemplate));
+    this.state.plugins.sources = plugins.filter(uniquePluginFilter(this.sourcesToVersionMap)).map(mapPluginsWithMoreInfo(type, this.sourcesToVersionMap, this.DAGPlusPlusFactory, this.popoverTemplate));
     this.checkAndUpdateDefaultVersion(this.state.plugins.sources);
     this.emitChange();
   }
@@ -141,7 +141,7 @@ class LeftPanelStoreBeta {
 
   setTransforms(plugins, type) {
     this.transformsToVersionMap = {};
-    this.state.plugins.transforms = plugins.filter(uniquePluginFilter(this.transformsToVersionMap)).map(mapPluginsWithMoreInfo(type, this.transformsToVersionMap, this.MyDAGFactoryBeta, this.popoverTemplate));
+    this.state.plugins.transforms = plugins.filter(uniquePluginFilter(this.transformsToVersionMap)).map(mapPluginsWithMoreInfo(type, this.transformsToVersionMap, this.DAGPlusPlusFactory, this.popoverTemplate));
     this.checkAndUpdateDefaultVersion(this.state.plugins.transforms);
     this.emitChange();
   }
@@ -153,7 +153,7 @@ class LeftPanelStoreBeta {
 
   setSinks(plugins, type) {
     this.sinksToVersionMap = {};
-    this.state.plugins.sinks = plugins.filter(uniquePluginFilter(this.sinksToVersionMap)).map(mapPluginsWithMoreInfo(type, this.sinksToVersionMap, this.MyDAGFactoryBeta, this.popoverTemplate));
+    this.state.plugins.sinks = plugins.filter(uniquePluginFilter(this.sinksToVersionMap)).map(mapPluginsWithMoreInfo(type, this.sinksToVersionMap, this.DAGPlusPlusFactory, this.popoverTemplate));
     this.checkAndUpdateDefaultVersion(this.state.plugins.sinks);
     this.emitChange();
   }
@@ -202,7 +202,7 @@ class LeftPanelStoreBeta {
     }
 
     var typeMap;
-    var pluginTypes = this.GLOBALS.pluginTypes[this.ConfigStoreBeta.getAppType()];
+    var pluginTypes = this.GLOBALS.pluginTypes[this.HydratorPlusPlusConfigStore.getAppType()];
     switch(plugin.type) {
       case pluginTypes.source:
         typeMap = this.sourcesToVersionMap;
@@ -250,7 +250,7 @@ class LeftPanelStoreBeta {
       angular.forEach(defaultVersionsMap, (pluginArtifact, pluginKey) => {
         delete this.state.defaultVersionsMap[pluginKey];
       });
-      let pipelineType = this.ConfigStoreBeta.getAppType();
+      let pipelineType = this.HydratorPlusPlusConfigStore.getAppType();
       this.mySettings.set('plugin-default-version', this.state.defaultVersionsMap);
       this.setSources(this.state.plugins.sources, this.GLOBALS.pluginTypes[pipelineType]['source']);
       this.setSinks(this.state.plugins.sinks, this.GLOBALS.pluginTypes[pipelineType]['sink']);
@@ -259,18 +259,18 @@ class LeftPanelStoreBeta {
   }
 
   updatePluginTemplates(plugins, params) {
-    let pipelineType = this.ConfigStoreBeta.getAppType();
+    let pipelineType = this.HydratorPlusPlusConfigStore.getAppType();
     if (!plugins || !plugins[params.namespace] || !plugins[params.namespace][pipelineType]) { return; }
 
     let pluginsList = plugins[params.namespace][pipelineType];
     angular.forEach(pluginsList, (plugins, key) => {
-      this.state.pluginTemplates[this.GLOBALS.pluginConvert[key]] = _.values(plugins).map(mapPluginTemplatesWithMoreInfo(key, this.MyDAGFactoryBeta, this.popoverTemplate));
+      this.state.pluginTemplates[this.GLOBALS.pluginConvert[key]] = _.values(plugins).map(mapPluginTemplatesWithMoreInfo(key, this.DAGPlusPlusFactory, this.popoverTemplate));
     });
 
     this.emitChange();
   }
 }
 
-LeftPanelStoreBeta.$inject = ['LeftPanelDispatcherBeta', 'PluginsDispatcherBeta', 'MyDAGFactoryBeta', 'GLOBALS', 'ConfigStoreBeta', 'mySettings', '$q', '$timeout'];
+HydratorPlusPlusLeftPanelStore.$inject = ['HydratorPlusPlusLeftPanelDispatcher', 'HydratorPlusPlusPluginsDispatcher', 'DAGPlusPlusFactory', 'GLOBALS', 'HydratorPlusPlusConfigStore', 'mySettings', '$q', '$timeout'];
 angular.module(`${PKG.name}.feature.hydrator-beta`)
-  .service('LeftPanelStoreBeta', LeftPanelStoreBeta);
+  .service('HydratorPlusPlusLeftPanelStore', HydratorPlusPlusLeftPanelStore);

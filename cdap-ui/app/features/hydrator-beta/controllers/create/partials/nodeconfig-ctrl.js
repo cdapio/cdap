@@ -14,30 +14,30 @@
  * the License.
  */
 
-class NodeConfigControllerBeta {
-  constructor(NodeConfigStoreBeta, $scope, $timeout, $state, DetailNonRunsStore, PluginConfigFactoryBeta, EventPipe, GLOBALS, ConfigActionsFactoryBeta, myHelpers, NonStorePipelineErrorFactory) {
+class HydratorPlusPlusNodeConfigCtrl {
+  constructor(HydratorPlusPlusNodeConfigStore, $scope, $timeout, $state, DetailNonRunsStore, HydratorPlusPlusPluginConfigFactory, EventPipe, GLOBALS, HydratorPlusPlusConfigActions, myHelpers, NonStorePipelineErrorFactory) {
 
     this.$scope = $scope;
     this.$timeout = $timeout;
     this.$state = $state;
     this.EventPipe = EventPipe;
     this.DetailNonRunsStore = DetailNonRunsStore;
-    this.PluginConfigFactoryBeta = PluginConfigFactoryBeta;
+    this.HydratorPlusPlusPluginConfigFactory = HydratorPlusPlusPluginConfigFactory;
     this.GLOBALS = GLOBALS;
     this.myHelpers = myHelpers;
-    this.NodeConfigStoreBeta = NodeConfigStoreBeta;
-    this.ConfigActionsFactoryBeta = ConfigActionsFactoryBeta;
+    this.HydratorPlusPlusNodeConfigStore = HydratorPlusPlusNodeConfigStore;
+    this.HydratorPlusPlusConfigActions = HydratorPlusPlusConfigActions;
     this.NonStorePipelineErrorFactory = NonStorePipelineErrorFactory;
     this.requiredPropertyError = this.GLOBALS.en.hydrator.studio.error['GENERIC-MISSING-REQUIRED-FIELDS'];
     this.showPropagateConfirm = false; // confirmation dialog in node config for schema propagation.
     this.$timeout = $timeout;
 
     this.setDefaults();
-    NodeConfigStoreBeta.registerOnChangeListener(this.setState.bind(this));
+    HydratorPlusPlusNodeConfigStore.registerOnChangeListener(this.setState.bind(this));
   }
   setState() {
-    var appType = this.$state.params.type || this.NodeConfigStoreBeta.ConfigStoreBeta.getAppType();
-    var nodeState = this.NodeConfigStoreBeta.getState();
+    var appType = this.$state.params.type || this.HydratorPlusPlusNodeConfigStore.ConfigStore.getAppType();
+    var nodeState = this.HydratorPlusPlusNodeConfigStore.getState();
     nodeState.appType = appType;
     if (angular.isArray(this.state.watchers)) {
       this.state.watchers.forEach(watcher => watcher());
@@ -53,7 +53,7 @@ class NodeConfigControllerBeta {
     }
   }
   validateNodeLabel() {
-    let nodes = this.NodeConfigStoreBeta.ConfigStoreBeta.getNodes();
+    let nodes = this.HydratorPlusPlusNodeConfigStore.ConfigStore.getNodes();
     let nodeName = this.myHelpers.objectQuery(this.state, 'node', 'plugin', 'label');
     if (!nodeName) {
       return;
@@ -89,7 +89,7 @@ class NodeConfigControllerBeta {
     this.showPropagateConfirm = false;
   }
   propagateSchemaDownStream() {
-    this.ConfigActionsFactoryBeta.propagateSchemaDownStream(this.state.node.name);
+    this.HydratorPlusPlusConfigActions.propagateSchemaDownStream(this.state.node.name);
   }
   loadNewPlugin() {
     this.state.noproperty = Object.keys(
@@ -100,7 +100,7 @@ class NodeConfigControllerBeta {
       var artifactName = this.myHelpers.objectQuery(this.state.node, 'plugin', 'artifact', 'name');
       var artifactVersion = this.myHelpers.objectQuery(this.state.node, 'plugin', 'artifact', 'version');
       var artifactScope = this.myHelpers.objectQuery(this.state.node, 'plugin', 'artifact', 'scope');
-      this.PluginConfigFactoryBeta.fetchWidgetJson(
+      this.HydratorPlusPlusPluginConfigFactory.fetchWidgetJson(
         artifactName,
         artifactVersion,
         artifactScope,
@@ -108,7 +108,7 @@ class NodeConfigControllerBeta {
       )
         .then(
           (res) => {
-            this.state.groupsConfig = this.PluginConfigFactoryBeta.generateNodeConfig(this.state.node._backendProperties, res);
+            this.state.groupsConfig = this.HydratorPlusPlusPluginConfigFactory.generateNodeConfig(this.state.node._backendProperties, res);
             if (res.errorDataset || this.state.node.errorDatasetName) {
               this.state.showErrorDataset = true;
               this.state.errorDatasetTooltip = res.errorDataset && res.errorDataset.errorDatasetTooltip || false;
@@ -133,7 +133,7 @@ class NodeConfigControllerBeta {
                 });
               });
               this.state.node.outputSchema = JSON.stringify({ fields: formattedSchema });
-              this.ConfigActionsFactoryBeta.editPlugin(this.state.node.name, this.state.node);
+              this.HydratorPlusPlusConfigActions.editPlugin(this.state.node.name, this.state.node);
             } else {
               // If not an implcit schema check if a schema property exists in the node config.
               // What this means is, has the plugin developer specified a plugin property in 'outputs' array of node config.
@@ -148,7 +148,7 @@ class NodeConfigControllerBeta {
                   this.state.node.plugin.properties[configOutputSchema.outputSchemaProperty[0]] = this.state.node.outputSchema;
                 }
                 this.state.watchers.push(
-                  this.$scope.$watch('NodeConfigControllerBeta.state.node.outputSchema', () => {
+                  this.$scope.$watch('HydratorPlusPlusNodeConfigCtrl.state.node.outputSchema', () => {
                     if(this.validateSchema()) {
                       this.state.node.plugin.properties[configOutputSchema.outputSchemaProperty[0]] = this.state.node.outputSchema;
                     }
@@ -159,10 +159,10 @@ class NodeConfigControllerBeta {
             if (!this.$scope.isDisabled) {
               this.state.watchers.push(
                 this.$scope.$watch(
-                  'NodeConfigControllerBeta.state.node',
+                  'HydratorPlusPlusNodeConfigCtrl.state.node',
                   () => {
                     this.validateNodeLabel(this);
-                    this.ConfigActionsFactoryBeta.editPlugin(this.state.node.name, this.state.node);
+                    this.HydratorPlusPlusConfigActions.editPlugin(this.state.node.name, this.state.node);
                   },
                   true
                 )
@@ -197,10 +197,10 @@ class NodeConfigControllerBeta {
             });
             this.state.watchers.push(
               this.$scope.$watch(
-                'NodeConfigControllerBeta.state.node',
+                'HydratorPlusPlusNodeConfigCtrl.state.node',
                 () => {
                   this.validateNodeLabel(this);
-                  this.ConfigActionsFactoryBeta.editPlugin(this.state.node.name, this.state.node);
+                  this.HydratorPlusPlusConfigActions.editPlugin(this.state.node.name, this.state.node);
                 },
                 true
               )
@@ -252,7 +252,7 @@ class NodeConfigControllerBeta {
   }
 }
 
-NodeConfigControllerBeta.$inject = ['NodeConfigStoreBeta', '$scope', '$timeout', '$state', 'DetailNonRunsStore', 'PluginConfigFactoryBeta', 'EventPipe', 'GLOBALS', 'ConfigActionsFactoryBeta', 'myHelpers', 'NonStorePipelineErrorFactory'];
+HydratorPlusPlusNodeConfigCtrl.$inject = ['HydratorPlusPlusNodeConfigStore', '$scope', '$timeout', '$state', 'DetailNonRunsStore', 'HydratorPlusPlusPluginConfigFactory', 'EventPipe', 'GLOBALS', 'HydratorPlusPlusConfigActions', 'myHelpers', 'NonStorePipelineErrorFactory'];
 
 angular.module(PKG.name + '.feature.hydrator-beta')
-  .controller('NodeConfigControllerBeta', NodeConfigControllerBeta);
+  .controller('HydratorPlusPlusNodeConfigCtrl', HydratorPlusPlusNodeConfigCtrl);

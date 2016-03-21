@@ -19,7 +19,7 @@ var commonModule = angular.module(PKG.name+'.commons');
 //   return $window.jsPlumb;
 // });
 
-commonModule.directive('myDagBeta', function() {
+commonModule.directive('myDagPlus', function() {
   return {
     restrict: 'E',
     scope: {
@@ -86,7 +86,7 @@ commonModule.directive('myDagBeta', function() {
       };
     },
     templateUrl: 'dag-beta/my-dag.html',
-    controller: 'MyDAGControllerBeta',
-    controllerAs: 'MyDAGControllerBeta'
+    controller: 'DAGPlusPlusCtrl',
+    controllerAs: 'DAGPlusPlusCtrl'
   };
 });

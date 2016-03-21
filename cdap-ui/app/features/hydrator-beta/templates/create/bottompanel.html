@@ -14,30 +14,30 @@
   the License.
 -->
 
-<div class="console" ng-class="{'minimized': BottomPanelControllerBeta.bottomPanelState === 0, 'maximized': BottomPanelControllerBeta.bottomPanelState === 2}">
+<div class="console" ng-class="{'minimized': HydratorPlusPlusBottomPanelCtrl.bottomPanelState === 0, 'maximized': HydratorPlusPlusBottomPanelCtrl.bottomPanelState === 2}">
   <div class="console-tabs clearfix">
     <ul class="nav nav-tabs pull-left" role="tablist">
-      <li ng-repeat="tab in BottomPanelControllerBeta.tabs"
-          ng-click="BottomPanelControllerBeta.selectTab($index, true);"
-          ng-class="{'active': tab.title == BottomPanelControllerBeta.activeTab.title, 'bg-danger': BottomPanelControllerBeta.dangerBg && tab.title === 'Console', 'bg-primary': BottomPanelControllerBeta.infoBg && tab.title === 'Console', 'bg-success': BottomPanelControllerBeta.successBg && tab.title === 'Console'}"
+      <li ng-repeat="tab in HydratorPlusPlusBottomPanelCtrl.tabs"
+          ng-click="HydratorPlusPlusBottomPanelCtrl.selectTab($index, true);"
+          ng-class="{'active': tab.title == HydratorPlusPlusBottomPanelCtrl.activeTab.title, 'bg-danger': HydratorPlusPlusBottomPanelCtrl.dangerBg && tab.title === 'Console', 'bg-primary': HydratorPlusPlusBottomPanelCtrl.infoBg && tab.title === 'Console', 'bg-success': HydratorPlusPlusBottomPanelCtrl.successBg && tab.title === 'Console'}"
           role="presentation"
           data-toggle="tab">
           {{ tab.title }}
-          <span ng-show="tab.title === 'Console' && BottomPanelControllerBeta.messageCount">
-            <span class="badge">{{BottomPanelControllerBeta.messageCount}}</span>
+          <span ng-show="tab.title === 'Console' && HydratorPlusPlusBottomPanelCtrl.messageCount">
+            <span class="badge">{{HydratorPlusPlusBottomPanelCtrl.messageCount}}</span>
           </span>
       </li>
     </ul>
     <div class="btn-group pull-right">
-      <a ng-click="BottomPanelControllerBeta.toggleCollapse(BottomPanelControllerBeta.bottomPanelState)">
-        <span ng-if="BottomPanelControllerBeta.bottomPanelState !== 0"
+      <a ng-click="HydratorPlusPlusBottomPanelCtrl.toggleCollapse(HydratorPlusPlusBottomPanelCtrl.bottomPanelState)">
+        <span ng-if="HydratorPlusPlusBottomPanelCtrl.bottomPanelState !== 0"
               class="fa fa-minus"
               uib-tooltip="Minimize"
               tooltip-class="tooltip-pane"
               tooltip-placement="top"
               tooltip-append-to-body="true">
         </span>
-        <span ng-if="BottomPanelControllerBeta.bottomPanelState === 0"
+        <span ng-if="HydratorPlusPlusBottomPanelCtrl.bottomPanelState === 0"
               class="fa fa-expand"
               uib-tooltip="Grow"
               tooltip-class="tooltip-pane"
@@ -45,15 +45,15 @@
               tooltip-append-to-body="true">
         </span>
       </a>
-      <a ng-click="BottomPanelControllerBeta.toggleMaximized(BottomPanelControllerBeta.bottomPanelState)">
-        <span ng-if="BottomPanelControllerBeta.bottomPanelState !== 2"
+      <a ng-click="HydratorPlusPlusBottomPanelCtrl.toggleMaximized(HydratorPlusPlusBottomPanelCtrl.bottomPanelState)">
+        <span ng-if="HydratorPlusPlusBottomPanelCtrl.bottomPanelState !== 2"
               class="fa fa-arrows-alt"
               uib-tooltip="Maximize"
               tooltip-class="tooltip-pane"
               tooltip-placement="top"
               tooltip-append-to-body="true">
         </span>
-        <span ng-if="BottomPanelControllerBeta.bottomPanelState === 2"
+        <span ng-if="HydratorPlusPlusBottomPanelCtrl.bottomPanelState === 2"
               class="fa fa-compress"
               uib-tooltip="Shrink"
               tooltip-class="tooltip-pane"
@@ -65,9 +65,9 @@
 
   </div>
   <div class="console-type">
-    <div ng-repeat="tab in BottomPanelControllerBeta.tabs"
+    <div ng-repeat="tab in HydratorPlusPlusBottomPanelCtrl.tabs"
          ng-include="tab.template"
-         ng-show="BottomPanelControllerBeta.activeTab.title === tab.title"
+         ng-show="HydratorPlusPlusBottomPanelCtrl.activeTab.title === tab.title"
          ng-class="{'node-config': tab.title === 'Node Configuration'}">
       </div>
   </div>

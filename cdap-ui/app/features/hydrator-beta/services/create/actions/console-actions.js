@@ -14,20 +14,20 @@
  * the License.
  */
 
-class ConsoleActionsFactoryBeta {
-  constructor(ConsoleDispatcherBeta) {
-    this.ConsoleDispatcherBeta = ConsoleDispatcherBeta.getDispatcher();
+class HydratorPlusPlusConsoleActions {
+  constructor(HydratorPlusPlusConsoleDispatcher) {
+    this.hydratorPlusPlusConsoleDispatcher = HydratorPlusPlusConsoleDispatcher.getDispatcher();
   }
 
   addMessage(message) {
-    this.ConsoleDispatcherBeta.dispatch('onAddMessage', message);
+    this.hydratorPlusPlusConsoleDispatcher.dispatch('onAddMessage', message);
   }
 
   resetMessages() {
-    this.ConsoleDispatcherBeta.dispatch('onResetMessages');
+    this.hydratorPlusPlusConsoleDispatcher.dispatch('onResetMessages');
   }
 
 }
-ConsoleActionsFactoryBeta.$inject = ['ConsoleDispatcherBeta'];
+HydratorPlusPlusConsoleActions.$inject = ['HydratorPlusPlusConsoleDispatcher'];
 angular.module(`${PKG.name}.feature.hydrator-beta`)
-  .service('ConsoleActionsFactoryBeta', ConsoleActionsFactoryBeta);
+  .service('HydratorPlusPlusConsoleActions', HydratorPlusPlusConsoleActions);

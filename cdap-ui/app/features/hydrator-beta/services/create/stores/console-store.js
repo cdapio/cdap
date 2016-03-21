@@ -14,13 +14,13 @@
  * the License.
  */
 
-class ConsoleStoreBeta {
-  constructor(ConsoleDispatcherBeta) {
+class HydratorPlusPlusConsoleStore {
+  constructor(HydratorPlusPlusConsoleDispatcher) {
     this.state = {};
     this.setDefaults();
     this.changeListeners = [];
 
-    let dispatcher = ConsoleDispatcherBeta.getDispatcher();
+    let dispatcher = HydratorPlusPlusConsoleDispatcher.getDispatcher();
     dispatcher.register('onAddMessage', this.addMessage.bind(this));
     dispatcher.register('onResetMessages', this.resetMessages.bind(this));
   }
@@ -56,6 +56,6 @@ class ConsoleStoreBeta {
 
 }
 
-ConsoleStoreBeta.$inject = ['ConsoleDispatcherBeta'];
+HydratorPlusPlusConsoleStore.$inject = ['HydratorPlusPlusConsoleDispatcher'];
 angular.module(`${PKG.name}.feature.hydrator-beta`)
-  .service('ConsoleStoreBeta', ConsoleStoreBeta);
+  .service('HydratorPlusPlusConsoleStore', HydratorPlusPlusConsoleStore);

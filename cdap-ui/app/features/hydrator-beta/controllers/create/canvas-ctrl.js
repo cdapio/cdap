@@ -14,39 +14,39 @@
  * the License.
  */
 
-class HydratorCreateCanvasControllerBeta {
-  constructor(BottomPanelStoreBeta, NodesStoreBeta, NodesActionsFactoryBeta, ConfigStoreBeta, PipelineNodeConfigActionFactoryBeta, HydratorServiceBeta) {
-    this.NodesStoreBeta = NodesStoreBeta;
-    this.ConfigStoreBeta = ConfigStoreBeta;
-    this.PipelineNodeConfigActionFactoryBeta = PipelineNodeConfigActionFactoryBeta;
-    this.NodesActionsFactoryBeta = NodesActionsFactoryBeta;
-    this.HydratorServiceBeta = HydratorServiceBeta;
+class HydratorPlusPlusCreateCanvasCtrl {
+  constructor(HydratorPlusPlusBottomPanelStore, DAGPlusPlusNodesStore, DAGPlusPlusNodesActionsFactory, HydratorPlusPlusConfigStore, HydratorPlusPlusNodeConfigActions, HydratorPlusPlusHydratorService) {
+    this.DAGPlusPlusNodesStore = DAGPlusPlusNodesStore;
+    this.HydratorPlusPlusConfigStore = HydratorPlusPlusConfigStore;
+    this.HydratorPlusPlusNodeConfigActions = HydratorPlusPlusNodeConfigActions;
+    this.DAGPlusPlusNodesActionsFactory = DAGPlusPlusNodesActionsFactory;
+    this.HydratorPlusPlusHydratorService = HydratorPlusPlusHydratorService;
 
     this.setState = () => {
       this.state = {
-        setScroll: (BottomPanelStoreBeta.getPanelState() === 0? false: true)
+        setScroll: (HydratorPlusPlusBottomPanelStore.getPanelState() === 0? false: true)
       };
     };
     this.setState();
-    BottomPanelStoreBeta.registerOnChangeListener(this.setState.bind(this));
+    HydratorPlusPlusBottomPanelStore.registerOnChangeListener(this.setState.bind(this));
 
     this.nodes = [];
     this.connections = [];
 
     this.updateNodesAndConnections();
-    NodesStoreBeta.registerOnChangeListener(this.updateNodesAndConnections.bind(this));
+    DAGPlusPlusNodesStore.registerOnChangeListener(this.updateNodesAndConnections.bind(this));
   }
 
   setStateAndUpdateConfigStore() {
-    this.nodes = this.NodesStoreBeta.getNodes();
-    this.connections = this.NodesStoreBeta.getConnections();
-    this.ConfigStoreBeta.setNodes(this.nodes);
-    this.ConfigStoreBeta.setConnections(this.connections);
-    this.ConfigStoreBeta.setComments(this.NodesStoreBeta.getComments());
+    this.nodes = this.DAGPlusPlusNodesStore.getNodes();
+    this.connections = this.DAGPlusPlusNodesStore.getConnections();
+    this.HydratorPlusPlusConfigStore.setNodes(this.nodes);
+    this.HydratorPlusPlusConfigStore.setConnections(this.connections);
+    this.HydratorPlusPlusConfigStore.setComments(this.DAGPlusPlusNodesStore.getComments());
   }
 
   updateNodesAndConnections() {
-    var activeNode = this.NodesStoreBeta.getActiveNodeId();
+    var activeNode = this.DAGPlusPlusNodesStore.getActiveNodeId();
     if (!activeNode) {
       this.deleteNode();
     } else {
@@ -55,34 +55,34 @@ class HydratorCreateCanvasControllerBeta {
   }
 
   setActiveNode() {
-    var nodeId = this.NodesStoreBeta.getActiveNodeId();
+    var nodeId = this.DAGPlusPlusNodesStore.getActiveNodeId();
     if (!nodeId) {
       return;
     }
     var pluginNode;
     var nodeFromNodesStore;
-    var nodeFromConfigStore = this.ConfigStoreBeta.getNodes().filter( node => node.name === nodeId );
+    var nodeFromConfigStore = this.HydratorPlusPlusConfigStore.getNodes().filter( node => node.name === nodeId );
     if (nodeFromConfigStore.length) {
       pluginNode = nodeFromConfigStore[0];
     } else {
-      nodeFromNodesStore = this.NodesStoreBeta.getNodes().filter(node => node.name === nodeId);
+      nodeFromNodesStore = this.DAGPlusPlusNodesStore.getNodes().filter(node => node.name === nodeId);
       pluginNode = nodeFromNodesStore[0];
     }
-    this.PipelineNodeConfigActionFactoryBeta.choosePlugin(pluginNode);
+    this.HydratorPlusPlusNodeConfigActions.choosePlugin(pluginNode);
     this.setStateAndUpdateConfigStore();
   }
 
   deleteNode() {
     this.setStateAndUpdateConfigStore();
-    this.PipelineNodeConfigActionFactoryBeta.removePlugin();
+    this.HydratorPlusPlusNodeConfigActions.removePlugin();
   }
 
   generateSchemaOnEdge(sourceId) {
-    return this.HydratorServiceBeta.generateSchemaOnEdge(sourceId);
+    return this.HydratorPlusPlusHydratorService.generateSchemaOnEdge(sourceId);
   }
 }
 
 
-HydratorCreateCanvasControllerBeta.$inject = ['BottomPanelStoreBeta', 'NodesStoreBeta', 'NodesActionsFactoryBeta', 'ConfigStoreBeta', 'PipelineNodeConfigActionFactoryBeta', 'HydratorServiceBeta'];
+HydratorPlusPlusCreateCanvasCtrl.$inject = ['HydratorPlusPlusBottomPanelStore', 'DAGPlusPlusNodesStore', 'DAGPlusPlusNodesActionsFactory', 'HydratorPlusPlusConfigStore', 'HydratorPlusPlusNodeConfigActions', 'HydratorPlusPlusHydratorService'];
 angular.module(PKG.name + '.feature.hydrator-beta')
-  .controller('HydratorCreateCanvasControllerBeta', HydratorCreateCanvasControllerBeta);
+  .controller('HydratorPlusPlusCreateCanvasCtrl', HydratorPlusPlusCreateCanvasCtrl);

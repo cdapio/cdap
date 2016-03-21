@@ -15,17 +15,17 @@
  */
 
 angular.module(PKG.name + '.commons')
-  .controller('MyDAGControllerBeta', function MyDAGController(jsPlumb, $scope, $timeout, MyDAGFactoryBeta, GLOBALS, NodesActionsFactoryBeta, $window, NodesStoreBeta, $rootScope, HydratorService, $popover, $filter, uuid, $tooltip) {
+  .controller('DAGPlusPlusCtrl', function MyDAGController(jsPlumb, $scope, $timeout, DAGPlusPlusFactory, GLOBALS, DAGPlusPlusNodesActionsFactory, $window, DAGPlusPlusNodesStore, $rootScope, $popover, $filter, uuid, $tooltip) {
 
     var vm = this;
 
     var numberFilter = $filter('number');
 
     var endpoints = [];
-    var sourceSettings = angular.copy(MyDAGFactoryBeta.getSettings(false).source);
-    var sinkSettings = angular.copy(MyDAGFactoryBeta.getSettings(false).sink);
-    var transformSourceSettings = angular.copy(MyDAGFactoryBeta.getSettings(false).transformSource);
-    var transformSinkSettings = angular.copy(MyDAGFactoryBeta.getSettings(false).transformSink);
+    var sourceSettings = angular.copy(DAGPlusPlusFactory.getSettings(false).source);
+    var sinkSettings = angular.copy(DAGPlusPlusFactory.getSettings(false).sink);
+    var transformSourceSettings = angular.copy(DAGPlusPlusFactory.getSettings(false).transformSource);
+    var transformSinkSettings = angular.copy(DAGPlusPlusFactory.getSettings(false).transformSink);
 
     var SHOW_METRICS_THRESHOLD = 0.8;
     var METRICS_THRESHOLD = 999999999999;
@@ -96,9 +96,9 @@ angular.module(PKG.name + '.commons')
      - User should be able interact with the dag and add incremental changes.
     */
     function init() {
-      $scope.nodes = NodesStoreBeta.getNodes();
-      $scope.connections = NodesStoreBeta.getConnections();
-      vm.comments = NodesStoreBeta.getComments();
+      $scope.nodes = DAGPlusPlusNodesStore.getNodes();
+      $scope.connections = DAGPlusPlusNodesStore.getConnections();
+      vm.comments = DAGPlusPlusNodesStore.getComments();
 
       $timeout(function () {
         addEndpoints();
@@ -346,7 +346,7 @@ angular.module(PKG.name + '.commons')
           to: conn.targetId
         });
       });
-      NodesActionsFactoryBeta.setConnections(connections);
+      DAGPlusPlusNodesActionsFactory.setConnections(connections);
     }
 
     function addConnection (connectionObj) {
@@ -388,7 +388,7 @@ angular.module(PKG.name + '.commons')
     }
 
     jsPlumb.ready(function() {
-      var dagSettings = MyDAGFactoryBeta.getSettings().default;
+      var dagSettings = DAGPlusPlusFactory.getSettings().default;
 
       jsPlumb.setContainer('dag-container');
       vm.instance = jsPlumb.getInstance(dagSettings);
@@ -402,8 +402,8 @@ angular.module(PKG.name + '.commons')
           e.el.style.left = '0px';
           e.el.style.top = '0px';
           transformCanvas(e.pos[1], e.pos[0]);
-          NodesActionsFactoryBeta.resetPluginCount();
-          NodesActionsFactoryBeta.setCanvasPanning(vm.panning);
+          DAGPlusPlusNodesActionsFactory.resetPluginCount();
+          DAGPlusPlusNodesActionsFactory.setCanvasPanning(vm.panning);
         },
         start: function () {
           canvasDragged = true;
@@ -442,7 +442,7 @@ angular.module(PKG.name + '.commons')
                     left: dragEndEvent.el.style.left
                   }
                 };
-                NodesActionsFactoryBeta.updateNode(dragEndEvent.el.id, config);
+                DAGPlusPlusNodesActionsFactory.updateNode(dragEndEvent.el.id, config);
                 $timeout(function () { vm.instance.repaintEverything(); });
               }
             });
@@ -454,8 +454,8 @@ angular.module(PKG.name + '.commons')
         vm.instance.repaintEverything();
       });
 
-      NodesStoreBeta.registerOnChangeListener(function () {
-        vm.comments = NodesStoreBeta.getComments();
+      DAGPlusPlusNodesStore.registerOnChangeListener(function () {
+        vm.comments = DAGPlusPlusNodesStore.getComments();
 
         if (!vm.isDisabled) {
           $timeout(function () {
@@ -471,7 +471,7 @@ angular.module(PKG.name + '.commons')
                     left: dragEndEvent.el.style.left
                   }
                 };
-                NodesActionsFactoryBeta.updateComment(dragEndEvent.el.id, config);
+                DAGPlusPlusNodesActionsFactory.updateComment(dragEndEvent.el.id, config);
               }
             });
           });
@@ -488,7 +488,7 @@ angular.module(PKG.name + '.commons')
       closeAllPopovers();
       selected = [];
       vm.instance.clearDragSelection();
-      NodesActionsFactoryBeta.resetSelectedNode();
+      DAGPlusPlusNodesActionsFactory.resetSelectedNode();
       angular.forEach($scope.nodes, function (node) {
         node.selected = false;
       });
@@ -518,7 +518,7 @@ angular.module(PKG.name + '.commons')
 
       if ((event.ctrlKey || event.metaKey)) {
         node.selected = !node.selected;
-        NodesActionsFactoryBeta.resetSelectedNode();
+        DAGPlusPlusNodesActionsFactory.resetSelectedNode();
 
         if (node.selected) {
           checkSelection();
@@ -528,21 +528,21 @@ angular.module(PKG.name + '.commons')
       } else {
         vm.clearNodeSelection();
         node.selected = true;
-        NodesActionsFactoryBeta.selectNode(node.name);
+        DAGPlusPlusNodesActionsFactory.selectNode(node.name);
       }
     };
 
     vm.onNodeDelete = function (event, node) {
       event.stopPropagation();
       closeAllPopovers();
-      NodesActionsFactoryBeta.removeNode(node.name);
+      DAGPlusPlusNodesActionsFactory.removeNode(node.name);
       vm.instance.remove(node.name);
     };
 
     vm.cleanUpGraph = function () {
       if ($scope.nodes.length === 0) { return; }
 
-      var graphNodes = MyDAGFactoryBeta.getGraphLayout($scope.nodes, $scope.connections)._nodes;
+      var graphNodes = DAGPlusPlusFactory.getGraphLayout($scope.nodes, $scope.connections)._nodes;
       angular.forEach($scope.nodes, function (node) {
         var location = graphNodes[node.name];
         node._uiPosition = {
@@ -563,8 +563,8 @@ angular.module(PKG.name + '.commons')
 
       $timeout(function () { vm.instance.repaintEverything(); });
 
-      NodesActionsFactoryBeta.resetPluginCount();
-      NodesActionsFactoryBeta.setCanvasPanning(vm.panning);
+      DAGPlusPlusNodesActionsFactory.resetPluginCount();
+      DAGPlusPlusNodesActionsFactory.setCanvasPanning(vm.panning);
     };
 
     // This algorithm is f* up
@@ -646,12 +646,12 @@ angular.module(PKG.name + '.commons')
         'left': vm.panning.left + 'px'
       };
 
-      NodesActionsFactoryBeta.resetPluginCount();
-      NodesActionsFactoryBeta.setCanvasPanning(vm.panning);
+      DAGPlusPlusNodesActionsFactory.resetPluginCount();
+      DAGPlusPlusNodesActionsFactory.setCanvasPanning(vm.panning);
     };
 
     vm.addComment = function () {
-      var canvasPanning = NodesStoreBeta.getCanvasPanning();
+      var canvasPanning = DAGPlusPlusNodesStore.getCanvasPanning();
 
       var config = {
         content: '',
@@ -663,7 +663,7 @@ angular.module(PKG.name + '.commons')
         }
       };
 
-      NodesActionsFactoryBeta.addComment(config);
+      DAGPlusPlusNodesActionsFactory.addComment(config);
     };
 
     function clearCommentSelection() {
@@ -685,13 +685,13 @@ angular.module(PKG.name + '.commons')
     };
 
     vm.deleteComment = function (comment) {
-      NodesActionsFactoryBeta.deleteComment(comment);
+      DAGPlusPlusNodesActionsFactory.deleteComment(comment);
     };
 
     $scope.$on('$destroy', function () {
       closeAllPopovers();
-      NodesActionsFactoryBeta.resetNodesAndConnections();
-      NodesStoreBeta.reset();
+      DAGPlusPlusNodesActionsFactory.resetNodesAndConnections();
+      DAGPlusPlusNodesStore.reset();
     });
 
   });

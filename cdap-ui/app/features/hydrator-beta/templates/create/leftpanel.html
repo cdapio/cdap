@@ -15,29 +15,29 @@
 -->
 
 <select class="form-control"
-        ng-change="LeftPanelControllerBeta.onArtifactChange()"
-        ng-model="LeftPanelControllerBeta.selectedArtifact"
-        ng-options="artifact as artifact.name for artifact in LeftPanelControllerBeta.artifacts">
+        ng-change="HydratorPlusPlusLeftPanelCtrl.onArtifactChange()"
+        ng-model="HydratorPlusPlusLeftPanelCtrl.selectedArtifact"
+        ng-options="artifact as artifact.name for artifact in HydratorPlusPlusLeftPanelCtrl.artifacts">
 </select>
 
 <div class="import-section">
-  <a href="" class="btn btn-primary btn-xs" ng-click="LeftPanelControllerBeta.showTemplates()">Templates</a>
-  <a href="" class="btn btn-primary btn-xs"  ng-click="LeftPanelControllerBeta.openFileBrowser()">Import</a>
+  <a href="" class="btn btn-primary btn-xs" ng-click="HydratorPlusPlusLeftPanelCtrl.showTemplates()">Templates</a>
+  <a href="" class="btn btn-primary btn-xs"  ng-click="HydratorPlusPlusLeftPanelCtrl.openFileBrowser()">Import</a>
 </div>
 
 <my-side-panel
-  data-panel-groups="LeftPanelControllerBeta.pluginTypes"
+  data-panel-groups="HydratorPlusPlusLeftPanelCtrl.pluginTypes"
 
   data-placement="left"
   data-is-sub-menu="true"
 
-  data-on-panel-item-click-context="LeftPanelControllerBeta"
-  data-on-panel-item-click="LeftPanelControllerBeta.onLeftSidePanelItemClicked">
+  data-on-panel-item-click-context="HydratorPlusPlusLeftPanelCtrl"
+  data-on-panel-item-click="HydratorPlusPlusLeftPanelCtrl.onLeftSidePanelItemClicked">
 </my-side-panel>
 
 <my-file-select class="sr-only"
                 id="pipeline-import-config-link"
                 data-button-icon="fa-upload"
-                on-file-select="LeftPanelControllerBeta.importFile($files)"
+                on-file-select="HydratorPlusPlusLeftPanelCtrl.importFile($files)"
                 data-button-label="Import">
 </my-file-select>

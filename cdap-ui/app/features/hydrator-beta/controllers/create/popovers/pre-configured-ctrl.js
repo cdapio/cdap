@@ -14,15 +14,14 @@
  * the License.
  */
 
-class PreConfiguredControllerBeta {
-  constructor (rTemplateType, GLOBALS, myPipelineTemplatesApi, ConfigStoreBeta, ConfigActionsFactoryBeta, HydratorServiceBeta, CanvasFactoryBeta, NodesActionsFactoryBeta, $state) {
+class HydratorPlusPlusPreConfiguredCtrl {
+  constructor (rTemplateType, GLOBALS, myPipelineTemplatesApi, HydratorPlusPlusHydratorService, HydratorPlusPlusCanvasFactory, DAGPlusPlusNodesActionsFactory, $state) {
     this.currentPage = 1;
     this.templates = [];
-    this.ConfigActionsFactoryBeta = ConfigActionsFactoryBeta;
-    this.HydratorServiceBeta = HydratorServiceBeta;
-    this.CanvasFactoryBeta = CanvasFactoryBeta;
+    this.HydratorPlusPlusHydratorService = HydratorPlusPlusHydratorService;
+    this.HydratorPlusPlusCanvasFactory = HydratorPlusPlusCanvasFactory;
     this.myPipelineTemplatesApi = myPipelineTemplatesApi;
-    this.NodesActionsFactoryBeta = NodesActionsFactoryBeta;
+    this.DAGPlusPlusNodesActionsFactory = DAGPlusPlusNodesActionsFactory;
     this.$state = $state;
 
     this.typeFilter = (rTemplateType === GLOBALS.etlBatch? GLOBALS.etlBatch: GLOBALS.etlRealtime);
@@ -32,7 +31,7 @@ class PreConfiguredControllerBeta {
   }
 
   selectTemplate(template) {
-    let result = this.CanvasFactoryBeta.parseImportedJson(
+    let result = this.HydratorPlusPlusCanvasFactory.parseImportedJson(
       JSON.stringify(template._properties),
       template.type
     );
@@ -79,6 +78,6 @@ class PreConfiguredControllerBeta {
 
 }
 
-PreConfiguredControllerBeta.$inject = ['rTemplateType', 'GLOBALS', 'myPipelineTemplatesApi', 'ConfigStoreBeta', 'ConfigActionsFactoryBeta', 'HydratorServiceBeta', 'CanvasFactoryBeta', 'NodesActionsFactoryBeta', '$state'];
+HydratorPlusPlusPreConfiguredCtrl.$inject = ['rTemplateType', 'GLOBALS', 'myPipelineTemplatesApi', 'HydratorPlusPlusHydratorService', 'HydratorPlusPlusCanvasFactory', 'DAGPlusPlusNodesActionsFactory', '$state'];
 angular.module(`${PKG.name}.feature.hydrator-beta`)
-  .controller('PreConfiguredControllerBeta', PreConfiguredControllerBeta);
+  .controller('HydratorPlusPlusPreConfiguredCtrl', HydratorPlusPlusPreConfiguredCtrl);

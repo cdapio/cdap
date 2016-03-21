@@ -14,23 +14,23 @@
  * the License.
  */
 
-class ConsoleTabControllerBeta {
-  constructor(PluginConfigFactoryBeta, NodeConfigStoreBeta, GLOBALS, myHelpers) {
+class HydratorPlusPlusReferenceTabCtrl {
+  constructor(HydratorPlusPlusPluginConfigFactory, HydratorPlusPlusNodeConfigStore, GLOBALS, myHelpers) {
     this.GLOBALS = GLOBALS;
-    this.NodeConfigStoreBeta = NodeConfigStoreBeta;
-    this.PluginConfigFactoryBeta = PluginConfigFactoryBeta;
+    this.HydratorPlusPlusNodeConfigStore = HydratorPlusPlusNodeConfigStore;
+    this.HydratorPlusPlusPluginConfigFactory = HydratorPlusPlusPluginConfigFactory;
     this.myHelpers = myHelpers;
-    this.NodeConfigStoreBeta.registerOnChangeListener(this.setState.bind(this));
+    this.HydratorPlusPlusNodeConfigStore.registerOnChangeListener(this.setState.bind(this));
     this.setState();
   }
   setState() {
     this.state = this.state || {};
-    this.state.node = this.NodeConfigStoreBeta.getState().node;
+    this.state.node = this.HydratorPlusPlusNodeConfigStore.getState().node;
     if (!this.state.node.plugin) {
       this.state.docReference = this.GLOBALS.en.hydrator.studio.info['DEFAULT-REFERENCE'];
     } else {
       let key = `doc.${this.state.node.plugin.name}-${this.state.node.type}`;
-      this.PluginConfigFactoryBeta.fetchDocJson(
+      this.HydratorPlusPlusPluginConfigFactory.fetchDocJson(
         this.myHelpers.objectQuery(this.state.node, 'plugin', 'artifact', 'name'),
         this.myHelpers.objectQuery(this.state.node, 'plugin', 'artifact', 'version'),
         this.myHelpers.objectQuery(this.state.node, 'plugin', 'artifact', 'scope'),
@@ -49,6 +49,6 @@ class ConsoleTabControllerBeta {
   }
 }
 
-ConsoleTabControllerBeta.$inject = ['PluginConfigFactoryBeta', 'NodeConfigStoreBeta', 'GLOBALS', 'myHelpers'];
+HydratorPlusPlusReferenceTabCtrl.$inject = ['HydratorPlusPlusPluginConfigFactory', 'HydratorPlusPlusNodeConfigStore', 'GLOBALS', 'myHelpers'];
 angular.module(`${PKG.name}.feature.hydrator-beta`)
-  .controller('ReferenceTabControllerBeta', ConsoleTabControllerBeta);
+  .controller('HydratorPlusPlusReferenceTabCtrl', HydratorPlusPlusReferenceTabCtrl);

@@ -14,7 +14,7 @@
  * the License.
  */
 
-class NodesDispatcher {
+class DAGPlusPlusNodesDispatcher {
   constructor(CaskAngularDispatcher) {
     this.baseDispatcher = CaskAngularDispatcher;
     this.__dispatcher__ = null;
@@ -29,6 +29,6 @@ class NodesDispatcher {
     delete this.__dispatcher__;
   }
 }
-NodesDispatcher.$inject = ['CaskAngularDispatcher'];
+DAGPlusPlusNodesDispatcher.$inject = ['CaskAngularDispatcher'];
 angular.module(`${PKG.name}.commons`)
-  .service('NodesDispatcherBeta', NodesDispatcher);
+  .service('DAGPlusPlusNodesDispatcher', DAGPlusPlusNodesDispatcher);

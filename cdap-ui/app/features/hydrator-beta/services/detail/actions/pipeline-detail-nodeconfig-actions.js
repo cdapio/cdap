@@ -15,11 +15,11 @@
  */
 
 angular.module(PKG.name + '.feature.hydrator-beta')
-  .service('PipelineNodeConfigActionFactoryBeta', function(PipelineNodeConfigDispatcherBeta, PipelineDetailBottomPanelActionFactoryBeta) {
-    var dispatcher = PipelineNodeConfigDispatcherBeta.getDispatcher();
+  .service('HydratorPlusPlusNodeConfigActions', function(HydratorPlusPlusConfigDispatcher, HydratorPlusPlusBottomPanelActions) {
+    var dispatcher = HydratorPlusPlusConfigDispatcher.getDispatcher();
     this.choosePlugin = function(plugin) {
       dispatcher.dispatch('onPluginChange', plugin);
-      PipelineDetailBottomPanelActionFactoryBeta.expand();
+      HydratorPlusPlusBottomPanelActions.expand();
     };
     this.removePlugin = function() {
       dispatcher.dispatch('onPluginRemove');

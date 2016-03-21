@@ -14,17 +14,17 @@
  * the License.
  */
 
-class NodesActionsFactory {
-  constructor(NodesDispatcherBeta, GLOBALS, MyDAGFactoryBeta, NodesStoreBeta) {
+class DAGPlusPlusNodesActionsFactory {
+  constructor(DAGPlusPlusNodesDispatcher, GLOBALS, DAGPlusPlusFactory, DAGPlusPlusNodesStore) {
     this.GLOBALS = GLOBALS;
-    this.MyDAGFactory = MyDAGFactoryBeta;
-    this.NodesStore = NodesStoreBeta;
+    this.MyDAGFactory = DAGPlusPlusFactory;
+    this.DAGPlusPlusNodesStore = DAGPlusPlusNodesStore;
 
-    this.nodesDispatcher = NodesDispatcherBeta.getDispatcher();
+    this.nodesDispatcher = DAGPlusPlusNodesDispatcher.getDispatcher();
   }
 
   addNode(config) {
-    let canvasPanning = this.NodesStore.getCanvasPanning();
+    let canvasPanning = this.DAGPlusPlusNodesStore.getCanvasPanning();
 
     let sourcePosition = {
       top: 150 - canvasPanning.top,
@@ -45,7 +45,7 @@ class NodesActionsFactory {
     // set initial position
     switch (this.GLOBALS.pluginConvert[config.type]) {
       case 'source':
-        let sourceOffset = this.NodesStore.getSourceCount() * offset;
+        let sourceOffset = this.DAGPlusPlusNodesStore.getSourceCount() * offset;
         config._uiPosition = {
           top: (sourcePosition.top + sourceOffset) + 'px',
           left: (sourcePosition.left + sourceOffset) + 'px'
@@ -53,7 +53,7 @@ class NodesActionsFactory {
         this.nodesDispatcher.dispatch('onAddSourceCount');
         break;
       case 'transform':
-        let transformOffset = this.NodesStore.getTransformCount() * offset;
+        let transformOffset = this.DAGPlusPlusNodesStore.getTransformCount() * offset;
         config._uiPosition = {
           top: (transformPosition.top + transformOffset) + 'px',
           left: (transformPosition.left + transformOffset) + 'px'
@@ -61,7 +61,7 @@ class NodesActionsFactory {
         this.nodesDispatcher.dispatch('onAddTransformCount');
         break;
       case 'sink':
-        let sinkOffset = this.NodesStore.getSinkCount() * offset;
+        let sinkOffset = this.DAGPlusPlusNodesStore.getSinkCount() * offset;
         config._uiPosition = {
           top: (sinkPosition.top + sinkOffset) + 'px',
           left: (sinkPosition.left + sinkOffset) + 'px'
@@ -114,7 +114,7 @@ class NodesActionsFactory {
   }
 
   createGraphFromConfig(nodes, connections, comments) {
-    this.NodesStore.setDefaults();
+    this.DAGPlusPlusNodesStore.setDefaults();
     this.nodesDispatcher.dispatch('onCreateGraphFromConfig', nodes, connections, comments);
   }
 
@@ -132,6 +132,6 @@ class NodesActionsFactory {
   }
 
 }
-NodesActionsFactory.$inject = ['NodesDispatcherBeta', 'GLOBALS', 'MyDAGFactoryBeta', 'NodesStoreBeta'];
+DAGPlusPlusNodesActionsFactory.$inject = ['DAGPlusPlusNodesDispatcher', 'GLOBALS', 'DAGPlusPlusFactory', 'DAGPlusPlusNodesStore'];
 angular.module(`${PKG.name}.commons`)
-  .service('NodesActionsFactoryBeta', NodesActionsFactory);
+  .service('DAGPlusPlusNodesActionsFactory', DAGPlusPlusNodesActionsFactory);

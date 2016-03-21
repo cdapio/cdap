@@ -14,22 +14,21 @@
  * the License.
  */
 
-class LeftPanelControllerBeta {
-  constructor($scope, $stateParams, rVersion, GLOBALS, LeftPanelStoreBeta, LeftPanelActionsFactoryBeta, PluginActionsFactoryBeta, ConfigStoreBeta, ConfigActionsFactoryBeta, MyDAGFactoryBeta, NodesActionsFactoryBeta, NonStorePipelineErrorFactory, HydratorServiceBeta, $rootScope, $uibModal, $timeout, myAlertOnValium, $state) {
+class HydratorPlusPlusLeftPanelCtrl {
+  constructor($scope, $stateParams, rVersion, GLOBALS, HydratorPlusPlusLeftPanelStore, HydratorPlusPlusPluginActions, HydratorPlusPlusConfigStore, HydratorPlusPlusConfigActions, DAGPlusPlusFactory, DAGPlusPlusNodesActionsFactory, NonStorePipelineErrorFactory, HydratorPlusPlusHydratorService, $rootScope, $uibModal, $timeout, myAlertOnValium, $state) {
     this.$state = $state;
     this.$rootScope = $rootScope;
     this.$scope = $scope;
     this.$stateParams = $stateParams;
-    this.LeftPanelStoreBeta = LeftPanelStoreBeta;
-    this.LeftPanelActionsFactoryBeta = LeftPanelActionsFactoryBeta;
-    this.PluginActionsFactoryBeta = PluginActionsFactoryBeta;
-    this.ConfigActionsFactoryBeta = ConfigActionsFactoryBeta;
+    this.HydratorPlusPlusLeftPanelStore = HydratorPlusPlusLeftPanelStore;
+    this.HydratorPlusPlusPluginActions = HydratorPlusPlusPluginActions;
+    this.HydratorPlusPlusConfigActions = HydratorPlusPlusConfigActions;
     this.GLOBALS = GLOBALS;
-    this.ConfigStoreBeta = ConfigStoreBeta;
-    this.MyDAGFactoryBeta = MyDAGFactoryBeta;
-    this.NodesActionsFactoryBeta = NodesActionsFactoryBeta;
+    this.HydratorPlusPlusConfigStore = HydratorPlusPlusConfigStore;
+    this.DAGPlusPlusFactory = DAGPlusPlusFactory;
+    this.DAGPlusPlusNodesActionsFactory = DAGPlusPlusNodesActionsFactory;
     this.NonStorePipelineErrorFactory = NonStorePipelineErrorFactory;
-    this.HydratorServiceBeta = HydratorServiceBeta;
+    this.HydratorPlusPlusHydratorService = HydratorPlusPlusHydratorService;
     this.rVersion = rVersion;
     this.$timeout = $timeout;
     this.myAlertOnValium = myAlertOnValium;
@@ -55,41 +54,41 @@ class LeftPanelControllerBeta {
     this.transformsToVersionMap = {};
     this.sinksToVersionMap = {};
 
-    this.LeftPanelStoreBeta.registerOnChangeListener(() => {
-      this.artifacts = this.LeftPanelStoreBeta.getArtifacts();
-      let artifactFromConfigStore = this.ConfigStoreBeta.getArtifact();
+    this.HydratorPlusPlusLeftPanelStore.registerOnChangeListener(() => {
+      this.artifacts = this.HydratorPlusPlusLeftPanelStore.getArtifacts();
+      let artifactFromConfigStore = this.HydratorPlusPlusConfigStore.getArtifact();
       if (!this.selectedArtifact) {
         if (artifactFromConfigStore.name.length) {
           this.selectedArtifact = this.artifacts.filter(artifact => angular.equals(artifact, artifactFromConfigStore))[0];
         } else {
           this.selectedArtifact =  this.artifacts[0];
         }
-        this.ConfigActionsFactoryBeta.setArtifact(this.selectedArtifact);
+        this.HydratorPlusPlusConfigActions.setArtifact(this.selectedArtifact);
         console.log('selectedArticact', this.selectedArtifact);
         this.onArtifactChange();
         return;
       }
-      this.pluginTypes[0].plugins = this.LeftPanelStoreBeta.getSources();
-      this.pluginTypes[1].plugins = this.LeftPanelStoreBeta.getTransforms();
-      this.pluginTypes[2].plugins = this.LeftPanelStoreBeta.getSinks();
+      this.pluginTypes[0].plugins = this.HydratorPlusPlusLeftPanelStore.getSources();
+      this.pluginTypes[1].plugins = this.HydratorPlusPlusLeftPanelStore.getTransforms();
+      this.pluginTypes[2].plugins = this.HydratorPlusPlusLeftPanelStore.getSinks();
     });
     this.$uibModal = $uibModal;
-    this.PluginActionsFactoryBeta.fetchArtifacts({namespace: $stateParams.namespace});
+    this.HydratorPlusPlusPluginActions.fetchArtifacts({namespace: $stateParams.namespace});
   }
 
   onArtifactChange() {
     console.log('On change selectedArticact', this.selectedArtifact);
-    this.ConfigActionsFactoryBeta.setArtifact(this.selectedArtifact);
+    this.HydratorPlusPlusConfigActions.setArtifact(this.selectedArtifact);
     let params = {
       namespace: this.$stateParams.namespace,
-      pipelineType: this.ConfigStoreBeta.getArtifact().name,
+      pipelineType: this.HydratorPlusPlusConfigStore.getArtifact().name,
       version: this.rVersion.version,
       scope: this.$scope
     };
-    this.PluginActionsFactoryBeta.fetchSources(params);
-    this.PluginActionsFactoryBeta.fetchTransforms(params);
-    this.PluginActionsFactoryBeta.fetchSinks(params);
-    this.PluginActionsFactoryBeta.fetchTemplates(params);
+    this.HydratorPlusPlusPluginActions.fetchSources(params);
+    this.HydratorPlusPlusPluginActions.fetchTransforms(params);
+    this.HydratorPlusPlusPluginActions.fetchSinks(params);
+    this.HydratorPlusPlusPluginActions.fetchTemplates(params);
 
   }
 
@@ -151,14 +150,14 @@ class LeftPanelControllerBeta {
   }
 
   showTemplates() {
-    let templateType = this.ConfigStoreBeta.getArtifact().name;
+    let templateType = this.HydratorPlusPlusConfigStore.getArtifact().name;
     this.$uibModal.open({
       templateUrl: '/assets/features/hydrator-beta/templates/create/popovers/pre-configured-batch-list.html',
       size: 'lg',
       backdrop: true,
       keyboard: true,
-      controller: 'PreConfiguredControllerBeta',
-      controllerAs: 'PreConfiguredControllerBeta',
+      controller: 'HydratorPlusPlusPreConfiguredCtrl',
+      controllerAs: 'HydratorPlusPlusPreConfiguredCtrl',
       windowTopClass: 'hydrator-template-modal',
       resolve: {
         rTemplateType: () => templateType
@@ -167,13 +166,13 @@ class LeftPanelControllerBeta {
   }
   onLeftSidePanelItemClicked(event, node) {
     event.stopPropagation();
-    var item = this.LeftPanelStoreBeta.getSpecificPluginVersion(node);
-    this.NodesActionsFactoryBeta.resetSelectedNode();
-    this.LeftPanelStoreBeta.updatePluginDefaultVersion(item);
+    var item = this.HydratorPlusPlusLeftPanelStore.getSpecificPluginVersion(node);
+    this.DAGPlusPlusNodesActionsFactory.resetSelectedNode();
+    this.HydratorPlusPlusLeftPanelStore.updatePluginDefaultVersion(item);
 
     let name = item.name || item.pluginTemplate;
 
-    let filteredNodes = this.ConfigStoreBeta
+    let filteredNodes = this.HydratorPlusPlusConfigStore
                     .getNodes()
                     .filter( node => (node.plugin.label ? node.plugin.label.includes(name) : false) );
     let config;
@@ -185,7 +184,7 @@ class LeftPanelControllerBeta {
           artifact: item.artifact,
           properties: item.properties,
         },
-        icon: this.MyDAGFactoryBeta.getIcon(item.pluginName),
+        icon: this.DAGPlusPlusFactory.getIcon(item.pluginName),
         type: item.pluginType,
         outputSchema: item.outputSchema,
         inputSchema: item.inputSchema,
@@ -206,10 +205,10 @@ class LeftPanelControllerBeta {
         warning: true
       };
     }
-    this.NodesActionsFactoryBeta.addNode(config);
+    this.DAGPlusPlusNodesActionsFactory.addNode(config);
   }
 }
 
-LeftPanelControllerBeta.$inject = ['$scope', '$stateParams', 'rVersion', 'GLOBALS', 'LeftPanelStoreBeta', 'LeftPanelActionsFactoryBeta', 'PluginActionsFactoryBeta', 'ConfigStoreBeta', 'ConfigActionsFactoryBeta', 'MyDAGFactoryBeta', 'NodesActionsFactoryBeta', 'NonStorePipelineErrorFactory', 'HydratorServiceBeta', '$rootScope', '$uibModal', '$timeout', 'myAlertOnValium', '$state'];
+HydratorPlusPlusLeftPanelCtrl.$inject = ['$scope', '$stateParams', 'rVersion', 'GLOBALS', 'HydratorPlusPlusLeftPanelStore', 'HydratorPlusPlusPluginActions', 'HydratorPlusPlusConfigStore', 'HydratorPlusPlusConfigActions', 'DAGPlusPlusFactory', 'DAGPlusPlusNodesActionsFactory', 'NonStorePipelineErrorFactory', 'HydratorPlusPlusHydratorService', '$rootScope', '$uibModal', '$timeout', 'myAlertOnValium', '$state'];
 angular.module(PKG.name + '.feature.hydrator-beta')
-  .controller('LeftPanelControllerBeta', LeftPanelControllerBeta);
+  .controller('HydratorPlusPlusLeftPanelCtrl', HydratorPlusPlusLeftPanelCtrl);

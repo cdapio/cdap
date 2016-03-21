@@ -14,16 +14,16 @@
  * the License.
  */
 
-class HydratorSettingsControllerBeta {
-  constructor(GLOBALS, ConfigStoreBeta, ConfigActionsFactoryBeta, $scope) {
+class HydratorPlusPlusSettingsCtrl {
+  constructor(GLOBALS, HydratorPlusPlusConfigStore, HydratorPlusPlusConfigActions, $scope) {
     this.GLOBALS = GLOBALS;
 
-    this.templateType = ConfigStoreBeta.getArtifact().name;
+    this.templateType = HydratorPlusPlusConfigStore.getArtifact().name;
 
     // If ETL Batch
     if (this.templateType === GLOBALS.etlBatch) {
       // Initialiting ETL Batch Schedule
-      this.initialCron = ConfigStoreBeta.getSchedule();
+      this.initialCron = HydratorPlusPlusConfigStore.getSchedule();
       this.cron = this.initialCron;
 
       this.isBasic = this.checkCron(this.initialCron);
@@ -31,7 +31,7 @@ class HydratorSettingsControllerBeta {
 
       // Debounce method for setting schedule
       var setSchedule = _.debounce( () => {
-        ConfigActionsFactoryBeta.setSchedule(this.cron);
+        HydratorPlusPlusConfigActions.setSchedule(this.cron);
       }, 1000);
 
       $scope.$watch( () => {
@@ -41,11 +41,11 @@ class HydratorSettingsControllerBeta {
     // If ETL Realtime
     else if (this.templateType === GLOBALS.etlRealtime) {
       // Initializing ETL Realtime Instance
-      this.instance = ConfigStoreBeta.getInstance();
+      this.instance = HydratorPlusPlusConfigStore.getInstance();
 
       // Debounce method for setting instance
       var setInstance = _.debounce( () => {
-        ConfigActionsFactoryBeta.setInstance(this.instance);
+        HydratorPlusPlusConfigActions.setInstance(this.instance);
       }, 1000);
 
       $scope.$watch( () => {
@@ -82,6 +82,6 @@ class HydratorSettingsControllerBeta {
   }
 }
 
-HydratorSettingsControllerBeta.$inject = ['GLOBALS', 'ConfigStoreBeta', 'ConfigActionsFactoryBeta', '$scope'];
+HydratorPlusPlusSettingsCtrl.$inject = ['GLOBALS', 'HydratorPlusPlusConfigStore', 'HydratorPlusPlusConfigActions', '$scope'];
 angular.module(PKG.name + '.feature.hydrator-beta')
-  .controller('HydratorSettingsControllerBeta', HydratorSettingsControllerBeta);
+  .controller('HydratorPlusPlusSettingsCtrl', HydratorPlusPlusSettingsCtrl);

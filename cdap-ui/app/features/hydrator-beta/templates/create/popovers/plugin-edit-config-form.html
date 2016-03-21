@@ -14,7 +14,7 @@
   the License.
 -->
 
-<div class="config-table source-table" ng-if="NodeConfigControllerBeta.state.isSource">
+<div class="config-table source-table" ng-if="HydratorPlusPlusNodeConfigCtrl.state.isSource">
   <div>
     <div ng-include="'/assets/features/hydrator-beta/templates/create/popovers/plugin-edit-properties-template.html'"></div>
   </div>
@@ -24,7 +24,7 @@
   </div>
 </div>
 
-<div class="config-table transform-table" ng-if="NodeConfigControllerBeta.state.isTransform && NodeConfigControllerBeta.state.node.plugin.name !== 'Validator'">
+<div class="config-table transform-table" ng-if="HydratorPlusPlusNodeConfigCtrl.state.isTransform && HydratorPlusPlusNodeConfigCtrl.state.node.plugin.name !== 'Validator'">
   <div>
     <div ng-include="'/assets/features/hydrator-beta/templates/create/popovers/plugin-edit-input-schema.html'"></div>
   </div>
@@ -38,13 +38,13 @@
   </div>
 </div>
 
-<div class="validator-plugin" ng-if="NodeConfigControllerBeta.state.isTransform && NodeConfigControllerBeta.state.node.plugin.name === 'Validator'">
+<div class="validator-plugin" ng-if="HydratorPlusPlusNodeConfigCtrl.state.isTransform && HydratorPlusPlusNodeConfigCtrl.state.node.plugin.name === 'Validator'">
   <div>
     <div ng-include="'/assets/features/hydrator-beta/templates/create/popovers/plugin-edit-validator-transform.html'"></div>
   </div>
 </div>
 
-<div class="config-table sink-table" ng-if="NodeConfigControllerBeta.state.isSink">
+<div class="config-table sink-table" ng-if="HydratorPlusPlusNodeConfigCtrl.state.isSink">
   <div>
     <div ng-include="'/assets/features/hydrator-beta/templates/create/popovers/plugin-edit-input-schema.html'"></div>
   </div>
@@ -55,7 +55,7 @@
         <div ng-include="'/assets/features/hydrator-beta/templates/create/popovers/plugin-edit-properties-template.html'"></div>
       </div>
 
-      <div class="col-xs-12 sink-output-schema" ng-if="NodeConfigControllerBeta.state.groupsConfig.outputSchema.isOutputSchemaExists || NodeConfigControllerBeta.state.groupsConfig.implicitSchema">
+      <div class="col-xs-12 sink-output-schema" ng-if="HydratorPlusPlusNodeConfigCtrl.state.groupsConfig.outputSchema.isOutputSchemaExists || HydratorPlusPlusNodeConfigCtrl.state.groupsConfig.implicitSchema">
         <div ng-include="'/assets/features/hydrator-beta/templates/create/popovers/plugin-edit-output-schema.html'"></div>
       </div>
     </div>

@@ -15,9 +15,9 @@
  */
 
 angular.module(PKG.name + '.feature.hydrator-beta')
-  .service('BottomPanelStoreBeta', function(PipelineDetailBottomPanelDispatcherBeta) {
+  .service('HydratorPlusPlusBottomPanelStore', function(HydratorPlusPlusBottomPanelDispatcher) {
 
-    var dispatcher = PipelineDetailBottomPanelDispatcherBeta.getDispatcher();
+    var dispatcher = HydratorPlusPlusBottomPanelDispatcher.getDispatcher();
     this.changeListeners = [];
     this.setDefaults = function() {
       this.state = {

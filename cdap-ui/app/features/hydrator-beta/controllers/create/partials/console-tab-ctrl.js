@@ -14,19 +14,19 @@
  * the License.
  */
 
-class ConsoleTabControllerBeta {
-  constructor(ConsoleStoreBeta) {
-    this.ConsoleStoreBeta = ConsoleStoreBeta;
+class HydratorPlusPlusConsoleTabCtrl {
+  constructor(HydratorPlusPlusConsoleStore) {
+    this.HydratorPlusPlusConsoleStore = HydratorPlusPlusConsoleStore;
 
     this.setMessages();
-    this.ConsoleStoreBeta.registerOnChangeListener( this.setMessages.bind(this) );
+    this.HydratorPlusPlusConsoleStore.registerOnChangeListener( this.setMessages.bind(this) );
   }
 
   setMessages() {
-    this.messages = this.ConsoleStoreBeta.getMessages();
+    this.messages = this.HydratorPlusPlusConsoleStore.getMessages();
   }
 }
 
-ConsoleTabControllerBeta.$inject = ['ConsoleStoreBeta'];
+HydratorPlusPlusConsoleTabCtrl.$inject = ['HydratorPlusPlusConsoleStore'];
 angular.module(PKG.name + '.feature.hydrator-beta')
-  .controller('ConsoleTabControllerBeta', ConsoleTabControllerBeta);
+  .controller('HydratorPlusPlusConsoleTabCtrl', HydratorPlusPlusConsoleTabCtrl);

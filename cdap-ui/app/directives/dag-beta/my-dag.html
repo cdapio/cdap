@@ -17,7 +17,7 @@
 <!-- Control Buttons -->
 <div class="btn-group-vertical btn-group-sm zoom-control">
   <button class="btn btn-default"
-          ng-click="MyDAGControllerBeta.zoomIn()"
+          ng-click="DAGPlusPlusCtrl.zoomIn()"
           uib-tooltip="Zoom In"
           tooltip-append-to-body="true"
           tooltip-placement="left"
@@ -26,7 +26,7 @@
   </button>
 
   <button class="btn btn-default"
-          ng-click="MyDAGControllerBeta.zoomOut()"
+          ng-click="DAGPlusPlusCtrl.zoomOut()"
           uib-tooltip="Zoom Out"
           tooltip-append-to-body="true"
           tooltip-placement="left"
@@ -35,8 +35,8 @@
   </button>
 
   <button class="btn btn-default"
-          ng-click="MyDAGControllerBeta.fitToScreen()"
-          ng-if="!MyDAGControllerBeta.isDisabled"
+          ng-click="DAGPlusPlusCtrl.fitToScreen()"
+          ng-if="!DAGPlusPlusCtrl.isDisabled"
           uib-tooltip="Fit to screen"
           tooltip-append-to-body="true"
           tooltip-placement="left"
@@ -45,8 +45,8 @@
   </button>
 
   <button class="btn btn-default"
-          ng-click="MyDAGControllerBeta.cleanUpGraph()"
-          ng-if="!MyDAGControllerBeta.isDisabled"
+          ng-click="DAGPlusPlusCtrl.cleanUpGraph()"
+          ng-if="!DAGPlusPlusCtrl.isDisabled"
           uib-tooltip="Align"
           tooltip-append-to-body="true"
           tooltip-placement="left"
@@ -57,8 +57,8 @@
 
   <!-- Adding Comments -->
   <button class="btn btn-default"
-          ng-click="MyDAGControllerBeta.addComment()"
-          ng-if="!MyDAGControllerBeta.isDisabled"
+          ng-click="DAGPlusPlusCtrl.addComment()"
+          ng-if="!DAGPlusPlusCtrl.isDisabled"
           uib-tooltip="Add Comments"
           tooltip-append-to-body="true"
           tooltip-placement="left"
@@ -68,11 +68,11 @@
 </div>
 
 <div class="my-js-dag"
-    ng-class="{'disabled': MyDAGControllerBeta.isDisabled, 'normal-cursor': disableNodeClick }"
-    ng-click="MyDAGControllerBeta.clearNodeSelection()">
+    ng-class="{'disabled': DAGPlusPlusCtrl.isDisabled, 'normal-cursor': disableNodeClick }"
+    ng-click="DAGPlusPlusCtrl.clearNodeSelection()">
 
     <div id="diagram-container">
-      <div id="dag-container" ng-style="MyDAGControllerBeta.panning.style">
+      <div id="dag-container" ng-style="DAGPlusPlusCtrl.panning.style">
         <!--
           The condition on ng-click is to prevent user from being able to click
           if the DAG is disabled. It will prevent the highlighting of nodes on select
@@ -80,11 +80,11 @@
         <div ng-repeat="node in nodes" class="box {{node.type}}" ng-style="node._uiPosition"
                data-type="{{node.type}}"
                id="{{node.name}}"
-               ng-click="!disableNodeClick && MyDAGControllerBeta.onNodeClick($event, node)"
+               ng-click="!disableNodeClick && DAGPlusPlusCtrl.onNodeClick($event, node)"
                ng-class="{'selected': node.selected}">
           <div class="node"
-                ng-mouseenter="MyDAGControllerBeta.nodeMouseEnter(node)"
-                ng-mouseleave="MyDAGControllerBeta.nodeMouseLeave(node)">
+                ng-mouseenter="DAGPlusPlusCtrl.nodeMouseEnter(node)"
+                ng-mouseleave="DAGPlusPlusCtrl.nodeMouseLeave(node)">
             <div ng-if="node.error">
               <div class="error-node-notification"
                    ng-if="node.errorCount > 0"
@@ -108,16 +108,16 @@
               </div>
             </div>
             <div class="fa fa-close"
-                 ng-if="!MyDAGControllerBeta.isDisabled"
-                 ng-click="MyDAGControllerBeta.onNodeDelete($event, node)"></div>
+                 ng-if="!DAGPlusPlusCtrl.isDisabled"
+                 ng-click="DAGPlusPlusCtrl.onNodeDelete($event, node)"></div>
             <div class="icon fa {{node.icon}}"></div>
           </div>
           <div class="plugin-name" ng-bind="node.plugin.label || node.name | myEllipsis: 25"></div>
         </div>
 
-        <div ng-repeat="comment in MyDAGControllerBeta.comments"
+        <div ng-repeat="comment in DAGPlusPlusCtrl.comments"
               class="comment-box"
-              ng-click="!MyDAGControllerBeta.isDisabled && MyDAGControllerBeta.commentSelect($event, comment)"
+              ng-click="!DAGPlusPlusCtrl.isDisabled && DAGPlusPlusCtrl.commentSelect($event, comment)"
               ng-style="comment._uiPosition"
               id="{{comment.id}}">
           <div ng-if="comment.isActive">
@@ -134,8 +134,8 @@
           </div>
 
           <div class="fa fa-close"
-               ng-click="MyDAGControllerBeta.deleteComment(comment)"
-               ng-if="!MyDAGControllerBeta.isDisabled">
+               ng-click="DAGPlusPlusCtrl.deleteComment(comment)"
+               ng-if="!DAGPlusPlusCtrl.isDisabled">
           </div>
 
         </div>

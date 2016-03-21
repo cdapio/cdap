@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.feature.hydrator-beta')
-  .service('NodeConfigStoreBeta', function(PipelineNodeConfigDispatcherBeta, $q, $filter, IMPLICIT_SCHEMA, GLOBALS, myPipelineApi, $state, $rootScope, ConfigStoreBeta, DetailNonRunsStore, ConfigActionsFactoryBeta, HydratorServiceBeta) {
+  .service('HydratorPlusPlusNodeConfigStore', function(HydratorPlusPlusConfigDispatcher, $q, $filter, IMPLICIT_SCHEMA, GLOBALS, myPipelineApi, $state, $rootScope, HydratorPlusPlusConfigStore, DetailNonRunsStore, HydratorPlusPlusNodeConfigActions, HydratorPlusPlusHydratorService) {
 
     var dispatcher;
     this.changeListeners = [];
@@ -29,7 +29,7 @@ angular.module(PKG.name + '.feature.hydrator-beta')
       };
     };
     this.setDefaults();
-    this.HydratorServiceBeta = HydratorServiceBeta;
+    this.HydratorPlusPlusHydratorService = HydratorPlusPlusHydratorService;
     this.getState = function() {
       return this.state;
     };
@@ -46,7 +46,7 @@ angular.module(PKG.name + '.feature.hydrator-beta')
         type = 'transform';
       }
 
-      ConfigActionsFactoryBeta.savePlugin(plugin, type);
+      HydratorPlusPlusNodeConfigActions.savePlugin(plugin, type);
     };
     this.registerOnChangeListener = function(callback) {
       this.changeListeners.push(callback);
@@ -61,16 +61,16 @@ angular.module(PKG.name + '.feature.hydrator-beta')
       // This is done here as NodeConfigStore is being reused between create and view pipelines states.
       // So we need to destroy the dispatcher updating all listeners of the store so when we switch states
       // one does not get notified if out of context.
-      PipelineNodeConfigDispatcherBeta.destroyDispatcher();
+      HydratorPlusPlusConfigDispatcher.destroyDispatcher();
       this.changeListeners = [];
     };
     this.init = function() {
       if ($state.includes('hydrator-beta.create.**')) {
-        this.ConfigStoreBeta = ConfigStoreBeta;
+        this.ConfigStore = HydratorPlusPlusConfigStore;
       } else if ($state.includes('hydrator-beta.detail.**')) {
-        this.ConfigStoreBeta = DetailNonRunsStore;
+        this.ConfigStore = DetailNonRunsStore;
       }
-      dispatcher = PipelineNodeConfigDispatcherBeta.getDispatcher();
+      dispatcher = HydratorPlusPlusConfigDispatcher.getDispatcher();
       dispatcher.register('onPluginChange', this.setState.bind(this));
       dispatcher.register('onPluginRemove', function() {
         this.setDefaults();
@@ -107,14 +107,14 @@ angular.module(PKG.name + '.feature.hydrator-beta')
       if (this.state.node._backendProperties) {
         return $q.when(true);
       } else {
-        return this.HydratorServiceBeta.fetchBackendProperties(this.state.node, this.ConfigStoreBeta.getAppType());
+        return this.HydratorPlusPlusHydratorService.fetchBackendProperties(this.state.node, this.ConfigStore.getAppType());
       }
     }
 
     function configurePluginInfo(pluginDetails) {
       var pluginId = this.state.node.name;
       var input;
-      var sourceConn = this.ConfigStoreBeta.getSourceNodes(pluginId).filter( node => typeof node.outputSchema === 'string');
+      var sourceConn = this.ConfigStore.getSourceNodes(pluginId).filter( node => typeof node.outputSchema === 'string');
       var sourceSchema = null;
       var isStreamSource = false;
 
@@ -165,7 +165,7 @@ angular.module(PKG.name + '.feature.hydrator-beta')
       this.state.node.description = pluginDetails.description || this.state.node.description;
       this.state.isValidPlugin = Object.keys(this.state.node).length;
 
-      var artifactTypeExtension = GLOBALS.pluginTypes[this.ConfigStoreBeta.getAppType()];
+      var artifactTypeExtension = GLOBALS.pluginTypes[this.ConfigStore.getAppType()];
       if (this.state.node.type === artifactTypeExtension.source) {
         this.state.isSource = true;
       }

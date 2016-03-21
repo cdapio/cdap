@@ -16,7 +16,7 @@
  */
 
 angular.module(PKG.name + '.feature.hydrator-beta')
-  .factory('CanvasFactoryBeta', function(myHelpers, $q, myAlertOnValium, GLOBALS, $filter) {
+  .factory('HydratorPlusPlusCanvasFactory', function(myHelpers, $q, myAlertOnValium, GLOBALS, $filter) {
     function extractMetadataFromDraft(data) {
       var returnConfig = {};
       returnConfig.name = myHelpers.objectQuery(data, 'name');

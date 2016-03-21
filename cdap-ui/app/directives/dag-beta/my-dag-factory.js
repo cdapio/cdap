@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.commons')
-  .factory('MyDAGFactoryBeta', function() {
+  .factory('DAGPlusPlusFactory', function() {
     var defaultSettings = {
       Connector : [ 'Flowchart', {gap: 6, stub: [10, 15], alwaysRespectStubs: true} ],
       ConnectionsDetachable: true

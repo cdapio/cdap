@@ -26,7 +26,7 @@
         <div class="form-group has-feedback">
           <input type="text"
             class="form-control"
-            ng-model="PreConfiguredControllerBeta.searchText"
+            ng-model="HydratorPlusPlusPreConfiguredCtrl.searchText"
             placeholder="Search" />
           <span class="fa fa-search form-control-feedback"></span>
         </div>
@@ -37,8 +37,8 @@
   <div class="col-xs-9 template-main">
     <div class="row">
       <div class="col-xs-4"
-        ng-repeat="template in PreConfiguredControllerBeta.filtered = (PreConfiguredControllerBeta.templates | filter: { $: PreConfiguredControllerBeta.searchText })"
-        ng-click="PreConfiguredControllerBeta.selectTemplate(template)">
+        ng-repeat="template in HydratorPlusPlusPreConfiguredCtrl.filtered = (HydratorPlusPlusPreConfiguredCtrl.templates | filter: { $: HydratorPlusPlusPreConfiguredCtrl.searchText })"
+        ng-click="HydratorPlusPlusPreConfiguredCtrl.selectTemplate(template)">
         <div class="well well-md start-well template-link">
           <h4 class="template-name">{{ template.name }}</h4>
           <p>{{ template.description }}</p>
@@ -50,9 +50,9 @@
         </div>
       </div>
 
-      <div class="col-xs-12" ng-if="PreConfiguredControllerBeta.filtered.length > 9">
-        <uib-pagination total-items="PreConfiguredControllerBeta.filtered.length"
-          ng-model="PreConfiguredControllerBeta.currentPage"
+      <div class="col-xs-12" ng-if="HydratorPlusPlusPreConfiguredCtrl.filtered.length > 9">
+        <uib-pagination total-items="HydratorPlusPlusPreConfiguredCtrl.filtered.length"
+          ng-model="HydratorPlusPlusPreConfiguredCtrl.currentPage"
           items-per-page="9"></uib-pagination>
       </div>
 

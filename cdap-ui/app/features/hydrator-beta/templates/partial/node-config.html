@@ -14,12 +14,12 @@
   the License.
 -->
 
-<div ng-controller="NodeConfigControllerBeta as NodeConfigControllerBeta">
-  <div ng-if="NodeConfigControllerBeta.state.isValidPlugin"
+<div ng-controller="HydratorPlusPlusNodeConfigCtrl as HydratorPlusPlusNodeConfigCtrl">
+  <div ng-if="HydratorPlusPlusNodeConfigCtrl.state.isValidPlugin"
        ng-include="'/assets/features/hydrator-beta/templates/create/popovers/plugin-edit-form.html'">
   </div>
-  <div class="bottompanel-body" ng-if="!NodeConfigControllerBeta.state.isValidPlugin">
-    <p ng-if="NodeConfigControllerBeta.$state.includes('hydrator.create.studio')">Please select a plugin to edit configuration.</p>
-    <p ng-if="NodeConfigControllerBeta.$state.includes('hydrator.detail')">Please select a plugin to view configuration.</p>
+  <div class="bottompanel-body" ng-if="!HydratorPlusPlusNodeConfigCtrl.state.isValidPlugin">
+    <p ng-if="HydratorPlusPlusNodeConfigCtrl.$state.includes('hydrator.create.studio')">Please select a plugin to edit configuration.</p>
+    <p ng-if="HydratorPlusPlusNodeConfigCtrl.$state.includes('hydrator.detail')">Please select a plugin to view configuration.</p>
   </div>
 </div>

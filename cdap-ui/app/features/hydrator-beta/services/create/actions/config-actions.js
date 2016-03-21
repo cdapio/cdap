@@ -14,20 +14,20 @@
  * the License.
  */
 
-class ConfigActionsFactoryBeta {
-  constructor(ConfigDispatcherBeta, myPipelineApi, $state, ConfigStoreBeta, mySettings, ConsoleActionsFactoryBeta, EventPipe, myAppsApi, GLOBALS, myHelpers, $stateParams) {
-    this.ConfigStoreBeta = ConfigStoreBeta;
+class HydratorPlusPlusConfigActions {
+  constructor(HydratorPlusPlusConfigDispatcher, myPipelineApi, $state, HydratorPlusPlusConfigStore, mySettings, HydratorPlusPlusConsoleActions, EventPipe, myAppsApi, GLOBALS, myHelpers, $stateParams) {
+    this.HydratorPlusPlusConfigStore = HydratorPlusPlusConfigStore;
     this.mySettings = mySettings;
     this.$state = $state;
     this.myPipelineApi = myPipelineApi;
-    this.ConsoleActionsFactoryBeta = ConsoleActionsFactoryBeta;
+    this.HydratorPlusPlusConsoleActions = HydratorPlusPlusConsoleActions;
     this.EventPipe = EventPipe;
     this.myAppsApi = myAppsApi;
     this.GLOBALS = GLOBALS;
     this.myHelpers = myHelpers;
     this.$stateParams = $stateParams;
 
-    this.dispatcher = ConfigDispatcherBeta.getDispatcher();
+    this.dispatcher = HydratorPlusPlusConfigDispatcher.getDispatcher();
   }
   initializeConfigStore(config) {
     this.dispatcher.dispatch('onInitialize', config);
@@ -66,14 +66,14 @@ class ConfigActionsFactoryBeta {
     this.dispatcher.dispatch('onSetInstance', instance);
   }
   publishPipeline() {
-    this.ConsoleActionsFactoryBeta.resetMessages();
-    let error = this.ConfigStoreBeta.validateState(true);
+    this.HydratorPlusPlusConsoleActions.resetMessages();
+    let error = this.HydratorPlusPlusConfigStore.validateState(true);
 
     if (!error) { return; }
     this.EventPipe.emit('showLoadingIcon', 'Publishing Pipeline to CDAP');
 
     let removeFromUserDrafts = (adapterName) => {
-      let draftId = this.ConfigStoreBeta.getState().__ui__.draftId;
+      let draftId = this.HydratorPlusPlusConfigStore.getState().__ui__.draftId;
       this.mySettings
         .get('hydratorDrafts', true)
         .then(
@@ -85,7 +85,7 @@ class ConfigActionsFactoryBeta {
             }
           },
           (err) => {
-            this.ConsoleActionsFactoryBeta.addMessage({
+            this.HydratorPlusPlusConsoleActions.addMessage({
               type: 'error',
               content: err
             });
@@ -113,7 +113,7 @@ class ConfigActionsFactoryBeta {
         removeFromUserDrafts.bind(this, pipelineName),
         (err) => {
           this.EventPipe.emit('hideLoadingIcon.immediate');
-          this.ConsoleActionsFactoryBeta.addMessage({
+          this.HydratorPlusPlusConsoleActions.addMessage({
             type: 'error',
             content: angular.isObject(err) ? err.data : err
           });
@@ -122,7 +122,7 @@ class ConfigActionsFactoryBeta {
     };
 
 
-    var config = this.ConfigStoreBeta.getConfigForExport();
+    var config = this.HydratorPlusPlusConfigStore.getConfigForExport();
 
     // Checking if Pipeline name already exist
     this.myAppsApi
@@ -132,7 +132,7 @@ class ConfigActionsFactoryBeta {
         var appNames = apps.map( (app) => { return app.name; } );
 
         if (appNames.indexOf(config.name) !== -1) {
-          this.ConsoleActionsFactoryBeta.addMessage({
+          this.HydratorPlusPlusConsoleActions.addMessage({
             type: 'error',
             content: this.GLOBALS.en.hydrator.studio.error['NAME-ALREADY-EXISTS']
           });
@@ -145,6 +145,6 @@ class ConfigActionsFactoryBeta {
   }
 }
 
-ConfigActionsFactoryBeta.$inject = ['ConfigDispatcherBeta', 'myPipelineApi', '$state', 'ConfigStoreBeta', 'mySettings', 'ConsoleActionsFactoryBeta', 'EventPipe', 'myAppsApi', 'GLOBALS', 'myHelpers', '$stateParams'];
+HydratorPlusPlusConfigActions.$inject = ['HydratorPlusPlusConfigDispatcher', 'myPipelineApi', '$state', 'HydratorPlusPlusConfigStore', 'mySettings', 'HydratorPlusPlusConsoleActions', 'EventPipe', 'myAppsApi', 'GLOBALS', 'myHelpers', '$stateParams'];
 angular.module(`${PKG.name}.feature.hydrator-beta`)
-  .service('ConfigActionsFactoryBeta', ConfigActionsFactoryBeta);
+  .service('HydratorPlusPlusConfigActions', HydratorPlusPlusConfigActions);

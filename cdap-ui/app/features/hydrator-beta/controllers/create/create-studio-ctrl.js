@@ -14,29 +14,28 @@
  * the License.
  */
 
-class HydratorCreateStudioControllerBeta {
+class HydratorPlusPlusStudioCtrl {
   // Holy cow. Much DI. Such angular.
-  constructor(LeftPanelStoreBeta, LeftPanelActionsFactoryBeta, ConfigActionsFactoryBeta, $stateParams, rConfig, ConfigStoreBeta, $rootScope, $scope, DetailNonRunsStore, NodeConfigStoreBeta, NodesActionsFactoryBeta, HydratorServiceBeta, ConsoleActionsFactoryBeta) {
+  constructor(HydratorPlusPlusLeftPanelStore, HydratorPlusPlusConfigActions, $stateParams, rConfig, $rootScope, $scope, DetailNonRunsStore, HydratorPlusPlusNodeConfigStore, DAGPlusPlusNodesActionsFactory, HydratorPlusPlusHydratorService, HydratorPlusPlusConsoleActions) {
     // This is required because before we fireup the actions related to the store, the store has to be initialized to register for any events.
 
-    this.LeftPanelActionsFactoryBeta = LeftPanelActionsFactoryBeta;
-    this.isExpanded = LeftPanelStoreBeta.getState();
-    LeftPanelStoreBeta.registerOnChangeListener( () => {
-      this.isExpanded = LeftPanelStoreBeta.getState();
+    this.isExpanded = HydratorPlusPlusLeftPanelStore.getState();
+    HydratorPlusPlusLeftPanelStore.registerOnChangeListener( () => {
+      this.isExpanded = HydratorPlusPlusLeftPanelStore.getState();
     });
     // FIXME: This should essentially be moved to a scaffolding service that will do stuff for a state/view
     $scope.$on('$destroy', () => {
       DetailNonRunsStore.reset();
-      NodeConfigStoreBeta.reset();
-      ConsoleActionsFactoryBeta.resetMessages();
+      HydratorPlusPlusNodeConfigStore.reset();
+      HydratorPlusPlusConsoleActions.resetMessages();
     });
 
-    NodeConfigStoreBeta.init();
+    HydratorPlusPlusNodeConfigStore.init();
     if (rConfig) {
-      ConfigActionsFactoryBeta.initializeConfigStore(rConfig);
+      HydratorPlusPlusConfigActions.initializeConfigStore(rConfig);
       let configJson = rConfig;
       if (!rConfig.__ui__) {
-        configJson = HydratorServiceBeta.getNodesAndConnectionsFromConfig(rConfig);
+        configJson = HydratorPlusPlusHydratorService.getNodesAndConnectionsFromConfig(rConfig);
         configJson['__ui__'] = {
           nodes: configJson.nodes.map( (node) => {
             node.properties = node.plugin.properties;
@@ -49,17 +48,17 @@ class HydratorCreateStudioControllerBeta {
         };
       }
 
-      NodesActionsFactoryBeta.createGraphFromConfig(configJson.__ui__.nodes, configJson.config.connections, configJson.config.comments);
+      DAGPlusPlusNodesActionsFactory.createGraphFromConfig(configJson.__ui__.nodes, configJson.config.connections, configJson.config.comments);
     } else {
-      ConfigActionsFactoryBeta.initializeConfigStore({});
+      HydratorPlusPlusConfigActions.initializeConfigStore({});
     }
   }
 
   toggleSidebar() {
-    this.LeftPanelActionsFactoryBeta.togglePanel();
+
   }
 }
 
-HydratorCreateStudioControllerBeta.$inject = ['LeftPanelStoreBeta', 'LeftPanelActionsFactoryBeta', 'ConfigActionsFactoryBeta', '$stateParams', 'rConfig', 'ConfigStoreBeta', '$rootScope', '$scope', 'DetailNonRunsStore', 'NodeConfigStoreBeta', 'NodesActionsFactoryBeta', 'HydratorServiceBeta', 'ConsoleActionsFactoryBeta'];
+HydratorPlusPlusStudioCtrl.$inject = ['HydratorPlusPlusLeftPanelStore', 'HydratorPlusPlusConfigActions', '$stateParams', 'rConfig', '$rootScope', '$scope', 'DetailNonRunsStore', 'HydratorPlusPlusNodeConfigStore', 'DAGPlusPlusNodesActionsFactory', 'HydratorPlusPlusHydratorService', 'HydratorPlusPlusConsoleActions'];
 angular.module(PKG.name + '.feature.hydrator-beta')
-  .controller('HydratorCreateStudioControllerBeta', HydratorCreateStudioControllerBeta);
+  .controller('HydratorPlusPlusStudioCtrl', HydratorPlusPlusStudioCtrl);
