@@ -77,7 +77,7 @@ public class AppMetadataStoreTest {
       metadataStoreDataset.recordProgramStart(program, runId.getId(), RunIds.getTime(runId, TimeUnit.SECONDS),
                                               null, null, null);
       metadataStoreDataset.recordProgramStop(program, runId.getId(), RunIds.getTime(runId, TimeUnit.SECONDS),
-                                             ProgramRunStatus.values()[i % ProgramRunStatus.values().length]);
+                                             ProgramRunStatus.values()[i % ProgramRunStatus.values().length], null);
     }
 
     // Run full scan

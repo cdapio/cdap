@@ -17,6 +17,8 @@
 package co.cask.cdap.proto;
 
 
+import co.cask.cdap.api.workflow.WorkflowNodeState;
+
 /**
  * Program Status Types used to query program runs
  */
@@ -26,5 +28,26 @@ public enum ProgramRunStatus {
   SUSPENDED,
   COMPLETED,
   FAILED,
-  KILLED
+  KILLED;
+
+  /**
+   * Conversion from program run status to Workflow node status.
+   * @param status the program run status to be converted
+   * @return the converted Workflow node status
+   */
+  public static WorkflowNodeState.NodeStatus toNodeStatus(ProgramRunStatus status) {
+    switch(status) {
+      case RUNNING:
+        return WorkflowNodeState.NodeStatus.RUNNING;
+      case COMPLETED:
+        return WorkflowNodeState.NodeStatus.COMPLETED;
+      case FAILED:
+        return WorkflowNodeState.NodeStatus.FAILED;
+      case KILLED:
+        return WorkflowNodeState.NodeStatus.KILLED;
+      default:
+        throw new IllegalArgumentException(String.format("No node status available corresponding to program status %s",
+                                                         status.name()));
+    }
+  }
 }

@@ -31,6 +31,7 @@ import co.cask.cdap.WorkflowTokenTestPutApp;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.workflow.WorkflowActionNode;
 import co.cask.cdap.api.workflow.WorkflowActionSpecification;
+import co.cask.cdap.api.workflow.WorkflowNodeState;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.utils.Tasks;
@@ -749,6 +750,31 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     Assert.assertEquals(workflowRunRecordProperties.get("OneSpark"), oneSparkHistoryRuns.get(0).getPid());
     Assert.assertEquals(workflowRunRecordProperties.get("AnotherMR"), anotherMRHistoryRuns.get(0).getPid());
     Assert.assertEquals(workflowRunRecordProperties.get("AnotherSpark"), anotherSparkHistoryRuns.get(0).getPid());
+
+    Type nodeStateType = new TypeToken<Map<String, WorkflowNodeState>>() { }.getType();
+    Map<String, WorkflowNodeState> nodeStates = GSON.fromJson(workflowRunRecordProperties.get("workflowNodeState"),
+                                                              nodeStateType);
+    Assert.assertNotNull(nodeStates);
+    Assert.assertEquals(4, nodeStates.size());
+    WorkflowNodeState mrNodeState = nodeStates.get("OneMR");
+    Assert.assertNotNull(mrNodeState);
+    Assert.assertEquals("OneMR", mrNodeState.getNodeId());
+    Assert.assertEquals(oneMRHistoryRuns.get(0).getPid(), mrNodeState.getRunId());
+
+    mrNodeState = nodeStates.get("AnotherMR");
+    Assert.assertNotNull(mrNodeState);
+    Assert.assertEquals("AnotherMR", mrNodeState.getNodeId());
+    Assert.assertEquals(anotherMRHistoryRuns.get(0).getPid(), mrNodeState.getRunId());
+
+    WorkflowNodeState sparkNodeState = nodeStates.get("OneSpark");
+    Assert.assertNotNull(sparkNodeState);
+    Assert.assertEquals("OneSpark", sparkNodeState.getNodeId());
+    Assert.assertEquals(oneSparkHistoryRuns.get(0).getPid(), sparkNodeState.getRunId());
+
+    sparkNodeState = nodeStates.get("AnotherSpark");
+    Assert.assertNotNull(sparkNodeState);
+    Assert.assertEquals("AnotherSpark", sparkNodeState.getNodeId());
+    Assert.assertEquals(anotherSparkHistoryRuns.get(0).getPid(), sparkNodeState.getRunId());
   }
 
   @Ignore

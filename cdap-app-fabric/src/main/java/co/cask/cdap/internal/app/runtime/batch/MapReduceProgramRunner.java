@@ -47,6 +47,7 @@ import co.cask.cdap.internal.app.runtime.workflow.NameMappedDatasetFramework;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
 import co.cask.cdap.internal.lang.Reflections;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Preconditions;
@@ -54,7 +55,6 @@ import com.google.common.base.Throwables;
 import com.google.common.io.Closeables;
 import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.Service;
-import com.google.gson.Gson;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;
@@ -79,7 +79,6 @@ import javax.annotation.Nullable;
  */
 public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
   private static final Logger LOG = LoggerFactory.getLogger(MapReduceProgramRunner.class);
-  private static final Gson GSON = new Gson();
 
   private final Injector injector;
   private final StreamAdmin streamAdmin;
@@ -218,9 +217,6 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
                                                         final Arguments arguments, final Arguments userArgs) {
 
     final String twillRunId = arguments.getOption(ProgramOptionConstants.TWILL_RUN_ID);
-    final String workflowName = arguments.getOption(ProgramOptionConstants.WORKFLOW_NAME);
-    final String workflowNodeId = arguments.getOption(ProgramOptionConstants.WORKFLOW_NODE_ID);
-    final String workflowRunId = arguments.getOption(ProgramOptionConstants.WORKFLOW_RUN_ID);
 
     return new ServiceListenerAdapter() {
       @Override
@@ -231,35 +227,28 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
           // If RunId is not time-based, use current time as start time
           startTimeInSeconds = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
         }
-        if (workflowName == null) {
-          store.setStart(program.getId(), runId.getId(), startTimeInSeconds, twillRunId,
-                         userArgs.asMap(), arguments.asMap());
-        } else {
-          // Program started by Workflow
-          store.setWorkflowProgramStart(program.getId(), runId.getId(), workflowName, workflowRunId, workflowNodeId,
-                                        startTimeInSeconds, twillRunId);
-        }
+        store.setStart(program.getId(), runId.getId(), startTimeInSeconds, twillRunId, userArgs.asMap(),
+                       arguments.asMap());
       }
 
       @Override
       public void terminated(Service.State from) {
         closeAllQuietly(closeables);
+        ProgramRunStatus runStatus = ProgramController.State.COMPLETED.getRunStatus();
         if (from == Service.State.STOPPING) {
           // Service was killed
-          store.setStop(program.getId(), runId.getId(), TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
-                        ProgramController.State.KILLED.getRunStatus());
-        } else {
-          // Service completed by itself.
-          store.setStop(program.getId(), runId.getId(), TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
-                        ProgramController.State.COMPLETED.getRunStatus());
+          runStatus = ProgramController.State.KILLED.getRunStatus();
         }
+
+        store.setStop(program.getId(), runId.getId(), TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
+                      runStatus);
       }
 
       @Override
-      public void failed(Service.State from, Throwable failure) {
+      public void failed(Service.State from, @Nullable Throwable failure) {
         closeAllQuietly(closeables);
         store.setStop(program.getId(), runId.getId(), TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
-                      ProgramController.State.ERROR.getRunStatus());
+                      ProgramController.State.ERROR.getRunStatus(), failure);
       }
     };
   }
