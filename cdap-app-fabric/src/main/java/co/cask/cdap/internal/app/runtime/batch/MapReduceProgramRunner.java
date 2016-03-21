@@ -55,7 +55,6 @@ import com.google.common.base.Throwables;
 import com.google.common.io.Closeables;
 import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.Service;
-import com.google.gson.Gson;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;
@@ -80,7 +79,6 @@ import javax.annotation.Nullable;
  */
 public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
   private static final Logger LOG = LoggerFactory.getLogger(MapReduceProgramRunner.class);
-  private static final Gson GSON = new Gson();
 
   private final Injector injector;
   private final StreamAdmin streamAdmin;
