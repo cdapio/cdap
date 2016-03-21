@@ -24,6 +24,7 @@ import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.api.plugin.PluginClass;
+import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.artifact.AppRequest;
@@ -36,7 +37,7 @@ import java.util.jar.Manifest;
 import javax.annotation.Nullable;
 
 /**
- *
+ * Class that provides utility methods for writing tests for CDAP Applications.
  */
 public interface TestManager {
 
@@ -281,16 +282,18 @@ public interface TestManager {
    * Creates a namespace.
    *
    * @param namespaceMeta the namespace to create
-   * @throws Exception
+   * @deprecated since 3.4.0. Use {@link NamespaceAdmin} exposed by TestBase for namespace operations.
    */
+  @Deprecated
   void createNamespace(NamespaceMeta namespaceMeta) throws Exception;
 
   /**
    * Deletes a namespace.
    *
    * @param namespace the namespace to delete
-   * @throws Exception
+   * @deprecated since 3.4.0. Use {@link NamespaceAdmin} exposed by TestBase for namespace operations.
    */
+  @Deprecated
   void deleteNamespace(Id.Namespace namespace) throws Exception;
 
   /**

@@ -19,6 +19,8 @@ package co.cask.cdap.proto.security;
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.proto.id.EntityId;
 
+import java.util.Objects;
+
 /**
  * Identifies a user, group or role which can be authorized to perform an {@link Action} on a {@link EntityId}.
  */
@@ -59,16 +61,14 @@ public class Principal {
       return false;
     }
 
-    Principal principal = (Principal) o;
+    Principal other = (Principal) o;
 
-    return name.equals(principal.name) && type == principal.type;
+    return Objects.equals(name, other.name) && Objects.equals(type, other.type);
   }
 
   @Override
   public int hashCode() {
-    int result = name.hashCode();
-    result = 31 * result + type.hashCode();
-    return result;
+    return Objects.hash(name, type);
   }
 
   @Override

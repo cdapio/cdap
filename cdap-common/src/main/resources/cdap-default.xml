@@ -44,6 +44,16 @@
   </property>
 
   <property>
+    <name>instance.name</name>
+    <value>${root.namespace}</value>
+    <description>
+      Determines a unique identifier for a CDAP instance. It is used for providing authorization to a particular CDAP
+      instance. Must be alphanumeric, and should not be changed after CDAP has been started. If it is changed, there is
+      a risk of losing data (for example, authorization policies).
+    </description>
+  </property>
+
+  <property>
     <name>local.data.dir</name>
     <value>data</value>
     <description>

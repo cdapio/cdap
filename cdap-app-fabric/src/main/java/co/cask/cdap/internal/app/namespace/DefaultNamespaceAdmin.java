@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -26,6 +26,7 @@ import co.cask.cdap.common.NamespaceCannotBeCreatedException;
 import co.cask.cdap.common.NamespaceCannotBeDeletedException;
 import co.cask.cdap.common.NamespaceNotFoundException;
 import co.cask.cdap.common.NotFoundException;
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.config.DashboardStore;
@@ -40,10 +41,17 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceConfig;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.id.InstanceId;
+import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.security.Action;
+import co.cask.cdap.proto.security.Principal;
+import co.cask.cdap.security.authorization.AuthorizerInstantiatorService;
+import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
 import co.cask.cdap.store.NamespaceStore;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
 import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 import org.slf4j.Logger;
@@ -52,9 +60,10 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 /**
- * Admin for managing namespaces
+ * Admin for managing namespaces.
  */
 public final class DefaultNamespaceAdmin implements NamespaceAdmin {
   private static final Logger LOG = LoggerFactory.getLogger(DefaultNamespaceAdmin.class);
@@ -71,6 +80,9 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
   private final Scheduler scheduler;
   private final ApplicationLifecycleService applicationLifecycleService;
   private final ArtifactRepository artifactRepository;
+  private final AuthorizerInstantiatorService authorizerInstantiatorService;
+  private final InstanceId instanceId;
+  private final Pattern namespacePattern = Pattern.compile("[a-zA-Z0-9_]+");
 
   @Inject
   DefaultNamespaceAdmin(Store store, NamespaceStore nsStore, PreferencesStore preferencesStore,
@@ -78,7 +90,9 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
                         ProgramRuntimeService runtimeService, QueueAdmin queueAdmin, StreamAdmin streamAdmin,
                         MetricStore metricStore, Scheduler scheduler,
                         ApplicationLifecycleService applicationLifecycleService,
-                        ArtifactRepository artifactRepository) {
+                        ArtifactRepository artifactRepository,
+                        AuthorizerInstantiatorService authorizerInstantiatorService,
+                        CConfiguration cConf) {
     this.queueAdmin = queueAdmin;
     this.streamAdmin = streamAdmin;
     this.store = store;
@@ -91,6 +105,8 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
     this.metricStore = metricStore;
     this.applicationLifecycleService = applicationLifecycleService;
     this.artifactRepository = artifactRepository;
+    this.authorizerInstantiatorService = authorizerInstantiatorService;
+    this.instanceId = createInstanceId(cConf);
   }
 
   /**
@@ -98,7 +114,8 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
    *
    * @return a list of {@link NamespaceMeta} for all namespaces
    */
-  public List<NamespaceMeta> list() {
+  @Override
+  public List<NamespaceMeta> list() throws Exception {
     return nsStore.list();
   }
 
@@ -109,7 +126,8 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
    * @return the {@link NamespaceMeta} of the requested namespace
    * @throws NamespaceNotFoundException if the requested namespace is not found
    */
-  public NamespaceMeta get(Id.Namespace namespaceId) throws NamespaceNotFoundException {
+  @Override
+  public NamespaceMeta get(Id.Namespace namespaceId) throws Exception {
     NamespaceMeta ns = nsStore.get(namespaceId);
     if (ns == null) {
       throw new NamespaceNotFoundException(namespaceId);
@@ -123,7 +141,8 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
    * @param namespaceId the {@link Id.Namespace} to check for existence
    * @return true, if the specifed namespace exists, false otherwise
    */
-  public boolean exists(Id.Namespace namespaceId) {
+  @Override
+  public boolean exists(Id.Namespace namespaceId) throws Exception {
     try {
       get(namespaceId);
     } catch (NotFoundException e) {
@@ -138,22 +157,25 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
    * @param metadata the {@link NamespaceMeta} for the new namespace to be created
    * @throws NamespaceAlreadyExistsException if the specified namespace already exists
    */
-  public synchronized void create(NamespaceMeta metadata)
-    throws NamespaceCannotBeCreatedException, NamespaceAlreadyExistsException {
+  @Override
+  public synchronized void create(NamespaceMeta metadata) throws Exception {
     // TODO: CDAP-1427 - This should be transactional, but we don't support transactions on files yet
     Preconditions.checkArgument(metadata != null, "Namespace metadata should not be null.");
-    Id.Namespace namespace = Id.Namespace.from(metadata.getName());
-    if (exists(Id.Namespace.from(metadata.getName()))) {
-      throw new NamespaceAlreadyExistsException(namespace);
+    NamespaceId namespace = new NamespaceId(metadata.getName());
+    if (exists(namespace.toId())) {
+      throw new NamespaceAlreadyExistsException(namespace.toId());
     }
 
+    // Namespace can be created. Check if the user is authorized now.
+    authorizerInstantiatorService.get().enforce(instanceId, getPrincipal(), Action.ADMIN);
     try {
-      dsFramework.createNamespace(Id.Namespace.from(metadata.getName()));
+      dsFramework.createNamespace(namespace.toId());
     } catch (DatasetManagementException e) {
-      throw new NamespaceCannotBeCreatedException(namespace, e);
+      throw new NamespaceCannotBeCreatedException(namespace.toId(), e);
     }
 
     nsStore.create(metadata);
+    authorizerInstantiatorService.get().grant(namespace, getPrincipal(), ImmutableSet.of(Action.ALL));
   }
 
   /**
@@ -163,19 +185,24 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
    * @throws NamespaceCannotBeDeletedException if the specified namespace cannot be deleted
    * @throws NamespaceNotFoundException if the specified namespace does not exist
    */
-  public synchronized void delete(final Id.Namespace namespaceId)
-    throws NamespaceCannotBeDeletedException, NamespaceNotFoundException {
+  @Override
+  public synchronized void delete(final Id.Namespace namespaceId) throws Exception {
+    NamespaceId namespace = namespaceId.toEntityId();
     // TODO: CDAP-870, CDAP-1427: Delete should be in a single transaction.
     if (!exists(namespaceId)) {
       throw new NamespaceNotFoundException(namespaceId);
     }
 
-    if (checkProgramsRunning(namespaceId)) {
+    if (checkProgramsRunning(namespaceId.toEntityId())) {
       throw new NamespaceCannotBeDeletedException(namespaceId,
                                                   String.format("Some programs are currently running in namespace " +
                                                                   "'%s', please stop them before deleting namespace",
                                                                 namespaceId));
     }
+
+    // Namespace can be deleted. Revoke all privileges first
+    authorizerInstantiatorService.get().enforce(namespace, getPrincipal(), Action.ADMIN);
+    authorizerInstantiatorService.get().revoke(namespace);
 
     LOG.info("Deleting namespace '{}'.", namespaceId);
     try {
@@ -196,7 +223,7 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
       // Delete all meta data
       store.removeAll(namespaceId);
 
-      deleteMetrics(namespaceId);
+      deleteMetrics(namespaceId.toEntityId());
       // delete all artifacts in the namespace
       artifactRepository.clear(namespaceId);
 
@@ -217,23 +244,22 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
     LOG.info("All data for namespace '{}' deleted.", namespaceId);
   }
 
-  private void deleteMetrics(Id.Namespace namespaceId) throws Exception {
+  private void deleteMetrics(NamespaceId namespaceId) throws Exception {
     long endTs = System.currentTimeMillis() / 1000;
     Map<String, String> tags = Maps.newHashMap();
-    tags.put(Constants.Metrics.Tag.NAMESPACE, namespaceId.getId());
+    tags.put(Constants.Metrics.Tag.NAMESPACE, namespaceId.getNamespace());
     MetricDeleteQuery deleteQuery = new MetricDeleteQuery(0, endTs, tags);
     metricStore.delete(deleteQuery);
   }
 
   @Override
-  public synchronized void deleteDatasets(Id.Namespace namespaceId)
-    throws NamespaceNotFoundException, NamespaceCannotBeDeletedException {
+  public synchronized void deleteDatasets(Id.Namespace namespaceId) throws Exception {
     // TODO: CDAP-870, CDAP-1427: Delete should be in a single transaction.
     if (!exists(namespaceId)) {
       throw new NamespaceNotFoundException(namespaceId);
     }
 
-    if (checkProgramsRunning(namespaceId)) {
+    if (checkProgramsRunning(namespaceId.toEntityId())) {
       throw new NamespaceCannotBeDeletedException(namespaceId,
                                                   String.format("Some programs are currently running in namespace " +
                                                                   "'%s', please stop them before deleting datasets " +
@@ -241,6 +267,8 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
                                                                 namespaceId));
     }
 
+    // Namespace data can be deleted. Revoke all privileges first
+    authorizerInstantiatorService.get().enforce(namespaceId.toEntityId(), getPrincipal(), Action.ADMIN);
     try {
       dsFramework.deleteAllInstances(namespaceId);
     } catch (DatasetManagementException | IOException e) {
@@ -250,12 +278,12 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
     LOG.debug("Deleted datasets in namespace '{}'.", namespaceId);
   }
 
-  public synchronized void updateProperties(Id.Namespace namespaceId, NamespaceMeta namespaceMeta)
-    throws NamespaceNotFoundException {
-
-    if (nsStore.get(namespaceId) == null) {
+  @Override
+  public synchronized void updateProperties(Id.Namespace namespaceId, NamespaceMeta namespaceMeta) throws Exception {
+    if (!exists(namespaceId)) {
       throw new NamespaceNotFoundException(namespaceId);
     }
+    authorizerInstantiatorService.get().enforce(namespaceId.toEntityId(), getPrincipal(), Action.ADMIN);
     NamespaceMeta metadata = nsStore.get(namespaceId);
     NamespaceMeta.Builder builder = new NamespaceMeta.Builder(metadata);
 
@@ -271,12 +299,25 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
     nsStore.update(builder.build());
   }
 
-  private boolean checkProgramsRunning(final Id.Namespace namespaceId) {
+  private boolean checkProgramsRunning(final NamespaceId namespaceId) {
     return runtimeService.checkAnyRunning(new Predicate<Id.Program>() {
       @Override
       public boolean apply(Id.Program program) {
-        return program.getNamespaceId().equals(namespaceId.getId());
+        return program.getNamespaceId().equals(namespaceId.getNamespace());
       }
     }, ProgramType.values());
+  }
+
+  private Principal getPrincipal() {
+    return new Principal(SecurityRequestContext.getUserId(), Principal.PrincipalType.USER);
+  }
+
+  private InstanceId createInstanceId(CConfiguration cConf) {
+    String instanceName = cConf.get(Constants.INSTANCE_NAME);
+    Preconditions.checkArgument(namespacePattern.matcher(instanceName).matches(),
+                                "CDAP instance name specified by '%s' in cdap-site.xml should be alphanumeric " +
+                                  "(underscores allowed). Its current invalid value is '%s'",
+                                Constants.INSTANCE_NAME, instanceName);
+    return new InstanceId(instanceName);
   }
 }
