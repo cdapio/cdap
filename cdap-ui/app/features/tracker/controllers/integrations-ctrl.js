@@ -121,7 +121,7 @@ class TrackerIntegrationsController {
 
             this.logsParams = {
               namespace: this.$state.params.namespace,
-              appId: 'ClouderaNavigator',
+              appId: '_ClouderaNavigator',
               programType: 'flows',
               programId: 'MetadataFlow',
               runId: res[0].runid
@@ -189,7 +189,7 @@ class TrackerIntegrationsController {
 
     let tags = {
       namespace: this.$state.params.namespace,
-      app: 'ClouderaNavigator',
+      app: '_ClouderaNavigator',
       flow: 'MetadataFlow'
     };
 

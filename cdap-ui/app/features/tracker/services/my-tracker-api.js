@@ -20,7 +20,7 @@ function myTrackerApi(myCdapUrl, $resource, myAuth, myHelpers) {
       basePath = '/namespaces/:namespace/:entityType/:entityId',
       programPath = '/namespaces/:namespace/apps/:appId/:programType/:programId/runs/:runId',
       auditPath = '/namespaces/:namespace/apps/Tracker/services/AuditLog/methods/auditlog/:entityType/:entityId',
-      navigatorPath = '/namespaces/:namespace/apps/ClouderaNavigator';
+      navigatorPath = '/namespaces/:namespace/apps/_ClouderaNavigator';
 
   return $resource(
     url({ _cdapPath: searchPath }),
