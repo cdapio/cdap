@@ -85,7 +85,7 @@ commonModule.directive('myDagPlus', function() {
         };
       };
     },
-    templateUrl: 'dag-beta/my-dag.html',
+    templateUrl: 'dag-plus/my-dag.html',
     controller: 'DAGPlusPlusCtrl',
     controllerAs: 'DAGPlusPlusCtrl'
   };
