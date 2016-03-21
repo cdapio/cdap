@@ -212,7 +212,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
                                  Map<String, String> runtimeArgs, Map<String, String> systemArgs) {
 
     String workflowrunId = null;
-    if (systemArgs.containsKey(ProgramOptionConstants.WORKFLOW_NAME)) {
+    if (systemArgs != null && systemArgs.containsKey(ProgramOptionConstants.WORKFLOW_NAME)) {
       // Program is started by Workflow. Update the Workflow run records first.
       updateWorkflowRecord(program, pid, systemArgs, ProgramRunStatus.RUNNING, null);
       workflowrunId = systemArgs.get(ProgramOptionConstants.WORKFLOW_RUN_ID);
