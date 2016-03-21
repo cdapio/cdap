@@ -15,13 +15,13 @@
  */
 
 class TopPanelControllerBeta{
-  constructor(GLOBALS, $stateParams, ConfigStoreBeta, ConfigActionsFactoryBeta, $uibModal, ConsoleActionsFactory, NodesActionsFactoryBeta) {
+  constructor(GLOBALS, $stateParams, ConfigStoreBeta, ConfigActionsFactoryBeta, $uibModal, ConsoleActionsFactoryBeta, NodesActionsFactoryBeta) {
 
     this.GLOBALS = GLOBALS;
     this.ConfigStoreBeta = ConfigStoreBeta;
     this.ConfigActionsFactoryBeta = ConfigActionsFactoryBeta;
     this.$uibModal = $uibModal;
-    this.ConsoleActionsFactory = ConsoleActionsFactory;
+    this.ConsoleActionsFactoryBeta = ConsoleActionsFactoryBeta;
     this.NodesActionsFactoryBeta = NodesActionsFactoryBeta;
     this.parsedDescription = this.ConfigStoreBeta.getDescription();
 
@@ -126,7 +126,7 @@ class TopPanelControllerBeta{
   onSaveDraft() {
     var config = this.ConfigStoreBeta.getState();
     if (!config.name) {
-      this.ConsoleActionsFactory.addMessage({
+      this.ConsoleActionsFactoryBeta.addMessage({
         type: 'error',
         content: this.GLOBALS.en.hydrator.studio.error['MISSING-NAME']
       });
@@ -135,10 +135,10 @@ class TopPanelControllerBeta{
     this.ConfigActionsFactoryBeta.saveAsDraft(config);
   }
   onValidate() {
-    this.ConsoleActionsFactory.resetMessages();
+    this.ConsoleActionsFactoryBeta.resetMessages();
     let isStateValid = this.ConfigStoreBeta.validateState(true);
     if (isStateValid) {
-      this.ConsoleActionsFactory.addMessage({
+      this.ConsoleActionsFactoryBeta.addMessage({
         type: 'success',
         content: 'Validation success! Pipeline ' + this.ConfigStoreBeta.getName() + ' is valid.'
       });
@@ -149,7 +149,7 @@ class TopPanelControllerBeta{
   }
 }
 
-TopPanelControllerBeta.$inject = ['GLOBALS', '$stateParams', 'ConfigStoreBeta', 'ConfigActionsFactoryBeta', '$uibModal', 'ConsoleActionsFactory', 'NodesActionsFactoryBeta'];
+TopPanelControllerBeta.$inject = ['GLOBALS', '$stateParams', 'ConfigStoreBeta', 'ConfigActionsFactoryBeta', '$uibModal', 'ConsoleActionsFactoryBeta', 'NodesActionsFactoryBeta'];
 
 angular.module(PKG.name + '.feature.hydrator-beta')
   .controller('TopPanelControllerBeta', TopPanelControllerBeta);

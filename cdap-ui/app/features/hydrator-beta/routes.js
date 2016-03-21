@@ -28,18 +28,6 @@ angular.module(PKG.name + '.feature.hydrator-beta')
         template: '<ui-view/>'
       })
 
-        .state('hydrator-beta.list', {
-          url: '',
-          data: {
-            authorizedRoles: MYAUTH_ROLE.all,
-            highlightTab: 'hydratorList'
-          },
-          templateUrl: '/assets/features/hydrator-beta/templates/list.html',
-          controller: 'HydratorListController',
-          controllerAs: 'ListController'
-        })
-
-
         .state('hydrator-beta.create', {
           url: '/studio?draftId',
           params: {
@@ -101,49 +89,6 @@ angular.module(PKG.name + '.feature.hydrator-beta')
           },
           onExit: function($uibModalStack) {
             $uibModalStack.dismissAll();
-          }
-        })
-
-        .state('hydrator-beta.detail', {
-          url: '/view/:pipelineId',
-          data: {
-            authorizedRoles: MYAUTH_ROLE.all,
-            highlightTab: 'hydratorList'
-          },
-          resolve : {
-            rPipelineDetail: function($stateParams, $q, myPipelineApi) {
-              var params = {
-                namespace: $stateParams.namespace,
-                pipeline: $stateParams.pipelineId
-              };
-
-              return myPipelineApi.get(params).$promise;
-            }
-          },
-          ncyBreadcrumb: {
-            parent: 'apps.list',
-            label: '{{$state.params.pipelineId}}'
-          },
-          views: {
-            '': {
-              templateUrl: '/assets/features/hydrator-beta/templates/detail.html',
-              controller: 'HydratorDetailControllerBeta'
-            },
-            'toppanel@hydrator-beta.detail': {
-              templateUrl: '/assets/features/hydrator-beta/templates/detail/top-panel.html',
-              controller: 'HydratorDetailTopPanelController',
-              controllerAs: 'TopPanelCtrl'
-            },
-            'bottompanel@hydrator-beta.detail': {
-              templateUrl: '/assets/features/hydrator-beta/templates/detail/bottom-panel.html',
-              controller: 'HydratorDetailBottomPanelControllerBeta',
-              controllerAs: 'BottomPanelCtrl'
-            },
-            'canvas@hydrator-beta.detail': {
-              templateUrl: '/assets/features/hydrator-beta/templates/detail/canvas.html',
-              controller: 'HydratorDetailCanvasControllerBeta',
-              controllerAs: 'CanvasCtrl'
-            }
           }
         });
 

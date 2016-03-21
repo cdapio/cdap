@@ -16,7 +16,7 @@
 
 class HydratorCreateStudioControllerBeta {
   // Holy cow. Much DI. Such angular.
-  constructor(LeftPanelStoreBeta, LeftPanelActionsFactoryBeta, ConfigActionsFactoryBeta, $stateParams, rConfig, ConfigStoreBeta, $rootScope, $scope, DetailNonRunsStore, NodeConfigStoreBeta, NodesActionsFactoryBeta, HydratorServiceBeta, ConsoleActionsFactory) {
+  constructor(LeftPanelStoreBeta, LeftPanelActionsFactoryBeta, ConfigActionsFactoryBeta, $stateParams, rConfig, ConfigStoreBeta, $rootScope, $scope, DetailNonRunsStore, NodeConfigStoreBeta, NodesActionsFactoryBeta, HydratorServiceBeta, ConsoleActionsFactoryBeta) {
     // This is required because before we fireup the actions related to the store, the store has to be initialized to register for any events.
 
     this.LeftPanelActionsFactoryBeta = LeftPanelActionsFactoryBeta;
@@ -28,7 +28,7 @@ class HydratorCreateStudioControllerBeta {
     $scope.$on('$destroy', () => {
       DetailNonRunsStore.reset();
       NodeConfigStoreBeta.reset();
-      ConsoleActionsFactory.resetMessages();
+      ConsoleActionsFactoryBeta.resetMessages();
     });
 
     NodeConfigStoreBeta.init();
@@ -60,6 +60,6 @@ class HydratorCreateStudioControllerBeta {
   }
 }
 
-HydratorCreateStudioControllerBeta.$inject = ['LeftPanelStoreBeta', 'LeftPanelActionsFactoryBeta', 'ConfigActionsFactoryBeta', '$stateParams', 'rConfig', 'ConfigStoreBeta', '$rootScope', '$scope', 'DetailNonRunsStore', 'NodeConfigStoreBeta', 'NodesActionsFactoryBeta', 'HydratorServiceBeta', 'ConsoleActionsFactory'];
+HydratorCreateStudioControllerBeta.$inject = ['LeftPanelStoreBeta', 'LeftPanelActionsFactoryBeta', 'ConfigActionsFactoryBeta', '$stateParams', 'rConfig', 'ConfigStoreBeta', '$rootScope', '$scope', 'DetailNonRunsStore', 'NodeConfigStoreBeta', 'NodesActionsFactoryBeta', 'HydratorServiceBeta', 'ConsoleActionsFactoryBeta'];
 angular.module(PKG.name + '.feature.hydrator-beta')
   .controller('HydratorCreateStudioControllerBeta', HydratorCreateStudioControllerBeta);

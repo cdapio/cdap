@@ -15,10 +15,10 @@
  */
 
 class ConfigStoreBeta {
-  constructor(ConfigDispatcherBeta, CanvasFactoryBeta, GLOBALS, mySettings, ConsoleActionsFactory, $stateParams, myHelpers, NonStorePipelineErrorFactory, HydratorServiceBeta, $q, PluginConfigFactoryBeta, uuid, $state){
+  constructor(ConfigDispatcherBeta, CanvasFactoryBeta, GLOBALS, mySettings, ConsoleActionsFactoryBeta, $stateParams, myHelpers, NonStorePipelineErrorFactory, HydratorServiceBeta, $q, PluginConfigFactoryBeta, uuid, $state){
     this.state = {};
     this.mySettings = mySettings;
-    this.ConsoleActionsFactory = ConsoleActionsFactory;
+    this.ConsoleActionsFactoryBeta = ConsoleActionsFactoryBeta;
     this.CanvasFactoryBeta = CanvasFactoryBeta;
     this.GLOBALS = GLOBALS;
     this.$stateParams = $stateParams;
@@ -249,7 +249,7 @@ class ConfigStoreBeta {
   getDisplayConfig() {
     let uniqueNodeNames = {};
     let ERROR_MESSAGES = this.GLOBALS.en.hydrator.studio.error;
-    this.ConsoleActionsFactory.resetMessages();
+    this.ConsoleActionsFactoryBeta.resetMessages();
     this.NonStorePipelineErrorFactory.isUniqueNodeNames(this.getNodes(), (err, node) => {
       if (err) {
         uniqueNodeNames[node.plugin.label] = err;
@@ -258,7 +258,7 @@ class ConfigStoreBeta {
 
     if (Object.keys(uniqueNodeNames).length > 0) {
       angular.forEach(uniqueNodeNames, (err, nodeName) => {
-        this.ConsoleActionsFactory.addMessage({
+        this.ConsoleActionsFactoryBeta.addMessage({
           type: 'error',
           content: nodeName + ': ' + ERROR_MESSAGES[err]
         });
@@ -551,7 +551,7 @@ class ConfigStoreBeta {
     let ERROR_MESSAGES = this.GLOBALS.en.hydrator.studio.error;
     let showConsoleMessage = (errObj) => {
       if (isShowConsoleMessage) {
-        this.ConsoleActionsFactory.addMessage(errObj);
+        this.ConsoleActionsFactoryBeta.addMessage(errObj);
       }
     };
     let setErrorWarningFlagOnNode = (node) => {
@@ -649,7 +649,7 @@ class ConfigStoreBeta {
   }
 
   saveAsDraft() {
-    this.ConsoleActionsFactory.resetMessages();
+    this.ConsoleActionsFactoryBeta.resetMessages();
     if(!this.getDraftId()) {
       this.setDraftId(this.uuid.v4());
       this.$stateParams.draftId = this.getDraftId();
@@ -660,6 +660,7 @@ class ConfigStoreBeta {
     // Next time they come to the draft and we still have the node selected but the bottom panel not updated.
     config.__ui__.nodes = config.__ui__.nodes.map( node => {
       delete node.selected;
+      delete node.error;
       return node;
     });
     let checkForDuplicateDrafts = (config, draftsMap = {}) => {
@@ -686,13 +687,13 @@ class ConfigStoreBeta {
       })
       .then(
         () => {
-          this.ConsoleActionsFactory.addMessage({
+          this.ConsoleActionsFactoryBeta.addMessage({
             type: 'success',
             content: `Draft ${config.name} saved successfully.`
           });
         },
         err => {
-          this.ConsoleActionsFactory.addMessage({
+          this.ConsoleActionsFactoryBeta.addMessage({
             type: 'error',
             content: err
           });
@@ -701,6 +702,6 @@ class ConfigStoreBeta {
   }
 }
 
-ConfigStoreBeta.$inject = ['ConfigDispatcherBeta', 'CanvasFactoryBeta', 'GLOBALS', 'mySettings', 'ConsoleActionsFactory', '$stateParams', 'myHelpers', 'NonStorePipelineErrorFactory', 'HydratorServiceBeta', '$q', 'PluginConfigFactoryBeta', 'uuid', '$state'];
+ConfigStoreBeta.$inject = ['ConfigDispatcherBeta', 'CanvasFactoryBeta', 'GLOBALS', 'mySettings', 'ConsoleActionsFactoryBeta', '$stateParams', 'myHelpers', 'NonStorePipelineErrorFactory', 'HydratorServiceBeta', '$q', 'PluginConfigFactoryBeta', 'uuid', '$state'];
 angular.module(`${PKG.name}.feature.hydrator-beta`)
   .service('ConfigStoreBeta', ConfigStoreBeta);

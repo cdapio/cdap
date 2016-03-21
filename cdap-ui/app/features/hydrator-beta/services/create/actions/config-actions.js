@@ -15,12 +15,12 @@
  */
 
 class ConfigActionsFactoryBeta {
-  constructor(ConfigDispatcherBeta, myPipelineApi, $state, ConfigStoreBeta, mySettings, ConsoleActionsFactory, EventPipe, myAppsApi, GLOBALS, myHelpers, $stateParams) {
+  constructor(ConfigDispatcherBeta, myPipelineApi, $state, ConfigStoreBeta, mySettings, ConsoleActionsFactoryBeta, EventPipe, myAppsApi, GLOBALS, myHelpers, $stateParams) {
     this.ConfigStoreBeta = ConfigStoreBeta;
     this.mySettings = mySettings;
     this.$state = $state;
     this.myPipelineApi = myPipelineApi;
-    this.ConsoleActionsFactory = ConsoleActionsFactory;
+    this.ConsoleActionsFactoryBeta = ConsoleActionsFactoryBeta;
     this.EventPipe = EventPipe;
     this.myAppsApi = myAppsApi;
     this.GLOBALS = GLOBALS;
@@ -66,7 +66,7 @@ class ConfigActionsFactoryBeta {
     this.dispatcher.dispatch('onSetInstance', instance);
   }
   publishPipeline() {
-    this.ConsoleActionsFactory.resetMessages();
+    this.ConsoleActionsFactoryBeta.resetMessages();
     let error = this.ConfigStoreBeta.validateState(true);
 
     if (!error) { return; }
@@ -85,7 +85,7 @@ class ConfigActionsFactoryBeta {
             }
           },
           (err) => {
-            this.ConsoleActionsFactory.addMessage({
+            this.ConsoleActionsFactoryBeta.addMessage({
               type: 'error',
               content: err
             });
@@ -113,7 +113,7 @@ class ConfigActionsFactoryBeta {
         removeFromUserDrafts.bind(this, pipelineName),
         (err) => {
           this.EventPipe.emit('hideLoadingIcon.immediate');
-          this.ConsoleActionsFactory.addMessage({
+          this.ConsoleActionsFactoryBeta.addMessage({
             type: 'error',
             content: angular.isObject(err) ? err.data : err
           });
@@ -132,7 +132,7 @@ class ConfigActionsFactoryBeta {
         var appNames = apps.map( (app) => { return app.name; } );
 
         if (appNames.indexOf(config.name) !== -1) {
-          this.ConsoleActionsFactory.addMessage({
+          this.ConsoleActionsFactoryBeta.addMessage({
             type: 'error',
             content: this.GLOBALS.en.hydrator.studio.error['NAME-ALREADY-EXISTS']
           });
@@ -145,6 +145,6 @@ class ConfigActionsFactoryBeta {
   }
 }
 
-ConfigActionsFactoryBeta.$inject = ['ConfigDispatcherBeta', 'myPipelineApi', '$state', 'ConfigStoreBeta', 'mySettings', 'ConsoleActionsFactory', 'EventPipe', 'myAppsApi', 'GLOBALS', 'myHelpers', '$stateParams'];
+ConfigActionsFactoryBeta.$inject = ['ConfigDispatcherBeta', 'myPipelineApi', '$state', 'ConfigStoreBeta', 'mySettings', 'ConsoleActionsFactoryBeta', 'EventPipe', 'myAppsApi', 'GLOBALS', 'myHelpers', '$stateParams'];
 angular.module(`${PKG.name}.feature.hydrator-beta`)
   .service('ConfigActionsFactoryBeta', ConfigActionsFactoryBeta);

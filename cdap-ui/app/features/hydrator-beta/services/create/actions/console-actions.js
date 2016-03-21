@@ -14,7 +14,7 @@
  * the License.
  */
 
-class ConsoleActionsFactory {
+class ConsoleActionsFactoryBeta {
   constructor(ConsoleDispatcherBeta) {
     this.ConsoleDispatcherBeta = ConsoleDispatcherBeta.getDispatcher();
   }
@@ -28,6 +28,6 @@ class ConsoleActionsFactory {
   }
 
 }
-ConsoleActionsFactory.$inject = ['ConsoleDispatcherBeta'];
+ConsoleActionsFactoryBeta.$inject = ['ConsoleDispatcherBeta'];
 angular.module(`${PKG.name}.feature.hydrator-beta`)
-  .service('ConsoleActionsFactory', ConsoleActionsFactory);
+  .service('ConsoleActionsFactoryBeta', ConsoleActionsFactoryBeta);

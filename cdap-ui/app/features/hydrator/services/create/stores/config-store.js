@@ -240,6 +240,7 @@ class ConfigStore {
 
     var nodes = angular.copy(this.getNodes()).map( node => {
       node.name = node.plugin.label;
+      delete node.error;
       return node;
     });
     state.__ui__.nodes = nodes;
@@ -640,6 +641,7 @@ class ConfigStore {
     // Next time they come to the draft and we still have the node selected but the bottom panel not updated.
     config.__ui__.nodes = config.__ui__.nodes.map( node => {
       delete node.selected;
+      delete node.error;
       return node;
     });
     let checkForDuplicateDrafts = (config, draftsMap = {}) => {
