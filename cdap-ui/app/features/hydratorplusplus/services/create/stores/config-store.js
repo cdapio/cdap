@@ -611,7 +611,7 @@ class HydratorPlusPlusConfigStore {
         isStateValid = false;
         node.errorCount += 1;
         setErrorWarningFlagOnNode(node);
-        uniqueNodeNames[node.plugin.label] = node.plugin.label + ' ' + ERROR_MESSAGES[err];
+        uniqueNodeNames[node.plugin.label] = node.plugin.label + ERROR_MESSAGES[err];
       }
     });
     if (Object.keys(uniqueNodeNames).length) {
