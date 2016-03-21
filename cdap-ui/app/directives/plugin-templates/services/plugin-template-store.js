@@ -28,7 +28,6 @@ class PluginTemplateStoreBeta {
   }
 
   setDefaults() {
-    console.log('Templates Store reset');
     this.state = {
       templateType: null,
       pluginType: null,
