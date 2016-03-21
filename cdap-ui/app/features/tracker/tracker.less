@@ -154,7 +154,7 @@ body.state-tracker {
       width: 300px;
       position: absolute;
       background-color: @filter-sidebar-background-color;
-      top: 111px;
+      top: @navbar-size + @search-top-bar-container-size + 1;
       bottom: 53px;
       border-right: 1px solid @border-color;
 
@@ -204,7 +204,7 @@ body.state-tracker {
 
     .tracker-search-results {
       position: absolute;
-      top: 111px;
+      top: @navbar-size + @search-top-bar-container-size + 1;
       bottom: 53px;
       left: 300px;
       right: 0;
