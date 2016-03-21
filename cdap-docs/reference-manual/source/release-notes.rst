@@ -78,7 +78,7 @@ Known Issues
 - `CDAP-2721 <https://issues.cask.co/browse/CDAP-2721>`__ -
   Metrics for :ref:`FileSets <datasets-fileset>` can show zero values even if there is
   data present, because FileSets do not emit metrics (`CDAP-587
-  <https://issues.cask.co/browse/CDAP-587>`).
+  <https://issues.cask.co/browse/CDAP-587>`__).
   
 - `CDAP-2831 <https://issues.cask.co/browse/CDAP-2831>`__ -
   A workflow that is scheduled by time will not be run between the failure of the primary
