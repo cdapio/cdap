@@ -17,22 +17,7 @@
 angular.module(PKG.name + '.commons')
   .controller('MySidePanel', function ($scope) {
     this.groups = $scope.panelGroups;
-    this.openedGroup = null;
-
-    this.toggleGroup = function (group) {
-      if (this.openedGroup === group.name) {
-        this.openedGroup = null;
-        group.expanded = false;
-        return;
-      }
-
-      angular.forEach(this.groups, function (g) {
-        g.expanded = false;
-      });
-
-      group.expanded = true;
-      this.openedGroup = group.name;
-    };
+    this.openedGroup = this.groups[0].name;
 
     this.onItemClicked = function(event, item) {
       event.stopPropagation();
