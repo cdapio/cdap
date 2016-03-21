@@ -21,9 +21,12 @@ import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.etl.api.PipelineConfigurable;
 import co.cask.cdap.etl.api.batch.BatchSource;
+import co.cask.cdap.etl.datapipeline.mock.FieldCountAggregator;
+import co.cask.cdap.etl.datapipeline.mock.IdentityAggregator;
 import co.cask.cdap.etl.datapipeline.mock.IdentityTransform;
 import co.cask.cdap.etl.datapipeline.mock.MockSink;
 import co.cask.cdap.etl.datapipeline.mock.MockSource;
+import co.cask.cdap.etl.datapipeline.mock.StringValueFilterTransform;
 import co.cask.cdap.etl.proto.v2.ETLBatchConfig;
 import co.cask.cdap.etl.proto.v2.ETLStage;
 import co.cask.cdap.proto.Id;
@@ -53,7 +56,7 @@ public class DataPipelineTest extends TestBase {
   public static final TestConfiguration CONFIG = new TestConfiguration("explore.enabled", false);
 
   protected static final Id.Artifact APP_ARTIFACT_ID = Id.Artifact.from(Id.Namespace.DEFAULT, "datapipeline", "3.4.0");
-  protected static final ArtifactSummary ETLBATCH_ARTIFACT = new ArtifactSummary("datapipeline", "3.4.0");
+  protected static final ArtifactSummary ARTIFACT = new ArtifactSummary("datapipeline", "3.4.0");
 
   @BeforeClass
   public static void setupTest() throws Exception {
@@ -64,7 +67,9 @@ public class DataPipelineTest extends TestBase {
 
     // add some test plugins
     addPluginArtifact(Id.Artifact.from(Id.Namespace.DEFAULT, "test-plugins", "1.0.0"), APP_ARTIFACT_ID,
-                      MockSource.class, MockSink.class, IdentityTransform.class);
+                      MockSource.class, MockSink.class,
+                      StringValueFilterTransform.class, IdentityTransform.class,
+                      FieldCountAggregator.class, IdentityAggregator.class);
   }
 
   @Test
@@ -92,7 +97,7 @@ public class DataPipelineTest extends TestBase {
       .addConnection("source3", "transform2")
       .build();
 
-    AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(ETLBATCH_ARTIFACT, etlConfig);
+    AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(ARTIFACT, etlConfig);
     Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "MultiSourceApp");
     ApplicationManager appManager = deployApplication(appId, appRequest);
 
@@ -126,6 +131,127 @@ public class DataPipelineTest extends TestBase {
     // sink2 should get all records
     sinkManager = getDataset("msOutput2");
     expected = ImmutableSet.of(recordSamuel, recordBob, recordJane);
+    actual = Sets.newHashSet(MockSink.readOutput(sinkManager));
+    Assert.assertEquals(expected, actual);
+  }
+
+  @Test
+  public void testLinearAggregators() throws Exception {
+    /*
+     * source --> filter1 --> aggregator1 --> aggregator2 --> filter2 --> sink
+     */
+    ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
+      .addStage(new ETLStage("source", MockSource.getPlugin("linearAggInput")))
+      .addStage(new ETLStage("sink", MockSink.getPlugin("linearAggOutput")))
+      .addStage(new ETLStage("filter1", StringValueFilterTransform.getPlugin("name", "bob")))
+      .addStage(new ETLStage("filter2", StringValueFilterTransform.getPlugin("name", "jane")))
+      .addStage(new ETLStage("aggregator1", IdentityAggregator.getPlugin()))
+      .addStage(new ETLStage("aggregator2", IdentityAggregator.getPlugin()))
+      .addConnection("source", "filter1")
+      .addConnection("filter1", "aggregator1")
+      .addConnection("aggregator1", "aggregator2")
+      .addConnection("aggregator2", "filter2")
+      .addConnection("filter2", "sink")
+      .build();
+
+    AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(ARTIFACT, etlConfig);
+    Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "LinearAggApp");
+    ApplicationManager appManager = deployApplication(appId, appRequest);
+
+    Schema schema = Schema.recordOf(
+      "testRecord",
+      Schema.Field.of("name", Schema.of(Schema.Type.STRING))
+    );
+
+    StructuredRecord recordSamuel = StructuredRecord.builder(schema).set("name", "samuel").build();
+    StructuredRecord recordBob = StructuredRecord.builder(schema).set("name", "bob").build();
+    StructuredRecord recordJane = StructuredRecord.builder(schema).set("name", "jane").build();
+
+    // write one record to each source
+    DataSetManager<Table> inputManager = getDataset(Id.Namespace.DEFAULT, "linearAggInput");
+    MockSource.writeInput(inputManager, ImmutableList.of(recordSamuel, recordBob, recordJane));
+
+    WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
+    workflowManager.start();
+    workflowManager.waitForFinish(5, TimeUnit.MINUTES);
+
+    // check output
+    DataSetManager<Table> sinkManager = getDataset("linearAggOutput");
+    Set<StructuredRecord> expected = ImmutableSet.of(recordSamuel);
+    Set<StructuredRecord> actual = Sets.newHashSet(MockSink.readOutput(sinkManager));
+    Assert.assertEquals(expected, actual);
+  }
+
+  @Test
+  public void testParallelAggregators() throws Exception {
+    /*
+                 |--> agg1 --> sink1
+        source --|
+                 |--> agg2 --> sink2
+     */
+    ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
+      .addStage(new ETLStage("source", MockSource.getPlugin("pAggInput")))
+      .addStage(new ETLStage("sink1", MockSink.getPlugin("pAggOutput1")))
+      .addStage(new ETLStage("sink2", MockSink.getPlugin("pAggOutput2")))
+      .addStage(new ETLStage("agg1", FieldCountAggregator.getPlugin("user", "string")))
+      .addStage(new ETLStage("agg2", FieldCountAggregator.getPlugin("item", "long")))
+      .addConnection("source", "agg1")
+      .addConnection("source", "agg2")
+      .addConnection("agg1", "sink1")
+      .addConnection("agg2", "sink2")
+      .build();
+
+    AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(ARTIFACT, etlConfig);
+    Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "ParallelAggApp");
+    ApplicationManager appManager = deployApplication(appId, appRequest);
+
+    Schema inputSchema = Schema.recordOf(
+      "testRecord",
+      Schema.Field.of("user", Schema.of(Schema.Type.STRING)),
+      Schema.Field.of("item", Schema.of(Schema.Type.LONG))
+    );
+
+    // write one record to each source
+    DataSetManager<Table> inputManager = getDataset(Id.Namespace.DEFAULT, "pAggInput");
+    MockSource.writeInput(inputManager, ImmutableList.of(
+      StructuredRecord.builder(inputSchema).set("user", "samuel").set("item", 1L).build(),
+      StructuredRecord.builder(inputSchema).set("user", "samuel").set("item", 2L).build(),
+      StructuredRecord.builder(inputSchema).set("user", "samuel").set("item", 3L).build(),
+      StructuredRecord.builder(inputSchema).set("user", "john").set("item", 4L).build(),
+      StructuredRecord.builder(inputSchema).set("user", "john").set("item", 3L).build()
+    ));
+
+    WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
+    workflowManager.start();
+    workflowManager.waitForFinish(5, TimeUnit.MINUTES);
+
+    Schema outputSchema1 = Schema.recordOf(
+      "user.count",
+      Schema.Field.of("user", Schema.of(Schema.Type.STRING)),
+      Schema.Field.of("ct", Schema.of(Schema.Type.LONG))
+    );
+    Schema outputSchema2 = Schema.recordOf(
+      "item.count",
+      Schema.Field.of("item", Schema.of(Schema.Type.LONG)),
+      Schema.Field.of("ct", Schema.of(Schema.Type.LONG))
+    );
+
+    // check output
+    DataSetManager<Table> sinkManager = getDataset("pAggOutput1");
+    Set<StructuredRecord> expected = ImmutableSet.of(
+      StructuredRecord.builder(outputSchema1).set("user", "all").set("ct", 5L).build(),
+      StructuredRecord.builder(outputSchema1).set("user", "samuel").set("ct", 3L).build(),
+      StructuredRecord.builder(outputSchema1).set("user", "john").set("ct", 2L).build());
+    Set<StructuredRecord> actual = Sets.newHashSet(MockSink.readOutput(sinkManager));
+    Assert.assertEquals(expected, actual);
+
+    sinkManager = getDataset("pAggOutput2");
+    expected = ImmutableSet.of(
+      StructuredRecord.builder(outputSchema2).set("item", 0L).set("ct", 5L).build(),
+      StructuredRecord.builder(outputSchema2).set("item", 1L).set("ct", 1L).build(),
+      StructuredRecord.builder(outputSchema2).set("item", 2L).set("ct", 1L).build(),
+      StructuredRecord.builder(outputSchema2).set("item", 3L).set("ct", 2L).build(),
+      StructuredRecord.builder(outputSchema2).set("item", 4L).set("ct", 1L).build());
     actual = Sets.newHashSet(MockSink.readOutput(sinkManager));
     Assert.assertEquals(expected, actual);
   }

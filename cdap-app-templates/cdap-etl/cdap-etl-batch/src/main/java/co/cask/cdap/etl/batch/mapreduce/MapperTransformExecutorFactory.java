@@ -27,20 +27,18 @@ import co.cask.cdap.etl.api.batch.BatchAggregator;
 import co.cask.cdap.etl.api.batch.BatchRuntimeContext;
 import co.cask.cdap.etl.batch.PipelinePluginInstantiator;
 import co.cask.cdap.etl.batch.TransformExecutorFactory;
+import co.cask.cdap.etl.batch.conversion.IdentityConversion;
 import co.cask.cdap.etl.batch.conversion.WritableConversion;
 import co.cask.cdap.etl.batch.conversion.WritableConversions;
 import co.cask.cdap.etl.common.DatasetContextLookupProvider;
 import co.cask.cdap.etl.common.DefaultEmitter;
 import co.cask.cdap.etl.common.DefaultStageMetrics;
-import com.google.common.base.Function;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.Writable;
-import org.apache.hadoop.io.WritableComparable;
 import org.apache.hadoop.mapreduce.Mapper;
 
 import java.util.HashMap;
 import java.util.Map;
-import javax.annotation.Nullable;
 
 /**
  * Creates transform executors for mapreduce programs.
@@ -107,8 +105,8 @@ public class MapperTransformExecutorFactory<T> extends TransformExecutorFactory<
     OUT_VAL extends Writable> implements Transformation<GROUP_VAL, KeyValue<OUT_KEY, OUT_VAL>> {
     private final Aggregator<GROUP_KEY, GROUP_VAL, ?> aggregator;
     private final StageMetrics stageMetrics;
-    private final Function<GROUP_KEY, OUT_KEY> keyFunction;
-    private final Function<GROUP_VAL, OUT_VAL> valFunction;
+    private final WritableConversion<GROUP_KEY, OUT_KEY> keyConversion;
+    private final WritableConversion<GROUP_VAL, OUT_VAL> valConversion;
 
     public AggregatorTransformation(Aggregator<GROUP_KEY, GROUP_VAL, ?> aggregator,
                                     StageMetrics stageMetrics,
@@ -118,27 +116,8 @@ public class MapperTransformExecutorFactory<T> extends TransformExecutorFactory<
       this.stageMetrics = stageMetrics;
       WritableConversion<GROUP_KEY, OUT_KEY> keyConversion = WritableConversions.getConversion(groupKeyClassName);
       WritableConversion<GROUP_VAL, OUT_VAL> valConversion = WritableConversions.getConversion(groupValClassName);
-      if (keyConversion == null) {
-        this.keyFunction = getIdentity();
-      } else {
-        this.keyFunction = keyConversion.getToWritableFunction();
-      }
-      if (valConversion == null) {
-        this.valFunction = getIdentity();
-      } else {
-        this.valFunction = valConversion.getToWritableFunction();
-      }
-    }
-
-    private <K, V> Function<K, V> getIdentity() {
-      return new Function<K, V>() {
-        @Nullable
-        @Override
-        public V apply(@Nullable K input) {
-          //noinspection unchecked
-          return (V) input;
-        }
-      };
+      this.keyConversion = keyConversion == null ? new IdentityConversion<GROUP_KEY, OUT_KEY>() : keyConversion;
+      this.valConversion = valConversion == null ? new IdentityConversion<GROUP_VAL, OUT_VAL>() : valConversion;
     }
 
     @Override
@@ -146,7 +125,7 @@ public class MapperTransformExecutorFactory<T> extends TransformExecutorFactory<
       DefaultEmitter<GROUP_KEY> groupKeyEmitter = new DefaultEmitter<>(stageMetrics);
       aggregator.groupBy(input, groupKeyEmitter);
       for (GROUP_KEY groupKey : groupKeyEmitter.getEntries()) {
-        emitter.emit(new KeyValue<>(keyFunction.apply(groupKey), valFunction.apply(input)));
+        emitter.emit(new KeyValue<>(keyConversion.toWritable(groupKey), valConversion.toWritable(input)));
       }
     }
   }

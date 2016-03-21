@@ -240,6 +240,7 @@ public class ETLMapReduce extends AbstractMapReduce {
       // in case the classes are not a WritableComparable, but is some common type we support
       // for example, a String or a StructuredRecord
       WritableConversion writableConversion = WritableConversions.getConversion(outputKeyClass.getName());
+      // if the conversion is null, it means the user is using their own object.
       if (writableConversion != null) {
         outputKeyClass = writableConversion.getWritableClass();
       }

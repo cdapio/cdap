@@ -16,24 +16,23 @@
 
 package co.cask.cdap.etl.batch.conversion;
 
-import com.google.common.reflect.TypeToken;
 import org.apache.hadoop.io.Writable;
 
 /**
- * Functions to convert common classes to their Writable equivalent and vice versa.
+ * Identity conversion that doesn't convert anything but just casts.
  *
  * @param <T> type of object to convert to a Writable
  * @param <W> the Writable type to convert to
  */
-public abstract class WritableConversion<T, W extends Writable> {
-  private final Class<? super W> cls = new TypeToken<W>(getClass()) { }.getRawType();
+public class IdentityConversion<T, W extends Writable> extends WritableConversion<T, W> {
 
-  public Class<? super W> getWritableClass() {
-    return cls;
+  @Override
+  public W toWritable(T val) {
+    return (W) val;
   }
 
-  public abstract W toWritable(T val);
-
-  public abstract T fromWritable(W val);
-
+  @Override
+  public T fromWritable(W val) {
+    return (T) val;
+  }
 }

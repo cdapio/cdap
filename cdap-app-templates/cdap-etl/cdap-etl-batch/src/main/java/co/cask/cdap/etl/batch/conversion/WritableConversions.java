@@ -18,7 +18,6 @@ package co.cask.cdap.etl.batch.conversion;
 
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.etl.batch.StructuredRecordWritable;
-import com.google.common.base.Function;
 import com.google.common.collect.ImmutableMap;
 import org.apache.hadoop.io.BooleanWritable;
 import org.apache.hadoop.io.BytesWritable;
@@ -38,228 +37,108 @@ import javax.annotation.Nullable;
 public class WritableConversions {
   // classname -> function for functions that transform common classes that should be transformed into classes usable
   // as mapper keys or values.
-  private static final Map<String, WritableConversion<?, ?>> conversions =
-    ImmutableMap.<String, WritableConversion<?, ?>>builder()
-      .put(StructuredRecord.class.getName(), new WritableConversion<StructuredRecord, StructuredRecordWritable>() {
-        @Override
-        public Class<StructuredRecordWritable> getWritableClass() {
-          return StructuredRecordWritable.class;
-        }
+  private static final Map<String, WritableConversion<?, ?>> CONVERSIONS;
 
-        @Override
-        public Function<StructuredRecord, StructuredRecordWritable> getToWritableFunction() {
-          return new Function<StructuredRecord, StructuredRecordWritable>() {
-            @Nullable
-            @Override
-            public StructuredRecordWritable apply(StructuredRecord input) {
-              return new StructuredRecordWritable(input);
-            }
-          };
-        }
+  static {
+    ImmutableMap.Builder<String, WritableConversion<?, ?>> builder = ImmutableMap.builder();
+    builder.put(StructuredRecord.class.getName(),
+                new WritableConversion<StructuredRecord, StructuredRecordWritable>() {
+                  @Override
+                  public StructuredRecordWritable toWritable(StructuredRecord val) {
+                    return new StructuredRecordWritable(val);
+                  }
 
-        @Override
-        public Function<StructuredRecordWritable, StructuredRecord> getFromWritableFunction() {
-          return new Function<StructuredRecordWritable, StructuredRecord>() {
-            @Nullable
-            @Override
-            public StructuredRecord apply(@Nullable StructuredRecordWritable input) {
-              return input == null ? null : input.get();
-            }
-          };
-        }
-      })
-    .put(String.class.getName(), new WritableConversion<String, Text>() {
-      @Override
-      public Class<Text> getWritableClass() {
-        return Text.class;
-      }
+                  @Override
+                  public StructuredRecord fromWritable(StructuredRecordWritable val) {
+                    return val.get();
+                  }
+                });
+    builder.put(String.class.getName(),
+                new WritableConversion<String, Text>() {
+                  @Override
+                  public Text toWritable(String val) {
+                    return new Text(val);
+                  }
 
-      @Override
-      public Function<String, Text> getToWritableFunction() {
-        return new Function<String, Text>() {
-          @Nullable
-          @Override
-          public Text apply(@Nullable String input) {
-            return input == null ? null : new Text(input);
-          }
-        };
-      }
+                  @Override
+                  public String fromWritable(Text val) {
+                    return val.toString();
+                  }
+                });
+    builder.put(Integer.class.getName(),
+                new WritableConversion<Integer, IntWritable>() {
+                  @Override
+                  public IntWritable toWritable(Integer val) {
+                    return new IntWritable(val);
+                  }
 
-      @Override
-      public Function<Text, String> getFromWritableFunction() {
-        return new Function<Text, String>() {
-          @Nullable
-          @Override
-          public String apply(@Nullable Text input) {
-            return input == null ? null : input.toString();
-          }
-        };
-      }
-    })
-    .put(Integer.class.getName(), new WritableConversion<Integer, IntWritable>() {
-      @Override
-      public Class<IntWritable> getWritableClass() {
-        return IntWritable.class;
-      }
+                  @Override
+                  public Integer fromWritable(IntWritable val) {
+                    return val.get();
+                  }
+                });
+    builder.put(Long.class.getName(),
+                new WritableConversion<Long, LongWritable>() {
+                  @Override
+                  public LongWritable toWritable(Long val) {
+                    return new LongWritable(val);
+                  }
 
-      @Override
-      public Function<Integer, IntWritable> getToWritableFunction() {
-        return new Function<Integer, IntWritable>() {
-          @Nullable
-          @Override
-          public IntWritable apply(@Nullable Integer input) {
-            return input == null ? null : new IntWritable(input);
-          }
-        };
-      }
+                  @Override
+                  public Long fromWritable(LongWritable val) {
+                    return val.get();
+                  }
+                });
+    builder.put(Float.class.getName(),
+                new WritableConversion<Float, FloatWritable>() {
+                  @Override
+                  public FloatWritable toWritable(Float val) {
+                    return new FloatWritable(val);
+                  }
 
-      @Override
-      public Function<IntWritable, Integer> getFromWritableFunction() {
-        return new Function<IntWritable, Integer>() {
-          @Nullable
-          @Override
-          public Integer apply(@Nullable IntWritable input) {
-            return input == null ? null : input.get();
-          }
-        };
-      }
-    })
-    .put(Long.class.getName(), new WritableConversion<Long, LongWritable>() {
-      @Override
-      public Class<LongWritable> getWritableClass() {
-        return LongWritable.class;
-      }
+                  @Override
+                  public Float fromWritable(FloatWritable val) {
+                    return val.get();
+                  }
+                });
+    builder.put(Double.class.getName(),
+                new WritableConversion<Double, DoubleWritable>() {
+                  @Override
+                  public DoubleWritable toWritable(Double val) {
+                    return new DoubleWritable(val);
+                  }
 
-      @Override
-      public Function<Long, LongWritable> getToWritableFunction() {
-        return new Function<Long, LongWritable>() {
-          @Nullable
-          @Override
-          public LongWritable apply(@Nullable Long input) {
-            return input == null ? null : new LongWritable(input);
-          }
-        };
-      }
+                  @Override
+                  public Double fromWritable(DoubleWritable val) {
+                    return val.get();
+                  }
+                });
+    builder.put(Boolean.class.getName(),
+                new WritableConversion<Boolean, BooleanWritable>() {
+                  @Override
+                  public BooleanWritable toWritable(Boolean val) {
+                    return new BooleanWritable(val);
+                  }
 
-      @Override
-      public Function<LongWritable, Long> getFromWritableFunction() {
-        return new Function<LongWritable, Long>() {
-          @Nullable
-          @Override
-          public Long apply(@Nullable LongWritable input) {
-            return input == null ? null : input.get();
-          }
-        };
-      }
-    })
-    .put(Double.class.getName(), new WritableConversion<Double, DoubleWritable>() {
-      @Override
-      public Class<DoubleWritable> getWritableClass() {
-        return DoubleWritable.class;
-      }
+                  @Override
+                  public Boolean fromWritable(BooleanWritable val) {
+                    return val.get();
+                  }
+                });
+    builder.put(byte[].class.getName(),
+                new WritableConversion<byte[], BytesWritable>() {
+                  @Override
+                  public BytesWritable toWritable(byte[] val) {
+                    return new BytesWritable(val);
+                  }
 
-      @Override
-      public Function<Double, DoubleWritable> getToWritableFunction() {
-        return new Function<Double, DoubleWritable>() {
-          @Nullable
-          @Override
-          public DoubleWritable apply(@Nullable Double input) {
-            return input == null ? null : new DoubleWritable(input);
-          }
-        };
-      }
-
-      @Override
-      public Function<DoubleWritable, Double> getFromWritableFunction() {
-        return new Function<DoubleWritable, Double>() {
-          @Nullable
-          @Override
-          public Double apply(@Nullable DoubleWritable input) {
-            return input == null ? null : input.get();
-          }
-        };
-      }
-    })
-    .put(Float.class.getName(), new WritableConversion<Float, FloatWritable>() {
-      @Override
-      public Class<FloatWritable> getWritableClass() {
-        return FloatWritable.class;
-      }
-
-      @Override
-      public Function<Float, FloatWritable> getToWritableFunction() {
-        return new Function<Float, FloatWritable>() {
-          @Nullable
-          @Override
-          public FloatWritable apply(@Nullable Float input) {
-            return input == null ? null : new FloatWritable(input);
-          }
-        };
-      }
-
-      @Override
-      public Function<FloatWritable, Float> getFromWritableFunction() {
-        return new Function<FloatWritable, Float>() {
-          @Nullable
-          @Override
-          public Float apply(@Nullable FloatWritable input) {
-            return input == null ? null : input.get();
-          }
-        };
-      }
-    })
-    .put(Boolean.class.getName(), new WritableConversion<Boolean, BooleanWritable>() {
-      @Override
-      public Class<BooleanWritable> getWritableClass() {
-        return BooleanWritable.class;
-      }
-
-      @Override
-      public Function<Boolean, BooleanWritable> getToWritableFunction() {
-        return new Function<Boolean, BooleanWritable>() {
-          @Nullable
-          @Override
-          public BooleanWritable apply(@Nullable Boolean input) {
-            return input == null ? null : new BooleanWritable(input);
-          }
-        };
-      }
-
-      @Override
-      public Function<BooleanWritable, Boolean> getFromWritableFunction() {
-        return new Function<BooleanWritable, Boolean>() {
-          @Nullable
-          @Override
-          public Boolean apply(@Nullable BooleanWritable input) {
-            return input == null ? null : input.get();
-          }
-        };
-      }
-    })
-    .put(byte[].class.getName(), new WritableConversion<byte[], BytesWritable>() {
-      @Override
-      public Function<byte[], BytesWritable> getToWritableFunction() {
-        return new Function<byte[], BytesWritable>() {
-          @Nullable
-          @Override
-          public BytesWritable apply(@Nullable byte[] input) {
-            return input == null ? null : new BytesWritable(input);
-          }
-        };
-      }
-
-      @Override
-      public Function<BytesWritable, byte[]> getFromWritableFunction() {
-        return new Function<BytesWritable, byte[]>() {
-          @Nullable
-          @Override
-          public byte[] apply(@Nullable BytesWritable input) {
-            return input == null ? null : input.getBytes();
-          }
-        };
-      }
-    })
-    .build();
+                  @Override
+                  public byte[] fromWritable(BytesWritable val) {
+                    return val.getBytes();
+                  }
+                });
+    CONVERSIONS = builder.build();
+  }
 
   /**
    * Get the conversion functions to and from the WritableComparable for the specified class.
@@ -271,7 +150,7 @@ public class WritableConversions {
   @Nullable
   public static <KEY, VAL extends Writable> WritableConversion<KEY, VAL> getConversion(String className) {
     //noinspection unchecked
-    return (WritableConversion<KEY, VAL>) conversions.get(className);
+    return (WritableConversion<KEY, VAL>) CONVERSIONS.get(className);
   }
 
   private WritableConversions() {

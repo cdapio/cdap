@@ -28,7 +28,7 @@ import java.io.IOException;
 
 /**
  * Wrapper around a {@link StructuredRecord} so that it can be used as the output key and/or value of a mapper.
- * This is not very performant and must be improved soon.
+ * This is not very performant and must be improved soon (CDAP-5347).
  */
 public class StructuredRecordWritable implements WritableComparable<StructuredRecordWritable> {
   private StructuredRecord record;

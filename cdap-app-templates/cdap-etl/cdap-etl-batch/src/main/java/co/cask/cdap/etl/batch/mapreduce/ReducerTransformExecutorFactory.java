@@ -26,6 +26,7 @@ import co.cask.cdap.etl.api.batch.BatchAggregator;
 import co.cask.cdap.etl.api.batch.BatchRuntimeContext;
 import co.cask.cdap.etl.batch.PipelinePluginInstantiator;
 import co.cask.cdap.etl.batch.TransformExecutorFactory;
+import co.cask.cdap.etl.batch.conversion.IdentityConversion;
 import co.cask.cdap.etl.batch.conversion.WritableConversion;
 import co.cask.cdap.etl.batch.conversion.WritableConversions;
 import co.cask.cdap.etl.common.DatasetContextLookupProvider;
@@ -104,8 +105,8 @@ public class ReducerTransformExecutorFactory<T> extends TransformExecutorFactory
     REDUCE_KEY extends WritableComparable, REDUCE_VAL extends Writable>
     implements Transformation<KeyValue<REDUCE_KEY, Iterator<REDUCE_VAL>>, OUT> {
     private final Aggregator<GROUP_KEY, GROUP_VAL, OUT> aggregator;
-    private final Function<REDUCE_KEY, GROUP_KEY> keyFunction;
-    private final Function<REDUCE_VAL, GROUP_VAL> valFunction;
+    private final WritableConversion<GROUP_KEY, REDUCE_KEY> keyConversion;
+    private final WritableConversion<GROUP_VAL, REDUCE_VAL> valConversion;
 
     public AggregatorTransformation(Aggregator<GROUP_KEY, GROUP_VAL, OUT> aggregator,
                                     String groupKeyClassName,
@@ -113,33 +114,20 @@ public class ReducerTransformExecutorFactory<T> extends TransformExecutorFactory
       this.aggregator = aggregator;
       WritableConversion<GROUP_KEY, REDUCE_KEY> keyConversion = WritableConversions.getConversion(groupKeyClassName);
       WritableConversion<GROUP_VAL, REDUCE_VAL> valConversion = WritableConversions.getConversion(groupValClassName);
-      if (keyConversion == null) {
-        this.keyFunction = getIdentity();
-      } else {
-        this.keyFunction = keyConversion.getFromWritableFunction();
-      }
-      if (valConversion == null) {
-        this.valFunction = getIdentity();
-      } else {
-        this.valFunction = valConversion.getFromWritableFunction();
-      }
-    }
-
-    private <K, V> Function<K, V> getIdentity() {
-      return new Function<K, V>() {
-        @Nullable
-        @Override
-        public V apply(@Nullable K input) {
-          //noinspection unchecked
-          return (V) input;
-        }
-      };
+      this.keyConversion = keyConversion == null ? new IdentityConversion<GROUP_KEY, REDUCE_KEY>() : keyConversion;
+      this.valConversion = valConversion == null ? new IdentityConversion<GROUP_VAL, REDUCE_VAL>() : valConversion;
     }
 
     @Override
     public void transform(KeyValue<REDUCE_KEY, Iterator<REDUCE_VAL>> input, Emitter<OUT> emitter) throws Exception {
-      GROUP_KEY groupKey = keyFunction.apply(input.getKey());
-      Iterator<GROUP_VAL> iter = Iterators.transform(input.getValue(), valFunction);
+      GROUP_KEY groupKey = keyConversion.fromWritable(input.getKey());
+      Iterator<GROUP_VAL> iter = Iterators.transform(input.getValue(), new Function<REDUCE_VAL, GROUP_VAL>() {
+        @Nullable
+        @Override
+        public GROUP_VAL apply(@Nullable REDUCE_VAL input) {
+          return valConversion.fromWritable(input);
+        }
+      });
       aggregator.aggregate(groupKey, iter, emitter);
     }
   }
