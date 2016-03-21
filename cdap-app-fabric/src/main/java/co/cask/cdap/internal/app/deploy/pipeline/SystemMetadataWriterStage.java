@@ -18,23 +18,14 @@ package co.cask.cdap.internal.app.deploy.pipeline;
 
 import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.app.ApplicationSpecification;
-import co.cask.cdap.api.flow.FlowSpecification;
-import co.cask.cdap.api.mapreduce.MapReduceSpecification;
-import co.cask.cdap.api.service.ServiceSpecification;
-import co.cask.cdap.api.spark.SparkSpecification;
-import co.cask.cdap.api.worker.WorkerSpecification;
-import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
-import co.cask.cdap.data2.metadata.system.AbstractSystemMetadataWriter;
 import co.cask.cdap.data2.metadata.system.AppSystemMetadataWriter;
 import co.cask.cdap.data2.metadata.system.ProgramSystemMetadataWriter;
+import co.cask.cdap.data2.metadata.system.SystemMetadataWriter;
 import co.cask.cdap.pipeline.AbstractStage;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import com.google.common.reflect.TypeToken;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Stage to write system metadata for an application.
@@ -52,7 +43,7 @@ public class SystemMetadataWriterStage extends AbstractStage<ApplicationWithProg
   public void process(ApplicationWithPrograms input) throws Exception {
     // add system metadata for apps
     ApplicationSpecification appSpec = input.getSpecification();
-    AbstractSystemMetadataWriter appSystemMetadataWriter = new AppSystemMetadataWriter(metadataStore, input.getId(),
+    SystemMetadataWriter appSystemMetadataWriter = new AppSystemMetadataWriter(metadataStore, input.getId(),
                                                                                        appSpec);
     appSystemMetadataWriter.write();
 

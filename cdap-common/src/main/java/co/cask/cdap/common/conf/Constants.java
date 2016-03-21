@@ -340,6 +340,7 @@ public final class Constants {
     public static final int HBASE_WRITE_BUFFER_SIZE = 4 * 1024 * 1024;
 
     public static final String URL_PREFIX = "stream://";
+    public static final String DESCRIPTION = "stream.description";
 
     /**
      * Contains HTTP headers used by Stream handler.

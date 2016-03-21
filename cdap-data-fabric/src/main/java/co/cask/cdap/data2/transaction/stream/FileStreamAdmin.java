@@ -34,8 +34,8 @@ import co.cask.cdap.data2.audit.AuditPublisher;
 import co.cask.cdap.data2.audit.AuditPublishers;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
-import co.cask.cdap.data2.metadata.system.AbstractSystemMetadataWriter;
 import co.cask.cdap.data2.metadata.system.StreamSystemMetadataWriter;
+import co.cask.cdap.data2.metadata.system.SystemMetadataWriter;
 import co.cask.cdap.data2.metadata.writer.LineageWriter;
 import co.cask.cdap.data2.registry.UsageRegistry;
 import co.cask.cdap.explore.client.ExploreFacade;
@@ -318,6 +318,7 @@ public class FileStreamAdmin implements StreamAdmin {
           return null;
         }
 
+        long createTime = System.currentTimeMillis();
         Properties properties = (props == null) ? new Properties() : props;
         long partitionDuration = Long.parseLong(properties.getProperty(
           Constants.Stream.PARTITION_DURATION, cConf.get(Constants.Stream.PARTITION_DURATION)));
@@ -327,6 +328,7 @@ public class FileStreamAdmin implements StreamAdmin {
           Constants.Stream.TTL, cConf.get(Constants.Stream.TTL)));
         int threshold = Integer.parseInt(properties.getProperty(
           Constants.Stream.NOTIFICATION_THRESHOLD, cConf.get(Constants.Stream.NOTIFICATION_THRESHOLD)));
+        String description = properties.getProperty(Constants.Stream.DESCRIPTION);
 
         StreamConfig config = new StreamConfig(streamId, partitionDuration, indexInterval,
                                                ttl, streamLocation, null, threshold);
@@ -335,8 +337,8 @@ public class FileStreamAdmin implements StreamAdmin {
         alterExploreStream(streamId, true, config.getFormat());
         streamMetaStore.addStream(streamId);
         publishAudit(streamId, AuditType.CREATE);
-        AbstractSystemMetadataWriter systemMetadataWriter = new StreamSystemMetadataWriter(metadataStore, streamId,
-                                                                                           config);
+        SystemMetadataWriter systemMetadataWriter =
+          new StreamSystemMetadataWriter(metadataStore, streamId, config, createTime, description);
         systemMetadataWriter.write();
         return config;
       }
@@ -533,7 +535,14 @@ public class FileStreamAdmin implements StreamAdmin {
       builder.setNotificationThreshold(properties.getNotificationThresholdMB());
     }
 
-    writeConfig(builder.build());
+    StreamConfig newConfig = builder.build();
+    writeConfig(newConfig);
+
+    // Update system metadata for stream
+    SystemMetadataWriter systemMetadataWriter =
+      new StreamSystemMetadataWriter(metadataStore, streamId, newConfig, null);
+    systemMetadataWriter.write();
+
     return new StreamProperties(config.getTTL(), config.getFormat(), config.getNotificationThresholdMB());
   }
 

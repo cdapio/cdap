@@ -31,12 +31,14 @@ import javax.annotation.Nullable;
 /**
  * A class to write {@link MetadataScope#SYSTEM} metadata for an {@link Id.NamespacedId entity}.
  */
-public abstract class AbstractSystemMetadataWriter {
+public abstract class AbstractSystemMetadataWriter implements SystemMetadataWriter {
 
   private static final String SCHEMA_FIELD_PROPERTY_PREFIX = "schema";
   private static final String PLUGIN_KEY_PREFIX = "plugin";
   private static final String PLUGIN_VERSION_KEY_PREFIX = "pluginversion";
   protected static final String TTL_KEY = "ttl";
+  protected static final String DESCRIPTION = "description";
+  protected static final String CREATE_TIME = "createtime";
 
   private final MetadataStore metadataStore;
   private final Id.NamespacedId entityId;
@@ -51,14 +53,14 @@ public abstract class AbstractSystemMetadataWriter {
    *
    * @return A {@link Map} of properties to add to this {@link Id.NamespacedId entity} in {@link MetadataScope#SYSTEM}
    */
-  abstract Map<String, String> getSystemPropertiesToAdd();
+  protected abstract Map<String, String> getSystemPropertiesToAdd();
 
   /**
    * Define the {@link MetadataScope#SYSTEM system} tags to add for this entity.
    *
    * @return an array of tags to add to this {@link Id.NamespacedId entity} in {@link MetadataScope#SYSTEM}
    */
-  abstract String[] getSystemTagsToAdd();
+  protected abstract String[] getSystemTagsToAdd();
 
   /**
    * Define the {@link MetadataScope#SYSTEM system} schema to add for this entity.
@@ -66,13 +68,14 @@ public abstract class AbstractSystemMetadataWriter {
    * @return the schema as a {@link String}
    */
   @Nullable
-  String getSchemaToAdd() {
+  protected String getSchemaToAdd() {
     return null;
   }
 
   /**
    * Updates the {@link MetadataScope#SYSTEM} metadata for this {@link Id.NamespacedId entity}.
    */
+  @Override
   public void write() {
     Map<String, String> properties = getSystemPropertiesToAdd();
     if (properties.size() > 0) {

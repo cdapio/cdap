@@ -44,12 +44,12 @@ public class ProgramSystemMetadataWriter extends AbstractSystemMetadataWriter {
   }
 
   @Override
-  Map<String, String> getSystemPropertiesToAdd() {
+  protected Map<String, String> getSystemPropertiesToAdd() {
     return ImmutableMap.of();
   }
 
   @Override
-  String[] getSystemTagsToAdd() {
+  protected String[] getSystemTagsToAdd() {
     List<String> tags = ImmutableList.<String>builder()
       .add(programId.getId())
       .add(programId.getType().getPrettyName())

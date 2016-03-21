@@ -36,6 +36,7 @@ import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.StreamProperties;
 import co.cask.cdap.proto.ViewSpecification;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.artifact.ArtifactRange;
@@ -51,6 +52,7 @@ import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.gson.JsonObject;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
@@ -66,6 +68,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.jar.Manifest;
 import javax.annotation.Nullable;
 
@@ -585,12 +588,46 @@ public class MetadataHttpHandlerTest extends MetadataTestBase {
     Id.Stream streamId = Id.Stream.from(Id.Namespace.DEFAULT, AllProgramsApp.STREAM_NAME);
     Set<String> streamSystemTags = getTags(streamId, MetadataScope.SYSTEM);
     Assert.assertEquals(ImmutableSet.of(AllProgramsApp.STREAM_NAME), streamSystemTags);
+
     Map<String, String> streamSystemProperties = getProperties(streamId, MetadataScope.SYSTEM);
-    Assert.assertEquals(ImmutableMap.of("schema",
-                                        Schema.recordOf("stringBody",
-                                                        Schema.Field.of("body",
-                                                                        Schema.of(Schema.Type.STRING))).toString(),
-                                        "ttl", String.valueOf(Long.MAX_VALUE)), streamSystemProperties);
+    // Verify create time exists, and is within the past hour
+    Assert.assertNotNull("Stream create time does not exist", streamSystemProperties.containsKey("createtime"));
+    long createTime = Long.parseLong(streamSystemProperties.get("createtime"));
+    Assert.assertTrue("Stream create time is invalid",
+                      createTime > System.currentTimeMillis() - TimeUnit.HOURS.toMillis(1));
+
+    // Now remove create time and assert all other system properties
+    Assert.assertEquals(
+      ImmutableMap.of("schema",
+                      Schema.recordOf("stringBody",
+                                      Schema.Field.of("body",
+                                                      Schema.of(Schema.Type.STRING))).toString(),
+                      "ttl", String.valueOf(Long.MAX_VALUE),
+                      "description", "test stream"
+      ),
+      Maps.filterEntries(streamSystemProperties, new Predicate<Map.Entry<String, String>>() {
+        @Override
+        public boolean apply(Map.Entry<String, String> input) {
+          return !"createtime".equals(input.getKey());
+        }
+      }));
+
+    // Update stream properties and verify metadata got updated
+    long newTtl = 100000L;
+    setStreamProperties(streamId, new StreamProperties(newTtl, null, null));
+    streamSystemProperties = getProperties(streamId, MetadataScope.SYSTEM);
+    Assert.assertEquals(
+      ImmutableMap.of("schema",
+                      Schema.recordOf("stringBody",
+                                      Schema.Field.of("body",
+                                                      Schema.of(Schema.Type.STRING))).toString(),
+                      "ttl", String.valueOf(newTtl * 1000),
+                      "description", "test stream",
+                      "createtime", String.valueOf(createTime)
+      ),
+      streamSystemProperties
+    );
+
     Set<MetadataRecord> streamSystemMetadata = getMetadata(streamId, MetadataScope.SYSTEM);
     Assert.assertEquals(
       ImmutableSet.of(new MetadataRecord(streamId, MetadataScope.SYSTEM, streamSystemProperties, streamSystemTags)),

@@ -29,8 +29,8 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.ForwardingDatasetFramework;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
-import co.cask.cdap.data2.metadata.system.AbstractSystemMetadataWriter;
 import co.cask.cdap.data2.metadata.system.DatasetSystemMetadataWriter;
+import co.cask.cdap.data2.metadata.system.SystemMetadataWriter;
 import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.Id;
 import com.google.inject.Inject;
@@ -88,7 +88,7 @@ public class LineageWriterDatasetFramework extends ForwardingDatasetFramework im
     if (!isUserDataset(datasetInstanceId)) {
       return;
     }
-    AbstractSystemMetadataWriter systemMetadataWriter =
+    SystemMetadataWriter systemMetadataWriter =
       new DatasetSystemMetadataWriter(metadataStore, dsInstantiatorFactory, datasetInstanceId, props, datasetTypeName);
     systemMetadataWriter.write();
   }
@@ -110,7 +110,7 @@ public class LineageWriterDatasetFramework extends ForwardingDatasetFramework im
     if (!isUserDataset(datasetInstanceId)) {
       return;
     }
-    AbstractSystemMetadataWriter systemMetadataWriter =
+    SystemMetadataWriter systemMetadataWriter =
       new DatasetSystemMetadataWriter(metadataStore, dsInstantiatorFactory, datasetInstanceId, props, null);
     systemMetadataWriter.write();
   }
