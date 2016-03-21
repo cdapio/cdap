@@ -16,6 +16,7 @@
 package co.cask.cdap.internal.app.runtime.workflow;
 
 import co.cask.cdap.api.Predicate;
+import co.cask.cdap.api.ProgramLifecycle;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.common.RuntimeArguments;
 import co.cask.cdap.api.common.Scope;
@@ -184,13 +185,13 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     workflow = initializeWorkflow();
   }
 
+  @SuppressWarnings("unchecked")
   private Workflow initializeWorkflow() throws Exception {
     Class<?> clz = Class.forName(workflowSpec.getClassName(), true, program.getClassLoader());
     if (!Workflow.class.isAssignableFrom(clz)) {
       throw new IllegalStateException(String.format("%s is not Workflow.", clz));
     }
 
-    @SuppressWarnings("unchecked")
     Class<? extends Workflow> workflowClass = (Class<? extends Workflow>) clz;
     Workflow workflow = new InstantiatorFactory(false).get(TypeToken.of(workflowClass)).create();
 
@@ -198,7 +199,9 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     transactionContext.start();
 
     try {
-      workflow.initialize(basicWorkflowContext);
+      if (workflow instanceof ProgramLifecycle) {
+        ((ProgramLifecycle<WorkflowContext>) workflow).initialize(basicWorkflowContext);
+      }
     } catch (Throwable t) {
       LOG.error(String.format("Failed to initialize the Workflow %s", workflowRunId), t);
       transactionContext.abort(new TransactionFailureException("Transaction function failure for transaction. ", t));
@@ -257,11 +260,14 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     destroyWorkflow();
   }
 
+  @SuppressWarnings("unchecked")
   private void destroyWorkflow() {
     TransactionContext transactionContext = basicWorkflowContext.getDatasetCache().newTransactionContext();
     try {
       transactionContext.start();
-      workflow.destroy();
+      if (workflow instanceof ProgramLifecycle) {
+        ((ProgramLifecycle<WorkflowContext>) workflow).destroy();
+      }
       transactionContext.finish();
     } catch (Throwable t) {
       LOG.error(String.format("Failed to destroy the Workflow %s", workflowRunId), t);

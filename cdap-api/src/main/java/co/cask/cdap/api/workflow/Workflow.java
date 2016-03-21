@@ -15,12 +15,10 @@
  */
 package co.cask.cdap.api.workflow;
 
-import co.cask.cdap.api.ProgramLifecycle;
-
 /**
  * Defines an interface for the Workflow.
  */
-public interface Workflow extends ProgramLifecycle<WorkflowContext> {
+public interface Workflow {
 
   /**
    * Configures a {@link Workflow} using the given {@link WorkflowConfigurer}.
