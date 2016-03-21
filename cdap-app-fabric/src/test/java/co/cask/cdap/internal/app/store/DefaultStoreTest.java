@@ -149,7 +149,7 @@ public class DefaultStoreTest {
   public void testStopBeforeStart() throws RuntimeException {
     Id.Program programId = Id.Program.from("account1", "invalidApp", ProgramType.FLOW, "InvalidFlowOperation");
     long now = System.currentTimeMillis();
-    store.setStop(programId, "runx", now, ProgramController.State.ERROR.getRunStatus(), null);
+    store.setStop(programId, "runx", now, ProgramController.State.ERROR.getRunStatus());
   }
 
   @Test
@@ -190,8 +190,8 @@ public class DefaultStoreTest {
     RunId run2 = RunIds.generate(now - 10000);
     store.setStart(programId, run2.getId(), runIdToSecs(run2));
 
-    store.setStop(programId, run1.getId(), nowSecs, ProgramController.State.COMPLETED.getRunStatus(), null);
-    store.setStop(programId, run2.getId(), nowSecs, ProgramController.State.COMPLETED.getRunStatus(), null);
+    store.setStop(programId, run1.getId(), nowSecs, ProgramController.State.COMPLETED.getRunStatus());
+    store.setStop(programId, run2.getId(), nowSecs, ProgramController.State.COMPLETED.getRunStatus());
 
     List<RunRecordMeta> history = store.getRuns(programId, ProgramRunStatus.ALL,
                                                 0, Long.MAX_VALUE, Integer.MAX_VALUE);
@@ -209,12 +209,12 @@ public class DefaultStoreTest {
 
     RunId run1 = RunIds.generate(now - 20000);
     store.setStart(programId, run1.getId(), runIdToSecs(run1));
-    store.setStop(programId, run1.getId(), nowSecs - 10, ProgramController.State.ERROR.getRunStatus(), null);
+    store.setStop(programId, run1.getId(), nowSecs - 10, ProgramController.State.ERROR.getRunStatus());
 
     // record another finished flow
     RunId run2 = RunIds.generate(now - 10000);
     store.setStart(programId, run2.getId(), runIdToSecs(run2));
-    store.setStop(programId, run2.getId(), nowSecs - 5, ProgramController.State.COMPLETED.getRunStatus(), null);
+    store.setStop(programId, run2.getId(), nowSecs - 5, ProgramController.State.COMPLETED.getRunStatus());
 
     // record a suspended flow
     RunId run21 = RunIds.generate(now - 7500);
@@ -234,7 +234,7 @@ public class DefaultStoreTest {
     Id.Program programId2 = Id.Program.from("account1", "application1", ProgramType.FLOW, "flow2");
     RunId run4 = RunIds.generate(now - 5000);
     store.setStart(programId2, run4.getId(), runIdToSecs(run4));
-    store.setStop(programId2, run4.getId(), nowSecs - 4, ProgramController.State.COMPLETED.getRunStatus(), null);
+    store.setStop(programId2, run4.getId(), nowSecs - 4, ProgramController.State.COMPLETED.getRunStatus());
 
     // record for different account
     store.setStart(Id.Program.from("account2", "application1", ProgramType.FLOW, "flow1"),
@@ -306,7 +306,7 @@ public class DefaultStoreTest {
     // record finished flow
     RunId run5 = RunIds.fromString(UUID.randomUUID().toString());
     store.setStart(programId, run5.getId(), nowSecs - 8);
-    store.setStop(programId, run5.getId(), nowSecs - 4, ProgramController.State.COMPLETED.getRunStatus(), null);
+    store.setStop(programId, run5.getId(), nowSecs - 4, ProgramController.State.COMPLETED.getRunStatus());
 
     // record not finished flow
     RunId run6 = RunIds.fromString(UUID.randomUUID().toString());
@@ -710,17 +710,17 @@ public class DefaultStoreTest {
     long now = System.currentTimeMillis();
 
     store.setStart(flowProgramId1, "flowRun1", now - 1000);
-    store.setStop(flowProgramId1, "flowRun1", now, ProgramController.State.COMPLETED.getRunStatus(), null);
+    store.setStop(flowProgramId1, "flowRun1", now, ProgramController.State.COMPLETED.getRunStatus());
 
     store.setStart(mapreduceProgramId1, "mrRun1", now - 1000);
-    store.setStop(mapreduceProgramId1, "mrRun1", now, ProgramController.State.COMPLETED.getRunStatus(), null);
+    store.setStop(mapreduceProgramId1, "mrRun1", now, ProgramController.State.COMPLETED.getRunStatus());
 
     RunId runId = RunIds.generate(System.currentTimeMillis() - TimeUnit.SECONDS.toMillis(1000));
     store.setStart(workflowProgramId1, runId.getId(), now - 1000);
-    store.setStop(workflowProgramId1, runId.getId(), now, ProgramController.State.COMPLETED.getRunStatus(), null);
+    store.setStop(workflowProgramId1, runId.getId(), now, ProgramController.State.COMPLETED.getRunStatus());
 
     store.setStart(flowProgramId2, "flowRun2", now - 1000);
-    store.setStop(flowProgramId2, "flowRun2", now, ProgramController.State.COMPLETED.getRunStatus(), null);
+    store.setStop(flowProgramId2, "flowRun2", now, ProgramController.State.COMPLETED.getRunStatus());
 
     verifyRunHistory(flowProgramId1, 1);
     verifyRunHistory(mapreduceProgramId1, 1);
@@ -764,7 +764,7 @@ public class DefaultStoreTest {
 
     long now = System.currentTimeMillis();
     store.setStart(flowProgramId, "flowRun1", now - 3000);
-    store.setStop(flowProgramId, "flowRun1", now - 100, ProgramController.State.COMPLETED.getRunStatus(), null);
+    store.setStop(flowProgramId, "flowRun1", now - 100, ProgramController.State.COMPLETED.getRunStatus());
 
     store.setStart(flowProgramId, "flowRun2", now - 2000);
 
@@ -1029,7 +1029,7 @@ public class DefaultStoreTest {
 
   private void writeStopRecord(Id.Run run, long stopTimeInMillis) {
     store.setStop(run.getProgram(), run.getId(), TimeUnit.MILLISECONDS.toSeconds(stopTimeInMillis),
-                  ProgramRunStatus.COMPLETED, null);
+                  ProgramRunStatus.COMPLETED);
     Assert.assertNotNull(store.getRun(run.getProgram(), run.getId()));
   }
 

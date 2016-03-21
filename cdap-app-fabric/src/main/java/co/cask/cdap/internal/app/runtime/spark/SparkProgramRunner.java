@@ -210,11 +210,11 @@ public class SparkProgramRunner extends AbstractProgramRunnerWithPlugin {
           runStatus = ProgramController.State.KILLED.getRunStatus();
         }
         store.setStop(programId, runId.getId(), TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
-                      runStatus, null);
+                      runStatus);
       }
 
       @Override
-      public void failed(Service.State from, Throwable failure) {
+      public void failed(Service.State from, @Nullable Throwable failure) {
         closeAll(closeables);
         store.setStop(programId, runId.getId(), TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
                       ProgramController.State.ERROR.getRunStatus(), failure);

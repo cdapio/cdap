@@ -243,11 +243,11 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
         }
 
         store.setStop(program.getId(), runId.getId(), TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
-                      runStatus, null);
+                      runStatus);
       }
 
       @Override
-      public void failed(Service.State from, Throwable failure) {
+      public void failed(Service.State from, @Nullable Throwable failure) {
         closeAllQuietly(closeables);
         store.setStop(program.getId(), runId.getId(), TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
                       ProgramController.State.ERROR.getRunStatus(), failure);

@@ -101,6 +101,16 @@ public interface Store {
    * @param pid     run id
    * @param endTime end timestamp in seconds
    * @param runStatus   {@link ProgramRunStatus} of program run
+   */
+  void setStop(Id.Program id, String pid, long endTime, ProgramRunStatus runStatus);
+
+  /**
+   * Logs end of program run.
+   *
+   * @param id      id of program
+   * @param pid     run id
+   * @param endTime end timestamp in seconds
+   * @param runStatus   {@link ProgramRunStatus} of program run
    * @param failureCause failure cause if the program failed to execute
    */
   void setStop(Id.Program id, String pid, long endTime, ProgramRunStatus runStatus, @Nullable Throwable failureCause);

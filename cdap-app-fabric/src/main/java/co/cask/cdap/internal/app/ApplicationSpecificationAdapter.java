@@ -165,11 +165,6 @@ public final class ApplicationSpecificationAdapter {
         SortedMap.class.isAssignableFrom(rawType)) {
         return null;
       }
-
-      if (!ParameterizedType.class.isAssignableFrom(type.getType().getClass())) {
-        return null;
-      }
-
       Type[] typeArgs = ((ParameterizedType) type.getType()).getActualTypeArguments();
       TypeToken<?> keyType = TypeToken.get(typeArgs[0]);
       TypeToken<?> valueType = TypeToken.get(typeArgs[1]);

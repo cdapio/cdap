@@ -255,7 +255,7 @@ public class MockLogReader implements LogReader {
       runRecordMap.put(id, new RunRecord(runId.getId(), startTs, stopTs, runStatus, null));
       store.setStart(id, runId.getId(), startTs);
       if (stopTs != null) {
-        store.setStop(id, runId.getId(), stopTs, runStatus, null);
+        store.setStop(id, runId.getId(), stopTs, runStatus);
       }
     }
   }

@@ -203,7 +203,8 @@ public class AppMetadataStore extends MetadataStoreDataset {
 
     Map<String, String> propertiesToUpdate = new HashMap<>();
     propertiesToUpdate.putAll(runRecordMeta.getProperties());
-    propertiesToUpdate.put(WORKFLOW_NODE_STATE_KEY, GSON.toJson(nodeStates));
+    propertiesToUpdate.put(WORKFLOW_NODE_STATE_KEY,
+                           GSON.toJson(nodeStates, new TypeToken<Map<String, WorkflowNodeState>>() { }.getType()));
 
     return new RunRecordMeta(runRecordMeta, propertiesToUpdate);
   }

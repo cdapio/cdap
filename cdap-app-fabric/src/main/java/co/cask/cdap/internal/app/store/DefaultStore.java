@@ -286,6 +286,11 @@ public class DefaultStore implements Store {
   }
 
   @Override
+  public void setStop(final Id.Program id, final String pid, final long endTime, final ProgramRunStatus runStatus) {
+    setStop(id, pid, endTime, runStatus, null);
+  }
+
+  @Override
   public void setStop(final Id.Program id, final String pid, final long endTime, final ProgramRunStatus runStatus,
                       final Throwable failureCause) {
     Preconditions.checkArgument(runStatus != null, "Run state of program run should be defined");

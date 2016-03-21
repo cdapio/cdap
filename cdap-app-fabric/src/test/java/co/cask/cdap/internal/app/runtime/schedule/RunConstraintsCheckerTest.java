@@ -75,10 +75,10 @@ public class RunConstraintsCheckerTest {
     Assert.assertFalse(requirementChecker.checkSatisfied(programId, schedule));
 
     // stop the first program, constraints should be satisfied now
-    store.setStop(programId, "pid1", System.currentTimeMillis(), ProgramRunStatus.FAILED, null);
+    store.setStop(programId, "pid1", System.currentTimeMillis(), ProgramRunStatus.FAILED);
     Assert.assertTrue(requirementChecker.checkSatisfied(programId, schedule));
 
-    store.setStop(programId, "pid4", System.currentTimeMillis(), ProgramRunStatus.KILLED, null);
+    store.setStop(programId, "pid4", System.currentTimeMillis(), ProgramRunStatus.KILLED);
     Assert.assertTrue(requirementChecker.checkSatisfied(programId, schedule));
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -166,14 +166,14 @@ public class ProgramLifecycleService extends AbstractIdleService {
         public void completed() {
           LOG.debug("Program {} {} {} completed successfully.", id.getNamespaceId(), id.getApplicationId(), id.getId());
           store.setStop(id, runId, TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
-                        ProgramController.State.COMPLETED.getRunStatus(), null);
+                        ProgramController.State.COMPLETED.getRunStatus());
         }
 
         @Override
         public void killed() {
           LOG.debug("Program {} {} {} killed.", id.getNamespaceId(), id.getApplicationId(), id.getId());
           store.setStop(id, runId, TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
-                        ProgramController.State.KILLED.getRunStatus(), null);
+                        ProgramController.State.KILLED.getRunStatus());
         }
 
         @Override
