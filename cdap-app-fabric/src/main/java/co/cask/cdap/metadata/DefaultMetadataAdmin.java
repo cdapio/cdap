@@ -33,7 +33,6 @@ import com.google.inject.Inject;
 
 import java.util.Map;
 import java.util.Set;
-import javax.annotation.Nullable;
 
 /**
  * Implementation of {@link MetadataAdmin} that interacts directly with {@link MetadataStore}.
@@ -146,20 +145,14 @@ public class DefaultMetadataAdmin implements MetadataAdmin {
 
   @Override
   public Set<MetadataSearchResultRecord> searchMetadata(String namespaceId, String searchQuery,
-                                                        @Nullable MetadataSearchTargetType type) {
-    if (type == null) {
-      return metadataStore.searchMetadata(namespaceId, searchQuery);
-    }
-    return metadataStore.searchMetadataOnType(namespaceId, searchQuery, type);
+                                                        Set<MetadataSearchTargetType> types) {
+    return metadataStore.searchMetadataOnType(namespaceId, searchQuery, types);
   }
 
   @Override
   public Set<MetadataSearchResultRecord> searchMetadata(MetadataScope scope, String namespaceId, String searchQuery,
-                                                        @Nullable final MetadataSearchTargetType type) {
-    if (type == null) {
-      return metadataStore.searchMetadata(scope, namespaceId, searchQuery);
-    }
-    return metadataStore.searchMetadataOnType(scope, namespaceId, searchQuery, type);
+                                                        Set<MetadataSearchTargetType> types) {
+    return metadataStore.searchMetadataOnType(scope, namespaceId, searchQuery, types);
   }
 
   // Helper methods to validate the metadata entries.
