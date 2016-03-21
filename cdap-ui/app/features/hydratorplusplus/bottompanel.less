@@ -1,0 +1,558 @@
+/*
+ * Copyright © 2015 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
+@import '../../styles/variables.less';
+@import "../../../bower_components/bootstrap/less/mixins.less";
+@import '../../styles/themes/cdap/mixins.less';
+
+body.theme-cdap.state-hydratorplusplus {
+  &.state-hydrator-detail {
+    background-color: @table-bg;
+
+    my-dag-plus .my-js-dag {
+      border-bottom: 0;
+    }
+
+    div.console {
+      div.console-tabs ul.nav-tabs li {
+        margin-bottom: -1px;
+      }
+      div.console-type {
+        // Avoid unnecessary horizontal scroll
+        overflow-x: hidden;
+        padding: 0;
+        width: 100%;
+        .p-10 {
+          padding: 10px;
+        }
+        button.btn-grey {
+          .cask-btn(@background: @body-bg, @border: 1px solid @table-border-color, @border-radius: 4px, @color: #666, @font-size: 13px, @padding: 6px 12px);
+          margin-top: 10px;
+        }
+      }
+      div.bottompanel-body {
+        width: 100%;
+      }
+      .history-table .table {
+        border: 1px solid #ddd;
+      }
+      .table {
+        th {
+          height: 30px;
+          padding: 0 5px;
+          vertical-align: middle;
+        }
+        // Metrics view
+        td.metric-cell {
+          padding: 0;
+        }
+        &.metric-table {
+          tr {
+            &:first-child > td {
+              border-top: 0;
+            }
+
+            &:last-child > td {
+              border-bottom: 0;
+            }
+          }
+          td {
+            &:first-child {
+              border-left: 0;
+            }
+            &:last-child {
+              border-right: 0;
+            }
+          }
+        }
+      }
+      select.cron-select:hover {
+        cursor: not-allowed;
+      }
+    }
+  }
+
+  div.console {
+    background-color: white;
+    position: relative;
+    width: 100%;
+    min-height: ~"-moz-calc(40vh - 113px)";
+    min-height: ~"-webkit-calc(40vh - 113px)";
+    min-height: ~"calc(40vh - 113px)";
+    z-index: 1024;
+    .transition(height 0.2s ease);
+
+    @media (min-height: 800px) {
+      min-height: ~"-moz-calc(60vh - 113px)";
+      min-height: ~"-webkit-calc(60vh - 113px)";
+      min-height: ~"calc(60vh - 113px)";
+    }
+    // Styling for minimized bottom panel
+    &.minimized {
+      position: fixed;
+      right: 0;
+      bottom: 53px;
+      min-height: 0;
+      z-index: 1025;
+
+      .console-type {
+        display: none;
+        height: 0;
+        min-height: 0;
+      }
+    }
+    &:not(.minimized) {
+      span.badge {
+        position: relative;
+      }
+    }
+    // Styling for maximized bottom panel
+    &.maximized {
+      position: fixed;
+      top: 120px;
+      right: 0;
+      left: 0;
+      bottom: 53px;
+      overflow-y: scroll;
+      overflow-x: hidden;
+      z-index: 1029;
+      div.console-tabs {
+        border-top: 0;
+        .box-shadow(0 7px 7px fade(black, 10%), 0 19px 59px fade(black, 25%););
+      }
+      .node-config .bottompanel-body {
+        div.config-table {
+          height: ~"-moz-calc(100vh - 284px)";
+          height: ~"-webkit-calc(100vh - 284px)";
+          height: ~"calc(100vh - 284px)";
+        }
+      }
+    }
+  }
+
+  // When bottom panel is in minimized state, set width based on left panel state
+  div.left-panel-wrapper {
+    + .right-wrapper div.console:not(.maximized) {
+      width: ~"-moz-calc(100vw - 130px)";
+      width: ~"-webkit-calc(100vw - 130px)";
+      width: ~"calc(100vw - 130px)";
+      .transition(width 0.2s ease);
+    }
+    &.expanded + .right-wrapper div.console:not(.maximized) {
+      width: ~"-moz-calc(100vw - 290px)";
+      width: ~"-webkit-calc(100vw - 290px)";
+      width: ~"calc(100vw - 290px)";
+    }
+  }
+
+  div.console-tabs {
+    background-color: @body-bg;
+    border-top: 1px solid @table-border-color;
+    position: relative;
+    ul.nav-tabs {
+      border-bottom: 0;
+      li {
+        margin-bottom: 0;
+        .border-radius(0);
+        border: 0;
+        border-bottom: 1px solid @body-bg;
+        color: #666;
+        font-weight: 500;
+        line-height: inherit;
+        margin-right: 0;
+        padding: 10px 15px;
+        .border-radius(0);
+        .transition(all 0.2s ease);
+        &:hover, &:focus {
+          background-color: transparent;
+          border: 0;
+          border-bottom: 2px solid transparent;
+          cursor: pointer;
+        }
+        &.bg-danger {
+          background-color: fade(@brand-danger, 40%);
+        }
+        &.bg-success {
+          background-color: fade(@brand-success, 40%);
+        }
+        &.bg-primary {
+          background-color: fade(@brand-primary, 40%);
+        }
+        &.active {
+          border-bottom: 2px solid @cdap-orange;
+        }
+        .badge {
+          display: inline;
+          margin-left: 5px;
+        }
+      }
+    }
+    > div {
+      margin: 0 10px;
+      a {
+        color: @brand-primary;
+        cursor: default;
+        display: inline-block;
+        padding: 10px;
+        .transition(all 0.2s ease);
+        &:hover, &:focus {
+          color: @cdap-orange;
+          cursor: pointer;
+        }
+      }
+    }
+  }
+  div.console-type {
+    border-top: 1px solid @table-border-color;
+    h4 {
+      color: #999;
+      font-size: 14px;
+      font-weight: 500;
+      margin-top: 0;
+    }
+    .select-wrapper {
+      .select-wrapper();
+    }
+    fieldset {
+      width: 100%;
+      .widget-group-container {
+        a.btn {
+          padding-right: 6px;
+          padding-left: 6px;
+        }
+        &.well .form-group {
+          margin-bottom: 10px;
+        }
+      }
+      .panel-body {
+        min-height: 50px;
+      }
+    }
+    .sink-output-schema {
+      .output-schema {
+        margin-top: 20px;
+      }
+    }
+    .output-schema {
+      .schema-propagation-confirm {
+        padding-top: 10px;
+      }
+      .confirmation-button {
+        margin-top: 5px;
+      }
+      .btn-group {
+        .btn {
+          margin-right: 5px;
+        }
+      }
+    }
+    .input-schema {
+      @media (max-width: @screen-md-max) {
+        margin-bottom: 15px;
+      }
+    }
+    .schema-error ul:only-child {
+      margin-bottom: 0;
+    }
+    .schema-inner > textarea {
+      height: auto;
+      resize: vertical;
+    }
+    .table {
+      background-color: transparent;
+      margin: 0;
+      th, td {
+        max-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      th {
+        border: 0;
+        padding: 0;
+        @media (min-width: @screen-lg-min) {
+          padding-left: 10px;
+        }
+        label {
+          margin-bottom: 0;
+          vertical-align: top;
+        }
+      }
+      td {
+        border: 1px solid @table-border-color;
+        border-collapse: collapse;
+        height: 30px;
+        padding: 0 5px;
+        vertical-align: middle;
+        div.select-wrapper:after {
+          right: 5px;
+        }
+        select.form-control {
+          padding-right: 20px;
+        }
+        &.name {
+          width: 35%;
+        }
+        &.type {
+          width: 30%;
+        }
+        &.nullable {
+          width: 20%;
+        }
+        &.trash {
+          width: 15%;
+          a {
+            padding-left: 0;
+            padding-right: 0;
+          }
+          .btn:active {
+            .box-shadow(none);
+          }
+        }
+      }
+      &.table-curved {
+        tr:first-child {
+          td {
+            border-top: 0;
+            &:first-child {
+              .border-radius(8px 0 0 0);
+            }
+            &:last-child {
+              .border-radius(0 8px 0 0);
+            }
+          }
+        }
+        td {
+          border-width: 1px 0 0 1px;
+        }
+      }
+      .control-label {
+        font-size: 13px;
+      }
+      .form-control {
+        border: 0;
+        padding: 0;
+      }
+
+      input {
+        &[type="text"] {
+          padding-left: 5px;
+        }
+        &[type="checkbox"] {
+          margin: 0;
+        }
+      }
+      .fa-trash {
+        color: @brand-danger;
+        font-size: 15px;
+      }
+    }
+    .form-control {
+      height: 30px;
+      .box-shadow(none);
+      &:focus {
+        border-color: @table-border-color;
+        outline: 1px solid @cdap-orange;
+        .box-shadow(none);
+      }
+    }
+    td.active-cell {
+      input:focus, select:focus {
+        outline: 0;
+      }
+    }
+    .loading-message {
+      margin-left: 10px;
+    }
+    .bottompanel-header {
+      border-bottom: 1px solid @table-border-color;
+      padding: 15px 10px;
+      > div:first-child {
+        max-width: 80%;
+      }
+      h3 {
+        color: @gray-dark;
+        font-size: 16px;
+        font-weight: 500;
+        margin: 0 0 5px;
+      }
+      p {
+        color: #9d9d9d;
+        margin-bottom: 0;
+      }
+      .btn-group {
+        > div {
+          display: inline-block;
+        }
+      }
+    }
+    .bottompanel-body {
+      padding: 20px 10px;
+      overflow: hidden;
+    }
+    .node-config .bottompanel-body {
+      @media (min-width: @screen-lg-min) {
+        padding: 0;
+        > p, .validator-plugin > div {
+          padding: 20px 10px;
+        }
+        div.config-table {
+          display: table;
+          width: 100%;
+          > div {
+            display: table-cell;
+            padding: 20px 10px;
+            vertical-align: top;
+          }
+        }
+        div.source-table {
+          > div {
+            &:first-child {
+              border-right: 1px solid @table-border-color;
+              width: 66.66666667%;
+            }
+            &:last-child {
+              width: 33.33333333%;
+            }
+          }
+        }
+        div.transform-table {
+          > div {
+            &:first-child, &:last-child {
+              width: 25%;
+            }
+            &:nth-child(2) {
+              width: 50%;
+              border-right: 1px solid @table-border-color;
+              border-left: 1px solid @table-border-color;
+            }
+          }
+        }
+        div.sink-table {
+          > div {
+            &:first-child {
+              border-right: 1px solid @table-border-color;
+              width: 33.33333333%;
+            }
+            &:last-child {
+              width: 66.66666667%;
+            }
+          }
+        }
+      }
+    }
+
+    .pipeline-schedule {
+      .bottompanel-header {
+        border-bottom-color: #c7c7c6;
+        padding-bottom: 0;
+      }
+
+      h3 {
+        margin-top: 0;
+        font-weight: 500;
+      }
+
+      .schedule-type {
+        margin-bottom: 20px;
+      }
+
+      .nav.nav-tabs.slanted-tabs {
+        border-bottom: 0;
+        margin-bottom: 0;
+        margin-top: 15px;
+
+        @tabs-grey: #c7c7c6;
+        @tabs-light-grey: lighten(@tabs-grey, 15%);
+
+        > li {
+          height: 22px;
+          background-color: @tabs-light-grey;
+          line-height: 11px;
+          padding: 5px 10px;
+          border-top: 1px solid @tabs-grey;
+          border-bottom: 0;
+          border-collapse: collapse;
+          margin-right: 15px;
+          cursor: pointer;
+          &::before, &::after {
+            background-color: @tabs-light-grey;
+            border-top: 1px solid transparent;
+            border-bottom: 1px solid @tabs-grey;
+            border-collapse: collapse;
+            content: '';
+            height: 22px;
+            width: 10px;
+            position: absolute;
+            top: 0;
+          }
+          &::before {
+            border-left: 1px solid @tabs-grey;
+            left: -3px;
+            .skew(-15deg,0);
+          }
+
+          &::after {
+            border-right: 1px solid @tabs-grey;
+            right: -3px;
+            .skew(15deg, 0);
+          }
+
+          &.active {
+            background-color: white;
+            border-bottom: 0;
+            height: 23px;
+            &::before, &::after {
+              background-color: transparent;
+              border-bottom: 1px solid white;
+            }
+            &::before {
+              border-left: 1px solid @tabs-grey;
+              left: -3px;
+            }
+            &::after {
+              border-right: 1px solid @tabs-grey;
+              right: -3px;
+            }
+          }
+        }
+      }
+    }
+
+    pre {
+      background-color: transparent;
+      border: 0;
+      display: inline;
+      padding: 0;
+      white-space: pre-wrap;
+      &:after {
+        display: block;
+        content: '';
+        margin-bottom: 10px;
+      }
+    }
+  }
+  // Place bottom panel tooltips (Minimize, Maximize, etc.) at the top of the stacking order
+  .tooltip.tooltip-pane {
+    z-index: 9999;
+  }
+  footer {
+    // Creates a bottom border for the bottom panel, needed to accommodate the single scroll
+    border-top: 1px solid @table-border-color;
+    position: fixed;
+    z-index: 1025;
+  }
+}
