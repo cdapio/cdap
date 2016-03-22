@@ -408,8 +408,8 @@ public class ArtifactClient {
                                         ArtifactScope scope)
     throws IOException, UnauthenticatedException, NotFoundException {
 
-    String path = String.format("artifacts/%s/versions/%s/extensions/%s/plugins/%s",
-      artifactId.getName(), artifactId.getVersion().getVersion(), pluginType, pluginName);
+    String path = String.format("artifacts/%s/versions/%s/extensions/%s/plugins/%s?scope=%s",
+      artifactId.getName(), artifactId.getVersion().getVersion(), pluginType, pluginName, scope.name());
     URL url = config.resolveNamespacedURLV3(artifactId.getNamespace(), path);
 
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
