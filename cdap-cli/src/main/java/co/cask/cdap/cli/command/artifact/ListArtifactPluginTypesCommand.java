@@ -80,6 +80,7 @@ public class ListArtifactPluginTypesCommand extends AbstractAuthCommand {
   @Override
   public String getDescription() {
     return String.format("Lists all plugin types usable by the specified %s. " +
-      "If no scope is given, the user scope will be used.", ElementType.ARTIFACT.getName());
+      "If no scope is given, properties are looked first in SYSTEM and then in USER scope.", 
+                         ElementType.ARTIFACT.getName());
   }
 }

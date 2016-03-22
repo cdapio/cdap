@@ -198,12 +198,9 @@ public class ArtifactClient {
   public ArtifactInfo getArtifactInfo(Id.Artifact artifactId, ArtifactScope scope)
     throws IOException, UnauthenticatedException, ArtifactNotFoundException {
     
-    String path = String.format("artifacts/%s/versions/%s",
-      artifactId.getName(), artifactId.getVersion().getVersion());
-    if (scope != null) {
-      path = String.format("%s?scope=%s", path, scope.name());
-    }
-    
+    String path = String.format("artifacts/%s/versions/%s?scope=%s",
+      artifactId.getName(), artifactId.getVersion().getVersion(), scope.name());
+
     URL url = config.resolveNamespacedURLV3(artifactId.getNamespace(), path);
     HttpResponse response =
       restClient.execute(HttpMethod.GET, url, config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND);
@@ -292,7 +289,13 @@ public class ArtifactClient {
    */
   public List<String> getPluginTypes(Id.Artifact artifactId)
     throws IOException, UnauthenticatedException, ArtifactNotFoundException {
-    return getPluginTypes(artifactId, ArtifactScope.USER);
+    List<String> pluginTypes;
+    try {
+      pluginTypes = getPluginTypes(artifactId, ArtifactScope.SYSTEM);
+    } catch (ArtifactNotFoundException e) {
+      pluginTypes = getPluginTypes(artifactId, ArtifactScope.USER);
+    }
+    return pluginTypes;
   }
 
   /**
@@ -332,7 +335,13 @@ public class ArtifactClient {
    */
   public List<PluginSummary> getPluginSummaries(Id.Artifact artifactId, String pluginType)
     throws IOException, UnauthenticatedException, ArtifactNotFoundException {
-    return getPluginSummaries(artifactId, pluginType, ArtifactScope.USER);
+    List<PluginSummary> pluginSummary;
+    try {
+      pluginSummary = getPluginSummaries(artifactId, pluginType, ArtifactScope.SYSTEM);
+    } catch (ArtifactNotFoundException e) {
+      pluginSummary = getPluginSummaries(artifactId, pluginType, ArtifactScope.USER);
+    }
+    return pluginSummary;
   }
 
   /**
@@ -401,9 +410,6 @@ public class ArtifactClient {
 
     String path = String.format("artifacts/%s/versions/%s/extensions/%s/plugins/%s",
       artifactId.getName(), artifactId.getVersion().getVersion(), pluginType, pluginName);
-    if (scope != null) {
-      path = String.format("%s?scope=%s", path, scope.name());
-    }
     URL url = config.resolveNamespacedURLV3(artifactId.getNamespace(), path);
 
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
