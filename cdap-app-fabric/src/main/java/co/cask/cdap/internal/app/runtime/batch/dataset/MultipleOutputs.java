@@ -17,8 +17,11 @@
 package co.cask.cdap.internal.app.runtime.batch.dataset;
 
 import co.cask.cdap.app.metrics.MapReduceMetrics;
+import co.cask.cdap.app.verification.AbstractVerifier;
 import co.cask.cdap.common.conf.ConfigurationUtil;
 import co.cask.cdap.common.lang.ClassLoaders;
+import co.cask.cdap.proto.Id;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Lists;
 import org.apache.hadoop.conf.Configuration;
@@ -52,6 +55,7 @@ import java.util.Set;
 public class MultipleOutputs implements Closeable {
 
   private static final String MULTIPLE_OUTPUTS = "hconf.mapreduce.multipleoutputs";
+  private static final String PREFIXED_CONF_PREFIX = "hconf.named.";
 
   private static final String MO_PREFIX = MULTIPLE_OUTPUTS + ".namedOutput.";
 
@@ -109,8 +113,7 @@ public class MultipleOutputs implements Closeable {
    *
    * @param job               job to add the named output
    * @param namedOutput       named output name, it has to be a word, letters
-   *                          and numbers only, cannot be the word 'part' as
-   *                          that is reserved for the default output.
+   *                          and numbers only (alphanumeric)
    * @param outputFormatClass name of the OutputFormat class.
    * @param keyClass          key class
    * @param valueClass        value class
@@ -119,13 +122,26 @@ public class MultipleOutputs implements Closeable {
   @SuppressWarnings("unchecked")
   public static void addNamedOutput(Job job, String namedOutput, String outputFormatClass,
                                     Class<?> keyClass, Class<?> valueClass, Map<String, String> outputConfigs) {
+    assertValidName(namedOutput);
     checkNamedOutputName(namedOutput, getNamedOutputsList(job), false);
     Configuration conf = job.getConfiguration();
     conf.set(MULTIPLE_OUTPUTS, conf.get(MULTIPLE_OUTPUTS, "") + " " + namedOutput);
     conf.set(MO_PREFIX + namedOutput + FORMAT, outputFormatClass);
     conf.setClass(MO_PREFIX + namedOutput + KEY, keyClass, Object.class);
     conf.setClass(MO_PREFIX + namedOutput + VALUE, valueClass, Object.class);
-    ConfigurationUtil.setNamedConfigurations(conf, namedOutput, outputConfigs);
+    ConfigurationUtil.setNamedConfigurations(conf, computePrefixName(namedOutput), outputConfigs);
+  }
+
+  private static String computePrefixName(String outputName) {
+    // suffix the outputName with an '.', so that one outputName being a prefix of another outputName doesn't cause
+    // conflicts when scanning for properties
+    return PREFIXED_CONF_PREFIX + outputName + ".";
+  }
+
+  private static void assertValidName(String name) {
+    // use the same check as used on datasets when they're created, since the output name can be any dataset name
+    Preconditions.checkArgument(AbstractVerifier.isId(name),
+                                "Name '%s' must consist only of ASCII letters, numbers, _, or -.", name);
   }
 
   /**
@@ -229,7 +245,7 @@ public class MultipleOutputs implements Closeable {
 
     Configuration conf = job.getConfiguration();
     Map<String, String> namedConfigurations = ConfigurationUtil.getNamedConfigurations(context.getConfiguration(),
-                                                                                       namedOutput);
+                                                                                       computePrefixName(namedOutput));
     ConfigurationUtil.setAll(namedConfigurations, conf);
     return job;
   }

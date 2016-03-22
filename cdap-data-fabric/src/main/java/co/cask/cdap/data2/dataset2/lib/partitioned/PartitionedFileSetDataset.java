@@ -650,14 +650,18 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
     // we set the file set's output path in the definition's getDataset(), so there is no need to configure it again.
     // here we just want to validate that an output partition key or dynamic partitioner was specified in the arguments.
     PartitionKey outputKey = PartitionedFileSetArguments.getOutputPartitionKey(runtimeArguments, getPartitioning());
-    if (outputKey != null) {
-      PartitionedFileSetArguments.setOutputPartitionKey(outputArgs, outputKey);
-    } else {
+    if (outputKey == null) {
       String dynamicPartitionerClassName = PartitionedFileSetArguments.getDynamicPartitioner(runtimeArguments);
       if (dynamicPartitionerClassName == null) {
         throw new DataSetException(
           "Either a Partition key or a DynamicPartitioner class must be given as a runtime argument.");
       }
+
+      // propagate output metadata into OutputFormatConfiguration so DynamicPartitionerOutputCommitter can assign
+      // the metadata when it creates the partitions
+      Map<String, String> outputMetadata = PartitionedFileSetArguments.getOutputPartitionMetadata(runtimeArguments);
+      PartitionedFileSetArguments.setOutputPartitionMetadata(outputArgs, outputMetadata);
+
       PartitionedFileSetArguments.setDynamicPartitioner(outputArgs, dynamicPartitionerClassName);
       outputArgs.put(Constants.Dataset.Partitioned.HCONF_ATTR_OUTPUT_FORMAT_CLASS_NAME,
                      files.getOutputFormatClassName());
@@ -675,7 +679,7 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
       return;
     }
     // its possible that there is no output key, if using the DynamicPartitioner, in which case
-    // DynamicPartitioningOutputFormat is responsible for registering the partitions
+    // DynamicPartitioningOutputFormat is responsible for registering the partitions and the metadata
     PartitionKey outputKey = PartitionedFileSetArguments.getOutputPartitionKey(runtimeArguments, getPartitioning());
     if (outputKey != null) {
       Map<String, String> metadata = PartitionedFileSetArguments.getOutputPartitionMetadata(runtimeArguments);

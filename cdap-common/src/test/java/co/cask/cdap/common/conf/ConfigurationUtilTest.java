@@ -35,15 +35,18 @@ public class ConfigurationUtilTest {
     Map<String, String> name1Config = ImmutableMap.of("key1", "value1",
                                                       "key2", "value2");
     Map<String, String> name2Config = ImmutableMap.of("name2key", "name2value");
+    Map<String, String> nameDotConfig = ImmutableMap.of("name3key", "name3value");
     Map<String, String> emptyConfig = ImmutableMap.of();
 
     ConfigurationUtil.setNamedConfigurations(conf, "name1", name1Config);
     ConfigurationUtil.setNamedConfigurations(conf, "name2", name2Config);
+    ConfigurationUtil.setNamedConfigurations(conf, "name.", nameDotConfig);
     ConfigurationUtil.setNamedConfigurations(conf, "emptyConfig", emptyConfig);
 
 
     Assert.assertEquals(name1Config, ConfigurationUtil.getNamedConfigurations(conf, "name1"));
     Assert.assertEquals(name2Config, ConfigurationUtil.getNamedConfigurations(conf, "name2"));
+    Assert.assertEquals(nameDotConfig, ConfigurationUtil.getNamedConfigurations(conf, "name."));
     Assert.assertEquals(emptyConfig, ConfigurationUtil.getNamedConfigurations(conf, "emptyConfig"));
   }
 

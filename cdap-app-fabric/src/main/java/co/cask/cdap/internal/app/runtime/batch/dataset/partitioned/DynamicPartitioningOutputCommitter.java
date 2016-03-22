@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,8 +17,11 @@
 package co.cask.cdap.internal.app.runtime.batch.dataset.partitioned;
 
 import co.cask.cdap.api.dataset.lib.PartitionKey;
+import co.cask.cdap.api.dataset.lib.PartitionOutput;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
+import co.cask.cdap.api.dataset.lib.PartitionedFileSetArguments;
 import co.cask.cdap.api.dataset.lib.Partitioning;
+import co.cask.cdap.common.conf.ConfigurationUtil;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.internal.app.runtime.batch.BasicMapReduceTaskContext;
 import co.cask.cdap.internal.app.runtime.batch.MapReduceClassLoader;
@@ -40,6 +43,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -121,9 +125,17 @@ public class DynamicPartitioningOutputCommitter extends FileOutputCommitter {
       mergePaths(fs, stat, finalOutput);
     }
 
+
+    // compute the metadata to be written to every output partition
+    Map<String, String> metadata =
+      ConfigurationUtil.getNamedConfigurations(this.taskContext.getConfiguration(),
+                                               PartitionedFileSetArguments.OUTPUT_PARTITION_METADATA_PREFIX);
+
     // create all the necessary partitions
     for (PartitionKey partitionKey : partitionsToAdd) {
-      outputDataset.getPartitionOutput(partitionKey).addPartition();
+      PartitionOutput partitionOutput = outputDataset.getPartitionOutput(partitionKey);
+      partitionOutput.setMetadata(metadata);
+      partitionOutput.addPartition();
     }
 
     // close the TaskContext, which flushes dataset operations
