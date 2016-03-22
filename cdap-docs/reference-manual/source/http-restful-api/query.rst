@@ -89,7 +89,7 @@ The status of a query is obtained using a HTTP GET request to the query's URL::
 
   GET <base-url>/data/explore/queries/<query-handle>/status
   
-***Note:** this endpoint is *not* namespaced, as all query-handles are globally unique.
+**Note:** this endpoint is *not* namespaced, as all query-handles are globally unique.
 
 .. list-table::
    :widths: 20 80
