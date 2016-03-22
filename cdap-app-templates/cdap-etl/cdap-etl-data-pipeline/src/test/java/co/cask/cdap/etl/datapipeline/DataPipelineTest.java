@@ -53,7 +53,7 @@ public class DataPipelineTest extends TestBase {
   public static final TestConfiguration CONFIG = new TestConfiguration("explore.enabled", false);
 
   protected static final Id.Artifact APP_ARTIFACT_ID = Id.Artifact.from(Id.Namespace.DEFAULT, "datapipeline", "3.4.0");
-  protected static final ArtifactSummary ETLBATCH_ARTIFACT = new ArtifactSummary("datapipeline", "3.4.0");
+  protected static final ArtifactSummary ARTIFACT = new ArtifactSummary("datapipeline", "3.4.0");
 
   @BeforeClass
   public static void setupTest() throws Exception {
@@ -65,6 +65,87 @@ public class DataPipelineTest extends TestBase {
     // add some test plugins
     addPluginArtifact(Id.Artifact.from(Id.Namespace.DEFAULT, "test-plugins", "1.0.0"), APP_ARTIFACT_ID,
                       MockSource.class, MockSink.class, IdentityTransform.class);
+  }
+
+  @Test
+  public void testSinglePhase() throws Exception {
+    /*
+     * source --> sink
+     */
+    ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
+      .addStage(new ETLStage("source", MockSource.getPlugin("singleInput")))
+      .addStage(new ETLStage("sink", MockSink.getPlugin("singleOutput")))
+      .addConnection("source", "sink")
+      .build();
+
+    AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(ARTIFACT, etlConfig);
+    Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "SinglePhaseApp");
+    ApplicationManager appManager = deployApplication(appId, appRequest);
+
+    Schema schema = Schema.recordOf(
+      "testRecord",
+      Schema.Field.of("name", Schema.of(Schema.Type.STRING))
+    );
+    StructuredRecord recordSamuel = StructuredRecord.builder(schema).set("name", "samuel").build();
+    StructuredRecord recordBob = StructuredRecord.builder(schema).set("name", "bob").build();
+
+    // write records to source
+    DataSetManager<Table> inputManager = getDataset(Id.Namespace.DEFAULT, "singleInput");
+    MockSource.writeInput(inputManager, ImmutableList.of(recordSamuel, recordBob));
+
+    WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
+    workflowManager.start();
+    workflowManager.waitForFinish(5, TimeUnit.MINUTES);
+
+    // check sink
+    DataSetManager<Table> sinkManager = getDataset("singleOutput");
+    Set<StructuredRecord> expected = ImmutableSet.of(recordSamuel, recordBob);
+    Set<StructuredRecord> actual = Sets.newHashSet(MockSink.readOutput(sinkManager));
+    Assert.assertEquals(expected, actual);
+  }
+
+  @Test
+  public void testSimpleMultiSource() throws Exception {
+    /*
+     * source1 --|
+     *           |--> sink
+     * source2 --|
+     */
+    ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
+      .addStage(new ETLStage("source1", MockSource.getPlugin("simpleMSInput1")))
+      .addStage(new ETLStage("source2", MockSource.getPlugin("simpleMSInput2")))
+      .addStage(new ETLStage("sink", MockSink.getPlugin("simpleMSOutput")))
+      .addConnection("source1", "sink")
+      .addConnection("source2", "sink")
+      .build();
+
+
+    AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(ARTIFACT, etlConfig);
+    Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "SimpleMultiSourceApp");
+    ApplicationManager appManager = deployApplication(appId, appRequest);
+
+    Schema schema = Schema.recordOf(
+      "testRecord",
+      Schema.Field.of("name", Schema.of(Schema.Type.STRING))
+    );
+    StructuredRecord recordSamuel = StructuredRecord.builder(schema).set("name", "samuel").build();
+    StructuredRecord recordBob = StructuredRecord.builder(schema).set("name", "bob").build();
+
+    // write one record to each source
+    DataSetManager<Table> inputManager = getDataset(Id.Namespace.DEFAULT, "simpleMSInput1");
+    MockSource.writeInput(inputManager, ImmutableList.of(recordSamuel));
+    inputManager = getDataset(Id.Namespace.DEFAULT, "simpleMSInput2");
+    MockSource.writeInput(inputManager, ImmutableList.of(recordBob));
+
+    WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
+    workflowManager.start();
+    workflowManager.waitForFinish(5, TimeUnit.MINUTES);
+
+    // check sink
+    DataSetManager<Table> sinkManager = getDataset("simpleMSOutput");
+    Set<StructuredRecord> expected = ImmutableSet.of(recordSamuel, recordBob);
+    Set<StructuredRecord> actual = Sets.newHashSet(MockSink.readOutput(sinkManager));
+    Assert.assertEquals(expected, actual);
   }
 
   @Test
@@ -92,7 +173,7 @@ public class DataPipelineTest extends TestBase {
       .addConnection("source3", "transform2")
       .build();
 
-    AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(ETLBATCH_ARTIFACT, etlConfig);
+    AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(ARTIFACT, etlConfig);
     Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "MultiSourceApp");
     ApplicationManager appManager = deployApplication(appId, appRequest);
 
