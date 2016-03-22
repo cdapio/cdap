@@ -207,7 +207,8 @@ function getEs6Directives(isNegate) {
     (isNegate ? '!' : '') + './app/directives/dag-plus/**/*.js',
     (isNegate ? '!' : '') + './app/directives/plugin-templates/**/*.js',
     (isNegate ? '!' : '') + './app/directives/my-global-navbar/*.js',
-    (isNegate ? '!' : '') + './app/directives/datetime-picker/*.js'
+    (isNegate ? '!' : '') + './app/directives/datetime-picker/*.js',
+    (isNegate ? '!' : '') + './app/directives/datetime-range/*.js'
   ];
 
   return es6directives;
@@ -490,6 +491,7 @@ gulp.task('watch', ['jshint', 'watch:build'], function() {
     '!./app/features/tracker/**/*.js',
     '!./app/directives/my-global-navbar/**/*.js',
     '!./app/directives/datetime-picker/*.js',
+    '!./app/directives/datetime-range/*.js',
     '!./app/**/*-test.js'
   ], ['jshint', 'watch:js:app']);
   gulp.watch([
@@ -506,7 +508,8 @@ gulp.task('watch', ['jshint', 'watch:build'], function() {
     './app/directives/plugin-templates/**/*.js',
     './app/features/tracker/**/*.js',
     './app/directives/my-global-navbar/**/*.js',
-    './app/directives/datetime-picker/*.js'
+    './app/directives/datetime-picker/*.js',
+    './app/directives/datetime-range/*.js'
   ], ['jshint', 'watch:js:app:babel']);
 
   gulp.watch('./app/**/*.{less,css}', ['css']);
