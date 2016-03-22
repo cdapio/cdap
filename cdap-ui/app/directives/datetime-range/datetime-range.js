@@ -17,7 +17,29 @@
 function RangeController ($scope) {
   'ngInject';
 
-  $scope.test = 'hahahaha';
+  var vm = this;
+
+  vm.startTimeOpen = false;
+  vm.endTimeOpen = false;
+
+  vm.openStartTime = () => {
+    vm.startTimeOpen = true;
+    vm.endTimeOpen = false;
+  };
+
+  vm.openEndTime = () => {
+    vm.startTimeOpen = false;
+    vm.endTimeOpen = true;
+  };
+
+  vm.done = () => {
+    vm.startTimeOpen = false;
+    vm.endTimeOpen = false;
+
+    $scope.onDone();
+  };
+
+
 }
 
 angular.module(PKG.name+'.commons')
@@ -25,7 +47,8 @@ angular.module(PKG.name+'.commons')
     return {
       restrict: 'E',
       scope: {
-        dateRange: '='
+        dateRange: '=',
+        onDone: '&'
       },
       controller: RangeController,
       controllerAs: 'RangeController',

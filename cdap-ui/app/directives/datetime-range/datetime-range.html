@@ -14,4 +14,48 @@
   the License.
 -->
 
-{{test}}
+<div class="datetime-range"
+     ng-class="{ 'open': RangeController.startTimeOpen || RangeController.endTimeOpen }">
+  <div class="date-text-input text-center">
+    <div class="start-time datetime-input">
+      <input type="text"
+             class="form-control"
+             placeholder="Start Time"
+             ng-model="dateRange.startTime"
+             ng-click="RangeController.openStartTime()"
+             ng-class="{ 'active': RangeController.startTimeOpen }">
+    </div>
+    <span>to</span>
+    <div class="end-time datetime-input">
+      <input type="text"
+             class="form-control"
+             placeholder="End Time"
+             ng-model="dateRange.endTime"
+             ng-click="RangeController.openEndTime()"
+             ng-class="{ 'active': RangeController.endTimeOpen }">
+    </div>
+  </div>
+
+  <div>
+    <my-datetime-picker
+      date-data="dateRange.startTime"
+      max-date="dateRange.endTime"
+      ng-if="RangeController.startTimeOpen">
+    </my-datetime-picker>
+
+    <my-datetime-picker
+      date-data="dateRange.endTime"
+      min-date="dateRange.startTime"
+      ng-if="RangeController.endTimeOpen">
+    </my-datetime-picker>
+
+    <div class="footer-row text-center" ng-if="RangeController.startTimeOpen || RangeController.endTimeOpen">
+      <button class="btn btn-default btn-block done-button"
+              ng-disabled="dateRange.startTime >= dateRange.endTime"
+              ng-click="RangeController.done()">
+        Done
+      </button>
+    </div>
+  </div>
+
+</div>

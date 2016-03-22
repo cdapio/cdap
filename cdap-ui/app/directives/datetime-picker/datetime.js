@@ -24,6 +24,9 @@ function DatetimeController($scope) {
     startingDay: 0
   };
 
+  if ($scope.minDate) { vm.options.minDate = $scope.minDate; }
+  if ($scope.maxDate) { vm.options.maxDate = $scope.maxDate; }
+
   $scope.dateData = $scope.dateData || new Date();
 
   vm.min = 0;
@@ -96,8 +99,8 @@ angular.module(PKG.name+'.commons')
       restrict: 'E',
       scope: {
         dateData: '=',
-        min: '=?',
-        max: '=?'
+        minDate: '=?',
+        maxDate: '=?'
       },
       controller: DatetimeController,
       controllerAs: 'DatetimeController',

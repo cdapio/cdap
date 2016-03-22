@@ -14,6 +14,45 @@
  * the License.
  */
 
-my-datetime-range {
+@import "../../styles/variables.less";
+@import "../../styles/themes/cdap/mixins.less";
+@import "../../../bower_components/bootstrap/less/mixins.less";
 
+my-datetime-range {
+  .date-text-input {
+    margin-bottom: 10px;
+  }
+
+  .datetime-range {
+    width: 400px;
+    padding-top: 10px;
+
+    &.open {
+      background-color: white;
+      position: absolute;
+      border-radius: 4px;
+      .box-shadow(0 5px 15px 1px fade(black, 40%));
+    }
+  }
+  .datetime-input {
+    width: 45%;
+    display: inline-block;
+  }
+
+  .active, .form-control:focus {
+    border: 2px solid @tracker-green;
+  }
+
+  .done-button {
+    font-weight: 500;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    border-radius: 0;
+    color: #464a56;
+    border-bottom: 0;
+    border-right: 0;
+    border-left: 0;
+    border-bottom-right-radius: 4px;
+    border-bottom-left-radius: 4px;
+  }
 }

@@ -17,6 +17,13 @@
 angular.module(`${PKG.name}.feature.experimental`)
   .controller('DateCtrl', function($scope) {
 
-    $scope.dateObj = new Date();
+    $scope.dateObj = {
+      startTime: null,
+      endTime: null
+    };
+
+    $scope.test = function () {
+      console.log('Time', $scope.dateObj.startTime, $scope.dateObj.endTime);
+    };
 
   });
