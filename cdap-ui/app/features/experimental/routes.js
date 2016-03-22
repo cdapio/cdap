@@ -46,6 +46,16 @@ angular.module(PKG.name+'.feature.experimental')
             label: 'Directives Playground',
             parent: 'experimental.home'
           }
+        })
+        .state('experimental.datetime', {
+          url: '/datetime',
+          templateUrl: '/assets/features/experimental/templates/datetime.html',
+          controller: 'DateCtrl',
+          controllerAs: 'Date',
+          ncyBreadcrumb: {
+            label: 'Datetime Playground',
+            parent: 'experimental.home'
+          }
         });
 
   });
