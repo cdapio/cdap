@@ -81,7 +81,8 @@ public class AuthorizationClient {
 
     URL url = config.resolveURLV3(AUTHORIZATION_BASE + "authorized");
     HttpRequest request = HttpRequest.post(url).withBody(GSON.toJson(checkRequest)).build();
-    executeRequest(request, HttpURLConnection.HTTP_FORBIDDEN, HttpURLConnection.HTTP_NOT_IMPLEMENTED);
+    executeRequest(request, principal, entity, action, HttpURLConnection.HTTP_FORBIDDEN,
+                   HttpURLConnection.HTTP_NOT_IMPLEMENTED);
   }
 
   public void grant(EntityId entity, Principal principal, Set<Action> actions) throws IOException,
@@ -198,14 +199,26 @@ public class AuthorizationClient {
     }
   }
 
+
+  // TODO CDAP-5200 the following method is only used for autorization checks api. We are going to remove the api
+  // but the authorization checks call might be calling this and we will need to capture forbidden and throw right
+  // exception. Also for roleManagement actions if the user who is performing the action is not authorized we need
+  // show a helpful message with the authenticated user name. We need to revisit this during later stage of integration
+  // and refactor this.
+  private HttpResponse executeRequest(HttpRequest request, Principal principal, EntityId entityId, Action action,
+                                      int... allowedErrorCodes)
+    throws IOException, UnauthenticatedException, FeatureDisabledException, UnauthorizedException {
+    HttpResponse response = executeRequest(request, allowedErrorCodes);
+    if (HttpURLConnection.HTTP_FORBIDDEN == response.getResponseCode()) {
+      // TODO:(CDAP-5302) Include the logged in username here
+      throw new UnauthorizedException(principal, action, entityId);
+    }
+    return response;
+  }
+
   private HttpResponse executeRequest(HttpRequest request, int... allowedErrorCodes)
     throws IOException, UnauthenticatedException, FeatureDisabledException, UnauthorizedException {
     HttpResponse response = restClient.execute(request, config.getAccessToken(), allowedErrorCodes);
-    if (HttpURLConnection.HTTP_FORBIDDEN == response.getResponseCode()) {
-      // TODO:(CDAP-5302) Include the logged in username here
-      throw new UnauthorizedException(String.format("Unauthorized to perform %s %s with body %s",
-                                                    request.getMethod(), request.getURL(), request.getBody()));
-    }
     if (HttpURLConnection.HTTP_NOT_IMPLEMENTED == response.getResponseCode()) {
       throw new FeatureDisabledException("Authorization", "cdap-site.xml", Constants.Security.Authorization.ENABLED,
                                          "true");
