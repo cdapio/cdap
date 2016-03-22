@@ -23,11 +23,111 @@ Cask Data Application Platform Release Notes
    :backlinks: none
    :depth: 2
 
-`Release 3.3.2 <http://docs.cask.co/cdap/3.3.2/index.html>`__
+`Release 3.4.0 <http://docs.cask.co/cdap/3.4.0/index.html>`__
 =============================================================
 
-Bug Fix
--------
+New Features
+------------
+- `CDAP-9999 <https://issues.cask.co/browse/CDAP-9999>`__ - Added...
+
+Improvements
+------------
+- `CDAP-9999 <https://issues.cask.co/browse/CDAP-9999>`__ - Added...
+
+Bug Fixes
+---------
+- `CDAP-9999 <https://issues.cask.co/browse/CDAP-9999>`__ - Fixed a problem with...
+
+API Changes
+-----------
+- `CDAP-9999 <https://issues.cask.co/browse/CDAP-9999>`__ - Added...
+
+Deprecated and Removed Features
+-------------------------------
+- See the :ref:`CDAP 3.4.0 Javadocs <javadocs>` for a list of deprecated and removed APIs.
+
+- `CDAP-9999 <https://issues.cask.co/browse/CDAP-9999>`__ - Removed...
+
+Known Issues
+------------
+- After upgrading CDAP from a pre-3.0 version, any unprocessed metrics data in Kafka will
+  be lost and *WARN* log messages will be logged that tell about the inability to process
+  old data in the old format.
+
+- `CDAP-797 <https://issues.cask.co/browse/CDAP-797>`__ - 
+  When running secure Hadoop clusters, debug logs from MapReduce programs are not
+  available.
+
+- `CDAP-1007 <https://issues.cask.co/browse/CDAP-1007>`__ -
+  If the Hive Metastore is restarted while the CDAP Explore Service is running, the
+  Explore Service remains alive, but becomes unusable. To correct, restart the CDAP Master
+  |---| which will restart all services |---| as described under "Starting CDAP Services"
+  for your particular Hadoop distribution in the :ref:`Installation documentation <installation-index>`.
+
+- `CDAP-1587 <https://issues.cask.co/browse/CDAP-1587>`__ - 
+  CDAP internally creates tables in the "user" space that begin with the word
+  ``"system"``. User datasets with names starting with ``"system"`` can conflict if they
+  were to match one of those names. To avoid this, do not start any datasets with the word
+  ``"system"``. 
+
+- `CDAP-2632 <https://issues.cask.co/browse/CDAP-2632>`__ -
+  The application in the `cdap-kafka-ingest-guide 
+  <https://github.com/cdap-guides/cdap-kafka-ingest-guide/tree/release/cdap-3.0-compatible>`__ 
+  does not run on Ubuntu 14.x as of CDAP 3.0.x.
+
+- `CDAP-2721 <https://issues.cask.co/browse/CDAP-2721>`__ -
+  Metrics for :ref:`FileSets <datasets-fileset>` can show zero values even if there is
+  data present, because FileSets do not emit metrics (`CDAP-587
+  <https://issues.cask.co/browse/CDAP-587>`__).
+  
+- `CDAP-2831 <https://issues.cask.co/browse/CDAP-2831>`__ -
+  A workflow that is scheduled by time will not be run between the failure of the primary
+  master and the time that the secondary takes over. This scheduled run will not be
+  triggered at all.
+
+- `CDAP-2945 <https://issues.cask.co/browse/CDAP-2945>`__ -
+  If the input partition filter for a PartitionedFileSet does not match any partitions,
+  MapReduce jobs can fail.
+
+- `CDAP-3000 <https://issues.cask.co/browse/CDAP-3000>`__ -
+  The Workflow token is in an inconsistent state for nodes in a fork while the nodes of
+  the fork are still running. It becomes consistent after the join.
+
+- `CDAP-3221 <https://issues.cask.co/browse/CDAP-3221>`__ -
+  When running in CDAP Standalone mode, if a MapReduce job fails repeatedly, then the SDK
+  hits an out-of-memory exception due to ``perm gen``. The Standalone needs restarting at
+  this point.
+
+- `CDAP-3262 <https://issues.cask.co/browse/CDAP-3262>`__ -
+  For Microsoft Windows, the CDAP Standalone scripts can fail when used with a JAVA_HOME
+  that is defined as a path with spaces in it. A workaround is to use a definition of
+  JAVA_HOME that does not include spaces, such as ``C:\PROGRA~1\Java\jdk1.7.0_79\bin`` or
+  ``C:\ProgramData\Oracle\Java\javapath``.
+
+- `CDAP-3492 <https://issues.cask.co/browse/CDAP-3492>`__ -
+  In the CDAP CLI, executing ``'select *'`` from a dataset with many fields generates an error.
+  
+- `CDAP-3641 <https://issues.cask.co/browse/CDAP-3641>`__ -
+  A RESTful API call to retrieve workflow statistics hangs if units (such as "s" for
+  seconds) are not provided as part of the query.
+
+- `CDAP-3750 <https://issues.cask.co/browse/CDAP-3750>`__ -
+  If a table schema contains a field name that is a reserved word in the Hive DDL, ``'enable explore'`` fails.
+
+
+`Release 3.3.2 <http://docs.cask.co/cdap/3.3.2/index.html>`__
+
+=============================================================
+
+Improvements
+------------
+- `CDAP-5047 <https://issues.cask.co/browse/CDAP-5047>`__ - Added a :ref:`Batch Source
+  Plugin <cdap-apps-etl-plugins-batchsources>` to read from Microsoft Azure Blob Storage.
+
+- `CDAP-5134 <https://issues.cask.co/browse/CDAP-5134>`__ - Added support for CDH 5.6 to CDAP.
+
+Bug Fixes
+---------
 - `CDAP-4967 <https://issues.cask.co/browse/CDAP-4967>`__ - Fixed a schema-parsing bug
   that prevented the use of schemas where a record is used both as a top-level field and
   also used inside a different record field.
@@ -50,13 +150,6 @@ Bug Fix
 
 - `CDAP-5137 <https://issues.cask.co/browse/CDAP-5137>`__ - Fix a problem with Spark jobs
   not being submitted to the appropriate YARN scheduler queue set for the namespace.
-
-Improvements
-------------
-- `CDAP-5047 <https://issues.cask.co/browse/CDAP-5047>`__ - Added a :ref:`Batch Source
-  Plugin <cdap-apps-etl-plugins-batchsources>` to read from Microsoft Azure Blob Storage.
-
-- `CDAP-5134 <https://issues.cask.co/browse/CDAP-5134>`__ - Added support for CDH 5.6 to CDAP.
 
 
 `Release 3.3.1 <http://docs.cask.co/cdap/3.3.1/index.html>`__
@@ -209,12 +302,73 @@ Deprecated and Removed Features
 - The properties ``router.ssl.webapp.bind.port``, ``router.webapp.bind.port``,
   ``router.webapp.enabled`` have been deprecated and will be removed in a future version.
 
-.. _known-issues-331:
 
 Known Issues
 ------------
-- See the *Known Issues* of `version 3.2.0 <#known-issues-320>`_\ .
+- After upgrading CDAP from a pre-3.0 version, any unprocessed metrics data in Kafka will
+  be lost and *WARN* log messages will be logged that tell about the inability to process
+  old data in the old format.
 
+- `CDAP-797 <https://issues.cask.co/browse/CDAP-797>`__ - 
+  When running secure Hadoop clusters, debug logs from MapReduce programs are not
+  available.
+
+- `CDAP-1007 <https://issues.cask.co/browse/CDAP-1007>`__ -
+  If the Hive Metastore is restarted while the CDAP Explore Service is running, the
+  Explore Service remains alive, but becomes unusable. To correct, restart the CDAP Master
+  |---| which will restart all services |---| as described under "Starting CDAP Services"
+  for your particular Hadoop distribution in the :ref:`Installation documentation <installation-index>`.
+
+- `CDAP-1587 <https://issues.cask.co/browse/CDAP-1587>`__ - 
+  CDAP internally creates tables in the "user" space that begin with the word
+  ``"system"``. User datasets with names starting with ``"system"`` can conflict if they
+  were to match one of those names. To avoid this, do not start any datasets with the word
+  ``"system"``. 
+
+- `CDAP-2632 <https://issues.cask.co/browse/CDAP-2632>`__ -
+  The application in the `cdap-kafka-ingest-guide 
+  <https://github.com/cdap-guides/cdap-kafka-ingest-guide/tree/release/cdap-3.0-compatible>`__ 
+  does not run on Ubuntu 14.x as of CDAP 3.0.x.
+
+- `CDAP-2721 <https://issues.cask.co/browse/CDAP-2721>`__ -
+  Metrics for :ref:`FileSets <datasets-fileset>` can show zero values even if there is
+  data present, because FileSets do not emit metrics (`CDAP-587
+  <https://issues.cask.co/browse/CDAP-587>`).
+  
+- `CDAP-2831 <https://issues.cask.co/browse/CDAP-2831>`__ -
+  A workflow that is scheduled by time will not be run between the failure of the primary
+  master and the time that the secondary takes over. This scheduled run will not be
+  triggered at all.
+
+- `CDAP-2945 <https://issues.cask.co/browse/CDAP-2945>`__ -
+  If the input partition filter for a PartitionedFileSet does not match any partitions,
+  MapReduce jobs can fail.
+
+- `CDAP-3000 <https://issues.cask.co/browse/CDAP-3000>`__ -
+  The Workflow token is in an inconsistent state for nodes in a fork while the nodes of
+  the fork are still running. It becomes consistent after the join.
+
+- `CDAP-3221 <https://issues.cask.co/browse/CDAP-3221>`__ -
+  When running in CDAP Standalone mode, if a MapReduce job fails repeatedly, then the SDK
+  hits an out-of-memory exception due to ``perm gen``. The Standalone needs restarting at
+  this point.
+
+- `CDAP-3262 <https://issues.cask.co/browse/CDAP-3262>`__ -
+  For Microsoft Windows, the CDAP Standalone scripts can fail when used with a JAVA_HOME
+  that is defined as a path with spaces in it. A workaround is to use a definition of
+  JAVA_HOME that does not include spaces, such as ``C:\PROGRA~1\Java\jdk1.7.0_79\bin`` or
+  ``C:\ProgramData\Oracle\Java\javapath``.
+
+- `CDAP-3492 <https://issues.cask.co/browse/CDAP-3492>`__ -
+  In the CDAP CLI, executing ``'select *'`` from a dataset with many fields generates an error.
+  
+- `CDAP-3641 <https://issues.cask.co/browse/CDAP-3641>`__ -
+  A RESTful API call to retrieve workflow statistics hangs if units (such as "s" for
+  seconds) are not provided as part of the query.
+
+- `CDAP-3750 <https://issues.cask.co/browse/CDAP-3750>`__ -
+  If a table schema contains a field name that is a reserved word in the Hive DDL, ``'enable explore'`` fails.
+  
 
 `Release 3.3.0 <http://docs.cask.co/cdap/3.3.0/index.html>`__
 =============================================================
@@ -489,7 +643,72 @@ Deprecated and Removed Features
 - `CDAP-4251 <https://issues.cask.co/browse/CDAP-4251>`__ -
   Removed deprecated fluent style API for Flow configuration. The only supported API is now the configurer style.
 
+Known Issues
+------------
+- After upgrading CDAP from a pre-3.0 version, any unprocessed metrics data in Kafka will
+  be lost and *WARN* log messages will be logged that tell about the inability to process
+  old data in the old format.
 
+- `CDAP-797 <https://issues.cask.co/browse/CDAP-797>`__ - 
+  When running secure Hadoop clusters, debug logs from MapReduce programs are not
+  available.
+
+- `CDAP-1007 <https://issues.cask.co/browse/CDAP-1007>`__ -
+  If the Hive Metastore is restarted while the CDAP Explore Service is running, the
+  Explore Service remains alive, but becomes unusable. To correct, restart the CDAP Master
+  |---| which will restart all services |---| as described under "Starting CDAP Services"
+  for your particular Hadoop distribution in the :ref:`Installation documentation <installation-index>`.
+
+- `CDAP-1587 <https://issues.cask.co/browse/CDAP-1587>`__ - 
+  CDAP internally creates tables in the "user" space that begin with the word
+  ``"system"``. User datasets with names starting with ``"system"`` can conflict if they
+  were to match one of those names. To avoid this, do not start any datasets with the word
+  ``"system"``. 
+
+- `CDAP-2632 <https://issues.cask.co/browse/CDAP-2632>`__ -
+  The application in the `cdap-kafka-ingest-guide 
+  <https://github.com/cdap-guides/cdap-kafka-ingest-guide/tree/release/cdap-3.0-compatible>`__ 
+  does not run on Ubuntu 14.x as of CDAP 3.0.x.
+
+- `CDAP-2721 <https://issues.cask.co/browse/CDAP-2721>`__ -
+  Metrics for :ref:`FileSets <datasets-fileset>` can show zero values even if there is
+  data present, because FileSets do not emit metrics (`CDAP-587
+  <https://issues.cask.co/browse/CDAP-587>`).
+  
+- `CDAP-2831 <https://issues.cask.co/browse/CDAP-2831>`__ -
+  A workflow that is scheduled by time will not be run between the failure of the primary
+  master and the time that the secondary takes over. This scheduled run will not be
+  triggered at all.
+
+- `CDAP-2945 <https://issues.cask.co/browse/CDAP-2945>`__ -
+  If the input partition filter for a PartitionedFileSet does not match any partitions,
+  MapReduce jobs can fail.
+
+- `CDAP-3000 <https://issues.cask.co/browse/CDAP-3000>`__ -
+  The Workflow token is in an inconsistent state for nodes in a fork while the nodes of
+  the fork are still running. It becomes consistent after the join.
+
+- `CDAP-3221 <https://issues.cask.co/browse/CDAP-3221>`__ -
+  When running in CDAP Standalone mode, if a MapReduce job fails repeatedly, then the SDK
+  hits an out-of-memory exception due to ``perm gen``. The Standalone needs restarting at
+  this point.
+
+- `CDAP-3262 <https://issues.cask.co/browse/CDAP-3262>`__ -
+  For Microsoft Windows, the CDAP Standalone scripts can fail when used with a JAVA_HOME
+  that is defined as a path with spaces in it. A workaround is to use a definition of
+  JAVA_HOME that does not include spaces, such as ``C:\PROGRA~1\Java\jdk1.7.0_79\bin`` or
+  ``C:\ProgramData\Oracle\Java\javapath``.
+
+- `CDAP-3492 <https://issues.cask.co/browse/CDAP-3492>`__ -
+  In the CDAP CLI, executing ``'select *'`` from a dataset with many fields generates an error.
+  
+- `CDAP-3641 <https://issues.cask.co/browse/CDAP-3641>`__ -
+  A RESTful API call to retrieve workflow statistics hangs if units (such as "s" for
+  seconds) are not provided as part of the query.
+
+- `CDAP-3750 <https://issues.cask.co/browse/CDAP-3750>`__ -
+  If a table schema contains a field name that is a reserved word in the Hive DDL, ``'enable explore'`` fails.
+  
 
 `Release 3.2.1 <http://docs.cask.co/cdap/3.2.1/index.html>`__
 =============================================================
@@ -542,6 +761,72 @@ Bug Fixes
 - `CDAP-3961 <https://issues.cask.co/browse/CDAP-3961>`__ -
   Fixed a missing dependency on ``cdap-hbase-compat-1.1`` package in the CDAP Master package. 
 
+Known Issues
+------------
+- After upgrading CDAP from a pre-3.0 version, any unprocessed metrics data in Kafka will
+  be lost and *WARN* log messages will be logged that tell about the inability to process
+  old data in the old format.
+
+- `CDAP-797 <https://issues.cask.co/browse/CDAP-797>`__ - 
+  When running secure Hadoop clusters, debug logs from MapReduce programs are not
+  available.
+
+- `CDAP-1007 <https://issues.cask.co/browse/CDAP-1007>`__ -
+  If the Hive Metastore is restarted while the CDAP Explore Service is running, the
+  Explore Service remains alive, but becomes unusable. To correct, restart the CDAP Master
+  |---| which will restart all services |---| as described under "Starting CDAP Services"
+  for your particular Hadoop distribution in the :ref:`Installation documentation <installation-index>`.
+
+- `CDAP-1587 <https://issues.cask.co/browse/CDAP-1587>`__ - 
+  CDAP internally creates tables in the "user" space that begin with the word
+  ``"system"``. User datasets with names starting with ``"system"`` can conflict if they
+  were to match one of those names. To avoid this, do not start any datasets with the word
+  ``"system"``. 
+
+- `CDAP-2632 <https://issues.cask.co/browse/CDAP-2632>`__ -
+  The application in the `cdap-kafka-ingest-guide 
+  <https://github.com/cdap-guides/cdap-kafka-ingest-guide/tree/release/cdap-3.0-compatible>`__ 
+  does not run on Ubuntu 14.x as of CDAP 3.0.x.
+
+- `CDAP-2721 <https://issues.cask.co/browse/CDAP-2721>`__ -
+  Metrics for :ref:`FileSets <datasets-fileset>` can show zero values even if there is
+  data present, because FileSets do not emit metrics (`CDAP-587
+  <https://issues.cask.co/browse/CDAP-587>`).
+  
+- `CDAP-2831 <https://issues.cask.co/browse/CDAP-2831>`__ -
+  A workflow that is scheduled by time will not be run between the failure of the primary
+  master and the time that the secondary takes over. This scheduled run will not be
+  triggered at all.
+
+- `CDAP-2945 <https://issues.cask.co/browse/CDAP-2945>`__ -
+  If the input partition filter for a PartitionedFileSet does not match any partitions,
+  MapReduce jobs can fail.
+
+- `CDAP-3000 <https://issues.cask.co/browse/CDAP-3000>`__ -
+  The Workflow token is in an inconsistent state for nodes in a fork while the nodes of
+  the fork are still running. It becomes consistent after the join.
+
+- `CDAP-3221 <https://issues.cask.co/browse/CDAP-3221>`__ -
+  When running in CDAP Standalone mode, if a MapReduce job fails repeatedly, then the SDK
+  hits an out-of-memory exception due to ``perm gen``. The Standalone needs restarting at
+  this point.
+
+- `CDAP-3262 <https://issues.cask.co/browse/CDAP-3262>`__ -
+  For Microsoft Windows, the CDAP Standalone scripts can fail when used with a JAVA_HOME
+  that is defined as a path with spaces in it. A workaround is to use a definition of
+  JAVA_HOME that does not include spaces, such as ``C:\PROGRA~1\Java\jdk1.7.0_79\bin`` or
+  ``C:\ProgramData\Oracle\Java\javapath``.
+
+- `CDAP-3492 <https://issues.cask.co/browse/CDAP-3492>`__ -
+  In the CDAP CLI, executing ``'select *'`` from a dataset with many fields generates an error.
+  
+- `CDAP-3641 <https://issues.cask.co/browse/CDAP-3641>`__ -
+  A RESTful API call to retrieve workflow statistics hangs if units (such as "s" for
+  seconds) are not provided as part of the query.
+
+- `CDAP-3750 <https://issues.cask.co/browse/CDAP-3750>`__ -
+  If a table schema contains a field name that is a reserved word in the Hive DDL, ``'enable explore'`` fails.
+  
 
 `Release 3.2.0 <http://docs.cask.co/cdap/3.2.0/index.html>`__
 =============================================================
@@ -948,21 +1233,68 @@ Deprecated and Removed Features
 - `CDAP-3596 <https://issues.cask.co/browse/CDAP-3596>`__ -
   Replaced the ETL ApplicationTemplates with the new ETL Applications.
 
-.. _known-issues-320:
-
 Known Issues
 ------------
+- After upgrading CDAP from a pre-3.0 version, any unprocessed metrics data in Kafka will
+  be lost and *WARN* log messages will be logged that tell about the inability to process
+  old data in the old format.
+
+- `CDAP-797 <https://issues.cask.co/browse/CDAP-797>`__ - 
+  When running secure Hadoop clusters, debug logs from MapReduce programs are not
+  available.
+
+- `CDAP-1007 <https://issues.cask.co/browse/CDAP-1007>`__ -
+  If the Hive Metastore is restarted while the CDAP Explore Service is running, the
+  Explore Service remains alive, but becomes unusable. To correct, restart the CDAP Master
+  |---| which will restart all services |---| as described under "Starting CDAP Services"
+  for your particular Hadoop distribution in the :ref:`Installation documentation <installation-index>`.
+
+- `CDAP-1587 <https://issues.cask.co/browse/CDAP-1587>`__ - 
+  CDAP internally creates tables in the "user" space that begin with the word
+  ``"system"``. User datasets with names starting with ``"system"`` can conflict if they
+  were to match one of those names. To avoid this, do not start any datasets with the word
+  ``"system"``. 
+
+- `CDAP-2632 <https://issues.cask.co/browse/CDAP-2632>`__ -
+  The application in the `cdap-kafka-ingest-guide 
+  <https://github.com/cdap-guides/cdap-kafka-ingest-guide/tree/release/cdap-3.0-compatible>`__ 
+  does not run on Ubuntu 14.x as of CDAP 3.0.x.
+
+- `CDAP-2721 <https://issues.cask.co/browse/CDAP-2721>`__ -
+  Metrics for :ref:`FileSets <datasets-fileset>` can show zero values even if there is
+  data present, because FileSets do not emit metrics (`CDAP-587
+  <https://issues.cask.co/browse/CDAP-587>`).
+  
+- `CDAP-2831 <https://issues.cask.co/browse/CDAP-2831>`__ -
+  A workflow that is scheduled by time will not be run between the failure of the primary
+  master and the time that the secondary takes over. This scheduled run will not be
+  triggered at all.
+
+- `CDAP-2945 <https://issues.cask.co/browse/CDAP-2945>`__ -
+  If the input partition filter for a PartitionedFileSet does not match any partitions,
+  MapReduce jobs can fail.
+
+- `CDAP-3000 <https://issues.cask.co/browse/CDAP-3000>`__ -
+  The Workflow token is in an inconsistent state for nodes in a fork while the nodes of
+  the fork are still running. It becomes consistent after the join.
+
+- `CDAP-3221 <https://issues.cask.co/browse/CDAP-3221>`__ -
+  When running in CDAP Standalone mode, if a MapReduce job fails repeatedly, then the SDK
+  hits an out-of-memory exception due to ``perm gen``. The Standalone needs restarting at
+  this point.
+
+- `CDAP-3262 <https://issues.cask.co/browse/CDAP-3262>`__ -
+  For Microsoft Windows, the CDAP Standalone scripts can fail when used with a JAVA_HOME
+  that is defined as a path with spaces in it. A workaround is to use a definition of
+  JAVA_HOME that does not include spaces, such as ``C:\PROGRA~1\Java\jdk1.7.0_79\bin`` or
+  ``C:\ProgramData\Oracle\Java\javapath``.
 
 - `CDAP-3492 <https://issues.cask.co/browse/CDAP-3492>`__ -
-  In CDAP-CLI, executing 'select \*' from a dataset with many fields generates an error.
+  In the CDAP CLI, executing ``'select *'`` from a dataset with many fields generates an error.
   
 - `CDAP-3641 <https://issues.cask.co/browse/CDAP-3641>`__ -
-  WorkflowStatsSLAHttpHandler hangs if units not provided.
-  
-- `CDAP-3262 <https://issues.cask.co/browse/CDAP-3262>`__ -
-  There is a problem under Microsoft Windows and using the CDAP Standalone scripts when  
-  JAVA_HOME is defined as a path with spaces in it. A workaround is to use a definition of 
-  JAVA_HOME that does not include spaces.
+  A RESTful API call to retrieve workflow statistics hangs if units (such as "s" for
+  seconds) are not provided as part of the query.
 
 - `CDAP-3697 <https://issues.cask.co/browse/CDAP-3697>`__ -
   CDAP Explore is broken on secure CDH 5.1.
@@ -974,12 +1306,10 @@ Known Issues
   The DBSource plugin does not allow a username with an empty password.
   
 - `CDAP-3750 <https://issues.cask.co/browse/CDAP-3750>`__ -
-  If a table schema contains a field name that is a reserved word in Hive DDL, 'enable explore' fails.
-  
+  If a table schema contains a field name that is a reserved word in the Hive DDL, ``'enable explore'`` fails.
+
 - `CDAP-3819 <https://issues.cask.co/browse/CDAP-3819>`__ -
   The Cassandra source does not handles spaces properly in column fields which require a comma-separated list.
-  
-- See also the *Known Issues* of `version 3.1.0 <#known-issues-310>`_\ .
 
 
 `Release 3.1.0 <http://docs.cask.co/cdap/3.1.0/index.html>`__
@@ -1941,38 +2271,85 @@ Deprecated and Removed Features
 Known Issues
 ------------
 
+- See the above section (*API Changes*) for alterations that can affect existing installations.
+- CDAP has been tested on and supports CDH 4.2.x through CDH 5.4.4, HDP 2.0 through 2.6, and
+  Apache Bigtop 0.8.0. It has not been tested on more recent versions of CDH. 
+  See `our Hadoop/HBase Environment configurations 
+  <http://docs.cask.co/cdap/3.1.0/en/admin-manual/installation/installation.html#install-hadoop-hbase>`__.
+- After upgrading CDAP from a pre-3.0 version, any unprocessed metrics data in Kafka will
+  be lost and *WARN* log messages will be logged that tell about the inability to process
+  old data in the old format.
+
+- Retrieving multiple metrics |---| by issuing an HTTP POST request with a JSON list as
+  the request body that enumerates the name and attributes for each metric |---| is currently not
+  supported in the `Metrics HTTP RESTful API v3 
+  <http://docs.cask.co/cdap/2.8.0/en/reference-manual/http-restful-api/http-restful-api-v3/metrics.html#query-tips>`__.
+  Instead, use the v2 API. It will be supported in a future release.
+
+- `CDAP-797 <https://issues.cask.co/browse/CDAP-797>`__ -
+  When running secure Hadoop clusters, metrics and debug logs from MapReduce programs are
+  not available.
+  
+- `CDAP-1007 <https://issues.cask.co/browse/CDAP-1007>`__ -
+  If the Hive Metastore is restarted while the CDAP Explore Service is running, the
+  Explore Service remains alive, but becomes unusable. To correct, restart the CDAP Master
+  |---| which will restart all services |---| as described under "Starting CDAP Services"
+  for your particular Hadoop distribution in the `Installation documentation
+  <http://docs.cask.co/cdap/3.0.0/en/admin-manual/installation/installation.html#starting-services>`__.
+
+- `CDAP-1587 <https://issues.cask.co/browse/CDAP-1587>`__ - 
+  CDAP internally creates tables in the "user" space that begin with the word
+  ``"system"``. User datasets with names starting with ``"system"`` can conflict if they
+  were to match one of those names. To avoid this, do not start any datasets with the word
+  ``"system"``. 
+  
+- `CDAP-1864 <https://issues.cask.co/browse/CDAP-1864>`__ - 
+  Creating a dataset in a non-existent namespace manifests in the RESTful API with an
+  incorrect error message.
+  
+- `CDAP-2632 <https://issues.cask.co/browse/CDAP-2632>`__ -
+  The application in the `cdap-kafka-ingest-guide 
+  <https://github.com/cdap-guides/cdap-kafka-ingest-guide/tree/release/cdap-3.0-compatible>`__ 
+  does not run on Ubuntu 14.x as of CDAP 3.0.x.
+    
+- `CDAP-2785 <https://issues.cask.co/browse/CDAP-2785>`__ -
+  In the CDAP UI, many buttons will remain in focus after being clicked, even if they
+  should not retain focus.
+  
+- `CDAP-2831 <https://issues.cask.co/browse/CDAP-2831>`__ -
+  A workflow that is scheduled by time will not be run between the failure of the primary
+  master and the time that the secondary takes over. This scheduled run will not be
+  triggered at all.
+
 - `CDAP-2878 <https://issues.cask.co/browse/CDAP-2878>`__ -
-  There is a problem with confusing semantics for TTL. The Table TTL property is
+  The semantics for TTL are confusing, in that the Table TTL property is
   interpreted as milliseconds in some contexts: ``DatasetDefinition.confgure()`` and
   ``getAdmin()``.
 
 - `CDAP-2945 <https://issues.cask.co/browse/CDAP-2945>`__ -
-  There is a problem in the PartitionedFileSet causing MapReduce to fail if the input
-  partition filter does not match any partitions.
-  
+  If the input partition filter for a PartitionedFileSet does not match any partitions,
+  MapReduce jobs can fail.
+
 - `CDAP-3000 <https://issues.cask.co/browse/CDAP-3000>`__ -
-  There is a problem with the Workflow token being in inconsistent state for nodes in a
-  fork while the fork is still running. It becomes consistent after the join.
+  The Workflow token is in an inconsistent state for nodes in a fork while the nodes of
+  the fork are still running. It becomes consistent after the join.
 
 - `CDAP-3101 <https://issues.cask.co/browse/CDAP-3101>`__ -
-  There is a problem with workflow runs not being scheduled due to Quartz exceptions. The
-  issue is related to that there cannot be more than 30 concurrent runs of a workflow.
+  If there are more than 30 concurrent runs of a workflow, the runs will not be scheduled
+  due to a Quartz exception.
 
 - `CDAP-3179 <https://issues.cask.co/browse/CDAP-3179>`__ -
   If you are using CDH 5.3 (CDAP 3.0.0) and are upgrading to CDH 5.4 (CDAP 3.1.0), you
-  must first upgrade the underlying HBase before you upgrade CDAP. This means perform the
+  must first upgrade the underlying HBase before you upgrade CDAP. This means that you perform the
   CDH upgrade before upgrading the CDAP.
   
 - `CDAP-3189 <https://issues.cask.co/browse/CDAP-3189>`__ -
   Large MapReduce jobs can cause excessive logging in the CDAP logs. 
   
 - `CDAP-3221 <https://issues.cask.co/browse/CDAP-3221>`__ -
-  There is a problem when running Standalone mode: if an adapter is configured incorrectly
-  such that it leads to a MapReduce job to fail repeatedly, then the SDK hits an OOM exception due to perm gen.
-  The Standalone needs restarting at this point.
-
-- See also the *Known Issues* of `version 3.0.1 <#known-issues-301>`_\ .
-
+  When running in CDAP Standalone mode, if a MapReduce job fails repeatedly, then the SDK
+  hits an out-of-memory exception due to ``perm gen``. The Standalone needs restarting at
+  this point.
 
 
 `Release 3.0.3 <http://docs.cask.co/cdap/3.0.3/index.html>`__
@@ -1984,6 +2361,9 @@ Bug Fix
 - Fixed a Bower dependency error in the CDAP UI
   (`CDAP-3010 <https://issues.cask.co/browse/CDAP-3010>`__).
 
+Known Issues
+------------
+- See the *Known Issues* of `version 3.0.1 <#known-issues-301>`_\ .
 
 `Release 3.0.2 <http://docs.cask.co/cdap/3.0.2/index.html>`__
 =============================================================
@@ -1995,6 +2375,9 @@ Bug Fixes
   (`CDAP-2962 <https://issues.cask.co/browse/CDAP-2962>`__, 
   `CDAP-2897 <https://issues.cask.co/browse/CDAP-2897>`__).
 
+Known Issues
+------------
+- See the *Known Issues* of `version 3.0.1 <#known-issues-301>`_\ .
 
 `Release 3.0.1 <http://docs.cask.co/cdap/3.0.1/index.html>`__
 =============================================================
@@ -2279,9 +2662,51 @@ Known Issues
   triggered at all. There is no warnings or messages about the missed run of the
   workflow. (`CDAP-2831 <https://issues.cask.co/browse/CDAP-2831>`__)
 
+- CDAP has been tested on and supports CDH 4.2.x through CDH 5.3.x, HDP 2.0 through 2.1, and
+  Apache Bigtop 0.8.0. It has not been tested on more recent versions of CDH. 
+  See `our Hadoop/HBase Environment configurations 
+  <http://docs.cask.co/cdap/3.0.0/en/admin-manual/installation/installation.html#install-hadoop-hbase>`__.
+  
+- After upgrading CDAP from a pre-3.0 version, any unprocessed metrics data in Kafka will
+  be lost and *WARN* log messages will be logged that tell about the inability to process
+  old data in the old format.
 
-- See also the *Known Issues* of `version 3.0.0 <#known-issues-300>`_\ .
+- See the above section (*API Changes*) for alterations that can affect existing installations.
 
+- When running secure Hadoop clusters, metrics and debug logs from MapReduce programs are
+  not available (`CDAP-797 <https://issues.cask.co/browse/CDAP-797>`__).
+- If the Hive Metastore is restarted while the CDAP Explore Service is running, the 
+  Explore Service remains alive, but becomes unusable. To correct, `restart the CDAP Master
+  <http://docs.cask.co/cdap/3.0.0/en/admin-manual/installation/installation.html#starting-services>`__, 
+  which will restart all services (`CDAP-1007 <https://issues.cask.co/browse/CDAP-1007>`__).
+- User datasets with names starting with ``"system"`` can potentially cause conflicts
+  (`CDAP-1587 <https://issues.cask.co/browse/CDAP-1587>`__).
+- Scaling the number of metrics processor instances doesn't automatically distribute the
+  processing load to the newer instances of the metrics processor. The CDAP Master needs to be
+  restarted to effectively distribute the processing across all metrics processor instances
+  (`CDAP-1853 <https://issues.cask.co/browse/CDAP-1853>`__).
+- Creating a dataset in a non-existent namespace manifests in the RESTful API with an
+  incorrect error message (`CDAP-1864 <https://issues.cask.co/browse/CDAP-1864>`__).
+- Retrieving multiple metrics |---| by issuing an HTTP POST request with a JSON list as
+  the request body that enumerates the name and attributes for each metric |---| is currently not
+  supported in the 
+  `Metrics HTTP RESTful API v3 <http://docs.cask.co/cdap/2.8.0/en/reference-manual/http-restful-api/http-restful-api-v3/metrics.html#query-tips>`__.
+  Instead, use the v2 API. It will be supported in a future release.
+- Typically, datasets are bundled as part of applications. When an application is upgraded and redeployed,
+  any changes in datasets will not be redeployed. This is because datasets can be shared across applications,
+  and an incompatible schema change can break other applications that are using the dataset.
+  A workaround (`CDAP-1253 <https://issues.cask.co/browse/CDAP-1253>`__) is to allow *unchecked dataset upgrades*.
+  Upgrades cause the dataset metadata, i.e. its specification including properties, to be updated. The dataset
+  runtime code is also updated. To prevent data loss the existing data and the underlying HBase tables remain as-is.
+
+  You can allow *unchecked dataset upgrades* by setting the configuration property ``dataset.unchecked.upgrade``
+  to ``true`` in ``cdap-site.xml``. This will ensure that datasets are upgraded when the application is redeployed.
+  When this configuration is set, the recommended process to deploy an upgraded dataset is to first stop
+  all applications that are using the dataset before deploying the new version of the application.
+  This lets all containers (flows, services, etc) to pick up the new dataset changes.
+  When datasets are upgraded using ``dataset.unchecked.upgrade``, no schema compatibility checks are performed by the
+  system. Hence it is very important that the developer verify the backward-compatibility, and makes sure that
+  other applications that are using the dataset can work with the new changes.
 
 
 `Release 3.0.0 <http://docs.cask.co/cdap/3.0.0/index.html>`__
@@ -2492,8 +2917,41 @@ Known Issues
 
 - See the above section (*API Changes*) for alterations that can affect existing installations.
 
-- See also the *Known Issues* of `version 2.8.0 <#known-issues-280>`_\ .
+- When running secure Hadoop clusters, metrics and debug logs from MapReduce programs are
+  not available (`CDAP-797 <https://issues.cask.co/browse/CDAP-797>`__).
+- If the Hive Metastore is restarted while the CDAP Explore Service is running, the 
+  Explore Service remains alive, but becomes unusable. To correct, `restart the CDAP Master
+  <http://docs.cask.co/cdap/3.0.0/en/admin-manual/installation/installation.html#starting-services>`__, 
+  which will restart all services (`CDAP-1007 <https://issues.cask.co/browse/CDAP-1007>`__).
+- User datasets with names starting with ``"system"`` can potentially cause conflicts
+  (`CDAP-1587 <https://issues.cask.co/browse/CDAP-1587>`__).
+- Scaling the number of metrics processor instances doesn't automatically distribute the
+  processing load to the newer instances of the metrics processor. The CDAP Master needs to be
+  restarted to effectively distribute the processing across all metrics processor instances
+  (`CDAP-1853 <https://issues.cask.co/browse/CDAP-1853>`__).
+- Creating a dataset in a non-existent namespace manifests in the RESTful API with an
+  incorrect error message (`CDAP-1864 <https://issues.cask.co/browse/CDAP-1864>`__).
+- Retrieving multiple metrics |---| by issuing an HTTP POST request with a JSON list as
+  the request body that enumerates the name and attributes for each metric |---| is currently not
+  supported in the 
+  `Metrics HTTP RESTful API v3 <http://docs.cask.co/cdap/2.8.0/en/reference-manual/http-restful-api/http-restful-api-v3/metrics.html#query-tips>`__.
+  Instead, use the v2 API. It will be supported in a future release.
+- Typically, datasets are bundled as part of applications. When an application is upgraded and redeployed,
+  any changes in datasets will not be redeployed. This is because datasets can be shared across applications,
+  and an incompatible schema change can break other applications that are using the dataset.
+  A workaround (`CDAP-1253 <https://issues.cask.co/browse/CDAP-1253>`__) is to allow *unchecked dataset upgrades*.
+  Upgrades cause the dataset metadata, i.e. its specification including properties, to be updated. The dataset
+  runtime code is also updated. To prevent data loss the existing data and the underlying HBase tables remain as-is.
 
+  You can allow *unchecked dataset upgrades* by setting the configuration property ``dataset.unchecked.upgrade``
+  to ``true`` in ``cdap-site.xml``. This will ensure that datasets are upgraded when the application is redeployed.
+  When this configuration is set, the recommended process to deploy an upgraded dataset is to first stop
+  all applications that are using the dataset before deploying the new version of the application.
+  This lets all containers (flows, services, etc) to pick up the new dataset changes.
+  When datasets are upgraded using ``dataset.unchecked.upgrade``, no schema compatibility checks are performed by the
+  system. Hence it is very important that the developer verify the backward-compatibility, and makes sure that
+  other applications that are using the dataset can work with the new changes.
+  
 
 `Release 2.8.0 <http://docs.cask.co/cdap/2.8.0/index.html>`__
 =============================================================
@@ -2611,8 +3069,9 @@ API Changes
 
 Known Issues
 ------------
-
-- See also the *Known Issues* of `version 2.7.1 <#known-issues-271>`_\ .
+- When running secure Hadoop clusters, metrics and debug logs from MapReduce programs are
+  not available (`CDAP-64 <https://issues.cask.co/browse/CDAP-64>`__ and `CDAP-797
+  <https://issues.cask.co/browse/CDAP-797>`__).
 - If the Hive Metastore is restarted while the CDAP Explore Service is running, the 
   Explore Service remains alive, but becomes unusable. To correct, `restart the CDAP Master
   <http://docs.cask.co/cdap/2.8.0/en/admin-manual/installation/installation.html#starting-services>`__, 
@@ -2645,7 +3104,22 @@ Known Issues
   When datasets are upgraded using ``dataset.unchecked.upgrade``, no schema compatibility checks are performed by the
   system. Hence it is very important that the developer verify the backward-compatibility, and makes sure that
   other applications that are using the dataset can work with the new changes.
+- A race condition resulting in a deadlock can occur when a TwillRunnable container
+  shutdowns while it still has ZooKeeper events to process. This occasionally surfaces when
+  running with OpenJDK or JDK7, though not with Oracle JDK6. It is caused by a change in the
+  ``ThreadPoolExecutor`` implementation between Oracle JDK6 and OpenJDK/JDK7. Until Twill is
+  updated in a future version of CDAP, a work-around is to kill the errant process. The Yarn
+  command to list all running applications and their ``app-id``\s is::
+  
+    yarn application -list -appStates RUNNING
 
+  The command to kill a process is::
+  
+    yarn application -kill <app-id>
+    
+  All versions of CDAP running Twill version 0.4.0 with this configuration can exhibit this
+  problem (`TWILL-110 <https://issues.apache.org/jira/browse/TWILL-110>`__).
+  
 
 `Release 2.7.1 <http://docs.cask.co/cdap/2.7.1/index.html>`__
 =============================================================
@@ -2693,8 +3167,46 @@ New Features
 
 Known Issues
 ------------
-- See also the *Known Issues* of `version 2.6.1. <#known-issues-261>`_
 - When upgrading an existing CDAP installation to 2.7.1, all metrics are reset.
+- When running secure Hadoop clusters, metrics and debug logs from MapReduce programs are
+  not available (`CDAP-64 <https://issues.cask.co/browse/CDAP-64>`__ and `CDAP-797
+  <https://issues.cask.co/browse/CDAP-797>`__).
+- When upgrading a cluster from an earlier version of CDAP, warning messages may appear in
+  the master log indicating that in-transit (emitted, but not yet processed) metrics
+  system messages could not be decoded (*Failed to decode message to MetricsRecord*). This
+  is because of a change in the format of emitted metrics, and can result in a small
+  amount of metrics data points being lost (`CDAP-745 <https://issues.cask.co/browse/CDAP-745>`__).
+- A race condition resulting in a deadlock can occur when a TwillRunnable container
+  shutdowns while it still has ZooKeeper events to process. This occasionally surfaces when
+  running with OpenJDK or JDK7, though not with Oracle JDK6. It is caused by a change in the
+  ``ThreadPoolExecutor`` implementation between Oracle JDK6 and OpenJDK/JDK7. Until Twill is
+  updated in a future version of CDAP, a work-around is to kill the errant process. The Yarn
+  command to list all running applications and their ``app-id``\s is::
+  
+    yarn application -list -appStates RUNNING
+
+  The command to kill a process is::
+  
+    yarn application -kill <app-id>
+    
+  All versions of CDAP running Twill version 0.4.0 with this configuration can exhibit this
+  problem (`TWILL-110 <https://issues.apache.org/jira/browse/TWILL-110>`__).
+
+- Typically, datasets are bundled as part of applications. When an application is upgraded and redeployed,
+  any changes in datasets will not be redeployed. This is because datasets can be shared across applications,
+  and an incompatible schema change can break other applications that are using the dataset.
+  A workaround (`CDAP-1253 <https://issues.cask.co/browse/CDAP-1253>`__) is to allow *unchecked dataset upgrades*.
+  Upgrades cause the dataset metadata, i.e. its specification including properties, to be updated. The dataset
+  runtime code is also updated. To prevent data loss the existing data and the underlying HBase tables remain as-is.
+
+  You can allow *unchecked dataset upgrades* by setting the configuration property ``dataset.unchecked.upgrade``
+  to ``true`` in ``cdap-site.xml``. This will ensure that datasets are upgraded when the application is redeployed.
+  When this configuration is set, the recommended process to deploy an upgraded dataset is to first stop
+  all applications that are using the dataset before deploying the new version of the application.
+  This lets all containers (flows, services, etc) to pick up the new dataset changes.
+  When datasets are upgraded using ``dataset.unchecked.upgrade``, no schema compatibility checks are performed by the
+  system. Hence it is very important that the developer verify the backward-compatibility, and makes sure that
+  other applications that are using the dataset can work with the new changes.
 
 
 `Release 2.6.1 <http://docs.cask.co/cdap/2.6.1/index.html>`__
@@ -2713,7 +3225,29 @@ CDAP Bug Fixes
 
 Known Issues
 ------------
-- See also the *Known Issues* of `version 2.6.0. <#known-issues-260>`_
+- When running secure Hadoop clusters, metrics and debug logs from MapReduce programs are
+  not available (`CDAP-64 <https://issues.cask.co/browse/CDAP-64>`__ and `CDAP-797
+  <https://issues.cask.co/browse/CDAP-797>`__).
+- When upgrading a cluster from an earlier version of CDAP, warning messages may appear in
+  the master log indicating that in-transit (emitted, but not yet processed) metrics
+  system messages could not be decoded (*Failed to decode message to MetricsRecord*). This
+  is because of a change in the format of emitted metrics, and can result in a small
+  amount of metrics data points being lost (`CDAP-745 <https://issues.cask.co/browse/CDAP-745>`__).
+- A race condition resulting in a deadlock can occur when a TwillRunnable container
+  shutdowns while it still has ZooKeeper events to process. This occasionally surfaces when
+  running with OpenJDK or JDK7, though not with Oracle JDK6. It is caused by a change in the
+  ``ThreadPoolExecutor`` implementation between Oracle JDK6 and OpenJDK/JDK7. Until Twill is
+  updated in a future version of CDAP, a work-around is to kill the errant process. The Yarn
+  command to list all running applications and their ``app-id``\s is::
+  
+    yarn application -list -appStates RUNNING
+
+  The command to kill a process is::
+  
+    yarn application -kill <app-id>
+    
+  All versions of CDAP running Twill version 0.4.0 with this configuration can exhibit this
+  problem (`TWILL-110 <https://issues.apache.org/jira/browse/TWILL-110>`__).
 
 - Typically, datasets are bundled as part of applications. When an application is upgraded and redeployed,
   any changes in datasets will not be redeployed. This is because datasets can be shared across applications,
@@ -2839,8 +3373,6 @@ Known Issues
   is because of a change in the format of emitted metrics, and can result in a small
   amount of metrics data points being lost (`CDAP-745
   <https://issues.cask.co/browse/CDAP-745>`__).
-- Writing to datasets through Hive is not supported in CDH4.x
-  (`CDAP-988 <https://issues.cask.co/browse/CDAP-988>`__).
 - A race condition resulting in a deadlock can occur when a TwillRunnable container
   shutdowns while it still has ZooKeeper events to process. This occasionally surfaces when
   running with OpenJDK or JDK7, though not with Oracle JDK6. It is caused by a change in the
@@ -2901,8 +3433,27 @@ Known Issues
   from either ``JavaSparkProgram`` or ``ScalaSparkProgram`` (depending upon the language)
   fail with a class loading error. Spark or Scala classes should not be used outside of the
   Spark program. (`CDAP-599 <https://issues.cask.co/browse/CDAP-599>`__)
-- See also the *Known Issues* of `version 2.5.0. <#known-issues-250>`_
-- See also the *TWILL-110 Known Issue* of `version 2.6.0. <#known-issues-260>`_
+- Metrics for MapReduce programs aren't populated on secure Hadoop clusters
+- The metric for the number of cores shown in the Resources view of the CDAP Console will be zero
+  unless YARN has been configured to enable virtual cores
+- Writing to datasets through Hive is not supported in CDH4.x
+  (`CDAP-988 <https://issues.cask.co/browse/CDAP-988>`__).
+- A race condition resulting in a deadlock can occur when a TwillRunnable container
+  shutdowns while it still has ZooKeeper events to process. This occasionally surfaces when
+  running with OpenJDK or JDK7, though not with Oracle JDK6. It is caused by a change in the
+  ``ThreadPoolExecutor`` implementation between Oracle JDK6 and OpenJDK/JDK7. Until Twill is
+  updated in a future version of CDAP, a work-around is to kill the errant process. The Yarn
+  command to list all running applications and their ``app-id``\s is::
+  
+    yarn application -list -appStates RUNNING
+
+  The command to kill a process is::
+  
+    yarn application -kill <app-id>
+    
+  All versions of CDAP running Twill version 0.4.0 with this configuration can exhibit this
+  problem (`TWILL-110 <https://issues.apache.org/jira/browse/TWILL-110>`__).
+
 
 `Release 2.5.1 <http://docs.cask.co/cdap/2.5.1/index.html>`__
 =============================================================
@@ -2934,8 +3485,24 @@ Other Changes
 
 Known Issues
 ------------
-- See *Known Issues* of `the previous version. <#known-issues-250>`_
-- See also the *TWILL-110 Known Issue* of `version 2.6.0. <#known-issues-260>`_
+- Metrics for MapReduce programs aren't populated on secure Hadoop clusters
+- The metric for the number of cores shown in the Resources view of the CDAP Console will be zero
+  unless YARN has been configured to enable virtual cores
+- A race condition resulting in a deadlock can occur when a TwillRunnable container
+  shutdowns while it still has ZooKeeper events to process. This occasionally surfaces when
+  running with OpenJDK or JDK7, though not with Oracle JDK6. It is caused by a change in the
+  ``ThreadPoolExecutor`` implementation between Oracle JDK6 and OpenJDK/JDK7. Until Twill is
+  updated in a future version of CDAP, a work-around is to kill the errant process. The Yarn
+  command to list all running applications and their ``app-id``\s is::
+  
+    yarn application -list -appStates RUNNING
+
+  The command to kill a process is::
+  
+    yarn application -kill <app-id>
+    
+  All versions of CDAP running Twill version 0.4.0 with this configuration can exhibit this
+  problem (`TWILL-110 <https://issues.apache.org/jira/browse/TWILL-110>`__).
 
 
 `Release 2.5.0 <http://docs.cask.co/cdap/2.5.0/index.html>`__
@@ -3002,7 +3569,6 @@ Major CDAP Bug Fixes
 - Fixed an issue with the premature expiration of long-term Authentication Tokens
 - Fixed an issue with the dataset size metric showing data operations size instead of resource usage
 
-
 .. _known-issues-250:
 
 Known Issues
@@ -3010,4 +3576,18 @@ Known Issues
 - Metrics for MapReduce programs aren't populated on secure Hadoop clusters
 - The metric for the number of cores shown in the Resources view of the CDAP Console will be zero
   unless YARN has been configured to enable virtual cores
-- See also the *TWILL-110 Known Issue* of `version 2.6.0. <#known-issues-260>`_
+- A race condition resulting in a deadlock can occur when a TwillRunnable container
+  shutdowns while it still has ZooKeeper events to process. This occasionally surfaces when
+  running with OpenJDK or JDK7, though not with Oracle JDK6. It is caused by a change in the
+  ``ThreadPoolExecutor`` implementation between Oracle JDK6 and OpenJDK/JDK7. Until Twill is
+  updated in a future version of CDAP, a work-around is to kill the errant process. The Yarn
+  command to list all running applications and their ``app-id``\s is::
+  
+    yarn application -list -appStates RUNNING
+
+  The command to kill a process is::
+  
+    yarn application -kill <app-id>
+    
+  All versions of CDAP running Twill version 0.4.0 with this configuration can exhibit this
+  problem (`TWILL-110 <https://issues.apache.org/jira/browse/TWILL-110>`__).
