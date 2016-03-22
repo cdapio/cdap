@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,7 +18,9 @@ package co.cask.cdap.internal.app.runtime.spark;
 
 import co.cask.cdap.api.spark.Spark;
 import co.cask.cdap.api.spark.SparkContext;
+import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.runtime.ProgramController;
+import co.cask.cdap.app.runtime.WorkflowTokenProvider;
 import co.cask.cdap.internal.app.runtime.ProgramControllerServiceAdapter;
 import com.google.common.util.concurrent.Service;
 
@@ -26,7 +28,7 @@ import com.google.common.util.concurrent.Service;
  * A {@link ProgramController} for {@link Spark} jobs. This class acts as an adapter for reflecting state changes
  * happening in {@link SparkRuntimeService}
  */
-public final class SparkProgramController extends ProgramControllerServiceAdapter {
+final class SparkProgramController extends ProgramControllerServiceAdapter implements WorkflowTokenProvider {
 
   private final SparkContext context;
 
@@ -35,10 +37,14 @@ public final class SparkProgramController extends ProgramControllerServiceAdapte
     this.context = context;
   }
 
-  /**
-   * Returns the {@link SparkContext} for Spark run represented by this controller.
-   */
-  public SparkContext getContext() {
-    return context;
+  @Override
+  public WorkflowToken getWorkflowToken() {
+    WorkflowToken workflowToken = context.getWorkflowToken();
+    if (workflowToken == null) {
+      throw new IllegalStateException("WorkflowToken cannot be null when the " +
+                                        "Spark program is started by Workflow.");
+    }
+
+    return workflowToken;
   }
 }

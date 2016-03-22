@@ -411,7 +411,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
           Map.Entry<String, WorkflowToken> retValue = forkBranchResult.get();
           String branchInfo = retValue.getKey();
           WorkflowToken branchToken = retValue.getValue();
-          ((BasicWorkflowToken) token).mergeToken((BasicWorkflowToken) branchToken);
+          ((BasicWorkflowToken) token).mergeToken(branchToken);
           LOG.info("Execution of branch {} for fork {} completed", branchInfo, fork);
         } catch (Throwable t) {
           Throwable rootCause = Throwables.getRootCause(t);

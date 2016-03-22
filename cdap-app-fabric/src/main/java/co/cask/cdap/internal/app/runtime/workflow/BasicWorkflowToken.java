@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -24,6 +24,9 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
+import org.apache.hadoop.mapreduce.Counter;
+import org.apache.hadoop.mapreduce.CounterGroup;
+import org.apache.hadoop.mapreduce.Counters;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -96,11 +99,10 @@ public class BasicWorkflowToken implements WorkflowToken, Serializable {
    * with the WorkflowToken on which the method is invoked.
    * @param other the other WorkflowToken to be merged
    */
-  void mergeToken(BasicWorkflowToken other) {
-    for (Map.Entry<Scope, Map<String, List<NodeValue>>> entry : other.tokenValueMap.entrySet()) {
-      Map<String, List<NodeValue>> thisTokenValueMapForScope = this.tokenValueMap.get(entry.getKey());
-
-      for (Map.Entry<String, List<NodeValue>> otherTokenValueMapForScopeEntry : entry.getValue().entrySet()) {
+  void mergeToken(WorkflowToken other) {
+    for (Scope scope : Scope.values()) {
+      Map<String, List<NodeValue>> thisTokenValueMapForScope = this.tokenValueMap.get(scope);
+      for (Map.Entry<String, List<NodeValue>> otherTokenValueMapForScopeEntry : other.getAll(scope).entrySet()) {
         String otherKey = otherTokenValueMapForScopeEntry.getKey();
         if (!thisTokenValueMapForScope.containsKey(otherKey)) {
           thisTokenValueMapForScope.put(otherKey, Lists.<NodeValue>newArrayList());
@@ -125,7 +127,8 @@ public class BasicWorkflowToken implements WorkflowToken, Serializable {
     }
 
     if (other.getMapReduceCounters() != null) {
-      setMapReduceCounters(other.getMapReduceCounters());
+      // Overwriting is the intended behavior to keep it backward compatible
+      this.mapReduceCounters = copyHadoopCounters(other.getMapReduceCounters());
     }
   }
 
@@ -139,7 +142,7 @@ public class BasicWorkflowToken implements WorkflowToken, Serializable {
     put(key, value, Scope.USER);
   }
 
-  void put(String key, Value value, Scope scope) {
+  private void put(String key, Value value, Scope scope) {
     if (!putAllowed) {
       String msg = String.format("Failed to put key '%s' from node '%s' in the WorkflowToken. Put operation is not " +
                                  "allowed from the Mapper and Reducer classes and from Spark executor.", key, nodeName);
@@ -259,8 +262,20 @@ public class BasicWorkflowToken implements WorkflowToken, Serializable {
     return mapReduceCounters;
   }
 
-  public void setMapReduceCounters(Map<String, Map<String, Long>> mapReduceCounters) {
-    this.mapReduceCounters = copyHadoopCounters(mapReduceCounters);
+  public void setMapReduceCounters(Counters counters) {
+    ImmutableMap.Builder<String, Map<String, Long>> countersBuilder = ImmutableMap.builder();
+
+    for (CounterGroup group : counters) {
+      ImmutableMap.Builder<String, Long> groupBuilder = ImmutableMap.builder();
+      for (Counter counter : group) {
+        groupBuilder.put(counter.getName(), counter.getValue());
+        // Also put the counter to system scope.
+        put(group.getName() + "." + counter.getName(), Value.of(counter.getValue()), WorkflowToken.Scope.SYSTEM);
+      }
+      countersBuilder.put(group.getName(), groupBuilder.build());
+    }
+
+    this.mapReduceCounters = countersBuilder.build();
   }
 
   /**
