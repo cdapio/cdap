@@ -40,16 +40,6 @@ public class FakeWorkflow implements Workflow {
     configurer.addAction(new FakeAction(FakeAction.ANOTHER_FAKE_NAME));
   }
 
-  @Override
-  public void initialize(WorkflowContext context) throws Exception {
-    // no-op
-  }
-
-  @Override
-  public void destroy() {
-    // no-op
-  }
-
   /**
    * DummyAction
    */
