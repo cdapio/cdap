@@ -60,12 +60,7 @@ public class DescribeArtifactCommand extends AbstractAuthCommand {
 
     ArtifactInfo info;
     if (scopeStr == null) {
-      // When scope is null, then look it up in both SYSTEM and USER scope.
-      try {
-        info = artifactClient.getArtifactInfo(artifactId, ArtifactScope.SYSTEM);
-      } catch (ArtifactNotFoundException e) {
-        info = artifactClient.getArtifactInfo(artifactId, ArtifactScope.USER);
-      }
+      info = artifactClient.getArtifactInfo(artifactId);
     } else {
       ArtifactScope scope = ArtifactScope.valueOf(scopeStr.toUpperCase());
       info = artifactClient.getArtifactInfo(artifactId, scope);
@@ -93,8 +88,9 @@ public class DescribeArtifactCommand extends AbstractAuthCommand {
 
   @Override
   public String getDescription() {
-    return String.format("Shows information about %s. If no scope is given, the user scope will be used. " +
-      "Includes information about application and plugin classes contained in the artifact.",
+    return String.format("Shows information about %s. If no scope is given, the artifact is looked up in all " +
+                           "the scopes. Includes information about application and plugin classes contained " +
+                           "in the artifact.",
       Fragment.of(Article.A, ElementType.ARTIFACT.getName()));
   }
 }

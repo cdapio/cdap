@@ -176,7 +176,13 @@ public class ArtifactClient {
    */
   public ArtifactInfo getArtifactInfo(Id.Artifact artifactId)
     throws IOException, UnauthenticatedException, ArtifactNotFoundException {
-    return getArtifactInfo(artifactId, ArtifactScope.USER);
+    ArtifactInfo info;
+    try {
+      info = getArtifactInfo(artifactId, ArtifactScope.SYSTEM);
+    } catch (ArtifactNotFoundException e) {
+      info = getArtifactInfo(artifactId, ArtifactScope.USER);
+    }
+    return info;
   }
 
   /**
@@ -191,11 +197,14 @@ public class ArtifactClient {
    */
   public ArtifactInfo getArtifactInfo(Id.Artifact artifactId, ArtifactScope scope)
     throws IOException, UnauthenticatedException, ArtifactNotFoundException {
-
-    String path = String.format("artifacts/%s/versions/%s?scope=%s",
-      artifactId.getName(), artifactId.getVersion().getVersion(), scope.name());
+    
+    String path = String.format("artifacts/%s/versions/%s",
+      artifactId.getName(), artifactId.getVersion().getVersion());
+    if(scope != null) {
+      path = String.format("%s?scope=%s", path, scope.name());
+    }
+    
     URL url = config.resolveNamespacedURLV3(artifactId.getNamespace(), path);
-
     HttpResponse response =
       restClient.execute(HttpMethod.GET, url, config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
@@ -365,7 +374,13 @@ public class ArtifactClient {
    */
   public List<PluginInfo> getPluginInfo(Id.Artifact artifactId, String pluginType, String pluginName)
     throws IOException, UnauthenticatedException, NotFoundException {
-    return getPluginInfo(artifactId, pluginType, pluginName, ArtifactScope.USER);
+    List<PluginInfo> pluginInfo;
+    try {
+      pluginInfo = getPluginInfo(artifactId, pluginType, pluginName, ArtifactScope.SYSTEM);
+    } catch (NotFoundException e) {
+      pluginInfo = getPluginInfo(artifactId, pluginType, pluginName, ArtifactScope.USER);
+    }
+    return pluginInfo;
   }
 
   /**
@@ -384,8 +399,11 @@ public class ArtifactClient {
                                         ArtifactScope scope)
     throws IOException, UnauthenticatedException, NotFoundException {
 
-    String path = String.format("artifacts/%s/versions/%s/extensions/%s/plugins/%s?scope=%s",
-      artifactId.getName(), artifactId.getVersion().getVersion(), pluginType, pluginName, scope.name());
+    String path = String.format("artifacts/%s/versions/%s/extensions/%s/plugins/%s",
+      artifactId.getName(), artifactId.getVersion().getVersion(), pluginType, pluginName);
+    if(scope != null) {
+      path = String.format("%s?scope=%s", path, scope.name());
+    }
     URL url = config.resolveNamespacedURLV3(artifactId.getNamespace(), path);
 
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
