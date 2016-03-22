@@ -20,17 +20,18 @@ function DatetimeController($scope) {
   var vm = this;
   vm.options = {
     initDate: new Date(),
-    showWeeks: false
+    showWeeks: false,
+    startingDay: 0
   };
 
-  $scope.date = $scope.date || new Date();
+  $scope.dateData = $scope.dateData || new Date();
 
   vm.min = 0;
   vm.max = 11;
 
   function init () {
-    vm.date = angular.copy($scope.date);
-    vm.hour = $scope.date.getHours();
+    vm.date = angular.copy($scope.dateData);
+    vm.hour = $scope.dateData.getHours();
     vm.isPM = false;
 
     if (vm.hour > 11) {
@@ -40,7 +41,7 @@ function DatetimeController($scope) {
       setMinMax(vm.isPM);
     }
 
-    vm.minutes = $scope.date.getMinutes();
+    vm.minutes = $scope.dateData.getMinutes();
   }
 
   init();
@@ -84,22 +85,22 @@ function DatetimeController($scope) {
         hour = vm.isPM && vm.hour < 12 ? vm.hour + 12 : vm.hour,
         minutes = vm.minutes;
 
-    $scope.date = new Date(year, month, day, hour, minutes, 0);
+    $scope.dateData = new Date(year, month, day, hour, minutes, 0);
   }
 
 }
 
 angular.module(PKG.name+'.commons')
-  .directive('myDatetimeRange', () => {
+  .directive('myDatetimePicker', () => {
     return {
       restrict: 'E',
       scope: {
-        date: '=',
+        dateData: '=',
         min: '=?',
         max: '=?'
       },
       controller: DatetimeController,
       controllerAs: 'DatetimeController',
-      templateUrl: 'datetime-range/datetime.html'
+      templateUrl: 'datetime-picker/datetime.html'
     };
   });

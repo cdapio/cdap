@@ -39,13 +39,12 @@
         </div>
         <span>PM</span>
       </div>
-
     </div>
 
     <div class="time-slider">
       <div>
         <label>Hour</label>
-        <input type="range" min="0" max="12" ng-model="DatetimeController.hour">
+        <input type="range" min="{{ DatetimeController.min }}" max="{{ DatetimeController.max }}" ng-model="DatetimeController.hour">
       </div>
       <div class="minutes-slider">
         <label>Minutes</label>
@@ -53,6 +52,4 @@
       </div>
     </div>
   </div>
-
 </div>
-
