@@ -25,6 +25,7 @@ import co.cask.cdap.cli.english.Fragment;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.cli.util.table.Table;
 import co.cask.cdap.client.ArtifactClient;
+import co.cask.cdap.common.ArtifactNotFoundException;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.artifact.ArtifactInfo;
 import co.cask.common.cli.Arguments;
@@ -59,7 +60,12 @@ public class DescribeArtifactCommand extends AbstractAuthCommand {
 
     ArtifactInfo info;
     if (scopeStr == null) {
-      info = artifactClient.getArtifactInfo(artifactId);
+      // When scope is null, then look it up in both SYSTEM and USER scope.
+      try {
+        info = artifactClient.getArtifactInfo(artifactId, ArtifactScope.SYSTEM);
+      } catch (ArtifactNotFoundException e) {
+        info = artifactClient.getArtifactInfo(artifactId, ArtifactScope.USER);
+      }
     } else {
       ArtifactScope scope = ArtifactScope.valueOf(scopeStr.toUpperCase());
       info = artifactClient.getArtifactInfo(artifactId, scope);
