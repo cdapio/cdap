@@ -24,7 +24,8 @@ var baseDirective = {
     chartMetric: '=',
     chartMetricAlias: '@',
     chartSize: '=',
-    chartSettings: '='
+    chartSettings: '=',
+    chartPadding: '=?'
   },
   controller: 'c3Controller'
 };
@@ -118,6 +119,9 @@ ngC3.controller('c3Controller', function ($scope, c3, $filter, $timeout) {
         return $filter('amDateFormat')(timestampSeconds * 1000, 'h:mm:ss a');
       };
       xTick.format = timestampFormat;
+    }
+    if ($scope.chartPadding) {
+      chartConfig.padding = $scope.chartPadding;
     }
     chartConfig.axis = { x: { show: $scope.options.showx,
                               tick : xTick },

@@ -29,21 +29,6 @@ function ($scope, $state, myLocalStorage, MY_CONFIG, Widget, MyMetricsQueryHelpe
     return;
   }
 
-  this.hideWelcomeMessage = false;
-
-
-  var PREFKEY = 'feature.overview.welcomeIsHidden';
-
-  myLocalStorage.get(PREFKEY)
-    .then(function (v) {
-      this.welcomeIsHidden = v;
-    }.bind(this));
-
-  this.hideWelcome = function () {
-    myLocalStorage.set(PREFKEY, true);
-    this.welcomeIsHidden = true;
-  };
-
   this.isEnterprise = MY_CONFIG.isEnterprise;
   // this.systemStatus = '#C9C9D1';
   this.systemStatus = ServiceStatusFactory.systemStatus;

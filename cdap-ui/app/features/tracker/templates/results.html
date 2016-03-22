@@ -104,25 +104,27 @@
   <!-- MAIN RESULTS -->
   <div class="tracker-search-results">
     <div class="title-bar">
-      <h3>Sort by</h3>
-
-      <div class="btn-group" uib-dropdown>
-        <button class="btn btn-grey dropdown-toggle" uib-dropdown-toggle>
-          {{ ResultsController.sortBy.name }} <span class="caret"></span>
-        </button>
-
-        <ul uib-dropdown-menu role="menu">
-          <li role="menuitem" ng-repeat="option in ResultsController.sortByOptions">
-            <a ng-click="ResultsController.sortBy = option">{{ option.name }}</a>
-          </li>
-        </ul>
-      </div>
-
       <div class="results-count">
         <span>{{ ResultsController.evaluateShowResultCount() }}</span>
         <span> of {{ ResultsController.searchResults.length }}</span>
         <span ng-if="ResultsController.searchResults.length > 1">results</span>
         <span ng-if="ResultsController.searchResults.length <= 1">result</span>
+      </div>
+
+      <div class="pull-right">
+        <h3>Sort by</h3>
+
+        <div class="btn-group" uib-dropdown>
+          <button class="btn btn-grey dropdown-toggle" uib-dropdown-toggle>
+            {{ ResultsController.sortBy.name }} <span class="caret"></span>
+          </button>
+
+          <ul uib-dropdown-menu role="menu">
+            <li role="menuitem" ng-repeat="option in ResultsController.sortByOptions">
+              <a ng-click="ResultsController.sortBy = option">{{ option.name }}</a>
+            </li>
+          </ul>
+        </div>
       </div>
     </div>
 

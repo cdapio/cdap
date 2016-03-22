@@ -15,7 +15,7 @@
 -->
 
 <div class="no-content-message text-center" ng-if="Lineage.nodes.length === 0">
-  <h3>No lineage data for the selected time period</h3>
+  <p>No lineage data for the selected time period</p>
 </div>
 
 <div class="lineage-diagram-container" id="lineage-diagram"
@@ -24,21 +24,15 @@
        id="{{ node.dataId }}"
        ng-repeat="node in Lineage.nodes"
        ng-style="node._uiLocation"
-       ng-mouseenter="node.showNavigation = true"
-       ng-mouseleave="Lineage.mouseLeaveNode(node)"
        ng-click="Lineage.nodeClick($event, node)">
 
     <!-- Navigation -->
     <div class="navigation-control left"
-         ng-if="node.isLeftEdge && node.showNavigation"
-         ng-mouseenter="Lineage.mouseEnterNavigation(node)"
-         ng-mouseleave="node.showNavigation = false">
+         ng-if="node.isLeftEdge">
       <span class="fa fa-caret-left" ng-click="Lineage.navigationClick($event, node)"></span>
     </div>
     <div class="navigation-control right"
-         ng-if="node.isRightEdge && node.showNavigation"
-         ng-mouseenter="Lineage.mouseEnterNavigation(node)"
-         ng-mouseleave="node.showNavigation = false">
+         ng-if="node.isRightEdge">
       <span class="fa fa-caret-right" ng-click="Lineage.navigationClick($event, node)"></span>
     </div>
 
@@ -72,7 +66,7 @@
             </div>
 
             <div class="col-xs-4">
-              <div class="runs-controller">
+              <div class="runs-controller text-center">
                 <h5>Runs</h5>
                 <div class="runs-navigation">
                   <span class="fa fa-caret-left" ng-click="Lineage.prevRun($event, node)"></span>

@@ -28,6 +28,9 @@
 @title-font-color: #333;
 @active-font: #363945;
 @filter-sidebar-background-color: #eeeeee;
+@search-top-bar-container-size: 60px;
+@navbar-size: 50px;
+@entity-detail-top-bar-size: 50px;
 
 body[class*='state-tracker']{
   main.container {
@@ -40,6 +43,8 @@ body[class*='state-tracker']{
     }
   }
   .alerts { top: 50px; }
+
+  footer { border-top: 1px solid @border-color; }
 }
 
 body.state-tracker-home {
@@ -97,22 +102,22 @@ body.state-tracker {
 
     .tracker-search-bar {
       width: 500px;
-      padding: 0 10px;
+      padding: 10px;
       margin-left: 15px;
     }
 
     .form-group {
-      margin: 10px 0;
+      margin-bottom: 0;
 
       .form-control {
-        height: 30px;
-        font-size: 14px;
+        height: 40px;
         color: @search-font-color;
       }
 
-      .form-control-feedback {
-        color: @search-font-color;
-        line-height: 30px;
+      span {
+        line-height: 40px;
+        font-size: 18px;
+        color: @tracker-grey;
         margin-right: 8px;
       }
     }
@@ -132,6 +137,7 @@ body.state-tracker {
       border-bottom: 1px solid @border-color;
       height: 50px;
       line-height: 50px;
+      padding: 0 15px;
 
       h3 {
         font-size: 14px;
@@ -142,15 +148,13 @@ body.state-tracker {
       }
     }
 
-    .tracker-filters, .title-bar {
-      padding: 0 20px;
-    }
+    .tracker-filters { padding: 0 20px; }
 
     .tracker-filter-sidebar {
       width: 300px;
       position: absolute;
       background-color: @filter-sidebar-background-color;
-      top: 101px;
+      top: @navbar-size + @search-top-bar-container-size + 1;
       bottom: 53px;
       border-right: 1px solid @border-color;
 
@@ -200,7 +204,7 @@ body.state-tracker {
 
     .tracker-search-results {
       position: absolute;
-      top: 101px;
+      top: @navbar-size + @search-top-bar-container-size + 1;
       bottom: 53px;
       left: 300px;
       right: 0;
@@ -220,7 +224,6 @@ body.state-tracker {
 
         .results-count {
           display: inline-block;
-          margin-left: 20px;
           color: @tracker-grey;
           font-size: 12px;
         }
@@ -264,6 +267,11 @@ body.state-tracker {
       }
     }
   }
+
+  .time-range-picker-group {
+    .dropdown-menu { margin: 0; }
+  }
+
 }
 
 body.state-tracker-entity {
@@ -350,7 +358,7 @@ body.state-tracker-entity {
 
   .entity-detail-tags-column, .entity-detail-schema-column, .entity-detail-properties-column {
     position: absolute;
-    top: 152px;
+    top: @navbar-size + @search-top-bar-container-size + 1 + @entity-detail-top-bar-size + 1;
     bottom: 53px;
     box-sizing: border-box;
     overflow-y: auto;
@@ -505,7 +513,8 @@ body.state-tracker-entity {
 
 body.state-tracker-entity-lineage {
   .time-range-container {
-    padding: 20px;
+    padding-top: 20px;
+    padding-left: 20px;
   }
 }
 
@@ -619,12 +628,7 @@ body.state-tracker-integrations {
       }
 
       .status > p { margin-bottom: 0; }
-
-      .status-information {
-        margin: 0;
-        font-weight: 500;
-      }
-
+      .status-information { margin: 0; }
       .enable-control { vertical-align: middle; }
 
       .config-popover {
@@ -633,7 +637,6 @@ body.state-tracker-integrations {
 
         div.arrow { display: none; }
       }
-
 
 
       /* SWITCH STYLING */
@@ -717,11 +720,14 @@ body.state-tracker-integrations {
   }
 
   .navigator-confirm-modal {
-    .modal-body {
-      padding-top: 40px;
+    .modal-dialog { width: 500px; }
 
+    .modal-body {
+      padding-top: 50px;
+      padding-bottom: 25px;
       h4 { font-weight: 500; }
     }
+    .modal-footer { padding-right: 35px; }
   }
 
   .integrations-log-viewer {
@@ -747,10 +753,15 @@ body.state-tracker-integrations {
       .btn {
         margin-right: 10px;
         font-weight: 500;
-        background-color: white;
+        background-color: @tracker-green;
+        color: white;
+
+        &:hover, &:focus {
+          background-color: darken(@tracker-green, 10%);
+        }
 
         .fa {
-          margin-left: 15px;
+          margin-left: 10px;
         }
       }
 
