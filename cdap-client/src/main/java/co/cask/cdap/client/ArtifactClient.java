@@ -200,7 +200,7 @@ public class ArtifactClient {
     
     String path = String.format("artifacts/%s/versions/%s",
       artifactId.getName(), artifactId.getVersion().getVersion());
-    if(scope != null) {
+    if (scope != null) {
       path = String.format("%s?scope=%s", path, scope.name());
     }
     
@@ -401,7 +401,7 @@ public class ArtifactClient {
 
     String path = String.format("artifacts/%s/versions/%s/extensions/%s/plugins/%s",
       artifactId.getName(), artifactId.getVersion().getVersion(), pluginType, pluginName);
-    if(scope != null) {
+    if (scope != null) {
       path = String.format("%s?scope=%s", path, scope.name());
     }
     URL url = config.resolveNamespacedURLV3(artifactId.getNamespace(), path);
