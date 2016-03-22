@@ -74,14 +74,14 @@ public class SmartWorkflow extends AbstractWorkflow {
     properties.put("pipeline.spec", GSON.toJson(spec));
     setProperties(properties);
 
-    // if there are no connections, we have no dag
-    if (plan.getPhaseConnections().isEmpty()) {
-      // single phase, just add the program directly
-      if (plan.getPhases().size() == 1) {
-        addProgram(plan.getPhases().keySet().iterator().next(), new TrunkProgramAdder(getConfigurer()));
-        return;
-      }
+    // single phase, just add the program directly
+    if (plan.getPhases().size() == 1) {
+      addProgram(plan.getPhases().keySet().iterator().next(), new TrunkProgramAdder(getConfigurer()));
+      return;
+    }
 
+    // Dag classes don't allow a 'dag' without connections
+    if (plan.getPhaseConnections().isEmpty()) {
       // multiple phases, do a fork then join
       WorkflowForkConfigurer forkConfigurer = getConfigurer().fork();
       for (String phaseName : plan.getPhases().keySet()) {

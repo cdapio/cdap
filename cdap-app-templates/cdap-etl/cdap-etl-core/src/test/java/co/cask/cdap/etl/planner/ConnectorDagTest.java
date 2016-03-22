@@ -38,8 +38,14 @@ public class ConnectorDagTest {
     ConnectorDag cdag = new ConnectorDag(
       ImmutableSet.of(new Connection("n1", "n3"), new Connection("n2", "n3")));
     cdag.insertConnectors();
-    // n3 is not a connector because it is a sink
-    Assert.assertTrue(cdag.getConnectors().isEmpty());
+    // n3 should have a connector inserted in front of it
+    ConnectorDag expected = new ConnectorDag(
+      ImmutableSet.of(
+        new Connection("n1", "n3.connector"),
+        new Connection("n2", "n3.connector"),
+        new Connection("n3.connector", "n3")),
+      ImmutableSet.<String>of(), ImmutableSet.of("n3.connector"));
+    Assert.assertEquals(expected, cdag);
 
     /*
         n1 --|
@@ -53,7 +59,7 @@ public class ConnectorDagTest {
         new Connection("n3", "n4")));
     cdag.insertConnectors();
     // n3 should have a connector inserted in front of it
-    ConnectorDag expected = new ConnectorDag(
+    expected = new ConnectorDag(
       ImmutableSet.of(
         new Connection("n1", "n3.connector"),
         new Connection("n2", "n3.connector"),
