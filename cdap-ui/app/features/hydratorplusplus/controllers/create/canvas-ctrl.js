@@ -33,7 +33,6 @@ class HydratorPlusPlusCreateCanvasCtrl {
     this.nodes = [];
     this.connections = [];
 
-    this.updateNodesAndConnections();
     DAGPlusPlusNodesStore.registerOnChangeListener(this.updateNodesAndConnections.bind(this));
   }
 

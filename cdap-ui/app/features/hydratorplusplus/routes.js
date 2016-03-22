@@ -29,7 +29,7 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
       })
 
         .state('hydratorplusplus.create', {
-          url: '/studio?draftId',
+          url: '/studio?draftId&artifactType',
           params: {
             data: null
           },
@@ -55,6 +55,40 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
               } else {
                 defer.resolve(false);
               }
+              return defer.promise;
+            },
+            rSelectedArtifact: function($stateParams, $q, myPipelineApi) {
+              var defer = $q.defer();
+              myPipelineApi.fetchArtifacts({
+                namespace: $stateParams.namespace
+              }).$promise.then((res) => {
+                let uiSupportedArtifacts = ['cdap-etl-batch', 'cdap-etl-realtime'];
+                let filteredRes;
+                if ($stateParams.artifactType) {
+                  filteredRes = res.filter( r => r.name === $stateParams.artifactType );
+                  if (filteredRes.length) {
+                    defer.resolve(filteredRes[0].name);
+                  } else {
+                    defer.resolve(res[0].name);
+                  }
+                } else {
+                  filteredRes = res.filter( r => uiSupportedArtifacts.indexOf(r.name) !== -1 );
+                  $stateParams.artifactType = filteredRes[0].name;
+                  defer.resolve($stateParams.artifactType);
+                }
+              });
+              return defer.promise;
+            },
+            rArtifacts: function(myPipelineApi, $stateParams, $q) {
+              var defer = $q.defer();
+              myPipelineApi.fetchArtifacts({
+                namespace: $stateParams.namespace
+              }).$promise
+              .then((res) => {
+                let uiSupportedArtifacts = ['cdap-etl-batch', 'cdap-etl-realtime'];
+                let filteredRes = res.filter( r => uiSupportedArtifacts.indexOf(r.name) !== -1 );
+                defer.resolve(filteredRes);
+              });
               return defer.promise;
             },
             rVersion: function($state, MyCDAPDataSource) {
