@@ -21,7 +21,6 @@ import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.api.plugin.PluginPropertyField;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.reflect.TypeToken;
-import com.google.gson.JsonArray;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonElement;
@@ -30,7 +29,6 @@ import com.google.gson.JsonParseException;
 
 import java.lang.reflect.Type;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
@@ -42,6 +40,8 @@ public class PluginClassDeserializer implements JsonDeserializer<PluginClass> {
 
   // Type for the PluginClass.properties map.
   private static final Type PROPERTIES_TYPE = new TypeToken<Map<String, PluginPropertyField>>() { }.getType();
+  //Type for endpoints property
+  private static final Type ENDPOINTS_TYPE = new TypeToken<Set<String>>() { }.getType();
 
   @Override
   public PluginClass deserialize(JsonElement json, Type typeOfT,
@@ -57,11 +57,9 @@ public class PluginClassDeserializer implements JsonDeserializer<PluginClass> {
     String description = jsonObj.has("description") ? jsonObj.get("description").getAsString() : "";
     String className = getRequired(jsonObj, "className").getAsString();
 
-    JsonArray endpoints = getRequired(jsonObj, "endpoints").getAsJsonArray();
     Set<String> endpointsSet = new HashSet<>();
-    Iterator<JsonElement> iterator = endpoints.iterator();
-    while (iterator.hasNext()) {
-      endpointsSet.add(iterator.next().getAsString());
+    if (jsonObj.has("endpoints")) {
+      endpointsSet = context.deserialize(jsonObj.get("endpoints"), ENDPOINTS_TYPE);
     }
 
     Map<String, PluginPropertyField> properties = jsonObj.has("properties")
