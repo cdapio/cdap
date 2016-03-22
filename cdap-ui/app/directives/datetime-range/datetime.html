@@ -25,7 +25,10 @@
   <div class="time-picker">
     <div class="time-text">
       <div class="text-center">
-        <input type="number" class="time-input hour" min="0" max="12" ng-model="DatetimeController.hour">
+        <input type="number" class="time-input hour"
+          min="{{ DatetimeController.min }}"
+          max="{{ DatetimeController.max }}"
+          ng-model="DatetimeController.hour">
         <span class="colon">:</span>
         <input type="number" class="time-input minutes" min="0" max="59" ng-model="DatetimeController.minutes">
       </div>

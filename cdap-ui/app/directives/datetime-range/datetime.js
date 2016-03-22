@@ -25,14 +25,19 @@ function DatetimeController($scope) {
 
   $scope.date = $scope.date || new Date();
 
+  vm.min = 0;
+  vm.max = 11;
+
   function init () {
     vm.date = angular.copy($scope.date);
     vm.hour = $scope.date.getHours();
     vm.isPM = false;
 
-    if (vm.hour > 12) {
+    if (vm.hour > 11) {
       vm.isPM = true;
       vm.hour = vm.hour % 12;
+      vm.hour = vm.hour === 0 ? 12 : vm.hour;
+      setMinMax(vm.isPM);
     }
 
     vm.minutes = $scope.date.getMinutes();
@@ -42,8 +47,19 @@ function DatetimeController($scope) {
 
   vm.togglePM = () => {
     vm.isPM = !vm.isPM;
+    setMinMax(vm.isPM);
     formatDate();
   };
+
+  function setMinMax(isPM) {
+    if (isPM) {
+      vm.min = 1;
+      vm.max = 12;
+    } else {
+      vm.min = 0;
+      vm.max = 11;
+    }
+  }
 
   $scope.$watch(() => {
     return vm.hour;
@@ -65,7 +81,7 @@ function DatetimeController($scope) {
     let year = vm.date.getFullYear(),
         month = vm.date.getMonth(),
         day = vm.date.getDate(),
-        hour = vm.isPM ? vm.hour + 12 : vm.hour,
+        hour = vm.isPM && vm.hour < 12 ? vm.hour + 12 : vm.hour,
         minutes = vm.minutes;
 
     $scope.date = new Date(year, month, day, hour, minutes, 0);
@@ -78,7 +94,9 @@ angular.module(PKG.name+'.commons')
     return {
       restrict: 'E',
       scope: {
-        date: '='
+        date: '=',
+        min: '=?',
+        max: '=?'
       },
       controller: DatetimeController,
       controllerAs: 'DatetimeController',
