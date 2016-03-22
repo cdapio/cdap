@@ -16,6 +16,8 @@
 
 package co.cask.cdap.security.authorization;
 
+import co.cask.cdap.api.Transactional;
+import co.cask.cdap.api.TxRunnable;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.twill.LocalLocationFactory;
@@ -25,12 +27,16 @@ import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.proto.security.Privilege;
 import co.cask.cdap.proto.security.Role;
+import co.cask.cdap.security.spi.authorization.AbstractAuthorizer;
+import co.cask.cdap.security.spi.authorization.AuthorizationContext;
 import co.cask.cdap.security.spi.authorization.Authorizer;
 import co.cask.cdap.security.spi.authorization.NoOpAuthorizer;
 import co.cask.cdap.security.spi.authorization.RoleAlreadyExistsException;
 import co.cask.cdap.security.spi.authorization.RoleNotFoundException;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
+import co.cask.tephra.TransactionFailureException;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.UncheckedExecutionException;
 import com.google.gson.Gson;
 import org.apache.twill.filesystem.Location;
@@ -59,6 +65,18 @@ public class AuthorizerInstantiatorServiceTest {
   @ClassRule
   public static final TemporaryFolder TEMPORARY_FOLDER = new TemporaryFolder();
   private static final CConfiguration cConf = CConfiguration.create();
+  private static final AuthorizationContextFactory factory = new AuthorizationContextFactory() {
+    @Override
+    public AuthorizationContext create(Properties extensionProperties) {
+      Transactional txnl = new Transactional() {
+        @Override
+        public void execute(TxRunnable runnable) throws TransactionFailureException {
+          //no-op
+        }
+      };
+      return new DefaultAuthorizationContext(extensionProperties, new NoOpDatasetContext(), new NoOpAdmin(), txnl);
+    }
+  };
   private static LocationFactory locationFactory;
 
   @BeforeClass
@@ -69,15 +87,15 @@ public class AuthorizerInstantiatorServiceTest {
   }
 
   @Test
-  public void testAuthorizationDisabled() throws InvalidAuthorizerException, IOException {
+  public void testAuthorizationDisabled() throws IOException {
     CConfiguration cConf = CConfiguration.create();
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, TEMPORARY_FOLDER.newFolder().getAbsolutePath());
-    AuthorizerInstantiatorService instantiator = new AuthorizerInstantiatorService(cConf);
+    AuthorizerInstantiatorService instantiator = new AuthorizerInstantiatorService(cConf, factory);
     try {
       instantiator.startAndWait();
       Authorizer authorizer = instantiator.get();
-      Assert.assertTrue("When authorization is disabled, a NoOpAuthorizer must be returned.",
-                        authorizer instanceof NoOpAuthorizer);
+      Assert.assertTrue("When authorization is disabled, a NoOpAuthorizer must be returned, but got " +
+                          authorizer.getClass().getName(), authorizer instanceof NoOpAuthorizer);
     } finally {
       instantiator.stopAndWait();
     }
@@ -86,7 +104,7 @@ public class AuthorizerInstantiatorServiceTest {
   @Test(expected = InvalidAuthorizerException.class)
   public void testNonExistingAuthorizerJarPath() throws Throwable {
     cConf.set(Constants.Security.Authorization.EXTENSION_JAR_PATH, "/path/to/external-test-authorizer.jar");
-    AuthorizerInstantiatorService instantiator = new AuthorizerInstantiatorService(cConf);
+    AuthorizerInstantiatorService instantiator = new AuthorizerInstantiatorService(cConf, factory);
     try {
       instantiator.startAndWait();
     } catch (UncheckedExecutionException e) {
@@ -99,7 +117,7 @@ public class AuthorizerInstantiatorServiceTest {
   @Test(expected = InvalidAuthorizerException.class)
   public void testAuthorizerJarPathIsDirectory() throws Throwable {
     cConf.set(Constants.Security.Authorization.EXTENSION_JAR_PATH, TEMPORARY_FOLDER.newFolder().getPath());
-    AuthorizerInstantiatorService instantiator = new AuthorizerInstantiatorService(cConf);
+    AuthorizerInstantiatorService instantiator = new AuthorizerInstantiatorService(cConf, factory);
     try {
       instantiator.startAndWait();
     } catch (UncheckedExecutionException e) {
@@ -111,9 +129,8 @@ public class AuthorizerInstantiatorServiceTest {
 
   @Test(expected = InvalidAuthorizerException.class)
   public void testAuthorizerJarPathIsNotJar() throws Throwable {
-    cConf.set(Constants.Security.Authorization.EXTENSION_JAR_PATH,
-              TEMPORARY_FOLDER.newFile("abc.txt").getPath());
-    AuthorizerInstantiatorService instantiator = new AuthorizerInstantiatorService(cConf);
+    cConf.set(Constants.Security.Authorization.EXTENSION_JAR_PATH, TEMPORARY_FOLDER.newFile("abc.txt").getPath());
+    AuthorizerInstantiatorService instantiator = new AuthorizerInstantiatorService(cConf, factory);
     try {
       instantiator.startAndWait();
     } catch (UncheckedExecutionException e) {
@@ -127,7 +144,7 @@ public class AuthorizerInstantiatorServiceTest {
   public void testMissingManifest() throws Throwable {
     Location externalAuthJar = createInvalidExternalAuthJar(null);
     cConf.set(Constants.Security.Authorization.EXTENSION_JAR_PATH, externalAuthJar.toString());
-    AuthorizerInstantiatorService instantiator = new AuthorizerInstantiatorService(cConf);
+    AuthorizerInstantiatorService instantiator = new AuthorizerInstantiatorService(cConf, factory);
     try {
       instantiator.startAndWait();
     } catch (UncheckedExecutionException e) {
@@ -143,7 +160,7 @@ public class AuthorizerInstantiatorServiceTest {
     manifest.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION, "1.0");
     Location externalAuthJar = createInvalidExternalAuthJar(manifest);
     cConf.set(Constants.Security.Authorization.EXTENSION_JAR_PATH, externalAuthJar.toString());
-    AuthorizerInstantiatorService instantiator = new AuthorizerInstantiatorService(cConf);
+    AuthorizerInstantiatorService instantiator = new AuthorizerInstantiatorService(cConf, factory);
     try {
       instantiator.startAndWait();
     } catch (UncheckedExecutionException e) {
@@ -161,55 +178,38 @@ public class AuthorizerInstantiatorServiceTest {
     Location externalAuthJar = AppJarHelper.createDeploymentJar(locationFactory, DoesNotImplementAuthorizer.class,
                                                                 manifest);
     cConf.set(Constants.Security.Authorization.EXTENSION_JAR_PATH, externalAuthJar.toString());
-    AuthorizerInstantiatorService instantiator = new AuthorizerInstantiatorService(cConf);
+    AuthorizerInstantiatorService instantiator = new AuthorizerInstantiatorService(cConf, factory);
     try {
       instantiator.startAndWait();
     } catch (UncheckedExecutionException e) {
       throw Throwables.getRootCause(e);
     }
     Assert.assertFalse("Authorizer Instantiator should not have started because the Authorizer class defined in " +
-                         "the extension jar's manifest does not implement Authorizer.", instantiator.isRunning());
-  }
-
-  @Test(expected = InvalidAuthorizerException.class)
-  public void testInvalidConstructor() throws Throwable {
-    Manifest manifest = new Manifest();
-    Attributes mainAttributes = manifest.getMainAttributes();
-    mainAttributes.put(Attributes.Name.MAIN_CLASS, InvalidConstructor.class.getName());
-    Location externalAuthJar = AppJarHelper.createDeploymentJar(locationFactory, InvalidConstructor.class, manifest);
-    cConf.set(Constants.Security.Authorization.EXTENSION_JAR_PATH, externalAuthJar.toString());
-    AuthorizerInstantiatorService instantiator = new AuthorizerInstantiatorService(cConf);
-    try {
-      instantiator.startAndWait();
-    } catch (UncheckedExecutionException e) {
-      throw e.getCause();
-    }
-    Assert.assertFalse("Authorizer Instantiator should not have started because the Authorizer class defined in " +
-                         "the extension jar's manifest does not define a constructor that accepts a Properties object.",
+                         "the extension jar's manifest does not implement " + Authorizer.class.getName(),
                        instantiator.isRunning());
   }
 
   @Test(expected = InvalidAuthorizerException.class)
-  public void testConstructorNotVisible() throws Throwable {
+  public void testInitializationThrowsException() throws Throwable {
     Manifest manifest = new Manifest();
     Attributes mainAttributes = manifest.getMainAttributes();
-    mainAttributes.put(Attributes.Name.MAIN_CLASS, ConstructorNotVisible.class.getName());
-    Location externalAuthJar = AppJarHelper.createDeploymentJar(locationFactory, ConstructorNotVisible.class, manifest);
+    mainAttributes.put(Attributes.Name.MAIN_CLASS, ExceptionInInitialize.class.getName());
+    Location externalAuthJar = AppJarHelper.createDeploymentJar(locationFactory, ExceptionInInitialize.class,
+                                                                manifest);
     cConf.set(Constants.Security.Authorization.EXTENSION_JAR_PATH, externalAuthJar.toString());
-    AuthorizerInstantiatorService instantiator = new AuthorizerInstantiatorService(cConf);
+    AuthorizerInstantiatorService instantiator = new AuthorizerInstantiatorService(cConf, factory);
     try {
       instantiator.startAndWait();
     } catch (UncheckedExecutionException e) {
       throw e.getCause();
     }
     Assert.assertFalse("Authorizer Instantiator should not have started because the Authorizer class defined in " +
-                         "the extension jar's manifest defines a constructor that accepts a Properties object, " +
-                         "but it is not visible.",
+                         "the extension jar's manifest does not implement " + Authorizer.class.getName(),
                        instantiator.isRunning());
   }
 
   @Test
-  public void testAuthorizerExtension() throws IOException, ClassNotFoundException, InvalidAuthorizerException {
+  public void testAuthorizerExtension() throws IOException, ClassNotFoundException {
     Manifest manifest = new Manifest();
     manifest.getMainAttributes().put(Attributes.Name.MAIN_CLASS, ValidExternalAuthorizer.class.getName());
     Location externalAuthJar = AppJarHelper.createDeploymentJar(locationFactory, ValidExternalAuthorizer.class,
@@ -222,7 +222,7 @@ public class AuthorizerInstantiatorServiceTest {
                   "http://foo.bar.co:5555");
     cConfCopy.set("foo." + Constants.Security.Authorization.EXTENSION_CONFIG_PREFIX + "dont.include",
                   "not.prefix.should.not.be.included");
-    AuthorizerInstantiatorService instantiator = new AuthorizerInstantiatorService(cConfCopy);
+    AuthorizerInstantiatorService instantiator = new AuthorizerInstantiatorService(cConfCopy, factory);
     try {
       instantiator.startAndWait();
       Assert.assertTrue(instantiator.isRunning());
@@ -278,14 +278,7 @@ public class AuthorizerInstantiatorServiceTest {
     return externalAuthJar;
   }
 
-  public static final class ValidExternalAuthorizer implements Authorizer {
-
-    private final Properties properties;
-
-    @SuppressWarnings("unused")
-    public ValidExternalAuthorizer(Properties properties) {
-      this.properties = properties;
-    }
+  public static class NoOpAbstractAuthorizer extends AbstractAuthorizer {
 
     @Override
     public void grant(EntityId entity, Principal principal, Set<Action> actions) {
@@ -304,7 +297,7 @@ public class AuthorizerInstantiatorServiceTest {
 
     @Override
     public Set<Privilege> listPrivileges(Principal principal) {
-      return null;
+      return ImmutableSet.of();
     }
 
     @Override
@@ -318,28 +311,43 @@ public class AuthorizerInstantiatorServiceTest {
     }
 
     @Override
-    public void addRoleToPrincipal(Role role, Principal principal) throws RoleNotFoundException {
+    public void addRoleToPrincipal(Role role, Principal principal) {
       // no-op
     }
 
     @Override
-    public void removeRoleFromPrincipal(Role role, Principal principal) throws RoleNotFoundException {
+    public void removeRoleFromPrincipal(Role role, Principal principal) {
       // no-op
     }
 
     @Override
     public Set<Role> listRoles(Principal principal) {
-      return null;
+      return ImmutableSet.of();
     }
 
     @Override
     public Set<Role> listAllRoles() {
-      return null;
+      return ImmutableSet.of();
     }
 
     @Override
     public void enforce(EntityId entity, Principal principal, Action action) throws UnauthorizedException {
       // no-op
+    }
+  }
+
+  public static final class ExceptionInInitialize extends NoOpAbstractAuthorizer {
+    @Override
+    public void initialize(AuthorizationContext context) throws Exception {
+      throw new IllegalStateException("Testing exception during initialize");
+    }
+  }
+
+  public static final class ValidExternalAuthorizer extends NoOpAbstractAuthorizer {
+    private Properties properties;
+    @Override
+    public void initialize(AuthorizationContext context) throws Exception {
+      this.properties = context.getExtensionProperties();
     }
 
     public Properties getProperties() {
@@ -348,126 +356,5 @@ public class AuthorizerInstantiatorServiceTest {
   }
 
   private static final class DoesNotImplementAuthorizer {
-  }
-
-  private static final class InvalidConstructor implements Authorizer {
-
-    @Override
-    public void enforce(EntityId entity, Principal principal, Action action) throws UnauthorizedException {
-      // no-op
-    }
-
-    @Override
-    public void grant(EntityId entity, Principal principal, Set<Action> actions) {
-      // no-op
-    }
-
-    @Override
-    public void revoke(EntityId entity, Principal principal, Set<Action> actions) {
-      // no-op
-    }
-
-    @Override
-    public void revoke(EntityId entity) {
-      // no-op
-    }
-
-    @Override
-    public Set<Privilege> listPrivileges(Principal principal) {
-      return null;
-    }
-
-    @Override
-    public void createRole(Role role) throws RoleAlreadyExistsException {
-      // no-op
-    }
-
-    @Override
-    public void dropRole(Role role) throws RoleNotFoundException {
-      // no-op
-    }
-
-    @Override
-    public void addRoleToPrincipal(Role role, Principal principal) throws RoleNotFoundException {
-      // no-op
-    }
-
-    @Override
-    public void removeRoleFromPrincipal(Role role, Principal principal) throws RoleNotFoundException {
-      // no-op
-    }
-
-    @Override
-    public Set<Role> listRoles(Principal principal) {
-      return null;
-    }
-
-    @Override
-    public Set<Role> listAllRoles() {
-      return null;
-    }
-  }
-
-  private static final class ConstructorNotVisible implements Authorizer {
-
-    @SuppressWarnings("unused")
-    private ConstructorNotVisible(Properties properties) {
-      // no-op
-    }
-
-    @Override
-    public void enforce(EntityId entity, Principal principal, Action action) throws UnauthorizedException {
-      // no-op
-    }
-
-    @Override
-    public void grant(EntityId entity, Principal principal, Set<Action> actions) {
-      // no-op
-    }
-
-    @Override
-    public void revoke(EntityId entity, Principal principal, Set<Action> actions) {
-      // no-op
-    }
-
-    @Override
-    public void revoke(EntityId entity) {
-      // no-op
-    }
-
-    @Override
-    public Set<Privilege> listPrivileges(Principal principal) {
-      return null;
-    }
-
-    @Override
-    public void createRole(Role role) throws RoleAlreadyExistsException {
-      // no-op
-    }
-
-    @Override
-    public void dropRole(Role role) throws RoleNotFoundException {
-      // no-op
-    }
-
-    @Override
-    public void addRoleToPrincipal(Role role, Principal principal) throws RoleNotFoundException {
-      // no-op
-    }
-
-    @Override
-    public void removeRoleFromPrincipal(Role role, Principal principal) throws RoleNotFoundException {
-      // no-op
-    }
-
-    @Override
-    public Set<Role> listRoles(Principal principal) {
-      return null;
-    }
-
-    @Override
-    public Set<Role> listAllRoles() {
-      return null;
-    }
   }
 }

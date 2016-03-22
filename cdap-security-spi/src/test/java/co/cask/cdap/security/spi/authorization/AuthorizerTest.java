@@ -60,7 +60,7 @@ public abstract class AuthorizerTest {
   }
 
   @Test
-  public void testWildcard() throws UnauthorizedException {
+  public void testWildcard() throws Exception {
     Authorizer authorizer = get();
 
     verifyAuthFailure(namespace, user, Action.READ);
@@ -76,7 +76,7 @@ public abstract class AuthorizerTest {
   }
 
   @Test
-  public void testAll() throws UnauthorizedException {
+  public void testAll() throws Exception {
     Authorizer authorizer = get();
 
     verifyAuthFailure(namespace, user, Action.READ);
@@ -99,7 +99,7 @@ public abstract class AuthorizerTest {
   }
 
   @Test
-  public void testHierarchy() throws UnauthorizedException {
+  public void testHierarchy() throws Exception {
     Authorizer authorizer = get();
 
     DatasetId dataset = namespace.dataset("bar");
@@ -211,7 +211,7 @@ public abstract class AuthorizerTest {
     }
   }
 
-  private void verifyAuthFailure(EntityId entity, Principal principal, Action action) {
+  private void verifyAuthFailure(EntityId entity, Principal principal, Action action) throws Exception {
     try {
       get().enforce(entity, principal, action);
       Assert.fail(String.format("Expected authorization failure, but it succeeded for entity %s, principal %s," +

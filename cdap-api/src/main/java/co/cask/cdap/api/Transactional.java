@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -28,8 +28,7 @@ public interface Transactional {
 
   /**
    * Executes a set of operations via a {@link TxRunnable} that are committed as a single transaction.
-   * The {@link TxRunnable} can gain access to {@link Dataset} through the {@link DatasetContext} provided
-   * to it.
+   * The {@link TxRunnable} can gain access to {@link Dataset} through the provided {@link DatasetContext}.
    *
    * @param runnable the runnable to be executed in the transaction
    * @throws TransactionFailureException if failed to execute the given {@link TxRunnable} in a transaction

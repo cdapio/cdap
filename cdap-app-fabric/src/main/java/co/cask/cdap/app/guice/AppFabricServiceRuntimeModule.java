@@ -84,7 +84,6 @@ import co.cask.cdap.logging.run.LogSaverStatusServiceManager;
 import co.cask.cdap.metrics.runtime.MetricsProcessorStatusServiceManager;
 import co.cask.cdap.metrics.runtime.MetricsServiceManager;
 import co.cask.cdap.pipeline.PipelineFactory;
-import co.cask.cdap.security.authorization.AuthorizerInstantiatorService;
 import co.cask.http.HttpHandler;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
@@ -309,8 +308,6 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       for (Class<? extends HttpHandler> handlerClass : handlerClasses) {
         handlerBinder.addBinding().to(handlerClass);
       }
-
-      bind(AuthorizerInstantiatorService.class).in(Scopes.SINGLETON);
     }
 
     @Provides

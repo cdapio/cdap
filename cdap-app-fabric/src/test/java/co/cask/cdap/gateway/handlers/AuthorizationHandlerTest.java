@@ -16,6 +16,8 @@
 
 package co.cask.cdap.gateway.handlers;
 
+import co.cask.cdap.api.Transactional;
+import co.cask.cdap.api.TxRunnable;
 import co.cask.cdap.client.AuthorizationClient;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.config.ConnectionConfig;
@@ -30,13 +32,18 @@ import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.proto.security.Privilege;
 import co.cask.cdap.proto.security.Role;
+import co.cask.cdap.security.authorization.AuthorizationContextFactory;
 import co.cask.cdap.security.authorization.AuthorizerInstantiatorService;
-import co.cask.cdap.security.authorization.InvalidAuthorizerException;
+import co.cask.cdap.security.authorization.DefaultAuthorizationContext;
+import co.cask.cdap.security.authorization.NoOpAdmin;
+import co.cask.cdap.security.authorization.NoOpDatasetContext;
+import co.cask.cdap.security.spi.authorization.AuthorizationContext;
 import co.cask.cdap.security.spi.authorization.Authorizer;
 import co.cask.cdap.security.spi.authorization.RoleAlreadyExistsException;
 import co.cask.cdap.security.spi.authorization.RoleNotFoundException;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.http.NettyHttpService;
+import co.cask.tephra.TransactionFailureException;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
@@ -45,7 +52,6 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.IOException;
 import java.net.UnknownHostException;
 import java.util.HashSet;
 import java.util.Properties;
@@ -58,21 +64,33 @@ public class AuthorizationHandlerTest {
 
   private NettyHttpService service;
   private AuthorizationClient client;
-  private static final Properties properties = new Properties();
+  private static final AuthorizationContextFactory factory = new AuthorizationContextFactory() {
+    @Override
+    public AuthorizationContext create(Properties extensionProperties) {
+      Transactional txnl = new Transactional() {
+        @Override
+        public void execute(TxRunnable runnable) throws TransactionFailureException {
+          //no-op
+        }
+      };
+      return new DefaultAuthorizationContext(extensionProperties, new NoOpDatasetContext(), new NoOpAdmin(), txnl);
+    }
+  };
 
   @Before
   public void setUp() throws UnknownHostException {
     CConfiguration conf = CConfiguration.create();
     conf.setBoolean(Constants.Security.Authorization.ENABLED, true);
 
-    final InMemoryAuthorizer auth = new InMemoryAuthorizer(properties);
+    final InMemoryAuthorizer auth = new InMemoryAuthorizer();
     service = new CommonNettyHttpServiceBuilder(conf)
-      .addHttpHandlers(ImmutableList.of(new AuthorizationHandler(new AuthorizerInstantiatorService(conf) {
-        @Override
-        public Authorizer get() throws IOException, InvalidAuthorizerException {
-          return auth;
-        }
-      }, conf)))
+      .addHttpHandlers(ImmutableList.of(new AuthorizationHandler(
+        new AuthorizerInstantiatorService(conf, factory) {
+          @Override
+          public Authorizer get() {
+            return auth;
+          }
+        }, conf)))
       .build();
     service.startAndWait();
 
@@ -98,12 +116,13 @@ public class AuthorizationHandlerTest {
     conf.setBoolean(Constants.Security.Authorization.ENABLED, false);
 
     NettyHttpService service = new CommonNettyHttpServiceBuilder(conf)
-      .addHttpHandlers(ImmutableList.of(new AuthorizationHandler(new AuthorizerInstantiatorService(conf) {
-        @Override
-        public Authorizer get() throws IOException, InvalidAuthorizerException {
-          return new InMemoryAuthorizer(properties);
-        }
-      }, conf)))
+      .addHttpHandlers(ImmutableList.of(new AuthorizationHandler(
+        new AuthorizerInstantiatorService(conf, factory) {
+          @Override
+          public Authorizer get() {
+            return new InMemoryAuthorizer();
+          }
+        }, conf)))
       .build();
     service.startAndWait();
 

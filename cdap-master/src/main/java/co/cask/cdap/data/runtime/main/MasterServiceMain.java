@@ -18,6 +18,7 @@ package co.cask.cdap.data.runtime.main;
 
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.app.guice.AppFabricServiceRuntimeModule;
+import co.cask.cdap.app.guice.AuthorizationModule;
 import co.cask.cdap.app.guice.ProgramRunnerRuntimeModule;
 import co.cask.cdap.app.guice.ServiceStoreModules;
 import co.cask.cdap.app.store.ServiceStore;
@@ -378,7 +379,8 @@ public class MasterServiceMain extends DaemonMain {
       new StreamAdminModules().getDistributedModules(),
       new NamespaceClientRuntimeModule().getDistributedModules(),
       new NamespaceStoreModule().getDistributedModules(),
-      new AuditModule().getDistributedModules()
+      new AuditModule().getDistributedModules(),
+      new AuthorizationModule()
     );
   }
 

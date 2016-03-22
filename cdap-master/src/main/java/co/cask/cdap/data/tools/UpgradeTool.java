@@ -22,6 +22,7 @@ import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.app.guice.AppFabricServiceRuntimeModule;
+import co.cask.cdap.app.guice.AuthorizationModule;
 import co.cask.cdap.app.guice.ProgramRunnerRuntimeModule;
 import co.cask.cdap.app.guice.ServiceStoreModules;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -212,6 +213,7 @@ public class UpgradeTool {
       new NotificationServiceRuntimeModule().getInMemoryModules(),
       new KafkaClientModule(),
       new NamespaceStoreModule().getDistributedModules(),
+      new AuthorizationModule(),
       new AbstractModule() {
         @Override
         protected void configure() {
