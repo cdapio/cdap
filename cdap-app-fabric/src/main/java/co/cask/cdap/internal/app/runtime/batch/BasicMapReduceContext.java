@@ -44,6 +44,7 @@ import co.cask.cdap.internal.app.runtime.batch.dataset.DatasetOutputFormatProvid
 import co.cask.cdap.internal.app.runtime.batch.dataset.input.MapperInput;
 import co.cask.cdap.internal.app.runtime.distributed.LocalizeResource;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
+import co.cask.cdap.internal.app.runtime.workflow.BasicWorkflowToken;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
 import co.cask.cdap.logging.context.MapReduceLoggingContext;
 import co.cask.cdap.proto.Id;
@@ -159,7 +160,7 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
    */
   @Override
   @Nullable
-  public WorkflowToken getWorkflowToken() {
+  public BasicWorkflowToken getWorkflowToken() {
     return workflowProgramInfo == null ? null : workflowProgramInfo.getWorkflowToken();
   }
 

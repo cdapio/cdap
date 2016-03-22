@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,27 +15,43 @@
  */
 package co.cask.cdap.internal.app.runtime.batch;
 
-import co.cask.cdap.api.mapreduce.MapReduceContext;
+import co.cask.cdap.api.workflow.WorkflowToken;
+import co.cask.cdap.app.runtime.WorkflowTokenProvider;
 import co.cask.cdap.internal.app.runtime.ProgramControllerServiceAdapter;
+import co.cask.cdap.internal.app.runtime.workflow.BasicWorkflowToken;
+import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.Service;
+import org.apache.hadoop.mapreduce.Job;
+
+import java.io.IOException;
 
 /**
  * A ProgramController for MapReduce. It mainly is an adapter for reflecting the state changes in
  * {@link MapReduceRuntimeService}.
  */
-public final class MapReduceProgramController extends ProgramControllerServiceAdapter {
+final class MapReduceProgramController extends ProgramControllerServiceAdapter implements WorkflowTokenProvider {
 
-  private final MapReduceContext context;
+  private final BasicMapReduceContext context;
 
   MapReduceProgramController(Service mapReduceRuntimeService, BasicMapReduceContext context) {
     super(mapReduceRuntimeService, context.getProgram().getId(), context.getRunId());
     this.context = context;
   }
 
-  /**
-   * Returns the {@link MapReduceContext} for MapReduce run represented by this controller.
-   */
-  public MapReduceContext getContext() {
-    return context;
+  @Override
+  public WorkflowToken getWorkflowToken() {
+    BasicWorkflowToken workflowTokenFromContext = context.getWorkflowToken();
+
+    if (workflowTokenFromContext == null) {
+      throw new IllegalStateException("WorkflowToken cannot be null when the " +
+                                        "MapReduce program is started by Workflow.");
+    }
+
+    try {
+      workflowTokenFromContext.setMapReduceCounters(((Job) context.getHadoopJob()).getCounters());
+      return workflowTokenFromContext;
+    } catch (IOException e) {
+      throw Throwables.propagate(e);
+    }
   }
 }

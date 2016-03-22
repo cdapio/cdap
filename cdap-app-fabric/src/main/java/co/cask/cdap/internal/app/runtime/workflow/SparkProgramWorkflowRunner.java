@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,17 +17,13 @@ package co.cask.cdap.internal.app.runtime.workflow;
 
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.spark.Spark;
-import co.cask.cdap.api.spark.SparkContext;
 import co.cask.cdap.api.spark.SparkSpecification;
 import co.cask.cdap.api.workflow.Workflow;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.program.Program;
-import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunnerFactory;
-import co.cask.cdap.internal.app.runtime.spark.SparkProgramController;
-import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Preconditions;
 
 /**
@@ -59,33 +55,5 @@ final class SparkProgramWorkflowRunner extends AbstractProgramWorkflowRunner {
 
     final Program sparkProgram = new WorkflowSparkProgram(workflowProgram, sparkSpec);
     return getProgramRunnable(name, sparkProgram);
-  }
-
-  /**
-   * Executes given {@link Program} with the given {@link ProgramOptions} and block until it completed.
-   *
-   * @throws Exception if execution failed.
-   */
-  @Override
-  public void runAndWait(Program program, ProgramOptions options) throws Exception {
-    ProgramController controller = programRunnerFactory.create(ProgramType.SPARK).run(program, options);
-
-    if (controller instanceof SparkProgramController) {
-      SparkContext sparkContext = ((SparkProgramController) controller).getContext();
-      executeProgram(controller, sparkContext);
-      updateWorkflowToken(sparkContext);
-    } else {
-      throw new IllegalStateException("Failed to run program. The controller is not an instance of " +
-                                        "SparkProgramController");
-    }
-  }
-
-  private void updateWorkflowToken(SparkContext sparkContext) {
-    WorkflowToken workflowTokenFromContext = sparkContext.getWorkflowToken();
-    if (workflowTokenFromContext == null) {
-      throw new IllegalStateException("WorkflowToken cannot be null when the Spark program is started by Workflow.");
-    }
-
-    ((BasicWorkflowToken) token).mergeToken((BasicWorkflowToken) workflowTokenFromContext);
   }
 }
