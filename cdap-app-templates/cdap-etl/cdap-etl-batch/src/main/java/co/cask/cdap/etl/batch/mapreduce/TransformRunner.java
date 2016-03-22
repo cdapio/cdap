@@ -24,6 +24,7 @@ import co.cask.cdap.etl.api.Transform;
 import co.cask.cdap.etl.api.batch.BatchAggregator;
 import co.cask.cdap.etl.batch.BatchPhaseSpec;
 import co.cask.cdap.etl.batch.PipelinePluginInstantiator;
+import co.cask.cdap.etl.batch.TransformExecutorFactory;
 import co.cask.cdap.etl.common.Constants;
 import co.cask.cdap.etl.common.Destroyables;
 import co.cask.cdap.etl.common.PipelinePhase;
@@ -32,11 +33,13 @@ import co.cask.cdap.etl.common.TransformExecutor;
 import co.cask.cdap.etl.common.TransformResponse;
 import co.cask.cdap.etl.planner.StageInfo;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.SetMultimap;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.mapreduce.JobContext;
+import org.apache.hadoop.mapreduce.Mapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -54,18 +57,20 @@ import java.util.Set;
  * @param <KEY> the type of key to send into the transform executor
  * @param <VALUE> the type of value to send into the transform executor
  */
-public abstract class TransformRunner<KEY, VALUE> {
+public class TransformRunner<KEY, VALUE> {
   private static final Logger LOG = LoggerFactory.getLogger(TransformRunner.class);
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(SetMultimap.class, new SetMultimapCodec<>()).create();
   private final Set<String> transformsWithoutErrorDataset;
-  private final Map<String, ErrorSink<Object, Object>> transformErrorSinkMap;
+  private final Map<String, ErrorOutputWriter<Object, Object>> transformErrorSinkMap;
   private final TransformExecutor<KeyValue<KEY, VALUE>> transformExecutor;
   private final OutputWriter<Object, Object> outputWriter;
 
   public TransformRunner(MapReduceTaskContext<Object, Object> context,
-                         Configuration hConf,
                          Metrics metrics) throws Exception {
+    JobContext jobContext = context.getHadoopContext();
+    Configuration hConf = jobContext.getConfiguration();
+
     // figure out whether we are writing to a single output or to multiple outputs
     Map<String, String> properties = context.getSpecification().getProperties();
     BatchPhaseSpec phaseSpec = GSON.fromJson(properties.get(Constants.PIPELINEID), BatchPhaseSpec.class);
@@ -73,10 +78,25 @@ public abstract class TransformRunner<KEY, VALUE> {
 
     // instantiate and initialize all transformations and setup the TransformExecutor
     PipelinePluginInstantiator pluginInstantiator = new PipelinePluginInstantiator(context, phaseSpec);
+    // stage name -> runtime args for that stage
     Map<String, Map<String, String>> runtimeArgs = GSON.fromJson(
       hConf.get(ETLMapReduce.RUNTIME_ARGS_KEY), ETLMapReduce.RUNTIME_ARGS_TYPE);
-    this.transformExecutor = getTransformExecutor(context, pluginInstantiator, metrics,
-                                                  runtimeArgs, phaseSpec.getPhase());
+
+    PipelinePhase phase = phaseSpec.getPhase();
+    Set<StageInfo> aggregators = phase.getStagesOfType(BatchAggregator.PLUGIN_TYPE);
+    if (!aggregators.isEmpty()) {
+      String aggregatorName = aggregators.iterator().next().getName();
+      // if we're in the mapper, get the part of the pipeline starting from sources and ending at aggregator
+      if (jobContext instanceof Mapper.Context) {
+        phase = phase.subsetTo(ImmutableSet.of(aggregatorName));
+      } else {
+        // if we're in the reducer, get the part of the pipeline starting from the aggregator and ending at sinks
+        phase = phase.subsetFrom(ImmutableSet.of(aggregatorName));
+      }
+    }
+    TransformExecutorFactory<KeyValue<KEY, VALUE>> transformExecutorFactory =
+      new MapReduceTransformExecutorFactory<>(context, pluginInstantiator, metrics, runtimeArgs);
+    this.transformExecutor = transformExecutorFactory.create(phase);
 
     // setup error dataset information
     this.transformsWithoutErrorDataset = new HashSet<>();
@@ -84,18 +104,10 @@ public abstract class TransformRunner<KEY, VALUE> {
     for (StageInfo transformInfo : phaseSpec.getPhase().getStagesOfType(Transform.PLUGIN_TYPE)) {
       String errorDatasetName = transformInfo.getErrorDatasetName();
       if (errorDatasetName != null) {
-        transformErrorSinkMap.put(transformInfo.getName(), new ErrorSink<>(context, errorDatasetName));
+        transformErrorSinkMap.put(transformInfo.getName(), new ErrorOutputWriter<>(context, errorDatasetName));
       }
     }
   }
-
-  protected abstract TransformExecutor<KeyValue<KEY, VALUE>> getTransformExecutor(
-    MapReduceTaskContext<Object, Object> context,
-    PipelinePluginInstantiator pluginInstantiator,
-    Metrics metrics,
-    Map<String, Map<String, String>> runtimeArgs,
-    PipelinePhase pipelinePhase
-  ) throws Exception;
 
   // this is needed because we need to write to the context differently depending on the number of outputs
   private OutputWriter<Object, Object> getSinkWriter(MapReduceTaskContext<Object, Object> context,
@@ -137,37 +149,34 @@ public abstract class TransformRunner<KEY, VALUE> {
     return allOutputs.size() == 1;
   }
 
-  public void transform(KEY key, VALUE value) {
-    try {
-      KeyValue<KEY, VALUE> input = new KeyValue<>(key, value);
-      TransformResponse transformResponse = transformExecutor.runOneIteration(input);
-      for (Map.Entry<String, Collection<Object>> transformedEntry : transformResponse.getSinksResults().entrySet()) {
-        for (Object transformedRecord : transformedEntry.getValue()) {
-          outputWriter.write(transformedEntry.getKey(), (KeyValue<Object, Object>) transformedRecord);
-        }
+  public void transform(KEY key, VALUE value) throws Exception {
+    KeyValue<KEY, VALUE> input = new KeyValue<>(key, value);
+    TransformResponse transformResponse = transformExecutor.runOneIteration(input);
+    for (Map.Entry<String, Collection<Object>> transformedEntry : transformResponse.getSinksResults().entrySet()) {
+      for (Object transformedRecord : transformedEntry.getValue()) {
+        outputWriter.write(transformedEntry.getKey(), (KeyValue<Object, Object>) transformedRecord);
       }
-
-      for (Map.Entry<String, Collection<InvalidEntry<Object>>> errorEntries :
-        transformResponse.getMapTransformIdToErrorEmitter().entrySet()) {
-
-        if (transformsWithoutErrorDataset.contains(errorEntries.getKey())) {
-          continue;
-        }
-        if (!errorEntries.getValue().isEmpty()) {
-          if (!transformErrorSinkMap.containsKey(errorEntries.getKey())) {
-            LOG.warn("Transform : {} has error records, but does not have a error dataset configured.",
-                     errorEntries.getKey());
-            transformsWithoutErrorDataset.add(errorEntries.getKey());
-          } else {
-            transformErrorSinkMap.get(errorEntries.getKey()).write(errorEntries.getValue());
-          }
-        }
-      }
-      transformExecutor.resetEmitter();
-    } catch (Exception e) {
-      LOG.error("Exception thrown in BatchDriver Mapper.", e);
-      Throwables.propagate(e);
     }
+
+    for (Map.Entry<String, Collection<InvalidEntry<Object>>> errorEntry :
+      transformResponse.getMapTransformIdToErrorEmitter().entrySet()) {
+
+      // this check is used to make sure we don't log the same warning multiple times,
+      // but only log it once.
+      if (transformsWithoutErrorDataset.contains(errorEntry.getKey())) {
+        continue;
+      }
+      if (!errorEntry.getValue().isEmpty()) {
+        if (!transformErrorSinkMap.containsKey(errorEntry.getKey())) {
+          LOG.warn("Transform : {} has error records, but does not have a error dataset configured.",
+                   errorEntry.getKey());
+          transformsWithoutErrorDataset.add(errorEntry.getKey());
+        } else {
+          transformErrorSinkMap.get(errorEntry.getKey()).write(errorEntry.getValue());
+        }
+      }
+    }
+    transformExecutor.resetEmitter();
   }
 
   public void destroy() {

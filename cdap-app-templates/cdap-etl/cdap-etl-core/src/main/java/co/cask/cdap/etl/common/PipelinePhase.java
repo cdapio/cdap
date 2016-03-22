@@ -20,9 +20,11 @@ import co.cask.cdap.etl.planner.Dag;
 import co.cask.cdap.etl.planner.StageInfo;
 import co.cask.cdap.etl.proto.Connection;
 import com.google.common.base.Joiner;
+import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterators;
+import com.google.common.collect.Sets;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -97,15 +99,15 @@ public class PipelinePhase implements Iterable<StageInfo> {
     return getSubset(dag.subsetFrom(newSources));
   }
 
-  private PipelinePhase getSubset(Dag subsetDag) {
+  private PipelinePhase getSubset(final Dag subsetDag) {
     Map<String, Set<StageInfo>> subsetStages = new HashMap<>();
     for (Map.Entry<String, Set<StageInfo>> stagesEntry : stages.entrySet()) {
-      Set<StageInfo> stagesOfType = new HashSet<>();
-      for (StageInfo stageInfo : stagesEntry.getValue()) {
-        if (subsetDag.getNodes().contains(stageInfo.getName())) {
-          stagesOfType.add(stageInfo);
+      final Set<StageInfo> stagesOfType = Sets.filter(stagesEntry.getValue(), new Predicate<StageInfo>() {
+        @Override
+        public boolean apply(StageInfo stageInfo) {
+          return subsetDag.getNodes().contains(stageInfo.getName());
         }
-      }
+      });
       if (!stagesOfType.isEmpty()) {
         subsetStages.put(stagesEntry.getKey(), stagesOfType);
       }

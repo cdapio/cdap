@@ -43,6 +43,7 @@ import co.cask.cdap.etl.common.SetMultimapCodec;
 import co.cask.cdap.etl.common.TypeChecker;
 import co.cask.cdap.etl.log.LogStageInjector;
 import co.cask.cdap.etl.planner.StageInfo;
+import com.google.common.base.Joiner;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.SetMultimap;
@@ -114,15 +115,21 @@ public class ETLMapReduce extends AbstractMapReduce {
     setDriverResources(phaseSpec.getResources());
 
     // These should never happen unless there is a bug in the planner. The planner is supposed to ensure this.
-    if (phaseSpec.getPhase().getSources().size() != 1) {
-      throw new IllegalArgumentException("Pipeline phase must contain exactly one source.");
+    Set<String> sources = phaseSpec.getPhase().getSources();
+    if (sources.size() != 1) {
+      throw new IllegalArgumentException(String.format(
+        "Pipeline phase '%s' must contain exactly one source but it has sources '%s'.",
+        phaseSpec.getPhaseName(), Joiner.on(',').join(sources)));
     }
     if (phaseSpec.getPhase().getSinks().isEmpty()) {
-      throw new IllegalArgumentException("Pipeline phase must contain at least one sink.");
+      throw new IllegalArgumentException(String.format(
+        "Pipeline phase '%s' must contain at least one sink but does not have any.", phaseSpec.getPhaseName()));
     }
     Set<StageInfo> aggregators = phaseSpec.getPhase().getStagesOfType(BatchAggregator.PLUGIN_TYPE);
     if (aggregators.size() > 1) {
-      throw new IllegalArgumentException("Pipeline phase cannot have more than one aggregator.");
+      throw new IllegalArgumentException(String.format(
+        "Pipeline phase '%s' cannot contain more than one aggregator but it has aggregators '%s'.",
+        phaseSpec.getPhaseName(), Joiner.on(',').join(aggregators)));
     } else if (!aggregators.isEmpty()) {
       String aggregatorName = aggregators.iterator().next().getName();
       PipelinePhase mapperPipeline = phaseSpec.getPhase().subsetTo(ImmutableSet.of(aggregatorName));
@@ -221,6 +228,7 @@ public class ETLMapReduce extends AbstractMapReduce {
                                        new DatasetContextLookupProvider(context),
                                        aggregatorName, context.getRuntimeArguments());
       aggregator.prepareRun(aggregatorContext);
+      finishers.add(aggregator, aggregatorContext);
 
       if (aggregatorContext.getNumPartitions() != null) {
         job.setNumReduceTasks(aggregatorContext.getNumPartitions());
@@ -279,7 +287,6 @@ public class ETLMapReduce extends AbstractMapReduce {
    * Mapper Driver for ETL Transforms.
    */
   public static class ETLMapper extends Mapper implements ProgramLifecycle<MapReduceTaskContext<Object, Object>> {
-    private static final Logger LOG = LoggerFactory.getLogger(ETLMapper.class);
 
     private TransformRunner<Object, Object> transformRunner;
     // injected by CDAP
@@ -293,7 +300,7 @@ public class ETLMapReduce extends AbstractMapReduce {
       if (Boolean.valueOf(properties.get(Constants.STAGE_LOGGING_ENABLED))) {
         LogStageInjector.start();
       }
-      transformRunner = new MapperTransformRunner(context, mapperMetrics);
+      transformRunner = new TransformRunner<>(context, mapperMetrics);
     }
 
     @Override
@@ -301,7 +308,6 @@ public class ETLMapReduce extends AbstractMapReduce {
       try {
         transformRunner.transform(key, value);
       } catch (Exception e) {
-        LOG.error("Exception thrown in BatchDriver Mapper.", e);
         Throwables.propagate(e);
       }
     }
@@ -316,7 +322,6 @@ public class ETLMapReduce extends AbstractMapReduce {
    * Reducer for a phase of an ETL pipeline.
    */
   public static class ETLReducer extends Reducer implements ProgramLifecycle<MapReduceTaskContext<Object, Object>> {
-    private static final Logger LOG = LoggerFactory.getLogger(ETLReducer.class);
 
     // injected by CDAP
     @SuppressWarnings("unused")
@@ -330,7 +335,7 @@ public class ETLMapReduce extends AbstractMapReduce {
       if (Boolean.valueOf(properties.get(Constants.STAGE_LOGGING_ENABLED))) {
         LogStageInjector.start();
       }
-      transformRunner = new ReducerTransformRunner(context, reducerMetrics);
+      transformRunner = new TransformRunner<>(context, reducerMetrics);
     }
 
     @Override
@@ -338,7 +343,6 @@ public class ETLMapReduce extends AbstractMapReduce {
       try {
         transformRunner.transform(key, values.iterator());
       } catch (Exception e) {
-        LOG.error("Exception thrown in BatchDriver Reducer.", e);
         Throwables.propagate(e);
       }
     }

@@ -40,13 +40,13 @@ import java.util.Collection;
  * @param <KEY_OUT> output key type
  * @param <VAL_OUT> output value type
  */
-class ErrorSink<KEY_OUT, VAL_OUT> {
+class ErrorOutputWriter<KEY_OUT, VAL_OUT> {
   private static final org.apache.avro.Schema AVRO_ERROR_SCHEMA =
     new org.apache.avro.Schema.Parser().parse(Constants.ERROR_SCHEMA.toString());
   private final MapReduceTaskContext<KEY_OUT, VAL_OUT> context;
   private final String errorDatasetName;
 
-  ErrorSink(MapReduceTaskContext<KEY_OUT, VAL_OUT> context, String errorDatasetName) {
+  ErrorOutputWriter(MapReduceTaskContext<KEY_OUT, VAL_OUT> context, String errorDatasetName) {
     this.context = context;
     this.errorDatasetName = errorDatasetName;
   }
