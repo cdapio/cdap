@@ -89,7 +89,7 @@ public class DescribeArtifactPluginCommand extends AbstractAuthCommand {
   public String getDescription() {
     return String.format("Describes all plugins of a specific type and name available to a specific %s. " +
       "Can return multiple details if the plugin exists in multiple %s. " +
-      "If no scope is given, then plugins are looked up in all the scopes.",
+      "If no scope is given, then plugins are looked up first in SYSTEM and then in USER scope.",
       ElementType.ARTIFACT.getName(), ElementType.ARTIFACT.getNamePlural());
   }
 }
