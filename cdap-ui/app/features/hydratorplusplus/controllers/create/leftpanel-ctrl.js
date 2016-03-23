@@ -27,7 +27,7 @@ class HydratorPlusPlusLeftPanelCtrl {
     this.DAGPlusPlusFactory = DAGPlusPlusFactory;
     this.DAGPlusPlusNodesActionsFactory = DAGPlusPlusNodesActionsFactory;
     this.NonStorePipelineErrorFactory = NonStorePipelineErrorFactory;
-    this.PluginTemplateActionBeta = PluginTemplateActionBeta;
+    this.PluginTemplatesDirActions = PluginTemplatesDirActions;
     this.rVersion = rVersion;
     this.$timeout = $timeout;
     this.myAlertOnValium = myAlertOnValium;
@@ -286,7 +286,7 @@ class HydratorPlusPlusLeftPanelCtrl {
       })
       .rendered
       .then(() => {
-        this.PluginTemplateActionBeta.init({
+        this.PluginTemplatesDirActions.init({
           templateType: node.templateType,
           pluginType: node.pluginType,
           mode: mode === 'edit'? 'edit': 'create',

@@ -14,7 +14,7 @@
  * the License.
  */
 
-class PluginTemplateDispatcherBeta {
+class PluginTemplatesDirDispatcher {
   constructor(CaskAngularDispatcher) {
     this.__dispatcher__ = null;
     this.baseDispatcher = CaskAngularDispatcher;
@@ -29,6 +29,6 @@ class PluginTemplateDispatcherBeta {
     delete this.__dispatcher__;
   }
 }
-PluginTemplateDispatcherBeta.$inject = ['CaskAngularDispatcher'];
+PluginTemplatesDirDispatcher.$inject = ['CaskAngularDispatcher'];
 angular.module(`${PKG.name}.commons`)
-  .service('PluginTemplateDispatcherBeta', PluginTemplateDispatcherBeta);
+  .service('PluginTemplatesDirDispatcher', PluginTemplatesDirDispatcher);

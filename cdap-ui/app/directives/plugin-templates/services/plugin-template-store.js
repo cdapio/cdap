@@ -14,13 +14,13 @@
  * the License.
  */
 
-class PluginTemplateStoreBeta {
-  constructor(PluginTemplateDispatcherBeta) {
+class PluginTemplatesDirStore {
+  constructor(PluginTemplatesDirDispatcher) {
     this.state = {};
     this.setDefaults();
     this.changeListeners = [];
 
-    let dispatcher = PluginTemplateDispatcherBeta.getDispatcher();
+    let dispatcher = PluginTemplatesDirDispatcher.getDispatcher();
     dispatcher.register('onInit', this.initStore.bind(this));
     dispatcher.register('onSaveSuccessfull', this.setIsSaveSuccessfull.bind(this));
     dispatcher.register('onCloseCommand', this.setIsCloseCommand.bind(this));
@@ -73,7 +73,7 @@ class PluginTemplateStoreBeta {
   }
 }
 
-PluginTemplateStoreBeta.$inject = ['PluginTemplateDispatcherBeta'];
+PluginTemplatesDirStore.$inject = ['PluginTemplatesDirDispatcher'];
 
 angular.module(`${PKG.name}.commons`)
-  .service('PluginTemplateStoreBeta', PluginTemplateStoreBeta);
+  .service('PluginTemplatesDirStore', PluginTemplatesDirStore);

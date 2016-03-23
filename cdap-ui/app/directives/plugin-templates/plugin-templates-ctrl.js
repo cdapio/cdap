@@ -15,7 +15,7 @@
  */
 
 angular.module(`${PKG.name}.commons`)
-  .controller('PluginTemplatesCtrl', function (PluginTemplateStoreBeta, PluginTemplateActionBeta, $scope, myPipelineApi, HydratorPlusPlusPluginConfigFactory, myHelpers, mySettings, $stateParams, $state, GLOBALS, $rootScope) {
+  .controller('PluginTemplatesCtrl', function (PluginTemplatesDirStore, PluginTemplatesDirActions, $scope, myPipelineApi, HydratorPlusPlusPluginConfigFactory, myHelpers, mySettings, $stateParams, $state, GLOBALS, $rootScope) {
 
     var vm = this;
     var oldTemplateName;
@@ -195,18 +195,18 @@ angular.module(`${PKG.name}.commons`)
     };
 
 
-    PluginTemplateStoreBeta.registerOnChangeListener(() => {
-      let mode = PluginTemplateStoreBeta.getMode();
-      let isCloseCommand = PluginTemplateStoreBeta.getIsCloseCommand();
-      let isSaveSuccessfull = PluginTemplateStoreBeta.getIsSaveSuccessfull();
+    PluginTemplatesDirStore.registerOnChangeListener(() => {
+      let mode = PluginTemplatesDirStore.getMode();
+      let isCloseCommand = PluginTemplatesDirStore.getIsCloseCommand();
+      let isSaveSuccessfull = PluginTemplatesDirStore.getIsSaveSuccessfull();
       if (isCloseCommand || isSaveSuccessfull) {
         return;
       }
       if (mode === 'edit') {
-        vm.templateType = PluginTemplateStoreBeta.getTemplateType();
-        vm.pluginType = PluginTemplateStoreBeta.getPluginType();
-        vm.templateName = PluginTemplateStoreBeta.getTemplateName();
-        vm.pluginName = PluginTemplateStoreBeta.getPluginName();
+        vm.templateType = PluginTemplatesDirStore.getTemplateType();
+        vm.pluginType = PluginTemplatesDirStore.getPluginType();
+        vm.templateName = PluginTemplatesDirStore.getTemplateName();
+        vm.pluginName = PluginTemplatesDirStore.getPluginName();
         vm.prefill = {
           templateType: true,
           pluginType: true,
@@ -231,8 +231,8 @@ angular.module(`${PKG.name}.commons`)
             initialize();
           });
       } else {
-        let templateType = PluginTemplateStoreBeta.getTemplateType();
-        let pluginType = PluginTemplateStoreBeta.getPluginType();
+        let templateType = PluginTemplatesDirStore.getTemplateType();
+        let pluginType = PluginTemplatesDirStore.getPluginType();
         if (templateType && templateType.length && !vm.templateType) {
           vm.templateType = templateType;
           vm.prefill.templateType = true;
@@ -247,7 +247,7 @@ angular.module(`${PKG.name}.commons`)
     });
 
     vm.cancel = function() {
-      PluginTemplateActionBeta.templateClose(true);
+      PluginTemplatesDirActions.templateClose(true);
     };
 
     vm.save = function (isValid) {
@@ -321,7 +321,7 @@ angular.module(`${PKG.name}.commons`)
             .then(function () {
               vm.loading = false;
 
-              PluginTemplateActionBeta.templateSavedSuccesfully();
+              PluginTemplatesDirActions.templateSavedSuccesfully();
 
             });
         });

@@ -15,17 +15,17 @@
  */
 
 angular.module(`${PKG.name}.feature.hydratorplusplus`)
-  .controller('PluginTemplatesCreateEditCtrl', function ($scope, PluginTemplateStoreBeta, PluginTemplateActionBeta, HydratorPlusPlusPluginActions, $stateParams, myAlertOnValium) {
+  .controller('PluginTemplatesCreateEditCtrl', function ($scope, PluginTemplatesDirStore, PluginTemplatesDirActions, HydratorPlusPlusPluginActions, $stateParams, myAlertOnValium) {
       $scope.closeTemplateCreationModal = ()=> {
-        PluginTemplateActionBeta.reset();
+        PluginTemplatesDirActions.reset();
         $scope.$close();
       };
       $scope.pluginTemplateSaveError = null;
-      PluginTemplateStoreBeta.registerOnChangeListener(() => {
-        let getIsSaveSuccessfull = PluginTemplateStoreBeta.getIsSaveSuccessfull();
-        let getIsCloseCommand = PluginTemplateStoreBeta.getIsCloseCommand();
+      PluginTemplatesDirStore.registerOnChangeListener(() => {
+        let getIsSaveSuccessfull = PluginTemplatesDirStore.getIsSaveSuccessfull();
+        let getIsCloseCommand = PluginTemplatesDirStore.getIsCloseCommand();
         if (getIsSaveSuccessfull) {
-          PluginTemplateActionBeta.reset();
+          PluginTemplatesDirActions.reset();
           HydratorPlusPlusPluginActions.fetchTemplates({namespace: $stateParams.namespace});
           myAlertOnValium.show({
             type: 'success',
@@ -34,7 +34,7 @@ angular.module(`${PKG.name}.feature.hydratorplusplus`)
           $scope.$close();
         }
         if (getIsCloseCommand) {
-          PluginTemplateActionBeta.reset();
+          PluginTemplatesDirActions.reset();
           $scope.$close();
         }
       });

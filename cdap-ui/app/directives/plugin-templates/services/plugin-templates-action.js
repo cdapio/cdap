@@ -14,39 +14,39 @@
  * the License.
  */
 
-class PluginTemplateActionBeta {
-  constructor(PluginTemplateDispatcherBeta) {
-    this.PluginTemplateDispatcherBeta = PluginTemplateDispatcherBeta.getDispatcher();
+class PluginTemplatesDirActions {
+  constructor(PluginTemplatesDirDispatcher) {
+    this.pluginTemplatesDirDispatcher = PluginTemplatesDirDispatcher.getDispatcher();
   }
 
   init(state) {
-    this.PluginTemplateDispatcherBeta.dispatch('onInit', state);
+    this.pluginTemplatesDirDispatcher.dispatch('onInit', state);
   }
 
   reset() {
-    this.PluginTemplateDispatcherBeta.dispatch('onReset');
+    this.pluginTemplatesDirDispatcher.dispatch('onReset');
   }
 
   triggerSave() {
-    this.PluginTemplateDispatcherBeta.dispatch('onSaveTriggered');
+    this.pluginTemplatesDirDispatcher.dispatch('onSaveTriggered');
   }
 
   cancelTriggerSave() {
-    this.PluginTemplateDispatcherBeta.dispatch('onSaveTriggerCancel');
+    this.pluginTemplatesDirDispatcher.dispatch('onSaveTriggerCancel');
   }
 
   templateSavedSuccesfully() {
-    this.PluginTemplateDispatcherBeta.dispatch('onSaveSuccessfull');
+    this.pluginTemplatesDirDispatcher.dispatch('onSaveSuccessfull');
   }
   templateClose(isCloseCommand) {
-    this.PluginTemplateDispatcherBeta.dispatch('onCloseCommand', isCloseCommand);
+    this.pluginTemplatesDirDispatcher.dispatch('onCloseCommand', isCloseCommand);
   }
 
   templateSaveFailed(err) {
-    this.PluginTemplateDispatcherBeta.dispatch('onSaveFailure', err);
+    this.pluginTemplatesDirDispatcher.dispatch('onSaveFailure', err);
   }
 
 }
-PluginTemplateActionBeta.$inject = ['PluginTemplateDispatcherBeta'];
+PluginTemplatesDirActions.$inject = ['PluginTemplatesDirDispatcher'];
 angular.module(`${PKG.name}.commons`)
-  .service('PluginTemplateActionBeta', PluginTemplateActionBeta);
+  .service('PluginTemplatesDirActions', PluginTemplatesDirActions);
