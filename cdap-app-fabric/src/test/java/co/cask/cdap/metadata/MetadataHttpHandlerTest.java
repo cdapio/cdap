@@ -952,16 +952,16 @@ public class MetadataHttpHandlerTest extends MetadataTestBase {
 
     // Assert metadata
     Assert.assertEquals(ImmutableSet.of(new MetadataSearchResultRecord(stream), new MetadataSearchResultRecord(view)),
-                        searchMetadata(namespace, "text", null));
+                        searchMetadata(namespace, "text"));
     Assert.assertEquals(ImmutableSet.of(new MetadataSearchResultRecord(datasetInstance)),
-                        searchMetadata(namespace, "mydataset", null));
+                        searchMetadata(namespace, "mydataset"));
     Assert.assertEquals(ImmutableSet.of(
                           new MetadataSearchResultRecord(app),
                           new MetadataSearchResultRecord(flow),
                           new MetadataSearchResultRecord(artifact),
                           new MetadataSearchResultRecord(service)
                         ),
-                        searchMetadata(namespace, "word*", null));
+                        searchMetadata(namespace, "word*"));
     Assert.assertEquals(ImmutableSet.of(
                           new MetadataSearchResultRecord(app),
                           new MetadataSearchResultRecord(flow),
@@ -969,7 +969,7 @@ public class MetadataHttpHandlerTest extends MetadataTestBase {
                           new MetadataSearchResultRecord(datasetInstance),
                           new MetadataSearchResultRecord(view)
                         ),
-                        searchMetadata(namespace, "tag1", null));
+                        searchMetadata(namespace, "tag1"));
 
     // Delete entities
     deleteApp(app, 200);
@@ -980,10 +980,10 @@ public class MetadataHttpHandlerTest extends MetadataTestBase {
 
 
     // Assert no metadata
-    Assert.assertEquals(ImmutableSet.of(), searchMetadata(namespace, "text", null));
-    Assert.assertEquals(ImmutableSet.of(), searchMetadata(namespace, "mydataset", null));
-    Assert.assertEquals(ImmutableSet.of(), searchMetadata(namespace, "word*", null));
-    Assert.assertEquals(ImmutableSet.of(), searchMetadata(namespace, "tag1", null));
+    Assert.assertEquals(ImmutableSet.of(), searchMetadata(namespace, "text"));
+    Assert.assertEquals(ImmutableSet.of(), searchMetadata(namespace, "mydataset"));
+    Assert.assertEquals(ImmutableSet.of(), searchMetadata(namespace, "word*"));
+    Assert.assertEquals(ImmutableSet.of(), searchMetadata(namespace, "tag1"));
   }
 
   @Test
@@ -1015,16 +1015,16 @@ public class MetadataHttpHandlerTest extends MetadataTestBase {
     addTags(view, tags);
 
     Assert.assertEquals(ImmutableSet.of(new MetadataSearchResultRecord(stream), new MetadataSearchResultRecord(view)),
-                        searchMetadata(namespace, "text", null));
+                        searchMetadata(namespace, "text"));
     Assert.assertEquals(ImmutableSet.of(new MetadataSearchResultRecord(datasetInstance)),
-                        searchMetadata(namespace, "mydataset", null));
+                        searchMetadata(namespace, "mydataset"));
     Assert.assertEquals(ImmutableSet.of(
                           new MetadataSearchResultRecord(app),
                           new MetadataSearchResultRecord(flow),
                           new MetadataSearchResultRecord(artifact),
                           new MetadataSearchResultRecord(service)
                         ),
-                        searchMetadata(namespace, "word*", null));
+                        searchMetadata(namespace, "word*"));
     Assert.assertEquals(ImmutableSet.of(
                           new MetadataSearchResultRecord(app),
                           new MetadataSearchResultRecord(flow),
@@ -1032,16 +1032,16 @@ public class MetadataHttpHandlerTest extends MetadataTestBase {
                           new MetadataSearchResultRecord(datasetInstance),
                           new MetadataSearchResultRecord(view)
                         ),
-                        searchMetadata(namespace, "tag1", null));
+                        searchMetadata(namespace, "tag1"));
 
     // Delete namespace
     deleteNamespace(namespace.getId());
 
     // Assert no metadata
-    Assert.assertEquals(ImmutableSet.of(), searchMetadata(namespace, "text", null));
-    Assert.assertEquals(ImmutableSet.of(), searchMetadata(namespace, "mydataset", null));
-    Assert.assertEquals(ImmutableSet.of(), searchMetadata(namespace, "word*", null));
-    Assert.assertEquals(ImmutableSet.of(), searchMetadata(namespace, "tag1", null));
+    Assert.assertEquals(ImmutableSet.of(), searchMetadata(namespace, "text"));
+    Assert.assertEquals(ImmutableSet.of(), searchMetadata(namespace, "mydataset"));
+    Assert.assertEquals(ImmutableSet.of(), searchMetadata(namespace, "word*"));
+    Assert.assertEquals(ImmutableSet.of(), searchMetadata(namespace, "tag1"));
   }
 
   private Set<Id.NamespacedId> getEntities(Set<MetadataSearchResultRecord> results) {
