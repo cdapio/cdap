@@ -44,6 +44,7 @@ import co.cask.cdap.etl.common.Destroyables;
 import co.cask.cdap.etl.common.LoggedTransform;
 import co.cask.cdap.etl.common.NoopMetrics;
 import co.cask.cdap.etl.common.PipelinePhase;
+import co.cask.cdap.etl.common.SetMultimapCodec;
 import co.cask.cdap.etl.common.TransformDetail;
 import co.cask.cdap.etl.common.TransformExecutor;
 import co.cask.cdap.etl.common.TransformResponse;
@@ -61,6 +62,7 @@ import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.SetMultimap;
 import com.google.common.collect.Sets;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -86,6 +88,7 @@ public class ETLWorker extends AbstractWorker {
   private static final Logger LOG = LoggerFactory.getLogger(ETLWorker.class);
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
+    .registerTypeAdapter(SetMultimap.class, new SetMultimapCodec<>())
     .create();
   private static final String SEPARATOR = ":";
   private static final Schema ERROR_SCHEMA = Schema.recordOf(
@@ -209,9 +212,6 @@ public class ETLWorker extends AbstractWorker {
     });
 
     PipelinePhase pipeline = GSON.fromJson(properties.get(Constants.PIPELINEID), PipelinePhase.class);
-
-    Map<String, Set<String>> connectionsMap =
-      GSON.fromJson(properties.get(Constants.PIPELINEID), PipelinePhase.class).getConnections();
     Map<String, TransformDetail> transformationMap = new HashMap<>();
 
     initializeSource(context, pipeline);
@@ -219,7 +219,7 @@ public class ETLWorker extends AbstractWorker {
     initializeTransforms(context, transformationMap, pipeline);
     initializeSinks(context, transformationMap, pipeline);
     Set<String> startStages = new HashSet<>();
-    startStages.addAll(connectionsMap.get(sourceStageName));
+    startStages.addAll(pipeline.getStageOutputs(sourceStageName));
     transformExecutor = new TransformExecutor(transformationMap, startStages);
   }
 

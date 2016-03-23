@@ -65,7 +65,7 @@ public class DataPipelineApp extends AbstractApplication<ETLBatchConfig> {
                                   .build());
     PipelineSpec spec = specGenerator.generateSpec(config);
 
-    PipelinePlanner planner = new PipelinePlanner(supportedPluginTypes, ImmutableSet.of("aggregator"));
+    PipelinePlanner planner = new PipelinePlanner(supportedPluginTypes, ImmutableSet.of(BatchAggregator.PLUGIN_TYPE));
     PipelinePlan plan = planner.plan(spec);
 
     addWorkflow(new SmartWorkflow(spec, plan, getConfigurer()));
