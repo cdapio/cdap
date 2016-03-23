@@ -15,7 +15,7 @@
  */
 
 angular.module(`${PKG.name}.commons`)
-  .controller('PluginTemplatesCtrl', function (PluginTemplateStoreBeta, PluginTemplateActionBeta, $scope, myPipelineApi, PluginConfigFactory, myHelpers, mySettings, $stateParams, $state, GLOBALS, $rootScope) {
+  .controller('PluginTemplatesCtrl', function (PluginTemplateStoreBeta, PluginTemplateActionBeta, $scope, myPipelineApi, HydratorPlusPlusPluginConfigFactory, myHelpers, mySettings, $stateParams, $state, GLOBALS, $rootScope) {
 
     var vm = this;
     var oldTemplateName;
@@ -155,13 +155,13 @@ angular.module(`${PKG.name}.commons`)
         key: 'widgets.' + vm.plugin.name + '-' + vm.plugin.type
       };
 
-      PluginConfigFactory.fetchWidgetJson(artifact.name, artifact.version, artifact.scope, artifact.key)
+      HydratorPlusPlusPluginConfigFactory.fetchWidgetJson(artifact.name, artifact.version, artifact.scope, artifact.key)
         .then(function success (res) {
 
           vm.configFetched = true;
           vm.noConfig = false;
 
-          vm.groupsConfig = PluginConfigFactory.generateNodeConfig(vm.pluginConfig._backendProperties, res);
+          vm.groupsConfig = HydratorPlusPlusPluginConfigFactory.generateNodeConfig(vm.pluginConfig._backendProperties, res);
 
           angular.forEach(vm.groupsConfig.groups, function (group) {
             angular.forEach(group.fields, function (field) {

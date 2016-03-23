@@ -14,8 +14,8 @@
  * the License.
  */
 
-angular.module(`${PKG.name}.feature.hydrator-beta`)
-  .controller('PluginTemplatesDeleteCtrl', function(rNode, $scope, mySettings, $stateParams, myAlertOnValium, PluginActionsFactoryBeta) {
+angular.module(`${PKG.name}.feature.hydratorplusplus`)
+  .controller('PluginTemplatesDeleteCtrl', function(rNode, $scope, mySettings, $stateParams, myAlertOnValium, HydratorPlusPlusPluginActions) {
     let node = rNode;
     $scope.templateName = node.pluginTemplate;
     $scope.ok = () => {
@@ -32,7 +32,7 @@ angular.module(`${PKG.name}.feature.hydrator-beta`)
               type: 'success',
               content: 'Successfully deleted template ' + node.pluginTemplate
             });
-            PluginActionsFactoryBeta.fetchTemplates({namespace: $stateParams.namespace});
+            HydratorPlusPlusPluginActions.fetchTemplates({namespace: $stateParams.namespace});
             $scope.$close();
           },
           (err) => {

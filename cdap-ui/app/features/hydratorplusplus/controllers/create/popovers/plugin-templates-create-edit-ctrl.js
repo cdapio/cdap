@@ -14,8 +14,8 @@
  * the License.
  */
 
-angular.module(`${PKG.name}.feature.hydrator-beta`)
-  .controller('PluginTemplatesCreateEditCtrl', function ($scope, PluginTemplateStoreBeta, PluginTemplateActionBeta, PluginActionsFactoryBeta, $stateParams, myAlertOnValium) {
+angular.module(`${PKG.name}.feature.hydratorplusplus`)
+  .controller('PluginTemplatesCreateEditCtrl', function ($scope, PluginTemplateStoreBeta, PluginTemplateActionBeta, HydratorPlusPlusPluginActions, $stateParams, myAlertOnValium) {
       $scope.closeTemplateCreationModal = ()=> {
         PluginTemplateActionBeta.reset();
         $scope.$close();
@@ -26,10 +26,10 @@ angular.module(`${PKG.name}.feature.hydrator-beta`)
         let getIsCloseCommand = PluginTemplateStoreBeta.getIsCloseCommand();
         if (getIsSaveSuccessfull) {
           PluginTemplateActionBeta.reset();
-          PluginActionsFactoryBeta.fetchTemplates({namespace: $stateParams.namespace});
+          HydratorPlusPlusPluginActions.fetchTemplates({namespace: $stateParams.namespace});
           myAlertOnValium.show({
             type: 'success',
-            content: 'Plugin template creation successfull'
+            content: 'Plugin template save successfull'
           });
           $scope.$close();
         }

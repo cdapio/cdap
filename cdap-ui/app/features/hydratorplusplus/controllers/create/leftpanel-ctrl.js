@@ -262,7 +262,7 @@ class HydratorPlusPlusLeftPanelCtrl {
   deletePluginTemplate(node) {
     this.$uibModal
       .open({
-        templateUrl: '/assets/features/hydrator-beta/templates/create/popovers/plugin-delete-confirmation.html',
+        templateUrl: '/assets/features/hydratorplusplus/templates/create/popovers/plugin-delete-confirmation.html',
         size: 'lg',
         backdrop: 'static',
         keyboard: false,
@@ -277,7 +277,7 @@ class HydratorPlusPlusLeftPanelCtrl {
   createPluginTemplate(node, mode) {
     this.$uibModal
       .open({
-        templateUrl: '/assets/features/hydrator-beta/templates/create/popovers/plugin-templates.html',
+        templateUrl: '/assets/features/hydratorplusplus/templates/create/popovers/plugin-templates.html',
         size: 'lg',
         backdrop: 'static',
         keyboard: false,
