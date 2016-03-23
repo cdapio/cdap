@@ -124,13 +124,8 @@ There are two ways to use a dataset in a program:
   By default, the cached instance of a dataset will not expire, and it will participate in all transactions initiated
   by the program.
 
-  However, contrary to static datasets, dynamic datasets allow the release of the resources held by their Java classes
-  after you are done using them. You can do that by calling the ``discardDataset()`` method of the program context:
-  it marks the dataset to be closed and removed from all transactions as soon as the current transaction completes,
-  thereby releasing its resources.
-
-  If you know the dataset name at the time the program starts, you can store a reference to the dataset in a member
-  variable at that time (similar to static datasets, but assigned explicitly by you)::
+  For convenience, if you know the dataset name at the time the program starts, you can store a reference to 
+  the dataset in a member variable at that time (similar to static datasets, but assigned explicitly by you)::
 
     class MyFlowlet extends AbstractFlowlet {
 
@@ -149,8 +144,30 @@ There are two ways to use a dataset in a program:
   See the :ref:`Word Count <examples-word-count>` for an example of how this can be used to configure
   the dataset names used by an application.
 
-  Similarly to static datasets, if the program is multi-threaded, CDAP will make
-  sure that every thread has its own instance of the dataset.
+  Contrary to static datasets, dynamic datasets allow the release of the resources held by their Java classes
+  after you are finished using them. You can do that by calling the ``discardDataset()`` method of the program context:
+  it marks the dataset to be closed and removed from all transactions. However, this will not happen until after the
+  current transaction is completes, because the discarded dataset may have performed data operations and therefore
+  still needs to participate in the commit (or rollback) of the transaction.
+  
+  Discarding a dataset is useful:
+
+  - To ensure that the dataset is closed and its resources are released, as soon as a program does not need the dataset
+    any longer.
+  - To refresh a dataset after its properties have been updated. Without discarding the dataset, the program would keep
+    the dataset in its cache, and it would never pick up a change in the dataset's properties. Discarding the dataset
+    ensures that it is removed from the cache after the current transaction. Therefore, the next time this dataset is
+    obtained using ``getDataset()`` in a subsequent transaction, it is guaranteed to return a fresh instance of the
+    dataset, hence picking up any properties that have changed since the program started.
+
+  It is important to know that after discarding a dataset, it remains in the cache for the duration of the current
+  transaction. Be aware that if you call ``getDataset()`` again for the same dataset and arguments before the
+  transaction is complete, then that reverses the effect of discarding. It is therefore a good practice to discard
+  a dataset at the end of a transaction.
+
+  Similarly to static datasets, if a program is multi-threaded, CDAP will make
+  sure that every thread has its own instance of each dynamic dataset |---| and in order to discard a dataset
+  from the cache, every thread that uses it must individually call ``discardDataset()``.
 
 .. rubric::  Dataset Time-To-Live (TTL)
 
