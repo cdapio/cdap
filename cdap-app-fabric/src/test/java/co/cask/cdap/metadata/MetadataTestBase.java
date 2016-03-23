@@ -442,8 +442,9 @@ public abstract class MetadataTestBase extends AppFabricTestBase {
   }
 
   protected Set<MetadataSearchResultRecord> searchMetadata(Id.Namespace namespaceId, String query,
-                                                           @Nullable MetadataSearchTargetType target) throws Exception {
-    return metadataClient.searchMetadata(namespaceId, query, target);
+                                                           Set<MetadataSearchTargetType> targets)
+    throws Exception {
+    return metadataClient.searchMetadata(namespaceId, query, targets);
   }
 
   protected Set<String> getTags(Id.Application app, MetadataScope scope) throws Exception {

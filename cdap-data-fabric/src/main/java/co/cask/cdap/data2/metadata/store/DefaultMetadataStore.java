@@ -360,28 +360,28 @@ public class DefaultMetadataStore implements MetadataStore {
 
   @Override
   public Set<MetadataSearchResultRecord> searchMetadata(MetadataScope scope, String namespaceId, String searchQuery) {
-    return searchMetadataOnType(scope, namespaceId, searchQuery, MetadataSearchTargetType.ALL);
+    return searchMetadataOnType(scope, namespaceId, searchQuery, ImmutableSet.of(MetadataSearchTargetType.ALL));
   }
 
   @Override
   public Set<MetadataSearchResultRecord> searchMetadataOnType(String namespaceId, String searchQuery,
-                                                              MetadataSearchTargetType type) {
+                                                              Set<MetadataSearchTargetType> types) {
     return ImmutableSet.<MetadataSearchResultRecord>builder()
-      .addAll(searchMetadataOnType(MetadataScope.USER, namespaceId, searchQuery, type))
-      .addAll(searchMetadataOnType(MetadataScope.SYSTEM, namespaceId, searchQuery, type))
+      .addAll(searchMetadataOnType(MetadataScope.USER, namespaceId, searchQuery, types))
+      .addAll(searchMetadataOnType(MetadataScope.SYSTEM, namespaceId, searchQuery, types))
       .build();
   }
 
   @Override
   public Set<MetadataSearchResultRecord> searchMetadataOnType(final MetadataScope scope, final String namespaceId,
                                                               final String searchQuery,
-                                                              final MetadataSearchTargetType type) {
+                                                              final Set<MetadataSearchTargetType> types) {
     // Execute search query
     Iterable<MetadataEntry> results = execute(new TransactionExecutor.Function<MetadataDataset,
       Iterable<MetadataEntry>>() {
       @Override
       public Iterable<MetadataEntry> apply(MetadataDataset input) throws Exception {
-        return input.search(namespaceId, searchQuery, type);
+        return input.search(namespaceId, searchQuery, types);
       }
     }, scope);
 

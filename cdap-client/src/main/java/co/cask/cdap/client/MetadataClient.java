@@ -30,6 +30,7 @@ import co.cask.cdap.proto.metadata.MetadataSearchTargetType;
 import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpResponse;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -70,7 +71,7 @@ public class MetadataClient {
   }
 
   /**
-   * Returns search results for metadata.
+   * Searches entities in the specified namespace whose metadata matches the specified query.
    *
    * @param namespace the namespace to search in
    * @param query the query string with which to search
@@ -80,10 +81,28 @@ public class MetadataClient {
   public Set<MetadataSearchResultRecord> searchMetadata(Id.Namespace namespace, String query,
                                                         @Nullable MetadataSearchTargetType target)
     throws IOException, UnauthenticatedException {
+    Set<MetadataSearchTargetType> targets = ImmutableSet.of();
+    if (target != null) {
+      targets = ImmutableSet.of(target);
+    }
+    return searchMetadata(namespace, query, targets);
+  }
+
+  /**
+   * Searches entities in the specified namespace whose metadata matches the specified query.
+   *
+   * @param namespace the namespace to search in
+   * @param query the query string with which to search
+   * @param targets {@link MetadataSearchTargetType}s to search. If empty, all possible types will be searched
+   * @return A set of {@link MetadataSearchResultRecord} for the given query.
+   */
+  public Set<MetadataSearchResultRecord> searchMetadata(Id.Namespace namespace, String query,
+                                                        Set<MetadataSearchTargetType> targets)
+    throws IOException, UnauthenticatedException {
 
     String path = String.format("metadata/search?query=%s", query);
-    if (target != null) {
-      path = path + "&target=" + target;
+    for (MetadataSearchTargetType t : targets) {
+      path += "&target=" + t;
     }
     URL searchURL = config.resolveNamespacedURLV3(namespace, path);
     HttpResponse response = restClient.execute(HttpRequest.get(searchURL).build(),

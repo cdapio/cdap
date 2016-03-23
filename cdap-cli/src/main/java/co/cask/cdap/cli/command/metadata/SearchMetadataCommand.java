@@ -25,6 +25,10 @@ import co.cask.cdap.client.MetadataClient;
 import co.cask.cdap.proto.metadata.MetadataSearchResultRecord;
 import co.cask.cdap.proto.metadata.MetadataSearchTargetType;
 import co.cask.common.cli.Arguments;
+import com.google.common.base.Function;
+import com.google.common.base.Splitter;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 
@@ -36,6 +40,14 @@ import java.util.Set;
  * Command for metadata search in CLI.
  */
 public class SearchMetadataCommand extends AbstractCommand {
+
+  private static final Function<String, MetadataSearchTargetType> STRING_TO_TARGET_TYPE =
+    new Function<String, MetadataSearchTargetType>() {
+      @Override
+      public MetadataSearchTargetType apply(String input) {
+        return MetadataSearchTargetType.valueOf(input.toUpperCase());
+      }
+    };
 
   private final MetadataClient metadataClient;
 
@@ -49,10 +61,8 @@ public class SearchMetadataCommand extends AbstractCommand {
   public void perform(Arguments arguments, PrintStream output) throws Exception {
     String searchQuery = arguments.get(ArgumentName.SEARCH_QUERY.toString());
     String type = arguments.getOptional(ArgumentName.TARGET_TYPE.toString());
-    MetadataSearchTargetType targetType = type == null ? MetadataSearchTargetType.ALL :
-      MetadataSearchTargetType.valueOf(type.toUpperCase());
-    Set<MetadataSearchResultRecord> searchResults = metadataClient.searchMetadata(cliConfig.getCurrentNamespace(),
-                                                                                  searchQuery, targetType);
+    Set<MetadataSearchResultRecord> searchResults =
+      metadataClient.searchMetadata(cliConfig.getCurrentNamespace(), searchQuery, parseTargetType(type));
     Table table = Table.builder()
       .setHeader("Entity")
       .setRows(Lists.newArrayList(searchResults), new RowMaker<MetadataSearchResultRecord>() {
@@ -72,6 +82,16 @@ public class SearchMetadataCommand extends AbstractCommand {
 
   @Override
   public String getDescription() {
-    return "Allows users to search CDAP entities based on the metadata annotated on them.";
+    return "Searches CDAP entities based on the metadata annotated on them. " +
+      "The search can be restricted by adding a comma-separated list of target types: " +
+      "artifact, app, dataset, program, stream, or view.";
+  }
+
+  private Set<MetadataSearchTargetType> parseTargetType(String typeString) {
+    if (typeString == null) {
+      return ImmutableSet.of();
+    }
+
+    return ImmutableSet.copyOf(Iterables.transform(Splitter.on(',').split(typeString), STRING_TO_TARGET_TYPE));
   }
 }

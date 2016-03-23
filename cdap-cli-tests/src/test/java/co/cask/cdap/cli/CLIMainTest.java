@@ -610,6 +610,14 @@ public class CLIMainTest {
     expected = ImmutableList.of("Entity", fakeFlowId.toString(), pingServiceId.toString(),
                                 prefixedEchoHandlerId.toString());
     Assert.assertTrue(lines.containsAll(expected) && expected.containsAll(lines));
+    output = getCommandOutput(cli, "search metadata fake* filtered by target-type dataset,stream");
+    lines = Arrays.asList(output.split("\\r?\\n"));
+    expected = ImmutableList.of("Entity", fakeDsId.toString(), fakeStreamId.toString());
+    Assert.assertTrue(lines.containsAll(expected) && expected.containsAll(lines));
+    output = getCommandOutput(cli, "search metadata fake* filtered by target-type dataset,stream,app");
+    lines = Arrays.asList(output.split("\\r?\\n"));
+    expected = ImmutableList.of("Entity", fakeDsId.toString(), fakeStreamId.toString(), fakeAppId.toString());
+    Assert.assertTrue(lines.containsAll(expected) && expected.containsAll(lines));
   }
 
   @Test
