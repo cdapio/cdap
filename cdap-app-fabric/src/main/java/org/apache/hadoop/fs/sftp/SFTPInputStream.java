@@ -62,6 +62,9 @@ class SFTPInputStream extends FSInputStream {
 
   @Override
   public void seek(long position) throws IOException {
+    if (getPos() == position) {
+      return;
+    }
     throw new IOException(E_SEEK_NOTSUPPORTED);
   }
 
