@@ -18,24 +18,29 @@
   <div>
     <uib-datepicker
       ng-model="DatetimeController.date"
-      datepicker-options="DatetimeController.options"
-      ></uib-datepicker>
+      datepicker-options="DatetimeController.options">
+    </uib-datepicker>
   </div>
 
   <div class="time-picker">
     <div class="time-text">
       <div class="text-center">
         <input type="number" class="time-input hour"
-          min="{{ DatetimeController.min }}"
-          max="{{ DatetimeController.max }}"
-          ng-model="DatetimeController.hour">
+               min="{{ DatetimeController.min }}"
+               max="{{ DatetimeController.max }}"
+               ng-model="DatetimeController.hour">
         <span class="colon">:</span>
-        <input type="number" class="time-input minutes" min="0" max="59" ng-model="DatetimeController.minutes">
+        <input type="number" class="time-input minutes"
+               min="0"
+               max="59"
+               ng-model="DatetimeController.minutes">
       </div>
       <div class="am-pm-switch text-center">
         <span>AM</span>
         <div class="switch" ng-click="DatetimeController.togglePM()">
-          <span class="thumb" ng-class="{'am': !DatetimeController.isPM, 'pm': DatetimeController.isPM }"></span>
+          <span class="thumb"
+                ng-class="{'am': !DatetimeController.isPM, 'pm': DatetimeController.isPM }">
+          </span>
         </div>
         <span>PM</span>
       </div>
@@ -44,11 +49,17 @@
     <div class="time-slider">
       <div>
         <label>Hour</label>
-        <input type="range" min="{{ DatetimeController.min }}" max="{{ DatetimeController.max }}" ng-model="DatetimeController.hour">
+        <input type="range"
+               min="{{ DatetimeController.min }}"
+               max="{{ DatetimeController.max }}"
+               ng-model="DatetimeController.hour">
       </div>
       <div class="minutes-slider">
         <label>Minutes</label>
-        <input type="range" min="0" max="59" ng-model="DatetimeController.minutes">
+        <input type="range"
+               min="0"
+               max="59"
+               ng-model="DatetimeController.minutes">
       </div>
     </div>
   </div>

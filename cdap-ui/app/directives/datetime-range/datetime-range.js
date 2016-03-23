@@ -38,8 +38,6 @@ function RangeController ($scope) {
 
     $scope.onDone();
   };
-
-
 }
 
 angular.module(PKG.name+'.commons')
