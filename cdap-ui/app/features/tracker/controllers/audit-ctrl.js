@@ -153,7 +153,9 @@ class TrackerAuditController {
           return c.name === 'kafka.num.partitions';
         })[0].value;
 
-        let topic = 'audit';
+        let topic = res.filter( (c) => {
+          return c.name === 'audit.kafka.topic';
+        })[0].value;
 
         let config = {
           artifact: {
