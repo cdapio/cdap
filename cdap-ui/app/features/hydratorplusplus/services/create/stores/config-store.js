@@ -475,10 +475,14 @@ class HydratorPlusPlusConfigStore {
         return;
       }
       // If we encounter an implicit schema down the stream while propagation stop there and return.
-      if (node.isImplicitSchema) {
+      if (!angular.isArray(node) && nodesMap[node].implicitSchema) {
         return;
       }
       node.forEach( n => {
+        // If we encounter an implicit schema down the stream while propagation stop there and return.
+        if (nodesMap[n].implicitSchema) {
+          return;
+        }
         nodesMap[n].outputSchema = outputSchema;
         nodesMap[n].inputSchema = outputSchema;
         if (nodesMap[n].outputSchemaProperty) {
