@@ -24,6 +24,7 @@ import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.cli.util.RowMaker;
 import co.cask.cdap.cli.util.table.Table;
 import co.cask.cdap.client.ArtifactClient;
+import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.artifact.PluginInfo;
 import co.cask.common.cli.Arguments;
@@ -57,7 +58,7 @@ public class DescribeArtifactPluginCommand extends AbstractAuthCommand {
     String pluginType = arguments.get(ArgumentName.PLUGIN_TYPE.toString());
     String pluginName = arguments.get(ArgumentName.PLUGIN_NAME.toString());
 
-    final List<PluginInfo> pluginInfos;
+    List<PluginInfo> pluginInfos;
     String scopeStr = arguments.getOptional(ArgumentName.SCOPE.toString());
     if (scopeStr == null) {
       pluginInfos = artifactClient.getPluginInfo(artifactId, pluginType, pluginName);
@@ -88,7 +89,7 @@ public class DescribeArtifactPluginCommand extends AbstractAuthCommand {
   public String getDescription() {
     return String.format("Describes all plugins of a specific type and name available to a specific %s. " +
       "Can return multiple details if the plugin exists in multiple %s. " +
-      "If no scope is given, the user scope will be used.",
+      "If no scope is given, then plugins are looked up first in SYSTEM and then in USER scope.",
       ElementType.ARTIFACT.getName(), ElementType.ARTIFACT.getNamePlural());
   }
 }
