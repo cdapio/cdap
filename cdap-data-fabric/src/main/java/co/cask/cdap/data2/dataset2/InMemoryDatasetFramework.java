@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -36,6 +36,7 @@ import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.datafabric.dataset.type.ConstantClassLoaderProvider;
 import co.cask.cdap.data2.datafabric.dataset.type.DatasetClassLoaderProvider;
 import co.cask.cdap.data2.dataset2.module.lib.DatasetModules;
+import co.cask.cdap.data2.metadata.lineage.AccessType;
 import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.audit.AuditPayload;
@@ -444,6 +445,17 @@ public class InMemoryDatasetFramework implements DatasetFramework {
                                           @Nullable ClassLoader parentClassLoader,
                                           DatasetClassLoaderProvider classLoaderProvider,
                                           @Nullable Iterable<? extends Id> owners) throws IOException {
+    return getDataset(datasetInstanceId, arguments, parentClassLoader, classLoaderProvider, owners, AccessType.UNKNOWN);
+  }
+
+  @Nullable
+  @Override
+  public <T extends Dataset> T getDataset(Id.DatasetInstance datasetInstanceId, @Nullable Map<String, String> arguments,
+                                          @Nullable ClassLoader parentClassLoader,
+                                          DatasetClassLoaderProvider classLoaderProvider,
+                                          @Nullable Iterable<? extends Id> owners, AccessType accessType)
+    throws IOException {
+
     readLock.lock();
     try {
       DatasetSpecification spec = instances.get(datasetInstanceId.getNamespace(), datasetInstanceId);
@@ -454,10 +466,17 @@ public class InMemoryDatasetFramework implements DatasetFramework {
       DatasetDefinition def =
         createRegistry(availableModuleClasses, parentClassLoader).get(spec.getType());
       return (T) (def.getDataset(DatasetContext.from(datasetInstanceId.getNamespaceId()),
-        spec, arguments, parentClassLoader));
+                                 spec, arguments, parentClassLoader));
     } finally {
       readLock.unlock();
     }
+  }
+
+  @Override
+  public void writeLineage(Id.DatasetInstance datasetInstanceId, AccessType accessType) {
+    // no-op. The InMemoryDatasetFramework doesn't need to do anything.
+    // The lineage should be recorded before this point. In fact, this should not even be called because
+    // RemoteDatasetFramework's implementation of this is also a no-op.
   }
 
   @Override

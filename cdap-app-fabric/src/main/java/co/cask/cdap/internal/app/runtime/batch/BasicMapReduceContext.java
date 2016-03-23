@@ -37,6 +37,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.data.stream.StreamInputFormatProvider;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.metadata.lineage.AccessType;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.internal.app.runtime.AbstractContext;
 import co.cask.cdap.internal.app.runtime.batch.dataset.DatasetInputFormatProvider;
@@ -274,7 +275,8 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
     // compatibility for the #setOutput(String, Dataset) method, so delaying the instantiation of this dataset will
     // bring about code complexity without much benefit. Once #setOutput(String, Dataset) is removed, we can postpone
     // this dataset instantiation
-    addOutput(datasetName, new DatasetOutputFormatProvider(datasetName, arguments, getDataset(datasetName, arguments),
+    addOutput(datasetName, new DatasetOutputFormatProvider(datasetName, arguments,
+                                                           getDataset(datasetName, arguments, AccessType.WRITE),
                                                            MapReduceBatchWritableOutputFormat.class));
   }
 
@@ -390,7 +392,7 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
       return (Input.InputFormatProviderInput) input.alias(originalAlias);
     }
     DatasetInputFormatProvider datasetInputFormatProvider =
-      new DatasetInputFormatProvider(datasetName, datasetArgs, getDataset(datasetName, datasetArgs),
+      new DatasetInputFormatProvider(datasetName, datasetArgs, getDataset(datasetName, datasetArgs, AccessType.READ),
                                      datasetInput.getSplits(), MapReduceBatchReadableInputFormat.class);
     return (Input.InputFormatProviderInput) Input.of(datasetName, datasetInputFormatProvider).alias(originalAlias);
   }

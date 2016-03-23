@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -789,7 +789,7 @@ public class DefaultStoreTest {
     specsToBeVerified.addAll(spec.getSpark().keySet());
 
     //Verify if there are 6 program specs in AllProgramsApp
-    Assert.assertEquals(6, specsToBeVerified.size());
+    Assert.assertEquals(7, specsToBeVerified.size());
 
     Id.Application appId = Id.Application.from(DefaultId.NAMESPACE, "App");
     // Check the diff with the same app - re-deployment scenario where programs are not removed.
@@ -801,7 +801,7 @@ public class DefaultStoreTest {
 
     //Get the deleted program specs by sending a spec with same name as AllProgramsApp but with no programs
     deletedSpecs = store.getDeletedProgramSpecifications(appId, spec);
-    Assert.assertEquals(6, deletedSpecs.size());
+    Assert.assertEquals(7, deletedSpecs.size());
 
     for (ProgramSpecification specification : deletedSpecs) {
       //Remove the spec that is verified, to check the count later.
@@ -830,7 +830,7 @@ public class DefaultStoreTest {
 
     //Get the deleted program specs by sending a spec with same name as AllProgramsApp but with no programs
     List<ProgramSpecification> deletedSpecs = store.getDeletedProgramSpecifications(appId, spec);
-    Assert.assertEquals(1, deletedSpecs.size());
+    Assert.assertEquals(2, deletedSpecs.size());
 
     for (ProgramSpecification specification : deletedSpecs) {
       //Remove the spec that is verified, to check the count later.
