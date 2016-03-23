@@ -84,13 +84,14 @@ public class DatasetAdminOpHTTPHandler extends AbstractHttpHandler {
                                                          InternalDatasetCreationParams.class);
     Preconditions.checkArgument(params.getProperties() != null, "Missing required 'instanceProps' parameter.");
     Preconditions.checkArgument(params.getTypeMeta() != null, "Missing required 'typeMeta' parameter.");
+    Preconditions.checkArgument(params.isExisting() != null, "Missing required 'existing' parameter.");
 
     DatasetProperties props = params.getProperties();
     DatasetTypeMeta typeMeta = params.getTypeMeta();
 
     try {
       Id.DatasetInstance instanceId = Id.DatasetInstance.from(namespaceId, name);
-      DatasetSpecification spec = datasetAdminService.create(instanceId, typeMeta, props);
+      DatasetSpecification spec = datasetAdminService.create(instanceId, typeMeta, props, params.isExisting());
       responder.sendJson(HttpResponseStatus.OK, spec);
     } catch (BadRequestException e) {
       responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());

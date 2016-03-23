@@ -155,8 +155,8 @@ class DatasetServiceClient {
 
   public void addInstance(String datasetInstanceName, String datasetType, DatasetProperties props)
     throws DatasetManagementException {
-    DatasetInstanceConfiguration creationProperties = new DatasetInstanceConfiguration(datasetType,
-                                                                                       props.getProperties());
+    DatasetInstanceConfiguration creationProperties =
+      new DatasetInstanceConfiguration(datasetType, props.getProperties(), props.getDescription());
 
     HttpResponse response = doPut("datasets/" + datasetInstanceName, GSON.toJson(creationProperties));
 

@@ -50,7 +50,7 @@ public class InMemoryDatasetOpExecutor extends AbstractIdleService implements Da
 
   @Override
   public DatasetSpecification create(Id.DatasetInstance datasetInstanceId, DatasetTypeMeta typeMeta,
-                                     DatasetProperties props)
+                                     DatasetProperties props, boolean existing)
     throws Exception {
 
     DatasetType type = client.getDatasetType(typeMeta, null, new ConstantClassLoaderProvider());

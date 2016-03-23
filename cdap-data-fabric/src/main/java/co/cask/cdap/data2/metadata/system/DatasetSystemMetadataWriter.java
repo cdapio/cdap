@@ -49,15 +49,28 @@ public class DatasetSystemMetadataWriter extends AbstractSystemMetadataWriter {
   private final String dsType;
   private final DatasetProperties dsProperties;
   private final Dataset dataset;
+  private final long createTime;
+  private final String description;
 
   public DatasetSystemMetadataWriter(MetadataStore metadataStore,
                                      Id.DatasetInstance dsInstance, DatasetProperties dsProperties,
-                                     @Nullable Dataset dataset, @Nullable String dsType) {
+                                     @Nullable Dataset dataset, @Nullable String dsType,
+                                     @Nullable String description) {
+    this(metadataStore, dsInstance, dsProperties, -1, dataset, dsType, description);
+  }
+
+  public DatasetSystemMetadataWriter(MetadataStore metadataStore,
+                                     Id.DatasetInstance dsInstance, DatasetProperties dsProperties,
+                                     long createTime,
+                                     @Nullable Dataset dataset, @Nullable String dsType,
+                                     @Nullable String description) {
     super(metadataStore, dsInstance);
     this.dsInstance = dsInstance;
     this.dsType = dsType;
     this.dsProperties = dsProperties;
+    this.createTime = createTime;
     this.dataset = dataset;
+    this.description = description;
     if (dataset == null) {
       LOG.warn("Dataset {} is null, some metadata will not be recorded for the dataset", dsInstance);
     }
@@ -72,6 +85,12 @@ public class DatasetSystemMetadataWriter extends AbstractSystemMetadataWriter {
     }
     if (datasetProperties.containsKey(Table.PROPERTY_TTL)) {
       properties.put(TTL_KEY, datasetProperties.get(Table.PROPERTY_TTL));
+    }
+    if (description != null) {
+      properties.put(DESCRIPTION, description);
+    }
+    if (createTime > 0) {
+      properties.put(CREATE_TIME, String.valueOf(createTime));
     }
     return properties.build();
   }

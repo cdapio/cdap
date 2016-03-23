@@ -237,6 +237,9 @@ public class InMemoryDatasetFramework implements DatasetFramework {
       }
       DatasetSpecification spec = def.configure(datasetInstanceId.getId(), props);
       spec = spec.setOriginalProperties(props);
+      if (props.getDescription() != null) {
+        spec = spec.setDescription(props.getDescription());
+      }
       def.getAdmin(DatasetContext.from(datasetInstanceId.getNamespaceId()), spec, null).create();
       instances.put(datasetInstanceId.getNamespace(), datasetInstanceId, spec);
       publishAudit(datasetInstanceId, AuditType.CREATE);
@@ -263,6 +266,9 @@ public class InMemoryDatasetFramework implements DatasetFramework {
       }
       DatasetSpecification spec = def.configure(datasetInstanceId.getId(), props);
       spec = spec.setOriginalProperties(props);
+      if (props.getDescription() != null) {
+        spec = spec.setDescription(props.getDescription());
+      }
       instances.put(datasetInstanceId.getNamespace(), datasetInstanceId, spec);
       def.getAdmin(DatasetContext.from(datasetInstanceId.getNamespaceId()), spec, null).upgrade();
       publishAudit(datasetInstanceId, AuditType.UPDATE);

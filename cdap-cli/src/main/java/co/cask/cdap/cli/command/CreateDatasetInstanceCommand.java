@@ -52,8 +52,10 @@ public class CreateDatasetInstanceCommand extends AbstractAuthCommand {
     String datasetType = arguments.get(ArgumentName.DATASET_TYPE.toString());
     String datasetName = arguments.get(ArgumentName.NEW_DATASET.toString());
     String datasetPropertiesString = arguments.get(ArgumentName.DATASET_PROPERTIES.toString(), "");
+    String datasetDescription = arguments.get(ArgumentName.DATASET_DESCRIPTON.toString(), null);
     Map<String, String> datasetProperties = ArgumentParser.parseMap(datasetPropertiesString);
-    DatasetInstanceConfiguration datasetConfig = new DatasetInstanceConfiguration(datasetType, datasetProperties);
+    DatasetInstanceConfiguration datasetConfig =
+      new DatasetInstanceConfiguration(datasetType, datasetProperties, datasetDescription);
 
     datasetClient.create(Id.DatasetInstance.from(cliConfig.getCurrentNamespace(), datasetName), datasetConfig);
     output.printf("Successfully created dataset named '%s' with type '%s' and properties '%s'",
@@ -63,8 +65,9 @@ public class CreateDatasetInstanceCommand extends AbstractAuthCommand {
 
   @Override
   public String getPattern() {
-    return String.format("create dataset instance <%s> <%s> [<%s>]",
-                         ArgumentName.DATASET_TYPE, ArgumentName.NEW_DATASET, ArgumentName.DATASET_PROPERTIES);
+    return String.format("create dataset instance <%s> <%s> [<%s>] [<%s>]",
+                         ArgumentName.DATASET_TYPE, ArgumentName.NEW_DATASET, ArgumentName.DATASET_PROPERTIES,
+                         ArgumentName.DATASET_DESCRIPTON);
   }
 
   @Override
