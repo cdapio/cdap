@@ -23,6 +23,7 @@ import co.cask.cdap.proto.id.DatasetTypeId;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.FlowletId;
 import co.cask.cdap.proto.id.FlowletQueueId;
+import co.cask.cdap.proto.id.InstanceId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.NamespacedArtifactId;
 import co.cask.cdap.proto.id.NotificationFeedId;
@@ -40,6 +41,7 @@ import java.lang.invoke.MethodType;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * Represents a type of CDAP element. E.g. namespace, application, datasets, streams.
@@ -48,6 +50,7 @@ import java.util.Map;
 @SuppressWarnings("unchecked")
 public enum EntityType {
 
+  INSTANCE(InstanceId.class, null),
   NAMESPACE(NamespaceId.class, Id.Namespace.class),
   APPLICATION(ApplicationId.class, Id.Application.class),
   PROGRAM(ProgramId.class, Id.Program.class),
@@ -75,13 +78,16 @@ public enum EntityType {
     Map<Class<? extends Id>, EntityType> byOldIdClassMap = new LinkedHashMap<>();
     for (EntityType type : EntityType.values()) {
       byIdClassMap.put(type.getIdClass(), type);
-      byOldIdClassMap.put(type.getOldIdClass(), type);
+      if (type.getOldIdClass() != null) {
+        byOldIdClassMap.put(type.getOldIdClass(), type);
+      }
     }
     byIdClass = Collections.unmodifiableMap(byIdClassMap);
     byOldIdClass = Collections.unmodifiableMap(byOldIdClassMap);
   }
 
   private final Class<? extends EntityId> idClass;
+  @Nullable
   private final Class<? extends Id> oldIdClass;
   private final MethodHandle fromIdParts;
 
@@ -100,6 +106,7 @@ public enum EntityType {
     return idClass;
   }
 
+  @Nullable
   public Class<? extends Id> getOldIdClass() {
     return oldIdClass;
   }

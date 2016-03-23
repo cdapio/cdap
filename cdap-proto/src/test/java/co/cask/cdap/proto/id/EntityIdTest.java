@@ -226,6 +226,12 @@ public class EntityIdTest {
     Assert.assertEquals(expectedHierarchy, program.getHierarchy());
   }
 
+  @Test(expected = UnsupportedOperationException.class)
+  public void testInstanceId() {
+    InstanceId instanceId = new InstanceId("mycdap");
+    instanceId.toId();
+  }
+
   @Test
   @Ignore
   public void printToString() {

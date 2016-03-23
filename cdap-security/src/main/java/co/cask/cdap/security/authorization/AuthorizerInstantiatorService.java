@@ -26,6 +26,7 @@ import co.cask.cdap.security.spi.authorization.AuthorizationContext;
 import co.cask.cdap.security.spi.authorization.Authorizer;
 import co.cask.cdap.security.spi.authorization.NoOpAuthorizer;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.base.Supplier;
 import com.google.common.reflect.TypeToken;
@@ -144,6 +145,7 @@ public class AuthorizerInstantiatorService extends AbstractIdleService implement
    */
   @Override
   public Authorizer get() {
+    Preconditions.checkState(isRunning(), "Authorization Service has not yet started. Authorizer not available.");
     return authorizer;
   }
 

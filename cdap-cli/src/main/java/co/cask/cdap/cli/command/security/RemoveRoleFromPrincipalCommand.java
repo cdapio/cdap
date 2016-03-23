@@ -47,7 +47,7 @@ public class RemoveRoleFromPrincipalCommand extends AbstractAuthCommand {
     String principalName = arguments.get("principal-name");
     client.removeRoleFromPrincipal(new Role(roleName), new Principal(principalName, Principal.PrincipalType.valueOf
       (principalType.toUpperCase())));
-    output.printf("Successfully removed role '%s' from '%s' '%s'\n", roleName, principalType, principalName);
+    output.printf("Successfully removed role '%s' from %s '%s'\n", roleName, principalType, principalName);
   }
 
   @Override

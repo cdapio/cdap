@@ -17,9 +17,7 @@
 package co.cask.cdap.cli;
 
 import co.cask.cdap.StandaloneTester;
-import co.cask.cdap.cli.util.InstanceURIParser;
 import co.cask.cdap.cli.util.RowMaker;
-import co.cask.cdap.cli.util.table.CsvTableRenderer;
 import co.cask.cdap.cli.util.table.Table;
 import co.cask.cdap.client.DatasetTypeClient;
 import co.cask.cdap.client.NamespaceClient;
@@ -32,8 +30,6 @@ import co.cask.cdap.client.app.FakeSpark;
 import co.cask.cdap.client.app.FakeWorkflow;
 import co.cask.cdap.client.app.PingService;
 import co.cask.cdap.client.app.PrefixedEchoHandler;
-import co.cask.cdap.client.config.ClientConfig;
-import co.cask.cdap.client.config.ConnectionConfig;
 import co.cask.cdap.common.DatasetTypeNotFoundException;
 import co.cask.cdap.common.ProgramNotFoundException;
 import co.cask.cdap.common.UnauthenticatedException;
@@ -44,10 +40,6 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.WorkflowTokenDetail;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.security.Action;
-import co.cask.cdap.proto.security.Principal;
-import co.cask.cdap.proto.security.Role;
 import co.cask.cdap.test.XSlowTests;
 import co.cask.common.cli.CLI;
 import com.google.common.base.Charsets;
@@ -69,7 +61,6 @@ import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
-import org.junit.rules.TemporaryFolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -89,13 +80,10 @@ import javax.annotation.Nullable;
  * Test for {@link CLIMain}.
  */
 @Category(XSlowTests.class)
-public class CLIMainTest {
+public class CLIMainTest extends CLITestBase {
 
   @ClassRule
   public static final StandaloneTester STANDALONE = new StandaloneTester();
-
-  @ClassRule
-  public static final TemporaryFolder TMP_FOLDER = new TemporaryFolder();
 
   private static final Logger LOG = LoggerFactory.getLogger(CLIMainTest.class);
   private static final Gson GSON = new Gson();
@@ -118,10 +106,7 @@ public class CLIMainTest {
 
   @BeforeClass
   public static void setUpClass() throws Exception {
-    ConnectionConfig connectionConfig = InstanceURIParser.DEFAULT.parse(STANDALONE.getBaseURI().toString());
-    ClientConfig clientConfig = new ClientConfig.Builder().setConnectionConfig(connectionConfig).build();
-    clientConfig.setAllTimeouts(60000);
-    cliConfig = new CLIConfig(clientConfig, System.out, new CsvTableRenderer());
+    cliConfig = createCLIConfig(STANDALONE.getBaseURI());
     LaunchOptions launchOptions = new LaunchOptions(LaunchOptions.DEFAULT.getUri(), true, true, false);
     cliMain = new CLIMain(launchOptions, cliConfig);
     programClient = new ProgramClient(cliConfig.getClientConfig());
@@ -620,73 +605,6 @@ public class CLIMainTest {
     Assert.assertTrue(lines.containsAll(expected) && expected.containsAll(lines));
   }
 
-  @Test
-  public void testAuthorizer() throws Exception {
-    Role role = new Role("admins");
-    Principal principal = new Principal("spiderman", Principal.PrincipalType.USER);
-    NamespaceId namespaceId = new NamespaceId("ns1");
-
-    // test creating role
-    testCommandOutputContains(cli, "create role " + role.getName(), String.format("Successfully created role '%s'",
-                                                                                  role.getName()));
-
-    // test add role to principal
-    testCommandOutputContains(cli, String.format("add role %s to %s %s", role.getName(), principal.getType(),
-                                                 principal.getName()),
-                              String.format("Successfully added role '%s' to '%s' '%s'", role.getName(),
-                                            principal.getType(), principal.getName()));
-
-    // test listing all roles
-    String output = getCommandOutput(cli, "list roles");
-    List<String> lines = Arrays.asList(output.split("\\r?\\n"));
-    Assert.assertEquals(2, lines.size());
-    Assert.assertEquals(role.getName(), lines.get(1)); // 0 is just the table headers
-
-    // test listing roles for a principal
-    output = getCommandOutput(cli, String.format("list roles for %s %s", principal.getType(), principal.getName()));
-    lines = Arrays.asList(output.split("\\r?\\n"));
-    Assert.assertEquals(2, lines.size());
-    Assert.assertEquals(role.getName(), lines.get(1));
-
-    // test grant action
-    testCommandOutputContains(cli, String.format("grant actions %s on entity %s to %s %s", Action.READ,
-                                                 namespaceId.toString(), principal.getType(), principal.getName()),
-                              String.format("Successfully granted action(s) '%s' on entity '%s' to principal '%s' '%s'",
-                                            Action.READ, namespaceId.toString(), principal.getType(),
-                                            principal.getName()));
-
-    // test listing privilege
-    output = getCommandOutput(cli, String.format("list privileges for %s %s", principal.getType(),
-                                                 principal.getName()));
-    lines = Arrays.asList(output.split("\\r?\\n"));
-    Assert.assertEquals(2, lines.size());
-    Assert.assertArrayEquals(new String[]{namespaceId.toString(), Action.READ.name()}, lines.get(1).split(","));
-
-
-    // test revoke actions
-    testCommandOutputContains(cli, String.format("revoke actions %s on entity %s from %s %s", Action.READ,
-                                                 namespaceId.toString(), principal.getType(), principal.getName()),
-                              String.format("Successfully revoked action(s) '%s' on entity '%s' for '%s' '%s'",
-                                            Action.READ, namespaceId.toString(), principal.getType(),
-                                            principal.getName()));
-
-    // grant and perform revoke on the entity
-    output = getCommandOutput(cli, String.format("grant actions %s on entity %s to %s %s", Action.READ,
-                                                 namespaceId.toString(), principal.getType(), principal.getName()));
-
-    testCommandOutputContains(cli, String.format("revoke all on entity %s ", namespaceId.toString()),
-                              String.format("Successfully revoked all actions on entity '%s' for all principals",
-                                            namespaceId.toString()));
-
-
-    // test remove role from principal
-    testCommandOutputContains(cli, String.format("remove role %s from %s %s", role.getName(), principal.getType(),
-                                                 principal.getName()),
-                              String.format("Successfully removed role '%s' from '%s' '%s'", role.getName(),
-                                            principal.getType(), principal.getName()));
-  }
-
-
   private static File createAppJarFile(Class<?> cls) throws IOException {
     File tmpFolder = TMP_FOLDER.newFolder();
     LocationFactory locationFactory = new LocalLocationFactory(tmpFolder);
@@ -695,44 +613,6 @@ public class CLIMainTest {
       new File(tmpFolder, String.format("%s-1.0.%d.jar", cls.getSimpleName(), System.currentTimeMillis()));
     Files.copy(Locations.newInputSupplier(deploymentJar), appJarFile);
     return appJarFile;
-  }
-
-  private static void testCommandOutputContains(CLI cli, String command, final String expectedOutput) throws Exception {
-    testCommand(cli, command, new Function<String, Void>() {
-      @Nullable
-      @Override
-      public Void apply(@Nullable String output) {
-        Assert.assertTrue(String.format("Expected output '%s' to contain '%s'", output, expectedOutput),
-                          output != null && output.contains(expectedOutput));
-        return null;
-      }
-    });
-  }
-
-  private static void testCommandOutputNotContains(CLI cli, String command,
-                                                   final String expectedOutput) throws Exception {
-    testCommand(cli, command, new Function<String, Void>() {
-      @Nullable
-      @Override
-      public Void apply(@Nullable String output) {
-        Assert.assertTrue(String.format("Expected output '%s' to not contain '%s'", output, expectedOutput),
-                          output != null && !output.contains(expectedOutput));
-        return null;
-      }
-    });
-  }
-
-  private static void testCommand(CLI cli, String command, Function<String, Void> outputValidator) throws Exception {
-    String output = getCommandOutput(cli, command);
-    outputValidator.apply(output);
-  }
-
-  private static String getCommandOutput(CLI cli, String command) throws Exception {
-    try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-    PrintStream printStream = new PrintStream(outputStream)) {
-      cli.execute(command, printStream);
-      return outputStream.toString();
-    }
   }
 
   protected void assertProgramStatus(ProgramClient programClient, Id.Program programId, String programStatus, int tries)

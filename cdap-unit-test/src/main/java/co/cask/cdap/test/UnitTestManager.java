@@ -73,7 +73,7 @@ import java.util.jar.Manifest;
 import javax.annotation.Nullable;
 
 /**
- *
+ * {@link TestManager} for use in unit tests.
  */
 public class UnitTestManager implements TestManager {
 

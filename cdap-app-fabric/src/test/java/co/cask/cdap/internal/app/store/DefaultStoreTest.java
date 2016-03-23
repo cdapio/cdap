@@ -95,7 +95,7 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 /**
- *
+ * Tests for {@link DefaultStore}.
  */
 public class DefaultStoreTest {
   private static final Gson GSON = new Gson();

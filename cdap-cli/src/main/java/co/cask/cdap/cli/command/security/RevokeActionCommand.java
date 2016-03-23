@@ -61,7 +61,7 @@ public abstract class RevokeActionCommand extends AbstractAuthCommand {
     if (principal == null && actions == null) {
       output.printf("Successfully revoked all actions on entity '%s' for all principals", entity.toString());
     } else {
-      output.printf("Successfully revoked action(s) '%s' on entity '%s' for '%s' '%s'\n",
+      output.printf("Successfully revoked action(s) '%s' on entity '%s' for %s '%s'\n",
                     Joiner.on(",").join(actions), entity.toString(), principal.getType(), principal.getName());
     }
   }
