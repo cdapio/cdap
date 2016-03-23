@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.data2.datafabric.dataset.service;
+package co.cask.cdap.data2.datafabric.dataset;
 
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
@@ -30,7 +30,7 @@ import co.cask.cdap.api.dataset.lib.ObjectMappedTableProperties;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
 import co.cask.cdap.api.dataset.table.ConflictDetection;
 import co.cask.cdap.api.dataset.table.Table;
-import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
+import co.cask.cdap.data2.datafabric.dataset.service.DatasetServiceTestBase;
 import co.cask.cdap.data2.dataset2.DatasetFrameworkTestUtil;
 import co.cask.cdap.data2.dataset2.TestObject;
 import co.cask.cdap.data2.metadata.lineage.LineageDataset;
@@ -41,7 +41,7 @@ import org.junit.Test;
 
 import java.util.Map;
 
-public class DatasetInstanceServiceTest extends DatasetServiceTestBase {
+public class DatasetsUtilTest extends DatasetServiceTestBase {
 
   @Test
   public void testFixProperties() throws DatasetManagementException, UnsupportedTypeException {
@@ -68,7 +68,7 @@ public class DatasetInstanceServiceTest extends DatasetServiceTestBase {
             DatasetProperties.EMPTY);
     testFix(LineageDataset.class.getName(),
             DatasetProperties.builder().add(Table.PROPERTY_TTL, 1000).build());
-    testFix(UsageDataset.class.getName(),
+    testFix(UsageDataset.class.getSimpleName(),
             DatasetProperties.EMPTY);
 
     testFix("table",
@@ -79,7 +79,7 @@ public class DatasetInstanceServiceTest extends DatasetServiceTestBase {
 
   private void testFix(String type, DatasetProperties props) {
     DatasetDefinition def = DatasetFrameworkTestUtil.getDatasetDefinition(
-      inMemoryDatasetFramework, Id.Namespace.DEFAULT, "fileSet");
+      inMemoryDatasetFramework, Id.Namespace.DEFAULT, type);
     Assert.assertNotNull(def);
     DatasetSpecification spec = def.configure("nn", props);
     Map<String, String> originalProperties = DatasetsUtil.fixOriginalProperties(spec).getOriginalProperties();
