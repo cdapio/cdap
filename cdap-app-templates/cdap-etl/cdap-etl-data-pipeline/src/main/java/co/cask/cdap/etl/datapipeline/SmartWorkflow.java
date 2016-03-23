@@ -49,11 +49,11 @@ public class SmartWorkflow extends AbstractWorkflow {
     .registerTypeAdapter(Schema.class, new SchemaTypeAdapter()).create();
 
   private final PipelineSpec spec;
-  private final ControlDag dag;
   private final PipelinePlan plan;
   private final ApplicationConfigurer applicationConfigurer;
   // connector stage -> local dataset name
   private final Map<String, String> connectorDatasets;
+  private ControlDag dag;
   private int phaseNum;
 
   public SmartWorkflow(PipelineSpec spec, PipelinePlan plan, ApplicationConfigurer applicationConfigurer) {
@@ -61,8 +61,6 @@ public class SmartWorkflow extends AbstractWorkflow {
     this.plan = plan;
     this.applicationConfigurer = applicationConfigurer;
     this.phaseNum = 1;
-    this.dag = new ControlDag(plan.getPhaseConnections());
-    this.dag.flatten();
     this.connectorDatasets = new HashMap<>();
   }
 
@@ -76,7 +74,26 @@ public class SmartWorkflow extends AbstractWorkflow {
     properties.put("pipeline.spec", GSON.toJson(spec));
     setProperties(properties);
 
+    // single phase, just add the program directly
+    if (plan.getPhases().size() == 1) {
+      addProgram(plan.getPhases().keySet().iterator().next(), new TrunkProgramAdder(getConfigurer()));
+      return;
+    }
+
+    // Dag classes don't allow a 'dag' without connections
+    if (plan.getPhaseConnections().isEmpty()) {
+      // multiple phases, do a fork then join
+      WorkflowForkConfigurer forkConfigurer = getConfigurer().fork();
+      for (String phaseName : plan.getPhases().keySet()) {
+        addProgram(phaseName, new BranchProgramAdder(forkConfigurer));
+      }
+      forkConfigurer.join();
+      return;
+    }
+
     // after flattening, there is guaranteed to be just one source
+    dag = new ControlDag(plan.getPhaseConnections());
+    dag.flatten();
     String start = dag.getSources().iterator().next();
     addPrograms(start, getConfigurer());
   }
