@@ -29,7 +29,6 @@ import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.data2.audit.AuditModule;
@@ -38,7 +37,6 @@ import co.cask.cdap.data2.dataset2.lib.file.FileSetModule;
 import co.cask.cdap.data2.dataset2.lib.partitioned.PartitionedFileSetModule;
 import co.cask.cdap.data2.dataset2.lib.table.CoreDatasetsModule;
 import co.cask.cdap.data2.dataset2.module.lib.inmemory.InMemoryTableModule;
-import co.cask.cdap.data2.metadata.store.NoOpMetadataStore;
 import co.cask.cdap.data2.metadata.writer.LineageWriterDatasetFramework;
 import co.cask.cdap.data2.metadata.writer.NoOpLineageWriter;
 import co.cask.cdap.proto.DatasetSpecificationSummary;
@@ -60,12 +58,10 @@ import co.cask.tephra.runtime.TransactionInMemoryModule;
 import com.google.common.collect.Maps;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import org.apache.twill.filesystem.LocalLocationFactory;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -542,9 +538,7 @@ public abstract class AbstractDatasetFrameworkTest {
     // Access instance
     Id.Run runId = new Id.Run(Id.Program.from("ns", "app", ProgramType.FLOW, "flow"), RunIds.generate().getId());
     LineageWriterDatasetFramework lineageFramework =
-      new LineageWriterDatasetFramework(framework, new NoOpLineageWriter(), new NoOpMetadataStore(),
-                                        new LocalLocationFactory(new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR))),
-                                        cConf);
+      new LineageWriterDatasetFramework(framework, new NoOpLineageWriter());
     lineageFramework.initContext(runId);
     lineageFramework.setAuditPublisher(inMemoryAuditPublisher);
     lineageFramework.getDataset(MY_TABLE, null, getClass().getClassLoader());

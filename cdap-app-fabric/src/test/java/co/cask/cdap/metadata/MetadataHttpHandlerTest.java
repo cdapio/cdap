@@ -60,6 +60,7 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.gson.JsonObject;
+import org.apache.http.HttpResponse;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.junit.After;
 import org.junit.Assert;
@@ -919,6 +920,128 @@ public class MetadataHttpHandlerTest extends MetadataTestBase {
       Assert.assertFalse(systemMetadata.getProperties().isEmpty());
       Assert.assertFalse(systemMetadata.getTags().isEmpty());
     }
+  }
+
+  @Test
+  public void testSearchMetadataDelete() throws Exception {
+    Id.Namespace namespace = Id.Namespace.from("ns1");
+    createNamespace(namespace.getId());
+
+    // Deploy app
+    HttpResponse response =
+      deploy(WordCountApp.class, Constants.Gateway.API_VERSION_3_TOKEN, namespace.getId(), "1.0", null);
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+
+    Set<String> tags = ImmutableSet.of("tag1", "tag2");
+    Id.Artifact artifact = Id.Artifact.from(namespace, "WordCountApp", "1.0");
+    Id.Application app = Id.Application.from(namespace, "WordCountApp");
+    Id.Flow flow = Id.Flow.from(app, "WordCountFlow");
+    Id.Service service = Id.Service.from(app, "WordFrequencyService");
+    Id.Stream stream = Id.Stream.from(namespace, "text");
+    Id.DatasetInstance datasetInstance = Id.DatasetInstance.from(namespace, "mydataset");
+    Id.Stream.View view = Id.Stream.View.from(namespace, stream.getId(), "view");
+    Assert.assertTrue(
+      createOrUpdateView(view, new ViewSpecification(new FormatSpecification("format", Schema.of(Schema.Type.INT)))));
+
+    // Add metadata
+    addTags(app, tags);
+    addTags(flow, tags);
+    addTags(stream, tags);
+    addTags(datasetInstance, tags);
+    addTags(view, tags);
+
+    // Assert metadata
+    Assert.assertEquals(ImmutableSet.of(new MetadataSearchResultRecord(stream), new MetadataSearchResultRecord(view)),
+                        searchMetadata(namespace, "text", null));
+    Assert.assertEquals(ImmutableSet.of(new MetadataSearchResultRecord(datasetInstance)),
+                        searchMetadata(namespace, "mydataset", null));
+    Assert.assertEquals(ImmutableSet.of(
+                          new MetadataSearchResultRecord(app),
+                          new MetadataSearchResultRecord(flow),
+                          new MetadataSearchResultRecord(artifact),
+                          new MetadataSearchResultRecord(service)
+                        ),
+                        searchMetadata(namespace, "word*", null));
+    Assert.assertEquals(ImmutableSet.of(
+                          new MetadataSearchResultRecord(app),
+                          new MetadataSearchResultRecord(flow),
+                          new MetadataSearchResultRecord(stream),
+                          new MetadataSearchResultRecord(datasetInstance),
+                          new MetadataSearchResultRecord(view)
+                        ),
+                        searchMetadata(namespace, "tag1", null));
+
+    // Delete entities
+    deleteApp(app, 200);
+    deleteView(view);
+    deleteStream(stream);
+    deleteDataset(datasetInstance);
+    deleteArtifact(artifact, 200);
+
+
+    // Assert no metadata
+    Assert.assertEquals(ImmutableSet.of(), searchMetadata(namespace, "text", null));
+    Assert.assertEquals(ImmutableSet.of(), searchMetadata(namespace, "mydataset", null));
+    Assert.assertEquals(ImmutableSet.of(), searchMetadata(namespace, "word*", null));
+    Assert.assertEquals(ImmutableSet.of(), searchMetadata(namespace, "tag1", null));
+  }
+
+  @Test
+  public void testSearchMetadataDeleteNamespace() throws Exception {
+    Id.Namespace namespace = Id.Namespace.from("ns1");
+    createNamespace(namespace.getId());
+
+    // Deploy app
+    HttpResponse response =
+      deploy(WordCountApp.class, Constants.Gateway.API_VERSION_3_TOKEN, namespace.getId(), "1.0", null);
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+
+    Set<String> tags = ImmutableSet.of("tag1", "tag2");
+    Id.Artifact artifact = Id.Artifact.from(namespace, "WordCountApp", "1.0");
+    Id.Application app = Id.Application.from(namespace, "WordCountApp");
+    Id.Flow flow = Id.Flow.from(app, "WordCountFlow");
+    Id.Service service = Id.Service.from(app, "WordFrequencyService");
+    Id.Stream stream = Id.Stream.from(namespace, "text");
+    Id.DatasetInstance datasetInstance = Id.DatasetInstance.from(namespace, "mydataset");
+    Id.Stream.View view = Id.Stream.View.from(namespace, stream.getId(), "view");
+    Assert.assertTrue(
+      createOrUpdateView(view, new ViewSpecification(new FormatSpecification("format", Schema.of(Schema.Type.INT)))));
+
+    // Add metadata
+    addTags(app, tags);
+    addTags(flow, tags);
+    addTags(stream, tags);
+    addTags(datasetInstance, tags);
+    addTags(view, tags);
+
+    Assert.assertEquals(ImmutableSet.of(new MetadataSearchResultRecord(stream), new MetadataSearchResultRecord(view)),
+                        searchMetadata(namespace, "text", null));
+    Assert.assertEquals(ImmutableSet.of(new MetadataSearchResultRecord(datasetInstance)),
+                        searchMetadata(namespace, "mydataset", null));
+    Assert.assertEquals(ImmutableSet.of(
+                          new MetadataSearchResultRecord(app),
+                          new MetadataSearchResultRecord(flow),
+                          new MetadataSearchResultRecord(artifact),
+                          new MetadataSearchResultRecord(service)
+                        ),
+                        searchMetadata(namespace, "word*", null));
+    Assert.assertEquals(ImmutableSet.of(
+                          new MetadataSearchResultRecord(app),
+                          new MetadataSearchResultRecord(flow),
+                          new MetadataSearchResultRecord(stream),
+                          new MetadataSearchResultRecord(datasetInstance),
+                          new MetadataSearchResultRecord(view)
+                        ),
+                        searchMetadata(namespace, "tag1", null));
+
+    // Delete namespace
+    deleteNamespace(namespace.getId());
+
+    // Assert no metadata
+    Assert.assertEquals(ImmutableSet.of(), searchMetadata(namespace, "text", null));
+    Assert.assertEquals(ImmutableSet.of(), searchMetadata(namespace, "mydataset", null));
+    Assert.assertEquals(ImmutableSet.of(), searchMetadata(namespace, "word*", null));
+    Assert.assertEquals(ImmutableSet.of(), searchMetadata(namespace, "tag1", null));
   }
 
   private Set<Id.NamespacedId> getEntities(Set<MetadataSearchResultRecord> results) {

@@ -16,8 +16,10 @@
 
 package co.cask.cdap.data2.datafabric.dataset.service.executor;
 
+import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetContext;
+import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
@@ -30,6 +32,9 @@ import co.cask.cdap.data2.datafabric.dataset.DatasetType;
 import co.cask.cdap.data2.datafabric.dataset.RemoteDatasetFramework;
 import co.cask.cdap.data2.datafabric.dataset.type.DatasetClassLoaderProvider;
 import co.cask.cdap.data2.datafabric.dataset.type.DirectoryClassLoaderProvider;
+import co.cask.cdap.data2.metadata.store.MetadataStore;
+import co.cask.cdap.data2.metadata.system.DatasetSystemMetadataWriter;
+import co.cask.cdap.data2.metadata.system.SystemMetadataWriter;
 import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.cdap.proto.Id;
 import com.google.inject.Inject;
@@ -49,14 +54,16 @@ public class DatasetAdminService {
   private final CConfiguration cConf;
   private final LocationFactory locationFactory;
   private final SystemDatasetInstantiatorFactory datasetInstantiatorFactory;
+  private final MetadataStore metadataStore;
 
   @Inject
   public DatasetAdminService(RemoteDatasetFramework dsFramework, CConfiguration cConf, LocationFactory locationFactory,
-                             SystemDatasetInstantiatorFactory datasetInstantiatorFactory) {
+                             SystemDatasetInstantiatorFactory datasetInstantiatorFactory, MetadataStore metadataStore) {
     this.dsFramework = dsFramework;
     this.cConf = cConf;
     this.locationFactory = locationFactory;
     this.datasetInstantiatorFactory = datasetInstantiatorFactory;
+    this.metadataStore = metadataStore;
   }
 
   public boolean exists(Id.DatasetInstance datasetInstanceId) throws Exception {
@@ -78,9 +85,33 @@ public class DatasetAdminService {
       }
 
       DatasetSpecification spec = type.configure(datasetInstanceId.getId(), props);
-      DatasetAdmin admin = type.getAdmin(DatasetContext.from(datasetInstanceId.getNamespaceId()), spec);
+      DatasetContext context = DatasetContext.from(datasetInstanceId.getNamespaceId());
+      DatasetAdmin admin = type.getAdmin(context, spec);
       try {
         admin.create();
+
+        // add system metadata for user datasets only
+        if (isUserDataset(datasetInstanceId)) {
+          Dataset dataset = null;
+          try {
+            try {
+              dataset = type.getDataset(context, spec, DatasetDefinition.NO_ARGUMENTS);
+            } catch (Exception e) {
+              LOG.warn("Exception while instantiating Dataset {}", datasetInstanceId, e);
+            }
+
+            SystemMetadataWriter systemMetadataWriter =
+              new DatasetSystemMetadataWriter(metadataStore, datasetInstanceId, props,
+                                              dataset,
+                                              typeMeta.getName());
+            systemMetadataWriter.write();
+          } finally {
+            if (dataset != null) {
+              dataset.close();
+            }
+          }
+        }
+
         return spec;
       } catch (IOException e) {
         String msg = String.format("Error creating dataset \"%s\": %s", datasetInstanceId, e.getMessage());
@@ -110,6 +141,9 @@ public class DatasetAdminService {
       DatasetAdmin admin = type.getAdmin(DatasetContext.from(datasetInstanceId.getNamespaceId()), spec);
       admin.drop();
     }
+
+    // Remove metadata for the dataset
+    metadataStore.removeMetadata(datasetInstanceId);
   }
 
   public void truncate(Id.DatasetInstance datasetInstanceId) throws Exception {
@@ -132,5 +166,14 @@ public class DatasetAdminService {
       }
       return admin;
     }
+  }
+
+  //TODO: CDAP-4627 - Figure out a better way to identify system datasets in user namespaces
+  private boolean isUserDataset(Id.DatasetInstance datasetInstanceId) {
+    return !Id.Namespace.SYSTEM.equals(datasetInstanceId.getNamespace()) &&
+      !"system.queue.config".equals(datasetInstanceId.getId()) &&
+      !datasetInstanceId.getId().startsWith("system.sharded.queue") &&
+      !datasetInstanceId.getId().startsWith("system.queue") &&
+      !datasetInstanceId.getId().startsWith("system.stream");
   }
 }
