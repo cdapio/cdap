@@ -92,6 +92,7 @@ public class MasterStartupTool {
       for (CheckRunner.Failure failure : failures) {
         LOG.error("{} failed: {}", failure.getName(), failure.getException().getMessage());
         if (failure.getException().getCause() != null) {
+          LOG.error(" Cause : ", failure.getException());
           LOG.error("  Root cause: {}", ExceptionUtils.getRootCauseMessage(failure.getException().getCause()));
         }
       }
