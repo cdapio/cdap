@@ -17,6 +17,7 @@
 package co.cask.cdap.internal.app.runtime.workflow;
 
 import co.cask.cdap.api.workflow.Workflow;
+import co.cask.cdap.api.workflow.WorkflowInfo;
 import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
@@ -28,7 +29,7 @@ import javax.annotation.Nullable;
 /**
  * A container which contains information for a program that runs inside a {@link Workflow}.
  */
-public final class WorkflowProgramInfo {
+public final class WorkflowProgramInfo implements WorkflowInfo {
 
   private static final Gson GSON = new Gson();
 
@@ -71,21 +72,21 @@ public final class WorkflowProgramInfo {
   /**
    * Returns the name of the Workflow.
    */
-  public String getWorkflowName() {
+  public String getName() {
     return workflowName;
   }
 
   /**
    * Returns the node id inside the Workflow for the program.
    */
-  public String getWorkflowNodeId() {
+  public String getNodeId() {
     return workflowNodeId;
   }
 
   /**
    * Returns the {@link RunId} of the Workflow.
    */
-  public RunId getWorkflowRunId() {
+  public RunId getRunId() {
     return RunIds.fromString(workflowRunId);
   }
 

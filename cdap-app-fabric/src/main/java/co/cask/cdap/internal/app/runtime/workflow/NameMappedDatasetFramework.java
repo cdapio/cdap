@@ -50,8 +50,8 @@ public class NameMappedDatasetFramework extends ForwardingProgramContextAwareDat
   public static NameMappedDatasetFramework createFromWorkflowProgramInfo(DatasetFramework datasetFramework,
                                                                          WorkflowProgramInfo info,
                                                                          ApplicationSpecification appSpec) {
-    Set<String> localDatasets = appSpec.getWorkflows().get(info.getWorkflowName()).getLocalDatasetSpecs().keySet();
-    return new NameMappedDatasetFramework(datasetFramework, localDatasets, info.getWorkflowRunId().getId());
+    Set<String> localDatasets = appSpec.getWorkflows().get(info.getName()).getLocalDatasetSpecs().keySet();
+    return new NameMappedDatasetFramework(datasetFramework, localDatasets, info.getRunId().getId());
   }
 
   /**
