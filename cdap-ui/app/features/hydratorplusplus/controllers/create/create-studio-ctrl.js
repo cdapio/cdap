@@ -19,16 +19,14 @@ class HydratorPlusPlusStudioCtrl {
   constructor(HydratorPlusPlusLeftPanelStore, HydratorPlusPlusConfigActions, $stateParams, rConfig, $rootScope, $scope, DetailNonRunsStore, HydratorPlusPlusNodeConfigStore, DAGPlusPlusNodesActionsFactory, HydratorPlusPlusHydratorService, HydratorPlusPlusConsoleActions, rSelectedArtifact, rArtifacts) {
     // This is required because before we fireup the actions related to the store, the store has to be initialized to register for any events.
 
-    this.isExpanded = HydratorPlusPlusLeftPanelStore.getState();
-    HydratorPlusPlusLeftPanelStore.registerOnChangeListener( () => {
-      this.isExpanded = HydratorPlusPlusLeftPanelStore.getState();
-    });
+    this.isExpanded = true;
     // FIXME: This should essentially be moved to a scaffolding service that will do stuff for a state/view
     $scope.$on('$destroy', () => {
       DetailNonRunsStore.reset();
       HydratorPlusPlusNodeConfigStore.reset();
       HydratorPlusPlusConsoleActions.resetMessages();
     });
+
     let getValidArtifact = () => {
       let isValidArtifact;
       if (rArtifacts.length) {
@@ -70,5 +68,6 @@ class HydratorPlusPlusStudioCtrl {
 }
 
 HydratorPlusPlusStudioCtrl.$inject = ['HydratorPlusPlusLeftPanelStore', 'HydratorPlusPlusConfigActions', '$stateParams', 'rConfig', '$rootScope', '$scope', 'DetailNonRunsStore', 'HydratorPlusPlusNodeConfigStore', 'DAGPlusPlusNodesActionsFactory', 'HydratorPlusPlusHydratorService', 'HydratorPlusPlusConsoleActions','rSelectedArtifact', 'rArtifacts'];
+
 angular.module(PKG.name + '.feature.hydratorplusplus')
   .controller('HydratorPlusPlusStudioCtrl', HydratorPlusPlusStudioCtrl);

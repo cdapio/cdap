@@ -65,9 +65,7 @@ class HydratorPlusPlusLeftPanelStore {
     this.setDefaults();
     this.DAGPlusPlusFactory = DAGPlusPlusFactory;
     this.changeListeners = [];
-    this.sourcesToVersionMap = {};
-    this.transformsToVersionMap = {};
-    this.sinksToVersionMap = {};
+    this.pluginsToVersionMap = {};
     this.popoverTemplate = '/assets/features/hydratorplusplus/templates/create/popovers/leftpanel-plugin-popover.html';
     this.GLOBALS = GLOBALS;
     this.HydratorPlusPlusConfigStore = HydratorPlusPlusConfigStore;
@@ -81,30 +79,20 @@ class HydratorPlusPlusLeftPanelStore {
           this.state.defaultArtifactMap = res;
           return this.$q.resolve;
         })
-        .then(this.cleanupNonExistantPlugins.bind(this));
-
-    let dispatcher = HydratorPlusPlusLeftPanelDispatcher.getDispatcher();
-    dispatcher.register('onLeftPanelToggled', this.setState.bind(this));
-    dispatcher.register('toggleLeftPanelState', this.togglePanelState.bind(this));
+        .then($timeout(this.cleanupNonExistantPlugins.bind(this), 10000));
 
     let hydratorPlusPlusPluginsDispatcher = HydratorPlusPlusPluginsDispatcher.getDispatcher();
-    hydratorPlusPlusPluginsDispatcher.register('onArtifactsFetch', this.setArtifacts.bind(this));
-    hydratorPlusPlusPluginsDispatcher.register('onSourcesFetch', this.setSources.bind(this));
-    hydratorPlusPlusPluginsDispatcher.register('onTransformsFetch', this.setTransforms.bind(this));
-    hydratorPlusPlusPluginsDispatcher.register('onSinksFetch', this.setSinks.bind(this));
+
+    hydratorPlusPlusPluginsDispatcher.register('onExtensionsFetch', this.setExtensions.bind(this));
+    hydratorPlusPlusPluginsDispatcher.register('onPluginsFetch', this.setPlugins.bind(this));
     hydratorPlusPlusPluginsDispatcher.register('onPluginTemplatesFetch', this.updatePluginTemplates.bind(this));
   }
   setDefaults() {
     this.state = {
-      panelState: true,
       plugins: {},
-      artifacts: [],
+      extensions: [], // Left panel store doesn't have a selected artifact as that information HAS to come from config store, that should be the only source of truth.
       defaultArtifactMap: {},
-      pluginTemplates: {
-        source: [],
-        transform: [],
-        sink: []
-      }
+      pluginTemplates: {}
     };
   }
 
@@ -122,56 +110,37 @@ class HydratorPlusPlusLeftPanelStore {
     this.state = state;
     this.emitChange();
   }
-  togglePanelState() {
-    this.state.panelState = !this.state.panelState;
+
+  setExtensions(extensions) {
+    let uiSupportedExtension = (extension) => {
+      let pipelineType = this.HydratorPlusPlusConfigStore.getArtifact().name;
+      let extensionMap = this.GLOBALS.pluginTypes[pipelineType];
+      return Object.keys(extensionMap).filter(ext => extensionMap[ext] === extension).length;
+    };
+    extensions = extensions.filter(uiSupportedExtension);
+    this.state.extensions = extensions;
+    this.emitChange();
+  }
+  getExtensions() {
+    return this.state.extensions;
+  }
+
+  setPlugins(extension, plugins) {
+    this.pluginsToVersionMap[extension] = {};
+    this.state.plugins[extension] = plugins
+        .filter(
+          uniquePluginFilter(this.pluginsToVersionMap[extension])
+        )
+        .map(
+          mapPluginsWithMoreInfo(extension, this.pluginsToVersionMap[extension], this.DAGPlusPlusFactory, this.popoverTemplate)
+        );
+    this.checkAndUpdateDefaultVersion(this.state.plugins[extension]);
     this.emitChange();
   }
 
-  setSources(plugins, type) {
-    this.sourcesToVersionMap = {};
-    this.state.plugins.sources = plugins.filter(uniquePluginFilter(this.sourcesToVersionMap)).map(mapPluginsWithMoreInfo(type, this.sourcesToVersionMap, this.DAGPlusPlusFactory, this.popoverTemplate));
-    this.checkAndUpdateDefaultVersion(this.state.plugins.sources);
-    this.emitChange();
+  getPlugins(extension) {
+    return this.state.plugins[extension];
   }
-  getSources() {
-    let sources = angular.copy(this.state.plugins.sources) || [];
-    let templates = angular.copy(this.state.pluginTemplates.source);
-    return sources.concat(templates);
-  }
-
-  setTransforms(plugins, type) {
-    this.transformsToVersionMap = {};
-    this.state.plugins.transforms = plugins.filter(uniquePluginFilter(this.transformsToVersionMap)).map(mapPluginsWithMoreInfo(type, this.transformsToVersionMap, this.DAGPlusPlusFactory, this.popoverTemplate));
-    this.checkAndUpdateDefaultVersion(this.state.plugins.transforms);
-    this.emitChange();
-  }
-  getTransforms() {
-    let transforms = angular.copy(this.state.plugins.transforms) || [];
-    let templates = angular.copy(this.state.pluginTemplates.transform);
-    return transforms.concat(templates);
-  }
-
-  setSinks(plugins, type) {
-    this.sinksToVersionMap = {};
-    this.state.plugins.sinks = plugins.filter(uniquePluginFilter(this.sinksToVersionMap)).map(mapPluginsWithMoreInfo(type, this.sinksToVersionMap, this.DAGPlusPlusFactory, this.popoverTemplate));
-    this.checkAndUpdateDefaultVersion(this.state.plugins.sinks);
-    this.emitChange();
-  }
-  getSinks() {
-    let sinks = angular.copy(this.state.plugins.sinks) || [];
-    let templates = angular.copy(this.state.pluginTemplates.sink);
-    return sinks.concat(templates);
-  }
-
-  setArtifacts(artifacts) {
-    this.state.artifacts = artifacts;
-    this.emitChange();
-  }
-  getArtifacts() {
-    let UISupportedArtifacts = ['cdap-etl-batch', 'cdap-etl-realtime'];
-    return this.state.artifacts.filter(artifact => UISupportedArtifacts.indexOf(artifact.name) !== -1);
-  }
-
   checkAndUpdateDefaultVersion(pluginsList) {
     if (!angular.isObject(this.state.defaultVersionsMap)) {
       this.mySettings
@@ -200,20 +169,8 @@ class HydratorPlusPlusLeftPanelStore {
     if (plugin.pluginTemplate) {
       return plugin;
     }
-
-    var typeMap;
-    var pluginTypes = this.GLOBALS.pluginTypes[this.HydratorPlusPlusConfigStore.getAppType()];
-    switch(plugin.type) {
-      case pluginTypes.source:
-        typeMap = this.sourcesToVersionMap;
-        break;
-      case pluginTypes.sink:
-        typeMap = this.sinksToVersionMap;
-        break;
-      case pluginTypes.transform:
-        typeMap = this.transformsToVersionMap;
-        break;
-    }
+    let extension = plugin.type;
+    let typeMap = this.pluginsToVersionMap[extension];
     if (!typeMap) {
       return;
     }
@@ -229,44 +186,39 @@ class HydratorPlusPlusLeftPanelStore {
   cleanupNonExistantPlugins() {
     let defaultVersionsMap = angular.copy(this.state.defaultArtifactMap);
     let defaultVersionChange = [];
-    if (!angular.isArray(this.state.plugins.sources) && !angular.isArray(this.state.plugins.sinks) && !angular.isArray(this.state.plugins.transforms)) {
-      this.$timeout(this.cleanupNonExistantPlugins.bind(this));
-      return;
-    }
-    this.state.plugins.sources
-        .concat(this.state.plugins.sinks)
-        .concat(this.state.plugins.transforms)
-        .forEach( plugin => {
-          let key = `${plugin.name}-${plugin.type}-${plugin.artifact.name}`;
-          if (defaultVersionsMap.hasOwnProperty(key)) {
-            let matchingArtifact = plugin.allArtifacts.filter( artifact => angular.equals(artifact, defaultVersionsMap[key]));
-            if (matchingArtifact.length) {
-              defaultVersionChange.push({name: plugin.name, type: plugin.type});
-              delete defaultVersionsMap[key];
-            }
-          }
+    this.getExtensions()
+        .forEach(extension => {
+          this.getPlugins(extension)
+              .forEach( plugin => {
+                let key = `${plugin.name}-${plugin.type}-${plugin.artifact.name}`;
+                if (defaultVersionsMap.hasOwnProperty(key)) {
+                  let matchingArtifact = plugin.allArtifacts.filter( artifact => angular.equals(artifact, defaultVersionsMap[key]));
+                  if (matchingArtifact.length) {
+                    defaultVersionChange.push({name: plugin.name, type: plugin.type});
+                    delete defaultVersionsMap[key];
+                  }
+                }
+              });
         });
     if (Object.keys(defaultVersionsMap).length) {
       angular.forEach(defaultVersionsMap, (pluginArtifact, pluginKey) => {
         delete this.state.defaultVersionsMap[pluginKey];
       });
-      let pipelineType = this.HydratorPlusPlusConfigStore.getAppType();
       this.mySettings.set('plugin-default-version', this.state.defaultVersionsMap);
-      this.setSources(this.state.plugins.sources, this.GLOBALS.pluginTypes[pipelineType]['source']);
-      this.setSinks(this.state.plugins.sinks, this.GLOBALS.pluginTypes[pipelineType]['sink']);
-      this.setTransforms(this.state.plugins.transforms, this.GLOBALS.pluginTypes[pipelineType]['transform']);
     }
   }
 
+  getPluginTemplates(extension) {
+    return this.state.pluginTemplates[extension];
+  }
   updatePluginTemplates(plugins, params) {
     let pipelineType = this.HydratorPlusPlusConfigStore.getAppType();
     if (!plugins || !plugins[params.namespace] || !plugins[params.namespace][pipelineType]) { return; }
 
     let pluginsList = plugins[params.namespace][pipelineType];
     angular.forEach(pluginsList, (plugins, key) => {
-      this.state.pluginTemplates[this.GLOBALS.pluginConvert[key]] = _.values(plugins).map(mapPluginTemplatesWithMoreInfo(key, this.DAGPlusPlusFactory, this.popoverTemplate));
+      this.state.pluginTemplates[key] = _.values(plugins).map(mapPluginTemplatesWithMoreInfo(key, this.DAGPlusPlusFactory, this.popoverTemplate));
     });
-
     this.emitChange();
   }
 }
