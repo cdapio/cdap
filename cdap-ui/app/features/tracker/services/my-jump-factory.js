@@ -159,6 +159,11 @@ function myJumpFactory($state, myTrackerApi, $rootScope) {
       });
   }
 
+  function isAvailableDataset(datasetType) {
+    let available = _.values(cdapDatasetTypes);
+    return available.indexOf(datasetType) > -1;
+  }
+
   function _addTableBatchSource(datasetName) {
     let params = {
       namespace: $state.params.namespace,
@@ -262,7 +267,8 @@ function myJumpFactory($state, myTrackerApi, $rootScope) {
     streamBatchSource: streamBatchSource,
     streamRealtimeSink: streamRealtimeSink,
     datasetBatchSource: datasetBatchSource,
-    datasetBatchSink: datasetBatchSink
+    datasetBatchSink: datasetBatchSink,
+    isAvailableDataset: isAvailableDataset
   };
 
 }

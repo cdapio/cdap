@@ -73,6 +73,30 @@ angular.module(PKG.name + '.feature.tracker')
           data: {
             authorizedRoles: MYAUTH_ROLE.all,
             highlightTab: 'search'
+          },
+          resolve: {
+            rDatasetType: function ($q, myTrackerApi, $stateParams) {
+              if ($stateParams.entityType !== 'datasets') {
+                return null;
+              }
+
+              let defer = $q.defer();
+
+              let params = {
+                namespace: $stateParams.namespace,
+                entityType: $stateParams.entityType,
+                entityId: $stateParams.entityId
+              };
+              myTrackerApi.getDatasetSystemProperties(params)
+                .$promise
+                .then( (res) => {
+                  defer.resolve(res.type);
+                }, () => {
+                  defer.reject();
+                });
+
+              return defer.promise;
+            }
           }
         })
           .state('tracker.entity.metadata', {

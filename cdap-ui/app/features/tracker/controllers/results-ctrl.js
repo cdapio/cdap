@@ -147,7 +147,8 @@ class TrackerResultsController {
         entityTypeState: 'datasets',
         icon: 'icon-datasets',
         description: entity.metadata.SYSTEM.properties.description || 'No description provided for this Dataset.',
-        createDate: entity.metadata.SYSTEM.properties.createtime
+        createDate: entity.metadata.SYSTEM.properties.createtime,
+        datasetType: entity.metadata.SYSTEM.properties.type
       });
       obj.queryFound = this.findQueries(entity, obj);
       this.entityFiltersList[0].count++;

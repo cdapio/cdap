@@ -15,13 +15,14 @@
  */
 
 class TrackerEntityController{
-  constructor($state, $window, myJumpFactory) {
+  constructor($state, $window, rDatasetType) {
     this.$state = $state;
     this.$window = $window;
-    this.myJumpFactory = myJumpFactory;
 
     let entityParams = this.$state.params.entityType;
     let entitySplit = entityParams.split(':');
+
+    this.datasetType = rDatasetType;
 
     switch (entitySplit[0]) {
       case 'streams':
@@ -51,7 +52,7 @@ class TrackerEntityController{
   }
 }
 
-TrackerEntityController.$inject = ['$state', '$window', 'myJumpFactory'];
+TrackerEntityController.$inject = ['$state', '$window', 'rDatasetType'];
 
 angular.module(PKG.name + '.feature.tracker')
  .controller('TrackerEntityController', TrackerEntityController);
