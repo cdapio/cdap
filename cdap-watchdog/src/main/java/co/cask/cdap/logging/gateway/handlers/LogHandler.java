@@ -329,7 +329,7 @@ public class LogHandler extends AbstractHttpHandler {
     private final long fromMillis;
     private final long toMillis;
 
-    public TimeRange(long fromMillis, long toMillis) {
+    private TimeRange(long fromMillis, long toMillis) {
       this.fromMillis = fromMillis;
       this.toMillis = toMillis;
     }
