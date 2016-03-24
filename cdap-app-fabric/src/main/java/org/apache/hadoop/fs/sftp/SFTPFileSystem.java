@@ -491,6 +491,11 @@ public class SFTPFileSystem extends FileSystem {
   }
 
   @Override
+  public String getScheme() {
+    return "sftp";
+  }
+
+  @Override
   public URI getUri() {
     return uri;
   }
