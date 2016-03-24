@@ -19,7 +19,7 @@ angular.module(PKG.name + '.services')
     var templatePath = '/templates',
         pipelinePath = '/namespaces/:namespace/apps/:pipeline',
 
-        listPath = '/namespaces/:namespace/apps?artifactName=' + GLOBALS.etlBatch + ',' + GLOBALS.etlRealtime,
+        listPath = '/namespaces/:namespace/apps?artifactName=' + GLOBALS.etlBatch + ',' + GLOBALS.etlRealtime + ',' + GLOBALS.etlDataPipeline,
         artifactsPath = '/namespaces/:namespace/artifacts?scope=SYSTEM',
         extensionsFetchBase = '/namespaces/:namespace/artifacts/:pipelineType/versions/:version/extensions',
         pluginFetchBase = extensionsFetchBase + '/:extensionType',

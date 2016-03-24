@@ -62,7 +62,7 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
               myPipelineApi.fetchArtifacts({
                 namespace: $stateParams.namespace
               }).$promise.then((res) => {
-                let uiSupportedArtifacts = ['cdap-etl-batch', 'cdap-etl-realtime'];
+                let uiSupportedArtifacts = ['cdap-etl-batch', 'cdap-etl-realtime', 'cdap-etl-data-pipeline'];
                 let filteredRes;
                 if ($stateParams.artifactType) {
                   filteredRes = res.filter( r => r.name === $stateParams.artifactType );
@@ -85,7 +85,7 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
                 namespace: $stateParams.namespace
               }).$promise
               .then((res) => {
-                let uiSupportedArtifacts = ['cdap-etl-batch', 'cdap-etl-realtime'];
+                let uiSupportedArtifacts = ['cdap-etl-batch', 'cdap-etl-realtime', 'cdap-etl-data-pipeline'];
                 let filteredRes = res.filter( r => uiSupportedArtifacts.indexOf(r.name) !== -1 );
                 defer.resolve(filteredRes);
               });
