@@ -15,6 +15,8 @@
  */
 package co.cask.cdap.security.spi.authentication;
 
+import co.cask.cdap.proto.security.Principal;
+
 import javax.annotation.Nullable;
 
 /**
@@ -59,5 +61,12 @@ public final class SecurityRequestContext {
    */
   public static void setUserIP(String userIPParam) {
     userIP.set(userIPParam);
+  }
+
+  /**
+   * Returns a {@link Principal} for the user set on the current thread
+   */
+  public static Principal toPrincipal() {
+    return new Principal(userId.get(), Principal.PrincipalType.USER);
   }
 }

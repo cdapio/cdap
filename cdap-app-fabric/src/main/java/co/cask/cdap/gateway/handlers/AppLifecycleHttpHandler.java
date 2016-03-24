@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -43,6 +43,7 @@ import co.cask.cdap.internal.app.services.ApplicationLifecycleService;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.artifact.ArtifactSummary;
+import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.http.BodyConsumer;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Charsets;
@@ -104,10 +105,10 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   private final File tmpDir;
 
   @Inject
-  public AppLifecycleHttpHandler(CConfiguration configuration,
-                                 Scheduler scheduler, ProgramRuntimeService runtimeService,
-                                 NamespaceAdmin namespaceAdmin, NamespacedLocationFactory namespacedLocationFactory,
-                                 ApplicationLifecycleService applicationLifecycleService) {
+  AppLifecycleHttpHandler(CConfiguration configuration,
+                          Scheduler scheduler, ProgramRuntimeService runtimeService,
+                          NamespaceAdmin namespaceAdmin, NamespacedLocationFactory namespacedLocationFactory,
+                          ApplicationLifecycleService applicationLifecycleService) {
     this.configuration = configuration;
     this.namespaceAdmin = namespaceAdmin;
     this.scheduler = scheduler;
@@ -203,7 +204,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/apps/{app-id}")
   public void deleteApp(HttpRequest request, HttpResponder responder,
                         @PathParam("namespace-id") String namespaceId,
-                        @PathParam("app-id") final String appId) throws Exception {
+                        @PathParam("app-id") String appId) throws Exception {
     Id.Application id = validateApplicationId(namespaceId, appId);
     try {
       applicationLifecycleService.removeApplication(id);
@@ -239,7 +240,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   public void updateApp(HttpRequest request, HttpResponder responder,
                         @PathParam("namespace-id") final String namespaceId,
                         @PathParam("app-id") final String appName)
-    throws NamespaceNotFoundException, BadRequestException {
+    throws NotFoundException, BadRequestException, UnauthorizedException, IOException {
 
     Id.Application appId = validateApplicationId(namespaceId, appName);
 
@@ -248,20 +249,18 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       appRequest = GSON.fromJson(reader, AppRequest.class);
     } catch (IOException e) {
       LOG.error("Error reading request to update app {} in namespace {}.", appName, namespaceId, e);
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Error reading request body.");
-      return;
+      throw new IOException("Error reading request body.");
     } catch (JsonSyntaxException e) {
-      responder.sendString(HttpResponseStatus.BAD_REQUEST, "Request body is invalid json: " + e.getMessage());
-      return;
+      throw new BadRequestException("Request body is invalid json: " + e.getMessage());
     }
 
     try {
       applicationLifecycleService.updateApp(appId, appRequest, createProgramTerminator());
       responder.sendString(HttpResponseStatus.OK, "Update complete.");
     } catch (InvalidArtifactException e) {
-      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
-    } catch (NotFoundException e) {
-      responder.sendString(HttpResponseStatus.NOT_FOUND, e.getMessage());
+      throw new BadRequestException(e.getMessage());
+    } catch (NotFoundException | UnauthorizedException e) {
+      throw e;
     } catch (Exception e) {
       // this is the same behavior as deploy app pipeline, but this is bad behavior. Error handling needs improvement.
       LOG.error("Deploy failure", e);
@@ -375,6 +374,8 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
           responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR,
                                "Write conflict while adding artifact. This can happen if multiple requests to add " +
                                  "the same artifact occur simultaneously. Please try again.");
+        } catch (UnauthorizedException e) {
+          responder.sendString(HttpResponseStatus.FORBIDDEN, e.getMessage());
         } catch (Exception e) {
           LOG.error("Deploy failure", e);
           responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
