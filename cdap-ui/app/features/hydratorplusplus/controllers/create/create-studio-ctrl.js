@@ -34,7 +34,7 @@ class HydratorPlusPlusStudioCtrl {
       if (rArtifacts.length) {
         isValidArtifact = rArtifacts.filter(r => r.name === rSelectedArtifact);
       }
-      return isValidArtifact.length? isValidArtifact[0]: rArtifacts[0];
+      return isValidArtifact.length ? isValidArtifact[0]: rArtifacts[0];
     };
     HydratorPlusPlusNodeConfigStore.init();
     let artifact = getValidArtifact();
