@@ -20,6 +20,7 @@ import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.schema.Schema;
 
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -28,9 +29,11 @@ import java.util.Objects;
  * Instance of a record structured by a {@link Schema}. Fields are accessible by name.
  */
 @Beta
-public class StructuredRecord {
+public class StructuredRecord implements Serializable {
   private final Schema schema;
   private final Map<String, Object> fields;
+
+  private static final long serialVersionUID = -4648752378975451591L;
 
   private StructuredRecord(Schema schema, Map<String, Object> fields) {
     this.schema = schema;

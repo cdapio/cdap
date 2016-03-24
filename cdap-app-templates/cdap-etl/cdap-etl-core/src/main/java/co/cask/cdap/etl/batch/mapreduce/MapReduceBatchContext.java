@@ -16,45 +16,26 @@
 
 package co.cask.cdap.etl.batch.mapreduce;
 
-import co.cask.cdap.api.data.DatasetInstantiationException;
-import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.etl.api.LookupProvider;
 import co.cask.cdap.etl.api.batch.BatchContext;
-import co.cask.cdap.etl.common.AbstractTransformContext;
+import co.cask.cdap.etl.batch.AbstractBatchContext;
 import co.cask.cdap.etl.log.LogContext;
 
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Callable;
 
 /**
  * Abstract implementation of {@link BatchContext} using {@link MapReduceContext}.
  */
-public abstract class MapReduceBatchContext extends AbstractTransformContext implements BatchContext {
-
+public class MapReduceBatchContext extends AbstractBatchContext {
   protected final MapReduceContext mrContext;
-  protected final LookupProvider lookup;
-  private final Map<String, String> runtimeArguments;
 
   public MapReduceBatchContext(MapReduceContext context, Metrics metrics,
                                LookupProvider lookup, String stageName, Map<String, String> runtimeArguments) {
-    super(context, metrics, lookup, stageName);
+    super(context, metrics, lookup, stageName, context.getLogicalStartTime(), runtimeArguments);
     this.mrContext = context;
-    this.lookup = lookup;
-    this.runtimeArguments = new HashMap<>(runtimeArguments);
-  }
-
-  @Override
-  public long getLogicalStartTime() {
-    return LogContext.runWithoutLoggingUnchecked(new Callable<Long>() {
-      @Override
-      public Long call() throws Exception {
-        return mrContext.getLogicalStartTime();
-      }
-    });
   }
 
   @Override
@@ -65,60 +46,5 @@ public abstract class MapReduceBatchContext extends AbstractTransformContext imp
         return mrContext.getHadoopJob();
       }
     });
-  }
-
-  @Override
-  public <T extends Dataset> T getDataset(final String name) throws DatasetInstantiationException {
-    return LogContext.runWithoutLoggingUnchecked(new Callable<T>() {
-      @Override
-      public T call() throws Exception {
-        return mrContext.getDataset(name);
-      }
-    });
-  }
-
-  @Override
-  public <T extends Dataset> T getDataset(final String name, final Map<String, String> arguments)
-    throws DatasetInstantiationException {
-    return LogContext.runWithoutLoggingUnchecked(new Callable<T>() {
-      @Override
-      public T call() throws Exception {
-        return mrContext.getDataset(name, arguments);
-      }
-    });
-  }
-
-  @Override
-  public void releaseDataset(final Dataset dataset) {
-    LogContext.runWithoutLoggingUnchecked(new Callable<Void>() {
-      @Override
-      public Void call() {
-        mrContext.releaseDataset(dataset);
-        return null;
-      }
-    });
-  }
-
-  @Override
-  public void discardDataset(final Dataset dataset) {
-    LogContext.runWithoutLoggingUnchecked(new Callable<Void>() {
-      @Override
-      public Void call() {
-        mrContext.discardDataset(dataset);
-        return null;
-      }
-    });
-  }
-
-  @Override
-  public Map<String, String> getRuntimeArguments() {
-    return Collections.unmodifiableMap(runtimeArguments);
-  }
-
-  @Override
-  public void setRuntimeArgument(String key, String value, boolean overwrite) {
-    if (overwrite || !runtimeArguments.containsKey(key)) {
-      runtimeArguments.put(key, value);
-    }
   }
 }

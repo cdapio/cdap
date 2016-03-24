@@ -30,11 +30,12 @@ import java.util.Iterator;
  * As it is used in batch programs, a BatchAggregator must be parameterized
  * with supported group key and value classes. Group keys and values can be a
  * byte[], Boolean, Integer, Long, Float, Double, String, or StructuredRecord.
- * If the group key is not one of those types,
+ * If the group key is not one of those types and is being used in mapreduce,
  * it must implement Hadoop's org.apache.hadoop.io.WritableComparable interface.
- * If the group value is not one of those types,
+ * If the group value is not one of those types and is being used in mapreduce,
  * it must implement Hadoop's org.apache.hadoop.io.Writable interface.
- *
+ * If the aggregator is being used in spark, both the group key and value must implement the
+ * {@link java.io.Serializable} interface.
  *
  * @param <GROUP_KEY> group key type. Must be a supported type
  * @param <GROUP_VALUE> group value type. Must be a supported type

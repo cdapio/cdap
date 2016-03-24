@@ -18,6 +18,7 @@ package co.cask.cdap.api.data.schema;
 
 import co.cask.cdap.api.annotation.Beta;
 
+import java.io.Serializable;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.security.MessageDigest;
@@ -31,9 +32,10 @@ import java.util.Set;
  * A MD5 hash of a {@link Schema}.
  */
 @Beta
-public final class SchemaHash {
+public final class SchemaHash implements Serializable {
 
   private static final Charset UTF_8 = Charset.forName("UTF-8");
+  private static final long serialVersionUID = 3640799184470835328L;
 
   private final byte[] hash;
   private String hashStr;

@@ -72,7 +72,7 @@ public class DataPipelineApp extends AbstractApplication<ETLBatchConfig> {
                                                   ImmutableSet.<String>of());
     PipelinePlan plan = planner.plan(spec);
 
-    addWorkflow(new SmartWorkflow(spec, plan, getConfigurer()));
+    addWorkflow(new SmartWorkflow(spec, plan, getConfigurer(), config.getEngine()));
     scheduleWorkflow(Schedules.builder(SCHEDULE_NAME)
                        .setDescription("Data pipeline schedule")
                        .createTimeSchedule(config.getSchedule()),
