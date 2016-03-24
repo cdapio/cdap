@@ -1,4 +1,10 @@
 
+.. To use this include, define these replacements:
+.. application-overview
+.. example
+.. example-workflow
+.. example-workflow-italic
+
 **Stopping the Workflow**
 
 - Using the CDAP-UI, go to the |application-overview|,
@@ -6,8 +12,7 @@
   
 - From the Standalone CDAP SDK directory, use the Command Line Interface:
 
-  .. container:: highlight
+  .. tabbed-parsed-literal::
 
-    .. parsed-literal::
-      |$| cdap-cli.sh stop workflow |example|.\ |example-workflow|
-      Successfully stopped workflow '|example-workflow|' of application '|example|'
+    $ cdap-cli.sh stop workflow |example|.\ |example-workflow|
+    Successfully stopped workflow '|example-workflow|' of application '|example|'

@@ -1,4 +1,10 @@
 
+.. To use this include, define these replacements:
+.. application-overview
+.. example
+.. example-service
+.. example-service-italic
+
 **Stopping the Service**
 
 - Using the CDAP-UI, go to the |application-overview|,
@@ -6,8 +12,7 @@
   
 - From the Standalone CDAP SDK directory, use the Command Line Interface:
 
-  .. container:: highlight
+  .. tabbed-parsed-literal::
 
-    .. parsed-literal::
-      |$| cdap-cli.sh stop service |example|.\ |example-service|
-      Successfully stopped service '|example-service|' of application '|example|'
+    $ cdap-cli.sh stop service |example|.\ |example-service|
+    Successfully stopped service '|example-service|' of application '|example|'

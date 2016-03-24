@@ -1,5 +1,7 @@
 
 .. To use this include, define these replacements:
+.. application-overview
+.. example
 .. example-schedule
 .. example-workflow
 .. example-workflow-italic
@@ -21,9 +23,8 @@ as the schedule is in a *suspended* state when the application is deployed.
 
 - From the Standalone CDAP SDK directory, use the Command Line Interface:
 
-  .. container:: highlight
+  .. tabbed-parsed-literal::
 
-    .. parsed-literal::
-      |$| cdap-cli.sh resume schedule |example|.\ |example-schedule|
-      Successfully resumed schedule '|example-schedule|' in app '|example|'
+    $ cdap-cli.sh resume schedule |example|.\ |example-schedule|
+    Successfully resumed schedule '|example-schedule|' in app '|example|'
       

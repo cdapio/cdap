@@ -1,4 +1,10 @@
 
+.. To use this include, define these replacements:
+.. application-overview
+.. example
+.. example-schedule
+.. example-workflow-italic
+
 **Suspending the Schedule**
 
 The only thing you need to do to stop the application is suspend the schedule.
@@ -14,9 +20,8 @@ The only thing you need to do to stop the application is suspend the schedule.
 
 - From the Standalone CDAP SDK directory, use the Command Line Interface:
 
-  .. container:: highlight
+  .. tabbed-parsed-literal::
 
-    .. parsed-literal::
-      |$| cdap-cli.sh suspend schedule |example|.\ |example-schedule|
-      Successfully suspended schedule '|example-schedule|' in app '|example|'
+    $ cdap-cli.sh suspend schedule |example|.\ |example-schedule|
+    Successfully suspended schedule '|example-schedule|' in app '|example|'
       

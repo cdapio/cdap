@@ -1,4 +1,10 @@
 
+.. To use this include, define these replacements:
+.. application-overview
+.. example
+.. example-flow
+.. example-flow-italic
+
 **Stopping the Flow**
 
 - Using the CDAP-UI, go to the |application-overview|,
@@ -6,8 +12,7 @@
   
 - From the Standalone CDAP SDK directory, use the Command Line Interface:
 
-  .. container:: highlight
+  .. tabbed-parsed-literal::
 
-    .. parsed-literal::
-      |$| cdap-cli.sh stop flow |example|.\ |example-flow|
-      Successfully stopped flow '|example-flow|' of application '|example|'
+    $ cdap-cli.sh stop flow |example|.\ |example-flow|
+    Successfully stopped flow '|example-flow|' of application '|example|'

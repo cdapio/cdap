@@ -29,9 +29,15 @@ tab label with a space in it, and is enclosed in quotes.
 
 Note that slightly different rule operate for replacements: a replacement such as
 "\|replace|" will work, and the backslash will be interpreted as a single backslash rather
-than as escaping the "|". 
+than as escaping the "|".
 
-Example:
+It is best if all tabs on a page are identical. If not, changing an active tab will cause other
+tabs in other sets to become "inactive" (ie, disappear).
+
+FIXME: Add a concept of "tab labels" versus "tab keys", and control so they can be independent.
+FIXME: Adding cookies to store the current tab selection between pages or sessions would be helpful.
+
+Examples:
 
 .. tabbed-parsed-literal::
     :tabs: "Linux or OS/X",Windows
@@ -50,6 +56,18 @@ Example:
     Successfully started flow 'WhoFlow' of application 'HelloWorld' with stored runtime arguments '{}'
 
     > <CDAP-SDK-HOME>\libexec\bin\curl.exe -d c:\|release| -X POST 'http://repository.cask.co/centos/6/x86_64/cdap/|short-version|/cask.repo'
+
+If you pass a single set of commands, without comments, the directive will create a
+two-tabbed "Linux" and "Windows" with a generated Windows-equivalent command set. Check
+the results carefully, and file an issue if it is unable to create the correct command.
+Worst-case is that you have to use the full format and enter the two commands.
+
+.. tabbed-parsed-literal::
+
+    $ cdap-cli.sh start flow HelloWorld.WhoFlow
+    Successfully started flow 'WhoFlow' of application 'HelloWorld' with stored runtime arguments '{}'
+    
+    $ curl -o /etc/yum.repos.d/cask.repo http://repository.cask.co/centos/6/x86_64/cdap/|short-version|/cask.repo
 
 """
 
@@ -131,9 +149,41 @@ def dequote(s):
         return s[1:-1]
     return s
     
+def convert(c):
+    """
+    Converts a Linux command to a Windows-equivalent following a few simple rules:
     
+    - Converts a starting '$' to '>'
+    - Slashes in 'http[s]' urls are preserved, else slashes become backslashes
+    - '.sh' commands become '.bat' commands
+    """
+    w = []
+    for i, v in enumerate(c.split()):
+        if i == 0 and v == '$':
+            w.append('>')
+            continue
+        if v.endswith('.sh'):
+            w.append(v.replace('.sh', '.bat'))
+            continue
+        if v.startswith('http'):
+            w.append(v)
+            continue
+        if v.find('/') != -1:
+            w.append(v.replace('/', '\\'))
+        else:
+            w.append(v)
+    return ' '.join(w)
+
+
 class TabbedParsedLiteralNode(nodes.literal_block):
-    pass
+    """TabbedParsedLiteralNode is an extended literal_block that supports replacements."""
+
+    def cleanup(self):
+        for i, v in enumerate(self.traverse()):
+            if isinstance(v, nodes.Text):
+                if v.astext() == '.\ ':
+                    self.replace(v, nodes.Text('.'))    
+
 
 
 class TabbedParsedLiteral(ParsedLiteral):
@@ -146,10 +196,23 @@ class TabbedParsedLiteral(ParsedLiteral):
         """Parses content, looks for comment markers, removes them, prepares backslashes.
            Calculates size for each block.
         """
-    
+        content = self.content
+        text_block = '\n'.join(content)
+        
+        if not text_block.startswith('.. ') or text_block.index('\n.. ') == -1:
+            # There are no comments... generating a Windows-equivalent code
+            LINUX = ['.. Linux', '']
+            WINDOWS = ['', '.. Windows', '']
+            old_content = []
+            new_content = []
+            for line in self.content:
+                old_content.append(line)
+                new_content.append(convert(line))
+            content = LINUX + old_content + WINDOWS + new_content
+
         line_sets = []
         line_set = []
-        for line in self.content:
+        for line in content:
             if line.startswith('.. '):
                 if line_set:
                     line_sets.append(line_set)
@@ -157,7 +220,7 @@ class TabbedParsedLiteral(ParsedLiteral):
             else:
                 line_set.append(line)
         line_sets.append(line_set)
-    
+
         line_counts = []
         lines = []
         for line_set in line_sets:
@@ -181,19 +244,19 @@ class TabbedParsedLiteral(ParsedLiteral):
             for s in _option.split(","):
                 _options.append(dequote(s))         
             return _options
-    
+                    
     def run(self):
         set_classes(self.options)
         self.assert_has_content()
 
         line_counts, lines = self.cleanup_content()
         text = '\n'.join(lines)
-        print "text:\n%s" % text
         text_nodes, messages = self.state.inline_text(text, self.lineno)
         node = TabbedParsedLiteralNode(text, '', *text_nodes, **self.options)
+        node.cleanup()
         node.line = self.content_offset + 1
         self.add_name(node)
-        
+
         node['languages'] = self.cleanup_options('languages', ['console', 'shell-session'])
         node['line_counts'] = line_counts
         node['linenos'] = self.cleanup_options('linenos', '')

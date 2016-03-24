@@ -1,4 +1,8 @@
 
+.. To use this include, define these replacements:
+.. application-overview
+.. example
+
 **Removing the Application**
 
 You can now remove the application as described in :ref:`Removing an Application
@@ -13,10 +17,4 @@ You can now remove the application as described in :ref:`Removing an Application
 
   .. tabbed-parsed-literal::
 
-    .. Linux
-
     $ cdap-cli.sh delete app |example|
-
-    .. Windows
-
-    $ cdap-cli.bat delete app |example|

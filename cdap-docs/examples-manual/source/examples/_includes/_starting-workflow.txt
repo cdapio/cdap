@@ -1,5 +1,7 @@
 
 .. To use this include, define these replacements:
+.. application-overview
+.. example
 .. example-workflow
 .. example-workflow-italic
 
@@ -11,15 +13,13 @@ Starting the Workflow
   
 - From the Standalone CDAP SDK directory, use the Command Line Interface:
 
-  .. container:: highlight
+  .. tabbed-parsed-literal::
 
-    .. parsed-literal::
-      |$| cdap-cli.sh start workflow |example|.\ |example-workflow|
-      Successfully started workflow '|example-workflow|' of application '|example|' with stored runtime arguments '{}'
+    $ cdap-cli.sh start workflow |example|.\ |example-workflow|
+    Successfully started workflow '|example-workflow|' of application '|example|' with stored runtime arguments '{}'
 
 - Or, send a query via an HTTP request using the ``curl`` command:
 
-  .. container:: highlight
+  .. tabbed-parsed-literal::
 
-    .. parsed-literal::
-      |$| curl -w'\\n' -v -X POST '\http://localhost:10000/v3/namespaces/default/apps/|example|/workflows/|example-workflow|/start'
+    $ curl -w'\\n' -v -X POST '\http://localhost:10000/v3/namespaces/default/apps/|example|/workflows/|example-workflow|/start'

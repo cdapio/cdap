@@ -120,7 +120,9 @@ Go back to the |application-overview-page|, and click on the *Greeting* service.
 haven't already started the service, click on the *Start* button on the right-side.) The
 service's label will read *Running* when it is ready to receive events.
 
-Now you can make a request to the service using ``curl``::
+Now you can make a request to the service using ``curl``:
+
+.. tabbed-parsed-literal::
 
   $ curl -w'\n' http://localhost:10000/v3/namespaces/default/apps/HelloWorld/services/Greeting/methods/greet
 
