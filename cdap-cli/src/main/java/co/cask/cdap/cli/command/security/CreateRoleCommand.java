@@ -34,7 +34,7 @@ public class CreateRoleCommand extends AbstractAuthCommand {
   private final AuthorizationClient client;
 
   @Inject
-  public CreateRoleCommand(AuthorizationClient client, CLIConfig cliConfig) {
+  CreateRoleCommand(AuthorizationClient client, CLIConfig cliConfig) {
     super(cliConfig);
     this.client = client;
   }

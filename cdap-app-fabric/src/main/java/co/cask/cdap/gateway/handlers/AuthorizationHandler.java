@@ -26,7 +26,6 @@ import co.cask.cdap.proto.codec.EntityIdTypeAdapter;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.AuthorizationRequest;
-import co.cask.cdap.proto.security.CheckAuthorizedRequest;
 import co.cask.cdap.proto.security.GrantRequest;
 import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.proto.security.Privilege;
@@ -37,7 +36,6 @@ import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
 import co.cask.cdap.security.spi.authorization.Authorizer;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Objects;
-import com.google.common.base.Optional;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -50,7 +48,6 @@ import org.slf4j.LoggerFactory;
 import java.lang.reflect.Type;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.Collections;
 import java.util.EnumSet;
 import java.util.Set;
 import javax.annotation.Nullable;
@@ -81,43 +78,7 @@ public class AuthorizationHandler extends AbstractAppFabricHttpHandler {
     this.enabled = conf.getBoolean(Constants.Security.Authorization.ENABLED);
   }
 
-  private void createLogEntry(HttpRequest httpRequest, @Nullable AuthorizationRequest request,
-                              HttpResponseStatus responseStatus) throws UnknownHostException {
-
-    AuditLogEntry logEntry = new AuditLogEntry();
-    logEntry.setUserName(Objects.firstNonNull(SecurityRequestContext.getUserId(), "-"));
-    logEntry.setClientIP(InetAddress.getByName(Objects.firstNonNull(SecurityRequestContext.getUserIP(), "0.0.0.0")));
-    logEntry.setRequestLine(httpRequest.getMethod(), httpRequest.getUri(), httpRequest.getProtocolVersion());
-    if (request != null) {
-      logEntry.setRequestBody(String.format("[%s %s %s]", request.getPrincipal(), request.getEntity(),
-                                            request.getActions()));
-    }
-    logEntry.setResponseCode(responseStatus.getCode());
-    AUDIT_LOG.trace(logEntry.toString());
-  }
-
-  @Path("/authorized")
-  @POST
-  public void authorized(HttpRequest httpRequest, HttpResponder httpResponder) throws Exception {
-    ensureAuthorizationEnabled();
-
-    CheckAuthorizedRequest request = parseBody(httpRequest, CheckAuthorizedRequest.class);
-    verifyAuthRequest(request);
-
-    Set<Action> actions = Optional.fromNullable(request.getActions()).or(Collections.<Action>emptySet());
-    if (actions.isEmpty()) {
-      httpResponder.sendString(HttpResponseStatus.OK, "No actions to check for authorization in request");
-      return;
-    }
-
-    for (Action action : request.getActions()) {
-      authorizerInstantiatorService.get().enforce(request.getEntity(), request.getPrincipal(), action);
-    }
-    httpResponder.sendStatus(HttpResponseStatus.OK);
-    createLogEntry(httpRequest, request, HttpResponseStatus.OK);
-  }
-
-  @Path("/grant")
+  @Path("/privileges/grant")
   @POST
   public void grant(HttpRequest httpRequest, HttpResponder httpResponder) throws Exception {
     ensureAuthorizationEnabled();
@@ -132,7 +93,7 @@ public class AuthorizationHandler extends AbstractAppFabricHttpHandler {
     createLogEntry(httpRequest, request, HttpResponseStatus.OK);
   }
 
-  @Path("/revoke")
+  @Path("/privileges/revoke")
   @POST
   public void revoke(HttpRequest httpRequest, HttpResponder httpResponder) throws Exception {
     ensureAuthorizationEnabled();
@@ -246,5 +207,19 @@ public class AuthorizationHandler extends AbstractAppFabricHttpHandler {
     if (request == null) {
       throw new BadRequestException("Missing request body");
     }
+  }
+
+  private void createLogEntry(HttpRequest httpRequest, @Nullable AuthorizationRequest request,
+                              HttpResponseStatus responseStatus) throws UnknownHostException {
+    AuditLogEntry logEntry = new AuditLogEntry();
+    logEntry.setUserName(Objects.firstNonNull(SecurityRequestContext.getUserId(), "-"));
+    logEntry.setClientIP(InetAddress.getByName(Objects.firstNonNull(SecurityRequestContext.getUserIP(), "0.0.0.0")));
+    logEntry.setRequestLine(httpRequest.getMethod(), httpRequest.getUri(), httpRequest.getProtocolVersion());
+    if (request != null) {
+      logEntry.setRequestBody(String.format("[%s %s %s]", request.getPrincipal(), request.getEntity(),
+                                            request.getActions()));
+    }
+    logEntry.setResponseCode(responseStatus.getCode());
+    AUDIT_LOG.trace(logEntry.toString());
   }
 }

@@ -129,9 +129,10 @@ public class AuthorizationCLITest extends CLITestBase {
     Assert.assertEquals(2, lines.size());
     Assert.assertEquals(role.getName(), lines.get(1));
 
-    // test grant action
-    testCommandOutputContains(cli, String.format("grant actions %s on entity %s to %s %s", Action.READ,
-                                                 namespaceId.toString(), principal.getType(), principal.getName()),
+    // test grant action. also tests case insensitivity of Action and Principal.PrincipalType
+    testCommandOutputContains(cli, String.format("grant actions %s on entity %s to %s %s",
+                                                 Action.READ.name().toLowerCase(), namespaceId.toString(),
+                                                 principal.getType().name().toLowerCase(), principal.getName()),
                               String.format("Successfully granted action(s) '%s' on entity '%s' to %s '%s'",
                                             Action.READ, namespaceId.toString(), principal.getType(),
                                             principal.getName()));

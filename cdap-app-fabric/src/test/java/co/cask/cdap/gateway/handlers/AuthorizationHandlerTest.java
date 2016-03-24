@@ -41,7 +41,6 @@ import co.cask.cdap.security.spi.authorization.AuthorizationContext;
 import co.cask.cdap.security.spi.authorization.Authorizer;
 import co.cask.cdap.security.spi.authorization.RoleAlreadyExistsException;
 import co.cask.cdap.security.spi.authorization.RoleNotFoundException;
-import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.http.NettyHttpService;
 import co.cask.tephra.TransactionFailureException;
 import com.google.common.collect.ImmutableList;
@@ -53,6 +52,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.net.UnknownHostException;
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Properties;
 import java.util.Set;
@@ -126,7 +126,7 @@ public class AuthorizationHandlerTest {
       .build();
     service.startAndWait();
 
-    AuthorizationClient client = new AuthorizationClient(
+    final AuthorizationClient client = new AuthorizationClient(
       ClientConfig.builder()
         .setConnectionConfig(
           ConnectionConfig.builder()
@@ -136,29 +136,73 @@ public class AuthorizationHandlerTest {
             .build())
         .build());
 
-    NamespaceId ns1 = Ids.namespace("ns1");
-    Principal admin = new Principal("admin", Principal.PrincipalType.USER);
-    try {
-      client.authorized(ns1, admin, Action.READ);
-      Assert.fail();
-    } catch (FeatureDisabledException expected) {
-      Assert.assertEquals("Authorization", expected.getFeature());
-    }
+    final NamespaceId ns1 = Ids.namespace("ns1");
+    final Principal admin = new Principal("admin", Principal.PrincipalType.USER);
+    final Role admins = new Role("admins");
 
-    try {
-      client.grant(ns1, admin, ImmutableSet.of(Action.READ));
-      Assert.fail();
-    } catch (FeatureDisabledException expected) {
-      Assert.assertEquals(Constants.Security.Authorization.ENABLED, expected.getEnableConfigKey());
-      Assert.assertEquals("true", expected.getEnableConfigValue());
-    }
+    // Test that the right exception is thrown when any Authorization REST API is called when authorization is disabled
+    verifyFeatureDisabled(new DisabledFeatureCaller() {
+      @Override
+      public void call() throws Exception {
+        client.grant(ns1, admin, ImmutableSet.of(Action.READ));
+      }
+    });
 
-    try {
-      client.revoke(ns1, admin, ImmutableSet.of(Action.READ));
-      Assert.fail();
-    } catch (FeatureDisabledException expected) {
-      Assert.assertEquals("cdap-site.xml", expected.getConfigFile());
-    }
+    verifyFeatureDisabled(new DisabledFeatureCaller() {
+      @Override
+      public void call() throws Exception {
+        client.revoke(ns1, admin, ImmutableSet.of(Action.READ));
+      }
+    });
+
+    verifyFeatureDisabled(new DisabledFeatureCaller() {
+      @Override
+      public void call() throws Exception {
+        client.revoke(ns1);
+      }
+    });
+
+    verifyFeatureDisabled(new DisabledFeatureCaller() {
+      @Override
+      public void call() throws Exception {
+        client.listPrivileges(admin);
+      }
+    });
+
+    verifyFeatureDisabled(new DisabledFeatureCaller() {
+      @Override
+      public void call() throws Exception {
+        client.addRoleToPrincipal(new Role("admins"), admin);
+      }
+    });
+
+    verifyFeatureDisabled(new DisabledFeatureCaller() {
+      @Override
+      public void call() throws Exception {
+        client.removeRoleFromPrincipal(admins, admin);
+      }
+    });
+
+    verifyFeatureDisabled(new DisabledFeatureCaller() {
+      @Override
+      public void call() throws Exception {
+        client.createRole(admins);
+      }
+    });
+
+    verifyFeatureDisabled(new DisabledFeatureCaller() {
+      @Override
+      public void call() throws Exception {
+        client.dropRole(admins);
+      }
+    });
+
+    verifyFeatureDisabled(new DisabledFeatureCaller() {
+      @Override
+      public void call() throws Exception {
+        client.listAllRoles();
+      }
+    });
   }
 
   @Test
@@ -170,7 +214,7 @@ public class AuthorizationHandlerTest {
     verifyAuthFailure(ns1, admin, Action.READ);
 
     client.grant(ns1, admin, ImmutableSet.of(Action.READ));
-    client.authorized(ns1, admin, Action.READ);
+    verifyAuthSuccess(ns1, admin, Action.READ);
 
     client.revoke(ns1, admin, ImmutableSet.of(Action.READ));
     verifyAuthFailure(ns1, admin, Action.READ);
@@ -185,12 +229,12 @@ public class AuthorizationHandlerTest {
     // grant() and revoke(EntityId, String)
     client.grant(ns1, admin, ImmutableSet.of(Action.READ));
     client.grant(ns1, bob, ImmutableSet.of(Action.READ));
-    client.authorized(ns1, admin, Action.READ);
-    client.authorized(ns1, bob, Action.READ);
+    verifyAuthSuccess(ns1, admin, Action.READ);
+    verifyAuthSuccess(ns1, bob, Action.READ);
 
-    client.revoke(ns1, admin);
+    client.revoke(ns1, admin, EnumSet.allOf(Action.class));
     verifyAuthFailure(ns1, admin, Action.READ);
-    client.authorized(ns1, bob, Action.READ);
+    verifyAuthSuccess(ns1, bob, Action.READ);
   }
 
   @Test
@@ -204,24 +248,14 @@ public class AuthorizationHandlerTest {
     client.grant(ns1, admin, ImmutableSet.of(Action.READ));
     client.grant(ns1, bob, ImmutableSet.of(Action.READ));
     client.grant(ns2, admin, ImmutableSet.of(Action.READ));
-    client.authorized(ns1, admin, Action.READ);
-    client.authorized(ns1, bob, Action.READ);
-    client.authorized(ns2, admin, Action.READ);
+    verifyAuthSuccess(ns1, admin, Action.READ);
+    verifyAuthSuccess(ns1, bob, Action.READ);
+    verifyAuthSuccess(ns2, admin, Action.READ);
 
     client.revoke(ns1);
     verifyAuthFailure(ns1, admin, Action.READ);
     verifyAuthFailure(ns1, bob, Action.READ);
-    client.authorized(ns2, admin, Action.READ);
-  }
-
-  private void verifyAuthFailure(EntityId entity, Principal principal, Action action) throws Exception {
-    try {
-      client.authorized(entity, principal, action);
-      Assert.fail(String.format("Expected authorization failure, but it succeeded for entity %s, principal %s," +
-                                  " action %s", entity, principal, action));
-    } catch (UnauthorizedException expected) {
-      // expected
-    }
+    verifyAuthSuccess(ns2, admin, Action.READ);
   }
 
   @Test
@@ -285,7 +319,7 @@ public class AuthorizationHandlerTest {
     client.grant(ns1, engineers, ImmutableSet.of(Action.READ));
 
     // check that a spiderman who has engineers role has access
-    client.authorized(ns1, spiderman, Action.READ);
+    verifyAuthSuccess(ns1, spiderman, Action.READ);
 
     // list privileges for spiderman should have read action on ns1
     Assert.assertEquals(Sets.newHashSet(new Privilege(ns1, Action.READ)), client.listPrivileges(spiderman));
@@ -313,5 +347,50 @@ public class AuthorizationHandlerTest {
     } catch (RoleNotFoundException expected) {
       // expected
     }
+  }
+
+  /**
+   * Interface to centralize testing the exception thrown when Authorization is disabled.
+   */
+  private interface DisabledFeatureCaller {
+    void call() throws Exception;
+  }
+
+  /**
+   * Calls a {@link DisabledFeatureCaller} and verifies that the right exception was thrown.
+   *
+   * @param caller the {@link DisabledFeatureCaller} that wraps the operation to test
+   */
+  private void verifyFeatureDisabled(DisabledFeatureCaller caller) throws Exception {
+    try {
+      caller.call();
+    } catch (FeatureDisabledException expected) {
+      Assert.assertEquals("Authorization", expected.getFeature());
+      Assert.assertEquals("cdap-site.xml", expected.getConfigFile());
+      Assert.assertEquals(Constants.Security.Authorization.ENABLED, expected.getEnableConfigKey());
+      Assert.assertEquals("true", expected.getEnableConfigValue());
+    }
+  }
+
+  private void verifyAuthSuccess(EntityId entity, Principal principal, Action action) throws Exception {
+    Set<Privilege> privileges = client.listPrivileges(principal);
+    Privilege privilegeToCheck = new Privilege(entity, action);
+    Assert.assertTrue(
+      String.format(
+        "Expected principal %s to have the privilege %s, but found that it did not.", principal, privilegeToCheck
+      ),
+      privileges.contains(privilegeToCheck)
+    );
+  }
+
+  private void verifyAuthFailure(EntityId entity, Principal principal, Action action) throws Exception {
+    Set<Privilege> privileges = client.listPrivileges(principal);
+    Privilege privilegeToCheck = new Privilege(entity, action);
+    Assert.assertFalse(
+      String.format(
+        "Expected principal %s to not have the privilege %s, but found that it did.", principal, privilegeToCheck
+      ),
+      privileges.contains(privilegeToCheck)
+    );
   }
 }

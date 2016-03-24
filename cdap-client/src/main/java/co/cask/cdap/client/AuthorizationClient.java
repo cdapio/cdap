@@ -26,19 +26,18 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.proto.codec.EntityIdTypeAdapter;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.security.Action;
-import co.cask.cdap.proto.security.CheckAuthorizedRequest;
 import co.cask.cdap.proto.security.GrantRequest;
 import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.proto.security.Privilege;
 import co.cask.cdap.proto.security.RevokeRequest;
 import co.cask.cdap.proto.security.Role;
+import co.cask.cdap.security.spi.authorization.AbstractAuthorizer;
 import co.cask.cdap.security.spi.authorization.RoleAlreadyExistsException;
 import co.cask.cdap.security.spi.authorization.RoleNotFoundException;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpResponse;
 import co.cask.common.http.ObjectResponse;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.InputSupplier;
 import com.google.common.reflect.TypeToken;
@@ -57,7 +56,7 @@ import javax.inject.Inject;
  * Provides ways to interact with the CDAP authorization system.
  */
 @Beta
-public class AuthorizationClient {
+public class AuthorizationClient extends AbstractAuthorizer {
 
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(EntityId.class, new EntityIdTypeAdapter())
@@ -78,48 +77,36 @@ public class AuthorizationClient {
     this(config, new RESTClient(config));
   }
 
-  public void authorized(EntityId entity, Principal principal, Action action)
-    throws IOException, UnauthenticatedException, FeatureDisabledException, UnauthorizedException {
-
-    CheckAuthorizedRequest checkRequest = new CheckAuthorizedRequest(entity, principal, ImmutableSet.of(action));
-
-    URL url = config.resolveURLV3(AUTHORIZATION_BASE + "authorized");
-    HttpRequest request = HttpRequest.post(url).withBody(GSON.toJson(checkRequest)).build();
-    executeRequest(request, HttpURLConnection.HTTP_FORBIDDEN, HttpURLConnection.HTTP_NOT_IMPLEMENTED);
+  @Override
+  public void enforce(EntityId entity, Principal principal, Action action) throws Exception {
+    throw new UnsupportedOperationException("Enforcement is not supported via Java Client. Please instead use the " +
+                                              "listPrivileges method to view the privileges for a principal.");
   }
 
+  @Override
   public void grant(EntityId entity, Principal principal, Set<Action> actions) throws IOException,
     UnauthenticatedException, FeatureDisabledException, UnauthorizedException {
 
     GrantRequest grantRequest = new GrantRequest(entity, principal, actions);
 
-    URL url = config.resolveURLV3(AUTHORIZATION_BASE + "grant");
+    URL url = config.resolveURLV3(AUTHORIZATION_BASE + "/privileges/grant");
     HttpRequest request = HttpRequest.post(url).withBody(GSON.toJson(grantRequest)).build();
     executeRequest(request, HttpURLConnection.HTTP_FORBIDDEN, HttpURLConnection.HTTP_NOT_IMPLEMENTED);
   }
 
-  public void revoke(EntityId entity, Principal principal, Set<Action> actions) throws IOException,
+  @Override
+  public void revoke(EntityId entity) throws IOException, UnauthenticatedException, FeatureDisabledException,
+    UnauthorizedException {
+    revoke(entity, null, null);
+  }
+
+  @Override
+  public void revoke(EntityId entity, @Nullable Principal principal, @Nullable Set<Action> actions) throws IOException,
     UnauthenticatedException, FeatureDisabledException, UnauthorizedException {
     revoke(new RevokeRequest(entity, principal, actions));
   }
 
-  public void revoke(EntityId entity, Principal principal) throws IOException, UnauthenticatedException,
-    FeatureDisabledException, UnauthorizedException {
-    revoke(new RevokeRequest(entity, principal, null));
-  }
-
-  public void revoke(EntityId entity) throws IOException, UnauthenticatedException, FeatureDisabledException,
-    UnauthorizedException {
-    revoke(new RevokeRequest(entity, null, null));
-  }
-
-  public void revoke(RevokeRequest revokeRequest)
-    throws IOException, UnauthenticatedException, FeatureDisabledException, UnauthorizedException {
-    URL url = config.resolveURLV3(AUTHORIZATION_BASE + "revoke");
-    HttpRequest request = HttpRequest.post(url).withBody(GSON.toJson(revokeRequest)).build();
-    executeRequest(request, HttpURLConnection.HTTP_FORBIDDEN, HttpURLConnection.HTTP_NOT_IMPLEMENTED);
-  }
-
+  @Override
   public Set<Privilege> listPrivileges(Principal principal) throws IOException, FeatureDisabledException,
     UnauthenticatedException, UnauthorizedException {
     URL url = config.resolveURLV3(String.format(AUTHORIZATION_BASE + "%s/%s/privileges", principal.getType(),
@@ -133,6 +120,7 @@ public class AuthorizationClient {
     throw new IOException(String.format("Cannot list privileges. Reason: %s", response.getResponseBodyAsString()));
   }
 
+  @Override
   public void createRole(Role role) throws IOException, FeatureDisabledException, UnauthenticatedException,
     UnauthorizedException, RoleAlreadyExistsException {
     URL url = config.resolveURLV3(String.format(AUTHORIZATION_BASE + "roles/%s", role.getName()));
@@ -144,6 +132,7 @@ public class AuthorizationClient {
     }
   }
 
+  @Override
   public void dropRole(Role role) throws IOException, FeatureDisabledException, UnauthenticatedException,
     UnauthorizedException, RoleNotFoundException {
     URL url = config.resolveURLV3(String.format(AUTHORIZATION_BASE + "roles/%s", role.getName()));
@@ -151,17 +140,20 @@ public class AuthorizationClient {
     executeRoleRequest(role, request);
   }
 
+  @Override
   public Set<Role> listAllRoles() throws FeatureDisabledException, UnauthenticatedException, UnauthorizedException,
     IOException {
     return listRolesHelper(null);
   }
 
+  @Override
   public Set<Role> listRoles(Principal principal) throws FeatureDisabledException, UnauthenticatedException,
     UnauthorizedException,
     IOException {
     return listRolesHelper(principal);
   }
 
+  @Override
   public void addRoleToPrincipal(Role role, Principal principal) throws IOException, FeatureDisabledException,
     UnauthenticatedException, UnauthorizedException, RoleNotFoundException {
     URL url = config.resolveURLV3(String.format(AUTHORIZATION_BASE + "%s/%s/roles/%s", principal.getType(),
@@ -170,12 +162,20 @@ public class AuthorizationClient {
     executeRoleRequest(role, request);
   }
 
+  @Override
   public void removeRoleFromPrincipal(Role role, Principal principal) throws IOException, FeatureDisabledException,
     UnauthenticatedException, UnauthorizedException, RoleNotFoundException {
     URL url = config.resolveURLV3(String.format(AUTHORIZATION_BASE + "%s/%s/roles/%s", principal.getType(),
                                                 principal.getName(), role.getName()));
     HttpRequest request = HttpRequest.delete(url).build();
     executeRoleRequest(role, request);
+  }
+
+  private void revoke(RevokeRequest revokeRequest)
+    throws IOException, UnauthenticatedException, FeatureDisabledException, UnauthorizedException {
+    URL url = config.resolveURLV3(AUTHORIZATION_BASE + "/privileges/revoke");
+    HttpRequest request = HttpRequest.post(url).withBody(GSON.toJson(revokeRequest)).build();
+    executeRequest(request, HttpURLConnection.HTTP_FORBIDDEN, HttpURLConnection.HTTP_NOT_IMPLEMENTED);
   }
 
   private Set<Role> listRolesHelper(@Nullable Principal principal) throws IOException, FeatureDisabledException,

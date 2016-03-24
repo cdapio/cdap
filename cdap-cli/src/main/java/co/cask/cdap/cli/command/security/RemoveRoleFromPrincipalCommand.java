@@ -35,7 +35,7 @@ public class RemoveRoleFromPrincipalCommand extends AbstractAuthCommand {
   private final AuthorizationClient client;
 
   @Inject
-  public RemoveRoleFromPrincipalCommand(AuthorizationClient client, CLIConfig cliConfig) {
+  RemoveRoleFromPrincipalCommand(AuthorizationClient client, CLIConfig cliConfig) {
     super(cliConfig);
     this.client = client;
   }
