@@ -16,23 +16,39 @@ Building and Starting
   <cdap-building-running-example>`) or use the pre-built JAR file included in the CDAP SDK
   (as described in :ref:`Deploying an Application <cdap-building-running-deploying>`):
   
-  .. parsed-literal::
+  .. tabbed-parsed-literal::
+
+    .. Linux
+
     examples/|example-dir|/target/|example-artifact|-|release|.jar
+
+    .. Windows
+
+    examples\|example-dir|\target\|example-artifact|-|release|.jar
   
 - Start CDAP (as described in :ref:`Starting and Stopping CDAP <start-stop-cdap>`). 
 
 - Deploy the application, as described in :ref:`Deploying an Application <cdap-building-running-deploying>`.
   For example, from the Standalone CDAP SDK directory, use the :ref:`Command Line Interface (CLI) <cli>`:
 
-  .. container:: highlight
+  .. tabbed-parsed-literal::
 
-    .. parsed-literal::
-      |$| cdap-cli.sh load artifact examples/|example-dir|/target/|example-artifact|-|release|.jar
-      Successfully added artifact with name '|example-artifact|'
+    .. Linux
+    
+    $ cdap-cli.sh load artifact examples/|example-dir|/target/|example-artifact|-|release|.jar
+    Successfully added artifact with name '|example-artifact|'
 
-      |$| cdap-cli.sh create app |example| |example-artifact| |release| user
-      Successfully created application
+    $ cdap-cli.sh create app |example| |example-artifact| |release| user
+    Successfully created application
   
+    .. Windows
+    
+    > cdap-cli.bat load artifact examples\|example-dir|\target\|example-artifact|-|release|.jar
+    Successfully added artifact with name '|example-artifact|'
+
+    > cdap-cli.bat create app |example| |example-artifact| |release| user
+    Successfully created application
+
 - Once the application has been deployed, you can start its components, as described in
   :ref:`Starting an Application <cdap-building-running-starting-application>`, and detailed at the 
   start of `running the example <#running-the-example>`__.

@@ -11,7 +11,12 @@ You can now remove the application as described in :ref:`Removing an Application
   
 - From the Standalone CDAP SDK directory, use the Command Line Interface:
 
-  .. container:: highlight
+  .. tabbed-parsed-literal::
 
-    .. parsed-literal::
-      |$| cdap-cli.sh delete app |example|
+    .. Linux
+
+    $ cdap-cli.sh delete app |example|
+
+    .. Windows
+
+    $ cdap-cli.bat delete app |example|

@@ -27,6 +27,10 @@ Separate the code blocks with matching comment lines. Tabs must follow in order 
 option. Comment labels are for convenience, and don't need to match. Note example uses a
 tab label with a space in it, and is enclosed in quotes.
 
+Note that slightly different rule operate for replacements: a replacement such as
+"\|replace|" will work, and the backslash will be interpreted as a single backslash rather
+than as escaping the "|". 
+
 Example:
 
 .. tabbed-parsed-literal::
@@ -45,7 +49,7 @@ Example:
     > cdap-cli.bat start flow HelloWorld.WhoFlow
     Successfully started flow 'WhoFlow' of application 'HelloWorld' with stored runtime arguments '{}'
 
-    > <CDAP-SDK-HOME>\libexec\bin\curl.exe -X POST 'http://repository.cask.co/centos/6/x86_64/cdap/|short-version|/cask.repo'
+    > <CDAP-SDK-HOME>\libexec\bin\curl.exe -d c:\|release| -X POST 'http://repository.cask.co/centos/6/x86_64/cdap/|short-version|/cask.repo'
 
 """
 
@@ -157,7 +161,9 @@ class TabbedParsedLiteral(ParsedLiteral):
         line_counts = []
         lines = []
         for line_set in line_sets:
-            block = '\n'.join(line_set).strip().replace('\\', '\\\\')
+            block = '\n'.join(line_set).strip()
+            block = block.replace('\\', '\\\\')
+            block = block.replace('\\|', '\\\ |')
             if not block.endswith('\n'):
                 block += '\n'
             lines.append(block)
@@ -182,6 +188,7 @@ class TabbedParsedLiteral(ParsedLiteral):
 
         line_counts, lines = self.cleanup_content()
         text = '\n'.join(lines)
+        print "text:\n%s" % text
         text_nodes, messages = self.state.inline_text(text, self.lineno)
         node = TabbedParsedLiteralNode(text, '', *text_nodes, **self.options)
         node.line = self.content_offset + 1
