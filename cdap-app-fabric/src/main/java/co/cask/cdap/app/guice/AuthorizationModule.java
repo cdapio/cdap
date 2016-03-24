@@ -81,7 +81,7 @@ import java.util.Properties;
 public class AuthorizationModule extends PrivateModule {
   @Override
   protected void configure() {
-    bind(DynamicDatasetCache.class).toProvider(DynamicDatasetCacheProvider.class);
+    bind(DynamicDatasetCache.class).toProvider(DynamicDatasetCacheProvider.class).in(Scopes.SINGLETON);
     bind(DatasetContext.class).to(DynamicDatasetCache.class).in(Scopes.SINGLETON);
     bind(Admin.class).toProvider(AdminProvider.class);
     bind(Transactional.class).toProvider(TransactionalProvider.class);
