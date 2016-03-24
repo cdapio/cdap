@@ -15,7 +15,7 @@
  */
 
 class HydratorPlusPlusLeftPanelCtrl {
-  constructor($scope, $stateParams, rVersion, GLOBALS, HydratorPlusPlusLeftPanelStore, HydratorPlusPlusPluginActions, HydratorPlusPlusConfigStore, HydratorPlusPlusConfigActions, DAGPlusPlusFactory, DAGPlusPlusNodesActionsFactory, NonStorePipelineErrorFactory, $uibModal, myAlertOnValium, $state, $q, rArtifacts, $timeout, PluginTemplateActionBeta) {
+  constructor($scope, $stateParams, rVersion, GLOBALS, HydratorPlusPlusLeftPanelStore, HydratorPlusPlusPluginActions, HydratorPlusPlusConfigStore, HydratorPlusPlusConfigActions, DAGPlusPlusFactory, DAGPlusPlusNodesActionsFactory, NonStorePipelineErrorFactory, $uibModal, myAlertOnValium, $state, $q, rArtifacts, $timeout, PluginTemplatesDirActions) {
     this.$state = $state;
     this.$scope = $scope;
     this.$stateParams = $stateParams;
@@ -57,21 +57,9 @@ class HydratorPlusPlusLeftPanelCtrl {
     this.artifacts = rArtifacts;
     let configStoreArtifact = this.HydratorPlusPlusConfigStore.getArtifact();
     this.selectedArtifact = rArtifacts.filter( ar => ar.name === configStoreArtifact.name)[0];
+    console.log('setting: ', this.selectedArtifact);
     this.fetchPlugins();
     this.HydratorPlusPlusLeftPanelStore.registerOnChangeListener(() => {
-      this.artifacts = this.HydratorPlusPlusLeftPanelStore.getArtifacts();
-      let artifactFromConfigStore = this.HydratorPlusPlusConfigStore.getArtifact();
-      if (!this.selectedArtifact) {
-        if (artifactFromConfigStore.name.length) {
-          this.selectedArtifact = this.artifacts.filter(artifact => angular.equals(artifact, artifactFromConfigStore))[0];
-        } else {
-          this.selectedArtifact =  this.artifacts[0];
-        }
-        this.HydratorPlusPlusConfigActions.setArtifact(this.selectedArtifact);
-        console.log('selectedArticact', this.selectedArtifact);
-        this.onArtifactChange();
-        return;
-      }
       let addPlugin = {
         name: 'Plugin Template',
         icon: 'fa-plus',
@@ -112,9 +100,11 @@ class HydratorPlusPlusLeftPanelCtrl {
   }
 
   onArtifactChange() {
+    console.log('On Artifact baslasduas');
     this._checkAndShowConfirmationModalOnDirtyState()
-      .then(saveState =>{
+      .then(saveState => {
         if (saveState) {
+          console.log('setting1: ', this.selectedArtifact);
           this.selectedArtifact = this.artifactToRevert;
         } else {
           this.$state.go('hydratorplusplus.create', {
@@ -339,6 +329,6 @@ class HydratorPlusPlusLeftPanelCtrl {
   }
 }
 
-HydratorPlusPlusLeftPanelCtrl.$inject = ['$scope', '$stateParams', 'rVersion', 'GLOBALS', 'HydratorPlusPlusLeftPanelStore', 'HydratorPlusPlusPluginActions', 'HydratorPlusPlusConfigStore', 'HydratorPlusPlusConfigActions', 'DAGPlusPlusFactory', 'DAGPlusPlusNodesActionsFactory', 'NonStorePipelineErrorFactory', 'HydratorPlusPlusHydratorService', '$rootScope', '$uibModal', 'myAlertOnValium', '$state', '$q', 'rArtifacts', '$timeout', 'PluginTemplateActionBeta'];
+HydratorPlusPlusLeftPanelCtrl.$inject = ['$scope', '$stateParams', 'rVersion', 'GLOBALS', 'HydratorPlusPlusLeftPanelStore', 'HydratorPlusPlusPluginActions', 'HydratorPlusPlusConfigStore', 'HydratorPlusPlusConfigActions', 'DAGPlusPlusFactory', 'DAGPlusPlusNodesActionsFactory', 'NonStorePipelineErrorFactory',  '$uibModal', 'myAlertOnValium', '$state', '$q', 'rArtifacts', '$timeout', 'PluginTemplatesDirActions'];
 angular.module(PKG.name + '.feature.hydratorplusplus')
   .controller('HydratorPlusPlusLeftPanelCtrl', HydratorPlusPlusLeftPanelCtrl);
