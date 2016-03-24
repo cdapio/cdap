@@ -109,8 +109,14 @@ angular.module(PKG.name + '.commons')
           if (!sourceNode.length || !targetNode.length) {
             return;
           }
-          var sourceId = sourceNode[0].type === 'transform' ? 'Left' + conn.from : conn.from;
-          var targetId = targetNode[0].type === 'transform' ? 'Right' + conn.to : conn.to;
+          let batch = GLOBALS.etlBatch, realtime = GLOBALS.etlRealtime;
+          let pluginTypes = GLOBALS.pluginTypes;
+          let notATransformTypeNode = [
+            pluginTypes[batch].source, pluginTypes[batch].sink,
+            pluginTypes[realtime].source,  pluginTypes[realtime].sink
+          ];
+          var sourceId = notATransformTypeNode.indexOf(sourceNode[0].type) === -1 ? 'Left' + conn.from : conn.from;
+          var targetId = notATransformTypeNode.indexOf(targetNode[0].type) === -1 ? 'Right' + conn.to : conn.to;
           var connObj = {
             uuids: [sourceId, targetId]
           };
