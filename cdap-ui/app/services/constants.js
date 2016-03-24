@@ -53,7 +53,7 @@ angular.module(PKG.name + '.services')
             'SYNTAX-CONFIG-JSON': 'Error parsing widgets JSON for the plugin. Please check the documentation to fix.',
             'SEMANTIC-CONFIG-JSON': 'Semantic error in the configuration JSON for the plugin.',
             'GENERIC-MISSING-REQUIRED-FIELDS': 'Please provide required information.',
-            'MISSING-REQUIRED-FIELDS': ' is missing required fields',
+            'MISSING-REQUIRED-FIELDS': 'is missing required fields',
             'MORE-THAN-ONE-SOURCE-FOUND': 'Pipelines can only have one source. Please remove any additional sources.',
             'NO-SOURCE-FOUND': 'Please add a source to your pipeline',
             'MISSING-NAME': 'Pipeline name is missing.',

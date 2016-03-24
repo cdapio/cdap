@@ -71,6 +71,10 @@ class HydratorPlusPlusConfigStore {
       this.setArtifact(this.state.artifact);
       this.setEngine(this.state.config.engine);
     }
+    this.__defaultState = angular.copy(this.state);
+  }
+  getDefaults() {
+    return this.__defaultState;
   }
   init(config) {
     this.setDefaults(config);
@@ -301,6 +305,11 @@ class HydratorPlusPlusConfigStore {
   }
   getName() {
     return this.getState().name;
+  }
+  getIsStateDirty() {
+    let defaults = this.getDefaults();
+    let state = this.getState();
+    return !angular.equals(defaults, state);
   }
   setName(name) {
     this.state.name = name;
@@ -611,7 +620,7 @@ class HydratorPlusPlusConfigStore {
         isStateValid = false;
         node.errorCount += 1;
         setErrorWarningFlagOnNode(node);
-        uniqueNodeNames[node.plugin.label] = node.plugin.label + ' ' + ERROR_MESSAGES[err];
+        uniqueNodeNames[node.plugin.label] = node.plugin.label + ERROR_MESSAGES[err];
       }
     });
     if (Object.keys(uniqueNodeNames).length) {
@@ -691,6 +700,7 @@ class HydratorPlusPlusConfigStore {
             type: 'success',
             content: `Draft ${config.name} saved successfully.`
           });
+          this.state.isStateDirty = false;
         },
         err => {
           this.HydratorPlusPlusConsoleActions.addMessage({

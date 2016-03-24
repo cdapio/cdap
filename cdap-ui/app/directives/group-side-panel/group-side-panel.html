@@ -22,8 +22,8 @@
   <div class="groups-container">
     <div class="item"
           ng-repeat="group in MySidePanel.groups"
-          ng-click="MySidePanel.toggleGroup(group)"
-          ng-class="{'item-open': MySidePanel.openedGroup === group.name, 'group-default': MySidePanel.openedGroup === null }">
+          ng-click="MySidePanel.openedGroup = group.name"
+          ng-class="{'item-open': MySidePanel.openedGroup === group.name }">
       <div class="text-left item-heading {{group.name}}">
         <span class="name">{{group.name | caskCapitalizeFilter}} </span>
         <div class="pull-right">

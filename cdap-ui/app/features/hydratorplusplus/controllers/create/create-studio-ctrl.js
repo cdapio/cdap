@@ -16,7 +16,7 @@
 
 class HydratorPlusPlusStudioCtrl {
   // Holy cow. Much DI. Such angular.
-  constructor(HydratorPlusPlusLeftPanelStore, HydratorPlusPlusConfigActions, $stateParams, rConfig, $rootScope, $scope, DetailNonRunsStore, HydratorPlusPlusNodeConfigStore, DAGPlusPlusNodesActionsFactory, HydratorPlusPlusHydratorService, HydratorPlusPlusConsoleActions) {
+  constructor(HydratorPlusPlusLeftPanelStore, HydratorPlusPlusConfigActions, $stateParams, rConfig, $rootScope, $scope, DetailNonRunsStore, HydratorPlusPlusNodeConfigStore, DAGPlusPlusNodesActionsFactory, HydratorPlusPlusHydratorService, HydratorPlusPlusConsoleActions, rSelectedArtifact, rArtifacts) {
     // This is required because before we fireup the actions related to the store, the store has to be initialized to register for any events.
 
     this.isExpanded = HydratorPlusPlusLeftPanelStore.getState();
@@ -29,9 +29,17 @@ class HydratorPlusPlusStudioCtrl {
       HydratorPlusPlusNodeConfigStore.reset();
       HydratorPlusPlusConsoleActions.resetMessages();
     });
-
+    let getValidArtifact = () => {
+      let isValidArtifact;
+      if (rArtifacts.length) {
+        isValidArtifact = rArtifacts.filter(r => r.name === rSelectedArtifact);
+      }
+      return isValidArtifact.length ? isValidArtifact[0]: rArtifacts[0];
+    };
     HydratorPlusPlusNodeConfigStore.init();
+    let artifact = getValidArtifact();
     if (rConfig) {
+      rConfig.artifact = artifact;
       HydratorPlusPlusConfigActions.initializeConfigStore(rConfig);
       let configJson = rConfig;
       if (!rConfig.__ui__) {
@@ -50,7 +58,9 @@ class HydratorPlusPlusStudioCtrl {
 
       DAGPlusPlusNodesActionsFactory.createGraphFromConfig(configJson.__ui__.nodes, configJson.config.connections, configJson.config.comments);
     } else {
-      HydratorPlusPlusConfigActions.initializeConfigStore({});
+      let config = {};
+      config.artifact = artifact;
+      HydratorPlusPlusConfigActions.initializeConfigStore(config);
     }
   }
 
@@ -59,6 +69,6 @@ class HydratorPlusPlusStudioCtrl {
   }
 }
 
-HydratorPlusPlusStudioCtrl.$inject = ['HydratorPlusPlusLeftPanelStore', 'HydratorPlusPlusConfigActions', '$stateParams', 'rConfig', '$rootScope', '$scope', 'DetailNonRunsStore', 'HydratorPlusPlusNodeConfigStore', 'DAGPlusPlusNodesActionsFactory', 'HydratorPlusPlusHydratorService', 'HydratorPlusPlusConsoleActions'];
+HydratorPlusPlusStudioCtrl.$inject = ['HydratorPlusPlusLeftPanelStore', 'HydratorPlusPlusConfigActions', '$stateParams', 'rConfig', '$rootScope', '$scope', 'DetailNonRunsStore', 'HydratorPlusPlusNodeConfigStore', 'DAGPlusPlusNodesActionsFactory', 'HydratorPlusPlusHydratorService', 'HydratorPlusPlusConsoleActions','rSelectedArtifact', 'rArtifacts'];
 angular.module(PKG.name + '.feature.hydratorplusplus')
   .controller('HydratorPlusPlusStudioCtrl', HydratorPlusPlusStudioCtrl);
