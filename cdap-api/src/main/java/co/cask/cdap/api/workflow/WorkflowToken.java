@@ -32,9 +32,9 @@ public interface WorkflowToken {
    * Keys in the {@link WorkflowToken} can be added by user, using the
    * {@link WorkflowToken#put} method. These keys are added under the {@link Scope#USER} scope.
    * CDAP also adds some keys to the {@link WorkflowToken}. for e.g. MapReduce counters.
-   * The keys added by CDAP gets added under {@link Scope#SYSTEM} scope.
+   * The keys added by CDAP are added under the {@link Scope#SYSTEM} scope.
    */
-  public enum Scope {
+  enum Scope {
     USER,
     SYSTEM
   }
@@ -45,6 +45,7 @@ public interface WorkflowToken {
    * this key is being set, for example, the unique name of the workflow node.
    * @param key the key representing the entry
    * @param value the value for the key
+   * @throws UnsupportedOperationException if called in a context where the token may not be modified.
    */
   void put(String key, String value);
 
@@ -54,6 +55,7 @@ public interface WorkflowToken {
    * this key is being set, for example, the unique name of the workflow node.
    * @param key the key representing entry
    * @param value the {@link Value} for the key
+   * @throws UnsupportedOperationException if called in a context where the token may not be modified.
    */
   void put(String key, Value value);
 

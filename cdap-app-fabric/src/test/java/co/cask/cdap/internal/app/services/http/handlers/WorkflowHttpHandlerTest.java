@@ -1337,89 +1337,36 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     Id.Program mapReduceId = Id.Program.from(appId, ProgramType.MAPREDUCE, WorkflowTokenTestPutApp.RecordCounter.NAME);
     Id.Program sparkId = Id.Program.from(appId, ProgramType.SPARK, WorkflowTokenTestPutApp.SparkTestApp.NAME);
 
-    // Start program with "put.in.mapper.initialize" argument.
-    // It will perform put operation on the WorkflowToken in the Initialize method of the Mapper class.
-    // This should fail.
+    // Start program with inputPath and outputPath arguments.
+    // This should succeed. The programs inside the workflow will attempt to write to the workflow token
+    // from the Mapper's and Reducer's methods as well as from a Spark closure, and they will throw an exception
+    // if that succeeds.
+    // The MapReduce's beforeSubmit will record the workflow run id in the token, and the onFinish as well
+    // as the mapper and the reducer will validate that they have the same workflow run id.
     String outputPath = new File(tmpFolder.newFolder(), "output").getAbsolutePath();
-    startProgram(workflowId, ImmutableMap.of("inputPath", createInputForRecordVerification("firstInput"),
-                                             "outputPath", outputPath, "put.in.mapper.initialize", "true"));
-    waitState(workflowId, ProgramStatus.RUNNING.name());
-    waitState(workflowId, ProgramStatus.STOPPED.name());
-
-    verifyProgramRuns(workflowId, "failed");
-
-    List<RunRecord> mapReduceProgramRuns = getProgramRuns(mapReduceId, ProgramRunStatus.FAILED.name());
-    Assert.assertEquals(1, mapReduceProgramRuns.size());
-
-    // Start program with "put.in.map" argument.
-    // It will perform put operation on the WorkflowToken in the map method of the Mapper class.
-    // This should fail.
-    outputPath = new File(tmpFolder.newFolder(), "output").getAbsolutePath();
-    startProgram(workflowId, ImmutableMap.of("inputPath", createInputForRecordVerification("secondInput"),
-                                             "outputPath", outputPath, "put.in.map", "true"));
-    waitState(workflowId, ProgramStatus.RUNNING.name());
-    waitState(workflowId, ProgramStatus.STOPPED.name());
-
-    verifyProgramRuns(workflowId, "failed", 1);
-
-    mapReduceProgramRuns = getProgramRuns(mapReduceId, ProgramRunStatus.FAILED.name());
-    Assert.assertEquals(2, mapReduceProgramRuns.size());
-
-    // Start program with "put.in.reducer.initialize" argument.
-    // It will perform put operation on the WorkflowToken in the Initialize method of the Reducer class.
-    // This should fail.
-    outputPath = new File(tmpFolder.newFolder(), "output").getAbsolutePath();
-    startProgram(workflowId, ImmutableMap.of("inputPath", createInputForRecordVerification("thirdInput"),
-                                             "outputPath", outputPath, "put.in.reducer.initialize", "true"));
-    waitState(workflowId, ProgramStatus.RUNNING.name());
-    waitState(workflowId, ProgramStatus.STOPPED.name());
-
-    verifyProgramRuns(workflowId, "failed", 2);
-
-    mapReduceProgramRuns = getProgramRuns(mapReduceId, ProgramRunStatus.FAILED.name());
-    Assert.assertEquals(3, mapReduceProgramRuns.size());
-
-    // Start program with "put.in.reduce" argument.
-    // It will perform put operation on the WorkflowToken in the reduce method of the Reducer class.
-    // This should fail.
-    outputPath = new File(tmpFolder.newFolder(), "output").getAbsolutePath();
-    startProgram(workflowId, ImmutableMap.of("inputPath", createInputForRecordVerification("fourthInput"),
-                                             "outputPath", outputPath, "put.in.reduce", "true"));
-    waitState(workflowId, ProgramStatus.RUNNING.name());
-    waitState(workflowId, ProgramStatus.STOPPED.name());
-
-    verifyProgramRuns(workflowId, "failed", 3);
-
-    mapReduceProgramRuns = getProgramRuns(mapReduceId, ProgramRunStatus.FAILED.name());
-    Assert.assertEquals(4, mapReduceProgramRuns.size());
-
-    // Start program with closurePutToken parameter, so that put will be tried from the closure
-    outputPath = new File(tmpFolder.newFolder(), "output").getAbsolutePath();
-    startProgram(workflowId, ImmutableMap.of("inputPath", createInputForRecordVerification("fifthInput"),
-                                             "outputPath", outputPath, "closurePutToken", "true"));
-    waitState(workflowId, ProgramStatus.RUNNING.name());
-    waitState(workflowId, ProgramStatus.STOPPED.name());
-
-    verifyProgramRuns(workflowId, "failed", 4);
-
-    mapReduceProgramRuns = getProgramRuns(mapReduceId, ProgramRunStatus.COMPLETED.name());
-    Assert.assertEquals(1, mapReduceProgramRuns.size());
-
-    List<RunRecord> sparkProgramRuns = getProgramRuns(sparkId, ProgramRunStatus.FAILED.name());
-    Assert.assertEquals(1, sparkProgramRuns.size());
-
-    // Start program with only inputPath and outputPath arguments.
-    // This should succeed.
-    outputPath = new File(tmpFolder.newFolder(), "output").getAbsolutePath();
     startProgram(workflowId, ImmutableMap.of("inputPath", createInputForRecordVerification("sixthInput"),
                                              "outputPath", outputPath));
 
     waitState(workflowId, ProgramStatus.RUNNING.name());
     waitState(workflowId, ProgramStatus.STOPPED.name());
 
+    // validate the completed workflow run and validate that it is the same as recorded in the token
     verifyProgramRuns(workflowId, "completed");
+    List<RunRecord> runs = getProgramRuns(workflowId, "completed");
+    Assert.assertEquals(1, runs.size());
+    String wfRunId = runs.get(0).getPid();
+    WorkflowTokenDetail tokenDetail = getWorkflowToken(workflowId, wfRunId, null, null);
+    List<WorkflowTokenDetail.NodeValueDetail> details = tokenDetail.getTokenData().get("wf.runid");
+    Assert.assertEquals(1, details.size());
+    Assert.assertEquals(wfRunId, details.get(0).getValue());
 
-    sparkProgramRuns = getProgramRuns(sparkId, ProgramRunStatus.COMPLETED.name());
+    // validate that none of the mapper, reducer or spark closure were able to write to the token
+    for (String key : new String[] {
+      "mapper.initialize.key", "map.key", "reducer.initialize.key", "reduce.key", "some.key" }) {
+      Assert.assertFalse(tokenDetail.getTokenData().containsKey(key));
+    }
+
+    List<RunRecord> sparkProgramRuns = getProgramRuns(sparkId, ProgramRunStatus.COMPLETED.name());
     Assert.assertEquals(1, sparkProgramRuns.size());
   }
 

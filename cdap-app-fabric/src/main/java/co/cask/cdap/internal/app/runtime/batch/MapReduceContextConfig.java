@@ -87,7 +87,7 @@ public final class MapReduceContextConfig {
   public void set(BasicMapReduceContext context, CConfiguration conf, Transaction tx, URI programJarURI,
                   Map<String, String> localizedUserResources) {
     setRunId(context.getRunId().getId());
-    setWorkflowProgramInfo(context.getWorkflowProgramInfo());
+    setWorkflowProgramInfo(context.getWorkflowInfo());
     setPlugins(context.getPlugins());
     setArguments(context.getRuntimeArguments());
     setProgramJarURI(programJarURI);

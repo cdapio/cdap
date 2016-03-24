@@ -62,7 +62,6 @@ import org.apache.twill.discovery.DiscoveryServiceClient;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -195,6 +194,12 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
   @Nullable
   public WorkflowToken getWorkflowToken() {
     return workflowProgramInfo == null ? null : workflowProgramInfo.getWorkflowToken();
+  }
+
+  @Nullable
+  @Override
+  public WorkflowProgramInfo getWorkflowInfo() {
+    return workflowProgramInfo;
   }
 
   @Nullable

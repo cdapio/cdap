@@ -29,7 +29,6 @@ import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.api.plugin.Plugin;
-import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.metrics.ProgramUserMetrics;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.Arguments;
@@ -355,8 +354,9 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
    * Returns the information about Workflow if the MapReduce program is executed
    * as a part of it, otherwise {@code null} is returned.
    */
+  @Override
   @Nullable
-  public WorkflowProgramInfo getWorkflowProgramInfo() {
+  public WorkflowProgramInfo getWorkflowInfo() {
     return workflowProgramInfo;
   }
 
