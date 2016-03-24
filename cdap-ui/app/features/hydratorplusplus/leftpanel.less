@@ -48,14 +48,17 @@ body.theme-cdap.state-hydratorplusplus-create {
     .left-panel {
       select.form-control {
         width: 87%;
-        margin-top: 10px;
         margin-left: 10px;
       }
       my-side-panel {
         display: block;
         margin-top: 10px;
+        height: ~"calc(100% - 73px)"; // footer = 53px, 30px (import, templates & add plugin buttons on top of the side-panel.)
+
         .groups-container {
-          top: 128px;
+          position: static;
+          margin-top: 10px;
+          height: ~"calc(100% - 43px);" // 100% - height of filter textbox + margin-top 10px;
         }
       }
       .import-section {
@@ -156,7 +159,6 @@ body.theme-cdap.state-hydratorplusplus-create {
       }
 
       &.item-open {
-        height: 100%;
 
         .item-heading {
           border-bottom-color: transparent;
@@ -185,9 +187,9 @@ body.theme-cdap.state-hydratorplusplus-create {
 
         .item-body-wrapper {
           // Syntax needed to avoid LESS parsing issue affecting calc()
-          height: ~"-moz-calc(100% - 120px)";
-          height: ~"-webkit-calc(100% - 120px)";
-          height: ~"calc(100% - 120px)";
+          height: ~"-moz-calc(100% - 40px)";
+          height: ~"-webkit-calc(100% - 40px)";
+          height: ~"calc(100% - 40px)";
         }
       }
 
