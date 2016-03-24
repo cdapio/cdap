@@ -11,7 +11,7 @@ Command Line Interface API
 Introduction
 ============
 
-The Command Line Interface (CLI) provides methods to interact with the CDAP server from within a shell,
+The Command Line Interface (CLI, or CDAP CLI) provides methods to interact with the CDAP server from within a shell,
 similar to the HBase or ``bash`` shells. It is located within the SDK, at ``bin/cdap-cli`` as either a bash
 script or a Windows ``.bat`` file.
 
@@ -64,8 +64,10 @@ To list all of the available commands, enter the CLI command ``help``::
 Non-Interactive Mode
 --------------------
 
-To run the CLI in non-interactive mode, run the ``cdap-cli.sh`` executable, passing the command you want executed
-as the argument. For example, to list all applications currently deployed to CDAP, execute::
+To run the CLI in non-interactive mode, run the CDAP CLI executable, passing the command you want executed
+as the argument. For example, to list all applications currently deployed to CDAP, execute:
+
+.. tabbed-parsed-literal::
 
   $ cdap-cli.sh list apps
 
@@ -81,7 +83,9 @@ the current CLI session.
 Options
 -------
 
-The CLI can be started with command-line options, as detailed below::
+The CLI can be started with command-line options:
+
+.. tabbed-parsed-literal::
 
   usage: cdap-cli.sh [--autoconnect <true|false>] [--debug] [--help]
                      [--verify-ssl <true|false>] [--uri <uri>][--script

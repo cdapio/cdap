@@ -12,7 +12,7 @@
 Starting the Services
 ---------------------
 
-- Using the CDAP-UI, go to the |application-overview|,
+- Using the CDAP UI, go to the |application-overview|,
   click |example-service1-italic| to get to the service detail page, then click the *Start* button,
   and then do the same for the |example-service2-italic| and |example-service3-italic| services; or
   

@@ -8,7 +8,7 @@
 Starting the Workflow
 ---------------------
 
-- Using the CDAP-UI, go to the |application-overview|,
+- Using the CDAP UI, go to the |application-overview|,
   click |example-workflow-italic| to get to the workflow detail page, then click the *Start* button; or
   
 - From the Standalone CDAP SDK directory, use the Command Line Interface:

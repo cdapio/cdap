@@ -12,7 +12,7 @@ Resuming the Schedule
 The only thing you need to do to start the application is resume the schedule,
 as the schedule is in a *suspended* state when the application is deployed.
 
-- Using the CDAP-UI, go to the |application-overview|,
+- Using the CDAP UI, go to the |application-overview|,
 
   - click |example-workflow-italic| to get to the workflow detail page, 
   - click on the *More* button in the upper-right to display an additional menu, 

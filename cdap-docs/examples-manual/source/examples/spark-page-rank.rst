@@ -102,7 +102,7 @@ The workflow must be started with a runtime argument ``spark.SparkPageRankProgra
 that specifies the number of iterations. By default, this is 10; in this example, we'll
 use ``3`` as the value.
 
-- Using the CDAP-UI, go to the |application-overview|,
+- Using the CDAP UI, go to the |application-overview|,
   click |example-workflow-italic| to get to the workflow detail page, set the runtime
   arguments using ``spark.SparkPageRankProgram.args`` as the key and ``3`` as the value, then click
   the *Start* button; or

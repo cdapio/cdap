@@ -90,7 +90,7 @@ The MapReduce must be started with a runtime argument ``output.partition.key`` t
 specifies the output partition of the *cleanRecords* dataset to write to. In this
 example, we'll simply use ``1`` as the value.
 
-- Using the CDAP-UI, go to the |application-overview|,
+- Using the CDAP UI, go to the |application-overview|,
   click |example-mapreduce-italic| to get to the MapReduce detail page, set the runtime
   arguments using ``output.partition.key`` as the key and ``1`` as the value, then click
   the *Start* button; or

@@ -181,7 +181,7 @@ def convert(c):
         if v == '\\':
             w.append('^')
             continue
-        if v.startswith('http') or v.startswith('localhost:10000'):
+        if v.startswith('http') or v.startswith("'http") or v.startswith('localhost:10000') or v.startswith("'localhost:10000"):
             w.append(v)
             continue
         if v.find('/') != -1:

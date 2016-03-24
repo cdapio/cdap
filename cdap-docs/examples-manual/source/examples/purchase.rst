@@ -192,7 +192,7 @@ Querying the Results
 --------------------
 To query the *history* ``ObjectStore`` through the |example-service1-italic|, you can:
 
-- Using the CDAP-UI, go to the |application-overview|,
+- Using the CDAP UI, go to the |application-overview|,
   click |example-service1-italic| to get to the service detail page, then click the *Start* button; or
 
 - From the Standalone CDAP SDK directory, use the Command Line Interface::
