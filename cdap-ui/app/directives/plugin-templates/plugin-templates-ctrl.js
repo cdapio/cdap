@@ -53,7 +53,7 @@ angular.module(`${PKG.name}.commons`)
       vm.pluginTypeOptions = vm.templateType === vm.GLOBALS.etlBatch ? batchOptions : realtimeOptions;
     };
 
-    vm.getPluginsList = function () {
+    vm.getPluginsList = function (pluginType) {
       vm.submitted = false;
       vm.pluginName = null;
       vm.pluginVersions = [];
@@ -65,22 +65,10 @@ angular.module(`${PKG.name}.commons`)
       var params = {
         pipelineType: vm.templateType,
         namespace: $stateParams.namespace,
-        version: $rootScope.cdapVersion
+        version: $rootScope.cdapVersion,
+        extensionType: pluginType
       };
-      switch (vm.pluginType) {
-        case GLOBALS.pluginTypes[vm.templateType].source:
-          params.extensionType = GLOBALS.pluginTypes[vm.templateType].source;
-          prom = myPipelineApi.fetchSources(params).$promise;
-          break;
-        case GLOBALS.pluginTypes[vm.templateType].transform:
-          params.extensionType = GLOBALS.pluginTypes[vm.templateType].transform;
-          prom = myPipelineApi.fetchTransforms(params).$promise;
-          break;
-        case GLOBALS.pluginTypes[vm.templateType].sink:
-          params.extensionType = GLOBALS.pluginTypes[vm.templateType].sink;
-          prom = myPipelineApi.fetchSinks(params).$promise;
-          break;
-      }
+      prom = myPipelineApi.fetchPlugins(params).$promise;
       prom.then(function (res) {
         vm.pluginList = _.uniq(res.map(function (p) { return p.name; }));
       });
@@ -241,7 +229,7 @@ angular.module(`${PKG.name}.commons`)
         if (pluginType && pluginType.length && !vm.pluginType) {
           vm.pluginType = pluginType;
           vm.prefill.pluginType = true;
-          vm.getPluginsList();
+          vm.getPluginsList(pluginType);
         }
       }
     });
