@@ -145,19 +145,25 @@ such as::
   {"startTime":0,"endTime":1429475995,"series":[]}
 
 To see the value of the ``names.bytes`` metric, you can make an HTTP request to the
-:ref:`http-restful-api-metrics` using curl::
+:ref:`http-restful-api-metrics` using curl:
+
+.. tabbed-parsed-literal::
 
   $ curl -w'\n' -X POST 'http://localhost:10000/v3/metrics/query?tag=namespace:default&tag=app:HelloWorld&tag=flow:WhoFlow&tag=flowlet:saver&metric=user.names.bytes&aggregate=true'
   {"startTime":0,"endTime":1429477634,"series":[{"metricName":"user.names.bytes","grouping":{},"data":[{"time":0,"value":44}]}]}
 
 To see the value of the ``names.longnames`` metric (the number of names, each of which is greater than 10 characters in length),
-you can use::
+you can use:
+
+.. tabbed-parsed-literal::
 
   $ curl -w'\n' -X POST 'http://localhost:10000/v3/metrics/query?tag=namespace:default&tag=app:HelloWorld&tag=flow:WhoFlow&tag=flowlet:saver&metric=user.names.longnames&aggregate=true'
   {"startTime":0,"endTime":1429476082,"series":[{"metricName":"user.names.longnames","grouping":{},"data":[{"time":0,"value":2}]}]}
   
 To see the value of the ``greetings.count.jane_doe`` metric (the number of times the specific name *Jane Doe* has been "greeted"),
-you can use::
+you can use:
+
+.. tabbed-parsed-literal::
 
   $ curl -w'\n' -X POST 'http://localhost:10000/v3/metrics/query?tag=namespace:default&tag=app:HelloWorld&tag=service:Greeting&metric=user.greetings.count.jane_doe&aggregate=true'
   {"startTime":0,"endTime":1429464632,"series":[{"metricName":"user.greetings.count.jane_doe","grouping":{},"data":[{"time":0,"value":1}]}]}

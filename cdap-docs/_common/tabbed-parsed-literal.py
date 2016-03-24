@@ -17,11 +17,11 @@
 """Simple, inelegant Sphinx extension which adds a directive for a
 tabbed parsed-literals that may be switched between in HTML.  
 
-The directive takes an optional language parameter and an optional tabs parameter:
+The directive adds these parameters, both optional:
 
-:tabs: comma-separated list of tabs; default 'Linux,Windows'
-:language: comma-separated list of pygments languages; default 'console`
-:classes: class of container; default `highlight`
+    :language: comma-separated list of pygments languages; default 'console`
+
+    :tabs: comma-separated list of tabs; default 'Linux,Windows'
 
 Separate the code blocks with matching comment lines. Tabs must follow in order of :tabs:
 option. Comment labels are for convenience, and don't need to match. Note example uses a
@@ -35,7 +35,6 @@ It is best if all tabs on a page are identical. If not, changing an active tab w
 tabs in other sets to become "inactive" (ie, disappear).
 
 FIXME: Add a concept of "tab labels" versus "tab keys", and control so they can be independent.
-FIXME: Adding cookies to store the current tab selection between pages or sessions would be helpful.
 
 Examples:
 
@@ -69,6 +68,9 @@ Worst-case is that you have to use the full format and enter the two commands.
     
     $ curl -o /etc/yum.repos.d/cask.repo http://repository.cask.co/centos/6/x86_64/cdap/|short-version|/cask.repo
 
+JavaScript and design of tabs was taken from the Apache Spark Project:
+http://spark.apache.org/examples.html
+
 """
 
 import ast
@@ -77,6 +79,8 @@ from docutils import nodes
 from docutils.parsers.rst import Directive, directives
 from docutils.parsers.rst.directives.body import ParsedLiteral
 from docutils.parsers.rst.roles import set_classes
+
+DEFAULT_TABS = ['Linux', 'Windows']
 
 TPL_COUNTER = 0
 
@@ -92,6 +96,7 @@ function changeExampleTab(example) {
     $(".example-tab").removeClass("active");
     $(".example-tab-" + example).addClass("active");
     $(document).scrollTop($(this).offset().top - scrollOffset);
+    Cookies.set("cdap-documentation-tab", example, { path: '/' });
   }
 }
 
@@ -101,6 +106,11 @@ $(function() {
     var example = examples[i];
     $(".example-tab-" + example).click(changeExampleTab(example));
   }
+});
+
+$( document ).ready(function() {
+  var example = Cookies.get("cdap-documentation-tab");
+  $(".example-tab-" + example)[0].click(changeExampleTab(example));
 });
 
 </script>
@@ -154,10 +164,13 @@ def convert(c):
     Converts a Linux command to a Windows-equivalent following a few simple rules:
     
     - Converts a starting '$' to '>'
-    - Slashes in 'http[s]' urls are preserved, else slashes become backslashes
+    - Forward-slashes in 'http[s]' and 'localhost:10000' URIs are preserved
+    - Other forward-slashes become backslashes
+    - A lone backslash (the Linux line continuation character) becomes a '^'
     - '.sh' commands become '.bat' commands
     """
     w = []
+    text_list = c.split()
     for i, v in enumerate(c.split()):
         if i == 0 and v == '$':
             w.append('>')
@@ -165,7 +178,10 @@ def convert(c):
         if v.endswith('.sh'):
             w.append(v.replace('.sh', '.bat'))
             continue
-        if v.startswith('http'):
+        if v == '\\':
+            w.append('^')
+            continue
+        if v.startswith('http') or v.startswith('localhost:10000'):
             w.append(v)
             continue
         if v.find('/') != -1:
@@ -181,9 +197,12 @@ class TabbedParsedLiteralNode(nodes.literal_block):
     def cleanup(self):
         for i, v in enumerate(self.traverse()):
             if isinstance(v, nodes.Text):
-                if v.astext() == '.\ ':
-                    self.replace(v, nodes.Text('.'))    
-
+                t = v.astext()
+#                 print "v:\n%s'v-end'\n" % v.astext()
+                if t.endswith('.\ '):
+                    self.replace(v, nodes.Text(t[:-2]))
+                elif t.endswith('=\ '):
+                    self.replace(v, nodes.Text(t[:-2]))
 
 
 class TabbedParsedLiteral(ParsedLiteral):
@@ -209,6 +228,7 @@ class TabbedParsedLiteral(ParsedLiteral):
                 old_content.append(line)
                 new_content.append(convert(line))
             content = LINUX + old_content + WINDOWS + new_content
+#             print "old_content:\n%s\nnew_content:\n%s\n" % (old_content, new_content)
 
         line_sets = []
         line_set = []
@@ -235,7 +255,7 @@ class TabbedParsedLiteral(ParsedLiteral):
         return line_counts, lines
     
     def cleanup_options(self, option, default):
-        """Removes leading and trailing quotes and double-quotes from a string."""
+        """Removes leading or trailing quotes or double-quotes from a string option."""
         _option = self.options.get(option,'')
         if not _option:
             return default
@@ -260,7 +280,7 @@ class TabbedParsedLiteral(ParsedLiteral):
         node['languages'] = self.cleanup_options('languages', ['console', 'shell-session'])
         node['line_counts'] = line_counts
         node['linenos'] = self.cleanup_options('linenos', '')
-        node['tabs'] = self.cleanup_options('tabs', ['Linux', 'Windows'])
+        node['tabs'] = self.cleanup_options('tabs', DEFAULT_TABS)
         return [node] + messages
         
 def visit_tpl_html(self, node):
