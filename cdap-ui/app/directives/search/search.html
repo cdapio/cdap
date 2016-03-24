@@ -35,7 +35,13 @@
         <a class="entity-name"
            ui-sref="{{ result.stateLink }}">
           <div class="col-xs-8">
-            {{ result.name }}
+            <div class="result-info">
+              <span>{{ result.name }}</span>
+              <span class="entity-app-details" ng-if="result.programType">
+                <span class="icon-app"></span>
+                <span>{{ result.stateParams.appId }}</span>
+              </span>
+            </div>
           </div>
           <div class="col-xs-4">
             <span class="entity-details">
