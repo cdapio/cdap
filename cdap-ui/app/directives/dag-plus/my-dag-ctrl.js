@@ -311,6 +311,7 @@ angular.module(PKG.name + '.commons')
         endpoints.push(node.name);
 
         var type = GLOBALS.pluginConvert[node.type];
+
         switch(type) {
           case 'source':
             vm.instance.addEndpoint(node.name, sourceSettings, {uuid: node.name});
@@ -318,7 +319,7 @@ angular.module(PKG.name + '.commons')
           case 'sink':
             vm.instance.addEndpoint(node.name, sinkSettings, {uuid: node.name});
             break;
-          case 'transform':
+          default:
             // Need to id each end point so that it can be used later to make connections.
             vm.instance.addEndpoint(node.name, transformSourceSettings, {uuid: 'Left' + node.name});
             vm.instance.addEndpoint(node.name, transformSinkSettings, {uuid: 'Right' + node.name});

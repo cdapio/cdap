@@ -68,7 +68,7 @@ my-dag-plus {
             border-width: 6px;
           }
         }
-        &.transform {
+        &:not(.realtimesource):not(.batchsource):not(.realtimesink):not(.batchsink) {
           .node {
             background-color: #4586f3;
             border-width: 6px;
@@ -113,7 +113,7 @@ my-dag-plus {
           border: 3px solid #48c038;
         }
       }
-      &.transform {
+      &:not(.realtimesource):not(.batchsource):not(.realtimesink):not(.batchsink) {
         color: #4586f3;
         left: 30vw;
         .node {
