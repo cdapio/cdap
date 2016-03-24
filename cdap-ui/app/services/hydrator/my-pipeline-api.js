@@ -21,8 +21,10 @@ angular.module(PKG.name + '.services')
 
         listPath = '/namespaces/:namespace/apps?artifactName=' + GLOBALS.etlBatch + ',' + GLOBALS.etlRealtime,
         artifactsPath = '/namespaces/:namespace/artifacts?scope=SYSTEM',
-        pluginFetchBase = '/namespaces/:namespace/artifacts/:pipelineType/versions/:version/extensions/:extensionType',
+        extensionsFetchBase = '/namespaces/:namespace/artifacts/:pipelineType/versions/:version/extensions',
+        pluginFetchBase = extensionsFetchBase + '/:extensionType',
         pluginsFetchPath = pluginFetchBase + '?scope=system',
+        extensionsFetchPath = extensionsFetchBase + '?scope=system',
         pluginDetailFetch = pluginFetchBase + '/plugins/:pluginName?scope=system',
         artifactPropertiesPath = '/namespaces/:namespace/artifacts/:artifactName/versions/:artifactVersion/properties';
 
@@ -35,10 +37,11 @@ angular.module(PKG.name + '.services')
       {
         save: myHelpers.getConfig('PUT', 'REQUEST', pipelinePath, false, {contentType: 'application/json'}),
         fetchArtifacts: myHelpers.getConfig('GET', 'REQUEST', artifactsPath, true),
-        fetchTemplates: myHelpers.getConfig('GET', 'REQUEST', templatePath, true),
+        fetchExtensions: myHelpers.getConfig('GET', 'REQUEST', extensionsFetchPath, true),
         fetchSources: myHelpers.getConfig('GET', 'REQUEST', pluginsFetchPath, true),
         fetchSinks: myHelpers.getConfig('GET', 'REQUEST', pluginsFetchPath, true),
         fetchTransforms: myHelpers.getConfig('GET', 'REQUEST', pluginsFetchPath, true),
+        fetchTemplates: myHelpers.getConfig('GET', 'REQUEST', templatePath, true),
         fetchPlugins: myHelpers.getConfig('GET', 'REQUEST', pluginsFetchPath, true),
         fetchSourceProperties: myHelpers.getConfig('GET', 'REQUEST', pluginDetailFetch, true),
         fetchSinkProperties: myHelpers.getConfig('GET', 'REQUEST', pluginDetailFetch, true),
