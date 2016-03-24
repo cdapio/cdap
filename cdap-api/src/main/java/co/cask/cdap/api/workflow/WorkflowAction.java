@@ -50,7 +50,7 @@ public interface WorkflowAction extends Runnable {
   void initialize(WorkflowContext context) throws Exception;
 
   /**
-   * This method is called after the {@link #run} method completes and it can be used for resource cleanup. 
+   * This method is called after the {@link #run} method completes and it can be used for resource cleanup.
    * Any exception thrown only gets logged but does not affect execution of the {@link Workflow}.
    */
   void destroy();

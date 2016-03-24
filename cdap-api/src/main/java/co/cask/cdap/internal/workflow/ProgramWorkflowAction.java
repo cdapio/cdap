@@ -37,7 +37,6 @@ public final class ProgramWorkflowAction extends AbstractWorkflowAction {
   public static final String PROGRAM_TYPE = "ProgramType";
 
   private String programName;
-  private Runnable programRunner;
   private SchedulableProgramType programType;
 
   public ProgramWorkflowAction(String programName, SchedulableProgramType programType) {
@@ -57,23 +56,10 @@ public final class ProgramWorkflowAction extends AbstractWorkflowAction {
   }
 
   @Override
-  public void initialize(WorkflowContext context) throws Exception {
-    programName = context.getSpecification().getProperties().get(PROGRAM_NAME);
-    if (programName == null) {
-      throw new IllegalArgumentException("No Program name provided.");
-    }
-
-    programRunner = context.getProgramRunner(programName);
-    programType = context.getSpecification().getProperties().containsKey(PROGRAM_TYPE) ?
-      SchedulableProgramType.valueOf(context.getSpecification().getProperties().get(PROGRAM_TYPE)) : null;
-
-    LOG.info("Initialized for {} Program {} in workflow action",
-             programType != null ? programType.name() : null, programName);
-  }
-
-  @Override
   public void run() {
     try {
+      String programName = getContext().getSpecification().getProperties().get(PROGRAM_NAME);
+      Runnable programRunner = getContext().getProgramRunner(programName);
       LOG.info("Starting Program for workflow action: {}", programName);
       programRunner.run();
 
