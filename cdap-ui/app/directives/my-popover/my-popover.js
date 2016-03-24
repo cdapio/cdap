@@ -54,6 +54,10 @@ angular.module(PKG.name + '.commons')
         function delayClose(delay) {
           cancelTimers();
           delayCloseTimer = $timeout(function() {
+            // This could be the case where we didn't show popup (based on some condition). Trying to hide it would give JS error.
+            if (!mypopover) {
+              return;
+            }
             mypopover.hide();
             destroyPopover();
           }, delay);
@@ -66,6 +70,9 @@ angular.module(PKG.name + '.commons')
           }
         }
         function createPopover() {
+          if (!scope.template || (scope.template && !scope.template.length)) {
+            return;
+          }
           mypopover = $popover(targetElement, {
             title: scope.title,
             contentTemplate: scope.template,

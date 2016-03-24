@@ -230,10 +230,14 @@ body.theme-cdap.state-hydratorplusplus-create {
         width: 48%;
         .border-radius(4px);
         .transition(all 0.2s ease);
-        &:hover, &:focus {
+        &.add-plugin-template:hover, &.add-plugin-template:focus, &:hover, &:focus {
           background-color: fade(black, 45%);
           border: 1px dashed #999;
           color: white;
+        }
+        &.add-plugin-template {
+          background: transparent;
+          border: dashed 1px;
         }
         > .fa {
           font-size: 12px;
@@ -275,4 +279,29 @@ body.theme-cdap.state-hydratorplusplus-create {
     }
   }
 
+  .modal {
+    &.plugin-templates-modal {
+      plugin-templates {
+        display: block;
+        overflow-y: auto;
+        overflow-x: hidden;
+
+        h3 {
+          strong {
+            word-break: break-all;
+          }
+        }
+      }
+    }
+    &.plugin-template-delete-confirm-modal {
+      .modal-dialog {
+        margin-top: 40vh;
+        max-width: 630px;
+        text-align: center;
+        .modal-footer {
+          text-align: center;
+        }
+      }
+    }
+  }
 }
