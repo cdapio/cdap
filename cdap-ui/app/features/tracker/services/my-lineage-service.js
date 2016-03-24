@@ -284,14 +284,14 @@ class myLineageService {
       nodesep: 50,
       ranksep: 90,
       rankdir: 'LR',
-      marginx: 90,
-      marginy: 25
+      marginx: 70,
+      marginy: 130
     });
     graph.setDefaultEdgeLabel(function() { return {}; });
 
     angular.forEach(nodes, (node) => {
       var id = node.dataId;
-      graph.setNode(id, { width: 175, height: 55 });
+      graph.setNode(id, { width: 180, height: 60 });
     });
 
     angular.forEach(connections, (connection) => {
@@ -306,8 +306,8 @@ class myLineageService {
   mapNodesLocation(nodes, graph) {
     angular.forEach(nodes, (node) => {
       node._uiLocation = {
-        top: graph._nodes[node.dataId].y + 'px',
-        left: graph._nodes[node.dataId].x + 'px'
+        top: graph._nodes[node.dataId].y - 30 + 'px',
+        left: graph._nodes[node.dataId].x - 90 + 'px'
       };
     });
   }

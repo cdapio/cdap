@@ -14,7 +14,7 @@
  * the License.
  */
 
-function LineageController ($scope, jsPlumb, $timeout, $state, LineageStore, myTrackerApi) {
+function LineageController ($scope, jsPlumb, $timeout, $state, LineageStore, myTrackerApi, $window) {
   'ngInject';
 
   var vm = this;
@@ -45,6 +45,8 @@ function LineageController ($scope, jsPlumb, $timeout, $state, LineageStore, myT
       $timeout( () => {
         vm.instance.repaintEverything();
       });
+
+      vm.scaleInfo = $scope.getScale(vm.graphInfo);
     });
   }
 
@@ -66,6 +68,10 @@ function LineageController ($scope, jsPlumb, $timeout, $state, LineageStore, myT
     });
 
     render();
+  });
+
+  angular.element($window).on('resize', function() {
+    vm.scaleInfo = $scope.getScale(vm.graphInfo);
   });
 
   vm.nodeClick = (event, node) => {
@@ -166,6 +172,28 @@ function LineageController ($scope, jsPlumb, $timeout, $state, LineageStore, myT
   });
 }
 
+function LineageLink(scope, elem) {
+  scope.getScale = (graph) => {
+    let parentContainerWidth = elem.parent()[0].clientWidth;
+
+    if (parentContainerWidth > graph.width ) {
+      return {
+        scale: 1,
+        padX: (parentContainerWidth - graph.width) / 2 + 'px',
+        padY: 0
+      };
+    } else {
+      let scale = parentContainerWidth / graph.width;
+
+      return {
+        scale: scale,
+        padX: ((graph.width * scale) - graph.width) / 2 + 'px',
+        padY: ((graph.height * scale) - graph.height) / 2 + 'px'
+      };
+    }
+  };
+}
+
 angular.module(PKG.name + '.feature.tracker')
   .directive('myLineageDiagram', () => {
     return {
@@ -176,6 +204,7 @@ angular.module(PKG.name + '.feature.tracker')
       },
       templateUrl: '/assets/features/tracker/directives/lineage/lineage.html',
       controller: LineageController,
-      controllerAs: 'Lineage'
+      controllerAs: 'Lineage',
+      link: LineageLink
     };
   });
