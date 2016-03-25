@@ -124,6 +124,49 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
           onExit: function($uibModalStack) {
             $uibModalStack.dismissAll();
           }
+        })
+
+        .state('hydratorplusplus.detail', {
+          url: '/view/:pipelineId',
+          data: {
+            authorizedRoles: MYAUTH_ROLE.all,
+            highlightTab: 'hydratorList'
+          },
+          resolve : {
+            rPipelineDetail: function($stateParams, $q, myPipelineApi) {
+              var params = {
+                namespace: $stateParams.namespace,
+                pipeline: $stateParams.pipelineId
+              };
+
+              return myPipelineApi.get(params).$promise;
+            }
+          },
+          ncyBreadcrumb: {
+            parent: 'apps.list',
+            label: '{{$state.params.pipelineId}}'
+          },
+          views: {
+            '': {
+              templateUrl: '/assets/features/hydratorplusplus/templates/detail.html',
+              controller: 'HydratorPlusPlusDetailCtrl'
+            },
+            'toppanel@hydratorplusplus.detail': {
+              templateUrl: '/assets/features/hydratorplusplus/templates/detail/top-panel.html',
+              controller: 'HydratorDetailTopPanelController',
+              controllerAs: 'TopPanelCtrl'
+            },
+            'bottompanel@hydratorplusplus.detail': {
+              templateUrl: '/assets/features/hydratorplusplus/templates/detail/bottom-panel.html',
+              controller: 'HydratorPlusPlusDetailBottomPanelCtrl',
+              controllerAs: 'BottomPanelCtrl'
+            },
+            'canvas@hydratorplusplus.detail': {
+              templateUrl: '/assets/features/hydratorplusplus/templates/detail/canvas.html',
+              controller: 'HydratorPlusPlusDetailCanvasCtrl',
+              controllerAs: 'CanvasCtrl'
+            }
+          }
         });
 
   });

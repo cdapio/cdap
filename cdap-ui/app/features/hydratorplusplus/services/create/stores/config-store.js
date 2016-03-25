@@ -303,7 +303,7 @@ class HydratorPlusPlusConfigStore {
     this.state.artifact.version = artifact.version;
     this.state.artifact.scope = artifact.scope;
 
-    if (artifact.name === this.GLOBALS.etlBatch) {
+    if ([this.GLOBALS.etlBatch, this.GLOBALS.etlDataPipeline].indexOf(artifact.name) !== -1) {
       this.state.config.schedule = '* * * * *';
     } else if (artifact.name === this.GLOBALS.etlRealtime) {
       this.state.config.instance = 1;

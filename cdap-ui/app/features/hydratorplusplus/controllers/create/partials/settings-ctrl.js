@@ -21,7 +21,7 @@ class HydratorPlusPlusSettingsCtrl {
     this.templateType = HydratorPlusPlusConfigStore.getArtifact().name;
 
     // If ETL Batch
-    if (this.templateType === GLOBALS.etlBatch) {
+    if ([GLOBALS.etlBatch, GLOBALS.etlDataPipeline].indexOf(this.templateType) !== -1) {
       // Initialiting ETL Batch Schedule
       this.initialCron = HydratorPlusPlusConfigStore.getSchedule();
       this.cron = this.initialCron;
