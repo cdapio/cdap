@@ -49,11 +49,25 @@ public final class Transactions {
 
   public static void invalidateQuietly(TransactionSystemClient txClient, Transaction tx) {
     try {
-      txClient.invalidate(tx.getWritePointer());
+      if (!txClient.invalidate(tx.getWritePointer())) {
+        LOG.error("Failed to invalidate transaction {}", tx);
+      }
     } catch (Throwable t) {
       LOG.error("Exception when invalidating transaction {}", tx, t);
     }
   }
+
+  /**
+   * Wraps the given {@link Throwable} as a {@link TransactionFailureException} if it is not already an instance of
+   * {@link TransactionFailureException}.
+   */
+  public static TransactionFailureException asTransactionFailure(Throwable t) {
+    if (t instanceof TransactionFailureException) {
+      return (TransactionFailureException) t;
+    }
+    return new TransactionFailureException("Transaction Failure", t);
+  }
+
 
   public static Supplier<TransactionContext>
   constantContextSupplier(final TransactionSystemClient txClient,
