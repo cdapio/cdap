@@ -18,6 +18,7 @@ package co.cask.cdap.test;
 
 import co.cask.cdap.api.Config;
 import co.cask.cdap.api.app.Application;
+import co.cask.cdap.api.artifact.ArtifactVersion;
 import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.module.DatasetModule;
@@ -44,8 +45,11 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.artifact.ArtifactRange;
+import co.cask.cdap.proto.id.Ids;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.NamespacedArtifactId;
 import co.cask.cdap.test.remote.RemoteApplicationManager;
+import co.cask.cdap.test.remote.RemoteArtifactManager;
 import co.cask.cdap.test.remote.RemoteStreamManager;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
@@ -62,6 +66,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.JarURLConnection;
@@ -182,52 +187,97 @@ public class IntegrationTestManager implements TestManager {
   }
 
   @Override
+  public ArtifactManager addArtifact(NamespacedArtifactId artifactId, final File artifactFile) throws Exception {
+    artifactClient.add(artifactId.toId(), null, new InputSupplier<InputStream>() {
+      @Override
+      public InputStream getInput() throws IOException {
+        return new FileInputStream(artifactFile);
+      }
+    });
+    return new RemoteArtifactManager(clientConfig, restClient, artifactId);
+  }
+
+  @Override
   public void addAppArtifact(Id.Artifact artifactId, Class<?> appClass) throws Exception {
+    addAppArtifact(artifactId.toEntityId(), appClass);
+  }
+
+  @Override
+  public ArtifactManager addAppArtifact(NamespacedArtifactId artifactId, Class<?> appClass) throws Exception {
     addAppArtifact(artifactId, appClass, new Manifest());
+    return new RemoteArtifactManager(clientConfig, restClient, artifactId);
   }
 
   @Override
   public void addAppArtifact(Id.Artifact artifactId, Class<?> appClass, String... exportPackages) throws Exception {
+    addAppArtifact(artifactId.toEntityId(), appClass, exportPackages);
+  }
+
+  @Override
+  public ArtifactManager addAppArtifact(NamespacedArtifactId artifactId, Class<?> appClass,
+                                        String... exportPackages) throws Exception {
     Manifest manifest = new Manifest();
     manifest.getMainAttributes().put(ManifestFields.EXPORT_PACKAGE, Joiner.on(',').join(exportPackages));
     addAppArtifact(artifactId, appClass, manifest);
+    return new RemoteArtifactManager(clientConfig, restClient, artifactId);
   }
 
   @Override
   public void addAppArtifact(Id.Artifact artifactId, Class<?> appClass, Manifest manifest) throws Exception {
+    addAppArtifact(artifactId.toEntityId(), appClass, manifest);
+  }
+
+  @Override
+  public ArtifactManager addAppArtifact(NamespacedArtifactId artifactId, Class<?> appClass,
+                                        Manifest manifest) throws Exception {
     final Location appJar = AppJarHelper.createDeploymentJar(locationFactory, appClass, manifest);
 
-    artifactClient.add(artifactId, null, new InputSupplier<InputStream>() {
+    artifactClient.add(artifactId.toId(), null, new InputSupplier<InputStream>() {
       @Override
       public InputStream getInput() throws IOException {
         return appJar.getInputStream();
       }
     });
     appJar.delete();
+    return new RemoteArtifactManager(clientConfig, restClient, artifactId);
   }
 
   @Override
   public void addPluginArtifact(Id.Artifact artifactId, Id.Artifact parent,
                                 Class<?> pluginClass, Class<?>... pluginClasses) throws Exception {
+    addPluginArtifact(artifactId.toEntityId(), parent.toEntityId(), pluginClass, pluginClasses);
+  }
+
+  @Override
+  public ArtifactManager addPluginArtifact(NamespacedArtifactId artifactId, NamespacedArtifactId parent,
+                                           Class<?> pluginClass, Class<?>... pluginClasses) throws Exception {
     Set<ArtifactRange> parents = new HashSet<>();
     parents.add(new ArtifactRange(
-      parent.getNamespace(), parent.getName(), parent.getVersion(), true, parent.getVersion(), true));
+      Ids.namespace(parent.getNamespace()).toId(), parent.getArtifact(), new ArtifactVersion(parent.getVersion()),
+      true, new ArtifactVersion(parent.getVersion()), true));
     addPluginArtifact(artifactId, parents, pluginClass, pluginClasses);
+    return new RemoteArtifactManager(clientConfig, restClient, artifactId);
   }
 
   @Override
   public void addPluginArtifact(Id.Artifact artifactId, Set<ArtifactRange> parents,
-                                Class<?> pluginClass,
-                                Class<?>... pluginClasses) throws Exception {
+                                Class<?> pluginClass, Class<?>... pluginClasses) throws Exception {
+    addPluginArtifact(artifactId.toEntityId(), parents, pluginClass, pluginClasses);
+  }
+
+  @Override
+  public ArtifactManager addPluginArtifact(NamespacedArtifactId artifactId, Set<ArtifactRange> parents,
+                                           Class<?> pluginClass, Class<?>... pluginClasses) throws Exception {
     Manifest manifest = createManifest(pluginClass, pluginClasses);
     final Location appJar = PluginJarHelper.createPluginJar(locationFactory, manifest, pluginClass, pluginClasses);
-    artifactClient.add(artifactId, parents, new InputSupplier<InputStream>() {
+    artifactClient.add(artifactId.toId(), parents, new InputSupplier<InputStream>() {
       @Override
       public InputStream getInput() throws IOException {
         return appJar.getInputStream();
       }
     });
     appJar.delete();
+    return new RemoteArtifactManager(clientConfig, restClient, artifactId);
   }
 
   @Override
@@ -235,32 +285,49 @@ public class IntegrationTestManager implements TestManager {
                                 Set<PluginClass> additionalPlugins,
                                 Class<?> pluginClass,
                                 Class<?>... pluginClasses) throws Exception {
+    addPluginArtifact(artifactId.toEntityId(), parent.toEntityId(), additionalPlugins, pluginClass, pluginClasses);
+  }
+
+  @Override
+  public ArtifactManager addPluginArtifact(NamespacedArtifactId artifactId, NamespacedArtifactId parent,
+                                           @Nullable Set<PluginClass> additionalPlugins, Class<?> pluginClass,
+                                           Class<?>... pluginClasses) throws Exception {
     Set<ArtifactRange> parents = new HashSet<>();
     parents.add(new ArtifactRange(
-      parent.getNamespace(), parent.getName(), parent.getVersion(), true, parent.getVersion(), true));
+      Ids.namespace(parent.getNamespace()).toId(), parent.getArtifact(), new ArtifactVersion(parent.getVersion()),
+      true, new ArtifactVersion(parent.getVersion()), true));
     addPluginArtifact(artifactId, parents, additionalPlugins, pluginClass, pluginClasses);
+    return new RemoteArtifactManager(clientConfig, restClient, artifactId);
   }
 
   @Override
   public void addPluginArtifact(Id.Artifact artifactId, Set<ArtifactRange> parents,
                                 @Nullable Set<PluginClass> additionalPlugins,
                                 Class<?> pluginClass, Class<?>... pluginClasses) throws Exception {
+    addPluginArtifact(artifactId.toEntityId(), parents, additionalPlugins, pluginClass, pluginClasses);
+  }
+
+  @Override
+  public ArtifactManager addPluginArtifact(NamespacedArtifactId artifactId, Set<ArtifactRange> parents,
+                                           @Nullable Set<PluginClass> additionalPlugins, Class<?> pluginClass,
+                                           Class<?>... pluginClasses) throws Exception {
     Manifest manifest = createManifest(pluginClass, pluginClasses);
     final Location appJar = PluginJarHelper.createPluginJar(locationFactory, manifest, pluginClass, pluginClasses);
     artifactClient.add(
-      artifactId.getNamespace(),
-      artifactId.getName(),
+      Ids.namespace(artifactId.getNamespace()).toId(),
+      artifactId.getArtifact(),
       new InputSupplier<InputStream>() {
         @Override
         public InputStream getInput() throws IOException {
           return appJar.getInputStream();
         }
       },
-      artifactId.getVersion().getVersion(),
+      artifactId.getVersion(),
       parents,
       additionalPlugins
     );
     appJar.delete();
+    return new RemoteArtifactManager(clientConfig, restClient, artifactId);
   }
 
   @Override

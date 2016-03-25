@@ -50,7 +50,7 @@ public abstract class RevokeActionCommand extends AbstractAuthCommand {
     String principalName = arguments.getOptional("principal-name", null);
     String type = arguments.getOptional("principal-type", null);
     Principal.PrincipalType principalType =
-      type != null ? Principal.PrincipalType.valueOf(arguments.get("principal-type")) : null;
+      type != null ? Principal.PrincipalType.valueOf(type.toUpperCase()) : null;
     Principal principal = type != null ? new Principal(principalName, principalType) : null;
     String actionsString = arguments.getOptional("actions", null);
     Set<Action> actions = actionsString == null ? null : ACTIONS_STRING_TO_SET.apply(actionsString);

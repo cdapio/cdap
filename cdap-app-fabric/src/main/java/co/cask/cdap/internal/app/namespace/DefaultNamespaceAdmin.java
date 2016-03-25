@@ -44,7 +44,6 @@ import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.InstanceId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.security.Action;
-import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.security.authorization.AuthorizerInstantiatorService;
 import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
 import co.cask.cdap.store.NamespaceStore;
@@ -167,7 +166,7 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
     }
 
     // Namespace can be created. Check if the user is authorized now.
-    authorizerInstantiatorService.get().enforce(instanceId, getPrincipal(), Action.ADMIN);
+    authorizerInstantiatorService.get().enforce(instanceId, SecurityRequestContext.toPrincipal(), Action.ADMIN);
     try {
       dsFramework.createNamespace(namespace.toId());
     } catch (DatasetManagementException e) {
@@ -175,7 +174,8 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
     }
 
     nsStore.create(metadata);
-    authorizerInstantiatorService.get().grant(namespace, getPrincipal(), ImmutableSet.of(Action.ALL));
+    authorizerInstantiatorService.get().grant(namespace, SecurityRequestContext.toPrincipal(),
+                                              ImmutableSet.of(Action.ALL));
   }
 
   /**
@@ -201,7 +201,7 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
     }
 
     // Namespace can be deleted. Revoke all privileges first
-    authorizerInstantiatorService.get().enforce(namespace, getPrincipal(), Action.ADMIN);
+    authorizerInstantiatorService.get().enforce(namespace, SecurityRequestContext.toPrincipal(), Action.ADMIN);
     authorizerInstantiatorService.get().revoke(namespace);
 
     LOG.info("Deleting namespace '{}'.", namespaceId);
@@ -225,7 +225,7 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
 
       deleteMetrics(namespaceId.toEntityId());
       // delete all artifacts in the namespace
-      artifactRepository.clear(namespaceId);
+      artifactRepository.clear(namespaceId.toEntityId());
 
       // Delete the namespace itself, only if it is a non-default namespace. This is because we do not allow users to
       // create default namespace, and hence deleting it may cause undeterministic behavior.
@@ -268,7 +268,8 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
     }
 
     // Namespace data can be deleted. Revoke all privileges first
-    authorizerInstantiatorService.get().enforce(namespaceId.toEntityId(), getPrincipal(), Action.ADMIN);
+    authorizerInstantiatorService.get().enforce(namespaceId.toEntityId(), SecurityRequestContext.toPrincipal(),
+                                                Action.ADMIN);
     try {
       dsFramework.deleteAllInstances(namespaceId);
     } catch (DatasetManagementException | IOException e) {
@@ -283,7 +284,8 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
     if (!exists(namespaceId)) {
       throw new NamespaceNotFoundException(namespaceId);
     }
-    authorizerInstantiatorService.get().enforce(namespaceId.toEntityId(), getPrincipal(), Action.ADMIN);
+    authorizerInstantiatorService.get().enforce(namespaceId.toEntityId(), SecurityRequestContext.toPrincipal(),
+                                                Action.ADMIN);
     NamespaceMeta metadata = nsStore.get(namespaceId);
     NamespaceMeta.Builder builder = new NamespaceMeta.Builder(metadata);
 
@@ -306,10 +308,6 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
         return program.getNamespaceId().equals(namespaceId.getNamespace());
       }
     }, ProgramType.values());
-  }
-
-  private Principal getPrincipal() {
-    return new Principal(SecurityRequestContext.getUserId(), Principal.PrincipalType.USER);
   }
 
   private InstanceId createInstanceId(CConfiguration cConf) {

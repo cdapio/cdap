@@ -65,8 +65,7 @@ public final class FindPluginHelper {
     Preconditions.checkArgument(properties != null, "Plugin properties cannot be null");
     Map.Entry<ArtifactDescriptor, PluginClass> pluginEntry;
     try {
-      pluginEntry = artifactRepository.findPlugin(namespace.toId(),
-                                                  parentArtifactId, pluginType, pluginName, selector);
+      pluginEntry = artifactRepository.findPlugin(namespace, parentArtifactId, pluginType, pluginName, selector);
     } catch (IOException e) {
       throw Throwables.propagate(e);
     }
@@ -74,8 +73,7 @@ public final class FindPluginHelper {
     // Just verify if all required properties are provided.
     // No type checking is done for now.
     for (PluginPropertyField field : pluginEntry.getValue().getProperties().values()) {
-      Preconditions.checkArgument(!field.isRequired() ||
-                                    (properties != null && properties.getProperties().containsKey(field.getName())),
+      Preconditions.checkArgument(!field.isRequired() || (properties.getProperties().containsKey(field.getName())),
                                   "Required property '%s' missing for plugin of type %s, name %s.",
                                   field.getName(), pluginType, pluginName);
     }

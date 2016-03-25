@@ -398,7 +398,9 @@ public class AppFabricClient {
                                                                appId.getNamespaceId(), appId.getId());
     Preconditions.checkNotNull(bodyConsumer, "BodyConsumer from deploy call should not be null");
 
-    bodyConsumer.chunk(ChannelBuffers.wrappedBuffer(Bytes.toBytes(GSON.toJson(appRequest))), mockResponder);
+    byte[] contents = Bytes.toBytes(GSON.toJson(appRequest));
+    Preconditions.checkNotNull(contents);
+    bodyConsumer.chunk(ChannelBuffers.wrappedBuffer(contents), mockResponder);
     bodyConsumer.finished(mockResponder);
     verifyResponse(HttpResponseStatus.OK, mockResponder.getStatus(), "Failed to deploy app");
   }
@@ -409,7 +411,9 @@ public class AppFabricClient {
         String.format("/v3/namespaces/%s/apps/%s/update", appId.getNamespace(), appId.getApplication())
     );
     request.setHeader(Constants.Gateway.API_KEY, "api-key-example");
-    request.setContent(ChannelBuffers.wrappedBuffer(Bytes.toBytes(GSON.toJson(appRequest))));
+    byte[] contents = Bytes.toBytes(GSON.toJson(appRequest));
+    Preconditions.checkNotNull(contents);
+    request.setContent(ChannelBuffers.wrappedBuffer(contents));
     MockResponder mockResponder = new MockResponder();
     appLifecycleHttpHandler.updateApp(request, mockResponder, appId.getNamespace(), appId.getApplication());
     verifyResponse(HttpResponseStatus.OK, mockResponder.getStatus(), "Updating app failed");
