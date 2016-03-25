@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -254,7 +254,9 @@ public class DefaultStore implements Store {
             case COMPLETED:
             case KILLED:
             case FAILED:
-              mds.recordProgramStop(id, pid, nowSecs, updateStatus);
+              Throwable failureCause = updateStatus == ProgramRunStatus.FAILED
+                ? new Throwable("Marking run record as failed since no running program found.") : null;
+              mds.recordProgramStop(id, pid, nowSecs, updateStatus, failureCause);
               break;
             default:
               break;
@@ -285,11 +287,17 @@ public class DefaultStore implements Store {
 
   @Override
   public void setStop(final Id.Program id, final String pid, final long endTime, final ProgramRunStatus runStatus) {
+    setStop(id, pid, endTime, runStatus, null);
+  }
+
+  @Override
+  public void setStop(final Id.Program id, final String pid, final long endTime, final ProgramRunStatus runStatus,
+                      final Throwable failureCause) {
     Preconditions.checkArgument(runStatus != null, "Run state of program run should be defined");
     appsTx.get().executeUnchecked(new TransactionExecutor.Function<AppMetadataStore, Void>() {
       @Override
       public Void apply(AppMetadataStore mds) throws Exception {
-        mds.recordProgramStop(id, pid, endTime, runStatus);
+        mds.recordProgramStop(id, pid, endTime, runStatus, failureCause);
         return null;
       }
     }, apps.get());
@@ -318,7 +326,8 @@ public class DefaultStore implements Store {
     Map<String, WorkflowNode> nodeIdMap = workflowSpec.getNodeIdMap();
     final List<WorkflowDataset.ProgramRun> programRunsList = new ArrayList<>();
     for (Map.Entry<String, String> entry : run.getProperties().entrySet()) {
-      if (!("workflowToken".equals(entry.getKey()) || "runtimeArgs".equals(entry.getKey()))) {
+      if (!("workflowToken".equals(entry.getKey()) || "runtimeArgs".equals(entry.getKey())
+        || "workflowNodeState".equals(entry.getKey()))) {
         WorkflowActionNode workflowNode = (WorkflowActionNode) nodeIdMap.get(entry.getKey());
         ProgramType programType = ProgramType.valueOfSchedulableType(workflowNode.getProgram().getProgramType());
         Id.Program innerProgram = Id.Program.from(app.getNamespaceId(), app.getId(), programType, entry.getKey());
@@ -872,21 +881,6 @@ public class DefaultStore implements Store {
       case WORKFLOW:  return appSpec.getWorkflows().containsKey(id.getId());
       default:        throw new IllegalArgumentException("Unexpected ProgramType " + id.getType());
     }
-  }
-
-  @Override
-  public void setWorkflowProgramStart(final Id.Program programId, final String programRunId, final String workflow,
-                                      final String workflowRunId, final String workflowNodeId,
-                                      final long startTimeInSeconds, final String twillRunId) {
-    appsTx.get().executeUnchecked(
-      new TransactionExecutor.Function<AppMetadataStore, Void>() {
-        @Override
-        public Void apply(AppMetadataStore mds) throws Exception {
-          mds.recordWorkflowProgramStart(programId, programRunId, workflow, workflowRunId, workflowNodeId,
-                                         startTimeInSeconds, twillRunId);
-          return null;
-        }
-      }, apps.get());
   }
 
   @Override

@@ -18,19 +18,19 @@ package co.cask.cdap.data2.metadata.system;
 
 import co.cask.cdap.api.data.batch.BatchReadable;
 import co.cask.cdap.api.data.batch.BatchWritable;
+import co.cask.cdap.api.data.batch.InputFormatProvider;
+import co.cask.cdap.api.data.batch.OutputFormatProvider;
 import co.cask.cdap.api.data.batch.RecordScannable;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.lib.ObjectMappedTableProperties;
 import co.cask.cdap.api.dataset.table.Table;
-import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
-import co.cask.cdap.data.dataset.SystemDatasetInstantiatorFactory;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.proto.Id;
-import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -40,23 +40,27 @@ import javax.annotation.Nullable;
  * A {@link AbstractSystemMetadataWriter} for a {@link Id.DatasetInstance dataset}.
  */
 public class DatasetSystemMetadataWriter extends AbstractSystemMetadataWriter {
+  private static final Logger LOG = LoggerFactory.getLogger(DatasetSystemMetadataWriter.class);
+
   public static final String EXPLORE_TAG = "explore";
   public static final String BATCH_TAG = "batch";
 
   private final Id.DatasetInstance dsInstance;
   private final String dsType;
   private final DatasetProperties dsProperties;
-  private final SystemDatasetInstantiatorFactory dsInstantiatorFactory;
+  private final Dataset dataset;
 
   public DatasetSystemMetadataWriter(MetadataStore metadataStore,
-                                     SystemDatasetInstantiatorFactory dsInstantiatorFactory,
                                      Id.DatasetInstance dsInstance, DatasetProperties dsProperties,
-                                     @Nullable String dsType) {
+                                     @Nullable Dataset dataset, @Nullable String dsType) {
     super(metadataStore, dsInstance);
     this.dsInstance = dsInstance;
     this.dsType = dsType;
     this.dsProperties = dsProperties;
-    this.dsInstantiatorFactory = dsInstantiatorFactory;
+    this.dataset = dataset;
+    if (dataset == null) {
+      LOG.warn("Dataset {} is null, some metadata will not be recorded for the dataset", dsInstance);
+    }
   }
 
   @Override
@@ -76,16 +80,12 @@ public class DatasetSystemMetadataWriter extends AbstractSystemMetadataWriter {
   protected String[] getSystemTagsToAdd() {
     List<String> tags = new ArrayList<>();
     tags.add(dsInstance.getId());
-    try (SystemDatasetInstantiator dsInstantiator = dsInstantiatorFactory.create();
-         Dataset dataset = dsInstantiator.getDataset(dsInstance)) {
-      if (dataset instanceof RecordScannable) {
-        tags.add(EXPLORE_TAG);
-      }
-      if (dataset instanceof BatchReadable || dataset instanceof BatchWritable) {
-        tags.add(BATCH_TAG);
-      }
-    } catch (IOException e) {
-      throw Throwables.propagate(e);
+    if (dataset instanceof RecordScannable) {
+      tags.add(EXPLORE_TAG);
+    }
+    if (dataset instanceof BatchReadable || dataset instanceof BatchWritable ||
+      dataset instanceof InputFormatProvider || dataset instanceof OutputFormatProvider) {
+      tags.add(BATCH_TAG);
     }
     return tags.toArray(new String[tags.size()]);
   }

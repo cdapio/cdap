@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,6 +19,7 @@ package co.cask.cdap.metadata;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.app.RunIds;
+import co.cask.cdap.data2.metadata.lineage.AccessType;
 import co.cask.cdap.data2.metadata.lineage.Lineage;
 import co.cask.cdap.data2.metadata.lineage.LineageStore;
 import co.cask.cdap.data2.metadata.lineage.Relation;
@@ -30,14 +31,19 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Function;
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
+import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Multimap;
 import com.google.inject.Inject;
 import org.apache.twill.api.RunId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Collection;
 import java.util.HashSet;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
@@ -182,7 +188,7 @@ public class LineageAdmin {
       }
     }
 
-    Lineage lineage = new Lineage(relations);
+    Lineage lineage = new Lineage(simplifyRelations(relations));
     LOG.trace("Got lineage {}", lineage);
     return lineage;
   }
@@ -198,6 +204,93 @@ public class LineageAdmin {
     }
 
     throw new IllegalStateException("Unknown data type " + data);
+  }
+
+  private Set<Relation> simplifyRelations(Iterable<Relation> relations) {
+    Set<Relation> simplifiedRelations = new HashSet<>();
+
+    Multimap<RelationKey, Relation> multimap = HashMultimap.create();
+    for (Relation relation : relations) {
+      // group all the relations together that have all fields same, except accessType
+      multimap.put(new RelationKey(relation), relation);
+    }
+    for (Map.Entry<RelationKey, Collection<Relation>> similarRelationsEntry : multimap.asMap().entrySet()) {
+      // similar relations are all relations that are equal, except for their accessType
+      Collection<Relation> similarRelations = similarRelationsEntry.getValue();
+      boolean hasRead = false;
+      boolean hasWrite = false;
+      for (Relation similarRelation : similarRelations) {
+        if (AccessType.READ == similarRelation.getAccess()) {
+          hasRead = true;
+        }
+        if (AccessType.WRITE == similarRelation.getAccess()) {
+          hasWrite = true;
+        }
+        if (AccessType.READ_WRITE == similarRelation.getAccess()) {
+          hasRead = true;
+          hasWrite = true;
+        }
+      }
+      if (hasRead && hasWrite) {
+        // if there was a read and a write, we can just emit 1 READ_WRITE relation. Any individual READ, WRITE,
+        // UNKNOWN can be ignored
+        simplifiedRelations.add(similarRelationsEntry.getKey().toRelation(AccessType.READ_WRITE));
+      } else {
+        // otherwise, relations can not be ignored, add all of the similar relations
+        simplifiedRelations.addAll(similarRelations);
+      }
+    }
+    return simplifiedRelations;
+  }
+
+  /**
+   * Holds all the fields of a {@link Relation}, except the accessType. Used for grouping Relations that have similar
+   * fields, except the accessType.
+   */
+  private static final class RelationKey {
+    private final Id.NamespacedId data;
+    private final Id.Program program;
+    private final RunId run;
+    private final Set<? extends Id.NamespacedId> components;
+
+    public RelationKey(Relation relation) {
+      this.data = relation.getData();
+      this.program = relation.getProgram();
+      this.run = relation.getRun();
+      this.components = relation.getComponents();
+    }
+
+    public Relation toRelation(AccessType accessType) {
+      if (data instanceof Id.DatasetInstance) {
+        return new Relation((Id.DatasetInstance) data, program, accessType, run, components);
+      }
+
+      if (data instanceof Id.Stream) {
+        return new Relation((Id.Stream) data, program, accessType, run, components);
+      }
+
+      throw new IllegalStateException("Unknown data type " + data);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+      RelationKey other = (RelationKey) o;
+      return Objects.equals(data, other.data) &&
+        Objects.equals(program, other.program) &&
+        Objects.equals(run, other.run) &&
+        Objects.equals(components, other.components);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(data, program, run, components);
+    }
   }
 
   /**

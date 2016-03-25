@@ -41,7 +41,7 @@ public class ListRolesCommand extends AbstractAuthCommand {
   private final AuthorizationClient client;
 
   @Inject
-  public ListRolesCommand(AuthorizationClient client, CLIConfig cliConfig) {
+  ListRolesCommand(AuthorizationClient client, CLIConfig cliConfig) {
     super(cliConfig);
     this.client = client;
   }

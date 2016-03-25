@@ -17,7 +17,6 @@
 angular.module(PKG.name + '.feature.hydrator')
   .controller('HydratorListController', function($scope, myPipelineApi, $stateParams, GLOBALS, mySettings, $state, $timeout, myHelpers, myWorkFlowApi, myWorkersApi, MyCDAPDataSource, myAppsApi, myAlertOnValium) {
     var dataSrc = new MyCDAPDataSource($scope);
-
     var vm = this;
 
     vm.pipelineList = [];

@@ -37,6 +37,7 @@ import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.metadata.lineage.AccessType;
 import co.cask.cdap.internal.app.runtime.AbstractContext;
 import co.cask.cdap.internal.app.runtime.DefaultTaskLocalizationContext;
 import co.cask.cdap.internal.app.runtime.batch.dataset.CloseableBatchWritable;
@@ -197,6 +198,12 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
 
   @Nullable
   @Override
+  public WorkflowProgramInfo getWorkflowInfo() {
+    return workflowProgramInfo;
+  }
+
+  @Nullable
+  @Override
   public String getInputName() {
     return inputName;
   }
@@ -248,7 +255,12 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
   @Override
   public <T extends Dataset> T getDataset(String name, Map<String, String> arguments)
     throws DatasetInstantiationException {
-    T dataset = super.getDataset(name, arguments);
+    return getDataset(name, arguments, AccessType.UNKNOWN);
+  }
+
+  protected <T extends Dataset> T getDataset(String name, Map<String, String> arguments, AccessType accessType)
+    throws DatasetInstantiationException {
+    T dataset = super.getDataset(name, arguments, accessType);
     if (dataset instanceof TransactionAware) {
       TransactionAware txAware = (TransactionAware) dataset;
       if (txAwares.add(txAware)) {
@@ -291,7 +303,7 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
    * Returns a {@link BatchReadable} that reads data from the given dataset.
    */
   <K, V> BatchReadable<K, V> getBatchReadable(String datasetName, Map<String, String> datasetArgs) {
-    Dataset dataset = getDataset(datasetName, datasetArgs);
+    Dataset dataset = getDataset(datasetName, datasetArgs, AccessType.READ);
     // Must be BatchReadable.
     Preconditions.checkArgument(dataset instanceof BatchReadable, "Dataset '%s' is not a BatchReadable.", datasetName);
 
@@ -335,7 +347,7 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
    * Returns a {@link CloseableBatchWritable} that writes data to the given dataset.
    */
   <K, V> CloseableBatchWritable<K, V> getBatchWritable(String datasetName, Map<String, String> datasetArgs) {
-    Dataset dataset = getDataset(datasetName, datasetArgs);
+    Dataset dataset = getDataset(datasetName, datasetArgs, AccessType.WRITE);
     // Must be BatchWritable.
     Preconditions.checkArgument(dataset instanceof BatchWritable, "Dataset '%s' is not a BatchWritable.", datasetName);
 

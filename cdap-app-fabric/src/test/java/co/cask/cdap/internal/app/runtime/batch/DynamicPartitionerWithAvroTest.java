@@ -114,6 +114,9 @@ public class DynamicPartitionerWithAvroTest extends MapReduceRunnerTestBase {
           Map<PartitionKey, PartitionDetail> partitions = new HashMap<>();
           for (PartitionDetail partition : pfs.getPartitions(null)) {
             partitions.put(partition.getPartitionKey(), partition);
+            // check that the mapreduce wrote the output partition metadata to all the output partitions
+            Assert.assertEquals(AppWithMapReduceUsingAvroDynamicPartitioner.DynamicPartitioningMapReduce.METADATA,
+                                partition.getMetadata().asMap());
           }
           Assert.assertEquals(3, partitions.size());
 

@@ -176,26 +176,26 @@ public interface MetadataStore {
   Set<MetadataSearchResultRecord> searchMetadata(MetadataScope scope, String namespaceId, String searchQuery);
 
   /**
-   * Search the Metadata Dataset for the specified target type in both {@link MetadataScope#USER} and
+   * Search the Metadata Dataset for the specified target types in both {@link MetadataScope#USER} and
    * {@link MetadataScope#SYSTEM}.
    *
    * @param namespaceId the namespace to search in
    * @param searchQuery the search query, which could be of two forms: [key]:[value] or just [value]
-   * @param type the {@link MetadataSearchTargetType} to restrict the search to
+   * @param types the {@link MetadataSearchTargetType} to restrict the search to, if empty all types are searched
    */
   Set<MetadataSearchResultRecord> searchMetadataOnType(String namespaceId, String searchQuery,
-                                                       MetadataSearchTargetType type);
+                                                       Set<MetadataSearchTargetType> types);
 
   /**
-   * Search the Metadata Dataset for the specified target type in the specified {@link MetadataScope}.
+   * Search the Metadata Dataset for the specified target types in the specified {@link MetadataScope}.
    *
    * @param scope the {@link MetadataScope} to restrict the search to
    * @param namespaceId the namespace to search in
    * @param searchQuery the search query, which could be of two forms: [key]:[value] or just [value]
-   * @param type the {@link MetadataSearchTargetType} to restrict the search to
+   * @param types the {@link MetadataSearchTargetType} to restrict the search to, if empty all types are searched
    */
   Set<MetadataSearchResultRecord> searchMetadataOnType(MetadataScope scope, String namespaceId, String searchQuery,
-                                                       MetadataSearchTargetType type);
+                                                       Set<MetadataSearchTargetType> types);
 
   /**
    * Returns the snapshot of the metadata for entities on or before the given time in both {@link MetadataScope#USER}

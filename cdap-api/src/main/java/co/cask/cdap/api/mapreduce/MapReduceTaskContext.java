@@ -23,6 +23,7 @@ import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.plugin.PluginContext;
 import co.cask.cdap.api.workflow.Workflow;
+import co.cask.cdap.api.workflow.WorkflowInfo;
 import co.cask.cdap.api.workflow.WorkflowToken;
 
 import java.io.IOException;
@@ -83,6 +84,13 @@ public interface MapReduceTaskContext<KEYOUT, VALUEOUT> extends RuntimeContext, 
    */
   @Nullable
   WorkflowToken getWorkflowToken();
+
+  /**
+   * @return information about the enclosing {@link Workflow} run, if this {@link MapReduce} program is executed
+   * as a part of the Workflow; returns {@code null} otherwise.
+   */
+  @Nullable
+  WorkflowInfo getWorkflowInfo();
 
   /**
    * Returns the name of the input configured for this task.

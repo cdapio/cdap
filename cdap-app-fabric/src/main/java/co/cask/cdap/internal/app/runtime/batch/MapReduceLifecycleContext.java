@@ -30,6 +30,7 @@ import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.mapreduce.MapReduceTaskContext;
 import co.cask.cdap.api.plugin.PluginProperties;
+import co.cask.cdap.api.workflow.WorkflowInfo;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import org.apache.twill.api.RunId;
 import org.slf4j.Logger;
@@ -89,6 +90,12 @@ public class MapReduceLifecycleContext<KEY, VALUE> implements MapReduceTaskConte
   @Override
   public WorkflowToken getWorkflowToken() {
     return delegate.getWorkflowToken();
+  }
+
+  @Nullable
+  @Override
+  public WorkflowInfo getWorkflowInfo() {
+    return delegate.getWorkflowInfo();
   }
 
   @Nullable

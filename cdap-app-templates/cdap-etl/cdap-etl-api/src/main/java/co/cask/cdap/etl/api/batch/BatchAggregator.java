@@ -17,7 +17,6 @@
 package co.cask.cdap.etl.api.batch;
 
 import co.cask.cdap.api.annotation.Beta;
-import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.etl.api.Aggregator;
 import co.cask.cdap.etl.api.Emitter;
 import co.cask.cdap.etl.api.PipelineConfigurable;
@@ -29,12 +28,16 @@ import java.util.Iterator;
 /**
  * An {@link Aggregator} used in batch programs.
  * As it is used in batch programs, a BatchAggregator must be parameterized
- * with a group value type that implements org.apache.hadoop.io.Writable and a group key type that implements
- * org.apache.hadoop.io.WritableComparable. The exception is if the type is a {@link StructuredRecord},
- * in which case the application will handle serialization and deserialization for you.
+ * with supported group key and value classes. Group keys and values can be a
+ * byte[], Boolean, Integer, Long, Float, Double, String, or StructuredRecord.
+ * If the group key is not one of those types,
+ * it must implement Hadoop's org.apache.hadoop.io.WritableComparable interface.
+ * If the group value is not one of those types,
+ * it must implement Hadoop's org.apache.hadoop.io.Writable interface.
  *
- * @param <GROUP_KEY> group key type. Must be a StructuredRecord, or implement org.apache.hadoop.io.WritableComparable
- * @param <GROUP_VALUE> group value type. Must be a StructuredRecord, or implement org.apache.hadoop.io.Writable
+ *
+ * @param <GROUP_KEY> group key type. Must be a supported type
+ * @param <GROUP_VALUE> group value type. Must be a supported type
  * @param <OUT> output object type
  */
 @Beta

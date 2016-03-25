@@ -29,7 +29,6 @@ import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.api.plugin.Plugin;
-import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.metrics.ProgramUserMetrics;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.Arguments;
@@ -37,6 +36,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.data.stream.StreamInputFormatProvider;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.metadata.lineage.AccessType;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.internal.app.runtime.AbstractContext;
 import co.cask.cdap.internal.app.runtime.batch.dataset.DatasetInputFormatProvider;
@@ -44,6 +44,7 @@ import co.cask.cdap.internal.app.runtime.batch.dataset.DatasetOutputFormatProvid
 import co.cask.cdap.internal.app.runtime.batch.dataset.input.MapperInput;
 import co.cask.cdap.internal.app.runtime.distributed.LocalizeResource;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
+import co.cask.cdap.internal.app.runtime.workflow.BasicWorkflowToken;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
 import co.cask.cdap.logging.context.MapReduceLoggingContext;
 import co.cask.cdap.proto.Id;
@@ -159,7 +160,7 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
    */
   @Override
   @Nullable
-  public WorkflowToken getWorkflowToken() {
+  public BasicWorkflowToken getWorkflowToken() {
     return workflowProgramInfo == null ? null : workflowProgramInfo.getWorkflowToken();
   }
 
@@ -273,7 +274,8 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
     // compatibility for the #setOutput(String, Dataset) method, so delaying the instantiation of this dataset will
     // bring about code complexity without much benefit. Once #setOutput(String, Dataset) is removed, we can postpone
     // this dataset instantiation
-    addOutput(datasetName, new DatasetOutputFormatProvider(datasetName, arguments, getDataset(datasetName, arguments),
+    addOutput(datasetName, new DatasetOutputFormatProvider(datasetName, arguments,
+                                                           getDataset(datasetName, arguments, AccessType.WRITE),
                                                            MapReduceBatchWritableOutputFormat.class));
   }
 
@@ -352,8 +354,9 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
    * Returns the information about Workflow if the MapReduce program is executed
    * as a part of it, otherwise {@code null} is returned.
    */
+  @Override
   @Nullable
-  public WorkflowProgramInfo getWorkflowProgramInfo() {
+  public WorkflowProgramInfo getWorkflowInfo() {
     return workflowProgramInfo;
   }
 
@@ -389,7 +392,7 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
       return (Input.InputFormatProviderInput) input.alias(originalAlias);
     }
     DatasetInputFormatProvider datasetInputFormatProvider =
-      new DatasetInputFormatProvider(datasetName, datasetArgs, getDataset(datasetName, datasetArgs),
+      new DatasetInputFormatProvider(datasetName, datasetArgs, getDataset(datasetName, datasetArgs, AccessType.READ),
                                      datasetInput.getSplits(), MapReduceBatchReadableInputFormat.class);
     return (Input.InputFormatProviderInput) Input.of(datasetName, datasetInputFormatProvider).alias(originalAlias);
   }

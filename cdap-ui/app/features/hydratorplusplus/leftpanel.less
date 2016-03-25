@@ -1,0 +1,307 @@
+/*
+ * Copyright © 2015 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
+@import '../../styles/variables.less';
+@import "../../../bower_components/bootstrap/less/mixins.less";
+@import '../../styles/themes/cdap/mixins.less';
+
+body.theme-cdap.state-hydratorplusplus-create {
+  .left-panel-wrapper {
+    position: fixed;
+    top: 110px;
+    bottom: 53px;
+    left: 0;
+    z-index: 1024;
+    width: 130px;
+    vertical-align: top;
+    background: #c7c7c6;
+    background-image: url('@{img-path}/hydrator_bg_pattern.png'), -moz-linear-gradient(-45deg, #c7c7c6 0%, #a0a0a0 100%);
+    background-image: url('@{img-path}/hydrator_bg_pattern.png'), -webkit-gradient(linear, left top, right bottom, color-stop(0%,#c7c7c6), color-stop(100%,#a0a0a0));
+    background-image: url('@{img-path}/hydrator_bg_pattern.png'), -webkit-linear-gradient(-45deg, #c7c7c6 0%,#a0a0a0 100%);
+    background-image: url('@{img-path}/hydrator_bg_pattern.png'), -o-linear-gradient(-45deg, #c7c7c6 0%,#a0a0a0 100%);
+    background-image: url('@{img-path}/hydrator_bg_pattern.png'), -ms-linear-gradient(-45deg, #c7c7c6 0%,#a0a0a0 100%);
+    background-image: url('@{img-path}/hydrator_bg_pattern.png'), linear-gradient(135deg, #c7c7c6 0%,#a0a0a0 100%);
+    filter: progid:DXImageTransform.Microsoft.gradient(GradientType=1, startColorstr='#c7c7c6', endColorstr='#a0a0a0'), progid:DXImageTransform.Microsoft.AlphaImageLoader(src='@{img-path}/hydrator_bg_pattern.png', sizingMethod='crop');
+    .transition(all 0.2s ease);
+    @media (max-width: @screen-xs-max) {
+      bottom: 75px;
+    }
+    + .right-wrapper {
+      margin-left: 130px;
+      height: 100%;
+      position: relative;
+      .transition(all 0.2s ease);
+    }
+    .left-panel {
+      select.form-control {
+        width: 87%;
+        margin-top: 10px;
+        margin-left: 10px;
+      }
+      my-side-panel {
+        display: block;
+        margin-top: 10px;
+        .groups-container {
+          top: 128px;
+        }
+      }
+      .import-section {
+        margin-top: 10px;
+        padding-left: 10px;
+      }
+    }
+    &.expanded {
+      width: 290px;
+      .item .plugin-item {
+        text-align: left;
+        width: 48%;
+        .name {
+          display: inline-block;
+          max-width: 81px;
+        }
+      }
+      + .right-wrapper {
+        margin-left: 290px;
+      }
+    }
+    > div.btn {
+      background-color: white;
+      border: 0;
+      color: #74685a;
+      font-weight: bold;
+      height: 35px;
+      width: 25px;
+      padding-left: 10px;
+      position: relative;
+      top: 18px;
+      left: 6px;
+      .border-radius(90px 0 0 90px);
+      .box-shadow(0 1px 5px 0 fade(black, 33%));
+      &:active, &.active {
+        .box-shadow(none);
+      }
+      &:after {
+        display: block;
+        content: "";
+        border-left: 4px solid transparent;
+        border-right: 4px solid transparent;
+        border-bottom: 4px solid #666;
+        position: absolute;
+        bottom: -3.5px;
+        right: 0.5px;
+        .rotate(-45deg);
+      }
+      > span {
+        font-weight: 600;
+        &:last-child {
+          position: relative;
+          right: 3px;
+        }
+      }
+    }
+    .hydrator-filter {
+      padding: 0 0 0 5px;
+      input {
+        background-color: fade(@gray-dark, 25%);
+        background-image: url('@{img-path}/hydrator_bg_pattern.png');
+        background-repeat: repeat;
+        border: 0;
+        color: white;
+        height: 35px;
+        width: 75%;
+        .border-radius(25px);
+        .box-shadow(inset 0 2px 5px 0 rgba(0, 0, 0, 0.33));
+        .placeholder-color(white);
+      }
+    }
+    .item {
+      color: @cdap-lightgray;
+      font-size: 14px;
+
+      &.group-default {
+        height: 33%;
+        position: relative;
+
+        .item-body-wrapper {
+          bottom: 0;
+          top: 40px;
+          overflow-y: auto;
+          position: absolute;
+          bottom: 0;
+          top: 40px;
+          width: 100%;
+        }
+      }
+      .item-body, .item-heading {
+        .name {
+          display: inline-block;
+          vertical-align: top;
+          overflow-x: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+      }
+
+      &.item-open {
+        height: 100%;
+
+        .item-heading {
+          border-bottom-color: transparent;
+          color: white;
+        }
+        + .item {
+          .transform {
+            position: absolute;
+            bottom: 40px;
+          }
+          + .item .sink {
+            position: absolute;
+            bottom: 0;
+          }
+        }
+        .transform {
+          position: static;
+        }
+        + .item .sink {
+          position: absolute;
+          bottom: 0;
+        }
+        .sink {
+          position: static;
+        }
+
+        .item-body-wrapper {
+          // Syntax needed to avoid LESS parsing issue affecting calc()
+          height: ~"-moz-calc(100% - 120px)";
+          height: ~"-webkit-calc(100% - 120px)";
+          height: ~"calc(100% - 120px)";
+        }
+      }
+
+      .item-heading {
+        color: white;
+        background-color: fade(@gray-dark, 45);
+        border-bottom: 1px solid #c7c7c6;
+        padding: 0 15px 0 10px;
+        height: 40px;
+        line-height: 40px;
+        width: 100%;
+        span.name {
+          font-size: 13px;
+          line-height: inherit;
+        }
+      }
+      .item-body-wrapper {
+        overflow-y: auto;
+      }
+      .item-body {
+        padding: 10px 10px 0;
+        .flexbox();
+        flex-direction: row;
+        flex-wrap: wrap;
+        align-items: baseline;
+        justify-content: space-between;
+        // Adjust max height to prevent side panel from becoming unusable below a certain browser height
+        @media (max-height: 550px) {
+          max-height: 20vh;
+        }
+      }
+      .plugin-item {
+        background-color: white;
+        border: 1px solid transparent;
+        color: #666;
+        line-height: 40px;
+        margin-bottom: 6px;
+        padding: 0 8px;
+        height: 40px;
+        width: 48%;
+        .border-radius(4px);
+        .transition(all 0.2s ease);
+        &.add-plugin-template:hover, &.add-plugin-template:focus, &:hover, &:focus {
+          background-color: fade(black, 45%);
+          border: 1px dashed #999;
+          color: white;
+        }
+        &.add-plugin-template {
+          background: transparent;
+          border: dashed 1px;
+        }
+        > .fa {
+          font-size: 12px;
+          width: 18px;
+          line-height: 40px;
+          vertical-align: top;
+        }
+        .name {
+          display: none;
+          font-size: 11px;
+        }
+      }
+    }
+    .badge {
+      background-color: #c7c7c6;
+      color: #666;
+      vertical-align: text-bottom;
+    }
+  }
+
+  .my-cdap-popover {
+    padding: 0;
+    outline: none;
+
+    &:focus { outline: none; }
+
+    .popover-content {
+      padding: 5px;
+      .list-group {
+        margin: 0;
+        .list-group-item {
+          padding: 4px 4px;
+          border: 0;
+          h5,h6 {
+            margin:0;
+          }
+        }
+      }
+    }
+  }
+
+  .modal {
+    &.plugin-templates-modal {
+      plugin-templates {
+        display: block;
+        overflow-y: auto;
+        overflow-x: hidden;
+
+        h3 {
+          strong {
+            word-break: break-all;
+          }
+        }
+      }
+    }
+    &.plugin-template-delete-confirm-modal {
+      .modal-dialog {
+        margin-top: 40vh;
+        max-width: 630px;
+        text-align: center;
+        .modal-footer {
+          text-align: center;
+        }
+      }
+    }
+  }
+}

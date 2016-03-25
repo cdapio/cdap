@@ -16,6 +16,7 @@
 package co.cask.cdap.internal.app.runtime.workflow;
 
 import co.cask.cdap.api.Predicate;
+import co.cask.cdap.api.ProgramLifecycle;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.common.RuntimeArguments;
 import co.cask.cdap.api.common.Scope;
@@ -42,20 +43,14 @@ import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.lang.ClassLoaders;
-import co.cask.cdap.common.lang.CombineClassLoader;
 import co.cask.cdap.common.lang.InstantiatorFactory;
-import co.cask.cdap.common.lang.PropertyFieldSetter;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
-import co.cask.cdap.internal.app.runtime.DataSetFieldSetter;
-import co.cask.cdap.internal.app.runtime.MetricsFieldSetter;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.workflow.DefaultWorkflowActionConfigurer;
 import co.cask.cdap.internal.dataset.DatasetCreationSpec;
-import co.cask.cdap.internal.lang.Reflections;
 import co.cask.cdap.internal.workflow.ProgramWorkflowAction;
 import co.cask.cdap.logging.context.WorkflowLoggingContext;
 import co.cask.cdap.proto.ProgramType;
@@ -184,13 +179,13 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     workflow = initializeWorkflow();
   }
 
+  @SuppressWarnings("unchecked")
   private Workflow initializeWorkflow() throws Exception {
     Class<?> clz = Class.forName(workflowSpec.getClassName(), true, program.getClassLoader());
     if (!Workflow.class.isAssignableFrom(clz)) {
       throw new IllegalStateException(String.format("%s is not Workflow.", clz));
     }
 
-    @SuppressWarnings("unchecked")
     Class<? extends Workflow> workflowClass = (Class<? extends Workflow>) clz;
     Workflow workflow = new InstantiatorFactory(false).get(TypeToken.of(workflowClass)).create();
 
@@ -198,7 +193,9 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     transactionContext.start();
 
     try {
-      workflow.initialize(basicWorkflowContext);
+      if (workflow instanceof ProgramLifecycle) {
+        ((ProgramLifecycle<WorkflowContext>) workflow).initialize(basicWorkflowContext);
+      }
     } catch (Throwable t) {
       LOG.error(String.format("Failed to initialize the Workflow %s", workflowRunId), t);
       transactionContext.abort(new TransactionFailureException("Transaction function failure for transaction. ", t));
@@ -257,11 +254,14 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     destroyWorkflow();
   }
 
+  @SuppressWarnings("unchecked")
   private void destroyWorkflow() {
     TransactionContext transactionContext = basicWorkflowContext.getDatasetCache().newTransactionContext();
     try {
       transactionContext.start();
-      workflow.destroy();
+      if (workflow instanceof ProgramLifecycle) {
+        ((ProgramLifecycle<WorkflowContext>) workflow).destroy();
+      }
       transactionContext.finish();
     } catch (Throwable t) {
       LOG.error(String.format("Failed to destroy the Workflow %s", workflowRunId), t);
@@ -273,17 +273,14 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     }
   }
 
-  private void executeAction(WorkflowActionNode node,
-                             InstantiatorFactory instantiator, final ClassLoader classLoader,
-                             WorkflowToken token) throws Exception {
-
-    final SchedulableProgramType programType = node.getProgram().getProgramType();
-    final WorkflowActionSpecification actionSpec = getActionSpecification(node, programType);
-
+  private void executeAction(WorkflowActionNode node, WorkflowToken token) throws Exception {
+    WorkflowActionSpecification actionSpec = getActionSpecification(node, node.getProgram().getProgramType());
     status.put(node.getNodeId(), node);
 
-    final BasicWorkflowContext workflowContext = createWorkflowContext(actionSpec, token, node.getNodeId());
-    final WorkflowAction action = initialize(actionSpec, classLoader, instantiator, workflowContext);
+    BasicWorkflowContext workflowContext = createWorkflowContext(actionSpec, token, node.getNodeId());
+    final WorkflowAction action = new ProgramWorkflowAction(node.getProgram().getProgramName(),
+                                                            node.getProgram().getProgramType());
+    action.initialize(workflowContext);
 
     CountDownLatch executorTerminateLatch = new CountDownLatch(1);
     ExecutorService executorService = createExecutor(1, executorTerminateLatch, "action-" + node.getNodeId() + "-%d");
@@ -293,22 +290,13 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
       Future<?> future = executorService.submit(new Callable<Void>() {
         @Override
         public Void call() throws Exception {
-          setContextCombinedClassLoader(action);
-          try {
-            if (programType == SchedulableProgramType.CUSTOM_ACTION) {
-              runInTransaction(action, workflowContext);
-            } else {
-              action.run();
-            }
-            return null;
-          } finally {
-            destroyInTransaction(action, actionSpec, workflowContext);
-          }
+          action.run();
+          return null;
         }
       });
       future.get();
     } catch (Throwable t) {
-      LOG.error("Exception on WorkflowAction.run(), aborting Workflow. {}", actionSpec, t);
+      LOG.error("Error executing the action {} in the Workflow {}.", actionSpec.getName(), workflowRunId, t);
       Throwables.propagateIfPossible(t, Exception.class);
       throw Throwables.propagate(t);
     } finally {
@@ -340,49 +328,6 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     return actionSpec;
   }
 
-  private void runInTransaction(WorkflowAction action,
-                                BasicWorkflowContext workflowContext) throws TransactionFailureException {
-    TransactionContext transactionContext = workflowContext.getDatasetCache().newTransactionContext();
-    transactionContext.start();
-    try {
-      action.run();
-    } catch (Throwable e) {
-      LOG.error("Transaction failed to run: " + e.getMessage());
-      transactionContext.abort(new TransactionFailureException("Transaction function failure for transaction. ", e));
-    }
-    transactionContext.finish();
-  }
-
-  private void destroyInTransaction(WorkflowAction action, WorkflowActionSpecification spec,
-                                    BasicWorkflowContext workflowContext) throws TransactionFailureException {
-    TransactionContext transactionContext = workflowContext.getDatasetCache().newTransactionContext();
-    transactionContext.start();
-    try {
-      try {
-        destroy(spec, action);
-      } catch (Throwable e) {
-        LOG.error("Transaction failed to destroy: " + e.getMessage());
-        transactionContext.abort(new TransactionFailureException("Transaction function failure for transaction. ", e));
-      }
-      transactionContext.finish();
-    } finally {
-      // after the action is destroyed, we can release its datasets; TODO: would it be better to hold on to them?
-      workflowContext.getDatasetCache().invalidate();
-    }
-  }
-
-  private void initializeInTransaction(WorkflowAction action, BasicWorkflowContext workflowContext) throws Exception {
-    TransactionContext transactionContext = workflowContext.getDatasetCache().newTransactionContext();
-    transactionContext.start();
-    try {
-      action.initialize(workflowContext);
-    } catch (Throwable e) {
-      LOG.error("Transaction failed to initialize: " + e.getMessage());
-      transactionContext.abort(new TransactionFailureException("Transaction function failure for transaction. ", e));
-    }
-    transactionContext.finish();
-  }
-
   private void executeFork(final ApplicationSpecification appSpec, WorkflowForkNode fork,
                            final InstantiatorFactory instantiator, final ClassLoader classLoader,
                            final WorkflowToken token) throws Exception {
@@ -411,7 +356,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
           Map.Entry<String, WorkflowToken> retValue = forkBranchResult.get();
           String branchInfo = retValue.getKey();
           WorkflowToken branchToken = retValue.getValue();
-          ((BasicWorkflowToken) token).mergeToken((BasicWorkflowToken) branchToken);
+          ((BasicWorkflowToken) token).mergeToken(branchToken);
           LOG.info("Execution of branch {} for fork {} completed", branchInfo, fork);
         } catch (Throwable t) {
           Throwable rootCause = Throwables.getRootCause(t);
@@ -436,13 +381,32 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     }
   }
 
+  private void executeCustomAction(final WorkflowActionNode node, InstantiatorFactory instantiator,
+                                   final ClassLoader classLoader, WorkflowToken token)  throws Exception {
+    BasicWorkflowContext context = createWorkflowContext(node.getActionSpecification(), token, node.getNodeId());
+    CustomActionExecutor customActionExecutor = new CustomActionExecutor(workflowRunId, context,
+                                                                         instantiator, classLoader);
+    status.put(node.getNodeId(), node);
+    try {
+      customActionExecutor.execute();
+    } finally {
+      status.remove(node.getNodeId());
+      store.updateWorkflowToken(workflowRunId, token);
+    }
+  }
+
   private void executeNode(ApplicationSpecification appSpec, WorkflowNode node, InstantiatorFactory instantiator,
                            ClassLoader classLoader, WorkflowToken token) throws Exception {
     WorkflowNodeType nodeType = node.getType();
     ((BasicWorkflowToken) token).setCurrentNode(node.getNodeId());
     switch (nodeType) {
       case ACTION:
-        executeAction((WorkflowActionNode) node, instantiator, classLoader, token);
+        WorkflowActionNode actionNode = (WorkflowActionNode) node;
+        if (SchedulableProgramType.CUSTOM_ACTION == actionNode.getProgram().getProgramType()) {
+          executeCustomAction(actionNode, instantiator, classLoader, token);
+        } else {
+          executeAction(actionNode, token);
+        }
         break;
       case FORK:
         executeFork(appSpec, (WorkflowForkNode) node, instantiator, classLoader, token);
@@ -565,51 +529,6 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
                                     datasetFramework, txClient, discoveryServiceClient);
   }
 
-  /**
-   * Instantiates and initialize a WorkflowAction.
-   */
-  @SuppressWarnings("unchecked")
-  private WorkflowAction initialize(WorkflowActionSpecification actionSpec,
-                                    ClassLoader classLoader, InstantiatorFactory instantiator,
-                                    BasicWorkflowContext workflowContext) throws Exception {
-    Class<?> clz = Class.forName(actionSpec.getClassName(), true, classLoader);
-    Preconditions.checkArgument(WorkflowAction.class.isAssignableFrom(clz), "%s is not a WorkflowAction.", clz);
-    WorkflowAction action = instantiator.get(TypeToken.of((Class<? extends WorkflowAction>) clz)).create();
-
-    ClassLoader oldClassLoader = setContextCombinedClassLoader(action);
-    try {
-      Reflections.visit(action, action.getClass(),
-                        new PropertyFieldSetter(actionSpec.getProperties()),
-                        new DataSetFieldSetter(workflowContext),
-                        new MetricsFieldSetter(workflowContext.getMetrics()));
-
-      initializeInTransaction(action, workflowContext);
-    } catch (Throwable t) {
-      LOG.warn("Exception on WorkflowAction.initialize(), abort Workflow. {}", actionSpec, t);
-      // this will always rethrow
-      Throwables.propagateIfPossible(t, Exception.class);
-    } finally {
-      ClassLoaders.setContextClassLoader(oldClassLoader);
-    }
-
-    return action;
-  }
-
-  /**
-   * Calls the destroy method on the given WorkflowAction.
-   */
-  private void destroy(WorkflowActionSpecification actionSpec, WorkflowAction action) {
-    ClassLoader oldClassLoader = setContextCombinedClassLoader(action);
-    try {
-      action.destroy();
-    } catch (Throwable t) {
-      LOG.warn("Exception on WorkflowAction.destroy(): {}", actionSpec, t);
-      // Just log, but not propagate
-    } finally {
-      ClassLoaders.setContextClassLoader(oldClassLoader);
-    }
-  }
-
   private Map<String, String> createRuntimeArgs(Arguments args) {
     return ImmutableMap.<String, String>builder().putAll(args.asMap()).build();
   }
@@ -625,11 +544,6 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
         return currentNodes;
       }
     };
-  }
-
-  private ClassLoader setContextCombinedClassLoader(WorkflowAction action) {
-    return ClassLoaders.setContextClassLoader(
-      new CombineClassLoader(null, ImmutableList.of(action.getClass().getClassLoader(), getClass().getClassLoader())));
   }
 
   /**

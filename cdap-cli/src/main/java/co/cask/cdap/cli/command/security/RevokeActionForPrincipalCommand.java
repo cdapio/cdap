@@ -27,7 +27,7 @@ import com.google.inject.Inject;
 public class RevokeActionForPrincipalCommand extends RevokeActionCommand {
 
   @Inject
-  public RevokeActionForPrincipalCommand(AuthorizationClient client, CLIConfig cliConfig) {
+  RevokeActionForPrincipalCommand(AuthorizationClient client, CLIConfig cliConfig) {
     super(client, cliConfig);
   }
 

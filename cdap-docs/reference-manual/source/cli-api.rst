@@ -168,9 +168,9 @@ These are the available commands:
     |       ``""className"": ""com.mysql.jdbc.Driver""``
     |     ``}``
     |   ``],``
-    |   ``""plugins"":{``
-    |     ``""prop1"": ""val1"",``
-    |   ``},``
+    |   ``""properties"":{``
+    |     ``""prop1"": ""val1""``
+    |   ``}``
     | ``}``
 
    This config specifies that the artifact contains one JDBC third-party plugin that should be available to the app1 artifact (versions 1.0.0 inclusive to 2.0.0 exclusive) and app2 artifact (versions 1.2.0 inclusive to 1.3.0 inclusive). The config may also include a 'properties' field specifying properties for the artifact."
@@ -188,7 +188,7 @@ These are the available commands:
    ``remove metadata-property <entity-id> <property>``,"Removes a metadata property for an entity"
    ``remove metadata-tag <entity-id> <tag>``,"Removes a metadata tag for an entity"
    ``remove metadata-tags <entity-id>``,"Removes all metadata tags for an entity"
-   ``search metadata <search-query> [filtered by target-type <target-type>]``,"Allows users to search CDAP entities based on the metadata annotated on them."
+   ``search metadata <search-query> [filtered by target-type <target-type>]``,"Searches CDAP entities based on the metadata annotated on them. The search can be restricted by adding a comma-separated list of target types: artifact, app, dataset, program, stream, or view."
    **Application Lifecycle**
    ``create app <app-id> <artifact-name> <artifact-version> <scope> [<app-config-file>]``,"Creates an application from an artifact with optional configuration. If configuration is needed, it must be given as a file whose contents are a JSON object containing the application config. For example, the file contents could contain: '{ ""config"": { ""stream"": ""purchases"" } }'. In this case, the application would receive '{ ""stream"": ""purchases"" }' as its config object."
    ``delete app <app-id>``,"Deletes an application."
@@ -201,6 +201,7 @@ These are the available commands:
    ``delete preferences spark [<app-id.spark-id>]``,"Deletes the preferences of a Spark program."
    ``delete preferences worker [<app-id.worker-id>]``,"Deletes the preferences of a worker."
    ``delete preferences workflow [<app-id.workflow-id>]``,"Deletes the preferences of a workflow."
+   ``delete workflow local datasets <app-id.workflow-id> <runid>``,"Deletes the local datasets associated with the workflow for a given run id."
    ``deploy app <app-jar-file> [<app-config>]``,"Deploys an application optionally with a serialized configuration string."
    ``describe app <app-id>``,"Shows information about an application."
    ``get app <app-id> programs status [of type <program-types>]``,"Command to get status of one or more programs of an application. By default, get status of all flows, services, and workers. A comma separated list of program types can be specified, which will start all programs of those types. For example, specifying ""flow,workflow"" will get status of all flows and workflows in the application."
@@ -249,6 +250,7 @@ These are the available commands:
    ``get worker runtimeargs <app-id.worker-id>``,"Gets the runtime arguments of a worker."
    ``get worker status <app-id.worker-id>``,"Gets the status of a worker."
    ``get workflow current <app-id.workflow-id> <runid>``,"Gets the currently running nodes of a workflow for a given run id."
+   ``get workflow local datasets <app-id.workflow-id> <runid>``,"Gets the local datasets associated with the workflow for a given run id."
    ``get workflow logs <app-id.workflow-id> [<start-time>] [<end-time>]``,"Gets the logs of a workflow."
    ``get workflow runs <app-id.workflow-id> [<status>] [<start-time>] [<end-time>] [<limit>]``,"Gets the run history of a workflow."
    ``get workflow runtimeargs <app-id.workflow-id>``,"Gets the runtime arguments of a workflow."
@@ -322,7 +324,7 @@ These are the available commands:
    ``describe dataset instance <dataset-name>``,"Shows information about a dataset."
    ``describe dataset module <dataset-module>``,"Shows information about a dataset module."
    ``describe dataset type <dataset-type>``,"Shows information about a dataset type."
-   ``get dataset instance properties <dataset-name>``,"Gets the properties with which a dataset was created or updated."
+   ``get dataset instance properties <dataset-name>``,"Gets the properties used to create or update a dataset."
    ``list dataset instances``,"Lists all datasets."
    ``list dataset modules``,"Lists all dataset modules."
    ``list dataset types``,"Lists all dataset types."
@@ -355,6 +357,13 @@ These are the available commands:
    **Egress**
    ``call service <app-id.service-id> <http-method> <endpoint> [headers <headers>] [body <body>] [body:file <local-file-path>]``,"Calls a service endpoint. The <headers> are formatted as ""{'key':'value', ...}"". The request body may be provided either as a string or a file. To provide the body as a string, use ""body <body>"". To provide the body as a file, use ""body:file <local-file-path>""."
    **Security**
-   ``security access entity <entity-id> user <user> actions <actions>``,"Checks whether a user has permission to perform certain actions on an entity. <actions> is a comma-separated list."
-   ``security grant entity <entity-id> user <user> actions <actions>``,"Grants a user permission to perform certain actions on an entity. <actions> is a comma-separated list."
-   ``security revoke entity <entity-id> [user <user>] [actions <actions>]``,"Revokes a user's permission to perform certain actions on an entity. <actions> is a comma-separated list."
+   ``add role <role-name> to <principal-type> <principal-name>``,"Adds a role to a principal in authorization system for role based access control."
+   ``create role <role-name>``,"Creates a role in authorization system for role based access control."
+   ``drop role <role-name>``,"Drops a role from authorization system for role based access control."
+   ``grant actions <actions> on entity <entity-id> to <principal-type> <principal-name>``,"Grants a principal permission to perform certain actions on an entity. <actions> is a comma-separated list."
+   ``list privileges for <principal-type> <principal-name>``,"Lists privileges for a principal"
+   ``list roles [for <principal-type> <principal-name>]``,"Lists all roles, optionally for a particular principal in authorization system for role based access control."
+   ``remove role <role-name> from <principal-type> <principal-name>``,"Removes a role from a principal in authorization system for role based access control."
+   ``revoke actions <actions> on entity <entity-id> from <principal-type> <principal-name>``,"Revokes a user's permission to perform certain actions on an entity. <actions> is a comma-separated list."
+   ``revoke all on entity <entity-id>``,"Revokes all privileges for all users on the entity."
+   ``security access entity <entity-id> principal-type <principal-type> principal-name <principal-name> action <action>``,"Checks whether a principal is authorized to perform an action on an entity."

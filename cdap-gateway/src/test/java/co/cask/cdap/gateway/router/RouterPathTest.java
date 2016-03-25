@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -367,11 +367,30 @@ public class RouterPathTest {
     assertMetadataRouting("/v3/namespaces/default//apps/WordCount/flows/WordCountFlow/runs/runid/metadata");
   }
 
+  @Test
+  public void testAuthorizationPaths() {
+    assertAuthorizationRouting("/v3/////security/authorization/privileges///grant", HttpMethod.POST);
+    assertAuthorizationRouting("/v3/security/authorization/////privileges/revoke", HttpMethod.POST);
+    assertAuthorizationRouting("/v3/security/authorization/user/alice/privileges", HttpMethod.GET);
+    assertAuthorizationRouting("/v3/security/authorization/roles/admins////", HttpMethod.GET);
+    assertAuthorizationRouting("/v3/security/authorization/roles/admins", HttpMethod.DELETE);
+    assertAuthorizationRouting("/v3/security/authorization/roles", HttpMethod.GET);
+    assertAuthorizationRouting("/v3/security/authorization/group/devs/roles", HttpMethod.GET);
+    assertAuthorizationRouting("/v3/security/authorization/group/devs/roles/admins", HttpMethod.PUT);
+    assertAuthorizationRouting("//v3/security/authorization/group/devs/roles/admins", HttpMethod.DELETE);
+  }
+
   private void assertMetadataRouting(String path) {
     for (HttpMethod method : ImmutableList.of(HttpMethod.GET, HttpMethod.POST, HttpMethod.DELETE)) {
       HttpRequest httpRequest = new DefaultHttpRequest(VERSION, method, path);
       String result = pathLookup.getRoutingService(FALLBACKSERVICE, path, httpRequest);
       Assert.assertEquals(Constants.Service.METADATA_SERVICE,  result);
     }
+  }
+
+  private void assertAuthorizationRouting(String path, HttpMethod method) {
+    HttpRequest request = new DefaultHttpRequest(VERSION, method, path);
+    String result = pathLookup.getRoutingService(FALLBACKSERVICE, path, request);
+    Assert.assertEquals(Constants.Service.APP_FABRIC_HTTP, result);
   }
 }

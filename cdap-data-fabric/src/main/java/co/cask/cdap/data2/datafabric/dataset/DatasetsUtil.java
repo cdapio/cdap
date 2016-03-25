@@ -39,7 +39,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Map;
-import java.util.Set;
 import java.util.TreeMap;
 import javax.annotation.Nullable;
 
@@ -116,10 +115,9 @@ public final class DatasetsUtil {
         // TPFS adds the partitioning
       } else if (TimePartitionedFileSet.class.getName().equals(type) || "timePartitionedFileSet".equals(type)) {
         props.remove(PartitionedFileSetProperties.PARTITIONING_FIELDS);
-        Set<String> keys = props.keySet();
-        for (String key : keys) {
+        for (String key : spec.getProperties().keySet()) {
           if (key.startsWith(PartitionedFileSetProperties.PARTITIONING_FIELD_PREFIX)) {
-            keys.remove(key);
+            props.remove(key);
           }
         }
 

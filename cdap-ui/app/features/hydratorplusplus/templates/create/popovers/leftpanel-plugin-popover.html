@@ -1,0 +1,66 @@
+<!--
+  Copyright © 2015 Cask Data, Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+-->
+
+<!--
+  Why ng-init. Helps in resetting showAllVersion whenever the popover is shown.
+  -> When the user hovers over the popover
+  -> clicks on the 'change' link
+  -> and leaves the popover with version list
+  -> comesback
+  -> should see the description not where he left
+-->
+<div ng-init="contentData.showAllVersion=false;">
+  <ul class="list-group">
+    <li class="list-group-item">
+      <h5>
+        <strong>{{::contentData.name || contentData.pluginTemplate }}</strong>
+      </h5>
+    </li>
+    <li class="list-group-item">
+      <h6>
+        <a ng-if="contentData.pluginTemplate"
+           href="#"
+           ng-click="delayClose(1) && popoverContext.onItemClicked($event, {action: 'editTemplate', contentData: contentData})">
+           Edit
+        </a>
+        <a ng-if="contentData.pluginTemplate"
+           href="#"
+           ng-click="delayClose(1) && popoverContext.onItemClicked($event, {action: 'deleteTemplate', contentData: contentData})">
+           Delete
+        </a>
+      </h6>
+      <h6>
+        {{contentData.defaultArtifact['version']}}
+        <small ng-if="!contentData.showAllVersion && contentData.allArtifacts.length > 1">
+          <a href="#" ng-click="contentData.showAllVersion = !contentData.showAllVersion">Change</a>
+        </small>
+      </h6>
+    </li>
+    <li class="list-group-item" ng-if="!contentData.showAllVersion">
+      {{::contentData.description}}
+      <span ng-if="!contentData.description.length">No description available</span>
+    </li>
+    <!-- on click is a little f**&ed up. Have to revisit this -->
+    <a  ng-if="contentData.showAllVersion"
+        href="#"
+        class="list-group-item"
+        ng-repeat="artifact in contentData.allArtifacts track by $index"
+        ng-class="{'active': artifact.version === contentData.defaultArtifact.version}"
+        ng-click="(contentData.defaultArtifact = artifact) && delayClose(1) && popoverContext.onItemClicked($event, contentData)">
+      {{::artifact.version}}
+    </a>
+  </ul>
+</div>

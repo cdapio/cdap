@@ -85,7 +85,8 @@ public class ListArtifactPluginsCommand extends AbstractAuthCommand {
   public String getDescription() {
     return String.format("Lists all plugins of a specific type available to a specific %s. " +
       "Includes the type, name, classname, and description of the plugin, " +
-      "as well as the %s the plugin came from. If no scope is given, the user scope will be used.",
+      "as well as the %s the plugin came from. If no scope is given, properties are looked first in " +
+                           "SYSTEM and then in USER scope.",
       ElementType.ARTIFACT.getName(), ElementType.ARTIFACT.getName());
   }
 }

@@ -30,7 +30,7 @@ angular
       PKG.name+'.feature.userprofile',
       PKG.name+'.feature.experimental',
       PKG.name+'.feature.hydrator',
-      PKG.name+'.feature.hydrator-beta',
+      PKG.name+'.feature.hydratorplusplus',
       PKG.name+'.feature.explore',
       PKG.name +'.feature.search',
       PKG.name +'.feature.pins',

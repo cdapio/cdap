@@ -494,7 +494,7 @@ Searching for Metadata
 CDAP supports searching metadata of entities. To find which applications, datasets, streams, etc. have a particular
 metadata property or metadata tag, submit an HTTP GET request::
 
-  GET <base-url>/namespaces/<namespace>/metadata/search?query=<term>&target=<entity-type>
+  GET <base-url>/namespaces/<namespace>/metadata/search?query=<term>[&target=<entity-type>&target=<entity-type2>...]
 
 Entities that match the specified query and entity type are returned in the body of the response in JSON format::
 
@@ -556,7 +556,8 @@ Entities that match the specified query and entity type are returned in the body
    * - ``<namespace>``
      - Namespace ID
    * - ``<entity-type>``
-     - One of ``all``, ``artifact``, ``app``, ``dataset``, ``program``, ``stream`` or ``view``
+     - Restricts the search to either all or specified entity types: ``all``, ``artifact``, ``app``, ``dataset``,
+       ``program``, ``stream``, or ``view``
    * - ``<term>``
      - Query term, as described below. Query terms are case-insensitive
 
@@ -569,7 +570,7 @@ Entities that match the specified query and entity type are returned in the body
    * - Status Codes
      - Description
    * - ``200 OK``
-     - Entity ID and metadata of entities that match the query and entity type are returned in the body of the response
+     - Entity ID and metadata of entities that match the query and entity type(s) are returned in the body of the response
 
 .. rubric:: Query Terms
 

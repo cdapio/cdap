@@ -21,6 +21,7 @@ import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.proto.security.Privilege;
 import co.cask.cdap.proto.security.Role;
+import co.cask.cdap.security.spi.authorization.AbstractAuthorizer;
 import co.cask.cdap.security.spi.authorization.Authorizer;
 import co.cask.cdap.security.spi.authorization.RoleAlreadyExistsException;
 import co.cask.cdap.security.spi.authorization.RoleNotFoundException;
@@ -40,14 +41,10 @@ import javax.annotation.concurrent.NotThreadSafe;
  * In-memory implementation of {@link Authorizer}.
  */
 @NotThreadSafe
-public class InMemoryAuthorizer implements Authorizer {
+public class InMemoryAuthorizer extends AbstractAuthorizer {
 
   private final Table<EntityId, Principal, Set<Action>> table = HashBasedTable.create();
   private final Map<Role, Set<Principal>> roleToPrincipals = new HashMap<>();
-
-  public InMemoryAuthorizer(@SuppressWarnings("unused") Properties properties) {
-
-  }
 
   @Override
   public void enforce(EntityId entity, Principal principal, Action action) throws UnauthorizedException {

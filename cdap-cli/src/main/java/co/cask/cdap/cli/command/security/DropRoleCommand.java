@@ -34,7 +34,7 @@ public class DropRoleCommand extends AbstractAuthCommand {
   private final AuthorizationClient client;
 
   @Inject
-  public DropRoleCommand(AuthorizationClient client, CLIConfig cliConfig) {
+  DropRoleCommand(AuthorizationClient client, CLIConfig cliConfig) {
     super(cliConfig);
     this.client = client;
   }

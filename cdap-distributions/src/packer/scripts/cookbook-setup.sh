@@ -18,9 +18,11 @@
 # Download cookbooks from Chef Supermarket
 #
 
+die() { echo $*; exit 1; }
+
 # Grab cookbooks using knife
 for cb in hadoop idea maven nodejs cdap ; do
-  knife cookbook site install $cb || (echo "Cannot fetch cookbook $cb" && exit 1)
+  knife cookbook site install $cb || die "Cannot fetch cookbook $cb"
 done
 
 # Do not change HOME for cdap user

@@ -19,10 +19,12 @@ package co.cask.cdap.data.tools;
 import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.data.stream.StreamSpecification;
+import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiatorFactory;
 import co.cask.cdap.data.view.ViewAdmin;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -45,6 +47,8 @@ import co.cask.cdap.proto.artifact.ArtifactInfo;
 import co.cask.cdap.store.NamespaceStore;
 import com.google.inject.Inject;
 import org.apache.twill.filesystem.LocationFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -54,6 +58,8 @@ import java.util.Collection;
  * TODO CDAP-4696: Remove in 3.4
  */
 public class ExistingEntitySystemMetadataWriter {
+  private static final Logger LOG = LoggerFactory.getLogger(ExistingEntitySystemMetadataWriter.class);
+
   private final MetadataStore metadataStore;
   private final NamespaceStore nsStore;
   private final Store store;
@@ -126,17 +132,32 @@ public class ExistingEntitySystemMetadataWriter {
   }
 
   private void writeSystemMetadataForDatasets(Id.Namespace namespace,
-                                              DatasetFramework dsFramework) throws DatasetManagementException {
+                                              DatasetFramework dsFramework)
+    throws DatasetManagementException, IOException {
     SystemDatasetInstantiatorFactory systemDatasetInstantiatorFactory =
       new SystemDatasetInstantiatorFactory(locationFactory, dsFramework, cConf);
-    for (DatasetSpecificationSummary summary : dsFramework.getInstances(namespace)) {
-      Id.DatasetInstance dsInstance = Id.DatasetInstance.from(namespace, summary.getName());
-      DatasetProperties dsProperties = DatasetProperties.builder().addAll(summary.getProperties()).build();
-      String dsType = summary.getType();
-      SystemMetadataWriter writer = new DatasetSystemMetadataWriter(metadataStore,
-                                                                            systemDatasetInstantiatorFactory,
-                                                                            dsInstance, dsProperties, dsType);
-      writer.write();
+    try (SystemDatasetInstantiator systemDatasetInstantiator = systemDatasetInstantiatorFactory.create()) {
+      for (DatasetSpecificationSummary summary : dsFramework.getInstances(namespace)) {
+        Id.DatasetInstance dsInstance = Id.DatasetInstance.from(namespace, summary.getName());
+        DatasetProperties dsProperties = DatasetProperties.builder().addAll(summary.getProperties()).build();
+        String dsType = summary.getType();
+        Dataset dataset = null;
+        try {
+          try {
+            dataset = systemDatasetInstantiator.getDataset(dsInstance);
+          } catch (Exception e) {
+            LOG.warn("Exception while instantiating dataset {}", dsInstance, e);
+          }
+
+          SystemMetadataWriter writer =
+            new DatasetSystemMetadataWriter(metadataStore, dsInstance, dsProperties, dataset, dsType);
+          writer.write();
+        } finally {
+          if (dataset != null) {
+            dataset.close();
+          }
+        }
+      }
     }
   }
 

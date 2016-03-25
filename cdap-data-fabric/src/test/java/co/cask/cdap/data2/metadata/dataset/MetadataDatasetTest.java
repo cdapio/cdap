@@ -214,46 +214,46 @@ public class MetadataDatasetTest {
 
     // Try to search on all tags
     List<MetadataEntry> results =
-      dataset.search("ns1", "tags:*", MetadataSearchTargetType.ALL);
+      dataset.search("ns1", "tags:*", ImmutableSet.of(MetadataSearchTargetType.ALL));
     // results for dataset1 - ns1:tags:tag12, ns1:tags:tag2, ns1:tags:tag3, ns1:tags:tag33, ns1:tags:tag12-tag33
     Assert.assertEquals(11, results.size());
 
     // Try to search for tag1*
-    results = dataset.search("ns1", "tags:tag1*", MetadataSearchTargetType.ALL);
+    results = dataset.search("ns1", "tags:tag1*", ImmutableSet.of(MetadataSearchTargetType.ALL));
     Assert.assertEquals(4, results.size());
 
     // Try to search for tag1 with spaces in search query and mixed case of tags keyword
-    results = dataset.search("ns1", "  tAGS  :  tag1  ", MetadataSearchTargetType.ALL);
+    results = dataset.search("ns1", "  tAGS  :  tag1  ", ImmutableSet.of(MetadataSearchTargetType.ALL));
     Assert.assertEquals(2, results.size());
 
     // Try to search for tag4
-    results = dataset.search("ns1", "tags:tag4", MetadataSearchTargetType.ALL);
+    results = dataset.search("ns1", "tags:tag4", ImmutableSet.of(MetadataSearchTargetType.ALL));
     Assert.assertEquals(1, results.size());
 
     // Try to search for tag33
-    results = dataset.search("ns1", "tags:tag33", MetadataSearchTargetType.ALL);
+    results = dataset.search("ns1", "tags:tag33", ImmutableSet.of(MetadataSearchTargetType.ALL));
     Assert.assertEquals(1, results.size());
 
     // Try to search for a tag which has - in it
-    results = dataset.search("ns1", "tag12-tag33", MetadataSearchTargetType.ALL);
+    results = dataset.search("ns1", "tag12-tag33", ImmutableSet.of(MetadataSearchTargetType.ALL));
     Assert.assertEquals(1, results.size());
 
     // Try to search for tag33 with spaces in query
-    results = dataset.search("ns1", "  tag33  ", MetadataSearchTargetType.ALL);
+    results = dataset.search("ns1", "  tag33  ", ImmutableSet.of(MetadataSearchTargetType.ALL));
     Assert.assertEquals(1, results.size());
 
     // Try to search for tag3
-    results = dataset.search("ns1", "tags:tag3*", MetadataSearchTargetType.ALL);
+    results = dataset.search("ns1", "tags:tag3*", ImmutableSet.of(MetadataSearchTargetType.ALL));
     Assert.assertEquals(3, results.size());
 
     // try search in another namespace
-    results = dataset.search("ns2", "tags:tag1", MetadataSearchTargetType.ALL);
+    results = dataset.search("ns2", "tags:tag1", ImmutableSet.of(MetadataSearchTargetType.ALL));
     Assert.assertEquals(1, results.size());
 
-    results = dataset.search("ns2", "tag3", MetadataSearchTargetType.ALL);
+    results = dataset.search("ns2", "tag3", ImmutableSet.of(MetadataSearchTargetType.ALL));
     Assert.assertEquals(1, results.size());
 
-    results = dataset.search("ns2", "tag*", MetadataSearchTargetType.APP);
+    results = dataset.search("ns2", "tag*", ImmutableSet.of(MetadataSearchTargetType.APP));
     // 9 due to matches of type ns2:tag1, ns2:tags:tag1, and splitting of tag3_more
     Assert.assertEquals(9, results.size());
 
@@ -263,7 +263,7 @@ public class MetadataDatasetTest {
     dataset.removeTags(dataset1);
     dataset.removeTags(stream1);
     // Search should be empty after deleting tags
-    results = dataset.search("ns1", "tags:tag3*", MetadataSearchTargetType.ALL);
+    results = dataset.search("ns1", "tags:tag3*", ImmutableSet.of(MetadataSearchTargetType.ALL));
     Assert.assertEquals(0, results.size());
     Assert.assertEquals(0, dataset.getTags(app1).size());
     Assert.assertEquals(0, dataset.getTags(flow1).size());
@@ -284,36 +284,36 @@ public class MetadataDatasetTest {
 
     // Search for it based on value
     List<MetadataEntry> results =
-      dataset.search("ns1", "value1", MetadataSearchTargetType.PROGRAM);
+      dataset.search("ns1", "value1", ImmutableSet.of(MetadataSearchTargetType.PROGRAM));
     Assert.assertEquals(ImmutableList.of(entry), results);
 
     // Search for it based on a word in value with spaces in search query
-    results = dataset.search("ns1", "  aV1   ", MetadataSearchTargetType.PROGRAM);
+    results = dataset.search("ns1", "  aV1   ", ImmutableSet.of(MetadataSearchTargetType.PROGRAM));
     Assert.assertEquals(ImmutableList.of(multiWordEntry), results);
 
     // Search for it based split patterns to make sure nothing is matched
-    results = dataset.search("ns1", "-", MetadataSearchTargetType.ALL);
+    results = dataset.search("ns1", "-", ImmutableSet.of(MetadataSearchTargetType.ALL));
     Assert.assertTrue(results.isEmpty());
-    results = dataset.search("ns1", ",", MetadataSearchTargetType.ALL);
+    results = dataset.search("ns1", ",", ImmutableSet.of(MetadataSearchTargetType.ALL));
     Assert.assertTrue(results.isEmpty());
-    results = dataset.search("ns1", "_", MetadataSearchTargetType.ALL);
+    results = dataset.search("ns1", "_", ImmutableSet.of(MetadataSearchTargetType.ALL));
     Assert.assertTrue(results.isEmpty());
-    results = dataset.search("ns1", ", ,", MetadataSearchTargetType.ALL);
+    results = dataset.search("ns1", ", ,", ImmutableSet.of(MetadataSearchTargetType.ALL));
     Assert.assertTrue(results.isEmpty());
-    results = dataset.search("ns1", ", - ,", MetadataSearchTargetType.ALL);
+    results = dataset.search("ns1", ", - ,", ImmutableSet.of(MetadataSearchTargetType.ALL));
     Assert.assertTrue(results.isEmpty());
 
     // Search for it based on a word in value
-    results = dataset.search("ns1", "av5", MetadataSearchTargetType.PROGRAM);
+    results = dataset.search("ns1", "av5", ImmutableSet.of(MetadataSearchTargetType.PROGRAM));
     Assert.assertEquals(ImmutableList.of(multiWordEntry), results);
 
     // Case insensitive
-    results = dataset.search("ns1", "ValUe1", MetadataSearchTargetType.PROGRAM);
+    results = dataset.search("ns1", "ValUe1", ImmutableSet.of(MetadataSearchTargetType.PROGRAM));
     Assert.assertEquals(ImmutableList.of(entry), results);
 
     // Search based on value
     dataset.setProperty(flow1, "key3", "value1");
-    results = dataset.search("ns1", "value1", MetadataSearchTargetType.PROGRAM);
+    results = dataset.search("ns1", "value1", ImmutableSet.of(MetadataSearchTargetType.PROGRAM));
     Assert.assertEquals(2, results.size());
     for (MetadataEntry result : results) {
       Assert.assertEquals("value1", result.getValue());
@@ -321,14 +321,14 @@ public class MetadataDatasetTest {
 
     // Search based on value prefix
     dataset.setProperty(stream1, "key21", "value21");
-    results = dataset.search("ns1", "value2*", MetadataSearchTargetType.ALL);
+    results = dataset.search("ns1", "value2*", ImmutableSet.of(MetadataSearchTargetType.ALL));
     Assert.assertEquals(2, results.size());
     for (MetadataEntry result : results) {
       Assert.assertTrue(result.getValue().startsWith("value2"));
     }
 
     // Search based on value prefix in the wrong namespace
-    results = dataset.search("ns12", "value2*", MetadataSearchTargetType.ALL);
+    results = dataset.search("ns12", "value2*", ImmutableSet.of(MetadataSearchTargetType.ALL));
     Assert.assertTrue(results.isEmpty());
   }
 
@@ -352,12 +352,13 @@ public class MetadataDatasetTest {
 
     // Search for it based on value
     List<MetadataEntry> results =
-      dataset.search("ns1", "key1" + MetadataDataset.KEYVALUE_SEPARATOR + "value1", MetadataSearchTargetType.PROGRAM);
+      dataset.search("ns1", "key1" + MetadataDataset.KEYVALUE_SEPARATOR + "value1",
+                     ImmutableSet.of(MetadataSearchTargetType.PROGRAM));
     Assert.assertEquals(ImmutableList.of(flowEntry1), results);
 
     // Search for it based on a word in value with spaces in search query
     results = dataset.search("ns1", "  multiword" + MetadataDataset.KEYVALUE_SEPARATOR + "aV1   ",
-                             MetadataSearchTargetType.PROGRAM);
+                             ImmutableSet.of(MetadataSearchTargetType.PROGRAM));
 
     MetadataEntry flowMultiWordEntry = new MetadataEntry(flow1, multiWordKey, multiWordValue);
     Assert.assertEquals(ImmutableList.of(flowMultiWordEntry), results);
@@ -365,29 +366,33 @@ public class MetadataDatasetTest {
     // Search for it based on a word in value
     results =
       dataset.search("ns1", multiWordKey + MetadataDataset.KEYVALUE_SEPARATOR + "aV5",
-                     MetadataSearchTargetType.PROGRAM);
+                     ImmutableSet.of(MetadataSearchTargetType.PROGRAM));
     Assert.assertEquals(ImmutableList.of(flowMultiWordEntry), results);
 
     dataset.removeProperties(flow1, multiWordKey);
     results = dataset.search("ns1", multiWordKey + MetadataDataset.KEYVALUE_SEPARATOR + "aV5",
-                             MetadataSearchTargetType.PROGRAM);
+                             ImmutableSet.of(MetadataSearchTargetType.PROGRAM));
     // search results should be empty after removing this key as the indexes are deleted
     Assert.assertTrue(results.isEmpty());
 
     // Test wrong ns
     List<MetadataEntry> results2  =
       dataset.search("ns12", "key1" + MetadataDataset.KEYVALUE_SEPARATOR + "value1",
-                               MetadataSearchTargetType.PROGRAM);
+                               ImmutableSet.of(MetadataSearchTargetType.PROGRAM));
     Assert.assertTrue(results2.isEmpty());
 
     // Test multi word query
-    results = dataset.search("ns1", "  value1  av2 ", MetadataSearchTargetType.ALL);
+    results = dataset.search("ns1", "  value1  av2 ", ImmutableSet.of(MetadataSearchTargetType.ALL));
     Assert.assertEquals(Sets.newHashSet(flowEntry1, streamEntry1), Sets.newHashSet(results));
 
-    results = dataset.search("ns1", "  value1  sValue1 ", MetadataSearchTargetType.ALL);
+    results = dataset.search("ns1", "  value1  sValue1 ", ImmutableSet.of(MetadataSearchTargetType.ALL));
     Assert.assertEquals(Sets.newHashSet(flowEntry1, streamEntry1, streamEntry2), Sets.newHashSet(results));
 
-    results = dataset.search("ns1", "  valu*  sVal* ", MetadataSearchTargetType.ALL);
+    results = dataset.search("ns1", "  valu*  sVal* ", ImmutableSet.of(MetadataSearchTargetType.ALL));
+    Assert.assertEquals(Sets.newHashSet(flowEntry1, flowEntry2, streamEntry1, streamEntry2), Sets.newHashSet(results));
+
+    // Using empty filter should also search for all target types
+    results = dataset.search("ns1", "  valu*  sVal* ", ImmutableSet.<MetadataSearchTargetType>of());
     Assert.assertEquals(Sets.newHashSet(flowEntry1, flowEntry2, streamEntry1, streamEntry2), Sets.newHashSet(results));
   }
 
@@ -407,30 +412,30 @@ public class MetadataDatasetTest {
     MetadataEntry flowMultiWordEntry = new MetadataEntry(flow1, multiWordKey, multiWordValue);
     MetadataEntry systemArtifactEntry = new MetadataEntry(sysArtifact, multiWordKey, multiWordValue);
     MetadataEntry ns2ArtifactEntry = new MetadataEntry(ns2Artifact, multiWordKey, multiWordValue);
-    List<MetadataEntry> results = dataset.search("ns1", "aV5", MetadataSearchTargetType.ALL);
+    List<MetadataEntry> results = dataset.search("ns1", "aV5", ImmutableSet.of(MetadataSearchTargetType.ALL));
     Assert.assertEquals(Sets.newHashSet(flowMultiWordEntry, systemArtifactEntry), Sets.newHashSet(results));
     // search only programs - should only return flow
     results = dataset.search("ns1", multiWordKey + MetadataDataset.KEYVALUE_SEPARATOR + "aV5",
-                             MetadataSearchTargetType.PROGRAM);
+                             ImmutableSet.of(MetadataSearchTargetType.PROGRAM));
     Assert.assertEquals(ImmutableList.of(flowMultiWordEntry), results);
     // search only artifacts - should only return system artifact
     results = dataset.search("ns1", multiWordKey + MetadataDataset.KEYVALUE_SEPARATOR + multiWordValue,
-                             MetadataSearchTargetType.ARTIFACT);
+                             ImmutableSet.of(MetadataSearchTargetType.ARTIFACT));
     // this query returns the system artifact 4 times, since the dataset returns a list with duplicates for scoring
     // purposes. Convert to a Set for comparison.
     Assert.assertEquals(Sets.newHashSet(systemArtifactEntry), Sets.newHashSet(results));
     // search all entities in namespace 'ns2' - should return the system artifact and the same artifact in ns2
     results = dataset.search("ns2", multiWordKey + MetadataDataset.KEYVALUE_SEPARATOR + "aV4",
-                             MetadataSearchTargetType.ALL);
+                             ImmutableSet.of(MetadataSearchTargetType.ALL));
     Assert.assertEquals(Sets.newHashSet(systemArtifactEntry, ns2ArtifactEntry), Sets.newHashSet(results));
     // search only programs in a namespace 'ns2'. Should return empty
-    results = dataset.search("ns2", "aV*", MetadataSearchTargetType.PROGRAM);
+    results = dataset.search("ns2", "aV*", ImmutableSet.of(MetadataSearchTargetType.PROGRAM));
     Assert.assertTrue(results.isEmpty());
     // search all entities in namespace 'ns3'. Should return only the system artifact
-    results = dataset.search("ns3", "av*", MetadataSearchTargetType.ALL);
+    results = dataset.search("ns3", "av*", ImmutableSet.of(MetadataSearchTargetType.ALL));
     Assert.assertEquals(Sets.newHashSet(systemArtifactEntry), Sets.newHashSet(results));
     // search the system namespace for all entities. Should return only the system artifact
-    results = dataset.search(Id.Namespace.SYSTEM.getId(), "av*", MetadataSearchTargetType.ALL);
+    results = dataset.search(Id.Namespace.SYSTEM.getId(), "av*", ImmutableSet.of(MetadataSearchTargetType.ALL));
     Assert.assertEquals(Sets.newHashSet(systemArtifactEntry), Sets.newHashSet(results));
     // clean up
     dataset.removeProperties(flow1);

@@ -29,6 +29,9 @@ import co.cask.cdap.proto.metadata.MetadataSearchTargetType;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Charsets;
+import com.google.common.base.Function;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Iterables;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
@@ -67,6 +70,15 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
   private static final Type SET_METADATA_RECORD_TYPE = new TypeToken<Set<MetadataRecord>>() { }.getType();
   private static final Type SET_METADATA_SEARCH_RESULT_TYPE =
     new TypeToken<Set<MetadataSearchResultRecord>>() { }.getType();
+
+  private static final Function<String, MetadataSearchTargetType> STRING_TO_TARGET_TYPE =
+    new Function<String, MetadataSearchTargetType>() {
+      @Override
+      public MetadataSearchTargetType apply(String input) {
+        return MetadataSearchTargetType.valueOf(input.toUpperCase());
+      }
+    };
+
   private final MetadataAdmin metadataAdmin;
 
   @Inject
@@ -826,16 +838,15 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
   public void searchMetadata(HttpRequest request, HttpResponder responder,
                              @PathParam("namespace-id") String namespaceId,
                              @QueryParam("query") String searchQuery,
-                             @QueryParam("target") String target) throws Exception {
-    MetadataSearchTargetType metadataSearchTargetType;
-    if (target != null) {
-      metadataSearchTargetType = MetadataSearchTargetType.valueOf(target.toUpperCase());
-    } else {
-      metadataSearchTargetType = null;
+                             @QueryParam("target") List<String> targets) throws Exception {
+    Set<MetadataSearchTargetType> types = ImmutableSet.of();
+    if (targets != null) {
+      types = ImmutableSet.copyOf(Iterables.transform(targets, STRING_TO_TARGET_TYPE));
     }
+
     Set<MetadataSearchResultRecord> results = metadataAdmin.searchMetadata(namespaceId,
                                                                            URLDecoder.decode(searchQuery, "UTF-8"),
-                                                                           metadataSearchTargetType);
+                                                                           types);
 
     responder.sendJson(HttpResponseStatus.OK, results, SET_METADATA_SEARCH_RESULT_TYPE, GSON);
   }

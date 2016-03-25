@@ -17,7 +17,9 @@
 package co.cask.cdap.logging.save;
 
 import ch.qos.logback.classic.LoggerContext;
+import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.util.StatusPrinter;
+import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.ApplicationLoggingContext;
@@ -28,11 +30,14 @@ import co.cask.cdap.common.logging.NamespaceLoggingContext;
 import co.cask.cdap.common.logging.ServiceLoggingContext;
 import co.cask.cdap.common.logging.SystemLoggingContext;
 import co.cask.cdap.data2.dataset2.lib.table.inmemory.InMemoryTableService;
+import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import co.cask.cdap.logging.KafkaTestBase;
 import co.cask.cdap.logging.LoggingConfiguration;
 import co.cask.cdap.logging.appender.LogAppenderInitializer;
 import co.cask.cdap.logging.appender.kafka.KafkaLogAppender;
+import co.cask.cdap.logging.appender.kafka.LoggingEventSerializer;
 import co.cask.cdap.logging.context.FlowletLoggingContext;
+import co.cask.cdap.logging.context.LoggingContextHelper;
 import co.cask.cdap.logging.filter.Filter;
 import co.cask.cdap.logging.read.AvroFileReader;
 import co.cask.cdap.logging.read.FileLogReader;
@@ -40,13 +45,18 @@ import co.cask.cdap.logging.read.LogEvent;
 import co.cask.cdap.logging.serialize.LogSchema;
 import co.cask.cdap.test.SlowTests;
 import co.cask.tephra.TransactionManager;
+import com.google.common.base.Function;
+import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Multimap;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.inject.Injector;
 import com.google.inject.Key;
 import com.google.inject.TypeLiteral;
@@ -54,6 +64,7 @@ import com.google.inject.name.Names;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
+import org.apache.twill.kafka.client.FetchedMessage;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -63,10 +74,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.PrintStream;
 import java.text.SimpleDateFormat;
+import java.util.Collection;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.concurrent.Executors;
@@ -85,7 +100,9 @@ public class LogSaverTest extends KafkaTestBase {
   private static TransactionManager txManager;
   private static String logBaseDir;
   private static KafkaLogAppender appender;
-  private static CountingLogAppender countingLogAppender;
+  private static Gson gson;
+  @SuppressWarnings("FieldCanBeLocal")
+  private static String isLogSaverTestExpressive = "logsaver.test.expressive";
 
   @BeforeClass
   public static void startLogSaver() throws Exception {
@@ -98,8 +115,9 @@ public class LogSaverTest extends KafkaTestBase {
     txManager.startAndWait();
 
     appender = injector.getInstance(KafkaLogAppender.class);
-    countingLogAppender = new CountingLogAppender(appender);
+    CountingLogAppender countingLogAppender = new CountingLogAppender(appender);
     new LogAppenderInitializer(countingLogAppender).initialize("LogSaverTest");
+    gson = new GsonBuilder().registerTypeAdapter(Schema.class, new SchemaTypeAdapter()).create();
 
     LogSaverFactory factory = injector.getInstance(LogSaverFactory.class);
     // {0, 1} - because we have 2 partitions as per configuration above (see LoggingConfiguration.NUM_PARTITIONS)
@@ -177,17 +195,41 @@ public class LogSaverTest extends KafkaTestBase {
 
   @Test
   public void testLogRead1() throws Exception {
-    testLogRead(new FlowletLoggingContext("NS_1", "APP_1", "FLOW_1", "", "RUN1", "INSTANCE"));
+    try {
+      testLogRead(new FlowletLoggingContext("NS_1", "APP_1", "FLOW_1", "", "RUN1", "INSTANCE"));
+    } catch (Throwable t) {
+      if (!isExpressive()) {
+        t.printStackTrace();
+      } else {
+        throw t;
+      }
+    }
   }
 
   @Test
   public void testLogRead2() throws Exception {
-    testLogRead(new FlowletLoggingContext("NS_2", "APP_2", "FLOW_2", "", "RUN1", "INSTANCE"));
+    try {
+      testLogRead(new FlowletLoggingContext("NS_2", "APP_2", "FLOW_2", "", "RUN1", "INSTANCE"));
+    } catch (Throwable t) {
+      if (!isExpressive()) {
+        t.printStackTrace();
+      } else {
+        throw t;
+      }
+    }
   }
 
   @Test
   public void testLogRead3() throws Exception {
-    testLogRead(new ServiceLoggingContext("system", "services", "metrics"));
+    try {
+      testLogRead(new ServiceLoggingContext("system", "services", "metrics"));
+    } catch (Throwable t) {
+      if (!isExpressive()) {
+        t.printStackTrace();
+      } else {
+        throw t;
+      }
+    }
   }
 
   private long getCheckpointTime(LoggingContext loggingContext, int numExpectedEvents) throws Exception {
@@ -207,9 +249,27 @@ public class LogSaverTest extends KafkaTestBase {
     distributedLogReader.getLog(loggingContext, 0, Long.MAX_VALUE, Filter.EMPTY_FILTER, logCallback1);
     List<LogEvent> allEvents = logCallback1.getEvents();
 
+    final Multimap<String, String> contextMessages = ArrayListMultimap.create();
+    KAFKA_TESTER.getPublishedMessages(KAFKA_TESTER.getCConf().get(Constants.Logging.KAFKA_TOPIC),
+                                      ImmutableSet.of(0, 1), 300, 0, new Function<FetchedMessage, String>() {
+      @Override
+      public String apply(final FetchedMessage input) {
+        try {
+          Map.Entry<String, String> entry = convertFetchedMessage(input);
+          contextMessages.put(entry.getKey(), entry.getValue());
+        } catch (IOException e) {
+          e.printStackTrace();
+        }
+        return "";
+      }
+    });
+
+    for (Map.Entry<String, Collection<String>> entry : contextMessages.asMap().entrySet()) {
+      LOG.info("Kafka Message Count for {} is {}", entry.getKey(), entry.getValue().size());
+    }
+
     for (int i = 0; i < 60; ++i) {
-      Assert.assertEquals("Log append count for " + loggingContext.getLogPartition() + " = " +
-                            countingLogAppender.getCount(loggingContext.getLogPartition()),
+      Assert.assertEquals("All messages in Kafka = " + gson.toJson(contextMessages.asMap()),
                           String.format("Test log message %d arg1 arg2", i),
                           allEvents.get(i).getLoggingEvent().getFormattedMessage());
       if (loggingContext instanceof ServiceLoggingContext) {
@@ -312,6 +372,24 @@ public class LogSaverTest extends KafkaTestBase {
     Assert.assertEquals("Test log message 18 arg1 arg2", events.get(0).getLoggingEvent().getFormattedMessage());
     Assert.assertEquals("Test log message 33 arg1 arg2",
                         events.get(events.size() - 1 - (events.size() - 16)).getLoggingEvent().getFormattedMessage());
+  }
+
+  private Map.Entry<String, String> convertFetchedMessage(FetchedMessage message) throws IOException {
+    LoggingEventSerializer serializer = new LoggingEventSerializer();
+    ILoggingEvent iLoggingEvent = serializer.fromBytes(message.getPayload());
+    LoggingContext loggingContext = LoggingContextHelper.getLoggingContext(iLoggingEvent.getMDCPropertyMap());
+    String key = loggingContext.getLogPartition();
+
+    // Temporary map for pretty format
+    Map<String, String> tempMap = new HashMap<>();
+    tempMap.put("Timestamp", Long.toString(iLoggingEvent.getTimeStamp()));
+    tempMap.put("Partition", Long.toString(message.getTopicPartition().getPartition()));
+    tempMap.put("LogEvent", iLoggingEvent.getFormattedMessage());
+    return Maps.immutableEntry(key, gson.toJson(tempMap));
+  }
+
+  public static boolean isExpressive() {
+    return Boolean.getBoolean(isLogSaverTestExpressive);
   }
 
   private static void publishLogs() throws Exception {

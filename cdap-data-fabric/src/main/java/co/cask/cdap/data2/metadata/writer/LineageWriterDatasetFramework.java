@@ -19,8 +19,6 @@ package co.cask.cdap.data2.metadata.writer;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.DatasetProperties;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.data.dataset.SystemDatasetInstantiatorFactory;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data2.audit.AuditPublisher;
 import co.cask.cdap.data2.audit.AuditPublishers;
@@ -28,17 +26,11 @@ import co.cask.cdap.data2.datafabric.dataset.type.DatasetClassLoaderProvider;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.ForwardingDatasetFramework;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
-import co.cask.cdap.data2.metadata.store.MetadataStore;
-import co.cask.cdap.data2.metadata.system.DatasetSystemMetadataWriter;
-import co.cask.cdap.data2.metadata.system.SystemMetadataWriter;
-import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.Id;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
-import org.apache.twill.filesystem.LocationFactory;
 
 import java.io.IOException;
-import java.util.Collection;
 import java.util.Map;
 import javax.annotation.Nullable;
 
@@ -48,20 +40,15 @@ import javax.annotation.Nullable;
 public class LineageWriterDatasetFramework extends ForwardingDatasetFramework implements ProgramContextAware {
   private final LineageWriter lineageWriter;
   private final ProgramContext programContext = new ProgramContext();
-  private final MetadataStore metadataStore;
-  private final SystemDatasetInstantiatorFactory dsInstantiatorFactory;
 
   private AuditPublisher auditPublisher;
 
   @Inject
   public LineageWriterDatasetFramework(
     @Named(DataSetsModules.BASIC_DATASET_FRAMEWORK) DatasetFramework datasetFramework,
-    LineageWriter lineageWriter, MetadataStore metadataStore,
-    LocationFactory locationFactory, CConfiguration cConf) {
+    LineageWriter lineageWriter) {
     super(datasetFramework);
     this.lineageWriter = lineageWriter;
-    this.metadataStore = metadataStore;
-    this.dsInstantiatorFactory = new SystemDatasetInstantiatorFactory(locationFactory, datasetFramework, cConf);
   }
 
   @SuppressWarnings("unused")
@@ -84,53 +71,22 @@ public class LineageWriterDatasetFramework extends ForwardingDatasetFramework im
   public void addInstance(String datasetTypeName, Id.DatasetInstance datasetInstanceId, DatasetProperties props)
     throws DatasetManagementException, IOException {
     super.addInstance(datasetTypeName, datasetInstanceId, props);
-    // add system metadata for user datasets only
-    if (!isUserDataset(datasetInstanceId)) {
-      return;
-    }
-    SystemMetadataWriter systemMetadataWriter =
-      new DatasetSystemMetadataWriter(metadataStore, dsInstantiatorFactory, datasetInstanceId, props, datasetTypeName);
-    systemMetadataWriter.write();
-  }
 
-  //TODO: CDAP-4627 - Figure out a better way to identify system datasets in user namespaces
-  private boolean isUserDataset(Id.DatasetInstance datasetInstanceId) {
-    return !Id.Namespace.SYSTEM.equals(datasetInstanceId.getNamespace()) &&
-      !"system.queue.config".equals(datasetInstanceId.getId()) &&
-      !datasetInstanceId.getId().startsWith("system.sharded.queue") &&
-      !datasetInstanceId.getId().startsWith("system.queue") &&
-      !datasetInstanceId.getId().startsWith("system.stream");
   }
 
   @Override
   public void updateInstance(Id.DatasetInstance datasetInstanceId, DatasetProperties props)
     throws DatasetManagementException, IOException {
     super.updateInstance(datasetInstanceId, props);
-    // add system metadata for user datasets only
-    if (!isUserDataset(datasetInstanceId)) {
-      return;
-    }
-    SystemMetadataWriter systemMetadataWriter =
-      new DatasetSystemMetadataWriter(metadataStore, dsInstantiatorFactory, datasetInstanceId, props, null);
-    systemMetadataWriter.write();
   }
 
   @Override
   public void deleteInstance(Id.DatasetInstance datasetInstanceId) throws DatasetManagementException, IOException {
-    // Remove metadata for the dataset (TODO: https://issues.cask.co/browse/CDAP-3670)
-    metadataStore.removeMetadata(datasetInstanceId);
     delegate.deleteInstance(datasetInstanceId);
   }
 
   @Override
   public void deleteAllInstances(Id.Namespace namespaceId) throws DatasetManagementException, IOException {
-    Collection<DatasetSpecificationSummary> datasets = this.getInstances(namespaceId);
-    for (DatasetSpecificationSummary dataset : datasets) {
-      String dsName = dataset.getName();
-      Id.DatasetInstance datasetInstanceId = Id.DatasetInstance.from(namespaceId, dsName);
-      // Remove metadata for the dataset (TODO: https://issues.cask.co/browse/CDAP-3670)
-      metadataStore.removeMetadata(datasetInstanceId);
-    }
     delegate.deleteAllInstances(namespaceId);
   }
 
@@ -167,11 +123,40 @@ public class LineageWriterDatasetFramework extends ForwardingDatasetFramework im
     return dataset;
   }
 
-  private <T extends Dataset> void writeLineage(Id.DatasetInstance datasetInstanceId, T dataset) {
-    if (dataset != null && programContext.getRun() != null) {
-      lineageWriter.addAccess(programContext.getRun(), datasetInstanceId, AccessType.UNKNOWN,
+  @Nullable
+  @Override
+  public <T extends Dataset> T getDataset(Id.DatasetInstance datasetInstanceId, @Nullable Map<String, String> arguments,
+                                          @Nullable ClassLoader classLoader,
+                                          DatasetClassLoaderProvider classLoaderProvider,
+                                          @Nullable Iterable<? extends Id> owners, AccessType accessType)
+    throws DatasetManagementException, IOException {
+    T dataset = super.getDataset(datasetInstanceId, arguments, classLoader, classLoaderProvider, owners, accessType);
+    writeLineage(datasetInstanceId, dataset, accessType);
+    return dataset;
+  }
+
+  @Override
+  public void writeLineage(Id.DatasetInstance datasetInstanceId, AccessType accessType) {
+    super.writeLineage(datasetInstanceId, accessType);
+    doWriteLineage(datasetInstanceId, accessType);
+  }
+
+  private <T extends Dataset> void writeLineage(Id.DatasetInstance datasetInstanceId, @Nullable T dataset) {
+    writeLineage(datasetInstanceId, dataset, AccessType.UNKNOWN);
+  }
+
+  private <T extends Dataset> void writeLineage(Id.DatasetInstance datasetInstanceId, @Nullable T dataset,
+                                                AccessType accessType) {
+    if (dataset != null) {
+      doWriteLineage(datasetInstanceId, accessType);
+    }
+  }
+
+  private void doWriteLineage(Id.DatasetInstance datasetInstanceId, AccessType accessType) {
+    if (programContext.getRun() != null) {
+      lineageWriter.addAccess(programContext.getRun(), datasetInstanceId, accessType,
                               programContext.getComponentId());
-      AuditPublishers.publishAccess(auditPublisher, datasetInstanceId, AccessType.UNKNOWN, programContext.getRun());
+      AuditPublishers.publishAccess(auditPublisher, datasetInstanceId, accessType, programContext.getRun());
     }
   }
 }

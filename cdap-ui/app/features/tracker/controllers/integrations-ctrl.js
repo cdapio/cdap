@@ -121,7 +121,7 @@ class TrackerIntegrationsController {
 
             this.logsParams = {
               namespace: this.$state.params.namespace,
-              appId: 'ClouderaNavigator',
+              appId: '_ClouderaNavigator',
               programType: 'flows',
               programId: 'MetadataFlow',
               runId: res[0].runid
@@ -141,7 +141,7 @@ class TrackerIntegrationsController {
     if (this.navigatorSetup.isEnabled) {
       let modal = this.$uibModal.open({
         templateUrl: '/assets/features/tracker/templates/partial/navigator-confirm-modal.html',
-        size: 'sm',
+        size: 'md',
         windowClass: 'navigator-confirm-modal'
       });
 
@@ -189,7 +189,7 @@ class TrackerIntegrationsController {
 
     let tags = {
       namespace: this.$state.params.namespace,
-      app: 'ClouderaNavigator',
+      app: '_ClouderaNavigator',
       flow: 'MetadataFlow'
     };
 

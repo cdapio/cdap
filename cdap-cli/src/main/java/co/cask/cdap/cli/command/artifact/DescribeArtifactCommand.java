@@ -25,6 +25,7 @@ import co.cask.cdap.cli.english.Fragment;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.cli.util.table.Table;
 import co.cask.cdap.client.ArtifactClient;
+import co.cask.cdap.common.ArtifactNotFoundException;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.artifact.ArtifactInfo;
 import co.cask.common.cli.Arguments;
@@ -87,8 +88,9 @@ public class DescribeArtifactCommand extends AbstractAuthCommand {
 
   @Override
   public String getDescription() {
-    return String.format("Shows information about %s. If no scope is given, the user scope will be used. " +
-      "Includes information about application and plugin classes contained in the artifact.",
+    return String.format("Shows information about %s. If no scope is given, the artifact is looked up first in " +
+                           "SYSTEM and then in USER scope. Includes information about application and plugin " +
+                           "classes contained in the artifact.",
       Fragment.of(Article.A, ElementType.ARTIFACT.getName()));
   }
 }

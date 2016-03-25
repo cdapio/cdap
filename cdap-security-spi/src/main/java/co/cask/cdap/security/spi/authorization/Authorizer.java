@@ -27,24 +27,39 @@ import java.util.Set;
 import java.util.jar.Attributes;
 
 /**
- * Interface to grant/revoke {@link Principal principals} authorization for {@link Action actions} on
+ * Interface for managing {@link Principal principals'} authorization for {@link Action actions} on
  * {@link EntityId CDAP entities}. Authorization extensions must implement this interface to delegate authorization
- * to appropriate authorization backends. The contract with Authorization extensions is as below:
+ * to appropriate authorization back-ends. The contract with Authorization extensions is as below:
  *
  * <ul>
  *   <li>Authorization is enabled setting the parameter {@code security.authorization.enabled} to true in
  *   {@code cdap-site.xml}.</li>
  *   <li>The path to the extension jar bundled with all its dependencies must be specified by
  *   {@code security.authorization.extension.jar.path} in cdap-site.xml</li>
- *   <li>The extension jar must contain a class that implements {@link Authorizer}. This class must be specified as
- *   the {@link Attributes.Name#MAIN_CLASS} in the extension jar's manifest file.</li>
- *   <li>The contract with the class that implements {@link Authorizer} is that it must have a public constructor that
- *   accepts a single {@link Properties} object as parameter. This constructor is invoked with a {@link Properties}
- *   object that is populated with all configuration settings from {@code cdap-site.xml} that have keys with the prefix
- *   {@code security.authorization.extension.config}.</li>
+ *   <li>The extension jar must contain a class that implements {@link Authorizer}. This class must be
+ *   specified as the {@link Attributes.Name#MAIN_CLASS} in the extension jar's manifest file.</li>
+ *   <li>The contract with the class that implements {@link Authorizer} is that it must have a default
+ *   constructor.</li>
+ *   <li>{@link Authorizer} also provides lifecycle methods for extensions. {@link #initialize(AuthorizationContext)}
+ *   can be used to perform initialization tasks. This method provides an {@link AuthorizationContext} which gives
+ *   extensions access to CDAP entities for operations like creating and accessing datasets, accessing datasets in
+ *   transactions, etc. It also provides access to {@link Properties extension properties} via the
+ *   {@link AuthorizationContext#getExtensionProperties()} method. The {@link Properties} object returned form this
+ *   method is populated with all configuration settings from {@code cdap-site.xml} that have
+ *   keys with the prefix {@code security.authorization.extension.config}.</li>
+ *   <li>The {@link #destroy()} method can be used to perform cleanup tasks.</li>
  * </ul>
  */
 public interface Authorizer {
+  /**
+   * Initialize the {@link Authorizer}. Authorization extensions can use this method to access an
+   * {@link AuthorizationContext} that allows them to interact with CDAP for operations such as creating and accessing
+   * datasets, executing dataset operations in transactions, etc.
+   *
+   * @param context the {@link AuthorizationContext} that can be used to interact with CDAP
+   */
+  void initialize(AuthorizationContext context) throws Exception;
+
   /**
    * Enforces authorization for the specified {@link Principal} for the specified {@link Action} on the specified
    * {@link EntityId}.
@@ -53,8 +68,9 @@ public interface Authorizer {
    * @param principal the {@link Principal} that performs the actions
    * @param action the {@link Action} being performed
    * @throws UnauthorizedException if the principal is not authorized to perform action on the entity
+   * @throws Exception if any other errors occurred while performing the authorization enforcement check
    */
-  void enforce(EntityId entity, Principal principal, Action action) throws UnauthorizedException;
+  void enforce(EntityId entity, Principal principal, Action action) throws Exception;
 
   /**
    * Grants a {@link Principal} authorization to perform a set of {@link Action actions} on an {@link EntityId}.
@@ -63,7 +79,7 @@ public interface Authorizer {
    * @param principal the {@link Principal} that performs the actions. This could be a user, or role
    * @param actions the set of {@link Action actions} to grant.
    */
-  void grant(EntityId entity, Principal principal, Set<Action> actions);
+  void grant(EntityId entity, Principal principal, Set<Action> actions) throws Exception;
 
   /**
    * Revokes a {@link Principal principal's} authorization to perform a set of {@link Action actions} on
@@ -73,7 +89,7 @@ public interface Authorizer {
    * @param principal the {@link Principal} that performs the actions. This could be a user, group or role
    * @param actions the set of {@link Action actions} to revoke
    */
-  void revoke(EntityId entity, Principal principal, Set<Action> actions);
+  void revoke(EntityId entity, Principal principal, Set<Action> actions) throws Exception;
 
   /**
    * Revokes all {@link Principal principals'} authorization to perform any {@link Action} on the given
@@ -81,7 +97,7 @@ public interface Authorizer {
    *
    * @param entity the {@link EntityId} on which all {@link Action actions} are to be revoked
    */
-  void revoke(EntityId entity);
+  void revoke(EntityId entity) throws Exception;
 
   /**
    * Returns all the {@link Privilege} for the specified {@link Principal}.
@@ -140,4 +156,9 @@ public interface Authorizer {
    * @return a set of all available {@link Role} in the system.
    */
   Set<Role> listAllRoles() throws Exception;
+
+  /**
+   * Destroys an {@link Authorizer}. Authorization extensions can use this method to write any cleanup code.
+   */
+  void destroy() throws Exception;
 }

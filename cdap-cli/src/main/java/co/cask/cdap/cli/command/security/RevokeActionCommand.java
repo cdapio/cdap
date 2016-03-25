@@ -23,14 +23,12 @@ import co.cask.cdap.client.AuthorizationClient;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
-import co.cask.cdap.proto.security.RevokeRequest;
 import co.cask.common.cli.Arguments;
 import com.google.common.base.Joiner;
-import com.google.common.base.Splitter;
+import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 
 import java.io.PrintStream;
-import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -41,7 +39,7 @@ public abstract class RevokeActionCommand extends AbstractAuthCommand {
   private final AuthorizationClient client;
 
   @Inject
-  public RevokeActionCommand(AuthorizationClient client, CLIConfig cliConfig) {
+  RevokeActionCommand(AuthorizationClient client, CLIConfig cliConfig) {
     super(cliConfig);
     this.client = client;
   }
@@ -55,22 +53,21 @@ public abstract class RevokeActionCommand extends AbstractAuthCommand {
       type != null ? Principal.PrincipalType.valueOf(arguments.get("principal-type")) : null;
     Principal principal = type != null ? new Principal(principalName, principalType) : null;
     String actionsString = arguments.getOptional("actions", null);
-    Set<Action> actions = actionsString == null ? null : fromStrings(Splitter.on(",").split(actionsString));
+    Set<Action> actions = actionsString == null ? null : ACTIONS_STRING_TO_SET.apply(actionsString);
 
-    client.revoke(new RevokeRequest(entity, principal, actions));
+    client.revoke(entity, principal, actions);
     if (principal == null && actions == null) {
+      // Revoked all actions for all principals on the entity
       output.printf("Successfully revoked all actions on entity '%s' for all principals", entity.toString());
     } else {
-      output.printf("Successfully revoked action(s) '%s' on entity '%s' for '%s' '%s'\n",
+      // currently, the CLI only supports 2 scenarios:
+      // 1. both actions and principal are null - supported in the if block.
+      // 2. both actions and principal are non-null - supported here. So it should be ok to have preconditions here to
+      // enforce that both are non-null. In fact, if only one of them is null, the CLI will fail to parse the command.
+      Preconditions.checkNotNull(actions, "Actions cannot be null when principal is not null in the revoke command");
+      Preconditions.checkNotNull(principal, "Principal cannot be null when actions is not null in the revoke command");
+      output.printf("Successfully revoked action(s) '%s' on entity '%s' for %s '%s'\n",
                     Joiner.on(",").join(actions), entity.toString(), principal.getType(), principal.getName());
     }
-  }
-
-  private Set<Action> fromStrings(Iterable<String> strings) {
-    Set<Action> result = new HashSet<>();
-    for (String string : strings) {
-      result.add(Action.valueOf(string));
-    }
-    return result;
   }
 }

@@ -1,0 +1,391 @@
+/*
+ * Copyright © 2015 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
+@import '../../styles/variables.less';
+@import "../../../bower_components/bootstrap/less/mixins.less";
+@import '../../styles/themes/cdap/mixins.less';
+
+body.theme-cdap {
+  &.state-hydratorplusplus {
+    margin-bottom: 50px;
+
+    &:not(.state-hydrator-create), &.state-hydrator-create-studio {
+      main.container {
+        // Offset the Hydrator navbar + top panel
+        margin-top: 110px;
+      }
+    }
+
+    main.container {
+      width: 100%;
+      padding-right: 0;
+      padding-left: 0;
+
+      & > div {
+        margin-bottom: 0
+      }
+    }
+
+    .canvas-wrapper {
+      .left-panel-wrapper {
+        .left-panel {
+          height: 100%;
+        }
+      }
+    }
+
+    my-dag-plus {
+      width: 100%;
+      // Dag-Height 60% on smaller screen
+      height: 60vh;
+      &:not(.canvas-scroll) {
+        // Subtract navbar, top panel, collapsed bottom panel and footer from total viewport height
+        height: ~"-moz-calc(100vh - 213px)";
+        height: ~"-webkit-calc(100vh - 213px)";
+        height: ~"calc(100vh - 213px)";
+      }
+      @media (min-height: 800px) {
+        height: 40vh;
+      }
+    }
+
+    .my-js-dag {
+      overflow: auto;
+    }
+
+    .zoom-control {
+      position: fixed;
+      top: 145px;
+    }
+
+    i.fa-exclamation-circle {
+      margin-left: 3px;
+      outline: none;
+    }
+
+    .fa-plus-square { color: @cdap-header; }
+    .fa-info-circle {
+      color: @brand-primary;
+    }
+
+    .fa-asterisk {
+      font-size: 9px;
+      color: @brand-danger;
+    }
+
+    fieldset.view-plugin-json {
+      textarea {
+        resize: none;
+        height: 60vh;
+      }
+    }
+
+    .col-xs-12.text-right {
+      > .btn.btn-default { margin-bottom: 20px; }
+    }
+
+    .hydrator-template-modal {
+      .modal-content {
+        .modal-content-wrapper {
+          padding: 10px;
+        }
+      }
+    }
+  }
+
+  &.state-hydrator-detail, &.state-hydratorplusplus-create {
+    .btn {
+      &.btn-orange, &.btn-grey {
+        color: white;
+      }
+      &.btn-orange {
+        background-color: @cdap-orange;
+      }
+
+      &.btn-grey {
+        background-color: #ccc;
+      }
+    }
+  }
+
+  &.state-hydrator-detail {
+    .detail-canvas-container {
+      position: relative;
+    }
+
+    my-program-history {
+      ul.pagination {
+        margin-right: 15px;
+      }
+    }
+  }
+
+  &.state-hydratorplusplus-create {
+    background-image: url('../img/grid.png');
+    height: 100%;
+  }
+
+  &.state-hydratorplusplus-create, &.state-hydrator-list, &.state-hydrator-preconfigured, &.state-hydratorplusplus-create {
+    .alerts {
+      top: 50px;
+      z-index: 1029;
+    }
+  }
+  &.state-hydrator-detail {
+    .alerts {
+      top: 120px;
+      z-index: 1028;
+    }
+  }
+
+  &.state-hydratorplusplus-create {
+    background-color: #e2e3e5;
+    main.container {
+      background-color: transparent;
+      background-image: none;
+      // Offset the Hydrator navbar
+      margin-top: 60px;
+      > div {
+        margin-bottom: 0;
+      }
+    }
+    .tiles-container {
+      background-color: white;
+      border-radius: 5px;
+
+      a:hover {
+        text-decoration: none;
+      }
+
+      .info {
+        margin-bottom: 35px;
+
+        h4 {
+          font-weight: 400;
+          font-size: 14px;
+          letter-spacing: 0.3px;
+        }
+      }
+    }
+
+    // Create start screen
+    .hydrator-start {
+      margin-top: 90px;
+    }
+    .hydrator-preconfigured {
+      margin-bottom: 50px;
+
+      .well {
+        padding: 15px;
+      }
+    }
+
+    .templates-filters {
+      .has-feedback > .form-control-feedback {
+        line-height: 32px;
+      }
+
+      .btn-group-vertical {
+        width: 100%;
+        margin: 15px 0;
+
+        button:focus {
+          background-color: #e2e3e5;
+        }
+      }
+    }
+
+    div.template-link {
+      cursor: pointer;
+      width: 100%;
+
+      p {
+        color: lighten(@btn-default-color, 15%);
+        margin-bottom: 2px;
+      }
+
+      &:hover {
+        background-color: lighten(@btn-default-color, 15%);
+        text-decoration: none;
+        .box-shadow(inset 0 0 20px 0 fade(black, 25%));
+
+        h4, p { color: white; }
+      }
+
+      hr {
+        border: 0;
+        height: 0;
+        width: 100%;
+        border-top: 1px solid fade(black, 10%);
+        border-bottom: 1px solid fade(white, 30%);
+        margin: 10px auto;
+      }
+    }
+
+    .start-well {
+      background-color: white;
+      font-weight: 500;
+      margin-right: auto;
+      margin-left: auto;
+      height: 180px;
+      width: 180px;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      .border-radius(6px);
+      h4, a {
+        font-weight: 500;
+      }
+      h4 {
+        color: @btn-default-color;
+
+        &.template-name {
+          margin-bottom: 10px;
+        }
+      }
+
+      p {
+        font-size: 12px;
+      }
+
+      &:hover {
+        background-color: lighten(@btn-default-color, 15%);
+        .box-shadow(inset 0 0 20px 0 fade(black, 25%));
+
+        h4 { color: white; }
+      }
+    }
+  }
+
+  &.state-hydrator-list {
+    main.container {
+      width: 100%;
+      padding-right: 0;
+      padding-left: 0;
+    }
+    .side-panel.top {
+      background-color: white;
+      font-weight: 500;
+      position: fixed;
+      top: 60px;
+      right: 0;
+      left: 0;
+      z-index: 1028;
+      height: 60px;
+      .box-shadow(0 7px 7px fade(black, 10%), 0 19px 59px fade(black, 25%););
+      h1 {
+        border-right: 1px solid @table-border-color;
+        display: inline-block;
+        font-size: 20px;
+        line-height: 60px;
+        margin: 0;
+        padding: 0 15px;
+      }
+      > div {
+        padding: 7px 15px;
+        span {
+          display: block;
+          &:first-child {
+            font-size: 15px;
+          }
+          &:last-child {
+            font-size: 18px;
+          }
+        }
+      }
+      ul {
+        line-height: 60px;
+        margin: 0;
+        li {
+          padding: 0 15px;
+          i {
+            font-size: 22px;
+            margin-right: 10px;
+            vertical-align: sub;
+          }
+          span {
+            font-size: 15px;
+            &:first-child {
+              padding-right: 5px;
+            }
+          }
+        }
+      }
+      a.btn-primary {
+        position: absolute;
+        right: 40px;
+        top: 35px;
+        padding: 12px 16px;
+        .border-radius(50%);
+        span.fa {
+          font-size: 24px;
+          vertical-align: middle;
+        }
+      }
+    }
+    .my-pipelines {
+      margin-top: 8px;
+      table.table {
+        background-color: white;
+
+        th, td {
+          color: @gray-dark;
+          padding-right: 15px;
+          padding-left: 15px;
+        }
+        th {
+          font-weight: 500;
+        }
+
+        td > span.status-bubble {
+          display: inline-block;
+          width: 10px;
+          height: 10px;
+          margin-right: 5px;
+          .border-radius(25px);
+          &.status-green { background-color: @brand-success; }
+          &.status-red { background-color: @brand-danger; }
+          &.status-grey { background-color: @cdap-gray; }
+        }
+
+        .delete-draft {
+          cursor: pointer;
+        }
+      }
+      .well {
+        margin-top: 10px;
+      }
+    }
+  }
+}
+
+.popover {
+  .well.metrics-popover {
+    background-color: white;
+    padding-top: 0;
+    padding-bottom: 5px;
+
+    h5 {
+      margin-top: 15px;
+      font-weight: 600;
+    }
+
+    p {
+      color: #397cf1;
+    }
+  }
+}

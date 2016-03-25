@@ -18,13 +18,10 @@ package co.cask.cdap;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.twill.LocalLocationFactory;
 import co.cask.cdap.common.utils.Networks;
 import co.cask.cdap.common.utils.Tasks;
-import co.cask.cdap.gateway.handlers.InMemoryAuthorizer;
-import co.cask.cdap.internal.test.AppJarHelper;
+import com.google.common.base.Preconditions;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.twill.filesystem.Location;
 import org.junit.rules.ExternalResource;
 import org.junit.rules.TemporaryFolder;
 import org.slf4j.Logger;
@@ -35,6 +32,7 @@ import java.net.InetAddress;
 import java.net.URI;
 import java.net.URL;
 import java.net.UnknownHostException;
+import java.util.Arrays;
 import java.util.Objects;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
@@ -47,10 +45,14 @@ public class StandaloneTester extends ExternalResource {
   private static final Logger LOG = LoggerFactory.getLogger(StandaloneTester.class);
 
   private final TemporaryFolder tmpFolder = new TemporaryFolder();
+  private final Object [] configs;
   private CConfiguration cConf;
   private StandaloneMain standaloneMain;
 
-  public StandaloneTester() {
+  public StandaloneTester(Object ... configs) {
+    Preconditions.checkArgument(configs.length % 2 == 0,
+                                "Arguments must be in pair form like (k1, v1, k2, v2): %s", Arrays.toString(configs));
+    this.configs = configs;
   }
 
   @Override
@@ -66,10 +68,10 @@ public class StandaloneTester extends ExternalResource {
     cConf.setBoolean(Constants.Explore.EXPLORE_ENABLED, true);
     cConf.setBoolean(Constants.Explore.START_ON_DEMAND, true);
     cConf.setBoolean(StandaloneMain.DISABLE_UI, true);
-    cConf.setBoolean(Constants.Security.Authorization.ENABLED, true);
-    Location authExtensionJar = AppJarHelper.createDeploymentJar(new LocalLocationFactory(tmpFolder.newFolder()),
-                                                             InMemoryAuthorizer.class);
-    cConf.set(Constants.Security.Authorization.EXTENSION_JAR_PATH, authExtensionJar.toURI().getPath());
+
+    for (int i = 0; i < configs.length; i += 2) {
+      cConf.set(configs[i].toString(), configs[i + 1].toString());
+    }
     this.cConf = cConf;
 
     // Start standalone

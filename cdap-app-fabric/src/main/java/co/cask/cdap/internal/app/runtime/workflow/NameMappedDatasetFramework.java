@@ -13,6 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package co.cask.cdap.internal.app.runtime.workflow;
 
 import co.cask.cdap.api.app.ApplicationSpecification;
@@ -24,6 +25,7 @@ import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.data2.datafabric.dataset.type.DatasetClassLoaderProvider;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.ForwardingProgramContextAwareDatasetFramework;
+import co.cask.cdap.data2.metadata.lineage.AccessType;
 import co.cask.cdap.proto.Id;
 import com.google.common.base.Function;
 
@@ -48,8 +50,8 @@ public class NameMappedDatasetFramework extends ForwardingProgramContextAwareDat
   public static NameMappedDatasetFramework createFromWorkflowProgramInfo(DatasetFramework datasetFramework,
                                                                          WorkflowProgramInfo info,
                                                                          ApplicationSpecification appSpec) {
-    Set<String> localDatasets = appSpec.getWorkflows().get(info.getWorkflowName()).getLocalDatasetSpecs().keySet();
-    return new NameMappedDatasetFramework(datasetFramework, localDatasets, info.getWorkflowRunId().getId());
+    Set<String> localDatasets = appSpec.getWorkflows().get(info.getName()).getLocalDatasetSpecs().keySet();
+    return new NameMappedDatasetFramework(datasetFramework, localDatasets, info.getRunId().getId());
   }
 
   /**
@@ -151,7 +153,23 @@ public class NameMappedDatasetFramework extends ForwardingProgramContextAwareDat
                                           @Nullable Iterable<? extends Id> owners)
     throws DatasetManagementException, IOException {
     return super.getDataset(getMappedDatasetInstance(datasetInstanceId), arguments, classLoader,
-                               classLoaderProvider, owners);
+                            classLoaderProvider, owners);
+  }
+
+  @Nullable
+  @Override
+  public <T extends Dataset> T getDataset(Id.DatasetInstance datasetInstanceId, @Nullable Map<String, String> arguments,
+                                          @Nullable ClassLoader classLoader,
+                                          DatasetClassLoaderProvider classLoaderProvider,
+                                          @Nullable Iterable<? extends Id> owners, AccessType accessType)
+    throws DatasetManagementException, IOException {
+    return super.getDataset(getMappedDatasetInstance(datasetInstanceId),
+                            arguments, classLoader, classLoaderProvider, owners, accessType);
+  }
+
+  @Override
+  public void writeLineage(Id.DatasetInstance datasetInstanceId, AccessType accessType) {
+    super.writeLineage(getMappedDatasetInstance(datasetInstanceId), accessType);
   }
 
   private Id.DatasetInstance getMappedDatasetInstance(Id.DatasetInstance datasetInstanceId) {

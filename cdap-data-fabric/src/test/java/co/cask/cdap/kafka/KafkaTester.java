@@ -24,9 +24,11 @@ import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.KafkaClientModule;
 import co.cask.cdap.common.guice.ZKClientModule;
 import co.cask.cdap.common.utils.Tasks;
+import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.gson.Gson;
 import com.google.inject.Guice;
@@ -51,12 +53,12 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.net.InetAddress;
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -248,17 +250,39 @@ public class KafkaTester extends ExternalResource {
    */
   public <T> List<T> getPublishedMessages(String topic, int expectedNumMsgs, final Type typeOfT,
                                           final Gson gson, int offset) throws InterruptedException {
+    return getPublishedMessages(topic, ImmutableSet.of(0), expectedNumMsgs, offset, new Function<FetchedMessage, T>() {
+      @Override
+      public T apply(FetchedMessage input) {
+        return gson.fromJson(Bytes.toString(input.getPayload()), typeOfT);
+      }
+    });
+  }
+
+  /**
+   * Return a list of messages from the specified Kafka topic.
+   *
+   * @param topic the specified Kafka topic
+   * @param expectedNumMsgs the expected number of messages
+   * @param offset the Kafka offset
+   * @param converter converter function to convert payload bytebuffer into type T
+   * @param <T> the type of each message
+   * @return a list of messages from the specified Kafka topic
+   */
+  public <T> List<T> getPublishedMessages(String topic, Set<Integer> partitions, int expectedNumMsgs, int offset,
+                                          final Function<FetchedMessage, T> converter) throws InterruptedException {
     final CountDownLatch latch = new CountDownLatch(expectedNumMsgs);
     final CountDownLatch stopLatch = new CountDownLatch(1);
     final List<T> actual = new ArrayList<>(expectedNumMsgs);
-    Cancellable cancellable = kafkaClient.getConsumer().prepare().add(topic, 0, offset).consume(
+    KafkaConsumer.Preparer preparer = kafkaClient.getConsumer().prepare();
+    for (int partition : partitions) {
+      preparer.add(topic, partition, offset);
+    }
+    Cancellable cancellable = preparer.consume(
       new KafkaConsumer.MessageCallback() {
         @Override
         public void onReceived(Iterator<FetchedMessage> messages) {
           while (messages.hasNext()) {
-            ByteBuffer payload = messages.next().getPayload();
-            T record = gson.fromJson(Bytes.toString(payload), typeOfT);
-            actual.add(record);
+            actual.add(converter.apply(messages.next()));
             latch.countDown();
           }
         }

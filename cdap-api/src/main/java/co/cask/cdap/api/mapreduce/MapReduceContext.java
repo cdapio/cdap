@@ -30,6 +30,7 @@ import co.cask.cdap.api.data.stream.StreamBatchReadable;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.plugin.PluginContext;
 import co.cask.cdap.api.workflow.Workflow;
+import co.cask.cdap.api.workflow.WorkflowInfo;
 import co.cask.cdap.api.workflow.WorkflowToken;
 
 import java.util.List;
@@ -231,4 +232,11 @@ public interface MapReduceContext
    */
   @Nullable
   WorkflowToken getWorkflowToken();
+
+  /**
+   * @return information about the enclosing {@link Workflow} run, if this {@link MapReduce} program is executed
+   * as a part of the Workflow; returns {@code null} otherwise.
+   */
+  @Nullable
+  WorkflowInfo getWorkflowInfo();
 }

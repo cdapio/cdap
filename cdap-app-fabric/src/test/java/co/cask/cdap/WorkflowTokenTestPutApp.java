@@ -25,6 +25,7 @@ import co.cask.cdap.api.spark.JavaSparkProgram;
 import co.cask.cdap.api.spark.SparkContext;
 import co.cask.cdap.api.workflow.AbstractWorkflow;
 import co.cask.cdap.api.workflow.Value;
+import co.cask.cdap.api.workflow.WorkflowInfo;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterables;
@@ -48,6 +49,7 @@ import java.util.Map;
 
 /**
  * App to test the put operation on the WorkflowToken through map and reduce methods.
+ * Also used to test the workflow run id in MapReduce programs that run inside the workflow.
  */
 public class WorkflowTokenTestPutApp extends AbstractApplication {
   public static final String NAME = "WorkflowTokenTestPutApp";
@@ -100,12 +102,22 @@ public class WorkflowTokenTestPutApp extends AbstractApplication {
       }
       workflowToken.put("action.type", "MapReduce");
       workflowToken.put("start.time", Value.of(System.currentTimeMillis()));
+
+      WorkflowInfo workflowInfo = context.getWorkflowInfo();
+      Preconditions.checkNotNull(workflowInfo);
+      workflowToken.put("wf.runid", workflowInfo.getRunId().getId());
     }
 
     @Override
     public void onFinish(boolean succeeded, MapReduceContext context) throws Exception {
       WorkflowToken workflowToken = context.getWorkflowToken();
       workflowToken.put("end.time", Value.of(System.currentTimeMillis()));
+
+      WorkflowInfo workflowInfo = context.getWorkflowInfo();
+      Preconditions.checkNotNull(workflowInfo);
+      Preconditions.checkArgument(workflowInfo.getRunId().getId()
+                                    .equals(workflowToken.get("wf.runid").toString()));
+
     }
   }
 
@@ -123,17 +135,26 @@ public class WorkflowTokenTestPutApp extends AbstractApplication {
       workflowToken = context.getWorkflowToken();
       Preconditions.checkNotNull(workflowToken, "WorkflowToken cannot be null.");
       Preconditions.checkArgument(workflowToken.get("action.type").toString().equals("MapReduce"));
-      arguments = context.getRuntimeArguments();
-      if (arguments.containsKey("put.in.mapper.initialize")) {
+      WorkflowInfo workflowInfo = context.getWorkflowInfo();
+      Preconditions.checkNotNull(workflowInfo);
+      Preconditions.checkArgument(workflowInfo.getRunId().toString()
+                                    .equals(workflowToken.get("wf.runid").toString()));
+      try {
         workflowToken.put("mapper.initialize.key", "mapper.initialize.value");
+        throw new IllegalStateException("Expected exception from workflowToken.put() in Mapper.initialize()");
+      } catch (UnsupportedOperationException e) {
+        //expected
       }
     }
 
     public void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
       Preconditions.checkArgument(workflowToken.get("action.type").toString().equals("MapReduce"));
 
-      if (arguments.containsKey("put.in.map")) {
+      try {
         workflowToken.put("map.key", "map.value");
+        throw new IllegalStateException("Expected exception from workflowToken.put() in Mapper.map()");
+      } catch (UnsupportedOperationException e) {
+        //expected
       }
 
       String[] fields = value.toString().split(":");
@@ -160,18 +181,28 @@ public class WorkflowTokenTestPutApp extends AbstractApplication {
       workflowToken = context.getWorkflowToken();
       Preconditions.checkNotNull(workflowToken, "WorkflowToken cannot be null.");
       Preconditions.checkArgument(workflowToken.get("action.type").toString().equals("MapReduce"));
-      arguments = context.getRuntimeArguments();
-      if (arguments.containsKey("put.in.reducer.initialize")) {
+      WorkflowInfo workflowInfo = context.getWorkflowInfo();
+      Preconditions.checkNotNull(workflowInfo);
+      Preconditions.checkArgument(workflowInfo.getRunId().toString()
+                                    .equals(workflowToken.get("wf.runid").toString()));
+      try {
         workflowToken.put("reducer.initialize.key", "reducer.initialize.value");
+        throw new IllegalStateException("Expected exception from workflowToken.put() in Reducer.initialize()");
+      } catch (UnsupportedOperationException e) {
+        //expected
       }
     }
 
     public void reduce(Text key, Iterable<Text> value, Context context) throws IOException, InterruptedException {
       Preconditions.checkArgument(workflowToken.get("action.type").toString().equals("MapReduce"));
 
-      if (arguments.containsKey("put.in.reduce")) {
+      try {
         workflowToken.put("reduce.key", "reduce.value");
+        throw new IllegalStateException("Expected exception from workflowToken.put() in Reducer.reduce()");
+      } catch (UnsupportedOperationException e) {
+        //expected
       }
+
       context.write(key, new IntWritable(Iterables.size(value)));
     }
 
@@ -205,13 +236,15 @@ public class WorkflowTokenTestPutApp extends AbstractApplication {
         workflowToken.put("multiplier", "2");
       }
 
-      final boolean closurePutToken = context.getRuntimeArguments().containsKey("closurePutToken");
       JavaRDD<Integer> distData = ((JavaSparkContext) context.getOriginalSparkContext()).parallelize(data);
       JavaRDD<Integer> mapData = distData.map(new Function<Integer, Integer>() {
         @Override
         public Integer call(Integer val) throws Exception {
-          if (closurePutToken) {
+          try {
             workflowToken.put("some.key", "some.value");
+            throw new IllegalStateException("Expected exception from workflowToken.put() in Spark closure");
+          } catch (UnsupportedOperationException e) {
+            //expected
           }
 
           if (workflowToken.get("multiplier") != null) {

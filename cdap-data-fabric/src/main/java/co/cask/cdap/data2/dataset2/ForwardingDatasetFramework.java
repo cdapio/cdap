@@ -13,6 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package co.cask.cdap.data2.dataset2;
 
 import co.cask.cdap.api.dataset.Dataset;
@@ -22,6 +23,7 @@ import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.data2.datafabric.dataset.type.DatasetClassLoaderProvider;
+import co.cask.cdap.data2.metadata.lineage.AccessType;
 import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.Id;
 import org.apache.twill.filesystem.Location;
@@ -157,6 +159,21 @@ public class ForwardingDatasetFramework implements DatasetFramework {
                                           @Nullable Iterable<? extends Id> owners)
     throws DatasetManagementException, IOException {
     return delegate.getDataset(datasetInstanceId, arguments, classLoader, classLoaderProvider, owners);
+  }
+
+  @Nullable
+  @Override
+  public <T extends Dataset> T getDataset(Id.DatasetInstance datasetInstanceId, @Nullable Map<String, String> arguments,
+                                          @Nullable ClassLoader classLoader,
+                                          DatasetClassLoaderProvider classLoaderProvider,
+                                          @Nullable Iterable<? extends Id> owners, AccessType accessType)
+    throws DatasetManagementException, IOException {
+    return delegate.getDataset(datasetInstanceId, arguments, classLoader, classLoaderProvider, owners, accessType);
+  }
+
+  @Override
+  public void writeLineage(Id.DatasetInstance datasetInstanceId, AccessType accessType) {
+    delegate.writeLineage(datasetInstanceId, accessType);
   }
 
   @Override

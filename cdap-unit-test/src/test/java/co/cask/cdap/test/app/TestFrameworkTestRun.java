@@ -41,6 +41,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.proto.WorkflowTokenDetail;
@@ -122,7 +123,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
 
   @Before
   public void setUp() throws Exception {
-    createNamespace(testSpace);
+    getNamespaceAdmin().create(new NamespaceMeta.Builder().setName(testSpace).build());
   }
 
   @Test
@@ -514,8 +515,8 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     throws Exception {
     WorkflowManager wfManager = applicationManager.getWorkflowManager(WorkflowAppWithLocalDatasets.WORKFLOW_NAME);
     Map<String, String> runtimeArgs = new HashMap<>();
-    File waitFile = new File(tmpFolder.newFolder(), "/wait.file");
-    File doneFile = new File(tmpFolder.newFolder(), "/done.file");
+    File waitFile = new File(TMP_FOLDER.newFolder(), "/wait.file");
+    File doneFile = new File(TMP_FOLDER.newFolder(), "/done.file");
 
     runtimeArgs.put("input.path", "input");
     runtimeArgs.put("output.path", "output");

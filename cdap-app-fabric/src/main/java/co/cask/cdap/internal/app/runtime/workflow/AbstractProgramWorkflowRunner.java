@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -27,6 +27,7 @@ import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.app.runtime.ProgramRunnerFactory;
+import co.cask.cdap.app.runtime.WorkflowTokenProvider;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.internal.app.runtime.AbstractListener;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
@@ -49,13 +50,15 @@ import java.util.concurrent.ExecutionException;
  * <p>
  * Programs that extend this class (such as {@link MapReduceProgramWorkflowRunner} or
  * {@link SparkProgramWorkflowRunner}) can execute their associated programs through the
- * {@link AbstractProgramWorkflowRunner#executeProgram} by providing the {@link ProgramController} and
+ * {@link AbstractProgramWorkflowRunner#blockForCompletion} by providing the {@link ProgramController} and
  * {@link RuntimeContext} that they obtained through the {@link ProgramRunner}.
  * </p>
  * The {@link RuntimeContext} is blocked until completion of the associated program.
  */
 public abstract class AbstractProgramWorkflowRunner implements ProgramWorkflowRunner {
+
   private static final Gson GSON = new Gson();
+
   private final Arguments userArguments;
   private final Arguments systemArguments;
   private final String nodeId;
@@ -75,12 +78,6 @@ public abstract class AbstractProgramWorkflowRunner implements ProgramWorkflowRu
     this.token = token;
     this.nodeId = nodeId;
   }
-
-  @Override
-  public abstract Runnable create(String name);
-
-  @Override
-  public abstract void runAndWait(Program program, ProgramOptions options) throws Exception;
 
   /**
    * Gets a {@link Runnable} for the {@link Program}.
@@ -122,27 +119,36 @@ public abstract class AbstractProgramWorkflowRunner implements ProgramWorkflowRu
     };
   }
 
+  private void runAndWait(Program program, ProgramOptions options) throws Exception {
+    ProgramController controller = programRunnerFactory.create(program.getType()).run(program, options);
+    blockForCompletion(controller);
+
+    if (controller instanceof WorkflowTokenProvider) {
+      updateWorkflowToken(((WorkflowTokenProvider) controller).getWorkflowToken());
+    } else {
+      // This shouldn't happen
+      throw new IllegalStateException("No WorkflowToken available after program completed: " + program.getId());
+    }
+  }
+
   /**
    * Adds a listener to the {@link ProgramController} and blocks for completion.
    *
    * @param controller the {@link ProgramController} for the program
-   * @param context    the {@link RuntimeContext}
-   * @return {@link RuntimeContext} of the completed program
    * @throws Exception if the execution failed
    */
-  protected RuntimeContext executeProgram(final ProgramController controller,
-                                          final RuntimeContext context) throws Exception {
+  private void blockForCompletion(ProgramController controller) throws Exception {
     // Execute the program.
-    final SettableFuture<RuntimeContext> completion = SettableFuture.create();
+    final SettableFuture<Void> completion = SettableFuture.create();
     controller.addListener(new AbstractListener() {
       @Override
       public void completed() {
-        completion.set(context);
+        completion.set(null);
       }
 
       @Override
       public void killed() {
-        completion.set(context);
+        completion.set(null);
       }
 
       @Override
@@ -153,7 +159,7 @@ public abstract class AbstractProgramWorkflowRunner implements ProgramWorkflowRu
 
     // Block for completion.
     try {
-      return completion.get();
+      completion.get();
     } catch (ExecutionException e) {
       Throwable cause = e.getCause();
       if (cause instanceof Exception) {
@@ -168,7 +174,10 @@ public abstract class AbstractProgramWorkflowRunner implements ProgramWorkflowRu
       }
       // reset the interrupt
       Thread.currentThread().interrupt();
-      return null;
     }
+  }
+
+  private void updateWorkflowToken(WorkflowToken workflowToken) throws Exception {
+    ((BasicWorkflowToken) token).mergeToken(workflowToken);
   }
 }

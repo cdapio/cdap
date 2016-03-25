@@ -26,6 +26,8 @@
   <modelVersion>4.0.0</modelVersion>
 
   <artifactId>cdap-security-spi</artifactId>
+  <name>CDAP Security SPI</name>
+  <packaging>jar</packaging>
 
   <dependencies>
     <dependency>

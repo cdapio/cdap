@@ -512,9 +512,10 @@ public class MetadataDataset extends AbstractDataset {
    * @param namespaceId the namespace to search in
    * @param searchQuery the search query, which could be of two forms: [key]:[value] or just [value] and can have '*'
    *                    at the end for a prefix search
-   * @param type the {@link MetadataSearchTargetType} to restrict the search to.
+   * @param types the {@link MetadataSearchTargetType} to restrict the search to, if empty all types are searched
    */
-  public List<MetadataEntry> search(String namespaceId, String searchQuery, MetadataSearchTargetType type) {
+  public List<MetadataEntry> search(String namespaceId, String searchQuery, Set<MetadataSearchTargetType> types) {
+    boolean includeAllTypes = types.isEmpty() || types.contains(MetadataSearchTargetType.ALL);
     List<MetadataEntry> results = new ArrayList<>();
     for (String searchTerm : getSearchTerms(namespaceId, searchQuery)) {
       Scanner scanner;
@@ -538,9 +539,9 @@ public class MetadataDataset extends AbstractDataset {
           final byte[] rowKey = next.getRow();
           String targetType = MdsKey.getTargetType(rowKey);
 
-          // Filter on target type if not ALL
-          if ((type != MetadataSearchTargetType.ALL) &&
-            (type != MetadataSearchTargetType.valueOfSerializedForm(targetType))) {
+          // Filter on target type if not set to include all types
+          if (!includeAllTypes &&
+            !types.contains(MetadataSearchTargetType.valueOfSerializedForm(targetType))) {
             continue;
           }
 

@@ -148,10 +148,6 @@ public class ConnectorDag extends Dag {
       nodeSources.put(source, source);
     }
     for (String node : getTopologicalOrder()) {
-      if (sinks.contains(node)) {
-        continue;
-      }
-
       Set<String> connectedSources = nodeSources.get(node);
       /*
           If this node is a connector, replace all sources for this node with itself, since a connector is a source

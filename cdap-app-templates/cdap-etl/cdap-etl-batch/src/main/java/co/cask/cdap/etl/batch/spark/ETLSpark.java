@@ -27,7 +27,10 @@ import co.cask.cdap.etl.batch.Finisher;
 import co.cask.cdap.etl.batch.PipelinePluginInstantiator;
 import co.cask.cdap.etl.common.Constants;
 import co.cask.cdap.etl.common.DatasetContextLookupProvider;
+import co.cask.cdap.etl.common.SetMultimapCodec;
+import com.google.common.collect.SetMultimap;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,7 +47,8 @@ import java.util.Map;
  */
 public class ETLSpark extends AbstractSpark {
   private static final Logger LOG = LoggerFactory.getLogger(ETLSpark.class);
-  private static final Gson GSON = new Gson();
+  private static final Gson GSON = new GsonBuilder()
+    .registerTypeAdapter(SetMultimap.class, new SetMultimapCodec<>()).create();
 
   private final BatchPhaseSpec phaseSpec;
   private Finisher finisher;
