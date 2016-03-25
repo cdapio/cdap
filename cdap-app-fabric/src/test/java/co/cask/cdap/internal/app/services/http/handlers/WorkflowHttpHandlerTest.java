@@ -460,6 +460,7 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
   }
 
   private void verifyMultipleConcurrentRuns(Id.Program workflowId) throws Exception {
+    verifyProgramRuns(workflowId, ProgramRunStatus.RUNNING.name(), 1);
     List<RunRecord> historyRuns = getProgramRuns(workflowId, "running");
     Assert.assertEquals(2, historyRuns.size());
 
