@@ -295,18 +295,34 @@ body.theme-cdap.state-hydratorplusplus-create {
   .my-cdap-popover {
     padding: 0;
     outline: none;
+    border-radius: 0;
 
+    .arrow {
+      border-right-color: black;
+
+      &:after {
+        border-right-color: black;
+      }
+    }
     &:focus { outline: none; }
 
     .popover-content {
       padding: 5px;
+      background: black;
+
       .list-group {
         margin: 0;
         .list-group-item {
           padding: 4px 4px;
           border: 0;
+          background: black;
+          color: white;
           h5,h6 {
             margin:0;
+            font-weight: bold;
+            a {
+              text-decoration: none;
+            }
           }
         }
       }
