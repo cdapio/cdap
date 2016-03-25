@@ -22,7 +22,7 @@
   <div class="groups-container">
     <div class="item"
           ng-repeat="group in MySidePanel.groups"
-          ng-click="MySidePanel.openedGroup = group.name "
+          ng-click="MySidePanel.openedGroup = group.name"
           ng-style="MySidePanel.openedGroup === group.name && {height: MySidePanel.groupWrapperHeight}"
           ng-class="{'item-open': MySidePanel.openedGroup === group.name }">
       <div class="text-left item-heading {{group.name}}" >
@@ -32,7 +32,6 @@
         </div>
       </div>
       <div class="item-body-wrapper"
-
            ng-show="MySidePanel.openedGroup === null || MySidePanel.openedGroup === group.name">
         <div class="item-body">
           <div ng-repeat="plugin in group.filtered = (group.plugins | filter: {name: MySidePanel.searchText}) track by $index"

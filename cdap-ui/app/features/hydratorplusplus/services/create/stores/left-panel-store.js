@@ -79,7 +79,7 @@ class HydratorPlusPlusLeftPanelStore {
           this.state.defaultArtifactMap = res;
           return this.$q.resolve;
         })
-        .then($timeout(this.cleanupNonExistantPlugins.bind(this), 10000));
+        .then($timeout(this.cleanupNonExistentPlugins.bind(this), 10000));
 
     let hydratorPlusPlusPluginsDispatcher = HydratorPlusPlusPluginsDispatcher.getDispatcher();
 
@@ -183,7 +183,7 @@ class HydratorPlusPlusLeftPanelStore {
       return false;
     })[0];
   }
-  cleanupNonExistantPlugins() {
+  cleanupNonExistentPlugins() {
     let defaultVersionsMap = angular.copy(this.state.defaultArtifactMap);
     let defaultVersionChange = [];
     this.getExtensions()

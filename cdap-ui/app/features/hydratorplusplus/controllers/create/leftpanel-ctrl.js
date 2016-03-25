@@ -49,11 +49,7 @@ class HydratorPlusPlusLeftPanelCtrl {
       scope: this.$scope
     });
 
-    // console.log('setting: ', this.selectedArtifact);
-    // this.fetchPlugins();
     this.HydratorPlusPlusLeftPanelStore.registerOnChangeListener(() => {
-
-
       let extensions = this.HydratorPlusPlusLeftPanelStore.getExtensions();
       if (!angular.isArray(extensions)) {
         return;
@@ -102,8 +98,6 @@ class HydratorPlusPlusLeftPanelCtrl {
               });
         }
       });
-
-
     });
     this.$uibModal = $uibModal;
   }
