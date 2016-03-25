@@ -31,6 +31,7 @@ function LineageController ($scope, jsPlumb, $timeout, $state, LineageStore, myT
     if (vm.nodes.length === 0) { return; }
 
     vm.graphInfo = vm.graph.graph();
+    vm.graphInfo.width = vm.graphInfo.width < 920 ? 920 : vm.graphInfo.width;
 
     $timeout( () => {
       angular.forEach(vm.connections, (conn) => {
@@ -180,7 +181,7 @@ function LineageLink(scope, elem) {
       return {
         scale: 1,
         padX: (parentContainerWidth - graph.width) / 2 + 'px',
-        padY: '-100px' // 100 is to offset the marginY from dagre
+        padY: 0
       };
     } else {
       let scale = parentContainerWidth / graph.width;
@@ -188,7 +189,7 @@ function LineageLink(scope, elem) {
       return {
         scale: scale,
         padX: ((graph.width * scale) - graph.width) / 2 + 'px',
-        padY: (((graph.height * scale) - graph.height) / 2) - 100 + 'px'
+        padY: (((graph.height * scale) - graph.height) / 2) + 'px'
       };
     }
   };

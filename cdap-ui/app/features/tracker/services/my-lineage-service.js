@@ -283,8 +283,8 @@ class myLineageService {
       nodesep: 50,
       ranksep: 90,
       rankdir: 'LR',
-      marginx: 70,
-      marginy: 130
+      marginx: 100,
+      marginy: 50
     });
     graph.setDefaultEdgeLabel(function() { return {}; });
 
@@ -305,7 +305,7 @@ class myLineageService {
   mapNodesLocation(nodes, graph) {
     angular.forEach(nodes, (node) => {
       node._uiLocation = {
-        top: graph._nodes[node.dataId].y - 30 + 'px', // 30 = half of node height
+        top: graph._nodes[node.dataId].y - 20 + 'px', // 30 = half of node height
         left: graph._nodes[node.dataId].x - 90 + 'px' // 90 = half of node width
       };
     });
