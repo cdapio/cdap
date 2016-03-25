@@ -47,17 +47,17 @@ public class PipelineSpecGenerator {
   private final PluginConfigurer configurer;
   private final Class<? extends Dataset> errorDatasetClass;
   private final DatasetProperties errorDatasetProperties;
-  private final String sourcePluginType;
-  private final String sinkPluginType;
+  private final Set<String> sourcePluginTypes;
+  private final Set<String> sinkPluginTypes;
 
   public PipelineSpecGenerator(PluginConfigurer configurer,
-                               String sourcePluginType,
-                               String sinkPluginType,
+                               Set<String> sourcePluginTypes,
+                               Set<String> sinkPluginTypes,
                                Class<? extends Dataset> errorDatasetClass,
                                DatasetProperties errorDatasetProperties) {
     this.configurer = configurer;
-    this.sourcePluginType = sourcePluginType;
-    this.sinkPluginType = sinkPluginType;
+    this.sourcePluginTypes = sourcePluginTypes;
+    this.sinkPluginTypes = sinkPluginTypes;
     this.errorDatasetClass = errorDatasetClass;
     this.errorDatasetProperties = errorDatasetProperties;
   }
@@ -218,13 +218,13 @@ public class PipelineSpecGenerator {
       Set<String> stageInputs = dag.getNodeInputs(stageName);
       Set<String> stageOutputs = dag.getNodeOutputs(stageName);
 
-      if (sourcePluginType.equals(stage.getPlugin().getType())) {
+      if (isSource(stage.getPlugin().getType())) {
         if (!stageInputs.isEmpty()) {
           throw new IllegalArgumentException(
             String.format("Source %s has incoming connections from %s. Sources cannot have any incoming connections.",
                           stageName, Joiner.on(',').join(stageInputs)));
         }
-      } else if (sinkPluginType.equals(stage.getPlugin().getType())) {
+      } else if (isSink(stage.getPlugin().getType())) {
         if (!stageOutputs.isEmpty()) {
           throw new IllegalArgumentException(
             String.format("Sink %s has outgoing connections to %s. Sinks cannot have any outgoing connections.",
@@ -249,5 +249,13 @@ public class PipelineSpecGenerator {
     }
 
     return traversalOrder;
+  }
+
+  private boolean isSource(String pluginType) {
+    return sourcePluginTypes.contains(pluginType);
+  }
+
+  private boolean isSink(String pluginType) {
+    return sinkPluginTypes.contains(pluginType);
   }
 }

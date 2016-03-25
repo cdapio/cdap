@@ -153,7 +153,8 @@ public class DefaultPluginConfigurer extends DefaultDatasetConfigurer implements
                             PluginProperties properties, PluginSelector selector)
     throws PluginNotExistsException, ArtifactNotFoundException {
     Preconditions.checkArgument(!plugins.containsKey(pluginId),
-                                "Plugin of type %s, name %s was already added.", pluginType, pluginName);
+                                "Plugin of type %s, name %s was already added as id %s.",
+                                pluginType, pluginName, pluginId);
     return FindPluginHelper.findPlugin(artifactRepository, pluginInstantiator, deployNamespace.toEntityId(), artifactId,
                                        pluginType, pluginName, properties, selector);
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,6 +21,7 @@ import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.plugin.PluginContext;
 import co.cask.cdap.api.spark.JavaSparkProgram;
 import co.cask.cdap.api.spark.SparkContext;
+import co.cask.cdap.etl.api.batch.SparkSink;
 import co.cask.cdap.etl.batch.BatchPhaseSpec;
 import co.cask.cdap.etl.batch.PipelinePluginInstantiator;
 import co.cask.cdap.etl.batch.TransformExecutorFactory;
@@ -28,10 +29,12 @@ import co.cask.cdap.etl.common.Constants;
 import co.cask.cdap.etl.common.SetMultimapCodec;
 import co.cask.cdap.etl.common.TransformExecutor;
 import co.cask.cdap.etl.common.TransformResponse;
+import co.cask.cdap.etl.planner.StageInfo;
 import com.google.common.collect.SetMultimap;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.apache.spark.api.java.JavaPairRDD;
+import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.Function;
 import org.apache.spark.api.java.function.PairFlatMapFunction;
 import org.slf4j.Logger;
@@ -42,8 +45,10 @@ import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Spark program to run an ETL pipeline.
@@ -70,25 +75,48 @@ public class ETLSparkProgram implements JavaSparkProgram {
 
     BatchPhaseSpec phaseSpec = GSON.fromJson(context.getSpecification().getProperty(Constants.PIPELINEID),
                                              BatchPhaseSpec.class);
+
+    Set<StageInfo> stagesOfTypeMLLib = phaseSpec.getPhase().getStagesOfType(SparkSink.PLUGIN_TYPE);
+    Set<String> namesOfTypeMLLib = new HashSet<>();
+
+    for (StageInfo stageInfo : stagesOfTypeMLLib) {
+      namesOfTypeMLLib.add(stageInfo.getName());
+    }
+
     for (final String sinkName : phaseSpec.getPhase().getSinks()) {
 
-      JavaPairRDD<Object, Object> sinkRDD = resultRDD
-        .filter(new Function<Tuple2<String, Object>, Boolean>() {
+      JavaPairRDD<String, Object> filteredResultRDD = resultRDD.filter(new Function<Tuple2<String, Object>, Boolean>() {
+        @Override
+        public Boolean call(Tuple2<String, Object> v1) throws Exception {
+          return v1._1().equals(sinkName);
+        }
+      });
+
+      if (namesOfTypeMLLib.contains(sinkName)) {
+        JavaRDD<Object> values = filteredResultRDD.map(new Function<Tuple2<String, Object>, Object>() {
           @Override
-          public Boolean call(Tuple2<String, Object> v1) throws Exception {
-            return v1._1().equals(sinkName);
-          }
-        })
-        .flatMapToPair(new PairFlatMapFunction<Tuple2<String, Object>, Object, Object>() {
-          @Override
-          public Iterable<Tuple2<Object, Object>> call(Tuple2<String, Object> input) throws Exception {
-            List<Tuple2<Object, Object>> result = new ArrayList<>();
-            KeyValue<Object, Object> keyValue = (KeyValue<Object, Object>) input._2();
-            result.add(new Tuple2<>(keyValue.getKey(), keyValue.getValue()));
-            return result;
+          public Object call(Tuple2<String, Object> input) throws Exception {
+            return input._2();
           }
         });
-      sinkFactory.writeFromRDD(sinkRDD, context, sinkName, Object.class, Object.class);
+
+        SparkSink sparkSink = context.getPluginContext().newPluginInstance(sinkName);
+        BasicSparkPluginContext sparkPluginContext = new BasicSparkPluginContext(context, null, sinkName);
+        sparkSink.run(sparkPluginContext, values);
+      } else {
+
+        JavaPairRDD<Object, Object> sinkRDD =
+          filteredResultRDD.flatMapToPair(new PairFlatMapFunction<Tuple2<String, Object>, Object, Object>() {
+            @Override
+            public Iterable<Tuple2<Object, Object>> call(Tuple2<String, Object> input) throws Exception {
+              List<Tuple2<Object, Object>> result = new ArrayList<>();
+              KeyValue<Object, Object> keyValue = (KeyValue<Object, Object>) input._2();
+              result.add(new Tuple2<>(keyValue.getKey(), keyValue.getValue()));
+              return result;
+            }
+          });
+        sinkFactory.writeFromRDD(sinkRDD, context, sinkName, Object.class, Object.class);
+      }
     }
   }
 
@@ -133,6 +161,7 @@ public class ETLSparkProgram implements JavaSparkProgram {
           result.add(new Tuple2<>(sinkName, outputRecord));
         }
       }
+      transformExecutor.resetEmitter();
       return result;
     }
 

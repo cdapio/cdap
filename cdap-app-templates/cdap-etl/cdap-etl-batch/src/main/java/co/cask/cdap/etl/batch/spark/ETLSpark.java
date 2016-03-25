@@ -21,6 +21,7 @@ import co.cask.cdap.api.spark.SparkContext;
 import co.cask.cdap.etl.api.batch.BatchConfigurable;
 import co.cask.cdap.etl.api.batch.BatchSinkContext;
 import co.cask.cdap.etl.api.batch.BatchSourceContext;
+import co.cask.cdap.etl.api.batch.SparkSink;
 import co.cask.cdap.etl.batch.BatchPhaseSpec;
 import co.cask.cdap.etl.batch.CompositeFinisher;
 import co.cask.cdap.etl.batch.Finisher;
@@ -93,8 +94,9 @@ public class ETLSpark extends AbstractSpark {
     String sourceName = phaseSpec.getPhase().getSources().iterator().next();
 
     BatchConfigurable<BatchSourceContext> batchSource = pluginInstantiator.newPluginInstance(sourceName);
+    DatasetContextLookupProvider lookProvider = new DatasetContextLookupProvider(context);
     SparkBatchSourceContext sourceContext = new SparkBatchSourceContext(context,
-                                                                        new DatasetContextLookupProvider(context),
+                                                                        lookProvider,
                                                                         sourceName);
     batchSource.prepareRun(sourceContext);
 
@@ -109,9 +111,15 @@ public class ETLSpark extends AbstractSpark {
     SparkBatchSinkFactory sinkFactory = new SparkBatchSinkFactory();
     for (String sinkName : phaseSpec.getPhase().getSinks()) {
       BatchConfigurable<BatchSinkContext> batchSink = pluginInstantiator.newPluginInstance(sinkName);
-      BatchSinkContext sinkContext = new SparkBatchSinkContext(sinkFactory, context, null, sinkName);
-      batchSink.prepareRun(sinkContext);
-      finishers.add(batchSink, sinkContext);
+      if (batchSink instanceof SparkSink) {
+        BasicSparkPluginContext sparkPluginContext = new BasicSparkPluginContext(context, lookProvider, sinkName);
+        ((SparkSink) batchSink).prepareRun(sparkPluginContext);
+        finishers.add((SparkSink) batchSink, sparkPluginContext);
+      } else {
+        BatchSinkContext sinkContext = new SparkBatchSinkContext(sinkFactory, context, null, sinkName);
+        batchSink.prepareRun(sinkContext);
+        finishers.add(batchSink, sinkContext);
+      }
     }
 
     File configFile = File.createTempFile("ETLSpark", ".config");

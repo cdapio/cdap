@@ -16,24 +16,31 @@
 
 package co.cask.cdap.etl.datapipeline;
 
+import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.schema.Schema;
+import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.etl.api.PipelineConfigurable;
 import co.cask.cdap.etl.api.batch.BatchSource;
+import co.cask.cdap.etl.api.batch.SparkSink;
 import co.cask.cdap.etl.datapipeline.mock.FieldCountAggregator;
 import co.cask.cdap.etl.datapipeline.mock.IdentityAggregator;
 import co.cask.cdap.etl.datapipeline.mock.IdentityTransform;
 import co.cask.cdap.etl.datapipeline.mock.MockSink;
 import co.cask.cdap.etl.datapipeline.mock.MockSource;
+import co.cask.cdap.etl.datapipeline.mock.SpamMessage;
+import co.cask.cdap.etl.datapipeline.mock.SpamOrHam;
 import co.cask.cdap.etl.datapipeline.mock.StringValueFilterTransform;
 import co.cask.cdap.etl.proto.v2.ETLBatchConfig;
+import co.cask.cdap.etl.proto.v2.ETLPlugin;
 import co.cask.cdap.etl.proto.v2.ETLStage;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.artifact.ArtifactSummary;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.DataSetManager;
+import co.cask.cdap.test.StreamManager;
 import co.cask.cdap.test.TestBase;
 import co.cask.cdap.test.TestConfiguration;
 import co.cask.cdap.test.WorkflowManager;
@@ -45,6 +52,9 @@ import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
@@ -60,16 +70,17 @@ public class DataPipelineTest extends TestBase {
 
   @BeforeClass
   public static void setupTest() throws Exception {
-    // add the artifact for etl batch app
+    // add the artifact for data pipeline app
     addAppArtifact(APP_ARTIFACT_ID, DataPipelineApp.class,
-                   BatchSource.class.getPackage().getName(),
+                   BatchSource.class.getPackage().getName(), SparkSink.class.getPackage().getName(),
                    PipelineConfigurable.class.getPackage().getName());
 
     // add some test plugins
     addPluginArtifact(Id.Artifact.from(Id.Namespace.DEFAULT, "test-plugins", "1.0.0"), APP_ARTIFACT_ID,
                       MockSource.class, MockSink.class,
                       StringValueFilterTransform.class, IdentityTransform.class,
-                      FieldCountAggregator.class, IdentityAggregator.class);
+                      FieldCountAggregator.class, IdentityAggregator.class,
+                      SpamOrHam.class);
   }
 
   @Test
@@ -336,4 +347,61 @@ public class DataPipelineTest extends TestBase {
     actual = Sets.newHashSet(MockSink.readOutput(sinkManager));
     Assert.assertEquals(expected, actual);
   }
+
+  @Test
+  public void testSinglePhaseWithSparkSink() throws Exception {
+    /*
+     * source --> sparksink
+     */
+    ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
+      .addStage(new ETLStage("source", MockSource.getPlugin("messages")))
+      .addStage(new ETLStage("customsink", new ETLPlugin("SpamOrHam", SparkSink.PLUGIN_TYPE,
+                                                         Collections.<String, String>emptyMap(), null)))
+      .addConnection("source", "customsink")
+      .build();
+
+    AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(ARTIFACT, etlConfig);
+    Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "SinglePhaseApp");
+    ApplicationManager appManager = deployApplication(appId, appRequest);
+
+
+    // set up five spam messages and five non-spam messages to be used for classification
+    List<StructuredRecord> messagesToWrite = new ArrayList<>();
+    messagesToWrite.add(new SpamMessage(true, "buy our clothes").toStructuredRecord());
+    messagesToWrite.add(new SpamMessage(true, "sell your used books to us").toStructuredRecord());
+    messagesToWrite.add(new SpamMessage(true, "earn money for free").toStructuredRecord());
+    messagesToWrite.add(new SpamMessage(true, "this is definitely not spam").toStructuredRecord());
+    messagesToWrite.add(new SpamMessage(true, "you won the lottery").toStructuredRecord());
+    messagesToWrite.add(new SpamMessage(false, "how was your day").toStructuredRecord());
+    messagesToWrite.add(new SpamMessage(false, "what are you up to").toStructuredRecord());
+    messagesToWrite.add(new SpamMessage(false, "this is a genuine message").toStructuredRecord());
+    messagesToWrite.add(new SpamMessage(false, "this is an even more genuine message").toStructuredRecord());
+    messagesToWrite.add(new SpamMessage(false, "could you send me the report").toStructuredRecord());
+
+    // write records to source
+    DataSetManager<Table> inputManager = getDataset(Id.Namespace.DEFAULT, "messages");
+    MockSource.writeInput(inputManager, messagesToWrite);
+
+    // ingest in some messages to be classified
+    StreamManager textsToClassify = getStreamManager(SpamOrHam.TEXTS_TO_CLASSIFY);
+    textsToClassify.send("how are you doing today");
+    textsToClassify.send("free money money");
+    textsToClassify.send("what are you doing today");
+    textsToClassify.send("genuine report");
+
+    // manually trigger the pipeline
+    WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
+    workflowManager.start();
+    workflowManager.waitForFinish(5, TimeUnit.MINUTES);
+
+
+    DataSetManager<KeyValueTable> classifiedTexts = getDataset(SpamOrHam.CLASSIFIED_TEXTS);
+
+    Assert.assertEquals(0.0d, Bytes.toDouble(classifiedTexts.get().read("how are you doing today")), 0.01d);
+    // only 'free money money' should be predicated as spam
+    Assert.assertEquals(1.0d, Bytes.toDouble(classifiedTexts.get().read("free money money")), 0.01d);
+    Assert.assertEquals(0.0d, Bytes.toDouble(classifiedTexts.get().read("what are you doing today")), 0.01d);
+    Assert.assertEquals(0.0d, Bytes.toDouble(classifiedTexts.get().read("genuine report")), 0.01d);
+  }
+
 }

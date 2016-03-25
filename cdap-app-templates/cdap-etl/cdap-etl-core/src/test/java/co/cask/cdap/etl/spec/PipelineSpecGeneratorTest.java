@@ -69,7 +69,9 @@ public class PipelineSpecGeneratorTest {
     pluginConfigurer.addMockPlugin(Transform.PLUGIN_TYPE, "mockB", new MockPlugin(SCHEMA_B), artifactIds);
     pluginConfigurer.addMockPlugin(BatchSink.PLUGIN_TYPE, "mocksink", new MockPlugin(), artifactIds);
 
-    specGenerator = new PipelineSpecGenerator(pluginConfigurer, BatchSource.PLUGIN_TYPE, BatchSink.PLUGIN_TYPE,
+    specGenerator = new PipelineSpecGenerator(pluginConfigurer,
+                                              ImmutableSet.of(BatchSource.PLUGIN_TYPE),
+                                              ImmutableSet.of(BatchSink.PLUGIN_TYPE),
                                               FileSet.class, DatasetProperties.EMPTY);
   }
 
