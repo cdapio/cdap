@@ -36,13 +36,13 @@
 
   <div>
     <my-datetime-picker
-      date-data="dateRange.startTime"
+      date-object="dateRange.startTime"
       max-date="dateRange.endTime"
       ng-if="RangeController.startTimeOpen">
     </my-datetime-picker>
 
     <my-datetime-picker
-      date-data="dateRange.endTime"
+      date-object="dateRange.endTime"
       min-date="dateRange.startTime"
       ng-if="RangeController.endTimeOpen">
     </my-datetime-picker>

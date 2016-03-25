@@ -27,12 +27,12 @@ function DatetimeController($scope) {
   if ($scope.minDate) { vm.options.minDate = $scope.minDate; }
   if ($scope.maxDate) { vm.options.maxDate = $scope.maxDate; }
 
-  $scope.dateData = $scope.dateData || new Date();
+  $scope.dateObject = $scope.dateObject || new Date();
 
   function init () {
-    vm.date = angular.copy($scope.dateData);
-    vm.hour = $scope.dateData.getHours();
-    vm.minutes = $scope.dateData.getMinutes();
+    vm.date = angular.copy($scope.dateObject);
+    vm.hour = $scope.dateObject.getHours();
+    vm.minutes = $scope.dateObject.getMinutes();
   }
 
   init();
@@ -54,7 +54,7 @@ function DatetimeController($scope) {
         hour = vm.hour,
         minutes = vm.minutes;
 
-    $scope.dateData = new Date(year, month, day, hour, minutes, 0);
+    $scope.dateObject = new Date(year, month, day, hour, minutes, 0);
   }
 
 }
@@ -64,7 +64,7 @@ angular.module(PKG.name+'.commons')
     return {
       restrict: 'E',
       scope: {
-        dateData: '=',
+        dateObject: '=',
         minDate: '=?',
         maxDate: '=?'
       },
