@@ -83,7 +83,7 @@
               </a>
             </td>
             <td>
-              <span ng-if="pipeline.artifact.name === ListController.GLOBALS.etlBatch">
+              <span ng-if="[ListController.GLOBALS.etlBatch, ListController.GLOBALS.etlDataPipeline].indexOf(pipeline.artifact.name) !== -1">
                 <span class="icon-ETLBatch"></span>
                 <span>ETL Batch</span>
               </span>

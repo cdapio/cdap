@@ -17,11 +17,11 @@
 angular.module(PKG.name + '.services')
   .factory('myHydratorFactory', function(GLOBALS) {
     function isCustomApp(artifactName) {
-      return artifactName !== GLOBALS.etlBatch && artifactName !== GLOBALS.etlRealtime;
+      return !isETLApp(artifactName);
     }
 
     function isETLApp(artifactName) {
-      return artifactName === GLOBALS.etlBatch || artifactName === GLOBALS.etlRealtime;
+      return [GLOBALS.etlBatch, GLOBALS.etlRealtime, GLOBALS.etlDataPipeline].indexOf(artifactName) !== -1;
     }
 
     return {
