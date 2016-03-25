@@ -87,7 +87,9 @@ Status of a Query
 -----------------
 The status of a query is obtained using a HTTP GET request to the query's URL::
 
-  GET <base-url>/namespaces/<namespace>/data/explore/queries/<query-handle>/status
+  GET <base-url>/data/explore/queries/<query-handle>/status
+  
+**Note:** this endpoint is *not* namespaced, as all query-handles are globally unique.
 
 .. list-table::
    :widths: 20 80
@@ -95,8 +97,6 @@ The status of a query is obtained using a HTTP GET request to the query's URL::
 
    * - Parameter
      - Description
-   * - ``<namespace>``
-     - Namespace ID
    * - ``<query-handle>``
      - Handle obtained when the query was submitted
 
@@ -131,7 +131,7 @@ Status can be one of the following: ``INITIALIZED``, ``RUNNING``, ``FINISHED``, 
    :stub-columns: 1
 
    * - HTTP Request
-     - ``GET <base-url>/namespaces/default/data/explore/queries/57cf1b01-8dba-423a-a8b4-66cd29dd75e2/status``
+     - ``GET <base-url>/data/explore/queries/57cf1b01-8dba-423a-a8b4-66cd29dd75e2/status``
    * - HTTP Response
      - ``{"status":"FINISHED","hasResults":true}``
    * - Description
@@ -197,7 +197,7 @@ The type of each column is a data type as defined in the `Hive language manual
        ``{"name":"dataset_mydataset.value","type":"array<tinyint>","position":2}]``
    * - Description
      - Retrieve the schema of the result of the query in the namespace *default* which has
-       the handle 57cf1b01-8dba-423a-a8b4-66cd29dd75e2
+       the handle ``57cf1b01-8dba-423a-a8b4-66cd29dd75e2``
 
 
 .. _http-restful-api-query-retrieving-results:
