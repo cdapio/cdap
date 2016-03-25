@@ -66,7 +66,7 @@ angular.module(PKG.name + '.feature.tracker')
         })
 
         .state('tracker.entity', {
-          url: '/entity/:entityType/:entityId',
+          url: '/entity/:entityType/:entityId?searchTerm',
           templateUrl: '/assets/features/tracker/templates/entity.html',
           controller: 'TrackerEntityController',
           controllerAs: 'EntityController',

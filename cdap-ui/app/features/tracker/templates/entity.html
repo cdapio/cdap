@@ -16,11 +16,16 @@
 
 <div class="tracker-entity-top-bar">
   <div class="back-button text-center"
-       ng-click="EntityController.goBack()">
+       ng-click="EntityController.goBack()"
+       ng-if="$state.params.searchTerm"
+       uib-tooltip="Back to search results"
+       tooltip-popup-delay="300"
+       tooltip-placement="right">
     <span class="fa fa-caret-left"></span>
   </div>
 
-  <div class="entity-detail">
+  <div class="entity-detail"
+       ng-class="{ 'offset': !$state.params.searchTerm }">
     <h3>{{ $state.params.entityId }}</h3>
     <div class="entity-type">
       <span class="{{EntityController.entityInfo.icon}}"></span>

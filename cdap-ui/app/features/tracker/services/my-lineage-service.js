@@ -305,7 +305,7 @@ class myLineageService {
   mapNodesLocation(nodes, graph) {
     angular.forEach(nodes, (node) => {
       node._uiLocation = {
-        top: graph._nodes[node.dataId].y - 20 + 'px', // 30 = half of node height
+        top: graph._nodes[node.dataId].y - 20 + 'px', // 20 = half of node height
         left: graph._nodes[node.dataId].x - 90 + 'px' // 90 = half of node width
       };
     });
