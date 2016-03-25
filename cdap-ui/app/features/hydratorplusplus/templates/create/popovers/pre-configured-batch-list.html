@@ -14,12 +14,16 @@
   the License.
 -->
 <div class="modal-header">
-  <h3 class="modal-title"><span>Select a pre-configured Pipeline</span></h3>
+  <h3 class="modal-title">
+    <span>Select a pre-configured Pipeline</span>
+    <!-- <span class="fa fa-times pull-right"></span> -->
+    <span class="fa fa-times pull-right" ng-click="$close()"></span>
+  </h3>
 </div>
 
-<div class="row">
-  <div class="modal-content-wrapper">
-    <div class="col-xs-12 templates-filters">
+<div class="modal-body">
+  <div class="row">
+    <div class="col-xs-offset-8 col-xs-4 templates-filters">
       <div class="row">
         <div class="col-xs-12">
           <div class="form-group has-feedback">
