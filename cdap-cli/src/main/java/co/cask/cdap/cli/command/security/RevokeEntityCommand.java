@@ -27,14 +27,13 @@ import com.google.inject.Inject;
 public class RevokeEntityCommand extends RevokeActionCommand {
 
   @Inject
-  public RevokeEntityCommand(AuthorizationClient client, CLIConfig cliConfig) {
+  RevokeEntityCommand(AuthorizationClient client, CLIConfig cliConfig) {
     super(client, cliConfig);
   }
 
   @Override
   public String getPattern() {
     return String.format("revoke all on entity <%s>", ArgumentName.ENTITY);
-
   }
 
   @Override

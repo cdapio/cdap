@@ -39,7 +39,7 @@ public class ListPrivilegesCommand extends AbstractAuthCommand {
   private final AuthorizationClient client;
 
   @Inject
-  public ListPrivilegesCommand(AuthorizationClient client, CLIConfig cliConfig) {
+  ListPrivilegesCommand(AuthorizationClient client, CLIConfig cliConfig) {
     super(cliConfig);
     this.client = client;
   }

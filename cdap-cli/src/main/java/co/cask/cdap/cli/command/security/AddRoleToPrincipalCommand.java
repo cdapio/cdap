@@ -35,7 +35,7 @@ public class AddRoleToPrincipalCommand extends AbstractAuthCommand {
   private final AuthorizationClient client;
 
   @Inject
-  public AddRoleToPrincipalCommand(AuthorizationClient client, CLIConfig cliConfig) {
+  AddRoleToPrincipalCommand(AuthorizationClient client, CLIConfig cliConfig) {
     super(cliConfig);
     this.client = client;
   }
