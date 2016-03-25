@@ -172,7 +172,6 @@ class myLineageService {
     /* SETTING CONNECTIONS */
     angular.forEach(response.relations, (rel) => {
       let isUnknownOrBoth = rel.access === 'both' || rel.access === 'unknown';
-
       if (rel.access === 'read' || isUnknownOrBoth) {
         let dataId = rel.data;
         let programId = rel.program;
@@ -306,8 +305,8 @@ class myLineageService {
   mapNodesLocation(nodes, graph) {
     angular.forEach(nodes, (node) => {
       node._uiLocation = {
-        top: graph._nodes[node.dataId].y - 30 + 'px',
-        left: graph._nodes[node.dataId].x - 90 + 'px'
+        top: graph._nodes[node.dataId].y - 30 + 'px', // 30 = half of node height
+        left: graph._nodes[node.dataId].x - 90 + 'px' // 90 = half of node width
       };
     });
   }

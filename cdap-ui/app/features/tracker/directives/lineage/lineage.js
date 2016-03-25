@@ -38,7 +38,7 @@ function LineageController ($scope, jsPlumb, $timeout, $state, LineageStore, myT
           source: conn.source,
           target: conn.target,
           detachable: false,
-          anchors: ['Right', 'Left']
+          anchors: ['Right', ['Continuous', { faces: ['left']}]]
         });
       });
 
@@ -180,7 +180,7 @@ function LineageLink(scope, elem) {
       return {
         scale: 1,
         padX: (parentContainerWidth - graph.width) / 2 + 'px',
-        padY: 0
+        padY: '-100px' // 100 is to offset the marginY from dagre
       };
     } else {
       let scale = parentContainerWidth / graph.width;
@@ -188,7 +188,7 @@ function LineageLink(scope, elem) {
       return {
         scale: scale,
         padX: ((graph.width * scale) - graph.width) / 2 + 'px',
-        padY: ((graph.height * scale) - graph.height) / 2 + 'px'
+        padY: (((graph.height * scale) - graph.height) / 2) - 100 + 'px'
       };
     }
   };
