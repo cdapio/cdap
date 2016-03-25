@@ -93,7 +93,7 @@ angular.module(PKG.name + '.commons')
 
      We need to be able to separate render of graph from data and incremental user interactions.
      - Programmatically it should be possible to provide data and should be able to ask dag to render it at any time post-rendering of the directive
-     - User should be able interact with the dag and add incremental changes.
+     - User should be able interact with the dag and  incremental changes.
     */
     function init() {
       $scope.nodes = DAGPlusPlusNodesStore.getNodes();
