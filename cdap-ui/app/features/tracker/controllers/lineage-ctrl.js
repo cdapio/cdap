@@ -74,16 +74,16 @@ class TrackerLineageController{
 
     if (match.length === 0) {
       this.isCustom = true;
-      this.customTimeRange.startTime = new Date(parseInt(this.$state.params.start) * 1000);
-      this.customTimeRange.endTime = new Date(parseInt(this.$state.params.end) * 1000);
+      this.customTimeRange.startTime = new Date(parseInt(this.$state.params.start, 10) * 1000);
+      this.customTimeRange.endTime = new Date(parseInt(this.$state.params.end, 10) * 1000);
     }
 
     return match.length > 0 ? match[0] : { label: 'Custom' };
   }
 
   goCustomDate() {
-    let startTime = parseInt(this.customTimeRange.startTime.valueOf() / 1000);
-    let endTime = parseInt(this.customTimeRange.endTime.valueOf() / 1000);
+    let startTime = parseInt(this.customTimeRange.startTime.valueOf() / 1000, 10);
+    let endTime = parseInt(this.customTimeRange.endTime.valueOf() / 1000, 10);
 
     this.$state.go('tracker.entity.lineage', { start: startTime, end: endTime });
   }

@@ -40,11 +40,24 @@ my-datetime-range {
   .datetime-input {
     width: 45%;
     display: inline-block;
+
+    & > span {
+      display: block;
+      width: 100%;
+      height: 32px;
+      padding: 6px 12px;
+      background-color: white;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      cursor: pointer;
+
+      &.active {
+        border: 2px solid @tracker-green;
+      }
+    }
   }
 
-  .active, .form-control:focus {
-    border: 2px solid @tracker-green;
-  }
+
 
   .done-button {
     font-weight: 500;

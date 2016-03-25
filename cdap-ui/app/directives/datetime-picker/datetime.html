@@ -26,8 +26,8 @@
     <div class="time-text">
       <div class="text-center">
         <input type="number" class="time-input hour"
-               min="{{ DatetimeController.min }}"
-               max="{{ DatetimeController.max }}"
+               min="0"
+               max="23"
                ng-model="DatetimeController.hour">
         <span class="colon">:</span>
         <input type="number" class="time-input minutes"
@@ -35,23 +35,14 @@
                max="59"
                ng-model="DatetimeController.minutes">
       </div>
-      <div class="am-pm-switch text-center">
-        <span>AM</span>
-        <div class="switch" ng-click="DatetimeController.togglePM()">
-          <span class="thumb"
-                ng-class="{'am': !DatetimeController.isPM, 'pm': DatetimeController.isPM }">
-          </span>
-        </div>
-        <span>PM</span>
-      </div>
     </div>
 
     <div class="time-slider">
       <div>
         <label>Hour</label>
         <input type="range"
-               min="{{ DatetimeController.min }}"
-               max="{{ DatetimeController.max }}"
+               min="0"
+               max="23"
                ng-model="DatetimeController.hour">
       </div>
       <div class="minutes-slider">

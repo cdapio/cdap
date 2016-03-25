@@ -18,21 +18,19 @@
      ng-class="{ 'open': RangeController.startTimeOpen || RangeController.endTimeOpen }">
   <div class="date-text-input text-center">
     <div class="start-time datetime-input">
-      <input type="text"
-             class="form-control"
-             placeholder="Start Time"
-             ng-model="dateRange.startTime"
-             ng-click="RangeController.openStartTime()"
+      <span ng-click="RangeController.openStartTime()"
              ng-class="{ 'active': RangeController.startTimeOpen }">
+        <span ng-if="dateRange.startTime">{{ dateRange.startTime | amDateFormat: 'MMM DD, YYYY  HH:mm'}}</span>
+        <span ng-if="!dateRange.startTime">Start Time</span>
+      </span>
     </div>
     <span>to</span>
     <div class="end-time datetime-input">
-      <input type="text"
-             class="form-control"
-             placeholder="End Time"
-             ng-model="dateRange.endTime"
-             ng-click="RangeController.openEndTime()"
+      <span ng-click="RangeController.openEndTime()"
              ng-class="{ 'active': RangeController.endTimeOpen }">
+        <span ng-if="dateRange.endTime">{{ dateRange.endTime | amDateFormat: 'MMM DD, YYYY  HH:mm'}}</span>
+        <span ng-if="!dateRange.endTime">End Time</span>
+      </span>
     </div>
   </div>
 

@@ -51,6 +51,7 @@ my-datetime-picker {
       .time-text, .time-slider {
         width: 49%;
         display: inline-block;
+        vertical-align: middle;
       }
 
       input::-webkit-outer-spin-button,
@@ -81,9 +82,7 @@ my-datetime-picker {
       text-align: center;
     }
 
-    .minutes-slider {
-      margin-top: 20px;
-    }
+    .minutes-slider { margin-top: 15px; }
 
     .uib-yearpicker, .uib-monthpicker, .uib-daypicker {
       width: 100%;
@@ -104,40 +103,6 @@ my-datetime-picker {
             span { color: white; }
           }
         }
-      }
-    }
-  }
-
-  .am-pm-switch {
-    margin-top: 15px;
-    line-height: 20px;
-    user-select: none;
-
-    span {
-      vertical-align: middle;
-      font-weight: 500;
-    }
-
-    .switch {
-      display: inline-block;
-      position: relative;
-      background-color: @track-color;
-      height: 20px;
-      width: 35px;
-      border-radius: 10px;
-      vertical-align: middle;
-      cursor: pointer;
-
-      .thumb {
-        position: absolute;
-        top: 3px;
-        height: 14px;
-        width: 14px;
-        background-color: white;
-        border-radius: 50%;
-
-        &.pm { right: 3px; }
-        &.am { left: 3px; }
       }
     }
   }
@@ -170,7 +135,7 @@ my-datetime-picker {
 
   input[type=range] {
     -webkit-appearance: none;
-    margin: @thumb-height/2 0;
+    margin: @thumb-height/3 0;
     width: @track-width;
 
     &:focus {

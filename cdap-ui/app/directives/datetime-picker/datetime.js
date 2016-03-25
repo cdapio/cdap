@@ -29,63 +29,29 @@ function DatetimeController($scope) {
 
   $scope.dateData = $scope.dateData || new Date();
 
-  vm.min = 0;
-  vm.max = 11;
-
   function init () {
     vm.date = angular.copy($scope.dateData);
     vm.hour = $scope.dateData.getHours();
-    vm.isPM = false;
-
-    if (vm.hour > 11) {
-      vm.isPM = true;
-      vm.hour = vm.hour % 12;
-      vm.hour = vm.hour === 0 ? 12 : vm.hour;
-      setMinMax(vm.isPM);
-    }
-
     vm.minutes = $scope.dateData.getMinutes();
   }
 
   init();
 
-  vm.togglePM = () => {
-    vm.isPM = !vm.isPM;
-    setMinMax(vm.isPM);
-    formatDate();
-  };
-
-  function setMinMax(isPM) {
-    if (isPM) {
-      vm.min = 1;
-      vm.max = 12;
-    } else {
-      vm.min = 0;
-      vm.max = 11;
-    }
-  }
-
-  $scope.$watch(() => {
-    return vm.hour;
-  }, () => {
-    vm.hour = parseInt(vm.hour);
+  $scope.$watch('DatetimeController.hour', () => {
+    vm.hour = parseInt(vm.hour, 10);
     formatDate();
   });
-  $scope.$watch(() => {
-    return vm.minutes;
-  }, () => {
-    vm.minutes = parseInt(vm.minutes);
+  $scope.$watch('DatetimeController.minutes', () => {
+    vm.minutes = parseInt(vm.minutes, 10);
     formatDate();
   });
-  $scope.$watch(() => {
-    return vm.date;
-  }, formatDate);
+  $scope.$watch('DatetimeController.date', formatDate);
 
   function formatDate() {
     let year = vm.date.getFullYear(),
         month = vm.date.getMonth(),
         day = vm.date.getDate(),
-        hour = vm.isPM && vm.hour < 12 ? vm.hour + 12 : vm.hour,
+        hour = vm.hour,
         minutes = vm.minutes;
 
     $scope.dateData = new Date(year, month, day, hour, minutes, 0);
