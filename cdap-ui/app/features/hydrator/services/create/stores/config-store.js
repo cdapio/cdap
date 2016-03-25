@@ -456,7 +456,7 @@ class ConfigStore {
         return;
       }
       // If we encounter an implicit schema down the stream while propagation stop there and return.
-      if (!angular.isArray(node) && nodesMap[node].implicitSchema) {
+      if (nodesMap[node] && nodesMap[node].implicitSchema) {
         return;
       }
       node.forEach( n => {
