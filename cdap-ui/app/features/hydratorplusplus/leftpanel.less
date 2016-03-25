@@ -21,20 +21,13 @@
 body.theme-cdap.state-hydratorplusplus-create {
   .left-panel-wrapper {
     position: fixed;
-    top: 110px;
+    top: 50px;
     bottom: 53px;
     left: 0;
     z-index: 1024;
     width: 130px;
     vertical-align: top;
-    background: #c7c7c6;
-    background-image: url('@{img-path}/hydrator_bg_pattern.png'), -moz-linear-gradient(-45deg, #c7c7c6 0%, #a0a0a0 100%);
-    background-image: url('@{img-path}/hydrator_bg_pattern.png'), -webkit-gradient(linear, left top, right bottom, color-stop(0%,#c7c7c6), color-stop(100%,#a0a0a0));
-    background-image: url('@{img-path}/hydrator_bg_pattern.png'), -webkit-linear-gradient(-45deg, #c7c7c6 0%,#a0a0a0 100%);
-    background-image: url('@{img-path}/hydrator_bg_pattern.png'), -o-linear-gradient(-45deg, #c7c7c6 0%,#a0a0a0 100%);
-    background-image: url('@{img-path}/hydrator_bg_pattern.png'), -ms-linear-gradient(-45deg, #c7c7c6 0%,#a0a0a0 100%);
-    background-image: url('@{img-path}/hydrator_bg_pattern.png'), linear-gradient(135deg, #c7c7c6 0%,#a0a0a0 100%);
-    filter: progid:DXImageTransform.Microsoft.gradient(GradientType=1, startColorstr='#c7c7c6', endColorstr='#a0a0a0'), progid:DXImageTransform.Microsoft.AlphaImageLoader(src='@{img-path}/hydrator_bg_pattern.png', sizingMethod='crop');
+    background: #E8E8E8;
     .transition(all 0.2s ease);
     @media (max-width: @screen-xs-max) {
       bottom: 75px;
@@ -46,24 +39,52 @@ body.theme-cdap.state-hydratorplusplus-create {
       .transition(all 0.2s ease);
     }
     .left-panel {
-      select.form-control {
-        width: 87%;
-        margin-left: 10px;
+      .left-top-section {
+        height: 69px;
+        padding: 12px 0;
+        background: white;
+        border: 1px solid #dddddd;
+        border-top: 0;
+        border-left: 0;
+        border-bottom: 0;
+        select.form-control {
+          width: 87%;
+          margin-left: 10px;
+          color: white;
+          background: rgb(153, 153, 153);
+        }
+        .import-section {
+          padding-left: 10px;
+          margin-top: 3px;
+
+          strong {
+            font-size: 12px;
+            &:last-child {
+              margin-left: 20px;
+            }
+            a {
+              text-decoration: none;
+              color: #999999;
+              &:focus {
+                outline: 0;
+              }
+            }
+          }
+        }
       }
       my-side-panel {
         display: block;
-        margin-top: 10px;
+        padding-top: 10px;
+        border-right: 1px solid #dddddd;
+        border-top: 1px solid #dddddd;
         height: ~"calc(100% - 73px)"; // footer = 53px, 30px (import, templates & add plugin buttons on top of the side-panel.)
 
         .groups-container {
           position: static;
           margin-top: 10px;
-          height: ~"calc(100% - 43px);" // 100% - height of filter textbox + margin-top 10px;
+          border-top: 1px solid #D4D4D4;
+          height: ~"calc(100% - 40px);" // 100% - height of filter textbox + margin-top 10px;
         }
-      }
-      .import-section {
-        margin-top: 10px;
-        padding-left: 10px;
       }
     }
     &.expanded {
@@ -118,15 +139,13 @@ body.theme-cdap.state-hydratorplusplus-create {
     .hydrator-filter {
       padding: 0 0 0 5px;
       input {
-        background-color: fade(@gray-dark, 25%);
-        background-image: url('@{img-path}/hydrator_bg_pattern.png');
-        background-repeat: repeat;
+        background-color: #BEBEBE;
         border: 0;
         color: white;
         height: 35px;
         width: 75%;
+        box-shadow: none;
         .border-radius(25px);
-        .box-shadow(inset 0 2px 5px 0 rgba(0, 0, 0, 0.33));
         .placeholder-color(white);
       }
     }
@@ -162,7 +181,6 @@ body.theme-cdap.state-hydratorplusplus-create {
 
         .item-heading {
           border-bottom-color: transparent;
-          color: white;
         }
         + .item {
           .transform {
@@ -194,9 +212,8 @@ body.theme-cdap.state-hydratorplusplus-create {
       }
 
       .item-heading {
-        color: white;
-        background-color: fade(@gray-dark, 45);
-        border-bottom: 1px solid #c7c7c6;
+        color: black;
+        font-weight: bold;
         padding: 0 15px 0 10px;
         height: 40px;
         line-height: 40px;
@@ -208,6 +225,8 @@ body.theme-cdap.state-hydratorplusplus-create {
       }
       .item-body-wrapper {
         overflow-y: auto;
+        border-top: 1px solid #CBCBCB;
+        border-bottom: 1px solid #CBCBCB;
       }
       .item-body {
         padding: 10px 10px 0;
@@ -225,26 +244,30 @@ body.theme-cdap.state-hydratorplusplus-create {
         background-color: white;
         border: 1px solid transparent;
         color: #666;
-        line-height: 40px;
+        line-height: 30px;
         margin-bottom: 6px;
         padding: 0 8px;
-        height: 40px;
+        height: 30px;
         width: 48%;
+        border: 1px solid #dddddd;
         .border-radius(4px);
         .transition(all 0.2s ease);
-        &.add-plugin-template:hover, &.add-plugin-template:focus, &:hover, &:focus {
-          background-color: fade(black, 45%);
-          border: 1px dashed #999;
-          color: white;
-        }
+        // &.add-plugin-template:hover, &.add-plugin-template:focus, &:hover, &:focus {
+        //   background-color: fade(black, 45%);
+        //   border: 1px dashed #999;
+        //   color: white;
+        // }
         &.add-plugin-template {
-          background: transparent;
-          border: dashed 1px;
+          width: 100%;
+          text-align: center;
+          background: #098BF9;
+          color: white;
+          border: 0;
         }
         > .fa {
           font-size: 12px;
           width: 18px;
-          line-height: 40px;
+          line-height: 30px;
           vertical-align: top;
         }
         .name {
@@ -254,9 +277,18 @@ body.theme-cdap.state-hydratorplusplus-create {
       }
     }
     .badge {
-      background-color: #c7c7c6;
+      background-color: transparent;
       color: #666;
       vertical-align: text-bottom;
+      &:before, &:after {
+        padding: 2px;
+      }
+      &:before{
+        content: "(";
+      }
+      &:after {
+        content: ")";
+      }
     }
   }
 

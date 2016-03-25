@@ -328,10 +328,14 @@ body.theme-cdap {
       position: fixed;
       top: 50px;
       right: 0;
-      left: 0;
+      left: 290px;
       z-index: 1029;
-      height: 60px;
-      .box-shadow(5px 0 10px rgba(0, 0, 0, 0.5));
+      height: 70px;
+      // .box-shadow(5px 0 10px rgba(0, 0, 0, 0.5));
+      max-width: ~"calc(100% - 290px)";
+      border-left: 0;
+      border-top: 0;
+
       div.pipeline-type {
         color: #397cf1;
         float: left;
@@ -354,11 +358,11 @@ body.theme-cdap {
         border-right: 1px solid transparent;
         border-bottom: 1px solid transparent;
         border-left: 1px solid @table-border-color;
-        height: 60px;
+        height: 70px;
         padding: 0;
         .transition(all 0.2s ease);
         span {
-          line-height: 60px;
+          line-height: 70px;
         }
         &:hover, &:focus {
           background-color: #ebebeb;
