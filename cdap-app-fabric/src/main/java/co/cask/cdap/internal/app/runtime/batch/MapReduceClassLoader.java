@@ -23,13 +23,16 @@ import co.cask.cdap.common.lang.CombineClassLoader;
 import co.cask.cdap.common.lang.Delegators;
 import co.cask.cdap.common.lang.ProgramClassLoader;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
+import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.twill.LocalLocationFactory;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.internal.app.runtime.batch.distributed.DistributedMapReduceTaskContextProvider;
 import co.cask.cdap.internal.app.runtime.batch.distributed.MapReduceContainerLauncher;
 import co.cask.cdap.internal.app.runtime.plugin.PluginClassLoaders;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
+import co.cask.cdap.logging.context.MapReduceLoggingContext;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Supplier;
@@ -41,6 +44,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapreduce.MRJobConfig;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
+import org.apache.twill.api.RunId;
 import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -129,11 +133,26 @@ public class MapReduceClassLoader extends CombineClassLoader implements AutoClos
    * Returns the {@link MapReduceTaskContextProvider} associated with this ClassLoader.
    */
   public MapReduceTaskContextProvider getTaskContextProvider() {
+    // Logging context needs to be set in main thread.
+    MapReduceLoggingContext loggingContext = createMapReduceLoggingContext();
+    LoggingContextAccessor.setLoggingContext(loggingContext);
+
     synchronized (this) {
       taskContextProvider = Optional.fromNullable(taskContextProvider).or(taskContextProviderSupplier);
     }
     taskContextProvider.startAndWait();
     return taskContextProvider;
+  }
+
+  /**
+   * Creates logging context for MapReduce
+   */
+  private MapReduceLoggingContext createMapReduceLoggingContext() {
+    MapReduceContextConfig contextConfig = new MapReduceContextConfig(parameters.getHConf());
+    ProgramId programId = contextConfig.getProgramId();
+    RunId runId = contextConfig.getRunId();
+    return new MapReduceLoggingContext(programId.getNamespace(), programId.getApplication(),
+                                       programId.getProgram(), runId.getId());
   }
 
   /**

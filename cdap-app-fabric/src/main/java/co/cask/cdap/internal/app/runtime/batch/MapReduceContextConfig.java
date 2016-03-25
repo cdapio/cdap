@@ -23,6 +23,7 @@ import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
+import co.cask.cdap.proto.id.ProgramId;
 import co.cask.tephra.Transaction;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
@@ -57,6 +58,7 @@ public final class MapReduceContextConfig {
   private static final Gson GSON = new Gson();
 
   private static final String HCONF_ATTR_RUN_ID = "hconf.program.run.id";
+  private static final String HCONF_ATTR_PROGRAM_ID = "hconf.program.id";
   private static final String HCONF_ATTR_WORKFLOW_INFO = "hconf.program.workflow.info";
   private static final String HCONF_ATTR_PLUGINS = "hconf.program.plugins.map";
   private static final String HCONF_ATTR_ARGS = "hconf.program.args";
@@ -87,6 +89,7 @@ public final class MapReduceContextConfig {
   public void set(BasicMapReduceContext context, CConfiguration conf, Transaction tx, URI programJarURI,
                   Map<String, String> localizedUserResources) {
     setRunId(context.getRunId().getId());
+    setProgramId(context.getProgram().getId().toEntityId());
     setWorkflowProgramInfo(context.getWorkflowInfo());
     setPlugins(context.getPlugins());
     setArguments(context.getRuntimeArguments());
@@ -113,11 +116,22 @@ public final class MapReduceContextConfig {
     hConf.set(HCONF_ATTR_RUN_ID, runId);
   }
 
+  private void setProgramId(ProgramId programId) {
+    hConf.set(HCONF_ATTR_PROGRAM_ID, GSON.toJson(programId));
+  }
+
   /**
    * Returns the {@link RunId} for the MapReduce program.
    */
   public RunId getRunId() {
     return RunIds.fromString(hConf.get(HCONF_ATTR_RUN_ID));
+  }
+
+  /**
+   * Returns the {@link ProgramId} for the MapReduce program.
+   */
+  public ProgramId getProgramId() {
+    return GSON.fromJson(hConf.get(HCONF_ATTR_PROGRAM_ID), ProgramId.class);
   }
 
   private void setWorkflowProgramInfo(@Nullable WorkflowProgramInfo info) {
