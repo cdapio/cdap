@@ -23,6 +23,7 @@ Starting the Services
     $ cdap-cli.sh start service |example|.\ |example-service1|
     $ cdap-cli.sh start service |example|.\ |example-service2|
     $ cdap-cli.sh start service |example|.\ |example-service3|
+    
     Successfully started service '|example-service1|' of application '|example|' with stored runtime arguments '{}'
     Successfully started service '|example-service2|' of application '|example|' with stored runtime arguments '{}'
     Successfully started service '|example-service3|' of application '|example|' with stored runtime arguments '{}'
@@ -31,6 +32,6 @@ Starting the Services
 
   .. tabbed-parsed-literal::
 
-    $ curl -w'\\n' -v -X POST '\http://localhost:10000/v3/namespaces/default/apps/|example|/services/|example-service1|/start'
-    $ curl -w'\\n' -v -X POST '\http://localhost:10000/v3/namespaces/default/apps/|example|/services/|example-service2|/start'
-    $ curl -w'\\n' -v -X POST '\http://localhost:10000/v3/namespaces/default/apps/|example|/services/|example-service3|/start'
+    $ curl -w'\n' -X POST "http://localhost:10000/v3/namespaces/default/apps/|example|/services/|example-service1|/start"
+    $ curl -w'\n' -X POST "http://localhost:10000/v3/namespaces/default/apps/|example|/services/|example-service2|/start"
+    $ curl -w'\n' -X POST "http://localhost:10000/v3/namespaces/default/apps/|example|/services/|example-service3|/start"

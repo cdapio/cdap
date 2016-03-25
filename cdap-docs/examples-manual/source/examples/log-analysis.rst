@@ -57,7 +57,8 @@ of the application are tied together by the class ``LogAnalysisApp``:
 .. literalinclude:: /../../../cdap-examples/LogAnalysis/src/main/java/co/cask/cdap/examples/loganalysis/LogAnalysisApp.java
    :language: java
    :lines: 60-94
-
+   :append: ...
+    
 The *hitCount* and *responseCount* ``KeyValueTable``\ s and *reqCount* ``TimePartitionedFileSet``
 -------------------------------------------------------------------------------------------------
 The calculated hit count for every unique URL is stored in a ``KeyValueTable`` dataset,
@@ -120,17 +121,15 @@ Querying the Results
 - To query the *hitCount* KeyValueTable through the ``HitCounterService``, send a query via an HTTP
   request using the ``curl`` command. For example:
   
-  .. container:: highlight
+  .. tabbed-parsed-literal::
 
-    .. parsed-literal::
-      |$| curl -w'\\n' -X POST -d'{"url":"/index.html"}' '\http://localhost:10000/v3/namespaces/default/apps/|example|/services/|example-service1|/methods/hitcount'
+    $ curl -w'\n' -X POST -d "{'url':'/index.html'}" "http://localhost:10000/v3/namespaces/default/apps/|example|/services/|example-service1|/methods/hitcount"
 
   You can also use the Command Line Interface:
   
-  .. container:: highlight
+  .. tabbed-parsed-literal::
 
-    .. parsed-literal::
-      |$| cdap-cli.sh call service |example|.\ |example-service1| POST 'hitcount' body '{"url":"/index.html"}'
+    $ cdap-cli.sh call service |example|.\ |example-service1| POST "hitcount" body "{'url':'/index.html'}"
 
   On success, this command will return the hit count for the above URL, such as ``4``.
 
@@ -138,23 +137,21 @@ Querying the Results
   ``TimePartitionedFileSet`` through the *RequestCounterService*, and to retrieve data from a particular partition of
   the ``TimePartitionedFileSet``, use either ``curl`` or the Command Line Interface:
 
-  .. container:: highlight
+  .. tabbed-parsed-literal::
+  
+    $ curl -w'\n' -X GET "http://localhost:10000/v3/namespaces/default/apps/|example|/services/|example-service2|/methods/rescount/200"
 
-    .. parsed-literal::
-      |$| curl -w'\\n' '\http://localhost:10000/v3/namespaces/default/apps/|example|/services/|example-service2|/methods/rescount/200'
-
-      |$| cdap-cli.sh call service |example|.\ |example-service2| GET 'rescount/200'
+    $ cdap-cli.sh call service |example|.\ |example-service2| GET "rescount/200"
 
   On success, this command will return the total number of responses sent with the queried response code, ``30``.
 
 - To query the set of all the available partitions, use either of these commands:
 
-  .. container:: highlight
+  .. tabbed-parsed-literal::
 
-    .. parsed-literal::
-      |$| curl -w'\\n' '\http://localhost:10000/v3/namespaces/default/apps/|example|/services/|example-service3|/methods/reqcount'
+    $ curl -w'\n' '\http://localhost:10000/v3/namespaces/default/apps/|example|/services/|example-service3|/methods/reqcount'
 
-      |$| cdap-cli.sh call service |example|.\ |example-service3| GET 'reqcount'
+    $ cdap-cli.sh call service |example|.\ |example-service3| GET 'reqcount'
 
   A possible successful response::
   

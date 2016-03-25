@@ -181,7 +181,9 @@ def convert(c):
         if v == '\\':
             w.append('^')
             continue
-        if v.startswith('http') or v.startswith("'http") or v.startswith('localhost:10000') or v.startswith("'localhost:10000"):
+        if (v.startswith('http') or v.startswith("'http") or v.startswith('"http') or 
+             v.startswith('localhost:10000') or v.startswith("'localhost:10000") or 
+             v.startswith('"localhost:10000')):
             w.append(v)
             continue
         if v.find('/') != -1:
@@ -198,12 +200,12 @@ class TabbedParsedLiteralNode(nodes.literal_block):
         for i, v in enumerate(self.traverse()):
             if isinstance(v, nodes.Text):
                 t = v.astext()
-#                 print "v:\n%s'v-end'\n" % v.astext()
-                if t.endswith('.\ '):
-                    self.replace(v, nodes.Text(t[:-2]))
-                elif t.endswith('=\ '):
-                    self.replace(v, nodes.Text(t[:-2]))
-
+                if t.endswith('.\ ') or t.endswith('=\ '):
+                    t = t[:-2]
+                if t.find('\`') != -1:
+                    t = t.replace('\`', '`')
+                if t != v.astext():
+                    self.replace(v, nodes.Text(t))
 
 class TabbedParsedLiteral(ParsedLiteral):
     """TabbedParsedLiteral is a set of different blocks"""
@@ -271,7 +273,9 @@ class TabbedParsedLiteral(ParsedLiteral):
 
         line_counts, lines = self.cleanup_content()
         text = '\n'.join(lines)
+#         print "text:\n%s" % text
         text_nodes, messages = self.state.inline_text(text, self.lineno)
+#         print "text_nodes:\n%s" % text_nodes
         node = TabbedParsedLiteralNode(text, '', *text_nodes, **self.options)
         node.cleanup()
         node.line = self.content_offset + 1

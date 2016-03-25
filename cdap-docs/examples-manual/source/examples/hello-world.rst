@@ -25,6 +25,7 @@ The ``HelloWorld`` Application
 .. literalinclude:: /../../../cdap-examples/HelloWorld/src/main/java/co/cask/cdap/examples/helloworld/HelloWorld.java
    :language: java
    :lines: 47-57
+   :append: ...
    
 The application uses a stream called *who* to ingest data through a flow *WhoFlow* to a dataset *whom*.
 
@@ -114,6 +115,17 @@ the ``longnames`` metric (the number of names, each greater than 10 characters),
 To try out these metrics, first send a few long names (each greater than 10 characters)
 and send *Jane Doe* a number of times.
 
+You can also use the CDAP CLI:
+
+.. tabbed-parsed-literal::
+
+  $ cdap-cli.sh send stream who "'Alice Cumberbund'"
+  $ cdap-cli.sh send stream who "Bob"
+  $ cdap-cli.sh send stream who "'Jane Doe'"
+  $ cdap-cli.sh send stream who "Tom"
+  ...
+  
+
 Using the Service
 -----------------
 Go back to the |application-overview-page|, and click on the *Greeting* service. (If you
@@ -124,7 +136,7 @@ Now you can make a request to the service using ``curl``:
 
 .. tabbed-parsed-literal::
 
-  $ curl -w'\n' http://localhost:10000/v3/namespaces/default/apps/HelloWorld/services/Greeting/methods/greet
+  $ curl -w"\n" -X GET "http://localhost:10000/v3/namespaces/default/apps/HelloWorld/services/Greeting/methods/greet"
 
 If the last name you entered was *Tom*, the service will respond with ``Hello Tom!``
 
@@ -149,24 +161,24 @@ To see the value of the ``names.bytes`` metric, you can make an HTTP request to 
 
 .. tabbed-parsed-literal::
 
-  $ curl -w'\n' -X POST 'http://localhost:10000/v3/metrics/query?tag=namespace:default&tag=app:HelloWorld&tag=flow:WhoFlow&tag=flowlet:saver&metric=user.names.bytes&aggregate=true'
-  {"startTime":0,"endTime":1429477634,"series":[{"metricName":"user.names.bytes","grouping":{},"data":[{"time":0,"value":44}]}]}
+  $ curl -w"\n" -X POST "http://localhost:10000/v3/metrics/query?tag=namespace:default&tag=app:HelloWorld&tag=flow:WhoFlow&tag=flowlet:saver&metric=user.names.bytes&aggregate=true"
+  {"startTime":0,"endTime":1458877439,"series":[{"metricName":"user.names.bytes","grouping":{},"data":[{"time":0,"value":79}]}],"resolution":"2147483647s"}
 
 To see the value of the ``names.longnames`` metric (the number of names, each of which is greater than 10 characters in length),
 you can use:
 
 .. tabbed-parsed-literal::
 
-  $ curl -w'\n' -X POST 'http://localhost:10000/v3/metrics/query?tag=namespace:default&tag=app:HelloWorld&tag=flow:WhoFlow&tag=flowlet:saver&metric=user.names.longnames&aggregate=true'
-  {"startTime":0,"endTime":1429476082,"series":[{"metricName":"user.names.longnames","grouping":{},"data":[{"time":0,"value":2}]}]}
+  $ curl -w"\n" -X POST "http://localhost:10000/v3/metrics/query?tag=namespace:default&tag=app:HelloWorld&tag=flow:WhoFlow&tag=flowlet:saver&metric=user.names.longnames&aggregate=true"
+  {"startTime":0,"endTime":1458877544,"series":[{"metricName":"user.names.longnames","grouping":{},"data":[{"time":0,"value":3}]}],"resolution":"2147483647s"}
   
 To see the value of the ``greetings.count.jane_doe`` metric (the number of times the specific name *Jane Doe* has been "greeted"),
 you can use:
 
 .. tabbed-parsed-literal::
 
-  $ curl -w'\n' -X POST 'http://localhost:10000/v3/metrics/query?tag=namespace:default&tag=app:HelloWorld&tag=service:Greeting&metric=user.greetings.count.jane_doe&aggregate=true'
-  {"startTime":0,"endTime":1429464632,"series":[{"metricName":"user.greetings.count.jane_doe","grouping":{},"data":[{"time":0,"value":1}]}]}
+  $ curl -w"\n" -X POST "http://localhost:10000/v3/metrics/query?tag=namespace:default&tag=app:HelloWorld&tag=service:Greeting&metric=user.greetings.count.jane_doe&aggregate=true"
+  {"startTime":0,"endTime":1458877575,"series":[{"metricName":"user.greetings.count.jane_doe","grouping":{},"data":[{"time":0,"value":2}]}],"resolution":"2147483647s"}
 
 
 .. Stopping and Removing the Application

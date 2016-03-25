@@ -55,7 +55,7 @@ Accessing CLI, curl and the SDK bin
   
     .. Linux
 
-    $ export PATH=${PATH}:`pwd`/bin
+    $ export PATH=${PATH}:\`pwd\`/bin
 
     .. Windows
 
