@@ -53,7 +53,10 @@
           <td>{{ log.time | amDateFormat: 'MM/DD/YYYY  h:mm:ss a' }}</td>
           <td>{{ log.payload.accessor.program || log.payload.accessor.service || '-' }}</td>
           <td>{{ log.payload.accessor.type || log.payload.accessor.entity || '-' }}</td>
-          <td>{{ log.type }}</td>
+          <td>
+            <span ng-if="log.type !== 'ACCESS'">{{ log.type }}</span>
+            <span ng-if="log.type === 'ACCESS'">{{ log.payload.accessType }}</span>
+          </td>
           <td>{{ log.user }}</td>
         </tr>
       </tbody>
