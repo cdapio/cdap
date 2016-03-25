@@ -20,6 +20,7 @@ angular.module(PKG.name + '.services')
     etlBatch: 'cdap-etl-batch',
     etlRealtime: 'cdap-etl-realtime',
     etlDataPipeline: 'cdap-etl-data-pipeline',
+    etlBatchPipelines: ['cdap-etl-batch', 'cdap-etl-data-pipeline'],
     pluginTypes: {
       'cdap-etl-batch': {
         'source': 'batchsource',

@@ -63,7 +63,7 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
     this.setState();
 
     this.pipelineType = HydratorPlusPlusDetailNonRunsStore.getPipelineType();
-    if ([GLOBALS.etlBatch, GLOBALS.etlDataPipeline].indexOf(this.pipelineType) !== -1) {
+    if (GLOBALS.etlBatchPipelines.indexOf(this.pipelineType) !== -1) {
       params = angular.copy(HydratorPlusPlusDetailRunsStore.getParams());
       params.scope = $scope;
       HydratorPlusPlusDetailActions.pollStatistics(
@@ -86,7 +86,7 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
     this.setAppStatus();
     var appType = HydratorPlusPlusDetailNonRunsStore.getAppType();
 
-    if ([GLOBALS.etlBatch, GLOBALS.etlDataPipeline].indexOf(appType) !== -1) {
+    if (GLOBALS.etlBatchPipelines.indexOf(appType) !== -1) {
       HydratorPlusPlusDetailActions.fetchScheduleStatus(
         HydratorPlusPlusDetailRunsStore.getApi(),
         HydratorPlusPlusDetailRunsStore.getScheduleParams()

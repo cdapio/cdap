@@ -14,12 +14,12 @@
 <!-- TOP PANEL -->
 
 <div class="side-panel top text-center">
-<div class="tbl" ng-class="{'batch': [TopPanelCtrl.GLOBALS.etlBatch, TopPanelCtrl.GLOBALS.etlDataPipeline].indexOf(TopPanelCtrl.app.type) !== -1, 'realtime': TopPanelCtrl.app.type === TopPanelCtrl.GLOBALS.etlRealtime}">
+<div class="tbl" ng-class="{'batch': TopPanelCtrl.GLOBALS.etlBatchPipelines.indexOf(TopPanelCtrl.app.type) !== -1, 'realtime': TopPanelCtrl.app.type === TopPanelCtrl.GLOBALS.etlRealtime}">
   <div class="tbl-cell">
     <div class="clearfix">
       <div class="hydrator-detail-metadata">
         <div class="pipeline-type">
-          <span ng-if="[TopPanelCtrl.GLOBALS.etlBatch, TopPanelCtrl.GLOBALS.etlDataPipeline].indexOf(TopPanelCtrl.app.type) !== -1"
+          <span ng-if="TopPanelCtrl.GLOBALS.etlBatchPipelines.indexOf(TopPanelCtrl.app.type) !== -1"
                 class="icon-ETLBatch"
                 uib-tooltip="Type: Batch"
                 tooltip-placement="right"
@@ -75,7 +75,7 @@
   <div class="tbl-cell all-runs">
     <strong>All Runs</strong>
     <div class="clearfix">
-      <div class="metric pull-left" ng-if="[TopPanelCtrl.GLOBALS.etlBatch, TopPanelCtrl.GLOBALS.etlDataPipeline].indexOf(TopPanelCtrl.app.type) !== -1">
+      <div class="metric pull-left" ng-if="TopPanelCtrl.GLOBALS.etlBatchPiplines.indexOf(TopPanelCtrl.app.type) !== -1">
         <span class="metric-value" ng-if="TopPanelCtrl.avgRunTime === 'N/A'"> &mdash; </span>
         <span class="metric-value" ng-if="TopPanelCtrl.avgRunTime !== 'N/A'"> {{ TopPanelCtrl.avgRunTime}}</span>
         <span class="metric-label">Avg Duration</span>
@@ -86,7 +86,7 @@
       </div>
     </div>
   </div>
-  <div class="tbl-cell next-run" ng-if="[TopPanelCtrl.GLOBALS.etlBatch, TopPanelCtrl.GLOBALS.etlDataPipeline].indexOf(TopPanelCtrl.app.type) !== -1">
+  <div class="tbl-cell next-run" ng-if="TopPanelCtrl.GLOBALS.etlBatchPipelines.indexOf(TopPanelCtrl.app.type) !== -1">
     <strong>Next Run</strong>
     <div class="clearfix">
       <div class="metric pull-left">
@@ -102,7 +102,7 @@
   </div>
   <div class="tbl-cell">
     <!-- Right Buttons Actions -->
-    <div class="btn-group action-buttons clearfix" ng-class="{'batch': [TopPanelCtrl.GLOBALS.etlBatch, TopPanelCtrl.GLOBALS.etlDataPipeline].indexOf(TopPanelCtrl.app.type) !== -1, 'realtime': TopPanelCtrl.app.type === TopPanelCtrl.GLOBALS.etlRealtime}">
+    <div class="btn-group action-buttons clearfix" ng-class="{'batch': TopPanelCtrl.GLOBALS.etlBatchPipelines.indexOf(TopPanelCtrl.app.type) !== -1, 'realtime': TopPanelCtrl.app.type === TopPanelCtrl.GLOBALS.etlRealtime}">
       <!-- IF ETL REALTIME -->
       <div class="pull-left"
         ng-if="TopPanelCtrl.app.type === TopPanelCtrl.GLOBALS.etlRealtime && (['KILLED', 'STOPPED', 'COMPLETED', 'FAILED', 'STARTING'].indexOf(TopPanelCtrl.appStatus) !== -1)">
@@ -140,7 +140,7 @@
       </div>
       <!-- IF ETL BATCH -->
       <div class="pull-left"
-        ng-if="[TopPanelCtrl.GLOBALS.etlBatch, TopPanelCtrl.GLOBALS.etlDataPipeline].indexOf(TopPanelCtrl.app.type) !== -1">
+        ng-if="TopPanelCtrl.GLOBALS.etlBatchPipelines.indexOf(TopPanelCtrl.app.type) !== -1">
         <div ng-if="['SUSPENDED', 'SCHEDULING'].indexOf(TopPanelCtrl.scheduleStatus) !== -1 || TopPanelCtrl.scheduleStatus.error">
 
           <div class="btn"
@@ -176,7 +176,7 @@
         </div>
       </div>
       <div class="pull-left"
-           ng-if="[TopPanelCtrl.GLOBALS.etlBatch, TopPanelCtrl.GLOBALS.etlDataPipeline].indexOf(TopPanelCtrl.app.type) !== -1">
+           ng-if="TopPanelCtrl.GLOBALS.etlBatchPipelines.indexOf(TopPanelCtrl.app.type) !== -1">
         <div ng-if="['STARTING', 'STOPPED', 'COMPLETED', 'FAILED', 'KILLED'].indexOf(TopPanelCtrl.appStatus) !== -1">
           <div class="btn"
                ng-click="TopPanelCtrl.do('Start')"

@@ -52,7 +52,7 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
         return false;
       }
 
-      if (appType === GLOBALS.etlBatch) {
+      if (GLOBALS.etlBatchPipelines.indexOf(appType) !== -1) {
         // TODO: Make it generic so that we can choose between spark and mapreduce.
         // We will get a flag from backend called 'engine'. This can be chosen based on that.
         metricRunId = this.state.runs.list[0].properties.ETLMapReduce;
@@ -125,7 +125,7 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
         runsCount: runs.length,
         nextRunTime: this.state.runs.nextRunTime || null
       };
-      if (this.state.type === GLOBALS.etlBatch) {
+      if (GLOBALS.etlBatchPipelines.indexOf(this.state.type) !== -1) {
         this.state.logsParams.runId = this.state.runs.latest.properties.ETLMapReduce;
       } else {
         this.state.logsParams.runId = this.state.runs.latest.runid;
@@ -154,7 +154,7 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
         appId: app.name
       };
 
-      programType = app.artifact.name === GLOBALS.etlBatch ? 'WORKFLOWS' : 'WORKER';
+      programType = GLOBALS.etlBatchPipelines.indexOf(app.artifact.name) !== -1 ? 'WORKFLOWS' : 'WORKER';
 
       if (programType === 'WORKFLOWS') {
         let engineType = JSON.parse(app.configuration).engine;

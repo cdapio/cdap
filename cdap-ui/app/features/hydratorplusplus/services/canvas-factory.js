@@ -26,7 +26,7 @@
       returnConfig.template = {
         type: template
       };
-      if (template === GLOBALS.etlBatch) {
+      if (GLOBALS.etlBatchPipelines.indexOf(template) !== -1) {
         returnConfig.template.schedule = {};
         returnConfig.template.schedule.cron = myHelpers.objectQuery(data.config, 'schedule') || '* * * * *';
       } else if (template === GLOBALS.etlRealtime) {

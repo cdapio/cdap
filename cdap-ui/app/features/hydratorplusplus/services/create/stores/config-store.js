@@ -185,7 +185,7 @@ class HydratorPlusPlusConfigStore {
     config.connections = connections;
 
     let appType = this.getAppType();
-    if ( appType=== this.GLOBALS.etlBatch || appType === this.GLOBALS.etlDataPipeline) {
+    if ( this.GLOBALS.etlBatchPipelines.indexOf(appType) !== -1) {
       config.schedule = this.getSchedule();
       config.engine = this.getEngine();
     } else if (appType === this.GLOBALS.etlRealtime) {
@@ -291,7 +291,7 @@ class HydratorPlusPlusConfigStore {
     this.emitChange();
   }
   setEngine(engine) {
-    if (this.state.config.artifact === this.GLOBALS.etlBatch) {
+    if (this.GLOBALS.etlBatchPipelines.indexOf(this.state.config.artifact) !== -1) {
       this.state.config.engine = engine || 'mapreduce';
     }
   }
@@ -303,7 +303,7 @@ class HydratorPlusPlusConfigStore {
     this.state.artifact.version = artifact.version;
     this.state.artifact.scope = artifact.scope;
 
-    if ([this.GLOBALS.etlBatch, this.GLOBALS.etlDataPipeline].indexOf(artifact.name) !== -1) {
+    if (this.GLOBALS.etlBatchPipelines.indexOf(artifact.name) !== -1) {
       this.state.config.schedule = '* * * * *';
     } else if (artifact.name === this.GLOBALS.etlRealtime) {
       this.state.config.instance = 1;
