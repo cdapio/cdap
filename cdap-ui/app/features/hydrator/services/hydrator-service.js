@@ -39,7 +39,12 @@ class HydratorService {
     let nodes = [];
     let connections = [];
     config.stages.forEach( node => {
-      nodes.push(node);
+      let nodeInfo = angular.extend(node, {
+        type: node.plugin.type,
+        label: node.plugin.label,
+        icon: this.MyDAGFactory.getIcon(node.plugin.name)
+      });
+      nodes.push(nodeInfo);
     });
     connections = config.connections;
     // Obtaining layout of graph with Dagre
@@ -61,7 +66,7 @@ class HydratorService {
     let nodes = [];
     let connections = [];
     let config = pipeline.config;
-    
+
     let artifact = this.GLOBALS.pluginTypes[pipeline.artifact.name];
 
     let source = angular.copy(config.source);
