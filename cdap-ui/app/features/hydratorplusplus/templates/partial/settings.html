@@ -17,7 +17,7 @@
 <div ng-controller="HydratorPlusPlusSettingsCtrl as HydratorPlusPlusSettingsCtrl" class="pipeline-schedule">
 
   <div class="bottompanel-header"
-       ng-if="HydratorPlusPlusSettingsCtrl.templateType === HydratorPlusPlusSettingsCtrl.GLOBALS.etlBatch">
+       ng-if="HydratorPlusPlusSettingsCtrl.GLOBALS.etlBatchPipelines.indexOf(HydratorPlusPlusSettingsCtrl.templateType) !== -1">
     <h3>
       <span>Pipeline Schedule</span>
     </h3>
@@ -39,7 +39,7 @@
   </div>
 
   <div class="bottompanel-body">
-    <div ng-if="HydratorPlusPlusSettingsCtrl.templateType === HydratorPlusPlusSettingsCtrl.GLOBALS.etlBatch">
+    <div ng-if="HydratorPlusPlusSettingsCtrl.GLOBALS.etlBatchPipelines.indexOf(HydratorPlusPlusSettingsCtrl.templateType) !== -1">
       <div class="basic-cron" ng-if="HydratorPlusPlusSettingsCtrl.isBasic">
         <cron-selection class="select-wrapper" output="HydratorPlusPlusSettingsCtrl.cron"
           init="HydratorPlusPlusSettingsCtrl.initialCron"></cron-selection>

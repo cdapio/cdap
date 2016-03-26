@@ -134,7 +134,7 @@
               ng-click="AppsSectionCtrl.MyOrderings.appClicked(app.id)">
             <p ng-bind="app.name"> </p>
             <div class="title-type-image">
-              <span ng-if="AppsSectionCtrl.GLOBALS.etlBatch === app.artifact.name">
+              <span ng-if="AppsSectionCtrl.GLOBALS.etlBatchPipelines.indexOf(app.artifact.name) !== -1">
                 <span class="icon-ETLBatch"></span>
                 <span>ETL Batch</span>
               </span>

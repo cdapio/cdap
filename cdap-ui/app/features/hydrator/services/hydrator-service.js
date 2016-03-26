@@ -28,20 +28,56 @@ class HydratorService {
   }
 
   getNodesAndConnectionsFromConfig(pipeline) {
+    if (pipeline.config.stages) {
+      return this._parseNewConfigStages(pipeline.config);
+    } else {
+      return this._parseOldConfig(pipeline);
+    }
+  }
+
+  _parseNewConfigStages(config) {
     let nodes = [];
     let connections = [];
+    config.stages.forEach( node => {
+      let nodeInfo = angular.extend(node, {
+        type: node.plugin.type,
+        label: node.plugin.label,
+        icon: this.MyDAGFactory.getIcon(node.plugin.name)
+      });
+      nodes.push(nodeInfo);
+    });
+    connections = config.connections;
+    // Obtaining layout of graph with Dagre
+    var graph = this.MyDAGFactory.getGraphLayout(nodes, connections);
+    angular.forEach(nodes, function (node) {
+      node._uiPosition = {
+        'top': graph._nodes[node.name].y + 'px' ,
+        'left': graph._nodes[node.name].x + 'px'
+      };
+    });
+
+    return {
+      nodes: nodes,
+      connections: connections
+    };
+  }
+
+  _parseOldConfig(pipeline) {
+    let nodes = [];
+    let connections = [];
+    let config = pipeline.config;
 
     let artifact = this.GLOBALS.pluginTypes[pipeline.artifact.name];
 
-    let source = angular.copy(pipeline.config.source);
-    let transforms = angular.copy(pipeline.config.transforms || [])
+    let source = angular.copy(config.source);
+    let transforms = angular.copy(config.transforms || [])
       .map( node => {
         node.type = artifact.transform;
         node.label = node.label || node.name;
         node.icon = this.MyDAGFactory.getIcon(node.plugin.name);
         return node;
       });
-    let sinks = angular.copy(pipeline.config.sinks)
+    let sinks = angular.copy(config.sinks)
       .map( node => {
         node.type = artifact.sink;
         node.icon = this.MyDAGFactory.getIcon(node.plugin.name);
@@ -58,7 +94,7 @@ class HydratorService {
     nodes = nodes.concat(transforms);
     nodes = nodes.concat(sinks);
 
-    connections = pipeline.config.connections;
+    connections = config.connections;
 
     // Obtaining layout of graph with Dagre
     var graph = this.MyDAGFactory.getGraphLayout(nodes, connections);

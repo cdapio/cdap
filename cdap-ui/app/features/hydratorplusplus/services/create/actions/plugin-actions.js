@@ -22,13 +22,23 @@ class HydratorPlusPlusPluginActions {
     this.GLOBALS = GLOBALS;
     this.mySettings = mySettings;
   }
-  fetchArtifacts(params) {
+
+  fetchExtensions(params) {
     this.api
-        .fetchArtifacts(params)
+        .fetchExtensions(params)
         .$promise
         .then(
-          res => this.dispatcher.dispatch('onArtifactsFetch', res),
+          res => this.dispatcher.dispatch('onExtensionsFetch', res),
           err => console.log('ERR: Fetching list of artifacts failed', err)
+        );
+  }
+  fetchPlugins(extension, params) {
+    this.api
+        .fetchPlugins(params)
+        .$promise
+        .then(
+          res => this.dispatcher.dispatch('onPluginsFetch', extension, res),
+          err => console.log(`ERR: Fetch list of plugins for ${extension} failed: ${err}`)
         );
   }
   fetchSources(params) {

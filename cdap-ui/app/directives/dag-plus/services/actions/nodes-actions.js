@@ -52,14 +52,6 @@ class DAGPlusPlusNodesActionsFactory {
         };
         this.nodesDispatcher.dispatch('onAddSourceCount');
         break;
-      case 'transform':
-        let transformOffset = this.DAGPlusPlusNodesStore.getTransformCount() * offset;
-        config._uiPosition = {
-          top: (transformPosition.top + transformOffset) + 'px',
-          left: (transformPosition.left + transformOffset) + 'px'
-        };
-        this.nodesDispatcher.dispatch('onAddTransformCount');
-        break;
       case 'sink':
         let sinkOffset = this.DAGPlusPlusNodesStore.getSinkCount() * offset;
         config._uiPosition = {
@@ -67,6 +59,14 @@ class DAGPlusPlusNodesActionsFactory {
           left: (sinkPosition.left + sinkOffset) + 'px'
         };
         this.nodesDispatcher.dispatch('onAddSinkCount');
+        break;
+      default:
+        let transformOffset = this.DAGPlusPlusNodesStore.getTransformCount() * offset;
+        config._uiPosition = {
+          top: (transformPosition.top + transformOffset) + 'px',
+          left: (transformPosition.left + transformOffset) + 'px'
+        };
+        this.nodesDispatcher.dispatch('onAddTransformCount');
         break;
     }
 

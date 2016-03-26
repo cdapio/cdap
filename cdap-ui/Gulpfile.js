@@ -504,7 +504,7 @@ gulp.task('watch', ['jshint', 'watch:build'], function() {
     './app/features/flows/**/*.js',
     './app/features/flows/**/*.js',
     './app/directives/dag/**/*.js',
-    '!./app/directives/dag-plus/**/*.js',
+    './app/directives/dag-plus/**/*.js',
     './app/directives/plugin-templates/**/*.js',
     './app/features/tracker/**/*.js',
     './app/directives/my-global-navbar/**/*.js',
