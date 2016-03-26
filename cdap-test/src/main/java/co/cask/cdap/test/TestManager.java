@@ -29,6 +29,7 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.artifact.ArtifactRange;
+import co.cask.cdap.proto.id.NamespaceId;
 
 import java.io.File;
 import java.sql.Connection;
@@ -300,4 +301,11 @@ public interface TestManager {
    * Returns a {@link StreamManager} for the specified {@link Id.Stream}.
    */
   StreamManager getStreamManager(Id.Stream streamId);
+
+  /**
+   * Removes all apps in the specified namespace.
+   *
+   * @param namespaceId the specified namespace from which to remove all apps
+   */
+  void deleteAllApplications(NamespaceId namespaceId) throws Exception;
 }

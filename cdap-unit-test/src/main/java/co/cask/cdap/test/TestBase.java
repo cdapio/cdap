@@ -81,6 +81,7 @@ import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.artifact.ArtifactRange;
 import co.cask.cdap.proto.id.InstanceId;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.security.authorization.AuthorizerInstantiatorService;
@@ -744,7 +745,7 @@ public class TestBase {
   /**
    * Returns a {@link NamespaceAdmin} to interact with namespaces.
    */
-  protected final NamespaceAdmin getNamespaceAdmin() {
+  protected static NamespaceAdmin getNamespaceAdmin() {
     return namespaceAdmin;
   }
 
@@ -752,14 +753,23 @@ public class TestBase {
    * Returns an {@link Authorizer} for performing authorization operations.
    */
   @Beta
-  protected final Authorizer getAuthorizer() throws IOException, InvalidAuthorizerException {
+  protected static Authorizer getAuthorizer() throws IOException, InvalidAuthorizerException {
     return authorizerInstantiatorService.get();
   }
 
   /**
    * Returns the {@link CConfiguration} used in tests.
    */
-  protected final CConfiguration getConfiguration() {
+  protected static CConfiguration getConfiguration() {
     return cConf;
+  }
+
+  /**
+   * Deletes all applications in the specified namespace.
+   *
+   * @param namespaceId the namespace from which to delete all applications
+   */
+  protected static void deleteAllApplications(NamespaceId namespaceId) throws Exception {
+    getTestManager().deleteAllApplications(namespaceId);
   }
 }

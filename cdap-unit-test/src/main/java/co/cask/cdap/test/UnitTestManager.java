@@ -41,6 +41,7 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.artifact.ArtifactRange;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.test.internal.ApplicationManagerFactory;
 import co.cask.cdap.test.internal.StreamManagerFactory;
 import co.cask.tephra.TransactionAware;
@@ -358,6 +359,11 @@ public class UnitTestManager implements TestManager {
   @Override
   public StreamManager getStreamManager(Id.Stream streamId) {
     return streamManagerFactory.create(streamId);
+  }
+
+  @Override
+  public void deleteAllApplications(NamespaceId namespaceId) throws Exception {
+    appFabricClient.deleteAllApplications(namespaceId);
   }
 
   private Manifest createManifest(Class<?> cls, Class<?>... classes) {

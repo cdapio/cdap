@@ -31,6 +31,7 @@ import co.cask.cdap.gateway.handlers.WorkflowHttpHandler;
 import co.cask.cdap.internal.app.BufferFileInputStream;
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerException;
 import co.cask.cdap.internal.test.AppJarHelper;
+import co.cask.cdap.proto.ApplicationDetail;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.Instances;
 import co.cask.cdap.proto.NamespaceMeta;
@@ -44,6 +45,8 @@ import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.codec.ScheduleSpecificationCodec;
 import co.cask.cdap.proto.codec.WorkflowTokenDetailCodec;
 import co.cask.cdap.proto.codec.WorkflowTokenNodeDetailCodec;
+import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.http.BodyConsumer;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
@@ -398,5 +401,51 @@ public class AppFabricClient {
     bodyConsumer.chunk(ChannelBuffers.wrappedBuffer(Bytes.toBytes(GSON.toJson(appRequest))), mockResponder);
     bodyConsumer.finished(mockResponder);
     verifyResponse(HttpResponseStatus.OK, mockResponder.getStatus(), "Failed to deploy app");
+  }
+
+  public void updateApplication(ApplicationId appId, AppRequest appRequest) throws Exception {
+    DefaultHttpRequest request = new DefaultHttpRequest(
+        HttpVersion.HTTP_1_1, HttpMethod.PUT,
+        String.format("/v3/namespaces/%s/apps/%s/update", appId.getNamespace(), appId.getApplication())
+    );
+    request.setHeader(Constants.Gateway.API_KEY, "api-key-example");
+    request.setContent(ChannelBuffers.wrappedBuffer(Bytes.toBytes(GSON.toJson(appRequest))));
+    MockResponder mockResponder = new MockResponder();
+    appLifecycleHttpHandler.updateApp(request, mockResponder, appId.getNamespace(), appId.getApplication());
+    verifyResponse(HttpResponseStatus.OK, mockResponder.getStatus(), "Updating app failed");
+  }
+
+  public void deleteApplication(ApplicationId appId) throws Exception {
+    DefaultHttpRequest request = new DefaultHttpRequest(
+      HttpVersion.HTTP_1_1, HttpMethod.DELETE,
+      String.format("/v3/namespaces/%s/apps/%s", appId.getNamespace(), appId.getApplication())
+    );
+    request.setHeader(Constants.Gateway.API_KEY, "api-key-example");
+    MockResponder mockResponder = new MockResponder();
+    appLifecycleHttpHandler.deleteApp(request, mockResponder, appId.getNamespace(), appId.getApplication());
+    verifyResponse(HttpResponseStatus.OK, mockResponder.getStatus(), "Deleting app failed");
+  }
+
+  public void deleteAllApplications(NamespaceId namespaceId) throws Exception {
+    DefaultHttpRequest request = new DefaultHttpRequest(
+      HttpVersion.HTTP_1_1, HttpMethod.DELETE,
+      String.format("/v3/namespaces/%s/apps", namespaceId.getNamespace())
+    );
+    request.setHeader(Constants.Gateway.API_KEY, "api-key-example");
+    MockResponder mockResponder = new MockResponder();
+    appLifecycleHttpHandler.deleteAllApps(request, mockResponder, namespaceId.getNamespace());
+    verifyResponse(HttpResponseStatus.OK, mockResponder.getStatus(), "Deleting all apps failed");
+  }
+
+  public ApplicationDetail getInfo(ApplicationId appId) throws Exception {
+    DefaultHttpRequest request = new DefaultHttpRequest(
+      HttpVersion.HTTP_1_1, HttpMethod.GET,
+      String.format("/v3/namespaces/%s/apps/%s", appId.getNamespace(), appId.getApplication())
+    );
+    request.setHeader(Constants.Gateway.API_KEY, "api-key-example");
+    MockResponder mockResponder = new MockResponder();
+    appLifecycleHttpHandler.getAppInfo(request, mockResponder, appId.getNamespace(), appId.getApplication());
+    verifyResponse(HttpResponseStatus.OK, mockResponder.getStatus(), "Getting app info failed");
+    return mockResponder.decodeResponseContent(new TypeToken<ApplicationDetail>() { }.getType(), GSON);
   }
 }

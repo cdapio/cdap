@@ -16,9 +16,11 @@
 
 package co.cask.cdap.test;
 
+import co.cask.cdap.proto.ApplicationDetail;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.RunRecord;
+import co.cask.cdap.proto.artifact.AppRequest;
 
 import java.util.List;
 import java.util.Map;
@@ -105,4 +107,21 @@ public interface ApplicationManager {
    * @return list of {@link RunRecord} history
    */
   List<RunRecord> getHistory(Id.Program programId, ProgramRunStatus status);
+
+  /**
+   * Updates this application
+   *
+   * @param appRequest the {@link AppRequest} to update the application with
+   */
+  void update(AppRequest appRequest) throws Exception;
+
+  /**
+   * Deletes the application;
+   */
+  void delete() throws Exception;
+
+  /**
+   * Returns the application's details.
+   */
+  ApplicationDetail getInfo() throws Exception;
 }

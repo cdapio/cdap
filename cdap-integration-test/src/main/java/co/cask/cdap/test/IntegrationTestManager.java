@@ -44,6 +44,7 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.artifact.ArtifactRange;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.test.remote.RemoteApplicationManager;
 import co.cask.cdap.test.remote.RemoteStreamManager;
 import com.google.common.base.Joiner;
@@ -336,6 +337,11 @@ public class IntegrationTestManager implements TestManager {
   @Override
   public StreamManager getStreamManager(Id.Stream streamId) {
     return new RemoteStreamManager(clientConfig, restClient, streamId);
+  }
+
+  @Override
+  public void deleteAllApplications(NamespaceId namespaceId) throws Exception {
+    applicationClient.deleteAll(namespaceId.toId());
   }
 
   /**
