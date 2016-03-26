@@ -32,19 +32,17 @@ import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.ApplicationNotFoundException;
+import co.cask.cdap.common.ConflictException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.ProgramNotFoundException;
 import co.cask.cdap.common.app.RunIds;
-import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerException;
 import co.cask.cdap.internal.app.services.ProgramLifecycleService;
-import co.cask.cdap.internal.app.services.PropertiesResolver;
 import co.cask.cdap.internal.dataset.DatasetCreationSpec;
 import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.Id;
@@ -76,7 +74,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -108,25 +105,22 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
   private final DatasetFramework datasetFramework;
 
   @Inject
-  public WorkflowHttpHandler(Store store, WorkflowClient workflowClient,
-                             CConfiguration configuration, ProgramRuntimeService runtimeService,
-                             QueueAdmin queueAdmin, Scheduler scheduler, PreferencesStore preferencesStore,
-                             NamespacedLocationFactory namespacedLocationFactory, MRJobInfoFetcher mrJobInfoFetcher,
-                             ProgramLifecycleService lifecycleService, PropertiesResolver resolver,
-                             MetricStore metricStore, DatasetFramework datasetFramework) {
-    super(store, configuration, runtimeService, lifecycleService, queueAdmin, scheduler,
-          preferencesStore, namespacedLocationFactory, mrJobInfoFetcher, resolver, metricStore);
+  WorkflowHttpHandler(Store store, WorkflowClient workflowClient, ProgramRuntimeService runtimeService,
+                      QueueAdmin queueAdmin, Scheduler scheduler, PreferencesStore preferencesStore,
+                      MRJobInfoFetcher mrJobInfoFetcher, ProgramLifecycleService lifecycleService,
+                      MetricStore metricStore, DatasetFramework datasetFramework) {
+    super(store, runtimeService, lifecycleService, queueAdmin, scheduler, preferencesStore, mrJobInfoFetcher,
+          metricStore);
     this.workflowClient = workflowClient;
     this.datasetFramework = datasetFramework;
   }
 
   @POST
   @Path("/apps/{app-id}/workflows/{workflow-name}/runs/{run-id}/suspend")
-  public void suspendWorkflowRun(HttpRequest request, final HttpResponder responder,
+  public void suspendWorkflowRun(HttpRequest request, HttpResponder responder,
                                  @PathParam("namespace-id") String namespaceId, @PathParam("app-id") String appId,
-                                 @PathParam("workflow-name") String workflowName, @PathParam("run-id") String runId)
-    throws NotFoundException, ExecutionException, InterruptedException {
-
+                                 @PathParam("workflow-name") String workflowName,
+                                 @PathParam("run-id") String runId) throws Exception {
     Id.Program id = Id.Program.from(namespaceId, appId, ProgramType.WORKFLOW, workflowName);
     ProgramRuntimeService.RuntimeInfo runtimeInfo = runtimeService.list(id).get(RunIds.fromString(runId));
     if (runtimeInfo == null) {
@@ -134,9 +128,7 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
     }
     ProgramController controller = runtimeInfo.getController();
     if (controller.getState() == ProgramController.State.SUSPENDED) {
-      responder.sendString(AppFabricServiceStatus.PROGRAM_ALREADY_SUSPENDED.getCode(),
-                           AppFabricServiceStatus.PROGRAM_ALREADY_SUSPENDED.getMessage());
-      return;
+      throw new ConflictException("Program run already suspended");
     }
     controller.suspend().get();
     responder.sendString(HttpResponseStatus.OK, "Program run suspended.");
@@ -144,10 +136,10 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
 
   @POST
   @Path("/apps/{app-id}/workflows/{workflow-name}/runs/{run-id}/resume")
-  public void resumeWorkflowRun(HttpRequest request, final HttpResponder responder,
+  public void resumeWorkflowRun(HttpRequest request, HttpResponder responder,
                                 @PathParam("namespace-id") String namespaceId, @PathParam("app-id") String appId,
-                                @PathParam("workflow-name") String workflowName, @PathParam("run-id") String runId)
-          throws NotFoundException, ExecutionException, InterruptedException {
+                                @PathParam("workflow-name") String workflowName,
+                                @PathParam("run-id") String runId) throws Exception {
 
     Id.Program id = Id.Program.from(namespaceId, appId, ProgramType.WORKFLOW, workflowName);
     ProgramRuntimeService.RuntimeInfo runtimeInfo = runtimeService.list(id).get(RunIds.fromString(runId));
@@ -156,9 +148,7 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
     }
     ProgramController controller = runtimeInfo.getController();
     if (controller.getState() == ProgramController.State.ALIVE) {
-      responder.sendString(AppFabricServiceStatus.PROGRAM_ALREADY_RUNNING.getCode(),
-                           AppFabricServiceStatus.PROGRAM_ALREADY_RUNNING.getMessage());
-      return;
+      throw new ConflictException("Program is already running");
     }
     controller.resume().get();
     responder.sendString(HttpResponseStatus.OK, "Program run resumed.");

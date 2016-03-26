@@ -190,7 +190,6 @@ public class DefaultStore implements Store {
     }
   }
 
-  @Nullable
   @Override
   public Program loadProgram(final Id.Program id)
     throws IOException, ApplicationNotFoundException, ProgramNotFoundException {

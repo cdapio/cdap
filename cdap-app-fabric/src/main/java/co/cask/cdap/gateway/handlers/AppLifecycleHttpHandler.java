@@ -79,7 +79,6 @@ import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.MediaType;
 
 /**
  * {@link co.cask.http.HttpHandler} for managing application lifecycle.
@@ -204,23 +203,15 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/apps/{app-id}")
   public void deleteApp(HttpRequest request, HttpResponder responder,
                         @PathParam("namespace-id") String namespaceId,
-                        @PathParam("app-id") final String appId)
-    throws BadRequestException, NamespaceNotFoundException {
-
+                        @PathParam("app-id") final String appId) throws Exception {
     Id.Application id = validateApplicationId(namespaceId, appId);
-    AppFabricServiceStatus appStatus;
     try {
       applicationLifecycleService.removeApplication(id);
-      appStatus = AppFabricServiceStatus.OK;
-    } catch (NotFoundException nfe) {
-      appStatus = AppFabricServiceStatus.PROGRAM_NOT_FOUND;
-    } catch (CannotBeDeletedException cbde) {
-      appStatus = AppFabricServiceStatus.PROGRAM_STILL_RUNNING;
-    } catch (Exception e) {
-      appStatus = AppFabricServiceStatus.INTERNAL_ERROR;
+      responder.sendStatus(HttpResponseStatus.OK);
+    } catch (CannotBeDeletedException e) {
+      // Keeping this for backward compatibility. Ideally this should return conflict, not forbidden.
+      responder.sendString(HttpResponseStatus.FORBIDDEN, "Program is still running");
     }
-    LOG.trace("Delete call for Application {} at AppFabricHttpHandler", appId);
-    responder.sendString(appStatus.getCode(), appStatus.getMessage());
   }
 
   /**
@@ -229,23 +220,15 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @DELETE
   @Path("/apps")
   public void deleteAllApps(HttpRequest request, HttpResponder responder,
-                            @PathParam("namespace-id") String namespaceId)
-    throws BadRequestException, NamespaceNotFoundException {
-
+                            @PathParam("namespace-id") String namespaceId) throws Exception {
     Id.Namespace id = validateNamespace(namespaceId);
-    AppFabricServiceStatus status;
     try {
       applicationLifecycleService.removeAll(id);
-      status = AppFabricServiceStatus.OK;
-    } catch (NotFoundException nfe) {
-      status = AppFabricServiceStatus.PROGRAM_NOT_FOUND;
-    } catch (CannotBeDeletedException cbde) {
-      status = AppFabricServiceStatus.PROGRAM_STILL_RUNNING;
-    } catch (Exception e) {
-      status = AppFabricServiceStatus.INTERNAL_ERROR;
+      responder.sendStatus(HttpResponseStatus.OK);
+    } catch (CannotBeDeletedException e) {
+      // Keeping this for backward compatibility. Ideally this should return conflict, not forbidden.
+      responder.sendString(HttpResponseStatus.FORBIDDEN, "Program is still running");
     }
-    LOG.trace("Delete all call at AppFabricHttpHandler");
-    responder.sendString(status.getCode(), status.getMessage());
   }
 
   /**
@@ -378,20 +361,20 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         try {
           // deploy app
           applicationLifecycleService.deployAppAndArtifact(namespace, appId, artifactId, uploadedFile,
-            configString, createProgramTerminator());
+                                                           configString, createProgramTerminator());
           responder.sendString(HttpResponseStatus.OK, "Deploy Complete");
         } catch (InvalidArtifactException e) {
           responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
         } catch (ArtifactAlreadyExistsException e) {
           responder.sendString(HttpResponseStatus.CONFLICT, String.format(
             "Artifact '%s' already exists. Please use the API that creates an application from an existing artifact. " +
-            "If you are trying to replace the artifact, please delete it and then try again.", artifactId));
+              "If you are trying to replace the artifact, please delete it and then try again.", artifactId));
         } catch (WriteConflictException e) {
           // don't really expect this to happen. It means after multiple retries there were still write conflicts.
           LOG.warn("Write conflict while trying to add artifact {}.", artifactId, e);
           responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR,
                                "Write conflict while adding artifact. This can happen if multiple requests to add " +
-                               "the same artifact occur simultaneously. Please try again.");
+                                 "the same artifact occur simultaneously. Please try again.");
         } catch (Exception e) {
           LOG.error("Deploy failure", e);
           responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
