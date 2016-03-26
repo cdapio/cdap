@@ -43,9 +43,15 @@
         </a>
       </h6>
       <h6>
-        {{contentData.defaultArtifact['version']}}
+        {{contentData.defaultArtifact['name']}} {{contentData.defaultArtifact['version']}}
         <small ng-if="!contentData.showAllVersion && contentData.allArtifacts.length > 1">
           <a href="#" ng-click="contentData.showAllVersion = !contentData.showAllVersion">Change</a>
+        </small>
+        <a href="#" ng-if="!contentData.pluginTemplate" ng-click="popoverContext.onItemClicked($event,  {action: 'createTemplate', contentData: contentData})">
+          <span class="fa fa-plus-circle"></span>
+          <span>Template</span>
+        </a>
+        <small>
         </small>
       </h6>
     </li>

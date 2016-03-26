@@ -42,7 +42,6 @@ class HydratorPlusPlusLeftPanelCtrl {
     this.artifacts = rArtifacts;
     let configStoreArtifact = this.HydratorPlusPlusConfigStore.getArtifact();
     this.selectedArtifact = rArtifacts.filter( ar => ar.name === configStoreArtifact.name)[0];
-
     this.HydratorPlusPlusPluginActions.fetchExtensions({
       namespace: $stateParams.namespace,
       pipelineType: this.selectedArtifact.name,
@@ -251,8 +250,8 @@ class HydratorPlusPlusLeftPanelCtrl {
   }
   onLeftSidePanelItemClicked(event, node) {
     event.stopPropagation();
-    if (node.nodeType === 'ADDPLUGINTEMPLATE') {
-      this.createPluginTemplate(node, 'create');
+    if (node.action === 'createTemplate') {
+      this.createPluginTemplate(node.contentData, 'create');
     } else if(node.action === 'deleteTemplate') {
       this.deletePluginTemplate(node.contentData);
     } else if(node.action === 'editTemplate') {
@@ -290,11 +289,11 @@ class HydratorPlusPlusLeftPanelCtrl {
       .rendered
       .then(() => {
         this.PluginTemplatesDirActions.init({
-          templateType: node.templateType,
-          pluginType: node.pluginType,
+          templateType: node.templateType || this.selectedArtifact.name,
+          pluginType: node.pluginType || node.type,
           mode: mode === 'edit'? 'edit': 'create',
           templateName: node.pluginTemplate,
-          pluginName: node.pluginName
+          pluginName: node.pluginName || node.name
         });
       });
   }
