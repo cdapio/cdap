@@ -84,16 +84,6 @@ public class SparkProgramWrapper {
 
     sparkConf.setAppName(sparkContext.getProgramId().getId());
 
-    if (!sparkContext.getContextConfig().isLocal()) {
-      // Create the __spark_conf.zip conf archive. It's for bug CDAP-5019 (SPARK-13441)
-      Properties properties = new Properties();
-      for (Tuple2<String, String> tuple : sparkConf.getAll()) {
-        properties.put(tuple._1(), tuple._2());
-      }
-
-      SparkUtils.createSparkConfZip(properties);
-    }
-
     if (JavaSparkProgram.class.isAssignableFrom(sparkProgramClass)) {
       sparkContext.setSparkFacade(new JavaSparkFacade(sparkConf));
     } else if (ScalaSparkProgram.class.isAssignableFrom(sparkProgramClass)) {
