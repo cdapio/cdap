@@ -39,7 +39,7 @@ function LineageController ($scope, jsPlumb, $timeout, $state, LineageStore, myT
           source: conn.source,
           target: conn.target,
           detachable: false,
-          anchors: ['Right', ['Continuous', { faces: ['left']}]]
+          anchors: ['Right', 'Left']
         });
       });
 
@@ -61,7 +61,7 @@ function LineageController ($scope, jsPlumb, $timeout, $state, LineageStore, myT
         lineWidth: 2,
         strokeStyle: 'rgba(0,0,0, 1)'
       },
-      Connector: [ 'Flowchart', {gap: 0, stub: [10, 15], alwaysRespectStubs: true, cornerRadius: 3} ],
+      Connector: [ 'Flowchart', {gap: 0, stub: [10, 15], alwaysRespectStubs: true, cornerRadius: 0} ],
       ConnectionOverlays: [ [ 'Arrow', { location: 1, direction: 1, width: 10, length: 10 }] ],
       Endpoints: ['Blank', 'Blank']
     });
