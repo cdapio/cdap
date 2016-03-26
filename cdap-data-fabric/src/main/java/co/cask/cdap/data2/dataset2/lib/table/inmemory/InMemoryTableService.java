@@ -21,7 +21,9 @@ import co.cask.cdap.data2.dataset2.lib.table.IncrementValue;
 import co.cask.cdap.data2.dataset2.lib.table.PutValue;
 import co.cask.cdap.data2.dataset2.lib.table.Update;
 import co.cask.cdap.data2.dataset2.lib.table.Updates;
+import co.cask.tephra.Transaction;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Ordering;
@@ -239,19 +241,19 @@ public class InMemoryTableService {
 
   public static synchronized NavigableMap<byte[], NavigableMap<Long, byte[]>> get(String tableName,
                                                                                   byte[] row,
-                                                                                  Long version) {
+                                                                                  @Nullable Transaction tx) {
     // todo: handle nulls
     ConcurrentNavigableMap<byte[], NavigableMap<byte[], NavigableMap<Long, Update>>> table = tables.get(tableName);
     Preconditions.checkArgument(table != null, "table not found: " + tableName);
     NavigableMap<byte[], NavigableMap<Long, Update>> rowMap = table.get(row);
-    return deepCopy(Updates.rowToBytes(getVisible(rowMap, version)));
+    return deepCopy(Updates.rowToBytes(getVisible(rowMap, tx)));
   }
 
   public static synchronized NavigableMap<byte[], NavigableMap<byte[], NavigableMap<Long, byte[]>>>
                              getRowRange(String tableName,
                                          byte[] startRow,
                                          byte[] stopRow,
-                                         Long version) {
+                                         @Nullable Transaction tx) {
     // todo: handle nulls
     ConcurrentNavigableMap<byte[], NavigableMap<byte[], NavigableMap<Long, Update>>> tableData = tables.get(tableName);
     NavigableMap<byte[], NavigableMap<byte[], NavigableMap<Long, Update>>> rows;
@@ -269,7 +271,7 @@ public class InMemoryTableService {
       Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
     for (Map.Entry<byte[], NavigableMap<byte[], NavigableMap<Long, Update>>> rowMap : rows.entrySet()) {
       NavigableMap<byte[], NavigableMap<Long, Update>> columns =
-        version == null ? rowMap.getValue() : getVisible(rowMap.getValue(), version);
+        tx == null ? rowMap.getValue() : getVisible(rowMap.getValue(), tx);
       result.put(copy(rowMap.getKey()), deepCopy(Updates.rowToBytes(columns)));
     }
 
@@ -281,16 +283,21 @@ public class InMemoryTableService {
   }
 
   private static NavigableMap<byte[], NavigableMap<Long, Update>> getVisible(
-    NavigableMap<byte[], NavigableMap<Long, Update>> rowMap, Long version) {
+    NavigableMap<byte[], NavigableMap<Long, Update>> rowMap, final Transaction tx) {
 
     if (rowMap == null) {
       return null;
     }
     NavigableMap<byte[], NavigableMap<Long, Update>> result = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
     for (Map.Entry<byte[], NavigableMap<Long, Update>> column : rowMap.entrySet()) {
-      NavigableMap<Long, Update> visbleValues = column.getValue();
-      if (version != null) {
-        visbleValues = visbleValues.headMap(version, true);
+      SortedMap<Long, Update> visbleValues = column.getValue();
+      if (tx != null) {
+        visbleValues = Maps.filterKeys(visbleValues, new Predicate<Long>() {
+          @Override
+          public boolean apply(Long version) {
+            return tx.isVisible(version);
+          }
+        });
       }
       if (visbleValues.size() > 0) {
         NavigableMap<Long, Update> colMap = createVersionedValuesMap(visbleValues);
@@ -300,7 +307,7 @@ public class InMemoryTableService {
     return result;
   }
 
-  private static NavigableMap<Long, Update> createVersionedValuesMap(NavigableMap<Long, Update> copy) {
+  private static NavigableMap<Long, Update> createVersionedValuesMap(SortedMap<Long, Update> copy) {
     NavigableMap<Long, Update> map = Maps.newTreeMap(VERSIONED_VALUE_MAP_COMPARATOR);
     map.putAll(copy);
     return map;
