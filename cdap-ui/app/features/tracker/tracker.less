@@ -362,6 +362,23 @@ body.state-tracker-entity {
     bottom: 53px;
     box-sizing: border-box;
     overflow-y: auto;
+
+    .table {
+      border-top: 0;
+      border-right: 0;
+      border-left: 0;
+
+      th:first-child, td:first-child {
+        border-left: 0;
+      }
+      th:last-child, td:last-child {
+        border-right: 0;
+      }
+
+      tr:first-child {
+        td { border-top: 0; }
+      }
+    }
   }
 
   .entity-detail-tags-column, .entity-detail-schema-column {
