@@ -33,11 +33,26 @@ function RangeController ($scope) {
   };
 
   vm.done = () => {
-    vm.startTimeOpen = false;
-    vm.endTimeOpen = false;
+    vm.close();
 
     $scope.onDone();
   };
+
+  vm.close = () => {
+    vm.startTimeOpen = false;
+    vm.endTimeOpen = false;
+  };
+
+  let keydownListener = (event) => {
+    if (event.keyCode !== 27) { return; }
+    vm.close();
+  };
+
+  document.addEventListener('keydown', keydownListener);
+
+  $scope.$on('$destroy', () => {
+    document.removeEventListener('keydown', keydownListener);
+  });
 }
 
 angular.module(PKG.name+'.commons')

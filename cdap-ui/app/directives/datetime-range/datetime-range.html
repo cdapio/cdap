@@ -49,7 +49,7 @@
 
     <div class="footer-row text-center" ng-if="RangeController.startTimeOpen || RangeController.endTimeOpen">
       <button class="btn btn-default btn-block done-button"
-              ng-disabled="dateRange.startTime >= dateRange.endTime"
+              ng-disabled="!dateRange.startTime || !dateRange.endTime || dateRange.startTime >= dateRange.endTime"
               ng-click="RangeController.done()">
         Done
       </button>
