@@ -37,10 +37,12 @@ import java.util.TreeSet;
  */
 public class PipelinePlanner {
   private final Set<String> reduceTypes;
+  private final Set<String> isolationTypes;
   private final Set<String> supportedPluginTypes;
 
-  public PipelinePlanner(Set<String> supportedPluginTypes, Set<String> reduceTypes) {
+  public PipelinePlanner(Set<String> supportedPluginTypes, Set<String> reduceTypes, Set<String> isolationTypes) {
     this.reduceTypes = ImmutableSet.copyOf(reduceTypes);
+    this.isolationTypes = ImmutableSet.copyOf(isolationTypes);
     this.supportedPluginTypes = ImmutableSet.copyOf(supportedPluginTypes);
   }
 
@@ -69,16 +71,24 @@ public class PipelinePlanner {
   public PipelinePlan plan(PipelineSpec spec) {
     // go through the stages and examine their plugin type to determine which stages are reduce stages
     Set<String> reduceNodes = new HashSet<>();
+    Set<String> isolationNodes = new HashSet<>();
     Map<String, StageSpec> specs = new HashMap<>();
     for (StageSpec stage : spec.getStages()) {
       if (reduceTypes.contains(stage.getPlugin().getType())) {
         reduceNodes.add(stage.getName());
       }
+      if (isolationTypes.contains(stage.getPlugin().getType())) {
+        isolationNodes.add(stage.getName());
+      }
       specs.put(stage.getName(), stage);
     }
 
     // insert connector stages into the logical pipeline
-    ConnectorDag cdag = new ConnectorDag(spec.getConnections(), reduceNodes);
+    ConnectorDag cdag = ConnectorDag.builder()
+      .addConnections(spec.getConnections())
+      .addReduceNodes(reduceNodes)
+      .addIsolationNodes(isolationNodes)
+      .build();
     cdag.insertConnectors();
     Set<String> connectorNodes = cdag.getConnectors();
 
