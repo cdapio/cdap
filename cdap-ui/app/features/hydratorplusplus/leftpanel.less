@@ -64,7 +64,7 @@ body.theme-cdap.state-hydratorplusplus-create {
             }
             a {
               text-decoration: none;
-              color: #098BF9;
+              color: #BEBEBE;
               &:focus {
                 outline: 0;
               }
@@ -92,9 +92,28 @@ body.theme-cdap.state-hydratorplusplus-create {
       .item .plugin-item {
         text-align: left;
         width: 48%;
+        position: relative;
+
         .name {
           display: inline-block;
           max-width: 81px;
+        }
+        .plugin-badge {
+          display: none;
+        }
+        &.plugin-templates{
+          .plugin-badge {
+            display: block;
+            font-size: 8px;
+            position: absolute;
+            left: 110px;
+            background: #D8D8D8;
+            border-radius: 2px;
+            margin: 0;
+            padding: 3px 3px;
+            line-height: 8px;
+            top: 3px;
+          }
         }
       }
       + .right-wrapper {
@@ -139,6 +158,7 @@ body.theme-cdap.state-hydratorplusplus-create {
           overflow-x: hidden;
           text-overflow: ellipsis;
           white-space: nowrap;
+          font-weight: 500;
         }
       }
 
@@ -271,11 +291,25 @@ body.theme-cdap.state-hydratorplusplus-create {
           border: 0;
           background: black;
           color: white;
+          h6 {
+            &:not(:first-child) {
+              margin-left: 5px;
+
+              a {
+                text-decoration: none;
+                &:not(:last-child) {
+                  margin-right: 5px;
+                }
+              }
+            }
+          }
           h5,h6 {
             margin:0;
             font-weight: bold;
+            display: inline-block;
             a {
               text-decoration: none;
+              margin-left: 3px;
             }
           }
         }

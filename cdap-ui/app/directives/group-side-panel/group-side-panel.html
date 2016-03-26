@@ -47,6 +47,7 @@
                ng-click="MySidePanel.onItemClicked($event, plugin)">
             <span ng-if="plugin.icon" class="text-center fa {{plugin.icon}}"></span>
             <span class="name">{{ (plugin.name || plugin.pluginTemplate) | myEllipsis: 15}}</span>
+            <span class="plugin-badge">T</span>
           </div>
         </div>
       </div>

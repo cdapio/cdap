@@ -269,7 +269,8 @@ angular.module(`${PKG.name}.commons`)
         templateType: vm.templateType,
         pluginName: vm.pluginName,
         outputSchema: vm.pluginConfig.outputSchema,
-        lock: vm.pluginConfig.lock
+        lock: vm.pluginConfig.lock,
+        nodeClass: 'plugin-templates'
       };
 
       var namespace = $stateParams.namespace;
