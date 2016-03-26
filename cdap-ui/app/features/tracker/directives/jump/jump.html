@@ -36,7 +36,8 @@
     </li>
   </ul>
 
-  <ul class="pull-right" uib-dropdown-menu ng-if="entityType === 'datasets'">
+  <ul class="pull-right" uib-dropdown-menu
+      ng-if="entityType === 'datasets' && Jump.isAvailableDataset">
     <li>
       <a ui-sref="datasets.detail.overview.status({ datasetId: entityId })">View in CDAP</a>
     </li>
@@ -47,6 +48,13 @@
     </li>
     <li>
       <a href="" ng-click="Jump.datasetBatchSink()">Sink in batch pipeline</a>
+    </li>
+  </ul>
+
+  <ul class="pull-right" uib-dropdown-menu
+      ng-if="entityType === 'datasets' && !Jump.isAvailableDataset">
+    <li>
+      <a ui-sref="datasets.detail.overview.status({ datasetId: entityId })">View in CDAP</a>
     </li>
   </ul>
 

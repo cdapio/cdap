@@ -19,6 +19,10 @@ function JumpController ($scope, myJumpFactory) {
 
   let vm = this;
 
+  if ($scope.entityType === 'datasets') {
+    vm.isAvailableDataset = myJumpFactory.isAvailableDataset($scope.datasetType);
+  }
+
   vm.streamBatchSource = () => {
     myJumpFactory.streamBatchSource($scope.entityId);
   };
@@ -42,7 +46,7 @@ angular.module(PKG.name + '.feature.tracker')
       scope: {
         entityType: '=',
         entityId: '=',
-        tableType: '=?'
+        datasetType: '=?'
       },
       templateUrl: '/assets/features/tracker/directives/jump/jump.html',
       controller: JumpController,
