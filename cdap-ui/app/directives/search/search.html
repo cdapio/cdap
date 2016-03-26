@@ -31,22 +31,24 @@
     </div>
 
     <div class="search-results" ng-if="SearchCtrl.searchResults.length > 0">
-      <div ng-repeat="result in SearchCtrl.searchResults">
-        <a class="entity-name"
+      <div ng-repeat="result in SearchCtrl.searchResults | orderBy:'type'">
+        <a class="entity-name clearfix"
            ui-sref="{{ result.stateLink }}">
-          <div class="col-xs-8">
+          <div class="col-xs-7 truncate-ellipsis">
             <div class="result-info">
-              <span>{{ result.name }}</span>
-              <span class="entity-app-details" ng-if="result.programType">
-                <span class="icon-app"></span>
-                <span>{{ result.stateParams.appId }}</span>
+              <span class="{{ result.icon }}"></span>
+              <span uib-tooltip="Type: {{ result.type }}"
+                    tooltip-popup-delay="300"
+                    tooltip-append-to-body="true">
+                {{ result.name }}
               </span>
             </div>
           </div>
-          <div class="col-xs-4">
-            <span class="entity-details">
-              <span class="{{ result.icon }}"></span>
-              <span class="entity-type">{{ result.type }}</span>
+
+          <div class="col-xs-5 truncate-ellipsis">
+            <span class="entity-app-details" ng-if="result.programType">
+              <span class="icon-app"></span>
+              <span>{{ result.stateParams.appId }}</span>
             </span>
           </div>
         </a>
