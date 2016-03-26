@@ -18,13 +18,12 @@ package co.cask.cdap.internal.app.runtime.spark;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.internal.app.runtime.distributed.LocalizeResource;
 import co.cask.cdap.internal.asm.Methods;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
-import com.google.common.io.OutputSupplier;
+import com.google.common.io.Resources;
 import org.apache.hadoop.yarn.api.ApplicationConstants;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
@@ -36,6 +35,7 @@ import org.objectweb.asm.commons.GeneratorAdapter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scala.Option;
+import scala.Tuple2;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -57,7 +57,6 @@ import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Map;
-import java.util.Properties;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.jar.JarInputStream;
@@ -254,50 +253,22 @@ public final class SparkUtils {
   }
 
   /**
-   * Creates a {@code __spark_conf__.zip} in the local directory by zipping contains from the
-   * {@code __spark_conf__} directory, with the addition of the serialization of the Spark properties.
-   * This method works in conjunction with the {@link #prepareSparkResources(CConfiguration, File, Map)} method and
-   * should only be called from the the Spark client container process.
-   *
-   * @param sparkProperties the Spark properties to serialize
-   */
-  public static void createSparkConfZip(final Properties sparkProperties) {
-    try {
-      BundleJarUtil.createArchive(new File(LOCALIZED_CONF_DIR), new OutputSupplier<ZipOutputStream>() {
-        @Override
-        public ZipOutputStream getOutput() throws IOException {
-          ZipOutputStream zipOutput = new ZipOutputStream(new FileOutputStream(LOCALIZED_CONF_DIR_ZIP));
-          try {
-            zipOutput.putNextEntry(new ZipEntry(SPARK_CONF_FILE));
-            sparkProperties.store(zipOutput, "Spark configuration.");
-            return zipOutput;
-          } catch (IOException e) {
-            zipOutput.close();
-            throw e;
-          }
-        }
-      });
-    } catch (IOException e) {
-      // Don't propagate the exception.
-      // It is possible that the LOCALIZED_CONF_DIR doesn't exist if the prepareSparkResources
-      // cannot locate the HADOOP_CONF_DIR (should be very rare, if not impossible).
-      // In that case, will just let the SparkSubmit method handle it
-      // (depending on the Spark version, some can handle it).
-      LOG.warn("Failed to create {} file", LOCALIZED_CONF_DIR_ZIP, e);
-    }
-  }
-
-  /**
    * Returns the Spark assembly jar file with the Spark Yarn Client rewritten. It is for workaround the bug in
    * CDAP-5019 (SPARK-13441).
    *
-   * @param cConf configuration for determining where is the CDAP data directory.
+   * @param cConf configuration for determining whether rewrite is enabled and where is the CDAP data directory.
    * @return the rewritten Spark assembly JAR file
    * @throws IOException if failed to create the rewritten jar
    * @throws IllegalStateException if failed to locate the original Spark assembly JAR file
    */
   public static synchronized File getRewrittenSparkAssemblyJar(CConfiguration cConf) throws IOException {
     File assemblyJar = locateSparkAssemblyJar();
+
+    // Check if rewrite is enabled
+    if (!cConf.getBoolean(Constants.AppFabric.SPARK_YARN_CLIENT_REWRITE)) {
+      return assemblyJar;
+    }
+
     File tempDir = getTempDir(cConf);
     long vmStartTime = ManagementFactory.getRuntimeMXBean().getStartTime();
     File rewrittenJar = new File(tempDir, vmStartTime + "-" + assemblyJar.getName());
@@ -341,11 +312,18 @@ public final class SparkUtils {
               jarOutput.closeEntry();
             }
           }
-          if (!tempFile.renameTo(rewrittenJar)) {
-            throw new IOException("Failed to rename " + tempFile + " to " + rewrittenJar);
-          }
-          return rewrittenJar;
+
+          // Add the SparkConfUtils.class to the spark assembly jar
+          String sparkConfUtilsResourceName = Type.getInternalName(SparkConfUtils.class) + ".class";
+          jarOutput.putNextEntry(new JarEntry(sparkConfUtilsResourceName));
+          Resources.copy(Resources.getResource(sparkConfUtilsResourceName), jarOutput);
+          jarOutput.closeEntry();
         }
+
+        if (!tempFile.renameTo(rewrittenJar)) {
+          throw new IOException("Failed to rename " + tempFile + " to " + rewrittenJar);
+        }
+        return rewrittenJar;
       }
     } finally {
       tempFile.delete();
@@ -373,35 +351,53 @@ public final class SparkUtils {
           return mv;
         }
 
-        // Generate the method body to just return the hardcode LOCALIZED_CONF_DIR_ZIP file name
-        if (Type.getReturnType(desc).equals(Type.getType(File.class))) {
-          // Spark 1.5+ return type is File
-          // This is what gets generated
-          // return new File(LOCALIZED_CONF_DIR_ZIP);
-          GeneratorAdapter mg = new GeneratorAdapter(mv, access, name, desc);
-          mg.newInstance(Type.getType(File.class));
-          mg.dup();
-          mg.visitLdcInsn(LOCALIZED_CONF_DIR_ZIP);
-          mg.invokeConstructor(Type.getType(File.class), Methods.getMethod(void.class, "<init>", String.class));
+        // Check if it's a recognizable return type.
+        // Spark 1.5+ return type is File
+        boolean isReturnFile = Type.getReturnType(desc).equals(Type.getType(File.class));
+        if (!isReturnFile) {
+          // Spark 1.4 return type is Option<File>
+          if (!Type.getReturnType(desc).equals(Type.getType(Option.class))) {
+            // Unknown type. Not going to modify the code.
+            return mv;
+          }
+        }
+
+        // Generate this first,
+        // SparkConfUtils.createSparkConfZip(this.sparkConf.getAll(), SPARK_CONF_FILE,
+        //                                   LOCALIZED_CONF_DIR, LOCALIZED_CONF_DIR_ZIP);
+        Type sparkConfType = Type.getObjectType("org/apache/spark/SparkConf");
+        GeneratorAdapter mg = new GeneratorAdapter(mv, access, name, desc);
+
+        // this.sparkConf.getAll()
+        mg.loadThis();
+        mg.getField(Type.getObjectType("org/apache/spark/deploy/yarn/Client"), "sparkConf", sparkConfType);
+        mg.invokeVirtual(sparkConfType, Methods.getMethod(Tuple2[].class, "getAll"));
+
+        // push three constants to stack
+        mg.visitLdcInsn(SPARK_CONF_FILE);
+        mg.visitLdcInsn(LOCALIZED_CONF_DIR);
+        mg.visitLdcInsn(LOCALIZED_CONF_DIR_ZIP);
+
+        // call SparkConfUtils.createSparkConfZip, return a File and leave it in stack
+        mg.invokeStatic(Type.getType(SparkConfUtils.class),
+                        Methods.getMethod(File.class, "createZip", Tuple2[].class,
+                                          String.class, String.class, String.class));
+
+        if (isReturnFile) {
+          // Spark 1.5+ return type is File, hence just return the File from the stack
           mg.returnValue();
           mg.endMethod();
-          return null;
-        } else if (Type.getReturnType(desc).equals(Type.getType(Option.class))) {
+        } else {
           // Spark 1.4 return type is Option<File>
-          // This is what gets generated
-          // return Option.apply(new File(LOCALIZED_CONF_DIR_ZIP);
-          GeneratorAdapter mg = new GeneratorAdapter(mv, access, name, desc);
-          mg.newInstance(Type.getType(File.class));
-          mg.dup();
-          mg.visitLdcInsn(LOCALIZED_CONF_DIR_ZIP);
-          mg.invokeConstructor(Type.getType(File.class), Methods.getMethod(void.class, "<init>", String.class));
+          // return Option.apply(file);
+          // where the file is actually just popped from the stack
           mg.invokeStatic(Type.getType(Option.class), Methods.getMethod(Option.class, "apply", Object.class));
           mg.checkCast(Type.getType(Option.class));
           mg.returnValue();
           mg.endMethod();
-          return null;
         }
-        return mv;
+
+        return null;
       }
     }, 0);
     return cw.toByteArray();

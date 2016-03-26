@@ -127,6 +127,7 @@ public final class Constants {
     public static final String PROGRAM_RUNID_CORRECTOR_INTERVAL_SECONDS = "app.program.runid.corrector.interval";
     public static final String SYSTEM_ARTIFACTS_DIR = "app.artifact.dir";
     public static final String PROGRAM_EXTRA_CLASSPATH = "app.program.extra.classpath";
+    public static final String SPARK_YARN_CLIENT_REWRITE = "app.program.spark.yarn.client.rewrite.enabled";
 
     /**
      * Guice named bindings.
