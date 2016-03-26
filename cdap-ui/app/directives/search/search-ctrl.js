@@ -55,8 +55,11 @@ angular.module(PKG.name + '.commons')
         .$promise
         .then(function (res) {
           vm.loading = false;
+
+          let result = res.slice(0, 20);
+
           var parsedSearch = [];
-          angular.forEach(res, function (entity) {
+          angular.forEach(result, function (entity) {
             var parsedData = parseEntity(entity.entityId);
 
             // Checking the return value is something we can display
