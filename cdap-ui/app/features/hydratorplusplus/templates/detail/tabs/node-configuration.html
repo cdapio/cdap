@@ -1,5 +1,5 @@
 <!--
-  Copyright © 2015 Cask Data, Inc.
+  Copyright © 2016 Cask Data, Inc.
 
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy of
@@ -14,10 +14,6 @@
   the License.
 -->
 
-<br />
-<div class="dag-view">
-  <my-dag-plus
-    data-is-disabled="true"
-    disable-node-click="true"
-  ></my-dag-plus>
+<div ng-init="isDisabled=true">
+  <div ng-include="'/assets/features/hydratorplusplus/templates/partial/node-config.html'"></div>
 </div>

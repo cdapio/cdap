@@ -211,7 +211,7 @@ let hasValidConfig = (importConfig) => {
   return importConfig.config;
 };
 let hasValidSchedule = (importConfig, GLOBALS) => {
-  let isBatchPipeline = importConfig.artifact.name === GLOBALS.etlBatch;
+  let isBatchPipeline = GLOBALS.etlBatchPipelines.indexOf(importConfig.artifact.name) !== -1;
   return !isBatchPipeline? true: importConfig.config.schedule;
 };
 let hasValidInstance = (importConfig, GLOBALS) => {

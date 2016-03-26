@@ -15,22 +15,22 @@
 */
 
 class AppDetailStatusController {
-  constructor(DetailNonRunsStore, NodesActionsFactory, NodeConfigStore, rPipelineDetail, $scope) {
-    DetailNonRunsStore.init(rPipelineDetail);
-    NodeConfigStore.init();
+  constructor(HydratorPlusPlusDetailNonRunsStore, DAGPlusPlusNodesActionsFactory, HydratorPlusPlusNodeConfigStore, rPipelineDetail, $scope) {
+    HydratorPlusPlusDetailNonRunsStore.init(rPipelineDetail);
+    HydratorPlusPlusNodeConfigStore.init();
 
-    var obj = DetailNonRunsStore.getCloneConfig();
-    NodesActionsFactory.createGraphFromConfig(obj.__ui__.nodes, obj.config.connections);
+    var obj = HydratorPlusPlusDetailNonRunsStore.getCloneConfig();
+    DAGPlusPlusNodesActionsFactory.createGraphFromConfig(obj.__ui__.nodes, obj.config.connections);
 
     $scope.$on('$destroy', function() {
       // FIXME: This should essentially be moved to a scaffolding service that will do stuff for a state/view
-      DetailNonRunsStore.reset();
-      NodeConfigStore.reset();
+      HydratorPlusPlusDetailNonRunsStore.reset();
+      HydratorPlusPlusNodeConfigStore.reset();
     });
   }
 }
 
-AppDetailStatusController.$inject = ['DetailNonRunsStore', 'NodesActionsFactory', 'NodeConfigStore', 'rPipelineDetail', '$scope'];
+AppDetailStatusController.$inject = ['HydratorPlusPlusDetailNonRunsStore', 'DAGPlusPlusNodesActionsFactory', 'HydratorPlusPlusNodeConfigStore', 'rPipelineDetail', '$scope'];
 
 angular.module(PKG.name + '.feature.apps')
   .controller('AppDetailStatusController', AppDetailStatusController);

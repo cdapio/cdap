@@ -20,7 +20,7 @@
       <div class="hydrator-metadata" ng-class="{'expanded': HydratorPlusPlusTopPanelCtrl.metadataExpanded}">
         <div ng-click="HydratorPlusPlusTopPanelCtrl.openMetadata()" class="clearfix">
           <div class="pipeline-type">
-            <span ng-if="HydratorPlusPlusTopPanelCtrl.state.artifact.name === HydratorPlusPlusTopPanelCtrl.GLOBALS.etlBatch"
+            <span ng-if="HydratorPlusPlusTopPanelCtrl.GLOBALS.etlBatchPipelines.indexOf(HydratorPlusPlusTopPanelCtrl.state.artifact.name) !== -1"
                   uib-tooltip="Type: Batch"
                   tooltip-placement="right"
                   tooltip-class="toppanel-tooltip icon-tooltip"
