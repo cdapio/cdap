@@ -172,8 +172,7 @@ class myLineageService {
     /* SETTING CONNECTIONS */
     angular.forEach(response.relations, (rel) => {
       let isUnknownOrBoth = rel.access === 'both' || rel.access === 'unknown';
-
-      if (rel.access === 'read' || isUnknownOrBoth) {
+      if (rel.access === 'read') {
         let dataId = rel.data;
         let programId = rel.program;
         connections.push({
@@ -193,7 +192,7 @@ class myLineageService {
         });
       }
 
-      if (rel.access === 'write') {
+      if (rel.access === 'write' || isUnknownOrBoth) {
         let dataId = rel.data;
         let programId = rel.program;
         connections.push({
@@ -284,14 +283,14 @@ class myLineageService {
       nodesep: 50,
       ranksep: 90,
       rankdir: 'LR',
-      marginx: 90,
-      marginy: 25
+      marginx: 100,
+      marginy: 50
     });
     graph.setDefaultEdgeLabel(function() { return {}; });
 
     angular.forEach(nodes, (node) => {
       var id = node.dataId;
-      graph.setNode(id, { width: 175, height: 55 });
+      graph.setNode(id, { width: 180, height: 60 });
     });
 
     angular.forEach(connections, (connection) => {
@@ -306,8 +305,8 @@ class myLineageService {
   mapNodesLocation(nodes, graph) {
     angular.forEach(nodes, (node) => {
       node._uiLocation = {
-        top: graph._nodes[node.dataId].y + 'px',
-        left: graph._nodes[node.dataId].x + 'px'
+        top: graph._nodes[node.dataId].y - 20 + 'px', // 20 = half of node height
+        left: graph._nodes[node.dataId].x - 90 + 'px' // 90 = half of node width
       };
     });
   }

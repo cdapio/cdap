@@ -19,7 +19,7 @@
 </div>
 
 <div class="lineage-diagram-container" id="lineage-diagram"
-     style="height: {{Lineage.graphInfo.height + 300}}px; width: {{Lineage.graphInfo.width + 175 + 200}}px;">
+     style="height: {{Lineage.graphInfo.height}}px; width: {{Lineage.graphInfo.width}}px; transform: scale({{ Lineage.scaleInfo.scale }}); left: {{ Lineage.scaleInfo.padX }}; top: {{ Lineage.scaleInfo.padY }};">
   <div class="nodes {{ Lineage.uniqueNodes[node.uniqueNodeId].nodeType }}"
        id="{{ node.dataId }}"
        ng-repeat="node in Lineage.nodes"
