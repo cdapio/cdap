@@ -55,6 +55,11 @@ class TrackerAuditController {
       end: $state.params.end || 'now'
     };
 
+    this.customTimeRange = {
+      startTime: null,
+      endTime: null
+    };
+
     this.selectedTimeRange = this.findTimeRange();
 
     this.currentPage = 1;
@@ -66,7 +71,21 @@ class TrackerAuditController {
     let match = this.timeRangeOptions.filter( (option) => {
       return option.start === this.timeRange.start && option.end === this.timeRange.end;
     });
+
+    if (match.length === 0) {
+      this.isCustom = true;
+      this.customTimeRange.startTime = new Date(parseInt(this.$state.params.start, 10) * 1000);
+      this.customTimeRange.endTime = new Date(parseInt(this.$state.params.end, 10) * 1000);
+    }
+
     return match.length > 0 ? match[0] : { label: 'Custom' };
+  }
+
+  goCustomDate() {
+    let startTime = parseInt(this.customTimeRange.startTime.valueOf() / 1000, 10);
+    let endTime = parseInt(this.customTimeRange.endTime.valueOf() / 1000, 10);
+
+    this.$state.go('tracker.entity.audit', { start: startTime, end: endTime });
   }
 
   fetchAuditLogs(currentPage) {
