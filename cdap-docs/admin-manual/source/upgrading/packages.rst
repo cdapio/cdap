@@ -8,7 +8,7 @@
 Upgrading CDAP using Packages
 =============================
 
-.. _admin-upgrading-packages-cdap:
+.. _admin-upgrading-packages-upgrading-cdap:
 
 Upgrading CDAP
 ==============
@@ -19,7 +19,7 @@ These steps will stop CDAP, update the installation, run an upgrade tool for the
 and then restart CDAP.
 
 **These steps will upgrade from CDAP** |bold-previous-short-version|\ **.x to**
-|bold-short-version|\ **.x.** If you are on an earlier version of CDAP, please follow the
+|bold-version|\ **.** If you are on an earlier version of CDAP, please follow the
 upgrade instructions for the earlier versions and upgrade first to
 |previous-short-version|\.x before proceeding.
 
@@ -107,7 +107,7 @@ upgrade instructions for the earlier versions and upgrade first to
      $ for i in `ls /etc/init.d/ | grep cdap` ; do sudo service $i start ; done
 
 
-.. _admin-upgrading-packages-hadoop:
+.. _admin-upgrading-packages-upgrading-hadoop:
 
 Upgrading Hadoop
 ================
@@ -155,7 +155,7 @@ version. The steps below will, if required, update the coprocessors appropriatel
 get upgraded correctly and HBase regionservers may crash.**
 
 1. Upgrade CDAP to a version that will support the new Hadoop version, following the usual
-   :ref:`CDAP upgrade procedure for packages <admin-upgrading-packages-cdap>`. 
+   :ref:`CDAP upgrade procedure for packages <admin-upgrading-packages-upgrading-cdap>`. 
 
 #. After upgrading CDAP, start CDAP and check that it is working correctly.
 
