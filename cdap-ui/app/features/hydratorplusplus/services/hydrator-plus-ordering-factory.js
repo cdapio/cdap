@@ -25,8 +25,48 @@ function HydratorPlusPlusOrderingFactory() {
     return artifactMap[artifactName];
   }
 
+  function getPluginTypeDisplayName (pluginType) {
+    let pluginTypeMap = {
+      'transform': 'Transform',
+      'batchsource': 'Source',
+      'batchsink': 'Sink',
+      'batchaggregator': 'Aggregator',
+      'realtimesink': 'Sink',
+      'realtimesource': 'Source'
+    };
+
+    return pluginTypeMap[pluginType];
+  }
+
+  function orderPluginTypes (pluginsMap) {
+
+    let orderedTypes = [];
+
+    let source = pluginsMap.filter( p => { return p.name === 'Source'; });
+    let transform = pluginsMap.filter( p => { return p.name === 'Transform'; });
+    let sink = pluginsMap.filter( p => { return p.name === 'Sink'; });
+    let aggregator = pluginsMap.filter( p => { return p.name === 'Aggregator'; });
+
+    orderedTypes.push(source[0]);
+    orderedTypes.push(transform[0]);
+    orderedTypes.push(sink[0]);
+    if (aggregator.length) {
+      orderedTypes.push(aggregator[0]);
+    }
+
+    // Doing this so that the SidePanel does not lose the reference of the original
+    // array object.
+    angular.forEach(orderedTypes, (type, index) => {
+      pluginsMap[index] = type;
+    });
+
+    return pluginsMap;
+  }
+
   return {
-    getArtifactDisplayName: getArtifactDisplayName
+    getArtifactDisplayName: getArtifactDisplayName,
+    getPluginTypeDisplayName: getPluginTypeDisplayName,
+    orderPluginTypes: orderPluginTypes
   };
 }
 
