@@ -79,7 +79,7 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
               });
               return defer.promise;
             },
-            rArtifacts: function(myPipelineApi, $stateParams, $q) {
+            rArtifacts: function(myPipelineApi, $stateParams, $q, HydratorPlusPlusOrderingFactory) {
               var defer = $q.defer();
               myPipelineApi.fetchArtifacts({
                 namespace: $stateParams.namespace
@@ -87,6 +87,11 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
               .then((res) => {
                 let uiSupportedArtifacts = ['cdap-etl-batch', 'cdap-etl-realtime', 'cdap-etl-data-pipeline'];
                 let filteredRes = res.filter( r => uiSupportedArtifacts.indexOf(r.name) !== -1 );
+
+                filteredRes = filteredRes.map( r => {
+                  r.label = HydratorPlusPlusOrderingFactory.getArtifactDisplayName(r.name);
+                  return r;
+                });
                 defer.resolve(filteredRes);
               });
               return defer.promise;
