@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Copyright © 2014-2015 Cask Data, Inc.
+# Copyright © 2014-2016 Cask Data, Inc.
 # 
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -154,9 +154,9 @@ function download_includes() {
 
   test_an_include a9a7fd53c199defff09e6e3c73e4e71f ../../cdap-examples/LogAnalysis/src/main/java/co/cask/cdap/examples/loganalysis/LogAnalysisApp.java
   
-  test_an_include ad0d0b46225a2e4e0564d8755fbb99b0 ../../cdap-examples/Purchase/src/main/java/co/cask/cdap/examples/purchase/PurchaseApp.java
+  test_an_include 6e91764bbf75e2c4efd5547ab1a3e4e6 ../../cdap-examples/Purchase/src/main/java/co/cask/cdap/examples/purchase/PurchaseApp.java
   test_an_include 29fe1471372678115e643b0ad431b28d ../../cdap-examples/Purchase/src/main/java/co/cask/cdap/examples/purchase/PurchaseStore.java
-  test_an_include 26e904a0a4524ab5dd97c4b3072d26fc ../../cdap-examples/Purchase/src/main/java/co/cask/cdap/examples/purchase/PurchaseHistoryBuilder.java
+  test_an_include 0bcc5fe3914acbb793c993e72834bbde ../../cdap-examples/Purchase/src/main/java/co/cask/cdap/examples/purchase/PurchaseHistoryBuilder.java
   test_an_include 80216a08a2b3d480e4a081722408222f ../../cdap-examples/Purchase/src/main/java/co/cask/cdap/examples/purchase/PurchaseHistoryService.java
 
   test_an_include 950241d0199883f3bcb23d6f7da0551f ../../cdap-examples/SparkKMeans/src/main/java/co/cask/cdap/examples/sparkkmeans/SparkKMeansApp.java

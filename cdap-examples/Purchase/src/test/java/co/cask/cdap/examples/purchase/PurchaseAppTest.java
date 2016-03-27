@@ -16,11 +16,8 @@
 
 package co.cask.cdap.examples.purchase;
 
-import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.metrics.RuntimeMetrics;
 import co.cask.cdap.test.ApplicationManager;
-import co.cask.cdap.test.DataSetManager;
 import co.cask.cdap.test.FlowManager;
 import co.cask.cdap.test.MapReduceManager;
 import co.cask.cdap.test.ServiceManager;
@@ -28,7 +25,6 @@ import co.cask.cdap.test.StreamManager;
 import co.cask.cdap.test.TestBase;
 import co.cask.cdap.test.TestConfiguration;
 import com.google.common.base.Charsets;
-import com.google.common.collect.ImmutableList;
 import com.google.common.io.ByteStreams;
 import com.google.gson.Gson;
 import org.junit.Assert;
@@ -37,7 +33,6 @@ import org.junit.Test;
 
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -73,21 +68,6 @@ public class PurchaseAppTest extends TestBase {
     } finally {
       flowManager.stop();
     }
-
-    // write a few purchase records into the 'oldPurchases' dataset, which stores it in a different format
-    DataSetManager<KeyValueTable> oldPurchasesManager = getDataset("oldPurchases");
-    KeyValueTable oldPurchases = oldPurchasesManager.get();
-    long now = System.currentTimeMillis();
-    List<Purchase> purchases = ImmutableList.of(new Purchase("bob", "pineapples", 1, 4, now),
-                                                new Purchase("bob", "drupes", 16, 30, now + 1),
-                                                new Purchase("joe", "bananas", 4, 5, now + 2),
-                                                new Purchase("joe", "oranges", 5, 3, now + 3),
-                                                new Purchase("joe", "pomegranates", 1, 10, now + 4));
-    for (Purchase purchase : purchases) {
-      oldPurchases.write(Bytes.toBytes(purchase.getPurchaseTime()), Bytes.toBytes(GSON.toJson(purchase)));
-    }
-    oldPurchasesManager.flush();
-
 
     ServiceManager userProfileServiceManager = getUserProfileServiceManager(appManager);
 
@@ -146,7 +126,7 @@ public class PurchaseAppTest extends TestBase {
     }
     PurchaseHistory history = GSON.fromJson(historyJson, PurchaseHistory.class);
     Assert.assertEquals("joe", history.getCustomer());
-    Assert.assertEquals(5, history.getPurchases().size());
+    Assert.assertEquals(2, history.getPurchases().size());
 
     UserProfile profileFromPurchaseHistory = history.getUserProfile();
     Assert.assertEquals(profileFromPurchaseHistory.getFirstName(), "joe");
