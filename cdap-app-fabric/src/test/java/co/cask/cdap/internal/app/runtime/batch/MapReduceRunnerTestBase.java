@@ -26,6 +26,7 @@ import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.app.runtime.ProgramRunnerFactory;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
 import co.cask.cdap.data.runtime.LocationStreamFileWriterFactory;
 import co.cask.cdap.data.stream.StreamFileWriterFactory;
@@ -43,6 +44,7 @@ import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.test.XSlowTests;
 import co.cask.tephra.TransactionExecutorFactory;
@@ -109,7 +111,7 @@ public class MapReduceRunnerTestBase {
   };
 
   @BeforeClass
-  public static void beforeClass() {
+  public static void beforeClass() throws Exception {
     // Set the tx timeout to a ridiculously low value that will test that the long-running transactions
     // actually bypass that timeout.
     CConfiguration conf = CConfiguration.create();
@@ -132,6 +134,9 @@ public class MapReduceRunnerTestBase {
     metricStore = injector.getInstance(MetricStore.class);
     txService.startAndWait();
     streamHandler = injector.getInstance(StreamHandler.class);
+
+    // Always create the default namespace
+    injector.getInstance(NamespaceAdmin.class).create(NamespaceMeta.DEFAULT);
   }
 
   @AfterClass
