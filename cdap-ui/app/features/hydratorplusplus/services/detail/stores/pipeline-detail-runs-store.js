@@ -55,7 +55,8 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
       if (GLOBALS.etlBatchPipelines.indexOf(appType) !== -1) {
         // TODO: Make it generic so that we can choose between spark and mapreduce.
         // We will get a flag from backend called 'engine'. This can be chosen based on that.
-        metricRunId = this.state.runs.list[0].properties.ETLMapReduce;
+        let mrProgramId = this.getLogsParams().programId;
+        metricRunId = this.state.runs.list[0].properties[mrProgramId];
       } else if (appType === GLOBALS.etlRealtime) {
         metricRunId = this.state.runs.list[0].runid;
       }
@@ -126,7 +127,8 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
         nextRunTime: this.state.runs.nextRunTime || null
       };
       if (GLOBALS.etlBatchPipelines.indexOf(this.state.type) !== -1) {
-        this.state.logsParams.runId = this.state.runs.latest.properties.ETLMapReduce;
+        let mrProgramId = this.getLogsParams().programId;
+        this.state.logsParams.runId = this.state.runs.latest.properties[mrProgramId];
       } else {
         this.state.logsParams.runId = this.state.runs.latest.runid;
       }
