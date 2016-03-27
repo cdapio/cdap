@@ -15,14 +15,17 @@
 -->
 
 <div class="row" ng-repeat="fnalias in functionAliasList">
-  <div class="col-xs-7">
+  <div class="col-xs-6">
     <input type="text" class="form-control" ng-model="fnalias.field"/>
     <select ng-model="fnalias.functionName"
             class="form-control"
             ng-options="fn as fn for fn in dropdownOptions"></select>
   </div>
-  <div class="col-xs-3">
-    <input class="form-control" type="text" ng-model="fnalias.alias"/>
+  <div class="col-xs-4">
+    <div class="alias-wrapper">
+      <span> as </span>
+      <input class="form-control" type="text" ng-model="fnalias.alias"/>
+    </div>
   </div>
   <div class="col-xs-2">
     <a class="btn btn-danger">
