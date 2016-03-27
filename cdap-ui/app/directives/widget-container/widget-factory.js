@@ -122,6 +122,13 @@ angular.module(PKG.name + '.commons')
           'is-dropdown': 'true'
         }
       },
+      'function-dropdown-with-alias': {
+        element: '<my-function-dropdown-with-alias></my-function-dropdown-with-alias>',
+        attributes: {
+          'ng-model': 'model',
+          'data-config': 'myconfig'
+        }
+      },
       'schedule': {
         element: '<my-schedule></my-schedule>',
         attributes: {
