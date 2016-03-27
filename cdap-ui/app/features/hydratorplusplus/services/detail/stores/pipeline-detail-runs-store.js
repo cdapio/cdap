@@ -46,20 +46,11 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
       return this.state.runs.list[0];
     };
     this.getLatestMetricRunId = function() {
-      var appType = this.getAppType();
       var metricRunId;
       if (!this.state.runs.count) {
         return false;
       }
-
-      if (GLOBALS.etlBatchPipelines.indexOf(appType) !== -1) {
-        // TODO: Make it generic so that we can choose between spark and mapreduce.
-        // We will get a flag from backend called 'engine'. This can be chosen based on that.
-        let mrProgramId = this.getLogsParams().programId;
-        metricRunId = this.state.runs.list[0].properties[mrProgramId];
-      } else if (appType === GLOBALS.etlRealtime) {
-        metricRunId = this.state.runs.list[0].runid;
-      }
+      metricRunId = this.state.runs.list[0].runid;
       return metricRunId;
     };
     this.getAppType = function() {
@@ -126,12 +117,7 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
         runsCount: runs.length,
         nextRunTime: this.state.runs.nextRunTime || null
       };
-      if (GLOBALS.etlBatchPipelines.indexOf(this.state.type) !== -1) {
-        let mrProgramId = this.getLogsParams().programId;
-        this.state.logsParams.runId = this.state.runs.latest.properties[mrProgramId];
-      } else {
-        this.state.logsParams.runId = this.state.runs.latest.runid;
-      }
+      this.state.logsParams.runId = this.state.runs.latest.runid;
       this.emitChange();
     };
     this.setStatistics = function(statistics) {
@@ -159,16 +145,13 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
       programType = GLOBALS.etlBatchPipelines.indexOf(app.artifact.name) !== -1 ? 'WORKFLOWS' : 'WORKER';
 
       if (programType === 'WORKFLOWS') {
-        let engineType = JSON.parse(app.configuration).engine;
         angular.forEach(app.programs, function (program) {
           if (program.type === 'Workflow') {
             appLevelParams.programName = program.id;
             appLevelParams.programType = program.type.toLowerCase() + 's';
-          } else {
             metricProgramType = program.type.toLowerCase();
-
             logsLevelParams.programId = program.id;
-            logsLevelParams.programType = engineType || 'mapreduce';
+            logsLevelParams.programType = appLevelParams.programType;
           }
         });
       } else {
