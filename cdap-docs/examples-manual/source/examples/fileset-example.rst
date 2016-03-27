@@ -143,13 +143,7 @@ and you can download the results of the computation:
 
 .. tabbed-parsed-literal::
 
-  .. Linux
-  
   $ cdap-cli.sh call service FileSetExample.FileSetService GET "counts?path=counts.out/part-r-00000"
-
-  .. Windows
-  
-  > cdap-cli.bat call service FileSetExample.FileSetService GET "counts?path=counts.out/part-r-00000"
 
   
 Results::

@@ -76,7 +76,9 @@ Running the Example
 Injecting Points Data
 ---------------------
 Inject a file of points data to the stream *pointsStream* by running this command from the
-Standalone CDAP SDK directory, using the Command Line Interface::
+Standalone CDAP SDK directory, using the Command Line Interface:
+  
+.. tabbed-parsed-literal::
   
   $ cdap-cli.sh load stream pointsStream examples/SparkKMeans/resources/points.txt 
   Successfully sent stream event to stream 'pointsStream' 
@@ -89,12 +91,16 @@ There are three ways to start the Spark program:
    <http://localhost:9999/ns/default/apps/SparkKMeans/overview/programs>`__,
    click ``CentersService`` to get to the service detail page, then click the *Start* button; or
    
-#. Send a query via an HTTP request using the ``curl`` command::
+#. Send a query via an HTTP request using the ``curl`` command:
 
-    $ curl -w'\n' -v  -d '{args="3"}' \
-      http://localhost:10000/v3/namespaces/default/apps/SparkKMeans/spark/SparkKMeansProgram/start
+   .. tabbed-parsed-literal::
 
-#. Use the Command Line Interface::
+    $ curl -w"\n" -v  -d "{args='3'}" -X POST \
+      "http://localhost:10000/v3/namespaces/default/apps/SparkKMeans/spark/SparkKMeansProgram/start"
+
+#. Use the Command Line Interface:
+
+   .. tabbed-parsed-literal::
 
     $ cdap-cli.sh start spark SparkKMeans.SparkKMeansProgram "args='3'"
 
@@ -102,11 +108,15 @@ Querying the Results
 --------------------
 To query the *centers* ObjectStore using the ``CentersService``, you can:
 
-- Send a query via an HTTP request using the ``curl`` command. For example::
+- Send a query via an HTTP request using the ``curl`` command. For example:
 
-    $ curl -w'\n' -v http://localhost:10000/v3/namespaces/default/apps/SparkKMeans/services/CentersService/methods/centers/1
+  .. tabbed-parsed-literal::
 
-- You can use the Command Line Interface::
+    $ curl -w"\n" -x GET "http://localhost:10000/v3/namespaces/default/apps/SparkKMeans/services/CentersService/methods/centers/1"
+
+- You can use the Command Line Interface:
+
+  .. tabbed-parsed-literal::
 
     $ cdap-cli.sh call service SparkKMeans.CentersService GET centers/1
 

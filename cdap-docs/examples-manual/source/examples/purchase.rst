@@ -115,14 +115,19 @@ the use of ``Resources`` to configure the memory requirements of the service:
 
 This service has two endpoints:
 
-A ``user`` endpoint to add a user's profile information to the system::
+A ``user`` endpoint to add a user's profile information to the system:
+
+.. tabbed-parsed-literal::
 
   $ cdap-cli.sh call service PurchaseHistory.UserProfileService POST user body \
     "{'id':'Alice','firstName':'Alice','lastName':'Bernard','categories':['fruits']}"
 
-A ``user/{id}`` endpoint to obtain profile information for a specified user::
+A ``user/{id}`` endpoint to obtain profile information for a specified user:
+
+.. tabbed-parsed-literal::
 
   $ cdap-cli.sh call service PurchaseHistory.UserProfileService GET user/Alice
+  
   < 200 OK
   < Content-Length: 79
   < Connection: keep-alive
@@ -166,17 +171,22 @@ Running the Example
 Add A Profile
 -------------
 Add a *User Profile* for the user *Alice*, by running this command from the Standalone
-CDAP SDK directory, using the Command Line Interface::
+CDAP SDK directory, using the Command Line Interface:
+
+.. tabbed-parsed-literal::
 
   $ cdap-cli.sh call service PurchaseHistory.UserProfileService POST user body \
     "{'id':'Alice','firstName':'Alice','lastName':'Bernard','categories':['fruits']}"
+    
   Successfully connected to CDAP instance at http://localhost:10000/default
   < 200 OK
 
 Injecting Sentences
 -------------------
 Inject a file of sentences by running this command from the Standalone
-CDAP SDK directory, using the Command Line Interface::
+CDAP SDK directory, using the Command Line Interface:
+
+.. tabbed-parsed-literal::
 
   $ cdap-cli.sh load stream purchaseStream examples/Purchase/resources/purchases.txt 
   Successfully sent stream event to stream 'purchaseStream'
@@ -195,13 +205,17 @@ To query the *history* ``ObjectStore`` through the |example-service1-italic|, yo
 - Using the CDAP UI, go to the |application-overview|,
   click |example-service1-italic| to get to the service detail page, then click the *Start* button; or
 
-- From the Standalone CDAP SDK directory, use the Command Line Interface::
+- From the Standalone CDAP SDK directory, use the Command Line Interface:
+
+  .. tabbed-parsed-literal::
 
     $ cdap-cli.sh call service PurchaseHistory.PurchaseHistoryService GET history/Alice
 
-- Or, send a query via an HTTP request using the ``curl`` command::
+- Or, send a query via an HTTP request using the ``curl`` command:
 
-    $ curl -w'\n' -v 'http://localhost:10000/v3/namespaces/default/apps/PurchaseHistory/services/PurchaseHistoryService/methods/history/Alice'
+  .. tabbed-parsed-literal::
+
+    $ curl -w"\n" -X POST "http://localhost:10000/v3/namespaces/default/apps/PurchaseHistory/services/PurchaseHistoryService/methods/history/Alice"
 
 The results will be in JSON::
 
@@ -217,7 +231,9 @@ This is done by a series of ``curl`` calls, as described in the :ref:`RESTful AP
 <http-restful-api-query>` section of the :ref:`CDAP Reference Manual <reference-index>`.
 For your convenience, the SDK's Command Line Interface can execute the series of calls.
 
-From within the SDK root directory::
+From within the SDK root directory:
+
+.. tabbed-parsed-literal::
 
   $ cdap-cli.sh execute "\"SELECT * FROM dataset_history WHERE customer IN ('Alice','Bob')\""
 
@@ -252,9 +268,11 @@ Explore the Results Using curl and SQL
 ......................................
 If you prefer to use ``curl`` directly, here are the sequence of steps to execute:
 
-First, submit the query for execution::
+First, submit the query for execution:
 
-  $ curl -w'\n' -v http://localhost:10000/v3/namespaces/default/data/explore/queries \
+.. tabbed-parsed-literal::
+
+  $ curl -w"\n" -X POST "http://localhost:10000/v3/namespaces/default/data/explore/queries" \
     -d '{"query": "'"SELECT * FROM dataset_history WHERE customer IN ('Alice','Bob')"'"}'
 
 Note that due to the mix and repetition of single and double quotes, it can be tricky to escape all quotes
@@ -263,17 +281,21 @@ correctly at the shell command prompt. On success, this will return a handle for
   {"handle":"07fd9b6a-95b3-4831-992c-7164f11c3754"}
 
 This handle is needed to inquire about the status of the query and to retrieve query results. To get the
-status, issue a GET to the query's URL using the handle::
+status, issue a GET to the query's URL using the handle:
 
-  $ curl -w'\n' -v -X GET http://localhost:10000/v3/data/explore/queries/07fd9b6a-95b3-4831-992c-7164f11c3754/status
+.. tabbed-parsed-literal::
+
+  $ curl -w"\n" -X GET "http://localhost:10000/v3/data/explore/queries/07fd9b6a-95b3-4831-992c-7164f11c3754/status"
 
 Because a SQL query can run for several minutes, you may have to repeat the call until it returns a status of *finished*::
 
   {"status":"FINISHED","hasResults":true}
 
-Once execution has finished, you can retrieve the results of the query using the handle::
+Once execution has finished, you can retrieve the results of the query using the handle:
 
-  $ curl -w'\n' -v -X POST http://localhost:10000/v3/data/explore/queries/07fd9b6a-95b3-4831-992c-7164f11c3754/next
+.. tabbed-parsed-literal::
+
+  $ curl -w"\n" -X POST "http://localhost:10000/v3/data/explore/queries/07fd9b6a-95b3-4831-992c-7164f11c3754/next"
 
 This will return |---| up to a limited number |---| the results in JSON format::
 
@@ -284,9 +306,11 @@ This will return |---| up to a limited number |---| the results in JSON format::
   . . .
 
 You repeat this step until the ``curl`` call returns an empty list. That means you have
-retrieved all of the results and you can now close the query::
+retrieved all of the results and you can now close the query:
 
-  $ curl -v -X DELETE http://localhost:10000/v3/data/explore/queries/07fd9b6a-95b3-4831-992c-7164f11c3754
+.. tabbed-parsed-literal::
+
+  $ curl -w"\n" -X DELETE "http://localhost:10000/v3/data/explore/queries/07fd9b6a-95b3-4831-992c-7164f11c3754"
 
 
 .. Stopping and Removing the Application

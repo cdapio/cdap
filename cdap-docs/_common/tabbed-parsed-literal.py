@@ -96,7 +96,7 @@ function changeExampleTab(example) {
     $(".example-tab").removeClass("active");
     $(".example-tab-" + example).addClass("active");
     $(document).scrollTop($(this).offset().top - scrollOffset);
-    Cookies.set("cdap-documentation-tab", example, { path: '/' });
+    localStorage.setItem("cdap-documentation-tab", example);
   }
 }
 
@@ -108,9 +108,16 @@ $(function() {
   }
 });
 
-$( document ).ready(function() {
-  var example = Cookies.get("cdap-documentation-tab");
-  $(".example-tab-" + example)[0].click(changeExampleTab(example));
+$(document).ready(function() {
+  var example = localStorage.getItem("cdap-documentation-tab");
+  var tabs = $(".example-tab-" + example);
+  if (example && tabs) {
+    try {
+      $(".example-tab-" + example)[0].click(changeExampleTab(example));
+    } catch (e) {
+      console.log("Unable to set using Cookie: " + example);
+    }
+  }
 });
 
 </script>
@@ -162,33 +169,56 @@ def dequote(s):
 def convert(c):
     """
     Converts a Linux command to a Windows-equivalent following a few simple rules:
-    
+
     - Converts a starting '$' to '>'
     - Forward-slashes in 'http[s]' and 'localhost:10000' URIs are preserved
     - Other forward-slashes become backslashes
     - A lone backslash (the Linux line continuation character) becomes a '^'
     - '.sh' commands become '.bat' commands
+    - removes a "-w'\n'" option from curl commands
+
     """
     w = []
     text_list = c.split()
+    CLI = 'cdap-cli.sh'
+    CURL = 'curl'
+    IN_CLI = False
+    IN_CURL = False
+#     print "convert: %s" % c
     for i, v in enumerate(c.split()):
+#         print "v:%s" % v
+        if v == CLI:
+            IN_CLI = True
+        if v == CURL:
+            IN_CURL = True
         if i == 0 and v == '$':
             w.append('>')
+#             print "w.append('>')"
             continue
         if v.endswith('.sh'):
             w.append(v.replace('.sh', '.bat'))
+#             print "w.append(v.replace('.sh', '.bat'))"
             continue
         if v == '\\':
             w.append('^')
+#             print "w.append('^')"
             continue
-        if (v.startswith('http') or v.startswith("'http") or v.startswith('"http') or 
-             v.startswith('localhost:10000') or v.startswith("'localhost:10000") or 
-             v.startswith('"localhost:10000')):
+        if IN_CURL and (v in ["-w'\\n'", '-w"\\n"']):
+            continue
+        if (IN_CLI or IN_CURL) and v.startswith('"'):
+#             print "v.startswith('\"')"
             w.append(v)
             continue
+#         if (v.startswith('http') or v.startswith("'http") or v.startswith('"http') or 
+#              v.startswith('localhost:10000') or v.startswith("'localhost:10000") or 
+#              v.startswith('"localhost:10000')):
+#             w.append(v)
+#             continue
         if v.find('/') != -1:
+#             print "found slash"
             w.append(v.replace('/', '\\'))
         else:
+#             print "didn't find slash"
             w.append(v)
     return ' '.join(w)
 
@@ -274,13 +304,20 @@ class TabbedParsedLiteral(ParsedLiteral):
         line_counts, lines = self.cleanup_content()
         text = '\n'.join(lines)
 #         print "text:\n%s" % text
+        # Sending text to state machine for inline text replacement
         text_nodes, messages = self.state.inline_text(text, self.lineno)
+        
 #         print "text_nodes:\n%s" % text_nodes
+#         for n in text_nodes:
+#             print "n:\n%s" % n
+#              n['classes'].append('snippet')
+        
         node = TabbedParsedLiteralNode(text, '', *text_nodes, **self.options)
         node.cleanup()
         node.line = self.content_offset + 1
         self.add_name(node)
 
+       
         node['languages'] = self.cleanup_options('languages', ['console', 'shell-session'])
         node['line_counts'] = line_counts
         node['linenos'] = self.cleanup_options('linenos', '')
@@ -312,12 +349,40 @@ def visit_tpl_html(self, node):
             text, lang, opts=opts, warn=warner, linenos=linenos,
             **highlight_args)
         if lang in ['console', 'shell-session', 'ps1', 'powershell']:
-            for p in ['$', '#', '>', '&gt;', 'cdap >','cdap &gt;',]:
-                highlighted = highlighted.replace("\n%s" % p, "\n<span class=\"gp\">%s</span>" % p)
-                highlighted = highlighted.replace("<pre>%s" % p, "<pre><span class=\"gp\">%s</span>" % p)
-                highlighted = highlighted.replace("<span class=\"go\">%s" % p, 
-                                                  "<span class=\"gp\">%s</span><span class=\"go\">" % p)
-        return highlighted
+            # Console-specific highlighting
+#             print "highlighted (before):\n%s\n" % highlighted
+            new_highlighted = []
+            for l in highlighted.splitlines():
+                for p in ['$', '#', '>', '&gt;', 'cdap >','cdap &gt;',]:
+                    if l.startswith(p):
+                        l = "<span class=\"gp\">%s</span><span \"copyable copyable-text\">%s</span>" % (p, l[1:])
+
+                    t = "<pre>%s " % p
+                    i = l.find(t)
+                    if i != -1:
+                        l = "%s<pre class=\"copyable\"><span class=\"gp\">%s </span><span \"copyable-text\">%s</span>" % (l[:i], p, l[len(t)+i:])
+                        
+                    t = "<pre><span class=\"go\">%s " % p
+                    i = l.find(t)
+                    if i != -1:
+                        l = "%s<pre class=\"copyable\"><span class=\"gp\">%s </span><span class=\"go\"><span class=\"copyable-text\">%s</span>" % (l[:i], p, l[len(t)+i:])
+                        
+                    t = "<pre><span class=\"gp\">%s</span> " % p
+                    i = l.find(t)
+                    if i != -1:
+                        l = "%s<pre class=\"copyable\"><span class=\"gp\">%s </span><span class=\"copyable-text\">%s</span>" % (l[:i], p, l[len(t)+i:])
+                    
+                    t = "<span class=\"go\">%s " % p
+                    if l.startswith(t):
+                        l = "<span class=\"gp\">%s </span><span class=\"go\"><span class=\"copyable-text\">%s</span>" % (p, l[len(t):])
+                  
+                    t = "<span class=\"gp\">%s</span> " % p
+                    if l.startswith(t):
+                        l = "<span class=\"gp\">%s </span><span class=\"copyable-text\">%s</span>" % (p, l[len(t):])
+                    
+                new_highlighted.append(l)
+#             print "highlighted (after):\n%s\n" % '\n'.join(new_highlighted)            
+        return '\n'.join(new_highlighted)
     
     nav_tabs_html = ''
     tab_content_html = ''
@@ -329,6 +394,7 @@ def visit_tpl_html(self, node):
     fill_div = {'div_name': 'tabbedparsedliteral{0}'.format(TPL_COUNTER)}
     
     start_html = JS_TPL % clean_tab_links + DIV_START.format(**fill_div)
+#     start_html = DIV_START.format(**fill_div)
     text_list = node.astext().split('\n')
     offset = 0
     for index in range(len(tabs)):
