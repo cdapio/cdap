@@ -138,8 +138,8 @@ public class ETLWorker extends AbstractWorker {
 
     PipelineSpecGenerator specGenerator =
       new PipelineSpecGenerator(getConfigurer(),
-                                RealtimeSource.PLUGIN_TYPE,
-                                RealtimeSink.PLUGIN_TYPE,
+                                ImmutableSet.of(RealtimeSource.PLUGIN_TYPE),
+                                ImmutableSet.of(RealtimeSink.PLUGIN_TYPE),
                                 Table.class,
                                 DatasetProperties.builder()
                                   .add(Table.PROPERTY_SCHEMA, ERROR_SCHEMA.toString())

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -61,9 +61,9 @@ public class ETLBatchTestBase extends TestBase {
 
     // add the artifact for etl batch app
     addAppArtifact(APP_ARTIFACT_ID, ETLBatchApplication.class,
-      BatchSource.class.getPackage().getName(),
-      PipelineConfigurable.class.getPackage().getName(),
-      "org.apache.avro.mapred", "org.apache.avro", "org.apache.avro.generic", "org.apache.avro.io");
+                   BatchSource.class.getPackage().getName(),
+                   PipelineConfigurable.class.getPackage().getName(),
+                   "org.apache.avro.mapred", "org.apache.avro", "org.apache.avro.generic", "org.apache.avro.io");
 
     // add some test plugins
     addPluginArtifact(Id.Artifact.from(Id.Namespace.DEFAULT, "test-plugins", "1.0.0"), APP_ARTIFACT_ID,

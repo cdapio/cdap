@@ -18,7 +18,10 @@ package co.cask.cdap.etl.batch.spark;
 
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.plugin.PluginContext;
+import co.cask.cdap.etl.api.Emitter;
+import co.cask.cdap.etl.api.Transformation;
 import co.cask.cdap.etl.api.batch.BatchRuntimeContext;
+import co.cask.cdap.etl.api.batch.SparkSink;
 import co.cask.cdap.etl.batch.PipelinePluginInstantiator;
 import co.cask.cdap.etl.batch.TransformExecutorFactory;
 
@@ -30,6 +33,13 @@ import java.util.Map;
  * @param <T> the type of input for the created transform executors
  */
 public class SparkTransformExecutorFactory<T> extends TransformExecutorFactory<T> {
+  private static final Transformation IDENTITY_TRANSFORMATION = new Transformation() {
+    @Override
+    public void transform(Object input, Emitter emitter) throws Exception {
+      emitter.emit(input);
+    }
+  };
+
   private final PluginContext pluginContext;
   private final long logicalStartTime;
   private final Map<String, String> runtimeArgs;
@@ -47,5 +57,14 @@ public class SparkTransformExecutorFactory<T> extends TransformExecutorFactory<T
   @Override
   protected BatchRuntimeContext createRuntimeContext(String stageName) {
     return new SparkBatchRuntimeContext(pluginContext, metrics, logicalStartTime, runtimeArgs, stageName);
+  }
+
+  @Override
+  protected Transformation getTransformation(String pluginType, String stageName) throws Exception {
+    if (SparkSink.PLUGIN_TYPE.equals(pluginType)) {
+      // if this plugin type is not a transformation, substitute in an IDENTITY_TRANSFORMATION
+      return IDENTITY_TRANSFORMATION;
+    }
+    return super.getTransformation(pluginType, stageName);
   }
 }

@@ -59,7 +59,6 @@ public abstract class TransformExecutorFactory<T> {
    * @throws Exception if there was an error initializing a plugin
    */
   public TransformExecutor<T> create(PipelinePhase pipeline) throws Exception {
-
     Map<String, TransformDetail> transformations = new HashMap<>();
     for (String pluginType : pipeline.getPluginTypes()) {
       for (StageInfo stageInfo : pipeline.getStagesOfType(pluginType)) {

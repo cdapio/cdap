@@ -69,12 +69,13 @@ public class TransformExecutor<IN> implements Destroyable {
   }
 
   private <T> void executeTransformation(final String stageName, Collection<T> input) throws Exception {
-    TransformDetail transformDetail = transformDetailMap.get(stageName);
-    Transformation<T, Object> transformation = transformDetail.getTransformation();
-
     if (input == null) {
       return;
     }
+
+    TransformDetail transformDetail = transformDetailMap.get(stageName);
+    Transformation<T, Object> transformation = transformDetail.getTransformation();
+
 
     // clear old data for this stageName if its not a terminal node
     if (!transformDetail.getNextStages().isEmpty()) {

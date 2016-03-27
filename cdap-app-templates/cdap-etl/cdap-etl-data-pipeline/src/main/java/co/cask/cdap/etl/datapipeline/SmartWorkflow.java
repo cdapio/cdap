@@ -21,9 +21,11 @@ import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.workflow.AbstractWorkflow;
 import co.cask.cdap.api.workflow.WorkflowConfigurer;
 import co.cask.cdap.api.workflow.WorkflowForkConfigurer;
+import co.cask.cdap.etl.api.batch.SparkSink;
 import co.cask.cdap.etl.batch.BatchPhaseSpec;
 import co.cask.cdap.etl.batch.connector.ConnectorSource;
 import co.cask.cdap.etl.batch.mapreduce.ETLMapReduce;
+import co.cask.cdap.etl.batch.spark.ETLSpark;
 import co.cask.cdap.etl.common.Constants;
 import co.cask.cdap.etl.common.PipelinePhase;
 import co.cask.cdap.etl.planner.ControlDag;
@@ -172,8 +174,16 @@ public class SmartWorkflow extends AbstractWorkflow {
     }
     BatchPhaseSpec batchPhaseSpec = new BatchPhaseSpec(programName, phase, spec.getResources(),
                                                        spec.isStageLoggingEnabled(), phaseConnectorDatasets);
-    applicationConfigurer.addMapReduce(new ETLMapReduce(batchPhaseSpec));
-    programAdder.addMapReduce(programName);
+
+    boolean hasSparkPlugin = !batchPhaseSpec.getPhase().getStagesOfType(SparkSink.PLUGIN_TYPE).isEmpty();
+
+    if (hasSparkPlugin) {
+      applicationConfigurer.addSpark(new ETLSpark(batchPhaseSpec));
+      programAdder.addSpark(programName);
+    } else {
+      applicationConfigurer.addMapReduce(new ETLMapReduce(batchPhaseSpec));
+      programAdder.addMapReduce(programName);
+    }
   }
 
 }
