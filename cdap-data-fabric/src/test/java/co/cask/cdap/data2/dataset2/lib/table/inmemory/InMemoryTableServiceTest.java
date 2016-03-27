@@ -19,6 +19,8 @@ package co.cask.cdap.data2.dataset2.lib.table.inmemory;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.data2.dataset2.lib.table.PutValue;
 import co.cask.cdap.data2.dataset2.lib.table.Update;
+import co.cask.tephra.Transaction;
+import co.cask.tephra.util.TxUtils;
 import com.google.common.collect.Maps;
 import org.junit.Assert;
 import org.junit.Test;
@@ -59,7 +61,7 @@ public class InMemoryTableServiceTest {
 
     // verify changing returned data from get doesn't affect the stored data
     NavigableMap<byte[], NavigableMap<Long, byte[]>> rowFromGet =
-      InMemoryTableService.get("table", new byte[]{1}, 1L);
+      InMemoryTableService.get("table", new byte[]{1}, new Transaction(1L, 2L, new long[0], new long[0], 1L));
     Assert.assertEquals(1, rowFromGet.size());
     byte[] columnFromGet = rowFromGet.firstEntry().getKey();
     Assert.assertArrayEquals(new byte[] {2}, columnFromGet);
@@ -75,7 +77,7 @@ public class InMemoryTableServiceTest {
 
     // verify changing returned data doesn't affect the stored data
     NavigableMap<byte[], NavigableMap<byte[], NavigableMap<Long, byte[]>>> fromGetRange = 
-      InMemoryTableService.getRowRange("table", null, null, 1L);
+      InMemoryTableService.getRowRange("table", null, null, new Transaction(1L, 2L, new long[0], new long[0], 1L));
     Assert.assertEquals(1, fromGetRange.size());
     byte[] keyFromGetRange = fromGetRange.firstEntry().getKey();
     Assert.assertArrayEquals(new byte[] {1}, keyFromGetRange);
@@ -98,7 +100,7 @@ public class InMemoryTableServiceTest {
 
   private void verify123() {
     NavigableMap<byte[], NavigableMap<Long, byte[]>> rowFromGet =
-      InMemoryTableService.get("table", new byte[]{1}, 1L);
+      InMemoryTableService.get("table", new byte[]{1}, new Transaction(1L, 2L, new long[0], new long[0], 1L));
     Assert.assertEquals(1, rowFromGet.size());
     Assert.assertArrayEquals(new byte[] {2}, rowFromGet.firstEntry().getKey());
     Assert.assertArrayEquals(new byte[] {3}, rowFromGet.firstEntry().getValue().get(1L));
