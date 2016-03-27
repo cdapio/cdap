@@ -29,7 +29,8 @@
         "initrd=/install/initrd.gz -- <enter>"
       ],
       "vboxmanage": [
-        ["modifyvm", "{{ .Name }}", "--memory", "4096"]
+        ["modifyvm", "{{ .Name }}", "--memory", "4096"],
+        ["modifyvm", "{{ .Name }}", "--nictype1", "virtio"]
       ],
       "vboxmanage_post": [
         ["modifyvm", "{{ .Name }}", "--clipboard", "bidirectional"],
