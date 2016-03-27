@@ -20,6 +20,7 @@ import co.cask.cdap.api.dataset.DatasetSpecification;
 
 import java.util.Map;
 import java.util.Objects;
+import javax.annotation.Nullable;
 
 /**
  * Summary of a {@link DatasetSpecification}. This is returned by the dataset API when getting all dataset instances
@@ -29,12 +30,19 @@ import java.util.Objects;
 public class DatasetSpecificationSummary {
   private final String name;
   private final String type;
+  private final String description;
   private final Map<String, String> properties;
 
-  public DatasetSpecificationSummary(String name, String type, Map<String, String> properties) {
+  public DatasetSpecificationSummary(String name, String type, @Nullable String description,
+                                     Map<String, String> properties) {
     this.name = name;
     this.type = type;
+    this.description = description;
     this.properties = properties;
+  }
+
+  public DatasetSpecificationSummary(String name, String type, Map<String, String> properties) {
+    this(name, type, null, properties);
   }
 
   public String getName() {
@@ -43,6 +51,10 @@ public class DatasetSpecificationSummary {
 
   public String getType() {
     return type;
+  }
+
+  public String getDescription() {
+    return description;
   }
 
   public Map<String, String> getProperties() {
@@ -54,20 +66,19 @@ public class DatasetSpecificationSummary {
     if (this == o) {
       return true;
     }
-    if (!(o instanceof DatasetSpecificationSummary)) {
+    if (o == null || getClass() != o.getClass()) {
       return false;
     }
-
     DatasetSpecificationSummary that = (DatasetSpecificationSummary) o;
-
     return Objects.equals(name, that.name) &&
       Objects.equals(type, that.type) &&
+      Objects.equals(description, that.description) &&
       Objects.equals(properties, that.properties);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(name, type, properties);
+    return Objects.hash(name, type, description, properties);
   }
 
   @Override
@@ -75,6 +86,7 @@ public class DatasetSpecificationSummary {
     return "DatasetSpecificationSummary{" +
       "name='" + name + '\'' +
       ", type='" + type + '\'' +
+      ", description='" + description + '\'' +
       ", properties=" + properties +
       '}';
   }

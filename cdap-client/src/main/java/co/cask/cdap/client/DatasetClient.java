@@ -145,7 +145,7 @@ public class DatasetClient {
    */
   public void create(Id.DatasetInstance instance, String typeName)
     throws DatasetTypeNotFoundException, DatasetAlreadyExistsException, IOException, UnauthenticatedException {
-    create(instance, new DatasetInstanceConfiguration(typeName, ImmutableMap.<String, String>of()));
+    create(instance, new DatasetInstanceConfiguration(typeName, ImmutableMap.<String, String>of(), null));
   }
 
   /**

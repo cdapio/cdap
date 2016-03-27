@@ -103,7 +103,7 @@ class ConversionHelpers {
         continue;
       }
       spec = DatasetsUtil.fixOriginalProperties(spec);
-      datasetSummaries.add(new DatasetSpecificationSummary(spec.getName(), spec.getType(),
+      datasetSummaries.add(new DatasetSpecificationSummary(spec.getName(), spec.getType(), spec.getDescription(),
                                                            spec.getOriginalProperties()));
     }
     return datasetSummaries;

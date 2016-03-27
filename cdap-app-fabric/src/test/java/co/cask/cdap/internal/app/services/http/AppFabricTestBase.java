@@ -192,9 +192,9 @@ public abstract class AppFabricTestBase {
     metadataService = injector.getInstance(MetadataService.class);
     metadataService.startAndWait();
     locationFactory = getInjector().getInstance(LocationFactory.class);
-    streamClient = createStreamClient();
-    streamViewClient = createStreamViewClient();
-    datasetClient = createDatasetClient();
+    streamClient = new StreamClient(getClientConfig(discoveryClient, Constants.Service.STREAMS));
+    streamViewClient = new StreamViewClient(getClientConfig(discoveryClient, Constants.Service.STREAMS));
+    datasetClient = new DatasetClient(getClientConfig(discoveryClient, Constants.Service.DATASET_MANAGER));
     createNamespaces();
   }
 
@@ -615,8 +615,8 @@ public abstract class AppFabricTestBase {
       @Override
       public String call() throws Exception {
         String path = String.format("apps/%s/%s/%s/status",
-          programId.getApplicationId(),
-          programId.getType().getCategoryName(), programId.getId());
+                                    programId.getApplicationId(),
+                                    programId.getType().getCategoryName(), programId.getId());
         HttpResponse response = doGet(getVersionedAPIPath(path, programId.getNamespaceId()));
         JsonObject status = GSON.fromJson(EntityUtils.toString(response.getEntity()), JsonObject.class);
         if (status == null || !status.has("status")) {
@@ -657,9 +657,9 @@ public abstract class AppFabricTestBase {
 
   protected HttpResponse programStatus(Id.Program program) throws Exception {
     String path = String.format("apps/%s/%s/%s/status",
-      program.getApplicationId(),
-      program.getType().getCategoryName(),
-      program.getId());
+                                program.getApplicationId(),
+                                program.getType().getCategoryName(),
+                                program.getId());
     return doGet(getVersionedAPIPath(path, program.getNamespaceId()));
   }
 
@@ -681,7 +681,7 @@ public abstract class AppFabricTestBase {
   protected int resumeSchedule(String namespace, String appName, String schedule) throws Exception {
     String scheduleResume = String.format("apps/%s/schedules/%s/resume", appName, schedule);
     HttpResponse response = doPost(getVersionedAPIPath(scheduleResume, Constants.Gateway.API_VERSION_3_TOKEN,
-      namespace));
+                                                       namespace));
     return response.getStatusLine().getStatusCode();
   }
 
@@ -742,6 +742,10 @@ public abstract class AppFabricTestBase {
     streamClient.setStreamProperties(stream, props);
   }
 
+  protected void updateDatasetProperties(Id.DatasetInstance dataset, Map<String, String> properties) throws Exception {
+    datasetClient.updateExisting(dataset, properties);
+  }
+
   protected void deleteDataset(Id.DatasetInstance datasetInstance) throws Exception {
     datasetClient.delete(datasetInstance);
   }
@@ -790,42 +794,13 @@ public abstract class AppFabricTestBase {
     return destination;
   }
 
-  private static StreamClient createStreamClient() {
-    DiscoveryServiceClient discoveryClient = getInjector().getInstance(DiscoveryServiceClient.class);
+  private static ClientConfig getClientConfig(DiscoveryServiceClient discoveryClient, String service) {
     EndpointStrategy endpointStrategy =
-      new RandomEndpointStrategy(discoveryClient.discover(Constants.Service.STREAMS));
+      new RandomEndpointStrategy(discoveryClient.discover(service));
     Discoverable discoverable = endpointStrategy.pick(1, TimeUnit.SECONDS);
     Assert.assertNotNull(discoverable);
-    String host = "127.0.0.1";
     int port = discoverable.getSocketAddress().getPort();
-    ConnectionConfig connectionConfig = ConnectionConfig.builder().setHostname(host).setPort(port).build();
-    ClientConfig clientConfig = ClientConfig.builder().setConnectionConfig(connectionConfig).build();
-    return new StreamClient(clientConfig);
-  }
-
-  private static StreamViewClient createStreamViewClient() {
-    DiscoveryServiceClient discoveryClient = getInjector().getInstance(DiscoveryServiceClient.class);
-    EndpointStrategy endpointStrategy =
-      new RandomEndpointStrategy(discoveryClient.discover(Constants.Service.STREAMS));
-    Discoverable discoverable = endpointStrategy.pick(1, TimeUnit.SECONDS);
-    Assert.assertNotNull(discoverable);
-    String host = "127.0.0.1";
-    int port = discoverable.getSocketAddress().getPort();
-    ConnectionConfig connectionConfig = ConnectionConfig.builder().setHostname(host).setPort(port).build();
-    ClientConfig clientConfig = ClientConfig.builder().setConnectionConfig(connectionConfig).build();
-    return new StreamViewClient(clientConfig);
-  }
-
-  private static DatasetClient createDatasetClient() {
-    DiscoveryServiceClient discoveryClient = getInjector().getInstance(DiscoveryServiceClient.class);
-    EndpointStrategy endpointStrategy =
-      new RandomEndpointStrategy(discoveryClient.discover(Constants.Service.DATASET_MANAGER));
-    Discoverable discoverable = endpointStrategy.pick(1, TimeUnit.SECONDS);
-    Assert.assertNotNull(discoverable);
-    String host = "127.0.0.1";
-    int port = discoverable.getSocketAddress().getPort();
-    ConnectionConfig connectionConfig = ConnectionConfig.builder().setHostname(host).setPort(port).build();
-    ClientConfig clientConfig = ClientConfig.builder().setConnectionConfig(connectionConfig).build();
-    return new DatasetClient(clientConfig);
+    ConnectionConfig connectionConfig = ConnectionConfig.builder().setHostname(hostname).setPort(port).build();
+    return ClientConfig.builder().setConnectionConfig(connectionConfig).build();
   }
 }

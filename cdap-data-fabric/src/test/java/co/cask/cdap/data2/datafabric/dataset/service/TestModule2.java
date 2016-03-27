@@ -36,6 +36,8 @@ import java.util.Map;
  * Test dataset module
  */
 public class TestModule2 implements DatasetModule {
+  public static final String DESCRIPTION = "dataset test module 2 description";
+
   @Override
   public void register(DatasetDefinitionRegistry registry) {
     registry.get("datasetType1");
@@ -48,6 +50,7 @@ public class TestModule2 implements DatasetModule {
       public DatasetSpecification configure(String instanceName, DatasetProperties properties) {
         return DatasetSpecification
           .builder(instanceName, getName())
+          .setDescription(DESCRIPTION)
           // This is to test that the dataset summary returned by list() contains the original properties.
           // Original properties are different from the spec.getProperties() if the configure() method
           // modifies the original properties. That is what we mimic here.

@@ -150,7 +150,8 @@ public class ExistingEntitySystemMetadataWriter {
           }
 
           SystemMetadataWriter writer =
-            new DatasetSystemMetadataWriter(metadataStore, dsInstance, dsProperties, dataset, dsType);
+            new DatasetSystemMetadataWriter(metadataStore, dsInstance, dsProperties, dataset, dsType,
+                                            summary.getDescription());
           writer.write();
         } finally {
           if (dataset != null) {

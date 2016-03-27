@@ -298,7 +298,8 @@ public class IntegrationTestManager implements TestManager {
                                                        String datasetTypeName, String datasetInstanceName,
                                                        DatasetProperties props) throws Exception {
     Id.DatasetInstance datasetInstance = Id.DatasetInstance.from(namespace, datasetInstanceName);
-    DatasetInstanceConfiguration dsConf = new DatasetInstanceConfiguration(datasetTypeName, props.getProperties());
+    DatasetInstanceConfiguration dsConf = new DatasetInstanceConfiguration(datasetTypeName, props.getProperties(),
+                                                                           props.getDescription());
 
     datasetClient.create(datasetInstance, dsConf);
     return (T) new RemoteDatasetAdmin(datasetClient, datasetInstance, dsConf);

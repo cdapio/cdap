@@ -95,7 +95,7 @@ public class DatasetInstanceService {
                                     DatasetProperties creationProps) throws Exception {
         DatasetInstanceService.this.createIfNotExists(
           instance.getNamespace(), instance.getId(),
-          new DatasetInstanceConfiguration(type, creationProps.getProperties()));
+          new DatasetInstanceConfiguration(type, creationProps.getProperties(), creationProps.getDescription()));
       }
     });
     this.nsStore = nsStore;
@@ -217,7 +217,9 @@ public class DatasetInstanceService {
     DatasetSpecification spec = opExecutorClient.create(newInstance, typeMeta,
                                                         DatasetProperties.builder()
                                                           .addAll(props.getProperties())
-                                                          .build());
+                                                          .setDescription(props.getDescription())
+                                                          .build(),
+                                                        false);
     instanceManager.add(namespace, spec);
     publishAudit(newInstance, AuditType.CREATE);
 
@@ -267,10 +269,12 @@ public class DatasetInstanceService {
     DatasetSpecification spec = opExecutorClient.create(instance, typeMeta,
                                                         DatasetProperties.builder()
                                                           .addAll(properties)
-                                                          .build());
+                                                          .build(),
+                                                        true);
     instanceManager.add(instance.getNamespace(), spec);
 
-    DatasetInstanceConfiguration creationProperties = new DatasetInstanceConfiguration(existing.getType(), properties);
+    DatasetInstanceConfiguration creationProperties =
+      new DatasetInstanceConfiguration(existing.getType(), properties, null);
     enableExplore(instance, creationProperties);
 
     //caling admin upgrade, after updating specification

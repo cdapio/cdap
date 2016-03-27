@@ -18,6 +18,7 @@ package co.cask.cdap.proto;
 
 import java.util.Collections;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * POJO that carries dataset type and properties information for create dataset request
@@ -25,10 +26,12 @@ import java.util.Map;
 public final class DatasetInstanceConfiguration {
   private final String typeName;
   private final Map<String, String> properties;
+  private final String description;
 
-  public DatasetInstanceConfiguration(String typeName, Map<String, String> properties) {
+  public DatasetInstanceConfiguration(String typeName, Map<String, String> properties, @Nullable String description) {
     this.typeName = typeName;
     this.properties = properties;
+    this.description = description;
   }
 
   public String getTypeName() {
@@ -39,4 +42,8 @@ public final class DatasetInstanceConfiguration {
     return properties == null ? Collections.<String, String>emptyMap() : properties;
   }
 
+  @Nullable
+  public String getDescription() {
+    return description;
+  }
 }
