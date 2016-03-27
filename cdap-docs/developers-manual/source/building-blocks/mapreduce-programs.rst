@@ -341,8 +341,6 @@ are set:
    :lines: 47-57
    :append: ...
 
-..   :lines: 44-54
-
 The Resources API, if called with two arguments, sets both the memory used in megabytes
 and the number of virtual cores used.
 
