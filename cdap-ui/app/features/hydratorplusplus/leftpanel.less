@@ -298,10 +298,25 @@ body.theme-cdap.state-hydratorplusplus-create {
     &.plugin-template-delete-confirm-modal {
       .modal-dialog {
         margin-top: 40vh;
-        max-width: 630px;
-        text-align: center;
-        .modal-footer {
-          text-align: center;
+        max-width: 400px;
+      }
+
+      .modal-body {
+        font-weight: 500;
+        font-size: 16px;
+        padding-top: 25px;
+
+        strong { font-size: 22px; }
+
+        .fa.fa-times {
+          color: #999;
+          cursor: pointer;
+        }
+      }
+
+      .modal-footer {
+        .btn {
+          width: 100px;
         }
       }
     }
