@@ -70,9 +70,12 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
         HydratorPlusPlusDetailRunsStore.getApi(),
         params
       );
+
+      let nextRunTimeParams = HydratorPlusPlusDetailRunsStore.getParams();
+      nextRunTimeParams.scope = $scope;
       HydratorPlusPlusDetailActions.pollNextRunTime(
         HydratorPlusPlusDetailRunsStore.getApi(),
-        HydratorPlusPlusDetailRunsStore.getParams()
+        nextRunTimeParams
       );
     }
 

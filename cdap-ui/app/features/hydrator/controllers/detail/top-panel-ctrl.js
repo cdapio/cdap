@@ -70,9 +70,12 @@ angular.module(PKG.name + '.feature.hydrator')
         DetailRunsStore.getApi(),
         params
       );
+
+      let nextRunTimeParams = DetailRunsStore.getParams();
+      nextRunTimeParams.scope = $scope;
       PipelineDetailActionFactory.pollNextRunTime(
         DetailRunsStore.getApi(),
-        DetailRunsStore.getParams()
+        nextRunTimeParams
       );
     }
 
