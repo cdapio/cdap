@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -32,7 +32,11 @@ import co.cask.cdap.pipeline.AbstractStage;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.ProgramTypes;
+import co.cask.cdap.proto.security.Action;
+import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
+import co.cask.cdap.security.spi.authorization.Authorizer;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.reflect.TypeToken;
@@ -56,11 +60,14 @@ import java.util.concurrent.Executors;
 public class ProgramGenerationStage extends AbstractStage<ApplicationDeployable> {
   private final CConfiguration configuration;
   private final NamespacedLocationFactory namespacedLocationFactory;
+  private final Authorizer authorizer;
 
-  public ProgramGenerationStage(CConfiguration configuration, NamespacedLocationFactory namespacedLocationFactory) {
+  public ProgramGenerationStage(CConfiguration configuration, NamespacedLocationFactory namespacedLocationFactory,
+                                Authorizer authorizer) {
     super(TypeToken.of(ApplicationDeployable.class));
     this.configuration = configuration;
     this.namespacedLocationFactory = namespacedLocationFactory;
+    this.authorizer = authorizer;
   }
 
   @Override
@@ -120,7 +127,9 @@ public class ProgramGenerationStage extends AbstractStage<ApplicationDeployable>
             }
             Location output = programDir.append(String.format("%s.jar", spec.getName()));
             Id.Program programId = Id.Program.from(input.getId(), type, spec.getName());
-            return ProgramBundle.create(programId, bundler, output, spec.getClassName(), appSpec);
+            Location programLocation = ProgramBundle.create(programId, bundler, output, spec.getClassName(), appSpec);
+            authorizer.grant(programId.toEntityId(), SecurityRequestContext.toPrincipal(), ImmutableSet.of(Action.ALL));
+            return programLocation;
             }
         });
         futures.add(future);

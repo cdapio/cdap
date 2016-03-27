@@ -63,6 +63,9 @@ import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.ProgramTypes;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.artifact.ArtifactSummary;
+import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.proto.id.Ids;
+import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.security.authorization.AuthorizerInstantiatorService;
 import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
@@ -87,6 +90,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -565,7 +569,8 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     // enfore ADMIN privileges on the app
     authorizerInstantiatorService.get().enforce(appId.toEntityId(), SecurityRequestContext.toPrincipal(), Action.ADMIN);
     // first remove all privileges on the app
-    authorizerInstantiatorService.get().revoke(appId.toEntityId());
+    revokePrivileges(appId.toEntityId(), spec);
+
     //Delete the schedules
     for (WorkflowSpecification workflowSpec : spec.getWorkflows().values()) {
       Id.Program workflowProgramId = Id.Program.from(appId, ProgramType.WORKFLOW, workflowSpec.getName());
@@ -613,6 +618,14 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     }
   }
 
+  // TODO: CDAP-5427 - This should be a single operation
+  private void revokePrivileges(ApplicationId appId, ApplicationSpecification appSpec) throws Exception {
+    for (ProgramId programId : getAllPrograms(appId, appSpec)) {
+      authorizerInstantiatorService.get().revoke(programId);
+    }
+    authorizerInstantiatorService.get().revoke(appId);
+  }
+
   /**
    * Delete the metadata for the application and the programs.
    */
@@ -623,33 +636,30 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     // Remove metadata for the programs of the Application
     // TODO: Need to remove this we support prefix search of metadata type.
     // See https://issues.cask.co/browse/CDAP-3669
+    for (ProgramId programId : getAllPrograms(appId.toEntityId(), appSpec)) {
+      metadataStore.removeMetadata(programId.toId());
+    }
+  }
+
+  private Set<ProgramId> getAllPrograms(ApplicationId appId, ApplicationSpecification appSpec) {
+    Set<ProgramId> result = new HashSet<>();
     Map<ProgramType, Set<String>> programTypeToNames = new HashMap<>();
-    if (appSpec.getFlows() != null) {
-      programTypeToNames.put(ProgramType.FLOW, appSpec.getFlows().keySet());
-    }
-    if (appSpec.getMapReduce() != null) {
-      programTypeToNames.put(ProgramType.MAPREDUCE, appSpec.getMapReduce().keySet());
-    }
-    if (appSpec.getWorkflows() != null) {
-      programTypeToNames.put(ProgramType.WORKFLOW, appSpec.getWorkflows().keySet());
-    }
-    if (appSpec.getServices() != null) {
-      programTypeToNames.put(ProgramType.SERVICE, appSpec.getServices().keySet());
-    }
-    if (appSpec.getSpark() != null) {
-      programTypeToNames.put(ProgramType.SPARK, appSpec.getSpark().keySet());
-    }
-    if (appSpec.getWorkers() != null) {
-      programTypeToNames.put(ProgramType.WORKER, appSpec.getWorkers().keySet());
-    }
+    programTypeToNames.put(ProgramType.FLOW, appSpec.getFlows().keySet());
+    programTypeToNames.put(ProgramType.MAPREDUCE, appSpec.getMapReduce().keySet());
+    programTypeToNames.put(ProgramType.WORKFLOW, appSpec.getWorkflows().keySet());
+    programTypeToNames.put(ProgramType.SERVICE, appSpec.getServices().keySet());
+    programTypeToNames.put(ProgramType.SPARK, appSpec.getSpark().keySet());
+    programTypeToNames.put(ProgramType.WORKER, appSpec.getWorkers().keySet());
 
     for (Map.Entry<ProgramType, Set<String>> entry : programTypeToNames.entrySet()) {
       Set<String> programNames = entry.getValue();
       for (String programName : programNames) {
-        Id.Program programId = Id.Program.from(appId.getNamespaceId(), appId.getId(), entry.getKey(), programName);
-        metadataStore.removeMetadata(programId);
+        result.add(Ids.namespace(appId.getNamespace())
+                     .app(appId.getApplication())
+                     .program(entry.getKey(), programName));
       }
     }
+    return result;
   }
 
   // get filter for app specs by artifact name and version. if they are null, it means don't filter.

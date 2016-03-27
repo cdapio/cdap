@@ -46,6 +46,9 @@ import co.cask.cdap.proto.id.Ids;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
+import co.cask.cdap.proto.security.Action;
+import co.cask.cdap.security.authorization.AuthorizerInstantiatorService;
+import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.cdap.store.NamespaceStore;
 import com.google.common.base.Predicate;
@@ -88,11 +91,13 @@ public class ProgramLifecycleService extends AbstractIdleService {
   private final PropertiesResolver propertiesResolver;
   private final NamespacedLocationFactory namespacedLocationFactory;
   private final String appFabricDir;
+  private final AuthorizerInstantiatorService authorizerInstantiatorService;
 
   @Inject
   ProgramLifecycleService(Store store, NamespaceStore nsStore, ProgramRuntimeService runtimeService,
                           CConfiguration cConf, PropertiesResolver propertiesResolver,
-                          NamespacedLocationFactory namespacedLocationFactory) {
+                          NamespacedLocationFactory namespacedLocationFactory,
+                          AuthorizerInstantiatorService authorizerInstantiatorService) {
     this.store = store;
     this.nsStore = nsStore;
     this.runtimeService = runtimeService;
@@ -101,6 +106,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
     this.appFabricDir = cConf.get(Constants.AppFabric.OUTPUT_DIR);
     this.scheduledExecutorService = Executors.newScheduledThreadPool(1);
     this.cConf = cConf;
+    this.authorizerInstantiatorService = authorizerInstantiatorService;
   }
 
   @Override
@@ -131,38 +137,6 @@ public class ProgramLifecycleService extends AbstractIdleService {
   }
 
   /**
-   * Starts/stops a program. This is a wrapper method around the start and stop methods. It helps validate the action
-   * centrally.
-   *
-   * @param programId the {@link ProgramId} to start/stop
-   * @param args the arguments to pass to the program while starting
-   * @param action the action to perform on the program ("start", "stop" or "debug")
-   * @throws NotFoundException if the specified program is not found
-   * @throws BadRequestException if the action was other than "start", "stop" or "debug"
-   * @throws Exception if there were other exceptions while starting or stopping programs.
-   */
-  public synchronized void startStopProgram(ProgramId programId, Map<String, String> args,
-                                            String action) throws Exception {
-    if (programId.getType() == null) {
-      throw new NotFoundException(programId);
-    }
-    LOG.trace("{} call from AppFabricHttpHandler for program: {}", action, programId);
-    switch (action.toLowerCase()) {
-      case "start":
-        start(programId, args, false);
-        break;
-      case "debug":
-        start(programId, args, true);
-        break;
-      case "stop":
-        stop(programId);
-        break;
-      default:
-        throw new BadRequestException(String.format("Action must be start, stop, or debug, but is: %s", action));
-    }
-  }
-
-  /**
    * Returns the program status.
    * @param programId the id of the program for which the status call is made
    * @return the status of the program
@@ -170,11 +144,6 @@ public class ProgramLifecycleService extends AbstractIdleService {
    * @throws NotFoundException if the application to which this program belongs was not found
    */
   public ProgramStatus getProgramStatus(ProgramId programId) throws BadRequestException, NotFoundException {
-    // invalid type does not exist
-    if (programId.getType() == null) {
-      throw new BadRequestException(String.format("Invalid program type provided for program %s.", programId));
-    }
-
     // check that app exists
     ApplicationSpecification appSpec = store.getApplication(programId.toId().getApplication());
     if (appSpec == null) {
@@ -247,9 +216,19 @@ public class ProgramLifecycleService extends AbstractIdleService {
 
 
   /**
-   * Starts a Program.
+   * Starts a Program with the specified argument overrides.
+   *
+   * @param programId the {@link ProgramId} to start/stop
+   * @param overrides the arguments to override in the program's configured user arguments before starting
+   * @param debug {@code true} if the program is to be started in debug mode, {@code false} otherwise
+   * @throws ConflictException if the specified program is already running, and if concurrent runs are not allowed
+   * @throws NotFoundException if the specified program or the app it belongs to is not found in the specified namespace
+   * @throws IOException if there is an error starting the program
+   * @throws UnauthorizedException if the logged in user is not authorized to start the program. To start a program,
+   *                               a user requires {@link Action#EXECUTE} on the program
+   * @throws Exception if there were other exceptions checking if the current user is authorized to start the program
    */
-  public void start(ProgramId programId, Map<String, String> overrides, boolean debug) throws Exception {
+  public synchronized void start(ProgramId programId, Map<String, String> overrides, boolean debug) throws Exception {
     Map<String, String> sysArgs = propertiesResolver.getSystemProperties(programId.toId());
     Map<String, String> userArgs = propertiesResolver.getUserProperties(programId.toId());
     if (overrides != null) {
@@ -276,10 +255,13 @@ public class ProgramLifecycleService extends AbstractIdleService {
    * @return {@link ProgramRuntimeService.RuntimeInfo}
    * @throws IOException if there is an error starting the program
    * @throws ProgramNotFoundException if program is not found
-   * @throws UnauthorizedException if the logged in user is not authorized to start the program
+   * @throws UnauthorizedException if the logged in user is not authorized to start the program. To start a program,
+   *                               a user requires {@link Action#EXECUTE} on the program
+   * @throws Exception if there were other exceptions checking if the current user is authorized to start the program
    */
   public ProgramRuntimeService.RuntimeInfo start(final ProgramId programId, final Map<String, String> systemArgs,
                                                  final Map<String, String> userArgs, boolean debug) throws Exception {
+    authorizerInstantiatorService.get().enforce(programId, SecurityRequestContext.toPrincipal(), Action.EXECUTE);
     Program program = store.loadProgram(programId.toId());
     BasicArguments systemArguments = new BasicArguments(systemArgs);
     BasicArguments userArguments = new BasicArguments(userArgs);
@@ -357,7 +339,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
    * @throws InterruptedException if there was a problem while waiting for the stop call to complete
    * @throws ExecutionException if there was a problem while waiting for the stop call to complete
    */
-  public void stop(ProgramId programId) throws Exception {
+  public synchronized void stop(ProgramId programId) throws Exception {
     stop(programId, null);
   }
 
@@ -389,9 +371,11 @@ public class ProgramLifecycleService extends AbstractIdleService {
    * @throws NotFoundException if the app, program or run was not found
    * @throws BadRequestException if an attempt is made to stop a program that is either not running or
    *                             was started by a workflow
+   * @throws UnauthorizedException if the user issuing the command is not authorized to stop the program. To stop a
+   *                               program, a user requires {@link Action#EXECUTE} permission on the program.
    */
-  public ListenableFuture<ProgramController> issueStop(ProgramId programId, @Nullable String runId)
-    throws NotFoundException, BadRequestException {
+  public ListenableFuture<ProgramController> issueStop(ProgramId programId, @Nullable String runId) throws Exception {
+    authorizerInstantiatorService.get().enforce(programId, SecurityRequestContext.toPrincipal(), Action.EXECUTE);
     ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(programId, runId);
     if (runtimeInfo == null) {
       if (!store.applicationExists(programId.toId().getApplication())) {

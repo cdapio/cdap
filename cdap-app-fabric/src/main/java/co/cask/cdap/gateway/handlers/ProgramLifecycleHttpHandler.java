@@ -228,7 +228,12 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       return;
     }
 
-    ProgramType programType = ProgramType.valueOfCategoryName(type);
+    ProgramType programType;
+    try {
+      programType = ProgramType.valueOfCategoryName(type);
+    } catch (IllegalArgumentException e) {
+      throw new BadRequestException(e);
+    }
     ProgramId program = Ids.namespace(namespaceId).app(appId).program(programType, id);
     ProgramStatus programStatus = lifecycleService.getProgramStatus(program);
 
@@ -289,13 +294,9 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                             @PathParam("type") String type,
                             @PathParam("id") String id,
                             @PathParam("action") String action) throws Exception {
-    if (type.equals("schedules")) {
+    if ("schedules".equals(type)) {
       suspendResumeSchedule(responder, namespaceId, appId, id, action);
       return;
-    }
-
-    if (!isValidAction(action)) {
-      throw new NotFoundException(String.format("%s action was not found", action));
     }
 
     ProgramType programType;
@@ -305,12 +306,26 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       throw new BadRequestException(String.format("Unknown program type '%s'", type), e);
     }
 
-    if ("debug".equals(action) && !isDebugAllowed(programType)) {
-      throw new NotImplementedException(String.format("debug action is not implemented for program type %s",
-                                                      programType));
-    }
     ProgramId programId = Ids.namespace(namespaceId).app(appId).program(programType, id);
-    lifecycleService.startStopProgram(programId, decodeArguments(request), action);
+    Map<String, String> args = decodeArguments(request);
+    // we have already validated that the action is valid
+    switch (action.toLowerCase()) {
+      case "start":
+        lifecycleService.start(programId, args, false);
+        break;
+      case "debug":
+        if (!isDebugAllowed(programType)) {
+          throw new NotImplementedException(String.format("debug action is not implemented for program type %s",
+                                                          programType));
+        }
+        lifecycleService.start(programId, args, true);
+        break;
+      case "stop":
+        lifecycleService.stop(programId);
+        break;
+      default:
+        throw new NotFoundException(String.format("%s action was not found", action));
+    }
     responder.sendStatus(HttpResponseStatus.OK);
   }
 
@@ -532,10 +547,10 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
     List<BatchProgramStatus> statuses = new ArrayList<>(programs.size());
     for (BatchProgram program : programs) {
-      ProgramId progId =
+      ProgramId programId =
         Ids.namespace(namespaceId).app(program.getAppId()).program(program.getProgramType(), program.getProgramId());
       try {
-        ProgramStatus programStatus = lifecycleService.getProgramStatus(progId);
+        ProgramStatus programStatus = lifecycleService.getProgramStatus(programId);
         statuses.add(new BatchProgramStatus(
           program, HttpResponseStatus.OK.getCode(), null, programStatus.name()));
       } catch (BadRequestException e) {
@@ -1240,10 +1255,6 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   private int getRequestedServiceInstances(Id.Program serviceId) {
     // Not running on YARN, get it from store
     return store.getServiceInstances(serviceId);
-  }
-
-  private boolean isValidAction(String action) {
-    return "start".equals(action) || "stop".equals(action) || "debug".equals(action);
   }
 
   private boolean isDebugAllowed(ProgramType programType) {
