@@ -25,6 +25,7 @@ import org.apache.hadoop.io.WritableComparable;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.util.Objects;
 
 /**
  * Wrapper around a {@link StructuredRecord} so that it can be used as the output key and/or value of a mapper.
@@ -78,6 +79,25 @@ public class StructuredRecordWritable implements WritableComparable<StructuredRe
 
   @Override
   public int compareTo(StructuredRecordWritable o) {
-    return Integer.compare(record.hashCode(), o.get().hashCode());
+    return Integer.compare(hashCode(), o.hashCode());
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    StructuredRecordWritable that = (StructuredRecordWritable) o;
+
+    return Objects.equals(record, that.record);
+  }
+
+  @Override
+  public int hashCode() {
+    return record != null ? record.hashCode() : 0;
   }
 }
