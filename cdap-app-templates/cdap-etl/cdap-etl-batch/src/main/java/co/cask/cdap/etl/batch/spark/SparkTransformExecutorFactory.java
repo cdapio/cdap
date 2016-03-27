@@ -25,6 +25,7 @@ import co.cask.cdap.etl.api.StageMetrics;
 import co.cask.cdap.etl.api.Transformation;
 import co.cask.cdap.etl.api.batch.BatchAggregator;
 import co.cask.cdap.etl.api.batch.BatchRuntimeContext;
+import co.cask.cdap.etl.api.batch.SparkCompute;
 import co.cask.cdap.etl.api.batch.SparkSink;
 import co.cask.cdap.etl.batch.PipelinePluginInstantiator;
 import co.cask.cdap.etl.batch.TransformExecutorFactory;
@@ -72,10 +73,7 @@ public class SparkTransformExecutorFactory<T> extends TransformExecutorFactory<T
   @SuppressWarnings("unchecked")
   @Override
   protected Transformation getTransformation(String pluginType, String stageName) throws Exception {
-    if (SparkSink.PLUGIN_TYPE.equals(pluginType)) {
-      // if this plugin type is not a transformation, substitute in an IDENTITY_TRANSFORMATION
-      return IDENTITY_TRANSFORMATION;
-    } else if (BatchAggregator.PLUGIN_TYPE.equals(pluginType)) {
+    if (BatchAggregator.PLUGIN_TYPE.equals(pluginType)) {
       BatchAggregator<?, ?, ?> batchAggregator = pluginInstantiator.newPluginInstance(stageName);
       BatchRuntimeContext runtimeContext = createRuntimeContext(stageName);
       batchAggregator.initialize(runtimeContext);
@@ -84,6 +82,9 @@ public class SparkTransformExecutorFactory<T> extends TransformExecutorFactory<T
       } else {
         return new PostGroupAggregatorTransformation(batchAggregator);
       }
+    } else if (SparkSink.PLUGIN_TYPE.equals(pluginType) || SparkCompute.PLUGIN_TYPE.equals(pluginType)) {
+      // if this plugin type is a SparkSink or SparkCompute, substitute in an IDENTITY_TRANSFORMATION
+      return IDENTITY_TRANSFORMATION;
     }
     return super.getTransformation(pluginType, stageName);
   }

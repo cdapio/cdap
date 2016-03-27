@@ -24,6 +24,7 @@ import co.cask.cdap.etl.api.Transform;
 import co.cask.cdap.etl.api.batch.BatchAggregator;
 import co.cask.cdap.etl.api.batch.BatchSink;
 import co.cask.cdap.etl.api.batch.BatchSource;
+import co.cask.cdap.etl.api.batch.SparkCompute;
 import co.cask.cdap.etl.api.batch.SparkSink;
 import co.cask.cdap.etl.common.Constants;
 import co.cask.cdap.etl.planner.PipelinePlan;
@@ -45,7 +46,7 @@ public class DataPipelineApp extends AbstractApplication<ETLBatchConfig> {
   public static final String DEFAULT_DESCRIPTION = "Data Pipeline Application";
   private static final Set<String> supportedPluginTypes = ImmutableSet.of(
     BatchSource.PLUGIN_TYPE, BatchSink.PLUGIN_TYPE, Transform.PLUGIN_TYPE,
-    Constants.CONNECTOR_TYPE, BatchAggregator.PLUGIN_TYPE, SparkSink.PLUGIN_TYPE);
+    Constants.CONNECTOR_TYPE, BatchAggregator.PLUGIN_TYPE, SparkCompute.PLUGIN_TYPE, SparkSink.PLUGIN_TYPE);
 
   @Override
   public void configure() {
@@ -69,7 +70,7 @@ public class DataPipelineApp extends AbstractApplication<ETLBatchConfig> {
 
     PipelinePlanner planner = new PipelinePlanner(supportedPluginTypes,
                                                   ImmutableSet.of(BatchAggregator.PLUGIN_TYPE),
-                                                  ImmutableSet.<String>of());
+                                                  ImmutableSet.of(SparkCompute.PLUGIN_TYPE, SparkSink.PLUGIN_TYPE));
     PipelinePlan plan = planner.plan(spec);
 
     addWorkflow(new SmartWorkflow(spec, plan, getConfigurer(), config.getEngine()));

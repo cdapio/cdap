@@ -24,6 +24,7 @@ import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
+import co.cask.cdap.api.plugin.PluginConfig;
 import co.cask.cdap.etl.api.PipelineConfigurer;
 import co.cask.cdap.etl.api.batch.SparkPluginContext;
 import co.cask.cdap.etl.api.batch.SparkSink;
@@ -52,22 +53,51 @@ import scala.Tuple2;
  * Also persists the trained model to a file in a FileSet.
  */
 @Plugin(type = SparkSink.PLUGIN_TYPE)
-@Name("SpamOrHam")
+@Name(NaiveBayesTrainer.PLUGIN_NAME)
 @Description("Trains a model based upon whether messages are spam or not.")
-public final class SpamOrHam extends SparkSink<StructuredRecord> {
+public final class NaiveBayesTrainer extends SparkSink<StructuredRecord> {
+  private static final Logger LOG = LoggerFactory.getLogger(NaiveBayesTrainer.class);
 
-  private static final Logger LOG = LoggerFactory.getLogger(SpamOrHam.class);
-
-  private static final String OUTPUT_FILESET = "modelFileSet";
-
+  public static final String PLUGIN_NAME = "NaiveBayesTrainer";
   public static final String TEXTS_TO_CLASSIFY = "textsToClassify";
   public static final String CLASSIFIED_TEXTS = "classifiedTexts";
+
+  private final Config config;
+
+  /**
+   * Configuration for the NaiveBayesTrainer.
+   */
+  public static class Config extends PluginConfig {
+
+    @Description("FileSet to use to load the model from.")
+    private final String fileSetName;
+
+    @Description("Path of the FileSet to load the model from.")
+    private final String path;
+
+    @Description("A space-separated sequence of words, which to use for classification.")
+    private final String fieldToClassify;
+
+    @Description("The field from which to get the prediction. It must be of type double.")
+    private final String predictionField;
+
+    public Config(String fileSetName, String path, String fieldToClassify, String predictionField) {
+      this.fileSetName = fileSetName;
+      this.path = path;
+      this.fieldToClassify = fieldToClassify;
+      this.predictionField = predictionField;
+    }
+  }
+
+  public NaiveBayesTrainer(Config config) {
+    this.config = config;
+  }
 
   @Override
   public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
     pipelineConfigurer.addStream(TEXTS_TO_CLASSIFY);
     pipelineConfigurer.createDataset(CLASSIFIED_TEXTS, KeyValueTable.class);
-    pipelineConfigurer.createDataset(OUTPUT_FILESET, FileSet.class, FileSetProperties.builder()
+    pipelineConfigurer.createDataset(config.fileSetName, FileSet.class, FileSetProperties.builder()
       .setInputFormat(TextInputFormat.class)
       .setOutputFormat(TextOutputFormat.class)
       .setOutputProperty(TextOutputFormat.SEPERATOR, ":").build());
@@ -81,64 +111,28 @@ public final class SpamOrHam extends SparkSink<StructuredRecord> {
   @Override
   public void run(SparkPluginContext sparkContext, JavaRDD<StructuredRecord> input) throws Exception {
     Preconditions.checkArgument(input.count() != 0, "Input RDD is empty.");
-    final JavaRDD<StructuredRecord> spam = input.filter(new Function<StructuredRecord, Boolean>() {
-      @Override
-      public Boolean call(StructuredRecord record) throws Exception {
-        return record.get(SpamMessage.IS_SPAM_FIELD);
-      }
-    });
-
-    JavaRDD<StructuredRecord> ham = input.filter(new Function<StructuredRecord, Boolean>() {
-      @Override
-      public Boolean call(StructuredRecord record) throws Exception {
-        return !(Boolean) record.get(SpamMessage.IS_SPAM_FIELD);
-      }
-    });
 
     final HashingTF tf = new HashingTF(100);
-    JavaRDD<Vector> spamFeatures = spam.map(new Function<StructuredRecord, Vector>() {
+    JavaRDD<LabeledPoint> trainingData = input.map(new Function<StructuredRecord, LabeledPoint>() {
       @Override
-      public Vector call(StructuredRecord structuredRecord) throws Exception {
-        String text = structuredRecord.get(SpamMessage.TEXT_FIELD);
-        return tf.transform(Lists.newArrayList(text.split(" ")));
+      public LabeledPoint call(StructuredRecord record) throws Exception {
+        String text = record.get(config.fieldToClassify);
+        return new LabeledPoint((Double) record.get(config.predictionField),
+                                tf.transform(Lists.newArrayList(text.split(" "))));
       }
     });
 
-    JavaRDD<Vector> hamFeatures = ham.map(new Function<StructuredRecord, Vector>() {
-      @Override
-      public Vector call(StructuredRecord structuredRecord) throws Exception {
-        String text = structuredRecord.get(SpamMessage.TEXT_FIELD);
-        return tf.transform(Lists.newArrayList(text.split(" ")));
-      }
-    });
-
-
-    JavaRDD<LabeledPoint> positiveExamples = spamFeatures.map(new Function<Vector, LabeledPoint>() {
-      @Override
-      public LabeledPoint call(Vector vector) throws Exception {
-        return new LabeledPoint(1, vector);
-      }
-    });
-
-    JavaRDD<LabeledPoint> negativeExamples = hamFeatures.map(new Function<Vector, LabeledPoint>() {
-      @Override
-      public LabeledPoint call(Vector vector) throws Exception {
-        return new LabeledPoint(0, vector);
-      }
-    });
-
-    JavaRDD<LabeledPoint> trainingData = positiveExamples.union(negativeExamples);
     trainingData.cache();
 
     final NaiveBayesModel model = NaiveBayes.train(trainingData.rdd(), 1.0);
 
     // save the model to a file in the output FileSet
     JavaSparkContext javaSparkContext = sparkContext.getOriginalSparkContext();
-    FileSet outputFS = sparkContext.getDataset(OUTPUT_FILESET);
+    FileSet outputFS = sparkContext.getDataset(config.fileSetName);
     model.save(JavaSparkContext.toSparkContext(javaSparkContext),
-               outputFS.getBaseLocation().append("output").toURI().getPath());
+               outputFS.getBaseLocation().append(config.path).toURI().getPath());
 
-    JavaPairRDD<LongWritable, Text> textsToClassify = sparkContext.readFromStream("textsToClassify", Text.class);
+    JavaPairRDD<LongWritable, Text> textsToClassify = sparkContext.readFromStream(TEXTS_TO_CLASSIFY, Text.class);
     JavaRDD<Vector> featuresToClassify = textsToClassify.map(new Function<Tuple2<LongWritable, Text>, Vector>() {
       @Override
       public Vector call(Tuple2<LongWritable, Text> longWritableTextTuple2) throws Exception {
