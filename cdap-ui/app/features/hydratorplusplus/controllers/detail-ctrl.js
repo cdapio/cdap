@@ -36,8 +36,8 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
       currentRunId = latestRunId;
 
       if (latestRunId) {
-        var appParams = angular.copy(HydratorPlusPlusDetailRunsStore.getParams());
-        var logsParams = angular.copy(HydratorPlusPlusDetailRunsStore.getLogsParams());
+        var appParams = HydratorPlusPlusDetailRunsStore.getParams();
+        var logsParams = HydratorPlusPlusDetailRunsStore.getLogsParams();
         var metricParams = {
           namespace: appParams.namespace,
           app: appParams.app,
