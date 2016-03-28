@@ -28,6 +28,10 @@ public final class DatasetInstanceConfiguration {
   private final Map<String, String> properties;
   private final String description;
 
+  public DatasetInstanceConfiguration(String typeName, Map<String, String> properties) {
+    this(typeName, properties, null);
+  }
+  
   public DatasetInstanceConfiguration(String typeName, Map<String, String> properties, @Nullable String description) {
     this.typeName = typeName;
     this.properties = properties;
