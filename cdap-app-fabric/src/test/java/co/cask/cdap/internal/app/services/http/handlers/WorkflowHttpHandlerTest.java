@@ -764,7 +764,7 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
                                                                             workflowHistoryRuns.get(0).getPid());
 
     Assert.assertNotNull(nodeStates);
-    Assert.assertEquals(4, nodeStates.size());
+    Assert.assertEquals(5, nodeStates.size());
     WorkflowNodeStateDetail mrNodeState = nodeStates.get("OneMR");
     Assert.assertNotNull(mrNodeState);
     Assert.assertEquals("OneMR", mrNodeState.getNodeId());
@@ -784,6 +784,10 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     Assert.assertNotNull(sparkNodeState);
     Assert.assertEquals("AnotherSpark", sparkNodeState.getNodeId());
     Assert.assertEquals(anotherSparkHistoryRuns.get(0).getPid(), sparkNodeState.getRunId());
+
+    WorkflowNodeStateDetail oneActionNodeState = nodeStates.get("OneAction");
+    Assert.assertNotNull(oneActionNodeState);
+    Assert.assertEquals("OneAction", oneActionNodeState.getNodeId());
   }
 
   @Ignore

@@ -372,6 +372,14 @@ public interface Store {
   WorkflowToken getWorkflowToken(Id.Workflow workflowId, String workflowRunId);
 
   /**
+   * Add node state for the given {@link Workflow} run. This method is used to update the
+   * state of the custom actions started by Workflow.
+   * @param workflowRunId the Workflow run
+   * @param nodeStateDetail the node state to be added for the Workflow run
+   */
+  void addWorkflowNodeState(ProgramRunId workflowRunId, WorkflowNodeStateDetail nodeStateDetail);
+
+  /**
    * Get the node states for {@link Workflow} run.
    * @param workflowRunId run of the Workflow.
    * @return {@link Map} of node id to the {@link WorkflowNodeStateDetail}

@@ -168,6 +168,15 @@ public class AppMetadataStore extends MetadataStoreDataset {
     return nodeStates;
   }
 
+  public void addWorkflowNodeState(ProgramRunId workflowRunId, WorkflowNodeStateDetail nodeStateDetail) {
+    // Node states will be stored with following key:
+    // workflowNodeState.namespace.app.WORKFLOW.workflowName.workflowRun.workflowNodeId
+    MDSKey key = getProgramKeyBuilder(TYPE_WORKFLOW_NODE_STATE, workflowRunId.getParent().toId())
+      .add(workflowRunId.getRun()).add(nodeStateDetail.getNodeId()).build();
+
+    write(key, nodeStateDetail);
+  }
+
   private void addWorkflowNodeState(Id.Program program, String pid, Map<String, String> systemArgs,
                                     ProgramRunStatus status, @Nullable Throwable failureCause) {
     String workflowNodeId = systemArgs.get(ProgramOptionConstants.WORKFLOW_NODE_ID);

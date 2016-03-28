@@ -15,6 +15,7 @@
  */
 package co.cask.cdap.proto;
 
+import co.cask.cdap.api.workflow.NodeStatus;
 import co.cask.cdap.api.workflow.Workflow;
 
 import javax.annotation.Nullable;
@@ -23,16 +24,6 @@ import javax.annotation.Nullable;
  * Class to represent the state of the node in the {@link Workflow}.
  */
 public final class WorkflowNodeStateDetail {
-
-  /**
-   * Status of the node running inside the Workflow.
-   */
-  public enum NodeStatus {
-    RUNNING,
-    COMPLETED,
-    FAILED,
-    KILLED
-  }
 
   private final String nodeId;
   private final NodeStatus nodeStatus;

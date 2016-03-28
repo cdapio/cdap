@@ -46,6 +46,7 @@ import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.schedule.Schedules;
 import co.cask.cdap.api.service.ServiceSpecification;
+import co.cask.cdap.api.workflow.NodeStatus;
 import co.cask.cdap.api.workflow.ScheduleProgramInfo;
 import co.cask.cdap.app.DefaultAppConfigurer;
 import co.cask.cdap.app.DefaultApplicationContext;
@@ -231,13 +232,13 @@ public class DefaultStoreTest {
     Assert.assertEquals(2, workflowNodeStates.size());
     WorkflowNodeStateDetail nodeStateDetail = workflowNodeStates.get(mapReduceName);
     Assert.assertEquals(mapReduceName, nodeStateDetail.getNodeId());
-    Assert.assertEquals(WorkflowNodeStateDetail.NodeStatus.COMPLETED, nodeStateDetail.getNodeStatus());
+    Assert.assertEquals(NodeStatus.COMPLETED, nodeStateDetail.getNodeStatus());
     Assert.assertEquals(mapReduceRunId.getId(), nodeStateDetail.getRunId());
     Assert.assertNull(nodeStateDetail.getFailureCause());
 
     nodeStateDetail = workflowNodeStates.get(sparkName);
     Assert.assertEquals(sparkName, nodeStateDetail.getNodeId());
-    Assert.assertEquals(WorkflowNodeStateDetail.NodeStatus.FAILED, nodeStateDetail.getNodeStatus());
+    Assert.assertEquals(NodeStatus.FAILED, nodeStateDetail.getNodeStatus());
     Assert.assertEquals(sparkRunId.getId(), nodeStateDetail.getRunId());
     Assert.assertNull(nodeStateDetail.getFailureCause());
   }

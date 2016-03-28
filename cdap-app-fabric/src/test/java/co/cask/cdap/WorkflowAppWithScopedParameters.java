@@ -25,6 +25,7 @@ import co.cask.cdap.api.spark.JavaSparkProgram;
 import co.cask.cdap.api.spark.SparkContext;
 import co.cask.cdap.api.workflow.AbstractWorkflow;
 import co.cask.cdap.api.workflow.AbstractWorkflowAction;
+import co.cask.cdap.api.workflow.NodeStatus;
 import co.cask.cdap.api.workflow.WorkflowContext;
 import co.cask.cdap.api.workflow.WorkflowNodeState;
 import co.cask.cdap.internal.app.runtime.batch.WordCount;
@@ -140,7 +141,6 @@ public class WorkflowAppWithScopedParameters extends AbstractApplication {
     }
   }
 
-
   /**
    *
    */
@@ -164,26 +164,30 @@ public class WorkflowAppWithScopedParameters extends AbstractApplication {
     @Override
     public void destroy() {
       Map<String, WorkflowNodeState> nodeStates = getContext().getNodeStates();
-      Preconditions.checkArgument(4 == nodeStates.size());
+      Preconditions.checkArgument(5 == nodeStates.size());
       WorkflowNodeState nodeState = nodeStates.get("OneMR");
       Preconditions.checkArgument("OneMR".equals(nodeState.getNodeId()));
-      Preconditions.checkNotNull(nodeState.getRunId());
-      Preconditions.checkArgument(WorkflowNodeState.NodeStatus.COMPLETED == nodeState.getNodeStatus());
+      Preconditions.checkArgument(nodeState.getRunId() != null);
+      Preconditions.checkArgument(NodeStatus.COMPLETED == nodeState.getNodeStatus());
 
       nodeState = nodeStates.get("OneSpark");
       Preconditions.checkArgument("OneSpark".equals(nodeState.getNodeId()));
-      Preconditions.checkNotNull(nodeState.getRunId());
-      Preconditions.checkArgument(WorkflowNodeState.NodeStatus.COMPLETED == nodeState.getNodeStatus());
+      Preconditions.checkArgument(nodeState.getRunId() != null);
+      Preconditions.checkArgument(NodeStatus.COMPLETED == nodeState.getNodeStatus());
 
       nodeState = nodeStates.get("AnotherMR");
       Preconditions.checkArgument("AnotherMR".equals(nodeState.getNodeId()));
-      Preconditions.checkNotNull(nodeState.getRunId());
-      Preconditions.checkArgument(WorkflowNodeState.NodeStatus.COMPLETED == nodeState.getNodeStatus());
+      Preconditions.checkArgument(nodeState.getRunId() != null);
+      Preconditions.checkArgument(NodeStatus.COMPLETED == nodeState.getNodeStatus());
 
       nodeState = nodeStates.get("AnotherSpark");
       Preconditions.checkArgument("AnotherSpark".equals(nodeState.getNodeId()));
-      Preconditions.checkNotNull(nodeState.getRunId());
-      Preconditions.checkArgument(WorkflowNodeState.NodeStatus.COMPLETED == nodeState.getNodeStatus());
+      Preconditions.checkArgument(nodeState.getRunId() != null);
+      Preconditions.checkArgument(NodeStatus.COMPLETED == nodeState.getNodeStatus());
+
+      nodeState = nodeStates.get("OneAction");
+      Preconditions.checkArgument("OneAction".equals(nodeState.getNodeId()));
+      Preconditions.checkArgument(NodeStatus.COMPLETED == nodeState.getNodeStatus());
     }
   }
 
@@ -195,13 +199,13 @@ public class WorkflowAppWithScopedParameters extends AbstractApplication {
       Preconditions.checkArgument(2 == nodeStates.size());
       WorkflowNodeState nodeState = nodeStates.get("OneMR");
       Preconditions.checkArgument("OneMR".equals(nodeState.getNodeId()));
-      Preconditions.checkNotNull(nodeState.getRunId());
-      Preconditions.checkArgument(WorkflowNodeState.NodeStatus.COMPLETED == nodeState.getNodeStatus());
+      Preconditions.checkArgument(nodeState.getRunId() != null);
+      Preconditions.checkArgument(NodeStatus.COMPLETED == nodeState.getNodeStatus());
 
       nodeState = nodeStates.get("OneSpark");
       Preconditions.checkArgument("OneSpark".equals(nodeState.getNodeId()));
-      Preconditions.checkNotNull(nodeState.getRunId());
-      Preconditions.checkArgument(WorkflowNodeState.NodeStatus.COMPLETED == nodeState.getNodeStatus());
+      Preconditions.checkArgument(nodeState.getRunId() != null);
+      Preconditions.checkArgument(NodeStatus.COMPLETED == nodeState.getNodeStatus());
     }
   }
 }

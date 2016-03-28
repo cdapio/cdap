@@ -19,6 +19,7 @@ package co.cask.cdap.internal.app.runtime.workflow;
 import co.cask.cdap.api.RuntimeContext;
 import co.cask.cdap.api.common.RuntimeArguments;
 import co.cask.cdap.api.common.Scope;
+import co.cask.cdap.api.workflow.NodeStatus;
 import co.cask.cdap.api.workflow.WorkflowNodeState;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.api.workflow.WorkflowToken;
@@ -146,22 +147,20 @@ public abstract class AbstractProgramWorkflowRunner implements ProgramWorkflowRu
     controller.addListener(new AbstractListener() {
       @Override
       public void completed() {
-        nodeStates.put(nodeId, new WorkflowNodeState(nodeId, WorkflowNodeState.NodeStatus.COMPLETED,
-                                                     controller.getRunId().getId(), null));
+        nodeStates.put(nodeId, new WorkflowNodeState(nodeId, NodeStatus.COMPLETED, controller.getRunId().getId(),
+                                                     null));
         completion.set(null);
       }
 
       @Override
       public void killed() {
-        nodeStates.put(nodeId, new WorkflowNodeState(nodeId, WorkflowNodeState.NodeStatus.KILLED,
-                                                     controller.getRunId().getId(), null));
+        nodeStates.put(nodeId, new WorkflowNodeState(nodeId, NodeStatus.KILLED, controller.getRunId().getId(), null));
         completion.set(null);
       }
 
       @Override
       public void error(Throwable cause) {
-        nodeStates.put(nodeId, new WorkflowNodeState(nodeId, WorkflowNodeState.NodeStatus.FAILED,
-                                                     controller.getRunId().getId(), cause));
+        nodeStates.put(nodeId, new WorkflowNodeState(nodeId, NodeStatus.FAILED, controller.getRunId().getId(), cause));
         completion.setException(cause);
       }
     }, Threads.SAME_THREAD_EXECUTOR);

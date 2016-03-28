@@ -21,17 +21,7 @@ import javax.annotation.Nullable;
 /**
  * Class to represent the state of the node in the {@link Workflow}.
  */
-public final class WorkflowNodeState {
-
-  /**
-   * Status of the node running inside the Workflow.
-   */
-  public enum NodeStatus {
-    RUNNING,
-    COMPLETED,
-    FAILED,
-    KILLED
-  }
+public class WorkflowNodeState {
 
   private final String nodeId;
   private final NodeStatus nodeStatus;

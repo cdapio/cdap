@@ -23,6 +23,7 @@ import co.cask.cdap.api.common.Scope;
 import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
+import co.cask.cdap.api.workflow.NodeStatus;
 import co.cask.cdap.api.workflow.ScheduleProgramInfo;
 import co.cask.cdap.api.workflow.Workflow;
 import co.cask.cdap.api.workflow.WorkflowAction;
@@ -54,6 +55,7 @@ import co.cask.cdap.internal.app.workflow.DefaultWorkflowActionConfigurer;
 import co.cask.cdap.internal.dataset.DatasetCreationSpec;
 import co.cask.cdap.internal.workflow.ProgramWorkflowAction;
 import co.cask.cdap.logging.context.WorkflowLoggingContext;
+import co.cask.cdap.proto.DefaultThrowable;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.WorkflowNodeStateDetail;
 import co.cask.cdap.proto.id.DatasetId;
@@ -390,11 +392,23 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     CustomActionExecutor customActionExecutor = new CustomActionExecutor(workflowRunId, context,
                                                                          instantiator, classLoader);
     status.put(node.getNodeId(), node);
+    store.addWorkflowNodeState(workflowRunId, new WorkflowNodeStateDetail(node.getNodeId(), NodeStatus.RUNNING, null,
+                                                                          null));
+    Throwable failureCause = null;
     try {
       customActionExecutor.execute();
+    } catch (Throwable t) {
+      failureCause = t;
+      Throwables.propagateIfPossible(t, Exception.class);
+      throw Throwables.propagate(t);
     } finally {
       status.remove(node.getNodeId());
       store.updateWorkflowToken(workflowRunId, token);
+      NodeStatus status = failureCause == null ? NodeStatus.COMPLETED : NodeStatus.FAILED;
+      nodeStates.put(node.getNodeId(), new WorkflowNodeState(node.getNodeId(), status, null, failureCause));
+      store.addWorkflowNodeState(workflowRunId, new WorkflowNodeStateDetail(node.getNodeId(), status, null,
+                                                                            failureCause == null ? null
+                                                                              : new DefaultThrowable(failureCause)));
     }
   }
 
