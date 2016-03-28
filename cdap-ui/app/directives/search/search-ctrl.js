@@ -56,7 +56,7 @@ angular.module(PKG.name + '.commons')
         .then(function (res) {
           vm.loading = false;
 
-          let result = res.slice(0, 20);
+          var result = res.slice(0, 20);
 
           var parsedSearch = [];
           angular.forEach(result, function (entity) {
