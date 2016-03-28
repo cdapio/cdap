@@ -129,6 +129,7 @@ Now, we start the MapReduce program and configure it to use the file ``some.txt`
 .. tabbed-parsed-literal::
 
   $ cdap-cli.sh start mapreduce FileSetExample.WordCount "\"dataset.lines.input.paths=some.txt dataset.counts.output.path=counts.out\""
+  
   Successfully started MapReduce program 'WordCount' of application 'FileSetExample' 
   with provided runtime arguments 'dataset.lines.input.paths=some.txt dataset.counts.output.path=counts.out'
 
@@ -137,6 +138,7 @@ Check the status of the MapReduce program until it is completed:
 .. tabbed-parsed-literal::
 
   $ cdap-cli.sh get mapreduce status FileSetExample.WordCount
+  
   STOPPED
 
 and you can download the results of the computation:

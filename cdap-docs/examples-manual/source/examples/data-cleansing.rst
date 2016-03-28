@@ -84,6 +84,7 @@ Begin by uploading a file containing some newline-separated JSON records into th
   .. Linux
 
   $ cdap-cli.sh call service DataCleansing.DataCleansingService POST v1/records/raw body:file examples/DataCleansing/resources/person.json
+  
   < 200 OK
   < Content-Length: 0
   < Connection: keep-alive
@@ -92,6 +93,7 @@ Begin by uploading a file containing some newline-separated JSON records into th
   .. Windows
 
   > cdap-cli.bat call service DataCleansing.DataCleansingService POST v1/records/raw body:file examples\DataCleansing\resources\person.json
+  
   < 200 OK
   < Content-Length: 0
   < Connection: keep-alive
@@ -116,6 +118,7 @@ example, we'll simply use ``1`` as the value.
   .. tabbed-parsed-literal::
 
       $ cdap-cli.sh start mapreduce |example|.\ |example-mapreduce| output.partition.key=1
+      
       Successfully started mapreduce '|example-mapreduce|' of application '|example|' 
       with provided runtime arguments 'output.partition.key=1'
 

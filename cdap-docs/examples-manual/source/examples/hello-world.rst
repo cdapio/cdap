@@ -162,6 +162,7 @@ To see the value of the ``names.bytes`` metric, you can make an HTTP request to 
 .. tabbed-parsed-literal::
 
   $ curl -w"\n" -X POST "http://localhost:10000/v3/metrics/query?tag=namespace:default&tag=app:HelloWorld&tag=flow:WhoFlow&tag=flowlet:saver&metric=user.names.bytes&aggregate=true"
+  
   {"startTime":0,"endTime":1458877439,"series":[{"metricName":"user.names.bytes","grouping":{},"data":[{"time":0,"value":79}]}],"resolution":"2147483647s"}
 
 To see the value of the ``names.longnames`` metric (the number of names, each of which is greater than 10 characters in length),
@@ -170,6 +171,7 @@ you can use:
 .. tabbed-parsed-literal::
 
   $ curl -w"\n" -X POST "http://localhost:10000/v3/metrics/query?tag=namespace:default&tag=app:HelloWorld&tag=flow:WhoFlow&tag=flowlet:saver&metric=user.names.longnames&aggregate=true"
+  
   {"startTime":0,"endTime":1458877544,"series":[{"metricName":"user.names.longnames","grouping":{},"data":[{"time":0,"value":3}]}],"resolution":"2147483647s"}
   
 To see the value of the ``greetings.count.jane_doe`` metric (the number of times the specific name *Jane Doe* has been "greeted"),
@@ -178,6 +180,7 @@ you can use:
 .. tabbed-parsed-literal::
 
   $ curl -w"\n" -X POST "http://localhost:10000/v3/metrics/query?tag=namespace:default&tag=app:HelloWorld&tag=service:Greeting&metric=user.greetings.count.jane_doe&aggregate=true"
+  
   {"startTime":0,"endTime":1458877575,"series":[{"metricName":"user.greetings.count.jane_doe","grouping":{},"data":[{"time":0,"value":2}]}],"resolution":"2147483647s"}
 
 

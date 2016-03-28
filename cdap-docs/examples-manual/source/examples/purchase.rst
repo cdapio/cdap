@@ -275,12 +275,12 @@ First, submit the query for execution:
   .. Linux
 
   $ curl -w"\n" -X POST "http://localhost:10000/v3/namespaces/default/data/explore/queries" \
-    -d '{"query": "'"SELECT * FROM dataset_history WHERE customer IN ('Alice','Bob')"'"}'
+  -d '{"query": "'"SELECT * FROM dataset_history WHERE customer IN ('Alice','Bob')"'"}'
 
   .. Windows
   
   > curl -X POST "http://localhost:10000/v3/namespaces/default/data/explore/queries" ^ 
-    -d "{'query': 'SELECT * FROM dataset_history WHERE customer IN (\'Alice\',\'Bob\')'}"
+  -d "{'query': 'SELECT * FROM dataset_history WHERE customer IN (\'Alice\',\'Bob\')'}"
   
 Note that due to the mix and repetition of single and double quotes, it can be tricky to escape all quotes
 correctly at the shell command prompt. On success, this will return a handle for the query, such as::

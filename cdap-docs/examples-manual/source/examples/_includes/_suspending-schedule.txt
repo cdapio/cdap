@@ -23,5 +23,6 @@ The only thing you need to do to stop the application is suspend the schedule.
   .. tabbed-parsed-literal::
 
     $ cdap-cli.sh suspend schedule |example|.\ |example-schedule|
+    
     Successfully suspended schedule '|example-schedule|' in app '|example|'
       

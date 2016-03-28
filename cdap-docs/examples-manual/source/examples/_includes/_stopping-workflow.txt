@@ -15,4 +15,5 @@
   .. tabbed-parsed-literal::
 
     $ cdap-cli.sh stop workflow |example|.\ |example-workflow|
+    
     Successfully stopped workflow '|example-workflow|' of application '|example|'
