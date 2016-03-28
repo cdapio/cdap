@@ -37,7 +37,9 @@ class HydratorPlusPlusStudioCtrl {
     HydratorPlusPlusNodeConfigStore.init();
     let artifact = getValidArtifact();
     if (rConfig) {
-      rConfig.artifact = artifact;
+      if (!rConfig.artifact){
+        rConfig.artifact = artifact;
+      }
       HydratorPlusPlusConfigActions.initializeConfigStore(rConfig);
       let configJson = rConfig;
       if (!rConfig.__ui__) {

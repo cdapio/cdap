@@ -78,7 +78,7 @@
               <a ui-sref="hydratorplusplus.detail({ pipelineId: pipeline.name })" ng-if="!pipeline.isDraft">
                 {{pipeline.name}}
               </a>
-              <a ui-sref="hydrator.create.studio({ draftId: pipeline.id, type:pipeline.artifact.name })" ng-if="pipeline.isDraft">
+              <a ui-sref="hydratorplusplus.create({ draftId: pipeline.id, type:pipeline.artifact.name })" ng-if="pipeline.isDraft">
                 {{pipeline.name}}
               </a>
             </td>

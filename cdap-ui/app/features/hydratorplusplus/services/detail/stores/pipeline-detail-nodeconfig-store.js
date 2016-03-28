@@ -173,7 +173,7 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
       if (this.state.node.type === artifactTypeExtension.sink) {
         this.state.isSink = true;
       }
-      if (this.state.node.type === 'transform') {
+      if ([artifactTypeExtension.source, artifactTypeExtension.sink].indexOf(this.state.node.type) === -1) {
         this.state.isTransform = true;
       }
     }
