@@ -19,27 +19,69 @@ package co.cask.cdap.etl.datapipeline.mock;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.schema.Schema;
 
+import javax.annotation.Nullable;
+
 /**
  * Represents a string and whether that is spam or not.
  */
 public class SpamMessage {
-  static final String IS_SPAM_FIELD = "isSpam";
-  static final String TEXT_FIELD = "text";
+  public static final String SPAM_PREDICTION_FIELD = "isSpam";
+  public static final String TEXT_FIELD = "text";
   static final Schema SCHEMA = Schema.recordOf(
     "simpleMessage",
-    Schema.Field.of(IS_SPAM_FIELD, Schema.of(Schema.Type.BOOLEAN)),
+    Schema.Field.of(SPAM_PREDICTION_FIELD, Schema.nullableOf(Schema.of(Schema.Type.DOUBLE))),
     Schema.Field.of(TEXT_FIELD, Schema.of(Schema.Type.STRING))
   );
 
-  private final boolean isSpam;
   private final String text;
+  @Nullable
+  private final Double spamPrediction;
 
-  public SpamMessage(boolean isSpam, String text) {
-    this.isSpam = isSpam;
+  public SpamMessage(String text) {
+    this(text, null);
+  }
+
+  public SpamMessage(String text, @Nullable Double spamPrediction) {
     this.text = text;
+    this.spamPrediction = spamPrediction;
   }
 
   public StructuredRecord toStructuredRecord() {
-    return StructuredRecord.builder(SCHEMA).set(IS_SPAM_FIELD, isSpam).set(TEXT_FIELD, text).build();
+    StructuredRecord.Builder builder = StructuredRecord.builder(SCHEMA);
+    builder.set(TEXT_FIELD, text);
+    if (spamPrediction != null) {
+      builder.set(SPAM_PREDICTION_FIELD, spamPrediction);
+    }
+    return builder.build();
+  }
+
+  public static SpamMessage fromStructuredRecord(StructuredRecord structuredRecord) {
+    return new SpamMessage((String) structuredRecord.get(TEXT_FIELD),
+                           (Double) structuredRecord.get(SPAM_PREDICTION_FIELD));
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    SpamMessage that = (SpamMessage) o;
+
+    if (!text.equals(that.text)) {
+      return false;
+    }
+    return !(spamPrediction != null ? !spamPrediction.equals(that.spamPrediction) : that.spamPrediction != null);
+
+  }
+
+  @Override
+  public int hashCode() {
+    int result = text.hashCode();
+    result = 31 * result + (spamPrediction != null ? spamPrediction.hashCode() : 0);
+    return result;
   }
 }

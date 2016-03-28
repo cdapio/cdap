@@ -43,7 +43,7 @@ public abstract class SparkSink<IN> extends BatchConfigurable<SparkPluginContext
   /**
    * User Spark job which will be executed and is responsible for persisting any data.
    *
-   * @param context {@link SparkContext} for this job
+   * @param context {@link SparkPluginContext} for this job
    * @param input the input from previous stages of the Batch run.
    */
   public abstract void run(SparkPluginContext context, JavaRDD<IN> input) throws Exception;

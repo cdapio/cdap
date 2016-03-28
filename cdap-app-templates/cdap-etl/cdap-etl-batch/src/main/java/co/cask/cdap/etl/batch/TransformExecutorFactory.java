@@ -64,10 +64,9 @@ public abstract class TransformExecutorFactory<T> {
       for (StageInfo stageInfo : pipeline.getStagesOfType(pluginType)) {
         String stageName = stageInfo.getName();
         transformations.put(stageName,
-                            new TransformDetail(
-                              getTransformation(pluginType, stageName),
-                              new DefaultStageMetrics(metrics, stageName),
-                              pipeline.getStageOutputs(stageName)));
+                            new TransformDetail(getTransformation(pluginType, stageName),
+                                                new DefaultStageMetrics(metrics, stageName),
+                                                pipeline.getStageOutputs(stageName)));
       }
     }
 

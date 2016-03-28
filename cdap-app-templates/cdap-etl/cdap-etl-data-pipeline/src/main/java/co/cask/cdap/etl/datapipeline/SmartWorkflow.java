@@ -21,6 +21,7 @@ import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.workflow.AbstractWorkflow;
 import co.cask.cdap.api.workflow.WorkflowConfigurer;
 import co.cask.cdap.api.workflow.WorkflowForkConfigurer;
+import co.cask.cdap.etl.api.batch.SparkCompute;
 import co.cask.cdap.etl.api.batch.SparkSink;
 import co.cask.cdap.etl.batch.BatchPhaseSpec;
 import co.cask.cdap.etl.batch.connector.ConnectorSource;
@@ -202,9 +203,12 @@ public class SmartWorkflow extends AbstractWorkflow {
     BatchPhaseSpec batchPhaseSpec = new BatchPhaseSpec(programName, phase, spec.getResources(),
                                                        spec.isStageLoggingEnabled(), phaseConnectorDatasets);
 
-    boolean hasSparkPlugin = !batchPhaseSpec.getPhase().getStagesOfType(SparkSink.PLUGIN_TYPE).isEmpty();
 
-    if (hasSparkPlugin) {
+    boolean hasSparkCompute = !batchPhaseSpec.getPhase().getStagesOfType(SparkCompute.PLUGIN_TYPE).isEmpty();
+    boolean hasSparkSink = !batchPhaseSpec.getPhase().getStagesOfType(SparkSink.PLUGIN_TYPE).isEmpty();
+
+    if (hasSparkCompute || hasSparkSink) {
+      // always use ETLSpark if this phase has a spark plugin
       applicationConfigurer.addSpark(new ETLSpark(batchPhaseSpec));
       programAdder.addSpark(programName);
     } else {
