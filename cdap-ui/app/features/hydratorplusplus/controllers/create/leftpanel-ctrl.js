@@ -42,6 +42,7 @@ class HydratorPlusPlusLeftPanelCtrl {
     this.artifacts = rArtifacts;
     let configStoreArtifact = this.HydratorPlusPlusConfigStore.getArtifact();
     this.selectedArtifact = rArtifacts.filter( ar => ar.name === configStoreArtifact.name)[0];
+    this.artifactToRevert = this.selectedArtifact;
     this.HydratorPlusPlusPluginActions.fetchExtensions({
       namespace: $stateParams.namespace,
       pipelineType: this.selectedArtifact.name,
