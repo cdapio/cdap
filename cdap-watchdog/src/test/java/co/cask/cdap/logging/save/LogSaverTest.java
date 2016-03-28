@@ -152,32 +152,41 @@ public class LogSaverTest extends KafkaTestBase {
     TypeLiteral<Set<KafkaLogProcessor>> type = new TypeLiteral<Set<KafkaLogProcessor>>() { };
     Set<KafkaLogProcessor> processors =
       injector.getInstance(Key.get(type, Names.named(Constants.LogSaver.MESSAGE_PROCESSORS)));
+    try {
+      for (KafkaLogProcessor processor : processors) {
+        CheckpointManager checkpointManager = getCheckPointManager(processor);
 
-    for (KafkaLogProcessor processor : processors) {
-      CheckpointManager checkpointManager = getCheckPointManager(processor);
+        // Verify checkpoint offset
+        Assert.assertEquals(180, checkpointManager.getCheckpoint(0).getNextOffset());
+        Assert.assertEquals(120, checkpointManager.getCheckpoint(1).getNextOffset());
 
-      // Verify checkpoint offset
-      Assert.assertEquals(180, checkpointManager.getCheckpoint(0).getNextOffset());
-      Assert.assertEquals(120, checkpointManager.getCheckpoint(1).getNextOffset());
+        // Verify checkpoint time
+        // Read with null runid should give 120 results back
+        long checkpointTimeApp1 =
+          getCheckpointTime(new FlowletLoggingContext("NS_1", "APP_1", "FLOW_1", "", null, "INSTANCE"), 120);
+        long checkpointTimeApp2 =
+          getCheckpointTime(new FlowletLoggingContext("NS_2", "APP_2", "FLOW_2", "", null, "INSTANCE"), 120);
+        long checkpointTimeService = getCheckpointTime(new ServiceLoggingContext("system", "services", "metrics"), 60);
 
-      // Verify checkpoint time
-      // Read with null runid should give 120 results back
-      long checkpointTimeApp1 =
-        getCheckpointTime(new FlowletLoggingContext("NS_1", "APP_1", "FLOW_1", "", null, "INSTANCE"), 120);
-      long checkpointTimeApp2 =
-        getCheckpointTime(new FlowletLoggingContext("NS_2", "APP_2", "FLOW_2", "", null, "INSTANCE"), 120);
-      long checkpointTimeService = getCheckpointTime(new ServiceLoggingContext("system", "services", "metrics"), 60);
+        // Checkpoint time should be within last 10 minutes
+        long currentTime = System.currentTimeMillis();
+        Assert.assertTrue(checkpointTimeApp1 > currentTime - TimeUnit.MINUTES.toMillis(10));
+        Assert.assertTrue(checkpointTimeApp2 > currentTime - TimeUnit.MINUTES.toMillis(10));
+        Assert.assertTrue(checkpointTimeService > currentTime - TimeUnit.MINUTES.toMillis(10));
 
-      // Checkpoint time should be within last 10 minutes
-      long currentTime = System.currentTimeMillis();
-      Assert.assertTrue(checkpointTimeApp1 > currentTime - TimeUnit.MINUTES.toMillis(10));
-      Assert.assertTrue(checkpointTimeApp2 > currentTime - TimeUnit.MINUTES.toMillis(10));
-      Assert.assertTrue(checkpointTimeService > currentTime - TimeUnit.MINUTES.toMillis(10));
-
-      // Saved checkpoint must be equal to time on last message for a partition.
-      Assert.assertEquals(checkpointTimeApp1, checkpointManager.getCheckpoint(0).getMaxEventTime());
-      Assert.assertTrue(checkpointManager.getCheckpoint(1).getMaxEventTime() == checkpointTimeApp2 ||
-                          checkpointManager.getCheckpoint(1).getMaxEventTime() == checkpointTimeService);
+        // Saved checkpoint must be equal to time on last message for a partition.
+        Assert.assertEquals(checkpointTimeApp1, checkpointManager.getCheckpoint(0).getMaxEventTime());
+        Assert.assertTrue(checkpointManager.getCheckpoint(1).getMaxEventTime() == checkpointTimeApp2 ||
+                            checkpointManager.getCheckpoint(1).getMaxEventTime() == checkpointTimeService);
+      }
+    } catch (Throwable t) {
+      final Multimap<String, String> contextMessages = getPublishedKafkaMessages();
+      LOG.error("All kafka messages: {}", contextMessages);
+      if (!isExpressive()) {
+        LOG.error("Error while reading checkpoint messages from kafka {}", t);
+      } else {
+        throw t;
+      }
     }
   }
 
@@ -199,7 +208,7 @@ public class LogSaverTest extends KafkaTestBase {
       testLogRead(new FlowletLoggingContext("NS_1", "APP_1", "FLOW_1", "", "RUN1", "INSTANCE"));
     } catch (Throwable t) {
       if (!isExpressive()) {
-        t.printStackTrace();
+        LOG.error("Error while reading log messages from kafka {}", t);
       } else {
         throw t;
       }
@@ -212,7 +221,7 @@ public class LogSaverTest extends KafkaTestBase {
       testLogRead(new FlowletLoggingContext("NS_2", "APP_2", "FLOW_2", "", "RUN1", "INSTANCE"));
     } catch (Throwable t) {
       if (!isExpressive()) {
-        t.printStackTrace();
+        LOG.error("Error while reading log messages from kafka {}", t);
       } else {
         throw t;
       }
@@ -225,7 +234,7 @@ public class LogSaverTest extends KafkaTestBase {
       testLogRead(new ServiceLoggingContext("system", "services", "metrics"));
     } catch (Throwable t) {
       if (!isExpressive()) {
-        t.printStackTrace();
+        LOG.error("Error while reading log messages from kafka {}", t);
       } else {
         throw t;
       }
@@ -249,24 +258,7 @@ public class LogSaverTest extends KafkaTestBase {
     distributedLogReader.getLog(loggingContext, 0, Long.MAX_VALUE, Filter.EMPTY_FILTER, logCallback1);
     List<LogEvent> allEvents = logCallback1.getEvents();
 
-    final Multimap<String, String> contextMessages = ArrayListMultimap.create();
-    KAFKA_TESTER.getPublishedMessages(KAFKA_TESTER.getCConf().get(Constants.Logging.KAFKA_TOPIC),
-                                      ImmutableSet.of(0, 1), 300, 0, new Function<FetchedMessage, String>() {
-      @Override
-      public String apply(final FetchedMessage input) {
-        try {
-          Map.Entry<String, String> entry = convertFetchedMessage(input);
-          contextMessages.put(entry.getKey(), entry.getValue());
-        } catch (IOException e) {
-          e.printStackTrace();
-        }
-        return "";
-      }
-    });
-
-    for (Map.Entry<String, Collection<String>> entry : contextMessages.asMap().entrySet()) {
-      LOG.info("Kafka Message Count for {} is {}", entry.getKey(), entry.getValue().size());
-    }
+    final Multimap<String, String> contextMessages = getPublishedKafkaMessages();
 
     for (int i = 0; i < 60; ++i) {
       Assert.assertEquals("All messages in Kafka = " + gson.toJson(contextMessages.asMap()),
@@ -372,6 +364,27 @@ public class LogSaverTest extends KafkaTestBase {
     Assert.assertEquals("Test log message 18 arg1 arg2", events.get(0).getLoggingEvent().getFormattedMessage());
     Assert.assertEquals("Test log message 33 arg1 arg2",
                         events.get(events.size() - 1 - (events.size() - 16)).getLoggingEvent().getFormattedMessage());
+  }
+
+  private Multimap<String, String> getPublishedKafkaMessages() throws InterruptedException {
+    final Multimap<String, String> contextMessages = ArrayListMultimap.create();
+    KAFKA_TESTER.getPublishedMessages(KAFKA_TESTER.getCConf().get(Constants.Logging.KAFKA_TOPIC),
+                                      ImmutableSet.of(0, 1), 300, 0, new Function<FetchedMessage, String>() {
+      @Override
+      public String apply(final FetchedMessage input) {
+        try {
+          Map.Entry<String, String> entry = convertFetchedMessage(input);
+          contextMessages.put(entry.getKey(), entry.getValue());
+        } catch (IOException e) {
+          LOG.error("Error while converting FetchedMessage {} ", e);
+        }
+        return "";
+      }
+    });
+    for (Map.Entry<String, Collection<String>> entry : contextMessages.asMap().entrySet()) {
+      LOG.info("Kafka Message Count for {} is {}", entry.getKey(), entry.getValue().size());
+    }
+    return contextMessages;
   }
 
   private Map.Entry<String, String> convertFetchedMessage(FetchedMessage message) throws IOException {
