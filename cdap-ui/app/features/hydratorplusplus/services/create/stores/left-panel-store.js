@@ -120,7 +120,6 @@ class HydratorPlusPlusLeftPanelStore {
 
   setExtensions(extensions) {
     let uiSupportedExtension = (extension) => {
-      console.log('extensions', extension);
       let pipelineType = this.HydratorPlusPlusConfigStore.getArtifact().name;
       let extensionMap = this.GLOBALS.pluginTypes[pipelineType];
       return Object.keys(extensionMap).filter(ext => extensionMap[ext] === extension).length;

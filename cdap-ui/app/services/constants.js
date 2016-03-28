@@ -26,7 +26,6 @@ angular.module(PKG.name + '.services')
         'source': 'batchsource',
         'sink': 'batchsink',
         'transform': 'transform',
-        'batchaggregator': 'batchaggregator'
       },
       'cdap-etl-realtime': {
         'source': 'realtimesource',

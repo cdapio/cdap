@@ -41,29 +41,36 @@ function HydratorPlusPlusOrderingFactory() {
   }
 
   function orderPluginTypes (pluginsMap) {
-    console.log('pluginsMap', pluginsMap);
-    // if (!pluginsMap.length) {
-    //   return pluginsMap;
-    // }
-    // let orderedTypes = [];
+    if (!pluginsMap.length) {
+      return pluginsMap;
+    }
+    let orderedTypes = [];
 
-    // let source = pluginsMap.filter( p => { return p.name === 'Source'; });
-    // let transform = pluginsMap.filter( p => { return p.name === 'Transform'; });
-    // let sink = pluginsMap.filter( p => { return p.name === 'Sink'; });
-    // let aggregator = pluginsMap.filter( p => { return p.name === 'Aggregator'; });
+    let source = pluginsMap.filter( p => { return p.name === 'Source'; });
+    let transform = pluginsMap.filter( p => { return p.name === 'Transform'; });
+    let sink = pluginsMap.filter( p => { return p.name === 'Sink'; });
+    let aggregator = pluginsMap.filter( p => { return p.name === 'Aggregator'; });
+    let sparksink = pluginsMap.filter( p => { return p.name === 'SparkSink'; });
+    let sparkcompute = pluginsMap.filter( p => { return p.name === 'SparkCompute'; });
 
-    // orderedTypes.push(source[0]);
-    // orderedTypes.push(transform[0]);
-    // orderedTypes.push(sink[0]);
-    // if (aggregator.length) {
-    //   orderedTypes.push(aggregator[0]);
-    // }
+    orderedTypes.push(source[0]);
+    orderedTypes.push(transform[0]);
+    orderedTypes.push(sink[0]);
+    if (aggregator.length) {
+      orderedTypes.push(aggregator[0]);
+    }
+    if (sparkcompute.length) {
+      orderedTypes.push(sparkcompute[0]);
+    }
+    if (sparksink.length) {
+      orderedTypes.push(sparksink[0]);
+    }
 
-    // // Doing this so that the SidePanel does not lose the reference of the original
-    // // array object.
-    // angular.forEach(orderedTypes, (type, index) => {
-    //   pluginsMap[index] = type;
-    // });
+    // Doing this so that the SidePanel does not lose the reference of the original
+    // array object.
+    angular.forEach(orderedTypes, (type, index) => {
+      pluginsMap[index] = type;
+    });
 
     return pluginsMap;
   }

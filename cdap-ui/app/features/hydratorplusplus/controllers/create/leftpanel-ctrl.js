@@ -79,7 +79,6 @@ class HydratorPlusPlusLeftPanelCtrl {
               .filter( pluginObj => pluginObj.name === this.HydratorPlusPlusOrderingFactory.getPluginTypeDisplayName(ext))
               .forEach( matchedObj => {
                 let getPluginTemplateNode = (ext) => {
-                  console.log('ext', ext);
                   return (this.HydratorPlusPlusLeftPanelStore.getPlugins(ext) || [])
                          .concat(this.HydratorPlusPlusLeftPanelStore.getPluginTemplates(ext));
                 };

@@ -122,7 +122,6 @@ angular.module(PKG.name + '.commons')
             uuids: [sourceId, targetId]
           };
 
-          console.log('conn', connObj);
           if (vm.isDisabled) {
             connObj.detachable = false;
           }
@@ -320,8 +319,6 @@ angular.module(PKG.name + '.commons')
         endpoints.push(node.name);
 
         var type = GLOBALS.pluginConvert[node.type];
-
-        console.log('node', node, node.name, type);
 
         switch(type) {
           case 'source':
