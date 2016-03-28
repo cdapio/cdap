@@ -209,14 +209,14 @@ def convert(c):
 #             print "v.startswith('\"')"
             w.append(v)
             continue
-#         if (v.startswith('http') or v.startswith("'http") or v.startswith('"http') or 
-#              v.startswith('localhost:10000') or v.startswith("'localhost:10000") or 
-#              v.startswith('"localhost:10000')):
-#             w.append(v)
-#             continue
-        if v.find('/') != -1:
-#             print "found slash"
-            w.append(v.replace('/', '\\'))
+        if (not IN_CLI) and v.find('/') != -1:
+#             print "found slash: v: %s" % v
+#             print "converting: %s" % c
+            if IN_CURL and v.startswith('localhost'):
+#                 print "IN_CURL and v.startswith('localhost')"
+                w.append(v)
+            else:
+                w.append(v.replace('/', '\\'))
         else:
 #             print "didn't find slash"
             w.append(v)
@@ -349,39 +349,78 @@ def visit_tpl_html(self, node):
             text, lang, opts=opts, warn=warner, linenos=linenos,
             **highlight_args)
         if lang in ['console', 'shell-session', 'ps1', 'powershell']:
+
+#             print "highlighted (before):\n%s" % highlighted
+            
             # Console-specific highlighting
-#             print "highlighted (before):\n%s\n" % highlighted
-            new_highlighted = []
+            new_highlighted = ['<!-- tabbed-parsed-literal start -->']
+            continuing_line = False # Indicates current line continues to next
+            continued_line = False # Indicates current line was continued from previous
+            copyable_text = False # Indicates that the line (or the previous) now has copyable text in it
             for l in highlighted.splitlines():
+                continuing_line = False
+                if l:
+                    continuing_line = l.endswith('\\</span>') or l.endswith('^</span>')    
+#                 print "continuing_line: %s continued_line: %s l: %s" % (continuing_line, continued_line, l)
+                
                 for p in ['$', '#', '>', '&gt;', 'cdap >','cdap &gt;',]:
                     if l.startswith(p):
-                        l = "<span class=\"gp\">%s</span><span \"copyable copyable-text\">%s</span>" % (p, l[1:])
-
+                        l = "<span class=\"gp\">%s</span><span \"copyable copyable-text\">%s" % (p, l[1:])
+                        copyable_text = True
+                        break
+                        
                     t = "<pre>%s " % p
                     i = l.find(t)
                     if i != -1:
-                        l = "%s<pre class=\"copyable\"><span class=\"gp\">%s </span><span \"copyable-text\">%s</span>" % (l[:i], p, l[len(t)+i:])
-                        
+                        l = "%s<pre class=\"copyable\"><span class=\"gp\">%s </span><span \"copyable-text\">%s" % (l[:i], p, l[len(t)+i:])
+                        copyable_text = True
+                        break
+                                                
                     t = "<pre><span class=\"go\">%s " % p
                     i = l.find(t)
                     if i != -1:
-                        l = "%s<pre class=\"copyable\"><span class=\"gp\">%s </span><span class=\"go\"><span class=\"copyable-text\">%s</span>" % (l[:i], p, l[len(t)+i:])
-                        
+                        l = "%s<pre class=\"copyable\"><span class=\"gp\">%s </span><span class=\"copyable-text\"><span class=\"go\">%s" % (l[:i], p, l[len(t)+i:])
+                        copyable_text = True
+                        break
+                    
                     t = "<pre><span class=\"gp\">%s</span> " % p
                     i = l.find(t)
                     if i != -1:
-                        l = "%s<pre class=\"copyable\"><span class=\"gp\">%s </span><span class=\"copyable-text\">%s</span>" % (l[:i], p, l[len(t)+i:])
-                    
+                        l = "%s<pre class=\"copyable\"><span class=\"gp\">%s </span><span class=\"copyable-text\">%s" % (l[:i], p, l[len(t)+i:])
+                        copyable_text = True
+                        break
+
                     t = "<span class=\"go\">%s " % p
                     if l.startswith(t):
-                        l = "<span class=\"gp\">%s </span><span class=\"go\"><span class=\"copyable-text\">%s</span>" % (p, l[len(t):])
-                  
+                        if continued_line:
+                            l = "<span class=\"gp\">%s </span><span class=\"go\">%s" % (p, l[len(t):])
+                        else:
+                            l = "<span class=\"gp\">%s </span><span class=\"copyable-text\"><span class=\"go\">%s" % (p, l[len(t):])
+                            copyable_text = True
+                        break
+                        
                     t = "<span class=\"gp\">%s</span> " % p
                     if l.startswith(t):
-                        l = "<span class=\"gp\">%s </span><span class=\"copyable-text\">%s</span>" % (p, l[len(t):])
-                    
+                        if continued_line:                    
+                            l = "<span class=\"gp\">%s </span>%s" % (p, l[len(t):])
+                        else:
+                            l = "<span class=\"gp\">%s </span><span class=\"copyable-text\">%s" % (p, l[len(t):])
+                            copyable_text = True
+                        break
+
+#                 print "continuing_line: %s continued_line: %s copyable_text: %s l: %s" % (continuing_line, continued_line, copyable_text, l)
+                if continued_line and (not continuing_line) or (not continued_line and not continuing_line and copyable_text):
+                    # End the copyable-text
+                    l += "</span>"
+                    copyable_text = False
+
                 new_highlighted.append(l)
-#             print "highlighted (after):\n%s\n" % '\n'.join(new_highlighted)            
+                # Set next line status
+                continued_line = continuing_line
+            
+            new_highlighted.append('<!-- tabbed-parsed-literal end -->')                
+#             print "\nhighlighted (after):\n%s\n\n" % '\n'.join(new_highlighted)
+                      
         return '\n'.join(new_highlighted)
     
     nav_tabs_html = ''
