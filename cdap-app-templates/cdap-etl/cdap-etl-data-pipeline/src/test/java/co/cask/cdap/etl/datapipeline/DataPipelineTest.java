@@ -32,6 +32,7 @@ import co.cask.cdap.etl.datapipeline.mock.MockSource;
 import co.cask.cdap.etl.datapipeline.mock.SpamMessage;
 import co.cask.cdap.etl.datapipeline.mock.SpamOrHam;
 import co.cask.cdap.etl.datapipeline.mock.StringValueFilterTransform;
+import co.cask.cdap.etl.proto.Engine;
 import co.cask.cdap.etl.proto.v2.ETLBatchConfig;
 import co.cask.cdap.etl.proto.v2.ETLPlugin;
 import co.cask.cdap.etl.proto.v2.ETLStage;
@@ -228,13 +229,35 @@ public class DataPipelineTest extends TestBase {
   }
 
   @Test
-  public void testLinearAggregators() throws Exception {
+  public void testMapRedSequentialAggregators() throws Exception {
+    testSequentialAggregators(Engine.MAPREDUCE);
+  }
+
+  @Test
+  public void testSparkSequentialAggregators() throws Exception {
+    testSequentialAggregators(Engine.SPARK);
+  }
+
+  @Test
+  public void testMapRedParallelAggregators() throws Exception {
+    testParallelAggregators(Engine.MAPREDUCE);
+  }
+
+  @Test
+  public void testSparkParallelAggregators() throws Exception {
+    testParallelAggregators(Engine.SPARK);
+  }
+
+  private void testSequentialAggregators(Engine engine) throws Exception {
+    String sourceName = "linearAggInput-" + engine.name();
+    String sinkName = "linearAggOutput-" + engine.name();
     /*
      * source --> filter1 --> aggregator1 --> aggregator2 --> filter2 --> sink
      */
     ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
-      .addStage(new ETLStage("source", MockSource.getPlugin("linearAggInput")))
-      .addStage(new ETLStage("sink", MockSink.getPlugin("linearAggOutput")))
+      .setEngine(engine)
+      .addStage(new ETLStage("source", MockSource.getPlugin(sourceName)))
+      .addStage(new ETLStage("sink", MockSink.getPlugin(sinkName)))
       .addStage(new ETLStage("filter1", StringValueFilterTransform.getPlugin("name", "bob")))
       .addStage(new ETLStage("filter2", StringValueFilterTransform.getPlugin("name", "jane")))
       .addStage(new ETLStage("aggregator1", IdentityAggregator.getPlugin()))
@@ -260,7 +283,7 @@ public class DataPipelineTest extends TestBase {
     StructuredRecord recordJane = StructuredRecord.builder(schema).set("name", "jane").build();
 
     // write one record to each source
-    DataSetManager<Table> inputManager = getDataset(Id.Namespace.DEFAULT, "linearAggInput");
+    DataSetManager<Table> inputManager = getDataset(Id.Namespace.DEFAULT, sourceName);
     MockSource.writeInput(inputManager, ImmutableList.of(recordSamuel, recordBob, recordJane));
 
     WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
@@ -268,23 +291,25 @@ public class DataPipelineTest extends TestBase {
     workflowManager.waitForFinish(5, TimeUnit.MINUTES);
 
     // check output
-    DataSetManager<Table> sinkManager = getDataset("linearAggOutput");
+    DataSetManager<Table> sinkManager = getDataset(sinkName);
     Set<StructuredRecord> expected = ImmutableSet.of(recordSamuel);
     Set<StructuredRecord> actual = Sets.newHashSet(MockSink.readOutput(sinkManager));
     Assert.assertEquals(expected, actual);
   }
 
-  @Test
-  public void testParallelAggregators() throws Exception {
+  private void testParallelAggregators(Engine engine) throws Exception {
+    String sourceName = "pAggInput-" + engine.name();
+    String sink1Name = "pAggOutput1-" + engine.name();
+    String sink2Name = "pAggOutput2-" + engine.name();
     /*
                  |--> agg1 --> sink1
         source --|
                  |--> agg2 --> sink2
      */
     ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
-      .addStage(new ETLStage("source", MockSource.getPlugin("pAggInput")))
-      .addStage(new ETLStage("sink1", MockSink.getPlugin("pAggOutput1")))
-      .addStage(new ETLStage("sink2", MockSink.getPlugin("pAggOutput2")))
+      .addStage(new ETLStage("source", MockSource.getPlugin(sourceName)))
+      .addStage(new ETLStage("sink1", MockSink.getPlugin(sink1Name)))
+      .addStage(new ETLStage("sink2", MockSink.getPlugin(sink2Name)))
       .addStage(new ETLStage("agg1", FieldCountAggregator.getPlugin("user", "string")))
       .addStage(new ETLStage("agg2", FieldCountAggregator.getPlugin("item", "long")))
       .addConnection("source", "agg1")
@@ -304,7 +329,7 @@ public class DataPipelineTest extends TestBase {
     );
 
     // write one record to each source
-    DataSetManager<Table> inputManager = getDataset(Id.Namespace.DEFAULT, "pAggInput");
+    DataSetManager<Table> inputManager = getDataset(Id.Namespace.DEFAULT, sourceName);
     MockSource.writeInput(inputManager, ImmutableList.of(
       StructuredRecord.builder(inputSchema).set("user", "samuel").set("item", 1L).build(),
       StructuredRecord.builder(inputSchema).set("user", "samuel").set("item", 2L).build(),
@@ -329,7 +354,7 @@ public class DataPipelineTest extends TestBase {
     );
 
     // check output
-    DataSetManager<Table> sinkManager = getDataset("pAggOutput1");
+    DataSetManager<Table> sinkManager = getDataset(sink1Name);
     Set<StructuredRecord> expected = ImmutableSet.of(
       StructuredRecord.builder(outputSchema1).set("user", "all").set("ct", 5L).build(),
       StructuredRecord.builder(outputSchema1).set("user", "samuel").set("ct", 3L).build(),
@@ -337,7 +362,7 @@ public class DataPipelineTest extends TestBase {
     Set<StructuredRecord> actual = Sets.newHashSet(MockSink.readOutput(sinkManager));
     Assert.assertEquals(expected, actual);
 
-    sinkManager = getDataset("pAggOutput2");
+    sinkManager = getDataset(sink2Name);
     expected = ImmutableSet.of(
       StructuredRecord.builder(outputSchema2).set("item", 0L).set("ct", 5L).build(),
       StructuredRecord.builder(outputSchema2).set("item", 1L).set("ct", 1L).build(),

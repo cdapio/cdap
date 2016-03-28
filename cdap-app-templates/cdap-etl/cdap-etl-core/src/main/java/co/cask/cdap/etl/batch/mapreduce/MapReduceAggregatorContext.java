@@ -19,48 +19,25 @@ package co.cask.cdap.etl.batch.mapreduce;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.etl.api.LookupProvider;
-import co.cask.cdap.etl.api.batch.BatchAggregatorContext;
+import co.cask.cdap.etl.batch.AbstractAggregatorContext;
 
 import java.util.Map;
 
 /**
  * MapReduce Aggregator Context.
  */
-public class MapReduceAggregatorContext extends MapReduceBatchContext implements BatchAggregatorContext {
-  private Integer numPartitions;
-  private Class<?> groupKeyClass;
-  private Class<?> groupValueClass;
+public class MapReduceAggregatorContext extends AbstractAggregatorContext {
+  private final MapReduceContext mrContext;
 
   public MapReduceAggregatorContext(MapReduceContext context, Metrics metrics, LookupProvider lookup,
                                     String stageName,
                                     Map<String, String> runtimeArgs) {
-    super(context, metrics, lookup, stageName, runtimeArgs);
+    super(context, context, metrics, lookup, stageName, context.getLogicalStartTime(), runtimeArgs);
+    this.mrContext = context;
   }
 
   @Override
-  public void setNumPartitions(int numPartitions) {
-    this.numPartitions = numPartitions;
-  }
-
-  @Override
-  public void setGroupKeyClass(Class<?> groupKeyClass) {
-    this.groupKeyClass = groupKeyClass;
-  }
-
-  @Override
-  public void setGroupValueClass(Class<?> groupValueClass) {
-    this.groupValueClass = groupValueClass;
-  }
-
-  public Integer getNumPartitions() {
-    return numPartitions;
-  }
-
-  public Class<?> getGroupKeyClass() {
-    return groupKeyClass;
-  }
-
-  public Class<?> getGroupValueClass() {
-    return groupValueClass;
+  public <T> T getHadoopJob() {
+    return mrContext.getHadoopJob();
   }
 }

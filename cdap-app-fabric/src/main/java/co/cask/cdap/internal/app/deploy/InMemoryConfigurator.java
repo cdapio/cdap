@@ -26,6 +26,7 @@ import co.cask.cdap.app.deploy.Configurator;
 import co.cask.cdap.app.program.ManifestFields;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.io.CaseInsensitiveEnumTypeAdapterFactory;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
@@ -43,6 +44,7 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
 import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
@@ -62,6 +64,9 @@ import javax.annotation.Nullable;
  */
 public final class InMemoryConfigurator implements Configurator {
   private static final Logger LOG = LoggerFactory.getLogger(InMemoryConfigurator.class);
+  private static final Gson GSON = new GsonBuilder()
+    .registerTypeAdapterFactory(new CaseInsensitiveEnumTypeAdapterFactory())
+    .create();
 
   /**
    * JAR file path.
@@ -171,7 +176,7 @@ public final class InMemoryConfigurator implements Configurator {
         appConfig = ((Class<? extends Config>) configType).newInstance();
       } else {
         try {
-          appConfig = new Gson().fromJson(configString, configType);
+          appConfig = GSON.fromJson(configString, configType);
         } catch (JsonSyntaxException e) {
           throw new IllegalArgumentException("Invalid JSON configuration was provided. Please check the syntax.", e);
         }

@@ -21,15 +21,18 @@ import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.plugin.PluginContext;
 import co.cask.cdap.api.spark.JavaSparkProgram;
 import co.cask.cdap.api.spark.SparkContext;
+import co.cask.cdap.etl.api.batch.BatchAggregator;
 import co.cask.cdap.etl.api.batch.SparkSink;
 import co.cask.cdap.etl.batch.BatchPhaseSpec;
 import co.cask.cdap.etl.batch.PipelinePluginInstantiator;
 import co.cask.cdap.etl.batch.TransformExecutorFactory;
 import co.cask.cdap.etl.common.Constants;
+import co.cask.cdap.etl.common.PipelinePhase;
 import co.cask.cdap.etl.common.SetMultimapCodec;
 import co.cask.cdap.etl.common.TransformExecutor;
 import co.cask.cdap.etl.common.TransformResponse;
 import co.cask.cdap.etl.planner.StageInfo;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.SetMultimap;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -41,6 +44,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scala.Tuple2;
 
+import java.io.DataInputStream;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -49,6 +53,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import javax.annotation.Nullable;
 
 /**
  * Spark program to run an ETL pipeline.
@@ -63,18 +68,33 @@ public class ETLSparkProgram implements JavaSparkProgram {
 
   @Override
   public void run(SparkContext context) throws Exception {
+    BatchPhaseSpec phaseSpec = GSON.fromJson(context.getSpecification().getProperty(Constants.PIPELINEID),
+                                             BatchPhaseSpec.class);
+    Set<StageInfo> aggregators = phaseSpec.getPhase().getStagesOfType(BatchAggregator.PLUGIN_TYPE);
+    String aggregatorName = null;
+    if (!aggregators.isEmpty()) {
+      aggregatorName = aggregators.iterator().next().getName();
+    }
+
     SparkBatchSourceFactory sourceFactory;
     SparkBatchSinkFactory sinkFactory;
+    Integer numPartitions;
     try (InputStream is = new FileInputStream(context.getTaskLocalizationContext().getLocalFile("ETLSpark.config"))) {
       sourceFactory = SparkBatchSourceFactory.deserialize(is);
       sinkFactory = SparkBatchSinkFactory.deserialize(is);
+      numPartitions = new DataInputStream(is).readInt();
     }
 
     JavaPairRDD<Object, Object> rdd = sourceFactory.createRDD(context, Object.class, Object.class);
-    JavaPairRDD<String, Object> resultRDD = rdd.flatMapToPair(new MapFunction(context)).cache();
-
-    BatchPhaseSpec phaseSpec = GSON.fromJson(context.getSpecification().getProperty(Constants.PIPELINEID),
-                                             BatchPhaseSpec.class);
+    JavaPairRDD<String, Object> resultRDD;
+    if (aggregatorName != null) {
+      JavaPairRDD<Object, Object> preGroupRDD = rdd.flatMapToPair(new PreGroupFunction(context, aggregatorName));
+      JavaPairRDD<Object, Iterable<Object>> groupedRDD =
+        numPartitions < 0 ? preGroupRDD.groupByKey() : preGroupRDD.groupByKey(numPartitions);
+      resultRDD = groupedRDD.flatMapToPair(new MapFunction<Iterable<Object>>(context, aggregatorName)).cache();
+    } else {
+      resultRDD = rdd.flatMapToPair(new MapFunction<>(context, null)).cache();
+    }
 
     Set<StageInfo> stagesOfTypeMLLib = phaseSpec.getPhase().getStagesOfType(SparkSink.PLUGIN_TYPE);
     Set<String> namesOfTypeMLLib = new HashSet<>();
@@ -120,57 +140,130 @@ public class ETLSparkProgram implements JavaSparkProgram {
     }
   }
 
+
   /**
-   * Performs all transforms, and returns tuples where the first item is the sink to write to, and the second item
-   * is the KeyValue to write.
+   * Base function that knows how to set up a transform executor and run it.
+   * Subclasses are responsible for massaging the output of the transform executor into the expected output,
+   * and for configuring the transform executor with the right part of the pipeline.
    */
-  public static final class MapFunction
-    implements PairFlatMapFunction<Tuple2<Object, Object>, String, Object> {
+  public abstract static class TransformExecutorFunction<KEY_IN, VAL_IN, KEY_OUT, VAL_OUT>
+    implements PairFlatMapFunction<Tuple2<KEY_IN, VAL_IN>, KEY_OUT, VAL_OUT> {
 
-    private final PluginContext pluginContext;
-    private final Metrics metrics;
-    private final long logicalStartTime;
-    private final String pipelineStr;
-    private final Map<String, String> runtimeArgs;
-    private transient TransformExecutor<KeyValue<Object, Object>> transformExecutor;
+    protected final PluginContext pluginContext;
+    protected final Metrics metrics;
+    protected final long logicalStartTime;
+    protected final Map<String, String> runtimeArgs;
+    protected final String pipelineStr;
+    private transient TransformExecutor<KeyValue<KEY_IN, VAL_IN>> transformExecutor;
 
-    public MapFunction(SparkContext sparkContext) {
+    public TransformExecutorFunction(SparkContext sparkContext) {
       this.pluginContext = sparkContext.getPluginContext();
       this.metrics = sparkContext.getMetrics();
       this.logicalStartTime = sparkContext.getLogicalStartTime();
-      this.pipelineStr = sparkContext.getSpecification().getProperty(Constants.PIPELINEID);
       this.runtimeArgs = sparkContext.getRuntimeArguments();
+      this.pipelineStr = sparkContext.getSpecification().getProperty(Constants.PIPELINEID);
     }
 
     @Override
-    public Iterable<Tuple2<String, Object>> call(Tuple2<Object, Object> tuple) throws Exception {
+    public Iterable<Tuple2<KEY_OUT, VAL_OUT>> call(Tuple2<KEY_IN, VAL_IN> tuple) throws Exception {
       if (transformExecutor == null) {
         // TODO: There is no way to call destroy() method on Transform
         // In fact, we can structure transform in a way that it doesn't need destroy
         // All current usage of destroy() in transform is actually for Source/Sink, which is actually
         // better do it in prepareRun and onRunFinish, which happen outside of the Job execution (true for both
         // Spark and MapReduce).
-        transformExecutor = initialize();
+        BatchPhaseSpec phaseSpec = GSON.fromJson(pipelineStr, BatchPhaseSpec.class);
+        PipelinePluginInstantiator pluginInstantiator = new PipelinePluginInstantiator(pluginContext, phaseSpec);
+        transformExecutor = initialize(phaseSpec, pluginInstantiator);
       }
       TransformResponse response = transformExecutor.runOneIteration(new KeyValue<>(tuple._1(), tuple._2()));
+      Iterable<Tuple2<KEY_OUT, VAL_OUT>> output = getOutput(response);
+      transformExecutor.resetEmitter();
+      return output;
+    }
 
+    protected abstract Iterable<Tuple2<KEY_OUT, VAL_OUT>> getOutput(TransformResponse transformResponse);
+
+    protected abstract TransformExecutor<KeyValue<KEY_IN, VAL_IN>> initialize(
+      BatchPhaseSpec phaseSpec, PipelinePluginInstantiator pluginInstantiator) throws Exception;
+  }
+
+  /**
+   * Performs all transforms before an aggregator plugin. Outputs tuples whose keys are the group key and values
+   * are the group values that result by calling the aggregator's groupBy method.
+   */
+  public static final class PreGroupFunction extends TransformExecutorFunction<Object, Object, Object, Object> {
+    private final String aggregatorName;
+
+    public PreGroupFunction(SparkContext sparkContext, @Nullable String aggregatorName) {
+      super(sparkContext);
+      this.aggregatorName = aggregatorName;
+    }
+
+    @Override
+    protected Iterable<Tuple2<Object, Object>> getOutput(TransformResponse transformResponse) {
+      List<Tuple2<Object, Object>> result = new ArrayList<>();
+      for (Map.Entry<String, Collection<Object>> transformedEntry : transformResponse.getSinksResults().entrySet()) {
+        for (Object output : transformedEntry.getValue()) {
+          result.add((Tuple2<Object, Object>) output);
+        }
+      }
+      return result;
+    }
+
+    @Override
+    protected TransformExecutor<KeyValue<Object, Object>> initialize(BatchPhaseSpec phaseSpec,
+                                                                     PipelinePluginInstantiator pluginInstantiator)
+      throws Exception {
+
+      TransformExecutorFactory<KeyValue<Object, Object>> transformExecutorFactory =
+        new SparkTransformExecutorFactory<>(pluginContext, pluginInstantiator, metrics,
+                                            logicalStartTime, runtimeArgs, true);
+      PipelinePhase pipelinePhase = phaseSpec.getPhase().subsetTo(ImmutableSet.of(aggregatorName));
+      return transformExecutorFactory.create(pipelinePhase);
+    }
+  }
+
+  /**
+   * Performs all transforms that happen after an aggregator, or if there is no aggregator at all.
+   * Outputs tuples whose first item is the name of the sink that is being written to, and second item is
+   * the key-value that should be written to that sink
+   */
+  public static final class MapFunction<T> extends TransformExecutorFunction<Object, T, String, Object> {
+    @Nullable
+    private final String aggregatorName;
+
+    public MapFunction(SparkContext sparkContext, @Nullable String aggregatorName) {
+      super(sparkContext);
+      this.aggregatorName = aggregatorName;
+    }
+
+    @Override
+    protected Iterable<Tuple2<String, Object>> getOutput(TransformResponse transformResponse) {
       List<Tuple2<String, Object>> result = new ArrayList<>();
-      for (Map.Entry<String, Collection<Object>> transformedEntry : response.getSinksResults().entrySet()) {
+      for (Map.Entry<String, Collection<Object>> transformedEntry : transformResponse.getSinksResults().entrySet()) {
         String sinkName = transformedEntry.getKey();
         for (Object outputRecord : transformedEntry.getValue()) {
           result.add(new Tuple2<>(sinkName, outputRecord));
         }
       }
-      transformExecutor.resetEmitter();
       return result;
     }
 
-    private TransformExecutor<KeyValue<Object, Object>> initialize() throws Exception {
-      BatchPhaseSpec phaseSpec = GSON.fromJson(pipelineStr, BatchPhaseSpec.class);
-      PipelinePluginInstantiator pluginInstantiator = new PipelinePluginInstantiator(pluginContext, phaseSpec);
-      TransformExecutorFactory<KeyValue<Object, Object>> transformExecutorFactory =
-        new SparkTransformExecutorFactory<>(pluginContext, pluginInstantiator, metrics, logicalStartTime, runtimeArgs);
-      return transformExecutorFactory.create(phaseSpec.getPhase());
+    @Override
+    protected TransformExecutor<KeyValue<Object, T>> initialize(BatchPhaseSpec phaseSpec,
+                                                                PipelinePluginInstantiator pluginInstantiator)
+      throws Exception {
+      TransformExecutorFactory<KeyValue<Object, T>> transformExecutorFactory =
+        new SparkTransformExecutorFactory<>(pluginContext, pluginInstantiator, metrics,
+                                            logicalStartTime, runtimeArgs, false);
+
+      PipelinePhase pipelinePhase = phaseSpec.getPhase();
+      if (aggregatorName != null) {
+        pipelinePhase = pipelinePhase.subsetFrom(ImmutableSet.of(aggregatorName));
+      }
+
+      return transformExecutorFactory.create(pipelinePhase);
     }
   }
 }
