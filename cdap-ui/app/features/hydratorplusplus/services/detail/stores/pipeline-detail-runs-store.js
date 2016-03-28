@@ -171,7 +171,7 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
       appConfig.metricProgramType = metricProgramType;
       appConfig.scheduleParams = {
         app: appLevelParams.app,
-        schedule: 'etlWorkflow',
+        schedule: appConfig.type === GLOBALS.etlDataPipeline ? 'dataPipelineSchedule' : 'etlWorkflow',
         namespace: appLevelParams.namespace
       };
       this.setDefaults(appConfig);
