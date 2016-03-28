@@ -85,6 +85,7 @@ class HydratorPlusPlusLeftPanelStore {
 
     let hydratorPlusPlusPluginsDispatcher = HydratorPlusPlusPluginsDispatcher.getDispatcher();
 
+    hydratorPlusPlusPluginsDispatcher.register('onReset', this.reset.bind(this));
     hydratorPlusPlusPluginsDispatcher.register('onExtensionsFetch', this.setExtensions.bind(this));
     hydratorPlusPlusPluginsDispatcher.register('onPluginsFetch', this.setPlugins.bind(this));
     hydratorPlusPlusPluginsDispatcher.register('onPluginTemplatesFetch', this.updatePluginTemplates.bind(this));
@@ -105,6 +106,10 @@ class HydratorPlusPlusLeftPanelStore {
     this.changeListeners.forEach( callback => callback() );
   }
 
+  reset() {
+    this.changeListeners = [];
+    this.setDefaults();
+  }
   getState() {
     return this.state.panelState;
   }
