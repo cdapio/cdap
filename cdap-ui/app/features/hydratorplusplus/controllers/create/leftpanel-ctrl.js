@@ -194,7 +194,7 @@ class HydratorPlusPlusLeftPanelCtrl {
         keyboard: true,
         controller: 'HydratorPlusPlusPreConfiguredCtrl',
         controllerAs: 'HydratorPlusPlusPreConfiguredCtrl',
-        windowTopClass: 'hydrator-template-modal',
+        windowTopClass: 'hydrator-template-modal hydrator-modal',
         resolve: {
           rTemplateType: () => templateType
         }
@@ -217,6 +217,7 @@ class HydratorPlusPlusLeftPanelCtrl {
         size: 'lg',
         backdrop: 'static',
         keyboard: false,
+        windowTopClass: 'confirm-modal hydrator-modal',
         controller: ['$scope', function($scope) {
           $scope.yes = () => {
             if (yesCb) {
@@ -268,7 +269,7 @@ class HydratorPlusPlusLeftPanelCtrl {
         size: 'lg',
         backdrop: 'static',
         keyboard: false,
-        windowTopClass: 'plugin-template-delete-confirm-modal',
+        windowTopClass: 'confirm-modal hydrator-modal',
         controller: 'PluginTemplatesDeleteCtrl',
         resolve: {
           rNode: () => node
@@ -283,7 +284,7 @@ class HydratorPlusPlusLeftPanelCtrl {
         size: 'lg',
         backdrop: 'static',
         keyboard: false,
-        windowTopClass: 'plugin-templates-modal',
+        windowTopClass: 'plugin-templates-modal hydrator-modal',
         controller: 'PluginTemplatesCreateEditCtrl'
       })
       .rendered
