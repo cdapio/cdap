@@ -16,6 +16,11 @@
 
 class myLineageService {
 
+  constructor($state, myTrackerApi) {
+    this.$state = $state;
+    this.myTrackerApi = myTrackerApi;
+  }
+
   /**
    *  Takes in the response from backend, and returns an object with list of
    *  nodes and connections.
@@ -62,6 +67,21 @@ class myLineageService {
       };
 
       uniqueNodes[key] = nodeObj;
+
+      if (data.type === 'datasets') {
+        let params = {
+          namespace: this.$state.params.namespace,
+          entityType: data.type,
+          entityId: data.name
+        };
+        this.myTrackerApi.getDatasetSystemProperties(params)
+          .$promise
+          .then( (res) => {
+            let parsedType = res.type.split('.');
+            nodeObj.displayType = parsedType[parsedType.length - 1];
+          });
+      }
+
     });
 
 
@@ -167,6 +187,20 @@ class myLineageService {
       };
 
       uniqueNodes[key] = nodeObj;
+
+      if (data.type === 'datasets') {
+        let params = {
+          namespace: this.$state.params.namespace,
+          entityType: data.type,
+          entityId: data.name
+        };
+        this.myTrackerApi.getDatasetSystemProperties(params)
+          .$promise
+          .then( (res) => {
+            let parsedType = res.type.split('.');
+            nodeObj.displayType = parsedType[parsedType.length - 1];
+          });
+      }
     });
 
     /* SETTING CONNECTIONS */
@@ -312,7 +346,7 @@ class myLineageService {
   }
 }
 
-myLineageService.$inject = [];
+myLineageService.$inject = ['$state', 'myTrackerApi'];
 
 angular.module(PKG.name + '.feature.tracker')
   .service('myLineageService', myLineageService);

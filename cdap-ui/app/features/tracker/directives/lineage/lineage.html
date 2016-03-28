@@ -36,11 +36,21 @@
       <span class="fa fa-caret-right" ng-click="Lineage.navigationClick($event, node)"></span>
     </div>
 
-    <a class="entity-link" ui-sref="{{ Lineage.constructNodeLink(node) }}">
+    <a class="entity-link" ui-sref="{{ Lineage.constructNodeLink(node) }}"
+       ng-if="Lineage.uniqueNodes[node.uniqueNodeId].nodeType === 'data'">
       <h4 class="entity-name">{{ Lineage.uniqueNodes[node.uniqueNodeId].label }}</h4>
       <div class="entity-type">
         <span class="{{ Lineage.uniqueNodes[node.uniqueNodeId].icon }}"></span>
         <span>{{ Lineage.uniqueNodes[node.uniqueNodeId].displayType }}</span>
+      </div>
+    </a>
+
+    <a href="" class="entity-link"
+       ng-if="Lineage.uniqueNodes[node.uniqueNodeId].nodeType === 'program'">
+      <h4 class="entity-name">{{ Lineage.uniqueNodes[node.uniqueNodeId].applicationId }}</h4>
+      <div class="entity-type">
+        <span class="{{ Lineage.uniqueNodes[node.uniqueNodeId].icon}}"></span>
+        <span>{{ Lineage.uniqueNodes[node.uniqueNodeId].label }}</span>
       </div>
     </a>
 
