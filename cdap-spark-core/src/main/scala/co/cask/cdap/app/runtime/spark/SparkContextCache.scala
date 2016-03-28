@@ -67,13 +67,15 @@ object SparkContextCache {
     * Sets the [[org.apache.spark.streaming.StreamingContext]] that is currently in use.
     */
   def setContext(context: StreamingContext): Unit = {
-    if (stopped) {
-      context.stop(false)
-      throw new IllegalStateException("Spark program is already stopped")
-    }
+    this.synchronized {
+      if (stopped) {
+        context.stop(false)
+        throw new IllegalStateException("Spark program is already stopped")
+      }
 
-    // Spark doesn't allow multiple StreamingContext instances concurrently, hence we don't need to check in here
-    streamingContext = Some(context)
+      // Spark doesn't allow multiple StreamingContext instances concurrently, hence we don't need to check in here
+      streamingContext = Some(context)
+    }
   }
 
   /**

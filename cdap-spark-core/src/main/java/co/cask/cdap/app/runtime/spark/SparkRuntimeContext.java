@@ -226,7 +226,7 @@ public final class SparkRuntimeContext extends AbstractServiceDiscoverer
    * Returns the {@link WorkflowProgramInfo} if the spark program is running inside a workflow.
    */
   @Nullable
-  WorkflowProgramInfo getWorkflowProgramInfo() {
+  WorkflowProgramInfo getWorkflowInfo() {
     return workflowProgramInfo;
   }
 

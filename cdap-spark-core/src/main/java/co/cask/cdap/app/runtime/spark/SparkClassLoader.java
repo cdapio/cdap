@@ -121,7 +121,7 @@ public class SparkClassLoader extends CombineClassLoader {
         SparkRuntimeContextConfig contextConfig = new SparkRuntimeContextConfig(runtimeContext.getConfiguration());
 
         Map<String, File> localizeResources = new HashMap<>();
-        for (String name : contextConfig.getLocalizeResourceNames()) {
+        for (String name : contextConfig.getLocalizedResourceNames()) {
           // In distributed mode, files will be localized to the container local directory
           localizeResources.put(name, new File(name));
         }

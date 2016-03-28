@@ -324,7 +324,8 @@ final class SparkTransactionService extends AbstractIdleService {
           try {
             if (!txClient.commit(jobTx)) {
               // If failed to commit (which it shouldn't since there is no conflict detection), throw exception
-              throw new TransactionFailureException("Failed to commit transaction " + jobTx);
+              throw new TransactionFailureException("Failed to commit transaction on job success. JobId: "
+                                                      + jobId + ", transaction: " + jobTx);
             }
             transactionInfo.onTransactionCompleted(succeeded, null);
           } catch (Throwable t) {
@@ -336,7 +337,8 @@ final class SparkTransactionService extends AbstractIdleService {
         } else {
           LOG.debug("Invalidating transaction for job {}", jobId);
           if (!txClient.invalidate(jobTx.getWritePointer())) {
-            throw new TransactionFailureException("Failed to invalid traction " + jobTx);
+            throw new TransactionFailureException("Failed to invalid transaction on job failure. JobId: "
+                                                    + jobId + ", transaction: " + jobTx);
           }
         }
       } catch (Throwable t) {

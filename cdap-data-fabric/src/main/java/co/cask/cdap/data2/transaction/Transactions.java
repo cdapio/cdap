@@ -39,6 +39,10 @@ public final class Transactions {
 
   private static final Logger LOG = LoggerFactory.getLogger(Transactions.class);
 
+  /**
+   * Aborts the given transaction without throwing any exception. If there is exception raised during abort,
+   * it will get logged as an error.
+   */
   public static void abortQuietly(TransactionSystemClient txClient, Transaction tx) {
     try {
       txClient.abort(tx);
@@ -47,6 +51,10 @@ public final class Transactions {
     }
   }
 
+  /**
+   * Invalidates the given transaction without throwing any exception. If there is exception raised during invalidation,
+   * it will get logged as an error.
+   */
   public static void invalidateQuietly(TransactionSystemClient txClient, Transaction tx) {
     try {
       if (!txClient.invalidate(tx.getWritePointer())) {
@@ -65,7 +73,7 @@ public final class Transactions {
     if (t instanceof TransactionFailureException) {
       return (TransactionFailureException) t;
     }
-    return new TransactionFailureException("Transaction Failure", t);
+    return new TransactionFailureException("Exception raised in transactional execution. Cause: " + t.getMessage(), t);
   }
 
 

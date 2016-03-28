@@ -28,7 +28,6 @@ import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionFailureException;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Throwables;
 import com.google.common.collect.Iterables;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -143,8 +142,7 @@ final class SparkTransactional implements Transactional {
       // Successfully execute with the current active transaction
       return true;
     } catch (Throwable t) {
-      Throwables.propagateIfInstanceOf(t, TransactionFailureException.class);
-      throw new TransactionFailureException("Failed to execute TxRunnable in transaction", t);
+      throw Transactions.asTransactionFailure(t);
     }
   }
 
@@ -193,7 +191,9 @@ final class SparkTransactional implements Transactional {
 
       if (!asyncCommit) {
         // Commit transaction
-        txClient.commit(datasetContext.getTransaction());
+        if (!txClient.commit(datasetContext.getTransaction())) {
+          throw new TransactionFailureException("Failed to commit explicit transaction " + transaction);
+        }
         activeDatasetContext.remove();
         datasetContext.postCommit();
         datasetContext.discardDatasets();
@@ -202,8 +202,7 @@ final class SparkTransactional implements Transactional {
       // Any exception will cause invalidation of the transaction
       activeDatasetContext.remove();
       Transactions.invalidateQuietly(txClient, transaction);
-      Throwables.propagateIfInstanceOf(t, TransactionFailureException.class);
-      throw new TransactionFailureException("Failed to execute TxRunnable in transaction", t);
+      throw Transactions.asTransactionFailure(t);
     }
   }
 

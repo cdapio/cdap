@@ -21,7 +21,6 @@ import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.id.ProgramId;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -95,8 +94,8 @@ public class SparkRuntimeContextConfig {
     setProgramId(context.getProgram().getId().toEntityId());
     setRunId(context.getRunId().getId());
     setArguments(context.getRuntimeArguments());
-    setWorkflowProgramInfo(context.getWorkflowProgramInfo());
-    setLocalizeResourceNames(localizeResourceNames);
+    setWorkflowProgramInfo(context.getWorkflowInfo());
+    setLocalizedResourceNames(localizeResourceNames);
     setPluginArchive(pluginArchive);
 
     return this;
@@ -147,7 +146,7 @@ public class SparkRuntimeContextConfig {
   /**
    * @return the set of localized resource names stored in the configuration.
    */
-  public Set<String> getLocalizeResourceNames() {
+  public Set<String> getLocalizedResourceNames() {
     return GSON.fromJson(hConf.get(HCONF_ATTR_LOCAL_RESOURCES), new TypeToken<Set<String>>(){ }.getType());
   }
 
@@ -199,7 +198,7 @@ public class SparkRuntimeContextConfig {
   /**
    * Serialize the set of localize resource names to the configuration.
    */
-  private void setLocalizeResourceNames(Set<String> names) {
+  private void setLocalizedResourceNames(Set<String> names) {
     hConf.set(HCONF_ATTR_LOCAL_RESOURCES, GSON.toJson(names));
   }
 

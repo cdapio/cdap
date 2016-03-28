@@ -66,7 +66,7 @@ class DefaultSparkExecutionContext(runtimeContext: SparkRuntimeContext,
   private val taskLocalizationContext = new SparkTaskLocalizationContext(localizeResources)
   private val transactional = new SparkTransactional(runtimeContext.getTransactionSystemClient,
                                                      runtimeContext.getDatasetCache)
-  private val workflowToken = Option(runtimeContext.getWorkflowProgramInfo).map(_.getWorkflowToken)
+  private val workflowToken = Option(runtimeContext.getWorkflowInfo).map(_.getWorkflowToken)
   private val sparkTxService = new SparkTransactionService(runtimeContext.getTransactionSystemClient)
   private val applicationEndLatch = new CountDownLatch(1)
 
