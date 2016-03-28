@@ -94,7 +94,7 @@ public class ExistingEntitySystemMetadataWriter {
   }
 
   private void writeSystemMetadataForArtifacts(Id.Namespace namespace) throws IOException {
-    for (ArtifactDetail artifactDetail : artifactStore.getArtifacts(namespace)) {
+    for (ArtifactDetail artifactDetail : artifactStore.getArtifacts(namespace.toEntityId())) {
       ArtifactInfo artifactInfo = new ArtifactInfo(artifactDetail.getDescriptor().getArtifactId(),
                                                    artifactDetail.getMeta().getClasses(),
                                                    artifactDetail.getMeta().getProperties());

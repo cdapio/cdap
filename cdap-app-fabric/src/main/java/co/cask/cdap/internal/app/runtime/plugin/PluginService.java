@@ -29,6 +29,7 @@ import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.artifact.CloseableClassLoader;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.artifact.ArtifactRange;
+import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.io.Closeables;
 
 import java.io.Closeable;
@@ -72,7 +73,7 @@ public class PluginService implements Closeable {
    * @throws NotFoundException
    * @throws ClassNotFoundException
    */
-  public PluginEndpoint getPluginEndpoint(Id.Namespace namespace,
+  public PluginEndpoint getPluginEndpoint(NamespaceId namespace,
                                           Id.Artifact artifactId, String pluginType,
                                           String pluginName, String methodName)
     throws IOException, NotFoundException, ClassNotFoundException {
@@ -104,12 +105,12 @@ public class PluginService implements Closeable {
     return artifactDetails.get(0).getDescriptor();
   }
 
-  private PluginEndpoint getPluginEndpoint(Id.Namespace namespace, ArtifactDetail artifactDetail, String pluginType,
+  private PluginEndpoint getPluginEndpoint(NamespaceId namespace, ArtifactDetail artifactDetail, String pluginType,
                                            String pluginName, ArtifactDescriptor parentArtifactDescriptor,
                                            String methodName)
     throws NotFoundException, IOException, ClassNotFoundException {
 
-    Id.Artifact artifactId = Id.Artifact.from(namespace, artifactDetail.getDescriptor().getArtifactId());
+    Id.Artifact artifactId = Id.Artifact.from(namespace.toId(), artifactDetail.getDescriptor().getArtifactId());
     Set<PluginClass> pluginClasses = artifactDetail.getMeta().getClasses().getPlugins();
     PluginClass pluginClass = null;
 
@@ -140,8 +141,8 @@ public class PluginService implements Closeable {
     // we pass the parent artifact to endpoint plugin context,
     // as plugin method will use this context to load other plugins.
     DefaultEndpointPluginContext defaultEndpointPluginContext =
-      new DefaultEndpointPluginContext(namespace.toEntityId(), artifactRepository, pluginInstantiator,
-                                       Id.Artifact.from(namespace, parentArtifactDescriptor.getArtifactId()));
+      new DefaultEndpointPluginContext(namespace, artifactRepository, pluginInstantiator,
+                                       Id.Artifact.from(namespace.toId(), parentArtifactDescriptor.getArtifactId()));
 
     return getPluginEndpoint(pluginInstantiator, artifactId,
                              pluginClass, methodName, defaultEndpointPluginContext);
