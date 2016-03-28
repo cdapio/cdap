@@ -147,7 +147,7 @@ public class SparkRuntimeContextConfig {
    * @return the set of localized resource names stored in the configuration.
    */
   public Set<String> getLocalizedResourceNames() {
-    return GSON.fromJson(hConf.get(HCONF_ATTR_LOCAL_RESOURCES), new TypeToken<Set<String>>(){ }.getType());
+    return GSON.fromJson(hConf.get(HCONF_ATTR_LOCAL_RESOURCES), new TypeToken<Set<String>>() { }.getType());
   }
 
   /**
