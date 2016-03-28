@@ -201,7 +201,10 @@ class DefaultSparkExecutionContext(runtimeContext: SparkRuntimeContext,
           }
           outputCommitter.foreach(_.onSuccess())
         } catch {
-          case t: Throwable => outputCommitter.foreach(_.onFailure())
+          case t: Throwable => {
+            outputCommitter.foreach(_.onFailure())
+            throw t
+          }
         }
       }
     })

@@ -70,10 +70,21 @@ public final class Transactions {
    * {@link TransactionFailureException}.
    */
   public static TransactionFailureException asTransactionFailure(Throwable t) {
+    return asTransactionFailure(t, "Exception raised in transactional execution. Cause: " + t.getMessage());
+  }
+
+  /**
+   * Wraps the given {@link Throwable} as a {@link TransactionFailureException} if it is not already an instance of
+   * {@link TransactionFailureException}.
+   *
+   * @param t the original exception
+   * @param message the exception message to use in case wrapping is needed
+   */
+  public static TransactionFailureException asTransactionFailure(Throwable t, String message) {
     if (t instanceof TransactionFailureException) {
       return (TransactionFailureException) t;
     }
-    return new TransactionFailureException("Exception raised in transactional execution. Cause: " + t.getMessage(), t);
+    return new TransactionFailureException(message, t);
   }
 
 
