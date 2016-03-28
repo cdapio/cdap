@@ -214,7 +214,7 @@ class HydratorPlusPlusLeftPanelCtrl {
         size: 'lg',
         backdrop: 'static',
         keyboard: false,
-        windowTopClass: 'hydrator-modal',
+        windowTopClass: 'confirm-modal hydrator-modal',
         controller: ['$scope', function($scope) {
           $scope.yes = () => {
             if (yesCb) {
@@ -266,7 +266,7 @@ class HydratorPlusPlusLeftPanelCtrl {
         size: 'lg',
         backdrop: 'static',
         keyboard: false,
-        windowTopClass: 'plugin-template-delete-confirm-modal hydrator-modal',
+        windowTopClass: 'confirm-modal hydrator-modal',
         controller: 'PluginTemplatesDeleteCtrl',
         resolve: {
           rNode: () => node

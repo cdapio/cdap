@@ -14,15 +14,15 @@
   the License.
 -->
 
-<div class="modal-header text-center">
-  <div class="modal-title">
-    <h3>Confirmation</h3>
+<div class="modal-body">
+  <div>
+    <span>You have unsaved changes.</span>
+  </div>
+  <div>
+    <span>Do you want to stay at this page?</span>
   </div>
 </div>
-<div class="model-body text-center">
-  <span>You have unsaved changes. Do you wish to save pipeline as a draft?</span>
-</div>
 <div class="modal-footer">
-  <button class="btn btn-primary" ng-click="yes()">Yes</button>
-  <button class="btn btn-default" ng-click="no()">No</button>
+  <button class="btn btn-grey" ng-click="no()">No</button>
+  <button class="btn btn-blue" ng-click="yes()">Yes</button>
 </div>
