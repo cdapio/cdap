@@ -49,8 +49,8 @@ angular.module(PKG.name + '.services')
       'batchsink': 'sink',
       'realtimesink': 'sink',
       'transform': 'transform',
-      'sparksink': 'sparksink',
-      'sparkcompute': 'sparkcompute'
+      'sparksink': 'sink',
+      'sparkcompute': 'transform'
     },
 
     'en': {
