@@ -144,6 +144,23 @@
       <artifactId>twill-discovery-core</artifactId>
     </dependency>
     <dependency>
+      <groupId>org.apache.twill</groupId>
+      <artifactId>twill-zookeeper</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.twill</groupId>
+      <artifactId>twill-core</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.zookeeper</groupId>
+      <artifactId>zookeeper</artifactId>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.xerial.snappy</groupId>
+      <artifactId>snappy-java</artifactId>
+    </dependency>
+    <dependency>
       <groupId>co.cask.cdap</groupId>
       <artifactId>cdap-ui</artifactId>
       <version>${project.version}</version>
@@ -220,7 +237,7 @@
                   <overWriteReleases>false</overWriteReleases>
                   <overWriteSnapshots>false</overWriteSnapshots>
                   <overWriteIfNewer>true</overWriteIfNewer>
-                  <excludeGroupIds>org.apache.hbase,asm,org.apache.zookeeper</excludeGroupIds>
+                  <excludeGroupIds>org.apache.hbase,asm</excludeGroupIds>
                   <excludeArtifactIds>zkclient,servlet-api,cdap-cli,cdap-explore-jdbc</excludeArtifactIds>
                   <prependGroupId>true</prependGroupId>
                   <silent>true</silent>
