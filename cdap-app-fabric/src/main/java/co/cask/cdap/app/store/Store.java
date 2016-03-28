@@ -22,6 +22,7 @@ import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.worker.Worker;
+import co.cask.cdap.api.workflow.Workflow;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.common.ApplicationNotFoundException;
@@ -30,6 +31,7 @@ import co.cask.cdap.internal.app.store.RunRecordMeta;
 import co.cask.cdap.internal.app.store.WorkflowDataset;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRunStatus;
+import co.cask.cdap.proto.WorkflowNodeStateDetail;
 import co.cask.cdap.proto.WorkflowStatistics;
 import co.cask.cdap.proto.id.ProgramRunId;
 import com.google.common.annotations.VisibleForTesting;
@@ -368,6 +370,13 @@ public interface Store {
    * @return the {@link WorkflowToken} for the specified workflow run
    */
   WorkflowToken getWorkflowToken(Id.Workflow workflowId, String workflowRunId);
+
+  /**
+   * Get the node states for {@link Workflow} run.
+   * @param workflowRunId run of the Workflow.
+   * @return {@link Map} of node id to the {@link WorkflowNodeStateDetail}
+   */
+  Map<String, WorkflowNodeStateDetail> getWorkflowNodeStates(ProgramRunId workflowRunId);
 
   /**
    * Used by {@link co.cask.cdap.gateway.handlers.WorkflowStatsSLAHttpHandler} to get the statistics of all completed

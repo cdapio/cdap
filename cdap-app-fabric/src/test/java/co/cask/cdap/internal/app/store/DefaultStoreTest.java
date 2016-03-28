@@ -57,11 +57,15 @@ import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.internal.AppFabricTestHelper;
 import co.cask.cdap.internal.DefaultId;
 import co.cask.cdap.internal.app.Specifications;
+import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.WorkflowNodeStateDetail;
+import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.store.DefaultNamespaceStore;
 import com.google.common.base.Function;
 import com.google.common.base.Supplier;
@@ -176,6 +180,67 @@ public class DefaultStoreTest {
     Assert.assertTrue(store.getRuns(programId2, ProgramRunStatus.ALL, 0, Long.MAX_VALUE, Integer.MAX_VALUE).isEmpty());
   }
 
+  @Test
+  public void testWorkflowNodeState() throws Exception {
+    String namespaceName = "namespace1";
+    String appName = "app1";
+    String workflowName = "workflow1";
+    String mapReduceName = "mapReduce1";
+    String sparkName = "spark1";
+
+    ProgramId mapReduceProgram = new ProgramId(namespaceName, appName, ProgramType.MAPREDUCE, mapReduceName);
+    ProgramId sparkProgram = new ProgramId(namespaceName, appName, ProgramType.SPARK, sparkName);
+
+    long currentTime = System.currentTimeMillis();
+    RunId workflowRunId = RunIds.generate(currentTime);
+    ProgramRunId workflowRun = new ProgramRunId("namespace1", "app1", ProgramType.WORKFLOW, workflowName,
+                                                workflowRunId.getId());
+
+    // start Workflow
+    store.setStart(workflowRun.getParent().toId(), workflowRun.getRun(), currentTime);
+
+    // start MapReduce as a part of Workflow
+    Map<String, String> systemArgs = ImmutableMap.of(ProgramOptionConstants.WORKFLOW_NODE_ID, mapReduceName,
+                                                     ProgramOptionConstants.WORKFLOW_NAME, workflowName,
+                                                     ProgramOptionConstants.WORKFLOW_RUN_ID, workflowRunId.getId());
+
+    RunId mapReduceRunId = RunIds.generate(currentTime + 10);
+    store.setStart(mapReduceProgram.toId(), mapReduceRunId.getId(), currentTime + 10, null,
+                   ImmutableMap.<String, String>of(), systemArgs);
+
+    // stop the MapReduce program
+    store.setStop(mapReduceProgram.toId(), mapReduceRunId.getId(), currentTime + 50, ProgramRunStatus.COMPLETED);
+
+    // start Spark program as a part of Workflow
+    systemArgs = ImmutableMap.of(ProgramOptionConstants.WORKFLOW_NODE_ID, sparkName,
+                                 ProgramOptionConstants.WORKFLOW_NAME, workflowName,
+                                 ProgramOptionConstants.WORKFLOW_RUN_ID, workflowRunId.getId());
+
+    RunId sparkRunId = RunIds.generate(currentTime + 60);
+    store.setStart(sparkProgram.toId(), sparkRunId.getId(), currentTime + 60, null,
+                   ImmutableMap.<String, String>of(), systemArgs);
+
+    // stop the Spark program
+    // TODO add test case for failureCause
+    store.setStop(sparkProgram.toId(), sparkRunId.getId(), currentTime + 100, ProgramRunStatus.FAILED);
+
+    // stop Workflow
+    store.setStop(workflowRun.getParent().toId(), workflowRun.getRun(), currentTime + 110, ProgramRunStatus.FAILED);
+
+    Map<String, WorkflowNodeStateDetail> workflowNodeStates = store.getWorkflowNodeStates(workflowRun);
+    Assert.assertEquals(2, workflowNodeStates.size());
+    WorkflowNodeStateDetail nodeStateDetail = workflowNodeStates.get(mapReduceName);
+    Assert.assertEquals(mapReduceName, nodeStateDetail.getNodeId());
+    Assert.assertEquals(WorkflowNodeStateDetail.NodeStatus.COMPLETED, nodeStateDetail.getNodeStatus());
+    Assert.assertEquals(mapReduceRunId.getId(), nodeStateDetail.getRunId());
+    Assert.assertNull(nodeStateDetail.getFailureCause());
+
+    nodeStateDetail = workflowNodeStates.get(sparkName);
+    Assert.assertEquals(sparkName, nodeStateDetail.getNodeId());
+    Assert.assertEquals(WorkflowNodeStateDetail.NodeStatus.FAILED, nodeStateDetail.getNodeStatus());
+    Assert.assertEquals(sparkRunId.getId(), nodeStateDetail.getRunId());
+    Assert.assertNull(nodeStateDetail.getFailureCause());
+  }
 
   @Test
   public void testConcurrentStopStart() throws Exception {

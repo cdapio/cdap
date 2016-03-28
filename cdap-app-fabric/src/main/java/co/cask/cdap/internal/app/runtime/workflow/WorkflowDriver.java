@@ -32,6 +32,7 @@ import co.cask.cdap.api.workflow.WorkflowConditionNode;
 import co.cask.cdap.api.workflow.WorkflowContext;
 import co.cask.cdap.api.workflow.WorkflowForkNode;
 import co.cask.cdap.api.workflow.WorkflowNode;
+import co.cask.cdap.api.workflow.WorkflowNodeState;
 import co.cask.cdap.api.workflow.WorkflowNodeType;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.api.workflow.WorkflowToken;
@@ -54,6 +55,7 @@ import co.cask.cdap.internal.dataset.DatasetCreationSpec;
 import co.cask.cdap.internal.workflow.ProgramWorkflowAction;
 import co.cask.cdap.logging.context.WorkflowLoggingContext;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.WorkflowNodeStateDetail;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.http.NettyHttpService;
@@ -123,6 +125,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
   private final ProgramRunId workflowRunId;
   private Workflow workflow;
   private final BasicWorkflowContext basicWorkflowContext;
+  private final Map<String, WorkflowNodeState> nodeStates = new ConcurrentHashMap<>();
 
   private final CConfiguration cConf;
 
@@ -157,7 +160,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     this.basicWorkflowContext = new BasicWorkflowContext(workflowSpec, null, null, new BasicArguments(runtimeArgs),
                                                          null, program, RunIds.fromString(runId),
                                                          metricsCollectionService, datasetFramework, txClient,
-                                                         discoveryServiceClient);
+                                                         discoveryServiceClient, nodeStates);
   }
 
   @Override
@@ -431,7 +434,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
                                                        new BasicArguments(runtimeArgs), token,
                                                        program, RunIds.fromString(workflowRunId.getRun()),
                                                        metricsCollectionService, datasetFramework, txClient,
-                                                       discoveryServiceClient);
+                                                       discoveryServiceClient, nodeStates);
     Iterator<WorkflowNode> iterator;
     if (predicate.apply(context)) {
       // execute the if branch
@@ -523,10 +526,11 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
   private BasicWorkflowContext createWorkflowContext(WorkflowActionSpecification actionSpec,
                                                      WorkflowToken token, String nodeId) {
     return new BasicWorkflowContext(workflowSpec, actionSpec,
-                                    workflowProgramRunnerFactory.getProgramWorkflowRunner(actionSpec, token, nodeId),
+                                    workflowProgramRunnerFactory.getProgramWorkflowRunner(actionSpec, token, nodeId,
+                                                                                          nodeStates),
                                     new BasicArguments(runtimeArgs), token, program,
                                     RunIds.fromString(workflowRunId.getRun()), metricsCollectionService,
-                                    datasetFramework, txClient, discoveryServiceClient);
+                                    datasetFramework, txClient, discoveryServiceClient, nodeStates);
   }
 
   private Map<String, String> createRuntimeArgs(Arguments args) {

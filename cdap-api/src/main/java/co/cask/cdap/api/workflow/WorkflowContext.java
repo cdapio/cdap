@@ -54,4 +54,9 @@ public interface WorkflowContext extends RuntimeContext, ServiceDiscoverer, Data
    * @return a {@link WorkflowToken}
    */
   WorkflowToken getToken();
+
+  /**
+   * Return the {@link Map} of node ids to {@link WorkflowNodeState}.
+   */
+  Map<String, WorkflowNodeState> getNodeStates();
 }

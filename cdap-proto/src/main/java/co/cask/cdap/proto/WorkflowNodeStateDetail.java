@@ -13,15 +13,16 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+package co.cask.cdap.proto;
 
-package co.cask.cdap.api.workflow;
+import co.cask.cdap.api.workflow.Workflow;
 
 import javax.annotation.Nullable;
 
 /**
  * Class to represent the state of the node in the {@link Workflow}.
  */
-public final class WorkflowNodeState {
+public final class WorkflowNodeStateDetail {
 
   /**
    * Status of the node running inside the Workflow.
@@ -36,7 +37,7 @@ public final class WorkflowNodeState {
   private final String nodeId;
   private final NodeStatus nodeStatus;
   private final String runId;
-  private final Throwable failureCause;
+  private final DefaultThrowable failureCause;
 
   /**
    * Create a new instance.
@@ -45,8 +46,8 @@ public final class WorkflowNodeState {
    * @param runId run id assigned to the node, null if current node represents custom action or predicate
    * @param failureCause cause of failure, null if execution of the node succeeded
    */
-  public WorkflowNodeState(String nodeId, NodeStatus nodeStatus, @Nullable String runId,
-                           @Nullable Throwable failureCause) {
+  public WorkflowNodeStateDetail(String nodeId, NodeStatus nodeStatus, @Nullable String runId,
+                                 @Nullable DefaultThrowable failureCause) {
     this.nodeId = nodeId;
     this.nodeStatus = nodeStatus;
     this.runId = runId;
@@ -80,7 +81,7 @@ public final class WorkflowNodeState {
    * Return the detail message string for failure if node execution failed, otherwise {@code null} is returned.
    */
   @Nullable
-  public Throwable getFailureCause() {
+  public DefaultThrowable getFailureCause() {
     return failureCause;
   }
 }

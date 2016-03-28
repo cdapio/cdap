@@ -50,6 +50,7 @@ import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.ScheduledRuntime;
+import co.cask.cdap.proto.WorkflowNodeStateDetail;
 import co.cask.cdap.proto.WorkflowTokenDetail;
 import co.cask.cdap.proto.WorkflowTokenNodeDetail;
 import co.cask.cdap.proto.codec.ScheduleSpecificationCodec;
@@ -342,6 +343,34 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
       throw new NotFoundException(new Id.Run(workflowId, runId));
     }
     return store.getWorkflowToken(workflowId, runId);
+  }
+
+  @GET
+  @Path("/apps/{app-id}/workflows/{workflow-id}/runs/{run-id}/nodestates")
+  public void getWorkflowNodeStates(HttpRequest request, HttpResponder responder,
+                                       @PathParam("namespace-id") String namespaceId,
+                                       @PathParam("app-id") String applicationId,
+                                       @PathParam("workflow-id") String workflowId,
+                                       @PathParam("run-id") String runId)
+    throws NotFoundException, DatasetManagementException {
+    ApplicationId appId = new ApplicationId(namespaceId, applicationId);
+    ApplicationSpecification appSpec = store.getApplication(appId.toId());
+    if (appSpec == null) {
+      throw new ApplicationNotFoundException(appId.toId());
+    }
+
+    WorkflowSpecification workflowSpec = appSpec.getWorkflows().get(workflowId);
+    ProgramRunId workflowRunId = new ProgramRunId(namespaceId, applicationId, ProgramType.WORKFLOW, workflowId, runId);
+    if (workflowSpec == null) {
+      throw new ProgramNotFoundException(workflowRunId.getParent().toId());
+    }
+
+    if (store.getRun(workflowRunId.getParent().toId(), runId) == null) {
+      throw new NotFoundException(workflowRunId);
+    }
+
+    responder.sendJson(HttpResponseStatus.OK, store.getWorkflowNodeStates(workflowRunId),
+                       new TypeToken<Map<String, WorkflowNodeStateDetail>>() { }.getType());
   }
 
   @GET

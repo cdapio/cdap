@@ -19,6 +19,7 @@ package co.cask.cdap.internal.app.runtime.workflow;
 import co.cask.cdap.api.RuntimeContext;
 import co.cask.cdap.api.common.RuntimeArguments;
 import co.cask.cdap.api.common.Scope;
+import co.cask.cdap.api.workflow.WorkflowNodeState;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.program.Program;
@@ -62,6 +63,7 @@ public abstract class AbstractProgramWorkflowRunner implements ProgramWorkflowRu
   private final Arguments userArguments;
   private final Arguments systemArguments;
   private final String nodeId;
+  private final Map<String, WorkflowNodeState> nodeStates;
   protected final WorkflowSpecification workflowSpec;
   protected final ProgramRunnerFactory programRunnerFactory;
   protected final Program workflowProgram;
@@ -69,7 +71,7 @@ public abstract class AbstractProgramWorkflowRunner implements ProgramWorkflowRu
 
   public AbstractProgramWorkflowRunner(Program workflowProgram, ProgramOptions workflowProgramOptions,
                                        ProgramRunnerFactory programRunnerFactory, WorkflowSpecification workflowSpec,
-                                       WorkflowToken token, String nodeId) {
+                                       WorkflowToken token, String nodeId, Map<String, WorkflowNodeState> nodeStates) {
     this.userArguments = workflowProgramOptions.getUserArguments();
     this.workflowProgram = workflowProgram;
     this.programRunnerFactory = programRunnerFactory;
@@ -77,6 +79,7 @@ public abstract class AbstractProgramWorkflowRunner implements ProgramWorkflowRu
     this.systemArguments = workflowProgramOptions.getArguments();
     this.token = token;
     this.nodeId = nodeId;
+    this.nodeStates = nodeStates;
   }
 
   /**
@@ -137,22 +140,28 @@ public abstract class AbstractProgramWorkflowRunner implements ProgramWorkflowRu
    * @param controller the {@link ProgramController} for the program
    * @throws Exception if the execution failed
    */
-  private void blockForCompletion(ProgramController controller) throws Exception {
+  private void blockForCompletion(final ProgramController controller) throws Exception {
     // Execute the program.
     final SettableFuture<Void> completion = SettableFuture.create();
     controller.addListener(new AbstractListener() {
       @Override
       public void completed() {
+        nodeStates.put(nodeId, new WorkflowNodeState(nodeId, WorkflowNodeState.NodeStatus.COMPLETED,
+                                                     controller.getRunId().getId(), null));
         completion.set(null);
       }
 
       @Override
       public void killed() {
+        nodeStates.put(nodeId, new WorkflowNodeState(nodeId, WorkflowNodeState.NodeStatus.KILLED,
+                                                     controller.getRunId().getId(), null));
         completion.set(null);
       }
 
       @Override
       public void error(Throwable cause) {
+        nodeStates.put(nodeId, new WorkflowNodeState(nodeId, WorkflowNodeState.NodeStatus.FAILED,
+                                                     controller.getRunId().getId(), cause));
         completion.setException(cause);
       }
     }, Threads.SAME_THREAD_EXECUTOR);

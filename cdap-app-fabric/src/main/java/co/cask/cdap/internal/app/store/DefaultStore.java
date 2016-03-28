@@ -54,6 +54,7 @@ import co.cask.cdap.internal.app.program.ProgramBundle;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.WorkflowNodeStateDetail;
 import co.cask.cdap.proto.WorkflowStatistics;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramRunId;
@@ -902,6 +903,17 @@ public class DefaultStore implements Store {
         @Override
         public WorkflowToken apply(AppMetadataStore mds) throws Exception {
           return mds.getWorkflowToken(workflowId, workflowRunId);
+        }
+      }, apps.get());
+  }
+
+  @Override
+  public Map<String, WorkflowNodeStateDetail> getWorkflowNodeStates(final ProgramRunId workflowRunId) {
+    return appsTx.get().executeUnchecked(
+      new TransactionExecutor.Function<AppMetadataStore, Map<String, WorkflowNodeStateDetail>>() {
+        @Override
+        public Map<String, WorkflowNodeStateDetail> apply(AppMetadataStore mds) throws Exception {
+          return mds.getWorkflowNodeStates(workflowRunId);
         }
       }, apps.get());
   }
