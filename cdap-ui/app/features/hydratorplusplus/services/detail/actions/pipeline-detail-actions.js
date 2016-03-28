@@ -18,14 +18,14 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
   .service('HydratorPlusPlusDetailActions', function(HydratorPlusPlusDetailDispatcher, myPipelineApi) {
     var dispatcher = HydratorPlusPlusDetailDispatcher.getDispatcher();
     this.startPipeline = function (api, params) {
-      return api.start(params).$promise;
+      return api.start(params, {}).$promise;
     };
     this.schedulePipeline = function(api, scheduleParams) {
-      return api.schedule(scheduleParams).$promise;
+      return api.schedule(scheduleParams, {}).$promise;
     };
 
     this.stopPipeline = function (api, params) {
-      return api.stop(params).$promise;
+      return api.stop(params, {}).$promise;
     };
     this.suspendSchedule = function(api, params) {
       return api.suspend(params).$promise;

@@ -79,10 +79,10 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
       return this.state.api;
     };
     this.getParams = function() {
-      return angular.copy(this.state.params);
+      return this.state.params;
     };
     this.getScheduleParams = function() {
-      return angular.copy(this.state.scheduleParams);
+      return this.state.scheduleParams;
     };
     this.getLogsParams = function() {
       var logsParams = angular.extend({runId: this.state.runs.latest.runid}, this.state.logsParams);
