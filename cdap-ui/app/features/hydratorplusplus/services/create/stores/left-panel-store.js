@@ -120,6 +120,7 @@ class HydratorPlusPlusLeftPanelStore {
 
   setExtensions(extensions) {
     let uiSupportedExtension = (extension) => {
+      console.log('extensions', extension);
       let pipelineType = this.HydratorPlusPlusConfigStore.getArtifact().name;
       let extensionMap = this.GLOBALS.pluginTypes[pipelineType];
       return Object.keys(extensionMap).filter(ext => extensionMap[ext] === extension).length;
@@ -146,7 +147,7 @@ class HydratorPlusPlusLeftPanelStore {
   }
 
   getPlugins(extension) {
-    return this.state.plugins[extension];
+    return this.state.plugins[extension] || [];
   }
   checkAndUpdateDefaultVersion(pluginsList) {
     if (!angular.isObject(this.state.defaultVersionsMap)) {
@@ -216,7 +217,7 @@ class HydratorPlusPlusLeftPanelStore {
   }
 
   getPluginTemplates(extension) {
-    return this.state.pluginTemplates[extension];
+    return this.state.pluginTemplates[extension] || [];
   }
   updatePluginTemplates(plugins, params) {
     let pipelineType = this.HydratorPlusPlusConfigStore.getAppType();

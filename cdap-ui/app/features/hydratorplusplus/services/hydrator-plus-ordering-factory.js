@@ -32,35 +32,38 @@ function HydratorPlusPlusOrderingFactory() {
       'batchsink': 'Sink',
       'batchaggregator': 'Aggregator',
       'realtimesink': 'Sink',
-      'realtimesource': 'Source'
+      'realtimesource': 'Source',
+      'sparksink': 'SparkSink',
+      'sparkcompute': 'SparkCompute'
     };
 
     return pluginTypeMap[pluginType];
   }
 
   function orderPluginTypes (pluginsMap) {
-    if (!pluginsMap.length) {
-      return pluginsMap;
-    }
-    let orderedTypes = [];
+    console.log('pluginsMap', pluginsMap);
+    // if (!pluginsMap.length) {
+    //   return pluginsMap;
+    // }
+    // let orderedTypes = [];
 
-    let source = pluginsMap.filter( p => { return p.name === 'Source'; });
-    let transform = pluginsMap.filter( p => { return p.name === 'Transform'; });
-    let sink = pluginsMap.filter( p => { return p.name === 'Sink'; });
-    let aggregator = pluginsMap.filter( p => { return p.name === 'Aggregator'; });
+    // let source = pluginsMap.filter( p => { return p.name === 'Source'; });
+    // let transform = pluginsMap.filter( p => { return p.name === 'Transform'; });
+    // let sink = pluginsMap.filter( p => { return p.name === 'Sink'; });
+    // let aggregator = pluginsMap.filter( p => { return p.name === 'Aggregator'; });
 
-    orderedTypes.push(source[0]);
-    orderedTypes.push(transform[0]);
-    orderedTypes.push(sink[0]);
-    if (aggregator.length) {
-      orderedTypes.push(aggregator[0]);
-    }
+    // orderedTypes.push(source[0]);
+    // orderedTypes.push(transform[0]);
+    // orderedTypes.push(sink[0]);
+    // if (aggregator.length) {
+    //   orderedTypes.push(aggregator[0]);
+    // }
 
-    // Doing this so that the SidePanel does not lose the reference of the original
-    // array object.
-    angular.forEach(orderedTypes, (type, index) => {
-      pluginsMap[index] = type;
-    });
+    // // Doing this so that the SidePanel does not lose the reference of the original
+    // // array object.
+    // angular.forEach(orderedTypes, (type, index) => {
+    //   pluginsMap[index] = type;
+    // });
 
     return pluginsMap;
   }

@@ -37,7 +37,9 @@ angular.module(PKG.name + '.services')
         'source': 'batchsource',
         'sink': 'batchsink',
         'transform': 'transform',
-        'batchaggregator': 'batchaggregator'
+        'batchaggregator': 'batchaggregator',
+        'sparksink': 'sparksink',
+        'sparkcompute': 'sparkcompute'
       }
     },
     pluginConvert: {
@@ -46,7 +48,9 @@ angular.module(PKG.name + '.services')
       'realtimesource': 'source',
       'batchsink': 'sink',
       'realtimesink': 'sink',
-      'transform': 'transform'
+      'transform': 'transform',
+      'sparksink': 'sparksink',
+      'sparkcompute': 'sparkcompute'
     },
 
     'en': {

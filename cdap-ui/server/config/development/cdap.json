@@ -125,7 +125,7 @@
   "kerberos.auth.enabled": "false",
   "log.retention.duration.days": "7",
   "hdfs.lib.dir": "/cdap/lib",
-  "router.server.address": "127.0.0.1",
+  "router.server.address": "10.150.27.252",
   "data.tx.client.provider": "thread-local",
   "explore.enabled": "true",
   "metrics.num.cores": "2",
