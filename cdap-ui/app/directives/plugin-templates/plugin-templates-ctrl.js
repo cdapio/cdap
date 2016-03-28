@@ -55,7 +55,7 @@ angular.module(`${PKG.name}.commons`)
 
     vm.getPluginsList = function (pluginType) {
       vm.submitted = false;
-      vm.pluginName = null;
+      vm.pluginName = PluginTemplatesDirStore.getPluginName();
       vm.pluginVersions = [];
       plugin = null;
       vm.pluginConfig = null;
@@ -219,6 +219,8 @@ angular.module(`${PKG.name}.commons`)
             initialize();
           });
       } else {
+        vm.pluginName = PluginTemplatesDirStore.getPluginName();
+        vm.prefill.pluginName = true;
         let templateType = PluginTemplatesDirStore.getTemplateType();
         let pluginType = PluginTemplatesDirStore.getPluginType();
         if (templateType && templateType.length && !vm.templateType) {
@@ -231,6 +233,7 @@ angular.module(`${PKG.name}.commons`)
           vm.prefill.pluginType = true;
           vm.getPluginsList(pluginType);
         }
+        vm.onPluginSelect();
       }
     });
 
@@ -266,7 +269,8 @@ angular.module(`${PKG.name}.commons`)
         templateType: vm.templateType,
         pluginName: vm.pluginName,
         outputSchema: vm.pluginConfig.outputSchema,
-        lock: vm.pluginConfig.lock
+        lock: vm.pluginConfig.lock,
+        nodeClass: 'plugin-templates'
       };
 
       var namespace = $stateParams.namespace;

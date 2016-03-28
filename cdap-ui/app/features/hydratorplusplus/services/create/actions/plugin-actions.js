@@ -23,6 +23,9 @@ class HydratorPlusPlusPluginActions {
     this.mySettings = mySettings;
   }
 
+  reset() {
+    this.dispatcher.dispatch('onReset');
+  }
   fetchExtensions(params) {
     this.api
         .fetchExtensions(params)

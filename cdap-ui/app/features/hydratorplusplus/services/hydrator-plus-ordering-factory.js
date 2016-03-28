@@ -39,7 +39,9 @@ function HydratorPlusPlusOrderingFactory() {
   }
 
   function orderPluginTypes (pluginsMap) {
-
+    if (!pluginsMap.length) {
+      return pluginsMap;
+    }
     let orderedTypes = [];
 
     let source = pluginsMap.filter( p => { return p.name === 'Source'; });

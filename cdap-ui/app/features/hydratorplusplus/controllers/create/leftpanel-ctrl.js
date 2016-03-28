@@ -42,7 +42,7 @@ class HydratorPlusPlusLeftPanelCtrl {
     this.artifacts = rArtifacts;
     let configStoreArtifact = this.HydratorPlusPlusConfigStore.getArtifact();
     this.selectedArtifact = rArtifacts.filter( ar => ar.name === configStoreArtifact.name)[0];
-
+    this.artifactToRevert = this.selectedArtifact;
     this.HydratorPlusPlusPluginActions.fetchExtensions({
       namespace: $stateParams.namespace,
       pipelineType: this.selectedArtifact.name,
@@ -50,12 +50,14 @@ class HydratorPlusPlusLeftPanelCtrl {
       scope: this.$scope
     });
 
-    this.HydratorPlusPlusLeftPanelStore.registerOnChangeListener(() => {
+    this.HydratorPlusPlusPluginActions.fetchTemplates({namespace: this.$stateParams.namespace});
+    this.HydratorPlusPlusLeftPanelStore.registerOnChangeListener( () => {
       let extensions = this.HydratorPlusPlusLeftPanelStore.getExtensions();
       if (!angular.isArray(extensions)) {
         return;
       }
-      extensions.forEach( ext => {
+
+      extensions.forEach( (ext) => {
         let isPluginAlreadyExist = (ext) => {
           return this.pluginsMap.filter( pluginObj => pluginObj.name === this.HydratorPlusPlusOrderingFactory.getPluginTypeDisplayName(ext));
         };
@@ -72,28 +74,13 @@ class HydratorPlusPlusLeftPanelCtrl {
             scope: this.$scope
           };
           this.HydratorPlusPlusPluginActions.fetchPlugins(ext, params);
-          this.HydratorPlusPlusPluginActions.fetchTemplates(params);
         } else {
           this.pluginsMap
               .filter( pluginObj => pluginObj.name === this.HydratorPlusPlusOrderingFactory.getPluginTypeDisplayName(ext))
               .forEach( matchedObj => {
-                let addPlugin = {
-                  name: 'Plugin Template',
-                  icon: 'fa-plus',
-                  nodeClass: 'add-plugin-template',
-                  nodeType: 'ADDPLUGINTEMPLATE',
-                  templateType: this.selectedArtifact.name
-                };
-                let getPluginTemplateNode = (type) => {
-                  return [
-                    angular
-                      .extend(
-                        { pluginType: type },
-                        addPlugin
-                      )
-                  ]
-                  .concat(this.HydratorPlusPlusLeftPanelStore.getPlugins(ext))
-                  .concat(this.HydratorPlusPlusLeftPanelStore.getPluginTemplates(ext));
+                let getPluginTemplateNode = (ext) => {
+                  return (this.HydratorPlusPlusLeftPanelStore.getPlugins(ext) || [])
+                         .concat(this.HydratorPlusPlusLeftPanelStore.getPluginTemplates(ext));
                 };
                 matchedObj.plugins = getPluginTemplateNode(ext);
               });
@@ -103,14 +90,15 @@ class HydratorPlusPlusLeftPanelCtrl {
     });
 
     this.$uibModal = $uibModal;
+    this.$scope.$on('$destroy', () => {
+      this.HydratorPlusPlusPluginActions.reset();
+    });
   }
 
   onArtifactChange() {
-    console.log('On Artifact baslasduas');
     this._checkAndShowConfirmationModalOnDirtyState()
       .then(saveState => {
         if (saveState) {
-          console.log('setting1: ', this.selectedArtifact);
           this.selectedArtifact = this.artifactToRevert;
         } else {
           this.$state.go('hydratorplusplus.create', {
@@ -251,8 +239,8 @@ class HydratorPlusPlusLeftPanelCtrl {
   }
   onLeftSidePanelItemClicked(event, node) {
     event.stopPropagation();
-    if (node.nodeType === 'ADDPLUGINTEMPLATE') {
-      this.createPluginTemplate(node, 'create');
+    if (node.action === 'createTemplate') {
+      this.createPluginTemplate(node.contentData, 'create');
     } else if(node.action === 'deleteTemplate') {
       this.deletePluginTemplate(node.contentData);
     } else if(node.action === 'editTemplate') {
@@ -290,11 +278,11 @@ class HydratorPlusPlusLeftPanelCtrl {
       .rendered
       .then(() => {
         this.PluginTemplatesDirActions.init({
-          templateType: node.templateType,
-          pluginType: node.pluginType,
+          templateType: node.templateType || this.selectedArtifact.name,
+          pluginType: node.pluginType || node.type,
           mode: mode === 'edit'? 'edit': 'create',
           templateName: node.pluginTemplate,
-          pluginName: node.pluginName
+          pluginName: node.pluginName || node.name
         });
       });
   }

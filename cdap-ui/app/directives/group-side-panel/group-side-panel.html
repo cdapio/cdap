@@ -26,6 +26,9 @@
           ng-style="MySidePanel.openedGroup === group.name && {height: MySidePanel.groupWrapperHeight}"
           ng-class="{'item-open': MySidePanel.openedGroup === group.name }">
       <div class="text-left item-heading {{group.name}}" >
+        <span class="fa"
+              ng-class="{'fa-caret-down': MySidePanel.openedGroup === group.name, 'fa-caret-right': MySidePanel.openedGroup !== group.name}">
+        </span>
         <span class="name">{{group.name | caskCapitalizeFilter}} </span>
         <div class="pull-right">
           <span class="badge" >{{group.filtered.length}}</span>
@@ -44,6 +47,7 @@
                ng-click="MySidePanel.onItemClicked($event, plugin)">
             <span ng-if="plugin.icon" class="text-center fa {{plugin.icon}}"></span>
             <span class="name">{{ (plugin.name || plugin.pluginTemplate) | myEllipsis: 15}}</span>
+            <span class="plugin-badge">T</span>
           </div>
         </div>
       </div>

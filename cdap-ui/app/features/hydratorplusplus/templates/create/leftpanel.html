@@ -13,16 +13,22 @@
   License for the specific language governing permissions and limitations under
   the License.
 -->
+<div class="left-top-section">
 
-<select class="form-control"
-        ng-change="HydratorPlusPlusLeftPanelCtrl.onArtifactChange()"
-        ng-model="HydratorPlusPlusLeftPanelCtrl.selectedArtifact"
-        ng-options="artifact as artifact.label for artifact in HydratorPlusPlusLeftPanelCtrl.artifacts | orderBy: 'label'">
-</select>
+  <select class="form-control"
+          ng-change="HydratorPlusPlusLeftPanelCtrl.onArtifactChange()"
+          ng-model="HydratorPlusPlusLeftPanelCtrl.selectedArtifact"
+          ng-options="artifact as artifact.label for artifact in HydratorPlusPlusLeftPanelCtrl.artifacts | orderBy: 'label'">
+  </select>
 
-<div class="import-section">
-  <a href="" class="btn btn-primary btn-xs" ng-click="HydratorPlusPlusLeftPanelCtrl.showTemplates()">Templates</a>
-  <a href="" class="btn btn-primary btn-xs"  ng-click="HydratorPlusPlusLeftPanelCtrl.openFileBrowser()">Import</a>
+  <div class="import-section">
+    <strong>
+      <a href="" ng-click="HydratorPlusPlusLeftPanelCtrl.showTemplates()">Templates</a>
+    </strong>
+    <strong>
+      <a href="" ng-click="HydratorPlusPlusLeftPanelCtrl.openFileBrowser()">Import</a>
+    </strong>
+  </div>
 </div>
 <my-side-panel
   data-panel-groups="HydratorPlusPlusLeftPanelCtrl.pluginsMap"
