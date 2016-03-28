@@ -22,14 +22,17 @@ my-function-dropdown-with-alias {
         display: inline-block;
         width: 46%;
       }
-     > select.form-control {
+      > select.form-control {
        margin-left: 5px;
-     }
-      > input.form-control {
-        &:only-child {
-           width: 100%;
-           display: inline-block;
-         }
+      }
+      .alias-wrapper {
+        span {
+          margin-right: 4px;
+        }
+        input.form-control {
+          width: 85%;
+          display: inline-block;
+        }
       }
     }
     [class*="col-xs-"] {
