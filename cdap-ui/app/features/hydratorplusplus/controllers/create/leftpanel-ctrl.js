@@ -15,7 +15,7 @@
  */
 
 class HydratorPlusPlusLeftPanelCtrl {
-  constructor($scope, $stateParams, rVersion, GLOBALS, HydratorPlusPlusLeftPanelStore, HydratorPlusPlusPluginActions, HydratorPlusPlusConfigStore, HydratorPlusPlusConfigActions, DAGPlusPlusFactory, DAGPlusPlusNodesActionsFactory, NonStorePipelineErrorFactory, $uibModal, myAlertOnValium, $state, $q, rArtifacts, $timeout, PluginTemplatesDirActions) {
+  constructor($scope, $stateParams, rVersion, GLOBALS, HydratorPlusPlusLeftPanelStore, HydratorPlusPlusPluginActions, HydratorPlusPlusConfigStore, HydratorPlusPlusConfigActions, DAGPlusPlusFactory, DAGPlusPlusNodesActionsFactory, NonStorePipelineErrorFactory, $uibModal, myAlertOnValium, $state, $q, rArtifacts, $timeout, PluginTemplatesDirActions, HydratorPlusPlusOrderingFactory) {
     this.$state = $state;
     this.$scope = $scope;
     this.$stateParams = $stateParams;
@@ -32,6 +32,7 @@ class HydratorPlusPlusLeftPanelCtrl {
     this.$timeout = $timeout;
     this.myAlertOnValium = myAlertOnValium;
     this.$q = $q;
+    this.HydratorPlusPlusOrderingFactory = HydratorPlusPlusOrderingFactory;
 
     this.pluginsMap = [];
     this.sourcesToVersionMap = {};
@@ -56,11 +57,11 @@ class HydratorPlusPlusLeftPanelCtrl {
       }
       extensions.forEach( ext => {
         let isPluginAlreadyExist = (ext) => {
-          return this.pluginsMap.filter( pluginObj => pluginObj.name === ext);
+          return this.pluginsMap.filter( pluginObj => pluginObj.name === this.HydratorPlusPlusOrderingFactory.getPluginTypeDisplayName(ext));
         };
         if (!isPluginAlreadyExist(ext).length) {
           this.pluginsMap.push({
-            name: ext,
+            name: this.HydratorPlusPlusOrderingFactory.getPluginTypeDisplayName(ext),
             plugins: []
           });
           let params = {
@@ -74,7 +75,7 @@ class HydratorPlusPlusLeftPanelCtrl {
           this.HydratorPlusPlusPluginActions.fetchTemplates(params);
         } else {
           this.pluginsMap
-              .filter( pluginObj => pluginObj.name === ext)
+              .filter( pluginObj => pluginObj.name === this.HydratorPlusPlusOrderingFactory.getPluginTypeDisplayName(ext))
               .forEach( matchedObj => {
                 let addPlugin = {
                   name: 'Plugin Template',
@@ -98,7 +99,9 @@ class HydratorPlusPlusLeftPanelCtrl {
               });
         }
       });
+      this.pluginsMap = this.HydratorPlusPlusOrderingFactory.orderPluginTypes(this.pluginsMap);
     });
+
     this.$uibModal = $uibModal;
   }
 
@@ -338,6 +341,6 @@ class HydratorPlusPlusLeftPanelCtrl {
   }
 }
 
-HydratorPlusPlusLeftPanelCtrl.$inject = ['$scope', '$stateParams', 'rVersion', 'GLOBALS', 'HydratorPlusPlusLeftPanelStore', 'HydratorPlusPlusPluginActions', 'HydratorPlusPlusConfigStore', 'HydratorPlusPlusConfigActions', 'DAGPlusPlusFactory', 'DAGPlusPlusNodesActionsFactory', 'NonStorePipelineErrorFactory',  '$uibModal', 'myAlertOnValium', '$state', '$q', 'rArtifacts', '$timeout', 'PluginTemplatesDirActions'];
+HydratorPlusPlusLeftPanelCtrl.$inject = ['$scope', '$stateParams', 'rVersion', 'GLOBALS', 'HydratorPlusPlusLeftPanelStore', 'HydratorPlusPlusPluginActions', 'HydratorPlusPlusConfigStore', 'HydratorPlusPlusConfigActions', 'DAGPlusPlusFactory', 'DAGPlusPlusNodesActionsFactory', 'NonStorePipelineErrorFactory',  '$uibModal', 'myAlertOnValium', '$state', '$q', 'rArtifacts', '$timeout', 'PluginTemplatesDirActions', 'HydratorPlusPlusOrderingFactory'];
 angular.module(PKG.name + '.feature.hydratorplusplus')
   .controller('HydratorPlusPlusLeftPanelCtrl', HydratorPlusPlusLeftPanelCtrl);
