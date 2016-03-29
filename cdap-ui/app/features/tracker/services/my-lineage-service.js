@@ -205,8 +205,8 @@ class myLineageService {
 
     /* SETTING CONNECTIONS */
     angular.forEach(response.relations, (rel) => {
-      let isUnknownOrBoth = rel.access === 'both' || rel.access === 'unknown';
-      if (rel.access === 'read') {
+      let isUnknownOrBoth = rel.accesses.length > 1;
+      if (!isUnknownOrBoth && rel.accesses[0] === 'read') {
         let dataId = rel.data;
         let programId = rel.program;
         connections.push({
@@ -226,7 +226,7 @@ class myLineageService {
         });
       }
 
-      if (rel.access === 'write' || isUnknownOrBoth) {
+      if (rel.accesses[0] !== 'read' || isUnknownOrBoth) {
         let dataId = rel.data;
         let programId = rel.program;
         connections.push({
