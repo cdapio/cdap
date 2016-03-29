@@ -652,8 +652,7 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     path = getVersionedAPIPath(path, Constants.Gateway.API_VERSION_3_TOKEN, workflowId.getNamespace());
 
     HttpResponse response = doGet(path);
-    return readResponse(response, new TypeToken<Map<String, WorkflowNodeStateDetail>>() {
-    }.getType());
+    return readResponse(response, new TypeToken<Map<String, WorkflowNodeStateDetail>>() { }.getType());
   }
 
   @Category(XSlowTests.class)
