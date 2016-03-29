@@ -402,6 +402,47 @@ body.theme-cdap.state-hydratorplusplus {
     .bottompanel-body {
       padding: 20px 10px;
       overflow: hidden;
+
+      .engine-panel {
+        padding-left: 20px;
+
+        label {
+          font-weight: 500;
+          line-height: 21px;
+        }
+        h2 {
+          margin-top: 0;
+          .fa.fa-info-circle {
+            vertical-align: middle;
+            font-size: 16px;
+          }
+
+          .popover {
+            border-radius: 0;
+            background: #333333;
+            color: white;
+
+            .popover-content {
+              padding-top: 5px;
+            }
+            .arrow {
+              border-right-color: #333333;
+              &:after {
+                border-right-color: #333333;
+              }
+            }
+          }
+        }
+        form {
+          margin: 15px 0 0 20px;
+
+          label {
+            &:not(:first-child) {
+              margin-top: 10px;
+            }
+          }
+        }
+      }
     }
     .node-config .bottompanel-body {
       @media (min-width: @screen-lg-min) {
