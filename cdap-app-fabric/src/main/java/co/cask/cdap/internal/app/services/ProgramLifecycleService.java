@@ -160,7 +160,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
           // program doesn't exist
           throw new NotFoundException(programId);
         }
-        if (programId.getType() == ProgramType.MAPREDUCE &&
+        if ((programId.getType() == ProgramType.MAPREDUCE || programId.getType() == ProgramType.SPARK) &&
           !store.getRuns(programId.toId(), ProgramRunStatus.RUNNING, 0, Long.MAX_VALUE, 1).isEmpty()) {
           // MapReduce program exists and running as a part of Workflow
           return ProgramStatus.RUNNING;
