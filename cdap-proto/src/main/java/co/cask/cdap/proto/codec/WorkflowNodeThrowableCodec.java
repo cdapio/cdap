@@ -49,10 +49,10 @@ public final class WorkflowNodeThrowableCodec extends AbstractSpecificationCodec
     JsonArray stackTraces = jsonObj.get("stackTraces").getAsJsonArray();
     StackTraceElement[] stackTraceElements = context.deserialize(stackTraces, StackTraceElement[].class);
     JsonElement cause = jsonObj.get("cause");
-    if (cause == null) {
-      return new WorkflowNodeThrowable(className, message, stackTraceElements, null);
+    WorkflowNodeThrowable dfc = null;
+    if (cause != null) {
+      dfc = context.deserialize(cause, WorkflowNodeThrowable.class);
     }
-    WorkflowNodeThrowable dfc = context.deserialize(cause, WorkflowNodeThrowable.class);
     return new WorkflowNodeThrowable(className, message, stackTraceElements, dfc);
   }
 }
