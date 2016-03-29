@@ -118,6 +118,10 @@ angular.module(PKG.name + '.feature.hydrator')
             statusMap[app.appId] = 'Running';
             vm.statusCount.running++;
           } else {
+            /**
+             * FIXME: https://github.com/caskdata/cdap/pull/5426
+             * The check for app.programId is because we don't have the artifact name here
+             **/
             myWorkFlowApi.getScheduleStatus({
               namespace: $state.params.namespace,
               appId: app.appId,
