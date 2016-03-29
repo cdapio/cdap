@@ -49,8 +49,14 @@
             <span class="name">{{ (plugin.name || plugin.pluginTemplate) | myEllipsis: 15}}</span>
             <span class="plugin-badge">T</span>
           </div>
+          <div class="no-item-message" ng-if="group.filtered.length === 0">
+            No plugins found.
+          </div>
         </div>
       </div>
+    </div>
+    <div ng-if="MySidePanel.groups.length === 0">
+      No groups found.
     </div>
   </div>
 </div>
