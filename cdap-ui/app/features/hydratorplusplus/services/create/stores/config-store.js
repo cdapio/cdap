@@ -33,6 +33,7 @@ class HydratorPlusPlusConfigStore {
     this.changeListeners = [];
     this.setDefaults();
     this.hydratorPlusPlusConfigDispatcher = HydratorPlusPlusConfigDispatcher.getDispatcher();
+    this.hydratorPlusPlusConfigDispatcher.register('onEngineChange', this.setEngine.bind(this));
     this.hydratorPlusPlusConfigDispatcher.register('onArtifactSave', this.setArtifact.bind(this));
     this.hydratorPlusPlusConfigDispatcher.register('onMetadataInfoSave', this.setMetadataInformation.bind(this));
     this.hydratorPlusPlusConfigDispatcher.register('onPluginAdd', this.setConfig.bind(this));
@@ -291,7 +292,7 @@ class HydratorPlusPlusConfigStore {
     this.emitChange();
   }
   setEngine(engine) {
-    if (this.GLOBALS.etlBatchPipelines.indexOf(this.state.config.artifact) !== -1) {
+    if (this.GLOBALS.etlBatchPipelines.indexOf(this.state.artifact.name) !== -1) {
       this.state.config.engine = engine || 'mapreduce';
     }
   }

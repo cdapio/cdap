@@ -25,35 +25,70 @@
     <ul class="nav nav-tabs slanted-tabs" role="tablist">
       <li role="presentation"
         class="text-center"
-        ng-class="{ 'active': HydratorPlusPlusSettingsCtrl.isBasic}"
+        ng-class="{ 'active': HydratorPlusPlusSettingsCtrl.activeTab === 0}"
         ng-click="HydratorPlusPlusSettingsCtrl.changeScheduler('BASIC')">
         Simple
       </li>
       <li role="presentation"
         class="text-center"
-        ng-class="{ 'active': !HydratorPlusPlusSettingsCtrl.isBasic}"
+        ng-class="{ 'active': HydratorPlusPlusSettingsCtrl.activeTab === 1}"
         ng-click="HydratorPlusPlusSettingsCtrl.changeScheduler('ADVANCE')">
         Cron Expression
+      </li>
+      <li role="presentation"
+        class="text-center"
+        ng-class="{ 'active': HydratorPlusPlusSettingsCtrl.activeTab === 2}"
+        ng-click="HydratorPlusPlusSettingsCtrl.activeTab = 2">
+        Advanced
       </li>
     </ul>
   </div>
 
   <div class="bottompanel-body">
     <div ng-if="HydratorPlusPlusSettingsCtrl.GLOBALS.etlBatchPipelines.indexOf(HydratorPlusPlusSettingsCtrl.templateType) !== -1">
-      <div class="basic-cron" ng-if="HydratorPlusPlusSettingsCtrl.isBasic">
-        <cron-selection class="select-wrapper" output="HydratorPlusPlusSettingsCtrl.cron"
-          init="HydratorPlusPlusSettingsCtrl.initialCron"></cron-selection>
-      </div>
+      <div ng-if="[0, 1].indexOf(HydratorPlusPlusSettingsCtrl.activeTab) !== -1">
+        <div class="basic-cron" ng-if="HydratorPlusPlusSettingsCtrl.isBasic">
+          <cron-selection class="select-wrapper" output="HydratorPlusPlusSettingsCtrl.cron"
+            init="HydratorPlusPlusSettingsCtrl.initialCron"></cron-selection>
+        </div>
 
-      <div class="form-group" ng-if="!HydratorPlusPlusSettingsCtrl.isBasic">
-        <div class="col-sm-10">
-          <div data-name="field"
-               class="my-widget-container"
-               data-model="HydratorPlusPlusSettingsCtrl.cron"
-               data-myconfig="{properties: {}, widget: 'schedule'}"
-               widget-container>
+        <div class="form-group" ng-if="!HydratorPlusPlusSettingsCtrl.isBasic">
+          <div class="col-sm-10">
+            <div data-name="field"
+                 class="my-widget-container"
+                 data-model="HydratorPlusPlusSettingsCtrl.cron"
+                 data-myconfig="{properties: {}, widget: 'schedule'}"
+                 widget-container>
+            </div>
           </div>
         </div>
+      </div>
+      <div ng-if="HydratorPlusPlusSettingsCtrl.activeTab === 2" class="engine-panel">
+        <h2>
+          Engine
+          <small class="fa fa-info-circle"
+                 popover-trigger="mouseenter"
+                 popover-placement="right"
+                 uib-popover="Selecting engine will change the pipeline to run as MapReduce or Spark."></small>
+        </h2>
+        <form role="form">
+          <label class="radio">
+            <input type="radio"
+              name="mapreduce"
+              value="mapreduce"
+              ng-change="HydratorPlusPlusSettingsCtrl.onEngineChange()"
+              ng-model="HydratorPlusPlusSettingsCtrl.engine">
+            MapReduce
+          </label>
+          <label class="radio">
+            <input type="radio"
+               name="spark"
+               value="spark"
+               ng-change="HydratorPlusPlusSettingsCtrl.onEngineChange()"
+               ng-model="HydratorPlusPlusSettingsCtrl.engine">
+              Spark
+          </label>
+        </form>
       </div>
     </div>
 
