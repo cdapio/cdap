@@ -60,6 +60,7 @@ import co.cask.cdap.internal.DefaultId;
 import co.cask.cdap.internal.app.Specifications;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
+import co.cask.cdap.proto.DefaultThrowable;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
@@ -221,9 +222,10 @@ public class DefaultStoreTest {
     store.setStart(sparkProgram.toId(), sparkRunId.getId(), currentTime + 60, null,
                    ImmutableMap.<String, String>of(), systemArgs);
 
-    // stop the Spark program
-    // TODO add test case for failureCause
-    store.setStop(sparkProgram.toId(), sparkRunId.getId(), currentTime + 100, ProgramRunStatus.FAILED);
+    // stop the Spark program with failure
+    NullPointerException npe = new NullPointerException("dataset not found");
+    IllegalArgumentException iae = new IllegalArgumentException("illegal argument", npe);
+    store.setStop(sparkProgram.toId(), sparkRunId.getId(), currentTime + 100, ProgramRunStatus.FAILED, iae);
 
     // stop Workflow
     store.setStop(workflowRun.getParent().toId(), workflowRun.getRun(), currentTime + 110, ProgramRunStatus.FAILED);
@@ -240,7 +242,15 @@ public class DefaultStoreTest {
     Assert.assertEquals(sparkName, nodeStateDetail.getNodeId());
     Assert.assertEquals(NodeStatus.FAILED, nodeStateDetail.getNodeStatus());
     Assert.assertEquals(sparkRunId.getId(), nodeStateDetail.getRunId());
-    Assert.assertNull(nodeStateDetail.getFailureCause());
+    DefaultThrowable failureCause = nodeStateDetail.getFailureCause();
+    Assert.assertNotNull(failureCause);
+    Assert.assertTrue("illegal argument".equals(failureCause.getMessage()));
+    Assert.assertTrue("java.lang.IllegalArgumentException".equals(failureCause.getClassName()));
+    failureCause = failureCause.getCause();
+    Assert.assertNotNull(failureCause);
+    Assert.assertTrue("dataset not found".equals(failureCause.getMessage()));
+    Assert.assertTrue("java.lang.NullPointerException".equals(failureCause.getClassName()));
+    Assert.assertNull(failureCause.getCause());
   }
 
   @Test

@@ -392,8 +392,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     CustomActionExecutor customActionExecutor = new CustomActionExecutor(workflowRunId, context,
                                                                          instantiator, classLoader);
     status.put(node.getNodeId(), node);
-    store.addWorkflowNodeState(workflowRunId, new WorkflowNodeStateDetail(node.getNodeId(), NodeStatus.RUNNING, null,
-                                                                          null));
+    store.addWorkflowNodeState(workflowRunId, new WorkflowNodeStateDetail(node.getNodeId(), NodeStatus.RUNNING));
     Throwable failureCause = null;
     try {
       customActionExecutor.execute();
@@ -406,9 +405,9 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
       store.updateWorkflowToken(workflowRunId, token);
       NodeStatus status = failureCause == null ? NodeStatus.COMPLETED : NodeStatus.FAILED;
       nodeStates.put(node.getNodeId(), new WorkflowNodeState(node.getNodeId(), status, null, failureCause));
+      DefaultThrowable defaultThrowable = failureCause == null ? null : new DefaultThrowable(failureCause);
       store.addWorkflowNodeState(workflowRunId, new WorkflowNodeStateDetail(node.getNodeId(), status, null,
-                                                                            failureCause == null ? null
-                                                                              : new DefaultThrowable(failureCause)));
+                                                                            defaultThrowable));
     }
   }
 

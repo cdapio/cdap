@@ -53,7 +53,6 @@ import co.cask.cdap.proto.codec.WorkflowActionSpecificationCodec;
 import co.cask.cdap.proto.codec.WorkflowTokenDetailCodec;
 import co.cask.cdap.proto.codec.WorkflowTokenNodeDetailCodec;
 import co.cask.cdap.proto.id.ProgramId;
-import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.test.XSlowTests;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
@@ -188,7 +187,8 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     String versionedUrl = getVersionedAPIPath(nextRunTimeUrl, Constants.Gateway.API_VERSION_3_TOKEN,
                                               program.getNamespaceId());
     HttpResponse response = doGet(versionedUrl);
-    return readResponse(response, new TypeToken<List<ScheduledRuntime>>() { }.getType());
+    return readResponse(response, new TypeToken<List<ScheduledRuntime>>() {
+    }.getType());
   }
 
   private String getLocalDatasetPath(ProgramId workflowId, String runId) {
@@ -201,7 +201,8 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
   private Map<String, DatasetSpecificationSummary> getWorkflowLocalDatasets(ProgramId workflowId, String runId)
     throws Exception {
     HttpResponse response = doGet(getLocalDatasetPath(workflowId, runId));
-    return readResponse(response, new TypeToken<Map<String, DatasetSpecificationSummary>>() { }.getType());
+    return readResponse(response, new TypeToken<Map<String, DatasetSpecificationSummary>>() {
+    }.getType());
   }
 
   private void deleteWorkflowLocalDatasets(ProgramId workflowId, String runId) throws Exception {
@@ -645,13 +646,14 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
 
   private Map<String, WorkflowNodeStateDetail> getWorkflowNodeStates(ProgramId workflowId, String runId)
     throws Exception {
-    String path = String.format("apps/%s/workflows/%s/runs/%s/nodestates", workflowId.getApplication(),
+    String path = String.format("apps/%s/workflows/%s/runs/%s/nodes/state", workflowId.getApplication(),
                                 workflowId.getProgram(), runId);
 
     path = getVersionedAPIPath(path, Constants.Gateway.API_VERSION_3_TOKEN, workflowId.getNamespace());
 
     HttpResponse response = doGet(path);
-    return readResponse(response, new TypeToken<Map<String, WorkflowNodeStateDetail>>() { }.getType());
+    return readResponse(response, new TypeToken<Map<String, WorkflowNodeStateDetail>>() {
+    }.getType());
   }
 
   @Category(XSlowTests.class)
@@ -758,6 +760,12 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
 
     Assert.assertNotNull(anotherSparkRunRecordProperties.get("workflowrunid"));
     Assert.assertEquals(workflowHistoryRuns.get(0).getPid(), anotherSparkRunRecordProperties.get("workflowrunid"));
+
+    Assert.assertEquals(workflowRunRecordProperties.get("OneMR"), oneMRHistoryRuns.get(0).getPid());
+    Assert.assertEquals(workflowRunRecordProperties.get("OneSpark"), oneSparkHistoryRuns.get(0).getPid());
+    Assert.assertEquals(workflowRunRecordProperties.get("AnotherMR"), anotherMRHistoryRuns.get(0).getPid());
+    Assert.assertEquals(workflowRunRecordProperties.get("AnotherSpark"), anotherSparkHistoryRuns.get(0).getPid());
+
 
     // Get Workflow node states
     Map<String, WorkflowNodeStateDetail> nodeStates = getWorkflowNodeStates(programId,

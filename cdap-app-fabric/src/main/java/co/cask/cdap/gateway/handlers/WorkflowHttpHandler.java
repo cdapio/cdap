@@ -57,6 +57,7 @@ import co.cask.cdap.proto.codec.ScheduleSpecificationCodec;
 import co.cask.cdap.proto.codec.WorkflowTokenDetailCodec;
 import co.cask.cdap.proto.codec.WorkflowTokenNodeDetailCodec;
 import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.proto.id.Ids;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.http.HttpResponder;
@@ -77,7 +78,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -99,6 +99,8 @@ import javax.ws.rs.QueryParam;
 @Path(Constants.Gateway.API_VERSION_3 + "/namespaces/{namespace-id}")
 public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(WorkflowHttpHandler.class);
+  private static final Type STRING_TO_NODESTATEDETAIL_MAP_TYPE
+    = new TypeToken<Map<String, WorkflowNodeStateDetail>>() { }.getType();
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(ScheduleSpecification.class, new ScheduleSpecificationCodec())
     .registerTypeAdapter(WorkflowTokenDetail.class, new WorkflowTokenDetailCodec())
@@ -346,31 +348,33 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
   }
 
   @GET
-  @Path("/apps/{app-id}/workflows/{workflow-id}/runs/{run-id}/nodestates")
+  @Path("/apps/{app-id}/workflows/{workflow-id}/runs/{run-id}/nodes/state")
   public void getWorkflowNodeStates(HttpRequest request, HttpResponder responder,
-                                       @PathParam("namespace-id") String namespaceId,
-                                       @PathParam("app-id") String applicationId,
-                                       @PathParam("workflow-id") String workflowId,
-                                       @PathParam("run-id") String runId)
+                                    @PathParam("namespace-id") String namespaceId,
+                                    @PathParam("app-id") String applicationId,
+                                    @PathParam("workflow-id") String workflowId,
+                                    @PathParam("run-id") String runId)
     throws NotFoundException, DatasetManagementException {
-    ApplicationId appId = new ApplicationId(namespaceId, applicationId);
+    ApplicationId appId = Ids.namespace(namespaceId).app(applicationId);
     ApplicationSpecification appSpec = store.getApplication(appId.toId());
     if (appSpec == null) {
       throw new ApplicationNotFoundException(appId.toId());
     }
 
-    WorkflowSpecification workflowSpec = appSpec.getWorkflows().get(workflowId);
-    ProgramRunId workflowRunId = new ProgramRunId(namespaceId, applicationId, ProgramType.WORKFLOW, workflowId, runId);
+    ProgramId workflowProgramId = appId.workflow(workflowId);
+    WorkflowSpecification workflowSpec = appSpec.getWorkflows().get(workflowProgramId.getProgram());
+
     if (workflowSpec == null) {
-      throw new ProgramNotFoundException(workflowRunId.getParent().toId());
+      throw new ProgramNotFoundException(workflowProgramId.toId());
     }
 
-    if (store.getRun(workflowRunId.getParent().toId(), runId) == null) {
+    ProgramRunId workflowRunId = workflowProgramId.run(runId);
+    if (store.getRun(workflowProgramId.toId(), runId) == null) {
       throw new NotFoundException(workflowRunId);
     }
 
     responder.sendJson(HttpResponseStatus.OK, store.getWorkflowNodeStates(workflowRunId),
-                       new TypeToken<Map<String, WorkflowNodeStateDetail>>() { }.getType());
+                       STRING_TO_NODESTATEDETAIL_MAP_TYPE);
   }
 
   @GET

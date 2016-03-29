@@ -16,13 +16,16 @@
 package co.cask.cdap.proto.codec;
 
 import co.cask.cdap.proto.DefaultThrowable;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonSerializationContext;
 
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Type;
+import java.util.Iterator;
 
 /**
  * Codec for {@link DefaultThrowable}.
@@ -35,18 +38,23 @@ public final class DefaultThrowableCodec extends AbstractSpecificationCodec<Defa
     json.addProperty("className", src.getClassName());
     json.addProperty("message", src.getMessage());
     json.add("stackTraces", context.serialize(src.getStackTraces(), StackTraceElement[].class));
-
-    DefaultThrowable cause = src.getCause();
-    if (cause != null) {
-      json.add("cause", context.serialize(cause, DefaultThrowable.class));
-    }
-
+    json.add("cause", context.serialize(src.getCause(), DefaultThrowable.class));
     return json;
   }
 
   @Override
   public DefaultThrowable deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context)
     throws JsonParseException {
-    return context.deserialize(json, DefaultThrowable.class);
+    JsonObject jsonObj = json.getAsJsonObject();
+    String className = jsonObj.get("className").getAsString();
+    String message = jsonObj.get("message").getAsString();
+    JsonArray stackTraces = jsonObj.get("stackTraces").getAsJsonArray();
+    StackTraceElement[] stackTraceElements = context.deserialize(stackTraces, StackTraceElement[].class);
+    final JsonElement cause = jsonObj.get("cause");
+    if (cause == null) {
+      return new DefaultThrowable(className, message, stackTraceElements, null);
+    }
+    DefaultThrowable dfc = context.deserialize(cause, DefaultThrowable.class);
+    return new DefaultThrowable(className, message, stackTraceElements, dfc);
   }
 }

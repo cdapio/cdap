@@ -32,10 +32,21 @@ public final class WorkflowNodeStateDetail {
 
   /**
    * Create a new instance.
-   * @param nodeId id of the node inside the Workflow
+   *
+   * @param nodeId id of the node inside a Workflow
    * @param nodeStatus status of the node
-   * @param runId run id assigned to the node, null if current node represents custom action or predicate
-   * @param failureCause cause of failure, null if execution of the node succeeded
+   */
+  public WorkflowNodeStateDetail(String nodeId, NodeStatus nodeStatus) {
+    this(nodeId, nodeStatus, null, null);
+  }
+
+  /**
+   * Create a new instance.
+   *
+   * @param nodeId id of the node inside a Workflow
+   * @param nodeStatus status of the node
+   * @param runId run id assigned to the node, {code null} if current node represents custom action or predicate
+   * @param failureCause cause of failure, {code null} if execution of the node succeeded
    */
   public WorkflowNodeStateDetail(String nodeId, NodeStatus nodeStatus, @Nullable String runId,
                                  @Nullable DefaultThrowable failureCause) {

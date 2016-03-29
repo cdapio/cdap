@@ -26,6 +26,13 @@ public final class DefaultThrowable {
   private final StackTraceElement[] stackTraces;
   private final DefaultThrowable cause;
 
+  public DefaultThrowable(String className, String message, StackTraceElement[] stackTraces, DefaultThrowable cause) {
+    this.className = className;
+    this.message = message;
+    this.stackTraces = stackTraces;
+    this.cause = cause;
+  }
+
   /**
    * Creates serializable instance from {@link Throwable}.
    */
@@ -37,11 +44,11 @@ public final class DefaultThrowable {
     this.stackTraces = new StackTraceElement[stackTraceElements.length];
     System.arraycopy(stackTraceElements, 0, stackTraces, 0, stackTraceElements.length);
 
-    cause = (throwable.getCause() == null) ? null : new DefaultThrowable(throwable.getCause());
+    this.cause = (throwable.getCause() == null) ? null : new DefaultThrowable(throwable.getCause());
   }
 
   /**
-   * Return the class name for the Throwable.
+   * Return the class name for the Throwablne.
    */
   public String getClassName() {
     return className;

@@ -81,7 +81,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
   private static final String TYPE_RUN_RECORD_STARTED = "runRecordStarted";
   private static final String TYPE_RUN_RECORD_SUSPENDED = "runRecordSuspended";
   private static final String TYPE_RUN_RECORD_COMPLETED = "runRecordCompleted";
-  private static final String TYPE_WORKFLOW_NODE_STATE = "workflowNodeState";
+  private static final String TYPE_WORKFLOW_NODE_STATE = "wns";
   private static final String TYPE_NAMESPACE = "namespace";
   private static final String WORKFLOW_TOKEN_PROPERTY_KEY = "workflowToken";
 
@@ -159,10 +159,10 @@ public class AppMetadataStore extends MetadataStoreDataset {
     MDSKey key = getProgramKeyBuilder(TYPE_WORKFLOW_NODE_STATE, workflowRunId.getParent().toId())
       .add(workflowRunId.getRun()).build();
 
-    List<WorkflowNodeStateDetail> nodeStateList = list(key, WorkflowNodeStateDetail.class);
+    List<WorkflowNodeStateDetail> nodeStateDetails = list(key, WorkflowNodeStateDetail.class);
 
     Map<String, WorkflowNodeStateDetail> nodeStates = new HashMap<>();
-    for (WorkflowNodeStateDetail nodeStateDetail : nodeStateList) {
+    for (WorkflowNodeStateDetail nodeStateDetail : nodeStateDetails) {
       nodeStates.put(nodeStateDetail.getNodeId(), nodeStateDetail);
     }
     return nodeStates;
@@ -193,10 +193,20 @@ public class AppMetadataStore extends MetadataStoreDataset {
 
     WorkflowNodeStateDetail nodeStateDetail
       = new WorkflowNodeStateDetail(workflowNodeId, ProgramRunStatus.toNodeStatus(status), pid,
-                                    failureCause == null ? null
-                                      : new DefaultThrowable(Throwables.getRootCause(failureCause)));
+                                    failureCause == null ? null : new DefaultThrowable(failureCause));
 
     write(key, nodeStateDetail);
+
+    // Get the run record of the Workflow which started this program
+    key = getWorkflowRunRecordKey(workflowRunId.getParent().toId(), workflowRunId.getRun());
+
+    RunRecordMeta record = get(key, RunRecordMeta.class);
+    if (record != null) {
+      // Update the parent Workflow run record by adding node id and program run id in the properties
+      Map<String, String> properties = record.getProperties();
+      properties.put(workflowNodeId, pid);
+      write(key, new RunRecordMeta(record, properties));
+    }
   }
 
   public void recordProgramStart(Id.Program program, String pid, long startTs, String twillRunId,
