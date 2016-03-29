@@ -65,14 +65,16 @@ angular.module(PKG.name + '.feature.hydrator')
 
       var api;
 
-      if (app.artifact.name === GLOBALS.etlBatch) {
+      if (app.artifact.name === GLOBALS.etlBatch || app.artifact.name === GLOBALS.etlDataPipeline) {
         api = myWorkFlowApi;
-        params.workflowId = 'ETLWorkflow';
+
+        var workflowId = app.artifact.name === GLOBALS.etlDataPipeline ? 'DataPipelineWorkflow' : 'ETLWorkflow';
+        params.workflowId = workflowId;
 
         batch.push({
           appId: app.id,
           programType: 'Workflow',
-          programId: 'ETLWorkflow'
+          programId: workflowId
         });
       } else {
         api = myWorkersApi;
@@ -116,11 +118,10 @@ angular.module(PKG.name + '.feature.hydrator')
             statusMap[app.appId] = 'Running';
             vm.statusCount.running++;
           } else {
-
             myWorkFlowApi.getScheduleStatus({
               namespace: $state.params.namespace,
               appId: app.appId,
-              scheduleId: 'etlWorkflow',
+              scheduleId: app.programId === 'ETLWorkflow' ? 'etlWorkflow' : 'dataPipelineSchedule',
               scope: $scope
             })
               .$promise
