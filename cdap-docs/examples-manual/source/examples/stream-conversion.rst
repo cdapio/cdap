@@ -116,14 +116,18 @@ Running the Workflow
 --------------------
 The ``StreamConversionWorkflow`` will run automatically every five minutes based on its schedule.
 To give it some data, you can use a provided script to send events to the stream, for example,
-to send 10000 events at a rate of roughly two per second::
+to send 10000 events at a rate of roughly two per second:
+
+.. tabbed-parsed-literal::
 
   $ examples/StreamConversion/bin/send-events.sh --events 10000 --delay 0.5
 
 You can now wait for the workflow to run, after which you can query the partitions in the
-*converted* dataset::
+*converted* dataset:
 
-  $ cdap-cli.sh execute \"show partitions dataset_converted\"
+.. tabbed-parsed-literal::
+
+  $ cdap-cli.sh execute "\"show partitions dataset_converted\""
   
   +============================================+
   | partition: STRING                          |
@@ -136,9 +140,11 @@ You can now wait for the workflow to run, after which you can query the partitio
 Note that in the Hive meta store, the partitions are registered with multiple dimensions rather
 than the time since the Epoch: the year, month, day of the month, hour and minute of the day.
 
-You can also query the data in the dataset. For example, to find the five most frequent body texts, issue::
+You can also query the data in the dataset. For example, to find the five most frequent body texts, issue:
 
-  $ cdap-cli.sh execute '"select count(*) as count, body from dataset_converted group by body order by count desc limit 5"'
+.. tabbed-parsed-literal::
+
+  $ cdap-cli.sh execute "\"select count(*) as count, body from dataset_converted group by body order by count desc limit 5\""
   
   +==============================+
   | count: BIGINT | body: STRING |

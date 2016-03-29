@@ -166,7 +166,7 @@ def dequote(s):
         return s[1:-1]
     return s
     
-def convert(c):
+def convert(c, state={}):
     """
     Converts a Linux command to a Windows-equivalent following a few simple rules:
 
@@ -176,51 +176,70 @@ def convert(c):
     - A lone backslash (the Linux line continuation character) becomes a '^'
     - '.sh' commands become '.bat' commands
     - removes a "-w'\n'" option from curl commands
+    - state option allows one command to pass state to the next line to be converted
 
     """
+    DEBUG = False
+#     DEBUG = True
     w = []
     text_list = c.split()
     CLI = 'cdap-cli.sh'
     CURL = 'curl'
     IN_CLI = False
     IN_CURL = False
-#     print "convert: %s" % c
+    for k in ['IN_CLI', 'IN_CURL']:
+        if not state.has_key(k):
+            state[k] = False
+    if DEBUG: print "\nconverting: %s\nstate: %s" % (c, state)
     for i, v in enumerate(c.split()):
-#         print "v:%s" % v
-        if v == CLI:
+        if DEBUG: print "v:%s" % v
+        if v == CLI or state['IN_CLI']:
             IN_CLI = True
-        if v == CURL:
+            state['IN_CLI'] =  False
+        if v == CURL or state['IN_CURL']:
             IN_CURL = True
+            state['IN_CURL'] =  False
         if i == 0 and v == '$':
             w.append('>')
-#             print "w.append('>')"
+            if DEBUG: print "w.append('>')"
             continue
         if v.endswith('.sh'):
-            w.append(v.replace('.sh', '.bat'))
-#             print "w.append(v.replace('.sh', '.bat'))"
-            continue
+            v = v.replace('.sh', '.bat')
+            if DEBUG: print "v.replace('.sh', '.bat')"
         if v == '\\':
             w.append('^')
-#             print "w.append('^')"
+            if IN_CLI:
+                state['IN_CLI'] = True
+            if IN_CURL: 
+                state['IN_CURL'] = True
+            if DEBUG: print "w.append('^')"
             continue
         if IN_CURL and (v in ["-w'\\n'", '-w"\\n"']):
             continue
         if (IN_CLI or IN_CURL) and v.startswith('"'):
-#             print "v.startswith('\"')"
+            if DEBUG: print "v.startswith('\"')"
             w.append(v)
             continue
-        if (not IN_CLI) and v.find('/') != -1:
-#             print "found slash: v: %s" % v
-#             print "converting: %s" % c
-            if IN_CURL and v.startswith('localhost'):
-#                 print "IN_CURL and v.startswith('localhost')"
-                w.append(v)
-            else:
-                w.append(v.replace('/', '\\'))
+        if v.find('/') != -1:
+            if DEBUG: print "found slash: IN_CURL: %s v: %s" % (IN_CURL, v)
+            if IN_CURL:
+                if v.startswith('localhost') or v.startswith('"localhost') or v.startswith('"http:') or v.startswith('"https:'):
+                    if DEBUG: print "IN_CURL and v.startswith..."
+                    w.append(v)
+                    continue
+            if IN_CLI:
+                if i > 0 and text_list[i-1] in ['body:file', 'artifact']:
+                    if DEBUG: print "IN_CLI and path"
+                else:
+                    w.append(v)
+                    continue
+            w.append(v.replace('/', '\\'))
         else:
-#             print "didn't find slash"
+            if DEBUG: print "didn't find slash"
             w.append(v)
-    return ' '.join(w)
+            
+    if DEBUG: print "converted to: %s\nstate: %s" % (' '.join(w), state)
+    return ' '.join(w), state
 
 
 class TabbedParsedLiteralNode(nodes.literal_block):
@@ -256,9 +275,11 @@ class TabbedParsedLiteral(ParsedLiteral):
             WINDOWS = ['', '.. Windows', '']
             old_content = []
             new_content = []
+            state = {}
             for line in self.content:
                 old_content.append(line)
-                new_content.append(convert(line))
+                new_line, state = convert(line, state)
+                new_content.append(new_line)
             content = LINUX + old_content + WINDOWS + new_content
 #             print "old_content:\n%s\nnew_content:\n%s\n" % (old_content, new_content)
 

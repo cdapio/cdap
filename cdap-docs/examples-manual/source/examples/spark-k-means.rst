@@ -102,8 +102,9 @@ There are three ways to start the Spark program:
 
    .. tabbed-parsed-literal::
 
-    $ curl -w"\n" -v  -d "{args='3'}" -X POST \
+    $ curl -w"\n" -X POST -d "{args='3'}" \
     "http://localhost:10000/v3/namespaces/default/apps/SparkKMeans/spark/SparkKMeansProgram/start"
+    
 
 Querying the Results
 --------------------
@@ -114,6 +115,7 @@ To query the *centers* ObjectStore using the ``CentersService``, you can:
   .. tabbed-parsed-literal::
 
     $ cdap-cli.sh call service SparkKMeans.CentersService GET centers/1
+    
     306.52261306532665,306.52261306532665,793.7956448911223
 
 - Send a query via an HTTP request using the ``curl`` command. For example:

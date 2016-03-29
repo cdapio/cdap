@@ -166,7 +166,8 @@ Querying the Results
 
       $ cdap-cli.sh call service |example|.\ |example-service2| POST "reqfile" body "{'time':'7/29/15 7:47 PM'}"
 
-      $ curl -w"\n" -X POST -d "{'time':'7/29/15 7:47 PM'}" "http://localhost:10000/v3/namespaces/default/apps/|example|/services/|example-service2|/methods/reqfile"
+      $ curl -w"\n" -X POST -d "{'time':'7/29/15 7:47 PM'}" \
+      "http://localhost:10000/v3/namespaces/default/apps/|example|/services/|example-service2|/methods/reqfile"
 
   A possible successful response::
 

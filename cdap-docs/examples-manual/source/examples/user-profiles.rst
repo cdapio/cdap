@@ -121,9 +121,11 @@ Re-build the Application with Column-level Conflict Detection
 -------------------------------------------------------------
 - Stop the application's flow and service (as described `below <#stopping-and-removing-the-application>`__).
 - Delete the ``profiles`` dataset, either through the CDAP Command Line Interface or
-  by making a ``curl`` call::
+  by making a ``curl`` call:
+  
+  .. tabbed-parsed-literal::
 
-    $ curl -w'\n' -v localhost:10000/v3/namespaces/default/data/datasets/profiles -X DELETE
+    $ curl -w"\n" -X DELETE "localhost:10000/v3/namespaces/default/data/datasets/profiles"
 
 - Now, rebuild the application, setting the ``Table.PROPERTY_CONFLICT_LEVEL`` back to its
   original value, ``ConflictDetection.COLUMN.name()``.
@@ -135,13 +137,17 @@ If a ``profiles`` dataset has been created from an earlier deployment of the app
 running of the example, it needs to be removed before the next deployment, so that it is created
 with the correct properties.
 
-To delete the ``profiles`` dataset, either use the CDAP Command Line Interface::
+To delete the ``profiles`` dataset, either use the CDAP Command Line Interface:
+
+.. tabbed-parsed-literal::
 
   $ cdap-cli.sh delete dataset instance profiles
 
-or by making a ``curl`` call::
+or by making a ``curl`` call:
 
-  $ curl -w'\n' -X DELETE 'http://localhost:10000/v3/namespaces/default/data/datasets/profiles'
+.. tabbed-parsed-literal::
+
+  $ curl -w"\n" -X DELETE "http://localhost:10000/v3/namespaces/default/data/datasets/profiles"
   
 Then re-deploy the application.
 
@@ -161,7 +167,9 @@ Then re-deploy the application.
 
 Populate the ``profiles`` Table
 -------------------------------
-Populate the ``profiles`` table with users using a script. From the Standalone CDAP SDK directory, use::
+Populate the ``profiles`` table with users using a script. From the Standalone CDAP SDK directory, use:
+
+.. tabbed-parsed-literal::
 
   $ ./examples/UserProfiles/bin/add-users.sh
 
@@ -170,11 +178,15 @@ Create a Conflict
 Now, from two different terminals, run the following commands concurrently
 (they are set to run for a maximum of 100 seconds):
 
-- To randomly update the time of last login for users::
+- To randomly update the time of last login for users:
+
+  .. tabbed-parsed-literal::
 
     $ ./examples/UserProfiles/bin/update-login.sh
     
 - To generate random user activity events and send them to the stream::
+
+  .. tabbed-parsed-literal::
 
     $ ./examples/UserProfiles/bin/send-events.sh
 
