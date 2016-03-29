@@ -71,6 +71,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
@@ -556,7 +557,31 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
 
     // Wait for workflow to finish
     wfManager.waitForFinish(1, TimeUnit.MINUTES);
+    Map<String, String> workflowMetricsContext = new HashMap<>();
+    workflowMetricsContext.put(Constants.Metrics.Tag.NAMESPACE, testSpace.getId());
+    workflowMetricsContext.put(Constants.Metrics.Tag.APP, applicationManager.getInfo().getName());
+    workflowMetricsContext.put(Constants.Metrics.Tag.WORKFLOW, WorkflowAppWithLocalDatasets.WORKFLOW_NAME);
+    workflowMetricsContext.put(Constants.Metrics.Tag.RUN_ID, runId);
 
+
+    Map<String, String> writerContext = new HashMap<>(workflowMetricsContext);
+    writerContext.put(Constants.Metrics.Tag.NODE,
+                      WorkflowAppWithLocalDatasets.LocalDatasetWriter.class.getSimpleName());
+
+    Assert.assertEquals(2, getMetricsManager().getTotalMetric(writerContext, "user.num.lines"));
+
+    Map<String, String> sparkMetricsContext = new HashMap<>(workflowMetricsContext);
+    sparkMetricsContext.put(Constants.Metrics.Tag.NODE, "JavaSparkCSVToSpaceConverter");
+    Assert.assertEquals(2, getMetricsManager().getTotalMetric(sparkMetricsContext, "user.num.lines"));
+
+    Map<String, String> mrMetricsContext = new HashMap<>(workflowMetricsContext);
+    mrMetricsContext.put(Constants.Metrics.Tag.NODE, "WordCount");
+    Assert.assertEquals(7, getMetricsManager().getTotalMetric(mrMetricsContext, "user.num.words"));
+
+    Map<String, String> readerContext = new HashMap<>(workflowMetricsContext);
+    readerContext.put(Constants.Metrics.Tag.NODE,
+                      WorkflowAppWithLocalDatasets.LocalDatasetReader.class.getSimpleName());
+    Assert.assertEquals(6, getMetricsManager().getTotalMetric(readerContext, "user.unique.words"));
     return runId;
   }
 

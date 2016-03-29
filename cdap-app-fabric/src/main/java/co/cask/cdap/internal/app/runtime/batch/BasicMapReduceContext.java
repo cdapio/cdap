@@ -30,6 +30,7 @@ import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.api.plugin.Plugin;
 import co.cask.cdap.app.metrics.ProgramUserMetrics;
+import co.cask.cdap.app.metrics.WorkflowMetrics;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.common.conf.Constants;
@@ -73,7 +74,8 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
   private final MapReduceSpecification spec;
   private final LoggingContext loggingContext;
   private final WorkflowProgramInfo workflowProgramInfo;
-  private final Metrics userMetrics;
+  private final MetricsContext programMetricsContext;
+  private final MetricsContext workFlowMetricsContext;
   private final Map<String, Plugin> plugins;
   private final Map<String, OutputFormatProvider> outputFormatProviders;
   private final TransactionContext txContext;
@@ -103,12 +105,8 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
           getMetricsCollector(program, runId.getId(), metricsCollectionService),
           dsFramework, txClient, discoveryServiceClient, false, pluginInstantiator);
     this.workflowProgramInfo = workflowProgramInfo;
-
-    if (metricsCollectionService != null) {
-      this.userMetrics = new ProgramUserMetrics(getProgramMetrics());
-    } else {
-      this.userMetrics = null;
-    }
+    this.programMetricsContext = getProgramMetrics();
+    this.workFlowMetricsContext = getWorkflowMetricsContext(workflowProgramInfo, program, metricsCollectionService);
     this.loggingContext = createLoggingContext(program.getId(), runId);
     this.spec = spec;
     this.mapperResources = spec.getMapperResources();
@@ -331,7 +329,11 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
 
   @Override
   public Metrics getMetrics() {
-    return userMetrics;
+    if (workFlowMetricsContext == null) {
+      return new ProgramUserMetrics(programMetricsContext);
+    } else {
+      return new WorkflowMetrics(programMetricsContext, workFlowMetricsContext);
+    }
   }
 
   public LoggingContext getLoggingContext() {
@@ -387,8 +389,8 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
     if (datasetName.startsWith(Constants.Stream.URL_PREFIX)) {
       StreamBatchReadable streamBatchReadable = new StreamBatchReadable(URI.create(datasetName));
       Input input = Input.of(streamBatchReadable.getStreamName(),
-                          new StreamInputFormatProvider(getProgram().getId().getNamespace(),
-                                                        streamBatchReadable, streamAdmin));
+                             new StreamInputFormatProvider(getProgram().getId().getNamespace(),
+                                                           streamBatchReadable, streamAdmin));
       return (Input.InputFormatProviderInput) input.alias(originalAlias);
     }
     DatasetInputFormatProvider datasetInputFormatProvider =
@@ -401,5 +403,20 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
                                                         Map<String, String> datasetArgs,
                                                         @Nullable List<Split> splits) {
     return createInput((Input.DatasetInput) Input.ofDataset(datasetName, datasetArgs, splits)).getInputFormatProvider();
+  }
+
+  @Nullable
+  private MetricsContext getWorkflowMetricsContext(@Nullable WorkflowProgramInfo workflowProgramInfo, Program program,
+                                                   MetricsCollectionService metricsCollectionService) {
+    if (workflowProgramInfo == null) {
+      return null;
+    }
+    Map<String, String> tags = Maps.newHashMap();
+    tags.put(Constants.Metrics.Tag.NAMESPACE, program.getNamespaceId());
+    tags.put(Constants.Metrics.Tag.APP, program.getApplicationId());
+    tags.put(Constants.Metrics.Tag.WORKFLOW, workflowProgramInfo.getName());
+    tags.put(Constants.Metrics.Tag.RUN_ID, workflowProgramInfo.getRunId().getId());
+    tags.put(Constants.Metrics.Tag.NODE, workflowProgramInfo.getNodeId());
+    return metricsCollectionService.getContext(tags);
   }
 }
