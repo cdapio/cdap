@@ -74,7 +74,7 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
   private final MapReduceSpecification spec;
   private final LoggingContext loggingContext;
   private final WorkflowProgramInfo workflowProgramInfo;
-  private final MetricsContext userMetricsContext;
+  private final MetricsContext programMetricsContext;
   private final MetricsContext workFlowMetricsContext;
   private final Map<String, Plugin> plugins;
   private final Map<String, OutputFormatProvider> outputFormatProviders;
@@ -105,7 +105,7 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
           getMetricsCollector(program, runId.getId(), metricsCollectionService),
           dsFramework, txClient, discoveryServiceClient, false, pluginInstantiator);
     this.workflowProgramInfo = workflowProgramInfo;
-    this.userMetricsContext = getProgramMetrics();
+    this.programMetricsContext = getProgramMetrics();
     this.workFlowMetricsContext = getWorkflowMetricsContext(workflowProgramInfo, program, metricsCollectionService);
     this.loggingContext = createLoggingContext(program.getId(), runId);
     this.spec = spec;
@@ -330,9 +330,9 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
   @Override
   public Metrics getMetrics() {
     if (workFlowMetricsContext == null) {
-      return new ProgramUserMetrics(userMetricsContext);
+      return new ProgramUserMetrics(programMetricsContext);
     } else {
-      return new WorkflowMetrics(userMetricsContext, workFlowMetricsContext);
+      return new WorkflowMetrics(programMetricsContext, workFlowMetricsContext);
     }
   }
 
@@ -416,6 +416,7 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
     tags.put(Constants.Metrics.Tag.APP, program.getApplicationId());
     tags.put(Constants.Metrics.Tag.WORKFLOW, workflowProgramInfo.getName());
     tags.put(Constants.Metrics.Tag.RUN_ID, workflowProgramInfo.getRunId().getId());
+    tags.put(Constants.Metrics.Tag.NODE, workflowProgramInfo.getNodeId());
     return metricsCollectionService.getContext(tags);
   }
 }

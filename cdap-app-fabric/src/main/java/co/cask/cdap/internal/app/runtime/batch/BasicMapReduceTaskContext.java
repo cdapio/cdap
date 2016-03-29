@@ -78,7 +78,7 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
 
   private final MapReduceSpecification spec;
   private final WorkflowProgramInfo workflowProgramInfo;
-  private final MetricsContext userMetricsContext;
+  private final MetricsContext programMetricsContext;
   private final MetricsContext workFlowMetricsContext;
   private final Map<String, Plugin> plugins;
   private final Transaction transaction;
@@ -111,7 +111,7 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
           dsFramework, txClient, discoveryServiceClient, false, pluginInstantiator);
     this.workflowProgramInfo = workflowProgramInfo;
     this.transaction = transaction;
-    this.userMetricsContext = getProgramMetrics();
+    this.programMetricsContext = getProgramMetrics();
     this.workFlowMetricsContext = getWorkflowMetricsContext(workflowProgramInfo, program, metricsCollectionService);
     this.spec = spec;
     this.plugins = Maps.newHashMap(program.getApplicationSpecification().getPlugins());
@@ -225,15 +225,16 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
     tags.put(Constants.Metrics.Tag.APP, program.getApplicationId());
     tags.put(Constants.Metrics.Tag.WORKFLOW, workflowProgramInfo.getName());
     tags.put(Constants.Metrics.Tag.RUN_ID, workflowProgramInfo.getRunId().getId());
+    tags.put(Constants.Metrics.Tag.NODE, workflowProgramInfo.getNodeId());
     return metricsCollectionService.getContext(tags);
   }
 
   @Override
   public Metrics getMetrics() {
     if (workFlowMetricsContext == null) {
-      return new ProgramUserMetrics(userMetricsContext);
+      return new ProgramUserMetrics(programMetricsContext);
     } else {
-      return new WorkflowMetrics(userMetricsContext, workFlowMetricsContext);
+      return new WorkflowMetrics(programMetricsContext, workFlowMetricsContext);
     }
   }
 

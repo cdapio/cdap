@@ -27,6 +27,7 @@ import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
+import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.spark.AbstractSpark;
 import co.cask.cdap.api.spark.JavaSparkProgram;
 import co.cask.cdap.api.spark.SparkContext;
@@ -127,18 +128,19 @@ public class WorkflowAppWithLocalDatasets extends AbstractApplication {
   public static class LocalDatasetWriter extends AbstractWorkflowAction {
 
     private static final Logger LOG = LoggerFactory.getLogger(LocalDatasetWriter.class);
+    private Metrics metrics;
 
     @Override
     public void run() {
       String inputPath = getContext().getRuntimeArguments().get("input.path");
       FileSet fileSetDataset = getContext().getDataset(CSV_FILESET_DATASET);
       Location inputLocation = fileSetDataset.getLocation(inputPath);
-
       try {
         try (PrintWriter writer = new PrintWriter(inputLocation.getOutputStream())) {
           writer.write("this,text,has");
           writer.println();
           writer.write("two,words,text,inside");
+          metrics.gauge("num.lines", 2);
         }
       } catch (Throwable t) {
         LOG.error("Exception occurred while running custom action ", t);
@@ -162,10 +164,11 @@ public class WorkflowAppWithLocalDatasets extends AbstractApplication {
    * Main class for the Spark program to convert comma separated file into space separated file.
    */
   public static final class SparkCSVToSpaceProgram implements JavaSparkProgram {
-
+    private static final Logger LOG = LoggerFactory.getLogger(SparkCSVToSpaceProgram.class);
     @Override
-    public void run(SparkContext context) throws Exception {
+    public void run(final SparkContext context) throws Exception {
       Map<String, String> fileSetArgs = new HashMap<>();
+      final Metrics metrics = context.getMetrics();
       FileSetArguments.addInputPath(fileSetArgs, context.getRuntimeArguments().get("input.path"));
       JavaPairRDD<LongWritable, Text> input = context.readFromDataset(CSV_FILESET_DATASET, LongWritable.class,
                                                                       Text.class, fileSetArgs);
@@ -174,6 +177,7 @@ public class WorkflowAppWithLocalDatasets extends AbstractApplication {
         @Override
         public String call(Text input) throws Exception {
           String line = input.toString();
+          metrics.count("num.lines", 1);
           return line.replaceAll(",", " ");
         }
       });
@@ -233,6 +237,7 @@ public class WorkflowAppWithLocalDatasets extends AbstractApplication {
    */
   public static class IntSumReducer extends Reducer<Text, IntWritable, byte[], byte[]> {
     private IntWritable result = new IntWritable();
+    private Metrics metrics;
 
     public void reduce(Text key, Iterable<IntWritable> values, Context context)
       throws IOException, InterruptedException {
@@ -241,6 +246,7 @@ public class WorkflowAppWithLocalDatasets extends AbstractApplication {
         sum += val.get();
       }
       result.set(sum);
+      metrics.count("num.words", sum);
       context.write(Bytes.toBytes(key.toString()), Bytes.toBytes(String.valueOf(result.get())));
     }
   }
@@ -250,6 +256,7 @@ public class WorkflowAppWithLocalDatasets extends AbstractApplication {
    */
   public static class LocalDatasetReader extends AbstractWorkflowAction {
     private static final Logger LOG = LoggerFactory.getLogger(LocalDatasetReader.class);
+    private Metrics metrics;
 
     @UseDataSet("wordcount")
     private KeyValueTable wordCount;
@@ -275,6 +282,7 @@ public class WorkflowAppWithLocalDatasets extends AbstractApplication {
           scanner.close();
         }
         result.write("UniqueWordCount", String.valueOf(uniqueWordCount));
+        metrics.gauge("unique.words", uniqueWordCount);
         File doneFile = new File(getContext().getRuntimeArguments().get("done.file"));
         while (!doneFile.exists()) {
           TimeUnit.MILLISECONDS.sleep(50);

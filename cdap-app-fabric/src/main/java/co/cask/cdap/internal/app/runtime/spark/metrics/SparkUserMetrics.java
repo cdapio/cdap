@@ -37,7 +37,7 @@ public final class SparkUserMetrics implements Metrics, Externalizable {
   private final Metrics delegate;
 
   public SparkUserMetrics() {
-    this(SparkContextProvider.getSparkContext().getUserMetrics());
+    this(SparkContextProvider.getSparkContext().getProgramWorkflowMetrics());
   }
 
   public SparkUserMetrics(Metrics delegate) {

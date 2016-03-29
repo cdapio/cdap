@@ -37,7 +37,6 @@ import co.cask.cdap.api.stream.StreamEventDecoder;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.metrics.ProgramUserMetrics;
 import co.cask.cdap.app.metrics.WorkflowMetrics;
-import co.cask.cdap.app.program.Program;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
@@ -80,15 +79,14 @@ public abstract class AbstractSparkContext implements SparkContext, Closeable {
   private final long logicalStartTime;
   private final Map<String, String> runtimeArguments;
   private final DiscoveryServiceClient discoveryServiceClient;
-  private final MetricsContext metricsContext;
+  private final MetricsContext programMetricsContext;
+  private final MetricsContext workFlowMetricsContext;
   private final LoggingContext loggingContext;
   private final PluginInstantiator pluginInstantiator;
   private final Admin admin;
   protected final SystemDatasetInstantiator systemDatasetInstantiator;
   private final WorkflowProgramInfo workflowProgramInfo;
-  private final MetricsContext workFlowMetricsContext;
   private final MetricsCollectionService metricsCollectionService;
-
 
   private Resources executorResources;
   private SparkConf sparkConf;
@@ -109,7 +107,7 @@ public abstract class AbstractSparkContext implements SparkContext, Closeable {
     this.programClassLoader = programClassLoader;
     this.discoveryServiceClient = discoveryServiceClient;
     this.metricsCollectionService = metricsCollectionService;
-    this.metricsContext = metricsContext;
+    this.programMetricsContext = metricsContext;
     this.workFlowMetricsContext = getWorkflowMetricsContext(workflowProgramInfo, programId, metricsCollectionService);
     this.loggingContext = loggingContext;
     this.executorResources = Objects.firstNonNull(specification.getExecutorResources(), new Resources());
@@ -157,7 +155,7 @@ public abstract class AbstractSparkContext implements SparkContext, Closeable {
 
   @Override
   public Metrics getMetrics() {
-    return new SparkUserMetrics(getUserMetrics());
+    return new SparkUserMetrics(getProgramWorkflowMetrics());
   }
 
   @Override
@@ -261,19 +259,19 @@ public abstract class AbstractSparkContext implements SparkContext, Closeable {
    * Returns the underlying {@link Metrics} instance for emitting user metrics. The returned instance is
    * not serializable and shouldn't be exposed to user program directly.
    */
-  public Metrics getUserMetrics() {
+  public Metrics getProgramWorkflowMetrics() {
     if (workFlowMetricsContext != null) {
-      return new WorkflowMetrics(metricsContext, workFlowMetricsContext);
+      return new WorkflowMetrics(programMetricsContext, workFlowMetricsContext);
     } else {
-      return new ProgramUserMetrics(metricsContext);
+      return new ProgramUserMetrics(programMetricsContext);
     }
   }
 
   /**
    * Returns the {@link MetricsContext} for this context.
    */
-  public MetricsContext getMetricsContext() {
-    return metricsContext;
+  public MetricsContext getProgramMetricsContext() {
+    return programMetricsContext;
   }
 
   /**
@@ -359,6 +357,7 @@ public abstract class AbstractSparkContext implements SparkContext, Closeable {
     tags.put(Constants.Metrics.Tag.APP, program.getApplicationId());
     tags.put(Constants.Metrics.Tag.WORKFLOW, workflowProgramInfo.getName());
     tags.put(Constants.Metrics.Tag.RUN_ID, workflowProgramInfo.getRunId().getId());
+    tags.put(Constants.Metrics.Tag.NODE, workflowProgramInfo.getNodeId());
     return metricsCollectionService.getContext(tags);
   }
 

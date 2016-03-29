@@ -150,7 +150,7 @@ public class ExecutionSparkContext extends AbstractSparkContext {
     this.streamAdmin = streamAdmin;
     this.datasetCache = new SingleThreadDatasetCache(systemDatasetInstantiator, txClient,
                                                      new NamespaceId(programId.getNamespace().getId()),
-                                                     runtimeArguments, getMetricsContext(), null);
+                                                     runtimeArguments, getProgramMetricsContext(), null);
     this.localizedResources = localizedResources;
   }
 
