@@ -28,7 +28,7 @@ public final class WorkflowNodeStateDetail {
   private final String nodeId;
   private final NodeStatus nodeStatus;
   private final String runId;
-  private final DefaultThrowable failureCause;
+  private final WorkflowNodeThrowable failureCause;
 
   /**
    * Create a new instance.
@@ -49,7 +49,7 @@ public final class WorkflowNodeStateDetail {
    * @param failureCause cause of failure, {code null} if execution of the node succeeded
    */
   public WorkflowNodeStateDetail(String nodeId, NodeStatus nodeStatus, @Nullable String runId,
-                                 @Nullable DefaultThrowable failureCause) {
+                                 @Nullable WorkflowNodeThrowable failureCause) {
     this.nodeId = nodeId;
     this.nodeStatus = nodeStatus;
     this.runId = runId;
@@ -83,7 +83,7 @@ public final class WorkflowNodeStateDetail {
    * Return the detail message string for failure if node execution failed, otherwise {@code null} is returned.
    */
   @Nullable
-  public DefaultThrowable getFailureCause() {
+  public WorkflowNodeThrowable getFailureCause() {
     return failureCause;
   }
 }

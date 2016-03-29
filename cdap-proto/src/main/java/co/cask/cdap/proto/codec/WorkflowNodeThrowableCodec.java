@@ -15,7 +15,7 @@
  */
 package co.cask.cdap.proto.codec;
 
-import co.cask.cdap.proto.DefaultThrowable;
+import co.cask.cdap.proto.WorkflowNodeThrowable;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonElement;
@@ -23,38 +23,36 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonSerializationContext;
 
-import java.lang.reflect.Constructor;
 import java.lang.reflect.Type;
-import java.util.Iterator;
 
 /**
- * Codec for {@link DefaultThrowable}.
+ * Codec for {@link WorkflowNodeThrowable}.
  */
-public final class DefaultThrowableCodec extends AbstractSpecificationCodec<DefaultThrowable> {
+public final class WorkflowNodeThrowableCodec extends AbstractSpecificationCodec<WorkflowNodeThrowable> {
 
   @Override
-  public JsonElement serialize(DefaultThrowable src, Type typeOfSrc, JsonSerializationContext context) {
+  public JsonElement serialize(WorkflowNodeThrowable src, Type typeOfSrc, JsonSerializationContext context) {
     JsonObject json = new JsonObject();
     json.addProperty("className", src.getClassName());
     json.addProperty("message", src.getMessage());
     json.add("stackTraces", context.serialize(src.getStackTraces(), StackTraceElement[].class));
-    json.add("cause", context.serialize(src.getCause(), DefaultThrowable.class));
+    json.add("cause", context.serialize(src.getCause(), WorkflowNodeThrowable.class));
     return json;
   }
 
   @Override
-  public DefaultThrowable deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context)
+  public WorkflowNodeThrowable deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context)
     throws JsonParseException {
     JsonObject jsonObj = json.getAsJsonObject();
     String className = jsonObj.get("className").getAsString();
     String message = jsonObj.get("message").getAsString();
     JsonArray stackTraces = jsonObj.get("stackTraces").getAsJsonArray();
     StackTraceElement[] stackTraceElements = context.deserialize(stackTraces, StackTraceElement[].class);
-    final JsonElement cause = jsonObj.get("cause");
+    JsonElement cause = jsonObj.get("cause");
     if (cause == null) {
-      return new DefaultThrowable(className, message, stackTraceElements, null);
+      return new WorkflowNodeThrowable(className, message, stackTraceElements, null);
     }
-    DefaultThrowable dfc = context.deserialize(cause, DefaultThrowable.class);
-    return new DefaultThrowable(className, message, stackTraceElements, dfc);
+    WorkflowNodeThrowable dfc = context.deserialize(cause, WorkflowNodeThrowable.class);
+    return new WorkflowNodeThrowable(className, message, stackTraceElements, dfc);
   }
 }

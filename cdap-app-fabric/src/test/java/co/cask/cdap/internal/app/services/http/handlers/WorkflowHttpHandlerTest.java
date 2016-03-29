@@ -188,8 +188,7 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     String versionedUrl = getVersionedAPIPath(nextRunTimeUrl, Constants.Gateway.API_VERSION_3_TOKEN,
                                               program.getNamespaceId());
     HttpResponse response = doGet(versionedUrl);
-    return readResponse(response, new TypeToken<List<ScheduledRuntime>>() {
-    }.getType());
+    return readResponse(response, new TypeToken<List<ScheduledRuntime>>() { }.getType());
   }
 
   private String getLocalDatasetPath(ProgramId workflowId, String runId) {

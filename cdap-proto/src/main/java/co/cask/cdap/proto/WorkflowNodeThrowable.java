@@ -15,18 +15,29 @@
  */
 package co.cask.cdap.proto;
 
+import co.cask.cdap.proto.codec.WorkflowNodeThrowableCodec;
+
 import javax.annotation.Nullable;
 
 /**
  * Carries {@link Throwable} information in {@link WorkflowNodeStateDetail}.
  */
-public final class DefaultThrowable {
+public final class WorkflowNodeThrowable {
   private final String className;
   private final String message;
   private final StackTraceElement[] stackTraces;
-  private final DefaultThrowable cause;
+  private final WorkflowNodeThrowable cause;
 
-  public DefaultThrowable(String className, String message, StackTraceElement[] stackTraces, DefaultThrowable cause) {
+  /**
+   * This constructor is used by {@link WorkflowNodeThrowableCodec} during de-serialization.
+   *
+   * @param className the name of the Throwable
+   * @param message the message inside the Throwable
+   * @param stackTraces stack traces associated with the Throwable
+   * @param cause cause associated with the Throwable
+   */
+  public WorkflowNodeThrowable(String className, String message, StackTraceElement[] stackTraces,
+                               @Nullable WorkflowNodeThrowable cause) {
     this.className = className;
     this.message = message;
     this.stackTraces = stackTraces;
@@ -34,9 +45,11 @@ public final class DefaultThrowable {
   }
 
   /**
-   * Creates serializable instance from {@link Throwable}.
+   * This constructor is used to create serializable instance from {@link Throwable}.
+   *
+   * @param throwable the instance of Throwable to be serialize
    */
-  public DefaultThrowable(Throwable throwable) {
+  public WorkflowNodeThrowable(Throwable throwable) {
     this.className = throwable.getClass().getName();
     this.message = throwable.getMessage();
 
@@ -44,11 +57,11 @@ public final class DefaultThrowable {
     this.stackTraces = new StackTraceElement[stackTraceElements.length];
     System.arraycopy(stackTraceElements, 0, stackTraces, 0, stackTraceElements.length);
 
-    this.cause = (throwable.getCause() == null) ? null : new DefaultThrowable(throwable.getCause());
+    this.cause = (throwable.getCause() == null) ? null : new WorkflowNodeThrowable(throwable.getCause());
   }
 
   /**
-   * Return the class name for the Throwablne.
+   * Return the class name for the Throwable.
    */
   public String getClassName() {
     return className;
@@ -72,7 +85,7 @@ public final class DefaultThrowable {
    * Return the cause of Throwable if it is available, otherwise {@code null}.
    */
   @Nullable
-  public DefaultThrowable getCause() {
+  public WorkflowNodeThrowable getCause() {
     return cause;
   }
 }

@@ -31,12 +31,13 @@ import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.DefaultApplicationSpecification;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.workflow.BasicWorkflowToken;
-import co.cask.cdap.proto.DefaultThrowable;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.WorkflowNodeStateDetail;
+import co.cask.cdap.proto.WorkflowNodeThrowable;
+import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.Ids;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
@@ -46,7 +47,6 @@ import com.google.common.base.Function;
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
 import com.google.common.base.Stopwatch;
-import com.google.common.base.Throwables;
 import com.google.common.base.Ticker;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
@@ -61,7 +61,6 @@ import org.slf4j.LoggerFactory;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -188,17 +187,18 @@ public class AppMetadataStore extends MetadataStoreDataset {
     String workflowName = systemArgs.get(ProgramOptionConstants.WORKFLOW_NAME);
     String workflowRun = systemArgs.get(ProgramOptionConstants.WORKFLOW_RUN_ID);
 
-    ProgramRunId workflowRunId = Ids.namespace(programId.getNamespace()).app(programId.getApplication())
-      .workflow(workflowName).run(workflowRun);
+    ApplicationId appId = Ids.namespace(programId.getNamespace()).app(programId.getApplication());
+    ProgramRunId workflowRunId = appId.workflow(workflowName).run(workflowRun);
 
     // Node states will be stored with following key:
     // workflowNodeState.namespace.app.WORKFLOW.workflowName.workflowRun.workflowNodeId
     MDSKey key = getProgramKeyBuilder(TYPE_WORKFLOW_NODE_STATE, workflowRunId.getParent().toId())
       .add(workflowRun).add(workflowNodeId).build();
 
-    WorkflowNodeStateDetail nodeStateDetail
-      = new WorkflowNodeStateDetail(workflowNodeId, ProgramRunStatus.toNodeStatus(status), pid,
-                                    failureCause == null ? null : new DefaultThrowable(failureCause));
+    WorkflowNodeThrowable defaultThrowable = failureCause == null ? null : new WorkflowNodeThrowable(failureCause);
+    WorkflowNodeStateDetail nodeStateDetail = new WorkflowNodeStateDetail(workflowNodeId,
+                                                                          ProgramRunStatus.toNodeStatus(status),
+                                                                          pid, defaultThrowable);
 
     write(key, nodeStateDetail);
 
@@ -220,8 +220,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
     String workflowrunId = null;
     if (systemArgs != null && systemArgs.containsKey(ProgramOptionConstants.WORKFLOW_NAME)) {
       // Program is started by Workflow. Add row corresponding to its node state.
-      ProgramId programId = new ProgramId(program.getNamespaceId(), program.getApplicationId(), program.getType(),
-                                          program.getId());
+      ProgramId programId = program.toEntityId();
       addWorkflowNodeState(programId, pid, systemArgs, ProgramRunStatus.RUNNING, null);
       workflowrunId = systemArgs.get(ProgramOptionConstants.WORKFLOW_RUN_ID);
     }
@@ -317,8 +316,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
     }
 
     if (started.getSystemArgs() != null && started.getSystemArgs().containsKey(ProgramOptionConstants.WORKFLOW_NAME)) {
-      ProgramId programId = new ProgramId(program.getNamespaceId(), program.getApplicationId(), program.getType(),
-                                          program.getId());
+      ProgramId programId = program.toEntityId();
       addWorkflowNodeState(programId, pid, started.getSystemArgs(), runStatus, failureCause);
     }
 

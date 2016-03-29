@@ -60,12 +60,13 @@ import co.cask.cdap.internal.DefaultId;
 import co.cask.cdap.internal.app.Specifications;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
-import co.cask.cdap.proto.DefaultThrowable;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.WorkflowNodeStateDetail;
+import co.cask.cdap.proto.WorkflowNodeThrowable;
+import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.Ids;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
@@ -192,13 +193,13 @@ public class DefaultStoreTest {
     String mapReduceName = "mapReduce1";
     String sparkName = "spark1";
 
-    ProgramId mapReduceProgram = Ids.namespace(namespaceName).app(appName).mr(mapReduceName);
-    ProgramId sparkProgram = Ids.namespace(namespaceName).app(appName).spark(sparkName);
+    ApplicationId appId = Ids.namespace(namespaceName).app(appName);
+    ProgramId mapReduceProgram = appId.mr(mapReduceName);
+    ProgramId sparkProgram = appId.spark(sparkName);
 
     long currentTime = System.currentTimeMillis();
     RunId workflowRunId = RunIds.generate(currentTime);
-    ProgramRunId workflowRun = Ids.namespace(namespaceName).app(appName)
-      .workflow(workflowName).run(workflowRunId.getId());
+    ProgramRunId workflowRun = appId.workflow(workflowName).run(workflowRunId.getId());
 
     // start Workflow
     store.setStart(workflowRun.getParent().toId(), workflowRun.getRun(), currentTime);
@@ -249,7 +250,7 @@ public class DefaultStoreTest {
     Assert.assertEquals(sparkName, nodeStateDetail.getNodeId());
     Assert.assertEquals(NodeStatus.FAILED, nodeStateDetail.getNodeStatus());
     Assert.assertEquals(sparkRunId.getId(), nodeStateDetail.getRunId());
-    DefaultThrowable failureCause = nodeStateDetail.getFailureCause();
+    WorkflowNodeThrowable failureCause = nodeStateDetail.getFailureCause();
     Assert.assertNotNull(failureCause);
     Assert.assertTrue("illegal argument".equals(failureCause.getMessage()));
     Assert.assertTrue("java.lang.IllegalArgumentException".equals(failureCause.getClassName()));
