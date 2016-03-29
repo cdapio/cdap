@@ -19,6 +19,7 @@
   <button class="btn btn-default"
           ng-click="DAGPlusPlusCtrl.zoomIn()"
           uib-tooltip="Zoom In"
+          ng-if="!DAGPlusPlusCtrl.disableNodeClick"
           tooltip-append-to-body="true"
           tooltip-placement="left"
           tooltip-popup-delay="500">
@@ -27,6 +28,7 @@
 
   <button class="btn btn-default"
           ng-click="DAGPlusPlusCtrl.zoomOut()"
+          ng-if="!DAGPlusPlusCtrl.disableNodeClick"
           uib-tooltip="Zoom Out"
           tooltip-append-to-body="true"
           tooltip-placement="left"
@@ -36,7 +38,7 @@
 
   <button class="btn btn-default"
           ng-click="DAGPlusPlusCtrl.fitToScreen()"
-          ng-if="!DAGPlusPlusCtrl.isDisabled"
+          ng-if="!DAGPlusPlusCtrl.disableNodeClick"
           uib-tooltip="Fit to screen"
           tooltip-append-to-body="true"
           tooltip-placement="left"

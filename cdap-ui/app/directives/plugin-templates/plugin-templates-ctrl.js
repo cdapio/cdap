@@ -83,22 +83,7 @@ angular.module(`${PKG.name}.commons`)
       if (!vm.pluginName) { return; }
       vm.configFetched = false;
 
-      var fetchApi;
-      switch (vm.pluginType) {
-        case GLOBALS.pluginTypes[vm.templateType].source:
-          fetchApi = myPipelineApi.fetchSourceProperties;
-          break;
-        case GLOBALS.pluginTypes[vm.templateType].transform:
-          fetchApi = myPipelineApi.fetchTransformProperties;
-          break;
-        case GLOBALS.pluginTypes[vm.templateType].sink:
-          fetchApi = myPipelineApi.fetchSinkProperties;
-          break;
-      }
-
-      plugin = {
-        name: vm.pluginName
-      };
+      var fetchApi = myPipelineApi.fetchPluginProperties;
 
       var params = {
         namespace: $stateParams.namespace,
