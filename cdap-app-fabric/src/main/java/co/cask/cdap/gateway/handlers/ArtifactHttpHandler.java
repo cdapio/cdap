@@ -125,8 +125,7 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
   private final CConfiguration cConf;
 
   @Inject
-  public ArtifactHttpHandler(CConfiguration cConf,
-                             ArtifactRepository artifactRepository, NamespaceAdmin namespaceAdmin) {
+  ArtifactHttpHandler(CConfiguration cConf, ArtifactRepository artifactRepository, NamespaceAdmin namespaceAdmin) {
     this.namespaceAdmin = namespaceAdmin;
     this.artifactRepository = artifactRepository;
     this.tmpDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
@@ -136,7 +135,7 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
 
   @POST
   @Path("/namespaces/system/artifacts")
-  public void refreshSystemArtifacts(HttpRequest request, HttpResponder responder) {
+  public void refreshSystemArtifacts(HttpRequest request, HttpResponder responder) throws Exception {
     try {
       artifactRepository.addSystemArtifacts();
       responder.sendStatus(HttpResponseStatus.OK);

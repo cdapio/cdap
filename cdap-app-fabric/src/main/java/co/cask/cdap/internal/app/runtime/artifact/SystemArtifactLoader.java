@@ -23,7 +23,6 @@ import com.google.common.util.concurrent.AbstractService;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.Inject;
 
-import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -45,10 +44,7 @@ public final class SystemArtifactLoader extends AbstractService {
               artifactRepository.addSystemArtifacts();
               // if there is no exception, all good, continue on
               notifyStarted();
-            } catch (WriteConflictException e) {
-              // transient error, fail it and retry
-              notifyFailed(e);
-            } catch (IOException e) {
+            } catch (Exception e) {
               // transient error, fail it and retry
               notifyFailed(e);
             }
