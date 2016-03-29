@@ -204,9 +204,19 @@ public class LogSaverPluginTest extends KafkaTestBase {
     Set<KafkaLogProcessor> processors =
       injector.getInstance(Key.get(type, Names.named(Constants.LogSaver.MESSAGE_PROCESSORS)));
 
-    for (KafkaLogProcessor processor : processors) {
-      CheckpointManager checkpointManager = getCheckPointManager(processor);
-      Assert.assertEquals(60, checkpointManager.getCheckpoint(0).getNextOffset());
+    try {
+      for (KafkaLogProcessor processor : processors) {
+        CheckpointManager checkpointManager = getCheckPointManager(processor);
+        Assert.assertEquals(60, checkpointManager.getCheckpoint(0).getNextOffset());
+      }
+    } catch (Throwable t) {
+      final Multimap<String, String> contextMessages = getPublishedKafkaMessages();
+      LOG.info("All kafka messages: {}", contextMessages);
+      if (!LogSaverTest.isExpressive()) {
+        LOG.error("Error while reading checkpoint messages from kafka {}", t);
+      } else {
+        throw t;
+      }
     }
   }
 
@@ -229,24 +239,7 @@ public class LogSaverPluginTest extends KafkaTestBase {
     distributedLogReader.getLog(loggingContext, 0, Long.MAX_VALUE, Filter.EMPTY_FILTER, logCallback1);
     List<LogEvent> allEvents = logCallback1.getEvents();
 
-    final Multimap<String, String> contextMessages = ArrayListMultimap.create();
-    KAFKA_TESTER.getPublishedMessages(KAFKA_TESTER.getCConf().get(Constants.Logging.KAFKA_TOPIC),
-                                      ImmutableSet.of(0, 1), 60, 0, new Function<FetchedMessage, String>() {
-        @Override
-        public String apply(final FetchedMessage input) {
-          try {
-            Map.Entry<String, String> entry = convertFetchedMessage(input);
-            contextMessages.put(entry.getKey(), entry.getValue());
-          } catch (IOException e) {
-            e.printStackTrace();
-          }
-          return "";
-        }
-      });
-
-    for (Map.Entry<String, Collection<String>> entry : contextMessages.asMap().entrySet()) {
-      LOG.info("Kafka Message Count for {} is {}", entry.getKey(), entry.getValue().size());
-    }
+    final Multimap<String, String> contextMessages = getPublishedKafkaMessages();
 
     for (int i = 0; i < 60; ++i) {
       try {
@@ -255,7 +248,7 @@ public class LogSaverPluginTest extends KafkaTestBase {
                             allEvents.get(i).getLoggingEvent().getFormattedMessage());
       } catch (Throwable t) {
         if (!LogSaverTest.isExpressive()) {
-          t.printStackTrace();
+          LOG.error("Error while reading log messages from kafka {}", t);
         } else {
           // Throw exception in expressive mode
           throw t;
@@ -361,6 +354,27 @@ public class LogSaverPluginTest extends KafkaTestBase {
     Assert.assertEquals("Test log message 18 arg1 arg2", events.get(0).getLoggingEvent().getFormattedMessage());
     Assert.assertEquals("Test log message 33 arg1 arg2",
                         events.get(events.size() - 1 - (events.size() - 16)).getLoggingEvent().getFormattedMessage());
+  }
+
+  private Multimap<String, String> getPublishedKafkaMessages() throws InterruptedException {
+    final Multimap<String, String> contextMessages = ArrayListMultimap.create();
+    KAFKA_TESTER.getPublishedMessages(KAFKA_TESTER.getCConf().get(Constants.Logging.KAFKA_TOPIC),
+                                      ImmutableSet.of(0, 1), 60, 0, new Function<FetchedMessage, String>() {
+        @Override
+        public String apply(final FetchedMessage input) {
+          try {
+            Map.Entry<String, String> entry = convertFetchedMessage(input);
+            contextMessages.put(entry.getKey(), entry.getValue());
+          } catch (IOException e) {
+            LOG.error("Error while converting FetchedMessage {}", e);
+          }
+          return "";
+        }
+      });
+    for (Map.Entry<String, Collection<String>> entry : contextMessages.asMap().entrySet()) {
+      LOG.info("Kafka Message Count for {} is {}", entry.getKey(), entry.getValue().size());
+    }
+    return contextMessages;
   }
 
   private Map.Entry<String, String> convertFetchedMessage(FetchedMessage message) throws IOException {
