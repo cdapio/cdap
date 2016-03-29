@@ -69,6 +69,7 @@ final class SparkContextFactory {
                                      transaction, datasetFramework, txClient, clientContext.getDiscoveryServiceClient(),
                                      clientContext.getMetricsContext(), clientContext.getLoggingContext(),
                                      hConf, streamAdmin, localizedResources,
+                                     clientContext.getMetricsCollectionService(),
                                      clientContext.getPluginInstantiator(), clientContext.getWorkflowProgramInfo());
   }
 
