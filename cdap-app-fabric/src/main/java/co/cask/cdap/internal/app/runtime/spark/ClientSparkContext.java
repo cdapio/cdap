@@ -69,7 +69,7 @@ public final class ClientSparkContext extends AbstractSparkContext {
           runtimeArguments, discoveryServiceClient,
           createMetricsContext(metricsCollectionService, program.getId(), runId),
           createLoggingContext(program.getId(), runId),
-          datasetFramework, pluginInstantiator, workflowProgramInfo);
+          datasetFramework, metricsCollectionService, pluginInstantiator, workflowProgramInfo);
 
     NamespaceId namespaceId = program.getId().getNamespace().toEntityId();
     this.datasetCache = new SingleThreadDatasetCache(systemDatasetInstantiator, txClient, namespaceId,
