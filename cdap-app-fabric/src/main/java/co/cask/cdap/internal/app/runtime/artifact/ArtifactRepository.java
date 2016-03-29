@@ -576,7 +576,7 @@ public class ArtifactRepository {
    * @throws WriteConflictException if there was a write conflicting adding the system artifact. This shouldn't happen,
    *                                but if it does, it should be ok to retry the operation.
    */
-  public void addSystemArtifacts() throws IOException, WriteConflictException {
+  public void addSystemArtifacts() throws Exception {
 
     // scan the directory for artifact .jar files and config files for those artifacts
     List<SystemArtifactInfo> systemArtifacts = new ArrayList<>();
@@ -645,8 +645,8 @@ public class ArtifactRepository {
     }
   }
 
-  // TODO: Re-think authorization here
-  private void addSystemArtifact(SystemArtifactInfo systemArtifactInfo) throws IOException, WriteConflictException {
+  // TODO: CDAP-5455 Re-think authorization here. This can be called with a missing username in SecurityRequestContext
+  private void addSystemArtifact(SystemArtifactInfo systemArtifactInfo) throws Exception {
     String fileName = systemArtifactInfo.getArtifactFile().getName();
     try {
       Id.Artifact artifactId = systemArtifactInfo.getArtifactId();
@@ -671,13 +671,11 @@ public class ArtifactRepository {
     } catch (ArtifactAlreadyExistsException e) {
       // shouldn't happen... but if it does for some reason it's fine, it means it was added some other way already.
     } catch (ArtifactRangeNotFoundException e) {
-      LOG.warn(String.format("Could not add system artifact '%s' because it extends artifacts that do not exist.",
-                             fileName), e);
+      LOG.warn("Could not add system artifact '{}' because it extends artifacts that do not exist.", fileName, e);
     } catch (InvalidArtifactException e) {
-      LOG.warn(String.format("Could not add system artifact '%s' because it is invalid.", fileName), e);
-    } catch (Exception e) {
-      LOG.warn(String.format("Could not add system artifact '%s' because the user is not authorized to add artifacts",
-                             fileName), e);
+      LOG.warn("Could not add system artifact '{}' because it is invalid.", fileName, e);
+    } catch (UnauthorizedException e) {
+      LOG.warn("Could not add system artifact '{}' because of an authorization error.", fileName, e);
     }
   }
 
