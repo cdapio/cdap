@@ -64,7 +64,7 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
 
     this.pipelineType = HydratorPlusPlusDetailNonRunsStore.getPipelineType();
     if (GLOBALS.etlBatchPipelines.indexOf(this.pipelineType) !== -1) {
-      params = angular.copy(HydratorPlusPlusDetailRunsStore.getParams());
+      params = HydratorPlusPlusDetailRunsStore.getParams();
       params.scope = $scope;
       HydratorPlusPlusDetailActions.pollStatistics(
         HydratorPlusPlusDetailRunsStore.getApi(),
@@ -185,7 +185,7 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
           break;
         case 'Delete':
           myLoadingService.showLoadingIcon();
-          var params = angular.copy(HydratorPlusPlusDetailRunsStore.getParams());
+          var params = HydratorPlusPlusDetailRunsStore.getParams();
           params = {
             namespace: params.namespace,
             pipeline: params.app
