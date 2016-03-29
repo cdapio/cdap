@@ -37,6 +37,7 @@ import co.cask.cdap.api.stream.StreamEventDecoder;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.metrics.ProgramUserMetrics;
 import co.cask.cdap.app.metrics.WorkflowMetrics;
+import co.cask.cdap.app.program.Program;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
@@ -87,6 +88,7 @@ public abstract class AbstractSparkContext implements SparkContext, Closeable {
   protected final SystemDatasetInstantiator systemDatasetInstantiator;
   private final WorkflowProgramInfo workflowProgramInfo;
   private final MetricsCollectionService metricsCollectionService;
+
 
   private Resources executorResources;
   private SparkConf sparkConf;
@@ -259,6 +261,7 @@ public abstract class AbstractSparkContext implements SparkContext, Closeable {
    * Returns the underlying {@link Metrics} instance for emitting user metrics. The returned instance is
    * not serializable and shouldn't be exposed to user program directly.
    */
+
   public Metrics getProgramWorkflowMetrics() {
     if (workFlowMetricsContext != null) {
       return new WorkflowMetrics(programMetricsContext, workFlowMetricsContext);
