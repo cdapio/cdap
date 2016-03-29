@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.feature.hydratorplusplus')
-  .controller('HydratorPlusPlusDetailBottomPanelCtrl', function(HydratorPlusPlusBottomPanelStore , DAGPlusPlusNodesStore, $scope, PipelineDetailBottomPanelActionFactory) {
+  .controller('HydratorPlusPlusDetailBottomPanelCtrl', function(HydratorPlusPlusBottomPanelStore , DAGPlusPlusNodesStore, $scope, HydratorPlusPlusBottomPanelActions) {
     this.tabs = [
       {
         title: 'History',
@@ -49,31 +49,31 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
     this.setIsCollapsed();
     this.selectTab = function(tab) {
       this.activeTab = this.tabs[tab];
-      PipelineDetailBottomPanelActionFactory.expand();
+      HydratorPlusPlusBottomPanelActions.expand();
     };
     this.selectTab(0);
 
     this.toggleCollapse = function(expanded) {
       if(expanded) {
-        PipelineDetailBottomPanelActionFactory.collapse();
+        HydratorPlusPlusBottomPanelActions.collapse();
       } else {
-        PipelineDetailBottomPanelActionFactory.expand();
+        HydratorPlusPlusBottomPanelActions.expand();
       }
     };
     this.toggleMaximized = function(maximized) {
       if (maximized !== 2) {
-        PipelineDetailBottomPanelActionFactory.maximize();
+        HydratorPlusPlusBottomPanelActions.maximize();
       } else {
-        PipelineDetailBottomPanelActionFactory.expand();
+        HydratorPlusPlusBottomPanelActions.expand();
       }
     };
     HydratorPlusPlusBottomPanelStore.registerOnChangeListener(this.setIsCollapsed.bind(this));
-    PipelineDetailBottomPanelActionFactory.expand();
+    HydratorPlusPlusBottomPanelActions.expand();
     DAGPlusPlusNodesStore.registerOnChangeListener(function() {
       this.selectTab(5);
     }.bind(this));
 
     $scope.$on('$destroy', function() {
-      PipelineDetailBottomPanelActionFactory.reset();
+      HydratorPlusPlusBottomPanelActions.reset();
     });
   });
