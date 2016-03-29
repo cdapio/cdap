@@ -54,6 +54,7 @@ angular.module(PKG.name + '.commons')
     var canvasDragged = false;
 
     vm.isDisabled = $scope.isDisabled;
+    vm.disableNodeClick = $scope.disableNodeClick;
 
     var popovers = [];
     var nodePopovers = {};
@@ -404,20 +405,21 @@ angular.module(PKG.name + '.commons')
 
       // Making canvas draggable
       vm.secondInstance = jsPlumb.getInstance();
-      vm.secondInstance.draggable('diagram-container', {
-        stop: function (e) {
-          e.el.style.left = '0px';
-          e.el.style.top = '0px';
-          transformCanvas(e.pos[1], e.pos[0]);
-          DAGPlusPlusNodesActionsFactory.resetPluginCount();
-          DAGPlusPlusNodesActionsFactory.setCanvasPanning(vm.panning);
-        },
-        start: function () {
-          canvasDragged = true;
-          closeAllPopovers();
-        }
-      });
-
+      if (!vm.disableNodeClick) {
+        vm.secondInstance.draggable('diagram-container', {
+          stop: function (e) {
+            e.el.style.left = '0px';
+            e.el.style.top = '0px';
+            transformCanvas(e.pos[1], e.pos[0]);
+            DAGPlusPlusNodesActionsFactory.resetPluginCount();
+            DAGPlusPlusNodesActionsFactory.setCanvasPanning(vm.panning);
+          },
+          start: function () {
+            canvasDragged = true;
+            closeAllPopovers();
+          }
+        });
+      }
       vm.instance.bind('connection', addConnection);
       vm.instance.bind('connectionDetached', formatConnections);
 
