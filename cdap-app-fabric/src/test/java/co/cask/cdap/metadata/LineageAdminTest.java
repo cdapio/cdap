@@ -172,68 +172,6 @@ public class LineageAdminTest extends MetadataTestBase {
   }
 
   @Test
-  public void testLineageSimplifying() throws Exception {
-    // tests that if there's a READ and a WRITE, it gets served as a READ_WRITE
-    // also tests that UNKNOWN is ignored when a READ_WRITE is served
-
-    // Lineage for D3 -> P2 -> D2 -> P1 -> D1
-    //             |     |
-    //             |     V
-    //             |<-----
-
-    LineageStore lineageStore = new LineageStore(getTxExecFactory(), getDatasetFramework(),
-                                                 Id.DatasetInstance.from("default", "testSimpleLineage"));
-    Store store = getInjector().getInstance(Store.class);
-    MetadataStore metadataStore = getInjector().getInstance(MetadataStore.class);
-    LineageAdmin lineageAdmin = new LineageAdmin(lineageStore, store, metadataStore, new NoOpEntityValidator());
-
-    // Add accesses for D3 -> P2 -> D2 -> P1 -> D1
-    // We need to use current time here as metadata store stores access time using current time
-    Id.Run run1 = new Id.Run(program1, RunIds.generate(System.currentTimeMillis()).getId());
-    Id.Run run2 = new Id.Run(program2, RunIds.generate(System.currentTimeMillis()).getId());
-    addRuns(store, run1, run2);
-    // It is okay to use current time here since access time is ignore during assertions
-    lineageStore.addAccess(run1, dataset1, AccessType.WRITE, System.currentTimeMillis(), flowlet1);
-    lineageStore.addAccess(run1, dataset2, AccessType.READ, System.currentTimeMillis(), flowlet1);
-    lineageStore.addAccess(run1, dataset2, AccessType.UNKNOWN, System.currentTimeMillis(), flowlet1);
-
-    lineageStore.addAccess(run2, dataset2, AccessType.WRITE, System.currentTimeMillis(), flowlet2);
-    // a READ, WRITE, and UNKNOWN will be served as a READ_WRITE
-    lineageStore.addAccess(run2, dataset3, AccessType.READ, System.currentTimeMillis(), flowlet2);
-    lineageStore.addAccess(run2, dataset3, AccessType.WRITE, System.currentTimeMillis(), flowlet2);
-    lineageStore.addAccess(run2, dataset3, AccessType.UNKNOWN, System.currentTimeMillis(), flowlet2);
-
-    Lineage expectedLineage = new Lineage(
-      ImmutableSet.of(
-        new Relation(dataset1, program1, AccessType.WRITE, twillRunId(run1), toSet(flowlet1)),
-        new Relation(dataset2, program1, AccessType.READ, twillRunId(run1), toSet(flowlet1)),
-        new Relation(dataset2, program1, AccessType.UNKNOWN, twillRunId(run1), toSet(flowlet1)),
-        new Relation(dataset2, program2, AccessType.WRITE, twillRunId(run2), toSet(flowlet2)),
-        new Relation(dataset3, program2, AccessType.READ_WRITE, twillRunId(run2), toSet(flowlet2))
-      )
-    );
-
-    // Lineage for D1
-    Assert.assertEquals(expectedLineage,
-                        lineageAdmin.computeLineage(dataset1, 500, System.currentTimeMillis() + 10000, 100));
-
-    // Lineage for D2
-    Assert.assertEquals(expectedLineage,
-                        lineageAdmin.computeLineage(dataset2, 500, System.currentTimeMillis() + 10000, 100));
-
-    // Lineage for D1 for one level should be D2 -> P1 -> D1
-    Lineage oneLevelLineage = lineageAdmin.computeLineage(dataset1, 500, System.currentTimeMillis() + 10000, 1);
-
-    Assert.assertEquals(
-      ImmutableSet.of(
-        new Relation(dataset1, program1, AccessType.WRITE, twillRunId(run1), toSet(flowlet1)),
-        new Relation(dataset2, program1, AccessType.READ, twillRunId(run1), toSet(flowlet1)),
-        new Relation(dataset2, program1, AccessType.UNKNOWN, twillRunId(run1), toSet(flowlet1))
-      ),
-      oneLevelLineage.getRelations());
-  }
-
-  @Test
   public void testSimpleLoopLineage() throws Exception {
     // Lineage for D1 -> P1 -> D2 -> P2 -> D3 -> P3 -> D4
     //             |                 |
@@ -316,7 +254,10 @@ public class LineageAdminTest extends MetadataTestBase {
     lineageStore.addAccess(run1, dataset1, AccessType.WRITE, System.currentTimeMillis(), flowlet1);
 
     Lineage expectedLineage = new Lineage(
-      ImmutableSet.of(new Relation(dataset1, program1, AccessType.READ_WRITE, twillRunId(run1), toSet(flowlet1)))
+      ImmutableSet.of(
+        new Relation(dataset1, program1, AccessType.WRITE, twillRunId(run1), toSet(flowlet1)),
+        new Relation(dataset1, program1, AccessType.READ, twillRunId(run1), toSet(flowlet1))
+        )
     );
 
     Assert.assertEquals(expectedLineage, lineageAdmin.computeLineage(dataset1, 500, 20000, 100));
