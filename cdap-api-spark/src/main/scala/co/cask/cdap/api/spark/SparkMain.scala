@@ -80,7 +80,7 @@ import scala.reflect.ClassTag
   * }
   * }}}
   */
-trait SparkMain {
+trait SparkMain extends Serializable {
 
   /**
     * This method will be called when the Spark program starts.

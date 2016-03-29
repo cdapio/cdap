@@ -46,14 +46,14 @@ public class SparkRuntimeContextConfig {
   /**
    * Configuration key for boolean value to tell whether Spark program is executed on a cluster or not.
    */
-  static final String HCONF_ATTR_CLUSTER_MODE = "cdap.spark.cluster.mode";
-  static final String HCONF_ATTR_LOCAL_RESOURCES = "cdap.spark.local.resources";
+  public static final String HCONF_ATTR_CLUSTER_MODE = "cdap.spark.cluster.mode";
 
   private static final String HCONF_ATTR_APP_SPEC = "cdap.spark.app.spec";
   private static final String HCONF_ATTR_PROGRAM_ID = "cdap.spark.program.id";
   private static final String HCONF_ATTR_RUN_ID = "cdap.spark.run.id";
   private static final String HCONF_ATTR_ARGS = "cdap.spark.program.args";
   private static final String HCONF_ATTR_WORKFLOW_INFO = "cdap.spark.program.workflow.info";
+  private static final String HCONF_ATTR_LOCAL_RESOURCES = "cdap.spark.local.resources";
 
   private final Configuration hConf;
 

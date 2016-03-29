@@ -18,10 +18,11 @@ package co.cask.cdap.app.runtime.spark
 
 import java.net.URI
 import java.util.concurrent.TimeUnit
-import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.{AtomicBoolean, AtomicReference}
 
 import co.cask.cdap.api.data.batch.{BatchReadable, Split, SplitReader}
 import co.cask.cdap.api.dataset.Dataset
+import co.cask.cdap.data2.metadata.lineage.AccessType
 import co.cask.tephra.TransactionAware
 import org.apache.spark._
 import org.apache.spark.broadcast.Broadcast
@@ -52,30 +53,36 @@ class BatchReadableRDD[K: ClassTag, V: ClassTag](@transient sc: SparkContext,
     val sparkTxClient = new SparkTransactionClient(txServiceBaseURI.value)
 
     val datasetCache = SparkRuntimeContextProvider.get().getDatasetCache
-    val dataset: Dataset = datasetCache.getDataset(datasetName, arguments, false)
+    val dataset: Dataset = datasetCache.getDataset(datasetName, arguments, true, AccessType.READ)
 
-    // Get the Transaction of the dataset if it is TransactionAware
-    dataset match {
-      case txAware: TransactionAware => {
-        // Try to get the transaction for this stage. Hardcoded the timeout to 10 seconds for now
-        txAware.startTx(sparkTxClient.getTransaction(context.stageId(), 10, TimeUnit.SECONDS))
+    try {
+      // Get the Transaction of the dataset if it is TransactionAware
+      dataset match {
+        case txAware: TransactionAware => {
+          // Try to get the transaction for this stage. Hardcoded the timeout to 10 seconds for now
+          txAware.startTx(sparkTxClient.getTransaction(context.stageId(), 10, TimeUnit.SECONDS))
+        }
+        case _ => // Nothing happen
       }
-      case _ => // Nothing happen
+
+      // Creates the split reader and use it to construct the Iterator to result
+      val splitReader = dataset.asInstanceOf[BatchReadable[K, V]].createSplitReader(split)
+      splitReader.initialize(split)
+      val iterator = new SplitReaderIterator[K, V](context, splitReader, inputMetrics, () => {
+        try {
+          splitReader.close()
+        } finally {
+          dataset.close()
+        }
+      })
+
+      context.addTaskCompletionListener(context => iterator.close)
+      iterator
+    } catch {
+      case t: Throwable =>
+        dataset.close()
+        throw t
     }
-
-    // Creates the split reader and use it to construct the Iterator to result
-    val splitReader = dataset.asInstanceOf[BatchReadable[K, V]].createSplitReader(split)
-    splitReader.initialize(split)
-    val iterator = new SplitReaderIterator[K, V](context, splitReader, inputMetrics, () => {
-      try {
-        splitReader.close()
-      } finally {
-        datasetCache.releaseDataset(dataset)
-      }
-    })
-
-    context.addTaskCompletionListener(context => iterator.close)
-    iterator
   }
 
   /**
@@ -92,14 +99,9 @@ class BatchReadableRDD[K: ClassTag, V: ClassTag](@transient sc: SparkContext,
         return false
       }
       if (context.isInterrupted()) {
-        close
         throw new TaskKilledException
       }
-      val result = splitReader.nextKeyValue()
-      if (!result) {
-        close
-      }
-      result
+      splitReader.nextKeyValue()
     }
 
     override def next: (K, V) = {

@@ -23,7 +23,6 @@ import java.util.concurrent.{CountDownLatch, TimeUnit}
 
 import co.cask.cdap.api._
 import co.cask.cdap.api.app.ApplicationSpecification
-import co.cask.cdap.api.data.DatasetContext
 import co.cask.cdap.api.data.batch.{BatchWritable, DatasetOutputCommitter, OutputFormatProvider, Split}
 import co.cask.cdap.api.dataset.Dataset
 import co.cask.cdap.api.flow.flowlet.StreamEvent
@@ -34,6 +33,7 @@ import co.cask.cdap.api.workflow.WorkflowToken
 import co.cask.cdap.common.conf.ConfigurationUtil
 import co.cask.cdap.data.stream.{StreamInputFormat, StreamUtils}
 import co.cask.cdap.data2.metadata.lineage.AccessType
+import co.cask.cdap.internal.app.runtime.DefaultTaskLocalizationContext
 import co.cask.cdap.proto.Id
 import co.cask.tephra.TransactionAware
 import org.apache.hadoop.conf.Configuration
@@ -63,7 +63,7 @@ class DefaultSparkExecutionContext(runtimeContext: SparkRuntimeContext,
   // Import the companion object for static fields
   import DefaultSparkExecutionContext._
 
-  private val taskLocalizationContext = new SparkTaskLocalizationContext(localizeResources)
+  private val taskLocalizationContext = new DefaultTaskLocalizationContext(localizeResources)
   private val transactional = new SparkTransactional(runtimeContext.getTransactionSystemClient,
                                                      runtimeContext.getDatasetCache)
   private val workflowToken = Option(runtimeContext.getWorkflowInfo).map(_.getWorkflowToken)
@@ -71,7 +71,7 @@ class DefaultSparkExecutionContext(runtimeContext: SparkRuntimeContext,
   private val applicationEndLatch = new CountDownLatch(1)
 
   // Start the Spark TX service
-  sparkTxService.startAndWait();
+  sparkTxService.startAndWait()
 
   // Attach a listener to the SparkContextCache, which will in turn listening to events from SparkContext.
   SparkContextCache.addSparkListener(new SparkListener {
@@ -86,11 +86,12 @@ class DefaultSparkExecutionContext(runtimeContext: SparkRuntimeContext,
 
       sparkTransaction.fold({
         LOG.debug("Spark program={}, runId={}, jobId={} starts without transaction",
-                  runtimeContext.getProgram.getId.toEntityId, getRunId, jobId);
+                  runtimeContext.getProgram.getId.toEntityId, getRunId, jobId)
         sparkTxService.jobStarted(jobId, stageIds)
       })(info => {
-        LOG.debug("Spark program={}, runId={}, jobId={} starts with transaction {}",
-                  runtimeContext.getProgram.getId.toEntityId, getRunId, jobId, info.getTransaction);
+        LOG.debug("Spark program={}, runId={}, jobId={} starts with auto-commit={} on transaction {}",
+                  runtimeContext.getProgram.getId.toEntityId, getRunId, jobId,
+                  info.commitOnJobEnded().toString, info.getTransaction)
         sparkTxService.jobStarted(jobId, stageIds, info)
         info.onJobStarted()
       })
@@ -109,7 +110,7 @@ class DefaultSparkExecutionContext(runtimeContext: SparkRuntimeContext,
     } finally {
       sparkTxService.stopAndWait()
     }
-  };
+  }
 
   override def getApplicationSpecification: ApplicationSpecification = runtimeContext.getApplicationSpecification
 
@@ -125,7 +126,7 @@ class DefaultSparkExecutionContext(runtimeContext: SparkRuntimeContext,
 
   override def getLogicalStartTime: Long = runtimeContext.getLogicalStartTime
 
-  override def getServiceDiscoverer: ServiceDiscoverer = return new SparkServiceDiscoverer(runtimeContext)
+  override def getServiceDiscoverer: ServiceDiscoverer = new SparkServiceDiscoverer(runtimeContext)
 
   override def getMetrics: Metrics = new SparkUserMetrics(runtimeContext)
 
@@ -143,7 +144,7 @@ class DefaultSparkExecutionContext(runtimeContext: SparkRuntimeContext,
                                                      datasetName: String,
                                                      arguments: Map[String, String],
                                                      splits: Option[Iterable[_ <: Split]]): RDD[(K, V)] = {
-    new DatasetRDD[K, V](sc, createDatasetCompute, runtimeContext.getConfiguration(), datasetName, arguments, splits,
+    new DatasetRDD[K, V](sc, createDatasetCompute, runtimeContext.getConfiguration, datasetName, arguments, splits,
                          getTxServiceBaseURI(sc, sparkTxService.getBaseURI))
   }
 
@@ -165,9 +166,8 @@ class DefaultSparkExecutionContext(runtimeContext: SparkRuntimeContext,
       runtimeContext.getStreamAdmin.addAccess(new Id.Run(oldProgramId, getRunId.getId), streamId, AccessType.READ)
     }
     catch {
-      case e: Exception => {
+      case e: Exception =>
         LOG.warn("Failed to registry usage of {} -> {}", streamId, owners, e)
-      }
     }
 
     rdd.values.map(decoder)
@@ -175,10 +175,10 @@ class DefaultSparkExecutionContext(runtimeContext: SparkRuntimeContext,
 
   override def saveAsDataset[K: ClassTag, V: ClassTag](rdd: RDD[(K, V)], datasetName: String,
                                                        arguments: Map[String, String]): Unit = {
-    transactional.executeWithActiveOrLongTx(new TxRunnable {
-      override def run(context: DatasetContext) = {
+    transactional.executeWithActiveOrLongTx(new SparkTxRunnable {
+      override def run(context: SparkDatasetContext) = {
         val sc = rdd.sparkContext
-        val dataset: Dataset = context.getDataset(datasetName, arguments)
+        val dataset: Dataset = context.getDataset(datasetName, arguments, AccessType.WRITE)
         val outputCommitter = dataset match {
           case outputCommitter: DatasetOutputCommitter => Some(outputCommitter)
           case _ => None
@@ -186,28 +186,26 @@ class DefaultSparkExecutionContext(runtimeContext: SparkRuntimeContext,
 
         try {
           dataset match {
-            case outputFormatProvider: OutputFormatProvider => {
+            case outputFormatProvider: OutputFormatProvider =>
               val conf = new Configuration(runtimeContext.getConfiguration)
               ConfigurationUtil.setAll(outputFormatProvider.getOutputFormatConfiguration, conf)
               rdd.saveAsNewAPIHadoopDataset(conf)
-            }
-            case batchWritable: BatchWritable[K, V] => {
+
+            case batchWritable: BatchWritable[K, V] =>
               val txServiceBaseURI = getTxServiceBaseURI(sc, sparkTxService.getBaseURI)
               sc.runJob(rdd, createBatchWritableFunc(datasetName, arguments, txServiceBaseURI))
-            }
-            case _ => {
+
+            case _ =>
               throw new IllegalArgumentException("Dataset is neither a OutputFormatProvider nor a BatchWritable")
-            }
           }
           outputCommitter.foreach(_.onSuccess())
         } catch {
-          case t: Throwable => {
+          case t: Throwable =>
             outputCommitter.foreach(_.onFailure())
             throw t
-          }
         }
       }
-    })
+    }, false)
   }
 
   private def configureStreamInput(configuration: Configuration, streamId: Id.Stream,
@@ -236,9 +234,9 @@ class DefaultSparkExecutionContext(runtimeContext: SparkRuntimeContext,
         // It should either be using the active transaction (explicit transaction), or create a new transaction
         // but leave it open so that it will be used for all stages in same job execution and get committed when
         // the job ended.
-        transactional.executeWithActiveOrLongTx(new TxRunnable {
-          override def run(context: DatasetContext) = {
-            val dataset: Dataset = context.getDataset(datasetName, arguments)
+        transactional.executeWithActiveOrLongTx(new SparkTxRunnable {
+          override def run(context: SparkDatasetContext) = {
+            val dataset: Dataset = context.getDataset(datasetName, arguments, AccessType.READ)
             try {
               result(0) = f(dataset)
             } finally {
@@ -268,11 +266,10 @@ object DefaultSparkExecutionContext {
     this.synchronized {
       this.txServiceBaseURI match {
         case Some(uri) => uri
-        case None => {
+        case None =>
           val broadcast = sc.broadcast(baseURI)
           txServiceBaseURI = Some(broadcast)
           broadcast
-        }
       }
     }
   }
@@ -287,41 +284,44 @@ object DefaultSparkExecutionContext {
        arguments: Map[String, String],
        txServiceBaseURI: Broadcast[URI]) = (context: TaskContext, itor: Iterator[(K, V)]) => {
 
-    val sparkTxClient = new SparkTransactionClient(txServiceBaseURI.value)
-    val datasetCache = SparkRuntimeContextProvider.get().getDatasetCache
-    val dataset: Dataset = datasetCache.getDataset(datasetName, arguments)
     val outputMetrics = new BatchWritableMetrics
-
     context.taskMetrics.outputMetrics = Option(outputMetrics)
 
-    // Creates an Option[TransactionAware] if the dataset is a TransactionAware
-    val txAware = dataset match {
-      case txAware: TransactionAware => Some(txAware)
-      case _ => None
-    }
+    val sparkTxClient = new SparkTransactionClient(txServiceBaseURI.value)
+    val datasetCache = SparkRuntimeContextProvider.get().getDatasetCache
+    val dataset: Dataset = datasetCache.getDataset(datasetName, arguments, true, AccessType.WRITE)
 
-    // Try to get the transaction for this stage. Hardcoded the timeout to 10 seconds for now
-    txAware.foreach(_.startTx(sparkTxClient.getTransaction(context.stageId(), 10, TimeUnit.SECONDS)));
-
-    // Write through BatchWritable.
-    val writable = dataset.asInstanceOf[BatchWritable[K, V]]
-    var records = 0;
-    while (itor.hasNext) {
-      val pair = itor.next()
-      writable.write(pair._1, pair._2)
-      outputMetrics.incrementRecordWrite(1)
-
-      // Periodically calling commitTx to flush changes. Hardcoded to 1000 records for now
-      if (records > 1000) {
-        txAware.foreach(_.commitTx())
-        records = 0
+    try {
+      // Creates an Option[TransactionAware] if the dataset is a TransactionAware
+      val txAware = dataset match {
+        case txAware: TransactionAware => Some(txAware)
+        case _ => None
       }
-      records += 1
-    }
 
-    // Flush all writes
-    txAware.foreach(_.commitTx())
-    datasetCache.releaseDataset(dataset)
+      // Try to get the transaction for this stage. Hardcoded the timeout to 10 seconds for now
+      txAware.foreach(_.startTx(sparkTxClient.getTransaction(context.stageId(), 10, TimeUnit.SECONDS)))
+
+      // Write through BatchWritable.
+      val writable = dataset.asInstanceOf[BatchWritable[K, V]]
+      var records = 0
+      while (itor.hasNext) {
+        val pair = itor.next()
+        writable.write(pair._1, pair._2)
+        outputMetrics.incrementRecordWrite(1)
+
+        // Periodically calling commitTx to flush changes. Hardcoded to 1000 records for now
+        if (records > 1000) {
+          txAware.foreach(_.commitTx())
+          records = 0
+        }
+        records += 1
+      }
+
+      // Flush all writes
+      txAware.foreach(_.commitTx())
+    } finally {
+      dataset.close()
+    }
   }
 
   /**

@@ -22,6 +22,7 @@ import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.data.DatasetInstantiationException;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.data2.dataset2.DynamicDatasetCache;
+import co.cask.cdap.data2.metadata.lineage.AccessType;
 import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.tephra.Transaction;
 import co.cask.tephra.TransactionAware;
@@ -100,7 +101,7 @@ final class SparkTransactional implements Transactional {
    */
   @Override
   public void execute(TxRunnable runnable) throws TransactionFailureException {
-    executeLong(runnable, false);
+    executeLong(wrap(runnable), false);
   }
 
   @Nullable
@@ -108,11 +109,18 @@ final class SparkTransactional implements Transactional {
     return transactionInfos.get(key);
   }
 
-  void executeWithActiveOrLongTx(TxRunnable runnable) throws TransactionFailureException {
-    executeWithActiveOrLongTx(runnable, false);
-  }
-
-  void executeWithActiveOrLongTx(TxRunnable runnable, boolean asyncCommit) throws TransactionFailureException {
+  /**
+   * Attempts to execute the given {@link TxRunnable} with an active transaction first. If there is no active
+   * transaction, it will be executed with a new long {@link Transaction}.
+   *
+   * @param runnable The {@link TxRunnable} to be executed inside a transaction
+   * @param asyncCommit Only used if a new long {@link Transaction} is created.
+   *                    If {@code true}, the transaction will be left open and it is expected to be committed
+   *                    by external entity asynchronously after this method returns;
+   *                    if {@code false}, the transaction will be committed when the runnable returned.
+   * @throws TransactionFailureException
+   */
+  void executeWithActiveOrLongTx(SparkTxRunnable runnable, boolean asyncCommit) throws TransactionFailureException {
     if (!tryExecuteWithActiveTransaction(runnable)) {
       executeLong(runnable, asyncCommit);
     }
@@ -126,7 +134,7 @@ final class SparkTransactional implements Transactional {
    * @return {@code true} if there is an active transaction and the {@link TxRunnable} was executed
    * @throws TransactionFailureException if execute of the {@link TxRunnable} failed.
    */
-  private boolean tryExecuteWithActiveTransaction(TxRunnable runnable) throws TransactionFailureException {
+  private boolean tryExecuteWithActiveTransaction(SparkTxRunnable runnable) throws TransactionFailureException {
     try {
       TransactionalDatasetContext datasetContext = activeDatasetContext.get();
       if (datasetContext == null || !datasetContext.canUse()) {
@@ -156,7 +164,7 @@ final class SparkTransactional implements Transactional {
    *                    if {@code false}, the transaction will be committed when the runnable returned.
    *
    */
-  private void executeLong(TxRunnable runnable, boolean asyncCommit) throws TransactionFailureException {
+  private void executeLong(SparkTxRunnable runnable, boolean asyncCommit) throws TransactionFailureException {
     TransactionalDatasetContext transactionalDatasetContext = activeDatasetContext.get();
     if (transactionalDatasetContext != null) {
       try {
@@ -165,9 +173,20 @@ final class SparkTransactional implements Transactional {
                                                   + transactionalDatasetContext.getTransaction());
         }
 
-        // Wait for the completion of the active transaction. This is needed because the commit is done
-        // asynchronously through the SparkListener.
-        transactionalDatasetContext.awaitCompletion();
+        if (transactionalDatasetContext.isJobStarted()) {
+          // Wait for the completion of the active transaction. This is needed because the commit is done
+          // asynchronously through the SparkListener.
+          transactionalDatasetContext.awaitCompletion();
+        } else if (!asyncCommit) {
+          // For implicit transaction (commitOnJobEnd == true), if the job hasn't been started,
+          // we can use that transaction.
+          // If asyncCommit is false, change the transaction to be committed at the end of this method instead
+          // of on job end. This is for the case when there is an opening of implicit transaction (e.g. reduceByKey),
+          // followed by an explicit transaction.
+          transactionalDatasetContext.useSyncCommit();
+          LOG.debug("Converted implicit transaction to explicit transaction: {}",
+                    transactionalDatasetContext.getTransaction().getWritePointer());
+        }
       } catch (InterruptedException e) {
         // Don't execute the runnable. Reset the interrupt flag and return
         Thread.currentThread().interrupt();
@@ -206,6 +225,15 @@ final class SparkTransactional implements Transactional {
     }
   }
 
+  private SparkTxRunnable wrap(final TxRunnable runnable) {
+    return new SparkTxRunnable() {
+      @Override
+      public void run(SparkDatasetContext context) throws Exception {
+        runnable.run(context);
+      }
+    };
+  }
+
   /**
    * A {@link DatasetContext} to be used for the transactional execution. All {@link Dataset} instance
    * created through instance of this class will be using the same transaction.
@@ -214,13 +242,13 @@ final class SparkTransactional implements Transactional {
    * with multiple threads that drive computation concurrently within the same transaction.
    */
   @ThreadSafe
-  private final class TransactionalDatasetContext implements DatasetContext, TransactionInfo {
+  private final class TransactionalDatasetContext implements SparkDatasetContext, TransactionInfo {
 
     private final Transaction transaction;
     private final DynamicDatasetCache datasetCache;
     private final Set<Dataset> datasets;
     private final Set<Dataset> discardDatasets;
-    private final CountDownLatch completion;
+    private CountDownLatch completion;
     private volatile boolean jobStarted;
 
     private TransactionalDatasetContext(Transaction transaction,
@@ -230,6 +258,17 @@ final class SparkTransactional implements Transactional {
       this.datasets = Collections.synchronizedSet(new HashSet<Dataset>());
       this.discardDatasets = Collections.synchronizedSet(new HashSet<Dataset>());
       this.completion = asyncCommit ? new CountDownLatch(1) : null;
+    }
+
+    void useSyncCommit() {
+      // This shouldn't happen as the executeLong will check for isJobStarted before calling this method
+      Preconditions.checkState(commitOnJobEnded() && !isJobStarted(),
+                               "Job execution already started, cannot change commit method to sync commit.");
+      this.completion = null;
+    }
+
+    boolean isJobStarted() {
+      return jobStarted;
     }
 
     @Override
@@ -256,7 +295,6 @@ final class SparkTransactional implements Transactional {
       if (failureCause == null) {
         postCommit();
       }
-      discardDatasets();
       completion.countDown();
     }
 
@@ -268,7 +306,13 @@ final class SparkTransactional implements Transactional {
     @Override
     public <T extends Dataset> T getDataset(String name,
                                             Map<String, String> arguments) throws DatasetInstantiationException {
-      T dataset = datasetCache.getDataset(name, arguments);
+      return getDataset(name, arguments, AccessType.UNKNOWN);
+    }
+
+    @Override
+    public <T extends Dataset> T getDataset(String name, Map<String, String> arguments,
+                                            AccessType accessType) throws DatasetInstantiationException {
+      T dataset = datasetCache.getDataset(name, arguments, accessType);
 
       // Only call startTx if the dataset hasn't been seen before
       // It is ok because there is only one transaction in this DatasetContext
@@ -330,6 +374,8 @@ final class SparkTransactional implements Transactional {
       for (Dataset dataset : discardDatasets) {
         datasetCache.discardDataset(dataset);
       }
+      discardDatasets.clear();
+      datasets.clear();
     }
 
     /**
@@ -338,10 +384,11 @@ final class SparkTransactional implements Transactional {
      * @throws InterruptedException if current thread is interrupted while waiting
      */
     private void awaitCompletion() throws InterruptedException {
-      LOG.debug("Awaiting completiong for {}", transaction.getWritePointer());
+      LOG.debug("Awaiting completion for {}", transaction.getWritePointer());
       if (completion != null) {
         completion.await();
       }
+      discardDatasets();
     }
 
     /**
