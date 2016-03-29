@@ -24,6 +24,13 @@
     </encoder>
   </appender>
 
+  <!--Supressing some chatty loggers -->
+  <logger name="org.apache.commons.beanutils" level="ERROR"/>
+  <logger name="org.apache.spark" level="WARN"/>
+  <logger name="org.apache.hadoop" level="WARN"/>
+  <logger name="org.eclipse.jetty" level="WARN"/>
+  <logger name="org.mortbay.log" level="WARN"/>
+
   <logger name="co.cask.cdap" level="DEBUG" />
 
   <root level="INFO">

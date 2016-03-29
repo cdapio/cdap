@@ -18,8 +18,10 @@ package co.cask.cdap.api.spark
 
 import java.nio.charset.Charset
 
+import co.cask.cdap.api.data.DatasetContext
 import co.cask.cdap.api.data.batch.Split
 import co.cask.cdap.api.flow.flowlet.StreamEvent
+import co.cask.cdap.api.{Transactional, TxRunnable}
 import org.apache.spark
 import org.apache.spark.rdd.RDD
 
@@ -49,6 +51,31 @@ import scala.reflect.ClassTag
   *       .join(lookupRDD)
   *       .mapValues(_._2)
   *       .saveAsDataset("output")
+  *
+  *     // Perform multiple operations in the same transaction
+  *     Transaction {
+  *       // Create a standard wordcount RDD
+  *       val wordCountRDD = streamRDD
+  *         .flatMap(_.split(" "))
+  *         .map((_, 1))
+  *         .reduceByKey(_ + _)
+  *
+  *       // Save those words that have count > 10 to "aboveten" dataset
+  *       wordCountRDD
+  *         .filter(_._2 > 10)
+  *         .saveAsDataset("aboveten")
+  *
+  *       // Save all wordcount to another "allcounts" dataset
+  *       wordCountRDD.saveAsDataset("allcounts")
+  *
+  *       // Updates to both "aboveten" and "allcounts" dataset will be committed within the same Transaction.
+  *     }
+  *
+  *     // Access to Dataset instance in the driver can be done through Transaction as well
+  *     Transaction((context: DatasetContext) => {
+  *       val kvTable: KeyValueTable = context.getDataset("myKvTable")
+  *       ...
+  *     })
   *   }
   * }
   * }}}
@@ -70,7 +97,7 @@ trait SparkMain {
     * @tparam K key type
     * @tparam V value type
     */
-  protected implicit class SparkProgramRDDFunctions[K, V](rdd: RDD[(K, V)]) {
+  protected implicit class SparkProgramRDDFunctions[K: ClassTag, V: ClassTag](rdd: RDD[(K, V)]) {
 
     /**
       * Saves the given [[org.apache.spark.rdd.RDD]] to the given [[co.cask.cdap.api.dataset.Dataset]].
@@ -133,6 +160,37 @@ trait SparkMain {
     def fromStream[T: ClassTag](streamName: String, startTime: Long = 0L, endTime: Long = Long.MaxValue)
                                (implicit sec: SparkExecutionContext, decoder: StreamEvent => T): RDD[T] = {
       sec.fromStream(sc, streamName, startTime, endTime)
+    }
+  }
+
+  /**
+    * Provides functional syntax to execute a function with a Transaction.
+    */
+  protected object Transaction extends Serializable {
+
+    /**
+      * Executes the given function in a single transaction.
+      *
+      * @param f the function to execute
+      * @param transactional the [[co.cask.cdap.api.Transactional]] to use for the execution
+      */
+    def apply[T: ClassTag](f: => T)(implicit transactional: Transactional): T = {
+      apply((context: DatasetContext) => f)
+    }
+
+    /**
+      * Executes the given function in a single transaction with access to [[co.cask.cdap.api.dataset.Dataset]]
+      * through the [[co.cask.cdap.api.data.DatasetContext]].
+      *
+      * @param f the function to execute
+      * @param transactional the [[co.cask.cdap.api.Transactional]] to use for the execution
+      */
+    def apply[T: ClassTag](f: DatasetContext => T)(implicit transactional: Transactional): T = {
+      val result = new Array[T](1)
+      transactional.execute(new TxRunnable {
+        override def run(context: DatasetContext) = result(0) = f(context)
+      })
+      result(0)
     }
   }
 
