@@ -37,6 +37,8 @@ import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.WorkflowNodeStateDetail;
+import co.cask.cdap.proto.id.Ids;
+import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.tephra.TxConstants;
 import com.google.common.annotations.VisibleForTesting;
@@ -155,19 +157,22 @@ public class AppMetadataStore extends MetadataStoreDataset {
     write(key, updated);
   }
 
-  public Map<String, WorkflowNodeStateDetail> getWorkflowNodeStates(ProgramRunId workflowRunId) {
+  /**
+   * Return the {@link List} of {@link WorkflowNodeStateDetail} for a given Workflow run.
+   */
+  public List<WorkflowNodeStateDetail> getWorkflowNodeStates(ProgramRunId workflowRunId) {
     MDSKey key = getProgramKeyBuilder(TYPE_WORKFLOW_NODE_STATE, workflowRunId.getParent().toId())
       .add(workflowRunId.getRun()).build();
 
-    List<WorkflowNodeStateDetail> nodeStateDetails = list(key, WorkflowNodeStateDetail.class);
-
-    Map<String, WorkflowNodeStateDetail> nodeStates = new HashMap<>();
-    for (WorkflowNodeStateDetail nodeStateDetail : nodeStateDetails) {
-      nodeStates.put(nodeStateDetail.getNodeId(), nodeStateDetail);
-    }
-    return nodeStates;
+    return list(key, WorkflowNodeStateDetail.class);
   }
 
+  /**
+   * This method is called to associate node state of custom action with the Workflow run.
+   *
+   * @param workflowRunId the run for which node state is to be added
+   * @param nodeStateDetail node state details to be added
+   */
   public void addWorkflowNodeState(ProgramRunId workflowRunId, WorkflowNodeStateDetail nodeStateDetail) {
     // Node states will be stored with following key:
     // workflowNodeState.namespace.app.WORKFLOW.workflowName.workflowRun.workflowNodeId
@@ -177,14 +182,14 @@ public class AppMetadataStore extends MetadataStoreDataset {
     write(key, nodeStateDetail);
   }
 
-  private void addWorkflowNodeState(Id.Program program, String pid, Map<String, String> systemArgs,
+  private void addWorkflowNodeState(ProgramId programId, String pid, Map<String, String> systemArgs,
                                     ProgramRunStatus status, @Nullable Throwable failureCause) {
     String workflowNodeId = systemArgs.get(ProgramOptionConstants.WORKFLOW_NODE_ID);
     String workflowName = systemArgs.get(ProgramOptionConstants.WORKFLOW_NAME);
     String workflowRun = systemArgs.get(ProgramOptionConstants.WORKFLOW_RUN_ID);
 
-    ProgramRunId workflowRunId = new ProgramRunId(program.getNamespaceId(), program.getApplicationId(),
-                                                  ProgramType.WORKFLOW, workflowName, workflowRun);
+    ProgramRunId workflowRunId = Ids.namespace(programId.getNamespace()).app(programId.getApplication())
+      .workflow(workflowName).run(workflowRun);
 
     // Node states will be stored with following key:
     // workflowNodeState.namespace.app.WORKFLOW.workflowName.workflowRun.workflowNodeId
@@ -215,7 +220,9 @@ public class AppMetadataStore extends MetadataStoreDataset {
     String workflowrunId = null;
     if (systemArgs != null && systemArgs.containsKey(ProgramOptionConstants.WORKFLOW_NAME)) {
       // Program is started by Workflow. Add row corresponding to its node state.
-      addWorkflowNodeState(program, pid, systemArgs, ProgramRunStatus.RUNNING, null);
+      ProgramId programId = new ProgramId(program.getNamespaceId(), program.getApplicationId(), program.getType(),
+                                          program.getId());
+      addWorkflowNodeState(programId, pid, systemArgs, ProgramRunStatus.RUNNING, null);
       workflowrunId = systemArgs.get(ProgramOptionConstants.WORKFLOW_RUN_ID);
     }
 
@@ -310,7 +317,9 @@ public class AppMetadataStore extends MetadataStoreDataset {
     }
 
     if (started.getSystemArgs() != null && started.getSystemArgs().containsKey(ProgramOptionConstants.WORKFLOW_NAME)) {
-      addWorkflowNodeState(program, pid, started.getSystemArgs(), runStatus, failureCause);
+      ProgramId programId = new ProgramId(program.getNamespaceId(), program.getApplicationId(), program.getType(),
+                                          program.getId());
+      addWorkflowNodeState(programId, pid, started.getSystemArgs(), runStatus, failureCause);
     }
 
     deleteAll(key);

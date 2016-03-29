@@ -920,11 +920,11 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public Map<String, WorkflowNodeStateDetail> getWorkflowNodeStates(final ProgramRunId workflowRunId) {
+  public List<WorkflowNodeStateDetail> getWorkflowNodeStates(final ProgramRunId workflowRunId) {
     return appsTx.get().executeUnchecked(
-      new TransactionExecutor.Function<AppMetadataStore, Map<String, WorkflowNodeStateDetail>>() {
+      new TransactionExecutor.Function<AppMetadataStore, List<WorkflowNodeStateDetail>>() {
         @Override
-        public Map<String, WorkflowNodeStateDetail> apply(AppMetadataStore mds) throws Exception {
+        public List<WorkflowNodeStateDetail> apply(AppMetadataStore mds) throws Exception {
           return mds.getWorkflowNodeStates(workflowRunId);
         }
       }, apps.get());

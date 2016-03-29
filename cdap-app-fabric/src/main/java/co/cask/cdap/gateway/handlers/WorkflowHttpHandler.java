@@ -373,8 +373,13 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
       throw new NotFoundException(workflowRunId);
     }
 
-    responder.sendJson(HttpResponseStatus.OK, store.getWorkflowNodeStates(workflowRunId),
-                       STRING_TO_NODESTATEDETAIL_MAP_TYPE);
+    List<WorkflowNodeStateDetail> nodeStateDetails = store.getWorkflowNodeStates(workflowRunId);
+    Map<String, WorkflowNodeStateDetail> nodeStates = new HashMap<>();
+    for (WorkflowNodeStateDetail nodeStateDetail : nodeStateDetails) {
+      nodeStates.put(nodeStateDetail.getNodeId(), nodeStateDetail);
+    }
+
+    responder.sendJson(HttpResponseStatus.OK, nodeStates, STRING_TO_NODESTATEDETAIL_MAP_TYPE);
   }
 
   @GET

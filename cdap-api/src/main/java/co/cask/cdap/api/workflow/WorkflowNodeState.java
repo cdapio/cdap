@@ -16,11 +16,14 @@
 
 package co.cask.cdap.api.workflow;
 
+import co.cask.cdap.api.annotation.Beta;
+
 import javax.annotation.Nullable;
 
 /**
  * Class to represent the state of the node in the {@link Workflow}.
  */
+@Beta
 public class WorkflowNodeState {
 
   private final String nodeId;

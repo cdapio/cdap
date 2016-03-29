@@ -380,11 +380,12 @@ public interface Store {
   void addWorkflowNodeState(ProgramRunId workflowRunId, WorkflowNodeStateDetail nodeStateDetail);
 
   /**
-   * Get the node states for {@link Workflow} run.
+   * Get the node states for a given {@link Workflow} run.
+   *
    * @param workflowRunId run of the Workflow.
-   * @return {@link Map} of node id to the {@link WorkflowNodeStateDetail}
+   * @return {@link List} of {@link WorkflowNodeStateDetail}
    */
-  Map<String, WorkflowNodeStateDetail> getWorkflowNodeStates(ProgramRunId workflowRunId);
+  List<WorkflowNodeStateDetail> getWorkflowNodeStates(ProgramRunId workflowRunId);
 
   /**
    * Used by {@link co.cask.cdap.gateway.handlers.WorkflowStatsSLAHttpHandler} to get the statistics of all completed

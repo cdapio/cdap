@@ -66,6 +66,7 @@ import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.WorkflowNodeStateDetail;
+import co.cask.cdap.proto.id.Ids;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.store.DefaultNamespaceStore;
@@ -91,6 +92,7 @@ import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -190,13 +192,13 @@ public class DefaultStoreTest {
     String mapReduceName = "mapReduce1";
     String sparkName = "spark1";
 
-    ProgramId mapReduceProgram = new ProgramId(namespaceName, appName, ProgramType.MAPREDUCE, mapReduceName);
-    ProgramId sparkProgram = new ProgramId(namespaceName, appName, ProgramType.SPARK, sparkName);
+    ProgramId mapReduceProgram = Ids.namespace(namespaceName).app(appName).mr(mapReduceName);
+    ProgramId sparkProgram = Ids.namespace(namespaceName).app(appName).spark(sparkName);
 
     long currentTime = System.currentTimeMillis();
     RunId workflowRunId = RunIds.generate(currentTime);
-    ProgramRunId workflowRun = new ProgramRunId("namespace1", "app1", ProgramType.WORKFLOW, workflowName,
-                                                workflowRunId.getId());
+    ProgramRunId workflowRun = Ids.namespace(namespaceName).app(appName)
+      .workflow(workflowName).run(workflowRunId.getId());
 
     // start Workflow
     store.setStart(workflowRun.getParent().toId(), workflowRun.getRun(), currentTime);
@@ -230,7 +232,12 @@ public class DefaultStoreTest {
     // stop Workflow
     store.setStop(workflowRun.getParent().toId(), workflowRun.getRun(), currentTime + 110, ProgramRunStatus.FAILED);
 
-    Map<String, WorkflowNodeStateDetail> workflowNodeStates = store.getWorkflowNodeStates(workflowRun);
+    List<WorkflowNodeStateDetail> nodeStateDetails = store.getWorkflowNodeStates(workflowRun);
+    Map<String, WorkflowNodeStateDetail> workflowNodeStates = new HashMap<>();
+    for (WorkflowNodeStateDetail nodeStateDetail : nodeStateDetails) {
+      workflowNodeStates.put(nodeStateDetail.getNodeId(), nodeStateDetail);
+    }
+
     Assert.assertEquals(2, workflowNodeStates.size());
     WorkflowNodeStateDetail nodeStateDetail = workflowNodeStates.get(mapReduceName);
     Assert.assertEquals(mapReduceName, nodeStateDetail.getNodeId());
