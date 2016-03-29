@@ -73,7 +73,7 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
                   }
                 } else {
                   filteredRes = res.filter( r => uiSupportedArtifacts.indexOf(r.name) !== -1 );
-                  $stateParams.artifactType = filteredRes[0].name;
+                  $stateParams.artifactType = filteredRes.filter(fres => fres.name === 'cdap-etl-data-pipeline')[0].name;
                   defer.resolve($stateParams.artifactType);
                 }
               });
