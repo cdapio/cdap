@@ -182,9 +182,8 @@ public class AppMetadataStore extends MetadataStoreDataset {
     properties.put(workflowNodeId, pid);
 
     RunRecordMeta runRecordMeta = new RunRecordMeta(record, properties);
-    String failureMsg = failureCause == null ? null : Throwables.getRootCause(failureCause).getMessage();
     WorkflowNodeState nodeState = new WorkflowNodeState(workflowNodeId, ProgramRunStatus.toNodeStatus(status),
-                                                        pid, failureMsg);
+                                                        pid, failureCause);
 
     RunRecordMeta meta = updateRunRecordWithWorkflowNodeState(runRecordMeta, nodeState);
     write(key, meta);

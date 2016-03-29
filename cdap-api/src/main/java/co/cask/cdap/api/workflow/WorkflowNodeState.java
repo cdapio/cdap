@@ -16,6 +16,9 @@
 
 package co.cask.cdap.api.workflow;
 
+import co.cask.cdap.api.common.DefaultThrowable;
+import co.cask.cdap.api.common.Throwable;
+
 import javax.annotation.Nullable;
 
 /**
@@ -36,7 +39,7 @@ public final class WorkflowNodeState {
   private final String nodeId;
   private final NodeStatus nodeStatus;
   private final String runId;
-  private final String failureCause;
+  private final Throwable failureCause;
 
   /**
    * Create a new instance.
@@ -46,11 +49,11 @@ public final class WorkflowNodeState {
    * @param failureCause cause of failure, null if execution of the node succeeded
    */
   public WorkflowNodeState(String nodeId, NodeStatus nodeStatus, @Nullable String runId,
-                           @Nullable String failureCause) {
+                           @Nullable java.lang.Throwable failureCause) {
     this.nodeId = nodeId;
     this.nodeStatus = nodeStatus;
     this.runId = runId;
-    this.failureCause = failureCause;
+    this.failureCause = (failureCause == null) ? null : new DefaultThrowable(failureCause);
   }
 
   /**
@@ -77,10 +80,10 @@ public final class WorkflowNodeState {
   }
 
   /**
-   * Return the detail message string for failure if node execution failed, otherwise {@code null} is returned.
+   * Return the {@link Throwable} for failure if node execution failed, otherwise {@code null} is returned.
    */
   @Nullable
-  public String getFailureCause() {
+  public Throwable getFailureCause() {
     return failureCause;
   }
 }

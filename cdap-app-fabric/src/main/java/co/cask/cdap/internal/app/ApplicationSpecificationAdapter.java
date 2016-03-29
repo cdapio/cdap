@@ -17,6 +17,7 @@
 package co.cask.cdap.internal.app;
 
 import co.cask.cdap.api.app.ApplicationSpecification;
+import co.cask.cdap.api.common.Throwable;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 import co.cask.cdap.api.flow.FlowSpecification;
@@ -37,6 +38,7 @@ import co.cask.cdap.proto.codec.FlowletSpecificationCodec;
 import co.cask.cdap.proto.codec.MapReduceSpecificationCodec;
 import co.cask.cdap.proto.codec.ScheduleSpecificationCodec;
 import co.cask.cdap.proto.codec.SparkSpecificationCodec;
+import co.cask.cdap.proto.codec.ThrowableCodec;
 import co.cask.cdap.proto.codec.WorkerSpecificationCodec;
 import co.cask.cdap.proto.codec.WorkflowActionSpecificationCodec;
 import co.cask.cdap.proto.codec.WorkflowNodeCodec;
@@ -92,6 +94,7 @@ public final class ApplicationSpecificationAdapter {
       .registerTypeAdapter(ScheduleSpecification.class, new ScheduleSpecificationCodec())
       .registerTypeAdapter(ServiceSpecification.class, new ServiceSpecificationCodec())
       .registerTypeAdapter(WorkerSpecification.class, new WorkerSpecificationCodec())
+      .registerTypeAdapter(Throwable.class, new ThrowableCodec())
       .registerTypeAdapterFactory(new AppSpecTypeAdapterFactory());
   }
 
