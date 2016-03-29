@@ -116,11 +116,17 @@ Running the Workflow
 --------------------
 The ``StreamConversionWorkflow`` will run automatically every five minutes based on its schedule.
 To give it some data, you can use a provided script to send events to the stream, for example,
-to send 10000 events at a rate of roughly two per second:
+to send 10000 events at a rate of roughly two per second (one per second in the case of Windows):
 
 .. tabbed-parsed-literal::
 
+  .. Linux
+  
   $ examples/StreamConversion/bin/send-events.sh --events 10000 --delay 0.5
+
+  .. Windows
+  
+  > examples\StreamConversion\bin\send-events.bat 10000 1
 
 You can now wait for the workflow to run, after which you can query the partitions in the
 *converted* dataset:
