@@ -26,8 +26,6 @@ body.theme-cdap {
       }
       div.hydrator-metadata {
         background-color: transparent;
-        height: 60px;
-        padding: 10px 5px;
         position: relative;
         z-index: 1021;
         .box-shadow(none);
@@ -65,7 +63,10 @@ body.theme-cdap {
               color: gray;
             }
             &:first-child {
-              font-size: 16px;
+              font-size: 14px;
+              margin-top: 8px;
+              line-height: 13px;
+
               &.placeholder {
                 &:before {
                   content: "Name your pipeline";
@@ -129,6 +130,8 @@ body.theme-cdap {
           .box-shadow(@box-shadow);
           div.pipeline-name {
             width: 85%;
+            padding-top: 10px;
+
             &:after {
               content: none;
             }
@@ -164,7 +167,7 @@ body.theme-cdap {
     div.side-panel.top {
       div.tbl {
         display: table;
-        height: 50px;
+        height: 40px;
         width: 100%;
       }
       div.tbl-cell {
@@ -337,7 +340,7 @@ body.theme-cdap {
       right: 0;
       left: 290px;
       z-index: 1029;
-      height: 70px;
+      height: 40px;
       // .box-shadow(5px 0 10px rgba(0, 0, 0, 0.5));
       max-width: ~"calc(100% - 290px)";
       border-left: 0;
@@ -352,7 +355,7 @@ body.theme-cdap {
           line-height: 40px;
           font-size: 1.8em;
           @media (min-width: @screen-sm-min) {
-            font-size: 26px;
+            font-size: 23px;
           }
         }
       }
@@ -365,11 +368,11 @@ body.theme-cdap {
         border-right: 1px solid transparent;
         border-bottom: 1px solid transparent;
         border-left: 1px solid @table-border-color;
-        height: 70px;
+        height: 40px;
         padding: 0;
         .transition(all 0.2s ease);
         span {
-          line-height: 70px;
+          line-height: 40px;
         }
         &:hover, &:focus {
           background-color: #ebebeb;
