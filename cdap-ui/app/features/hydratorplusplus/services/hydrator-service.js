@@ -28,35 +28,25 @@ class HydratorPlusPlusHydratorService {
   }
 
   getNodesAndConnectionsFromConfig(pipeline) {
+    if (pipeline.config && pipeline.config.stages) {
+      return this._parseNewConfigStages(pipeline.config);
+    } else {
+      return this._parseOldConfig(pipeline);
+    }
+  }
+
+  _parseNewConfigStages(config) {
     let nodes = [];
     let connections = [];
-
-    let artifact = this.GLOBALS.pluginTypes[pipeline.artifact.name];
-
-    let source = angular.copy(pipeline.config.source);
-    let transforms = angular.copy(pipeline.config.transforms || [])
-      .map( node => {
-        node.type = artifact.transform;
-        node.label = node.label || node.name;
-        node.icon = this.DAGPlusPlusFactory.getIcon(node.plugin.name);
-        return node;
+    config.stages.forEach( node => {
+      let nodeInfo = angular.extend(node, {
+        type: node.plugin.type,
+        label: node.plugin.label,
+        icon: this.DAGPlusPlusFactory.getIcon(node.plugin.name)
       });
-    let sinks = angular.copy(pipeline.config.sinks)
-      .map( node => {
-        node.type = artifact.sink;
-        node.icon = this.DAGPlusPlusFactory.getIcon(node.plugin.name);
-        return node;
-      });
-
-    source.type = artifact.source;
-    source.icon = this.DAGPlusPlusFactory.getIcon(source.plugin.name);
-    // replace with backend id
-    nodes.push(source);
-    nodes = nodes.concat(transforms);
-    nodes = nodes.concat(sinks);
-
-    connections = pipeline.config.connections;
-
+      nodes.push(nodeInfo);
+    });
+    connections = config.connections;
     // Obtaining layout of graph with Dagre
     var graph = this.DAGPlusPlusFactory.getGraphLayout(nodes, connections);
     angular.forEach(nodes, function (node) {
@@ -72,6 +62,54 @@ class HydratorPlusPlusHydratorService {
     };
   }
 
+  _parseOldConfig(pipeline) {
+    let nodes = [];
+    let connections = [];
+    let config = pipeline.config;
+
+    let artifact = this.GLOBALS.pluginTypes[pipeline.artifact.name];
+
+    let source = angular.copy(config.source);
+    let transforms = angular.copy(config.transforms || [])
+      .map( node => {
+        node.type = artifact.transform;
+        node.label = node.label || node.name;
+        node.icon = this.DAGPlusPlusFactory.getIcon(node.plugin.name);
+        return node;
+      });
+    let sinks = angular.copy(config.sinks)
+      .map( node => {
+        node.type = artifact.sink;
+        node.icon = this.DAGPlusPlusFactory.getIcon(node.plugin.name);
+        return node;
+      });
+
+    if (Object.keys(source).length > 0) {
+      source.type = artifact.source;
+      source.icon = this.DAGPlusPlusFactory.getIcon(source.plugin.name);
+      // replace with backend id
+      nodes.push(source);
+    }
+
+    nodes = nodes.concat(transforms);
+    nodes = nodes.concat(sinks);
+
+    connections = config.connections;
+
+    // Obtaining layout of graph with Dagre
+    var graph = this.DAGPlusPlusFactory.getGraphLayout(nodes, connections);
+    angular.forEach(nodes, function (node) {
+      node._uiPosition = {
+        'top': graph._nodes[node.name].y + 'px' ,
+        'left': graph._nodes[node.name].x + 'px'
+      };
+    });
+
+    return {
+      nodes: nodes,
+      connections: connections
+    };
+  }
   fetchBackendProperties(node, appType) {
     var defer = this.$q.defer();
 
