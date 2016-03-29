@@ -42,10 +42,15 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
           _cdapPath: metricBasePath
         }).then(function (res) {
           var config = HydratorPlusPlusDetailNonRunsStore.getConfigJson();
-          var source = config.source.name;
-          var transforms = config.transforms.map(function (n) { return n.name; });
-          var sinks = config.sinks.map(function (n) { return n.name; });
-          var stagesArray = [source].concat(transforms, sinks);
+          var stagesArray, source, sinks, transforms;
+          if (config.stages) {
+            stagesArray = config.stages.map(n => n.name);
+          } else {
+            source = config.source.name;
+            transforms = config.transforms.map(function (n) { return n.name; });
+            sinks = config.sinks.map(function (n) { return n.name; });
+            stagesArray = [source].concat(transforms, sinks);
+          }
           var metricQuery = [];
 
           if (res.length > 0) {
