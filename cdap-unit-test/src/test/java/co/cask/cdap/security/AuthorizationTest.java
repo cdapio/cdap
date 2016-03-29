@@ -24,6 +24,7 @@ import co.cask.cdap.api.artifact.ArtifactVersion;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.twill.LocalLocationFactory;
+import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.gateway.handlers.InMemoryAuthorizer;
 import co.cask.cdap.internal.test.AppJarHelper;
 import co.cask.cdap.proto.NamespaceMeta;
@@ -34,6 +35,7 @@ import co.cask.cdap.proto.id.Ids;
 import co.cask.cdap.proto.id.InstanceId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.NamespacedArtifactId;
+import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.proto.security.Privilege;
@@ -47,6 +49,7 @@ import co.cask.cdap.test.TestConfiguration;
 import co.cask.cdap.test.XSlowTests;
 import co.cask.cdap.test.app.DummyApp;
 import co.cask.cdap.test.artifacts.plugins.ToStringPlugin;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import org.apache.twill.filesystem.Location;
@@ -65,6 +68,8 @@ import org.junit.runners.model.Statement;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Unit tests with authorization enabled.
@@ -200,12 +205,14 @@ public class AuthorizationTest extends TestBase {
     ArtifactSummary artifact = appManager.getInfo().getArtifact();
     NamespacedArtifactId dummyArtifact =
       Ids.namespace(dummyAppId.getNamespace()).artifact(artifact.getName(), artifact.getVersion());
+    ProgramId greetingServiceId = dummyAppId.service(DummyApp.Greeting.SERVICE_NAME);
     Assert.assertEquals(
       ImmutableSet.of(
         new Privilege(instance, Action.ADMIN),
         new Privilege(AUTH_NAMESPACE, Action.ALL),
         new Privilege(dummyAppId, Action.ALL),
-        new Privilege(dummyArtifact, Action.ALL)
+        new Privilege(dummyArtifact, Action.ALL),
+        new Privilege(greetingServiceId, Action.ALL)
       ),
       authorizer.listPrivileges(ALICE)
     );
@@ -263,28 +270,41 @@ public class AuthorizationTest extends TestBase {
     appManager = deployApplication(AUTH_NAMESPACE.toId(), WorkflowApp.class);
     artifact = appManager.getInfo().getArtifact();
     NamespacedArtifactId workflowArtifact = AUTH_NAMESPACE.artifact(artifact.getName(), artifact.getVersion());
+    ApplicationId workflowAppId = AUTH_NAMESPACE.app(WorkflowApp.class.getSimpleName());
+    ProgramId classicMapReduceId = workflowAppId.mr(WorkflowApp.WordCountMapReduce.NAME);
+    ProgramId sparkId = workflowAppId.spark(WorkflowApp.SparkWorkflowTestApp.NAME);
+    ProgramId funWorkflowId = workflowAppId.workflow(WorkflowApp.FunWorkflow.NAME);
     Assert.assertEquals(
       ImmutableSet.of(
         new Privilege(instance, Action.ADMIN),
         new Privilege(AUTH_NAMESPACE, Action.ALL),
-        new Privilege(AUTH_NAMESPACE.app(DummyApp.class.getSimpleName()), Action.ALL),
-        new Privilege(AUTH_NAMESPACE.app(WorkflowApp.class.getSimpleName()), Action.ALL),
         new Privilege(dummyArtifact, Action.ALL),
         new Privilege(updatedDummyArtifact, Action.ALL),
-        new Privilege(workflowArtifact, Action.ALL)
+        new Privilege(workflowArtifact, Action.ALL),
+        new Privilege(dummyAppId, Action.ALL),
+        new Privilege(workflowAppId, Action.ALL),
+        new Privilege(greetingServiceId, Action.ALL),
+        new Privilege(classicMapReduceId, Action.ALL),
+        new Privilege(sparkId, Action.ALL),
+        new Privilege(funWorkflowId, Action.ALL)
       ),
       authorizer.listPrivileges(ALICE)
     );
     // revoke all privileges on an app.
-    authorizer.revoke(AUTH_NAMESPACE.app(WorkflowApp.class.getSimpleName()));
+    authorizer.revoke(workflowAppId);
+    // TODO: CDAP-5428 Revoking privileges on an app should revoke privileges on the contents of the app
+    authorizer.revoke(sparkId);
+    authorizer.revoke(classicMapReduceId);
+    authorizer.revoke(funWorkflowId);
     Assert.assertEquals(
       ImmutableSet.of(
         new Privilege(instance, Action.ADMIN),
         new Privilege(AUTH_NAMESPACE, Action.ALL),
-        new Privilege(AUTH_NAMESPACE.app(DummyApp.class.getSimpleName()), Action.ALL),
         new Privilege(dummyArtifact, Action.ALL),
         new Privilege(updatedDummyArtifact, Action.ALL),
-        new Privilege(workflowArtifact, Action.ALL)
+        new Privilege(workflowArtifact, Action.ALL),
+        new Privilege(dummyAppId, Action.ALL),
+        new Privilege(greetingServiceId, Action.ALL)
       ),
       authorizer.listPrivileges(ALICE)
     );
@@ -297,15 +317,15 @@ public class AuthorizationTest extends TestBase {
       // expected
     }
     // grant admin privilege on the WorkflowApp. deleting all applications should succeed.
-    authorizer.grant(AUTH_NAMESPACE.app(WorkflowApp.class.getSimpleName()), ALICE, ImmutableSet.of(Action.ADMIN));
+    authorizer.grant(workflowAppId, ALICE, ImmutableSet.of(Action.ADMIN));
     Assert.assertEquals(
       ImmutableSet.of(
         new Privilege(instance, Action.ADMIN),
         new Privilege(AUTH_NAMESPACE, Action.ALL),
-        new Privilege(AUTH_NAMESPACE.app(WorkflowApp.class.getSimpleName()), Action.ADMIN),
         new Privilege(dummyArtifact, Action.ALL),
         new Privilege(updatedDummyArtifact, Action.ALL),
-        new Privilege(workflowArtifact, Action.ALL)
+        new Privilege(workflowArtifact, Action.ALL),
+        new Privilege(workflowAppId, Action.ADMIN)
       ),
       authorizer.listPrivileges(ALICE)
     );
@@ -432,6 +452,78 @@ public class AuthorizationTest extends TestBase {
     getNamespaceAdmin().delete(AUTH_NAMESPACE.toId());
     Assert.assertEquals(ImmutableSet.of(new Privilege(instance, Action.ADMIN)), authorizer.listPrivileges(ALICE));
     // revoke privileges on the instance
+    authorizer.revoke(instance);
+    Assert.assertEquals(ImmutableSet.of(), authorizer.listPrivileges(ALICE));
+  }
+
+  @Test
+  public void testPrograms() throws Exception {
+    Authorizer authorizer = getAuthorizer();
+    authorizer.grant(instance, ALICE, ImmutableSet.of(Action.ADMIN));
+    getNamespaceAdmin().create(AUTH_NAMESPACE_META);
+    Assert.assertEquals(
+      ImmutableSet.of(new Privilege(instance, Action.ADMIN), new Privilege(AUTH_NAMESPACE, Action.ALL)),
+      authorizer.listPrivileges(ALICE)
+    );
+    final ApplicationManager dummyAppManager = deployApplication(AUTH_NAMESPACE.toId(), DummyApp.class);
+    ArtifactSummary dummyArtifactSummary = dummyAppManager.getInfo().getArtifact();
+    NamespacedArtifactId dummyArtifact = AUTH_NAMESPACE.artifact(dummyArtifactSummary.getName(),
+                                                                 dummyArtifactSummary.getVersion());
+    ApplicationId appId = AUTH_NAMESPACE.app(DummyApp.class.getSimpleName());
+    final ProgramId serviceId = appId.service(DummyApp.Greeting.SERVICE_NAME);
+    Assert.assertEquals(
+      ImmutableSet.of(
+        new Privilege(instance, Action.ADMIN),
+        new Privilege(AUTH_NAMESPACE, Action.ALL),
+        new Privilege(dummyArtifact, Action.ALL),
+        new Privilege(appId, Action.ALL),
+        new Privilege(serviceId, Action.ALL)
+      ),
+      authorizer.listPrivileges(ALICE)
+    );
+    // alice should be able to start and stop programs in the app she deployed
+    dummyAppManager.startProgram(serviceId.toId());
+    Tasks.waitFor(true, new Callable<Boolean>() {
+      @Override
+      public Boolean call() throws Exception {
+        return dummyAppManager.isRunning(serviceId.toId());
+      }
+    }, 5, TimeUnit.SECONDS);
+    dummyAppManager.stopProgram(serviceId.toId());
+    Tasks.waitFor(false, new Callable<Boolean>() {
+      @Override
+      public Boolean call() throws Exception {
+        return dummyAppManager.isRunning(serviceId.toId());
+      }
+    }, 5, TimeUnit.SECONDS);
+    // Bob should not be able to start programs in dummy app because he does not have privileges on it
+    SecurityRequestContext.setUserId(BOB.getName());
+    try {
+      dummyAppManager.startProgram(serviceId.toId());
+      Assert.fail("Bob should not be able to start the service because he does not have admin privileges on it.");
+    } catch (RuntimeException e) {
+      //noinspection ThrowableResultOfMethodCallIgnored
+      Assert.assertTrue(Throwables.getRootCause(e) instanceof UnauthorizedException);
+    }
+    // TODO: CDAP-5452 can't verify running programs in this case, because DefaultApplicationManager maintains an
+    // in-memory map of running processes that does not use ApplicationLifecycleService to get the runtime status.
+    // So no matter if the start/stop call succeeds or fails, it updates its running state in the in-memory map.
+    // Also have to switch back to being alice, start the program, and then stop it as Bob because otherwise AppManager
+    // doesn't send the request to the app fabric service, but just makes decisions based on an in-memory
+    // ConcurrentHashMap.
+    // Also add a test for stopping with unauthorized user after the above bug is fixed
+    SecurityRequestContext.setUserId(ALICE.getName());
+    dummyAppManager.delete();
+    Assert.assertEquals(
+      ImmutableSet.of(
+        new Privilege(instance, Action.ADMIN),
+        new Privilege(AUTH_NAMESPACE, Action.ALL),
+        new Privilege(dummyArtifact, Action.ALL)
+      ),
+      authorizer.listPrivileges(ALICE)
+    );
+    getNamespaceAdmin().delete(AUTH_NAMESPACE.toId());
+    // revoke alice's ADMIN privilege on the instance, so we get back to the same state as at the beginning of the test
     authorizer.revoke(instance);
     Assert.assertEquals(ImmutableSet.of(), authorizer.listPrivileges(ALICE));
   }
