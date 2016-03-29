@@ -68,13 +68,13 @@ my-dag-plus {
             border-width: 6px;
           }
         }
-        &:not(.realtimesource):not(.batchsource):not(.realtimesink):not(.batchsink) {
+        &:not(.realtimesource):not(.batchsource):not(.realtimesink):not(.batchsink):not(.sparksink) {
           .node {
             background-color: #4586f3;
             border-width: 6px;
           }
         }
-        &.realtimesink, &.batchsink {
+        &.realtimesink, &.batchsink, &.sparksink {
           .node {
             background-color: #8367df;
             border-width: 6px;
@@ -113,14 +113,14 @@ my-dag-plus {
           border: 3px solid #48c038;
         }
       }
-      &:not(.realtimesource):not(.batchsource):not(.realtimesink):not(.batchsink) {
+      &:not(.realtimesource):not(.batchsource):not(.realtimesink):not(.batchsink):not(.sparksink) {
         color: #4586f3;
         left: 30vw;
         .node {
           border: 3px solid #4586f3;
         }
       }
-      &.realtimesink, &.batchsink {
+      &.realtimesink, &.batchsink, &.sparksink {
         color: #8367df;
         left: 50vw;
         .node {
