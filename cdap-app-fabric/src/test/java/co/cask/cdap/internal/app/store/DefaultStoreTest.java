@@ -46,6 +46,7 @@ import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.schedule.Schedules;
 import co.cask.cdap.api.service.ServiceSpecification;
+import co.cask.cdap.api.workflow.NodeStatus;
 import co.cask.cdap.api.workflow.ScheduleProgramInfo;
 import co.cask.cdap.app.DefaultAppConfigurer;
 import co.cask.cdap.app.DefaultApplicationContext;
@@ -57,11 +58,18 @@ import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.internal.AppFabricTestHelper;
 import co.cask.cdap.internal.DefaultId;
 import co.cask.cdap.internal.app.Specifications;
+import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.WorkflowNodeStateDetail;
+import co.cask.cdap.proto.WorkflowNodeThrowable;
+import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.proto.id.Ids;
+import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.store.DefaultNamespaceStore;
 import com.google.common.base.Function;
 import com.google.common.base.Supplier;
@@ -85,6 +93,7 @@ import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -176,6 +185,81 @@ public class DefaultStoreTest {
     Assert.assertTrue(store.getRuns(programId2, ProgramRunStatus.ALL, 0, Long.MAX_VALUE, Integer.MAX_VALUE).isEmpty());
   }
 
+  @Test
+  public void testWorkflowNodeState() throws Exception {
+    String namespaceName = "namespace1";
+    String appName = "app1";
+    String workflowName = "workflow1";
+    String mapReduceName = "mapReduce1";
+    String sparkName = "spark1";
+
+    ApplicationId appId = Ids.namespace(namespaceName).app(appName);
+    ProgramId mapReduceProgram = appId.mr(mapReduceName);
+    ProgramId sparkProgram = appId.spark(sparkName);
+
+    long currentTime = System.currentTimeMillis();
+    RunId workflowRunId = RunIds.generate(currentTime);
+    ProgramRunId workflowRun = appId.workflow(workflowName).run(workflowRunId.getId());
+
+    // start Workflow
+    store.setStart(workflowRun.getParent().toId(), workflowRun.getRun(), currentTime);
+
+    // start MapReduce as a part of Workflow
+    Map<String, String> systemArgs = ImmutableMap.of(ProgramOptionConstants.WORKFLOW_NODE_ID, mapReduceName,
+                                                     ProgramOptionConstants.WORKFLOW_NAME, workflowName,
+                                                     ProgramOptionConstants.WORKFLOW_RUN_ID, workflowRunId.getId());
+
+    RunId mapReduceRunId = RunIds.generate(currentTime + 10);
+    store.setStart(mapReduceProgram.toId(), mapReduceRunId.getId(), currentTime + 10, null,
+                   ImmutableMap.<String, String>of(), systemArgs);
+
+    // stop the MapReduce program
+    store.setStop(mapReduceProgram.toId(), mapReduceRunId.getId(), currentTime + 50, ProgramRunStatus.COMPLETED);
+
+    // start Spark program as a part of Workflow
+    systemArgs = ImmutableMap.of(ProgramOptionConstants.WORKFLOW_NODE_ID, sparkName,
+                                 ProgramOptionConstants.WORKFLOW_NAME, workflowName,
+                                 ProgramOptionConstants.WORKFLOW_RUN_ID, workflowRunId.getId());
+
+    RunId sparkRunId = RunIds.generate(currentTime + 60);
+    store.setStart(sparkProgram.toId(), sparkRunId.getId(), currentTime + 60, null,
+                   ImmutableMap.<String, String>of(), systemArgs);
+
+    // stop the Spark program with failure
+    NullPointerException npe = new NullPointerException("dataset not found");
+    IllegalArgumentException iae = new IllegalArgumentException("illegal argument", npe);
+    store.setStop(sparkProgram.toId(), sparkRunId.getId(), currentTime + 100, ProgramRunStatus.FAILED, iae);
+
+    // stop Workflow
+    store.setStop(workflowRun.getParent().toId(), workflowRun.getRun(), currentTime + 110, ProgramRunStatus.FAILED);
+
+    List<WorkflowNodeStateDetail> nodeStateDetails = store.getWorkflowNodeStates(workflowRun);
+    Map<String, WorkflowNodeStateDetail> workflowNodeStates = new HashMap<>();
+    for (WorkflowNodeStateDetail nodeStateDetail : nodeStateDetails) {
+      workflowNodeStates.put(nodeStateDetail.getNodeId(), nodeStateDetail);
+    }
+
+    Assert.assertEquals(2, workflowNodeStates.size());
+    WorkflowNodeStateDetail nodeStateDetail = workflowNodeStates.get(mapReduceName);
+    Assert.assertEquals(mapReduceName, nodeStateDetail.getNodeId());
+    Assert.assertEquals(NodeStatus.COMPLETED, nodeStateDetail.getNodeStatus());
+    Assert.assertEquals(mapReduceRunId.getId(), nodeStateDetail.getRunId());
+    Assert.assertNull(nodeStateDetail.getFailureCause());
+
+    nodeStateDetail = workflowNodeStates.get(sparkName);
+    Assert.assertEquals(sparkName, nodeStateDetail.getNodeId());
+    Assert.assertEquals(NodeStatus.FAILED, nodeStateDetail.getNodeStatus());
+    Assert.assertEquals(sparkRunId.getId(), nodeStateDetail.getRunId());
+    WorkflowNodeThrowable failureCause = nodeStateDetail.getFailureCause();
+    Assert.assertNotNull(failureCause);
+    Assert.assertTrue("illegal argument".equals(failureCause.getMessage()));
+    Assert.assertTrue("java.lang.IllegalArgumentException".equals(failureCause.getClassName()));
+    failureCause = failureCause.getCause();
+    Assert.assertNotNull(failureCause);
+    Assert.assertTrue("dataset not found".equals(failureCause.getMessage()));
+    Assert.assertTrue("java.lang.NullPointerException".equals(failureCause.getClassName()));
+    Assert.assertNull(failureCause.getCause());
+  }
 
   @Test
   public void testConcurrentStopStart() throws Exception {

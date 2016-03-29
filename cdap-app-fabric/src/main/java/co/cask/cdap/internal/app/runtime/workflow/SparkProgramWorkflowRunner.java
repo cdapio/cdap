@@ -19,12 +19,15 @@ import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.spark.Spark;
 import co.cask.cdap.api.spark.SparkSpecification;
 import co.cask.cdap.api.workflow.Workflow;
+import co.cask.cdap.api.workflow.WorkflowNodeState;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunnerFactory;
 import com.google.common.base.Preconditions;
+
+import java.util.Map;
 
 /**
  * Creates {@link Runnable} for executing {@link Spark} programs from {@link Workflow}.
@@ -33,8 +36,8 @@ final class SparkProgramWorkflowRunner extends AbstractProgramWorkflowRunner {
 
   SparkProgramWorkflowRunner(WorkflowSpecification workflowSpec, ProgramRunnerFactory programRunnerFactory,
                              Program workflowProgram, ProgramOptions workflowProgramOptions, WorkflowToken token,
-                             String nodeId) {
-    super(workflowProgram, workflowProgramOptions, programRunnerFactory, workflowSpec, token, nodeId);
+                             String nodeId, Map<String, WorkflowNodeState> nodeStates) {
+    super(workflowProgram, workflowProgramOptions, programRunnerFactory, workflowSpec, token, nodeId, nodeStates);
   }
 
   /**

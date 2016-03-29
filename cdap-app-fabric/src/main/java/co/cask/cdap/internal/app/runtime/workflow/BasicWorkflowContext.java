@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,6 +21,7 @@ import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.api.plugin.Plugin;
 import co.cask.cdap.api.workflow.WorkflowActionSpecification;
 import co.cask.cdap.api.workflow.WorkflowContext;
+import co.cask.cdap.api.workflow.WorkflowNodeState;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.metrics.ProgramUserMetrics;
@@ -49,13 +50,14 @@ final class BasicWorkflowContext extends AbstractContext implements WorkflowCont
   private final Map<String, String> runtimeArgs;
   private final WorkflowToken token;
   private final Metrics userMetrics;
+  private final Map<String, WorkflowNodeState> nodeStates;
 
   BasicWorkflowContext(WorkflowSpecification workflowSpec, @Nullable WorkflowActionSpecification spec,
                        @Nullable ProgramWorkflowRunner programWorkflowRunner,
                        Arguments arguments, WorkflowToken token, Program program, RunId runId,
                        MetricsCollectionService metricsCollectionService,
                        DatasetFramework datasetFramework, TransactionSystemClient txClient,
-                       DiscoveryServiceClient discoveryServiceClient) {
+                       DiscoveryServiceClient discoveryServiceClient, Map<String, WorkflowNodeState> nodeStates) {
     super(program, runId, arguments,
           (spec == null) ? new HashSet<String>() : spec.getDatasets(),
           getMetricCollector(program, runId.getId(), metricsCollectionService),
@@ -70,6 +72,7 @@ final class BasicWorkflowContext extends AbstractContext implements WorkflowCont
     } else {
       this.userMetrics = null;
     }
+    this.nodeStates = nodeStates;
   }
 
   @Nullable
@@ -122,5 +125,10 @@ final class BasicWorkflowContext extends AbstractContext implements WorkflowCont
   @Override
   public WorkflowToken getToken() {
     return token;
+  }
+
+  @Override
+  public Map<String, WorkflowNodeState> getNodeStates() {
+    return ImmutableMap.copyOf(nodeStates);
   }
 }
