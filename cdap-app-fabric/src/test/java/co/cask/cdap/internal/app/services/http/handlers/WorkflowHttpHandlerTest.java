@@ -31,7 +31,6 @@ import co.cask.cdap.WorkflowTokenTestPutApp;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.workflow.WorkflowActionNode;
 import co.cask.cdap.api.workflow.WorkflowActionSpecification;
-import co.cask.cdap.api.workflow.WorkflowNodeState;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.utils.Tasks;
@@ -93,7 +92,12 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     .registerTypeAdapter(WorkflowTokenNodeDetail.class, new WorkflowTokenNodeDetailCodec())
     .create();
 
-  protected static final Type LIST_WORKFLOWACTIONNODE_TYPE = new TypeToken<List<WorkflowActionNode>>() { }.getType();
+  private static final Type LIST_WORKFLOWACTIONNODE_TYPE = new TypeToken<List<WorkflowActionNode>>() { }.getType();
+  private static final Type MAP_STRING_TO_WORKFLOWNODESTATEDETAIL_TYPE
+    = new TypeToken<Map<String, WorkflowNodeStateDetail>>() { }.getType();
+  private static final Type MAP_STRING_TO_DATASETSPECIFICATIONSUMMARY_TYPE
+    = new TypeToken<Map<String, DatasetSpecificationSummary>>() { }.getType();
+
 
   private void verifyRunningProgramCount(final Id.Program program, final String runId, final int expected)
     throws Exception {
@@ -201,8 +205,7 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
   private Map<String, DatasetSpecificationSummary> getWorkflowLocalDatasets(ProgramId workflowId, String runId)
     throws Exception {
     HttpResponse response = doGet(getLocalDatasetPath(workflowId, runId));
-    return readResponse(response, new TypeToken<Map<String, DatasetSpecificationSummary>>() {
-    }.getType());
+    return readResponse(response, MAP_STRING_TO_DATASETSPECIFICATIONSUMMARY_TYPE);
   }
 
   private void deleteWorkflowLocalDatasets(ProgramId workflowId, String runId) throws Exception {
@@ -652,7 +655,7 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     path = getVersionedAPIPath(path, Constants.Gateway.API_VERSION_3_TOKEN, workflowId.getNamespace());
 
     HttpResponse response = doGet(path);
-    return readResponse(response, new TypeToken<Map<String, WorkflowNodeStateDetail>>() { }.getType());
+    return readResponse(response, MAP_STRING_TO_WORKFLOWNODESTATEDETAIL_TYPE);
   }
 
   @Category(XSlowTests.class)
