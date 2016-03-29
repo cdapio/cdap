@@ -18,6 +18,7 @@ package co.cask.cdap.internal.app.services;
 
 import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.app.ApplicationSpecification;
+import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.program.Programs;
 import co.cask.cdap.app.runtime.ProgramController;
@@ -32,9 +33,13 @@ import co.cask.cdap.common.ProgramNotFoundException;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.io.CaseInsensitiveEnumTypeAdapterFactory;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
+import co.cask.cdap.config.PreferencesStore;
+import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.runtime.AbstractListener;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
+import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.internal.app.store.RunRecordMeta;
 import co.cask.cdap.proto.NamespaceMeta;
@@ -54,9 +59,12 @@ import co.cask.cdap.store.NamespaceStore;
 import com.google.common.base.Predicate;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Collections2;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
 import org.apache.twill.api.RunId;
 import org.apache.twill.common.Threads;
@@ -83,6 +91,11 @@ import javax.annotation.Nullable;
 public class ProgramLifecycleService extends AbstractIdleService {
   private static final Logger LOG = LoggerFactory.getLogger(ProgramLifecycleService.class);
 
+  private static final Gson GSON = ApplicationSpecificationAdapter
+    .addTypeAdapters(new GsonBuilder())
+    .registerTypeAdapterFactory(new CaseInsensitiveEnumTypeAdapterFactory())
+    .create();
+
   private final ScheduledExecutorService scheduledExecutorService;
   private final Store store;
   private final ProgramRuntimeService runtimeService;
@@ -91,12 +104,13 @@ public class ProgramLifecycleService extends AbstractIdleService {
   private final PropertiesResolver propertiesResolver;
   private final NamespacedLocationFactory namespacedLocationFactory;
   private final String appFabricDir;
+  private final PreferencesStore preferencesStore;
   private final AuthorizerInstantiatorService authorizerInstantiatorService;
 
   @Inject
   ProgramLifecycleService(Store store, NamespaceStore nsStore, ProgramRuntimeService runtimeService,
                           CConfiguration cConf, PropertiesResolver propertiesResolver,
-                          NamespacedLocationFactory namespacedLocationFactory,
+                          NamespacedLocationFactory namespacedLocationFactory, PreferencesStore preferencesStore,
                           AuthorizerInstantiatorService authorizerInstantiatorService) {
     this.store = store;
     this.nsStore = nsStore;
@@ -106,6 +120,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
     this.appFabricDir = cConf.get(Constants.AppFabric.OUTPUT_DIR);
     this.scheduledExecutorService = Executors.newScheduledThreadPool(1);
     this.cConf = cConf;
+    this.preferencesStore = preferencesStore;
     this.authorizerInstantiatorService = authorizerInstantiatorService;
   }
 
@@ -140,17 +155,16 @@ public class ProgramLifecycleService extends AbstractIdleService {
    * Returns the program status.
    * @param programId the id of the program for which the status call is made
    * @return the status of the program
-   * @throws BadRequestException if the program type is invalid
    * @throws NotFoundException if the application to which this program belongs was not found
    */
-  public ProgramStatus getProgramStatus(ProgramId programId) throws BadRequestException, NotFoundException {
+  public ProgramStatus getProgramStatus(ProgramId programId) throws NotFoundException {
     // check that app exists
     ApplicationSpecification appSpec = store.getApplication(programId.toId().getApplication());
     if (appSpec == null) {
       throw new NotFoundException(Ids.namespace(programId.getNamespace()).app(programId.getApplication()).toId());
     }
 
-    ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(programId, null);
+    ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(programId);
 
     if (runtimeInfo == null) {
       if (programId.getType() != ProgramType.WEBAPP) {
@@ -185,6 +199,12 @@ public class ProgramLifecycleService extends AbstractIdleService {
     return runtimeInfo.getController().getState().getProgramStatus();
   }
 
+  /**
+   * Returns the {@link ProgramSpecification} for the specified {@link ProgramId program}.
+   *
+   * @param programId the {@link ProgramId program} for which the {@link ProgramSpecification} is requested
+   * @return the {@link ProgramSpecification} for the specified {@link ProgramId program}
+   */
   @Nullable
   public ProgramSpecification getProgramSpecification(ProgramId programId) {
     ApplicationSpecification appSpec;
@@ -400,6 +420,28 @@ public class ProgramLifecycleService extends AbstractIdleService {
     return runtimeInfo.getController().stop();
   }
 
+  /**
+   * Save runtime arguments for all future runs of this program. The runtime arguments are saved in the
+   * {@link PreferencesStore}.
+   *
+   * @param programId the {@link ProgramId program} for which runtime arguments are to be saved
+   * @param runtimeArgs the runtime arguments to save
+   * @throws NotFoundException if the specified program was not found
+   * @throws UnauthorizedException if the current user does not have sufficient privileges to save runtime arguments for
+   *                               the specified program. To save runtime arguments for a program, a user requires
+   *                               {@link Action#ADMIN} privileges on the program.
+   */
+  public void saveRuntimeArgs(ProgramId programId, Map<String, String> runtimeArgs) throws Exception {
+    authorizerInstantiatorService.get().enforce(programId, SecurityRequestContext.toPrincipal(), Action.ADMIN);
+    if (!store.programExists(programId.toId())) {
+      throw new NotFoundException(programId.toId());
+    }
+
+    preferencesStore.setProperties(programId.getNamespace(), programId.getApplication(),
+                                   programId.getType().getCategoryName(),
+                                   programId.getProgram(), runtimeArgs);
+  }
+
   private boolean isRunning(ProgramId programId) throws BadRequestException, NotFoundException {
     return ProgramStatus.STOPPED != getProgramStatus(programId);
   }
@@ -424,6 +466,12 @@ public class ProgramLifecycleService extends AbstractIdleService {
       return runtimeInfos.get(run);
     }
 
+    return findRuntimeInfo(programId);
+  }
+
+  @Nullable
+  private ProgramRuntimeService.RuntimeInfo findRuntimeInfo(ProgramId programId) {
+    Map<RunId, ProgramRuntimeService.RuntimeInfo> runtimeInfos = runtimeService.list(programId.getType());
     for (ProgramRuntimeService.RuntimeInfo info : runtimeInfos.values()) {
       if (programId.equals(info.getProgramId().toEntityId())) {
         return info;
@@ -433,20 +481,83 @@ public class ProgramLifecycleService extends AbstractIdleService {
   }
 
   /**
-   * Stop a Program given its {@link RunId}.
-   *
-   * @param programId The id of the program
-   * @param runId {@link RunId} of the program
-   * @throws ExecutionException
-   * @throws InterruptedException
+   * @see #setInstances(ProgramId, int, String)
    */
-  //TODO: Improve this once we have logic moved from ProgramLifecycleHttpHandler for stopping a program
-  public void stopProgram(ProgramId programId, RunId runId) throws ExecutionException, InterruptedException {
-    ProgramRuntimeService.RuntimeInfo runtimeInfo = runtimeService.lookup(programId.toId(), runId);
-    if (runtimeInfo != null) {
-      runtimeInfo.getController().stop().get();
-    } else {
-      LOG.warn("RunTimeInfo not found for Program {} RunId {} to be stopped", programId, runId);
+  public void setInstances(ProgramId programId, int instances) throws Exception {
+    setInstances(programId, instances, null);
+  }
+
+  /**
+   * Set instances for the given program. Only supported program types for this action are {@link ProgramType#FLOW},
+   * {@link ProgramType#SERVICE} and {@link ProgramType#WORKER}.
+   *
+   * @param programId the {@link ProgramId} of the program for which instances are to be updated
+   * @param instances the number of instances to be updated.
+   * @param component the flowlet name. Only used when the program is a {@link ProgramType#FLOW flow}.
+   * @throws InterruptedException if there is an error while asynchronously updating instances
+   * @throws ExecutionException if there is an error while asynchronously updating instances
+   * @throws BadRequestException if the number of instances specified is less than 0
+   * @throws UnauthorizedException if the user does not have privileges to set instances for the specified program.
+   *                               To set instances for a program, a user needs {@link Action#ADMIN} on the program.
+   */
+  public void setInstances(ProgramId programId, int instances, @Nullable String component) throws Exception {
+    authorizerInstantiatorService.get().enforce(programId, SecurityRequestContext.toPrincipal(), Action.ADMIN);
+    if (instances < 1) {
+      throw new BadRequestException(String.format("Instance count should be greater than 0. Got %s.", instances));
+    }
+    switch (programId.getType()) {
+      case SERVICE:
+        setServiceInstances(programId, instances);
+        break;
+      case WORKER:
+        setWorkerInstances(programId, instances);
+        break;
+      case FLOW:
+        setFlowletInstances(programId, component, instances);
+        break;
+      default:
+        throw new BadRequestException(String.format("Setting instances for program type %s is not supported",
+                                                    programId.getType().getPrettyName()));
+    }
+  }
+
+  private void setWorkerInstances(ProgramId programId, int instances) throws ExecutionException, InterruptedException {
+    int oldInstances = store.getWorkerInstances(programId.toId());
+    if (oldInstances != instances) {
+      store.setWorkerInstances(programId.toId(), instances);
+      ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(programId);
+      if (runtimeInfo != null) {
+        runtimeInfo.getController().command(ProgramOptionConstants.INSTANCES,
+                                            ImmutableMap.of(programId.getProgram(), String.valueOf(instances))).get();
+      }
+    }
+  }
+
+  private void setFlowletInstances(ProgramId programId, String flowletId,
+                                   int instances) throws ExecutionException, InterruptedException {
+    int oldInstances = store.getFlowletInstances(programId.toId(), flowletId);
+    if (oldInstances != instances) {
+      FlowSpecification flowSpec = store.setFlowletInstances(programId.toId(), flowletId, instances);
+      ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(programId);
+      if (runtimeInfo != null) {
+        runtimeInfo.getController()
+          .command(ProgramOptionConstants.INSTANCES,
+                   ImmutableMap.of("flowlet", flowletId,
+                                   "newInstances", String.valueOf(instances),
+                                   "oldFlowSpec", GSON.toJson(flowSpec, FlowSpecification.class))).get();
+      }
+    }
+  }
+
+  private void setServiceInstances(ProgramId programId, int instances) throws ExecutionException, InterruptedException {
+    int oldInstances = store.getServiceInstances(programId.toId());
+    if (oldInstances != instances) {
+      store.setServiceInstances(programId.toId(), instances);
+      ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(programId);
+      if (runtimeInfo != null) {
+        runtimeInfo.getController().command(ProgramOptionConstants.INSTANCES,
+                                            ImmutableMap.of(programId.getProgram(), String.valueOf(instances))).get();
+      }
     }
   }
 
