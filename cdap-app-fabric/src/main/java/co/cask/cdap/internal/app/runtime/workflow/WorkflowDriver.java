@@ -398,8 +398,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
       customActionExecutor.execute();
     } catch (Throwable t) {
       failureCause = t;
-      Throwables.propagateIfPossible(t, Exception.class);
-      throw Throwables.propagate(t);
+      throw t;
     } finally {
       status.remove(node.getNodeId());
       store.updateWorkflowToken(workflowRunId, token);
@@ -498,6 +497,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     executeAll(workflowSpec.getNodes().iterator(), program.getApplicationSpecification(),
                new InstantiatorFactory(false), program.getClassLoader(), token);
 
+    basicWorkflowContext.setSuccess();
     LOG.info("Workflow execution succeeded for {}", workflowSpec);
   }
 
