@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -74,7 +74,7 @@ public final class ScheduleTaskRunner {
    * @throws IOException if program failed to start.
    */
   public ListenableFuture<?> run(Id.Program programId, Map<String, String> systemOverrides,
-                                 Map<String, String> userOverrides) throws TaskExecutionException, IOException {
+                                 Map<String, String> userOverrides) throws Exception {
     Map<String, String> userArgs = Maps.newHashMap();
     Map<String, String> systemArgs = Maps.newHashMap();
 
@@ -107,10 +107,10 @@ public final class ScheduleTaskRunner {
    * @return a {@link ListenableFuture} object that completes when the program completes
    */
   private ListenableFuture<?> execute(final Id.Program id, Map<String, String> sysArgs,
-                                      Map<String, String> userArgs) throws IOException, TaskExecutionException {
+                                      Map<String, String> userArgs) throws Exception {
     ProgramRuntimeService.RuntimeInfo runtimeInfo;
     try {
-      runtimeInfo = lifecycleService.start(id, sysArgs, userArgs, false);
+      runtimeInfo = lifecycleService.start(id.toEntityId(), sysArgs, userArgs, false);
     } catch (ProgramNotFoundException | ApplicationNotFoundException e) {
       throw new TaskExecutionException(String.format(UserMessages.getMessage(UserErrors.PROGRAM_NOT_FOUND), id),
                                        e, false);

@@ -53,6 +53,7 @@ import co.cask.cdap.proto.artifact.ArtifactRange;
 import co.cask.cdap.proto.artifact.ArtifactSummary;
 import co.cask.cdap.proto.artifact.PluginInfo;
 import co.cask.cdap.proto.artifact.PluginSummary;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.metadata.MetadataRecord;
 import co.cask.cdap.proto.metadata.MetadataScope;
 import co.cask.common.http.HttpRequest;
@@ -128,9 +129,9 @@ public class ArtifactHttpHandlerTest extends AppFabricTestBase {
   }
 
   @After
-  public void wipeData() throws IOException {
-    artifactRepository.clear(Id.Namespace.DEFAULT);
-    artifactRepository.clear(Id.Namespace.SYSTEM);
+  public void wipeData() throws Exception {
+    artifactRepository.clear(NamespaceId.DEFAULT);
+    artifactRepository.clear(NamespaceId.SYSTEM);
   }
 
   // test deploying an application artifact that has a non-application as its main class

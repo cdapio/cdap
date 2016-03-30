@@ -23,6 +23,7 @@ import com.google.gson.stream.JsonWriter;
 
 import java.io.IOException;
 import java.io.Reader;
+import java.io.Serializable;
 import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -40,8 +41,9 @@ import java.util.Set;
  * This class represents schema of data types.
  */
 @Beta
-public final class Schema {
+public final class Schema implements Serializable {
   private static final SchemaTypeAdapter SCHEMA_TYPE_ADAPTER = new SchemaTypeAdapter();
+  private static final long serialVersionUID = -1891891892562027345L;
 
   /**
    * Types known to Schema.
@@ -80,7 +82,8 @@ public final class Schema {
   /**
    * Represents a field inside a {@link Type#RECORD} schema.
    */
-  public static final class Field {
+  public static final class Field implements Serializable {
+    private static final long serialVersionUID = 5423721270457378454L;
     private final String name;
     private final Schema schema;
 

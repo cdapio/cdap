@@ -16,6 +16,11 @@
 
 class myLineageService {
 
+  constructor($state, myTrackerApi) {
+    this.$state = $state;
+    this.myTrackerApi = myTrackerApi;
+  }
+
   /**
    *  Takes in the response from backend, and returns an object with list of
    *  nodes and connections.
@@ -62,6 +67,21 @@ class myLineageService {
       };
 
       uniqueNodes[key] = nodeObj;
+
+      if (data.type === 'datasets') {
+        let params = {
+          namespace: this.$state.params.namespace,
+          entityType: data.type,
+          entityId: data.name
+        };
+        this.myTrackerApi.getDatasetSystemProperties(params)
+          .$promise
+          .then( (res) => {
+            let parsedType = res.type.split('.');
+            nodeObj.displayType = parsedType[parsedType.length - 1];
+          });
+      }
+
     });
 
 
@@ -167,13 +187,26 @@ class myLineageService {
       };
 
       uniqueNodes[key] = nodeObj;
+
+      if (data.type === 'datasets') {
+        let params = {
+          namespace: this.$state.params.namespace,
+          entityType: data.type,
+          entityId: data.name
+        };
+        this.myTrackerApi.getDatasetSystemProperties(params)
+          .$promise
+          .then( (res) => {
+            let parsedType = res.type.split('.');
+            nodeObj.displayType = parsedType[parsedType.length - 1];
+          });
+      }
     });
 
     /* SETTING CONNECTIONS */
     angular.forEach(response.relations, (rel) => {
-      let isUnknownOrBoth = rel.access === 'both' || rel.access === 'unknown';
-
-      if (rel.access === 'read' || isUnknownOrBoth) {
+      let isUnknownOrBoth = rel.accesses.length > 1;
+      if (!isUnknownOrBoth && rel.accesses[0] === 'read') {
         let dataId = rel.data;
         let programId = rel.program;
         connections.push({
@@ -193,7 +226,7 @@ class myLineageService {
         });
       }
 
-      if (rel.access === 'write') {
+      if (rel.accesses[0] !== 'read' || isUnknownOrBoth) {
         let dataId = rel.data;
         let programId = rel.program;
         connections.push({
@@ -284,14 +317,14 @@ class myLineageService {
       nodesep: 50,
       ranksep: 90,
       rankdir: 'LR',
-      marginx: 90,
-      marginy: 25
+      marginx: 100,
+      marginy: 50
     });
     graph.setDefaultEdgeLabel(function() { return {}; });
 
     angular.forEach(nodes, (node) => {
       var id = node.dataId;
-      graph.setNode(id, { width: 175, height: 55 });
+      graph.setNode(id, { width: 180, height: 60 });
     });
 
     angular.forEach(connections, (connection) => {
@@ -306,14 +339,14 @@ class myLineageService {
   mapNodesLocation(nodes, graph) {
     angular.forEach(nodes, (node) => {
       node._uiLocation = {
-        top: graph._nodes[node.dataId].y + 'px',
-        left: graph._nodes[node.dataId].x + 'px'
+        top: graph._nodes[node.dataId].y - 20 + 'px', // 20 = half of node height
+        left: graph._nodes[node.dataId].x - 90 + 'px' // 90 = half of node width
       };
     });
   }
 }
 
-myLineageService.$inject = [];
+myLineageService.$inject = ['$state', 'myTrackerApi'];
 
 angular.module(PKG.name + '.feature.tracker')
   .service('myLineageService', myLineageService);

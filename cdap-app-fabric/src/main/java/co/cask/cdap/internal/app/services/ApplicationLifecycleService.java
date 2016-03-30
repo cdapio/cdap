@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -63,9 +63,16 @@ import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.ProgramTypes;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.artifact.ArtifactSummary;
+import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.proto.id.Ids;
+import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.proto.security.Action;
+import co.cask.cdap.security.authorization.AuthorizerInstantiatorService;
+import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
 import com.google.common.collect.HashMultimap;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -83,6 +90,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -115,16 +123,18 @@ public class ApplicationLifecycleService extends AbstractIdleService {
   private final ArtifactRepository artifactRepository;
   private final ManagerFactory<AppDeploymentInfo, ApplicationWithPrograms> managerFactory;
   private final MetadataStore metadataStore;
+  private final AuthorizerInstantiatorService authorizerInstantiatorService;
 
   @Inject
-  public ApplicationLifecycleService(ProgramRuntimeService runtimeService, Store store, CConfiguration configuration,
-                                     Scheduler scheduler, QueueAdmin queueAdmin,
-                                     NamespacedLocationFactory namespacedLocationFactory,
-                                     StreamConsumerFactory streamConsumerFactory, UsageRegistry usageRegistry,
-                                     PreferencesStore preferencesStore, MetricStore metricStore,
-                                     ArtifactRepository artifactRepository,
-                                     ManagerFactory<AppDeploymentInfo, ApplicationWithPrograms> managerFactory,
-                                     MetadataStore metadataStore) {
+  ApplicationLifecycleService(ProgramRuntimeService runtimeService, Store store, CConfiguration configuration,
+                              Scheduler scheduler, QueueAdmin queueAdmin,
+                              NamespacedLocationFactory namespacedLocationFactory,
+                              StreamConsumerFactory streamConsumerFactory, UsageRegistry usageRegistry,
+                              PreferencesStore preferencesStore, MetricStore metricStore,
+                              ArtifactRepository artifactRepository,
+                              ManagerFactory<AppDeploymentInfo, ApplicationWithPrograms> managerFactory,
+                              MetadataStore metadataStore,
+                              AuthorizerInstantiatorService authorizerInstantiatorService) {
     this.runtimeService = runtimeService;
     this.store = store;
     this.configuration = configuration;
@@ -138,6 +148,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     this.artifactRepository = artifactRepository;
     this.managerFactory = managerFactory;
     this.metadataStore = metadataStore;
+    this.authorizerInstantiatorService = authorizerInstantiatorService;
   }
 
   @Override
@@ -227,6 +238,9 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     if (currentSpec == null) {
       throw new ApplicationNotFoundException(appId);
     }
+    // App exists. Check if the current user has admin privileges on it before updating. The user's write privileges on
+    // the namespace will get enforced in the deployApp method.
+    authorizerInstantiatorService.get().enforce(appId.toEntityId(), SecurityRequestContext.toPrincipal(), Action.ADMIN);
     ArtifactId currentArtifact = currentSpec.getArtifactId();
 
     // if no artifact is given, use the current one.
@@ -335,31 +349,30 @@ public class ApplicationLifecycleService extends AbstractIdleService {
   /**
    * Remove all the applications inside the given {@link Id.Namespace}
    *
-   * @param identifier the {@link Id.Namespace} under which all application should be deleted
+   * @param namespaceId the {@link Id.Namespace} under which all application should be deleted
    * @throws Exception
    */
-  public void removeAll(Id.Namespace identifier) throws Exception {
+  public void removeAll(final Id.Namespace namespaceId) throws Exception {
     List<ApplicationSpecification> allSpecs = new ArrayList<>(
-      store.getAllApplications(identifier));
+      store.getAllApplications(namespaceId));
 
     //Check if any program associated with this namespace is running
-    final Id.Namespace accId = Id.Namespace.from(identifier.getId());
     boolean appRunning = runtimeService.checkAnyRunning(new Predicate<Id.Program>() {
       @Override
       public boolean apply(Id.Program programId) {
-        return programId.getApplication().getNamespace().equals(accId);
+        return programId.getApplication().getNamespace().equals(namespaceId);
       }
     }, ProgramType.values());
 
     if (appRunning) {
-      throw new CannotBeDeletedException(identifier, "One of the program associated with this namespace is still " +
+      throw new CannotBeDeletedException(namespaceId, "One of the program associated with this namespace is still " +
         "running");
     }
 
     //All Apps are STOPPED, delete them
     for (ApplicationSpecification appSpec : allSpecs) {
-      Id.Application id = Id.Application.from(identifier.getId(), appSpec.getName());
-      removeApplication(id);
+      Id.Application id = Id.Application.from(namespaceId.getId(), appSpec.getName());
+      deleteApp(id, appSpec);
     }
   }
 
@@ -386,7 +399,6 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     if (spec == null) {
       throw new NotFoundException(appId);
     }
-
     deleteApp(appId, spec);
   }
 
@@ -521,7 +533,9 @@ public class ApplicationLifecycleService extends AbstractIdleService {
                                             @Nullable String configStr,
                                             ProgramTerminator programTerminator,
                                             ArtifactDetail artifactDetail) throws Exception {
-
+    // Enforce that the current principal has write access to the namespace the app is being deployed to
+    authorizerInstantiatorService.get().enforce(namespace.toEntityId(), SecurityRequestContext.toPrincipal(),
+                                                Action.WRITE);
     Id.Artifact artifactId = Id.Artifact.from(namespace, artifactDetail.getDescriptor().getArtifactId());
     Set<ApplicationClass> appClasses = artifactDetail.getMeta().getClasses().getApps();
     if (appClasses.isEmpty()) {
@@ -535,7 +549,11 @@ public class ApplicationLifecycleService extends AbstractIdleService {
 
     Manager<AppDeploymentInfo, ApplicationWithPrograms> manager = managerFactory.create(programTerminator);
     // TODO: (CDAP-3258) Manager needs MUCH better error handling.
-    return manager.deploy(namespace, appName, deploymentInfo).get();
+    ApplicationWithPrograms applicationWithPrograms = manager.deploy(namespace, appName, deploymentInfo).get();
+    // Deployment successful. Grant all privileges on this app to the current principal.
+    authorizerInstantiatorService.get().grant(namespace.toEntityId().app(applicationWithPrograms.getId().getId()),
+                                              SecurityRequestContext.toPrincipal(), ImmutableSet.of(Action.ALL));
+    return applicationWithPrograms;
   }
 
   // deletes without performs checks that no programs are running
@@ -548,6 +566,11 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    * @throws Exception
    */
   private void deleteApp(Id.Application appId, ApplicationSpecification spec) throws Exception {
+    // enfore ADMIN privileges on the app
+    authorizerInstantiatorService.get().enforce(appId.toEntityId(), SecurityRequestContext.toPrincipal(), Action.ADMIN);
+    // first remove all privileges on the app
+    revokePrivileges(appId.toEntityId(), spec);
+
     //Delete the schedules
     for (WorkflowSpecification workflowSpec : spec.getWorkflows().values()) {
       Id.Program workflowProgramId = Id.Program.from(appId, ProgramType.WORKFLOW, workflowSpec.getName());
@@ -595,6 +618,14 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     }
   }
 
+  // TODO: CDAP-5427 - This should be a single operation
+  private void revokePrivileges(ApplicationId appId, ApplicationSpecification appSpec) throws Exception {
+    for (ProgramId programId : getAllPrograms(appId, appSpec)) {
+      authorizerInstantiatorService.get().revoke(programId);
+    }
+    authorizerInstantiatorService.get().revoke(appId);
+  }
+
   /**
    * Delete the metadata for the application and the programs.
    */
@@ -605,33 +636,30 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     // Remove metadata for the programs of the Application
     // TODO: Need to remove this we support prefix search of metadata type.
     // See https://issues.cask.co/browse/CDAP-3669
+    for (ProgramId programId : getAllPrograms(appId.toEntityId(), appSpec)) {
+      metadataStore.removeMetadata(programId.toId());
+    }
+  }
+
+  private Set<ProgramId> getAllPrograms(ApplicationId appId, ApplicationSpecification appSpec) {
+    Set<ProgramId> result = new HashSet<>();
     Map<ProgramType, Set<String>> programTypeToNames = new HashMap<>();
-    if (appSpec.getFlows() != null) {
-      programTypeToNames.put(ProgramType.FLOW, appSpec.getFlows().keySet());
-    }
-    if (appSpec.getMapReduce() != null) {
-      programTypeToNames.put(ProgramType.MAPREDUCE, appSpec.getMapReduce().keySet());
-    }
-    if (appSpec.getWorkflows() != null) {
-      programTypeToNames.put(ProgramType.WORKFLOW, appSpec.getWorkflows().keySet());
-    }
-    if (appSpec.getServices() != null) {
-      programTypeToNames.put(ProgramType.SERVICE, appSpec.getServices().keySet());
-    }
-    if (appSpec.getSpark() != null) {
-      programTypeToNames.put(ProgramType.SPARK, appSpec.getSpark().keySet());
-    }
-    if (appSpec.getWorkers() != null) {
-      programTypeToNames.put(ProgramType.WORKER, appSpec.getWorkers().keySet());
-    }
+    programTypeToNames.put(ProgramType.FLOW, appSpec.getFlows().keySet());
+    programTypeToNames.put(ProgramType.MAPREDUCE, appSpec.getMapReduce().keySet());
+    programTypeToNames.put(ProgramType.WORKFLOW, appSpec.getWorkflows().keySet());
+    programTypeToNames.put(ProgramType.SERVICE, appSpec.getServices().keySet());
+    programTypeToNames.put(ProgramType.SPARK, appSpec.getSpark().keySet());
+    programTypeToNames.put(ProgramType.WORKER, appSpec.getWorkers().keySet());
 
     for (Map.Entry<ProgramType, Set<String>> entry : programTypeToNames.entrySet()) {
       Set<String> programNames = entry.getValue();
       for (String programName : programNames) {
-        Id.Program programId = Id.Program.from(appId.getNamespaceId(), appId.getId(), entry.getKey(), programName);
-        metadataStore.removeMetadata(programId);
+        result.add(Ids.namespace(appId.getNamespace())
+                     .app(appId.getApplication())
+                     .program(entry.getKey(), programName));
       }
     }
+    return result;
   }
 
   // get filter for app specs by artifact name and version. if they are null, it means don't filter.

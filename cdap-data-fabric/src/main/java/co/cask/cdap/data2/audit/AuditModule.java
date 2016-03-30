@@ -49,7 +49,7 @@ public class AuditModule extends RuntimeModule {
     return new PrivateModule() {
       @Override
       protected void configure() {
-        bind(AuditPublisher.class).to(NoOpAuditPublisher.class);
+        bind(AuditPublisher.class).toProvider(KafkaAuditPublisherProvider.class).in(Scopes.SINGLETON);
         expose(AuditPublisher.class);
       }
     };

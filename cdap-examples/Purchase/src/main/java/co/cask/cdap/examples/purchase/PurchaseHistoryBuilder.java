@@ -62,7 +62,6 @@ public class PurchaseHistoryBuilder extends AbstractMapReduce {
     job.setReducerClass(PerUserReducer.class);
 
     context.addInput(Input.ofDataset("purchases"), PurchaseMapper.class);
-    context.addInput(Input.ofDataset("oldPurchases"), OldPurchaseMapper.class);
     context.addOutput("history");
 
     // override default memory usage if the corresponding runtime arguments are set.
@@ -86,27 +85,6 @@ public class PurchaseHistoryBuilder extends AbstractMapReduce {
 
     @Override
     public void map(byte[] key, Purchase purchase, Context context) throws IOException, InterruptedException {
-      String user = purchase.getCustomer();
-      if (purchase.getPrice() > 100000) {
-        mapMetrics.count("purchases.large", 1);
-      }
-      context.write(new Text(user), purchase);
-    }
-  }
-
-  /**
-   * Mapper class to emit user and corresponding purchase information. The input value to this mapper is byte[],
-   * instead of a Purchase object, and so it first must deserialize the byte[] before acting on it.
-   */
-  public static class OldPurchaseMapper extends Mapper<byte[], byte[], Text, Purchase> {
-
-    private static final Gson GSON = new Gson();
-    private Metrics mapMetrics;
-
-    @Override
-    public void map(byte[] key, byte[] purchaseBytes, Context context)
-      throws IOException, InterruptedException {
-      Purchase purchase = GSON.fromJson(Bytes.toString(purchaseBytes), Purchase.class);
       String user = purchase.getCustomer();
       if (purchase.getPrice() > 100000) {
         mapMetrics.count("purchases.large", 1);

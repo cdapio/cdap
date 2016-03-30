@@ -121,8 +121,6 @@ NODE_VERSION_MINOR=`echo $NODE_VERSION | awk -F'[\\\.v]*' ' { print $3 } '`
 NODE_VERSION_PATCH=`echo $NODE_VERSION | awk -F'[\\\.v]*' ' { print $4 } '`
 if [ "$NODE_VERSION_MAJOR" -lt 1 ] && [ "$NODE_VERSION_MINOR" -lt 11 ] && [ "$NODE_VERSION_PATCH" -lt 36 ]; then
   die "ERROR: Node.js $NODE_VERSION is not supported. The minimum version supported is $NODE_VERSION_MINIMUM."
-else
-  echo "Node.js version: $NODE_VERSION"
 fi
 
 # Split up the JVM_OPTS And CDAP_OPTS values into an array, following the shell quoting and substitution rules

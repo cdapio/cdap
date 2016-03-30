@@ -16,7 +16,10 @@
 
 package co.cask.cdap.internal.app.runtime.workflow;
 
+import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.workflow.WorkflowAction;
+import co.cask.cdap.app.metrics.ProgramUserMetrics;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.common.lang.CombineClassLoader;
 import co.cask.cdap.common.lang.InstantiatorFactory;
@@ -64,10 +67,12 @@ public class CustomActionExecutor {
     Class<?> clz = Class.forName(context.getSpecification().getClassName(), true, classLoader);
     Preconditions.checkArgument(WorkflowAction.class.isAssignableFrom(clz), "%s is not a WorkflowAction.", clz);
     WorkflowAction action = instantiator.get(TypeToken.of((Class<? extends WorkflowAction>) clz)).create();
+    Metrics metrics = new ProgramUserMetrics(
+      context.getProgramMetrics().childContext(Constants.Metrics.Tag.NODE, context.getSpecification().getName()));
     Reflections.visit(action, action.getClass(),
                       new PropertyFieldSetter(context.getSpecification().getProperties()),
                       new DataSetFieldSetter(context),
-                      new MetricsFieldSetter(context.getMetrics()));
+                      new MetricsFieldSetter(metrics));
     return action;
   }
 

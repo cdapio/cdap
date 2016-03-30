@@ -19,6 +19,7 @@ package co.cask.cdap.test;
 import co.cask.cdap.api.Config;
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.app.Application;
+import co.cask.cdap.api.artifact.ArtifactVersion;
 import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.module.DatasetModule;
@@ -41,7 +42,11 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.artifact.ArtifactRange;
+import co.cask.cdap.proto.id.Ids;
+import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.NamespacedArtifactId;
 import co.cask.cdap.test.internal.ApplicationManagerFactory;
+import co.cask.cdap.test.internal.ArtifactManagerFactory;
 import co.cask.cdap.test.internal.StreamManagerFactory;
 import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionContext;
@@ -87,6 +92,7 @@ public class UnitTestManager implements TestManager {
   private final StreamManagerFactory streamManagerFactory;
   private final LocationFactory locationFactory;
   private final ArtifactRepository artifactRepository;
+  private final ArtifactManagerFactory artifactManagerFactory;
   private final MetricsManager metricsManager;
   private final File tmpDir;
 
@@ -101,6 +107,7 @@ public class UnitTestManager implements TestManager {
                          LocationFactory locationFactory,
                          MetricsManager metricsManager,
                          ArtifactRepository artifactRepository,
+                         ArtifactManagerFactory artifactManagerFactory,
                          CConfiguration cConf) {
     this.appFabricClient = appFabricClient;
     this.datasetFramework = datasetFramework;
@@ -113,6 +120,7 @@ public class UnitTestManager implements TestManager {
     this.artifactRepository = artifactRepository;
     // this should have been set to a temp dir during injector setup
     this.metricsManager = metricsManager;
+    this.artifactManagerFactory = artifactManagerFactory;
     this.tmpDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
       cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
   }
@@ -176,60 +184,118 @@ public class UnitTestManager implements TestManager {
   }
 
   @Override
+  public ArtifactManager addArtifact(NamespacedArtifactId artifactId, File artifactFile) throws Exception {
+    artifactRepository.addArtifact(artifactId.toId(), artifactFile);
+    return artifactManagerFactory.create(artifactId);
+  }
+
+  @Override
   public void addAppArtifact(Id.Artifact artifactId, Class<?> appClass) throws Exception {
+    addAppArtifact(artifactId.toEntityId(), appClass);
+  }
+
+  @Override
+  public ArtifactManager addAppArtifact(NamespacedArtifactId artifactId, Class<?> appClass) throws Exception {
     Location appJar = AppJarHelper.createDeploymentJar(locationFactory, appClass, new Manifest());
     addArtifact(artifactId, appJar);
+    return artifactManagerFactory.create(artifactId);
   }
 
   @Override
   public void addAppArtifact(Id.Artifact artifactId, Class<?> appClass, String... exportPackages) throws Exception {
+    addAppArtifact(artifactId.toEntityId(), appClass, exportPackages);
+  }
+
+  @Override
+  public ArtifactManager addAppArtifact(NamespacedArtifactId artifactId, Class<?> appClass,
+                                        String... exportPackages) throws Exception {
     Manifest manifest = new Manifest();
     manifest.getMainAttributes().put(ManifestFields.EXPORT_PACKAGE, Joiner.on(',').join(exportPackages));
     Location appJar = AppJarHelper.createDeploymentJar(locationFactory, appClass, manifest);
     addArtifact(artifactId, appJar);
+    return artifactManagerFactory.create(artifactId);
   }
 
   @Override
   public void addAppArtifact(Id.Artifact artifactId, Class<?> appClass, Manifest manifest) throws Exception {
+    addAppArtifact(artifactId.toEntityId(), appClass, manifest);
+  }
+
+  @Override
+  public ArtifactManager addAppArtifact(NamespacedArtifactId artifactId, Class<?> appClass,
+                                        Manifest manifest) throws Exception {
     Location appJar = AppJarHelper.createDeploymentJar(locationFactory, appClass, manifest);
     addArtifact(artifactId, appJar);
+    return artifactManagerFactory.create(artifactId);
   }
 
   @Override
   public void addPluginArtifact(Id.Artifact artifactId, Id.Artifact parent,
                                 Class<?> pluginClass, Class<?>... pluginClasses) throws Exception {
+    addPluginArtifact(artifactId.toEntityId(), parent.toEntityId(), pluginClass, pluginClasses);
+  }
+
+  @Override
+  public ArtifactManager addPluginArtifact(NamespacedArtifactId artifactId, NamespacedArtifactId parent,
+                                           Class<?> pluginClass, Class<?>... pluginClasses) throws Exception {
     Set<ArtifactRange> parents = new HashSet<>();
     parents.add(new ArtifactRange(
-      parent.getNamespace(), parent.getName(), parent.getVersion(), true, parent.getVersion(), true));
+      Ids.namespace(parent.getNamespace()).toId(), parent.getArtifact(), new ArtifactVersion(parent.getVersion()),
+      true, new ArtifactVersion(parent.getVersion()), true));
     addPluginArtifact(artifactId, parents, pluginClass, pluginClasses);
+    return artifactManagerFactory.create(artifactId);
   }
 
   @Override
   public void addPluginArtifact(Id.Artifact artifactId, Set<ArtifactRange> parents,
                                 Class<?> pluginClass, Class<?>... pluginClasses) throws Exception {
+    addPluginArtifact(artifactId.toEntityId(), parents, pluginClass, pluginClasses);
+  }
+
+  @Override
+  public ArtifactManager addPluginArtifact(NamespacedArtifactId artifactId, Set<ArtifactRange> parents,
+                                           Class<?> pluginClass, Class<?>... pluginClasses) throws Exception {
     File pluginJar = createPluginJar(artifactId, pluginClass, pluginClasses);
-    artifactRepository.addArtifact(artifactId, pluginJar, parents);
-    pluginJar.delete();
+    artifactRepository.addArtifact(artifactId.toId(), pluginJar, parents);
+    Preconditions.checkState(pluginJar.delete());
+    return artifactManagerFactory.create(artifactId);
   }
 
   @Override
   public void addPluginArtifact(Id.Artifact artifactId, Id.Artifact parent,
                                 @Nullable Set<PluginClass> additionalPlugins,
                                 Class<?> pluginClass, Class<?>... pluginClasses) throws Exception {
+    addPluginArtifact(artifactId.toEntityId(), parent.toEntityId(), additionalPlugins, pluginClass, pluginClasses);
+  }
+
+  @Override
+  public ArtifactManager addPluginArtifact(NamespacedArtifactId artifactId, NamespacedArtifactId parent,
+                                           @Nullable Set<PluginClass> additionalPlugins, Class<?> pluginClass,
+                                           Class<?>... pluginClasses) throws Exception {
     Set<ArtifactRange> parents = new HashSet<>();
     parents.add(new ArtifactRange(
-      parent.getNamespace(), parent.getName(), parent.getVersion(), true, parent.getVersion(), true));
+      Ids.namespace(parent.getNamespace()).toId(), parent.getArtifact(), new ArtifactVersion(parent.getVersion()),
+      true, new ArtifactVersion(parent.getVersion()), true));
     addPluginArtifact(artifactId, parents, additionalPlugins, pluginClass, pluginClasses);
+    return artifactManagerFactory.create(artifactId);
   }
 
   @Override
   public void addPluginArtifact(Id.Artifact artifactId, Set<ArtifactRange> parents,
                                 @Nullable Set<PluginClass> additionalPlugins,
                                 Class<?> pluginClass, Class<?>... pluginClasses) throws Exception {
+
+  }
+
+  @Override
+  public ArtifactManager addPluginArtifact(NamespacedArtifactId artifactId, Set<ArtifactRange> parents,
+                                           @Nullable Set<PluginClass> additionalPlugins, Class<?> pluginClass,
+                                           Class<?>... pluginClasses) throws Exception {
     File pluginJar = createPluginJar(artifactId, pluginClass, pluginClasses);
-    artifactRepository.addArtifact(artifactId, pluginJar, parents,
+    artifactRepository.addArtifact(artifactId.toId(), pluginJar, parents,
                                    additionalPlugins, Collections.<String, String>emptyMap());
-    pluginJar.delete();
+    Preconditions.checkState(pluginJar.delete());
+    return artifactManagerFactory.create(artifactId);
   }
 
   @Override
@@ -360,6 +426,11 @@ public class UnitTestManager implements TestManager {
     return streamManagerFactory.create(streamId);
   }
 
+  @Override
+  public void deleteAllApplications(NamespaceId namespaceId) throws Exception {
+    appFabricClient.deleteAllApplications(namespaceId);
+  }
+
   private Manifest createManifest(Class<?> cls, Class<?>... classes) {
     Manifest manifest = new Manifest();
     Set<String> exportPackages = new HashSet<>();
@@ -372,24 +443,24 @@ public class UnitTestManager implements TestManager {
     return manifest;
   }
 
-  private File createPluginJar(Id.Artifact artifactId, Class<?> pluginClass,
+  private File createPluginJar(NamespacedArtifactId artifactId, Class<?> pluginClass,
                                Class<?>... pluginClasses) throws IOException {
     Manifest manifest = createManifest(pluginClass, pluginClasses);
     Location appJar = PluginJarHelper.createPluginJar(locationFactory, manifest, pluginClass, pluginClasses);
     File destination =
-      new File(tmpDir, String.format("%s-%s.jar", artifactId.getName(), artifactId.getVersion().getVersion()));
+      new File(tmpDir, String.format("%s-%s.jar", artifactId.getArtifact(), artifactId.getVersion()));
     Files.copy(Locations.newInputSupplier(appJar), destination);
     appJar.delete();
     return destination;
   }
 
-  private void addArtifact(Id.Artifact artifactId, Location jar) throws Exception {
+  private void addArtifact(NamespacedArtifactId artifactId, Location jar) throws Exception {
     File destination =
-      new File(tmpDir, String.format("%s-%s.jar", artifactId.getName(), artifactId.getVersion().getVersion()));
+      new File(tmpDir, String.format("%s-%s.jar", artifactId.getArtifact(), artifactId.getVersion()));
     Files.copy(Locations.newInputSupplier(jar), destination);
     jar.delete();
 
-    artifactRepository.addArtifact(artifactId, destination);
-    destination.delete();
+    artifactRepository.addArtifact(artifactId.toId(), destination);
+    Preconditions.checkState(destination.delete());
   }
 }

@@ -222,12 +222,14 @@ public class MapReduceProgramRunnerTest extends MapReduceRunnerTestBase {
     final long[] values = { 15L, 17L, 7L, 3L };
     final FileSet input = datasetCache.getDataset(inputDatasetName, inputArgs);
     long sum = 0L, count = 1;
+    long inputRecords = 0;
     for (Location inputLocation : input.getInputLocations()) {
       final PrintWriter writer = new PrintWriter(inputLocation.getOutputStream());
       for (long value : values) {
         value *= count;
         writer.println(value);
         sum += value;
+        inputRecords++;
       }
       writer.close();
       count++;
@@ -261,11 +263,13 @@ public class MapReduceProgramRunnerTest extends MapReduceRunnerTestBase {
     Assert.assertEquals(sum, Long.parseLong(fields[1]));
 
     if (counterTableName != null) {
+      final long totalInputRecords = inputRecords;
       Transactions.execute(datasetCache.newTransactionContext(), "countersVerify", new Runnable() {
         @Override
         public void run() {
           KeyValueTable counters = datasetCache.getDataset(counterTableName);
-          Assert.assertEquals(4L, counters.incrementAndGet(AppWithMapReduceUsingRuntimeDatasets.INPUT_RECORDS, 0L));
+          Assert.assertEquals(totalInputRecords,
+                              counters.incrementAndGet(AppWithMapReduceUsingRuntimeDatasets.INPUT_RECORDS, 0L));
           Assert.assertEquals(1L, counters.incrementAndGet(AppWithMapReduceUsingRuntimeDatasets.REDUCE_KEYS, 0L));
         }
       });

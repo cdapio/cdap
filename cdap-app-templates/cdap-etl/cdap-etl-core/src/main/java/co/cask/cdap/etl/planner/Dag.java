@@ -297,6 +297,14 @@ public class Dag {
   }
 
   /**
+   * Add the specified connection. It is possible to create a cycle with this call.
+   */
+  protected void addConnection(String from, String to) {
+    outgoingConnections.put(from, to);
+    incomingConnections.put(to, from);
+  }
+
+  /**
    * Remove a specific node from the dag. Removing a node will remove all connections into the node and all
    * connection coming out of the node. Removing a node will also re-compute the sources and sinks of the dag.
    *

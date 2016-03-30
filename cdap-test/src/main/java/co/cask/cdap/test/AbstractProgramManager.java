@@ -116,4 +116,9 @@ public abstract class AbstractProgramManager<T extends ProgramManager> implement
   public List<RunRecord> getHistory(ProgramRunStatus status) {
     return applicationManager.getHistory(programId, status);
   }
+
+  @Override
+  public void setRuntimeArgs(Map<String, String> args) throws Exception {
+    applicationManager.setRuntimeArgs(programId.toEntityId(), args);
+  }
 }

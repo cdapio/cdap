@@ -100,9 +100,10 @@ class HydratorPlusPlusTopPanelCtrl{
       return;
     }
     this.$uibModal.open({
-      templateUrl: '/assets/features/hydrator/templates/create/popovers/viewconfig.html',
+      templateUrl: '/assets/features/hydratorplusplus/templates/create/popovers/viewconfig.html',
       size: 'lg',
       keyboard: true,
+      windowTopClass: 'hydrator-modal',
       controller: ['$scope', 'config', '$timeout', 'exportConfig', function($scope, config, $timeout, exportConfig) {
         $scope.config = JSON.stringify(config);
         $scope.export = function () {

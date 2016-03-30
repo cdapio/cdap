@@ -24,6 +24,7 @@ import co.cask.cdap.api.Config;
 import co.cask.cdap.api.data.format.FormatSpecification;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
+import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.app.program.ManifestFields;
 import co.cask.cdap.client.util.RESTClient;
 import co.cask.cdap.common.BadRequestException;
@@ -597,9 +598,9 @@ public class MetadataHttpHandlerTest extends MetadataTestBase {
 
     Map<String, String> streamSystemProperties = getProperties(streamId, MetadataScope.SYSTEM);
     // Verify create time exists, and is within the past hour
-    Assert.assertNotNull("Stream create time does not exist", streamSystemProperties.containsKey("createtime"));
+    Assert.assertTrue("Stream create time does not exist", streamSystemProperties.containsKey("createtime"));
     long createTime = Long.parseLong(streamSystemProperties.get("createtime"));
-    Assert.assertTrue("Stream create time is invalid",
+    Assert.assertTrue("Stream create time should be within the last hour - " + createTime,
                       createTime > System.currentTimeMillis() - TimeUnit.HOURS.toMillis(1));
 
     // Now remove create time and assert all other system properties
@@ -618,7 +619,7 @@ public class MetadataHttpHandlerTest extends MetadataTestBase {
         }
       }));
 
-    // Update stream properties and verify metadata got updated
+    // Update stream properties and verify metadata got updated (except create time)
     long newTtl = 100000L;
     setStreamProperties(streamId, new StreamProperties(newTtl, null, null));
     streamSystemProperties = getProperties(streamId, MetadataScope.SYSTEM);
@@ -638,6 +639,7 @@ public class MetadataHttpHandlerTest extends MetadataTestBase {
     Assert.assertEquals(
       ImmutableSet.of(new MetadataRecord(streamId, MetadataScope.SYSTEM, streamSystemProperties, streamSystemTags)),
       streamSystemMetadata);
+
     // create view and verify view system metadata
     Id.Stream.View view = Id.Stream.View.from(streamId, "view");
     Schema viewSchema = Schema.recordOf("record",
@@ -654,6 +656,7 @@ public class MetadataHttpHandlerTest extends MetadataTestBase {
                       new MetadataRecord(view, MetadataScope.SYSTEM, viewSystemProperties, viewSystemTags)),
       getMetadata(view)
     );
+
     // verify dataset system metadata
     Id.DatasetInstance datasetInstance = Id.DatasetInstance.from(Id.Namespace.DEFAULT, AllProgramsApp.DATASET_NAME);
     Set<String> dsSystemTags = getTags(datasetInstance, MetadataScope.SYSTEM);
@@ -662,8 +665,40 @@ public class MetadataHttpHandlerTest extends MetadataTestBase {
                       DatasetSystemMetadataWriter.BATCH_TAG,
                       DatasetSystemMetadataWriter.EXPLORE_TAG),
       dsSystemTags);
+
     Map<String, String> dsSystemProperties = getProperties(datasetInstance, MetadataScope.SYSTEM);
-    Assert.assertEquals(KeyValueTable.class.getName(), dsSystemProperties.get("type"));
+    // Verify create time exists, and is within the past hour
+    Assert.assertTrue("Dataset create time does not exist", dsSystemProperties.containsKey("createtime"));
+    createTime = Long.parseLong(dsSystemProperties.get("createtime"));
+    Assert.assertTrue("Dataset create time should be within the last hour - " + createTime,
+                      createTime > System.currentTimeMillis() - TimeUnit.HOURS.toMillis(1));
+
+    // Now remove create time and assert all other system properties
+    Assert.assertEquals(
+      ImmutableMap.of(
+        "type", KeyValueTable.class.getName(),
+        "description", "test dataset"
+      ),
+      Maps.filterEntries(dsSystemProperties, new Predicate<Map.Entry<String, String>>() {
+        @Override
+        public boolean apply(Map.Entry<String, String> input) {
+          return !"createtime".equals(input.getKey());
+        }
+      }));
+
+    //Update properties, and make sure that system metadata gets updated (except create time)
+    updateDatasetProperties(datasetInstance, ImmutableMap.of(Table.PROPERTY_TTL, "100000"));
+    dsSystemProperties = getProperties(datasetInstance, MetadataScope.SYSTEM);
+    Assert.assertEquals(
+      ImmutableMap.of(
+        "type", KeyValueTable.class.getName(),
+        "description", "test dataset",
+        "ttl", "100000",
+        "createtime", String.valueOf(createTime)
+      ),
+      dsSystemProperties
+    );
+
     // verify artifact metadata
     Id.Artifact artifactId = getArtifactId();
     Assert.assertEquals(

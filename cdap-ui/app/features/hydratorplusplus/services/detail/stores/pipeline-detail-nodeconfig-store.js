@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.feature.hydratorplusplus')
-  .service('HydratorPlusPlusNodeConfigStore', function(HydratorPlusPlusConfigDispatcher, $q, $filter, IMPLICIT_SCHEMA, GLOBALS, myPipelineApi, $state, $rootScope, HydratorPlusPlusConfigStore, DetailNonRunsStore, HydratorPlusPlusNodeConfigActions, HydratorPlusPlusHydratorService) {
+  .service('HydratorPlusPlusNodeConfigStore', function(HydratorPlusPlusConfigDispatcher, $q, $filter, IMPLICIT_SCHEMA, GLOBALS, myPipelineApi, $state, $rootScope, HydratorPlusPlusConfigStore, HydratorPlusPlusDetailNonRunsStore, HydratorPlusPlusNodeConfigActions, HydratorPlusPlusHydratorService) {
 
     var dispatcher;
     this.changeListeners = [];
@@ -58,7 +58,7 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
     };
 
     this.reset = function() {
-      // This is done here as NodeConfigStore is being reused between create and view pipelines states.
+      // This is done here as DAGPlusPlusNodesStore is being reused between create and view pipelines states.
       // So we need to destroy the dispatcher updating all listeners of the store so when we switch states
       // one does not get notified if out of context.
       HydratorPlusPlusConfigDispatcher.destroyDispatcher();
@@ -68,7 +68,7 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
       if ($state.includes('hydratorplusplus.create.**')) {
         this.ConfigStore = HydratorPlusPlusConfigStore;
       } else if ($state.includes('hydratorplusplus.detail.**')) {
-        this.ConfigStore = DetailNonRunsStore;
+        this.ConfigStore = HydratorPlusPlusDetailNonRunsStore;
       }
       dispatcher = HydratorPlusPlusConfigDispatcher.getDispatcher();
       dispatcher.register('onPluginChange', this.setState.bind(this));
@@ -173,7 +173,7 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
       if (this.state.node.type === artifactTypeExtension.sink) {
         this.state.isSink = true;
       }
-      if (this.state.node.type === 'transform') {
+      if ([artifactTypeExtension.source, artifactTypeExtension.sink].indexOf(this.state.node.type) === -1) {
         this.state.isTransform = true;
       }
     }

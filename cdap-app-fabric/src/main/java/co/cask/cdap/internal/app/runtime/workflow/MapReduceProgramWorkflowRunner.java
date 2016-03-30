@@ -17,12 +17,15 @@ package co.cask.cdap.internal.app.runtime.workflow;
 
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
+import co.cask.cdap.api.workflow.WorkflowNodeState;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunnerFactory;
 import com.google.common.base.Preconditions;
+
+import java.util.Map;
 
 /**
  * A {@link ProgramWorkflowRunner} that creates {@link Runnable} for executing MapReduce job from Workflow.
@@ -31,8 +34,8 @@ final class MapReduceProgramWorkflowRunner extends AbstractProgramWorkflowRunner
 
   MapReduceProgramWorkflowRunner(WorkflowSpecification workflowSpec, ProgramRunnerFactory programRunnerFactory,
                                  Program workflowProgram, ProgramOptions workflowProgramOptions, WorkflowToken token,
-                                 String nodeId) {
-    super(workflowProgram, workflowProgramOptions, programRunnerFactory, workflowSpec, token, nodeId);
+                                 String nodeId, Map<String, WorkflowNodeState> nodeStates) {
+    super(workflowProgram, workflowProgramOptions, programRunnerFactory, workflowSpec, token, nodeId, nodeStates);
   }
 
   /**

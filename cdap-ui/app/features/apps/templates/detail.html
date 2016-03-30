@@ -25,7 +25,7 @@
                 tooltip-append-to-body="true"></span>
         </span>
         <span ng-if="DetailController.myHydratorFactory.isETLApp(DetailController.artifact.name)">
-          <span ng-if="DetailController.artifact.name === DetailController.GLOBALS.etlBatch">
+          <span ng-if="DetailController.GLOBALS.etlBatchPipelines.indexOf(DetailController.artifact.name) !== -1">
             <span class="icon-ETLBatch pull-left"
                   uib-tooltip="Type: ETL Batch"
                   tooltip-placement="top"
@@ -43,7 +43,7 @@
       <my-metadata-tags tag-limit="5" params="DetailController.metadataParams" type="apps"></my-metadata-tags>
     </div>
     <div class="col-sm-6 text-right">
-      <a ui-sref="hydrator.detail({ pipelineId: $state.params.appId })"
+      <a ui-sref="hydratorplusplus.detail({ pipelineId: $state.params.appId })"
         class="btn btn-hydrator"
         ng-if="DetailController.isHydrator"
         title="View in Hydrator">

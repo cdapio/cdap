@@ -38,6 +38,7 @@ public enum ArgumentName {
   DATASET_TYPE("dataset-type"),
   DATASET_MODULE("dataset-module"),
   DATASET_PROPERTIES("dataset-properties"),
+  DATASET_DESCRIPTON("dataset-description"),
   NEW_DATASET_MODULE("new-dataset-module"),
   DATASET("dataset-name"),
   NEW_DATASET("new-dataset-name"),

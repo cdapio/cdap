@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -57,7 +57,8 @@ public class ETLBatchApplication extends AbstractApplication<ETLBatchConfig> {
     setDescription(DEFAULT_DESCRIPTION);
 
     PipelineSpecGenerator specGenerator =
-      new PipelineSpecGenerator(getConfigurer(), BatchSource.PLUGIN_TYPE, BatchSink.PLUGIN_TYPE,
+      new PipelineSpecGenerator(getConfigurer(),
+                                ImmutableSet.of(BatchSource.PLUGIN_TYPE), ImmutableSet.of(BatchSink.PLUGIN_TYPE),
                                 TimePartitionedFileSet.class,
                                 FileSetProperties.builder()
                                   .setInputFormat(AvroKeyInputFormat.class)
@@ -81,7 +82,8 @@ public class ETLBatchApplication extends AbstractApplication<ETLBatchConfig> {
       throw new IllegalArgumentException("Invalid pipeline. There must only be one source.");
     }
 
-    PipelinePlanner planner = new PipelinePlanner(SUPPORTED_PLUGIN_TYPES, ImmutableSet.<String>of());
+    PipelinePlanner planner = new PipelinePlanner(SUPPORTED_PLUGIN_TYPES,
+                                                  ImmutableSet.<String>of(), ImmutableSet.<String>of());
     PipelinePlan plan = planner.plan(spec);
 
     if (plan.getPhases().size() != 1) {

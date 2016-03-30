@@ -137,7 +137,8 @@ public class PipelinePlannerTest {
     );
     Set<String> pluginTypes = ImmutableSet.of(NODE, AGGREGATOR, Constants.CONNECTOR_TYPE);
     Set<String> reduceTypes = ImmutableSet.of(AGGREGATOR);
-    PipelinePlanner planner = new PipelinePlanner(pluginTypes, reduceTypes);
+    Set<String> isolationTypes = ImmutableSet.of();
+    PipelinePlanner planner = new PipelinePlanner(pluginTypes, reduceTypes, isolationTypes);
     PipelineSpec pipelineSpec = new PipelineSpec(stageSpecs, connections, new Resources(), true);
 
     Map<String, PipelinePhase> phases = new HashMap<>();

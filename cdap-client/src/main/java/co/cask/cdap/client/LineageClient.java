@@ -23,6 +23,7 @@ import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.UnauthenticatedException;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.codec.NamespacedIdCodec;
+import co.cask.cdap.proto.metadata.lineage.CollapseType;
 import co.cask.cdap.proto.metadata.lineage.LineageRecord;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpResponse;
@@ -33,6 +34,8 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.util.Collections;
+import java.util.Set;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 
@@ -84,8 +87,43 @@ public class LineageClient {
   public LineageRecord getLineage(Id.DatasetInstance datasetInstance, String startTime, String endTime,
                                   @Nullable Integer levels)
     throws IOException, UnauthenticatedException, NotFoundException, BadRequestException {
+    return getLineage(datasetInstance, startTime, endTime, Collections.<CollapseType>emptySet(), levels);
+  }
+
+  /**
+   * Retrieves Lineage for a given dataset.
+   *
+   * @param datasetInstance the dataset for which to retrieve lineage
+   * @param startTime start time for the query, in seconds
+   * @param endTime end time for the query, in seconds
+   * @param collapseTypes fields on which lineage relations can be collapsed on
+   * @param levels number of levels to compute lineage for, or {@code null} to use the LineageHandler's default value
+   * @return {@link LineageRecord} for the specified dataset.
+   */
+  public LineageRecord getLineage(Id.DatasetInstance datasetInstance, long startTime, long endTime,
+                                  Set<CollapseType> collapseTypes, @Nullable Integer levels)
+    throws IOException, UnauthenticatedException, NotFoundException, BadRequestException {
+    return getLineage(datasetInstance, Long.toString(startTime), Long.toString(endTime), collapseTypes, levels);
+  }
+
+  /**
+   * Retrieves Lineage for a given dataset.
+   *
+   * @param datasetInstance the dataset for which to retrieve lineage
+   * @param startTime start time for the query, in seconds, or in 'now - xs' format
+   * @param endTime end time for the query, in seconds, or in 'now - xs' format
+   * @param collapseTypes fields on which lineage relations can be collapsed on
+   * @param levels number of levels to compute lineage for, or {@code null} to use the LineageHandler's default value
+   * @return {@link LineageRecord} for the specified dataset.
+   */
+  public LineageRecord getLineage(Id.DatasetInstance datasetInstance, String startTime, String endTime,
+                                  Set<CollapseType> collapseTypes, @Nullable Integer levels)
+    throws IOException, UnauthenticatedException, NotFoundException, BadRequestException {
     String path = String.format("datasets/%s/lineage?start=%s&end=%s", datasetInstance.getId(),
                                 URLEncoder.encode(startTime, "UTF-8"), URLEncoder.encode(endTime, "UTF-8"));
+    for (CollapseType collapseType : collapseTypes) {
+      path = String.format("%s&collapse=%s", path, collapseType);
+    }
     if (levels != null) {
       path = String.format("%s&levels=%d", path, levels);
     }
@@ -110,6 +148,22 @@ public class LineageClient {
    * Retrieves Lineage for a given stream.
    *
    * @param streamId the stream for which to retrieve lineage
+   * @param startTime start time for the query, in seconds
+   * @param endTime end time for the query, in seconds
+   * @param collapseTypes fields on which lineage relations can be collapsed on
+   * @param levels number of levels to compute lineage for, or {@code null} to use the LineageHandler's default value
+   * @return {@link LineageRecord} for the specified stream.
+   */
+  public LineageRecord getLineage(Id.Stream streamId, long startTime, long endTime,
+                                  Set<CollapseType> collapseTypes, @Nullable Integer levels)
+    throws IOException, UnauthenticatedException, NotFoundException, BadRequestException {
+    return getLineage(streamId, Long.toString(startTime), Long.toString(endTime), collapseTypes, levels);
+  }
+
+  /**
+   * Retrieves Lineage for a given stream.
+   *
+   * @param streamId the stream for which to retrieve lineage
    * @param startTime start time for the query, in seconds, or in 'now - xs' format
    * @param endTime end time for the query, in seconds, or in 'now - xs' format
    * @param levels number of levels to compute lineage for, or {@code null} to use the LineageHandler's default value
@@ -117,8 +171,27 @@ public class LineageClient {
    */
   public LineageRecord getLineage(Id.Stream streamId, String startTime, String endTime, @Nullable Integer levels)
     throws IOException, UnauthenticatedException, NotFoundException, BadRequestException {
+    return getLineage(streamId, startTime, endTime, Collections.<CollapseType>emptySet(), levels);
+  }
+
+  /**
+   * Retrieves Lineage for a given stream.
+   *
+   * @param streamId the stream for which to retrieve lineage
+   * @param startTime start time for the query, in seconds, or in 'now - xs' format
+   * @param endTime end time for the query, in seconds, or in 'now - xs' format
+   * @param collapseTypes fields on which lineage relations can be collapsed on
+   * @param levels number of levels to compute lineage for, or {@code null} to use the LineageHandler's default value
+   * @return {@link LineageRecord} for the specified stream.
+   */
+  public LineageRecord getLineage(Id.Stream streamId, String startTime, String endTime,
+                                  Set<CollapseType> collapseTypes, @Nullable Integer levels)
+    throws IOException, UnauthenticatedException, NotFoundException, BadRequestException {
     String path = String.format("streams/%s/lineage?start=%s&end=%s", streamId.getId(),
                                 URLEncoder.encode(startTime, "UTF-8"), URLEncoder.encode(endTime, "UTF-8"));
+    for (CollapseType collapseType : collapseTypes) {
+      path = String.format("%s&collapse=%s", path, collapseType);
+    }
     if (levels != null) {
       path = String.format("%s&levels=%d", path, levels);
     }

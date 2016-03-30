@@ -17,15 +17,13 @@
 package co.cask.cdap.app.runtime.spark;
 
 import co.cask.tephra.Transaction;
-import co.cask.tephra.TransactionCodec;
+import co.cask.tephra.TransactionFailureException;
 import co.cask.tephra.TransactionManager;
 import co.cask.tephra.TransactionSystemClient;
 import co.cask.tephra.inmemory.InMemoryTxSystemClient;
 import co.cask.tephra.persist.TransactionSnapshot;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.io.ByteStreams;
 import org.apache.hadoop.conf.Configuration;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -33,10 +31,6 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.net.HttpURLConnection;
-import java.net.URI;
-import java.net.URL;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashSet;
@@ -51,6 +45,7 @@ import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.annotation.Nullable;
 
@@ -60,11 +55,11 @@ import javax.annotation.Nullable;
 public class SparkTransactionServiceTest {
 
   private static final Logger LOG = LoggerFactory.getLogger(SparkTransactionServiceTest.class);
-  private static final TransactionCodec TX_CODEC = new TransactionCodec();
 
   private static TransactionManager txManager;
   private static TransactionSystemClient txClient;
   private static SparkTransactionService sparkTxService;
+  private static SparkTransactionClient sparkTxClient;
 
   @BeforeClass
   public static void init() {
@@ -75,6 +70,8 @@ public class SparkTransactionServiceTest {
 
     sparkTxService = new SparkTransactionService(txClient);
     sparkTxService.startAndWait();
+
+    sparkTxClient = new SparkTransactionClient(sparkTxService.getBaseURI());
   }
 
   @AfterClass
@@ -167,7 +164,7 @@ public class SparkTransactionServiceTest {
    * Tests the case where starting of transaction failed.
    */
   @Test
-  public void testFailureTransaction() throws IOException {
+  public void testFailureTransaction() throws Exception {
     TransactionManager txManager = new TransactionManager(new Configuration()) {
       @Override
       public Transaction startLong() {
@@ -182,12 +179,12 @@ public class SparkTransactionServiceTest {
         // Start a job
         sparkTxService.jobStarted(1, ImmutableSet.of(2));
 
-        // Make a call to the stage transaction endpoint, it should get a 410 Gone response.
-        HttpURLConnection urlConn = open(sparkTxService.getBaseURI().resolve("/spark/stages/2/transaction"));
+        // Make a call to the stage transaction endpoint, it should throw TransactionFailureException
         try {
-          Assert.assertEquals(HttpResponseStatus.GONE.getCode(), urlConn.getResponseCode());
-        } finally {
-          urlConn.disconnect();
+          new SparkTransactionClient(sparkTxService.getBaseURI()).getTransaction(2, 1, TimeUnit.SECONDS);
+          Assert.fail("Should failed to get transaction");
+        } catch (TransactionFailureException e) {
+          // expected
         }
 
         // End the job
@@ -198,6 +195,27 @@ public class SparkTransactionServiceTest {
     } finally {
       txManager.stopAndWait();
     }
+  }
+
+  /**
+   * Tests the retry timeout logic in the {@link SparkTransactionClient}.
+   */
+  @Test
+  public void testClientRetry() throws Exception {
+    final Set<Integer> stages = ImmutableSet.of(2);
+
+    // Delay the call to jobStarted by 3 seconds
+    Executors.newSingleThreadScheduledExecutor().schedule(new Runnable() {
+      @Override
+      public void run() {
+        sparkTxService.jobStarted(1, stages);
+      }
+    }, 3, TimeUnit.SECONDS);
+
+    // Should be able to get the transaction, hence no exception
+    sparkTxClient.getTransaction(2, 10, TimeUnit.SECONDS);
+
+    sparkTxService.jobEnded(1, true);
   }
 
   /**
@@ -220,14 +238,12 @@ public class SparkTransactionServiceTest {
    * @param explicitTransaction the job transaction to use if not {@code null}
    */
   private void testRunJob(int jobId, Set<Integer> stages, boolean jobSucceeded,
-                          @Nullable Transaction explicitTransaction) throws Exception {
-    URI baseURI = sparkTxService.getBaseURI().resolve("/spark/stages/");
-
-    // Before job start, getting transaction should return 404
-    verifyStagesTransactions(stages, baseURI, new Verifier() {
+                          @Nullable final Transaction explicitTransaction) throws Exception {
+    // Before job start, no transaction will be associated with the stages
+    verifyStagesTransactions(stages, new ClientTransactionVerifier() {
       @Override
-      public boolean verify(HttpURLConnection urlConn) throws Exception {
-        return HttpResponseStatus.NOT_FOUND.getCode() == urlConn.getResponseCode();
+      public boolean verify(@Nullable Transaction transaction, @Nullable Throwable failureCause) throws Exception {
+        return transaction == null && failureCause instanceof TimeoutException;
       }
     });
 
@@ -235,17 +251,36 @@ public class SparkTransactionServiceTest {
     if (explicitTransaction == null) {
       sparkTxService.jobStarted(jobId, stages);
     } else {
-      sparkTxService.jobStarted(jobId, stages, explicitTransaction);
+      sparkTxService.jobStarted(jobId, stages, new TransactionInfo() {
+        @Override
+        public Transaction getTransaction() {
+          return explicitTransaction;
+        }
+
+        @Override
+        public boolean commitOnJobEnded() {
+          return false;
+        }
+
+        @Override
+        public void onJobStarted() {
+          // no-op
+        }
+
+        @Override
+        public void onTransactionCompleted(boolean jobSucceeded, @Nullable TransactionFailureException failureCause) {
+          // no-op
+        }
+      });
     }
 
-    // For all stages, it should get 200 with the same transaction returned
+    // For all stages, it should get the same transaction
     final Set<Transaction> transactions = Collections.newSetFromMap(new ConcurrentHashMap<Transaction, Boolean>());
-    verifyStagesTransactions(stages, baseURI, new Verifier() {
+    verifyStagesTransactions(stages, new ClientTransactionVerifier() {
       @Override
-      public boolean verify(HttpURLConnection urlConn) throws Exception {
-        Transaction transaction = TX_CODEC.decode(ByteStreams.toByteArray(urlConn.getInputStream()));
+      public boolean verify(@Nullable Transaction transaction, @Nullable Throwable failureCause) throws Exception {
         transactions.add(new TransactionWrapper(transaction));
-        return HttpResponseStatus.OK.getCode() == urlConn.getResponseCode();
+        return transaction != null;
       }
     });
 
@@ -264,11 +299,11 @@ public class SparkTransactionServiceTest {
     // Now finish the job
     sparkTxService.jobEnded(jobId, jobSucceeded);
 
-    // For all stages, it should get a 404 Not found again after the job completed
-    verifyStagesTransactions(stages, baseURI, new Verifier() {
+    // After job finished, no transaction will be associated with the stages
+    verifyStagesTransactions(stages, new ClientTransactionVerifier() {
       @Override
-      public boolean verify(HttpURLConnection urlConn) throws Exception {
-        return HttpResponseStatus.NOT_FOUND.getCode() == urlConn.getResponseCode();
+      public boolean verify(@Nullable Transaction transaction, @Nullable Throwable failureCause) throws Exception {
+        return transaction == null && failureCause instanceof TimeoutException;
       }
     });
 
@@ -293,13 +328,6 @@ public class SparkTransactionServiceTest {
   }
 
   /**
-   * Opens a {@link HttpURLConnection} from the {@link URL} created from the given {@link URI}.
-   */
-  private HttpURLConnection open(URI uri) throws IOException {
-    return (HttpURLConnection) uri.toURL().openConnection();
-  }
-
-  /**
    * Creates a new set of stage ids.
    */
   private Set<Integer> generateStages(AtomicInteger idGen, int stages) {
@@ -311,15 +339,14 @@ public class SparkTransactionServiceTest {
   }
 
   /**
-   * Verifies the result of get stage transaction endpoint for the given set of stages.
-   * The get transaction endpoint will be hit concurrently for all stages.
+   * Verifies the result of get stage transaction for the given set of stages.
+   * The get transaction will be called concurrently for all stages.
    *
    * @param stages set of stages to verify
-   * @param baseURI the base URI for constructing the complete endpoint
-   * @param verifier a {@link Verifier} to verify the http call result.
+   * @param verifier a {@link ClientTransactionVerifier} to verify the http call result.
    */
-  private void verifyStagesTransactions(Set<Integer> stages, final URI baseURI,
-                                        final Verifier verifier) throws Exception {
+  private void verifyStagesTransactions(Set<Integer> stages,
+                                        final ClientTransactionVerifier verifier) throws Exception {
     final CyclicBarrier barrier = new CyclicBarrier(stages.size());
     final ExecutorService executor = Executors.newFixedThreadPool(stages.size());
     try {
@@ -329,11 +356,10 @@ public class SparkTransactionServiceTest {
           @Override
           public Boolean call() throws Exception {
             barrier.await();
-            HttpURLConnection urlConn = open(baseURI.resolve(stageId + "/transaction"));
             try {
-              return verifier.verify(urlConn);
-            } finally {
-              urlConn.disconnect();
+              return verifier.verify(sparkTxClient.getTransaction(stageId, 0, TimeUnit.SECONDS), null);
+            } catch (Throwable t) {
+              return verifier.verify(null, t);
             }
           }
         });
@@ -351,11 +377,11 @@ public class SparkTransactionServiceTest {
     }
   }
 
-  private interface Verifier {
+  private interface ClientTransactionVerifier {
     /**
-     * Verifies the given http call.
+     * Verifies the result of a call to the transaction service.
      */
-    boolean verify(HttpURLConnection urlConn) throws Exception;
+    boolean verify(@Nullable Transaction transaction, @Nullable Throwable failureCause) throws Exception;
   }
 
   /**

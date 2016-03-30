@@ -41,6 +41,7 @@ import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.audit.AuditPayload;
 import co.cask.cdap.proto.audit.AuditType;
+import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Supplier;
@@ -237,6 +238,9 @@ public class InMemoryDatasetFramework implements DatasetFramework {
       }
       DatasetSpecification spec = def.configure(datasetInstanceId.getId(), props);
       spec = spec.setOriginalProperties(props);
+      if (props.getDescription() != null) {
+        spec = spec.setDescription(props.getDescription());
+      }
       def.getAdmin(DatasetContext.from(datasetInstanceId.getNamespaceId()), spec, null).create();
       instances.put(datasetInstanceId.getNamespace(), datasetInstanceId, spec);
       publishAudit(datasetInstanceId, AuditType.CREATE);
@@ -263,6 +267,9 @@ public class InMemoryDatasetFramework implements DatasetFramework {
       }
       DatasetSpecification spec = def.configure(datasetInstanceId.getId(), props);
       spec = spec.setOriginalProperties(props);
+      if (props.getDescription() != null) {
+        spec = spec.setDescription(props.getDescription());
+      }
       instances.put(datasetInstanceId.getNamespace(), datasetInstanceId, spec);
       def.getAdmin(DatasetContext.from(datasetInstanceId.getNamespaceId()), spec, null).upgrade();
       publishAudit(datasetInstanceId, AuditType.UPDATE);
@@ -608,6 +615,11 @@ public class InMemoryDatasetFramework implements DatasetFramework {
   }
 
   private void publishAudit(Id.DatasetInstance datasetInstance, AuditType auditType) {
+    // Don't publish audit for system datasets admin operations, there can be a deadlock
+    if (NamespaceId.SYSTEM.getNamespace().equals(datasetInstance.getNamespaceId()) &&
+      auditType != AuditType.ACCESS) {
+      return;
+    }
     AuditPublishers.publishAudit(auditPublisher, datasetInstance, auditType, AuditPayload.EMPTY_PAYLOAD);
   }
 }

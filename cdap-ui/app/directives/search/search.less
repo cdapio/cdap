@@ -59,7 +59,7 @@ my-search {
   }
 
   .search-results {
-    width: 400px;
+    width: 450px;
     max-height: 500px;
     position: absolute;
     background-color: white;
@@ -73,6 +73,8 @@ my-search {
     border-bottom-right-radius: 4px;
     border-bottom-left-radius: 4px;
     z-index: 955;
+    overflow-y: auto;
+
     .box-shadow(0 7px 15px 1px fade(black, 30%));
 
     h4 {
@@ -80,12 +82,20 @@ my-search {
       font-weight: 500;
     }
 
-    .entity-details {
+    .result-info, .truncate-ellipsis {
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+
+    .entity-details, .entity-app-details {
       color: #999999;
       span {
         vertical-align: middle;
       }
     }
+
+    .entity-app-details { margin-left: 15px; }
   }
 
   .blank-click-handler {

@@ -15,11 +15,11 @@
  */
 
 class TrackerResultsController {
-  constructor($state, myTrackerApi, $scope, $q) {
+  constructor($state, myTrackerApi, $scope, myHelpers) {
     this.$state = $state;
     this.$scope = $scope;
     this.myTrackerApi = myTrackerApi;
-    this.$q = $q;
+    this.myHelpers = myHelpers;
 
     this.loading = false;
     this.entitiesShowAllButton = false;
@@ -72,37 +72,44 @@ class TrackerResultsController {
       {
         name: 'Name',
         isActive: true,
-        isHover: false
+        isHover: false,
+        count: 0
       },
       {
         name: 'Description',
         isActive: true,
-        isHover: false
+        isHover: false,
+        count: 0
       },
       {
         name: 'User Tags',
         isActive: true,
-        isHover: false
+        isHover: false,
+        count: 0
       },
       {
         name: 'System Tags',
         isActive: true,
-        isHover: false
+        isHover: false,
+        count: 0
       },
       {
         name: 'User Properties',
         isActive: true,
-        isHover: false
+        isHover: false,
+        count: 0
       },
       {
         name: 'System Properties',
         isActive: true,
-        isHover: false
+        isHover: false,
+        count: 0
       },
       {
         name: 'Schema',
         isActive: true,
-        isHover: false
+        isHover: false,
+        count: 0
       }
     ];
 
@@ -110,33 +117,25 @@ class TrackerResultsController {
     this.fetchResults();
   }
 
-  /* Can be updated to use single query once backend supports it */
   fetchResults () {
     this.loading = true;
 
-    let paramsBase = {
+    let params = {
       namespace: this.$state.params.namespace,
       query: this.$state.params.searchQuery,
       scope: this.$scope
     };
-    let datasetParams = angular.extend({target: 'dataset'}, paramsBase);
-    let streamParams = angular.extend({target: 'stream'}, paramsBase);
-    let viewParams = angular.extend({target: 'view'}, paramsBase);
 
-    this.$q.all([
-      this.myTrackerApi.search(datasetParams).$promise,
-      this.myTrackerApi.search(streamParams).$promise,
-      this.myTrackerApi.search(viewParams).$promise
-    ]).then( (res) => {
-      this.fullResults = this.fullResults.concat(res[0], res[1], res[2]);
-      this.fullResults = this.fullResults.map(this.parseResult.bind(this));
-      this.searchResults = angular.copy(this.fullResults);
-      this.loading = false;
-    }, (err) => {
-      console.log('error', err);
-      this.loading = false;
-    });
-
+    this.myTrackerApi.search(params)
+      .$promise
+      .then( (res) => {
+        this.fullResults = res.map(this.parseResult.bind(this));
+        this.searchResults = angular.copy(this.fullResults);
+        this.loading = false;
+      }, (err) => {
+        console.log('error', err);
+        this.loading = false;
+      });
   }
 
   parseResult (entity) {
@@ -147,10 +146,11 @@ class TrackerResultsController {
         type: 'Dataset',
         entityTypeState: 'datasets',
         icon: 'icon-datasets',
-        description: 'This is some description while waiting for backend to add description to these entities. Meanwhile, you can read this nonsense.',
-        createDate: 1456299781,
-        queryFound: ['User Tags', 'Schema', 'System Tags']
+        description: entity.metadata.SYSTEM.properties.description || 'No description provided for this Dataset.',
+        createDate: entity.metadata.SYSTEM.properties.createtime,
+        datasetType: entity.metadata.SYSTEM.properties.type
       });
+      obj.queryFound = this.findQueries(entity, obj);
       this.entityFiltersList[0].count++;
     } else if (entity.entityId.type === 'stream') {
       angular.extend(obj, {
@@ -158,10 +158,10 @@ class TrackerResultsController {
         type: 'Stream',
         entityTypeState: 'streams',
         icon: 'icon-streams',
-        description: 'This is some description while waiting for backend to add description to these entities. Meanwhile, you can read this nonsense.',
-        createDate: 1456299781,
-        queryFound: ['User Tags', 'Schema', 'System Tags']
+        description: entity.metadata.SYSTEM.properties.description || 'No description provided for this Stream.',
+        createDate: entity.metadata.SYSTEM.properties.createtime
       });
+      obj.queryFound = this.findQueries(entity, obj);
       this.entityFiltersList[1].count++;
     } else if (entity.entityId.type === 'view') {
       // THIS SECTION NEEDS TO BE UPDATED
@@ -170,14 +170,71 @@ class TrackerResultsController {
         type: 'Stream View',
         entityTypeState: 'views:' + entity.entityId.id.stream.streamName,
         icon: 'icon-streams',
-        description: 'This is some description while waiting for backend to add description to these entities. Meanwhile, you can read this nonsense.',
-        createDate: 1456299781,
-        queryFound: ['User Tags', 'Schema', 'System Tags']
+        description: entity.metadata.SYSTEM.properties.description || 'No description provided for this Stream View.',
+        createDate: entity.metadata.SYSTEM.properties.createtime
       });
+      obj.queryFound = this.findQueries(entity, obj);
       this.entityFiltersList[2].count++;
     }
 
     return obj;
+  }
+
+  findQueries(entity, parsedEntity) {
+
+    // Removing special characters from search query
+    let replaceRegex = new RegExp('[^a-zA-Z0-9]', 'g');
+    let searchTerm = this.$state.params.searchQuery.replace(replaceRegex, '');
+
+    let regex = new RegExp(searchTerm, 'ig');
+
+    let foundIn = [];
+
+    if (parsedEntity.name.search(regex) > -1) {
+      foundIn.push('Name');
+      this.metadataFiltersList[0].count++;
+    }
+    if (entity.metadata.SYSTEM.properties.description && entity.metadata.SYSTEM.properties.description.search(regex) > -1) {
+      foundIn.push('Description');
+      this.metadataFiltersList[1].count++;
+    }
+
+    let userTags = this.myHelpers.objectQuery(entity, 'metadata', 'USER', 'tags') || '';
+    userTags = userTags.toString();
+    let systemTags = this.myHelpers.objectQuery(entity, 'metadata', 'SYSTEM', 'tags') || '';
+    systemTags = systemTags.toString();
+
+    if (userTags.search(regex) > -1) {
+      foundIn.push('User Tags');
+      this.metadataFiltersList[2].count++;
+    }
+    if (systemTags.search(regex) > -1) {
+      foundIn.push('System Tags');
+      this.metadataFiltersList[3].count++;
+    }
+
+    let userProperties = this.myHelpers.objectQuery(entity, 'metadata', 'USER', 'properties') || {};
+    userProperties = JSON.stringify(userProperties);
+    let systemProperties = this.myHelpers.objectQuery(entity, 'metadata', 'SYSTEM', 'properties') || {};
+    systemProperties = JSON.stringify(systemProperties);
+
+    if (userProperties.search(regex) > -1) {
+      foundIn.push('User Properties');
+      this.metadataFiltersList[4].count++;
+    }
+    if (systemProperties.search(regex) > -1) {
+      foundIn.push('System Properties');
+      this.metadataFiltersList[5].count++;
+    }
+
+    let schema = this.myHelpers.objectQuery(entity, 'metadata', 'SYSTEM', 'properties', 'schema') || '';
+
+    if (schema.search(regex) > -1) {
+      foundIn.push('Schema');
+      this.metadataFiltersList[6].count++;
+    }
+
+    return foundIn;
   }
 
   onlyFilter(event, filter, filterType) {
@@ -199,12 +256,23 @@ class TrackerResultsController {
 
   filterResults() {
     let filter = [];
-
     angular.forEach(this.entityFiltersList, (entity) => {
       if (entity.isActive) { filter.push(entity.filter); }
     });
 
-    this.searchResults = this.fullResults.filter( (result) => { return filter.indexOf(result.type) > -1 ? true : false; });
+    let entitySearchResults = this.fullResults.filter( (result) => {
+      return filter.indexOf(result.type) > -1 ? true : false;
+    });
+
+
+    let metadataFilter = [];
+    angular.forEach(this.metadataFiltersList, (metadata) => {
+      if (metadata.isActive) { metadataFilter.push(metadata.name); }
+    });
+
+    this.searchResults = entitySearchResults.filter( (result) => {
+      return _.intersection(metadataFilter, result.queryFound).length > 0;
+    });
   }
 
   showAll (filterType) {
@@ -232,7 +300,7 @@ class TrackerResultsController {
   }
 }
 
-TrackerResultsController.$inject = ['$state', 'myTrackerApi', '$scope', '$q'];
+TrackerResultsController.$inject = ['$state', 'myTrackerApi', '$scope', 'myHelpers'];
 
 angular.module(PKG.name + '.feature.tracker')
  .controller('TrackerResultsController', TrackerResultsController);

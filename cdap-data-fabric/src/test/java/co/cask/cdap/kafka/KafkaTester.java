@@ -24,12 +24,12 @@ import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.KafkaClientModule;
 import co.cask.cdap.common.guice.ZKClientModule;
 import co.cask.cdap.common.utils.Tasks;
+import com.google.common.base.Charsets;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Iterables;
 import com.google.gson.Gson;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -40,9 +40,11 @@ import org.apache.twill.internal.kafka.client.ZKBrokerService;
 import org.apache.twill.internal.utils.Networks;
 import org.apache.twill.internal.zookeeper.InMemoryZKServer;
 import org.apache.twill.kafka.client.BrokerService;
+import org.apache.twill.kafka.client.Compression;
 import org.apache.twill.kafka.client.FetchedMessage;
 import org.apache.twill.kafka.client.KafkaClientService;
 import org.apache.twill.kafka.client.KafkaConsumer;
+import org.apache.twill.kafka.client.KafkaPublisher;
 import org.apache.twill.zookeeper.ZKClientService;
 import org.junit.Assert;
 import org.junit.rules.ExternalResource;
@@ -62,6 +64,7 @@ import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * {@link ExternalResource} to be used in tests that require in-memory Kafka.
@@ -195,7 +198,27 @@ public class KafkaTester extends ExternalResource {
   private void waitForKafkaStartup() throws Exception {
     Tasks.waitFor(true, new Callable<Boolean>() {
       public Boolean call() throws Exception {
-        return Iterables.size(brokerService.getBrokers()) > 0;
+        final AtomicBoolean isKafkaStarted = new AtomicBoolean(false);
+        try {
+          KafkaPublisher kafkaPublisher = kafkaClient.getPublisher(KafkaPublisher.Ack.LEADER_RECEIVED,
+                                                                   Compression.NONE);
+          final String testTopic = "kafkatester.test.topic";
+          final String testMessage = "Test Message";
+          kafkaPublisher.prepare(testTopic).add(Charsets.UTF_8.encode(testMessage), 0).send().get();
+          getPublishedMessages(testTopic, ImmutableSet.of(0), 1, 0, new Function<FetchedMessage, String>() {
+            @Override
+            public String apply(FetchedMessage input) {
+              String fetchedMessage = Charsets.UTF_8.decode(input.getPayload()).toString();
+              if (fetchedMessage.equalsIgnoreCase(testMessage)) {
+                isKafkaStarted.set(true);
+              }
+              return "";
+            }
+          });
+        } catch (Exception e) {
+          // nothing to do as waiting for kafka startup
+        }
+        return isKafkaStarted.get();
       }
     }, 60, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
   }

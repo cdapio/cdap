@@ -48,6 +48,8 @@ import co.cask.cdap.internal.test.AppJarHelper;
 import co.cask.cdap.internal.test.PluginJarHelper;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.artifact.ArtifactRange;
+import co.cask.cdap.proto.id.Ids;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.metadata.MetadataRecord;
 import co.cask.cdap.proto.metadata.MetadataScope;
 import com.google.common.base.Charsets;
@@ -115,7 +117,7 @@ public class ArtifactRepositoryTest {
 
   @Before
   public void setupData() throws Exception {
-    artifactRepository.clear(Id.Namespace.DEFAULT);
+    artifactRepository.clear(NamespaceId.DEFAULT);
     File appArtifactFile = createAppJar(PluginTestApp.class, new File(tmpDir, "PluginTest-1.0.0.jar"),
       createManifest(ManifestFields.EXPORT_PACKAGE, PluginTestRunnable.class.getPackage().getName()));
     artifactRepository.addArtifact(APP_ARTIFACT_ID, appArtifactFile, null);
@@ -206,15 +208,15 @@ public class ArtifactRepositoryTest {
     }
 
     artifactRepository.addSystemArtifacts();
-    systemAppJar.delete();
-    pluginJar1.delete();
-    pluginJar2.delete();
+    Assert.assertTrue(systemAppJar.delete());
+    Assert.assertTrue(pluginJar1.delete());
+    Assert.assertTrue(pluginJar2.delete());
 
     try {
       // check app artifact added correctly
       ArtifactDetail appArtifactDetail = artifactRepository.getArtifact(systemAppArtifactId);
       Map<ArtifactDescriptor, List<PluginClass>> plugins =
-        artifactRepository.getPlugins(Id.Namespace.DEFAULT, systemAppArtifactId);
+        artifactRepository.getPlugins(NamespaceId.DEFAULT, systemAppArtifactId);
       Assert.assertEquals(2, plugins.size());
       List<PluginClass> pluginClasses = plugins.values().iterator().next();
 
@@ -247,7 +249,7 @@ public class ArtifactRepositoryTest {
       // check properties are there
       Assert.assertEquals(pluginConfig2.getProperties(), pluginArtifactDetail.getMeta().getProperties());
     } finally {
-      artifactRepository.clear(Id.Namespace.SYSTEM);
+      artifactRepository.clear(NamespaceId.SYSTEM);
     }
   }
 
@@ -277,7 +279,7 @@ public class ArtifactRepositoryTest {
 
     // check the parent can see the plugins
     SortedMap<ArtifactDescriptor, List<PluginClass>> plugins =
-      artifactRepository.getPlugins(Id.Namespace.DEFAULT, APP_ARTIFACT_ID);
+      artifactRepository.getPlugins(NamespaceId.DEFAULT, APP_ARTIFACT_ID);
     Assert.assertEquals(1, plugins.size());
     Assert.assertEquals(2, plugins.get(plugins.firstKey()).size());
 
@@ -302,7 +304,7 @@ public class ArtifactRepositoryTest {
   public void testPluginSelector() throws Exception {
     // No plugin yet
     try {
-      artifactRepository.findPlugin(Id.Namespace.DEFAULT, APP_ARTIFACT_ID,
+      artifactRepository.findPlugin(NamespaceId.DEFAULT, APP_ARTIFACT_ID,
                                     "plugin", "TestPlugin2", new PluginSelector());
       Assert.fail();
     } catch (PluginNotExistsException e) {
@@ -324,7 +326,7 @@ public class ArtifactRepositoryTest {
 
     // Should get the only version.
     Map.Entry<ArtifactDescriptor, PluginClass> plugin =
-      artifactRepository.findPlugin(Id.Namespace.DEFAULT, APP_ARTIFACT_ID,
+      artifactRepository.findPlugin(NamespaceId.DEFAULT, APP_ARTIFACT_ID,
                                     "plugin", "TestPlugin2", new PluginSelector());
     Assert.assertNotNull(plugin);
     Assert.assertEquals(new ArtifactVersion("1.0"), plugin.getKey().getArtifactId().getVersion());
@@ -338,7 +340,7 @@ public class ArtifactRepositoryTest {
     artifactRepository.addArtifact(artifact2Id, jarFile, parents);
 
     // Should select the latest version
-    plugin = artifactRepository.findPlugin(Id.Namespace.DEFAULT, APP_ARTIFACT_ID,
+    plugin = artifactRepository.findPlugin(NamespaceId.DEFAULT, APP_ARTIFACT_ID,
                                            "plugin", "TestPlugin2", new PluginSelector());
     Assert.assertNotNull(plugin);
     Assert.assertEquals(new ArtifactVersion("2.0"), plugin.getKey().getArtifactId().getVersion());
@@ -352,7 +354,7 @@ public class ArtifactRepositoryTest {
       Class<?> pluginClass = pluginClassLoader.loadClass(TestPlugin2.class.getName());
 
       // Use a custom plugin selector to select with smallest version
-      plugin = artifactRepository.findPlugin(Id.Namespace.DEFAULT, APP_ARTIFACT_ID,
+      plugin = artifactRepository.findPlugin(NamespaceId.DEFAULT, APP_ARTIFACT_ID,
                                              "plugin", "TestPlugin2", new PluginSelector() {
         @Override
         public Map.Entry<ArtifactId, PluginClass> select(SortedMap<ArtifactId, PluginClass> plugins) {
@@ -451,16 +453,16 @@ public class ArtifactRepositoryTest {
     File jar = createAppJar(PluginTestApp.class, new File(systemArtifactsDir1, "PluginTest-1.0.0.jar"),
                  createManifest(ManifestFields.EXPORT_PACKAGE, PluginTestRunnable.class.getPackage().getName()));
     artifactRepository.addSystemArtifacts();
-    jar.delete();
+    Assert.assertTrue(jar.delete());
 
     Set<ArtifactRange> parents = ImmutableSet.of(
       new ArtifactRange(systemAppArtifactId.getNamespace(), systemAppArtifactId.getName(),
                         new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0")));
-    Id.Namespace namespace1 = Id.Namespace.from("ns1");
-    Id.Namespace namespace2 = Id.Namespace.from("ns2");
+    NamespaceId namespace1 = Ids.namespace("ns1");
+    NamespaceId namespace2 = Ids.namespace("ns2");
 
-    Id.Artifact pluginArtifactId1 = Id.Artifact.from(namespace1, "myPlugin", "1.0");
-    Id.Artifact pluginArtifactId2 = Id.Artifact.from(namespace2, "myPlugin", "1.0");
+    Id.Artifact pluginArtifactId1 = Id.Artifact.from(namespace1.toId(), "myPlugin", "1.0");
+    Id.Artifact pluginArtifactId2 = Id.Artifact.from(namespace2.toId(), "myPlugin", "1.0");
 
     try {
       // create plugin artifact in namespace1 that extends the system artifact
@@ -482,7 +484,7 @@ public class ArtifactRepositoryTest {
       Assert.assertEquals(1, extensions.keySet().size());
       Assert.assertEquals(2, extensions.values().iterator().next().size());
     } finally {
-      artifactRepository.clear(Id.Namespace.SYSTEM);
+      artifactRepository.clear(NamespaceId.SYSTEM);
       artifactRepository.clear(namespace1);
       artifactRepository.clear(namespace2);
     }

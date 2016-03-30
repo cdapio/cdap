@@ -104,7 +104,7 @@
               <span class="icon-ETLRealtime"></span>
               <span> ETL Real-time</span>
             </span>
-            <span ng-if="app.artifact.name === ListController.GLOBALS.etlBatch">
+            <span ng-if="ListController.GLOBALS.etlBatchPipelines.indexOf(app.artifact.name) !== -1">
               <span class="icon-ETLBatch"></span>
               <span>ETL Batch</span>
             </span>

@@ -22,13 +22,13 @@ import co.cask.http.HttpResponder;
 import co.cask.http.NettyHttpService;
 import co.cask.tephra.Transaction;
 import co.cask.tephra.TransactionCodec;
+import co.cask.tephra.TransactionFailureException;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.AbstractIdleService;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
-import org.jboss.netty.util.internal.ConcurrentHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,6 +39,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import javax.annotation.Nullable;
 import javax.ws.rs.GET;
@@ -53,6 +54,28 @@ import javax.ws.rs.PathParam;
 final class SparkTransactionService extends AbstractIdleService {
 
   private static final Logger LOG = LoggerFactory.getLogger(SparkTransactionService.class);
+  private static final TransactionInfo IMPLICIT_TX_INFO = new TransactionInfo() {
+    @Nullable
+    @Override
+    public Transaction getTransaction() {
+      return null;
+    }
+
+    @Override
+    public boolean commitOnJobEnded() {
+      return true;
+    }
+
+    @Override
+    public void onJobStarted() {
+      // no-op
+    }
+
+    @Override
+    public void onTransactionCompleted(boolean jobSucceeded, @Nullable TransactionFailureException failureCause) {
+      // no-op
+    }
+  };
 
   private final TransactionSystemClient txClient;
 
@@ -94,34 +117,26 @@ final class SparkTransactionService extends AbstractIdleService {
   }
 
   /**
-   * Notifies the given job execution started.
+   * Notifies the given job execution started without any active transaction. A transaction will be started
+   * on demand and commit when the job ended.
    *
    * @param jobId the unique id that identifies the job.
    * @param stageIds set of stage ids that are associated with the given job.
    */
   void jobStarted(Integer jobId, Set<Integer> stageIds) {
-    jobStarted(new JobTransaction(jobId, stageIds, null));
+    jobStarted(jobId, stageIds, IMPLICIT_TX_INFO);
   }
 
   /**
-   * Notifies the given job execution started with an explicit {@link Transaction}.
+   * Notifies the given job execution started.
    *
    * @param jobId the unique id that identifies the job.
    * @param stageIds set of stage ids that are associated with the given job.
-   * @param transaction the {@link Transaction} to use for the job.
+   * @param transactionInfo information about the transaction to be used for the job.
    */
-  void jobStarted(Integer jobId, Set<Integer> stageIds, Transaction transaction) {
-    if (transaction == null) {
-      throw new IllegalArgumentException("Transaction cannot be null for explicit transaction");
-    }
-    jobStarted(new JobTransaction(jobId, stageIds, transaction));
-  }
-
-  /**
-   * Notifies the job represented by the given {@link JobTransaction} started.
-   */
-  private void jobStarted(JobTransaction jobTransaction) {
-    Integer jobId = jobTransaction.getJobId();
+  void jobStarted(Integer jobId, Set<Integer> stageIds, TransactionInfo transactionInfo) {
+    JobTransaction jobTransaction = new JobTransaction(jobId, stageIds, transactionInfo);
+    LOG.debug("Spark job started: {}", jobTransaction);
 
     // Remember the job Id. We won't start a new transaction here until a stage requested for it.
     // This is because there can be job that doesn't need transaction or explicit transaction is being used
@@ -135,7 +150,7 @@ final class SparkTransactionService extends AbstractIdleService {
 
     // Build the stageId => jobId map first instead of putting to the concurrent map one by one
     Map<Integer, Integer> stageToJob = new HashMap<>();
-    for (Integer stageId : jobTransaction.getStageIds()) {
+    for (Integer stageId : stageIds) {
       stageToJob.put(stageId, jobId);
     }
     this.stageToJob.putAll(stageToJob);
@@ -147,7 +162,7 @@ final class SparkTransactionService extends AbstractIdleService {
    * @param jobId the unique id that identifies the job.
    * @param succeeded {@code true} if the job execution completed successfully.
    */
-  void jobEnded(Integer jobId, boolean succeeded) {
+  void jobEnded(Integer jobId, boolean succeeded) throws TransactionFailureException {
     JobTransaction jobTransaction = jobTransactions.remove(jobId);
     if (jobTransaction == null) {
       // Shouldn't happen, otherwise something very wrong. Can't do much, just log and return
@@ -222,20 +237,35 @@ final class SparkTransactionService extends AbstractIdleService {
   private final class JobTransaction {
     private final Integer jobId;
     private final Set<Integer> stageIds;
-    private final boolean ownTransaction;
+    private final TransactionInfo transactionInfo;
     private volatile Optional<Transaction> transaction;
 
-    JobTransaction(Integer jobId, Set<Integer> stageIds, @Nullable Transaction transaction) {
+    /**
+     * Creates a {@link JobTransaction}.
+     *
+     * @param jobId the Spark job id
+     * @param stageIds set of stage ids that are part of the job.
+     * @param transactionInfo transaction information associated with this job.
+     */
+    JobTransaction(Integer jobId, Set<Integer> stageIds, TransactionInfo transactionInfo) {
       this.jobId = jobId;
       this.stageIds = ImmutableSet.copyOf(stageIds);
-      this.ownTransaction = transaction == null;
-      this.transaction = transaction == null ? null : Optional.of(transaction);
+      this.transactionInfo = transactionInfo;
+
+      Transaction tx = transactionInfo.getTransaction();
+      this.transaction = tx == null ? null : Optional.of(tx);
     }
 
+    /**
+     * Returns the job id.
+     */
     Integer getJobId() {
       return jobId;
     }
 
+    /**
+     * Returns id of all stages of the job.
+     */
     Set<Integer> getStageIds() {
       return stageIds;
     }
@@ -258,6 +288,8 @@ final class SparkTransactionService extends AbstractIdleService {
               tx = transaction = Optional.of(txClient.startLong());
             } catch (Throwable t) {
               LOG.error("Failed to start transaction for job {}", jobId, t);
+              // Set the transaction to an absent Optional to indicate the starting of transaction failed.
+              // This will prevent future call to this method to attempt to start a transaction again
               tx = transaction = Optional.absent();
             }
           }
@@ -272,32 +304,47 @@ final class SparkTransactionService extends AbstractIdleService {
      *
      * @param succeeded {@code true} if the job execution completed successfully.
      */
-    public void completed(boolean succeeded) {
-      // If this service doesn't own the transaction, then nothing to do. It is for the explicit transaction case.
-      if (!ownTransaction) {
+    public void completed(boolean succeeded) throws TransactionFailureException {
+      // Return if doesn't need to commit the transaction
+      if (!transactionInfo.commitOnJobEnded()) {
         return;
       }
 
-      try {
-        Optional<Transaction> tx = transaction;
-        if (tx == null || !tx.isPresent()) {
-          // No transaction was started for the job, hence nothing to do.
-          return;
-        }
+      // Get the transaction to commit.
+      Optional<Transaction> tx = transaction;
+      if (tx == null || !tx.isPresent()) {
+        // No transaction was started for the job, hence nothing to do.
+        return;
+      }
 
-        Transaction jobTx = tx.get();
+      Transaction jobTx = tx.get();
+      try {
         if (succeeded) {
           LOG.debug("Committing transaction for job {}", jobId);
-          if (!txClient.commit(jobTx)) {
-            // If failed to commit (which it shouldn't since there is no conflict detection), invalidate the tx
+          try {
+            if (!txClient.commit(jobTx)) {
+              // If failed to commit (which it shouldn't since there is no conflict detection), throw exception
+              throw new TransactionFailureException("Failed to commit transaction on job success. JobId: "
+                                                      + jobId + ", transaction: " + jobTx);
+            }
+            transactionInfo.onTransactionCompleted(succeeded, null);
+          } catch (Throwable t) {
+            // Any failure will invalidate the transaction
             Transactions.invalidateQuietly(txClient, jobTx);
+            // Since the failure is unexpected, propagate it
+            throw t;
           }
         } else {
-          LOG.debug("Aborting transaction for job {}", jobId);
-          txClient.invalidate(jobTx.getWritePointer());
+          LOG.debug("Invalidating transaction for job {}", jobId);
+          if (!txClient.invalidate(jobTx.getWritePointer())) {
+            throw new TransactionFailureException("Failed to invalid transaction on job failure. JobId: "
+                                                    + jobId + ", transaction: " + jobTx);
+          }
         }
       } catch (Throwable t) {
-        LOG.error("Failed to {} transaction for job {}", succeeded ? "commit" : "invalidate", jobId, t);
+        TransactionFailureException failureCause = Transactions.asTransactionFailure(t);
+        transactionInfo.onTransactionCompleted(succeeded, failureCause);
+        throw failureCause;
       }
     }
 
@@ -306,7 +353,6 @@ final class SparkTransactionService extends AbstractIdleService {
       return "JobTransaction{" +
         "jobId=" + jobId +
         ", stageIds=" + stageIds +
-        ", ownTransaction=" + ownTransaction +
         ", transaction=" + (transaction == null ? null : transaction.orNull()) +
         '}';
     }

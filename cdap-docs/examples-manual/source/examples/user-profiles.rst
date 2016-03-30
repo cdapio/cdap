@@ -141,8 +141,8 @@ and build this example twice:
 
 .. include:: _includes/_starting-service.txt
 
-Populate the profiles Table
----------------------------
+Populate the *profiles* Table
+-----------------------------
 Populate the ``profiles`` table with users using a script. From the Standalone CDAP SDK directory, use:
 
 .. tabbed-parsed-literal::

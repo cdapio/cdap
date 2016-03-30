@@ -18,7 +18,7 @@ package co.cask.cdap.api.spark;
 
 import co.cask.cdap.api.RuntimeContext;
 import co.cask.cdap.api.ServiceDiscoverer;
-import co.cask.cdap.api.data.DatasetContext;
+import co.cask.cdap.api.Transactional;
 import co.cask.cdap.api.data.DatasetInstantiationException;
 import co.cask.cdap.api.data.batch.Split;
 import co.cask.cdap.api.dataset.Dataset;
@@ -42,7 +42,7 @@ import javax.annotation.Nullable;
 /**
  * Spark program execution context. User Spark program can interact with CDAP through this context.
  */
-public abstract class JavaSparkExecutionContext implements RuntimeContext, DatasetContext {
+public abstract class JavaSparkExecutionContext implements RuntimeContext, Transactional {
 
   /**
    * @return The specification used to configure this {@link Spark} job instance.

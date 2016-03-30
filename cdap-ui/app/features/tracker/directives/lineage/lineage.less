@@ -23,7 +23,6 @@ my-lineage-diagram {
   .lineage-diagram-container {
     position: relative;
     width: 100vw;
-    overflow-x: scroll;
   }
 
   .no-content-message {
@@ -179,5 +178,8 @@ my-lineage-diagram {
   }
   .entity-type {
     color: @entity-type-font-color;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow-x: hidden;
   }
 }

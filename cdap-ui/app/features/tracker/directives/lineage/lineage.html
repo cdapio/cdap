@@ -19,7 +19,7 @@
 </div>
 
 <div class="lineage-diagram-container" id="lineage-diagram"
-     style="height: {{Lineage.graphInfo.height + 300}}px; width: {{Lineage.graphInfo.width + 175 + 200}}px;">
+     style="height: {{Lineage.graphInfo.height}}px; width: {{Lineage.graphInfo.width}}px; transform: scale({{ Lineage.scaleInfo.scale }}); left: {{ Lineage.scaleInfo.padX }}; top: {{ Lineage.scaleInfo.padY }};">
   <div class="nodes {{ Lineage.uniqueNodes[node.uniqueNodeId].nodeType }}"
        id="{{ node.dataId }}"
        ng-repeat="node in Lineage.nodes"
@@ -36,11 +36,21 @@
       <span class="fa fa-caret-right" ng-click="Lineage.navigationClick($event, node)"></span>
     </div>
 
-    <a class="entity-link" ui-sref="{{ Lineage.constructNodeLink(node) }}">
+    <a class="entity-link" ui-sref="{{ Lineage.constructNodeLink(node) }}"
+       ng-if="Lineage.uniqueNodes[node.uniqueNodeId].nodeType === 'data'">
       <h4 class="entity-name">{{ Lineage.uniqueNodes[node.uniqueNodeId].label }}</h4>
       <div class="entity-type">
         <span class="{{ Lineage.uniqueNodes[node.uniqueNodeId].icon }}"></span>
         <span>{{ Lineage.uniqueNodes[node.uniqueNodeId].displayType }}</span>
+      </div>
+    </a>
+
+    <a href="" class="entity-link"
+       ng-if="Lineage.uniqueNodes[node.uniqueNodeId].nodeType === 'program'">
+      <h4 class="entity-name">{{ Lineage.uniqueNodes[node.uniqueNodeId].applicationId }}</h4>
+      <div class="entity-type">
+        <span class="{{ Lineage.uniqueNodes[node.uniqueNodeId].icon}}"></span>
+        <span>{{ Lineage.uniqueNodes[node.uniqueNodeId].label }}</span>
       </div>
     </a>
 

@@ -23,6 +23,7 @@ import co.cask.cdap.api.common.Scope;
 import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
+import co.cask.cdap.api.workflow.NodeStatus;
 import co.cask.cdap.api.workflow.ScheduleProgramInfo;
 import co.cask.cdap.api.workflow.Workflow;
 import co.cask.cdap.api.workflow.WorkflowAction;
@@ -32,6 +33,7 @@ import co.cask.cdap.api.workflow.WorkflowConditionNode;
 import co.cask.cdap.api.workflow.WorkflowContext;
 import co.cask.cdap.api.workflow.WorkflowForkNode;
 import co.cask.cdap.api.workflow.WorkflowNode;
+import co.cask.cdap.api.workflow.WorkflowNodeState;
 import co.cask.cdap.api.workflow.WorkflowNodeType;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.api.workflow.WorkflowToken;
@@ -54,6 +56,8 @@ import co.cask.cdap.internal.dataset.DatasetCreationSpec;
 import co.cask.cdap.internal.workflow.ProgramWorkflowAction;
 import co.cask.cdap.logging.context.WorkflowLoggingContext;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.WorkflowNodeStateDetail;
+import co.cask.cdap.proto.WorkflowNodeThrowable;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.http.NettyHttpService;
@@ -123,6 +127,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
   private final ProgramRunId workflowRunId;
   private Workflow workflow;
   private final BasicWorkflowContext basicWorkflowContext;
+  private final Map<String, WorkflowNodeState> nodeStates = new ConcurrentHashMap<>();
 
   private final CConfiguration cConf;
 
@@ -157,7 +162,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     this.basicWorkflowContext = new BasicWorkflowContext(workflowSpec, null, null, new BasicArguments(runtimeArgs),
                                                          null, program, RunIds.fromString(runId),
                                                          metricsCollectionService, datasetFramework, txClient,
-                                                         discoveryServiceClient);
+                                                         discoveryServiceClient, nodeStates);
   }
 
   @Override
@@ -387,11 +392,22 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     CustomActionExecutor customActionExecutor = new CustomActionExecutor(workflowRunId, context,
                                                                          instantiator, classLoader);
     status.put(node.getNodeId(), node);
+    store.addWorkflowNodeState(workflowRunId, new WorkflowNodeStateDetail(node.getNodeId(), NodeStatus.RUNNING));
+    Throwable failureCause = null;
     try {
       customActionExecutor.execute();
+    } catch (Throwable t) {
+      failureCause = t;
+      Throwables.propagateIfPossible(t, Exception.class);
+      throw Throwables.propagate(t);
     } finally {
       status.remove(node.getNodeId());
       store.updateWorkflowToken(workflowRunId, token);
+      NodeStatus status = failureCause == null ? NodeStatus.COMPLETED : NodeStatus.FAILED;
+      nodeStates.put(node.getNodeId(), new WorkflowNodeState(node.getNodeId(), status, null, failureCause));
+      WorkflowNodeThrowable defaultThrowable = failureCause == null ? null : new WorkflowNodeThrowable(failureCause);
+      store.addWorkflowNodeState(workflowRunId, new WorkflowNodeStateDetail(node.getNodeId(), status, null,
+                                                                            defaultThrowable));
     }
   }
 
@@ -431,7 +447,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
                                                        new BasicArguments(runtimeArgs), token,
                                                        program, RunIds.fromString(workflowRunId.getRun()),
                                                        metricsCollectionService, datasetFramework, txClient,
-                                                       discoveryServiceClient);
+                                                       discoveryServiceClient, nodeStates);
     Iterator<WorkflowNode> iterator;
     if (predicate.apply(context)) {
       // execute the if branch
@@ -523,10 +539,11 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
   private BasicWorkflowContext createWorkflowContext(WorkflowActionSpecification actionSpec,
                                                      WorkflowToken token, String nodeId) {
     return new BasicWorkflowContext(workflowSpec, actionSpec,
-                                    workflowProgramRunnerFactory.getProgramWorkflowRunner(actionSpec, token, nodeId),
+                                    workflowProgramRunnerFactory.getProgramWorkflowRunner(actionSpec, token, nodeId,
+                                                                                          nodeStates),
                                     new BasicArguments(runtimeArgs), token, program,
                                     RunIds.fromString(workflowRunId.getRun()), metricsCollectionService,
-                                    datasetFramework, txClient, discoveryServiceClient);
+                                    datasetFramework, txClient, discoveryServiceClient, nodeStates);
   }
 
   private Map<String, String> createRuntimeArgs(Arguments args) {

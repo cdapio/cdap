@@ -21,14 +21,18 @@ import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.workflow.AbstractWorkflow;
 import co.cask.cdap.api.workflow.WorkflowConfigurer;
 import co.cask.cdap.api.workflow.WorkflowForkConfigurer;
+import co.cask.cdap.etl.api.batch.SparkCompute;
+import co.cask.cdap.etl.api.batch.SparkSink;
 import co.cask.cdap.etl.batch.BatchPhaseSpec;
 import co.cask.cdap.etl.batch.connector.ConnectorSource;
 import co.cask.cdap.etl.batch.mapreduce.ETLMapReduce;
+import co.cask.cdap.etl.batch.spark.ETLSpark;
 import co.cask.cdap.etl.common.Constants;
 import co.cask.cdap.etl.common.PipelinePhase;
 import co.cask.cdap.etl.planner.ControlDag;
 import co.cask.cdap.etl.planner.PipelinePlan;
 import co.cask.cdap.etl.planner.StageInfo;
+import co.cask.cdap.etl.proto.Engine;
 import co.cask.cdap.etl.spec.PipelineSpec;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import com.google.gson.Gson;
@@ -53,15 +57,20 @@ public class SmartWorkflow extends AbstractWorkflow {
   private final ApplicationConfigurer applicationConfigurer;
   // connector stage -> local dataset name
   private final Map<String, String> connectorDatasets;
+  private final Engine engine;
   private ControlDag dag;
   private int phaseNum;
 
-  public SmartWorkflow(PipelineSpec spec, PipelinePlan plan, ApplicationConfigurer applicationConfigurer) {
+  public SmartWorkflow(PipelineSpec spec,
+                       PipelinePlan plan,
+                       ApplicationConfigurer applicationConfigurer,
+                       Engine engine) {
     this.spec = spec;
     this.plan = plan;
     this.applicationConfigurer = applicationConfigurer;
     this.phaseNum = 1;
     this.connectorDatasets = new HashMap<>();
+    this.engine = engine;
   }
 
   @Override
@@ -82,17 +91,38 @@ public class SmartWorkflow extends AbstractWorkflow {
 
     // Dag classes don't allow a 'dag' without connections
     if (plan.getPhaseConnections().isEmpty()) {
-      // multiple phases, do a fork then join
-      WorkflowForkConfigurer forkConfigurer = getConfigurer().fork();
-      for (String phaseName : plan.getPhases().keySet()) {
-        addProgram(phaseName, new BranchProgramAdder(forkConfigurer));
+
+      // todo:(CDAP-3008) remove this once CDAP supports parallel spark jobs in a workflow
+      WorkflowProgramAdder programAdder;
+      WorkflowForkConfigurer forkConfigurer = null;
+      if (engine == Engine.SPARK) {
+        programAdder = new TrunkProgramAdder(getConfigurer());
+      } else {
+        // multiple phases, do a fork then join
+        forkConfigurer = getConfigurer().fork();
+        programAdder = new BranchProgramAdder(forkConfigurer);
       }
-      forkConfigurer.join();
+      for (String phaseName : plan.getPhases().keySet()) {
+        addProgram(phaseName, programAdder);
+      }
+      if (forkConfigurer != null) {
+        forkConfigurer.join();
+      }
+      return;
+    }
+
+    dag = new ControlDag(plan.getPhaseConnections());
+
+    // todo:(CDAP-3008) remove this once CDAP supports parallel spark jobs in a workflow
+    if (engine == Engine.SPARK) {
+      WorkflowProgramAdder programAdder = new TrunkProgramAdder(getConfigurer());
+      for (String phaseName : dag.getTopologicalOrder()) {
+        addProgram(phaseName, programAdder);
+      }
       return;
     }
 
     // after flattening, there is guaranteed to be just one source
-    dag = new ControlDag(plan.getPhaseConnections());
     dag.flatten();
     String start = dag.getSources().iterator().next();
     addPrograms(start, getConfigurer());
@@ -172,8 +202,30 @@ public class SmartWorkflow extends AbstractWorkflow {
     }
     BatchPhaseSpec batchPhaseSpec = new BatchPhaseSpec(programName, phase, spec.getResources(),
                                                        spec.isStageLoggingEnabled(), phaseConnectorDatasets);
-    applicationConfigurer.addMapReduce(new ETLMapReduce(batchPhaseSpec));
-    programAdder.addMapReduce(programName);
+
+
+    boolean hasSparkCompute = !batchPhaseSpec.getPhase().getStagesOfType(SparkCompute.PLUGIN_TYPE).isEmpty();
+    boolean hasSparkSink = !batchPhaseSpec.getPhase().getStagesOfType(SparkSink.PLUGIN_TYPE).isEmpty();
+
+    if (hasSparkCompute || hasSparkSink) {
+      // always use ETLSpark if this phase has a spark plugin
+      applicationConfigurer.addSpark(new ETLSpark(batchPhaseSpec));
+      programAdder.addSpark(programName);
+    } else {
+      switch (engine) {
+        case MAPREDUCE:
+          applicationConfigurer.addMapReduce(new ETLMapReduce(batchPhaseSpec));
+          programAdder.addMapReduce(programName);
+          break;
+        case SPARK:
+          applicationConfigurer.addSpark(new ETLSpark(batchPhaseSpec));
+          programAdder.addSpark(programName);
+          break;
+        default:
+          // should never happen
+          throw new IllegalStateException("Unsupported engine " + engine);
+      }
+    }
   }
 
 }

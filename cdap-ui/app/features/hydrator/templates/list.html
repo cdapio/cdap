@@ -75,15 +75,15 @@
         <tbody>
           <tr ng-repeat="pipeline in ListController.filtered = (ListController.pipelineList | filter: ListController.searchText ) | orderBy:sortable.predicate:sortable.reverse | myPaginate:ListController.currentPage">
             <td>
-              <a ui-sref="hydrator.detail({ pipelineId: pipeline.name })" ng-if="!pipeline.isDraft">
+              <a ui-sref="hydratorplusplus.detail({ pipelineId: pipeline.name })" ng-if="!pipeline.isDraft">
                 {{pipeline.name}}
               </a>
-              <a ui-sref="hydrator.create.studio({ draftId: pipeline.id, type:pipeline.artifact.name })" ng-if="pipeline.isDraft">
+              <a ui-sref="hydratorplusplus.create({ draftId: pipeline.id, type:pipeline.artifact.name })" ng-if="pipeline.isDraft">
                 {{pipeline.name}}
               </a>
             </td>
             <td>
-              <span ng-if="pipeline.artifact.name === ListController.GLOBALS.etlBatch">
+              <span ng-if="[ListController.GLOBALS.etlBatch, ListController.GLOBALS.etlDataPipeline].indexOf(pipeline.artifact.name) !== -1">
                 <span class="icon-ETLBatch"></span>
                 <span>ETL Batch</span>
               </span>

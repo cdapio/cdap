@@ -27,7 +27,9 @@ angular.module(PKG.name + '.feature.overview')
       _cdapNsPath: '/apps'
     })
       .then(function(res) {
-        this.apps = this.apps.concat(res);
+        this.apps = this.apps.concat(res).filter(function (app) {
+          return app.name[0] !== '_';
+        });
       }.bind(this));
 
     var params = {

@@ -28,6 +28,7 @@ import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 import co.cask.cdap.api.data.stream.Stream;
+import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.lib.ObjectMappedTable;
 import co.cask.cdap.api.dataset.lib.ObjectMappedTableProperties;
@@ -92,7 +93,8 @@ public class AllProgramsApp extends AbstractApplication {
     setName(NAME);
     setDescription("Application which has everything");
     addStream(new Stream(STREAM_NAME, "test stream"));
-    createDataset(DATASET_NAME, KeyValueTable.class);
+    createDataset(DATASET_NAME, KeyValueTable.class,
+                  DatasetProperties.builder().setDescription("test dataset").build());
     createDataset(DATASET_NAME2, KeyValueTable.class);
     createDataset(DATASET_NAME3, KeyValueTable.class);
     addFlow(new NoOpFlow());
@@ -108,7 +110,11 @@ public class AllProgramsApp extends AbstractApplication {
                      NoOpWorkflow.NAME);
     try {
       createDataset(DS_WITH_SCHEMA_NAME, ObjectMappedTable.class,
-                    ObjectMappedTableProperties.builder().setType(DsSchema.class).build());
+                    ObjectMappedTableProperties.builder()
+                      .setType(DsSchema.class)
+                      .setDescription("test object mapped table")
+                      .build()
+      );
     } catch (UnsupportedTypeException e) {
       // ignore for test
     }

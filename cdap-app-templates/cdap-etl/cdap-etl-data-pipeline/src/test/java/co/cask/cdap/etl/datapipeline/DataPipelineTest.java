@@ -16,28 +16,39 @@
 
 package co.cask.cdap.etl.datapipeline;
 
+import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.schema.Schema;
+import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.etl.api.PipelineConfigurable;
 import co.cask.cdap.etl.api.batch.BatchSource;
+import co.cask.cdap.etl.api.batch.SparkCompute;
+import co.cask.cdap.etl.api.batch.SparkSink;
 import co.cask.cdap.etl.datapipeline.mock.FieldCountAggregator;
 import co.cask.cdap.etl.datapipeline.mock.IdentityAggregator;
 import co.cask.cdap.etl.datapipeline.mock.IdentityTransform;
 import co.cask.cdap.etl.datapipeline.mock.MockSink;
 import co.cask.cdap.etl.datapipeline.mock.MockSource;
+import co.cask.cdap.etl.datapipeline.mock.NaiveBayesClassifier;
+import co.cask.cdap.etl.datapipeline.mock.NaiveBayesTrainer;
+import co.cask.cdap.etl.datapipeline.mock.SpamMessage;
 import co.cask.cdap.etl.datapipeline.mock.StringValueFilterTransform;
+import co.cask.cdap.etl.proto.Engine;
 import co.cask.cdap.etl.proto.v2.ETLBatchConfig;
+import co.cask.cdap.etl.proto.v2.ETLPlugin;
 import co.cask.cdap.etl.proto.v2.ETLStage;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.artifact.ArtifactSummary;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.DataSetManager;
+import co.cask.cdap.test.StreamManager;
 import co.cask.cdap.test.TestBase;
 import co.cask.cdap.test.TestConfiguration;
 import co.cask.cdap.test.WorkflowManager;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import org.junit.Assert;
@@ -45,6 +56,9 @@ import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
@@ -60,16 +74,17 @@ public class DataPipelineTest extends TestBase {
 
   @BeforeClass
   public static void setupTest() throws Exception {
-    // add the artifact for etl batch app
+    // add the artifact for data pipeline app
     addAppArtifact(APP_ARTIFACT_ID, DataPipelineApp.class,
-                   BatchSource.class.getPackage().getName(),
+                   BatchSource.class.getPackage().getName(), SparkSink.class.getPackage().getName(),
                    PipelineConfigurable.class.getPackage().getName());
 
     // add some test plugins
     addPluginArtifact(Id.Artifact.from(Id.Namespace.DEFAULT, "test-plugins", "1.0.0"), APP_ARTIFACT_ID,
                       MockSource.class, MockSink.class,
                       StringValueFilterTransform.class, IdentityTransform.class,
-                      FieldCountAggregator.class, IdentityAggregator.class);
+                      FieldCountAggregator.class, IdentityAggregator.class,
+                      NaiveBayesTrainer.class, NaiveBayesClassifier.class);
   }
 
   @Test
@@ -217,13 +232,35 @@ public class DataPipelineTest extends TestBase {
   }
 
   @Test
-  public void testLinearAggregators() throws Exception {
+  public void testMapRedSequentialAggregators() throws Exception {
+    testSequentialAggregators(Engine.MAPREDUCE);
+  }
+
+  @Test
+  public void testSparkSequentialAggregators() throws Exception {
+    testSequentialAggregators(Engine.SPARK);
+  }
+
+  @Test
+  public void testMapRedParallelAggregators() throws Exception {
+    testParallelAggregators(Engine.MAPREDUCE);
+  }
+
+  @Test
+  public void testSparkParallelAggregators() throws Exception {
+    testParallelAggregators(Engine.SPARK);
+  }
+
+  private void testSequentialAggregators(Engine engine) throws Exception {
+    String sourceName = "linearAggInput-" + engine.name();
+    String sinkName = "linearAggOutput-" + engine.name();
     /*
      * source --> filter1 --> aggregator1 --> aggregator2 --> filter2 --> sink
      */
     ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
-      .addStage(new ETLStage("source", MockSource.getPlugin("linearAggInput")))
-      .addStage(new ETLStage("sink", MockSink.getPlugin("linearAggOutput")))
+      .setEngine(engine)
+      .addStage(new ETLStage("source", MockSource.getPlugin(sourceName)))
+      .addStage(new ETLStage("sink", MockSink.getPlugin(sinkName)))
       .addStage(new ETLStage("filter1", StringValueFilterTransform.getPlugin("name", "bob")))
       .addStage(new ETLStage("filter2", StringValueFilterTransform.getPlugin("name", "jane")))
       .addStage(new ETLStage("aggregator1", IdentityAggregator.getPlugin()))
@@ -249,7 +286,7 @@ public class DataPipelineTest extends TestBase {
     StructuredRecord recordJane = StructuredRecord.builder(schema).set("name", "jane").build();
 
     // write one record to each source
-    DataSetManager<Table> inputManager = getDataset(Id.Namespace.DEFAULT, "linearAggInput");
+    DataSetManager<Table> inputManager = getDataset(Id.Namespace.DEFAULT, sourceName);
     MockSource.writeInput(inputManager, ImmutableList.of(recordSamuel, recordBob, recordJane));
 
     WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
@@ -257,23 +294,25 @@ public class DataPipelineTest extends TestBase {
     workflowManager.waitForFinish(5, TimeUnit.MINUTES);
 
     // check output
-    DataSetManager<Table> sinkManager = getDataset("linearAggOutput");
+    DataSetManager<Table> sinkManager = getDataset(sinkName);
     Set<StructuredRecord> expected = ImmutableSet.of(recordSamuel);
     Set<StructuredRecord> actual = Sets.newHashSet(MockSink.readOutput(sinkManager));
     Assert.assertEquals(expected, actual);
   }
 
-  @Test
-  public void testParallelAggregators() throws Exception {
+  private void testParallelAggregators(Engine engine) throws Exception {
+    String sourceName = "pAggInput-" + engine.name();
+    String sink1Name = "pAggOutput1-" + engine.name();
+    String sink2Name = "pAggOutput2-" + engine.name();
     /*
                  |--> agg1 --> sink1
         source --|
                  |--> agg2 --> sink2
      */
     ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
-      .addStage(new ETLStage("source", MockSource.getPlugin("pAggInput")))
-      .addStage(new ETLStage("sink1", MockSink.getPlugin("pAggOutput1")))
-      .addStage(new ETLStage("sink2", MockSink.getPlugin("pAggOutput2")))
+      .addStage(new ETLStage("source", MockSource.getPlugin(sourceName)))
+      .addStage(new ETLStage("sink1", MockSink.getPlugin(sink1Name)))
+      .addStage(new ETLStage("sink2", MockSink.getPlugin(sink2Name)))
       .addStage(new ETLStage("agg1", FieldCountAggregator.getPlugin("user", "string")))
       .addStage(new ETLStage("agg2", FieldCountAggregator.getPlugin("item", "long")))
       .addConnection("source", "agg1")
@@ -293,7 +332,7 @@ public class DataPipelineTest extends TestBase {
     );
 
     // write one record to each source
-    DataSetManager<Table> inputManager = getDataset(Id.Namespace.DEFAULT, "pAggInput");
+    DataSetManager<Table> inputManager = getDataset(Id.Namespace.DEFAULT, sourceName);
     MockSource.writeInput(inputManager, ImmutableList.of(
       StructuredRecord.builder(inputSchema).set("user", "samuel").set("item", 1L).build(),
       StructuredRecord.builder(inputSchema).set("user", "samuel").set("item", 2L).build(),
@@ -318,7 +357,7 @@ public class DataPipelineTest extends TestBase {
     );
 
     // check output
-    DataSetManager<Table> sinkManager = getDataset("pAggOutput1");
+    DataSetManager<Table> sinkManager = getDataset(sink1Name);
     Set<StructuredRecord> expected = ImmutableSet.of(
       StructuredRecord.builder(outputSchema1).set("user", "all").set("ct", 5L).build(),
       StructuredRecord.builder(outputSchema1).set("user", "samuel").set("ct", 3L).build(),
@@ -326,7 +365,7 @@ public class DataPipelineTest extends TestBase {
     Set<StructuredRecord> actual = Sets.newHashSet(MockSink.readOutput(sinkManager));
     Assert.assertEquals(expected, actual);
 
-    sinkManager = getDataset("pAggOutput2");
+    sinkManager = getDataset(sink2Name);
     expected = ImmutableSet.of(
       StructuredRecord.builder(outputSchema2).set("item", 0L).set("ct", 5L).build(),
       StructuredRecord.builder(outputSchema2).set("item", 1L).set("ct", 1L).build(),
@@ -335,5 +374,133 @@ public class DataPipelineTest extends TestBase {
       StructuredRecord.builder(outputSchema2).set("item", 4L).set("ct", 1L).build());
     actual = Sets.newHashSet(MockSink.readOutput(sinkManager));
     Assert.assertEquals(expected, actual);
+  }
+
+  @Test
+  public void testSparkSinkAndCompute() throws Exception {
+    // use the SparkSink to train a model
+    testSinglePhaseWithSparkSink();
+    // use a SparkCompute to classify all records going through the pipeline, using the model build with the SparkSink
+    testSinglePhaseWithSparkCompute();
+  }
+
+  private void testSinglePhaseWithSparkSink() throws Exception {
+    /*
+     * source --> sparksink
+     */
+    ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
+      .addStage(new ETLStage("source", MockSource.getPlugin("messages")))
+      .addStage(new ETLStage("customsink",
+                             new ETLPlugin(NaiveBayesTrainer.PLUGIN_NAME, SparkSink.PLUGIN_TYPE,
+                                           ImmutableMap.of("fileSetName", "modelFileSet",
+                                                           "path", "output",
+                                                           "fieldToClassify", SpamMessage.TEXT_FIELD,
+                                                           "predictionField", SpamMessage.SPAM_PREDICTION_FIELD),
+                                           null)))
+      .addConnection("source", "customsink")
+      .build();
+
+    AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(ARTIFACT, etlConfig);
+    Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "SinglePhaseApp");
+    ApplicationManager appManager = deployApplication(appId, appRequest);
+
+
+    // set up five spam messages and five non-spam messages to be used for classification
+    List<StructuredRecord> messagesToWrite = new ArrayList<>();
+    messagesToWrite.add(new SpamMessage("buy our clothes", 1.0).toStructuredRecord());
+    messagesToWrite.add(new SpamMessage("sell your used books to us", 1.0).toStructuredRecord());
+    messagesToWrite.add(new SpamMessage("earn money for free", 1.0).toStructuredRecord());
+    messagesToWrite.add(new SpamMessage("this is definitely not spam", 1.0).toStructuredRecord());
+    messagesToWrite.add(new SpamMessage("you won the lottery", 1.0).toStructuredRecord());
+    messagesToWrite.add(new SpamMessage("how was your day", 0.0).toStructuredRecord());
+    messagesToWrite.add(new SpamMessage("what are you up to", 0.0).toStructuredRecord());
+    messagesToWrite.add(new SpamMessage("this is a genuine message", 0.0).toStructuredRecord());
+    messagesToWrite.add(new SpamMessage("this is an even more genuine message", 0.0).toStructuredRecord());
+    messagesToWrite.add(new SpamMessage("could you send me the report", 0.0).toStructuredRecord());
+
+    // write records to source
+    DataSetManager<Table> inputManager = getDataset(Id.Namespace.DEFAULT, "messages");
+    MockSource.writeInput(inputManager, messagesToWrite);
+
+    // ingest in some messages to be classified
+    StreamManager textsToClassify = getStreamManager(NaiveBayesTrainer.TEXTS_TO_CLASSIFY);
+    textsToClassify.send("how are you doing today");
+    textsToClassify.send("free money money");
+    textsToClassify.send("what are you doing today");
+    textsToClassify.send("genuine report");
+
+    // manually trigger the pipeline
+    WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
+    workflowManager.start();
+    workflowManager.waitForFinish(5, TimeUnit.MINUTES);
+
+
+    DataSetManager<KeyValueTable> classifiedTexts = getDataset(NaiveBayesTrainer.CLASSIFIED_TEXTS);
+
+    Assert.assertEquals(0.0d, Bytes.toDouble(classifiedTexts.get().read("how are you doing today")), 0.01d);
+    // only 'free money money' should be predicated as spam
+    Assert.assertEquals(1.0d, Bytes.toDouble(classifiedTexts.get().read("free money money")), 0.01d);
+    Assert.assertEquals(0.0d, Bytes.toDouble(classifiedTexts.get().read("what are you doing today")), 0.01d);
+    Assert.assertEquals(0.0d, Bytes.toDouble(classifiedTexts.get().read("genuine report")), 0.01d);
+  }
+
+  private void testSinglePhaseWithSparkCompute() throws Exception {
+    /*
+     * source --> sparkcompute --> sink
+     */
+    String classifiedTextsTable = "classifiedTextTable";
+
+    ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
+      .addStage(new ETLStage("source", MockSource.getPlugin(NaiveBayesTrainer.TEXTS_TO_CLASSIFY)))
+      .addStage(new ETLStage("sparkcompute",
+                             new ETLPlugin(NaiveBayesClassifier.PLUGIN_NAME, SparkCompute.PLUGIN_TYPE,
+                                           ImmutableMap.of("fileSetName", "modelFileSet"  ,
+                                                           "path", "output",
+                                                           "fieldToClassify", SpamMessage.TEXT_FIELD,
+                                                           "fieldToSet", SpamMessage.SPAM_PREDICTION_FIELD),
+                                           null)))
+      .addStage(new ETLStage("sink", MockSink.getPlugin(classifiedTextsTable)))
+      .addConnection("source", "sparkcompute")
+      .addConnection("sparkcompute", "sink")
+      .build();
+
+    AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(ARTIFACT, etlConfig);
+    Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "SinglePhaseApp");
+    ApplicationManager appManager = deployApplication(appId, appRequest);
+
+
+    // write some some messages to be classified
+    List<StructuredRecord> messagesToWrite = new ArrayList<>();
+    messagesToWrite.add(new SpamMessage("how are you doing today").toStructuredRecord());
+    messagesToWrite.add(new SpamMessage("free money money").toStructuredRecord());
+    messagesToWrite.add(new SpamMessage("what are you doing today").toStructuredRecord());
+    messagesToWrite.add(new SpamMessage("genuine report").toStructuredRecord());
+
+    DataSetManager<Table> inputManager = getDataset(Id.Namespace.DEFAULT, NaiveBayesTrainer.TEXTS_TO_CLASSIFY);
+    MockSource.writeInput(inputManager, messagesToWrite);
+
+    // manually trigger the pipeline
+    WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
+    workflowManager.start();
+    workflowManager.waitForFinish(5, TimeUnit.MINUTES);
+
+
+    DataSetManager<Table> classifiedTexts = getDataset(classifiedTextsTable);
+    List<StructuredRecord> structuredRecords = MockSink.readOutput(classifiedTexts);
+
+
+    Set<SpamMessage> results = new HashSet<>();
+    for (StructuredRecord structuredRecord : structuredRecords) {
+      results.add(SpamMessage.fromStructuredRecord(structuredRecord));
+    }
+
+    Set<SpamMessage> expected = new HashSet<>();
+    expected.add(new SpamMessage("how are you doing today", 0.0));
+    // only 'free money money' should be predicated as spam
+    expected.add(new SpamMessage("free money money", 1.0));
+    expected.add(new SpamMessage("what are you doing today", 0.0));
+    expected.add(new SpamMessage("genuine report", 0.0));
+
+    Assert.assertEquals(expected, results);
   }
 }

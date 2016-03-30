@@ -18,7 +18,7 @@ class TrackerContainerController {
   constructor($state) {
     this.$state = $state;
 
-    this.searchQuery = this.$state.params.searchQuery;
+    this.searchQuery = this.$state.params.searchQuery || this.$state.params.searchTerm;
   }
 
   search(event) {

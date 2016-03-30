@@ -71,8 +71,18 @@ public class DatasetAdminService {
     return datasetAdmin.exists();
   }
 
+  /**
+   * Configures and creates a Dataset
+   *
+   * @param datasetInstanceId dataset instance to be created
+   * @param typeMeta type meta for the dataset
+   * @param props dataset instance properties
+   * @param existing true, if dataset already exists (in case of update)
+   * @return dataset specification
+   * @throws Exception
+   */
   public DatasetSpecification create(Id.DatasetInstance datasetInstanceId, DatasetTypeMeta typeMeta,
-                                     DatasetProperties props) throws Exception {
+                                     DatasetProperties props, boolean existing) throws Exception {
     LOG.info("Creating dataset instance {}, type meta: {}, props: {}", datasetInstanceId, typeMeta, props);
     try (DatasetClassLoaderProvider classLoaderProvider =
            new DirectoryClassLoaderProvider(cConf, locationFactory)) {
@@ -90,27 +100,7 @@ public class DatasetAdminService {
       try {
         admin.create();
 
-        // add system metadata for user datasets only
-        if (isUserDataset(datasetInstanceId)) {
-          Dataset dataset = null;
-          try {
-            try {
-              dataset = type.getDataset(context, spec, DatasetDefinition.NO_ARGUMENTS);
-            } catch (Exception e) {
-              LOG.warn("Exception while instantiating Dataset {}", datasetInstanceId, e);
-            }
-
-            SystemMetadataWriter systemMetadataWriter =
-              new DatasetSystemMetadataWriter(metadataStore, datasetInstanceId, props,
-                                              dataset,
-                                              typeMeta.getName());
-            systemMetadataWriter.write();
-          } finally {
-            if (dataset != null) {
-              dataset.close();
-            }
-          }
-        }
+        writeSystemMetadata(datasetInstanceId, spec, props, typeMeta, type, context, existing);
 
         return spec;
       } catch (IOException e) {
@@ -122,6 +112,41 @@ public class DatasetAdminService {
       String msg = String.format("Error instantiating the dataset admin for dataset %s", datasetInstanceId);
       LOG.error(msg, e);
       throw new IOException(msg, e);
+    }
+  }
+
+  private void writeSystemMetadata(Id.DatasetInstance datasetInstanceId, DatasetSpecification spec,
+                                   DatasetProperties props, DatasetTypeMeta typeMeta, DatasetType type,
+                                   DatasetContext context, boolean existing) throws IOException {
+    // add system metadata for user datasets only
+    if (isUserDataset(datasetInstanceId)) {
+      Dataset dataset = null;
+      try {
+        try {
+          dataset = type.getDataset(context, spec, DatasetDefinition.NO_ARGUMENTS);
+        } catch (Exception e) {
+          LOG.warn("Exception while instantiating Dataset {}", datasetInstanceId, e);
+        }
+
+        // Make sure to write whatever system metadata that can be derived
+        // even if the above instantiation throws exception
+        SystemMetadataWriter systemMetadataWriter;
+        if (existing) {
+          systemMetadataWriter =
+            new DatasetSystemMetadataWriter(metadataStore, datasetInstanceId, props,
+                                            dataset, typeMeta.getName(), spec.getDescription());
+        } else {
+          long createTime = System.currentTimeMillis();
+          systemMetadataWriter =
+            new DatasetSystemMetadataWriter(metadataStore, datasetInstanceId, props, createTime,
+                                            dataset, typeMeta.getName(), spec.getDescription());
+        }
+        systemMetadataWriter.write();
+      } finally {
+        if (dataset != null) {
+          dataset.close();
+        }
+      }
     }
   }
 

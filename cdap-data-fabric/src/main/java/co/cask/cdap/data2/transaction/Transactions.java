@@ -39,6 +39,10 @@ public final class Transactions {
 
   private static final Logger LOG = LoggerFactory.getLogger(Transactions.class);
 
+  /**
+   * Aborts the given transaction without throwing any exception. If there is exception raised during abort,
+   * it will get logged as an error.
+   */
   public static void abortQuietly(TransactionSystemClient txClient, Transaction tx) {
     try {
       txClient.abort(tx);
@@ -47,13 +51,42 @@ public final class Transactions {
     }
   }
 
+  /**
+   * Invalidates the given transaction without throwing any exception. If there is exception raised during invalidation,
+   * it will get logged as an error.
+   */
   public static void invalidateQuietly(TransactionSystemClient txClient, Transaction tx) {
     try {
-      txClient.invalidate(tx.getWritePointer());
+      if (!txClient.invalidate(tx.getWritePointer())) {
+        LOG.error("Failed to invalidate transaction {}", tx);
+      }
     } catch (Throwable t) {
       LOG.error("Exception when invalidating transaction {}", tx, t);
     }
   }
+
+  /**
+   * Wraps the given {@link Throwable} as a {@link TransactionFailureException} if it is not already an instance of
+   * {@link TransactionFailureException}.
+   */
+  public static TransactionFailureException asTransactionFailure(Throwable t) {
+    return asTransactionFailure(t, "Exception raised in transactional execution. Cause: " + t.getMessage());
+  }
+
+  /**
+   * Wraps the given {@link Throwable} as a {@link TransactionFailureException} if it is not already an instance of
+   * {@link TransactionFailureException}.
+   *
+   * @param t the original exception
+   * @param message the exception message to use in case wrapping is needed
+   */
+  public static TransactionFailureException asTransactionFailure(Throwable t, String message) {
+    if (t instanceof TransactionFailureException) {
+      return (TransactionFailureException) t;
+    }
+    return new TransactionFailureException(message, t);
+  }
+
 
   public static Supplier<TransactionContext>
   constantContextSupplier(final TransactionSystemClient txClient,

@@ -24,6 +24,8 @@ import co.cask.cdap.etl.api.Transform;
 import co.cask.cdap.etl.api.batch.BatchAggregator;
 import co.cask.cdap.etl.api.batch.BatchSink;
 import co.cask.cdap.etl.api.batch.BatchSource;
+import co.cask.cdap.etl.api.batch.SparkCompute;
+import co.cask.cdap.etl.api.batch.SparkSink;
 import co.cask.cdap.etl.common.Constants;
 import co.cask.cdap.etl.planner.PipelinePlan;
 import co.cask.cdap.etl.planner.PipelinePlanner;
@@ -44,7 +46,7 @@ public class DataPipelineApp extends AbstractApplication<ETLBatchConfig> {
   public static final String DEFAULT_DESCRIPTION = "Data Pipeline Application";
   private static final Set<String> supportedPluginTypes = ImmutableSet.of(
     BatchSource.PLUGIN_TYPE, BatchSink.PLUGIN_TYPE, Transform.PLUGIN_TYPE,
-    Constants.CONNECTOR_TYPE, BatchAggregator.PLUGIN_TYPE);
+    Constants.CONNECTOR_TYPE, BatchAggregator.PLUGIN_TYPE, SparkCompute.PLUGIN_TYPE, SparkSink.PLUGIN_TYPE);
 
   @Override
   public void configure() {
@@ -52,7 +54,8 @@ public class DataPipelineApp extends AbstractApplication<ETLBatchConfig> {
     setDescription(DEFAULT_DESCRIPTION);
 
     PipelineSpecGenerator specGenerator =
-      new PipelineSpecGenerator(getConfigurer(), BatchSource.PLUGIN_TYPE, BatchSink.PLUGIN_TYPE,
+      new PipelineSpecGenerator(getConfigurer(), ImmutableSet.of(BatchSource.PLUGIN_TYPE),
+                                ImmutableSet.of(BatchSink.PLUGIN_TYPE, SparkSink.PLUGIN_TYPE),
                                 TimePartitionedFileSet.class,
                                 FileSetProperties.builder()
                                   .setInputFormat(AvroKeyInputFormat.class)
@@ -65,10 +68,12 @@ public class DataPipelineApp extends AbstractApplication<ETLBatchConfig> {
                                   .build());
     PipelineSpec spec = specGenerator.generateSpec(config);
 
-    PipelinePlanner planner = new PipelinePlanner(supportedPluginTypes, ImmutableSet.of(BatchAggregator.PLUGIN_TYPE));
+    PipelinePlanner planner = new PipelinePlanner(supportedPluginTypes,
+                                                  ImmutableSet.of(BatchAggregator.PLUGIN_TYPE),
+                                                  ImmutableSet.of(SparkCompute.PLUGIN_TYPE, SparkSink.PLUGIN_TYPE));
     PipelinePlan plan = planner.plan(spec);
 
-    addWorkflow(new SmartWorkflow(spec, plan, getConfigurer()));
+    addWorkflow(new SmartWorkflow(spec, plan, getConfigurer(), config.getEngine()));
     scheduleWorkflow(Schedules.builder(SCHEDULE_NAME)
                        .setDescription("Data pipeline schedule")
                        .createTimeSchedule(config.getSchedule()),

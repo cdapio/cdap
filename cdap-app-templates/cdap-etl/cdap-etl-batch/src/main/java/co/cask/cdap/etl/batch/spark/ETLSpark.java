@@ -18,9 +18,12 @@ package co.cask.cdap.etl.batch.spark;
 
 import co.cask.cdap.api.spark.AbstractSpark;
 import co.cask.cdap.api.spark.SparkContext;
+import co.cask.cdap.etl.api.batch.BatchAggregator;
 import co.cask.cdap.etl.api.batch.BatchConfigurable;
 import co.cask.cdap.etl.api.batch.BatchSinkContext;
 import co.cask.cdap.etl.api.batch.BatchSourceContext;
+import co.cask.cdap.etl.api.batch.SparkSink;
+import co.cask.cdap.etl.batch.AbstractAggregatorContext;
 import co.cask.cdap.etl.batch.BatchPhaseSpec;
 import co.cask.cdap.etl.batch.CompositeFinisher;
 import co.cask.cdap.etl.batch.Finisher;
@@ -28,12 +31,16 @@ import co.cask.cdap.etl.batch.PipelinePluginInstantiator;
 import co.cask.cdap.etl.common.Constants;
 import co.cask.cdap.etl.common.DatasetContextLookupProvider;
 import co.cask.cdap.etl.common.SetMultimapCodec;
+import co.cask.cdap.etl.planner.StageInfo;
+import com.google.common.base.Joiner;
 import com.google.common.collect.SetMultimap;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.DataOutput;
+import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
@@ -41,6 +48,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Configures and sets up runs of {@link ETLSparkProgram}.
@@ -93,8 +101,9 @@ public class ETLSpark extends AbstractSpark {
     String sourceName = phaseSpec.getPhase().getSources().iterator().next();
 
     BatchConfigurable<BatchSourceContext> batchSource = pluginInstantiator.newPluginInstance(sourceName);
+    DatasetContextLookupProvider lookProvider = new DatasetContextLookupProvider(context);
     SparkBatchSourceContext sourceContext = new SparkBatchSourceContext(context,
-                                                                        new DatasetContextLookupProvider(context),
+                                                                        lookProvider,
                                                                         sourceName);
     batchSource.prepareRun(sourceContext);
 
@@ -109,9 +118,32 @@ public class ETLSpark extends AbstractSpark {
     SparkBatchSinkFactory sinkFactory = new SparkBatchSinkFactory();
     for (String sinkName : phaseSpec.getPhase().getSinks()) {
       BatchConfigurable<BatchSinkContext> batchSink = pluginInstantiator.newPluginInstance(sinkName);
-      BatchSinkContext sinkContext = new SparkBatchSinkContext(sinkFactory, context, null, sinkName);
-      batchSink.prepareRun(sinkContext);
-      finishers.add(batchSink, sinkContext);
+      if (batchSink instanceof SparkSink) {
+        BasicSparkPluginContext sparkPluginContext = new BasicSparkPluginContext(context, lookProvider, sinkName);
+        ((SparkSink) batchSink).prepareRun(sparkPluginContext);
+        finishers.add((SparkSink) batchSink, sparkPluginContext);
+      } else {
+        BatchSinkContext sinkContext = new SparkBatchSinkContext(sinkFactory, context, null, sinkName);
+        batchSink.prepareRun(sinkContext);
+        finishers.add(batchSink, sinkContext);
+      }
+    }
+
+    Set<StageInfo> aggregators = phaseSpec.getPhase().getStagesOfType(BatchAggregator.PLUGIN_TYPE);
+    Integer numPartitions = null;
+    if (!aggregators.isEmpty()) {
+      if (aggregators.size() > 1) {
+        throw new IllegalArgumentException(String.format(
+          "There was an error during planning. Phase %s has multiple aggregators %s.",
+          phaseSpec.getPhaseName(), Joiner.on(',').join(aggregators)));
+      }
+      String aggregatorName = aggregators.iterator().next().getName();
+      BatchAggregator aggregator = pluginInstantiator.newPluginInstance(aggregatorName);
+      AbstractAggregatorContext aggregatorContext =
+        new SparkAggregatorContext(context, new DatasetContextLookupProvider(context), aggregatorName);
+      aggregator.prepareRun(aggregatorContext);
+      finishers.add(aggregator, aggregatorContext);
+      numPartitions = aggregatorContext.getNumPartitions();
     }
 
     File configFile = File.createTempFile("ETLSpark", ".config");
@@ -119,6 +151,8 @@ public class ETLSpark extends AbstractSpark {
     try (OutputStream os = new FileOutputStream(configFile)) {
       sourceFactory.serialize(os);
       sinkFactory.serialize(os);
+      DataOutput dataOutput = new DataOutputStream(os);
+      dataOutput.writeInt(numPartitions == null ? -1 : numPartitions);
     }
 
     finisher = finishers.build();

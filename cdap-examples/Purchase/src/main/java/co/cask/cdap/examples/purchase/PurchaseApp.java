@@ -91,8 +91,5 @@ public class PurchaseApp extends AbstractApplication {
       // because PurchaseHistory and Purchase are actual classes.
       throw new RuntimeException(e);
     }
-    // create an 'oldPurchases' KeyValueTable, which stores Purchase events, but in JSON format in one column, instead
-    // of in an ObjectMappedTable
-    createDataset("oldPurchases", KeyValueTable.class);
   }
 }

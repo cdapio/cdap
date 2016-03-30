@@ -14,7 +14,7 @@
  * the License.
  */
 
-function LineageController ($scope, jsPlumb, $timeout, $state, LineageStore, myTrackerApi) {
+function LineageController ($scope, jsPlumb, $timeout, $state, LineageStore, myTrackerApi, $window) {
   'ngInject';
 
   var vm = this;
@@ -31,6 +31,7 @@ function LineageController ($scope, jsPlumb, $timeout, $state, LineageStore, myT
     if (vm.nodes.length === 0) { return; }
 
     vm.graphInfo = vm.graph.graph();
+    vm.graphInfo.width = vm.graphInfo.width < 920 ? 920 : vm.graphInfo.width;
 
     $timeout( () => {
       angular.forEach(vm.connections, (conn) => {
@@ -45,6 +46,8 @@ function LineageController ($scope, jsPlumb, $timeout, $state, LineageStore, myT
       $timeout( () => {
         vm.instance.repaintEverything();
       });
+
+      vm.scaleInfo = $scope.getScale(vm.graphInfo);
     });
   }
 
@@ -58,14 +61,16 @@ function LineageController ($scope, jsPlumb, $timeout, $state, LineageStore, myT
         lineWidth: 2,
         strokeStyle: 'rgba(0,0,0, 1)'
       },
-      // Connector: [ 'Flowchart', {gap: 0, stub: [10, 15], alwaysRespectStubs: true, cornerRadius: 3} ],
-      Connector: [ 'Straight', {gap: 0} ],
+      Connector: [ 'Flowchart', {gap: 0, stub: [10, 15], alwaysRespectStubs: true, cornerRadius: 0} ],
       ConnectionOverlays: [ [ 'Arrow', { location: 1, direction: 1, width: 10, length: 10 }] ],
-      Endpoints: ['Blank', 'Blank'],
-      HoverPaintStyle: { strokeStyle: 'rgb(53, 200, 83)' }
+      Endpoints: ['Blank', 'Blank']
     });
 
     render();
+  });
+
+  angular.element($window).on('resize', function() {
+    vm.scaleInfo = $scope.getScale(vm.graphInfo);
   });
 
   vm.nodeClick = (event, node) => {
@@ -166,6 +171,28 @@ function LineageController ($scope, jsPlumb, $timeout, $state, LineageStore, myT
   });
 }
 
+function LineageLink(scope, elem) {
+  scope.getScale = (graph) => {
+    let parentContainerWidth = elem.parent()[0].clientWidth;
+
+    if (parentContainerWidth > graph.width ) {
+      return {
+        scale: 1,
+        padX: (parentContainerWidth - graph.width) / 2 + 'px',
+        padY: 0
+      };
+    } else {
+      let scale = parentContainerWidth / graph.width;
+
+      return {
+        scale: scale,
+        padX: ((graph.width * scale) - graph.width) / 2 + 'px',
+        padY: (((graph.height * scale) - graph.height) / 2) + 'px'
+      };
+    }
+  };
+}
+
 angular.module(PKG.name + '.feature.tracker')
   .directive('myLineageDiagram', () => {
     return {
@@ -176,6 +203,7 @@ angular.module(PKG.name + '.feature.tracker')
       },
       templateUrl: '/assets/features/tracker/directives/lineage/lineage.html',
       controller: LineageController,
-      controllerAs: 'Lineage'
+      controllerAs: 'Lineage',
+      link: LineageLink
     };
   });

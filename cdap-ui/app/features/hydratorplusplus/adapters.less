@@ -97,16 +97,9 @@ body.theme-cdap {
       > .btn.btn-default { margin-bottom: 20px; }
     }
 
-    .hydrator-template-modal {
-      .modal-content {
-        .modal-content-wrapper {
-          padding: 10px;
-        }
-      }
-    }
   }
 
-  &.state-hydrator-detail, &.state-hydratorplusplus-create {
+  &.state-hydratorplusplus-detail, &.state-hydratorplusplus-create {
     .btn {
       &.btn-orange, &.btn-grey {
         color: white;
@@ -121,7 +114,7 @@ body.theme-cdap {
     }
   }
 
-  &.state-hydrator-detail {
+  &.state-hydratorplusplus-detail {
     .detail-canvas-container {
       position: relative;
     }
@@ -144,7 +137,7 @@ body.theme-cdap {
       z-index: 1029;
     }
   }
-  &.state-hydrator-detail {
+  &.state-hydratorplusplus-detail {
     .alerts {
       top: 120px;
       z-index: 1028;
@@ -213,24 +206,23 @@ body.theme-cdap {
       width: 100%;
 
       p {
-        color: lighten(@btn-default-color, 15%);
+        color: @cdap-header;
         margin-bottom: 2px;
       }
 
       &:hover {
-        background-color: lighten(@btn-default-color, 15%);
+        background-color: @cdap-header;
         text-decoration: none;
-        .box-shadow(inset 0 0 20px 0 fade(black, 25%));
 
         h4, p { color: white; }
+        hr { border-color: white; }
       }
 
       hr {
         border: 0;
         height: 0;
         width: 100%;
-        border-top: 1px solid fade(black, 10%);
-        border-bottom: 1px solid fade(white, 30%);
+        border-top: 1px solid @cdap-header;
         margin: 10px auto;
       }
     }
@@ -246,12 +238,13 @@ body.theme-cdap {
       display: flex;
       flex-direction: column;
       justify-content: center;
+
       .border-radius(6px);
       h4, a {
         font-weight: 500;
       }
       h4 {
-        color: @btn-default-color;
+        color: @cdap-header;
 
         &.template-name {
           margin-bottom: 10px;
@@ -260,11 +253,11 @@ body.theme-cdap {
 
       p {
         font-size: 12px;
+        color: @cdap-header;
       }
 
       &:hover {
-        background-color: lighten(@btn-default-color, 15%);
-        .box-shadow(inset 0 0 20px 0 fade(black, 25%));
+        background-color: @cdap-header;
 
         h4 { color: white; }
       }

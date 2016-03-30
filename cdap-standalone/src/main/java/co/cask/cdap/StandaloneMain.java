@@ -28,7 +28,9 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.IOModule;
+import co.cask.cdap.common.guice.KafkaClientModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
+import co.cask.cdap.common.guice.ZKClientModule;
 import co.cask.cdap.common.io.URLConnections;
 import co.cask.cdap.common.namespace.guice.NamespaceClientRuntimeModule;
 import co.cask.cdap.common.startup.ConfigurationLogger;
@@ -73,6 +75,8 @@ import com.google.inject.Injector;
 import com.google.inject.Module;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.counters.Limits;
+import org.apache.twill.kafka.client.KafkaClientService;
+import org.apache.twill.zookeeper.ZKClientService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -111,10 +115,24 @@ public class StandaloneMain {
   private ExploreExecutorService exploreExecutorService;
   private final ExploreClient exploreClient;
 
+  private final ZKClientService zkClient;
+  private final KafkaClientService kafkaClient;
+
   private StandaloneMain(List<Module> modules, CConfiguration cConf) {
     this.cConf = cConf;
 
     Injector injector = Guice.createInjector(modules);
+
+    // Start ZK client and Kafka client only when audit is enabled
+    boolean auditEnabled = cConf.getBoolean(Constants.Audit.ENABLED);
+    if (auditEnabled) {
+      zkClient = injector.getInstance(ZKClientService.class);
+      kafkaClient = injector.getInstance(KafkaClientService.class);
+    } else {
+      zkClient = null;
+      kafkaClient = null;
+    }
+
     txService = injector.getInstance(InMemoryTransactionService.class);
     router = injector.getInstance(NettyRouter.class);
     metricsQueryService = injector.getInstance(MetricsQueryService.class);
@@ -174,6 +192,14 @@ public class StandaloneMain {
     ConfigurationLogger.logImportantConfig(cConf);
 
     // Start all the services.
+    if (zkClient != null) {
+      zkClient.startAndWait();
+    }
+
+    if (kafkaClient != null) {
+      kafkaClient.startAndWait();
+    }
+
     txService.startAndWait();
     metricsCollectionService.startAndWait();
     datasetService.startAndWait();
@@ -232,6 +258,7 @@ public class StandaloneMain {
         exploreExecutorService.stopAndWait();
       }
       exploreClient.close();
+      metadataService.stopAndWait();
       serviceStore.stopAndWait();
       // app fabric will also stop all programs
       appFabricServer.stopAndWait();
@@ -245,8 +272,14 @@ public class StandaloneMain {
         externalAuthenticationServer.stopAndWait();
       }
       logAppenderInitializer.close();
-      metadataService.stopAndWait();
 
+      if (kafkaClient != null) {
+        kafkaClient.stopAndWait();
+      }
+
+      if (zkClient != null) {
+        zkClient.startAndWait();
+      }
     } catch (Throwable e) {
       LOG.error("Exception during shutdown", e);
       // We can't do much but exit. Because there was an exception, some non-daemon threads may still be running.
@@ -364,6 +397,8 @@ public class StandaloneMain {
     return ImmutableList.of(
       new ConfigModule(cConf, hConf),
       new IOModule(),
+      new ZKClientModule(),
+      new KafkaClientModule(),
       new MetricsHandlerModule(),
       new DiscoveryRuntimeModule().getStandaloneModules(),
       new LocationRuntimeModule().getStandaloneModules(),

@@ -54,6 +54,7 @@ angular.module(PKG.name + '.commons')
     var canvasDragged = false;
 
     vm.isDisabled = $scope.isDisabled;
+    vm.disableNodeClick = $scope.disableNodeClick;
 
     var popovers = [];
     var nodePopovers = {};
@@ -93,7 +94,7 @@ angular.module(PKG.name + '.commons')
 
      We need to be able to separate render of graph from data and incremental user interactions.
      - Programmatically it should be possible to provide data and should be able to ask dag to render it at any time post-rendering of the directive
-     - User should be able interact with the dag and add incremental changes.
+     - User should be able interact with the dag and  incremental changes.
     */
     function init() {
       $scope.nodes = DAGPlusPlusNodesStore.getNodes();
@@ -109,11 +110,19 @@ angular.module(PKG.name + '.commons')
           if (!sourceNode.length || !targetNode.length) {
             return;
           }
-          var sourceId = sourceNode[0].type === 'transform' ? 'Left' + conn.from : conn.from;
-          var targetId = targetNode[0].type === 'transform' ? 'Right' + conn.to : conn.to;
+          let batch = GLOBALS.etlBatch, realtime = GLOBALS.etlRealtime, datapipeline = GLOBALS.etlDataPipeline;
+          let pluginTypes = GLOBALS.pluginTypes;
+          let notATransformTypeNode = [
+            pluginTypes[batch].source, pluginTypes[batch].sink,
+            pluginTypes[realtime].source,  pluginTypes[realtime].sink,
+            pluginTypes[datapipeline].sparksink
+          ];
+          var sourceId = notATransformTypeNode.indexOf(sourceNode[0].type) === -1 ? 'Left' + conn.from : conn.from;
+          var targetId = notATransformTypeNode.indexOf(targetNode[0].type) === -1 ? 'Right' + conn.to : conn.to;
           var connObj = {
             uuids: [sourceId, targetId]
           };
+
           if (vm.isDisabled) {
             connObj.detachable = false;
           }
@@ -311,6 +320,7 @@ angular.module(PKG.name + '.commons')
         endpoints.push(node.name);
 
         var type = GLOBALS.pluginConvert[node.type];
+
         switch(type) {
           case 'source':
             vm.instance.addEndpoint(node.name, sourceSettings, {uuid: node.name});
@@ -318,7 +328,7 @@ angular.module(PKG.name + '.commons')
           case 'sink':
             vm.instance.addEndpoint(node.name, sinkSettings, {uuid: node.name});
             break;
-          case 'transform':
+          default:
             // Need to id each end point so that it can be used later to make connections.
             vm.instance.addEndpoint(node.name, transformSourceSettings, {uuid: 'Left' + node.name});
             vm.instance.addEndpoint(node.name, transformSinkSettings, {uuid: 'Right' + node.name});
@@ -397,20 +407,21 @@ angular.module(PKG.name + '.commons')
 
       // Making canvas draggable
       vm.secondInstance = jsPlumb.getInstance();
-      vm.secondInstance.draggable('diagram-container', {
-        stop: function (e) {
-          e.el.style.left = '0px';
-          e.el.style.top = '0px';
-          transformCanvas(e.pos[1], e.pos[0]);
-          DAGPlusPlusNodesActionsFactory.resetPluginCount();
-          DAGPlusPlusNodesActionsFactory.setCanvasPanning(vm.panning);
-        },
-        start: function () {
-          canvasDragged = true;
-          closeAllPopovers();
-        }
-      });
-
+      if (!vm.disableNodeClick) {
+        vm.secondInstance.draggable('diagram-container', {
+          stop: function (e) {
+            e.el.style.left = '0px';
+            e.el.style.top = '0px';
+            transformCanvas(e.pos[1], e.pos[0]);
+            DAGPlusPlusNodesActionsFactory.resetPluginCount();
+            DAGPlusPlusNodesActionsFactory.setCanvasPanning(vm.panning);
+          },
+          start: function () {
+            canvasDragged = true;
+            closeAllPopovers();
+          }
+        });
+      }
       vm.instance.bind('connection', addConnection);
       vm.instance.bind('connectionDetached', formatConnections);
 

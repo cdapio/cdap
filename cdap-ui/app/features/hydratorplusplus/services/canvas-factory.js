@@ -26,7 +26,7 @@
       returnConfig.template = {
         type: template
       };
-      if (template === GLOBALS.etlBatch) {
+      if (GLOBALS.etlBatchPipelines.indexOf(template) !== -1) {
         returnConfig.template.schedule = {};
         returnConfig.template.schedule.cron = myHelpers.objectQuery(data.config, 'schedule') || '* * * * *';
       } else if (template === GLOBALS.etlRealtime) {
@@ -210,41 +210,25 @@
 
         return properties;
       }
-      if (myHelpers.objectQuery(config, 'source', 'plugin', 'properties') &&
-          Object.keys(config.source.plugin.properties).length > 0) {
-        config.source.plugin.properties = propertiesIterator(config.source.plugin.properties, config.source.plugin._backendProperties);
+
+      if (angular.isArray(config.stages)) {
+        config.stages.forEach( node => {
+          if (myHelpers.objectQuery( node, 'plugin', 'properties', 'length') > 0) {
+            node.plugin.properties = propertiesIterator(node.plugin.properties, node.plugin._backendProperties);
+          }
+        });
       }
-
-      config.sinks.forEach(function(sink) {
-        if (myHelpers.objectQuery(sink, 'plugin', 'properties') &&
-            Object.keys(sink.plugin.properties).length > 0) {
-          sink.plugin.properties = propertiesIterator(sink.plugin.properties, sink.plugin._backendProperties);
-        }
-      });
-
-      config.transforms.forEach(function(transform) {
-        if (myHelpers.objectQuery(transform, 'plugin', 'properties') &&
-            Object.keys(transform.plugin.properties).length > 0) {
-          transform.plugin.properties = propertiesIterator(transform.plugin.properties, transform.plugin._backendProperties);
-        }
-      });
     }
 
     function pruneProperties(config) {
 
       pruneNonBackEndProperties(config);
 
-      if (config.source.plugin && (config.source.name || config.source.plugin._backendProperties)) {
-        delete config.source.plugin._backendProperties;
+      if(angular.isArray(config.stages)) {
+        config.stages.forEach( node => {
+          delete node.plugin._backendProperties;
+        });
       }
-
-      config.sinks.forEach(function(sink) {
-        delete sink.plugin._backendProperties;
-      });
-
-      config.transforms.forEach(function(t) {
-        delete t.plugin._backendProperties;
-      });
       return config;
     }
 

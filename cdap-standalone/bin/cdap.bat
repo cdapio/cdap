@@ -2,7 +2,7 @@
 
 REM #################################################################################
 REM ##
-REM ## Copyright © 2014-2015 Cask Data, Inc.
+REM ## Copyright (c) 2014-2015 Cask Data, Inc.
 REM ##
 REM ## Licensed under the Apache License, Version 2.0 (the "License"); you may not
 REM ## use this file except in compliance with the License. You may obtain a copy of
@@ -22,6 +22,7 @@ SET ORIGPATH=%cd%
 SET CDAP_HOME=%~dp0
 SET CDAP_HOME=%CDAP_HOME:~0,-5%
 SET JAVACMD=%JAVA_HOME%\bin\java.exe
+SET DEFAULT_JVM_OPTS=-Xmx2048m -XX:MaxPermSize=128m
 
 REM %CDAP_HOME%
 SET CLASSPATH=%CDAP_HOME%\lib\*;%CDAP_HOME%\conf\
@@ -188,7 +189,7 @@ IF "%2" == "--enable-debug" (
   set DEBUG_OPTIONS="-agentlib:jdwp=transport=dt_socket,address=localhost:!port!,server=y,suspend=n"
 )
 
-start /B %JAVACMD% !DEBUG_OPTIONS! -Dhadoop.security.group.mapping=org.apache.hadoop.security.JniBasedUnixGroupsMappingWithFallback -Dhadoop.home.dir=%CDAP_HOME%\libexec -classpath %CLASSPATH% co.cask.cdap.StandaloneMain >> %CDAP_HOME%\logs\cdap-process.log 2>&1 < NUL
+start /B %JAVACMD% %DEFAULT_JVM_OPTS% !DEBUG_OPTIONS! -Dhadoop.security.group.mapping=org.apache.hadoop.security.JniBasedUnixGroupsMappingWithFallback -Dhadoop.home.dir=%CDAP_HOME%\libexec -classpath %CLASSPATH% co.cask.cdap.StandaloneMain >> %CDAP_HOME%\logs\cdap-process.log 2>&1 < NUL
 echo Starting Standalone CDAP...
 
 for /F "TOKENS=1,2,*" %%a in ('tasklist /FI "IMAGENAME eq java.exe"') DO SET MyPID=%%b

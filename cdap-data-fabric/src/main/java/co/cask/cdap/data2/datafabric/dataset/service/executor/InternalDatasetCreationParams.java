@@ -26,10 +26,12 @@ final class InternalDatasetCreationParams {
 
   private final DatasetTypeMeta typeMeta;
   private final DatasetProperties instanceProps;
+  private final Boolean existing;
 
-  public InternalDatasetCreationParams(DatasetTypeMeta typeMeta, DatasetProperties instanceProps) {
+  public InternalDatasetCreationParams(DatasetTypeMeta typeMeta, DatasetProperties instanceProps, boolean existing) {
     this.typeMeta = typeMeta;
     this.instanceProps = instanceProps;
+    this.existing = existing;
   }
 
   public DatasetTypeMeta getTypeMeta() {
@@ -38,5 +40,9 @@ final class InternalDatasetCreationParams {
 
   public DatasetProperties getProperties() {
     return instanceProps;
+  }
+
+  public Boolean isExisting() {
+    return existing;
   }
 }

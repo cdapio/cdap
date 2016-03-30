@@ -24,6 +24,10 @@ import co.cask.cdap.api.spark.AbstractSpark;
 import co.cask.cdap.api.spark.JavaSparkProgram;
 import co.cask.cdap.api.spark.SparkContext;
 import co.cask.cdap.api.workflow.AbstractWorkflow;
+import co.cask.cdap.api.workflow.AbstractWorkflowAction;
+import co.cask.cdap.api.workflow.NodeStatus;
+import co.cask.cdap.api.workflow.WorkflowContext;
+import co.cask.cdap.api.workflow.WorkflowNodeState;
 import co.cask.cdap.internal.app.runtime.batch.WordCount;
 import com.google.common.base.Preconditions;
 import org.apache.hadoop.mapreduce.Job;
@@ -38,9 +42,18 @@ import java.util.Map;
  *
  */
 public class WorkflowAppWithScopedParameters extends AbstractApplication {
+
+  public static final String APP_NAME = "WorkflowAppWithScopedParameters";
+  public static final String ONE_MR = "OneMR";
+  public static final String ANOTHER_MR = "AnotherMR";
+  public static final String ONE_SPARK = "OneSpark";
+  public static final String ANOTHER_SPARK = "AnotherSpark";
+  public static final String ONE_WORKFLOW = "OneWorkflow";
+  public static final String ONE_ACTION = "OneAction";
+
   @Override
   public void configure() {
-    setName("WorkflowAppWithScopedParameters");
+    setName(APP_NAME);
     setDescription("WorkflowApp which demonstrates the scoped runtime arguments.");
     addMapReduce(new OneMR());
     addMapReduce(new AnotherMR());
@@ -137,17 +150,71 @@ public class WorkflowAppWithScopedParameters extends AbstractApplication {
     }
   }
 
-
   /**
    *
    */
   public static class OneWorkflow extends AbstractWorkflow {
+
+    @Override
+    public void initialize(WorkflowContext context) throws Exception {
+      super.initialize(context);
+      Preconditions.checkArgument(0 == context.getNodeStates().size());
+    }
+
     @Override
     public void configure() {
-      addMapReduce("OneMR");
-      addSpark("OneSpark");
-      addMapReduce("AnotherMR");
-      addSpark("AnotherSpark");
+      addMapReduce(ONE_MR);
+      addSpark(ONE_SPARK);
+      addAction(new OneAction());
+      addMapReduce(ANOTHER_MR);
+      addSpark(ANOTHER_SPARK);
+    }
+
+    @Override
+    public void destroy() {
+      Map<String, WorkflowNodeState> nodeStates = getContext().getNodeStates();
+      Preconditions.checkArgument(5 == nodeStates.size());
+      WorkflowNodeState nodeState = nodeStates.get(ONE_MR);
+      Preconditions.checkArgument(ONE_MR.equals(nodeState.getNodeId()));
+      Preconditions.checkArgument(nodeState.getRunId() != null);
+      Preconditions.checkArgument(NodeStatus.COMPLETED == nodeState.getNodeStatus());
+
+      nodeState = nodeStates.get(ONE_SPARK);
+      Preconditions.checkArgument(ONE_SPARK.equals(nodeState.getNodeId()));
+      Preconditions.checkArgument(nodeState.getRunId() != null);
+      Preconditions.checkArgument(NodeStatus.COMPLETED == nodeState.getNodeStatus());
+
+      nodeState = nodeStates.get(ANOTHER_MR);
+      Preconditions.checkArgument(ANOTHER_MR.equals(nodeState.getNodeId()));
+      Preconditions.checkArgument(nodeState.getRunId() != null);
+      Preconditions.checkArgument(NodeStatus.COMPLETED == nodeState.getNodeStatus());
+
+      nodeState = nodeStates.get(ANOTHER_SPARK);
+      Preconditions.checkArgument(ANOTHER_SPARK.equals(nodeState.getNodeId()));
+      Preconditions.checkArgument(nodeState.getRunId() != null);
+      Preconditions.checkArgument(NodeStatus.COMPLETED == nodeState.getNodeStatus());
+
+      nodeState = nodeStates.get(ONE_ACTION);
+      Preconditions.checkArgument(ONE_ACTION.equals(nodeState.getNodeId()));
+      Preconditions.checkArgument(NodeStatus.COMPLETED == nodeState.getNodeStatus());
+    }
+  }
+
+  public static class OneAction extends AbstractWorkflowAction {
+
+    @Override
+    public void run() {
+      Map<String, WorkflowNodeState> nodeStates = getContext().getNodeStates();
+      Preconditions.checkArgument(2 == nodeStates.size());
+      WorkflowNodeState nodeState = nodeStates.get(ONE_MR);
+      Preconditions.checkArgument(ONE_MR.equals(nodeState.getNodeId()));
+      Preconditions.checkArgument(nodeState.getRunId() != null);
+      Preconditions.checkArgument(NodeStatus.COMPLETED == nodeState.getNodeStatus());
+
+      nodeState = nodeStates.get(ONE_SPARK);
+      Preconditions.checkArgument(ONE_SPARK.equals(nodeState.getNodeId()));
+      Preconditions.checkArgument(nodeState.getRunId() != null);
+      Preconditions.checkArgument(NodeStatus.COMPLETED == nodeState.getNodeStatus());
     }
   }
 }

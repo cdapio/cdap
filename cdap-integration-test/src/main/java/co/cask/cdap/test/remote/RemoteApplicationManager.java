@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,11 +20,14 @@ import co.cask.cdap.client.ApplicationClient;
 import co.cask.cdap.client.ProgramClient;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.util.RESTClient;
+import co.cask.cdap.proto.ApplicationDetail;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
+import co.cask.cdap.proto.artifact.AppRequest;
+import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.test.AbstractApplicationManager;
 import co.cask.cdap.test.DefaultMapReduceManager;
 import co.cask.cdap.test.DefaultSparkManager;
@@ -41,7 +44,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- *
+ * {@link AbstractApplicationManager} for use in integration tests.
  */
 public class RemoteApplicationManager extends AbstractApplicationManager {
   private final ClientConfig clientConfig;
@@ -147,5 +150,25 @@ public class RemoteApplicationManager extends AbstractApplicationManager {
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
+  }
+
+  @Override
+  public void update(AppRequest appRequest) throws Exception {
+    applicationClient.update(application, appRequest);
+  }
+
+  @Override
+  public void delete() throws Exception {
+    applicationClient.delete(application);
+  }
+
+  @Override
+  public ApplicationDetail getInfo() throws Exception {
+    return applicationClient.get(application);
+  }
+
+  @Override
+  public void setRuntimeArgs(ProgramId programId, Map<String, String> args) throws Exception {
+    programClient.setRuntimeArgs(programId.toId(), args);
   }
 }

@@ -15,13 +15,12 @@
  */
 
 class HydratorPlusPlusNodeConfigCtrl {
-  constructor(HydratorPlusPlusNodeConfigStore, $scope, $timeout, $state, DetailNonRunsStore, HydratorPlusPlusPluginConfigFactory, EventPipe, GLOBALS, HydratorPlusPlusConfigActions, myHelpers, NonStorePipelineErrorFactory) {
+  constructor(HydratorPlusPlusNodeConfigStore, $scope, $timeout, $state, HydratorPlusPlusPluginConfigFactory, EventPipe, GLOBALS, HydratorPlusPlusConfigActions, myHelpers, NonStorePipelineErrorFactory) {
 
     this.$scope = $scope;
     this.$timeout = $timeout;
     this.$state = $state;
     this.EventPipe = EventPipe;
-    this.DetailNonRunsStore = DetailNonRunsStore;
     this.HydratorPlusPlusPluginConfigFactory = HydratorPlusPlusPluginConfigFactory;
     this.GLOBALS = GLOBALS;
     this.myHelpers = myHelpers;
@@ -252,7 +251,7 @@ class HydratorPlusPlusNodeConfigCtrl {
   }
 }
 
-HydratorPlusPlusNodeConfigCtrl.$inject = ['HydratorPlusPlusNodeConfigStore', '$scope', '$timeout', '$state', 'DetailNonRunsStore', 'HydratorPlusPlusPluginConfigFactory', 'EventPipe', 'GLOBALS', 'HydratorPlusPlusConfigActions', 'myHelpers', 'NonStorePipelineErrorFactory'];
+HydratorPlusPlusNodeConfigCtrl.$inject = ['HydratorPlusPlusNodeConfigStore', '$scope', '$timeout', '$state', 'HydratorPlusPlusPluginConfigFactory', 'EventPipe', 'GLOBALS', 'HydratorPlusPlusConfigActions', 'myHelpers', 'NonStorePipelineErrorFactory'];
 
 angular.module(PKG.name + '.feature.hydratorplusplus')
   .controller('HydratorPlusPlusNodeConfigCtrl', HydratorPlusPlusNodeConfigCtrl);

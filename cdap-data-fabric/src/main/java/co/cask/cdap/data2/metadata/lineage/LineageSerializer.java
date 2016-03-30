@@ -17,6 +17,7 @@
 package co.cask.cdap.data2.metadata.lineage;
 
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.metadata.lineage.CollapseType;
 import co.cask.cdap.proto.metadata.lineage.DataRecord;
 import co.cask.cdap.proto.metadata.lineage.LineageRecord;
 import co.cask.cdap.proto.metadata.lineage.ProgramRecord;
@@ -32,34 +33,51 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import javax.annotation.Nullable;
 
 /**
  * Serializes {@link Lineage} into a {@link LineageRecord}.
  */
+// TODO: Clean up this class (make data/program keys) when new Id classes are used CDAP-4291
 public final class LineageSerializer {
   private static final Function<Id.NamespacedId, String> ID_STRING_FUNCTION =
     new Function<Id.NamespacedId, String>() {
-      @Nullable
       @Override
       public String apply(Id.NamespacedId input) {
         return input.getId();
       }
     };
 
+  private static final Function<RunId, String> RUN_ID_STRING_FUNCTION =
+    new Function<RunId, String>() {
+      @Override
+      public String apply(RunId input) {
+        return input.getId();
+      }
+    };
+
+  private static final Function<AccessType, String> ACCESS_TYPE_STRING_FUNCTION =
+    new Function<AccessType, String>() {
+      @Override
+      public String apply(AccessType input) {
+        return input.toString().toLowerCase();
+      }
+    };
+
   private LineageSerializer() {}
 
-  public static LineageRecord toLineageRecord(long start, long end, Lineage lineage) {
+  public static LineageRecord toLineageRecord(long start, long end, Lineage lineage, Set<CollapseType> collapseTypes) {
     Set<RelationRecord> relationBuilder = new HashSet<>();
     Map<String, ProgramRecord> programBuilder = new HashMap<>();
     Map<String, DataRecord> dataBuilder = new HashMap<>();
 
-    for (Relation relation : lineage.getRelations()) {
+    Set<CollapsedRelation> collapsedRelations =
+      LineageCollapser.collapseRelations(lineage.getRelations(), collapseTypes);
+    for (CollapsedRelation relation : collapsedRelations) {
       String dataKey = makeDataKey(relation.getData());
       String programKey = makeProgramKey(relation.getProgram());
       RelationRecord relationRecord = new RelationRecord(dataKey, programKey,
-                                                         relation.getAccess().toString().toLowerCase(),
-                                                         convertRuns(relation.getRun()),
+                                                         convertAccessType(relation.getAccess()),
+                                                         convertRuns(relation.getRuns()),
                                                          convertComponents(relation.getComponents()));
       relationBuilder.add(relationRecord);
       programBuilder.put(programKey, new ProgramRecord(relation.getProgram()));
@@ -68,8 +86,12 @@ public final class LineageSerializer {
     return new LineageRecord(start, end, relationBuilder, programBuilder, dataBuilder);
   }
 
-  private static Set<String> convertRuns(RunId runId) {
-    return ImmutableSet.of(runId.getId());
+  private static Set<String> convertAccessType(Set<AccessType> accessTypes) {
+    return ImmutableSet.copyOf(Iterables.transform(accessTypes, ACCESS_TYPE_STRING_FUNCTION));
+  }
+
+  private static Set<String> convertRuns(Set<RunId> runIds) {
+    return ImmutableSet.copyOf((Iterables.transform(runIds, RUN_ID_STRING_FUNCTION)));
   }
 
   private static Set<String> convertComponents(Set<Id.NamespacedId> components) {

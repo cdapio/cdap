@@ -94,7 +94,7 @@ public class ExistingEntitySystemMetadataWriter {
   }
 
   private void writeSystemMetadataForArtifacts(Id.Namespace namespace) throws IOException {
-    for (ArtifactDetail artifactDetail : artifactStore.getArtifacts(namespace)) {
+    for (ArtifactDetail artifactDetail : artifactStore.getArtifacts(namespace.toEntityId())) {
       ArtifactInfo artifactInfo = new ArtifactInfo(artifactDetail.getDescriptor().getArtifactId(),
                                                    artifactDetail.getMeta().getClasses(),
                                                    artifactDetail.getMeta().getProperties());
@@ -150,7 +150,8 @@ public class ExistingEntitySystemMetadataWriter {
           }
 
           SystemMetadataWriter writer =
-            new DatasetSystemMetadataWriter(metadataStore, dsInstance, dsProperties, dataset, dsType);
+            new DatasetSystemMetadataWriter(metadataStore, dsInstance, dsProperties, dataset, dsType,
+                                            summary.getDescription());
           writer.write();
         } finally {
           if (dataset != null) {

@@ -138,8 +138,8 @@ public class ETLWorker extends AbstractWorker {
 
     PipelineSpecGenerator specGenerator =
       new PipelineSpecGenerator(getConfigurer(),
-                                RealtimeSource.PLUGIN_TYPE,
-                                RealtimeSink.PLUGIN_TYPE,
+                                ImmutableSet.of(RealtimeSource.PLUGIN_TYPE),
+                                ImmutableSet.of(RealtimeSink.PLUGIN_TYPE),
                                 Table.class,
                                 DatasetProperties.builder()
                                   .add(Table.PROPERTY_SCHEMA, ERROR_SCHEMA.toString())
@@ -154,7 +154,8 @@ public class ETLWorker extends AbstractWorker {
     if (sourceCount != 1) {
       throw new IllegalArgumentException("Invalid pipeline. There must only be one source.");
     }
-    PipelinePlanner planner = new PipelinePlanner(SUPPORTED_PLUGIN_TYPES, ImmutableSet.<String>of());
+    PipelinePlanner planner = new PipelinePlanner(SUPPORTED_PLUGIN_TYPES,
+                                                  ImmutableSet.<String>of(), ImmutableSet.<String>of());
     PipelinePlan plan = planner.plan(spec);
     if (plan.getPhases().size() != 1) {
       // should never happen

@@ -160,7 +160,7 @@ body.theme-cdap {
       }
     }
   }
-  &.state-hydrator-detail {
+  &.state-hydratorplusplus-detail {
     div.side-panel.top {
       div.tbl {
         display: table;
@@ -239,6 +239,7 @@ body.theme-cdap {
           font-weight: 500;
           margin-top: 0;
           margin-bottom: 0;
+          line-height: 20px;
         }
         p {
           color: #666;
@@ -322,16 +323,26 @@ body.theme-cdap {
     }
   }
   &.state-hydratorplusplus {
+    &.state-hydratorplusplus-detail {
+      div.side-panel.top {
+        left: 0;
+        max-width: 100vw;
+      }
+    }
     div.side-panel.top {
       background-color: white;
       border-bottom: 1px solid @table-border-color;
       position: fixed;
       top: 50px;
       right: 0;
-      left: 0;
+      left: 290px;
       z-index: 1029;
-      height: 60px;
-      .box-shadow(5px 0 10px rgba(0, 0, 0, 0.5));
+      height: 70px;
+      // .box-shadow(5px 0 10px rgba(0, 0, 0, 0.5));
+      max-width: ~"calc(100% - 290px)";
+      border-left: 0;
+      border-top: 0;
+
       div.pipeline-type {
         color: #397cf1;
         float: left;
@@ -354,11 +365,11 @@ body.theme-cdap {
         border-right: 1px solid transparent;
         border-bottom: 1px solid transparent;
         border-left: 1px solid @table-border-color;
-        height: 60px;
+        height: 70px;
         padding: 0;
         .transition(all 0.2s ease);
         span {
-          line-height: 60px;
+          line-height: 70px;
         }
         &:hover, &:focus {
           background-color: #ebebeb;

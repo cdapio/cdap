@@ -20,11 +20,21 @@
       {{ AuditController.selectedTimeRange.label }} <span class="caret"></span>
     </button>
     <ul uib-dropdown-menu role="menu" aria-labelledby="single-button">
+      <li role="menuitem">
+        <a href="" ng-click="AuditController.isCustom = true">Custom</a>
+      </li>
       <li role="menuitem" ng-repeat="time in AuditController.timeRangeOptions">
         <a ui-sref="tracker.entity.audit({ start: time.start, end: time.end })">{{ time.label }}</a>
       </li>
     </ul>
   </div>
+
+  <my-datetime-range
+    date-range="AuditController.customTimeRange"
+    on-done="AuditController.goCustomDate()"
+    ng-if="AuditController.isCustom">
+  </my-datetime-range>
+
 
   <div class="audit-logs-table-container" ng-if="AuditController.auditLogs.results.length > 0">
     <table class="table table-bordered">
@@ -43,7 +53,10 @@
           <td>{{ log.time | amDateFormat: 'MM/DD/YYYY  h:mm:ss a' }}</td>
           <td>{{ log.payload.accessor.program || log.payload.accessor.service || '-' }}</td>
           <td>{{ log.payload.accessor.type || log.payload.accessor.entity || '-' }}</td>
-          <td>{{ log.type }}</td>
+          <td>
+            <span ng-if="log.type !== 'ACCESS'">{{ log.type }}</span>
+            <span ng-if="log.type === 'ACCESS'">{{ log.payload.accessType }}</span>
+          </td>
           <td>{{ log.user }}</td>
         </tr>
       </tbody>

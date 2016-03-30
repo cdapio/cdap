@@ -115,7 +115,7 @@ public class MapReduceTransformExecutorFactory<T> extends TransformExecutorFacto
   private static class MapperAggregatorTransformation<GROUP_KEY, GROUP_VAL, OUT_KEY extends Writable,
     OUT_VAL extends Writable> implements Transformation<GROUP_VAL, KeyValue<OUT_KEY, OUT_VAL>> {
     private final Aggregator<GROUP_KEY, GROUP_VAL, ?> aggregator;
-    private final StageMetrics stageMetrics;
+    private final DefaultEmitter<GROUP_KEY> groupKeyEmitter;
     private final WritableConversion<GROUP_KEY, OUT_KEY> keyConversion;
     private final WritableConversion<GROUP_VAL, OUT_VAL> valConversion;
 
@@ -124,7 +124,7 @@ public class MapReduceTransformExecutorFactory<T> extends TransformExecutorFacto
                                           String groupKeyClassName,
                                           String groupValClassName) {
       this.aggregator = aggregator;
-      this.stageMetrics = stageMetrics;
+      this.groupKeyEmitter = new DefaultEmitter<>(stageMetrics);
       WritableConversion<GROUP_KEY, OUT_KEY> keyConversion = WritableConversions.getConversion(groupKeyClassName);
       WritableConversion<GROUP_VAL, OUT_VAL> valConversion = WritableConversions.getConversion(groupValClassName);
       // if the conversion is null, it means the user is using a Writable already
@@ -134,7 +134,7 @@ public class MapReduceTransformExecutorFactory<T> extends TransformExecutorFacto
 
     @Override
     public void transform(GROUP_VAL input, Emitter<KeyValue<OUT_KEY, OUT_VAL>> emitter) throws Exception {
-      DefaultEmitter<GROUP_KEY> groupKeyEmitter = new DefaultEmitter<>(stageMetrics);
+      groupKeyEmitter.reset();
       aggregator.groupBy(input, groupKeyEmitter);
       for (GROUP_KEY groupKey : groupKeyEmitter.getEntries()) {
         emitter.emit(new KeyValue<>(keyConversion.toWritable(groupKey), valConversion.toWritable(input)));

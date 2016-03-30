@@ -17,7 +17,7 @@
 package co.cask.cdap.api.spark
 
 import co.cask.cdap.api.data.batch.Split
-import co.cask.cdap.api.{RuntimeContext, ServiceDiscoverer}
+import co.cask.cdap.api.{RuntimeContext, ServiceDiscoverer, TaskLocalizationContext, Transactional}
 import co.cask.cdap.api.data.DatasetContext
 import co.cask.cdap.api.flow.flowlet.StreamEvent
 import co.cask.cdap.api.metrics.Metrics
@@ -31,7 +31,7 @@ import scala.reflect.ClassTag
 /**
   * Spark program execution context. User Spark program can interact with CDAP through this context.
   */
-trait SparkExecutionContext extends RuntimeContext with DatasetContext {
+trait SparkExecutionContext extends RuntimeContext with Transactional {
 
   /**
     * @return The specification used to configure this Spark job instance.
@@ -81,6 +81,12 @@ trait SparkExecutionContext extends RuntimeContext with DatasetContext {
   def getWorkflowToken: Option[WorkflowToken]
 
   /**
+    * Returns the [[co.cask.cdap.api.TaskLocalizationContext]] that gives access to files that were localized
+    * by [[co.cask.cdap.api.spark.Spark]] {@code beforeSubmit} method.
+    */
+  def getLocalizationContext: TaskLocalizationContext
+
+  /**
     * Creates a [[org.apache.spark.rdd.RDD]] from the given [[co.cask.cdap.api.dataset.Dataset]].
     * Using the implicit object [[co.cask.cdap.api.spark.SparkMain.SparkProgramContextFunctions]] is preferred.
     *
@@ -125,5 +131,6 @@ trait SparkExecutionContext extends RuntimeContext with DatasetContext {
     * @param arguments arguments for the Dataset
     * @throws co.cask.cdap.api.data.DatasetInstantiationException if the Dataset doesn't exist
     */
-  def saveAsDataset[T: ClassTag](rdd: RDD[T], datasetName: String, arguments: Map[String, String]): Unit
+  def saveAsDataset[K: ClassTag, V: ClassTag](rdd: RDD[(K, V)],
+                                              datasetName: String, arguments: Map[String, String]): Unit
 }

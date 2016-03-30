@@ -53,8 +53,8 @@ you should not start it manually until after entering the first customers' purch
 
 Let's look at some of these components, and then run the application and see the results.
 
-The Purchase Application
-------------------------
+The *Purchase* Application
+--------------------------
 As in the other `examples <index.html>`__, the components
 of the application are tied together by the class ``PurchaseApp``:
 
@@ -62,8 +62,8 @@ of the application are tied together by the class ``PurchaseApp``:
     :language: java
     :lines: 31-
 
-Storing Purchases with the ``Purchase`` ObjectStore Data Storage
-----------------------------------------------------------------
+Storing Purchases with the *Purchase* ObjectStore Data Storage
+--------------------------------------------------------------
 The raw purchase data is stored in an ``ObjectMappedTable`` dataset, *purchases*,
 with this method defined in ``PurchaseStore.java``:
 
@@ -90,17 +90,17 @@ The memory requirements of the flowlet *PurchaseStore* are set in its ``configur
    :end-before:   /**
    :dedent: 2
 
-``PurchaseHistoryBuilder`` MapReduce
-------------------------------------
+*PurchaseHistoryBuilder* MapReduce
+----------------------------------
 This MapReduce program demonstrates the setting of the YARN container resources, both as
 default values used in configuration and as runtime arguments:
 
 .. literalinclude:: /../../../cdap-examples/Purchase/src/main/java/co/cask/cdap/examples/purchase/PurchaseHistoryBuilder.java
    :language: java
-   :lines: 47-78
+   :lines: 47-77
 
-``PurchaseHistoryService`` Service
-----------------------------------
+*PurchaseHistoryService* Service
+--------------------------------
 This service has a ``history/{customer}`` endpoint to obtain the purchase history of a given customer. It also demonstrates
 the use of ``Resources`` to configure the memory requirements of the service:
 
@@ -109,8 +109,8 @@ the use of ``Resources`` to configure the memory requirements of the service:
     :lines: 39-46
     :dedent: 2
 
-``UserProfileService`` Service
-------------------------------
+*UserProfileService* Service
+----------------------------
 .. highlight:: console
 
 This service has two endpoints:

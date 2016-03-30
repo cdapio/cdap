@@ -44,10 +44,11 @@ public interface DatasetOpExecutor extends Service {
    * @param datasetInstanceId {@link Id.DatasetInstance} of the dataset instance.
    * @param typeMeta Data set type meta
    * @param props Data set instance properties
+   * @param existing true, if dataset already exists (in case of update)
    * @throws IOException
    */
-  DatasetSpecification create(Id.DatasetInstance datasetInstanceId, DatasetTypeMeta typeMeta, DatasetProperties props)
-    throws Exception;
+  DatasetSpecification create(Id.DatasetInstance datasetInstanceId, DatasetTypeMeta typeMeta, DatasetProperties props,
+                              boolean existing) throws Exception;
 
   /**
    * Drops dataset.

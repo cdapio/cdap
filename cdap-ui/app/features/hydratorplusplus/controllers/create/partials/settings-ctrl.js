@@ -17,15 +17,15 @@
 class HydratorPlusPlusSettingsCtrl {
   constructor(GLOBALS, HydratorPlusPlusConfigStore, HydratorPlusPlusConfigActions, $scope) {
     this.GLOBALS = GLOBALS;
-
+    this.HydratorPlusPlusConfigActions = HydratorPlusPlusConfigActions;
     this.templateType = HydratorPlusPlusConfigStore.getArtifact().name;
 
     // If ETL Batch
-    if (this.templateType === GLOBALS.etlBatch) {
+    if (GLOBALS.etlBatchPipelines.indexOf(this.templateType) !== -1) {
       // Initialiting ETL Batch Schedule
       this.initialCron = HydratorPlusPlusConfigStore.getSchedule();
       this.cron = this.initialCron;
-
+      this.engine = 'mapreduce';
       this.isBasic = this.checkCron(this.initialCron);
 
 
@@ -53,6 +53,7 @@ class HydratorPlusPlusSettingsCtrl {
       }, setInstance);
     }
 
+    this.activeTab = 0;
   }
 
   checkCron(cron) {
@@ -66,8 +67,12 @@ class HydratorPlusPlusSettingsCtrl {
     return true;
   }
 
+  onEngineChange() {
+    this.HydratorPlusPlusConfigActions.setEngine(this.engine);
+  }
   changeScheduler (type) {
     if (type === 'BASIC') {
+      this.activeTab = 0;
       this.initialCron = this.cron;
       var check = true;
       if (!this.checkCron(this.initialCron)) {
@@ -77,6 +82,7 @@ class HydratorPlusPlusSettingsCtrl {
         this.isBasic = true;
       }
     } else {
+      this.activeTab = 1;
       this.isBasic = false;
     }
   }

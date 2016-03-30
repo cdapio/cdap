@@ -32,10 +32,10 @@ import co.cask.cdap.api.plugin.Plugin;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.metrics.MapReduceMetrics;
 import co.cask.cdap.app.metrics.ProgramUserMetrics;
+import co.cask.cdap.app.metrics.WorkflowMetrics;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
 import co.cask.cdap.internal.app.runtime.AbstractContext;
@@ -45,8 +45,6 @@ import co.cask.cdap.internal.app.runtime.batch.dataset.ForwardingSplitReader;
 import co.cask.cdap.internal.app.runtime.batch.dataset.MultipleOutputs;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
-import co.cask.cdap.logging.context.MapReduceLoggingContext;
-import co.cask.cdap.proto.Id;
 import co.cask.tephra.Transaction;
 import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionSystemClient;
@@ -79,9 +77,9 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
   implements MapReduceTaskContext<KEYOUT, VALUEOUT> {
 
   private final MapReduceSpecification spec;
-  private final LoggingContext loggingContext;
   private final WorkflowProgramInfo workflowProgramInfo;
-  private final Metrics userMetrics;
+  private final MetricsContext programMetricsContext;
+  private final MetricsContext workflowMetricsContext;
   private final Map<String, Plugin> plugins;
   private final Transaction transaction;
   private final TaskLocalizationContext taskLocalizationContext;
@@ -113,23 +111,13 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
           dsFramework, txClient, discoveryServiceClient, false, pluginInstantiator);
     this.workflowProgramInfo = workflowProgramInfo;
     this.transaction = transaction;
-
-    if (metricsCollectionService != null) {
-      this.userMetrics = new ProgramUserMetrics(getProgramMetrics());
-    } else {
-      this.userMetrics = null;
-    }
-    this.loggingContext = createLoggingContext(program.getId(), runId);
+    this.programMetricsContext = getProgramMetrics();
+    this.workflowMetricsContext = getWorkflowMetricsContext(workflowProgramInfo, program, metricsCollectionService);
     this.spec = spec;
     this.plugins = Maps.newHashMap(program.getApplicationSpecification().getPlugins());
     this.taskLocalizationContext = new DefaultTaskLocalizationContext(localizedResources);
 
     initializeTransactionAwares();
-  }
-
-  private LoggingContext createLoggingContext(Id.Program programId, RunId runId) {
-    return new MapReduceLoggingContext(programId.getNamespaceId(), programId.getApplicationId(),
-                                       programId.getId(), runId.getId());
   }
 
   @Override
@@ -226,13 +214,26 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
     return service.getContext(tags);
   }
 
-  @Override
-  public Metrics getMetrics() {
-    return userMetrics;
+  @Nullable
+  private MetricsContext getWorkflowMetricsContext(@Nullable WorkflowProgramInfo workflowProgramInfo, Program program,
+                                                   MetricsCollectionService metricsCollectionService) {
+    if (workflowProgramInfo == null) {
+      return null;
+    }
+    Map<String, String> tags = Maps.newHashMap();
+    tags.put(Constants.Metrics.Tag.NAMESPACE, program.getNamespaceId());
+    tags.put(Constants.Metrics.Tag.APP, program.getApplicationId());
+    tags.put(Constants.Metrics.Tag.WORKFLOW, workflowProgramInfo.getName());
+    tags.put(Constants.Metrics.Tag.RUN_ID, workflowProgramInfo.getRunId().getId());
+    tags.put(Constants.Metrics.Tag.NODE, workflowProgramInfo.getNodeId());
+    return metricsCollectionService.getContext(tags);
   }
 
-  public LoggingContext getLoggingContext() {
-    return loggingContext;
+  @Override
+  public Metrics getMetrics() {
+    return workflowMetricsContext == null ?
+      new ProgramUserMetrics(programMetricsContext) :
+      new WorkflowMetrics(programMetricsContext, workflowMetricsContext);
   }
 
   //---- following are methods to manage transaction lifecycle for the datasets. This needs to

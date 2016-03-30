@@ -60,10 +60,10 @@ public class WorkflowApp extends AbstractApplication {
    *
    */
   public static class FunWorkflow extends AbstractWorkflow {
-
+    public static final String NAME = "FunWorkflow";
     @Override
     public void configure() {
-      setName("FunWorkflow");
+      setName(NAME);
       setDescription("FunWorkflow description");
       addMapReduce("ClassicWordCount");
       addAction(new CustomAction("verify"));
@@ -75,10 +75,10 @@ public class WorkflowApp extends AbstractApplication {
    *
    */
   public static final class WordCountMapReduce extends AbstractMapReduce {
-
+    public static final String NAME = "ClassicWordCount";
     @Override
     public void configure() {
-      setName("ClassicWordCount");
+      setName(NAME);
       setDescription("WordCount job from Hadoop examples");
     }
 
@@ -97,9 +97,10 @@ public class WorkflowApp extends AbstractApplication {
   }
 
   public static class SparkWorkflowTestApp extends AbstractSpark {
+    public static final String NAME = "SparkWorkflowTest";
     @Override
     public void configure() {
-      setName("SparkWorkflowTest");
+      setName(NAME);
       setDescription("Test Spark with Workflow");
       setMainClass(SparkWorkflowTestProgram.class);
     }

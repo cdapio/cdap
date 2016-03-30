@@ -32,30 +32,30 @@ import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.ApplicationNotFoundException;
+import co.cask.cdap.common.ConflictException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.ProgramNotFoundException;
 import co.cask.cdap.common.app.RunIds;
-import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerException;
 import co.cask.cdap.internal.app.services.ProgramLifecycleService;
-import co.cask.cdap.internal.app.services.PropertiesResolver;
 import co.cask.cdap.internal.dataset.DatasetCreationSpec;
 import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.ScheduledRuntime;
+import co.cask.cdap.proto.WorkflowNodeStateDetail;
 import co.cask.cdap.proto.WorkflowTokenDetail;
 import co.cask.cdap.proto.WorkflowTokenNodeDetail;
 import co.cask.cdap.proto.codec.ScheduleSpecificationCodec;
 import co.cask.cdap.proto.codec.WorkflowTokenDetailCodec;
 import co.cask.cdap.proto.codec.WorkflowTokenNodeDetailCodec;
 import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.proto.id.Ids;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.http.HttpResponder;
@@ -76,7 +76,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -98,6 +97,8 @@ import javax.ws.rs.QueryParam;
 @Path(Constants.Gateway.API_VERSION_3 + "/namespaces/{namespace-id}")
 public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(WorkflowHttpHandler.class);
+  private static final Type STRING_TO_NODESTATEDETAIL_MAP_TYPE
+    = new TypeToken<Map<String, WorkflowNodeStateDetail>>() { }.getType();
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(ScheduleSpecification.class, new ScheduleSpecificationCodec())
     .registerTypeAdapter(WorkflowTokenDetail.class, new WorkflowTokenDetailCodec())
@@ -108,25 +109,22 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
   private final DatasetFramework datasetFramework;
 
   @Inject
-  public WorkflowHttpHandler(Store store, WorkflowClient workflowClient,
-                             CConfiguration configuration, ProgramRuntimeService runtimeService,
-                             QueueAdmin queueAdmin, Scheduler scheduler, PreferencesStore preferencesStore,
-                             NamespacedLocationFactory namespacedLocationFactory, MRJobInfoFetcher mrJobInfoFetcher,
-                             ProgramLifecycleService lifecycleService, PropertiesResolver resolver,
-                             MetricStore metricStore, DatasetFramework datasetFramework) {
-    super(store, configuration, runtimeService, lifecycleService, queueAdmin, scheduler,
-          preferencesStore, namespacedLocationFactory, mrJobInfoFetcher, resolver, metricStore);
+  WorkflowHttpHandler(Store store, WorkflowClient workflowClient, ProgramRuntimeService runtimeService,
+                      QueueAdmin queueAdmin, Scheduler scheduler, PreferencesStore preferencesStore,
+                      MRJobInfoFetcher mrJobInfoFetcher, ProgramLifecycleService lifecycleService,
+                      MetricStore metricStore, DatasetFramework datasetFramework) {
+    super(store, runtimeService, lifecycleService, queueAdmin, scheduler, preferencesStore, mrJobInfoFetcher,
+          metricStore);
     this.workflowClient = workflowClient;
     this.datasetFramework = datasetFramework;
   }
 
   @POST
   @Path("/apps/{app-id}/workflows/{workflow-name}/runs/{run-id}/suspend")
-  public void suspendWorkflowRun(HttpRequest request, final HttpResponder responder,
+  public void suspendWorkflowRun(HttpRequest request, HttpResponder responder,
                                  @PathParam("namespace-id") String namespaceId, @PathParam("app-id") String appId,
-                                 @PathParam("workflow-name") String workflowName, @PathParam("run-id") String runId)
-    throws NotFoundException, ExecutionException, InterruptedException {
-
+                                 @PathParam("workflow-name") String workflowName,
+                                 @PathParam("run-id") String runId) throws Exception {
     Id.Program id = Id.Program.from(namespaceId, appId, ProgramType.WORKFLOW, workflowName);
     ProgramRuntimeService.RuntimeInfo runtimeInfo = runtimeService.list(id).get(RunIds.fromString(runId));
     if (runtimeInfo == null) {
@@ -134,9 +132,7 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
     }
     ProgramController controller = runtimeInfo.getController();
     if (controller.getState() == ProgramController.State.SUSPENDED) {
-      responder.sendString(AppFabricServiceStatus.PROGRAM_ALREADY_SUSPENDED.getCode(),
-                           AppFabricServiceStatus.PROGRAM_ALREADY_SUSPENDED.getMessage());
-      return;
+      throw new ConflictException("Program run already suspended");
     }
     controller.suspend().get();
     responder.sendString(HttpResponseStatus.OK, "Program run suspended.");
@@ -144,10 +140,10 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
 
   @POST
   @Path("/apps/{app-id}/workflows/{workflow-name}/runs/{run-id}/resume")
-  public void resumeWorkflowRun(HttpRequest request, final HttpResponder responder,
+  public void resumeWorkflowRun(HttpRequest request, HttpResponder responder,
                                 @PathParam("namespace-id") String namespaceId, @PathParam("app-id") String appId,
-                                @PathParam("workflow-name") String workflowName, @PathParam("run-id") String runId)
-          throws NotFoundException, ExecutionException, InterruptedException {
+                                @PathParam("workflow-name") String workflowName,
+                                @PathParam("run-id") String runId) throws Exception {
 
     Id.Program id = Id.Program.from(namespaceId, appId, ProgramType.WORKFLOW, workflowName);
     ProgramRuntimeService.RuntimeInfo runtimeInfo = runtimeService.list(id).get(RunIds.fromString(runId));
@@ -156,9 +152,7 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
     }
     ProgramController controller = runtimeInfo.getController();
     if (controller.getState() == ProgramController.State.ALIVE) {
-      responder.sendString(AppFabricServiceStatus.PROGRAM_ALREADY_RUNNING.getCode(),
-                           AppFabricServiceStatus.PROGRAM_ALREADY_RUNNING.getMessage());
-      return;
+      throw new ConflictException("Program is already running");
     }
     controller.resume().get();
     responder.sendString(HttpResponseStatus.OK, "Program run resumed.");
@@ -342,6 +336,41 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
       throw new NotFoundException(new Id.Run(workflowId, runId));
     }
     return store.getWorkflowToken(workflowId, runId);
+  }
+
+  @GET
+  @Path("/apps/{app-id}/workflows/{workflow-id}/runs/{run-id}/nodes/state")
+  public void getWorkflowNodeStates(HttpRequest request, HttpResponder responder,
+                                    @PathParam("namespace-id") String namespaceId,
+                                    @PathParam("app-id") String applicationId,
+                                    @PathParam("workflow-id") String workflowId,
+                                    @PathParam("run-id") String runId)
+    throws NotFoundException, DatasetManagementException {
+    ApplicationId appId = Ids.namespace(namespaceId).app(applicationId);
+    ApplicationSpecification appSpec = store.getApplication(appId.toId());
+    if (appSpec == null) {
+      throw new ApplicationNotFoundException(appId.toId());
+    }
+
+    ProgramId workflowProgramId = appId.workflow(workflowId);
+    WorkflowSpecification workflowSpec = appSpec.getWorkflows().get(workflowProgramId.getProgram());
+
+    if (workflowSpec == null) {
+      throw new ProgramNotFoundException(workflowProgramId.toId());
+    }
+
+    ProgramRunId workflowRunId = workflowProgramId.run(runId);
+    if (store.getRun(workflowProgramId.toId(), runId) == null) {
+      throw new NotFoundException(workflowRunId);
+    }
+
+    List<WorkflowNodeStateDetail> nodeStateDetails = store.getWorkflowNodeStates(workflowRunId);
+    Map<String, WorkflowNodeStateDetail> nodeStates = new HashMap<>();
+    for (WorkflowNodeStateDetail nodeStateDetail : nodeStateDetails) {
+      nodeStates.put(nodeStateDetail.getNodeId(), nodeStateDetail);
+    }
+
+    responder.sendJson(HttpResponseStatus.OK, nodeStates, STRING_TO_NODESTATEDETAIL_MAP_TYPE);
   }
 
   @GET

@@ -62,7 +62,7 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
               myPipelineApi.fetchArtifacts({
                 namespace: $stateParams.namespace
               }).$promise.then((res) => {
-                let uiSupportedArtifacts = ['cdap-etl-batch', 'cdap-etl-realtime'];
+                let uiSupportedArtifacts = ['cdap-etl-batch', 'cdap-etl-realtime', 'cdap-etl-data-pipeline'];
                 let filteredRes;
                 if ($stateParams.artifactType) {
                   filteredRes = res.filter( r => r.name === $stateParams.artifactType );
@@ -73,20 +73,25 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
                   }
                 } else {
                   filteredRes = res.filter( r => uiSupportedArtifacts.indexOf(r.name) !== -1 );
-                  $stateParams.artifactType = filteredRes[0].name;
+                  $stateParams.artifactType = filteredRes.filter(fres => fres.name === 'cdap-etl-data-pipeline')[0].name;
                   defer.resolve($stateParams.artifactType);
                 }
               });
               return defer.promise;
             },
-            rArtifacts: function(myPipelineApi, $stateParams, $q) {
+            rArtifacts: function(myPipelineApi, $stateParams, $q, HydratorPlusPlusOrderingFactory) {
               var defer = $q.defer();
               myPipelineApi.fetchArtifacts({
                 namespace: $stateParams.namespace
               }).$promise
               .then((res) => {
-                let uiSupportedArtifacts = ['cdap-etl-batch', 'cdap-etl-realtime'];
+                let uiSupportedArtifacts = ['cdap-etl-batch', 'cdap-etl-realtime', 'cdap-etl-data-pipeline'];
                 let filteredRes = res.filter( r => uiSupportedArtifacts.indexOf(r.name) !== -1 );
+
+                filteredRes = filteredRes.map( r => {
+                  r.label = HydratorPlusPlusOrderingFactory.getArtifactDisplayName(r.name);
+                  return r;
+                });
                 defer.resolve(filteredRes);
               });
               return defer.promise;
@@ -123,6 +128,49 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
           },
           onExit: function($uibModalStack) {
             $uibModalStack.dismissAll();
+          }
+        })
+
+        .state('hydratorplusplus.detail', {
+          url: '/view/:pipelineId',
+          data: {
+            authorizedRoles: MYAUTH_ROLE.all,
+            highlightTab: 'hydratorList'
+          },
+          resolve : {
+            rPipelineDetail: function($stateParams, $q, myPipelineApi) {
+              var params = {
+                namespace: $stateParams.namespace,
+                pipeline: $stateParams.pipelineId
+              };
+
+              return myPipelineApi.get(params).$promise;
+            }
+          },
+          ncyBreadcrumb: {
+            parent: 'apps.list',
+            label: '{{$state.params.pipelineId}}'
+          },
+          views: {
+            '': {
+              templateUrl: '/assets/features/hydratorplusplus/templates/detail.html',
+              controller: 'HydratorPlusPlusDetailCtrl'
+            },
+            'toppanel@hydratorplusplus.detail': {
+              templateUrl: '/assets/features/hydratorplusplus/templates/detail/top-panel.html',
+              controller: 'HydratorDetailTopPanelController',
+              controllerAs: 'TopPanelCtrl'
+            },
+            'bottompanel@hydratorplusplus.detail': {
+              templateUrl: '/assets/features/hydratorplusplus/templates/detail/bottom-panel.html',
+              controller: 'HydratorPlusPlusDetailBottomPanelCtrl',
+              controllerAs: 'BottomPanelCtrl'
+            },
+            'canvas@hydratorplusplus.detail': {
+              templateUrl: '/assets/features/hydratorplusplus/templates/detail/canvas.html',
+              controller: 'HydratorPlusPlusDetailCanvasCtrl',
+              controllerAs: 'CanvasCtrl'
+            }
           }
         });
 

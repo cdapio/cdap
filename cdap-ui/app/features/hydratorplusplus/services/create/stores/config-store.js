@@ -33,6 +33,7 @@ class HydratorPlusPlusConfigStore {
     this.changeListeners = [];
     this.setDefaults();
     this.hydratorPlusPlusConfigDispatcher = HydratorPlusPlusConfigDispatcher.getDispatcher();
+    this.hydratorPlusPlusConfigDispatcher.register('onEngineChange', this.setEngine.bind(this));
     this.hydratorPlusPlusConfigDispatcher.register('onArtifactSave', this.setArtifact.bind(this));
     this.hydratorPlusPlusConfigDispatcher.register('onMetadataInfoSave', this.setMetadataInformation.bind(this));
     this.hydratorPlusPlusConfigDispatcher.register('onPluginAdd', this.setConfig.bind(this));
@@ -81,12 +82,6 @@ class HydratorPlusPlusConfigStore {
   }
   getDefaultConfig() {
     return {
-      source: {
-        name: '',
-        plugin: {}
-      },
-      sinks: [],
-      transforms: [],
       connections: [],
       comments: []
     };
@@ -118,7 +113,6 @@ class HydratorPlusPlusConfigStore {
   }
   generateConfigFromState() {
     var config = this.getDefaultConfig();
-    var artifactTypeExtension = this.GLOBALS.pluginTypes[this.state.artifact.name];
     var nodesMap = {};
     this.state.__ui__.nodes.forEach(function(n) {
       nodesMap[n.name] = angular.copy(n);
@@ -145,48 +139,21 @@ class HydratorPlusPlusConfigStore {
         } catch(e) {}
       }
       node.plugin.properties = stripFormatSchemas(node.watchProperty, node.outputSchemaProperty, angular.copy(node.plugin.properties));
-      var pluginConfig =  {
-        // Solely adding id and _backendProperties for validation.
-        // Should be removed while saving it to backend.
-        name: node.plugin.name,
-        label: node.plugin.label,
-        artifact: node.plugin.artifact,
-        properties: node.plugin.properties ,
-        _backendProperties: node._backendProperties
-      };
-
-      if (node.type === artifactTypeExtension.source) {
-        config['source'] = {
-          name: node.plugin.label,
-          plugin: pluginConfig,
-          outputSchema: node.outputSchema,
-          inputSchema: node.inputSchema
-        };
-      } else if (node.type === 'transform') {
-        if (node.plugin.validationFields) {
-          pluginConfig.validationFields = node.plugin.validationFields;
-        }
-        pluginConfig = {
-          name: node.plugin.label,
-          plugin: pluginConfig,
-          outputSchema: node.outputSchema,
-          inputSchema: node.inputSchema
-        };
-
-        if (node.errorDatasetName && node.errorDatasetName.length > 0) {
-          pluginConfig.errorDatasetName = node.errorDatasetName;
-        }
-
-        config['transforms'].push(pluginConfig);
-      } else if (node.type === artifactTypeExtension.sink) {
-        pluginConfig = {
-          name: node.plugin.label,
-          plugin: pluginConfig,
-          outputSchema: node.outputSchema,
-          inputSchema: node.inputSchema
-        };
-        config['sinks'].push(pluginConfig);
-      }
+      config.stages.push({
+        name: node.plugin.label,
+        plugin: {
+          // Solely adding id and _backendProperties for validation.
+          // Should be removed while saving it to backend.
+          name: node.plugin.name,
+          type: node.type,
+          label: node.plugin.label,
+          artifact: node.plugin.artifact,
+          properties: node.plugin.properties ,
+          _backendProperties: node._backendProperties
+        },
+        outputSchema: node.outputSchema,
+        inputSchema: node.inputSchema
+      });
       delete nodesMap[id];
     };
 
@@ -195,7 +162,7 @@ class HydratorPlusPlusConfigStore {
       this.state.artifact.name,
       this.state.__ui__.nodes
     );
-
+    config.stages = [];
     connections.forEach( connection => {
       let fromConnectionName, toConnectionName;
 
@@ -219,7 +186,7 @@ class HydratorPlusPlusConfigStore {
     config.connections = connections;
 
     let appType = this.getAppType();
-    if ( appType=== this.GLOBALS.etlBatch) {
+    if ( this.GLOBALS.etlBatchPipelines.indexOf(appType) !== -1) {
       config.schedule = this.getSchedule();
       config.engine = this.getEngine();
     } else if (appType === this.GLOBALS.etlRealtime) {
@@ -270,24 +237,10 @@ class HydratorPlusPlusConfigStore {
       return false;
     }
     var stateCopy = this.getConfigForExport();
-    var source = stateCopy.config.source;
-    var sinks = stateCopy.config.sinks;
-    var transforms = stateCopy.config.transforms;
-
-    if (source.plugin) {
-      delete source.outputSchema;
-      delete source.inputSchema;
-    }
-    angular.forEach(sinks, (sink) => {
-      if (sink.plugin) {
-        delete sink.outputSchema;
-        delete sink.inputSchema;
-      }
-    });
-    angular.forEach(transforms, (transform) =>  {
-      if (transform.plugin) {
-        delete transform.outputSchema;
-        delete transform.inputSchema;
+    angular.forEach(stateCopy.config.stages, (node) => {
+      if (node.plugin) {
+        delete node.outputSchema;
+        delete node.inputSchema;
       }
     });
     delete stateCopy.__ui__;
@@ -339,7 +292,7 @@ class HydratorPlusPlusConfigStore {
     this.emitChange();
   }
   setEngine(engine) {
-    if (this.state.config.artifact === this.GLOBALS.etlBatch) {
+    if (this.GLOBALS.etlBatchPipelines.indexOf(this.state.artifact.name) !== -1) {
       this.state.config.engine = engine || 'mapreduce';
     }
   }
@@ -351,7 +304,7 @@ class HydratorPlusPlusConfigStore {
     this.state.artifact.version = artifact.version;
     this.state.artifact.scope = artifact.scope;
 
-    if (artifact.name === this.GLOBALS.etlBatch) {
+    if (this.GLOBALS.etlBatchPipelines.indexOf(artifact.name) !== -1) {
       this.state.config.schedule = '* * * * *';
     } else if (artifact.name === this.GLOBALS.etlRealtime) {
       this.state.config.instance = 1;
@@ -484,10 +437,14 @@ class HydratorPlusPlusConfigStore {
         return;
       }
       // If we encounter an implicit schema down the stream while propagation stop there and return.
-      if (node.isImplicitSchema) {
+      if (nodesMap[node] && nodesMap[node].implicitSchema) {
         return;
       }
       node.forEach( n => {
+        // If we encounter an implicit schema down the stream while propagation stop there and return.
+        if (nodesMap[n].implicitSchema) {
+          return;
+        }
         nodesMap[n].outputSchema = outputSchema;
         nodesMap[n].inputSchema = outputSchema;
         if (nodesMap[n].outputSchemaProperty) {

@@ -54,6 +54,9 @@ body.theme-cdap.state-hydrator-create {
           display: inline-block;
           max-width: 81px;
         }
+        .plugin-badge {
+          display: none;
+        }
       }
       + .right-wrapper {
         margin-left: 290px;
@@ -168,9 +171,9 @@ body.theme-cdap.state-hydrator-create {
 
         .item-body-wrapper {
           // Syntax needed to avoid LESS parsing issue affecting calc()
-          height: ~"-moz-calc(100% - 120px)";
-          height: ~"-webkit-calc(100% - 120px)";
-          height: ~"calc(100% - 120px)";
+          height: ~"-moz-calc(100% - 40px)";
+          height: ~"-webkit-calc(100% - 40px)";
+          height: ~"calc(100% - 40px)";
         }
       }
 
@@ -185,6 +188,9 @@ body.theme-cdap.state-hydrator-create {
         span.name {
           font-size: 13px;
           line-height: inherit;
+        }
+        .fa {
+          display: none;
         }
       }
       .item-body-wrapper {
@@ -201,6 +207,10 @@ body.theme-cdap.state-hydrator-create {
         @media (max-height: 550px) {
           max-height: 20vh;
         }
+        .no-item-message {
+          color: white;
+          width: 100%;
+        }
       }
       .plugin-item {
         background-color: white;
@@ -212,7 +222,7 @@ body.theme-cdap.state-hydrator-create {
         height: 40px;
         width: 48%;
         .border-radius(4px);
-        .transition(all 0.2s ease);
+
         &:hover, &:focus {
           background-color: fade(black, 45%);
           border: 1px dashed #999;

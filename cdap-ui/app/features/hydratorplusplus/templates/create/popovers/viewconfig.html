@@ -15,21 +15,21 @@
 -->
 
 <div class="modal-header clearfix">
-  <h3 class="pull-left">Export Pipeline Configuration</h3>
-  <a class="btn pull-right" ng-click="$close()">
-    <span class="fa fa-remove"></span>
-    <span class="sr-only"> Close </span>
-  </a>
+  <h3 class="modal-title">
+    <span>Export Pipeline Configuration</span>
+    <span class="fa fa-times pull-right" ng-click="$close()"></span>
+  </h3>
 </div>
 <div class="modal-body config-modal">
   <fieldset disabled="true" class="view-plugin-json">
     <my-json-textbox ng-model="config"></my-json-textbox>
   </fieldset>
   <br/>
-  <div class="pull-right">
-    <button class="btn btn-orange" ng-click="export()">Export</button>
-    <button class="btn btn-grey" ng-click="$close()">Cancel</button>
-  </div>
+</div>
+
+<div class="modal-footer">
+  <button class="btn btn-grey" ng-click="$close()">Cancel</button>
+  <button class="btn btn-orange" ng-click="export()">Export</button>
 </div>
 
 

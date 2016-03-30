@@ -295,6 +295,14 @@ public class CLIMainTest extends CLITestBase {
     } finally {
       testCommandOutputContains(cli, "delete dataset instance " + datasetName, "Successfully deleted");
     }
+
+    String datasetName2 = PREFIX + "asoijm39485";
+    String description = "test-description-for-" + datasetName2;
+    testCommandOutputContains(cli, "create dataset instance " + datasetType.getName() + " " + datasetName2 +
+                                " \"a=1\"" + " " + description,
+                              "Successfully created dataset");
+    testCommandOutputContains(cli, "list dataset instances", description);
+    testCommandOutputContains(cli, "delete dataset instance " + datasetName2, "Successfully deleted");
   }
 
   @Test

@@ -24,6 +24,7 @@ import com.google.common.collect.Sets;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -37,19 +38,16 @@ import java.util.UUID;
  */
 public class ConnectorDag extends Dag {
   private final Set<String> reduceNodes;
+  private final Set<String> isolationNodes;
   private final Set<String> connectors;
 
-  public ConnectorDag(Collection<Connection> connections) {
-    this(connections, ImmutableSet.<String>of());
-  }
-
-  public ConnectorDag(Collection<Connection> connections, Set<String> reduceNodes) {
-    this(connections, reduceNodes, ImmutableSet.<String>of());
-  }
-
-  public ConnectorDag(Collection<Connection> connections, Set<String> reduceNodes, Set<String> connectors) {
+  private ConnectorDag(Collection<Connection> connections,
+                       Set<String> reduceNodes,
+                       Set<String> isolationNodes,
+                       Set<String> connectors) {
     super(connections);
     this.reduceNodes = ImmutableSet.copyOf(reduceNodes);
+    this.isolationNodes = ImmutableSet.copyOf(isolationNodes);
     this.connectors = new HashSet<>(connectors);
   }
 
@@ -69,13 +67,23 @@ public class ConnectorDag extends Dag {
    * mapreduce job (or possibly map-only job). Or in spark, each subdag would be a series of operations from
    * one rdd to another rdd.
    *
-   * @return the connectors added
+   * @return the nodes that had connectors inserted in front of them
    */
   public Set<String> insertConnectors() {
     // none of this is particularly efficient, but this should never be a bottleneck
     // unless we're dealing with very very large dags
 
     Set<String> addedAlready = new HashSet<>();
+
+    /*
+        Isolate the specified node by inserting a connector in front of and behind the node.
+        If all inputs into the the node are sources, a connector will not be inserted in front.
+        If all outputs from the node are sinks, a connector will not be inserted after.
+        Other connectors count as both a source and a sink.
+     */
+    for (String isolationNode : isolationNodes) {
+      isolate(isolationNode, addedAlready);
+    }
 
     /*
         Find sections of the dag where a source is writing to both a sink and a reduce node
@@ -105,7 +113,8 @@ public class ConnectorDag extends Dag {
       }
 
       Set<String> accessibleByNode = accessibleFrom(node, Sets.union(connectors, reduceNodes));
-      Set<String> sinksAndReduceNodes = Sets.intersection(accessibleByNode, Sets.union(sinks, reduceNodes));
+      Set<String> sinksAndReduceNodes = Sets.intersection(
+        accessibleByNode, Sets.union(connectors, Sets.union(sinks, reduceNodes)));
       // don't count this node
       sinksAndReduceNodes = Sets.difference(sinksAndReduceNodes, ImmutableSet.of(node));
 
@@ -205,6 +214,76 @@ public class ConnectorDag extends Dag {
     return addedAlready;
   }
 
+  /**
+   * Isolate the specified node by inserting a connector in front of and behind the node.
+   * If all inputs into the the node are sources, a connector will not be inserted in front.
+   * If all outputs from the node are sinks, a connector will not be inserted after.
+   * Other connectors count as both a source and a sink.
+   */
+  private void isolate(String node, Set<String> addedAlready) {
+    if (!nodes.contains(node)) {
+      throw new IllegalArgumentException(String.format("Cannot isolate node %s because it is not in the dag.", node));
+    }
+
+    /*
+         If an input into this node is not a source and not a connector,
+         or if the input has another output besides this node, insert a connector in front of this node.
+
+         For example, if we're isolating n2, we need to insert a connector in front if we have a dag like:
+
+              |--> n2
+         n1 --|
+              |--> n3
+
+         but not if our dag looks like:
+
+         n1 --> n2 --> n3
+     */
+    boolean shouldInsert = false;
+    for (String input : incomingConnections.get(node)) {
+      if (connectors.contains(input)) {
+        continue;
+      }
+      if (outgoingConnections.get(input).size() > 1 || !sources.contains(input)) {
+        shouldInsert = true;
+        break;
+      }
+    }
+    if (shouldInsert) {
+      addConnectorInFrontOf(node, addedAlready);
+    }
+
+    /*
+         If an output of this node is not a connector and not a sink,
+         or if the output has another input besides this node, insert a connector in front of the output.
+
+         For example, if we are isolating n2 in:
+
+           n1 --|
+                |--> n3
+           n2 --|
+
+         we need to insert a connector in front of n3.
+         But if our dag looks like:
+
+         n1 --> n2 --> n3
+
+         there is no need to insert a connector in front of n3 anymore.
+     */
+    Set<String> insertNodes = new HashSet<>();
+    for (String output : outgoingConnections.get(node)) {
+      if (connectors.contains(output)) {
+        continue;
+      }
+      if (incomingConnections.get(output).size() > 1 || !sinks.contains(output)) {
+        insertNodes.add(output);
+      }
+    }
+    for (String insertNode : insertNodes) {
+      addConnectorInFrontOf(insertNode, addedAlready);
+    }
+  }
+
   public Set<String> getConnectors() {
     return connectors;
   }
@@ -238,7 +317,7 @@ public class ConnectorDag extends Dag {
     if (nodes.contains(connectorName)) {
       connectorName += UUID.randomUUID().toString();
     }
-    insertNode(connectorName, inFrontOf);
+    insertInFront(connectorName, inFrontOf);
     connectors.add(connectorName);
     return connectorName;
   }
@@ -249,7 +328,7 @@ public class ConnectorDag extends Dag {
    * @param name the name of the new node
    * @param inFrontOf the node to insert in front of
    */
-  private void insertNode(String name, String inFrontOf) {
+  private void insertInFront(String name, String inFrontOf) {
     if (!nodes.contains(inFrontOf)) {
       throw new IllegalArgumentException(
         String.format("Cannot insert in front of node %s because it does not exist.", inFrontOf));
@@ -300,4 +379,69 @@ public class ConnectorDag extends Dag {
     return Objects.hash(super.hashCode(), reduceNodes, connectors);
   }
 
+
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  /**
+   * Builder for a connector dag
+   */
+  public static class Builder {
+    private final Set<Connection> connections;
+    private final Set<String> reduceNodes;
+    private final Set<String> isolationNodes;
+    private final Set<String> connectors;
+
+    private Builder() {
+      this.connections = new HashSet<>();
+      this.reduceNodes = new HashSet<>();
+      this.isolationNodes = new HashSet<>();
+      this.connectors = new HashSet<>();
+    }
+
+    public Builder addReduceNodes(String... nodes) {
+      Collections.addAll(reduceNodes, nodes);
+      return this;
+    }
+
+    public Builder addReduceNodes(Collection<String> nodes) {
+      reduceNodes.addAll(nodes);
+      return this;
+    }
+
+    public Builder addIsolationNodes(String... nodes) {
+      Collections.addAll(isolationNodes, nodes);
+      return this;
+    }
+
+    public Builder addIsolationNodes(Collection<String> nodes) {
+      isolationNodes.addAll(nodes);
+      return this;
+    }
+
+    public Builder addConnectors(String... nodes) {
+      Collections.addAll(connectors, nodes);
+      return this;
+    }
+
+    public Builder addConnectors(Collection<String> nodes) {
+      connectors.addAll(nodes);
+      return this;
+    }
+
+    public Builder addConnection(String from, String to) {
+      connections.add(new Connection(from, to));
+      return this;
+    }
+
+    public Builder addConnections(Collection<Connection> connections) {
+      this.connections.addAll(connections);
+      return this;
+    }
+
+    public ConnectorDag build() {
+      return new ConnectorDag(connections, reduceNodes, isolationNodes, connectors);
+    }
+  }
 }

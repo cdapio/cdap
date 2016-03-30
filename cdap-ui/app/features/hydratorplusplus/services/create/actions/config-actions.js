@@ -50,6 +50,9 @@ class HydratorPlusPlusConfigActions {
   setArtifact(artifact) {
     this.dispatcher.dispatch('onArtifactSave', artifact);
   }
+  setEngine(engine) {
+    this.dispatcher.dispatch('onEngineChange', engine);
+  }
   addPlugin (plugin, type) {
     this.dispatcher.dispatch('onPluginAdd', plugin, type);
   }
@@ -95,7 +98,7 @@ class HydratorPlusPlusConfigActions {
         .then(
           () => {
             this.EventPipe.emit('hideLoadingIcon.immediate');
-            this.$state.go('hydrator.detail', { pipelineId: adapterName });
+            this.$state.go('hydratorplusplus.detail', { pipelineId: adapterName });
           }
         );
     };

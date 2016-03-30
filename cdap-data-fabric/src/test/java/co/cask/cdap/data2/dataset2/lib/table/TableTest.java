@@ -49,6 +49,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
+import org.apache.jasper.tagplugins.jstl.core.Out;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -1919,6 +1920,32 @@ public abstract class TableTest<T extends Table> {
 
     table.delete(new Delete(R1, C1, V1));
     verifyDatasetMetrics(metrics, ++writes, reads);
+
+    // drop table
+    admin.drop();
+  }
+
+  @Test
+  public void testReadOwnWrite() throws Exception {
+    final String tableName = "readOwnWrite";
+    DatasetAdmin admin = getTableAdmin(CONTEXT1, tableName);
+    admin.create();
+    Table table = getTable(CONTEXT1, tableName);
+
+    Transaction tx = txClient.startShort();
+    try {
+      ((TransactionAware) table).startTx(tx);
+
+      // Write some data, then flush it by calling commitTx.
+      table.put(new Put(R1, C1, V1));
+
+      ((TransactionAware) table).commitTx();
+
+      // Try to read the previous write.
+      Assert.assertArrayEquals(V1, table.get(new Get(R1, C1)).get(C1));
+    } finally {
+      txClient.commit(tx);
+    }
 
     // drop table
     admin.drop();

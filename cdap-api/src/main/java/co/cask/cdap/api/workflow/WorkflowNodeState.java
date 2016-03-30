@@ -16,27 +16,20 @@
 
 package co.cask.cdap.api.workflow;
 
+import co.cask.cdap.api.annotation.Beta;
+
 import javax.annotation.Nullable;
 
 /**
  * Class to represent the state of the node in the {@link Workflow}.
  */
-public final class WorkflowNodeState {
-
-  /**
-   * Status of the node running inside the Workflow.
-   */
-  public enum NodeStatus {
-    RUNNING,
-    COMPLETED,
-    FAILED,
-    KILLED
-  }
+@Beta
+public class WorkflowNodeState {
 
   private final String nodeId;
   private final NodeStatus nodeStatus;
   private final String runId;
-  private final String failureCause;
+  private final Throwable failureCause;
 
   /**
    * Create a new instance.
@@ -46,7 +39,7 @@ public final class WorkflowNodeState {
    * @param failureCause cause of failure, null if execution of the node succeeded
    */
   public WorkflowNodeState(String nodeId, NodeStatus nodeStatus, @Nullable String runId,
-                           @Nullable String failureCause) {
+                           @Nullable Throwable failureCause) {
     this.nodeId = nodeId;
     this.nodeStatus = nodeStatus;
     this.runId = runId;
@@ -80,7 +73,7 @@ public final class WorkflowNodeState {
    * Return the detail message string for failure if node execution failed, otherwise {@code null} is returned.
    */
   @Nullable
-  public String getFailureCause() {
+  public Throwable getFailureCause() {
     return failureCause;
   }
 }
