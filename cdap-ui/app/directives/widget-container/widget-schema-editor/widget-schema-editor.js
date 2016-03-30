@@ -353,6 +353,7 @@ angular.module(PKG.name + '.commons')
 
         $scope.$on('$destroy', function() {
           EventPipe.cancelEvent('schema.export');
+          EventPipe.cancelEvent('schema.import');
           EventPipe.cancelEvent('schema.clear');
           EventPipe.cancelEvent('plugin.reset');
           EventPipe.cancelEvent('dataset.selected');
