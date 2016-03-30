@@ -127,6 +127,14 @@ function download_includes() {
   download_md_doc_file $base_target $hydrator_source core-plugins Table-realtimesink.md
   download_md_doc_file $base_target $hydrator_source core-plugins Twitter-realtimesource.md
   download_md_doc_file $base_target $hydrator_source core-plugins Validator-transform.md
+
+  # Temp moved docs (was in core-plugins)
+  download_md_doc_file $base_target $hydrator_source fileset-plugins-parquet S3Parquet-batchsink.md
+  download_md_doc_file $base_target $hydrator_source fileset-plugins-parquet SnapshotParquet-batchsink.md
+  download_md_doc_file $base_target $hydrator_source fileset-plugins-parquet SnapshotParquet-batchsource.md
+  download_md_doc_file $base_target $hydrator_source fileset-plugins-parquet TPFSParquet-batchsink.md
+  download_md_doc_file $base_target $hydrator_source fileset-plugins-parquet TPFSParquet-batchsource.md
+  # End Temp moved docs
   
   download_md_doc_file $base_target $hydrator_source database-plugins Database-batchsink.md
   download_md_doc_file $base_target $hydrator_source database-plugins Database-batchsource.md
