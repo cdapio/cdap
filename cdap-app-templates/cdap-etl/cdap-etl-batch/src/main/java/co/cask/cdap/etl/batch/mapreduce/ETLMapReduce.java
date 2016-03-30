@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -98,18 +98,7 @@ public class ETLMapReduce extends AbstractMapReduce {
   @Override
   public void configure() {
     setName(phaseSpec.getPhaseName());
-
-    StringBuilder description = new StringBuilder("DataFlow MapReduce phase executor. Sources");
-
-    for (String sourceName : phaseSpec.getPhase().getSources()) {
-      description.append(" '").append(sourceName).append("'");
-    }
-    description.append(" to sinks");
-
-    for (StageInfo sinkInfo : phaseSpec.getPhase().getStagesOfType(BatchSink.PLUGIN_TYPE)) {
-      description.append(" '").append(sinkInfo.getName()).append("'");
-    }
-    setDescription(description.toString());
+    setDescription("MapReduce phase executor. " + phaseSpec.getDescription());
 
     setMapperResources(phaseSpec.getResources());
     setDriverResources(phaseSpec.getResources());

@@ -18,6 +18,7 @@ package co.cask.cdap.etl.batch;
 
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.etl.common.PipelinePhase;
+import com.google.common.base.Joiner;
 
 import java.util.Map;
 
@@ -30,14 +31,16 @@ public class BatchPhaseSpec {
   private final Resources resources;
   private final boolean isStageLoggingEnabled;
   private final Map<String, String> connectorDatasets;
+  private final String description;
 
-  public BatchPhaseSpec(String phaseName, PipelinePhase phase, Resources resources, boolean
-    isStageLoggingEnabled, Map<String, String> connectorDatasets) {
+  public BatchPhaseSpec(String phaseName, PipelinePhase phase, Resources resources, boolean isStageLoggingEnabled,
+                        Map<String, String> connectorDatasets) {
     this.phaseName = phaseName;
     this.phase = phase;
     this.resources = resources;
     this.isStageLoggingEnabled = isStageLoggingEnabled;
     this.connectorDatasets = connectorDatasets;
+    this.description = createDescription();
   }
 
   public String getPhaseName() {
@@ -58,5 +61,19 @@ public class BatchPhaseSpec {
 
   public Map<String, String> getConnectorDatasets() {
     return connectorDatasets;
+  }
+
+  public String getDescription() {
+    return description;
+  }
+
+  private String createDescription() {
+    StringBuilder description = new StringBuilder("Sources '");
+    Joiner.on("', '").appendTo(description, phase.getSources());
+    description.append("' to sinks '");
+
+    Joiner.on("', '").appendTo(description, phase.getSinks());
+    description.append("'.");
+    return description.toString();
   }
 }
