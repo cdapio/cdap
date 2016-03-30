@@ -113,20 +113,15 @@ function download_includes() {
   download_md_doc_file $base_target $hydrator_source core-plugins PythonEvaluator-transform.md
   download_md_doc_file $base_target $hydrator_source core-plugins S3-batchsource.md
   download_md_doc_file $base_target $hydrator_source core-plugins S3Avro-batchsink.md
-  download_md_doc_file $base_target $hydrator_source core-plugins S3Parquet-batchsink.md
   download_md_doc_file $base_target $hydrator_source core-plugins Script-transform.md
   download_md_doc_file $base_target $hydrator_source core-plugins ScriptFilter-transform.md
   download_md_doc_file $base_target $hydrator_source core-plugins SnapshotAvro-batchsink.md
   download_md_doc_file $base_target $hydrator_source core-plugins SnapshotAvro-batchsource.md
-  download_md_doc_file $base_target $hydrator_source core-plugins SnapshotParquet-batchsink.md
-  download_md_doc_file $base_target $hydrator_source core-plugins SnapshotParquet-batchsource.md
   download_md_doc_file $base_target $hydrator_source core-plugins Stream-batchsource.md
   download_md_doc_file $base_target $hydrator_source core-plugins Stream-realtimesink.md
   download_md_doc_file $base_target $hydrator_source core-plugins StructuredRecordToGenericRecord-transform.md
   download_md_doc_file $base_target $hydrator_source core-plugins TPFSAvro-batchsink.md
   download_md_doc_file $base_target $hydrator_source core-plugins TPFSAvro-batchsource.md
-  download_md_doc_file $base_target $hydrator_source core-plugins TPFSParquet-batchsink.md
-  download_md_doc_file $base_target $hydrator_source core-plugins TPFSParquet-batchsource.md
   download_md_doc_file $base_target $hydrator_source core-plugins Table-batchsink.md
   download_md_doc_file $base_target $hydrator_source core-plugins Table-batchsource.md
   download_md_doc_file $base_target $hydrator_source core-plugins Table-realtimesink.md
@@ -135,7 +130,6 @@ function download_includes() {
   
   download_md_doc_file $base_target $hydrator_source database-plugins Database-batchsink.md
   download_md_doc_file $base_target $hydrator_source database-plugins Database-batchsource.md
-  download_md_doc_file $base_target $hydrator_source database-plugins Teradata-batchsource.md
   
   download_md_doc_file $base_target $hydrator_source elasticsearch-plugins Elasticsearch-batchsink.md
   download_md_doc_file $base_target $hydrator_source elasticsearch-plugins Elasticsearch-batchsource.md
