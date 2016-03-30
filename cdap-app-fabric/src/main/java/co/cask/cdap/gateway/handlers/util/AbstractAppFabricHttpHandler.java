@@ -20,6 +20,7 @@ import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.store.Store;
+import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.internal.UserErrors;
 import co.cask.cdap.internal.UserMessages;
 import co.cask.cdap.proto.Id;
@@ -80,10 +81,15 @@ public abstract class AbstractAppFabricHttpHandler extends AbstractHttpHandler {
 
   public static final String APP_CONFIG_HEADER = "X-App-Config";
 
-  protected int getInstances(HttpRequest request) throws IllegalArgumentException, JsonSyntaxException {
-    Instances instances = parseBody(request, Instances.class);
+  protected int getInstances(HttpRequest request) throws BadRequestException {
+    Instances instances;
+      try {
+        instances = parseBody(request, Instances.class);
+      } catch (JsonSyntaxException e) {
+        throw new BadRequestException("Invalid JSON in request: " + e.getMessage());
+      }
     if (instances == null) {
-      throw new IllegalArgumentException("Could not read instances from request body");
+      throw new BadRequestException("Invalid instance value in request");
     }
     return instances.getInstances();
   }

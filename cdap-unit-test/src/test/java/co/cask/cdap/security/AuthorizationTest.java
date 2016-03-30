@@ -44,9 +44,10 @@ import co.cask.cdap.security.spi.authorization.Authorizer;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.ArtifactManager;
+import co.cask.cdap.test.ServiceManager;
+import co.cask.cdap.test.SlowTests;
 import co.cask.cdap.test.TestBase;
 import co.cask.cdap.test.TestConfiguration;
-import co.cask.cdap.test.XSlowTests;
 import co.cask.cdap.test.app.DummyApp;
 import co.cask.cdap.test.artifacts.plugins.ToStringPlugin;
 import com.google.common.base.Throwables;
@@ -68,6 +69,7 @@ import org.junit.runners.model.Statement;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
@@ -183,7 +185,7 @@ public class AuthorizationTest extends TestBase {
   }
 
   @Test
-  @Category(XSlowTests.class)
+  @Category(SlowTests.class)
   public void testApps() throws Exception {
     try {
       deployApplication(NamespaceId.DEFAULT.toId(), DummyApp.class);
@@ -489,6 +491,13 @@ public class AuthorizationTest extends TestBase {
         return dummyAppManager.isRunning(serviceId.toId());
       }
     }, 5, TimeUnit.SECONDS);
+    ServiceManager greetingService = dummyAppManager.getServiceManager(serviceId.getProgram());
+    // alice should be able to set instances for the program
+    greetingService.setInstances(2);
+    Assert.assertEquals(2, greetingService.getProvisionedInstances());
+    // alice should also be able to save runtime arguments for all future runs of the program
+    Map<String, String> args = ImmutableMap.of("key", "value");
+    greetingService.setRuntimeArgs(args);
     dummyAppManager.stopProgram(serviceId.toId());
     Tasks.waitFor(false, new Callable<Boolean>() {
       @Override
@@ -501,9 +510,9 @@ public class AuthorizationTest extends TestBase {
     try {
       dummyAppManager.startProgram(serviceId.toId());
       Assert.fail("Bob should not be able to start the service because he does not have admin privileges on it.");
-    } catch (RuntimeException e) {
+    } catch (RuntimeException expected) {
       //noinspection ThrowableResultOfMethodCallIgnored
-      Assert.assertTrue(Throwables.getRootCause(e) instanceof UnauthorizedException);
+      Assert.assertTrue(Throwables.getRootCause(expected) instanceof UnauthorizedException);
     }
     // TODO: CDAP-5452 can't verify running programs in this case, because DefaultApplicationManager maintains an
     // in-memory map of running processes that does not use ApplicationLifecycleService to get the runtime status.
@@ -512,6 +521,22 @@ public class AuthorizationTest extends TestBase {
     // doesn't send the request to the app fabric service, but just makes decisions based on an in-memory
     // ConcurrentHashMap.
     // Also add a test for stopping with unauthorized user after the above bug is fixed
+    
+    // setting instances should fail because Bob does not have admin privileges on the program
+    try {
+      greetingService.setInstances(3);
+      Assert.fail("Setting instances should have failed because bob does not have admin privileges on the service.");
+    } catch (RuntimeException expected) {
+      //noinspection ThrowableResultOfMethodCallIgnored
+      Assert.assertTrue(Throwables.getRootCause(expected) instanceof UnauthorizedException);
+    }
+    try {
+      greetingService.setRuntimeArgs(args);
+      Assert.fail("Setting runtime arguments should have failed because bob does not have admin privileges on the " +
+                    "service");
+    } catch (UnauthorizedException expected) {
+      // expected
+    }
     SecurityRequestContext.setUserId(ALICE.getName());
     dummyAppManager.delete();
     Assert.assertEquals(

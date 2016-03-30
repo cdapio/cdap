@@ -32,14 +32,12 @@ import co.cask.cdap.common.ConflictException;
 import co.cask.cdap.common.MethodNotAllowedException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.NotImplementedException;
-import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.CaseInsensitiveEnumTypeAdapterFactory;
 import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
-import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.flow.FlowUtils;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerException;
@@ -81,7 +79,6 @@ import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import org.apache.twill.api.RunId;
 import org.jboss.netty.buffer.ChannelBufferInputStream;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
@@ -97,9 +94,7 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-import javax.annotation.Nullable;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
@@ -472,22 +467,15 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                      @PathParam("namespace-id") String namespaceId,
                                      @PathParam("app-id") String appId,
                                      @PathParam("program-type") String programType,
-                                     @PathParam("program-id") String programId)
-    throws BadRequestException, NotImplementedException, NotFoundException {
+                                     @PathParam("program-id") String programId) throws Exception {
     ProgramType type = getProgramType(programType);
     if (type == null || type == ProgramType.WEBAPP) {
       throw new NotFoundException(String.format("Saving program runtime arguments is not supported for program " +
                                                   "type '%s'.", programType));
     }
 
-    Id.Program id = Id.Program.from(namespaceId, appId, type, programId);
-
-    if (!store.programExists(id)) {
-      throw new NotFoundException(id);
-    }
-
-    Map<String, String> args = decodeArguments(request);
-    preferencesStore.setProperties(namespaceId, appId, programType, programId, args);
+    lifecycleService.saveRuntimeArgs(Ids.namespace(namespaceId).app(appId).program(type, programId),
+                                     decodeArguments(request));
     responder.sendStatus(HttpResponseStatus.OK);
   }
 
@@ -553,9 +541,6 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         ProgramStatus programStatus = lifecycleService.getProgramStatus(programId);
         statuses.add(new BatchProgramStatus(
           program, HttpResponseStatus.OK.getCode(), null, programStatus.name()));
-      } catch (BadRequestException e) {
-        statuses.add(new BatchProgramStatus(
-          program, HttpResponseStatus.BAD_REQUEST.getCode(), e.getMessage(), null));
       } catch (NotFoundException e) {
         statuses.add(new BatchProgramStatus(
           program, HttpResponseStatus.NOT_FOUND.getCode(), e.getMessage(), null));
@@ -858,41 +843,10 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   public void setWorkerInstances(HttpRequest request, HttpResponder responder,
                                  @PathParam("namespace-id") String namespaceId,
                                  @PathParam("app-id") String appId,
-                                 @PathParam("worker-id") String workerId)
-    throws ExecutionException, InterruptedException {
-    int instances;
+                                 @PathParam("worker-id") String workerId) throws Exception {
+    int instances = getInstances(request);
     try {
-      try {
-        instances = getInstances(request);
-      } catch (IllegalArgumentException e) {
-        responder.sendString(HttpResponseStatus.BAD_REQUEST, "Invalid instance value in request");
-        return;
-      } catch (JsonSyntaxException e) {
-        responder.sendString(HttpResponseStatus.BAD_REQUEST, "Invalid JSON in request");
-        return;
-      }
-      if (instances < 1) {
-        responder.sendString(HttpResponseStatus.BAD_REQUEST, "Instance count should be greater than 0");
-        return;
-      }
-    } catch (Throwable th) {
-      responder.sendString(HttpResponseStatus.BAD_REQUEST, "Invalid instance count.");
-      return;
-    }
-
-    try {
-      Id.Program programId = Id.Program.from(namespaceId, appId, ProgramType.WORKER, workerId);
-      int oldInstances = store.getWorkerInstances(programId);
-      if (oldInstances != instances) {
-        store.setWorkerInstances(programId, instances);
-        ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(programId, runtimeService);
-        if (runtimeInfo != null) {
-          runtimeInfo.getController().command(ProgramOptionConstants.INSTANCES,
-                                              ImmutableMap.of("runnable", programId.getId(),
-                                                              "oldInstances", String.valueOf(oldInstances),
-                                                              "newInstances", String.valueOf(instances))).get();
-        }
-      }
+      lifecycleService.setInstances(Ids.namespace(namespaceId).app(appId).worker(workerId), instances);
       responder.sendStatus(HttpResponseStatus.OK);
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
@@ -935,42 +889,10 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   public synchronized void setFlowletInstances(HttpRequest request, HttpResponder responder,
                                                @PathParam("namespace-id") String namespaceId,
                                                @PathParam("app-id") String appId, @PathParam("flow-id") String flowId,
-                                               @PathParam("flowlet-id") String flowletId)
-    throws ExecutionException, InterruptedException {
-    int instances;
+                                               @PathParam("flowlet-id") String flowletId) throws Exception {
+    int instances = getInstances(request);
     try {
-      try {
-        instances = getInstances(request);
-      } catch (IllegalArgumentException e) {
-        responder.sendString(HttpResponseStatus.BAD_REQUEST, "Invalid instance value in request");
-        return;
-      } catch (JsonSyntaxException e) {
-        responder.sendString(HttpResponseStatus.BAD_REQUEST, "Invalid JSON in request");
-        return;
-      }
-      if (instances < 1) {
-        responder.sendString(HttpResponseStatus.BAD_REQUEST, "Instance count should be greater than 0");
-        return;
-      }
-    } catch (Throwable th) {
-      responder.sendString(HttpResponseStatus.BAD_REQUEST, "Invalid instance count.");
-      return;
-    }
-
-    try {
-      Id.Program programId = Id.Program.from(namespaceId, appId, ProgramType.FLOW, flowId);
-      int oldInstances = store.getFlowletInstances(programId, flowletId);
-      if (oldInstances != instances) {
-        FlowSpecification flowSpec = store.setFlowletInstances(programId, flowletId, instances);
-        ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(programId, runtimeService);
-        if (runtimeInfo != null) {
-          runtimeInfo.getController()
-            .command(ProgramOptionConstants.INSTANCES,
-                     ImmutableMap.of("flowlet", flowletId,
-                                     "newInstances", String.valueOf(instances),
-                                     "oldFlowSpec", GSON.toJson(flowSpec, FlowSpecification.class))).get();
-        }
-      }
+      lifecycleService.setInstances(Ids.namespace(namespaceId).app(appId).flow(flowId), instances, flowletId);
       responder.sendStatus(HttpResponseStatus.OK);
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
@@ -1062,40 +984,15 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                   @PathParam("namespace-id") String namespaceId,
                                   @PathParam("app-id") String appId,
                                   @PathParam("service-id") String serviceId)
-    throws ExecutionException, InterruptedException {
+    throws Exception {
     try {
-      Id.Program programId = Id.Program.from(namespaceId, appId, ProgramType.SERVICE, serviceId);
-      if (!store.programExists(programId)) {
+      ProgramId programId = Ids.namespace(namespaceId).app(appId).service(serviceId);
+      if (!store.programExists(programId.toId())) {
         responder.sendString(HttpResponseStatus.NOT_FOUND, "Service not found");
         return;
       }
-
-      int instances;
-      try {
-        instances = getInstances(request);
-      } catch (IllegalArgumentException e) {
-        responder.sendString(HttpResponseStatus.BAD_REQUEST, "Invalid instance value in request");
-        return;
-      } catch (JsonSyntaxException e) {
-        responder.sendString(HttpResponseStatus.BAD_REQUEST, "Invalid JSON in request");
-        return;
-      }
-      if (instances < 1) {
-        responder.sendString(HttpResponseStatus.BAD_REQUEST, "Instance count should be greater than 0");
-        return;
-      }
-
-      int oldInstances = store.getServiceInstances(programId);
-      if (oldInstances != instances) {
-        store.setServiceInstances(programId, instances);
-        ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(programId, runtimeService);
-        if (runtimeInfo != null) {
-          runtimeInfo.getController().command(ProgramOptionConstants.INSTANCES,
-                                              ImmutableMap.of("runnable", programId.getId(),
-                                                              "oldInstances", String.valueOf(oldInstances),
-                                                              "newInstances", String.valueOf(instances))).get();
-        }
-      }
+      int instances = getInstances(request);
+      lifecycleService.setInstances(programId, instances);
       responder.sendStatus(HttpResponseStatus.OK);
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
@@ -1195,22 +1092,6 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     int provisioned = getInstanceCount(programId.toEntityId(), runnableId);
     // use the pretty name of program types to be consistent
     return new BatchRunnableInstances(runnable, HttpResponseStatus.OK.getCode(), provisioned, requested);
-  }
-
-  @Nullable
-  private ProgramRuntimeService.RuntimeInfo findRuntimeInfo(Id.Program identifier, @Nullable String runId) {
-    Map<RunId, ProgramRuntimeService.RuntimeInfo> runtimeInfos = runtimeService.list(identifier.getType());
-
-    if (runId != null) {
-      return runtimeInfos.get(RunIds.fromString(runId));
-    }
-
-    for (ProgramRuntimeService.RuntimeInfo info : runtimeInfos.values()) {
-      if (identifier.equals(info.getProgramId())) {
-        return info;
-      }
-    }
-    return null;
   }
 
   private void getRuns(HttpResponder responder, Id.Program programId, String status,

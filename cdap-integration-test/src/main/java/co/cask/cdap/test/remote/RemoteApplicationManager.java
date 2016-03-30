@@ -27,6 +27,7 @@ import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.proto.artifact.AppRequest;
+import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.test.AbstractApplicationManager;
 import co.cask.cdap.test.DefaultMapReduceManager;
 import co.cask.cdap.test.DefaultSparkManager;
@@ -164,5 +165,10 @@ public class RemoteApplicationManager extends AbstractApplicationManager {
   @Override
   public ApplicationDetail getInfo() throws Exception {
     return applicationClient.get(application);
+  }
+
+  @Override
+  public void setRuntimeArgs(ProgramId programId, Map<String, String> args) throws Exception {
+    programClient.setRuntimeArgs(programId.toId(), args);
   }
 }

@@ -16,7 +16,6 @@
 
 package co.cask.cdap.internal.app.runtime.spark;
 
-import co.cask.cdap.api.Admin;
 import co.cask.cdap.api.TaskLocalizationContext;
 import co.cask.cdap.api.data.stream.StreamBatchReadable;
 import co.cask.cdap.api.dataset.Dataset;
@@ -27,7 +26,6 @@ import co.cask.cdap.app.program.Program;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DynamicDatasetCache;
 import co.cask.cdap.data2.dataset2.SingleThreadDatasetCache;
-import co.cask.cdap.internal.app.runtime.DefaultAdmin;
 import co.cask.cdap.internal.app.runtime.distributed.LocalizeResource;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
@@ -69,11 +67,11 @@ public final class ClientSparkContext extends AbstractSparkContext {
           runtimeArguments, discoveryServiceClient,
           createMetricsContext(metricsCollectionService, program.getId(), runId),
           createLoggingContext(program.getId(), runId),
-          datasetFramework, pluginInstantiator, workflowProgramInfo);
+          datasetFramework, metricsCollectionService, pluginInstantiator, workflowProgramInfo);
 
     NamespaceId namespaceId = program.getId().getNamespace().toEntityId();
     this.datasetCache = new SingleThreadDatasetCache(systemDatasetInstantiator, txClient, namespaceId,
-                                                     runtimeArguments, getMetricsContext(), null);
+                                                     runtimeArguments, getProgramMetricsContext(), null);
     this.transactionContext = datasetCache.newTransactionContext();
     this.pluginArchive = pluginArchive;
     this.resourcesToLocalize = new HashMap<>();

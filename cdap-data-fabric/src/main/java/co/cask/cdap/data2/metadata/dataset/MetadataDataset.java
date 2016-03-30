@@ -440,6 +440,10 @@ public class MetadataDataset extends AbstractDataset {
    * @return map of entitiyId to set of metadata for that entity
    */
   public Set<Metadata> getMetadata(Set<? extends Id.NamespacedId> targetIds) {
+    if (targetIds.isEmpty()) {
+      return Collections.emptySet();
+    }
+
     List<ImmutablePair<byte [], byte []>> fuzzyKeys = new ArrayList<>();
     for (Id.NamespacedId targetId : targetIds) {
       fuzzyKeys.add(getFuzzyKeyFor(targetId));
@@ -451,7 +455,9 @@ public class MetadataDataset extends AbstractDataset {
     // Scan using fuzzy filter. Scan returns one row per property.
     // Group the rows on entityId
     Multimap<Id.NamespacedId, MetadataEntry> metadataMap = HashMultimap.create();
-    Scanner scan = indexedTable.scan(new Scan(null, null, new FuzzyRowFilter(fuzzyKeys)));
+    byte[] start = fuzzyKeys.get(0).getFirst();
+    byte[] end = Bytes.stopKeyForPrefix(fuzzyKeys.get(fuzzyKeys.size() - 1).getFirst());
+    Scanner scan = indexedTable.scan(new Scan(start, end, new FuzzyRowFilter(fuzzyKeys)));
     try {
       Row next;
       while ((next = scan.next()) != null) {

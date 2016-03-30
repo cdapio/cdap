@@ -36,6 +36,7 @@ import co.cask.cdap.api.spark.SparkSpecification;
 import co.cask.cdap.api.stream.StreamEventDecoder;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.metrics.ProgramUserMetrics;
+import co.cask.cdap.app.metrics.WorkflowMetrics;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
@@ -78,14 +79,14 @@ public abstract class AbstractSparkContext implements SparkContext, Closeable {
   private final long logicalStartTime;
   private final Map<String, String> runtimeArguments;
   private final DiscoveryServiceClient discoveryServiceClient;
-  private final Metrics userMetrics;
-  private final MetricsContext metricsContext;
+  private final MetricsContext programMetricsContext;
+  private final MetricsContext workflowMetricsContext;
   private final LoggingContext loggingContext;
   private final PluginInstantiator pluginInstantiator;
   private final Admin admin;
-  protected final SystemDatasetInstantiator systemDatasetInstantiator;
   private final WorkflowProgramInfo workflowProgramInfo;
-
+  private final MetricsCollectionService metricsCollectionService;
+  protected final SystemDatasetInstantiator systemDatasetInstantiator;
 
   private Resources executorResources;
   private SparkConf sparkConf;
@@ -96,6 +97,7 @@ public abstract class AbstractSparkContext implements SparkContext, Closeable {
                                  Map<String, String> runtimeArguments, DiscoveryServiceClient discoveryServiceClient,
                                  MetricsContext metricsContext, LoggingContext loggingContext,
                                  DatasetFramework dsFramework,
+                                 MetricsCollectionService metricsCollectionService,
                                  @Nullable PluginInstantiator pluginInstantiator,
                                  @Nullable WorkflowProgramInfo workflowProgramInfo) {
     this.applicationSpecification = applicationSpecification;
@@ -104,8 +106,9 @@ public abstract class AbstractSparkContext implements SparkContext, Closeable {
     this.runId = runId;
     this.programClassLoader = programClassLoader;
     this.discoveryServiceClient = discoveryServiceClient;
-    this.userMetrics = new ProgramUserMetrics(metricsContext);
-    this.metricsContext = metricsContext;
+    this.metricsCollectionService = metricsCollectionService;
+    this.programMetricsContext = metricsContext;
+    this.workflowMetricsContext = getWorkflowMetricsContext(workflowProgramInfo, programId, metricsCollectionService);
     this.loggingContext = loggingContext;
     this.executorResources = Objects.firstNonNull(specification.getExecutorResources(), new Resources());
     this.sparkConf = new SparkConf();
@@ -152,7 +155,7 @@ public abstract class AbstractSparkContext implements SparkContext, Closeable {
 
   @Override
   public Metrics getMetrics() {
-    return new SparkUserMetrics(userMetrics);
+    return new SparkUserMetrics(getProgramWorkflowMetrics());
   }
 
   @Override
@@ -256,15 +259,17 @@ public abstract class AbstractSparkContext implements SparkContext, Closeable {
    * Returns the underlying {@link Metrics} instance for emitting user metrics. The returned instance is
    * not serializable and shouldn't be exposed to user program directly.
    */
-  public Metrics getUserMetrics() {
-    return userMetrics;
+  public Metrics getProgramWorkflowMetrics() {
+    return workflowMetricsContext == null ?
+      new ProgramUserMetrics(programMetricsContext) :
+      new WorkflowMetrics(programMetricsContext, workflowMetricsContext);
   }
 
   /**
-   * Returns the {@link MetricsContext} for this context.
+   * Returns the {@link MetricsContext} for this program.
    */
-  public MetricsContext getMetricsContext() {
-    return metricsContext;
+  public MetricsContext getProgramMetricsContext() {
+    return programMetricsContext;
   }
 
   /**
@@ -327,6 +332,32 @@ public abstract class AbstractSparkContext implements SparkContext, Closeable {
     tags.put(Constants.Metrics.Tag.INSTANCE_ID, "0");
 
     return service.getContext(tags);
+  }
+
+  /**
+   * Get the metrics collection service
+   *
+   * @return metrics collection service
+   */
+  public MetricsCollectionService getMetricsCollectionService() {
+    return metricsCollectionService;
+  }
+
+  @Nullable
+  private MetricsContext getWorkflowMetricsContext(@Nullable WorkflowProgramInfo workflowProgramInfo,
+                                                   Id.Program program,
+                                                   MetricsCollectionService metricsCollectionService) {
+    if (workflowProgramInfo == null) {
+      return null;
+    }
+
+    Map<String, String> tags = Maps.newHashMap();
+    tags.put(Constants.Metrics.Tag.NAMESPACE, program.getNamespaceId());
+    tags.put(Constants.Metrics.Tag.APP, program.getApplicationId());
+    tags.put(Constants.Metrics.Tag.WORKFLOW, workflowProgramInfo.getName());
+    tags.put(Constants.Metrics.Tag.RUN_ID, workflowProgramInfo.getRunId().getId());
+    tags.put(Constants.Metrics.Tag.NODE, workflowProgramInfo.getNodeId());
+    return metricsCollectionService.getContext(tags);
   }
 
   /**
