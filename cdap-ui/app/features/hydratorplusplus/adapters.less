@@ -111,6 +111,27 @@ body.theme-cdap {
       &.btn-grey {
         background-color: #ccc;
       }
+
+      &.btn-default.dropdown-toggle {
+        background-color: white;
+        color: #666;
+        border: 1px solid #999;
+        padding: 5px 15px;
+      }
+    }
+
+    .dropdown-menu.output-schema-actions {
+      top: 0;
+
+      & > li > a {
+        background-color: white;
+        color: #666;
+
+        &:hover {
+          background-color: @hydrator-blue;
+          color: white;
+        }
+      }
     }
   }
 

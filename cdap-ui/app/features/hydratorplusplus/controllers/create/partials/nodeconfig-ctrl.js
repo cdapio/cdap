@@ -213,6 +213,24 @@ class HydratorPlusPlusNodeConfigCtrl {
   schemaClear() {
     this.EventPipe.emit('schema.clear');
   }
+  importSchema() {
+    this.$timeout(function() {
+      document.getElementById('schema-import-link').click();
+    });
+  }
+  importFiles(files) {
+    let reader = new FileReader();
+    reader.readAsText(files[0], 'UTF-8');
+
+    reader.onload = (evt) => {
+      let data = evt.target.result;
+      this.EventPipe.emit('schema.import', data);
+    };
+  }
+  exportSchema() {
+    this.EventPipe.emit('schema.export');
+  }
+
   validateSchema() {
     this.state.errors = [];
     var schema;
