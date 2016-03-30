@@ -147,7 +147,7 @@ The *pageTitleStream* consumes events in the format returned by the Facebook "Li
   The *wikiStream* consumes events in the format returned by the MediaWiki Wikipedia API.
 
 - Inject a file of "Wikipedia" data to the stream *wikiStream* by running this command from the Standalone
-  CDAP SDK directory, using the Command Line Interface::
+  CDAP SDK directory, using the Command Line Interface:
 
   .. tabbed-parsed-literal::
 
@@ -185,6 +185,25 @@ setting either the runtime arguments (which changes the *next* run) or the prefe
 
 .. image:: _images/wikipedia-data-pipeline-2.png
    :width: 8in
+
+You can also do this from a terminal:
+
+- From the Standalone CDAP SDK directory, use the Command Line Interface:
+
+  .. tabbed-parsed-literal::
+
+    $ cdap-cli.sh start workflow |example|.\ |example-workflow| "\"min.pages.threshold=0 mode=online\""
+    
+    Successfully started workflow '|example-workflow|' of application '|example|'
+    with provided runtime arguments 'min.pages.threshold=0 mode=online'
+
+- Or, send a query via an HTTP request using the ``curl`` command:
+
+  .. tabbed-parsed-literal::
+
+    $ curl -w"\n" -X POST -d "{'min.pages.threshold':'0', 'mode':'online'}" \
+    "http://localhost:10000/v3/namespaces/default/apps/|example|/workflows/|example-workflow|/start"
+
 
 Once the pipeline has run through to the end (below), you can start the service and query the results.
 

@@ -45,8 +45,8 @@ The interesting part is the creation of the dataset *converted*:
   - The first set of properties configures the underlying FileSet, as documented in the
     :ref:`FileSet <datasets-fileset>` section.
   - The second set of properties configures how the dataset is queryable with SQL. Here we can enable the
-    dataset for querying, and if so, we must specify Hive-specific properties for the Avro format: The Avro
-    SerDe, an input and an output format, and an additional table property, namely the schema for the Avro SerDe.
+    dataset for querying, and if so, we must specify Hive-specific properties for the Avro format: the Avro
+    SerDe, an input and an output format, and an additional table property: namely, the schema for the Avro SerDe.
 
 The MapReduce Program
 ---------------------
@@ -144,7 +144,7 @@ You can now wait for the workflow to run, after which you can query the partitio
   +============================================+
 
 Note that in the Hive meta store, the partitions are registered with multiple dimensions rather
-than the time since the Epoch: the year, month, day of the month, hour and minute of the day.
+than the time since the Epoch: the year, month, and day of the month plus the hour and minute of the day.
 
 You can also query the data in the dataset. For example, to find the five most frequent body texts, issue:
 
@@ -165,7 +165,7 @@ You can also query the data in the dataset. For example, to find the five most f
 Because this dataset is time-partitioned, you can use the partitioning keys to restrict the scope
 of the query. For example, to run the same query for only the month of January, use the query::
 
-  select count(*) as count, body from dataset_converted where month=5 group by body order by count desc limit 5
+  select count(*) as count, body from dataset_converted where month=1 group by body order by count desc limit 5
 
 
 .. Stopping and Removing the Application

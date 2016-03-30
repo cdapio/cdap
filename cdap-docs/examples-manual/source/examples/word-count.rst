@@ -127,7 +127,7 @@ Querying the Results
 
 To query the ``RetrieveCounts`` service, either:
 
-- Use the CDAP CLI::
+- Use the CDAP CLI:
 
   .. tabbed-parsed-literal::
 

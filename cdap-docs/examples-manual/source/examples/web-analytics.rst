@@ -127,7 +127,7 @@ To inject a single log event, you can use the ``curl`` command:
 .. tabbed-parsed-literal::
 
   $ curl -d "192.168.252.135 - - [14/Jan/2014:00:12:51 -0400] 'GET /products HTTP/1.1' 500 182 'http://www.example.org' 'Mozilla/5.0'" \
-  http://localhost:10000/v3/namespaces/default/streams/log
+  "http://localhost:10000/v3/namespaces/default/streams/log"
 
 This sends the log event (formatted in the Common Log Format or CLF) to the CDAP instance located at
 ``localhost`` and listening on port ``10000``.
@@ -158,9 +158,14 @@ Then, once at the dataset detail page, select the *Explore* tab:
    :width: 8in
 
 You can then run SQL queries against the dataset. Let's try to find the top five IP
-addresses that visited the site by running a SQL query::
+addresses that visited the site by running a SQL query:
 
-  SELECT * FROM dataset_uniquevisitcount ORDER BY value DESC LIMIT 5
+.. tabbed-parsed-literal::
+    :single:
+    :copyable:
+    
+    SELECT * FROM dataset_uniquevisitcount ORDER BY value DESC LIMIT 5   
+
 
 You can copy and paste the above SQL into the text box as shown below (replacing the
 default query that is there) and click the **Execute SQL** button to run it. It may take a

@@ -39,7 +39,7 @@ of the application are tied together by a class ``UserProfiles``:
 .. literalinclude:: /../../../cdap-examples/UserProfiles/src/main/java/co/cask/cdap/examples/profiles/UserProfiles.java
     :language: java
     :lines: 33-
-
+    
 This application uses a Table with conflict detection either at the row level or
 at the column level.
 
@@ -99,57 +99,33 @@ and build this example twice:
 - The first time, you will use row-level conflict detection, and see errors appearing in a log;
 - The second time, you will use column-level conflict detection and see the scripts complete successfully without errors.
   
-Build the Application with Row-level Conflict Detection
--------------------------------------------------------
-Before building the application, set the ``ConflictDetection`` appropriately in the class ``UserProfiles``:
+#. Build the Application with Row-level Conflict Detection
 
-.. literalinclude:: /../../../cdap-examples/UserProfiles/src/main/java/co/cask/cdap/examples/profiles/UserProfiles.java
-      :language: java
-      :lines: 55-57
-      :dedent: 4
+   Before building the application, set the ``ConflictDetection`` appropriately in the class ``UserProfiles``:
+
+   .. literalinclude:: /../../../cdap-examples/UserProfiles/src/main/java/co/cask/cdap/examples/profiles/UserProfiles.java
+         :language: java
+         :lines: 55-57
+         :dedent: 4
+
       
-- The first time you build the application, set the ``Table.PROPERTY_CONFLICT_LEVEL`` to
-  ``ConflictDetection.ROW.name()``. 
+   - The first time you build the application, set the ``Table.PROPERTY_CONFLICT_LEVEL`` to
+     ``ConflictDetection.ROW.name()``. 
+ 
+   - Build the example (as described :ref:`Building an Example Application <cdap-building-running-example>`).
+   - Start CDAP, deploy and start the application and its component.
+     Make sure you start the flow and service as described below.
+   - Once the application has been deployed and started, you can run the example by `starting the flow and service. <#starting-the-flow>`__
+   - You should observe errors as described below, in the ``<CDAP-SDK-home>/logs/cdap-debug.log``.
 
-- Build the example (as described :ref:`Building an Example Application <cdap-building-running-example>`).
-- Start CDAP, deploy and start the application and its component.
-  Make sure you start the flow and service as described below.
-- Once the application has been deployed and started, you can run the example by `starting the flow and service. <#starting-the-flow>`__
-- You should observe errors as described below, in the ``<CDAP-SDK-home>/logs/cdap-debug.log``.
+#. Re-build the Application with Column-level Conflict Detection
 
-Re-build the Application with Column-level Conflict Detection
--------------------------------------------------------------
-- Stop the application's flow and service (as described `below <#stopping-and-removing-the-application>`__).
-- Delete the ``profiles`` dataset, either through the CDAP Command Line Interface or
-  by making a ``curl`` call:
-  
-  .. tabbed-parsed-literal::
-
-    $ curl -w"\n" -X DELETE "localhost:10000/v3/namespaces/default/data/datasets/profiles"
-
-- Now, rebuild the application, setting the ``Table.PROPERTY_CONFLICT_LEVEL`` back to its
-  original value, ``ConflictDetection.COLUMN.name()``.
-- Re-deploy and re-run the application. You should not see any errors in the log.    
-
-Deleting any Existing *profiles* Dataset
-----------------------------------------
-If a ``profiles`` dataset has been created from an earlier deployment of the application and
-running of the example, it needs to be removed before the next deployment, so that it is created
-with the correct properties.
-
-To delete the ``profiles`` dataset, either use the CDAP Command Line Interface:
-
-.. tabbed-parsed-literal::
-
-  $ cdap-cli.sh delete dataset instance profiles
-
-or by making a ``curl`` call:
-
-.. tabbed-parsed-literal::
-
-  $ curl -w"\n" -X DELETE "http://localhost:10000/v3/namespaces/default/data/datasets/profiles"
-  
-Then re-deploy the application.
+   - Stop the application's flow and service (as described `below <#stopping-and-removing-the-application>`__).
+   - :ref:`Delete the existing dataset <user-profiles-delete-dataset>` ``profiles``,
+     either through the CDAP Command Line Interface or by making a ``curl`` call.
+   - Now, rebuild the application, setting the ``Table.PROPERTY_CONFLICT_LEVEL`` back to its
+     original value, ``ConflictDetection.COLUMN.name()``.
+   - Re-deploy and re-run the application. You should not see any errors in the log.    
 
 .. Starting the Flow
 .. -----------------
@@ -165,8 +141,8 @@ Then re-deploy the application.
 
 .. include:: _includes/_starting-service.txt
 
-Populate the ``profiles`` Table
--------------------------------
+Populate the profiles Table
+---------------------------
 Populate the ``profiles`` table with users using a script. From the Standalone CDAP SDK directory, use:
 
 .. tabbed-parsed-literal::
@@ -176,27 +152,39 @@ Populate the ``profiles`` table with users using a script. From the Standalone C
 Create a Conflict
 -----------------
 Now, from two different terminals, run the following commands concurrently
-(they are set to run for a maximum of 100 seconds):
+(they are set to run, by default, for 100 seconds):
 
 - To randomly update the time of last login for users:
 
   .. tabbed-parsed-literal::
+  
+    .. Linux
 
     $ ./examples/UserProfiles/bin/update-login.sh
     
-- To generate random user activity events and send them to the stream::
+    .. Windows
+    
+    > .\examples\UserProfiles\bin\update-login.bat 100 1
+    
+- To generate random user activity events and send them to the stream:
 
   .. tabbed-parsed-literal::
+  
+    .. Linux
 
     $ ./examples/UserProfiles/bin/send-events.sh
-
+    
+    .. Windows
+    
+    > .\examples\UserProfiles\bin\send-events.bat 100 1
+    
 If both scripts are running at the same time, then some user profiles will be updated at
 the same time by the service and by the flow. With row-level conflict detection, you would
 see transaction conflicts in the logs. But when the ``profiles`` table uses
 column-level conflict detection, these conflicts are avoided.
 
 To see the behavior with row-level conflict detection, set the dataset creation statement
-at the bottom of ``UserProfiles.java`` to use ``ConflictDetection.ROW.name()`` and run the
+at the bottom of ``UserProfiles.java`` to use ``ConflictDetection.ROW.name()`` and re-run the
 steps as above. You should see transaction conflicts in the logs. (One of the scripts will
 stop when a conflict occurs. You can stop the other one at that time.)
 
@@ -214,12 +202,33 @@ error in the CDAP UI, in the `UserProfileService error log
 <http://localhost:9999/ns/default/apps/UserProfiles/programs/services/UserProfileService/logs?filter=error>`__.)
 
 Note that in order to see this happen (and to change from row- to column- and vice-versa),
-you need to delete the ``profiles`` dataset before redeploying the application, to force
-its recreation with the new properties.
+you need to :ref:`delete the existing dataset <user-profiles-delete-dataset>` ``profiles``
+before redeploying the application, to force its recreation with the new properties.
 
 Running the example with ``ConflictDetection.COLUMN.name()`` will result in the two scripts running
 concurrently without transaction conflicts.
 
+.. _user-profiles-delete-dataset:
+
+Deleting any Existing *profiles* Dataset
+----------------------------------------
+If the ``profiles`` dataset has been created from an earlier deployment of the application
+and running of the example, it needs to be removed before the next deployment and running,
+so that it is created with the correct properties.
+
+To delete the ``profiles`` dataset, either use the CDAP Command Line Interface:
+
+.. tabbed-parsed-literal::
+
+  $ cdap-cli.sh delete dataset instance profiles
+
+or by making a ``curl`` call:
+
+.. tabbed-parsed-literal::
+
+  $ curl -w"\n" -X DELETE "http://localhost:10000/v3/namespaces/default/data/datasets/profiles"
+  
+Then re-deploy the application.
 
 .. Stopping and Removing the Application
 .. =====================================

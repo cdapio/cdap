@@ -19,9 +19,13 @@ tabbed parsed-literals that may be switched between in HTML.
 
 The directive adds these parameters, both optional:
 
-    :language: comma-separated list of pygments languages; default 'console`
+    :languages: comma-separated list of pygments languages; default 'console`
 
     :tabs: comma-separated list of tabs; default 'Linux,Windows'
+    
+    :copyable: flag to indicate that all text can be "copied"
+    
+    :single: flag to indicate that only one tab should be used, with no label (not yet implemented)
 
 Separate the code blocks with matching comment lines. Tabs must follow in order of :tabs:
 option. Comment labels are for convenience, and don't need to match. Note example uses a
@@ -34,13 +38,17 @@ than as escaping the "|".
 It is best if all tabs on a page are identical. If not, changing an active tab will cause other
 tabs in other sets to become "inactive" (ie, disappear).
 
+Lines that begin with "$", "#", ">", "&gt;", "cdap >", "cdap &gt;" are treated as command lines
+and the text following is auto-selected for copying on mouse-over. (On Safari, command-V still 
+required for copying; other browser support click-copying to the clipboard.)
+
 FIXME: Add a concept of "tab labels" versus "tab keys", and control so they can be independent.
 
 Examples:
 
 .. tabbed-parsed-literal::
-    :tabs: "Linux or OS/X",Windows
     :languages: console,shell-session
+    :tabs: "Linux or OS/X",Windows
     
     .. Linux
 
@@ -67,6 +75,12 @@ Worst-case is that you have to use the full format and enter the two commands.
     Successfully started flow 'WhoFlow' of application 'HelloWorld' with stored runtime arguments '{}'
     
     $ curl -o /etc/yum.repos.d/cask.repo http://repository.cask.co/centos/6/x86_64/cdap/|short-version|/cask.repo
+    
+.. tabbed-parsed-literal::
+    :copyable:
+    :single:
+    
+    SELECT * FROM dataset_uniquevisitcount ORDER BY value DESC LIMIT 5   
 
 JavaScript and design of tabs was taken from the Apache Spark Project:
 http://spark.apache.org/examples.html
@@ -259,7 +273,11 @@ class TabbedParsedLiteralNode(nodes.literal_block):
 class TabbedParsedLiteral(ParsedLiteral):
     """TabbedParsedLiteral is a set of different blocks"""
 
-    option_spec = dict(languages=str, tabs=directives.unchanged_required, **ParsedLiteral.option_spec)
+    option_spec = dict(languages=directives.unchanged_required, 
+                       tabs=directives.unchanged_required,
+                       copyable=directives.flag,
+                       single=directives.flag,
+                       **ParsedLiteral.option_spec)
     has_content = True
 
     def cleanup_content(self):
@@ -342,6 +360,8 @@ class TabbedParsedLiteral(ParsedLiteral):
         node['languages'] = self.cleanup_options('languages', ['console', 'shell-session'])
         node['line_counts'] = line_counts
         node['linenos'] = self.cleanup_options('linenos', '')
+        node['copyable'] = self.options.has_key('copyable')
+        node['single'] = self.options.has_key('single')
         node['tabs'] = self.cleanup_options('tabs', DEFAULT_TABS)
         return [node] + messages
         
@@ -369,72 +389,84 @@ def visit_tpl_html(self, node):
         highlighted = self.highlighter.highlight_block(
             text, lang, opts=opts, warn=warner, linenos=linenos,
             **highlight_args)
+        copyable = node.get('copyable')
         if lang in ['console', 'shell-session', 'ps1', 'powershell']:
 
 #             print "highlighted (before):\n%s" % highlighted
             
             # Console-specific highlighting
-            new_highlighted = ['<!-- tabbed-parsed-literal start -->']
+            new_highlighted = ['','<!-- tabbed-parsed-literal start -->',]
             continuing_line = False # Indicates current line continues to next
             continued_line = False # Indicates current line was continued from previous
             copyable_text = False # Indicates that the line (or the previous) now has copyable text in it
             for l in highlighted.splitlines():
-                continuing_line = False
-                if l:
-                    continuing_line = l.endswith('\\</span>') or l.endswith('^</span>')    
-#                 print "continuing_line: %s continued_line: %s l: %s" % (continuing_line, continued_line, l)
+                if copyable:
+                    t = "<pre>"
+                    i = l.find(t)
+                    if i != -1:
+                        l = "%s<pre class=\"copyable\"><span class=\"copyable-text\">%s" % (l[:i], l[len(t)+i:])
+                    t = "</pre>"
+                    i = l.find(t)
+                    if i != -1:
+                        l = "%s</span></pre>%s" % (l[:i], l[len(t)+i:])
+                else:
+                    continuing_line = False
+                    if l:
+                        continuing_line = l.endswith('\\</span>') or l.endswith('^</span>')    
+    #                 print "continuing_line: %s continued_line: %s l: %s" % (continuing_line, continued_line, l)
                 
-                for p in ['$', '#', '>', '&gt;', 'cdap >','cdap &gt;',]:
-                    if l.startswith(p):
-                        l = "<span class=\"gp\">%s</span><span \"copyable copyable-text\">%s" % (p, l[1:])
-                        copyable_text = True
-                        break
+                    for p in ['$', '#', '>', '&gt;', 'cdap >', 'cdap &gt;']:
+                        if l.startswith(p):
+                            l = "<span class=\"gp\">%s</span><span class=\"copyable copyable-text\">%s" % (p, l[1:])
+                            copyable_text = True
+                            break
                         
-                    t = "<pre>%s " % p
-                    i = l.find(t)
-                    if i != -1:
-                        l = "%s<pre class=\"copyable\"><span class=\"gp\">%s </span><span \"copyable-text\">%s" % (l[:i], p, l[len(t)+i:])
-                        copyable_text = True
-                        break
+                        t = "<pre>%s " % p
+                        i = l.find(t)
+                        if i != -1:
+                            l = "%s<pre class=\"copyable\"><span class=\"gp\">%s </span><span \"copyable-text\">%s" % (l[:i], p, l[len(t)+i:])
+                            copyable_text = True
+                            break
                                                 
-                    t = "<pre><span class=\"go\">%s " % p
-                    i = l.find(t)
-                    if i != -1:
-                        l = "%s<pre class=\"copyable\"><span class=\"gp\">%s </span><span class=\"copyable-text\"><span class=\"go\">%s" % (l[:i], p, l[len(t)+i:])
-                        copyable_text = True
-                        break
+                        t = "<pre><span class=\"go\">%s " % p
+                        i = l.find(t)
+                        if i != -1:
+                            l = "%s<pre class=\"copyable\"><span class=\"gp\">%s </span><span class=\"copyable-text\"><span class=\"go\">%s" % (l[:i], p, l[len(t)+i:])
+                            copyable_text = True
+                            break
                     
-                    t = "<pre><span class=\"gp\">%s</span> " % p
-                    i = l.find(t)
-                    if i != -1:
-                        l = "%s<pre class=\"copyable\"><span class=\"gp\">%s </span><span class=\"copyable-text\">%s" % (l[:i], p, l[len(t)+i:])
-                        copyable_text = True
-                        break
-
-                    t = "<span class=\"go\">%s " % p
-                    if l.startswith(t):
-                        if continued_line:
-                            l = "<span class=\"gp\">%s </span><span class=\"go\">%s" % (p, l[len(t):])
-                        else:
-                            l = "<span class=\"gp\">%s </span><span class=\"copyable-text\"><span class=\"go\">%s" % (p, l[len(t):])
+                        t = "<pre><span class=\"gp\">%s</span> " % p
+                        i = l.find(t)
+                        if i != -1:
+                            l = "%s<pre class=\"copyable\"><span class=\"gp\">%s </span><span class=\"copyable-text\">%s" % (l[:i], p, l[len(t)+i:])
                             copyable_text = True
-                        break
+                            break
+
+                        t = "<span class=\"go\">%s " % p
+                        if l.startswith(t):
+                            if continued_line:
+                                l = "<span class=\"gp\">%s </span><span class=\"go\">%s" % (p, l[len(t):])
+                            else:
+                                l = "<span class=\"gp\">%s </span><span class=\"copyable-text\"><span class=\"go\">%s" % (p, l[len(t):])
+                                copyable_text = True
+                            break
                         
-                    t = "<span class=\"gp\">%s</span> " % p
-                    if l.startswith(t):
-                        if continued_line:                    
-                            l = "<span class=\"gp\">%s </span>%s" % (p, l[len(t):])
-                        else:
-                            l = "<span class=\"gp\">%s </span><span class=\"copyable-text\">%s" % (p, l[len(t):])
-                            copyable_text = True
-                        break
+                        t = "<span class=\"gp\">%s</span> " % p
+                        if l.startswith(t):
+                            if continued_line:                    
+                                l = "<span class=\"gp\">%s </span>%s" % (p, l[len(t):])
+                            else:
+                                l = "<span class=\"gp\">%s </span><span class=\"copyable-text\">%s" % (p, l[len(t):])
+                                copyable_text = True
+                            break
 
-#                 print "continuing_line: %s continued_line: %s copyable_text: %s l: %s" % (continuing_line, continued_line, copyable_text, l)
-                if continued_line and (not continuing_line) or (not continued_line and not continuing_line and copyable_text):
-                    # End the copyable-text
-                    l += "</span>"
-                    copyable_text = False
-
+    #                 print "continuing_line: %s continued_line: %s copyable_text: %s l: %s" % (continuing_line, continued_line, copyable_text, l)
+                    if (continued_line and (not continuing_line)) or (not continued_line and not continuing_line and copyable_text):
+    #                     print "continued_line: %s continuing_line: %s copyable_text: %s" % (continued_line, continuing_line, copyable_text)
+                        # End the copyable-text
+                        l += "</span>"
+                        copyable_text = False
+                    
                 new_highlighted.append(l)
                 # Set next line status
                 continued_line = continuing_line
