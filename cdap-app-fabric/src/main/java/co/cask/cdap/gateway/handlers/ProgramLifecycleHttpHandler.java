@@ -888,7 +888,9 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(programId, runtimeService);
         if (runtimeInfo != null) {
           runtimeInfo.getController().command(ProgramOptionConstants.INSTANCES,
-                                              ImmutableMap.of(programId.getId(), String.valueOf(instances))).get();
+                                              ImmutableMap.of("runnable", programId.getId(),
+                                                              "oldInstances", String.valueOf(oldInstances),
+                                                              "newInstances", String.valueOf(instances))).get();
         }
       }
       responder.sendStatus(HttpResponseStatus.OK);
@@ -1089,7 +1091,9 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(programId, runtimeService);
         if (runtimeInfo != null) {
           runtimeInfo.getController().command(ProgramOptionConstants.INSTANCES,
-                                              ImmutableMap.of(serviceId, String.valueOf(instances))).get();
+                                              ImmutableMap.of("runnable", programId.getId(),
+                                                              "oldInstances", String.valueOf(oldInstances),
+                                                              "newInstances", String.valueOf(instances))).get();
         }
       }
       responder.sendStatus(HttpResponseStatus.OK);
