@@ -264,11 +264,11 @@
     }
 }
 
-.tab-content > .tab-pane {
+.tab-contents > .tab-pane {
     display: none
 }
 
-.tab-content > .active {
+.tab-contents > .active {
     display: block
 }
 

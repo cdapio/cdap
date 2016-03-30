@@ -19,13 +19,17 @@ tabbed parsed-literals that may be switched between in HTML.
 
 The directive adds these parameters, both optional:
 
-    :languages: comma-separated list of pygments languages; default 'console`
+    :languages: comma-separated list of pygments languages; default "console"
 
-    :tabs: comma-separated list of tabs; default 'Linux,Windows'
+    :tabs: comma-separated list of tabs; default "Linux,Windows"
     
     :copyable: flag to indicate that all text can be "copied"
     
     :single: flag to indicate that only one tab should be used, with no label (not yet implemented)
+
+    :independent: flag to indicate that this tab set does not link to another tabs
+    
+    :dependent: comma-separated list of linked-tabs; default "Linux,Windows"
 
 Separate the code blocks with matching comment lines. Tabs must follow in order of :tabs:
 option. Comment labels are for convenience, and don't need to match. Note example uses a
@@ -42,7 +46,8 @@ Lines that begin with "$", "#", ">", "&gt;", "cdap >", "cdap &gt;" are treated a
 and the text following is auto-selected for copying on mouse-over. (On Safari, command-V still 
 required for copying; other browser support click-copying to the clipboard.)
 
-FIXME: Add a concept of "tab labels" versus "tab keys", and control so they can be independent.
+FIXME: Add a concept of "tab labels" versus "tab keys".
+FIXME: Implement the ":single:" flag.
 
 Examples:
 
@@ -80,7 +85,21 @@ Worst-case is that you have to use the full format and enter the two commands.
     :copyable:
     :single:
     
-    SELECT * FROM dataset_uniquevisitcount ORDER BY value DESC LIMIT 5   
+    SELECT * FROM dataset_uniquevisitcount ORDER BY value DESC LIMIT 5
+    
+Tab sets are either independent or dependent. Independent tabs do not participate in page or site tab setting.
+In other words, clicking on a tab does not change any other tabs. Dependent tabs do. Clicking on the "Linux"
+tab will change all other tabs to "Linux". You may need to include a mapping listing the relationship, such as this:
+
+.. tabbed-parsed-literal::
+  :tabs: Linux,Windows,"Distributed CDAP"
+  :dependent: Linux,Windows,Linux
+  :languages: console,shell-session,console
+
+    ...
+    
+This maps the tab "Distributed CDAP" to the other "Linux" tabs on the page. Currently, only one 
+dependent set of tabs can be used per documentation set.
 
 JavaScript and design of tabs was taken from the Apache Spark Project:
 http://spark.apache.org/examples.html
@@ -95,71 +114,78 @@ from docutils.parsers.rst.directives.body import ParsedLiteral
 from docutils.parsers.rst.roles import set_classes
 
 DEFAULT_TABS = ['Linux', 'Windows']
+DEFAULT_LANGUAGES = ['console', 'shell-session']
 
 TPL_COUNTER = 0
 
-JS_TPL = """\
+# Sets the handlers for the tabs used by a particular instance of tabbed parsed literal
+# Note doubled {{ to pass them through formatting
+DEPENDENT_JS_TPL = """\
 <script type="text/javascript">
 
-function changeExampleTab(example) {
-  return function(e) {
+$(function {div_name}() {{
+  var examples = {tab_links};
+  var mapping = {mapping};
+  for (var i = 0; i < examples.length; i++) {{
+    var example = examples[i];
+    $("#{div_name} .example-tab-" + example).click(changeExampleTab(example, mapping, "{div_name}"));
+  }}
+}});
+
+</script>
+"""
+
+# Note doubled {{ to pass them through formatting
+INDEPENDENT_JS_TPL = """\
+<script type="text/javascript">
+
+function change_{div_name}_ExampleTab(example) {{
+  return function(e) {{
     e.preventDefault();
     var scrollOffset = $(this).offset().top - $(document).scrollTop();
-    $(".tab-pane").removeClass("active");
-    $(".tab-pane-" + example).addClass("active");
-    $(".example-tab").removeClass("active");
-    $(".example-tab-" + example).addClass("active");
+    $("#{div_name} .tab-pane").removeClass("active");
+    $("#{div_name} .tab-pane-" + example).addClass("active");
+    $("#{div_name} .example-tab").removeClass("active");
+    $("#{div_name} .example-tab-" + example).addClass("active");
     $(document).scrollTop($(this).offset().top - scrollOffset);
-    localStorage.setItem("cdap-documentation-tab", example);
-  }
-}
+  }}
+}}
 
-$(function() {
-  var examples = %s;
-  for (var i = 0; i < examples.length; i++) {
+$(function() {{
+  var examples = {tab_links};
+  for (var i = 0; i < examples.length; i++) {{
     var example = examples[i];
-    $(".example-tab-" + example).click(changeExampleTab(example));
-  }
-});
-
-$(document).ready(function() {
-  var example = localStorage.getItem("cdap-documentation-tab");
-  var tabs = $(".example-tab-" + example);
-  if (example && tabs) {
-    try {
-      $(".example-tab-" + example)[0].click(changeExampleTab(example));
-    } catch (e) {
-      console.log("Unable to set using Cookie: " + example);
-    }
-  }
-});
+    $("#{div_name} .example-tab-" + example).click(change_{div_name}_ExampleTab(example));
+  }}
+}});
 
 </script>
 """
 
 DIV_START = """
-<div id="{div_name}" >
+<div id="{div_name}" class="{class}">
 """
 
 NAV_TABS = """
 <ul class="nav nav-tabs">
-%s
-</ul>
+%s</ul>
+
 """
 
-NAV_TABS_ENTRY = """
+NAV_TABS_ENTRY = """\
 <li class="example-tab example-tab-{tab_link} {active}"><a href="#">{tab_name}</a></li>
 """
 
-TAB_CONTENT_START = """
-<div class="tab-content">
+TAB_CONTENT_START = """\
+<div class="tab-contents">
+
 """
 
 DIV_END = """
 </div>
 """
 
-TAB_CONTENT_ENTRY_START = """
+TAB_CONTENT_ENTRY_START = """\
 <div class="tab-pane tab-pane-{tab_link} {active}">
 <div class="code code-tab">
 """
@@ -205,7 +231,7 @@ def convert(c, state={}):
         if not state.has_key(k):
             state[k] = False
     if DEBUG: print "\nconverting: %s\nstate: %s" % (c, state)
-    for i, v in enumerate(c.split()):
+    for i, v in enumerate(text_list):
         if DEBUG: print "v:%s" % v
         if v == CLI or state['IN_CLI']:
             IN_CLI = True
@@ -273,11 +299,13 @@ class TabbedParsedLiteralNode(nodes.literal_block):
 class TabbedParsedLiteral(ParsedLiteral):
     """TabbedParsedLiteral is a set of different blocks"""
 
-    option_spec = dict(languages=directives.unchanged_required, 
-                       tabs=directives.unchanged_required,
-                       copyable=directives.flag,
-                       single=directives.flag,
-                       **ParsedLiteral.option_spec)
+    option_spec = dict(dependent=directives.unchanged_required,
+                        independent=directives.flag,
+                        languages=directives.unchanged_required, 
+                        tabs=directives.unchanged_required,
+                        copyable=directives.flag,
+                        single=directives.flag,
+                        **ParsedLiteral.option_spec)
     has_content = True
 
     def cleanup_content(self):
@@ -299,7 +327,8 @@ class TabbedParsedLiteral(ParsedLiteral):
                 new_line, state = convert(line, state)
                 new_content.append(new_line)
             content = LINUX + old_content + WINDOWS + new_content
-#             print "old_content:\n%s\nnew_content:\n%s\n" % (old_content, new_content)
+#             print "old_content:\n%s\n" % ('\n'.join(old_content))
+#             print "new_content:\n%s\n" % ('\n'.join(new_content))
 
         line_sets = []
         line_set = []
@@ -315,7 +344,8 @@ class TabbedParsedLiteral(ParsedLiteral):
         line_counts = []
         lines = []
         for line_set in line_sets:
-            block = '\n'.join(line_set).strip()
+#             block = '\n'.join(line_set).strip()
+            block = '\n'.join(line_set).rstrip()
             block = block.replace('\\', '\\\\')
             block = block.replace('\\|', '\\\ |')
             if not block.endswith('\n'):
@@ -357,12 +387,25 @@ class TabbedParsedLiteral(ParsedLiteral):
         self.add_name(node)
 
        
-        node['languages'] = self.cleanup_options('languages', ['console', 'shell-session'])
+        node['languages'] = self.cleanup_options('languages', DEFAULT_LANGUAGES)
         node['line_counts'] = line_counts
         node['linenos'] = self.cleanup_options('linenos', '')
         node['copyable'] = self.options.has_key('copyable')
         node['single'] = self.options.has_key('single')
         node['tabs'] = self.cleanup_options('tabs', DEFAULT_TABS)
+        tab_count = len(node['tabs'])
+        if tab_count != len(node['languages']):
+            print "Error: tabs (%s) don't match languages (%s)" % (node['tabs'], node['languages'])
+            node['languages'] = [DEFAULT_LANGUAGES[0]] * tab_count
+        node['independent'] = self.options.has_key('independent')
+        if not node['independent']:
+            node['dependent'] = self.cleanup_options('dependent', DEFAULT_TABS)
+            if tab_count != len(node['dependent']):
+                print "Error: tabs (%s) don't match dependents (%s)" % (node['tabs'], node['dependent'])
+                if tab_count > 1:
+                    node['dependent'] = DEFAULT_TABS + [DEFAULT_TABS[0]] * (tab_count -2)
+                else:
+                    node['dependent'] = [DEFAULT_TABS[0]] * tab_count
         return [node] + messages
         
 def visit_tpl_html(self, node):
@@ -392,8 +435,7 @@ def visit_tpl_html(self, node):
         copyable = node.get('copyable')
         if lang in ['console', 'shell-session', 'ps1', 'powershell']:
 
-#             print "highlighted (before):\n%s" % highlighted
-            
+#             print "highlighted (before):\n%s" % highlighted 
             # Console-specific highlighting
             new_highlighted = ['','<!-- tabbed-parsed-literal start -->',]
             continuing_line = False # Indicates current line continues to next
@@ -483,10 +525,26 @@ def visit_tpl_html(self, node):
     tabs = node.get('tabs')
     clean_tabs = [str(tab) for tab in tabs]
     clean_tab_links = [tab.replace(' ', '-').lower() for tab in clean_tabs]
-    fill_div = {'div_name': 'tabbedparsedliteral{0}'.format(TPL_COUNTER)}
+    dependent = node.get('dependent')
+    if dependent:
+        mapping = {}
+        for i in range(len(clean_tab_links)):
+            mapping[clean_tab_links[i]] = str(dependent[i]).lower()        
     
-    start_html = JS_TPL % clean_tab_links + DIV_START.format(**fill_div)
-#     start_html = DIV_START.format(**fill_div)
+    div_name = 'tabbedparsedliteral{0}'.format(TPL_COUNTER)
+    fill_div_options = {'div_name': div_name}
+    
+    if node.get('independent'):
+        # Independent node, doesn't participate in clicks with other nodes
+        fill_div_options['class'] = 'independent'
+        js_options = {'tab_links':clean_tab_links, 'div_name':div_name}
+        start_html = INDEPENDENT_JS_TPL.format(**js_options) + DIV_START.format(**fill_div_options)
+    else:
+        # Dependent node
+        fill_div_options['class'] = 'dependent'
+        js_options = {'tab_links':clean_tab_links, 'mapping': repr(mapping), 'div_name':div_name}
+        start_html = DEPENDENT_JS_TPL.format(**js_options) + DIV_START.format(**fill_div_options)
+
     text_list = node.astext().split('\n')
     offset = 0
     for index in range(len(tabs)):
