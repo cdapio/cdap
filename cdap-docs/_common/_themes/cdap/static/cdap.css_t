@@ -373,6 +373,21 @@ ul.simple {
   margin-bottom: 1em;
 }
 
+/* -- Literals ---------------------------------------------------------- */
+
+.docutils.literal {
+  background: #F3F3F3;
+  border-radius: 3px;
+  padding: 1px 3px;
+}
+
+td .docutils.literal {
+  background: #ffffff;
+  border: 0px;
+  border-radius: 0px;
+  padding: 0px;
+}
+
 /* -- Table styles used in Introduction page -------------------------------------- */
 
 div.table-block.container {

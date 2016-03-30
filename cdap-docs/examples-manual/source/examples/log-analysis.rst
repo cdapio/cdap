@@ -49,8 +49,8 @@ number of requests made by them.
 
 Let's look at some of these components, and then run the application and see the results.
 
-The LogAnalysis Application
----------------------------
+The *LogAnalysis* Application
+-----------------------------
 As in the other `examples <index.html>`__, the components
 of the application are tied together by the class ``LogAnalysisApp``:
 
@@ -58,15 +58,15 @@ of the application are tied together by the class ``LogAnalysisApp``:
    :language: java
    :lines: 60-94
 
-The *hitCount* and *responseCount* ``KeyValueTable``\ s and *reqCount* ``TimePartitionedFileSet``
--------------------------------------------------------------------------------------------------
+The *hitCount* and *responseCount* KeyValueTables and *reqCount* TimePartitionedFileSet
+---------------------------------------------------------------------------------------
 The calculated hit count for every unique URL is stored in a ``KeyValueTable`` dataset,
 *hitCount* and the total number of responses for a response code is stored in another
 ``KeyValueTable`` dataset, *responseCount*. The total number of requests made by every
 unique IP address is written to a ``TimePartitionedFileSet``, *ipCount*.
 
-The ``HitCounterService``, ``ResponseCounterService``, and ``RequestCounterService``
-------------------------------------------------------------------------------------
+The *HitCounterService*, *ResponseCounterService*, and *RequestCounterService*
+------------------------------------------------------------------------------
 These services provide convenient endpoints:
 
 - ``HitCounterService:`` ``hitcount`` endpoint to obtain the total number of hits for a given URL;

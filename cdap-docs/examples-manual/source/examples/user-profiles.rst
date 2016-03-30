@@ -159,8 +159,8 @@ Then re-deploy the application.
 
 .. include:: _includes/_starting-service.txt
 
-Populate the ``profiles`` Table
--------------------------------
+Populate the *profiles* Table
+-----------------------------
 Populate the ``profiles`` table with users using a script. From the Standalone CDAP SDK directory, use::
 
   $ ./examples/UserProfiles/bin/add-users.sh
