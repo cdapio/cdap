@@ -70,7 +70,6 @@ public class AuthorizationCLITest extends CLITestBase {
 
     /**
      * Return the base URI of Standalone for use in tests.
-     * @return
      */
     public URI getBaseURI() {
       return standaloneTester.getBaseURI();
@@ -81,7 +80,10 @@ public class AuthorizationCLITest extends CLITestBase {
       Location authExtensionJar = AppJarHelper.createDeploymentJar(locationFactory, InMemoryAuthorizer.class);
       return new String[] {
         Constants.Security.Authorization.ENABLED, "true",
-        Constants.Security.Authorization.EXTENSION_JAR_PATH, authExtensionJar.toURI().getPath()
+        Constants.Security.Authorization.EXTENSION_JAR_PATH, authExtensionJar.toURI().getPath(),
+        // Bypass authorization enforcement for grant/revoke operations in this test. Authorization enforcement for
+        // grant/revoke is tested in AuthorizationHandlerTest
+        Constants.Security.Authorization.EXTENSION_CONFIG_PREFIX + "superusers", "*"
       };
     }
   }
@@ -99,7 +101,6 @@ public class AuthorizationCLITest extends CLITestBase {
     cli = cliMain.getCLI();
     testCommandOutputContains(cli, "connect " + AUTH_STANDALONE.getBaseURI(), "Successfully connected");
   }
-
 
   @Test
   public void testAuthorizationCLI() throws Exception {

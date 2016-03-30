@@ -34,11 +34,14 @@ import co.cask.cdap.security.spi.authorization.RoleAlreadyExistsException;
 import co.cask.cdap.security.spi.authorization.RoleNotFoundException;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.tephra.TransactionFailureException;
+import com.google.common.base.Splitter;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.HashSet;
+import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -47,6 +50,7 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public class DatasetBasedAuthorizer extends AbstractAuthorizer {
   private static final Logger LOG = LoggerFactory.getLogger(DatasetBasedAuthorizer.class);
+  private final Set<Principal> superUsers = new HashSet<>();
   private AuthorizationContext context;
   private Supplier<ACLDataset> dsSupplier;
 
@@ -67,11 +71,27 @@ public class DatasetBasedAuthorizer extends AbstractAuthorizer {
         return new ACLDataset(table);
       }
     };
+    Properties properties = context.getExtensionProperties();
+    if (!properties.containsKey("superusers")) {
+      LOG.warn("No superusers configured. The system may become unusable when authorization is enabled but " +
+                 "superusers are not configured. Please set the property " +
+                 "security.authorization.extension.config.superusers to a comma-separated list of superusers in " +
+                 "cdap-site.xml and restart CDAP.");
+      return;
+    }
+    for (String superuser : Splitter.on(",").trimResults().omitEmptyStrings()
+      .split(properties.getProperty("superusers"))) {
+      this.superUsers.add(new Principal(superuser, Principal.PrincipalType.USER));
+    }
   }
 
   @Override
   public void enforce(final EntityId entity, final Principal principal,
                       final Action action) throws UnauthorizedException, TransactionFailureException {
+    // no enforcement for superusers
+    if (superUsers.contains(principal)) {
+      return;
+    }
     final AtomicReference<Boolean> result = new AtomicReference<>(false);
     context.execute(new TxRunnable() {
       @Override

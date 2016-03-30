@@ -87,6 +87,9 @@ public class AuthorizationHandler extends AbstractAppFabricHttpHandler {
     verifyAuthRequest(request);
 
     Set<Action> actions = request.getActions() == null ? EnumSet.allOf(Action.class) : request.getActions();
+    // enforce that the user granting access has admin privileges on the entity
+    authorizerInstantiatorService.get().enforce(request.getEntity(), SecurityRequestContext.toPrincipal(),
+                                                Action.ADMIN);
     authorizerInstantiatorService.get().grant(request.getEntity(), request.getPrincipal(), actions);
 
     httpResponder.sendStatus(HttpResponseStatus.OK);
@@ -101,6 +104,9 @@ public class AuthorizationHandler extends AbstractAppFabricHttpHandler {
     RevokeRequest request = parseBody(httpRequest, RevokeRequest.class);
     verifyAuthRequest(request);
 
+    // enforce that the user revoking access has admin privileges on the entity
+    authorizerInstantiatorService.get().enforce(request.getEntity(), SecurityRequestContext.toPrincipal(),
+                                                Action.ADMIN);
     if (request.getPrincipal() == null && request.getActions() == null) {
       authorizerInstantiatorService.get().revoke(request.getEntity());
     } else {
