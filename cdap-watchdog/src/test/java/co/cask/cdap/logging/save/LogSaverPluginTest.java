@@ -141,40 +141,54 @@ public class LogSaverPluginTest extends KafkaTestBase {
     // Re-process from the reset offset
     // Verify checkpoints
 
-    startLogSaver();
-    publishLogs();
+    try {
+      startLogSaver();
+      publishLogs();
 
-    LocationFactory locationFactory = injector.getInstance(LocationFactory.class);
-    Location ns1LogBaseDir = locationFactory.create(namespaceDir).append("NS_1").append(logBaseDir);
-    waitTillLogSaverDone(ns1LogBaseDir, "APP_1/flow-FLOW_1/%s", "Test log message 59 arg1 arg2");
+      LocationFactory locationFactory = injector.getInstance(LocationFactory.class);
+      Location ns1LogBaseDir = locationFactory.create(namespaceDir).append("NS_1").append(logBaseDir);
+      waitTillLogSaverDone(ns1LogBaseDir, "APP_1/flow-FLOW_1/%s", "Test log message 59 arg1 arg2");
 
-    testLogRead(new FlowletLoggingContext("NS_1", "APP_1", "FLOW_1", "", "RUN1", "INSTANCE"));
+      testLogRead(new FlowletLoggingContext("NS_1", "APP_1", "FLOW_1", "", "RUN1", "INSTANCE"));
 
-    LogCallback logCallback = new LogCallback();
-    FileLogReader distributedLogReader = injector.getInstance(FileLogReader.class);
-    distributedLogReader.getLog(new FlowletLoggingContext("NS_1", "APP_1", "FLOW_1", "", null, "INSTANCE"),
-                                0, Long.MAX_VALUE, Filter.EMPTY_FILTER, logCallback);
-    Assert.assertEquals(60, logCallback.getEvents().size());
+      LogCallback logCallback = new LogCallback();
+      FileLogReader distributedLogReader = injector.getInstance(FileLogReader.class);
+      distributedLogReader.getLog(new FlowletLoggingContext("NS_1", "APP_1", "FLOW_1", "", null, "INSTANCE"),
+                                  0, Long.MAX_VALUE, Filter.EMPTY_FILTER, logCallback);
+      Assert.assertEquals(60, logCallback.getEvents().size());
 
-    // Reset checkpoint for log saver plugin
-    resetLogSaverPluginCheckpoint();
+      // Reset checkpoint for log saver plugin
+      resetLogSaverPluginCheckpoint();
 
-    // reset the logsaver to start reading from reset offset
-    Set<Integer> partitions = Sets.newHashSet(0, 1);
-    logSaver.unscheduleTasks();
-    logSaver.scheduleTasks(partitions);
+      // reset the logsaver to start reading from reset offset
+      Set<Integer> partitions = Sets.newHashSet(0, 1);
+      logSaver.unscheduleTasks();
+      logSaver.scheduleTasks(partitions);
 
-    waitTillLogSaverDone(ns1LogBaseDir, "APP_1/flow-FLOW_1/%s", "Test log message 59 arg1 arg2");
-    stopLogSaver();
+      waitTillLogSaverDone(ns1LogBaseDir, "APP_1/flow-FLOW_1/%s", "Test log message 59 arg1 arg2");
+      stopLogSaver();
 
-    LogCallback callbackAfterReset = new LogCallback();
+      LogCallback callbackAfterReset = new LogCallback();
 
-    //Verify that more records are processed by LogWriter plugin
-    distributedLogReader.getLog(new FlowletLoggingContext("NS_1", "APP_1", "FLOW_1", "", null, "INSTANCE"),
-                                0, Long.MAX_VALUE, Filter.EMPTY_FILTER, callbackAfterReset);
-    Assert.assertEquals(60, logCallback.getEvents().size());
-    // Checkpoint should read 60 for both processor
-    verifyCheckpoint();
+      //Verify that more records are processed by LogWriter plugin
+      distributedLogReader.getLog(new FlowletLoggingContext("NS_1", "APP_1", "FLOW_1", "", null, "INSTANCE"),
+                                  0, Long.MAX_VALUE, Filter.EMPTY_FILTER, callbackAfterReset);
+      Assert.assertEquals(60, logCallback.getEvents().size());
+      // Checkpoint should read 60 for both processor
+      verifyCheckpoint();
+    } catch (Throwable t) {
+      try {
+        final Multimap<String, String> contextMessages = getPublishedKafkaMessages();
+        LOG.info("All kafka messages: {}", contextMessages);
+      } catch (Exception e) {
+        LOG.error("Error while getting published kafka messages {}", e);
+      }
+      if (!LogSaverTest.isExpressive()) {
+        LOG.error("Error while reading checkpoint messages from kafka {}", t);
+      } else {
+        throw t;
+      }
+    }
   }
 
   private void resetLogSaverPluginCheckpoint() throws Exception {
@@ -203,20 +217,9 @@ public class LogSaverPluginTest extends KafkaTestBase {
     TypeLiteral<Set<KafkaLogProcessor>> type = new TypeLiteral<Set<KafkaLogProcessor>>() { };
     Set<KafkaLogProcessor> processors =
       injector.getInstance(Key.get(type, Names.named(Constants.LogSaver.MESSAGE_PROCESSORS)));
-
-    try {
-      for (KafkaLogProcessor processor : processors) {
-        CheckpointManager checkpointManager = getCheckPointManager(processor);
-        Assert.assertEquals(60, checkpointManager.getCheckpoint(0).getNextOffset());
-      }
-    } catch (Throwable t) {
-      final Multimap<String, String> contextMessages = getPublishedKafkaMessages();
-      LOG.info("All kafka messages: {}", contextMessages);
-      if (!LogSaverTest.isExpressive()) {
-        LOG.error("Error while reading checkpoint messages from kafka {}", t);
-      } else {
-        throw t;
-      }
+    for (KafkaLogProcessor processor : processors) {
+      CheckpointManager checkpointManager = getCheckPointManager(processor);
+      Assert.assertEquals(60, checkpointManager.getCheckpoint(0).getNextOffset());
     }
   }
 
@@ -239,21 +242,9 @@ public class LogSaverPluginTest extends KafkaTestBase {
     distributedLogReader.getLog(loggingContext, 0, Long.MAX_VALUE, Filter.EMPTY_FILTER, logCallback1);
     List<LogEvent> allEvents = logCallback1.getEvents();
 
-    final Multimap<String, String> contextMessages = getPublishedKafkaMessages();
-
     for (int i = 0; i < 60; ++i) {
-      try {
-        Assert.assertEquals("All messages in Kafka = " + contextMessages,
-                            String.format("Test log message %d arg1 arg2", i),
-                            allEvents.get(i).getLoggingEvent().getFormattedMessage());
-      } catch (Throwable t) {
-        if (!LogSaverTest.isExpressive()) {
-          LOG.error("Error while reading log messages from kafka {}", t);
-        } else {
-          // Throw exception in expressive mode
-          throw t;
-        }
-      }
+      Assert.assertEquals("Assert failed: ", String.format("Test log message %d arg1 arg2", i),
+                          allEvents.get(i).getLoggingEvent().getFormattedMessage());
       if (loggingContext instanceof ServiceLoggingContext) {
         Assert.assertEquals(
           loggingContext.getSystemTagsMap().get(SystemLoggingContext.TAG_SYSTEM_ID).getValue(),
