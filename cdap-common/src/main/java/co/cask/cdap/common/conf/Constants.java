@@ -511,6 +511,7 @@ public final class Constants {
       public static final String MR_TASK_TYPE = "mrt";
 
       public static final String WORKFLOW = "wf";
+      public static final String NODE = "nd";
 
       public static final String SPARK = "sp";
 
