@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.etl.batch.mock;
+package co.cask.cdap.etl.mock.batch;
 
 import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.annotation.Plugin;
@@ -30,6 +30,7 @@ import co.cask.cdap.etl.api.PipelineConfigurer;
 import co.cask.cdap.etl.api.batch.BatchRuntimeContext;
 import co.cask.cdap.etl.api.batch.BatchSource;
 import co.cask.cdap.etl.api.batch.BatchSourceContext;
+import co.cask.cdap.etl.proto.v2.ETLPlugin;
 import co.cask.cdap.format.StructuredRecordStringConverter;
 import co.cask.cdap.test.DataSetManager;
 
@@ -52,6 +53,9 @@ public class MockSource extends BatchSource<byte[], Row, StructuredRecord> {
     this.config = config;
   }
 
+  /**
+   * Config for the source.
+   */
   public static class Config extends PluginConfig {
     private String tableName;
   }
@@ -79,10 +83,10 @@ public class MockSource extends BatchSource<byte[], Row, StructuredRecord> {
     context.setInput(config.tableName);
   }
 
-  public static co.cask.cdap.etl.proto.v1.Plugin getPlugin(String tableName) {
+  public static ETLPlugin getPlugin(String tableName) {
     Map<String, String> properties = new HashMap<>();
     properties.put("tableName", tableName);
-    return new co.cask.cdap.etl.proto.v1.Plugin("Mock", properties);
+    return new ETLPlugin("Mock", BatchSource.PLUGIN_TYPE, properties, null);
   }
 
   /**
@@ -91,7 +95,8 @@ public class MockSource extends BatchSource<byte[], Row, StructuredRecord> {
    * @param tableManager dataset manager used to write to the source dataset
    * @param records records that should be the input for the pipeline
    */
-  public static void writeInput(DataSetManager<Table> tableManager, List<StructuredRecord> records) throws Exception {
+  public static void writeInput(DataSetManager<Table> tableManager,
+                                Iterable<StructuredRecord> records) throws Exception {
     tableManager.flush();
     Table table = tableManager.get();
     // write each record as a separate row, with the serialized record as one column and schema as another

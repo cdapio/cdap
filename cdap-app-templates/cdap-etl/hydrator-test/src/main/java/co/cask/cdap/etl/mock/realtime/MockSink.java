@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.etl.realtime.mock;
+package co.cask.cdap.etl.mock.realtime;
 
 import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.annotation.Plugin;
@@ -24,6 +24,7 @@ import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.etl.api.realtime.DataWriter;
 import co.cask.cdap.etl.api.realtime.RealtimeContext;
 import co.cask.cdap.etl.api.realtime.RealtimeSink;
+import co.cask.cdap.etl.proto.v2.ETLPlugin;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
@@ -44,7 +45,7 @@ import java.util.concurrent.TimeoutException;
 import javax.annotation.Nullable;
 
 /**
- * Mock sink to keep track of what was written. For every call to write, it will write
+ * Mock sink to keep track of what was written. For every call to write, it will write its records to a new file.
  */
 @Plugin(type = RealtimeSink.PLUGIN_TYPE)
 @Name("Mock")
@@ -96,19 +97,21 @@ public class MockSink extends RealtimeSink<StructuredRecord> {
     return outputRecords.size();
   }
 
+  /**
+   * Config for the sink.
+   */
   public static class Config extends PluginConfig {
     @Nullable
     private String dir;
   }
 
   // should pass in a temporary directory to ensure proper cleanup
-  public static co.cask.cdap.etl.proto.v1.Plugin getPlugin(File dir) {
-    if (dir == null) {
-      return new co.cask.cdap.etl.proto.v1.Plugin("Mock", null);
-    }
+  public static ETLPlugin getPlugin(File dir) {
     Map<String, String> properties = new HashMap<>();
-    properties.put("dir", dir.getAbsolutePath());
-    return new co.cask.cdap.etl.proto.v1.Plugin("Mock", properties);
+    if (dir != null) {
+      properties.put("dir", dir.getAbsolutePath());
+    }
+    return new ETLPlugin("Mock", RealtimeSink.PLUGIN_TYPE, properties, null);
   }
 
   /**

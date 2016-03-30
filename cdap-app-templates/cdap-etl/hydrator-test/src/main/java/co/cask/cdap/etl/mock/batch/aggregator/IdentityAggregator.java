@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.etl.datapipeline.mock;
+package co.cask.cdap.etl.mock.batch.aggregator;
 
 import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.annotation.Plugin;
@@ -42,11 +42,6 @@ public class IdentityAggregator extends BatchAggregator<StructuredRecord, Struct
     stageConfigurer.setOutputSchema(stageConfigurer.getInputSchema());
   }
 
-  public static ETLPlugin getPlugin() {
-    Map<String, String> properties = new HashMap<>();
-    return new ETLPlugin("Identity", BatchAggregator.PLUGIN_TYPE, properties, null);
-  }
-
   @Override
   public void groupBy(StructuredRecord input, Emitter<StructuredRecord> emitter) throws Exception {
     emitter.emit(input);
@@ -58,5 +53,10 @@ public class IdentityAggregator extends BatchAggregator<StructuredRecord, Struct
     while (groupValues.hasNext()) {
       emitter.emit(groupValues.next());
     }
+  }
+
+  public static ETLPlugin getPlugin() {
+    Map<String, String> properties = new HashMap<>();
+    return new ETLPlugin("Identity", BatchAggregator.PLUGIN_TYPE, properties, null);
   }
 }

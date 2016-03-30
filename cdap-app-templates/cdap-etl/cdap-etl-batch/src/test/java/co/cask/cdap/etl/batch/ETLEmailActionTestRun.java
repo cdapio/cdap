@@ -17,11 +17,11 @@
 package co.cask.cdap.etl.batch;
 
 import co.cask.cdap.common.utils.Networks;
-import co.cask.cdap.etl.batch.mock.MockSink;
-import co.cask.cdap.etl.batch.mock.MockSource;
-import co.cask.cdap.etl.proto.v1.ETLBatchConfig;
-import co.cask.cdap.etl.proto.v1.ETLStage;
-import co.cask.cdap.etl.proto.v1.Plugin;
+import co.cask.cdap.etl.mock.batch.MockSink;
+import co.cask.cdap.etl.mock.batch.MockSource;
+import co.cask.cdap.etl.proto.v2.ETLBatchConfig;
+import co.cask.cdap.etl.proto.v2.ETLPlugin;
+import co.cask.cdap.etl.proto.v2.ETLStage;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.test.ApplicationManager;
@@ -53,19 +53,23 @@ public class ETLEmailActionTestRun extends ETLBatchTestBase {
   @Test
   public void testEmailAction() throws Exception {
 
-    Plugin actionConfig = new Plugin("Email", ImmutableMap.of(EmailAction.RECIPIENT_EMAIL_ADDRESS, "to@test.com",
-                                                              EmailAction.FROM_ADDRESS, "from@test.com",
-                                                              EmailAction.MESSAGE, "testing body",
-                                                              EmailAction.SUBJECT, "Test",
-                                                              EmailAction.PORT, Integer.toString(port)));
+    ETLPlugin actionConfig = new ETLPlugin("Email",
+                                           "action",
+                                           ImmutableMap.of(EmailAction.RECIPIENT_EMAIL_ADDRESS, "to@test.com",
+                                                           EmailAction.FROM_ADDRESS, "from@test.com",
+                                                           EmailAction.MESSAGE, "testing body",
+                                                           EmailAction.SUBJECT, "Test",
+                                                           EmailAction.PORT, Integer.toString(port)),
+                                           null);
 
     ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
-      .setSource(new ETLStage("source", MockSource.getPlugin("inputTable")))
-      .addSink(new ETLStage("sink", MockSink.getPlugin("outputTable")))
+      .addStage(new ETLStage("source", MockSource.getPlugin("inputTable")))
+      .addStage(new ETLStage("sink", MockSink.getPlugin("outputTable")))
       .addAction(new ETLStage("action", actionConfig))
+      .addConnection("source", "sink")
       .build();
 
-    AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(ETLBATCH_ARTIFACT, etlConfig);
+    AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
     Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "actionTest");
     ApplicationManager appManager = deployApplication(appId, appRequest);
 

@@ -21,19 +21,18 @@ import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.table.Table;
-import co.cask.cdap.etl.api.PipelineConfigurable;
-import co.cask.cdap.etl.api.batch.BatchSource;
 import co.cask.cdap.etl.api.batch.SparkCompute;
 import co.cask.cdap.etl.api.batch.SparkSink;
-import co.cask.cdap.etl.datapipeline.mock.FieldCountAggregator;
-import co.cask.cdap.etl.datapipeline.mock.IdentityAggregator;
-import co.cask.cdap.etl.datapipeline.mock.IdentityTransform;
-import co.cask.cdap.etl.datapipeline.mock.MockSink;
-import co.cask.cdap.etl.datapipeline.mock.MockSource;
 import co.cask.cdap.etl.datapipeline.mock.NaiveBayesClassifier;
 import co.cask.cdap.etl.datapipeline.mock.NaiveBayesTrainer;
 import co.cask.cdap.etl.datapipeline.mock.SpamMessage;
-import co.cask.cdap.etl.datapipeline.mock.StringValueFilterTransform;
+import co.cask.cdap.etl.mock.batch.MockSink;
+import co.cask.cdap.etl.mock.batch.MockSource;
+import co.cask.cdap.etl.mock.batch.aggregator.FieldCountAggregator;
+import co.cask.cdap.etl.mock.batch.aggregator.IdentityAggregator;
+import co.cask.cdap.etl.mock.test.HydratorTestBase;
+import co.cask.cdap.etl.mock.transform.IdentityTransform;
+import co.cask.cdap.etl.mock.transform.StringValueFilterTransform;
 import co.cask.cdap.etl.proto.Engine;
 import co.cask.cdap.etl.proto.v2.ETLBatchConfig;
 import co.cask.cdap.etl.proto.v2.ETLPlugin;
@@ -44,7 +43,6 @@ import co.cask.cdap.proto.artifact.ArtifactSummary;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.DataSetManager;
 import co.cask.cdap.test.StreamManager;
-import co.cask.cdap.test.TestBase;
 import co.cask.cdap.test.TestConfiguration;
 import co.cask.cdap.test.WorkflowManager;
 import com.google.common.collect.ImmutableList;
@@ -65,25 +63,23 @@ import java.util.concurrent.TimeUnit;
 /**
  *
  */
-public class DataPipelineTest extends TestBase {
+public class DataPipelineTest extends HydratorTestBase {
+
+  protected static final Id.Artifact APP_ARTIFACT_ID = Id.Artifact.from(Id.Namespace.DEFAULT, "app", "1.0.0");
+  protected static final ArtifactSummary APP_ARTIFACT = ArtifactSummary.from(APP_ARTIFACT_ID);
+  private static int startCount = 0;
   @ClassRule
   public static final TestConfiguration CONFIG = new TestConfiguration("explore.enabled", false);
 
-  protected static final Id.Artifact APP_ARTIFACT_ID = Id.Artifact.from(Id.Namespace.DEFAULT, "datapipeline", "3.4.0");
-  protected static final ArtifactSummary ARTIFACT = new ArtifactSummary("datapipeline", "3.4.0");
-
   @BeforeClass
   public static void setupTest() throws Exception {
-    // add the artifact for data pipeline app
-    addAppArtifact(APP_ARTIFACT_ID, DataPipelineApp.class,
-                   BatchSource.class.getPackage().getName(), SparkSink.class.getPackage().getName(),
-                   PipelineConfigurable.class.getPackage().getName());
+    if (startCount++ > 0) {
+      return;
+    }
+    setupBatchArtifacts(APP_ARTIFACT_ID, DataPipelineApp.class);
 
     // add some test plugins
-    addPluginArtifact(Id.Artifact.from(Id.Namespace.DEFAULT, "test-plugins", "1.0.0"), APP_ARTIFACT_ID,
-                      MockSource.class, MockSink.class,
-                      StringValueFilterTransform.class, IdentityTransform.class,
-                      FieldCountAggregator.class, IdentityAggregator.class,
+    addPluginArtifact(Id.Artifact.from(Id.Namespace.DEFAULT, "spark-plugins", "1.0.0"), APP_ARTIFACT_ID,
                       NaiveBayesTrainer.class, NaiveBayesClassifier.class);
   }
 
@@ -98,7 +94,7 @@ public class DataPipelineTest extends TestBase {
       .addConnection("source", "sink")
       .build();
 
-    AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(ARTIFACT, etlConfig);
+    AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
     Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "SinglePhaseApp");
     ApplicationManager appManager = deployApplication(appId, appRequest);
 
@@ -140,7 +136,7 @@ public class DataPipelineTest extends TestBase {
       .build();
 
 
-    AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(ARTIFACT, etlConfig);
+    AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
     Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "SimpleMultiSourceApp");
     ApplicationManager appManager = deployApplication(appId, appRequest);
 
@@ -193,7 +189,7 @@ public class DataPipelineTest extends TestBase {
       .addConnection("source3", "transform2")
       .build();
 
-    AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(ARTIFACT, etlConfig);
+    AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
     Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "MultiSourceApp");
     ApplicationManager appManager = deployApplication(appId, appRequest);
 
@@ -272,7 +268,7 @@ public class DataPipelineTest extends TestBase {
       .addConnection("filter2", "sink")
       .build();
 
-    AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(ARTIFACT, etlConfig);
+    AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
     Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "LinearAggApp");
     ApplicationManager appManager = deployApplication(appId, appRequest);
 
@@ -321,7 +317,7 @@ public class DataPipelineTest extends TestBase {
       .addConnection("agg2", "sink2")
       .build();
 
-    AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(ARTIFACT, etlConfig);
+    AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
     Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "ParallelAggApp");
     ApplicationManager appManager = deployApplication(appId, appRequest);
 
@@ -400,7 +396,7 @@ public class DataPipelineTest extends TestBase {
       .addConnection("source", "customsink")
       .build();
 
-    AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(ARTIFACT, etlConfig);
+    AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
     Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "SinglePhaseApp");
     ApplicationManager appManager = deployApplication(appId, appRequest);
 
@@ -464,7 +460,7 @@ public class DataPipelineTest extends TestBase {
       .addConnection("sparkcompute", "sink")
       .build();
 
-    AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(ARTIFACT, etlConfig);
+    AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
     Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "SinglePhaseApp");
     ApplicationManager appManager = deployApplication(appId, appRequest);
 

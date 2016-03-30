@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.etl.batch.mock;
+package co.cask.cdap.etl.mock.transform;
 
 import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.annotation.Plugin;
@@ -22,6 +22,7 @@ import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.etl.api.Emitter;
 import co.cask.cdap.etl.api.InvalidEntry;
 import co.cask.cdap.etl.api.Transform;
+import co.cask.cdap.etl.proto.v2.ETLPlugin;
 
 import java.util.HashMap;
 
@@ -37,7 +38,7 @@ public class ErrorTransform extends Transform<StructuredRecord, StructuredRecord
     emitter.emitError(new InvalidEntry<>(500, "msg", input));
   }
 
-  public static co.cask.cdap.etl.proto.v1.Plugin getPlugin() {
-    return new co.cask.cdap.etl.proto.v1.Plugin("Error", new HashMap<String, String>());
+  public static ETLPlugin getPlugin() {
+    return new ETLPlugin("Error", Transform.PLUGIN_TYPE, new HashMap<String, String>(), null);
   }
 }
