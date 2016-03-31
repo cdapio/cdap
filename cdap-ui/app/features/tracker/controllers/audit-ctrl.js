@@ -15,12 +15,13 @@
  */
 
 class TrackerAuditController {
-  constructor($state, $scope, myTrackerApi, myAlertOnValium) {
+  constructor($state, $scope, myTrackerApi, myAlertOnValium, $q) {
 
     this.$state = $state;
     this.$scope = $scope;
     this.myTrackerApi = myTrackerApi;
     this.myAlertOnValium = myAlertOnValium;
+    this.$q = $q;
 
     this.timeRangeOptions = [
       {
@@ -60,6 +61,9 @@ class TrackerAuditController {
       endTime: null
     };
 
+    this.isTrackerSetup = true;
+    this.enableTrackerLoading = false;
+
     this.selectedTimeRange = this.findTimeRange();
 
     this.currentPage = 1;
@@ -89,6 +93,7 @@ class TrackerAuditController {
   }
 
   fetchAuditLogs(currentPage) {
+    this.enableTrackerLoading = false;
     let params = {
       namespace: this.$state.params.namespace,
       entityType: this.$state.params.entityType === 'streams' ? 'stream' : 'dataset',
@@ -102,18 +107,111 @@ class TrackerAuditController {
     this.myTrackerApi.getAuditLogs(params)
       .$promise
       .then((response) => {
+        this.isTrackerSetup = true;
         this.auditLogs = response;
       }, (err) => {
-        console.log('Error: ', err);
-        this.myAlertOnValium.show({
-          type: 'danger',
-          content: 'Enable the Tracker extension to view audit logs.'
-        });
+        if (err.statusCode === 503) {
+          this.isTrackerSetup = false;
+        } else {
+          this.myAlertOnValium.show({
+            type: 'danger',
+            content: err.data
+          });
+        }
       });
+  }
+
+  enableTracker() {
+    this.enableTrackerLoading = true;
+    this.myTrackerApi.getTrackerApp({
+      namespace: this.$state.params.namespace,
+      scope: this.$scope
+    })
+    .$promise
+    .then(() => {
+      // start programs
+      this.startPrograms();
+    }, () => {
+      // create app
+      this.createTrackerApp();
+    });
+  }
+
+  createTrackerApp() {
+    this.myTrackerApi.getCDAPConfig({ scope: this.$scope })
+      .$promise
+      .then((res) => {
+        let zookeeper = res.filter( (c) => {
+          return c.name === 'zookeeper.quorum';
+        })[0].value;
+
+        let kafkaNamespace = res.filter( (c) => {
+          return c.name === 'kafka.zookeeper.namespace';
+        })[0].value;
+
+        let numPartitions = res.filter( (c) => {
+          return c.name === 'kafka.num.partitions';
+        })[0].value;
+
+        let topic = res.filter( (c) => {
+          return c.name === 'audit.kafka.topic';
+        })[0].value;
+
+        let config = {
+          artifact: {
+            name: 'tracker',
+            version: '1.0-SNAPSHOT',
+            scope: 'USER'
+          },
+          config: {
+            auditLogKafkaConfig: {
+              zookeeperString: zookeeper + '/' + kafkaNamespace,
+              topic: topic,
+              numPartitions: numPartitions
+            }
+          }
+        };
+
+        this.myTrackerApi.deployTrackerApp({
+          namespace: this.$state.params.namespace,
+          scope: this.$scope
+        }, config)
+          .$promise
+          .then(() => {
+            this.startPrograms();
+          });
+      });
+
+  }
+
+  startPrograms() {
+    let auditServiceParams = {
+      namespace: this.$state.params.namespace,
+      programType: 'services',
+      programId: 'AuditLog',
+      scope: this.$scope
+    };
+
+    let auditFlowParams = {
+      namespace: this.$state.params.namespace,
+      programType: 'flows',
+      programId: 'AuditLogFlow',
+      scope: this.$scope
+    };
+
+    this.$q.all([
+      this.myTrackerApi.startTrackerProgram(auditServiceParams, {}).$promise,
+      this.myTrackerApi.startTrackerProgram(auditFlowParams, {}).$promise
+    ]).then( () => {
+      this.fetchAuditLogs(this.currentPage);
+    }, () => {
+      // it errors out if one of the programs already started
+      this.fetchAuditLogs(this.currentPage);
+    });
   }
 }
 
-TrackerAuditController.$inject = ['$state', '$scope', 'myTrackerApi', 'myAlertOnValium'];
+TrackerAuditController.$inject = ['$state', '$scope', 'myTrackerApi', 'myAlertOnValium', '$q'];
 
 angular.module(PKG.name + '.feature.tracker')
 .controller('TrackerAuditController', TrackerAuditController);

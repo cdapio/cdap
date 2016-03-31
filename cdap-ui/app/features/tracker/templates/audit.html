@@ -74,4 +74,17 @@
                     ng-change="AuditController.fetchAuditLogs(this.currentPage)">
     </uib-pagination>
   </div>
+
+  <div class="tracker-no-result text-center" ng-if="!AuditController.isTrackerSetup">
+    <p>Tracker Audit Log application is not enabled</p>
+    <button class="btn btn-success"
+            ng-click="AuditController.enableTracker()"
+            ng-disabled="AuditController.enableTrackerLoading">
+      <span ng-if="!AuditController.enableTrackerLoading">Enable Tracker</span>
+      <span ng-if="AuditController.enableTrackerLoading">
+        <span class="fa fa-spin fa-refresh"></span>
+        <span>Enabling</span>
+      </span>
+    </button>
+  </div>
 </div>
