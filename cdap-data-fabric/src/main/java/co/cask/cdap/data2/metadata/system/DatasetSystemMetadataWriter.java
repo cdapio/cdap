@@ -23,10 +23,12 @@ import co.cask.cdap.api.data.batch.OutputFormatProvider;
 import co.cask.cdap.api.data.batch.RecordScannable;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetProperties;
+import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.api.dataset.lib.ObjectMappedTableProperties;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.proto.Id;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,6 +46,11 @@ public class DatasetSystemMetadataWriter extends AbstractSystemMetadataWriter {
 
   public static final String EXPLORE_TAG = "explore";
   public static final String BATCH_TAG = "batch";
+
+  @VisibleForTesting
+  static final String FILESET_AVRO_SCHEMA_PROPERTY = "avro.schema.literal";
+  static final String FILESET_PARQUET_SCHEMA_OUTPUT_KEY = "parquet.avro.schema";
+  static final String FILESET_AVRO_SCHEMA_OUTPUT_KEY = "avro.schema.output.key";
 
   private final Id.DatasetInstance dsInstance;
   private final String dsType;
@@ -112,6 +119,7 @@ public class DatasetSystemMetadataWriter extends AbstractSystemMetadataWriter {
   @Nullable
   @Override
   protected String getSchemaToAdd() {
+    // TODO: fix schema determination after CDAP-2790 is fixed (CDAP-5408)
     Map<String, String> datasetProperties = dsProperties.getProperties();
     String schemaStr = null;
     if (datasetProperties.containsKey(DatasetProperties.SCHEMA)) {
@@ -119,7 +127,24 @@ public class DatasetSystemMetadataWriter extends AbstractSystemMetadataWriter {
     } else if (datasetProperties.containsKey(ObjectMappedTableProperties.OBJECT_SCHEMA)) {
       // If it is an ObjectMappedTable, the schema is in a property called 'object.schema'
       schemaStr = datasetProperties.get(ObjectMappedTableProperties.OBJECT_SCHEMA);
+    } else if (datasetProperties.containsKey(getExplorePropName(FILESET_AVRO_SCHEMA_PROPERTY))) {
+      // Fileset with avro schema (CDAP-5322)
+      schemaStr = datasetProperties.get(getExplorePropName(FILESET_AVRO_SCHEMA_PROPERTY));
+    } else if (datasetProperties.containsKey(getOutputPropName(FILESET_AVRO_SCHEMA_OUTPUT_KEY))) {
+      // Fileset with avro schema defined in output property (CDAP-5322)
+      schemaStr = datasetProperties.get(getOutputPropName(FILESET_AVRO_SCHEMA_OUTPUT_KEY));
+    } else if (datasetProperties.containsKey(getOutputPropName(FILESET_PARQUET_SCHEMA_OUTPUT_KEY))) {
+      // Fileset with parquet schema defined in output property (CDAP-5322)
+      schemaStr = datasetProperties.get(getOutputPropName(FILESET_PARQUET_SCHEMA_OUTPUT_KEY));
     }
     return schemaStr;
+  }
+
+  private static String getExplorePropName(String prop) {
+    return FileSetProperties.PROPERTY_EXPLORE_TABLE_PROPERTY_PREFIX + prop;
+  }
+
+  private static String getOutputPropName(String prop) {
+    return FileSetProperties.OUTPUT_PROPERTIES_PREFIX + prop;
   }
 }

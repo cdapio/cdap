@@ -76,7 +76,6 @@ public class AppWithMapReduceUsingAvroDynamicPartitioner extends AbstractApplica
         // Properties for file set
       .setInputFormat(AvroKeyInputFormat.class)
       .setOutputFormat(AvroKeyOutputFormat.class)
-      .setOutputProperty("schema", SCHEMA_STRING)
         // Properties for Explore (to create a partitioned Hive table)
       .setEnableExploreOnCreate(true)
       .setSerDe("org.apache.hadoop.hive.serde2.avro.AvroSerDe")
