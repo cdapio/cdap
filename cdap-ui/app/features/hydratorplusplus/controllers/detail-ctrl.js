@@ -21,7 +21,7 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
     HydratorPlusPlusDetailNonRunsStore.init(rPipelineDetail);
     HydratorPlusPlusNodeConfigStore.init();
 
-    var params = angular.copy(HydratorPlusPlusDetailRunsStore.getParams());
+    var params = HydratorPlusPlusDetailRunsStore.getParams();
     params.scope = $scope;
     var currentRunId;
 
