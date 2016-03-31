@@ -281,7 +281,7 @@ public class AuthorizerInstantiatorServiceTest {
   public static class NoOpAbstractAuthorizer extends AbstractAuthorizer {
 
     @Override
-    public void grant(EntityId entity, Principal principal, Set<Action> actions) {
+    public void grant(Principal principal, Set<Privilege> privileges) {
       // no-op
     }
 

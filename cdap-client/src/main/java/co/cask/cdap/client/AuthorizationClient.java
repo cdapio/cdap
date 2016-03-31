@@ -84,10 +84,10 @@ public class AuthorizationClient extends AbstractAuthorizer {
   }
 
   @Override
-  public void grant(EntityId entity, Principal principal, Set<Action> actions) throws IOException,
+  public void grant(Principal principal, Set<Privilege> privileges) throws IOException,
     UnauthenticatedException, FeatureDisabledException, UnauthorizedException {
 
-    GrantRequest grantRequest = new GrantRequest(entity, principal, actions);
+    GrantRequest grantRequest = new GrantRequest(principal, privileges);
 
     URL url = config.resolveURLV3(AUTHORIZATION_BASE + "/privileges/grant");
     HttpRequest request = HttpRequest.post(url).withBody(GSON.toJson(grantRequest)).build();
@@ -103,7 +103,14 @@ public class AuthorizationClient extends AbstractAuthorizer {
   @Override
   public void revoke(EntityId entity, @Nullable Principal principal, @Nullable Set<Action> actions) throws IOException,
     UnauthenticatedException, FeatureDisabledException, UnauthorizedException {
-    revoke(new RevokeRequest(entity, principal, actions));
+    // TODO: fix
+    RevokeRequest revokeRequest;
+    if (actions == null) {
+      revokeRequest = new RevokeRequest(entity, principal, null);
+    } else {
+      revokeRequest = new RevokeRequest(entity, principal, actions.iterator().next());
+    }
+    revoke(revokeRequest);
   }
 
   @Override

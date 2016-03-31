@@ -19,6 +19,7 @@ package co.cask.cdap.proto.security;
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.proto.id.EntityId;
 
+import java.util.Collections;
 import java.util.Set;
 
 /**
@@ -27,13 +28,17 @@ import java.util.Set;
 @Beta
 public class GrantRequest extends AuthorizationRequest {
 
-  public GrantRequest(EntityId entity, Principal principal, Set<Action> actions) {
-    super(entity, principal, actions);
+  public GrantRequest(EntityId entity, Principal principal, Action action) {
+    this(principal, Collections.singleton(new Privilege(entity, action)));
     if (principal == null) {
       throw new IllegalArgumentException("principal is required");
     }
-    if (actions == null) {
-      throw new IllegalArgumentException("actions is required");
+    if (action == null) {
+      throw new IllegalArgumentException("action is required");
     }
+  }
+
+  public GrantRequest(Principal principal, Set<Privilege> privileges) {
+    super(principal, privileges);
   }
 }

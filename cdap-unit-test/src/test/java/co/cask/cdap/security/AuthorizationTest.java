@@ -141,7 +141,7 @@ public class AuthorizationTest extends TestBase {
     } catch (UnauthorizedException expected) {
       // expected
     }
-    authorizer.grant(instance, ALICE, ImmutableSet.of(Action.ADMIN));
+    authorizer.grant(ALICE, ImmutableSet.of(new Privilege(instance, Action.ADMIN)));
     Assert.assertEquals(ImmutableSet.of(new Privilege(instance, Action.ADMIN)), authorizer.listPrivileges(ALICE));
     namespaceAdmin.create(AUTH_NAMESPACE_META);
     // create should grant all privileges
@@ -163,7 +163,7 @@ public class AuthorizationTest extends TestBase {
       // expected
     }
     // grant privileges again
-    authorizer.grant(AUTH_NAMESPACE, ALICE, ImmutableSet.of(Action.ADMIN));
+    authorizer.grant(ALICE, ImmutableSet.of(new Privilege(AUTH_NAMESPACE, Action.ADMIN)));
     Assert.assertEquals(
       ImmutableSet.of(new Privilege(instance, Action.ADMIN), new Privilege(AUTH_NAMESPACE, Action.ADMIN)),
       authorizer.listPrivileges(ALICE)
@@ -194,7 +194,7 @@ public class AuthorizationTest extends TestBase {
       // expected
     }
     Authorizer authorizer = getAuthorizer();
-    authorizer.grant(instance, ALICE, ImmutableSet.of(Action.ADMIN));
+    authorizer.grant(ALICE, ImmutableSet.of(new Privilege(instance, Action.ADMIN)));
     getNamespaceAdmin().create(AUTH_NAMESPACE_META);
     Assert.assertEquals(
       ImmutableSet.of(new Privilege(instance, Action.ADMIN), new Privilege(AUTH_NAMESPACE, Action.ALL)),
@@ -234,7 +234,8 @@ public class AuthorizationTest extends TestBase {
       // expected
     }
     // grant READ and WRITE to Bob
-    authorizer.grant(dummyAppId, BOB, ImmutableSet.of(Action.READ, Action.WRITE));
+    authorizer.grant(BOB, ImmutableSet.of(
+      new Privilege(dummyAppId, Action.READ), new Privilege(dummyAppId, Action.WRITE)));
     // delete should fail
     try {
       appManager.delete();
@@ -242,7 +243,7 @@ public class AuthorizationTest extends TestBase {
       // expected
     }
     // grant ADMIN to Bob. Now delete should succeed
-    authorizer.grant(dummyAppId, BOB, ImmutableSet.of(Action.ADMIN));
+    authorizer.grant(BOB, ImmutableSet.of(new Privilege(dummyAppId, Action.ADMIN)));
     Assert.assertEquals(
       ImmutableSet.of(
         new Privilege(dummyAppId, Action.READ),
@@ -319,7 +320,7 @@ public class AuthorizationTest extends TestBase {
       // expected
     }
     // grant admin privilege on the WorkflowApp. deleting all applications should succeed.
-    authorizer.grant(workflowAppId, ALICE, ImmutableSet.of(Action.ADMIN));
+    authorizer.grant(ALICE, ImmutableSet.of(new Privilege(workflowAppId, Action.ADMIN)));
     Assert.assertEquals(
       ImmutableSet.of(
         new Privilege(instance, Action.ADMIN),
@@ -375,7 +376,7 @@ public class AuthorizationTest extends TestBase {
     }
     // create a new namespace, alice should get ALL privileges on the namespace
     Authorizer authorizer = getAuthorizer();
-    authorizer.grant(instance, ALICE, ImmutableSet.of(Action.ADMIN));
+    authorizer.grant(ALICE, ImmutableSet.of(new Privilege(instance, Action.ADMIN)));
     getNamespaceAdmin().create(AUTH_NAMESPACE_META);
     Assert.assertEquals(
       ImmutableSet.of(new Privilege(instance, Action.ADMIN), new Privilege(AUTH_NAMESPACE, Action.ALL)),
@@ -461,7 +462,7 @@ public class AuthorizationTest extends TestBase {
   @Test
   public void testPrograms() throws Exception {
     Authorizer authorizer = getAuthorizer();
-    authorizer.grant(instance, ALICE, ImmutableSet.of(Action.ADMIN));
+    authorizer.grant(ALICE, ImmutableSet.of(new Privilege(instance, Action.ADMIN)));
     getNamespaceAdmin().create(AUTH_NAMESPACE_META);
     Assert.assertEquals(
       ImmutableSet.of(new Privilege(instance, Action.ADMIN), new Privilege(AUTH_NAMESPACE, Action.ALL)),

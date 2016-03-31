@@ -67,6 +67,7 @@ import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.Ids;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.security.Action;
+import co.cask.cdap.proto.security.Privilege;
 import co.cask.cdap.security.authorization.AuthorizerInstantiatorService;
 import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
 import com.google.common.base.Predicate;
@@ -89,6 +90,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -551,8 +553,12 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     // TODO: (CDAP-3258) Manager needs MUCH better error handling.
     ApplicationWithPrograms applicationWithPrograms = manager.deploy(namespace, appName, deploymentInfo).get();
     // Deployment successful. Grant all privileges on this app to the current principal.
-    authorizerInstantiatorService.get().grant(namespace.toEntityId().app(applicationWithPrograms.getId().getId()),
-                                              SecurityRequestContext.toPrincipal(), ImmutableSet.of(Action.ALL));
+    authorizerInstantiatorService.get().grant(
+      SecurityRequestContext.toPrincipal(),
+      Collections.singleton(
+        new Privilege(namespace.toEntityId().app(applicationWithPrograms.getId().getId()), Action.ALL)
+      )
+    );
     return applicationWithPrograms;
   }
 

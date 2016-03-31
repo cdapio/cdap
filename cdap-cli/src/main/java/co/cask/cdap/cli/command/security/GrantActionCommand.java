@@ -23,18 +23,15 @@ import co.cask.cdap.client.AuthorizationClient;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
+import co.cask.cdap.proto.security.Privilege;
 import co.cask.common.cli.Arguments;
-import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableSet;
 import com.google.inject.Inject;
 
 import java.io.PrintStream;
-import java.util.HashSet;
 import java.util.Set;
-import javax.annotation.Nullable;
 
 /**
  * Grants a user permission to perform certain actions on an entity.
@@ -60,7 +57,9 @@ public class GrantActionCommand extends AbstractAuthCommand {
     // actions is not an optional argument so should never be null
     Preconditions.checkNotNull(actions, "Actions can never be null in the grant command.");
 
-    client.grant(entity, principal, actions);
+    for (Action action : actions) {
+      client.grant(principal, ImmutableSet.of(new Privilege(entity, action)));
+    }
     output.printf("Successfully granted action(s) '%s' on entity '%s' to %s '%s'\n",
                   Joiner.on(",").join(actions), entity.toString(), principal.getType(), principal.getName());
   }

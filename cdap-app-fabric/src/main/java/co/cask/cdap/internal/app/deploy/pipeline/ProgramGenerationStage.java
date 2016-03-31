@@ -33,10 +33,10 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.ProgramTypes;
 import co.cask.cdap.proto.security.Action;
+import co.cask.cdap.proto.security.Privilege;
 import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
 import co.cask.cdap.security.spi.authorization.Authorizer;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.reflect.TypeToken;
@@ -48,6 +48,7 @@ import org.apache.twill.common.Threads;
 import org.apache.twill.filesystem.Location;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
@@ -128,7 +129,8 @@ public class ProgramGenerationStage extends AbstractStage<ApplicationDeployable>
             Location output = programDir.append(String.format("%s.jar", spec.getName()));
             Id.Program programId = Id.Program.from(input.getId(), type, spec.getName());
             Location programLocation = ProgramBundle.create(programId, bundler, output, spec.getClassName(), appSpec);
-            authorizer.grant(programId.toEntityId(), SecurityRequestContext.toPrincipal(), ImmutableSet.of(Action.ALL));
+            authorizer.grant(SecurityRequestContext.toPrincipal(),
+                             Collections.singleton(new Privilege(programId.toEntityId(), Action.ALL)));
             return programLocation;
             }
         });

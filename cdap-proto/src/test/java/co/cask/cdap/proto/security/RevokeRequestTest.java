@@ -31,21 +31,19 @@ public class RevokeRequestTest {
   @Test
   public void testValidation() {
     Principal bob = new Principal("bob", Principal.PrincipalType.USER);
-    Set<Action> actions = new LinkedHashSet<>();
-    actions.add(Action.READ);
-    new RevokeRequest(Ids.namespace("foo"), bob, actions);
+    new RevokeRequest(Ids.namespace("foo"), bob, Action.READ);
     new RevokeRequest(Ids.namespace("foo"), bob, null);
     new RevokeRequest(Ids.namespace("foo"), null, null);
 
     try {
-      new RevokeRequest(Ids.namespace("foo"), null, actions);
+      new RevokeRequest(Ids.namespace("foo"), null, Action.READ);
       Assert.fail();
     } catch (IllegalArgumentException e) {
       // expected
     }
 
     try {
-      new RevokeRequest(null, null, actions);
+      new RevokeRequest(null, null, Action.READ);
       Assert.fail();
     } catch (IllegalArgumentException e) {
       // expected

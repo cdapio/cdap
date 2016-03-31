@@ -82,8 +82,10 @@ public class InMemoryAuthorizer extends AbstractAuthorizer {
   }
 
   @Override
-  public void grant(EntityId entity, Principal principal, Set<Action> actions) {
-    getActions(entity, principal).addAll(actions);
+  public void grant(Principal principal, Set<Privilege> privileges) {
+    for (Privilege privilege : privileges) {
+      getActions(privilege.getEntity(), principal).add(privilege.getAction());
+    }
   }
 
   @Override

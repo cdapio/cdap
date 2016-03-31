@@ -148,7 +148,6 @@ public class AuthorizationHandlerTest {
       .build();
     service.startAndWait();
     try {
-
       final AuthorizationClient client = new AuthorizationClient(
         ClientConfig.builder()
           .setConnectionConfig(
@@ -166,7 +165,7 @@ public class AuthorizationHandlerTest {
       verifyFeatureDisabled(new DisabledFeatureCaller() {
         @Override
         public void call() throws Exception {
-          client.grant(ns1, admin, ImmutableSet.of(Action.READ));
+          client.grant(admin, ImmutableSet.of(new Privilege(ns1, Action.READ)));
         }
       });
 
@@ -237,7 +236,7 @@ public class AuthorizationHandlerTest {
     // grant() and revoke(EntityId, String, Set<Action>)
     verifyAuthFailure(ns1, admin, Action.READ);
 
-    client.grant(ns1, admin, ImmutableSet.of(Action.READ));
+    client.grant(admin, ImmutableSet.of(new Privilege(ns1, Action.READ)));
     verifyAuthSuccess(ns1, admin, Action.READ);
 
     client.revoke(ns1, admin, ImmutableSet.of(Action.READ));
@@ -251,8 +250,8 @@ public class AuthorizationHandlerTest {
     Principal bob = new Principal("bob", Principal.PrincipalType.USER);
 
     // grant() and revoke(EntityId, String)
-    client.grant(ns1, adminGroup, ImmutableSet.of(Action.READ));
-    client.grant(ns1, bob, ImmutableSet.of(Action.READ));
+    client.grant(adminGroup, ImmutableSet.of(new Privilege(ns1, Action.READ)));
+    client.grant(bob, ImmutableSet.of(new Privilege(ns1, Action.READ)));
     verifyAuthSuccess(ns1, adminGroup, Action.READ);
     verifyAuthSuccess(ns1, bob, Action.READ);
 
@@ -269,9 +268,9 @@ public class AuthorizationHandlerTest {
     Principal bob = new Principal("bob", Principal.PrincipalType.USER);
 
     // grant() and revoke(EntityId)
-    client.grant(ns1, adminGroup, ImmutableSet.of(Action.READ));
-    client.grant(ns1, bob, ImmutableSet.of(Action.READ));
-    client.grant(ns2, adminGroup, ImmutableSet.of(Action.READ));
+    client.grant(adminGroup, ImmutableSet.of(new Privilege(ns1, Action.READ)));
+    client.grant(bob, ImmutableSet.of(new Privilege(ns1, Action.READ)));
+    client.grant(adminGroup, ImmutableSet.of(new Privilege(ns2, Action.READ)));
     verifyAuthSuccess(ns1, adminGroup, Action.READ);
     verifyAuthSuccess(ns1, bob, Action.READ);
     verifyAuthSuccess(ns2, adminGroup, Action.READ);
@@ -340,7 +339,7 @@ public class AuthorizationHandlerTest {
     verifyAuthFailure(ns1, spiderman, Action.READ);
 
     // give a permission to engineers role
-    client.grant(ns1, engineers, ImmutableSet.of(Action.READ));
+    client.grant(engineers, ImmutableSet.of(new Privilege(ns1, Action.READ)));
 
     // check that a spiderman who has engineers role has access
     verifyAuthSuccess(ns1, spiderman, Action.READ);
@@ -383,7 +382,7 @@ public class AuthorizationHandlerTest {
     setCurrentUser(alice.getName());
     try {
       try {
-        client.grant(ns, bob, ImmutableSet.of(Action.ALL));
+        client.grant(bob, ImmutableSet.of(new Privilege(ns, Action.ALL)));
         Assert.fail(String.format("alice should not be able to grant privileges to bob on namespace %s because she " +
                                     "does not have admin privileges on the namespace.", ns));
       } catch (UnauthorizedException expected) {
@@ -391,10 +390,10 @@ public class AuthorizationHandlerTest {
       }
       setCurrentUser(oldUser);
       // admin should be able to grant since he is a super user
-      client.grant(ns, alice, ImmutableSet.of(Action.ADMIN));
+      client.grant(alice, ImmutableSet.of(new Privilege(ns, Action.ADMIN)));
       // now alice should be able to grant privileges on ns since she has ADMIN privileges
       setCurrentUser(alice.getName());
-      client.grant(ns, bob, ImmutableSet.of(Action.ALL));
+      client.grant(bob, ImmutableSet.of(new Privilege(ns, Action.ALL)));
       // revoke alice's permissions as admin
       setCurrentUser(oldUser);
       client.revoke(ns);
@@ -409,7 +408,7 @@ public class AuthorizationHandlerTest {
       }
       // grant alice privileges as admin again
       setCurrentUser(oldUser);
-      client.grant(ns, alice, ImmutableSet.of(Action.ALL));
+      client.grant(alice, ImmutableSet.of(new Privilege(ns, Action.ALL)));
       // Now alice should be able to revoke bob's privileges
       setCurrentUser(alice.getName());
       client.revoke(ns, bob, ImmutableSet.of(Action.ALL));

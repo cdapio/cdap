@@ -48,7 +48,7 @@ import org.slf4j.LoggerFactory;
 import java.lang.reflect.Type;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.EnumSet;
+import java.util.Collections;
 import java.util.Set;
 import javax.annotation.Nullable;
 import javax.ws.rs.DELETE;
@@ -86,11 +86,12 @@ public class AuthorizationHandler extends AbstractAppFabricHttpHandler {
     GrantRequest request = parseBody(httpRequest, GrantRequest.class);
     verifyAuthRequest(request);
 
-    Set<Action> actions = request.getActions() == null ? EnumSet.allOf(Action.class) : request.getActions();
     // enforce that the user granting access has admin privileges on the entity
-    authorizerInstantiatorService.get().enforce(request.getEntity(), SecurityRequestContext.toPrincipal(),
-                                                Action.ADMIN);
-    authorizerInstantiatorService.get().grant(request.getEntity(), request.getPrincipal(), actions);
+    for (Privilege privilege : request.getPrivileges()) {
+      authorizerInstantiatorService.get().enforce(privilege.getEntity(), SecurityRequestContext.toPrincipal(),
+                                                  Action.ADMIN);
+    }
+    authorizerInstantiatorService.get().grant(request.getPrincipal(), request.getPrivileges());
 
     httpResponder.sendStatus(HttpResponseStatus.OK);
     createLogEntry(httpRequest, request, HttpResponseStatus.OK);
@@ -103,16 +104,34 @@ public class AuthorizationHandler extends AbstractAppFabricHttpHandler {
 
     RevokeRequest request = parseBody(httpRequest, RevokeRequest.class);
     verifyAuthRequest(request);
-
     // enforce that the user revoking access has admin privileges on the entity
-    authorizerInstantiatorService.get().enforce(request.getEntity(), SecurityRequestContext.toPrincipal(),
-                                                Action.ADMIN);
-    if (request.getPrincipal() == null && request.getActions() == null) {
-      authorizerInstantiatorService.get().revoke(request.getEntity());
-    } else {
-      Set<Action> actions = request.getActions() == null ? EnumSet.allOf(Action.class) : request.getActions();
-      authorizerInstantiatorService.get().revoke(request.getEntity(), request.getPrincipal(), actions);
+    for (Privilege privilege : request.getPrivileges()) {
+      authorizerInstantiatorService.get().enforce(privilege.getEntity(), SecurityRequestContext.toPrincipal(),
+                                                  Action.ADMIN);
     }
+
+    if (request.getPrincipal() == null) {
+      // Principal is null, we're probably trying to revoke all privileges on a set of entities
+      for (Privilege privilege : request.getPrivileges()) {
+        // currently we do not support revoking particular privileges on an entity, so we will revoke all for now
+        authorizerInstantiatorService.get().revoke(privilege.getEntity());
+      }
+    } else {
+      // revoke the specified actions for the given principal on the specified entities
+      for (Privilege privilege : request.getPrivileges()) {
+        // if action is unspecified, we revoke all
+        Action action = privilege.getAction() == null ? Action.ALL : privilege.getAction();
+        authorizerInstantiatorService.get().revoke(privilege.getEntity(), request.getPrincipal(),
+                                                   Collections.singleton(action));
+      }
+    }
+
+//    if (request.getPrincipal() == null && request.getActions() == null) {
+//      authorizerInstantiatorService.get().revoke(request.getEntity());
+//    } else {
+//      Set<Action> actions = request.getActions() == null ? EnumSet.allOf(Action.class) : request.getActions();
+//      authorizerInstantiatorService.get().revoke(request.getEntity(), request.getPrincipal(), actions);
+//    }
 
     httpResponder.sendStatus(HttpResponseStatus.OK);
     createLogEntry(httpRequest, request, HttpResponseStatus.OK);
@@ -221,9 +240,11 @@ public class AuthorizationHandler extends AbstractAppFabricHttpHandler {
     logEntry.setUserName(Objects.firstNonNull(SecurityRequestContext.getUserId(), "-"));
     logEntry.setClientIP(InetAddress.getByName(Objects.firstNonNull(SecurityRequestContext.getUserIP(), "0.0.0.0")));
     logEntry.setRequestLine(httpRequest.getMethod(), httpRequest.getUri(), httpRequest.getProtocolVersion());
-    if (request != null) {
-      logEntry.setRequestBody(String.format("[%s %s %s]", request.getPrincipal(), request.getEntity(),
-                                            request.getActions()));
+    if (request != null && request.getPrivileges() != null) {
+      for (Privilege privilege : request.getPrivileges()) {
+        logEntry.setRequestBody(String.format("[%s %s %s]", request.getPrincipal(), privilege.getEntity(),
+                                              privilege.getAction()));
+      }
     }
     logEntry.setResponseCode(responseStatus.getCode());
     AUDIT_LOG.trace(logEntry.toString());

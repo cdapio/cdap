@@ -48,7 +48,7 @@ public abstract class AuthorizerTest {
 
     verifyAuthFailure(namespace, user, Action.READ);
 
-    authorizer.grant(namespace, user, Collections.singleton(Action.READ));
+    authorizer.grant(user, Collections.singleton(new Privilege(namespace, Action.READ)));
     authorizer.enforce(namespace, user, Action.READ);
 
     Set<Privilege> expectedPrivileges = new HashSet<>();
@@ -65,7 +65,7 @@ public abstract class AuthorizerTest {
 
     verifyAuthFailure(namespace, user, Action.READ);
 
-    authorizer.grant(namespace, user, EnumSet.allOf(Action.class));
+    authorizer.grant(user, Collections.singleton(new Privilege(namespace, Action.ALL)));
     authorizer.enforce(namespace, user, Action.READ);
     authorizer.enforce(namespace, user, Action.WRITE);
     authorizer.enforce(namespace, user, Action.ADMIN);
@@ -81,7 +81,7 @@ public abstract class AuthorizerTest {
 
     verifyAuthFailure(namespace, user, Action.READ);
 
-    authorizer.grant(namespace, user, Collections.singleton(Action.ALL));
+    authorizer.grant(user, Collections.singleton(new Privilege(namespace, Action.ALL)));
     authorizer.enforce(namespace, user, Action.READ);
     authorizer.enforce(namespace, user, Action.WRITE);
     authorizer.enforce(namespace, user, Action.ADMIN);
@@ -91,8 +91,8 @@ public abstract class AuthorizerTest {
     verifyAuthFailure(namespace, user, Action.READ);
 
     Principal role = new Principal("admins", Principal.PrincipalType.ROLE);
-    authorizer.grant(namespace, user, Collections.singleton(Action.READ));
-    authorizer.grant(namespace, role, Collections.singleton(Action.ALL));
+    authorizer.grant(user, Collections.singleton(new Privilege(namespace, Action.READ)));
+    authorizer.grant(role, Collections.singleton(new Privilege(namespace, Action.ALL)));
     authorizer.revoke(namespace);
     verifyAuthFailure(namespace, user, Action.READ);
     verifyAuthFailure(namespace, role, Action.ALL);
@@ -106,10 +106,10 @@ public abstract class AuthorizerTest {
 
     verifyAuthFailure(namespace, user, Action.READ);
 
-    authorizer.grant(namespace, user, Collections.singleton(Action.READ));
+    authorizer.grant(user, Collections.singleton(new Privilege(namespace, Action.READ)));
     authorizer.enforce(dataset, user, Action.READ);
 
-    authorizer.grant(dataset, user, Collections.singleton(Action.WRITE));
+    authorizer.grant(user, Collections.singleton(new Privilege(dataset, Action.WRITE)));
     verifyAuthFailure(namespace, user, Action.WRITE);
 
     authorizer.revoke(namespace, user, Collections.singleton(Action.READ));
@@ -177,7 +177,7 @@ public abstract class AuthorizerTest {
     verifyAuthFailure(ns1, spiderman, Action.READ);
 
     // give a permission to engineers role
-    authorizer.grant(ns1, engineers, Collections.singleton(Action.READ));
+    authorizer.grant(engineers, Collections.singleton(new Privilege(ns1, Action.READ)));
 
     // check that a spiderman who has engineers role has access
     authorizer.enforce(ns1, spiderman, Action.READ);

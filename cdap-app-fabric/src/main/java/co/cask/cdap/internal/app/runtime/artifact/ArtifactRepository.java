@@ -43,6 +43,7 @@ import co.cask.cdap.proto.artifact.ArtifactRange;
 import co.cask.cdap.proto.artifact.ArtifactSummary;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.security.Action;
+import co.cask.cdap.proto.security.Privilege;
 import co.cask.cdap.security.authorization.AuthorizerInstantiatorService;
 import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
@@ -339,8 +340,10 @@ public class ArtifactRepository {
       writeSystemMetadata(artifactId, artifactInfo);
       artifactDetail = artifactStore.write(artifactId, meta, Files.newInputStreamSupplier(artifactFile));
     }
-    authorizerInstantiatorService.get().grant(artifactId.toEntityId(), SecurityRequestContext.toPrincipal(),
-                                              Collections.singleton(Action.ALL));
+    authorizerInstantiatorService.get().grant(
+      SecurityRequestContext.toPrincipal(),
+      Collections.singleton(new Privilege(artifactId.toEntityId(), Action.ALL))
+    );
     return artifactDetail;
   }
 
@@ -450,8 +453,10 @@ public class ArtifactRepository {
       // add system metadata for artifacts
       writeSystemMetadata(artifactId, artifactInfo);
       // artifact successfully added. now grant ALL permissions on the artifact to the current user
-      authorizerInstantiatorService.get().grant(artifactId.toEntityId(), SecurityRequestContext.toPrincipal(),
-                                                ImmutableSet.of(Action.ALL));
+      authorizerInstantiatorService.get().grant(
+        SecurityRequestContext.toPrincipal(),
+        Collections.singleton(new Privilege(artifactId.toEntityId(), Action.ALL))
+      );
       return artifactDetail;
     } finally {
       parentClassLoader.close();

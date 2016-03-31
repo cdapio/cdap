@@ -85,6 +85,7 @@ import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.NamespacedArtifactId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
+import co.cask.cdap.proto.security.Privilege;
 import co.cask.cdap.security.authorization.AuthorizerInstantiatorService;
 import co.cask.cdap.security.authorization.InvalidAuthorizerException;
 import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
@@ -279,7 +280,7 @@ public class TestBase {
     if (cConf.getBoolean(Constants.Security.Authorization.ENABLED)) {
       InstanceId instance = new InstanceId(cConf.get(Constants.INSTANCE_NAME));
       Principal principal = new Principal(SecurityRequestContext.getUserId(), Principal.PrincipalType.USER);
-      authorizerInstantiatorService.get().grant(instance, principal, ImmutableSet.of(Action.ADMIN));
+      authorizerInstantiatorService.get().grant(principal, ImmutableSet.of(new Privilege(instance, Action.ADMIN)));
     }
     namespaceAdmin = injector.getInstance(NamespaceAdmin.class);
     namespaceAdmin.create(NamespaceMeta.DEFAULT);

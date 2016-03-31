@@ -44,6 +44,7 @@ import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.InstanceId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.security.Action;
+import co.cask.cdap.proto.security.Privilege;
 import co.cask.cdap.security.authorization.AuthorizerInstantiatorService;
 import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
 import co.cask.cdap.store.NamespaceStore;
@@ -57,6 +58,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
@@ -174,8 +176,8 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
     }
 
     nsStore.create(metadata);
-    authorizerInstantiatorService.get().grant(namespace, SecurityRequestContext.toPrincipal(),
-                                              ImmutableSet.of(Action.ALL));
+    authorizerInstantiatorService.get().grant(SecurityRequestContext.toPrincipal(),
+                                              Collections.singleton(new Privilege(namespace, Action.ALL)));
   }
 
   /**

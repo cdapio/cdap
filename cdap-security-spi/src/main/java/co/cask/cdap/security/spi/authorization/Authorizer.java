@@ -73,13 +73,12 @@ public interface Authorizer {
   void enforce(EntityId entity, Principal principal, Action action) throws Exception;
 
   /**
-   * Grants a {@link Principal} authorization to perform a set of {@link Action actions} on an {@link EntityId}.
+   * Grants a set of {@link Privilege privileges} to the specified {@link Principal}.
    *
-   * @param entity the {@link EntityId} to whom {@link Action actions} are to be granted
-   * @param principal the {@link Principal} that performs the actions. This could be a user, or role
-   * @param actions the set of {@link Action actions} to grant.
+   * @param principal the {@link Principal} to grant privileges to. This could be a user, or role
+   * @param privileges the set of {@link Privilege privileges} to grant
    */
-  void grant(EntityId entity, Principal principal, Set<Action> actions) throws Exception;
+  void grant(Principal principal, Set<Privilege> privileges) throws Exception;
 
   /**
    * Revokes a {@link Principal principal's} authorization to perform a set of {@link Action actions} on

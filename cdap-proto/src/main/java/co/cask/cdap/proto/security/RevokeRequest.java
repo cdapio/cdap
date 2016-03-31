@@ -19,6 +19,7 @@ package co.cask.cdap.proto.security;
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.proto.id.EntityId;
 
+import java.util.Collections;
 import java.util.Set;
 import javax.annotation.Nullable;
 
@@ -28,10 +29,14 @@ import javax.annotation.Nullable;
 @Beta
 public class RevokeRequest extends AuthorizationRequest {
 
-  public RevokeRequest(EntityId entity, @Nullable Principal principal, @Nullable Set<Action> actions) {
-    super(entity, principal, actions);
-    if (actions != null && principal == null) {
+  public RevokeRequest(EntityId entity, @Nullable Principal principal, @Nullable Action action) {
+    this(principal, Collections.singleton(new Privilege(entity, action)));
+    if (action != null && principal == null) {
       throw new IllegalArgumentException("Principal is required when actions is provided");
     }
+  }
+
+  public RevokeRequest(Principal principal, Set<Privilege> privileges) {
+    super(principal, privileges);
   }
 }
