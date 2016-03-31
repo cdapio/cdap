@@ -28,7 +28,6 @@ body.theme-cdap.state-hydratorplusplus-create {
     width: 130px;
     vertical-align: top;
     background: #E8E8E8;
-    .transition(all 0.2s ease);
     @media (max-width: @screen-xs-max) {
       bottom: 75px;
     }
@@ -36,7 +35,6 @@ body.theme-cdap.state-hydratorplusplus-create {
       margin-left: 130px;
       height: 100%;
       position: relative;
-      .transition(all 0.2s ease);
     }
     .left-panel {
       .left-top-section {
@@ -121,19 +119,6 @@ body.theme-cdap.state-hydratorplusplus-create {
         margin-left: 290px;
       }
     }
-    .hydrator-filter {
-      padding: 0 0 0 10px;
-      input {
-        background-color: #BEBEBE;
-        border: 0;
-        color: white;
-        height: 35px;
-        width: 75%;
-        box-shadow: none;
-        .border-radius(5px);
-        .placeholder-color(white);
-      }
-    }
     .item {
       color: @cdap-lightgray;
       font-size: 14px;
@@ -216,42 +201,61 @@ body.theme-cdap.state-hydratorplusplus-create {
         border-bottom: 1px solid #CBCBCB;
       }
       .item-body {
-        padding: 10px 10px 0;
-        .flexbox();
-        flex-direction: row;
-        flex-wrap: wrap;
-        align-items: baseline;
-        justify-content: space-between;
-        // Adjust max height to prevent side panel from becoming unusable below a certain browser height
-        @media (max-height: 550px) {
-          max-height: 20vh;
+        &.view-icon {
+          padding: 10px 10px 0;
+          .flexbox();
+          flex-direction: row;
+          flex-wrap: wrap;
+          align-items: baseline;
+          justify-content: space-between;
+          // Adjust max height to prevent side panel from becoming unusable below a certain browser height
+          @media (max-height: 550px) {
+            max-height: 20vh;
+          }
+          .plugin-item {
+            background-color: white;
+            border: 1px solid transparent;
+            color: #666;
+            line-height: 30px;
+            margin-bottom: 6px;
+            padding: 0 8px;
+            height: 30px;
+            width: 48%;
+            border: 1px solid #dddddd;
+            .border-radius(4px);
+            > .fa {
+              font-size: 12px;
+              width: 18px;
+              line-height: 30px;
+              vertical-align: top;
+            }
+            .name {
+              // display: none;
+              font-size: 11px;
+            }
+          }
         }
-        .no-item-message {
-          width: 100%;
+        &.view-list {
+          .plugin-item {
+            text-align: left;
+            margin: 10px 12px;
+            text-align: left;
+            width: 100%;
+            position: relative;
+
+            > .fa {
+              font-size: 13px;
+            }
+            .name {
+              font-size: 12px;
+              vertical-align: text-top;
+              display: inline-block;
+              max-width: 85%;
+            }
+          }
         }
       }
-      .plugin-item {
-        background-color: white;
-        border: 1px solid transparent;
-        color: #666;
-        line-height: 30px;
-        margin-bottom: 6px;
-        padding: 0 8px;
-        height: 30px;
-        width: 48%;
-        border: 1px solid #dddddd;
-        .border-radius(4px);
-        > .fa {
-          font-size: 12px;
-          width: 18px;
-          line-height: 30px;
-          vertical-align: top;
-        }
-        .name {
-          display: none;
-          font-size: 11px;
-        }
-      }
+
     }
     .badge {
       background-color: transparent;
