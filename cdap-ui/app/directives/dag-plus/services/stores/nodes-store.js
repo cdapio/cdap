@@ -154,7 +154,7 @@ class DAGPlusPlusNodesStore {
   getNodesAsObjects() {
     var obj = {};
     angular.forEach(this.state.nodes, function (node) {
-      obj[node.id] = node;
+      obj[node.name] = node;
     });
     return obj;
   }

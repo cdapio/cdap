@@ -28,7 +28,7 @@
       <tbody>
         <tr ng-repeat="metric in MetricsCtrl.state.metrics | orderBy:'stage'">
           <td>{{ metric.nodeName }}</td>
-          <td>{{ MetricsCtrl.state.nodes[metric.nodeName].type }}</td>
+          <td>{{ MetricsCtrl.state.nodes[metric.nodeName].type  | caskCapitalizeFilter}}</td>
           <td class="metric-cell">
             <table class="table metric-table">
               <tr ng-if="metric.nodeType !== 'sink'">
