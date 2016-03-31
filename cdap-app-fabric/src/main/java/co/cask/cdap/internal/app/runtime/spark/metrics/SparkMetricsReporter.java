@@ -44,7 +44,7 @@ final class SparkMetricsReporter extends ScheduledReporter {
                        TimeUnit durationUnit,
                        MetricFilter filter) {
     super(registry, "spark-reporter", filter, rateUnit, durationUnit);
-    this.metricsContext = SparkContextProvider.getSparkContext().getProgramMetricsContext();
+    this.metricsContext = SparkContextProvider.getSparkContext().getMetricsContext();
   }
 
   /**

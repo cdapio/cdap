@@ -28,6 +28,7 @@ import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.metrics.MetricsContext;
+import co.cask.cdap.api.metrics.MultiMetricsContext;
 import co.cask.cdap.api.plugin.PluginContext;
 import co.cask.cdap.api.spark.Spark;
 import co.cask.cdap.api.spark.SparkContext;
@@ -36,7 +37,6 @@ import co.cask.cdap.api.spark.SparkSpecification;
 import co.cask.cdap.api.stream.StreamEventDecoder;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.metrics.ProgramUserMetrics;
-import co.cask.cdap.app.metrics.WorkflowMetrics;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
@@ -79,14 +79,14 @@ public abstract class AbstractSparkContext implements SparkContext, Closeable {
   private final long logicalStartTime;
   private final Map<String, String> runtimeArguments;
   private final DiscoveryServiceClient discoveryServiceClient;
-  private final MetricsContext programMetricsContext;
-  private final MetricsContext workflowMetricsContext;
+  private final Metrics userMetrics;
+  private final MetricsContext metricsContext;
   private final LoggingContext loggingContext;
   private final PluginInstantiator pluginInstantiator;
   private final Admin admin;
-  private final WorkflowProgramInfo workflowProgramInfo;
-  private final MetricsCollectionService metricsCollectionService;
   protected final SystemDatasetInstantiator systemDatasetInstantiator;
+  private final WorkflowProgramInfo workflowProgramInfo;
+
 
   private Resources executorResources;
   private SparkConf sparkConf;
@@ -97,7 +97,6 @@ public abstract class AbstractSparkContext implements SparkContext, Closeable {
                                  Map<String, String> runtimeArguments, DiscoveryServiceClient discoveryServiceClient,
                                  MetricsContext metricsContext, LoggingContext loggingContext,
                                  DatasetFramework dsFramework,
-                                 MetricsCollectionService metricsCollectionService,
                                  @Nullable PluginInstantiator pluginInstantiator,
                                  @Nullable WorkflowProgramInfo workflowProgramInfo) {
     this.applicationSpecification = applicationSpecification;
@@ -106,9 +105,8 @@ public abstract class AbstractSparkContext implements SparkContext, Closeable {
     this.runId = runId;
     this.programClassLoader = programClassLoader;
     this.discoveryServiceClient = discoveryServiceClient;
-    this.metricsCollectionService = metricsCollectionService;
-    this.programMetricsContext = metricsContext;
-    this.workflowMetricsContext = getWorkflowMetricsContext(workflowProgramInfo, programId, metricsCollectionService);
+    this.userMetrics = new ProgramUserMetrics(metricsContext);
+    this.metricsContext = metricsContext;
     this.loggingContext = loggingContext;
     this.executorResources = Objects.firstNonNull(specification.getExecutorResources(), new Resources());
     this.sparkConf = new SparkConf();
@@ -155,7 +153,7 @@ public abstract class AbstractSparkContext implements SparkContext, Closeable {
 
   @Override
   public Metrics getMetrics() {
-    return new SparkUserMetrics(getProgramWorkflowMetrics());
+    return new SparkUserMetrics(userMetrics);
   }
 
   @Override
@@ -259,17 +257,15 @@ public abstract class AbstractSparkContext implements SparkContext, Closeable {
    * Returns the underlying {@link Metrics} instance for emitting user metrics. The returned instance is
    * not serializable and shouldn't be exposed to user program directly.
    */
-  public Metrics getProgramWorkflowMetrics() {
-    return workflowMetricsContext == null ?
-      new ProgramUserMetrics(programMetricsContext) :
-      new WorkflowMetrics(programMetricsContext, workflowMetricsContext);
+  public Metrics getUserMetrics() {
+    return userMetrics;
   }
 
   /**
-   * Returns the {@link MetricsContext} for this program.
+   * Returns the {@link MetricsContext} for this context.
    */
-  public MetricsContext getProgramMetricsContext() {
-    return programMetricsContext;
+  public MetricsContext getMetricsContext() {
+    return metricsContext;
   }
 
   /**
@@ -321,7 +317,8 @@ public abstract class AbstractSparkContext implements SparkContext, Closeable {
    * the given program execution context.
    */
   protected static MetricsContext createMetricsContext(MetricsCollectionService service,
-                                                       Id.Program programId, RunId runId) {
+                                                       Id.Program programId, RunId runId,
+                                                       @Nullable WorkflowProgramInfo workflowProgramInfo) {
     Map<String, String> tags = Maps.newHashMap();
     tags.put(Constants.Metrics.Tag.NAMESPACE, programId.getNamespaceId());
     tags.put(Constants.Metrics.Tag.APP, programId.getApplicationId());
@@ -331,33 +328,20 @@ public abstract class AbstractSparkContext implements SparkContext, Closeable {
     // todo: use proper spark instance id. For now we have to emit smth for test framework's waitFor metric to work
     tags.put(Constants.Metrics.Tag.INSTANCE_ID, "0");
 
-    return service.getContext(tags);
-  }
-
-  /**
-   * Get the metrics collection service
-   *
-   * @return metrics collection service
-   */
-  public MetricsCollectionService getMetricsCollectionService() {
-    return metricsCollectionService;
-  }
-
-  @Nullable
-  private MetricsContext getWorkflowMetricsContext(@Nullable WorkflowProgramInfo workflowProgramInfo,
-                                                   Id.Program program,
-                                                   MetricsCollectionService metricsCollectionService) {
+    MetricsContext programMetricsContext = service.getContext(tags);
     if (workflowProgramInfo == null) {
-      return null;
+      return programMetricsContext;
     }
 
-    Map<String, String> tags = Maps.newHashMap();
-    tags.put(Constants.Metrics.Tag.NAMESPACE, program.getNamespaceId());
-    tags.put(Constants.Metrics.Tag.APP, program.getApplicationId());
+    // If running inside Workflow, add the WorkflowMetricsContext as well
+    tags = Maps.newHashMap();
+    tags.put(Constants.Metrics.Tag.NAMESPACE, programId.getNamespaceId());
+    tags.put(Constants.Metrics.Tag.APP, programId.getApplicationId());
     tags.put(Constants.Metrics.Tag.WORKFLOW, workflowProgramInfo.getName());
     tags.put(Constants.Metrics.Tag.RUN_ID, workflowProgramInfo.getRunId().getId());
     tags.put(Constants.Metrics.Tag.NODE, workflowProgramInfo.getNodeId());
-    return metricsCollectionService.getContext(tags);
+
+    return new MultiMetricsContext(programMetricsContext, service.getContext(tags));
   }
 
   /**

@@ -120,9 +120,9 @@ public class ExecutionSparkContext extends AbstractSparkContext {
                                @Nullable WorkflowProgramInfo workflowProgramInfo) {
     this(appSpec, specification, programId, runId, programClassLoader, runtimeArguments,
          transaction, datasetFramework, txClient, discoveryServiceClient,
-         createMetricsContext(metricsCollectionService, programId, runId),
-         createLoggingContext(programId, runId), hConf, streamAdmin, localizedResources,
-         metricsCollectionService, pluginInstantiator, workflowProgramInfo);
+         createMetricsContext(metricsCollectionService, programId, runId, workflowProgramInfo),
+         createLoggingContext(programId, runId), hConf, streamAdmin, localizedResources, pluginInstantiator,
+         workflowProgramInfo);
   }
 
   /**
@@ -138,19 +138,18 @@ public class ExecutionSparkContext extends AbstractSparkContext {
                                MetricsContext metricsContext, LoggingContext loggingContext,
                                Configuration hConf, StreamAdmin streamAdmin,
                                Map<String, File> localizedResources,
-                               MetricsCollectionService metricsCollectionService,
                                @Nullable PluginInstantiator pluginInstantiator,
                                @Nullable WorkflowProgramInfo workflowProgramInfo) {
     super(appSpec, specification, programId, runId, programClassLoader,
           runtimeArguments, discoveryServiceClient, metricsContext, loggingContext, datasetFramework,
-          metricsCollectionService, pluginInstantiator, workflowProgramInfo);
+          pluginInstantiator, workflowProgramInfo);
     this.datasets = new HashMap<>();
     this.contextConfig = new SparkContextConfig(hConf);
     this.transaction = transaction;
     this.streamAdmin = streamAdmin;
     this.datasetCache = new SingleThreadDatasetCache(systemDatasetInstantiator, txClient,
                                                      new NamespaceId(programId.getNamespace().getId()),
-                                                     runtimeArguments, getProgramMetricsContext(), null);
+                                                     runtimeArguments, getMetricsContext(), null);
     this.localizedResources = localizedResources;
   }
 
