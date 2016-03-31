@@ -155,7 +155,7 @@ angular.module(PKG.name + '.commons')
             if (angular.isArray(p.type)) {
               $scope.properties.push({
                 name: p.name,
-                type: p.type[0],
+                type: p.type[0].type === 'map' ? typeMap : p.type[0],
                 nullable: true,
                 readonly: p.readonly
               });
