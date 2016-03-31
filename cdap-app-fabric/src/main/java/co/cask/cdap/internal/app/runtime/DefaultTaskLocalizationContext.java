@@ -21,12 +21,13 @@ import com.google.common.collect.ImmutableMap;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.Serializable;
 import java.util.Map;
 
 /**
  * An implementation of {@link TaskLocalizationContext} that can be initialized with some localized resources.
  */
-public class DefaultTaskLocalizationContext implements TaskLocalizationContext {
+public class DefaultTaskLocalizationContext implements TaskLocalizationContext, Serializable {
 
   private final Map<String, File> localizedResources;
 

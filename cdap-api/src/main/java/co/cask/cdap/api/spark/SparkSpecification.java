@@ -66,6 +66,9 @@ public final class SparkSpecification implements ProgramSpecification, PropertyP
     return description;
   }
 
+  /**
+   * Returns the main class name for the Spark program.
+   */
   public String getMainClassName() {
     return mainClassName;
   }

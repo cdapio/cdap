@@ -112,8 +112,10 @@ trait SparkExecutionContext extends RuntimeContext with Transactional {
     *
     * @param sc the [[org.apache.spark.SparkContext]] to use
     * @param streamName name of the stream
-    * @param startTime the starting time of the stream to be read in milliseconds (inclusive)
-    * @param endTime the ending time of the streams to be read in milliseconds (exclusive)
+    * @param startTime  the starting time of the stream to be read in milliseconds (inclusive);
+    *                   passing in `0` means start reading from the first event available in the stream.
+    * @param endTime the ending time of the streams to be read in milliseconds (exclusive);
+    *                passing in `Long#MAX_VALUE` means read up to latest event available in the stream.
     * @param decoder a function to convert a [[co.cask.cdap.api.flow.flowlet.StreamEvent]] to a value
     * @tparam T value type
     * @return a new [[org.apache.spark.rdd.RDD]] instance that reads from the given stream.

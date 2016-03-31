@@ -16,6 +16,8 @@
 
 package co.cask.cdap.api.spark;
 
+import java.io.Serializable;
+
 /**
  * A Java interface for Spark program to implement. It provides access to {@link JavaSparkExecutionContext} for
  * interacting with CDAP.
@@ -55,12 +57,12 @@ package co.cask.cdap.api.spark;
  * </pre></code>
  * </p>
  */
-public abstract class JavaSparkMain {
+public interface JavaSparkMain extends Serializable {
 
   /**
    * This method will be called when the Spark program starts.
    *
    * @param sec the context for interacting with CDAP
    */
-  public abstract void run(JavaSparkExecutionContext sec) throws Exception;
+  void run(JavaSparkExecutionContext sec) throws Exception;
 }
