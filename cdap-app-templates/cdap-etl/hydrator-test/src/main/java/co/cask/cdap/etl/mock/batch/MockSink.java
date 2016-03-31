@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.etl.datapipeline.mock;
+package co.cask.cdap.etl.mock.batch;
 
 import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.annotation.Plugin;
@@ -32,6 +32,7 @@ import co.cask.cdap.etl.api.PipelineConfigurer;
 import co.cask.cdap.etl.api.batch.BatchRuntimeContext;
 import co.cask.cdap.etl.api.batch.BatchSink;
 import co.cask.cdap.etl.api.batch.BatchSinkContext;
+import co.cask.cdap.etl.proto.v2.ETLPlugin;
 import co.cask.cdap.format.StructuredRecordStringConverter;
 import co.cask.cdap.test.DataSetManager;
 
@@ -55,6 +56,9 @@ public class MockSink extends BatchSink<StructuredRecord, byte[], Put> {
     this.config = config;
   }
 
+  /**
+   * Config for the sink.
+   */
   public static class Config extends PluginConfig {
     private String tableName;
   }
@@ -84,10 +88,10 @@ public class MockSink extends BatchSink<StructuredRecord, byte[], Put> {
     emitter.emit(new KeyValue<>(rowkey, put));
   }
 
-  public static co.cask.cdap.etl.proto.v2.ETLPlugin getPlugin(String tableName) {
+  public static ETLPlugin getPlugin(String tableName) {
     Map<String, String> properties = new HashMap<>();
     properties.put("tableName", tableName);
-    return new co.cask.cdap.etl.proto.v2.ETLPlugin("Mock", BatchSink.PLUGIN_TYPE, properties, null);
+    return new ETLPlugin("Mock", BatchSink.PLUGIN_TYPE, properties, null);
   }
 
   /**

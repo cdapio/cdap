@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.etl.realtime.mock;
+package co.cask.cdap.etl.mock.transform;
 
 import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.annotation.Plugin;
@@ -22,6 +22,7 @@ import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.plugin.PluginConfig;
 import co.cask.cdap.etl.api.Emitter;
 import co.cask.cdap.etl.api.Transform;
+import co.cask.cdap.etl.proto.v2.ETLPlugin;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -47,15 +48,18 @@ public class IntValueFilterTransform extends Transform<StructuredRecord, Structu
     }
   }
 
+  /**
+   * Config for the transform.
+   */
   public static class Config extends PluginConfig {
     private String field;
     private int value;
   }
 
-  public static co.cask.cdap.etl.proto.v1.Plugin getPlugin(String field, int value) {
+  public static ETLPlugin getPlugin(String field, int value) {
     Map<String, String> properties = new HashMap<>();
     properties.put("field", field);
     properties.put("value", String.valueOf(value));
-    return new co.cask.cdap.etl.proto.v1.Plugin("IntValueFilter", properties);
+    return new ETLPlugin("IntValueFilter", Transform.PLUGIN_TYPE, properties, null);
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.etl.realtime.mock;
+package co.cask.cdap.etl.mock.realtime;
 
 import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.annotation.Plugin;
@@ -24,6 +24,7 @@ import co.cask.cdap.etl.api.Emitter;
 import co.cask.cdap.etl.api.realtime.RealtimeContext;
 import co.cask.cdap.etl.api.realtime.RealtimeSource;
 import co.cask.cdap.etl.api.realtime.SourceState;
+import co.cask.cdap.etl.proto.v2.ETLPlugin;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
@@ -69,6 +70,9 @@ public class MockSource extends RealtimeSource<StructuredRecord> {
     return currentState;
   }
 
+  /**
+   * Config for the source.
+   */
   public static class Config extends PluginConfig {
     @Nullable
     private String records;
@@ -82,12 +86,11 @@ public class MockSource extends RealtimeSource<StructuredRecord> {
     }
   }
 
-  public static co.cask.cdap.etl.proto.v1.Plugin getPlugin(List<StructuredRecord> records) {
-    if (records == null) {
-      return new co.cask.cdap.etl.proto.v1.Plugin("Mock", null);
-    }
+  public static ETLPlugin getPlugin(List<StructuredRecord> records) {
     Map<String, String> properties = new HashMap<>();
-    properties.put("records", GSON.toJson(records));
-    return new co.cask.cdap.etl.proto.v1.Plugin("Mock", properties);
+    if (records != null) {
+      properties.put("records", GSON.toJson(records));
+    }
+    return new ETLPlugin("Mock", RealtimeSource.PLUGIN_TYPE, properties, null);
   }
 }

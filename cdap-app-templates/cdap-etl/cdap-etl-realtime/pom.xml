@@ -54,6 +54,12 @@
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
     </dependency>
+    <dependency>
+      <groupId>co.cask.cdap</groupId>
+      <artifactId>hydrator-test</artifactId>
+      <version>${project.version}</version>
+      <scope>test</scope>
+    </dependency>
     <!-- TODO Remove this when CDAP-3810 is fixed -->
     <dependency>
       <groupId>org.apache.geronimo.specs</groupId>

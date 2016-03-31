@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,29 +14,31 @@
  * the License.
  */
 
-package co.cask.cdap.etl.realtime.mock;
+package co.cask.cdap.etl.mock.transform;
 
 import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.annotation.Plugin;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.etl.api.Emitter;
 import co.cask.cdap.etl.api.Transform;
+import co.cask.cdap.etl.proto.v2.ETLPlugin;
 
 import java.util.HashMap;
 
 /**
- * Transform that passes every record on.
+ * Transform that doubles every record it receives.
  */
 @Plugin(type = Transform.PLUGIN_TYPE)
-@Name("Identity")
-public class IdentityTransform extends Transform<StructuredRecord, StructuredRecord> {
+@Name("Double")
+public class DoubleTransform extends Transform<StructuredRecord, StructuredRecord> {
 
   @Override
   public void transform(StructuredRecord input, Emitter<StructuredRecord> emitter) throws Exception {
     emitter.emit(input);
+    emitter.emit(input);
   }
 
-  public static co.cask.cdap.etl.proto.v1.Plugin getPlugin() {
-    return new co.cask.cdap.etl.proto.v1.Plugin("Identity", new HashMap<String, String>());
+  public static ETLPlugin getPlugin() {
+    return new ETLPlugin("Double", Transform.PLUGIN_TYPE, new HashMap<String, String>(), null);
   }
 }

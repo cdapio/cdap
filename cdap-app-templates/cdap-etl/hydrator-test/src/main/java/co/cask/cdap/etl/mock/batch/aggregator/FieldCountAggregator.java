@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.etl.datapipeline.mock;
+package co.cask.cdap.etl.mock.batch.aggregator;
 
 import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.annotation.Plugin;
@@ -93,6 +93,9 @@ public class FieldCountAggregator extends BatchAggregator<Object, StructuredReco
     schema = config.getSchema();
   }
 
+  /**
+   * Conf for the aggregator.
+   */
   public static class Config extends PluginConfig {
     private final String fieldName;
 

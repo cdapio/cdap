@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.etl.realtime.mock;
+package co.cask.cdap.etl.mock.realtime;
 
 import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.annotation.Plugin;
@@ -26,6 +26,7 @@ import co.cask.cdap.etl.api.Lookup;
 import co.cask.cdap.etl.api.realtime.RealtimeContext;
 import co.cask.cdap.etl.api.realtime.RealtimeSource;
 import co.cask.cdap.etl.api.realtime.SourceState;
+import co.cask.cdap.etl.proto.v2.ETLPlugin;
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
 
@@ -80,15 +81,18 @@ public class LookupSource extends RealtimeSource<StructuredRecord> {
     return currentState;
   }
 
+  /**
+   * Config for the source.
+   */
   public static class Config extends PluginConfig {
     private String fields;
     private String lookupName;
   }
 
-  public static co.cask.cdap.etl.proto.v1.Plugin getPlugin(Set<String> fields, String lookupName) {
+  public static ETLPlugin getPlugin(Set<String> fields, String lookupName) {
     Map<String, String> properties = new HashMap<>();
     properties.put("fields", Joiner.on(',').join(fields));
     properties.put("lookupName", lookupName);
-    return new co.cask.cdap.etl.proto.v1.Plugin("Lookup", properties);
+    return new ETLPlugin("Lookup", RealtimeSource.PLUGIN_TYPE, properties, null);
   }
 }
