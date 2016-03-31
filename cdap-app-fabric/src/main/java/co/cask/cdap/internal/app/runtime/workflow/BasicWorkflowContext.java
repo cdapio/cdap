@@ -30,6 +30,7 @@ import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.AbstractContext;
 import co.cask.tephra.TransactionSystemClient;
+import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import org.apache.twill.api.RunId;
@@ -51,6 +52,7 @@ final class BasicWorkflowContext extends AbstractContext implements WorkflowCont
   private final WorkflowToken token;
   private final Metrics userMetrics;
   private final Map<String, WorkflowNodeState> nodeStates;
+  private boolean success = false;
 
   BasicWorkflowContext(WorkflowSpecification workflowSpec, @Nullable WorkflowActionSpecification spec,
                        @Nullable ProgramWorkflowRunner programWorkflowRunner,
@@ -130,5 +132,17 @@ final class BasicWorkflowContext extends AbstractContext implements WorkflowCont
   @Override
   public Map<String, WorkflowNodeState> getNodeStates() {
     return ImmutableMap.copyOf(nodeStates);
+  }
+
+  /**
+   * Sets the success flag if execution of the program associated with current context succeeds.
+   */
+  void setSuccess() {
+    success = true;
+  }
+
+  @Override
+  public boolean isSuccessful() {
+    return success;
   }
 }

@@ -413,6 +413,31 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     Assert.assertEquals(Long.valueOf(1), aggs.get(writeCountName));
   }
 
+  @Test
+  public void testWorkflowStatus() throws Exception {
+    ApplicationManager appManager = deployApplication(WorkflowStatusTestApp.class);
+
+    File workflowSuccess = new File(TMP_FOLDER.newFolder() + "/workflow.success");
+    File actionSuccess = new File(TMP_FOLDER.newFolder() + "/action.success");
+
+    WorkflowManager workflowManager = appManager.getWorkflowManager(WorkflowStatusTestApp.WORKFLOW_NAME);
+    workflowManager.start(ImmutableMap.of("workflow.success.file", workflowSuccess.getAbsolutePath(),
+                                          "action.success.file", actionSuccess.getAbsolutePath(),
+                                          "throw.exception", "true"));
+    workflowManager.waitForFinish(1, TimeUnit.MINUTES);
+
+    // Since action and workflow failed the files should not exist
+    Assert.assertFalse(workflowSuccess.exists());
+    Assert.assertFalse(actionSuccess.exists());
+
+    workflowManager.start(ImmutableMap.of("workflow.success.file", workflowSuccess.getAbsolutePath(),
+                                          "action.success.file", actionSuccess.getAbsolutePath()));
+    workflowManager.waitForFinish(1, TimeUnit.MINUTES);
+
+    Assert.assertTrue(workflowSuccess.exists());
+    Assert.assertTrue(actionSuccess.exists());
+  }
+
   @Category(SlowTests.class)
   @Test
   public void testCustomActionDatasetAccess() throws Exception {

@@ -81,6 +81,7 @@ public class CustomActionExecutor {
     try {
       initializeInTransaction();
       runInTransaction();
+      workflowContext.setSuccess();
     } finally {
       destroyInTransaction();
       ClassLoaders.setContextClassLoader(oldClassLoader);
