@@ -44,6 +44,7 @@ import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.InstanceId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.security.Action;
+import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.security.authorization.AuthorizerInstantiatorService;
 import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
 import co.cask.cdap.store.NamespaceStore;
@@ -166,7 +167,13 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
     }
 
     // Namespace can be created. Check if the user is authorized now.
-    authorizerInstantiatorService.get().enforce(instanceId, SecurityRequestContext.toPrincipal(), Action.ADMIN);
+    Principal principal = SecurityRequestContext.toPrincipal();
+    // Skip authorization enforcement for the system user and the default namespace, so the DefaultNamespaceEnsurer
+    // thread can successfully create the default namespace
+    if (!(Principal.SYSTEM.equals(principal) && NamespaceId.DEFAULT.equals(namespace))) {
+      authorizerInstantiatorService.get().enforce(instanceId, principal, Action.ADMIN);
+    }
+
     try {
       dsFramework.createNamespace(namespace.toId());
     } catch (DatasetManagementException e) {
@@ -174,8 +181,10 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
     }
 
     nsStore.create(metadata);
-    authorizerInstantiatorService.get().grant(namespace, SecurityRequestContext.toPrincipal(),
-                                              ImmutableSet.of(Action.ALL));
+    // Skip authorization grants for the system user
+    if (!(Principal.SYSTEM.equals(principal) && NamespaceId.DEFAULT.equals(namespace))) {
+      authorizerInstantiatorService.get().grant(namespace, principal, ImmutableSet.of(Action.ALL));
+    }
   }
 
   /**

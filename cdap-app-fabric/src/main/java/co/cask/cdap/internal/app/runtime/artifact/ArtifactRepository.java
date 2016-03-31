@@ -41,8 +41,10 @@ import co.cask.cdap.proto.artifact.ApplicationClassSummary;
 import co.cask.cdap.proto.artifact.ArtifactInfo;
 import co.cask.cdap.proto.artifact.ArtifactRange;
 import co.cask.cdap.proto.artifact.ArtifactSummary;
+import co.cask.cdap.proto.id.InstanceId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.security.Action;
+import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.security.authorization.AuthorizerInstantiatorService;
 import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
@@ -84,6 +86,7 @@ public class ArtifactRepository {
   private final ArtifactConfigReader configReader;
   private final MetadataStore metadataStore;
   private final AuthorizerInstantiatorService authorizerInstantiatorService;
+  private final InstanceId instanceId;
 
   @Inject
   ArtifactRepository(CConfiguration cConf, ArtifactStore artifactStore, MetadataStore metadataStore,
@@ -105,6 +108,7 @@ public class ArtifactRepository {
     this.configReader = new ArtifactConfigReader();
     this.metadataStore = metadataStore;
     this.authorizerInstantiatorService = authorizerInstantiatorService;
+    this.instanceId = new InstanceId(cConf.get(Constants.INSTANCE_NAME));
   }
 
   /**
@@ -326,8 +330,11 @@ public class ArtifactRepository {
    *                               on the added artifact.
    */
   public ArtifactDetail addArtifact(Id.Artifact artifactId, File artifactFile) throws Exception {
-    authorizerInstantiatorService.get().enforce(artifactId.getNamespace().toEntityId(),
-                                                SecurityRequestContext.toPrincipal(), Action.WRITE);
+    Principal principal = SecurityRequestContext.toPrincipal();
+    NamespaceId namespace = artifactId.getNamespace().toEntityId();
+    // Enforce WRITE privileges on the namespace
+    authorizerInstantiatorService.get().enforce(namespace, principal, Action.WRITE);
+
     Location artifactLocation = Locations.toLocation(artifactFile);
     ArtifactDetail artifactDetail;
     try (CloseableClassLoader parentClassLoader = artifactClassLoaderFactory.createClassLoader(artifactLocation)) {
@@ -339,8 +346,8 @@ public class ArtifactRepository {
       writeSystemMetadata(artifactId, artifactInfo);
       artifactDetail = artifactStore.write(artifactId, meta, Files.newInputStreamSupplier(artifactFile));
     }
-    authorizerInstantiatorService.get().grant(artifactId.toEntityId(), SecurityRequestContext.toPrincipal(),
-                                              Collections.singleton(Action.ALL));
+    // grant ALL privileges once artifact is successfully added
+    authorizerInstantiatorService.get().grant(artifactId.toEntityId(), principal, Collections.singleton(Action.ALL));
     return artifactDetail;
   }
 
@@ -365,9 +372,19 @@ public class ArtifactRepository {
    *                               the artifact is added successfully, then the user gets {@link Action#ALL} privileges
    *                               on the added artifact.
    */
+  @VisibleForTesting
   public ArtifactDetail addArtifact(Id.Artifact artifactId, File artifactFile,
                                     @Nullable Set<ArtifactRange> parentArtifacts) throws Exception {
-    return addArtifact(artifactId, artifactFile, parentArtifacts, null, Collections.<String, String>emptyMap());
+    // To add an artifact, a user must have write privileges on the namespace in which the artifact is being added
+    // This method is used to add user plugin artifacts, so enforce authorization on the specified, non-system namespace
+    Principal principal = SecurityRequestContext.toPrincipal();
+    NamespaceId namespace = artifactId.getNamespace().toEntityId();
+    authorizerInstantiatorService.get().enforce(namespace, principal, Action.WRITE);
+    ArtifactDetail artifactDetail = addArtifact(artifactId, artifactFile, parentArtifacts, null,
+                                                Collections.<String, String>emptyMap());
+    // artifact successfully added. now grant ALL permissions on the artifact to the current user
+    authorizerInstantiatorService.get().grant(artifactId.toEntityId(), principal, Collections.singleton(Action.ALL));
+    return artifactDetail;
   }
 
   /**
@@ -393,8 +410,17 @@ public class ArtifactRepository {
   public ArtifactDetail addArtifact(Id.Artifact artifactId, File artifactFile,
                                     @Nullable Set<ArtifactRange> parentArtifacts,
                                     @Nullable Set<PluginClass> additionalPlugins) throws Exception {
-    return addArtifact(artifactId, artifactFile, parentArtifacts,
-                       additionalPlugins, Collections.<String, String>emptyMap());
+    // To add an artifact, a user must have write privileges on the namespace in which the artifact is being added
+    // This method is used to add user app artifacts, so enforce authorization on the specified, non-system namespace
+    Principal principal = SecurityRequestContext.toPrincipal();
+    NamespaceId namespace = artifactId.getNamespace().toEntityId();
+    authorizerInstantiatorService.get().enforce(namespace, principal, Action.WRITE);
+
+    ArtifactDetail artifactDetail = addArtifact(artifactId, artifactFile, parentArtifacts, additionalPlugins,
+                                                Collections.<String, String>emptyMap());
+    // artifact successfully added. now grant ALL permissions on the artifact to the current user
+    authorizerInstantiatorService.get().grant(artifactId.toEntityId(), principal, Collections.singleton(Action.ALL));
+    return artifactDetail;
   }
 
   /**
@@ -418,13 +444,11 @@ public class ArtifactRepository {
    *                               the artifact is added successfully, then the user gets {@link Action#ALL} privileges
    *                               on the added artifact.
    */
+  @VisibleForTesting
   public ArtifactDetail addArtifact(Id.Artifact artifactId, File artifactFile,
                                     @Nullable Set<ArtifactRange> parentArtifacts,
                                     @Nullable Set<PluginClass> additionalPlugins,
                                     Map<String, String> properties) throws Exception {
-    // check that the current user has write privileges on the namespace
-    authorizerInstantiatorService.get().enforce(artifactId.getNamespace().toEntityId(),
-                                                SecurityRequestContext.toPrincipal(), Action.WRITE);
     if (additionalPlugins != null) {
       validatePluginSet(additionalPlugins);
     }
@@ -449,9 +473,6 @@ public class ArtifactRepository {
                                                    artifactDetail.getMeta().getProperties());
       // add system metadata for artifacts
       writeSystemMetadata(artifactId, artifactInfo);
-      // artifact successfully added. now grant ALL permissions on the artifact to the current user
-      authorizerInstantiatorService.get().grant(artifactId.toEntityId(), SecurityRequestContext.toPrincipal(),
-                                                ImmutableSet.of(Action.ALL));
       return artifactDetail;
     } finally {
       parentClassLoader.close();
@@ -577,7 +598,18 @@ public class ArtifactRepository {
    *                                but if it does, it should be ok to retry the operation.
    */
   public void addSystemArtifacts() throws Exception {
-
+    // this method is called from two places:
+    // 1. the SystemArtifactLoader calls it during master startup to load all system artifacts. There should not be any
+    // authorization enforcement for this step.
+    // 2. the refresh system artifacts API - POST /namespaces/system/artifacts calls this when a user hits that API. To
+    // perform this operation, a user must have write privileges on the cdap instance
+    Principal principal = SecurityRequestContext.toPrincipal();
+    if (Principal.SYSTEM.equals(principal)) {
+      LOG.trace("Skipping authorization enforcement since it is being called with the system principal. This is " +
+                  "so the SystemArtifactLoader can load system artifacts.");
+    } else {
+      authorizerInstantiatorService.get().enforce(instanceId, principal, Action.WRITE);
+    }
     // scan the directory for artifact .jar files and config files for those artifacts
     List<SystemArtifactInfo> systemArtifacts = new ArrayList<>();
     for (File systemArtifactDir : systemArtifactDirs) {
@@ -645,7 +677,6 @@ public class ArtifactRepository {
     }
   }
 
-  // TODO: CDAP-5455 Re-think authorization here. This can be called with a missing username in SecurityRequestContext
   private void addSystemArtifact(SystemArtifactInfo systemArtifactInfo) throws Exception {
     String fileName = systemArtifactInfo.getArtifactFile().getName();
     try {
@@ -688,8 +719,14 @@ public class ArtifactRepository {
    *                               a user needs {@link Action#ADMIN} permission on the artifact.
    */
   public void deleteArtifact(Id.Artifact artifactId) throws Exception {
-    authorizerInstantiatorService.get().enforce(artifactId.toEntityId(), SecurityRequestContext.toPrincipal(),
-                                                Action.ADMIN);
+    // for deleting system artifacts, users need admin privileges on the CDAP instance.
+    // for deleting non-system artifacts, users need admin privileges on the artifact being deleted.
+    Principal principal = SecurityRequestContext.toPrincipal();
+    if (NamespaceId.SYSTEM.equals(artifactId.getNamespace().toEntityId())) {
+      authorizerInstantiatorService.get().enforce(instanceId, principal, Action.ADMIN);
+    } else {
+      authorizerInstantiatorService.get().enforce(artifactId.toEntityId(), principal, Action.ADMIN);
+    }
     // revoke all privileges on the artifact
     authorizerInstantiatorService.get().revoke(artifactId.toEntityId());
     artifactStore.delete(artifactId);
