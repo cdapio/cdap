@@ -54,9 +54,9 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
           };
         }
 
-        if (split[split.length - 1] === 'in') {
+        if (metric.metricName.indexOf(split[1] + '.records.in') !== -1) {
           metricObj[key].recordsIn = metric.data[0].value;
-        } else if (split[split.length - 1] === 'out') {
+        } else if (metric.metricName.indexOf(split[1] + '.records.out') !== -1) {
           metricObj[key].recordsOut = metric.data[0].value;
         }
 
