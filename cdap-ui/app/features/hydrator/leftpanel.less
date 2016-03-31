@@ -99,6 +99,11 @@ body.theme-cdap.state-hydrator-create {
     }
     .hydrator-filter {
       padding: 20px 0 20px 10px;
+      > * {
+        &:not(input){
+          display: none;
+        }
+      }
       input {
         background-color: fade(@gray-dark, 25%);
         background-image: url('@{img-path}/hydrator_bg_pattern.png');
