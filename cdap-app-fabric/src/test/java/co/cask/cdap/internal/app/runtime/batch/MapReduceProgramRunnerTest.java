@@ -44,6 +44,7 @@ import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionExecutorFactory;
 import co.cask.tephra.TransactionFailureException;
+import co.cask.tephra.TxConstants;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
@@ -53,8 +54,10 @@ import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.twill.filesystem.Location;
 import org.junit.Assert;
+import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.junit.rules.ExternalResource;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -77,6 +80,16 @@ import javax.annotation.Nullable;
  */
 @Category(XSlowTests.class)
 public class MapReduceProgramRunnerTest extends MapReduceRunnerTestBase {
+  @ClassRule
+  public static final ExternalResource RESOURCE = new ExternalResource() {
+    @Override
+    protected void before() throws Throwable {
+      // Set the tx timeout to a ridiculously low value that will test that the long-running transactions
+      // actually bypass that timeout.
+      System.setProperty(TxConstants.Manager.CFG_TX_TIMEOUT, "1");
+      System.setProperty(TxConstants.Manager.CFG_TX_CLEANUP_INTERVAL, "2");
+    }
+  };
 
   /**
    * Tests that beforeSubmit() and getSplits() are called in the same transaction,

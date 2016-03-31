@@ -112,11 +112,16 @@ public class MapReduceRunnerTestBase {
 
   @BeforeClass
   public static void beforeClass() throws Exception {
-    // Set the tx timeout to a ridiculously low value that will test that the long-running transactions
-    // actually bypass that timeout.
     CConfiguration conf = CConfiguration.create();
-    conf.setInt(TxConstants.Manager.CFG_TX_TIMEOUT, 1);
-    conf.setInt(TxConstants.Manager.CFG_TX_CLEANUP_INTERVAL, 2);
+    // allow subclasses to override the following two parameters
+    Integer txTimeout = Integer.getInteger(TxConstants.Manager.CFG_TX_TIMEOUT);
+    if (txTimeout != null) {
+      conf.setInt(TxConstants.Manager.CFG_TX_TIMEOUT, txTimeout);
+    }
+    Integer txCleanupInterval = Integer.getInteger(TxConstants.Manager.CFG_TX_CLEANUP_INTERVAL);
+    if (txCleanupInterval != null) {
+      conf.setInt(TxConstants.Manager.CFG_TX_CLEANUP_INTERVAL, txCleanupInterval);
+    }
     injector = AppFabricTestHelper.getInjector(conf, new AbstractModule() {
       @Override
       protected void configure() {
