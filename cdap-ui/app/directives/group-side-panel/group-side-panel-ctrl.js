@@ -17,7 +17,15 @@
 angular.module(PKG.name + '.commons')
   .controller('MySidePanel', function ($scope) {
     this.groups = $scope.panelGroups;
-
+    this.view = $scope.view || 'icon';
+    this.add = function() {
+      event.stopPropagation();
+      event.preventDefault();
+      var fn = $scope.onAdd();
+      if ('undefined' !== typeof fn) {
+        fn.call(null, event);
+      }
+    };
     $scope.$watch('MySidePanel.groups.length', function() {
 
       if (this.groups.length) {

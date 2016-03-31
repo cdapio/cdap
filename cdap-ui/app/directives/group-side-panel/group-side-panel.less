@@ -34,5 +34,39 @@ my-side-panel {
         cursor: pointer;
       }
     }
+    .hydrator-filter {
+      padding: 0 0 0 10px;
+      input {
+        background-color: #BEBEBE;
+        border: 0;
+        color: white;
+        height: 28px;
+        width: 130px;
+        box-shadow: none;
+        margin: 1px 5px 0 3px;
+        .border-radius(4px);
+        .placeholder-color(white);
+      }
+      > * {
+        margin-right: 8px;
+        &:last-child {
+          margin-right: 0;
+        }
+        &:first-child {
+          margin-left: 0;
+        }
+      }
+
+      .btn.btn-default {
+        &.btn-toggle {
+          padding: 5px;
+          padding-left: 5px;
+          border-radius: 0;
+          padding-right: 8px;
+          border-top-left-radius: 3px;
+          border-bottom-left-radius: 3px;
+        }
+      }
+    }
   }
 }
