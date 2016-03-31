@@ -40,8 +40,8 @@ import java.lang.annotation.Target;
  * </pre>
  *
  * <p>
- * See the <i><a href="http://cask.co/docs/cdap/current/en/developers-manual/index.html">CDAP Developers' Manual</a></i>
- * and the <i><a href="http://cask.co/docs/cdap/current/en/examples-manual/index.html">CDAP examples</a></i>
+ * See the <i><a href="http://docs.cask.co/cdap/current/en/developers-manual/index.html">CDAP Developers' Manual</a></i>
+ * and the <i><a href="http://docs.cask.co/cdap/current/en/examples-manual/index.html">CDAP examples</a></i>
  * for more information.
  * </p>
  *
