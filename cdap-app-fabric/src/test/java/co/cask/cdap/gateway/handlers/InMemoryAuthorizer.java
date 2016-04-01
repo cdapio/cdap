@@ -89,8 +89,10 @@ public class InMemoryAuthorizer extends AbstractAuthorizer {
   }
 
   @Override
-  public void revoke(EntityId entity, Principal principal, Set<Action> actions) {
-    getActions(entity, principal).removeAll(actions);
+  public void revoke(Principal principal, Set<Privilege> privileges) {
+    for (Privilege privilege : privileges) {
+      getActions(privilege.getEntity(), principal).remove(privilege.getAction());
+    }
   }
 
   @Override

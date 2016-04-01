@@ -125,14 +125,13 @@ public class DatasetBasedAuthorizer extends AbstractAuthorizer {
   }
 
   @Override
-  public void revoke(final EntityId entity, final Principal principal,
-                     final Set<Action> actions) throws TransactionFailureException {
+  public void revoke(final Principal principal, final Set<Privilege> privileges) throws TransactionFailureException {
     context.execute(new TxRunnable() {
       @Override
       public void run(DatasetContext context) throws Exception {
         ACLDataset dataset = dsSupplier.get();
-        for (Action action : actions) {
-          dataset.remove(entity, principal, action);
+        for (Privilege privilege : privileges) {
+          dataset.remove(privilege.getEntity(), principal, privilege.getAction());
         }
       }
     });

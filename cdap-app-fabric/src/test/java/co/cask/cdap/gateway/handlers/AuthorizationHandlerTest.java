@@ -172,7 +172,7 @@ public class AuthorizationHandlerTest {
       verifyFeatureDisabled(new DisabledFeatureCaller() {
         @Override
         public void call() throws Exception {
-          client.revoke(ns1, admin, ImmutableSet.of(Action.READ));
+          client.revoke(admin, ImmutableSet.of(new Privilege(ns1, Action.READ)));
         }
       });
 
@@ -239,7 +239,7 @@ public class AuthorizationHandlerTest {
     client.grant(admin, ImmutableSet.of(new Privilege(ns1, Action.READ)));
     verifyAuthSuccess(ns1, admin, Action.READ);
 
-    client.revoke(ns1, admin, ImmutableSet.of(Action.READ));
+    client.revoke(admin, ImmutableSet.of(new Privilege(ns1, Action.READ)));
     verifyAuthFailure(ns1, admin, Action.READ);
   }
 
@@ -255,7 +255,7 @@ public class AuthorizationHandlerTest {
     verifyAuthSuccess(ns1, adminGroup, Action.READ);
     verifyAuthSuccess(ns1, bob, Action.READ);
 
-    client.revoke(ns1, adminGroup, EnumSet.allOf(Action.class));
+    client.revoke(adminGroup, toAllPrivileges(ns1));
     verifyAuthFailure(ns1, adminGroup, Action.READ);
     verifyAuthSuccess(ns1, bob, Action.READ);
   }
@@ -348,7 +348,7 @@ public class AuthorizationHandlerTest {
     Assert.assertEquals(Sets.newHashSet(new Privilege(ns1, Action.READ)), client.listPrivileges(spiderman));
 
     // revoke action from the role
-    client.revoke(ns1, engineers, ImmutableSet.of(Action.READ));
+    client.revoke(engineers, ImmutableSet.of(new Privilege(ns1, Action.READ)));
 
     // now the privileges for spiderman should be empty
     Assert.assertEquals(new HashSet<>(), client.listPrivileges(spiderman));
@@ -400,7 +400,7 @@ public class AuthorizationHandlerTest {
       // revoking bob's privileges as alice should fail
       setCurrentUser(alice.getName());
       try {
-        client.revoke(ns, bob, ImmutableSet.of(Action.ALL));
+        client.revoke(bob, ImmutableSet.of(new Privilege(ns, Action.ALL)));
         Assert.fail(String.format("alice should not be able to revoke bob's privileges on namespace %s because she " +
                                     "does not have admin privileges on the namespace.", ns));
       } catch (UnauthorizedException expected) {
@@ -411,7 +411,7 @@ public class AuthorizationHandlerTest {
       client.grant(alice, ImmutableSet.of(new Privilege(ns, Action.ALL)));
       // Now alice should be able to revoke bob's privileges
       setCurrentUser(alice.getName());
-      client.revoke(ns, bob, ImmutableSet.of(Action.ALL));
+      client.revoke(bob, ImmutableSet.of(new Privilege(ns, Action.ALL)));
     } finally {
       setCurrentUser(oldUser);
     }
@@ -468,6 +468,14 @@ public class AuthorizationHandlerTest {
 
   private static String getCurrentUser() {
     return System.getProperty(USERNAME_PROPERTY);
+  }
+
+  private Set<Privilege> toAllPrivileges(NamespaceId ns1) {
+    ImmutableSet.Builder<Privilege> builder = ImmutableSet.builder();
+    for (Action action : EnumSet.allOf(Action.class)) {
+      builder.add(new Privilege(ns1, action));
+    }
+    return builder.build();
   }
 
   /**

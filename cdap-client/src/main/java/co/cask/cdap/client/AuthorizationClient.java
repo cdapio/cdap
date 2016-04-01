@@ -38,6 +38,7 @@ import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpResponse;
 import co.cask.common.http.ObjectResponse;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.InputSupplier;
 import com.google.common.reflect.TypeToken;
@@ -48,6 +49,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.EnumSet;
 import java.util.Set;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
@@ -97,20 +99,13 @@ public class AuthorizationClient extends AbstractAuthorizer {
   @Override
   public void revoke(EntityId entity) throws IOException, UnauthenticatedException, FeatureDisabledException,
     UnauthorizedException {
-    revoke(entity, null, null);
+    revoke(null, ImmutableSet.of(new Privilege(entity, Action.ALL)));
   }
 
   @Override
-  public void revoke(EntityId entity, @Nullable Principal principal, @Nullable Set<Action> actions) throws IOException,
+  public void revoke(@Nullable Principal principal, Set<Privilege> privileges) throws IOException,
     UnauthenticatedException, FeatureDisabledException, UnauthorizedException {
-    // TODO: fix
-    RevokeRequest revokeRequest;
-    if (actions == null) {
-      revokeRequest = new RevokeRequest(entity, principal, null);
-    } else {
-      revokeRequest = new RevokeRequest(entity, principal, actions.iterator().next());
-    }
-    revoke(revokeRequest);
+    revoke(new RevokeRequest(principal, privileges));
   }
 
   @Override

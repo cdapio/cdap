@@ -111,7 +111,7 @@ public class AuthorizationHandler extends AbstractAppFabricHttpHandler {
     }
 
     if (request.getPrincipal() == null) {
-      // Principal is null, we're probably trying to revoke all privileges on a set of entities
+      // Principal is null, we're trying to revoke all privileges on a set of entities
       for (Privilege privilege : request.getPrivileges()) {
         // currently we do not support revoking particular privileges on an entity, so we will revoke all for now
         authorizerInstantiatorService.get().revoke(privilege.getEntity());
@@ -121,17 +121,10 @@ public class AuthorizationHandler extends AbstractAppFabricHttpHandler {
       for (Privilege privilege : request.getPrivileges()) {
         // if action is unspecified, we revoke all
         Action action = privilege.getAction() == null ? Action.ALL : privilege.getAction();
-        authorizerInstantiatorService.get().revoke(privilege.getEntity(), request.getPrincipal(),
-                                                   Collections.singleton(action));
+        authorizerInstantiatorService.get().revoke(request.getPrincipal(),
+                                                   Collections.singleton(new Privilege(privilege.getEntity(), action)));
       }
     }
-
-//    if (request.getPrincipal() == null && request.getActions() == null) {
-//      authorizerInstantiatorService.get().revoke(request.getEntity());
-//    } else {
-//      Set<Action> actions = request.getActions() == null ? EnumSet.allOf(Action.class) : request.getActions();
-//      authorizerInstantiatorService.get().revoke(request.getEntity(), request.getPrincipal(), actions);
-//    }
 
     httpResponder.sendStatus(HttpResponseStatus.OK);
     createLogEntry(httpRequest, request, HttpResponseStatus.OK);

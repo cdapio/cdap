@@ -28,7 +28,6 @@ import org.junit.Test;
 
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -55,7 +54,7 @@ public abstract class AuthorizerTest {
     expectedPrivileges.add(new Privilege(namespace, Action.READ));
     Assert.assertEquals(expectedPrivileges, authorizer.listPrivileges(user));
 
-    authorizer.revoke(namespace, user, Collections.singleton(Action.READ));
+    authorizer.revoke(user, Collections.singleton(new Privilege(namespace, Action.READ)));
     verifyAuthFailure(namespace, user, Action.READ);
   }
 
@@ -71,7 +70,7 @@ public abstract class AuthorizerTest {
     authorizer.enforce(namespace, user, Action.ADMIN);
     authorizer.enforce(namespace, user, Action.EXECUTE);
 
-    authorizer.revoke(namespace, user, EnumSet.allOf(Action.class));
+    authorizer.revoke(user, Collections.singleton(new Privilege(namespace, Action.ALL)));
     verifyAuthFailure(namespace, user, Action.READ);
   }
 
@@ -87,7 +86,7 @@ public abstract class AuthorizerTest {
     authorizer.enforce(namespace, user, Action.ADMIN);
     authorizer.enforce(namespace, user, Action.EXECUTE);
 
-    authorizer.revoke(namespace, user, EnumSet.allOf(Action.class));
+    authorizer.revoke(user, Collections.singleton(new Privilege(namespace, Action.ALL)));
     verifyAuthFailure(namespace, user, Action.READ);
 
     Principal role = new Principal("admins", Principal.PrincipalType.ROLE);
@@ -112,7 +111,7 @@ public abstract class AuthorizerTest {
     authorizer.grant(user, Collections.singleton(new Privilege(dataset, Action.WRITE)));
     verifyAuthFailure(namespace, user, Action.WRITE);
 
-    authorizer.revoke(namespace, user, Collections.singleton(Action.READ));
+    authorizer.revoke(user, Collections.singleton(new Privilege(namespace, Action.READ)));
     authorizer.revoke(dataset);
     verifyAuthFailure(namespace, user, Action.READ);
   }
@@ -183,11 +182,11 @@ public abstract class AuthorizerTest {
     authorizer.enforce(ns1, spiderman, Action.READ);
 
     // list privileges for spiderman should have read action on ns1
-    Assert.assertEquals((Collections.singleton(new Privilege(ns1, Action.READ))),
+    Assert.assertEquals(Collections.singleton(new Privilege(ns1, Action.READ)),
                         authorizer.listPrivileges(spiderman));
 
     // revoke action from the role
-    authorizer.revoke(ns1, engineers, (Collections.singleton(Action.READ)));
+    authorizer.revoke(engineers, Collections.singleton(new Privilege(ns1, Action.READ)));
 
     // now the privileges for spiderman should be empty
     Assert.assertEquals(Collections.EMPTY_SET, authorizer.listPrivileges(spiderman));

@@ -33,6 +33,7 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.ProgramTypes;
 import co.cask.cdap.proto.security.Action;
+import co.cask.cdap.proto.security.Privilege;
 import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
 import co.cask.cdap.security.spi.authorization.Authorizer;
 import com.google.common.collect.HashMultimap;
@@ -92,7 +93,8 @@ public class DeletedProgramHandlerStage extends AbstractStage<ApplicationDeploya
       Id.Program programId = Id.Program.from(appSpec.getId(), type, spec.getName());
       programTerminator.stop(programId);
       // revoke privileges
-      authorizer.revoke(programId.toEntityId(), SecurityRequestContext.toPrincipal(), ImmutableSet.of(Action.ALL));
+      authorizer.revoke(SecurityRequestContext.toPrincipal(),
+                        ImmutableSet.of(new Privilege(programId.toEntityId(), Action.ALL)));
 
       // TODO: Unify with AppFabricHttpHandler.removeApplication
       // drop all queues and stream states of a deleted flow

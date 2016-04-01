@@ -41,7 +41,7 @@ public class NoOpAuthorizer extends AbstractAuthorizer {
   }
 
   @Override
-  public void revoke(EntityId entity, Principal principal, Set<Action> actions) {
+  public void revoke(Principal principal, Set<Privilege> privileges) {
     //no-op
   }
 

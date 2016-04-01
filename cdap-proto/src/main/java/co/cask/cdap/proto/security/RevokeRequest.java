@@ -24,7 +24,7 @@ import java.util.Set;
 import javax.annotation.Nullable;
 
 /**
- * Request for revoking a principal's permission to perform certain actions on an entity.
+ * Request for revoking a {@link Principal principal's} {@link Privilege privileges}.
  */
 @Beta
 public class RevokeRequest extends AuthorizationRequest {
@@ -36,7 +36,7 @@ public class RevokeRequest extends AuthorizationRequest {
     }
   }
 
-  public RevokeRequest(Principal principal, Set<Privilege> privileges) {
+  public RevokeRequest(@Nullable Principal principal, Set<Privilege> privileges) {
     super(principal, privileges);
   }
 }

@@ -81,20 +81,17 @@ public interface Authorizer {
   void grant(Principal principal, Set<Privilege> privileges) throws Exception;
 
   /**
-   * Revokes a {@link Principal principal's} authorization to perform a set of {@link Action actions} on
-   * an {@link EntityId}.
+   * Revokes a set of {@link Privilege privileges} from the specified {@link Principal principal}.
    *
-   * @param entity the {@link EntityId} whose {@link Action actions} are to be revoked
-   * @param principal the {@link Principal} that performs the actions. This could be a user, group or role
-   * @param actions the set of {@link Action actions} to revoke
+   * @param principal the {@link Principal} whose {@link Privilege privileges} are to be revoked
+   * @param privileges the set of {@link Privilege privileges} to revoke
    */
-  void revoke(EntityId entity, Principal principal, Set<Action> actions) throws Exception;
+  void revoke(Principal principal, Set<Privilege> privileges) throws Exception;
 
   /**
-   * Revokes all {@link Principal principals'} authorization to perform any {@link Action} on the given
-   * {@link EntityId}.
+   * Revokes all {@link Privilege privileges} for all {@link Principal principals} on the specified {@link EntityId}.
    *
-   * @param entity the {@link EntityId} on which all {@link Action actions} are to be revoked
+   * @param entity the {@link EntityId} on which all {@link Privilege privileges} are to be revoked
    */
   void revoke(EntityId entity) throws Exception;
 

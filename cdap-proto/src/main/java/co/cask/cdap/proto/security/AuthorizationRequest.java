@@ -32,7 +32,7 @@ public class AuthorizationRequest {
   private final Principal principal;
   private final Set<Privilege> privileges;
 
-  protected AuthorizationRequest(@Nullable Principal principal, @Nullable Set<Privilege> privileges) {
+  protected AuthorizationRequest(@Nullable Principal principal, Set<Privilege> privileges) {
     this.principal = principal;
     this.privileges = (privileges != null) ? Collections.unmodifiableSet(new LinkedHashSet<>(privileges)) : null;
   }
@@ -42,7 +42,6 @@ public class AuthorizationRequest {
     return principal;
   }
 
-  @Nullable
   public Set<Privilege> getPrivileges() {
     return privileges;
   }

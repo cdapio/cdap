@@ -31,6 +31,9 @@ public class Privilege {
   private final Action action;
 
   public Privilege(EntityId entity, Action action) {
+    if (entity == null) {
+      throw new IllegalArgumentException("entity is required");
+    }
     this.entity = entity;
     this.action = action;
   }
