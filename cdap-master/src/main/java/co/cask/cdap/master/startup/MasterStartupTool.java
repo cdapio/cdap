@@ -63,6 +63,9 @@ public class MasterStartupTool {
     if (cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED)) {
       LOG.info("  Hive version: {}", ExploreServiceUtils.getHiveVersion());
     }
+    LOG.info("CDAP version: {}", ClientVersions.getCdapVersion());
+    LOG.info("CDAP HBase compat version: {}", ClientVersions.getCdapHBaseCompatVersion());
+    LOG.info("Tephra HBase compat version: {}", ClientVersions.getTephraHBaseCompatVersion());
 
     if (!cConf.getBoolean(Constants.Startup.CHECKS_ENABLED)) {
       return;
