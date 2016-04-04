@@ -17,6 +17,7 @@
 @import '../../styles/variables.less';
 @import '../../../bower_components/bootstrap/less/mixins.less';
 @import '../../styles/themes/cdap/mixins.less';
+@height-of-toppanel: 43px;
 
 body.theme-cdap {
   &.state-hydratorplusplus-create {
@@ -102,7 +103,7 @@ body.theme-cdap {
           }
         }
         input {
-          height: 40px;
+          height: @height-of-toppanel;
         }
         textarea {
           font-weight: 400;
@@ -165,9 +166,10 @@ body.theme-cdap {
   }
   &.state-hydratorplusplus-detail {
     div.side-panel.top {
+
       div.tbl {
         display: table;
-        height: 40px;
+        height: @height-of-toppanel;
         width: 100%;
       }
       div.tbl-cell {
@@ -321,6 +323,10 @@ body.theme-cdap {
         }
         div.btn {
           width: 100%;
+          height: 70px;
+          span {
+            line-height: 70px;
+          }
         }
       }
     }
@@ -330,6 +336,7 @@ body.theme-cdap {
       div.side-panel.top {
         left: 0;
         max-width: 100vw;
+        height: 70px;
       }
     }
     div.side-panel.top {
@@ -340,7 +347,7 @@ body.theme-cdap {
       right: 0;
       left: 130px;
       z-index: 1029;
-      height: 40px;
+      height: @height-of-toppanel;
       // .box-shadow(5px 0 10px rgba(0, 0, 0, 0.5));
       max-width: ~"calc(100% - 130px)";
       .transition(all 0.2s ease);
@@ -353,7 +360,7 @@ body.theme-cdap {
         text-decoration: none;
         span {
           display: inline-block;
-          line-height: 40px;
+          line-height: @height-of-toppanel;
           font-size: 1.8em;
           @media (min-width: @screen-sm-min) {
             font-size: 23px;
@@ -369,11 +376,11 @@ body.theme-cdap {
         border-right: 1px solid transparent;
         border-bottom: 1px solid transparent;
         border-left: 1px solid @table-border-color;
-        height: 40px;
+        height: @height-of-toppanel;
         padding: 0;
         .transition(all 0.2s ease);
         span {
-          line-height: 40px;
+          line-height: @height-of-toppanel;
         }
         &:hover, &:focus {
           background-color: #ebebeb;

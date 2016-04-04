@@ -17,6 +17,7 @@
 @import '../../styles/variables.less';
 @import "../../../bower_components/bootstrap/less/mixins.less";
 @import '../../styles/themes/cdap/mixins.less';
+@height-of-toppanel: 43px;
 
 body.theme-cdap.state-hydratorplusplus-create {
   .left-panel-wrapper {
@@ -47,8 +48,6 @@ body.theme-cdap.state-hydratorplusplus-create {
           select.form-control {
             width: 87%;
             margin-left: 10px;
-            color: white;
-            background: #098BF9;
             height: 30px;
           }
           .btn.btn-default {
@@ -56,7 +55,7 @@ body.theme-cdap.state-hydratorplusplus-create {
           }
           .import-section {
             padding-left: 10px;
-            margin-top: 6px;
+            margin-top: 1px;
             display: block;
 
             strong {
@@ -90,7 +89,7 @@ body.theme-cdap.state-hydratorplusplus-create {
             position: static;
             margin-top: 10px;
             border-top: 1px solid #D4D4D4;
-            height: ~"calc(100% - 40px);"; // 100% - height of filter textbox + margin-top 10px;
+            height: calc(~"100% - "@height-of-toppanel);
             .item {
               color: @cdap-lightgray;
               font-size: 14px;
@@ -112,9 +111,9 @@ body.theme-cdap.state-hydratorplusplus-create {
                 }
                 .item-body-wrapper {
                   // Syntax needed to avoid LESS parsing issue affecting calc()
-                  height: ~"-moz-calc(100% - 40px)";
-                  height: ~"-webkit-calc(100% - 40px)";
-                  height: ~"calc(100% - 40px)";
+                  height: -moz-calc(~"100% - "@height-of-toppanel);
+                  height: -webkit-calc(~"100% - "@height-of-toppanel);
+                  height: calc(~"100% - "@height-of-toppanel);
                 }
               }
 
@@ -122,8 +121,8 @@ body.theme-cdap.state-hydratorplusplus-create {
                 color: black;
                 font-weight: bold;
                 padding: 0 15px 0 10px;
-                height: 40px;
-                line-height: 40px;
+                height: @height-of-toppanel;
+                line-height: @height-of-toppanel;
                 width: 100%;
                 border-bottom: 1px solid #CBCBCB;
                 span.name {
@@ -278,9 +277,9 @@ body.theme-cdap.state-hydratorplusplus-create {
           &.item-open {
             .item-body-wrapper {
               // Syntax needed to avoid LESS parsing issue affecting calc()
-              height: ~"-moz-calc(100% - 40px)";
-              height: ~"-webkit-calc(100% - 40px)";
-              height: ~"calc(100% - 40px)";
+              height: -moz-calc(~"100% - "@height-of-toppanel);
+              height: -webkit-calc(~"100% - "@height-of-toppanel);
+              height: calc(~"100% - "@height-of-toppanel);
               overflow-y: auto;
             }
           }
@@ -289,8 +288,8 @@ body.theme-cdap.state-hydratorplusplus-create {
             color: black;
             font-weight: bold;
             padding: 0 5px 0 5px;
-            height: 40px;
-            line-height: 40px;
+            height: @height-of-toppanel;
+            line-height: @height-of-toppanel;
             width: 100%;
             border-bottom: 1px solid #CBCBCB;
             span.name {
