@@ -45,7 +45,7 @@ import javax.annotation.Nullable;
 /**
  * An implementation of {@link Location} using {@link FileContext}.
  * TODO (CDAP-5328): This class is copied from Twill for the fix in TWILL-163.
- * Should be removed when toSting() is overridden in Twill (TWILL-167)
+ * Should be removed when toString() is overridden in Twill (TWILL-167)
  */
 final class FileContextLocation implements Location {
 

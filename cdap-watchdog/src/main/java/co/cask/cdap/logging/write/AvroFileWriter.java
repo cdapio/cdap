@@ -282,7 +282,7 @@ public final class AvroFileWriter implements Closeable, Flushable {
         }
       }
 
-      AvroFileWriter.LOG.trace("Closing file {}", location);
+      LOG.trace("Closing file {}", location);
       isOpen = false;
     }
   }
