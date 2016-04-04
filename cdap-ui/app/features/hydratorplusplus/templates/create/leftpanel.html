@@ -36,6 +36,10 @@
   data-on-panel-item-click="HydratorPlusPlusLeftPanelCtrl.onLeftSidePanelItemClicked">
 </my-side-panel>
 
+<div class="btn btn-default btn-left-panel-toggle btn-sm pull-right" ng-click="HydratorPlusPlusStudioCtrl.isExpanded = !HydratorPlusPlusStudioCtrl.isExpanded">
+  <span ng-class="{'fa-angle-double-left': HydratorPlusPlusStudioCtrl.isExpanded === true, 'fa-angle-double-right': HydratorPlusPlusStudioCtrl.isExpanded === false}" class="fa "></span>
+</div>
+
 <my-file-select class="sr-only"
                 id="pipeline-import-config-link"
                 data-button-icon="fa-upload"
