@@ -16,6 +16,7 @@
 
 package co.cask.cdap.proto.security;
 
+import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.proto.id.EntityId;
 
 import java.util.Objects;
@@ -24,6 +25,7 @@ import java.util.Objects;
  * Represents a privilege granted to a {@link Principal user}, {@link Principal group} or a {@link Principal role}.
  * It determines if the user or group can perform a given {@link Action} on an {@link EntityId}.
  */
+@Beta
 public class Privilege {
   private final EntityId entity;
   private final Action action;

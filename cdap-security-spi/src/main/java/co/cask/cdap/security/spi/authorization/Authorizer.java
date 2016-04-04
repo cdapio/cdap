@@ -16,6 +16,7 @@
 
 package co.cask.cdap.security.spi.authorization;
 
+import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
@@ -50,6 +51,7 @@ import java.util.jar.Attributes;
  *   <li>The {@link #destroy()} method can be used to perform cleanup tasks.</li>
  * </ul>
  */
+@Beta
 public interface Authorizer {
   /**
    * Initialize the {@link Authorizer}. Authorization extensions can use this method to access an
