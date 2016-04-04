@@ -71,6 +71,7 @@ import java.io.InputStream;
 import java.io.PrintWriter;
 import java.io.Writer;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -91,7 +92,6 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
     .create();
 
   private final TwillRunner twillRunner;
-  private final LocationFactory locationFactory;
   protected final YarnConfiguration hConf;
   protected final CConfiguration cConf;
   protected final EventHandler eventHandler;
@@ -140,11 +140,9 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
     public abstract TwillController launch(TwillApplication twillApplication, Iterable<String> extraClassPaths);
   }
 
-  protected AbstractDistributedProgramRunner(TwillRunner twillRunner, LocationFactory locationFactory,
-                                             YarnConfiguration hConf, CConfiguration cConf,
+  protected AbstractDistributedProgramRunner(TwillRunner twillRunner, YarnConfiguration hConf, CConfiguration cConf,
                                              TokenSecureStoreUpdater tokenSecureStoreUpdater) {
     this.twillRunner = twillRunner;
-    this.locationFactory = locationFactory;
     this.hConf = hConf;
     this.cConf = cConf;
     this.eventHandler = createEventHandler(cConf);
@@ -177,16 +175,14 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
                             new LocalizeResource(saveHConf(hConf, File.createTempFile("hConf", ".xml", tempDir))));
       localizeResources.put("cConf.xml",
                             new LocalizeResource(saveCConf(cConf, File.createTempFile("cConf", ".xml", tempDir))));
-      File programDir = DirUtils.createTempDir(tempDir);
-      final Program copiedProgram = copyProgramJar(program, tempDir, programDir);
 
-      final URI logbackURI = getLogBackURI(copiedProgram, programDir, tempDir);
+      final URI logbackURI = getLogBackURI(program, tempDir);
       final String programOptions = GSON.toJson(options);
 
       // Obtains and add the HBase delegation token as well (if in non-secure mode, it's a no-op)
       // Twill would also ignore it if it is not running in secure mode.
       // The HDFS token should already obtained by Twill.
-      return launch(copiedProgram, options, localizeResources, tempDir, new ApplicationLauncher() {
+      return launch(program, options, localizeResources, tempDir, new ApplicationLauncher() {
         @Override
         public TwillController launch(TwillApplication twillApplication, Iterable<String> extraClassPaths) {
           TwillPreparer twillPreparer = twillRunner.prepare(twillApplication);
@@ -236,13 +232,13 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
             .withApplicationClassPaths(Splitter.on(",").trimResults().split(yarnAppClassPath))
             .withBundlerClassAcceptor(new HadoopClassExcluder())
             .withApplicationArguments(
-              String.format("--%s", RunnableOptions.JAR), copiedProgram.getJarLocation().getName(),
+              String.format("--%s", RunnableOptions.JAR), program.getJarLocation().getName(),
               String.format("--%s", RunnableOptions.PROGRAM_OPTIONS), programOptions
             ).start();
           return addCleanupListener(twillController, program, tempDir);
         }
       });
-    } catch (IOException e) {
+    } catch (Exception e) {
       deleteDirectory(tempDir);
       throw Throwables.propagate(e);
     }
@@ -275,20 +271,17 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
    * classpath.
    */
   @Nullable
-  private URI getLogBackURI(Program program, File programDir, File tempDir) throws IOException {
-    // TODO: When CDAP-1273 is fixed you can get the resource directly from the program classloader.
-    // Make an unused call to getClassloader() to ensure that the jar is expanded into programDir.
-    program.getClassLoader();
-    File logbackFile = new File(programDir, "logback.xml");
-    if (logbackFile.exists()) {
-      return logbackFile.toURI();
+  private URI getLogBackURI(Program program, File tempDir) throws IOException, URISyntaxException {
+    URL logbackURL = program.getClassLoader().getResource("logback.xml");
+    if (logbackURL != null) {
+      return logbackURL.toURI();
     }
     URL resource = getClass().getClassLoader().getResource("logback-container.xml");
     if (resource == null) {
       return null;
     }
     // Copy the template
-    logbackFile = new File(tempDir, "logback.xml");
+    File logbackFile = new File(tempDir, "logback.xml");
     Files.copy(Resources.newInputStreamSupplier(resource), logbackFile);
     return logbackFile.toURI();
   }
@@ -321,21 +314,6 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
       conf.writeXml(writer);
     }
     return file;
-  }
-
-  /**
-   * Copies the program jar to a local temp file and return a {@link Program} instance
-   * with {@link Program#getJarLocation()} points to the local temp file.
-   */
-  private Program copyProgramJar(final Program program, File tempDir, File programDir) throws IOException {
-    File tempJar = File.createTempFile(program.getName(), ".jar", tempDir);
-    Files.copy(new InputSupplier<InputStream>() {
-      @Override
-      public InputStream getInput() throws IOException {
-        return program.getJarLocation().getInputStream();
-      }
-    }, tempJar);
-    return Programs.createWithUnpack(cConf, Locations.toLocation(tempJar), programDir);
   }
 
   /**

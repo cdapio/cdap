@@ -34,7 +34,6 @@ import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.batch.distributed.MapReduceContainerHelper;
-import co.cask.cdap.internal.app.runtime.spark.SparkContextConfig;
 import co.cask.cdap.internal.app.runtime.spark.SparkUtils;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.security.TokenSecureStoreUpdater;
@@ -44,7 +43,6 @@ import org.apache.hadoop.yarn.conf.YarnConfiguration;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.TwillController;
 import org.apache.twill.api.TwillRunner;
-import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -60,11 +58,12 @@ public final class DistributedWorkflowProgramRunner extends AbstractDistributedP
 
   private static final Logger LOG = LoggerFactory.getLogger(DistributedWorkflowProgramRunner.class);
 
+  private static final String HCONF_ATTR_CLUSTER_MODE = "cdap.spark.cluster.mode";
+
   @Inject
-  public DistributedWorkflowProgramRunner(TwillRunner twillRunner, LocationFactory locationFactory,
-                                          YarnConfiguration hConf, CConfiguration cConf,
+  public DistributedWorkflowProgramRunner(TwillRunner twillRunner, YarnConfiguration hConf, CConfiguration cConf,
                                           TokenSecureStoreUpdater tokenSecureStoreUpdater) {
-    super(twillRunner, locationFactory, createConfiguration(hConf), cConf, tokenSecureStoreUpdater);
+    super(twillRunner, createConfiguration(hConf), cConf, tokenSecureStoreUpdater);
   }
 
   @Override
@@ -109,7 +108,7 @@ public final class DistributedWorkflowProgramRunner extends AbstractDistributedP
 
   private static YarnConfiguration createConfiguration(YarnConfiguration hConf) {
     YarnConfiguration configuration = new YarnConfiguration(hConf);
-    configuration.setBoolean(SparkContextConfig.HCONF_ATTR_CLUSTER_MODE, true);
+    configuration.setBoolean(HCONF_ATTR_CLUSTER_MODE, true);
     return configuration;
   }
 

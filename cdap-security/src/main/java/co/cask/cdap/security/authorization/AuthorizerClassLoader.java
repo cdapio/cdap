@@ -48,9 +48,18 @@ public class AuthorizerClassLoader extends DirectoryClassLoader {
       authorizerResources = ImmutableSet.of();
     }
 
-    return FilterClassLoader.create(Predicates.in(authorizerResources),
-                                    Predicates.<String>alwaysTrue(),
-                                    baseClassLoader);
+    final Set<String> finalAuthorizerResources = authorizerResources;
+    return new FilterClassLoader(baseClassLoader, new FilterClassLoader.Filter() {
+      @Override
+      public boolean acceptResource(String resource) {
+        return finalAuthorizerResources.contains(resource);
+      }
+
+      @Override
+      public boolean acceptPackage(String packageName) {
+        return true;
+      }
+    });
   }
 
   AuthorizerClassLoader(File unpackedJarDir) {

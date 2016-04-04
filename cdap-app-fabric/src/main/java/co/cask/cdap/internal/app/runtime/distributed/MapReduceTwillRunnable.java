@@ -34,9 +34,4 @@ final class MapReduceTwillRunnable extends AbstractProgramTwillRunnable<MapReduc
     // Don't propagate MR failure as failure. Quick fix for CDAP-749.
     return false;
   }
-
-  @Override
-  protected Class<MapReduceProgramRunner> getProgramClass() {
-    return MapReduceProgramRunner.class;
-  }
 }

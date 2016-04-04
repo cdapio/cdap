@@ -18,6 +18,7 @@ package co.cask.cdap.api.spark
 
 import java.nio.charset.Charset
 
+import co.cask.cdap.api.annotation.Beta
 import co.cask.cdap.api.data.DatasetContext
 import co.cask.cdap.api.data.batch.Split
 import co.cask.cdap.api.flow.flowlet.StreamEvent
@@ -79,7 +80,13 @@ import scala.reflect.ClassTag
   *   }
   * }
   * }}}
+  *
+  * This interface extends serializable because the closures are anonymous class in Scala and Spark Serializes the
+  * closures before sending it to worker nodes. This serialization of inner anonymous class expects the outer
+  * containing class to be serializable else [[java.io.NotSerializableException]] is thrown. Having this interface
+  * serializable gives a neater API.
   */
+@Beta
 trait SparkMain extends Serializable {
 
   /**

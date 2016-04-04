@@ -66,6 +66,7 @@ import co.cask.cdap.security.guice.SecurityModules;
 import co.cask.cdap.security.server.ExternalAuthenticationServer;
 import co.cask.cdap.store.guice.NamespaceStoreModule;
 import co.cask.tephra.inmemory.InMemoryTransactionService;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
@@ -95,6 +96,7 @@ public class StandaloneMain {
 
   private static final Logger LOG = LoggerFactory.getLogger(StandaloneMain.class);
 
+  private final Injector injector;
   private final UserInterfaceService userInterfaceService;
   private final NettyRouter router;
   private final MetricsQueryService metricsQueryService;
@@ -121,7 +123,7 @@ public class StandaloneMain {
   private StandaloneMain(List<Module> modules, CConfiguration cConf) {
     this.cConf = cConf;
 
-    Injector injector = Guice.createInjector(modules);
+    injector = Guice.createInjector(modules);
 
     // Start ZK client and Kafka client only when audit is enabled
     boolean auditEnabled = cConf.getBoolean(Constants.Audit.ENABLED);
@@ -178,6 +180,14 @@ public class StandaloneMain {
         }
       }
     });
+  }
+
+  /**
+   * INTERNAL METHOD. Returns the guice injector of Standalone. It's for testing only. Use with extra caution.
+   */
+  @VisibleForTesting
+  public Injector getInjector() {
+    return injector;
   }
 
   /**

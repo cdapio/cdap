@@ -34,6 +34,7 @@ import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.common.utils.ImmutablePair;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.data2.metadata.system.ArtifactSystemMetadataWriter;
+import co.cask.cdap.internal.app.runtime.ProgramRuntimeProviderLoader;
 import co.cask.cdap.internal.app.runtime.plugin.PluginNotExistsException;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.artifact.ApplicationClassInfo;
@@ -87,12 +88,11 @@ public class ArtifactRepository {
 
   @Inject
   ArtifactRepository(CConfiguration cConf, ArtifactStore artifactStore, MetadataStore metadataStore,
-                     AuthorizerInstantiatorService authorizerInstantiatorService) {
+                     AuthorizerInstantiatorService authorizerInstantiatorService,
+                     ProgramRuntimeProviderLoader programRuntimeProviderLoader) {
     this.artifactStore = artifactStore;
-    File baseUnpackDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
-                                  cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
-    this.artifactClassLoaderFactory = new ArtifactClassLoaderFactory(cConf, baseUnpackDir);
-    this.artifactInspector = new ArtifactInspector(cConf, artifactClassLoaderFactory, baseUnpackDir);
+    this.artifactClassLoaderFactory = new ArtifactClassLoaderFactory(cConf, programRuntimeProviderLoader);
+    this.artifactInspector = new ArtifactInspector(cConf, artifactClassLoaderFactory);
     this.systemArtifactDirs = new ArrayList<>();
     for (String dir : cConf.get(Constants.AppFabric.SYSTEM_ARTIFACTS_DIR).split(";")) {
       File file = new File(dir);
@@ -105,6 +105,17 @@ public class ArtifactRepository {
     this.configReader = new ArtifactConfigReader();
     this.metadataStore = metadataStore;
     this.authorizerInstantiatorService = authorizerInstantiatorService;
+  }
+
+  /**
+   * Create a classloader that uses the artifact at the specified location to load classes, with access to
+   * packages that all program type has access to.
+   * It delegates to {@link ArtifactClassLoaderFactory#createClassLoader(Location)}.
+   *
+   * @see ArtifactClassLoaderFactory
+   */
+  public CloseableClassLoader createArtifactClassLoader(Location artifactLocation) throws IOException {
+    return artifactClassLoaderFactory.createClassLoader(artifactLocation);
   }
 
   /**
@@ -330,7 +341,7 @@ public class ArtifactRepository {
                                                 SecurityRequestContext.toPrincipal(), Action.WRITE);
     Location artifactLocation = Locations.toLocation(artifactFile);
     ArtifactDetail artifactDetail;
-    try (CloseableClassLoader parentClassLoader = artifactClassLoaderFactory.createClassLoader(artifactLocation)) {
+    try (CloseableClassLoader parentClassLoader = createArtifactClassLoader(artifactLocation)) {
       ArtifactClasses artifactClasses = inspectArtifact(artifactId, artifactFile, null, parentClassLoader);
       validatePluginSet(artifactClasses.getPlugins());
       ArtifactMeta meta = new ArtifactMeta(artifactClasses, ImmutableSet.<ArtifactRange>of());
@@ -432,8 +443,7 @@ public class ArtifactRepository {
     parentArtifacts = parentArtifacts == null ? Collections.<ArtifactRange>emptySet() : parentArtifacts;
     CloseableClassLoader parentClassLoader;
     if (parentArtifacts.isEmpty()) {
-      parentClassLoader =
-        artifactClassLoaderFactory.createClassLoader(Locations.toLocation(artifactFile));
+      parentClassLoader = createArtifactClassLoader(Locations.toLocation(artifactFile));
     } else {
       validateParentSet(artifactId, parentArtifacts);
       parentClassLoader = createParentClassLoader(artifactId, parentArtifacts);
@@ -754,7 +764,7 @@ public class ArtifactRepository {
     // assumes any of the parents will do
     Location parentLocation = parents.get(0).getDescriptor().getLocation();
 
-    return artifactClassLoaderFactory.createClassLoader(parentLocation);
+    return createArtifactClassLoader(parentLocation);
   }
 
   private void addAppSummaries(List<ApplicationClassSummary> summaries, NamespaceId namespace) {
