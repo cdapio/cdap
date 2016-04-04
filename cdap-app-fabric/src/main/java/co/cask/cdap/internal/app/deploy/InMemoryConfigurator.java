@@ -30,7 +30,6 @@ import co.cask.cdap.common.io.CaseInsensitiveEnumTypeAdapterFactory;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
-import co.cask.cdap.internal.app.runtime.artifact.ArtifactClassLoaderFactory;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.artifact.Artifacts;
 import co.cask.cdap.internal.app.runtime.artifact.CloseableClassLoader;
@@ -74,7 +73,6 @@ public final class InMemoryConfigurator implements Configurator {
   private final Location artifact;
   private final CConfiguration cConf;
   private final String configString;
-  private final ArtifactClassLoaderFactory artifactClassLoaderFactory;
   private final File baseUnpackDir;
   // this is the namespace that the app will be in, which may be different than the namespace of the artifact.
   // if the artifact is a system artifact, the namespace will be the system namespace.
@@ -88,8 +86,8 @@ public final class InMemoryConfigurator implements Configurator {
   private Id.Artifact artifactId;
 
   public InMemoryConfigurator(CConfiguration cConf, Id.Namespace appNamespace, Id.Artifact artifactId,
-                              String appClassName,
-                              Location artifact, @Nullable String configString, ArtifactRepository artifactRepository) {
+                              String appClassName, Location artifact,
+                              @Nullable String configString, ArtifactRepository artifactRepository) {
     Preconditions.checkNotNull(artifact);
     this.cConf = cConf;
     this.appNamespace = appNamespace;
@@ -100,7 +98,6 @@ public final class InMemoryConfigurator implements Configurator {
     this.artifactRepository = artifactRepository;
     this.baseUnpackDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
                                   cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
-    this.artifactClassLoaderFactory = new ArtifactClassLoaderFactory(cConf, baseUnpackDir);
   }
 
   /**
@@ -120,7 +117,7 @@ public final class InMemoryConfigurator implements Configurator {
         readAppClassName();
       }
 
-      try (CloseableClassLoader artifactClassLoader = artifactClassLoaderFactory.createClassLoader(artifact)) {
+      try (CloseableClassLoader artifactClassLoader = artifactRepository.createArtifactClassLoader(artifact)) {
         Object appMain = artifactClassLoader.loadClass(appClassName).newInstance();
         if (!(appMain instanceof Application)) {
           throw new IllegalStateException(String.format("Application main class is of invalid type: %s",
@@ -158,22 +155,22 @@ public final class InMemoryConfigurator implements Configurator {
     return new DefaultConfigResponse(0, CharStreams.newReaderSupplier(specJson));
   }
 
-  private String getSpecJson(Application app, final String configString)
+  private <T extends Config> String getSpecJson(Application<T> app, final String configString)
     throws IllegalAccessException, InstantiationException, IOException {
 
     File tempDir = DirUtils.createTempDir(baseUnpackDir);
     // Now, we call configure, which returns application specification.
     DefaultAppConfigurer configurer;
-    try (PluginInstantiator pluginInstantiator = new PluginInstantiator(
-      cConf, app.getClass().getClassLoader(), tempDir)) {
-      configurer =
-        new DefaultAppConfigurer(appNamespace, artifactId, app, configString, artifactRepository, pluginInstantiator);
-
-      Config appConfig;
+    try (
+      PluginInstantiator pluginInstantiator = new PluginInstantiator(cConf, app.getClass().getClassLoader(), tempDir)
+    ) {
+      configurer = new DefaultAppConfigurer(appNamespace, artifactId, app,
+                                            configString, artifactRepository, pluginInstantiator);
+      T appConfig;
       Type configType = Artifacts.getConfigType(app.getClass());
       if (Strings.isNullOrEmpty(configString)) {
         //noinspection unchecked
-        appConfig = ((Class<? extends Config>) configType).newInstance();
+        appConfig = ((Class<T>) configType).newInstance();
       } else {
         try {
           appConfig = GSON.fromJson(configString, configType);
@@ -182,9 +179,13 @@ public final class InMemoryConfigurator implements Configurator {
         }
       }
 
-      app.configure(configurer, new DefaultApplicationContext(appConfig));
+      app.configure(configurer, new DefaultApplicationContext<>(appConfig));
     } finally {
-      DirUtils.deleteDirectoryContents(tempDir);
+      try {
+        DirUtils.deleteDirectoryContents(tempDir);
+      } catch (IOException e) {
+        LOG.warn("Exception raised when deleting directory {}", tempDir, e);
+      }
     }
     ApplicationSpecification specification = configurer.createSpecification();
 

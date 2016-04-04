@@ -57,10 +57,20 @@
     <dependency>
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
+      <!-- Currently comes from cdap-app-fabric -->
+      <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>org.ow2.asm</groupId>
       <artifactId>asm-all</artifactId>
+      <!-- Currently comes from cdap-app-fabric -->
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>co.cask.http</groupId>
+      <artifactId>netty-http</artifactId>
+      <!-- Currently comes from cdap-app-fabric -->
+      <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.spark</groupId>
@@ -90,12 +100,10 @@
       <scope>provided</scope>
     </dependency>
     <dependency>
-      <groupId>co.cask.http</groupId>
-      <artifactId>netty-http</artifactId>
-    </dependency>
-    <dependency>
       <groupId>co.cask.tephra</groupId>
       <artifactId>tephra-core</artifactId>
+      <!-- Currently comes from cdap-app-fabric -->
+      <scope>provided</scope>
       <!-- Only TransactionCodec is used. Exclude unrelated dependencies -->
       <exclusions>
         <exclusion>

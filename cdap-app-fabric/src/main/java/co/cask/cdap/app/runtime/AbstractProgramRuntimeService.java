@@ -18,11 +18,13 @@ package co.cask.cdap.app.runtime;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.plugin.Plugin;
 import co.cask.cdap.app.program.Program;
+import co.cask.cdap.app.program.Programs;
 import co.cask.cdap.common.ArtifactNotFoundException;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
+import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.internal.app.runtime.AbstractListener;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
@@ -43,13 +45,16 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.common.collect.Table;
+import com.google.common.io.Closeables;
 import com.google.common.io.Files;
 import com.google.common.util.concurrent.AbstractIdleService;
 import org.apache.twill.api.RunId;
 import org.apache.twill.common.Threads;
+import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.util.EnumSet;
@@ -86,45 +91,64 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
   }
 
   @Override
-  public RuntimeInfo run(Program program, ProgramOptions options) {
+  public final RuntimeInfo run(Program program, ProgramOptions options) {
     ProgramRunner runner = programRunnerFactory.create(program.getType());
     Preconditions.checkNotNull(runner, "Fail to get ProgramRunner for type " + program.getType());
     RunId runId = RunIds.generate();
     ProgramOptions optionsWithRunId = addRunId(options, runId);
     File tempDir = createTempDirectory(program.getId(), runId);
     Runnable cleanUpTask = createCleanupTask(tempDir);
-    ProgramOptions optionsWithPlugins = null;
     try {
-      optionsWithPlugins = createPluginSnapshot(optionsWithRunId, program.getId(), tempDir,
-                                                program.getApplicationSpecification());
+      ProgramOptions optionsWithPlugins = createPluginSnapshot(optionsWithRunId, program.getId(), tempDir,
+                                                               program.getApplicationSpecification());
+      Program executableProgram = createProgram(cConf, runner, program.getJarLocation(), tempDir);
+      cleanUpTask = createCleanupTask(cleanUpTask, executableProgram);
+      RuntimeInfo runtimeInfo = createRuntimeInfo(runner.run(executableProgram, optionsWithPlugins), program);
+      monitorProgram(runtimeInfo, cleanUpTask);
+      return runtimeInfo;
     } catch (IOException e) {
       cleanUpTask.run();
       LOG.error("Exception while trying to createPluginSnapshot", e);
-      Throwables.propagate(e);
+      throw Throwables.propagate(e);
     }
-
-    final RuntimeInfo runtimeInfo = createRuntimeInfo(runner.run(program, optionsWithPlugins), program);
-    monitorProgram(runtimeInfo, cleanUpTask);
-    return runtimeInfo;
   }
 
-  private Runnable createCleanupTask(final File... resources) {
+  /**
+   * Creates a {@link Program} for the given {@link ProgramRunner} from the given program jar {@link Location}.
+   */
+  private Program createProgram(CConfiguration cConf, ProgramRunner programRunner,
+                                Location programJarLocation, File tempDir) throws IOException {
+    File unpackedDir = new File(tempDir, "unpacked");
+    unpackedDir.mkdirs();
+    BundleJarUtil.unJar(programJarLocation, unpackedDir);
+
+    return Programs.create(cConf, programRunner, programJarLocation, unpackedDir);
+  }
+
+  private Runnable createCleanupTask(final Object... resources) {
     return new Runnable() {
       @Override
       public void run() {
-        for (File file : resources) {
-          if (file == null) {
+        for (Object resource : resources) {
+          if (resource == null) {
             continue;
           }
 
           try {
-            if (file.isDirectory()) {
-              DirUtils.deleteDirectoryContents(file);
-            } else {
-              file.delete();
+            if (resource instanceof File) {
+              File file = (File) resource;
+              if (file.isDirectory()) {
+                DirUtils.deleteDirectoryContents(file);
+              } else {
+                file.delete();
+              }
+            } else if (resource instanceof Closeable) {
+              Closeables.closeQuietly((Closeable) resource);
+            } else if (resource instanceof Runnable) {
+              ((Runnable) resource).run();
             }
           } catch (Throwable t) {
-            LOG.warn("Exception when cleaning up resource {}", file, t);
+            LOG.warn("Exception when cleaning up resource {}", resource, t);
           }
         }
       }

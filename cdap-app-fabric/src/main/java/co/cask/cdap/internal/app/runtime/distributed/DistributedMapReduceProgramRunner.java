@@ -32,7 +32,6 @@ import org.apache.hadoop.yarn.conf.YarnConfiguration;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.TwillController;
 import org.apache.twill.api.TwillRunner;
-import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,10 +47,9 @@ public final class DistributedMapReduceProgramRunner extends AbstractDistributed
   private static final Logger LOG = LoggerFactory.getLogger(DistributedMapReduceProgramRunner.class);
 
   @Inject
-  public DistributedMapReduceProgramRunner(TwillRunner twillRunner, LocationFactory locationFactory,
-                                           YarnConfiguration hConf, CConfiguration cConf,
+  public DistributedMapReduceProgramRunner(TwillRunner twillRunner, YarnConfiguration hConf, CConfiguration cConf,
                                            TokenSecureStoreUpdater tokenSecureStoreUpdater) {
-    super(twillRunner, locationFactory, hConf, cConf, tokenSecureStoreUpdater);
+    super(twillRunner, hConf, cConf, tokenSecureStoreUpdater);
   }
 
   @Override

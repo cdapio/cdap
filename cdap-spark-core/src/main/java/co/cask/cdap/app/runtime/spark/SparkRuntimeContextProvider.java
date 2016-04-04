@@ -212,8 +212,7 @@ public final class SparkRuntimeContextProvider {
                                        SparkRuntimeContextConfig contextConfig) throws IOException {
     File programDir = new File(PROGRAM_JAR_NAME);
     ProgramClassLoader classLoader = ProgramClassLoader.create(cConf, programDir,
-                                                               SparkClassLoader.class.getClassLoader(),
-                                                               ProgramType.SPARK);
+                                                               SparkClassLoader.class.getClassLoader());
     final Id.Program programId = contextConfig.getProgramId().toId();
     return new ForwardingProgram(Programs.create(Locations.toLocation(programDir), classLoader)) {
       @Override

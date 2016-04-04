@@ -16,13 +16,13 @@
 
 package co.cask.cdap.api.spark
 
+import co.cask.cdap.api.annotation.Beta
 import co.cask.cdap.api.data.batch.Split
-import co.cask.cdap.api.{RuntimeContext, ServiceDiscoverer, TaskLocalizationContext, Transactional}
-import co.cask.cdap.api.data.DatasetContext
 import co.cask.cdap.api.flow.flowlet.StreamEvent
 import co.cask.cdap.api.metrics.Metrics
 import co.cask.cdap.api.plugin.PluginContext
 import co.cask.cdap.api.workflow.WorkflowToken
+import co.cask.cdap.api.{RuntimeContext, ServiceDiscoverer, TaskLocalizationContext, Transactional}
 import org.apache.spark
 import org.apache.spark.rdd.RDD
 
@@ -31,6 +31,7 @@ import scala.reflect.ClassTag
 /**
   * Spark program execution context. User Spark program can interact with CDAP through this context.
   */
+@Beta
 trait SparkExecutionContext extends RuntimeContext with Transactional {
 
   /**

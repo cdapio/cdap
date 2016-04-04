@@ -25,6 +25,8 @@ import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunnerFactory;
+import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Preconditions;
 
 import java.util.Map;
@@ -34,29 +36,26 @@ import java.util.Map;
  */
 final class SparkProgramWorkflowRunner extends AbstractProgramWorkflowRunner {
 
-  SparkProgramWorkflowRunner(WorkflowSpecification workflowSpec, ProgramRunnerFactory programRunnerFactory,
+  SparkProgramWorkflowRunner(CConfiguration cConf, WorkflowSpecification workflowSpec,
+                             ProgramRunnerFactory programRunnerFactory,
                              Program workflowProgram, ProgramOptions workflowProgramOptions, WorkflowToken token,
                              String nodeId, Map<String, WorkflowNodeState> nodeStates) {
-    super(workflowProgram, workflowProgramOptions, programRunnerFactory, workflowSpec, token, nodeId, nodeStates);
+    super(cConf, workflowProgram, workflowProgramOptions,
+          programRunnerFactory, workflowSpec, token, nodeId, nodeStates);
   }
 
-  /**
-   * Gets the Specification of the program by its name from the {@link WorkflowSpecification}. Creates an
-   * appropriate {@link Program} using this specification through a suitable concrete implementation of
-   * {@link AbstractWorkflowProgram} and then gets the {@link Runnable} for the program which can be called
-   * to execute the program.
-   *
-   * @param name name of the program in the workflow
-   * @return {@link Runnable} for the program.
-   */
   @Override
-  public Runnable create(String name) {
-    ApplicationSpecification spec = workflowProgram.getApplicationSpecification();
-    final SparkSpecification sparkSpec = spec.getSpark().get(name);
+  protected ProgramType getProgramType() {
+    return ProgramType.SPARK;
+  }
+
+  @Override
+  protected Program rewriteProgram(String name, Program program) {
+    ApplicationSpecification spec = program.getApplicationSpecification();
+    SparkSpecification sparkSpec = spec.getSpark().get(name);
     Preconditions.checkArgument(sparkSpec != null,
                                 "No Spark with name %s found in Workflow %s", name, workflowSpec.getName());
 
-    final Program sparkProgram = new WorkflowSparkProgram(workflowProgram, sparkSpec);
-    return getProgramRunnable(name, sparkProgram);
+    return new WorkflowSparkProgram(program, sparkSpec);
   }
 }

@@ -22,7 +22,6 @@ import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.internal.app.runtime.DefaultEndpointPluginContext;
-import co.cask.cdap.internal.app.runtime.artifact.ArtifactClassLoaderFactory;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactDescriptor;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactDetail;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
@@ -46,7 +45,6 @@ import javax.ws.rs.Path;
  */
 public class PluginService implements Closeable {
   private final ArtifactRepository artifactRepository;
-  private final ArtifactClassLoaderFactory artifactClassLoaderFactory;
   private final File stageDir;
   private final CConfiguration cConf;
 
@@ -57,7 +55,6 @@ public class PluginService implements Closeable {
     this.artifactRepository = artifactRepository;
     this.stageDir = DirUtils.createTempDir(tmpDir);
     this.cConf = cConf;
-    this.artifactClassLoaderFactory = new ArtifactClassLoaderFactory(cConf, tmpDir);
   }
 
   /**
@@ -132,7 +129,7 @@ public class PluginService implements Closeable {
     }
 
     // initialize parent classloader and plugin instantiator
-    parentClassLoader = artifactClassLoaderFactory.createClassLoader(parentArtifactDescriptor.getLocation());
+    parentClassLoader = artifactRepository.createArtifactClassLoader(parentArtifactDescriptor.getLocation());
     pluginInstantiator = new PluginInstantiator(cConf, parentClassLoader, stageDir);
 
     // add plugin artifact

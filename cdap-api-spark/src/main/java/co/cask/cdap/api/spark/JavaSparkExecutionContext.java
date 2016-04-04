@@ -20,6 +20,7 @@ import co.cask.cdap.api.RuntimeContext;
 import co.cask.cdap.api.ServiceDiscoverer;
 import co.cask.cdap.api.TaskLocalizationContext;
 import co.cask.cdap.api.Transactional;
+import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.data.DatasetInstantiationException;
 import co.cask.cdap.api.data.batch.Split;
 import co.cask.cdap.api.dataset.Dataset;
@@ -43,6 +44,7 @@ import javax.annotation.Nullable;
 /**
  * Spark program execution context. User Spark program can interact with CDAP through this context.
  */
+@Beta
 public abstract class JavaSparkExecutionContext implements RuntimeContext, Transactional {
 
   /**

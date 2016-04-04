@@ -16,10 +16,7 @@
 
 package co.cask.cdap.common.lang;
 
-import co.cask.cdap.proto.ProgramType;
-import com.google.common.base.Predicate;
-import com.google.common.base.Predicates;
-import com.google.common.collect.ImmutableSet;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 
 import java.io.IOException;
@@ -28,6 +25,7 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.Collections;
 import java.util.Enumeration;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -36,17 +34,32 @@ import java.util.Set;
  */
 public final class FilterClassLoader extends ClassLoader {
 
-  private final Predicate<String> resourceAcceptor;
-  private final Predicate<String> packageAcceptor;
   private final ClassLoader bootstrapClassLoader;
+  private final Filter filter;
 
-  public static FilterClassLoader create(ClassLoader parentClassLoader) {
-    return create(null, parentClassLoader);
+  /**
+   * Represents filtering  that the {@link FilterClassLoader} needs to apply.
+   */
+  public interface Filter {
+
+    /**
+     * Returns the result of whether the given resource is accepted or not.
+     */
+    boolean acceptResource(String resource);
+
+    /**
+     * Returns the result of whether the given package is accepted or not.
+     */
+    boolean acceptPackage(String packageName);
   }
 
-  public static FilterClassLoader create(ProgramType programType, ClassLoader parentClassLoader) {
-    Set<String> visibleResources = ProgramResources.getVisibleResources(parentClassLoader, programType);
-    ImmutableSet.Builder<String> visiblePackages = ImmutableSet.builder();
+  /**
+   * Returns the default filter that should applies to all program type. By default
+   * all hadoop classes and cdap-api classes (and dependencies) are allowed.
+   */
+  public static Filter defaultFilter() {
+    final Set<String> visibleResources = ProgramResources.getVisibleResources();
+    final Set<String> visiblePackages = new HashSet<>();
     for (String resource : visibleResources) {
       if (resource.endsWith(".class")) {
         int idx = resource.lastIndexOf('/');
@@ -56,25 +69,41 @@ public final class FilterClassLoader extends ClassLoader {
         }
       }
     }
-    return new FilterClassLoader(Predicates.in(visibleResources),
-      Predicates.in(visiblePackages.build()), parentClassLoader);
-  }
+    return new Filter() {
+      @Override
+      public boolean acceptResource(String resource) {
+        return visibleResources.contains(resource);
+      }
 
-  public static FilterClassLoader create(Predicate<String> resourceAcceptor,
-                                         Predicate<String> packageAcceptor, ClassLoader parentClassLoader) {
-    return new FilterClassLoader(resourceAcceptor, packageAcceptor, parentClassLoader);
+      @Override
+      public boolean acceptPackage(String packageName) {
+        return visiblePackages.contains(packageName);
+      }
+    };
   }
 
   /**
-   * @param resourceAcceptor Filter for accepting resources
-   * @param parentClassLoader Parent classloader
+   * Creates a new {@link FilterClassLoader} that filter classes based on the {@link #defaultFilter()} on the
+   * given parent ClassLoader
+   *
+   * @param parentClassLoader the ClassLoader to filter from.
+   * @return a new intance of {@link FilterClassLoader}.
    */
-  private FilterClassLoader(Predicate<String> resourceAcceptor,
-                           Predicate<String> packageAcceptor, ClassLoader parentClassLoader) {
+  public static FilterClassLoader create(ClassLoader parentClassLoader) {
+    return new FilterClassLoader(parentClassLoader, defaultFilter());
+  }
+
+  /**
+   * Create a {@link FilterClassLoader} that filter classes based on the given {@link Filter} on the given
+   * parent ClassLoader.
+   *
+   * @param parentClassLoader Parent ClassLoader
+   * @param filter Filter to apply for the ClassLoader
+   */
+  public FilterClassLoader(ClassLoader parentClassLoader, Filter filter) {
     super(parentClassLoader);
-    this.resourceAcceptor = resourceAcceptor;
-    this.packageAcceptor = packageAcceptor;
     this.bootstrapClassLoader = new URLClassLoader(new URL[0], null);
+    this.filter = filter;
   }
 
   @Override
@@ -83,7 +112,7 @@ public final class FilterClassLoader extends ClassLoader {
     try {
       return bootstrapClassLoader.loadClass(name);
     } catch (ClassNotFoundException e) {
-      if (isValidResource(classNameToResourceName(name))) {
+      if (filter.acceptResource(classNameToResourceName(name))) {
         return super.loadClass(name, resolve);
       }
       throw e;
@@ -94,7 +123,7 @@ public final class FilterClassLoader extends ClassLoader {
   protected Package[] getPackages() {
     List<Package> packages = Lists.newArrayList();
     for (Package pkg : super.getPackages()) {
-      if (packageAcceptor.apply(pkg.getName())) {
+      if (filter.acceptPackage(pkg.getName())) {
         packages.add(pkg);
       }
     }
@@ -103,7 +132,7 @@ public final class FilterClassLoader extends ClassLoader {
 
   @Override
   protected Package getPackage(String name) {
-    return (packageAcceptor.apply(name)) ? super.getPackage(name) : null;
+    return (filter.acceptPackage(name)) ? super.getPackage(name) : null;
   }
 
   @Override
@@ -112,7 +141,7 @@ public final class FilterClassLoader extends ClassLoader {
     if (resource != null) {
       return resource;
     }
-    return resourceAcceptor.apply(name) ? super.getResource(name) : null;
+    return filter.acceptResource(name) ? super.getResource(name) : null;
   }
 
   @Override
@@ -121,7 +150,7 @@ public final class FilterClassLoader extends ClassLoader {
     if (resources.hasMoreElements()) {
       return resources;
     }
-    return resourceAcceptor.apply(name) ? super.getResources(name) : Collections.<URL>emptyEnumeration();
+    return filter.acceptResource(name) ? super.getResources(name) : Collections.<URL>emptyEnumeration();
   }
 
   @Override
@@ -130,14 +159,10 @@ public final class FilterClassLoader extends ClassLoader {
     if (resourceStream != null) {
       return resourceStream;
     }
-    return resourceAcceptor.apply(name) ? super.getResourceAsStream(name) : null;
+    return filter.acceptResource(name) ? super.getResourceAsStream(name) : null;
   }
 
   private String classNameToResourceName(String className) {
     return className.replace('.', '/') + ".class";
-  }
-
-  private boolean isValidResource(String resourceName) {
-    return resourceAcceptor.apply(resourceName);
   }
 }
