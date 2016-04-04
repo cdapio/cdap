@@ -41,11 +41,13 @@ public final class StreamConfig {
   private final long ttl;
   private final FormatSpecification format;
   private final int notificationThresholdMB;
+  private final String description;
 
   private final transient Location location;
 
   public StreamConfig(Id.Stream streamId, long partitionDuration, long indexInterval, long ttl,
-                      Location location, FormatSpecification format, int notificationThresholdMB) {
+                      Location location, FormatSpecification format, int notificationThresholdMB,
+                      String description) {
     this.streamId = streamId;
     this.partitionDuration = partitionDuration;
     this.indexInterval = indexInterval;
@@ -53,6 +55,7 @@ public final class StreamConfig {
     this.location = location;
     this.notificationThresholdMB = notificationThresholdMB;
     this.format = format;
+    this.description = description;
   }
 
   /**
@@ -104,6 +107,13 @@ public final class StreamConfig {
     return notificationThresholdMB;
   }
 
+  /**
+   * @return The description of the stream.
+   */
+  public String getDescription() {
+    return description;
+  }
+
   @Override
   public String toString() {
     return Objects.toStringHelper(this)
@@ -114,6 +124,7 @@ public final class StreamConfig {
       .add("location", location)
       .add("format", format)
       .add("notificationThresholdMB", notificationThresholdMB)
+      .add("description", description)
       .toString();
   }
 
@@ -130,6 +141,7 @@ public final class StreamConfig {
     private Long ttl;
     private FormatSpecification formatSpec;
     private Integer notificationThreshold;
+    private String description;
 
     private Builder(StreamConfig config) {
       this.config = config;
@@ -147,12 +159,17 @@ public final class StreamConfig {
       this.notificationThreshold = notificationThreshold;
     }
 
+    public void setDescription(String description) {
+      this.description = description;
+    }
+
     public StreamConfig build() {
       return new StreamConfig(config.getStreamId(), config.getPartitionDuration(), config.getIndexInterval(),
                               Objects.firstNonNull(ttl, config.getTTL()),
                               config.getLocation(),
                               Objects.firstNonNull(formatSpec, config.getFormat()),
-                              Objects.firstNonNull(notificationThreshold, config.getNotificationThresholdMB()));
+                              Objects.firstNonNull(notificationThreshold, config.getNotificationThresholdMB()),
+                              Objects.firstNonNull(description, config.getDescription()));
     }
   }
 }

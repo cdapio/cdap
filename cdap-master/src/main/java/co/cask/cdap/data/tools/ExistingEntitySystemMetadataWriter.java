@@ -166,8 +166,7 @@ public class ExistingEntitySystemMetadataWriter {
     for (StreamSpecification streamSpec : store.getAllStreams(namespace)) {
       Id.Stream streamId = Id.Stream.from(namespace, streamSpec.getName());
       SystemMetadataWriter writer =
-        new StreamSystemMetadataWriter(metadataStore, streamId, streamAdmin.getConfig(streamId),
-                                       streamSpec.getDescription());
+        new StreamSystemMetadataWriter(metadataStore, streamId, streamAdmin.getConfig(streamId));
       writer.write();
       for (Id.Stream.View view : streamAdmin.listViews(streamId)) {
         writer = new ViewSystemMetadataWriter(metadataStore, view, viewAdmin.get(view));

@@ -251,7 +251,8 @@ public class FileStreamAdmin implements StreamAdmin {
     }
 
     return new StreamConfig(streamId, config.getPartitionDuration(), config.getIndexInterval(),
-                            config.getTTL(), getStreamLocation(streamId), config.getFormat(), threshold);
+                            config.getTTL(), getStreamLocation(streamId), config.getFormat(), threshold,
+                            config.getDescription());
   }
 
   @Override
@@ -281,7 +282,8 @@ public class FileStreamAdmin implements StreamAdmin {
 
             publishAudit(streamId, AuditType.UPDATE);
             return new CoordinatorStreamProperties(properties.getTTL(), properties.getFormat(),
-                                                   properties.getNotificationThresholdMB(), null);
+                                                   properties.getNotificationThresholdMB(), null,
+                                                   properties.getDescription());
           }
         });
     } catch (Exception e) {
@@ -331,14 +333,14 @@ public class FileStreamAdmin implements StreamAdmin {
         String description = properties.getProperty(Constants.Stream.DESCRIPTION);
 
         StreamConfig config = new StreamConfig(streamId, partitionDuration, indexInterval,
-                                               ttl, streamLocation, null, threshold);
+                                               ttl, streamLocation, null, threshold, description);
         writeConfig(config);
         createStreamFeeds(config);
         alterExploreStream(streamId, true, config.getFormat());
         streamMetaStore.addStream(streamId);
         publishAudit(streamId, AuditType.CREATE);
         SystemMetadataWriter systemMetadataWriter =
-          new StreamSystemMetadataWriter(metadataStore, streamId, config, createTime, description);
+          new StreamSystemMetadataWriter(metadataStore, streamId, config, createTime);
         systemMetadataWriter.write();
         return config;
       }
@@ -473,7 +475,7 @@ public class FileStreamAdmin implements StreamAdmin {
         int newGeneration = StreamUtils.getGeneration(streamLocation) + 1;
         Locations.mkdirsIfNotExists(StreamUtils.createGenerationLocation(streamLocation, newGeneration));
         publishAudit(streamId, AuditType.TRUNCATE);
-        return new CoordinatorStreamProperties(null, null, null, newGeneration);
+        return new CoordinatorStreamProperties(null, null, null, newGeneration, null);
       }
     });
   }
@@ -535,15 +537,20 @@ public class FileStreamAdmin implements StreamAdmin {
       builder.setNotificationThreshold(properties.getNotificationThresholdMB());
     }
 
+    if (properties.getDescription() != null) {
+      builder.setDescription(properties.getDescription());
+    }
+
     StreamConfig newConfig = builder.build();
     writeConfig(newConfig);
 
     // Update system metadata for stream
     SystemMetadataWriter systemMetadataWriter =
-      new StreamSystemMetadataWriter(metadataStore, streamId, newConfig, null);
+      new StreamSystemMetadataWriter(metadataStore, streamId, newConfig);
     systemMetadataWriter.write();
 
-    return new StreamProperties(config.getTTL(), config.getFormat(), config.getNotificationThresholdMB());
+    return new StreamProperties(config.getTTL(), config.getFormat(), config.getNotificationThresholdMB(),
+                                config.getDescription());
   }
 
   private void writeConfig(StreamConfig config) throws IOException {

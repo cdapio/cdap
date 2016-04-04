@@ -60,6 +60,7 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import org.apache.twill.common.Threads;
 import org.jboss.netty.buffer.ChannelBufferInputStream;
+import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
@@ -174,7 +175,8 @@ public final class StreamHandler extends AbstractHttpHandler {
 
     StreamConfig streamConfig = streamAdmin.getConfig(streamId);
     StreamProperties streamProperties = new StreamProperties(streamConfig.getTTL(), streamConfig.getFormat(),
-                                                             streamConfig.getNotificationThresholdMB());
+                                                             streamConfig.getNotificationThresholdMB(),
+                                                             streamConfig.getDescription());
     responder.sendJson(HttpResponseStatus.OK, streamProperties, StreamProperties.class, GSON);
   }
 
@@ -194,9 +196,20 @@ public final class StreamHandler extends AbstractHttpHandler {
       throw new BadRequestException(e);
     }
 
-    // TODO: Modify the REST API to support custom configurations.
-    streamAdmin.create(streamId);
+    StreamProperties properties = null;
+    // If the request to create a stream contains a non-empty body, then construct and set StreamProperties
+    if (request.getContent() != ChannelBuffers.EMPTY_BUFFER) {
+      properties = getAndValidateConfig(request, responder);
+      if (properties == null) {
+        return;
+      }
+    }
 
+    // TODO: Consolidate the two separate calls to StreamAdmin
+    streamAdmin.create(streamId);
+    if (properties != null) {
+      streamAdmin.updateConfig(streamId, properties);
+    }
     responder.sendStatus(HttpResponseStatus.OK);
   }
 
@@ -387,7 +400,7 @@ public final class StreamHandler extends AbstractHttpHandler {
       return null;
     }
 
-    return new StreamProperties(ttl, formatSpec, threshold);
+    return new StreamProperties(ttl, formatSpec, threshold, properties.getDescription());
   }
 
   private RejectedExecutionHandler createAsyncRejectedExecutionHandler() {
@@ -457,6 +470,9 @@ public final class StreamHandler extends AbstractHttpHandler {
       if (src.getNotificationThresholdMB() != null) {
         json.addProperty("notification.threshold.mb", src.getNotificationThresholdMB());
       }
+      if (src.getDescription() != null) {
+        json.addProperty("description", src.getDescription());
+      }
       return json;
     }
 
@@ -472,7 +488,8 @@ public final class StreamHandler extends AbstractHttpHandler {
       Integer threshold = jsonObj.has("notification.threshold.mb") ?
         jsonObj.get("notification.threshold.mb").getAsInt() :
         null;
-      return new StreamProperties(ttl, format, threshold);
+      String description = jsonObj.has("description") ? jsonObj.get("description").getAsString() : null;
+      return new StreamProperties(ttl, format, threshold, description);
     }
   }
 }
