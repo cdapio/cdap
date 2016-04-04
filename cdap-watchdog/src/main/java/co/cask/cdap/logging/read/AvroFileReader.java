@@ -154,6 +154,7 @@ public class AvroFileReader {
             logSegments.add(logSegment);
             count = count + logSegment.size();
           }
+          LOG.trace("Startposition: {}, CurrentSync: {}, count: {}", startPosition, currentSync, count);
 
           if (count >= maxEvents) {
             break;
@@ -218,6 +219,7 @@ public class AvroFileReader {
       startPosition = startPosition < skipLen ? 0 : startPosition - skipLen;
       dataFileReader.sync(startPosition);
       currentSync = dataFileReader.previousSync();
+      LOG.trace("Got Startposition: {}, CurrentSync: {}", startPosition, currentSync);
     }
     return startPosition;
   }
