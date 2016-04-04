@@ -123,10 +123,16 @@ public class ProgramRuntimeProviderLoader {
             continue;
           }
 
-          // Try to find a provider that can support the given program type.
-          ProgramRuntimeProvider provider = findProvider(serviceLoaderCache.getUnchecked(extDir), programType);
-          if (provider != null) {
-            return provider;
+          // Each module would be under a directory of the extension directory
+          for (File moduleDir : DirUtils.listFiles(extDir)) {
+            if (!moduleDir.isDirectory()) {
+              continue;
+            }
+            // Try to find a provider that can support the given program type.
+            ProgramRuntimeProvider provider = findProvider(serviceLoaderCache.getUnchecked(moduleDir), programType);
+            if (provider != null) {
+              return provider;
+            }
           }
         }
 
