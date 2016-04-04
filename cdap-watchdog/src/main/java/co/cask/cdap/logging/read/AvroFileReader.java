@@ -135,11 +135,21 @@ public class AvroFileReader {
         long finalSync = dataFileReader.previousSync();
         logSegment = readToEndSyncPosition(dataFileReader, logFilter, fromTimeMs, -1);
 
+        if (logSegment != null && !logSegment.isEmpty()) {
+          logSegments.add(logSegment);
+          count = count + logSegment.size();
+        }
+
         long startPosition = finalSync;
         long endPosition = startPosition;
         long currentSync;
 
         while (startPosition > 0 && count < maxEvents) {
+          // Skip to previous sync marker
+          startPosition = skipToPosition(dataFileReader, startPosition, endPosition, skipLen);
+          currentSync = dataFileReader.previousSync();
+          logSegment = readToEndSyncPosition(dataFileReader, logFilter, fromTimeMs, endPosition);
+
           if (logSegment != null && !logSegment.isEmpty()) {
             logSegments.add(logSegment);
             count = count + logSegment.size();
@@ -149,10 +159,6 @@ public class AvroFileReader {
             break;
           }
 
-          // Skip to previous sync marker
-          startPosition = skipToPosition(dataFileReader, startPosition, endPosition, skipLen);
-          currentSync = dataFileReader.previousSync();
-          logSegment = readToEndSyncPosition(dataFileReader, logFilter, fromTimeMs, endPosition);
           endPosition = currentSync;
         }
 
@@ -174,7 +180,6 @@ public class AvroFileReader {
   /**
    *  Read current block in Avro file from current block sync marker to next block sync marker
    */
-
   private List<LogEvent> readToEndSyncPosition(DataFileReader<GenericRecord> dataFileReader, Filter logFilter,
                                                long fromTimeMs, long endSyncPosition) throws IOException {
 
@@ -202,11 +207,13 @@ public class AvroFileReader {
     return logSegment;
   }
 
+  /**
+   * Starting from endSyncPosition, skip skipLen number of positions backwards, to find out a sync position less than
+   * endSyncPosition
+   */
   private long skipToPosition(DataFileReader<GenericRecord> dataFileReader,
                              long startPosition, long endSyncPosition, long skipLen) throws IOException {
     long currentSync = endSyncPosition;
-    // Starting from endSyncPosition, move backwards skipLen number of positions to find out a sync point less than
-    // endSyncPosition
     while (startPosition > 0 && currentSync == endSyncPosition) {
       startPosition = startPosition < skipLen ? 0 : startPosition - skipLen;
       dataFileReader.sync(startPosition);
