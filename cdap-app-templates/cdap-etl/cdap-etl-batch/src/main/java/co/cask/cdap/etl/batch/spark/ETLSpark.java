@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -69,7 +69,8 @@ public class ETLSpark extends AbstractSpark {
   @Override
   protected void configure() {
     setName(phaseSpec.getPhaseName());
-    setDescription("Spark Driver for ETL Batch Applications");
+    setDescription("Spark phase executor. " + phaseSpec.getDescription());
+
     setMainClass(ETLSparkProgram.class);
 
     setExecutorResources(phaseSpec.getResources());
