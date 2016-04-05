@@ -23,7 +23,7 @@ import co.cask.cdap.api.metrics.Metrics
 import co.cask.cdap.api.plugin.PluginContext
 import co.cask.cdap.api.workflow.WorkflowToken
 import co.cask.cdap.api.{RuntimeContext, ServiceDiscoverer, TaskLocalizationContext, Transactional}
-import org.apache.spark
+import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 
 import scala.reflect.ClassTag
@@ -83,7 +83,7 @@ trait SparkExecutionContext extends RuntimeContext with Transactional {
 
   /**
     * Returns the [[co.cask.cdap.api.TaskLocalizationContext]] that gives access to files that were localized
-    * by [[co.cask.cdap.api.spark.Spark]] {@code beforeSubmit} method.
+    * by [[co.cask.cdap.api.spark.Spark]] `beforeSubmit` method.
     */
   def getLocalizationContext: TaskLocalizationContext
 
@@ -101,7 +101,7 @@ trait SparkExecutionContext extends RuntimeContext with Transactional {
     * @return A new [[org.apache.spark.rdd.RDD]] instance that reads from the given Dataset.
     * @throws co.cask.cdap.api.data.DatasetInstantiationException if the Dataset doesn't exist
     */
-  def fromDataset[K: ClassTag, V: ClassTag](sc: spark.SparkContext,
+  def fromDataset[K: ClassTag, V: ClassTag](sc: SparkContext,
                                             datasetName: String,
                                             arguments: Map[String, String],
                                             splits: Option[Iterable[_ <: Split]]): RDD[(K, V)]
@@ -122,7 +122,7 @@ trait SparkExecutionContext extends RuntimeContext with Transactional {
     * @return a new [[org.apache.spark.rdd.RDD]] instance that reads from the given stream.
     * @throws co.cask.cdap.api.data.DatasetInstantiationException if the Stream doesn't exist
     */
-  def fromStream[T: ClassTag](sc: spark.SparkContext, streamName: String, startTime: Long, endTime: Long)
+  def fromStream[T: ClassTag](sc: SparkContext, streamName: String, startTime: Long, endTime: Long)
                              (implicit decoder: StreamEvent => T): RDD[T]
 
   /**

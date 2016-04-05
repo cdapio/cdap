@@ -17,9 +17,8 @@
 package co.cask.cdap.etl.batch.spark;
 
 import co.cask.cdap.api.data.batch.OutputFormatProvider;
-import co.cask.cdap.api.spark.SparkContext;
+import co.cask.cdap.api.spark.SparkClientContext;
 import co.cask.cdap.etl.api.LookupProvider;
-import co.cask.cdap.etl.api.batch.BatchRuntimeContext;
 import co.cask.cdap.etl.api.batch.BatchSinkContext;
 
 import java.util.Collections;
@@ -32,7 +31,7 @@ public class SparkBatchSinkContext extends AbstractSparkBatchContext implements 
 
   private final SparkBatchSinkFactory sinkFactory;
 
-  public SparkBatchSinkContext(SparkBatchSinkFactory sinkFactory, SparkContext sparkContext,
+  public SparkBatchSinkContext(SparkBatchSinkFactory sinkFactory, SparkClientContext sparkContext,
                                LookupProvider lookupProvider, String stageId) {
     super(sparkContext, lookupProvider, stageId);
     this.sinkFactory = sinkFactory;

@@ -166,10 +166,10 @@ public class SparkKMeansApp extends AbstractApplication {
     @Path("centers/{index}")
     @GET
     public void centers(HttpServiceRequest request, HttpServiceResponder responder,
-                        @PathParam("index") String index) {
+                        @PathParam("index") int index) {
       LOG.debug("Try to get centers for index: {}", index);
 
-      String centers = store.read(index.getBytes());
+      String centers = store.read(Bytes.toBytes(index));
       if (centers == null) {
         LOG.debug("No centers found");
         responder.sendString(HttpURLConnection.HTTP_NO_CONTENT,

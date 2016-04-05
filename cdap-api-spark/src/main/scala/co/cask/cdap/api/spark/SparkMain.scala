@@ -23,7 +23,7 @@ import co.cask.cdap.api.data.DatasetContext
 import co.cask.cdap.api.data.batch.Split
 import co.cask.cdap.api.flow.flowlet.StreamEvent
 import co.cask.cdap.api.{Transactional, TxRunnable}
-import org.apache.spark
+import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 
 import scala.language.implicitConversions
@@ -125,7 +125,7 @@ trait SparkMain extends Serializable {
     *
     * @param sc the [[org.apache.spark.SparkContext]]
     */
-  protected implicit class SparkProgramContextFunctions(sc: spark.SparkContext) {
+  protected implicit class SparkProgramContextFunctions(sc: SparkContext) {
 
     /**
       * Creates a [[org.apache.spark.rdd.RDD]] from the given [[co.cask.cdap.api.dataset.Dataset]].

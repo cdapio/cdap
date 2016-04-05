@@ -23,37 +23,38 @@
 package co.cask.cdap.examples.sparkkmeans
 
 import breeze.linalg.{DenseVector, Vector, squaredDistance}
-import co.cask.cdap.api.spark.{ScalaSparkProgram, SparkContext}
-import org.apache.spark.rdd.NewHadoopRDD
+import co.cask.cdap.api.common.Bytes
+import co.cask.cdap.api.spark.{SparkExecutionContext, SparkMain}
+import org.apache.spark.SparkContext
+import org.apache.spark.rdd.RDD
 import org.slf4j.{Logger, LoggerFactory}
 
 /**
  * Implementation of KMeans Clustering Spark Program.
  */
-class SparkKMeansProgram extends ScalaSparkProgram {
+class SparkKMeansProgram extends SparkMain {
 
   import SparkKMeansProgram._
 
-  override def run(sc: SparkContext) {
-
-    val arguments: String = sc.getRuntimeArguments.get("args")
-    val args: Array[String] = if (arguments == null) Array() else arguments.split("\\s")
+  override def run(implicit sec: SparkExecutionContext) {
+    val sc = new SparkContext
+    val arguments = Option(sec.getRuntimeArguments.get("args"))
+    val args = arguments.map(_.split("\\s")).getOrElse(Array())
 
     LOG.info("Running with arguments {}", args)
     // Amount of centers to calculate
-    val K = if (args.length > 0) args(0).toInt else "2".toInt
-    val convergeDist = if (args.length > 1) args(1).toDouble else "0.5".toDouble
+    val k = if (args.nonEmpty) args(0).toInt else 2
+    val convergeDist = if (args.length > 1) args(1).toDouble else 0.5d
 
     LOG.info("Processing points data")
 
-    val linesDataset: NewHadoopRDD[Array[Byte], Point] =
-      sc.readFromDataset("points", classOf[Array[Byte]], classOf[Point])
+    val linesDataset: RDD[(Array[Byte], Point)] = sc.fromDataset("points")
     val lines = linesDataset.values
     val data = lines.map(pointVector).cache()
 
     LOG.info("Calculating centers")
 
-    val kPoints = data.takeSample(withReplacement = false, K, 42)
+    val kPoints = data.takeSample(withReplacement = false, k, 42)
     var tempDist = 1.0
     while (tempDist > convergeDist) {
       val closest = data.map(p => (closestPoint(p, kPoints), (p, 1)))
@@ -62,7 +63,7 @@ class SparkKMeansProgram extends ScalaSparkProgram {
         (pair._1, pair._2._1 * (1.0 / pair._2._2))
       }.collectAsMap()
       tempDist = 0.0
-      for (i <- 0 until K) {
+      for (i <- 0 until k) {
         tempDist += squaredDistance(kPoints(i), newPoints(i))
       }
       for (newP <- newPoints) {
@@ -73,16 +74,10 @@ class SparkKMeansProgram extends ScalaSparkProgram {
 
     LOG.info("Center count {}", kPoints.length)
 
-    val centers = new Array[(Array[Byte], String)](kPoints.length)
-    for (i <- kPoints.indices) {
-      LOG.debug("Center {}, {}", i, kPoints(i).toString)
-      centers(i) = new Tuple2(i.toString.getBytes, kPoints(i).toArray.mkString(","))
-    }
-
     LOG.info("Writing centers data")
-
-    val originalContext: org.apache.spark.SparkContext = sc.getOriginalSparkContext()
-    sc.writeToDataset(originalContext.parallelize(centers), "centers", classOf[Array[Byte]], classOf[String])
+    sc.parallelize(kPoints.zipWithIndex
+      .map(p => {(Bytes.toBytes(p._2), p._1.toArray.mkString(","))}))
+      .saveAsDataset("centers")
 
     LOG.info("Done!")
   }

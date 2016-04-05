@@ -179,6 +179,12 @@
   <dependencyManagement>
     <dependencies>
       <dependency>
+        <groupId>co.cask.cdap</groupId>
+        <artifactId>cdap-api-spark</artifactId>
+        <version>${project.version}</version>
+        <scope>provided</scope>
+      </dependency>
+      <dependency>
         <groupId>co.cask.common</groupId>
         <artifactId>common-http</artifactId>
         <version>${cask.common.version}</version>

@@ -117,7 +117,7 @@ public class LogAnalysisApp extends AbstractApplication {
     @Override
     public void configure() {
       setDescription("Counts the total number of responses for every unique response code");
-      setMainClass(ResponseCounterProgram.class);
+      setMainClassName(ResponseCounterProgram.class.getName());
     }
   }
 

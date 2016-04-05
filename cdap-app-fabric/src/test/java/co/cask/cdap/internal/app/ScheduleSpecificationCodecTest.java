@@ -19,7 +19,6 @@ package co.cask.cdap.internal.app;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.app.Application;
 import co.cask.cdap.api.app.ApplicationSpecification;
-import co.cask.cdap.api.schedule.RunConstraints;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
@@ -32,7 +31,6 @@ import co.cask.cdap.internal.schedule.StreamSizeSchedule;
 import co.cask.cdap.internal.schedule.TimeSchedule;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.codec.ScheduleSpecificationCodec;
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -129,7 +127,7 @@ public class ScheduleSpecificationCodecTest {
   private class OldSchedule extends Schedule {
     private final String cronEntry;
 
-    public OldSchedule(String name, String description, String cronEntry) {
+    OldSchedule(String name, String description, String cronEntry) {
       super(name, description, null);
       this.cronEntry = cronEntry;
     }
