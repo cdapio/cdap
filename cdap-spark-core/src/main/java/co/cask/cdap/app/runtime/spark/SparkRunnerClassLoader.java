@@ -154,7 +154,7 @@ final class SparkRunnerClassLoader extends URLClassLoader {
           @Override
           public void visitMethodInsn(int opcode, String owner, String name, String desc, boolean itf) {
             // See if in this constructor it is calling other constructor (this(..)).
-            calledThis |= (opcode == Opcodes.INVOKESPECIAL
+            calledThis = calledThis || (opcode == Opcodes.INVOKESPECIAL
               && Type.getObjectType(owner).equals(contextType)
               && name.equals("<init>")
               && Type.getReturnType(desc).equals(Type.VOID_TYPE));

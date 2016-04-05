@@ -65,7 +65,7 @@ public final class FilterClassLoader extends ClassLoader {
         int idx = resource.lastIndexOf('/');
         // Ignore empty package
         if (idx > 0) {
-          visiblePackages.add(resource.substring(0, idx));
+          visiblePackages.add(resource.substring(0, idx).replace('/', '.'));
         }
       }
     }
@@ -132,7 +132,8 @@ public final class FilterClassLoader extends ClassLoader {
 
   @Override
   protected Package getPackage(String name) {
-    return (filter.acceptPackage(name)) ? super.getPackage(name) : null;
+    // Replace all '/' with '.' since Java allow both names like "java/lang" or "java.lang" as the name to lookup
+    return (filter.acceptPackage(name.replace('/', '.'))) ? super.getPackage(name) : null;
   }
 
   @Override
