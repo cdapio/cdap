@@ -25,7 +25,7 @@ angular.module(PKG.name + '.commons')
         disabled: '='
       },
       templateUrl: 'widget-container/widget-schema-editor/widget-schema-editor.html',
-      controller: function($scope, myHelpers, EventPipe, IMPLICIT_SCHEMA, HydratorService, $timeout) {
+      controller: function($scope, myHelpers, EventPipe, IMPLICIT_SCHEMA, HydratorService, $timeout, myAlertOnValium) {
         var modelCopy = angular.copy($scope.model);
 
         var typeMap = 'map<string, string>';
@@ -338,7 +338,13 @@ angular.module(PKG.name + '.commons')
         };
 
         function exportSchema() {
+          if ($scope.url) {
+            URL.revokeObjectURL($scope.url);
+          }
+
           var schema = JSON.parse($scope.model);
+          schema = schema.fields;
+
           var blob = new Blob([JSON.stringify(schema, null, 4)], { type: 'application/json'});
           $scope.url = URL.createObjectURL(blob);
           $scope.exportFileName = 'schema';
@@ -349,7 +355,22 @@ angular.module(PKG.name + '.commons')
         }
 
         EventPipe.on('schema.export', exportSchema);
-        EventPipe.on('schema.import', initialize);
+        EventPipe.on('schema.import', function (data) {
+          var fields = [];
+          try {
+            fields = JSON.parse(data);
+          } catch (e) {
+            myAlertOnValium.show({
+              type: 'danger',
+              content: 'Error parsing imported schema'
+            });
+          }
+
+          var schema = {
+            fields: fields
+          };
+          initialize(JSON.stringify(schema));
+        });
 
         $scope.$on('$destroy', function() {
           EventPipe.cancelEvent('schema.export');
