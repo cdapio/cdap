@@ -493,12 +493,27 @@ Enabling Kerberos
 -----------------
 For Kerberos-enabled Hadoop clusters:
 
-- The ``'cdap'`` user needs to be granted HBase permissions to create tables.
+- The ``cdap`` user needs to be granted HBase permissions to create tables.
   As the ``hbase`` user, issue the command::
  
     $ echo "grant 'cdap', 'RWCA'" | hbase shell
 
-- The ``'cdap'`` user must be able to launch YARN containers, either by adding it to the YARN
+- The ``cdap`` user must be able to launch YARN containers, either by adding it to the YARN
   ``allowed.system.users`` or by adjusting the YARN ``min.user.id`` to include the ``cdap`` user.
   (Search for the YARN configuration ``allowed.system.users`` in Cloudera Manager, and then add
   the ``cdap`` user to the whitelist.)
+  
+- If you are converting an existing CDAP cluster to being Kerberos-enabled, then you may
+  run into Yarn usercache directory permission problems. A non-Kerberos cluster with
+  default settings will run CDAP containers as the user ``yarn``. A Kerberos cluster will
+  run them as the user ``cdap``. When converting, the usercache directory that Yarn
+  creates will already exist and be owned by a different user. On all datanodes, run this
+  command, substituting in the correct value of the YARN parameter ``yarn.nodemanager.local-dirs``::
+    
+    rm -rf <YARN.NODEMANAGER.LOCAL-DIRS>/usercache/cdap
+    
+  On Cloudera, the default setting for ``yarn.nodemanager.local-dirs`` is ``/yarn/nm``, resulting in::
+  
+    rm -rf /yarn/nm/usercache/cdap
+
+  Restart CDAP after removing the usercache.
