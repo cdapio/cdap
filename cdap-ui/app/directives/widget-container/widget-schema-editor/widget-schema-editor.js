@@ -153,9 +153,15 @@ angular.module(PKG.name + '.commons')
 
           angular.forEach(schema, function(p) {
             if (angular.isArray(p.type)) {
+              var mapType = p.type[0];
+
+              if (mapType.type === 'map') {
+                mapType = mapType.keys === 'string' && mapType.values === 'string' ? typeMap : null;
+              }
+
               $scope.properties.push({
                 name: p.name,
-                type: p.type[0].type === 'map' ? typeMap : p.type[0],
+                type: mapType,
                 nullable: true,
                 readonly: p.readonly
               });
@@ -163,7 +169,7 @@ angular.module(PKG.name + '.commons')
               if (p.type.type === 'map') {
                 $scope.properties.push({
                   name: p.name,
-                  type: typeMap,
+                  type: p.type.keys === 'string' && p.type.values === 'string' ? typeMap : null,
                   nullable: p.nullable,
                   readonly: p.readonly
                 });
