@@ -25,7 +25,7 @@ angular.module(PKG.name + '.commons')
         disabled: '='
       },
       templateUrl: 'widget-container/widget-schema-editor/widget-schema-editor.html',
-      controller: function($scope, myHelpers, EventPipe, IMPLICIT_SCHEMA, HydratorService) {
+      controller: function($scope, myHelpers, EventPipe, IMPLICIT_SCHEMA, HydratorService, $timeout, myAlertOnValium) {
         var modelCopy = angular.copy($scope.model);
 
         var typeMap = 'map<string, string>';
@@ -153,9 +153,15 @@ angular.module(PKG.name + '.commons')
 
           angular.forEach(schema, function(p) {
             if (angular.isArray(p.type)) {
+              var mapType = p.type[0];
+
+              if (mapType.type === 'map') {
+                mapType = mapType.keys === 'string' && mapType.values === 'string' ? typeMap : null;
+              }
+
               $scope.properties.push({
                 name: p.name,
-                type: p.type[0],
+                type: mapType,
                 nullable: true,
                 readonly: p.readonly
               });
@@ -163,7 +169,7 @@ angular.module(PKG.name + '.commons')
               if (p.type.type === 'map') {
                 $scope.properties.push({
                   name: p.name,
-                  type: typeMap,
+                  type: p.type.keys === 'string' && p.type.values === 'string' ? typeMap : null,
                   nullable: p.nullable,
                   readonly: p.readonly
                 });
@@ -337,10 +343,54 @@ angular.module(PKG.name + '.commons')
           }
         };
 
+        function exportSchema() {
+          if ($scope.url) {
+            URL.revokeObjectURL($scope.url);
+          }
+
+          var schema = JSON.parse($scope.model);
+          schema = schema.fields;
+
+          angular.forEach(schema, function (field) {
+            if (field.readonly) {
+              delete field.readonly;
+            }
+          });
+
+          var blob = new Blob([JSON.stringify(schema, null, 4)], { type: 'application/json'});
+          $scope.url = URL.createObjectURL(blob);
+          $scope.exportFileName = 'schema';
+
+          $timeout(function() {
+            document.getElementById('schema-export-link').click();
+          });
+        }
+
+        EventPipe.on('schema.export', exportSchema);
+        EventPipe.on('schema.import', function (data) {
+          var fields = [];
+          try {
+            fields = JSON.parse(data);
+          } catch (e) {
+            myAlertOnValium.show({
+              type: 'danger',
+              content: 'Error parsing imported schema'
+            });
+          }
+
+          var schema = {
+            fields: fields
+          };
+          initialize(JSON.stringify(schema));
+        });
+
         $scope.$on('$destroy', function() {
+          EventPipe.cancelEvent('schema.export');
+          EventPipe.cancelEvent('schema.import');
           EventPipe.cancelEvent('schema.clear');
           EventPipe.cancelEvent('plugin.reset');
           EventPipe.cancelEvent('dataset.selected');
+          URL.revokeObjectURL($scope.url);
         });
       }
     };

@@ -56,6 +56,16 @@ angular.module(PKG.name+'.feature.experimental')
             label: 'Datetime Playground',
             parent: 'experimental.home'
           }
+        })
+        .state('experimental.schema', {
+          url: '/schema',
+          templateUrl: '/assets/features/experimental/templates/schema.html',
+          controller: 'SchemaController',
+          controllerAs: 'vm',
+          ncyBreadcrumb: {
+            label: 'Schema Widget',
+            parent: 'experimental.home'
+          }
         });
 
   });
