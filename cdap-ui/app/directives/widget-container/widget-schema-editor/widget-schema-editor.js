@@ -25,7 +25,7 @@ angular.module(PKG.name + '.commons')
         disabled: '='
       },
       templateUrl: 'widget-container/widget-schema-editor/widget-schema-editor.html',
-      controller: function($scope, myHelpers, EventPipe, IMPLICIT_SCHEMA, HydratorService) {
+      controller: function($scope, myHelpers, EventPipe, IMPLICIT_SCHEMA, HydratorService, $timeout) {
         var modelCopy = angular.copy($scope.model);
 
         var typeMap = 'map<string, string>';
@@ -155,7 +155,7 @@ angular.module(PKG.name + '.commons')
             if (angular.isArray(p.type)) {
               $scope.properties.push({
                 name: p.name,
-                type: p.type[0],
+                type: p.type[0].type === 'map' ? typeMap : p.type[0],
                 nullable: true,
                 readonly: p.readonly
               });
@@ -337,10 +337,27 @@ angular.module(PKG.name + '.commons')
           }
         };
 
+        function exportSchema() {
+          var schema = JSON.parse($scope.model);
+          var blob = new Blob([JSON.stringify(schema, null, 4)], { type: 'application/json'});
+          $scope.url = URL.createObjectURL(blob);
+          $scope.exportFileName = 'schema';
+
+          $timeout(function() {
+            document.getElementById('schema-export-link').click();
+          });
+        }
+
+        EventPipe.on('schema.export', exportSchema);
+        EventPipe.on('schema.import', initialize);
+
         $scope.$on('$destroy', function() {
+          EventPipe.cancelEvent('schema.export');
+          EventPipe.cancelEvent('schema.import');
           EventPipe.cancelEvent('schema.clear');
           EventPipe.cancelEvent('plugin.reset');
           EventPipe.cancelEvent('dataset.selected');
+          URL.revokeObjectURL($scope.url);
         });
       }
     };
