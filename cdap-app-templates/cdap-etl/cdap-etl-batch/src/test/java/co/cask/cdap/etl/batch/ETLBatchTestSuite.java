@@ -28,8 +28,7 @@ import org.junit.runners.Suite;
 @Category(XSlowTests.class)
 @RunWith(Suite.class)
 @Suite.SuiteClasses({
-  ETLEmailActionTestRun.class,
-  ETLMapReduceTestRun.class,
+  ETLWorkflowTestRun.class,
   ETLSparkTestRun.class
 })
 public class ETLBatchTestSuite extends ETLBatchTestBase {

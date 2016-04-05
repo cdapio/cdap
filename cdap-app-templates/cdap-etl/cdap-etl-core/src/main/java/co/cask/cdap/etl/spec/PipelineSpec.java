@@ -21,6 +21,8 @@ import co.cask.cdap.etl.proto.Connection;
 import co.cask.cdap.etl.proto.v2.ETLConfig;
 import com.google.common.collect.ImmutableSet;
 
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
@@ -93,5 +95,48 @@ public class PipelineSpec {
       ", resources=" + resources +
       ", stageLoggingEnabled=" + stageLoggingEnabled +
       '}';
+  }
+
+  /**
+   * Base builder for creating pipeline specs.
+   */
+  @SuppressWarnings("unchecked")
+  protected static class Builder<T extends Builder> {
+    protected Set<StageSpec> stages;
+    protected Set<Connection> connections;
+    protected Resources resources;
+    protected boolean stageLoggingEnabled;
+
+    protected Builder() {
+      this.stages = new HashSet<>();
+      this.connections = new HashSet<>();
+      this.resources = new Resources();
+      this.stageLoggingEnabled = true;
+    }
+
+    public T addStage(StageSpec stage) {
+      stages.add(stage);
+      return (T) this;
+    }
+
+    public T addConnection(String from, String to) {
+      connections.add(new Connection(from, to));
+      return (T) this;
+    }
+
+    public T addConnections(Collection<Connection> connections) {
+      this.connections.addAll(connections);
+      return (T) this;
+    }
+
+    public T setResources(Resources resources) {
+      this.resources = resources;
+      return (T) this;
+    }
+
+    public T setStageLoggingEnabled(boolean stageLoggingEnabled) {
+      this.stageLoggingEnabled = stageLoggingEnabled;
+      return (T) this;
+    }
   }
 }

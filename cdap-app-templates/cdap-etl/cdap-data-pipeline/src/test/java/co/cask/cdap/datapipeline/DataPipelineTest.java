@@ -21,6 +21,7 @@ import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.api.workflow.NodeStatus;
 import co.cask.cdap.datapipeline.mock.NaiveBayesClassifier;
 import co.cask.cdap.datapipeline.mock.NaiveBayesTrainer;
 import co.cask.cdap.datapipeline.mock.SpamMessage;
@@ -28,6 +29,7 @@ import co.cask.cdap.etl.api.batch.SparkCompute;
 import co.cask.cdap.etl.api.batch.SparkSink;
 import co.cask.cdap.etl.mock.batch.MockSink;
 import co.cask.cdap.etl.mock.batch.MockSource;
+import co.cask.cdap.etl.mock.batch.NodeStatesAction;
 import co.cask.cdap.etl.mock.batch.aggregator.FieldCountAggregator;
 import co.cask.cdap.etl.mock.batch.aggregator.IdentityAggregator;
 import co.cask.cdap.etl.mock.test.HydratorTestBase;
@@ -378,6 +380,42 @@ public class DataPipelineTest extends HydratorTestBase {
     testSinglePhaseWithSparkSink();
     // use a SparkCompute to classify all records going through the pipeline, using the model build with the SparkSink
     testSinglePhaseWithSparkCompute();
+  }
+
+  @Test
+  public void testPostAction() throws Exception {
+    ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
+      .addStage(new ETLStage("source", MockSource.getPlugin("actionInput")))
+      .addStage(new ETLStage("sink", MockSink.getPlugin("actionOutput")))
+      .addPostAction(new ETLStage("tokenWriter", NodeStatesAction.getPlugin("tokenTable")))
+      .addConnection("source", "sink")
+      .build();
+
+    AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
+    Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "ActionApp");
+    ApplicationManager appManager = deployApplication(appId, appRequest);
+
+    Schema schema = Schema.recordOf(
+      "testRecord",
+      Schema.Field.of("name", Schema.of(Schema.Type.STRING))
+    );
+
+    StructuredRecord recordSamuel = StructuredRecord.builder(schema).set("name", "samuel").build();
+    StructuredRecord recordBob = StructuredRecord.builder(schema).set("name", "bob").build();
+    StructuredRecord recordJane = StructuredRecord.builder(schema).set("name", "jane").build();
+
+    DataSetManager<Table> inputManager = getDataset(Id.Namespace.DEFAULT, "actionInput");
+    MockSource.writeInput(inputManager, ImmutableList.of(recordSamuel, recordBob, recordJane));
+
+    WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
+    workflowManager.start();
+    workflowManager.waitForFinish(5, TimeUnit.MINUTES);
+
+    DataSetManager<Table> tokenTableManager = getDataset(Id.Namespace.DEFAULT, "tokenTable");
+    Table tokenTable = tokenTableManager.get();
+    NodeStatus status = NodeStatus.valueOf(Bytes.toString(
+      tokenTable.get(Bytes.toBytes("phase-1"), Bytes.toBytes("status"))));
+    Assert.assertEquals(NodeStatus.COMPLETED, status);
   }
 
   private void testSinglePhaseWithSparkSink() throws Exception {
