@@ -169,7 +169,7 @@ public final class StreamConfig {
                               config.getLocation(),
                               Objects.firstNonNull(formatSpec, config.getFormat()),
                               Objects.firstNonNull(notificationThreshold, config.getNotificationThresholdMB()),
-                              Objects.firstNonNull(description, config.getDescription()));
+                              description != null ? description : config.getDescription());
     }
   }
 }

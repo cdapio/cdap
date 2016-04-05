@@ -49,6 +49,7 @@ public enum ArgumentName {
   PARAMETER_MAP("parameter-map"),
   TTL_IN_SECONDS("ttl-in-seconds"),
   NOTIFICATION_THRESHOLD_MB("notification-threshold-mb"),
+  STREAM_DESCRIPTION("stream-description"),
   NUM_INSTANCES("num-instances"),
   START_TIME("start-time"),
   END_TIME("end-time"),

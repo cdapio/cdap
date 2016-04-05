@@ -16,6 +16,7 @@
 
 package co.cask.cdap.cli.command;
 
+import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.cli.ArgumentName;
 import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.ElementType;
@@ -23,17 +24,28 @@ import co.cask.cdap.cli.english.Article;
 import co.cask.cdap.cli.english.Fragment;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.client.StreamClient;
+import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.StreamProperties;
 import co.cask.common.cli.Arguments;
+import com.google.common.base.Charsets;
+import com.google.common.io.Files;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
 
+import java.io.File;
 import java.io.PrintStream;
+import java.io.Reader;
 
 /**
  * Creates a stream.
  */
 public class CreateStreamCommand extends AbstractAuthCommand {
 
+  private static final Gson GSON = new GsonBuilder()
+    .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
+    .create();
   private final StreamClient streamClient;
 
   @Inject
@@ -45,14 +57,28 @@ public class CreateStreamCommand extends AbstractAuthCommand {
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
     String streamId = arguments.get(ArgumentName.NEW_STREAM.toString());
+    StreamProperties streamProperties = null;
 
-    streamClient.create(Id.Stream.from(cliConfig.getCurrentNamespace(), streamId));
+    if (arguments.hasArgument(ArgumentName.LOCAL_FILE_PATH.toString())) {
+      File file = new File(arguments.get(ArgumentName.LOCAL_FILE_PATH.toString()));
+      if (!file.isFile()) {
+        throw new IllegalArgumentException("Not a file: " + file);
+      }
+
+      try (Reader reader = Files.newReader(file, Charsets.UTF_8)) {
+        streamProperties = GSON.fromJson(reader, StreamProperties.class);
+      } catch (Exception e) {
+        throw new IllegalArgumentException("Stream properties are malformed.", e);
+      }
+    }
+
+    streamClient.create(Id.Stream.from(cliConfig.getCurrentNamespace(), streamId), streamProperties);
     output.printf("Successfully created stream with ID '%s'\n", streamId);
   }
 
   @Override
   public String getPattern() {
-    return String.format("create stream <%s>", ArgumentName.NEW_STREAM);
+    return String.format("create stream <%s> [<%s>]", ArgumentName.NEW_STREAM, ArgumentName.LOCAL_FILE_PATH);
   }
 
   @Override
