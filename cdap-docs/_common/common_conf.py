@@ -28,7 +28,9 @@
 
 # Component versions used in replacements:
 
-cdap_apps_version = '0.4.0'
+cdap_apps_version = '0.7.0'
+cdap_apps_compatibile_version = 'develop'
+# cdap_apps_compatibile_version = 'release/cdap-3.4-compatible'
 
 node_js_min_version = 'beginning with v0.10.36'
 node_js_max_version = 'v4.4.0'
@@ -118,6 +120,7 @@ extensions = [
     'sphinx.ext.ifconfig',
     'sphinx.ext.intersphinx',
     'sphinx.ext.extlinks',
+    'tabbed-parsed-literal',
 ]
 
 _intersphinx_mapping = "../../%%s/%s/html/objects.inv" % target
@@ -189,6 +192,9 @@ rst_epilog = """
 
 .. role:: gp
 .. |#| replace:: :gp:`#`
+
+.. role:: gp
+.. |>| replace:: :gp:`>`
 
 .. role:: gp
 .. |cdap >| replace:: :gp:`cdap >`
@@ -275,10 +281,10 @@ if copyright:
 if cdap_apps_version:
     rst_epilog += """
 .. |cdap-apps-version| replace:: %(cdap-apps-version)s
-
 .. |literal-cdap-apps-version| replace:: ``%(cdap-apps-version)s``
+.. |cdap-apps-compatibile-version| replace:: %(cdap-apps-compatibile-version)s
 
-""" % {'cdap-apps-version': cdap_apps_version}
+""" % {'cdap-apps-version': cdap_apps_version, 'cdap-apps-compatibile-version': cdap_apps_compatibile_version}
 
 # There are two options for replacing |today|: either, you set today to some
 # non-false value, then it is used:

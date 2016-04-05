@@ -26,21 +26,29 @@ Interactive Mode
 
 .. highlight:: console
 
-To run the CLI in interactive mode, run the ``cdap-cli.sh`` executable with no arguments from the terminal::
+To run the CLI in interactive mode, run the ``cdap-cli.sh`` executable with no arguments from a terminal:
+
+.. tabbed-parsed-literal::
+  :tabs: Linux,Windows,"Distributed CDAP","Cloudera Manager Clusters"
+  :mapping: Linux,Windows,Linux,Linux
+  :languages: console,shell-session,console,console
+
+  .. Linux
 
   $ ./bin/cdap-cli.sh
 
-On Windows::
+  .. Windows
 
-  > bin\cdap-cli.bat
+  > .\bin\cdap-cli.bat
   
-On Distributed CDAP::
+  .. Distributed CDAP
 
   $ ./opt/cdap/cli/bin/cdap-cli.sh
-
-On Cloudera Manager clusters::
-
+  
+  .. Cloudera Manager Clusters
+  
   $ ./opt/cloudera/parcels/cdap/cli/bin/cdap-cli.sh
+
 
 The executable should bring you into a shell, with a prompt similar to::
 
