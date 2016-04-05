@@ -13,6 +13,8 @@
 
 @import url(http://fonts.googleapis.com/css?family=Source+Sans+Pro:400,700,400italic,700italic);
 
+@import url("tabbed-parsed-literal.css");
+
 /* -- page layout ----------------------------------------------------------- */
 
 body {
@@ -67,7 +69,7 @@ div.footer a {
 }
 
 div.related {
-background-color: #303840;
+    background-color: #303840;
     line-height: 32px;
     color: #fff;
     text-shadow: 0px 1px 0 #444;
@@ -81,6 +83,7 @@ background-color: #303840;
     box-sizing: border-box;
     width: 100%;
     position: fixed;
+    z-index: 1;
 }
 
 div.related a {
@@ -519,4 +522,15 @@ div.documentwrapper-hidden {
 
 div.bodywrapper-hidden {
     margin: 0 0 0 0;
+}
+
+/* -- Styles for tabbed parsed literals -------------------------------------- */
+
+div.code.code-tab div.highlight pre {
+    margin-top: 0px;
+}
+
+div.code.code-tab {
+    padding-top: 20px;
+    border-left: 1px solid #ddd;
 }

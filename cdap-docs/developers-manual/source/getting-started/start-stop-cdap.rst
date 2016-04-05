@@ -11,19 +11,17 @@ Starting and Stopping Standalone CDAP
 
 .. highlight:: console
 
-Use the ``cdap.sh`` script to start and stop the Standalone CDAP 
-(the location will vary depending on where the CDAP SDK is installed):
+Use the ``cdap.sh`` script (or, if you are using Windows, use ``cdap.bat``) to start and
+stop the Standalone CDAP (the location will vary depending on where the CDAP SDK is
+installed):
 
-.. container:: highlight
-
-  .. parsed-literal::
+.. tabbed-parsed-literal::
   
-    |$| cd cdap-sdk-|version|
-    |$| ./bin/cdap.sh start
+    $ cd cdap-sdk-|version|
+    $ ./bin/cdap.sh start
     . . .
-    |$| ./bin/cdap.sh stop
+    $ ./bin/cdap.sh stop
 
-Or, if you are using Windows, use the batch script ``cdap.bat`` to start and stop the SDK.
 
 .. include:: /_includes/windows-note.txt
 

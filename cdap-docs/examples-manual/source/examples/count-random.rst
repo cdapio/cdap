@@ -91,7 +91,7 @@ are not injecting any data into the flow, the counters increase steadily.
 
 Querying the Results
 --------------------
-You can see the results by executing a SQL query using the CDAP-UI. Go to the *randomTable* 
+You can see the results by executing a SQL query using the CDAP UI. Go to the *randomTable* 
 :cdap-ui-datasets-explore:`dataset overview page, explore tab <randomTable>` and click the 
 *Execute SQL* button. When the query has finished and is hi-lighted in color, you can view
 the results by clicking a middle *Action* button in the right-side of the *Results* table.
