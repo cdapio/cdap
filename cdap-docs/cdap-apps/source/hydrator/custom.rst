@@ -316,7 +316,8 @@ The only method that needs to be implemented is:
 
 	``transform()``
 
-.. rubric:: Methods
+Methods
+-------
 
 - ``initialize()``: Used to perform any initialization step that might be required during
   the runtime of the ``Transform``. It is guaranteed that this method will be invoked
@@ -349,7 +350,7 @@ copies in each transform is emitted. The user metrics can be queried by using th
   
     @Override
     public void transform(StructuredRecord input, Emitter<StructuredRecord> emitter) {
-      Integer copies = input.get(config.fieldName);
+      int copies = input.get(config.fieldName);
       for (int i = 0; i < copies; i++) {
         emitter.emit(input);
       }
@@ -361,6 +362,41 @@ copies in each transform is emitted. The user metrics can be queried by using th
     
     }
   }
+
+
+Script Transformations
+----------------------
+In the script transformations (such as the *Script*, *Script Filter*, and *Validator* transforms), a
+``ScriptContext`` object is passed to the ``transform()`` method::
+
+  function transform(input, context);
+
+The ``ScriptContext`` has these methods::
+
+  public Logger getLogger();
+  public StageMetrics getMetrics();
+  public ScriptLookup getLookup(String table);
+
+
+There are actually five Transforms that expose this object, each with a different signature:
+
+|| Transform || Signature || Returns ||
+| JavaScriptTransform.java | {{function transform(input, emitter, context)}} | None: uses {{emitter.emit(input)}} |
+| PythonEvaluator.java | {{def transform(record, emitter, context)}} | None: uses {{emitter.emit(record)}} |
+| ScriptFilterTransform.java | {{function shouldFilter(input, context)}} | Boolean | 
+| ScriptTransform.java | {{function transform(input, context)}} | JSON object |
+| ValidatorTransform.java | {{function isValid(input, context)}} | JSON with validity, error code, and error message |
+
+
+
+
+where:
+
+- ``Logger`` is the `org.slf4j.Logger <http://www.slf4j.org/api/org/slf4j/Logger.html>`__
+- ``StageMetrics``: https://github.com/caskdata/cdap/blob/develop/cdap-app-templates/cdap-etl/cdap-etl-api/src/main/java/co/cask/cdap/etl/api/StageMetrics.java
+- ``ScriptLookup``: https://github.com/caskdata/cdap/blob/develop/cdap-app-templates/cdap-etl/cdap-etl-core/src/main/java/co/cask/cdap/etl/common/DatasetContextLookupProvider.java
+
+Currently, ``ScriptContext.getLookup(String table)`` only supports :ref:`key-value tables <datasets-index>`.
 
 
 Test Framework for Plugins
