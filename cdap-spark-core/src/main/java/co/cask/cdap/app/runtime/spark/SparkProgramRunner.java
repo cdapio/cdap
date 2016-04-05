@@ -95,6 +95,18 @@ final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin implement
 
     @Override
     public boolean acceptPackage(String packageName) {
+      if (packageName.equals("co.cask.cdap.api.spark") || packageName.startsWith("co.cask.cdap.api.spark.")) {
+        return true;
+      }
+      if (packageName.equals("scala") || packageName.startsWith("scala.")) {
+        return true;
+      }
+      if (packageName.equals("org.apache.spark") || packageName.startsWith("org.apache.spark.")) {
+        return true;
+      }
+      if (packageName.equals("akka") || packageName.startsWith("akka.")) {
+        return true;
+      }
       return defaultFilter.acceptResource(packageName);
     }
   };
@@ -229,7 +241,9 @@ final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin implement
         Thread t = new Thread("delay-close-thread-" + programId + "-" + runId) {
           @Override
           public void run() {
-            Uninterruptibles.sleepUninterruptibly(1, TimeUnit.SECONDS);
+            // Delay the closing of the ClassLoader because Spark, which uses akka, has an async cleanup process
+            // for shutting down threads. During shutdown, there are new classes being loaded.
+            Uninterruptibles.sleepUninterruptibly(2, TimeUnit.SECONDS);
             if (classLoader instanceof Closeable) {
               Closeables.closeQuietly((Closeable) classLoader);
               LOG.debug("Closed ClassLoader for SparkProgramRunner of {}, run {}.", programId, runId);
