@@ -43,7 +43,9 @@ import co.cask.cdap.internal.app.runtime.ProgramRunners;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
 import co.cask.cdap.logging.context.SparkLoggingContext;
+import co.cask.cdap.logging.context.WorkflowProgramLoggingContext;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.id.Ids;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Objects;
@@ -119,8 +121,22 @@ public final class SparkRuntimeContext extends AbstractServiceDiscoverer
     this.pluginContext = new DefaultPluginContext(pluginInstantiator, programId,
                                                   program.getApplicationSpecification().getPlugins());
     this.admin = new DefaultAdmin(datasetFramework, programId.getNamespaceId());
-    this.loggingContext = new SparkLoggingContext(programId.getNamespace(), programId.getApplication(),
-                                                  programId.getProgram(), runId.getId());
+    this.loggingContext = createLoggingContext(programId, runId, workflowProgramInfo);
+  }
+
+  private LoggingContext createLoggingContext(ProgramId programId, RunId runId,
+                                              @Nullable WorkflowProgramInfo workflowProgramInfo) {
+    if (workflowProgramInfo == null) {
+      return new SparkLoggingContext(programId.getNamespace(), programId.getApplication(), programId.getProgram(),
+                                     runId.getId());
+    }
+
+    ProgramId workflowProramId = Ids.namespace(programId.getNamespace()).app(programId.getApplication())
+      .workflow(workflowProgramInfo.getName());
+
+    return new WorkflowProgramLoggingContext(workflowProramId.getNamespace(), workflowProramId.getApplication(),
+                                             workflowProramId.getProgram(), workflowProgramInfo.getRunId().getId(),
+                                             ProgramType.SPARK, programId.getProgram());
   }
 
   @Override
