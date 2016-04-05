@@ -29,7 +29,7 @@ BUILD_RST_HASH="6b6124e34febf8ff1259e923ce29b5f9"
 GIT_BRANCH_PARENT="release/3.4"
 
 # Used by cdap-apps for Hydrator documentation
-GIT_BRANCH_CDAP_HYDRATOR="develop"
+GIT_BRANCH_CDAP_HYDRATOR="release/1.3"
 
 # Used by developers-manual
 CDAP_CLIENTS_RELEASE_VERSION="1.2.0"
