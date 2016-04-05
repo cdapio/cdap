@@ -21,11 +21,12 @@ import co.cask.cdap.api.ProgramConfigurer;
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetProperties;
+import co.cask.cdap.api.plugin.PluginConfigurer;
 
 /**
  * Configurer for configuring the {@link Workflow}.
  */
-public interface WorkflowConfigurer extends ProgramConfigurer {
+public interface WorkflowConfigurer extends ProgramConfigurer, PluginConfigurer {
 
   /**
    * Adds a MapReduce program as a next sequential step in the {@link Workflow}. MapReduce program must be

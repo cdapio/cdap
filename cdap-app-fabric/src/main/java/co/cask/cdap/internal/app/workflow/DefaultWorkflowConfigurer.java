@@ -31,8 +31,11 @@ import co.cask.cdap.api.workflow.WorkflowForkConfigurer;
 import co.cask.cdap.api.workflow.WorkflowForkNode;
 import co.cask.cdap.api.workflow.WorkflowNode;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
-import co.cask.cdap.app.DefaultAppConfigurer;
+import co.cask.cdap.internal.app.DefaultPluginConfigurer;
+import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
+import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.internal.dataset.DatasetCreationSpec;
+import co.cask.cdap.proto.Id;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 
@@ -43,7 +46,8 @@ import java.util.Map;
 /**
  * Default implementation of {@link WorkflowConfigurer}.
  */
-public class DefaultWorkflowConfigurer implements WorkflowConfigurer, WorkflowForkJoiner, WorkflowConditionAdder {
+public class DefaultWorkflowConfigurer extends DefaultPluginConfigurer
+  implements WorkflowConfigurer, WorkflowForkJoiner, WorkflowConditionAdder {
 
   private final String className;
   private String name;
@@ -55,7 +59,10 @@ public class DefaultWorkflowConfigurer implements WorkflowConfigurer, WorkflowFo
 
   private final List<WorkflowNode> nodes = Lists.newArrayList();
 
-  public DefaultWorkflowConfigurer(Workflow workflow, DatasetConfigurer datasetConfigurer) {
+  public DefaultWorkflowConfigurer(Workflow workflow, DatasetConfigurer datasetConfigurer,
+                                   Id.Namespace deployNamespace, Id.Artifact artifactId,
+                                   ArtifactRepository artifactRepository, PluginInstantiator pluginInstantiator) {
+    super(deployNamespace, artifactId, artifactRepository, pluginInstantiator);
     this.className = workflow.getClass().getName();
     this.name = workflow.getClass().getSimpleName();
     this.description = "";
