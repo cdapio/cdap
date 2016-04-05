@@ -60,6 +60,34 @@ A stream can be created with an HTTP PUT method to the URL::
 - The ``<new-stream-id>`` should only contain ASCII letters, digits and hyphens.
 - If the stream already exists, no error is returned, and the existing stream remains in place.
 
+Optionally, properties for the stream can be set by providing it in the body of the PUT request. These properties can
+also be retrieved and/or modified later using the /properties endpoint.
+
+.. list-table::
+:widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+     - Default Value
+   * - ``ttl``
+     - Number of seconds that an event will be valid for since ingested
+     - Long.MAX (2^63 - 1)
+   * - ``format``
+     - JSON Object describing the format name, schema, and settings. Accepted formats are
+       ``avro``, ``csv`` (comma-separated), ``tsv`` (tab-separated), ``text``, ``clf``,
+       ``grok``, and ``syslog``.
+     - ``text``
+   * - ``notification.threshold.mb``
+     - Increment of data, in MB, that a stream has to receive before
+       publishing a notification.
+     - 1024
+   * - ``description``
+     - Description of the stream
+     - ``null``
+
+If a property is not given in the request body, then the default values will be used.
+
 Sending Events to a Stream
 --------------------------
 An event can be sent to a stream by sending an HTTP POST method to the URL of the stream::
@@ -356,6 +384,8 @@ See :ref:`stream-exploration` for more information about formats and schemas.
 The **notification threshold** defines the increment of data that a stream has to receive before
 publishing a notification.
 
+The **description** of the stream.
+
 .. rubric:: Getting Stream Properties
 
 Stream properties can be retrieved with an HTTP PUT method to the URL::
@@ -395,7 +425,8 @@ Stream properties can be retrieved with an HTTP PUT method to the URL::
              },
              "settings": {}
            },
-           "notification.threshold.mb" : 1024
+           "notification.threshold.mb" : 1024,
+           "description" : "Web access logs"
          }
      
    * - Description
@@ -435,6 +466,8 @@ New properties are passed in the JSON request body.
    * - ``notification.threshold.mb``
      - Increment of data, in MB, that a stream has to receive before
        publishing a notification.
+   * - ``description``
+     - Description of the stream
 
 If a property is not given in the request body, no change will be made to the value.
 For example, setting format but not TTL will preserve the current value for TTL.
