@@ -110,25 +110,46 @@ Uploading and Downloading Files
 -------------------------------
 First, we will upload a text file (``some.txt``) that we will use as input for the WordCount.
 This is done by making a RESTful call to the *FileSetService*.
-A sample text file (``lines.txt``) is included in the ``resources`` directory of the example::
+A sample text file (``lines.txt``) is included in the ``resources`` directory of the example:
+
+.. tabbed-parsed-literal::
 
   $ cdap-cli.sh call service FileSetExample.FileSetService PUT "lines?path=some.txt" body:file examples/FileSetExample/resources/lines.txt
 
+Results::
+
+  < 200 OK
+  < Content-Length: 0
+  < Connection: keep-alive
+  < Content-Type: text/plain
+
 Now, we start the MapReduce program and configure it to use the file ``some.txt`` as its input, and to write its output to
-``counts.out``::
+``counts.out``:
 
-  $ cdap-cli.sh start mapreduce FileSetExample.WordCount \"dataset.lines.input.paths=some.txt dataset.counts.output.path=counts.out\"
-  Successfully started MapReduce program 'WordCount' of application 'FileSetExample' with provided runtime arguments 'dataset.lines.input.paths=some.txt dataset.counts.output.path=counts.out'
+.. tabbed-parsed-literal::
 
-Check the status of the MapReduce program until it is completed::
+  $ cdap-cli.sh start mapreduce FileSetExample.WordCount "\"dataset.lines.input.paths=some.txt dataset.counts.output.path=counts.out\""
+  
+  Successfully started MapReduce program 'WordCount' of application 'FileSetExample' 
+  with provided runtime arguments 'dataset.lines.input.paths=some.txt dataset.counts.output.path=counts.out'
+
+Check the status of the MapReduce program until it is completed:
+
+.. tabbed-parsed-literal::
 
   $ cdap-cli.sh get mapreduce status FileSetExample.WordCount
+  
   STOPPED
 
+and you can download the results of the computation:
 
-and you can download the results of the computation::
+.. tabbed-parsed-literal::
 
   $ cdap-cli.sh call service FileSetExample.FileSetService GET "counts?path=counts.out/part-r-00000"
+
+  
+Results::
+
   < 200 OK
   < Content-Length: 60
   a:1

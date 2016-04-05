@@ -118,6 +118,7 @@ extensions = [
     'sphinx.ext.ifconfig',
     'sphinx.ext.intersphinx',
     'sphinx.ext.extlinks',
+    'tabbed-parsed-literal',
 ]
 
 _intersphinx_mapping = "../../%%s/%s/html/objects.inv" % target
@@ -189,6 +190,9 @@ rst_epilog = """
 
 .. role:: gp
 .. |#| replace:: :gp:`#`
+
+.. role:: gp
+.. |>| replace:: :gp:`>`
 
 .. role:: gp
 .. |cdap >| replace:: :gp:`cdap >`
