@@ -527,8 +527,9 @@ public class TestBase {
    * @param appClass the application class to build the artifact from
    * @param exportPackages the packages to export and place in the manifest of the jar to build. This should include
    *                       packages that contain classes that plugins for the application will implement.
-   * @throws Exception
+   * @deprecated since 3.4.0. Use {@link #addAppArtifact(NamespacedArtifactId, Class, String...)}
    */
+  @Deprecated
   protected static void addAppArtifact(Id.Artifact artifactId, Class<?> appClass,
                                        String... exportPackages) throws Exception {
     getTestManager().addAppArtifact(artifactId, appClass, exportPackages);
@@ -539,11 +540,39 @@ public class TestBase {
    *
    * @param artifactId the id of the artifact to add
    * @param appClass the application class to build the artifact from
-   * @param manifest the manifest to use when building the jar
-   * @throws Exception
+   * @param exportPackages the packages to export and place in the manifest of the jar to build. This should include
+   *                       packages that contain classes that plugins for the application will implement.
+   * @return an {@link ArtifactManager} to manage the added artifact
    */
+  protected static ArtifactManager addAppArtifact(NamespacedArtifactId artifactId, Class<?> appClass,
+                                                  String... exportPackages) throws Exception {
+    return getTestManager().addAppArtifact(artifactId, appClass, exportPackages);
+  }
+
+  /**
+   * Build an application artifact from the specified class and then add it.
+   *
+   * @param artifactId the id of the artifact to add
+   * @param appClass the application class to build the artifact from
+   * @param manifest the manifest to use when building the jar
+   * @deprecated since 3.4.0. Use {@link #addAppArtifact(NamespacedArtifactId, Class, Manifest)}
+   */
+  @Deprecated
   protected static void addAppArtifact(Id.Artifact artifactId, Class<?> appClass, Manifest manifest) throws Exception {
     getTestManager().addAppArtifact(artifactId, appClass, manifest);
+  }
+
+  /**
+   * Build an application artifact from the specified class and then add it.
+   *
+   * @param artifactId the id of the artifact to add
+   * @param appClass the application class to build the artifact from
+   * @param manifest the manifest to use when building the jar
+   * @return an {@link ArtifactManager} to manage the added artifact
+   */
+  protected static ArtifactManager addAppArtifact(NamespacedArtifactId artifactId, Class<?> appClass,
+                                                  Manifest manifest) throws Exception {
+    return getTestManager().addAppArtifact(artifactId, appClass, manifest);
   }
 
   /**
