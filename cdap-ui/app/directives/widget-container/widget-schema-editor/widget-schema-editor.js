@@ -345,6 +345,12 @@ angular.module(PKG.name + '.commons')
           var schema = JSON.parse($scope.model);
           schema = schema.fields;
 
+          angular.forEach(schema, function (field) {
+            if (field.readonly) {
+              delete field.readonly;
+            }
+          });
+
           var blob = new Blob([JSON.stringify(schema, null, 4)], { type: 'application/json'});
           $scope.url = URL.createObjectURL(blob);
           $scope.exportFileName = 'schema';
