@@ -18,6 +18,7 @@ package co.cask.cdap.internal.app.runtime.distributed;
 import co.cask.cdap.app.guice.DefaultProgramRunnerFactory;
 import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.app.runtime.ProgramRunnerFactory;
+import co.cask.cdap.app.runtime.ProgramRuntimeProvider;
 import co.cask.cdap.internal.app.runtime.batch.MapReduceProgramRunner;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramRunner;
 import co.cask.cdap.proto.ProgramType;
@@ -26,17 +27,12 @@ import com.google.inject.PrivateModule;
 import com.google.inject.Scopes;
 import com.google.inject.multibindings.MapBinder;
 import com.google.inject.util.Modules;
-import org.apache.hadoop.mapred.YarnClientProtocolProvider;
 import org.apache.twill.api.TwillContext;
 
 /**
  *
  */
 final class WorkflowTwillRunnable extends AbstractProgramTwillRunnable<WorkflowProgramRunner> {
-
-  // NOTE: DO NOT REMOVE.  Though it is unused, the dependency is needed when submitting the mapred job.
-  @SuppressWarnings("unused")
-  private YarnClientProtocolProvider provider;
 
   WorkflowTwillRunnable(String name, String hConfName, String cConfName) {
     super(name, hConfName, cConfName);
@@ -54,6 +50,11 @@ final class WorkflowTwillRunnable extends AbstractProgramTwillRunnable<WorkflowP
           MapBinder.newMapBinder(binder(), ProgramType.class, ProgramRunner.class);
         runnerFactoryBinder.addBinding(ProgramType.MAPREDUCE).to(MapReduceProgramRunner.class);
 
+        // It uses local mode factory because for Workflow we launch the job from the Workflow container directly.
+        // The actual execution mode of the job is governed by the framework configuration
+        // For mapreduce, it's in the mapred-site.xml
+        // for spark, it's in the hConf we shipped from DistributedWorkflowProgramRunner
+        bind(ProgramRuntimeProvider.Mode.class).toInstance(ProgramRuntimeProvider.Mode.LOCAL);
         bind(ProgramRunnerFactory.class).to(DefaultProgramRunnerFactory.class).in(Scopes.SINGLETON);
         expose(ProgramRunnerFactory.class);
       }

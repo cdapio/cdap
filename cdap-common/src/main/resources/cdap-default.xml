@@ -261,7 +261,7 @@
 
   <property>
     <name>app.program.runtime.extensions.dir</name>
-    <value>/opt/cdap/master/ext/runtime</value>
+    <value>/opt/cdap/master/ext/runtimes</value>
     <description>
       Semicolon-separated list of local directories scanned for program runtime extension.
     </description>

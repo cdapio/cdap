@@ -118,11 +118,15 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
    */
   private Program createProgram(CConfiguration cConf, ProgramRunner programRunner,
                                 Location programJarLocation, File tempDir) throws IOException {
+    // Take a snapshot of the JAR file to avoid program mutation
+    File programJar = Locations.linkOrCopy(programJarLocation, new File(tempDir, "program.jar"));
+
+    // Unpack the JAR file
     File unpackedDir = new File(tempDir, "unpacked");
     unpackedDir.mkdirs();
-    BundleJarUtil.unJar(programJarLocation, unpackedDir);
+    BundleJarUtil.unJar(Files.newInputStreamSupplier(programJar), unpackedDir);
 
-    return Programs.create(cConf, programRunner, programJarLocation, unpackedDir);
+    return Programs.create(cConf, programRunner, Locations.toLocation(programJar), unpackedDir);
   }
 
   private Runnable createCleanupTask(final Object... resources) {

@@ -16,14 +16,14 @@
 package co.cask.cdap.internal.app.runtime.distributed;
 
 import co.cask.cdap.app.program.Program;
-import co.cask.cdap.app.program.Programs;
 import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.io.Locations;
+import co.cask.cdap.common.lang.ClassLoaders;
+import co.cask.cdap.common.lang.CombineClassLoader;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.common.twill.AbortOnTimeoutEventHandler;
 import co.cask.cdap.common.twill.HadoopClassExcluder;
@@ -36,14 +36,13 @@ import co.cask.cdap.internal.app.runtime.codec.ArgumentsCodec;
 import co.cask.cdap.internal.app.runtime.codec.ProgramOptionsCodec;
 import co.cask.cdap.security.TokenSecureStoreUpdater;
 import com.google.common.base.Charsets;
+import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
 import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import com.google.common.io.Files;
-import com.google.common.io.InputSupplier;
 import com.google.common.io.Resources;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -61,19 +60,18 @@ import org.apache.twill.api.logging.LogEntry;
 import org.apache.twill.api.logging.LogHandler;
 import org.apache.twill.api.logging.PrinterLogHandler;
 import org.apache.twill.common.Threads;
-import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.PrintWriter;
 import java.io.Writer;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -110,7 +108,7 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
      * @return the {@link TwillController} for the application.
      */
     public TwillController launch(TwillApplication twillApplication) {
-      return launch(twillApplication, ImmutableList.<String>of());
+      return launch(twillApplication, Collections.<String>emptyList(), Collections.<Class<?>>emptyList());
     }
 
     /**
@@ -124,7 +122,7 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
      * @see TwillPreparer#withClassPaths(Iterable)
      */
     public TwillController launch(TwillApplication twillApplication, String...extraClassPaths) {
-      return launch(twillApplication, Arrays.asList(extraClassPaths));
+      return launch(twillApplication, Arrays.asList(extraClassPaths), Collections.<Class<?>>emptyList());
     }
 
     /**
@@ -137,7 +135,8 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
      * @return the {@link TwillController} for the application.
      * @see TwillPreparer#withClassPaths(Iterable)
      */
-    public abstract TwillController launch(TwillApplication twillApplication, Iterable<String> extraClassPaths);
+    public abstract TwillController launch(TwillApplication twillApplication, Iterable<String> extraClassPaths,
+                                           Iterable<? extends Class<?>> extraDependencies);
   }
 
   protected AbstractDistributedProgramRunner(TwillRunner twillRunner, YarnConfiguration hConf, CConfiguration cConf,
@@ -184,7 +183,8 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
       // The HDFS token should already obtained by Twill.
       return launch(program, options, localizeResources, tempDir, new ApplicationLauncher() {
         @Override
-        public TwillController launch(TwillApplication twillApplication, Iterable<String> extraClassPaths) {
+        public TwillController launch(TwillApplication twillApplication, Iterable<String> extraClassPaths,
+                                      Iterable<? extends Class<?>> extraDependencies) {
           TwillPreparer twillPreparer = twillRunner.prepare(twillApplication);
           if (options.isDebug()) {
             LOG.info("Starting {} with debugging enabled, programOptions: {}, and logback: {}",
@@ -225,16 +225,43 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
             // TokenSecureStoreUpdater.update() ignores parameters
             twillPreparer.addSecureStore(secureStoreUpdater.update(null, null));
           }
-          TwillController twillController = twillPreparer
-            .withDependencies(HBaseTableUtilFactory.getHBaseTableUtilClass())
+
+          Iterable<Class<?>> dependencies = Iterables.concat(
+            Collections.singletonList(HBaseTableUtilFactory.getHBaseTableUtilClass()), extraDependencies
+          );
+          twillPreparer
+            .withDependencies(dependencies)
             .withClassPaths(Iterables.concat(extraClassPaths, Splitter.on(',').trimResults()
               .split(hConf.get(YarnConfiguration.YARN_APPLICATION_CLASSPATH, ""))))
             .withApplicationClassPaths(Splitter.on(",").trimResults().split(yarnAppClassPath))
-            .withBundlerClassAcceptor(new HadoopClassExcluder())
+            .withBundlerClassAcceptor(new HadoopClassExcluder() {
+              @Override
+              public boolean accept(String className, URL classUrl, URL classPathUrl) {
+                // Exclude both hadoop and spark classes.
+                return super.accept(className, classUrl, classPathUrl) && !className.startsWith("org.apache.spark.");
+              }
+            })
             .withApplicationArguments(
               String.format("--%s", RunnableOptions.JAR), program.getJarLocation().getName(),
               String.format("--%s", RunnableOptions.PROGRAM_OPTIONS), programOptions
-            ).start();
+            );
+
+          TwillController twillController;
+          // Change the context classloader to the combine classloader of this ProgramRunner and
+          // all the classloaders of the dependencies classes so that Twill can trace classes.
+          ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(new CombineClassLoader(
+            AbstractDistributedProgramRunner.this.getClass().getClassLoader(),
+            Iterables.transform(dependencies, new Function<Class<?>, ClassLoader>() {
+              @Override
+              public ClassLoader apply(Class<?> input) {
+                return input.getClassLoader();
+              }
+            })));
+          try {
+            twillController = twillPreparer.start();
+          } finally {
+            ClassLoaders.setContextClassLoader(oldClassLoader);
+          }
           return addCleanupListener(twillController, program, tempDir);
         }
       });
@@ -310,8 +337,12 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
   }
 
   private File saveCConf(CConfiguration conf, File file) throws IOException {
+    // Unsettting the runtime extension directory as the necessary extension jars should be shipped to the container
+    // by the distributed ProgramRunner.
+    CConfiguration copied = CConfiguration.copy(conf);
+    copied.unset(Constants.AppFabric.RUNTIME_EXT_DIR);
     try (Writer writer = Files.newWriter(file, Charsets.UTF_8)) {
-      conf.writeXml(writer);
+      copied.writeXml(writer);
     }
     return file;
   }

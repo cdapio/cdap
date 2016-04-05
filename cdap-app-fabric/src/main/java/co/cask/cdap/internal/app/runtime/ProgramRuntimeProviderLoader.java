@@ -129,9 +129,14 @@ public class ProgramRuntimeProviderLoader {
               continue;
             }
             // Try to find a provider that can support the given program type.
-            ProgramRuntimeProvider provider = findProvider(serviceLoaderCache.getUnchecked(moduleDir), programType);
-            if (provider != null) {
-              return provider;
+            try {
+              ProgramRuntimeProvider provider = findProvider(serviceLoaderCache.getUnchecked(moduleDir), programType);
+              if (provider != null) {
+                return provider;
+              }
+            } catch (Exception e) {
+              LOG.warn("Exception raised when loading a ProgramRuntimeProvider from {}. Extension ignored.",
+                       moduleDir, e);
             }
           }
         }

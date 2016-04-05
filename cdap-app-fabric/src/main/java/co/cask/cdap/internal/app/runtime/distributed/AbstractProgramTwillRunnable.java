@@ -21,7 +21,6 @@ import co.cask.cdap.app.guice.DataFabricFacadeModule;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.program.Programs;
 import co.cask.cdap.app.runtime.Arguments;
-import co.cask.cdap.app.runtime.ProgramClassLoaderFilterProvider;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramResourceReporter;
@@ -38,8 +37,6 @@ import co.cask.cdap.common.guice.KafkaClientModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.guice.ZKClientModule;
 import co.cask.cdap.common.io.Locations;
-import co.cask.cdap.common.lang.FilterClassLoader;
-import co.cask.cdap.common.lang.ProgramClassLoader;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
@@ -48,7 +45,6 @@ import co.cask.cdap.data.stream.StreamCoordinatorClient;
 import co.cask.cdap.data.view.ViewAdminModules;
 import co.cask.cdap.data2.audit.AuditModule;
 import co.cask.cdap.explore.guice.ExploreClientModule;
-import co.cask.cdap.internal.app.program.ForwardingProgram;
 import co.cask.cdap.internal.app.queue.QueueReaderFactory;
 import co.cask.cdap.internal.app.runtime.AbstractListener;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
@@ -286,7 +282,8 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
   protected ProgramRunner createProgramRunner(Injector injector) {
     Type type = TypeToken.of(getClass()).getSupertype(AbstractProgramTwillRunnable.class).getType();
     // Must be ParameterizedType
-    Preconditions.checkState(type instanceof ParameterizedType, "Invalid ProgramTwillRunnable class %s.", getClass());
+    Preconditions.checkState(type instanceof ParameterizedType,
+                             "Invalid ProgramTwillRunnable class %s. Expected to be a ParameterizedType.", getClass());
 
     Type programRunnerType = ((ParameterizedType) type).getActualTypeArguments()[0];
     // the ProgramRunnerType must be a Class
@@ -296,38 +293,6 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
     @SuppressWarnings("unchecked")
     Class<ProgramRunner> programRunnerClass = (Class<ProgramRunner>) programRunnerType;
     return injector.getInstance(programRunnerClass);
-  }
-
-  /**
-   * Creates a {@link Program} for the given {@link ProgramRunner} from the given program jar {@link File}.
-   */
-  private Program createProgram(ProgramRunner programRunner, File programJarFile) throws IOException {
-    File unpackedDir = Files.createTempDir();
-
-    FilterClassLoader.Filter filter;
-    if (programRunner instanceof ProgramClassLoaderFilterProvider) {
-      filter = ((ProgramClassLoaderFilterProvider) programRunner).getFilter();
-    } else {
-      filter = FilterClassLoader.defaultFilter();
-    }
-
-    if (filter == null) {
-      // Shouldn't happen. This is to catch invalid ProgramClassLoaderFilterProvider implementation
-      // since it's provided by the ProgramRunner, which can be external to CDAP
-      throw new IOException("Program classloader filter cannot be null");
-    }
-
-    BundleJarUtil.unJar(Files.newInputStreamSupplier(programJarFile), unpackedDir);
-    FilterClassLoader parentClassLoader = new FilterClassLoader(programRunner.getClass().getClassLoader(), filter);
-    final ProgramClassLoader programClassLoader = new ProgramClassLoader(cConf, unpackedDir, parentClassLoader);
-
-    return new ForwardingProgram(Programs.create(Locations.toLocation(programJarFile), programClassLoader)) {
-      @Override
-      public void close() throws IOException {
-        Closeables.closeQuietly(programClassLoader);
-        super.close();
-      }
-    };
   }
 
   @Override

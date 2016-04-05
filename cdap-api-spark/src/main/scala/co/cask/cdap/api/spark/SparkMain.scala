@@ -202,21 +202,16 @@ trait SparkMain extends Serializable {
   }
 
   /**
-    * An implicit object that performs identity transform for [[co.cask.cdap.api.flow.flowlet.StreamEvent]].
-    */
-  protected implicit val identityStreamDecoder = (e: StreamEvent) => e
-
-  /**
     * An implicit object that transforms [[co.cask.cdap.api.flow.flowlet.StreamEvent]] to a
     * [[scala.Tuple2]] of (eventTimestamp, UTF-8 decoded body string).
     */
-  protected implicit val timestampStringStreamDecoder = (e: StreamEvent) => {
+  protected implicit val timestampStringStreamDecoder: (StreamEvent) => (Long, String) = (e: StreamEvent) => {
     (e.getTimestamp, Charset.forName("UTF-8").decode(e.getBody).toString)
   }
 
   /**
     * An implicit object that transforms [[co.cask.cdap.api.flow.flowlet.StreamEvent]] body to a UTF-8 string.
     */
-  protected implicit val stringStreamDecoder = (e: StreamEvent) =>
+  protected implicit val stringStreamDecoder: (StreamEvent) => String = (e: StreamEvent) =>
     timestampStringStreamDecoder(e)._2
 }
