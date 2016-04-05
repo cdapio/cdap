@@ -22,8 +22,6 @@ import org.apache.hadoop.mapred.YarnClientProtocolProvider;
  * Wraps {@link MapReduceProgramRunner} to be run via Twill
  */
 final class MapReduceTwillRunnable extends AbstractProgramTwillRunnable<MapReduceProgramRunner> {
-  // NOTE: DO NOT REMOVE.  Though it is unused, the dependency is needed when submitting the mapred job.
-  private YarnClientProtocolProvider provider;
 
   MapReduceTwillRunnable(String name, String hConfName, String cConfName) {
     super(name, hConfName, cConfName);

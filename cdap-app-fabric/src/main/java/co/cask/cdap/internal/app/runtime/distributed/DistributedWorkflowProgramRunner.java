@@ -30,15 +30,18 @@ import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
+import co.cask.cdap.app.runtime.ProgramRuntimeProvider;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
+import co.cask.cdap.internal.app.runtime.ProgramRuntimeProviderLoader;
 import co.cask.cdap.internal.app.runtime.batch.distributed.MapReduceContainerHelper;
 import co.cask.cdap.internal.app.runtime.spark.SparkUtils;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.security.TokenSecureStoreUpdater;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
+import org.apache.hadoop.mapred.YarnClientProtocolProvider;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.TwillController;
@@ -60,10 +63,14 @@ public final class DistributedWorkflowProgramRunner extends AbstractDistributedP
 
   private static final String HCONF_ATTR_CLUSTER_MODE = "cdap.spark.cluster.mode";
 
+  private final ProgramRuntimeProviderLoader runtimeProviderLoader;
+
   @Inject
   public DistributedWorkflowProgramRunner(TwillRunner twillRunner, YarnConfiguration hConf, CConfiguration cConf,
-                                          TokenSecureStoreUpdater tokenSecureStoreUpdater) {
+                                          TokenSecureStoreUpdater tokenSecureStoreUpdater,
+                                          ProgramRuntimeProviderLoader runtimeProviderLoader) {
     super(twillRunner, createConfiguration(hConf), cConf, tokenSecureStoreUpdater);
+    this.runtimeProviderLoader = runtimeProviderLoader;
   }
 
   @Override
@@ -83,12 +90,21 @@ public final class DistributedWorkflowProgramRunner extends AbstractDistributedP
 
     // It the workflow has Spark, localize the spark-assembly jar
     List<String> extraClassPaths = new ArrayList<>();
+    List<Class<?>> extraDependencies = new ArrayList<>();
+
+    // Adds the extra classes that MapReduce needs
+    extraDependencies.add(YarnClientProtocolProvider.class);
 
     // See if the Workflow has Spark or MapReduce in it
     DriverMeta driverMeta = findDriverResources(program.getApplicationSpecification().getSpark(),
                                                 program.getApplicationSpecification().getMapReduce(), workflowSpec);
 
     if (driverMeta.hasSpark) {
+      // Adds the extra class that Spark runtime needed
+      ProgramRuntimeProvider provider = runtimeProviderLoader.get(ProgramType.SPARK);
+      Preconditions.checkState(provider != null, "Missing Spark runtime system. Not able to run Spark program.");
+      extraDependencies.add(provider.getClass());
+
       // Localize the spark-assembly jar and spark conf zip
       String sparkAssemblyJarName = SparkUtils.prepareSparkResources(cConf, tempDir, localizeResources);
       extraClassPaths.add(sparkAssemblyJarName);
@@ -100,7 +116,7 @@ public final class DistributedWorkflowProgramRunner extends AbstractDistributedP
     LOG.info("Launching distributed workflow: " + program.getName() + ":" + workflowSpec.getName());
     TwillController controller = launcher.launch(
       new WorkflowTwillApplication(program, workflowSpec, localizeResources, eventHandler, driverMeta.resources),
-      extraClassPaths
+      extraClassPaths, extraDependencies
     );
     RunId runId = RunIds.fromString(options.getArguments().getOption(ProgramOptionConstants.RUN_ID));
     return new WorkflowTwillProgramController(program.getId(), controller, runId).startListen();

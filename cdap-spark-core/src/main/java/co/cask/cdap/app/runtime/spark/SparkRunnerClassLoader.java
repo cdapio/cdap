@@ -70,7 +70,7 @@ final class SparkRunnerClassLoader extends URLClassLoader {
       );
     } catch (IOException e) {
       // Shouldn't happen, because Spark.class is in cdap-api and it should always be there.
-      LOG.warn("Unable to ");
+      LOG.error("Unable to find cdap-api classes.", e);
     }
 
     API_CLASSES = Collections.unmodifiableSet(apiClasses);

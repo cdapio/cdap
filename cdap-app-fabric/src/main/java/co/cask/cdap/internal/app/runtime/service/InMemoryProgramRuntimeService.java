@@ -47,13 +47,10 @@ public final class InMemoryProgramRuntimeService extends AbstractProgramRuntimeS
 
   private static final Logger LOG = LoggerFactory.getLogger(InMemoryProgramRuntimeService.class);
 
-  private final CConfiguration cConf;
-
   @Inject
   public InMemoryProgramRuntimeService(ProgramRunnerFactory programRunnerFactory, CConfiguration cConf,
                                        ArtifactRepository artifactRepository) {
     super(cConf, programRunnerFactory, artifactRepository);
-    this.cConf = cConf;
   }
 
   @Override

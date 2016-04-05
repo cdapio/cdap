@@ -29,6 +29,7 @@ import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.guice.ZKClientModule;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.lang.ClassLoaders;
+import co.cask.cdap.common.lang.FilterClassLoader;
 import co.cask.cdap.common.lang.ProgramClassLoader;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
@@ -81,6 +82,8 @@ public final class SparkRuntimeContextProvider {
   // They are needed for recreating the SparkRuntimeContext in this class.
   static final String CCONF_FILE_NAME = "cConf.xml";
   static final String HCONF_FILE_NAME = "hConf.xml";
+  // The suffix has to be .jar, otherwise YARN don't expand it
+  static final String PROGRAM_JAR_EXPANDED_NAME = "program.expanded.jar";
   static final String PROGRAM_JAR_NAME = "program.jar";
 
   private static volatile SparkRuntimeContext sparkRuntimeContext;
@@ -210,11 +213,13 @@ public final class SparkRuntimeContextProvider {
 
   private static Program createProgram(CConfiguration cConf,
                                        SparkRuntimeContextConfig contextConfig) throws IOException {
-    File programDir = new File(PROGRAM_JAR_NAME);
-    ProgramClassLoader classLoader = ProgramClassLoader.create(cConf, programDir,
-                                                               SparkClassLoader.class.getClassLoader());
+    File programJar = new File(PROGRAM_JAR_NAME);
+    File programDir = new File(PROGRAM_JAR_EXPANDED_NAME);
+    ClassLoader parentClassLoader = new FilterClassLoader(SparkRuntimeContextProvider.class.getClassLoader(),
+                                                          SparkProgramRunner.SPARK_PROGRAM_CLASS_LOADER_FILTER);
+    ProgramClassLoader classLoader = new ProgramClassLoader(cConf, programDir, parentClassLoader);
     final Id.Program programId = contextConfig.getProgramId().toId();
-    return new ForwardingProgram(Programs.create(Locations.toLocation(programDir), classLoader)) {
+    return new ForwardingProgram(Programs.create(Locations.toLocation(programJar), classLoader)) {
       @Override
       public Id.Program getId() {
         return programId;

@@ -39,6 +39,14 @@
     </description>
   </property>
 
+  <property>
+    <name>app.program.runtime.extensions.dir</name>
+    <value>ext/runtimes</value>
+    <description>
+      Semicolon-separated list of local directories scanned for program runtime extension.
+    </description>
+  </property>
+
 
   <!-- Datasets Configuration -->
   

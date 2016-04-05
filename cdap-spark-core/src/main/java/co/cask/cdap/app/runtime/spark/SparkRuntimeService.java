@@ -155,8 +155,14 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
         distributedUserResources(context.getLocalizeResources(), localizeResources);
 
         // Localize system files in distributed mode
-        localizeResources.add(
-          new LocalizeResource(copyProgramJar(runtimeContext.getProgram().getJarLocation(), tempDir), true));
+        File programJar = Locations.linkOrCopy(runtimeContext.getProgram().getJarLocation(),
+                                               new File(tempDir, SparkRuntimeContextProvider.PROGRAM_JAR_NAME));
+        File expandedProgramJar = Locations.linkOrCopy(runtimeContext.getProgram().getJarLocation(),
+                                                       new File(tempDir,
+                                                                SparkRuntimeContextProvider.PROGRAM_JAR_EXPANDED_NAME));
+        // Localize both the unexpanded and expanded jar
+        localizeResources.add(new LocalizeResource(programJar, false));
+        localizeResources.add(new LocalizeResource(expandedProgramJar, true));
         localizeResources.add(new LocalizeResource(buildDependencyJar(tempDir), true));
         localizeResources.add(new LocalizeResource(saveCConf(cConf, tempDir)));
 
@@ -385,19 +391,6 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
     });
     appBundler.createBundle(tempLocation, SparkMainWrapper.class, HBaseTableUtilFactory.getHBaseTableUtilClass());
     return new File(tempLocation.toURI());
-  }
-
-  /**
-   * Copy the program jar to local directory.
-   *
-   * @return {@link File} of the copied jar in the given target directory
-   */
-  private File copyProgramJar(Location programJar, File targetDir) throws IOException {
-    File tempFile = new File(targetDir, SparkRuntimeContextProvider.PROGRAM_JAR_NAME);
-
-    LOG.debug("Copy program jar from {} to {}", programJar, tempFile);
-    Files.copy(Locations.newInputSupplier(programJar), tempFile);
-    return tempFile;
   }
 
   /**
