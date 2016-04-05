@@ -26,7 +26,7 @@ BUILD_RST_HASH_LOCATION="cdap-docs/vars"
 BUILD_RST_HASH="6b6124e34febf8ff1259e923ce29b5f9"
 
 # This needs to be explicitly set as Git has trouble identifying it.
-GIT_BRANCH_PARENT="develop"
+GIT_BRANCH_PARENT="release/3.4"
 
 # Used by cdap-apps for Hydrator documentation
 GIT_BRANCH_CDAP_HYDRATOR="develop"
