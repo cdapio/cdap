@@ -991,7 +991,6 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         responder.sendString(HttpResponseStatus.NOT_FOUND, "Service not found");
         return;
       }
-
       int instances = getInstances(request);
       lifecycleService.setInstances(programId, instances);
       responder.sendStatus(HttpResponseStatus.OK);

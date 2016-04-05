@@ -528,7 +528,9 @@ public class ProgramLifecycleService extends AbstractIdleService {
       ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(programId);
       if (runtimeInfo != null) {
         runtimeInfo.getController().command(ProgramOptionConstants.INSTANCES,
-                                            ImmutableMap.of(programId.getProgram(), String.valueOf(instances))).get();
+                                            ImmutableMap.of("runnable", programId.getProgram(),
+                                                            "oldInstances", String.valueOf(oldInstances),
+                                                            "newInstances", String.valueOf(instances))).get();
       }
     }
   }
@@ -556,7 +558,9 @@ public class ProgramLifecycleService extends AbstractIdleService {
       ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(programId);
       if (runtimeInfo != null) {
         runtimeInfo.getController().command(ProgramOptionConstants.INSTANCES,
-                                            ImmutableMap.of(programId.getProgram(), String.valueOf(instances))).get();
+                                            ImmutableMap.of("runnable", programId.getProgram(),
+                                                            "oldInstances", String.valueOf(oldInstances),
+                                                            "newInstances", String.valueOf(instances))).get();
       }
     }
   }
