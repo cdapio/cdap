@@ -58,7 +58,7 @@ of the application are tied together by the class ``LogAnalysisApp``:
    :language: java
    :lines: 60-94
    :append: ...
-   
+
 The *hitCount* and *responseCount* KeyValueTables and *reqCount* TimePartitionedFileSet
 ---------------------------------------------------------------------------------------
 The calculated hit count for every unique URL is stored in a ``KeyValueTable`` dataset,
@@ -93,11 +93,11 @@ Running the Example
 .. |example-service1| replace:: HitCounterService
 .. |example-service1-italic| replace:: *HitCounterService*
 
-.. |example-service2| replace:: ResponseCounterService
-.. |example-service2-italic| replace:: *ResponseCounterService*
+.. |example-service2| replace:: RequestCounterService
+.. |example-service2-italic| replace:: *RequestCounterService*
 
-.. |example-service3| replace:: RequestCounterService
-.. |example-service3-italic| replace:: *RequestCounterService*
+.. |example-service3| replace:: ResponseCounterService
+.. |example-service3-italic| replace:: *ResponseCounterService*
 
 .. include:: _includes/_starting-services.txt
 
