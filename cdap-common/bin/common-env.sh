@@ -27,7 +27,7 @@
 # Below are what we set by default.  May only work with SUN JVM.
 # For more on why as well as other possible settings,
 # see http://wiki.apache.org/hadoop/PerformanceTuning
-export OPTS="-XX:+UseConcMarkSweepGC"
+export OPTS="-XX:+UseConcMarkSweepGC -XX:MaxPermSize=256m"
 
 # Uncomment below to enable java garbage collection logging in the .out file.
 # export GC_OPTS="-verbose:gc -XX:+PrintGCDetails -XX:+PrintGCDateStamps"
