@@ -63,82 +63,85 @@ import javax.annotation.Nullable;
 /**
  * Spark program to run an ETL pipeline.
  */
-public class ETLSparkProgram implements JavaSparkMain {
+public class ETLSparkProgram implements JavaSparkMain, TxRunnable {
 
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(SetMultimap.class, new SetMultimapCodec<>()).create();
 
+  private transient JavaSparkContext jsc;
+  private transient JavaSparkExecutionContext sec;
 
   @Override
   public void run(final JavaSparkExecutionContext sec) throws Exception {
-    final JavaSparkContext jsc = new JavaSparkContext();
+    this.jsc = new JavaSparkContext();
+    this.sec = sec;
 
     // Execution the whole pipeline in one long transaction. This is because the Spark execution
     // currently share the same contract and API as the MapReduce one.
     // The API need to expose DatasetContext, hence it needs to be exeucted inside a transaction
-    sec.execute(new TxRunnable() {
-      @Override
-      public void run(DatasetContext datasetContext) throws Exception {
+    sec.execute(this);
+  }
 
-        BatchPhaseSpec phaseSpec = GSON.fromJson(sec.getSpecification().getProperty(Constants.PIPELINEID),
-                                                 BatchPhaseSpec.class);
-        Set<StageInfo> aggregators = phaseSpec.getPhase().getStagesOfType(BatchAggregator.PLUGIN_TYPE);
-        String aggregatorName = null;
-        if (!aggregators.isEmpty()) {
-          aggregatorName = aggregators.iterator().next().getName();
-        }
+  @Override
+  public void run(DatasetContext datasetContext) throws Exception {
 
-        SparkBatchSourceFactory sourceFactory;
-        SparkBatchSinkFactory sinkFactory;
-        Integer numPartitions;
-        try (InputStream is = new FileInputStream(sec.getLocalizationContext().getLocalFile("ETLSpark.config"))) {
-          sourceFactory = SparkBatchSourceFactory.deserialize(is);
-          sinkFactory = SparkBatchSinkFactory.deserialize(is);
-          numPartitions = new DataInputStream(is).readInt();
-        }
+    BatchPhaseSpec phaseSpec = GSON.fromJson(sec.getSpecification().getProperty(Constants.PIPELINEID),
+                                             BatchPhaseSpec.class);
+    Set<StageInfo> aggregators = phaseSpec.getPhase().getStagesOfType(BatchAggregator.PLUGIN_TYPE);
+    String aggregatorName = null;
+    if (!aggregators.isEmpty()) {
+      aggregatorName = aggregators.iterator().next().getName();
+    }
 
-        JavaPairRDD<Object, Object> rdd = sourceFactory.createRDD(sec, jsc, Object.class, Object.class);
-        JavaPairRDD<String, Object> resultRDD = doTransform(sec, jsc, datasetContext, phaseSpec, rdd,
-                                                            aggregatorName, numPartitions);
+    SparkBatchSourceFactory sourceFactory;
+    SparkBatchSinkFactory sinkFactory;
+    Integer numPartitions;
+    try (InputStream is = new FileInputStream(sec.getLocalizationContext().getLocalFile("ETLSpark.config"))) {
+      sourceFactory = SparkBatchSourceFactory.deserialize(is);
+      sinkFactory = SparkBatchSinkFactory.deserialize(is);
+      numPartitions = new DataInputStream(is).readInt();
+    }
 
-        Set<StageInfo> stagesOfTypeSparkSink = phaseSpec.getPhase().getStagesOfType(SparkSink.PLUGIN_TYPE);
-        Set<String> namesOfTypeSparkSink = new HashSet<>();
+    JavaPairRDD<Object, Object> rdd = sourceFactory.createRDD(sec, jsc, Object.class, Object.class);
+    JavaPairRDD<String, Object> resultRDD = doTransform(sec, jsc, datasetContext, phaseSpec, rdd,
+                                                        aggregatorName, numPartitions);
 
-        for (StageInfo stageInfo : stagesOfTypeSparkSink) {
-          namesOfTypeSparkSink.add(stageInfo.getName());
-        }
+    Set<StageInfo> stagesOfTypeSparkSink = phaseSpec.getPhase().getStagesOfType(SparkSink.PLUGIN_TYPE);
+    Set<String> namesOfTypeSparkSink = new HashSet<>();
 
-        for (final String sinkName : phaseSpec.getPhase().getSinks()) {
+    for (StageInfo stageInfo : stagesOfTypeSparkSink) {
+      namesOfTypeSparkSink.add(stageInfo.getName());
+    }
 
-          JavaPairRDD<String, Object> filteredResultRDD = resultRDD.filter(
-            new Function<Tuple2<String, Object>, Boolean>() {
-              @Override
-              public Boolean call(Tuple2<String, Object> v1) throws Exception {
-                return v1._1().equals(sinkName);
-              }
-            });
+    for (final String sinkName : phaseSpec.getPhase().getSinks()) {
 
-          if (namesOfTypeSparkSink.contains(sinkName)) {
-            SparkSink sparkSink = sec.getPluginContext().newPluginInstance(sinkName);
-            sparkSink.run(new BasicSparkExecutionPluginContext(sec, jsc, datasetContext, sinkName),
-                          filteredResultRDD.values());
-          } else {
-
-            JavaPairRDD<Object, Object> sinkRDD =
-              filteredResultRDD.flatMapToPair(new PairFlatMapFunction<Tuple2<String, Object>, Object, Object>() {
-                @Override
-                public Iterable<Tuple2<Object, Object>> call(Tuple2<String, Object> input) throws Exception {
-                  List<Tuple2<Object, Object>> result = new ArrayList<>();
-                  KeyValue<Object, Object> keyValue = (KeyValue<Object, Object>) input._2();
-                  result.add(new Tuple2<>(keyValue.getKey(), keyValue.getValue()));
-                  return result;
-                }
-              });
-            sinkFactory.writeFromRDD(sinkRDD, sec, sinkName, Object.class, Object.class);
+      JavaPairRDD<String, Object> filteredResultRDD = resultRDD.filter(
+        new Function<Tuple2<String, Object>, Boolean>() {
+          @Override
+          public Boolean call(Tuple2<String, Object> v1) throws Exception {
+            return v1._1().equals(sinkName);
           }
-        }
+        });
+
+      if (namesOfTypeSparkSink.contains(sinkName)) {
+        SparkSink sparkSink = sec.getPluginContext().newPluginInstance(sinkName);
+        sparkSink.run(new BasicSparkExecutionPluginContext(sec, jsc, datasetContext, sinkName),
+                      filteredResultRDD.values());
+      } else {
+
+        JavaPairRDD<Object, Object> sinkRDD =
+          filteredResultRDD.flatMapToPair(new PairFlatMapFunction<Tuple2<String, Object>, Object, Object>() {
+            @Override
+            public Iterable<Tuple2<Object, Object>> call(Tuple2<String, Object> input) throws Exception {
+              List<Tuple2<Object, Object>> result = new ArrayList<>();
+              KeyValue<Object, Object> keyValue = (KeyValue<Object, Object>) input._2();
+              result.add(new Tuple2<>(keyValue.getKey(), keyValue.getValue()));
+              return result;
+            }
+          });
+        sinkFactory.writeFromRDD(sinkRDD, sec, sinkName, Object.class, Object.class);
       }
-    });
+    }
   }
 
   private JavaPairRDD<String, Object> doTransform(JavaSparkExecutionContext sec, JavaSparkContext jsc,
