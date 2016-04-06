@@ -59,7 +59,6 @@ final class ServiceTwillProgramController extends AbstractTwillProgramController
                       Integer.valueOf(command.get("oldInstances")));
     } catch (Throwable t) {
       LOG.error(String.format("Failed to change instances: %s", command), t);
-      throw t;
     } finally {
       lock.unlock();
     }

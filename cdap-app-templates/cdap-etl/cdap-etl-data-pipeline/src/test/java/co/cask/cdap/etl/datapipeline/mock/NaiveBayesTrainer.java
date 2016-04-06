@@ -26,12 +26,11 @@ import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.plugin.PluginConfig;
 import co.cask.cdap.etl.api.PipelineConfigurer;
+import co.cask.cdap.etl.api.batch.SparkExecutionPluginContext;
 import co.cask.cdap.etl.api.batch.SparkPluginContext;
 import co.cask.cdap.etl.api.batch.SparkSink;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
-import org.apache.hadoop.io.LongWritable;
-import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.spark.api.java.JavaPairRDD;
@@ -109,7 +108,7 @@ public final class NaiveBayesTrainer extends SparkSink<StructuredRecord> {
   }
 
   @Override
-  public void run(SparkPluginContext sparkContext, JavaRDD<StructuredRecord> input) throws Exception {
+  public void run(SparkExecutionPluginContext sparkContext, JavaRDD<StructuredRecord> input) throws Exception {
     Preconditions.checkArgument(input.count() != 0, "Input RDD is empty.");
 
     final HashingTF tf = new HashingTF(100);
@@ -127,16 +126,16 @@ public final class NaiveBayesTrainer extends SparkSink<StructuredRecord> {
     final NaiveBayesModel model = NaiveBayes.train(trainingData.rdd(), 1.0);
 
     // save the model to a file in the output FileSet
-    JavaSparkContext javaSparkContext = sparkContext.getOriginalSparkContext();
+    JavaSparkContext javaSparkContext = sparkContext.getSparkContext();
     FileSet outputFS = sparkContext.getDataset(config.fileSetName);
     model.save(JavaSparkContext.toSparkContext(javaSparkContext),
                outputFS.getBaseLocation().append(config.path).toURI().getPath());
 
-    JavaPairRDD<LongWritable, Text> textsToClassify = sparkContext.readFromStream(TEXTS_TO_CLASSIFY, Text.class);
-    JavaRDD<Vector> featuresToClassify = textsToClassify.map(new Function<Tuple2<LongWritable, Text>, Vector>() {
+    JavaPairRDD<Long, String> textsToClassify = sparkContext.fromStream(TEXTS_TO_CLASSIFY, String.class);
+    JavaRDD<Vector> featuresToClassify = textsToClassify.map(new Function<Tuple2<Long, String>, Vector>() {
       @Override
-      public Vector call(Tuple2<LongWritable, Text> longWritableTextTuple2) throws Exception {
-        String text = longWritableTextTuple2._2().toString();
+      public Vector call(Tuple2<Long, String> longWritableTextTuple2) throws Exception {
+        String text = longWritableTextTuple2._2();
         return tf.transform(Lists.newArrayList(text.split(" ")));
       }
     });
@@ -145,17 +144,17 @@ public final class NaiveBayesTrainer extends SparkSink<StructuredRecord> {
     LOG.info("Predictions: {}", predict.collect());
 
     // key the predictions with the message
-    JavaPairRDD<Text, Double> keyedPredictions = textsToClassify.values().zip(predict);
+    JavaPairRDD<String, Double> keyedPredictions = textsToClassify.values().zip(predict);
 
     // convert to byte[],byte[] to write to data
     JavaPairRDD<byte[], byte[]> bytesRDD =
-      keyedPredictions.mapToPair(new PairFunction<Tuple2<Text, Double>, byte[], byte[]>() {
+      keyedPredictions.mapToPair(new PairFunction<Tuple2<String, Double>, byte[], byte[]>() {
         @Override
-        public Tuple2<byte[], byte[]> call(Tuple2<Text, Double> tuple) throws Exception {
-          return new Tuple2<>(Bytes.toBytes(tuple._1().toString()), Bytes.toBytes(tuple._2()));
+        public Tuple2<byte[], byte[]> call(Tuple2<String, Double> tuple) throws Exception {
+          return new Tuple2<>(Bytes.toBytes(tuple._1()), Bytes.toBytes(tuple._2()));
         }
       });
 
-    sparkContext.writeToDataset(bytesRDD, CLASSIFIED_TEXTS, byte[].class, byte[].class);
+    sparkContext.saveAsDataset(bytesRDD, CLASSIFIED_TEXTS);
   }
 }

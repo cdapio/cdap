@@ -19,6 +19,7 @@ package co.cask.cdap.app.guice;
 import co.cask.cdap.api.data.stream.StreamWriter;
 import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.app.runtime.ProgramRunnerFactory;
+import co.cask.cdap.app.runtime.ProgramRuntimeProvider;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.stream.DefaultStreamWriter;
 import co.cask.cdap.app.stream.StreamWriterFactory;
@@ -34,7 +35,6 @@ import co.cask.cdap.internal.app.runtime.flow.FlowletProgramRunner;
 import co.cask.cdap.internal.app.runtime.service.InMemoryProgramRuntimeService;
 import co.cask.cdap.internal.app.runtime.service.InMemoryServiceProgramRunner;
 import co.cask.cdap.internal.app.runtime.service.ServiceProgramRunner;
-import co.cask.cdap.internal.app.runtime.spark.SparkProgramRunner;
 import co.cask.cdap.internal.app.runtime.webapp.IntactJarHttpHandler;
 import co.cask.cdap.internal.app.runtime.webapp.JarHttpHandler;
 import co.cask.cdap.internal.app.runtime.webapp.WebappHttpHandlerFactory;
@@ -43,10 +43,8 @@ import co.cask.cdap.internal.app.runtime.worker.InMemoryWorkerRunner;
 import co.cask.cdap.internal.app.runtime.worker.WorkerProgramRunner;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramRunner;
 import co.cask.cdap.proto.ProgramType;
-import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import com.google.inject.PrivateModule;
-import com.google.inject.Provider;
 import com.google.inject.Provides;
 import com.google.inject.Scopes;
 import com.google.inject.Singleton;
@@ -60,7 +58,6 @@ import org.apache.twill.discovery.DiscoveryService;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
@@ -103,7 +100,6 @@ public final class InMemoryProgramRunnerModule extends PrivateModule {
       MapBinder.newMapBinder(binder(), ProgramType.class, ProgramRunner.class);
     runnerFactoryBinder.addBinding(ProgramType.FLOW).to(FlowProgramRunner.class);
     runnerFactoryBinder.addBinding(ProgramType.MAPREDUCE).to(MapReduceProgramRunner.class);
-    runnerFactoryBinder.addBinding(ProgramType.SPARK).to(SparkProgramRunner.class);
     runnerFactoryBinder.addBinding(ProgramType.WORKFLOW).to(WorkflowProgramRunner.class);
     runnerFactoryBinder.addBinding(ProgramType.WEBAPP).to(WebappProgramRunner.class);
     runnerFactoryBinder.addBinding(ProgramType.WORKER).to(InMemoryWorkerRunner.class);
@@ -115,7 +111,9 @@ public final class InMemoryProgramRunnerModule extends PrivateModule {
     bind(ServiceProgramRunner.class);
     bind(WorkerProgramRunner.class);
 
-    bind(ProgramRunnerFactory.class).to(InMemoryFlowProgramRunnerFactory.class).in(Scopes.SINGLETON);
+    // ProgramRunnerFactory should be in local mode
+    bind(ProgramRuntimeProvider.Mode.class).toInstance(ProgramRuntimeProvider.Mode.LOCAL);
+    bind(ProgramRunnerFactory.class).to(DefaultProgramRunnerFactory.class).in(Scopes.SINGLETON);
     // Note: Expose for test cases. Need to refactor test cases.
     expose(ProgramRunnerFactory.class);
 
@@ -139,24 +137,6 @@ public final class InMemoryProgramRunnerModule extends PrivateModule {
   @Provides
   private LocalLogWriter providesLogWriter(CConfiguration configuration) {
     return new LocalLogWriter(configuration);
-  }
-
-  @Singleton
-  private static final class InMemoryFlowProgramRunnerFactory implements ProgramRunnerFactory {
-
-    private final Map<ProgramType, Provider<ProgramRunner>> providers;
-
-    @Inject
-    private InMemoryFlowProgramRunnerFactory(Map<ProgramType, Provider<ProgramRunner>> providers) {
-      this.providers = providers;
-    }
-
-    @Override
-    public ProgramRunner create(ProgramType programType) {
-      Provider<ProgramRunner> provider = providers.get(programType);
-      Preconditions.checkNotNull(provider, "Unsupported program type: " + programType);
-      return provider.get();
-    }
   }
 
   @Singleton

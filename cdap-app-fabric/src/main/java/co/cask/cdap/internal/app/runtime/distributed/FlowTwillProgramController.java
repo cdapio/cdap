@@ -63,7 +63,6 @@ final class FlowTwillProgramController extends AbstractTwillProgramController {
     } catch (Throwable t) {
       LOG.error("Fail to change instances. Terminating flow: {}", command, t);
       stop();
-      throw t;
     } finally {
       lock.unlock();
     }

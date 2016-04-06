@@ -17,7 +17,6 @@
 package co.cask.cdap.etl.api.batch;
 
 import co.cask.cdap.api.annotation.Beta;
-import co.cask.cdap.api.spark.SparkContext;
 import org.apache.spark.api.java.JavaRDD;
 
 import java.io.Serializable;
@@ -43,9 +42,9 @@ public abstract class SparkSink<IN> extends BatchConfigurable<SparkPluginContext
   /**
    * User Spark job which will be executed and is responsible for persisting any data.
    *
-   * @param context {@link SparkPluginContext} for this job
+   * @param context {@link SparkExecutionPluginContext} for this job
    * @param input the input from previous stages of the Batch run.
    */
-  public abstract void run(SparkPluginContext context, JavaRDD<IN> input) throws Exception;
+  public abstract void run(SparkExecutionPluginContext context, JavaRDD<IN> input) throws Exception;
 
 }

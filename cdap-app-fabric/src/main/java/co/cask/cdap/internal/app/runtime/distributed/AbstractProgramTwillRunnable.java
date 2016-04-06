@@ -36,6 +36,8 @@ import co.cask.cdap.common.guice.IOModule;
 import co.cask.cdap.common.guice.KafkaClientModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.guice.ZKClientModule;
+import co.cask.cdap.common.io.Locations;
+import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.stream.StreamAdminModules;
@@ -57,6 +59,7 @@ import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.notifications.feeds.client.NotificationFeedClientModule;
 import co.cask.cdap.store.DefaultNamespaceStore;
 import co.cask.cdap.store.NamespaceStore;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Predicates;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
@@ -64,6 +67,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import com.google.common.io.Closeables;
 import com.google.common.io.Files;
+import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.SettableFuture;
@@ -71,13 +75,11 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
-import com.google.inject.Inject;
 import com.google.inject.Injector;
 import com.google.inject.Module;
 import com.google.inject.PrivateModule;
 import com.google.inject.Scopes;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
-import com.google.inject.name.Named;
 import com.google.inject.name.Names;
 import com.google.inject.util.Modules;
 import org.apache.commons.cli.CommandLine;
@@ -93,9 +95,7 @@ import org.apache.twill.api.TwillContext;
 import org.apache.twill.api.TwillRunnable;
 import org.apache.twill.api.TwillRunnableSpecification;
 import org.apache.twill.common.Cancellable;
-import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
-import org.apache.twill.filesystem.LocationFactory;
 import org.apache.twill.internal.Services;
 import org.apache.twill.kafka.client.KafkaClientService;
 import org.apache.twill.zookeeper.ZKClientService;
@@ -104,6 +104,8 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.net.InetAddress;
 import java.security.Permission;
 import java.util.Arrays;
@@ -129,7 +131,7 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
   private String hConfName;
   private String cConfName;
 
-  private Injector injector;
+  private ProgramRunner programRunner;
   private Program program;
   private ProgramOptions programOpts;
   private ProgramController controller;
@@ -155,8 +157,6 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
     this.hConfName = hConfName;
     this.cConfName = cConfName;
   }
-
-  protected abstract Class<T> getProgramClass();
 
   /**
    * Provides sets of configurations to put into the specification. Children classes can override
@@ -199,7 +199,7 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
 
       cConf = CConfiguration.create(new File(configs.get("cConf")));
 
-      injector = Guice.createInjector(createModule(context));
+      Injector injector = Guice.createInjector(createModule(context));
 
       zkClientService = injector.getInstance(ZKClientService.class);
       kafkaClientService = injector.getInstance(KafkaClientService.class);
@@ -210,15 +210,20 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
       logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
       logAppenderInitializer.initialize();
 
+      // Create the ProgramRunner
+      programRunner = createProgramRunner(injector);
+
       try {
-        program = injector.getInstance(ProgramFactory.class)
-          .create(cmdLine.getOptionValue(RunnableOptions.JAR));
+        Location programJarLocation = Locations.toLocation(new File(cmdLine.getOptionValue(RunnableOptions.JAR)));
+        program = Programs.create(cConf, programRunner, programJarLocation,
+                                  BundleJarUtil.unJar(programJarLocation, Files.createTempDir()));
       } catch (IOException e) {
         throw Throwables.propagate(e);
       }
 
       programOpts = createProgramOptions(cmdLine, context, configs);
-      resourceReporter = new ProgramRunnableResourceReporter(program, metricsCollectionService, context);
+      resourceReporter = new ProgramRunnableResourceReporter(program.getId().toEntityId(),
+                                                             metricsCollectionService, context);
 
       LOG.info("Runnable initialized: " + name);
     } catch (Throwable t) {
@@ -271,6 +276,25 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
     return true;
   }
 
+  /**
+   * Creates a {@link ProgramRunner} for the running the program in this {@link TwillRunnable}.
+   */
+  protected ProgramRunner createProgramRunner(Injector injector) {
+    Type type = TypeToken.of(getClass()).getSupertype(AbstractProgramTwillRunnable.class).getType();
+    // Must be ParameterizedType
+    Preconditions.checkState(type instanceof ParameterizedType,
+                             "Invalid ProgramTwillRunnable class %s. Expected to be a ParameterizedType.", getClass());
+
+    Type programRunnerType = ((ParameterizedType) type).getActualTypeArguments()[0];
+    // the ProgramRunnerType must be a Class
+    Preconditions.checkState(programRunnerType instanceof Class,
+                             "ProgramRunner type is not a class: %s", programRunnerType);
+
+    @SuppressWarnings("unchecked")
+    Class<ProgramRunner> programRunnerClass = (Class<ProgramRunner>) programRunnerType;
+    return injector.getInstance(programRunnerClass);
+  }
+
   @Override
   public void run() {
     LOG.info("Starting metrics service");
@@ -279,7 +303,7 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
                           metricsCollectionService, streamCoordinatorClient, resourceReporter));
 
     LOG.info("Starting runnable: {}", name);
-    controller = injector.getInstance(getProgramClass()).run(program, programOpts);
+    controller = programRunner.run(program, programOpts);
     final SettableFuture<ProgramController.State> state = SettableFuture.create();
     controller.addListener(new AbstractListener() {
 
@@ -411,9 +435,6 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
           // For Binding queue stuff
           bind(QueueReaderFactory.class).in(Scopes.SINGLETON);
 
-          // For program loading
-          install(createProgramFactoryModule());
-
           // For binding DataSet transaction stuff
           install(new DataFabricFacadeModule());
 
@@ -443,40 +464,6 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
         expose(StreamWriterFactory.class);
       }
     };
-  }
-
-  private Module createProgramFactoryModule() {
-    return new PrivateModule() {
-      @Override
-      protected void configure() {
-        bind(LocationFactory.class)
-          .annotatedWith(Names.named("program.location.factory"))
-          .toInstance(new LocalLocationFactory(new File(System.getProperty("user.dir"))));
-        bind(ProgramFactory.class).in(Scopes.SINGLETON);
-        expose(ProgramFactory.class);
-      }
-    };
-  }
-
-  /**
-   * A private factory for creating instance of Program.
-   * It's needed so that we can inject different LocationFactory just for loading program.
-   */
-  private static final class ProgramFactory {
-
-    private final CConfiguration cConf;
-    private final LocationFactory locationFactory;
-
-    @Inject
-    ProgramFactory(CConfiguration cConf, @Named("program.location.factory") LocationFactory locationFactory) {
-      this.cConf = cConf;
-      this.locationFactory = locationFactory;
-    }
-
-    public Program create(String path) throws IOException {
-      Location location = locationFactory.create(path);
-      return Programs.createWithUnpack(cConf, location, Files.createTempDir());
-    }
   }
 
   /**

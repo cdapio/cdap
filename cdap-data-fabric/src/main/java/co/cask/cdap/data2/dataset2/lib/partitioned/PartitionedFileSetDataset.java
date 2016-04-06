@@ -129,9 +129,9 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
   }
 
   @Override
-  public boolean commitTx() throws Exception {
+  public void postTxCommit() {
     this.tx = null;
-    return super.commitTx();
+    super.postTxCommit();
   }
 
   @Override

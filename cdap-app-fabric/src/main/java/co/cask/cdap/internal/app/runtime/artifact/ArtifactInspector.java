@@ -33,6 +33,7 @@ import co.cask.cdap.api.plugin.PluginPropertyField;
 import co.cask.cdap.app.program.ManifestFields;
 import co.cask.cdap.common.InvalidArtifactException;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.common.utils.DirUtils;
@@ -48,7 +49,6 @@ import com.google.common.collect.Iterators;
 import com.google.common.collect.Maps;
 import com.google.common.primitives.Primitives;
 import com.google.common.reflect.TypeToken;
-import com.google.gson.Gson;
 import org.apache.twill.filesystem.Location;
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.ClassReader;
@@ -83,19 +83,17 @@ import javax.ws.rs.Path;
 /**
  * Inspects a jar file to determine metadata about the artifact.
  */
-public class ArtifactInspector {
+final class ArtifactInspector {
   private static final Logger LOG = LoggerFactory.getLogger(ArtifactInspector.class);
-  private static final Gson GSON = new Gson();
+
   private final CConfiguration cConf;
   private final ArtifactClassLoaderFactory artifactClassLoaderFactory;
   private final ReflectionSchemaGenerator schemaGenerator;
-  private final File tempDir;
 
-  ArtifactInspector(CConfiguration cConf, ArtifactClassLoaderFactory artifactClassLoaderFactory, File tempDir) {
+  ArtifactInspector(CConfiguration cConf, ArtifactClassLoaderFactory artifactClassLoaderFactory) {
     this.cConf = cConf;
     this.artifactClassLoaderFactory = artifactClassLoaderFactory;
     this.schemaGenerator = new ReflectionSchemaGenerator(false);
-    this.tempDir = tempDir;
   }
 
   /**
@@ -110,18 +108,23 @@ public class ArtifactInspector {
    * @throws InvalidArtifactException if the artifact is invalid. For example, if the application main class is not
    *                                  actually an Application.
    */
-  public ArtifactClasses inspectArtifact(Id.Artifact artifactId, File artifactFile,
-                                         ClassLoader parentClassLoader) throws IOException, InvalidArtifactException {
+  ArtifactClasses inspectArtifact(Id.Artifact artifactId, File artifactFile,
+                                  ClassLoader parentClassLoader) throws IOException, InvalidArtifactException {
 
     ArtifactClasses.Builder builder = inspectApplications(artifactId, ArtifactClasses.builder(),
                                                           Locations.toLocation(artifactFile));
-
-    File stageDir = DirUtils.createTempDir(tempDir);
+    File tmpDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
+                           cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
+    File stageDir = DirUtils.createTempDir(tmpDir);
     try (PluginInstantiator pluginInstantiator = new PluginInstantiator(cConf, parentClassLoader, stageDir)) {
       pluginInstantiator.addArtifact(Locations.toLocation(artifactFile), artifactId.toArtifactId());
       inspectPlugins(builder, artifactFile, artifactId.toArtifactId(), pluginInstantiator);
     } finally {
-      DirUtils.deleteDirectoryContents(stageDir);
+      try {
+        DirUtils.deleteDirectoryContents(stageDir);
+      } catch (IOException e) {
+        LOG.warn("Exception raised while deleting directory {}", stageDir, e);
+      }
     }
     return builder.build();
   }
@@ -152,9 +155,7 @@ public class ArtifactInspector {
     }
 
     if (mainClassName != null) {
-      try (CloseableClassLoader artifactClassLoader =
-             artifactClassLoaderFactory.createClassLoader(artifactLocation)) {
-
+      try (CloseableClassLoader artifactClassLoader = artifactClassLoaderFactory.createClassLoader(artifactLocation)) {
         Object appMain = artifactClassLoader.loadClass(mainClassName).newInstance();
         if (!(appMain instanceof Application)) {
           // we don't want to error here, just don't record an application class.

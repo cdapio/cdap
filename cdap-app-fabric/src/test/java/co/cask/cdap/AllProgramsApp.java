@@ -44,8 +44,6 @@ import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceRequest;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
 import co.cask.cdap.api.spark.AbstractSpark;
-import co.cask.cdap.api.spark.JavaSparkProgram;
-import co.cask.cdap.api.spark.SparkContext;
 import co.cask.cdap.api.worker.AbstractWorker;
 import co.cask.cdap.api.workflow.AbstractWorkflow;
 import co.cask.cdap.api.workflow.AbstractWorkflowAction;
@@ -56,7 +54,6 @@ import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
-import org.apache.spark.api.java.JavaPairRDD;
 import org.junit.Assert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -245,22 +242,9 @@ public class AllProgramsApp extends AbstractApplication {
   /**
    *
    */
-  public static class NoOpSparkProgram implements JavaSparkProgram {
-    @Override
-    public void run(SparkContext context) {
-      JavaPairRDD<LongWritable, String> streamRDD = context.readFromStream(STREAM_NAME, String.class);
-      LOG.info("Stream events: {}", streamRDD.count());
-
-      JavaPairRDD<byte[], byte[]> datasetRDD = context.readFromDataset(DATASET_NAME, byte[].class, byte[].class);
-      LOG.info("Dataset pairs: {}", datasetRDD.count());
-
-      context.writeToDataset(datasetRDD, DATASET_NAME2, byte[].class, byte[].class);
-
-      datasetRDD = context.readFromDataset(DATASET_NAME3, byte[].class, byte[].class);
-      LOG.info("Dataset pairs: {}", datasetRDD.count());
-
-      context.writeToDataset(datasetRDD, DATASET_NAME3, byte[].class, byte[].class);
-    }
+  public static class NoOpSparkProgram  {
+    // An empty class since in App-Fabric we don't have Spark dependency.
+    // The intention of this class is to test various MDS and meta operation only without running the program
   }
 
   /**

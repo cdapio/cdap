@@ -26,9 +26,4 @@ public class ServiceTwillRunnable extends AbstractProgramTwillRunnable<ServicePr
   protected ServiceTwillRunnable(String name, String hConfName, String cConfName) {
     super(name, hConfName, cConfName);
   }
-
-  @Override
-  protected Class<ServiceProgramRunner> getProgramClass() {
-    return ServiceProgramRunner.class;
-  }
 }

@@ -19,8 +19,8 @@ package co.cask.cdap.spark.metrics;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.spark.AbstractSpark;
-import co.cask.cdap.api.spark.JavaSparkProgram;
-import co.cask.cdap.api.spark.SparkContext;
+import co.cask.cdap.api.spark.JavaSparkExecutionContext;
+import co.cask.cdap.api.spark.JavaSparkMain;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.Function;
@@ -51,12 +51,14 @@ public class TestSparkMetricsIntegrationApp extends AbstractApplication {
     }
   }
 
-  public static class SparkMetricsProgram implements JavaSparkProgram {
+  public static class SparkMetricsProgram implements JavaSparkMain {
+
     @Override
-    public void run(SparkContext context) {
+    public void run(JavaSparkExecutionContext sec) throws Exception {
+      JavaSparkContext jsc = new JavaSparkContext();
       List<Integer> data = Arrays.asList(1, 2, 3, 4, 5);
-      final Metrics metrics = context.getMetrics();
-      JavaRDD<Integer> distData = ((JavaSparkContext) context.getOriginalSparkContext()).parallelize(data);
+      final Metrics metrics = sec.getMetrics();
+      JavaRDD<Integer> distData = jsc.parallelize(data);
 
       List<Integer> result = distData.map(new Function<Integer, Integer>() {
         @Override

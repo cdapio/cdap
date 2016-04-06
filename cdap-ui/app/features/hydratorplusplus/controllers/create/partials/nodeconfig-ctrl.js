@@ -29,6 +29,7 @@ class HydratorPlusPlusNodeConfigCtrl {
     this.NonStorePipelineErrorFactory = NonStorePipelineErrorFactory;
     this.requiredPropertyError = this.GLOBALS.en.hydrator.studio.error['GENERIC-MISSING-REQUIRED-FIELDS'];
     this.showPropagateConfirm = false; // confirmation dialog in node config for schema propagation.
+    this.$timeout = $timeout;
 
     this.setDefaults();
     HydratorPlusPlusNodeConfigStore.registerOnChangeListener(this.setState.bind(this));
@@ -212,22 +213,6 @@ class HydratorPlusPlusNodeConfigCtrl {
   schemaClear() {
     this.EventPipe.emit('schema.clear');
   }
-  importSchema() {
-    document.getElementById('schema-import-link').click();
-  }
-  importFiles(files) {
-    let reader = new FileReader();
-    reader.readAsText(files[0], 'UTF-8');
-
-    reader.onload = (evt) => {
-      let data = evt.target.result;
-      this.EventPipe.emit('schema.import', data);
-    };
-  }
-  exportSchema() {
-    this.EventPipe.emit('schema.export');
-  }
-
   validateSchema() {
     this.state.errors = [];
     var schema;

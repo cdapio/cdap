@@ -17,7 +17,7 @@
 package co.cask.cdap.etl.batch.spark;
 
 import co.cask.cdap.api.data.batch.OutputFormatProvider;
-import co.cask.cdap.api.spark.SparkContext;
+import co.cask.cdap.api.spark.JavaSparkExecutionContext;
 import com.google.common.collect.ImmutableMap;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.MRJobConfig;
@@ -119,7 +119,7 @@ final class SparkBatchSinkFactory {
     Serializations.serializeMap(sinkOutputs, Serializations.createStringSetObjectWriter(), output);
   }
 
-  <K, V> void writeFromRDD(JavaPairRDD<K, V> rdd, SparkContext sparkContext, String sinkName,
+  <K, V> void writeFromRDD(JavaPairRDD<K, V> rdd, JavaSparkExecutionContext sec, String sinkName,
                            Class<K> keyClass, Class<V> valueClass) {
     Set<String> outputNames = sinkOutputs.get(sinkName);
     if (outputNames == null || outputNames.size() == 0) {
@@ -142,8 +142,7 @@ final class SparkBatchSinkFactory {
 
       DatasetInfo datasetInfo = datasetInfos.get(outputName);
       if (datasetInfo != null) {
-        sparkContext.writeToDataset(rdd, datasetInfo.getDatasetName(),
-                                    keyClass, valueClass, datasetInfo.getDatasetArgs());
+        sec.saveAsDataset(rdd, datasetInfo.getDatasetName(), datasetInfo.getDatasetArgs());
       }
     }
   }

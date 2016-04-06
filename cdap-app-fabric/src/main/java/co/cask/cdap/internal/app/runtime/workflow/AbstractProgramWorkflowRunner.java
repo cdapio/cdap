@@ -24,6 +24,7 @@ import co.cask.cdap.api.workflow.WorkflowNodeState;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.program.Program;
+import co.cask.cdap.app.program.Programs;
 import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
@@ -31,18 +32,24 @@ import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.app.runtime.ProgramRunnerFactory;
 import co.cask.cdap.app.runtime.WorkflowTokenProvider;
 import co.cask.cdap.common.app.RunIds;
+import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.lang.ProgramClassLoader;
+import co.cask.cdap.internal.app.program.ForwardingProgram;
 import co.cask.cdap.internal.app.runtime.AbstractListener;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
+import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
+import com.google.common.io.Closeables;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.gson.Gson;
 import org.apache.twill.common.Threads;
 
+import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
@@ -57,22 +64,24 @@ import java.util.concurrent.ExecutionException;
  * </p>
  * The {@link RuntimeContext} is blocked until completion of the associated program.
  */
-public abstract class AbstractProgramWorkflowRunner implements ProgramWorkflowRunner {
+abstract class AbstractProgramWorkflowRunner implements ProgramWorkflowRunner {
 
   private static final Gson GSON = new Gson();
 
+  private final CConfiguration cConf;
   private final Arguments userArguments;
   private final Arguments systemArguments;
+  private final Program workflowProgram;
   private final String nodeId;
   private final Map<String, WorkflowNodeState> nodeStates;
   protected final WorkflowSpecification workflowSpec;
   protected final ProgramRunnerFactory programRunnerFactory;
-  protected final Program workflowProgram;
   protected final WorkflowToken token;
 
-  public AbstractProgramWorkflowRunner(Program workflowProgram, ProgramOptions workflowProgramOptions,
-                                       ProgramRunnerFactory programRunnerFactory, WorkflowSpecification workflowSpec,
-                                       WorkflowToken token, String nodeId, Map<String, WorkflowNodeState> nodeStates) {
+  AbstractProgramWorkflowRunner(CConfiguration cConf, Program workflowProgram, ProgramOptions workflowProgramOptions,
+                                ProgramRunnerFactory programRunnerFactory, WorkflowSpecification workflowSpec,
+                                WorkflowToken token, String nodeId, Map<String, WorkflowNodeState> nodeStates) {
+    this.cConf = cConf;
     this.userArguments = workflowProgramOptions.getUserArguments();
     this.workflowProgram = workflowProgram;
     this.programRunnerFactory = programRunnerFactory;
@@ -84,13 +93,35 @@ public abstract class AbstractProgramWorkflowRunner implements ProgramWorkflowRu
   }
 
   /**
+   * Returns the {@link ProgramType} supported by this runner.
+   */
+  protected abstract ProgramType getProgramType();
+
+  /**
+   * Rewrites the given {@link Program} to a {@link Program} that represents the {@link ProgramType} as
+   * returned by {@link #getProgramType()}.
+   */
+  protected abstract Program rewriteProgram(String name, Program program);
+
+  @Override
+  public final Runnable create(String name) {
+    try {
+      ProgramRunner programRunner = programRunnerFactory.create(getProgramType());
+      Program program = rewriteProgram(name, createProgram(programRunner, workflowProgram));
+      return getProgramRunnable(name, programRunner, program);
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
+    }
+  }
+
+  /**
    * Gets a {@link Runnable} for the {@link Program}.
    *
    * @param name    name of the {@link Program}
    * @param program the {@link Program}
    * @return a {@link Runnable} for this {@link Program}
    */
-  protected Runnable getProgramRunnable(String name, final Program program) {
+  private Runnable getProgramRunnable(String name, final ProgramRunner programRunner, final Program program) {
     Map<String, String> systemArgumentsMap = Maps.newHashMap();
     systemArgumentsMap.putAll(systemArguments.asMap());
     // Generate the new RunId here for the program running under Workflow
@@ -115,7 +146,7 @@ public abstract class AbstractProgramWorkflowRunner implements ProgramWorkflowRu
       @Override
       public void run() {
         try {
-          runAndWait(program, options);
+          runAndWait(programRunner, program, options);
         } catch (Exception e) {
           throw Throwables.propagate(e);
         }
@@ -123,9 +154,37 @@ public abstract class AbstractProgramWorkflowRunner implements ProgramWorkflowRu
     };
   }
 
-  private void runAndWait(Program program, ProgramOptions options) throws Exception {
-    ProgramController controller = programRunnerFactory.create(program.getType()).run(program, options);
-    blockForCompletion(controller);
+  /**
+   * Creates a new {@link Program} instance for the execution by the given {@link ProgramRunner}.
+   */
+  private Program createProgram(ProgramRunner programRunner, Program originalProgram) throws IOException {
+    ClassLoader classLoader = originalProgram.getClassLoader();
+    if (!(classLoader instanceof ProgramClassLoader)) {
+      // If for some reason that the ClassLoader of the original program is not ProgramClassLoader,
+      // we don't own the program, hence don't close it when execution of the program completed.
+      return new ForwardingProgram(originalProgram) {
+        @Override
+        public void close() throws IOException {
+          // no-op
+        }
+      };
+    }
+
+    return Programs.create(cConf, programRunner, originalProgram.getJarLocation(),
+                           ((ProgramClassLoader) classLoader).getDir());
+  }
+
+  private void runAndWait(ProgramRunner programRunner, Program program, ProgramOptions options) throws Exception {
+    ProgramController controller;
+    try {
+      controller = programRunner.run(program, options);
+    } catch (Throwable t) {
+      // If there is any exception when running the program, close the program to release resources.
+      // Otherwise it will be released when the execution completed.
+      Closeables.closeQuietly(program);
+      throw t;
+    }
+    blockForCompletion(program, controller);
 
     if (controller instanceof WorkflowTokenProvider) {
       updateWorkflowToken(((WorkflowTokenProvider) controller).getWorkflowToken());
@@ -138,15 +197,17 @@ public abstract class AbstractProgramWorkflowRunner implements ProgramWorkflowRu
   /**
    * Adds a listener to the {@link ProgramController} and blocks for completion.
    *
+   * @param program the {@link Program} in execution. It will get closed when the execution completed
    * @param controller the {@link ProgramController} for the program
    * @throws Exception if the execution failed
    */
-  private void blockForCompletion(final ProgramController controller) throws Exception {
+  private void blockForCompletion(final Program program, final ProgramController controller) throws Exception {
     // Execute the program.
     final SettableFuture<Void> completion = SettableFuture.create();
     controller.addListener(new AbstractListener() {
       @Override
       public void completed() {
+        Closeables.closeQuietly(program);
         nodeStates.put(nodeId, new WorkflowNodeState(nodeId, NodeStatus.COMPLETED, controller.getRunId().getId(),
                                                      null));
         completion.set(null);
@@ -154,12 +215,14 @@ public abstract class AbstractProgramWorkflowRunner implements ProgramWorkflowRu
 
       @Override
       public void killed() {
+        Closeables.closeQuietly(program);
         nodeStates.put(nodeId, new WorkflowNodeState(nodeId, NodeStatus.KILLED, controller.getRunId().getId(), null));
         completion.set(null);
       }
 
       @Override
       public void error(Throwable cause) {
+        Closeables.closeQuietly(program);
         nodeStates.put(nodeId, new WorkflowNodeState(nodeId, NodeStatus.FAILED, controller.getRunId().getId(), cause));
         completion.setException(cause);
       }

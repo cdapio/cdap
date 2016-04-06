@@ -19,8 +19,6 @@ package co.cask.cdap.etl.api.batch;
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.etl.api.PipelineConfigurable;
 import co.cask.cdap.etl.api.PipelineConfigurer;
-import co.cask.cdap.etl.api.StageLifecycle;
-import co.cask.cdap.etl.api.TransformContext;
 import org.apache.spark.api.java.JavaRDD;
 
 import java.io.Serializable;
@@ -52,10 +50,10 @@ public abstract class SparkCompute<IN, OUT> implements PipelineConfigurable, Ser
   /**
    * Transform the input and return the output to be sent to the next stage in the pipeline.
    *
-   * @param context {@link SparkPluginContext} for this job
+   * @param context {@link SparkExecutionPluginContext} for this job
    * @param input input data to be transformed
    * @throws Exception if there's an error during this method invocation
    */
-  public abstract JavaRDD<OUT> transform(SparkPluginContext context, JavaRDD<IN> input) throws Exception;
+  public abstract JavaRDD<OUT> transform(SparkExecutionPluginContext context, JavaRDD<IN> input) throws Exception;
 
 }

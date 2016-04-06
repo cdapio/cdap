@@ -31,7 +31,6 @@ import co.cask.cdap.internal.app.runtime.batch.distributed.MapReduceContainerLau
 import co.cask.cdap.internal.app.runtime.plugin.PluginClassLoaders;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.logging.context.MapReduceLoggingContext;
-import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
@@ -284,7 +283,7 @@ public class MapReduceClassLoader extends CombineClassLoader implements AutoClos
 
         BundleJarUtil.unJar(programLocation, unpackDir);
         return ProgramClassLoader.create(contextConfig.getCConf(), unpackDir,
-                                         contextConfig.getHConf().getClassLoader(), ProgramType.MAPREDUCE);
+                                         contextConfig.getHConf().getClassLoader());
       } catch (IOException e) {
         LOG.error("Failed to create ProgramClassLoader", e);
         throw Throwables.propagate(e);
