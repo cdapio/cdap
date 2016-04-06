@@ -17,21 +17,22 @@
 angular.module(PKG.name + '.commons')
   .controller('MySidePanel', function ($scope) {
     this.groups = $scope.panelGroups;
-
+    this.view = $scope.view || 'icon';
     $scope.$watch('MySidePanel.groups.length', function() {
 
       if (this.groups.length) {
         this.openedGroup = this.groups[0].name;
       }
       /*
-        40 = height of the each group's header
-        (-40) = height of the current wrapper(group's) header height. We need to include that in the height of the group's wrapper.
+        42 = height of the each group's header
+        (-42) = height of the current wrapper(group's) header height. We need to include that in the height of the group's wrapper.
         This is has to be through ng-style as the #of groups we might have could be dynamic and having to fit all in one specific
         height needs this calculation.
 
+        FIXME: This will not scale i.e., non-reusable.
 
       */
-      this.groupWrapperHeight = 'calc(100% - '+ ((this.groups.length * 40) - 40)+ 'px)';
+      this.groupWrapperHeight = 'calc(100% - '+ ((this.groups.length * 42) - 42)+ 'px)';
     }.bind(this));
 
     this.onItemClicked = function(event, item) {
