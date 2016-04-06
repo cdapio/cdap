@@ -16,8 +16,8 @@
 
 package co.cask.cdap.security;
 
+import co.cask.cdap.AllProgramsApp;
 import co.cask.cdap.ConfigTestApp;
-import co.cask.cdap.WorkflowApp;
 import co.cask.cdap.api.artifact.ArtifactId;
 import co.cask.cdap.api.artifact.ArtifactScope;
 import co.cask.cdap.api.artifact.ArtifactVersion;
@@ -269,14 +269,20 @@ public class AuthorizationTest extends TestBase {
     appManager = deployApplication(AUTH_NAMESPACE.toId(), DummyApp.class);
     artifact = appManager.getInfo().getArtifact();
     NamespacedArtifactId updatedDummyArtifact = AUTH_NAMESPACE.artifact(artifact.getName(), artifact.getVersion());
-    appManager = deployApplication(AUTH_NAMESPACE.toId(), WorkflowApp.class);
+    appManager = deployApplication(AUTH_NAMESPACE.toId(), AllProgramsApp.class);
     artifact = appManager.getInfo().getArtifact();
     NamespacedArtifactId workflowArtifact = AUTH_NAMESPACE.artifact(artifact.getName(), artifact.getVersion());
-    ApplicationId workflowAppId = AUTH_NAMESPACE.app(WorkflowApp.class.getSimpleName());
-    ProgramId classicMapReduceId = workflowAppId.mr(WorkflowApp.WordCountMapReduce.NAME);
-    ProgramId sparkId = workflowAppId.spark(WorkflowApp.SparkWorkflowTestApp.NAME);
-    ProgramId funWorkflowId = workflowAppId.workflow(WorkflowApp.FunWorkflow.NAME);
-    Assert.assertEquals(
+    ApplicationId workflowAppId = AUTH_NAMESPACE.app(AllProgramsApp.NAME);
+
+    ProgramId flowId = workflowAppId.flow(AllProgramsApp.NoOpFlow.NAME);
+    ProgramId classicMapReduceId = workflowAppId.mr(AllProgramsApp.NoOpMR.NAME);
+    ProgramId mapReduceId = workflowAppId.mr(AllProgramsApp.NoOpMR2.NAME);
+    ProgramId sparkId = workflowAppId.spark(AllProgramsApp.NoOpSpark.NAME);
+    ProgramId workflowId = workflowAppId.workflow(AllProgramsApp.NoOpWorkflow.NAME);
+    ProgramId serviceId = workflowAppId.service(AllProgramsApp.NoOpService.NAME);
+    ProgramId workerId = workflowAppId.worker(AllProgramsApp.NoOpWorker.NAME);
+
+      Assert.assertEquals(
       ImmutableSet.of(
         new Privilege(instance, Action.ADMIN),
         new Privilege(AUTH_NAMESPACE, Action.ALL),
@@ -286,18 +292,27 @@ public class AuthorizationTest extends TestBase {
         new Privilege(dummyAppId, Action.ALL),
         new Privilege(workflowAppId, Action.ALL),
         new Privilege(greetingServiceId, Action.ALL),
+        new Privilege(flowId, Action.ALL),
         new Privilege(classicMapReduceId, Action.ALL),
+        new Privilege(mapReduceId, Action.ALL),
         new Privilege(sparkId, Action.ALL),
-        new Privilege(funWorkflowId, Action.ALL)
+        new Privilege(workflowId, Action.ALL),
+        new Privilege(serviceId, Action.ALL),
+        new Privilege(workerId, Action.ALL)
       ),
       authorizer.listPrivileges(ALICE)
     );
     // revoke all privileges on an app.
     authorizer.revoke(workflowAppId);
     // TODO: CDAP-5428 Revoking privileges on an app should revoke privileges on the contents of the app
-    authorizer.revoke(sparkId);
+    authorizer.revoke(flowId);
     authorizer.revoke(classicMapReduceId);
-    authorizer.revoke(funWorkflowId);
+    authorizer.revoke(mapReduceId);
+    authorizer.revoke(sparkId);
+    authorizer.revoke(workflowId);
+    authorizer.revoke(serviceId);
+    authorizer.revoke(workerId);
+
     Assert.assertEquals(
       ImmutableSet.of(
         new Privilege(instance, Action.ADMIN),
@@ -320,17 +335,6 @@ public class AuthorizationTest extends TestBase {
     }
     // grant admin privilege on the WorkflowApp. deleting all applications should succeed.
     authorizer.grant(workflowAppId, ALICE, ImmutableSet.of(Action.ADMIN));
-    Assert.assertEquals(
-      ImmutableSet.of(
-        new Privilege(instance, Action.ADMIN),
-        new Privilege(AUTH_NAMESPACE, Action.ALL),
-        new Privilege(dummyArtifact, Action.ALL),
-        new Privilege(updatedDummyArtifact, Action.ALL),
-        new Privilege(workflowArtifact, Action.ALL),
-        new Privilege(workflowAppId, Action.ADMIN)
-      ),
-      authorizer.listPrivileges(ALICE)
-    );
     deleteAllApplications(AUTH_NAMESPACE);
     // deleting all apps should remove all privileges on all apps, but the privilege on the namespace should still exist
     Assert.assertEquals(

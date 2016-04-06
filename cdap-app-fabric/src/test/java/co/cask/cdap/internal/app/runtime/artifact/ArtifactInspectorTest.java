@@ -26,6 +26,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.utils.DirUtils;
+import co.cask.cdap.internal.app.runtime.ProgramRuntimeProviderLoader;
 import co.cask.cdap.internal.app.runtime.artifact.app.InvalidConfigApp;
 import co.cask.cdap.internal.app.runtime.artifact.app.inspection.InspectionApp;
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
@@ -61,8 +62,8 @@ public class ArtifactInspectorTest {
     CConfiguration cConf = CConfiguration.create();
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, TMP_FOLDER.newFolder().getAbsolutePath());
 
-    classLoaderFactory = new ArtifactClassLoaderFactory(cConf, TMP_FOLDER.newFolder());
-    artifactInspector = new ArtifactInspector(cConf, classLoaderFactory, TMP_FOLDER.newFolder());
+    classLoaderFactory = new ArtifactClassLoaderFactory(cConf, new ProgramRuntimeProviderLoader(cConf));
+    artifactInspector = new ArtifactInspector(cConf, classLoaderFactory);
   }
 
   @Test(expected = InvalidArtifactException.class)

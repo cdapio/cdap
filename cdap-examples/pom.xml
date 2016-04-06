@@ -179,6 +179,12 @@
   <dependencyManagement>
     <dependencies>
       <dependency>
+        <groupId>co.cask.cdap</groupId>
+        <artifactId>cdap-api-spark</artifactId>
+        <version>${project.version}</version>
+        <scope>provided</scope>
+      </dependency>
+      <dependency>
         <groupId>co.cask.common</groupId>
         <artifactId>common-http</artifactId>
         <version>${cask.common.version}</version>
@@ -198,18 +204,6 @@
         <groupId>org.apache.commons</groupId>
         <artifactId>commons-io</artifactId>
         <version>1.3.2</version>
-      </dependency>
-      <dependency> <!-- Spark dependency -->
-        <groupId>org.apache.spark</groupId>
-        <artifactId>spark-core_2.10</artifactId>
-        <version>${spark.version}</version>
-        <scope>provided</scope>
-        <exclusions>
-          <exclusion>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-log4j12</artifactId>
-          </exclusion>
-        </exclusions>
       </dependency>
       <dependency>
         <groupId>co.cask.cdap</groupId>

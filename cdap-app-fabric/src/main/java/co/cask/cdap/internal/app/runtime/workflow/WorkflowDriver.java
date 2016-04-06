@@ -156,7 +156,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     this.txClient = txClient;
     this.store = store;
     this.cConf = cConf;
-    this.workflowProgramRunnerFactory = new ProgramWorkflowRunnerFactory(workflowSpec, programRunnerFactory,
+    this.workflowProgramRunnerFactory = new ProgramWorkflowRunnerFactory(cConf, workflowSpec, programRunnerFactory,
                                                                          program, options);
 
     this.basicWorkflowContext = new BasicWorkflowContext(workflowSpec, null, null, new BasicArguments(runtimeArgs),

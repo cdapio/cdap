@@ -16,10 +16,14 @@
 
 package co.cask.cdap;
 
+import co.cask.cdap.api.artifact.ArtifactVersion;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.utils.Networks;
 import co.cask.cdap.common.utils.Tasks;
+import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
+import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.artifact.ArtifactRange;
 import com.google.common.base.Preconditions;
 import org.apache.hadoop.conf.Configuration;
 import org.junit.rules.ExternalResource;
@@ -27,6 +31,7 @@ import org.junit.rules.TemporaryFolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.net.HttpURLConnection;
 import java.net.InetAddress;
 import java.net.URI;
@@ -34,8 +39,10 @@ import java.net.URL;
 import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 
 /**
  * This class helps writing tests that needs {@link StandaloneMain} up and running.
@@ -111,6 +118,17 @@ public class StandaloneTester extends ExternalResource {
     return URI.create(String.format("http://%s:%d/",
                                     getConfiguration().get(Constants.Router.ADDRESS),
                                     getConfiguration().getInt(Constants.Router.ROUTER_PORT)));
+  }
+
+  /**
+   * Adds a system artifact to CDAP instance that is used for testing.
+   */
+  public void addSystemArtifact(String name, ArtifactVersion version, File artifactFile,
+                                @Nullable Set<ArtifactRange> parentArtifacts) throws Exception {
+    ArtifactRepository artifactRepository = standaloneMain.getInjector().getInstance(ArtifactRepository.class);
+
+    Id.Artifact artifactId = new Id.Artifact(Id.Namespace.SYSTEM, name, version);
+    artifactRepository.addArtifact(artifactId, artifactFile, parentArtifacts);
   }
 
   private String getLocalHostname() {
