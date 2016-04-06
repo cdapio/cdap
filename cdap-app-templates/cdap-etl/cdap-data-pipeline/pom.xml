@@ -26,12 +26,12 @@
     <version>3.4.0-SNAPSHOT</version>
   </parent>
 
-  <artifactId>cdap-etl-data-pipeline</artifactId>
+  <artifactId>cdap-data-pipeline</artifactId>
   <name>CDAP Data Pipeline Application</name>
   <packaging>jar</packaging>
 
   <properties>
-    <app.main.class>co.cask.cdap.etl.datapipeline.DataPipelineApp</app.main.class>
+    <app.main.class>co.cask.cdap.datapipeline.DataPipelineApp</app.main.class>
   </properties>
 
   <dependencies>

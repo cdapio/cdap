@@ -14,18 +14,18 @@
  * the License.
  */
 
-package co.cask.cdap.etl.datapipeline;
+package co.cask.cdap.datapipeline;
 
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.datapipeline.mock.NaiveBayesClassifier;
+import co.cask.cdap.datapipeline.mock.NaiveBayesTrainer;
+import co.cask.cdap.datapipeline.mock.SpamMessage;
 import co.cask.cdap.etl.api.batch.SparkCompute;
 import co.cask.cdap.etl.api.batch.SparkSink;
-import co.cask.cdap.etl.datapipeline.mock.NaiveBayesClassifier;
-import co.cask.cdap.etl.datapipeline.mock.NaiveBayesTrainer;
-import co.cask.cdap.etl.datapipeline.mock.SpamMessage;
 import co.cask.cdap.etl.mock.batch.MockSink;
 import co.cask.cdap.etl.mock.batch.MockSource;
 import co.cask.cdap.etl.mock.batch.aggregator.FieldCountAggregator;
