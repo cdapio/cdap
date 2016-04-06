@@ -133,7 +133,7 @@ final class SparkRunnerClassLoader extends URLClassLoader {
    */
   private Class<?> defineContext(final Type contextType, String name, InputStream byteCodeStream) throws IOException {
     ClassReader cr = new ClassReader(byteCodeStream);
-    ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
+    ClassWriter cw = new ClassWriter(0);
 
     cr.accept(new ClassVisitor(Opcodes.ASM5, cw) {
 

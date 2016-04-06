@@ -243,7 +243,7 @@
                       </excludes>
                     </filter>
                   </filters>
-                  <outputFile>${build.directory}/libexec/${project.groupId}.cdap-spark-assembly-${spark.version}.jar</outputFile>
+                  <outputFile>${build.directory}/libexec/${project.groupId}.spark-assembly-${spark.version}.jar</outputFile>
                   <!-- Needed to merge akka config files -->
                   <transformers>
                     <transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">

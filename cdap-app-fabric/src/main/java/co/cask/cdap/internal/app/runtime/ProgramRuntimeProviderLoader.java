@@ -45,6 +45,8 @@ import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.ServiceLoader;
 import javax.annotation.Nullable;
@@ -169,7 +171,10 @@ public class ProgramRuntimeProviderLoader {
    * Creates a {@link ServiceLoader} from the {@link ClassLoader} created by all jar files under the given directory.
    */
   private ServiceLoader<ProgramRuntimeProvider> createServiceLoader(File dir) {
-    URL[] urls = Iterables.toArray(Iterables.transform(DirUtils.listFiles(dir, "jar"), new Function<File, URL>() {
+    List<File> files = new ArrayList<>(DirUtils.listFiles(dir, "jar"));
+    Collections.sort(files);
+
+    URL[] urls = Iterables.toArray(Iterables.transform(files, new Function<File, URL>() {
       @Override
       public URL apply(File input) {
         try {
