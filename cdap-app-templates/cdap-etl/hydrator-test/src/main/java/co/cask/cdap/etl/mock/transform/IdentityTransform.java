@@ -19,6 +19,8 @@ package co.cask.cdap.etl.mock.transform;
 import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.annotation.Plugin;
 import co.cask.cdap.api.data.format.StructuredRecord;
+import co.cask.cdap.api.plugin.PluginClass;
+import co.cask.cdap.api.plugin.PluginPropertyField;
 import co.cask.cdap.etl.api.Emitter;
 import co.cask.cdap.etl.api.PipelineConfigurer;
 import co.cask.cdap.etl.api.StageConfigurer;
@@ -34,6 +36,7 @@ import java.util.Map;
 @Plugin(type = Transform.PLUGIN_TYPE)
 @Name("Identity")
 public class IdentityTransform extends Transform<StructuredRecord, StructuredRecord> {
+  public static final PluginClass PLUGIN_CLASS = getPluginClass();
 
   @Override
   public void configurePipeline(PipelineConfigurer pipelineConfigurer) throws IllegalArgumentException {
@@ -49,5 +52,11 @@ public class IdentityTransform extends Transform<StructuredRecord, StructuredRec
   public static ETLPlugin getPlugin() {
     Map<String, String> properties = new HashMap<>();
     return new ETLPlugin("Identity", Transform.PLUGIN_TYPE, properties, null);
+  }
+
+  private static PluginClass getPluginClass() {
+    Map<String, PluginPropertyField> properties = new HashMap<>();
+    return new PluginClass(Transform.PLUGIN_TYPE, "Identity", "", IdentityTransform.class.getName(),
+                           null, properties);
   }
 }

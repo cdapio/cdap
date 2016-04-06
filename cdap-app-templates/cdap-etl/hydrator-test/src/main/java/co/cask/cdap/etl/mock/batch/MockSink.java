@@ -26,7 +26,9 @@ import co.cask.cdap.api.dataset.table.Put;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.api.plugin.PluginConfig;
+import co.cask.cdap.api.plugin.PluginPropertyField;
 import co.cask.cdap.etl.api.Emitter;
 import co.cask.cdap.etl.api.PipelineConfigurer;
 import co.cask.cdap.etl.api.batch.BatchRuntimeContext;
@@ -48,6 +50,7 @@ import java.util.UUID;
 @Plugin(type = BatchSink.PLUGIN_TYPE)
 @Name("Mock")
 public class MockSink extends BatchSink<StructuredRecord, byte[], Put> {
+  public static final PluginClass PLUGIN_CLASS = getPluginClass();
   private static final byte[] SCHEMA_COL = Bytes.toBytes("s");
   private static final byte[] RECORD_COL = Bytes.toBytes("r");
   private final Config config;
@@ -115,5 +118,11 @@ public class MockSink extends BatchSink<StructuredRecord, byte[], Put> {
     } finally {
       scanner.close();
     }
+  }
+
+  private static PluginClass getPluginClass() {
+    Map<String, PluginPropertyField> properties = new HashMap<>();
+    properties.put("tableName", new PluginPropertyField("tableName", "", "string", true));
+    return new PluginClass(BatchSink.PLUGIN_TYPE, "Mock", "", MockSink.class.getName(), "config", properties);
   }
 }
