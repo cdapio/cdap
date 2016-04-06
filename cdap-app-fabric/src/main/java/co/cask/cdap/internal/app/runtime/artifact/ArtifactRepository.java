@@ -89,10 +89,11 @@ public class ArtifactRepository {
   private final AuthorizerInstantiatorService authorizerInstantiatorService;
   private final InstanceId instanceId;
 
+  @VisibleForTesting
   @Inject
-  ArtifactRepository(CConfiguration cConf, ArtifactStore artifactStore, MetadataStore metadataStore,
-                     AuthorizerInstantiatorService authorizerInstantiatorService,
-                     ProgramRuntimeProviderLoader programRuntimeProviderLoader) {
+  public ArtifactRepository(CConfiguration cConf, ArtifactStore artifactStore, MetadataStore metadataStore,
+                            AuthorizerInstantiatorService authorizerInstantiatorService,
+                            ProgramRuntimeProviderLoader programRuntimeProviderLoader) {
     this.artifactStore = artifactStore;
     this.artifactClassLoaderFactory = new ArtifactClassLoaderFactory(cConf, programRuntimeProviderLoader);
     this.artifactInspector = new ArtifactInspector(cConf, artifactClassLoaderFactory);
