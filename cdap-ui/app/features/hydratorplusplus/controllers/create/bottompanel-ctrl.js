@@ -36,6 +36,9 @@ class HydratorPlusPlusBottomPanelCtrl {
       {
         title: 'Post-Run Actions',
         template: '/assets/features/hydratorplusplus/templates/partial/postactions.html'
+      },
+        title: 'Preview',
+        template: '/assets/features/hydratorplusplus/templates/partial/preview.html'
       }
     ];
     this.HydratorPlusPlusBottomPanelActions = HydratorPlusPlusBottomPanelActions;

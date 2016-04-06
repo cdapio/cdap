@@ -26,6 +26,10 @@ class HydratorPlusPlusTopPanelCtrl{
 
     this.canvasOperations = [
       {
+        name: 'Preview',
+        icon: 'fa fa-eye'
+      },
+      {
         name: 'Export',
         icon: 'icon-export',
         fn: this.onExport.bind(this)
