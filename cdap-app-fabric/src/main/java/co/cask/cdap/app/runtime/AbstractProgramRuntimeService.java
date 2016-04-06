@@ -101,7 +101,9 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
     try {
       ProgramOptions optionsWithPlugins = createPluginSnapshot(optionsWithRunId, program.getId(), tempDir,
                                                                program.getApplicationSpecification());
-      Program executableProgram = createProgram(cConf, runner, program.getJarLocation(), tempDir);
+      // The Jar Location will be null for some unit-test. It won't be for production.
+      Location jarLocation = program.getJarLocation();
+      Program executableProgram = jarLocation == null ? program : createProgram(cConf, runner, jarLocation, tempDir);
       cleanUpTask = createCleanupTask(cleanUpTask, executableProgram);
       RuntimeInfo runtimeInfo = createRuntimeInfo(runner.run(executableProgram, optionsWithPlugins), program);
       monitorProgram(runtimeInfo, cleanUpTask);
