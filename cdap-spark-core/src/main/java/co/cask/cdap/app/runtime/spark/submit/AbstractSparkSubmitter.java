@@ -47,7 +47,9 @@ import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.atomic.AtomicBoolean;
 import javax.annotation.Nullable;
 
 /**
@@ -93,14 +95,15 @@ public abstract class AbstractSparkSubmitter implements SparkSubmitter {
 
     // Latch for the Spark job completion
     final CountDownLatch completion = new CountDownLatch(1);
-    final SparkJobFuture<V> resultFuture = new SparkJobFuture<V>() {
+    final SparkJobFuture<V> resultFuture = new SparkJobFuture<V>(runtimeContext) {
       @Override
-      protected void interruptTask() {
+      protected void cancelTask() {
         // Try to shutdown the running spark job.
         triggerShutdown();
 
         // Interrupt the executing thread as well in case it is blocking in somewhere.
         executor.shutdownNow();
+        // Wait for the Spark-Submit returns
         Uninterruptibles.awaitUninterruptibly(completion);
       }
     };
@@ -214,16 +217,73 @@ public abstract class AbstractSparkSubmitter implements SparkSubmitter {
       .build();
   }
 
+  /**
+   * A {@link Future} implementation for representing a Spark job execution, which allows cancelling the job through
+   * the {@link #cancel(boolean)} method. When the job execution is completed, the {@link #set(Object)} should be
+   * called for successful execution, or call the {@link #setException(Throwable)} for failure. To terminate the
+   * job execution while it is running, call the {@link #cancel(boolean)} method. Sub-classes should override the
+   * {@link #cancelTask()} method for cancelling the execution and the state of this {@link Future} will change
+   * to cancelled after the {@link #cancelTask()} call returns.
+   *
+   * @param <V> type of object returned by the {@link #get()} method.
+   */
   private abstract static class SparkJobFuture<V> extends AbstractFuture<V> {
 
-    @Override
-    public boolean set(@Nullable V value) {
-      return super.set(value);
+    private static final Logger LOG = LoggerFactory.getLogger(SparkJobFuture.class);
+    private final AtomicBoolean done;
+    private final SparkRuntimeContext context;
+
+    protected SparkJobFuture(SparkRuntimeContext context) {
+      this.done = new AtomicBoolean();
+      this.context = context;
     }
 
     @Override
-    public boolean setException(Throwable throwable) {
-      return super.setException(throwable);
+    protected boolean set(V value) {
+      if (done.compareAndSet(false, true)) {
+        return super.set(value);
+      }
+      return false;
+    }
+
+    @Override
+    protected boolean setException(Throwable throwable) {
+      if (done.compareAndSet(false, true)) {
+        return super.setException(throwable);
+      }
+      return false;
+    }
+
+    @Override
+    public boolean cancel(boolean mayInterruptIfRunning) {
+      if (!done.compareAndSet(false, true)) {
+        return false;
+      }
+
+      try {
+        cancelTask();
+        return super.cancel(mayInterruptIfRunning);
+      } catch (Throwable t) {
+        // Only log and reset state, but not propagate since Future.cancel() doesn't expect exception to be thrown.
+        LOG.warn("Failed to cancel Spark execution for {}.", context, t);
+        done.set(false);
+        return false;
+      }
+    }
+
+
+    @Override
+    protected final void interruptTask() {
+      // Final it so that it cannot be overridden. This method gets call after the Future state changed
+      // to cancel, hence cannot have the caller block until cancellation is done.
+    }
+
+    /**
+     * Will be called to cancel an executing task. Sub-class can override this method to provide
+     * custom cancellation logic. This method will be called before the future changed to cancelled state.
+     */
+    protected void cancelTask() {
+      // no-op
     }
   }
 }

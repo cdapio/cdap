@@ -20,7 +20,6 @@ import co.cask.cdap.api.spark.Spark;
 import co.cask.cdap.common.internal.guava.ClassPath;
 import co.cask.cdap.common.lang.ClassPathResources;
 import com.google.common.collect.Iterables;
-import com.google.common.io.ByteStreams;
 import org.apache.spark.SparkContext;
 import org.apache.spark.streaming.StreamingContext;
 import org.objectweb.asm.ClassReader;
@@ -33,6 +32,8 @@ import org.objectweb.asm.commons.AdviceAdapter;
 import org.objectweb.asm.commons.Method;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import scala.concurrent.ExecutionContext;
+import scala.concurrent.ExecutionContextExecutor;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -41,6 +42,7 @@ import java.net.URLClassLoader;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 import javax.annotation.Nullable;
 
 /**
@@ -54,6 +56,10 @@ final class SparkRunnerClassLoader extends URLClassLoader {
   private static final Type SPARK_CONTEXT_TYPE = Type.getType(SparkContext.class);
   private static final Type SPARK_STREAMING_CONTEXT_TYPE = Type.getType(StreamingContext.class);
   private static final Type SPARK_CONTEXT_CACHE_TYPE = Type.getType(SparkContextCache.class);
+
+  // Don't refer akka Remoting with the ".class" because in future Spark version, akka dependency is removed and
+  // we don't want to force a dependency on akka.
+  private static final Type AKKA_REMOTING_TYPE = Type.getObjectType("akka/remote/Remoting");
 
   // Set of resources that are in cdap-api. They should be loaded by the parent ClassLoader
   private static final Set<String> API_CLASSES;
@@ -89,7 +95,7 @@ final class SparkRunnerClassLoader extends URLClassLoader {
     // Any class that is not from Spark
     if (API_CLASSES.contains(name) || (!name.startsWith("co.cask.cdap.api.spark.")
         && !name.startsWith("co.cask.cdap.app.runtime.spark.")
-        && !name.startsWith("org.apache.spark."))) {
+        && !name.startsWith("org.apache.spark.") && !name.startsWith("akka."))) {
       return super.loadClass(name, resolve);
     }
 
@@ -111,10 +117,12 @@ final class SparkRunnerClassLoader extends URLClassLoader {
       } else if (name.equals(SPARK_STREAMING_CONTEXT_TYPE.getClassName())) {
         // Define the StreamingContext class by rewriting the constructor
         cls = defineContext(SPARK_STREAMING_CONTEXT_TYPE, name, is);
+      } else if (name.equals(AKKA_REMOTING_TYPE.getClassName())) {
+        // Define the akka.remote.Remoting class to avoid thread leakage
+        cls = defineAkkaRemoting(name, is);
       } else {
         // Otherwise, just define it with this ClassLoader
-        byte[] byteCode = ByteStreams.toByteArray(is);
-        cls = defineClass(name, byteCode, 0, byteCode.length);
+        cls = findClass(name);
       }
 
       if (resolve) {
@@ -180,5 +188,112 @@ final class SparkRunnerClassLoader extends URLClassLoader {
 
     byte[] byteCode = cw.toByteArray();
     return defineClass(name, byteCode, 0, byteCode.length);
+  }
+
+  /**
+   * Define the akka.remote.Remoting by rewriting usages of scala.concurrent.ExecutionContext.Implicits.global
+   * to Remoting.system().dispatcher() in the shutdown() method for fixing the Akka thread/permgen leak bug in
+   * https://github.com/akka/akka/issues/17729
+   */
+  private Class<?> defineAkkaRemoting(String name,
+                                      InputStream byteCodeStream) throws IOException, ClassNotFoundException {
+    final Type dispatcherReturnType = determineAkkaDispatcherReturnType();
+    if (dispatcherReturnType == null) {
+      LOG.warn("Failed to determine ActorSystem.dispatcher() return type. " +
+                 "No rewriting of akka.remote.Remoting class. ClassLoader leakage might happen in SDK.");
+      return findClass(name);
+    }
+
+    ClassReader cr = new ClassReader(byteCodeStream);
+    ClassWriter cw = new ClassWriter(0);
+
+    cr.accept(new ClassVisitor(Opcodes.ASM5, cw) {
+      @Override
+      public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
+        // Call super so that the method signature is registered with the ClassWriter (parent)
+        MethodVisitor mv = super.visitMethod(access, name, desc, signature, exceptions);
+
+        // Only rewrite the shutdown() method
+        if (!"shutdown".equals(name)) {
+          return mv;
+        }
+
+        return new MethodVisitor(Opcodes.ASM5, mv) {
+          @Override
+          public void visitMethodInsn(int opcode, String owner, String name, String desc, boolean itf) {
+            // Detect if it is making call "import scala.concurrent.ExecutionContext.Implicits.global",
+            // which translate to Java code as
+            // scala.concurrent.ExecutionContext$Implicits$.MODULE$.global()
+            // hence as bytecode
+            // GETSTATIC scala/concurrent/ExecutionContext$Implicits$.MODULE$ :
+            //           Lscala/concurrent/ExecutionContext$Implicits$;
+            // INVOKEVIRTUAL scala/concurrent/ExecutionContext$Implicits$.global
+            //           ()Lscala/concurrent/ExecutionContextExecutor;
+            Type executionContextExecutorType = Type.getType(ExecutionContextExecutor.class);
+            if (opcode == Opcodes.INVOKEVIRTUAL
+                && "global".equals(name)
+                && "scala/concurrent/ExecutionContext$Implicits$".equals(owner)
+                && Type.getMethodDescriptor(executionContextExecutorType).equals(desc)) {
+              // Discard the GETSTATIC result from the stack by popping it
+              super.visitInsn(Opcodes.POP);
+              // Make the call "import system.dispatch", which translate to Java code as
+              // this.system().dispatcher()
+              // hence as bytecode
+              // ALOAD 0 (load this)
+              // INVOKEVIRTUAL akka/remote/Remoting.system ()Lakka/actor/ExtendedActorSystem;
+              // INVOKEVIRTUAL akka/actor/ExtendedActorSystem.dispatcher ()Lscala/concurrent/ExecutionContextExecutor;
+              Type extendedActorSystemType = Type.getObjectType("akka/actor/ExtendedActorSystem");
+              super.visitVarInsn(Opcodes.ALOAD, 0);
+              super.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "akka/remote/Remoting", "system",
+                                    Type.getMethodDescriptor(extendedActorSystemType), false);
+              super.visitMethodInsn(Opcodes.INVOKEVIRTUAL, extendedActorSystemType.getInternalName(), "dispatcher",
+                                    Type.getMethodDescriptor(dispatcherReturnType), false);
+            } else {
+              // For other instructions, just call parent to deal with it
+              super.visitMethodInsn(opcode, owner, name, desc, itf);
+            }
+          }
+        };
+      }
+    }, ClassReader.EXPAND_FRAMES);
+
+    byte[] byteCode = cw.toByteArray();
+    return defineClass(name, byteCode, 0, byteCode.length);
+  }
+
+  /**
+   * Find the return type of the ActorSystem.dispatcher() method. It is {@link ExecutionContextExecutor} in
+   * Akka 2.3 (Spark 1.2+) and {@link ExecutionContext} in Akka 2.2 (Spark < 1.2, which CDAP doesn't support,
+   * however the Spark 1.5 in CDH 5.6. still has Akka 2.2, instead of 2.3).
+   *
+   * @return the return type of the ActorSystem.dispatcher() method or {@code null} if no such method
+   */
+  @Nullable
+  private Type determineAkkaDispatcherReturnType() {
+    try (InputStream is = getResourceAsStream("akka/actor/ActorSystem.class")) {
+      final AtomicReference<Type> result = new AtomicReference<>();
+      ClassReader cr = new ClassReader(is);
+      cr.accept(new ClassVisitor(Opcodes.ASM5) {
+        @Override
+        public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
+          if (name.equals("dispatcher") && Type.getArgumentTypes(desc).length == 0) {
+            // Expected to be either ExecutionContext (akka 2.2, only in CDH spark)
+            // or ExecutionContextExecutor (akka 2.3, for open source, HDP spark).
+            Type returnType = Type.getReturnType(desc);
+            if (returnType.equals(Type.getType(ExecutionContext.class))
+              || returnType.equals(Type.getType(ExecutionContextExecutor.class))) {
+              result.set(returnType);
+            } else {
+              LOG.warn("Unsupported return type of ActorSystem.dispatcher(): {}", returnType.getClassName());
+            }
+          }
+          return super.visitMethod(access, name, desc, signature, exceptions);
+        }
+      }, ClassReader.SKIP_DEBUG | ClassReader.SKIP_CODE | ClassReader.SKIP_FRAMES);
+      return result.get();
+    } catch (IOException e) {
+      LOG.warn("Failed to determine ActorSystem dispatcher() return type.", e);
+      return null;
+    }
   }
 }

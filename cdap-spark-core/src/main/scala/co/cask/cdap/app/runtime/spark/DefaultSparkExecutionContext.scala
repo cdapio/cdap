@@ -170,7 +170,9 @@ class DefaultSparkExecutionContext(runtimeContext: SparkRuntimeContext,
         LOG.warn("Failed to registry usage of {} -> {}", streamId, owners, e)
     }
 
-    rdd.values.map(new SerializableStreamEvent(_)).map(decoder)
+    // Wrap the StreamEvent with a SerializableStreamEvent
+    // Don't use rdd.values() as it brings in implicit object from SparkContext, which is not available in Spark 1.2
+    rdd.map(t => new SerializableStreamEvent(t._2)).map(decoder)
   }
 
   override def saveAsDataset[K: ClassTag, V: ClassTag](rdd: RDD[(K, V)], datasetName: String,
