@@ -123,12 +123,6 @@
       <version>${project.version}</version>
       <scope>test</scope>
     </dependency>
-
-    <dependency>
-      <groupId>org.apache.spark</groupId>
-      <artifactId>spark-streaming-kafka_2.10</artifactId>
-      <version>${spark.version}</version>
-    </dependency>
   </dependencies>
 
   <build>

@@ -56,10 +56,6 @@ the License.
       <artifactId>hadoop-common</artifactId>
     </dependency>
     <dependency>
-      <groupId>com.google.guava</groupId>
-      <artifactId>guava</artifactId>
-    </dependency>
-    <dependency>
       <groupId>co.cask.cdap</groupId>
       <artifactId>cdap-common</artifactId>
       <version>${project.version}</version>
