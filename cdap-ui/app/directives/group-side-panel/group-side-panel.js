@@ -20,7 +20,9 @@ angular.module(PKG.name + '.commons')
       restrict: 'E',
       scope: {
         panelGroups: '=',
+        view: '=',
 
+        onAdd: '&',
         onPanelItemClick: '&',
         onPanelItemClickContext: '='
       },
