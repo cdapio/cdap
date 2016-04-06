@@ -63,9 +63,6 @@ import javax.annotation.Nullable;
  */
 public final class InMemoryConfigurator implements Configurator {
   private static final Logger LOG = LoggerFactory.getLogger(InMemoryConfigurator.class);
-  private static final Gson GSON = new GsonBuilder()
-    .registerTypeAdapterFactory(new CaseInsensitiveEnumTypeAdapterFactory())
-    .create();
 
   /**
    * JAR file path.
@@ -159,6 +156,9 @@ public final class InMemoryConfigurator implements Configurator {
     throws IllegalAccessException, InstantiationException, IOException {
 
     File tempDir = DirUtils.createTempDir(baseUnpackDir);
+    // This Gson cannot be static since it is used to deserialize user class.
+    // Gson will keep a static map to class, hence will leak the classloader
+    Gson gson = new GsonBuilder().registerTypeAdapterFactory(new CaseInsensitiveEnumTypeAdapterFactory()).create();
     // Now, we call configure, which returns application specification.
     DefaultAppConfigurer configurer;
     try (
@@ -173,7 +173,7 @@ public final class InMemoryConfigurator implements Configurator {
         appConfig = ((Class<T>) configType).newInstance();
       } else {
         try {
-          appConfig = GSON.fromJson(configString, configType);
+          appConfig = gson.fromJson(configString, configType);
         } catch (JsonSyntaxException e) {
           throw new IllegalArgumentException("Invalid JSON configuration was provided. Please check the syntax.", e);
         }
