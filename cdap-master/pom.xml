@@ -189,12 +189,30 @@
         --depends cdap-hbase-compat-1.0 --depends cdap-hbase-compat-1.0-cdh
         --depends cdap-hbase-compat-1.1 --depends cdap-hbase-compat-1.0-cdh5.5.0</package.depends>
         <stage.artifacts.dir>${stage.opt.dir}/artifacts</stage.artifacts.dir>
+        <stage.runtime.ext.dir>${stage.opt.dir}/ext/runtimes</stage.runtime.ext.dir>
         <additional.artifacts.jar.pattern>**/target/*.jar</additional.artifacts.jar.pattern>
         <additional.artifacts.config.pattern>**/target/*.json</additional.artifacts.config.pattern>
         <additional.artifacts.exclude.pattern>**/target/*-tests.jar</additional.artifacts.exclude.pattern>
         <!-- contains hydrator upgrade tool. Should be moved out when Hydrator is moved out of CDAP -->
         <stage.libexec.dir>${stage.opt.dir}/libexec</stage.libexec.dir>
       </properties>
+
+      <!-- Add dependencies on spark api and core. It just for making sure those artifacts are built before this -->
+      <dependencies>
+        <dependency>
+          <groupId>co.cask.cdap</groupId>
+          <artifactId>cdap-api-spark</artifactId>
+          <version>${project.version}</version>
+          <scope>provided</scope>
+        </dependency>
+        <dependency>
+          <groupId>co.cask.cdap</groupId>
+          <artifactId>cdap-spark-core</artifactId>
+          <version>${project.version}</version>
+          <scope>provided</scope>
+        </dependency>
+      </dependencies>
+
       <build>
         <plugins>
           <plugin>
@@ -283,6 +301,30 @@
                       </directory>
                       <includes>
                         <include>cdap-data-quality-${project.version}.jar</include>
+                      </includes>
+                    </resource>
+                  </resources>
+                </configuration>
+              </execution>
+
+              <!-- Copy runtime extensions. Currently only has Spark -->
+              <execution>
+                <id>copy-runtime-extensions</id>
+                <phase>process-resources</phase>
+                <goals>
+                  <goal>copy-resources</goal>
+                </goals>
+                <configuration combine.self="override">
+                  <outputDirectory>${stage.runtime.ext.dir}/spark</outputDirectory>
+                  <resources>
+                    <resource>
+                      <directory>
+                        ${project.parent.basedir}/cdap-spark-core/target/libexec
+                      </directory>
+                      <!-- Only package with the cdap extensions, not the spark assembly jar -->
+                      <includes>
+                        <include>co.cask.cdap.cdap-api-spark*.jar</include>
+                        <include>co.cask.cdap.cdap-spark-core*.jar</include>
                       </includes>
                     </resource>
                   </resources>

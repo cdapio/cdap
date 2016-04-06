@@ -16,6 +16,9 @@
 
 package co.cask.cdap.api.spark;
 
+import co.cask.cdap.api.annotation.Beta;
+
+import java.io.NotSerializableException;
 import java.io.Serializable;
 
 /**
@@ -56,7 +59,13 @@ import java.io.Serializable;
  * }
  * </pre></code>
  * </p>
+ *
+ * This interface extends serializable because the closures are anonymous class in Java and Spark Serializes the
+ * closures before sending it to worker nodes. This serialization of inner anonymous class expects the outer
+ * containing class to be serializable else {@link NotSerializableException} is thrown. Having this interface
+ * serializable gives a neater API.
  */
+@Beta
 public interface JavaSparkMain extends Serializable {
 
   /**

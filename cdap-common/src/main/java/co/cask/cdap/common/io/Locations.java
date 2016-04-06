@@ -45,6 +45,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.reflect.Method;
 import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.security.PrivilegedExceptionAction;
 import java.util.Comparator;
 import java.util.Iterator;
@@ -108,7 +110,7 @@ public final class Locations {
   }
 
   /**
-   * Creates a new {@link InputSupplier} that can provide {@link SeekableInputStream} from the given location.
+   * Creates a new {@link InputSupplier} that can provides {@link SeekableInputStream} from the given location.
    *
    * @param location Location for the input stream.
    * @return A {@link InputSupplier}.
@@ -198,6 +200,33 @@ public final class Locations {
       }
     }
     return processor.getResult();
+  }
+
+  /**
+   * Tries to create a hardlink to the given {@link Location} if it is on the local file system. If creation
+   * of the hardlink failed or if the Location is not local, it will copy the the location to the given target path.
+   *
+   * @param location location to hardlink or copy from
+   * @param targetPath the target file path
+   * @return the target path
+   * @throws IOException if copying failed
+   */
+  public static File linkOrCopy(Location location, File targetPath) throws IOException {
+    URI uri = location.toURI();
+    if ("file".equals(uri.getScheme())) {
+      try {
+        Files.createLink(targetPath.toPath(), Paths.get(uri));
+        return targetPath;
+      } catch (Exception e) {
+        // Ignore. Fallback to copy
+      }
+    }
+
+    try (InputStream is = location.getInputStream()) {
+      Files.copy(is, targetPath.toPath());
+    }
+
+    return targetPath;
   }
 
   /**

@@ -189,12 +189,11 @@ public abstract class AbstractInMemoryProgramRunner implements ProgramRunner {
       Map<String, String> command = (Map<String, String>) value;
       lock.lock();
       try {
-        changeInstances(command.get("runnable"),
-                        Integer.valueOf(command.get("newInstances")),
-                        Integer.valueOf(command.get("oldInstances")));
+        for (Map.Entry<String, String> entry : command.entrySet()) {
+          changeInstances(entry.getKey(), Integer.valueOf(entry.getValue()));
+        }
       } catch (Throwable t) {
         LOG.error(String.format("Fail to change instances: %s", command), t);
-        throw t;
       } finally {
         lock.unlock();
       }
@@ -204,13 +203,10 @@ public abstract class AbstractInMemoryProgramRunner implements ProgramRunner {
      * Change the number of instances of the running runnable.
      * @param runnableName Name of the runnable
      * @param newCount New instance count
-     * @param oldCount Old instance count
      * @throws java.util.concurrent.ExecutionException
      * @throws InterruptedException
      */
-    private void changeInstances(String runnableName, final int newCount,
-                                 // unused but makes the in-memory controller expect the same command as twill
-                                 @SuppressWarnings("unused") final int oldCount) throws Exception {
+    private void changeInstances(String runnableName, final int newCount) throws Exception {
       Map<Integer, ProgramController> liveRunnables = components.row(runnableName);
       int liveCount = liveRunnables.size();
       if (liveCount == newCount) {

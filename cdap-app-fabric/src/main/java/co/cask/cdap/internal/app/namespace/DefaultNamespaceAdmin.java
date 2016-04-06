@@ -219,16 +219,16 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
       preferencesStore.deleteProperties(namespaceId.getId());
       // Delete all dashboards associated with this namespace
       dashboardStore.delete(namespaceId.getId());
+      // Delete all applications
+      applicationLifecycleService.removeAll(namespaceId);
+      // Delete all the schedules
+      scheduler.deleteAllSchedules(namespaceId);
       // Delete datasets and modules
       dsFramework.deleteAllInstances(namespaceId);
       dsFramework.deleteAllModules(namespaceId);
       // Delete queues and streams data
       queueAdmin.dropAllInNamespace(namespaceId);
       streamAdmin.dropAllInNamespace(namespaceId);
-      // Delete all the schedules
-      scheduler.deleteAllSchedules(namespaceId);
-      // Delete all applications
-      applicationLifecycleService.removeAll(namespaceId);
       // Delete all meta data
       store.removeAll(namespaceId);
 

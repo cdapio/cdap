@@ -96,7 +96,7 @@ public abstract class IntegrationTestBase {
           return false;
         }
         // Check that the dataset service is up, and also that the default namespace exists
-        // Using list and checking if default namespace exists, as opposed to using get()
+        // Using list and checking that the only namespace to exist is default, as opposed to using get()
         // so we don't have to unnecessarily add a try-catch for NamespaceNotFoundException, since that exception is
         // not handled in checkServicesWithRetry.
         List<NamespaceMeta> namespaces = getNamespaceClient().list();
@@ -104,11 +104,10 @@ public abstract class IntegrationTestBase {
         if (namespaces.size() == 0) {
           return false;
         }
-        if (namespaces.contains(NamespaceMeta.DEFAULT)) {
+        if (namespaces.size() == 1 && NamespaceMeta.DEFAULT.equals(namespaces.get(0))) {
           return true;
         }
-        throw new IllegalStateException("Default namespace not found. Instead found unexpected namespaces: "
-                                          + namespaces);
+        throw new IllegalStateException("Unexpected namespaces: " + namespaces);
       }
     };
 

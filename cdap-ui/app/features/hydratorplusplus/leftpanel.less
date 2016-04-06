@@ -17,7 +17,6 @@
 @import '../../styles/variables.less';
 @import "../../../bower_components/bootstrap/less/mixins.less";
 @import '../../styles/themes/cdap/mixins.less';
-@height-of-toppanel: 43px;
 
 body.theme-cdap.state-hydratorplusplus-create {
   .left-panel-wrapper {
@@ -29,401 +28,229 @@ body.theme-cdap.state-hydratorplusplus-create {
     width: 130px;
     vertical-align: top;
     background: #E8E8E8;
+    .transition(all 0.2s ease);
     @media (max-width: @screen-xs-max) {
       bottom: 75px;
     }
-    .transition(width 0.2s ease);
-    &.expanded {
-      width: 290px;
-
-      .left-panel {
-        .left-top-section {
-          height: 80px;
-          padding: 5px 0;
-          background: white;
-          border-right: 1px solid #dddddd;
-
-          select.form-control {
-            width: 87%;
-            margin-left: 10px;
-            height: 30px;
-          }
-          .btn.btn-default {
-            width: auto;
-          }
-          .import-section {
-            padding-left: 10px;
-            margin-top: 1px;
-            display: block;
-
-            strong {
-              font-size: 12px;
-              &:last-child {
-                margin-left: 20px;
-              }
-              a {
-                text-decoration: none;
-                color: #BEBEBE;
-                &:focus {
-                  outline: 0;
-                }
-              }
-            }
-          }
-        }
-        my-side-panel {
-          display: block;
-          border-right: 1px solid #dddddd;
-          border-top: 1px solid #dddddd;
-          height: ~"calc(100% - 79px)"; // 100% height of left panel - 80px of height from top section of left panel (filter, import, templates & + plugin)
-
-          .hydrator-filter {
-            .btn-group, input.form-control {
-              display: block;
-            }
-          }
-          .groups-container {
-            position: static;
-            border-top: 1px solid #D4D4D4;
-            height: calc(~"100% - "@height-of-toppanel);
-            .item {
-              color: @cdap-lightgray;
-              font-size: 14px;
-              .item-body, .item-heading {
-                .name {
-                  display: inline-block;
-                  vertical-align: top;
-                  overflow-x: hidden;
-                  text-overflow: ellipsis;
-                  white-space: nowrap;
-                  font-weight: 500;
-                }
-              }
-
-              &.item-open {
-
-                .item-heading {
-                  border-bottom-color: transparent;
-                }
-                .item-body-wrapper {
-                  // Syntax needed to avoid LESS parsing issue affecting calc()
-                  height: -moz-calc(~"100% - "@height-of-toppanel);
-                  height: -webkit-calc(~"100% - "@height-of-toppanel);
-                  height: calc(~"100% - "@height-of-toppanel);
-                }
-              }
-
-              .item-heading {
-                color: black;
-                font-weight: bold;
-                padding: 0 15px 0 10px;
-                height: @height-of-toppanel;
-                line-height: @height-of-toppanel;
-                width: 100%;
-                border-bottom: 1px solid #D4D4D4;
-                span.name {
-                  font-size: 13px;
-                  line-height: inherit;
-                }
-              }
-              .item-body-wrapper {
-                overflow-y: auto;
-                border-top: 1px solid #CBCBCB;
-                border-bottom: 1px solid #CBCBCB;
-              }
-              .item-body {
-                &.view-icon {
-                  padding: 10px 10px 0;
-                  .flexbox();
-                  flex-direction: row;
-                  flex-wrap: wrap;
-                  align-items: baseline;
-                  justify-content: space-between;
-                  // Adjust max height to prevent side panel from becoming unusable below a certain browser height
-                  @media (max-height: 550px) {
-                    max-height: 20vh;
-                  }
-                  .plugin-item {
-                    text-align: left;
-                    width: 48%;
-                    position: relative;
-                    background-color: white;
-                    border: 1px solid transparent;
-                    color: #666;
-                    line-height: 30px;
-                    margin-bottom: 6px;
-                    padding: 0 8px;
-                    height: 30px;
-                    width: 48%;
-                    border: 1px solid #dddddd;
-                    .border-radius(4px);
-
-                    .name {
-                      display: inline-block;
-                      max-width: 81px;
-                    }
-                    .plugin-badge {
-                      display: none;
-                    }
-                    &.plugin-templates{
-                      .plugin-badge {
-                        display: block;
-                        font-size: 8px;
-                        position: absolute;
-                        left: 110px;
-                        background: #D8D8D8;
-                        border-radius: 2px;
-                        margin: 0;
-                        padding: 3px 3px;
-                        line-height: 8px;
-                        top: 3px;
-                      }
-                    }
-
-                    > .fa {
-                      font-size: 12px;
-                      width: 18px;
-                      line-height: 30px;
-                      vertical-align: top;
-                    }
-                    .name {
-                      font-size: 11px;
-                    }
-                  }
-                }
-                &.view-list {
-                  .plugin-item {
-                    text-align: left;
-                    margin: 10px 12px;
-                    text-align: left;
-                    width: 100%;
-                    position: relative;
-
-                    .plugin-badge {
-                      display: none;
-                    }
-
-                    &.plugin-templates {
-                      .plugin-badge {
-                        display: inline-block;
-                        font-size: 8px;
-                        background: #ADADAD;
-                        color: white;
-                        border-radius: 2px;
-                        margin: 0;
-                        padding: 3px 3px;
-                        line-height: 8px;
-                      }
-                    }
-                    > .fa {
-                      font-size: 13px;
-                    }
-                    .name {
-                      font-size: 12px;
-                      vertical-align: text-top;
-                      display: inline-block;
-                      max-width: 85%;
-                    }
-                  }
-                }
-              }
-
-            }
-          }
-        }
-
-        .btn-left-panel-toggle {
-          position: absolute;
-          left: 260px;
-          top: 85px;
-        }
-      }
-      ~ .top-panel {
-        div.side-panel.top {
-          left: 290px;
-          max-width: ~"calc(100% - 290px)";
-        }
-      }
-      ~ .right-wrapper {
-        margin-left: 290px;
-      }
-
-    }
-
-    ~ .right-wrapper {
+    + .right-wrapper {
       margin-left: 130px;
       height: 100%;
       position: relative;
       .transition(all 0.2s ease);
     }
+    .left-panel {
+      .left-top-section {
+        height: 69px;
+        padding: 12px 0;
+        background: white;
+        border: 1px solid #dddddd;
+        border-top: 0;
+        border-left: 0;
+        border-bottom: 0;
+        select.form-control {
+          width: 87%;
+          margin-left: 10px;
+          color: white;
+          background: #098BF9;
+        }
+        .import-section {
+          padding-left: 10px;
+          margin-top: 3px;
 
-    width: 130px;
-    .left-top-section {
-      padding: 5px;
-      background: white;
-
-      select.form-control {
-        width: 100%;
+          strong {
+            font-size: 12px;
+            &:last-child {
+              margin-left: 20px;
+            }
+            a {
+              text-decoration: none;
+              color: #BEBEBE;
+              &:focus {
+                outline: 0;
+              }
+            }
+          }
+        }
       }
-      .btn.btn-default {
-        width: 100%;
-        margin: 5px 0;
-        &:last-child {
-          margin: 0;
+      my-side-panel {
+        display: block;
+        padding-top: 10px;
+        border-right: 1px solid #dddddd;
+        border-top: 1px solid #dddddd;
+        height: ~"calc(100% - 73px)"; // footer = 53px, 30px (import, templates & add plugin buttons on top of the side-panel.)
+
+        .groups-container {
+          position: static;
+          margin-top: 10px;
+          border-top: 1px solid #D4D4D4;
+          height: ~"calc(100% - 40px);" // 100% - height of filter textbox + margin-top 10px;
         }
       }
     }
-    my-side-panel {
-      .side-panel {
-        height: 100%;
-      }
-      .groups-container {
-        top: 152px;
+    &.expanded {
+      width: 290px;
+      .item .plugin-item {
+        text-align: left;
+        width: 48%;
+        position: relative;
 
-        .item {
-          color: @cdap-lightgray;
-          font-size: 14px;
-
-          &.item-open {
-            .name {
-              font-weight: 500;
-            }
-            .item-body-wrapper {
-              // Syntax needed to avoid LESS parsing issue affecting calc()
-              height: -moz-calc(~"100% - "@height-of-toppanel);
-              height: -webkit-calc(~"100% - "@height-of-toppanel);
-              height: calc(~"100% - "@height-of-toppanel);
-              overflow-y: auto;
-            }
-          }
-
-          .item-heading {
-            color: black;
-            font-weight: bold;
-            padding: 0 5px 0 5px;
-            height: @height-of-toppanel;
-            line-height: @height-of-toppanel;
-            width: 100%;
-            border-bottom: 1px solid #D4D4D4;
-            span.name {
-              font-size: 13px;
-              line-height: inherit;
-            }
-            .badge {
-              padding: 0;
-            }
-          }
-
-          .item-body {
-            &.view-icon {
-              padding: 10px 10px 0;
-              .flexbox();
-              flex-direction: row;
-              flex-wrap: wrap;
-              align-items: baseline;
-              justify-content: space-between;
-              // Adjust max height to prevent side panel from becoming unusable below a certain browser height
-              @media (max-height: 550px) {
-                max-height: 20vh;
-              }
-              .plugin-item {
-                text-align: center;
-                width: 48%;
-                position: relative;
-                background-color: white;
-                border: 1px solid transparent;
-                color: #666;
-                line-height: 30px;
-                margin-bottom: 6px;
-                padding: 0 8px;
-                height: 30px;
-                border: 1px solid #dddddd;
-                .border-radius(4px);
-
-                .name {
-                  display: none;
-                }
-                .plugin-badge {
-                  display: none;
-                }
-                &.plugin-templates{
-                  .plugin-badge {
-                    display: block;
-                    font-size: 8px;
-                    position: absolute;
-                    left: 110px;
-                    background: #D8D8D8;
-                    border-radius: 2px;
-                    margin: 0;
-                    padding: 3px 3px;
-                    line-height: 8px;
-                    top: 3px;
-                  }
-                }
-
-                > .fa {
-                  font-size: 18px;
-                  width: 18px;
-                  line-height: 30px;
-                  vertical-align: top;
-                }
-                .name {
-                  font-size: 11px;
-                }
-              }
-            }
-            &.view-list {
-              .plugin-item {
-                text-align: left;
-                margin: 5px;
-                overflow: hidden;
-
-                .plugin-badge {
-                  display: none;
-                }
-
-                &.plugin-templates {
-                  .plugin-badge {
-                    display: inline-block;
-                    font-size: 8px;
-                    background: #ADADAD;
-                    color: white;
-                    border-radius: 2px;
-                    margin: 0;
-                    padding: 3px 3px;
-                    line-height: 8px;
-                  }
-                }
-                .name {
-                  max-width: 70%;
-                  text-overflow: ellipsis;
-                  padding-right: 5px;
-                  overflow-y: hidden;
-                  font-size: 12px;
-                  vertical-align: text-top;
-                  display: inline-block;
-                }
-              }
-            }
-          }
+        .name {
+          display: inline-block;
+          max-width: 81px;
         }
-
-      }
-      .hydrator-filter {
-        padding: 5px 5px;
-        background: #EEEEEE;
-        min-height: 40px;
-
-        .btn-group, input.form-control {
+        .plugin-badge {
           display: none;
         }
-
+        &.plugin-templates{
+          .plugin-badge {
+            display: block;
+            font-size: 8px;
+            position: absolute;
+            left: 110px;
+            background: #D8D8D8;
+            border-radius: 2px;
+            margin: 0;
+            padding: 3px 3px;
+            line-height: 8px;
+            top: 3px;
+          }
+        }
+      }
+      + .right-wrapper {
+        margin-left: 290px;
       }
     }
-    .btn-left-panel-toggle {
-      position: absolute;
-      left: 100px;
-      top: 121px;
+    .hydrator-filter {
+      padding: 0 0 0 10px;
+      input {
+        background-color: #BEBEBE;
+        border: 0;
+        color: white;
+        height: 35px;
+        width: 75%;
+        box-shadow: none;
+        .border-radius(5px);
+        .placeholder-color(white);
+      }
+    }
+    .item {
+      color: @cdap-lightgray;
+      font-size: 14px;
+
+      &.group-default {
+        height: 33%;
+        position: relative;
+
+        .item-body-wrapper {
+          bottom: 0;
+          top: 40px;
+          overflow-y: auto;
+          position: absolute;
+          bottom: 0;
+          top: 40px;
+          width: 100%;
+        }
+      }
+      .item-body, .item-heading {
+        .name {
+          display: inline-block;
+          vertical-align: top;
+          overflow-x: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+          font-weight: 500;
+        }
+      }
+
+      &.item-open {
+
+        .item-heading {
+          border-bottom-color: transparent;
+        }
+        + .item {
+          .transform {
+            position: absolute;
+            bottom: 40px;
+          }
+          + .item .sink {
+            position: absolute;
+            bottom: 0;
+          }
+        }
+        .transform {
+          position: static;
+        }
+        + .item .sink {
+          position: absolute;
+          bottom: 0;
+        }
+        .sink {
+          position: static;
+        }
+
+        .item-body-wrapper {
+          // Syntax needed to avoid LESS parsing issue affecting calc()
+          height: ~"-moz-calc(100% - 40px)";
+          height: ~"-webkit-calc(100% - 40px)";
+          height: ~"calc(100% - 40px)";
+        }
+      }
+
+      .item-heading {
+        color: black;
+        font-weight: bold;
+        padding: 0 15px 0 10px;
+        height: 40px;
+        line-height: 40px;
+        width: 100%;
+        border-bottom: 1px solid #CBCBCB;
+        span.name {
+          font-size: 13px;
+          line-height: inherit;
+        }
+      }
+      .item-body-wrapper {
+        overflow-y: auto;
+        border-top: 1px solid #CBCBCB;
+        border-bottom: 1px solid #CBCBCB;
+      }
+      .item-body {
+        padding: 10px 10px 0;
+        .flexbox();
+        flex-direction: row;
+        flex-wrap: wrap;
+        align-items: baseline;
+        justify-content: space-between;
+        // Adjust max height to prevent side panel from becoming unusable below a certain browser height
+        @media (max-height: 550px) {
+          max-height: 20vh;
+        }
+        .no-item-message {
+          width: 100%;
+        }
+      }
+      .plugin-item {
+        background-color: white;
+        border: 1px solid transparent;
+        color: #666;
+        line-height: 30px;
+        margin-bottom: 6px;
+        padding: 0 8px;
+        height: 30px;
+        width: 48%;
+        border: 1px solid #dddddd;
+        .border-radius(4px);
+        > .fa {
+          font-size: 12px;
+          width: 18px;
+          line-height: 30px;
+          vertical-align: top;
+        }
+        .name {
+          display: none;
+          font-size: 11px;
+        }
+      }
     }
     .badge {
       background-color: transparent;
@@ -440,7 +267,6 @@ body.theme-cdap.state-hydratorplusplus-create {
       }
     }
   }
-
 
   .my-cdap-popover {
     padding: 0;

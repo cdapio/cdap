@@ -23,14 +23,13 @@ package co.cask.cdap.examples.sparkpagerank;
 
 import co.cask.cdap.api.ServiceDiscoverer;
 import co.cask.cdap.api.metrics.Metrics;
-import co.cask.cdap.api.spark.JavaSparkProgram;
-import co.cask.cdap.api.spark.SparkContext;
+import co.cask.cdap.api.spark.JavaSparkExecutionContext;
+import co.cask.cdap.api.spark.JavaSparkMain;
 import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Iterables;
-import org.apache.hadoop.io.LongWritable;
-import org.apache.hadoop.io.Text;
 import org.apache.spark.api.java.JavaPairRDD;
+import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.Function;
 import org.apache.spark.api.java.function.Function2;
 import org.apache.spark.api.java.function.PairFlatMapFunction;
@@ -51,7 +50,7 @@ import java.util.regex.Pattern;
 /**
  * Spark PageRank program
  */
-public class SparkPageRankProgram implements JavaSparkProgram {
+public class SparkPageRankProgram implements JavaSparkMain {
   private static final Logger LOG = LoggerFactory.getLogger(SparkPageRankProgram.class);
 
   private static final int ITERATIONS_COUNT = 10;
@@ -62,6 +61,7 @@ public class SparkPageRankProgram implements JavaSparkProgram {
   private static final int POPULAR_PAGE_THRESHOLD = 10;
   private static final int UNPOPULAR_PAGE_THRESHOLD = 3;
 
+
   private static class Sum implements Function2<Double, Double, Double> {
     @Override
     public Double call(Double a, Double b) {
@@ -70,18 +70,20 @@ public class SparkPageRankProgram implements JavaSparkProgram {
   }
 
   @Override
-  public void run(SparkContext sc) {
+  public void run(JavaSparkExecutionContext sec) throws Exception {
+    JavaSparkContext jsc = new JavaSparkContext();
+
     LOG.info("Processing backlinkURLs data");
-    JavaPairRDD<LongWritable, Text> backlinkURLs = sc.readFromStream("backlinkURLStream", Text.class);
-    int iterationCount = getIterationCount(sc);
+    JavaPairRDD<Long, String> backlinkURLs = sec.fromStream("backlinkURLStream", String.class);
+    int iterationCount = getIterationCount(sec);
 
     LOG.info("Grouping data by key");
     // Grouping backlinks by unique URL in key
     JavaPairRDD<String, Iterable<String>> links =
-      backlinkURLs.values().mapToPair(new PairFunction<Text, String, String>() {
+      backlinkURLs.values().mapToPair(new PairFunction<String, String, String>() {
         @Override
-        public Tuple2<String, String> call(Text s) {
-          String[] parts = SPACES.split(s.toString());
+        public Tuple2<String, String> call(String s) {
+          String[] parts = SPACES.split(s);
           return new Tuple2<>(parts[0], parts[1]);
         }
       }).distinct().groupByKey().cache();
@@ -121,8 +123,8 @@ public class SparkPageRankProgram implements JavaSparkProgram {
 
     LOG.info("Writing ranks data");
 
-    final ServiceDiscoverer discoveryServiceContext = sc.getServiceDiscoverer();
-    final Metrics sparkMetrics = sc.getMetrics();
+    final ServiceDiscoverer discoveryServiceContext = sec.getServiceDiscoverer();
+    final Metrics sparkMetrics = sec.getMetrics();
     JavaPairRDD<byte[], Integer> ranksRaw = ranks.mapToPair(new PairFunction<Tuple2<String, Double>, byte[],
       Integer>() {
       @Override
@@ -160,13 +162,13 @@ public class SparkPageRankProgram implements JavaSparkProgram {
     // All calculated results are stored in one row.
     // Each result, the calculated URL rank based on backlink contributions, is an entry of the row.
     // The value of the entry is the URL rank.
-    sc.writeToDataset(ranksRaw, "ranks", byte[].class, Integer.class);
+    sec.saveAsDataset(ranksRaw, "ranks");
 
     LOG.info("PageRanks successfuly computed and written to \"ranks\" dataset");
   }
 
-  private int getIterationCount(SparkContext sc) {
-    String args = sc.getRuntimeArguments().get("args");
+  private int getIterationCount(JavaSparkExecutionContext sec) {
+    String args = sec.getRuntimeArguments().get("args");
     if (args == null) {
       return ITERATIONS_COUNT;
     }

@@ -25,7 +25,7 @@ body.theme-cdap {
     &:not(.state-hydrator-create), &.state-hydrator-create-studio {
       main.container {
         // Offset the Hydrator navbar + top panel
-        margin-top: 93px;
+        margin-top: 110px;
       }
     }
 
@@ -53,9 +53,9 @@ body.theme-cdap {
       height: 60vh;
       &:not(.canvas-scroll) {
         // Subtract navbar, top panel, collapsed bottom panel and footer from total viewport height
-        height: ~"-moz-calc(100vh - 187px)";
-        height: ~"-webkit-calc(100vh - 187px)";
-        height: ~"calc(100vh - 187px)";
+        height: ~"-moz-calc(100vh - 213px)";
+        height: ~"-webkit-calc(100vh - 213px)";
+        height: ~"calc(100vh - 213px)";
       }
       @media (min-height: 800px) {
         height: 40vh;
@@ -110,27 +110,6 @@ body.theme-cdap {
 
       &.btn-grey {
         background-color: #ccc;
-      }
-
-      &.btn-default.dropdown-toggle {
-        background-color: white;
-        color: #666;
-        border: 1px solid #999;
-        padding: 5px 15px;
-      }
-    }
-
-    .dropdown-menu.output-schema-actions {
-      top: 0;
-
-      & > li > a {
-        background-color: white;
-        color: #666;
-
-        &:hover {
-          background-color: @hydrator-blue;
-          color: white;
-        }
       }
     }
   }

@@ -18,7 +18,6 @@ package co.cask.cdap.internal.test;
 
 import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.common.lang.ProgramResources;
-import co.cask.cdap.proto.ProgramType;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.Files;
 import org.apache.twill.api.ClassAcceptor;
@@ -49,13 +48,20 @@ public final class AppJarHelper {
   public static Location createDeploymentJar(LocationFactory locationFactory, Class<?> clz, Manifest manifest,
                                              File... bundleEmbeddedJars) throws IOException {
 
-    final Set<String> visibleResources = ProgramResources.getVisibleResources(AppJarHelper.class.getClassLoader(),
-                                                                              ProgramType.SPARK);
+    final Set<String> visibleResources = ProgramResources.getVisibleResources();
     // Exclude all classes that are visible form the system to the program classloader.
     ApplicationBundler bundler = new ApplicationBundler(new ClassAcceptor() {
       @Override
       public boolean accept(String className, URL classUrl, URL classPathUrl) {
-        return !visibleResources.contains(className.replace('.', '/') + ".class");
+        if (visibleResources.contains(className.replace('.', '/') + ".class")) {
+          return false;
+        }
+        // Exclude all Spark classes in the app jar.
+        // We keep the Scala classes in case the app is not Spark but uses Scala in unit-test (CDAP-5168)
+        if (className.startsWith("org.apache.spark.")) {
+          return false;
+        }
+        return true;
       }
     });
     Location jarLocation = locationFactory.create(clz.getName()).getTempFile(".jar");

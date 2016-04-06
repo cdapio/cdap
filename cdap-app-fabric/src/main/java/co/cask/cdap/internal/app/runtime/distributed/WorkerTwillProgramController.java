@@ -55,7 +55,6 @@ public class WorkerTwillProgramController extends AbstractTwillProgramController
       }
     } catch (Throwable t) {
       LOG.error("Failed to change worker instances : {}", command, t);
-      throw t;
     }
   }
 
