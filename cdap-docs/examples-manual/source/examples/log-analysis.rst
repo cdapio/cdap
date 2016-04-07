@@ -57,6 +57,7 @@ of the application are tied together by the class ``LogAnalysisApp``:
 .. literalinclude:: /../../../cdap-examples/LogAnalysis/src/main/java/co/cask/cdap/examples/loganalysis/LogAnalysisApp.java
    :language: java
    :lines: 60-94
+   :append: . . .
 
 The *hitCount* and *responseCount* KeyValueTables and *reqCount* TimePartitionedFileSet
 ---------------------------------------------------------------------------------------
