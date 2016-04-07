@@ -260,19 +260,19 @@
   </property>
 
   <property>
-    <name>app.program.runtime.extensions.dir</name>
-    <value>/opt/cdap/master/ext/runtimes</value>
-    <description>
-      Semicolon-separated list of local directories scanned for program runtime extension.
-    </description>
-  </property>
-
-  <property>
     <name>app.program.runid.corrector.interval</name>
     <value>180</value>
     <description>
       The interval of how often the run id corrector thread will run in
       seconds; this value should be greater than 0
+    </description>
+  </property>
+
+  <property>
+    <name>app.program.runtime.extensions.dir</name>
+    <value>/opt/cdap/master/ext/runtimes</value>
+    <description>
+      Semicolon-separated list of local directories that are scanned for program runtime extensions
     </description>
   </property>
 
