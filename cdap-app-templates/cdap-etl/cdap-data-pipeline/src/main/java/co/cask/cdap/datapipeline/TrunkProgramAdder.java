@@ -14,18 +14,27 @@
  * the License.
  */
 
-package co.cask.cdap.etl.datapipeline;
+package co.cask.cdap.datapipeline;
 
 import co.cask.cdap.api.workflow.WorkflowConfigurer;
-import co.cask.cdap.api.workflow.WorkflowForkConfigurer;
 
 /**
- * Adds workflow programs.
- * This is required because {@link WorkflowForkConfigurer} doesn't extend {@link WorkflowConfigurer}.
+ * Adds programs on the workflow trunk.
  */
-public interface WorkflowProgramAdder {
+public class TrunkProgramAdder implements WorkflowProgramAdder {
+  private final WorkflowConfigurer configurer;
 
-  void addMapReduce(String name);
+  public TrunkProgramAdder(WorkflowConfigurer configurer) {
+    this.configurer = configurer;
+  }
 
-  void addSpark(String name);
+  @Override
+  public void addMapReduce(String name) {
+    configurer.addMapReduce(name);
+  }
+
+  @Override
+  public void addSpark(String name) {
+    configurer.addSpark(name);
+  }
 }

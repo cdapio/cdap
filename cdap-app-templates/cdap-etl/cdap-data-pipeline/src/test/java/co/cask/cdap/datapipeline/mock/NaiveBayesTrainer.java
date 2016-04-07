@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.etl.datapipeline.mock;
+package co.cask.cdap.datapipeline.mock;
 
 import co.cask.cdap.api.annotation.Description;
 import co.cask.cdap.api.annotation.Name;

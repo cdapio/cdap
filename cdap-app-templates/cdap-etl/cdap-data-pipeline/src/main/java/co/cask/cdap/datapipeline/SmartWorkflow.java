@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.etl.datapipeline;
+package co.cask.cdap.datapipeline;
 
 import co.cask.cdap.api.app.ApplicationConfigurer;
 import co.cask.cdap.api.data.schema.Schema;
