@@ -512,7 +512,7 @@ For Kerberos-enabled Hadoop clusters:
     
     rm -rf <YARN.NODEMANAGER.LOCAL-DIRS>/usercache/cdap
   
-  (As ``yarn.nodemanager.local-dirs` can be a comma-separated list of directories, you may
+  (As ``yarn.nodemanager.local-dirs`` can be a comma-separated list of directories, you may
   need to run this command multiple times, once for each entry.)
   
   If, for example, the setting for ``yarn.nodemanager.local-dirs`` is ``/yarn/nm``, you would use::
