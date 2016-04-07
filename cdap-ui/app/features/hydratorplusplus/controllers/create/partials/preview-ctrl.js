@@ -15,8 +15,11 @@
  */
 
 class HydratorPlusPlusPreviewTabCtrl {
-  constructor(HydratorPlusPlusNodeConfigStore) {
+  constructor(HydratorPlusPlusNodeConfigStore, myPipelineApi, $state, $scope) {
     this.HydratorPlusPlusNodeConfigStore = HydratorPlusPlusNodeConfigStore;
+    this.myPipelineApi = myPipelineApi;
+    this.$state = $state;
+    this.$scope = $scope;
 
     this.HydratorPlusPlusNodeConfigStore.registerOnChangeListener(this.setState.bind(this));
 
@@ -28,7 +31,7 @@ class HydratorPlusPlusPreviewTabCtrl {
   }
 }
 
-HydratorPlusPlusPreviewTabCtrl.$inject = ['HydratorPlusPlusNodeConfigStore'];
+HydratorPlusPlusPreviewTabCtrl.$inject = ['HydratorPlusPlusNodeConfigStore', 'myPipelineApi', '$state' ,'$scope'];
 
 angular.module(`${PKG.name}.feature.hydratorplusplus`)
   .controller('HydratorPlusPlusPreviewTabCtrl', HydratorPlusPlusPreviewTabCtrl);

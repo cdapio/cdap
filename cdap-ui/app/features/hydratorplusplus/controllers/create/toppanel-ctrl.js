@@ -27,7 +27,8 @@ class HydratorPlusPlusTopPanelCtrl{
     this.canvasOperations = [
       {
         name: 'Preview',
-        icon: 'fa fa-eye'
+        icon: 'fa fa-eye',
+        fn: this.onPreview.bind(this)
       },
       {
         name: 'Export',
@@ -142,6 +143,11 @@ class HydratorPlusPlusTopPanelCtrl{
   }
   onPublish() {
     this.HydratorPlusPlusConfigActions.publishPipeline();
+  }
+
+  onPreview() {
+    this.DAGPlusPlusNodesActionsFactory.resetSelectedNode();
+    this.HydratorPlusPlusConfigActions.previewPipeline();
   }
 }
 

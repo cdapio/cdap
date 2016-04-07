@@ -31,6 +31,7 @@ angular.module(PKG.name + '.services')
         postActionDetailFetch = pluginFetchBase + '/plugins/:pluginName',
         artifactPropertiesPath = '/namespaces/:namespace/artifacts/:artifactName/versions/:artifactVersion/properties',
         pluginMethodsPath = '/namespaces/:namespace/artifacts/:artifactName/versions/:version/plugintypes/:pluginType/plugins/:pluginName/methods/:methodName';
+        previewPath = '/namespaces/:namespace/artifacts/:artifactName/versions/:artifactVersion/plugintypes/:pluginType/plugins/:pluginName/methods/preview?scope=system';
 
 
     return $resource(
@@ -77,6 +78,7 @@ angular.module(PKG.name + '.services')
         getPluginMethod: myHelpers.getConfig('GET', 'REQUEST', pluginMethodsPath, false, { suppressErrors: true }),
         putPluginMethod: myHelpers.getConfig('PUT', 'REQUEST', pluginMethodsPath, false, { suppressErrors: true }),
         deletePluginMethod: myHelpers.getConfig('DELETE', 'REQUEST', pluginMethodsPath, false, { suppressErrors: true })
+        preview: myHelpers.getConfig('POST', 'REQUEST', previewPath, true, { suppressErrors: true })
       }
     );
   });

@@ -156,6 +156,10 @@ class HydratorPlusPlusConfigActions {
       });
 
   }
+
+  previewPipeline() {
+    this.dispatcher.dispatch('onPreviewPipeline');
+  }
 }
 
 HydratorPlusPlusConfigActions.$inject = ['HydratorPlusPlusConfigDispatcher', 'myPipelineApi', '$state', 'HydratorPlusPlusConfigStore', 'mySettings', 'HydratorPlusPlusConsoleActions', 'EventPipe', 'myAppsApi', 'GLOBALS', 'myHelpers', '$stateParams'];

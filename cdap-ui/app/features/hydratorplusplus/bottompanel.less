@@ -705,6 +705,26 @@ body.theme-cdap.state-hydratorplusplus {
   }
 
   div.preview-tab {
-    padding: 0 10px 20px 10px;
+    .bottompanel-body {
+      &.empty {
+        padding-top: 20px;
+      }
+
+      padding: 0 10px;
+
+      .col-xs-6 {
+        &:first-child {
+          border-right: 1px solid #cdcdcd;
+        }
+        padding-top: 10px;
+        min-height: ~"-moz-calc(60vh - 113px - 41px)";
+        min-height: ~"-webkit-calc(60vh - 113px - 41px)";
+        min-height: ~"calc(60vh - 113px - 41px)";
+
+        .no-records {
+          margin-top: 50px;
+        }
+      }
+    }
   }
 }
