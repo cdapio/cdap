@@ -38,8 +38,8 @@ to use the namespace *my_namespace*, you would replace ``default`` with ``my_nam
 	http://localhost:10000/v3/namespaces/my_namespace/apps...
 
 
-Accessing CLI, curl and the SDK bin
------------------------------------ 
+Accessing CLI, curl, and the SDK bin
+------------------------------------ 
 
 - For brevity in the commands given below, we will simply use ``cdap-cli.sh`` for the CDAP
   Command Line Interface. Substitute the actual path of ``./<CDAP-SDK-HOME>/bin/cdap-cli.sh``,

@@ -85,13 +85,13 @@ GitHub. If you download the zip file, then the artifact is already built and pac
   .. Linux
 
   $ cd <CDAP-SDK-HOME>
-  $ curl -w"\n" -O -X GET "http://repository.cask.co/downloads/co/cask/cdap/apps/|cdap-apps-version|/cdap-wise-|cdap-apps-version|.zip
+  $ curl -w"\n" -O -X GET "http://repository.cask.co/downloads/co/cask/cdap/apps/|cdap-apps-version|/cdap-wise-|cdap-apps-version|.zip"
   $ unzip cdap-wise-|cdap-apps-version|.zip
 
   .. Windows
   
   > cd <CDAP-SDK-HOME>
-  > curl -O -X GET "http://repository.cask.co/downloads/co/cask/cdap/apps/|cdap-apps-version|/cdap-wise-|cdap-apps-version|.zip
+  > curl -O -X GET "http://repository.cask.co/downloads/co/cask/cdap/apps/|cdap-apps-version|/cdap-wise-|cdap-apps-version|.zip"
   > jar xf cdap-wise-|cdap-apps-version|.zip
 
             
@@ -103,9 +103,10 @@ the artifact with these commands:
   $ git clone https://github.com/caskdata/cdap-apps --branch |cdap-apps-compatibile-version|
   $ cd cdap-apps/Wise
   $ mvn clean package -DskipTests
+  $ cd <CDAP-SDK-HOME>
 
 
-In both cases (downloading the artifact or building from source), the artifact is in the
+In both cases (downloading the artifact or building from source), the artifact is in a
 ``target/`` directory with the file name:
 
 .. container:: highlight
@@ -137,8 +138,18 @@ or using ``curl`` to directly make an HTTP request:
     
     Artifact added successfully
 
-(If you cloned the source code and built the app, you'll need to adjust the above paths to
-include the ``cdap-apps/Wise`` directory.)
+If you cloned the source code and built the app, you'll need to adjust the above paths to
+include the ``cdap-apps/Wise`` directory, such as:
+
+.. tabbed-parsed-literal::
+
+    $ cdap-cli.sh load artifact cdap-apps/Wise/target/cdap-wise-|cdap-apps-version|.jar 
+
+    or
+
+    $ curl -w"\n" localhost:10000/v3/namespaces/default/artifacts/cdap-wise \
+    --data-binary @cdap-apps/Wise/target/cdap-wise-|cdap-apps-version|.jar
+
 
 Once the artifact has been added to CDAP, you can create an application using that artifact.
 You can create the application by using the CLI:
@@ -163,22 +174,31 @@ or by using ``curl``:
 
 Starting Real-time Processing
 =============================
-Now that the application is deployed, we can start the real-time processing::
+Now that the application is deployed, we can start the real-time processing:
+
+.. tabbed-parsed-literal::
 
   $ cdap-cli.sh start flow Wise.WiseFlow
+  
   Successfully started Flow 'WiseFlow' of application 'Wise' with stored runtime arguments '{}'
 
 This starts the flow named *WiseFlow,* which listens for log events from web servers to
-analyze them in real time. Another way to start the flow is using ``curl``::
+analyze them in real time. Another way to start the flow is using ``curl``:
 
-  $ curl -w"\n" -X POST localhost:10000/v3/namespaces/default/apps/Wise/flows/WiseFlow/start
+.. tabbed-parsed-literal::
 
-At any time, you can find out whether the flow is running::
+  $ curl -w"\n" -X POST "localhost:10000/v3/namespaces/default/apps/Wise/flows/WiseFlow/start"
+
+At any time, you can find out whether the flow is running:
+
+.. tabbed-parsed-literal::
 
   $ cdap-cli.sh get flow status Wise.WiseFlow
+  
   RUNNING
   
-  $ curl -w"\n" localhost:10000/v3/namespaces/default/apps/Wise/flows/WiseFlow/status
+  $ curl -w"\n" "localhost:10000/v3/namespaces/default/apps/Wise/flows/WiseFlow/status"
+  
   {"status":"RUNNING"}
 
 
@@ -186,13 +206,17 @@ Injecting Data
 ==============
 The *WiseFlow* uses a stream to receive log events from Web servers. The stream has a REST
 endpoint used to ingest data with HTTP requests, and you can do that using the
-Command Line Interface::
+Command Line Interface:
+
+.. tabbed-parsed-literal::
 
   $ cdap-cli.sh send stream logEventStream \
-    \''255.255.255.185 - - [23/Sep/2014:11:45:38 -0400] '\
+    ''255.255.255.185 - - [23/Sep/2014:11:45:38 -0400] '\
     '"GET /cdap.html HTTP/1.0" 401 2969 " " "Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1)"'\'
 
-Or, you can use an HTTP request::
+Or, you can use an HTTP request:
+
+.. tabbed-parsed-literal::
 
   $ curl -w"\n" localhost:10000/v3/namespaces/default/streams/logEventStream \
     -d '255.255.255.185 - - [23/Sep/2014:11:45:38 -0400] "GET /cdap.html HTTP/1.0" \ 
@@ -203,9 +227,8 @@ a multi-line command), a file with sample web log events is included in the Wise
 application source. The CDAP CLI can read it line-by-line and submit them as events
 to the stream. Use the CLI to send the events to the stream:
 
-.. container:: highlight
+.. tabbed-parsed-literal::
 
-  .. parsed-literal::
     $ cdap-cli.sh load stream logEventStream cdap-wise-|cdap-apps-version|/resources/apache.accesslog text/plain
     
 This will run for a number of seconds until all events are inserted.
