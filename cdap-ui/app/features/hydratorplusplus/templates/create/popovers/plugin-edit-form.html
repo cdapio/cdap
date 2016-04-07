@@ -40,6 +40,10 @@
       </h3>
       <p>{{HydratorPlusPlusNodeConfigCtrl.state.node.description}}</p>
     </div>
+
+    <div class="pull-right" ng-if="HydratorPlusPlusNodeConfigCtrl.state.isTransform">
+      <button class="btn btn-default" ng-click="HydratorPlusPlusNodeConfigCtrl.testPlugin()">Test</button>
+    </div>
   </div>
 
   <div class="bottompanel-body" ng-class="{'modal-sink': HydratorPlusPlusNodeConfigCtrl.state.node.type === 'sink'}">

@@ -28,6 +28,8 @@ class HydratorPlusPlusPreviewTabCtrl {
 
   setState() {
     this.node = this.HydratorPlusPlusNodeConfigStore.getState().node;
+
+    console.log('node', this.node);
   }
 }
 

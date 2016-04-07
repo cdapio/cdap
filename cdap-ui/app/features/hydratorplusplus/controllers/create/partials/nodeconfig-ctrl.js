@@ -15,7 +15,7 @@
  */
 
 class HydratorPlusPlusNodeConfigCtrl {
-  constructor(HydratorPlusPlusNodeConfigStore, $scope, $timeout, $state, HydratorPlusPlusPluginConfigFactory, EventPipe, GLOBALS, HydratorPlusPlusConfigActions, myHelpers, NonStorePipelineErrorFactory) {
+  constructor(HydratorPlusPlusNodeConfigStore, $scope, $timeout, $state, HydratorPlusPlusPluginConfigFactory, EventPipe, GLOBALS, HydratorPlusPlusConfigActions, myHelpers, NonStorePipelineErrorFactory, $uibModal, HydratorPlusPlusHydratorService) {
 
     this.$scope = $scope;
     this.$timeout = $timeout;
@@ -28,6 +28,8 @@ class HydratorPlusPlusNodeConfigCtrl {
     this.HydratorPlusPlusConfigActions = HydratorPlusPlusConfigActions;
     this.NonStorePipelineErrorFactory = NonStorePipelineErrorFactory;
     this.requiredPropertyError = this.GLOBALS.en.hydrator.studio.error['GENERIC-MISSING-REQUIRED-FIELDS'];
+    this.$uibModal = $uibModal;
+    this.HydratorPlusPlusHydratorService = HydratorPlusPlusHydratorService;
     this.showPropagateConfirm = false; // confirmation dialog in node config for schema propagation.
     this.inputSchemaRowLimit = 15;
     this.loadNextInputSchemaRows = _.debounce(this.doLoadNextSetOfInputSchemaRows.bind(this));
@@ -265,12 +267,75 @@ class HydratorPlusPlusNodeConfigCtrl {
       error.push('There are two or more fields with the same name.');
     }
   }
+
   doLoadNextSetOfInputSchemaRows() {
     this.inputSchemaRowLimit += 10;
   }
+
+  testPlugin() {
+    let node = this.HydratorPlusPlusNodeConfigStore.getState().node;
+
+    let inputSchema = this.HydratorPlusPlusHydratorService.formatOutputSchema(node.inputSchema);
+
+    this.$uibModal.open({
+      templateUrl: '/assets/features/hydratorplusplus/templates/partial/pluginTest.html',
+      controller: ['input', 'nodeInfo', '$state', 'myPipelineApi', function (input, nodeInfo, $state, myPipelineApi) {
+
+        var vm = this;
+
+        vm.inputSchema = input;
+        vm.node = nodeInfo;
+        vm.inputRecord = {};
+        vm.loading = false;
+        vm.previewData = null;
+
+        vm.preview = function () {
+          vm.loading = true;
+          let params = {
+            namespace: $state.params.namespace,
+            artifactName: vm.node.plugin.artifact.name,
+            artifactVersion: vm.node.plugin.artifact.version,
+            pluginType: vm.node.type,
+            pluginName: vm.node.plugin.name,
+          };
+
+          let body = {
+            inputSchema: JSON.parse(vm.inputSchema),
+            inputRecord: JSON.parse(vm.inputRecord),
+            properties: vm.node.plugin.properties
+          };
+
+          myPipelineApi.preview(params, body)
+            .$promise
+            .then((res) => {
+              vm.previewData = res[0];
+              vm.loading = false;
+            }, (err) => {
+              console.log('err', err);
+              vm.loading = false;
+            });
+        };
+
+
+      }],
+      controllerAs: 'PluginTestController',
+      keyboard: true,
+      size: 'lg',
+      backdrop: true,
+      windowTopClass: 'hydrator-modal preview-data',
+      resolve: {
+        input: function () {
+          return inputSchema;
+        },
+        nodeInfo: function () {
+          return node;
+        }
+      }
+    });
+  }
 }
 
-HydratorPlusPlusNodeConfigCtrl.$inject = ['HydratorPlusPlusNodeConfigStore', '$scope', '$timeout', '$state', 'HydratorPlusPlusPluginConfigFactory', 'EventPipe', 'GLOBALS', 'HydratorPlusPlusConfigActions', 'myHelpers', 'NonStorePipelineErrorFactory'];
+HydratorPlusPlusNodeConfigCtrl.$inject = ['HydratorPlusPlusNodeConfigStore', '$scope', '$timeout', '$state', 'HydratorPlusPlusPluginConfigFactory', 'EventPipe', 'GLOBALS', 'HydratorPlusPlusConfigActions', 'myHelpers', 'NonStorePipelineErrorFactory', '$uibModal', 'HydratorPlusPlusHydratorService'];
 
 angular.module(PKG.name + '.feature.hydratorplusplus')
   .controller('HydratorPlusPlusNodeConfigCtrl', HydratorPlusPlusNodeConfigCtrl);
