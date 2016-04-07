@@ -57,7 +57,6 @@ import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
-import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.junit.After;
@@ -600,39 +599,40 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
 
     Map<String, String> streamSystemProperties = getProperties(streamId, MetadataScope.SYSTEM);
     // Verify create time exists, and is within the past hour
-    Assert.assertTrue("Stream create time does not exist", streamSystemProperties.containsKey("createtime"));
-    long createTime = Long.parseLong(streamSystemProperties.get("createtime"));
+    final String creationTime = "creation-time";
+    String description = "description";
+    String schema = "schema";
+    String ttl = "ttl";
+    Assert.assertTrue("Expected creation time to exist but it does not",
+                      streamSystemProperties.containsKey(creationTime));
+    long createTime = Long.parseLong(streamSystemProperties.get(creationTime));
     Assert.assertTrue("Stream create time should be within the last hour - " + createTime,
                       createTime > System.currentTimeMillis() - TimeUnit.HOURS.toMillis(1));
 
-    // Now remove create time and assert all other system properties
     Assert.assertEquals(
-      ImmutableMap.of("schema",
+      ImmutableMap.of(schema,
                       Schema.recordOf("stringBody",
                                       Schema.Field.of("body",
                                                       Schema.of(Schema.Type.STRING))).toString(),
-                      "ttl", String.valueOf(Long.MAX_VALUE),
-                      "description", "test stream"
+                      ttl, String.valueOf(Long.MAX_VALUE),
+                      description, "test stream",
+                      creationTime, String.valueOf(createTime)
       ),
-      Maps.filterEntries(streamSystemProperties, new Predicate<Map.Entry<String, String>>() {
-        @Override
-        public boolean apply(Map.Entry<String, String> input) {
-          return !"createtime".equals(input.getKey());
-        }
-      }));
+      streamSystemProperties
+    );
 
-    // Update stream properties and verify metadata got updated (except create time)
+    // Update stream properties and verify metadata got updated (except creation time and description)
     long newTtl = 100000L;
     streamClient.setStreamProperties(streamId, new StreamProperties(newTtl, null, null));
     streamSystemProperties = getProperties(streamId, MetadataScope.SYSTEM);
     Assert.assertEquals(
-      ImmutableMap.of("schema",
+      ImmutableMap.of(schema,
                       Schema.recordOf("stringBody",
                                       Schema.Field.of("body",
                                                       Schema.of(Schema.Type.STRING))).toString(),
-                      "ttl", String.valueOf(newTtl * 1000),
-                      "description", "test stream",
-                      "createtime", String.valueOf(createTime)
+                      ttl, String.valueOf(newTtl * 1000),
+                      description, "test stream",
+                      creationTime, String.valueOf(createTime)
       ),
       streamSystemProperties
     );
@@ -650,7 +650,7 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
     Set<String> viewSystemTags = getTags(view, MetadataScope.SYSTEM);
     Assert.assertEquals(ImmutableSet.of("view", AllProgramsApp.STREAM_NAME), viewSystemTags);
     Map<String, String> viewSystemProperties = getProperties(view, MetadataScope.SYSTEM);
-    Assert.assertEquals(viewSchema.toString(), viewSystemProperties.get("schema"));
+    Assert.assertEquals(viewSchema.toString(), viewSystemProperties.get(schema));
     ImmutableSet<String> viewUserTags = ImmutableSet.of("viewTag");
     addTags(view, viewUserTags);
     Assert.assertEquals(
@@ -670,8 +670,8 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
 
     Map<String, String> dsSystemProperties = getProperties(datasetInstance, MetadataScope.SYSTEM);
     // Verify create time exists, and is within the past hour
-    Assert.assertTrue("Dataset create time does not exist", dsSystemProperties.containsKey("createtime"));
-    createTime = Long.parseLong(dsSystemProperties.get("createtime"));
+    Assert.assertTrue("Expected creation time to exist but it does not", dsSystemProperties.containsKey(creationTime));
+    createTime = Long.parseLong(dsSystemProperties.get(creationTime));
     Assert.assertTrue("Dataset create time should be within the last hour - " + createTime,
                       createTime > System.currentTimeMillis() - TimeUnit.HOURS.toMillis(1));
 
@@ -679,14 +679,11 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
     Assert.assertEquals(
       ImmutableMap.of(
         "type", KeyValueTable.class.getName(),
-        "description", "test dataset"
+        description, "test dataset",
+        creationTime, String.valueOf(createTime)
       ),
-      Maps.filterEntries(dsSystemProperties, new Predicate<Map.Entry<String, String>>() {
-        @Override
-        public boolean apply(Map.Entry<String, String> input) {
-          return !"createtime".equals(input.getKey());
-        }
-      }));
+      dsSystemProperties
+    );
 
     //Update properties, and make sure that system metadata gets updated (except create time)
     datasetClient.update(datasetInstance, ImmutableMap.of(Table.PROPERTY_TTL, "100000"));
@@ -694,9 +691,9 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
     Assert.assertEquals(
       ImmutableMap.of(
         "type", KeyValueTable.class.getName(),
-        "description", "test dataset",
-        "ttl", "100000",
-        "createtime", String.valueOf(createTime)
+        description, "test dataset",
+        ttl, "100000",
+        creationTime, String.valueOf(createTime)
       ),
       dsSystemProperties
     );
