@@ -34,52 +34,79 @@ in real time, and computes the bounce ratio of each web page encountered in batc
 bounce rate is the percentage of views that are not followed by another view on the same
 site.)
 
-Convention
-----------
-In the examples that follow, for brevity we will simply use ``cdap-cli.sh`` for the
-CDAP Command Line Interface. Substitute the actual path of
-``./<CDAP-SDK-HOME>/bin/cdap-cli.sh``, or ``<CDAP-SDK-HOME>\bin\cdap-cli.bat`` on Windows,
-as appropriate. A Windows-version of the application ``curl`` is included in the CDAP SDK as
-``libexec\bin\curl.exe``; substitute it for the examples shown below.
+Conventions
+-----------
+
+In the examples and commands that follow, for brevity we will use these conventions:
+
+- ``<CDAP-SDK-HOME>`` is the directory that you have installed the CDAP Standalone SDK, either
+  on a UNIX-type system or Windows.
+  
+- The `CDAP Command Line Interface (CLI) <http://docs.cask.co/cdap/current/en/reference-manual/cli-api.html>`__
+  is included in the SDK in the ``bin`` directory, either at ``bin/cdap-cli.sh`` or |---|
+  on Windows |---| ``bin\cdap-cli.bat``. The CLI allows you to quickly access CDAP
+  facilities from a command line environment.
+  
+- For brevity in the commands given below, we will simply use ``cdap-cli.sh`` for the CDAP
+  Command Line Interface. Substitute the actual path of ``./<CDAP-SDK-HOME>/bin/cdap-cli.sh``,
+  or ``<CDAP-SDK-HOME>\bin\cdap-cli.bat`` on Windows, as appropriate. 
+
+- A Windows-version of the application ``curl`` is included in the CDAP SDK as
+  ``libexec\bin\curl.exe``; use it as a substitute for ``curl`` in examples.
+
+- If you add the SDK bin directory to your path, you can simplify the commands. From within
+  the CDAP-SDK-home directory, enter:
+  
+  .. tabbed-parsed-literal::
+  
+    .. Linux
+
+    $ export PATH=${PATH}:\`pwd\`/bin
+
+    .. Windows
+
+    > set path=%PATH%;%CD%\bin;%CD%\libexec\bin
+  
+  The Windows path has been augmented with a directory where the SDK includes
+  Windows-versions of commands such as ``curl``.
+  
+.. include:: ../_includes/windows-note.txt
 
 .. highlight:: console
 
 Downloading the Artifact
 ========================
-An artifact is a JAR file that contains Application code.
-You can either download the application zip archive that we have built for you, or
-you can pull the source code from GitHub. If you download the zip file, then the artifact
-is already built and packaged:
-
-.. container:: highlight
-
-  .. parsed-literal::
-    |$| cd <CDAP-SDK-HOME>
-    |$| curl -w'\\n' -O |http:|//repository.cask.co/downloads/co/cask/cdap/apps/|cdap-apps-version|/cdap-wise-|cdap-apps-version|.zip
-    |$| unzip cdap-wise-|cdap-apps-version|.zip
+An artifact is a JAR file that contains Application code. You can either download the
+application zip archive that we have built for you, or you can pull the source code from
+GitHub. If you download the zip file, then the artifact is already built and packaged:
 
 .. tabbed-parsed-literal::
 
-  $ cd cdap-sdk-|release|/examples
-  $ curl -O http://repository.cask.co/downloads/co/cask/cdap/apps/|cdap-apps-version|/cdap-wise-|cdap-apps-version|.zip
+  .. Linux
+
+  $ cd <CDAP-SDK-HOME>
+  $ curl -w"\n" -O -X GET "http://repository.cask.co/downloads/co/cask/cdap/apps/|cdap-apps-version|/cdap-wise-|cdap-apps-version|.zip
   $ unzip cdap-wise-|cdap-apps-version|.zip
 
-            
-If instead, you would like to clone the source code from GitHub, you can build and package
-the artifact with these commands::
+  .. Windows
+  
+  > cd <CDAP-SDK-HOME>
+  > curl -O -X GET "http://repository.cask.co/downloads/co/cask/cdap/apps/|cdap-apps-version|/cdap-wise-|cdap-apps-version|.zip
+  > jar xf cdap-wise-|cdap-apps-version|.zip
 
-  $ git clone https://github.com/caskdata/cdap-apps  
-  $ cd cdap-apps/Wise
-  $ mvn package -DskipTests
+            
+If instead you would like to clone the source code from GitHub, you can build and package
+the artifact with these commands:
 
 .. tabbed-parsed-literal::
 
   $ git clone https://github.com/caskdata/cdap-apps --branch |cdap-apps-compatibile-version|
   $ cd cdap-apps/Wise
-  $ mvn package -DskipTests
+  $ mvn clean package -DskipTests
 
 
-In both cases, the artifact is in the ``target/`` directory with the file name:
+In both cases (downloading the artifact or building from source), the artifact is in the
+``target/`` directory with the file name:
 
 .. container:: highlight
 
@@ -87,7 +114,7 @@ In both cases, the artifact is in the ``target/`` directory with the file name:
     cdap-wise-|cdap-apps-version|.jar
 
 **Learn More:** A detailed description of the application and its implementation is
-available in the :ref:`Web Analytics Application documentation <examples-web-analytics>`.
+available in the :ref:`Web Analytics Application <examples-web-analytics>` documentation.
 
 
 Deploying the Application
@@ -95,19 +122,19 @@ Deploying the Application
 You can load the artifact into your running instance of CDAP either by using the
 :ref:`CDAP Command Line Interface <reference:cli>`:
 
-.. container:: highlight
+.. tabbed-parsed-literal::
 
-  .. parsed-literal::
-    |$| cdap-cli.sh load artifact cdap-wise-|cdap-apps-version|/target/cdap-wise-|cdap-apps-version|.jar 
+    $ cdap-cli.sh load artifact cdap-wise-|cdap-apps-version|/target/cdap-wise-|cdap-apps-version|.jar 
+
     Successfully added artifact with name 'cdap-wise'
 
 or using ``curl`` to directly make an HTTP request:
 
-.. container:: highlight
+.. tabbed-parsed-literal::
 
-  .. parsed-literal::
-    |$| curl -w'\\n' localhost:10000/v3/namespaces/default/artifacts/cdap-wise \
+    $ curl -w"\n" localhost:10000/v3/namespaces/default/artifacts/cdap-wise \
     --data-binary @cdap-wise-|cdap-apps-version|/target/cdap-wise-|cdap-apps-version|.jar
+    
     Artifact added successfully
 
 (If you cloned the source code and built the app, you'll need to adjust the above paths to
@@ -116,19 +143,19 @@ include the ``cdap-apps/Wise`` directory.)
 Once the artifact has been added to CDAP, you can create an application using that artifact.
 You can create the application by using the CLI:
 
-.. container:: highlight
+.. tabbed-parsed-literal::
 
-  .. parsed-literal::
-    |$| cdap-cli.sh create app Wise cdap-wise |cdap-apps-version| user
+    $ cdap-cli.sh create app Wise cdap-wise |cdap-apps-version| user
+
     Successfully created application
 
 or by using ``curl``:
 
-.. container:: highlight
+.. tabbed-parsed-literal::
 
-  .. parsed-literal::
-    |$| curl -w'\\n' -X PUT -H "Content-Type: application/json" localhost:10000/v3/namespaces/default/apps/Wise \
-    -d '{ "artifact":{ "name": "cdap-wise", "version": "0.4.0", "scope": "user" } }'
+    $ curl -w"\n" -X PUT -H "Content-Type: application/json" localhost:10000/v3/namespaces/default/apps/Wise \
+    -d '{ "artifact":{ "name": "cdap-wise", "version": "|cdap-apps-version|", "scope": "user" } }'
+
     Deploy Complete
     
 **Learn More:** *You can also deploy artifacts and apps in one step by dragging and dropping their JARs on*
@@ -144,14 +171,14 @@ Now that the application is deployed, we can start the real-time processing::
 This starts the flow named *WiseFlow,* which listens for log events from web servers to
 analyze them in real time. Another way to start the flow is using ``curl``::
 
-  $ curl -w'\n' -X POST localhost:10000/v3/namespaces/default/apps/Wise/flows/WiseFlow/start
+  $ curl -w"\n" -X POST localhost:10000/v3/namespaces/default/apps/Wise/flows/WiseFlow/start
 
 At any time, you can find out whether the flow is running::
 
   $ cdap-cli.sh get flow status Wise.WiseFlow
   RUNNING
   
-  $ curl -w'\n' localhost:10000/v3/namespaces/default/apps/Wise/flows/WiseFlow/status
+  $ curl -w"\n" localhost:10000/v3/namespaces/default/apps/Wise/flows/WiseFlow/status
   {"status":"RUNNING"}
 
 
@@ -167,7 +194,7 @@ Command Line Interface::
 
 Or, you can use an HTTP request::
 
-  $ curl -w'\n' localhost:10000/v3/namespaces/default/streams/logEventStream \
+  $ curl -w"\n" localhost:10000/v3/namespaces/default/streams/logEventStream \
     -d '255.255.255.185 - - [23/Sep/2014:11:45:38 -0400] "GET /cdap.html HTTP/1.0" \ 
     401 2969 " " "Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1)"'
 
@@ -179,7 +206,7 @@ to the stream. Use the CLI to send the events to the stream:
 .. container:: highlight
 
   .. parsed-literal::
-    |$| cdap-cli.sh load stream logEventStream cdap-wise-|cdap-apps-version|/resources/apache.accesslog text/plain
+    $ cdap-cli.sh load stream logEventStream cdap-wise-|cdap-apps-version|/resources/apache.accesslog text/plain
     
 This will run for a number of seconds until all events are inserted.
 
@@ -231,7 +258,7 @@ you will need to go to find the events::
 The same query can be made using curl with an HTTP request. However, you'll need to adjust the
 start and end of the time range to milliseconds since the start of the Epoch::
 
-  $ curl -w'\n' localhost:10000/v3/namespaces/default/streams/logEventStream/events?start=1412386081819\&end=1412386081870\&limit=5
+  $ curl -w"\n" localhost:10000/v3/namespaces/default/streams/logEventStream/events?start=1412386081819\&end=1412386081870\&limit=5
   
 The current time in seconds since the start of the Epoch can be found with::
 
@@ -256,7 +283,7 @@ In this case, it is a flowlet named *parser*. Here is a ``curl`` command to retr
 number of events it has processed (the endTime and the value returned will vary, depending 
 on when and how many events you have sent)::
 
-  $ curl -w'\n' -X POST 'localhost:10000/v3/metrics/query?'\
+  $ curl -w"\n" -X POST 'localhost:10000/v3/metrics/query?'\
   'context=namespace.default.app.Wise.flow.WiseFlow.flowlet.parser'\
   '&metric=system.process.events.processed&aggregate=true'
   {"startTime":0,"endTime":1431467057,"series":[{"metricName":"system.process.events.processed","grouping":{},"data":[{"time":0,"value":3007}]}]}
@@ -275,7 +302,7 @@ repeating the injection of events into the stream:
 .. container:: highlight
 
   .. parsed-literal::
-    |$| cdap-cli.sh load stream logEventStream cdap-wise-|cdap-apps-version|/resources/apache.accesslog text/plain
+    $ cdap-cli.sh load stream logEventStream cdap-wise-|cdap-apps-version|/resources/apache.accesslog text/plain
   
 If you click on the right-most flowlet (*pageViewCount*) you see the current number of
 events being processed by each flowlet, in this case up to about 60 events per second:
@@ -296,9 +323,9 @@ can start the service using the Command Line Interface::
   
 Or, using a REST call::
 
-  $ curl -w'\n' -X POST localhost:10000/v3/namespaces/default/apps/Wise/services/WiseService/start
+  $ curl -w"\n" -X POST localhost:10000/v3/namespaces/default/apps/Wise/services/WiseService/start
   
-  $ curl -w'\n' localhost:10000/v3/namespaces/default/apps/Wise/services/WiseService/status
+  $ curl -w"\n" localhost:10000/v3/namespaces/default/apps/Wise/services/WiseService/status
   {"status":"RUNNING"}
 
 Now that the service is running, we can query it to find out the current count for a
@@ -311,13 +338,13 @@ particular IP address. For example, the data injected by our script contains thi
 To find out the total number of page views from this IP address, we can query the service
 using a REST call::
 
-  $ curl -w'\n' localhost:10000/v3/namespaces/default/apps/Wise/services/WiseService/methods/ip/255.255.255.249/count
+  $ curl -w"\n" localhost:10000/v3/namespaces/default/apps/Wise/services/WiseService/methods/ip/255.255.255.249/count
   42
 
 Or, we can find out how many times the URL ``/home.html`` was accessed from the same IP address
 (reformatted to fit)::
 
-  $ curl -w'\n' -X POST localhost:10000/v3/namespaces/default/apps/Wise/services/WiseService/methods/ip/255.255.255.249/count \
+  $ curl -w"\n" -X POST localhost:10000/v3/namespaces/default/apps/Wise/services/WiseService/methods/ip/255.255.255.249/count \
   -d "/home.html"
   6
   
@@ -377,7 +404,7 @@ CLI::
   
 or using a REST call::
 
-  $ curl -w'\n' -X POST localhost:10000/v3/namespaces/default/apps/Wise/mapreduce/BounceCountsMapReduce/start
+  $ curl -w"\n" -X POST localhost:10000/v3/namespaces/default/apps/Wise/mapreduce/BounceCountsMapReduce/start
 
 Note that this MapReduce program processes the exact same data that is consumed by the
 WiseFlow, namely, the log event stream, and both programs can run at the same time without
@@ -385,7 +412,7 @@ getting in each other’s way.
 
 We can inquire as to the status of the MapReduce::
 
-  $ curl -w'\n' localhost:10000/v3/namespaces/default/apps/Wise/mapreduce/BounceCountsMapReduce/status
+  $ curl -w"\n" localhost:10000/v3/namespaces/default/apps/Wise/mapreduce/BounceCountsMapReduce/status
   {"status":"RUNNING"}
 
 When the job has finished, the returned status will be *STOPPED*. Now we can query the

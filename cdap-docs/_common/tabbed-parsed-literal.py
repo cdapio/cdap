@@ -273,12 +273,12 @@ def convert(c, state={}):
             w.append(v)
             continue
         if v.find('/') != -1:
-            if DEBUG: print "found slash: IN_CURL: %s v: %s" % (IN_CURL, v)
-            if IN_CURL:
-                if v.startswith('localhost') or v.startswith('"localhost') or v.startswith('"http:') or v.startswith('"https:'):
-                    if DEBUG: print "IN_CURL and v.startswith..."
-                    w.append(v)
-                    continue
+            if DEBUG: print "found slash: IN_CLI: %s v: %s" % (IN_CLI, v)
+            if (v.startswith('localhost') or v.startswith('"localhost') or v.startswith('"http:') 
+                    or v.startswith('"https:') or v.startswith('http:') or v.startswith('https:')):
+                if DEBUG: print "v.startswith..."
+                w.append(v)
+                continue
             if IN_CLI:
                 if i > 0 and text_list[i-1] in ['body:file', 'artifact']:
                     if DEBUG: print "IN_CLI and path"
