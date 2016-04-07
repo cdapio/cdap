@@ -511,9 +511,12 @@ For Kerberos-enabled Hadoop clusters:
   command, substituting in the correct value of the YARN parameter ``yarn.nodemanager.local-dirs``::
     
     rm -rf <YARN.NODEMANAGER.LOCAL-DIRS>/usercache/cdap
-    
-  On Cloudera, the default setting for ``yarn.nodemanager.local-dirs`` is ``/yarn/nm``, resulting in::
+  
+  (As ``yarn.nodemanager.local-dirs` can be a comma-separated list of directories, you may
+  need to run this command multiple times, once for each entry.)
+  
+  If, for example, the setting for ``yarn.nodemanager.local-dirs`` is ``/yarn/nm``, you would use::
   
     rm -rf /yarn/nm/usercache/cdap
 
-  Restart CDAP after removing the usercache.
+  Restart CDAP after removing the usercache(s).
