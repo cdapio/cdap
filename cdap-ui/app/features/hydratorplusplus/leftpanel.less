@@ -237,6 +237,11 @@ body.theme-cdap.state-hydratorplusplus-create {
           left: 260px;
           top: 85px;
         }
+        .btn-left-panel-add-plugin {
+          position: absolute;
+          left: 220px;
+          top: 85px;
+        }
       }
       ~ .top-panel {
         div.side-panel.top {
@@ -411,6 +416,7 @@ body.theme-cdap.state-hydratorplusplus-create {
       }
       .hydrator-filter {
         padding: 5px 5px;
+        padding-left: 10px;
         background: #EEEEEE;
         min-height: 40px;
 
@@ -425,6 +431,12 @@ body.theme-cdap.state-hydratorplusplus-create {
       left: 100px;
       top: 121px;
     }
+    .btn-left-panel-add-plugin {
+      position: absolute;
+      left: 10px;
+      top: 121px;
+    }
+
     .badge {
       background-color: transparent;
       color: #666;
@@ -505,6 +517,36 @@ body.theme-cdap.state-hydratorplusplus-create {
             word-break: break-all;
           }
         }
+      }
+    }
+    &.load-artifact-modal {
+      .modal-content {
+        .inner-section {
+          border: 2px dotted grey;
+          height: inherit;
+          height: 200px;
+          border-radius: 8px;
+          padding-top: 50px;
+          background: transparent;
+          width: 100%;
+
+          .fa.fa-cloud-upload, .fa.fa-refresh.fa-spin {
+            font-size: 64px;
+          }
+          .upload-message {
+            margin-top: 20px;
+          }
+        }
+
+        .row {
+          height: 200px;
+        }
+      }
+    }
+
+    @media(min-width: @screen-md) {
+      .modal-lg {
+        width: 600px;
       }
     }
   }

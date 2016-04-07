@@ -328,6 +328,19 @@ class HydratorPlusPlusLeftPanelCtrl {
     }
     this.DAGPlusPlusNodesActionsFactory.addNode(config);
   }
+
+  loadArtifact() {
+    this.$uibModal
+      .open({
+        templateUrl: '/assets/features/hydratorplusplus/templates/create/popovers/load-artifact.html',
+        size: 'lg',
+        backdrop: 'static',
+        keyboard: false,
+        windowTopClass: 'load-artifact-modal hydrator-modal',
+        controller: 'LoadArtifactCtrl',
+        controllerAs: 'LoadArtifactCtrl'
+      });
+  }
 }
 
 HydratorPlusPlusLeftPanelCtrl.$inject = ['$scope', '$stateParams', 'rVersion', 'GLOBALS', 'HydratorPlusPlusLeftPanelStore', 'HydratorPlusPlusPluginActions', 'HydratorPlusPlusConfigStore', 'HydratorPlusPlusConfigActions', 'DAGPlusPlusFactory', 'DAGPlusPlusNodesActionsFactory', 'NonStorePipelineErrorFactory',  '$uibModal', 'myAlertOnValium', '$state', '$q', 'rArtifacts', '$timeout', 'PluginTemplatesDirActions', 'HydratorPlusPlusOrderingFactory'];

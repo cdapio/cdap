@@ -39,6 +39,9 @@
 <div class="btn btn-default btn-left-panel-toggle btn-sm pull-right" ng-click="HydratorPlusPlusStudioCtrl.toggleSidebar();">
   <span ng-class="{'fa-angle-double-left': HydratorPlusPlusStudioCtrl.isExpanded === true, 'fa-angle-double-right': HydratorPlusPlusStudioCtrl.isExpanded === false}" class="fa "></span>
 </div>
+<div class="btn btn-default btn-left-panel-add-plugin btn-sm pull-right" ng-click="HydratorPlusPlusLeftPanelCtrl.loadArtifact();">
+  <span class="fa fa-plus"></span>
+</div>
 
 <my-file-select class="sr-only"
                 id="pipeline-import-config-link"
