@@ -16,39 +16,26 @@
 
 package co.cask.cdap.internal.app.runtime.service;
 
-import co.cask.cdap.app.program.Program;
-import co.cask.cdap.app.program.Programs;
 import co.cask.cdap.app.runtime.AbstractProgramRuntimeService;
 import co.cask.cdap.app.runtime.ProgramController;
-import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunnerFactory;
-import co.cask.cdap.common.async.ExecutorUtils;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.internal.app.runtime.AbstractListener;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.InMemoryProgramLiveInfo;
 import co.cask.cdap.proto.NotRunningProgramLiveInfo;
 import co.cask.cdap.proto.ProgramLiveInfo;
 import co.cask.cdap.proto.ProgramType;
-import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
-import com.google.common.io.Closeables;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.inject.Inject;
-import org.apache.commons.io.FileUtils;
 import org.apache.twill.api.RunId;
-import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -60,66 +47,10 @@ public final class InMemoryProgramRuntimeService extends AbstractProgramRuntimeS
 
   private static final Logger LOG = LoggerFactory.getLogger(InMemoryProgramRuntimeService.class);
 
-  private final CConfiguration cConf;
-
   @Inject
   public InMemoryProgramRuntimeService(ProgramRunnerFactory programRunnerFactory, CConfiguration cConf,
                                        ArtifactRepository artifactRepository) {
     super(cConf, programRunnerFactory, artifactRepository);
-    this.cConf = cConf;
-  }
-
-  @Override
-  public RuntimeInfo run(Program program, ProgramOptions options) {
-    try {
-      File tmpDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR), cConf.get(Constants.AppFabric.TEMP_DIR));
-      final File destinationUnpackedJarDir = new File(tmpDir, String.format("%s.%s",
-                                                                      program.getName(), UUID.randomUUID().toString()));
-      Preconditions.checkState(!destinationUnpackedJarDir.exists());
-      destinationUnpackedJarDir.mkdirs();
-
-      final Program bundleJarProgram = Programs.createWithUnpack(cConf, program.getJarLocation(),
-                                                                 destinationUnpackedJarDir);
-      RuntimeInfo info = super.run(bundleJarProgram, options);
-      final ProgramController controller = info.getController();
-      controller.addListener(new AbstractListener() {
-
-        @Override
-        public void killed() {
-          try {
-            Closeables.closeQuietly(bundleJarProgram);
-            FileUtils.deleteDirectory(destinationUnpackedJarDir);
-          } catch (IOException e) {
-            LOG.warn("Failed to cleanup temporary program directory {}.", destinationUnpackedJarDir, e);
-          }
-        }
-
-        @Override
-        public void completed() {
-          try {
-            Closeables.closeQuietly(bundleJarProgram);
-            FileUtils.deleteDirectory(destinationUnpackedJarDir);
-          } catch (IOException e) {
-            LOG.warn("Failed to cleanup temporary program directory {}.", destinationUnpackedJarDir, e);
-          }
-        }
-
-        @Override
-        public void error(Throwable cause) {
-          try {
-            Closeables.closeQuietly(bundleJarProgram);
-            FileUtils.deleteDirectory(destinationUnpackedJarDir);
-          } catch (IOException e) {
-            LOG.warn("Failed to cleanup temporary program directory {}.", destinationUnpackedJarDir, e);
-          }
-        }
-      }, ExecutorUtils.newThreadExecutor(Threads.createDaemonThreadFactory("program-clean-up-%d")));
-
-      return info;
-
-    } catch (IOException e) {
-      throw new RuntimeException("Error unpackaging program " + program.getName());
-    }
   }
 
   @Override

@@ -40,7 +40,7 @@ import java.util.Set;
  */
 public final class ClassPathResources {
 
-  private static final Function<ClassPath.ClassInfo, String> CLASS_INFO_TO_CLASS_NAME =
+  public static final Function<ClassPath.ClassInfo, String> CLASS_INFO_TO_CLASS_NAME =
     new Function<ClassPath.ClassInfo, String>() {
       @Override
       public String apply(ClassPath.ClassInfo input) {

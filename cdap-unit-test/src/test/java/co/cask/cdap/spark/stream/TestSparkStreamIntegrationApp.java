@@ -21,10 +21,10 @@ import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.spark.AbstractSpark;
-import co.cask.cdap.api.spark.JavaSparkProgram;
-import co.cask.cdap.api.spark.SparkContext;
-import org.apache.hadoop.io.LongWritable;
+import co.cask.cdap.api.spark.JavaSparkExecutionContext;
+import co.cask.cdap.api.spark.JavaSparkMain;
 import org.apache.spark.api.java.JavaPairRDD;
+import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.PairFunction;
 import scala.Tuple2;
 
@@ -50,19 +50,19 @@ public class TestSparkStreamIntegrationApp extends AbstractApplication {
     }
   }
 
-  public static class SparkStreamProgram implements JavaSparkProgram {
+  public static class SparkStreamProgram implements JavaSparkMain {
     @Override
-    public void run(SparkContext context) {
-      JavaPairRDD<LongWritable, String> rdd = context.readFromStream("testStream", String.class);
-      JavaPairRDD<byte[], byte[]> resultRDD = rdd.mapToPair(new PairFunction<Tuple2<LongWritable, String>,
+    public void run(JavaSparkExecutionContext sec) throws Exception {
+      JavaSparkContext jsc = new JavaSparkContext();
+      JavaPairRDD<Long, String> rdd = sec.fromStream("testStream", String.class);
+      JavaPairRDD<byte[], byte[]> resultRDD = rdd.mapToPair(new PairFunction<Tuple2<Long, String>,
         byte[], byte[]>() {
         @Override
-        public Tuple2<byte[], byte[]> call(Tuple2<LongWritable, String> longWritableTextTuple2) throws Exception {
-          return new Tuple2<>(Bytes.toBytes(longWritableTextTuple2._2()),
-                                            Bytes.toBytes(longWritableTextTuple2._2()));
+        public Tuple2<byte[], byte[]> call(Tuple2<Long, String> tuple2) throws Exception {
+          return new Tuple2<>(Bytes.toBytes(tuple2._2()), Bytes.toBytes(tuple2._2()));
         }
       });
-      context.writeToDataset(resultRDD, "result", byte[].class, byte[].class);
+      sec.saveAsDataset(resultRDD, "result");
     }
   }
 }

@@ -17,18 +17,20 @@
 package co.cask.cdap.admin
 
 import co.cask.cdap.api.common.Bytes
-import co.cask.cdap.api.spark.{ScalaSparkProgram, SparkContext}
-import org.apache.spark.rdd.NewHadoopRDD
+import co.cask.cdap.api.spark.{SparkExecutionContext, SparkMain}
+import org.apache.spark.SparkContext
+import org.apache.spark.rdd.RDD
 
 /**
  * A Scala Spark program that counts the number of words and truncates its output before writing
  */
-class ScalaAdminSparkProgram extends ScalaSparkProgram {
+class ScalaAdminSparkProgram extends SparkMain {
 
-  override def run(sc: SparkContext) {
+  override def run(implicit sec: SparkExecutionContext) = {
+    val sc = new SparkContext
+
     // read the dataset
-    val input: NewHadoopRDD[Array[Byte], Array[Byte]] =
-      sc.readFromDataset("lines", classOf[Array[Byte]], classOf[Array[Byte]])
+    val input: RDD[(Array[Byte], Array[Byte])] = sc.fromDataset("lines")
 
     val result = input
       .values
@@ -38,9 +40,9 @@ class ScalaAdminSparkProgram extends ScalaSparkProgram {
       .map(pair => (Bytes.toBytes(pair._1), Bytes.toBytes(pair._2)))
 
     // truncate output dataset before writing
-    sc.getAdmin.truncateDataset("counts")
+    sec.getAdmin.truncateDataset("counts")
 
     // write to dataset
-    sc.writeToDataset(result, "counts", classOf[Array[Byte]], classOf[Array[Byte]])
+    result.saveAsDataset("counts")
   }
 }

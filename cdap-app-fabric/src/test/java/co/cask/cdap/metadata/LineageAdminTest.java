@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2016 Cask Data, Inc.
+ * Copyright © 2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -25,6 +25,7 @@ import co.cask.cdap.data2.metadata.lineage.Lineage;
 import co.cask.cdap.data2.metadata.lineage.LineageStore;
 import co.cask.cdap.data2.metadata.lineage.Relation;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
+import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -46,7 +47,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * Tests lineage computation.
  */
-public class LineageAdminTest extends MetadataTestBase {
+public class LineageAdminTest extends AppFabricTestBase {
   // Define data
   private final Id.Stream stream1 = Id.Stream.from("default", "stream1");
   private final Id.DatasetInstance dataset1 = Id.DatasetInstance.from("default", "dataset1");

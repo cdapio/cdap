@@ -17,15 +17,16 @@
 package co.cask.cdap.examples.wikipedia
 
 import java.text.BreakIterator
-import java.util
 
+import co.cask.cdap.api.TxRunnable
 import co.cask.cdap.api.common.Bytes
-import co.cask.cdap.api.dataset.table.{Table, Put}
-import co.cask.cdap.api.spark.SparkContext
-import co.cask.cdap.api.workflow.{Value, WorkflowToken}
-import org.apache.spark.{AccumulatorParam, Accumulator}
-import org.apache.spark.mllib.linalg.{Vectors, Vector}
-import org.apache.spark.rdd.{RDD, NewHadoopRDD}
+import co.cask.cdap.api.data.DatasetContext
+import co.cask.cdap.api.dataset.table.{Put, Table}
+import co.cask.cdap.api.spark.SparkExecutionContext
+import co.cask.cdap.api.workflow.Value
+import org.apache.spark.mllib.linalg.{Vector, Vectors}
+import org.apache.spark.rdd.RDD
+import org.apache.spark.{Accumulator, AccumulatorParam, SparkContext}
 
 import scala.collection.mutable
 
@@ -38,19 +39,13 @@ object ClusteringUtils {
    * Pre-processes normalized wikipedia data to return a corpus (an RDD[(Long,Vector)], a vocabulary
    * and a count of tokens.
    */
-  def preProcess(context: SparkContext): (RDD[(Long, Vector)], Array[String], Long) = {
-    val arguments: util.Map[String, String] = context.getRuntimeArguments
+  def preProcess(normalizedWikiDataset: RDD[(Array[Byte], Array[Byte])],
+                 arguments: Map[String, String]): (RDD[(Long, Vector)], Array[String], Long) = {
 
-    val normalizedWikiDataset: NewHadoopRDD[Array[Byte], Array[Byte]] =
-      context.readFromDataset(WikipediaPipelineApp.NORMALIZED_WIKIPEDIA_DATASET,
-        classOf[Array[Byte]], classOf[Array[Byte]])
+    val stopwordFile = arguments.getOrElse("stopwords.file", "")
+    val vocabSize = arguments.get("vocab.size").map(_.toInt).getOrElse(1000)
 
-    val sc: org.apache.spark.SparkContext = context.getOriginalSparkContext.asInstanceOf[org.apache.spark.SparkContext]
-
-    val stopwordFile = if (arguments.containsKey("stopwords.file")) arguments.get("stopwords.file") else ""
-    val vocabSize: Int = if (arguments.containsKey("vocab.size")) arguments.get("vocab.size").toInt else 1000
-
-    val tokenizer = new SimpleTokenizer(sc, stopwordFile)
+    val tokenizer = new SimpleTokenizer(normalizedWikiDataset.sparkContext, stopwordFile)
 
     val tokenized: RDD[(Long, IndexedSeq[String])] = normalizedWikiDataset.zipWithIndex().map {
       case (text, id) => id -> tokenizer.getWords(Bytes.toString(text._2))
@@ -102,32 +97,37 @@ object ClusteringUtils {
   /**
    * Store the clustering results in the specified dataset and update accumulators and workflow token.
    */
-  def storeResults(context: SparkContext, results: Array[Array[(String, Double)]], tableName: String) = {
-    val table: Table = context.getDataset(tableName)
-    val sc: org.apache.spark.SparkContext = context.getOriginalSparkContext.asInstanceOf[org.apache.spark.SparkContext]
+  def storeResults(sc: SparkContext, sec: SparkExecutionContext,
+                   results: Array[Array[(String, Double)]], tableName: String) = {
     val numRecords: Accumulator[Int] = sc.accumulator(0, "num.records")
-    val initial: Term = new Term("", 0.0)
+    val initial= new Term("", 0.0)
     val highestScore: Accumulator[Term] = sc.accumulator(initial, "highest.score")(HighestAccumulatorParam)
-    results.zipWithIndex.foreach { case (topic, i) =>
-      val put: Put = new Put(Bytes.toBytes(i))
-      topic.foreach { case (term, weight) =>
-        put.add(term, weight)
-        highestScore += new Term(term, weight)
-      }
-      table.put(put)
-      numRecords += 1
-    }
 
-    val token: WorkflowToken = context.getWorkflowToken
-    if (token != null) {
+    sec.execute(new TxRunnable {
+      override def run(context: DatasetContext) = {
+        val table: Table = context.getDataset(tableName)
+
+        results.zipWithIndex.foreach { case (topic, i) =>
+          val put: Put = new Put(Bytes.toBytes(i))
+          topic.foreach { case (term, weight) =>
+            put.add(term, weight)
+            highestScore += new Term(term, weight)
+          }
+          table.put(put)
+          numRecords += 1
+        }
+      }
+    })
+
+    sec.getWorkflowToken.foreach(token => {
       token.put("num.records", Value.of(numRecords.value))
       token.put("highest.score.term", highestScore.value.name)
       token.put("highest.score.value", Value.of(highestScore.value.weight))
-    }
+    })
   }
 }
 
-class SimpleTokenizer(sc: org.apache.spark.SparkContext, stopwordFile: String) extends Serializable {
+class SimpleTokenizer(sc: SparkContext, stopwordFile: String) extends Serializable {
 
   private val stopwords: Set[String] = if (stopwordFile.isEmpty) {
     Set.empty[String]

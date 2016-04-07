@@ -40,6 +40,10 @@
 
   <dependencies>
     <dependency>
+      <groupId>co.cask.cdap</groupId>
+      <artifactId>cdap-api-spark</artifactId>
+    </dependency>
+    <dependency>
       <groupId>org.scalanlp</groupId>
       <artifactId>breeze_2.10</artifactId>
       <version>0.9</version>

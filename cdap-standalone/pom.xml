@@ -48,20 +48,6 @@
       <artifactId>logback-classic</artifactId>
     </dependency>
 
-    <!-- Include spark runtime in standalone -->
-    <dependency>
-      <groupId>org.apache.spark</groupId>
-      <artifactId>spark-core_2.10</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.spark</groupId>
-      <artifactId>spark-sql_2.10</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.spark</groupId>
-      <artifactId>spark-mllib_2.10</artifactId>
-    </dependency>
-
     <dependency>
       <groupId>co.cask.cdap</groupId>
       <artifactId>cdap-api</artifactId>
@@ -214,6 +200,23 @@
         <additional.artifacts.config.pattern>**/target/*.json</additional.artifacts.config.pattern>
         <additional.artifacts.exclude.pattern>**/target/*-tests.jar</additional.artifacts.exclude.pattern>
       </properties>
+
+      <!-- Add dependencies on spark api and core. It just for making sure those artifacts are built before this -->
+      <dependencies>
+        <dependency>
+          <groupId>co.cask.cdap</groupId>
+          <artifactId>cdap-api-spark</artifactId>
+          <version>${project.version}</version>
+          <scope>provided</scope>
+        </dependency>
+        <dependency>
+          <groupId>co.cask.cdap</groupId>
+          <artifactId>cdap-spark-core</artifactId>
+          <version>${project.version}</version>
+          <scope>provided</scope>
+        </dependency>
+      </dependencies>
+
       <build>
         <plugins>
           <plugin>
@@ -396,6 +399,14 @@
                         <exclude>**/target/apidocs/**</exclude>
                         <exclude>**/target/stage-packaging*/**</exclude>
                       </excludes>
+                    </resource>
+                    <!-- Copy runtime extensions. Currently only has Spark -->
+                    <resource>
+                      <directory>${project.parent.basedir}/cdap-spark-core/target/libexec</directory>
+                      <targetPath>ext/runtimes/spark</targetPath>
+                      <includes>
+                        <include>*.jar</include>
+                      </includes>
                     </resource>
                   </resources>
                 </configuration>
