@@ -628,6 +628,9 @@ public class MetadataDataset extends AbstractDataset {
    * @param indexes {@link Set<String>} of indexes to store for this {@link MetadataEntry}
    */
   private void storeIndexes(Id.NamespacedId targetId, MetadataEntry entry, Set<String> indexes) {
+    // Delete existing indexes for targetId-key
+    deleteIndexes(targetId, entry.getKey());
+
     for (String index : indexes) {
       // store the index with key of the metadata
       indexedTable.put(getIndexPut(targetId, entry.getKey(), entry.getKey() + KEYVALUE_SEPARATOR + index));
