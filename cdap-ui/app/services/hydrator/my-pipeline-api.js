@@ -28,7 +28,8 @@ angular.module(PKG.name + '.services')
         pluginsFetchPath = pluginFetchBase + '?scope=system',
         extensionsFetchPath = extensionsFetchBase + '?scope=system',
         pluginDetailFetch = pluginFetchBase + '/plugins/:pluginName?scope=system',
-        artifactPropertiesPath = '/namespaces/:namespace/artifacts/:artifactName/versions/:artifactVersion/properties';
+        artifactPropertiesPath = '/namespaces/:namespace/artifacts/:artifactName/versions/:artifactVersion/properties',
+        pluginMethodsPath = '/namespaces/:namespace/artifacts/:artifactName/versions/:version/plugintypes/:pluginType/plugins/:pluginName/methods/:methodName';
 
 
     return $resource(
@@ -66,7 +67,8 @@ angular.module(PKG.name + '.services')
         get: myHelpers.getConfig('GET', 'REQUEST', pipelinePath),
         datasets: myHelpers.getConfig('GET', 'REQUEST', pipelinePath + '/datasets', true),
         streams: myHelpers.getConfig('GET', 'REQUEST', pipelinePath + '/streams', true),
-        action: myHelpers.getConfig('POST', 'REQUEST', pipelinePath + '/:action')
+        action: myHelpers.getConfig('POST', 'REQUEST', pipelinePath + '/:action'),
+        pluginMethod: myHelpers.getConfig('POST', 'REQUEST', pluginMethodsPath, true)
       }
     );
   });

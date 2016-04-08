@@ -44,6 +44,13 @@
                   <small class="text-danger" ng-if="!HydratorPlusPlusNodeConfigCtrl.state.node.warning && HydratorPlusPlusNodeConfigCtrl.state.node._backendProperties[field.name].required && !HydratorPlusPlusNodeConfigCtrl.state.node.plugin.properties[field.name]">{{::HydratorPlusPlusNodeConfigCtrl.requiredPropertyError}}</small>
                 </label>
 
+                <span ng-if="field['plugin-function']">
+                  <plugin-functions
+                    name="field['plugin-function']['method']"
+                    node="HydratorPlusPlusNodeConfigCtrl.state.node">
+                  </plugin-functions>
+                </span>
+
                 <div>
                   <div data-name="field"
                        class="my-widget-container"
