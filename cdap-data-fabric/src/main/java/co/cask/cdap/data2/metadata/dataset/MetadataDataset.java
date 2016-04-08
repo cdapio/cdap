@@ -390,7 +390,13 @@ public class MetadataDataset extends AbstractDataset {
    * @param targetId the {@link Id.NamespacedId} for which to remove the properties
    */
   public void removeProperties(Id.NamespacedId targetId) {
-    removeMetadata(targetId);
+    removeMetadata(targetId,
+                   new Predicate<String>() {
+                     @Override
+                     public boolean apply(String input) {
+                       return !TAGS_KEY.equals(input);
+                     }
+                   });
   }
 
   /**
@@ -399,7 +405,13 @@ public class MetadataDataset extends AbstractDataset {
    * @param targetId the {@link Id.NamespacedId} for which to remove the tags
    */
   public void removeTags(Id.NamespacedId targetId) {
-    removeMetadata(targetId);
+    removeMetadata(targetId,
+                   new Predicate<String>() {
+                     @Override
+                     public boolean apply(String input) {
+                       return TAGS_KEY.equals(input);
+                     }
+                   });
   }
 
   /**

@@ -499,6 +499,31 @@ public class MetadataDatasetTest {
   }
 
   @Test
+  public void testDelete() throws Exception {
+    dataset.setProperty(flow1, "key1", "value1");
+    dataset.setProperty(flow1, "key2", "value2");
+    dataset.addTags(flow1, "tag1", "tag2");
+
+    dataset.setProperty(app1, "key10", "value10");
+    dataset.setProperty(app1, "key12", "value12");
+    dataset.addTags(app1, "tag11", "tag12");
+
+    Assert.assertEquals(ImmutableMap.of("key1", "value1", "key2", "value2"), dataset.getProperties(flow1));
+    Assert.assertEquals(ImmutableSet.of("tag1", "tag2"), dataset.getTags(flow1));
+    Assert.assertEquals(ImmutableMap.of("key10", "value10", "key12", "value12"), dataset.getProperties(app1));
+    Assert.assertEquals(ImmutableSet.of("tag11", "tag12"), dataset.getTags(app1));
+
+    // Delete all tags for flow1, and delete all properties for app1
+    dataset.removeTags(flow1);
+    dataset.removeProperties(app1);
+
+    Assert.assertEquals(ImmutableMap.of("key1", "value1", "key2", "value2"), dataset.getProperties(flow1));
+    Assert.assertEquals(ImmutableSet.of(), dataset.getTags(flow1));
+    Assert.assertEquals(ImmutableMap.of(), dataset.getProperties(app1));
+    Assert.assertEquals(ImmutableSet.of("tag11", "tag12"), dataset.getTags(app1));
+  }
+
+  @Test
   public void testHistory() throws Exception {
     MetadataDataset dataset =
       getDataset(Id.DatasetInstance.from(DatasetFrameworkTestUtil.NAMESPACE_ID, "testHistory"));
