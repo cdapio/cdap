@@ -257,10 +257,10 @@
                     </resource>
                     <resource>
                       <directory>
-                        ${project.parent.basedir}/cdap-app-templates/cdap-etl/cdap-etl-data-pipeline/target
+                        ${project.parent.basedir}/cdap-app-templates/cdap-etl/cdap-data-pipeline/target
                       </directory>
                       <includes>
-                        <include>cdap-etl-data-pipeline-${project.version}.jar</include>
+                        <include>cdap-data-pipeline-${project.version}.jar</include>
                       </includes>
                     </resource>
                   </resources>

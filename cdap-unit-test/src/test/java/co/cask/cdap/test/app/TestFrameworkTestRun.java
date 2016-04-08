@@ -71,7 +71,6 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
@@ -291,11 +290,14 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
       }
     }, 5, TimeUnit.SECONDS, 10, TimeUnit.MILLISECONDS);
 
-    MapReduceManager mrManager = appManager.getMapReduceManager(AppWithPlugin.MAPREDUCE);
-    mrManager.start();
-    mrManager.waitForFinish(10, TimeUnit.MINUTES);
-    List<RunRecord> runRecords = mrManager.getHistory();
+    WorkflowManager workflowManager = appManager.getWorkflowManager(AppWithPlugin.WORKFLOW);
+    workflowManager.start();
+    workflowManager.waitForFinish(10, TimeUnit.MINUTES);
+    List<RunRecord> runRecords = workflowManager.getHistory();
     Assert.assertNotEquals(ProgramRunStatus.FAILED, runRecords.get(0).getStatus());
+    DataSetManager<KeyValueTable> workflowTableManager = getDataset(AppWithPlugin.WORKFLOW_TABLE);
+    String value = Bytes.toString(workflowTableManager.get().read("val"));
+    Assert.assertEquals(AppWithPlugin.TEST, value);
 
     // Testing Spark Plugins. First send some data to stream for the Spark program to process
     StreamManager streamManager = getStreamManager(AppWithPlugin.SPARK_STREAM);

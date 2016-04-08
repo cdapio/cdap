@@ -30,12 +30,12 @@
   <packaging>pom</packaging>
 
   <modules>
+    <module>cdap-data-pipeline</module>
     <module>cdap-etl-api</module>
     <module>cdap-etl-api-spark</module>
     <module>cdap-etl-archetypes</module>
     <module>cdap-etl-batch</module>
     <module>cdap-etl-core</module>
-    <module>cdap-etl-data-pipeline</module>
     <module>cdap-etl-proto</module>
     <module>cdap-etl-realtime</module>
     <module>cdap-etl-tools</module>

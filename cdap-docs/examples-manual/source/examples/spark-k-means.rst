@@ -36,6 +36,7 @@ of the application are tied together by the class ``SparkKMeansApp``:
 .. literalinclude:: /../../../cdap-examples/SparkKMeans/src/main/java/co/cask/cdap/examples/sparkkmeans/SparkKMeansApp.java
    :language: java
    :lines: 51-82
+   :append: . . .
 
 The *points* and *centers* ObjectStore Data Storage
 ---------------------------------------------------

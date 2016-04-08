@@ -35,7 +35,10 @@ import co.cask.cdap.api.spark.AbstractSpark;
 import co.cask.cdap.api.spark.JavaSparkExecutionContext;
 import co.cask.cdap.api.spark.JavaSparkMain;
 import co.cask.cdap.api.worker.AbstractWorker;
+import co.cask.cdap.api.workflow.AbstractWorkflow;
+import co.cask.cdap.api.workflow.WorkflowContext;
 import com.google.common.base.Charsets;
+import com.google.common.base.Throwables;
 import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.Job;
@@ -64,6 +67,8 @@ public class AppWithPlugin extends AbstractApplication {
   public static final String SPARK = "testSpark";
   public static final String SPARK_STREAM = "sparkStream";
   public static final String SPARK_TABLE = "sparkTable";
+  public static final String WORKFLOW = "testWorkflow";
+  public static final String WORKFLOW_TABLE = "workflowTable";
 
   @Override
   public void configure() {
@@ -72,6 +77,30 @@ public class AppWithPlugin extends AbstractApplication {
     addService(new ServiceWithPlugin());
     addSpark(new SparkWithPlugin());
     usePlugin("t1", "n1", "mrid", PluginProperties.builder().add(KEY, TEST).build());
+    addWorkflow(new WorkflowWithPlugin());
+  }
+
+  public static class WorkflowWithPlugin extends AbstractWorkflow {
+
+    @Override
+    protected void configure() {
+      setName(WORKFLOW);
+      addMapReduce(MAPREDUCE);
+      usePlugin("t1", "n1", "workflowplugin", PluginProperties.builder().add(KEY, TEST).build());
+      createDataset(WORKFLOW_TABLE, KeyValueTable.class);
+    }
+
+    @Override
+    public void destroy() {
+      WorkflowContext context = getContext();
+      KeyValueTable table = context.getDataset(WORKFLOW_TABLE);
+      try {
+        Object plugin = context.newPluginInstance("workflowplugin");
+        table.write("val", plugin.toString());
+      } catch (InstantiationException e) {
+        Throwables.propagate(e);
+      }
+    }
   }
 
   public static class ServiceWithPlugin extends AbstractService {

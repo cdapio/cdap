@@ -20,6 +20,7 @@ import co.cask.cdap.api.Predicate;
 import co.cask.cdap.api.ProgramLifecycle;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetProperties;
+import co.cask.cdap.internal.api.AbstractPluginConfigurable;
 
 import java.util.Map;
 
@@ -42,7 +43,8 @@ import java.util.Map;
  *
  * See the Purchase example application.
  */
-public abstract class AbstractWorkflow implements Workflow, ProgramLifecycle<WorkflowContext> {
+public abstract class AbstractWorkflow extends AbstractPluginConfigurable<WorkflowConfigurer>
+  implements Workflow, ProgramLifecycle<WorkflowContext> {
 
   private WorkflowConfigurer configurer;
   private WorkflowContext context;

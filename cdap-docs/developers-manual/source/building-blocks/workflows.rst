@@ -308,6 +308,7 @@ the :ref:`Wikipedia Pipeline <examples-wikipedia-data-pipeline>` example's ``Clu
 .. literalinclude:: /../../../cdap-examples/WikipediaPipeline/src/main/scala/co/cask/cdap/examples/wikipedia/ClusteringUtils.scala
    :language: scala
    :lines: 121-126
+   :dedent: 4
 
 Persisting the WorkflowToken
 ----------------------------
