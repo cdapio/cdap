@@ -539,3 +539,8 @@ div.code.code-tab {
     border-right: 1px solid #ddd;
     border-bottom: 1px solid #ddd;
 }
+
+div.tab-contents {
+    padding-bottom: 16px;
+}
+
