@@ -22,25 +22,27 @@ angular.module(PKG.name + '.commons')
       scope: {
         node: '='
       },
-      controller: function ($scope, $uibModal) {
+      controller: function ($scope, $uibModal, EventPipe) {
         console.log('node', $scope.node);
 
         var vm = this;
 
         vm.openModal = function () {
-          $uibModal.open({
+          var modal = $uibModal.open({
             templateUrl: 'plugin-functions/functions/get-schema/get-schema-modal.html',
             size: 'lg',
-            windowTopClass: 'hydrator-modal',
+            windowTopClass: 'hydrator-modal get-schema-modal',
             keyboard: true,
-            controller: function (nodeInfo, myPipelineApi, $state) {
+            controller: function ($scope, nodeInfo, myPipelineApi, $state) {
               var mvm = this;
 
-              mvm.node = nodeInfo;
+              mvm.node = angular.copy(nodeInfo);
+
+              mvm.query = mvm.node.plugin.properties.importQuery;
 
               mvm.fetchSchema = function () {
-                var config = angular.copy(mvm.node.plugin.properties);
-                config.query = config.importQuery;
+                var config = mvm.node.plugin.properties;
+                config.query = mvm.query;
                 delete config.importQuery;
 
                 var params = {
@@ -56,8 +58,25 @@ angular.module(PKG.name + '.commons')
                 myPipelineApi.pluginMethod(params, config)
                   .$promise
                   .then(function (res) {
-                    console.log('res', res);
+                    mvm.error = null;
+                    mvm.resolvedSchema = res.fields;
+                    mvm.schema = res.fields.filter(function (field) {
+                      if (angular.isArray(field.type)) {
+                        field.type = field.type[0];
+                        field.nullable = true;
+                      }
+                      return field;
+                    });
+                  }, function (err) {
+                    mvm.resolvedSchema = null;
+                    mvm.schema = null;
+
+                    mvm.error = err.data;
                   });
+              };
+
+              mvm.apply = function () {
+                $scope.$close(mvm.resolvedSchema);
               };
 
             },
@@ -67,6 +86,10 @@ angular.module(PKG.name + '.commons')
                 return $scope.node;
               }
             }
+          });
+
+          modal.result.then(function (schema) {
+            EventPipe.emit('schema.import', JSON.stringify(schema));
           });
         };
       },

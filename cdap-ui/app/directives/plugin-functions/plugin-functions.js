@@ -34,11 +34,6 @@ angular.module(PKG.name + '.commons')
         });
         element.append(fnElem);
         $compile(element)(scope);
-
-        // fieldset.append(angularElement);
-        // element.append(fieldset);
-        // element.removeAttr('widget-container');
-        // $compile(element)(scope);
       }
     };
   });
