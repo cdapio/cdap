@@ -110,6 +110,7 @@ public interface StreamManager {
    * Sends the content of a file to the stream. Use this to load events into a stream in batch.
    *
    * @param file the file to send to the stream
+   * @param contentType content type of the file
    * @throws IOException if there is an error writing to the stream
    */
   void send(File file, String contentType) throws Exception;
