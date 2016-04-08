@@ -520,7 +520,7 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
         PluginClass pluginClass = pluginsEntry.getValue();
         pluginInfos.add(new PluginInfo(
           pluginClass.getName(), pluginClass.getType(), pluginClass.getDescription(),
-          pluginClass.getClassName(), pluginArtifactSummary, pluginClass.getProperties()));
+          pluginClass.getClassName(), pluginArtifactSummary, pluginClass.getProperties(), pluginClass.getEndpoints()));
       }
       responder.sendJson(HttpResponseStatus.OK, pluginInfos);
     } catch (PluginNotExistsException e) {
