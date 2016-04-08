@@ -30,7 +30,7 @@ angular.module(`${PKG.name}.feature.hydratorplusplus`)
     this.jarLoadFailMessage = GLOBALS.en.hydrator.studio.info['ARTIFACT-UPLOAD-MESSAGE-JAR'];
     this.jsonLoadFailMessage = GLOBALS.en.hydrator.studio.info['ARTIFACT-UPLOAD-MESSAGE-JSON'];
 
-    var jarFile, jsonFile;
+    var jarFile, jsonFile, artifactExtends;
     this.openJARFileDialog = () => {
       document.getElementById('jar-import-config-link').click();
     };
@@ -86,10 +86,11 @@ angular.module(`${PKG.name}.feature.hydratorplusplus`)
           } catch(e) {
             throw e;
           }
-          if (!artifactJson.properties) {
+          if (!artifactJson.properties || !artifactJson.parents) {
             throw 'error';
           }
           jsonFile = artifactJson.properties;
+          artifactExtends = artifactJson.parents.reduce( (prev, curr) => `${prev}/${curr}`);
           this.jsonStatus = 1;
         },
         () => {
@@ -111,7 +112,13 @@ angular.module(`${PKG.name}.feature.hydratorplusplus`)
       this.myFileUploader.upload({
         path: '/namespaces/' + this.$stateParams.namespace + '/artifacts/' + this.artifactName,
         file: jarFile
-      } , 'application/octet-stream')
+      } , {
+        'Content-type': 'application/octet-stream',
+        'customHeader': {
+          'Artifact-Version': this.artifactVersion,
+          'Artifact-Extends': artifactExtends
+        }
+      })
         .then(
           () => this.myPipelineApi.loadJson(jsonParams, jsonFile).$promise,
           (err) => {
