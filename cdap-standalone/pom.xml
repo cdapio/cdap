@@ -27,7 +27,6 @@
     <version>3.4.0-SNAPSHOT</version>
   </parent>
 
-
   <artifactId>cdap-standalone</artifactId>
   <name>CDAP Standalone</name>
   <packaging>jar</packaging>
@@ -57,6 +56,12 @@
       <groupId>co.cask.cdap</groupId>
       <artifactId>cdap-common</artifactId>
       <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>co.cask.cdap</groupId>
+      <artifactId>cdap-kafka</artifactId>
+      <version>${project.version}</version>
+      <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>co.cask.cdap</groupId>
@@ -400,10 +405,17 @@
                         <exclude>**/target/stage-packaging*/**</exclude>
                       </excludes>
                     </resource>
-                    <!-- Copy runtime extensions. Currently only has Spark -->
+                    <!-- Copy runtime extensions. Currently only has Spark and Kafka (for audit logging) -->
                     <resource>
                       <directory>${project.parent.basedir}/cdap-spark-core/target/libexec</directory>
                       <targetPath>ext/runtimes/spark</targetPath>
+                      <includes>
+                        <include>*.jar</include>
+                      </includes>
+                    </resource>
+                    <resource>
+                      <directory>${project.parent.basedir}/cdap-kafka/target/libexec</directory>
+                      <targetPath>ext/runtimes/kafka</targetPath>
                       <includes>
                         <include>*.jar</include>
                       </includes>
