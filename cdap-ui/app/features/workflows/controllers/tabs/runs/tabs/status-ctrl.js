@@ -100,53 +100,21 @@ class WorkflowsRunsStatusController {
       .$promise
       .then( response => {
         this.runStatus = response.status;
-
-        var pastNodes = Object.keys(response.properties);
         this.runsCtrl.runs.selected.properties = response.properties;
 
-        var activeNodes = this.$filter('filter')(this.data.nodes , node => pastNodes.indexOf(node.nodeId) !== -1);
-
-        angular.forEach(activeNodes, node => {
-          var runid = response.properties[node.nodeId];
-          var mapreduceParams;
-
-          if (node.program.programType === 'MAPREDUCE') {
-            mapreduceParams = {
-              namespace: this.$state.params.namespace,
-              appId: this.$state.params.appId,
-              mapreduceId: node.program.programName,
-              runId: runid,
-              scope: this.$scope
-            };
-            this.myMapreduceApi.runDetail(mapreduceParams)
-              .$promise
-              .then( result => {
-                this.data.current[node.name] = result.status;
-                this.onChangeFlag += 1;
-              });
-          } else if (node.program.programType === 'SPARK') {
-
-            var sparkParams = {
-              namespace: this.$state.params.namespace,
-              appId: this.$state.params.appId,
-              sparkId: node.program.programName,
-              runId: runid,
-              scope: this.$scope
-            };
-
-            this.mySparkApi.runDetail(sparkParams)
-              .$promise
-              .then( (result) => {
-                this.data.current[node.name] = result.status;
-                this.onChangeFlag += 1;
-              });
-          }
-        });
+        this.myWorkFlowApi.getNodesState(runparams)
+          .$promise
+          .then( info => {
+            angular.forEach(info, (node, nodeName) => {
+              if (!node.nodeId) { return; }
+              this.data.current[nodeName + node.nodeId] = node.nodeStatus;
+              this.onChangeFlag += 1;
+            });
+          });
 
         if (['STOPPED', 'KILLED', 'COMPLETED', 'FAILED'].indexOf(this.runStatus) !== -1) {
           this.myWorkFlowApi.stopPollRunDetail(runparams);
         }
-
       });
 
   }
