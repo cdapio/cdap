@@ -24,13 +24,14 @@ angular.module(`${PKG.name}.feature.hydratorplusplus`)
     this.myAlertOnValium = myAlertOnValium;
     this.$state = $state;
     this.myFileUploader = myFileUploader;
-    this.artifactName = '';
-    this.artifactVersion = '';
     this.GLOBALS = GLOBALS;
     this.jarLoadFailMessage = GLOBALS.en.hydrator.studio.info['ARTIFACT-UPLOAD-MESSAGE-JAR'];
     this.jsonLoadFailMessage = GLOBALS.en.hydrator.studio.info['ARTIFACT-UPLOAD-MESSAGE-JSON'];
 
+    var artifactName = '';
+    var artifactVersion = '';
     var jarFile, jsonFile, artifactExtends;
+
     this.openJARFileDialog = () => {
       document.getElementById('jar-import-config-link').click();
     };
@@ -51,14 +52,14 @@ angular.module(`${PKG.name}.feature.hydratorplusplus`)
       jarFile = jar[0];
       let nameAndVersion = jar[0].name.split('.jar')[0];
       var {name, version} = getArtifactNameAndVersion(nameAndVersion);
-      this.artifactName = name;
-      this.artifactVersion = version;
+      artifactName = name;
+      artifactVersion = version;
       this.jarStatus = 1;
     };
     let getJsonContents = (file) => {
       let defer = this.$q.defer();
 
-      var reader = new FileReader();
+      let reader = new FileReader();
       reader.readAsText(file, 'UTF-8');
 
       reader.onload = function (evt) {
@@ -95,7 +96,6 @@ angular.module(`${PKG.name}.feature.hydratorplusplus`)
         },
         () => {
           this.jsonStatus = 2;
-          console.log('Got to LoadJar');
           this.jsonLoadFailMessage = this.GLOBALS.en.hydrator.studio.info['ARTIFACT-UPLOAD-ERROR-JSON'];
         }
       );
@@ -103,26 +103,26 @@ angular.module(`${PKG.name}.feature.hydratorplusplus`)
     this.upload = () => {
       let params = {
         namespace: this.$stateParams.namespace,
-        artifactName: this.artifactName
+        artifactName: artifactName
       };
       let jsonParams = angular.extend({
-        version: this.artifactVersion
+        version: artifactVersion
       }, params);
 
       this.myFileUploader.upload({
-        path: '/namespaces/' + this.$stateParams.namespace + '/artifacts/' + this.artifactName,
+        path: '/namespaces/' + this.$stateParams.namespace + '/artifacts/' + artifactName,
         file: jarFile
       } , {
         'Content-type': 'application/octet-stream',
         'customHeader': {
-          'Artifact-Version': this.artifactVersion,
+          'Artifact-Version': artifactVersion,
           'Artifact-Extends': artifactExtends
         }
       })
         .then(
           () => this.myPipelineApi.loadJson(jsonParams, jsonFile).$promise,
           (err) => {
-            this.errorMessage = 'Upload jar failed: ' + err;
+            this.errorMessage = err;
             return $q.reject(this.errorMessage);
           }
         )
@@ -137,7 +137,7 @@ angular.module(`${PKG.name}.feature.hydratorplusplus`)
               });
           },
           (err) => {
-            console.log('adasdasd ', err);
+            this.errorMessage = `${err}`;
           }
         );
     };

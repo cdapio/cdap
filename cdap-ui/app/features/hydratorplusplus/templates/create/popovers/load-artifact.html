@@ -67,6 +67,10 @@
 <div class="modal-footer">
   <button class="btn btn-grey" ng-click="$close()">Cancel</button>
   <button class="btn btn-orange" ng-click="LoadArtifactCtrl.upload()" ng-disabled="LoadArtifactCtrl.jsonStatus !== 1 || LoadArtifactCtrl.jarStatus !== 1">Upload</button>
+  <div class="text-danger text-left" ng-if="LoadArtifactCtrl.errorMessage">
+    <strong>Upload Failed </strong>
+    {{LoadArtifactCtrl.errorMessage}}
+  </div>
 </div>
 
 <my-file-select class="sr-only"
