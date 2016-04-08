@@ -24,10 +24,13 @@ import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.api.plugin.PluginConfig;
+import co.cask.cdap.api.plugin.PluginPropertyField;
 import co.cask.cdap.etl.api.Emitter;
 import co.cask.cdap.etl.api.PipelineConfigurer;
 import co.cask.cdap.etl.api.batch.BatchRuntimeContext;
+import co.cask.cdap.etl.api.batch.BatchSink;
 import co.cask.cdap.etl.api.batch.BatchSource;
 import co.cask.cdap.etl.api.batch.BatchSourceContext;
 import co.cask.cdap.etl.proto.v2.ETLPlugin;
@@ -45,6 +48,7 @@ import java.util.UUID;
 @Plugin(type = BatchSource.PLUGIN_TYPE)
 @Name("Mock")
 public class MockSource extends BatchSource<byte[], Row, StructuredRecord> {
+  public static final PluginClass PLUGIN_CLASS = getPluginClass();
   private static final byte[] SCHEMA_COL = Bytes.toBytes("s");
   private static final byte[] RECORD_COL = Bytes.toBytes("r");
   private final Config config;
@@ -107,5 +111,11 @@ public class MockSource extends BatchSource<byte[], Row, StructuredRecord> {
       table.put(row, RECORD_COL, Bytes.toBytes(StructuredRecordStringConverter.toJsonString(record)));
     }
     tableManager.flush();
+  }
+
+  private static PluginClass getPluginClass() {
+    Map<String, PluginPropertyField> properties = new HashMap<>();
+    properties.put("tableName", new PluginPropertyField("tableName", "", "string", true));
+    return new PluginClass(BatchSource.PLUGIN_TYPE, "Mock", "", MockSource.class.getName(), "config", properties);
   }
 }

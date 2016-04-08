@@ -28,7 +28,7 @@ import javax.ws.rs.Path;
  */
 @Plugin(type = "interactive")
 @Name("CallablePlugin")
-@Description("This is plugin3")
+@Description("This is plugin with endpoint")
 public class CallablePlugin implements Callable {
 
   @Path("ping")
