@@ -528,9 +528,14 @@ div.bodywrapper-hidden {
 
 div.code.code-tab div.highlight pre {
     margin-top: 0px;
+    margin-right: 14px;
+    margin-left: 14px;
+    margin-bottom: 16px;
 }
 
 div.code.code-tab {
-    padding-top: 20px;
+    padding-top: 16px;
     border-left: 1px solid #ddd;
+    border-right: 1px solid #ddd;
+    border-bottom: 1px solid #ddd;
 }
