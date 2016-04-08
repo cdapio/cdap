@@ -15,7 +15,7 @@
  */
 
 class TrackerIntegrationsController {
-  constructor($state, myTrackerApi, $scope, myAlertOnValium, MyCDAPDataSource, MyChartHelpers, MyMetricsQueryHelper, $uibModal) {
+  constructor($state, myTrackerApi, $scope, myAlertOnValium, MyCDAPDataSource, MyChartHelpers, MyMetricsQueryHelper, $uibModal, UI_CONFIG) {
     this.$state = $state;
     this.myTrackerApi = myTrackerApi;
     this.$scope = $scope;
@@ -23,6 +23,7 @@ class TrackerIntegrationsController {
     this.MyChartHelpers = MyChartHelpers;
     this.MyMetricsQueryHelper = MyMetricsQueryHelper;
     this.$uibModal = $uibModal;
+    this.UI_CONFIG = UI_CONFIG;
 
     this.dataSrc = new MyCDAPDataSource($scope);
 
@@ -157,9 +158,9 @@ class TrackerIntegrationsController {
 
             this.logsParams = {
               namespace: this.$state.params.namespace,
-              appId: '_ClouderaNavigator',
+              appId: this.UI_CONFIG.navigator.appId,
               programType: 'flows',
-              programId: 'MetadataFlow',
+              programId: this.UI_CONFIG.navigator.programId,
               runId: res[0].runid
             };
           } else {
@@ -225,8 +226,8 @@ class TrackerIntegrationsController {
 
     let tags = {
       namespace: this.$state.params.namespace,
-      app: '_ClouderaNavigator',
-      flow: 'MetadataFlow'
+      app: this.UI_CONFIG.navigator.appId,
+      flow: this.UI_CONFIG.navigator.programId
     };
 
     // fetch timeseries metrics
@@ -284,11 +285,7 @@ class TrackerIntegrationsController {
     });
 
     let config = {
-      artifact: {
-        name: 'navigator',
-        version: '0.2.0-SNAPSHOT',
-        scope: 'USER'
-      },
+      artifact: this.UI_CONFIG.navigator.artifact,
       config: appConfig
     };
 
@@ -315,7 +312,7 @@ class TrackerIntegrationsController {
 
 }
 
-TrackerIntegrationsController.$inject = ['$state', 'myTrackerApi', '$scope', 'myAlertOnValium', 'MyCDAPDataSource', 'MyChartHelpers', 'MyMetricsQueryHelper', '$uibModal'];
+TrackerIntegrationsController.$inject = ['$state', 'myTrackerApi', '$scope', 'myAlertOnValium', 'MyCDAPDataSource', 'MyChartHelpers', 'MyMetricsQueryHelper', '$uibModal', 'UI_CONFIG'];
 
 angular.module(PKG.name + '.feature.tracker')
   .controller('TrackerIntegrationsController', TrackerIntegrationsController);
