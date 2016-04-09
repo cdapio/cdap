@@ -40,6 +40,8 @@ import co.cask.cdap.etl.proto.v2.ETLStage;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.artifact.ArtifactSummary;
+import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.NamespacedArtifactId;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.DataSetManager;
 import co.cask.cdap.test.StreamManager;
@@ -65,8 +67,9 @@ import java.util.concurrent.TimeUnit;
  */
 public class DataPipelineTest extends HydratorTestBase {
 
-  protected static final Id.Artifact APP_ARTIFACT_ID = Id.Artifact.from(Id.Namespace.DEFAULT, "app", "1.0.0");
-  protected static final ArtifactSummary APP_ARTIFACT = ArtifactSummary.from(APP_ARTIFACT_ID);
+  protected static final NamespacedArtifactId APP_ARTIFACT_ID =
+    new NamespacedArtifactId(NamespaceId.DEFAULT.getNamespace(), "app", "1.0.0");
+  protected static final ArtifactSummary APP_ARTIFACT = new ArtifactSummary("app", "1.0.0");
   private static int startCount = 0;
   @ClassRule
   public static final TestConfiguration CONFIG = new TestConfiguration("explore.enabled", false);
@@ -79,7 +82,8 @@ public class DataPipelineTest extends HydratorTestBase {
     setupBatchArtifacts(APP_ARTIFACT_ID, DataPipelineApp.class);
 
     // add some test plugins
-    addPluginArtifact(Id.Artifact.from(Id.Namespace.DEFAULT, "spark-plugins", "1.0.0"), APP_ARTIFACT_ID,
+    addPluginArtifact(new NamespacedArtifactId(NamespaceId.DEFAULT.getNamespace(), "spark-plugins", "1.0.0"),
+                      APP_ARTIFACT_ID,
                       NaiveBayesTrainer.class, NaiveBayesClassifier.class);
   }
 

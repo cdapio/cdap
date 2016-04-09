@@ -19,7 +19,9 @@ package co.cask.cdap.etl.mock.transform;
 import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.annotation.Plugin;
 import co.cask.cdap.api.data.format.StructuredRecord;
+import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.api.plugin.PluginConfig;
+import co.cask.cdap.api.plugin.PluginPropertyField;
 import co.cask.cdap.etl.api.Emitter;
 import co.cask.cdap.etl.api.Transform;
 import co.cask.cdap.etl.proto.v2.ETLPlugin;
@@ -34,6 +36,7 @@ import java.util.Map;
 @Plugin(type = Transform.PLUGIN_TYPE)
 @Name("StringValueFilter")
 public class StringValueFilterTransform extends Transform<StructuredRecord, StructuredRecord> {
+  public static final PluginClass PLUGIN_CLASS = getPluginClass();
   private final Config config;
 
   public StringValueFilterTransform(Config config) {
@@ -61,5 +64,13 @@ public class StringValueFilterTransform extends Transform<StructuredRecord, Stru
     properties.put("field", field);
     properties.put("value", value);
     return new ETLPlugin("StringValueFilter", Transform.PLUGIN_TYPE, properties, null);
+  }
+
+  private static PluginClass getPluginClass() {
+    Map<String, PluginPropertyField> properties = new HashMap<>();
+    properties.put("field", new PluginPropertyField("field", "", "string", true));
+    properties.put("value", new PluginPropertyField("value", "", "string", true));
+    return new PluginClass(Transform.PLUGIN_TYPE, "StringValueFilter", "", StringValueFilterTransform.class.getName(),
+                           "config", properties);
   }
 }

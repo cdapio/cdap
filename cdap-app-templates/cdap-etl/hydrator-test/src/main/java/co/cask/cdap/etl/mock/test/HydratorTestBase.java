@@ -16,6 +16,7 @@
 
 package co.cask.cdap.etl.mock.test;
 
+import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.etl.api.PipelineConfigurable;
 import co.cask.cdap.etl.api.batch.BatchSource;
 import co.cask.cdap.etl.api.realtime.RealtimeSource;
@@ -29,29 +30,54 @@ import co.cask.cdap.etl.mock.transform.ErrorTransform;
 import co.cask.cdap.etl.mock.transform.IdentityTransform;
 import co.cask.cdap.etl.mock.transform.IntValueFilterTransform;
 import co.cask.cdap.etl.mock.transform.StringValueFilterTransform;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.NamespacedArtifactId;
 import co.cask.cdap.test.TestBase;
+import com.google.common.collect.ImmutableSet;
+
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Performs common setup logic
  */
 public class HydratorTestBase extends TestBase {
+  private static final Set<PluginClass> REALTIME_MOCK_PLUGINS = ImmutableSet.of(
+    LookupSource.PLUGIN_CLASS, MockSink.PLUGIN_CLASS, MockSource.PLUGIN_CLASS,
+    DoubleTransform.PLUGIN_CLASS, ErrorTransform.PLUGIN_CLASS, IdentityTransform.PLUGIN_CLASS,
+    IntValueFilterTransform.PLUGIN_CLASS, StringValueFilterTransform.PLUGIN_CLASS
+  );
+  private static final Set<PluginClass> BATCH_MOCK_PLUGINS = ImmutableSet.of(
+    FieldCountAggregator.PLUGIN_CLASS, IdentityAggregator.PLUGIN_CLASS,
+    co.cask.cdap.etl.mock.batch.MockSink.PLUGIN_CLASS, co.cask.cdap.etl.mock.batch.MockSource.PLUGIN_CLASS,
+    DoubleTransform.PLUGIN_CLASS, ErrorTransform.PLUGIN_CLASS, IdentityTransform.PLUGIN_CLASS,
+    IntValueFilterTransform.PLUGIN_CLASS, StringValueFilterTransform.PLUGIN_CLASS
+  );
 
   public HydratorTestBase() {
   }
 
-  protected static void setupRealtimeArtifacts(Id.Artifact artifactId, Class<?> appClass) throws Exception {
+  protected static void setupRealtimeArtifacts(NamespacedArtifactId artifactId, Class<?> appClass) throws Exception {
     addAppArtifact(artifactId, appClass,
                    RealtimeSource.class.getPackage().getName(),
                    PipelineConfigurable.class.getPackage().getName());
 
-    addPluginArtifact(Id.Artifact.from(Id.Namespace.DEFAULT, artifactId.getName() + "-mocks", "1.0.0"), artifactId,
+    // need to specify each PluginClass so that they can be used outside of this project. If we don't do this,
+    // when the plugin jar is created, it will add lib/hydrator-test.jar to the plugin jar.
+    // The ArtifactInspector will not examine any library jars for plugins, because it assumes plugins are always
+    // .class files in the jar and never in the dependencies, which is normally a reasonable assumption.
+    // So since the plugins are in lib/hydrator-test.jar, CDAP won't find any plugins in the jar.
+    // To work around, we'll just explicitly specify each plugin.
+    Set<PluginClass> pluginClasses = new HashSet<>();
+
+    addPluginArtifact(new NamespacedArtifactId(artifactId.getNamespace(), artifactId.getArtifact() + "-mocks", "1.0.0"),
+                      artifactId,
+                      REALTIME_MOCK_PLUGINS,
                       MockSink.class, MockSource.class, LookupSource.class,
                       DoubleTransform.class, ErrorTransform.class, IdentityTransform.class,
                       IntValueFilterTransform.class, StringValueFilterTransform.class);
   }
 
-  protected static void setupBatchArtifacts(Id.Artifact artifactId, Class<?> appClass) throws Exception {
+  protected static void setupBatchArtifacts(NamespacedArtifactId artifactId, Class<?> appClass) throws Exception {
     // add the app artifact
     addAppArtifact(artifactId, appClass,
                    BatchSource.class.getPackage().getName(),
@@ -59,7 +85,9 @@ public class HydratorTestBase extends TestBase {
                    "org.apache.avro.mapred", "org.apache.avro", "org.apache.avro.generic", "org.apache.avro.io");
 
     // add plugins artifact
-    addPluginArtifact(Id.Artifact.from(Id.Namespace.DEFAULT, artifactId.getName() + "-mocks", "1.0.0"), artifactId,
+    addPluginArtifact(new NamespacedArtifactId(artifactId.getNamespace(), artifactId.getArtifact() + "-mocks", "1.0.0"),
+                      artifactId,
+                      BATCH_MOCK_PLUGINS,
                       co.cask.cdap.etl.mock.batch.MockSource.class,
                       co.cask.cdap.etl.mock.batch.MockSink.class,
                       DoubleTransform.class, ErrorTransform.class, IdentityTransform.class,

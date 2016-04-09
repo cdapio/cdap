@@ -24,8 +24,11 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.metadata.MetadataScope;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Sets;
 
 import java.util.Map;
+import java.util.Set;
 import javax.annotation.Nullable;
 
 /**
@@ -33,12 +36,16 @@ import javax.annotation.Nullable;
  */
 public abstract class AbstractSystemMetadataWriter implements SystemMetadataWriter {
 
-  private static final String SCHEMA_FIELD_PROPERTY_PREFIX = "schema";
-  private static final String PLUGIN_KEY_PREFIX = "plugin";
-  private static final String PLUGIN_VERSION_KEY_PREFIX = "pluginversion";
+  protected static final String SCHEMA_FIELD_PROPERTY_PREFIX = "schema";
+  protected static final String PLUGIN_KEY_PREFIX = "plugin";
+  protected static final String PLUGIN_VERSION_KEY_PREFIX = "plugin-version";
   protected static final String TTL_KEY = "ttl";
   protected static final String DESCRIPTION = "description";
-  protected static final String CREATE_TIME = "createtime";
+  protected static final String CREATION_TIME = "creation-time";
+
+  // The following system properties should not get removed on metadata update
+  // since they are not part of entity properties
+  protected static final Set<String> PRESERVE_PROPERTIES = ImmutableSet.of(CREATION_TIME, DESCRIPTION);
 
   private final MetadataStore metadataStore;
   private final Id.NamespacedId entityId;
@@ -77,6 +84,16 @@ public abstract class AbstractSystemMetadataWriter implements SystemMetadataWrit
    */
   @Override
   public void write() {
+    // Delete existing system metadata before writing new metadata
+    Set<String> existingProperties = metadataStore.getProperties(MetadataScope.SYSTEM, entityId).keySet();
+    Sets.SetView<String> removeProperties = Sets.difference(existingProperties, PRESERVE_PROPERTIES);
+    if (!removeProperties.isEmpty()) {
+      String[] propertiesArray = removeProperties.toArray(new String[removeProperties.size()]);
+      metadataStore.removeProperties(MetadataScope.SYSTEM, entityId, propertiesArray);
+    }
+    metadataStore.removeTags(MetadataScope.SYSTEM, entityId);
+
+    // Now add the new metadata
     Map<String, String> properties = getSystemPropertiesToAdd();
     if (properties.size() > 0) {
       metadataStore.setProperties(MetadataScope.SYSTEM, entityId, properties);
