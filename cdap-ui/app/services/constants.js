@@ -60,8 +60,8 @@ angular.module(PKG.name + '.services')
             'DEFAULT-REFERENCE': 'Please select a plugin to view reference information',
             'NO-REFERENCE': 'Currently, no reference information is available for this plugin.',
             'NO-CONFIG': 'No widgets JSON found for the plugin. Please check documentation on how to add.',
-            'ARTIFACT-UPLOAD-MESSAGE-JAR': 'The artifact needs to be a JAR file.',
-            'ARTIFACT-UPLOAD-MESSAGE-JSON': 'The artifact needs to be a JSON file.',
+            'ARTIFACT-UPLOAD-MESSAGE-JAR': 'The plugin JAR needs to be a JAR file.',
+            'ARTIFACT-UPLOAD-MESSAGE-JSON': 'The plugin JSON needs to be a JSON file.',
             'ARTIFACT-UPLOAD-ERROR-JSON': 'Error in parsing config json for the artifact'
           },
           error: {

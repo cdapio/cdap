@@ -56,6 +56,7 @@ angular.module(`${PKG.name}.feature.hydratorplusplus`)
       artifactVersion = version;
       this.jarStatus = 1;
     };
+    // FIXME: Could this be extracted out into a factory??
     let getJsonContents = (file) => {
       let defer = this.$q.defer();
 
@@ -76,6 +77,7 @@ angular.module(`${PKG.name}.feature.hydratorplusplus`)
     this.loadJSON = (json) => {
       if (json[0].name.indexOf('.json') === -1) {
         this.jsonStatus = 2;
+        this.jsonLoadFailMessage = this.GLOBALS.en.hydrator.studio.info['ARTIFACT-UPLOAD-MESSAGE-JSON'];
         return;
       }
       let artifactJson;
@@ -88,7 +90,9 @@ angular.module(`${PKG.name}.feature.hydratorplusplus`)
             throw e;
           }
           if (!artifactJson.properties || !artifactJson.parents) {
-            throw 'error';
+            this.jsonStatus = 2;
+            this.jsonLoadFailMessage = this.GLOBALS.en.hydrator.studio.info['ARTIFACT-UPLOAD-ERROR-JSON'];
+            return;
           }
           jsonFile = artifactJson.properties;
           artifactExtends = artifactJson.parents.reduce( (prev, curr) => `${prev}/${curr}`);
