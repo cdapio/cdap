@@ -118,6 +118,16 @@
       <version>${project.version}</version>
     </dependency>
     <dependency>
+      <groupId>co.cask.cdap</groupId>
+      <artifactId>cdap-api-spark</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>co.cask.cdap</groupId>
+      <artifactId>cdap-spark-core</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
       <groupId>co.cask.tephra</groupId>
       <artifactId>tephra-core</artifactId>
     </dependency>
