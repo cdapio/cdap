@@ -146,8 +146,19 @@ class HydratorPlusPlusTopPanelCtrl{
   }
 
   onPreview() {
-    this.DAGPlusPlusNodesActionsFactory.resetSelectedNode();
-    this.HydratorPlusPlusConfigActions.previewPipeline();
+    var modal = this.$uibModal.open({
+      keyboard: true,
+      templateUrl: '/assets/features/hydratorplusplus/templates/partial/count-modal.html',
+      controller: ['$scope', function ($scope) {
+        $scope.count = 5;
+      }],
+      windowTopClass: 'hydrator-modal'
+    });
+
+    modal.result.then((count) => {
+      this.DAGPlusPlusNodesActionsFactory.resetSelectedNode();
+      this.HydratorPlusPlusConfigActions.previewPipeline(count);
+    });
   }
 }
 

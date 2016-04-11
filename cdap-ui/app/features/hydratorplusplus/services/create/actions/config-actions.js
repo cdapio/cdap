@@ -157,8 +157,8 @@ class HydratorPlusPlusConfigActions {
 
   }
 
-  previewPipeline() {
-    this.dispatcher.dispatch('onPreviewPipeline');
+  previewPipeline(count) {
+    this.dispatcher.dispatch('onPreviewPipeline', count);
   }
 }
 
