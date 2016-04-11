@@ -31,7 +31,9 @@ The directive adds these parameters, both optional:
 
     :independent: flag to indicate that this tab set does not link to another tabs
     
-    :dependent: comma-separated list of linked-tabs; default "Linux,Windows"
+    :dependent: name of tab set this tab belongs to; default "linux-windows"
+
+    :mapping: comma-separated list of linked-tabs; default "Linux,Windows"
 
 Separate the code blocks with matching comment lines. Tabs must follow in order of :tabs:
 option. Comment labels are for convenience, and don't need to match. Note example uses a
@@ -99,7 +101,7 @@ tab will change all other tabs to "Linux". You may need to include a mapping lis
 
 .. tabbed-parsed-literal::
   :tabs: Linux,Windows,"Distributed CDAP"
-  :dependent: Linux,Windows,Linux
+  :mapping: Linux,Windows,Linux
   :languages: console,shell-session,console
 
     ...
@@ -310,7 +312,8 @@ class TabbedParsedLiteral(ParsedLiteral):
 
     option_spec = dict(dependent=directives.unchanged_required,
                         independent=directives.flag,
-                        languages=directives.unchanged_required, 
+                        languages=directives.unchanged_required,
+                        mapping=directives.unchanged_required,
                         tabs=directives.unchanged_required,
                         copyable=directives.flag,
                         single=directives.flag,
@@ -364,8 +367,16 @@ class TabbedParsedLiteral(ParsedLiteral):
     
         return line_counts, lines
     
-    def cleanup_options(self, option, default):
+    def cleanup_option(self, option, default):
         """Removes leading or trailing quotes or double-quotes from a string option."""
+        _option = self.options.get(option,'')
+        if not _option:
+            return default
+        else:
+            return dequote(_option)
+
+    def cleanup_options(self, option, default):
+        """Removes leading or trailing quotes or double-quotes from a string option list."""
         _option = self.options.get(option,'')
         if not _option:
             return default
@@ -400,7 +411,6 @@ class TabbedParsedLiteral(ParsedLiteral):
         node['languages'] = self.cleanup_options('languages', DEFAULT_LANGUAGES)
         node['line_counts'] = line_counts
         node['linenos'] = self.cleanup_options('linenos', '')
-        node['copyable'] = self.options.has_key('copyable')
         node['single'] = self.options.has_key('single')
         node['tabs'] = self.cleanup_options('tabs', DEFAULT_TABS)
         tab_count = len(node['tabs'])
@@ -413,15 +423,15 @@ class TabbedParsedLiteral(ParsedLiteral):
         if tab_count != len(node['languages']):
             print "Error: tabs (%s) don't match languages (%s)" % (node['tabs'], node['languages'])
             node['languages'] = [DEFAULT_LANGUAGES[0]] * tab_count
-        node['independent'] = self.options.has_key('independent')
         if not node['independent']:
-            node['dependent'] = self.cleanup_options('dependent', DEFAULT_TABS)
-            if tab_count != len(node['dependent']):
-                print "Error: tabs (%s) don't match dependents (%s)" % (node['tabs'], node['dependent'])
+            node['dependent'] = self.cleanup_option('dependent', DEFAULT_TAB_SET)
+            node['mapping'] = self.cleanup_options('mapping', node['tabs'])
+            if tab_count != len(node['mapping']):
+                print "Error: tabs (%s) don't match mapping (%s)" % (node['tabs'], node['mapping'])
                 if tab_count > 1:
-                    node['dependent'] = DEFAULT_TABS + [DEFAULT_TABS[0]] * (tab_count -2)
+                    node['mapping'] = DEFAULT_TABS + [DEFAULT_TABS[0]] * (tab_count -2)
                 else:
-                    node['dependent'] = [DEFAULT_TABS[0]] * tab_count
+                    node['mapping'] = [DEFAULT_TABS[0]] * tab_count
         return [node] + messages
         
 def visit_tpl_html(self, node):
@@ -529,13 +539,11 @@ def visit_tpl_html(self, node):
                 new_highlighted.append(l)
                 # Set next line status
                 continued_line = continuing_line
-            
         else:
             new_highlighted += highlighted.splitlines()
 
         new_highlighted.append('<!-- tabbed-parsed-literal end -->')                
 #         print "\nhighlighted (after):\n%s\n\n" % '\n'.join(new_highlighted)
-                      
         return '\n'.join(new_highlighted)
     
     nav_tabs_html = ''
@@ -546,10 +554,11 @@ def visit_tpl_html(self, node):
     clean_tabs = [str(tab) for tab in tabs]
     clean_tab_links = [tab.replace(' ', '-').lower() for tab in clean_tabs]
     dependent = node.get('dependent')
-    if dependent:
+    node_mapping = node.get('mapping')
+    if node_mapping:
         mapping = {}
         for i in range(len(clean_tab_links)):
-            mapping[clean_tab_links[i]] = str(dependent[i]).lower()        
+            mapping[clean_tab_links[i]] = str(node_mapping[i]).lower()        
     
     div_name = 'tabbedparsedliteral{0}'.format(TPL_COUNTER)
     fill_div_options = {'div_name': div_name}
