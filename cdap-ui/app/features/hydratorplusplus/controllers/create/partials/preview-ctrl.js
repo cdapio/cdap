@@ -29,7 +29,15 @@ class HydratorPlusPlusPreviewTabCtrl {
   setState() {
     this.node = this.HydratorPlusPlusNodeConfigStore.getState().node;
 
-    console.log('node', this.node);
+    if (!this.node || !this.node.previewData) { return; }
+
+    if (this.node.previewData.input) {
+      this.inputSchema = this.node.previewData.input[0].inputSchema.fields;
+    }
+
+    if (this.node.previewData.output) {
+      this.outputSchema = this.node.previewData.output[0].outputSchema.fields;
+    }
   }
 }
 

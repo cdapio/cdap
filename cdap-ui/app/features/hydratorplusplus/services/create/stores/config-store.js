@@ -746,7 +746,7 @@ class HydratorPlusPlusConfigStore {
       );
   }
 
-  _fetchPreviewRecords(node, body, nodesMap, adjacencyMap) {
+  _fetchPreviewRecords(node, body, isSource, nodesMap, adjacencyMap) {
 
     let params = {
       namespace: this.$state.params.namespace,
@@ -759,7 +759,7 @@ class HydratorPlusPlusConfigStore {
     if (this.GLOBALS.pluginConvert[node.type] === 'sink') {
       let config = node;
       config.previewData = {
-        inputRecord: body.inputRecord
+        input: body
       };
       this.editNodeProperties(config.name, config);
       this.HydratorPlusPlusConsoleActions.addMessage({
@@ -770,14 +770,18 @@ class HydratorPlusPlusConfigStore {
       return;
     }
 
+    if (isSource) {
+      body.count = 5;
+    }
+
     this.myPipelineApi.preview(params, body)
       .$promise
       .then((res) => {
         let config = node;
-        config.previewData = res[0];
-        if (body.inputRecord) {
-          config.previewData.inputRecord = body.inputRecord;
-        }
+        config.previewData = {
+          input: body,
+          output: res
+        };
 
         this.editNodeProperties(config.name, config);
         this.HydratorPlusPlusConsoleActions.addMessage({
@@ -787,13 +791,18 @@ class HydratorPlusPlusConfigStore {
 
         if (adjacencyMap[config.name]) {
           angular.forEach(adjacencyMap[config.name], (nodeId) => {
-            let previewConfig = {
-              inputSchema: config.previewData.outputSchema,
-              inputRecord: config.previewData.outputRecord,
-              properties: nodesMap[nodeId].plugin.properties
-            };
 
-            this._fetchPreviewRecords(nodesMap[nodeId], previewConfig, nodesMap, adjacencyMap);
+            let previewConfig = [];
+
+            angular.forEach(config.previewData.output, (conf) => {
+              previewConfig.push({
+                inputRecord: conf.outputRecord,
+                inputSchema: conf.outputSchema,
+                properties: nodesMap[nodeId].plugin.properties
+              });
+            });
+
+            this._fetchPreviewRecords(nodesMap[nodeId], previewConfig, false, nodesMap, adjacencyMap);
           });
         }
 
@@ -834,7 +843,7 @@ class HydratorPlusPlusConfigStore {
       }
     });
 
-    this._fetchPreviewRecords(source, { properties: source.plugin.properties }, nodesMap, adjacencyMap);
+    this._fetchPreviewRecords(source, { properties: source.plugin.properties }, true, nodesMap, adjacencyMap);
   }
 }
 
