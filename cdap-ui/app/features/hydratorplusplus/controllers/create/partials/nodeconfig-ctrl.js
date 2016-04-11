@@ -285,7 +285,7 @@ class HydratorPlusPlusNodeConfigCtrl {
 
         vm.inputSchema = input;
         vm.node = nodeInfo;
-        vm.inputRecord = {};
+        vm.inputRecord = '[]';
         vm.loading = false;
         vm.previewData = null;
 
@@ -299,16 +299,24 @@ class HydratorPlusPlusNodeConfigCtrl {
             pluginName: vm.node.plugin.name,
           };
 
-          let body = {
-            inputSchema: JSON.parse(vm.inputSchema),
-            inputRecord: JSON.parse(vm.inputRecord),
-            properties: vm.node.plugin.properties
-          };
+          let schema = JSON.parse(vm.inputSchema);
+          let records = JSON.parse(vm.inputRecord);
+          let body = [];
+
+          angular.forEach(records, (record) => {
+            body.push({
+              inputSchema: schema,
+              inputRecord: record,
+              properties: vm.node.plugin.properties
+            });
+          });
 
           myPipelineApi.preview(params, body)
             .$promise
             .then((res) => {
-              vm.previewData = res[0];
+              vm.previewData = res;
+              vm.outputSchema = res[0].outputSchema.fields;
+
               vm.loading = false;
             }, (err) => {
               console.log('err', err);

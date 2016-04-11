@@ -46,20 +46,6 @@
   </div>
 
   <div class="results" ng-if="PluginTestController.previewData">
-    <!-- <pre>{{ PluginTestController.previewData | json:4 }}</pre> -->
-    <h4>Output Record</h4>
-    <table class="table">
-      <thead>
-        <th>Key</th>
-        <th>Value</th>
-      </thead>
-      <tbody>
-        <tr ng-repeat="(key, value) in PluginTestController.previewData.outputRecord">
-          <td>{{ key }}</td>
-          <td>{{ value }}</td>
-        </tr>
-      </tbody>
-    </table>
 
     <h4>Output Schema</h4>
     <table class="table">
@@ -68,13 +54,28 @@
         <th>Type</th>
       </thead>
       <tbody>
-        <tr ng-repeat="field in PluginTestController.previewData.outputSchema.fields">
+        <tr ng-repeat="field in PluginTestController.outputSchema">
           <td>{{ field.name }}</td>
           <td>{{ field.type }}</td>
         </tr>
       </tbody>
     </table>
 
+    <h4>Output Record</h4>
+    <table class="table">
+      <thead>
+        <th ng-repeat="field in PluginTestController.outputSchema">
+          {{ field.name }}
+        </th>
+      </thead>
+      <tbody>
+        <tr ng-repeat="output in PluginTestController.previewData">
+          <td ng-repeat="field in PluginTestController.outputSchema">
+            {{ output.outputRecord[field.name] }}
+          </td>
+        </tr>
+      </tbody>
+    </table>
 
   </div>
 
