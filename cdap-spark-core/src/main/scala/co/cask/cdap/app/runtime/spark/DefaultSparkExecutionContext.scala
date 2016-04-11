@@ -170,7 +170,7 @@ class DefaultSparkExecutionContext(runtimeContext: SparkRuntimeContext,
         LOG.warn("Failed to registry usage of {} -> {}", streamId, owners, e)
     }
 
-    rdd.values.map(decoder)
+    rdd.values.map(new SerializableStreamEvent(_)).map(decoder)
   }
 
   override def saveAsDataset[K: ClassTag, V: ClassTag](rdd: RDD[(K, V)], datasetName: String,

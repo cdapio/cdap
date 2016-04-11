@@ -15,7 +15,9 @@
 # the License.
 
 """Simple, inelegant Sphinx extension which adds a directive for a
-tabbed parsed-literals that may be switched between in HTML.  
+tabbed parsed-literals that may be switched between in HTML.
+
+version: 0.2
 
 The directive adds these parameters, both optional:
 
@@ -25,13 +27,11 @@ The directive adds these parameters, both optional:
     
     :copyable: flag to indicate that all text can be "copied"
     
-    :single: flag to indicate that only one tab should be used, with no label (not implemented)
+    :single: flag to indicate that only one tab should be used, with no label (not yet implemented)
 
     :independent: flag to indicate that this tab set does not link to another tabs
     
-    :dependent: name of tab set this tab belongs to; default "linux-windows"
-
-    :mapping: comma-separated list of linked-tabs; default "Linux,Windows"
+    :dependent: comma-separated list of linked-tabs; default "Linux,Windows"
 
 Separate the code blocks with matching comment lines. Tabs must follow in order of :tabs:
 option. Comment labels are for convenience, and don't need to match. Note example uses a
@@ -43,14 +43,11 @@ Note that slightly different rule operate for replacements: a replacement such a
 "\|replace|" will work, and the backslash will be interpreted as a single backslash rather
 than as escaping the "|".
 
-It is best if all tabs on a page are identical. If not, changing an active tab will cause other
-tabs in other sets to become "inactive" (ie, disappear).
-
 If there is only one tab, the node is set to "independent" automatically, as there is
 nothing to switch. If :languages: is not supplied for the single tab, "shell-session" is
 used.
 
-Lines that begin with "$", "#", ">", "&gt;", "cdap >", "cdap &gt;" are treated as command
+Lines that begin with "$", "#", ">", "&gt;", "cdap >", "cdap &gt;" are treated as command 
 lines and the text following is auto-selected for copying on mouse-over. (On Safari,
 command-V is still required for copying; other browser support click-copying to the
 clipboard.)
@@ -102,7 +99,7 @@ tab will change all other tabs to "Linux". You may need to include a mapping lis
 
 .. tabbed-parsed-literal::
   :tabs: Linux,Windows,"Distributed CDAP"
-  :mapping: Linux,Windows,Linux
+  :dependent: Linux,Windows,Linux
   :languages: console,shell-session,console
 
     ...
@@ -314,7 +311,6 @@ class TabbedParsedLiteral(ParsedLiteral):
     option_spec = dict(dependent=directives.unchanged_required,
                         independent=directives.flag,
                         languages=directives.unchanged_required, 
-                        mapping=directives.unchanged_required, 
                         tabs=directives.unchanged_required,
                         copyable=directives.flag,
                         single=directives.flag,
@@ -368,16 +364,8 @@ class TabbedParsedLiteral(ParsedLiteral):
     
         return line_counts, lines
     
-    def cleanup_option(self, option, default):
-        """Removes leading or trailing quotes or double-quotes from a string option."""
-        _option = self.options.get(option,'')
-        if not _option:
-            return default
-        else:
-            return dequote(_option)
-
     def cleanup_options(self, option, default):
-        """Removes leading or trailing quotes or double-quotes from a string option list."""
+        """Removes leading or trailing quotes or double-quotes from a string option."""
         _option = self.options.get(option,'')
         if not _option:
             return default
@@ -412,6 +400,7 @@ class TabbedParsedLiteral(ParsedLiteral):
         node['languages'] = self.cleanup_options('languages', DEFAULT_LANGUAGES)
         node['line_counts'] = line_counts
         node['linenos'] = self.cleanup_options('linenos', '')
+        node['copyable'] = self.options.has_key('copyable')
         node['single'] = self.options.has_key('single')
         node['tabs'] = self.cleanup_options('tabs', DEFAULT_TABS)
         tab_count = len(node['tabs'])
@@ -424,18 +413,15 @@ class TabbedParsedLiteral(ParsedLiteral):
         if tab_count != len(node['languages']):
             print "Error: tabs (%s) don't match languages (%s)" % (node['tabs'], node['languages'])
             node['languages'] = [DEFAULT_LANGUAGES[0]] * tab_count
+        node['independent'] = self.options.has_key('independent')
         if not node['independent']:
-            node['dependent'] = self.cleanup_option('dependent', DEFAULT_TAB_SET)
-#             if node['dependent'] != DEFAULT_TAB_SET and node['tabs'] != DEFAULT_TABS:
-#                 if self.options.has_key('mapping')
-                
-            node['mapping'] = self.cleanup_options('mapping', node['tabs'])
-            if tab_count != len(node['mapping']):
-                print "Error: tabs (%s) don't match mapping (%s)" % (node['tabs'], node['mapping'])
+            node['dependent'] = self.cleanup_options('dependent', DEFAULT_TABS)
+            if tab_count != len(node['dependent']):
+                print "Error: tabs (%s) don't match dependents (%s)" % (node['tabs'], node['dependent'])
                 if tab_count > 1:
-                    node['mapping'] = DEFAULT_TABS + [DEFAULT_TABS[0]] * (tab_count -2)
+                    node['dependent'] = DEFAULT_TABS + [DEFAULT_TABS[0]] * (tab_count -2)
                 else:
-                    node['mapping'] = [DEFAULT_TABS[0]] * tab_count
+                    node['dependent'] = [DEFAULT_TABS[0]] * tab_count
         return [node] + messages
         
 def visit_tpl_html(self, node):
@@ -542,12 +528,14 @@ def visit_tpl_html(self, node):
                     
                 new_highlighted.append(l)
                 # Set next line status
-                continued_line = continuing_line          
+                continued_line = continuing_line
+            
         else:
             new_highlighted += highlighted.splitlines()
 
         new_highlighted.append('<!-- tabbed-parsed-literal end -->')                
 #         print "\nhighlighted (after):\n%s\n\n" % '\n'.join(new_highlighted)
+                      
         return '\n'.join(new_highlighted)
     
     nav_tabs_html = ''
@@ -558,11 +546,10 @@ def visit_tpl_html(self, node):
     clean_tabs = [str(tab) for tab in tabs]
     clean_tab_links = [tab.replace(' ', '-').lower() for tab in clean_tabs]
     dependent = node.get('dependent')
-    node_mapping = node.get('mapping')
-    if node_mapping:
+    if dependent:
         mapping = {}
         for i in range(len(clean_tab_links)):
-            mapping[clean_tab_links[i]] = str(node_mapping[i]).lower()        
+            mapping[clean_tab_links[i]] = str(dependent[i]).lower()        
     
     div_name = 'tabbedparsedliteral{0}'.format(TPL_COUNTER)
     fill_div_options = {'div_name': div_name}
@@ -574,7 +561,6 @@ def visit_tpl_html(self, node):
         start_html = INDEPENDENT_JS_TPL.format(**js_options) + DIV_START.format(**fill_div_options)
     else:
         # Dependent node
-        
         fill_div_options['class'] = "dependent-%s" % dependent
         js_options = {'tab_links':clean_tab_links, 
                       'mapping': repr(mapping),

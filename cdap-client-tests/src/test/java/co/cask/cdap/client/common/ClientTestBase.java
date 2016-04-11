@@ -47,6 +47,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.jar.Manifest;
 
 /**
  *
@@ -124,13 +125,24 @@ public abstract class ClientTestBase {
   }
 
   protected File createAppJarFile(Class<?> cls) throws IOException {
-    return createAppJarFile(cls, cls.getSimpleName(), String.format("1.0.%d-SNAPSHOT", System.currentTimeMillis()));
+    return createArtifactJarFile(cls, new Manifest());
   }
 
   protected File createAppJarFile(Class<?> cls, String name, String version) throws IOException {
+    return createArtifactJarFile(cls, name, version, new Manifest());
+  }
+
+  protected File createArtifactJarFile(Class<?> cls, Manifest manifest) throws IOException {
+    return createArtifactJarFile(cls, cls.getSimpleName(),
+                                 String.format("1.0.%d-SNAPSHOT", System.currentTimeMillis()), manifest);
+  }
+
+  protected File createArtifactJarFile(Class<?> cls, String name,
+                                       String version, Manifest manifest) throws IOException {
+
     File tmpJarFolder = TMP_FOLDER.newFolder();
     LocationFactory locationFactory = new LocalLocationFactory(tmpJarFolder);
-    Location deploymentJar = AppJarHelper.createDeploymentJar(locationFactory, cls);
+    Location deploymentJar = AppJarHelper.createDeploymentJar(locationFactory, cls, manifest);
 
     File appJarFile = new File(tmpJarFolder, String.format("%s-%s.jar", name, version));
     try {

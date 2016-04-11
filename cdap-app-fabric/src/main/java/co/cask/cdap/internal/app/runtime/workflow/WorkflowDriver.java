@@ -51,6 +51,7 @@ import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
+import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.internal.app.workflow.DefaultWorkflowActionConfigurer;
 import co.cask.cdap.internal.dataset.DatasetCreationSpec;
 import co.cask.cdap.internal.workflow.ProgramWorkflowAction;
@@ -99,6 +100,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import javax.annotation.Nullable;
 
 /**
  * Core of Workflow engine that drives the execution of Workflow.
@@ -128,6 +130,8 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
   private Workflow workflow;
   private final BasicWorkflowContext basicWorkflowContext;
   private final Map<String, WorkflowNodeState> nodeStates = new ConcurrentHashMap<>();
+  @Nullable
+  private final PluginInstantiator pluginInstantiator;
 
   private final CConfiguration cConf;
 
@@ -135,7 +139,8 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
                  WorkflowSpecification workflowSpec, ProgramRunnerFactory programRunnerFactory,
                  MetricsCollectionService metricsCollectionService,
                  DatasetFramework datasetFramework, DiscoveryServiceClient discoveryServiceClient,
-                 TransactionSystemClient txClient, Store store, CConfiguration cConf) {
+                 TransactionSystemClient txClient, Store store, CConfiguration cConf,
+                 @Nullable PluginInstantiator pluginInstantiator) {
     this.program = program;
     this.hostname = hostname;
     this.runtimeArgs = createRuntimeArgs(options.getUserArguments());
@@ -156,13 +161,14 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     this.txClient = txClient;
     this.store = store;
     this.cConf = cConf;
-    this.workflowProgramRunnerFactory = new ProgramWorkflowRunnerFactory(workflowSpec, programRunnerFactory,
+    this.workflowProgramRunnerFactory = new ProgramWorkflowRunnerFactory(cConf, workflowSpec, programRunnerFactory,
                                                                          program, options);
 
     this.basicWorkflowContext = new BasicWorkflowContext(workflowSpec, null, null, new BasicArguments(runtimeArgs),
                                                          null, program, RunIds.fromString(runId),
                                                          metricsCollectionService, datasetFramework, txClient,
-                                                         discoveryServiceClient, nodeStates);
+                                                         discoveryServiceClient, nodeStates, pluginInstantiator);
+    this.pluginInstantiator = pluginInstantiator;
   }
 
   @Override
@@ -257,6 +263,9 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     httpService.stopAndWait();
     deleteLocalDatasets();
     destroyWorkflow();
+    if (pluginInstantiator != null) {
+      pluginInstantiator.close();
+    }
   }
 
   @SuppressWarnings("unchecked")
@@ -446,7 +455,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
                                                        new BasicArguments(runtimeArgs), token,
                                                        program, RunIds.fromString(workflowRunId.getRun()),
                                                        metricsCollectionService, datasetFramework, txClient,
-                                                       discoveryServiceClient, nodeStates);
+                                                       discoveryServiceClient, nodeStates, pluginInstantiator);
     Iterator<WorkflowNode> iterator;
     if (predicate.apply(context)) {
       // execute the if branch
@@ -543,7 +552,8 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
                                                                                           nodeStates),
                                     new BasicArguments(runtimeArgs), token, program,
                                     RunIds.fromString(workflowRunId.getRun()), metricsCollectionService,
-                                    datasetFramework, txClient, discoveryServiceClient, nodeStates);
+                                    datasetFramework, txClient, discoveryServiceClient, nodeStates,
+                                    pluginInstantiator);
   }
 
   private Map<String, String> createRuntimeArgs(Arguments args) {

@@ -390,7 +390,13 @@ public class MetadataDataset extends AbstractDataset {
    * @param targetId the {@link Id.NamespacedId} for which to remove the properties
    */
   public void removeProperties(Id.NamespacedId targetId) {
-    removeMetadata(targetId);
+    removeMetadata(targetId,
+                   new Predicate<String>() {
+                     @Override
+                     public boolean apply(String input) {
+                       return !TAGS_KEY.equals(input);
+                     }
+                   });
   }
 
   /**
@@ -399,7 +405,13 @@ public class MetadataDataset extends AbstractDataset {
    * @param targetId the {@link Id.NamespacedId} for which to remove the tags
    */
   public void removeTags(Id.NamespacedId targetId) {
-    removeMetadata(targetId);
+    removeMetadata(targetId,
+                   new Predicate<String>() {
+                     @Override
+                     public boolean apply(String input) {
+                       return TAGS_KEY.equals(input);
+                     }
+                   });
   }
 
   /**
@@ -616,6 +628,9 @@ public class MetadataDataset extends AbstractDataset {
    * @param indexes {@link Set<String>} of indexes to store for this {@link MetadataEntry}
    */
   private void storeIndexes(Id.NamespacedId targetId, MetadataEntry entry, Set<String> indexes) {
+    // Delete existing indexes for targetId-key
+    deleteIndexes(targetId, entry.getKey());
+
     for (String index : indexes) {
       // store the index with key of the metadata
       indexedTable.put(getIndexPut(targetId, entry.getKey(), entry.getKey() + KEYVALUE_SEPARATOR + index));

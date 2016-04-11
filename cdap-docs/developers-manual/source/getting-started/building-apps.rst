@@ -49,17 +49,20 @@ Accessing CLI, curl, and the SDK bin
   ``libexec\bin\curl.exe``; use it as a substitute for ``curl`` in examples.
 
 - If you add the SDK bin directory to your path, you can simplify the commands. From within
-  the CDAP-SDK-home directory, enter::
+  the CDAP-SDK-home directory, enter:
+  
+  .. tabbed-parsed-literal::
+  
+    .. Linux
 
-    $ export PATH=${PATH}:`pwd`/bin
+    $ export PATH=${PATH}:\`pwd\`/bin
 
-  or under Windows::
+    .. Windows
 
     > set path=%PATH%;%CD%\bin;%CD%\libexec\bin
   
-  Note that under Windows, you'll need to create a new command line window in order to see
-  this change to the path variable. The Windows path has been augmented with a directory where
-  the SDK includes Windows-versions of commands such as ``curl``.
+  The Windows path has been augmented with a directory where the SDK includes
+  Windows-versions of commands such as ``curl``.
   
 .. include:: /_includes/windows-note.txt
 
@@ -69,9 +72,11 @@ Building an Example Application Artifact
 ----------------------------------------
 
 From the example's project root, build an example with the
-`Apache Maven <http://maven.apache.org>`__ command::
+`Apache Maven <http://maven.apache.org>`__ command:
 
-	$ mvn clean package
+.. tabbed-parsed-literal::
+
+  $ mvn clean package
 
 
 .. _cdap-building-running-starting:
@@ -96,18 +101,18 @@ Once CDAP is started, you can deploy an application using an example JAR by any 
   |management|_ pages |---| selecting the *Custom App* menu item, and then browse and upload an
   artifact to create an app:
 
-  .. parsed-literal::
+  .. tabbed-parsed-literal::
+
     examples/|example-dir|/target/|example|-|release|.jar
  
 - From the Standalone CDAP SDK directory, use the :ref:`Command Line Interface (CLI) <cli>`:
 
-  .. container:: highlight
+  .. tabbed-parsed-literal::
 
-    .. parsed-literal::
-      |$| cdap-cli.sh load artifact examples/|example-dir|/target/|example|-|release|.jar
+      $ cdap-cli.sh load artifact examples/|example-dir|/target/|example|-|release|.jar
       Successfully added artifact with name '|example|'
 
-      |$| cdap-cli.sh create app <app name> |example| |release| user
+      $ cdap-cli.sh create app <app name> |example| |release| user
       Successfully created application
 
   The CLI can be accessed under Windows using the ``bin\cdap-cli.bat`` script.
@@ -115,16 +120,15 @@ Once CDAP is started, you can deploy an application using an example JAR by any 
 - Use an application such as ``curl`` (a Windows-version is included in the CDAP SDK in
   ``libexec\bin\curl.exe``):
 
-  .. container:: highlight
+  .. tabbed-parsed-literal::
   
-    .. parsed-literal::
-      |$| curl -w'\\n' localhost:10000/v3/namespaces/default/artifacts/|example| \\
-        --data-binary @examples/|example-dir|/target/|example|-|release|.jar
-      Artifact added successfully
+    $ curl -w'\n' localhost:10000/v3/namespaces/default/artifacts/|example| \
+      --data-binary @examples/|example-dir|/target/|example|-|release|.jar
+    Artifact added successfully
 
-      |$| curl -w'\\n' -X PUT -H "Content-Type: application/json" localhost:10000/v3/namespaces/default/apps/<app name> \\
-        -d '{ "artifact": { "name": "|example|", "version": "|release|", "scope": "user" }, "config": {} }'
-      Deploy Complete
+    $ curl -w'\n' -X PUT -H "Content-Type: application/json" localhost:10000/v3/namespaces/default/apps/<app name> \
+      -d '{ "artifact": { "name": "|example|", "version": "|release|", "scope": "user" }, "config": {} }'
+    Deploy Complete
 
 
 .. _cdap-building-running-starting-application:
@@ -139,7 +143,9 @@ Once an application is deployed, there are multiple methods for starting an appl
   see the status of any of the programs associated with the application and, by clicking
   on them, go to their detail page where you can start or stop them.
 - From the Standalone CDAP SDK directory, use the :ref:`Command Line Interface<cli>`.
-  In each CDAP example, the CLI commands for that particular example are provided::
+  In each CDAP example, the CLI commands for that particular example are provided:
+  
+  .. tabbed-parsed-literal::
 
     $ cdap-cli.sh start <program-type> <app-id.program-id>
     
@@ -166,7 +172,9 @@ Once an application is deployed:
 
 - On an application's detail page in the CDAP UI, you can click on a program to go 
   to its detail page and then click the *Stop* button there; or
-- From the Standalone CDAP SDK directory, use the :ref:`Command Line Interface <cli>`::
+- From the Standalone CDAP SDK directory, use the :ref:`Command Line Interface <cli>`:
+
+  .. tabbed-parsed-literal::
 
     $ cdap-cli.sh stop <program-type> <app-id.program-id>
     
@@ -184,9 +192,11 @@ the application, then click the *Actions* menu on the right side and select *Del
 
 After confirmation, the application will be deleted.
 
-From the Standalone CDAP SDK directory, you can also use the Command Line Interface::
+From the Standalone CDAP SDK directory, you can also use the Command Line Interface:
 
-    $ cdap-cli.sh delete app <app-id>
+.. tabbed-parsed-literal::
+
+  $ cdap-cli.sh delete app <app-id>
 
 Note that any storage (datasets) created or used by the application will remain, as they
 are independent of the application. Datasets can be deleted from the |datasets|_ page of

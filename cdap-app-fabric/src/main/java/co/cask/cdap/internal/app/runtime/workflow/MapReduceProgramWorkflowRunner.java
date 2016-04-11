@@ -23,6 +23,8 @@ import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunnerFactory;
+import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Preconditions;
 
 import java.util.Map;
@@ -32,29 +34,26 @@ import java.util.Map;
  */
 final class MapReduceProgramWorkflowRunner extends AbstractProgramWorkflowRunner {
 
-  MapReduceProgramWorkflowRunner(WorkflowSpecification workflowSpec, ProgramRunnerFactory programRunnerFactory,
+  MapReduceProgramWorkflowRunner(CConfiguration cConf, WorkflowSpecification workflowSpec,
+                                 ProgramRunnerFactory programRunnerFactory,
                                  Program workflowProgram, ProgramOptions workflowProgramOptions, WorkflowToken token,
                                  String nodeId, Map<String, WorkflowNodeState> nodeStates) {
-    super(workflowProgram, workflowProgramOptions, programRunnerFactory, workflowSpec, token, nodeId, nodeStates);
+    super(cConf, workflowProgram, workflowProgramOptions,
+          programRunnerFactory, workflowSpec, token, nodeId, nodeStates);
   }
 
-  /**
-   * Gets the Specification of the program by its name from the {@link WorkflowSpecification}. Creates an
-   * appropriate {@link Program} using this specification through a suitable concrete implementation of
-   * * {@link AbstractWorkflowProgram} and then gets the {@link Runnable} for the program
-   * which can be called to execute the program
-   *
-   * @param name name of the program in the workflow
-   * @return {@link Runnable} associated with this program run.
-   */
   @Override
-  public Runnable create(String name) {
-    ApplicationSpecification spec = workflowProgram.getApplicationSpecification();
-    final MapReduceSpecification mapReduceSpec = spec.getMapReduce().get(name);
+  protected ProgramType getProgramType() {
+    return ProgramType.MAPREDUCE;
+  }
+
+  @Override
+  protected Program rewriteProgram(String name, Program program) {
+    ApplicationSpecification spec = program.getApplicationSpecification();
+    MapReduceSpecification mapReduceSpec = spec.getMapReduce().get(name);
     Preconditions.checkArgument(mapReduceSpec != null,
                                 "No MapReduce with name %s found in Application %s", name, spec.getName());
 
-    final Program mapReduceProgram = new WorkflowMapReduceProgram(workflowProgram, mapReduceSpec);
-    return getProgramRunnable(name, mapReduceProgram);
+    return new WorkflowMapReduceProgram(program, mapReduceSpec);
   }
 }

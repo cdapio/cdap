@@ -21,14 +21,12 @@ methods.
 
 The best way to start developing a CDAP application is by using the Maven archetype:
 
-.. container:: highlight
-
-  .. parsed-literal::
+.. tabbed-parsed-literal::
   
-    |$| mvn archetype:generate \\
-          -DarchetypeGroupId=co.cask.cdap \\
-          -DarchetypeArtifactId=cdap-app-archetype \\
-          -DarchetypeVersion=\ |release|
+  $ mvn archetype:generate \
+      -DarchetypeGroupId=co.cask.cdap \
+      -DarchetypeArtifactId=cdap-app-archetype \
+      -DarchetypeVersion=\ |release|
 
 This creates a Maven project with all required dependencies, Maven plugins, and a simple
 application template for the development of your application. You can import this Maven project

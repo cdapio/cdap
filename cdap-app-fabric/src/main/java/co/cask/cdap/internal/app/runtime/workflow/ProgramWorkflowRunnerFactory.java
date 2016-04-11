@@ -26,6 +26,7 @@ import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunnerFactory;
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.internal.workflow.ProgramWorkflowAction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,17 +39,20 @@ import java.util.Map;
  * It acts as the single point for conditionally creating the needed {@link ProgramWorkflowRunner} for programs.
  * Currently we support {@link MapReduce} and {@link Spark} in Workflow (See {@link SchedulableProgramType}.
  */
-public class ProgramWorkflowRunnerFactory {
+final class ProgramWorkflowRunnerFactory {
 
-  private static final Logger LOG = LoggerFactory.getLogger(WorkflowDriver.class);
+  private static final Logger LOG = LoggerFactory.getLogger(ProgramWorkflowRunnerFactory.class);
 
+  private final CConfiguration cConf;
   private final WorkflowSpecification workflowSpec;
   private final ProgramRunnerFactory programRunnerFactory;
   private final Program workflowProgram;
   private final ProgramOptions workflowProgramOptions;
 
-  public ProgramWorkflowRunnerFactory(WorkflowSpecification workflowSpec, ProgramRunnerFactory programRunnerFactory,
-                                      Program workflowProgram, ProgramOptions workflowProgramOptions) {
+  ProgramWorkflowRunnerFactory(CConfiguration cConf, WorkflowSpecification workflowSpec,
+                               ProgramRunnerFactory programRunnerFactory,
+                               Program workflowProgram, ProgramOptions workflowProgramOptions) {
+    this.cConf = cConf;
     this.workflowSpec = workflowSpec;
     this.programRunnerFactory = programRunnerFactory;
     this.workflowProgram = workflowProgram;
@@ -64,16 +68,16 @@ public class ProgramWorkflowRunnerFactory {
    * @param nodeStates the map of node ids to node states
    * @return the appropriate concrete implementation of {@link ProgramWorkflowRunner} for the program
    */
-  public ProgramWorkflowRunner getProgramWorkflowRunner(WorkflowActionSpecification actionSpec, WorkflowToken token,
-                                                        String nodeId, Map<String, WorkflowNodeState> nodeStates) {
+  ProgramWorkflowRunner getProgramWorkflowRunner(WorkflowActionSpecification actionSpec, WorkflowToken token,
+                                                 String nodeId, Map<String, WorkflowNodeState> nodeStates) {
 
     if (actionSpec.getProperties().containsKey(ProgramWorkflowAction.PROGRAM_TYPE)) {
       switch (SchedulableProgramType.valueOf(actionSpec.getProperties().get(ProgramWorkflowAction.PROGRAM_TYPE))) {
         case MAPREDUCE:
-          return new MapReduceProgramWorkflowRunner(workflowSpec, programRunnerFactory, workflowProgram,
+          return new MapReduceProgramWorkflowRunner(cConf, workflowSpec, programRunnerFactory, workflowProgram,
                                                     workflowProgramOptions, token, nodeId, nodeStates);
         case SPARK:
-          return new SparkProgramWorkflowRunner(workflowSpec, programRunnerFactory, workflowProgram,
+          return new SparkProgramWorkflowRunner(cConf, workflowSpec, programRunnerFactory, workflowProgram,
                                                 workflowProgramOptions, token, nodeId, nodeStates);
         default:
           LOG.debug("No workflow program runner found for this program");

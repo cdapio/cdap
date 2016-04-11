@@ -300,7 +300,8 @@ public class FlowTest {
       long intPending = waitForPending(tagsForSourceToTwoInts, 3, 4L, 1000);
       long stringPending = waitForPending(tagsForSourceToTwoStrings, 3, 4L, 1000);
       long totalPending = intPending + stringPending;
-      Assert.assertTrue(totalPending == 6 || totalPending == 7);
+      Assert.assertTrue(String.format("Expected the pending events count to be 6 or 7. But it was %d", totalPending),
+                        totalPending == 6 || totalPending == 7);
       waitForPending(tagsForSourceToTwo, 7, 6L, 100);
       waitForPending(tagsForAllToTwo, 7, 6L, 100);
       // neither one nor two have emitted, so the total pending should be = 12 - 1 (forward-one) - 1 or 2 (forward-two)

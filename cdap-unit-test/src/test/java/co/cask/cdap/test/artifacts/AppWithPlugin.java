@@ -32,16 +32,19 @@ import co.cask.cdap.api.service.http.HttpServiceContext;
 import co.cask.cdap.api.service.http.HttpServiceRequest;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
 import co.cask.cdap.api.spark.AbstractSpark;
-import co.cask.cdap.api.spark.JavaSparkProgram;
-import co.cask.cdap.api.spark.SparkContext;
+import co.cask.cdap.api.spark.JavaSparkExecutionContext;
+import co.cask.cdap.api.spark.JavaSparkMain;
 import co.cask.cdap.api.worker.AbstractWorker;
+import co.cask.cdap.api.workflow.AbstractWorkflow;
+import co.cask.cdap.api.workflow.WorkflowContext;
 import com.google.common.base.Charsets;
+import com.google.common.base.Throwables;
 import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.io.LongWritable;
-import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.spark.api.java.JavaPairRDD;
+import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.Function;
 import org.apache.spark.api.java.function.PairFunction;
 import org.junit.Assert;
@@ -64,6 +67,8 @@ public class AppWithPlugin extends AbstractApplication {
   public static final String SPARK = "testSpark";
   public static final String SPARK_STREAM = "sparkStream";
   public static final String SPARK_TABLE = "sparkTable";
+  public static final String WORKFLOW = "testWorkflow";
+  public static final String WORKFLOW_TABLE = "workflowTable";
 
   @Override
   public void configure() {
@@ -72,6 +77,30 @@ public class AppWithPlugin extends AbstractApplication {
     addService(new ServiceWithPlugin());
     addSpark(new SparkWithPlugin());
     usePlugin("t1", "n1", "mrid", PluginProperties.builder().add(KEY, TEST).build());
+    addWorkflow(new WorkflowWithPlugin());
+  }
+
+  public static class WorkflowWithPlugin extends AbstractWorkflow {
+
+    @Override
+    protected void configure() {
+      setName(WORKFLOW);
+      addMapReduce(MAPREDUCE);
+      usePlugin("t1", "n1", "workflowplugin", PluginProperties.builder().add(KEY, TEST).build());
+      createDataset(WORKFLOW_TABLE, KeyValueTable.class);
+    }
+
+    @Override
+    public void destroy() {
+      WorkflowContext context = getContext();
+      KeyValueTable table = context.getDataset(WORKFLOW_TABLE);
+      try {
+        Object plugin = context.newPluginInstance("workflowplugin");
+        table.write("val", plugin.toString());
+      } catch (InstantiationException e) {
+        Throwables.propagate(e);
+      }
+    }
   }
 
   public static class ServiceWithPlugin extends AbstractService {
@@ -169,7 +198,7 @@ public class AppWithPlugin extends AbstractApplication {
     }
   }
 
-  public static class SparkWithPlugin extends AbstractSpark implements JavaSparkProgram {
+  public static class SparkWithPlugin extends AbstractSpark implements JavaSparkMain {
 
     @Override
     protected void configure() {
@@ -181,14 +210,15 @@ public class AppWithPlugin extends AbstractApplication {
     }
 
     @Override
-    public void run(SparkContext context) throws Exception {
-      JavaPairRDD<LongWritable, Text> rdd = context.readFromStream(SPARK_STREAM, Text.class);
+    public void run(JavaSparkExecutionContext sec) throws Exception {
+      JavaSparkContext jsc = new JavaSparkContext();
+      JavaPairRDD<Long, String> rdd = sec.fromStream(SPARK_STREAM, String.class);
 
-      final Object plugin = context.getPluginContext().newPluginInstance("plugin");
-      JavaPairRDD<byte[], Put> resultRDD = rdd.values().map(new Function<Text, String>() {
+      final Object plugin = sec.getPluginContext().newPluginInstance("plugin");
+      JavaPairRDD<byte[], Put> resultRDD = rdd.values().map(new Function<String, String>() {
         @Override
-        public String call(Text text) throws Exception {
-          return text.toString() + " " + plugin.toString();
+        public String call(String text) throws Exception {
+          return text + " " + plugin.toString();
         }
       }).mapToPair(new PairFunction<String, byte[], Put>() {
         @Override
@@ -197,7 +227,7 @@ public class AppWithPlugin extends AbstractApplication {
         }
       });
 
-      context.writeToDataset(resultRDD, SPARK_TABLE, byte[].class, Put.class);
+      sec.saveAsDataset(resultRDD, SPARK_TABLE);
     }
   }
 }

@@ -105,7 +105,7 @@ Known Issues
   ``C:\ProgramData\Oracle\Java\javapath``.
 
 - `CDAP-3492 <https://issues.cask.co/browse/CDAP-3492>`__ -
-  In the CDAP CLI, executing ``'select *'`` from a dataset with many fields generates an error.
+  In the CDAP CLI, executing ``select *`` from a dataset with many fields generates an error.
   
 - `CDAP-3641 <https://issues.cask.co/browse/CDAP-3641>`__ -
   A RESTful API call to retrieve workflow statistics hangs if units (such as "s" for
@@ -360,7 +360,7 @@ Known Issues
   ``C:\ProgramData\Oracle\Java\javapath``.
 
 - `CDAP-3492 <https://issues.cask.co/browse/CDAP-3492>`__ -
-  In the CDAP CLI, executing ``'select *'`` from a dataset with many fields generates an error.
+  In the CDAP CLI, executing ``select *`` from a dataset with many fields generates an error.
   
 - `CDAP-3641 <https://issues.cask.co/browse/CDAP-3641>`__ -
   A RESTful API call to retrieve workflow statistics hangs if units (such as "s" for
@@ -700,7 +700,7 @@ Known Issues
   ``C:\ProgramData\Oracle\Java\javapath``.
 
 - `CDAP-3492 <https://issues.cask.co/browse/CDAP-3492>`__ -
-  In the CDAP CLI, executing ``'select *'`` from a dataset with many fields generates an error.
+  In the CDAP CLI, executing ``select *`` from a dataset with many fields generates an error.
   
 - `CDAP-3641 <https://issues.cask.co/browse/CDAP-3641>`__ -
   A RESTful API call to retrieve workflow statistics hangs if units (such as "s" for
@@ -818,7 +818,7 @@ Known Issues
   ``C:\ProgramData\Oracle\Java\javapath``.
 
 - `CDAP-3492 <https://issues.cask.co/browse/CDAP-3492>`__ -
-  In the CDAP CLI, executing ``'select *'`` from a dataset with many fields generates an error.
+  In the CDAP CLI, executing ``select *`` from a dataset with many fields generates an error.
   
 - `CDAP-3641 <https://issues.cask.co/browse/CDAP-3641>`__ -
   A RESTful API call to retrieve workflow statistics hangs if units (such as "s" for
@@ -848,7 +848,7 @@ New Features
   dataset as the output of a MapReduce job.
   
 - `CDAP-3253 <https://issues.cask.co/browse/CDAP-3253>`__ -
-  Added a Stream and Dataset Widget to the CDAP-UI.
+  Added a Stream and Dataset Widget to the CDAP UI.
   
 - `CDAP-3390 <https://issues.cask.co/browse/CDAP-3390>`__ -
   Added stream views, enabling reading from a single stream using various formats and
@@ -913,20 +913,20 @@ Improvements
   Added documentation of the RESTful endpoint to retrieve the properties of a stream.
 
 - `CDAP-2514 <https://issues.cask.co/browse/CDAP-2514>`__ -
-  Added an interface to load a file into a stream from the CDAP-UI.
+  Added an interface to load a file into a stream from the CDAP UI.
   
 - `CDAP-2809 <https://issues.cask.co/browse/CDAP-2809>`__ -
-  The CDAP-UI "Errors" pop-up in the main screen now displays the time and date for each
+  The CDAP UI "Errors" pop-up in the main screen now displays the time and date for each
   error.
     
 - `CDAP-2872 <https://issues.cask.co/browse/CDAP-2872>`__ -
   Updated the Cloudera Manager CSD to use support for logback.
   
 - `CDAP-2950 <https://issues.cask.co/browse/CDAP-2950>`__ -
-  Cleaned up the messages shown in the errors dropdown in the CDAP-UI.
+  Cleaned up the messages shown in the errors dropdown in the CDAP UI.
 
 - `CDAP-3147 <https://issues.cask.co/browse/CDAP-3147>`__ -
-  Added a  CDAP-CLI command to stop a workflow.
+  Added a CDAP CLI command to stop a workflow.
   
 - `CDAP-3179 <https://issues.cask.co/browse/CDAP-3179>`__ -
   Added support for upgrading the Hadoop distribution or the HBase version that CDAP is
@@ -938,7 +938,7 @@ Improvements
   file.
 
 - `CDAP-3270 <https://issues.cask.co/browse/CDAP-3270>`__ -
-  Improved the help provided in the CDAP-CLI for the setting of stream formats.
+  Improved the help provided in the CDAP CLI for the setting of stream formats.
   
 - `CDAP-3275 <https://issues.cask.co/browse/CDAP-3275>`__ -
   Upgraded netty-http version to 0.12.0.
@@ -947,17 +947,17 @@ Improvements
   Added a HTTP RESTful API to update the application configuration and artifact version.
   
 - `CDAP-3332 <https://issues.cask.co/browse/CDAP-3332>`__ -
-  Added a "clear" button in the CDAP-UI for cases where a user decides to not used a
+  Added a "clear" button in the CDAP UI for cases where a user decides to not used a
   pre-populated schema.
   
 - `CDAP-3351 <https://issues.cask.co/browse/CDAP-3351>`__ -
   Defined a directory structure to be used for predefined applications.
   
 - `CDAP-3357 <https://issues.cask.co/browse/CDAP-3357>`__ -
-  Added documentation in the source code on adding new commands and completers to the CDAP-CLI.
+  Added documentation in the source code on adding new commands and completers to the CDAP CLI.
 
 - `CDAP-3393 <https://issues.cask.co/browse/CDAP-3393>`__ -
-  In the CDAP-UI, added visualization for Workflow tokens in Workflows.
+  In the CDAP UI, added visualization for Workflow tokens in Workflows.
   
 - `CDAP-3419 <https://issues.cask.co/browse/CDAP-3419>`__ -
   HBaseQueueDebugger now shows the minimum queue event transaction write pointer both for
@@ -1006,16 +1006,16 @@ Bug Fixes
   standalone mode.
   
 - `CDAP-2428 <https://issues.cask.co/browse/CDAP-2428>`__ -
-  Fixed a problem with the CDAP-CLI creating file logs.
+  Fixed a problem with the CDAP CLI creating file logs.
   
 - `CDAP-2521 <https://issues.cask.co/browse/CDAP-2521>`__ -
-  Fixed a problem with the CDAP-CLI not auto-completing when setting a stream format.
+  Fixed a problem with the CDAP CLI not auto-completing when setting a stream format.
   
 - `CDAP-2785 <https://issues.cask.co/browse/CDAP-2785>`__ -
-  Fixed a problem with the CDAP-UI of buttons staying 'in focus' after clicking.
+  Fixed a problem with the CDAP UI of buttons staying 'in focus' after clicking.
   
 - `CDAP-2809 <https://issues.cask.co/browse/CDAP-2809>`__ -
-  The CDAP-UI "Errors" pop-up in the main screen now displays the time and date for each error.
+  The CDAP UI "Errors" pop-up in the main screen now displays the time and date for each error.
   
 - `CDAP-2892 <https://issues.cask.co/browse/CDAP-2892>`__ -
   Fixed a problem with schedules not being deployed in suspended mode.
@@ -1034,32 +1034,32 @@ Bug Fixes
   Fixed a problem with discrepancies between the documentation and the defaults actually used by CDAP.
   
 - `CDAP-3200 <https://issues.cask.co/browse/CDAP-3200>`__ -
-  Fixed a problem in the CDAP-UI with the clone button in an incorrect position when using Firefox.
+  Fixed a problem in the CDAP UI with the clone button in an incorrect position when using Firefox.
   
 - `CDAP-3201 <https://issues.cask.co/browse/CDAP-3201>`__ -
-  Fixed a problem in the CDAP-UI with an incorrect tabbing order when using Firefox.
+  Fixed a problem in the CDAP UI with an incorrect tabbing order when using Firefox.
   
 - `CDAP-3219 <https://issues.cask.co/browse/CDAP-3219>`__ -
   Fixed a problem when specifying the HBase version using the HBASE_VERSION environment variable.
   
 - `CDAP-3233 <https://issues.cask.co/browse/CDAP-3233>`__ -
-  Fixed a problem in the CDAP-UI error pop-ups not having a default focus on a button.
+  Fixed a problem in the CDAP UI error pop-ups not having a default focus on a button.
   
 - `CDAP-3243 <https://issues.cask.co/browse/CDAP-3243>`__ -
-  Fixed a problem in the CDAP-UI with the default schema shown for streams.
+  Fixed a problem in the CDAP UI with the default schema shown for streams.
   
 - `CDAP-3260 <https://issues.cask.co/browse/CDAP-3260>`__ -
-  Fixed a problem in the CDAP-UI with scrolling on the namespaces dropdown on certain pages.
+  Fixed a problem in the CDAP UI with scrolling on the namespaces dropdown on certain pages.
   
 - `CDAP-3261 <https://issues.cask.co/browse/CDAP-3261>`__ -
   Fixed a problem on CDAP distributed mode with the serializing of the metadata artifact
   causing a stack overflow.
   
 - `CDAP-3305 <https://issues.cask.co/browse/CDAP-3305>`__ -
-  Fixed a problem in the CDAP-UI not warning users if they exit or close their browser without saving.
+  Fixed a problem in the CDAP UI not warning users if they exit or close their browser without saving.
   
 - `CDAP-3313 <https://issues.cask.co/browse/CDAP-3313>`__ -
-  Fixed a problem in the CDAP-UI with refreshing always returning to the overview page.
+  Fixed a problem in the CDAP UI with refreshing always returning to the overview page.
   
 - `CDAP-3326 <https://issues.cask.co/browse/CDAP-3326>`__ -
   Fixed a problem with the table batch source requiring a row key to be set.
@@ -1068,7 +1068,7 @@ Bug Fixes
   Fixed a problem with the application deployment for apps that contain Spark.
   
 - `CDAP-3349 <https://issues.cask.co/browse/CDAP-3349>`__ -
-  Fixed a problem with the display of ETL application metrics in the CDAP-UI.
+  Fixed a problem with the display of ETL application metrics in the CDAP UI.
   
 - `CDAP-3355 <https://issues.cask.co/browse/CDAP-3355>`__ -
   Fixed a problem in the CDAP examples with the use of a runtime argument, ``min.pages.threshold``.
@@ -1088,7 +1088,7 @@ Bug Fixes
   through a Workflow in CDAP Distributed mode on HDP 2.2.
   
 - `CDAP-3394 <https://issues.cask.co/browse/CDAP-3394>`__ -
-  Fixed a problem with the deployment of applications through the CDAP-UI.
+  Fixed a problem with the deployment of applications through the CDAP UI.
   
 - `CDAP-3399 <https://issues.cask.co/browse/CDAP-3399>`__ -
   Fixed a problem with the SparkPageRankApp example spawning multiple containers in
@@ -1132,7 +1132,7 @@ Bug Fixes
   Fixed a problem with a workflow failure not updating a run record for the inner program.
     
 - `CDAP-3530 <https://issues.cask.co/browse/CDAP-3530>`__ -
-  Fixed a problem with the CDAP-UI performance when rendering flow diagrams with a large number of nodes.
+  Fixed a problem with the CDAP UI performance when rendering flow diagrams with a large number of nodes.
   
 - `CDAP-3563 <https://issues.cask.co/browse/CDAP-3563>`__ -
   Removed faulty and unused metrics around CDAP file resource usage.
@@ -1290,7 +1290,7 @@ Known Issues
   ``C:\ProgramData\Oracle\Java\javapath``.
 
 - `CDAP-3492 <https://issues.cask.co/browse/CDAP-3492>`__ -
-  In the CDAP CLI, executing ``'select *'`` from a dataset with many fields generates an error.
+  In the CDAP CLI, executing ``select *`` from a dataset with many fields generates an error.
   
 - `CDAP-3641 <https://issues.cask.co/browse/CDAP-3641>`__ -
   A RESTful API call to retrieve workflow statistics hangs if units (such as "s" for
@@ -1506,7 +1506,7 @@ New Features
   Added a metrics client for search and query by tags.
 
 - `CDAP-2582 <https://issues.cask.co/browse/CDAP-2582>`__ -
-  Documented the licenses of the shipped CDAP-UI components.
+  Documented the licenses of the shipped CDAP UI components.
 
 - `CDAP-2595 <https://issues.cask.co/browse/CDAP-2595>`__ -
   Added data modelling of flows.
@@ -1594,13 +1594,13 @@ Improvements
   Removed redundant catch blocks in AdapterHttpHandler.
 
 - `CDAP-2455 <https://issues.cask.co/browse/CDAP-2455>`__ -
-  Version in CDAP-UI footer is dynamic.
+  Version in CDAP UI footer is dynamic.
 
 - `CDAP-2482 <https://issues.cask.co/browse/CDAP-2482>`__ -
   Reduced excessive capitalisation in documentation.
 
 - `CDAP-2531 <https://issues.cask.co/browse/CDAP-2531>`__ -
-  Adapter details made available through CDAP-UI.
+  Adapter details made available through CDAP UI.
 
 - `CDAP-2539 <https://issues.cask.co/browse/CDAP-2539>`__ -
   Added a build identifier (branch, commit) in header of Documentation HTML pages.
@@ -1627,52 +1627,52 @@ Improvements
   Improvements to the MetricsClient APIs.
 
 - `CDAP-2590 <https://issues.cask.co/browse/CDAP-2590>`__ -
-  Switching namespaces when in CDAP-UI Operations screens.
+  Switching namespaces when in CDAP UI Operations screens.
 
 - `CDAP-2620 <https://issues.cask.co/browse/CDAP-2620>`__ -
   CDAP clients now use Id classes from cdap proto, instead of plain strings.
 
 - `CDAP-2628 <https://issues.cask.co/browse/CDAP-2628>`__ -
-  CDAP-UI: Breadcrumbs in Workflow/Mapreduce work as expected.
+  CDAP UI: Breadcrumbs in Workflow/Mapreduce work as expected.
 
 - `CDAP-2644 <https://issues.cask.co/browse/CDAP-2644>`__ -
   In cdap-clients, no longer need to retrieve runtime arguments before starting a program.
 
 - `CDAP-2651 <https://issues.cask.co/browse/CDAP-2651>`__ -
-  CDAP-UI: the Namespace is made more prominent.
+  CDAP UI: the Namespace is made more prominent.
 
 - `CDAP-2681 <https://issues.cask.co/browse/CDAP-2681>`__ -
-  CDAP-UI: scrolling no longer enlarges the workflow diagram instead of scrolling through.
+  CDAP UI: scrolling no longer enlarges the workflow diagram instead of scrolling through.
 
 - `CDAP-2683 <https://issues.cask.co/browse/CDAP-2683>`__ -
-  CDAP-UI: added a remove icons for fork and Join.
+  CDAP UI: added a remove icons for fork and Join.
 
 - `CDAP-2684 <https://issues.cask.co/browse/CDAP-2684>`__ -
-  CDAP-UI: workflow diagrams are directed graphs.
+  CDAP UI: workflow diagrams are directed graphs.
 
 - `CDAP-2688 <https://issues.cask.co/browse/CDAP-2688>`__ -
-  CDAP-UI: added search & pagination for lists of apps and datasets.
+  CDAP UI: added search & pagination for lists of apps and datasets.
 
 - `CDAP-2689 <https://issues.cask.co/browse/CDAP-2689>`__ -
-  CDAP-UI: shows which application is a part of which dataset.
+  CDAP UI: shows which application is a part of which dataset.
 
 - `CDAP-2691 <https://issues.cask.co/browse/CDAP-2691>`__ -
-  CDAP-UI: added ability to delete streams.
+  CDAP UI: added ability to delete streams.
 
 - `CDAP-2692 <https://issues.cask.co/browse/CDAP-2692>`__ -
-  CDAP-UI: added pagination for logs.
+  CDAP UI: added pagination for logs.
 
 - `CDAP-2694 <https://issues.cask.co/browse/CDAP-2694>`__ -
-  CDAP-UI: added a loading icon/UI element when creating an adapter.
+  CDAP UI: added a loading icon/UI element when creating an adapter.
 
 - `CDAP-2695 <https://issues.cask.co/browse/CDAP-2695>`__ -
-  CDAP-UI: long names of adapters are replaced by a short version ending in an ellipsis.
+  CDAP UI: long names of adapters are replaced by a short version ending in an ellipsis.
 
 - `CDAP-2697 <https://issues.cask.co/browse/CDAP-2697>`__ -
-  CDAP-UI: added tab names during adapter creation.
+  CDAP UI: added tab names during adapter creation.
 
 - `CDAP-2716 <https://issues.cask.co/browse/CDAP-2716>`__ -
-  CDAP-UI: when creating an adapter, the tabbing order shows correctly.
+  CDAP UI: when creating an adapter, the tabbing order shows correctly.
 
 - `CDAP-2733 <https://issues.cask.co/browse/CDAP-2733>`__ -
   Implemented a TimeParitionedFileSet source.
@@ -1777,7 +1777,7 @@ Bug Fixes
   Fixed a problem with StreamSizeSchedulerTest failing randomly.
 
 - `CDAP-2140 <https://issues.cask.co/browse/CDAP-2140>`__ -
-  Fixed a problem with the CDAP-UI not showing system service status when system services are down.
+  Fixed a problem with the CDAP UI not showing system service status when system services are down.
 
 - `CDAP-2177 <https://issues.cask.co/browse/CDAP-2177>`__ -
   Fixed a problem with Enable and Fix LogSaverPluginTest.
@@ -1804,10 +1804,10 @@ Bug Fixes
   Fixed a problem that when a MapReduce fails to start, it cannot be started or stopped any more.
 
 - `CDAP-2343 <https://issues.cask.co/browse/CDAP-2343>`__ -
-  Fixed a problem in the CDAP-UI that Mapreduce logs are convoluted with system logs.
+  Fixed a problem in the CDAP UI that Mapreduce logs are convoluted with system logs.
 
 - `CDAP-2344 <https://issues.cask.co/browse/CDAP-2344>`__ -
-  Fixed a problem with the formatting of logs in the CDAP-UI.
+  Fixed a problem with the formatting of logs in the CDAP UI.
 
 - `CDAP-2355 <https://issues.cask.co/browse/CDAP-2355>`__ -
   Fixed a problem with an Adapter CLI help error.
@@ -1816,7 +1816,7 @@ Bug Fixes
   Fixed a problem with CLI autocompletion results not sorted in alphabetical order.
 
 - `CDAP-2365 <https://issues.cask.co/browse/CDAP-2365>`__ -
-  Fixed a problem that when restarting CDAP-Master, the CDAP-UI oscillates between being up and down.
+  Fixed a problem that when restarting CDAP-Master, the CDAP UI oscillates between being up and down.
 
 - `CDAP-2376 <https://issues.cask.co/browse/CDAP-2376>`__ -
   Fixed a problem with logs from mapper and reducer not being collected.
@@ -1825,13 +1825,13 @@ Bug Fixes
   Fixed a problem with Cloudera Configuring doc needs fixing.
 
 - `CDAP-2446 <https://issues.cask.co/browse/CDAP-2446>`__ -
-  Fixed a problem with that examples needing to be updated for new CDAP-UI.
+  Fixed a problem with that examples needing to be updated for new CDAP UI.
 
 - `CDAP-2454 <https://issues.cask.co/browse/CDAP-2454>`__ -
   Fixed a problem with Proto class RunRecord containing the Twill RunId when serialized in REST API response.
 
 - `CDAP-2459 <https://issues.cask.co/browse/CDAP-2459>`__ -
-  Fixed a problem with the CDAP-UI going into a loop when the Router returns 200 and App Fabric is not up.
+  Fixed a problem with the CDAP UI going into a loop when the Router returns 200 and App Fabric is not up.
 
 - `CDAP-2474 <https://issues.cask.co/browse/CDAP-2474>`__ -
   Fixed a problem with changing the format of the name for the connectionfactory in JMS source plugin.
@@ -1853,7 +1853,7 @@ Bug Fixes
 
 - `CDAP-2493 <https://issues.cask.co/browse/CDAP-2493>`__ -
   After the fix for `CDAP-2474 <https://issues.cask.co/browse/CDAP-2474>`__ (ConnectionFactory in JMS source), 
-  the JSON file requires updating for the change to reflect in CDAP-UI.
+  the JSON file requires updating for the change to reflect in CDAP UI.
 
 - `CDAP-2496 <https://issues.cask.co/browse/CDAP-2496>`__ -
   Fixed a problem with CDAP using its own transaction snapshot codec.
@@ -1923,13 +1923,13 @@ Bug Fixes
   Fixed a problem with False values showing up as 'false null' in the CDAP Explore UI.
 
 - `CDAP-2685 <https://issues.cask.co/browse/CDAP-2685>`__ -
-  Fixed a problem with the CDAP-UI: no empty box for transforms.
+  Fixed a problem with the CDAP UI: no empty box for transforms.
 
 - `CDAP-2729 <https://issues.cask.co/browse/CDAP-2729>`__ -
-  Fixed a problem with CDAP-UI not handling downstream system services gracefully.
+  Fixed a problem with CDAP UI not handling downstream system services gracefully.
 
 - `CDAP-2740 <https://issues.cask.co/browse/CDAP-2740>`__ -
-  Fixed a problem with CDAP-UI not gracefully handling when the nodejs server goes down.
+  Fixed a problem with CDAP UI not gracefully handling when the nodejs server goes down.
 
 - `CDAP-2748 <https://issues.cask.co/browse/CDAP-2748>`__ -
   Fixed a problem with the currently running and completed status of Spark programs in a 
@@ -1974,10 +1974,10 @@ Bug Fixes
   Fixed a problem with the conversion from Avro and to Avro not taking into account nested records.
 
 - `CDAP-2830 <https://issues.cask.co/browse/CDAP-2830>`__ -
-  Fixed a problem with CDAP-UI dying when CDAP Master is killed.
+  Fixed a problem with CDAP UI dying when CDAP Master is killed.
 
 - `CDAP-2832 <https://issues.cask.co/browse/CDAP-2832>`__ -
-  Fixed a problem where suspending a schedule takes a long time and the CDAP-UI does not provide any indication.
+  Fixed a problem where suspending a schedule takes a long time and the CDAP UI does not provide any indication.
 
 - `CDAP-2838 <https://issues.cask.co/browse/CDAP-2838>`__ -
   Fixed a problem with poor error message when there is a mistake in security configration.
@@ -2005,10 +2005,10 @@ Bug Fixes
   Fixed a problem with the documentation for updating dataset properties.
 
 - `CDAP-2861 <https://issues.cask.co/browse/CDAP-2861>`__ -
-  Fixed a problem with CDAP-UI not mentioning required fields in all entry forms.
+  Fixed a problem with CDAP UI not mentioning required fields in all entry forms.
 
 - `CDAP-2862 <https://issues.cask.co/browse/CDAP-2862>`__ -
-  Fixed a problem with CDAP-UI creating multiple namespaces with the same name.
+  Fixed a problem with CDAP UI creating multiple namespaces with the same name.
 
 - `CDAP-2866 <https://issues.cask.co/browse/CDAP-2866>`__ -
   Fixed a problem with FileBatchSource not reattempting to read in files if there is a failure.
@@ -2054,7 +2054,7 @@ Bug Fixes
   Fixed a problem with the ScriptTransform failing to initialize.
 
 - `CDAP-2942 <https://issues.cask.co/browse/CDAP-2942>`__ -
-  Fixed a problem with the CDAP-UI namespace dropdown failing on standalone restart.
+  Fixed a problem with the CDAP UI namespace dropdown failing on standalone restart.
 
 - `CDAP-2948 <https://issues.cask.co/browse/CDAP-2948>`__ -
   Fixed a problem with creating Adapters.
@@ -2081,7 +2081,7 @@ Bug Fixes
   Fixed a problem with CLI broken for secure CDAP.
 
 - `CDAP-2996 <https://issues.cask.co/browse/CDAP-2996>`__ -
-  Fixed a problem with CDAP-UI: Stop Run and Suspend Run buttons needed styling updates.
+  Fixed a problem with CDAP UI: Stop Run and Suspend Run buttons needed styling updates.
 
 - `CDAP-2997 <https://issues.cask.co/browse/CDAP-2997>`__ -
   Fixed a problem with SparkProgramRunnerTest failing randomly.
@@ -2130,7 +2130,7 @@ Bug Fixes
   Fixed a problem with flowlet instance count defaulting to 1.
 
 - `CDAP-3024 <https://issues.cask.co/browse/CDAP-3024>`__ -
-  Fixed a problem with surfacing more logs in CDAP-UI for System Services.
+  Fixed a problem with surfacing more logs in CDAP UI for System Services.
 
 - `CDAP-3026 <https://issues.cask.co/browse/CDAP-3026>`__ -
   Fixed a problem with updating SparkPageRank example docs.
@@ -2189,13 +2189,13 @@ Bug Fixes
   Fixed a problem with adding integration tests for datasets.
 
 - `CDAP-3086 <https://issues.cask.co/browse/CDAP-3086>`__ -
-  Fixed a problem with the CDAP-UI current adapter UI.
+  Fixed a problem with the CDAP UI current adapter UI.
 
 - `CDAP-3087 <https://issues.cask.co/browse/CDAP-3087>`__ -
-  Fixed a problem with CDAP-UI: a session timeout on secure mode.
+  Fixed a problem with CDAP UI: a session timeout on secure mode.
 
 - `CDAP-3088 <https://issues.cask.co/browse/CDAP-3088>`__ -
-  Fixed a problem with CDAP-UI: application types need to be updated.
+  Fixed a problem with CDAP UI: application types need to be updated.
 
 - `CDAP-3092 <https://issues.cask.co/browse/CDAP-3092>`__ -
   Fixed a problem with reading multiple files with one mapper in FileBatchSource.
@@ -2204,10 +2204,10 @@ Bug Fixes
   Fixed a problem with running MapReduce on HDP 2.2.
 
 - `CDAP-3098 <https://issues.cask.co/browse/CDAP-3098>`__ -
-  Fixed problems with the CDAP-UI Adapter UI.
+  Fixed problems with the CDAP UI Adapter UI.
 
 - `CDAP-3099 <https://issues.cask.co/browse/CDAP-3099>`__ -
-  Fixed a problem with CDAP-UI and that settings icons shift 2px when you click on them.
+  Fixed a problem with CDAP UI and that settings icons shift 2px when you click on them.
 
 - `CDAP-3104 <https://issues.cask.co/browse/CDAP-3104>`__ -
   Fixed a problem with CDAP Explore throwing an exception if a Table dataset does not set schema.

@@ -28,12 +28,12 @@ import org.slf4j.LoggerFactory;
 /**
  * A {@link ProgramController} that control program through twill.
  */
-abstract class AbstractTwillProgramController extends AbstractProgramController implements ProgramController {
+public abstract class AbstractTwillProgramController extends AbstractProgramController implements ProgramController {
 
   private static final Logger LOG = LoggerFactory.getLogger(AbstractTwillProgramController.class);
 
   protected final Id.Program programId;
-  protected final TwillController twillController;
+  private final TwillController twillController;
   private volatile boolean stopRequested;
 
   protected AbstractTwillProgramController(Id.Program programId, TwillController twillController, RunId runId) {

@@ -39,8 +39,8 @@ import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceRequest;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
 import co.cask.cdap.api.spark.AbstractSpark;
-import co.cask.cdap.api.spark.JavaSparkProgram;
-import co.cask.cdap.api.spark.SparkContext;
+import co.cask.cdap.api.spark.JavaSparkExecutionContext;
+import co.cask.cdap.api.spark.JavaSparkMain;
 import co.cask.cdap.api.worker.AbstractWorker;
 import co.cask.cdap.api.workflow.AbstractWorkflow;
 import co.cask.cdap.api.workflow.AbstractWorkflowAction;
@@ -55,6 +55,7 @@ import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.apache.spark.api.java.function.Function2;
 import org.apache.spark.api.java.function.PairFunction;
@@ -374,12 +375,12 @@ public class AdminApp extends AbstractApplication {
       setMainClass(WordCountSpark.class);
     }
 
-    public static class WordCountSpark implements JavaSparkProgram {
+    public static class WordCountSpark implements JavaSparkMain {
 
       @Override
-      public void run(SparkContext context) throws Exception {
-
-        JavaPairRDD<byte[], byte[]> input = context.readFromDataset("lines", byte[].class, byte[].class);
+      public void run(JavaSparkExecutionContext sec) throws Exception {
+        JavaSparkContext jsc = new JavaSparkContext();
+        JavaPairRDD<byte[], byte[]> input = sec.fromDataset("lines");
         JavaRDD<String> words = input.values().flatMap(new FlatMapFunction<byte[], String>() {
           public Iterable<String> call(byte[] line) {
             return Arrays.asList(Bytes.toString(line).split(" "));
@@ -402,8 +403,8 @@ public class AdminApp extends AbstractApplication {
               return new Tuple2<>(Bytes.toBytes(input._1()), Bytes.toBytes(input._2()));
             }
           });
-        context.getAdmin().truncateDataset("counts");
-        context.writeToDataset(result, "counts", byte[].class, byte[].class);
+        sec.getAdmin().truncateDataset("counts");
+        sec.saveAsDataset(result, "counts");
       }
     }
   }

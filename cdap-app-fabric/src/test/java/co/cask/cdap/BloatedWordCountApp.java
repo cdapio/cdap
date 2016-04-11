@@ -39,8 +39,6 @@ import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceRequest;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
 import co.cask.cdap.api.spark.AbstractSpark;
-import co.cask.cdap.api.spark.JavaSparkProgram;
-import co.cask.cdap.api.spark.SparkContext;
 import co.cask.cdap.api.worker.AbstractWorker;
 import co.cask.cdap.api.workflow.AbstractWorkflow;
 import com.google.common.base.Charsets;
@@ -256,16 +254,15 @@ public class BloatedWordCountApp extends AbstractApplication {
     }
   }
 
-  private static class SparklingNothing extends AbstractSpark implements JavaSparkProgram {
+  /**
+   * A dummy Spark program. It actually doesn't implement SparkMain, hence cannot really run.
+   * It is just for testing app-fabric lifecycle.
+   */
+  private static class SparklingNothing extends AbstractSpark {
     @Override
     protected void configure() {
       setDescription("Spark program that does nothing");
       setMainClass(this.getClass());
-    }
-
-    @Override
-    public void run(SparkContext context) throws Exception {
-      // no-op
     }
   }
 

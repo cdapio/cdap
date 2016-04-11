@@ -269,6 +269,14 @@
   </property>
 
   <property>
+    <name>app.program.runtime.extensions.dir</name>
+    <value>/opt/cdap/master/ext/runtimes</value>
+    <description>
+      Semicolon-separated list of local directories that are scanned for program runtime extensions
+    </description>
+  </property>
+
+  <property>
     <name>app.program.spark.yarn.client.rewrite.enabled</name>
     <value>true</value>
     <description>

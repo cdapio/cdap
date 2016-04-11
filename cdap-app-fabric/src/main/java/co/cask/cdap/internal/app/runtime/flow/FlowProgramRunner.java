@@ -251,6 +251,8 @@ public final class FlowProgramRunner implements ProgramRunner {
         changeInstances(command.get("flowlet"), Integer.valueOf(command.get("newInstances")));
       } catch (Throwable t) {
         LOG.error(String.format("Fail to change instances: %s", command), t);
+        stop();
+        throw t;
       } finally {
         lock.unlock();
       }

@@ -63,7 +63,7 @@ public class SparkMetricsIntegrationTestRun extends TestFrameworkTestBase {
       public Boolean call() throws Exception {
         return getSparkMetric(TestSparkMetricsIntegrationApp.APP_NAME,
                               TestSparkMetricsIntegrationApp.APP_SPARK_NAME,
-                              "system.<driver>.BlockManager.memory.remainingMem_MB") > 0;
+                              "system.driver.BlockManager.memory.remainingMem_MB") > 0;
       }
     }, 10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
 

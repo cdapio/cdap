@@ -161,40 +161,6 @@ public final class SparkUtils {
   }
 
   /**
-   * Creates a new {@link URLClassLoader} that can load Spark classes. If Spark classes are already loadable
-   * from the given parent ClassLoader, a new URLClassLoader will be created in a way such that it
-   * always delegates to the parent for class loading.
-   * Otherwise, it will try to find the Spark Assembly JAR to create a new URLClassLoader from it.
-   *
-   * @param parentClassLoader the parent ClassLoader for the new URLClassLoader created
-   */
-  public static URLClassLoader createSparkFrameworkClassLoader(ClassLoader parentClassLoader) {
-    // Try to see if Spark class is already available in the CDAP system classpath.
-    // It is for the Standalone case
-    URL[] urls;
-
-    try {
-      parentClassLoader.loadClass("org.apache.spark.SparkConf");
-      urls = new URL[0];
-    } catch (ClassNotFoundException e) {
-      // Try to locate Spark Assembly jar, which is for the distributed mode case
-      try {
-        urls = new URL[] { SparkUtils.locateSparkAssemblyJar().toURI().toURL() };
-      } catch (IllegalStateException ex) {
-        // Don't propagate as it's possible that a cluster doesn't have Spark configured
-        // If someone deploy an artifact with Spark program inside, there will be NoClassDefFound exception and
-        // will be handled by the ArtifactInspector.
-        LOG.debug("Spark is not available");
-        urls = new URL[0];
-      } catch (MalformedURLException ex) {
-        // This shouldn't happen
-        throw Throwables.propagate(ex);
-      }
-    }
-    return new URLClassLoader(urls, parentClassLoader);
-  }
-
-  /**
    * Prepares the resources that need to be localized to the Spark client container.
    *
    * @param cConf configuration for determining where is the CDAP data directory.

@@ -19,7 +19,8 @@ package co.cask.cdap.etl.batch.spark;
 import co.cask.cdap.api.data.batch.InputFormatProvider;
 import co.cask.cdap.api.data.batch.Split;
 import co.cask.cdap.api.data.stream.StreamBatchReadable;
-import co.cask.cdap.api.spark.SparkContext;
+import co.cask.cdap.api.spark.JavaSparkExecutionContext;
+import co.cask.cdap.api.stream.StreamEventDecoder;
 import com.google.common.base.Objects;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
@@ -39,6 +40,8 @@ import java.net.URI;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
+
+import static java.lang.Thread.currentThread;
 
 /**
  * A POJO class for storing source information being set from {@link SparkBatchSourceContext} and used in
@@ -140,31 +143,48 @@ final class SparkBatchSourceFactory {
     throw new IllegalStateException("Unknown source type");
   }
 
-  public <K, V> JavaPairRDD<K, V> createRDD(SparkContext sparkContext, Class<K> keyClass, Class<V> valueClass) {
+  public <K, V> JavaPairRDD<K, V> createRDD(JavaSparkExecutionContext sec, JavaSparkContext jsc,
+                                            Class<K> keyClass, Class<V> valueClass) {
     if (streamBatchReadable != null) {
-      return sparkContext.readFromStream(streamBatchReadable, valueClass);
+      String decoderType = streamBatchReadable.getDecoderType();
+      if (decoderType == null) {
+        return (JavaPairRDD<K, V>) sec.fromStream(streamBatchReadable.getStreamName(),
+                                                  streamBatchReadable.getStartTime(),
+                                                  streamBatchReadable.getEndTime(),
+                                                  valueClass);
+      } else {
+        try {
+          @SuppressWarnings("unchecked")
+          Class<StreamEventDecoder<K, V>> decoderClass =
+            (Class<StreamEventDecoder<K, V>>) Thread.currentThread().getContextClassLoader().loadClass(decoderType);
+          return sec.fromStream(streamBatchReadable.getStreamName(),
+                                streamBatchReadable.getStartTime(),
+                                streamBatchReadable.getEndTime(),
+                                decoderClass, keyClass, valueClass);
+        } catch (Exception e) {
+          throw Throwables.propagate(e);
+        }
+      }
     }
     if (inputFormatProvider != null) {
-      JavaSparkContext originalContext = sparkContext.getOriginalSparkContext();
       Configuration hConf = new Configuration();
       hConf.clear();
       for (Map.Entry<String, String> entry : inputFormatProvider.getInputFormatConfiguration().entrySet()) {
         hConf.set(entry.getKey(), entry.getValue());
       }
-      ClassLoader classLoader = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
+      ClassLoader classLoader = Objects.firstNonNull(currentThread().getContextClassLoader(),
                                                      getClass().getClassLoader());
       try {
         @SuppressWarnings("unchecked")
         Class<InputFormat> inputFormatClass = (Class<InputFormat>) classLoader.loadClass(
           inputFormatProvider.getInputFormatClassName());
-        return originalContext.newAPIHadoopRDD(hConf, inputFormatClass, keyClass, valueClass);
+        return jsc.newAPIHadoopRDD(hConf, inputFormatClass, keyClass, valueClass);
       } catch (ClassNotFoundException e) {
         throw Throwables.propagate(e);
       }
     }
     if (datasetInfo != null) {
-      return sparkContext.readFromDataset(datasetInfo.getDatasetName(),
-                                          keyClass, valueClass, datasetInfo.getDatasetArgs());
+      return sec.fromDataset(datasetInfo.getDatasetName(), datasetInfo.getDatasetArgs());
     }
     // This should never happen since the constructor is private and it only get calls from static create() methods
     // which make sure one and only one of those source type will be specified.

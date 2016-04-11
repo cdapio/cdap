@@ -18,14 +18,11 @@ package co.cask.cdap.common.lang;
 
 import co.cask.cdap.api.app.Application;
 import co.cask.cdap.common.internal.guava.ClassPath;
-import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Function;
 import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,9 +33,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
-import javax.annotation.Nullable;
 import javax.ws.rs.Path;
 
 /**
@@ -50,7 +45,6 @@ public final class ProgramResources {
 
   private static final List<String> HADOOP_PACKAGES = ImmutableList.of("org.apache.hadoop.");
   private static final List<String> HBASE_PACKAGES = ImmutableList.of("org.apache.hadoop.hbase.");
-  private static final List<String> SPARK_PACKAGES = ImmutableList.of("org.apache.spark.", "scala.");
 
   private static final Predicate<URI> JAR_ONLY_URI = new Predicate<URI>() {
     @Override
@@ -59,50 +53,13 @@ public final class ProgramResources {
     }
   };
 
-  // Each program type has it's own set of visible resources
-  private static Map<ProgramType, Set<String>> visibleResources = Maps.newHashMap();
   // Contains set of resources that are always visible to all program type.
   private static Set<String> baseResources;
 
   /**
    * Returns a Set of resource names that are visible through to user program.
-   *
-   * @param classLoader the ClassLoader for finding program type specific resources.
-   * @param type program type. If {@code null}, only the base visible resources will be returned.
    */
-  public static synchronized Set<String> getVisibleResources(ClassLoader classLoader, @Nullable ProgramType type) {
-    if (type == null) {
-      return getBaseResources();
-    }
-
-    Set<String> resources = visibleResources.get(type);
-    if (resources != null) {
-      return resources;
-    }
-    try {
-      resources = createVisibleResources(classLoader, type);
-    } catch (IOException e) {
-      LOG.error("Failed to determine visible resources to user program of type {}", type, e);
-      resources = ImmutableSet.of();
-    }
-    visibleResources.put(type, resources);
-    return resources;
-  }
-
-  private static Set<String> createVisibleResources(ClassLoader classLoader, ProgramType type) throws IOException {
-    Set<String> resources = getBaseResources();
-
-    // Base on the type, add extra resources
-    // Current only Spark and Workflow type has extra visible resources
-    if (type == ProgramType.SPARK || type == ProgramType.WORKFLOW) {
-      resources = getResources(ClassPath.from(classLoader, JAR_ONLY_URI),
-                               SPARK_PACKAGES, ImmutableList.<String>of(),
-                               ClassPathResources.RESOURCE_INFO_TO_RESOURCE_NAME, Sets.newHashSet(resources));
-    }
-    return Collections.unmodifiableSet(resources);
-  }
-
-  private static Set<String> getBaseResources() {
+  public static synchronized Set<String> getVisibleResources() {
     if (baseResources != null) {
       return baseResources;
     }

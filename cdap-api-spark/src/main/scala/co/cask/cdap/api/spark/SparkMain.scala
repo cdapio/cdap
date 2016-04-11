@@ -18,11 +18,12 @@ package co.cask.cdap.api.spark
 
 import java.nio.charset.Charset
 
+import co.cask.cdap.api.annotation.Beta
 import co.cask.cdap.api.data.DatasetContext
 import co.cask.cdap.api.data.batch.Split
 import co.cask.cdap.api.flow.flowlet.StreamEvent
 import co.cask.cdap.api.{Transactional, TxRunnable}
-import org.apache.spark
+import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 
 import scala.language.implicitConversions
@@ -79,7 +80,13 @@ import scala.reflect.ClassTag
   *   }
   * }
   * }}}
+  *
+  * This interface extends serializable because the closures are anonymous class in Scala and Spark Serializes the
+  * closures before sending it to worker nodes. This serialization of inner anonymous class expects the outer
+  * containing class to be serializable else [[java.io.NotSerializableException]] is thrown. Having this interface
+  * serializable gives a neater API.
   */
+@Beta
 trait SparkMain extends Serializable {
 
   /**
@@ -118,7 +125,7 @@ trait SparkMain extends Serializable {
     *
     * @param sc the [[org.apache.spark.SparkContext]]
     */
-  protected implicit class SparkProgramContextFunctions(sc: spark.SparkContext) {
+  protected implicit class SparkProgramContextFunctions(sc: SparkContext) {
 
     /**
       * Creates a [[org.apache.spark.rdd.RDD]] from the given [[co.cask.cdap.api.dataset.Dataset]].
@@ -195,21 +202,16 @@ trait SparkMain extends Serializable {
   }
 
   /**
-    * An implicit object that performs identity transform for [[co.cask.cdap.api.flow.flowlet.StreamEvent]].
-    */
-  protected implicit val identityStreamDecoder = (e: StreamEvent) => e
-
-  /**
     * An implicit object that transforms [[co.cask.cdap.api.flow.flowlet.StreamEvent]] to a
     * [[scala.Tuple2]] of (eventTimestamp, UTF-8 decoded body string).
     */
-  protected implicit val timestampStringStreamDecoder = (e: StreamEvent) => {
+  protected implicit val timestampStringStreamDecoder: (StreamEvent) => (Long, String) = (e: StreamEvent) => {
     (e.getTimestamp, Charset.forName("UTF-8").decode(e.getBody).toString)
   }
 
   /**
     * An implicit object that transforms [[co.cask.cdap.api.flow.flowlet.StreamEvent]] body to a UTF-8 string.
     */
-  protected implicit val stringStreamDecoder = (e: StreamEvent) =>
+  protected implicit val stringStreamDecoder: (StreamEvent) => String = (e: StreamEvent) =>
     timestampStringStreamDecoder(e)._2
 }
