@@ -35,7 +35,7 @@ public interface BatchActionContext extends BatchRuntimeContext {
   WorkflowToken getToken();
 
   /**
-   * Return the {@link Map} of node ids to {@link WorkflowNodeState}. This can be used
+   * Return an immutable {@link Map} of node ids to {@link WorkflowNodeState}. This can be used
    * to determine the status of all pipeline phases executed in the current run.
    */
   Map<String, WorkflowNodeState> getNodeStates();

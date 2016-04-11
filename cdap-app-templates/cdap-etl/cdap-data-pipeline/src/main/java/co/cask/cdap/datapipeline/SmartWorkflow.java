@@ -49,6 +49,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -96,7 +97,7 @@ public class SmartWorkflow extends AbstractWorkflow {
 
     // set the pipeline spec as a property in case somebody like the UI wants to read it
     Map<String, String> properties = new HashMap<>();
-    properties.put("pipeline.spec", GSON.toJson(spec));
+    properties.put(Constants.PIPELINE_SPEC_KEY, GSON.toJson(spec));
     setProperties(properties);
 
     // single phase, just add the program directly
@@ -147,9 +148,10 @@ public class SmartWorkflow extends AbstractWorkflow {
   @Override
   public void initialize(WorkflowContext context) throws Exception {
     super.initialize(context);
-    postActions = new HashMap<>();
+    postActions = new LinkedHashMap<>();
     BatchPipelineSpec batchPipelineSpec =
-      GSON.fromJson(context.getWorkflowSpecification().getProperty("pipeline.spec"), BatchPipelineSpec.class);
+      GSON.fromJson(context.getWorkflowSpecification().getProperty(Constants.PIPELINE_SPEC_KEY),
+                    BatchPipelineSpec.class);
     for (ActionSpec actionSpec : batchPipelineSpec.getEndingActions()) {
       postActions.put(actionSpec.getName(), (PostAction) context.newPluginInstance(actionSpec.getName()));
     }

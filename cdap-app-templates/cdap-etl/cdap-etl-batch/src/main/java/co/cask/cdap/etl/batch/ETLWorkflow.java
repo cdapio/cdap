@@ -34,6 +34,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
@@ -80,7 +81,7 @@ public class ETLWorkflow extends AbstractWorkflow {
   @Override
   public void initialize(WorkflowContext context) throws Exception {
     super.initialize(context);
-    postActions = new HashMap<>();
+    postActions = new LinkedHashMap<>();
     BatchPipelineSpec batchPipelineSpec =
       GSON.fromJson(context.getWorkflowSpecification().getProperty("pipeline.spec"), BatchPipelineSpec.class);
     for (ActionSpec actionSpec : batchPipelineSpec.getEndingActions()) {

@@ -146,16 +146,17 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
       .setOutputSchema(outputSchema)
       .addInputs(stageConnections.getInputs())
       .addOutputs(stageConnections.getOutputs())
-      .build();  }
+      .build();
+  }
 
 
   /**
-   * Configureplugintage and returns the spec for it.
+   * Configures a plugin and returns the spec for it.
    *
    * @param pluginId the unique plugin id
    * @param etlPlugin user provided configuration for the plugin
    * @param pipelineConfigurer configurer used to configure the plugin
-   * @return the spec for plugintage
+   * @return the spec for the plugin
    */
   protected PluginSpec configurePlugin(String pluginId, ETLPlugin etlPlugin,
                                        PipelineConfigurer pipelineConfigurer) {

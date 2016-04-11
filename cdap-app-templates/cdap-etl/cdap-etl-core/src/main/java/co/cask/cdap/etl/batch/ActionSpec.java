@@ -36,7 +36,7 @@ public class ActionSpec {
     return name;
   }
 
-  public PluginSpec getPlugin() {
+  public PluginSpec getPluginSpec() {
     return plugin;
   }
 

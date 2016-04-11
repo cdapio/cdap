@@ -60,7 +60,7 @@ public interface WorkflowContext extends RuntimeContext, ServiceDiscoverer, Data
   WorkflowToken getToken();
 
   /**
-   * Return the {@link Map} of node ids to {@link WorkflowNodeState}. This can be used
+   * Return an immutable {@link Map} of node ids to {@link WorkflowNodeState}. This can be used
    * from {@link AbstractWorkflow#destroy} method to determine the status of all nodes
    * executed by the Workflow in the current run.
    */
