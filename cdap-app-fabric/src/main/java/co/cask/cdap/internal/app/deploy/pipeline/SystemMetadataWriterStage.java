@@ -25,6 +25,7 @@ import co.cask.cdap.data2.metadata.system.SystemMetadataWriter;
 import co.cask.cdap.pipeline.AbstractStage;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.reflect.TypeToken;
 
 /**
@@ -62,7 +63,7 @@ public class SystemMetadataWriterStage extends AbstractStage<ApplicationWithProg
   private void writeProgramSystemMetadata(Id.Application appId, ProgramType programType,
                                           Iterable<? extends ProgramSpecification> specs) {
     for (ProgramSpecification spec : specs) {
-      Id.Program programId = Id.Program.from(appId, programType, spec.getName());
+      ProgramId programId = appId.toEntityId().program(programType, spec.getName());
       ProgramSystemMetadataWriter writer = new ProgramSystemMetadataWriter(metadataStore, programId, spec);
       writer.write();
     }
