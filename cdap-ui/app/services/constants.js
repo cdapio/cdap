@@ -73,7 +73,7 @@ angular.module(PKG.name + '.services')
             'NAME-ALREADY-EXISTS': 'A pipeline with this name already exists. Please choose a different name.',
             'DUPLICATE-NODE-NAMES': 'Every node should have a unique name to be exported/published.',
             'DUPLICATE-NAME': 'Node with the same name already exists.',
-            'MISSING-CONNECTION': ' is missing connection',
+            'MISSING-CONNECTION': 'is missing connection',
             'IMPORT-JSON': {
               'INVALID-ARTIFACT': 'Pipeline configuration should have a valild artifact specification.',
               'INVALID-CONFIG': 'Missing \'config\' property in pipeline specification.',
