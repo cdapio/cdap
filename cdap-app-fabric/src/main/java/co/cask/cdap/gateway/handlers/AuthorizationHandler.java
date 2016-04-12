@@ -70,18 +70,20 @@ public class AuthorizationHandler extends AbstractAppFabricHttpHandler {
     .registerTypeAdapter(EntityId.class, new EntityIdTypeAdapter())
     .create();
   private static final Type PRIVILEGE_SET_TYPE = new TypeToken<Set<Privilege>>() { }.getType();
-  private final boolean enabled;
+  private final boolean authenticationEnabled;
+  private final boolean authorizationEnabled;
 
   @Inject
-  AuthorizationHandler(AuthorizerInstantiatorService authorizerInstantiatorService, CConfiguration conf) {
+  AuthorizationHandler(AuthorizerInstantiatorService authorizerInstantiatorService, CConfiguration cConf) {
     this.authorizerInstantiatorService = authorizerInstantiatorService;
-    this.enabled = conf.getBoolean(Constants.Security.Authorization.ENABLED);
+    this.authenticationEnabled = cConf.getBoolean(Constants.Security.ENABLED);
+    this.authorizationEnabled = cConf.getBoolean(Constants.Security.Authorization.ENABLED);
   }
 
   @Path("/privileges/grant")
   @POST
   public void grant(HttpRequest httpRequest, HttpResponder httpResponder) throws Exception {
-    ensureAuthorizationEnabled();
+    ensureSecurityEnabled();
 
     GrantRequest request = parseBody(httpRequest, GrantRequest.class);
     verifyAuthRequest(request);
@@ -99,7 +101,7 @@ public class AuthorizationHandler extends AbstractAppFabricHttpHandler {
   @Path("/privileges/revoke")
   @POST
   public void revoke(HttpRequest httpRequest, HttpResponder httpResponder) throws Exception {
-    ensureAuthorizationEnabled();
+    ensureSecurityEnabled();
 
     RevokeRequest request = parseBody(httpRequest, RevokeRequest.class);
     verifyAuthRequest(request);
@@ -123,7 +125,7 @@ public class AuthorizationHandler extends AbstractAppFabricHttpHandler {
   public void listPrivileges(HttpRequest httpRequest, HttpResponder httpResponder,
                              @PathParam("principal-type") String principalType,
                              @PathParam("principal-name") String principalName) throws Exception {
-    ensureAuthorizationEnabled();
+    ensureSecurityEnabled();
     Principal principal = new Principal(principalName, Principal.PrincipalType.valueOf(principalType.toUpperCase()));
     httpResponder.sendJson(HttpResponseStatus.OK, authorizerInstantiatorService.get().listPrivileges(principal),
                            PRIVILEGE_SET_TYPE, GSON);
@@ -139,7 +141,7 @@ public class AuthorizationHandler extends AbstractAppFabricHttpHandler {
   @PUT
   public void createRole(HttpRequest httpRequest, HttpResponder httpResponder,
                          @PathParam("role-name") String roleName) throws Exception {
-    ensureAuthorizationEnabled();
+    ensureSecurityEnabled();
     authorizerInstantiatorService.get().createRole(new Role(roleName));
     httpResponder.sendStatus(HttpResponseStatus.OK);
     createLogEntry(httpRequest, null, HttpResponseStatus.OK);
@@ -149,7 +151,7 @@ public class AuthorizationHandler extends AbstractAppFabricHttpHandler {
   @DELETE
   public void dropRole(HttpRequest httpRequest, HttpResponder httpResponder,
                        @PathParam("role-name") String roleName) throws Exception {
-    ensureAuthorizationEnabled();
+    ensureSecurityEnabled();
     authorizerInstantiatorService.get().dropRole(new Role(roleName));
     httpResponder.sendStatus(HttpResponseStatus.OK);
     createLogEntry(httpRequest, null, HttpResponseStatus.OK);
@@ -158,7 +160,7 @@ public class AuthorizationHandler extends AbstractAppFabricHttpHandler {
   @Path("/roles")
   @GET
   public void listAllRoles(HttpRequest httpRequest, HttpResponder httpResponder) throws Exception {
-    ensureAuthorizationEnabled();
+    ensureSecurityEnabled();
     httpResponder.sendJson(HttpResponseStatus.OK, authorizerInstantiatorService.get().listAllRoles());
     createLogEntry(httpRequest, null, HttpResponseStatus.OK);
   }
@@ -168,7 +170,7 @@ public class AuthorizationHandler extends AbstractAppFabricHttpHandler {
   public void listRoles(HttpRequest httpRequest, HttpResponder httpResponder,
                         @PathParam("principal-type") String principalType,
                         @PathParam("principal-name") String principalName) throws Exception {
-    ensureAuthorizationEnabled();
+    ensureSecurityEnabled();
     Principal principal = new Principal(principalName, Principal.PrincipalType.valueOf(principalType.toUpperCase()));
     httpResponder.sendJson(HttpResponseStatus.OK, authorizerInstantiatorService.get().listRoles(principal));
     createLogEntry(httpRequest, null, HttpResponseStatus.OK);
@@ -180,7 +182,7 @@ public class AuthorizationHandler extends AbstractAppFabricHttpHandler {
                                  @PathParam("principal-type") String principalType,
                                  @PathParam("principal-name") String principalName,
                                  @PathParam("role-name") String roleName) throws Exception {
-    ensureAuthorizationEnabled();
+    ensureSecurityEnabled();
     authorizerInstantiatorService.get().addRoleToPrincipal(new Role(roleName),
                                   new Principal(principalName,
                                                 Principal.PrincipalType.valueOf(principalType.toUpperCase())));
@@ -194,7 +196,7 @@ public class AuthorizationHandler extends AbstractAppFabricHttpHandler {
                                       @PathParam("principal-type") String principalType,
                                       @PathParam("principal-name") String principalName,
                                       @PathParam("role-name") String roleName) throws Exception {
-    ensureAuthorizationEnabled();
+    ensureSecurityEnabled();
     authorizerInstantiatorService.get().removeRoleFromPrincipal(new Role(roleName),
                                        new Principal(principalName,
                                                      Principal.PrincipalType.valueOf(principalType.toUpperCase())));
@@ -202,9 +204,14 @@ public class AuthorizationHandler extends AbstractAppFabricHttpHandler {
     createLogEntry(httpRequest, null, HttpResponseStatus.OK);
   }
 
-  private void ensureAuthorizationEnabled() throws FeatureDisabledException {
-    if (!enabled) {
-      throw new FeatureDisabledException("Authorization", "cdap-site.xml", Constants.Security.Authorization.ENABLED,
+  private void ensureSecurityEnabled() throws FeatureDisabledException {
+    if (!authenticationEnabled) {
+      throw new FeatureDisabledException(FeatureDisabledException.Feature.AUTHENTICATION,
+                                         FeatureDisabledException.CDAP_SITE, Constants.Security.ENABLED, "true");
+    }
+    if (!authorizationEnabled) {
+      throw new FeatureDisabledException(FeatureDisabledException.Feature.AUTHORIZATION,
+                                         FeatureDisabledException.CDAP_SITE, Constants.Security.Authorization.ENABLED,
                                          "true");
     }
   }

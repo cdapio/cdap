@@ -215,8 +215,13 @@ public class AuthorizationClient extends AbstractAuthorizer {
       throw new UnauthorizedException(msg);
     }
     if (HttpURLConnection.HTTP_NOT_IMPLEMENTED == response.getResponseCode()) {
-      throw new FeatureDisabledException("Authorization", "cdap-site.xml", Constants.Security.Authorization.ENABLED,
-                                         "true");
+      FeatureDisabledException.Feature feature = FeatureDisabledException.Feature.AUTHORIZATION;
+      String enableConfig = Constants.Security.Authorization.ENABLED;
+      if (response.getResponseBodyAsString().toLowerCase().contains("authentication")) {
+        feature = FeatureDisabledException.Feature.AUTHENTICATION;
+        enableConfig = Constants.Security.ENABLED;
+      }
+      throw new FeatureDisabledException(feature, FeatureDisabledException.CDAP_SITE, enableConfig, "true");
     }
     return response;
   }

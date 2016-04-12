@@ -18,6 +18,7 @@ package co.cask.cdap.security.authorization;
 
 import co.cask.cdap.api.Transactional;
 import co.cask.cdap.api.TxRunnable;
+import co.cask.cdap.common.FeatureDisabledException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.twill.LocalLocationFactory;
@@ -82,20 +83,38 @@ public class AuthorizerInstantiatorServiceTest {
   @BeforeClass
   public static void setup() throws IOException {
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, TEMPORARY_FOLDER.newFolder().getAbsolutePath());
+    cConf.setBoolean(Constants.Security.ENABLED, true);
     cConf.setBoolean(Constants.Security.Authorization.ENABLED, true);
     locationFactory = new LocalLocationFactory(TEMPORARY_FOLDER.newFolder());
   }
 
   @Test
-  public void testAuthorizationDisabled() throws IOException {
+  public void testAuthenticationDisabled() throws IOException {
     CConfiguration cConf = CConfiguration.create();
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, TEMPORARY_FOLDER.newFolder().getAbsolutePath());
+    cConf.setBoolean(Constants.Security.Authorization.ENABLED, true);
+    assertDisabled(cConf, FeatureDisabledException.Feature.AUTHENTICATION);
+  }
+
+  @Test
+  public void testAuthorizationDisabled() throws IOException {
+    CConfiguration cConf = CConfiguration.create();
+    cConf.setBoolean(Constants.Security.ENABLED, true);
+    cConf.set(Constants.CFG_LOCAL_DATA_DIR, TEMPORARY_FOLDER.newFolder().getAbsolutePath());
+    assertDisabled(cConf, FeatureDisabledException.Feature.AUTHORIZATION);
+  }
+
+  private void assertDisabled(CConfiguration cConf, FeatureDisabledException.Feature feature) {
     AuthorizerInstantiatorService instantiator = new AuthorizerInstantiatorService(cConf, factory);
+    instantiator.startAndWait();
     try {
-      instantiator.startAndWait();
       Authorizer authorizer = instantiator.get();
-      Assert.assertTrue("When authorization is disabled, a NoOpAuthorizer must be returned, but got " +
-                          authorizer.getClass().getName(), authorizer instanceof NoOpAuthorizer);
+      Assert.assertTrue(
+        String.format("When %s is disabled, a %s must be returned, but got %s.",
+                      feature.name().toLowerCase(), NoOpAuthorizer.class.getSimpleName(),
+                      authorizer.getClass().getName()),
+        authorizer instanceof NoOpAuthorizer
+      );
     } finally {
       instantiator.stopAndWait();
     }

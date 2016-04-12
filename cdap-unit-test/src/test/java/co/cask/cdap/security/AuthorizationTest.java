@@ -111,6 +111,7 @@ public class AuthorizationTest extends TestBase {
       LocationFactory locationFactory = new LocalLocationFactory(tmpDir);
       Location authExtensionJar = AppJarHelper.createDeploymentJar(locationFactory, InMemoryAuthorizer.class);
       return new String[] {
+        Constants.Security.ENABLED, "true",
         Constants.Security.Authorization.ENABLED, "true",
         Constants.Security.Authorization.EXTENSION_JAR_PATH, authExtensionJar.toURI().getPath()
       };

@@ -23,21 +23,33 @@ import org.jboss.netty.handler.codec.http.HttpResponseStatus;
  * Exception thrown when a feature is disabled.
  */
 public class FeatureDisabledException extends Exception implements HttpErrorStatusProvider {
-  private final String feature;
+  /**
+   * Represents disabled features
+   */
+  public enum Feature {
+    AUTHENTICATION,
+    AUTHORIZATION
+  }
+
+  public static final String CDAP_SITE = "cdap-site.xml";
+
+  private final Feature feature;
   private final String configFile;
   private final String enableConfigKey;
   private final String enableConfigValue;
 
-  public FeatureDisabledException(String feature, String configFile, String enableConfigKey, String enableConfigValue) {
+  public FeatureDisabledException(Feature feature, String configFile, String enableConfigKey,
+                                  String enableConfigValue) {
     super(String.format("Feature '%s' is not enabled. Please set '%s' to '%s' in the config file '%s' to " +
-                          "enable this feature.", feature, enableConfigKey, enableConfigValue, configFile));
+                          "enable this feature.", feature.name().toLowerCase(), enableConfigKey, enableConfigValue,
+                        configFile));
     this.feature = feature;
     this.configFile = configFile;
     this.enableConfigKey = enableConfigKey;
     this.enableConfigValue = enableConfigValue;
   }
 
-  public String getFeature() {
+  public Feature getFeature() {
     return feature;
   }
 
