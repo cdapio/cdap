@@ -21,11 +21,13 @@ import co.cask.cdap.etl.api.batch.BatchSink;
 import co.cask.cdap.etl.api.batch.BatchSource;
 import co.cask.cdap.etl.proto.Connection;
 import co.cask.cdap.etl.proto.Engine;
-import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.ImmutableList;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
@@ -36,21 +38,25 @@ public final class ETLBatchConfig extends ETLConfig {
   private final Engine engine;
   private final String schedule;
   private final Resources driverResources;
-  private final Set<ETLStage> actions;
+  private final List<ETLStage> postActions;
+  // for backwards compatibility
+  private final List<ETLStage> actions;
 
   private ETLBatchConfig(Set<ETLStage> stages,
                          Set<Connection> connections,
-                         Set<ETLStage> actions,
+                         List<ETLStage> postActions,
                          Resources resources,
                          boolean stageLoggingEnabled,
                          Engine engine,
                          String schedule,
                          Resources driverResources) {
     super(stages, connections, resources, stageLoggingEnabled);
-    this.actions = ImmutableSet.copyOf(actions);
+    this.postActions = ImmutableList.copyOf(postActions);
     this.engine = engine;
     this.schedule = schedule;
     this.driverResources = driverResources;
+    // field only exists for backwards compatibility -- used by convertOldConfig()
+    this.actions = null;
   }
 
   /**
@@ -68,12 +74,12 @@ public final class ETLBatchConfig extends ETLConfig {
     ETLBatchConfig.Builder builder = builder(schedule)
       .setEngine(engine)
       .setDriverResources(getDriverResources())
-      .addActions(getActions());
+      .addPostActions(actions == null ? new HashSet<ETLStage>() : actions);
     return convertStages(builder, BatchSource.PLUGIN_TYPE, BatchSink.PLUGIN_TYPE).build();
   }
 
-  public Set<ETLStage> getActions() {
-    return Collections.unmodifiableSet(actions == null ? new HashSet<ETLStage>() : actions);
+  public List<ETLStage> getPostActions() {
+    return Collections.unmodifiableList(postActions == null ? new ArrayList<ETLStage>() : postActions);
   }
 
   public Engine getEngine() {
@@ -87,6 +93,7 @@ public final class ETLBatchConfig extends ETLConfig {
   public Resources getDriverResources() {
     return driverResources == null ? new Resources() : driverResources;
   }
+
 
   @Override
   public boolean equals(Object o) {
@@ -104,12 +111,15 @@ public final class ETLBatchConfig extends ETLConfig {
 
     return Objects.equals(engine, that.engine) &&
       Objects.equals(schedule, that.schedule) &&
-      Objects.equals(driverResources, that.driverResources);
+      Objects.equals(driverResources, that.driverResources) &&
+      Objects.equals(postActions, that.postActions) &&
+      Objects.equals(actions, that.actions);
+
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(super.hashCode(), engine, schedule, driverResources);
+    return Objects.hash(super.hashCode(), engine, schedule, driverResources, postActions, actions);
   }
 
   @Override
@@ -118,6 +128,7 @@ public final class ETLBatchConfig extends ETLConfig {
       "engine=" + engine +
       ", schedule='" + schedule + '\'' +
       ", driverResources=" + driverResources +
+      ", postActions=" + postActions +
       "} " + super.toString();
   }
 
@@ -132,13 +143,13 @@ public final class ETLBatchConfig extends ETLConfig {
     private final String schedule;
     private Engine engine;
     private Resources driverResources;
-    private Set<ETLStage> actions;
+    private List<ETLStage> endingActions;
 
     public Builder(String schedule) {
       super();
       this.schedule = schedule;
       this.engine = Engine.MAPREDUCE;
-      this.actions = new HashSet<>();
+      this.endingActions = new ArrayList<>();
     }
 
     public Builder setEngine(Engine engine) {
@@ -151,18 +162,18 @@ public final class ETLBatchConfig extends ETLConfig {
       return this;
     }
 
-    public Builder addAction(ETLStage action) {
-      this.actions.add(action);
+    public Builder addPostAction(ETLStage action) {
+      this.endingActions.add(action);
       return this;
     }
 
-    public Builder addActions(Collection<ETLStage> actions) {
-      this.actions.addAll(actions);
+    public Builder addPostActions(Collection<ETLStage> actions) {
+      this.endingActions.addAll(actions);
       return this;
     }
 
     public ETLBatchConfig build() {
-      return new ETLBatchConfig(stages, connections, actions, resources, stageLoggingEnabled,
+      return new ETLBatchConfig(stages, connections, endingActions, resources, stageLoggingEnabled,
                                 engine, schedule, driverResources);
     }
   }

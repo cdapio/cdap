@@ -31,7 +31,6 @@ import co.cask.cdap.etl.planner.PipelinePlan;
 import co.cask.cdap.etl.planner.PipelinePlanner;
 import co.cask.cdap.etl.proto.Engine;
 import co.cask.cdap.etl.proto.v2.ETLBatchConfig;
-import co.cask.cdap.etl.spec.PipelineSpec;
 import co.cask.cdap.etl.spec.PipelineSpecGenerator;
 import co.cask.cdap.etl.spec.StageSpec;
 import com.google.common.base.Joiner;
@@ -56,21 +55,21 @@ public class ETLBatchApplication extends AbstractApplication<ETLBatchConfig> {
     ETLBatchConfig config = getConfig().convertOldConfig();
     setDescription(DEFAULT_DESCRIPTION);
 
-    PipelineSpecGenerator specGenerator =
-      new PipelineSpecGenerator(getConfigurer(),
-                                ImmutableSet.of(BatchSource.PLUGIN_TYPE), ImmutableSet.of(BatchSink.PLUGIN_TYPE),
-                                TimePartitionedFileSet.class,
-                                FileSetProperties.builder()
-                                  .setInputFormat(AvroKeyInputFormat.class)
-                                  .setOutputFormat(AvroKeyOutputFormat.class)
-                                  .setEnableExploreOnCreate(true)
-                                  .setSerDe("org.apache.hadoop.hive.serde2.avro.AvroSerDe")
-                                  .setExploreInputFormat("org.apache.hadoop.hive.ql.io.avro.AvroContainerInputFormat")
-                                  .setExploreOutputFormat("org.apache.hadoop.hive.ql.io.avro.AvroContainerOutputFormat")
-                                  .setTableProperty("avro.schema.literal", Constants.ERROR_SCHEMA.toString())
-                                  .build());
+    PipelineSpecGenerator<ETLBatchConfig, BatchPipelineSpec> specGenerator = new BatchPipelineSpecGenerator(
+      getConfigurer(),
+      ImmutableSet.of(BatchSource.PLUGIN_TYPE), ImmutableSet.of(BatchSink.PLUGIN_TYPE),
+      TimePartitionedFileSet.class,
+      FileSetProperties.builder()
+        .setInputFormat(AvroKeyInputFormat.class)
+        .setOutputFormat(AvroKeyOutputFormat.class)
+        .setEnableExploreOnCreate(true)
+        .setSerDe("org.apache.hadoop.hive.serde2.avro.AvroSerDe")
+        .setExploreInputFormat("org.apache.hadoop.hive.ql.io.avro.AvroContainerInputFormat")
+        .setExploreOutputFormat("org.apache.hadoop.hive.ql.io.avro.AvroContainerOutputFormat")
+        .setTableProperty("avro.schema.literal", Constants.ERROR_SCHEMA.toString())
+        .build());
 
-    PipelineSpec spec = specGenerator.generateSpec(config);
+    BatchPipelineSpec spec = specGenerator.generateSpec(config);
 
     int sourceCount = 0;
     for (StageSpec stageSpec : spec.getStages()) {
@@ -114,7 +113,7 @@ public class ETLBatchApplication extends AbstractApplication<ETLBatchConfig> {
                         config.getEngine(), Joiner.on(',').join(Engine.values())));
     }
 
-    addWorkflow(new ETLWorkflow(config));
+    addWorkflow(new ETLWorkflow(spec, config.getEngine()));
     scheduleWorkflow(Schedules.builder(SCHEDULE_NAME)
                        .setDescription("ETL Batch schedule")
                        .createTimeSchedule(config.getSchedule()),

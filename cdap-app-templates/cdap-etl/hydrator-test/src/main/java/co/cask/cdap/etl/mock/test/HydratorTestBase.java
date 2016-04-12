@@ -20,6 +20,7 @@ import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.etl.api.PipelineConfigurable;
 import co.cask.cdap.etl.api.batch.BatchSource;
 import co.cask.cdap.etl.api.realtime.RealtimeSource;
+import co.cask.cdap.etl.mock.batch.NodeStatesAction;
 import co.cask.cdap.etl.mock.batch.aggregator.FieldCountAggregator;
 import co.cask.cdap.etl.mock.batch.aggregator.IdentityAggregator;
 import co.cask.cdap.etl.mock.realtime.LookupSource;
@@ -92,7 +93,8 @@ public class HydratorTestBase extends TestBase {
                       co.cask.cdap.etl.mock.batch.MockSink.class,
                       DoubleTransform.class, ErrorTransform.class, IdentityTransform.class,
                       IntValueFilterTransform.class, StringValueFilterTransform.class,
-                      FieldCountAggregator.class, IdentityAggregator.class);
+                      FieldCountAggregator.class, IdentityAggregator.class,
+                      NodeStatesAction.class);
   }
 
 }
