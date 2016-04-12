@@ -16,8 +16,9 @@
 
 angular.module(PKG.name + '.services')
   .factory('myFileUploader', function($q, $window, cfpLoadingBar, myAuth, myAlert) {
-    function upload(fileObj, contentType){
+    function upload(fileObj, header){
       var deferred = $q.defer();
+      var path, customHeaderNames, xhr;
       if (!myAuth.currentUser) {
         deferred.reject(400);
         myAlert({
@@ -26,15 +27,24 @@ angular.module(PKG.name + '.services')
           type: 'danger'
         });
       } else {
-        var xhr = new $window.XMLHttpRequest();
+        xhr = new $window.XMLHttpRequest();
         xhr.upload.addEventListener('progress', function (e) {
           if (e.type === 'progress') {
             console.info('App Upload in progress');
           }
         });
-        var path = fileObj.path;
+        path = fileObj.path;
         xhr.open('POST', path, true);
-        xhr.setRequestHeader('Content-type', contentType);
+        if (angular.isObject(header) && Object.keys(header).length > 0) {
+          xhr.setRequestHeader('Content-type', header['Content-type']);
+          if (angular.isObject(header.customHeader) && Object.keys(header.customHeader).length > 0) {
+            customHeaderNames = Object.keys(header.customHeader);
+            customHeaderNames.forEach( function(headerName) {
+              xhr.setRequestHeader(headerName, header.customHeader[headerName]);
+            });
+          }
+        }
+
         xhr.setRequestHeader('X-Archive-Name', fileObj.file.name);
         xhr.setRequestHeader('Authorization', 'Bearer ' + myAuth.currentUser.token);
         xhr.send(fileObj.file);
