@@ -32,7 +32,7 @@ angular.module(PKG.name + '.commons')
         FIXME: This will not scale i.e., non-reusable.
 
       */
-      this.groupWrapperHeight = 'calc(100% - '+ ((this.groups.length * 42) - 42)+ 'px)';
+      this.groupWrapperHeight = 'calc(100% - '+ (((this.groups.length * 35) - 35) - 1)+ 'px)';
     }.bind(this));
 
     this.onItemClicked = function(event, item) {
