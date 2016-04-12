@@ -101,6 +101,8 @@ _start_java() {
     cdap_set_hive_classpath || exit 1
     # Add proper HBase compatibility to CLASSPATH
     cdap_set_hbase || exit 1
+    # Determine SPARK_HOME
+    cdap_set_spark || logecho "Could not determine SPARK_HOME! Spark support unavailable!"
     # Master requires this local directory
     cdap_check_or_create_master_local_dir || die "Could not create Master local directory"
     logecho "Running startup checks -- this may take a few minutes"
@@ -208,6 +210,7 @@ run() {
   # Setup classpaths.
   cdap_set_classpath "${COMPONENT_HOME}" "${CDAP_CONF}"
   cdap_set_hive_classpath || exit 1
+  cdap_set_spark
   # Setup Java
   cdap_set_java || exit 1
   # Add proper HBase compatibility to CLASSPATH
