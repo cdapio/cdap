@@ -24,20 +24,20 @@
 
 var cdapDocumentationTabsets = {};
 
-function changeExampleTab(example, mapping, tabID, tabSetID) {
+function changeExampleTab(tab, mapping, tabID, tabSetID) {
   return function(e) {
     e.preventDefault();
     var scrollOffset = $(this).offset().top - $(document).scrollTop();
     $(".dependent-" + tabSetID + " .tab-pane").removeClass("active");
     $(".dependent-" + tabSetID + " .example-tab").removeClass("active");
-    if (example != mapping[example]) {
-      $('.dependent-' + tabSetID).not('#' + tabID).find('.tab-pane-'+ mapping[example]).addClass("active");
-      $('.dependent-' + tabSetID).not('#' + tabID).find('.example-tab-'+ mapping[example]).addClass("active");
+    if (tab != mapping[tab]) {
+      $('.dependent-' + tabSetID).not('#' + tabID).find('.tab-pane-'+ mapping[tab]).addClass("active");
+      $('.dependent-' + tabSetID).not('#' + tabID).find('.example-tab-'+ mapping[tab]).addClass("active");
     }
-    $(".dependent-" + tabSetID + " .tab-pane-" + example).addClass("active");
-    $(".dependent-" + tabSetID + " .example-tab-" + example).addClass("active");
+    $(".dependent-" + tabSetID + " .tab-pane-" + tab).addClass("active");
+    $(".dependent-" + tabSetID + " .example-tab-" + tab).addClass("active");
     $(document).scrollTop($(this).offset().top - scrollOffset);
-    cdapDocumentationTabsets[tabSetID] = mapping[example];
+    cdapDocumentationTabsets[tabSetID] = mapping[tab];
     localStorage.setItem("cdap-documentation-tabsets", JSON.stringify(cdapDocumentationTabsets));
   }
 }

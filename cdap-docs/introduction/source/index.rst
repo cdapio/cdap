@@ -70,6 +70,8 @@ Installation
       
      * -  
        - .. tabbed-parsed-literal::
+       
+            .. Linux
       
             $ unzip cdap-sdk-|release|.zip
             $ cd cdap-sdk-|release|
@@ -78,6 +80,17 @@ Installation
             Starting Standalone CDAP ................
             Standalone CDAP started successfully.
             Connect to the CDAP UI at http://localhost:9999
+            
+            .. Windows
+            
+            > jar xf cdap-sdk-|release|.zip
+            > cd cdap-sdk-|release|
+            > bin\cdap.bat start
+          
+            Starting Standalone CDAP ................
+            Standalone CDAP started successfully.
+            Connect to the CDAP UI at http://localhost:9999
+            
 
 .. container:: table-block
 

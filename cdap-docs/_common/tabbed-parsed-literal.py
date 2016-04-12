@@ -37,9 +37,18 @@ The directive adds these parameters, both optional:
 
 Separate the code blocks with matching comment lines. Tabs must follow in order of :tabs:
 option. Comment labels are for convenience, and don't need to match. Note example uses a
-tab label with a space in it, and is enclosed in quotes. Note that the comma-separate
+tab label with a space in it, and is enclosed in quotes. Note that the comma-separated
 lists must not have spaces in them (outside of quotes); ie, use "java,scala", not 
 "java, scala".
+
+The mapping maps a tab that is displayed to the trigger that will display it.
+For example, you could have a set of tabs:
+
+    :tabs: "Mac OS X",Windows
+    :mapping: linux,windows
+    :dependent: linux-windows
+    
+Clicking on a "Linux" tab in another tab-set woula activate the "Mac OS X" tab in this tab set.
 
 Note that slightly different rule operate for replacements: a replacement such as
 "\|replace|" will work, and the backslash will be interpreted as a single backslash rather
@@ -122,9 +131,9 @@ from docutils.parsers.rst import Directive, directives
 from docutils.parsers.rst.directives.body import ParsedLiteral
 from docutils.parsers.rst.roles import set_classes
 
-DEFAULT_TABS = ['Linux', 'Windows']
 DEFAULT_LANGUAGES = ['console', 'shell-session']
 DEFAULT_TAB_SET = 'linux-windows'
+DEFAULT_TABS = ['Linux', 'Windows']
 
 TPL_COUNTER = 0
 
@@ -134,12 +143,12 @@ DEPENDENT_JS_TPL = """\
 <script type="text/javascript">
 
 $(function {div_name}() {{
-  var examples = {tab_links};
+  var tabs = {tab_links};
   var mapping = {mapping};
   var tabSetID = {tabSetID};
-  for (var i = 0; i < examples.length; i++) {{
-    var example = examples[i];
-    $("#{div_name} .example-tab-" + example).click(changeExampleTab(example, mapping, "{div_name}", tabSetID));
+  for (var i = 0; i < tabs.length; i++) {{
+    var tab = tabs[i];
+    $("#{div_name} .example-tab-" + tab).click(changeExampleTab(tab, mapping, "{div_name}", tabSetID));
   }}
 }});
 
@@ -150,23 +159,23 @@ $(function {div_name}() {{
 INDEPENDENT_JS_TPL = """\
 <script type="text/javascript">
 
-function change_{div_name}_ExampleTab(example) {{
+function change_{div_name}_ExampleTab(tab) {{
   return function(e) {{
     e.preventDefault();
     var scrollOffset = $(this).offset().top - $(document).scrollTop();
     $("#{div_name} .tab-pane").removeClass("active");
-    $("#{div_name} .tab-pane-" + example).addClass("active");
+    $("#{div_name} .tab-pane-" + tab).addClass("active");
     $("#{div_name} .example-tab").removeClass("active");
-    $("#{div_name} .example-tab-" + example).addClass("active");
+    $("#{div_name} .example-tab-" + tab).addClass("active");
     $(document).scrollTop($(this).offset().top - scrollOffset);
   }}
 }}
 
 $(function() {{
-  var examples = {tab_links};
-  for (var i = 0; i < examples.length; i++) {{
-    var example = examples[i];
-    $("#{div_name} .example-tab-" + example).click(change_{div_name}_ExampleTab(example));
+  var tabs = {tab_links};
+  for (var i = 0; i < tabs.length; i++) {{
+    var tab = tabs[i];
+    $("#{div_name} .example-tab-" + tab).click(change_{div_name}_ExampleTab(tab));
   }}
 }});
 
@@ -551,20 +560,32 @@ def visit_tpl_html(self, node):
     languages = node.get('languages')
     line_counts = node.get('line_counts')
     tabs = node.get('tabs')
-    clean_tabs = [str(tab) for tab in tabs]
-    clean_tab_links = [tab.replace(' ', '-').lower() for tab in clean_tabs]
-    dependent = node.get('dependent')
     node_mapping = node.get('mapping')
+    dependent = node.get('dependent')
+
+    clean_tabs = [str(tab) for tab in tabs]
+    clean_tab_links = []
+    mapping = {}
+
+    i = 0
     if node_mapping:
-        mapping = {}
+        for m in node_mapping:
+            m = str(m).lower()
+            if m in clean_tab_links:
+                i += 1
+                m = "%s%d" % (m, i)
+            clean_tab_links.append(m)
         for i in range(len(clean_tab_links)):
-            mapping[clean_tab_links[i]] = str(node_mapping[i]).lower()        
+            mapping[clean_tab_links[i]] = str(node_mapping[i]).lower()
+    else:
+        # Independent tabs use the tab for the link
+        clean_tab_links = [tab.replace(' ', '-').lower() for tab in clean_tabs]
     
     div_name = 'tabbedparsedliteral{0}'.format(TPL_COUNTER)
     fill_div_options = {'div_name': div_name}
     
     if node.get('independent'):
-        # Independent node, doesn't participate in clicks with other nodes
+        # Independent node, doesn't participate in clicks with other nodes and has no mapping
         fill_div_options['class'] = 'independent'
         js_options = {'tab_links':clean_tab_links, 'div_name':div_name}
         start_html = INDEPENDENT_JS_TPL.format(**js_options) + DIV_START.format(**fill_div_options)

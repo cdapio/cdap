@@ -23,7 +23,7 @@
  *
  * <span class="copyable">$ <span class="copyable-text">cdap-cli.sh start service HelloWorld.Greeting</span></span>
  *
- * version 1.0.1
+ * version 1.0.2
  *
  * Requires JQuery
  * 
@@ -31,9 +31,10 @@
 
 jQuery(document).ready(function() {
   var tooltip, hidetooltiptimer;
-
+  var optionkeyed = false;
   var copyables = document.getElementsByClassName('copyable');
   for (var i = 0; i < copyables.length; i++) {
+  
     copyables[i].addEventListener('mouseup', function(e){
       var e = e || event // equalize event object between modern and older IE browsers
       var target = e.target || e.srcElement // get target element mouse is over
@@ -42,7 +43,7 @@ jQuery(document).ready(function() {
       } else if ($(this)[0].className.includes('copyable-text')) {
         target = $(this)[0]
       }
-      if (target.className.includes('copyable-text')) {
+      if (target.className.includes('copyable-text') && !optionkeyed) {
         var copysuccess = copySelectionText()
         if (copysuccess) {
           showTooltip(e, 'Copied!');
@@ -59,26 +60,36 @@ jQuery(document).ready(function() {
       } else if ($(this)[0].className.includes('copyable-text')) {
         target = $(this)[0]
       }
-      if (target.className.includes('copyable-text')){
+      if (target.className.includes('copyable-text') && !optionkeyed){
         selectElementText(target) // select the element's text we wish to read
+      
+        var actionMsg, disableKey;
+        if (/Mac/i.test(navigator.userAgent)) {
+          actionMsg = 'Press ⌘-';
+          disableKey = 'Option';
+        } else {
+          actionMsg = 'Press Ctrl-';
+          disableKey = 'Alt';
+        }
         if (navigator.userAgent.indexOf('Safari') != -1 && 
               navigator.userAgent.indexOf('Chrome') == -1) {
-          showSafariToCopyTooltip(e);
+          showTooltip(e, actionMsg + 'C to copy (use the ' + disableKey + ' key to disable)');
         } else {
-          showTooltip(e, 'Click to copy');
+          showTooltip(e, 'Click to copy (use the ' + disableKey + ' key to disable)');
         }
       }
     }, false);
-  }
-
-  function showSafariToCopyTooltip(e){
-    var actionMsg;
-    if (/Mac/i.test(navigator.userAgent)) {
-      actionMsg = 'Press ⌘-';
-    } else {
-      actionMsg = 'Press Ctrl-';
-    }
-    showTooltip(e, actionMsg + 'C to copy');
+    
+    document.addEventListener('keydown', function(e){
+      var e = e || event // equalize event object between modern and older IE browsers
+      optionkeyed = (e.which == 18);
+    }, false);
+    
+    document.addEventListener('keyup', function(e){
+      var e = e || event // equalize event object between modern and older IE browsers
+      optionkeyed = optionkeyed && !(e.which == 18);
+    }, false);
+    
   }
 
   function createCopyableTooltip(){ // call this function ONCE at the end of page to create tool tip object
