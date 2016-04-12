@@ -11,7 +11,7 @@ Command Line Interface API
 Introduction
 ============
 
-The Command Line Interface (CLI) provides methods to interact with the CDAP server from within a shell,
+The Command Line Interface (CLI, or CDAP CLI) provides methods to interact with the CDAP server from within a shell,
 similar to the HBase or ``bash`` shells. It is located within the SDK, at ``bin/cdap-cli`` as either a bash
 script or a Windows ``.bat`` file.
 
@@ -26,25 +26,37 @@ Interactive Mode
 
 .. highlight:: console
 
-To run the CLI in interactive mode, run the ``cdap-cli.sh`` executable with no arguments from the terminal::
+To run the CLI in interactive mode, run the ``cdap-cli.sh`` executable with no arguments from a terminal:
+
+.. tabbed-parsed-literal::
+  :tabs: Linux,Windows,"Distributed CDAP","Cloudera Manager Clusters"
+  :dependent: Linux,Windows,Linux,Linux
+  :languages: console,shell-session,console,console
+
+  .. Linux
 
   $ ./bin/cdap-cli.sh
 
-On Windows::
+  .. Windows
 
-  > bin\cdap-cli.bat
+  > .\bin\cdap-cli.bat
   
-On Distributed CDAP::
+  .. Distributed CDAP
 
   $ ./opt/cdap/cli/bin/cdap-cli.sh
-
-On Cloudera Manager clusters::
-
+  
+  .. Cloudera Manager Clusters
+  
   $ ./opt/cloudera/parcels/cdap/cli/bin/cdap-cli.sh
 
-The executable should bring you into a shell, with a prompt similar to::
 
-  cdap (http://localhost:10000/namespace:default)>
+The executable should bring you into a shell, with a prompt similar to:
+
+.. container:: highlight-all
+
+  .. parsed-literal::
+  
+    cdap (http://localhost:10000/namespace:default)>
 
 This indicates that the CLI is currently set to interact with the CDAP server at ``localhost``.
 
@@ -64,8 +76,10 @@ To list all of the available commands, enter the CLI command ``help``::
 Non-Interactive Mode
 --------------------
 
-To run the CLI in non-interactive mode, run the ``cdap-cli.sh`` executable, passing the command you want executed
-as the argument. For example, to list all applications currently deployed to CDAP, execute::
+To run the CLI in non-interactive mode, run the CDAP CLI executable, passing the command you want executed
+as the argument. For example, to list all applications currently deployed to CDAP, execute:
+
+.. tabbed-parsed-literal::
 
   $ cdap-cli.sh list apps
 
@@ -81,11 +95,34 @@ the current CLI session.
 Options
 -------
 
-The CLI can be started with command-line options, as detailed below::
+The CLI can be started with command-line options:
+
+.. tabbed-parsed-literal::
+
+  .. Linux
 
   usage: cdap-cli.sh [--autoconnect <true|false>] [--debug] [--help]
                      [--verify-ssl <true|false>] [--uri <uri>][--script
                      <script-file>]
+   -a,--autoconnect <arg>   If "true", try provided connection (from uri)
+                            upon launch or try default connection if none
+                            provided. Defaults to "true".
+   -d,--debug               Print exception stack traces.
+   -h,--help                Print the usage message.
+   -s,--script <arg>        Execute a file containing a series of CLI
+                            commands, line-by-line.
+   -u,--uri <arg>           CDAP instance URI to interact with in the format
+                            "[http[s]://]<hostname>[:<port>[/<namespace>]]".
+                            Defaults to
+                            "http://<hostname>.local:10000".
+   -v,--verify-ssl <arg>    If "true", verify SSL certificate when making
+                            requests. Defaults to "true".
+
+  .. Windows
+
+  usage: cdap-cli.bat [--autoconnect <true|false>] [--debug] [--help]
+                      [--verify-ssl <true|false>] [--uri <uri>][--script
+                      <script-file>]
    -a,--autoconnect <arg>   If "true", try provided connection (from uri)
                             upon launch or try default connection if none
                             provided. Defaults to "true".

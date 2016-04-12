@@ -26,11 +26,12 @@ import co.cask.cdap.etl.api.batch.BatchSink;
 import co.cask.cdap.etl.api.batch.BatchSource;
 import co.cask.cdap.etl.api.batch.SparkCompute;
 import co.cask.cdap.etl.api.batch.SparkSink;
+import co.cask.cdap.etl.batch.BatchPipelineSpec;
+import co.cask.cdap.etl.batch.BatchPipelineSpecGenerator;
 import co.cask.cdap.etl.common.Constants;
 import co.cask.cdap.etl.planner.PipelinePlan;
 import co.cask.cdap.etl.planner.PipelinePlanner;
 import co.cask.cdap.etl.proto.v2.ETLBatchConfig;
-import co.cask.cdap.etl.spec.PipelineSpec;
 import co.cask.cdap.etl.spec.PipelineSpecGenerator;
 import com.google.common.collect.ImmutableSet;
 import org.apache.avro.mapreduce.AvroKeyInputFormat;
@@ -53,20 +54,21 @@ public class DataPipelineApp extends AbstractApplication<ETLBatchConfig> {
     ETLBatchConfig config = getConfig();
     setDescription(DEFAULT_DESCRIPTION);
 
-    PipelineSpecGenerator specGenerator =
-      new PipelineSpecGenerator(getConfigurer(), ImmutableSet.of(BatchSource.PLUGIN_TYPE),
-                                ImmutableSet.of(BatchSink.PLUGIN_TYPE, SparkSink.PLUGIN_TYPE),
-                                TimePartitionedFileSet.class,
-                                FileSetProperties.builder()
-                                  .setInputFormat(AvroKeyInputFormat.class)
-                                  .setOutputFormat(AvroKeyOutputFormat.class)
-                                  .setEnableExploreOnCreate(true)
-                                  .setSerDe("org.apache.hadoop.hive.serde2.avro.AvroSerDe")
-                                  .setExploreInputFormat("org.apache.hadoop.hive.ql.io.avro.AvroContainerInputFormat")
-                                  .setExploreOutputFormat("org.apache.hadoop.hive.ql.io.avro.AvroContainerOutputFormat")
-                                  .setTableProperty("avro.schema.literal", Constants.ERROR_SCHEMA.toString())
-                                  .build());
-    PipelineSpec spec = specGenerator.generateSpec(config);
+    PipelineSpecGenerator<ETLBatchConfig, BatchPipelineSpec> specGenerator = new BatchPipelineSpecGenerator(
+      getConfigurer(),
+      ImmutableSet.of(BatchSource.PLUGIN_TYPE),
+      ImmutableSet.of(BatchSink.PLUGIN_TYPE, SparkSink.PLUGIN_TYPE),
+      TimePartitionedFileSet.class,
+      FileSetProperties.builder()
+        .setInputFormat(AvroKeyInputFormat.class)
+        .setOutputFormat(AvroKeyOutputFormat.class)
+        .setEnableExploreOnCreate(true)
+        .setSerDe("org.apache.hadoop.hive.serde2.avro.AvroSerDe")
+        .setExploreInputFormat("org.apache.hadoop.hive.ql.io.avro.AvroContainerInputFormat")
+        .setExploreOutputFormat("org.apache.hadoop.hive.ql.io.avro.AvroContainerOutputFormat")
+        .setTableProperty("avro.schema.literal", Constants.ERROR_SCHEMA.toString())
+        .build());
+    BatchPipelineSpec spec = specGenerator.generateSpec(config);
 
     PipelinePlanner planner = new PipelinePlanner(supportedPluginTypes,
                                                   ImmutableSet.of(BatchAggregator.PLUGIN_TYPE),

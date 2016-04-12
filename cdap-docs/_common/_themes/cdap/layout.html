@@ -104,7 +104,9 @@
     {%- for scriptfile in script_files %}
     <script type="text/javascript" src="{{ pathto(scriptfile, 1) }}"></script>
     {%- endfor %}
-    
+    <script type="text/javascript" src="{{ pathto('_static/copy-to-clipboard.js', 1) }}"></script>
+    <script type="text/javascript" src="{{ pathto('_static/tabbed-parsed-literal.js', 1) }}"></script>
+   
     <!-- Google Tag Manager start -->
     {%- if html_google_tag_manager_code is defined %}
     <script>dataLayer = [];</script>

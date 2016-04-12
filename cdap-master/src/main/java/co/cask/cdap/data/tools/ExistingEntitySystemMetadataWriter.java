@@ -44,6 +44,7 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.artifact.ArtifactInfo;
+import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.store.NamespaceStore;
 import com.google.inject.Inject;
 import org.apache.twill.filesystem.LocationFactory;
@@ -125,14 +126,13 @@ public class ExistingEntitySystemMetadataWriter {
   private void writeSystemMetadataForPrograms(Id.Application app, ProgramType programType,
                                               Collection<? extends ProgramSpecification> programSpecs) {
     for (ProgramSpecification programSpec : programSpecs) {
-      Id.Program programId = Id.Program.from(app, programType, programSpec.getName());
+      ProgramId programId = app.toEntityId().program(programType, programSpec.getName());
       SystemMetadataWriter writer = new ProgramSystemMetadataWriter(metadataStore, programId, programSpec);
       writer.write();
     }
   }
 
-  private void writeSystemMetadataForDatasets(Id.Namespace namespace,
-                                              DatasetFramework dsFramework)
+  private void writeSystemMetadataForDatasets(Id.Namespace namespace, DatasetFramework dsFramework)
     throws DatasetManagementException, IOException {
     SystemDatasetInstantiatorFactory systemDatasetInstantiatorFactory =
       new SystemDatasetInstantiatorFactory(locationFactory, dsFramework, cConf);

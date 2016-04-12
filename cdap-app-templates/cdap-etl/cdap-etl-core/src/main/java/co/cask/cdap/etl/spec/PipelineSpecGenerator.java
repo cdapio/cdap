@@ -42,19 +42,22 @@ import java.util.Set;
  * This is run at application configure time to take an application config {@link ETLConfig} and call
  * {@link PipelineConfigurable#configurePipeline(PipelineConfigurer)} on all plugins in the pipeline.
  * This generates a {@link PipelineSpec} which the programs understand.
+ *
+ * @param <C> the type of user provided config
+ * @param <P> the pipeline specification generated from the config
  */
-public class PipelineSpecGenerator {
-  private final PluginConfigurer configurer;
+public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends PipelineSpec> {
+  protected final PluginConfigurer configurer;
   private final Class<? extends Dataset> errorDatasetClass;
   private final DatasetProperties errorDatasetProperties;
   private final Set<String> sourcePluginTypes;
   private final Set<String> sinkPluginTypes;
 
-  public PipelineSpecGenerator(PluginConfigurer configurer,
-                               Set<String> sourcePluginTypes,
-                               Set<String> sinkPluginTypes,
-                               Class<? extends Dataset> errorDatasetClass,
-                               DatasetProperties errorDatasetProperties) {
+  protected PipelineSpecGenerator(PluginConfigurer configurer,
+                                  Set<String> sourcePluginTypes,
+                                  Set<String> sinkPluginTypes,
+                                  Class<? extends Dataset> errorDatasetClass,
+                                  DatasetProperties errorDatasetProperties) {
     this.configurer = configurer;
     this.sourcePluginTypes = sourcePluginTypes;
     this.sinkPluginTypes = sinkPluginTypes;
@@ -75,9 +78,17 @@ public class PipelineSpecGenerator {
    * All inputs into a stage have the same schema.
    *
    * @param config user provided ETL config
-   * @return the pipeline specification
    */
-  public PipelineSpec generateSpec(ETLConfig config) {
+  public abstract P generateSpec(C config);
+
+  /**
+   * Performs most of the validation and configuration needed by a pipeline.
+   * Handles stages, connections, resources, and stage logging settings.
+   *
+   * @param config user provided ETL config
+   * @param specBuilder builder for creating a pipeline spec.
+   */
+  protected void configureStages(ETLConfig config, PipelineSpec.Builder specBuilder) {
     // validate the config and determine the order we should configure the stages in.
     List<StageConnections> traversalOrder = validateConfig(config);
 
@@ -88,7 +99,6 @@ public class PipelineSpecGenerator {
     }
 
     // configure the stages in order and build up the stage specs
-    Set<StageSpec> stageSpecs = new HashSet<>(traversalOrder.size());
     for (StageConnections stageConnections : traversalOrder) {
       ETLStage stage = stageConnections.getStage();
       String stageName = stage.getName();
@@ -102,13 +112,12 @@ public class PipelineSpecGenerator {
         pluginConfigurers.get(outputStageName).getStageConfigurer().setInputSchema(outputSchema);
       }
 
-      stageSpecs.add(stageSpec);
+      specBuilder.addStage(stageSpec);
     }
 
-    Set<Connection> connections = new HashSet<>();
-    connections.addAll(config.getConnections());
-
-    return new PipelineSpec(stageSpecs, connections, config.getResources(), config.isStageLoggingEnabled());
+    specBuilder.addConnections(config.getConnections())
+      .setResources(config.getResources())
+      .setStageLoggingEnabled(config.isStageLoggingEnabled());
   }
 
   /**
@@ -122,38 +131,15 @@ public class PipelineSpecGenerator {
     ETLStage stage = stageConnections.getStage();
     String stageName = stage.getName();
     ETLPlugin stagePlugin = stage.getPlugin();
-    TrackedPluginSelector pluginSelector = new TrackedPluginSelector(stagePlugin.getPluginSelector());
-    PipelineConfigurable plugin = configurer.usePlugin(stagePlugin.getType(),
-                                                       stagePlugin.getName(),
-                                                       stageName,
-                                                       stagePlugin.getPluginProperties(),
-                                                       pluginSelector);
-    if (plugin == null) {
-      throw new IllegalArgumentException(
-        String.format("No plugin of type %s and name %s could be found for stage %s.",
-                      stagePlugin.getType(), stagePlugin.getName(), stageName));
-    }
-
-    try {
-      plugin.configurePipeline(pluginConfigurer);
-    } catch (Exception e) {
-      throw new RuntimeException(
-        String.format("Exception while configuring plugin of type %s and name %s for stage %s: %s",
-                      stagePlugin.getType(), stagePlugin.getName(), stageName, e.getMessage()),
-        e);
-    }
 
     if (!Strings.isNullOrEmpty(stage.getErrorDatasetName())) {
       configurer.createDataset(stage.getErrorDatasetName(), errorDatasetClass, errorDatasetProperties);
     }
 
+    PluginSpec pluginSpec = configurePlugin(stageName, stagePlugin, pluginConfigurer);
     Schema inputSchema = pluginConfigurer.getStageConfigurer().getInputSchema();
     Schema outputSchema = pluginConfigurer.getStageConfigurer().getOutputSchema();
 
-    PluginSpec pluginSpec = new PluginSpec(stagePlugin.getType(),
-                                           stagePlugin.getName(),
-                                           stagePlugin.getProperties(),
-                                           pluginSelector.getSelectedArtifact());
     return StageSpec.builder(stageName, pluginSpec)
       .setErrorDatasetName(stage.getErrorDatasetName())
       .setInputSchema(inputSchema)
@@ -161,6 +147,44 @@ public class PipelineSpecGenerator {
       .addInputs(stageConnections.getInputs())
       .addOutputs(stageConnections.getOutputs())
       .build();
+  }
+
+
+  /**
+   * Configures a plugin and returns the spec for it.
+   *
+   * @param pluginId the unique plugin id
+   * @param etlPlugin user provided configuration for the plugin
+   * @param pipelineConfigurer configurer used to configure the plugin
+   * @return the spec for the plugin
+   */
+  protected PluginSpec configurePlugin(String pluginId, ETLPlugin etlPlugin,
+                                       PipelineConfigurer pipelineConfigurer) {
+    TrackedPluginSelector pluginSelector = new TrackedPluginSelector(etlPlugin.getPluginSelector());
+    PipelineConfigurable plugin = configurer.usePlugin(etlPlugin.getType(),
+                                                       etlPlugin.getName(),
+                                                       pluginId,
+                                                       etlPlugin.getPluginProperties(),
+                                                       pluginSelector);
+    if (plugin == null) {
+      throw new IllegalArgumentException(
+        String.format("No plugin of type %s and name %s could be found stage for %s.",
+                      etlPlugin.getType(), etlPlugin.getName(), pluginId));
+    }
+
+    try {
+      plugin.configurePipeline(pipelineConfigurer);
+    } catch (Exception e) {
+      throw new RuntimeException(
+        String.format("Exception while configuring plugin of type %s and name %s for stage %s: %s",
+                      etlPlugin.getType(), etlPlugin.getName(), pluginId, e.getMessage()),
+        e);
+    }
+
+    return new PluginSpec(etlPlugin.getType(),
+                          etlPlugin.getName(),
+                          etlPlugin.getProperties(),
+                          pluginSelector.getSelectedArtifact());
   }
 
   /**

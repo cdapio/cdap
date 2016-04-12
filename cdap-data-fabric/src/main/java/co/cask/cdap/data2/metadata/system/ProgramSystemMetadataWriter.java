@@ -17,28 +17,32 @@
 package co.cask.cdap.data2.metadata.system;
 
 import co.cask.cdap.api.ProgramSpecification;
+import co.cask.cdap.api.workflow.WorkflowNode;
+import co.cask.cdap.api.workflow.WorkflowNodeType;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
- * A {@link AbstractSystemMetadataWriter} for a {@link Id.Program program}.
+ * A {@link AbstractSystemMetadataWriter} for a {@link ProgramId program}.
  */
 public class ProgramSystemMetadataWriter extends AbstractSystemMetadataWriter {
-  private final Id.Program programId;
+  private final ProgramId programId;
   private final ProgramSpecification programSpec;
 
-  public ProgramSystemMetadataWriter(MetadataStore metadataStore, Id.Program programId,
+  public ProgramSystemMetadataWriter(MetadataStore metadataStore, ProgramId programId,
                                      ProgramSpecification programSpec) {
-    super(metadataStore, programId);
+    super(metadataStore, programId.toId());
     this.programId = programId;
     this.programSpec = programSpec;
   }
@@ -51,7 +55,7 @@ public class ProgramSystemMetadataWriter extends AbstractSystemMetadataWriter {
   @Override
   protected String[] getSystemTagsToAdd() {
     List<String> tags = ImmutableList.<String>builder()
-      .add(programId.getId())
+      .add(programId.getProgram())
       .add(programId.getType().getPrettyName())
       .add(getMode())
       .addAll(getWorkflowNodes())
@@ -81,6 +85,17 @@ public class ProgramSystemMetadataWriter extends AbstractSystemMetadataWriter {
     }
     Preconditions.checkArgument(programSpec instanceof WorkflowSpecification,
                                 "Expected programSpec %s to be of type WorkflowSpecification", programSpec);
-    return ((WorkflowSpecification) programSpec).getNodeIdMap().keySet();
+    WorkflowSpecification workflowSpec = (WorkflowSpecification) this.programSpec;
+    Set<String> workflowNodeNames = new HashSet<>();
+    for (Map.Entry<String, WorkflowNode> entry : workflowSpec.getNodeIdMap().entrySet()) {
+      WorkflowNode workflowNode = entry.getValue();
+      WorkflowNodeType type = workflowNode.getType();
+      // Fork nodes have integers as node ids. Ignore them in system metadata.
+      if (WorkflowNodeType.FORK == type) {
+        continue;
+      }
+      workflowNodeNames.add(entry.getKey());
+    }
+    return workflowNodeNames;
   }
 }

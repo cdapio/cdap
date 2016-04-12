@@ -136,14 +136,14 @@ public class ETLWorker extends AbstractWorker {
       setResources(config.getResources());
     }
 
-    PipelineSpecGenerator specGenerator =
-      new PipelineSpecGenerator(getConfigurer(),
-                                ImmutableSet.of(RealtimeSource.PLUGIN_TYPE),
-                                ImmutableSet.of(RealtimeSink.PLUGIN_TYPE),
-                                Table.class,
-                                DatasetProperties.builder()
-                                  .add(Table.PROPERTY_SCHEMA, ERROR_SCHEMA.toString())
-                                  .build());
+    PipelineSpecGenerator<ETLRealtimeConfig, PipelineSpec> specGenerator =
+      new RealtimePipelineSpecGenerator(getConfigurer(),
+                                        ImmutableSet.of(RealtimeSource.PLUGIN_TYPE),
+                                        ImmutableSet.of(RealtimeSink.PLUGIN_TYPE),
+                                        Table.class,
+                                        DatasetProperties.builder()
+                                          .add(Table.PROPERTY_SCHEMA, ERROR_SCHEMA.toString())
+                                          .build());
     PipelineSpec spec = specGenerator.generateSpec(config);
     int sourceCount = 0;
     for (StageSpec stageSpec : spec.getStages()) {

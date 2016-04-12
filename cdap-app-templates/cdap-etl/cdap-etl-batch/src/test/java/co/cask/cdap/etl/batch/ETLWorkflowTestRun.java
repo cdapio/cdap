@@ -16,14 +16,17 @@
 
 package co.cask.cdap.etl.batch;
 
+import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
 import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.api.workflow.NodeStatus;
 import co.cask.cdap.etl.batch.mapreduce.ETLMapReduce;
 import co.cask.cdap.etl.common.Constants;
 import co.cask.cdap.etl.mock.batch.MockSink;
 import co.cask.cdap.etl.mock.batch.MockSource;
+import co.cask.cdap.etl.mock.batch.NodeStatesAction;
 import co.cask.cdap.etl.mock.transform.ErrorTransform;
 import co.cask.cdap.etl.mock.transform.StringValueFilterTransform;
 import co.cask.cdap.etl.proto.v2.ETLBatchConfig;
@@ -34,6 +37,7 @@ import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.DataSetManager;
 import co.cask.cdap.test.MapReduceManager;
+import co.cask.cdap.test.WorkflowManager;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -52,7 +56,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * Tests for ETLBatch.
  */
-public class ETLMapReduceTestRun extends ETLBatchTestBase {
+public class ETLWorkflowTestRun extends ETLBatchTestBase {
 
   @Test
   public void testInvalidTransformConfigFailsToDeploy() {
@@ -72,6 +76,42 @@ public class ETLMapReduceTestRun extends ETLBatchTestBase {
     } catch (Exception e) {
       // expected
     }
+  }
+
+  @Test
+  public void testPostAction() throws Exception {
+    ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
+      .addStage(new ETLStage("source", MockSource.getPlugin("actionInput")))
+      .addStage(new ETLStage("sink", MockSink.getPlugin("actionOutput")))
+      .addPostAction(new ETLStage("tokenWriter", NodeStatesAction.getPlugin("tokenTable")))
+      .addConnection("source", "sink")
+      .build();
+
+    AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
+    Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "ActionApp");
+    ApplicationManager appManager = deployApplication(appId, appRequest);
+
+    Schema schema = Schema.recordOf(
+      "testRecord",
+      Schema.Field.of("name", Schema.of(Schema.Type.STRING))
+    );
+
+    StructuredRecord recordSamuel = StructuredRecord.builder(schema).set("name", "samuel").build();
+    StructuredRecord recordBob = StructuredRecord.builder(schema).set("name", "bob").build();
+    StructuredRecord recordJane = StructuredRecord.builder(schema).set("name", "jane").build();
+
+    DataSetManager<Table> inputManager = getDataset(Id.Namespace.DEFAULT, "actionInput");
+    MockSource.writeInput(inputManager, ImmutableList.of(recordSamuel, recordBob, recordJane));
+
+    WorkflowManager workflowManager = appManager.getWorkflowManager(ETLWorkflow.NAME);
+    workflowManager.start();
+    workflowManager.waitForFinish(5, TimeUnit.MINUTES);
+
+    DataSetManager<Table> tokenTableManager = getDataset(Id.Namespace.DEFAULT, "tokenTable");
+    Table tokenTable = tokenTableManager.get();
+    NodeStatus status = NodeStatus.valueOf(Bytes.toString(
+      tokenTable.get(Bytes.toBytes(ETLMapReduce.NAME), Bytes.toBytes("status"))));
+    Assert.assertEquals(NodeStatus.COMPLETED, status);
   }
 
   @Test

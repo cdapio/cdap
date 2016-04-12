@@ -18,27 +18,38 @@ package co.cask.cdap.datapipeline;
 
 import co.cask.cdap.api.app.ApplicationConfigurer;
 import co.cask.cdap.api.data.schema.Schema;
+import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.workflow.AbstractWorkflow;
 import co.cask.cdap.api.workflow.WorkflowConfigurer;
+import co.cask.cdap.api.workflow.WorkflowContext;
 import co.cask.cdap.api.workflow.WorkflowForkConfigurer;
+import co.cask.cdap.etl.api.LookupProvider;
+import co.cask.cdap.etl.api.batch.BatchActionContext;
+import co.cask.cdap.etl.api.batch.PostAction;
 import co.cask.cdap.etl.api.batch.SparkCompute;
 import co.cask.cdap.etl.api.batch.SparkSink;
+import co.cask.cdap.etl.batch.ActionSpec;
 import co.cask.cdap.etl.batch.BatchPhaseSpec;
+import co.cask.cdap.etl.batch.BatchPipelineSpec;
+import co.cask.cdap.etl.batch.WorkflowBackedActionContext;
 import co.cask.cdap.etl.batch.connector.ConnectorSource;
 import co.cask.cdap.etl.batch.mapreduce.ETLMapReduce;
 import co.cask.cdap.etl.batch.spark.ETLSpark;
 import co.cask.cdap.etl.common.Constants;
+import co.cask.cdap.etl.common.DatasetContextLookupProvider;
 import co.cask.cdap.etl.common.PipelinePhase;
 import co.cask.cdap.etl.planner.ControlDag;
 import co.cask.cdap.etl.planner.PipelinePlan;
 import co.cask.cdap.etl.planner.StageInfo;
 import co.cask.cdap.etl.proto.Engine;
-import co.cask.cdap.etl.spec.PipelineSpec;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -49,10 +60,11 @@ import java.util.UUID;
 public class SmartWorkflow extends AbstractWorkflow {
   public static final String NAME = "DataPipelineWorkflow";
   public static final String DESCRIPTION = "Data Pipeline Workflow";
+  private static final Logger LOG = LoggerFactory.getLogger(SmartWorkflow.class);
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(Schema.class, new SchemaTypeAdapter()).create();
 
-  private final PipelineSpec spec;
+  private final BatchPipelineSpec spec;
   private final PipelinePlan plan;
   private final ApplicationConfigurer applicationConfigurer;
   // connector stage -> local dataset name
@@ -60,8 +72,13 @@ public class SmartWorkflow extends AbstractWorkflow {
   private final Engine engine;
   private ControlDag dag;
   private int phaseNum;
+  private Map<String, PostAction> postActions;
 
-  public SmartWorkflow(PipelineSpec spec,
+  // injected by cdap
+  @SuppressWarnings("unused")
+  private Metrics workflowMetrics;
+
+  public SmartWorkflow(BatchPipelineSpec spec,
                        PipelinePlan plan,
                        ApplicationConfigurer applicationConfigurer,
                        Engine engine) {
@@ -80,7 +97,7 @@ public class SmartWorkflow extends AbstractWorkflow {
 
     // set the pipeline spec as a property in case somebody like the UI wants to read it
     Map<String, String> properties = new HashMap<>();
-    properties.put("pipeline.spec", GSON.toJson(spec));
+    properties.put(Constants.PIPELINE_SPEC_KEY, GSON.toJson(spec));
     setProperties(properties);
 
     // single phase, just add the program directly
@@ -126,6 +143,37 @@ public class SmartWorkflow extends AbstractWorkflow {
     dag.flatten();
     String start = dag.getSources().iterator().next();
     addPrograms(start, getConfigurer());
+  }
+
+  @Override
+  public void initialize(WorkflowContext context) throws Exception {
+    super.initialize(context);
+    postActions = new LinkedHashMap<>();
+    BatchPipelineSpec batchPipelineSpec =
+      GSON.fromJson(context.getWorkflowSpecification().getProperty(Constants.PIPELINE_SPEC_KEY),
+                    BatchPipelineSpec.class);
+    for (ActionSpec actionSpec : batchPipelineSpec.getEndingActions()) {
+      postActions.put(actionSpec.getName(), (PostAction) context.newPluginInstance(actionSpec.getName()));
+    }
+  }
+
+  @Override
+  public void destroy() {
+    WorkflowContext workflowContext = getContext();
+    LookupProvider lookupProvider = new DatasetContextLookupProvider(workflowContext);
+    Map<String, String> runtimeArgs = workflowContext.getRuntimeArguments();
+    long logicalStartTime = workflowContext.getLogicalStartTime();
+    for (Map.Entry<String, PostAction> endingActionEntry : postActions.entrySet()) {
+      String name = endingActionEntry.getKey();
+      PostAction action = endingActionEntry.getValue();
+      BatchActionContext context = new WorkflowBackedActionContext(workflowContext, workflowMetrics, lookupProvider,
+                                                                   name, logicalStartTime, runtimeArgs);
+      try {
+        action.run(context);
+      } catch (Throwable t) {
+        LOG.error("Error while running ending action {}.", name, t);
+      }
+    }
   }
 
   private void addPrograms(String node, WorkflowConfigurer configurer) {
