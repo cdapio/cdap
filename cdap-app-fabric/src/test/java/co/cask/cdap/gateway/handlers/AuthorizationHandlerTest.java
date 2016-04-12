@@ -133,22 +133,34 @@ public class AuthorizationHandlerTest {
   }
 
   @Test
-  public void testDisabled() throws Exception {
-    CConfiguration conf = CConfiguration.create();
-    conf.setBoolean(Constants.Security.Authorization.ENABLED, false);
+  public void testAuthenticationDisabled() throws Exception {
+    CConfiguration cConf = CConfiguration.create();
+    cConf.setBoolean(Constants.Security.ENABLED, false);
+    cConf.setBoolean(Constants.Security.Authorization.ENABLED, true);
+    testDisabled(cConf, FeatureDisabledException.Feature.AUTHENTICATION, Constants.Security.ENABLED);
+  }
 
-    NettyHttpService service = new CommonNettyHttpServiceBuilder(conf)
+  @Test
+  public void testAuthorizationDisabled() throws Exception {
+    CConfiguration cConf = CConfiguration.create();
+    cConf.setBoolean(Constants.Security.ENABLED, true);
+    cConf.setBoolean(Constants.Security.Authorization.ENABLED, false);
+    testDisabled(cConf, FeatureDisabledException.Feature.AUTHORIZATION, Constants.Security.Authorization.ENABLED);
+  }
+
+  private void testDisabled(CConfiguration cConf, FeatureDisabledException.Feature feature,
+                            String configSetting) throws Exception {
+    NettyHttpService service = new CommonNettyHttpServiceBuilder(cConf)
       .addHttpHandlers(ImmutableList.of(new AuthorizationHandler(
-        new AuthorizerInstantiatorService(conf, factory) {
+        new AuthorizerInstantiatorService(cConf, factory) {
           @Override
           public Authorizer get() {
             return new InMemoryAuthorizer();
           }
-        }, conf)))
+        }, cConf)))
       .build();
     service.startAndWait();
     try {
-
       final AuthorizationClient client = new AuthorizationClient(
         ClientConfig.builder()
           .setConnectionConfig(
@@ -168,63 +180,63 @@ public class AuthorizationHandlerTest {
         public void call() throws Exception {
           client.grant(ns1, admin, ImmutableSet.of(Action.READ));
         }
-      });
+      }, feature, configSetting);
 
       verifyFeatureDisabled(new DisabledFeatureCaller() {
         @Override
         public void call() throws Exception {
           client.revoke(ns1, admin, ImmutableSet.of(Action.READ));
         }
-      });
+      }, feature, configSetting);
 
       verifyFeatureDisabled(new DisabledFeatureCaller() {
         @Override
         public void call() throws Exception {
           client.revoke(ns1);
         }
-      });
+      }, feature, configSetting);
 
       verifyFeatureDisabled(new DisabledFeatureCaller() {
         @Override
         public void call() throws Exception {
           client.listPrivileges(admin);
         }
-      });
+      }, feature, configSetting);
 
       verifyFeatureDisabled(new DisabledFeatureCaller() {
         @Override
         public void call() throws Exception {
           client.addRoleToPrincipal(admins, admin);
         }
-      });
+      }, feature, configSetting);
 
       verifyFeatureDisabled(new DisabledFeatureCaller() {
         @Override
         public void call() throws Exception {
           client.removeRoleFromPrincipal(admins, admin);
         }
-      });
+      }, feature, configSetting);
 
       verifyFeatureDisabled(new DisabledFeatureCaller() {
         @Override
         public void call() throws Exception {
           client.createRole(admins);
         }
-      });
+      }, feature, configSetting);
 
       verifyFeatureDisabled(new DisabledFeatureCaller() {
         @Override
         public void call() throws Exception {
           client.dropRole(admins);
         }
-      });
+      }, feature, configSetting);
 
       verifyFeatureDisabled(new DisabledFeatureCaller() {
         @Override
         public void call() throws Exception {
           client.listAllRoles();
         }
-      });
+      }, feature, configSetting);
     } finally {
       service.stopAndWait();
     }
@@ -429,14 +441,18 @@ public class AuthorizationHandlerTest {
    * Calls a {@link DisabledFeatureCaller} and verifies that the right exception was thrown.
    *
    * @param caller the {@link DisabledFeatureCaller} that wraps the operation to test
+   * @param expectedDisabledFeature the disabled feature
+   * @param expectedEnableConfig the expected config setting to enable the disabled feature
    */
-  private void verifyFeatureDisabled(DisabledFeatureCaller caller) throws Exception {
+  private void verifyFeatureDisabled(DisabledFeatureCaller caller,
+                                     FeatureDisabledException.Feature expectedDisabledFeature,
+                                     String expectedEnableConfig) throws Exception {
     try {
       caller.call();
     } catch (FeatureDisabledException expected) {
-      Assert.assertEquals("Authorization", expected.getFeature());
-      Assert.assertEquals("cdap-site.xml", expected.getConfigFile());
-      Assert.assertEquals(Constants.Security.Authorization.ENABLED, expected.getEnableConfigKey());
+      Assert.assertEquals(expectedDisabledFeature, expected.getFeature());
+      Assert.assertEquals(FeatureDisabledException.CDAP_SITE, expected.getConfigFile());
+      Assert.assertEquals(expectedEnableConfig, expected.getEnableConfigKey());
       Assert.assertEquals("true", expected.getEnableConfigValue());
     }
   }

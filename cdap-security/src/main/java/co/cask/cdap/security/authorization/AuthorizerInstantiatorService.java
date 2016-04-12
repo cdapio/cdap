@@ -19,6 +19,7 @@ package co.cask.cdap.security.authorization;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
+import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.common.lang.InstantiatorFactory;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.common.utils.DirUtils;
@@ -79,6 +80,7 @@ public class AuthorizerInstantiatorService extends AbstractIdleService implement
   private static final Logger LOG = LoggerFactory.getLogger(AuthorizerInstantiatorService.class);
 
   private final CConfiguration cConf;
+  private final boolean authenticationEnabled;
   private final boolean authorizationEnabled;
   private final InstantiatorFactory instantiatorFactory;
   private final AuthorizationContextFactory authorizationContextFactory;
@@ -91,6 +93,7 @@ public class AuthorizerInstantiatorService extends AbstractIdleService implement
   @VisibleForTesting
   public AuthorizerInstantiatorService(CConfiguration cConf, AuthorizationContextFactory authorizationContextFactory) {
     this.cConf = cConf;
+    this.authenticationEnabled = cConf.getBoolean(Constants.Security.ENABLED);
     this.authorizationEnabled = cConf.getBoolean(Constants.Security.Authorization.ENABLED);
     this.instantiatorFactory = new InstantiatorFactory(false);
     this.authorizationContextFactory = authorizationContextFactory;
@@ -99,6 +102,12 @@ public class AuthorizerInstantiatorService extends AbstractIdleService implement
   @Override
   protected void startUp() throws Exception {
     if (!authorizationEnabled) {
+      LOG.debug("Authorization is disabled. Using a no-op authorizer.");
+      this.authorizer = new NoOpAuthorizer();
+      return;
+    }
+    if (!authenticationEnabled) {
+      LOG.debug("Authorization is enabled. However, authentication is disabled. Using a no-op authorizer.");
       this.authorizer = new NoOpAuthorizer();
       return;
     }
@@ -122,7 +131,7 @@ public class AuthorizerInstantiatorService extends AbstractIdleService implement
   @Override
   protected void shutDown() throws Exception {
     authorizer.destroy();
-    if (!authorizationEnabled) {
+    if (!authorizationEnabled || !authenticationEnabled) {
       // nothing to close, since we would not have created a class loader
       return;
     }
@@ -160,8 +169,7 @@ public class AuthorizerInstantiatorService extends AbstractIdleService implement
     Class<? extends Authorizer> authorizerClass = loadAuthorizerClass(authorizerExtensionJar);
     // Set the context class loader to the AuthorizerClassLoader before creating a new instance of the extension,
     // so all classes required in this process are created from the AuthorizerClassLoader.
-    ClassLoader oldClassLoader = Thread.currentThread().getContextClassLoader();
-    Thread.currentThread().setContextClassLoader(authorizerClassLoader);
+    ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(authorizerClassLoader);
     LOG.debug("Setting context classloader to {}. Old classloader was {}.", authorizerClassLoader, oldClassLoader);
     try {
       Authorizer authorizer;
@@ -183,7 +191,7 @@ public class AuthorizerInstantiatorService extends AbstractIdleService implement
     } finally {
       // After the process of creation of a new instance has completed (success or failure), reset the context
       // classloader back to the original class loader.
-      Thread.currentThread().setContextClassLoader(oldClassLoader);
+      ClassLoaders.setContextClassLoader(oldClassLoader);
       LOG.debug("Resetting context classloader to {} from {}.", oldClassLoader, authorizerClassLoader);
     }
   }

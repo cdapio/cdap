@@ -25,6 +25,7 @@ import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.proto.security.Role;
+import co.cask.cdap.security.server.BasicAuthenticationHandler;
 import co.cask.common.cli.CLI;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
@@ -79,6 +80,10 @@ public class AuthorizationCLITest extends CLITestBase {
       LocationFactory locationFactory = new LocalLocationFactory(tmpDir);
       Location authExtensionJar = AppJarHelper.createDeploymentJar(locationFactory, InMemoryAuthorizer.class);
       return new String[] {
+        // We want to enable security, but bypass it for only testing authorization commands
+        Constants.Security.ENABLED, "true",
+        Constants.Security.AUTH_HANDLER_CLASS, BasicAuthenticationHandler.class.getName(),
+        Constants.Security.Router.BYPASS_AUTHENTICATION_REGEX, ".*",
         Constants.Security.Authorization.ENABLED, "true",
         Constants.Security.Authorization.EXTENSION_JAR_PATH, authExtensionJar.toURI().getPath(),
         // Bypass authorization enforcement for grant/revoke operations in this test. Authorization enforcement for
