@@ -66,7 +66,6 @@ angular.module(PKG.name + '.services')
             'SEMANTIC-CONFIG-JSON': 'Semantic error in the configuration JSON for the plugin.',
             'GENERIC-MISSING-REQUIRED-FIELDS': 'Please provide required information.',
             'MISSING-REQUIRED-FIELDS': 'is missing required fields',
-            'MORE-THAN-ONE-SOURCE-FOUND': 'Pipelines can only have one source. Please remove any additional sources.',
             'NO-SOURCE-FOUND': 'Please add a source to your pipeline',
             'MISSING-NAME': 'Pipeline name is missing.',
             'INVALID-NAME': 'Pipeline names can only contain alphanumeric (\'a-z A-Z 0-9\') and underscore ( \'_\') characters. Please remove any other characters.',
