@@ -508,7 +508,6 @@ class HydratorPlusPlusConfigStore {
     let name = this.getName();
     let errorFactory = this.NonStorePipelineErrorFactory;
     let daglevelvalidation = [
-      errorFactory.hasOnlyOneSource,
       errorFactory.hasAtLeastOneSink
     ];
     let nodes = this.state.__ui__.nodes;

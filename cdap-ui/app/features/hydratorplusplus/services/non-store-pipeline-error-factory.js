@@ -123,30 +123,6 @@ let hasValidName = (name, cb) => {
   cb(false);
 };
 
-let hasOnlyOneSource = (myHelpers, GLOBALS, nodes, cb) => {
-  let error;
-  let countSource = 0;
-  if (!myHelpers.objectQuery(nodes, 'length')) {
-    cb(false);
-  }
-  nodes.forEach( node => {
-    if (GLOBALS.pluginConvert[node.type] === 'source') {
-      countSource++;
-    }
-  });
-  if (countSource === 0) {
-    error = 'NO-SOURCE-FOUND';
-    cb(error);
-    return;
-  }
-  if (countSource > 1) {
-    error = 'MORE-THAN-ONE-SOURCE-FOUND';
-    cb(error);
-    return;
-  }
-  cb(false);
-};
-
 let hasAtLeastOneSink = (myHelpers, GLOBALS, nodes, cb) => {
   let error;
   let countSink = 0;
@@ -262,7 +238,6 @@ let NonStorePipelineErrorFactory = (GLOBALS, myHelpers) => {
     isRequiredFieldsFilled: isRequiredFieldsFilled.bind(null, myHelpers),
     countUnFilledRequiredFields: countUnFilledRequiredFields,
     hasValidName: hasValidName,
-    hasOnlyOneSource: hasOnlyOneSource.bind(null, myHelpers, GLOBALS),
     hasAtLeastOneSink: hasAtLeastOneSink.bind(null, myHelpers, GLOBALS),
     isNodeNameUnique: isNodeNameUnique.bind(null, myHelpers),
     allNodesConnected: allNodesConnected.bind(null, GLOBALS),
