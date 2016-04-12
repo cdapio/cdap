@@ -39,6 +39,8 @@ angular.module(`${PKG.name}.feature.hydratorplusplus`)
       document.getElementById('json-import-config-link').click();
     };
     let getArtifactNameAndVersion = (nameWithVersion) => {
+      // core-plugins-3.4.0-SNAPSHOT.jar
+      // extracts version from the jar file name. We then get the name of the artifact (that is from the beginning till version beginning)
       let regExpRule = new RegExp('(\\d+)(?:\\.(\\d+))?(?:\\.(\\d+))?(?:[.\\-](.*))?$');
       let version = regExpRule.exec(nameWithVersion)[0];
       let name = nameWithVersion.substr(0, nameWithVersion.indexOf(version) -1);

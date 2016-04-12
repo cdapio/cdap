@@ -62,7 +62,7 @@ angular.module(PKG.name + '.services')
             'NO-CONFIG': 'No widgets JSON found for the plugin. Please check documentation on how to add.',
             'ARTIFACT-UPLOAD-MESSAGE-JAR': 'The plugin JAR needs to be a JAR file.',
             'ARTIFACT-UPLOAD-MESSAGE-JSON': 'The plugin JSON needs to be a JSON file.',
-            'ARTIFACT-UPLOAD-ERROR-JSON': 'Error in parsing config json for the artifact'
+            'ARTIFACT-UPLOAD-ERROR-JSON': 'Error in parsing config json for the artifact.'
           },
           error: {
             'SYNTAX-CONFIG-JSON': 'Error parsing widgets JSON for the plugin. Please check the documentation to fix.',

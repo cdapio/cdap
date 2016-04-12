@@ -21,14 +21,8 @@
         <div ng-click="HydratorPlusPlusTopPanelCtrl.openMetadata()" class="clearfix">
           <div class="pipeline-type">
             <span ng-if="HydratorPlusPlusTopPanelCtrl.GLOBALS.etlBatchPipelines.indexOf(HydratorPlusPlusTopPanelCtrl.state.artifact.name) !== -1"
-                  uib-tooltip="Type: Batch"
-                  tooltip-placement="right"
-                  tooltip-class="toppanel-tooltip icon-tooltip"
                   class="icon-ETLBatch"></span>
             <span ng-if="HydratorPlusPlusTopPanelCtrl.state.artifact.name === HydratorPlusPlusTopPanelCtrl.GLOBALS.etlRealtime"
-                  uib-tooltip="Type: Realtime"
-                  tooltip-placement="right"
-                  tooltip-class="toppanel-tooltip icon-tooltip"
                   class="icon-ETLRealtime"></span>
           </div>
           <div class="pipeline-name pull-left">
