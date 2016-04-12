@@ -246,7 +246,7 @@ public class ArtifactRepository {
    * @throws ArtifactNotFoundException if the given artifact does not exist
    * @throws IOException if there was an exception reading plugin metadata from the artifact store
    */
-  public SortedMap<ArtifactDescriptor, List<PluginClass>> getPlugins(NamespaceId namespace, Id.Artifact artifactId)
+  public SortedMap<ArtifactDescriptor, Set<PluginClass>> getPlugins(NamespaceId namespace, Id.Artifact artifactId)
     throws IOException, ArtifactNotFoundException {
     return artifactStore.getPluginClasses(namespace, artifactId);
   }
@@ -263,7 +263,7 @@ public class ArtifactRepository {
    * @throws ArtifactNotFoundException if the given artifact does not exist
    * @throws IOException if there was an exception reading plugin metadata from the artifact store
    */
-  public SortedMap<ArtifactDescriptor, List<PluginClass>> getPlugins(NamespaceId namespace, Id.Artifact artifactId,
+  public SortedMap<ArtifactDescriptor, Set<PluginClass>> getPlugins(NamespaceId namespace, Id.Artifact artifactId,
                                                                      String pluginType)
     throws IOException, ArtifactNotFoundException {
     return artifactStore.getPluginClasses(namespace, artifactId, pluginType);
