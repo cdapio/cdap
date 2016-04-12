@@ -17,7 +17,7 @@
 <h3>
   <span>Configuration</span>
   <button class="btn btn-default pull-right"
-          ng-if="!IntegrationsController.navigatorSetup.popoverEnabled"
+          ng-if="!IntegrationsController.navigatorSetup.popoverEnabled && IntegrationsController.navigatorState.status !== 'RUNNING'"
           ng-click="IntegrationsController.editConfiguration($event)">
     Edit
   </button>
