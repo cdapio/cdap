@@ -36,43 +36,151 @@
             Cloudera
           </h4>
           <div class="form-group">
-            <label class="control-label col-xs-3">Hostname</label>
-            <div class="col-xs-9">
+            <label class="control-label col-xs-4">Hostname</label>
+            <div class="col-xs-8">
               <input type="text" class="form-control"
-                     ng-model="IntegrationsController.navigatorInfo.hostname"
+                     ng-model="IntegrationsController.navigatorInfo.navigatorConfig.hostname"
                      required>
             </div>
           </div>
 
           <div class="form-group">
-            <label class="control-label col-xs-3">Username</label>
-            <div class="col-xs-9">
+            <label class="control-label col-xs-4">Username</label>
+            <div class="col-xs-8">
               <input type="text" class="form-control"
-                     ng-model="IntegrationsController.navigatorInfo.username"
+                     ng-model="IntegrationsController.navigatorInfo.navigatorConfig.username"
                      required>
             </div>
           </div>
 
           <div class="form-group">
-            <label class="control-label col-xs-3">Password</label>
-            <div class="col-xs-9">
+            <label class="control-label col-xs-4">Password</label>
+            <div class="col-xs-8">
               <input type="password" class="form-control"
-                     ng-model="IntegrationsController.navigatorInfo.password"
+                     ng-model="IntegrationsController.navigatorInfo.navigatorConfig.password"
                      required>
             </div>
+          </div>
+
+          <h5 class="optional-settings-toggle"
+              ng-click="IntegrationsController.optionalSettings.navigator = !IntegrationsController.optionalSettings.navigator">
+            <span class="fa fa-caret-right"
+                  ng-if="!IntegrationsController.optionalSettings.navigator">
+            </span>
+            <span class="fa fa-caret-down"
+                  ng-if="IntegrationsController.optionalSettings.navigator">
+            </span>
+            <span>Optional Settings</span>
+          </h5>
+
+          <div ng-if="IntegrationsController.optionalSettings.navigator">
+            <div class="form-group">
+              <label class="control-label col-xs-4">Navigator Port</label>
+              <div class="col-xs-8">
+                <input type="text" class="form-control"
+                       ng-model="IntegrationsController.navigatorInfo.navigatorConfig.navigatorPort">
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="control-label col-xs-4">Auto Commit</label>
+              <div class="col-xs-8">
+                <input type="text" class="form-control"
+                       ng-model="IntegrationsController.navigatorInfo.navigatorConfig.autocommit">
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="control-label col-xs-4">Namespace</label>
+              <div class="col-xs-8">
+                <input type="text" class="form-control"
+                       ng-model="IntegrationsController.navigatorInfo.navigatorConfig.namespace">
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="control-label col-xs-4">Application URL</label>
+              <div class="col-xs-8">
+                <input type="text" class="form-control"
+                       ng-model="IntegrationsController.navigatorInfo.navigatorConfig.applicationURL">
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="control-label col-xs-4">File Format</label>
+              <div class="col-xs-8">
+                <input type="text" class="form-control"
+                       ng-model="IntegrationsController.navigatorInfo.navigatorConfig.fileFormat">
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="control-label col-xs-4">Navigator URL</label>
+              <div class="col-xs-8">
+                <input type="text" class="form-control"
+                       ng-model="IntegrationsController.navigatorInfo.navigatorConfig.navigatorURL">
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="control-label col-xs-4">Metadata Parent URI</label>
+              <div class="col-xs-8">
+                <input type="text" class="form-control"
+                       ng-model="IntegrationsController.navigatorInfo.navigatorConfig.metadataParentURI">
+              </div>
+            </div>
+
           </div>
 
           <h4>
             Kafka
           </h4>
           <div class="form-group">
-            <label class="control-label col-xs-3">Broker List</label>
-            <div class="col-xs-9">
+            <label class="control-label col-xs-4">Zookeeper String</label>
+            <div class="col-xs-8">
               <input type="text" class="form-control"
-                     ng-model="IntegrationsController.navigatorInfo.brokerString"
+                     ng-model="IntegrationsController.navigatorInfo.metadataKafkaConfig.zookeeperString"
                      required>
             </div>
           </div>
+
+          <h5 class="optional-settings-toggle"
+              ng-click="IntegrationsController.optionalSettings.kafka = !IntegrationsController.optionalSettings.kafka">
+            <span class="fa fa-caret-right"
+                  ng-if="!IntegrationsController.optionalSettings.kafka">
+            </span>
+            <span class="fa fa-caret-down"
+                  ng-if="IntegrationsController.optionalSettings.kafka">
+            </span>
+            <span>Optional Settings</span>
+          </h5>
+
+          <div ng-if="IntegrationsController.optionalSettings.kafka">
+            <div class="form-group">
+              <label class="control-label col-xs-4">Topic</label>
+              <div class="col-xs-8">
+                <input type="text" class="form-control"
+                       ng-model="IntegrationsController.navigatorInfo.metadataKafkaConfig.topic">
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="control-label col-xs-4">Num Partitions</label>
+              <div class="col-xs-8">
+                <input type="text" class="form-control"
+                       ng-model="IntegrationsController.navigatorInfo.metadataKafkaConfig.zookeeperString.numPartitions">
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="control-label col-xs-4">Offset Dataset</label>
+              <div class="col-xs-8">
+                <input type="text" class="form-control"
+                       ng-model="IntegrationsController.navigatorInfo.metadataKafkaConfig.zookeeperString.offsetDataset">
+              </div>
+            </div>
+          </div>
+
         </form>
 
         <div>

@@ -33,11 +33,30 @@ class TrackerIntegrationsController {
     };
     this.showConfig = false;
 
+    this.optionalSettings = {
+      navigator: false,
+      kafka: false
+    };
+
     this.navigatorInfo = {
-      brokerString: '',
-      hostname: '',
-      username: '',
-      password: ''
+      navigatorConfig: {
+        hostname: '',
+        username: '',
+        password: '',
+        navigatorPort: '',
+        autocommit: '',
+        namespace: '',
+        applicationURL: '',
+        fileFormat: '',
+        navigatorURL: '',
+        metadataParentURI: ''
+      },
+      metadataKafkaConfig: {
+        zookeeperString: '',
+        topic: '',
+        numPartitions: '',
+        offsetDataset: ''
+      }
     };
 
     this.chartSettings = {
@@ -69,10 +88,14 @@ class TrackerIntegrationsController {
     this.myTrackerApi.getCDAPConfig({ scope: this.$scope })
       .$promise
       .then( (res) => {
-        let filtered = res.filter( (config) => {
-          return config.name === 'metadata.updates.kafka.broker.list';
+        let zookeeperQuorum = res.filter( (config) => {
+          return config.name === 'zookeeper.quorum';
         });
-        this.navigatorInfo.brokerString = filtered[0].value;
+
+        let zookeeperKafka = res.filter( (config) => {
+          return config.name === 'kafka.zookeeper.namespace';
+        });
+        this.navigatorInfo.metadataKafkaConfig.zookeeperString = zookeeperQuorum[0].value + '/' + zookeeperKafka[0].value;
       });
   }
 
@@ -226,22 +249,28 @@ class TrackerIntegrationsController {
       scope: this.$scope
     };
 
+    let appConfig = {
+      navigatorConfig: {},
+      metadataKafkaConfig: {}
+    };
+    angular.forEach(this.navigatorInfo.navigatorConfig, (value, key) => {
+      if (value.length) {
+        appConfig.navigatorConfig[key] = value;
+      }
+    });
+    angular.forEach(this.navigatorInfo.metadataKafkaConfig, (value, key) => {
+      if (value.length) {
+        appConfig.metadataKafkaConfig[key] = value;
+      }
+    });
+
     let config = {
       artifact: {
         name: 'navigator',
         version: '0.2.0-SNAPSHOT',
         scope: 'USER'
       },
-      config: {
-        navigatorConfig: {
-          navigatorHostName: this.navigatorInfo.hostname,
-          username: this.navigatorInfo.username,
-          password: this.navigatorInfo.password
-        },
-        metadataKafkaConfig: {
-          brokerString: this.navigatorInfo.brokerString
-        }
-      }
+      config: appConfig
     };
 
     this.myTrackerApi.deployNavigator(params, config)

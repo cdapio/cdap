@@ -619,12 +619,16 @@ body.state-tracker-integrations {
       padding: 15px;
       background-color: white;
       position: absolute;
-      width: 400px;
+      width: 450px;
       right: 25px;
       border-radius: 5px;
       transform: translateY(-36px);
       z-index: 950;
       line-height: normal;
+      max-height: ~"-moz-calc(100vh - 150px)";
+      max-height: ~"-webkit-calc(100vh - 150px)";
+      max-height: ~"calc(100vh - 150px)";
+      overflow-y: auto;
       .box-shadow(0 0 20px 1px rgba(0,0,0,0.5));
 
       h3, h4 {
@@ -637,6 +641,13 @@ body.state-tracker-integrations {
 
       .control-label {
         color: #888;
+        font-size: 12px;
+        text-align: left;
+      }
+
+      .optional-settings-toggle {
+        user-select: none;
+        cursor: pointer;
       }
     }
 
