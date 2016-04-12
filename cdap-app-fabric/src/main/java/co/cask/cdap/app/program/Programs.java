@@ -15,11 +15,11 @@
  */
 package co.cask.cdap.app.program;
 
-import co.cask.cdap.app.runtime.ProgramClassLoaderFilterProvider;
 import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.lang.FilterClassLoader;
 import co.cask.cdap.common.lang.ProgramClassLoader;
+import co.cask.cdap.common.lang.ProgramClassLoaderProvider;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.internal.app.program.ForwardingProgram;
 import co.cask.cdap.proto.Id;
@@ -62,7 +62,7 @@ public final class Programs {
   }
 
   /**
-   * Creates {@link Program} that can be executed by the given {@link ProgramRunner}.
+   * Creates a {@link Program} that can be executed by the given {@link ProgramRunner}.
    *
    * @param cConf the CDAP configuration
    * @param programRunner the {@link ProgramRunner} for executing the program
@@ -73,21 +73,19 @@ public final class Programs {
    */
   public static Program create(CConfiguration cConf, ProgramRunner programRunner,
                                Location programJarLocation, File unpackedDir) throws IOException {
-    FilterClassLoader.Filter filter;
-    if (programRunner instanceof ProgramClassLoaderFilterProvider) {
-      filter = ((ProgramClassLoaderFilterProvider) programRunner).getFilter();
+    final ProgramClassLoader programClassLoader;
+    if (programRunner instanceof ProgramClassLoaderProvider) {
+      programClassLoader = ((ProgramClassLoaderProvider) programRunner).createProgramClassLoader(cConf, unpackedDir);
     } else {
-      filter = FilterClassLoader.defaultFilter();
+      programClassLoader = new ProgramClassLoader(cConf, unpackedDir,
+                                                  FilterClassLoader.create(Programs.class.getClassLoader()));
     }
 
-    if (filter == null) {
-      // Shouldn't happen. This is to catch invalid ProgramClassLoaderFilterProvider implementation
+    if (programClassLoader == null) {
+      // Shouldn't happen. This is to catch invalid ProgramFilterClassLoaderProvider implementation
       // since it's provided by the ProgramRunner, which can be external to CDAP
       throw new IOException("Program classloader filter cannot be null");
     }
-
-    FilterClassLoader parentClassLoader = new FilterClassLoader(programRunner.getClass().getClassLoader(), filter);
-    final ProgramClassLoader programClassLoader = new ProgramClassLoader(cConf, unpackedDir, parentClassLoader);
 
     return new ForwardingProgram(Programs.create(programJarLocation, programClassLoader)) {
       @Override

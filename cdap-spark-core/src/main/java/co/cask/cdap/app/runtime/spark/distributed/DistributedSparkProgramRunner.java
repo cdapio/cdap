@@ -24,8 +24,11 @@ import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.app.runtime.spark.SparkRuntimeContextConfig;
+import co.cask.cdap.app.runtime.spark.SparkRuntimeUtils;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.lang.ProgramClassLoader;
+import co.cask.cdap.common.lang.ProgramClassLoaderProvider;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.distributed.AbstractDistributedProgramRunner;
 import co.cask.cdap.internal.app.runtime.distributed.LocalizeResource;
@@ -49,7 +52,8 @@ import java.util.Map;
  * a YARN application to act as the Spark client. A second YARN application will be launched
  * by Spark framework as the actual Spark program execution.
  */
-public final class DistributedSparkProgramRunner extends AbstractDistributedProgramRunner {
+public final class DistributedSparkProgramRunner extends AbstractDistributedProgramRunner
+                                                 implements ProgramClassLoaderProvider {
 
   private static final Logger LOG = LoggerFactory.getLogger(DistributedSparkProgramRunner.class);
 
@@ -91,5 +95,10 @@ public final class DistributedSparkProgramRunner extends AbstractDistributedProg
     YarnConfiguration configuration = new YarnConfiguration(hConf);
     configuration.setBoolean(SparkRuntimeContextConfig.HCONF_ATTR_CLUSTER_MODE, true);
     return configuration;
+  }
+
+  @Override
+  public ProgramClassLoader createProgramClassLoader(CConfiguration cConf, File dir) {
+    return SparkRuntimeUtils.createProgramClassLoader(cConf, dir, getClass().getClassLoader());
   }
 }
