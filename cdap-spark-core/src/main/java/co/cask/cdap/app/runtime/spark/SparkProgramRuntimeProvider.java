@@ -21,7 +21,6 @@ import co.cask.cdap.app.runtime.ProgramRuntimeProvider;
 import co.cask.cdap.app.runtime.spark.distributed.DistributedSparkProgramRunner;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.lang.ClassLoaders;
-import co.cask.cdap.common.lang.FilterClassLoader;
 import co.cask.cdap.internal.app.runtime.spark.SparkUtils;
 import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Preconditions;
@@ -58,11 +57,6 @@ public class SparkProgramRuntimeProvider implements ProgramRuntimeProvider {
       default:
         throw new IllegalArgumentException("Unsupported Spark execution mode " + mode);
     }
-  }
-
-  @Override
-  public FilterClassLoader.Filter createProgramClassLoaderFilter(ProgramType programType) {
-    return SparkProgramRunner.SPARK_PROGRAM_CLASS_LOADER_FILTER;
   }
 
   /**

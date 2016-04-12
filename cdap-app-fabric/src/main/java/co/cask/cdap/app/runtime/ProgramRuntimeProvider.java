@@ -16,8 +16,6 @@
 
 package co.cask.cdap.app.runtime;
 
-import co.cask.cdap.common.lang.FilterClassLoader;
-import co.cask.cdap.common.lang.ProgramClassLoader;
 import co.cask.cdap.proto.ProgramType;
 import com.google.inject.Injector;
 
@@ -59,12 +57,4 @@ public interface ProgramRuntimeProvider {
    * @param injector the CDAP app-fabric Guice {@link Injector} for acquiring system services to interact with CDAP
    */
   ProgramRunner createProgramRunner(ProgramType programType, Mode mode, Injector injector);
-
-  /**
-   * Creates a {@link FilterClassLoader.Filter} to be used for resources filtering on the parent ClassLoader for
-   * the {@link ProgramClassLoader} being created for the program execution.
-   *
-   * @param programType the {@link ProgramType} that the filtering would be applied on
-   */
-  FilterClassLoader.Filter createProgramClassLoaderFilter(ProgramType programType);
 }
