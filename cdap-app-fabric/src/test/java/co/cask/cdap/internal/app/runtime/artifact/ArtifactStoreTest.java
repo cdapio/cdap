@@ -161,8 +161,10 @@ public class ArtifactStoreTest {
       new PluginClass("atype", "plugin1", "", "c.c.c.plugin1", "cfg", ImmutableMap.<String, PluginPropertyField>of());
     PluginClass plugin2 =
       new PluginClass("atype", "plugin2", "", "c.c.c.plugin2", "cfg", ImmutableMap.<String, PluginPropertyField>of());
+    PluginClass plugin3 =
+      new PluginClass("btype", "plugin3", "", "c.c.c.plugin3", "cfg", ImmutableMap.<String, PluginPropertyField>of());
 
-    List<PluginClass> plugins = ImmutableList.of(plugin1, plugin2);
+    List<PluginClass> plugins = ImmutableList.of(plugin1, plugin2, plugin3);
     ApplicationClass appClass = new ApplicationClass(
       InspectionApp.class.getName(), "",
       new ReflectionSchemaGenerator().generate(InspectionApp.AConfig.class));
@@ -188,16 +190,16 @@ public class ArtifactStoreTest {
     pluginsMap = artifactStore.getPluginClasses(NamespaceId.DEFAULT, artifactId, "atype");
     Assert.assertEquals(1, pluginsMap.size());
     Assert.assertTrue(pluginsMap.containsKey(artifactDetail.getDescriptor()));
-    expected = ImmutableSet.copyOf(plugins);
+    expected = ImmutableSet.of(plugin1, plugin2);
     actual = ImmutableSet.copyOf(pluginsMap.get(artifactDetail.getDescriptor()));
     Assert.assertEquals(expected, actual);
 
     // test plugins for specific type and name
     Map<ArtifactDescriptor, PluginClass> pluginClasses =
-      artifactStore.getPluginClasses(NamespaceId.DEFAULT, artifactId, "atype", "plugin2");
+      artifactStore.getPluginClasses(NamespaceId.DEFAULT, artifactId, "btype", "plugin3");
     Assert.assertEquals(1, pluginClasses.size());
     Assert.assertTrue(pluginClasses.containsKey(artifactDetail.getDescriptor()));
-    Assert.assertEquals(plugin2, pluginClasses.get(artifactDetail.getDescriptor()));
+    Assert.assertEquals(plugin3, pluginClasses.get(artifactDetail.getDescriptor()));
   }
 
   @Test

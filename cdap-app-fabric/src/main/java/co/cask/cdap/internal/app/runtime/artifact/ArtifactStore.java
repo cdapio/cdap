@@ -53,6 +53,8 @@ import co.cask.tephra.TransactionFailureException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
+import com.google.common.base.Predicate;
+import com.google.common.base.Predicates;
 import com.google.common.base.Splitter;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
@@ -80,12 +82,14 @@ import java.lang.reflect.Type;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
+import javax.annotation.Nullable;
 
 /**
  * This class manages artifacts as well as metadata for each artifact. Artifacts and their metadata cannot be changed
@@ -444,7 +448,14 @@ public class ArtifactStore {
         @Override
         public SortedMap<ArtifactDescriptor, List<PluginClass>> apply(DatasetContext<Table> context) throws Exception {
           Table table = context.get();
-          SortedMap<ArtifactDescriptor, List<PluginClass>> result = getPluginsInArtifact(table, parentArtifactId);
+          SortedMap<ArtifactDescriptor, List<PluginClass>> result =
+            getPluginsInArtifact(table, parentArtifactId, new Predicate<PluginClass>() {
+              @Override
+              public boolean apply(@Nullable PluginClass input) {
+                return type.equals(input.getType());
+              }
+            });
+
           if (result == null) {
             return null;
           }
@@ -825,6 +836,11 @@ public class ArtifactStore {
   }
 
   private SortedMap<ArtifactDescriptor, List<PluginClass>> getPluginsInArtifact(Table table, Id.Artifact artifactId) {
+   return getPluginsInArtifact(table, artifactId, Predicates.<PluginClass>alwaysTrue());
+  }
+
+  private SortedMap<ArtifactDescriptor, List<PluginClass>> getPluginsInArtifact(Table table, Id.Artifact artifactId,
+                                                                                Predicate<PluginClass> filter) {
     SortedMap<ArtifactDescriptor, List<PluginClass>> result = new TreeMap<>();
 
     // Make sure the artifact exists
@@ -837,12 +853,19 @@ public class ArtifactStore {
     // include any plugin classes that are inside the artifact itself
     ArtifactData parentData = gson.fromJson(Bytes.toString(parentDataBytes), ArtifactData.class);
     Set<PluginClass> parentPlugins = parentData.meta.getClasses().getPlugins();
-    if (!parentPlugins.isEmpty()) {
-      Location parentLocation = locationFactory.create(parentData.locationURI);
-      ArtifactDescriptor descriptor = new ArtifactDescriptor(artifactId.toArtifactId(), parentLocation);
-      result.put(descriptor, Lists.newArrayList(parentPlugins));
+
+    Set<PluginClass> filteredPlugins = new HashSet<>();
+    for (PluginClass pluginClass : parentPlugins) {
+      if (filter.apply(pluginClass)) {
+        filteredPlugins.add(pluginClass);
+      }
     }
 
+    if (!filteredPlugins.isEmpty()) {
+      Location parentLocation = locationFactory.create(parentData.locationURI);
+      ArtifactDescriptor descriptor = new ArtifactDescriptor(artifactId.toArtifactId(), parentLocation);
+      result.put(descriptor, Lists.newArrayList(filteredPlugins));
+    }
     return result;
   }
 
