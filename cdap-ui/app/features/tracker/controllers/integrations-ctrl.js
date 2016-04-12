@@ -29,7 +29,8 @@ class TrackerIntegrationsController {
     this.navigatorSetup = {
       isOpen: false,
       isSetup: false,
-      isEnabled: false
+      isEnabled: false,
+      popoverEnabled: true
     };
     this.showConfig = false;
 
@@ -40,7 +41,7 @@ class TrackerIntegrationsController {
 
     this.navigatorInfo = {
       navigatorConfig: {
-        hostname: '',
+        navigatorHostName: '',
         username: '',
         password: '',
         navigatorPort: '',
@@ -82,6 +83,14 @@ class TrackerIntegrationsController {
 
     this.pollId = null;
 
+    $scope.$watch(() => {
+      return this.navigatorSetup.isOpen;
+    }, () => {
+      if (!this.navigatorSetup.isOpen && this.navigatorSetup.isSetup) {
+        this.navigatorSetup.popoverEnabled = false;
+      }
+    });
+
   }
 
   getKafkaBrokerList() {
@@ -108,14 +117,16 @@ class TrackerIntegrationsController {
       .$promise
       .then((res) => {
         this.navigatorSetup.isSetup = true;
+        this.navigatorSetup.popoverEnabled = false;
+        this.optionalSettings.navigator = false;
+        this.optionalSettings.kafka = false;
+
         let config = {};
         try {
           config = JSON.parse(res.configuration);
 
-          this.navigatorInfo.hostname = config.navigatorConfig.navigatorHostName;
-          this.navigatorInfo.username = config.navigatorConfig.username;
-          this.navigatorInfo.password = config.navigatorConfig.password;
-          this.navigatorInfo.brokerString = config.metadataKafkaConfig.brokerString;
+          this.navigatorInfo.navigatorConfig = config.navigatorConfig;
+          this.navigatorInfo.metadataKafkaConfig = config.metadataKafkaConfig;
 
           this.getNavigatorStatus();
         } catch (e) {
@@ -240,6 +251,12 @@ class TrackerIntegrationsController {
 
       this.eventsSentAggregate = _.sum(this.chartData.columns[0]);
     });
+  }
+
+  editConfiguration(event) {
+    event.stopPropagation();
+
+    this.navigatorSetup.popoverEnabled = true;
   }
 
   saveNavigatorSetup() {

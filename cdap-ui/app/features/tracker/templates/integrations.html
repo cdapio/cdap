@@ -23,183 +23,19 @@
 
     <div class="integration-setup text-right" ng-if="!IntegrationsController.navigatorSetup.isSetup">
       <button class="btn btn-default btn-setup"
-              ng-click="IntegrationsController.navigatorSetup.isOpen = true">
-        Setup
+              uib-popover-template="'/assets/features/tracker/templates/partial/integrations-setup-popover.html'"
+              popover-placement="bottom"
+              popover-class="integration-setup-popup"
+              popover-trigger="outsideClick"
+              popover-is-open="IntegrationsController.navigatorSetup.isOpen">
+        <span ng-if="!IntegrationsController.saving">
+          Setup
+        </span>
+        <span ng-if="IntegrationsController.saving">
+          <span class="fa fa-spin fa-refresh"></span>
+          <span>Saving</span>
+        </span>
       </button>
-
-      <div class="integration-setup-popup text-left"
-           ng-if="IntegrationsController.navigatorSetup.isOpen">
-
-        <h3>Configuration</h3>
-        <form name="navigatorConfiguration" class="form-horizontal">
-          <h4>
-            Cloudera
-          </h4>
-          <div class="form-group">
-            <label class="control-label col-xs-4">Hostname</label>
-            <div class="col-xs-8">
-              <input type="text" class="form-control"
-                     ng-model="IntegrationsController.navigatorInfo.navigatorConfig.hostname"
-                     required>
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label class="control-label col-xs-4">Username</label>
-            <div class="col-xs-8">
-              <input type="text" class="form-control"
-                     ng-model="IntegrationsController.navigatorInfo.navigatorConfig.username"
-                     required>
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label class="control-label col-xs-4">Password</label>
-            <div class="col-xs-8">
-              <input type="password" class="form-control"
-                     ng-model="IntegrationsController.navigatorInfo.navigatorConfig.password"
-                     required>
-            </div>
-          </div>
-
-          <h5 class="optional-settings-toggle"
-              ng-click="IntegrationsController.optionalSettings.navigator = !IntegrationsController.optionalSettings.navigator">
-            <span class="fa fa-caret-right"
-                  ng-if="!IntegrationsController.optionalSettings.navigator">
-            </span>
-            <span class="fa fa-caret-down"
-                  ng-if="IntegrationsController.optionalSettings.navigator">
-            </span>
-            <span>Optional Settings</span>
-          </h5>
-
-          <div ng-if="IntegrationsController.optionalSettings.navigator">
-            <div class="form-group">
-              <label class="control-label col-xs-4">Navigator Port</label>
-              <div class="col-xs-8">
-                <input type="text" class="form-control"
-                       ng-model="IntegrationsController.navigatorInfo.navigatorConfig.navigatorPort">
-              </div>
-            </div>
-
-            <div class="form-group">
-              <label class="control-label col-xs-4">Auto Commit</label>
-              <div class="col-xs-8">
-                <input type="text" class="form-control"
-                       ng-model="IntegrationsController.navigatorInfo.navigatorConfig.autocommit">
-              </div>
-            </div>
-
-            <div class="form-group">
-              <label class="control-label col-xs-4">Namespace</label>
-              <div class="col-xs-8">
-                <input type="text" class="form-control"
-                       ng-model="IntegrationsController.navigatorInfo.navigatorConfig.namespace">
-              </div>
-            </div>
-
-            <div class="form-group">
-              <label class="control-label col-xs-4">Application URL</label>
-              <div class="col-xs-8">
-                <input type="text" class="form-control"
-                       ng-model="IntegrationsController.navigatorInfo.navigatorConfig.applicationURL">
-              </div>
-            </div>
-
-            <div class="form-group">
-              <label class="control-label col-xs-4">File Format</label>
-              <div class="col-xs-8">
-                <input type="text" class="form-control"
-                       ng-model="IntegrationsController.navigatorInfo.navigatorConfig.fileFormat">
-              </div>
-            </div>
-
-            <div class="form-group">
-              <label class="control-label col-xs-4">Navigator URL</label>
-              <div class="col-xs-8">
-                <input type="text" class="form-control"
-                       ng-model="IntegrationsController.navigatorInfo.navigatorConfig.navigatorURL">
-              </div>
-            </div>
-
-            <div class="form-group">
-              <label class="control-label col-xs-4">Metadata Parent URI</label>
-              <div class="col-xs-8">
-                <input type="text" class="form-control"
-                       ng-model="IntegrationsController.navigatorInfo.navigatorConfig.metadataParentURI">
-              </div>
-            </div>
-
-          </div>
-
-          <h4>
-            Kafka
-          </h4>
-          <div class="form-group">
-            <label class="control-label col-xs-4">Zookeeper String</label>
-            <div class="col-xs-8">
-              <input type="text" class="form-control"
-                     ng-model="IntegrationsController.navigatorInfo.metadataKafkaConfig.zookeeperString"
-                     required>
-            </div>
-          </div>
-
-          <h5 class="optional-settings-toggle"
-              ng-click="IntegrationsController.optionalSettings.kafka = !IntegrationsController.optionalSettings.kafka">
-            <span class="fa fa-caret-right"
-                  ng-if="!IntegrationsController.optionalSettings.kafka">
-            </span>
-            <span class="fa fa-caret-down"
-                  ng-if="IntegrationsController.optionalSettings.kafka">
-            </span>
-            <span>Optional Settings</span>
-          </h5>
-
-          <div ng-if="IntegrationsController.optionalSettings.kafka">
-            <div class="form-group">
-              <label class="control-label col-xs-4">Topic</label>
-              <div class="col-xs-8">
-                <input type="text" class="form-control"
-                       ng-model="IntegrationsController.navigatorInfo.metadataKafkaConfig.topic">
-              </div>
-            </div>
-
-            <div class="form-group">
-              <label class="control-label col-xs-4">Num Partitions</label>
-              <div class="col-xs-8">
-                <input type="text" class="form-control"
-                       ng-model="IntegrationsController.navigatorInfo.metadataKafkaConfig.zookeeperString.numPartitions">
-              </div>
-            </div>
-
-            <div class="form-group">
-              <label class="control-label col-xs-4">Offset Dataset</label>
-              <div class="col-xs-8">
-                <input type="text" class="form-control"
-                       ng-model="IntegrationsController.navigatorInfo.metadataKafkaConfig.zookeeperString.offsetDataset">
-              </div>
-            </div>
-          </div>
-
-        </form>
-
-        <div>
-          <button class="btn btn-default pull-left"
-                  ng-disabled="IntegrationsController.saving"
-                  ng-click="IntegrationsController.navigatorSetup.isOpen = false">
-            Cancel
-          </button>
-          <button class="btn btn-success pull-right"
-                  ng-disabled="navigatorConfiguration.$invalid || IntegrationsController.saving"
-                  ng-click="IntegrationsController.saveNavigatorSetup()">
-            <span ng-if="!IntegrationsController.saving">Save</span>
-            <span ng-if="IntegrationsController.saving">
-              <span class="fa fa-spin fa-refresh"></span>
-              <span>Saving</span>
-            </span>
-          </button>
-        </div>
-      </div>
     </div>
 
     <div class="integration-status" ng-if="IntegrationsController.navigatorSetup.isSetup">
@@ -234,11 +70,15 @@
         <button class="btn btn-default btn-setup"
                 uib-popover-template="'/assets/features/tracker/templates/partial/integrations-setup-popover.html'"
                 popover-placement="bottom"
-                popover-class="config-popover"
-                popover-trigger="outsideClick">
-          View Config
+                popover-class="integration-setup-popup"
+                popover-trigger="outsideClick"
+                popover-is-open="IntegrationsController.navigatorSetup.isOpen">
+          <span ng-if="!IntegrationsController.saving">View Config</span>
+          <span ng-if="IntegrationsController.saving">
+            <span class="fa fa-spin fa-refresh"></span>
+            <span>Saving</span>
+          </span>
         </button>
-
       </div>
 
       <div class="enable-control status-item">
