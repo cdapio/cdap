@@ -44,12 +44,17 @@ body.theme-cdap.state-hydratorplusplus-create {
           border-right: 1px solid #dddddd;
 
           select.form-control {
-            width: 87%;
+            width: 270px;
             margin-left: 10px;
             height: 30px;
+            background: #999999;
+            color: white;
           }
           .btn.btn-default {
-            width: auto;
+            width: 47.5%;
+            height: 25px;
+            line-height: 12px;
+            font-weight: 500;
           }
           .import-section {
             padding-left: 10px;
@@ -80,6 +85,24 @@ body.theme-cdap.state-hydratorplusplus-create {
           .hydrator-filter {
             .btn-group, input.form-control {
               display: block;
+              height: 25px;
+            }
+            input.form-control {
+              border: 1px solid #dfe2e9;
+            }
+            .btn-group {
+              display: inline-block;
+              .btn.btn-default {
+                height: 27px;
+                margin-top: 0;
+                border: 1px solid #dfe2e9;
+                box-shadow: none;
+
+                &.active {
+                  background: #BEBEBE;
+                  color: white;
+                }
+              }
             }
           }
           .groups-container {
@@ -235,12 +258,16 @@ body.theme-cdap.state-hydratorplusplus-create {
         .btn-left-panel-toggle {
           position: absolute;
           left: 260px;
-          top: 85px;
+          top: 86px;
+          height: 28px;
+          border-top-right-radius: 0;
+          border-bottom-right-radius: 0;
         }
         .btn-left-panel-add-plugin {
           position: absolute;
-          left: 220px;
-          top: 85px;
+          left: 144px;
+          top: 86px;
+          height: 27px;
         }
       }
       ~ .top-panel {
