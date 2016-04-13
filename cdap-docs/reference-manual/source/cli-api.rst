@@ -185,12 +185,12 @@ These are the available commands:
    ``use namespace <namespace-name>``,"Changes the current namespace to <namespace-name>."
    **Artifact**
    ``delete artifact <artifact-name> <artifact-version>``,"Deletes an artifact"
-   ``describe artifact <artifact-name> <artifact-version> [<scope>]``,"Shows information about an artifact. If no scope is given, the user scope will be used. Includes information about application and plugin classes contained in the artifact."
-   ``describe artifact-plugin <artifact-name> <artifact-version> <plugin-type> <plugin-name> [<scope>]``,"Describes all plugins of a specific type and name available to a specific artifact. Can return multiple details if the plugin exists in multiple artifacts. If no scope is given, the user scope will be used."
-   ``get artifact properties <artifact-name> <artifact-version> [<scope>]``,"Gets properties of an artifact. If no scope is given, the user scope will be used. "
-   ``list artifact plugin-types <artifact-name> <artifact-version> [<scope>]``,"Lists all plugin types usable by the specified artifact. If no scope is given, the user scope will be used."
-   ``list artifact plugins <artifact-name> <artifact-version> <plugin-type> [<scope>]``,"Lists all plugins of a specific type available to a specific artifact. Includes the type, name, classname, and description of the plugin, as well as the artifact the plugin came from. If no scope is given, the user scope will be used."
-   ``list artifact versions <artifact-name> [<scope>]``,"Lists all versions of a specific artifact. If no scope is given, the user scope will be used."
+   ``describe artifact <artifact-name> <artifact-version> [<scope>]``,"Shows information about an artifact. If no scope is given, the artifact is looked up first in SYSTEM and then in USER scope. Includes information about application and plugin classes contained in the artifact."
+   ``describe artifact-plugin <artifact-name> <artifact-version> <plugin-type> <plugin-name> [<scope>]``,"Describes all plugins of a specific type and name available to a specific artifact. Can return multiple details if the plugin exists in multiple artifacts. If no scope is given, then plugins are looked up first in SYSTEM and then in USER scope."
+   ``get artifact properties <artifact-name> <artifact-version> [<scope>]``,"Gets properties of an artifact. If no scope is given, properties are looked first in SYSTEM and then in USER scope."
+   ``list artifact plugin-types <artifact-name> <artifact-version> [<scope>]``,"Lists all plugin types usable by the specified artifact. If no scope is given, properties are looked first in SYSTEM and then in USER scope."
+   ``list artifact plugins <artifact-name> <artifact-version> <plugin-type> [<scope>]``,"Lists all plugins of a specific type available to a specific artifact. Includes the type, name, classname, and description of the plugin, as well as the artifact the plugin came from. If no scope is given, properties are looked first in SYSTEM and then in USER scope."
+   ``list artifact versions <artifact-name> [<scope>]``,"Lists all versions of a specific artifact. If no scope is given, properties are looked first in SYSTEM and then in USER scope."
    ``list artifacts [<scope>]``,"Lists all artifacts. If no scope is given, artifacts in all scopes are returned. Otherwise, only artifacts in the specified scope are returned."
    ``load artifact <local-file-path> [config-file <artifact-config>] [name <artifact-name>] [version <artifact-version>]``,"Loads an artifact into CDAP. If the artifact name and version are not both given, they will be derived from the filename of the artifact. File names are expected to be of the form <name>-<version>.jar. If the artifact contains plugins that extend another artifact, or if it contains third-party plugins, a config file must be given. The config file must contain a JSON object that specifies the parent artifacts and any third-party plugins in the jar. For example, if there is a config file with these contents:
     | ``{``
@@ -205,7 +205,7 @@ These are the available commands:
     |     ``""prop1"": ""val1""``
     |   ``}``
     | ``}``
-
+    
    This config specifies that the artifact contains one JDBC third-party plugin that should be available to the app1 artifact (versions 1.0.0 inclusive to 2.0.0 exclusive) and app2 artifact (versions 1.2.0 inclusive to 1.3.0 inclusive). The config may also include a 'properties' field specifying properties for the artifact."
    ``set artifact properties <artifact-name> <artifact-version> <scope> <local-file-path>``,"Sets properties of an artifact. The properties file must contain a JSON Object with a 'properties' key whose value is a JSON Object of the properties for the artifact."
    **Metadata And Lineage**
@@ -350,7 +350,7 @@ These are the available commands:
    ``suspend schedule <app-id.schedule-id>``,"Suspends a schedule"
    ``update app <app-id> <artifact-name> <artifact-version> <scope> [<app-config-file>]``,"Updates an application to use another artifact version and/or configuration."
    **Dataset**
-   ``create dataset instance <dataset-type> <new-dataset-name> [<dataset-properties>]``,"Creates a dataset. <dataset-properties> is in the format ""key1=val1 key2=val2"""
+   ``create dataset instance <dataset-type> <new-dataset-name> [<dataset-properties>] [<dataset-description>]``,"Creates a dataset. <dataset-properties> is in the format ""key1=val1 key2=val2"""
    ``delete dataset instance <dataset-name>``,"Deletes a dataset."
    ``delete dataset module <dataset-module>``,"Deletes a dataset module."
    ``deploy dataset module <new-dataset-module> <module-jar-file> <module-jar-classname>``,"Deploys a dataset module."
@@ -399,4 +399,3 @@ These are the available commands:
    ``remove role <role-name> from <principal-type> <principal-name>``,"Removes a role from a principal in authorization system for role based access control."
    ``revoke actions <actions> on entity <entity-id> from <principal-type> <principal-name>``,"Revokes a user's permission to perform certain actions on an entity. <actions> is a comma-separated list."
    ``revoke all on entity <entity-id>``,"Revokes all privileges for all users on the entity."
-   ``security access entity <entity-id> principal-type <principal-type> principal-name <principal-name> action <action>``,"Checks whether a principal is authorized to perform an action on an entity."
