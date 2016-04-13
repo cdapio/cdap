@@ -103,17 +103,20 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
   private final File pluginArchive;
   private final SparkSubmitter sparkSubmitter;
   private final AtomicReference<ListenableFuture<RunId>> completion;
+  private final String hostname;
   private Callable<ListenableFuture<RunId>> submitSpark;
   private Runnable cleanupTask;
 
   SparkRuntimeService(CConfiguration cConf, Spark spark, @Nullable File pluginArchive,
-                      SparkRuntimeContext runtimeContext, SparkSubmitter sparkSubmitter) {
+                      SparkRuntimeContext runtimeContext, SparkSubmitter sparkSubmitter,
+                      String hostname) {
     this.cConf = cConf;
     this.spark = spark;
     this.runtimeContext = runtimeContext;
     this.pluginArchive = pluginArchive;
     this.sparkSubmitter = sparkSubmitter;
     this.completion = new AtomicReference<>();
+    this.hostname = hostname;
   }
 
   @Override
@@ -149,7 +152,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
       final SparkExecutionContextFactory contextFactory = new SparkExecutionContextFactory() {
         @Override
         public SparkExecutionContext create(SparkRuntimeContext runtimeContext) {
-          return new DefaultSparkExecutionContext(runtimeContext, localizedFiles);
+          return new DefaultSparkExecutionContext(runtimeContext, localizedFiles, hostname);
         }
       };
 

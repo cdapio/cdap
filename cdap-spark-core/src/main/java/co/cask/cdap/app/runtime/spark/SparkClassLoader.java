@@ -23,8 +23,12 @@ import co.cask.cdap.common.lang.CombineClassLoader;
 import co.cask.cdap.common.lang.ProgramClassLoader;
 import co.cask.cdap.internal.app.runtime.plugin.PluginClassLoaders;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Throwables;
+import org.apache.hadoop.yarn.api.ApplicationConstants;
 
 import java.io.File;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -112,7 +116,8 @@ public class SparkClassLoader extends CombineClassLoader {
   }
 
   /**
-   * Creates a {@link SparkExecutionContextFactory} to be used in distributed mode.
+   * Creates a {@link SparkExecutionContextFactory} to be used in distributed mode. This method only gets called
+   * from the driver node if running in yarn-cluster mode.
    */
   private static SparkExecutionContextFactory createSparkExecutionContextFactory() {
     return new SparkExecutionContextFactory() {
@@ -126,7 +131,19 @@ public class SparkClassLoader extends CombineClassLoader {
           localizeResources.put(name, new File(name));
         }
 
-        return new DefaultSparkExecutionContext(runtimeContext, localizeResources);
+        // Try to determine the hostname from the NM_HOST environment variable, which is set by NM
+        String host = System.getenv(ApplicationConstants.Environment.NM_HOST.key());
+        if (host == null) {
+          // If it is missing, use the current hostname
+          try {
+            host = InetAddress.getLocalHost().getCanonicalHostName();
+          } catch (UnknownHostException e) {
+            // Nothing much we can do. Just throw exception since
+            // we need the hostname to start the SparkTransactionService
+            throw Throwables.propagate(e);
+          }
+        }
+        return new DefaultSparkExecutionContext(runtimeContext, localizeResources, host);
       }
     };
   }

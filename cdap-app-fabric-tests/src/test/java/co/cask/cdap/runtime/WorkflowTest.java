@@ -59,6 +59,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.net.InetAddress;
 import javax.annotation.Nullable;
 
 /**
@@ -103,7 +104,10 @@ public class WorkflowTest {
     String inputPath = createInput();
     String outputPath = new File(tmpFolder.newFolder(), "output").getAbsolutePath();
     final String runId = RunIds.generate().getId();
-    BasicArguments systemArgs = new BasicArguments(ImmutableMap.of(ProgramOptionConstants.RUN_ID, runId));
+    BasicArguments systemArgs = new BasicArguments(ImmutableMap.of(
+      ProgramOptionConstants.RUN_ID, runId,
+      ProgramOptionConstants.HOST, InetAddress.getLoopbackAddress().getCanonicalHostName()
+    ));
     BasicArguments userArgs = new BasicArguments(ImmutableMap.of("inputPath", inputPath, "outputPath", outputPath));
     ProgramOptions options = new SimpleProgramOptions(program.getName(), systemArgs, userArgs);
 
@@ -217,7 +221,10 @@ public class WorkflowTest {
 
     ProgramRunner programRunner = runnerFactory.create(program.getType());
     final String runId = RunIds.generate().getId();
-    BasicArguments systemArgs = new BasicArguments(ImmutableMap.of(ProgramOptionConstants.RUN_ID, runId));
+    BasicArguments systemArgs = new BasicArguments(ImmutableMap.of(
+      ProgramOptionConstants.RUN_ID, runId,
+      ProgramOptionConstants.HOST, InetAddress.getLoopbackAddress().getCanonicalHostName()
+    ));
     ProgramOptions options = new SimpleProgramOptions(program.getName(), systemArgs, new BasicArguments());
 
     final SettableFuture<String> completion = SettableFuture.create();
