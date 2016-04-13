@@ -277,7 +277,17 @@ cdap_set_spark() {
     return 0 # SPARK_HOME is set, already
   else
     if [[ $(which spark-shell 2>/dev/null) ]]; then
-      SPARK_VAR_OUT=$(echo 'for ((key, value) <- sys.env) println (key + "=" + value); exit' | spark-shell --master local 2>/dev/null)
+      ERR_FILE=$(mktemp)
+      SPARK_VAR_OUT=$(echo 'for ((key, value) <- sys.env) println (key + "=" + value); exit' | spark-shell --master local 2>${ERR_FILE})
+      __ret=$?
+      SPARK_ERR_MSG=$(< ${ERR_FILE})
+      rm ${ERR_FILE}
+      if [ ${__ret} -ne 0 ]; then
+        echo "ERROR - While determining Spark home, failed to get Spark settings using: spark-shell --master local"
+        echo "stderr:"
+        echo "${SPARK_ERR_MSG}"
+        return 1
+      fi
       SPARK_HOME=$(echo -e "${SPARK_VAR_OUT}" | grep ^SPARK_HOME= | cut -d= -f2)
       export SPARK_HOME
       return 0

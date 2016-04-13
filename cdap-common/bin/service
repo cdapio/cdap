@@ -210,7 +210,7 @@ run() {
   # Setup classpaths.
   cdap_set_classpath "${COMPONENT_HOME}" "${CDAP_CONF}"
   cdap_set_hive_classpath || exit 1
-  cdap_set_spark
+  cdap_set_spark || logecho "Could not determine SPARK_HOME! Spark support unavailable!"
   # Setup Java
   cdap_set_java || exit 1
   # Add proper HBase compatibility to CLASSPATH
