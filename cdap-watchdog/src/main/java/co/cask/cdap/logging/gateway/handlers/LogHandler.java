@@ -113,7 +113,7 @@ public class LogHandler extends AbstractHttpHandler {
 
       ReadRange readRange = new ReadRange(timeRange.getFromMillis(), timeRange.getToMillis(),
                                           LogOffset.INVALID_KAFKA_OFFSET);
-      readRange = adjustReadRange(readRange, runRecord);
+      readRange = adjustReadRange(readRange, runRecord, fromTimeSecsParam != -1);
 
       ChunkedLogReaderCallback logCallback = new ChunkedLogReaderCallback(responder, logPattern, escape);
       logReader.getLog(loggingContext, readRange.getFromMillis(), readRange.getToMillis(), filter, logCallback);
@@ -166,7 +166,7 @@ public class LogHandler extends AbstractHttpHandler {
 
       LogOffset logOffset = FormattedLogEvent.parseLogOffset(fromOffsetStr);
       ReadRange readRange = ReadRange.createFromRange(logOffset);
-      readRange = adjustReadRange(readRange, runRecord);
+      readRange = adjustReadRange(readRange, runRecord, true);
       logReader.getLogNext(loggingContext, readRange, maxEvents, filter, logCallback);
       logCallback.close();
     } catch (SecurityException e) {
@@ -179,7 +179,8 @@ public class LogHandler extends AbstractHttpHandler {
   /**
    * If readRange is outside runRecord's range, then the readRange is adjusted to fall within runRecords range.
    */
-  private ReadRange adjustReadRange(ReadRange readRange, @Nullable RunRecordMeta runRecord) {
+  private ReadRange adjustReadRange(ReadRange readRange, @Nullable RunRecordMeta runRecord,
+                                    boolean fromTimeSpecified) {
     if (runRecord == null) {
       return readRange;
     }
@@ -188,9 +189,19 @@ public class LogHandler extends AbstractHttpHandler {
     long toTimeMillis = readRange.getToMillis();
 
     long runStartMillis = TimeUnit.SECONDS.toMillis(runRecord.getStartTs());
-    if (fromTimeMillis < runStartMillis) {
+
+    if (!fromTimeSpecified) {
+      // If from time is not specified explicitly, use the run records start time as from time
       fromTimeMillis = runStartMillis;
     }
+
+
+    if (fromTimeMillis < runStartMillis) {
+      // If from time is specified but is smaller than run records start time, reset it to
+      // run record start time. This is to optimize so that we do not look into extra files.
+      fromTimeMillis = runStartMillis;
+    }
+
     if (runRecord.getStopTs() != null) {
       // Add a buffer to stop time due to CDAP-3100
       long runStopMillis = TimeUnit.SECONDS.toMillis(runRecord.getStopTs() + 1);
@@ -198,6 +209,7 @@ public class LogHandler extends AbstractHttpHandler {
         toTimeMillis = runStopMillis;
       }
     }
+
     ReadRange adjusted = new ReadRange(fromTimeMillis, toTimeMillis, readRange.getKafkaOffset());
     LOG.trace("Original read range: {}. Adjusted read range: {}", readRange, adjusted);
     return adjusted;
@@ -243,7 +255,7 @@ public class LogHandler extends AbstractHttpHandler {
       LogReaderCallback logCallback = new LogReaderCallback(responder, logPattern, escape);
       LogOffset logOffset = FormattedLogEvent.parseLogOffset(fromOffsetStr);
       ReadRange readRange = ReadRange.createToRange(logOffset);
-      readRange = adjustReadRange(readRange, runRecord);
+      readRange = adjustReadRange(readRange, runRecord, true);
       logReader.getLogPrev(loggingContext, readRange,
                            maxEvents, filter, logCallback);
       logCallback.close();
