@@ -19,16 +19,12 @@ package co.cask.cdap.app.runtime;
 import co.cask.cdap.proto.ProgramType;
 
 /**
- * Factory for creating {@link ProgramRunner}.
+ * A dummy implementation of {@link ProgramRunnerFactory} that doesn't support any program type.
+ * It is purely for testing purpose.
  */
-public interface ProgramRunnerFactory {
-
-  /**
-   * Creates a {@link ProgramRunner} for the given {@link ProgramType}.
-   *
-   * @param programType type of program
-   * @return a {@link ProgramRunner} that can execute the given program type.
-   * @throws IllegalArgumentException if no {@link ProgramRunner} is found for the given program type
-   */
-  ProgramRunner create(ProgramType programType);
+public class DummyProgramRunnerFactory implements ProgramRunnerFactory {
+  @Override
+  public ProgramRunner create(ProgramType programType) {
+    throw new IllegalArgumentException("Program type not supported: " + programType);
+  }
 }

@@ -14,14 +14,23 @@
  * the License.
  */
 
-package co.cask.cdap.app.runtime;
+package co.cask.cdap.common.lang;
 
-import co.cask.cdap.common.lang.FilterClassLoader;
+import co.cask.cdap.common.conf.CConfiguration;
+
+import java.io.File;
 
 /**
- * A provider for {@link FilterClassLoader.Filter} used for ClassLoading filtering.
+ * A provider for {@link ProgramClassLoader} used for program classloading.
  */
-public interface ProgramClassLoaderFilterProvider {
+public interface ProgramClassLoaderProvider {
 
-  FilterClassLoader.Filter getFilter();
+  /**
+   * Creates a {@link ProgramClassLoader}.
+   *
+   * @param cConf configuration for the classloader creation
+   * @param dir directory where the program artifact jar is unpacked to
+   * @return an instance of {@link ProgramClassLoader}
+   */
+  ProgramClassLoader createProgramClassLoader(CConfiguration cConf, File dir);
 }

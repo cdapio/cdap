@@ -21,7 +21,6 @@ import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.app.runtime.ProgramRuntimeProvider;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.lang.FilterClassLoader;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.proto.ProgramType;
 import com.google.common.annotations.VisibleForTesting;
@@ -71,12 +70,6 @@ public class ProgramRuntimeProviderLoader {
     public ProgramRunner createProgramRunner(ProgramType type, Mode mode, Injector injector) {
       throw new UnsupportedOperationException();
     }
-
-    @Override
-    public FilterClassLoader.Filter createProgramClassLoaderFilter(ProgramType programType) {
-      throw new UnsupportedOperationException();
-    }
-
   };
 
   private final LoadingCache<ProgramType, ProgramRuntimeProvider> programRunnerProviderCache;

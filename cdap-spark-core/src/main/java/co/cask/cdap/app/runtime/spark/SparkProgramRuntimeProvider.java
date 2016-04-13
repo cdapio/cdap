@@ -21,7 +21,6 @@ import co.cask.cdap.app.runtime.ProgramRuntimeProvider;
 import co.cask.cdap.app.runtime.spark.distributed.DistributedSparkProgramRunner;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.lang.ClassLoaders;
-import co.cask.cdap.common.lang.FilterClassLoader;
 import co.cask.cdap.internal.app.runtime.spark.SparkUtils;
 import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Preconditions;
@@ -48,7 +47,6 @@ import java.util.List;
 @ProgramRuntimeProvider.SupportedProgramType(ProgramType.SPARK)
 public class SparkProgramRuntimeProvider implements ProgramRuntimeProvider {
 
-  private static final String SPARK_PROGRAM_RUNNER_CLASS_NAME = SparkProgramRunner.class.getName();
   private URL[] classLoaderUrls;
 
   @Override
@@ -57,23 +55,18 @@ public class SparkProgramRuntimeProvider implements ProgramRuntimeProvider {
                                 type, ProgramType.SPARK);
     switch (mode) {
       case LOCAL:
-        return createSparkProgramRunner(injector);
+        return createSparkProgramRunner(injector, SparkProgramRunner.class.getName());
       case DISTRIBUTED:
-        return injector.getInstance(DistributedSparkProgramRunner.class);
+        return createSparkProgramRunner(injector, DistributedSparkProgramRunner.class.getName());
       default:
         throw new IllegalArgumentException("Unsupported Spark execution mode " + mode);
     }
   }
 
-  @Override
-  public FilterClassLoader.Filter createProgramClassLoaderFilter(ProgramType programType) {
-    return SparkProgramRunner.SPARK_PROGRAM_CLASS_LOADER_FILTER;
-  }
-
   /**
    * Creates a {@link ProgramRunner} that execute Spark program from the given {@link Injector}.
    */
-  public ProgramRunner createSparkProgramRunner(Injector injector) {
+  private ProgramRunner createSparkProgramRunner(Injector injector, String programRunnerClassName) {
     try {
       CConfiguration cConf = injector.getInstance(CConfiguration.class);
       final SparkRunnerClassLoader classLoader = new SparkRunnerClassLoader(getClassLoaderURLs(cConf),
@@ -84,7 +77,7 @@ public class SparkProgramRuntimeProvider implements ProgramRuntimeProvider {
           // Closing of the SparkRunnerClassLoader is done by the SparkProgramRunner when the program execution finished
           // The current CDAP call run right after it get a ProgramRunner and never reuse a ProgramRunner.
           // TODO: CDAP-5506 to refactor the program runtime architecture to remove the need of this assumption
-          return createInstance(injector, classLoader.loadClass(SPARK_PROGRAM_RUNNER_CLASS_NAME), classLoader);
+          return createInstance(injector, classLoader.loadClass(programRunnerClassName), classLoader);
         } finally {
           ClassLoaders.setContextClassLoader(oldClassLoader);
         }
