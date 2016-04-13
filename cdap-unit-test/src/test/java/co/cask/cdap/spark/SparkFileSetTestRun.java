@@ -106,7 +106,7 @@ public class SparkFileSetTestRun extends TestFrameworkTestBase {
     sparkManager.waitForFinish(1, TimeUnit.MINUTES);
     Assert.assertEquals(1, sparkManager.getHistory(ProgramRunStatus.COMPLETED).size());
 
-    validateFileOutput(fileset.getLocation("xx"));
+    validateFileOutput(fileset.getLocation("xx"), "custom:");
 
     // Cleanup paths after running test
     fileset.getLocation("nn").delete(true);
@@ -264,16 +264,20 @@ public class SparkFileSetTestRun extends TestFrameworkTestBase {
   }
 
   private void validateFileOutput(Location location) throws Exception {
+    validateFileOutput(location, "");
+  }
+
+  private void validateFileOutput(Location location, String prefix) throws Exception {
     Assert.assertTrue(location.isDirectory());
     for (Location child : location.list()) {
       if (child.getName().startsWith("part-r-")) {
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(child.getInputStream()))) {
           String line = reader.readLine();
           Assert.assertNotNull(line);
-          Assert.assertEquals("13 characters:13", line);
+          Assert.assertEquals(prefix + "13 characters:13", line);
           line = reader.readLine();
           Assert.assertNotNull(line);
-          Assert.assertEquals("7 chars:7", line);
+          Assert.assertEquals(prefix + "7 chars:7", line);
           line = reader.readLine();
           Assert.assertNull(line);
           return;

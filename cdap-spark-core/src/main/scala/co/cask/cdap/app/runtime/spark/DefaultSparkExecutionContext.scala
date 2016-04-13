@@ -38,12 +38,13 @@ import co.cask.cdap.proto.Id
 import co.cask.tephra.TransactionAware
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.io.LongWritable
+import org.apache.hadoop.mapreduce.MRJobConfig
 import org.apache.spark
-import org.apache.spark.TaskContext
 import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.executor.{DataWriteMethod, OutputMetrics}
 import org.apache.spark.rdd.RDD
 import org.apache.spark.scheduler._
+import org.apache.spark.{SparkContext, TaskContext}
 import org.apache.twill.api.RunId
 import org.slf4j.LoggerFactory
 
@@ -190,8 +191,17 @@ class DefaultSparkExecutionContext(runtimeContext: SparkRuntimeContext,
           dataset match {
             case outputFormatProvider: OutputFormatProvider =>
               val conf = new Configuration(runtimeContext.getConfiguration)
+
               ConfigurationUtil.setAll(outputFormatProvider.getOutputFormatConfiguration, conf)
-              rdd.saveAsNewAPIHadoopDataset(conf)
+              conf.set(MRJobConfig.OUTPUT_FORMAT_CLASS_ATTR, outputFormatProvider.getOutputFormatClassName)
+
+              // In Spark 1.2, we have to use the SparkContext.rddToPairRDDFunctions because the implicit
+              // conversion from RDD is not available.
+              if (sc.version == "1.2" || sc.version.startsWith("1.2.")) {
+                SparkContext.rddToPairRDDFunctions(rdd).saveAsNewAPIHadoopDataset(conf)
+              } else {
+                rdd.saveAsNewAPIHadoopDataset(conf)
+              }
 
             case batchWritable: BatchWritable[K, V] =>
               val txServiceBaseURI = getTxServiceBaseURI(sc, sparkTxService.getBaseURI)
