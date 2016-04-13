@@ -156,6 +156,9 @@ final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin implement
       SparkSpecification spec = appSpec.getSpark().get(program.getName());
       Preconditions.checkNotNull(spec, "Missing SparkSpecification for %s", program.getName());
 
+      String host = options.getArguments().getOption(ProgramOptionConstants.HOST);
+      Preconditions.checkArgument(host != null, "No hostname is provided");
+
       // Get the WorkflowProgramInfo if it is started by Workflow
       WorkflowProgramInfo workflowInfo = WorkflowProgramInfo.create(arguments);
       DatasetFramework programDatasetFramework = workflowInfo == null ?
@@ -201,7 +204,7 @@ final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin implement
                                         options.getArguments().getOption(Constants.AppFabric.APP_SCHEDULER_QUEUE));
 
       Service sparkRuntimeService = new SparkRuntimeService(cConf, spark, getPluginArchive(options),
-                                                            runtimeContext, submitter);
+                                                            runtimeContext, submitter, host);
 
       sparkRuntimeService.addListener(
         createRuntimeServiceListener(program.getId(), runId, arguments, options.getUserArguments(), closeables, store),

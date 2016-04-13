@@ -58,8 +58,8 @@ import scala.reflect.ClassTag
   *                          beforeSubmit call.
   */
 class DefaultSparkExecutionContext(runtimeContext: SparkRuntimeContext,
-                                   localizeResources: util.Map[String, File]) extends SparkExecutionContext
-                                                                              with AutoCloseable {
+                                   localizeResources: util.Map[String, File],
+                                   hostname: String) extends SparkExecutionContext with AutoCloseable {
   // Import the companion object for static fields
   import DefaultSparkExecutionContext._
 
@@ -67,7 +67,7 @@ class DefaultSparkExecutionContext(runtimeContext: SparkRuntimeContext,
   private val transactional = new SparkTransactional(runtimeContext.getTransactionSystemClient,
                                                      runtimeContext.getDatasetCache)
   private val workflowToken = Option(runtimeContext.getWorkflowInfo).map(_.getWorkflowToken)
-  private val sparkTxService = new SparkTransactionService(runtimeContext.getTransactionSystemClient)
+  private val sparkTxService = new SparkTransactionService(runtimeContext.getTransactionSystemClient, hostname)
   private val applicationEndLatch = new CountDownLatch(1)
 
   // Start the Spark TX service
