@@ -62,7 +62,9 @@ public final class DefaultProgramRunnerFactory implements ProgramRunnerFactory {
     }
 
     Provider<ProgramRunner> defaultProvider = defaultRunnerProviders.get(programType);
-    Preconditions.checkNotNull(defaultProvider, "Unsupported program type: " + programType);
+    if (defaultProvider == null) {
+      throw new IllegalArgumentException("Unsupported program type: " + programType);
+    }
     return defaultProvider.get();
   }
 }

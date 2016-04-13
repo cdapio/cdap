@@ -29,7 +29,6 @@ import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.guice.ZKClientModule;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.lang.ClassLoaders;
-import co.cask.cdap.common.lang.FilterClassLoader;
 import co.cask.cdap.common.lang.ProgramClassLoader;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
@@ -215,9 +214,8 @@ public final class SparkRuntimeContextProvider {
                                        SparkRuntimeContextConfig contextConfig) throws IOException {
     File programJar = new File(PROGRAM_JAR_NAME);
     File programDir = new File(PROGRAM_JAR_EXPANDED_NAME);
-    ClassLoader parentClassLoader = new FilterClassLoader(SparkRuntimeContextProvider.class.getClassLoader(),
-                                                          SparkProgramRunner.SPARK_PROGRAM_CLASS_LOADER_FILTER);
-    ProgramClassLoader classLoader = new ProgramClassLoader(cConf, programDir, parentClassLoader);
+    ProgramClassLoader classLoader = SparkRuntimeUtils.createProgramClassLoader(
+      cConf, programDir, SparkRuntimeContextProvider.class.getClassLoader());
     final Id.Program programId = contextConfig.getProgramId().toId();
     return new ForwardingProgram(Programs.create(Locations.toLocation(programJar), classLoader)) {
       @Override

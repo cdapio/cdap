@@ -21,10 +21,10 @@ import co.cask.cdap.WordCountApp;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.app.deploy.ConfigResponse;
 import co.cask.cdap.app.deploy.Configurator;
+import co.cask.cdap.app.runtime.DummyProgramRunnerFactory;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
-import co.cask.cdap.internal.app.runtime.ProgramRuntimeProviderLoader;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
 import co.cask.cdap.internal.test.AppJarHelper;
@@ -68,8 +68,7 @@ public class ConfiguratorTest {
     LocationFactory locationFactory = new LocalLocationFactory(TMP_FOLDER.newFolder());
     Location appJar = AppJarHelper.createDeploymentJar(locationFactory, WordCountApp.class);
     Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, WordCountApp.class.getSimpleName(), "1.0.0");
-    ArtifactRepository artifactRepo = new ArtifactRepository(conf, null, null, null,
-                                                             new ProgramRuntimeProviderLoader(conf));
+    ArtifactRepository artifactRepo = new ArtifactRepository(conf, null, null, null, new DummyProgramRunnerFactory());
 
     // Create a configurator that is testable. Provide it a application.
     Configurator configurator = new InMemoryConfigurator(conf, Id.Namespace.DEFAULT, artifactId,
@@ -93,8 +92,7 @@ public class ConfiguratorTest {
     LocationFactory locationFactory = new LocalLocationFactory(TMP_FOLDER.newFolder());
     Location appJar = AppJarHelper.createDeploymentJar(locationFactory, ConfigTestApp.class);
     Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, ConfigTestApp.class.getSimpleName(), "1.0.0");
-    ArtifactRepository artifactRepo = new ArtifactRepository(conf, null, null, null,
-                                                             new ProgramRuntimeProviderLoader(conf));
+    ArtifactRepository artifactRepo = new ArtifactRepository(conf, null, null, null, new DummyProgramRunnerFactory());
 
     ConfigTestApp.ConfigClass config = new ConfigTestApp.ConfigClass("myStream", "myTable");
     Configurator configuratorWithConfig =

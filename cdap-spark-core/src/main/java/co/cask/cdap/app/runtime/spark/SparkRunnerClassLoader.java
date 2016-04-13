@@ -52,9 +52,11 @@ final class SparkRunnerClassLoader extends URLClassLoader {
 
   private static final Logger LOG = LoggerFactory.getLogger(SparkRunnerClassLoader.class);
 
-  // Define some of the class types used for bytecode rewriting purpose.
-  private static final Type SPARK_CONTEXT_TYPE = Type.getType(SparkContext.class);
-  private static final Type SPARK_STREAMING_CONTEXT_TYPE = Type.getType(StreamingContext.class);
+  // Define some of the class types used for bytecode rewriting purpose. Cannot be referred with .class since
+  // those classes may not be available to the ClassLoader of this class (they are loadable from this ClassLoader).
+  private static final Type SPARK_CONTEXT_TYPE = Type.getObjectType("org/apache/spark/SparkContext");
+  private static final Type SPARK_STREAMING_CONTEXT_TYPE =
+    Type.getObjectType("org/apache/spark/streaming/StreamingContext");
   private static final Type SPARK_CONTEXT_CACHE_TYPE = Type.getType(SparkContextCache.class);
 
   // Don't refer akka Remoting with the ".class" because in future Spark version, akka dependency is removed and
