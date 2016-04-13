@@ -117,6 +117,13 @@ class HydratorPlusPlusLeftPanelCtrl {
   }
 
   importFile(files) {
+    if (files[0].name.indexOf('.json') === -1) {
+      this.myAlertOnValium.show({
+        type: 'danger',
+        content: 'Pipeline configuration should be JSON.'
+      });
+      return;
+    }
     let generateLinearConnections = (config) => {
       let nodes = [config.source].concat(config.transforms || []).concat(config.sinks);
       let connections = [];
@@ -127,9 +134,18 @@ class HydratorPlusPlusLeftPanelCtrl {
       return connections;
     };
 
-    // let isValidArtifact = (importArtifact) => {
-    //   return this.artifacts.filter( artifact => angular.equals(artifact, importArtifact)).length;
-    // };
+    let isValidArtifact = (importArtifact) => {
+      let isVersionExists = [];
+      let isScopeExists = [];
+      let isNameExists = this.artifacts.filter( artifact => artifact.name === importArtifact.name );
+      isVersionExists = isNameExists.filter( artifact => artifact.version === importArtifact.version );
+      isScopeExists = isNameExists.filter( artifact => artifact.scope === importArtifact.scope );
+      return {
+        name: isNameExists.length > 0,
+        version: isVersionExists.length > 0,
+        scope: isScopeExists.length > 0
+      };
+    };
 
     var reader = new FileReader();
     reader.readAsText(files[0], 'UTF-8');
@@ -149,26 +165,38 @@ class HydratorPlusPlusLeftPanelCtrl {
       if (!jsonData.config.connections) {
         jsonData.config.connections = generateLinearConnections(jsonData.config);
       }
-      this.$state.go('hydratorplusplus.create', { data: jsonData });
-      return;
 
-      // let isNotValid = this.NonStorePipelineErrorFactory.validateImportJSON(jsonData);
-      // if (isNotValid) {
-      //   this.myAlertOnValium.show({
-      //     type: 'danger',
-      //     content: isNotValid
-      //   });
-      // } else if (!isValidArtifact(jsonData.artifact)) {
-      //   this.myAlertOnValium.show({
-      //     type: 'danger',
-      //     content: 'Temporary message indicating invalid artifact. This should be fixed.'
-      //   });
-      // } else {
-      //   if (!jsonData.config.connections) {
-      //     jsonData.config.connections = generateLinearConnections(jsonData.config);
-      //   }
-      //   this.$state.go('hydratorplusplus.create', { data: jsonData });
-      // }
+      let isNotValid = this.NonStorePipelineErrorFactory.validateImportJSON(jsonData);
+      let validArtifact = isValidArtifact(jsonData.artifact);
+
+      if (isNotValid) {
+        this.myAlertOnValium.show({
+          type: 'danger',
+          content: isNotValid
+        });
+      } else if (!validArtifact.name || !validArtifact.version || !validArtifact.scope) {
+        let invalidFields = [];
+        if (!validArtifact.name) {
+          invalidFields.push('Artifact name');
+        } else {
+          if (!validArtifact.version) {
+            invalidFields.push('Artifact version');
+          }
+          if (!validArtifact.scope) {
+            invalidFields.push('Artifact scope');
+          }
+        }
+        invalidFields = invalidFields.length === 1 ? invalidFields[0] : invalidFields.join(', ');
+        this.myAlertOnValium.show({
+          type: 'danger',
+          content: `Imported pipeline has invalid artifact information: ${invalidFields}.`
+        });
+      } else {
+        if (!jsonData.config.connections) {
+          jsonData.config.connections = generateLinearConnections(jsonData.config);
+        }
+        this.$state.go('hydratorplusplus.create', { data: jsonData });
+      }
     };
   }
 
