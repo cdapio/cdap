@@ -201,12 +201,6 @@ let allNodesConnected = (GLOBALS, nodes, connections, cb) => {
 let hasValidArtifact = (importConfig) => {
   return importConfig.artifact && importConfig.artifact.name.length && importConfig.artifact.version.length && importConfig.artifact.scope.length;
 };
-let hasValidSource = (importConfig) => {
-  return importConfig.config.source;
-};
-let hasValidSinks = (importConfig) => {
-  return importConfig.config.sinks && importConfig.config.sinks.length;
-};
 let hasValidConfig = (importConfig) => {
   return importConfig.config;
 };
@@ -225,9 +219,15 @@ let hasValidNodesConnections = (importConfig) => {
   let config = importConfig.config;
   let isValid = true;
   let nodesMap = {};
-  [config.source].concat(config.sinks)
-    .concat( (config.transforms || []) )
-    .forEach( node => nodesMap[node.name] = node);
+  let stages;
+  if (importConfig.__ui__) {
+    stages = importConfig.__ui__.nodes;
+  } else if (config.stages){
+    stages = config.stages;
+  } else {
+    stages = [];
+  }
+  stages.forEach( node => nodesMap[node.name] = node);
   config.connections.forEach( conn => {
     isValid = isValid && (nodesMap[conn.from] && nodesMap[conn.to]);
   });
@@ -241,8 +241,6 @@ let validateImportJSON = (myHelpers, GLOBALS, config) => {
     { fn: hasValidConfig, messagePath: errorPath.concat(['INVALID-CONFIG']) },
     { fn: hasValidSchedule, messagePath: errorPath.concat(['INVALID-SCHEDULE']) },
     { fn: hasValidInstance, messagePath: errorPath.concat(['INVALID-INSTANCE']) },
-    { fn: hasValidSource, messagePath: errorPath.concat(['INVALID-SOURCE']) },
-    { fn: hasValidSinks, messagePath: errorPath.concat(['INVALID-SINKS']) },
     { fn: hasValidNodesConnections, messagePath: errorPath.concat(['INVALID-NODES-CONNECTIONS']) }
   ];
   let i;
