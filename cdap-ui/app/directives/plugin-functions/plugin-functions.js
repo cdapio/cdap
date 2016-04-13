@@ -19,14 +19,16 @@ angular.module(PKG.name + '.commons')
     return {
       restrict: 'E',
       scope: {
-        name: '=',
+        fnConfig: '=',
         node: '=',
         isDisabled: '='
       },
       replace: false,
       link: function (scope, element) {
-        var fn = PluginsFunctionsFactory.registry[scope.name];
-        if (!fn) { return; }
+
+        if (!scope.fnConfig) { return; }
+        var fn = PluginsFunctionsFactory.registry[scope.fnConfig.endpoint];
+
         var fnElem = angular.element(fn.element);
 
         angular.forEach(fn.attributes, function(value, key) {

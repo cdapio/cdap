@@ -23,8 +23,6 @@ angular.module(PKG.name + '.commons')
         node: '='
       },
       controller: function ($scope, $uibModal, EventPipe) {
-        console.log('node', $scope.node);
-
         var vm = this;
 
         vm.openModal = function () {
@@ -76,7 +74,10 @@ angular.module(PKG.name + '.commons')
               };
 
               mvm.apply = function () {
-                $scope.$close(mvm.resolvedSchema);
+                $scope.$close({
+                  schema: mvm.resolvedSchema,
+                  query: mvm.query
+                });
               };
 
             },
@@ -88,8 +89,9 @@ angular.module(PKG.name + '.commons')
             }
           });
 
-          modal.result.then(function (schema) {
-            EventPipe.emit('schema.import', JSON.stringify(schema));
+          modal.result.then(function (obj) {
+            EventPipe.emit('schema.import', JSON.stringify(obj.schema));
+            $scope.node.plugin.properties.importQuery = obj.query;
           });
         };
       },
