@@ -49,6 +49,10 @@ public class AuthorizerClassLoaderTest {
     parent.loadClass(Gson.class.getName());
     // classes from cdap-api should be available
     parent.loadClass(Application.class.getName());
+    // classes from twill-api should be available as dependencies of cdap-api
+    parent.loadClass(LocationFactory.class.getName());
+    // classes from slf4j-api should be available as dependencies of cdap-api
+    parent.loadClass(Logger.class.getName());
     // classes from cdap-proto should be available
     parent.loadClass(Principal.class.getName());
     // classes from cdap-security-spi should be available
@@ -66,10 +70,6 @@ public class AuthorizerClassLoaderTest {
     assertClassUnavailable(HTable.class);
     // classes from spark should not be available
     assertClassUnavailable("org.apache.spark.SparkConf");
-    // classes from twill should not be available
-    assertClassUnavailable(LocationFactory.class);
-    // classes from logback should not be available
-    assertClassUnavailable(Logger.class);
     // classes from cdap-common should not be available
     assertClassUnavailable(ClassPathResources.class);
     // classes from cdap-security should not be available
