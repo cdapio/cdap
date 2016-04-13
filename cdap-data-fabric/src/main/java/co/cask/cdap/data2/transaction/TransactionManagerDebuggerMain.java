@@ -230,17 +230,17 @@ public class TransactionManagerDebuggerMain {
       pw = new PrintWriter(System.out);
     }
     
-    String TOOL_NAME;
-    String OS = System.getProperty("os.name").toLowerCase();
-    if (OS.indexOf("win") >= 0) {
-      TOOL_NAME = TOOL_NAME_BASE + ".bat";
+    String toolName;
+    String os = System.getProperty("os.name").toLowerCase();
+    if (os.indexOf("win") >= 0) {
+      toolName = TOOL_NAME_BASE + ".bat";
     } else {
-      TOOL_NAME = TOOL_NAME_BASE + ".sh";
+      toolName = TOOL_NAME_BASE + ".sh";
     }
     
     pw.println("Usage:" +
-        "\n\t " + TOOL_NAME + " view [ <option> ... ]" +
-        "\n\t " + TOOL_NAME + " invalidate --host <name> --transaction <id>");
+        "\n\t " + toolName + " view [ <option> ... ]" +
+        "\n\t " + toolName + " invalidate --host <name> --transaction <id>");
     pw.println("\nOptions:\n");
     HelpFormatter formatter = new HelpFormatter();
     formatter.printOptions(pw, 100, options, 0, 10);
