@@ -19,11 +19,14 @@ package co.cask.cdap.app.runtime.spark
 import java.util.concurrent.ConcurrentLinkedQueue
 import javax.annotation.Nullable
 
+import com.google.common.reflect.TypeToken
 import org.apache.spark.SparkContext
 import org.apache.spark.scheduler._
 import org.apache.spark.streaming.StreamingContext
+import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConversions._
+import scala.collection.mutable.ArrayBuffer
 
 /**
   * A singleton cache for [[org.apache.spark.SparkContext]] and [[org.apache.spark.streaming.StreamingContext]]
@@ -33,6 +36,7 @@ import scala.collection.JavaConversions._
   */
 object SparkContextCache {
 
+  private val LOG = LoggerFactory.getLogger(SparkContextCache.getClass)
   private var stopped = false
   private var sparkContext: Option[SparkContext] = None
   private var streamingContext: Option[StreamingContext] = None
@@ -131,13 +135,121 @@ object SparkContextCache {
         try {
           streamingContext.foreach(ssc => {
             ssc.stop(false)
-            ssc.awaitTermination()
+            ssc.awaitTermination
           })
         } finally {
-          sparkContext.foreach(_.stop())
+          sparkContext.foreach(sc => {
+            val cleanup = createCleanup(sc);
+            try {
+              sc.stop
+            } finally {
+              cleanup()
+            }
+          })
         }
       }
+      sparkListeners.clear()
       sparkContext;
+    }
+  }
+
+  /**
+    * Creates a function that will stop and cleanup up all http servers and thread pools
+    * associated with the given SparkContext.
+    */
+  private def createCleanup(sc: SparkContext): () => Unit = {
+    val closers = ArrayBuffer.empty[Option[() => Unit]]
+
+    // Create a closer function for the file server in Spark
+    // The SparkEnv is either accessed through the "env() method (1.4+) or the "env" field in the SparkContext
+    // Every field access or method call are done through Option, hence if there is any changes in Spark,
+    // it won't fail the execution, although it might create permgen leakage, but it also depends on Spark
+    // has fixed this Thread resource leakage or not.
+    closers += sc.callMethod("env").orElse(sc.getField("env")).flatMap(env =>
+      env.getField("rpcEnv").flatMap(rpcEnv =>
+        // The rpcEnv.fileServer() call returns either a HttpBasedFileServer, NettyStreamManager or AkkaFileServer
+        // For HttpBasedFileServer or AkkaFileServer, we are interested in the "httpFileServer" field inside
+        rpcEnv.callMethod("fileServer").flatMap(_.getField("httpFileServer")).flatMap(fs =>
+          fs.getField("httpServer").flatMap(httpServer => createServerCloser(httpServer.getField("server"), sc))
+        )
+      )
+    )
+
+    // Create a closer funciton for the WebUI in Spark
+    // The WebUI is either accessed through the "ui() method (1.4+) or the "ui" field in the SparkContext
+    // The ui field is an Option
+    closers += sc.callMethod("ui").orElse(sc.getField("ui")).flatMap(_ match {
+      case o: Option[Any] => o.flatMap(ui =>
+        // Get the serverInfo inside WebUI, which is an Option
+        ui.getField("serverInfo").flatMap(_ match {
+          case o: Option[Any] => o.flatMap(info => createServerCloser(info.getField("server"), sc))
+          case _ => None
+        })
+      )
+      case _ => None
+    })
+
+    // Creates a function that calls all closers
+    () => closers.foreach(_.foreach(_()))
+  }
+
+  /**
+    * Creates an optional function that will close the given server when getting called.
+    */
+  private def createServerCloser(server: Option[Any], sc: SparkContext): Option[() => Unit] = {
+    server.flatMap(s => {
+      s.callMethod("getThreadPool").map(threadPool =>
+        () => {
+          LOG.debug("Shutting down Server and ThreadPool used by Spark {}", sc)
+          s.callMethod("stop")
+          threadPool.callMethod("stop")
+        }
+      )
+    })
+  }
+
+  /**
+    * An implicit helper class for getting field and calling method on an object through reflection
+    */
+  private implicit class ObjectReflectionFunctions(obj: Any) {
+
+    // Wrap it with an Option to avoid null
+    private val objOption = Option(obj)
+
+    def getField(fieldName: String): Option[_] = {
+      try {
+        // Find the first hit of given field in the given obj class hierarchy
+        objOption.flatMap(obj => TypeToken.of(obj.getClass).getTypes.classes.map(t => {
+          // If able to find the field, get the field value
+          t.getRawType.getDeclaredFields.find(f => fieldName == f.getName).map(f => {
+            f.setAccessible(true)
+            f.get(obj)
+          })
+        }).find(_.isDefined).flatten)
+      } catch {
+        case t: Throwable => {
+          LOG.warn("Unable to access field {} from object {}", fieldName, obj, t)
+          None
+        }
+      }
+    }
+
+    def callMethod(methodName: String): Option[_] = {
+      try {
+        // Find the first hit of given method in the given obj class hierarchy
+        objOption.flatMap(obj => TypeToken.of(obj.getClass).getTypes.classes.map(t => {
+          // If able to find the method, invoke the method
+          t.getRawType.getDeclaredMethods.find(m => methodName == m.getName).map(m => {
+            m.setAccessible(true)
+            m.invoke(obj)
+          })
+        }).find(_.isDefined).flatten)
+      } catch {
+        case t: Throwable => {
+          LOG.warn("Unable to invoke method {} from object {}", methodName, obj, t)
+          None
+        }
+      }
     }
   }
 

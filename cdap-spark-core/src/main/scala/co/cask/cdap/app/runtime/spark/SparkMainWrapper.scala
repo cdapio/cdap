@@ -53,7 +53,8 @@ object SparkMainWrapper {
           getMainMethod(cls).fold(
             throw new IllegalArgumentException(userSparkClass.getName
               + " is not a supported Spark program. It should implements either "
-              + classOf[SparkMain].getName + " or " + classOf[JavaSparkMain].getName)
+              + classOf[SparkMain].getName + " or " + classOf[JavaSparkMain].getName
+              + " or has a main method defined")
           )(
             _.invoke(null, RuntimeArguments.toPosixArray(runtimeContext.getRuntimeArguments))
           )
