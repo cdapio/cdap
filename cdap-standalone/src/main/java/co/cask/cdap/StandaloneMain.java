@@ -328,6 +328,7 @@ public class StandaloneMain {
       }
       main.startUp();
     } catch (Throwable e) {
+      @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
       Throwable rootCause = Throwables.getRootCause(e);
       if (rootCause instanceof ServiceBindException) {
         LOG.error("Failed to start Standalone CDAP: {}", rootCause.getMessage());

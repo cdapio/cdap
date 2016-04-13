@@ -17,6 +17,7 @@
 package co.cask.cdap.data.runtime.main;
 
 import co.cask.cdap.api.metrics.MetricsCollectionService;
+import co.cask.cdap.app.guice.EntityVerifierModule;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
@@ -114,6 +115,7 @@ public class DatasetOpExecutorServerTwillRunnable extends AbstractMasterTwillRun
       new StreamAdminModules().getDistributedModules(),
       new NotificationFeedClientModule(),
       new AuditModule().getDistributedModules(),
+      new EntityVerifierModule(),
       new AbstractModule() {
         @Override
         protected void configure() {
