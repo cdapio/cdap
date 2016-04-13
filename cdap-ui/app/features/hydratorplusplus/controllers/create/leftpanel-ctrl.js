@@ -135,7 +135,16 @@ class HydratorPlusPlusLeftPanelCtrl {
     };
 
     let isValidArtifact = (importArtifact) => {
-      return this.artifacts.filter( artifact => angular.equals(artifact, importArtifact)).length;
+      let isVersionExists = [];
+      let isScopeExists = [];
+      let isNameExists = this.artifacts.filter( artifact => artifact.name === importArtifact.name );
+      isVersionExists = isNameExists.filter( artifact => artifact.version === importArtifact.version );
+      isScopeExists = isNameExists.filter( artifact => artifact.scope === importArtifact.scope );
+      return {
+        name: isNameExists.length > 0,
+        version: isVersionExists.length > 0,
+        scope: isScopeExists.length > 0
+      };
     };
 
     var reader = new FileReader();
@@ -158,15 +167,29 @@ class HydratorPlusPlusLeftPanelCtrl {
       }
 
       let isNotValid = this.NonStorePipelineErrorFactory.validateImportJSON(jsonData);
+      let validArtifact = isValidArtifact(jsonData.artifact);
+
       if (isNotValid) {
         this.myAlertOnValium.show({
           type: 'danger',
           content: isNotValid
         });
-      } else if (!isValidArtifact(jsonData.artifact)) {
+      } else if (!validArtifact.name || !validArtifact.version || !validArtifact.scope) {
+        let invalidFields = [];
+        if (!validArtifact.name) {
+          invalidFields.push('Artifact name');
+        } else {
+          if (!validArtifact.version) {
+            invalidFields.push('Artifact version');
+          }
+          if (!validArtifact.scope) {
+            invalidFields.push('Artifact scope');
+          }
+        }
+        invalidFields = invalidFields.length === 1 ? invalidFields[0] : invalidFields.join(', ');
         this.myAlertOnValium.show({
           type: 'danger',
-          content: 'Imported pipeline has invalid artifact information (artifact name).'
+          content: `Imported pipeline has invalid artifact information: ${invalidFields}.`
         });
       } else {
         if (!jsonData.config.connections) {
