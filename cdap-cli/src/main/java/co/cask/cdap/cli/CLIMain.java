@@ -335,6 +335,14 @@ public class CLIMain {
   }
 
   private static void usage() {
+    String TOOL_NAME;
+    String TOOL_NAME_BASE = "cdap-cli";
+    String OS = System.getProperty("os.name").toLowerCase();
+    if (OS.indexOf("win") >= 0) {
+      TOOL_NAME = TOOL_NAME_BASE + ".bat";
+    } else {
+      TOOL_NAME = TOOL_NAME_BASE + ".sh";
+    }
     HelpFormatter formatter = new HelpFormatter();
     String args =
       "[--autoconnect <true|false>] " +
@@ -343,7 +351,7 @@ public class CLIMain {
       "[--verify-ssl <true|false>] " +
       "[--uri <uri>]" +
       "[--script <script-file>]";
-    formatter.printHelp("cdap-cli.sh " + args, getOptions());
+    formatter.printHelp(TOOL_NAME + " " + args, getOptions());
     System.exit(0);
   }
 
