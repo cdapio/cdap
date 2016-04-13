@@ -88,7 +88,24 @@ let isUniqueNodeNames = (myHelpers, nodes, cb) => {
   });
   return isRuleValid;
 };
-
+let hasAtleastOneSource = (myHelpers, GLOBALS, nodes, cb) => {
+  let error;
+  let countSource = 0;
+  if (!myHelpers.objectQuery(nodes, 'length')) {
+    cb(false);
+  }
+  nodes.forEach( node => {
+    if (GLOBALS.pluginConvert[node.type] === 'source') {
+      countSource++;
+    }
+  });
+  if (countSource === 0) {
+    error = 'NO-SOURCE-FOUND';
+    cb(error);
+    return;
+   }
+   cb(false);
+ };
 let isNodeNameUnique = (myHelpers, nodeName, nodes, cb) => {
   if (!myHelpers.objectQuery(nodes, 'length') || !nodeName.length) {
     cb(false);
@@ -117,30 +134,6 @@ let hasValidName = (name, cb) => {
   }
   if (!pattern.test(name)) {
     error = 'INVALID-NAME';
-    cb(error);
-    return;
-  }
-  cb(false);
-};
-
-let hasOnlyOneSource = (myHelpers, GLOBALS, nodes, cb) => {
-  let error;
-  let countSource = 0;
-  if (!myHelpers.objectQuery(nodes, 'length')) {
-    cb(false);
-  }
-  nodes.forEach( node => {
-    if (GLOBALS.pluginConvert[node.type] === 'source') {
-      countSource++;
-    }
-  });
-  if (countSource === 0) {
-    error = 'NO-SOURCE-FOUND';
-    cb(error);
-    return;
-  }
-  if (countSource > 1) {
-    error = 'MORE-THAN-ONE-SOURCE-FOUND';
     cb(error);
     return;
   }
@@ -262,7 +255,7 @@ let NonStorePipelineErrorFactory = (GLOBALS, myHelpers) => {
     isRequiredFieldsFilled: isRequiredFieldsFilled.bind(null, myHelpers),
     countUnFilledRequiredFields: countUnFilledRequiredFields,
     hasValidName: hasValidName,
-    hasOnlyOneSource: hasOnlyOneSource.bind(null, myHelpers, GLOBALS),
+    hasAtleastOneSource: hasAtleastOneSource.bind(null, myHelpers, GLOBALS),
     hasAtLeastOneSink: hasAtLeastOneSink.bind(null, myHelpers, GLOBALS),
     isNodeNameUnique: isNodeNameUnique.bind(null, myHelpers),
     allNodesConnected: allNodesConnected.bind(null, GLOBALS),
