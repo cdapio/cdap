@@ -442,13 +442,13 @@ security components are working as expected:
 
   .. tabbed-parsed-literal::
 	
-    $ curl -w"\n" <base-url>/apps
+    curl -v -w"\n" <base-url>/apps
 	
   such as:
  
   .. tabbed-parsed-literal::
 	
-    $ curl -w"\n" -X GET "http://localhost:10000/v3/namespaces/default/apps"
+    $ curl -v -w"\n" -X GET "http://localhost:10000/v3/namespaces/default/apps"
 
   This should return a ``401 Unauthorized`` response with a list of authentication URIs in
   the response body. For example::
@@ -459,14 +459,14 @@ security components are working as expected:
 
   .. tabbed-parsed-literal::
 	
-    $ curl -w"\n" -X GET -u <username>:<password> <auth-uri>
+    curl -v -w"\n" -X GET -u <username>:<password> <auth-uri>
 	
   such as (assuming an authentication server at an URI ``localhost:10009`` and that you
   have defined a username:password pair such as ``cdap:realtime``):
   
   .. tabbed-parsed-literal::
 	
-    $ curl -w"\n" -X GET -u cdap:realtime "http://localhost:10009/token"
+    $ curl -v -w"\n" -X GET -u cdap:realtime "http://localhost:10009/token"
 
   This should return a ``200 OK`` response with the ``AccessToken`` string in the response
   body (formatted to fit)::
@@ -474,17 +474,17 @@ security components are working as expected:
     {"access_token":"AghjZGFwAI7e8p65Uo7OpfG5UrD87psGQE0u0sFDoqxtacdRR5GxEb6bkTypP7mXdqvqqnLmfxOS",
       "token_type":"Bearer","expires_in":86400}
 
-- Reattempt the first command, but this time include the ``AccessToken`` as a header in the request:
+- Reattempt the first command, but this time include the ``access_token`` as a header in the request:
 
   .. tabbed-parsed-literal::
 	
-    $ curl -w"\n" -X GET <base-url>/apps -H "Authorization: Bearer <AccessToken>"
+    curl -v -w"\n" -X GET <base-url>/apps -H "Authorization: Bearer <access_token>"
 	  
   such as (formatted to fit):
 	
   .. tabbed-parsed-literal::
 	
-    $ curl -w"\n" -X GET "http://localhost:10000/v3/namespaces/default/apps" \
+    $ curl -v -w"\n" -X GET "http://localhost:10000/v3/namespaces/default/apps" \
     -H "Authorization: Bearer AghjZGFwAI7e8p65Uo7OpfG5UrD87psGQE0u0sFDoqxtacdRR5GxEb6bkTypP7mXdqvqqnLmfxOS" 
       
   This should return a ``200 OK`` response.
