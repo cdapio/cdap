@@ -92,7 +92,7 @@ function myJumpFactory($state, myTrackerApi, $rootScope) {
           }
         };
 
-        $state.go('hydrator.create.studio', {
+        $state.go('hydratorplusplus.create', {
           data: data,
           type: 'cdap-etl-batch'
         });
@@ -115,7 +115,7 @@ function myJumpFactory($state, myTrackerApi, $rootScope) {
       }
     ];
 
-    $state.go('hydrator.create.studio', {
+    $state.go('hydratorplusplus.create', {
       data: data,
       type: 'cdap-etl-realtime'
     });
@@ -187,7 +187,7 @@ function myJumpFactory($state, myTrackerApi, $rootScope) {
           }
         };
 
-        $state.go('hydrator.create.studio', {
+        $state.go('hydratorplusplus.create', {
           data: data,
           type: 'cdap-etl-batch'
         });
@@ -217,7 +217,7 @@ function myJumpFactory($state, myTrackerApi, $rootScope) {
           }
         }];
 
-        $state.go('hydrator.create.studio', {
+        $state.go('hydratorplusplus.create', {
           data: data,
           type: 'cdap-etl-batch'
         });
@@ -238,7 +238,7 @@ function myJumpFactory($state, myTrackerApi, $rootScope) {
       }
     };
 
-    $state.go('hydrator.create.studio', {
+    $state.go('hydratorplusplus.create', {
       data: data,
       type: 'cdap-etl-batch'
     });
@@ -257,7 +257,7 @@ function myJumpFactory($state, myTrackerApi, $rootScope) {
       }
     }];
 
-    $state.go('hydrator.create.studio', {
+    $state.go('hydratorplusplus.create', {
       data: data,
       type: 'cdap-etl-batch'
     });
