@@ -53,11 +53,15 @@ import co.cask.tephra.TransactionFailureException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
+import com.google.common.base.Predicate;
+import com.google.common.base.Predicates;
 import com.google.common.base.Splitter;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.InputSupplier;
 import com.google.gson.Gson;
@@ -391,16 +395,16 @@ public class ArtifactStore {
    * @throws ArtifactNotFoundException if the artifact to find plugins for does not exist
    * @throws IOException if there was an exception reading metadata from the metastore
    */
-  public SortedMap<ArtifactDescriptor, List<PluginClass>> getPluginClasses(final NamespaceId namespace,
+  public SortedMap<ArtifactDescriptor, Set<PluginClass>> getPluginClasses(final NamespaceId namespace,
                                                                            final Id.Artifact parentArtifactId)
     throws ArtifactNotFoundException, IOException {
 
-    SortedMap<ArtifactDescriptor, List<PluginClass>> pluginClasses = metaTable.executeUnchecked(
-      new TransactionExecutor.Function<DatasetContext<Table>, SortedMap<ArtifactDescriptor, List<PluginClass>>>() {
+    SortedMap<ArtifactDescriptor, Set<PluginClass>> pluginClasses = metaTable.executeUnchecked(
+      new TransactionExecutor.Function<DatasetContext<Table>, SortedMap<ArtifactDescriptor, Set<PluginClass>>>() {
         @Override
-        public SortedMap<ArtifactDescriptor, List<PluginClass>> apply(DatasetContext<Table> context) throws Exception {
+        public SortedMap<ArtifactDescriptor, Set<PluginClass>> apply(DatasetContext<Table> context) throws Exception {
           Table table = context.get();
-          SortedMap<ArtifactDescriptor, List<PluginClass>> result = getPluginsInArtifact(table, parentArtifactId);
+          SortedMap<ArtifactDescriptor, Set<PluginClass>> result = getPluginsInArtifact(table, parentArtifactId);
           if (result == null) {
             return null;
           }
@@ -434,17 +438,24 @@ public class ArtifactStore {
    * @throws ArtifactNotFoundException if the artifact to find plugins for does not exist
    * @throws IOException if there was an exception reading metadata from the metastore
    */
-  public SortedMap<ArtifactDescriptor, List<PluginClass>> getPluginClasses(final NamespaceId namespace,
+  public SortedMap<ArtifactDescriptor, Set<PluginClass>> getPluginClasses(final NamespaceId namespace,
                                                                            final Id.Artifact parentArtifactId,
                                                                            final String type)
     throws IOException, ArtifactNotFoundException {
 
-    SortedMap<ArtifactDescriptor, List<PluginClass>> pluginClasses = metaTable.executeUnchecked(
-      new TransactionExecutor.Function<DatasetContext<Table>, SortedMap<ArtifactDescriptor, List<PluginClass>>>() {
+    SortedMap<ArtifactDescriptor, Set<PluginClass>> pluginClasses = metaTable.executeUnchecked(
+      new TransactionExecutor.Function<DatasetContext<Table>, SortedMap<ArtifactDescriptor, Set<PluginClass>>>() {
         @Override
-        public SortedMap<ArtifactDescriptor, List<PluginClass>> apply(DatasetContext<Table> context) throws Exception {
+        public SortedMap<ArtifactDescriptor, Set<PluginClass>> apply(DatasetContext<Table> context) throws Exception {
           Table table = context.get();
-          SortedMap<ArtifactDescriptor, List<PluginClass>> result = getPluginsInArtifact(table, parentArtifactId);
+          SortedMap<ArtifactDescriptor, Set<PluginClass>> result =
+            getPluginsInArtifact(table, parentArtifactId, new Predicate<PluginClass>() {
+              @Override
+              public boolean apply(PluginClass input) {
+                return type.equals(input.getType());
+              }
+            });
+
           if (result == null) {
             return null;
           }
@@ -824,8 +835,13 @@ public class ArtifactStore {
     locationFactory.create(oldMeta.locationURI).delete();
   }
 
-  private SortedMap<ArtifactDescriptor, List<PluginClass>> getPluginsInArtifact(Table table, Id.Artifact artifactId) {
-    SortedMap<ArtifactDescriptor, List<PluginClass>> result = new TreeMap<>();
+  private SortedMap<ArtifactDescriptor, Set<PluginClass>> getPluginsInArtifact(Table table, Id.Artifact artifactId) {
+   return getPluginsInArtifact(table, artifactId, Predicates.<PluginClass>alwaysTrue());
+  }
+
+  private SortedMap<ArtifactDescriptor, Set<PluginClass>> getPluginsInArtifact(Table table, Id.Artifact artifactId,
+                                                                                Predicate<PluginClass> filter) {
+    SortedMap<ArtifactDescriptor, Set<PluginClass>> result = new TreeMap<>();
 
     // Make sure the artifact exists
     ArtifactCell parentCell = new ArtifactCell(artifactId);
@@ -837,12 +853,14 @@ public class ArtifactStore {
     // include any plugin classes that are inside the artifact itself
     ArtifactData parentData = gson.fromJson(Bytes.toString(parentDataBytes), ArtifactData.class);
     Set<PluginClass> parentPlugins = parentData.meta.getClasses().getPlugins();
-    if (!parentPlugins.isEmpty()) {
+
+    Set<PluginClass> filteredPlugins = Sets.newLinkedHashSet(Iterables.filter(parentPlugins, filter));
+
+    if (!filteredPlugins.isEmpty()) {
       Location parentLocation = locationFactory.create(parentData.locationURI);
       ArtifactDescriptor descriptor = new ArtifactDescriptor(artifactId.toArtifactId(), parentLocation);
-      result.put(descriptor, Lists.newArrayList(parentPlugins));
+      result.put(descriptor, filteredPlugins);
     }
-
     return result;
   }
 
@@ -863,7 +881,7 @@ public class ArtifactStore {
   // and are from an artifact in the given namespace.
   // if so, information about the plugin artifact and the plugin details are added to the given map.
   private void addPluginsToMap(NamespaceId namespace, Id.Artifact parentArtifactId,
-                               SortedMap<ArtifactDescriptor, List<PluginClass>> map,
+                               SortedMap<ArtifactDescriptor, Set<PluginClass>> map,
                                Row row) throws IOException {
     // column is the artifact namespace, name, and version. value is the serialized PluginData
     for (Map.Entry<byte[], byte[]> column : row.getColumns().entrySet()) {
@@ -871,7 +889,7 @@ public class ArtifactStore {
       if (pluginEntry != null) {
         ArtifactDescriptor artifactDescriptor = pluginEntry.getFirst();
         if (!map.containsKey(artifactDescriptor)) {
-          map.put(artifactDescriptor, Lists.<PluginClass>newArrayList());
+          map.put(artifactDescriptor, Sets.<PluginClass>newHashSet());
         }
         map.get(artifactDescriptor).add(pluginEntry.getSecond());
       }

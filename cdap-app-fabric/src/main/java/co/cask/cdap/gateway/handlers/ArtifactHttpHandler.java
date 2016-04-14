@@ -395,9 +395,9 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
     Id.Artifact artifactId = validateAndGetArtifactId(artifactNamespace, artifactName, artifactVersion);
 
     try {
-      SortedMap<ArtifactDescriptor, List<PluginClass>> plugins = artifactRepository.getPlugins(namespace, artifactId);
+      SortedMap<ArtifactDescriptor, Set<PluginClass>> plugins = artifactRepository.getPlugins(namespace, artifactId);
       Set<String> pluginTypes = Sets.newHashSet();
-      for (List<PluginClass> pluginClasses : plugins.values()) {
+      for (Set<PluginClass> pluginClasses : plugins.values()) {
         for (PluginClass pluginClass : pluginClasses) {
           pluginTypes.add(pluginClass.getType());
         }
@@ -425,11 +425,11 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
     Id.Artifact artifactId = validateAndGetArtifactId(artifactNamespace, artifactName, artifactVersion);
 
     try {
-      SortedMap<ArtifactDescriptor, List<PluginClass>> plugins =
+      SortedMap<ArtifactDescriptor, Set<PluginClass>> plugins =
         artifactRepository.getPlugins(namespace, artifactId, pluginType);
       List<PluginSummary> pluginSummaries = Lists.newArrayList();
       // flatten the map
-      for (Map.Entry<ArtifactDescriptor, List<PluginClass>> pluginsEntry : plugins.entrySet()) {
+      for (Map.Entry<ArtifactDescriptor, Set<PluginClass>> pluginsEntry : plugins.entrySet()) {
         ArtifactDescriptor pluginArtifact = pluginsEntry.getKey();
         ArtifactSummary pluginArtifactSummary = ArtifactSummary.from(pluginArtifact.getArtifactId());
 

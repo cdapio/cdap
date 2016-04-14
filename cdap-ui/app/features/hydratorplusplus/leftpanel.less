@@ -17,7 +17,7 @@
 @import '../../styles/variables.less';
 @import "../../../bower_components/bootstrap/less/mixins.less";
 @import '../../styles/themes/cdap/mixins.less';
-@height-of-toppanel: 43px;
+@height-of-toppanel: 35px;
 
 body.theme-cdap.state-hydratorplusplus-create {
   .left-panel-wrapper {
@@ -44,12 +44,19 @@ body.theme-cdap.state-hydratorplusplus-create {
           border-right: 1px solid #dddddd;
 
           select.form-control {
-            width: 87%;
+            width: 270px;
             margin-left: 10px;
             height: 30px;
+            background: #999999;
+            color: white;
           }
           .btn.btn-default {
-            width: auto;
+            width: 47.5%;
+            height: 26px;
+            line-height: 12px;
+            font-weight: 600;
+            color: #9A9A9A;
+            font-size: 12px;
           }
           .import-section {
             padding-left: 10px;
@@ -78,14 +85,35 @@ body.theme-cdap.state-hydratorplusplus-create {
           height: ~"calc(100% - 79px)"; // 100% height of left panel - 80px of height from top section of left panel (filter, import, templates & + plugin)
 
           .hydrator-filter {
+            min-height: 50px;
             .btn-group, input.form-control {
               display: block;
+              height: 32px;
+              margin: 0;
+            }
+            input.form-control {
+              border: 1px solid #dfe2e9;
+            }
+            .btn-group {
+              display: inline-block;
+              .btn.btn-default {
+                height: 32px;
+                margin-top: 0;
+                border: 1px solid #dfe2e9;
+                box-shadow: none;
+                line-height: 20px;
+
+                &.active {
+                  background: #BEBEBE;
+                  color: white;
+                }
+              }
             }
           }
           .groups-container {
             position: static;
             border-top: 1px solid #D4D4D4;
-            height: calc(~"100% - "@height-of-toppanel);
+            height: calc(~"100% - 50px");
             .item {
               color: @cdap-lightgray;
               font-size: 14px;
@@ -128,12 +156,13 @@ body.theme-cdap.state-hydratorplusplus-create {
               }
               .item-body-wrapper {
                 overflow-y: auto;
+                overflow-x: hidden;
                 border-top: 1px solid #CBCBCB;
                 border-bottom: 1px solid #CBCBCB;
               }
               .item-body {
                 &.view-icon {
-                  padding: 10px 10px 0;
+                  padding: 10px 5px 0;
                   .flexbox();
                   flex-direction: row;
                   flex-wrap: wrap;
@@ -150,11 +179,11 @@ body.theme-cdap.state-hydratorplusplus-create {
                     background-color: white;
                     border: 1px solid transparent;
                     color: #666;
-                    line-height: 30px;
-                    margin-bottom: 6px;
+                    line-height: 28px;
+                    margin-bottom: 2px;
                     padding: 0 8px;
-                    height: 30px;
-                    width: 48%;
+                    height: 28px;
+                    width: 49%;
                     border: 1px solid #dddddd;
                     .border-radius(4px);
 
@@ -235,7 +264,20 @@ body.theme-cdap.state-hydratorplusplus-create {
         .btn-left-panel-toggle {
           position: absolute;
           left: 260px;
-          top: 85px;
+          top: 90px;
+          height: 32px;
+          border-top-right-radius: 0;
+          border-bottom-right-radius: 0;
+          .btn.btn-default {
+            line-height: 20px;
+          }
+        }
+        .btn-left-panel-add-plugin {
+          position: absolute;
+          left: 144px;
+          top: 90px;
+          height: 32px;
+          line-height: 21px;
         }
       }
       ~ .top-panel {
@@ -264,10 +306,20 @@ body.theme-cdap.state-hydratorplusplus-create {
 
       select.form-control {
         width: 100%;
+        height: 30px;
+        background: #999999;
+        color: white;
       }
       .btn.btn-default {
         width: 100%;
         margin: 5px 0;
+        height: 26px;
+        line-height: 12px;
+        color: #9A9A9A;
+        font-weight: 600;
+        &:first-child {
+          padding-left: 6px;
+        }
         &:last-child {
           margin: 0;
         }
@@ -398,7 +450,7 @@ body.theme-cdap.state-hydratorplusplus-create {
                   max-width: 70%;
                   text-overflow: ellipsis;
                   padding-right: 5px;
-                  overflow-y: hidden;
+                  overflow: hidden;
                   font-size: 12px;
                   vertical-align: text-top;
                   display: inline-block;
@@ -410,9 +462,10 @@ body.theme-cdap.state-hydratorplusplus-create {
 
       }
       .hydrator-filter {
-        padding: 5px 5px;
+        padding: 9px 5px;
+        padding-left: 10px;
         background: #EEEEEE;
-        min-height: 40px;
+        min-height: 41px;
 
         .btn-group, input.form-control {
           display: none;
@@ -423,8 +476,14 @@ body.theme-cdap.state-hydratorplusplus-create {
     .btn-left-panel-toggle {
       position: absolute;
       left: 100px;
-      top: 121px;
+      top: 108px;
     }
+    .btn-left-panel-add-plugin {
+      position: absolute;
+      left: 10px;
+      top: 108px;
+    }
+
     .badge {
       background-color: transparent;
       color: #666;
@@ -504,6 +563,39 @@ body.theme-cdap.state-hydratorplusplus-create {
           strong {
             word-break: break-all;
           }
+        }
+      }
+    }
+    &.load-artifact-modal {
+      .modal-content {
+        .inner-section {
+          border: 2px dotted grey;
+          height: inherit;
+          height: 200px;
+          border-radius: 8px;
+          padding-top: 50px;
+          background: transparent;
+          width: 100%;
+
+          .fa.fa-cloud-upload, .fa.fa-refresh.fa-spin {
+            font-size: 64px;
+          }
+          .upload-message {
+            margin-top: 20px;
+          }
+        }
+
+        .row {
+          height: 200px;
+        }
+      }
+    }
+  }
+  @media(min-width: @screen-md) {
+    .modal {
+      &.load-artifact-modal {
+        .modal-lg {
+          width: 600px;
         }
       }
     }

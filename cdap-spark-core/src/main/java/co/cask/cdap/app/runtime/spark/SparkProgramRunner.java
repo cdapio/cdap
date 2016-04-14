@@ -22,7 +22,6 @@ import co.cask.cdap.api.spark.Spark;
 import co.cask.cdap.api.spark.SparkSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.Arguments;
-import co.cask.cdap.app.runtime.ProgramClassLoaderFilterProvider;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
@@ -33,8 +32,9 @@ import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.lang.FilterClassLoader;
 import co.cask.cdap.common.lang.InstantiatorFactory;
+import co.cask.cdap.common.lang.ProgramClassLoader;
+import co.cask.cdap.common.lang.ProgramClassLoaderProvider;
 import co.cask.cdap.common.lang.PropertyFieldSetter;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.metadata.writer.ProgramContextAware;
@@ -79,37 +79,9 @@ import javax.annotation.Nullable;
 /**
  * The {@link ProgramRunner} that executes Spark program.
  */
-final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin implements ProgramClassLoaderFilterProvider {
+final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin implements ProgramClassLoaderProvider {
 
   private static final Logger LOG = LoggerFactory.getLogger(SparkProgramRunner.class);
-  static final FilterClassLoader.Filter SPARK_PROGRAM_CLASS_LOADER_FILTER = new FilterClassLoader.Filter() {
-
-    final FilterClassLoader.Filter defaultFilter = FilterClassLoader.defaultFilter();
-
-    @Override
-    public boolean acceptResource(String resource) {
-      return resource.startsWith("co/cask/cdap/api/spark/") || resource.startsWith("scala/")
-        || resource.startsWith("org/apache/spark/") || resource.startsWith("akka/")
-        || defaultFilter.acceptResource(resource);
-    }
-
-    @Override
-    public boolean acceptPackage(String packageName) {
-      if (packageName.equals("co.cask.cdap.api.spark") || packageName.startsWith("co.cask.cdap.api.spark.")) {
-        return true;
-      }
-      if (packageName.equals("scala") || packageName.startsWith("scala.")) {
-        return true;
-      }
-      if (packageName.equals("org.apache.spark") || packageName.startsWith("org.apache.spark.")) {
-        return true;
-      }
-      if (packageName.equals("akka") || packageName.startsWith("akka.")) {
-        return true;
-      }
-      return defaultFilter.acceptResource(packageName);
-    }
-  };
 
   private final CConfiguration cConf;
   private final Configuration hConf;
@@ -156,6 +128,9 @@ final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin implement
       SparkSpecification spec = appSpec.getSpark().get(program.getName());
       Preconditions.checkNotNull(spec, "Missing SparkSpecification for %s", program.getName());
 
+      String host = options.getArguments().getOption(ProgramOptionConstants.HOST);
+      Preconditions.checkArgument(host != null, "No hostname is provided");
+
       // Get the WorkflowProgramInfo if it is started by Workflow
       WorkflowProgramInfo workflowInfo = WorkflowProgramInfo.create(arguments);
       DatasetFramework programDatasetFramework = workflowInfo == null ?
@@ -201,7 +176,7 @@ final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin implement
                                         options.getArguments().getOption(Constants.AppFabric.APP_SCHEDULER_QUEUE));
 
       Service sparkRuntimeService = new SparkRuntimeService(cConf, spark, getPluginArchive(options),
-                                                            runtimeContext, submitter);
+                                                            runtimeContext, submitter, host);
 
       sparkRuntimeService.addListener(
         createRuntimeServiceListener(program.getId(), runId, arguments, options.getUserArguments(), closeables, store),
@@ -222,8 +197,8 @@ final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin implement
   }
 
   @Override
-  public FilterClassLoader.Filter getFilter() {
-    return SPARK_PROGRAM_CLASS_LOADER_FILTER;
+  public ProgramClassLoader createProgramClassLoader(CConfiguration cConf, File dir) {
+    return SparkRuntimeUtils.createProgramClassLoader(cConf, dir, getClass().getClassLoader());
   }
 
   /**

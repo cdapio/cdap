@@ -88,7 +88,24 @@ let isUniqueNodeNames = (myHelpers, nodes, cb) => {
   });
   return isRuleValid;
 };
-
+let hasAtleastOneSource = (myHelpers, GLOBALS, nodes, cb) => {
+  let error;
+  let countSource = 0;
+  if (!myHelpers.objectQuery(nodes, 'length')) {
+    cb(false);
+  }
+  nodes.forEach( node => {
+    if (GLOBALS.pluginConvert[node.type] === 'source') {
+      countSource++;
+    }
+  });
+  if (countSource === 0) {
+    error = 'NO-SOURCE-FOUND';
+    cb(error);
+    return;
+   }
+   cb(false);
+ };
 let isNodeNameUnique = (myHelpers, nodeName, nodes, cb) => {
   if (!myHelpers.objectQuery(nodes, 'length') || !nodeName.length) {
     cb(false);
@@ -117,30 +134,6 @@ let hasValidName = (name, cb) => {
   }
   if (!pattern.test(name)) {
     error = 'INVALID-NAME';
-    cb(error);
-    return;
-  }
-  cb(false);
-};
-
-let hasOnlyOneSource = (myHelpers, GLOBALS, nodes, cb) => {
-  let error;
-  let countSource = 0;
-  if (!myHelpers.objectQuery(nodes, 'length')) {
-    cb(false);
-  }
-  nodes.forEach( node => {
-    if (GLOBALS.pluginConvert[node.type] === 'source') {
-      countSource++;
-    }
-  });
-  if (countSource === 0) {
-    error = 'NO-SOURCE-FOUND';
-    cb(error);
-    return;
-  }
-  if (countSource > 1) {
-    error = 'MORE-THAN-ONE-SOURCE-FOUND';
     cb(error);
     return;
   }
@@ -201,12 +194,6 @@ let allNodesConnected = (GLOBALS, nodes, connections, cb) => {
 let hasValidArtifact = (importConfig) => {
   return importConfig.artifact && importConfig.artifact.name.length && importConfig.artifact.version.length && importConfig.artifact.scope.length;
 };
-let hasValidSource = (importConfig) => {
-  return importConfig.config.source;
-};
-let hasValidSinks = (importConfig) => {
-  return importConfig.config.sinks && importConfig.config.sinks.length;
-};
 let hasValidConfig = (importConfig) => {
   return importConfig.config;
 };
@@ -225,9 +212,15 @@ let hasValidNodesConnections = (importConfig) => {
   let config = importConfig.config;
   let isValid = true;
   let nodesMap = {};
-  [config.source].concat(config.sinks)
-    .concat( (config.transforms || []) )
-    .forEach( node => nodesMap[node.name] = node);
+  let stages;
+  if (importConfig.__ui__) {
+    stages = importConfig.__ui__.nodes;
+  } else if (config.stages){
+    stages = config.stages;
+  } else {
+    stages = [];
+  }
+  stages.forEach( node => nodesMap[node.name] = node);
   config.connections.forEach( conn => {
     isValid = isValid && (nodesMap[conn.from] && nodesMap[conn.to]);
   });
@@ -241,8 +234,6 @@ let validateImportJSON = (myHelpers, GLOBALS, config) => {
     { fn: hasValidConfig, messagePath: errorPath.concat(['INVALID-CONFIG']) },
     { fn: hasValidSchedule, messagePath: errorPath.concat(['INVALID-SCHEDULE']) },
     { fn: hasValidInstance, messagePath: errorPath.concat(['INVALID-INSTANCE']) },
-    { fn: hasValidSource, messagePath: errorPath.concat(['INVALID-SOURCE']) },
-    { fn: hasValidSinks, messagePath: errorPath.concat(['INVALID-SINKS']) },
     { fn: hasValidNodesConnections, messagePath: errorPath.concat(['INVALID-NODES-CONNECTIONS']) }
   ];
   let i;
@@ -262,7 +253,7 @@ let NonStorePipelineErrorFactory = (GLOBALS, myHelpers) => {
     isRequiredFieldsFilled: isRequiredFieldsFilled.bind(null, myHelpers),
     countUnFilledRequiredFields: countUnFilledRequiredFields,
     hasValidName: hasValidName,
-    hasOnlyOneSource: hasOnlyOneSource.bind(null, myHelpers, GLOBALS),
+    hasAtleastOneSource: hasAtleastOneSource.bind(null, myHelpers, GLOBALS),
     hasAtLeastOneSink: hasAtLeastOneSink.bind(null, myHelpers, GLOBALS),
     isNodeNameUnique: isNodeNameUnique.bind(null, myHelpers),
     allNodesConnected: allNodesConnected.bind(null, GLOBALS),

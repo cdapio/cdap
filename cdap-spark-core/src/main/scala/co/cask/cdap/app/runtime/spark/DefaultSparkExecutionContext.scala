@@ -38,12 +38,13 @@ import co.cask.cdap.proto.Id
 import co.cask.tephra.TransactionAware
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.io.LongWritable
+import org.apache.hadoop.mapreduce.MRJobConfig
 import org.apache.spark
-import org.apache.spark.TaskContext
 import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.executor.{DataWriteMethod, OutputMetrics}
 import org.apache.spark.rdd.RDD
 import org.apache.spark.scheduler._
+import org.apache.spark.{SparkContext, TaskContext}
 import org.apache.twill.api.RunId
 import org.slf4j.LoggerFactory
 
@@ -58,8 +59,8 @@ import scala.reflect.ClassTag
   *                          beforeSubmit call.
   */
 class DefaultSparkExecutionContext(runtimeContext: SparkRuntimeContext,
-                                   localizeResources: util.Map[String, File]) extends SparkExecutionContext
-                                                                              with AutoCloseable {
+                                   localizeResources: util.Map[String, File],
+                                   hostname: String) extends SparkExecutionContext with AutoCloseable {
   // Import the companion object for static fields
   import DefaultSparkExecutionContext._
 
@@ -67,7 +68,7 @@ class DefaultSparkExecutionContext(runtimeContext: SparkRuntimeContext,
   private val transactional = new SparkTransactional(runtimeContext.getTransactionSystemClient,
                                                      runtimeContext.getDatasetCache)
   private val workflowToken = Option(runtimeContext.getWorkflowInfo).map(_.getWorkflowToken)
-  private val sparkTxService = new SparkTransactionService(runtimeContext.getTransactionSystemClient)
+  private val sparkTxService = new SparkTransactionService(runtimeContext.getTransactionSystemClient, hostname)
   private val applicationEndLatch = new CountDownLatch(1)
 
   // Start the Spark TX service
@@ -170,7 +171,9 @@ class DefaultSparkExecutionContext(runtimeContext: SparkRuntimeContext,
         LOG.warn("Failed to registry usage of {} -> {}", streamId, owners, e)
     }
 
-    rdd.values.map(new SerializableStreamEvent(_)).map(decoder)
+    // Wrap the StreamEvent with a SerializableStreamEvent
+    // Don't use rdd.values() as it brings in implicit object from SparkContext, which is not available in Spark 1.2
+    rdd.map(t => new SerializableStreamEvent(t._2)).map(decoder)
   }
 
   override def saveAsDataset[K: ClassTag, V: ClassTag](rdd: RDD[(K, V)], datasetName: String,
@@ -188,8 +191,17 @@ class DefaultSparkExecutionContext(runtimeContext: SparkRuntimeContext,
           dataset match {
             case outputFormatProvider: OutputFormatProvider =>
               val conf = new Configuration(runtimeContext.getConfiguration)
+
               ConfigurationUtil.setAll(outputFormatProvider.getOutputFormatConfiguration, conf)
-              rdd.saveAsNewAPIHadoopDataset(conf)
+              conf.set(MRJobConfig.OUTPUT_FORMAT_CLASS_ATTR, outputFormatProvider.getOutputFormatClassName)
+
+              // In Spark 1.2, we have to use the SparkContext.rddToPairRDDFunctions because the implicit
+              // conversion from RDD is not available.
+              if (sc.version == "1.2" || sc.version.startsWith("1.2.")) {
+                SparkContext.rddToPairRDDFunctions(rdd).saveAsNewAPIHadoopDataset(conf)
+              } else {
+                rdd.saveAsNewAPIHadoopDataset(conf)
+              }
 
             case batchWritable: BatchWritable[K, V] =>
               val txServiceBaseURI = getTxServiceBaseURI(sc, sparkTxService.getBaseURI)

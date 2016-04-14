@@ -17,7 +17,7 @@
 <div class="side-panel text-center left">
   <div class="hydrator-filter clearfix">
     <input class="form-control pull-left" placeholder="Filter" type="text" ng-model="MySidePanel.searchText" />
-    <div class="btn-group pull-left">
+    <div class="btn-group">
       <div class="btn btn-default btn-sm"
             ng-class="{'active': MySidePanel.view === 'list'}"
             ng-click="MySidePanel.view = 'list'">
@@ -75,7 +75,7 @@
                   data-template="plugin.template"
                   content-data="plugin"
                   data-popover-context="MySidePanel"
-            >{{ (plugin.name || plugin.pluginTemplate) | myEllipsis: 15}}</span>
+            >{{ (plugin.name || plugin.pluginTemplate)}}</span>
             <span class="plugin-badge">T</span>
           </div>
         </div>

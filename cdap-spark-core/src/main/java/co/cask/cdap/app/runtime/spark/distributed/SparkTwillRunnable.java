@@ -17,8 +17,10 @@
 package co.cask.cdap.app.runtime.spark.distributed;
 
 import co.cask.cdap.app.runtime.ProgramRunner;
+import co.cask.cdap.app.runtime.ProgramRuntimeProvider;
 import co.cask.cdap.app.runtime.spark.SparkProgramRuntimeProvider;
 import co.cask.cdap.internal.app.runtime.distributed.AbstractProgramTwillRunnable;
+import co.cask.cdap.proto.ProgramType;
 import com.google.inject.Injector;
 import org.apache.twill.api.TwillRunnable;
 
@@ -39,6 +41,10 @@ final class SparkTwillRunnable extends AbstractProgramTwillRunnable<ProgramRunne
 
   @Override
   protected ProgramRunner createProgramRunner(Injector injector) {
-    return new SparkProgramRuntimeProvider().createSparkProgramRunner(injector);
+    // Inside the TwillRunanble, we use the "Local" SparkRunner, since we need to actually submit the job.
+    // The actual execution mode of the job is governed by the framework configuration,
+    // which is in the hConf we shipped from DistributedSparkProgramRunner
+    return new SparkProgramRuntimeProvider().createProgramRunner(ProgramType.SPARK,
+                                                                 ProgramRuntimeProvider.Mode.LOCAL, injector);
   }
 }

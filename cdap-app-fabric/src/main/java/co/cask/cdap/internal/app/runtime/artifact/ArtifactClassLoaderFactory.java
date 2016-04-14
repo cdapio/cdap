@@ -16,15 +16,15 @@
 
 package co.cask.cdap.internal.app.runtime.artifact;
 
-import co.cask.cdap.app.runtime.ProgramRuntimeProvider;
+import co.cask.cdap.app.runtime.ProgramRunner;
+import co.cask.cdap.app.runtime.ProgramRunnerFactory;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.lang.FilterClassLoader;
 import co.cask.cdap.common.lang.ProgramClassLoader;
+import co.cask.cdap.common.lang.ProgramClassLoaderProvider;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.common.utils.DirUtils;
-import co.cask.cdap.internal.app.runtime.ProgramRuntimeProviderLoader;
-import co.cask.cdap.internal.app.runtime.spark.SparkUtils;
 import co.cask.cdap.proto.ProgramType;
 import com.google.common.io.Closeables;
 import org.apache.twill.filesystem.Location;
@@ -34,7 +34,6 @@ import org.slf4j.LoggerFactory;
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
-import java.net.URLClassLoader;
 
 /**
  * Given an artifact, creates a {@link CloseableClassLoader} from it. Takes care of unpacking the artifact and
@@ -44,12 +43,12 @@ final class ArtifactClassLoaderFactory {
   private static final Logger LOG = LoggerFactory.getLogger(ArtifactClassLoaderFactory.class);
 
   private final CConfiguration cConf;
-  private final ProgramRuntimeProviderLoader runtimeProviderLoader;
+  private final ProgramRunnerFactory programRunnerFactory;
   private final File tmpDir;
 
-  ArtifactClassLoaderFactory(CConfiguration cConf, ProgramRuntimeProviderLoader runtimeProviderLoader) {
+  ArtifactClassLoaderFactory(CConfiguration cConf, ProgramRunnerFactory programRunnerFactory) {
     this.cConf = cConf;
-    this.runtimeProviderLoader = runtimeProviderLoader;
+    this.programRunnerFactory = programRunnerFactory;
     this.tmpDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
                            cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
   }
@@ -68,25 +67,30 @@ final class ArtifactClassLoaderFactory {
   CloseableClassLoader createClassLoader(Location artifactLocation) throws IOException {
     final File unpackDir = BundleJarUtil.unJar(artifactLocation, DirUtils.createTempDir(tmpDir));
 
-    ClassLoader parentClassLoader;
-
-    ProgramRuntimeProvider sparkRuntimeProvider = runtimeProviderLoader.get(ProgramType.SPARK);
-    if (sparkRuntimeProvider != null) {
-      // Always have spark classes visible for artifact class loading purpose since we don't know if
-      // any classes inside the artifact is a Spark program
-      parentClassLoader = new FilterClassLoader(sparkRuntimeProvider.getClass().getClassLoader(),
-                                                sparkRuntimeProvider.createProgramClassLoaderFilter(ProgramType.SPARK));
-    } else {
-      // If no Spark is available, just use the standard filter
-      parentClassLoader = new FilterClassLoader(getClass().getClassLoader(), FilterClassLoader.defaultFilter());
+    ProgramClassLoader programClassLoader = null;
+    try {
+      // Try to create a ProgramClassLoader from the Spark runtime system if it is available.
+      // It is needed because we don't know what program types that an artifact might have.
+      // TODO: CDAP-5613. We shouldn't always expose the Spark classes.
+      ProgramRunner programRunner = programRunnerFactory.create(ProgramType.SPARK);
+      if (programRunner instanceof ProgramClassLoaderProvider) {
+        programClassLoader = ((ProgramClassLoaderProvider) programRunner).createProgramClassLoader(cConf, unpackDir);
+      }
+    } catch (Exception e) {
+      // If Spark is not supported, exception is expected. We'll use the default filter.
+      LOG.trace("Spark is not supported. Not using ProgramClassLoader from Spark", e);
+    }
+    if (programClassLoader == null) {
+      programClassLoader = new ProgramClassLoader(cConf, unpackDir,
+                                                  FilterClassLoader.create(getClass().getClassLoader()));
     }
 
-    final ProgramClassLoader programClassLoader = new ProgramClassLoader(cConf, unpackDir, parentClassLoader);
+    final ProgramClassLoader finalProgramClassLoader = programClassLoader;
     return new CloseableClassLoader(programClassLoader, new Closeable() {
       @Override
       public void close() {
         try {
-          Closeables.closeQuietly(programClassLoader);
+          Closeables.closeQuietly(finalProgramClassLoader);
           DirUtils.deleteDirectoryContents(unpackDir);
         } catch (IOException e) {
           LOG.warn("Failed to delete directory {}", unpackDir, e);

@@ -38,6 +38,7 @@ import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.RecordReader;
+import org.apache.hadoop.mapreduce.RecordWriter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
@@ -56,7 +57,7 @@ public class SparkAppUsingFileSet extends AbstractApplication {
     try {
       createDataset("fs", FileSet.class, FileSetProperties.builder()
         .setInputFormat(MyTextInputFormat.class)
-        .setOutputFormat(TextOutputFormat.class)
+        .setOutputFormat(MyTextOutputFormat.class)
         .setOutputProperty(TextOutputFormat.SEPERATOR, ":").build());
       createDataset("pfs", PartitionedFileSet.class, PartitionedFileSetProperties.builder()
         .setPartitioning(Partitioning.builder().addStringField("x").build())
@@ -203,6 +204,27 @@ public class SparkAppUsingFileSet extends AbstractApplication {
     @Override
     public void close() throws IOException {
       delegate.close();
+    }
+  }
+
+  public static final class MyTextOutputFormat extends TextOutputFormat<String, Integer> {
+    @Override
+    public RecordWriter<String, Integer> getRecordWriter(TaskAttemptContext job) throws IOException,
+                                                                                        InterruptedException {
+      final String prefix = "custom" + job.getConfiguration().get(SEPERATOR);
+      final RecordWriter<String, Integer> recordWriter = super.getRecordWriter(job);
+      return new RecordWriter<String, Integer>() {
+        @Override
+        public void write(String key, Integer value) throws IOException, InterruptedException {
+          // Prefix the key with "custom" + separator
+          recordWriter.write(prefix + key, value);
+        }
+
+        @Override
+        public void close(TaskAttemptContext context) throws IOException, InterruptedException {
+          recordWriter.close(context);
+        }
+      };
     }
   }
 }

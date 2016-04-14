@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,7 +19,10 @@ package co.cask.cdap.internal.app.runtime.service;
 import co.cask.cdap.app.runtime.AbstractProgramRuntimeService;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramRunnerFactory;
+import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.InMemoryProgramLiveInfo;
@@ -30,10 +33,13 @@ import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.inject.Inject;
+import com.google.inject.name.Named;
 import org.apache.twill.api.RunId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.net.InetAddress;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
@@ -41,22 +47,31 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 /**
- *
+ * A {@link ProgramRuntimeService} for in memory mode. It is used for unit-test as well as in Standalone.
  */
 public final class InMemoryProgramRuntimeService extends AbstractProgramRuntimeService {
 
   private static final Logger LOG = LoggerFactory.getLogger(InMemoryProgramRuntimeService.class);
 
+  private final String hostname;
+
   @Inject
   public InMemoryProgramRuntimeService(ProgramRunnerFactory programRunnerFactory, CConfiguration cConf,
-                                       ArtifactRepository artifactRepository) {
+                                       ArtifactRepository artifactRepository,
+                                       @Named(Constants.AppFabric.SERVER_ADDRESS) InetAddress hostname) {
     super(cConf, programRunnerFactory, artifactRepository);
+    this.hostname = hostname.getCanonicalHostName();
   }
 
   @Override
   public ProgramLiveInfo getLiveInfo(Id.Program programId) {
     return isRunning(programId) ? new InMemoryProgramLiveInfo(programId)
       : new NotRunningProgramLiveInfo(programId);
+  }
+
+  @Override
+  protected Map<String, String> getExtraProgramOptions() {
+    return Collections.singletonMap(ProgramOptionConstants.HOST, hostname);
   }
 
   @Override

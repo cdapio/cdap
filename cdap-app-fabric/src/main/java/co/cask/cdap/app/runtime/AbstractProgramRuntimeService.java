@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -57,6 +57,7 @@ import org.slf4j.LoggerFactory;
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
@@ -95,7 +96,7 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
     ProgramRunner runner = programRunnerFactory.create(program.getType());
     Preconditions.checkNotNull(runner, "Fail to get ProgramRunner for type " + program.getType());
     RunId runId = RunIds.generate();
-    ProgramOptions optionsWithRunId = addRunId(options, runId);
+    ProgramOptions optionsWithRunId = updateProgramOptions(options, runId);
     File tempDir = createTempDirectory(program.getId(), runId);
     Runnable cleanUpTask = createCleanupTask(tempDir);
     try {
@@ -215,15 +216,23 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
                                     options.getUserArguments(), options.isDebug());
   }
 
+  protected Map<String, String> getExtraProgramOptions() {
+    return Collections.emptyMap();
+  }
+
   /**
-   * Return the copy of the {@link ProgramOptions} including RunId in it.
+   * Updates the given {@link ProgramOptions} and return a new instance.
+   * It copies the {@link ProgramOptions} and add all options returned by {@link #getExtraProgramOptions()}.
+   * It then adds the {@link RunId} to it.
+   *
    * @param options The {@link ProgramOptions} in which the RunId to be included
    * @param runId   The RunId to be included
    * @return the copy of the program options with RunId included in them
    */
-  private ProgramOptions addRunId(ProgramOptions options, RunId runId) {
+  private ProgramOptions updateProgramOptions(ProgramOptions options, RunId runId) {
     ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
     builder.putAll(options.getArguments().asMap());
+    builder.putAll(getExtraProgramOptions());
     builder.put(ProgramOptionConstants.RUN_ID, runId.getId());
 
     return new SimpleProgramOptions(options.getName(), new BasicArguments(builder.build()), options.getUserArguments(),
