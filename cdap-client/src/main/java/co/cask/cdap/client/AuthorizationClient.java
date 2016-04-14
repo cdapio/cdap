@@ -49,7 +49,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.EnumSet;
 import java.util.Set;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
@@ -66,6 +65,7 @@ public class AuthorizationClient extends AbstractAuthorizer {
   public static final String AUTHORIZATION_BASE = "security/authorization/";
   private static final TypeToken<Set<Privilege>> TYPE_OF_PRIVILEGE_SET = new TypeToken<Set<Privilege>>() { };
   private static final TypeToken<Set<Role>> TYPE_OF_ROLE_SET = new TypeToken<Set<Role>>() { };
+
   private final RESTClient restClient;
   private final ClientConfig config;
 
@@ -97,9 +97,13 @@ public class AuthorizationClient extends AbstractAuthorizer {
   }
 
   @Override
-  public void revoke(EntityId entity) throws IOException, UnauthenticatedException, FeatureDisabledException,
+  public void revoke(Set<EntityId> entities) throws IOException, UnauthenticatedException, FeatureDisabledException,
     UnauthorizedException {
-    revoke(null, ImmutableSet.of(new Privilege(entity, Action.ALL)));
+    ImmutableSet.Builder<Privilege> builder = ImmutableSet.builder();
+    for (EntityId entity : entities) {
+      builder.add(new Privilege(entity, Action.ALL));
+    }
+    revoke(null, builder.build());
   }
 
   @Override

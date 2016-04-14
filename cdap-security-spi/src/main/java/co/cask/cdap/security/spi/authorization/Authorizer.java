@@ -91,9 +91,9 @@ public interface Authorizer {
   /**
    * Revokes all {@link Privilege privileges} for all {@link Principal principals} on the specified {@link EntityId}.
    *
-   * @param entity the {@link EntityId} on which all {@link Privilege privileges} are to be revoked
+   * @param entities the set of {@link EntityId entities} on which all {@link Privilege privileges} are to be revoked
    */
-  void revoke(EntityId entity) throws Exception;
+  void revoke(Set<EntityId> entities) throws Exception;
 
   /**
    * Returns all the {@link Privilege} for the specified {@link Principal}.
