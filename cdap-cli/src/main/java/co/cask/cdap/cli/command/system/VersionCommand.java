@@ -47,6 +47,6 @@ public class VersionCommand implements Command {
 
   @Override
   public String getDescription() {
-    return "Prints the CLI version.";
+    return "Prints the CDAP CLI version";
   }
 }

@@ -86,7 +86,7 @@ public class StartProgramCommand extends AbstractAuthCommand {
 
   @Override
   public String getDescription() {
-    return "Starts " + Fragment.of(Article.A, elementType.getName()) + "." +
-      " <" + ArgumentName.RUNTIME_ARGS + "> is specified in the format \"key1=a key2=b\".";
+    return "Starts " + Fragment.of(Article.A, elementType.getName()) + ". " +
+      "'<" + ArgumentName.RUNTIME_ARGS + ">' is specified in the format 'key1=a key2=b'.";
   }
 }

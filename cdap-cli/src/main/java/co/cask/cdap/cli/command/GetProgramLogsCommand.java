@@ -77,6 +77,6 @@ public class GetProgramLogsCommand extends AbstractAuthCommand {
 
   @Override
   public String getDescription() {
-    return String.format("Gets the logs of %s.", Fragment.of(Article.A, elementType.getName()));
+    return String.format("Gets the logs of %s", Fragment.of(Article.A, elementType.getName()));
   }
 }
