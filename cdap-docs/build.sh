@@ -174,6 +174,9 @@ function build_docs() {
     javadocs="${WITH}"
     cli_docs="${WITH}"
   fi
+  if [ "${doc_type}" == "${WEB_ONLY}" -o "${doc_type}" == "${GITHUB_ONLY}" ]; then
+    cli_docs="${WITH}"
+  fi  
   echo "========================================================"
   echo "========================================================"
   echo "Building \"${doc_type}\""
