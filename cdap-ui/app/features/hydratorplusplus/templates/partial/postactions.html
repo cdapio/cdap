@@ -21,8 +21,9 @@
       <li class="text-center active">
         Overview
       </li>
-      <li class="text-center">
-        Email
+      <li class="text-center"
+          ng-repeat="action in PostActionController.postActionsList">
+        {{ action.name }}
       </li>
     </ul>
   </div>

@@ -616,7 +616,7 @@ body.theme-cdap.state-hydratorplusplus {
         width: ~"calc(100% - 151px)";
 
         .main-container {
-          padding: 10px;
+          padding: 10px 20px 10px 10px;
 
           .table {
             th, td {
@@ -625,17 +625,20 @@ body.theme-cdap.state-hydratorplusplus {
               font-weight: 500;
             }
 
-            th { border: 1px solid #dddddd; }
+            th {
+              border: 1px solid #dddddd;
+              cursor: default;
+            }
 
             td {
+              color: #999;
               &:first-child { width: 200px; }
               &:nth-child(3) { width: 200px; }
-            }
-            td:last-child {
-              width: 80px;
-
-              a { color: @hydrator-blue; }
-              i { cursor: pointer; }
+              &:last-child {
+                width: 80px;
+                a { color: @hydrator-blue; }
+                i { cursor: pointer; }
+              }
             }
           }
         }
