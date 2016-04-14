@@ -21,6 +21,22 @@ source ../_common/common-build.sh
 
 CHECK_INCLUDES=${TRUE}
 
+RETURN_STRING="\
+"
+VERSION_STRING="Hydrator Version "
+
+function get_hydrator_version() {
+  local base_target="${1}"
+  local base_source="${2}"
+  local source_url="${base_source}/pom.xml"
+  local target="${base_target}/pom.xml"
+  curl --silent ${source_url} --output ${target}
+  HYDRATOR_VERSION=$(grep "<version>" ${target})
+  HYDRATOR_VERSION=${HYDRATOR_VERSION#*<version>}
+  HYDRATOR_VERSION=${HYDRATOR_VERSION%%</version>*}
+  export HYDRATOR_VERSION
+}
+
 function download_md_doc_file() {
   # Downloads a Markdown docs file to a directory
   # https://raw.githubusercontent.com/caskdata/hydrator-plugins/develop/cassandra-plugins/docs/Cassandra-batchsink.md
@@ -58,6 +74,8 @@ function download_md_doc_file() {
   if curl --output /dev/null --silent --head --fail "${source_url}"; then
     echo "Downloading ${source_file_name} from ${source_dir} to ${type_plural}/${target_file_name}"
     curl --silent ${source_url} --output ${target}
+    echo "${RETURN_STRING}" >> ${target}
+    echo "${VERSION_STRING}${HYDRATOR_VERSION}" >> ${target}
     # FIXME if file does not begin with a "#" character, append "# title\n" to start
     local first=$(head -1 ${target})
     if [ "x${first:0:2}" != "x# " ]; then
@@ -91,7 +109,8 @@ function download_includes() {
   
   local hydrator_source="${base_source}/${hydrator_branch}"
   echo_red_bold "Using $hydrator_source"
-
+  get_hydrator_version $base_target $hydrator_source
+  
   # 1:Includes dir 2:GitHub Hydrator source dir 3:Hydrator dir 4:Type 5:Target filename 6:Source Markdown filename
 
   download_md_doc_file $base_target $hydrator_source cassandra-plugins Cassandra-batchsink.md 
