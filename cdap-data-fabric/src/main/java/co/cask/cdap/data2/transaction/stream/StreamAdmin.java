@@ -66,6 +66,14 @@ public interface StreamAdmin {
   StreamConfig getConfig(Id.Stream streamId) throws IOException;
 
   /**
+   * Returns the {@link StreamProperties} of the given stream.
+   * @param streamId Id of the stream.
+   * @return {@link StreamProperties} instance.
+   * @throws IOException If the stream doesn't exist.
+   */
+  StreamProperties getProperties(Id.Stream streamId) throws Exception;
+
+  /**
    * Overwrites existing configuration for the given stream.
    * @param streamId Id of the stream whose properties are being updated
    * @param properties New configuration of the stream.
@@ -96,6 +104,15 @@ public interface StreamAdmin {
    */
   StreamConfig create(Id.Stream streamId, @Nullable Properties props) throws Exception;
 
+  /**
+   * Creates stream if it doesn't exist. If stream exists, nothing is changed.
+   *
+   * @param streamId Id of the stream to create
+   * @param properties {@link StreamProperties} associated with the new stream
+   * @return {@link StreamConfig} associated with the new stream
+   * @throws Exception if creation fails
+   */
+  StreamConfig create(Id.Stream streamId, @Nullable StreamProperties properties) throws Exception;
   /**
    * Wipes out stream data.
    * @param streamId Id of the stream to truncate

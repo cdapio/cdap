@@ -686,7 +686,7 @@ public abstract class StreamDataFileTestBase {
     location.mkdirs();
 
     final StreamConfig config = new StreamConfig(streamId, partitionDuration, 10000, Long.MAX_VALUE,
-                                                 location, null, 1000, null);
+                                                 location, null, 1000);
 
     // Create a thread that will write 10 event per second
     final AtomicInteger eventsWritten = new AtomicInteger();

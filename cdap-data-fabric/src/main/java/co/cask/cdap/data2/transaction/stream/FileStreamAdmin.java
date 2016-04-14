@@ -17,6 +17,7 @@ package co.cask.cdap.data2.transaction.stream;
 
 import co.cask.cdap.api.data.format.FormatSpecification;
 import co.cask.cdap.api.data.schema.Schema;
+import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.StreamNotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -49,6 +50,7 @@ import co.cask.cdap.proto.ViewSpecification;
 import co.cask.cdap.proto.audit.AuditPayload;
 import co.cask.cdap.proto.audit.AuditType;
 import com.google.common.base.Charsets;
+import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
 import com.google.common.base.Throwables;
@@ -251,8 +253,15 @@ public class FileStreamAdmin implements StreamAdmin {
     }
 
     return new StreamConfig(streamId, config.getPartitionDuration(), config.getIndexInterval(),
-                            config.getTTL(), getStreamLocation(streamId), config.getFormat(), threshold,
-                            config.getDescription());
+                            config.getTTL(), getStreamLocation(streamId), config.getFormat(), threshold);
+  }
+
+  @Override
+  public StreamProperties getProperties(Id.Stream streamId) throws Exception {
+    StreamConfig config = getConfig(streamId);
+    StreamSpecification spec = streamMetaStore.getStream(streamId);
+    return new StreamProperties(config.getTTL(), config.getFormat(), config.getNotificationThresholdMB(),
+                                spec.getDescription());
   }
 
   @Override
@@ -304,7 +313,7 @@ public class FileStreamAdmin implements StreamAdmin {
 
   @Override
   public StreamConfig create(Id.Stream streamId) throws Exception {
-    return create(streamId, null);
+    return create(streamId, new Properties());
   }
 
   @Override
@@ -333,14 +342,54 @@ public class FileStreamAdmin implements StreamAdmin {
         String description = properties.getProperty(Constants.Stream.DESCRIPTION);
 
         StreamConfig config = new StreamConfig(streamId, partitionDuration, indexInterval,
-                                               ttl, streamLocation, null, threshold, description);
+                                               ttl, streamLocation, null, threshold);
         writeConfig(config);
         createStreamFeeds(config);
         alterExploreStream(streamId, true, config.getFormat());
-        streamMetaStore.addStream(streamId);
+        streamMetaStore.addStream(streamId, description);
         publishAudit(streamId, AuditType.CREATE);
         SystemMetadataWriter systemMetadataWriter =
-          new StreamSystemMetadataWriter(metadataStore, streamId, config, createTime);
+          new StreamSystemMetadataWriter(metadataStore, streamId, config, createTime, description);
+        systemMetadataWriter.write();
+        return config;
+      }
+    });
+  }
+
+  @Override
+  public StreamConfig create(final Id.Stream streamId, @Nullable final StreamProperties properties) throws Exception {
+    assertNamespaceHomeExists(streamId.getNamespace());
+    final Location streamLocation = getStreamLocation(streamId);
+    Locations.mkdirsIfNotExists(streamLocation);
+    return streamCoordinatorClient.createStream(streamId, new Callable<StreamConfig>() {
+      @Override
+      public StreamConfig call() throws Exception {
+        if (exists(streamId)) {
+          return null;
+        }
+
+        long createTime = System.currentTimeMillis();
+        long partitionDuration = Long.parseLong(cConf.get(Constants.Stream.PARTITION_DURATION));
+        long indexInterval = Long.parseLong(cConf.get(Constants.Stream.INDEX_INTERVAL));
+        Long ttlFromProperties = properties != null ? properties.getTTL() : null;
+        long ttl = Optional.fromNullable(ttlFromProperties).or(Long.parseLong(cConf.get(Constants.Stream.TTL)));
+        Integer thresholdFromProperties = properties != null ? properties.getNotificationThresholdMB() : null;
+        int threshold = Optional.fromNullable(thresholdFromProperties).or(
+          Integer.parseInt(cConf.get(Constants.Stream.NOTIFICATION_THRESHOLD)));
+        FormatSpecification formatSpec = properties != null ? properties.getFormat() : null;
+
+        StreamConfig config = new StreamConfig(streamId, partitionDuration, indexInterval,
+                                               ttl, streamLocation, formatSpec, threshold);
+        writeConfig(config);
+        createStreamFeeds(config);
+        alterExploreStream(streamId, true, config.getFormat());
+
+
+        String description = properties != null ? properties.getDescription() : null;
+        streamMetaStore.addStream(streamId, description);
+        publishAudit(streamId, AuditType.CREATE);
+        SystemMetadataWriter systemMetadataWriter =
+          new StreamSystemMetadataWriter(metadataStore, streamId, config, createTime, description);
         systemMetadataWriter.write();
         return config;
       }
@@ -523,7 +572,7 @@ public class FileStreamAdmin implements StreamAdmin {
     });
   }
 
-  private StreamProperties updateProperties(Id.Stream streamId, StreamProperties properties) throws IOException {
+  private StreamProperties updateProperties(Id.Stream streamId, StreamProperties properties) throws Exception {
     StreamConfig config = getConfig(streamId);
 
     StreamConfig.Builder builder = StreamConfig.builder(config);
@@ -537,20 +586,21 @@ public class FileStreamAdmin implements StreamAdmin {
       builder.setNotificationThreshold(properties.getNotificationThresholdMB());
     }
 
-    if (properties.getDescription() != null) {
-      builder.setDescription(properties.getDescription());
+    // update stream description
+    String description = properties.getDescription();
+    if (description != null) {
+      streamMetaStore.addStream(streamId, description);
     }
 
     StreamConfig newConfig = builder.build();
     writeConfig(newConfig);
 
     // Update system metadata for stream
-    SystemMetadataWriter systemMetadataWriter =
-      new StreamSystemMetadataWriter(metadataStore, streamId, newConfig);
+    SystemMetadataWriter systemMetadataWriter = new StreamSystemMetadataWriter(
+      metadataStore, streamId, newConfig, description);
     systemMetadataWriter.write();
 
-    return new StreamProperties(config.getTTL(), config.getFormat(), config.getNotificationThresholdMB(),
-                                config.getDescription());
+    return new StreamProperties(config.getTTL(), config.getFormat(), config.getNotificationThresholdMB());
   }
 
   private void writeConfig(StreamConfig config) throws IOException {

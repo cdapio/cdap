@@ -60,7 +60,6 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import org.apache.twill.common.Threads;
 import org.jboss.netty.buffer.ChannelBufferInputStream;
-import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
@@ -172,12 +171,8 @@ public final class StreamHandler extends AbstractHttpHandler {
                       @PathParam("stream") String stream) throws Exception {
     Id.Stream streamId = Id.Stream.from(namespaceId, stream);
     checkStreamExists(streamId);
-
-    StreamConfig streamConfig = streamAdmin.getConfig(streamId);
-    StreamProperties streamProperties = new StreamProperties(streamConfig.getTTL(), streamConfig.getFormat(),
-                                                             streamConfig.getNotificationThresholdMB(),
-                                                             streamConfig.getDescription());
-    responder.sendJson(HttpResponseStatus.OK, streamProperties, StreamProperties.class, GSON);
+    StreamProperties properties = streamAdmin.getProperties(streamId);
+    responder.sendJson(HttpResponseStatus.OK, properties, StreamProperties.class, GSON);
   }
 
   @PUT
@@ -198,18 +193,14 @@ public final class StreamHandler extends AbstractHttpHandler {
 
     StreamProperties properties = null;
     // If the request to create a stream contains a non-empty body, then construct and set StreamProperties
-    if (request.getContent() != ChannelBuffers.EMPTY_BUFFER) {
+    if (request.getContent().readable()) {
       properties = getAndValidateConfig(request, responder);
       if (properties == null) {
         return;
       }
     }
 
-    // TODO: Consolidate the two separate calls to StreamAdmin
-    streamAdmin.create(streamId);
-    if (properties != null) {
-      streamAdmin.updateConfig(streamId, properties);
-    }
+    streamAdmin.create(streamId, properties);
     responder.sendStatus(HttpResponseStatus.OK);
   }
 
@@ -480,15 +471,26 @@ public final class StreamHandler extends AbstractHttpHandler {
     public StreamProperties deserialize(JsonElement json, Type typeOfT,
                                         JsonDeserializationContext context) throws JsonParseException {
       JsonObject jsonObj = json.getAsJsonObject();
-      Long ttl = jsonObj.has("ttl") ? TimeUnit.SECONDS.toMillis(jsonObj.get("ttl").getAsLong()) : null;
+      Long ttl = null;
+      if (jsonObj.has("ttl")) {
+        ttl = TimeUnit.SECONDS.toMillis(jsonObj.get("ttl").getAsLong());
+      }
+
       FormatSpecification format = null;
       if (jsonObj.has("format")) {
         format = context.deserialize(jsonObj.get("format"), FormatSpecification.class);
       }
-      Integer threshold = jsonObj.has("notification.threshold.mb") ?
-        jsonObj.get("notification.threshold.mb").getAsInt() :
-        null;
-      String description = jsonObj.has("description") ? jsonObj.get("description").getAsString() : null;
+
+      Integer threshold = null;
+      if (jsonObj.has("notification.threshold.mb")) {
+        threshold = jsonObj.get("notification.threshold.mb").getAsInt();
+      }
+
+      String description = null;
+      if (jsonObj.has("description")) {
+        description = jsonObj.get("description").getAsString();
+      }
+
       return new StreamProperties(ttl, format, threshold, description);
     }
   }

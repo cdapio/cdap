@@ -104,6 +104,11 @@ public class InMemoryStreamAdmin extends InMemoryQueueAdmin implements StreamAdm
   }
 
   @Override
+  public StreamProperties getProperties(Id.Stream streamId) {
+    throw new UnsupportedOperationException("Stream properties not supported for non-file based stream.");
+  }
+
+  @Override
   public void updateConfig(Id.Stream streamId, StreamProperties properties) throws IOException {
     throw new UnsupportedOperationException("Stream config not supported for non-file based stream.");
   }
@@ -124,6 +129,15 @@ public class InMemoryStreamAdmin extends InMemoryQueueAdmin implements StreamAdm
   public StreamConfig create(Id.Stream streamId, @Nullable Properties props) throws Exception {
     create(QueueName.fromStream(streamId), props);
     streamMetaStore.addStream(streamId);
+    publishAudit(streamId, AuditType.CREATE);
+    return null;
+  }
+
+  @Override
+  public StreamConfig create(Id.Stream streamId, @Nullable StreamProperties properties) throws Exception {
+    create(QueueName.fromStream(streamId));
+    String description = properties != null ? properties.getDescription() : null;
+    streamMetaStore.addStream(streamId, description);
     publishAudit(streamId, AuditType.CREATE);
     return null;
   }

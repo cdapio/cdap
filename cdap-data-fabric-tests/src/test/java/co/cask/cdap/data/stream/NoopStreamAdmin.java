@@ -56,6 +56,11 @@ public class NoopStreamAdmin implements StreamAdmin {
   }
 
   @Override
+  public StreamProperties getProperties(Id.Stream streamId) throws IOException {
+    throw new IllegalStateException("Stream " + streamId + " not exists.");
+  }
+
+  @Override
   public void updateConfig(Id.Stream streamId, StreamProperties properties) throws IOException {
   }
 
@@ -71,6 +76,11 @@ public class NoopStreamAdmin implements StreamAdmin {
 
   @Override
   public StreamConfig create(Id.Stream streamId, @Nullable Properties props) throws Exception {
+    return null;
+  }
+
+  @Override
+  public StreamConfig create(Id.Stream streamId, @Nullable StreamProperties properties) throws Exception {
     return null;
   }
 

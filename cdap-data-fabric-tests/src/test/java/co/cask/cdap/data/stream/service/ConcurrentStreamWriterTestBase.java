@@ -335,8 +335,7 @@ public abstract class ConcurrentStreamWriterTestBase {
     @Override
     public StreamConfig getConfig(Id.Stream streamId) throws IOException {
       Location streamLocation = StreamFileTestUtils.getStreamBaseLocation(namespacedLocationFactory, streamId);
-      return new StreamConfig(streamId, partitionDuration, indexInterval, Long.MAX_VALUE, streamLocation, null, 1000,
-                              null);
+      return new StreamConfig(streamId, partitionDuration, indexInterval, Long.MAX_VALUE, streamLocation, null, 1000);
     }
   }
 

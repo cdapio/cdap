@@ -35,6 +35,7 @@ import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.PrintStream;
 import java.io.Reader;
 
@@ -61,12 +62,10 @@ public class CreateStreamCommand extends AbstractAuthCommand {
 
     if (arguments.hasArgument(ArgumentName.LOCAL_FILE_PATH.toString())) {
       File file = new File(arguments.get(ArgumentName.LOCAL_FILE_PATH.toString()));
-      if (!file.isFile()) {
-        throw new IllegalArgumentException("Not a file: " + file);
-      }
-
       try (Reader reader = Files.newReader(file, Charsets.UTF_8)) {
         streamProperties = GSON.fromJson(reader, StreamProperties.class);
+      } catch (FileNotFoundException e) {
+        throw new IllegalArgumentException("Not a file: " + file);
       } catch (Exception e) {
         throw new IllegalArgumentException("Stream properties are malformed.", e);
       }

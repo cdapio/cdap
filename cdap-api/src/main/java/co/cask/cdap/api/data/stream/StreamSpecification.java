@@ -63,6 +63,11 @@ public final class StreamSpecification {
       return this;
     }
 
+    /**
+     * Adds description to Streams.
+     * @param description description
+     * @return Builder instance
+     */
     public Builder setDescription(String description) {
       this.description = description;
       return this;
@@ -88,6 +93,14 @@ public final class StreamSpecification {
     StreamSpecification that = (StreamSpecification) o;
     return Objects.equals(name, that.name) &&
       Objects.equals(description, that.description);
+  }
+
+  @Override
+  public String toString() {
+    return "StreamSpecification{" +
+      "name='" + name + '\'' +
+      ", description='" + description +
+      '}';
   }
 
   @Override
