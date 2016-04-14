@@ -39,8 +39,8 @@ function download_includes() {
   status_code=$?
   if [ "${warnings}" == "0" ]; then
     echo "CLI rst file written to ${CLI_TABLE_RST}"
-  elif [ "${warnings}" == "404" ]; then
-    local m="Error finding CLI input file: ${CLI_INPUT_TXT}"
+  else
+    local m="Error ${warnings} finding CLI input file: ${CLI_INPUT_TXT}"
     echo_red_bold "${m}"
     set_message "${m}"
   fi

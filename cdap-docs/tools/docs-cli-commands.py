@@ -12,6 +12,7 @@
 
 from optparse import OptionParser
 import os
+import sys
 
 VERSION = "0.0.1"
 
@@ -144,7 +145,7 @@ def create_table(input_file, output_file):
         print "Did not find %s" % input_file
         print "Wrote 'missing file' to table"
         lines.append(MISSING_FILE_TEMPLATE % input_file)
-        return_code = 404
+        return_code = 2
             
     output = open(output_file,'w')
     output.write(TABLE_HEADER)
@@ -162,7 +163,9 @@ def main():
     """
     options, args = parse_options()
     
-    return create_table(args[0], args[1])
+    return_code = create_table(args[0], args[1])
+    return return_code
 
 if __name__ == '__main__':
-    return main()
+    exit_code = main()
+    sys.exit(exit_code)
