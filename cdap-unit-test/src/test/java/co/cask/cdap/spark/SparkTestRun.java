@@ -30,6 +30,7 @@ import co.cask.cdap.api.dataset.lib.cube.AggregationFunction;
 import co.cask.cdap.api.metrics.MetricDataQuery;
 import co.cask.cdap.api.metrics.MetricTimeSeries;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.internal.DefaultId;
 import co.cask.cdap.proto.ProgramRunStatus;
@@ -37,20 +38,26 @@ import co.cask.cdap.spark.app.CharCountProgram;
 import co.cask.cdap.spark.app.ExplicitTransactionSpark;
 import co.cask.cdap.spark.app.ScalaCharCountProgram;
 import co.cask.cdap.spark.app.ScalaSparkLogParser;
+import co.cask.cdap.spark.app.ScalaStreamFormatSpecSpark;
 import co.cask.cdap.spark.app.SparkAppUsingGetDataset;
 import co.cask.cdap.spark.app.SparkAppUsingLocalFiles;
 import co.cask.cdap.spark.app.SparkAppUsingObjectStore;
 import co.cask.cdap.spark.app.SparkLogParser;
+import co.cask.cdap.spark.app.StreamFormatSpecSpark;
 import co.cask.cdap.spark.app.TestSparkApp;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.DataSetManager;
 import co.cask.cdap.test.SparkManager;
 import co.cask.cdap.test.StreamManager;
 import co.cask.cdap.test.base.TestFrameworkTestBase;
+import com.google.common.base.Charsets;
 import com.google.common.base.Function;
+import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Iterators;
+import com.google.common.io.CharStreams;
 import com.google.gson.Gson;
 import org.apache.twill.filesystem.Location;
 import org.junit.Assert;
@@ -103,6 +110,61 @@ public class SparkTestRun extends TestFrameworkTestBase {
           return sparkManager.getHistory(ProgramRunStatus.COMPLETED).size();
         }
       }, 5, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
+    }
+  }
+
+  @Test
+  public void testStreamFormatSpec() throws Exception {
+    ApplicationManager appManager = deployApplication(TestSparkApp.class);
+
+    StreamManager stream = getStreamManager("PeopleStream");
+    stream.send("Old Man,50");
+    stream.send("Baby,1");
+    stream.send("Young Guy,18");
+    stream.send("Small Kid,5");
+    stream.send("Legal Drinker,21");
+
+    Map<String, String> outputArgs = new HashMap<>();
+    FileSetArguments.setOutputPath(outputArgs, "output");
+
+    Map<String, String> runtimeArgs = new HashMap<>();
+    runtimeArgs.putAll(RuntimeArguments.addScope(Scope.DATASET, "PeopleFileSet", outputArgs));
+    runtimeArgs.put("stream.name", "PeopleStream");
+    runtimeArgs.put("output.dataset", "PeopleFileSet");
+    runtimeArgs.put("sql.statement", "SELECT name, age FROM people WHERE age >= 21");
+
+    List<String> programs = Arrays.asList(
+      ScalaStreamFormatSpecSpark.class.getSimpleName(),
+      StreamFormatSpecSpark.class.getSimpleName()
+    );
+    for (String sparkProgramName : programs) {
+      // Clean the output before starting
+      DataSetManager<FileSet> fileSetManager = getDataset("PeopleFileSet");
+      Location outputDir = fileSetManager.get().getLocation("output");
+      outputDir.delete(true);
+
+      SparkManager sparkManager = appManager.getSparkManager(sparkProgramName);
+      sparkManager.start(runtimeArgs);
+
+      sparkManager.waitForFinish(100, TimeUnit.SECONDS);
+
+      // Find the output part file. There is only one because the program repartition to 1
+      Location outputFile = Iterables.find(outputDir.list(), new Predicate<Location>() {
+        @Override
+        public boolean apply(Location input) {
+          return input.getName().startsWith("part-r-");
+        }
+      });
+
+      // Verify the result
+      List<String> lines = CharStreams.readLines(CharStreams.newReaderSupplier(Locations.newInputSupplier(outputFile),
+                                                                               Charsets.UTF_8));
+      Map<String, Integer> result = new HashMap<>();
+      for (String line : lines) {
+        String[] parts = line.split(":");
+        result.put(parts[0], Integer.parseInt(parts[1]));
+      }
+      Assert.assertEquals(ImmutableMap.of("Old Man", 50, "Legal Drinker", 21), result);
     }
   }
 

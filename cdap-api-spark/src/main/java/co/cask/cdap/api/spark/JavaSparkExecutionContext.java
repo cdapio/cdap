@@ -23,10 +23,12 @@ import co.cask.cdap.api.Transactional;
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.data.DatasetInstantiationException;
 import co.cask.cdap.api.data.batch.Split;
+import co.cask.cdap.api.data.format.FormatSpecification;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.plugin.PluginContext;
+import co.cask.cdap.api.stream.GenericStreamEventData;
 import co.cask.cdap.api.stream.StreamEventDecoder;
 import co.cask.cdap.api.workflow.Workflow;
 import co.cask.cdap.api.workflow.WorkflowToken;
@@ -217,6 +219,47 @@ public abstract class JavaSparkExecutionContext implements RuntimeContext, Trans
   public abstract <K, V> JavaPairRDD<K, V> fromStream(String streamName, long startTime, long endTime,
                                                       Class<? extends StreamEventDecoder<K, V>> decoderClass,
                                                       Class<K> keyType, Class<V> valueType);
+
+  /**
+   * Creates a {@link JavaPairRDD} that represents all events from the given stream.
+   * The first entry in the pair is a {@link Long}, representing the
+   * event timestamp, while the second entry is a {@link GenericStreamEventData},
+   * which contains data decoded from the stream event body base on
+   * the given {@link FormatSpecification}.
+   *
+   * @param streamName name of the stream
+   * @param formatSpec the {@link FormatSpecification} describing the format in the stream
+   * @param <T> value type
+   * @return a new {@link JavaPairRDD} instance that reads from the given stream.
+   * @throws DatasetInstantiationException if the Stream doesn't exist
+   */
+  public <T> JavaPairRDD<Long, GenericStreamEventData<T>> fromStream(String streamName,
+                                                                     FormatSpecification formatSpec,
+                                                                     Class<T> dataType) {
+    return fromStream(streamName, formatSpec, 0, Long.MAX_VALUE, dataType);
+  }
+
+  /**
+   * Creates a {@link JavaPairRDD} that represents data from the given stream for events in the given
+   * time range. The first entry in the pair is a {@link Long}, representing the
+   * event timestamp, while the second entry is a {@link GenericStreamEventData},
+   * which contains data decoded from the stream event body base on
+   * the given {@link FormatSpecification}.
+   *
+   * @param streamName name of the stream
+   * @param formatSpec the {@link FormatSpecification} describing the format in the stream
+   * @param startTime the starting time of the stream to be read in milliseconds (inclusive);
+   *                  passing in {@code 0} means start reading from the first event available in the stream.
+   * @param endTime the ending time of the streams to be read in milliseconds (exclusive);
+   *                passing in {@link Long#MAX_VALUE} means read up to latest event available in the stream.
+   * @param <T> value type
+   * @return a new {@link JavaPairRDD} instance that reads from the given stream.
+   * @throws DatasetInstantiationException if the Stream doesn't exist
+   */
+  public abstract <T> JavaPairRDD<Long, GenericStreamEventData<T>> fromStream(String streamName,
+                                                                              FormatSpecification formatSpec,
+                                                                              long startTime, long endTime,
+                                                                              Class<T> dataType);
 
   /**
    * Saves the given {@link JavaPairRDD} to the given {@link Dataset}.

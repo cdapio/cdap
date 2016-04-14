@@ -24,22 +24,24 @@ import java.util.concurrent.{CountDownLatch, TimeUnit}
 import co.cask.cdap.api._
 import co.cask.cdap.api.app.ApplicationSpecification
 import co.cask.cdap.api.data.batch.{BatchWritable, DatasetOutputCommitter, OutputFormatProvider, Split}
+import co.cask.cdap.api.data.format.FormatSpecification
 import co.cask.cdap.api.dataset.Dataset
 import co.cask.cdap.api.flow.flowlet.StreamEvent
 import co.cask.cdap.api.metrics.Metrics
 import co.cask.cdap.api.plugin.PluginContext
 import co.cask.cdap.api.spark.{SparkExecutionContext, SparkSpecification}
+import co.cask.cdap.api.stream.GenericStreamEventData
 import co.cask.cdap.api.workflow.WorkflowToken
 import co.cask.cdap.common.conf.ConfigurationUtil
 import co.cask.cdap.data.stream.{StreamInputFormat, StreamUtils}
 import co.cask.cdap.data2.metadata.lineage.AccessType
 import co.cask.cdap.internal.app.runtime.DefaultTaskLocalizationContext
 import co.cask.cdap.proto.Id
+import co.cask.cdap.proto.id.StreamId
 import co.cask.tephra.TransactionAware
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.io.LongWritable
 import org.apache.hadoop.mapreduce.MRJobConfig
-import org.apache.spark
 import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.executor.{DataWriteMethod, OutputMetrics}
 import org.apache.spark.rdd.RDD
@@ -141,7 +143,7 @@ class DefaultSparkExecutionContext(runtimeContext: SparkRuntimeContext,
     transactional.execute(runnable)
   }
 
-  override def fromDataset[K: ClassTag, V: ClassTag](sc: spark.SparkContext,
+  override def fromDataset[K: ClassTag, V: ClassTag](sc: SparkContext,
                                                      datasetName: String,
                                                      arguments: Map[String, String],
                                                      splits: Option[Iterable[_ <: Split]]): RDD[(K, V)] = {
@@ -149,31 +151,47 @@ class DefaultSparkExecutionContext(runtimeContext: SparkRuntimeContext,
                          getTxServiceBaseURI(sc, sparkTxService.getBaseURI))
   }
 
-  override def fromStream[T: ClassTag](sc: spark.SparkContext, streamName: String, startTime: Long, endTime: Long)
+  override def fromStream[T: ClassTag](sc: SparkContext, streamName: String, startTime: Long, endTime: Long)
                                       (implicit decoder: StreamEvent => T): RDD[T] = {
-    val streamId: Id.Stream = Id.Stream.from(getNamespace, streamName)
-
-    // Clone the configuration since it's dataset specification and shouldn't affect the global hConf
-    val configuration = configureStreamInput(new Configuration(runtimeContext.getConfiguration),
-                                             streamId, startTime, endTime)
-    val rdd = sc.newAPIHadoopRDD(configuration, classOf[StreamInputFormat[LongWritable, StreamEvent]],
-                                 classOf[LongWritable], classOf[StreamEvent])
-
-    // Register for stream usage for the Spark program
-    val oldProgramId = runtimeContext.getProgram.getId
-    val owners = List(oldProgramId)
-    try {
-      runtimeContext.getStreamAdmin.register(owners, streamId)
-      runtimeContext.getStreamAdmin.addAccess(new Id.Run(oldProgramId, getRunId.getId), streamId, AccessType.READ)
-    }
-    catch {
-      case e: Exception =>
-        LOG.warn("Failed to registry usage of {} -> {}", streamId, owners, e)
-    }
+    val rdd: RDD[(Long, StreamEvent)] = fromStream(sc, streamName, startTime, endTime, None)
 
     // Wrap the StreamEvent with a SerializableStreamEvent
     // Don't use rdd.values() as it brings in implicit object from SparkContext, which is not available in Spark 1.2
     rdd.map(t => new SerializableStreamEvent(t._2)).map(decoder)
+  }
+
+  override def fromStream[T: ClassTag](sc: SparkContext, streamName: String, formatSpec: FormatSpecification,
+                                       startTime: Long, endTime: Long): RDD[(Long, GenericStreamEventData[T])] = {
+    fromStream(sc, streamName, startTime, endTime, Some(formatSpec))
+  }
+
+  /**
+    * Creates a [[org.apache.spark.rdd.RDD]] by reading from the given stream and time range.
+    *
+    * @param sc the [[org.apache.spark.SparkContext]] to use
+    * @param streamName name of the stream
+    * @param startTime  the starting time of the stream to be read in milliseconds (inclusive);
+    *                   passing in `0` means start reading from the first event available in the stream.
+    * @param endTime the ending time of the streams to be read in milliseconds (exclusive);
+    *                passing in `Long#MAX_VALUE` means read up to latest event available in the stream.
+    * @param formatSpec if provided, it describes the format in the stream and will be used to decode stream events
+    *                   to the given value type `T`
+    * @return a new [[org.apache.spark.rdd.RDD]] instance that reads from the given stream.
+    */
+  private def fromStream[T: ClassTag](sc: SparkContext, streamName: String,
+                                      startTime: Long, endTime: Long,
+                                      formatSpec: Option[FormatSpecification]): RDD[(Long, T)] = {
+    val streamId = new StreamId(getNamespace, streamName)
+
+    // Clone the configuration since it's dataset specification and shouldn't affect the global hConf
+    val configuration = configureStreamInput(new Configuration(runtimeContext.getConfiguration),
+                                             streamId, startTime, endTime, formatSpec)
+
+    val valueClass = implicitly[ClassTag[T]].runtimeClass.asInstanceOf[Class[T]]
+    val rdd = sc.newAPIHadoopRDD(configuration, classOf[StreamInputFormat[LongWritable, T]],
+                                 classOf[LongWritable], valueClass)
+    recordStreamUsage(streamId)
+    rdd.map(t => (t._1.get(), t._2))
   }
 
   override def saveAsDataset[K: ClassTag, V: ClassTag](rdd: RDD[(K, V)], datasetName: String,
@@ -220,18 +238,38 @@ class DefaultSparkExecutionContext(runtimeContext: SparkRuntimeContext,
     }, false)
   }
 
-  private def configureStreamInput(configuration: Configuration, streamId: Id.Stream,
-                                   startTime: Long, endTime: Long): Configuration = {
-    val streamConfig = runtimeContext.getStreamAdmin.getConfig(streamId)
+  private def configureStreamInput(configuration: Configuration, streamId: StreamId, startTime: Long,
+                                   endTime: Long, formatSpec: Option[FormatSpecification]): Configuration = {
+    val streamConfig = runtimeContext.getStreamAdmin.getConfig(streamId.toId)
     val streamPath = StreamUtils.createGenerationLocation(streamConfig.getLocation,
                                                           StreamUtils.getGeneration(streamConfig))
 
     StreamInputFormat.setTTL(configuration, streamConfig.getTTL)
     StreamInputFormat.setStreamPath(configuration, streamPath.toURI)
     StreamInputFormat.setTimeRange(configuration, startTime, endTime)
-    StreamInputFormat.inferDecoderClass(configuration, classOf[StreamEvent])
-
+    // Either use the identity decoder or use the format spec to decode
+    formatSpec.fold(
+      StreamInputFormat.inferDecoderClass(configuration, classOf[StreamEvent])
+    )(
+      spec => StreamInputFormat.setBodyFormatSpecification(configuration, spec)
+    )
     configuration
+  }
+
+  private def recordStreamUsage(streamId: StreamId): Unit = {
+    val oldStreamId = streamId.toId
+
+    // Register for stream usage for the Spark program
+    val oldProgramId = runtimeContext.getProgram.getId
+    val owners = List(oldProgramId)
+    try {
+      runtimeContext.getStreamAdmin.register(owners, oldStreamId)
+      runtimeContext.getStreamAdmin.addAccess(new Id.Run(oldProgramId, getRunId.getId), oldStreamId, AccessType.READ)
+    }
+    catch {
+      case e: Exception =>
+        LOG.warn("Failed to register usage of {} -> {}", streamId, owners, e)
+    }
   }
 
   /**
@@ -274,7 +312,7 @@ object DefaultSparkExecutionContext {
     * Creates a [[org.apache.spark.broadcast.Broadcast]] for the base URI
     * of the [[co.cask.cdap.app.runtime.spark.SparkTransactionService]]
     */
-  private def getTxServiceBaseURI(sc: spark.SparkContext, baseURI: URI): Broadcast[URI] = {
+  private def getTxServiceBaseURI(sc: SparkContext, baseURI: URI): Broadcast[URI] = {
     this.synchronized {
       this.txServiceBaseURI match {
         case Some(uri) => uri
