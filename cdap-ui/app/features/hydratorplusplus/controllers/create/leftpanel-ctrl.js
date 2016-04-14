@@ -97,14 +97,15 @@ class HydratorPlusPlusLeftPanelCtrl {
 
   onArtifactChange() {
     this._checkAndShowConfirmationModalOnDirtyState()
-      .then(saveState => {
-        if (saveState) {
+      .then(proceedToNextStep => {
+        if (!proceedToNextStep) {
           this.selectedArtifact = this.artifactToRevert;
         } else {
           this.$state.go('hydratorplusplus.create', {
+            namespace: this.$state.params.namespace,
             artifactType: this.selectedArtifact.name,
-            data: null
-          });
+            data: null,
+          }, {reload: true, inherit: false});
         }
       });
   }
@@ -113,7 +114,11 @@ class HydratorPlusPlusLeftPanelCtrl {
     let fileBrowserClickCB = () => {
       document.getElementById('pipeline-import-config-link').click();
     };
-    this._checkAndShowConfirmationModalOnDirtyState(() => {}, () => this.$timeout(fileBrowserClickCB));
+    // This is not using the promise pattern as browsers NEED to have the click on the call stack to generate the click on input[type=file] button programmatically in like line:115.
+    // When done in promise we go into the promise ticks and the then callback is called in the next tick which prevents the browser to open the file dialog
+    // as a file dialog is opened ONLY when manually clicked by the user OR transferring the click to another button in the same call stack
+    // TL;DR Can't open file dialog programmatically. If we need to, we need to transfer the click from a user on a button directly into the input file dialog button.
+    this._checkAndShowConfirmationModalOnDirtyState(fileBrowserClickCB);
   }
 
   importFile(files) {
@@ -217,16 +222,16 @@ class HydratorPlusPlusLeftPanelCtrl {
       });
     };
     this._checkAndShowConfirmationModalOnDirtyState()
-      .then(saveState =>{
-        if (!saveState) {
+      .then(proceedToNextStep =>{
+        if (proceedToNextStep) {
           openTemplatesPopup();
         }
       });
   }
 
-  _checkAndShowConfirmationModalOnDirtyState(yesCb, noCb) {
-    let isSavePipeline = true;
-    let isStoreDirty = this.HydratorPlusPlusConfigStore.getIsStateDirty();
+  _checkAndShowConfirmationModalOnDirtyState(proceedCb) {
+    let goTonextStep = true;
+    let isStoreDirty = this.HydratorPlusPlusConfigStore.getIsStateDirty(); // 0=proceed 1=cancel
     if (isStoreDirty) {
       return this.$uibModal.open({
         templateUrl: '/assets/features/hydratorplusplus/templates/create/popovers/canvas-overwrite-confirmation.html',
@@ -234,35 +239,50 @@ class HydratorPlusPlusLeftPanelCtrl {
         backdrop: 'static',
         keyboard: false,
         windowTopClass: 'confirm-modal hydrator-modal',
-        controller: ['$scope', function($scope) {
-          $scope.yes = () => {
-            if (yesCb) {
-              yesCb();
-            } else {
-              isSavePipeline = true;
+        controller: ['$scope', 'HydratorPlusPlusConfigStore', 'HydratorPlusPlusConfigActions', function($scope, HydratorPlusPlusConfigStore, HydratorPlusPlusConfigActions) {
+          $scope.isSaving = false;
+          $scope.discard = () => {
+            goTonextStep = true;
+            if (proceedCb) {
+              proceedCb();
             }
             $scope.$close();
           };
-          $scope.no = () => {
-            if (noCb) {
-              noCb();
-            } else {
-              isSavePipeline = false;
+          $scope.save = () => {
+            let pipelineName = HydratorPlusPlusConfigStore.getName();
+            if (!pipelineName.length) {
+              HydratorPlusPlusConfigActions.saveAsDraft();
+              goTonextStep = false;
+              $scope.$close();
+              return;
             }
+            var unsub = HydratorPlusPlusConfigStore.registerOnChangeListener( () => {
+              let isStateDirty = HydratorPlusPlusConfigStore.getIsStateDirty();
+              // This is solely used for showing the spinner icon until the modal is closed.
+              if(!isStateDirty) {
+                unsub();
+                goTonextStep = true;
+                $scope.$close();
+              }
+            });
+            HydratorPlusPlusConfigActions.saveAsDraft();
+            $scope.isSaving = true;
+          };
+          $scope.cancel = () => {
             $scope.$close();
+            goTonextStep = false;
           };
         }]
       })
       .closed
       .then(() => {
-        return isSavePipeline;
+        return goTonextStep;
       });
     } else {
-      if (noCb) {
-        noCb();
-      } else {
-        return this.$q.when(false);
+      if (proceedCb) {
+        proceedCb();
       }
+      return this.$q.when(goTonextStep);
     }
   }
   onLeftSidePanelItemClicked(event, node) {
