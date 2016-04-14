@@ -18,8 +18,11 @@ package co.cask.cdap.spark.app;
 
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.data.stream.Stream;
+import co.cask.cdap.api.dataset.lib.FileSet;
+import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.spark.AbstractSpark;
+import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 
 /**
  * An application for testing various behavior of the Spark runtime.
@@ -30,12 +33,18 @@ public class TestSparkApp extends AbstractApplication {
   public void configure() {
 
     addStream(new Stream("SparkStream"));
+    addStream(new Stream("PeopleStream"));
     createDataset("SparkResult", KeyValueTable.class);
     createDataset("SparkThresholdResult", KeyValueTable.class);
+    createDataset("PeopleFileSet", FileSet.class, FileSetProperties.builder()
+      .setOutputFormat(TextOutputFormat.class)
+      .setOutputProperty(TextOutputFormat.SEPERATOR, ":").build());
 
     addSpark(new ClassicSpark());
     addSpark(new ScalaClassicSpark());
     addSpark(new ExplicitTransactionSpark());
+    addSpark(new StreamFormatSpecSpark());
+    addSpark(new ScalaStreamFormatSpecSpark());
   }
 
   public static final class ClassicSpark extends AbstractSpark {

@@ -20,11 +20,12 @@ import java.util
 
 import co.cask.cdap.api.app.ApplicationSpecification
 import co.cask.cdap.api.data.batch.Split
+import co.cask.cdap.api.data.format.FormatSpecification
 import co.cask.cdap.api.flow.flowlet.StreamEvent
 import co.cask.cdap.api.metrics.Metrics
 import co.cask.cdap.api.plugin.PluginContext
 import co.cask.cdap.api.spark.{JavaSparkExecutionContext, SparkExecutionContext, SparkSpecification}
-import co.cask.cdap.api.stream.StreamEventDecoder
+import co.cask.cdap.api.stream.{GenericStreamEventData, StreamEventDecoder}
 import co.cask.cdap.api.workflow.WorkflowToken
 import co.cask.cdap.api.{Admin, ServiceDiscoverer, TxRunnable}
 import co.cask.cdap.data.stream.StreamInputFormat
@@ -107,6 +108,15 @@ class DefaultJavaSparkExecutionContext(sec: SparkExecutionContext) extends JavaS
     implicit val vTag: ClassTag[V] = ClassTag(valueType)
 
     JavaPairRDD.fromRDD(decodeFromStream(streamName, startTime, endTime, decoderClass))
+  }
+
+  override def fromStream[T](streamName: String, formatSpec: FormatSpecification,
+                             startTime: Long, endTime: Long,
+                             dataType: Class[T]): JavaPairRDD[java.lang.Long, GenericStreamEventData[T]] = {
+    implicit val dTag: ClassTag[T] = ClassTag(dataType)
+    val stream: RDD[(Long, GenericStreamEventData[T])] =
+      sec.fromStream(SparkContextCache.getContext, streamName, formatSpec, startTime, endTime)
+    JavaPairRDD.fromRDD(stream.map(t => (t._1: java.lang.Long, t._2)))
   }
 
   override def saveAsDataset[K, V](rdd: JavaPairRDD[K, V], datasetName: String,
