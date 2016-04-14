@@ -15,12 +15,31 @@
  */
 
 class HydratorPlusPlusPostActionsCtrl {
-  constructor(HydratorPlusPlusPluginConfigFactory, HydratorPlusPlusNodeConfigStore, GLOBALS, myHelpers) {
+  constructor(HydratorPlusPlusConfigStore, HydratorPlusPlusNodeConfigStore, GLOBALS, myHelpers, myPipelineApi, $state) {
     this.GLOBALS = GLOBALS;
     this.HydratorPlusPlusNodeConfigStore = HydratorPlusPlusNodeConfigStore;
-    this.HydratorPlusPlusPluginConfigFactory = HydratorPlusPlusPluginConfigFactory;
+    this.HydratorPlusPlusConfigStore = HydratorPlusPlusConfigStore;
     this.myHelpers = myHelpers;
     this.HydratorPlusPlusNodeConfigStore.registerOnChangeListener(this.setState.bind(this));
+    this.myPipelineApi = myPipelineApi;
+    this.$state = $state;
+
+    let artifact = this.HydratorPlusPlusConfigStore.getArtifact();
+
+    this.postActionsList = [];
+
+    let params = {
+      namespace: this.$state.params.namespace,
+      pipelineType: artifact.name,
+      version: artifact.version,
+      extensionType: 'postaction'
+    };
+    this.myPipelineApi.fetchPlugins(params)
+      .$promise
+      .then( (res) => {
+        this.postActionsList = res;
+      });
+
     this.setState();
 
   }
@@ -30,6 +49,6 @@ class HydratorPlusPlusPostActionsCtrl {
   }
 }
 
-HydratorPlusPlusPostActionsCtrl.$inject = ['HydratorPlusPlusPluginConfigFactory', 'HydratorPlusPlusNodeConfigStore', 'GLOBALS', 'myHelpers'];
+HydratorPlusPlusPostActionsCtrl.$inject = ['HydratorPlusPlusConfigStore', 'HydratorPlusPlusNodeConfigStore', 'GLOBALS', 'myHelpers', 'myPipelineApi', '$state'];
 angular.module(`${PKG.name}.feature.hydratorplusplus`)
   .controller('HydratorPlusPlusPostActionsCtrl', HydratorPlusPlusPostActionsCtrl);
