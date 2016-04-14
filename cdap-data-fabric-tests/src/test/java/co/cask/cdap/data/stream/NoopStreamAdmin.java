@@ -80,11 +80,6 @@ public class NoopStreamAdmin implements StreamAdmin {
   }
 
   @Override
-  public StreamConfig create(Id.Stream streamId, @Nullable StreamProperties properties) throws Exception {
-    return null;
-  }
-
-  @Override
   public void truncate(Id.Stream streamId) throws Exception {
   }
 

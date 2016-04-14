@@ -50,7 +50,6 @@ import co.cask.cdap.proto.ViewSpecification;
 import co.cask.cdap.proto.audit.AuditPayload;
 import co.cask.cdap.proto.audit.AuditType;
 import com.google.common.base.Charsets;
-import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
 import com.google.common.base.Throwables;
@@ -340,52 +339,17 @@ public class FileStreamAdmin implements StreamAdmin {
         int threshold = Integer.parseInt(properties.getProperty(
           Constants.Stream.NOTIFICATION_THRESHOLD, cConf.get(Constants.Stream.NOTIFICATION_THRESHOLD)));
         String description = properties.getProperty(Constants.Stream.DESCRIPTION);
-
-        StreamConfig config = new StreamConfig(streamId, partitionDuration, indexInterval,
-                                               ttl, streamLocation, null, threshold);
-        writeConfig(config);
-        createStreamFeeds(config);
-        alterExploreStream(streamId, true, config.getFormat());
-        streamMetaStore.addStream(streamId, description);
-        publishAudit(streamId, AuditType.CREATE);
-        SystemMetadataWriter systemMetadataWriter =
-          new StreamSystemMetadataWriter(metadataStore, streamId, config, createTime, description);
-        systemMetadataWriter.write();
-        return config;
-      }
-    });
-  }
-
-  @Override
-  public StreamConfig create(final Id.Stream streamId, @Nullable final StreamProperties properties) throws Exception {
-    assertNamespaceHomeExists(streamId.getNamespace());
-    final Location streamLocation = getStreamLocation(streamId);
-    Locations.mkdirsIfNotExists(streamLocation);
-    return streamCoordinatorClient.createStream(streamId, new Callable<StreamConfig>() {
-      @Override
-      public StreamConfig call() throws Exception {
-        if (exists(streamId)) {
-          return null;
+        FormatSpecification formatSpec = null;
+        if (properties.containsKey(Constants.Stream.FORMAT_SPECIFICATION)) {
+          formatSpec = GSON.fromJson(properties.getProperty(Constants.Stream.FORMAT_SPECIFICATION),
+                                     FormatSpecification.class);
         }
-
-        long createTime = System.currentTimeMillis();
-        long partitionDuration = Long.parseLong(cConf.get(Constants.Stream.PARTITION_DURATION));
-        long indexInterval = Long.parseLong(cConf.get(Constants.Stream.INDEX_INTERVAL));
-        Long ttlFromProperties = properties != null ? properties.getTTL() : null;
-        long ttl = Optional.fromNullable(ttlFromProperties).or(Long.parseLong(cConf.get(Constants.Stream.TTL)));
-        Integer thresholdFromProperties = properties != null ? properties.getNotificationThresholdMB() : null;
-        int threshold = Optional.fromNullable(thresholdFromProperties).or(
-          Integer.parseInt(cConf.get(Constants.Stream.NOTIFICATION_THRESHOLD)));
-        FormatSpecification formatSpec = properties != null ? properties.getFormat() : null;
 
         StreamConfig config = new StreamConfig(streamId, partitionDuration, indexInterval,
                                                ttl, streamLocation, formatSpec, threshold);
         writeConfig(config);
         createStreamFeeds(config);
         alterExploreStream(streamId, true, config.getFormat());
-
-
-        String description = properties != null ? properties.getDescription() : null;
         streamMetaStore.addStream(streamId, description);
         publishAudit(streamId, AuditType.CREATE);
         SystemMetadataWriter systemMetadataWriter =

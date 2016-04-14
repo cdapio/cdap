@@ -65,7 +65,7 @@ public class StreamCommands extends CommandSet<Command> implements Categorized {
         .add(injector.getInstance(SendStreamEventCommand.class))
         .add(injector.getInstance(LoadStreamCommand.class))
         .add(injector.getInstance(GetStreamStatsCommand.class))
-          // views
+         // views
         .add(injector.getInstance(CreateOrUpdateStreamViewCommand.class))
         .add(injector.getInstance(DeleteStreamViewCommand.class))
         .add(injector.getInstance(DescribeStreamViewCommand.class))

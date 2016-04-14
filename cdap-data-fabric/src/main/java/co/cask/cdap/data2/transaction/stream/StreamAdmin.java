@@ -105,15 +105,6 @@ public interface StreamAdmin {
   StreamConfig create(Id.Stream streamId, @Nullable Properties props) throws Exception;
 
   /**
-   * Creates stream if it doesn't exist. If stream exists, nothing is changed.
-   *
-   * @param streamId Id of the stream to create
-   * @param properties {@link StreamProperties} associated with the new stream
-   * @return {@link StreamConfig} associated with the new stream
-   * @throws Exception if creation fails
-   */
-  StreamConfig create(Id.Stream streamId, @Nullable StreamProperties properties) throws Exception;
-  /**
    * Wipes out stream data.
    * @param streamId Id of the stream to truncate
    * @throws Exception if cleanup fails
