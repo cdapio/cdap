@@ -231,7 +231,7 @@ class HydratorPlusPlusLeftPanelCtrl {
 
   _checkAndShowConfirmationModalOnDirtyState(proceedCb) {
     let goTonextStep = true;
-    let isStoreDirty = this.HydratorPlusPlusConfigStore.getIsStateDirty(); // 0=proceed 1=cancel
+    let isStoreDirty = this.HydratorPlusPlusConfigStore.getIsStateDirty();
     if (isStoreDirty) {
       return this.$uibModal.open({
         templateUrl: '/assets/features/hydratorplusplus/templates/create/popovers/canvas-overwrite-confirmation.html',
