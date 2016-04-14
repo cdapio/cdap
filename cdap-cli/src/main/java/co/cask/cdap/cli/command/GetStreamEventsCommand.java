@@ -85,13 +85,12 @@ public class GetStreamEventsCommand extends AbstractCommand {
 
   @Override
   public String getDescription() {
-    return "Gets events from " + Fragment.of(Article.A, ElementType.STREAM.getName()) + ". " +
-      "The time format for '<" + ArgumentName.START_TIME + ">' and '<" + ArgumentName.END_TIME + ">' " +
-      "can be a timestamp in milliseconds or " +
-      "a relative time in the form of '[+|-][0-9][d|h|m|s]'. " +
-      "'<" + ArgumentName.START_TIME + ">' is relative to current time; " +
-      "'<" + ArgumentName.END_TIME + ">' is relative to '<" + ArgumentName.START_TIME + ">'. " +
-      "Special constants 'min' and 'max' can be used to represent '0' and 'max timestamp' respectively.";
+    return String.format("Gets events from %s. The time format for '<%s>' and '<%s>' can be a timestamp in " +
+      "milliseconds or a relative time in the form of '[+|-][0-9][d|h|m|s]'. '<%s>' is relative to current time; " + 
+      "'<%s>' is relative to '<%s>'. Special constants 'min' and 'max' can be used to represent '0' and " +
+      "'max timestamp' respectively.",
+      Fragment.of(Article.A, ElementType.STREAM.getName()), ArgumentName.START_TIME, ArgumentName.END_TIME,
+      ArgumentName.START_TIME, ArgumentName.END_TIME, ArgumentName.START_TIME);
   }
 
 }

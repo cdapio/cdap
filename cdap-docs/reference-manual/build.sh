@@ -40,7 +40,7 @@ function download_includes() {
   if [ "${status_code}" == "0" ]; then
     echo "CLI rst file written to ${CLI_TABLE_RST}"
   else
-    local m="Error ${status_code} finding CLI input file: ${CLI_INPUT_TXT}"
+    local m="Error ${status_code} building CLI docs table"
     echo_red_bold "${m}"
     set_message "${m}"
   fi
