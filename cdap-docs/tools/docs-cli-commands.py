@@ -14,15 +14,17 @@ from optparse import OptionParser
 import os
 import sys
 
-VERSION = "0.0.1"
+VERSION = "0.0.2"
 
 LITERAL = '``'
 SPACES = ' ' * 3
+QUOTE = '\''
+BACKSLASH = '\\'
 SECTION_LINE = SPACES + '**'
 COMMAND_LINE = SPACES + LITERAL
 LITERAL_LINE = SPACES + ' | '
 
-SKIP_SECTIONS = ['security (beta)']
+SKIP_SECTIONS = ['Security (Beta)']
 
 MISSING_FILE_TEMPLATE = "   **Missing Input File**,\"Missing input file %s\""
 TABLE_HEADER = """.. csv-table::
@@ -61,12 +63,10 @@ def parse_options():
 # Utility functions
 #
 
-def line_starts_with(line, left):
-    return bool(line[:len(left)] == left)
-
 def skip_this_section(line):
     text = line.strip(' *').lower()
-    return text in SKIP_SECTIONS
+    skip_sections = [section.lower() for section in SKIP_SECTIONS]
+    return text in skip_sections
     
 def create_literal_line(line):
     right_line = line.lstrip()
@@ -82,15 +82,11 @@ def create_parsed_line(line):
     i = 0
     in_literal = False
     finished_literal = False
-    literal = '``'
-    quote = '\''
-    backslash = '\\'
-    opening_literal_quote = literal + quote
-    closing_literal_quote = quote + literal
+    opening_literal_quote = LITERAL + QUOTE
+    closing_literal_quote = QUOTE + LITERAL
     new_line = ''
-    for i in range(len(line)):
-        c = line[i]
-        if c == quote:
+    for c in line:
+        if c == QUOTE:
             if not in_literal:
                 new_line += opening_literal_quote
             else:
@@ -100,7 +96,7 @@ def create_parsed_line(line):
         else:
             if finished_literal:
                 if c.isalnum():
-                    new_line += backslash
+                    new_line += BACKSLASH
                 finished_literal = False
             new_line += c
     return new_line
@@ -116,31 +112,31 @@ def create_table(input_file, output_file):
     return_code = 0
     if os.path.isfile(input_file):
         print "Reading in %s" % input_file
-        f = open(input_file,'r')
-        in_spaces = False
-        in_literal = False
-        skip_section = False
-        for line in f:
-            line = line.rstrip()
-            if line_starts_with(line, SECTION_LINE) or line_starts_with(line, COMMAND_LINE):
-                if line_starts_with(line, SECTION_LINE):
-                    skip_section = skip_this_section(line)
-                if skip_section:
-                    continue             
-                if in_spaces: # Insert a blank line
-                    lines.append('')
-                    in_spaces = False
-                lines.append(create_parsed_line(line))
-            elif skip_section:
-                continue
-            elif line_starts_with(line, SPACES): # Handle spaces: assume a literal
-                in_spaces = True
-                lines.append(create_literal_line(line))
-            else:
-                if in_spaces: # Insert a blank line
-                    lines.append('')
-                    in_spaces = False
-                lines.append(SPACES + create_parsed_line(line))
+        with open(input_file,'r') as f:
+            in_spaces = False
+            in_literal = False
+            skip_section = False
+            for line in f:
+                line = line.rstrip()
+                if line.startswith(SECTION_LINE) or line.startswith(COMMAND_LINE):
+                    if line.startswith(SECTION_LINE):
+                        skip_section = skip_this_section(line)
+                    if skip_section:
+                        continue             
+                    if in_spaces: # Insert a blank line
+                        lines.append('')
+                        in_spaces = False
+                    lines.append(create_parsed_line(line))
+                elif skip_section:
+                    continue
+                elif line.startswith(SPACES): # Handle spaces: assume a literal
+                    in_spaces = True
+                    lines.append(create_literal_line(line))
+                else:
+                    if in_spaces: # Insert a blank line
+                        lines.append('')
+                        in_spaces = False
+                    lines.append(SPACES + create_parsed_line(line))
     else:
         print "Did not find %s" % input_file
         print "Wrote 'missing file' to table"
@@ -148,9 +144,10 @@ def create_table(input_file, output_file):
         return_code = 2
             
     output = open(output_file,'w')
-    output.write(TABLE_HEADER)
-    for line in lines:
-        output.write(line+'\n')
+    with open(output_file,'w') as output:
+        output.write(TABLE_HEADER)
+        for line in lines:
+            output.write(line+'\n')
     
     print "Wrote to %s" % output_file
     return return_code
