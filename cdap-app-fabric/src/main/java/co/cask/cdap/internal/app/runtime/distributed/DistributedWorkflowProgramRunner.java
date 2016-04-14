@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -106,7 +106,7 @@ public final class DistributedWorkflowProgramRunner extends AbstractDistributedP
       extraDependencies.add(provider.getClass());
 
       // Localize the spark-assembly jar and spark conf zip
-      String sparkAssemblyJarName = SparkUtils.prepareSparkResources(cConf, tempDir, localizeResources);
+      String sparkAssemblyJarName = SparkUtils.prepareSparkResources(tempDir, localizeResources);
       extraClassPaths.add(sparkAssemblyJarName);
     }
     

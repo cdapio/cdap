@@ -81,7 +81,7 @@ public final class DistributedSparkProgramRunner extends AbstractDistributedProg
     Preconditions.checkNotNull(spec, "Missing SparkSpecification for %s", program.getId());
 
     // Localize the spark-assembly jar and spark conf zip
-    String sparkAssemblyJarName = SparkUtils.prepareSparkResources(cConf, tempDir, localizeResources);
+    String sparkAssemblyJarName = SparkUtils.prepareSparkResources(tempDir, localizeResources);
 
     LOG.info("Launching Spark program: {}", program.getId());
     TwillController controller = launcher.launch(
