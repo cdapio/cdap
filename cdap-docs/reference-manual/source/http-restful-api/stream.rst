@@ -60,8 +60,8 @@ A stream can be created with an HTTP PUT method to the URL::
 - The ``<new-stream-id>`` should only contain ASCII letters, digits and hyphens.
 - If the stream already exists, no error is returned, and the existing stream remains in place.
 
-Optionally, properties for the stream can be set by providing it in the body of the PUT request. These properties can
-also be retrieved and/or modified later using the /properties endpoint.
+Optionally, properties for the stream can be set by providing them in the body of the request. These properties can
+be retrieved and modified afterwards using the ``/properties`` endpoint.
 
 .. list-table::
 :widths: 20 80
@@ -71,8 +71,8 @@ also be retrieved and/or modified later using the /properties endpoint.
      - Description
      - Default Value
    * - ``ttl``
-     - Number of seconds that an event will be valid for since ingested
-     - Long.MAX (2^63 - 1)
+     - Number of seconds that an event will be valid for, since it was ingested
+     - ``Long.MAX`` (2^63 - 1)
    * - ``format``
      - JSON Object describing the format name, schema, and settings. Accepted formats are
        ``avro``, ``csv`` (comma-separated), ``tsv`` (tab-separated), ``text``, ``clf``,
@@ -86,7 +86,7 @@ also be retrieved and/or modified later using the /properties endpoint.
      - Description of the stream
      - ``null``
 
-If a property is not given in the request body, then the default values will be used.
+If a property is not given in the request body, the default value will be used instead.
 
 Sending Events to a Stream
 --------------------------
@@ -458,7 +458,7 @@ New properties are passed in the JSON request body.
    * - Parameter
      - Description
    * - ``ttl``
-     - Number of seconds that an event will be valid for since ingested
+     - Number of seconds that an event will be valid for, since it was ingested
    * - ``format``
      - JSON Object describing the format name, schema, and settings. Accepted formats are
        ``avro``, ``csv`` (comma-separated), ``tsv`` (tab-separated), ``text``, ``clf``, 
