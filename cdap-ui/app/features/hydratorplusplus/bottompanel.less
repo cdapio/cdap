@@ -577,16 +577,13 @@ body.theme-cdap.state-hydratorplusplus {
     }
 
     .post-actions-tab {
-      .post-actions-sidebar, .post-actions-content {
-        float: left;
-      }
-
       .post-actions-sidebar {
         width: 150px;
-        height: 100%;
-        min-height: 45vh;
         border-right: 1px solid #d4d4d4;
         background-color: #EEEEEE;
+        position: absolute;
+        top: 42px;
+        bottom: 0;
 
         ul {
           li {
@@ -614,9 +611,15 @@ body.theme-cdap.state-hydratorplusplus {
         width: ~"-moz-calc(100% - 151px)";
         width: ~"-webkit-calc(100% - 151px)";
         width: ~"calc(100% - 151px)";
+        float: right;
 
         .main-container {
           padding: 10px 20px 10px 10px;
+
+          .empty-message {
+            margin-top: 100px;
+            margin-bottom: 100px;
+          }
 
           .table {
             th, td {

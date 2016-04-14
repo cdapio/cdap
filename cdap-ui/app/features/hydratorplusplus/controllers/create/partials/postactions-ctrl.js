@@ -15,17 +15,20 @@
  */
 
 class HydratorPlusPlusPostActionsCtrl {
-  constructor(HydratorPlusPlusConfigStore, HydratorPlusPlusNodeConfigStore, GLOBALS, myHelpers, myPipelineApi, $state) {
+  constructor(HydratorPlusPlusConfigStore, GLOBALS, myHelpers, myPipelineApi, $state, HydratorPlusPlusPluginConfigFactory, uuid, HydratorPlusPlusConfigActions, myAlertOnValium) {
     this.GLOBALS = GLOBALS;
-    this.HydratorPlusPlusNodeConfigStore = HydratorPlusPlusNodeConfigStore;
     this.HydratorPlusPlusConfigStore = HydratorPlusPlusConfigStore;
     this.myHelpers = myHelpers;
-    this.HydratorPlusPlusNodeConfigStore.registerOnChangeListener(this.setState.bind(this));
     this.myPipelineApi = myPipelineApi;
     this.$state = $state;
+    this.HydratorPlusPlusPluginConfigFactory = HydratorPlusPlusPluginConfigFactory;
+    this.uuid = uuid;
+    this.HydratorPlusPlusConfigActions = HydratorPlusPlusConfigActions;
+    this.myAlertOnValium = myAlertOnValium;
+
+    this.HydratorPlusPlusConfigStore.registerOnChangeListener(this.setState.bind(this));
 
     let artifact = this.HydratorPlusPlusConfigStore.getArtifact();
-
     this.postActionsList = [];
 
     let params = {
@@ -44,11 +47,98 @@ class HydratorPlusPlusPostActionsCtrl {
 
   }
   setState() {
-    this.state = this.state || {};
+    this.postactions = this.HydratorPlusPlusConfigStore.getPostActions();
+    this.activeTab = 'OVERVIEW';
+  }
 
+  tabClick(tab) {
+    this.activeTab = tab;
+
+    if (tab === 'OVERVIEW') { return; }
+
+    this.pluginConfig = {
+      name: tab.name + '-' + this.uuid.v4(),
+      plugin: {
+        name: tab.name,
+        type: tab.type,
+        artifact: tab.artifact,
+        properties: {}
+      }
+    };
+
+    let params = {
+      namespace: this.$state.params.namespace,
+      pipelineType: tab.artifact.name,
+      version: tab.artifact.version,
+      scope: tab.artifact.scope,
+      extensionType: tab.type,
+      pluginName: tab.name
+    };
+
+    this.myPipelineApi.fetchPluginProperties(params)
+      .$promise
+      .then( (res) => {
+        this.pluginConfig._backendProperties = res[0].properties;
+
+        let artifact = {
+          name: tab.artifact.name,
+          version: tab.artifact.version,
+          scope: tab.artifact.scope,
+          key: 'widgets.' + tab.name + '-' + tab.type
+        };
+        this.HydratorPlusPlusPluginConfigFactory
+          .fetchWidgetJson(artifact.name, artifact.version, artifact.scope, artifact.key)
+          .then( (widgetJson) => {
+            this.noConfig = false;
+
+            this.groupsConfig = this.HydratorPlusPlusPluginConfigFactory.generateNodeConfig(this.pluginConfig._backendProperties, widgetJson);
+
+            // Initializing default value
+            angular.forEach(this.groupsConfig.groups, (group) => {
+              angular.forEach(group.fields, (field) => {
+                if (field.defaultValue) {
+                  this.pluginConfig.properties[field.name] = this.pluginConfig.properties[field.name] || field.defaultValue;
+                }
+              });
+            });
+          }, () => {
+            this.noConfig = true;
+          });
+      });
+
+  }
+
+  cancel() {
+    this.activeTab = 'OVERVIEW';
+    this.pluginConfig = {};
+  }
+
+  add() {
+    let isValid = true;
+    angular.forEach(this.pluginConfig._backendProperties, (value, key) => {
+      if (value.required && !this.pluginConfig.plugin.properties[key]) {
+        isValid = false;
+      }
+    });
+
+    if (!isValid) {
+      this.myAlertOnValium.show({
+        type: 'danger',
+        content: 'Please fill out all required field'
+      });
+      return;
+    }
+
+    delete this.pluginConfig._backendProperties;
+    this.HydratorPlusPlusConfigActions.addPostAction(angular.copy(this.pluginConfig));
+    this.pluginConfig = {};
+  }
+
+  deleteAction(config) {
+    this.HydratorPlusPlusConfigActions.deletePostAction(config);
   }
 }
 
-HydratorPlusPlusPostActionsCtrl.$inject = ['HydratorPlusPlusConfigStore', 'HydratorPlusPlusNodeConfigStore', 'GLOBALS', 'myHelpers', 'myPipelineApi', '$state'];
+HydratorPlusPlusPostActionsCtrl.$inject = ['HydratorPlusPlusConfigStore', 'GLOBALS', 'myHelpers', 'myPipelineApi', '$state', 'HydratorPlusPlusPluginConfigFactory', 'uuid', 'HydratorPlusPlusConfigActions', 'myAlertOnValium'];
 angular.module(`${PKG.name}.feature.hydratorplusplus`)
   .controller('HydratorPlusPlusPostActionsCtrl', HydratorPlusPlusPostActionsCtrl);

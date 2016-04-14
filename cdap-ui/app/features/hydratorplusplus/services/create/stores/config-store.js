@@ -43,6 +43,8 @@ class HydratorPlusPlusConfigStore {
     this.hydratorPlusPlusConfigDispatcher.register('onSaveAsDraft', this.saveAsDraft.bind(this));
     this.hydratorPlusPlusConfigDispatcher.register('onInitialize', this.init.bind(this));
     this.hydratorPlusPlusConfigDispatcher.register('onSchemaPropagationDownStream', this.propagateIOSchemas.bind(this));
+    this.hydratorPlusPlusConfigDispatcher.register('onAddPostAction', this.addPostAction.bind(this));
+    this.hydratorPlusPlusConfigDispatcher.register('onDeletePostAction', this.deletePostAction.bind(this));
   }
   registerOnChangeListener(callback) {
     let index = this.changeListeners.push(callback);
@@ -87,7 +89,8 @@ class HydratorPlusPlusConfigStore {
   getDefaultConfig() {
     return {
       connections: [],
-      comments: []
+      comments: [],
+      postactions: []
     };
   }
 
@@ -202,6 +205,7 @@ class HydratorPlusPlusConfigStore {
     }
 
     config.comments = this.getComments();
+    config.postactions = this.getPostActions();
 
     return config;
   }
@@ -616,6 +620,20 @@ class HydratorPlusPlusConfigStore {
   }
   getComments() {
     return this.getState().config.comments;
+  }
+
+  addPostAction(config) {
+    this.state.config.postactions.push(config);
+    this.emitChange();
+  }
+  deletePostAction(config) {
+    _.remove(this.state.config.postactions, (post) => {
+      return post.name === config.name;
+    });
+    this.emitChange();
+  }
+  getPostActions() {
+    return this.getState().config.postactions;
   }
 
   saveAsDraft() {
