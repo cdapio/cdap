@@ -217,9 +217,4 @@ public interface MetadataStore {
    * @return the snapshot of the metadata for entities on or before the given time
    */
   Set<MetadataRecord> getSnapshotBeforeTime(MetadataScope scope,  Set<Id.NamespacedId> entityIds, long timeMillis);
-
-  /**
-   * Upgrades the {@link MetadataStore}
-   */
-  void upgrade();
 }
