@@ -18,21 +18,25 @@
   <!-- SIDEBAR -->
   <div class="post-actions-sidebar">
     <ul class="list-unstyled">
-      <li class="text-center active">
+      <li class="text-center active"
+          ng-click="PostActionController.tabClick('OVERVIEW')"
+          ng-class="{'active': PostActionController.activeTab === 'OVERVIEW' }">
         Overview
       </li>
       <li class="text-center"
-          ng-repeat="action in PostActionController.postActionsList">
+          ng-repeat="action in PostActionController.postActionsList"
+          ng-click="PostActionController.tabClick(action)"
+          ng-class="{'active': PostActionController.activeTab.name === action.name }">
         {{ action.name }}
       </li>
     </ul>
   </div>
 
   <!-- MAIN CONTENT -->
-
-  <!-- OVERVIEW -->
   <div class="post-actions-content">
-    <div class="main-container">
+
+    <!-- OVERVIEW -->
+    <div class="main-container" ng-if="PostActionController.activeTab === 'OVERVIEW'">
       <table class="table">
         <thead>
           <th>Action</th>
@@ -41,17 +45,79 @@
         </thead>
 
         <tbody>
-          <tr>
-            <td>Email</td>
-            <td>Testing description</td>
-            <td>Completes</td>
+          <tr ng-repeat="action in PostActionController.postactions">
+            <td>{{ action.plugin.name }}</td>
+            <td>{{ action._uiDescription }}</td>
+            <td>{{ action.plugin.properties.runCondition }}</td>
             <td class="clearfix">
               <a href="" class="pull-left">Edit</a>
-              <i class="fa fa-trash text-danger pull-right"></i>
+              <i class="fa fa-trash text-danger pull-right"
+                 ng-click="PostActionController.deleteAction(action)">
+               </i>
             </td>
           </tr>
         </tbody>
       </table>
+
+      <div class="empty-message text-center" ng-if="PostActionController.postactions.length === 0">
+        <h4>You haven't set any actions yet.</h4>
+      </div>
     </div>
+
+
+    <!-- PLUGIN -->
+
+    <div class="main-container" ng-if="PostActionController.activeTab !== 'OVERVIEW'">
+      <div class="form-group">
+        <label class="control-label">Description</label>
+        <textarea class="form-control" ng-model="PostActionController.pluginConfig._uiDescription"></textarea>
+      </div>
+
+      <div ng-if="!PostActionController.noConfig">
+        <div ng-repeat="group in PostActionController.groupsConfig.groups">
+          <div class="widget-group-container">
+            <h4>{{::group.display}}</h4>
+            <div ng-repeat="field in group.fields">
+              <div class="form-group">
+                <label class="control-label">
+                  <span>{{::field.label}}</span>
+                  <span class="fa fa-info-circle"
+                        uib-tooltip="{{::field.description}}"
+                        tooltip-placement="right"
+                        tooltip-append-to-body="true">
+                  </span>
+                  <span class="fa fa-asterisk" ng-if="PostActionController.pluginConfig._backendProperties[field.name].required"></span>
+                  <small class="text-danger" ng-if="PostActionController.pluginConfig._backendProperties[field.name].required && !PostActionController.pluginConfig.plugin.properties[field.name]">{{::NodeConfigController.requiredPropertyError}}</small>
+                </label>
+
+                <div>
+                  <div data-name="field"
+                       class="my-widget-container"
+                       ng-class="{'select-wrapper': field.widget === 'select'}"
+                       data-model="PostActionController.pluginConfig.plugin.properties[field.name]"
+                       data-myconfig="field"
+                       data-properties="PostActionController.pluginConfig.plugin.properties"
+                       widget-container>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="action-buttons text-right">
+        <button class="btn btn-default" ng-click="PostActionController.cancel()">
+          Cancel
+        </button>
+
+        <button class="btn btn-blue" ng-click="PostActionController.add()">
+          Add
+        </button>
+      </div>
+
+    </div>
+
+
   </div>
 </div>
