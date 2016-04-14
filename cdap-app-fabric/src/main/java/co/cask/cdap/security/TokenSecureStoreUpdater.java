@@ -24,10 +24,11 @@ import co.cask.cdap.hive.ExploreUtils;
 import co.cask.cdap.security.hive.HiveTokenUtils;
 import co.cask.cdap.security.hive.JobHistoryServerTokenUtils;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.hbase.security.User;
 import org.apache.hadoop.hdfs.DFSConfigKeys;
 import org.apache.hadoop.hive.thrift.HadoopThriftAuthBridge;
@@ -40,6 +41,7 @@ import org.apache.twill.api.RunId;
 import org.apache.twill.api.SecureStore;
 import org.apache.twill.api.SecureStoreUpdater;
 import org.apache.twill.filesystem.FileContextLocationFactory;
+import org.apache.twill.filesystem.ForwardingLocationFactory;
 import org.apache.twill.filesystem.HDFSLocationFactory;
 import org.apache.twill.filesystem.LocationFactory;
 import org.apache.twill.internal.yarn.YarnUtils;
@@ -48,6 +50,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -87,22 +90,63 @@ public final class TokenSecureStoreUpdater implements SecureStoreUpdater {
         JobHistoryServerTokenUtils.obtainToken(hConf, refreshedCredentials);
       }
 
-      // Perform different logic to get delegation tokens based on the location factory type.
-      if (locationFactory instanceof HDFSLocationFactory) {
-        YarnUtils.addDelegationTokens(hConf, locationFactory, refreshedCredentials);
-      } else if (locationFactory instanceof FileContextLocationFactory) {
-        List<Token<?>> tokens = ((FileContextLocationFactory) locationFactory).getFileContext().getDelegationTokens(
-          new Path(locationFactory.getHomeLocation().toURI()), YarnUtils.getYarnTokenRenewer(hConf)
-        );
-        for (Token<?> token : tokens) {
-          refreshedCredentials.addToken(token.getService(), token);
-        }
-      }
+      addDelegationTokens(hConf, locationFactory, refreshedCredentials);
 
       return refreshedCredentials;
     } catch (IOException ioe) {
       throw Throwables.propagate(ioe);
     }
+  }
+
+  /**
+   * Helper method to get delegation tokens for the given LocationFactory.
+   * @param config The hadoop configuration.
+   * @param locationFactory The LocationFactory for generating tokens.
+   * @param credentials Credentials for storing tokens acquired.
+   * @return List of delegation Tokens acquired.
+   * TODO: copied from Twill 0.6 YarnUtils for CDAP-5350. Remove after this fix is moved to Twill.
+   */
+  private static List<Token<?>> addDelegationTokens(Configuration config,
+                                                    LocationFactory locationFactory,
+                                                    Credentials credentials) throws IOException {
+    if (!UserGroupInformation.isSecurityEnabled()) {
+      LOG.debug("Security is not enabled");
+      return ImmutableList.of();
+    }
+
+    FileSystem fileSystem = getFileSystem(locationFactory, config);
+
+    if (fileSystem == null) {
+      LOG.warn("Unexpected: LocationFactory is not HDFS. Not getting delegation tokens.");
+      return ImmutableList.of();
+    }
+
+    String renewer = YarnUtils.getYarnTokenRenewer(config);
+
+    Token<?>[] tokens = fileSystem.addDelegationTokens(renewer, credentials);
+    LOG.info("Added HDFS DelegationTokens: {}", Arrays.toString(tokens));
+
+    return tokens == null ? ImmutableList.<Token<?>>of() : ImmutableList.copyOf(tokens);
+  }
+
+  /**
+   * Gets the Hadoop FileSystem from LocationFactory.
+   * TODO: copied from Twill 0.6 YarnUtils for CDAP-5350. Remove after this fix is moved to Twill.
+   */
+  private static FileSystem getFileSystem(LocationFactory locationFactory, Configuration config) throws IOException {
+    LOG.debug("getFileSystem(): locationFactory is a {}", locationFactory.getClass());
+    if (locationFactory instanceof HDFSLocationFactory) {
+      return ((HDFSLocationFactory) locationFactory).getFileSystem();
+    }
+    if (locationFactory instanceof ForwardingLocationFactory) {
+      return getFileSystem(((ForwardingLocationFactory) locationFactory).getDelegate(), config);
+    }
+    // CDAP-5350: For encrypted file systems, FileContext does not acquire the KMS delegation token
+    // Since we know we are in Yarn, it is safe to get the FileSystem directly, bypassing LocationFactory.
+    if (locationFactory instanceof FileContextLocationFactory) {
+      return FileSystem.get(config);
+    }
+    return null;
   }
 
   /**
