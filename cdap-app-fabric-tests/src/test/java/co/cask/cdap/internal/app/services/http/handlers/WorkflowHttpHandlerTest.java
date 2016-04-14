@@ -1290,6 +1290,16 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     Assert.assertEquals(AppWithWorkflow.DummyAction.TOKEN_VALUE, nodeValueDetails.get(0).getValue());
     Assert.assertEquals(AppWithWorkflow.DummyAction.TOKEN_VALUE, nodeValueDetails.get(1).getValue());
 
+    // Get workflow level tokens
+    WorkflowTokenNodeDetail nodeDetail = getWorkflowToken(workflowId, pid, AppWithWorkflow.SampleWorkflow.NAME,
+                                                          WorkflowToken.Scope.USER, null);
+    Map<String, String> tokenData = nodeDetail.getTokenDataAtNode();
+    Assert.assertEquals(2, tokenData.size());
+    Assert.assertEquals(AppWithWorkflow.SampleWorkflow.INITIALIZE_TOKEN_VALUE,
+                        tokenData.get(AppWithWorkflow.SampleWorkflow.INITIALIZE_TOKEN_KEY));
+    Assert.assertEquals(AppWithWorkflow.SampleWorkflow.DESTROY_TOKEN_SUCCESS_VALUE,
+                        tokenData.get(AppWithWorkflow.SampleWorkflow.DESTROY_TOKEN_KEY));
+
     // Verify workflow token at a given node
     WorkflowTokenNodeDetail tokenAtNode = getWorkflowToken(workflowId, pid,
                                                            AppWithWorkflow.SampleWorkflow.FIRST_ACTION, null, null);
