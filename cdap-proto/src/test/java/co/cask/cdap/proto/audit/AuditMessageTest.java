@@ -30,7 +30,6 @@ import com.google.gson.GsonBuilder;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.lang.reflect.Modifier;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;

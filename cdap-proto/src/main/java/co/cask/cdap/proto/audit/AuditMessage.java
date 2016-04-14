@@ -18,7 +18,6 @@ package co.cask.cdap.proto.audit;
 
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.proto.id.EntityId;
-import com.google.gson.annotations.SerializedName;
 
 import java.util.Objects;
 
