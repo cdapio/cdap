@@ -37,10 +37,10 @@ function download_includes() {
   echo "Copying CLI Docs: building rst file from cli-docs results..." 
   python "${CLI_DOC_TOOL}" "${CLI_INPUT_TXT}" "${target_includes_dir}/${CLI_TABLE_RST}"
   status_code=$?
-  if [ "${warnings}" == "0" ]; then
+  if [ "${status_code}" == "0" ]; then
     echo "CLI rst file written to ${CLI_TABLE_RST}"
   else
-    local m="Error ${warnings} finding CLI input file: ${CLI_INPUT_TXT}"
+    local m="Error ${status_code} finding CLI input file: ${CLI_INPUT_TXT}"
     echo_red_bold "${m}"
     set_message "${m}"
   fi
