@@ -153,9 +153,4 @@ public class NoOpMetadataStore implements MetadataStore {
     }
     return builder.build();
   }
-
-  @Override
-  public void upgrade() {
-    // NO-OP
-  }
 }
