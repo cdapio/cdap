@@ -32,6 +32,10 @@ class HydratorPlusPlusBottomPanelCtrl {
       {
         title: 'Reference',
         template: '/assets/features/hydratorplusplus/templates/partial/reference-tab.html'
+      },
+      {
+        title: 'Post-Run Actions',
+        template: '/assets/features/hydratorplusplus/templates/partial/postactions.html'
       }
     ];
     this.HydratorPlusPlusBottomPanelActions = HydratorPlusPlusBottomPanelActions;
@@ -46,7 +50,7 @@ class HydratorPlusPlusBottomPanelCtrl {
     } );
     HydratorPlusPlusConsoleStore.registerOnChangeListener( () => { this.selectTab(0); } );
     this.setIsCollapsed();
-    this.selectTab(0);
+    this.selectTab(4);
   }
   selectTab(tab) {
     this.activeTab = this.tabs[tab];

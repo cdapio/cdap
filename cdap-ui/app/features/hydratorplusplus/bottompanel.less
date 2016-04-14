@@ -576,6 +576,74 @@ body.theme-cdap.state-hydratorplusplus {
       }
     }
 
+    .post-actions-tab {
+      .post-actions-sidebar, .post-actions-content {
+        float: left;
+      }
+
+      .post-actions-sidebar {
+        width: 150px;
+        height: 100%;
+        min-height: 45vh;
+        border-right: 1px solid #d4d4d4;
+        background-color: #EEEEEE;
+
+        ul {
+          li {
+            height: 40px;
+            line-height: 40px;
+            font-weight: 500;
+            color: #999;
+            cursor: pointer;
+            border-bottom: 1px solid #d4d4d4;
+
+            &.active {
+              background-color: white;
+              color: @hydrator-blue;
+
+              // this 1px will cover the sidebar border
+              width: ~"-moz-calc(100% + 1px)";
+              width: ~"-webkit-calc(100% + 1px)";
+              width: ~"calc(100% + 1px)";
+            }
+          }
+        }
+      }
+
+      .post-actions-content {
+        width: ~"-moz-calc(100% - 151px)";
+        width: ~"-webkit-calc(100% - 151px)";
+        width: ~"calc(100% - 151px)";
+
+        .main-container {
+          padding: 10px;
+
+          .table {
+            th, td {
+              padding: 10px;
+              font-size: 13px;
+              font-weight: 500;
+            }
+
+            th { border: 1px solid #dddddd; }
+
+            td {
+              &:first-child { width: 200px; }
+              &:nth-child(3) { width: 200px; }
+            }
+            td:last-child {
+              width: 80px;
+
+              a { color: @hydrator-blue; }
+              i { cursor: pointer; }
+            }
+          }
+        }
+      }
+    }
+
+
+
     pre {
       background-color: transparent;
       border: 0;
