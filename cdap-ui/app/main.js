@@ -1,3 +1,5 @@
+
+
 /*
  * Copyright © 2015 Cask Data, Inc.
  *
@@ -91,8 +93,8 @@ angular
       'angular-cron-jobs',
       'angularjs-dropdown-multiselect',
       'hc.marked',
-      'ngFileSaver'
-
+      'ngFileSaver',
+      'infinite-scroll'
     ]).name,
 
     'angular-loading-bar'
