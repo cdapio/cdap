@@ -47,11 +47,14 @@ public class ConcurrentPartitionConsumer extends AbstractPartitionConsumer {
   public PartitionConsumerResult doConsume(ConsumerWorkingSet workingSet, PartitionAcceptor acceptor) {
     doExpiry(workingSet);
     workingSet.populate(getPartitionedFileSet(), getConfiguration());
+    List<PartitionDetail> toConsume = selectPartitions(acceptor, workingSet.getPartitions());
+    return new PartitionConsumerResult(toConsume, removeDiscardedPartitions(workingSet));
+  }
 
+  private List<PartitionDetail> selectPartitions(PartitionAcceptor acceptor,
+                                                 List<? extends ConsumablePartition> partitions) {
     long now = System.currentTimeMillis();
     List<PartitionDetail> toConsume = new ArrayList<>();
-
-    List<? extends ConsumablePartition> partitions = workingSet.getPartitions();
     for (ConsumablePartition consumablePartition : partitions) {
       if (ProcessState.AVAILABLE != consumablePartition.getProcessState()) {
         continue;
@@ -71,10 +74,10 @@ public class ConcurrentPartitionConsumer extends AbstractPartitionConsumer {
         case SKIP:
           continue;
         case STOP:
-          break;
+          return toConsume;
       }
     }
-    return new PartitionConsumerResult(toConsume, removeDiscardedPartitions(workingSet));
+    return toConsume;
   }
 
   @Override

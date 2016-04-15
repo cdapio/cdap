@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,14 +19,25 @@ package co.cask.cdap.api.dataset.lib.partitioned;
 import co.cask.cdap.api.dataset.lib.PartitionDetail;
 
 /**
- * Defines whether to accept {@link PartitionDetail}s.
+ * Defines whether to accept {@link PartitionDetail}s, while iterating over a collection of them.
  */
 public interface PartitionAcceptor {
   /**
    * Return value, determining what to do with a Partition.
    */
   enum Return {
-    ACCEPT, SKIP, STOP
+    /**
+     * Accept the partition.
+     */
+    ACCEPT,
+    /**
+     * Skip over the partition. The skipped partition will remain as-is.
+     */
+    SKIP,
+    /**
+     * Will not include the partition. Additionally, the iteration over the partitions will end.
+     */
+    STOP
   }
 
   Return accept(PartitionDetail partitionDetail);
