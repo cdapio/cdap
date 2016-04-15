@@ -30,6 +30,7 @@ import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.config.ConnectionConfig;
 import co.cask.cdap.client.exception.DisconnectedException;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.utils.OSDetector;
 import co.cask.common.cli.CLI;
 import co.cask.common.cli.Command;
 import co.cask.common.cli.CommandSet;
@@ -335,14 +336,7 @@ public class CLIMain {
   }
 
   private static void usage() {
-    String toolName;
-    String toolNameBase = "cdap-cli";
-    String os = System.getProperty("os.name").toLowerCase();
-    if (os.indexOf("win") >= 0) {
-      toolName = toolNameBase + ".bat";
-    } else {
-      toolName = toolNameBase + ".sh";
-    }
+    String toolName = "cdap-cli" + OSDetector.isWindows() ? ".bat" : ".sh";
     HelpFormatter formatter = new HelpFormatter();
     String args =
       "[--autoconnect <true|false>] " +

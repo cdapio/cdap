@@ -19,6 +19,7 @@ package co.cask.cdap.data2.transaction;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.CConfigurationUtil;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.utils.OSDetector;
 import co.cask.tephra.ChangeId;
 import co.cask.tephra.TransactionManager;
 import co.cask.tephra.TxConstants;
@@ -230,14 +231,7 @@ public class TransactionManagerDebuggerMain {
       pw = new PrintWriter(System.out);
     }
     
-    String toolName;
-    String os = System.getProperty("os.name").toLowerCase();
-    if (os.indexOf("win") >= 0) {
-      toolName = TOOL_NAME_BASE + ".bat";
-    } else {
-      toolName = TOOL_NAME_BASE + ".sh";
-    }
-    
+    private static final String toolName = "tx-debugger" + OSDetector.isWindows() ? ".bat" : ".sh";
     pw.println("Usage:" +
         "\n\t " + toolName + " view [ <option> ... ]" +
         "\n\t " + toolName + " invalidate --host <name> --transaction <id>");
