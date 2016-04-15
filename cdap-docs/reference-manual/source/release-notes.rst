@@ -29,7 +29,8 @@ Cask Data Application Platform Release Notes
 Bug Fix
 -------
 
-- `CDAP-XXXX <https://issues.cask.co/browse/CDAP-XXXX>`__ - Fixed a ...
+- `CDAP-5350 <https://issues.cask.co/browse/CDAP-5350>`__ - Fixed an issue that prevented
+  MapReduce programs from running on clusters with encryption.
 
 
 `Release 3.3.2 <http://docs.cask.co/cdap/3.3.2/index.html>`__
