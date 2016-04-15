@@ -27,6 +27,7 @@
                 tooltip-append-to-body="true">
           </span>
           <span class="fa fa-asterisk" ng-if="PostActionController.pluginConfig._backendProperties[field.name].required"></span>
+          <small class="text-danger" ng-if="PostActionController.errorInConfig && PostActionController.pluginConfig._backendProperties[field.name].required && !PostActionController.pluginConfig.plugin.properties[field.name]">{{::PostActionController.requiredPropertyError}}</small>
         </label>
 
         <div>
