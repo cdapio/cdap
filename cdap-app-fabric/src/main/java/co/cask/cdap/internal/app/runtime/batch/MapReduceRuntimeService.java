@@ -34,7 +34,6 @@ import co.cask.cdap.common.lang.CombineClassLoader;
 import co.cask.cdap.common.lang.WeakReferenceDelegatorClassLoader;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.twill.HadoopClassExcluder;
-import co.cask.cdap.common.twill.LocalLocationFactory;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.data.stream.StreamInputFormat;
 import co.cask.cdap.data.stream.StreamInputFormatProvider;
@@ -798,7 +797,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     }
 
     ClassLoader oldCLassLoader = ClassLoaders.setContextClassLoader(job.getConfiguration().getClassLoader());
-    appBundler.createBundle(new LocalLocationFactory().create(jobJar.toURI()), classes);
+    appBundler.createBundle(Locations.toLocation(jobJar), classes);
     ClassLoaders.setContextClassLoader(oldCLassLoader);
 
     LOG.info("Built MapReduce Job Jar at {}", jobJar.toURI());
