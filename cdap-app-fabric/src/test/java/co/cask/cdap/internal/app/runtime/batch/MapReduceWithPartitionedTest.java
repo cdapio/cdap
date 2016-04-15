@@ -42,6 +42,7 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
 import java.text.DateFormat;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -56,6 +57,9 @@ import static co.cask.cdap.internal.app.runtime.batch.AppWithTimePartitionedFile
  * app-fabric tests, explore is disabled.
  */
 public class MapReduceWithPartitionedTest extends MapReduceRunnerTestBase {
+
+  static final DateFormat DATE_FORMAT = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT, Locale.US);
+
 
   @Test
   public void testTimePartitionedWithMR() throws Exception {
@@ -72,8 +76,7 @@ public class MapReduceWithPartitionedTest extends MapReduceRunnerTestBase {
         }
       });
 
-    final long time = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT)
-      .parse("1/15/15 11:15 am").getTime();
+    final long time = DATE_FORMAT.parse("1/15/15 11:15 am").getTime();
     final long time5 = time + TimeUnit.MINUTES.toMillis(5);
 
     // run the partition writer m/r with this output partition time

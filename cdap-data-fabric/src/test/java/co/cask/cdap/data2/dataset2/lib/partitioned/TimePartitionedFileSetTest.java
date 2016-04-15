@@ -48,6 +48,7 @@ import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.TimeZone;
@@ -58,7 +59,7 @@ public class TimePartitionedFileSetTest {
   @ClassRule
   public static DatasetFrameworkTestUtil dsFrameworkUtil = new DatasetFrameworkTestUtil();
 
-  static final DateFormat DATE_FORMAT = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT);
+  static final DateFormat DATE_FORMAT = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT, Locale.US);
   static final long MINUTE = TimeUnit.MINUTES.toMillis(1);
   static final long HOUR = TimeUnit.HOURS.toMillis(1);
   static final long MAX = Long.MAX_VALUE;
@@ -87,7 +88,7 @@ public class TimePartitionedFileSetTest {
         // make sure the dataset has no partitions
         validateTimePartitions(tpfs, 0L, MAX, Collections.<Long, String>emptyMap());
 
-        Date date = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT).parse("6/4/12 10:00 am");
+        Date date = DATE_FORMAT.parse("6/4/12 10:00 am");
         long time = date.getTime();
 
         // keep track of all the metadata added
@@ -205,7 +206,7 @@ public class TimePartitionedFileSetTest {
   @Test
   public void testOutputPartitionPath() throws Exception {
     // test specifying output time
-    Date date = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT).parse("1/1/15 8:42 pm");
+    Date date = DATE_FORMAT.parse("1/1/15 8:42 pm");
     Map<String, String> args = Maps.newHashMap();
     TimePartitionedFileSetArguments.setOutputPartitionTime(args, date.getTime());
     TimeZone timeZone = Calendar.getInstance().getTimeZone();
@@ -257,7 +258,7 @@ public class TimePartitionedFileSetTest {
     TransactionAware txAwareDataset = (TransactionAware) tpfs;
     validateTimePartitions(tpfs, 0L, MAX, Collections.<Long, String>emptyMap());
 
-    Date date = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT).parse("6/4/12 10:00 am");
+    Date date = DATE_FORMAT.parse("6/4/12 10:00 am");
     final long time = date.getTime();
     dsFrameworkUtil.newInMemoryTransactionExecutor(txAwareDataset).execute(new TransactionExecutor.Subroutine() {
       @Override
@@ -312,11 +313,10 @@ public class TimePartitionedFileSetTest {
 
   @Test
   public void testPartitionsForTimeRange() throws Exception {
-    DateFormat format = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT);
     for (Object[] test : rangeTests) {
       try {
-        long start = test[0] instanceof Long ? (Long) test[0] : format.parse((String) test[0]).getTime();
-        long stop = test[1] instanceof Long ? (Long) test[1] : format.parse((String) test[1]).getTime();
+        long start = test[0] instanceof Long ? (Long) test[0] : DATE_FORMAT.parse((String) test[0]).getTime();
+        long stop = test[1] instanceof Long ? (Long) test[1] : DATE_FORMAT.parse((String) test[1]).getTime();
         List<PartitionFilter> filters = TimePartitionedFileSetDataset.partitionFiltersForTimeRange(start, stop);
         //Assert.assertEquals(test.length - 2, filters.size());
         Set<String> expectedSet = Sets.newHashSet();
