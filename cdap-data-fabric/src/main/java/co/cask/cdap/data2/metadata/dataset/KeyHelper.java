@@ -25,8 +25,8 @@ import co.cask.cdap.proto.ProgramType;
  */
 // Note: these methods were refactored from MetadataDataset class. Once CDAP-3657 is fixed, these methods will need
 // to be cleaned up CDAP-4291
-public class KeyHelper {
-  public static void addTargetIdToKey(MDSKey.Builder builder, Id.NamespacedId namespacedId) {
+final class KeyHelper {
+  static void addTargetIdToKey(MDSKey.Builder builder, Id.NamespacedId namespacedId) {
     String type = getTargetType(namespacedId);
     if (type.equals(Id.Program.class.getSimpleName())) {
       Id.Program program = (Id.Program) namespacedId;
@@ -77,7 +77,7 @@ public class KeyHelper {
     }
   }
 
-  public static Id.NamespacedId getTargetIdIdFromKey(MDSKey.Splitter keySplitter, String type) {
+  static Id.NamespacedId getTargetIdIdFromKey(MDSKey.Splitter keySplitter, String type) {
     if (type.equals(Id.Program.class.getSimpleName())) {
       String namespaceId = keySplitter.getString();
       String appId = keySplitter.getString();
@@ -110,10 +110,13 @@ public class KeyHelper {
     throw new IllegalArgumentException("Illegal Type " + type + " of metadata source.");
   }
 
-  public static String getTargetType(Id.NamespacedId namespacedId) {
+  static String getTargetType(Id.NamespacedId namespacedId) {
     if (namespacedId instanceof Id.Program) {
       return Id.Program.class.getSimpleName();
     }
     return namespacedId.getClass().getSimpleName();
+  }
+
+  private KeyHelper() {
   }
 }

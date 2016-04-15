@@ -21,6 +21,7 @@ import co.cask.cdap.api.artifact.ArtifactVersion;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFrameworkTestUtil;
+import co.cask.cdap.data2.metadata.indexer.Indexer;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.metadata.MetadataSearchTargetType;
@@ -35,6 +36,7 @@ import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -567,6 +569,79 @@ public class MetadataDatasetTest {
     doTestHistory(dataset, stream1, "s_");
   }
 
+  @Test
+  public void testIndexRebuilding() throws Exception {
+    MetadataDataset dataset =
+      getDataset(Id.DatasetInstance.from(DatasetFrameworkTestUtil.NAMESPACE_ID, "testIndexRebuilding"));
+    dataset.setProperty(flow1, "flowKey", "flowValue", new ReversingIndexer());
+    dataset.setProperty(dataset1, "datasetKey", "datasetValue", new ReversingIndexer());
+    String namespaceId = flow1.getNamespaceId();
+    Set<MetadataSearchTargetType> targetTypes = Collections.singleton(MetadataSearchTargetType.ALL);
+    List<MetadataEntry> searchResults = dataset.search(namespaceId, "flowValue", targetTypes);
+    Assert.assertTrue(searchResults.isEmpty());
+    searchResults = dataset.search(namespaceId, "flowKey:flow*", targetTypes);
+    Assert.assertTrue(searchResults.isEmpty());
+    searchResults = dataset.search(namespaceId, "datasetValue", targetTypes);
+    Assert.assertTrue(searchResults.isEmpty());
+    searchResults = dataset.search(namespaceId, "datasetKey:dataset*", targetTypes);
+    Assert.assertTrue(searchResults.isEmpty());
+    // Re-build indexes. Now the default indexer should be used
+    byte[] startRowKeyForNextBatch = dataset.rebuildIndexes(null, 1);
+    Assert.assertNotNull(startRowKeyForNextBatch);
+    List<MetadataEntry> flowSearchResults = dataset.search(namespaceId, "flowValue", targetTypes);
+    List<MetadataEntry> dsSearchResults = dataset.search(namespaceId, "datasetValue", targetTypes);
+    if (!flowSearchResults.isEmpty()) {
+      Assert.assertEquals(1, flowSearchResults.size());
+      flowSearchResults = dataset.search(namespaceId, "flowKey:flow*", targetTypes);
+      Assert.assertEquals(1, flowSearchResults.size());
+      Assert.assertTrue(dsSearchResults.isEmpty());
+      dsSearchResults = dataset.search(namespaceId, "datasetKey:dataset*", targetTypes);
+      Assert.assertTrue(dsSearchResults.isEmpty());
+    } else {
+      flowSearchResults = dataset.search(namespaceId, "flowKey:flow*", targetTypes);
+      Assert.assertTrue(flowSearchResults.isEmpty());
+      Assert.assertEquals(1, dsSearchResults.size());
+      dsSearchResults = dataset.search(namespaceId, "datasetKey:dataset*", targetTypes);
+      Assert.assertEquals(1, dsSearchResults.size());
+    }
+    startRowKeyForNextBatch = dataset.rebuildIndexes(startRowKeyForNextBatch, 1);
+    Assert.assertNull(startRowKeyForNextBatch);
+    searchResults = dataset.search(namespaceId, "flowValue", targetTypes);
+    Assert.assertEquals(1, searchResults.size());
+    searchResults = dataset.search(namespaceId, "flowKey:flow*", targetTypes);
+    Assert.assertEquals(1, searchResults.size());
+    searchResults = dataset.search(namespaceId, "datasetValue", targetTypes);
+    Assert.assertEquals(1, searchResults.size());
+    searchResults = dataset.search(namespaceId, "datasetKey:dataset*", targetTypes);
+    Assert.assertEquals(1, searchResults.size());
+  }
+
+  @Test
+  public void testIndexDeletion() throws Exception {
+    MetadataDataset dataset =
+      getDataset(Id.DatasetInstance.from(DatasetFrameworkTestUtil.NAMESPACE_ID, "testIndexRebuilding"));
+    dataset.setProperty(flow1, "flowKey", "flowValue");
+    dataset.setProperty(dataset1, "datasetKey", "datasetValue");
+    String namespaceId = flow1.getNamespaceId();
+    Set<MetadataSearchTargetType> targetTypes = Collections.singleton(MetadataSearchTargetType.ALL);
+    MetadataEntry expectedFlowEntry = new MetadataEntry(flow1, "flowKey", "flowValue");
+    MetadataEntry expectedDatasetEntry = new MetadataEntry(dataset1, "datasetKey", "datasetValue");
+    List<MetadataEntry> searchResults = dataset.search(namespaceId, "flowValue", targetTypes);
+    Assert.assertEquals(ImmutableList.of(expectedFlowEntry), searchResults);
+    searchResults = dataset.search(namespaceId, "flowKey:flow*", targetTypes);
+    Assert.assertEquals(ImmutableList.of(expectedFlowEntry), searchResults);
+    searchResults = dataset.search(namespaceId, "datasetValue", targetTypes);
+    Assert.assertEquals(ImmutableList.of(expectedDatasetEntry), searchResults);
+    searchResults = dataset.search(namespaceId, "datasetKey:dataset*", targetTypes);
+    Assert.assertEquals(ImmutableList.of(expectedDatasetEntry), searchResults);
+    // delete indexes
+    // 4 indexes should have been deleted - flowValue, flowKey:flowValue, datasetValue, datasetKey:datasetValue
+    for (int i = 0; i < 4; i++) {
+      Assert.assertEquals(1, dataset.deleteAllIndexes(1));
+    }
+    Assert.assertEquals(0, dataset.deleteAllIndexes(1));
+  }
+
   private void doTestHistory(MetadataDataset dataset, Id.NamespacedId targetId, String prefix)
     throws Exception {
     // Metadata change history keyed by time in millis the change was made
@@ -744,5 +819,17 @@ public class MetadataDatasetTest {
     return DatasetsUtil.getOrCreateDataset(dsFrameworkUtil.getFramework(), instance,
                                            MetadataDataset.class.getName(),
                                            DatasetProperties.EMPTY, null, null);
+  }
+
+  private static final class ReversingIndexer implements Indexer {
+
+    @Override
+    public Set<String> getIndexes(MetadataEntry entry) {
+      return ImmutableSet.of(reverse(entry.getKey()), reverse(entry.getValue()));
+    }
+
+    private String reverse(String toReverse) {
+      return new StringBuilder(toReverse).reverse().toString();
+    }
   }
 }

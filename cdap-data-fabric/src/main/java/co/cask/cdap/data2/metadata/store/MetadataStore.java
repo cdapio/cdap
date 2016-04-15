@@ -217,4 +217,14 @@ public interface MetadataStore {
    * @return the snapshot of the metadata for entities on or before the given time
    */
   Set<MetadataRecord> getSnapshotBeforeTime(MetadataScope scope,  Set<Id.NamespacedId> entityIds, long timeMillis);
+
+  /**
+   * Rebuild stale metadata indexes.
+   */
+  void rebuildIndexes();
+
+  /**
+   * Delete all existing metadata indexes.
+   */
+  void deleteAllIndexes();
 }
