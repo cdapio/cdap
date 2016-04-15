@@ -19,13 +19,13 @@ package co.cask.cdap.internal.app.runtime.batch;
 import co.cask.cdap.api.plugin.Plugin;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.lang.CombineClassLoader;
 import co.cask.cdap.common.lang.Delegators;
 import co.cask.cdap.common.lang.ProgramClassLoader;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
-import co.cask.cdap.common.twill.LocalLocationFactory;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.internal.app.runtime.batch.distributed.DistributedMapReduceTaskContextProvider;
 import co.cask.cdap.internal.app.runtime.batch.distributed.MapReduceContainerLauncher;
@@ -288,8 +288,7 @@ public class MapReduceClassLoader extends CombineClassLoader implements AutoClos
       // In distributed mode, the program is created by expanding the program jar.
       // The program jar is localized to container with the program jar name.
       // It's ok to expand to a temp dir in local directory, as the YARN container will be gone.
-      Location programLocation = new LocalLocationFactory()
-        .create(new File(contextConfig.getProgramJarName()).getAbsoluteFile().toURI());
+      Location programLocation = Locations.toLocation(new File(contextConfig.getProgramJarName()));
       try {
         File unpackDir = DirUtils.createTempDir(new File(System.getProperty("user.dir")));
         LOG.info("Create ProgramClassLoader from {}, expand to {}", programLocation, unpackDir);

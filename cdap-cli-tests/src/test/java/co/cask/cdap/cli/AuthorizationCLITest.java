@@ -18,7 +18,6 @@ package co.cask.cdap.cli;
 
 import co.cask.cdap.StandaloneTester;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.twill.LocalLocationFactory;
 import co.cask.cdap.gateway.handlers.InMemoryAuthorizer;
 import co.cask.cdap.internal.test.AppJarHelper;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -27,6 +26,7 @@ import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.proto.security.Role;
 import co.cask.cdap.security.server.BasicAuthenticationHandler;
 import co.cask.common.cli.CLI;
+import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.junit.Assert;

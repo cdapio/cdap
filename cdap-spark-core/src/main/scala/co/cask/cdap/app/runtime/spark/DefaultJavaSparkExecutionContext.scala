@@ -26,7 +26,7 @@ import co.cask.cdap.api.metrics.Metrics
 import co.cask.cdap.api.plugin.PluginContext
 import co.cask.cdap.api.spark.{JavaSparkExecutionContext, SparkExecutionContext, SparkSpecification}
 import co.cask.cdap.api.stream.{GenericStreamEventData, StreamEventDecoder}
-import co.cask.cdap.api.workflow.WorkflowToken
+import co.cask.cdap.api.workflow.{WorkflowInfo, WorkflowToken}
 import co.cask.cdap.api.{Admin, ServiceDiscoverer, TxRunnable}
 import co.cask.cdap.data.stream.StreamInputFormat
 import org.apache.hadoop.conf.Configuration
@@ -57,6 +57,8 @@ class DefaultJavaSparkExecutionContext(sec: SparkExecutionContext) extends JavaS
   override def getPluginContext: PluginContext = sec.getPluginContext
 
   override def getWorkflowToken: WorkflowToken = sec.getWorkflowToken.orNull
+
+  override def getWorkflowInfo: WorkflowInfo = sec.getWorkflowInfo.orNull
 
   override def getLocalizationContext = sec.getLocalizationContext
 

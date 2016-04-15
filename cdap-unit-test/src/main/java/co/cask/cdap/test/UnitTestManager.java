@@ -36,6 +36,7 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.explore.jdbc.ExploreDriver;
 import co.cask.cdap.internal.AppFabricClient;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
+import co.cask.cdap.internal.app.runtime.artifact.Artifacts;
 import co.cask.cdap.internal.test.AppJarHelper;
 import co.cask.cdap.internal.test.PluginJarHelper;
 import co.cask.cdap.proto.Id;
@@ -67,6 +68,7 @@ import org.apache.twill.filesystem.LocationFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.net.InetSocketAddress;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -146,14 +148,13 @@ public class UnitTestManager implements TestManager {
                                               @Nullable Config configObject, File... bundleEmbeddedJars) {
     Preconditions.checkNotNull(applicationClz, "Application class cannot be null.");
     String appConfig = "";
-    TypeToken typeToken = TypeToken.of(applicationClz);
-    TypeToken<?> configToken = typeToken.resolveType(Application.class.getTypeParameters()[0]);
+    Type configType = Artifacts.getConfigType(applicationClz);
 
     try {
       if (configObject != null) {
         appConfig = GSON.toJson(configObject);
       } else {
-        configObject = ((Class<Config>) configToken.getRawType()).newInstance();
+        configObject = (Config) TypeToken.of(configType).getRawType().newInstance();
       }
 
       Application app = applicationClz.newInstance();

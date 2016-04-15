@@ -29,7 +29,7 @@ public abstract class AbstractSparkBatchContext extends AbstractBatchContext imp
   private final SparkClientContext sparkContext;
 
   public AbstractSparkBatchContext(SparkClientContext sparkContext, LookupProvider lookupProvider, String stageId) {
-    super(sparkContext.getPluginContext(), sparkContext, sparkContext.getMetrics(), lookupProvider, stageId,
+    super(sparkContext, sparkContext, sparkContext.getMetrics(), lookupProvider, stageId,
           sparkContext.getLogicalStartTime(), sparkContext.getRuntimeArguments());
     this.sparkContext = sparkContext;
   }
