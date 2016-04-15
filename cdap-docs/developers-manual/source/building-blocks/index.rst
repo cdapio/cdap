@@ -20,12 +20,12 @@ Building Blocks
     Views <views>
     Flows and Flowlets <flows-flowlets/index>
     MapReduce Programs<mapreduce-programs>
+    Plugins <plugins>
     Schedules <schedules>
     Services <services>
     Spark Programs <spark-programs>
     Workers <workers>
     Workflows <workflows>
-    Plugins <plugins>
     Artifacts <artifacts>
     Metadata and Lineage <metadata-lineage>
     Namespaces <namespaces>
@@ -47,12 +47,12 @@ write data through the data abstraction layer in CDAP.
 
 - :doc:`Flows and Flowlets <flows-flowlets/index>`
 - :doc:`MapReduce Programs <mapreduce-programs>`
+- :doc:`Plugins <plugins>`
 - :doc:`Schedules <schedules>`
 - :doc:`Services <services>`
 - :doc:`Spark Programs <spark-programs>`
 - :doc:`Workers <workers>`
 - :doc:`Workflows <workflows>`
-- :doc:`Plugins <plugins>`
 
 **Additional abstractions** include:
 

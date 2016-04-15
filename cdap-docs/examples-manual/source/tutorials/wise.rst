@@ -44,34 +44,43 @@ Conventions
 
 In the examples and commands that follow, for brevity we will use these conventions:
 
-- ``$CDAP_SDK_HOME`` is the directory that you have installed the CDAP Standalone SDK, either
+- ``<CDAP-SDK-HOME>`` is the directory that you have installed the CDAP Standalone SDK, either
   on a UNIX-type system or Windows.
+  
 - The `CDAP Command Line Interface (CLI) <http://docs.cask.co/cdap/current/en/reference-manual/cli-api.html>`__
   is included in the SDK in the ``bin`` directory, either at ``bin/cdap-cli.sh`` or |---|
-  on Windows |---| ``bin\cdap-cli.bat``. In the examples given, substitute the actual path
-  as appropriate. The CLI allows you to quickly access CDAP facilities from a command line
-  environment.
-- If you add the SDK bin directory to your path, you can simplify the commands. From within
-  the CDAP-SDK-home directory, enter::
-
-    $ export PATH=${PATH}:`pwd`/bin
-
-  or under Windows::
-
-    > setx path "%PATH%;%CD%\bin"
+  on Windows |---| ``bin\cdap-cli.bat``. The CLI allows you to quickly access CDAP
+  facilities from a command line environment.
   
-  Note that under Windows, you'll need to create a new command line window in order to see
-  this change to the path variable.
-- The ``curl`` command, common on UNIX-type systems, is included in a Windows-version in 
-  the CDAP SDK in the ``libexec\bin`` directory as ``curl.exe``.
-- Other scripts referenced below are included either in the SDK or downloaded zips as ``.bat``
-  versions for Windows. Substitute these versions as appropriate in the examples below.
+- For brevity in the commands given below, we will simply use ``cdap-cli.sh`` for the CDAP
+  Command Line Interface. Substitute the actual path of ``./<CDAP-SDK-HOME>/bin/cdap-cli.sh``,
+  or ``<CDAP-SDK-HOME>\bin\cdap-cli.bat`` on Windows, as appropriate. 
 
+- A Windows-version of the application ``curl`` is included in the CDAP SDK as
+  ``libexec\bin\curl.exe``; use it as a substitute for ``curl`` in examples.
+
+- If you add the SDK bin directory to your path, you can simplify the commands. From within
+  the CDAP-SDK-home directory, enter:
+  
+  .. tabbed-parsed-literal::
+  
+    .. Linux
+
+    $ export PATH=${PATH}:\`pwd\`/bin
+
+    .. Windows
+
+    > set path=%PATH%;%CD%\bin;%CD%\libexec\bin
+  
+  The Windows path has been augmented with a directory where the SDK includes
+  Windows-versions of commands such as ``curl``.
+  
+.. include:: ../../../developers-manual/source/_includes/windows-note.txt
+
+.. highlight:: console
 
 Running WISE 
 ============
-.. highlight:: console
-
 Building and running WISE v\ |cdap-apps-version| is straightforward. We’ll assume that you have
 already downloaded, installed, and have started an instance of CDAP, as described in the
 :ref:`CDAP Software Development Kit (SDK) <standalone-index>`.
@@ -79,34 +88,48 @@ already downloaded, installed, and have started an instance of CDAP, as describe
 Change to the directory where you have installed the CDAP SDK Standalone, and download the
 WISE source code:
 
-.. container:: highlight
+.. tabbed-parsed-literal::
 
-  .. parsed-literal::
-    |$| cd $CDAP_SDK_HOME/examples    
-    |$| curl |https:|//codeload.github.com/caskdata/cdap-apps/zip/release/cdap-|short-version|-compatible --output cdap-apps-release-cdap-|short-version|-compatible.zip
+  $ cd <CDAP-SDK-HOME>
+  $ curl -w"\n" -X GET "https://codeload.github.com/caskdata/cdap-apps/zip/release/cdap-|short-version|-compatible" \
+  --output examples/cdap-apps-release-cdap-|short-version|-compatible.zip  
 
 Unzip the directory and build the application (without running the self-test) by executing:
 
-.. container:: highlight
+.. tabbed-parsed-literal::
 
-  .. parsed-literal::
-    |$| unzip cdap-apps-release-cdap-|short-version|-compatible.zip
-    |$| cd cdap-apps-release-cdap-|short-version|-compatible/Wise
-    |$| mvn clean package -DskipTests
+  .. Linux
 
-To build and run the WISE Example Tests, you can use::
+  $ cd examples
+  $ unzip cdap-apps-release-cdap-|short-version|-compatible.zip
+  $ cd cdap-apps-release-cdap-|short-version|-compatible/Wise
+  
+  .. Windows
 
-    $ mvn clean package
+  > cd examples
+  > jar xf cdap-apps-release-cdap-|short-version|-compatible.zip
+  > cd cdap-apps-release-cdap-|short-version|-compatible\Wise
+
+To build WISE (skipping the tests), you use:
+
+.. tabbed-parsed-literal::
+
+  $ mvn clean package -DskipTests
+    
+(To build WISE and run the WISE Example Tests, you would use:)
+
+.. tabbed-parsed-literal::
+
+  $ mvn clean package
     
 To deploy and start the application, make sure CDAP is running and then execute:
 
-.. container:: highlight
+.. tabbed-parsed-literal::
 
-  .. parsed-literal::
-    |$| cd $CDAP_SDK_HOME
-    |$| cdap-cli.sh deploy app examples/cdap-apps-release-cdap-|short-version|-compatible/Wise/target/cdap-wise-|cdap-apps-version|.jar
-    |$| cdap-cli.sh start flow Wise.WiseFlow 
-    |$| cdap-cli.sh start service Wise.WiseService
+  $ cd $CDAP-SDK-HOME
+  $ cdap-cli.sh deploy app examples/cdap-apps-release-cdap-|short-version|-compatible/Wise/target/cdap-wise-|cdap-apps-version|.jar
+  $ cdap-cli.sh start flow Wise.WiseFlow 
+  $ cdap-cli.sh start service Wise.WiseService
 
 You should get responses similar to::
 
@@ -280,11 +303,13 @@ this format (broken on two lines to fit)::
 We have already prepared a sample of Web server access logs for you to inject into the
 *logEventStream*. Run this command from the CDAP Standalone home directory:
 
-.. container:: highlight
+.. tabbed-parsed-literal::
 
-  .. parsed-literal::
-    |$| cd $CDAP_SDK_HOME
-    |$| cdap-cli.sh load stream logEventStream examples/cdap-apps-release-cdap-|short-version|-compatible/Wise/resources/apache.accesslog text/plain
+   $ cd $CDAP-SDK-HOME
+   $ cdap-cli.sh load stream logEventStream examples/cdap-apps-release-cdap-|short-version|-compatible/Wise/resources/apache.accesslog text/plain
+
+   Successfully sent stream event to stream 'logEventStream'
+   
 
 This requires that a Standalone CDAP instance be running with the WISE application already
 deployed.
@@ -497,6 +522,15 @@ The ``WiseWorkflow`` can then be scheduled in the ``WiseApp``:
    :append: . . . 
    :dedent: 4
 
+You can manually run the ``WiseWorkflow`` using
+
+.. tabbed-parsed-literal::
+
+  $ cdap-cli.sh start workflow Wise.WiseWorkflow
+          
+  Successfully started workflow 'WiseWorkflow' of application 'Wise' 
+  with stored runtime arguments '{}'
+
 
 Accessing Data through WiseService
 ==================================
@@ -505,21 +539,20 @@ content of the *pageViewStore* dataset. For example, ``WiseService`` defines thi
 
   GET <base-url>/v3/namespaces/default/apps/Wise/services/WiseService/methods/ip/<ip-address>/count
   
-Using the ``curl`` command and the CLI, example use of the service would be::
+Using the ``curl`` command and the CLI, example use of the service would be:
 
-  $ curl -w'\n' -X GET http://localhost:10000/v3/namespaces/default/apps/Wise/services/WiseService/methods/ip/255.255.255.185/count
+.. tabbed-parsed-literal::
+
+  $ curl -w"\n" -X GET "http://localhost:10000/v3/namespaces/default/apps/Wise/services/WiseService/methods/ip/255.255.255.185/count"
   21
   
   $ cdap-cli.sh call service Wise.WiseService GET ip/255.255.255.185/count  
 
-  +=======================================================================================================================+
-  | status                      | headers                     | body size                   | body                        |
-  +=======================================================================================================================+
-  | 200                         | Content-Length : 2          | 2                           | 21                          |
-  |                             | Connection : keep-alive     |                             |                             |
-  |                             | Content-Type : application/ |                             |                             |
-  |                             | json                        |                             |                             |
-  +=======================================================================================================================+
+  < 200 OK
+  < Content-Length: 2
+  < Connection: keep-alive
+  < Content-Type: application/json
+  21
   
 This endpoint is defined in a class extending ``AbstractHttpServiceHandler``:
 
@@ -550,16 +583,20 @@ method with the help of the ``@PathParam`` annotation.
   is specified by the ``addHandler()`` method. 
 
 You can use a ``curl`` command to make calls to the service URL. For example, to query total pageview count
-from IP ``255.255.255.207``::
+from IP ``255.255.255.207``:
 
-  $ curl -w'\n' -X GET http://localhost:10000/v3/namespaces/default/apps/Wise/services/WiseService/methods/ip/255.255.255.207/count
+.. tabbed-parsed-literal::
+
+  $ curl -w"\n" -X GET "http://localhost:10000/v3/namespaces/default/apps/Wise/services/WiseService/methods/ip/255.255.255.207/count"
   22
 
 The ``PageViewCountHandler`` has another endpoint for retrieving the pageview count of a particular page from
-a specific IP address. For example, to query the pageview count of page ``/index.html`` from IP ``255.255.255.154``::
+a specific IP address. For example, to query the pageview count of page ``/index.html`` from IP ``255.255.255.154``:
 
-  $ curl -w'\n' -X GET -d /index.html http://localhost:10000/v3/namespaces/default/apps/Wise/services/WiseService/methods/ip/255.255.255.154/count
-  21
+.. tabbed-parsed-literal::
+
+  $ curl -w"\n" -X POST -d "/index.html" "http://localhost:10000/v3/namespaces/default/apps/Wise/services/WiseService/methods/ip/255.255.255.154/count"
+  2
   
   
 Exploring Datasets through SQL

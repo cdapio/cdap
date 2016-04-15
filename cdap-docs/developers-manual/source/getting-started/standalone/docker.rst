@@ -92,11 +92,24 @@ Docker from a Command Line
   started correctly.
   
   If you are not running on Linux, you need to start the Docker Virtual Machine (VM) before you
-  can use containers. For example, on Mac OS, use::
+  can use containers. For example:
   
+  .. tabbed-parsed-literal::
+    :tabs: "Mac OS X",Windows
+    :mapping: linux,windows
+    :dependent: linux-windows
+    :languages: console,shell-session
+
+    .. Mac OS X
+    
     $ boot2docker start
     $ boot2docker ip
     
+    .. Windows
+    
+    > boot2docker start
+    > boot2docker ip
+   
   to determine the Docker VM's IP address. You will need to use that address as the host
   name when either connecting to the CDAP UI or making an HTTP request.
   
@@ -113,19 +126,36 @@ Docker from a Command Line
 
 - Once Docker has started, pull down the *CDAP Docker Image* from the Docker hub using:
 
-  .. container:: highlight
+  .. tabbed-parsed-literal::
+    :tabs: "Mac OS X",Windows
+    :mapping: linux,windows
+    :dependent: linux-windows
+    :languages: console,shell-session
 
-    .. parsed-literal::
-  
-      |$| docker pull caskdata/cdap-standalone:|release|
+    .. Mac OS X
+    
+    $ docker pull caskdata/cdap-standalone:|release|
+    
+    .. Windows
+    
+    > docker pull caskdata/cdap-standalone:|release|
+
 
 - Start the *Docker CDAP Virtual Machine* with:
 
-  .. container:: highlight
+  .. tabbed-parsed-literal::
+    :tabs: "Mac OS X",Windows
+    :mapping: linux,windows
+    :dependent: linux-windows
+    :languages: console,shell-session
 
-    .. parsed-literal::
-  
-      |$| docker run -t -i -p 9999:9999 -p 10000:10000 caskdata/cdap-standalone:|release|
+    .. Mac OS X
+    
+    $ docker run -t -i -p 9999:9999 -p 10000:10000 caskdata/cdap-standalone:|release|
+    
+    .. Windows
+    
+    > docker run -t -i -p 9999:9999 -p 10000:10000 caskdata/cdap-standalone:|release|
 
 - CDAP will start automatically once the CDAP Virtual Machine starts. CDAP’s Software
   Directory is under ``/opt/cdap/sdk``.

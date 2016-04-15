@@ -15,7 +15,9 @@
 # the License.
 
 """Simple, inelegant Sphinx extension which adds a directive for a
-tabbed parsed-literals that may be switched between in HTML.  
+tabbed parsed-literals that may be switched between in HTML.
+
+version: 0.2
 
 The directive adds these parameters, both optional:
 
@@ -29,22 +31,37 @@ The directive adds these parameters, both optional:
 
     :independent: flag to indicate that this tab set does not link to another tabs
     
-    :dependent: comma-separated list of linked-tabs; default "Linux,Windows"
+    :dependent: name of tab set this tab belongs to; default "linux-windows"
+
+    :mapping: comma-separated list of linked-tabs; default "Linux,Windows"
 
 Separate the code blocks with matching comment lines. Tabs must follow in order of :tabs:
 option. Comment labels are for convenience, and don't need to match. Note example uses a
-tab label with a space in it, and is enclosed in quotes.
+tab label with a space in it, and is enclosed in quotes. Note that the comma-separated
+lists must not have spaces in them (outside of quotes); ie, use "java,scala", not 
+"java, scala".
+
+The mapping maps a tab that is displayed to the trigger that will display it.
+For example, you could have a set of tabs:
+
+    :tabs: "Mac OS X",Windows
+    :mapping: linux,windows
+    :dependent: linux-windows
+    
+Clicking on a "Linux" tab in another tab-set woula activate the "Mac OS X" tab in this tab set.
 
 Note that slightly different rule operate for replacements: a replacement such as
 "\|replace|" will work, and the backslash will be interpreted as a single backslash rather
 than as escaping the "|".
 
-It is best if all tabs on a page are identical. If not, changing an active tab will cause other
-tabs in other sets to become "inactive" (ie, disappear).
+If there is only one tab, the node is set to "independent" automatically, as there is
+nothing to switch. If :languages: is not supplied for the single tab, "shell-session" is
+used.
 
-Lines that begin with "$", "#", ">", "&gt;", "cdap >", "cdap &gt;" are treated as command lines
-and the text following is auto-selected for copying on mouse-over. (On Safari, command-V still 
-required for copying; other browser support click-copying to the clipboard.)
+Lines that begin with "$", "#", ">", "&gt;", "cdap >", "cdap &gt;" are treated as command 
+lines and the text following is auto-selected for copying on mouse-over. (On Safari,
+command-V is still required for copying; other browser support click-copying to the
+clipboard.)
 
 FIXME: Add a concept of "tab labels" versus "tab keys".
 FIXME: Implement the ":single:" flag.
@@ -93,13 +110,14 @@ tab will change all other tabs to "Linux". You may need to include a mapping lis
 
 .. tabbed-parsed-literal::
   :tabs: Linux,Windows,"Distributed CDAP"
-  :dependent: Linux,Windows,Linux
+  :mapping: Linux,Windows,Linux
   :languages: console,shell-session,console
 
     ...
     
-This maps the tab "Distributed CDAP" to the other "Linux" tabs on the page. Currently, only one 
-dependent set of tabs can be used per documentation set.
+This maps the tab "Distributed CDAP" to the other "Linux" tabs on the site. Clicking that
+tab would change other tabs to the "linux" tab. (Changing to "linux" from another tab will
+cause the first "linux" tab to be selected.)
 
 JavaScript and design of tabs was taken from the Apache Spark Project:
 http://spark.apache.org/examples.html
@@ -113,8 +131,9 @@ from docutils.parsers.rst import Directive, directives
 from docutils.parsers.rst.directives.body import ParsedLiteral
 from docutils.parsers.rst.roles import set_classes
 
-DEFAULT_TABS = ['Linux', 'Windows']
 DEFAULT_LANGUAGES = ['console', 'shell-session']
+DEFAULT_TAB_SET = 'linux-windows'
+DEFAULT_TABS = ['Linux', 'Windows']
 
 TPL_COUNTER = 0
 
@@ -124,11 +143,12 @@ DEPENDENT_JS_TPL = """\
 <script type="text/javascript">
 
 $(function {div_name}() {{
-  var examples = {tab_links};
+  var tabs = {tab_links};
   var mapping = {mapping};
-  for (var i = 0; i < examples.length; i++) {{
-    var example = examples[i];
-    $("#{div_name} .example-tab-" + example).click(changeExampleTab(example, mapping, "{div_name}"));
+  var tabSetID = {tabSetID};
+  for (var i = 0; i < tabs.length; i++) {{
+    var tab = tabs[i];
+    $("#{div_name} .example-tab-" + tab).click(changeExampleTab(tab, mapping, "{div_name}", tabSetID));
   }}
 }});
 
@@ -139,23 +159,23 @@ $(function {div_name}() {{
 INDEPENDENT_JS_TPL = """\
 <script type="text/javascript">
 
-function change_{div_name}_ExampleTab(example) {{
+function change_{div_name}_ExampleTab(tab) {{
   return function(e) {{
     e.preventDefault();
     var scrollOffset = $(this).offset().top - $(document).scrollTop();
     $("#{div_name} .tab-pane").removeClass("active");
-    $("#{div_name} .tab-pane-" + example).addClass("active");
+    $("#{div_name} .tab-pane-" + tab).addClass("active");
     $("#{div_name} .example-tab").removeClass("active");
-    $("#{div_name} .example-tab-" + example).addClass("active");
+    $("#{div_name} .example-tab-" + tab).addClass("active");
     $(document).scrollTop($(this).offset().top - scrollOffset);
   }}
 }}
 
 $(function() {{
-  var examples = {tab_links};
-  for (var i = 0; i < examples.length; i++) {{
-    var example = examples[i];
-    $("#{div_name} .example-tab-" + example).click(change_{div_name}_ExampleTab(example));
+  var tabs = {tab_links};
+  for (var i = 0; i < tabs.length; i++) {{
+    var tab = tabs[i];
+    $("#{div_name} .example-tab-" + tab).click(change_{div_name}_ExampleTab(tab));
   }}
 }});
 
@@ -261,12 +281,12 @@ def convert(c, state={}):
             w.append(v)
             continue
         if v.find('/') != -1:
-            if DEBUG: print "found slash: IN_CURL: %s v: %s" % (IN_CURL, v)
-            if IN_CURL:
-                if v.startswith('localhost') or v.startswith('"localhost') or v.startswith('"http:') or v.startswith('"https:'):
-                    if DEBUG: print "IN_CURL and v.startswith..."
-                    w.append(v)
-                    continue
+            if DEBUG: print "found slash: IN_CLI: %s v: %s" % (IN_CLI, v)
+            if (v.startswith('localhost') or v.startswith('"localhost') or v.startswith('"http:') 
+                    or v.startswith('"https:') or v.startswith('http:') or v.startswith('https:')):
+                if DEBUG: print "v.startswith..."
+                w.append(v)
+                continue
             if IN_CLI:
                 if i > 0 and text_list[i-1] in ['body:file', 'artifact']:
                     if DEBUG: print "IN_CLI and path"
@@ -301,7 +321,8 @@ class TabbedParsedLiteral(ParsedLiteral):
 
     option_spec = dict(dependent=directives.unchanged_required,
                         independent=directives.flag,
-                        languages=directives.unchanged_required, 
+                        languages=directives.unchanged_required,
+                        mapping=directives.unchanged_required,
                         tabs=directives.unchanged_required,
                         copyable=directives.flag,
                         single=directives.flag,
@@ -355,8 +376,16 @@ class TabbedParsedLiteral(ParsedLiteral):
     
         return line_counts, lines
     
-    def cleanup_options(self, option, default):
+    def cleanup_option(self, option, default):
         """Removes leading or trailing quotes or double-quotes from a string option."""
+        _option = self.options.get(option,'')
+        if not _option:
+            return default
+        else:
+            return dequote(_option)
+
+    def cleanup_options(self, option, default):
+        """Removes leading or trailing quotes or double-quotes from a string option list."""
         _option = self.options.get(option,'')
         if not _option:
             return default
@@ -386,26 +415,32 @@ class TabbedParsedLiteral(ParsedLiteral):
         node.line = self.content_offset + 1
         self.add_name(node)
 
-       
+        node['copyable'] = self.options.has_key('copyable')
+        node['independent'] = self.options.has_key('independent')
         node['languages'] = self.cleanup_options('languages', DEFAULT_LANGUAGES)
         node['line_counts'] = line_counts
         node['linenos'] = self.cleanup_options('linenos', '')
-        node['copyable'] = self.options.has_key('copyable')
         node['single'] = self.options.has_key('single')
         node['tabs'] = self.cleanup_options('tabs', DEFAULT_TABS)
         tab_count = len(node['tabs'])
+        if tab_count == 1:
+            # If only one tab, force to be independent
+            node['independent'] = True
+            # If languages were not supplied, make it a shell-session
+            if not self.options.has_key('languages'):
+                node['languages'] = [DEFAULT_LANGUAGES[1]]
         if tab_count != len(node['languages']):
             print "Error: tabs (%s) don't match languages (%s)" % (node['tabs'], node['languages'])
             node['languages'] = [DEFAULT_LANGUAGES[0]] * tab_count
-        node['independent'] = self.options.has_key('independent')
         if not node['independent']:
-            node['dependent'] = self.cleanup_options('dependent', DEFAULT_TABS)
-            if tab_count != len(node['dependent']):
-                print "Error: tabs (%s) don't match dependents (%s)" % (node['tabs'], node['dependent'])
+            node['dependent'] = self.cleanup_option('dependent', DEFAULT_TAB_SET)
+            node['mapping'] = self.cleanup_options('mapping', node['tabs'])
+            if tab_count != len(node['mapping']):
+                print "Error: tabs (%s) don't match mapping (%s)" % (node['tabs'], node['mapping'])
                 if tab_count > 1:
-                    node['dependent'] = DEFAULT_TABS + [DEFAULT_TABS[0]] * (tab_count -2)
+                    node['mapping'] = DEFAULT_TABS + [DEFAULT_TABS[0]] * (tab_count -2)
                 else:
-                    node['dependent'] = [DEFAULT_TABS[0]] * tab_count
+                    node['mapping'] = [DEFAULT_TABS[0]] * tab_count
         return [node] + messages
         
 def visit_tpl_html(self, node):
@@ -433,6 +468,7 @@ def visit_tpl_html(self, node):
             text, lang, opts=opts, warn=warner, linenos=linenos,
             **highlight_args)
         copyable = node.get('copyable')
+        new_highlighted = ['','<!-- tabbed-parsed-literal start -->',]
         if lang in ['console', 'shell-session', 'ps1', 'powershell']:
 
 #             print "highlighted (before):\n%s" % highlighted 
@@ -512,10 +548,11 @@ def visit_tpl_html(self, node):
                 new_highlighted.append(l)
                 # Set next line status
                 continued_line = continuing_line
-            
-            new_highlighted.append('<!-- tabbed-parsed-literal end -->')                
-#             print "\nhighlighted (after):\n%s\n\n" % '\n'.join(new_highlighted)
-                      
+        else:
+            new_highlighted += highlighted.splitlines()
+
+        new_highlighted.append('<!-- tabbed-parsed-literal end -->')                
+#         print "\nhighlighted (after):\n%s\n\n" % '\n'.join(new_highlighted)
         return '\n'.join(new_highlighted)
     
     nav_tabs_html = ''
@@ -523,26 +560,42 @@ def visit_tpl_html(self, node):
     languages = node.get('languages')
     line_counts = node.get('line_counts')
     tabs = node.get('tabs')
-    clean_tabs = [str(tab) for tab in tabs]
-    clean_tab_links = [tab.replace(' ', '-').lower() for tab in clean_tabs]
+    node_mapping = node.get('mapping')
     dependent = node.get('dependent')
-    if dependent:
-        mapping = {}
+
+    clean_tabs = [str(tab) for tab in tabs]
+    clean_tab_links = []
+    mapping = {}
+
+    i = 0
+    if node_mapping:
+        for m in node_mapping:
+            m = str(m).lower()
+            if m in clean_tab_links:
+                i += 1
+                m = "%s%d" % (m, i)
+            clean_tab_links.append(m)
         for i in range(len(clean_tab_links)):
-            mapping[clean_tab_links[i]] = str(dependent[i]).lower()        
+            mapping[clean_tab_links[i]] = str(node_mapping[i]).lower()
+    else:
+        # Independent tabs use the tab for the link
+        clean_tab_links = [tab.replace(' ', '-').lower() for tab in clean_tabs]
     
     div_name = 'tabbedparsedliteral{0}'.format(TPL_COUNTER)
     fill_div_options = {'div_name': div_name}
     
     if node.get('independent'):
-        # Independent node, doesn't participate in clicks with other nodes
+        # Independent node, doesn't participate in clicks with other nodes and has no mapping
         fill_div_options['class'] = 'independent'
         js_options = {'tab_links':clean_tab_links, 'div_name':div_name}
         start_html = INDEPENDENT_JS_TPL.format(**js_options) + DIV_START.format(**fill_div_options)
     else:
         # Dependent node
-        fill_div_options['class'] = 'dependent'
-        js_options = {'tab_links':clean_tab_links, 'mapping': repr(mapping), 'div_name':div_name}
+        fill_div_options['class'] = "dependent-%s" % dependent
+        js_options = {'tab_links':clean_tab_links, 
+                      'mapping': repr(mapping),
+                      'div_name':div_name,
+                      'tabSetID':repr(dependent), }
         start_html = DEPENDENT_JS_TPL.format(**js_options) + DIV_START.format(**fill_div_options)
 
     text_list = node.astext().split('\n')

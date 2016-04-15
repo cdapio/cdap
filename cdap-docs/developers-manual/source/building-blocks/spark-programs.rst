@@ -75,6 +75,7 @@ the ``PageRankSpark``, the amount of memory is specified:
 .. literalinclude:: /../../../cdap-examples/SparkPageRank/src/main/java/co/cask/cdap/examples/sparkpagerank/SparkPageRankApp.java
    :language: java
    :lines: 104-116
+   :dedent: 2
 
 If both the memory and the number of cores needs to be set, this can be done using::
 
@@ -92,24 +93,29 @@ depending upon the language (Java or Scala) in which the program is written. You
 ``SparkContext`` (for Scala programs) and ``JavaSparkContext`` (for Java programs) in your CDAP Spark program by calling
 ``getOriginalSparkContext()`` on CDAP ``SparkContext``.
 
-- Java::
+.. tabbed-parsed-literal::
+  :tabs: Java,Scala
+  :dependent: java-scala
+  :languages: java,scala
 
-     public class MyJavaSparkProgram implements JavaSparkProgram {
-       @Override
-       public void run(SparkContext sparkContext) {
-         JavaSparkContext originalSparkContext = sparkContext.originalSparkContext();
-           ...
-       }
-     }
+  .. Java
 
-- Scala::
-
-    class MyScalaSparkProgram implements ScalaSparkProgram {
-      override def run(sparkContext: SparkContext) {
-        val originalSparkContext = sparkContext.originalSparkContext();
-          ...
-        }
+  public class MyJavaSparkProgram implements JavaSparkProgram {
+    @Override
+    public void run(SparkContext sparkContext) {
+      JavaSparkContext originalSparkContext = sparkContext.originalSparkContext();
+        ...
     }
+  }
+
+  .. Scala
+
+  class MyScalaSparkProgram implements ScalaSparkProgram {
+    override def run(sparkContext: SparkContext) {
+      val originalSparkContext = sparkContext.originalSparkContext();
+        ...
+      }
+  }
 
 .. _spark-datasets:
 
@@ -127,33 +133,35 @@ An ``ObjectStore`` dataset can be used, provided its classes are serializable.
 
 - Creating an RDD from dataset
 
-  - Java:
+  .. tabbed-parsed-literal::
+    :tabs: Java,Scala
+    :dependent: java-scala
+    :languages: java,scala
 
-  ::
+    .. Java
 
-     JavaPairRDD<byte[], Purchase> purchaseRDD = sparkContext.readFromDataset("purchases",
-                                                                               byte[].class,
-                                                                               Purchase.class);
+    JavaPairRDD<byte[], Purchase> purchaseRDD = sparkContext.readFromDataset("purchases",
+                                                                              byte[].class,
+                                                                              Purchase.class);
 
-  - Scala:
+    .. Scala
 
-  ::
-
-     val purchaseRDD: RDD[(Array[Byte], Purchase)] = sparkContext.readFromDataset("purchases",
-                                                                                   classOf[Array[Byte]],
-                                                                                   classOf[Purchase]);
+    val purchaseRDD: RDD[(Array[Byte], Purchase)] = sparkContext.readFromDataset("purchases",
+                                                                                  classOf[Array[Byte]],
+                                                                                  classOf[Purchase]);
 
 - Writing an RDD to dataset
 
-  - Java:
+  .. tabbed-parsed-literal::
+    :tabs: Java,Scala
+    :dependent: java-scala
+    :languages: java,scala
 
-  ::
+    .. Java
 
     sparkContext.writeToDataset(purchaseRDD, "purchases", byte[].class, Purchase.class);
 
-  - Scala:
-
-  ::
+    .. Scala
 
     sparkContext.writeToDataset(purchaseRDD, "purchases", classOf[Array[Byte]], classOf[Purchase])
 
@@ -167,15 +175,20 @@ Spark programs in CDAP can directly access **streams** similar to the way a MapR
 These programs can create Spark's Resilient Distributed Dataset (RDD) by reading a stream.
 You can read from a stream using:
 
-- Java::
+.. tabbed-parsed-literal::
+  :tabs: Java,Scala
+  :dependent: java-scala
+  :languages: java,scala
 
-    JavaPairRDD<LongWritable, Text> backlinkURLs = sc.readFromStream("backlinkURLStream",
-                                                                      Text.class);
+  .. Java
 
-- Scala::
+  JavaPairRDD<LongWritable, Text> backlinkURLs = sc.readFromStream("backlinkURLStream",
+                                                                  Text.class);
 
-    val ratingsDataset: NewHadoopRDD[Array[Byte], Text] = sc.readFromStream("ratingsStream",
-                                                                             classOf[Text])
+  .. Scala
+
+  val ratingsDataset: NewHadoopRDD[Array[Byte], Text] = sc.readFromStream("ratingsStream",
+                                                                           classOf[Text])
 
 It’s possible to read parts of a stream by specifying start and end timestamps using::
 
@@ -256,15 +269,20 @@ The entry point to functionality in Spark SQL is through a Spark `SQLContext
 To run a Spark SQL program in CDAP, you can obtain a ``SQLContext`` from CDAP's ``SparkContext``
 using one of these approaches:
 
-- Java::
+.. tabbed-parsed-literal::
+  :tabs: Java,Scala
+  :dependent: java-scala
+  :languages: java,scala
 
-    org.apache.spark.SparkContext originalSparkContext = sc.getOriginalSparkContext();
-    SQLContext sqlContext = new SQLContext(originalSparkContext);
+  .. Java
 
-- Scala::
+  org.apache.spark.SparkContext originalSparkContext = sc.getOriginalSparkContext();
+  SQLContext sqlContext = new SQLContext(originalSparkContext);
 
-    val originalSparkContext:org.apache.spark.SparkContext = sc.getOriginalSparkContext[org.apache.spark.SparkContext]
-    val sqlContext = new org.apache.spark.sql.SQLContext(originalSparkContext)
+  .. Scala:
+
+  val originalSparkContext:org.apache.spark.SparkContext = sc.getOriginalSparkContext[org.apache.spark.SparkContext]
+  val sqlContext = new org.apache.spark.sql.SQLContext(originalSparkContext)
 
 
 Spark Program Examples

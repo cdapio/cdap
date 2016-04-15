@@ -30,7 +30,8 @@ To run the CLI in interactive mode, run the ``cdap-cli.sh`` executable with no a
 
 .. tabbed-parsed-literal::
   :tabs: Linux,Windows,"Distributed CDAP","Cloudera Manager Clusters"
-  :dependent: Linux,Windows,Linux,Linux
+  :dependent: linux-windows
+  :mapping: Linux,Windows,Linux,Linux
   :languages: console,shell-session,console,console
 
   .. Linux
@@ -52,7 +53,7 @@ To run the CLI in interactive mode, run the ``cdap-cli.sh`` executable with no a
 
 The executable should bring you into a shell, with a prompt similar to:
 
-.. container:: highlight-all
+.. container:: highlight
 
   .. parsed-literal::
   
@@ -72,6 +73,15 @@ a CDAP instance at ``example.com``, port ``10000``::
 To list all of the available commands, enter the CLI command ``help``::
 
   cdap (http://localhost:10000/namespace:default)> help
+  
+In this documentation, to save space, this prompt is abbreviated to:
+
+.. container:: highlight
+
+  .. parsed-literal::
+  
+    |cdap >|
+  
 
 Non-Interactive Mode
 --------------------
