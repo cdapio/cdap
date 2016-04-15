@@ -50,7 +50,7 @@ class HydratorPlusPlusBottomPanelCtrl {
     } );
     HydratorPlusPlusConsoleStore.registerOnChangeListener( () => { this.selectTab(0); } );
     this.setIsCollapsed();
-    this.selectTab(4);
+    this.selectTab(0);
   }
   selectTab(tab) {
     this.activeTab = this.tabs[tab];

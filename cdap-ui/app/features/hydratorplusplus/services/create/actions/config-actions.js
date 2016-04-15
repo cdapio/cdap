@@ -71,6 +71,9 @@ class HydratorPlusPlusConfigActions {
   addPostAction(config) {
     this.dispatcher.dispatch('onAddPostAction', config);
   }
+  editPostAction(config) {
+    this.dispatcher.dispatch('onEditPostAction', config);
+  }
   deletePostAction(config) {
     this.dispatcher.dispatch('onDeletePostAction', config);
   }

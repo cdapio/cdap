@@ -56,6 +56,7 @@ class HydratorPlusPlusPostActionsCtrl {
 
     if (tab === 'OVERVIEW') { return; }
 
+    this.isEdit = false;
     this.pluginConfig = {
       name: tab.name + '-' + this.uuid.v4(),
       plugin: {
@@ -66,6 +67,28 @@ class HydratorPlusPlusPostActionsCtrl {
       }
     };
 
+    this.pluginFetch(tab);
+  }
+
+  edit(config) {
+    this.isEdit = true;
+    let tab = {
+      artifact: {
+        name: config.plugin.artifact.name,
+        version: config.plugin.artifact.version,
+        scope: config.plugin.artifact.scope
+      },
+      name: config.plugin.name,
+      type: config.plugin.type
+    };
+
+    this.pluginConfig = config;
+    this.pluginFetch(tab);
+
+    this.activeTab = tab;
+  }
+
+  pluginFetch(tab) {
     let params = {
       namespace: this.$state.params.namespace,
       pipelineType: tab.artifact.name,
@@ -105,7 +128,6 @@ class HydratorPlusPlusPostActionsCtrl {
             this.noConfig = true;
           });
       });
-
   }
 
   cancel() {
@@ -113,13 +135,19 @@ class HydratorPlusPlusPostActionsCtrl {
     this.pluginConfig = {};
   }
 
-  add() {
+  fieldValidation() {
     let isValid = true;
     angular.forEach(this.pluginConfig._backendProperties, (value, key) => {
       if (value.required && !this.pluginConfig.plugin.properties[key]) {
         isValid = false;
       }
     });
+
+    return isValid;
+  }
+
+  save(isEdit) {
+    let isValid = this.fieldValidation();
 
     if (!isValid) {
       this.myAlertOnValium.show({
@@ -130,7 +158,13 @@ class HydratorPlusPlusPostActionsCtrl {
     }
 
     delete this.pluginConfig._backendProperties;
-    this.HydratorPlusPlusConfigActions.addPostAction(angular.copy(this.pluginConfig));
+
+    if (isEdit) {
+      this.HydratorPlusPlusConfigActions.editPostAction(angular.copy(this.pluginConfig));
+    } else {
+      this.HydratorPlusPlusConfigActions.addPostAction(angular.copy(this.pluginConfig));
+    }
+
     this.pluginConfig = {};
   }
 
