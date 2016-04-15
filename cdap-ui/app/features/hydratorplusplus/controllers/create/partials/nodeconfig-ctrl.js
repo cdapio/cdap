@@ -266,9 +266,7 @@ class HydratorPlusPlusNodeConfigCtrl {
     }
   }
   doLoadNextSetOfInputSchemaRows() {
-    if (this.state.node.inputSchema && (this.state.node.inputSchema.length - this.inputSchemaRowLimit) > 10) {
-      this.inputSchemaRowLimit += 10;
-    }
+    this.inputSchemaRowLimit += 10;
   }
 }
 
