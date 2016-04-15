@@ -101,8 +101,6 @@ public class LogSaverTest extends KafkaTestBase {
   private static String logBaseDir;
   private static KafkaLogAppender appender;
   private static Gson gson;
-  @SuppressWarnings("FieldCanBeLocal")
-  private static String isLogSaverTestExpressive = "logsaver.test.expressive";
 
   @BeforeClass
   public static void startLogSaver() throws Exception {
@@ -180,13 +178,13 @@ public class LogSaverTest extends KafkaTestBase {
                             checkpointManager.getCheckpoint(1).getMaxEventTime() == checkpointTimeService);
       }
     } catch (Throwable t) {
-      final Multimap<String, String> contextMessages = getPublishedKafkaMessages();
-      LOG.error("All kafka messages: {}", contextMessages);
-      if (!isExpressive()) {
-        LOG.error("Error while reading checkpoint messages from kafka {}", t);
-      } else {
-        throw t;
+      try {
+        final Multimap<String, String> contextMessages = getPublishedKafkaMessages();
+        LOG.error("All kafka messages: {}", contextMessages);
+      } catch (Exception e) {
+        LOG.error("Error while getting published kafka messages {}", e);
       }
+      throw t;
     }
   }
 
@@ -204,41 +202,17 @@ public class LogSaverTest extends KafkaTestBase {
 
   @Test
   public void testLogRead1() throws Exception {
-    try {
-      testLogRead(new FlowletLoggingContext("NS_1", "APP_1", "FLOW_1", "", "RUN1", "INSTANCE"));
-    } catch (Throwable t) {
-      if (!isExpressive()) {
-        LOG.error("Error while reading log messages from kafka {}", t);
-      } else {
-        throw t;
-      }
-    }
+    testLogRead(new FlowletLoggingContext("NS_1", "APP_1", "FLOW_1", "", "RUN1", "INSTANCE"));
   }
 
   @Test
   public void testLogRead2() throws Exception {
-    try {
-      testLogRead(new FlowletLoggingContext("NS_2", "APP_2", "FLOW_2", "", "RUN1", "INSTANCE"));
-    } catch (Throwable t) {
-      if (!isExpressive()) {
-        LOG.error("Error while reading log messages from kafka {}", t);
-      } else {
-        throw t;
-      }
-    }
+    testLogRead(new FlowletLoggingContext("NS_2", "APP_2", "FLOW_2", "", "RUN1", "INSTANCE"));
   }
 
   @Test
   public void testLogRead3() throws Exception {
-    try {
-      testLogRead(new ServiceLoggingContext("system", "services", "metrics"));
-    } catch (Throwable t) {
-      if (!isExpressive()) {
-        LOG.error("Error while reading log messages from kafka {}", t);
-      } else {
-        throw t;
-      }
-    }
+    testLogRead(new ServiceLoggingContext("system", "services", "metrics"));
   }
 
   private long getCheckpointTime(LoggingContext loggingContext, int numExpectedEvents) throws Exception {
@@ -399,10 +373,6 @@ public class LogSaverTest extends KafkaTestBase {
     tempMap.put("Partition", Long.toString(message.getTopicPartition().getPartition()));
     tempMap.put("LogEvent", iLoggingEvent.getFormattedMessage());
     return Maps.immutableEntry(key, gson.toJson(tempMap));
-  }
-
-  public static boolean isExpressive() {
-    return Boolean.getBoolean(isLogSaverTestExpressive);
   }
 
   private static void publishLogs() throws Exception {
