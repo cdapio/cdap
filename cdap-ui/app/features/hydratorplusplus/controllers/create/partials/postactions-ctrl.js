@@ -15,7 +15,7 @@
  */
 
 class HydratorPlusPlusPostActionsCtrl {
-  constructor(HydratorPlusPlusConfigStore, myPipelineApi, $state, HydratorPlusPlusPluginConfigFactory, uuid, HydratorPlusPlusConfigActions, myAlertOnValium) {
+  constructor(HydratorPlusPlusConfigStore, myPipelineApi, $state, HydratorPlusPlusPluginConfigFactory, uuid, HydratorPlusPlusConfigActions, myAlertOnValium, GLOBALS) {
     this.HydratorPlusPlusConfigStore = HydratorPlusPlusConfigStore;
     this.myPipelineApi = myPipelineApi;
     this.$state = $state;
@@ -23,6 +23,9 @@ class HydratorPlusPlusPostActionsCtrl {
     this.uuid = uuid;
     this.HydratorPlusPlusConfigActions = HydratorPlusPlusConfigActions;
     this.myAlertOnValium = myAlertOnValium;
+    this.GLOBALS = GLOBALS;
+
+    this.requiredPropertyError = this.GLOBALS.en.hydrator.studio.error['GENERIC-MISSING-REQUIRED-FIELDS'];
 
     this.HydratorPlusPlusConfigStore.registerOnChangeListener(this.setState.bind(this));
 
@@ -88,6 +91,7 @@ class HydratorPlusPlusPostActionsCtrl {
 
   // Fetching Backend Properties
   pluginFetch(tab) {
+    this.errorInConfig = false;
     let params = {
       namespace: this.$state.params.namespace,
       pipelineType: tab.artifact.name,
@@ -153,6 +157,7 @@ class HydratorPlusPlusPostActionsCtrl {
     let isValid = this.fieldValidation();
 
     if (!isValid) {
+      this.errorInConfig = true;
       this.myAlertOnValium.show({
         type: 'danger',
         content: 'Please fill out all required fields.'
@@ -186,6 +191,6 @@ class HydratorPlusPlusPostActionsCtrl {
   }
 }
 
-HydratorPlusPlusPostActionsCtrl.$inject = ['HydratorPlusPlusConfigStore', 'myPipelineApi', '$state', 'HydratorPlusPlusPluginConfigFactory', 'uuid', 'HydratorPlusPlusConfigActions', 'myAlertOnValium'];
+HydratorPlusPlusPostActionsCtrl.$inject = ['HydratorPlusPlusConfigStore', 'myPipelineApi', '$state', 'HydratorPlusPlusPluginConfigFactory', 'uuid', 'HydratorPlusPlusConfigActions', 'myAlertOnValium', 'GLOBALS'];
 angular.module(`${PKG.name}.feature.hydratorplusplus`)
   .controller('HydratorPlusPlusPostActionsCtrl', HydratorPlusPlusPostActionsCtrl);
