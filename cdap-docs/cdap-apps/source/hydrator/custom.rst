@@ -8,6 +8,8 @@
 Creating Custom ETL Plugins
 ===========================
 
+.. highlight:: java
+
 Overview
 ========
 This section is intended for developers writing custom ETL plugins. Users of these should
@@ -62,6 +64,8 @@ project for the plugin from the archetype:
           -DgroupId=org.example.plugin
 
 You can replace the groupId with your own organization, but it must not be ``co.cask.cdap``.
+
+.. highlight:: java
 
 In order to implement a Batch Source (to be used in the ETL Batch artifact), you extend
 the ``BatchSource`` class. You need to define the types of the KEY and VALUE that the Batch
@@ -119,6 +123,8 @@ In order to implement a Batch Sink (to be used in the ETL Batch artifact), you e
 VALUE that the Batch Sink will write in the Batch job and the type of object that it will
 accept from the previous stage (which could be either a Transformation or a Batch Source).
 
+.. highlight:: java
+
 After defining the types, only one method is required to be implemented:
 
   ``prepareRun()``
@@ -166,6 +172,8 @@ A real-time source plugin can be created from this Maven archetype:
           -DgroupId=org.example.plugin
 
 You can replace the groupId with your own organization, but it must not be ``co.cask.cdap``.
+
+.. highlight:: java
 
 The only method that needs to be implemented is:
 
@@ -259,6 +267,8 @@ A real-time sink plugin can be created from this Maven archetype:
 
 You can replace the groupId with your own organization, but it must not be ``co.cask.cdap``.
 
+.. highlight:: java
+
 The only method that needs to be implemented is:
 
  ``write()``
@@ -316,8 +326,7 @@ The only method that needs to be implemented is:
 
 	``transform()``
 
-Methods
--------
+.. rubric:: Methods
 
 - ``initialize()``: Used to perform any initialization step that might be required during
   the runtime of the ``Transform``. It is guaranteed that this method will be invoked
@@ -327,11 +336,12 @@ Methods
   (which could be either another Transformation or a Sink).
 - ``destroy()``: Used to perform any cleanup before the plugin shuts down.
 
+.. highlight:: java
+
 Below is an example of a ``DuplicateTransform`` that emits copies of the incoming record
 based on the value in the record. In addition, a user metric indicating the number of
 copies in each transform is emitted. The user metrics can be queried by using the CDAP 
 :ref:`Metrics HTTP RESTful API <http-restful-api-metrics>`::
-
 
   @Plugin(type = "transform")
   @Name("Duplicator")
@@ -363,6 +373,7 @@ copies in each transform is emitted. The user metrics can be queried by using th
     }
   }
 
+.. highlight:: java
 
 Script Transformations
 ----------------------
@@ -373,11 +384,20 @@ In the script transformations (*JavaScriptTransform*, *PythonEvaluator*, *Script
 
 The different Transforms that are passed this context object have similar signatures:
 
-|| Transform || Signature ||
-| JavaScriptTransform | {{function transform(input, emitter, context)}} |
-| PythonEvaluator | {{def transform(record, emitter, context)}} |
-| ScriptFilterTransform | {{function shouldFilter(input, context)}} |
-| ValidatorTransform | {{function isValid(input, context)}} |
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Transform
+     - Signature
+   * - ``JavaScriptTransform``
+     - ``{{function transform(input, emitter, context)}}``
+   * - ``PythonEvaluator``
+     - ``{{function transform(input, emitter, context)}}``
+   * - ``ScriptFilterTransform``
+     - ``{{function shouldFilter(input, context)}}``
+   * - ``ValidatorTransform``
+     - ``{{function isValid(input, context)}}``
 
 The ``ScriptContext`` has these methods::
 
@@ -417,12 +437,17 @@ operations with that lookup table in your script: ``context.getLookup('purchases
 
 **Validator Object**
 
-For example, in a validator transform, you can get the validator object and then call its functions as part of your script::
+.. highlight:: javascript
 
-  var coreValidator = context.getValidator(\"coreValidator\");
+For example, in a validator transform, you can retrieve the validator object and call its
+functions as part of your JavaScript::
+
+  var coreValidator = context.getValidator("coreValidator");
   if (!coreValidator.isDate(input.date)) {
   . . .
 
+
+.. highlight:: java
 
 Test Framework for Plugins
 ==========================
@@ -434,6 +459,7 @@ Test Framework for Plugins
 Additional information on unit testing with CDAP is in the Developers’ Manual section
 on :ref:`Testing a CDAP Application <test-framework>`.
 
+.. highlight:: java
 
 Source State in a Real-Time Source
 ==================================
@@ -530,8 +556,6 @@ The widget JSON is composed of two lists:
 
 - a list of property configuration groups and
 - a list of output properties. 
-
-.. highlight:: xml
 
 For example::
 
