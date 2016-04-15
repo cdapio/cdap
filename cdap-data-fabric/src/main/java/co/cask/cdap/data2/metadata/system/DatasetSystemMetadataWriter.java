@@ -46,6 +46,7 @@ public class DatasetSystemMetadataWriter extends AbstractSystemMetadataWriter {
 
   public static final String EXPLORE_TAG = "explore";
   public static final String BATCH_TAG = "batch";
+  public static final String TYPE = "type";
 
   @VisibleForTesting
   static final String FILESET_AVRO_SCHEMA_PROPERTY = "avro.schema.literal";
@@ -88,7 +89,7 @@ public class DatasetSystemMetadataWriter extends AbstractSystemMetadataWriter {
     ImmutableMap.Builder<String, String> properties = ImmutableMap.builder();
     Map<String, String> datasetProperties = dsProperties.getProperties();
     if (dsType != null) {
-      properties.put("type", dsType);
+      properties.put(TYPE, dsType);
     }
     if (datasetProperties.containsKey(Table.PROPERTY_TTL)) {
       properties.put(TTL_KEY, datasetProperties.get(Table.PROPERTY_TTL));
@@ -97,7 +98,7 @@ public class DatasetSystemMetadataWriter extends AbstractSystemMetadataWriter {
       properties.put(DESCRIPTION, description);
     }
     if (createTime > 0) {
-      properties.put(CREATE_TIME, String.valueOf(createTime));
+      properties.put(CREATION_TIME, String.valueOf(createTime));
     }
     return properties.build();
   }

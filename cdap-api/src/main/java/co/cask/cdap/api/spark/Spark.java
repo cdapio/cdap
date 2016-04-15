@@ -34,7 +34,7 @@ public interface Spark {
    * @param context job execution context
    * @throws Exception if there's an error during this method invocation
    */
-  void beforeSubmit(SparkContext context) throws Exception;
+  void beforeSubmit(SparkClientContext context) throws Exception;
 
   /**
    * Invoked after a Spark job finishes. Will not be called if: Job failed to start.
@@ -43,6 +43,6 @@ public interface Spark {
    * @param context   job execution context
    * @throws Exception if there's an error during this method invocation.
    */
-  void onFinish(boolean succeeded, SparkContext context) throws Exception;
+  void onFinish(boolean succeeded, SparkClientContext context) throws Exception;
 
 }

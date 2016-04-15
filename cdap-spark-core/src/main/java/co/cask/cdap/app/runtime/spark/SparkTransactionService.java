@@ -86,12 +86,13 @@ final class SparkTransactionService extends AbstractIdleService {
 
   private final NettyHttpService httpServer;
 
-  SparkTransactionService(TransactionSystemClient txClient) {
+  SparkTransactionService(TransactionSystemClient txClient, String hostname) {
     this.txClient = txClient;
     this.stageToJob = new ConcurrentHashMap<>();
     this.jobTransactions = new ConcurrentHashMap<>();
     this.httpServer = NettyHttpService.builder()
       .addHttpHandlers(Collections.singleton(new SparkTransactionHandler()))
+      .setHost(hostname)
       .build();
   }
 

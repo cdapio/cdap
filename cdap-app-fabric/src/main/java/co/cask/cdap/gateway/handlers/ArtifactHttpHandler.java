@@ -122,15 +122,16 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
   private final ArtifactRepository artifactRepository;
   private final NamespaceAdmin namespaceAdmin;
   private final File tmpDir;
-  private final CConfiguration cConf;
+  private final PluginService pluginService;
 
   @Inject
-  ArtifactHttpHandler(CConfiguration cConf, ArtifactRepository artifactRepository, NamespaceAdmin namespaceAdmin) {
+  ArtifactHttpHandler(CConfiguration cConf, ArtifactRepository artifactRepository, NamespaceAdmin namespaceAdmin,
+                      PluginService pluginService) {
     this.namespaceAdmin = namespaceAdmin;
     this.artifactRepository = artifactRepository;
     this.tmpDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
                            cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
-    this.cConf = cConf;
+    this.pluginService = pluginService;
   }
 
   @POST
@@ -395,9 +396,9 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
     Id.Artifact artifactId = validateAndGetArtifactId(artifactNamespace, artifactName, artifactVersion);
 
     try {
-      SortedMap<ArtifactDescriptor, List<PluginClass>> plugins = artifactRepository.getPlugins(namespace, artifactId);
+      SortedMap<ArtifactDescriptor, Set<PluginClass>> plugins = artifactRepository.getPlugins(namespace, artifactId);
       Set<String> pluginTypes = Sets.newHashSet();
-      for (List<PluginClass> pluginClasses : plugins.values()) {
+      for (Set<PluginClass> pluginClasses : plugins.values()) {
         for (PluginClass pluginClass : pluginClasses) {
           pluginTypes.add(pluginClass.getType());
         }
@@ -425,11 +426,11 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
     Id.Artifact artifactId = validateAndGetArtifactId(artifactNamespace, artifactName, artifactVersion);
 
     try {
-      SortedMap<ArtifactDescriptor, List<PluginClass>> plugins =
+      SortedMap<ArtifactDescriptor, Set<PluginClass>> plugins =
         artifactRepository.getPlugins(namespace, artifactId, pluginType);
       List<PluginSummary> pluginSummaries = Lists.newArrayList();
       // flatten the map
-      for (Map.Entry<ArtifactDescriptor, List<PluginClass>> pluginsEntry : plugins.entrySet()) {
+      for (Map.Entry<ArtifactDescriptor, Set<PluginClass>> pluginsEntry : plugins.entrySet()) {
         ArtifactDescriptor pluginArtifact = pluginsEntry.getKey();
         ArtifactSummary pluginArtifactSummary = ArtifactSummary.from(pluginArtifact.getArtifactId());
 
@@ -470,11 +471,9 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
       throw new BadRequestException("Request body is used as plugin method parameter, " +
                                       "Received empty request body.");
     }
-
-    try (PluginService pluginService = new PluginService(artifactRepository, tmpDir, cConf)) {
+    try {
       PluginEndpoint pluginEndpoint =
         pluginService.getPluginEndpoint(namespace, artifactId, pluginType, pluginName, methodName);
-
       Object response = pluginEndpoint.invoke(GSON.fromJson(requestBody, pluginEndpoint.getMethodParameterType()));
       responder.sendString(HttpResponseStatus.OK, GSON.toJson(response));
     } catch (JsonSyntaxException e) {
@@ -520,7 +519,7 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
         PluginClass pluginClass = pluginsEntry.getValue();
         pluginInfos.add(new PluginInfo(
           pluginClass.getName(), pluginClass.getType(), pluginClass.getDescription(),
-          pluginClass.getClassName(), pluginArtifactSummary, pluginClass.getProperties()));
+          pluginClass.getClassName(), pluginArtifactSummary, pluginClass.getProperties(), pluginClass.getEndpoints()));
       }
       responder.sendJson(HttpResponseStatus.OK, pluginInfos);
     } catch (PluginNotExistsException e) {

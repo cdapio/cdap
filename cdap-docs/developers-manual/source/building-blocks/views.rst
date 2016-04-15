@@ -92,17 +92,28 @@ Only the response code will differ.
 
 For example, using the CDAP CLI, this command (reformatted to fit) will create |---| for
 an existing stream *trades* |---| a stream view, *view1*, with a format of *CSV* and an
-appropriate schema::
+appropriate schema:
 
-  cdap > create stream-view trades view1 format csv schema "ticker string, num_traded int, price double" \
-          settings "mapping=0:ticker,1:num_traded,2:price"
+.. container:: highlight
+
+  .. parsed-literal::
+  
+    |cdap >| create stream-view trades view1 format csv schema "ticker string, num_traded int, price double" \
+    settings "mapping=0:ticker,1:num_traded,2:price"
 
 Listing Views and View Details
 ------------------------------
 You can list all of the existing stream views of a stream, and see the details of each view.
-For example::
+For example:
 
-  cdap > describe stream-view trades view1
+.. container:: highlight
+
+  .. parsed-literal::
+  
+    |cdap >| describe stream-view trades view1
+    
+::
+
   +==============================================================================================================+
   | id    | format | table             | schema            | settings                                            |
   +==============================================================================================================+
@@ -127,8 +138,12 @@ the underlying data that you are viewing.
 
 This example uses the CDAP CLI to delete the stream view, *view1*, created with the previous command:
 
-  cdap > delete stream-view stock_trades view1
-  Successfully deleted stream-view 'view1'
+.. container:: highlight
+
+  .. parsed-literal::
+  
+    |cdap >| delete stream-view stock_trades view1
+    Successfully deleted stream-view 'view1'
 
 
 Stream View Examples
@@ -136,26 +151,40 @@ Stream View Examples
 Let's create some simple stream views, using the CDAP CLI, and see how the same data can
 be viewed differently.
 
-First, from within the CDAP CLI, create a stream of stock *trades*, and add a few records::
+First, from within the CDAP CLI, create a stream of stock *trades*, and add a few records:
 
-  cdap > create stream trades
-  Successfully created stream with ID 'trades'
-  
-  cdap > send stream trades "AAPL,50,112.98"
-  cdap > send stream trades "AAPL,100,112.87"
-  cdap > send stream trades "AAPL,8,113.02"
-  cdap > send stream trades "NFLX,10,437.45"
-  Successfully sent stream event to stream 'trades'
-  
-Now, create a stream view, *view1*, with a format of *CSV* and an appropriate schema and mapping (reformatted to fit)::
+.. container:: highlight
 
-  cdap > create stream-view trades view1 format csv schema "ticker string, num_traded int, price double" \
-          settings "mapping=0:ticker,1:num_traded,2:price"  
-  Successfully created stream-view 'view1'
+  .. parsed-literal::
   
-Read from the stream directly, and you will receive the raw data that was sent to the stream::
+    |cdap >|  create stream trades
+    Successfully created stream with ID 'trades'
+  
+    |cdap >| send stream trades "AAPL,50,112.98"
+    |cdap >| send stream trades "AAPL,100,112.87"
+    |cdap >| send stream trades "AAPL,8,113.02"
+    |cdap >| send stream trades "NFLX,10,437.45"
+    Successfully sent stream event to stream 'trades'
+  
+Now, create a stream view, *view1*, with a format of *CSV* and an appropriate schema and mapping (reformatted to fit):
 
-  cdap > execute "select * from stream_trades"
+.. container:: highlight
+
+  .. parsed-literal::
+
+    |cdap >| create stream-view trades view1 format csv schema "ticker string, num_traded int, price double" \
+    settings "mapping=0:ticker,1:num_traded,2:price"  
+    Successfully created stream-view 'view1'
+  
+Read from the stream directly, and you will receive the raw data that was sent to the stream:
+
+.. container:: highlight
+
+  .. parsed-literal::
+
+    |cdap >| execute "select * from stream_trades"
+
+::
 
   +=======================================================================+
   | stream_trades.ts: BIGINT | stream_trades | stream_trades.body: STRING |
@@ -170,10 +199,16 @@ Read from the stream directly, and you will receive the raw data that was sent t
   +=======================================================================+
   Fetched 4 rows
   
-Now, read from the stream view *view1*::
+Now, read from the stream view *view1*:
 
-  cdap > execute "select * from stream_trades_view1"
-  
+.. container:: highlight
+
+  .. parsed-literal::
+
+    |cdap >| execute "select * from stream_trades_view1"
+
+::
+
   +==============================================================================================================+
   | stream_trades_view1 | stream_trades_view1 | stream_trades_view1 | stream_trades_view1 | stream_trades_view1. |
   | .ts: BIGINT         | .headers: map<strin | .ticker: STRING     | .num_traded: INT    | price: DOUBLE        |
@@ -187,10 +222,16 @@ Now, read from the stream view *view1*::
   Fetched 4 rows
   
 You can treat the stream view just as you would any other explorable stream, and run SQL
-queries. This query totals all the values for each stock::
+queries. This query totals all the values for each stock:
 
-  cdap > execute "select ticker, count(*) as transactions, sum(num_traded) as volume from stream_trades_view1 group by ticker order by volume desc"
-  
+.. container:: highlight
+
+  .. parsed-literal::
+
+    |cdap >| execute "select ticker, count(*) as transactions, sum(num_traded) as volume from stream_trades_view1 group by ticker order by volume desc"
+
+::
+
   +========================================================+
   | ticker: STRING | transactions: BIGINT | volume: BIGINT |
   +========================================================+
@@ -199,11 +240,17 @@ queries. This query totals all the values for each stock::
   +========================================================+
   Fetched 2 rows
 
-You can create and view an additional stream view, *view2*, with just a single column::
+You can create and view an additional stream view, *view2*, with just a single column:
 
-  cdap > create stream-view trades view2 format csv schema "num_traded int" settings "mapping=1:num_traded"
-  cdap > execute "select * from stream_trades_view2"
-  
+.. container:: highlight
+
+  .. parsed-literal::
+
+    |cdap >| create stream-view trades view2 format csv schema "num_traded int" settings "mapping=1:num_traded"
+    |cdap >| execute "select * from stream_trades_view2"
+
+::
+
   +========================================================================================================+
   | stream_trades_view2.ts: BIGINT | stream_trades_view2.he | stream_trades_view2.num_traded: INT          |
   |                                | aders: map<string,stri |                                              |

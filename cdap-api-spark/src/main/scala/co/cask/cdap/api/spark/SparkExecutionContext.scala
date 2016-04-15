@@ -16,14 +16,16 @@
 
 package co.cask.cdap.api.spark
 
+import co.cask.cdap.api.annotation.Beta
 import co.cask.cdap.api.data.batch.Split
-import co.cask.cdap.api.{RuntimeContext, ServiceDiscoverer, TaskLocalizationContext, Transactional}
-import co.cask.cdap.api.data.DatasetContext
+import co.cask.cdap.api.data.format.FormatSpecification
 import co.cask.cdap.api.flow.flowlet.StreamEvent
 import co.cask.cdap.api.metrics.Metrics
 import co.cask.cdap.api.plugin.PluginContext
-import co.cask.cdap.api.workflow.WorkflowToken
-import org.apache.spark
+import co.cask.cdap.api.stream.GenericStreamEventData
+import co.cask.cdap.api.workflow.{WorkflowInfo, WorkflowToken}
+import co.cask.cdap.api.{RuntimeContext, ServiceDiscoverer, TaskLocalizationContext, Transactional}
+import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 
 import scala.reflect.ClassTag
@@ -31,6 +33,7 @@ import scala.reflect.ClassTag
 /**
   * Spark program execution context. User Spark program can interact with CDAP through this context.
   */
+@Beta
 trait SparkExecutionContext extends RuntimeContext with Transactional {
 
   /**
@@ -75,14 +78,23 @@ trait SparkExecutionContext extends RuntimeContext with Transactional {
     * Returns the [[co.cask.cdap.api.workflow.WorkflowToken]] if the Spark program
     * is started from a [[co.cask.cdap.api.workflow.Workflow]].
     *
-    * @return An [[co.cask.cdap.api.workflow.WorkflowToken]] associated with
+    * @return An optional [[co.cask.cdap.api.workflow.WorkflowToken]] associated with
     *         the current [[co.cask.cdap.api.workflow.Workflow]]
     */
   def getWorkflowToken: Option[WorkflowToken]
 
   /**
+    * Returns the [[co.cask.cdap.api.workflow.WorkflowInfo]] if the Spark program
+    * is started from a [[co.cask.cdap.api.workflow.Workflow]].
+    *
+    * @return An optional [[co.cask.cdap.api.workflow.WorkflowInfo]] associated with
+    *         the current [[co.cask.cdap.api.workflow.Workflow]]
+    */
+  def getWorkflowInfo: Option[WorkflowInfo]
+
+  /**
     * Returns the [[co.cask.cdap.api.TaskLocalizationContext]] that gives access to files that were localized
-    * by [[co.cask.cdap.api.spark.Spark]] {@code beforeSubmit} method.
+    * by [[co.cask.cdap.api.spark.Spark]] `beforeSubmit` method.
     */
   def getLocalizationContext: TaskLocalizationContext
 
@@ -100,7 +112,7 @@ trait SparkExecutionContext extends RuntimeContext with Transactional {
     * @return A new [[org.apache.spark.rdd.RDD]] instance that reads from the given Dataset.
     * @throws co.cask.cdap.api.data.DatasetInstantiationException if the Dataset doesn't exist
     */
-  def fromDataset[K: ClassTag, V: ClassTag](sc: spark.SparkContext,
+  def fromDataset[K: ClassTag, V: ClassTag](sc: SparkContext,
                                             datasetName: String,
                                             arguments: Map[String, String],
                                             splits: Option[Iterable[_ <: Split]]): RDD[(K, V)]
@@ -121,8 +133,32 @@ trait SparkExecutionContext extends RuntimeContext with Transactional {
     * @return a new [[org.apache.spark.rdd.RDD]] instance that reads from the given stream.
     * @throws co.cask.cdap.api.data.DatasetInstantiationException if the Stream doesn't exist
     */
-  def fromStream[T: ClassTag](sc: spark.SparkContext, streamName: String, startTime: Long, endTime: Long)
+  def fromStream[T: ClassTag](sc: SparkContext, streamName: String, startTime: Long, endTime: Long)
                              (implicit decoder: StreamEvent => T): RDD[T]
+
+  /**
+    * Creates a [[org.apache.spark.rdd.RDD]] that represents data from the given stream for events in the given
+    * time range. The data in the RDD is always a pair, with the first entry as a [[scala.Long]], representing the
+    * event timestamp, while the second entry is a [[co.cask.cdap.api.stream.GenericStreamEventData]],
+    * which contains data decoded from the stream event body base on
+    * the given [[co.cask.cdap.api.data.format.FormatSpecification]].
+    *
+    * Using the implicit object [[co.cask.cdap.api.spark.SparkMain.SparkProgramContextFunctions]] is preferred.
+    *
+    * @param sc the [[org.apache.spark.SparkContext]] to use
+    * @param streamName name of the stream
+    * @param formatSpec the [[co.cask.cdap.api.data.format.FormatSpecification]] describing the format in the stream
+    * @param startTime the starting time of the stream to be read in milliseconds (inclusive);
+    *                  default is 0, which means reading from beginning of the stream.
+    * @param endTime the ending time of the streams to be read in milliseconds (exclusive);
+    *                default is [[scala.Long.MaxValue]], which means reading till the last event.
+    * @param sec the [[co.cask.cdap.api.spark.SparkExecutionContext]] of the current execution
+    * @tparam T value type
+    * @return a new [[org.apache.spark.rdd.RDD]] instance that reads from the given stream.
+    * @throws co.cask.cdap.api.data.DatasetInstantiationException if the Stream doesn't exist
+    */
+  def fromStream[T: ClassTag](sc: SparkContext, streamName: String, formatSpec: FormatSpecification,
+                              startTime: Long, endTime: Long): RDD[(Long, GenericStreamEventData[T])]
 
   /**
     * Saves the given [[org.apache.spark.rdd.RDD]] to the given [[co.cask.cdap.api.dataset.Dataset]].

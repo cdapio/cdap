@@ -18,11 +18,14 @@ package co.cask.cdap.api.spark
 
 import java.nio.charset.Charset
 
+import co.cask.cdap.api.annotation.Beta
 import co.cask.cdap.api.data.DatasetContext
 import co.cask.cdap.api.data.batch.Split
+import co.cask.cdap.api.data.format.FormatSpecification
 import co.cask.cdap.api.flow.flowlet.StreamEvent
+import co.cask.cdap.api.stream.GenericStreamEventData
 import co.cask.cdap.api.{Transactional, TxRunnable}
-import org.apache.spark
+import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 
 import scala.language.implicitConversions
@@ -79,7 +82,13 @@ import scala.reflect.ClassTag
   *   }
   * }
   * }}}
+  *
+  * This interface extends serializable because the closures are anonymous class in Scala and Spark Serializes the
+  * closures before sending it to worker nodes. This serialization of inner anonymous class expects the outer
+  * containing class to be serializable else [[java.io.NotSerializableException]] is thrown. Having this interface
+  * serializable gives a neater API.
   */
+@Beta
 trait SparkMain extends Serializable {
 
   /**
@@ -118,7 +127,7 @@ trait SparkMain extends Serializable {
     *
     * @param sc the [[org.apache.spark.SparkContext]]
     */
-  protected implicit class SparkProgramContextFunctions(sc: spark.SparkContext) {
+  protected implicit class SparkProgramContextFunctions(sc: SparkContext) {
 
     /**
       * Creates a [[org.apache.spark.rdd.RDD]] from the given [[co.cask.cdap.api.dataset.Dataset]].
@@ -152,7 +161,7 @@ trait SparkMain extends Serializable {
       * @param endTime the ending time of the streams to be read in milliseconds (exclusive);
       *                default is [[scala.Long.MaxValue]], which means reading till the last event.
       * @param sec the [[co.cask.cdap.api.spark.SparkExecutionContext]] of the current execution
-      * @param decoder a function to convert a [[co.cask.cdap.api.flow.flowlet.StreamEvent]] to a value
+      * @param decoder a function to convert a [[co.cask.cdap.api.flow.flowlet.StreamEvent]] to a value of type `T`
       * @tparam T value type
       * @return a new [[org.apache.spark.rdd.RDD]] instance that reads from the given stream.
       * @throws co.cask.cdap.api.data.DatasetInstantiationException if the Stream doesn't exist
@@ -160,6 +169,47 @@ trait SparkMain extends Serializable {
     def fromStream[T: ClassTag](streamName: String, startTime: Long = 0L, endTime: Long = Long.MaxValue)
                                (implicit sec: SparkExecutionContext, decoder: StreamEvent => T): RDD[T] = {
       sec.fromStream(sc, streamName, startTime, endTime)
+    }
+
+    /**
+      * Creates a [[org.apache.spark.rdd.RDD]] that represents all data from the given stream.
+      * The data in the RDD is always a pair, with the first entry as a [[scala.Long]], representing the
+      * event timestamp, while the second entry is a [[co.cask.cdap.api.stream.GenericStreamEventData]],
+      * which contains data decoded from the stream event body base on
+      * the given [[co.cask.cdap.api.data.format.FormatSpecification]].
+      *
+      * @param streamName name of the stream
+      * @param formatSpec the [[co.cask.cdap.api.data.format.FormatSpecification]] describing the format in the stream
+      * @param sec the [[co.cask.cdap.api.spark.SparkExecutionContext]] of the current execution
+      * @tparam T value type
+      * @return a new [[org.apache.spark.rdd.RDD]] instance that reads from the given stream.
+      * @throws co.cask.cdap.api.data.DatasetInstantiationException if the Stream doesn't exist
+      */
+    def fromStream[T: ClassTag](streamName: String, formatSpec: FormatSpecification)
+                               (implicit sec: SparkExecutionContext) : RDD[(Long, GenericStreamEventData[T])] = {
+      fromStream(streamName, formatSpec, 0, Long.MaxValue)
+    }
+
+    /**
+      * Creates a [[org.apache.spark.rdd.RDD]] that represents data from the given stream for events in the given
+      * time range. The data in the RDD is always a pair, with the first entry as a [[scala.Long]], representing the
+      * event timestamp, while the second entry is a [[co.cask.cdap.api.stream.GenericStreamEventData]],
+      * which contains data decoded from the stream event body base on
+      * the given [[co.cask.cdap.api.data.format.FormatSpecification]].
+      *
+      * @param streamName name of the stream
+      * @param formatSpec the [[co.cask.cdap.api.data.format.FormatSpecification]] describing the format in the stream
+      * @param startTime the starting time of the stream to be read in milliseconds (inclusive)
+      * @param endTime the ending time of the streams to be read in milliseconds (exclusive)
+      * @param sec the [[co.cask.cdap.api.spark.SparkExecutionContext]] of the current execution
+      * @tparam T value type
+      * @return a new [[org.apache.spark.rdd.RDD]] instance that reads from the given stream.
+      * @throws co.cask.cdap.api.data.DatasetInstantiationException if the Stream doesn't exist
+      */
+    def fromStream[T: ClassTag](streamName: String, formatSpec: FormatSpecification,
+                                startTime: Long, endTime: Long)
+                               (implicit sec: SparkExecutionContext) : RDD[(Long, GenericStreamEventData[T])] = {
+      sec.fromStream(sc, streamName, formatSpec, startTime, endTime)
     }
   }
 
@@ -195,21 +245,16 @@ trait SparkMain extends Serializable {
   }
 
   /**
-    * An implicit object that performs identity transform for [[co.cask.cdap.api.flow.flowlet.StreamEvent]].
-    */
-  protected implicit val identityStreamDecoder = (e: StreamEvent) => e
-
-  /**
     * An implicit object that transforms [[co.cask.cdap.api.flow.flowlet.StreamEvent]] to a
     * [[scala.Tuple2]] of (eventTimestamp, UTF-8 decoded body string).
     */
-  protected implicit val timestampStringStreamDecoder = (e: StreamEvent) => {
+  protected implicit val timestampStringStreamDecoder: (StreamEvent) => (Long, String) = (e: StreamEvent) => {
     (e.getTimestamp, Charset.forName("UTF-8").decode(e.getBody).toString)
   }
 
   /**
     * An implicit object that transforms [[co.cask.cdap.api.flow.flowlet.StreamEvent]] body to a UTF-8 string.
     */
-  protected implicit val stringStreamDecoder = (e: StreamEvent) =>
+  protected implicit val stringStreamDecoder: (StreamEvent) => String = (e: StreamEvent) =>
     timestampStringStreamDecoder(e)._2
 }

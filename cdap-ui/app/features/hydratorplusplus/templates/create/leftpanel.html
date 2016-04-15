@@ -22,12 +22,8 @@
   </select>
 
   <div class="import-section">
-    <strong>
-      <a href="" ng-click="HydratorPlusPlusLeftPanelCtrl.showTemplates()">Templates</a>
-    </strong>
-    <strong>
-      <a href="" ng-click="HydratorPlusPlusLeftPanelCtrl.openFileBrowser()">Import</a>
-    </strong>
+    <a class="btn btn-default" href="" ng-click="HydratorPlusPlusLeftPanelCtrl.showTemplates()">Template Gallery</a>
+    <a class="btn btn-default" href="" ng-click="HydratorPlusPlusLeftPanelCtrl.openFileBrowser()">Import Pipeline</a>
   </div>
 </div>
 <my-side-panel
@@ -39,6 +35,13 @@
   data-on-panel-item-click-context="HydratorPlusPlusLeftPanelCtrl"
   data-on-panel-item-click="HydratorPlusPlusLeftPanelCtrl.onLeftSidePanelItemClicked">
 </my-side-panel>
+
+<div class="btn btn-default btn-left-panel-toggle btn-sm pull-right" ng-click="HydratorPlusPlusStudioCtrl.toggleSidebar();">
+  <span ng-class="{'fa-angle-double-left': HydratorPlusPlusStudioCtrl.isExpanded === true, 'fa-angle-double-right': HydratorPlusPlusStudioCtrl.isExpanded === false}" class="fa "></span>
+</div>
+<div class="btn btn-default btn-left-panel-add-plugin btn-sm pull-right" ng-click="HydratorPlusPlusLeftPanelCtrl.loadArtifact();">
+  <span class="fa fa-plus"></span>
+</div>
 
 <my-file-select class="sr-only"
                 id="pipeline-import-config-link"

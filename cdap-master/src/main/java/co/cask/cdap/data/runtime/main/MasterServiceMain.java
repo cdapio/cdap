@@ -52,7 +52,6 @@ import co.cask.cdap.explore.client.ExploreClient;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.explore.service.ExploreServiceUtils;
 import co.cask.cdap.hive.ExploreUtils;
-import co.cask.cdap.internal.app.runtime.spark.SparkUtils;
 import co.cask.cdap.internal.app.services.AppFabricServer;
 import co.cask.cdap.logging.appender.LogAppenderInitializer;
 import co.cask.cdap.logging.guice.LoggingModules;
@@ -210,23 +209,6 @@ public class MasterServiceMain extends DaemonMain {
     } catch (IOException e) {
       LOG.error("Could not disable caching of URLJarFiles. This may lead to 'too many open files` exception.", e);
     }
-
-    // Create a new daemon thread to start the writing of Spark
-    Thread sparkRewriteThread = new Thread("Spark-Jar-Rewrite") {
-      @Override
-      public void run() {
-        try {
-          SparkUtils.getRewrittenSparkAssemblyJar(cConf);
-        } catch (IllegalStateException e) {
-          // It's ok if Spark is not configured at all
-          LOG.debug("Spark library is not available: {}", e.getMessage());
-        } catch (Throwable t) {
-          LOG.warn("Failed to rewrite Spark Assembly JAR", t);
-        }
-      }
-    };
-    sparkRewriteThread.setDaemon(true);
-    sparkRewriteThread.start();
 
     createSystemHBaseNamespace();
     updateConfigurationTable();

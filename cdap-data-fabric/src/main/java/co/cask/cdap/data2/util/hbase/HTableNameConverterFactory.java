@@ -49,4 +49,9 @@ public class HTableNameConverterFactory extends HBaseVersionSpecificFactory<HTab
   protected String getHBase10CHD550ClassName() {
     return "co.cask.cdap.data2.util.hbase.HTable10CDH550NameConverter";
   }
+
+  @Override
+  protected String getHBase12CHD570ClassName() {
+    return "co.cask.cdap.data2.util.hbase.HTable12CDH570NameConverter";
+  }
 }

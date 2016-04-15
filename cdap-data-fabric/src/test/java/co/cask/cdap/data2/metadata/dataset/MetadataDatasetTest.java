@@ -443,6 +443,39 @@ public class MetadataDatasetTest {
   }
 
   @Test
+  public void testUpdateSearch() throws Exception {
+    dataset.setProperty(flow1, "key1", "value1");
+    dataset.setProperty(flow1, "key2", "value2");
+    dataset.addTags(flow1, "tag1", "tag2");
+
+    Assert.assertEquals(ImmutableList.of(new MetadataEntry(flow1, "key1", "value1")),
+                        dataset.search(flow1.getNamespaceId(), "value1", ImmutableSet.<MetadataSearchTargetType>of()));
+    Assert.assertEquals(ImmutableList.of(new MetadataEntry(flow1, "key2", "value2")),
+                        dataset.search(flow1.getNamespaceId(), "value2", ImmutableSet.<MetadataSearchTargetType>of()));
+    Assert.assertEquals(ImmutableList.of(new MetadataEntry(flow1, MetadataDataset.TAGS_KEY, "tag1,tag2")),
+                        dataset.search(flow1.getNamespaceId(), "tag2", ImmutableSet.<MetadataSearchTargetType>of()));
+    // Update key1
+    dataset.setProperty(flow1, "key1", "value3");
+    dataset.removeProperties(flow1, "key2");
+    dataset.removeTags(flow1, "tag2");
+
+    // Searching for value1 should be empty
+    Assert.assertEquals(ImmutableList.of(),
+                        dataset.search(flow1.getNamespaceId(), "value1", ImmutableSet.<MetadataSearchTargetType>of()));
+    // Instead key1 has value value3 now
+    Assert.assertEquals(ImmutableList.of(new MetadataEntry(flow1, "key1", "value3")),
+                        dataset.search(flow1.getNamespaceId(), "value3", ImmutableSet.<MetadataSearchTargetType>of()));
+    // key2 was deleted
+    Assert.assertEquals(ImmutableList.of(),
+                        dataset.search(flow1.getNamespaceId(), "value2", ImmutableSet.<MetadataSearchTargetType>of()));
+    // tag2 was deleted
+    Assert.assertEquals(ImmutableList.of(),
+                        dataset.search(flow1.getNamespaceId(), "tag2", ImmutableSet.<MetadataSearchTargetType>of()));
+    Assert.assertEquals(ImmutableList.of(new MetadataEntry(flow1, MetadataDataset.TAGS_KEY, "tag1")),
+                        dataset.search(flow1.getNamespaceId(), "tag1", ImmutableSet.<MetadataSearchTargetType>of()));
+  }
+
+  @Test
   public void testMultiGet() throws Exception {
     Map<Id.NamespacedId, Metadata> allMetadata = new HashMap<>();
     allMetadata.put(flow1, new Metadata(flow1,
@@ -496,6 +529,31 @@ public class MetadataDatasetTest {
 
     expected = ImmutableSet.of();
     Assert.assertEquals(expected, dataset.getMetadata(ImmutableSet.<Id.NamespacedId>of()));
+  }
+
+  @Test
+  public void testDelete() throws Exception {
+    dataset.setProperty(flow1, "key1", "value1");
+    dataset.setProperty(flow1, "key2", "value2");
+    dataset.addTags(flow1, "tag1", "tag2");
+
+    dataset.setProperty(app1, "key10", "value10");
+    dataset.setProperty(app1, "key12", "value12");
+    dataset.addTags(app1, "tag11", "tag12");
+
+    Assert.assertEquals(ImmutableMap.of("key1", "value1", "key2", "value2"), dataset.getProperties(flow1));
+    Assert.assertEquals(ImmutableSet.of("tag1", "tag2"), dataset.getTags(flow1));
+    Assert.assertEquals(ImmutableMap.of("key10", "value10", "key12", "value12"), dataset.getProperties(app1));
+    Assert.assertEquals(ImmutableSet.of("tag11", "tag12"), dataset.getTags(app1));
+
+    // Delete all tags for flow1, and delete all properties for app1
+    dataset.removeTags(flow1);
+    dataset.removeProperties(app1);
+
+    Assert.assertEquals(ImmutableMap.of("key1", "value1", "key2", "value2"), dataset.getProperties(flow1));
+    Assert.assertEquals(ImmutableSet.of(), dataset.getTags(flow1));
+    Assert.assertEquals(ImmutableMap.of(), dataset.getProperties(app1));
+    Assert.assertEquals(ImmutableSet.of("tag11", "tag12"), dataset.getTags(app1));
   }
 
   @Test

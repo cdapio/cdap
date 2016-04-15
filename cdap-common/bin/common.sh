@@ -165,7 +165,10 @@ cdap_set_hbase() {
         hbasecompat="${CDAP_HOME}/hbase-compat-1.0/lib/*"
         ;;
       1.1*)
-        hbasecompat="$CDAP_HOME/hbase-compat-1.1/lib/*"
+        hbasecompat="${CDAP_HOME}/hbase-compat-1.1/lib/*"
+        ;;
+      1.2-cdh*)
+        hbasecompat="${CDAP_HOME}/hbase-compat-1.2-cdh5.7.0/lib/*"
         ;;
       *)
         echo "ERROR: Unknown/unsupported version of HBase found: ${HBASE_VERSION}"
@@ -203,7 +206,7 @@ cdap_set_classpath() {
 
   # In order to ensure that we can do hacks, need to make sure classpath is sorted
   # so that cdap jars are placed earlier in the classpath than twill or hadoop jars
-  COMP_LIB=$(find -L "${COMP_HOME}/lib" -type f | sort | tr '\n' ':')
+  COMP_LIB=$(find -L "${COMP_HOME}/lib" -type f 2>/dev/null | sort | tr '\n' ':')
 
   if [ -n "${HBASE_CP}" ]; then
     CP="${COMP_LIB}:${HBASE_CP}:${CCONF}/:${COMP_HOME}/conf/:${EXTRA_CLASSPATH}"
@@ -267,6 +270,32 @@ cdap_set_hive_classpath() {
       EXPLORE_CLASSPATH=$(ls -1 ${HIVE_HOME}/lib/hive-exec-* ${HIVE_HOME}/lib/*.jar | tr '\n' ':')
       export EXPLORE_CONF_FILES EXPLORE_CLASSPATH
     fi
+  fi
+}
+
+# Get SPARK_HOME
+cdap_set_spark() {
+  # First, see if we're set to something sane
+  if [ -n "${SPARK_HOME}" -a -d "${SPARK_HOME}" ]; then
+    return 0 # SPARK_HOME is set, already
+  else
+    if [[ $(which spark-shell 2>/dev/null) ]]; then
+      ERR_FILE=$(mktemp)
+      SPARK_VAR_OUT=$(echo 'for ((key, value) <- sys.env) println (key + "=" + value); exit' | spark-shell --master local 2>${ERR_FILE})
+      __ret=$?
+      SPARK_ERR_MSG=$(< ${ERR_FILE})
+      rm ${ERR_FILE}
+      if [ ${__ret} -ne 0 ]; then
+        echo "ERROR - While determining Spark home, failed to get Spark settings using: spark-shell --master local"
+        echo "stderr:"
+        echo "${SPARK_ERR_MSG}"
+        return 1
+      fi
+      SPARK_HOME=$(echo -e "${SPARK_VAR_OUT}" | grep ^SPARK_HOME= | cut -d= -f2)
+      export SPARK_HOME
+      return 0
+    fi
+    return 1
   fi
 }
 

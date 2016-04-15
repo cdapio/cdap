@@ -127,13 +127,17 @@ Querying the Results
 
 To query the ``RetrieveCounts`` service, either:
 
-- Send a query via an HTTP request using the ``curl`` command::
+- Use the CDAP CLI:
 
-    $ curl -w'\n' 'http://localhost:10000/v3/namespaces/default/apps/WordCount/services/RetrieveCounts/methods/count/CDAP'
-
-- Use the CDAP CLI::
+  .. tabbed-parsed-literal::
 
     $ cdap-cli.sh call service WordCount.RetrieveCounts GET /count/CDAP
+
+- Send a query via an HTTP request using the ``curl`` command:
+
+  .. tabbed-parsed-literal::
+
+    $ curl -w"\n" -X GET "http://localhost:10000/v3/namespaces/default/apps/WordCount/services/RetrieveCounts/methods/count/CDAP"
 
 The word count and top-10 associations words for that word will be displayed in JSON
 format (example reformatted to fit; results will depend on what you have submitted)::

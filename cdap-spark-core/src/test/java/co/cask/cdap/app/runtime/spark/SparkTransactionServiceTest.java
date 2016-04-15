@@ -31,6 +31,8 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashSet;
@@ -62,13 +64,13 @@ public class SparkTransactionServiceTest {
   private static SparkTransactionClient sparkTxClient;
 
   @BeforeClass
-  public static void init() {
+  public static void init() throws UnknownHostException {
     txManager = new TransactionManager(new Configuration());
     txManager.startAndWait();
 
     txClient = new InMemoryTxSystemClient(txManager);
 
-    sparkTxService = new SparkTransactionService(txClient);
+    sparkTxService = new SparkTransactionService(txClient, InetAddress.getLoopbackAddress().getCanonicalHostName());
     sparkTxService.startAndWait();
 
     sparkTxClient = new SparkTransactionClient(sparkTxService.getBaseURI());
@@ -173,7 +175,8 @@ public class SparkTransactionServiceTest {
     };
     txManager.startAndWait();
     try {
-      SparkTransactionService sparkTxService = new SparkTransactionService(new InMemoryTxSystemClient(txManager));
+      SparkTransactionService sparkTxService = new SparkTransactionService(
+        new InMemoryTxSystemClient(txManager), InetAddress.getLoopbackAddress().getCanonicalHostName());
       sparkTxService.startAndWait();
       try {
         // Start a job

@@ -29,8 +29,8 @@ import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.AbstractContext;
+import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.tephra.TransactionSystemClient;
-import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import org.apache.twill.api.RunId;
@@ -59,11 +59,12 @@ final class BasicWorkflowContext extends AbstractContext implements WorkflowCont
                        Arguments arguments, WorkflowToken token, Program program, RunId runId,
                        MetricsCollectionService metricsCollectionService,
                        DatasetFramework datasetFramework, TransactionSystemClient txClient,
-                       DiscoveryServiceClient discoveryServiceClient, Map<String, WorkflowNodeState> nodeStates) {
+                       DiscoveryServiceClient discoveryServiceClient, Map<String, WorkflowNodeState> nodeStates,
+                       @Nullable PluginInstantiator pluginInstantiator) {
     super(program, runId, arguments,
           (spec == null) ? new HashSet<String>() : spec.getDatasets(),
           getMetricCollector(program, runId.getId(), metricsCollectionService),
-          datasetFramework, txClient, discoveryServiceClient, false);
+          datasetFramework, txClient, discoveryServiceClient, false, pluginInstantiator);
     this.workflowSpec = workflowSpec;
     this.specification = spec;
     this.programWorkflowRunner = programWorkflowRunner;

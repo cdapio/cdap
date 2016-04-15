@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -91,12 +91,11 @@ public class LogHandler extends AbstractHttpHandler {
                            @QueryParam("stop") @DefaultValue("-1") long toTimeSecsParam,
                            @QueryParam("escape") @DefaultValue("true") boolean escape,
                            @QueryParam("filter") @DefaultValue("") String filterStr) {
-    LoggingContext loggingContext =
-      LoggingContextHelper.getLoggingContextWithRunId(namespaceId, appId, programId,
-                                                      ProgramType.valueOfCategoryName(programType),
-                                                      runId);
-    RunRecordMeta runRecord = programStore.getRun(
-      Id.Program.from(namespaceId, appId, ProgramType.valueOfCategoryName(programType), programId), runId);
+    ProgramType type = ProgramType.valueOfCategoryName(programType);
+    RunRecordMeta runRecord = programStore.getRun(Id.Program.from(namespaceId, appId, type, programId), runId);
+    LoggingContext loggingContext = LoggingContextHelper.getLoggingContextWithRunId(namespaceId, appId, programId, type,
+                                                                                    runId, runRecord.getSystemArgs());
+
     doGetLogs(responder, loggingContext, fromTimeSecsParam, toTimeSecsParam, escape, filterStr, runRecord);
   }
 
@@ -148,12 +147,11 @@ public class LogHandler extends AbstractHttpHandler {
                         @QueryParam("fromOffset") @DefaultValue("") String fromOffsetStr,
                         @QueryParam("escape") @DefaultValue("true") boolean escape,
                         @QueryParam("filter") @DefaultValue("") String filterStr) {
-    LoggingContext loggingContext =
-      LoggingContextHelper.getLoggingContextWithRunId(namespaceId, appId, programId,
-                                                      ProgramType.valueOfCategoryName(programType),
-                                                      runId);
-    RunRecordMeta runRecord = programStore.getRun(
-      Id.Program.from(namespaceId, appId, ProgramType.valueOfCategoryName(programType), programId), runId);
+    ProgramType type = ProgramType.valueOfCategoryName(programType);
+    RunRecordMeta runRecord = programStore.getRun(Id.Program.from(namespaceId, appId, type, programId), runId);
+    LoggingContext loggingContext = LoggingContextHelper.getLoggingContextWithRunId(namespaceId, appId, programId, type,
+                                                                                    runId, runRecord.getSystemArgs());
+
     doNext(responder, loggingContext, maxEvents, fromOffsetStr, escape, filterStr, runRecord);
   }
 
@@ -226,12 +224,11 @@ public class LogHandler extends AbstractHttpHandler {
                         @QueryParam("fromOffset") @DefaultValue("") String fromOffsetStr,
                         @QueryParam("escape") @DefaultValue("true") boolean escape,
                         @QueryParam("filter") @DefaultValue("") String filterStr) {
-    LoggingContext loggingContext =
-      LoggingContextHelper.getLoggingContextWithRunId(namespaceId, appId, programId,
-                                                      ProgramType.valueOfCategoryName(programType),
-                                                      runId);
-    RunRecordMeta runRecord = programStore.getRun(
-      Id.Program.from(namespaceId, appId, ProgramType.valueOfCategoryName(programType), programId), runId);
+    ProgramType type = ProgramType.valueOfCategoryName(programType);
+    RunRecordMeta runRecord = programStore.getRun(Id.Program.from(namespaceId, appId, type, programId), runId);
+    LoggingContext loggingContext = LoggingContextHelper.getLoggingContextWithRunId(namespaceId, appId, programId, type,
+                                                                                    runId, runRecord.getSystemArgs());
+
     doPrev(responder, loggingContext, maxEvents, fromOffsetStr, escape, filterStr, runRecord);
   }
 
@@ -344,9 +341,10 @@ public class LogHandler extends AbstractHttpHandler {
   }
 
   private static TimeRange parseTime(long fromTimeSecsParam, long toTimeSecsParam, HttpResponder responder) {
+    long currentTimeMillis = System.currentTimeMillis();
     long fromMillis = fromTimeSecsParam < 0 ?
-      System.currentTimeMillis() - TimeUnit.HOURS.toMillis(1) : TimeUnit.SECONDS.toMillis(fromTimeSecsParam);
-    long toMillis = toTimeSecsParam < 0 ? System.currentTimeMillis() : TimeUnit.SECONDS.toMillis(toTimeSecsParam);
+      currentTimeMillis - TimeUnit.HOURS.toMillis(1) : TimeUnit.SECONDS.toMillis(fromTimeSecsParam);
+    long toMillis = toTimeSecsParam < 0 ? currentTimeMillis : TimeUnit.SECONDS.toMillis(toTimeSecsParam);
 
     if (toMillis <= fromMillis) {
       responder.sendString(HttpResponseStatus.BAD_REQUEST, "Invalid time range. " +

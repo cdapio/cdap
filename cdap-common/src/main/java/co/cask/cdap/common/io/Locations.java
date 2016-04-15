@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,7 +16,6 @@
 package co.cask.cdap.common.io;
 
 import co.cask.cdap.common.lang.FunctionWithException;
-import co.cask.cdap.common.twill.LocalLocationFactory;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.common.base.Throwables;
@@ -33,6 +32,7 @@ import org.apache.hadoop.fs.RemoteIterator;
 import org.apache.hadoop.hdfs.DistributedFileSystem;
 import org.apache.twill.filesystem.FileContextLocationFactory;
 import org.apache.twill.filesystem.HDFSLocationFactory;
+import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
@@ -45,6 +45,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.reflect.Method;
 import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.security.PrivilegedExceptionAction;
 import java.util.Comparator;
 import java.util.Iterator;
@@ -198,6 +200,33 @@ public final class Locations {
       }
     }
     return processor.getResult();
+  }
+
+  /**
+   * Tries to create a hardlink to the given {@link Location} if it is on the local file system. If creation
+   * of the hardlink failed or if the Location is not local, it will copy the the location to the given target path.
+   *
+   * @param location location to hardlink or copy from
+   * @param targetPath the target file path
+   * @return the target path
+   * @throws IOException if copying failed
+   */
+  public static File linkOrCopy(Location location, File targetPath) throws IOException {
+    URI uri = location.toURI();
+    if ("file".equals(uri.getScheme())) {
+      try {
+        Files.createLink(targetPath.toPath(), Paths.get(uri));
+        return targetPath;
+      } catch (Exception e) {
+        // Ignore. Fallback to copy
+      }
+    }
+
+    try (InputStream is = location.getInputStream()) {
+      Files.copy(is, targetPath.toPath());
+    }
+
+    return targetPath;
   }
 
   /**

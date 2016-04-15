@@ -61,6 +61,7 @@
     <slf4j.version>@slf4j.version@</slf4j.version>
     <junit.version>@junit.version@</junit.version>
     <spark.version>@spark.version@</spark.version>
+    <scala.version>@scala.version@</scala.version>
     <cask.common.version>@cask.common.version@</cask.common.version>
   </properties>
 
@@ -226,6 +227,12 @@
   <dependencyManagement>
     <dependencies>
       <dependency>
+        <groupId>co.cask.cdap</groupId>
+        <artifactId>cdap-api-spark</artifactId>
+        <version>${cdap.version}</version>
+        <scope>provided</scope>
+      </dependency>
+      <dependency>
         <groupId>co.cask.common</groupId>
         <artifactId>common-http</artifactId>
         <version>${cask.common.version}</version>
@@ -258,6 +265,24 @@
             <artifactId>slf4j-log4j12</artifactId>
           </exclusion>
         </exclusions>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.spark</groupId>
+        <artifactId>spark-mllib_2.10</artifactId>
+        <version>${spark.version}</version>
+        <scope>provided</scope>
+        <exclusions>
+          <exclusion>
+            <groupId>asm</groupId>
+            <artifactId>asm</artifactId>
+          </exclusion>
+        </exclusions>
+      </dependency>
+      <dependency>
+        <groupId>org.scala-lang</groupId>
+        <artifactId>scala-library</artifactId>
+        <version>${scala.version}</version>
+        <scope>provided</scope>
       </dependency>
       <dependency>
         <groupId>co.cask.cdap</groupId>

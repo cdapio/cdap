@@ -15,42 +15,27 @@
  */
 package co.cask.cdap.internal.app.runtime.distributed;
 
+import co.cask.cdap.app.guice.DefaultProgramRunnerFactory;
 import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.app.runtime.ProgramRunnerFactory;
+import co.cask.cdap.app.runtime.ProgramRuntimeProvider;
 import co.cask.cdap.internal.app.runtime.batch.MapReduceProgramRunner;
-import co.cask.cdap.internal.app.runtime.spark.SparkProgramRunner;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramRunner;
 import co.cask.cdap.proto.ProgramType;
-import com.google.common.base.Preconditions;
-import com.google.inject.Inject;
 import com.google.inject.Module;
 import com.google.inject.PrivateModule;
-import com.google.inject.Provider;
 import com.google.inject.Scopes;
-import com.google.inject.Singleton;
 import com.google.inject.multibindings.MapBinder;
 import com.google.inject.util.Modules;
-import org.apache.hadoop.mapred.YarnClientProtocolProvider;
 import org.apache.twill.api.TwillContext;
-
-import java.util.Map;
 
 /**
  *
  */
 final class WorkflowTwillRunnable extends AbstractProgramTwillRunnable<WorkflowProgramRunner> {
 
-  // NOTE: DO NOT REMOVE.  Though it is unused, the dependency is needed when submitting the mapred job.
-  @SuppressWarnings("unused")
-  private YarnClientProtocolProvider provider;
-
   WorkflowTwillRunnable(String name, String hConfName, String cConfName) {
     super(name, hConfName, cConfName);
-  }
-
-  @Override
-  protected Class<WorkflowProgramRunner> getProgramClass() {
-    return WorkflowProgramRunner.class;
   }
 
   @Override
@@ -59,13 +44,18 @@ final class WorkflowTwillRunnable extends AbstractProgramTwillRunnable<WorkflowP
     return Modules.combine(module, new PrivateModule() {
       @Override
       protected void configure() {
-        // Bind ProgramRunner for MR and Spark, which is used by Workflow
+        // Bind ProgramRunner for MR, which is used by Workflow.
+        // The ProgramRunner for Spark is provided by the DefaultProgramRunnerFactory through the extension mechanism
         MapBinder<ProgramType, ProgramRunner> runnerFactoryBinder =
           MapBinder.newMapBinder(binder(), ProgramType.class, ProgramRunner.class);
         runnerFactoryBinder.addBinding(ProgramType.MAPREDUCE).to(MapReduceProgramRunner.class);
-        runnerFactoryBinder.addBinding(ProgramType.SPARK).to(SparkProgramRunner.class);
 
-        bind(ProgramRunnerFactory.class).to(WorkflowProgramRunnerFactory.class).in(Scopes.SINGLETON);
+        // It uses local mode factory because for Workflow we launch the job from the Workflow container directly.
+        // The actual execution mode of the job is governed by the framework configuration
+        // For mapreduce, it's in the mapred-site.xml
+        // for spark, it's in the hConf we shipped from DistributedWorkflowProgramRunner
+        bind(ProgramRuntimeProvider.Mode.class).toInstance(ProgramRuntimeProvider.Mode.LOCAL);
+        bind(ProgramRunnerFactory.class).to(DefaultProgramRunnerFactory.class).in(Scopes.SINGLETON);
         expose(ProgramRunnerFactory.class);
       }
     });
@@ -75,23 +65,5 @@ final class WorkflowTwillRunnable extends AbstractProgramTwillRunnable<WorkflowP
   protected boolean propagateServiceError() {
     // Don't propagate Workflow failure as failure. Quick fix for CDAP-749.
     return false;
-  }
-
-  @Singleton
-  private static final class WorkflowProgramRunnerFactory implements ProgramRunnerFactory {
-
-    private final Map<ProgramType, Provider<ProgramRunner>> providers;
-
-    @Inject
-    private WorkflowProgramRunnerFactory(Map<ProgramType, Provider<ProgramRunner>> providers) {
-      this.providers = providers;
-    }
-
-    @Override
-    public ProgramRunner create(ProgramType programType) {
-      Provider<ProgramRunner> provider = providers.get(programType);
-      Preconditions.checkNotNull(provider, "Unsupported program type: " + programType);
-      return provider.get();
-    }
   }
 }

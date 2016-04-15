@@ -16,9 +16,9 @@
 
 package co.cask.cdap.gateway.router;
 
-import co.cask.cdap.AllProgramsApp;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
+import co.cask.cdap.gateway.apps.AppWritingtoStream;
 import co.cask.cdap.internal.test.AppJarHelper;
 import com.google.common.collect.Iterables;
 import com.google.common.io.ByteStreams;
@@ -137,7 +137,7 @@ public class NettyRouterPipelineTest {
                                 HOSTNAME, ROUTER.getServiceMap().get(GATEWAY_NAME));
 
     LocationFactory lf = new LocalLocationFactory(TMP_FOLDER.newFolder());
-    Location programJar = AppJarHelper.createDeploymentJar(lf, AllProgramsApp.class);
+    Location programJar = AppJarHelper.createDeploymentJar(lf, AppWritingtoStream.class);
     GATEWAY_SERVER.setExpectedJarBytes(ByteStreams.toByteArray(Locations.newInputSupplier(programJar)));
 
     for (int i = 0; i < num; i++) {

@@ -44,6 +44,7 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.artifact.ArtifactInfo;
+import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.store.NamespaceStore;
 import com.google.inject.Inject;
 import org.apache.twill.filesystem.LocationFactory;
@@ -54,8 +55,7 @@ import java.io.IOException;
 import java.util.Collection;
 
 /**
- * Adds system metadata for existing entities prior to 3.3.
- * TODO CDAP-4696: Remove in 3.4
+ * Updates system metadata for existing entities.
  */
 public class ExistingEntitySystemMetadataWriter {
   private static final Logger LOG = LoggerFactory.getLogger(ExistingEntitySystemMetadataWriter.class);
@@ -125,14 +125,13 @@ public class ExistingEntitySystemMetadataWriter {
   private void writeSystemMetadataForPrograms(Id.Application app, ProgramType programType,
                                               Collection<? extends ProgramSpecification> programSpecs) {
     for (ProgramSpecification programSpec : programSpecs) {
-      Id.Program programId = Id.Program.from(app, programType, programSpec.getName());
+      ProgramId programId = app.toEntityId().program(programType, programSpec.getName());
       SystemMetadataWriter writer = new ProgramSystemMetadataWriter(metadataStore, programId, programSpec);
       writer.write();
     }
   }
 
-  private void writeSystemMetadataForDatasets(Id.Namespace namespace,
-                                              DatasetFramework dsFramework)
+  private void writeSystemMetadataForDatasets(Id.Namespace namespace, DatasetFramework dsFramework)
     throws DatasetManagementException, IOException {
     SystemDatasetInstantiatorFactory systemDatasetInstantiatorFactory =
       new SystemDatasetInstantiatorFactory(locationFactory, dsFramework, cConf);

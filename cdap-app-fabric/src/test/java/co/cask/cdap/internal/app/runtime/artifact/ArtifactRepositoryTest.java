@@ -72,7 +72,6 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
@@ -215,10 +214,10 @@ public class ArtifactRepositoryTest {
     try {
       // check app artifact added correctly
       ArtifactDetail appArtifactDetail = artifactRepository.getArtifact(systemAppArtifactId);
-      Map<ArtifactDescriptor, List<PluginClass>> plugins =
+      Map<ArtifactDescriptor, Set<PluginClass>> plugins =
         artifactRepository.getPlugins(NamespaceId.DEFAULT, systemAppArtifactId);
       Assert.assertEquals(2, plugins.size());
-      List<PluginClass> pluginClasses = plugins.values().iterator().next();
+      Set<PluginClass> pluginClasses = plugins.values().iterator().next();
 
       Set<String> pluginNames = Sets.newHashSet();
       for (PluginClass pluginClass : pluginClasses) {
@@ -278,7 +277,7 @@ public class ArtifactRepositoryTest {
     artifactRepository.addArtifact(artifactId, jarFile, parents);
 
     // check the parent can see the plugins
-    SortedMap<ArtifactDescriptor, List<PluginClass>> plugins =
+    SortedMap<ArtifactDescriptor, Set<PluginClass>> plugins =
       artifactRepository.getPlugins(NamespaceId.DEFAULT, APP_ARTIFACT_ID);
     Assert.assertEquals(1, plugins.size());
     Assert.assertEquals(2, plugins.get(plugins.firstKey()).size());
@@ -288,7 +287,7 @@ public class ArtifactRepositoryTest {
       new File(pluginDir, Artifacts.getFileName(descriptor.getArtifactId())));
     // Instantiate the plugins and execute them
     try (PluginInstantiator instantiator = new PluginInstantiator(cConf, appClassLoader, pluginDir)) {
-      for (Map.Entry<ArtifactDescriptor, List<PluginClass>> entry : plugins.entrySet()) {
+      for (Map.Entry<ArtifactDescriptor, Set<PluginClass>> entry : plugins.entrySet()) {
         for (PluginClass pluginClass : entry.getValue()) {
           Plugin pluginInfo = new Plugin(entry.getKey().getArtifactId(), pluginClass,
                                          PluginProperties.builder().add("class.name", TEST_EMPTY_CLASS)
@@ -475,7 +474,7 @@ public class ArtifactRepositoryTest {
       artifactRepository.addArtifact(pluginArtifactId2, jarFile, parents);
 
       // check that only plugins from the artifact in the namespace are returned, and not plugins from both
-      SortedMap<ArtifactDescriptor, List<PluginClass>> extensions =
+      SortedMap<ArtifactDescriptor, Set<PluginClass>> extensions =
         artifactRepository.getPlugins(namespace1, systemAppArtifactId);
       Assert.assertEquals(1, extensions.keySet().size());
       Assert.assertEquals(2, extensions.values().iterator().next().size());

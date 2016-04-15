@@ -52,7 +52,7 @@ public class StreamSystemMetadataWriter extends AbstractSystemMetadataWriter {
     ImmutableMap.Builder<String, String> properties = ImmutableMap.builder();
     properties.put(TTL_KEY, String.valueOf(config.getTTL()));
     if (creationTime > 0) {
-      properties.put(CREATE_TIME, String.valueOf(creationTime));
+      properties.put(CREATION_TIME, String.valueOf(creationTime));
     }
     if (description != null) {
       properties.put(DESCRIPTION, description);

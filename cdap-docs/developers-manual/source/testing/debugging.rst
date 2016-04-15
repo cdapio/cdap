@@ -46,9 +46,11 @@ an HTTP request to the component’s URL. For example, the following will start 
 
   POST <base-url>/namespaces/default/apps/WordCount/flows/WordCounter/debug
   
-Using ``curl``::
+Using ``curl``:
 
-  $ curl -w'\n' -X POST 'http://<hostname>:10000/v3/namespaces/default/apps/WordCount/flows/WordCounter/debug'
+.. tabbed-parsed-literal::
+
+  $ curl -w"\n" -X POST "http://<hostname>:10000/v3/namespaces/default/apps/WordCount/flows/WordCounter/debug"
 
 Note that this URL differs from the URL for starting the flow only by the last path
 component (``debug`` instead of ``start``; see the :ref:`http-restful-api-lifecycle`). 
@@ -61,7 +63,9 @@ the CDAP for a flow or service’s live info via HTTP::
 
   GET <base-url>/namespaces/default/apps/WordCount/flows/WordCounter/live-info
   
-or::
+or, using the CDAP CLI:
+
+.. tabbed-parsed-literal::
 
   $ cdap-cli.sh get flow live WordCount.WordCounter
 
@@ -160,9 +164,9 @@ You may need to adjust them for your installation or version.
    .. image:: ../_images/debugging/eclipse_2.png
 
 #. Enter the host name, for example, ``localhost`` or ``node-1003.my.cluster.net``
-   in the Port field:
-#. Enter the debugging port, for example, ``5005`` in the Port field:
-
+   in the Host field.
+   
+#. Enter the debugging port, for example, ``5005`` in the Port field.
 
 #. In your project, click ``Debug`` to start the debugger.
 
@@ -282,20 +286,24 @@ Dumping the Transaction Manager
 CDAP comes bundled with a script that allows you to dump the state of the internal
 transaction manager into a local file to allow further investigation. If your CDAP Instance
 tends to become slow, you can use this tool to detect the incriminating transactions.
-This script is called ``tx-debugger`` (on Windows, it is ``tx-debugger.bat``).
+This script is called ``tx-debugger.sh`` (on Windows, it is ``tx-debugger.bat``).
 
-To download a snapshot of the state of the TM of the CDAP, use the command::
+To download a snapshot of the state of the TM of the CDAP, use the command:
 
-  $ tx-debugger view --host <name> [--save <filename>]
+.. tabbed-parsed-literal::
+
+  $ tx-debugger.sh view --host <name> [--save <filename>]
 
 where `name` is the host name of your CDAP instance, and the optional `filename`
 specifies where the snapshot should be saved. This command will
 print statistics about all the structures that define the state of the TM.
 
 You can also load a snapshot that has already been saved locally
-with the command::
+with the command:
 
-  $ tx-debugger view --filename <filename>
+.. tabbed-parsed-literal::
+
+  $ tx-debugger.sh view --filename <filename>
 
 where `filename` specifies the location where the snapshot has been saved.
 
@@ -316,9 +324,11 @@ issues.
 
 If you really know what you are doing and you spot a transaction in the
 in-progress set that should be in the excluded set, you can
-use this command to invalidate it::
+use this command to invalidate it:
 
-  $ tx-debugger invalidate --host <name> --transaction <writePtr>
+.. tabbed-parsed-literal::
+
+  $ tx-debugger.sh invalidate --host <name> --transaction <writePtr>
 
 Invalidating a transaction when we know for sure that its writes should
 be invalidated is useful, because those writes will then be removed

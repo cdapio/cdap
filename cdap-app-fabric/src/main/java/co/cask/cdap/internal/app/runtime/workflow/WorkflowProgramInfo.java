@@ -24,12 +24,13 @@ import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import com.google.gson.Gson;
 import org.apache.twill.api.RunId;
 
+import java.io.Serializable;
 import javax.annotation.Nullable;
 
 /**
  * A container which contains information for a program that runs inside a {@link Workflow}.
  */
-public final class WorkflowProgramInfo implements WorkflowInfo {
+public final class WorkflowProgramInfo implements WorkflowInfo, Serializable {
 
   private static final Gson GSON = new Gson();
 

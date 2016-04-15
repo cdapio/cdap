@@ -19,7 +19,9 @@ package co.cask.cdap.etl.mock.realtime;
 import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.annotation.Plugin;
 import co.cask.cdap.api.data.format.StructuredRecord;
+import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.api.plugin.PluginConfig;
+import co.cask.cdap.api.plugin.PluginPropertyField;
 import co.cask.cdap.etl.api.Emitter;
 import co.cask.cdap.etl.api.realtime.RealtimeContext;
 import co.cask.cdap.etl.api.realtime.RealtimeSource;
@@ -41,6 +43,7 @@ import javax.annotation.Nullable;
 @Plugin(type = RealtimeSource.PLUGIN_TYPE)
 @Name("Mock")
 public class MockSource extends RealtimeSource<StructuredRecord> {
+  public static final PluginClass PLUGIN_CLASS = getPluginClass();
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(StructuredRecord.class, new StructuredRecordCodec())
     .create();
@@ -92,5 +95,12 @@ public class MockSource extends RealtimeSource<StructuredRecord> {
       properties.put("records", GSON.toJson(records));
     }
     return new ETLPlugin("Mock", RealtimeSource.PLUGIN_TYPE, properties, null);
+  }
+
+  private static PluginClass getPluginClass() {
+    Map<String, PluginPropertyField> properties = new HashMap<>();
+    properties.put("records", new PluginPropertyField("records", "", "string", false));
+    return new PluginClass(RealtimeSource.PLUGIN_TYPE, "Mock", "", MockSource.class.getName(),
+                           "config", properties);
   }
 }

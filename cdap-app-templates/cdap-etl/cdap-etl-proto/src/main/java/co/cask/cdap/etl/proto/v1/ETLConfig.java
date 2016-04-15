@@ -19,8 +19,6 @@ package co.cask.cdap.etl.proto.v1;
 import co.cask.cdap.api.Config;
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.etl.api.Transform;
-import co.cask.cdap.etl.api.batch.BatchSink;
-import co.cask.cdap.etl.api.batch.BatchSource;
 import co.cask.cdap.etl.proto.Connection;
 import co.cask.cdap.etl.proto.UpgradeContext;
 import com.google.common.collect.ImmutableList;

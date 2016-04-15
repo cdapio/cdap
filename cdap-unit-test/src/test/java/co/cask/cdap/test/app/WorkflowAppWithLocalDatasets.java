@@ -16,9 +16,11 @@
 
 package co.cask.cdap.test.app;
 
+import co.cask.cdap.api.TxRunnable;
 import co.cask.cdap.api.annotation.UseDataSet;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.api.dataset.lib.FileSetArguments;
@@ -29,8 +31,8 @@ import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.spark.AbstractSpark;
-import co.cask.cdap.api.spark.JavaSparkProgram;
-import co.cask.cdap.api.spark.SparkContext;
+import co.cask.cdap.api.spark.JavaSparkExecutionContext;
+import co.cask.cdap.api.spark.JavaSparkMain;
 import co.cask.cdap.api.workflow.AbstractWorkflow;
 import co.cask.cdap.api.workflow.AbstractWorkflowAction;
 import co.cask.cdap.api.workflow.WorkflowContext;
@@ -43,7 +45,7 @@ import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.spark.api.java.JavaPairRDD;
-import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.Function;
 import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
@@ -53,6 +55,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.StringTokenizer;
 import java.util.concurrent.TimeUnit;
@@ -163,35 +166,46 @@ public class WorkflowAppWithLocalDatasets extends AbstractApplication {
   /**
    * Main class for the Spark program to convert comma separated file into space separated file.
    */
-  public static final class SparkCSVToSpaceProgram implements JavaSparkProgram {
-    @Override
-    public void run(SparkContext context) throws Exception {
-      Map<String, String> fileSetArgs = new HashMap<>();
-      final Metrics metrics = context.getMetrics();
-      FileSetArguments.addInputPath(fileSetArgs, context.getRuntimeArguments().get("input.path"));
-      JavaPairRDD<LongWritable, Text> input = context.readFromDataset(CSV_FILESET_DATASET, LongWritable.class,
-                                                                      Text.class, fileSetArgs);
 
-      JavaRDD<String> converted = input.values().map(new Function<Text, String>() {
+  public static final class SparkCSVToSpaceProgram implements JavaSparkMain {
+
+    @Override
+    public void run(final JavaSparkExecutionContext sec) throws Exception {
+      JavaSparkContext jsc = new JavaSparkContext();
+
+      Map<String, String> fileSetArgs = new HashMap<>();
+      final Metrics metrics = sec.getMetrics();
+      FileSetArguments.addInputPath(fileSetArgs, sec.getRuntimeArguments().get("input.path"));
+      JavaPairRDD<LongWritable, Text> input = sec.fromDataset(CSV_FILESET_DATASET, fileSetArgs);
+
+      final List<String> converted = input.values().map(new Function<Text, String>() {
         @Override
         public String call(Text input) throws Exception {
           String line = input.toString();
           metrics.count("num.lines", 1);
           return line.replaceAll(",", " ");
         }
-      });
+      }).collect();
 
-      Map<String, String> args = context.getRuntimeArguments();
-      String outputPath = args.get("output.path");
-      fileSetArgs = new HashMap<>();
-      FileSetArguments.setOutputPath(fileSetArgs, outputPath);
-      FileSet fileSet = context.getDataset(CSV_FILESET_DATASET, fileSetArgs);
-      try (PrintWriter writer = new PrintWriter(fileSet.getOutputLocation().getOutputStream())) {
-        for (String line : converted.collect()) {
-          writer.write(line);
-          writer.println();
+      sec.execute(new TxRunnable() {
+        @Override
+        public void run(DatasetContext context) throws Exception {
+          Map<String, String> args = sec.getRuntimeArguments();
+          String outputPath = args.get("output.path");
+
+          Map<String, String> fileSetArgs = new HashMap<>();
+          FileSetArguments.setOutputPath(fileSetArgs, outputPath);
+
+
+          FileSet fileSet = context.getDataset(CSV_FILESET_DATASET, fileSetArgs);
+          try (PrintWriter writer = new PrintWriter(fileSet.getOutputLocation().getOutputStream())) {
+            for (String line : converted) {
+              writer.write(line);
+              writer.println();
+            }
+          }
         }
-      }
+      });
     }
   }
 

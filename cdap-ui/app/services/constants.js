@@ -19,8 +19,8 @@ angular.module(PKG.name + '.services')
     // Should be under property called 'artifactTypes' to be consistent. GLOBALS.etlBatch doesn't make much sense.
     etlBatch: 'cdap-etl-batch',
     etlRealtime: 'cdap-etl-realtime',
-    etlDataPipeline: 'cdap-etl-data-pipeline',
-    etlBatchPipelines: ['cdap-etl-batch', 'cdap-etl-data-pipeline'],
+    etlDataPipeline: 'cdap-data-pipeline',
+    etlBatchPipelines: ['cdap-etl-batch', 'cdap-data-pipeline'],
     pluginTypes: {
       'cdap-etl-batch': {
         'source': 'batchsource',
@@ -32,7 +32,7 @@ angular.module(PKG.name + '.services')
         'sink': 'realtimesink',
         'transform': 'transform'
       },
-      'cdap-etl-data-pipeline': {
+      'cdap-data-pipeline': {
         'source': 'batchsource',
         'sink': 'batchsink',
         'transform': 'transform',
@@ -60,13 +60,15 @@ angular.module(PKG.name + '.services')
             'DEFAULT-REFERENCE': 'Please select a plugin to view reference information',
             'NO-REFERENCE': 'Currently, no reference information is available for this plugin.',
             'NO-CONFIG': 'No widgets JSON found for the plugin. Please check documentation on how to add.',
+            'ARTIFACT-UPLOAD-MESSAGE-JAR': 'The plugin JAR needs to be a JAR file.',
+            'ARTIFACT-UPLOAD-MESSAGE-JSON': 'The plugin JSON needs to be a JSON file.',
+            'ARTIFACT-UPLOAD-ERROR-JSON': 'Error in parsing config json for the artifact.'
           },
           error: {
             'SYNTAX-CONFIG-JSON': 'Error parsing widgets JSON for the plugin. Please check the documentation to fix.',
             'SEMANTIC-CONFIG-JSON': 'Semantic error in the configuration JSON for the plugin.',
             'GENERIC-MISSING-REQUIRED-FIELDS': 'Please provide required information.',
             'MISSING-REQUIRED-FIELDS': 'is missing required fields',
-            'MORE-THAN-ONE-SOURCE-FOUND': 'Pipelines can only have one source. Please remove any additional sources.',
             'NO-SOURCE-FOUND': 'Please add a source to your pipeline',
             'MISSING-NAME': 'Pipeline name is missing.',
             'INVALID-NAME': 'Pipeline names can only contain alphanumeric (\'a-z A-Z 0-9\') and underscore ( \'_\') characters. Please remove any other characters.',
@@ -74,7 +76,7 @@ angular.module(PKG.name + '.services')
             'NAME-ALREADY-EXISTS': 'A pipeline with this name already exists. Please choose a different name.',
             'DUPLICATE-NODE-NAMES': 'Every node should have a unique name to be exported/published.',
             'DUPLICATE-NAME': 'Node with the same name already exists.',
-            'MISSING-CONNECTION': ' is missing connection',
+            'MISSING-CONNECTION': 'is missing connection',
             'IMPORT-JSON': {
               'INVALID-ARTIFACT': 'Pipeline configuration should have a valild artifact specification.',
               'INVALID-CONFIG': 'Missing \'config\' property in pipeline specification.',

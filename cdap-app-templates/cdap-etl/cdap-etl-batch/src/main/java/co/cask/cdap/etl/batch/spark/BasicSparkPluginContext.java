@@ -16,90 +16,32 @@
 
 package co.cask.cdap.etl.batch.spark;
 
-import co.cask.cdap.api.data.stream.StreamBatchReadable;
-import co.cask.cdap.api.plugin.PluginContext;
-import co.cask.cdap.api.spark.SparkContext;
-import co.cask.cdap.api.stream.StreamEventDecoder;
+import co.cask.cdap.api.spark.SparkClientContext;
 import co.cask.cdap.etl.api.LookupProvider;
 import co.cask.cdap.etl.api.batch.SparkPluginContext;
-import org.apache.hadoop.io.LongWritable;
-import org.apache.spark.api.java.JavaPairRDD;
-
-import java.util.Map;
+import co.cask.cdap.etl.batch.AbstractBatchContext;
+import org.apache.spark.SparkConf;
 
 /**
  * Implementation of SparkPluginContext that delegates to a SparkContext.
  */
-public class BasicSparkPluginContext extends AbstractSparkBatchContext implements SparkPluginContext {
+public class BasicSparkPluginContext extends AbstractBatchContext implements SparkPluginContext {
 
-  private final SparkContext sparkContext;
+  private final SparkClientContext sparkContext;
 
-  public BasicSparkPluginContext(SparkContext sparkContext, LookupProvider lookupProvider, String stageId) {
-    super(sparkContext, lookupProvider, stageId);
+  public BasicSparkPluginContext(SparkClientContext sparkContext, LookupProvider lookupProvider, String stageId) {
+    super(sparkContext, sparkContext, sparkContext.getMetrics(), lookupProvider, stageId,
+          sparkContext.getLogicalStartTime(), sparkContext.getRuntimeArguments());
     this.sparkContext = sparkContext;
   }
 
   @Override
-  public <V> JavaPairRDD<LongWritable, V> readFromStream(StreamBatchReadable stream, Class<? extends V> vClass) {
-    return sparkContext.readFromStream(stream, vClass);
-  }
-
-  @Override
-  public <V> JavaPairRDD<LongWritable, V> readFromStream(String streamName, Class<? extends V> vClass,
-                                                         long startTime, long endTime,
-                                                         Class<? extends StreamEventDecoder> decoderType) {
-    return sparkContext.readFromStream(streamName, vClass, startTime, endTime, decoderType);
-  }
-
-  @Override
-  public <K, V> JavaPairRDD<K, V> readFromStream(String streamName, Class<? extends V> vClass,
-                                                 long startTime, long endTime) {
-    return sparkContext.readFromStream(streamName, vClass, startTime, endTime);
-  }
-
-  @Override
-  public <V> JavaPairRDD<LongWritable, V> readFromStream(String streamName, Class<? extends V> vClass) {
-    return sparkContext.readFromStream(streamName, vClass);
-  }
-
-  @Override
-  public <K, V> void writeToDataset(JavaPairRDD<K, V> rdd, String datasetName,
-                                    Class<? extends K> kClass, Class<? extends V> vClass,
-                                    Map<String, String> datasetArgs) {
-    sparkContext.writeToDataset(rdd, datasetName, kClass, vClass, datasetArgs);
-  }
-
-  @Override
-  public <K, V> void writeToDataset(JavaPairRDD<K, V> rdd, String datasetName,
-                                    Class<? extends K> kClass, Class<? extends V> vClass) {
-    sparkContext.writeToDataset(rdd, datasetName, kClass, vClass);
-  }
-
-  @Override
-  public <K, V> JavaPairRDD<K, V> readFromDataset(String datasetName,
-                                                  Class<? extends K> kClass, Class<? extends V> vClass,
-                                                  Map<String, String> datasetArgs) {
-    return sparkContext.readFromDataset(datasetName, kClass, vClass, datasetArgs);
-  }
-
-  @Override
-  public <K, V> JavaPairRDD<K, V> readFromDataset(String datasetName,
-                                                  Class<? extends K> kClass, Class<? extends V> vClass) {
-    return sparkContext.readFromDataset(datasetName, kClass, vClass);
-  }
-
-  @Override
-  public <T> T getOriginalSparkContext() {
-    return sparkContext.getOriginalSparkContext();
-  }
-
-  @Override
-  public PluginContext getPluginContext() {
-    return sparkContext.getPluginContext();
-  }
-
-  @Override
-  public <T> void setSparkConf(T sparkConf) {
+  public void setSparkConf(SparkConf sparkConf) {
     sparkContext.setSparkConf(sparkConf);
+  }
+
+  @Override
+  public <T> T getHadoopJob() {
+    throw new UnsupportedOperationException("Hadoop Job is not available in Spark");
   }
 }

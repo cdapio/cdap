@@ -97,7 +97,9 @@ angular.module(PKG.name + '.services')
         myFileUploader.upload({
           path: path,
           file: files[i]
-        }, 'text/csv')
+        }, {
+          'Content-type': 'text/csv'
+        })
           .then(uploadSuccess, uploadFailure);
       }
 

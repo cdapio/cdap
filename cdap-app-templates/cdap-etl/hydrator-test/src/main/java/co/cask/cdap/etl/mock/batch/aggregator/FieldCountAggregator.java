@@ -20,7 +20,9 @@ import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.annotation.Plugin;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.schema.Schema;
+import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.api.plugin.PluginConfig;
+import co.cask.cdap.api.plugin.PluginPropertyField;
 import co.cask.cdap.etl.api.Emitter;
 import co.cask.cdap.etl.api.PipelineConfigurer;
 import co.cask.cdap.etl.api.StageConfigurer;
@@ -41,6 +43,7 @@ import java.util.Map;
 @Plugin(type = BatchAggregator.PLUGIN_TYPE)
 @Name("FieldCount")
 public class FieldCountAggregator extends BatchAggregator<Object, StructuredRecord, StructuredRecord> {
+  public static final PluginClass PLUGIN_CLASS = getPluginClass();
   private final Config config;
   private Schema schema;
 
@@ -128,5 +131,13 @@ public class FieldCountAggregator extends BatchAggregator<Object, StructuredReco
     properties.put("fieldName", fieldName);
     properties.put("fieldType", fieldType);
     return new ETLPlugin("FieldCount", BatchAggregator.PLUGIN_TYPE, properties, null);
+  }
+
+  private static PluginClass getPluginClass() {
+    Map<String, PluginPropertyField> properties = new HashMap<>();
+    properties.put("fieldName", new PluginPropertyField("fieldName", "", "string", true));
+    properties.put("fieldType", new PluginPropertyField("fieldType", "", "string", true));
+    return new PluginClass(BatchAggregator.PLUGIN_TYPE, "FieldCount", "", FieldCountAggregator.class.getName(),
+                           "config", properties);
   }
 }

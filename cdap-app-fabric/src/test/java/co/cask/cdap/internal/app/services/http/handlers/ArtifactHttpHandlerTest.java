@@ -359,25 +359,25 @@ public class ArtifactHttpHandlerTest extends AppFabricTestBase {
                        ImmutableMap.of(
                          "x", new PluginPropertyField("x", "", "int", true),
                          "stuff", new PluginPropertyField("stuff", "", "string", true)
-                       ));
+                       ), new HashSet<String>());
       PluginInfo info2Namespace1 =
         new PluginInfo("Plugin2", "callable", "Just returns the configured integer",
                        Plugin2.class.getName(), artifact1,
                        ImmutableMap.of(
                          "v", new PluginPropertyField("v", "value to return when called", "int", true)
-                       ));
+                       ), new HashSet<String>());
       PluginInfo info1Namespace2 =
         new PluginInfo("Plugin1", "dummy", "This is plugin1", Plugin1.class.getName(), artifact2,
                        ImmutableMap.of(
                          "x", new PluginPropertyField("x", "", "int", true),
                          "stuff", new PluginPropertyField("stuff", "", "string", true)
-                       ));
+                       ), new HashSet<String>());
       PluginInfo info2Namespace2 =
         new PluginInfo("Plugin2", "callable", "Just returns the configured integer",
                        Plugin2.class.getName(), artifact2,
                        ImmutableMap.of(
                          "v", new PluginPropertyField("v", "value to return when called", "int", true)
-                       ));
+                       ), new HashSet<String>());
 
       Id.Artifact namespace1Artifact = Id.Artifact.from(namespace1, systemId.getName(), systemId.getVersion());
       Id.Artifact namespace2Artifact = Id.Artifact.from(namespace2, systemId.getName(), systemId.getVersion());
@@ -433,6 +433,12 @@ public class ArtifactHttpHandlerTest extends AppFabricTestBase {
                         addPluginArtifact(plugins3Id, CallablePlugin.class, manifest,
                                           plugins3Parents).getStatusLine().getStatusCode());
 
+    Set<PluginInfo> expectedInfos = Sets.newHashSet(
+      new PluginInfo("CallablePlugin", "interactive", "This is plugin with endpoint", CallablePlugin.class.getName(),
+        new ArtifactSummary("plugins3", "1.0.0"),
+                     ImmutableMap.<String, PluginPropertyField>of(), ImmutableSet.<String>of("ping")));
+
+    Assert.assertEquals(expectedInfos, getPluginInfos(wordCount1Id, "interactive", "CallablePlugin"));
     // test plugin with endpoint
     Assert.assertEquals("hello",
                          GSON.fromJson(callPluginMethod(plugins3Id, "interactive",
@@ -608,28 +614,31 @@ public class ArtifactHttpHandlerTest extends AppFabricTestBase {
     );
 
     Set<PluginInfo> expectedInfos = Sets.newHashSet(
-      new PluginInfo("Plugin1", "dummy", "This is plugin1", Plugin1.class.getName(), plugins1Artifact, p1Properties),
-      new PluginInfo("Plugin1", "dummy", "This is plugin1", Plugin1.class.getName(), plugins2Artifact, p1Properties)
+      new PluginInfo("Plugin1", "dummy", "This is plugin1", Plugin1.class.getName(),
+                     plugins1Artifact, p1Properties, new HashSet<String>()),
+      new PluginInfo("Plugin1", "dummy", "This is plugin1", Plugin1.class.getName(),
+                     plugins2Artifact, p1Properties, new HashSet<String>())
     );
     Assert.assertEquals(expectedInfos, getPluginInfos(wordCount1Id, "dummy", "Plugin1"));
 
     expectedInfos = Sets.newHashSet(
       new PluginInfo("Plugin2", "callable", "Just returns the configured integer",
-                     Plugin2.class.getName(), plugins1Artifact, p2Properties),
+                     Plugin2.class.getName(), plugins1Artifact, p2Properties, new HashSet<String>()),
       new PluginInfo("Plugin2", "callable", "Just returns the configured integer",
-                     Plugin2.class.getName(), plugins2Artifact, p2Properties)
+                     Plugin2.class.getName(), plugins2Artifact, p2Properties, new HashSet<String>())
     );
     Assert.assertEquals(expectedInfos, getPluginInfos(wordCount1Id, "callable", "Plugin2"));
 
     // while wordcount2 should only see plugins from plugins2 artifact
     expectedInfos = Sets.newHashSet(
-      new PluginInfo("Plugin1", "dummy", "This is plugin1", Plugin1.class.getName(), plugins2Artifact, p1Properties)
+      new PluginInfo("Plugin1", "dummy", "This is plugin1", Plugin1.class.getName(),
+                     plugins2Artifact, p1Properties, new HashSet<String>())
     );
     Assert.assertEquals(expectedInfos, getPluginInfos(wordCount2Id, "dummy", "Plugin1"));
 
     expectedInfos = Sets.newHashSet(
       new PluginInfo("Plugin2", "callable", "Just returns the configured integer",
-                     Plugin2.class.getName(), plugins2Artifact, p2Properties)
+                     Plugin2.class.getName(), plugins2Artifact, p2Properties, new HashSet<String>())
     );
     Assert.assertEquals(expectedInfos, getPluginInfos(wordCount2Id, "callable", "Plugin2"));
   }

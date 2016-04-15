@@ -28,15 +28,16 @@ import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.security.TokenSecureStoreUpdater;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
+import org.apache.hadoop.mapred.YarnClientProtocolProvider;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.TwillController;
 import org.apache.twill.api.TwillRunner;
-import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -48,10 +49,9 @@ public final class DistributedMapReduceProgramRunner extends AbstractDistributed
   private static final Logger LOG = LoggerFactory.getLogger(DistributedMapReduceProgramRunner.class);
 
   @Inject
-  public DistributedMapReduceProgramRunner(TwillRunner twillRunner, LocationFactory locationFactory,
-                                           YarnConfiguration hConf, CConfiguration cConf,
+  public DistributedMapReduceProgramRunner(TwillRunner twillRunner, YarnConfiguration hConf, CConfiguration cConf,
                                            TokenSecureStoreUpdater tokenSecureStoreUpdater) {
-    super(twillRunner, locationFactory, hConf, cConf, tokenSecureStoreUpdater);
+    super(twillRunner, hConf, cConf, tokenSecureStoreUpdater);
   }
 
   @Override
@@ -74,7 +74,7 @@ public final class DistributedMapReduceProgramRunner extends AbstractDistributed
     LOG.info("Launching MapReduce program: " + program.getName() + ":" + spec.getName());
     TwillController controller = launcher.launch(
       new MapReduceTwillApplication(program, spec, localizeResources, eventHandler),
-      extraClassPaths);
+      extraClassPaths, Collections.singletonList(YarnClientProtocolProvider.class));
 
     RunId runId = RunIds.fromString(options.getArguments().getOption(ProgramOptionConstants.RUN_ID));
     return new MapReduceTwillProgramController(program.getId(), controller, runId).startListen();

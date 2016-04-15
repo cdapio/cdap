@@ -29,19 +29,16 @@ import co.cask.cdap.api.data.batch.Split;
 import co.cask.cdap.api.data.stream.StreamBatchReadable;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.plugin.PluginContext;
-import co.cask.cdap.api.workflow.Workflow;
-import co.cask.cdap.api.workflow.WorkflowInfo;
-import co.cask.cdap.api.workflow.WorkflowToken;
+import co.cask.cdap.api.workflow.WorkflowInfoProvider;
 
 import java.util.List;
 import java.util.Map;
-import javax.annotation.Nullable;
 
 /**
  * MapReduce job execution context.
  */
-public interface MapReduceContext
-  extends RuntimeContext, DatasetContext, ServiceDiscoverer, PluginContext, ClientLocalizationContext {
+public interface MapReduceContext extends RuntimeContext, DatasetContext, ServiceDiscoverer,
+                                          PluginContext, ClientLocalizationContext, WorkflowInfoProvider {
 
   /**
    * @return The specification used to configure this {@link MapReduce} job instance.
@@ -225,18 +222,4 @@ public interface MapReduceContext
    * @param resources Resources that each reducer should use.
    */
   void setReducerResources(Resources resources);
-
-  /**
-   * @return the {@link WorkflowToken} associated with the current {@link Workflow},
-   * if the {@link MapReduce} program is executed as a part of the Workflow; returns {@code null} otherwise.
-   */
-  @Nullable
-  WorkflowToken getWorkflowToken();
-
-  /**
-   * @return information about the enclosing {@link Workflow} run, if this {@link MapReduce} program is executed
-   * as a part of the Workflow; returns {@code null} otherwise.
-   */
-  @Nullable
-  WorkflowInfo getWorkflowInfo();
 }

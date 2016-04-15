@@ -40,8 +40,8 @@ public class NamespaceId extends EntityId {
     return namespace;
   }
 
-  public NamespacedArtifactId artifact(String artifact, String version) {
-    return new NamespacedArtifactId(namespace, artifact, version);
+  public ArtifactId artifact(String artifact, String version) {
+    return new ArtifactId(namespace, artifact, version);
   }
 
   public ApplicationId app(String application) {

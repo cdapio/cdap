@@ -43,8 +43,6 @@ import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -64,7 +62,6 @@ import javax.annotation.Nullable;
  * Dataset that manages Metadata using an {@link IndexedTable}.
  */
 public class MetadataDataset extends AbstractDataset {
-  private static final Logger LOG = LoggerFactory.getLogger(MetadataDataset.class);
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(Id.NamespacedId.class, new NamespacedIdCodec())
     .create();
@@ -84,13 +81,7 @@ public class MetadataDataset extends AbstractDataset {
       }
     };
 
-  //TODO: (UPG-3.3): Make this public after 3.3
-  public static final String INDEX_COLUMN = "i";          // column for metadata indexes
-
-  //TODO: (UPG-3.3): Remove this after 3.3. This is only for upgrade from 3.2 to 3.3
-  // These are the columns which were indexed in 3.2
-  public static final String CASE_INSENSITIVE_VALUE_COLUMN = "civ";
-  public static final String KEYVALUE_COLUMN = "kv";
+  static final String INDEX_COLUMN = "i";          // column for metadata indexes
 
   public static final String TAGS_KEY = "tags";
   public static final String KEYVALUE_SEPARATOR = ":";
@@ -390,7 +381,13 @@ public class MetadataDataset extends AbstractDataset {
    * @param targetId the {@link Id.NamespacedId} for which to remove the properties
    */
   public void removeProperties(Id.NamespacedId targetId) {
-    removeMetadata(targetId);
+    removeMetadata(targetId,
+                   new Predicate<String>() {
+                     @Override
+                     public boolean apply(String input) {
+                       return !TAGS_KEY.equals(input);
+                     }
+                   });
   }
 
   /**
@@ -399,7 +396,13 @@ public class MetadataDataset extends AbstractDataset {
    * @param targetId the {@link Id.NamespacedId} for which to remove the tags
    */
   public void removeTags(Id.NamespacedId targetId) {
-    removeMetadata(targetId);
+    removeMetadata(targetId,
+                   new Predicate<String>() {
+                     @Override
+                     public boolean apply(String input) {
+                       return TAGS_KEY.equals(input);
+                     }
+                   });
   }
 
   /**
@@ -616,6 +619,9 @@ public class MetadataDataset extends AbstractDataset {
    * @param indexes {@link Set<String>} of indexes to store for this {@link MetadataEntry}
    */
   private void storeIndexes(Id.NamespacedId targetId, MetadataEntry entry, Set<String> indexes) {
+    // Delete existing indexes for targetId-key
+    deleteIndexes(targetId, entry.getKey());
+
     for (String index : indexes) {
       // store the index with key of the metadata
       indexedTable.put(getIndexPut(targetId, entry.getKey(), entry.getKey() + KEYVALUE_SEPARATOR + index));
@@ -650,108 +656,5 @@ public class MetadataDataset extends AbstractDataset {
     Metadata metadata = new Metadata(targetId, properties, tags);
     byte[] row = MdsHistoryKey.getMdsKey(targetId, System.currentTimeMillis()).getKey();
     indexedTable.put(row, Bytes.toBytes(HISTORY_COLUMN), Bytes.toBytes(GSON.toJson(metadata)));
-  }
-
-  /**
-   * Upgrades the metadata from 3.2 to 3.3 for new storage format
-   */
-  public void upgrade() {
-    new Upgrader().upgrade();
-  }
-
-  /**
-   * Upgrader class for {@link MetadataDataset}. This class contains some functions from 3.2 which have changed in 3.3
-   * in their only 3.2 format to help in reading and processing the old metadata. This inner class should be deleted
-   * after 3.3
-   */
-  private class Upgrader {
-    public void upgrade() {
-      boolean upgradePerformed = false;
-      Scanner scan = indexedTable.scan(null, null); // scan the whole table
-      try {
-        Row next;
-        while ((next = scan.next()) != null) {
-          byte[] value = next.get(VALUE_COLUMN);
-          if (next.get(CASE_INSENSITIVE_VALUE_COLUMN) != null && value != null) {
-            // if case insensitive column has value then this is an old entry from 3.2 which needs to be updated.
-            final byte[] rowKey = next.getRow();
-            String targetType = MdsKey.getTargetType(rowKey);
-            Id.NamespacedId targetId = MdsKey.getNamespacedIdFromKey(targetType, rowKey);
-            String key = getMetadataKeyFromOldFormat(targetType, rowKey);
-            MetadataEntry metadataEntry = new MetadataEntry(targetId, key, Bytes.toString(value));
-            indexedTable.delete(new Delete(rowKey));            // remove the old metadata entry
-            // add the metadata back creating new indexes. We can just use DefaultValueIndexer because
-            // in 3.2 we didn't have schema as metadata so no old records can be schema.
-            write(metadataEntry.getTargetId(), metadataEntry, new DefaultValueIndexer());
-            upgradePerformed = true;
-            LOG.info("Upgraded MetadataEntry: {}", metadataEntry);
-          }
-        }
-      } finally {
-        scan.close();
-      }
-      if (!upgradePerformed) {
-        LOG.info("No MetadataEntry found in old format. Metadata upgrade not required.");
-      }
-    }
-
-    /**
-     * Write similar to {@link MetadataDataset#write(Id.NamespacedId, MetadataEntry, Indexer)} but without history
-     * since while writting during upgrade we don't want to add history.
-     */
-    private void write(Id.NamespacedId targetId, MetadataEntry entry, Indexer indexer) {
-      String key = entry.getKey();
-      MDSKey mdsValueKey = MdsKey.getMDSValueKey(targetId, key);
-      Put put = new Put(mdsValueKey.getKey());
-
-      // add the metadata value
-      put.add(Bytes.toBytes(VALUE_COLUMN), Bytes.toBytes(entry.getValue()));
-      indexedTable.put(put);
-      // index the metadata
-      storeIndexes(targetId, entry, indexer.getIndexes(entry));
-    }
-
-    /**
-     * This to read old Metadata keys which were written with a metadata type in 3.2
-     * Its used to update from 3.2 to 3.3 and should be removed after 3.3
-     * This is almost a copy of {@link MdsKey#getMetadataKey(String, byte[])} with additional skip for MetadataType
-     * which we used to write in 3.2
-     */
-    public String getMetadataKeyFromOldFormat(String type, byte[] rowKey) {
-      MDSKey.Splitter keySplitter = new MDSKey(rowKey).split();
-      // The rowkey in the following format in 3.2
-      // [rowPrefix][targetType][targetId][metadataType][key]
-      // so skip the first few strings.
-
-      // Skip rowType
-      keySplitter.skipBytes();
-
-      // Skip targetType
-      keySplitter.skipString();
-
-      // Skip targetId
-      if (type.equals(Id.Program.class.getSimpleName())) {
-        keySplitter.skipString();
-        keySplitter.skipString();
-        keySplitter.skipString();
-        keySplitter.skipString();
-      } else if (type.equals(Id.Application.class.getSimpleName())) {
-        keySplitter.skipString();
-        keySplitter.skipString();
-      } else if (type.equals(Id.DatasetInstance.class.getSimpleName())) {
-        keySplitter.skipString();
-        keySplitter.skipString();
-      } else if (type.equals(Id.Stream.class.getSimpleName())) {
-        keySplitter.skipString();
-        keySplitter.skipString();
-      } else {
-        throw new IllegalArgumentException("Illegal Type " + type + " of metadata source.");
-      }
-
-      // Skip metadata-type as the old key as metadata type
-      keySplitter.getString();
-
-      return keySplitter.getString();
-    }
   }
 }

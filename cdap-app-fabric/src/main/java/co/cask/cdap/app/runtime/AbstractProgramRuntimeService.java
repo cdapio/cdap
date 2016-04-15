@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,11 +18,13 @@ package co.cask.cdap.app.runtime;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.plugin.Plugin;
 import co.cask.cdap.app.program.Program;
+import co.cask.cdap.app.program.Programs;
 import co.cask.cdap.common.ArtifactNotFoundException;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
+import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.internal.app.runtime.AbstractListener;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
@@ -43,15 +45,19 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.common.collect.Table;
+import com.google.common.io.Closeables;
 import com.google.common.io.Files;
 import com.google.common.util.concurrent.AbstractIdleService;
 import org.apache.twill.api.RunId;
 import org.apache.twill.common.Threads;
+import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
@@ -86,45 +92,70 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
   }
 
   @Override
-  public RuntimeInfo run(Program program, ProgramOptions options) {
+  public final RuntimeInfo run(Program program, ProgramOptions options) {
     ProgramRunner runner = programRunnerFactory.create(program.getType());
     Preconditions.checkNotNull(runner, "Fail to get ProgramRunner for type " + program.getType());
     RunId runId = RunIds.generate();
-    ProgramOptions optionsWithRunId = addRunId(options, runId);
+    ProgramOptions optionsWithRunId = updateProgramOptions(options, runId);
     File tempDir = createTempDirectory(program.getId(), runId);
     Runnable cleanUpTask = createCleanupTask(tempDir);
-    ProgramOptions optionsWithPlugins = null;
     try {
-      optionsWithPlugins = createPluginSnapshot(optionsWithRunId, program.getId(), tempDir,
-                                                program.getApplicationSpecification());
+      ProgramOptions optionsWithPlugins = createPluginSnapshot(optionsWithRunId, program.getId(), tempDir,
+                                                               program.getApplicationSpecification());
+      // The Jar Location will be null for some unit-test. It won't be for production.
+      Location jarLocation = program.getJarLocation();
+      Program executableProgram = jarLocation == null ? program : createProgram(cConf, runner, jarLocation, tempDir);
+      cleanUpTask = createCleanupTask(cleanUpTask, executableProgram);
+      RuntimeInfo runtimeInfo = createRuntimeInfo(runner.run(executableProgram, optionsWithPlugins), program);
+      monitorProgram(runtimeInfo, cleanUpTask);
+      return runtimeInfo;
     } catch (IOException e) {
       cleanUpTask.run();
       LOG.error("Exception while trying to createPluginSnapshot", e);
-      Throwables.propagate(e);
+      throw Throwables.propagate(e);
     }
-
-    final RuntimeInfo runtimeInfo = createRuntimeInfo(runner.run(program, optionsWithPlugins), program);
-    monitorProgram(runtimeInfo, cleanUpTask);
-    return runtimeInfo;
   }
 
-  private Runnable createCleanupTask(final File... resources) {
+  /**
+   * Creates a {@link Program} for the given {@link ProgramRunner} from the given program jar {@link Location}.
+   */
+  private Program createProgram(CConfiguration cConf, ProgramRunner programRunner,
+                                Location programJarLocation, File tempDir) throws IOException {
+    // Take a snapshot of the JAR file to avoid program mutation
+    File programJar = Locations.linkOrCopy(programJarLocation, new File(tempDir, "program.jar"));
+
+    // Unpack the JAR file
+    File unpackedDir = new File(tempDir, "unpacked");
+    unpackedDir.mkdirs();
+    BundleJarUtil.unJar(Files.newInputStreamSupplier(programJar), unpackedDir);
+
+    return Programs.create(cConf, programRunner, Locations.toLocation(programJar), unpackedDir);
+  }
+
+  private Runnable createCleanupTask(final Object... resources) {
     return new Runnable() {
       @Override
       public void run() {
-        for (File file : resources) {
-          if (file == null) {
+        for (Object resource : resources) {
+          if (resource == null) {
             continue;
           }
 
           try {
-            if (file.isDirectory()) {
-              DirUtils.deleteDirectoryContents(file);
-            } else {
-              file.delete();
+            if (resource instanceof File) {
+              File file = (File) resource;
+              if (file.isDirectory()) {
+                DirUtils.deleteDirectoryContents(file);
+              } else {
+                file.delete();
+              }
+            } else if (resource instanceof Closeable) {
+              Closeables.closeQuietly((Closeable) resource);
+            } else if (resource instanceof Runnable) {
+              ((Runnable) resource).run();
             }
           } catch (Throwable t) {
-            LOG.warn("Exception when cleaning up resource {}", file, t);
+            LOG.warn("Exception when cleaning up resource {}", resource, t);
           }
         }
       }
@@ -185,15 +216,23 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
                                     options.getUserArguments(), options.isDebug());
   }
 
+  protected Map<String, String> getExtraProgramOptions() {
+    return Collections.emptyMap();
+  }
+
   /**
-   * Return the copy of the {@link ProgramOptions} including RunId in it.
+   * Updates the given {@link ProgramOptions} and return a new instance.
+   * It copies the {@link ProgramOptions} and add all options returned by {@link #getExtraProgramOptions()}.
+   * It then adds the {@link RunId} to it.
+   *
    * @param options The {@link ProgramOptions} in which the RunId to be included
    * @param runId   The RunId to be included
    * @return the copy of the program options with RunId included in them
    */
-  private ProgramOptions addRunId(ProgramOptions options, RunId runId) {
+  private ProgramOptions updateProgramOptions(ProgramOptions options, RunId runId) {
     ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
     builder.putAll(options.getArguments().asMap());
+    builder.putAll(getExtraProgramOptions());
     builder.put(ProgramOptionConstants.RUN_ID, runId.getId());
 
     return new SimpleProgramOptions(options.getName(), new BasicArguments(builder.build()), options.getUserArguments(),

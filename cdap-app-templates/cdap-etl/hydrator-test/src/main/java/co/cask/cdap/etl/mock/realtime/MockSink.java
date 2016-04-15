@@ -19,7 +19,9 @@ package co.cask.cdap.etl.mock.realtime;
 import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.annotation.Plugin;
 import co.cask.cdap.api.data.format.StructuredRecord;
+import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.api.plugin.PluginConfig;
+import co.cask.cdap.api.plugin.PluginPropertyField;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.etl.api.realtime.DataWriter;
 import co.cask.cdap.etl.api.realtime.RealtimeContext;
@@ -50,6 +52,7 @@ import javax.annotation.Nullable;
 @Plugin(type = RealtimeSink.PLUGIN_TYPE)
 @Name("Mock")
 public class MockSink extends RealtimeSink<StructuredRecord> {
+  public static final PluginClass PLUGIN_CLASS = getPluginClass();
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(StructuredRecord.class, new StructuredRecordCodec())
     .create();
@@ -139,5 +142,11 @@ public class MockSink extends RealtimeSink<StructuredRecord> {
     File recordsFile = new File(dir, String.valueOf(writeNum));
     String contents = new String(Files.readAllBytes(recordsFile.toPath()), StandardCharsets.UTF_8);
     return GSON.fromJson(contents, LIST_TYPE);
+  }
+
+  private static PluginClass getPluginClass() {
+    Map<String, PluginPropertyField> properties = new HashMap<>();
+    properties.put("dir", new PluginPropertyField("dir", "", "string", false));
+    return new PluginClass(RealtimeSink.PLUGIN_TYPE, "Mock", "", MockSink.class.getName(), "config", properties);
   }
 }

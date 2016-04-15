@@ -17,6 +17,18 @@
 <div class="side-panel text-center left">
   <div class="hydrator-filter clearfix">
     <input class="form-control pull-left" placeholder="Filter" type="text" ng-model="MySidePanel.searchText" />
+    <div class="btn-group">
+      <div class="btn btn-default btn-sm"
+            ng-class="{'active': MySidePanel.view === 'list'}"
+            ng-click="MySidePanel.view = 'list'">
+        <span class="fa fa-list-ul"></span>
+      </div>
+      <div class="btn btn-default btn-sm"
+            ng-class="{'active': MySidePanel.view === 'icon'}"
+            ng-click="MySidePanel.view = 'icon'">
+        <span class="fa fa-th"></span>
+      </div>
+    </div>
   </div>
 
   <div class="groups-container">
@@ -36,8 +48,9 @@
       </div>
       <div class="item-body-wrapper"
            ng-show="MySidePanel.openedGroup === null || MySidePanel.openedGroup === group.name">
-        <div class="item-body">
-          <div ng-repeat="plugin in group.filtered = (group.plugins | filter: {name: MySidePanel.searchText}) track by $index"
+        <div class="item-body" ng-class="{'view-icon': MySidePanel.view === 'icon', 'view-list': MySidePanel.view === 'list'}">
+
+          <div ng-if="MySidePanel.view === 'icon'" ng-repeat="plugin in group.filtered = (group.plugins | filter: {name: MySidePanel.searchText}) track by $index"
                class="plugin-item {{plugin.nodeClass}}"
                my-popover
                data-placement="right"
@@ -51,6 +64,19 @@
           </div>
           <div class="no-item-message" ng-if="group.filtered.length === 0">
             No plugins found.
+          </div>
+          <div ng-if="MySidePanel.view === 'list'" ng-repeat="plugin in group.filtered = (group.plugins | filter: {name: MySidePanel.searchText}) track by $index"
+               class="plugin-item {{plugin.nodeClass}}"
+               ng-click="MySidePanel.onItemClicked($event, plugin)">
+            <span ng-if="plugin.icon" class="text-center fa {{plugin.icon}}"></span>
+            <span class="name"
+                  my-popover
+                  data-placement="right"
+                  data-template="plugin.template"
+                  content-data="plugin"
+                  data-popover-context="MySidePanel"
+            >{{ (plugin.name || plugin.pluginTemplate)}}</span>
+            <span class="plugin-badge">T</span>
           </div>
         </div>
       </div>

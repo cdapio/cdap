@@ -29,6 +29,7 @@ import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
 import co.cask.cdap.data.runtime.TransactionExecutorModule;
+import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.Id;
 import co.cask.tephra.DefaultTransactionExecutor;
 import co.cask.tephra.TransactionAware;
@@ -47,6 +48,7 @@ import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Collection;
 import java.util.Map;
 
 public final class DatasetFrameworkTestUtil extends ExternalResource {
@@ -142,6 +144,10 @@ public final class DatasetFrameworkTestUtil extends ExternalResource {
 
   public DatasetSpecification getSpec(Id.DatasetInstance datasetInstanceId) throws DatasetManagementException {
     return framework.getDatasetSpec(datasetInstanceId);
+  }
+
+  public Collection<DatasetSpecificationSummary> list(Id.Namespace namespace) throws DatasetManagementException {
+    return framework.getInstances(namespace);
   }
 
   /**

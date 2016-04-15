@@ -19,11 +19,14 @@ package co.cask.cdap.etl.mock.transform;
 import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.annotation.Plugin;
 import co.cask.cdap.api.data.format.StructuredRecord;
+import co.cask.cdap.api.plugin.PluginClass;
+import co.cask.cdap.api.plugin.PluginPropertyField;
 import co.cask.cdap.etl.api.Emitter;
 import co.cask.cdap.etl.api.Transform;
 import co.cask.cdap.etl.proto.v2.ETLPlugin;
 
 import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Transform that doubles every record it receives.
@@ -31,6 +34,7 @@ import java.util.HashMap;
 @Plugin(type = Transform.PLUGIN_TYPE)
 @Name("Double")
 public class DoubleTransform extends Transform<StructuredRecord, StructuredRecord> {
+  public static final PluginClass PLUGIN_CLASS = getPluginClass();
 
   @Override
   public void transform(StructuredRecord input, Emitter<StructuredRecord> emitter) throws Exception {
@@ -40,5 +44,10 @@ public class DoubleTransform extends Transform<StructuredRecord, StructuredRecor
 
   public static ETLPlugin getPlugin() {
     return new ETLPlugin("Double", Transform.PLUGIN_TYPE, new HashMap<String, String>(), null);
+  }
+
+  private static PluginClass getPluginClass() {
+    Map<String, PluginPropertyField> properties = new HashMap<>();
+    return new PluginClass(Transform.PLUGIN_TYPE, "Double", "", DoubleTransform.class.getName(), null, properties);
   }
 }

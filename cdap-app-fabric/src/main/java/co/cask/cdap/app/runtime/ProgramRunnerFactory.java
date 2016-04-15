@@ -23,5 +23,12 @@ import co.cask.cdap.proto.ProgramType;
  */
 public interface ProgramRunnerFactory {
 
+  /**
+   * Creates a {@link ProgramRunner} for the given {@link ProgramType}.
+   *
+   * @param programType type of program
+   * @return a {@link ProgramRunner} that can execute the given program type.
+   * @throws IllegalArgumentException if no {@link ProgramRunner} is found for the given program type
+   */
   ProgramRunner create(ProgramType programType);
 }

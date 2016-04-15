@@ -27,6 +27,8 @@ import co.cask.cdap.etl.api.PipelineConfigurer;
 import co.cask.cdap.etl.api.Transform;
 import co.cask.cdap.etl.api.batch.BatchSink;
 import co.cask.cdap.etl.api.batch.BatchSource;
+import co.cask.cdap.etl.batch.BatchPipelineSpec;
+import co.cask.cdap.etl.batch.BatchPipelineSpecGenerator;
 import co.cask.cdap.etl.common.MockPluginConfigurer;
 import co.cask.cdap.etl.proto.v2.ETLBatchConfig;
 import co.cask.cdap.etl.proto.v2.ETLConfig;
@@ -57,7 +59,7 @@ public class PipelineSpecGeneratorTest {
     new ETLPlugin("mocksink", BatchSink.PLUGIN_TYPE, ImmutableMap.<String, String>of(), null);
   private static final ArtifactId ARTIFACT_ID =
     new ArtifactId("plugins", new ArtifactVersion("1.0.0"), ArtifactScope.USER);
-  private static PipelineSpecGenerator specGenerator;
+  private static BatchPipelineSpecGenerator specGenerator;
 
   @BeforeClass
   public static void setupTests() {
@@ -69,10 +71,10 @@ public class PipelineSpecGeneratorTest {
     pluginConfigurer.addMockPlugin(Transform.PLUGIN_TYPE, "mockB", new MockPlugin(SCHEMA_B), artifactIds);
     pluginConfigurer.addMockPlugin(BatchSink.PLUGIN_TYPE, "mocksink", new MockPlugin(), artifactIds);
 
-    specGenerator = new PipelineSpecGenerator(pluginConfigurer,
-                                              ImmutableSet.of(BatchSource.PLUGIN_TYPE),
-                                              ImmutableSet.of(BatchSink.PLUGIN_TYPE),
-                                              FileSet.class, DatasetProperties.EMPTY);
+    specGenerator = new BatchPipelineSpecGenerator(pluginConfigurer,
+                                                   ImmutableSet.of(BatchSource.PLUGIN_TYPE),
+                                                   ImmutableSet.of(BatchSink.PLUGIN_TYPE),
+                                                   FileSet.class, DatasetProperties.EMPTY);
   }
 
 
@@ -192,43 +194,50 @@ public class PipelineSpecGeneratorTest {
       .addConnection("t3", "sink1")
       .build();
     // test the spec generated is correct, with the right input and output schemas and artifact information.
-    PipelineSpec actual = specGenerator.generateSpec(etlConfig);
+    BatchPipelineSpec actual = specGenerator.generateSpec(etlConfig);
     Map<String, String> emptyMap = ImmutableMap.of();
-    Set<StageSpec> expectedStages = ImmutableSet.of(
-      StageSpec.builder("source", new PluginSpec(BatchSource.PLUGIN_TYPE, "mocksource", emptyMap, ARTIFACT_ID))
-        .setOutputSchema(SCHEMA_A)
-        .addOutputs("t1", "t2", "sink2")
-        .build(),
-      StageSpec.builder("sink1", new PluginSpec(BatchSink.PLUGIN_TYPE, "mocksink", emptyMap, ARTIFACT_ID))
-        .setInputSchema(SCHEMA_B)
-        .addInputs("t3")
-        .build(),
-      StageSpec.builder("sink2", new PluginSpec(BatchSink.PLUGIN_TYPE, "mocksink", emptyMap, ARTIFACT_ID))
-        .setInputSchema(SCHEMA_A)
-        .addInputs("t1", "t2", "source")
-        .build(),
-      StageSpec.builder("t1", new PluginSpec(Transform.PLUGIN_TYPE, "mockA", emptyMap, ARTIFACT_ID))
-        .setInputSchema(SCHEMA_A)
-        .setOutputSchema(SCHEMA_A)
-        .addInputs("source")
-        .addOutputs("t2", "t3", "sink2")
-        .build(),
-      StageSpec.builder("t2", new PluginSpec(Transform.PLUGIN_TYPE, "mockA", emptyMap, ARTIFACT_ID))
-        .setInputSchema(SCHEMA_A)
-        .setOutputSchema(SCHEMA_A)
-        .addInputs("source", "t1")
-        .addOutputs("t3", "sink2")
-        .build(),
-      StageSpec.builder("t3", new PluginSpec(Transform.PLUGIN_TYPE, "mockB", emptyMap, ARTIFACT_ID))
-        .setInputSchema(SCHEMA_A)
-        .setOutputSchema(SCHEMA_B)
-        .addInputs("t1", "t2")
-        .addOutputs("sink1")
-        .build()
-    );
-    PipelineSpec expected = new PipelineSpec(expectedStages, ImmutableSet.copyOf(etlConfig.getConnections()),
-                                             etlConfig.getResources(),
-                                             etlConfig.isStageLoggingEnabled());
+
+    PipelineSpec expected = BatchPipelineSpec.builder()
+      .addStage(
+        StageSpec.builder("source", new PluginSpec(BatchSource.PLUGIN_TYPE, "mocksource", emptyMap, ARTIFACT_ID))
+          .setOutputSchema(SCHEMA_A)
+          .addOutputs("t1", "t2", "sink2")
+          .build())
+      .addStage(
+        StageSpec.builder("sink1", new PluginSpec(BatchSink.PLUGIN_TYPE, "mocksink", emptyMap, ARTIFACT_ID))
+          .setInputSchema(SCHEMA_B)
+          .addInputs("t3")
+          .build())
+      .addStage(
+        StageSpec.builder("sink2", new PluginSpec(BatchSink.PLUGIN_TYPE, "mocksink", emptyMap, ARTIFACT_ID))
+          .setInputSchema(SCHEMA_A)
+          .addInputs("t1", "t2", "source")
+          .build())
+      .addStage(
+        StageSpec.builder("t1", new PluginSpec(Transform.PLUGIN_TYPE, "mockA", emptyMap, ARTIFACT_ID))
+          .setInputSchema(SCHEMA_A)
+          .setOutputSchema(SCHEMA_A)
+          .addInputs("source")
+          .addOutputs("t2", "t3", "sink2")
+          .build())
+      .addStage(
+        StageSpec.builder("t2", new PluginSpec(Transform.PLUGIN_TYPE, "mockA", emptyMap, ARTIFACT_ID))
+          .setInputSchema(SCHEMA_A)
+          .setOutputSchema(SCHEMA_A)
+          .addInputs("source", "t1")
+          .addOutputs("t3", "sink2")
+          .build())
+      .addStage(
+        StageSpec.builder("t3", new PluginSpec(Transform.PLUGIN_TYPE, "mockB", emptyMap, ARTIFACT_ID))
+          .setInputSchema(SCHEMA_A)
+          .setOutputSchema(SCHEMA_B)
+          .addInputs("t1", "t2")
+          .addOutputs("sink1")
+          .build())
+      .addConnections(etlConfig.getConnections())
+      .setResources(etlConfig.getResources())
+      .setStageLoggingEnabled(etlConfig.isStageLoggingEnabled())
+      .build();
     Assert.assertEquals(expected, actual);
   }
 

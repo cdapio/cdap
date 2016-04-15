@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,12 +21,14 @@ import ch.qos.logback.classic.spi.LoggingEvent;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.logging.ApplicationLoggingContext;
 import co.cask.cdap.common.logging.LoggingContext;
+import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.store.DefaultStore;
 import co.cask.cdap.logging.context.FlowletLoggingContext;
 import co.cask.cdap.logging.context.LoggingContextHelper;
 import co.cask.cdap.logging.context.MapReduceLoggingContext;
 import co.cask.cdap.logging.context.UserServiceLoggingContext;
 import co.cask.cdap.logging.context.WorkflowLoggingContext;
+import co.cask.cdap.logging.context.WorkflowProgramLoggingContext;
 import co.cask.cdap.logging.filter.Filter;
 import co.cask.cdap.logging.read.Callback;
 import co.cask.cdap.logging.read.LogEvent;
@@ -37,8 +39,11 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
+import co.cask.cdap.proto.id.Ids;
+import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.test.SlowTests;
 import com.google.common.base.Function;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
@@ -47,6 +52,7 @@ import org.junit.experimental.categories.Category;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -59,6 +65,10 @@ public class MockLogReader implements LogReader {
   private static final Logger LOG = LoggerFactory.getLogger(MockLogReader.class);
 
   public static final String TEST_NAMESPACE = "testNamespace";
+  public static final String SOME_WORKFLOW_APP = "someWorkflowApp";
+  public static final String SOME_WORKFLOW = "someWorkflow";
+  public static final String SOME_MAPREDUCE = "someMapReduce";
+  public static final String SOME_SPARK = "someSpark";
   private static final int MAX = 80;
 
   private final DefaultStore store;
@@ -117,6 +127,62 @@ public class MockLogReader implements LogReader {
                                             "testTemplate1", "testWorkflow1", "testRun2"),
                  Id.Program.from(Id.Namespace.DEFAULT.getId(), "testTemplate1", ProgramType.WORKFLOW, "testWorkflow1"),
                  ProgramRunStatus.COMPLETED);
+
+    generateWorkflowLogs();
+  }
+
+  /**
+   * Generate Workflow logs.
+   */
+  private void generateWorkflowLogs() {
+    ProgramId workflowId = Ids.namespace(TEST_NAMESPACE).app(SOME_WORKFLOW_APP).workflow(SOME_WORKFLOW);
+    long currentTime = TimeUnit.SECONDS.toMillis(10);
+    RunId workflowRunId = RunIds.generate();
+    store.setStart(workflowId.toId(), workflowRunId.getId(), currentTime);
+    runRecordMap.put(workflowId.toId(), store.getRun(workflowId.toId(), workflowRunId.getId()));
+    WorkflowLoggingContext wfLoggingContext = new WorkflowLoggingContext(workflowId.getNamespace(),
+                                                                         workflowId.getApplication(),
+                                                                         workflowId.getProgram(),
+                                                                         workflowRunId.getId());
+    generateWorkflowRunLogs(wfLoggingContext);
+
+    // Generate logs for MapReduce program started by above Workflow run
+    ProgramId mapReduceId = Ids.namespace(TEST_NAMESPACE).app(SOME_WORKFLOW_APP).mr(SOME_MAPREDUCE);
+    currentTime = TimeUnit.SECONDS.toMillis(20);
+    RunId mapReduceRunId = RunIds.generate();
+    Map<String, String> systemArgs = ImmutableMap.of(ProgramOptionConstants.WORKFLOW_NODE_ID, SOME_MAPREDUCE,
+                                                     ProgramOptionConstants.WORKFLOW_NAME, SOME_WORKFLOW,
+                                                     ProgramOptionConstants.WORKFLOW_RUN_ID, workflowRunId.getId());
+
+    store.setStart(mapReduceId.toId(), mapReduceRunId.getId(), currentTime, null, new HashMap<String, String>(),
+                   systemArgs);
+
+    runRecordMap.put(mapReduceId.toId(), store.getRun(mapReduceId.toId(), mapReduceRunId.getId()));
+    WorkflowProgramLoggingContext context = new WorkflowProgramLoggingContext(workflowId.getNamespace(),
+                                                                              workflowId.getApplication(),
+                                                                              workflowId.getProgram(),
+                                                                              workflowRunId.getId(),
+                                                                              ProgramType.MAPREDUCE, SOME_MAPREDUCE);
+    generateWorkflowRunLogs(context);
+
+    // Generate logs for Spark program started by Workflow run above
+    ProgramId sparkId = Ids.namespace(TEST_NAMESPACE).app(SOME_WORKFLOW_APP).spark(SOME_SPARK);
+    currentTime = TimeUnit.SECONDS.toMillis(40);
+    RunId sparkRunId = RunIds.generate();
+    systemArgs = ImmutableMap.of(ProgramOptionConstants.WORKFLOW_NODE_ID, SOME_SPARK,
+                                 ProgramOptionConstants.WORKFLOW_NAME, SOME_WORKFLOW,
+                                 ProgramOptionConstants.WORKFLOW_RUN_ID, workflowRunId.getId());
+
+    store.setStart(sparkId.toId(), sparkRunId.getId(), currentTime, null, new HashMap<String, String>(),
+                   systemArgs);
+    runRecordMap.put(sparkId.toId(), store.getRun(sparkId.toId(), sparkRunId.getId()));
+    context = new WorkflowProgramLoggingContext(workflowId.getNamespace(), workflowId.getApplication(),
+                                                workflowId.getProgram(), workflowRunId.getId(), ProgramType.SPARK,
+                                                SOME_SPARK);
+    generateWorkflowRunLogs(context);
+
+    // Generate some more logs for Workflow
+    generateWorkflowRunLogs(wfLoggingContext);
   }
 
   public RunRecord getRunRecord(Id id) {
@@ -219,6 +285,44 @@ public class MockLogReader implements LogReader {
       }
     };
 
+  /**
+   * Generate logs for Workflow run.
+   */
+  private void generateWorkflowRunLogs(LoggingContext loggingContext) {
+    Logger logger = LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
+
+    String programName;
+    if (loggingContext instanceof WorkflowProgramLoggingContext) {
+      // Logging is being done for programs running inside Workflow
+      LoggingContext.SystemTag systemTag;
+      systemTag = loggingContext.getSystemTagsMap().get(WorkflowProgramLoggingContext.TAG_WORKFLOW_MAP_REDUCE_ID);
+      if (systemTag == null) {
+        systemTag = loggingContext.getSystemTagsMap().get(WorkflowProgramLoggingContext.TAG_WORKFLOW_SPARK_ID);
+      }
+      programName = systemTag.getValue();
+    } else {
+      // Logging is done for Workflow
+      programName = loggingContext.getSystemTagsMap().get(WorkflowLoggingContext.TAG_WORKFLOW_ID).getValue();
+    }
+
+    for (int i = 0; i < MAX; i++) {
+      LoggingEvent event = new LoggingEvent("co.cask.Test", (ch.qos.logback.classic.Logger) logger, Level.INFO,
+                                            programName + "<img>-" + i, null, null);
+      Map<String, String> tagMap = Maps.newHashMap(Maps.transformValues(loggingContext.getSystemTagsMap(),
+                                                                        TAG_TO_STRING_FUNCTION));
+      event.setMDCPropertyMap(tagMap);
+      logEvents.add(new LogEvent(event, new LogOffset(i, i)));
+    }
+  }
+
+  /**
+   * This method is used to generate the logs for program which are used for testing.
+   * Single call to this method would add {@link #MAX} number of events.
+   * First 20 events are generated without {@link ApplicationLoggingContext#TAG_RUNID_ID} tag.
+   * For next 40 events, alternate event is tagged with {@code ApplicationLoggingContext#TAG_RUNID_ID}.
+   * Last 20 events are not tagged with {@code ApplicationLoggingContext#TAG_RUNID_ID}.
+   * All events are alternately marked as {@link Level#ERROR} and {@link Level#WARN}.
+   */
   private void generateLogs(LoggingContext loggingContext, Id.Program id, ProgramRunStatus runStatus)
     throws InterruptedException {
     String entityId = LoggingContextHelper.getEntityId(loggingContext).getValue();

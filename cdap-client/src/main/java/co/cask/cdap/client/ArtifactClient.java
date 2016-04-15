@@ -37,7 +37,6 @@ import co.cask.cdap.proto.artifact.ArtifactRange;
 import co.cask.cdap.proto.artifact.ArtifactSummary;
 import co.cask.cdap.proto.artifact.PluginInfo;
 import co.cask.cdap.proto.artifact.PluginSummary;
-import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpResponse;
@@ -520,10 +519,10 @@ public class ArtifactClient {
     if (artifactVersion != null) {
       requestBuilder.addHeader("Artifact-Version", artifactVersion);
     }
-    if (parentArtifacts != null) {
+    if (parentArtifacts != null && !parentArtifacts.isEmpty()) {
       requestBuilder.addHeader("Artifact-Extends", Joiner.on('/').join(parentArtifacts));
     }
-    if (additionalPlugins != null) {
+    if (additionalPlugins != null && !additionalPlugins.isEmpty()) {
       requestBuilder.addHeader("Artifact-Plugins", GSON.toJson(additionalPlugins));
     }
     HttpRequest request = requestBuilder.withBody(artifactContents).build();

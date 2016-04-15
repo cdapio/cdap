@@ -20,7 +20,9 @@ import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.annotation.Plugin;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.schema.Schema;
+import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.api.plugin.PluginConfig;
+import co.cask.cdap.api.plugin.PluginPropertyField;
 import co.cask.cdap.etl.api.Emitter;
 import co.cask.cdap.etl.api.Lookup;
 import co.cask.cdap.etl.api.realtime.RealtimeContext;
@@ -45,6 +47,7 @@ import javax.annotation.Nullable;
 @Plugin(type = RealtimeSource.PLUGIN_TYPE)
 @Name("Lookup")
 public class LookupSource extends RealtimeSource<StructuredRecord> {
+  public static final PluginClass PLUGIN_CLASS = getPluginClass();
   private final Config config;
   private Set<String> fields;
   private Schema schema;
@@ -94,5 +97,13 @@ public class LookupSource extends RealtimeSource<StructuredRecord> {
     properties.put("fields", Joiner.on(',').join(fields));
     properties.put("lookupName", lookupName);
     return new ETLPlugin("Lookup", RealtimeSource.PLUGIN_TYPE, properties, null);
+  }
+
+  private static PluginClass getPluginClass() {
+    Map<String, PluginPropertyField> properties = new HashMap<>();
+    properties.put("fields", new PluginPropertyField("fields", "", "string", true));
+    properties.put("lookupName", new PluginPropertyField("lookupName", "", "string", true));
+    return new PluginClass(RealtimeSource.PLUGIN_TYPE, "Lookup", "", LookupSource.class.getName(),
+                           "config", properties);
   }
 }

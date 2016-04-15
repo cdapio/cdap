@@ -16,20 +16,20 @@
 
 package co.cask.cdap.etl.batch.spark;
 
-import co.cask.cdap.api.spark.SparkContext;
+import co.cask.cdap.api.spark.SparkClientContext;
 import co.cask.cdap.etl.api.LookupProvider;
 import co.cask.cdap.etl.api.batch.BatchContext;
 import co.cask.cdap.etl.batch.AbstractBatchContext;
 
 /**
- * Abstract implementation of {@link BatchContext} using {@link SparkContext}.
+ * Abstract implementation of {@link BatchContext} using {@link SparkClientContext}.
  */
 public abstract class AbstractSparkBatchContext extends AbstractBatchContext implements BatchContext {
 
-  private final SparkContext sparkContext;
+  private final SparkClientContext sparkContext;
 
-  public AbstractSparkBatchContext(SparkContext sparkContext, LookupProvider lookupProvider, String stageId) {
-    super(sparkContext.getPluginContext(), sparkContext, sparkContext.getMetrics(), lookupProvider, stageId,
+  public AbstractSparkBatchContext(SparkClientContext sparkContext, LookupProvider lookupProvider, String stageId) {
+    super(sparkContext, sparkContext, sparkContext.getMetrics(), lookupProvider, stageId,
           sparkContext.getLogicalStartTime(), sparkContext.getRuntimeArguments());
     this.sparkContext = sparkContext;
   }

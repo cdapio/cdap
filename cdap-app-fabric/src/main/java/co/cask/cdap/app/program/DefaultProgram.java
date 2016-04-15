@@ -165,7 +165,7 @@ public final class DefaultProgram implements Program {
       Preconditions.checkNotNull(cConf, "CConfiguration cannot be null.");
       expandIfNeeded();
       try {
-        classLoader = ProgramClassLoader.create(cConf, expandFolder, parentClassLoader, processorType);
+        classLoader = ProgramClassLoader.create(cConf, expandFolder, parentClassLoader);
       } catch (IOException e) {
         throw Throwables.propagate(e);
       }

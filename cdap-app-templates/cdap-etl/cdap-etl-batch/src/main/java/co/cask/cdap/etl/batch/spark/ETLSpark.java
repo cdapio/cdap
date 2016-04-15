@@ -17,7 +17,7 @@
 package co.cask.cdap.etl.batch.spark;
 
 import co.cask.cdap.api.spark.AbstractSpark;
-import co.cask.cdap.api.spark.SparkContext;
+import co.cask.cdap.api.spark.SparkClientContext;
 import co.cask.cdap.etl.api.batch.BatchAggregator;
 import co.cask.cdap.etl.api.batch.BatchConfigurable;
 import co.cask.cdap.etl.api.batch.BatchSinkContext;
@@ -90,14 +90,14 @@ public class ETLSpark extends AbstractSpark {
   }
 
   @Override
-  public void beforeSubmit(SparkContext context) throws Exception {
+  public void beforeSubmit(SparkClientContext context) throws Exception {
     cleanupFiles = new ArrayList<>();
     CompositeFinisher.Builder finishers = CompositeFinisher.builder();
 
     Map<String, String> properties = context.getSpecification().getProperties();
     BatchPhaseSpec phaseSpec = GSON.fromJson(properties.get(Constants.PIPELINEID), BatchPhaseSpec.class);
     PipelinePluginInstantiator pluginInstantiator =
-      new PipelinePluginInstantiator(context.getPluginContext(), phaseSpec);
+      new PipelinePluginInstantiator(context, phaseSpec);
     // we checked at configure time that there is exactly one source
     String sourceName = phaseSpec.getPhase().getSources().iterator().next();
 
@@ -161,7 +161,7 @@ public class ETLSpark extends AbstractSpark {
   }
 
   @Override
-  public void onFinish(boolean succeeded, SparkContext context) throws Exception {
+  public void onFinish(boolean succeeded, SparkClientContext context) throws Exception {
     finisher.onFinish(succeeded);
     for (File file : cleanupFiles) {
       if (!file.delete()) {

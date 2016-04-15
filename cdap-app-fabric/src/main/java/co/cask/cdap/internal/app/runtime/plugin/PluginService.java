@@ -15,14 +15,16 @@
  */
 package co.cask.cdap.internal.app.runtime.plugin;
 
+import co.cask.cdap.api.artifact.ArtifactId;
 import co.cask.cdap.api.plugin.EndpointPluginContext;
 import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.common.ArtifactNotFoundException;
 import co.cask.cdap.common.NotFoundException;
+import co.cask.cdap.common.ServiceUnavailableException;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.internal.app.runtime.DefaultEndpointPluginContext;
-import co.cask.cdap.internal.app.runtime.artifact.ArtifactClassLoaderFactory;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactDescriptor;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactDetail;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
@@ -30,7 +32,19 @@ import co.cask.cdap.internal.app.runtime.artifact.CloseableClassLoader;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.artifact.ArtifactRange;
 import co.cask.cdap.proto.id.NamespaceId;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
+import com.google.common.cache.RemovalListener;
+import com.google.common.cache.RemovalNotification;
+import com.google.common.cache.Weigher;
 import com.google.common.io.Closeables;
+import com.google.common.util.concurrent.AbstractIdleService;
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
+import org.apache.twill.filesystem.Location;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
 import java.io.File;
@@ -38,26 +52,43 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 import javax.ws.rs.Path;
 
 /**
  * To find, instantiate and invoke methods in plugin artifacts
  */
-public class PluginService implements Closeable {
+@Singleton
+public class PluginService extends AbstractIdleService {
+  private static final Logger LOG = LoggerFactory.getLogger(PluginService.class);
+
   private final ArtifactRepository artifactRepository;
-  private final ArtifactClassLoaderFactory artifactClassLoaderFactory;
-  private final File stageDir;
+  private final File tmpDir;
   private final CConfiguration cConf;
+  private final LoadingCache<ArtifactDescriptor, Instantiators> instantiators;
 
-  private CloseableClassLoader parentClassLoader;
-  private PluginInstantiator pluginInstantiator;
+  private File stageDir;
 
-  public PluginService(ArtifactRepository artifactRepository, File tmpDir, CConfiguration cConf) {
+  @Inject
+  public PluginService(ArtifactRepository artifactRepository, CConfiguration cConf) {
     this.artifactRepository = artifactRepository;
-    this.stageDir = DirUtils.createTempDir(tmpDir);
+    this.tmpDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
+                           cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
     this.cConf = cConf;
-    this.artifactClassLoaderFactory = new ArtifactClassLoaderFactory(cConf, tmpDir);
+    this.instantiators = CacheBuilder.newBuilder()
+      .removalListener(new InstantiatorsRemovalListener())
+      .maximumWeight(100)
+      .weigher(new Weigher<ArtifactDescriptor, Instantiators>() {
+        @Override
+        public int weigh(ArtifactDescriptor key, Instantiators value) {
+          return value.size();
+        }
+      })
+      .expireAfterAccess(1, TimeUnit.HOURS)
+      .build(new InstantiatorsCacheLoader());
   }
 
   /**
@@ -77,6 +108,10 @@ public class PluginService implements Closeable {
                                           Id.Artifact artifactId, String pluginType,
                                           String pluginName, String methodName)
     throws IOException, NotFoundException, ClassNotFoundException {
+    // should not happen
+    if (!isRunning()) {
+      throw new ServiceUnavailableException("Plugin Service is not running currently");
+    }
 
     ArtifactDetail artifactDetail = artifactRepository.getArtifact(artifactId);
     return getPluginEndpoint(namespace, artifactDetail, pluginType, pluginName,
@@ -105,6 +140,115 @@ public class PluginService implements Closeable {
     return artifactDetails.get(0).getDescriptor();
   }
 
+  @Override
+  protected void startUp() {
+    stageDir = DirUtils.createTempDir(tmpDir);
+  }
+
+  @Override
+  protected void shutDown() {
+    instantiators.invalidateAll();
+    try {
+      DirUtils.deleteDirectoryContents(stageDir);
+    } catch (IOException e) {
+      LOG.error("Error while deleting directory in PluginService", e);
+    }
+  }
+
+  /**
+   * A RemovalListener for closing classloader and plugin instantiators.
+   */
+  private static final class InstantiatorsRemovalListener implements
+    RemovalListener<ArtifactDescriptor, Instantiators> {
+
+    @Override
+    public void onRemoval(RemovalNotification<ArtifactDescriptor, Instantiators> notification) {
+      Closeables.closeQuietly(notification.getValue());
+    }
+  }
+
+  private class Instantiators implements Closeable {
+    private final CloseableClassLoader parentClassLoader;
+    private final Map<ArtifactDescriptor, InstantiatorInfo> instantiatorInfoMap;
+    private final File pluginDir;
+
+    private Instantiators(ArtifactDescriptor parentArtifactDescriptor) throws IOException {
+      this.parentClassLoader = artifactRepository.createArtifactClassLoader(parentArtifactDescriptor.getLocation());
+      this.instantiatorInfoMap = new ConcurrentHashMap<>();
+      this.pluginDir = DirUtils.createTempDir(stageDir);
+    }
+
+    private boolean hasArtifactChanged(ArtifactDescriptor artifactDescriptor) {
+      if (instantiatorInfoMap.containsKey(artifactDescriptor) &&
+        !instantiatorInfoMap.get(artifactDescriptor).getArtifactLocation().equals(artifactDescriptor.getLocation())) {
+        return true;
+      }
+      return false;
+    }
+
+    private void addInstantiatorAndAddArtifact(ArtifactDetail artifactDetail,
+                                               ArtifactId artifactId) throws IOException {
+      PluginInstantiator instantiator = new PluginInstantiator(cConf, parentClassLoader, pluginDir);
+      instantiatorInfoMap.put(artifactDetail.getDescriptor(),
+                              new InstantiatorInfo(artifactDetail.getDescriptor().getLocation(), instantiator));
+      instantiator.addArtifact(artifactDetail.getDescriptor().getLocation(), artifactId);
+    }
+
+    private PluginInstantiator getPluginInstantiator(ArtifactDetail artifactDetail,
+                                                     ArtifactId artifactId) throws IOException {
+      if (!instantiatorInfoMap.containsKey(artifactDetail.getDescriptor())) {
+        addInstantiatorAndAddArtifact(artifactDetail, artifactId);
+      } else if (hasArtifactChanged(artifactDetail.getDescriptor())) {
+        instantiatorInfoMap.remove(artifactDetail.getDescriptor());
+        addInstantiatorAndAddArtifact(artifactDetail, artifactId);
+      }
+      return instantiatorInfoMap.get(artifactDetail.getDescriptor()).getPluginInstantiator();
+    }
+
+    private int size() {
+      return instantiatorInfoMap.size();
+    }
+
+    @Override
+    public void close() throws IOException {
+      for (InstantiatorInfo instantiatorInfo : instantiatorInfoMap.values()) {
+        Closeables.closeQuietly(instantiatorInfo.getPluginInstantiator());
+      }
+      Closeables.closeQuietly(parentClassLoader);
+      DirUtils.deleteDirectoryContents(pluginDir);
+    }
+  }
+
+  private class InstantiatorInfo {
+    private final Location artifactLocation;
+    private final PluginInstantiator pluginInstantiator;
+
+    private InstantiatorInfo(Location artifactLocation, PluginInstantiator pluginInstantiator) {
+      this.artifactLocation = artifactLocation;
+      this.pluginInstantiator = pluginInstantiator;
+    }
+
+    private Location getArtifactLocation() {
+      return artifactLocation;
+    }
+
+    private PluginInstantiator getPluginInstantiator() {
+      return pluginInstantiator;
+    }
+  }
+
+  /**
+   * A CacheLoader for creating Instantiators.
+   */
+  private final class InstantiatorsCacheLoader extends CacheLoader<ArtifactDescriptor, Instantiators> {
+
+    @Override
+    public Instantiators load(ArtifactDescriptor parentArtifactDescriptor) throws Exception {
+      return new Instantiators(parentArtifactDescriptor);
+    }
+  }
+
+
   private PluginEndpoint getPluginEndpoint(NamespaceId namespace, ArtifactDetail artifactDetail, String pluginType,
                                            String pluginName, ArtifactDescriptor parentArtifactDescriptor,
                                            String methodName)
@@ -132,11 +276,9 @@ public class PluginService implements Closeable {
     }
 
     // initialize parent classloader and plugin instantiator
-    parentClassLoader = artifactClassLoaderFactory.createClassLoader(parentArtifactDescriptor.getLocation());
-    pluginInstantiator = new PluginInstantiator(cConf, parentClassLoader, stageDir);
-
-    // add plugin artifact
-    pluginInstantiator.addArtifact(artifactDetail.getDescriptor().getLocation(), artifactId.toArtifactId());
+    Instantiators instantiators = this.instantiators.getUnchecked(parentArtifactDescriptor);
+    PluginInstantiator pluginInstantiator = instantiators.getPluginInstantiator(artifactDetail,
+                                                                                artifactId.toArtifactId());
 
     // we pass the parent artifact to endpoint plugin context,
     // as plugin method will use this context to load other plugins.
@@ -215,16 +357,5 @@ public class PluginService implements Closeable {
 
     // cannot find the endpoint in plugin method. should not happen as this is checked earlier.
     throw new NotFoundException("Could not find the plugin method with the requested method endpoint {}", endpointName);
-  }
-
-  @Override
-  public void close() throws IOException {
-    if (pluginInstantiator != null) {
-      Closeables.closeQuietly(pluginInstantiator);
-    }
-    if (parentClassLoader != null) {
-      Closeables.closeQuietly(parentClassLoader);
-    }
-    DirUtils.deleteDirectoryContents(stageDir);
   }
 }

@@ -19,7 +19,7 @@ package co.cask.cdap.test.remote;
 import co.cask.cdap.client.ArtifactClient;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.util.RESTClient;
-import co.cask.cdap.proto.id.NamespacedArtifactId;
+import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.test.ArtifactManager;
 
 import java.util.Map;
@@ -29,9 +29,9 @@ import java.util.Map;
  */
 public class RemoteArtifactManager implements ArtifactManager {
   private final ArtifactClient artifactClient;
-  private final NamespacedArtifactId artifactId;
+  private final ArtifactId artifactId;
 
-  public RemoteArtifactManager(ClientConfig clientConfig, RESTClient restClient, NamespacedArtifactId artifactId) {
+  public RemoteArtifactManager(ClientConfig clientConfig, RESTClient restClient, ArtifactId artifactId) {
     this.artifactClient = new ArtifactClient(clientConfig, restClient);
     this.artifactId = artifactId;
   }

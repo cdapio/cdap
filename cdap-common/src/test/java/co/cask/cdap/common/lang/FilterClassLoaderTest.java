@@ -55,6 +55,22 @@ public class FilterClassLoaderTest {
   }
 
   @Test
+  public void testExtensionResourcesVisible() throws ClassNotFoundException {
+    // isn't really a way to guarantee what classes are in the extensions directory.
+    // so we'll just check that if the system classloader can load it, the filter classloader should be able to load it.
+    ClassLoader systemClassLoader = ClassLoader.getSystemClassLoader();
+    Object o;
+    try {
+      o = systemClassLoader.loadClass("com.sun.nio.zipfs.ZipInfo");
+    } catch (ClassNotFoundException e) {
+      // class isn't in extensions, this test will be a no-op
+      return;
+    }
+    FilterClassLoader classLoader = FilterClassLoader.create(this.getClass().getClassLoader());
+    Assert.assertEquals(o.getClass(), classLoader.loadClass("com.sun.nio.zipfs.ZipInfo").getClass());
+  }
+
+  @Test
   public void testHadoopResourcesVisible() throws ClassNotFoundException {
     FilterClassLoader classLoader = FilterClassLoader.create(this.getClass().getClassLoader());
     ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(classLoader);

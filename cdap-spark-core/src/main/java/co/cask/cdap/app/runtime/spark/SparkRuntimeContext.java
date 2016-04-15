@@ -22,6 +22,7 @@ import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.metrics.MetricsContext;
+import co.cask.cdap.api.metrics.MultiMetricsContext;
 import co.cask.cdap.api.plugin.PluginContext;
 import co.cask.cdap.api.plugin.PluginProperties;
 import co.cask.cdap.api.spark.SparkSpecification;
@@ -42,7 +43,9 @@ import co.cask.cdap.internal.app.runtime.ProgramRunners;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
 import co.cask.cdap.logging.context.SparkLoggingContext;
+import co.cask.cdap.logging.context.WorkflowProgramLoggingContext;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.id.Ids;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Objects;
@@ -103,7 +106,7 @@ public final class SparkRuntimeContext extends AbstractServiceDiscoverer
     this.txClient = txClient;
 
     ProgramId programId = program.getId().toEntityId();
-    this.metricsContext = createMetricsContext(metricsCollectionService, programId, runId);
+    this.metricsContext = createMetricsContext(metricsCollectionService, programId, runId, workflowProgramInfo);
 
     this.datasetCache = new MultiThreadDatasetCache(
       new SystemDatasetInstantiator(datasetFramework, program.getClassLoader(),
@@ -118,8 +121,22 @@ public final class SparkRuntimeContext extends AbstractServiceDiscoverer
     this.pluginContext = new DefaultPluginContext(pluginInstantiator, programId,
                                                   program.getApplicationSpecification().getPlugins());
     this.admin = new DefaultAdmin(datasetFramework, programId.getNamespaceId());
-    this.loggingContext = new SparkLoggingContext(programId.getNamespace(), programId.getApplication(),
-                                                  programId.getProgram(), runId.getId());
+    this.loggingContext = createLoggingContext(programId, runId, workflowProgramInfo);
+  }
+
+  private LoggingContext createLoggingContext(ProgramId programId, RunId runId,
+                                              @Nullable WorkflowProgramInfo workflowProgramInfo) {
+    if (workflowProgramInfo == null) {
+      return new SparkLoggingContext(programId.getNamespace(), programId.getApplication(), programId.getProgram(),
+                                     runId.getId());
+    }
+
+    ProgramId workflowProramId = Ids.namespace(programId.getNamespace()).app(programId.getApplication())
+      .workflow(workflowProgramInfo.getName());
+
+    return new WorkflowProgramLoggingContext(workflowProramId.getNamespace(), workflowProramId.getApplication(),
+                                             workflowProramId.getProgram(), workflowProgramInfo.getRunId().getId(),
+                                             ProgramType.SPARK, programId.getProgram());
   }
 
   @Override
@@ -259,8 +276,12 @@ public final class SparkRuntimeContext extends AbstractServiceDiscoverer
     return streamAdmin;
   }
 
+  /**
+   * Creates a {@link MetricsContext} to be used for the Spark execution.
+   */
   private static MetricsContext createMetricsContext(MetricsCollectionService service,
-                                                     ProgramId programId, RunId runId) {
+                                                     ProgramId programId, RunId runId,
+                                                     @Nullable WorkflowProgramInfo workflowProgramInfo) {
     Map<String, String> tags = Maps.newHashMap();
     tags.put(Constants.Metrics.Tag.NAMESPACE, programId.getNamespace());
     tags.put(Constants.Metrics.Tag.APP, programId.getApplication());
@@ -269,7 +290,21 @@ public final class SparkRuntimeContext extends AbstractServiceDiscoverer
 
     // todo: use proper spark instance id. For now we have to emit smth for test framework's waitFor metric to work
     tags.put(Constants.Metrics.Tag.INSTANCE_ID, "0");
-    return service.getContext(tags);
+
+    MetricsContext programMetricsContext = service.getContext(tags);
+    if (workflowProgramInfo == null) {
+      return programMetricsContext;
+    }
+
+    // If running inside Workflow, add the WorkflowMetricsContext as well
+    tags = Maps.newHashMap();
+    tags.put(Constants.Metrics.Tag.NAMESPACE, programId.getNamespace());
+    tags.put(Constants.Metrics.Tag.APP, programId.getApplication());
+    tags.put(Constants.Metrics.Tag.WORKFLOW, workflowProgramInfo.getName());
+    tags.put(Constants.Metrics.Tag.RUN_ID, workflowProgramInfo.getRunId().getId());
+    tags.put(Constants.Metrics.Tag.NODE, workflowProgramInfo.getNodeId());
+
+    return new MultiMetricsContext(programMetricsContext, service.getContext(tags));
   }
 
   @Override

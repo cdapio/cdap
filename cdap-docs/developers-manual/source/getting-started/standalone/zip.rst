@@ -16,10 +16,16 @@ Click the link marked "SDK" of the *Software Development Kit (SDK).*
 
 Once downloaded, unzip it to a directory on your machine:
 
-.. container:: highlight
+.. tabbed-parsed-literal::
 
-  .. parsed-literal::
-    |$| unzip cdap-sdk-|release|.zip
+  .. Linux
+
+  $ unzip cdap-sdk-|release|.zip
+  
+  .. Windows
+
+  > jar xf cdap-sdk-|release|.zip
+
 
 .. include:: index.rst  
   :start-after: .. _system-requirements:
