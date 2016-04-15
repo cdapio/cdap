@@ -19,6 +19,8 @@
 source ../vars
 source ../_common/common-build.sh
 
+EXTRACT_TABLE_TOOL="../tools/docs-extract-table.py"
+
 CHECK_INCLUDES=${TRUE}
 
 function download_md_doc_file() {
@@ -71,6 +73,20 @@ function download_md_doc_file() {
     echo_red_bold "${m}"
     set_message "${m}"
   fi   
+}
+
+function extract_table() {
+  # Extracts a table written in Markdown from a file so it can be reused in reST files
+  local base_target="${1}"
+  local source_file="${2}"
+  local target_file="${3}"
+
+  local extract_table_input="${base_target}/${source_file}"
+  local extract_table_output="${base_target}/${target_file}"
+
+  echo "Extracting table from ${extract_table_input}"
+  echo "Writing table info to ${extract_table_output}"
+  python "${EXTRACT_TABLE_TOOL}" "${extract_table_input}" "${extract_table_output}"
 }
 
 function download_includes() {
@@ -170,6 +186,8 @@ function download_includes() {
   download_md_doc_file $base_target $hydrator_source transform-plugins JSONParser-transform.md
   download_md_doc_file $base_target $hydrator_source transform-plugins StreamFormatter-transform.md
 
+  extract_table ${base_target} transforms/validator.md validator-extract.txt
+  
 }
 
 run_command ${1}
