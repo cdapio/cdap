@@ -23,8 +23,6 @@ import co.cask.cdap.app.runtime.spark.submit.SparkSubmitter;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
-import co.cask.cdap.common.lang.ClassLoaders;
-import co.cask.cdap.common.lang.CombineClassLoader;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.twill.HadoopClassExcluder;
 import co.cask.cdap.common.twill.LocalLocationFactory;
@@ -54,6 +52,7 @@ import org.apache.spark.SparkConf;
 import org.apache.spark.deploy.SparkSubmit;
 import org.apache.twill.api.ClassAcceptor;
 import org.apache.twill.api.RunId;
+import org.apache.twill.common.Cancellable;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.internal.ApplicationBundler;
 import org.slf4j.Logger;
@@ -310,13 +309,12 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
     Transactions.execute(txContext, spark.getClass().getName() + ".beforeSubmit()", new Callable<Void>() {
       @Override
       public Void call() throws Exception {
-        ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(new CombineClassLoader(
-          null, ImmutableList.of(spark.getClass().getClassLoader(), getClass().getClassLoader())));
+        Cancellable cancellable = SparkRuntimeUtils.setContextClassLoader(new SparkClassLoader(runtimeContext));
         try {
           spark.beforeSubmit(context);
           return null;
         } finally {
-          ClassLoaders.setContextClassLoader(oldClassLoader);
+          cancellable.cancel();
         }
       }
     });
@@ -333,13 +331,12 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
     Transactions.execute(txContext, spark.getClass().getName() + ".onFinish()", new Callable<Void>() {
       @Override
       public Void call() throws Exception {
-        ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(new CombineClassLoader(
-          null, ImmutableList.of(spark.getClass().getClassLoader(), getClass().getClassLoader())));
+        Cancellable cancellable = SparkRuntimeUtils.setContextClassLoader(new SparkClassLoader(runtimeContext));
         try {
           spark.onFinish(succeeded, context);
           return null;
         } finally {
-          ClassLoaders.setContextClassLoader(oldClassLoader);
+          cancellable.cancel();
         }
       }
     });

@@ -17,11 +17,15 @@
 package co.cask.cdap.app.runtime.spark;
 
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.common.lang.FilterClassLoader;
 import co.cask.cdap.common.lang.ProgramClassLoader;
+import co.cask.cdap.common.lang.WeakReferenceDelegatorClassLoader;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import com.google.common.io.OutputSupplier;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.spark.SparkConf;
+import org.apache.twill.common.Cancellable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scala.Tuple2;
@@ -116,6 +120,34 @@ public final class SparkRuntimeUtils {
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
+  }
+
+  /**
+   * Sets the context ClassLoader to the given {@link SparkClassLoader}. It will also set the
+   * ClassLoader for the {@link Configuration} contained inside the {@link SparkClassLoader}.
+   *
+   * @return a {@link Cancellable} to reset the classloader to the one prior to the call
+   */
+  public static Cancellable setContextClassLoader(final SparkClassLoader sparkClassLoader) {
+    final Configuration hConf = sparkClassLoader.getRuntimeContext().getConfiguration();
+    final ClassLoader oldConfClassLoader = hConf.getClassLoader();
+
+    // Always wrap it with WeakReference to avoid ClassLoader leakage from Spark.
+    ClassLoader classLoader = new WeakReferenceDelegatorClassLoader(sparkClassLoader);
+    hConf.setClassLoader(classLoader);
+    final ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(classLoader);
+    return new Cancellable() {
+      @Override
+      public void cancel() {
+        hConf.setClassLoader(oldConfClassLoader);
+        ClassLoaders.setContextClassLoader(oldClassLoader);
+
+        // Do not remove the next line.
+        // This is necessary to keep a strong reference to the SparkClassLoader so that it won't get GC until this
+        // cancel() is called
+        LOG.trace("Reset context ClassLoader. The SparkClassLoader is: {}", sparkClassLoader);
+      }
+    };
   }
 
   private SparkRuntimeUtils() {

@@ -17,6 +17,8 @@
 package co.cask.cdap.app.runtime.spark;
 
 import co.cask.cdap.api.spark.JavaSparkExecutionContext;
+import co.cask.cdap.api.spark.Spark;
+import co.cask.cdap.api.spark.SparkClientContext;
 import co.cask.cdap.api.spark.SparkExecutionContext;
 import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.common.lang.CombineClassLoader;
@@ -33,6 +35,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * ClassLoader being used in Spark execution context. It is used in driver as well as in executor node.
@@ -67,9 +70,18 @@ public class SparkClassLoader extends CombineClassLoader {
   }
 
   /**
+   * Creates a new SparkClassLoader from the given {@link SparkRuntimeContext} without the ability to create
+   * {@link SparkExecutionContext}. It is used in {@link Spark#beforeSubmit(SparkClientContext)} and
+   * {@link Spark#onFinish(boolean, SparkClientContext)} methods.
+   */
+  public SparkClassLoader(SparkRuntimeContext runtimeContext) {
+    this(runtimeContext, null);
+  }
+
+  /**
    * Creates a new SparkClassLoader with the given {@link SparkRuntimeContext}.
    */
-  public SparkClassLoader(SparkRuntimeContext runtimeContext, SparkExecutionContextFactory contextFactory) {
+  public SparkClassLoader(SparkRuntimeContext runtimeContext, @Nullable SparkExecutionContextFactory contextFactory) {
     super(null, createDelegateClassLoaders(runtimeContext));
     this.runtimeContext = runtimeContext;
     this.contextFactory = contextFactory;
@@ -93,6 +105,10 @@ public class SparkClassLoader extends CombineClassLoader {
    * Creates a new instance of {@link SparkExecutionContext}.
    */
   public SparkExecutionContext createExecutionContext() {
+    if (contextFactory == null) {
+      // This shouldn't happen, but to safeguard
+      throw new IllegalStateException("Creation of SparkExecutionContext is not allowed in the current context.");
+    }
     return contextFactory.create(runtimeContext);
   }
 
