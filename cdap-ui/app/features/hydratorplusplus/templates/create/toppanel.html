@@ -16,7 +16,7 @@
 
 <div class="side-panel top text-center">
   <div class="row nomargin">
-    <div class="col-xs-12 col-sm-6 text-left nopadding">
+    <div class="col-xs-12 col-sm-7 text-left nopadding">
       <div class="hydrator-metadata" ng-class="{'expanded': HydratorPlusPlusTopPanelCtrl.metadataExpanded}">
         <div ng-click="HydratorPlusPlusTopPanelCtrl.openMetadata()" class="clearfix">
           <div class="pipeline-type">
@@ -28,7 +28,7 @@
           <div class="pipeline-name pull-left">
             <div ng-class="{'placeholder': !HydratorPlusPlusTopPanelCtrl.state.metadata.name.length}"
                  ng-if="!HydratorPlusPlusTopPanelCtrl.metadataExpanded"
-                 ng-bind="HydratorPlusPlusTopPanelCtrl.state.metadata['name'] | myEllipsis: 28"
+                 ng-bind="HydratorPlusPlusTopPanelCtrl.state.metadata['name']"
                  uib-tooltip="{{ HydratorPlusPlusTopPanelCtrl.state.metadata.name }}"
                  tooltip-placement="right"
                  tooltip-enable="HydratorPlusPlusTopPanelCtrl.state.metadata.name.length > 27"
@@ -60,7 +60,7 @@
         </div>
       </div>
     </div>
-    <div class="col-sm-3 col-sm-offset-3 text-right nopadding">
+    <div class="col-sm-3 col-sm-offset-2 text-right nopadding">
       <div class="btn-group action-buttons">
         <div class="btn"
              ng-repeat="action in HydratorPlusPlusTopPanelCtrl.canvasOperations"
