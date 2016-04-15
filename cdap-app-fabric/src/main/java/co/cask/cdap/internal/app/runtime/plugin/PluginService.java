@@ -37,6 +37,7 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.cache.RemovalListener;
 import com.google.common.cache.RemovalNotification;
+import com.google.common.cache.Weigher;
 import com.google.common.io.Closeables;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
@@ -79,6 +80,13 @@ public class PluginService extends AbstractIdleService {
     this.cConf = cConf;
     this.instantiators = CacheBuilder.newBuilder()
       .removalListener(new InstantiatorsRemovalListener())
+      .maximumWeight(100)
+      .weigher(new Weigher<ArtifactDescriptor, Instantiators>() {
+        @Override
+        public int weigh(ArtifactDescriptor key, Instantiators value) {
+          return value.size();
+        }
+      })
       .expireAfterAccess(1, TimeUnit.HOURS)
       .build(new InstantiatorsCacheLoader());
   }
@@ -195,6 +203,10 @@ public class PluginService extends AbstractIdleService {
         addInstantiatorAndAddArtifact(artifactDetail, artifactId);
       }
       return instantiatorInfoMap.get(artifactDetail.getDescriptor()).getPluginInstantiator();
+    }
+
+    private int size() {
+      return instantiatorInfoMap.size();
     }
 
     @Override
