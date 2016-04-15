@@ -366,37 +366,62 @@ copies in each transform is emitted. The user metrics can be queried by using th
 
 Script Transformations
 ----------------------
-In the script transformations (such as the *Script*, *Script Filter*, and *Validator* transforms), a
+In the script transformations (*JavaScriptTransform*, *PythonEvaluator*, *ScriptFilterTransform*, and the *ValidatorTransform*), a
 ``ScriptContext`` object is passed to the ``transform()`` method::
 
   function transform(input, context);
+
+The different Transforms that are passed this context object have similar signatures:
+
+|| Transform || Signature ||
+| JavaScriptTransform | {{function transform(input, emitter, context)}} |
+| PythonEvaluator | {{def transform(record, emitter, context)}} |
+| ScriptFilterTransform | {{function shouldFilter(input, context)}} |
+| ValidatorTransform | {{function isValid(input, context)}} |
 
 The ``ScriptContext`` has these methods::
 
   public Logger getLogger();
   public StageMetrics getMetrics();
   public ScriptLookup getLookup(String table);
+  
+The context passed by the *ValidatorTransform* has an additional method that returns a validator::
 
+  public Object getValidator(String validatorName);
 
-There are actually five Transforms that expose this object, each with a different signature:
+These methods allow access within the script to CDAP loggers, metrics, lookup tables, and the validator object.
 
-|| Transform || Signature || Returns ||
-| JavaScriptTransform.java | {{function transform(input, emitter, context)}} | None: uses {{emitter.emit(input)}} |
-| PythonEvaluator.java | {{def transform(record, emitter, context)}} | None: uses {{emitter.emit(record)}} |
-| ScriptFilterTransform.java | {{function shouldFilter(input, context)}} | Boolean | 
-| ScriptTransform.java | {{function transform(input, context)}} | JSON object |
-| ValidatorTransform.java | {{function isValid(input, context)}} | JSON with validity, error code, and error message |
+**Logger**
 
+``Logger`` is an `org.slf4j.Logger <http://www.slf4j.org/api/org/slf4j/Logger.html>`__.
 
+**StageMetrics**
 
+``StageMetrics`` has these methods:
 
-where:
+- ``count(String metricName, int delta)``: Increases the value of the specific metric by delta. Metrics name will be prefixed by the
+  stage ID, hence it will be aggregated for the current stage.
+- ``gauge(String metricName, long value)``: Sets the specific metric to the provided value. Metrics name will be prefixed by the
+  stage ID, hence it will be aggregated for the current stage.
+- ``pipelineCount(String metricName, int delta)``: Increases the value of the specific metric by delta. Metrics emitted will be aggregated
+  for the entire pipeline.
+- ``pipelineGauge(String metricName, long value)``: Sets the specific metric to the provided value. Metrics emitted will be aggregated
+  for the entire pipeline.
 
-- ``Logger`` is the `org.slf4j.Logger <http://www.slf4j.org/api/org/slf4j/Logger.html>`__
-- ``StageMetrics``: https://github.com/caskdata/cdap/blob/develop/cdap-app-templates/cdap-etl/cdap-etl-api/src/main/java/co/cask/cdap/etl/api/StageMetrics.java
-- ``ScriptLookup``: https://github.com/caskdata/cdap/blob/develop/cdap-app-templates/cdap-etl/cdap-etl-core/src/main/java/co/cask/cdap/etl/common/DatasetContextLookupProvider.java
+**ScriptLookup**
 
 Currently, ``ScriptContext.getLookup(String table)`` only supports :ref:`key-value tables <datasets-index>`.
+
+For example, if a lookup table *purchases* is configured, then you will be able to perform
+operations with that lookup table in your script: ``context.getLookup('purchases').lookup('key')``
+
+**Validator Object**
+
+For example, in a validator transform, you can get the validator object and then call its functions as part of your script::
+
+  var coreValidator = context.getValidator(\"coreValidator\");
+  if (!coreValidator.isDate(input.date)) {
+  . . .
 
 
 Test Framework for Plugins
