@@ -44,6 +44,7 @@ class HydratorPlusPlusConfigStore {
     this.hydratorPlusPlusConfigDispatcher.register('onInitialize', this.init.bind(this));
     this.hydratorPlusPlusConfigDispatcher.register('onSchemaPropagationDownStream', this.propagateIOSchemas.bind(this));
     this.hydratorPlusPlusConfigDispatcher.register('onAddPostAction', this.addPostAction.bind(this));
+    this.hydratorPlusPlusConfigDispatcher.register('onEditPostAction', this.editPostAction.bind(this));
     this.hydratorPlusPlusConfigDispatcher.register('onDeletePostAction', this.deletePostAction.bind(this));
   }
   registerOnChangeListener(callback) {
@@ -620,6 +621,14 @@ class HydratorPlusPlusConfigStore {
 
   addPostAction(config) {
     this.state.config.postactions.push(config);
+    this.emitChange();
+  }
+  editPostAction(config) {
+    let index = _.findLastIndex(this.state.config.postactions, (post) => {
+      return config.name === post.name;
+    });
+
+    this.state.config.postactions[index] = config;
     this.emitChange();
   }
   deletePostAction(config) {

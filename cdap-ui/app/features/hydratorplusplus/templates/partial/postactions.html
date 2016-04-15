@@ -50,7 +50,10 @@
             <td>{{ action._uiDescription }}</td>
             <td>{{ action.plugin.properties.runCondition }}</td>
             <td class="clearfix">
-              <a href="" class="pull-left">Edit</a>
+              <a href="" class="pull-left"
+                 ng-click="PostActionController.edit(action)">
+                Edit
+              </a>
               <i class="fa fa-trash text-danger pull-right"
                  ng-click="PostActionController.deleteAction(action)">
                </i>
@@ -111,8 +114,9 @@
           Cancel
         </button>
 
-        <button class="btn btn-blue" ng-click="PostActionController.add()">
-          Add
+        <button class="btn btn-blue" ng-click="PostActionController.save(PostActionController.isEdit)">
+          <span ng-if="!PostActionController.isEdit">Add</span>
+          <span ng-if="PostActionController.isEdit">Save</span>
         </button>
       </div>
 
