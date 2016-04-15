@@ -24,11 +24,7 @@ import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.plugin.PluginContext;
-import co.cask.cdap.api.workflow.Workflow;
-import co.cask.cdap.api.workflow.WorkflowToken;
-
-import java.io.Serializable;
-import javax.annotation.Nullable;
+import co.cask.cdap.api.workflow.WorkflowInfoProvider;
 
 /**
  * A context for a {@link Spark} program to interact with CDAP. This context object will be provided to
@@ -36,7 +32,8 @@ import javax.annotation.Nullable;
  * {@link Spark#onFinish(boolean, SparkClientContext)} call.
  */
 @Beta
-public interface SparkClientContext extends RuntimeContext, DatasetContext, ClientLocalizationContext {
+public interface SparkClientContext extends RuntimeContext, DatasetContext, ClientLocalizationContext,
+                                            ServiceDiscoverer, PluginContext, WorkflowInfoProvider {
   /**
    * @return The specification used to configure this {@link Spark} job instance.
    */
@@ -52,32 +49,14 @@ public interface SparkClientContext extends RuntimeContext, DatasetContext, Clie
   long getLogicalStartTime();
 
   /**
-   * Returns a {@link Serializable} {@link ServiceDiscoverer} for Service Discovery in Spark Program which can be
-   * passed in Spark program's closures.
+   * Returns a {@link Metrics} which can be used to emit custom metrics.
    *
-   * @return A {@link Serializable} {@link ServiceDiscoverer}
-   */
-  ServiceDiscoverer getServiceDiscoverer();
-
-  /**
-   * Returns a {@link Serializable} {@link Metrics} which can be used to emit custom metrics from user's {@link Spark}
-   * program. This can also be passed in Spark program's closures and workers can emit their own metrics
-   *
-   * @return {@link Serializable} {@link Metrics} for {@link Spark} programs
+   * @return a {@link Metrics} for the {@link Spark} program
    */
   Metrics getMetrics();
 
   /**
-   * Returns a {@link Serializable} {@link PluginContext} which can be used to request for plugins instances. The
-   * instance returned can also be used in Spark program's closures.
-   *
-   * @return A {@link Serializable} {@link PluginContext}.
-   */
-  PluginContext getPluginContext();
-
-  /**
-   * Override the resources, such as memory and virtual cores, to use for each executor process for the Spark program.
-   * This method should be called in {@link Spark#beforeSubmit(SparkClientContext)} to take effect.
+   * Sets the resources, such as memory and virtual cores, to use for each executor process for the Spark program.
    *
    * @param resources Resources that each executor should use
    */
@@ -92,11 +71,4 @@ public interface SparkClientContext extends RuntimeContext, DatasetContext, Clie
    * @param <T> the SparkConf type
    */
   <T> void setSparkConf(T sparkConf);
-
-  /**
-   * @return the {@link WorkflowToken} associated with the current {@link Workflow},
-   * if the {@link Spark} program is executed as a part of the Workflow.
-   */
-  @Nullable
-  WorkflowToken getWorkflowToken();
 }

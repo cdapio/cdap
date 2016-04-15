@@ -31,7 +31,7 @@ import co.cask.cdap.api.metrics.Metrics
 import co.cask.cdap.api.plugin.PluginContext
 import co.cask.cdap.api.spark.{SparkExecutionContext, SparkSpecification}
 import co.cask.cdap.api.stream.GenericStreamEventData
-import co.cask.cdap.api.workflow.WorkflowToken
+import co.cask.cdap.api.workflow.{WorkflowInfo, WorkflowToken}
 import co.cask.cdap.common.conf.ConfigurationUtil
 import co.cask.cdap.data.stream.{StreamInputFormat, StreamUtils}
 import co.cask.cdap.data2.metadata.lineage.AccessType
@@ -69,7 +69,7 @@ class DefaultSparkExecutionContext(runtimeContext: SparkRuntimeContext,
   private val taskLocalizationContext = new DefaultTaskLocalizationContext(localizeResources)
   private val transactional = new SparkTransactional(runtimeContext.getTransactionSystemClient,
                                                      runtimeContext.getDatasetCache)
-  private val workflowToken = Option(runtimeContext.getWorkflowInfo).map(_.getWorkflowToken)
+  private val workflowInfo = Option(runtimeContext.getWorkflowInfo)
   private val sparkTxService = new SparkTransactionService(runtimeContext.getTransactionSystemClient, hostname)
   private val applicationEndLatch = new CountDownLatch(1)
 
@@ -135,7 +135,9 @@ class DefaultSparkExecutionContext(runtimeContext: SparkRuntimeContext,
 
   override def getPluginContext: PluginContext = new SparkPluginContext(runtimeContext)
 
-  override def getWorkflowToken: Option[WorkflowToken] = workflowToken
+  override def getWorkflowToken: Option[WorkflowToken] = workflowInfo.map(_.getWorkflowToken)
+
+  override def getWorkflowInfo: Option[WorkflowInfo] = workflowInfo
 
   override def getLocalizationContext: TaskLocalizationContext = taskLocalizationContext
 

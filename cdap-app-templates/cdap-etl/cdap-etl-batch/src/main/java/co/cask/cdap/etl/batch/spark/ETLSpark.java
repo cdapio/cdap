@@ -97,7 +97,7 @@ public class ETLSpark extends AbstractSpark {
     Map<String, String> properties = context.getSpecification().getProperties();
     BatchPhaseSpec phaseSpec = GSON.fromJson(properties.get(Constants.PIPELINEID), BatchPhaseSpec.class);
     PipelinePluginInstantiator pluginInstantiator =
-      new PipelinePluginInstantiator(context.getPluginContext(), phaseSpec);
+      new PipelinePluginInstantiator(context, phaseSpec);
     // we checked at configure time that there is exactly one source
     String sourceName = phaseSpec.getPhase().getSources().iterator().next();
 

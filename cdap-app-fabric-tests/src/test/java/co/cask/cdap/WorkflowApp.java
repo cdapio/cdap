@@ -22,14 +22,15 @@ import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.spark.AbstractSpark;
 import co.cask.cdap.api.spark.JavaSparkExecutionContext;
 import co.cask.cdap.api.spark.JavaSparkMain;
+import co.cask.cdap.api.spark.SparkClientContext;
 import co.cask.cdap.api.workflow.AbstractWorkflow;
 import co.cask.cdap.api.workflow.AbstractWorkflowAction;
+import co.cask.cdap.api.workflow.NodeValue;
 import co.cask.cdap.api.workflow.WorkflowContext;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.internal.app.runtime.batch.WordCount;
 import co.cask.cdap.runtime.WorkflowTest;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Throwables;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
@@ -66,8 +67,8 @@ public class WorkflowApp extends AbstractApplication {
       setName(NAME);
       setDescription("FunWorkflow description");
       addMapReduce("ClassicWordCount");
-      addAction(new CustomAction("verify"));
       addSpark("SparkWorkflowTest");
+      addAction(new CustomAction("verify"));
     }
   }
 
@@ -92,7 +93,7 @@ public class WorkflowApp extends AbstractApplication {
 
     @Override
     public void onFinish(boolean succeeded, MapReduceContext context) throws Exception {
-      // No-op
+      context.getWorkflowToken().put("completed", context.getWorkflowInfo().getNodeId());
     }
   }
 
@@ -104,6 +105,12 @@ public class WorkflowApp extends AbstractApplication {
       setDescription("Test Spark with Workflow");
       setMainClass(SparkWorkflowTestProgram.class);
     }
+
+    @Override
+    public void beforeSubmit(SparkClientContext context) throws Exception {
+      Preconditions.checkState(context.getWorkflowInfo() != null && context.getWorkflowToken() != null,
+                               "WorkflowInfo and WorkflowToken shouldn't be null");
+    }
   }
 
   public static class SparkWorkflowTestProgram implements JavaSparkMain {
@@ -113,11 +120,7 @@ public class WorkflowApp extends AbstractApplication {
       File outputDir = new File(sec.getRuntimeArguments().get("outputPath"));
       File successFile = new File(outputDir, "_SUCCESS");
       Preconditions.checkState(successFile.exists());
-      try {
-        Preconditions.checkState(successFile.delete());
-      } catch (Exception e) {
-        Throwables.propagate(e);
-      }
+
       List<Integer> data = Arrays.asList(1, 2, 3, 4, 5);
       JavaRDD<Integer> distData = jsc.parallelize(data);
       distData.collect();
@@ -135,7 +138,9 @@ public class WorkflowApp extends AbstractApplication {
           return val;
         }
       });
-      Preconditions.checkState(!successFile.exists());
+
+      // Write something to workflow token
+      workflowToken.put("completed", sec.getWorkflowInfo().getNodeId());
     }
   }
   
@@ -166,9 +171,8 @@ public class WorkflowApp extends AbstractApplication {
       super.initialize(context);
       LOG.info("Custom action initialized: " + context.getSpecification().getName());
       WorkflowToken workflowToken = context.getToken();
-      if (workflowToken != null) {
-        workflowToken.put("tokenKey", "value");
-      }
+      // Token shouldn't be null
+      workflowToken.put("tokenKey", "value");
     }
 
     @Override
@@ -182,6 +186,10 @@ public class WorkflowApp extends AbstractApplication {
       LOG.info("Custom action run");
       File outputDir = new File(getContext().getRuntimeArguments().get("outputPath"));
       Preconditions.checkState(condition && new File(outputDir, "_SUCCESS").exists());
+
+      // There should be two values for the "completed" key, one from MR, one from Spark
+      List<NodeValue> values = getContext().getToken().getAll("completed");
+      Preconditions.checkState(values.size() == 2);
       LOG.info("Custom run completed.");
     }
   }

@@ -23,7 +23,7 @@ import co.cask.cdap.api.flow.flowlet.StreamEvent
 import co.cask.cdap.api.metrics.Metrics
 import co.cask.cdap.api.plugin.PluginContext
 import co.cask.cdap.api.stream.GenericStreamEventData
-import co.cask.cdap.api.workflow.WorkflowToken
+import co.cask.cdap.api.workflow.{WorkflowInfo, WorkflowToken}
 import co.cask.cdap.api.{RuntimeContext, ServiceDiscoverer, TaskLocalizationContext, Transactional}
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
@@ -78,10 +78,19 @@ trait SparkExecutionContext extends RuntimeContext with Transactional {
     * Returns the [[co.cask.cdap.api.workflow.WorkflowToken]] if the Spark program
     * is started from a [[co.cask.cdap.api.workflow.Workflow]].
     *
-    * @return An [[co.cask.cdap.api.workflow.WorkflowToken]] associated with
+    * @return An optional [[co.cask.cdap.api.workflow.WorkflowToken]] associated with
     *         the current [[co.cask.cdap.api.workflow.Workflow]]
     */
   def getWorkflowToken: Option[WorkflowToken]
+
+  /**
+    * Returns the [[co.cask.cdap.api.workflow.WorkflowInfo]] if the Spark program
+    * is started from a [[co.cask.cdap.api.workflow.Workflow]].
+    *
+    * @return An optional [[co.cask.cdap.api.workflow.WorkflowInfo]] associated with
+    *         the current [[co.cask.cdap.api.workflow.Workflow]]
+    */
+  def getWorkflowInfo: Option[WorkflowInfo]
 
   /**
     * Returns the [[co.cask.cdap.api.TaskLocalizationContext]] that gives access to files that were localized

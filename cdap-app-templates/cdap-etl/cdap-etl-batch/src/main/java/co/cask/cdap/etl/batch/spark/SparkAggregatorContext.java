@@ -26,7 +26,7 @@ import co.cask.cdap.etl.batch.AbstractAggregatorContext;
 public class SparkAggregatorContext extends AbstractAggregatorContext {
 
   public SparkAggregatorContext(SparkClientContext context, LookupProvider lookup, String stageName) {
-    super(context.getPluginContext(), context, context.getMetrics(),
+    super(context, context, context.getMetrics(),
           lookup, stageName, context.getLogicalStartTime(), context.getRuntimeArguments());
   }
 
