@@ -48,7 +48,11 @@ import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.internal.app.runtime.workflow.BasicWorkflowToken;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
 import co.cask.cdap.logging.context.MapReduceLoggingContext;
+import co.cask.cdap.logging.context.WorkflowProgramLoggingContext;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.id.Ids;
+import co.cask.cdap.proto.id.ProgramId;
 import co.cask.tephra.TransactionContext;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.collect.ImmutableMap;
@@ -105,7 +109,7 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
           dsFramework, txClient, discoveryServiceClient, false, pluginInstantiator);
     this.workflowProgramInfo = workflowProgramInfo;
     this.userMetrics = new ProgramUserMetrics(getProgramMetrics());
-    this.loggingContext = createLoggingContext(program.getId(), runId);
+    this.loggingContext = createLoggingContext(program.getId(), runId, workflowProgramInfo);
     this.spec = spec;
     this.mapperResources = spec.getMapperResources();
     this.reducerResources = spec.getReducerResources();
@@ -131,9 +135,19 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
     return txContext;
   }
 
-  private LoggingContext createLoggingContext(Id.Program programId, RunId runId) {
-    return new MapReduceLoggingContext(programId.getNamespaceId(), programId.getApplicationId(),
-                                       programId.getId(), runId.getId());
+  private LoggingContext createLoggingContext(Id.Program programId, RunId runId,
+                                              @Nullable WorkflowProgramInfo workflowProgramInfo) {
+    if (workflowProgramInfo == null) {
+      return new MapReduceLoggingContext(programId.getNamespaceId(), programId.getApplicationId(),
+                                         programId.getId(), runId.getId());
+    }
+
+    ProgramId workflowProramId = Ids.namespace(programId.getNamespaceId()).app(programId.getApplicationId())
+      .workflow(workflowProgramInfo.getName());
+
+    return new WorkflowProgramLoggingContext(workflowProramId.getNamespace(), workflowProramId.getApplication(),
+                                             workflowProramId.getProgram(), workflowProgramInfo.getRunId().getId(),
+                                             ProgramType.MAPREDUCE, programId.getId());
   }
 
   @Override
