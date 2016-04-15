@@ -113,7 +113,10 @@ body.theme-cdap {
             background-image: url('@{img-path}/gray_chevron_body.png');
             margin-left: 20px;
             &:before {
+              background-color: transparent;
               content: '';
+              width: 0.5px;
+              .box-shadow(1px 0 6px rgba(1, 0, 0, 0.65));
             }
             span {
               padding-left: 11px;
