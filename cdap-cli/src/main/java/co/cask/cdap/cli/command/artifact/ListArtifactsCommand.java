@@ -74,7 +74,7 @@ public class ListArtifactsCommand extends AbstractAuthCommand {
 
   @Override
   public String getDescription() {
-    return String.format("Lists all %s. If no scope is given, artifacts in all scopes are returned. " +
+    return String.format("Lists all %s. If no scope is provided, artifacts in all scopes are returned. " +
       "Otherwise, only artifacts in the specified scope are returned.", ElementType.ARTIFACT.getNamePlural());
   }
 }

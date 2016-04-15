@@ -55,6 +55,6 @@ public class DeleteStreamViewCommand extends AbstractAuthCommand {
 
   @Override
   public String getDescription() {
-    return String.format("Deletes a stream-%s.", ElementType.VIEW.getName());
+    return String.format("Deletes a stream-%s", ElementType.VIEW.getName());
   }
 }

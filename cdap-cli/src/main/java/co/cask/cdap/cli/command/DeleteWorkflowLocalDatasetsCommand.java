@@ -65,6 +65,6 @@ public class DeleteWorkflowLocalDatasetsCommand extends AbstractCommand {
 
   @Override
   public String getDescription() {
-    return "Deletes the local datasets associated with the workflow for a given run id.";
+    return "Deletes the local datasets associated with the workflow for a given run ID";
   }
 }

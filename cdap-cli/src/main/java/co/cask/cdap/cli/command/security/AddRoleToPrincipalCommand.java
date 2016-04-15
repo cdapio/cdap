@@ -58,6 +58,6 @@ public class AddRoleToPrincipalCommand extends AbstractAuthCommand {
 
   @Override
   public String getDescription() {
-    return "Adds a role to a principal in authorization system for role based access control.";
+    return "Adds a role to a principal in authorization system for role-based access control";
   }
 }

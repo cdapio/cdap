@@ -79,6 +79,6 @@ public class DescribeStreamViewCommand extends AbstractAuthCommand {
 
   @Override
   public String getDescription() {
-    return String.format("Describes a stream-%s.", ElementType.VIEW.getName());
+    return String.format("Describes a stream-%s", ElementType.VIEW.getName());
   }
 }
