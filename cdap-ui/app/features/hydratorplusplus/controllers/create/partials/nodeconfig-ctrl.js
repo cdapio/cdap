@@ -29,7 +29,8 @@ class HydratorPlusPlusNodeConfigCtrl {
     this.NonStorePipelineErrorFactory = NonStorePipelineErrorFactory;
     this.requiredPropertyError = this.GLOBALS.en.hydrator.studio.error['GENERIC-MISSING-REQUIRED-FIELDS'];
     this.showPropagateConfirm = false; // confirmation dialog in node config for schema propagation.
-
+    this.inputSchemaRowLimit = 15;
+    this.loadNextInputSchemaRows = _.debounce(this.doLoadNextSetOfInputSchemaRows.bind(this));
     this.setDefaults();
     HydratorPlusPlusNodeConfigStore.registerOnChangeListener(this.setState.bind(this));
   }
@@ -93,7 +94,7 @@ class HydratorPlusPlusNodeConfigCtrl {
     this.state.noproperty = Object.keys(
       this.state.node._backendProperties || {}
     ).length;
-
+    this.inputSchemaRowLimit = 15;
     if (this.state.noproperty) {
       var artifactName = this.myHelpers.objectQuery(this.state.node, 'plugin', 'artifact', 'name');
       var artifactVersion = this.myHelpers.objectQuery(this.state.node, 'plugin', 'artifact', 'version');
@@ -262,6 +263,11 @@ class HydratorPlusPlusNodeConfigCtrl {
 
     if (fields.length !== unique.length) {
       error.push('There are two or more fields with the same name.');
+    }
+  }
+  doLoadNextSetOfInputSchemaRows() {
+    if (this.state.node.inputSchema && (this.state.node.inputSchema.length - this.inputSchemaRowLimit) > 10) {
+      this.inputSchemaRowLimit += 10;
     }
   }
 }
