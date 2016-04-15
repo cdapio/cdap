@@ -25,7 +25,6 @@ import co.cask.common.cli.Arguments;
 import com.google.inject.Inject;
 
 import java.io.PrintStream;
-import java.util.Map;
 
 /**
  * Removes a metadata property for an entity.

@@ -20,7 +20,6 @@ import co.cask.cdap.api.DatasetConfigurer;
 import co.cask.cdap.api.ProgramConfigurer;
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.data.batch.Input;
-import co.cask.cdap.api.data.stream.StreamBatchReadable;
 import co.cask.cdap.api.plugin.PluginConfigurer;
 
 /**

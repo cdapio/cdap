@@ -16,10 +16,10 @@
 
 package co.cask.cdap.proto;
 
-import co.cask.cdap.api.artifact.ArtifactId;
 import co.cask.cdap.api.artifact.ArtifactScope;
 import co.cask.cdap.api.artifact.ArtifactVersion;
 import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.DatasetModuleId;
 import co.cask.cdap.proto.id.DatasetTypeId;
@@ -28,7 +28,6 @@ import co.cask.cdap.proto.id.EntityIdCompatible;
 import co.cask.cdap.proto.id.FlowletId;
 import co.cask.cdap.proto.id.FlowletQueueId;
 import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.NamespacedArtifactId;
 import co.cask.cdap.proto.id.NotificationFeedId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
@@ -1086,8 +1085,8 @@ public abstract class Id implements EntityIdCompatible {
       return String.format("%s-%s", name, version.getVersion());
     }
 
-    public ArtifactId toArtifactId() {
-      return new ArtifactId(
+    public co.cask.cdap.api.artifact.ArtifactId toArtifactId() {
+      return new co.cask.cdap.api.artifact.ArtifactId(
         name, version, Namespace.SYSTEM.equals(namespace) ? ArtifactScope.SYSTEM : ArtifactScope.USER);
     }
 
@@ -1154,8 +1153,8 @@ public abstract class Id implements EntityIdCompatible {
     }
 
     @Override
-    public NamespacedArtifactId toEntityId() {
-      return new NamespacedArtifactId(namespace.getId(), name, version.getVersion());
+    public ArtifactId toEntityId() {
+      return new ArtifactId(namespace.getId(), name, version.getVersion());
     }
   }
 }

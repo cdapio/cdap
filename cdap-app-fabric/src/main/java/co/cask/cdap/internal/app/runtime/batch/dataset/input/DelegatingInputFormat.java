@@ -17,15 +17,12 @@
 package co.cask.cdap.internal.app.runtime.batch.dataset.input;
 
 import co.cask.cdap.common.conf.ConfigurationUtil;
-import co.cask.cdap.internal.app.runtime.batch.MapperWrapper;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Throwables;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.JobContext;
-import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.util.ReflectionUtils;
@@ -34,7 +31,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import javax.annotation.Nullable;
 
 /**
  * An {@link InputFormat} that delegates behavior of InputFormat to multiple other InputFormats.

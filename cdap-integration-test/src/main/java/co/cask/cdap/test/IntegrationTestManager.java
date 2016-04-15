@@ -46,9 +46,9 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.artifact.ArtifactRange;
+import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.Ids;
 import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.NamespacedArtifactId;
 import co.cask.cdap.test.remote.RemoteApplicationManager;
 import co.cask.cdap.test.remote.RemoteArtifactManager;
 import co.cask.cdap.test.remote.RemoteStreamManager;
@@ -189,7 +189,7 @@ public class IntegrationTestManager implements TestManager {
   }
 
   @Override
-  public ArtifactManager addArtifact(NamespacedArtifactId artifactId, final File artifactFile) throws Exception {
+  public ArtifactManager addArtifact(ArtifactId artifactId, final File artifactFile) throws Exception {
     artifactClient.add(artifactId.toId(), null, new InputSupplier<InputStream>() {
       @Override
       public InputStream getInput() throws IOException {
@@ -205,7 +205,7 @@ public class IntegrationTestManager implements TestManager {
   }
 
   @Override
-  public ArtifactManager addAppArtifact(NamespacedArtifactId artifactId, Class<?> appClass) throws Exception {
+  public ArtifactManager addAppArtifact(ArtifactId artifactId, Class<?> appClass) throws Exception {
     addAppArtifact(artifactId, appClass, new Manifest());
     return new RemoteArtifactManager(clientConfig, restClient, artifactId);
   }
@@ -216,7 +216,7 @@ public class IntegrationTestManager implements TestManager {
   }
 
   @Override
-  public ArtifactManager addAppArtifact(NamespacedArtifactId artifactId, Class<?> appClass,
+  public ArtifactManager addAppArtifact(ArtifactId artifactId, Class<?> appClass,
                                         String... exportPackages) throws Exception {
     Manifest manifest = new Manifest();
     manifest.getMainAttributes().put(ManifestFields.EXPORT_PACKAGE, Joiner.on(',').join(exportPackages));
@@ -230,7 +230,7 @@ public class IntegrationTestManager implements TestManager {
   }
 
   @Override
-  public ArtifactManager addAppArtifact(NamespacedArtifactId artifactId, Class<?> appClass,
+  public ArtifactManager addAppArtifact(ArtifactId artifactId, Class<?> appClass,
                                         Manifest manifest) throws Exception {
     final Location appJar = AppJarHelper.createDeploymentJar(locationFactory, appClass, manifest);
 
@@ -251,7 +251,7 @@ public class IntegrationTestManager implements TestManager {
   }
 
   @Override
-  public ArtifactManager addPluginArtifact(NamespacedArtifactId artifactId, NamespacedArtifactId parent,
+  public ArtifactManager addPluginArtifact(ArtifactId artifactId, ArtifactId parent,
                                            Class<?> pluginClass, Class<?>... pluginClasses) throws Exception {
     Set<ArtifactRange> parents = new HashSet<>();
     parents.add(new ArtifactRange(
@@ -268,7 +268,7 @@ public class IntegrationTestManager implements TestManager {
   }
 
   @Override
-  public ArtifactManager addPluginArtifact(NamespacedArtifactId artifactId, Set<ArtifactRange> parents,
+  public ArtifactManager addPluginArtifact(ArtifactId artifactId, Set<ArtifactRange> parents,
                                            Class<?> pluginClass, Class<?>... pluginClasses) throws Exception {
     Manifest manifest = createManifest(pluginClass, pluginClasses);
     final Location appJar = PluginJarHelper.createPluginJar(locationFactory, manifest, pluginClass, pluginClasses);
@@ -291,7 +291,7 @@ public class IntegrationTestManager implements TestManager {
   }
 
   @Override
-  public ArtifactManager addPluginArtifact(NamespacedArtifactId artifactId, NamespacedArtifactId parent,
+  public ArtifactManager addPluginArtifact(ArtifactId artifactId, ArtifactId parent,
                                            @Nullable Set<PluginClass> additionalPlugins, Class<?> pluginClass,
                                            Class<?>... pluginClasses) throws Exception {
     Set<ArtifactRange> parents = new HashSet<>();
@@ -310,7 +310,7 @@ public class IntegrationTestManager implements TestManager {
   }
 
   @Override
-  public ArtifactManager addPluginArtifact(NamespacedArtifactId artifactId, Set<ArtifactRange> parents,
+  public ArtifactManager addPluginArtifact(ArtifactId artifactId, Set<ArtifactRange> parents,
                                            @Nullable Set<PluginClass> additionalPlugins, Class<?> pluginClass,
                                            Class<?>... pluginClasses) throws Exception {
     Manifest manifest = createManifest(pluginClass, pluginClasses);

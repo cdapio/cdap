@@ -34,8 +34,8 @@ import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.pipeline.StageContext;
 import co.cask.cdap.internal.test.AppJarHelper;
 import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.NamespacedArtifactId;
 import co.cask.cdap.proto.metadata.MetadataScope;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
@@ -75,7 +75,7 @@ public class SystemMetadataWriterStageTest {
     String appName = WorkflowAppWithFork.class.getSimpleName();
     ApplicationId appId = NamespaceId.DEFAULT.app(appName);
     String workflowName = WorkflowAppWithFork.WorkflowWithFork.class.getSimpleName();
-    NamespacedArtifactId artifactId = NamespaceId.DEFAULT.artifact(appId.getApplication(), "1.0");
+    ArtifactId artifactId = NamespaceId.DEFAULT.artifact(appId.getApplication(), "1.0");
     ApplicationWithPrograms appWithPrograms = createAppWithWorkflow(artifactId, appId, workflowName);
     WorkflowSpecification workflowSpec = appWithPrograms.getSpecification().getWorkflows().get(workflowName);
     SystemMetadataWriterStage systemMetadataWriterStage = new SystemMetadataWriterStage(metadataStore);
@@ -91,7 +91,7 @@ public class SystemMetadataWriterStageTest {
   }
 
   @SuppressWarnings("unchecked")
-  private ApplicationWithPrograms createAppWithWorkflow(NamespacedArtifactId artifactId, ApplicationId appId,
+  private ApplicationWithPrograms createAppWithWorkflow(ArtifactId artifactId, ApplicationId appId,
                                                         String workflowName) throws IOException {
     LocationFactory locationFactory = new LocalLocationFactory(TEMP_FOLDER.newFolder());
     AbstractApplication app = new WorkflowAppWithFork();
