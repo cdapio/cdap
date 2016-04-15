@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -35,7 +35,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- *
+ * Tests for {@link PartitionedFileSetArguments}.
  */
 public class PartitionedFileSetArgumentsTest {
 
@@ -81,7 +81,31 @@ public class PartitionedFileSetArgumentsTest {
       .addValueCondition("s", "x")
       .build();
     PartitionedFileSetArguments.setInputPartitionFilter(arguments, filter);
+    // test the deprecated method (passing in PARTITIONING), at least until it is removed
     Assert.assertEquals(filter, PartitionedFileSetArguments.getInputPartitionFilter(arguments, PARTITIONING));
+
+    arguments = new HashMap<>();
+    filter = PartitionFilter.builder()
+      .addRangeCondition("i", 30, 40)
+      .addValueCondition("l", 17L)
+      .addValueCondition("s", "x")
+      .build();
+    PartitionedFileSetArguments.setInputPartitionFilter(arguments, filter);
+    Assert.assertEquals(filter, PartitionedFileSetArguments.getInputPartitionFilter(arguments));
+
+
+    arguments = new HashMap<>();
+    filter = PartitionFilter.builder()
+      .addRangeCondition("i", 30, 40)
+      .addValueCondition("s", "x")
+      .build();
+    PartitionedFileSetArguments.setInputPartitionFilter(arguments, filter);
+    Assert.assertEquals(filter, PartitionedFileSetArguments.getInputPartitionFilter(arguments));
+
+    arguments = new HashMap<>();
+    filter = PartitionFilter.ALWAYS_MATCH;
+    PartitionedFileSetArguments.setInputPartitionFilter(arguments, filter);
+    Assert.assertEquals(filter, PartitionedFileSetArguments.getInputPartitionFilter(arguments));
   }
 
 

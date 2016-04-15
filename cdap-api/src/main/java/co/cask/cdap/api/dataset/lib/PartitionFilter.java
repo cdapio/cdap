@@ -189,7 +189,7 @@ public class PartitionFilter {
     private final T upper;
     private final boolean isSingleValue;
 
-    private Condition(String fieldName, @Nullable T lower, @Nullable T upper) {
+    Condition(String fieldName, @Nullable T lower, @Nullable T upper) {
       if (lower == null && upper == null) {
         throw new IllegalArgumentException("Either lower or upper-bound must be non-null.");
       }
@@ -199,7 +199,7 @@ public class PartitionFilter {
       this.isSingleValue = false;
     }
 
-    private Condition(String fieldName, T value) {
+    Condition(String fieldName, T value) {
       if (value == null) {
         throw new IllegalArgumentException("Value must not be null.");
       }
@@ -207,6 +207,13 @@ public class PartitionFilter {
       this.lower = value;
       this.upper = null;
       this.isSingleValue = true;
+    }
+
+    /**
+     * @return the field name of this condition
+     */
+    public String getFieldName() {
+      return fieldName;
     }
 
     /**

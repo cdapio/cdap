@@ -614,7 +614,7 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
   protected Collection<String> computeFilterInputPaths() {
     PartitionFilter filter;
     try {
-      filter = PartitionedFileSetArguments.getInputPartitionFilter(runtimeArguments, partitioning);
+      filter = PartitionedFileSetArguments.getInputPartitionFilter(runtimeArguments);
     } catch (Exception e) {
       throw new DataSetException("Partition filter must be correctly specified in arguments.");
     }
