@@ -38,6 +38,7 @@ import co.cask.cdap.client.util.RESTClient;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.explore.jdbc.ExploreDriver;
+import co.cask.cdap.internal.app.runtime.artifact.Artifacts;
 import co.cask.cdap.internal.test.AppJarHelper;
 import co.cask.cdap.internal.test.PluginJarHelper;
 import co.cask.cdap.proto.DatasetInstanceConfiguration;
@@ -69,6 +70,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.Type;
 import java.net.JarURLConnection;
 import java.net.URL;
 import java.sql.Connection;
@@ -133,13 +135,13 @@ public class IntegrationTestManager implements TestManager {
 
     String appConfig = "";
     TypeToken typeToken = TypeToken.of(applicationClz);
-    TypeToken<?> configToken = typeToken.resolveType(Application.class.getTypeParameters()[0]);
+    Type configType = Artifacts.getConfigType(applicationClz);
 
     try {
       if (configObject != null) {
         appConfig = GSON.toJson(configObject);
       } else {
-        configObject = ((Class<Config>) configToken.getRawType()).newInstance();
+        configObject = (Config) TypeToken.of(configType).getRawType().newInstance();
       }
 
       // Create and deploy application jar
