@@ -27,7 +27,7 @@ angular.module(PKG.name + '.commons')
       templateUrl: 'widget-container/widget-schema-editor/widget-schema-editor.html',
       controller: function($scope, myHelpers, EventPipe, IMPLICIT_SCHEMA, HydratorService, $timeout, myAlertOnValium) {
         var modelCopy = angular.copy($scope.model);
-
+        $scope.limitedToView = 15;
         var typeMap = 'map<string, string>';
 
         var defaultOptions = [ 'boolean', 'int', 'long', 'float', 'double', 'bytes', 'string', 'map<string, string>' ];
@@ -391,6 +391,13 @@ angular.module(PKG.name + '.commons')
           EventPipe.cancelEvent('plugin.reset');
           EventPipe.cancelEvent('dataset.selected');
           URL.revokeObjectURL($scope.url);
+        });
+
+        $scope.loadNextSetOfRows = _.debounce(function() {
+          if ($scope.properties.length - $scope.limitedToView > 10) {
+            $scope.limitedToView = $scope.limitedToView + 10;
+            console.log('Increased: ', $scope.limitedToView);
+          }
         });
       }
     };
