@@ -138,7 +138,6 @@ def create_table(input_file, output_file):
         lines.append(MISSING_FILE_TEMPLATE % input_file)
         return_code = 2
             
-    output = open(output_file,'w')
     with open(output_file,'w') as output:
         output.write(TABLE_HEADER)
         for line in lines:

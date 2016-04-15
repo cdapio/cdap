@@ -91,6 +91,6 @@ public class DeletePreferencesCommand extends AbstractCommand {
 
   @Override
   public String getDescription() {
-    return String.format("Deletes the preferences of %s.", Fragment.of(Article.A, type.getName()));
+    return String.format("Deletes the preferences of %s", Fragment.of(Article.A, type.getName()));
   }
 }

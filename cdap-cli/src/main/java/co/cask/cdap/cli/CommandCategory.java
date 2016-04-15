@@ -30,7 +30,7 @@ public enum CommandCategory {
   METRICS("Metrics"),
   INGEST("Ingest"),
   EGRESS("Egress"),
-  SECURITY("Security");
+  SECURITY("Security (Beta)");
 
   final String name;
 
@@ -40,6 +40,10 @@ public enum CommandCategory {
 
   public String getName() {
     return name.toUpperCase();
+  }
+
+  public String getOriginalName() {
+    return name;
   }
 
   public static CommandCategory valueOfNameIgnoreCase(String name) {

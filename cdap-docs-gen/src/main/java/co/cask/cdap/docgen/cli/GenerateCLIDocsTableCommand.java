@@ -54,7 +54,7 @@ public class GenerateCLIDocsTableCommand extends HelpCommand {
     Multimap<String, Command> categorizedCommands = categorizeCommands(
       commands.get(), CommandCategory.GENERAL, Predicates.<Command>alwaysTrue());
     for (CommandCategory category : CommandCategory.values()) {
-      output.printf("   **%s**\n", simpleTitleCase(category.getName()));
+      output.printf("   **%s**\n", category.getOriginalName());
       List<Command> commandList = Lists.newArrayList(categorizedCommands.get(category.getName()));
       Collections.sort(commandList, new Comparator<Command>() {
         @Override

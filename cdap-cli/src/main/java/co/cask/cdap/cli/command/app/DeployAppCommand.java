@@ -64,7 +64,7 @@ public class DeployAppCommand extends AbstractAuthCommand {
 
   @Override
   public String getDescription() {
-    return String.format("Deploys %s optionally with a serialized configuration string.", Fragment.of(
+    return String.format("Deploys %s, optionally with a serialized configuration string", Fragment.of(
       Article.A, ElementType.APP.getName()));
   }
 }

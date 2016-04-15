@@ -22,6 +22,8 @@ import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.Categorized;
 import co.cask.cdap.cli.CommandCategory;
 import co.cask.cdap.cli.ElementType;
+import co.cask.cdap.cli.english.Article;
+import co.cask.cdap.cli.english.Fragment;
 import co.cask.cdap.cli.exception.CommandInputError;
 import co.cask.cdap.cli.util.AbstractCommand;
 import co.cask.cdap.cli.util.RowMaker;
@@ -250,7 +252,8 @@ public class ScheduleCommands extends CommandSet<Command> implements Categorized
 
     @Override
     public String getDescription() {
-      return "Resumes a schedule";
+      return String.format("Gets schedules of %s", Fragment.of(Article.A, ElementType.WORKFLOW.getName()));
+      
     }
   }
 }

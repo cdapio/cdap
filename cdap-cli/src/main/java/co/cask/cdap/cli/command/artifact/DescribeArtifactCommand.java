@@ -87,9 +87,9 @@ public class DescribeArtifactCommand extends AbstractAuthCommand {
 
   @Override
   public String getDescription() {
-    return String.format("Shows information about %s. If no scope is given, the artifact is looked up first in " +
-                           "SYSTEM and then in USER scope. Includes information about application and plugin " +
-                           "classes contained in the artifact.",
-      Fragment.of(Article.A, ElementType.ARTIFACT.getName()));
+    return String.format("Describes %s, including information about the application and plugin classes contained in " +
+                         "the artifact. If no scope is provided, the artifact is looked for first in the SYSTEM " +
+                         "and then in the USER scope.",
+                         Fragment.of(Article.A, ElementType.ARTIFACT.getName()));
   }
 }
