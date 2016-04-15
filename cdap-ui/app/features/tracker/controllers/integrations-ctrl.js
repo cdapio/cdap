@@ -60,6 +60,8 @@ class TrackerIntegrationsController {
       }
     };
 
+    this.originalConfig = angular.copy(this.navigatorInfo);
+
     this.chartSettings = {
       chartMetadata: {
         showx: false,
@@ -83,9 +85,7 @@ class TrackerIntegrationsController {
 
     this.pollId = null;
 
-    $scope.$watch(() => {
-      return this.navigatorSetup.isOpen;
-    }, () => {
+    $scope.$watch('IntegrationsController.navigatorSetup.isOpen', () => {
       if (!this.navigatorSetup.isOpen && this.navigatorSetup.isSetup) {
         this.navigatorSetup.popoverEnabled = false;
       }
@@ -124,6 +124,8 @@ class TrackerIntegrationsController {
         let config = {};
         try {
           config = JSON.parse(res.configuration);
+
+          this.originalConfig = angular.copy(config);
 
           this.navigatorInfo.navigatorConfig = config.navigatorConfig;
           this.navigatorInfo.metadataKafkaConfig = config.metadataKafkaConfig;
@@ -303,6 +305,12 @@ class TrackerIntegrationsController {
           content: err.data
         });
       });
+  }
+
+  cancelSetup() {
+    this.navigatorInfo.navigatorConfig = angular.copy(this.originalConfig.navigatorConfig);
+    this.navigatorInfo.metadataKafkaConfig = angular.copy(this.originalConfig.metadataKafkaConfig);
+    this.navigatorSetup.isOpen = false;
   }
 
 }
