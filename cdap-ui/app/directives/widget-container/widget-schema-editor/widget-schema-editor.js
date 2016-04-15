@@ -393,12 +393,9 @@ angular.module(PKG.name + '.commons')
           URL.revokeObjectURL($scope.url);
         });
 
-        $scope.loadNextSetOfRows = _.debounce(function() {
-          if ($scope.properties.length - $scope.limitedToView > 10) {
-            $scope.limitedToView = $scope.limitedToView + 10;
-            console.log('Increased: ', $scope.limitedToView);
-          }
-        });
+        $scope.loadNextSetOfRows = function() {
+          $scope.limitedToView = $scope.limitedToView + 10;
+        };
       }
     };
   });
