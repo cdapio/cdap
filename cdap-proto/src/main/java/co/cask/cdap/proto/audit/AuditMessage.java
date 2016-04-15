@@ -26,6 +26,8 @@ import java.util.Objects;
  */
 @Beta
 public class AuditMessage {
+  private final int version = 1;
+
   private final long time;
   private final EntityId entityId;
   private final String user;
@@ -38,6 +40,10 @@ public class AuditMessage {
     this.user = user;
     this.type = type;
     this.payload = payload;
+  }
+
+  public int getVersion() {
+    return version;
   }
 
   public long getTime() {
@@ -69,7 +75,8 @@ public class AuditMessage {
       return false;
     }
     AuditMessage that = (AuditMessage) o;
-    return Objects.equals(time, that.time) &&
+    return Objects.equals(version, that.version) &&
+      Objects.equals(time, that.time) &&
       Objects.equals(entityId, that.entityId) &&
       Objects.equals(user, that.user) &&
       Objects.equals(type, that.type) &&
@@ -78,13 +85,14 @@ public class AuditMessage {
 
   @Override
   public int hashCode() {
-    return Objects.hash(time, entityId, user, type, payload);
+    return Objects.hash(version, time, entityId, user, type, payload);
   }
 
   @Override
   public String toString() {
     return "AuditMessage{" +
-      "time=" + time +
+      "version=" + version +
+      ", time=" + time +
       ", entityId=" + entityId +
       ", user='" + user + '\'' +
       ", type=" + type +

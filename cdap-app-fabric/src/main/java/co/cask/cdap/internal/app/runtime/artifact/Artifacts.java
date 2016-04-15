@@ -45,7 +45,14 @@ public final class Artifacts {
   public static Type getConfigType(Class<? extends Application> appClass) {
     TypeToken<?> configType = TypeToken.of(appClass).resolveType(Application.class.getTypeParameters()[0]);
     if (Reflections.isResolved(configType.getType())) {
-      return configType.getType();
+      // Default the type to Config.class if the resolved type is not subclass of Config.
+      // It normally won't happen, unless someone generate the bytecode directly.
+      // This is for Scala. If the user don't specify any type parameter, Scala will automatically insert
+      // "scala.runtime.Nothing$" as the type parameter.
+      if (Config.class.isAssignableFrom(configType.getRawType())) {
+        return configType.getType();
+      }
+      return Config.class;
     }
 
     // It has to be Config

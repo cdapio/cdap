@@ -183,11 +183,7 @@ public class LogSaverPluginTest extends KafkaTestBase {
       } catch (Exception e) {
         LOG.error("Error while getting published kafka messages {}", e);
       }
-      if (!LogSaverTest.isExpressive()) {
-        LOG.error("Error while reading checkpoint messages from kafka {}", t);
-      } else {
-        throw t;
-      }
+      throw t;
     }
   }
 

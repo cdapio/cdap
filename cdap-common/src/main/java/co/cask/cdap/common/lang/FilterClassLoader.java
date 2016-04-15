@@ -16,7 +16,6 @@
 
 package co.cask.cdap.common.lang;
 
-import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 
 import java.io.IOException;
@@ -34,7 +33,7 @@ import java.util.Set;
  */
 public final class FilterClassLoader extends ClassLoader {
 
-  private final ClassLoader bootstrapClassLoader;
+  private final ClassLoader extensionClassLoader;
   private final Filter filter;
 
   /**
@@ -102,7 +101,7 @@ public final class FilterClassLoader extends ClassLoader {
    */
   public FilterClassLoader(ClassLoader parentClassLoader, Filter filter) {
     super(parentClassLoader);
-    this.bootstrapClassLoader = new URLClassLoader(new URL[0], null);
+    this.extensionClassLoader = new URLClassLoader(new URL[0], ClassLoader.getSystemClassLoader().getParent());
     this.filter = filter;
   }
 
@@ -110,7 +109,7 @@ public final class FilterClassLoader extends ClassLoader {
   protected synchronized Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
     // Try to load it from bootstrap class loader first
     try {
-      return bootstrapClassLoader.loadClass(name);
+      return extensionClassLoader.loadClass(name);
     } catch (ClassNotFoundException e) {
       if (filter.acceptResource(classNameToResourceName(name))) {
         return super.loadClass(name, resolve);
@@ -138,7 +137,7 @@ public final class FilterClassLoader extends ClassLoader {
 
   @Override
   public URL getResource(String name) {
-    URL resource = bootstrapClassLoader.getResource(name);
+    URL resource = extensionClassLoader.getResource(name);
     if (resource != null) {
       return resource;
     }
@@ -147,7 +146,7 @@ public final class FilterClassLoader extends ClassLoader {
 
   @Override
   public Enumeration<URL> getResources(String name) throws IOException {
-    Enumeration<URL> resources = bootstrapClassLoader.getResources(name);
+    Enumeration<URL> resources = extensionClassLoader.getResources(name);
     if (resources.hasMoreElements()) {
       return resources;
     }
@@ -156,7 +155,7 @@ public final class FilterClassLoader extends ClassLoader {
 
   @Override
   public InputStream getResourceAsStream(String name) {
-    InputStream resourceStream = bootstrapClassLoader.getResourceAsStream(name);
+    InputStream resourceStream = extensionClassLoader.getResourceAsStream(name);
     if (resourceStream != null) {
       return resourceStream;
     }

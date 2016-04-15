@@ -19,9 +19,9 @@ package co.cask.cdap.app.runtime.spark;
 import co.cask.cdap.api.spark.Spark;
 import co.cask.cdap.common.internal.guava.ClassPath;
 import co.cask.cdap.common.lang.ClassPathResources;
+import co.cask.cdap.internal.app.runtime.spark.SparkUtils;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
-import org.apache.spark.SparkContext;
-import org.apache.spark.streaming.StreamingContext;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
@@ -29,12 +29,12 @@ import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.commons.AdviceAdapter;
+import org.objectweb.asm.commons.GeneratorAdapter;
 import org.objectweb.asm.commons.Method;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import scala.concurrent.ExecutionContext;
-import scala.concurrent.ExecutionContextExecutor;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
@@ -58,13 +58,27 @@ final class SparkRunnerClassLoader extends URLClassLoader {
   private static final Type SPARK_STREAMING_CONTEXT_TYPE =
     Type.getObjectType("org/apache/spark/streaming/StreamingContext");
   private static final Type SPARK_CONTEXT_CACHE_TYPE = Type.getType(SparkContextCache.class);
+  private static final Type SPARK_CONF_TYPE = Type.getObjectType("org/apache/spark/SparkConf");
+  private static final Type SPARK_YARN_CLIENT_TYPE = Type.getObjectType("org/apache/spark/deploy/yarn/Client");
 
   // Don't refer akka Remoting with the ".class" because in future Spark version, akka dependency is removed and
   // we don't want to force a dependency on akka.
   private static final Type AKKA_REMOTING_TYPE = Type.getObjectType("akka/remote/Remoting");
+  private static final Type EXECUTION_CONTEXT_TYPE = Type.getObjectType("scala/concurrent/ExecutionContext");
+  private static final Type EXECUTION_CONTEXT_EXECUTOR_TYPE =
+    Type.getObjectType("scala/concurrent/ExecutionContextExecutor");
+
+  // File name of the Spark conf directory as defined by the Spark framework
+  // This is for the Hack to workaround CDAP-5019 (SPARK-13441)
+  private static final String LOCALIZED_CONF_DIR = SparkUtils.LOCALIZED_CONF_DIR;
+  private static final String LOCALIZED_CONF_DIR_ZIP = LOCALIZED_CONF_DIR + ".zip";
+  // File entry name of the SparkConf properties file inside the Spark conf zip
+  private static final String SPARK_CONF_FILE = "__spark_conf__.properties";
 
   // Set of resources that are in cdap-api. They should be loaded by the parent ClassLoader
   private static final Set<String> API_CLASSES;
+
+  private final boolean rewriteYarnClient;
 
   static {
     Set<String> apiClasses = new HashSet<>();
@@ -84,8 +98,9 @@ final class SparkRunnerClassLoader extends URLClassLoader {
     API_CLASSES = Collections.unmodifiableSet(apiClasses);
   }
 
-  SparkRunnerClassLoader(URL[] urls, @Nullable ClassLoader parent) {
+  SparkRunnerClassLoader(URL[] urls, @Nullable ClassLoader parent, boolean rewriteYarnClient) {
     super(urls, parent);
+    this.rewriteYarnClient = rewriteYarnClient;
   }
 
   @Override
@@ -119,6 +134,8 @@ final class SparkRunnerClassLoader extends URLClassLoader {
       } else if (name.equals(SPARK_STREAMING_CONTEXT_TYPE.getClassName())) {
         // Define the StreamingContext class by rewriting the constructor
         cls = defineContext(SPARK_STREAMING_CONTEXT_TYPE, name, is);
+      } else if (name.equals(SPARK_YARN_CLIENT_TYPE.getClassName()) && rewriteYarnClient) {
+        cls = defineClient(name, is);
       } else if (name.equals(AKKA_REMOTING_TYPE.getClassName())) {
         // Define the akka.remote.Remoting class to avoid thread leakage
         cls = defineAkkaRemoting(name, is);
@@ -138,7 +155,7 @@ final class SparkRunnerClassLoader extends URLClassLoader {
 
   /**
    * This method will define the class by rewriting the constructor to call
-   * {@link SparkContextCache#setContext(SparkContext)} or {@link SparkContextCache#setContext(StreamingContext)},
+   * SparkContextCache#setContext(SparkContext) or SparkContextCache#setContext(StreamingContext),
    * depending on the class type.
    */
   private Class<?> defineContext(final Type contextType, String name, InputStream byteCodeStream) throws IOException {
@@ -231,11 +248,10 @@ final class SparkRunnerClassLoader extends URLClassLoader {
             //           Lscala/concurrent/ExecutionContext$Implicits$;
             // INVOKEVIRTUAL scala/concurrent/ExecutionContext$Implicits$.global
             //           ()Lscala/concurrent/ExecutionContextExecutor;
-            Type executionContextExecutorType = Type.getType(ExecutionContextExecutor.class);
             if (opcode == Opcodes.INVOKEVIRTUAL
                 && "global".equals(name)
                 && "scala/concurrent/ExecutionContext$Implicits$".equals(owner)
-                && Type.getMethodDescriptor(executionContextExecutorType).equals(desc)) {
+                && Type.getMethodDescriptor(EXECUTION_CONTEXT_EXECUTOR_TYPE).equals(desc)) {
               // Discard the GETSTATIC result from the stack by popping it
               super.visitInsn(Opcodes.POP);
               // Make the call "import system.dispatch", which translate to Java code as
@@ -264,8 +280,8 @@ final class SparkRunnerClassLoader extends URLClassLoader {
   }
 
   /**
-   * Find the return type of the ActorSystem.dispatcher() method. It is {@link ExecutionContextExecutor} in
-   * Akka 2.3 (Spark 1.2+) and {@link ExecutionContext} in Akka 2.2 (Spark < 1.2, which CDAP doesn't support,
+   * Find the return type of the ActorSystem.dispatcher() method. It is ExecutionContextExecutor in
+   * Akka 2.3 (Spark 1.2+) and ExecutionContext in Akka 2.2 (Spark < 1.2, which CDAP doesn't support,
    * however the Spark 1.5 in CDH 5.6. still has Akka 2.2, instead of 2.3).
    *
    * @return the return type of the ActorSystem.dispatcher() method or {@code null} if no such method
@@ -282,8 +298,8 @@ final class SparkRunnerClassLoader extends URLClassLoader {
             // Expected to be either ExecutionContext (akka 2.2, only in CDH spark)
             // or ExecutionContextExecutor (akka 2.3, for open source, HDP spark).
             Type returnType = Type.getReturnType(desc);
-            if (returnType.equals(Type.getType(ExecutionContext.class))
-              || returnType.equals(Type.getType(ExecutionContextExecutor.class))) {
+            if (returnType.equals(EXECUTION_CONTEXT_TYPE)
+              || returnType.equals(EXECUTION_CONTEXT_EXECUTOR_TYPE)) {
               result.set(returnType);
             } else {
               LOG.warn("Unsupported return type of ActorSystem.dispatcher(): {}", returnType.getClassName());
@@ -297,5 +313,97 @@ final class SparkRunnerClassLoader extends URLClassLoader {
       LOG.warn("Failed to determine ActorSystem dispatcher() return type.", e);
       return null;
     }
+  }
+
+  /**
+   * Defines the org.apache.spark.deploy.yarn.Client class with rewriting of the createConfArchive method to
+   * workaround the SPARK-13441 bug.
+   */
+  private Class<?> defineClient(String name, InputStream createConfArchive) throws IOException, ClassNotFoundException {
+    // We only need to rewrite if listing either HADOOP_CONF_DIR or YARN_CONF_DIR return null.
+    boolean needRewrite = false;
+    for (String env : ImmutableList.of("HADOOP_CONF_DIR", "YARN_CONF_DIR")) {
+      String value = System.getenv(env);
+      if (value != null) {
+        File path = new File(value);
+        if (path.isDirectory() && path.listFiles() == null) {
+          needRewrite = true;
+          break;
+        }
+      }
+    }
+
+    // If rewrite is not needed
+    if (!needRewrite) {
+      return findClass(name);
+    }
+
+    ClassReader cr = new ClassReader(createConfArchive);
+    ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_MAXS);
+    cr.accept(new ClassVisitor(Opcodes.ASM5, cw) {
+      @Override
+      public MethodVisitor visitMethod(final int access, final String name,
+                                       final String desc, String signature, String[] exceptions) {
+        MethodVisitor mv = super.visitMethod(access, name, desc, signature, exceptions);
+
+        // Only rewrite the createConfArchive method
+        if (!"createConfArchive".equals(name)) {
+          return mv;
+        }
+
+        // Check if it's a recognizable return type.
+        // Spark 1.5+ return type is File
+        boolean isReturnFile = Type.getReturnType(desc).equals(Type.getType(File.class));
+        Type optionType = Type.getObjectType("scala/Option");
+        if (!isReturnFile) {
+          // Spark 1.4 return type is Option<File>
+          if (!Type.getReturnType(desc).equals(optionType)) {
+            // Unknown type. Not going to modify the code.
+            return mv;
+          }
+        }
+
+        // Generate this for Spark 1.5+
+        // return SparkRuntimeUtils.createConfArchive(this.sparkConf, SPARK_CONF_FILE,
+        //                                            LOCALIZED_CONF_DIR, LOCALIZED_CONF_DIR_ZIP);
+        // Generate this for Spark 1.4
+        // return Option.apply(SparkRuntimeUtils.createConfArchive(this.sparkConf, SPARK_CONF_FILE,
+        //                                                         LOCALIZED_CONF_DIR, LOCALIZED_CONF_DIR_ZIP));
+        GeneratorAdapter mg = new GeneratorAdapter(mv, access, name, desc);
+
+        // load this.sparkConf to the stack
+        mg.loadThis();
+        mg.getField(Type.getObjectType("org/apache/spark/deploy/yarn/Client"), "sparkConf", SPARK_CONF_TYPE);
+
+        // push three constants to the stack
+        mg.visitLdcInsn(SPARK_CONF_FILE);
+        mg.visitLdcInsn(LOCALIZED_CONF_DIR);
+        mg.visitLdcInsn(LOCALIZED_CONF_DIR_ZIP);
+
+        // call SparkRuntimeUtils.createConfArchive, return a File and leave it in stack
+        Type stringType = Type.getType(String.class);
+        mg.invokeStatic(Type.getType(SparkRuntimeUtils.class),
+                        new Method("createConfArchive", Type.getType(File.class),
+                                   new Type[] { SPARK_CONF_TYPE, stringType, stringType, stringType}));
+        if (isReturnFile) {
+          // Spark 1.5+ return type is File, hence just return the File from the stack
+          mg.returnValue();
+          mg.endMethod();
+        } else {
+          // Spark 1.4 return type is Option<File>
+          // return Option.apply(<file from stack>);
+          // where the file is actually just popped from the stack
+          mg.invokeStatic(optionType, new Method("apply", optionType, new Type[] { Type.getType(Object.class) }));
+          mg.checkCast(optionType);
+          mg.returnValue();
+          mg.endMethod();
+        }
+
+        return null;
+      }
+    }, ClassReader.EXPAND_FRAMES);
+
+    byte[] byteCode = cw.toByteArray();
+    return defineClass(name, byteCode, 0, byteCode.length);
   }
 }

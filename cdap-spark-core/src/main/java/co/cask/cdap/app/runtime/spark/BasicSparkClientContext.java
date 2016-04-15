@@ -18,15 +18,15 @@ package co.cask.cdap.app.runtime.spark;
 
 import co.cask.cdap.api.Admin;
 import co.cask.cdap.api.Resources;
-import co.cask.cdap.api.ServiceDiscoverer;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.data.DatasetInstantiationException;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.metrics.Metrics;
-import co.cask.cdap.api.plugin.PluginContext;
+import co.cask.cdap.api.plugin.PluginProperties;
 import co.cask.cdap.api.spark.Spark;
 import co.cask.cdap.api.spark.SparkClientContext;
 import co.cask.cdap.api.spark.SparkSpecification;
+import co.cask.cdap.api.workflow.WorkflowInfo;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.internal.app.runtime.distributed.LocalizeResource;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
@@ -37,6 +37,7 @@ import org.apache.twill.api.RunId;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -70,17 +71,7 @@ final class BasicSparkClientContext implements SparkClientContext {
   }
 
   @Override
-  public ServiceDiscoverer getServiceDiscoverer() {
-    return sparkRuntimeContext;
-  }
-
-  @Override
   public Metrics getMetrics() {
-    return sparkRuntimeContext;
-  }
-
-  @Override
-  public PluginContext getPluginContext() {
     return sparkRuntimeContext;
   }
 
@@ -99,6 +90,12 @@ final class BasicSparkClientContext implements SparkClientContext {
   public WorkflowToken getWorkflowToken() {
     WorkflowProgramInfo workflowProgramInfo = sparkRuntimeContext.getWorkflowInfo();
     return workflowProgramInfo == null ? null : workflowProgramInfo.getWorkflowToken();
+  }
+
+  @Nullable
+  @Override
+  public WorkflowInfo getWorkflowInfo() {
+    return sparkRuntimeContext.getWorkflowInfo();
   }
 
   @Override
@@ -186,5 +183,32 @@ final class BasicSparkClientContext implements SparkClientContext {
   @Nullable
   SparkConf getSparkConf() {
     return sparkConf;
+  }
+
+  @Nullable
+  @Override
+  public URL getServiceURL(String applicationId, String serviceId) {
+    return sparkRuntimeContext.getServiceURL(applicationId, serviceId);
+  }
+
+  @Nullable
+  @Override
+  public URL getServiceURL(String serviceId) {
+    return sparkRuntimeContext.getServiceURL(serviceId);
+  }
+
+  @Override
+  public PluginProperties getPluginProperties(String pluginId) {
+    return sparkRuntimeContext.getPluginProperties(pluginId);
+  }
+
+  @Override
+  public <T> Class<T> loadPluginClass(String pluginId) {
+    return sparkRuntimeContext.loadPluginClass(pluginId);
+  }
+
+  @Override
+  public <T> T newPluginInstance(String pluginId) throws InstantiationException {
+    return sparkRuntimeContext.newPluginInstance(pluginId);
   }
 }

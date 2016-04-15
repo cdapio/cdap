@@ -19,18 +19,22 @@ package co.cask.cdap.internal.app.runtime.batch;
 import co.cask.cdap.api.plugin.Plugin;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.lang.CombineClassLoader;
 import co.cask.cdap.common.lang.Delegators;
 import co.cask.cdap.common.lang.ProgramClassLoader;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
+import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
-import co.cask.cdap.common.twill.LocalLocationFactory;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.internal.app.runtime.batch.distributed.DistributedMapReduceTaskContextProvider;
 import co.cask.cdap.internal.app.runtime.batch.distributed.MapReduceContainerLauncher;
 import co.cask.cdap.internal.app.runtime.plugin.PluginClassLoaders;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
+import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
 import co.cask.cdap.logging.context.MapReduceLoggingContext;
+import co.cask.cdap.logging.context.WorkflowProgramLoggingContext;
+import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
@@ -133,7 +137,7 @@ public class MapReduceClassLoader extends CombineClassLoader implements AutoClos
    */
   public MapReduceTaskContextProvider getTaskContextProvider() {
     // Logging context needs to be set in main thread.
-    MapReduceLoggingContext loggingContext = createMapReduceLoggingContext();
+    LoggingContext loggingContext = createMapReduceLoggingContext();
     LoggingContextAccessor.setLoggingContext(loggingContext);
 
     synchronized (this) {
@@ -144,14 +148,23 @@ public class MapReduceClassLoader extends CombineClassLoader implements AutoClos
   }
 
   /**
-   * Creates logging context for MapReduce
+   * Creates logging context for MapReduce program. If the program is started
+   * by Workflow an instance of {@link WorkflowProgramLoggingContext} is returned,
+   * otherwise an instance of {@link MapReduceLoggingContext} is returned.
    */
-  private MapReduceLoggingContext createMapReduceLoggingContext() {
+  private LoggingContext createMapReduceLoggingContext() {
     MapReduceContextConfig contextConfig = new MapReduceContextConfig(parameters.getHConf());
     ProgramId programId = contextConfig.getProgramId();
     RunId runId = contextConfig.getRunId();
-    return new MapReduceLoggingContext(programId.getNamespace(), programId.getApplication(),
-                                       programId.getProgram(), runId.getId());
+    WorkflowProgramInfo workflowProgramInfo = contextConfig.getWorkflowProgramInfo();
+    if (workflowProgramInfo == null) {
+      return new MapReduceLoggingContext(programId.getNamespace(), programId.getApplication(),
+                                         programId.getProgram(), runId.getId());
+    }
+    String workflowId = workflowProgramInfo.getName();
+    String workflowRunId = workflowProgramInfo.getRunId().getId();
+    return new WorkflowProgramLoggingContext(programId.getNamespace(), programId.getApplication(), workflowId,
+                                             workflowRunId, ProgramType.MAPREDUCE, programId.getProgram());
   }
 
   /**
@@ -275,8 +288,7 @@ public class MapReduceClassLoader extends CombineClassLoader implements AutoClos
       // In distributed mode, the program is created by expanding the program jar.
       // The program jar is localized to container with the program jar name.
       // It's ok to expand to a temp dir in local directory, as the YARN container will be gone.
-      Location programLocation = new LocalLocationFactory()
-        .create(new File(contextConfig.getProgramJarName()).getAbsoluteFile().toURI());
+      Location programLocation = Locations.toLocation(new File(contextConfig.getProgramJarName()));
       try {
         File unpackDir = DirUtils.createTempDir(new File(System.getProperty("user.dir")));
         LOG.info("Create ProgramClassLoader from {}, expand to {}", programLocation, unpackDir);

@@ -270,6 +270,32 @@ cdap_set_hive_classpath() {
   fi
 }
 
+# Get SPARK_HOME
+cdap_set_spark() {
+  # First, see if we're set to something sane
+  if [ -n "${SPARK_HOME}" -a -d "${SPARK_HOME}" ]; then
+    return 0 # SPARK_HOME is set, already
+  else
+    if [[ $(which spark-shell 2>/dev/null) ]]; then
+      ERR_FILE=$(mktemp)
+      SPARK_VAR_OUT=$(echo 'for ((key, value) <- sys.env) println (key + "=" + value); exit' | spark-shell --master local 2>${ERR_FILE})
+      __ret=$?
+      SPARK_ERR_MSG=$(< ${ERR_FILE})
+      rm ${ERR_FILE}
+      if [ ${__ret} -ne 0 ]; then
+        echo "ERROR - While determining Spark home, failed to get Spark settings using: spark-shell --master local"
+        echo "stderr:"
+        echo "${SPARK_ERR_MSG}"
+        return 1
+      fi
+      SPARK_HOME=$(echo -e "${SPARK_VAR_OUT}" | grep ^SPARK_HOME= | cut -d= -f2)
+      export SPARK_HOME
+      return 0
+    fi
+    return 1
+  fi
+}
+
 # Check that directory /var/tmp/cdap exists in the master node, or create it
 cdap_check_or_create_master_local_dir() {
   mkdir -p "${LOCAL_DIR}"

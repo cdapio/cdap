@@ -30,7 +30,7 @@ public class BasicSparkPluginContext extends AbstractBatchContext implements Spa
   private final SparkClientContext sparkContext;
 
   public BasicSparkPluginContext(SparkClientContext sparkContext, LookupProvider lookupProvider, String stageId) {
-    super(sparkContext.getPluginContext(), sparkContext, sparkContext.getMetrics(), lookupProvider, stageId,
+    super(sparkContext, sparkContext, sparkContext.getMetrics(), lookupProvider, stageId,
           sparkContext.getLogicalStartTime(), sparkContext.getRuntimeArguments());
     this.sparkContext = sparkContext;
   }

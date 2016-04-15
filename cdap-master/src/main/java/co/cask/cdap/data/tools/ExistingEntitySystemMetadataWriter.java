@@ -55,8 +55,7 @@ import java.io.IOException;
 import java.util.Collection;
 
 /**
- * Adds system metadata for existing entities prior to 3.3.
- * TODO CDAP-4696: Remove in 3.4
+ * Updates system metadata for existing entities.
  */
 public class ExistingEntitySystemMetadataWriter {
   private static final Logger LOG = LoggerFactory.getLogger(ExistingEntitySystemMetadataWriter.class);

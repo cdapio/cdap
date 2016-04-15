@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -134,24 +134,38 @@ public final class LoggingContextHelper {
 
   public static LoggingContext getLoggingContext(String namespaceId, String applicationId, String entityId,
                                                  ProgramType programType) {
-    return getLoggingContext(namespaceId, applicationId, entityId, programType, null);
+    return getLoggingContext(namespaceId, applicationId, entityId, programType, null, null);
   }
 
   public static LoggingContext getLoggingContextWithRunId(String namespaceId, String applicationId, String entityId,
-                                                          ProgramType programType, String runId) {
-    return getLoggingContext(namespaceId, applicationId, entityId, programType, runId);
+                                                          ProgramType programType, String runId,
+                                                          Map<String, String> systemArgs) {
+    return getLoggingContext(namespaceId, applicationId, entityId, programType, runId, systemArgs);
   }
 
   public static LoggingContext getLoggingContext(String namespaceId, String applicationId, String entityId,
-                                                 ProgramType programType, @Nullable String runId) {
+                                                 ProgramType programType, @Nullable String runId,
+                                                 @Nullable Map<String, String> systemArgs) {
     switch (programType) {
       case FLOW:
         return new FlowletLoggingContext(namespaceId, applicationId, entityId, "", runId, null);
       case WORKFLOW:
         return new WorkflowLoggingContext(namespaceId, applicationId, entityId, runId);
       case MAPREDUCE:
+        if (systemArgs != null && systemArgs.containsKey("workflowRunId")) {
+          String workflowRunId = systemArgs.get("workflowRunId");
+          String workflowId = systemArgs.get("workflowName");
+          return new WorkflowProgramLoggingContext(namespaceId, applicationId, workflowId, workflowRunId, programType,
+                                                   entityId);
+        }
         return new MapReduceLoggingContext(namespaceId, applicationId, entityId, runId);
       case SPARK:
+        if (systemArgs != null && systemArgs.containsKey("workflowRunId")) {
+          String workflowRunId = systemArgs.get("workflowRunId");
+          String workflowId = systemArgs.get("workflowName");
+          return new WorkflowProgramLoggingContext(namespaceId, applicationId, workflowId, workflowRunId, programType,
+                                                   entityId);
+        }
         return new SparkLoggingContext(namespaceId, applicationId, entityId, runId);
       case SERVICE:
         return new UserServiceLoggingContext(namespaceId, applicationId, entityId, "", runId, null);
@@ -189,6 +203,22 @@ public final class LoggingContextHelper {
       filterBuilder.add(namespaceFilter);
       filterBuilder.add(new MdcExpression(ApplicationLoggingContext.TAG_APPLICATION_ID, applId));
       filterBuilder.add(new MdcExpression(entityTag.getName(), entityTag.getValue()));
+
+      if (loggingContext instanceof WorkflowProgramLoggingContext) {
+        // Program is started by Workflow. Add Program information to filter.
+        Map<String, LoggingContext.SystemTag> systemTagsMap = loggingContext.getSystemTagsMap();
+        LoggingContext.SystemTag programTag
+          = systemTagsMap.get(WorkflowProgramLoggingContext.TAG_WORKFLOW_MAP_REDUCE_ID);
+        if (programTag != null) {
+          filterBuilder.add(new MdcExpression(WorkflowProgramLoggingContext.TAG_WORKFLOW_MAP_REDUCE_ID,
+                                              programTag.getValue()));
+        }
+        programTag = systemTagsMap.get(WorkflowProgramLoggingContext.TAG_WORKFLOW_SPARK_ID);
+        if (programTag != null) {
+          filterBuilder.add(new MdcExpression(WorkflowProgramLoggingContext.TAG_WORKFLOW_SPARK_ID,
+                                              programTag.getValue()));
+        }
+      }
 
       // Add runid filter if required
       LoggingContext.SystemTag runId = loggingContext.getSystemTagsMap().get(ApplicationLoggingContext.TAG_RUNID_ID);
