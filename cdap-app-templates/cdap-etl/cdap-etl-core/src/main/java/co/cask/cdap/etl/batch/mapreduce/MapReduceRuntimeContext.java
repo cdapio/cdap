@@ -24,7 +24,6 @@ import co.cask.cdap.etl.api.LookupProvider;
 import co.cask.cdap.etl.api.batch.BatchRuntimeContext;
 import co.cask.cdap.etl.common.AbstractTransformContext;
 import co.cask.cdap.etl.log.LogContext;
-import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 
 import java.util.Map;

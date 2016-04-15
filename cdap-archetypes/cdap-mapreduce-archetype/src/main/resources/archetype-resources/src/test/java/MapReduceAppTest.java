@@ -17,7 +17,6 @@
 package $package;
 
 import co.cask.cdap.test.ApplicationManager;
-import co.cask.cdap.test.MapReduceManager;
 import co.cask.cdap.test.TestBase;
 import co.cask.cdap.test.TestConfiguration;
 import org.junit.ClassRule;

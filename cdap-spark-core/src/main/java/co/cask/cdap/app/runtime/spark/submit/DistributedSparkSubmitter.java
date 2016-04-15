@@ -18,7 +18,6 @@ package co.cask.cdap.app.runtime.spark.submit;
 
 import org.apache.hadoop.conf.Configuration;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import javax.annotation.Nullable;
