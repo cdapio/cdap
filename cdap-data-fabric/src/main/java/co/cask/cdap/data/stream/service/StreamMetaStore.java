@@ -20,6 +20,7 @@ import co.cask.cdap.proto.Id;
 import com.google.common.collect.Multimap;
 
 import java.util.List;
+import javax.annotation.Nullable;
 
 /**
  * A temporary place for hosting MDS access logic for streams.
@@ -32,6 +33,16 @@ public interface StreamMetaStore {
    * Adds a stream to the meta store.
    */
   void addStream(Id.Stream streamId) throws Exception;
+
+  /**
+   * Adds a stream to the meta store (or updates the description of stream, if stream exists).
+   */
+  void addStream(Id.Stream streamId, @Nullable String description) throws Exception;
+
+  /**
+   * Fetches the {@link StreamSpecification} of the given {@link Id.Stream}.
+   */
+  StreamSpecification getStream(Id.Stream streamId) throws Exception;
 
   /**
    * Removes a stream from the meta store.

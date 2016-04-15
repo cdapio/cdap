@@ -66,6 +66,14 @@ public interface StreamAdmin {
   StreamConfig getConfig(Id.Stream streamId) throws IOException;
 
   /**
+   * Returns the {@link StreamProperties} of the given stream.
+   * @param streamId Id of the stream.
+   * @return {@link StreamProperties} instance.
+   * @throws IOException If the stream doesn't exist.
+   */
+  StreamProperties getProperties(Id.Stream streamId) throws Exception;
+
+  /**
    * Overwrites existing configuration for the given stream.
    * @param streamId Id of the stream whose properties are being updated
    * @param properties New configuration of the stream.
