@@ -202,7 +202,28 @@ class HydratorPlusPlusConfigStore {
     }
 
     config.comments = this.getComments();
-    config.postactions = this.getPostActions();
+
+
+    // Removing UUID from postactions name
+    let postActions = this.getPostActions();
+    postActions = _.sortBy(postActions, (action) => {
+      return action.plugin.name;
+    });
+
+    let currCount = 0;
+    let currAction = '';
+
+    angular.forEach(postActions, (action) => {
+      if (action.plugin.name !== currAction) {
+        currAction = action.plugin.name;
+        currCount = 1;
+      } else {
+        currCount++;
+      }
+      action.name = action.plugin.name + '-' + currCount;
+    });
+
+    config.postactions = postActions;
 
     return config;
   }
