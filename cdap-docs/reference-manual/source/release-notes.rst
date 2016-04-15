@@ -116,7 +116,6 @@ Known Issues
 
 
 `Release 3.3.2 <http://docs.cask.co/cdap/3.3.2/index.html>`__
-
 =============================================================
 
 Improvements
