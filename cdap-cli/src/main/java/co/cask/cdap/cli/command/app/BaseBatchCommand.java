@@ -106,12 +106,13 @@ public abstract class BaseBatchCommand<T extends BatchProgram> extends AbstractA
     return types;
   }
 
-  protected String getDescription(String action) {
+  protected String getDescription(String action, String actionPlural) {
     return String.format("Command to %s one or more programs of %s. " +
-        "By default, %s all flows, services, and workers. A comma separated list of program types can be " +
-        "specified, which will start all programs of those types. For example, specifying \"flow,workflow\" will %s " +
+        "By default, %s all flows, services, and workers. A comma-separated list of program types can be " +
+        "specified, which will %s all programs of those types. For example, specifying 'flow,workflow' will %s " +
         "all flows and workflows in the %s.",
-      action, Fragment.of(Article.A, ElementType.APP.getName()), action, action, ElementType.APP.getName());
+      action, Fragment.of(Article.A, ElementType.APP.getName()), actionPlural, action, action, 
+      ElementType.APP.getName());
   }
 
   /**

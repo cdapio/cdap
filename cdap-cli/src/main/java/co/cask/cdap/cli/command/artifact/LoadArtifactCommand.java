@@ -96,11 +96,11 @@ public class LoadArtifactCommand extends AbstractAuthCommand {
   public String getDescription() {
     return "Loads an artifact into CDAP. If the artifact name and version are not both given, " +
       "they will be derived from the filename of the artifact. " +
-      "File names are expected to be of the form <name>-<version>.jar. " +
+      "File names are expected to be of the form '<name>-<version>.jar'. " +
       "If the artifact contains plugins that extend another artifact, or if it contains " +
-      "third-party plugins, a config file must be given. " +
+      "third-party plugins, a config file must be provided. " +
       "The config file must contain a JSON object that specifies the parent artifacts " +
-      "and any third-party plugins in the jar. " +
+      "and any third-party plugins in the JAR. " +
       "For example, if there is a config file with these contents:\n" +
       "    {\n" +
       "      \"parents\":[ \"app1[1.0.0,2.0.0)\", \"app2[1.2.0,1.3.0] ],\n" +
@@ -115,7 +115,7 @@ public class LoadArtifactCommand extends AbstractAuthCommand {
       "      }\n" +
       "    }\n" +
       "This config specifies that the artifact contains one JDBC third-party plugin that should be " +
-      "available to the app1 artifact (versions 1.0.0 inclusive to 2.0.0 exclusive) and app2 artifact " +
+      "available to the 'app1' artifact (versions 1.0.0 inclusive to 2.0.0 exclusive) and 'app2' artifact " +
       "(versions 1.2.0 inclusive to 1.3.0 inclusive). The config may also include a 'properties' field specifying " +
       "properties for the artifact.";
   }

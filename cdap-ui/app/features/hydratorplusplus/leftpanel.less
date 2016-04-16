@@ -28,7 +28,7 @@ body.theme-cdap.state-hydratorplusplus-create {
     z-index: 1024;
     width: 130px;
     vertical-align: top;
-    background: #E8E8E8;
+    background: #e1e1e1;
     @media (max-width: @screen-xs-max) {
       bottom: 75px;
     }
@@ -149,6 +149,7 @@ body.theme-cdap.state-hydratorplusplus-create {
                 line-height: @height-of-toppanel;
                 width: 100%;
                 border-bottom: 1px solid #D4D4D4;
+                background-color: #e8e8e8;
                 span.name {
                   font-size: 13px;
                   line-height: inherit;
@@ -180,13 +181,13 @@ body.theme-cdap.state-hydratorplusplus-create {
                     border: 1px solid transparent;
                     color: #666;
                     line-height: 28px;
-                    margin-bottom: 2px;
+                    margin-bottom: 4px;
                     padding: 0 8px;
                     height: 28px;
                     width: 49%;
                     border: 1px solid #dddddd;
                     .border-radius(4px);
-
+                    .box-shadow(1px 4px 7px -5px rgba(0,0,0,0.65));
                     .name {
                       display: inline-block;
                       max-width: 81px;
@@ -588,6 +589,11 @@ body.theme-cdap.state-hydratorplusplus-create {
         .row {
           height: 200px;
         }
+      }
+    }
+    &.confirm-modal.hydrator-modal {
+      .modal-dialog {
+        max-width: 500px;
       }
     }
   }

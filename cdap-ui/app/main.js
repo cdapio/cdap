@@ -90,7 +90,8 @@ angular
       'gridster',
       'angular-cron-jobs',
       'angularjs-dropdown-multiselect',
-      'hc.marked'
+      'hc.marked',
+      'ngFileSaver'
 
     ]).name,
 

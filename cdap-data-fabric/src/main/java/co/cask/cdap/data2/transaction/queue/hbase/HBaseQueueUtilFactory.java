@@ -48,6 +48,11 @@ public class HBaseQueueUtilFactory extends HBaseVersionSpecificFactory<HBaseQueu
   }
 
   @Override
+  protected String getHBase12CHD570ClassName() {
+    return "co.cask.cdap.data2.transaction.queue.hbase.HBase12CDH570QueueUtil";
+  }
+
+  @Override
   protected String getHBase10CHD550ClassName() {
     return "co.cask.cdap.data2.transaction.queue.hbase.HBase10CDH550QueueUtil";
   }

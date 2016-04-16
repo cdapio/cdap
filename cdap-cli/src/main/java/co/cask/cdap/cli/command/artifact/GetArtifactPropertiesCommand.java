@@ -26,7 +26,6 @@ import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.cli.util.RowMaker;
 import co.cask.cdap.cli.util.table.Table;
 import co.cask.cdap.client.ArtifactClient;
-import co.cask.cdap.common.ArtifactNotFoundException;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.artifact.ArtifactInfo;
 import co.cask.common.cli.Arguments;
@@ -90,8 +89,8 @@ public class GetArtifactPropertiesCommand extends AbstractAuthCommand {
 
   @Override
   public String getDescription() {
-    return String.format("Gets properties of %s. If no scope is given, properties are looked first in SYSTEM and " +
-                           "then in USER scope.",
+    return String.format("Gets the properties of %s. If no scope is provided, properties are looked for first in " +
+                         "the SYSTEM and then in the USER scope.",
                          Fragment.of(Article.A, ElementType.ARTIFACT.getName()));
   }
 }

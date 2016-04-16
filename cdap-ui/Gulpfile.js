@@ -153,7 +153,9 @@ gulp.task('js:lib', function() {
       './bower_components/marked/marked.min.js',
       './bower_components/angular-marked/dist/angular-marked.min.js',
 
-      './bower_components/js-beautify/js/lib/beautify.js'
+      './bower_components/js-beautify/js/lib/beautify.js',
+
+      './bower_components/angular-file-saver/dist/angular-file-saver.bundle.js'
 
     ].concat([
       './bower_components/cask-angular-*/*/module.js'

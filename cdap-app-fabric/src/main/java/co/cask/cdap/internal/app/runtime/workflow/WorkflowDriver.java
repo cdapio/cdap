@@ -501,13 +501,14 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
 
   @Override
   protected void run() throws Exception {
-    LOG.info("Start workflow execution for {}", workflowSpec);
+    LOG.info("Start workflow execution for {}", workflowSpec.getName());
+    LOG.debug("Workflow specification is {}", workflowSpec);
     WorkflowToken token = new BasicWorkflowToken(cConf.getInt(Constants.AppFabric.WORKFLOW_TOKEN_MAX_SIZE_MB));
     executeAll(workflowSpec.getNodes().iterator(), program.getApplicationSpecification(),
                new InstantiatorFactory(false), program.getClassLoader(), token);
 
     basicWorkflowContext.setSuccess();
-    LOG.info("Workflow execution succeeded for {}", workflowSpec);
+    LOG.info("Workflow execution succeeded for {}", workflowSpec.getName());
   }
 
   private void executeAll(Iterator<WorkflowNode> iterator, ApplicationSpecification appSpec,

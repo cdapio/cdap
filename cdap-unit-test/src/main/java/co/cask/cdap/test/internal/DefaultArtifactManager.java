@@ -17,7 +17,7 @@
 package co.cask.cdap.test.internal;
 
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
-import co.cask.cdap.proto.id.NamespacedArtifactId;
+import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.test.ArtifactManager;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
@@ -29,11 +29,11 @@ import java.util.Map;
  */
 public class DefaultArtifactManager implements ArtifactManager {
   private final ArtifactRepository artifactRepository;
-  private final NamespacedArtifactId artifactId;
+  private final ArtifactId artifactId;
 
   @Inject
   DefaultArtifactManager(ArtifactRepository artifactRepository,
-                         @Assisted("artifactId") NamespacedArtifactId artifactId) {
+                         @Assisted("artifactId") ArtifactId artifactId) {
     this.artifactRepository = artifactRepository;
     this.artifactId = artifactId;
   }

@@ -32,8 +32,8 @@ import co.cask.cdap.etl.proto.v2.ETLStage;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.artifact.ArtifactSummary;
+import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.NamespacedArtifactId;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.DataSetManager;
 import co.cask.cdap.test.SlowTests;
@@ -60,8 +60,8 @@ import java.util.concurrent.TimeUnit;
  */
 public class ETLWorkerTest extends HydratorTestBase {
   private static final Logger LOG = LoggerFactory.getLogger(ETLWorkerTest.class);
-  protected static final NamespacedArtifactId APP_ARTIFACT_ID =
-    new NamespacedArtifactId(NamespaceId.DEFAULT.getNamespace(), "app", "1.0.0");
+  protected static final ArtifactId APP_ARTIFACT_ID =
+    new ArtifactId(NamespaceId.DEFAULT.getNamespace(), "app", "1.0.0");
   protected static final ArtifactSummary APP_ARTIFACT = new ArtifactSummary("app", "1.0.0");
   private static int startCount = 0;
 

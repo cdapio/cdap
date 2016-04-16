@@ -20,7 +20,6 @@ import co.cask.cdap.app.metrics.MapReduceMetrics;
 import co.cask.cdap.app.verification.AbstractVerifier;
 import co.cask.cdap.common.conf.ConfigurationUtil;
 import co.cask.cdap.common.lang.ClassLoaders;
-import co.cask.cdap.proto.Id;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Lists;

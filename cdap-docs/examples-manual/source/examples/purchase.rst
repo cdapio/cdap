@@ -97,7 +97,7 @@ default values used in configuration and as runtime arguments:
 
 .. literalinclude:: /../../../cdap-examples/Purchase/src/main/java/co/cask/cdap/examples/purchase/PurchaseHistoryBuilder.java
    :language: java
-   :lines: 47-77
+   :lines: 46-76
 
 *PurchaseHistoryService* Service
 --------------------------------

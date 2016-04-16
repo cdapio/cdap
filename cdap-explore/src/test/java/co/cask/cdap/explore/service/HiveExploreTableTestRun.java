@@ -16,7 +16,6 @@
 
 package co.cask.cdap.explore.service;
 
-import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.DatasetDefinition;
