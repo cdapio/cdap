@@ -74,6 +74,7 @@ public class CLIMain {
 
   private static final boolean DEFAULT_VERIFY_SSL = true;
   private static final boolean DEFAULT_AUTOCONNECT = true;
+  private static final String TOOL_NAME = "cdap-cli";
 
   @VisibleForTesting
   public static final Option HELP_OPTION = new Option(
@@ -336,7 +337,7 @@ public class CLIMain {
   }
 
   private static void usage() {
-    String toolName = "cdap-cli" + OSDetector.isWindows() ? ".bat" : ".sh";
+    String toolName = TOOL_NAME + (OSDetector.isWindows() ? ".bat" : ".sh");
     HelpFormatter formatter = new HelpFormatter();
     String args =
       "[--autoconnect <true|false>] " +

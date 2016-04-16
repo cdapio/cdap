@@ -66,7 +66,7 @@ public class TransactionManagerDebuggerMain {
   private static final Gson GSON = new Gson();
   private static final SimpleDateFormat formatter
       = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S z");
-  private static final String TOOL_NAME_BASE = "tx-debugger";
+  private static final String TOOL_NAME = "tx-debugger";
         
   private static final String HOST_OPTION = "host";
   private static final String PORT_OPTION = "port";
@@ -231,7 +231,7 @@ public class TransactionManagerDebuggerMain {
       pw = new PrintWriter(System.out);
     }
     
-    String toolName = "tx-debugger" + OSDetector.isWindows() ? ".bat" : ".sh";
+    String toolName = TOOL_NAME + (OSDetector.isWindows() ? ".bat" : ".sh");
     pw.println("Usage:" +
         "\n\t " + toolName + " view [ <option> ... ]" +
         "\n\t " + toolName + " invalidate --host <name> --transaction <id>");
