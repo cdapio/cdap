@@ -64,7 +64,7 @@ public class SetPreferencesCommand extends AbstractSetPreferencesCommand {
 
   @Override
   public String getDescription() {
-    return "Sets the preferences of " + Fragment.of(Article.A, type.getName()) + "." +
-      " <" + ArgumentName.RUNTIME_ARGS + "> is specified in the format \"key1=v1 key2=v2\".";
+    return String.format("Sets the preferences of %s. '<%s>' is specified in the format 'key1=v1 key2=v2'.",
+      Fragment.of(Article.A, type.getName()), ArgumentName.RUNTIME_ARGS);
   }
 }

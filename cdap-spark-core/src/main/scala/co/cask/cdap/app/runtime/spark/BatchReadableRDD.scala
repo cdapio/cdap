@@ -18,7 +18,7 @@ package co.cask.cdap.app.runtime.spark
 
 import java.net.URI
 import java.util.concurrent.TimeUnit
-import java.util.concurrent.atomic.{AtomicBoolean, AtomicReference}
+import java.util.concurrent.atomic.AtomicBoolean
 
 import co.cask.cdap.api.data.batch.{BatchReadable, Split, SplitReader}
 import co.cask.cdap.api.dataset.Dataset

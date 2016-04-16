@@ -69,8 +69,8 @@ public class SetArtifactPropertiesCommand extends AbstractAuthCommand {
       try {
         properties = GSON.fromJson(reader, ArtifactProperties.class);
       } catch (Exception e) {
-        throw new RuntimeException("Error parsing file contents. Please check that it is a valid JSON Object, " +
-                                     "and that it contains a 'properties' key whose value is a JSON Object of the " +
+        throw new RuntimeException("Error parsing file contents. Please check that it is a valid JSON object, " +
+                                     "and that it contains a 'properties' key whose value is a JSON object of the " +
                                      "artifact properties.", e);
       }
       artifactClient.writeProperties(artifactId, properties.properties);
@@ -88,7 +88,7 @@ public class SetArtifactPropertiesCommand extends AbstractAuthCommand {
   public String getDescription() {
     return String.format(
       "Sets properties of %s. " +
-        "The properties file must contain a JSON Object with a 'properties' key whose value is a JSON Object " +
+        "The properties file must contain a JSON object with a 'properties' key whose value is a JSON object " +
         "of the properties for the artifact.",
       Fragment.of(Article.A, ElementType.ARTIFACT.getName()));
   }

@@ -33,6 +33,7 @@ angular.module(PKG.name + '.services')
           isAnAlertOpened = false;
         });
       } else {
+        alertObj.$scope.type = obj.type;
         alertObj.$scope.content = obj.content;
         alertObj.$scope.title = obj.title;
       }

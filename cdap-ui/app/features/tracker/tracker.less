@@ -619,12 +619,18 @@ body.state-tracker-integrations {
       padding: 15px;
       background-color: white;
       position: absolute;
-      width: 400px;
+      max-width: 450px;
+      width: 450px;
       right: 25px;
       border-radius: 5px;
-      transform: translateY(-36px);
       z-index: 950;
+      transform: translate(-180px, -37px);
+      margin-top: 0;
       line-height: normal;
+      max-height: ~"-moz-calc(100vh - 150px)";
+      max-height: ~"-webkit-calc(100vh - 150px)";
+      max-height: ~"calc(100vh - 150px)";
+      overflow-y: auto;
       .box-shadow(0 0 20px 1px rgba(0,0,0,0.5));
 
       h3, h4 {
@@ -635,9 +641,37 @@ body.state-tracker-integrations {
         margin-top: 5px;
       }
 
+      .popover-content { padding: 0; }
+
       .control-label {
         color: #888;
+        font-size: 12px;
+        text-align: left;
       }
+
+      .form-group {
+        margin-left: -10px;
+        margin-right: -10px;
+      }
+
+      [class*=col-] {
+        padding-left: 10px;
+        padding-right: 10px;
+      }
+
+      .optional-settings-toggle {
+        user-select: none;
+        cursor: pointer;
+        color: #888;
+      }
+
+
+
+      div.arrow { display: none; }
+    }
+
+    .config-popover {
+
     }
 
     .integration-status {
@@ -652,13 +686,6 @@ body.state-tracker-integrations {
       .status > p { margin-bottom: 0; }
       .status-information { margin: 0; }
       .enable-control { vertical-align: middle; }
-
-      .config-popover {
-        width: 400px;
-        transform: translate(-153px, -43px);
-
-        div.arrow { display: none; }
-      }
 
 
       /* SWITCH STYLING */

@@ -338,7 +338,7 @@ are set:
 
 .. literalinclude:: /../../../cdap-examples/Purchase/src/main/java/co/cask/cdap/examples/purchase/PurchaseHistoryBuilder.java
    :language: java
-   :lines: 47-57
+   :lines: 46-56
    :append: ...
 
 The Resources API, if called with two arguments, sets both the memory used in megabytes

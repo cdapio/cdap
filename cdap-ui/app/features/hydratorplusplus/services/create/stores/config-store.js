@@ -45,7 +45,11 @@ class HydratorPlusPlusConfigStore {
     this.hydratorPlusPlusConfigDispatcher.register('onSchemaPropagationDownStream', this.propagateIOSchemas.bind(this));
   }
   registerOnChangeListener(callback) {
-    this.changeListeners.push(callback);
+    let index = this.changeListeners.push(callback);
+    // un-subscribe for listners.
+    return () => {
+      this.changeListeners.splice(index-1, 1);
+    };
   }
   emitChange() {
     this.changeListeners.forEach( callback => callback() );
@@ -62,7 +66,7 @@ class HydratorPlusPlusConfigStore {
         draftId: null
       },
       description: '',
-      name: ''
+      name: '',
     };
     angular.extend(this.state, {config: this.getDefaultConfig()});
 
@@ -616,6 +620,14 @@ class HydratorPlusPlusConfigStore {
 
   saveAsDraft() {
     this.HydratorPlusPlusConsoleActions.resetMessages();
+    let name = this.getName();
+    if (!name.length) {
+      this.HydratorPlusPlusConsoleActions.addMessage({
+        type: 'error',
+        content: this.GLOBALS.en.hydrator.studio.error['MISSING-NAME']
+      });
+      return;
+    }
     if(!this.getDraftId()) {
       this.setDraftId(this.uuid.v4());
       this.$stateParams.draftId = this.getDraftId();
@@ -657,7 +669,8 @@ class HydratorPlusPlusConfigStore {
             type: 'success',
             content: `Draft ${config.name} saved successfully.`
           });
-          this.state.isStateDirty = false;
+          this.__defaultState = angular.copy(this.state);
+          this.emitChange();
         },
         err => {
           this.HydratorPlusPlusConsoleActions.addMessage({

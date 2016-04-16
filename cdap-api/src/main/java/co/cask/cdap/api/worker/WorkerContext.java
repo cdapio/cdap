@@ -24,7 +24,6 @@ import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.data.stream.StreamWriter;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.plugin.PluginContext;
-import co.cask.tephra.TransactionFailureException;
 
 /**
  * Context for {@link Worker}.

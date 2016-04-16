@@ -18,7 +18,6 @@ package co.cask.cdap.etl.common;
 
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.etl.api.Aggregator;
-import co.cask.cdap.etl.api.batch.BatchAggregator;
 import com.google.common.reflect.TypeToken;
 
 /**

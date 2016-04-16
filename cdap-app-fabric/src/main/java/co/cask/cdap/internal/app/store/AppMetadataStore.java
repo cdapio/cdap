@@ -83,8 +83,8 @@ public class AppMetadataStore extends MetadataStoreDataset {
   private static final String TYPE_RUN_RECORD_SUSPENDED = "runRecordSuspended";
   private static final String TYPE_RUN_RECORD_COMPLETED = "runRecordCompleted";
   private static final String TYPE_WORKFLOW_NODE_STATE = "wns";
+  private static final String TYPE_WORKFLOW_TOKEN = "wft";
   private static final String TYPE_NAMESPACE = "namespace";
-  private static final String WORKFLOW_TOKEN_PROPERTY_KEY = "workflowToken";
 
   private final CConfiguration cConf;
 
@@ -575,40 +575,28 @@ public class AppMetadataStore extends MetadataStoreDataset {
     return builder.build();
   }
 
-
   public void updateWorkflowToken(ProgramRunId workflowRunId, WorkflowToken workflowToken) throws NotFoundException {
-    RunRecordMeta runRecordMeta = getUnfinishedRun(workflowRunId.getParent().toId(), TYPE_RUN_RECORD_STARTED,
-                                                   workflowRunId.getRun());
-    if (runRecordMeta == null) {
-      // Even if a run is suspended, the currently running node runs to completion.
-      // This node also updates the workflow token at the end.
-      // For such a scenario, check for a suspended run record too.
-      runRecordMeta = getUnfinishedRun(workflowRunId.getParent().toId(), TYPE_RUN_RECORD_SUSPENDED,
-                                       workflowRunId.getRun());
-      if (runRecordMeta == null) {
-        throw new NotFoundException(workflowRunId);
-      }
-    }
-    Map<String, String> propertiesToUpdate = runRecordMeta.getProperties();
-    propertiesToUpdate.put(WORKFLOW_TOKEN_PROPERTY_KEY, GSON.toJson(workflowToken));
+    // Workflow token will be stored with following key:
+    // [wft][namespace][app][WORKFLOW][workflowName][workflowRun]
+    MDSKey key = getProgramKeyBuilder(TYPE_WORKFLOW_TOKEN, workflowRunId.getParent().toId())
+      .add(workflowRunId.getRun()).build();
 
-    write(getWorkflowRunRecordKey(workflowRunId.getParent().toId(), workflowRunId.getRun()),
-          new RunRecordMeta(runRecordMeta, propertiesToUpdate));
+    write(key, workflowToken);
   }
 
   public WorkflowToken getWorkflowToken(Id.Workflow workflowId, String workflowRunId) throws NotFoundException {
-    RunRecordMeta runRecordMeta = getRun(workflowId, workflowRunId);
-    if (runRecordMeta == null) {
-      throw new NotFoundException(new Id.Run(workflowId, workflowRunId));
-    }
-    String workflowToken = runRecordMeta.getProperties().get(WORKFLOW_TOKEN_PROPERTY_KEY);
-    // For pre-3.1 run records, there won't be a workflow token. Return an empty token for such run records.
+    // Workflow token is stored with following key:
+    // [wft][namespace][app][WORKFLOW][workflowName][workflowRun]
+    MDSKey key = getProgramKeyBuilder(TYPE_WORKFLOW_TOKEN, workflowId).add(workflowRunId).build();
+
+    BasicWorkflowToken workflowToken = get(key, BasicWorkflowToken.class);
     if (workflowToken == null) {
       LOG.debug("No workflow token available for workflow: {}, runId: {}", workflowId, workflowRunId);
       // Its ok to not allow any updates by returning a 0 size token.
       return new BasicWorkflowToken(0);
     }
-    return GSON.fromJson(workflowToken, BasicWorkflowToken.class);
+
+    return workflowToken;
   }
 
   private MDSKey getWorkflowRunRecordKey(Id.Program workflowId, String workflowRunId) {

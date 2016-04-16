@@ -66,6 +66,6 @@ public class RestartProgramsCommand extends BaseBatchCommand<BatchProgram> {
 
   @Override
   public String getDescription() {
-    return getDescription("restart");
+    return getDescription("restart", "restarts");
   }
 }

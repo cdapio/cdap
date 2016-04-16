@@ -26,13 +26,12 @@ import java.util.Objects;
 /**
  * Uniquely identifies an artifact.
  */
-// TODO: handle duplication with ArtifactId in cdap-api
-public class NamespacedArtifactId extends EntityId implements NamespacedId, ParentedId<NamespaceId> {
+public class ArtifactId extends EntityId implements NamespacedId, ParentedId<NamespaceId> {
   private final String namespace;
   private final String artifact;
   private final String version;
 
-  public NamespacedArtifactId(String namespace, String artifact, String version) {
+  public ArtifactId(String namespace, String artifact, String version) {
     super(EntityType.ARTIFACT);
     this.namespace = namespace;
     this.artifact = artifact;
@@ -61,7 +60,7 @@ public class NamespacedArtifactId extends EntityId implements NamespacedId, Pare
     if (!super.equals(o)) {
       return false;
     }
-    NamespacedArtifactId that = (NamespacedArtifactId) o;
+    ArtifactId that = (ArtifactId) o;
     return Objects.equals(namespace, that.namespace) &&
       Objects.equals(artifact, that.artifact) &&
       Objects.equals(version, that.version);
@@ -78,9 +77,9 @@ public class NamespacedArtifactId extends EntityId implements NamespacedId, Pare
   }
 
   @SuppressWarnings("unused")
-  public static NamespacedArtifactId fromIdParts(Iterable<String> idString) {
+  public static ArtifactId fromIdParts(Iterable<String> idString) {
     Iterator<String> iterator = idString.iterator();
-    return new NamespacedArtifactId(
+    return new ArtifactId(
       next(iterator, "namespace"), next(iterator, "artifact"),
       remaining(iterator, "version"));
   }
@@ -90,7 +89,7 @@ public class NamespacedArtifactId extends EntityId implements NamespacedId, Pare
     return Collections.unmodifiableList(Arrays.asList(namespace, artifact, version));
   }
 
-  public static NamespacedArtifactId fromString(String string) {
-    return EntityId.fromString(string, NamespacedArtifactId.class);
+  public static ArtifactId fromString(String string) {
+    return EntityId.fromString(string, ArtifactId.class);
   }
 }

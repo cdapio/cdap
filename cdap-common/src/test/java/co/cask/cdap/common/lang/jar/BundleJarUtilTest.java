@@ -37,7 +37,6 @@ import java.util.List;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.jar.JarOutputStream;
-import java.util.zip.ZipOutputStream;
 
 /**
  * Unit Tests for {@link BundleJarUtil}.

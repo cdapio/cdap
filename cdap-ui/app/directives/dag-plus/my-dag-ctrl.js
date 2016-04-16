@@ -206,9 +206,9 @@ angular.module(PKG.name + '.commons')
             });
           }, true);
         }
-
-        vm.fitToScreen();
-
+        if (vm.isDisabled) {
+          vm.fitToScreen();
+        }
       });
     }
 

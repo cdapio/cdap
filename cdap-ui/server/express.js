@@ -82,61 +82,26 @@ function makeApp (authAddress, cdapConfig) {
   });
 
   app.post('/downloadQuery', function(req, res) {
-    var fs = require('fs');
-    var StringDecoder = require('string_decoder').StringDecoder;
     var url = req.body.backendUrl;
-    var query = req.body.queryHandle;
 
-    var path = DIST_PATH + '/assets/public';
+    log.info('Download Start: ', req.body.queryHandle);
 
-    try {
-      fs.mkdirSync(path);
-    } catch (e) {
-      if (e.code !== 'EEXIST') {
-        log.debug('Error! ' + e);
-        res.status(500).send('Write permission denied. Unable to download the CSV file.');
-        return;
-      }
-    }
+    request({
+      method: 'POST',
+      url: url,
+      rejectUnauthorized: false,
+      requestCert: true,
+      agent: false,
+      headers: req.headers
+    })
+    .on('error', function (e) {
+      log.error('Error request: ', e);
+    })
+    .pipe(res)
+    .on('error', function (e) {
+      log.error('Error downloading query: ', e);
+    });
 
-    var decoder = new StringDecoder('utf8');
-
-    var filePath = DIST_PATH + '/assets/public/' + query + '.csv';
-
-
-    try {
-      fs.lstatSync(filePath);
-
-      // checking if file exist
-      // if file exist, respond with the link directly
-      // if file does not exist, it will throw an error
-      res.send('/assets/public/' + query + '.csv');
-
-    } catch (e) {
-      // this catch block will get executed when the file does not exist yet
-
-      var file = fs.createWriteStream(filePath);
-
-      var r = request({
-        method: 'POST',
-        url: url,
-        rejectUnauthorized: false,
-        requestCert: true,
-        agent: false,
-        headers: req.headers
-      });
-
-      r.on('response', function(response) {
-        response.on('data', function(chunk) {
-          file.write(decoder.write(chunk));
-        });
-
-        response.on('end', function() {
-          file.end();
-          res.send('/assets/public/' + query + '.csv');
-        });
-      });
-    }
   });
 
   /*
@@ -184,7 +149,18 @@ function makeApp (authAddress, cdapConfig) {
       url: url
     };
 
-    req.pipe(request.post(opts)).pipe(res);
+    req
+      .on('error', function (e) {
+        log.error(e);
+      })
+      .pipe(request.post(opts))
+        .on('error', function (e) {
+          log.error(e);
+        })
+      .pipe(res)
+        .on('error', function (e) {
+          log.error(e);
+        });
   });
 
   // serve static assets
