@@ -19,10 +19,10 @@ package co.cask.cdap.app.runtime.spark.submit;
 
 import co.cask.cdap.api.spark.SparkSpecification;
 import co.cask.cdap.app.runtime.spark.SparkClassLoader;
-import co.cask.cdap.app.runtime.spark.SparkContextCache;
 import co.cask.cdap.app.runtime.spark.SparkExecutionContextFactory;
 import co.cask.cdap.app.runtime.spark.SparkMainWrapper;
 import co.cask.cdap.app.runtime.spark.SparkRuntimeContext;
+import co.cask.cdap.app.runtime.spark.SparkRuntimeEnv;
 import co.cask.cdap.app.runtime.spark.SparkRuntimeUtils;
 import co.cask.cdap.internal.app.runtime.distributed.LocalizeResource;
 import com.google.common.base.Function;
@@ -137,7 +137,7 @@ public abstract class AbstractSparkSubmitter implements SparkSubmitter {
   protected void triggerShutdown() {
     // Try to get the SparkContext and call stop on it.
     try {
-      SparkContextCache.stop();
+      SparkRuntimeEnv.stop();
     } catch (Throwable t) {
       // Don't propagate the exception.
       LOG.error("Exception while calling SparkContext.stop()", t);
@@ -164,6 +164,10 @@ public abstract class AbstractSparkSubmitter implements SparkSubmitter {
     try {
       LOG.debug("Calling SparkSubmit for {} {}: {}",
                 runtimeContext.getProgram().getId(), runtimeContext.getRunId(), Arrays.toString(args));
+      // Explicitly set the SPARK_SUBMIT property as it is no longer set on the System properties by the SparkSubmit
+      // after the class rewrite. This property only control logging of a warning when submitting the Spark job,
+      // hence it's harmless to just leave it there.
+      System.setProperty("SPARK_SUBMIT", "true");
       SparkSubmit.main(args);
       LOG.debug("SparkSubmit returned for {} {}", runtimeContext.getProgram().getId(), runtimeContext.getRunId());
     } finally {
