@@ -52,4 +52,9 @@ public class HBaseTestFactory extends HBaseVersionSpecificFactory<HBaseTestBase>
   protected String getHBase10CHD550ClassName() {
     return "co.cask.cdap.data.hbase.HBase10CDH550Test";
   }
+
+  @Override
+  protected String getHBase12CHD570ClassName() {
+    return "co.cask.cdap.data.hbase.HBase12CDH570Test";
+  }
 }

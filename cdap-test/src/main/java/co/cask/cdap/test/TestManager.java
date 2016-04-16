@@ -29,8 +29,8 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.artifact.ArtifactRange;
+import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.NamespacedArtifactId;
 
 import java.io.File;
 import java.sql.Connection;
@@ -90,7 +90,7 @@ public interface TestManager {
    *
    * @param artifactId the id of the artifact to add
    * @param artifactFile the contents of the artifact. Must be a valid jar file containing apps or plugins
-   * @deprecated since 3.4.0 use {@link #addArtifact(NamespacedArtifactId, File)}
+   * @deprecated since 3.4.0 use {@link #addArtifact(ArtifactId, File)}
    */
   @Deprecated
   void addArtifact(Id.Artifact artifactId, File artifactFile) throws Exception;
@@ -102,14 +102,14 @@ public interface TestManager {
    * @param artifactFile the contents of the artifact. Must be a valid jar file containing apps or plugins
    * @return an {@link ArtifactManager} to manage the added artifact
    */
-  ArtifactManager addArtifact(NamespacedArtifactId artifactId, File artifactFile) throws Exception;
+  ArtifactManager addArtifact(ArtifactId artifactId, File artifactFile) throws Exception;
 
   /**
    * Build an application artifact from the specified class and then add it.
    *
    * @param artifactId the id of the artifact to add
    * @param appClass the application class to build the artifact from
-   * @deprecated since 3.4.0. Use {@link #addAppArtifact(NamespacedArtifactId, Class)}
+   * @deprecated since 3.4.0. Use {@link #addAppArtifact(ArtifactId, Class)}
    */
   @Deprecated
   void addAppArtifact(Id.Artifact artifactId, Class<?> appClass) throws Exception;
@@ -121,7 +121,7 @@ public interface TestManager {
    * @param appClass the application class to build the artifact from
    * @return an {@link ArtifactManager} for managing the added app artifact
    */
-  ArtifactManager addAppArtifact(NamespacedArtifactId artifactId, Class<?> appClass) throws Exception;
+  ArtifactManager addAppArtifact(ArtifactId artifactId, Class<?> appClass) throws Exception;
 
   /**
    * Build an application artifact from the specified class and then add it.
@@ -130,7 +130,7 @@ public interface TestManager {
    * @param appClass the application class to build the artifact from
    * @param exportPackages the packages to export and place in the manifest of the jar to build. This should include
    *                       packages that contain classes that plugins for the application will implement.
-   * @deprecated since 3.4.0. Use {@link #addAppArtifact(NamespacedArtifactId, Class, String...)} instead
+   * @deprecated since 3.4.0. Use {@link #addAppArtifact(ArtifactId, Class, String...)} instead
    */
   @Deprecated
   void addAppArtifact(Id.Artifact artifactId, Class<?> appClass, String... exportPackages) throws Exception;
@@ -144,7 +144,7 @@ public interface TestManager {
    *                       packages that contain classes that plugins for the application will implement.
    * @return an {@link ArtifactManager} to manage the added app artifact
    */
-  ArtifactManager addAppArtifact(NamespacedArtifactId artifactId, Class<?> appClass,
+  ArtifactManager addAppArtifact(ArtifactId artifactId, Class<?> appClass,
                                  String... exportPackages) throws Exception;
 
   /**
@@ -153,7 +153,7 @@ public interface TestManager {
    * @param artifactId the id of the artifact to add
    * @param appClass the application class to build the artifact from
    * @param manifest the manifest to use when building the jar
-   * @deprecated since 3.4.0. Use {@link #addAppArtifact(NamespacedArtifactId, Class, Manifest)} instead
+   * @deprecated since 3.4.0. Use {@link #addAppArtifact(ArtifactId, Class, Manifest)} instead
    */
   @Deprecated
   void addAppArtifact(Id.Artifact artifactId, Class<?> appClass, Manifest manifest) throws Exception;
@@ -166,7 +166,7 @@ public interface TestManager {
    * @param manifest the manifest to use when building the jar
    * @return an {@link ArtifactManager} to manage the added app artifact
    */
-  ArtifactManager addAppArtifact(NamespacedArtifactId artifactId, Class<?> appClass,
+  ArtifactManager addAppArtifact(ArtifactId artifactId, Class<?> appClass,
                                  Manifest manifest) throws Exception;
 
   /**
@@ -184,7 +184,7 @@ public interface TestManager {
    * @param parent the parent artifact it extends
    * @param pluginClass the plugin class to build the jar from
    * @param pluginClasses any additional plugin classes that should be included in the jar
-   * @deprecated since 3.4.0. Use {@link #addPluginArtifact(NamespacedArtifactId, NamespacedArtifactId, Class, Class[])}
+   * @deprecated since 3.4.0. Use {@link #addPluginArtifact(ArtifactId, ArtifactId, Class, Class[])}
    */
   @Deprecated
   void addPluginArtifact(Id.Artifact artifactId, Id.Artifact parent,
@@ -207,7 +207,7 @@ public interface TestManager {
    * @param pluginClasses any additional plugin classes that should be included in the jar
    * @return an {@link ArtifactManager} for managing the added artifact
    */
-  ArtifactManager addPluginArtifact(NamespacedArtifactId artifactId, NamespacedArtifactId parent,
+  ArtifactManager addPluginArtifact(ArtifactId artifactId, ArtifactId parent,
                                     Class<?> pluginClass, Class<?>... pluginClasses) throws Exception;
 
   /**
@@ -225,7 +225,7 @@ public interface TestManager {
    * @param parents the parent artifacts it extends
    * @param pluginClass the plugin class to build the jar from
    * @param pluginClasses any additional plugin classes that should be included in the jar
-   * @deprecated since 3.4.0. Use {@link #addPluginArtifact(NamespacedArtifactId, Set, Class, Class[])}
+   * @deprecated since 3.4.0. Use {@link #addPluginArtifact(ArtifactId, Set, Class, Class[])}
    */
   void addPluginArtifact(Id.Artifact artifactId, Set<ArtifactRange> parents,
                          Class<?> pluginClass, Class<?>... pluginClasses) throws Exception;
@@ -247,7 +247,7 @@ public interface TestManager {
    * @param pluginClasses any additional plugin classes that should be included in the jar
    * @return an {@link ArtifactManager} to manage the added plugin artifact
    */
-  ArtifactManager addPluginArtifact(NamespacedArtifactId artifactId, Set<ArtifactRange> parents,
+  ArtifactManager addPluginArtifact(ArtifactId artifactId, Set<ArtifactRange> parents,
                                     Class<?> pluginClass, Class<?>... pluginClasses) throws Exception;
 
 
@@ -269,7 +269,7 @@ public interface TestManager {
    * @param pluginClass the plugin class to build the jar from
    * @param pluginClasses any additional plugin classes that should be included in the jar
    * @deprecated since 3.4.0.
-   * Use {@link #addPluginArtifact(NamespacedArtifactId, NamespacedArtifactId, Set, Class, Class[])}
+   * Use {@link #addPluginArtifact(ArtifactId, ArtifactId, Set, Class, Class[])}
    */
   @Deprecated
   void addPluginArtifact(Id.Artifact artifactId, Id.Artifact parent,
@@ -295,7 +295,7 @@ public interface TestManager {
    * @param pluginClasses any additional plugin classes that should be included in the jar
    * @return an {@link ArtifactManager} to manage this artifact
    */
-  ArtifactManager addPluginArtifact(NamespacedArtifactId artifactId, NamespacedArtifactId parent,
+  ArtifactManager addPluginArtifact(ArtifactId artifactId, ArtifactId parent,
                                     @Nullable Set<PluginClass> additionalPlugins,
                                     Class<?> pluginClass, Class<?>... pluginClasses) throws Exception;
 
@@ -317,7 +317,7 @@ public interface TestManager {
    * @param pluginClass the plugin class to build the jar from
    * @param pluginClasses any additional plugin classes that should be included in the jar
    * @deprecated since 3.4.0
-   * Use {@link #addPluginArtifact(NamespacedArtifactId, Set, Set, Class, Class[])}
+   * Use {@link #addPluginArtifact(ArtifactId, Set, Set, Class, Class[])}
    */
   void addPluginArtifact(Id.Artifact artifactId, Set<ArtifactRange> parents,
                          @Nullable Set<PluginClass> additionalPlugins,
@@ -342,7 +342,7 @@ public interface TestManager {
    * @param pluginClasses any additional plugin classes that should be included in the jar
    * @return {@link ArtifactManager} to manage the added plugin artifact
    */
-  ArtifactManager addPluginArtifact(NamespacedArtifactId artifactId, Set<ArtifactRange> parents,
+  ArtifactManager addPluginArtifact(ArtifactId artifactId, Set<ArtifactRange> parents,
                                     @Nullable Set<PluginClass> additionalPlugins,
                                     Class<?> pluginClass, Class<?>... pluginClasses) throws Exception;
 

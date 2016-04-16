@@ -71,6 +71,7 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.lang.reflect.Type;
 import java.util.Map;
+import java.util.Properties;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.RejectedExecutionHandler;
@@ -171,11 +172,8 @@ public final class StreamHandler extends AbstractHttpHandler {
                       @PathParam("stream") String stream) throws Exception {
     Id.Stream streamId = Id.Stream.from(namespaceId, stream);
     checkStreamExists(streamId);
-
-    StreamConfig streamConfig = streamAdmin.getConfig(streamId);
-    StreamProperties streamProperties = new StreamProperties(streamConfig.getTTL(), streamConfig.getFormat(),
-                                                             streamConfig.getNotificationThresholdMB());
-    responder.sendJson(HttpResponseStatus.OK, streamProperties, StreamProperties.class, GSON);
+    StreamProperties properties = streamAdmin.getProperties(streamId);
+    responder.sendJson(HttpResponseStatus.OK, properties, StreamProperties.class, GSON);
   }
 
   @PUT
@@ -194,9 +192,34 @@ public final class StreamHandler extends AbstractHttpHandler {
       throw new BadRequestException(e);
     }
 
-    // TODO: Modify the REST API to support custom configurations.
-    streamAdmin.create(streamId);
+    Properties props = new Properties();
+    StreamProperties streamProperties;
+    // If the request to create a stream contains a non-empty body, then construct and set StreamProperties
+    if (request.getContent().readable()) {
+      streamProperties = getAndValidateConfig(request, responder);
+      if (streamProperties == null) {
+        return;
+      }
 
+      if (streamProperties.getTTL() != null) {
+        props.put(Constants.Stream.TTL, Long.toString(streamProperties.getTTL()));
+      }
+
+      if (streamProperties.getNotificationThresholdMB() != null) {
+        props.put(Constants.Stream.NOTIFICATION_THRESHOLD,
+                  Integer.toString(streamProperties.getNotificationThresholdMB()));
+      }
+
+      if (streamProperties.getDescription() != null) {
+        props.put(Constants.Stream.DESCRIPTION, streamProperties.getDescription());
+      }
+
+      if (streamProperties.getFormat() != null) {
+        props.put(Constants.Stream.FORMAT_SPECIFICATION, GSON.toJson(streamProperties.getFormat()));
+      }
+    }
+
+    streamAdmin.create(streamId, props);
     responder.sendStatus(HttpResponseStatus.OK);
   }
 
@@ -387,7 +410,7 @@ public final class StreamHandler extends AbstractHttpHandler {
       return null;
     }
 
-    return new StreamProperties(ttl, formatSpec, threshold);
+    return new StreamProperties(ttl, formatSpec, threshold, properties.getDescription());
   }
 
   private RejectedExecutionHandler createAsyncRejectedExecutionHandler() {
@@ -457,6 +480,9 @@ public final class StreamHandler extends AbstractHttpHandler {
       if (src.getNotificationThresholdMB() != null) {
         json.addProperty("notification.threshold.mb", src.getNotificationThresholdMB());
       }
+      if (src.getDescription() != null) {
+        json.addProperty("description", src.getDescription());
+      }
       return json;
     }
 
@@ -465,14 +491,17 @@ public final class StreamHandler extends AbstractHttpHandler {
                                         JsonDeserializationContext context) throws JsonParseException {
       JsonObject jsonObj = json.getAsJsonObject();
       Long ttl = jsonObj.has("ttl") ? TimeUnit.SECONDS.toMillis(jsonObj.get("ttl").getAsLong()) : null;
+
       FormatSpecification format = null;
       if (jsonObj.has("format")) {
         format = context.deserialize(jsonObj.get("format"), FormatSpecification.class);
       }
+
       Integer threshold = jsonObj.has("notification.threshold.mb") ?
-        jsonObj.get("notification.threshold.mb").getAsInt() :
-        null;
-      return new StreamProperties(ttl, format, threshold);
+        jsonObj.get("notification.threshold.mb").getAsInt() : null;
+
+      String description = jsonObj.has("description") ? jsonObj.get("description").getAsString() : null;
+      return new StreamProperties(ttl, format, threshold, description);
     }
   }
 }

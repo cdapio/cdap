@@ -31,7 +31,6 @@ import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.tephra.TransactionContext;
 import co.cask.tephra.TransactionFailureException;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.reflect.TypeToken;
 import org.slf4j.Logger;

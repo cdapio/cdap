@@ -18,7 +18,6 @@ package co.cask.cdap.internal.workflow;
 import co.cask.cdap.api.RuntimeContext;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.workflow.AbstractWorkflowAction;
-import co.cask.cdap.api.workflow.WorkflowContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

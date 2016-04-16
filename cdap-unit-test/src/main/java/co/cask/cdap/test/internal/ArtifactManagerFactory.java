@@ -16,7 +16,7 @@
 
 package co.cask.cdap.test.internal;
 
-import co.cask.cdap.proto.id.NamespacedArtifactId;
+import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.test.ArtifactManager;
 import com.google.inject.Guice;
 import com.google.inject.assistedinject.Assisted;
@@ -26,7 +26,7 @@ import com.google.inject.assistedinject.Assisted;
  */
 public interface ArtifactManagerFactory {
   /**
-   * Creates a {@link ArtifactManager} for the specified {@link NamespacedArtifactId artifact}.
+   * Creates a {@link ArtifactManager} for the specified {@link ArtifactId artifact}.
    */
-  ArtifactManager create(@Assisted("artifactId") NamespacedArtifactId artifactId);
+  ArtifactManager create(@Assisted("artifactId") ArtifactId artifactId);
 }

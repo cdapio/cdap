@@ -40,6 +40,7 @@ public class RevokeActionForPrincipalCommand extends RevokeActionCommand {
 
   @Override
   public String getDescription() {
-    return "Revokes a user's permission to perform certain actions on an entity. <actions> is a comma-separated list.";
+    return "Revokes a user's permission to perform certain actions on an entity. " +
+      "'<actions>' is a comma-separated list.";
   }
 }

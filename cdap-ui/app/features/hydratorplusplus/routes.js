@@ -29,7 +29,7 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
       })
 
         .state('hydratorplusplus.create', {
-          url: '/studio?draftId&artifactType',
+          url: '/studio?artifactType&draftId',
           params: {
             data: null
           },

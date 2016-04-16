@@ -128,10 +128,10 @@ public class CallServiceCommand extends AbstractCommand implements Categorized {
 
   @Override
   public String getDescription() {
-    return String.format("Calls %s endpoint. The <%s> are formatted as \"{'key':'value', ...}\"." +
-                         " The request body may be provided either as a string or a file." +
-                         " To provide the body as a string, use \"body <%s>\"." +
-                         " To provide the body as a file, use \"body:file <%s>\".",
+    return String.format("Calls %s endpoint. The '<%s>' are formatted as '{\"key\":\"value\", ...}'. " +
+                         "The request body may be provided as either a string or a file. " +
+                         "To provide the body as a string, use 'body <%s>'. " +
+                         "To provide the body as a file, use 'body:file <%s>'.",
                          Fragment.of(Article.A, ElementType.SERVICE.getName()),
                          ArgumentName.HEADERS, ArgumentName.HTTP_BODY, ArgumentName.LOCAL_FILE_PATH);
   }

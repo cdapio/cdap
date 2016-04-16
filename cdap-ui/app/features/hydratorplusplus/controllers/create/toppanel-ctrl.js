@@ -15,9 +15,8 @@
  */
 
 class HydratorPlusPlusTopPanelCtrl{
-  constructor(GLOBALS, $stateParams, HydratorPlusPlusConfigStore, HydratorPlusPlusConfigActions, $uibModal, HydratorPlusPlusConsoleActions, DAGPlusPlusNodesActionsFactory) {
+  constructor($stateParams, HydratorPlusPlusConfigStore, HydratorPlusPlusConfigActions, $uibModal, HydratorPlusPlusConsoleActions, DAGPlusPlusNodesActionsFactory) {
 
-    this.GLOBALS = GLOBALS;
     this.HydratorPlusPlusConfigStore = HydratorPlusPlusConfigStore;
     this.HydratorPlusPlusConfigActions = HydratorPlusPlusConfigActions;
     this.$uibModal = $uibModal;
@@ -125,15 +124,7 @@ class HydratorPlusPlusTopPanelCtrl{
     });
   }
   onSaveDraft() {
-    var config = this.HydratorPlusPlusConfigStore.getState();
-    if (!config.name) {
-      this.HydratorPlusPlusConsoleActions.addMessage({
-        type: 'error',
-        content: this.GLOBALS.en.hydrator.studio.error['MISSING-NAME']
-      });
-      return;
-    }
-    this.HydratorPlusPlusConfigActions.saveAsDraft(config);
+    this.HydratorPlusPlusConfigActions.saveAsDraft();
   }
   onValidate() {
     this.HydratorPlusPlusConsoleActions.resetMessages();
@@ -150,7 +141,7 @@ class HydratorPlusPlusTopPanelCtrl{
   }
 }
 
-HydratorPlusPlusTopPanelCtrl.$inject = ['GLOBALS', '$stateParams', 'HydratorPlusPlusConfigStore', 'HydratorPlusPlusConfigActions', '$uibModal', 'HydratorPlusPlusConsoleActions', 'DAGPlusPlusNodesActionsFactory'];
+HydratorPlusPlusTopPanelCtrl.$inject = ['$stateParams', 'HydratorPlusPlusConfigStore', 'HydratorPlusPlusConfigActions', '$uibModal', 'HydratorPlusPlusConsoleActions', 'DAGPlusPlusNodesActionsFactory'];
 
 angular.module(PKG.name + '.feature.hydratorplusplus')
   .controller('HydratorPlusPlusTopPanelCtrl', HydratorPlusPlusTopPanelCtrl);

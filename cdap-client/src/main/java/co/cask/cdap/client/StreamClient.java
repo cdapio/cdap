@@ -58,6 +58,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.net.ssl.HttpsURLConnection;
 import javax.ws.rs.core.HttpHeaders;
@@ -140,13 +141,50 @@ public class StreamClient {
    */
   public void create(Id.Stream newStreamId)
     throws IOException, BadRequestException, UnauthenticatedException {
+    create(newStreamId, null);
+  }
 
+  /**
+   * Creates a stream with {@link StreamProperties} properties.
+   *
+   * @param newStreamId ID of the new stream to create
+   * @param properties {@link StreamProperties} for the new stream
+   * @throws IOException if a network error occurred
+   * @throws BadRequestException if the provided stream ID was invalid
+   */
+  public void create(Id.Stream newStreamId, @Nullable StreamProperties properties)
+    throws IOException, BadRequestException, UnauthenticatedException {
     URL url = config.resolveNamespacedURLV3(newStreamId.getNamespace(),
                                             String.format("streams/%s", newStreamId.getId()));
-    HttpResponse response = restClient.execute(HttpMethod.PUT, url, config.getAccessToken(),
+    HttpRequest.Builder builder = HttpRequest.put(url);
+    if (properties != null) {
+      builder = builder.withBody(GSON.toJson(properties));
+    }
+    HttpResponse response = restClient.execute(builder.build(), config.getAccessToken(),
                                                HttpURLConnection.HTTP_BAD_REQUEST);
     if (response.getResponseCode() == HttpURLConnection.HTTP_BAD_REQUEST) {
       throw new BadRequestException("Bad request: " + response.getResponseBodyAsString());
+    }
+  }
+
+  /**
+   * Sets the description of a stream.
+   *
+   * @param stream ID of the stream
+   * @param description description of the stream
+   * @throws IOException if a network error occurred
+   * @throws StreamNotFoundException if the stream with the specified ID was not found
+   */
+  public void setDescription(Id.Stream stream, String description)
+    throws IOException, StreamNotFoundException, UnauthenticatedException {
+    URL url = config.resolveNamespacedURLV3(stream.getNamespace(),
+                                            String.format("streams/%s/properties", stream.getId()));
+    HttpRequest request = HttpRequest.put(url).withBody(GSON.toJson(
+      ImmutableMap.of("description", description))).build();
+
+    HttpResponse response = restClient.execute(request, config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND);
+    if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
+      throw new StreamNotFoundException(stream);
     }
   }
 

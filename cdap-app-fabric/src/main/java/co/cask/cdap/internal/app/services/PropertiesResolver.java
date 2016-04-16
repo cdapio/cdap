@@ -22,7 +22,6 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.store.NamespaceStore;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;

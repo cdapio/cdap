@@ -39,7 +39,8 @@
     "angular-cron-jobs": "1.4.1",
     "angularjs-dropdown-multiselect": "1.5.2",
     "angular-marked": "1.0.1",
-    "js-beautify": "1.6.2"
+    "js-beautify": "1.6.2",
+    "angular-file-saver": "1.0.3"
   },
   "resolutions": {
     "angular": "1.4.3",

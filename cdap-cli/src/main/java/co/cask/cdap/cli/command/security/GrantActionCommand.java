@@ -24,17 +24,12 @@ import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
 import co.cask.common.cli.Arguments;
-import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Splitter;
-import com.google.common.collect.ImmutableSet;
 import com.google.inject.Inject;
 
 import java.io.PrintStream;
-import java.util.HashSet;
 import java.util.Set;
-import javax.annotation.Nullable;
 
 /**
  * Grants a user permission to perform certain actions on an entity.
@@ -74,6 +69,6 @@ public class GrantActionCommand extends AbstractAuthCommand {
   @Override
   public String getDescription() {
     return "Grants a principal permission to perform certain actions on an entity. " +
-      "<actions> is a comma-separated list.";
+      "'<actions>' is a comma-separated list.";
   }
 }

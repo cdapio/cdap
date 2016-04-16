@@ -187,7 +187,8 @@
       <properties>
         <package.depends>--depends cdap --depends cdap-hbase-compat-0.96 --depends cdap-hbase-compat-0.98
         --depends cdap-hbase-compat-1.0 --depends cdap-hbase-compat-1.0-cdh
-        --depends cdap-hbase-compat-1.1 --depends cdap-hbase-compat-1.0-cdh5.5.0</package.depends>
+        --depends cdap-hbase-compat-1.1 --depends cdap-hbase-compat-1.0-cdh5.5.0
+        --depends cdap-hbase-compat-1.2-cdh5.7.0</package.depends>
         <stage.artifacts.dir>${stage.opt.dir}/artifacts</stage.artifacts.dir>
         <stage.runtime.ext.dir>${stage.opt.dir}/ext/runtimes</stage.runtime.ext.dir>
         <additional.artifacts.jar.pattern>**/target/*.jar</additional.artifacts.jar.pattern>

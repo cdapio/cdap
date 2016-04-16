@@ -22,7 +22,6 @@ import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.internal.app.store.RunRecordMeta;
 import co.cask.cdap.logging.LoggingConfiguration;
 import co.cask.cdap.logging.context.LoggingContextHelper;
-import co.cask.cdap.logging.context.WorkflowProgramLoggingContext;
 import co.cask.cdap.logging.filter.Filter;
 import co.cask.cdap.logging.filter.FilterParser;
 import co.cask.cdap.logging.gateway.handlers.store.ProgramStore;
@@ -41,7 +40,6 @@ import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 import javax.ws.rs.DefaultValue;

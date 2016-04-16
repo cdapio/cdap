@@ -345,6 +345,7 @@ public final class Constants {
 
     public static final String URL_PREFIX = "stream://";
     public static final String DESCRIPTION = "stream.description";
+    public static final String FORMAT_SPECIFICATION = "stream.format.specification";
 
     /**
      * Contains HTTP headers used by Stream handler.

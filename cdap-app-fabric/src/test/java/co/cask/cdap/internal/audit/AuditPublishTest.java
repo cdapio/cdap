@@ -29,10 +29,10 @@ import co.cask.cdap.proto.audit.AuditType;
 import co.cask.cdap.proto.codec.AuditMessageTypeAdapter;
 import co.cask.cdap.proto.codec.EntityIdTypeAdapter;
 import co.cask.cdap.proto.element.EntityType;
+import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.Ids;
 import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.NamespacedArtifactId;
 import co.cask.cdap.proto.id.NamespacedId;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableMap;
@@ -133,8 +133,8 @@ public class AuditPublishTest {
           continue;
         }
       }
-      if (entityId.getEntity() == EntityType.ARTIFACT && entityId instanceof NamespacedArtifactId) {
-        NamespacedArtifactId artifactId = (NamespacedArtifactId) entityId;
+      if (entityId.getEntity() == EntityType.ARTIFACT && entityId instanceof ArtifactId) {
+        ArtifactId artifactId = (ArtifactId) entityId;
         // Version is dynamic for deploys in test cases
         entityId = Ids.namespace(artifactId.getNamespace()).artifact(artifactId.getArtifact(), "1");
       }

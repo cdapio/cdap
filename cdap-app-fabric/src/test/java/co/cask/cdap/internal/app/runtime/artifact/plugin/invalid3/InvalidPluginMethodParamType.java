@@ -19,7 +19,6 @@ package co.cask.cdap.internal.app.runtime.artifact.plugin.invalid3;
 import co.cask.cdap.api.annotation.Description;
 import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.annotation.Plugin;
-import co.cask.cdap.api.plugin.EndpointPluginContext;
 
 import javax.ws.rs.Path;
 

@@ -16,12 +16,12 @@
 
 package co.cask.cdap.test;
 
-import co.cask.cdap.proto.id.NamespacedArtifactId;
+import co.cask.cdap.proto.id.ArtifactId;
 
 import java.util.Map;
 
 /**
- * An interface to manage interactions with an {@link NamespacedArtifactId artifact} in tests.
+ * An interface to manage interactions with an {@link ArtifactId artifact} in tests.
  */
 public interface ArtifactManager {
   /**

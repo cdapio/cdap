@@ -73,7 +73,7 @@ public class GetWorkflowLocalDatasetsCommand extends AbstractCommand {
 
   @Override
   public String getDescription() {
-    return "Gets the local datasets associated with the workflow for a given run id.";
+    return "Gets the local datasets associated with the workflow for a given run ID";
   }
 
   private Table getWorkflowLocalDatasets(ProgramRunId programRunId)

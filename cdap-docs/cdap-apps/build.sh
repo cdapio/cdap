@@ -113,29 +113,26 @@ function download_includes() {
   download_md_doc_file $base_target $hydrator_source core-plugins PythonEvaluator-transform.md
   download_md_doc_file $base_target $hydrator_source core-plugins S3-batchsource.md
   download_md_doc_file $base_target $hydrator_source core-plugins S3Avro-batchsink.md
+  download_md_doc_file $base_target $hydrator_source core-plugins S3Parquet-batchsink.md
   download_md_doc_file $base_target $hydrator_source core-plugins Script-transform.md
   download_md_doc_file $base_target $hydrator_source core-plugins ScriptFilter-transform.md
   download_md_doc_file $base_target $hydrator_source core-plugins SnapshotAvro-batchsink.md
   download_md_doc_file $base_target $hydrator_source core-plugins SnapshotAvro-batchsource.md
+  download_md_doc_file $base_target $hydrator_source core-plugins SnapshotParquet-batchsource.md
+  download_md_doc_file $base_target $hydrator_source core-plugins SnapshotParquet-batchsink.md
   download_md_doc_file $base_target $hydrator_source core-plugins Stream-batchsource.md
   download_md_doc_file $base_target $hydrator_source core-plugins Stream-realtimesink.md
   download_md_doc_file $base_target $hydrator_source core-plugins StructuredRecordToGenericRecord-transform.md
   download_md_doc_file $base_target $hydrator_source core-plugins TPFSAvro-batchsink.md
   download_md_doc_file $base_target $hydrator_source core-plugins TPFSAvro-batchsource.md
+  download_md_doc_file $base_target $hydrator_source core-plugins TPFSParquet-batchsink.md
+  download_md_doc_file $base_target $hydrator_source core-plugins TPFSParquet-batchsource.md
   download_md_doc_file $base_target $hydrator_source core-plugins Table-batchsink.md
   download_md_doc_file $base_target $hydrator_source core-plugins Table-batchsource.md
   download_md_doc_file $base_target $hydrator_source core-plugins Table-realtimesink.md
   download_md_doc_file $base_target $hydrator_source core-plugins Twitter-realtimesource.md
   download_md_doc_file $base_target $hydrator_source core-plugins Validator-transform.md
 
-  # Temp moved docs (was in core-plugins)
-  download_md_doc_file $base_target $hydrator_source fileset-plugins-parquet S3Parquet-batchsink.md
-  download_md_doc_file $base_target $hydrator_source fileset-plugins-parquet SnapshotParquet-batchsink.md
-  download_md_doc_file $base_target $hydrator_source fileset-plugins-parquet SnapshotParquet-batchsource.md
-  download_md_doc_file $base_target $hydrator_source fileset-plugins-parquet TPFSParquet-batchsink.md
-  download_md_doc_file $base_target $hydrator_source fileset-plugins-parquet TPFSParquet-batchsource.md
-  # End Temp moved docs
-  
   download_md_doc_file $base_target $hydrator_source database-plugins Database-batchsink.md
   download_md_doc_file $base_target $hydrator_source database-plugins Database-batchsource.md
   

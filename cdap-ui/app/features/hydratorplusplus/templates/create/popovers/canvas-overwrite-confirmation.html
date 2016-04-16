@@ -16,13 +16,20 @@
 
 <div class="modal-body">
   <div>
-    <span>You have unsaved changes.</span>
-  </div>
-  <div>
-    <span>Do you want to stay at this page?</span>
+    <span>Do you wish to save your work before navigating away?</span>
   </div>
 </div>
 <div class="modal-footer">
-  <button class="btn btn-grey" ng-click="no()">No</button>
-  <button class="btn btn-blue" ng-click="yes()">Yes</button>
+  <div class="pull-left">
+    <button class="btn btn-grey" ng-click="discard()" ng-disabled="isSaving">Don't Save</button>
+  </div>
+  <div class="pull-right">
+    <button class="btn btn-grey" ng-click="cancel()" ng-disabled="isSaving">Cancel</button>
+    <button class="btn btn-orange" ng-click="save()" ng-disabled="isSaving">
+      <span ng-if="isSaving">
+        <span class="fa fa-spin fa-refresh"></span>
+      </span>
+      <span>Save</span>
+    </button>
+  </div>
 </div>

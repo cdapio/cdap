@@ -34,17 +34,13 @@ body.theme-cdap {
       line-height: 40px;
       .box-shadow(5px 0 10px rgba(0,0,0,0.5));
       .crumbs {
-        .flexbox();
-        flex-direction: row;
-        flex-wrap: nowrap;
-        align-items: center;
         height: 40px;
+        margin-left: 235px;
       }
       .breadcrumb {
         background-color: transparent;
         font-weight: 500;
         height: 40px;
-        .order(1);
         white-space: nowrap;
         > li {
           display: inline-block;
@@ -72,7 +68,7 @@ body.theme-cdap {
               content: '';
             }
           }
-          &:last-child, &:only-child {
+          &:last-child {
             background-image: url('@{img-path}/gray_chevron_body.png');
             &:before, &:after {
               background-color: white;
@@ -111,6 +107,19 @@ body.theme-cdap {
           &:first-child {
             a {
               padding-left: 18px;
+            }
+          }
+          &:only-child {
+            background-image: url('@{img-path}/gray_chevron_body.png');
+            margin-left: 20px;
+            &:before {
+              background-color: transparent;
+              content: '';
+              width: 0.5px;
+              .box-shadow(1px 0 6px rgba(1, 0, 0, 0.65));
+            }
+            span {
+              padding-left: 11px;
             }
           }
         }
