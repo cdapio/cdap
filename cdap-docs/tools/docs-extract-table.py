@@ -55,7 +55,7 @@ def parse_options():
 #
 
 def _create_literal_line(pieces):
-    pieces[0] = "``%s``" % pieces[0]
+    pieces[0] = "``%s``" % pieces[0].strip()
     pieces = ["\"%s\"" % piece for piece in pieces]
     comma = ','
     return comma.join(pieces)
@@ -76,10 +76,8 @@ def create_from_lines(line1, line2):
     if len(pieces1) != len(pieces2):
         raise Exception(func, 'Malformed Markdown table; length of pieces1 != length of pieces2:\n%s\n%s' 
                             % (line1, line2))
-        
-    pieces = []
-    for i in range(len(pieces1)):    
-        pieces.append(pieces1[i] + ' ' + pieces2[i])
+                            
+    pieces = [pieces1[i] + ' ' + pieces2[i] for i in range(len(pieces1))]
     return _create_literal_line(pieces)
 
 #
