@@ -29,16 +29,38 @@ class TrackerIntegrationsController {
     this.navigatorSetup = {
       isOpen: false,
       isSetup: false,
-      isEnabled: false
+      isEnabled: false,
+      popoverEnabled: true
     };
     this.showConfig = false;
 
-    this.navigatorInfo = {
-      brokerString: '',
-      hostname: '',
-      username: '',
-      password: ''
+    this.optionalSettings = {
+      navigator: false,
+      kafka: false
     };
+
+    this.navigatorInfo = {
+      navigatorConfig: {
+        navigatorHostName: '',
+        username: '',
+        password: '',
+        navigatorPort: '',
+        autocommit: '',
+        namespace: '',
+        applicationURL: '',
+        fileFormat: '',
+        navigatorURL: '',
+        metadataParentURI: ''
+      },
+      metadataKafkaConfig: {
+        zookeeperString: '',
+        topic: '',
+        numPartitions: '',
+        offsetDataset: ''
+      }
+    };
+
+    this.originalConfig = angular.copy(this.navigatorInfo);
 
     this.chartSettings = {
       chartMetadata: {
@@ -63,16 +85,26 @@ class TrackerIntegrationsController {
 
     this.pollId = null;
 
+    $scope.$watch('IntegrationsController.navigatorSetup.isOpen', () => {
+      if (!this.navigatorSetup.isOpen && this.navigatorSetup.isSetup) {
+        this.navigatorSetup.popoverEnabled = false;
+      }
+    });
+
   }
 
   getKafkaBrokerList() {
     this.myTrackerApi.getCDAPConfig({ scope: this.$scope })
       .$promise
       .then( (res) => {
-        let filtered = res.filter( (config) => {
-          return config.name === 'metadata.updates.kafka.broker.list';
+        let zookeeperQuorum = res.filter( (config) => {
+          return config.name === 'zookeeper.quorum';
         });
-        this.navigatorInfo.brokerString = filtered[0].value;
+
+        let zookeeperKafka = res.filter( (config) => {
+          return config.name === 'kafka.zookeeper.namespace';
+        });
+        this.navigatorInfo.metadataKafkaConfig.zookeeperString = zookeeperQuorum[0].value + '/' + zookeeperKafka[0].value;
       });
   }
 
@@ -85,14 +117,18 @@ class TrackerIntegrationsController {
       .$promise
       .then((res) => {
         this.navigatorSetup.isSetup = true;
+        this.navigatorSetup.popoverEnabled = false;
+        this.optionalSettings.navigator = false;
+        this.optionalSettings.kafka = false;
+
         let config = {};
         try {
           config = JSON.parse(res.configuration);
 
-          this.navigatorInfo.hostname = config.navigatorConfig.navigatorHostName;
-          this.navigatorInfo.username = config.navigatorConfig.username;
-          this.navigatorInfo.password = config.navigatorConfig.password;
-          this.navigatorInfo.brokerString = config.metadataKafkaConfig.brokerString;
+          this.originalConfig = angular.copy(config);
+
+          this.navigatorInfo.navigatorConfig = config.navigatorConfig;
+          this.navigatorInfo.metadataKafkaConfig = config.metadataKafkaConfig;
 
           this.getNavigatorStatus();
         } catch (e) {
@@ -219,6 +255,12 @@ class TrackerIntegrationsController {
     });
   }
 
+  editConfiguration(event) {
+    event.stopPropagation();
+
+    this.navigatorSetup.popoverEnabled = true;
+  }
+
   saveNavigatorSetup() {
     this.saving = true;
     let params = {
@@ -226,22 +268,28 @@ class TrackerIntegrationsController {
       scope: this.$scope
     };
 
+    let appConfig = {
+      navigatorConfig: {},
+      metadataKafkaConfig: {}
+    };
+    angular.forEach(this.navigatorInfo.navigatorConfig, (value, key) => {
+      if (value.length) {
+        appConfig.navigatorConfig[key] = value;
+      }
+    });
+    angular.forEach(this.navigatorInfo.metadataKafkaConfig, (value, key) => {
+      if (value.length) {
+        appConfig.metadataKafkaConfig[key] = value;
+      }
+    });
+
     let config = {
       artifact: {
         name: 'navigator',
         version: '0.2.0-SNAPSHOT',
         scope: 'USER'
       },
-      config: {
-        navigatorConfig: {
-          navigatorHostName: this.navigatorInfo.hostname,
-          username: this.navigatorInfo.username,
-          password: this.navigatorInfo.password
-        },
-        metadataKafkaConfig: {
-          brokerString: this.navigatorInfo.brokerString
-        }
-      }
+      config: appConfig
     };
 
     this.myTrackerApi.deployNavigator(params, config)
@@ -257,6 +305,12 @@ class TrackerIntegrationsController {
           content: err.data
         });
       });
+  }
+
+  cancelSetup() {
+    this.navigatorInfo.navigatorConfig = angular.copy(this.originalConfig.navigatorConfig);
+    this.navigatorInfo.metadataKafkaConfig = angular.copy(this.originalConfig.metadataKafkaConfig);
+    this.navigatorSetup.isOpen = false;
   }
 
 }
