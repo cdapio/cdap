@@ -54,34 +54,33 @@ def parse_options():
 # Utility functions
 #
 
-def create_parsed_line(line):
-    """ Parses a line from a Markdown table and converts it to a reST CSV table line.
-    """
-
-    pieces = [piece.strip() for piece in line.split(PIPE)][1:-1]
+def _create_literal_line(pieces):
     pieces[0] = "``%s``" % pieces[0]
     pieces = ["\"%s\"" % piece for piece in pieces]
     comma = ','
     return comma.join(pieces)
+
+def create_parsed_line(line):
+    """ Parses a line from a Markdown table and converts it to a reST CSV table line.
+    """
+    pieces = [piece.strip() for piece in line.split(PIPE)][1:-1]
+    return _create_literal_line(pieces)
 
 def create_from_lines(line1, line2):
     """ Combines two lines from a Markdown table and converts them into a single line for a reST CSV table line.
     """
+    func = 'create_from_lines'
     pieces1 = [piece.strip() for piece in line1.split(PIPE)][1:-1]
     pieces2 = [piece.strip() for piece in line2.split(PIPE)][1:-1]
     
     if len(pieces1) != len(pieces2):
-        return ''
+        raise Exception(func, 'Malformed Markdown table; length of pieces1 != length of pieces2:\n%s\n%s' 
+                            % (line1, line2))
         
     pieces = []
     for i in range(len(pieces1)):    
         pieces.append(pieces1[i] + ' ' + pieces2[i])
-    
-    pieces = [piece.strip() for piece in pieces]
-    pieces[0] = "``%s``" % pieces[0]
-    pieces = ["\"%s\"" % piece for piece in pieces]
-    comma = ','
-    return comma.join(pieces)
+    return _create_literal_line(pieces)
 
 #
 # Create the table
