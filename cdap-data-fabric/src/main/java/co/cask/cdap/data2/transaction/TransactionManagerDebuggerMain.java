@@ -231,7 +231,7 @@ public class TransactionManagerDebuggerMain {
       pw = new PrintWriter(System.out);
     }
     
-    private static final String toolName = "tx-debugger" + OSDetector.isWindows() ? ".bat" : ".sh";
+    String toolName = "tx-debugger" + OSDetector.isWindows() ? ".bat" : ".sh";
     pw.println("Usage:" +
         "\n\t " + toolName + " view [ <option> ... ]" +
         "\n\t " + toolName + " invalidate --host <name> --transaction <id>");
