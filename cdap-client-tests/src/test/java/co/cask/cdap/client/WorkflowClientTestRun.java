@@ -129,7 +129,7 @@ public class WorkflowClientTestRun extends ClientTestBase {
 
     // Valid test scenarios
     WorkflowTokenDetail workflowToken = workflowClient.getWorkflowToken(workflowRunId.toId());
-    Assert.assertEquals(3, workflowToken.getTokenData().size());
+    Assert.assertEquals(5, workflowToken.getTokenData().size());
     workflowToken = workflowClient.getWorkflowToken(workflowRunId.toId(), WorkflowToken.Scope.SYSTEM);
     Assert.assertTrue(workflowToken.getTokenData().size() > 0);
     workflowToken = workflowClient.getWorkflowToken(workflowRunId.toId(), "start_time");
