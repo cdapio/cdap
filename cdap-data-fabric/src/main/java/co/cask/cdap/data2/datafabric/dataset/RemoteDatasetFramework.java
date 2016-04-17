@@ -27,7 +27,6 @@ import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
-import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.data2.datafabric.dataset.type.ConstantClassLoaderProvider;
 import co.cask.cdap.data2.datafabric.dataset.type.DatasetClassLoaderProvider;
 import co.cask.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
@@ -297,7 +296,8 @@ public class RemoteDatasetFramework implements DatasetFramework {
     File tempFile = File.createTempFile(clz.getName(), ".jar", tempDir);
     try {
       // Create a bundle jar in a temp location
-      ClassLoader remembered = ClassLoaders.setContextClassLoader(clz.getClassLoader());
+      ClassLoader remembered = Thread.currentThread().getContextClassLoader();
+      Thread.currentThread().setContextClassLoader(clz.getClassLoader());
       try {
         ApplicationBundler bundler = new ApplicationBundler(ImmutableList.of("co.cask.cdap.api",
                                                                              "org.apache.hadoop",
@@ -305,7 +305,7 @@ public class RemoteDatasetFramework implements DatasetFramework {
                                                                              "org.apache.hive"));
         bundler.createBundle(Locations.toLocation(tempFile), clz);
       } finally {
-        ClassLoaders.setContextClassLoader(remembered);
+        Thread.currentThread().setContextClassLoader(remembered);
       }
 
       // Create the program jar for deployment. It removes the "classes/" prefix as that's the convention taken

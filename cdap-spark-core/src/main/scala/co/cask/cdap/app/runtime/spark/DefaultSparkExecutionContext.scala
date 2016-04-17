@@ -157,9 +157,7 @@ class DefaultSparkExecutionContext(runtimeContext: SparkRuntimeContext,
                                       (implicit decoder: StreamEvent => T): RDD[T] = {
     val rdd: RDD[(Long, StreamEvent)] = fromStream(sc, streamName, startTime, endTime, None)
 
-    // Wrap the StreamEvent with a SerializableStreamEvent
-    // Don't use rdd.values() as it brings in implicit object from SparkContext, which is not available in Spark 1.2
-    rdd.map(t => new SerializableStreamEvent(t._2)).map(decoder)
+    rdd.values.map(new SerializableStreamEvent(_)).map(decoder)
   }
 
   override def fromStream[T: ClassTag](sc: SparkContext, streamName: String, formatSpec: FormatSpecification,

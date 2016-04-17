@@ -27,14 +27,9 @@ import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.io.Closeables;
-import com.google.inject.Inject;
 import com.google.inject.Injector;
-import com.google.inject.Key;
-import com.google.inject.ProvisionException;
 
 import java.io.IOException;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Type;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
@@ -80,7 +75,7 @@ public class SparkProgramRuntimeProvider implements ProgramRuntimeProvider {
           // Closing of the SparkRunnerClassLoader is done by the SparkProgramRunner when the program execution finished
           // The current CDAP call run right after it get a ProgramRunner and never reuse a ProgramRunner.
           // TODO: CDAP-5506 to refactor the program runtime architecture to remove the need of this assumption
-          return createInstance(injector, classLoader.loadClass(programRunnerClassName), classLoader);
+          return (ProgramRunner) injector.getInstance(classLoader.loadClass(programRunnerClassName));
         } finally {
           ClassLoaders.setContextClassLoader(oldClassLoader);
         }
@@ -94,69 +89,6 @@ public class SparkProgramRuntimeProvider implements ProgramRuntimeProvider {
     }
   }
 
-  /**
-   * Create a new instance of the given {@link Type} from the given {@link Injector}. This method
-   * is doing Guice injection manually through the @Inject constructor to avoid ClassLoader leakage
-   * due to the just-in-time binding map inside the Guice Injector that holds a strong reference to the type,
-   * hence the ClassLoader of that type
-   *
-   * @param injector The Guice Injector for acquiring CDAP system instances
-   * @param type the {@link Class} of the instance to create
-   * @return a new instance of the given {@link Type}
-   */
-  private <T> T createInstance(Injector injector, Type type, ClassLoader sparkClassLoader) throws Exception {
-    Key<?> typeKey = Key.get(type);
-    @SuppressWarnings("unchecked")
-    Class<T> rawType = (Class<T>) typeKey.getTypeLiteral().getRawType();
-
-    Constructor<T> constructor = findInjectableConstructor(rawType);
-    constructor.setAccessible(true);
-
-    // Acquire the instances for each parameter for the constructor
-    Type[] paramTypes = constructor.getGenericParameterTypes();
-    Object[] args = new Object[paramTypes.length];
-    int i = 0;
-    for (Type paramType : paramTypes) {
-      Key<?> paramTypeKey = Key.get(paramType);
-
-      // If the classloader of the parameter is the same as the Spark ClassLoader, we need to create the
-      // instance manually instead of getting through the Guice Injector to avoid ClassLoader leakage
-      if (paramTypeKey.getTypeLiteral().getRawType().getClassLoader() == sparkClassLoader) {
-        args[i++] = createInstance(injector, paramType, sparkClassLoader);
-      } else {
-        args[i++] = injector.getInstance(paramTypeKey);
-      }
-    }
-    return constructor.newInstance(args);
-  }
-
-  /**
-   * Finds the constructor of the given type that is suitable for Guice injection. If the given type has
-   * a constructor annotated with {@link Inject}, then it will be returned. Otherwise, the default constructor
-   * will be returned.
-   *
-   * @throws ProvisionException if failed to locate a constructor for the injection
-   */
-  @SuppressWarnings("unchecked")
-  private <T> Constructor<T> findInjectableConstructor(Class<T> type) throws ProvisionException {
-    for (Constructor<?> constructor : type.getDeclaredConstructors()) {
-      // Find the @Inject constructor
-      if (constructor.isAnnotationPresent(Inject.class)) {
-        return (Constructor<T>) constructor;
-      }
-    }
-
-    // If no @Inject constructor, use the default constructor
-    try {
-      return type.getDeclaredConstructor();
-    } catch (NoSuchMethodException e) {
-      throw new ProvisionException("No constructor is annotated with @Inject and there is no default constructor", e);
-    }
-  }
-
-  /**
-   * Returns an array of {@link URL} being used by the {@link ClassLoader} of this {@link Class}.
-   */
   private synchronized URL[] getClassLoaderURLs() throws IOException {
     if (classLoaderUrls != null) {
       return classLoaderUrls;
