@@ -2,7 +2,7 @@
 # Cookbook Name:: cdap
 # Recipe:: master
 #
-# Copyright © 2013-2015 Cask Data, Inc.
+# Copyright © 2013-2016 Cask Data, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ pkgs += ['cdap-hbase-compat-0.98'] if node['cdap']['version'].to_f >= 2.6
 pkgs += ['cdap-hbase-compat-1.0', 'cdap-hbase-compat-1.0-cdh'] if node['cdap']['version'].to_f >= 3.1
 pkgs += ['cdap-hbase-compat-1.1'] if node['cdap']['version'].to_f >= 3.2
 pkgs += ['cdap-hbase-compat-1.0-cdh5.5.0'] if node['cdap']['version'].to_f >= 3.3
+pkgs += ['cdap-hbase-compat-1.2-cdh5.7.0'] if node['cdap']['version'].to_f >= 3.4
 pkgs += ['cdap-hbase-compat-0.94'] if node['cdap']['version'].to_f < 3.1
 
 pkgs.each do |pkg|
