@@ -22,6 +22,7 @@ import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.data.DatasetInstantiationException;
 import co.cask.cdap.api.data.batch.Input;
 import co.cask.cdap.api.data.batch.InputFormatProvider;
+import co.cask.cdap.api.data.batch.Output;
 import co.cask.cdap.api.data.batch.OutputFormatProvider;
 import co.cask.cdap.api.data.batch.Split;
 import co.cask.cdap.api.data.stream.StreamBatchReadable;
@@ -247,7 +248,12 @@ public class MapReduceLifecycleContext<KEY, VALUE> implements MapReduceTaskConte
   }
 
   @Override
-  public void addOutput(String outputName, OutputFormatProvider outputFormatProvider) {
+  public void addOutput(String alias, OutputFormatProvider outputFormatProvider) {
+    LOG.warn(UNSUPPORTED_OPERATION_MESSAGE);
+  }
+
+  @Override
+  public void addOutput(Output output) {
     LOG.warn(UNSUPPORTED_OPERATION_MESSAGE);
   }
 

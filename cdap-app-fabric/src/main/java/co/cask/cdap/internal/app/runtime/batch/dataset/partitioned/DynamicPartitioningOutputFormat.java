@@ -26,7 +26,7 @@ import co.cask.cdap.common.lang.InstantiatorFactory;
 import co.cask.cdap.data2.dataset2.lib.partitioned.PartitionedFileSetDataset;
 import co.cask.cdap.internal.app.runtime.batch.BasicMapReduceTaskContext;
 import co.cask.cdap.internal.app.runtime.batch.MapReduceClassLoader;
-import co.cask.cdap.internal.app.runtime.batch.dataset.MultipleOutputs;
+import co.cask.cdap.internal.app.runtime.batch.dataset.output.MultipleOutputs;
 import com.google.common.reflect.TypeToken;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;

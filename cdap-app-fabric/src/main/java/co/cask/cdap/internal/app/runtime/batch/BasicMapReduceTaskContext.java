@@ -42,7 +42,7 @@ import co.cask.cdap.internal.app.runtime.AbstractContext;
 import co.cask.cdap.internal.app.runtime.DefaultTaskLocalizationContext;
 import co.cask.cdap.internal.app.runtime.batch.dataset.CloseableBatchWritable;
 import co.cask.cdap.internal.app.runtime.batch.dataset.ForwardingSplitReader;
-import co.cask.cdap.internal.app.runtime.batch.dataset.MultipleOutputs;
+import co.cask.cdap.internal.app.runtime.batch.dataset.output.MultipleOutputs;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
 import co.cask.tephra.Transaction;

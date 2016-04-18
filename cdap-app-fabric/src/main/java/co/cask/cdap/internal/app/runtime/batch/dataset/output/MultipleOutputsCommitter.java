@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.batch.dataset;
+package co.cask.cdap.internal.app.runtime.batch.dataset.output;
 
 import com.google.common.collect.ImmutableMap;
 import org.apache.hadoop.mapreduce.JobContext;

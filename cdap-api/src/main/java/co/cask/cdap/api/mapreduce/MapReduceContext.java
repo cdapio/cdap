@@ -24,6 +24,7 @@ import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.data.batch.BatchReadable;
 import co.cask.cdap.api.data.batch.Input;
 import co.cask.cdap.api.data.batch.InputFormatProvider;
+import co.cask.cdap.api.data.batch.Output;
 import co.cask.cdap.api.data.batch.OutputFormatProvider;
 import co.cask.cdap.api.data.batch.Split;
 import co.cask.cdap.api.data.stream.StreamBatchReadable;
@@ -184,7 +185,9 @@ public interface MapReduceContext extends RuntimeContext, DatasetContext, Servic
    * its name.
    *
    * @param datasetName the name of the output dataset
+   * Deprecated as of version 3.4.0. Use {@link #addOutput(Output)}, instead.
    */
+  @Deprecated
   void addOutput(String datasetName);
 
   /**
@@ -196,18 +199,29 @@ public interface MapReduceContext extends RuntimeContext, DatasetContext, Servic
    * @param datasetName the name of the output dataset
    * @param arguments the arguments to use when instantiating the dataset
    * @throws IllegalArgumentException if the specified dataset is not an OutputFormatProvider.
+   * Deprecated as of version 3.4.0. Use {@link #addOutput(Output)}, instead.
    */
+  @Deprecated
   void addOutput(String datasetName, Map<String, String> arguments);
 
   /**
-   * Updates the output configuration of this MapReduce job to also allow writing using the given 
+   * Updates the output configuration of this MapReduce job to also allow writing using the given
    * {@link OutputFormatProvider}.
    *
-   * @param outputName the name of the output
+   * @param alias the alias of the output
    * @param outputFormatProvider the outputFormatProvider which specifies an OutputFormat and configuration to be used
    *                             when writing to this output
+   * Deprecated as of version 3.4.0. Use {@link #addOutput(Output)}, instead.
    */
-  void addOutput(String outputName, OutputFormatProvider outputFormatProvider);
+  @Deprecated
+  void addOutput(String alias, OutputFormatProvider outputFormatProvider);
+
+  // TODO: (CDAP-5651) change usages of above three deprecated methods to use this
+  /**
+   * Updates the output configuration of this MapReduce job to use the specified {@link Output}.
+   * @param output the output to be used
+   */
+  void addOutput(Output output);
 
   /**
    * Overrides the resources, such as memory and virtual cores, to use for each mapper of this MapReduce job.

@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.batch.dataset;
+package co.cask.cdap.internal.app.runtime.batch.dataset.output;
 
 import co.cask.cdap.app.metrics.MapReduceMetrics;
 import co.cask.cdap.app.verification.AbstractVerifier;
@@ -79,6 +79,7 @@ public class MultipleOutputs implements Closeable {
    */
   private static void checkNamedOutputName(String namedOutput, Collection<String> namedOutputs, boolean expectToExist) {
     if (!expectToExist && namedOutputs.contains(namedOutput)) {
+      // this shouldn't happen, because it is already protected against in BasicMapReduceContext#addOutput
       throw new IllegalArgumentException("Named output '" + namedOutput + "' already defined");
     } else if (expectToExist && !namedOutputs.contains(namedOutput)) {
       throw new IllegalArgumentException("Named output '" + namedOutput + "' not defined");

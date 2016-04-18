@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.batch.dataset;
+package co.cask.cdap.internal.app.runtime.batch.dataset.output;
 
 import co.cask.cdap.common.lang.InstantiatorFactory;
 import com.google.common.reflect.TypeToken;
@@ -41,7 +41,7 @@ import java.util.Map;
 public class MultipleOutputsMainOutputWrapper<K, V> extends OutputFormat<K, V> {
 
   private static final String ROOT_OUTPUT_FORMAT =
-    "co.cask.cdap.internal.app.runtime.batch.dataset.MultipleOutputsMainOutputWrapper.rootOutputFormat";
+    "co.cask.cdap.internal.app.runtime.batch.dataset.output.MultipleOutputsMainOutputWrapper.rootOutputFormat";
   private OutputFormat<K, V> innerFormat;
   private OutputCommitter committer;
 

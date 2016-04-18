@@ -104,4 +104,13 @@ public class MapReduceWithMultipleInputsTest extends MapReduceRunnerTestBase {
                                   AppWithMapReduceUsingInconsistentMappers.MapReduceWithInconsistentMapperTypes2.class,
                                   new BasicArguments()));
   }
+
+  @Test
+  public void testAddingMultipleInputsWithSameAlias() throws Exception {
+    final ApplicationWithPrograms app = deployApp(AppWithMapReduceUsingMultipleInputs.class);
+
+    // will fail because it configured two inputs with the same alias
+    Assert.assertFalse(runProgram(app,
+                                  AppWithMapReduceUsingMultipleInputs.InvalidMapReduce.class, new BasicArguments()));
+  }
 }
