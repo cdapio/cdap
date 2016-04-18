@@ -63,6 +63,9 @@ import javax.annotation.Nullable;
  */
 public final class InMemoryConfigurator implements Configurator {
   private static final Logger LOG = LoggerFactory.getLogger(InMemoryConfigurator.class);
+  private static final Gson GSON = new GsonBuilder()
+    .registerTypeAdapterFactory(new CaseInsensitiveEnumTypeAdapterFactory())
+    .create();
 
   /**
    * JAR file path.
@@ -83,8 +86,8 @@ public final class InMemoryConfigurator implements Configurator {
   private Id.Artifact artifactId;
 
   public InMemoryConfigurator(CConfiguration cConf, Id.Namespace appNamespace, Id.Artifact artifactId,
-                              String appClassName, Location artifact,
-                              @Nullable String configString, ArtifactRepository artifactRepository) {
+                              String appClassName,
+                              Location artifact, @Nullable String configString, ArtifactRepository artifactRepository) {
     Preconditions.checkNotNull(artifact);
     this.cConf = cConf;
     this.appNamespace = appNamespace;
@@ -152,40 +155,33 @@ public final class InMemoryConfigurator implements Configurator {
     return new DefaultConfigResponse(0, CharStreams.newReaderSupplier(specJson));
   }
 
-  private <T extends Config> String getSpecJson(Application<T> app, final String configString)
+  private String getSpecJson(Application app, final String configString)
     throws IllegalAccessException, InstantiationException, IOException {
 
     File tempDir = DirUtils.createTempDir(baseUnpackDir);
-    // This Gson cannot be static since it is used to deserialize user class.
-    // Gson will keep a static map to class, hence will leak the classloader
-    Gson gson = new GsonBuilder().registerTypeAdapterFactory(new CaseInsensitiveEnumTypeAdapterFactory()).create();
     // Now, we call configure, which returns application specification.
     DefaultAppConfigurer configurer;
-    try (
-      PluginInstantiator pluginInstantiator = new PluginInstantiator(cConf, app.getClass().getClassLoader(), tempDir)
-    ) {
-      configurer = new DefaultAppConfigurer(appNamespace, artifactId, app,
-                                            configString, artifactRepository, pluginInstantiator);
-      T appConfig;
+    try (PluginInstantiator pluginInstantiator = new PluginInstantiator(
+      cConf, app.getClass().getClassLoader(), tempDir)) {
+      configurer =
+        new DefaultAppConfigurer(appNamespace, artifactId, app, configString, artifactRepository, pluginInstantiator);
+
+      Config appConfig;
       Type configType = Artifacts.getConfigType(app.getClass());
       if (Strings.isNullOrEmpty(configString)) {
         //noinspection unchecked
-        appConfig = ((Class<T>) configType).newInstance();
+        appConfig = ((Class<? extends Config>) configType).newInstance();
       } else {
         try {
-          appConfig = gson.fromJson(configString, configType);
+          appConfig = GSON.fromJson(configString, configType);
         } catch (JsonSyntaxException e) {
           throw new IllegalArgumentException("Invalid JSON configuration was provided. Please check the syntax.", e);
         }
       }
 
-      app.configure(configurer, new DefaultApplicationContext<>(appConfig));
+      app.configure(configurer, new DefaultApplicationContext(appConfig));
     } finally {
-      try {
-        DirUtils.deleteDirectoryContents(tempDir);
-      } catch (IOException e) {
-        LOG.warn("Exception raised when deleting directory {}", tempDir, e);
-      }
+      DirUtils.deleteDirectoryContents(tempDir);
     }
     ApplicationSpecification specification = configurer.createSpecification();
 
