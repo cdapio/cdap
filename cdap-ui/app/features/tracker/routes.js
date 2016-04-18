@@ -18,9 +18,33 @@ angular.module(PKG.name + '.feature.tracker')
   .config(function($stateProvider, MYAUTH_ROLE) {
 
     $stateProvider
-      .state('tracker-home', {
-        url: '/tracker/home',
+      .state('tracker', {
+        url: '/tracker',
+        abstract: true,
         parent: 'ns',
+        resolve: {
+          rTrackerApp: function (myTrackerApi, $q, $stateParams) {
+            let defer = $q.defer();
+
+            let params = {
+              namespace: $stateParams.namespace
+            };
+
+            myTrackerApi.getTrackerApp(params)
+              .$promise
+              .then( (res) => {
+                defer.resolve(true);
+              }, () => {
+                defer.reject(false);
+              });
+
+            return defer.promise;
+          }
+        }
+      })
+
+      .state('tracker.home', {
+        url: '/home',
         data: {
           authorizedRoles: MYAUTH_ROLE.all,
           highlightTab: 'search'
@@ -30,8 +54,8 @@ angular.module(PKG.name + '.feature.tracker')
         controllerAs: 'MainController'
       })
 
-      .state('tracker-integrations', {
-        url: '/tracker/integrations',
+      .state('tracker.integrations', {
+        url: '/integrations',
         parent: 'ns',
         templateUrl: '/assets/features/tracker/templates/integrations.html',
         controller: 'TrackerIntegrationsController',
@@ -42,8 +66,8 @@ angular.module(PKG.name + '.feature.tracker')
         }
       })
 
-      .state('tracker', {
-        url: '/tracker',
+      .state('tracker.detail', {
+        url: '/',
         parent: 'ns',
         data: {
           authorizedRoles: MYAUTH_ROLE.all,
@@ -54,7 +78,7 @@ angular.module(PKG.name + '.feature.tracker')
         controllerAs: 'ContainerController'
       })
 
-        .state('tracker.result', {
+        .state('tracker.detail.result', {
           url: '/search/:searchQuery/result',
           templateUrl: '/assets/features/tracker/templates/results.html',
           controller: 'TrackerResultsController',
@@ -65,7 +89,7 @@ angular.module(PKG.name + '.feature.tracker')
           }
         })
 
-        .state('tracker.entity', {
+        .state('tracker.detail.entity', {
           url: '/entity/:entityType/:entityId?searchTerm',
           templateUrl: '/assets/features/tracker/templates/entity.html',
           controller: 'TrackerEntityController',
@@ -99,7 +123,7 @@ angular.module(PKG.name + '.feature.tracker')
             }
           }
         })
-          .state('tracker.entity.metadata', {
+          .state('tracker.detail.entity.metadata', {
             url: '/metadata',
             templateUrl: '/assets/features/tracker/templates/metadata.html',
             controller: 'TrackerMetadataController',
@@ -109,7 +133,7 @@ angular.module(PKG.name + '.feature.tracker')
               highlightTab: 'search'
             }
           })
-          .state('tracker.entity.lineage', {
+          .state('tracker.detail.entity.lineage', {
             url: '/lineage?start&end&method',
             templateUrl: '/assets/features/tracker/templates/lineage.html',
             controller: 'TrackerLineageController',
@@ -119,7 +143,7 @@ angular.module(PKG.name + '.feature.tracker')
               highlightTab: 'search'
             }
           })
-          .state('tracker.entity.audit', {
+          .state('tracker.detail.entity.audit', {
             url: '/audit?start&end',
             templateUrl: '/assets/features/tracker/templates/audit.html',
             controller: 'TrackerAuditController',
