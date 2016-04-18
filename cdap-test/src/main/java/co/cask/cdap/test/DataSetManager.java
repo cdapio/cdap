@@ -30,9 +30,7 @@ package co.cask.cdap.test;
  * </p>
  *
  * <pre><code> 
- *   ApplicationManager appManager = deployApplication(AppWithTable.class);
- *   DataSetManager{@literal <}Table> myTableManager = appManager.getDataset("my_table");
- *   myTableManager = appManager.getDataset("my_table");
+ *   myTableManager = getDataset("my_table");
  *   String value = myTableManager.get().get(new Get("key1", "column1")).getString("column1");
  * </code></pre>
  *
@@ -41,13 +39,13 @@ package co.cask.cdap.test;
  * </p>
  *
  * <pre><code> 
- *   ApplicationManager appManager = deployApplication(AppWithTable.class);
- *   DataSetManager{@literal <}Table> myTableManager = appManager.getDataset("my_table");
+ *   DataSetManager{@literal <}Table> myTableManager = getDataset("my_table");
  *   myTableManager.get().put(new Put("key1", "column1", "value1"));
  *   myTableManager.flush();
  * </code></pre>
  *
  * @param <T> actual type of the dataset
+ *
  */
 public interface DataSetManager<T> {
   /**

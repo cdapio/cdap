@@ -86,7 +86,7 @@ public interface TestManager {
   ApplicationManager getApplicationManager(Id.Application appId) throws Exception;
 
   /**
-   * Add the specified artifact.
+   * Adds the specified artifact.
    *
    * @param artifactId the id of the artifact to add
    * @param artifactFile the contents of the artifact. Must be a valid jar file containing apps or plugins
@@ -96,7 +96,7 @@ public interface TestManager {
   void addArtifact(Id.Artifact artifactId, File artifactFile) throws Exception;
 
   /**
-   * Add the specified artifact.
+   * Adds the specified artifact.
    *
    * @param artifactId the id of the artifact to add
    * @param artifactFile the contents of the artifact. Must be a valid jar file containing apps or plugins
@@ -105,7 +105,7 @@ public interface TestManager {
   ArtifactManager addArtifact(ArtifactId artifactId, File artifactFile) throws Exception;
 
   /**
-   * Build an application artifact from the specified class and then add it.
+   * Builds an application artifact from the specified class and then adds it.
    *
    * @param artifactId the id of the artifact to add
    * @param appClass the application class to build the artifact from
@@ -115,7 +115,7 @@ public interface TestManager {
   void addAppArtifact(Id.Artifact artifactId, Class<?> appClass) throws Exception;
 
   /**
-   * Build an application artifact from the specified class and then add it.
+   * Builds an application artifact from the specified class and then adds it.
    *
    * @param artifactId the id of the artifact to add
    * @param appClass the application class to build the artifact from
@@ -124,7 +124,7 @@ public interface TestManager {
   ArtifactManager addAppArtifact(ArtifactId artifactId, Class<?> appClass) throws Exception;
 
   /**
-   * Build an application artifact from the specified class and then add it.
+   * Builds an application artifact from the specified class and then adds it.
    *
    * @param artifactId the id of the artifact to add
    * @param appClass the application class to build the artifact from
@@ -136,7 +136,7 @@ public interface TestManager {
   void addAppArtifact(Id.Artifact artifactId, Class<?> appClass, String... exportPackages) throws Exception;
 
   /**
-   * Build an application artifact from the specified class and then add it.
+   * Builds an application artifact from the specified class and then adds it.
    *
    * @param artifactId the id of the artifact to add
    * @param appClass the application class to build the artifact from
@@ -148,7 +148,7 @@ public interface TestManager {
                                  String... exportPackages) throws Exception;
 
   /**
-   * Build an application artifact from the specified class and then add it.
+   * Builds an application artifact from the specified class and then adds it.
    *
    * @param artifactId the id of the artifact to add
    * @param appClass the application class to build the artifact from
@@ -159,7 +159,7 @@ public interface TestManager {
   void addAppArtifact(Id.Artifact artifactId, Class<?> appClass, Manifest manifest) throws Exception;
 
   /**
-   * Build an application artifact from the specified class and then add it.
+   * Builds an application artifact from the specified class and then adds it.
    *
    * @param artifactId the id of the artifact to add
    * @param appClass the application class to build the artifact from
@@ -170,7 +170,7 @@ public interface TestManager {
                                  Manifest manifest) throws Exception;
 
   /**
-   * Build an artifact from the specified plugin classes and then add it. The
+   * Builds an artifact from the specified plugin classes and then adds it. The
    * jar created will include all classes in the same package as the give classes, plus any dependencies of the
    * given classes. If another plugin in the same package as the given plugin requires a different set of dependent
    * classes, you must include both plugins. For example, suppose you have two plugins,
@@ -191,7 +191,7 @@ public interface TestManager {
                          Class<?> pluginClass, Class<?>... pluginClasses) throws Exception;
 
   /**
-   * Build an artifact from the specified plugin classes and then add it. The
+   * Builds an artifact from the specified plugin classes and then adds it. The
    * jar created will include all classes in the same package as the give classes, plus any dependencies of the
    * given classes. If another plugin in the same package as the given plugin requires a different set of dependent
    * classes, you must include both plugins. For example, suppose you have two plugins,
@@ -211,7 +211,7 @@ public interface TestManager {
                                     Class<?> pluginClass, Class<?>... pluginClasses) throws Exception;
 
   /**
-   * Build an artifact from the specified plugin classes and then add it. The
+   * Builds an artifact from the specified plugin classes and then adds it. The
    * jar created will include all classes in the same package as the give classes, plus any dependencies of the
    * given classes. If another plugin in the same package as the given plugin requires a different set of dependent
    * classes, you must include both plugins. For example, suppose you have two plugins,
@@ -231,7 +231,7 @@ public interface TestManager {
                          Class<?> pluginClass, Class<?>... pluginClasses) throws Exception;
 
   /**
-   * Build an artifact from the specified plugin classes and then add it. The
+   * Builds an artifact from the specified plugin classes and then adds it. The
    * jar created will include all classes in the same package as the give classes, plus any dependencies of the
    * given classes. If another plugin in the same package as the given plugin requires a different set of dependent
    * classes, you must include both plugins. For example, suppose you have two plugins,
@@ -252,7 +252,7 @@ public interface TestManager {
 
 
   /**
-   * Build an artifact from the specified plugin classes and then add it. The
+   * Builds an artifact from the specified plugin classes and then adds it. The
    * jar created will include all classes in the same package as the give classes, plus any dependencies of the
    * given classes. If another plugin in the same package as the given plugin requires a different set of dependent
    * classes, you must include both plugins. For example, suppose you have two plugins,
@@ -277,7 +277,7 @@ public interface TestManager {
                          Class<?> pluginClass, Class<?>... pluginClasses) throws Exception;
 
   /**
-   * Build an artifact from the specified plugin classes and then add it. The
+   * Builds an artifact from the specified plugin classes and then adds it. The
    * jar created will include all classes in the same package as the give classes, plus any dependencies of the
    * given classes. If another plugin in the same package as the given plugin requires a different set of dependent
    * classes, you must include both plugins. For example, suppose you have two plugins,
@@ -300,7 +300,7 @@ public interface TestManager {
                                     Class<?> pluginClass, Class<?>... pluginClasses) throws Exception;
 
   /**
-   * Build an artifact from the specified plugin classes and then add it. The
+   * Builds an artifact from the specified plugin classes and then adds it. The
    * jar created will include all classes in the same package as the give classes, plus any dependencies of the
    * given classes. If another plugin in the same package as the given plugin requires a different set of dependent
    * classes, you must include both plugins. For example, suppose you have two plugins,
@@ -324,7 +324,7 @@ public interface TestManager {
                          Class<?> pluginClass, Class<?>... pluginClasses) throws Exception;
 
   /**
-   * Build an artifact from the specified plugin classes and then add it. The
+   * Builds an artifact from the specified plugin classes and then adds it. The
    * jar created will include all classes in the same package as the give classes, plus any dependencies of the
    * given classes. If another plugin in the same package as the given plugin requires a different set of dependent
    * classes, you must include both plugins. For example, suppose you have two plugins,
@@ -347,7 +347,7 @@ public interface TestManager {
                                     Class<?> pluginClass, Class<?>... pluginClasses) throws Exception;
 
   /**
-   * Delete the specified artifact.
+   * Deletes the specified artifact.
    *
    * @param artifactId the id of the artifact to delete
    * @deprecated since 3.4.0. Use {@link ArtifactManager#delete()} instead
@@ -400,11 +400,11 @@ public interface TestManager {
                                                 String datasetTypeName, String datasetInstanceName) throws Exception;
 
   /**
-   * Gets Dataset manager of Dataset instance of type <T>
+   * Gets Dataset manager of Dataset instance of type {@literal <}T>.
    *
    * @param namespace namespace of the dataset
    * @param datasetInstanceName instance name of dataset
-   * @return Dataset Manager of Dataset instance of type <T>
+   * @return Dataset Manager of Dataset instance of type {@literal <}T>
    * @throws Exception
    */
   @Beta
@@ -412,7 +412,7 @@ public interface TestManager {
 
   /**
    * @param namespace namespace to interact within
-   * @return a JDBC connection that allows to run SQL queries over data sets.
+   * @return a JDBC connection that allows running SQL queries over data sets
    */
   @Beta
   Connection getQueryClient(Id.Namespace namespace) throws Exception;
