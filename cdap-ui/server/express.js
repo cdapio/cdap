@@ -81,6 +81,20 @@ function makeApp (authAddress, cdapConfig) {
               '.constant("MY_CONFIG",'+data+');');
   });
 
+  app.get('/ui-config.js', function (req, res) {
+    var path = __dirname + '/config/cdap-ui-config.json';
+
+    var fileConfig = {};
+
+    fileConfig = fs.readFileSync(path, 'utf8');
+    res.header({
+      'Content-Type': 'text/javascript',
+      'Cache-Control': 'no-store, must-revalidate'
+    });
+    res.send('angular.module("'+pkg.name+'.config")' +
+              '.constant("UI_CONFIG",'+fileConfig+');');
+  });
+
   app.post('/downloadQuery', function(req, res) {
     var url = req.body.backendUrl;
 

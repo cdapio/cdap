@@ -29,8 +29,8 @@
             <label class="control-label">Null</label>
           </th>
         </thead>
-        <tbody>
-          <tr ng-repeat="schema in HydratorPlusPlusNodeConfigCtrl.state.node.inputSchema" ng-keypress="enter($event, $last)">
+        <tbody infinite-scroll="HydratorPlusPlusNodeConfigCtrl.doLoadNextSetOfInputSchemaRows()" infinite-scroll-disabled="HydratorPlusPlusNodeConfigCtrl.state.node.inputSchema.length <= HydratorPlusPlusNodeConfigCtrl.inputSchemaRowLimit">
+          <tr ng-repeat="schema in HydratorPlusPlusNodeConfigCtrl.state.node.inputSchema | limitTo: HydratorPlusPlusNodeConfigCtrl.inputSchemaRowLimit track by $index" ng-keypress="enter($event, $last)">
             <td class="name" ng-if="!schema.empty">
               <span uib-tooltip="{{ schema.name }}"
                     tooltip-ellipsis="{{ schema.name }}"

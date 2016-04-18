@@ -68,6 +68,15 @@ class HydratorPlusPlusConfigActions {
   setInstance(instance) {
     this.dispatcher.dispatch('onSetInstance', instance);
   }
+  addPostAction(config) {
+    this.dispatcher.dispatch('onAddPostAction', config);
+  }
+  editPostAction(config) {
+    this.dispatcher.dispatch('onEditPostAction', config);
+  }
+  deletePostAction(config) {
+    this.dispatcher.dispatch('onDeletePostAction', config);
+  }
   publishPipeline() {
     this.HydratorPlusPlusConsoleActions.resetMessages();
     let error = this.HydratorPlusPlusConfigStore.validateState(true);

@@ -193,7 +193,8 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
           instances: appConfigClone.configJson.instance,
           schedule: appConfigClone.configJson.schedule,
           connections: uiConfig.connections,
-          comments: appConfigClone.configJson.comments
+          comments: appConfigClone.configJson.comments,
+          postactions: appConfigClone.configJson.postactions
         }
       };
       appConfig.streams = app.streams.map(function (stream) {

@@ -576,6 +576,87 @@ body.theme-cdap.state-hydratorplusplus {
       }
     }
 
+    .post-actions-tab {
+      .post-actions-sidebar {
+        width: 150px;
+        border-right: 1px solid #d4d4d4;
+        background-color: #EEEEEE;
+        position: absolute;
+        top: 42px;
+        bottom: 0;
+
+        ul {
+          li {
+            height: 40px;
+            line-height: 40px;
+            font-weight: 500;
+            color: #999;
+            cursor: pointer;
+            border-bottom: 1px solid #d4d4d4;
+
+            &.active {
+              background-color: white;
+              color: @hydrator-blue;
+
+              // this 1px will cover the sidebar border
+              width: ~"-moz-calc(100% + 1px)";
+              width: ~"-webkit-calc(100% + 1px)";
+              width: ~"calc(100% + 1px)";
+            }
+          }
+        }
+      }
+
+      .post-actions-content {
+        width: ~"-moz-calc(100% - 151px)";
+        width: ~"-webkit-calc(100% - 151px)";
+        width: ~"calc(100% - 151px)";
+        float: right;
+
+        .main-container {
+          padding: 10px 20px 10px 10px;
+
+          .empty-message {
+            margin-top: 100px;
+            margin-bottom: 100px;
+          }
+
+          .table {
+            th, td {
+              padding: 10px;
+              font-size: 13px;
+              font-weight: 500;
+            }
+
+            th {
+              border: 1px solid #dddddd;
+              cursor: default;
+            }
+
+            td {
+              color: #999;
+              &:first-child { width: 200px; }
+              &:nth-child(3) { width: 200px; }
+              &:last-child {
+                width: 80px;
+                a { color: @hydrator-blue; }
+                i { cursor: pointer; }
+              }
+            }
+          }
+
+          .action-buttons {
+            button {
+              margin-left: 15px;
+              width: 80px;
+            }
+          }
+        }
+      }
+    }
+
+
+
     pre {
       background-color: transparent;
       border: 0;
