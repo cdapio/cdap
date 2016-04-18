@@ -1276,9 +1276,13 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
       new MetadataSearchResultRecord(mystream)
     );
 
+    Set<MetadataSearchResultRecord> expectedWithView = ImmutableSet.<MetadataSearchResultRecord>builder()
+      .addAll(expected)
+      .add(new MetadataSearchResultRecord(myview)).build();
+
     // schema search with fieldname
     Set<MetadataSearchResultRecord> metadataSearchResultRecords = searchMetadata(Id.Namespace.DEFAULT, "body");
-    Assert.assertEquals(expected, metadataSearchResultRecords);
+    Assert.assertEquals(expectedWithView, metadataSearchResultRecords);
 
     // schema search with fieldname and fieldtype
     metadataSearchResultRecords = searchMetadata(Id.Namespace.DEFAULT, "body:" + Schema.Type.STRING.toString());
@@ -1286,7 +1290,7 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
 
     // schema search for partial fieldname
     metadataSearchResultRecords = searchMetadata(Id.Namespace.DEFAULT, "bo*");
-    Assert.assertEquals(expected, metadataSearchResultRecords);
+    Assert.assertEquals(expectedWithView, metadataSearchResultRecords);
 
     // schema search with fieldname and all/partial fieldtype
     metadataSearchResultRecords = searchMetadata(Id.Namespace.DEFAULT, "body:STR*");
@@ -1312,7 +1316,7 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
 
     metadataSearchResultRecords = searchMetadata(Id.Namespace.DEFAULT, "schema:*");
     Assert.assertEquals(ImmutableSet.<MetadataSearchResultRecord>builder()
-                          .addAll(expected)
+                          .addAll(expectedWithView)
                           .add(new MetadataSearchResultRecord(datasetInstance))
                           .add(new MetadataSearchResultRecord(dsWithSchema))
                           .add(new MetadataSearchResultRecord(view))
