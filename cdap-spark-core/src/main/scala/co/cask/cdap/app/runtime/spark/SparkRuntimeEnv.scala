@@ -16,31 +16,49 @@
 
 package co.cask.cdap.app.runtime.spark
 
+import java.util.Properties
 import java.util.concurrent.ConcurrentLinkedQueue
 import javax.annotation.Nullable
 
 import com.google.common.reflect.TypeToken
-import org.apache.spark.SparkContext
 import org.apache.spark.scheduler._
 import org.apache.spark.streaming.StreamingContext
+import org.apache.spark.{SparkConf, SparkContext}
 import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConversions._
 import scala.collection.mutable.ArrayBuffer
 
 /**
-  * A singleton cache for [[org.apache.spark.SparkContext]] and [[org.apache.spark.streaming.StreamingContext]]
+  * A singleton for holding information used by the runtime system.
+  * It keeps a set of global configs for [[org.apache.spark.SparkConf]]. It also maintain references to
+  * the [[org.apache.spark.SparkContext]] and [[org.apache.spark.streaming.StreamingContext]]
   * to provide universal access to those contexts created by the user Spark program within CDAP.
   *
   * With ClassLoader isolation, there will be one instance of this class per one Spark program execution.
   */
-object SparkContextCache {
+object SparkRuntimeEnv {
 
-  private val LOG = LoggerFactory.getLogger(SparkContextCache.getClass)
+  private val LOG = LoggerFactory.getLogger(SparkRuntimeEnv.getClass)
   private var stopped = false
+  private val properties = new Properties
   private var sparkContext: Option[SparkContext] = None
   private var streamingContext: Option[StreamingContext] = None
   private val sparkListeners = new ConcurrentLinkedQueue[SparkListener]()
+
+  /**
+    * Sets a global property for the Spark program. The signature of this method must be the same as
+    * `System.setProperty`.
+    *
+    * @param key property key
+    * @param value property value
+    */
+  def setProperty(key: String, value: String): String = properties.setProperty(key, value).asInstanceOf[String]
+
+  /**
+    * Puts all global properties into the given [[org.apache.spark.SparkConf]].
+    */
+  def setupSparkConf(sparkConf: SparkConf): Unit = sparkConf.setAll(properties)
 
   /**
     * Adds a [[org.apache.spark.scheduler.SparkListener]]. The given listener will be added to

@@ -49,6 +49,7 @@ import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.DataSetManager;
 import co.cask.cdap.test.SparkManager;
 import co.cask.cdap.test.StreamManager;
+import co.cask.cdap.test.WorkflowManager;
 import co.cask.cdap.test.base.TestFrameworkTestBase;
 import com.google.common.base.Charsets;
 import com.google.common.base.Function;
@@ -81,7 +82,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  * Unit-tests for testing Spark program.
@@ -109,7 +112,7 @@ public class SparkTestRun extends TestFrameworkTestBase {
         public Integer call() throws Exception {
           return sparkManager.getHistory(ProgramRunStatus.COMPLETED).size();
         }
-      }, 5, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
+      }, 10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
     }
   }
 
@@ -166,6 +169,26 @@ public class SparkTestRun extends TestFrameworkTestBase {
       }
       Assert.assertEquals(ImmutableMap.of("Old Man", 50, "Legal Drinker", 21), result);
     }
+  }
+
+  @Test
+  public void testSparkFork() throws Exception {
+    ApplicationManager appManager = deployApplication(TestSparkApp.class);
+
+    File barrierDir = TEMP_FOLDER.newFolder();
+
+    final WorkflowManager workflowManager = appManager.getWorkflowManager(
+      TestSparkApp.ForkSparkWorkflow.class.getSimpleName())
+      .start(Collections.singletonMap("barrier.dir", barrierDir.getAbsolutePath()));
+
+    workflowManager.waitForFinish(2, TimeUnit.MINUTES);
+    Tasks.waitFor(1, new Callable<Integer>() {
+      @Override
+      public Integer call() throws Exception {
+        return workflowManager.getHistory(ProgramRunStatus.COMPLETED).size();
+      }
+    }, 10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
+
   }
 
   @Test

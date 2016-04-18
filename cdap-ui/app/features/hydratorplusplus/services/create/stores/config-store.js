@@ -43,6 +43,9 @@ class HydratorPlusPlusConfigStore {
     this.hydratorPlusPlusConfigDispatcher.register('onSaveAsDraft', this.saveAsDraft.bind(this));
     this.hydratorPlusPlusConfigDispatcher.register('onInitialize', this.init.bind(this));
     this.hydratorPlusPlusConfigDispatcher.register('onSchemaPropagationDownStream', this.propagateIOSchemas.bind(this));
+    this.hydratorPlusPlusConfigDispatcher.register('onAddPostAction', this.addPostAction.bind(this));
+    this.hydratorPlusPlusConfigDispatcher.register('onEditPostAction', this.editPostAction.bind(this));
+    this.hydratorPlusPlusConfigDispatcher.register('onDeletePostAction', this.deletePostAction.bind(this));
   }
   registerOnChangeListener(callback) {
     let index = this.changeListeners.push(callback);
@@ -87,7 +90,8 @@ class HydratorPlusPlusConfigStore {
   getDefaultConfig() {
     return {
       connections: [],
-      comments: []
+      comments: [],
+      postactions: []
     };
   }
 
@@ -202,6 +206,28 @@ class HydratorPlusPlusConfigStore {
     }
 
     config.comments = this.getComments();
+
+
+    // Removing UUID from postactions name
+    let postActions = this.getPostActions();
+    postActions = _.sortBy(postActions, (action) => {
+      return action.plugin.name;
+    });
+
+    let currCount = 0;
+    let currAction = '';
+
+    angular.forEach(postActions, (action) => {
+      if (action.plugin.name !== currAction) {
+        currAction = action.plugin.name;
+        currCount = 1;
+      } else {
+        currCount++;
+      }
+      action.name = action.plugin.name + '-' + currCount;
+    });
+
+    config.postactions = postActions;
 
     return config;
   }
@@ -616,6 +642,28 @@ class HydratorPlusPlusConfigStore {
   }
   getComments() {
     return this.getState().config.comments;
+  }
+
+  addPostAction(config) {
+    this.state.config.postactions.push(config);
+    this.emitChange();
+  }
+  editPostAction(config) {
+    let index = _.findLastIndex(this.state.config.postactions, (post) => {
+      return config.name === post.name;
+    });
+
+    this.state.config.postactions[index] = config;
+    this.emitChange();
+  }
+  deletePostAction(config) {
+    _.remove(this.state.config.postactions, (post) => {
+      return post.name === config.name;
+    });
+    this.emitChange();
+  }
+  getPostActions() {
+    return this.getState().config.postactions;
   }
 
   saveAsDraft() {

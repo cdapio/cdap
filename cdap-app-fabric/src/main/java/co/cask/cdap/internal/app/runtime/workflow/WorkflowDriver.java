@@ -129,6 +129,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
   private final ProgramRunId workflowRunId;
   private Workflow workflow;
   private final BasicWorkflowContext basicWorkflowContext;
+  private final BasicWorkflowToken basicWorkflowToken;
   private final Map<String, WorkflowNodeState> nodeStates = new ConcurrentHashMap<>();
   @Nullable
   private final PluginInstantiator pluginInstantiator;
@@ -164,8 +165,9 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     this.workflowProgramRunnerFactory = new ProgramWorkflowRunnerFactory(cConf, workflowSpec, programRunnerFactory,
                                                                          program, options);
 
+    this.basicWorkflowToken = new BasicWorkflowToken(cConf.getInt(Constants.AppFabric.WORKFLOW_TOKEN_MAX_SIZE_MB));
     this.basicWorkflowContext = new BasicWorkflowContext(workflowSpec, null, null, new BasicArguments(runtimeArgs),
-                                                         null, program, RunIds.fromString(runId),
+                                                         basicWorkflowToken, program, RunIds.fromString(runId),
                                                          metricsCollectionService, datasetFramework, txClient,
                                                          discoveryServiceClient, nodeStates, pluginInstantiator);
     this.pluginInstantiator = pluginInstantiator;
@@ -205,7 +207,9 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
 
     try {
       if (workflow instanceof ProgramLifecycle) {
+        basicWorkflowToken.setCurrentNode(workflowSpec.getName());
         ((ProgramLifecycle<WorkflowContext>) workflow).initialize(basicWorkflowContext);
+        store.updateWorkflowToken(workflowRunId, basicWorkflowToken);
       }
     } catch (Throwable t) {
       LOG.error(String.format("Failed to initialize the Workflow %s", workflowRunId), t);
@@ -274,7 +278,9 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     try {
       transactionContext.start();
       if (workflow instanceof ProgramLifecycle) {
+        basicWorkflowToken.setCurrentNode(workflowSpec.getName());
         ((ProgramLifecycle<WorkflowContext>) workflow).destroy();
+        store.updateWorkflowToken(workflowRunId, basicWorkflowToken);
       }
       transactionContext.finish();
     } catch (Throwable t) {
@@ -451,8 +457,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     Predicate<WorkflowContext> predicate = instantiator.get(
       TypeToken.of((Class<? extends Predicate<WorkflowContext>>) clz)).create();
 
-    WorkflowContext context = new BasicWorkflowContext(workflowSpec, null, null,
-                                                       new BasicArguments(runtimeArgs), token,
+    WorkflowContext context = new BasicWorkflowContext(workflowSpec, null, null, new BasicArguments(runtimeArgs), token,
                                                        program, RunIds.fromString(workflowRunId.getRun()),
                                                        metricsCollectionService, datasetFramework, txClient,
                                                        discoveryServiceClient, nodeStates, pluginInstantiator);
@@ -503,10 +508,8 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
   protected void run() throws Exception {
     LOG.info("Start workflow execution for {}", workflowSpec.getName());
     LOG.debug("Workflow specification is {}", workflowSpec);
-    WorkflowToken token = new BasicWorkflowToken(cConf.getInt(Constants.AppFabric.WORKFLOW_TOKEN_MAX_SIZE_MB));
     executeAll(workflowSpec.getNodes().iterator(), program.getApplicationSpecification(),
-               new InstantiatorFactory(false), program.getClassLoader(), token);
-
+               new InstantiatorFactory(false), program.getClassLoader(), basicWorkflowToken);
     basicWorkflowContext.setSuccess();
     LOG.info("Workflow execution succeeded for {}", workflowSpec.getName());
   }

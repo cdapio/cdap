@@ -14,13 +14,13 @@
  * the License.
  */
 
-function myTrackerApi(myCdapUrl, $resource, myAuth, myHelpers) {
+function myTrackerApi(myCdapUrl, $resource, myAuth, myHelpers, UI_CONFIG) {
   var url = myCdapUrl.constructUrl,
       searchPath = '/namespaces/:namespace/metadata/search?target=stream&target=dataset&target=view',
       basePath = '/namespaces/:namespace/:entityType/:entityId',
       programPath = '/namespaces/:namespace/apps/:appId/:programType/:programId/runs/:runId',
-      auditPath = '/namespaces/:namespace/apps/Tracker/services/AuditLog/methods/auditlog/:entityType/:entityId',
-      navigatorPath = '/namespaces/:namespace/apps/_ClouderaNavigator';
+      auditPath = '/namespaces/:namespace/apps/' + UI_CONFIG.tracker.appId + '/services/' + UI_CONFIG.tracker.programId + '/methods/auditlog/:entityType/:entityId',
+      navigatorPath = '/namespaces/:namespace/apps/' + UI_CONFIG.navigator.appId;
 
   return $resource(
     url({ _cdapPath: searchPath }),
