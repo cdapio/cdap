@@ -30,7 +30,7 @@ package co.cask.cdap.test;
  * </p>
  *
  * <pre><code> 
- *   myTableManager = getDataset("my_table");
+ *   DataSetManager{@literal <}Table> myTableManager = getDataset("my_table");
  *   String value = myTableManager.get().get(new Get("key1", "column1")).getString("column1");
  * </code></pre>
  *
