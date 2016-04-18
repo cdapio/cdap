@@ -52,8 +52,14 @@ public class WordCount extends AbstractMapReduce {
     job.setReducerClass(Counter.class);
     job.setNumReduceTasks(1);
 
-    context.addInput(Input.ofDataset("lines"));
-    context.addOutput("counts");
+    String inputDataset = context.getRuntimeArguments().get("input");
+    inputDataset = inputDataset != null ? inputDataset : "lines";
+
+    String outputDataset = context.getRuntimeArguments().get("output");
+    outputDataset = outputDataset != null ? outputDataset : "counts";
+
+    context.addInput(Input.ofDataset(inputDataset));
+    context.addOutput(outputDataset);
   }
 
   /**
