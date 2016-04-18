@@ -412,7 +412,7 @@ public interface TestManager {
 
   /**
    * @param namespace namespace to interact within
-   * @return a JDBC connection that allows running SQL queries over data sets
+   * @return a JDBC connection that allows the running of SQL queries over data sets
    */
   @Beta
   Connection getQueryClient(Id.Namespace namespace) throws Exception;

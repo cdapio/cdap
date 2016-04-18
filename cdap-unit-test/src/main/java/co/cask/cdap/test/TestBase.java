@@ -838,7 +838,7 @@ public class TestBase {
   }
 
   /**
-   * Returns a JDBC connection that allows to run SQL queries over data sets.
+   * Returns a JDBC connection that allows the running of SQL queries over data sets.
    * 
    * @param namespace namespace for the connection
    */
@@ -850,7 +850,7 @@ public class TestBase {
   }
 
   /**
-   * Returns a JDBC connection that allows to run SQL queries over data sets.
+   * Returns a JDBC connection that allows the running of SQL queries over data sets.
    */
   protected final Connection getQueryClient() throws Exception {
     return getQueryClient(Id.Namespace.DEFAULT);
