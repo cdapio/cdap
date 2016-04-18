@@ -138,13 +138,45 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
             highlightTab: 'hydratorList'
           },
           resolve : {
-            rPipelineDetail: function($stateParams, $q, myPipelineApi) {
+            rPipelineDetail: function($stateParams, $q, myPipelineApi, myAlertOnValium, $state) {
               var params = {
                 namespace: $stateParams.namespace,
                 pipeline: $stateParams.pipelineId
               };
 
-              return myPipelineApi.get(params).$promise;
+              return myPipelineApi
+                .get(params)
+                .$promise
+                .then(
+                  (pipelineDetail) => {
+                    let config = pipelineDetail.configuration;
+                    try {
+                      config = JSON.parse(config);
+                    } catch(e) {
+                      myAlertOnValium.show({
+                        type: 'danger',
+                        content: 'Invalid configuration JSON.'
+                      });
+                      $q.reject(false);
+                      // FIXME: We should not have done this. But ui-router when rejected on a 'resolve:' function takes it to the parent state apparaently
+                      // and in our case the parent state is 'hydratorplusplus and since its an abstract state it goes to home.'
+                      $state.go('hydrator.list');
+                      return;
+                    }
+                    if(!config.stages) {
+                      myAlertOnValium.show({
+                        type: 'danger',
+                        content: 'Pipeline is created using older version of hydrator. Please upgrage the pipeline to newer version(3.4) to view in UI.'
+                      });
+                      $q.reject(false);
+                      // FIXME: We should not have done this. But ui-router when rejected on a 'resolve:' function takes it to the parent state apparaently
+                      // and in our case the parent state is 'hydratorplusplus and since its an abstract state it goes to home.'
+                      $state.go('hydrator.list');
+                      return;
+                    }
+                    return $q.resolve(pipelineDetail);
+                  }
+                );
             }
           },
           ncyBreadcrumb: {
