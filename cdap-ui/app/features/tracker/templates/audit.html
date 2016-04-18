@@ -24,7 +24,7 @@
         <a href="" ng-click="AuditController.isCustom = true">Custom</a>
       </li>
       <li role="menuitem" ng-repeat="time in AuditController.timeRangeOptions">
-        <a ui-sref="tracker.entity.audit({ start: time.start, end: time.end })">{{ time.label }}</a>
+        <a ui-sref="tracker.detail.entity.audit({ start: time.start, end: time.end })">{{ time.label }}</a>
       </li>
     </ul>
   </div>
@@ -73,18 +73,5 @@
                     ng-model="this.currentPage"
                     ng-change="AuditController.fetchAuditLogs(this.currentPage)">
     </uib-pagination>
-  </div>
-
-  <div class="tracker-no-result text-center" ng-if="!AuditController.isTrackerSetup">
-    <p>Tracker Audit Log application is not enabled</p>
-    <button class="btn btn-success"
-            ng-click="AuditController.enableTracker()"
-            ng-disabled="AuditController.enableTrackerLoading">
-      <span ng-if="!AuditController.enableTrackerLoading">Enable Tracker</span>
-      <span ng-if="AuditController.enableTrackerLoading">
-        <span class="fa fa-spin fa-refresh"></span>
-        <span>Enabling</span>
-      </span>
-    </button>
   </div>
 </div>

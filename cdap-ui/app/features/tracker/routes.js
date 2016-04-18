@@ -18,12 +18,23 @@ angular.module(PKG.name + '.feature.tracker')
   .config(function($stateProvider, MYAUTH_ROLE) {
 
     $stateProvider
+      .state('tracker-enable', {
+        url: '/enable-tracker',
+        parent: 'ns',
+        templateUrl: '/assets/features/tracker/templates/tracker-enable.html',
+        controller: 'TrackerEnableController',
+        controllerAs: 'EnableController',
+        data: {
+          authorizedRoles: MYAUTH_ROLE.all,
+        }
+      })
       .state('tracker', {
         url: '/tracker',
         abstract: true,
         parent: 'ns',
+        template: '<ui-view/>',
         resolve: {
-          rTrackerApp: function (myTrackerApi, $q, $stateParams) {
+          rTrackerApp: function (myTrackerApi, $q, $stateParams, $state) {
             let defer = $q.defer();
 
             let params = {
@@ -32,10 +43,10 @@ angular.module(PKG.name + '.feature.tracker')
 
             myTrackerApi.getTrackerApp(params)
               .$promise
-              .then( (res) => {
+              .then( () => {
                 defer.resolve(true);
               }, () => {
-                defer.reject(false);
+                $state.go('tracker-enable');
               });
 
             return defer.promise;
@@ -56,7 +67,6 @@ angular.module(PKG.name + '.feature.tracker')
 
       .state('tracker.integrations', {
         url: '/integrations',
-        parent: 'ns',
         templateUrl: '/assets/features/tracker/templates/integrations.html',
         controller: 'TrackerIntegrationsController',
         controllerAs: 'IntegrationsController',
@@ -67,8 +77,7 @@ angular.module(PKG.name + '.feature.tracker')
       })
 
       .state('tracker.detail', {
-        url: '/',
-        parent: 'ns',
+        url: '',
         data: {
           authorizedRoles: MYAUTH_ROLE.all,
           highlightTab: 'search'

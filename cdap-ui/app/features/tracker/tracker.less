@@ -47,7 +47,7 @@ body[class*='state-tracker']{
   footer { border-top: 1px solid @border-color; }
 }
 
-body.state-tracker-home {
+body.state-tracker-home.state-tracker {
   background-color: white;
 
   .tracker-content {
@@ -277,7 +277,7 @@ body.state-tracker {
 
 }
 
-body.state-tracker-entity {
+body.state-tracker-detail-entity {
   .tracker-entity-top-bar {
     display: table;
     height: 50px;
@@ -533,14 +533,14 @@ body.state-tracker-entity {
   }
 }
 
-body.state-tracker-entity-lineage {
+body.state-tracker-detail-entity-lineage {
   .time-range-container {
     padding-top: 20px;
     padding-left: 20px;
   }
 }
 
-body.state-tracker-entity-audit {
+body.state-tracker-detail-entity-audit {
   .audit-container {
     padding: 20px;
   }
@@ -549,28 +549,6 @@ body.state-tracker-entity-audit {
     margin-top: 20px;
 
     .table th { cursor: default; }
-  }
-}
-
-body.state-tracker-help {
-  .help-container {
-    padding: 0 25px;
-    color: #777;
-    h2 { margin-bottom: 20px; }
-
-    marked {
-      font-size: 14px;
-      font-weight: 500;
-
-      strong { color: @active-font; }
-      ul { padding-left: 20px; }
-      code {
-        font-size: 14px;
-        color: inherit;
-        background-color: inherit;
-      }
-      &>p { margin-top: 25px; }
-    }
   }
 }
 
