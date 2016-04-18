@@ -186,6 +186,12 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
         public TwillController launch(TwillApplication twillApplication, Iterable<String> extraClassPaths,
                                       Iterable<? extends Class<?>> extraDependencies) {
           TwillPreparer twillPreparer = twillRunner.prepare(twillApplication);
+          // TODO: CDAP-5506. It's a bit hacky to set a Spark environment here. However, we always launch
+          // Spark using YARN and it is needed for both Workflow and Spark runner. We need to set it
+          // because inside Spark code, it will set and unset the SPARK_YARN_MODE system properties, causing
+          // fork in distributed mode not work. By setting it in the environment, which Spark always use it
+          // for default, hence it can't be unsetted by Spark.
+          twillPreparer.withEnv(Collections.singletonMap("SPARK_YARN_MODE", "true"));
           if (options.isDebug()) {
             LOG.info("Starting {} with debugging enabled, programOptions: {}, and logback: {}",
                      program.getId(), programOptions, logbackURI);

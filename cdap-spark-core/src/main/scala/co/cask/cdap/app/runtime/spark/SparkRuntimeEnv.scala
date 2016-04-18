@@ -47,6 +47,15 @@ object SparkRuntimeEnv {
   private val sparkListeners = new ConcurrentLinkedQueue[SparkListener]()
 
   /**
+    * Returns `true` if this Spark execution environment is already stopped.
+    */
+  def isStopped: Boolean = {
+    this.synchronized {
+      stopped
+    }
+  }
+
+  /**
     * Sets a global property for the Spark program. The signature of this method must be the same as
     * `System.setProperty`.
     *

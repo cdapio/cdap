@@ -172,7 +172,7 @@ final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin implement
 
       SparkSubmitter submitter = SparkRuntimeContextConfig.isLocal(hConf)
         ? new LocalSparkSubmitter()
-        : new DistributedSparkSubmitter(hConf,
+        : new DistributedSparkSubmitter(hConf, host, runtimeContext,
                                         options.getArguments().getOption(Constants.AppFabric.APP_SCHEDULER_QUEUE));
 
       Service sparkRuntimeService = new SparkRuntimeService(cConf, spark, getPluginArchive(options),

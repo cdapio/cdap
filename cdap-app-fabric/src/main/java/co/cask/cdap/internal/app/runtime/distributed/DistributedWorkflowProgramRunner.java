@@ -134,11 +134,11 @@ public final class DistributedWorkflowProgramRunner extends AbstractDistributedP
    * whether the workflow contains spark.
    */
   private DriverMeta findDriverResources(Map<String, SparkSpecification> sparkSpecs,
-                                        Map<String, MapReduceSpecification> mrSpecs,
-                                        WorkflowSpecification spec) {
-    // Find the resource requirements from the workflow
+                                         Map<String, MapReduceSpecification> mrSpecs,
+                                         WorkflowSpecification spec) {
+    // Find the resource requirements from the workflow with 768MB as minimum.
     // It is the largest memory and cores from all Spark and MapReduce programs inside the workflow
-    Resources resources = new Resources();
+    Resources resources = new Resources(768);
     boolean hasSpark = false;
 
     for (WorkflowNode node : spec.getNodeIdMap().values()) {

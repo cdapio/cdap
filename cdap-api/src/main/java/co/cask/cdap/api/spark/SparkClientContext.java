@@ -56,6 +56,13 @@ public interface SparkClientContext extends RuntimeContext, DatasetContext, Clie
   Metrics getMetrics();
 
   /**
+   * Sets the resources requirement for the Spark driver process.
+   *
+   * @param resources Resources that the driver should use
+   */
+  void setDriverResources(Resources resources);
+
+  /**
    * Sets the resources, such as memory and virtual cores, to use for each executor process for the Spark program.
    *
    * @param resources Resources that each executor should use

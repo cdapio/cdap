@@ -17,9 +17,20 @@
 package co.cask.cdap.app.runtime.spark
 
 import java.lang.reflect.{Method, Modifier}
+import java.net.URI
+import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.{Executors, TimeUnit}
 
 import co.cask.cdap.api.common.RuntimeArguments
 import co.cask.cdap.api.spark.{JavaSparkMain, SparkMain}
+import co.cask.cdap.app.runtime.spark.distributed.{SparkCommand, SparkExecutionClient}
+import co.cask.cdap.common.BadRequestException
+import co.cask.cdap.internal.app.runtime.workflow.BasicWorkflowToken
+import org.apache.twill.common.{Cancellable, Threads}
+import org.slf4j.LoggerFactory
+
+import scala.collection.JavaConversions._
+import scala.util.{Failure, Success, Try}
 
 /**
   * The main class that get submitted to Spark for execution of Spark program in CDAP.
@@ -27,43 +38,67 @@ import co.cask.cdap.api.spark.{JavaSparkMain, SparkMain}
   */
 object SparkMainWrapper {
 
+  val ARG_USER_CLASS = "userClass"
+  val ARG_EXECUTION_SERVICE_URI = "executionServiceURI"
+
+  private val HEARTBEAT_INTERVAL_SECONDS = 1L
+  private val LOG = LoggerFactory.getLogger(SparkMainWrapper.getClass)
+
   def main(args: Array[String]):Unit = {
-    require(args.length >= 1, "Missing SparkMain class name")
+    val arguments: Map[String, String] = RuntimeArguments.fromPosixArray(args).toMap
+    require(arguments.contains(ARG_USER_CLASS), "Missing Spark program class name")
 
-    // Find the SparkRuntimeContext from the classloader
-    val sparkClassLoader = SparkClassLoader.findFromContext
-    val runtimeContext = sparkClassLoader.getRuntimeContext
+    // Find the SparkRuntimeContext from the classloader. Create a new one if not found (for Spark 1.2)
+    val sparkClassLoader = Try(SparkClassLoader.findFromContext()) match {
+      case Success(classLoader) => classLoader
+      case Failure(exception) =>
+        val classLoader = SparkClassLoader.create()
+        // For Spark 1.2 driver. No need to reset the classloader at the end since this is the driver process.
+        SparkRuntimeUtils.setContextClassLoader(classLoader)
+        classLoader
+    }
 
-    // Load the user Spark class
-    val userSparkClass = sparkClassLoader.getProgramClassLoader.loadClass(args(0))
-    val executionContext = sparkClassLoader.createExecutionContext()
+    val cancellable = SparkRuntimeUtils.setContextClassLoader(sparkClassLoader)
     try {
-      userSparkClass match {
-        // SparkMain
-        case cls if classOf[SparkMain].isAssignableFrom(cls) =>
-          cls.asSubclass(classOf[SparkMain]).newInstance().run(executionContext)
+      val runtimeContext = sparkClassLoader.getRuntimeContext
 
-        // JavaSparkMain
-        case cls if classOf[JavaSparkMain].isAssignableFrom(cls) =>
-          cls.asSubclass(classOf[JavaSparkMain]).newInstance().run(
-            sparkClassLoader.createJavaExecutionContext(executionContext))
+      // Load the user Spark class
+      val userSparkClass = sparkClassLoader.getProgramClassLoader.loadClass(arguments(ARG_USER_CLASS))
+      val executionContext = sparkClassLoader.createExecutionContext()
+      try {
+        val cancelHeartbeat = startHeartbeat(arguments, runtimeContext, () => stop(Thread.currentThread))
+        userSparkClass match {
+          // SparkMain
+          case cls if classOf[SparkMain].isAssignableFrom(cls) =>
+            cls.asSubclass(classOf[SparkMain]).newInstance().run(executionContext)
 
-        // main() method
-        case cls =>
-          getMainMethod(cls).fold(
-            throw new IllegalArgumentException(userSparkClass.getName
-              + " is not a supported Spark program. It should implements either "
-              + classOf[SparkMain].getName + " or " + classOf[JavaSparkMain].getName
-              + " or has a main method defined")
-          )(
-            _.invoke(null, RuntimeArguments.toPosixArray(runtimeContext.getRuntimeArguments))
-          )
+          // JavaSparkMain
+          case cls if classOf[JavaSparkMain].isAssignableFrom(cls) =>
+            cls.asSubclass(classOf[JavaSparkMain]).newInstance().run(
+              sparkClassLoader.createJavaExecutionContext(executionContext))
+
+          // main() method
+          case cls =>
+            getMainMethod(cls).fold(
+              throw new IllegalArgumentException(userSparkClass.getName
+                + " is not a supported Spark program. It should implements either "
+                + classOf[SparkMain].getName + " or " + classOf[JavaSparkMain].getName
+                + " or has a main method defined")
+            )(
+              _.invoke(null, RuntimeArguments.toPosixArray(runtimeContext.getRuntimeArguments))
+            )
+        }
+        cancelHeartbeat.cancel
+      } catch {
+        case t: Throwable => if (!SparkRuntimeEnv.isStopped) throw t
+      } finally {
+        executionContext match {
+          case c: AutoCloseable => c.close
+          case _ => // no-op
+        }
       }
     } finally {
-      executionContext match {
-        case c: AutoCloseable => c.close()
-        case _ => // no-op
-      }
+      cancellable.cancel
     }
   }
 
@@ -73,6 +108,95 @@ object SparkMainWrapper {
       if (Modifier.isStatic(mainMethod.getModifiers)) Some(mainMethod) else None
     } catch {
       case _: Throwable => None
+    }
+  }
+
+  /**
+    * Starts the heartbeating thread if there is a [[co.cask.cdap.app.runtime.spark.distributed.SparkExecutionService]]
+    * running.
+    *
+    * @param arguments the arguments to the main method
+    * @param runtimeContext the [[co.cask.cdap.app.runtime.spark.SparkRuntimeContext]] for this execution
+    * @return a [[org.apache.twill.common.Cancellable]] to stop the heartbeating thread and signal the completion
+    *         of the execution.
+    */
+  private def startHeartbeat(arguments: Map[String, String],
+                             runtimeContext: SparkRuntimeContext, stopFunc: () => Unit): Cancellable = {
+    arguments.get(ARG_EXECUTION_SERVICE_URI).fold(new Cancellable {
+      override def cancel() = {
+        // no-op
+      }
+    })(baseURI => {
+      val programRunId = runtimeContext.getProgram.getId.toEntityId.run(runtimeContext.getRunId.getId)
+      val client = new SparkExecutionClient(URI.create(baseURI), programRunId)
+      val workflowToken = Option(runtimeContext.getWorkflowInfo).map(_.getWorkflowToken).orNull
+      val executor = Executors.newSingleThreadScheduledExecutor(
+        Threads.createDaemonThreadFactory("heartbeat-" + programRunId.getRun))
+
+      // Make the first heartbeat. If it fails, we will not start the spark execution.
+      heartbeat(client, stopFunc)
+
+      // Schedule the next heartbeat
+      executor.schedule(new Runnable() {
+        val failureCount = new AtomicInteger
+        override def run() = {
+          try {
+            heartbeat(client, stopFunc, workflowToken)
+            failureCount.set(0)
+            if (!SparkRuntimeEnv.isStopped) {
+              executor.schedule(this, HEARTBEAT_INTERVAL_SECONDS, TimeUnit.SECONDS)
+            }
+          } catch {
+            case badRequest : BadRequestException =>
+              LOG.error("Invalid spark program heartbeat. Terminating the execution.", badRequest)
+              stopFunc()
+            case t: Throwable =>
+              if (failureCount.getAndIncrement() < 10) {
+                LOG.warn("Failed to make heartbeat for {} times", failureCount.get, t)
+              } else {
+                LOG.error("Failed to make heartbeat for {} times. Terminating the execution", failureCount.get);
+                stopFunc()
+              }
+          }
+        }
+      }, HEARTBEAT_INTERVAL_SECONDS, TimeUnit.SECONDS)
+
+      new Cancellable {
+        override def cancel() = {
+          executor.shutdownNow
+          // Wait for the last heartbeat to complete
+          executor.awaitTermination(5L, TimeUnit.SECONDS)
+          // Send the complete call
+          client.completed(workflowToken)
+          LOG.info("Spark program execution completed: {}", programRunId)
+        }
+      }
+    })
+  }
+
+  /**
+    * Calls the heartbeat endpoint and handle the [[co.cask.cdap.app.runtime.spark.distributed.SparkCommand]]
+    * returned from the call.
+    */
+  private def heartbeat(client: SparkExecutionClient, stopFunc: () => Unit,
+                        workflowToken: BasicWorkflowToken = null) = {
+    Option(client.heartbeat(workflowToken)).foreach {
+      case stop if SparkCommand.STOP == stop =>
+        LOG.info("Stopping Spark program upon receiving stop command")
+        stopFunc()
+      case notSupported => LOG.warn("Ignoring unsupported command {}", notSupported)
+    }
+  }
+
+  /**
+    * Stops the Spark execution by stopping the [[co.cask.cdap.app.runtime.spark.SparkRuntimeEnv]] and
+    * interrupting the given Thread.
+    */
+  private def stop(thread: Thread): Unit = {
+    try {
+      SparkRuntimeEnv.stop
+    } finally {
+      thread.interrupt()
     }
   }
 }
