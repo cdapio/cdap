@@ -15,13 +15,14 @@
  */
 
 class TrackerEnableController{
-  constructor($state, myTrackerApi, $scope, myAlertOnValium, $q) {
+  constructor($state, myTrackerApi, $scope, myAlertOnValium, $q, UI_CONFIG) {
     this.$state = $state;
     this.myTrackerApi = myTrackerApi;
     this.$scope = $scope;
     this.enableTrackerLoading = false;
     this.myAlertOnValium = myAlertOnValium;
     this.$q = $q;
+    this.UI_CONFIG = UI_CONFIG;
   }
 
   enableTracker() {
@@ -61,11 +62,7 @@ class TrackerEnableController{
         })[0].value;
 
         let config = {
-          artifact: {
-            name: 'tracker',
-            version: '1.0-SNAPSHOT',
-            scope: 'USER'
-          },
+          artifact: this.UI_CONFIG.tracker.artifact,
           config: {
             auditLogKafkaConfig: {
               zookeeperString: zookeeper + '/' + kafkaNamespace,
@@ -97,14 +94,14 @@ class TrackerEnableController{
     let auditServiceParams = {
       namespace: this.$state.params.namespace,
       programType: 'services',
-      programId: 'AuditLog',
+      programId: this.UI_CONFIG.tracker.programId,
       scope: this.$scope
     };
 
     let auditFlowParams = {
       namespace: this.$state.params.namespace,
       programType: 'flows',
-      programId: 'AuditLogFlow',
+      programId: this.UI_CONFIG.tracker.flowProgramId,
       scope: this.$scope
     };
 
@@ -122,7 +119,7 @@ class TrackerEnableController{
   }
 }
 
-TrackerEnableController.$inject = ['$state', 'myTrackerApi', '$scope', 'myAlertOnValium', '$q'];
+TrackerEnableController.$inject = ['$state', 'myTrackerApi', '$scope', 'myAlertOnValium', '$q', 'UI_CONFIG'];
 
 angular.module(PKG.name + '.feature.tracker')
   .controller('TrackerEnableController', TrackerEnableController);

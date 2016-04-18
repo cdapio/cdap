@@ -34,7 +34,7 @@ angular.module(PKG.name + '.feature.tracker')
         parent: 'ns',
         template: '<ui-view/>',
         resolve: {
-          rTrackerApp: function (myTrackerApi, $q, $stateParams, $state) {
+          rTrackerApp: function (myTrackerApi, $q, $stateParams, $state, UI_CONFIG) {
             let defer = $q.defer();
 
             let params = {
@@ -44,7 +44,38 @@ angular.module(PKG.name + '.feature.tracker')
             myTrackerApi.getTrackerApp(params)
               .$promise
               .then( () => {
-                defer.resolve(true);
+
+                let auditServiceParams = {
+                  namespace: $stateParams.namespace,
+                  programType: 'services',
+                  programId: UI_CONFIG.tracker.programId,
+                };
+
+                let auditFlowParams = {
+                  namespace: $stateParams.namespace,
+                  programType: 'flows',
+                  programId: UI_CONFIG.tracker.flowProgramId,
+                };
+
+                $q.all([
+                  myTrackerApi.trackerProgramStatus(auditServiceParams).$promise,
+                  myTrackerApi.trackerProgramStatus(auditFlowParams).$promise
+                ]).then( (res) => {
+                  let isRunning = true;
+                  angular.forEach(res, (program) => {
+                    if (program.status !== 'RUNNING') {
+                      isRunning = false;
+                    }
+                  });
+
+                  if (!isRunning) {
+                    $state.go('tracker-enable');
+                  } else {
+                    defer.resolve(true);
+                  }
+                }, (err) => {
+                  console.log('error', err);
+                });
               }, () => {
                 $state.go('tracker-enable');
               });

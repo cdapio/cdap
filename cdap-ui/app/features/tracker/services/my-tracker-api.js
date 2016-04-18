@@ -45,7 +45,8 @@ function myTrackerApi(myCdapUrl, $resource, myAuth, myHelpers, UI_CONFIG) {
     toggleNavigator: myHelpers.getConfig('POST', 'REQUEST', navigatorPath + '/flows/MetadataFlow/:action', false),
     getTrackerApp: myHelpers.getConfig('GET', 'REQUEST', trackerApp, false, { suppressErrors: true }),
     deployTrackerApp: myHelpers.getConfig('PUT', 'REQUEST', trackerApp),
-    startTrackerProgram: myHelpers.getConfig('POST', 'REQUEST', trackerApp + '/:programType/:programId/start', false, { suppressErrors: true })
+    startTrackerProgram: myHelpers.getConfig('POST', 'REQUEST', trackerApp + '/:programType/:programId/start', false, { suppressErrors: true }),
+    trackerProgramStatus: myHelpers.getConfig('GET', 'REQUEST', trackerApp + '/:programType/:programId/status', false, { suppressErrors: true })
   });
 }
 

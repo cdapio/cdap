@@ -2,11 +2,12 @@
   "tracker": {
     "artifact": {
       "name": "tracker",
-      "version": "1.0-SNAPSHOT",
+      "version": "0.1.0-SNAPSHOT",
       "scope": "USER"
     },
     "appId": "_Tracker",
-    "programId": "AuditLog"
+    "programId": "AuditLog",
+    "flowProgramId": "AuditLogFlow"
   },
   "navigator": {
     "artifact": {
