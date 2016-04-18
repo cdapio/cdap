@@ -122,16 +122,27 @@ class HydratorPlusPlusHydratorService {
       extensionType: node.type,
       pluginName: node.plugin.name
     };
-    let nodeArtifact = node.plugin.artifact;
+
     return this.myPipelineApi.fetchPluginProperties(params)
       .$promise
       .then(function(res = []) {
+        let nodeArtifact = node.plugin.artifact;
+        if (node.plugin && !node.plugin.artifact && res.length) {
+          let lastElement = res.length - 1;
+          node._backendProperties = res[lastElement].properties || {};
+          node.description = res[lastElement].description;
+          node.plugin.artifact = res[lastElement].artifact;
+          defer.resolve(node);
+          return defer.promise;
+        }
+
         let match = res.filter(plug => angular.equals(plug.artifact, nodeArtifact));
         var pluginProperties = (match.length? match[0].properties: {});
         if (res.length && (!node.description || (node.description && !node.description.length))) {
           node.description = res[0].description;
         }
         node._backendProperties = pluginProperties;
+
         defer.resolve(node);
         return defer.promise;
       });
