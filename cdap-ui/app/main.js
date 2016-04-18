@@ -232,6 +232,7 @@ angular
       tables: true
     });
   }])
+
   /*
     FIXME: This is a one time only thing. Once all old users who migrated to 3.3 have their drafts moved from global level to
           namespace level this snippet can be removed. Ideally in 4.* we should be able to remove this.
