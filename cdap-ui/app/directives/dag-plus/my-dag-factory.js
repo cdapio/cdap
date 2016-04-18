@@ -145,7 +145,7 @@ angular.module(PKG.name + '.commons')
         'deduper': 'icon-deduper',
         'distinct': 'icon-distinct',
         'naivebayestrainer': 'icon-naivebayestrainer',
-        'groupbyaggregator': 'icon-groupbyaggregator',
+        'groupbyaggregate': 'icon-groupbyaggregate',
         'naivebayesclassifier': 'icon-naivebayesclassifier'
 
       };
