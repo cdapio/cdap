@@ -101,6 +101,7 @@ class HydratorPlusPlusLeftPanelCtrl {
         if (!proceedToNextStep) {
           this.selectedArtifact = this.artifactToRevert;
         } else {
+          this.HydratorPlusPlusConfigStore.setState(this.HydratorPlusPlusConfigStore.getDefaults());
           this.$state.go('hydratorplusplus.create', {
             namespace: this.$state.params.namespace,
             artifactType: this.selectedArtifact.name,
@@ -200,6 +201,7 @@ class HydratorPlusPlusLeftPanelCtrl {
         if (!jsonData.config.connections) {
           jsonData.config.connections = generateLinearConnections(jsonData.config);
         }
+        this.HydratorPlusPlusConfigStore.setState(this.HydratorPlusPlusConfigStore.getDefaults());
         this.$state.go('hydratorplusplus.create', { data: jsonData });
       }
     };

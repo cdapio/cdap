@@ -16,7 +16,7 @@
 
 class HydratorPlusPlusStudioCtrl {
   // Holy cow. Much DI. Such angular.
-  constructor(HydratorPlusPlusLeftPanelStore, HydratorPlusPlusConfigActions, $stateParams, rConfig, $rootScope, $scope, HydratorPlusPlusDetailNonRunsStore, HydratorPlusPlusNodeConfigStore, DAGPlusPlusNodesActionsFactory, HydratorPlusPlusHydratorService, HydratorPlusPlusConsoleActions, rSelectedArtifact, rArtifacts, myLocalStorage) {
+  constructor(HydratorPlusPlusLeftPanelStore, HydratorPlusPlusConfigActions, $stateParams, rConfig, $rootScope, $scope, HydratorPlusPlusDetailNonRunsStore, HydratorPlusPlusNodeConfigStore, DAGPlusPlusNodesActionsFactory, HydratorPlusPlusHydratorService, HydratorPlusPlusConsoleActions, rSelectedArtifact, rArtifacts, myLocalStorage, HydratorPlusPlusConfigStore, $window) {
     // This is required because before we fireup the actions related to the store, the store has to be initialized to register for any events.
 
     this.myLocalStorage = myLocalStorage;
@@ -66,6 +66,30 @@ class HydratorPlusPlusStudioCtrl {
       config.artifact = artifact;
       HydratorPlusPlusConfigActions.initializeConfigStore(config);
     }
+
+    var confirmOnPageExit = function (e) {
+
+      if (!HydratorPlusPlusConfigStore.getIsStateDirty()) { return; }
+      // If we haven't been passed the event get the window.event
+      e = e || $window.event;
+      var message = 'You have unsaved changes.';
+      // For IE6-8 and Firefox prior to version 4
+      if (e) {
+        e.returnValue = message;
+      }
+      // For Chrome, Safari, IE8+ and Opera 12+
+      return message;
+    };
+    $window.onbeforeunload = confirmOnPageExit;
+
+    $scope.$on('$stateChangeStart', function (event) {
+      if (HydratorPlusPlusConfigStore.getIsStateDirty()) {
+        var response = confirm('You have unsaved changes. Are you sure you want to exit this page?');
+        if (!response) {
+          event.preventDefault();
+        }
+      }
+    });
   }
   toggleSidebar() {
     this.isExpanded = !this.isExpanded;
@@ -73,7 +97,7 @@ class HydratorPlusPlusStudioCtrl {
   }
 }
 
-HydratorPlusPlusStudioCtrl.$inject = ['HydratorPlusPlusLeftPanelStore', 'HydratorPlusPlusConfigActions', '$stateParams', 'rConfig', '$rootScope', '$scope', 'HydratorPlusPlusDetailNonRunsStore', 'HydratorPlusPlusNodeConfigStore', 'DAGPlusPlusNodesActionsFactory', 'HydratorPlusPlusHydratorService', 'HydratorPlusPlusConsoleActions','rSelectedArtifact', 'rArtifacts', 'myLocalStorage'];
+HydratorPlusPlusStudioCtrl.$inject = ['HydratorPlusPlusLeftPanelStore', 'HydratorPlusPlusConfigActions', '$stateParams', 'rConfig', '$rootScope', '$scope', 'HydratorPlusPlusDetailNonRunsStore', 'HydratorPlusPlusNodeConfigStore', 'DAGPlusPlusNodesActionsFactory', 'HydratorPlusPlusHydratorService', 'HydratorPlusPlusConsoleActions','rSelectedArtifact', 'rArtifacts', 'myLocalStorage', 'HydratorPlusPlusConfigStore', '$window'];
 
 angular.module(PKG.name + '.feature.hydratorplusplus')
   .controller('HydratorPlusPlusStudioCtrl', HydratorPlusPlusStudioCtrl);
