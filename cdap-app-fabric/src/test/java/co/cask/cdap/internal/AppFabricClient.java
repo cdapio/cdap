@@ -39,6 +39,7 @@ import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.proto.ServiceInstances;
+import co.cask.cdap.proto.WorkflowNodeStateDetail;
 import co.cask.cdap.proto.WorkflowTokenDetail;
 import co.cask.cdap.proto.WorkflowTokenNodeDetail;
 import co.cask.cdap.proto.artifact.AppRequest;
@@ -48,6 +49,7 @@ import co.cask.cdap.proto.codec.WorkflowTokenNodeDetailCodec;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.http.BodyConsumer;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
@@ -287,6 +289,23 @@ public class AppFabricClient {
     WorkflowTokenNodeDetail workflowTokenDetail = responder.decodeResponseContent(workflowTokenNodeDetailType, GSON);
     verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Getting workflow token at node failed");
     return workflowTokenDetail;
+  }
+
+  public Map<String, WorkflowNodeStateDetail> getWorkflowNodeStates(ProgramRunId workflowRunId)
+    throws NotFoundException {
+    MockResponder responder = new MockResponder();
+    String uri = String.format("%s/apps/%s/workflows/%s/runs/%s/nodes/state",
+                               getNamespacePath(workflowRunId.getNamespace()), workflowRunId.getApplication(),
+                               workflowRunId.getProgram(), workflowRunId.getRun());
+    HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, uri);
+    workflowHttpHandler.getWorkflowNodeStates(request, responder, workflowRunId.getNamespace(),
+                                              workflowRunId.getApplication(), workflowRunId.getProgram(),
+                                              workflowRunId.getRun());
+
+    Type nodeStatesType = new TypeToken<Map<String, WorkflowNodeStateDetail>>() { }.getType();
+    Map<String, WorkflowNodeStateDetail> nodeStates = responder.decodeResponseContent(nodeStatesType, GSON);
+    verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Getting workflow node states failed.");
+    return nodeStates;
   }
 
   public List<RunRecord> getHistory(Id.Program programId, ProgramRunStatus status) throws BadRequestException,
