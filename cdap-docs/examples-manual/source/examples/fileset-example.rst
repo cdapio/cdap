@@ -10,8 +10,8 @@ FileSet Example
 ===============
 
 A Cask Data Application Platform (CDAP) example demonstrating the FileSet dataset and its
-use in services and MapReduce.
-
+use in services and MapReduce. The application also shows how to perform dataset management
+operations in programs.
 
 Overview
 ========
@@ -19,7 +19,8 @@ This application demonstrates the use of the FileSet dataset:
 
 - The *lines* FileSet is used as input for the *WordCount* MapReduce program.
 - The *counts* FileSet is used as output for the *WordCount* MapReduce program.
-- The *FileSetService* allows uploading and downloading files within these two file sets.
+- The *FileSetService* allows uploading and downloading files within these two file sets. It also allows creating
+  and managing additional file sets that can be used as input or output.
 
 Let's look at some of these components, and then run the application and see the results.
 
@@ -42,13 +43,13 @@ that file using MapReduce, and finally download the word counts from the *counts
 
 FileSetService
 --------------
-This service has two handler methods: one to upload and another to download a file.
-Both methods of this service have two arguments: the name of the FileSet and the relative path within that FileSet.
+This service has one method to upload and another to download a file.
+Both of these methods have two arguments: the name of the FileSet and the relative path within that FileSet.
 For example, the ``read`` method returns the contents of the requested file for a GET request:
 
 .. literalinclude:: /../../../cdap-examples/FileSetExample/src/main/java/co/cask/cdap/examples/fileset/FileSetService.java
     :language: java
-    :lines: 62-84
+    :lines: 77-99
     :dedent: 4
 
 It first instantiates the dataset specified by the first path parameter through its ``HttpServiceContext``.
@@ -70,18 +71,29 @@ by the ``path`` query parameter. See the section on :ref:`Handling Large Request
 and the :ref:`Sport Results Example <examples-sport-results>` for a more detailed explanation:
 
 .. literalinclude:: /../../../cdap-examples/FileSetExample/src/main/java/co/cask/cdap/examples/fileset/FileSetService.java
-     :language: java
-     :lines: 86-135
-     :dedent: 4
+    :language: java
+    :lines: 107-155
+    :dedent: 4
+
+In addition to reading and writing individual files, the ``FileSetService`` also allows performing dataset management
+operations, including creating, updating, truncating, and dropping file sets. These operations are available through
+the program context's ``getAdmin()`` interface. For example, the service has an endpoint that creates a new file set,
+either by cloning an existing file set's dataset properties, or using the properties submitted in the request body:
+
+.. literalinclude:: /../../../cdap-examples/FileSetExample/src/main/java/co/cask/cdap/examples/fileset/FileSetService.java
+    :language: java
+    :lines: 167-196
+    :dedent: 4
 
 MapReduce over Files
 ====================
-``WordCount`` is a simple word counting implementation in MapReduce. It reads its input from the
-*lines* FileSet and writes its output to the *counts* FileSet:
+``WordCount`` is a simple word counting implementation in MapReduce. By default, it reads its input from the
+*lines* FileSet and writes its output to the *counts* FileSet. Alternatively, the names of the input and output
+dataset can also be given as runtime arguments:
 
 .. literalinclude:: /../../../cdap-examples/FileSetExample/src/main/java/co/cask/cdap/examples/fileset/WordCount.java
     :language: java
-    :lines: 40-57
+    :lines: 40-63
     :append: ...
 
 It is worth mentioning that nothing in ``WordCount`` is specifically programmed to use a FileSet. Instead of
@@ -110,62 +122,109 @@ Uploading and Downloading Files
 -------------------------------
 First, we will upload a text file (``some.txt``) that we will use as input for the WordCount.
 This is done by making a RESTful call to the *FileSetService*.
-A sample text file (``lines.txt``) is included in the ``resources`` directory of the example:
+A sample text file (``lines.txt``) is included in the ``resources`` directory of the example. From within the CDAP CLI:
 
 .. tabbed-parsed-literal::
+    :tabs: "CDAP CLI"
 
-  $ cdap-cli.sh call service FileSetExample.FileSetService PUT "lines?path=some.txt" body:file examples/FileSetExample/resources/lines.txt
+    |cdap >| call service FileSetExample.FileSetService PUT lines?path=some.txt body:file examples/FileSetExample/resources/lines.txt
 
-Results::
-
-  < 200 OK
-  < Content-Length: 0
-  < Connection: keep-alive
-  < Content-Type: text/plain
+    < 200 OK
+    < Content-Length: 0
+    < Connection: keep-alive
+    < Content-Type: text/plain
 
 Now, we start the MapReduce program and configure it to use the file ``some.txt`` as its input, and to write its output to
 ``counts.out``:
 
 .. tabbed-parsed-literal::
-
-  $ cdap-cli.sh start mapreduce FileSetExample.WordCount "\"dataset.lines.input.paths=some.txt dataset.counts.output.path=counts.out\""
+    :tabs: "CDAP CLI"
+    
+    |cdap >| start mapreduce FileSetExample.WordCount "dataset.lines.input.paths=some.txt dataset.counts.output.path=counts.out"
   
-  Successfully started MapReduce program 'WordCount' of application 'FileSetExample' 
-  with provided runtime arguments 'dataset.lines.input.paths=some.txt dataset.counts.output.path=counts.out'
+    Successfully started MapReduce program 'WordCount' of application 'FileSetExample' 
+    with provided runtime arguments 'dataset.lines.input.paths=some.txt dataset.counts.output.path=counts.out'
 
 Check the status of the MapReduce program until it is completed:
 
 .. tabbed-parsed-literal::
-
-  $ cdap-cli.sh get mapreduce status FileSetExample.WordCount
+    :tabs: "CDAP CLI"
+    
+    |cdap >| get mapreduce status FileSetExample.WordCount
   
-  STOPPED
+    STOPPED
 
 and you can download the results of the computation:
 
 .. tabbed-parsed-literal::
-
-  $ cdap-cli.sh call service FileSetExample.FileSetService GET "counts?path=counts.out/part-r-00000"
-
+    :tabs: "CDAP CLI"
+    
+    |cdap >| call service FileSetExample.FileSetService GET counts?path=counts.out/part-r-00000
   
-Results::
-
-  < 200 OK
-  < Content-Length: 60
-  a:1
-  five:1
-  hello:4
-  is:1
-  letter:1
-  say:1
-  the:1
-  word:2
-  world:1
+    < 200 OK
+    < Content-Length: 60
+    a:1
+    five:1
+    hello:4
+    is:1
+    letter:1
+    say:1
+    the:1
+    word:2
+    world:1
 
 Note that we have to download a part file that is under the output path that was specified for the MapReduce program.
 This is because in MapReduce, every reducer writes a separate part file into the output directory.
 In this case, as we have fixed the number of reducers to one, there is only a single part file to download.
 
+Dataset Management Operations
+-----------------------------
+
+Instead of using the default input and output datasets that are created when the application is deployed,
+we can also create additional file sets using the ``FileSetService``. For example, we can create an input
+dataset named ``myin`` using the ``create`` endpoint:
+
+.. tabbed-parsed-literal::
+    :tabs: "CDAP CLI"
+    
+    |cdap >| call service FileSetExample.FileSetService POST /myin/create body "{ 'properties': { 'input.format' : 'org.apache.hadoop.mapreduce.lib.input.TextInputFormat' } }"
+
+The dataset properties for the new file set are given in the body of the request. Alternatively, we can clone an
+existing dataset's properties to create an output file set named ``myout``:
+
+.. tabbed-parsed-literal::
+    :tabs: "CDAP CLI"
+    
+    |cdap >| call service FileSetExample.FileSetService POST /myout/create?clone=counts
+
+We can now run the example with these two datasets as input and output. First, upload a file to the input dataset:
+
+.. tabbed-parsed-literal::
+    :tabs: "CDAP CLI"
+    
+    |cdap >| call service FileSetExample.FileSetService PUT myin?path=some.txt body:file examples/FileSetExample/resources/lines.txt
+
+Now start the MapReduce and provide extra runtime arguments to specify the input and output dataset:
+
+.. tabbed-parsed-literal::
+    :tabs: "CDAP CLI"
+    
+    |cdap >| start mapreduce FileSetExample.WordCount "input=myin output=myout dataset.myin.input.paths=some.txt dataset.myout.output.path=counts.out"
+
+Then we can retrieve the output of the MapReduce as previously:
+
+.. tabbed-parsed-literal::
+    :tabs: "CDAP CLI"
+    
+    |cdap >| call service FileSetExample.FileSetService GET myout?path=counts.out/part-r-00000
+
+Finally, we can delete the two datasets that we created:
+
+.. tabbed-parsed-literal::
+    :tabs: "CDAP CLI"
+    
+    |cdap >| call service FileSetExample.FileSetService POST /myin/drop
+    |cdap >| call service FileSetExample.FileSetService POST /myout/drop
 
 .. Stopping and Removing the Application
 .. =====================================
