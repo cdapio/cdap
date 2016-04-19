@@ -48,9 +48,9 @@ CDAP currently requires Internet access on the CDAP service nodes (or until the 
 For a Distributed CDAP cluster, version |release|, you **must** install these Hadoop components:
 
 .. |cdh-version|       replace:: 5.0.0 through 5.7.0
-.. |cdh-version-hbase| replace:: 5.0.0 through 5.7.0 (1.0-cdh5.7.0)
-.. |hdp-version|       replace:: 2.0 through 2.3
-.. |mapr-version|      replace:: 4.1 and 5.0
+.. |cdh-version-hbase| replace:: 5.0.0 through 5.7.0 (1.2-cdh5.7.0)
+.. |hdp-version|       replace:: 2.0 through 2.4
+.. |mapr-version|      replace:: 4.1 through 5.1
 
 +----------------+---------------------------------+---------------------------------------+
 | Component      | Source                          | Supported Versions                    |
@@ -104,7 +104,7 @@ Hadoop components, as required:
 +                +---------------------------------+---------------------------------------+
 |                | MapR                            | |mapr-version|                        |
 +----------------+---------------------------------+---------------------------------------+
-| **Spark**      | Apache                          | Versions 1.2.x, 1.3.x, and 1.4.x      |
+| **Spark**      | Apache                          | Versions 1.2.x through 1.6.x          |
 +                +---------------------------------+---------------------------------------+
 |                | Cloudera Data Hub (CDH)         | |cdh-version|                         |
 +                +---------------------------------+---------------------------------------+
