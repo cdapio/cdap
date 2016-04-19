@@ -145,13 +145,24 @@ public class WorkflowStatsSLAHttpHandler extends AbstractHttpHandler {
                                 @PathParam("app-id") String appId,
                                 @PathParam("workflow-id") String workflowId,
                                 @PathParam("run-id") String runId,
-                                @QueryParam("limit") int limit,
-                                @QueryParam("interval") String interval) throws Exception {
-    if (limit < 0) {
-      throw new BadRequestException("Limit has to be greater than or equal to 0. Entered value was : " + limit);
+                                @QueryParam("limit") @DefaultValue("10") int limit,
+                                @QueryParam("interval") @DefaultValue("10s") String interval) throws Exception {
+    if (limit <= 0) {
+      throw new BadRequestException("Limit has to be greater than 0. Entered value was : " + limit);
     }
 
-    long timeInterval = TimeMathParser.resolutionInSeconds(interval);
+    long timeInterval;
+    try {
+      timeInterval = TimeMathParser.resolutionInSeconds(interval);
+    } catch (IllegalArgumentException e) {
+      throw new BadRequestException("Interval is specified with invalid time unit. It should be specified with one" +
+                                      " of the 'ms', 's', 'm', 'h', 'd' units. Entered value was : " + interval);
+    }
+
+    if (timeInterval <= 0) {
+      throw new BadRequestException("Interval should be greater than 0 and should be specified with one of the 'ms'," +
+                                      " 's', 'm', 'h', 'd' units. Entered value was : " + interval);
+    }
     Id.Workflow workflow = Id.Workflow.from(Id.Namespace.from(namespaceId), appId, workflowId);
     Collection<WorkflowDataset.WorkflowRunRecord> workflowRunRecords =
       store.retrieveSpacedRecords(workflow, runId, limit, timeInterval);
