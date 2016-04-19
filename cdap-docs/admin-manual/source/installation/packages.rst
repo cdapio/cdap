@@ -47,12 +47,6 @@ Please review the :ref:`Software Prerequisites <admin-manual-software-requiremen
 as a configured Hadoop, HBase, and Hive (plus an optional Spark client) needs to be configured on the
 node(s) where CDAP will run. 
 
-.. Node.js Installation
-.. --------------------
-.. include:: /../target/_includes/packages-installation.rst
-    :start-after: .. _packages-install-node-js:
-    :end-before: .. _packages-install-packaging:
-
 .. Hadoop Configuration
 .. --------------------
 .. include:: ../_includes/installation/hadoop-configuration.txt
