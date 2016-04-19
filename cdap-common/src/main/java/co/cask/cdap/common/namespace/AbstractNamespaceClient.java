@@ -110,7 +110,12 @@ public abstract class AbstractNamespaceClient implements NamespaceAdmin {
 
   @Override
   public boolean exists(Id.Namespace namespaceId) throws Exception {
-    return get(namespaceId) != null;
+    try {
+      get(namespaceId);
+    } catch (NamespaceNotFoundException e) {
+      return false;
+    }
+    return true;
   }
 
   @Override
