@@ -47,6 +47,11 @@ CDAP currently requires Internet access on the CDAP service nodes (or until the 
 
 For a Distributed CDAP cluster, version |release|, you **must** install these Hadoop components:
 
+.. |cdh-version|       replace:: 5.0.0 through 5.7.0
+.. |cdh-version-hbase| replace:: 5.0.0 through 5.7.0 (1.0-cdh5.7.0)
+.. |hdp-version|       replace:: 2.0 through 2.3
+.. |mapr-version|      replace:: 4.1 and 5.0
+
 +----------------+---------------------------------+---------------------------------------+
 | Component      | Source                          | Supported Versions                    |
 +================+=================================+=======================================+
@@ -54,35 +59,35 @@ For a Distributed CDAP cluster, version |release|, you **must** install these Ha
 +----------------+---------------------------------+---------------------------------------+
 | **HBase**      | Apache                          | 0.96.x, 0.98.x, and 1.0               |
 +                +---------------------------------+---------------------------------------+
-|                | Cloudera Data Hub (CDH)         | 5.0.0 through 5.6.0 (1.0-cdh5.6.0)    |
+|                | Cloudera Data Hub (CDH)         | |cdh-version-hbase|                   |
 +                +---------------------------------+---------------------------------------+
-|                | Hortonworks Data Platform (HDP) | 2.0 through 2.3                       |
+|                | Hortonworks Data Platform (HDP) | |hdp-version|                         |
 +                +---------------------------------+---------------------------------------+
-|                | MapR                            | 4.1 and 5.0 (with Apache HBase)       |
+|                | MapR                            | |mapr-version| (with Apache HBase)    |
 +----------------+---------------------------------+---------------------------------------+
 | **HDFS**       | Apache Hadoop                   | 2.0.2-alpha through 2.6.0             |
 +                +---------------------------------+---------------------------------------+
-|                | Cloudera Data Hub (CDH)         | 5.0.0 through 5.6.0                   |
+|                | Cloudera Data Hub (CDH)         | |cdh-version|                         |
 +                +---------------------------------+---------------------------------------+
-|                | Hortonworks Data Platform (HDP) | 2.0 through 2.3                       |
+|                | Hortonworks Data Platform (HDP) | |hdp-version|                         |
 +                +---------------------------------+---------------------------------------+
-|                | MapR                            | 4.1 and 5.0 (with MapR-FS)            |
+|                | MapR                            | |mapr-version| (with MapR-FS)         |
 +----------------+---------------------------------+---------------------------------------+
 | **YARN** and   | Apache Hadoop                   | 2.0.2-alpha through 2.6.0             |
 + **MapReduce2** +---------------------------------+---------------------------------------+
-|                | Cloudera Data Hub (CDH)         | 5.0.0 through 5.6.0                   |
+|                | Cloudera Data Hub (CDH)         | |cdh-version|                         |
 +                +---------------------------------+---------------------------------------+
-|                | Hortonworks Data Platform (HDP) | 2.0 through 2.3                       |
+|                | Hortonworks Data Platform (HDP) | |hdp-version|                         |
 +                +---------------------------------+---------------------------------------+
-|                | MapR                            | 4.1 and 5.0                           |
+|                | MapR                            | |mapr-version|                        |
 +----------------+---------------------------------+---------------------------------------+
 | **ZooKeeper**  | Apache                          | Version 3.4.3 through 3.4.5           |
 +                +---------------------------------+---------------------------------------+
-|                | Cloudera Data Hub (CDH)         | 5.0.0 through 5.6.0                   |
+|                | Cloudera Data Hub (CDH)         | |cdh-version|                         |
 +                +---------------------------------+---------------------------------------+
-|                | Hortonworks Data Platform (HDP) | 2.0 through 2.3                       |
+|                | Hortonworks Data Platform (HDP) | |hdp-version|                         |
 +                +---------------------------------+---------------------------------------+
-|                | MapR                            | 4.1 and 5.0                           |
+|                | MapR                            | |mapr-version|                        |
 +----------------+---------------------------------+---------------------------------------+
 
 For a Distributed CDAP cluster, version |release|, you *can* (optionally) install these
@@ -93,19 +98,19 @@ Hadoop components, as required:
 +================+=================================+=======================================+
 | **Hive**       | Apache                          | Version 0.12.0 through 1.1.0          |
 +                +---------------------------------+---------------------------------------+
-|                | Cloudera Data Hub (CDH)         | 5.0.0 through 5.6.0                   |
+|                | Cloudera Data Hub (CDH)         | |cdh-version|                         |
 +                +---------------------------------+---------------------------------------+
-|                | Hortonworks Data Platform (HDP) | 2.0 through 2.3                       |
+|                | Hortonworks Data Platform (HDP) | |hdp-version|                         |
 +                +---------------------------------+---------------------------------------+
-|                | MapR                            | 4.1 and 5.0                           |
+|                | MapR                            | |mapr-version|                        |
 +----------------+---------------------------------+---------------------------------------+
 | **Spark**      | Apache                          | Versions 1.2.x, 1.3.x, and 1.4.x      |
 +                +---------------------------------+---------------------------------------+
-|                | Cloudera Data Hub (CDH)         | 5.0.0 through 5.6.0                   |
+|                | Cloudera Data Hub (CDH)         | |cdh-version|                         |
 +                +---------------------------------+---------------------------------------+
-|                | Hortonworks Data Platform (HDP) | 2.0 through 2.3                       |
+|                | Hortonworks Data Platform (HDP) | |hdp-version|                         |
 +                +---------------------------------+---------------------------------------+
-|                | MapR                            | 4.1 and 5.0                           |
+|                | MapR                            | |mapr-version|                        |
 +----------------+---------------------------------+---------------------------------------+
 
 **Note:** Component versions shown in these tables are those that we have tested and are
