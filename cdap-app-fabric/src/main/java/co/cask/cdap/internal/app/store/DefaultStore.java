@@ -1185,4 +1185,15 @@ public class DefaultStore implements Store {
         }
       }, apps.get());
   }
+
+  public void upgrade() {
+    appsTx.get().executeUnchecked(
+      new TransactionExecutor.Function<AppMetadataStore, Void>() {
+        @Override
+        public Void apply(AppMetadataStore mds) throws Exception {
+          mds.upgradeWorkflowRunRecords();
+          return null;
+        }
+      }, apps.get());
+  }
 }

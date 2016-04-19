@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,8 +21,10 @@ import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.internal.AppFabricClient;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.WorkflowNodeStateDetail;
 import co.cask.cdap.proto.WorkflowTokenDetail;
 import co.cask.cdap.proto.WorkflowTokenNodeDetail;
+import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.test.AbstractProgramManager;
 import co.cask.cdap.test.FlowManager;
 import co.cask.cdap.test.ScheduleManager;
@@ -30,6 +32,7 @@ import co.cask.cdap.test.WorkflowManager;
 import com.google.common.base.Throwables;
 
 import java.util.List;
+import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
@@ -61,6 +64,12 @@ public class DefaultWorkflowManager extends AbstractProgramManager<WorkflowManag
                                                 @Nullable String key) throws NotFoundException {
     return appFabricClient.getWorkflowToken(programId.getNamespaceId(), programId.getApplicationId(), programId.getId(),
                                             runId, nodeName, scope, key);
+  }
+
+  @Override
+  public Map<String, WorkflowNodeStateDetail> getWorkflowNodeStates(ProgramRunId workflowRunId)
+    throws NotFoundException {
+    return appFabricClient.getWorkflowNodeStates(workflowRunId);
   }
 
   public ScheduleManager getSchedule(final String schedName) {

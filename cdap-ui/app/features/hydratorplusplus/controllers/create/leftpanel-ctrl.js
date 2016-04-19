@@ -101,6 +101,7 @@ class HydratorPlusPlusLeftPanelCtrl {
         if (!proceedToNextStep) {
           this.selectedArtifact = this.artifactToRevert;
         } else {
+          this.HydratorPlusPlusConfigStore.setState(this.HydratorPlusPlusConfigStore.getDefaults());
           this.$state.go('hydratorplusplus.create', {
             namespace: this.$state.params.namespace,
             artifactType: this.selectedArtifact.name,
@@ -172,14 +173,16 @@ class HydratorPlusPlusLeftPanelCtrl {
       }
 
       let isNotValid = this.NonStorePipelineErrorFactory.validateImportJSON(jsonData);
-      let validArtifact = isValidArtifact(jsonData.artifact);
-
       if (isNotValid) {
         this.myAlertOnValium.show({
           type: 'danger',
           content: isNotValid
         });
-      } else if (!validArtifact.name || !validArtifact.version || !validArtifact.scope) {
+        return;
+      }
+
+      let validArtifact = isValidArtifact(jsonData.artifact);
+      if (!validArtifact.name || !validArtifact.version || !validArtifact.scope) {
         let invalidFields = [];
         if (!validArtifact.name) {
           invalidFields.push('Artifact name');
@@ -200,6 +203,7 @@ class HydratorPlusPlusLeftPanelCtrl {
         if (!jsonData.config.connections) {
           jsonData.config.connections = generateLinearConnections(jsonData.config);
         }
+        this.HydratorPlusPlusConfigStore.setState(this.HydratorPlusPlusConfigStore.getDefaults());
         this.$state.go('hydratorplusplus.create', { data: jsonData });
       }
     };

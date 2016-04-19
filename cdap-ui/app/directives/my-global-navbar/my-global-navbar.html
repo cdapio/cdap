@@ -68,6 +68,7 @@
     <ul class="navbar-list" ng-if="Navbar.activeProduct === 'hydrator'">
       <li>
         <a ui-sref="hydratorplusplus.create({ namespace: $stateParams.namespace })"
+           ui-sref-opts="{ inherit: false }"
            ng-class="{ 'active': Navbar.highlightTab === 'hydratorStudioPlusPlus'}">
           Studio
         </a>

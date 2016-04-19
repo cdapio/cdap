@@ -760,6 +760,7 @@ public class TestBase {
   /**
    * Adds an instance of a dataset.
    *
+   * @param namespace namespace for the dataset
    * @param datasetTypeName dataset type name
    * @param datasetInstanceName instance name
    * @param props properties
@@ -789,6 +790,7 @@ public class TestBase {
   /**
    * Adds an instance of dataset.
    *
+   * @param namespace namespace for the dataset
    * @param datasetTypeName dataset type name
    * @param datasetInstanceName instance name
    * @param <T> type of the dataset admin
@@ -812,9 +814,10 @@ public class TestBase {
   }
 
   /**
-   * Gets Dataset manager of Dataset instance of type <T>
+   * Gets Dataset manager of Dataset instance of type {@literal <}T>.
    *
-   * @param datasetInstanceName - instance name of dataset
+   * @param namespace namespace for the dataset
+   * @param datasetInstanceName instance name of dataset
    * @return Dataset Manager of Dataset instance of type <T>
    * @throws Exception
    */
@@ -824,10 +827,10 @@ public class TestBase {
   }
 
   /**
-   * Gets Dataset manager of Dataset instance of type <T>
+   * Gets Dataset manager of Dataset instance of type {@literal <}T>.
    *
-   * @param datasetInstanceName - instance name of dataset
-   * @return Dataset Manager of Dataset instance of type <T>
+   * @param datasetInstanceName instance name of dataset
+   * @return Dataset Manager of Dataset instance of type {@literal <}T>
    * @throws Exception
    */
   protected final <T> DataSetManager<T> getDataset(String datasetInstanceName) throws Exception {
@@ -835,7 +838,9 @@ public class TestBase {
   }
 
   /**
-   * Returns a JDBC connection that allows to run SQL queries over data sets.
+   * Returns a JDBC connection that allows the running of SQL queries over data sets.
+   * 
+   * @param namespace namespace for the connection
    */
   protected final Connection getQueryClient(Id.Namespace namespace) throws Exception {
     if (!cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED)) {
@@ -845,7 +850,7 @@ public class TestBase {
   }
 
   /**
-   * Returns a JDBC connection that allows to run SQL queries over data sets.
+   * Returns a JDBC connection that allows the running of SQL queries over data sets.
    */
   protected final Connection getQueryClient() throws Exception {
     return getQueryClient(Id.Namespace.DEFAULT);
@@ -864,6 +869,7 @@ public class TestBase {
   /**
    * Returns a {@link StreamManager} for the specified stream in the specified namespace
    *
+   * @param namespace namespace for the stream
    * @param streamName the specified stream
    * @return {@link StreamManager} for the specified stream in the specified namespace
    */
