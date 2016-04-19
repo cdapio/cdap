@@ -141,7 +141,12 @@ angular.module(PKG.name + '.commons')
         'streamformatter': 'icon-streamformatter',
         'hdfs': 'icon-hdfs',
         'hasher': 'icon-hasher',
-        'javascript': 'icon-javascript'
+        'javascript': 'icon-javascript',
+        'deduper': 'icon-deduper',
+        'distinct': 'icon-distinct',
+        'naivebayestrainer': 'icon-naivebayestrainer',
+        'groupbyaggregate': 'icon-groupbyaggregate',
+        'naivebayesclassifier': 'icon-naivebayesclassifier'
 
       };
 
