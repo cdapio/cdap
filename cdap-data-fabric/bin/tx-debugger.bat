@@ -25,7 +25,8 @@ SET DEFAULT_JVM_OPTS=-Xmx2048m -XX:MaxPermSize=128m
 SET HADOOP_HOME_OPTS=-Dhadoop.home.dir=%CDAP_HOME%\libexec
 
 SET CLASSPATH=%CDAP_HOME%\lib\*;%CDAP_HOME%\conf\
-SET PATH=%PATH%;%CDAP_HOME%\libexec\bin
+SET ORIG_PATH=%PATH%
+SET PATH=%PATH%;%CDAP_HOME%\libexec\bin;%CDAP_HOME%\lib\native
 
 REM Check for 64-bit version of OS. Currently not supporting 32-bit Windows
 IF NOT EXIST "%PROGRAMFILES(X86)%" (
@@ -75,3 +76,4 @@ if "%tokenFileProvided%" == "false" if exist %auth_file% (
 %JAVACMD% %DEFAULT_JVM_OPTS% %HADOOP_HOME_OPTS% %TOKEN_FILE_OPTS% -classpath %CLASSPATH% co.cask.cdap.data2.transaction.TransactionManagerDebuggerMain %*
 
 :FINALLY
+SET PATH=%ORIG_PATH%
