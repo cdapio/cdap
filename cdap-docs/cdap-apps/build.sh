@@ -76,8 +76,6 @@ function download_md_doc_file() {
   if curl --output /dev/null --silent --head --fail "${source_url}"; then
     echo "Downloading ${source_file_name} from ${source_dir} to ${type_plural}/${target_file_name}"
     curl --silent ${source_url} --output ${target}
-    echo "${RETURN_STRING}" >> ${target}
-    echo "${VERSION_STRING}${HYDRATOR_VERSION}" >> ${target}
     # FIXME if file does not begin with a "#" character, append "# title\n" to start
     local first=$(head -1 ${target})
     if [ "x${first:0:2}" != "x# " ]; then
@@ -90,6 +88,8 @@ function download_md_doc_file() {
       echo "  Appending ${append_file} to ${target_file_name}"
       cat ${base_target}/${append_file} >> ${target}
     fi
+    echo "${RETURN_STRING}" >> ${target}
+    echo "${VERSION_STRING}${HYDRATOR_VERSION}" >> ${target}
   else
     local m="URL does not exist: ${source_url}"
     echo_red_bold "${m}"
