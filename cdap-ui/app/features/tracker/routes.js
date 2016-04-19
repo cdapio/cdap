@@ -34,7 +34,7 @@ angular.module(PKG.name + '.feature.tracker')
         parent: 'ns',
         template: '<ui-view/>',
         resolve: {
-          rTrackerApp: function (myTrackerApi, $q, $stateParams, $state, UI_CONFIG) {
+          rTrackerApp: function (myTrackerApi, $q, $stateParams, $state, UI_CONFIG, myAlertOnValium) {
             let defer = $q.defer();
 
             let params = {
@@ -44,7 +44,6 @@ angular.module(PKG.name + '.feature.tracker')
             myTrackerApi.getTrackerApp(params)
               .$promise
               .then( () => {
-
                 let auditServiceParams = {
                   namespace: $stateParams.namespace,
                   programType: 'services',
@@ -74,7 +73,10 @@ angular.module(PKG.name + '.feature.tracker')
                     defer.resolve(true);
                   }
                 }, (err) => {
-                  console.log('error', err);
+                  myAlertOnValium.show({
+                    type: 'danger',
+                    content: err.data
+                  });
                 });
               }, () => {
                 $state.go('tracker-enable');

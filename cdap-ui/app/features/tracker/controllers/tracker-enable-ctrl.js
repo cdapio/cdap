@@ -111,9 +111,18 @@ class TrackerEnableController{
     ]).then( () => {
       this.$state.go('tracker.home');
       this.enableTrackerLoading = false;
-    }, () => {
+    }, (err) => {
       // it errors out if one of the programs already started
-      this.$state.go('tracker.home');
+      // If we get any other error besides 409, we need to surface that information
+      // because there is a legitimate error with starting the programs.
+      if (err.statusCode !== 409) {
+        this.myAlertOnValium.show({
+          type: 'danger',
+          content: err.data
+        });
+      } else {
+        this.$state.go('tracker.home');
+      }
       this.enableTrackerLoading = false;
     });
   }
