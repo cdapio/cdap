@@ -56,7 +56,7 @@ The request can be extended with query parameters:
      - *user* (default) returns the token for ``Scope.USER``; *system* returns the token for
        ``Scope.SYSTEM``
    * - ``key``
-     - Returns the value for a specified key; if unspecified, returns all keys.
+     - Returns the value for a specified key; if unspecified, returns all keys (optional)
 
 
 .. rubric:: Comments
@@ -164,12 +164,12 @@ where
    * - ``<workflow-id>``
      - Name of the workflow
    * - ``<start-time>``
-     - Start time of runs (in seconds); default is ``now`` (optional)
+     - Start time of runs (in seconds); if not provided, defaults to ``now`` (optional) 
    * - ``<end-time>``
-     - End time of runs (in seconds); default is ``now-1d`` (optional)
+     - End time of runs (in seconds); if not provided, defaults to ``now-1d`` (optional) 
    * - ``<percentile-1>``
      - List of percentiles (each greater than zero and less than 100) to be used for generating statistics;
-       if not provided, defaults to 90 (optional)
+       if not provided, defaults to 90 (optional) 
 
 If the query was successful, the body will contain a JSON structure of statistics.
 
@@ -276,9 +276,9 @@ where
    * - ``<run-id>``
      - UUID of the workflow run
    * - ``<limit>``
-     - The number of the records to compare against (before and after) the run
+     - The number of the records to compare against (before and after) the run; if not provided, defaults to ``10`` (optional) 
    * - ``<interval>``
-     - The time interval with which to space out the runs before and after, with units
+     - The time interval with which to space out the runs before and after, with units; if not provided, defaults to ``10s`` (optional) 
 
 If the query was successful, the body will contain a JSON structure of statistics.
 

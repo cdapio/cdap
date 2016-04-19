@@ -194,6 +194,34 @@ public class WorkflowStatsSLAHttpHandlerTest extends AppFabricTestBase {
 
     Assert.assertEquals(7, workflowStatistics.getProgramNodesList().iterator().next()
       .getWorkflowProgramDetailsList().size());
+
+    request = String.format("%s/namespaces/%s/apps/%s/workflows/%s/runs/%s/statistics?limit=0",
+                            Constants.Gateway.API_VERSION_3, Id.Namespace.DEFAULT.getId(),
+                            WorkflowApp.class.getSimpleName(), workflowProgram.getId(), runIdList.get(6).getId());
+
+    response = doGet(request);
+    Assert.assertEquals(HttpResponseStatus.BAD_REQUEST.getCode(), response.getStatusLine().getStatusCode());
+
+    request = String.format("%s/namespaces/%s/apps/%s/workflows/%s/runs/%s/statistics?limit=10&interval=10",
+                            Constants.Gateway.API_VERSION_3, Id.Namespace.DEFAULT.getId(),
+                            WorkflowApp.class.getSimpleName(), workflowProgram.getId(), runIdList.get(6).getId());
+
+    response = doGet(request);
+    Assert.assertEquals(HttpResponseStatus.BAD_REQUEST.getCode(), response.getStatusLine().getStatusCode());
+
+    request = String.format("%s/namespaces/%s/apps/%s/workflows/%s/runs/%s/statistics?limit=10&interval=10P",
+                            Constants.Gateway.API_VERSION_3, Id.Namespace.DEFAULT.getId(),
+                            WorkflowApp.class.getSimpleName(), workflowProgram.getId(), runIdList.get(6).getId());
+
+    response = doGet(request);
+    Assert.assertEquals(HttpResponseStatus.BAD_REQUEST.getCode(), response.getStatusLine().getStatusCode());
+
+    request = String.format("%s/namespaces/%s/apps/%s/workflows/%s/runs/%s/statistics?limit=20&interval=0d",
+                            Constants.Gateway.API_VERSION_3, Id.Namespace.DEFAULT.getId(),
+                            WorkflowApp.class.getSimpleName(), workflowProgram.getId(), runIdList.get(6).getId());
+
+    response = doGet(request);
+    Assert.assertEquals(HttpResponseStatus.BAD_REQUEST.getCode(), response.getStatusLine().getStatusCode());
   }
 
   @Test
