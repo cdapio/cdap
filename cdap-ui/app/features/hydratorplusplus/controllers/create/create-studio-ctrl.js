@@ -29,6 +29,7 @@ class HydratorPlusPlusStudioCtrl {
       HydratorPlusPlusDetailNonRunsStore.reset();
       HydratorPlusPlusNodeConfigStore.reset();
       HydratorPlusPlusConsoleActions.resetMessages();
+      $window.onbeforeunload = null;
     });
 
     let getValidArtifact = () => {
