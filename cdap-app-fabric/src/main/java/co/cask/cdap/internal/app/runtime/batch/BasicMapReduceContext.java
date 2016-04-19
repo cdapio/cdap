@@ -19,6 +19,7 @@ package co.cask.cdap.internal.app.runtime.batch;
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.data.batch.Input;
 import co.cask.cdap.api.data.batch.InputFormatProvider;
+import co.cask.cdap.api.data.batch.Output;
 import co.cask.cdap.api.data.batch.OutputFormatProvider;
 import co.cask.cdap.api.data.batch.Split;
 import co.cask.cdap.api.data.stream.StreamBatchReadable;
@@ -228,7 +229,7 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
   }
 
   @SuppressWarnings("unchecked")
-  private void addInput(String inputName, InputFormatProvider inputFormatProvider, @Nullable Class<?> mapperClass) {
+  private void addInput(String alias, InputFormatProvider inputFormatProvider, @Nullable Class<?> mapperClass) {
     // prevent calls to addInput after setting a single input.
     if (inputs instanceof ImmutableMap) {
       throw new IllegalStateException("Can not add inputs after setting a single input.");
@@ -237,7 +238,10 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
     if (mapperClass != null && !Mapper.class.isAssignableFrom(mapperClass)) {
       throw new IllegalArgumentException("Specified mapper class must extend Mapper.");
     }
-    inputs.put(inputName, new MapperInput(inputFormatProvider, (Class<? extends Mapper>) mapperClass));
+    if (inputs.containsKey(alias)) {
+      throw new IllegalArgumentException("Input already configured: " + alias);
+    }
+    inputs.put(alias, new MapperInput(inputFormatProvider, (Class<? extends Mapper>) mapperClass));
   }
 
   @Override
@@ -255,6 +259,10 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
                mapperCls);
     } else if (input instanceof Input.InputFormatProviderInput) {
       addInput(input.getAlias(), ((Input.InputFormatProviderInput) input).getInputFormatProvider(), mapperCls);
+    } else {
+      // shouldn't happen unless user defines their own Input class
+      throw new IllegalArgumentException(String.format("Input %s has unknown input class %s",
+                                                       input.getName(), input.getClass().getCanonicalName()));
     }
   }
 
@@ -280,18 +288,40 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
 
   @Override
   public void addOutput(String datasetName, Map<String, String> arguments) {
-    // we can delay the instantiation of the Dataset to later, but for now, we still have to maintain backwards
-    // compatibility for the #setOutput(String, Dataset) method, so delaying the instantiation of this dataset will
-    // bring about code complexity without much benefit. Once #setOutput(String, Dataset) is removed, we can postpone
-    // this dataset instantiation
-    addOutput(datasetName, new DatasetOutputFormatProvider(datasetName, arguments,
-                                                           getDataset(datasetName, arguments, AccessType.WRITE),
-                                                           MapReduceBatchWritableOutputFormat.class));
+    addOutput(Output.ofDataset(datasetName, arguments));
   }
 
   @Override
-  public void addOutput(String outputName, OutputFormatProvider outputFormatProvider) {
-    this.outputFormatProviders.put(outputName, outputFormatProvider);
+  public void addOutput(String alias, OutputFormatProvider outputFormatProvider) {
+    if (this.outputFormatProviders.containsKey(alias)) {
+      throw new IllegalArgumentException("Output already configured: " + alias);
+    }
+    this.outputFormatProviders.put(alias, outputFormatProvider);
+  }
+
+  @Override
+  public void addOutput(Output output) {
+    if (output instanceof Output.DatasetOutput) {
+      String datasetName = output.getName();
+      Map<String, String> arguments = ((Output.DatasetOutput) output).getArguments();
+
+      // we can delay the instantiation of the Dataset to later, but for now, we still have to maintain backwards
+      // compatibility for the #setOutput(String, Dataset) method, so delaying the instantiation of this dataset will
+      // bring about code complexity without much benefit. Once #setOutput(String, Dataset) is removed, we can postpone
+      // this dataset instantiation
+      DatasetOutputFormatProvider outputFormatProvider =
+        new DatasetOutputFormatProvider(datasetName, arguments,
+                                        getDataset(datasetName, arguments, AccessType.WRITE),
+                                        MapReduceBatchWritableOutputFormat.class);
+      addOutput(output.getAlias(), outputFormatProvider);
+
+    } else if (output instanceof Output.OutputFormatProviderOutput) {
+      addOutput(output.getAlias(), ((Output.OutputFormatProviderOutput) output).getOutputFormatProvider());
+    } else {
+      // shouldn't happen unless user defines their own Output class
+      throw new IllegalArgumentException(String.format("Output %s has unknown output class %s",
+                                                       output.getName(), output.getClass().getCanonicalName()));
+    }
   }
 
   private void clearOutputs() {

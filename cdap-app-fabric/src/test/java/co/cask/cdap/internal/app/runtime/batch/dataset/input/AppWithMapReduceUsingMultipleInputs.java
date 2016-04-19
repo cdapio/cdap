@@ -27,6 +27,7 @@ import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.mapreduce.MapReduceTaskContext;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableMap;
 import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
@@ -66,12 +67,13 @@ public class AppWithMapReduceUsingMultipleInputs extends AbstractApplication {
       .setOutputProperty(TextOutputFormat.SEPERATOR, " ")
       .build());
     addMapReduce(new ComputeSum());
+    addMapReduce(new InvalidMapReduce());
   }
 
   /**
    * Computes sum of a customer's spending, while also joining on a lookup table, to get more data.
    */
-  public static final class ComputeSum extends AbstractMapReduce {
+  public static class ComputeSum extends AbstractMapReduce {
 
     @Override
     public void beforeSubmit(MapReduceContext context) throws Exception {
@@ -91,6 +93,17 @@ public class AppWithMapReduceUsingMultipleInputs extends AbstractApplication {
       Job job = context.getHadoopJob();
       job.setMapperClass(FileMapper.class);
       job.setReducerClass(FileReducer.class);
+    }
+  }
+
+  /**
+   * This is an invalid MR because it adds an input a second time, with the same alias.
+   */
+  public static final class InvalidMapReduce extends ComputeSum {
+    @Override
+    public void beforeSubmit(MapReduceContext context) throws Exception {
+      super.beforeSubmit(context);
+      context.addInput(Input.ofDataset(PURCHASES, ImmutableMap.of("key", "value")));
     }
   }
 
