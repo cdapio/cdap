@@ -8,6 +8,8 @@
 Shared Plugins: CoreValidator
 =============================
 
+Hydrator Version |cdap-hydrator-version|
+
 .. rubric:: Description
 
 A system-supplied validator that offers a set of functions that can be called from the validator transform.

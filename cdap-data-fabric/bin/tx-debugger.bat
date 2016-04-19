@@ -1,7 +1,7 @@
 @echo OFF
 
 REM #################################################################################
-REM ## Copyright (c) 2014 Cask Data, Inc.
+REM ## Copyright (c) 2014-2016 Cask Data, Inc.
 REM ##
 REM ## Licensed under the Apache License, Version 2.0 (the "License"); you may not
 REM ## use this file except in compliance with the License. You may obtain a copy of
@@ -21,6 +21,8 @@ REM ############################################################################
 SET CDAP_HOME=%~dp0
 SET CDAP_HOME=%CDAP_HOME:~0,-5%
 SET JAVACMD=%JAVA_HOME%\bin\java.exe
+SET DEFAULT_JVM_OPTS=-Xmx2048m -XX:MaxPermSize=128m
+SET HADOOP_HOME_OPTS=-Dhadoop.home.dir=%CDAP_HOME%\libexec
 
 SET CLASSPATH=%CDAP_HOME%\lib\*;%CDAP_HOME%\conf\
 SET PATH=%PATH%;%CDAP_HOME%\libexec\bin
@@ -67,9 +69,9 @@ for %%a in (%*) do (
 )
 
 if "%tokenFileProvided%" == "false" if exist %auth_file% (
-  %JAVACMD% -classpath %CLASSPATH% co.cask.cdap.data2.transaction.TransactionManagerDebuggerMain %* --token-file %auth_file%
-  GOTO :FINALLY
+  set TOKEN_FILE_OPTS=--token-file %auth_file%
 )
-%JAVACMD% -classpath %CLASSPATH% co.cask.cdap.data2.transaction.TransactionManagerDebuggerMain %*
-:FINALLY
 
+%JAVACMD% %DEFAULT_JVM_OPTS% %HADOOP_HOME_OPTS% %TOKEN_FILE_OPTS% -classpath %CLASSPATH% co.cask.cdap.data2.transaction.TransactionManagerDebuggerMain %*
+
+:FINALLY
