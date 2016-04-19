@@ -312,6 +312,7 @@ public class DataPipelineTest extends HydratorTestBase {
                  |--> agg2 --> sink2
      */
     ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
+      .setEngine(engine)
       .addStage(new ETLStage("source", MockSource.getPlugin(sourceName)))
       .addStage(new ETLStage("sink1", MockSink.getPlugin(sink1Name)))
       .addStage(new ETLStage("sink2", MockSink.getPlugin(sink2Name)))
