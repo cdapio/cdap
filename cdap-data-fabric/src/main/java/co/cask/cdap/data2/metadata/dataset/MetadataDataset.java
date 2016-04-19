@@ -509,9 +509,12 @@ public class MetadataDataset extends AbstractDataset {
     byte[] keyBytes = mdsKey.getKey();
     // byte array is automatically initialized to 0, which implies fixed match in fuzzy info
     // the row key after targetId doesn't need to be a match.
-    byte[] infoBytes = new byte[keyBytes.length];
+    // Workaround for HBASE-15676, need to have at least one 1 in the fuzzy filter
+    byte[] infoBytes = new byte[keyBytes.length + 1];
+    infoBytes[infoBytes.length - 1] = 1;
 
-    return new ImmutablePair<>(keyBytes, infoBytes);
+    // the key array size and mask array size has to be equal so increase the size by 1
+    return new ImmutablePair<>(Bytes.concat(keyBytes, new byte[1]), infoBytes);
   }
 
   /**
