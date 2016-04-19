@@ -2,7 +2,7 @@
 # Cookbook Name:: cdap
 # Recipe:: ui
 #
-# Copyright © 2013-2015 Cask Data, Inc.
+# Copyright © 2013-2016 Cask Data, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,11 +17,14 @@
 # limitations under the License.
 #
 
-include_recipe 'nodejs::default'
-link '/usr/bin/node' do
-  to '/usr/local/bin/node'
-  action :create
-  not_if 'test -e /usr/bin/node'
+# Starting with CDAP 3.4, we ship Node.js with the cdap-ui package
+if node['cdap']['version'].to_f < 3.4
+  include_recipe 'nodejs::default'
+  link '/usr/bin/node' do
+    to '/usr/local/bin/node'
+    action :create
+    not_if 'test -e /usr/bin/node'
+  end
 end
 
 include_recipe 'cdap::repo'
