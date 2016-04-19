@@ -23,16 +23,18 @@ CHECK_INCLUDES=${TRUE}
 
 function download_md_doc_file() {
   # Downloads a Markdown docs file to a directory
+  #
   # https://raw.githubusercontent.com/caskdata/hydrator-plugins/develop/cassandra-plugins/docs/Cassandra-batchsink.md
   # goes to
   # hydrator-plugins/batchsinks/cassandra.md
-  # 1:Includes dir 2:GitHub Hydrator source dir 3:Hydrator dir 4:Type 5:Target filename 6:Source Markdown filename
-  # download_md_doc_file base_target  base_source      source_dir        source_file_name
-  # download_md_doc_file $base_target $hydrator_source cassandra-plugins Cassandra-batchsink.md 
+  #
+  # download_md_doc_file base_target  base_source      source_dir        source_file_name       append_file (optional)
+  # download_md_doc_file $base_target $hydrator_source cassandra-plugins Cassandra-batchsink.md append.txt
   local base_target="${1}"
   local base_source="${2}"
   local source_dir="${3}"
   local source_file_name="${4}" # JavaScript-transform.md
+  local append_file="${5}"
   local source_name="${source_file_name%-*}"
 
   local type=$(echo "${source_file_name#*-}" | tr [:upper:] [:lower:]) # batchsink
@@ -65,12 +67,16 @@ function download_md_doc_file() {
       echo_red_bold "${m}"
       set_message "${m}"
       echo -e "# ${source_name} ${type_capital}\n$(cat ${target})" > ${target}
-    fi    
+    fi
+    if [[ "x${append_file}" != "x" ]]; then
+      echo "  Appending ${append_file} to ${target_file_name}"
+      cat ${base_target}/${append_file} >> ${target}
+    fi
   else
     local m="URL does not exist: ${source_url}"
     echo_red_bold "${m}"
     set_message "${m}"
-  fi   
+  fi
 }
 
 function download_includes() {
@@ -133,8 +139,8 @@ function download_includes() {
   download_md_doc_file $base_target $hydrator_source core-plugins Twitter-realtimesource.md
   download_md_doc_file $base_target $hydrator_source core-plugins Validator-transform.md
 
-  download_md_doc_file $base_target $hydrator_source database-plugins Database-batchsink.md
-  download_md_doc_file $base_target $hydrator_source database-plugins Database-batchsource.md
+  download_md_doc_file $base_target $hydrator_source database-plugins Database-batchsink.md database-batchsink-append.txt
+  download_md_doc_file $base_target $hydrator_source database-plugins Database-batchsource.md database-batchsource-append.txt
   
   download_md_doc_file $base_target $hydrator_source elasticsearch-plugins Elasticsearch-batchsink.md
   download_md_doc_file $base_target $hydrator_source elasticsearch-plugins Elasticsearch-batchsource.md
@@ -166,7 +172,6 @@ function download_includes() {
   download_md_doc_file $base_target $hydrator_source transform-plugins JSONFormatter-transform.md
   download_md_doc_file $base_target $hydrator_source transform-plugins JSONParser-transform.md
   download_md_doc_file $base_target $hydrator_source transform-plugins StreamFormatter-transform.md
-
 }
 
 run_command ${1}
