@@ -158,7 +158,7 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
                         content: 'Invalid configuration JSON.'
                       });
                       $q.reject(false);
-                      // FIXME: We should not have done this. But ui-router when rejected on a 'resolve:' function takes it to the parent state apparaently
+                      // FIXME: We should not have done this. But ui-router when rejected on a 'resolve:' function takes it to the parent state apparently
                       // and in our case the parent state is 'hydratorplusplus and since its an abstract state it goes to home.'
                       $state.go('hydrator.list');
                       return;
@@ -169,7 +169,7 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
                         content: 'Pipeline is created using older version of hydrator. Please upgrage the pipeline to newer version(3.4) to view in UI.'
                       });
                       $q.reject(false);
-                      // FIXME: We should not have done this. But ui-router when rejected on a 'resolve:' function takes it to the parent state apparaently
+                      // FIXME: We should not have done this. But ui-router when rejected on a 'resolve:' function takes it to the parent state apparently
                       // and in our case the parent state is 'hydratorplusplus and since its an abstract state it goes to home.'
                       $state.go('hydrator.list');
                       return;
