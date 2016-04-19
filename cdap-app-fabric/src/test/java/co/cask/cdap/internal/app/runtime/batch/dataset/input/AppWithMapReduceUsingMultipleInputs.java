@@ -20,6 +20,7 @@ import co.cask.cdap.api.ProgramLifecycle;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.batch.Input;
+import co.cask.cdap.api.data.batch.Output;
 import co.cask.cdap.api.dataset.lib.FileSetArguments;
 import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
@@ -88,7 +89,7 @@ public class AppWithMapReduceUsingMultipleInputs extends AbstractApplication {
 
       Map<String, String> outputArgs = new HashMap<>();
       FileSetArguments.setOutputPath(outputArgs, "output");
-      context.addOutput(OUTPUT_DATASET, outputArgs);
+      context.addOutput(Output.ofDataset(OUTPUT_DATASET, outputArgs));
 
       Job job = context.getHadoopJob();
       job.setMapperClass(FileMapper.class);

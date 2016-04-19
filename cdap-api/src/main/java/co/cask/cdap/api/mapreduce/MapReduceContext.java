@@ -136,8 +136,7 @@ public interface MapReduceContext extends RuntimeContext, DatasetContext, Servic
    *
    * @param datasetName the name of the input dataset
    * @param dataset the input dataset
-   * @deprecated as of version 3.3.0. Use {@link #setInput(String, Map)}
-   *             or {@link #setInput(InputFormatProvider)} instead.
+   * @deprecated as of version 3.3.0. Use {@link #addInput(Input)} instead.
    */
   @Deprecated
   void setInput(String datasetName, Dataset dataset);
@@ -161,7 +160,7 @@ public interface MapReduceContext extends RuntimeContext, DatasetContext, Servic
    * Overrides the output configuration of this MapReduce job to write to the specified dataset by its name.
    *
    * @param datasetName the name of the output dataset
-   * Deprecated as of version 3.2.0. Use {@link #addOutput(String)}, instead.
+   * Deprecated as of version 3.2.0. Use {@link #addOutput(Output)}, instead.
    */
   @Deprecated
   void setOutput(String datasetName);
@@ -175,7 +174,7 @@ public interface MapReduceContext extends RuntimeContext, DatasetContext, Servic
    * @param datasetName the name of the output dataset
    * @param dataset the output dataset
    * @throws IllegalArgumentException if the given dataset is not an OutputFormatProvider.
-   * Deprecated as of version 3.2.0. Use {@link #addOutput(String, Map)}, instead.
+   * Deprecated as of version 3.2.0. Use {@link #addOutput(Output)}, instead.
    */
   @Deprecated
   void setOutput(String datasetName, Dataset dataset);
