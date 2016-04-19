@@ -85,7 +85,3 @@ follow the provided example applications.
 The :doc:`Docker image <docker>` is intended for those developing on Linux.
 
 Follow one of the above links for download and installation instructions.
-
-
-   
-
