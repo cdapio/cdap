@@ -206,10 +206,16 @@ angular.module(PKG.name + '.commons')
             });
           }, true);
         }
-        if (vm.isDisabled) {
-          vm.fitToScreen();
-        }
       });
+
+      // This is here because the left panel is initially in the minimized mode and expands
+      // based on user setting on local storage. This is taking more than a single angular digest cycle
+      // Hence the timeout to 1sec to render it in subsequent digest cycles.
+      // FIXME: This directive should not be dependent on specific external component to render itself.
+      // The left panel should default to expanded view and cleaning up the graph and fit to screen should happen in parallel.
+      $timeout(() => {
+        vm.fitToScreen();
+      }, 500);
     }
 
     vm.nodeMouseEnter = function (node) {
