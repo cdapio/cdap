@@ -53,9 +53,13 @@ public final class SparkContainerLauncher {
       throw new IllegalStateException("Failed to remove main class resource " + resource);
     }
 
+    // Creates the SparkRunnerClassLoader for class rewriting and it will be used for the rest of the execution.
+    // Use the extension classloader as the parent instead of the system classloader because
+    // Spark classes are in the system classloader which we want to rewrite.
     ClassLoader classLoader = new SparkRunnerClassLoader(urls.toArray(new URL[urls.size()]),
                                                          ClassLoader.getSystemClassLoader().getParent(),
                                                          false);
+    // Sets the context classloader and launch the actual Spark main class.
     Thread.currentThread().setContextClassLoader(classLoader);
     try {
       classLoader.loadClass(mainClassName).getMethod("main", String[].class).invoke(null, new Object[]{args});

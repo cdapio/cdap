@@ -21,7 +21,7 @@ import com.google.common.base.Objects;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.Arrays;
-import java.util.List;
+import java.util.Collection;
 import javax.annotation.Nullable;
 
 /**
@@ -87,12 +87,14 @@ public final class ClassLoaders {
   /**
    * Populates the list of {@link URL} that this ClassLoader uses, including all URLs used by the parent of the
    * given ClassLoader.
+   *
+   * @param urls a {@link Collection} for storing the {@link URL}s
+   * @return the same {@link Collection} passed from the parameter
    */
-  public static List<URL> getClassLoaderURLs(ClassLoader classLoader, List<URL> urls) {
-    if (classLoader == null) {
-      return urls;
+  public static <T extends Collection<? super URL>> T getClassLoaderURLs(ClassLoader classLoader, T urls) {
+    if (classLoader.getParent() != null) {
+      getClassLoaderURLs(classLoader.getParent(), urls);
     }
-    getClassLoaderURLs(classLoader.getParent(), urls);
 
     if (classLoader instanceof URLClassLoader) {
       urls.addAll(Arrays.asList(((URLClassLoader) classLoader).getURLs()));

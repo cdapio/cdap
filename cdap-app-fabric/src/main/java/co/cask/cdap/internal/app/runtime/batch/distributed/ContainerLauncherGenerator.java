@@ -149,7 +149,8 @@ public final class ContainerLauncherGenerator {
   }
 
   /**
-   * Generates a class that has a static main method which delegates the call to another main method.
+   * Generates a class that has a static main method which delegates the call to a static method in the given delegator
+   * class with method signature {@code public static void launch(String className, String[] args)}
    *
    * @param className the classname of the generated class
    * @param mainDelegator the class to delegate the main call to
@@ -174,7 +175,7 @@ public final class ContainerLauncherGenerator {
     // Generate the main method
     // public static void main(String[] args) {
     //   System.out.println("Launch class .....");
-    //   <MainDelegator>.main(<className>, args);
+    //   <MainDelegator>.launch(<className>, args);
     // }
     Method mainMethod = Methods.getMethod(void.class, "main", String[].class);
     mg = new GeneratorAdapter(Opcodes.ACC_PUBLIC + Opcodes.ACC_STATIC, mainMethod, null,

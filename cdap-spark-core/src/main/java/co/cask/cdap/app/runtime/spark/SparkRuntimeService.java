@@ -37,6 +37,7 @@ import co.cask.cdap.internal.lang.Fields;
 import co.cask.tephra.TransactionContext;
 import co.cask.tephra.TransactionFailureException;
 import com.google.common.base.Charsets;
+import com.google.common.base.Joiner;
 import com.google.common.base.Objects;
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
@@ -71,6 +72,7 @@ import java.lang.reflect.Method;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -171,7 +173,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
         File expandedProgramJar = Locations.linkOrCopy(runtimeContext.getProgram().getJarLocation(),
                                                        new File(tempDir,
                                                                 SparkRuntimeContextProvider.PROGRAM_JAR_EXPANDED_NAME));
-        // Localize both the unexpanded and expanded jar program jar
+        // Localize both the unexpanded and expanded program jar
         localizeResources.add(new LocalizeResource(programJar));
         localizeResources.add(new LocalizeResource(expandedProgramJar, true));
 
@@ -386,7 +388,8 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
       }
     }
 
-    String extraClassPath = "$PWD/" + CDAP_LAUNCHER_JAR + File.pathSeparator + "$PWD/" + CDAP_SPARK_JAR + "/lib/*";
+    String extraClassPath = Joiner.on(File.pathSeparator).join(Paths.get("$PWD", CDAP_LAUNCHER_JAR),
+                                                               Paths.get("$PWD", CDAP_SPARK_JAR, "lib", "*"));
     if (logbackJarName != null) {
       extraClassPath = logbackJarName + File.pathSeparator + extraClassPath;
     }
