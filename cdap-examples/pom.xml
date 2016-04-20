@@ -41,6 +41,7 @@
     <module>HelloWorld</module>
     <module>Purchase</module>
     <module>SparkKMeans</module>
+    <module>SparkKafkaWordCount</module>
     <module>SparkPageRank</module>
     <module>LogAnalysis</module>
     <module>SportResults</module>
