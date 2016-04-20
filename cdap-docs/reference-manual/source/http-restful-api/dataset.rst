@@ -37,6 +37,7 @@ The response body will contain a JSON-formatted list of the existing datasets::
   {
      "name":"cdap.user.purchases",
      "type":"co.cask.cdap.api.dataset.lib.ObjectStore",
+     "description" : "Purchases Dataset",
      "properties":{
         "schema":"...",
         "type":"..."
@@ -55,11 +56,12 @@ You can create a dataset by issuing an HTTP PUT request to the URL::
 
   PUT <base-url>/namespaces/<namespace>/data/datasets/<dataset-name>
 
-with JSON-formatted name of the dataset type and properties in a body::
+with JSON-formatted name of the dataset type, properties, and description in a body::
 
   {
      "typeName":"<type-name>",
-     "properties":{<properties>}
+     "properties":{<properties>},
+     "description":"Dataset Description"
   }
 
 
@@ -77,6 +79,8 @@ with JSON-formatted name of the dataset type and properties in a body::
      - Type of the new dataset
    * - ``<properties>``
      - Dataset properties, map of String to String.
+   * - ``description``
+     - Dataset description
 
 .. rubric:: HTTP Responses
 .. list-table::
@@ -100,10 +104,11 @@ with JSON-formatted name of the dataset type and properties in a body::
    * - HTTP Request
      - ``PUT <base-url>/namespaces/default/data/datasets/mydataset``
    * - Body
-     - ``{"typeName":"co.cask.cdap.api.dataset.table.Table",`` ``"properties":{"dataset.table.ttl":"3600"}}``
+     - ``{"typeName":"co.cask.cdap.api.dataset.table.Table",`` ``"properties":{"dataset.table.ttl":"3600"},``
+       ``"description":"My Dataset Description"}``
    * - Description
      - Creates a dataset named *mydataset* of the type ``Table`` in the namespace *default*
-       with the time-to-live property set to 1 hour
+       with the time-to-live property set to 1 hour and a description of ``My Dataset Description``
 
 .. _http-restful-api-dataset-updating:
 

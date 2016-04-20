@@ -16,6 +16,7 @@
 package co.cask.cdap.examples.countrandom;
 
 import co.cask.cdap.api.app.AbstractApplication;
+import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 
 /**
@@ -29,7 +30,7 @@ public class CountRandom extends AbstractApplication {
   public void configure() {
     setName("CountRandom");
     setDescription("Example random count application");
-    createDataset(TABLE_NAME, KeyValueTable.class);
+    createDataset(TABLE_NAME, KeyValueTable.class, DatasetProperties.builder().setDescription("Counts table").build());
     addFlow(new CountRandomFlow());
   }
 }

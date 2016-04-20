@@ -19,6 +19,7 @@ package co.cask.cdap.examples.purchase;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 import co.cask.cdap.api.data.stream.Stream;
+import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.lib.ObjectMappedTable;
 import co.cask.cdap.api.dataset.lib.ObjectMappedTableProperties;
@@ -35,16 +36,18 @@ public class PurchaseApp extends AbstractApplication {
   @Override
   public void configure() {
     setName(APP_NAME);
-    setDescription("Purchase history application.");
+    setDescription("Purchase history application");
 
     // Ingest data into the Application via a Stream
     addStream(new Stream("purchaseStream"));
 
     // Store processed data in a Dataset
-    createDataset("frequentCustomers", KeyValueTable.class);
+    createDataset("frequentCustomers", KeyValueTable.class,
+                  DatasetProperties.builder().setDescription("Store frequent customers").build());
 
     // Store user profiles in a Dataset
-    createDataset("userProfiles", KeyValueTable.class);
+    createDataset("userProfiles", KeyValueTable.class,
+                  DatasetProperties.builder().setDescription("Store user profiles").build());
 
     // Process events in realtime using a Flow
     addFlow(new PurchaseFlow());
@@ -80,10 +83,10 @@ public class PurchaseApp extends AbstractApplication {
       "PurchaseHistoryWorkflow"
     );
 
-    createDataset("history", PurchaseHistoryStore.class, PurchaseHistoryStore.properties());
+    createDataset("history", PurchaseHistoryStore.class, PurchaseHistoryStore.properties("History dataset"));
     try {
-      createDataset("purchases", ObjectMappedTable.class,
-                    ObjectMappedTableProperties.builder().setType(Purchase.class).build());
+      createDataset("purchases", ObjectMappedTable.class, ObjectMappedTableProperties.builder().setType(Purchase.class)
+        .setDescription("Store purchases").build());
     } catch (UnsupportedTypeException e) {
       // This exception is thrown by ObjectMappedTable if its parameter type cannot be
       // (de)serialized (for example, if it is an interface and not a class, then there is

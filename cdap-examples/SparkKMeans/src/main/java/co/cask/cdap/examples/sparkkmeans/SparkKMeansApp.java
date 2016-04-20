@@ -22,6 +22,7 @@ import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 import co.cask.cdap.api.data.stream.Stream;
+import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.lib.ObjectStore;
 import co.cask.cdap.api.dataset.lib.ObjectStores;
 import co.cask.cdap.api.flow.AbstractFlow;
@@ -69,8 +70,10 @@ public class SparkKMeansApp extends AbstractApplication {
 
     // Store input and processed data in ObjectStore Datasets
     try {
-      ObjectStores.createObjectStore(getConfigurer(), "points", Point.class);
-      ObjectStores.createObjectStore(getConfigurer(), "centers", String.class);
+      ObjectStores.createObjectStore(getConfigurer(), "points", Point.class,
+                                     DatasetProperties.builder().setDescription("Store points data").build());
+      ObjectStores.createObjectStore(getConfigurer(), "centers", String.class,
+                                     DatasetProperties.builder().setDescription("Store centers data").build());
     } catch (UnsupportedTypeException e) {
       // This exception is thrown by ObjectStore if its parameter type cannot be
       // (de)serialized (for example, if it is an interface and not a class, then there is
