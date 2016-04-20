@@ -29,9 +29,11 @@ import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
 import co.cask.cdap.data2.dataset2.lib.timeseries.EntityTable;
 import co.cask.cdap.data2.dataset2.lib.timeseries.FactTable;
+import com.google.common.collect.ImmutableMap;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -57,7 +59,7 @@ public class CubeDataset extends AbstractDataset implements Cube {
     }
     this.cube = new DefaultCube(resolutions,
                                 new FactTableSupplierImpl(entityTable, resolutionTables),
-                                aggregations);
+                                aggregations, ImmutableMap.<String, AggregationAlias>of());
   }
 
   @Override

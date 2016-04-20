@@ -22,7 +22,6 @@ import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.metrics.MetricsContext;
-import co.cask.cdap.api.metrics.MultiMetricsContext;
 import co.cask.cdap.api.plugin.PluginContext;
 import co.cask.cdap.api.plugin.PluginProperties;
 import co.cask.cdap.api.spark.SparkSpecification;
@@ -291,20 +290,14 @@ public final class SparkRuntimeContext extends AbstractServiceDiscoverer
     // todo: use proper spark instance id. For now we have to emit smth for test framework's waitFor metric to work
     tags.put(Constants.Metrics.Tag.INSTANCE_ID, "0");
 
-    MetricsContext programMetricsContext = service.getContext(tags);
-    if (workflowProgramInfo == null) {
-      return programMetricsContext;
+    if (workflowProgramInfo != null) {
+      // If running inside Workflow, add the WorkflowMetricsContext as well
+      tags.put(Constants.Metrics.Tag.WORKFLOW, workflowProgramInfo.getName());
+      tags.put(Constants.Metrics.Tag.WORKFLOW_RUN_ID, workflowProgramInfo.getRunId().getId());
+      tags.put(Constants.Metrics.Tag.NODE, workflowProgramInfo.getNodeId());
+
     }
-
-    // If running inside Workflow, add the WorkflowMetricsContext as well
-    tags = Maps.newHashMap();
-    tags.put(Constants.Metrics.Tag.NAMESPACE, programId.getNamespace());
-    tags.put(Constants.Metrics.Tag.APP, programId.getApplication());
-    tags.put(Constants.Metrics.Tag.WORKFLOW, workflowProgramInfo.getName());
-    tags.put(Constants.Metrics.Tag.RUN_ID, workflowProgramInfo.getRunId().getId());
-    tags.put(Constants.Metrics.Tag.NODE, workflowProgramInfo.getNodeId());
-
-    return new MultiMetricsContext(programMetricsContext, service.getContext(tags));
+    return service.getContext(tags);
   }
 
   @Override

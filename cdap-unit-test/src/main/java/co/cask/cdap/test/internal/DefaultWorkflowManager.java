@@ -39,11 +39,13 @@ import javax.annotation.Nullable;
  * A default implementation of {@link FlowManager}.
  */
 public class DefaultWorkflowManager extends AbstractProgramManager<WorkflowManager> implements WorkflowManager {
+  private final Id.Program programId;
   private final AppFabricClient appFabricClient;
 
   public DefaultWorkflowManager(Id.Program programId, AppFabricClient appFabricClient,
                                 DefaultApplicationManager applicationManager) {
     super(programId, applicationManager);
+    this.programId = programId;
     this.appFabricClient = appFabricClient;
   }
 
@@ -67,9 +69,11 @@ public class DefaultWorkflowManager extends AbstractProgramManager<WorkflowManag
   }
 
   @Override
-  public Map<String, WorkflowNodeStateDetail> getWorkflowNodeStates(ProgramRunId workflowRunId)
+  public Map<String, WorkflowNodeStateDetail> getWorkflowNodeStates(String workflowRunId)
     throws NotFoundException {
-    return appFabricClient.getWorkflowNodeStates(workflowRunId);
+    return appFabricClient.getWorkflowNodeStates(
+      new ProgramRunId(programId.getNamespaceId(), programId.getApplicationId(), programId.getType(),
+                       programId.getId(), workflowRunId));
   }
 
   public ScheduleManager getSchedule(final String schedName) {

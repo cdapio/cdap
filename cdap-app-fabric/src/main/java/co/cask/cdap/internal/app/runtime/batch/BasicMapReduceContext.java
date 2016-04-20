@@ -29,7 +29,6 @@ import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.metrics.MetricsContext;
-import co.cask.cdap.api.metrics.MultiMetricsContext;
 import co.cask.cdap.api.plugin.Plugin;
 import co.cask.cdap.app.metrics.ProgramUserMetrics;
 import co.cask.cdap.app.program.Program;
@@ -435,20 +434,12 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
     Map<String, String> tags = Maps.newHashMap();
     tags.putAll(getMetricsContext(program, runId));
 
-    MetricsContext programMetricsContext = service.getContext(tags);
-
-    if (workflowProgramInfo == null) {
-      return programMetricsContext;
+    if (workflowProgramInfo != null) {
+      // If running inside Workflow, add the WorkflowMetricsContext as well
+      tags.put(Constants.Metrics.Tag.WORKFLOW, workflowProgramInfo.getName());
+      tags.put(Constants.Metrics.Tag.WORKFLOW_RUN_ID, workflowProgramInfo.getRunId().getId());
+      tags.put(Constants.Metrics.Tag.NODE, workflowProgramInfo.getNodeId());
     }
-
-    // If running inside Workflow, add the WorkflowMetricsContext as well
-    tags = Maps.newHashMap();
-    tags.put(Constants.Metrics.Tag.NAMESPACE, program.getNamespaceId());
-    tags.put(Constants.Metrics.Tag.APP, program.getApplicationId());
-    tags.put(Constants.Metrics.Tag.WORKFLOW, workflowProgramInfo.getName());
-    tags.put(Constants.Metrics.Tag.RUN_ID, workflowProgramInfo.getRunId().getId());
-    tags.put(Constants.Metrics.Tag.NODE, workflowProgramInfo.getNodeId());
-
-    return new MultiMetricsContext(programMetricsContext, service.getContext(tags));
+    return service.getContext(tags);
   }
 }
