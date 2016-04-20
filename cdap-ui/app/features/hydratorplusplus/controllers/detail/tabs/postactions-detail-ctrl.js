@@ -15,11 +15,12 @@
  */
 
 class HydratorPluPlusPostActionDetailCtrl {
-  constructor(HydratorPlusPlusDetailNonRunsStore, $uibModal, myPipelineApi, $state) {
+  constructor(HydratorPlusPlusDetailNonRunsStore, $uibModal, myPipelineApi, $state, HydratorPlusPlusPluginConfigFactory) {
     this.HydratorPlusPlusDetailNonRunsStore = HydratorPlusPlusDetailNonRunsStore;
     this.$uibModal = $uibModal;
     this.myPipelineApi = myPipelineApi;
     this.$state = $state;
+    this.HydratorPlusPlusPluginConfigFactory = HydratorPlusPlusPluginConfigFactory;
 
     this.postactions = [];
     this.config = {};
@@ -28,13 +29,10 @@ class HydratorPluPlusPostActionDetailCtrl {
   setState() {
     let config = this.HydratorPlusPlusDetailNonRunsStore.getConfigJson();
     this.config = config;
-    console.log('config', config);
     this.postactions = config.postactions || [];
-    console.log('actions', this.postactions);
   }
 
   viewAction(action) {
-
     let params = {
       namespace: this.$state.params.namespace,
       pipelineType: action.plugin.artifact.name,
@@ -50,35 +48,59 @@ class HydratorPluPlusPostActionDetailCtrl {
       .$promise
       .then( (res) => {
         plugin._backendProperties = res[0].properties;
-        // this.fetchWidgets(tab);
-        this.$uibModal.open({
-          keyboard: false,
-          windowTopClass: 'hydrator-modal',
-          templateUrl: '/assets/features/hydratorplusplus/templates/partial/postactions-modal.html',
-          size: 'lg',
-          controller: PostActionModalController,
-          controllerAs: 'PostActionController',
-          resolve: {
-            pluginConfig: () => {
-              return plugin;
-            }
-          }
-        });
-
+        this.fetchWidgets(plugin);
       });
+  }
 
+  // Fetching Widget JSON for the plugin
+  fetchWidgets(action) {
+    let artifact = {
+      name: action.plugin.artifact.name,
+      version: action.plugin.artifact.version,
+      scope: action.plugin.artifact.scope,
+      key: 'widgets.' + action.plugin.name + '-' + action.plugin.type
+    };
+    this.HydratorPlusPlusPluginConfigFactory
+      .fetchWidgetJson(artifact.name, artifact.version, artifact.scope, artifact.key)
+      .then( (widgetJson) => {
+        let groupsConfig = this.HydratorPlusPlusPluginConfigFactory.generateNodeConfig(action._backendProperties, widgetJson);
 
+        this.showModal(false, action, groupsConfig);
 
+      }, () => {
+        this.showModal(true, action);
+      });
+  }
 
+  showModal(noConfig, action, groupsConfig) {
+    this.$uibModal.open({
+      keyboard: false,
+      windowTopClass: 'hydrator-modal',
+      templateUrl: '/assets/features/hydratorplusplus/templates/partial/postactions-modal.html',
+      size: 'lg',
+      controller: PostActionModalController,
+      controllerAs: 'PostActionController',
+      resolve: {
+        modalProperties: () => {
+          return {
+            noConfig: noConfig,
+            action: action,
+            groupsConfig: groupsConfig
+          };
+        }
+      }
+    });
   }
 }
 
-function PostActionModalController (pluginConfig) {
+function PostActionModalController (modalProperties) {
   'ngInject';
 
-  this.pluginConfig = pluginConfig;
+  this.pluginConfig = modalProperties.action;
+  this.noConfig = modalProperties.noConfig;
+  this.groupsConfig = modalProperties.groupsConfig;
 }
 
-HydratorPluPlusPostActionDetailCtrl.$inject = ['HydratorPlusPlusDetailNonRunsStore', '$uibModal', 'myPipelineApi', '$state'];
+HydratorPluPlusPostActionDetailCtrl.$inject = ['HydratorPlusPlusDetailNonRunsStore', '$uibModal', 'myPipelineApi', '$state', 'HydratorPlusPlusPluginConfigFactory'];
 angular.module(`${PKG.name}.feature.hydratorplusplus`)
   .controller('HydratorPluPlusPostActionDetailCtrl', HydratorPluPlusPostActionDetailCtrl);
