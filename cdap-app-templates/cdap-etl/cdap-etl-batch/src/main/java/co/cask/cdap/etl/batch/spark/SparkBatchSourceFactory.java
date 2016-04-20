@@ -16,6 +16,7 @@
 
 package co.cask.cdap.etl.batch.spark;
 
+import co.cask.cdap.api.data.batch.Input;
 import co.cask.cdap.api.data.batch.InputFormatProvider;
 import co.cask.cdap.api.data.batch.Split;
 import co.cask.cdap.api.data.format.FormatSpecification;
@@ -93,6 +94,21 @@ final class SparkBatchSourceFactory {
   static SparkBatchSourceFactory create(String datasetName, Map<String, String> datasetArgs,
                                         @Nullable List<Split> splits) {
     return new SparkBatchSourceFactory(null, null, new DatasetInfo(datasetName, datasetArgs, splits));
+  }
+
+  static SparkBatchSourceFactory create(Input input) {
+    if (input instanceof Input.DatasetInput) {
+      // Note if input format provider is trackable then it comes in as DatasetInput
+      Input.DatasetInput datasetInput = (Input.DatasetInput) input;
+      return create(datasetInput.getName(), datasetInput.getArguments(), datasetInput.getSplits());
+    } else if (input instanceof Input.StreamInput) {
+      Input.StreamInput streamInput = (Input.StreamInput) input;
+      return create(streamInput.getStreamBatchReadable());
+    } else if (input instanceof Input.InputFormatProviderInput) {
+      Input.InputFormatProviderInput ifpInput = (Input.InputFormatProviderInput) input;
+      return new SparkBatchSourceFactory(null, ifpInput.getInputFormatProvider(), null);
+    }
+    throw new IllegalArgumentException("Unknown input format type: " + input.getClass().getCanonicalName());
   }
 
   static SparkBatchSourceFactory deserialize(InputStream inputStream) throws IOException {
