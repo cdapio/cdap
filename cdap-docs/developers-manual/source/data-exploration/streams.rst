@@ -172,14 +172,14 @@ similarly-named `Common Logfile Format <https://www.w3.org/Daemon/User/Config/Lo
 adding to it two fields ("Referer" and "User-Agent") of request headers. Though described
 as a format, it is actually a combination of format and schema. The format consists of
 fields separated by spaces, with fields containing spaces surrounded by quotes, and the
-date field enclosed in square brackets.
+request_time field enclosed in square brackets.
 
 The schema is:
 
 - ``remote_host``: Remote hostname or IP number; type string
 - ``remote_login``: The remote logname of the user; type string
 - ``auth_user``: The username as which the user has authenticated; type string
-- ``date``: Date and time of the request, enclosed in square brackets; type string
+- ``request_time``: Date and time of the request, enclosed in square brackets; type string
 - ``request``: The request line exactly as it came from the client, enclosed in double quotes; type string
 - ``status``: The HTTP status code returned to the client; type integer
 - ``content_length``: The content-length of the document transferred, in bytes; type integer
