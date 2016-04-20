@@ -68,7 +68,11 @@ angular.module(PKG.name + '.services')
         datasets: myHelpers.getConfig('GET', 'REQUEST', pipelinePath + '/datasets', true),
         streams: myHelpers.getConfig('GET', 'REQUEST', pipelinePath + '/streams', true),
         action: myHelpers.getConfig('POST', 'REQUEST', pipelinePath + '/:action'),
-        pluginMethod: myHelpers.getConfig('POST', 'REQUEST', pluginMethodsPath, false, { suppressErrors: true })
+
+        postPluginMethod: myHelpers.getConfig('POST', 'REQUEST', pluginMethodsPath, false, { suppressErrors: true }),
+        getPluginMethod: myHelpers.getConfig('GET', 'REQUEST', pluginMethodsPath, false, { suppressErrors: true }),
+        putPluginMethod: myHelpers.getConfig('PUT', 'REQUEST', pluginMethodsPath, false, { suppressErrors: true }),
+        deletePluginMethod: myHelpers.getConfig('DELETE', 'REQUEST', pluginMethodsPath, false, { suppressErrors: true })
       }
     );
   });
