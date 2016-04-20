@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -87,11 +87,11 @@ object SparkKMeansProgram {
 
   private final val LOG: Logger = LoggerFactory.getLogger(classOf[SparkKMeansProgram])
 
-  private[sparkkmeans] def pointVector(point: Point): Vector[Double] = {
+  private def pointVector(point: Point): Vector[Double] = {
     DenseVector(Array(point.getX, point.getX, point.getZ).map(_.doubleValue()))
   }
 
-  private[sparkkmeans] def closestPoint(p: Vector[Double], centers: Array[Vector[Double]]): Int = {
+  private def closestPoint(p: Vector[Double], centers: Array[Vector[Double]]): Int = {
     var bestIndex = 0
     var closest = Double.PositiveInfinity
     for (i <- centers.indices) {
