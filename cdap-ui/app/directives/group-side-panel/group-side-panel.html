@@ -63,7 +63,7 @@
             <span class="plugin-badge">T</span>
           </div>
           <div class="no-item-message" ng-if="group.filtered.length === 0">
-            No plugins found.
+            <h4>No {{MySidePanel.itemGenericName}} found.</h4>
           </div>
           <div ng-if="MySidePanel.view === 'list'" ng-repeat="plugin in group.filtered = (group.plugins | filter: {name: MySidePanel.searchText}) track by $index"
                class="plugin-item {{plugin.nodeClass}}"
@@ -82,7 +82,7 @@
       </div>
     </div>
     <div ng-if="MySidePanel.groups.length === 0">
-      No groups found.
+      <h4>No {{MySidePanel.groupGenericName}} found.</h4>
     </div>
   </div>
 </div>
