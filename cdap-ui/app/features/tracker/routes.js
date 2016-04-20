@@ -62,7 +62,7 @@ angular.module(PKG.name + '.feature.tracker')
                 ]).then( (res) => {
                   let isRunning = true;
                   angular.forEach(res, (program) => {
-                    if (program.status !== 'RUNNING') {
+                    if (program.status === 'STOPPED') {
                       isRunning = false;
                     }
                   });
