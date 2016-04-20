@@ -78,7 +78,7 @@
             <version>2.8</version>
             <executions>
               <execution>
-                <id>copy-dependencies</id>
+                <id>copy-dependencies-standalone</id>
                 <phase>prepare-package</phase>
                 <goals>
                   <goal>copy-dependencies</goal>
