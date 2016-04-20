@@ -21,6 +21,7 @@ import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.util.RESTClient;
 import co.cask.cdap.common.FeatureDisabledException;
+import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.UnauthenticatedException;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.proto.codec.EntityIdTypeAdapter;
@@ -85,35 +86,34 @@ public class AuthorizationClient extends AbstractAuthorizer {
 
   @Override
   public void grant(EntityId entity, Principal principal, Set<Action> actions) throws IOException,
-    UnauthenticatedException, FeatureDisabledException, UnauthorizedException {
+    UnauthenticatedException, FeatureDisabledException, UnauthorizedException, NotFoundException {
 
     GrantRequest grantRequest = new GrantRequest(entity, principal, actions);
 
     URL url = config.resolveURLV3(AUTHORIZATION_BASE + "/privileges/grant");
     HttpRequest request = HttpRequest.post(url).withBody(GSON.toJson(grantRequest)).build();
-    executeRequest(request, HttpURLConnection.HTTP_FORBIDDEN, HttpURLConnection.HTTP_NOT_IMPLEMENTED);
+    executePrivilegeRequest(entity, request);
   }
 
   @Override
   public void revoke(EntityId entity) throws IOException, UnauthenticatedException, FeatureDisabledException,
-    UnauthorizedException {
+    UnauthorizedException, NotFoundException {
     revoke(entity, null, null);
   }
 
   @Override
   public void revoke(EntityId entity, @Nullable Principal principal, @Nullable Set<Action> actions) throws IOException,
-    UnauthenticatedException, FeatureDisabledException, UnauthorizedException {
+    UnauthenticatedException, FeatureDisabledException, UnauthorizedException, NotFoundException {
     revoke(new RevokeRequest(entity, principal, actions));
   }
 
   @Override
   public Set<Privilege> listPrivileges(Principal principal) throws IOException, FeatureDisabledException,
-    UnauthenticatedException, UnauthorizedException {
+    UnauthenticatedException, UnauthorizedException, NotFoundException {
     URL url = config.resolveURLV3(String.format(AUTHORIZATION_BASE + "%s/%s/privileges", principal.getType(),
                                                 principal.getName()));
     HttpRequest request = HttpRequest.get(url).build();
-    HttpResponse response = executeRequest(request, HttpURLConnection.HTTP_FORBIDDEN,
-                                           HttpURLConnection.HTTP_NOT_IMPLEMENTED);
+    HttpResponse response = doExecuteRequest(request);
     if (response.getResponseCode() == HttpURLConnection.HTTP_OK) {
       return ObjectResponse.fromJsonBody(response, TYPE_OF_PRIVILEGE_SET, GSON).getResponseObject();
     }
@@ -122,11 +122,10 @@ public class AuthorizationClient extends AbstractAuthorizer {
 
   @Override
   public void createRole(Role role) throws IOException, FeatureDisabledException, UnauthenticatedException,
-    UnauthorizedException, RoleAlreadyExistsException {
+    UnauthorizedException, RoleAlreadyExistsException, NotFoundException {
     URL url = config.resolveURLV3(String.format(AUTHORIZATION_BASE + "roles/%s", role.getName()));
     HttpRequest request = HttpRequest.put(url).build();
-    HttpResponse httpResponse = executeRequest(request, HttpURLConnection.HTTP_FORBIDDEN,
-                                               HttpURLConnection.HTTP_NOT_IMPLEMENTED, HttpURLConnection.HTTP_CONFLICT);
+    HttpResponse httpResponse = doExecuteRequest(request, HttpURLConnection.HTTP_CONFLICT);
     if (httpResponse.getResponseCode() == HttpURLConnection.HTTP_CONFLICT) {
       throw new RoleAlreadyExistsException(role);
     }
@@ -134,57 +133,55 @@ public class AuthorizationClient extends AbstractAuthorizer {
 
   @Override
   public void dropRole(Role role) throws IOException, FeatureDisabledException, UnauthenticatedException,
-    UnauthorizedException, RoleNotFoundException {
+    UnauthorizedException, RoleNotFoundException, NotFoundException {
     URL url = config.resolveURLV3(String.format(AUTHORIZATION_BASE + "roles/%s", role.getName()));
     HttpRequest request = HttpRequest.delete(url).build();
-    executeRoleRequest(role, request);
+    executeExistingRolesRequest(role, request);
   }
 
   @Override
   public Set<Role> listAllRoles() throws FeatureDisabledException, UnauthenticatedException, UnauthorizedException,
-    IOException {
+    IOException, NotFoundException {
     return listRolesHelper(null);
   }
 
   @Override
   public Set<Role> listRoles(Principal principal) throws FeatureDisabledException, UnauthenticatedException,
-    UnauthorizedException,
-    IOException {
+    UnauthorizedException, IOException, NotFoundException {
     return listRolesHelper(principal);
   }
 
   @Override
   public void addRoleToPrincipal(Role role, Principal principal) throws IOException, FeatureDisabledException,
-    UnauthenticatedException, UnauthorizedException, RoleNotFoundException {
+    UnauthenticatedException, UnauthorizedException, RoleNotFoundException, NotFoundException {
     URL url = config.resolveURLV3(String.format(AUTHORIZATION_BASE + "%s/%s/roles/%s", principal.getType(),
                                                 principal.getName(), role.getName()));
     HttpRequest request = HttpRequest.put(url).build();
-    executeRoleRequest(role, request);
+    executeExistingRolesRequest(role, request);
   }
 
   @Override
   public void removeRoleFromPrincipal(Role role, Principal principal) throws IOException, FeatureDisabledException,
-    UnauthenticatedException, UnauthorizedException, RoleNotFoundException {
+    UnauthenticatedException, UnauthorizedException, RoleNotFoundException, NotFoundException {
     URL url = config.resolveURLV3(String.format(AUTHORIZATION_BASE + "%s/%s/roles/%s", principal.getType(),
                                                 principal.getName(), role.getName()));
     HttpRequest request = HttpRequest.delete(url).build();
-    executeRoleRequest(role, request);
+    executeExistingRolesRequest(role, request);
   }
 
   private void revoke(RevokeRequest revokeRequest)
-    throws IOException, UnauthenticatedException, FeatureDisabledException, UnauthorizedException {
+    throws IOException, UnauthenticatedException, FeatureDisabledException, UnauthorizedException, NotFoundException {
     URL url = config.resolveURLV3(AUTHORIZATION_BASE + "/privileges/revoke");
     HttpRequest request = HttpRequest.post(url).withBody(GSON.toJson(revokeRequest)).build();
-    executeRequest(request, HttpURLConnection.HTTP_FORBIDDEN, HttpURLConnection.HTTP_NOT_IMPLEMENTED);
+    executePrivilegeRequest(revokeRequest.getEntity(), request);
   }
 
   private Set<Role> listRolesHelper(@Nullable Principal principal) throws IOException, FeatureDisabledException,
-    UnauthenticatedException, UnauthorizedException {
+    UnauthenticatedException, UnauthorizedException, NotFoundException {
     URL url = principal == null ? config.resolveURLV3(AUTHORIZATION_BASE + "roles") :
       config.resolveURLV3(String.format(AUTHORIZATION_BASE + "%s/%s/roles", principal.getType(), principal.getName()));
     HttpRequest request = HttpRequest.get(url).build();
-    HttpResponse response = executeRequest(request, HttpURLConnection.HTTP_FORBIDDEN,
-                                           HttpURLConnection.HTTP_NOT_IMPLEMENTED);
+    HttpResponse response = doExecuteRequest(request);
 
     if (response.getResponseCode() == HttpURLConnection.HTTP_OK) {
       return ObjectResponse.fromJsonBody(response, TYPE_OF_ROLE_SET).getResponseObject();
@@ -192,18 +189,30 @@ public class AuthorizationClient extends AbstractAuthorizer {
     throw new IOException(String.format("Cannot list roles. Reason: %s", response.getResponseBodyAsString()));
   }
 
-  private void executeRoleRequest(Role role, HttpRequest request) throws IOException, UnauthenticatedException,
-    FeatureDisabledException, UnauthorizedException, RoleNotFoundException {
-    HttpResponse httpResponse = executeRequest(request, HttpURLConnection.HTTP_FORBIDDEN,
-                                               HttpURLConnection.HTTP_NOT_IMPLEMENTED,
-                                               HttpURLConnection.HTTP_NOT_FOUND);
+  private void executeExistingRolesRequest(Role role, HttpRequest request) throws IOException,
+    UnauthenticatedException, FeatureDisabledException, UnauthorizedException, RoleNotFoundException,
+    NotFoundException {
+    HttpResponse httpResponse = doExecuteRequest(request, HttpURLConnection.HTTP_NOT_FOUND);
     if (httpResponse.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new RoleNotFoundException(role);
     }
   }
 
-  private HttpResponse executeRequest(HttpRequest request, int... allowedErrorCodes)
+  private HttpResponse executePrivilegeRequest(EntityId entityId, HttpRequest request) throws FeatureDisabledException,
+    UnauthenticatedException, IOException, NotFoundException, UnauthorizedException {
+    HttpResponse httpResponse = doExecuteRequest(request, HttpURLConnection.HTTP_NOT_FOUND);
+    if (HttpURLConnection.HTTP_NOT_FOUND == httpResponse.getResponseCode()) {
+      throw new NotFoundException(entityId);
+    }
+    return httpResponse;
+  }
+
+  private HttpResponse doExecuteRequest(HttpRequest request, int... additionalAllowedErrorCodes)
     throws IOException, UnauthenticatedException, FeatureDisabledException, UnauthorizedException {
+    int[] allowedErrorCodes = new int[additionalAllowedErrorCodes.length + 2];
+    System.arraycopy(additionalAllowedErrorCodes, 0, allowedErrorCodes, 0, additionalAllowedErrorCodes.length);
+    allowedErrorCodes[additionalAllowedErrorCodes.length] = HttpURLConnection.HTTP_FORBIDDEN;
+    allowedErrorCodes[additionalAllowedErrorCodes.length + 1] = HttpURLConnection.HTTP_NOT_IMPLEMENTED;
     HttpResponse response = restClient.execute(request, config.getAccessToken(), allowedErrorCodes);
     if (HttpURLConnection.HTTP_FORBIDDEN == response.getResponseCode()) {
       // TODO:(CDAP-5302) Include the logged in username here

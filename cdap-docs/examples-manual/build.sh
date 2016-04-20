@@ -123,7 +123,7 @@ function download_includes() {
   echo_red_bold "Downloading files and any images and re-writing all the image links..."
   guide_rewrite_sed $1 cdap-bi-guide 
   guide_rewrite_sed $1 cdap-cube-guide 
-  guide_rewrite_sed $1 cdap-etl-adapter-guide 
+  guide_rewrite_sed $1 cdap-etl-guide 
   guide_rewrite_sed $1 cdap-flow-guide
   guide_rewrite_sed $1 cdap-flume-guide
   guide_rewrite_sed $1 cdap-kafka-ingest-guide

@@ -24,15 +24,20 @@ import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.workflow.NodeStatus;
 import co.cask.cdap.etl.batch.mapreduce.ETLMapReduce;
 import co.cask.cdap.etl.common.Constants;
+import co.cask.cdap.etl.mock.batch.MockExternalSink;
+import co.cask.cdap.etl.mock.batch.MockExternalSource;
 import co.cask.cdap.etl.mock.batch.MockSink;
 import co.cask.cdap.etl.mock.batch.MockSource;
 import co.cask.cdap.etl.mock.batch.NodeStatesAction;
 import co.cask.cdap.etl.mock.transform.ErrorTransform;
 import co.cask.cdap.etl.mock.transform.StringValueFilterTransform;
+import co.cask.cdap.etl.proto.Engine;
 import co.cask.cdap.etl.proto.v2.ETLBatchConfig;
 import co.cask.cdap.etl.proto.v2.ETLStage;
 import co.cask.cdap.format.StructuredRecordStringConverter;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.ProgramRunStatus;
+import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.DataSetManager;
@@ -46,6 +51,7 @@ import org.apache.avro.generic.GenericRecord;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.io.File;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -191,4 +197,94 @@ public class ETLWorkflowTestRun extends ETLBatchTestBase {
     Assert.assertEquals(expectedErrors, actualErrors);
   }
 
+  @Test
+  public void testExternalDatasetTrackingMR() throws Exception {
+    testExternalDatasetTracking(Engine.MAPREDUCE, false);
+  }
+
+  @Test
+  public void testExternalDatasetTrackingSpark() throws Exception {
+    testExternalDatasetTracking(Engine.SPARK, false);
+  }
+
+  @Test
+  public void testBackwardsCompatibleExternalDatasetTrackingMR() throws Exception {
+    testExternalDatasetTracking(Engine.MAPREDUCE, true);
+  }
+
+  @Test
+  public void testBackwardsCompatibleExternalDatasetTrackingSpark() throws Exception {
+    testExternalDatasetTracking(Engine.SPARK, true);
+  }
+
+  private void testExternalDatasetTracking(Engine engine, boolean backwardsCompatible) throws Exception {
+    String suffix = engine.name() + (backwardsCompatible ? "-bc" : "");
+
+    // Define input/output datasets
+    String inputName = "fileInput-" + suffix;
+    String expectedExternalDatasetInput = "hydrator-ext-" + inputName;
+    String outputName = "fileOutput-" + suffix;
+    String expectedExternalDatasetOutput = "hydrator-ext-" + outputName;
+
+    // Define input/output directories
+    File inputDir = TMP_FOLDER.newFolder("input-" + suffix);
+    String inputFile = "input-file1.txt";
+    File outputDir = TMP_FOLDER.newFolder("output-" + suffix);
+    File outputSubDir1 = new File(outputDir, "subdir1");
+    File outputSubDir2 = new File(outputDir, "subdir2");
+
+    if (!backwardsCompatible) {
+      // Assert that there are no external datasets
+      Assert.assertNull(getDataset(Id.Namespace.DEFAULT, expectedExternalDatasetInput).get());
+      Assert.assertNull(getDataset(Id.Namespace.DEFAULT, expectedExternalDatasetOutput).get());
+    }
+
+    ETLBatchConfig.Builder builder = ETLBatchConfig.builder("* * * * *");
+    ETLBatchConfig etlConfig = builder
+      .setEngine(engine)
+      // TODO: test multiple inputs CDAP-5654
+      .addStage(new ETLStage("source", MockExternalSource.getPlugin(inputName, inputDir.getAbsolutePath())))
+      .addStage(new ETLStage("sink1", MockExternalSink.getPlugin(backwardsCompatible ? null : outputName, "dir1",
+                                                                 outputSubDir1.getAbsolutePath())))
+      .addStage(new ETLStage("sink2", MockExternalSink.getPlugin(backwardsCompatible ? null : outputName, "dir2",
+                                                                 outputSubDir2.getAbsolutePath())))
+      .addConnection("source", "sink1")
+      .addConnection("source", "sink2")
+      .build();
+
+    AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
+    Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "ExternalDatasetApp-" + suffix);
+    ApplicationManager appManager = deployApplication(appId, appRequest);
+
+    Schema schema = Schema.recordOf(
+      "testRecord",
+      Schema.Field.of("name", Schema.of(Schema.Type.STRING))
+    );
+
+    StructuredRecord recordSamuel = StructuredRecord.builder(schema).set("name", "samuel").build();
+    StructuredRecord recordBob = StructuredRecord.builder(schema).set("name", "bob").build();
+    StructuredRecord recordJane = StructuredRecord.builder(schema).set("name", "jane").build();
+    ImmutableList<StructuredRecord> allInput = ImmutableList.of(recordSamuel, recordBob, recordJane);
+
+    // Create input files
+    MockExternalSource.writeInput(new File(inputDir, inputFile).getAbsolutePath(), allInput);
+
+    WorkflowManager workflowManager = appManager.getWorkflowManager(ETLWorkflow.NAME);
+    workflowManager.start();
+    workflowManager.waitForFinish(5, TimeUnit.MINUTES);
+    List<RunRecord> history = workflowManager.getHistory();
+    // there should be only one completed run
+    Assert.assertEquals(1, history.size());
+    Assert.assertEquals(ProgramRunStatus.COMPLETED, history.get(0).getStatus());
+
+    // Assert output
+    Assert.assertEquals(allInput, MockExternalSink.readOutput(outputSubDir1.getAbsolutePath()));
+    Assert.assertEquals(allInput, MockExternalSink.readOutput(outputSubDir2.getAbsolutePath()));
+
+    if (!backwardsCompatible) {
+      // Assert that external datasets got created
+      Assert.assertNotNull(getDataset(Id.Namespace.DEFAULT, expectedExternalDatasetInput).get());
+      Assert.assertNotNull(getDataset(Id.Namespace.DEFAULT, expectedExternalDatasetOutput).get());
+    }
+  }
 }

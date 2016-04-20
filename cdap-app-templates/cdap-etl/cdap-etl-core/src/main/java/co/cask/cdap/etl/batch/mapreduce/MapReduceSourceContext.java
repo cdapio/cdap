@@ -16,6 +16,7 @@
 
 package co.cask.cdap.etl.batch.mapreduce;
 
+import co.cask.cdap.api.data.batch.Input;
 import co.cask.cdap.api.data.batch.InputFormatProvider;
 import co.cask.cdap.api.data.batch.Split;
 import co.cask.cdap.api.data.stream.StreamBatchReadable;
@@ -24,6 +25,7 @@ import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.etl.api.LookupProvider;
 import co.cask.cdap.etl.api.batch.BatchSourceContext;
+import co.cask.cdap.etl.common.ExternalDatasets;
 import co.cask.cdap.etl.log.LogContext;
 
 import java.util.List;
@@ -101,6 +103,18 @@ public class MapReduceSourceContext extends MapReduceBatchContext implements Bat
       @Override
       public Void call() throws Exception {
         mrContext.setInput(inputFormatProvider);
+        return null;
+      }
+    });
+  }
+
+  @Override
+  public void setInput(final Input input) {
+    LogContext.runWithoutLoggingUnchecked(new Callable<Void>() {
+      @Override
+      public Void call() throws Exception {
+        Input trackableInput =  ExternalDatasets.makeTrackable(mrContext.getAdmin(), input);
+        mrContext.addInput(trackableInput);
         return null;
       }
     });

@@ -1,6 +1,6 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2015 Cask Data, Inc.
+    :copyright: Copyright © 2015-2016 Cask Data, Inc.
 
 .. _stream-exploration:
 
@@ -318,7 +318,7 @@ When creating your queries, keep these limitations in mind:
   CDAP and not directly through Hive unless you place CDAP jars in your Hive classpath. This also means that
   streams cannot be queried directly by Impala. If you wish to use Impala to explore data in a stream, you can
   create an :ref:`ETL application <cdap-apps-hydrator-index>` that converts stream data into a ``TimePartitionedFileSet``.
-  This is described in the "How-To Guide" :ref:`Batch CDAP Stream to Impala <cdap-etl-application-guide>`.
+  This is described in the "How-To Guide" :ref:`Batch CDAP Stream to Impala <cdap-etl-guide>`.
 - Some versions of Hive may try to create a temporary staging directory at the table location when executing queries.
   If you are seeing permission errors, try setting ``hive.exec.stagingdir`` in your Hive configuration to ``/tmp/hive-staging``.
 
