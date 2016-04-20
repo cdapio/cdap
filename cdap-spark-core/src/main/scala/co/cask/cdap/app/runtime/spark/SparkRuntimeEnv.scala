@@ -161,8 +161,8 @@ object SparkRuntimeEnv {
         stopped = true
         try {
           streamingContext.foreach(ssc => {
-            ssc.stop(false)
-            ssc.awaitTermination
+            // Stop the Streaming context gracefully
+            ssc.stop(false, true)
           })
         } finally {
           sparkContext.foreach(sc => {
