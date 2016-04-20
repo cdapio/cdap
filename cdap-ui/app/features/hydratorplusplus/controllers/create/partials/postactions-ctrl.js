@@ -58,6 +58,7 @@ class HydratorPlusPlusPostActionsCtrl {
     if (tab === 'OVERVIEW') { return; }
 
     this.isEdit = false;
+    this.groupsConfig = null;
     this.pluginConfig = {
       name: tab.name + '-' + this.uuid.v4(),
       plugin: {
@@ -140,6 +141,7 @@ class HydratorPlusPlusPostActionsCtrl {
   cancel() {
     this.activeTab = 'OVERVIEW';
     this.pluginConfig = {};
+    this.groupsConfig = null;
   }
 
   fieldValidation() {
@@ -184,6 +186,7 @@ class HydratorPlusPlusPostActionsCtrl {
     }
 
     this.pluginConfig = {};
+    this.groupsConfig = null;
   }
 
   deleteAction(config) {
