@@ -16,22 +16,18 @@
 
 package co.cask.cdap.explore.service;
 
-import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.common.logging.RedirectedPrintStream;
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.hadoop.hive.ql.session.SessionState;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.ByteArrayOutputStream;
-import java.io.FilterOutputStream;
 import java.io.PrintStream;
-import javax.annotation.Nullable;
 
 /**
  * Sets the output streams of a {@link SessionState} to a logger instead of Hive's default System.out and System.err
  */
 public final class HiveStreamRedirector {
-  private static final String LINE_SEPARATOR = System.getProperty("line.separator");
 
   public static void redirectToLogger(SessionState sessionState) {
     redirectToLogger(sessionState, null);
@@ -39,59 +35,14 @@ public final class HiveStreamRedirector {
 
   @VisibleForTesting
   static void redirectToLogger(SessionState sessionState, Logger logger) {
-    sessionState.err = new PrintStream(new RedirectedPrintStream(true, logger), true);
-    sessionState.out = new PrintStream(new RedirectedPrintStream(false, logger), true);
+    Logger logOut = (logger == null) ? LoggerFactory.getLogger("Explore.stdout") : logger;
+    Logger logErr = (logger == null) ? LoggerFactory.getLogger("Explore.stderr") : logger;
 
-    sessionState.childErr = new PrintStream(new RedirectedPrintStream(true, logger), true);
-    sessionState.childOut = new PrintStream(new RedirectedPrintStream(false, logger), true);
-  }
+    sessionState.err = new PrintStream(RedirectedPrintStream.createRedirectedErrStream(logErr, null), true);
+    sessionState.out = new PrintStream(RedirectedPrintStream.createRedirectedOutStream(logOut, null), true);
 
-  private static final class RedirectedPrintStream extends FilterOutputStream {
-    private static final Logger LOG_OUT = LoggerFactory.getLogger("Explore.stdout");
-    private static final Logger LOG_ERR = LoggerFactory.getLogger("Explore.stderr");
-
-    private final ByteArrayOutputStream byteArrayOutputStream;
-    private final boolean errorStream;
-    private final Logger logger;
-
-    RedirectedPrintStream(boolean errorStream, @Nullable Logger logger) {
-      super(new ByteArrayOutputStream());
-      // Safe cast as we know what outputStream we've created.
-      byteArrayOutputStream = (ByteArrayOutputStream) super.out;
-      this.errorStream = errorStream;
-      this.logger = logger == null ? getLogger() : logger;
-    }
-
-    private Logger getLogger() {
-      return errorStream ? LOG_ERR : LOG_OUT;
-    }
-
-    @Override
-    public void flush() {
-      String msg = Bytes.toString(byteArrayOutputStream.toByteArray());
-      if (msg == null || msg.isEmpty()) {
-        byteArrayOutputStream.reset();
-        return;
-      }
-
-      if (msg.endsWith(LINE_SEPARATOR)) {
-        msg = msg.substring(0, msg.length() - LINE_SEPARATOR.length());
-      }
-
-      if (msg.isEmpty()) {
-        byteArrayOutputStream.reset();
-        return;
-      }
-
-      logger.info(msg);
-
-      byteArrayOutputStream.reset();
-    }
-
-    @Override
-    public void write(int i) {
-      byteArrayOutputStream.write(i);
-    }
+    sessionState.childErr = new PrintStream(RedirectedPrintStream.createRedirectedErrStream(logErr, null), true);
+    sessionState.childOut = new PrintStream(RedirectedPrintStream.createRedirectedOutStream(logOut, null), true);
   }
 
   private HiveStreamRedirector() {
