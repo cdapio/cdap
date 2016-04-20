@@ -43,6 +43,7 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.artifact.ArtifactRange;
+import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.Ids;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -161,7 +162,8 @@ public class UnitTestManager implements TestManager {
       MockAppConfigurer configurer = new MockAppConfigurer(app);
       app.configure(configurer, new DefaultApplicationContext<>(configObject));
       appFabricClient.deployApplication(namespace, applicationClz, appConfig, bundleEmbeddedJars);
-      return appManagerFactory.create(Id.Application.from(namespace, configurer.getName()));
+      ApplicationId applicationId = new ApplicationId(namespace.getId(), configurer.getName());
+      return appManagerFactory.create(applicationId.toId());
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
@@ -175,8 +177,8 @@ public class UnitTestManager implements TestManager {
   }
 
   @Override
-  public ApplicationManager getApplicationManager(Id.Application appId) {
-    return appManagerFactory.create(appId);
+  public ApplicationManager getApplicationManager(ApplicationId applicationId) {
+    return appManagerFactory.create(applicationId.toId());
   }
 
   @Override
