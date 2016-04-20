@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,6 +19,8 @@ package co.cask.cdap.examples.wikipedia;
 import co.cask.cdap.api.ProgramLifecycle;
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.api.data.batch.Input;
+import co.cask.cdap.api.data.batch.Output;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.workflow.Value;
@@ -51,7 +53,6 @@ public class TopNMapReduce extends AbstractMapReduce {
     setDescription("A MapReduce job that returns the top-n words in a dataset.");
     setMapperResources(new Resources(512));
     setReducerResources(new Resources(512));
-    setInputDataset(WikipediaPipelineApp.NORMALIZED_WIKIPEDIA_DATASET);
   }
 
   @Override
@@ -73,7 +74,8 @@ public class TopNMapReduce extends AbstractMapReduce {
     job.setNumReduceTasks(numReduceTasks);
     job.setMapperClass(TokenizerMapper.class);
     job.setReducerClass(TopNReducer.class);
-    context.addOutput(WikipediaPipelineApp.MAPREDUCE_TOPN_OUTPUT);
+    context.addInput(Input.ofDataset(WikipediaPipelineApp.NORMALIZED_WIKIPEDIA_DATASET));
+    context.addOutput(Output.ofDataset(WikipediaPipelineApp.MAPREDUCE_TOPN_OUTPUT));
   }
 
   @Override

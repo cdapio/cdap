@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,6 +17,8 @@
 package co.cask.cdap.test.app;
 
 import co.cask.cdap.api.app.AbstractApplication;
+import co.cask.cdap.api.data.batch.Input;
+import co.cask.cdap.api.data.batch.Output;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
 import org.apache.hadoop.mapreduce.Job;
@@ -49,8 +51,8 @@ public class DatasetWithMRApp extends AbstractApplication {
 
     @Override
     public void beforeSubmit(MapReduceContext context) {
-      context.setInput(context.getRuntimeArguments().get(INPUT_KEY));
-      context.setOutput(context.getRuntimeArguments().get(OUTPUT_KEY));
+      context.addInput(Input.ofDataset(context.getRuntimeArguments().get(INPUT_KEY)));
+      context.addOutput(Output.ofDataset(context.getRuntimeArguments().get(OUTPUT_KEY)));
       Job hadoopJob = context.getHadoopJob();
       hadoopJob.setMapperClass(IdentityMapper.class);
       hadoopJob.setNumReduceTasks(0);

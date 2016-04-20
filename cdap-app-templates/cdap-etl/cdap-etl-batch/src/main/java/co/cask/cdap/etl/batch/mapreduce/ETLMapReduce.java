@@ -17,6 +17,7 @@
 package co.cask.cdap.etl.batch.mapreduce;
 
 import co.cask.cdap.api.ProgramLifecycle;
+import co.cask.cdap.api.data.batch.Output;
 import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSetArguments;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
@@ -202,7 +203,7 @@ public class ETLMapReduce extends AbstractMapReduce {
         args.put(FileSetProperties.OUTPUT_PROPERTIES_PREFIX + "avro.schema.output.key",
                  Constants.ERROR_SCHEMA.toString());
         TimePartitionedFileSetArguments.setOutputPartitionTime(args, context.getLogicalStartTime());
-        context.addOutput(stageInfo.getErrorDatasetName(), args);
+        context.addOutput(Output.ofDataset(stageInfo.getErrorDatasetName(), args));
       }
     }
 

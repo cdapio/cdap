@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,6 +17,8 @@
 package co.cask.cdap.examples.sportresults;
 
 import co.cask.cdap.api.Resources;
+import co.cask.cdap.api.data.batch.Input;
+import co.cask.cdap.api.data.batch.Output;
 import co.cask.cdap.api.dataset.lib.FileSetArguments;
 import co.cask.cdap.api.dataset.lib.PartitionFilter;
 import co.cask.cdap.api.dataset.lib.PartitionKey;
@@ -67,17 +69,18 @@ public class ScoreCounter extends AbstractMapReduce {
     Map<String, String> inputArgs = Maps.newHashMap();
     PartitionedFileSetArguments.setInputPartitionFilter(
       inputArgs, PartitionFilter.builder().addValueCondition("league", league).build());
-    PartitionedFileSet input = context.getDataset("results", inputArgs);
-    context.setInput(input);
+    context.addInput(Input.ofDataset("results", inputArgs));
 
     // Each run writes its output to a partition for the league
     Map<String, String> outputArgs = Maps.newHashMap();
     PartitionKey outputKey = PartitionKey.builder().addStringField("league", league).build();
     PartitionedFileSetArguments.setOutputPartitionKey(outputArgs, outputKey);
+    context.addOutput(Output.ofDataset("totals", outputArgs));
+
+    // used only for logging:
+    PartitionedFileSet input = context.getDataset("results", inputArgs);
     PartitionedFileSet outputFileSet = context.getDataset("totals", outputArgs);
     String outputPath = FileSetArguments.getOutputPath(outputFileSet.getEmbeddedFileSet().getRuntimeArguments());
-    context.addOutput("totals", outputFileSet);
-
     LOG.info("input: {}, output: {}", input.getEmbeddedFileSet().getInputLocations(), outputPath);
   }
 

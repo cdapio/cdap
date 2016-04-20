@@ -21,6 +21,8 @@ import co.cask.cdap.api.RuntimeContext;
 import co.cask.cdap.api.annotation.ProcessInput;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.api.data.batch.Input;
+import co.cask.cdap.api.data.batch.Output;
 import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.InstanceConflictException;
@@ -338,8 +340,8 @@ public class AdminApp extends AbstractApplication {
       job.setMapperClass(Tokenizer.class);
       job.setReducerClass(Counter.class);
       job.setNumReduceTasks(1);
-      context.setInput("lines");
-      context.addOutput("counts");
+      context.addInput(Input.ofDataset("lines"));
+      context.addOutput(Output.ofDataset("counts"));
 
       // truncate the output dataset
       context.getAdmin().truncateDataset("counts");

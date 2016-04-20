@@ -1,7 +1,7 @@
 .. meta::
     :author: Cask Data, Inc.
     :description: Cask Data Application Platform WordCount Application
-    :copyright: Copyright © 2014-2015 Cask Data, Inc.
+    :copyright: Copyright © 2014-2016 Cask Data, Inc.
 
 .. _examples-fileset:
 
@@ -93,7 +93,7 @@ dataset can also be given as runtime arguments:
 
 .. literalinclude:: /../../../cdap-examples/FileSetExample/src/main/java/co/cask/cdap/examples/fileset/WordCount.java
     :language: java
-    :lines: 40-63
+    :lines: 41-64
     :append: ...
 
 It is worth mentioning that nothing in ``WordCount`` is specifically programmed to use a FileSet. Instead of
