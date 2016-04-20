@@ -79,7 +79,8 @@ import javax.annotation.Nullable;
 /**
  * The {@link ProgramRunner} that executes Spark program.
  */
-final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin implements ProgramClassLoaderProvider {
+final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
+                               implements ProgramClassLoaderProvider, Closeable {
 
   private static final Logger LOG = LoggerFactory.getLogger(SparkProgramRunner.class);
 
@@ -114,7 +115,6 @@ final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin implement
     RunId runId = RunIds.fromString(arguments.getOption(ProgramOptionConstants.RUN_ID));
 
     Deque<Closeable> closeables = new LinkedList<>();
-    closeables.addFirst(createClassLoaderCloseable(program.getId(), runId));
 
     try {
       // Extract and verify parameters
@@ -202,33 +202,27 @@ final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin implement
   }
 
   /**
-   * Creates a {@link Closeable} for closing the ClassLoader of this {@link SparkProgramRunner}. The
+   * Closes the ClassLoader of this {@link SparkProgramRunner}. The
    * ClassLoader needs to be closed because there is one such ClassLoader created per program execution by
-   * the {@link SparkProgramRuntimeProvider} to support concurrent Spark program execution in the same JVM. The
-   * {@link Closeable#close()} method will be called when the program being executed through this program runner
-   * is completed.
+   * the {@link SparkProgramRuntimeProvider} to support concurrent Spark program execution in the same JVM.
    */
-  private Closeable createClassLoaderCloseable(final Id.Program programId, final RunId runId) {
+  @Override
+  public void close() throws IOException {
     final ClassLoader classLoader = getClass().getClassLoader();
-    return new Closeable() {
+    Thread t = new Thread("spark-program-runner-delay-close") {
       @Override
-      public void close() throws IOException {
-        Thread t = new Thread("delay-close-thread-" + programId + "-" + runId) {
-          @Override
-          public void run() {
-            // Delay the closing of the ClassLoader because Spark, which uses akka, has an async cleanup process
-            // for shutting down threads. During shutdown, there are new classes being loaded.
-            Uninterruptibles.sleepUninterruptibly(2, TimeUnit.SECONDS);
-            if (classLoader instanceof Closeable) {
-              Closeables.closeQuietly((Closeable) classLoader);
-              LOG.debug("Closed ClassLoader for SparkProgramRunner of {}, run {}.", programId, runId);
-            }
-          }
-        };
-        t.setDaemon(true);
-        t.start();
+      public void run() {
+        // Delay the closing of the ClassLoader because Spark, which uses akka, has an async cleanup process
+        // for shutting down threads. During shutdown, there are new classes being loaded.
+        Uninterruptibles.sleepUninterruptibly(2, TimeUnit.SECONDS);
+        if (classLoader instanceof Closeable) {
+          Closeables.closeQuietly((Closeable) classLoader);
+          LOG.debug("Closed ClassLoader for SparkProgramRunner");
+        }
       }
     };
+    t.setDaemon(true);
+    t.start();
   }
 
   private void closeAll(Iterable<Closeable> closeables) {
