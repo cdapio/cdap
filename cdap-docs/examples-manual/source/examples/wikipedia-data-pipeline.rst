@@ -63,7 +63,7 @@ of the application are tied together by the class ``WikipediaPipelineApp``:
 
 .. literalinclude:: /../../../cdap-examples/WikipediaPipeline/src/main/java/co/cask/cdap/examples/wikipedia/WikipediaPipelineApp.java
    :language: java
-   :lines: 26-77
+   :lines: 28-82
 
 This application demonstrates:
 

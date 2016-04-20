@@ -97,8 +97,7 @@ and executed in CDAP:
 
 .. literalinclude:: /../../../cdap-examples/WebAnalytics/src/main/java/co/cask/cdap/examples/webanalytics/WebAnalytics.java
    :language: java
-   :lines: 26-35
-   :dedent: 2
+   :lines: 26-
 
 
 .. Building and Starting

@@ -60,7 +60,7 @@ of the application are tied together by the class ``PurchaseApp``:
 
 .. literalinclude:: /../../../cdap-examples/Purchase/src/main/java/co/cask/cdap/examples/purchase/PurchaseApp.java
     :language: java
-    :lines: 31-
+    :lines: 32-
 
 Storing Purchases with the *Purchase* ObjectStore Data Storage
 --------------------------------------------------------------
