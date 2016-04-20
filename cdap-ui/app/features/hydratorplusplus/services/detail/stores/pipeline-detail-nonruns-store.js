@@ -181,6 +181,7 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
       // in detailed view. `appConfig.configJson` is the culprit.
       // One of the worst cases of 2way binding where right now the app is super big that I have no f***ing clue where which one is modified.
       let appConfigClone = angular.copy(appConfig);
+
       appConfig.cloneConfig = {
         name: app.name,
         artifact: app.artifact,
@@ -194,7 +195,8 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
           schedule: appConfigClone.configJson.schedule,
           connections: uiConfig.connections,
           comments: appConfigClone.configJson.comments,
-          postactions: appConfigClone.configJson.postactions
+          postactions: appConfigClone.configJson.postactions,
+          engine: appConfigClone.configJson.engine
         }
       };
       appConfig.streams = app.streams.map(function (stream) {

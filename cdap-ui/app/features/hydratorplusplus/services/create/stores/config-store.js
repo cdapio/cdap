@@ -324,6 +324,7 @@ class HydratorPlusPlusConfigStore {
   setEngine(engine) {
     if (this.GLOBALS.etlBatchPipelines.indexOf(this.state.artifact.name) !== -1) {
       this.state.config.engine = engine || 'mapreduce';
+      this.emitChange();
     }
   }
   getEngine() {

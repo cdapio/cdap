@@ -22,10 +22,14 @@ class HydratorPlusPlusSettingsCtrl {
 
     // If ETL Batch
     if (GLOBALS.etlBatchPipelines.indexOf(this.templateType) !== -1) {
+      HydratorPlusPlusConfigStore.registerOnChangeListener(() => {
+        this.engine = HydratorPlusPlusConfigStore.getEngine();
+      });
+
       // Initialiting ETL Batch Schedule
       this.initialCron = HydratorPlusPlusConfigStore.getSchedule();
       this.cron = this.initialCron;
-      this.engine = 'mapreduce';
+      this.engine = HydratorPlusPlusConfigStore.getEngine();
       this.isBasic = this.checkCron(this.initialCron);
 
 
