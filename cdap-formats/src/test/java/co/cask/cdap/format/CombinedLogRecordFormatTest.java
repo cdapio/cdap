@@ -44,7 +44,7 @@ public class CombinedLogRecordFormatTest {
     Assert.assertEquals("10.10.10.10", output.get("remote_host"));
     Assert.assertNull(output.get("remote_login"));
     Assert.assertNull(output.get("auth_user"));
-    Assert.assertEquals("01/Feb/2015:09:58:24 +0000", output.get("date"));
+    Assert.assertEquals("01/Feb/2015:09:58:24 +0000", output.get("request_time"));
     Assert.assertNull(output.get("request"));
     Assert.assertEquals(408, output.get("status"));
     Assert.assertNull(output.get("content_length"));
@@ -65,7 +65,7 @@ public class CombinedLogRecordFormatTest {
     Assert.assertEquals("10.10.10.10", output.get("remote_host"));
     Assert.assertNull(output.get("remote_login"));
     Assert.assertNull(output.get("auth_user"));
-    Assert.assertEquals("01/Feb/2015:06:47:10 +0000", output.get("date"));
+    Assert.assertEquals("01/Feb/2015:06:47:10 +0000", output.get("request_time"));
     Assert.assertEquals("GET /browse/COOP-DBT-JOB1-238/artifact HTTP/1.1", output.get("request"));
     Assert.assertEquals(301, output.get("status"));
     Assert.assertEquals(256, output.get("content_length"));
@@ -87,7 +87,7 @@ public class CombinedLogRecordFormatTest {
     Assert.assertEquals("10.10.10.10", output.get("remote_host"));
     Assert.assertNull(output.get("remote_login"));
     Assert.assertNull(output.get("auth_user"));
-    Assert.assertEquals("01/Feb/2015:06:38:58 +0000", output.get("date"));
+    Assert.assertEquals("01/Feb/2015:06:38:58 +0000", output.get("request_time"));
     Assert.assertEquals("GET /plugins/servlet/buildStatusImage/CDAP-DUT HTTP/1.1", output.get("request"));
     Assert.assertEquals(301, output.get("status"));
     Assert.assertEquals(257, output.get("content_length"));
