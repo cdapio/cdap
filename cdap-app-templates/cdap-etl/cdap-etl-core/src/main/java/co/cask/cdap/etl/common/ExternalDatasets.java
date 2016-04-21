@@ -34,7 +34,6 @@ import java.util.Map;
  * This class is used to create external datasets to track external sources/sinks.
  */
 public final class ExternalDatasets {
-  private static final String NAME_PREFIX = "hydrator-ext-";
 
   /**
    * If the input is an external source then an external dataset is created for tracking purpose and returned.
@@ -63,17 +62,16 @@ public final class ExternalDatasets {
 
     try {
       // Create an external dataset for the input format for lineage tracking
-      String datasetName = NAME_PREFIX + inputName;
       Map<String, String> arguments = new HashMap<>();
       arguments.put("input.format.class", inputFormatProvider.getInputFormatClassName());
       arguments.putAll(inputFormatConfiguration);
-      if (!admin.datasetExists(datasetName)) {
+      if (!admin.datasetExists(inputName)) {
         // Note: the dataset properties are the same as the arguments since we cannot identify them separately
         // since they are mixed up in a single configuration object (CDAP-5674)
         // Also, the properties of the external dataset created will contain runtime arguments for the same reason.
-        admin.createDataset(datasetName, "externalDataset", DatasetProperties.builder().addAll(arguments).build());
+        admin.createDataset(inputName, "externalDataset", DatasetProperties.builder().addAll(arguments).build());
       }
-      return Input.ofDataset(datasetName, Collections.unmodifiableMap(arguments)).alias(input.getAlias());
+      return Input.ofDataset(inputName, Collections.unmodifiableMap(arguments)).alias(input.getAlias());
     } catch (DatasetManagementException e) {
       throw Throwables.propagate(e);
     }
@@ -107,17 +105,16 @@ public final class ExternalDatasets {
     // Output is an external sink, create an external dataset so that it can be tracked.
     try {
       // Create an external dataset for the output format for lineage tracking
-      String datasetName = NAME_PREFIX + outputName;
       Map<String, String> arguments = new HashMap<>();
       arguments.put("output.format.class", outputFormatProvider.getOutputFormatClassName());
       arguments.putAll(outputFormatConfiguration);
-      if (!admin.datasetExists(datasetName)) {
+      if (!admin.datasetExists(outputName)) {
         // Note: the dataset properties are the same as the arguments since we cannot identify them separately
         // since they are mixed up in a single configuration object (CDAP-5674)
         // Also, the properties of the external dataset created will contain runtime arguments for the same reason.
-        admin.createDataset(datasetName, "externalDataset", DatasetProperties.builder().addAll(arguments).build());
+        admin.createDataset(outputName, "externalDataset", DatasetProperties.builder().addAll(arguments).build());
       }
-      return Output.ofDataset(datasetName, Collections.unmodifiableMap(arguments)).alias(output.getAlias());
+      return Output.ofDataset(outputName, Collections.unmodifiableMap(arguments)).alias(output.getAlias());
     } catch (DatasetManagementException e) {
       throw Throwables.propagate(e);
     }
