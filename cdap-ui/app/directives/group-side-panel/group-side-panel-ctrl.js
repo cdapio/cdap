@@ -17,6 +17,9 @@
 angular.module(PKG.name + '.commons')
   .controller('MySidePanel', function ($scope) {
     this.groups = $scope.panelGroups;
+    this.groupGenericName = $scope.groupGenericName || 'group';
+    this.itemGenericName = $scope.itemGenericName || 'item';
+
     this.view = $scope.view || 'icon';
     $scope.$watch('MySidePanel.groups.length', function() {
 

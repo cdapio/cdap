@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,9 +19,11 @@ package co.cask.cdap.data2.datafabric.dataset.service.mds;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.module.EmbeddedDataset;
 import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.dataset2.lib.table.MDSKey;
 import co.cask.cdap.data2.dataset2.lib.table.MetadataStoreDataset;
 import co.cask.cdap.proto.Id;
+import com.google.common.base.Predicate;
 import com.google.common.collect.Lists;
 
 import java.util.Collection;
@@ -64,7 +66,16 @@ public final class DatasetInstanceMDS extends MetadataStoreDataset {
   }
 
   public Collection<DatasetSpecification> getAll(Id.Namespace namespaceId) {
-    Map<MDSKey, DatasetSpecification> instances = listKV(getInstanceKey(namespaceId), DatasetSpecification.class);
+    Predicate<DatasetSpecification> localDatasetFilter = new Predicate<DatasetSpecification>() {
+      @Override
+      public boolean apply(@Nullable DatasetSpecification input) {
+        return input != null
+          && !Boolean.parseBoolean(input.getProperty(Constants.AppFabric.WORKFLOW_LOCAL_DATASET_PROPERTY));
+      }
+    };
+
+    Map<MDSKey, DatasetSpecification> instances = listKV(getInstanceKey(namespaceId), null, DatasetSpecification.class,
+                                                         Integer.MAX_VALUE, localDatasetFilter);
     return instances.values();
   }
 

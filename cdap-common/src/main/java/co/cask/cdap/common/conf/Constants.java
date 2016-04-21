@@ -169,6 +169,11 @@ public final class Constants {
      * Configuration setting to set the maximum size of a workflow token in MB
      */
     public static final String WORKFLOW_TOKEN_MAX_SIZE_MB = "workflow.token.max.size.mb";
+
+    /**
+     * Name of the property used to identify whether the dataset is local or not.
+     */
+    public static final String WORKFLOW_LOCAL_DATASET_PROPERTY = "workflow.local.dataset";
   }
 
   /**

@@ -57,42 +57,88 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
               }
               return defer.promise;
             },
-            rSelectedArtifact: function($stateParams, $q, myPipelineApi) {
+            rSelectedArtifact: function($stateParams, $q, myPipelineApi, myAlertOnValium, $state, GLOBALS) {
               var defer = $q.defer();
+              let uiSupportedArtifacts = [GLOBALS.etlBatch, GLOBALS.etlRealtime, GLOBALS.etlDataPipeline];
+              let isArtifactValid = (backendArtifacts, artifact) => {
+                return backendArtifacts.filter( a => a.name === artifact).length;
+              };
+              let isAnyUISupportedArtifactPresent = (backendArtifacts) => {
+                return backendArtifacts.filter( artifact => uiSupportedArtifacts.indexOf(artifact.name) !== -1);
+              };
+              let getValidUISupportedArtifact = (backendArtifacts) => {
+                let validUISupportedArtifact = isAnyUISupportedArtifactPresent(backendArtifacts);
+                return validUISupportedArtifact.length ?  validUISupportedArtifact[0]: false;
+              };
+
+              let showError = (message) => {
+                message = (typeof message === 'string' ? message : GLOBALS.en.hydrator.studio.error['MISSING-SYSTEM-ARTIFACTS']);
+                myAlertOnValium.show({
+                  type: 'danger',
+                  content: message
+                });
+              };
+
               myPipelineApi.fetchArtifacts({
                 namespace: $stateParams.namespace
-              }).$promise.then((res) => {
-                let uiSupportedArtifacts = ['cdap-etl-batch', 'cdap-etl-realtime', 'cdap-data-pipeline'];
-                let filteredRes;
-                if ($stateParams.artifactType) {
-                  filteredRes = res.filter( r => r.name === $stateParams.artifactType );
-                  if (filteredRes.length) {
-                    defer.resolve(filteredRes[0].name);
+              }).$promise.then((artifactsFromBackend) => {
+                let showWarningAndNavigateAway = () => {
+                  if (!$state.current.name.length) {
+                    $state.go('hydrator.list').then(showError);
+                    return;
                   } else {
-                    defer.resolve(res[0].name);
+                    $state.go($state.current).then(showError);
                   }
+                };
+
+                let chooseDefaultArtifact = () => {
+                  if(!isArtifactValid(artifactsFromBackend, GLOBALS.etlDataPipeline)) {
+                    if (!isAnyUISupportedArtifactPresent(artifactsFromBackend).length) {
+                      return showWarningAndNavigateAway();
+                    } else {
+                      $stateParams.artifactType = getValidUISupportedArtifact(artifactsFromBackend).name;
+                      defer.resolve($stateParams.artifactType);
+                    }
+                  } else {
+                    $stateParams.artifactType = GLOBALS.etlDataPipeline;
+                    defer.resolve($stateParams.artifactType);
+                  }
+                };
+
+                if(!artifactsFromBackend.length) {
+                  return showWarningAndNavigateAway();
+                }
+
+                if(!isArtifactValid(artifactsFromBackend, $stateParams.artifactType)) {
+                  chooseDefaultArtifact();
                 } else {
-                  filteredRes = res.filter( r => uiSupportedArtifacts.indexOf(r.name) !== -1 );
-                  $stateParams.artifactType = filteredRes.filter(fres => fres.name === 'cdap-data-pipeline')[0].name;
                   defer.resolve($stateParams.artifactType);
                 }
-              });
+              },
+              (err) => {
+                showError(err);
+              }
+            );
               return defer.promise;
             },
-            rArtifacts: function(myPipelineApi, $stateParams, $q, HydratorPlusPlusOrderingFactory) {
+            rArtifacts: function(myPipelineApi, $stateParams, $q, HydratorPlusPlusOrderingFactory, GLOBALS) {
               var defer = $q.defer();
               myPipelineApi.fetchArtifacts({
                 namespace: $stateParams.namespace
               }).$promise
               .then((res) => {
-                let uiSupportedArtifacts = ['cdap-etl-batch', 'cdap-etl-realtime', 'cdap-data-pipeline'];
-                let filteredRes = res.filter( r => uiSupportedArtifacts.indexOf(r.name) !== -1 );
+                if (!res.length) {
+                  return;
+                } else {
+                  let uiSupportedArtifacts = [GLOBALS.etlBatch, GLOBALS.etlRealtime, GLOBALS.etlDataPipeline];
+                  let filteredRes = res.filter( r => uiSupportedArtifacts.indexOf(r.name) !== -1 );
 
-                filteredRes = filteredRes.map( r => {
-                  r.label = HydratorPlusPlusOrderingFactory.getArtifactDisplayName(r.name);
-                  return r;
-                });
-                defer.resolve(filteredRes);
+                  filteredRes = filteredRes.map( r => {
+                    r.label = HydratorPlusPlusOrderingFactory.getArtifactDisplayName(r.name);
+                    return r;
+                  });
+                  defer.resolve(filteredRes);
+                }
               });
               return defer.promise;
             },
