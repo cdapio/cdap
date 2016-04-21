@@ -15,10 +15,10 @@
  */
 
 angular.module(PKG.name + '.commons')
-  .directive('getSchema', function () {
+  .directive('outputSchema', function () {
     return {
       restrict: 'E',
-      templateUrl: 'plugin-functions/functions/get-schema/get-schema.html',
+      templateUrl: 'plugin-functions/functions/output-schema/output-schema.html',
       scope: {
         node: '=',
         fnConfig: '='
@@ -41,24 +41,32 @@ angular.module(PKG.name + '.commons')
           }
         };
         var pluginMethodApi = getPluginMethodApi(methodType);
+        vm.node = $scope.node;
+        var getRequiredFields = function() {
+          return fnConfig['required-fields'].map( function(field) { return $scope.node.plugin.properties[field]; } );
+        };
+        vm.requiredProperties = getRequiredFields();
+        vm.requiredFieldsWatch = $scope.$watch('OutputSchemaController.node.plugin.properties', function() {
+          vm.requiredProperties = getRequiredFields();
+        }, true);
+        vm.missingFieldsWarningMessage = fnConfig['missing-required-fields-message'] || '';
 
         vm.openModal = function () {
           var modal = $uibModal.open({
-            templateUrl: 'plugin-functions/functions/get-schema/get-schema-modal.html',
+            templateUrl: 'plugin-functions/functions/output-schema/output-schema-modal.html',
             size: 'lg',
-            windowTopClass: 'hydrator-modal get-schema-modal',
+            windowTopClass: 'hydrator-modal output-schema-modal',
             keyboard: true,
-            controller: function ($scope, nodeInfo, $state) {
+            controller: function ($scope, nodeInfo, $state, HydratorPlusPlusHydratorService) {
               var mvm = this;
 
               mvm.node = angular.copy(nodeInfo);
 
-              mvm.query = mvm.node.plugin.properties.importQuery;
-
               mvm.fetchSchema = function () {
                 var config = mvm.node.plugin.properties;
-                config.query = mvm.query;
-                delete config.importQuery;
+                // This is lame where we stringify the input schema from the formatOutputSchema function but again parse it here to send it as an object to the backend.
+                config.inputSchema = JSON.parse(HydratorPlusPlusHydratorService.formatOutputSchema(nodeInfo.inputSchema));
+                mvm.showLoading = true;
 
                 var params = {
                   namespace: $state.params.namespace,
@@ -83,13 +91,17 @@ angular.module(PKG.name + '.commons')
                       }
                       return field;
                     });
+                    mvm.showLoading = false;
                   }, function (err) {
                     mvm.resolvedSchema = null;
                     mvm.schema = null;
 
                     mvm.error = err.data;
+                    mvm.showLoading = false;
                   });
               };
+
+              mvm.fetchSchema();
 
               mvm.apply = function () {
                 $scope.$close({
@@ -112,7 +124,11 @@ angular.module(PKG.name + '.commons')
             $scope.node.plugin.properties.importQuery = obj.query;
           });
         };
+
+        $scope.$on('$destroy', function() {
+          vm.requiredFieldsWatch();
+        });
       },
-      controllerAs: 'GetSchemaController'
+      controllerAs: 'OutputSchemaController'
     };
   });

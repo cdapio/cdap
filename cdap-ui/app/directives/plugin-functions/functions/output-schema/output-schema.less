@@ -14,25 +14,12 @@
  * the License.
  */
 
-angular.module(PKG.name + '.commons')
-  .service('PluginsFunctionsFactory', function() {
-    this.registry = {
-      'getSchema': {
-        element: '<get-schema></get-schema>',
-        attributes: {
-          'node': 'node',
-          'fn-config': 'fnConfig',
-          'class': 'pull-right'
-        }
-      },
-      'outputSchema': {
-        element: '<output-schema></output-schema>',
-        attributes: {
-          'node': 'node',
-          'fn-config': 'fnConfig',
-          'class': 'pull-right'
-        }
-      }
-    };
+output-schema {
+  position: relative;
 
-  });
+  button.btn {
+    position: absolute;
+    top: -15px;
+    right: 0;
+  }
+}
