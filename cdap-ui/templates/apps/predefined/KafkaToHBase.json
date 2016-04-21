@@ -15,11 +15,11 @@
           "kafka.brokers": "localhost:9092",
           "kafka.zookeeper": "",
           "format": "csv",
-          "kafka.partitions": 2
+          "kafka.partitions": "2"
         },
         "label": "Kafka",
         "artifact": {
-          "name": "core-plugins",
+          "name": "kafka-plugins",
           "scope": "SYSTEM",
           "version": "1.3.0-SNAPSHOT"
         }

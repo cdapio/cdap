@@ -25,7 +25,7 @@ class HydratorPlusPlusPreConfiguredCtrl {
     this.HydratorPlusPlusConfigStore = HydratorPlusPlusConfigStore;
     this.$state = $state;
 
-    this.typeFilter = (rTemplateType === GLOBALS.etlBatch? GLOBALS.etlBatch: GLOBALS.etlRealtime);
+    this.typeFilter = (GLOBALS.etlBatchPipelines.indexOf(rTemplateType) !== -1 ? GLOBALS.etlBatch : GLOBALS.etlRealtime);
     this.fetchTemplates().then((plugins) => {
       this.templates = plugins;
     });

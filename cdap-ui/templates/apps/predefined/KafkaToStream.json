@@ -12,10 +12,10 @@
         "label": "Kafka",
         "properties": {
           "kafka.topic": "",
-          "kafka.partitions": 1
+          "kafka.partitions": "1"
         },
         "artifact": {
-          "name": "core-plugins",
+          "name": "kafka-plugins",
           "scope": "SYSTEM",
           "version": "1.3.0-SNAPSHOT"
         }
