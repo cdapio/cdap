@@ -51,9 +51,13 @@ function usage() {
   echo "    javadocs          Build Javadocs used in documentation"
   echo "    javadocs-all      Build Javadocs for all modules"
   echo "    licenses          Clean build of License Dependency PDFs"
-  echo "    sdk               Build CDAP SDK (includes the Hydrator plugins if Hydrator plugins source is at"
-  echo "                        '${HYDRATOR_PLUGINS_PATH}'"
-  echo "                        or the environment variable 'HYDRATOR_PLUGINS_PATH' has been set)"
+  echo "    sdk               Build CDAP SDK"
+  echo "                        includes the Hydrator plugins if Hydrator plugins source is at"
+  echo "                          '${HYDRATOR_PLUGINS_PATH}'"
+  echo "                          or the environment variable 'HYDRATOR_PLUGINS_PATH' has been set"
+  echo "                        includes the Tracker app if Tracker source is at"
+  echo "                          '${TRACKER_APP_PATH}'"
+  echo "                          or the environment variable 'TRACKER_APP_PATH' has been set"
   echo 
   echo "    version           Print the version information"
   echo 
@@ -78,6 +82,9 @@ function set_project_path() {
   fi
   if [[ "x${HYDRATOR_PLUGINS_PATH}" == "x" ]]; then
     HYDRATOR_PLUGINS_PATH="${PROJECT_PATH}/../${HYDRATOR_PLUGINS}"
+  fi
+  if [[ "x${TRACKER_APP_PATH}" == "x" ]]; then
+    TRACKER_APP_PATH="${PROJECT_PATH}/../${TRACKER_APP}"
   fi
 }
 
@@ -489,16 +496,40 @@ function build_license_dependency_pdfs() {
 }
 
 function build_standalone() {
-  local add_artifacts=""
+  local errors
+  local check="0"
+  local additional_artifacts_path="/tmp/${ADDITIONAL_ARTIFACTS}"
+  local add_artifacts="-Dadditional.artifacts.dir=${additional_artifacts_path}"
+  rm -rf ${additional_artifacts_path}
+  mkdir -p ${additional_artifacts_path}
+  echo "Cleaned directory ${additional_artifacts_path}"
   if [ -d ${HYDRATOR_PLUGINS_PATH} ]; then
-    build_hydrator_plugins
-    local errors=$?
-    if [ "${errors}" == "0" ]; then
-      add_artifacts="-Dadditional.artifacts.dir=${HYDRATOR_PLUGINS_PATH}"
+    build_hydrator_plugins ${additional_artifacts_path}
+    errors=$?
+    if [ "${errors}" != "0" ]; then
+      echo "Error building Hydrator plugins: ${errors}"
+      check=1
     fi
   else
     echo "No HYDRATOR_PLUGINS_PATH at ${HYDRATOR_PLUGINS_PATH}"
+    check=1
   fi
+  check_if_continue ${check}
+  check="0"
+  local add_apps=""
+  if [ -d ${TRACKER_APP_PATH} ]; then
+    build_tracker_app ${additional_artifacts_path}
+    errors=$?
+    if [ "${errors}" != "0" ]; then
+      echo "Error building Tracker app: ${errors}"
+      check=1
+    fi
+  else
+    echo "No TRACKER_APP_PATH at ${TRACKER_APP_PATH}"
+    check=1
+  fi
+  check_if_continue ${check}
+  echo "Using additional artifacts: ${add_artifacts}"
   set_mvn_environment
   MAVEN_OPTS="-Xmx1024m -XX:MaxPermSize=128m" mvn clean package \
   -pl cdap-standalone,cdap-app-templates/cdap-etl,cdap-app-templates/cdap-data-quality,cdap-examples \
@@ -506,6 +537,7 @@ function build_standalone() {
 }
 
 function build_hydrator_plugins() {
+  local additional_artifacts_path=$1
   local errors=0
   set_mvn_environment
   if [ -d ${HYDRATOR_PLUGINS_PATH} ]; then
@@ -513,12 +545,63 @@ function build_hydrator_plugins() {
     echo "HYDRATOR_PLUGINS_PATH: ${HYDRATOR_PLUGINS_PATH}"
     mvn clean package -DskipTests
     errors=$?
+    if [ "${errors}" == "0" ]; then
+      echo "Copying Hydrator to ${additional_artifacts_path}"
+      local artifacts="${additional_artifacts_path}/${HYDRATOR_PLUGINS}/${TARGET}"
+      if [ -d ${additional_artifacts_path} ]; then
+        rm -rf ${artifacts}
+        mkdir -p ${artifacts}
+        find ${HYDRATOR_PLUGINS_PATH} \( -name '*.jar' -o -name '*.json' \) -print0 | xargs -I{} -0 cp {} ${artifacts}
+        errors=$?
+        echo "Copied Hydrator to ${artifacts}"
+      fi
+    fi
   else
     echo "No HYDRATOR_PLUGINS_PATH at ${HYDRATOR_PLUGINS_PATH}"
   fi
   return ${errors}
 }
-  
+
+function build_tracker_app() {
+  local additional_artifacts_path=$1
+  local errors=0
+  set_mvn_environment
+  if [ -d ${TRACKER_APP_PATH} ]; then
+    cd ${TRACKER_APP_PATH}
+    echo "TRACKER_APP_PATH: ${TRACKER_APP_PATH}"
+    mvn clean package -DskipTests
+    errors=$?
+    if [ "${errors}" == "0" ]; then
+      echo "Copying Tracker app to ${additional_artifacts_path}"
+      local artifacts="${additional_artifacts_path}/${TRACKER_APP}/${TARGET}"
+      if [ -d ${additional_artifacts_path} ]; then
+        rm -rf ${artifacts}
+        mkdir -p ${artifacts}
+        find ${TRACKER_APP_PATH} \( -name '*.jar' -o -name '*.json' \) -print0 | xargs -I{} -0 cp {} ${artifacts}
+        errors=$?
+        echo "Copied Tracker app to ${artifacts}"
+      fi
+    fi
+  else
+    echo "No TRACKER_APP_PATH at ${TRACKER_APP_PATH}"
+  fi
+  return ${errors}
+}
+
+function check_if_continue() {
+  local check=$1
+  if [ "${check}" != "0" ]; then
+    echo -n "Error while building; continue with build? Enter [ENTER] or [y] to continue, or [n] or [q] to quit: "
+    read to_continue
+    case "${to_continue}" in
+      n ) exit 1;;
+      q ) exit 1;;
+      y ) return 0;;
+      * ) return 0;;
+    esac    
+  fi
+}
+
 function print_version() {
   cd ${SCRIPT_PATH}/developers-manual
   ./build.sh display-version ${ARG_2} 
