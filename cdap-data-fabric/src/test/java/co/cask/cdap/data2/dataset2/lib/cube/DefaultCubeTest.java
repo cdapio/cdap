@@ -21,6 +21,7 @@ import co.cask.cdap.data2.dataset2.lib.table.inmemory.InMemoryMetricsTable;
 import co.cask.cdap.data2.dataset2.lib.table.inmemory.InMemoryTableService;
 import co.cask.cdap.data2.dataset2.lib.timeseries.EntityTable;
 import co.cask.cdap.data2.dataset2.lib.timeseries.FactTable;
+import com.google.common.collect.ImmutableMap;
 
 import java.util.Map;
 
@@ -45,6 +46,6 @@ public class DefaultCubeTest extends AbstractCubeTest {
       }
     };
 
-    return new DefaultCube(resolutions, supplier, aggregations);
+    return new DefaultCube(resolutions, supplier, aggregations, ImmutableMap.<String, AggregationAlias>of());
   }
 }

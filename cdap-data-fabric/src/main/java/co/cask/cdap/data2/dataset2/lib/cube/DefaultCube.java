@@ -65,17 +65,20 @@ public class DefaultCube implements Cube {
 
   private final Map<Integer, FactTable> resolutionToFactTable;
   private final Map<String, ? extends Aggregation> aggregations;
+  private final Map<String, AggregationAlias> aggregationAliasMap;
 
   @Nullable
   private MetricsCollector metrics;
 
   public DefaultCube(int[] resolutions, FactTableSupplier factTableSupplier,
-                     Map<String, ? extends Aggregation> aggregations) {
+                     Map<String, ? extends Aggregation> aggregations,
+                     Map<String, AggregationAlias> aggregationAliasMap) {
     this.aggregations = aggregations;
     this.resolutionToFactTable = Maps.newHashMap();
     for (int resolution : resolutions) {
       resolutionToFactTable.put(resolution, factTableSupplier.get(resolution, 3600));
     }
+    this.aggregationAliasMap = aggregationAliasMap;
   }
 
   @Override
@@ -88,11 +91,20 @@ public class DefaultCube implements Cube {
     List<Fact> toWrite = Lists.newArrayList();
     int dimValuesCount = 0;
     for (CubeFact fact : facts) {
-      for (Aggregation agg : aggregations.values()) {
+      for (Map.Entry<String, ? extends Aggregation> aggEntry : aggregations.entrySet()) {
+        Aggregation agg = aggEntry.getValue();
+        AggregationAlias aggregationAlias = null;
+
+        if (aggregationAliasMap.containsKey(aggEntry.getKey())) {
+          aggregationAlias = aggregationAliasMap.get(aggEntry.getKey());
+        }
+
         if (agg.accept(fact)) {
           List<DimensionValue> dimensionValues = Lists.newArrayList();
           for (String dimensionName : agg.getDimensionNames()) {
-            dimensionValues.add(new DimensionValue(dimensionName, fact.getDimensionValues().get(dimensionName)));
+            String dimensionValueKey =
+              aggregationAlias == null ? dimensionName : aggregationAlias.getAlias(dimensionName);
+            dimensionValues.add(new DimensionValue(dimensionName, fact.getDimensionValues().get(dimensionValueKey)));
             dimValuesCount++;
           }
           toWrite.add(new Fact(fact.getTimestamp(), dimensionValues, fact.getMeasurements()));
@@ -306,7 +318,7 @@ public class DefaultCube implements Cube {
 
         // todo: choose aggregation smarter than just by number of dimensions :)
         if (currentBest == null ||
-            currentBest.getSecond().getDimensionNames().size() > agg.getDimensionNames().size()) {
+          currentBest.getSecond().getDimensionNames().size() > agg.getDimensionNames().size()) {
           currentBest = new ImmutablePair<>(entry.getKey(), agg);
         }
       }
