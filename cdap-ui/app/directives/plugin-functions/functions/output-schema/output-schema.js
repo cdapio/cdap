@@ -62,8 +62,6 @@ angular.module(PKG.name + '.commons')
 
               mvm.node = angular.copy(nodeInfo);
 
-              mvm.query = mvm.node.plugin.properties.importQuery;
-
               mvm.fetchSchema = function () {
                 var config = mvm.node.plugin.properties;
                 // This is lame where we stringify the input schema from the formatOutputSchema function but again parse it here to send it as an object to the backend.
