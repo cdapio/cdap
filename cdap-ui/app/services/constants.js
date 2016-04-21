@@ -85,7 +85,8 @@ angular.module(PKG.name + '.services')
               'INVALID-SCHEDULE': 'Batch pipeline should have a valid schedule specification.',
               'INVALID-INSTANCE': 'Realtime pipeline should have a valid instance specification.',
               'INVALID-NODES-CONNECTIONS': 'Unknown node(s) in \'connections\' property in pipeline specification.'
-            }
+            },
+            'MISSING-SYSTEM-ARTIFACTS': 'Missing system artifacts. Please load system artifacts to use hydrator studio.'
           },
           pluginDoesNotExist: 'This plugin does not exist: '
         },
