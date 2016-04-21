@@ -136,13 +136,16 @@ function download_includes() {
   echo_red_bold "Checking included example files for changes"
   
   # Group alphabetically each example separately, files from each example together
-  
+
+  test_an_include 0d1fdc6d75995c3c417886786ccc8997 ../../cdap-examples/ClicksAndViews/src/main/java/co/cask/cdap/examples/clicksandviews/ClicksAndViews.java
+  test_an_include 9c4cd5ce267ac0714abc5a4b724d303a ../../cdap-examples/ClicksAndViews/src/main/java/co/cask/cdap/examples/clicksandviews/ClicksAndViewsMapReduce.java
+
   test_an_include 45cbe451f2821eddf2f1245eff468cee ../../cdap-examples/CountRandom/src/main/java/co/cask/cdap/examples/countrandom/CountRandom.java
   test_an_include 9dcf41f03ee52e42b77588fe18f542d5 ../../cdap-examples/CountRandom/src/main/java/co/cask/cdap/examples/countrandom/CountRandomFlow.java
   test_an_include 288c590e1a9b010e1cd7e29a431e9071 ../../cdap-examples/CountRandom/src/main/java/co/cask/cdap/examples/countrandom/RandomSource.java
   test_an_include 77d244f968d508d9ea2d91e463065b68 ../../cdap-examples/CountRandom/src/main/java/co/cask/cdap/examples/countrandom/NumberSplitter.java
   test_an_include 9f963a17090976d2c15a4d092bd9e8de ../../cdap-examples/CountRandom/src/main/java/co/cask/cdap/examples/countrandom/NumberCounter.java
-  
+
   test_an_include fa746b8f3423736310316f2d48b0fe7d ../../cdap-examples/DataCleansing/src/main/java/co/cask/cdap/examples/datacleansing/DataCleansing.java
   test_an_include 0f13c7ad968facfcea78af2178a29fc4 ../../cdap-examples/DataCleansing/src/main/java/co/cask/cdap/examples/datacleansing/DataCleansingMapReduce.java
 
