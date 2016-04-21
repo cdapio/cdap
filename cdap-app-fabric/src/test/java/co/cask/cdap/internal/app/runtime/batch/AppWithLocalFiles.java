@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,6 +18,8 @@ package co.cask.cdap.internal.app.runtime.batch;
 
 import co.cask.cdap.api.ProgramLifecycle;
 import co.cask.cdap.api.app.AbstractApplication;
+import co.cask.cdap.api.data.batch.Input;
+import co.cask.cdap.api.data.batch.Output;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
@@ -70,8 +72,8 @@ public class AppWithLocalFiles extends AbstractApplication {
         context.localize(STOPWORDS_FILE_ALIAS, URI.create(args.get(STOPWORDS_FILE_ARG)));
       }
       context.localize(LOCAL_ARCHIVE_ALIAS, createTemporaryArchiveFile(), true);
-      context.setInput(args.get(MR_INPUT_DATASET));
-      context.addOutput(args.get(MR_OUTPUT_DATASET));
+      context.addInput(Input.ofDataset(args.get(MR_INPUT_DATASET)));
+      context.addOutput(Output.ofDataset(args.get(MR_OUTPUT_DATASET)));
       Job job = context.getHadoopJob();
       job.setMapperClass(TokenizerMapper.class);
       job.setReducerClass(IntSumReducer.class);

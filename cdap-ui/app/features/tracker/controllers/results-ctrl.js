@@ -147,7 +147,7 @@ class TrackerResultsController {
         entityTypeState: 'datasets',
         icon: 'icon-datasets',
         description: entity.metadata.SYSTEM.properties.description || 'No description provided for this Dataset.',
-        createDate: entity.metadata.SYSTEM.properties.createtime,
+        createDate: entity.metadata.SYSTEM.properties['creation-time'],
         datasetType: entity.metadata.SYSTEM.properties.type
       });
       obj.queryFound = this.findQueries(entity, obj);
@@ -159,7 +159,7 @@ class TrackerResultsController {
         entityTypeState: 'streams',
         icon: 'icon-streams',
         description: entity.metadata.SYSTEM.properties.description || 'No description provided for this Stream.',
-        createDate: entity.metadata.SYSTEM.properties.createtime
+        createDate: entity.metadata.SYSTEM.properties['creation-time']
       });
       obj.queryFound = this.findQueries(entity, obj);
       this.entityFiltersList[1].count++;
@@ -171,7 +171,7 @@ class TrackerResultsController {
         entityTypeState: 'views:' + entity.entityId.id.stream.streamName,
         icon: 'icon-streams',
         description: entity.metadata.SYSTEM.properties.description || 'No description provided for this Stream View.',
-        createDate: entity.metadata.SYSTEM.properties.createtime
+        createDate: entity.metadata.SYSTEM.properties['creation-time']
       });
       obj.queryFound = this.findQueries(entity, obj);
       this.entityFiltersList[2].count++;

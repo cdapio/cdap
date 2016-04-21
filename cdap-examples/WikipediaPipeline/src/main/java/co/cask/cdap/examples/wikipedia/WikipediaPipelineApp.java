@@ -19,6 +19,7 @@ package co.cask.cdap.examples.wikipedia;
 import co.cask.cdap.api.Config;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.data.stream.Stream;
+import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.table.Table;
 
@@ -48,11 +49,16 @@ public class WikipediaPipelineApp extends AbstractApplication<WikipediaPipelineA
     addMapReduce(new WikiContentValidatorAndNormalizer());
     addMapReduce(new TopNMapReduce());
     addSpark(new SparkWikipediaClustering(getConfig()));
-    createDataset(PAGE_TITLES_DATASET, KeyValueTable.class);
-    createDataset(RAW_WIKIPEDIA_DATASET, KeyValueTable.class);
-    createDataset(NORMALIZED_WIKIPEDIA_DATASET, KeyValueTable.class);
-    createDataset(SPARK_CLUSTERING_OUTPUT_DATASET, Table.class);
-    createDataset(MAPREDUCE_TOPN_OUTPUT, KeyValueTable.class);
+    createDataset(PAGE_TITLES_DATASET, KeyValueTable.class,
+                  DatasetProperties.builder().setDescription("Page titles dataset").build());
+    createDataset(RAW_WIKIPEDIA_DATASET, KeyValueTable.class,
+                  DatasetProperties.builder().setDescription("Raw Wikipedia dataset").build());
+    createDataset(NORMALIZED_WIKIPEDIA_DATASET, KeyValueTable.class,
+                  DatasetProperties.builder().setDescription("Normalized Wikipedia dataset").build());
+    createDataset(SPARK_CLUSTERING_OUTPUT_DATASET, Table.class,
+                  DatasetProperties.builder().setDescription("Spark clustering output dataset").build());
+    createDataset(MAPREDUCE_TOPN_OUTPUT, KeyValueTable.class,
+                  DatasetProperties.builder().setDescription("MapReduce top-'N'-words output dataset").build());
     addWorkflow(new WikipediaPipelineWorkflow(getConfig()));
     addService(new WikipediaService());
   }

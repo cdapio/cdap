@@ -21,6 +21,7 @@ import co.cask.cdap.api.annotation.UseDataSet;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.stream.Stream;
+import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.flow.AbstractFlow;
 import co.cask.cdap.api.flow.flowlet.AbstractFlowlet;
@@ -51,7 +52,7 @@ public class HelloWorld extends AbstractApplication {
     setName("HelloWorld");
     setDescription("A Hello World program for the Cask Data Application Platform");
     addStream(new Stream("who"));
-    createDataset("whom", KeyValueTable.class);
+    createDataset("whom", KeyValueTable.class, DatasetProperties.builder().setDescription("Store names").build());
     addFlow(new WhoFlow());
     addService(new Greeting());
   }

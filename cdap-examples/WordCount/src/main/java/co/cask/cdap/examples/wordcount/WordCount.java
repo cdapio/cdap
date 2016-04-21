@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,6 +19,7 @@ package co.cask.cdap.examples.wordcount;
 import co.cask.cdap.api.Config;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.data.stream.Stream;
+import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.table.Table;
 
@@ -88,16 +89,20 @@ public class WordCount extends AbstractApplication<WordCount.WordCountConfig> {
   public void configure() {
     WordCountConfig config = getConfig();
     setName("WordCount");
-    setDescription("Example Word Count Application");
+    setDescription("Example word count application");
 
     // Ingest data into the Application via Streams
     addStream(new Stream(config.getStream()));
 
-    // Store processed data in Datasets
-    createDataset(config.getWordStatsTable(), Table.class);
-    createDataset(config.getWordCountTable(), KeyValueTable.class);
-    createDataset(config.getUniqueCountTable(), UniqueCountTable.class);
-    createDataset(config.getWordAssocTable(), AssociationTable.class);
+    // Store processed data in Datasetss
+    createDataset(config.getWordStatsTable(), Table.class,
+                  DatasetProperties.builder().setDescription("Stats of total counts and lengths of words").build());
+    createDataset(config.getWordCountTable(), KeyValueTable.class,
+                  DatasetProperties.builder().setDescription("Words and corresponding counts").build());
+    createDataset(config.getUniqueCountTable(), UniqueCountTable.class,
+                  DatasetProperties.builder().setDescription("Total count of unique words").build());
+    createDataset(config.getWordAssocTable(), AssociationTable.class,
+                  DatasetProperties.builder().setDescription("Word associations table").build());
 
     // Process events in real-time using Flows
     addFlow(new WordCounter(config));

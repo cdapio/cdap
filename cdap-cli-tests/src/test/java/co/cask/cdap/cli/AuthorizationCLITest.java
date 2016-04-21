@@ -112,6 +112,8 @@ public class AuthorizationCLITest extends CLITestBase {
     Role role = new Role("admins");
     Principal principal = new Principal("spiderman", Principal.PrincipalType.USER);
     NamespaceId namespaceId = new NamespaceId("ns1");
+    testCommandOutputContains(cli, String.format("create namespace %s", namespaceId.getNamespace()),
+                              String.format("Namespace '%s' created successfully", namespaceId.getNamespace()));
 
     // test creating role
     testCommandOutputContains(cli, "create role " + role.getName(), String.format("Successfully created role '%s'",

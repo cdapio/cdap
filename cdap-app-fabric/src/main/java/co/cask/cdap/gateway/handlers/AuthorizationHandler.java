@@ -18,8 +18,10 @@ package co.cask.cdap.gateway.handlers;
 
 import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.FeatureDisabledException;
+import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.entity.EntityExistenceVerifier;
 import co.cask.cdap.common.logging.AuditLogEntry;
 import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import co.cask.cdap.proto.codec.EntityIdTypeAdapter;
@@ -72,12 +74,15 @@ public class AuthorizationHandler extends AbstractAppFabricHttpHandler {
   private static final Type PRIVILEGE_SET_TYPE = new TypeToken<Set<Privilege>>() { }.getType();
   private final boolean authenticationEnabled;
   private final boolean authorizationEnabled;
+  private final EntityExistenceVerifier entityExistenceVerifier;
 
   @Inject
-  AuthorizationHandler(AuthorizerInstantiatorService authorizerInstantiatorService, CConfiguration cConf) {
+  AuthorizationHandler(AuthorizerInstantiatorService authorizerInstantiatorService, CConfiguration cConf,
+                       EntityExistenceVerifier entityExistenceVerifier) {
     this.authorizerInstantiatorService = authorizerInstantiatorService;
     this.authenticationEnabled = cConf.getBoolean(Constants.Security.ENABLED);
     this.authorizationEnabled = cConf.getBoolean(Constants.Security.Authorization.ENABLED);
+    this.entityExistenceVerifier = entityExistenceVerifier;
   }
 
   @Path("/privileges/grant")
@@ -216,10 +221,12 @@ public class AuthorizationHandler extends AbstractAppFabricHttpHandler {
     }
   }
 
-  private void verifyAuthRequest(AuthorizationRequest request) throws BadRequestException {
+  private void verifyAuthRequest(AuthorizationRequest request) throws BadRequestException, NotFoundException {
     if (request == null) {
       throw new BadRequestException("Missing request body");
     }
+    EntityId entity = request.getEntity();
+    entityExistenceVerifier.ensureExists(entity);
   }
 
   private void createLogEntry(HttpRequest httpRequest, @Nullable AuthorizationRequest request,

@@ -22,6 +22,8 @@ import co.cask.cdap.api.workflow.WorkflowConfigurer;
 import co.cask.cdap.api.workflow.WorkflowContext;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import com.google.common.base.Preconditions;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.util.concurrent.TimeUnit;
@@ -31,7 +33,10 @@ import java.util.concurrent.TimeUnit;
  */
 public class FakeWorkflow implements Workflow {
 
+  private static final Logger LOG = LoggerFactory.getLogger(FakeWorkflow.class);
+
   public static final String NAME = "FakeWorkflow";
+  public static final String FAKE_LOG = "Running " + NAME;
 
   @Override
   public void configure(WorkflowConfigurer configurer) {
@@ -67,6 +72,7 @@ public class FakeWorkflow implements Workflow {
 
     @Override
     public void run() {
+      LOG.info(FAKE_LOG);
       File doneFile = new File(getContext().getRuntimeArguments().get("done.file"));
       while (!doneFile.exists()) {
         try {

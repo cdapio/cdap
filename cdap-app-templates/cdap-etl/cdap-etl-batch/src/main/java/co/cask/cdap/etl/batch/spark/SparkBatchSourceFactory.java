@@ -16,8 +16,11 @@
 
 package co.cask.cdap.etl.batch.spark;
 
+import co.cask.cdap.api.data.batch.Input;
 import co.cask.cdap.api.data.batch.InputFormatProvider;
 import co.cask.cdap.api.data.batch.Split;
+import co.cask.cdap.api.data.format.FormatSpecification;
+import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.stream.StreamBatchReadable;
 import co.cask.cdap.api.spark.JavaSparkExecutionContext;
 import co.cask.cdap.api.stream.StreamEventDecoder;
@@ -93,6 +96,21 @@ final class SparkBatchSourceFactory {
     return new SparkBatchSourceFactory(null, null, new DatasetInfo(datasetName, datasetArgs, splits));
   }
 
+  static SparkBatchSourceFactory create(Input input) {
+    if (input instanceof Input.DatasetInput) {
+      // Note if input format provider is trackable then it comes in as DatasetInput
+      Input.DatasetInput datasetInput = (Input.DatasetInput) input;
+      return create(datasetInput.getName(), datasetInput.getArguments(), datasetInput.getSplits());
+    } else if (input instanceof Input.StreamInput) {
+      Input.StreamInput streamInput = (Input.StreamInput) input;
+      return create(streamInput.getStreamBatchReadable());
+    } else if (input instanceof Input.InputFormatProviderInput) {
+      Input.InputFormatProviderInput ifpInput = (Input.InputFormatProviderInput) input;
+      return new SparkBatchSourceFactory(null, ifpInput.getInputFormatProvider(), null);
+    }
+    throw new IllegalArgumentException("Unknown input format type: " + input.getClass().getCanonicalName());
+  }
+
   static SparkBatchSourceFactory deserialize(InputStream inputStream) throws IOException {
     DataInput input = new DataInputStream(inputStream);
 
@@ -143,9 +161,19 @@ final class SparkBatchSourceFactory {
     throw new IllegalStateException("Unknown source type");
   }
 
+  @SuppressWarnings("unchecked")
   public <K, V> JavaPairRDD<K, V> createRDD(JavaSparkExecutionContext sec, JavaSparkContext jsc,
                                             Class<K> keyClass, Class<V> valueClass) {
     if (streamBatchReadable != null) {
+      FormatSpecification formatSpec = streamBatchReadable.getFormatSpecification();
+      if (formatSpec != null) {
+        return (JavaPairRDD<K, V>) sec.fromStream(streamBatchReadable.getStreamName(),
+                                                  formatSpec,
+                                                  streamBatchReadable.getStartTime(),
+                                                  streamBatchReadable.getEndTime(),
+                                                  StructuredRecord.class);
+      }
+
       String decoderType = streamBatchReadable.getDecoderType();
       if (decoderType == null) {
         return (JavaPairRDD<K, V>) sec.fromStream(streamBatchReadable.getStreamName(),
@@ -154,7 +182,6 @@ final class SparkBatchSourceFactory {
                                                   valueClass);
       } else {
         try {
-          @SuppressWarnings("unchecked")
           Class<StreamEventDecoder<K, V>> decoderClass =
             (Class<StreamEventDecoder<K, V>>) Thread.currentThread().getContextClassLoader().loadClass(decoderType);
           return sec.fromStream(streamBatchReadable.getStreamName(),

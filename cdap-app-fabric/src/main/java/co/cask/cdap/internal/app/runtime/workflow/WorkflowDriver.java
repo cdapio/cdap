@@ -176,7 +176,6 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
   @Override
   protected void startUp() throws Exception {
     LoggingContextAccessor.setLoggingContext(loggingContext);
-    LOG.info("Starting Workflow {}", workflowSpec);
 
     // Using small size thread pool is enough, as the API we supported are just simple lookup.
     httpService = NettyHttpService.builder()

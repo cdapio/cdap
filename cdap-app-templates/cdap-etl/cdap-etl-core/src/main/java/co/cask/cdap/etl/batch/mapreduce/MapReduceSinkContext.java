@@ -16,11 +16,13 @@
 
 package co.cask.cdap.etl.batch.mapreduce;
 
+import co.cask.cdap.api.data.batch.Output;
 import co.cask.cdap.api.data.batch.OutputFormatProvider;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.etl.api.LookupProvider;
 import co.cask.cdap.etl.api.batch.BatchSinkContext;
+import co.cask.cdap.etl.common.ExternalDatasets;
 import co.cask.cdap.etl.log.LogContext;
 
 import java.util.HashSet;
@@ -75,6 +77,19 @@ public class MapReduceSinkContext extends MapReduceBatchContext implements Batch
       }
     });
     outputNames.add(outputName);
+  }
+
+  @Override
+  public void addOutput(final Output output) {
+    Output trackableOutput = LogContext.runWithoutLoggingUnchecked(new Callable<Output>() {
+      @Override
+      public Output call() throws Exception {
+        Output trackableOutput = ExternalDatasets.makeTrackable(mrContext.getAdmin(), output);
+        mrContext.addOutput(trackableOutput);
+        return trackableOutput;
+      }
+    });
+    outputNames.add(trackableOutput.getAlias());
   }
 
   /**

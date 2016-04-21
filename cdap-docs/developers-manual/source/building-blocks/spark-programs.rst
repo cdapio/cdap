@@ -1,6 +1,6 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2014-2015 Cask Data, Inc.
+    :copyright: Copyright © 2014-2016 Cask Data, Inc.
 
 .. _spark:
 
@@ -74,7 +74,7 @@ the ``PageRankSpark``, the amount of memory is specified:
 
 .. literalinclude:: /../../../cdap-examples/SparkPageRank/src/main/java/co/cask/cdap/examples/sparkpagerank/SparkPageRankApp.java
    :language: java
-   :lines: 104-116
+   :lines: 109-121
    :dedent: 2
 
 If both the memory and the number of cores needs to be set, this can be done using::

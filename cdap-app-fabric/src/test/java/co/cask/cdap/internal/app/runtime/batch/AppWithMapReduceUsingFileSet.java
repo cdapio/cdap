@@ -18,6 +18,7 @@ package co.cask.cdap.internal.app.runtime.batch;
 
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.data.batch.Input;
+import co.cask.cdap.api.data.batch.Output;
 import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
@@ -71,7 +72,7 @@ public class AppWithMapReduceUsingFileSet extends AbstractApplication {
 
       // user can opt to define the mapper class through our APIs, instead of directly on the job
       context.addInput(Input.ofDataset(inputDataset), FileMapper.class);
-      context.addOutput(outputDataset);
+      context.addOutput(Output.ofDataset(outputDataset));
     }
   }
 
