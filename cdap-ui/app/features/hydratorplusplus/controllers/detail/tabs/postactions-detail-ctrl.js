@@ -44,7 +44,7 @@ class HydratorPluPlusPostActionDetailCtrl {
 
     let plugin = angular.copy(action);
 
-    this.myPipelineApi.fetchPluginProperties(params)
+    this.myPipelineApi.fetchPostActionProperties(params)
       .$promise
       .then( (res) => {
         plugin._backendProperties = res[0].properties;

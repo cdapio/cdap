@@ -102,7 +102,7 @@ class HydratorPlusPlusPostActionsCtrl {
       pluginName: tab.name
     };
 
-    this.myPipelineApi.fetchPluginProperties(params)
+    this.myPipelineApi.fetchPostActionProperties(params)
       .$promise
       .then( (res) => {
         this.pluginConfig._backendProperties = res[0].properties;
