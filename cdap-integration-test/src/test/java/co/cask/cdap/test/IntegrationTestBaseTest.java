@@ -20,6 +20,8 @@ import co.cask.cdap.StandaloneTester;
 import co.cask.cdap.client.ApplicationClient;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.proto.id.NamespaceId;
 import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -64,8 +66,8 @@ public class IntegrationTestBaseTest extends IntegrationTestBase {
   @Test
   public void testGetApplicationManager() throws Exception {
     ApplicationManager applicationManager = deployApplication(TestApplication.class);
-    ApplicationManager testApplicationManager = getApplicationManager(Id.Application.from(Id.Namespace.DEFAULT,
-                                                                                          TestApplication.NAME));
+    ApplicationId applicationId = NamespaceId.DEFAULT.app(TestApplication.NAME);
+    ApplicationManager testApplicationManager = getApplicationManager(applicationId);
     Assert.assertEquals(applicationManager.getFlowManager(TestFlow.NAME).getFlowletInstances(TestFlowlet.NAME),
                         testApplicationManager.getFlowManager(TestFlow.NAME).getFlowletInstances(TestFlowlet.NAME));
 
