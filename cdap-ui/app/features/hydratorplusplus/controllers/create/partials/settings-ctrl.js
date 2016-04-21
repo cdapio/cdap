@@ -20,14 +20,18 @@ class HydratorPlusPlusSettingsCtrl {
     this.HydratorPlusPlusConfigActions = HydratorPlusPlusConfigActions;
     this.templateType = HydratorPlusPlusConfigStore.getArtifact().name;
 
+    this.activeTab = 0;
+
     // If ETL Batch
     if (GLOBALS.etlBatchPipelines.indexOf(this.templateType) !== -1) {
       // Initialiting ETL Batch Schedule
       this.initialCron = HydratorPlusPlusConfigStore.getSchedule();
+
       this.cron = this.initialCron;
-      this.engine = 'mapreduce';
+      this.engine = HydratorPlusPlusConfigStore.getEngine();
       this.isBasic = this.checkCron(this.initialCron);
 
+      this.activeTab = this.isBasic ? 0 : 1;
 
       // Debounce method for setting schedule
       var setSchedule = _.debounce( () => {
@@ -48,12 +52,12 @@ class HydratorPlusPlusSettingsCtrl {
         HydratorPlusPlusConfigActions.setInstance(this.instance);
       }, 1000);
 
+
       $scope.$watch( () => {
         return this.instance;
       }, setInstance);
     }
 
-    this.activeTab = 0;
   }
 
   checkCron(cron) {

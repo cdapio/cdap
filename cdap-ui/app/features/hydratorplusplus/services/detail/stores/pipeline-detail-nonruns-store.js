@@ -190,11 +190,12 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
           source: appConfigClone.configJson.source,
           sinks: appConfigClone.configJson.sinks,
           transforms: appConfigClone.configJson.transforms,
-          instances: appConfigClone.configJson.instance,
+          instances: appConfigClone.configJson.instances,
           schedule: appConfigClone.configJson.schedule,
           connections: uiConfig.connections,
           comments: appConfigClone.configJson.comments,
-          postactions: appConfigClone.configJson.postactions
+          postactions: appConfigClone.configJson.postactions,
+          engine: appConfigClone.configJson.engine
         }
       };
       appConfig.streams = app.streams.map(function (stream) {
