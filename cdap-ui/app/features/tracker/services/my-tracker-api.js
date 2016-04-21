@@ -20,7 +20,8 @@ function myTrackerApi(myCdapUrl, $resource, myAuth, myHelpers, UI_CONFIG) {
       basePath = '/namespaces/:namespace/:entityType/:entityId',
       programPath = '/namespaces/:namespace/apps/:appId/:programType/:programId/runs/:runId',
       auditPath = '/namespaces/:namespace/apps/' + UI_CONFIG.tracker.appId + '/services/' + UI_CONFIG.tracker.programId + '/methods/auditlog/:entityType/:entityId',
-      navigatorPath = '/namespaces/:namespace/apps/' + UI_CONFIG.navigator.appId;
+      navigatorPath = '/namespaces/:namespace/apps/' + UI_CONFIG.navigator.appId,
+      trackerApp = '/namespaces/:namespace/apps/' + UI_CONFIG.tracker.appId;
 
   return $resource(
     url({ _cdapPath: searchPath }),
@@ -33,7 +34,7 @@ function myTrackerApi(myCdapUrl, $resource, myAuth, myHelpers, UI_CONFIG) {
     viewsProperties: myHelpers.getConfig('GET', 'REQUEST', basePath + '/views/:viewId/metadata', true),
     getLineage: myHelpers.getConfig('GET', 'REQUEST', basePath + '/lineage?collapse=access&collapse=run&collapse=component'),
     getProgramRunStatus: myHelpers.getConfig('GET', 'REQUEST', programPath),
-    getAuditLogs: myHelpers.getConfig('GET', 'REQUEST', auditPath),
+    getAuditLogs: myHelpers.getConfig('GET', 'REQUEST', auditPath, false, { suppressErrors: true }),
     getStreamProperties: myHelpers.getConfig('GET', 'REQUEST', '/namespaces/:namespace/streams/:entityId'),
     getDatasetSystemProperties: myHelpers.getConfig('GET', 'REQUEST', basePath + '/metadata/properties?scope=SYSTEM'),
     getDatasetDetail: myHelpers.getConfig('GET', 'REQUEST', '/namespaces/:namespace/data/datasets/:entityId'),
@@ -41,7 +42,11 @@ function myTrackerApi(myCdapUrl, $resource, myAuth, myHelpers, UI_CONFIG) {
     getCDAPConfig: myHelpers.getConfig('GET', 'REQUEST', '/config/cdap', true),
     getNavigatorApp: myHelpers.getConfig('GET', 'REQUEST', navigatorPath, false, { suppressErrors: true }),
     getNavigatorStatus: myHelpers.getConfig('GET', 'REQUEST', navigatorPath + '/flows/MetadataFlow/runs', true),
-    toggleNavigator: myHelpers.getConfig('POST', 'REQUEST', navigatorPath + '/flows/MetadataFlow/:action', false)
+    toggleNavigator: myHelpers.getConfig('POST', 'REQUEST', navigatorPath + '/flows/MetadataFlow/:action', false),
+    getTrackerApp: myHelpers.getConfig('GET', 'REQUEST', trackerApp, false, { suppressErrors: true }),
+    deployTrackerApp: myHelpers.getConfig('PUT', 'REQUEST', trackerApp),
+    startTrackerProgram: myHelpers.getConfig('POST', 'REQUEST', trackerApp + '/:programType/:programId/start', false, { suppressErrors: true }),
+    trackerProgramStatus: myHelpers.getConfig('GET', 'REQUEST', trackerApp + '/:programType/:programId/status', false, { suppressErrors: true })
   });
 }
 
