@@ -171,6 +171,7 @@ class HydratorPlusPlusConfigStore {
       this.state.__ui__.nodes
     );
     config.stages = [];
+
     connections.forEach( connection => {
       let fromConnectionName, toConnectionName;
 
@@ -324,7 +325,6 @@ class HydratorPlusPlusConfigStore {
   setEngine(engine) {
     if (this.GLOBALS.etlBatchPipelines.indexOf(this.state.artifact.name) !== -1) {
       this.state.config.engine = engine || 'mapreduce';
-      this.emitChange();
     }
   }
   getEngine() {
