@@ -16,6 +16,10 @@
 
 package co.cask.cdap.app.runtime.spark.submit;
 
+import co.cask.cdap.app.runtime.spark.SparkRuntimeEnv;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -25,6 +29,7 @@ import java.util.regex.Pattern;
  */
 public class LocalSparkSubmitter extends AbstractSparkSubmitter {
 
+  private static final Logger LOG = LoggerFactory.getLogger(LocalSparkSubmitter.class);
   private static final Pattern LOCAL_MASTER_PATTERN = Pattern.compile("local\\[([0-9]+|\\*)\\]");
 
   @Override
@@ -38,5 +43,16 @@ public class LocalSparkSubmitter extends AbstractSparkSubmitter {
     }
     // Use at least two threads for Spark Streaming
     return "local[2]";
+  }
+
+  @Override
+  protected void triggerShutdown() {
+    // Try to get the SparkContext and call stop on it.
+    try {
+      SparkRuntimeEnv.stop();
+    } catch (Throwable t) {
+      // Don't propagate the exception.
+      LOG.error("Exception while calling SparkContext.stop()", t);
+    }
   }
 }

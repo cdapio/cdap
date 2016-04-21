@@ -139,7 +139,6 @@ public class SparkRuntimeContextConfig {
       return null;
     }
     WorkflowProgramInfo workflowProgramInfo = GSON.fromJson(info, WorkflowProgramInfo.class);
-    workflowProgramInfo.getWorkflowToken().disablePut();
     return workflowProgramInfo;
   }
 

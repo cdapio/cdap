@@ -22,7 +22,6 @@ import co.cask.cdap.app.runtime.spark.distributed.DistributedSparkProgramRunner;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.lang.ClassLoaders;
-import co.cask.cdap.internal.app.runtime.spark.SparkUtils;
 import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
@@ -36,10 +35,6 @@ import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Type;
 import java.net.URL;
-import java.net.URLClassLoader;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
 /**
  * A {@link ProgramRuntimeProvider} that provides runtime system support for {@link ProgramType#SPARK} program.
@@ -71,9 +66,7 @@ public class SparkProgramRuntimeProvider implements ProgramRuntimeProvider {
     try {
       boolean rewriteYarnClient = injector.getInstance(CConfiguration.class)
         .getBoolean(Constants.AppFabric.SPARK_YARN_CLIENT_REWRITE);
-      final SparkRunnerClassLoader classLoader = new SparkRunnerClassLoader(getClassLoaderURLs(),
-                                                                            getClass().getClassLoader(),
-                                                                            rewriteYarnClient);
+      SparkRunnerClassLoader classLoader = createClassLoader(rewriteYarnClient);
       try {
         ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(classLoader);
         try {
@@ -157,44 +150,14 @@ public class SparkProgramRuntimeProvider implements ProgramRuntimeProvider {
   /**
    * Returns an array of {@link URL} being used by the {@link ClassLoader} of this {@link Class}.
    */
-  private synchronized URL[] getClassLoaderURLs() throws IOException {
-    if (classLoaderUrls != null) {
-      return classLoaderUrls;
+  private synchronized SparkRunnerClassLoader createClassLoader(boolean rewriteYarnClient) throws IOException {
+    SparkRunnerClassLoader classLoader;
+    if (classLoaderUrls == null) {
+      classLoader = new SparkRunnerClassLoader(getClass().getClassLoader(), rewriteYarnClient);
+      classLoaderUrls = classLoader.getURLs();
+    } else {
+      classLoader = new SparkRunnerClassLoader(classLoaderUrls, getClass().getClassLoader(), rewriteYarnClient);
     }
-    classLoaderUrls = getClassLoaderURLs(getClass().getClassLoader());
-    return classLoaderUrls;
-  }
-
-  /**
-   * Returns an array of {@link URL} that the given ClassLoader uses, including all URLs used by the parent of the
-   * given ClassLoader. It will also includes the Spark aseembly jar if Spark classes are not loadable from
-   * the given ClassLoader.
-   */
-  private URL[] getClassLoaderURLs(ClassLoader classLoader) throws IOException {
-    List<URL> urls = getClassLoaderURLs(classLoader, new ArrayList<URL>());
-
-    // If Spark classes are not available in the given ClassLoader, try to locate the Spark assembly jar
-    // This class cannot have dependency on Spark directly, hence using the class resource to discover if SparkContext
-    // is there
-    if (classLoader.getResource("org/apache/spark/SparkContext.class") == null) {
-      urls.add(SparkUtils.locateSparkAssemblyJar().toURI().toURL());
-    }
-    return urls.toArray(new URL[urls.size()]);
-  }
-
-  /**
-   * Populates the list of {@link URL} that this ClassLoader uses, including all URLs used by the parent of the
-   * given ClassLoader.
-   */
-  private List<URL> getClassLoaderURLs(ClassLoader classLoader, List<URL> urls) {
-    if (classLoader == null) {
-      return urls;
-    }
-    getClassLoaderURLs(classLoader.getParent(), urls);
-
-    if (classLoader instanceof URLClassLoader) {
-      urls.addAll(Arrays.asList(((URLClassLoader) classLoader).getURLs()));
-    }
-    return urls;
+    return classLoader;
   }
 }

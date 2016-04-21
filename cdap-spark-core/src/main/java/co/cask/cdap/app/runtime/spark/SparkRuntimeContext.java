@@ -212,6 +212,14 @@ public final class SparkRuntimeContext extends AbstractServiceDiscoverer
   }
 
   /**
+   * Returns the {@link WorkflowProgramInfo} if the spark program is running inside a workflow.
+   */
+  @Nullable
+  public WorkflowProgramInfo getWorkflowInfo() {
+    return workflowProgramInfo;
+  }
+
+  /**
    * Returns the logical start of this run.
    */
   long getLogicalStartTime() {
@@ -237,14 +245,6 @@ public final class SparkRuntimeContext extends AbstractServiceDiscoverer
    */
   DynamicDatasetCache getDatasetCache() {
     return datasetCache;
-  }
-
-  /**
-   * Returns the {@link WorkflowProgramInfo} if the spark program is running inside a workflow.
-   */
-  @Nullable
-  WorkflowProgramInfo getWorkflowInfo() {
-    return workflowProgramInfo;
   }
 
   /**

@@ -19,6 +19,7 @@ package co.cask.cdap.app.runtime.spark;
 import co.cask.cdap.api.spark.Spark;
 import co.cask.cdap.api.spark.SparkClientContext;
 import co.cask.cdap.api.spark.SparkExecutionContext;
+import co.cask.cdap.app.runtime.spark.distributed.SparkContainerLauncher;
 import co.cask.cdap.app.runtime.spark.submit.SparkSubmitter;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
@@ -30,11 +31,13 @@ import co.cask.cdap.data2.dataset2.DynamicDatasetCache;
 import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
 import co.cask.cdap.internal.app.runtime.LocalizationUtils;
+import co.cask.cdap.internal.app.runtime.batch.distributed.ContainerLauncherGenerator;
 import co.cask.cdap.internal.app.runtime.distributed.LocalizeResource;
 import co.cask.cdap.internal.lang.Fields;
 import co.cask.tephra.TransactionContext;
 import co.cask.tephra.TransactionFailureException;
 import com.google.common.base.Charsets;
+import com.google.common.base.Joiner;
 import com.google.common.base.Objects;
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
@@ -69,6 +72,7 @@ import java.lang.reflect.Method;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -92,6 +96,7 @@ import javax.annotation.Nullable;
  */
 final class SparkRuntimeService extends AbstractExecutionThreadService {
 
+  private static final String CDAP_LAUNCHER_JAR = "cdap-spark-launcher.jar";
   private static final String CDAP_SPARK_JAR = "cdap-spark.jar";
 
   private static final Logger LOG = LoggerFactory.getLogger(SparkRuntimeService.class);
@@ -168,9 +173,11 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
         File expandedProgramJar = Locations.linkOrCopy(runtimeContext.getProgram().getJarLocation(),
                                                        new File(tempDir,
                                                                 SparkRuntimeContextProvider.PROGRAM_JAR_EXPANDED_NAME));
-        // Localize both the unexpanded and expanded jar
-        localizeResources.add(new LocalizeResource(programJar, false));
+        // Localize both the unexpanded and expanded program jar
+        localizeResources.add(new LocalizeResource(programJar));
         localizeResources.add(new LocalizeResource(expandedProgramJar, true));
+
+        localizeResources.add(new LocalizeResource(createLauncherJar(tempDir)));
         localizeResources.add(new LocalizeResource(buildDependencyJar(tempDir), true));
         localizeResources.add(new LocalizeResource(saveCConf(cConf, tempDir)));
 
@@ -343,6 +350,19 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
   }
 
   /**
+   * Creates a JAR file which contains generate Spark YARN container main classes. Those classes
+   * are used for intercepting the Java main method in the YARN container so that we can control the
+   * ClassLoader creation.
+   */
+  private File createLauncherJar(File tempDir) throws IOException {
+    File jarFile = new File(tempDir, CDAP_LAUNCHER_JAR);
+    ContainerLauncherGenerator.generateLauncherJar("org.apache.spark.deploy.yarn.ApplicationMaster",
+                                                   SparkContainerLauncher.class,
+                                                   Files.newOutputStreamSupplier(jarFile));
+    return jarFile;
+  }
+
+  /**
    * Creates the configurations for the spark submitter.
    */
   private Map<String, String> createSubmitConfigs(BasicSparkClientContext context, File localDir,
@@ -354,6 +374,12 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
     // as WARN, which pollute the logs a lot if there are concurrent Spark job running (e.g. a fork in Workflow).
     configs.put("spark.ui.port", "0");
 
+    // Setups the resources requirements for driver and executor. The user can override it with the SparkConf.
+    configs.put("spark.driver.memory", context.getDriverResources().getMemoryMB() + "m");
+    configs.put("spark.driver.cores", String.valueOf(context.getDriverResources().getVirtualCores()));
+    configs.put("spark.executor.memory", context.getExecutorResources().getMemoryMB() + "m");
+    configs.put("spark.executor.cores", String.valueOf(context.getExecutorResources().getVirtualCores()));
+
     // Add user specified configs first. CDAP specifics config will override them later if there are duplicates.
     SparkConf sparkConf = context.getSparkConf();
     if (sparkConf != null) {
@@ -362,15 +388,17 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
       }
     }
 
-    String extraClassPath = "$PWD/" + CDAP_SPARK_JAR + "/lib/*";
+    String extraClassPath = Joiner.on(File.pathSeparator).join(Paths.get("$PWD", CDAP_LAUNCHER_JAR),
+                                                               Paths.get("$PWD", CDAP_SPARK_JAR, "lib", "*"));
     if (logbackJarName != null) {
       extraClassPath = logbackJarName + File.pathSeparator + extraClassPath;
     }
+
+    // These are system specific and shouldn't allow user to modify them
+    configs.put("spark.driver.extraClassPath", extraClassPath);
     configs.put("spark.executor.extraClassPath", extraClassPath);
     configs.put("spark.metrics.conf", metricsConfPath);
     configs.put("spark.local.dir", localDir.getAbsolutePath());
-    configs.put("spark.executor.memory", context.getExecutorResources().getMemoryMB() + "m");
-    configs.put("spark.executor.cores", String.valueOf(context.getExecutorResources().getVirtualCores()));
 
     return configs;
   }

@@ -73,8 +73,14 @@ final class ArtifactClassLoaderFactory {
       // It is needed because we don't know what program types that an artifact might have.
       // TODO: CDAP-5613. We shouldn't always expose the Spark classes.
       ProgramRunner programRunner = programRunnerFactory.create(ProgramType.SPARK);
-      if (programRunner instanceof ProgramClassLoaderProvider) {
-        programClassLoader = ((ProgramClassLoaderProvider) programRunner).createProgramClassLoader(cConf, unpackDir);
+      try {
+        if (programRunner instanceof ProgramClassLoaderProvider) {
+          programClassLoader = ((ProgramClassLoaderProvider) programRunner).createProgramClassLoader(cConf, unpackDir);
+        }
+      } finally {
+        if (programRunner instanceof Closeable) {
+          Closeables.closeQuietly((Closeable) programRunner);
+        }
       }
     } catch (Exception e) {
       // If Spark is not supported, exception is expected. We'll use the default filter.
