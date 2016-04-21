@@ -18,7 +18,7 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
   .config(function($stateProvider, $urlRouterProvider, MYAUTH_ROLE) {
     $stateProvider
       .state('hydratorplusplus', {
-        url: '/hydratorplusplus',
+        url: '/hydrator',
         abstract: true,
         parent: 'ns',
         data: {
@@ -206,7 +206,7 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
                       $q.reject(false);
                       // FIXME: We should not have done this. But ui-router when rejected on a 'resolve:' function takes it to the parent state apparently
                       // and in our case the parent state is 'hydratorplusplus and since its an abstract state it goes to home.'
-                      $state.go('hydrator.list');
+                      $state.go('hydratorplusplus.list');
                       return;
                     }
                     if(!config.stages) {
@@ -217,7 +217,7 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
                       $q.reject(false);
                       // FIXME: We should not have done this. But ui-router when rejected on a 'resolve:' function takes it to the parent state apparently
                       // and in our case the parent state is 'hydratorplusplus and since its an abstract state it goes to home.'
-                      $state.go('hydrator.list');
+                      $state.go('hydratorplusplus.list');
                       return;
                     }
                     return $q.resolve(pipelineDetail);
@@ -250,6 +250,16 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
               controllerAs: 'CanvasCtrl'
             }
           }
-        });
+        })
 
+        .state('hydratorplusplus.list', {
+          url: '',
+          data: {
+            authorizedRoles: MYAUTH_ROLE.all,
+            highlightTab: 'hydratorList'
+          },
+          templateUrl: '/assets/features/hydrator/templates/list.html',
+          controller: 'HydratorListController',
+          controllerAs: 'ListController'
+        });
   });
