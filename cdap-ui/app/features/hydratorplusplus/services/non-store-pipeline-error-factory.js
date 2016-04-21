@@ -126,7 +126,7 @@ let isNodeNameUnique = (myHelpers, nodeName, nodes, cb) => {
 
 let hasValidName = (name, cb) => {
   let error;
-  let pattern = /^[\w]+$/;
+  let pattern = /^[\w-]+$/;
   if (!name) {
     error = 'MISSING-NAME';
     cb(error);
