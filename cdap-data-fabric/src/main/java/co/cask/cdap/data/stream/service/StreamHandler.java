@@ -287,7 +287,9 @@ public final class StreamHandler extends AbstractHttpHandler {
                      @PathParam("stream") String stream) throws Exception {
     Id.Stream streamId = Id.Stream.from(namespaceId, stream);
     checkStreamExists(streamId);
-
+    // On Windows, we can not move the file if it is open, and the stream writer may have an open file in this dir.
+    // Since Windows is only supported in SDK/standalone, we don't need to worry about multiple stream writers here.
+    streamWriter.close(streamId);
     streamAdmin.drop(streamId);
     responder.sendStatus(HttpResponseStatus.OK);
   }
