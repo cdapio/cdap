@@ -199,7 +199,7 @@ class HydratorPlusPlusConfigStore {
       config.schedule = this.getSchedule();
       config.engine = this.getEngine();
     } else if (appType === this.GLOBALS.etlRealtime) {
-      config.instance = this.getInstance();
+      config.instances = this.getInstance();
     }
 
     if (this.state.description) {
@@ -336,9 +336,9 @@ class HydratorPlusPlusConfigStore {
     this.state.artifact.scope = artifact.scope;
 
     if (this.GLOBALS.etlBatchPipelines.indexOf(artifact.name) !== -1) {
-      this.state.config.schedule = '* * * * *';
+      this.state.config.schedule = this.state.config.schedule || '* * * * *';
     } else if (artifact.name === this.GLOBALS.etlRealtime) {
-      this.state.config.instance = 1;
+      this.state.config.instances = this.state.config.instances || 1;
     }
 
     this.emitChange();
@@ -632,10 +632,10 @@ class HydratorPlusPlusConfigStore {
     return isStateValid;
   }
   getInstance() {
-    return this.getState().config.instance;
+    return this.getState().config.instances;
   }
-  setInstance(instance) {
-    this.state.config.instance = instance;
+  setInstance(instances) {
+    this.state.config.instances = instances;
   }
 
   setComments(comments) {
