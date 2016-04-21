@@ -28,6 +28,7 @@ angular.module(PKG.name + '.services')
         pluginsFetchPath = pluginFetchBase + '?scope=system',
         extensionsFetchPath = extensionsFetchBase + '?scope=system',
         pluginDetailFetch = pluginFetchBase + '/plugins/:pluginName?scope=system',
+        postActionDetailFetch = pluginFetchBase + '/plugins/:pluginName',
         artifactPropertiesPath = '/namespaces/:namespace/artifacts/:artifactName/versions/:artifactVersion/properties',
         pluginMethodsPath = '/namespaces/:namespace/artifacts/:artifactName/versions/:version/plugintypes/:pluginType/plugins/:pluginName/methods/:methodName';
 
@@ -57,6 +58,9 @@ angular.module(PKG.name + '.services')
 
         // The above three could be replaced by this one.
         fetchPluginProperties: myHelpers.getConfig('GET', 'REQUEST', pluginDetailFetch, true),
+
+        // This should ideally be merged with fetchPluginProperties, however the path has SYSTEM scope
+        fetchPostActionProperties: myHelpers.getConfig('GET', 'REQUEST', postActionDetailFetch, true),
 
         // FIXME: This needs to be replaced with fetching etl-batch & etl-realtime separately.
         list: myHelpers.getConfig('GET', 'REQUEST', listPath, true),

@@ -40,6 +40,10 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
       {
         title: 'Node Configuration',
         template: '/assets/features/hydratorplusplus/templates/detail/tabs/node-configuration.html'
+      },
+      {
+        title: 'Post-Run Actions',
+        template: '/assets/features/hydratorplusplus/templates/detail/tabs/postactions-detail.html'
       }
     ];
 
