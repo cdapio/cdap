@@ -35,6 +35,8 @@ import java.util.Map;
  */
 public final class ExternalDatasets {
 
+  private static final String EXTERNAL_DATASET_TYPE = "externalDataset";
+
   /**
    * If the input is an external source then an external dataset is created for tracking purpose and returned.
    * If the input is a regular dataset or a stream then it is already trackable, hence same input is returned.
@@ -69,7 +71,14 @@ public final class ExternalDatasets {
         // Note: the dataset properties are the same as the arguments since we cannot identify them separately
         // since they are mixed up in a single configuration object (CDAP-5674)
         // Also, the properties of the external dataset created will contain runtime arguments for the same reason.
-        admin.createDataset(inputName, "externalDataset", DatasetProperties.builder().addAll(arguments).build());
+        admin.createDataset(inputName, EXTERNAL_DATASET_TYPE, DatasetProperties.builder().addAll(arguments).build());
+      } else {
+        // Check if the external dataset name clashes with an existing CDAP Dataset
+        String datasetType = admin.getDatasetType(inputName);
+        if (!EXTERNAL_DATASET_TYPE.equals(datasetType)) {
+          throw new IllegalArgumentException(
+            "An external source cannot have the same name as an existing CDAP Dataset instance " + inputName);
+        }
       }
       return Input.ofDataset(inputName, Collections.unmodifiableMap(arguments)).alias(input.getAlias());
     } catch (DatasetManagementException e) {
@@ -112,7 +121,14 @@ public final class ExternalDatasets {
         // Note: the dataset properties are the same as the arguments since we cannot identify them separately
         // since they are mixed up in a single configuration object (CDAP-5674)
         // Also, the properties of the external dataset created will contain runtime arguments for the same reason.
-        admin.createDataset(outputName, "externalDataset", DatasetProperties.builder().addAll(arguments).build());
+        admin.createDataset(outputName, EXTERNAL_DATASET_TYPE, DatasetProperties.builder().addAll(arguments).build());
+      } else {
+        // Check if the external dataset name clashes with an existing CDAP Dataset
+        String datasetType = admin.getDatasetType(outputName);
+        if (!EXTERNAL_DATASET_TYPE.equals(datasetType)) {
+          throw new IllegalArgumentException(
+            "An external sink cannot have the same name as an existing CDAP Dataset instance " + outputName);
+        }
       }
       return Output.ofDataset(outputName, Collections.unmodifiableMap(arguments)).alias(output.getAlias());
     } catch (DatasetManagementException e) {
