@@ -45,7 +45,7 @@
         </thead>
 
         <tbody>
-          <tr ng-repeat="action in PostActionController.postactions">
+          <tr ng-repeat="action in PostActionController.postActions">
             <td>{{ action.plugin.name }}</td>
             <td>{{ action._uiDescription }}</td>
             <td>{{ action.plugin.properties.runCondition }}</td>
@@ -62,7 +62,7 @@
         </tbody>
       </table>
 
-      <div class="empty-message text-center" ng-if="PostActionController.postactions.length === 0">
+      <div class="empty-message text-center" ng-if="PostActionController.postActions.length === 0">
         <h4>You haven't set any actions yet.</h4>
       </div>
     </div>

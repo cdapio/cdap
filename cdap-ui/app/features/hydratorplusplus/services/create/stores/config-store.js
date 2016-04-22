@@ -228,7 +228,7 @@ class HydratorPlusPlusConfigStore {
       action.name = action.plugin.name + '-' + currCount;
     });
 
-    config.postactions = postActions;
+    config.postActions = postActions;
 
     return config;
   }
@@ -646,25 +646,25 @@ class HydratorPlusPlusConfigStore {
   }
 
   addPostAction(config) {
-    this.state.config.postactions.push(config);
+    this.state.config.postActions.push(config);
     this.emitChange();
   }
   editPostAction(config) {
-    let index = _.findLastIndex(this.state.config.postactions, (post) => {
+    let index = _.findLastIndex(this.state.config.postActions, (post) => {
       return config.name === post.name;
     });
 
-    this.state.config.postactions[index] = config;
+    this.state.config.postActions[index] = config;
     this.emitChange();
   }
   deletePostAction(config) {
-    _.remove(this.state.config.postactions, (post) => {
+    _.remove(this.state.config.postActions, (post) => {
       return post.name === config.name;
     });
     this.emitChange();
   }
   getPostActions() {
-    return this.getState().config.postactions;
+    return this.getState().config.postActions;
   }
 
   saveAsDraft() {

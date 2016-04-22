@@ -48,7 +48,7 @@ class HydratorPlusPlusPostActionsCtrl {
 
   }
   setState() {
-    this.postactions = this.HydratorPlusPlusConfigStore.getPostActions();
+    this.postActions = this.HydratorPlusPlusConfigStore.getPostActions();
     this.activeTab = 'OVERVIEW';
   }
 
