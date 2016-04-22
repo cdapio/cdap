@@ -10,15 +10,14 @@ Clicks and Views
 ================
 
 A Cask Data Application Platform (CDAP) example demonstrating a reduce-side join
-across two Streams, using MapReduce.
+across two streams, using MapReduce.
 
 
 Overview
 ========
-This application has a MapReduce which processes records two Streams and outputs to a PartitionedFileSet.
-
-- The ``ClicksAndViewsMapReduce`` processes the records from a ``views`` Stream and a ``clicks`` Stream,
-  while joining on the ``viewId`` of the records, and writing the joined records to a ``joined`` PartitionedFileSet.
+This application has a MapReduce which processes records in two streams and outputs to a PartitionedFileSet.
+The ``ClicksAndViewsMapReduce`` processes the records from a ``views`` stream and a ``clicks`` stream,
+then joining on the ``viewId`` of the records and writing the joined records to a ``joined`` PartitionedFileSet.
 
 Let's look at some of these components, and then run the application and see the results.
 
@@ -38,7 +37,7 @@ Data Storage
 - *joined* output ``PartitionedFileSetFileSet`` contains the joined ad views, which additionally contains the
   count of clicks each ad view has. This Dataset is partitioned on the logical start time of the MapReduce.
 
-MapReduce over multiple Inputs
+MapReduce over Multiple Inputs
 ------------------------------
 ``ClicksAndViewsMapReduce`` is a MapReduce that reads from the *clicks* and *views* ``Stream``s and writes to
 the *joined* ``PartitionedFileSet``. The ``beforeSubmit`` method prepares the MapReduce program. It sets up the
@@ -65,15 +64,7 @@ Begin by uploading a file containing some newline-separated records representing
 
 .. tabbed-parsed-literal::
 
-  .. Linux
-
   $ cdap-cli.sh load stream views examples/ClicksAndViews/resources/views.txt
-  
-  Successfully sent stream event to stream 'views'
-
-  .. Windows
-
-  > cdap-cli.bat load stream views examples\ClicksAndViews\resources\views.txt
   
   Successfully sent stream event to stream 'views'
 
@@ -82,15 +73,7 @@ Also upload records representing click events into the *clicks* stream:
 
 .. tabbed-parsed-literal::
 
-  .. Linux
-
   $ cdap-cli.sh load stream clicks examples/ClicksAndViews/resources/clicks.txt
-
-  Successfully sent stream event to stream 'clicks'
-
-  .. Windows
-
-  > cdap-cli.bat load stream clicks examples\ClicksAndViews\resources\clicks.txt
 
   Successfully sent stream event to stream 'clicks'
 
@@ -100,7 +83,7 @@ Also upload records representing click events into the *clicks* stream:
 
 Starting the MapReduce
 ----------------------
-The MapReduce will write to a partition based upon its logical start time, when it is run.
+The MapReduce will write to a partition based upon its logical start time when it is run.
 
 - Using the CDAP UI, go to the |application-overview|,
   click |example-mapreduce-italic| to get to the MapReduce detail page, then click
@@ -144,13 +127,13 @@ The view records along with their click count will be displayed::
   Fetched 6 rows
 
 
-To calculate a click through rate from this data, you could divide the number of clicks by the number of total views::
+To calculate a click-through rate from this data, you could divide the number of clicks by the number of total views:
 
 .. tabbed-parsed-literal::
 
   $ cdap-cli.sh execute "\"SELECT SUM(numclicks)/COUNT(*) AS CTR FROM dataset_joined\""
 
-With our sample data, the click through rate is 0.5::
+With our sample data, the click through rate is ``0.5``::
 
   +=============+
   | ctr: DOUBLE |
