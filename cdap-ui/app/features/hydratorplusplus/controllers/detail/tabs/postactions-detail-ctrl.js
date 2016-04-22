@@ -74,7 +74,7 @@ class HydratorPluPlusPostActionDetailCtrl {
 
   showModal(noConfig, action, groupsConfig) {
     this.$uibModal.open({
-      keyboard: false,
+      keyboard: true,
       windowTopClass: 'hydrator-modal',
       templateUrl: '/assets/features/hydratorplusplus/templates/partial/postactions-modal.html',
       size: 'lg',
