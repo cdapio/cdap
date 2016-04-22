@@ -53,7 +53,10 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
     this.setIsCollapsed();
     this.selectTab = function(tab) {
       this.activeTab = this.tabs[tab];
-      HydratorPlusPlusBottomPanelActions.expand();
+      let bottomPanelState = HydratorPlusPlusBottomPanelStore.getPanelState();
+      if (bottomPanelState === 0) {
+        HydratorPlusPlusBottomPanelActions.expand();
+      }
     };
     this.selectTab(0);
 
