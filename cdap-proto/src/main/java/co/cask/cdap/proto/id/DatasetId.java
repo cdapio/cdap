@@ -34,6 +34,12 @@ public class DatasetId extends EntityId implements NamespacedId, ParentedId<Name
     super(EntityType.DATASET);
     this.namespace = namespace;
     this.dataset = dataset;
+
+    if (!isValidDatasetId(dataset)) {
+      throw new IllegalArgumentException(
+        String.format("Invalid characters found in dataset instance Id %s. Allowed characters are letters, numbers, " +
+                        "and _, -, ., or $.", dataset));
+    }
   }
 
   public String getNamespace() {

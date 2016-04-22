@@ -188,6 +188,18 @@ public class EntityIdTest {
   }
 
   @Test
+  public void testDatasetName() {
+    // TODO: CDAP-5730: Even though dots are allowed, if we use it here, id creation will fail.
+    DatasetId.fromString("dataset:foo.Zo123_-$$_-");
+    try {
+      DatasetId.fromString("dataset:i have a space in my name");
+      Assert.fail("Dataset Id with space in its name was created successfully while it should have failed.");
+    } catch (IllegalArgumentException e) {
+      // expected
+    }
+  }
+
+  @Test
   public void testInvalidId() {
     try {
       ApplicationId.fromString("application:ns1");

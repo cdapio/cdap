@@ -221,10 +221,8 @@ public class ETLWorkflowTestRun extends ETLBatchTestBase {
     String suffix = engine.name() + (backwardsCompatible ? "-bc" : "");
 
     // Define input/output datasets
-    String inputName = "fileInput-" + suffix;
-    String expectedExternalDatasetInput = "hydrator-ext-" + inputName;
-    String outputName = "fileOutput-" + suffix;
-    String expectedExternalDatasetOutput = "hydrator-ext-" + outputName;
+    String expectedExternalDatasetInput = "fileInput-" + suffix;
+    String expectedExternalDatasetOutput = "fileOutput-" + suffix;
 
     // Define input/output directories
     File inputDir = TMP_FOLDER.newFolder("input-" + suffix);
@@ -243,11 +241,12 @@ public class ETLWorkflowTestRun extends ETLBatchTestBase {
     ETLBatchConfig etlConfig = builder
       .setEngine(engine)
       // TODO: test multiple inputs CDAP-5654
-      .addStage(new ETLStage("source", MockExternalSource.getPlugin(inputName, inputDir.getAbsolutePath())))
-      .addStage(new ETLStage("sink1", MockExternalSink.getPlugin(backwardsCompatible ? null : outputName, "dir1",
-                                                                 outputSubDir1.getAbsolutePath())))
-      .addStage(new ETLStage("sink2", MockExternalSink.getPlugin(backwardsCompatible ? null : outputName, "dir2",
-                                                                 outputSubDir2.getAbsolutePath())))
+      .addStage(new ETLStage("source", MockExternalSource.getPlugin(expectedExternalDatasetInput,
+                                                                    inputDir.getAbsolutePath())))
+      .addStage(new ETLStage("sink1", MockExternalSink.getPlugin(
+        backwardsCompatible ? null : expectedExternalDatasetOutput, "dir1", outputSubDir1.getAbsolutePath())))
+      .addStage(new ETLStage("sink2", MockExternalSink.getPlugin(
+        backwardsCompatible ? null : expectedExternalDatasetOutput, "dir2", outputSubDir2.getAbsolutePath())))
       .addConnection("source", "sink1")
       .addConnection("source", "sink2")
       .build();
