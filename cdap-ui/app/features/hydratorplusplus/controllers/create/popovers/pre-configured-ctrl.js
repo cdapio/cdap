@@ -15,13 +15,14 @@
  */
 
 class HydratorPlusPlusPreConfiguredCtrl {
-  constructor (rTemplateType, GLOBALS, myPipelineTemplatesApi, HydratorPlusPlusHydratorService, HydratorPlusPlusCanvasFactory, DAGPlusPlusNodesActionsFactory, $state) {
+  constructor (rTemplateType, GLOBALS, myPipelineTemplatesApi, HydratorPlusPlusHydratorService, HydratorPlusPlusCanvasFactory, DAGPlusPlusNodesActionsFactory, $state, HydratorPlusPlusConfigStore) {
     this.currentPage = 1;
     this.templates = [];
     this.HydratorPlusPlusHydratorService = HydratorPlusPlusHydratorService;
     this.HydratorPlusPlusCanvasFactory = HydratorPlusPlusCanvasFactory;
     this.myPipelineTemplatesApi = myPipelineTemplatesApi;
     this.DAGPlusPlusNodesActionsFactory = DAGPlusPlusNodesActionsFactory;
+    this.HydratorPlusPlusConfigStore = HydratorPlusPlusConfigStore;
     this.$state = $state;
 
     this.typeFilter = (rTemplateType === GLOBALS.etlBatch? GLOBALS.etlBatch: GLOBALS.etlRealtime);
@@ -41,6 +42,7 @@ class HydratorPlusPlusPreConfiguredCtrl {
         content: 'Imported pre-defined app has issues. Please check the JSON of the imported pre-defined app.'
       });
     } else {
+      this.HydratorPlusPlusConfigStore.setState(this.HydratorPlusPlusConfigStore.getDefaults());
       this.$state.go('hydratorplusplus.create', {
         data: result
       });
@@ -78,6 +80,6 @@ class HydratorPlusPlusPreConfiguredCtrl {
 
 }
 
-HydratorPlusPlusPreConfiguredCtrl.$inject = ['rTemplateType', 'GLOBALS', 'myPipelineTemplatesApi', 'HydratorPlusPlusHydratorService', 'HydratorPlusPlusCanvasFactory', 'DAGPlusPlusNodesActionsFactory', '$state'];
+HydratorPlusPlusPreConfiguredCtrl.$inject = ['rTemplateType', 'GLOBALS', 'myPipelineTemplatesApi', 'HydratorPlusPlusHydratorService', 'HydratorPlusPlusCanvasFactory', 'DAGPlusPlusNodesActionsFactory', '$state', 'HydratorPlusPlusConfigStore'];
 angular.module(`${PKG.name}.feature.hydratorplusplus`)
   .controller('HydratorPlusPlusPreConfiguredCtrl', HydratorPlusPlusPreConfiguredCtrl);

@@ -29,6 +29,7 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.artifact.ArtifactRange;
+import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.NamespaceId;
 
@@ -83,7 +84,7 @@ public interface TestManager {
    * @param appId the id of deployed application
    * @return An {@link ApplicationManager} to manage the deployed application.
    */
-  ApplicationManager getApplicationManager(Id.Application appId) throws Exception;
+  ApplicationManager getApplicationManager(ApplicationId appId) throws Exception;
 
   /**
    * Adds the specified artifact.

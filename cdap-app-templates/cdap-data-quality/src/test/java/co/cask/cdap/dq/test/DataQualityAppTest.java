@@ -222,7 +222,7 @@ public class DataQualityAppTest extends TestBase {
     testSet.add("DiscreteValuesHistogram");
     testMap.put("content_length", testSet);
     testMap.put("status", testSet);
-    testMap.put("date", testSet);
+    testMap.put("request_time", testSet);
 
     DataQualityApp.DataQualityConfig config = new DataQualityApp.DataQualityConfig(WORKFLOW_SCHEDULE_MINUTES,
       getStreamSource(), "histogram", testMap);
@@ -264,7 +264,7 @@ public class DataQualityAppTest extends TestBase {
     AggregationTypeValue aggregationTypeValue = new AggregationTypeValue("DiscreteValuesHistogram", true);
     Set<AggregationTypeValue> aggregationTypeValuesList = Sets.newHashSet(aggregationTypeValue);
     expectedSet.add(new FieldDetail("content_length", aggregationTypeValuesList));
-    expectedSet.add(new FieldDetail("date", aggregationTypeValuesList));
+    expectedSet.add(new FieldDetail("request_time", aggregationTypeValuesList));
     expectedSet.add(new FieldDetail("status", aggregationTypeValuesList));
     Assert.assertEquals(expectedSet, outputSet);
 

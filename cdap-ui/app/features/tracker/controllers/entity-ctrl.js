@@ -48,7 +48,7 @@ class TrackerEntityController{
   }
 
   goBack() {
-    this.$state.go('tracker.result', {
+    this.$state.go('tracker.detail.result', {
       namespace: this.$state.params.namespace,
       searchQuery: this.$state.params.searchTerm
     });

@@ -27,7 +27,7 @@ angular.module(PKG.name + '.commons')
       link: function (scope, element) {
 
         if (!scope.fnConfig) { return; }
-        var fn = PluginsFunctionsFactory.registry[scope.fnConfig.endpoint];
+        var fn = PluginsFunctionsFactory.registry[scope.fnConfig.widget];
 
         var fnElem = angular.element(fn.element);
 

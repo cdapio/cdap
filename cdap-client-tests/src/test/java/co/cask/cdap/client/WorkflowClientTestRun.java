@@ -17,6 +17,7 @@
 package co.cask.cdap.client;
 
 import co.cask.cdap.AppWithWorkflow;
+import co.cask.cdap.api.workflow.NodeStatus;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.client.common.ClientTestBase;
 import co.cask.cdap.common.NotFoundException;
@@ -27,6 +28,7 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
+import co.cask.cdap.proto.WorkflowNodeStateDetail;
 import co.cask.cdap.proto.WorkflowTokenDetail;
 import co.cask.cdap.proto.WorkflowTokenNodeDetail;
 import co.cask.cdap.proto.id.ApplicationId;
@@ -35,6 +37,7 @@ import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -46,6 +49,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -174,6 +178,21 @@ public class WorkflowClientTestRun extends ClientTestBase {
 
     localDatasetSummaries = workflowClient.getWorkflowLocalDatasets(workflowRunId);
     Assert.assertEquals(0, localDatasetSummaries.size());
+
+    Map<String, WorkflowNodeStateDetail> nodeStates = workflowClient.getWorkflowNodeStates(workflowRunId);
+    Assert.assertEquals(3, nodeStates.size());
+
+    WorkflowNodeStateDetail nodeState = nodeStates.get(AppWithWorkflow.SampleWorkflow.FIRST_ACTION);
+    Assert.assertTrue(AppWithWorkflow.SampleWorkflow.FIRST_ACTION.equals(nodeState.getNodeId()));
+    Assert.assertTrue(NodeStatus.COMPLETED == nodeState.getNodeStatus());
+
+    nodeState = nodeStates.get(AppWithWorkflow.SampleWorkflow.SECOND_ACTION);
+    Assert.assertTrue(AppWithWorkflow.SampleWorkflow.SECOND_ACTION.equals(nodeState.getNodeId()));
+    Assert.assertTrue(NodeStatus.COMPLETED == nodeState.getNodeStatus());
+
+    nodeState = nodeStates.get(AppWithWorkflow.SampleWorkflow.WORD_COUNT_MR);
+    Assert.assertTrue(AppWithWorkflow.SampleWorkflow.WORD_COUNT_MR.equals(nodeState.getNodeId()));
+    Assert.assertTrue(NodeStatus.COMPLETED == nodeState.getNodeStatus());
   }
 
   private String createInput(String folderName) throws IOException {

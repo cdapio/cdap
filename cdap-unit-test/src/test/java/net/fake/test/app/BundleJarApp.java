@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,6 +20,8 @@ import co.cask.cdap.api.annotation.ProcessInput;
 import co.cask.cdap.api.annotation.UseDataSet;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.api.data.batch.Input;
+import co.cask.cdap.api.data.batch.Output;
 import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.flow.AbstractFlow;
@@ -171,12 +173,6 @@ public class BundleJarApp extends AbstractApplication {
     @UseDataSet("simpleInputDataset")
     private KeyValueTable input;
 
-    @Override
-    public void configure() {
-      setInputDataset("simpleInputDataset");
-      setOutputDataset("simpleOutputDataset");
-    }
-
     /**
      * Define a MapReduce job.
      * @param context the context of a MapReduce job
@@ -187,9 +183,11 @@ public class BundleJarApp extends AbstractApplication {
       LOG.info("Hello " + loadTestClasses());
 
       Job job = context.getHadoopJob();
-      context.setInput("simpleInputDataset", input.getSplits());
       job.setMapperClass(SimpleMapper.class);
       job.setReducerClass(SimpleReducer.class);
+
+      context.addInput(Input.ofDataset("simpleInputDataset", input.getSplits()));
+      context.addOutput(Output.ofDataset("simpleOutputDataset"));
     }
 
     /**

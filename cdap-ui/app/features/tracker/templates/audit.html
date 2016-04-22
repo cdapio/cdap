@@ -24,7 +24,7 @@
         <a href="" ng-click="AuditController.isCustom = true">Custom</a>
       </li>
       <li role="menuitem" ng-repeat="time in AuditController.timeRangeOptions">
-        <a ui-sref="tracker.entity.audit({ start: time.start, end: time.end })">{{ time.label }}</a>
+        <a ui-sref="tracker.detail.entity.audit({ start: time.start, end: time.end })">{{ time.label }}</a>
       </li>
     </ul>
   </div>

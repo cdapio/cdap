@@ -18,6 +18,8 @@ package co.cask.cdap.internal.app.runtime.batch;
 
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.api.data.batch.Input;
+import co.cask.cdap.api.data.batch.Output;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.lib.DynamicPartitioner;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
@@ -119,12 +121,12 @@ public class AppWithMapReduceUsingAvroDynamicPartitioner extends AbstractApplica
 
     @Override
     public void beforeSubmit(MapReduceContext context) throws Exception {
-      context.setInput(INPUT_DATASET);
+      context.addInput(Input.ofDataset(INPUT_DATASET));
 
       Map<String, String> outputDatasetArgs = new HashMap<>();
       PartitionedFileSetArguments.setDynamicPartitioner(outputDatasetArgs, TimeAndZipPartitioner.class);
       PartitionedFileSetArguments.setOutputPartitionMetadata(outputDatasetArgs, METADATA);
-      context.addOutput(OUTPUT_DATASET, outputDatasetArgs);
+      context.addOutput(Output.ofDataset(OUTPUT_DATASET, outputDatasetArgs));
 
       Job job = context.getHadoopJob();
       job.setMapperClass(FileMapper.class);

@@ -105,10 +105,9 @@ and build this example twice:
 
    .. literalinclude:: /../../../cdap-examples/UserProfiles/src/main/java/co/cask/cdap/examples/profiles/UserProfiles.java
          :language: java
-         :lines: 55-57
+         :lines: 56-58
          :dedent: 4
 
-      
    - The first time you build the application, set the ``Table.PROPERTY_CONFLICT_LEVEL`` to
      ``ConflictDetection.ROW.name()``. 
  

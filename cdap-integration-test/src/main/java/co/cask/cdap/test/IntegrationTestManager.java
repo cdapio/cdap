@@ -46,6 +46,7 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.artifact.ArtifactRange;
+import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.Ids;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -179,8 +180,8 @@ public class IntegrationTestManager implements TestManager {
   }
 
   @Override
-  public ApplicationManager getApplicationManager(Id.Application appId) {
-    return new RemoteApplicationManager(appId, clientConfig, restClient);
+  public ApplicationManager getApplicationManager(ApplicationId applicationId) {
+    return new RemoteApplicationManager(applicationId.toId(), clientConfig, restClient);
   }
 
   @Override

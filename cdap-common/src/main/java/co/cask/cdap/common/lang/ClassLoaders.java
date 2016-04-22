@@ -18,6 +18,10 @@ package co.cask.cdap.common.lang;
 
 import com.google.common.base.Objects;
 
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.util.Arrays;
+import java.util.Collection;
 import javax.annotation.Nullable;
 
 /**
@@ -78,5 +82,23 @@ public final class ClassLoaders {
     }
     // The casting should succeed since it's either null or is assignable to the given type
     return (T) result;
+  }
+
+  /**
+   * Populates the list of {@link URL} that this ClassLoader uses, including all URLs used by the parent of the
+   * given ClassLoader.
+   *
+   * @param urls a {@link Collection} for storing the {@link URL}s
+   * @return the same {@link Collection} passed from the parameter
+   */
+  public static <T extends Collection<? super URL>> T getClassLoaderURLs(ClassLoader classLoader, T urls) {
+    if (classLoader.getParent() != null) {
+      getClassLoaderURLs(classLoader.getParent(), urls);
+    }
+
+    if (classLoader instanceof URLClassLoader) {
+      urls.addAll(Arrays.asList(((URLClassLoader) classLoader).getURLs()));
+    }
+    return urls;
   }
 }

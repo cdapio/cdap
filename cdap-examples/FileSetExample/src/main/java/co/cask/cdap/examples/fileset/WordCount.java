@@ -18,6 +18,7 @@ package co.cask.cdap.examples.fileset;
 
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.data.batch.Input;
+import co.cask.cdap.api.data.batch.Output;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
 import org.apache.hadoop.io.IntWritable;
@@ -52,8 +53,14 @@ public class WordCount extends AbstractMapReduce {
     job.setReducerClass(Counter.class);
     job.setNumReduceTasks(1);
 
-    context.addInput(Input.ofDataset("lines"));
-    context.addOutput("counts");
+    String inputDataset = context.getRuntimeArguments().get("input");
+    inputDataset = inputDataset != null ? inputDataset : "lines";
+
+    String outputDataset = context.getRuntimeArguments().get("output");
+    outputDataset = outputDataset != null ? outputDataset : "counts";
+
+    context.addInput(Input.ofDataset(inputDataset));
+    context.addOutput(Output.ofDataset(outputDataset));
   }
 
   /**

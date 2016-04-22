@@ -58,8 +58,9 @@ public final class MultipleInputs {
     Configuration conf = job.getConfiguration();
 
     Map<String, MapperInput> map = getInputMap(conf);
+    // this shouldn't happen, because it is already protected against in BasicMapReduceContext#addInput
     if (map.containsKey(namedInput)) {
-      throw new IllegalArgumentException("Input already exists with name: " + namedInput);
+      throw new IllegalArgumentException("Input already configured: " + namedInput);
     }
     map.put(namedInput, new MapperInput(inputFormatClass, inputConfigs, mapperClass));
     conf.set(INPUT_CONFIGS, GSON.toJson(map));

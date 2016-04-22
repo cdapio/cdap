@@ -18,6 +18,7 @@ package co.cask.cdap.examples.webanalytics;
 
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.data.stream.Stream;
+import co.cask.cdap.api.dataset.DatasetProperties;
 
 /**
  * Simple Web Analytics App that produces unique IP address visit count.
@@ -28,7 +29,8 @@ public class WebAnalytics extends AbstractApplication {
   public void configure() {
     addStream(new Stream("log"));
     addFlow(new WebAnalyticsFlow());
-    createDataset("UniqueVisitCount", UniqueVisitCount.class);
+    createDataset("UniqueVisitCount", UniqueVisitCount.class,
+                  DatasetProperties.builder().setDescription("Unique Visit Counts").build());
 
     setName("WebAnalytics");
     setDescription("Web Analytics Application");

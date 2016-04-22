@@ -344,7 +344,7 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
                                     @PathParam("app-id") String applicationId,
                                     @PathParam("workflow-id") String workflowId,
                                     @PathParam("run-id") String runId)
-    throws NotFoundException, DatasetManagementException {
+    throws NotFoundException {
     ApplicationId appId = Ids.namespace(namespaceId).app(applicationId);
     ApplicationSpecification appSpec = store.getApplication(appId.toId());
     if (appSpec == null) {

@@ -22,7 +22,7 @@ class TrackerMainController{
 
   search(event) {
     if (event.keyCode === 13 && this.searchQuery) {
-      this.$state.go('tracker.result', { searchQuery: this.searchQuery });
+      this.$state.go('tracker.detail.result', { searchQuery: this.searchQuery });
     }
   }
 }

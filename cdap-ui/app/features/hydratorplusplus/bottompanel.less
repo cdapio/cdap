@@ -449,7 +449,10 @@ body.theme-cdap.state-hydratorplusplus {
     }
     .node-config .bottompanel-body {
       @media (min-width: @screen-lg-min) {
-        padding: 0;
+        padding: 0px;
+        .no-plugin-properties-message {
+          margin: 10px;
+        }
         > p, .validator-plugin > div {
           padding: 20px 10px;
         }
@@ -576,6 +579,32 @@ body.theme-cdap.state-hydratorplusplus {
       }
     }
 
+    .post-actions-detail, .post-actions-tab {
+      .table {
+        th, td {
+          padding: 10px;
+          font-size: 13px;
+          font-weight: 500;
+        }
+
+        th {
+          border: 1px solid #dddddd;
+          cursor: default;
+        }
+
+        td {
+          color: #999;
+          &:first-child { width: 200px; }
+          &:nth-child(3) { width: 200px; }
+          &:last-child {
+            width: 80px;
+            a { color: @hydrator-blue; }
+            i { cursor: pointer; }
+          }
+        }
+      }
+    }
+
     .post-actions-tab {
       .post-actions-sidebar {
         width: 150px;
@@ -621,30 +650,6 @@ body.theme-cdap.state-hydratorplusplus {
             margin-bottom: 100px;
           }
 
-          .table {
-            th, td {
-              padding: 10px;
-              font-size: 13px;
-              font-weight: 500;
-            }
-
-            th {
-              border: 1px solid #dddddd;
-              cursor: default;
-            }
-
-            td {
-              color: #999;
-              &:first-child { width: 200px; }
-              &:nth-child(3) { width: 200px; }
-              &:last-child {
-                width: 80px;
-                a { color: @hydrator-blue; }
-                i { cursor: pointer; }
-              }
-            }
-          }
-
           .action-buttons {
             button {
               margin-left: 15px;
@@ -654,8 +659,6 @@ body.theme-cdap.state-hydratorplusplus {
         }
       }
     }
-
-
 
     pre {
       background-color: transparent;

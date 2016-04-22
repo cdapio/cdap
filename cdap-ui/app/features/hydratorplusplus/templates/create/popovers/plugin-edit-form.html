@@ -54,9 +54,9 @@
           </div>
         </div>
 
-        <div ng-if="HydratorPlusPlusNodeConfigCtrl.state.noproperty === 0">
-          <div class="well well-lg">
-            <p>No Properties for this Plugin.</p>
+        <div ng-if="HydratorPlusPlusNodeConfigCtrl.state.noproperty === 0" class="no-plugin-properties-message">
+          <div class="well well-lg text-center">
+            <h4>No Properties found for Plugin '{{HydratorPlusPlusNodeConfigCtrl.state.node.plugin.name}}'</h4>
           </div>
         </div>
       </div>

@@ -161,7 +161,6 @@
 
       if (!source.length) {
         source = [findTransformThatIsSource(originalConnections)];
-        addConnectionsInOrder(source, finalConnections, originalConnections);
       }
 
       addConnectionsInOrder(source[0], finalConnections, originalConnections);

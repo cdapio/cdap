@@ -15,7 +15,7 @@
  */
 
 class HydratorPlusPlusHydratorService {
-  constructor(GLOBALS, DAGPlusPlusFactory, uuid, $state, $rootScope, myPipelineApi, $q, IMPLICIT_SCHEMA, DAGPlusPlusNodesStore) {
+  constructor(GLOBALS, DAGPlusPlusFactory, uuid, $state, $rootScope, myPipelineApi, $q, IMPLICIT_SCHEMA, DAGPlusPlusNodesStore, myHelpers) {
     this.GLOBALS = GLOBALS;
     this.DAGPlusPlusFactory = DAGPlusPlusFactory;
     this.uuid = uuid;
@@ -25,6 +25,7 @@ class HydratorPlusPlusHydratorService {
     this.$q = $q;
     this.IMPLICIT_SCHEMA = IMPLICIT_SCHEMA;
     this.DAGPlusPlusNodesStore = DAGPlusPlusNodesStore;
+    this.myHelpers = myHelpers;
   }
 
   getNodesAndConnectionsFromConfig(pipeline) {
@@ -122,17 +123,26 @@ class HydratorPlusPlusHydratorService {
       extensionType: node.type,
       pluginName: node.plugin.name
     };
-    let nodeArtifact = node.plugin.artifact;
+
     return this.myPipelineApi.fetchPluginProperties(params)
       .$promise
-      .then(function(res = []) {
-        let match = res.filter(plug => angular.equals(plug.artifact, nodeArtifact));
-        var pluginProperties = (match.length? match[0].properties: {});
-        if (res.length && (!node.description || (node.description && !node.description.length))) {
-          node.description = res[0].description;
+      .then((res = []) => {
+        let nodeArtifact = node.plugin.artifact;
+        if (node.plugin && !node.plugin.artifact && res.length) {
+          let lastElementIndex = res.length - 1;
+          node._backendProperties = res[lastElementIndex].properties || {};
+          node.description = res[lastElementIndex].description;
+          node.plugin.artifact = res[lastElementIndex].artifact;
+          defer.resolve(node);
+        } else {
+          let match = res.filter(plug => angular.equals(plug.artifact, nodeArtifact));
+          let pluginProperties = (match.length? match[0].properties: {});
+          if (res.length && this.myHelpers.objectQuery(node, 'description', 'length')) {
+            node.description = res[0].description;
+          }
+          node._backendProperties = pluginProperties;
+          defer.resolve(node);
         }
-        node._backendProperties = pluginProperties;
-        defer.resolve(node);
         return defer.promise;
       });
   }
@@ -257,6 +267,6 @@ class HydratorPlusPlusHydratorService {
   }
 
 }
-HydratorPlusPlusHydratorService.$inject = ['GLOBALS', 'DAGPlusPlusFactory', 'uuid', '$state', '$rootScope', 'myPipelineApi', '$q', 'IMPLICIT_SCHEMA', 'DAGPlusPlusNodesStore'];
+HydratorPlusPlusHydratorService.$inject = ['GLOBALS', 'DAGPlusPlusFactory', 'uuid', '$state', '$rootScope', 'myPipelineApi', '$q', 'IMPLICIT_SCHEMA', 'DAGPlusPlusNodesStore', 'myHelpers'];
 angular.module(`${PKG.name}.feature.hydratorplusplus`)
   .service('HydratorPlusPlusHydratorService', HydratorPlusPlusHydratorService);

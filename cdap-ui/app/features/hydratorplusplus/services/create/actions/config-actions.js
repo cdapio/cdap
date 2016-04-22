@@ -107,6 +107,7 @@ class HydratorPlusPlusConfigActions {
         .then(
           () => {
             this.EventPipe.emit('hideLoadingIcon.immediate');
+            this.HydratorPlusPlusConfigStore.setState(this.HydratorPlusPlusConfigStore.getDefaults());
             this.$state.go('hydratorplusplus.detail', { pipelineId: adapterName });
           }
         );

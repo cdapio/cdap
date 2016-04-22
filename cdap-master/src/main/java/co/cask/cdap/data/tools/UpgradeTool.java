@@ -111,6 +111,7 @@ public class UpgradeTool {
   private final ExistingEntitySystemMetadataWriter existingEntitySystemMetadataWriter;
   private final DatasetServiceManager datasetServiceManager;
   private final NamespaceStore nsStore;
+  private final DefaultStore store;
 
   /**
    * Set of Action available in this tool.
@@ -119,10 +120,12 @@ public class UpgradeTool {
     UPGRADE("Upgrades CDAP to " + ProjectInfo.getVersion() + "\n" +
               "  The upgrade tool upgrades the following: \n" +
               "  1. User and System Datasets (upgrades the coprocessor jars)\n" +
-              "  2. Upgrade Schedule Triggers\n" +
+              "  2. Schedule Triggers\n" +
               "  3. Stream State Store\n" +
-              "  4. Updates system metadata for all existing entities\n" +
-              "  5. Removes any metadata that may have left behind for deleted datasets.\n" +
+              "  4. Workflow run records in Application Metadata Store\n" +
+              "  5. System metadata for all existing entities\n" +
+              "  6. Metadata indexes for all existing metadata\n" +
+              "  7. Any metadata that may have left behind for deleted datasets (This metadata will be removed).\n" +
               "  Note: Once you run the upgrade tool you cannot rollback to the previous version."),
     UPGRADE_HBASE("After an HBase upgrade, updates the coprocessor jars of all user and \n" +
                     "system HBase tables to a version that is compatible with the new HBase \n" +
@@ -156,6 +159,7 @@ public class UpgradeTool {
     this.dsSpecUpgrader = injector.getInstance(DatasetSpecificationUpgrader.class);
     this.queueAdmin = injector.getInstance(QueueAdmin.class);
     this.nsStore = injector.getInstance(NamespaceStore.class);
+    this.store = injector.getInstance(DefaultStore.class);
 
     Runtime.getRuntime().addShutdownHook(new Thread() {
       @Override
@@ -390,13 +394,21 @@ public class UpgradeTool {
     LOG.info("Upgrading stream state store table...");
     streamStateStoreUpgrader.upgrade();
 
+    LOG.info("Upgrading Workflow run records in application metadata store table...");
+    store.upgrade();
+
     datasetServiceManager.startUp();
     LOG.info("Writing system metadata to existing entities...");
     try {
       existingEntitySystemMetadataWriter.write(datasetServiceManager.getDSFramework());
+      LOG.info("Removing metadata for deleted datasets...");
       DeletedDatasetMetadataRemover datasetMetadataRemover = new DeletedDatasetMetadataRemover(
         nsStore, metadataStore, datasetServiceManager.getDSFramework());
       datasetMetadataRemover.remove();
+      LOG.info("Deleting old metadata indexes...");
+      metadataStore.deleteAllIndexes();
+      LOG.info("Re-building metadata indexes...");
+      metadataStore.rebuildIndexes();
     } finally {
       datasetServiceManager.shutDown();
     }

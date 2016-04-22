@@ -32,7 +32,7 @@ of the application are tied together by the class ``CountRandom``:
 
 .. literalinclude:: /../../../cdap-examples/CountRandom/src/main/java/co/cask/cdap/examples/countrandom/CountRandom.java
    :language: java
-   :lines: 24-
+   :lines: 25-
 
 The flow contains three flowlets:
 

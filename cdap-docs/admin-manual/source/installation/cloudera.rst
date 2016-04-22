@@ -66,12 +66,6 @@ These roles map to the :ref:`CDAP components <admin-manual-cdap-components>` of 
 
 - All services run as the ``'cdap'`` user installed by the parcel.
 
-.. Node.js Installation
-.. --------------------
-.. include:: /../target/_includes/cloudera-installation.rst
-    :start-after: .. _cloudera-install-node-js:
-    :end-before: .. _cloudera-install-packaging:
-
 .. Hadoop Configuration
 .. --------------------
 .. include:: ../_includes/installation/hadoop-configuration.txt

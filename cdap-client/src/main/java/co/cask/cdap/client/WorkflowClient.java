@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -23,6 +23,7 @@ import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.UnauthenticatedException;
 import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.WorkflowNodeStateDetail;
 import co.cask.cdap.proto.WorkflowTokenDetail;
 import co.cask.cdap.proto.WorkflowTokenNodeDetail;
 import co.cask.cdap.proto.codec.WorkflowTokenDetailCodec;
@@ -254,5 +255,30 @@ public class WorkflowClient {
 
     NamespaceId namespaceId = workflowRunId.getParent().getNamespaceId();
     return config.resolveNamespacedURLV3(namespaceId.toId(), path);
+  }
+
+  /**
+   * Get node states associated with the Workflow run.
+   * @param workflowRunId run id for the Workflow
+   * @return the map of node id to the {@link WorkflowNodeStateDetail}
+   * @throws IOException if the error occurred during executing the http request
+   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   * @throws NotFoundException if the workflow with given runid not found
+   */
+  public Map<String, WorkflowNodeStateDetail> getWorkflowNodeStates(ProgramRunId workflowRunId)
+    throws IOException, UnauthenticatedException, NotFoundException {
+    String path = String.format("apps/%s/workflows/%s/runs/%s/nodes/state", workflowRunId.getApplication(),
+                                workflowRunId.getProgram(), workflowRunId.getRun());
+    NamespaceId namespaceId = workflowRunId.getParent().getNamespaceId();
+    URL urlPath = config.resolveNamespacedURLV3(namespaceId.toId(), path);
+    HttpResponse response = restClient.execute(HttpMethod.GET, urlPath, config.getAccessToken(),
+                                               HttpURLConnection.HTTP_NOT_FOUND);
+
+    if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
+      throw new NotFoundException(workflowRunId);
+    }
+
+    return ObjectResponse.fromJsonBody(response,
+                                       new TypeToken<Map<String, WorkflowNodeStateDetail>>() { }).getResponseObject();
   }
 }

@@ -20,6 +20,7 @@ import co.cask.cdap.api.workflow.NodeValue;
 import co.cask.cdap.api.workflow.Value;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.common.conf.Constants;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -36,10 +37,12 @@ import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import javax.annotation.concurrent.ThreadSafe;
 
 /**
  * Implementation of the {@link WorkflowToken} interface.
  */
+@ThreadSafe
 public class BasicWorkflowToken implements WorkflowToken, Serializable {
 
   private static final long serialVersionUID = -1173500180640174909L;
@@ -83,14 +86,15 @@ public class BasicWorkflowToken implements WorkflowToken, Serializable {
     this.bytesLeft = other.bytesLeft;
   }
 
-  void setCurrentNode(String nodeName) {
+  @VisibleForTesting
+  public synchronized void setCurrentNode(String nodeName) {
     this.nodeName = nodeName;
   }
 
   /**
    * Method to disable the put operation on the {@link WorkflowToken} form Mapper and Reducer classes.
    */
-  public void disablePut() {
+  public synchronized void disablePut() {
     putAllowed = false;
   }
 
@@ -99,7 +103,7 @@ public class BasicWorkflowToken implements WorkflowToken, Serializable {
    * with the WorkflowToken on which the method is invoked.
    * @param other the other WorkflowToken to be merged
    */
-  void mergeToken(WorkflowToken other) {
+  synchronized void mergeToken(WorkflowToken other) {
     for (Scope scope : Scope.values()) {
       Map<String, List<NodeValue>> thisTokenValueMapForScope = this.tokenValueMap.get(scope);
       for (Map.Entry<String, List<NodeValue>> otherTokenValueMapForScopeEntry : other.getAll(scope).entrySet()) {
@@ -133,12 +137,12 @@ public class BasicWorkflowToken implements WorkflowToken, Serializable {
   }
 
   @Override
-  public void put(String key, String value) {
+  public synchronized void put(String key, String value) {
     put(key, Value.of(value));
   }
 
   @Override
-  public void put(String key, Value value) {
+  public synchronized void put(String key, Value value) {
     put(key, value, Scope.USER);
   }
 
@@ -175,12 +179,12 @@ public class BasicWorkflowToken implements WorkflowToken, Serializable {
   }
 
   @Override
-  public Value get(String key) {
+  public synchronized Value get(String key) {
     return get(key, Scope.USER);
   }
 
   @Override
-  public Value get(String key, Scope scope) {
+  public synchronized Value get(String key, Scope scope) {
     List<NodeValue> nodeValueList = tokenValueMap.get(scope).get(key);
     if (nodeValueList == null) {
       return null;
@@ -195,12 +199,12 @@ public class BasicWorkflowToken implements WorkflowToken, Serializable {
   }
 
   @Override
-  public Value get(String key, String nodeName) {
+  public synchronized Value get(String key, String nodeName) {
     return get(key, nodeName, Scope.USER);
   }
 
   @Override
-  public Value get(String key, String nodeName, Scope scope) {
+  public synchronized Value get(String key, String nodeName, Scope scope) {
     List<NodeValue> nodeValueList = tokenValueMap.get(scope).get(key);
     if (nodeValueList == null) {
       return null;
@@ -215,12 +219,12 @@ public class BasicWorkflowToken implements WorkflowToken, Serializable {
   }
 
   @Override
-  public List<NodeValue> getAll(String key) {
+  public synchronized List<NodeValue> getAll(String key) {
     return getAll(key, Scope.USER);
   }
 
   @Override
-  public List<NodeValue> getAll(String key, Scope scope) {
+  public synchronized List<NodeValue> getAll(String key, Scope scope) {
     if (tokenValueMap.get(scope).containsKey(key)) {
       return ImmutableList.copyOf(tokenValueMap.get(scope).get(key));
     }
@@ -228,12 +232,12 @@ public class BasicWorkflowToken implements WorkflowToken, Serializable {
   }
 
   @Override
-  public Map<String, Value> getAllFromNode(String nodeName) {
+  public synchronized Map<String, Value> getAllFromNode(String nodeName) {
     return getAllFromNode(nodeName, Scope.USER);
   }
 
   @Override
-  public Map<String, Value> getAllFromNode(String nodeName, Scope scope) {
+  public synchronized Map<String, Value> getAllFromNode(String nodeName, Scope scope) {
     ImmutableMap.Builder<String, Value> tokenValuesBuilder = ImmutableMap.builder();
     for (Map.Entry<String, List<NodeValue>> entry : tokenValueMap.get(scope).entrySet()) {
       List<NodeValue> nodeValueList = entry.getValue();
@@ -248,21 +252,28 @@ public class BasicWorkflowToken implements WorkflowToken, Serializable {
   }
 
   @Override
-  public Map<String, List<NodeValue>> getAll() {
+  public synchronized Map<String, List<NodeValue>> getAll() {
     return getAll(Scope.USER);
   }
 
   @Override
-  public Map<String, List<NodeValue>> getAll(Scope scope) {
+  public synchronized Map<String, List<NodeValue>> getAll(Scope scope) {
     return ImmutableMap.copyOf(tokenValueMap.get(scope));
   }
 
   @Override
-  public Map<String, Map<String, Long>> getMapReduceCounters() {
+  public synchronized Map<String, Map<String, Long>> getMapReduceCounters() {
     return mapReduceCounters;
   }
 
-  public void setMapReduceCounters(Counters counters) {
+  /**
+   * Returns all {@link Scope#USER} tokens set by the current node.
+   */
+  public synchronized Map<String, Value> getAllFromCurrentNode() {
+    return getAllFromNode(nodeName);
+  }
+
+  public synchronized void setMapReduceCounters(Counters counters) {
     ImmutableMap.Builder<String, Map<String, Long>> countersBuilder = ImmutableMap.builder();
 
     for (CounterGroup group : counters) {
@@ -282,7 +293,7 @@ public class BasicWorkflowToken implements WorkflowToken, Serializable {
    * Make a deep copy of the {@link WorkflowToken}.
    * @return copied WorkflowToken
    */
-  public WorkflowToken deepCopy() {
+  public synchronized WorkflowToken deepCopy() {
     return new BasicWorkflowToken(this);
   }
 

@@ -66,6 +66,7 @@ public class AppWithWorkflow extends AbstractApplication {
     public static final String NAME = "SampleWorkflow";
     public static final String FIRST_ACTION = "firstAction";
     public static final String SECOND_ACTION = "secondAction";
+    public static final String WORD_COUNT_MR = WordCountMapReduce.class.getSimpleName();
     public static final String TABLE_NAME = "MyTable";
     public static final String FILE_NAME = "MyFile";
     public static final String INITIALIZE_TOKEN_KEY = "workflow.initialize.key";
@@ -103,7 +104,7 @@ public class AppWithWorkflow extends AbstractApplication {
       createLocalDataset(FILE_NAME, FileSet.class, DatasetProperties.builder().add("anotherFoo", "anotherBar").build());
       addAction(new DummyAction(FIRST_ACTION));
       addAction(new DummyAction(SECOND_ACTION));
-      addMapReduce(WordCountMapReduce.class.getSimpleName());
+      addMapReduce(WORD_COUNT_MR);
     }
   }
 

@@ -169,6 +169,37 @@ There are two ways to use a dataset in a program:
   sure that every thread has its own instance of each dynamic dataset |---| and in order to discard a dataset
   from the cache, every thread that uses it must individually call ``discardDataset()``.
 
+.. _dataset-admin-in-programs:
+
+.. rubric:: Dataset Management in Programs
+
+Instantiating a dataset in a program allows you to perform any of the dataset's data operations |---| the Java
+methods defined in the dataset's API. However, you cannot perform administrative operations such as creating or
+dropping a dataset. For these operations, the program context offers an ``Admin`` interface that can be obtained
+through the ``getAdmin()`` method of the context. This is available in all types of programs. For example, in
+a service handler, you can obtain the ``Admin`` through the ``HttpServiceContext``. The ``FileSetHandler`` of the
+:ref:`examples-fileset` extends ``AbstractHttpServiceHandler`` |---| its ``configure`` method saves the context
+in an instance variable and makes it available through ``getContext()``:
+
+.. literalinclude:: /../../../cdap-examples/FileSetExample/src/main/java/co/cask/cdap/examples/fileset/FileSetService.java
+    :language: java
+    :lines: 63-68
+    :dedent: 2
+
+The handler defines several endpoints for dataset management, one of which can be used to create a new file set,
+either by cloning an existing file set's dataset properties, or using the properties submitted in the request body:
+
+.. literalinclude:: /../../../cdap-examples/FileSetExample/src/main/java/co/cask/cdap/examples/fileset/FileSetService.java
+    :language: java
+    :lines: 167-196
+    :dedent: 2
+
+For more details, see the :ref:`examples-fileset`.
+
+Note that even though you can call dataset management methods within a transaction, these operations are *not*
+transactional, and they are not rolled back in case the current transaction fails. It is advisable not to mix data
+operations and dataset management operations within the same transaction.
+
 .. rubric::  Dataset Time-To-Live (TTL)
 
 Datasets, like :ref:`streams <streams>`, can have a Time-To-Live (TTL) property that
