@@ -34,6 +34,7 @@ import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceRequest;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
 import co.cask.cdap.api.spark.AbstractSpark;
+import co.cask.cdap.api.spark.SparkClientContext;
 import co.cask.cdap.api.workflow.AbstractWorkflow;
 import com.google.common.base.Charsets;
 import com.google.gson.Gson;
@@ -42,6 +43,7 @@ import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
+import org.apache.spark.SparkConf;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
@@ -117,6 +119,11 @@ public class SparkPageRankApp extends AbstractApplication {
       setMainClass(SparkPageRankProgram.class);
       setDriverResources(new Resources(1024));
       setExecutorResources(new Resources(1024));
+    }
+
+    @Override
+    public void beforeSubmit(SparkClientContext context) throws Exception {
+      context.setSparkConf(new SparkConf().set("spark.driver.extraJavaOptions", "-XX:MaxPermSize=256m"));
     }
   }
 
