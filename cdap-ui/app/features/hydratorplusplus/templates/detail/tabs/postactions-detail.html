@@ -16,7 +16,7 @@
 
 <div class="post-actions-detail"
      ng-controller="HydratorPluPlusPostActionDetailCtrl as PostActionController">
-  <table class="table">
+  <table class="table" ng-if="PostActionController.postActions.length !== 0">
     <thead>
       <th>Action</th>
       <th>Description</th>
@@ -33,4 +33,7 @@
       </tr>
     </tbody>
   </table>
+  <div class="well well-lg text-center" ng-if="PostActionController.postActions.length === 0">
+    <h4>You don't have any actions.</h4>
+  </div>
 </div>

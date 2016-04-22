@@ -680,7 +680,7 @@ class HydratorPlusPlusConfigStore {
     if(!this.getDraftId()) {
       this.setDraftId(this.uuid.v4());
       this.$stateParams.draftId = this.getDraftId();
-      this.$state.go('hydrator.create.studio', this.$stateParams, {notify: false});
+      this.$state.go('hydratorplusplus.create', this.$stateParams, {notify: false});
     }
     let config = this.getState();
     // This is not to fall in the scenario where when the user saves a draft with a node selected.

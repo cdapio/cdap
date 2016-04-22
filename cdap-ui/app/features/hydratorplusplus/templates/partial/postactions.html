@@ -37,7 +37,7 @@
 
     <!-- OVERVIEW -->
     <div class="main-container" ng-if="PostActionController.activeTab === 'OVERVIEW'">
-      <table class="table">
+      <table class="table" ng-if="PostActionController.postActions.length !== 0">
         <thead>
           <th>Action</th>
           <th>Description</th>
