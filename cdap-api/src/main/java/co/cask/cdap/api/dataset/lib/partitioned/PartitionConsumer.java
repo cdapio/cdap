@@ -16,6 +16,7 @@
 
 package co.cask.cdap.api.dataset.lib.partitioned;
 
+import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.dataset.lib.Partition;
 import co.cask.cdap.api.dataset.lib.PartitionKey;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
@@ -28,6 +29,7 @@ import java.util.List;
  * the consumePartitions method must be called in its own, short transaction before the processing of the partitions.
  * This is so that other concurrent consumers can see that the partitions have been marked as IN_PROGRESS.
  */
+@Beta
 public interface PartitionConsumer {
 
   /**
