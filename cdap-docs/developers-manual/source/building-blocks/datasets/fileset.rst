@@ -359,6 +359,8 @@ end of the job and none of the partitions will be added to the ``PartitionedFile
 Incrementally Processing PartitionedFileSets
 ============================================
 
+Processing using MapReduce
+--------------------------
 One way to process a partitioned file set is with a repeatedly-running MapReduce program that,
 in each run, reads all partitions that have been added since its previous run. This requires
 that the MapReduce program persists between runs which partitions have already been consumed.
@@ -389,6 +391,62 @@ This ensures that the next time the MapReduce job runs, it processes only the ne
   public void onFinish(boolean succeeded, MapReduceContext context) throws Exception {
     partitionCommitter.onFinish(succeeded);
   }
+
+Processing using other Programs
+-------------------------------
+Partitions of a partitioned file set can also be incrementally processed from other program types
+using the generic ``PartitionConsumer`` APIs. The implementation of these APIs that can be used from multiple instances
+of a program is ``ConcurrentPartitionConsumer``. To use, you simply need to provide the instance of the
+partitioned file set you want to consume from, along with a ``StatePersistor``, responsible for managing
+persistence of the consumer's state::
+
+  // This can be in any program where we have access to Datasets,
+  // such as a Worker, Workflow Action, or even in a MapReduce
+  PartitionConsumer consumer =
+    new ConcurrentPartitionConsumer(partitionedFileSet, new CustomStatePersistor(persistenceTable));
+
+  // Call consumePartitions to get a list of partitions to process
+  final List<PartitionDetail> partitions = partitionConsumer.consumePartitions().getPartitions();
+
+  // Process partitions
+  ...
+
+  // Once done processing, onFinish must be called with a boolean value indicating success or failure, so that
+  // the partitions' can be marked accordingly for completion or retries in the future
+  partitionConsumer.onFinish(partitions, true);
+
+The ``consumePartitions`` method of the ``PartitionConsumer`` can optionally take in a limit (an int), which will
+limit the number of returned partitions. It can also take in a ``PartitionAcceptor``, which allows you to
+define a custom method to limit the number of partitions. For instance, it may be useful to limit the number of
+partitions to process at a time, and have it be based on the size of the partitions::
+
+  public class SizeLimitingAcceptor implements PartitionAcceptor {
+
+    private final int sizeLimitMB;
+    private int acceptedMBSoFar;
+
+    public SizeLimitingAcceptor(int sizeLimitMB) {
+      this.sizeLimitMB = sizeLimitMB;
+      this.acceptedMBSoFar = 0;
+    }
+
+    @Override
+    public Return accept(PartitionDetail partitionDetail) {
+      // assuming that the metadata contains the size of that partition
+      acceptedMBSoFar += Integer.valueOf(partitionDetail.getMetadata().get("sizeMB"));
+      if (acceptedMBSoFar > sizeLimitMB) {
+        return Return.STOP;
+      }
+      return Return.ACCEPT;
+    }
+  }
+
+
+It can then be used as::
+
+  // return only partitions, to process up to 500MB of data
+  partitions = consumer.consumePartitions(new SizeLimitingAcceptor(500));
+
 
 Exploring PartitionedFileSets
 =============================
