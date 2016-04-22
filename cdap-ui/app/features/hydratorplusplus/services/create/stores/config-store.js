@@ -91,7 +91,7 @@ class HydratorPlusPlusConfigStore {
     return {
       connections: [],
       comments: [],
-      postactions: []
+      postActions: []
     };
   }
 
