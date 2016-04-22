@@ -15,12 +15,12 @@
  */
 
 angular.module(PKG.name + '.feature.hydratorplusplus')
-  .controller('HydratorPlusPlusDetailCanvasCtrl', function(rPipelineDetail, HydratorPlusPlusBottomPanelStore, DAGPlusPlusNodesActionsFactory, HydratorService, DAGPlusPlusNodesStore, ConfigStore, HydratorPlusPlusNodeConfigActions, HydratorPlusPlusDetailNonRunsStore, HydratorPlusPlusDetailMetricsStore) {
+  .controller('HydratorPlusPlusDetailCanvasCtrl', function(rPipelineDetail, HydratorPlusPlusBottomPanelStore, DAGPlusPlusNodesActionsFactory, HydratorPlusPlusHydratorService, DAGPlusPlusNodesStore, ConfigStore, HydratorPlusPlusNodeConfigActions, HydratorPlusPlusDetailNonRunsStore, HydratorPlusPlusDetailMetricsStore) {
     this.ConfigStore = ConfigStore;
     this.DAGPlusPlusNodesStore = DAGPlusPlusNodesStore;
     this.HydratorPlusPlusDetailNonRunsStore = HydratorPlusPlusDetailNonRunsStore;
     this.HydratorPlusPlusNodeConfigActions = HydratorPlusPlusNodeConfigActions;
-    this.HydratorService = HydratorService;
+    this.HydratorPlusPlusHydratorService = HydratorPlusPlusHydratorService;
     this.HydratorPlusPlusDetailMetricsStore = HydratorPlusPlusDetailMetricsStore;
 
     try{
@@ -60,7 +60,7 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
     };
 
     this.generateSchemaOnEdge = function (sourceId) {
-      return this.HydratorService.generateSchemaOnEdge(sourceId);
+      return this.HydratorPlusPlusHydratorService.generateSchemaOnEdge(sourceId);
     };
 
     function convertMetricsArrayIntoObject(arr) {
