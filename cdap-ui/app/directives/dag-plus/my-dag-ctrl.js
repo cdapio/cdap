@@ -628,7 +628,7 @@ angular.module(PKG.name + '.commons')
       var parent = $scope.element[0].parentElement.getBoundingClientRect();
 
       // calculating the scales and finding the minimum scale
-      var widthScale = (parent.width - 100) / width;
+      var widthScale = (parent.width - 150) / width;
       var heightScale = (parent.height - 100) / height;
 
       vm.scale = Math.min(widthScale, heightScale);
