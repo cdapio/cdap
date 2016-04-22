@@ -23,17 +23,25 @@ import co.cask.cdap.common.lang.ProgramClassLoader;
 import co.cask.cdap.common.lang.WeakReferenceDelegatorClassLoader;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import com.google.common.io.OutputSupplier;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.spark.SparkConf;
+import org.apache.spark.streaming.DStreamGraph;
 import org.apache.twill.common.Cancellable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scala.Tuple2;
+import scala.collection.parallel.TaskSupport;
+import scala.collection.parallel.ThreadPoolTaskSupport;
+import scala.collection.parallel.mutable.ParArray;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Properties;
+import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -148,6 +156,23 @@ public final class SparkRuntimeUtils {
         LOG.trace("Reset context ClassLoader. The SparkClassLoader is: {}", sparkClassLoader);
       }
     };
+  }
+
+  /**
+   * Sets the {@link TaskSupport} for the given Scala {@link ParArray} to {@link ThreadPoolTaskSupport}.
+   * This method is mainly used by {@link SparkRunnerClassLoader} to set the {@link TaskSupport} for the
+   * parallel array used inside the {@link DStreamGraph} class in spark to avoid thread leakage after the
+   * Spark program execution finished.
+   */
+  @SuppressWarnings("unused")
+  public static <T> ParArray<T> setTaskSupport(ParArray<T> parArray) {
+    ThreadPoolExecutor executor = new ThreadPoolExecutor(0, Integer.MAX_VALUE, 1,
+                                                         TimeUnit.SECONDS, new SynchronousQueue<Runnable>(),
+                                                         new ThreadFactoryBuilder()
+                                                           .setNameFormat("task-support-%d").build());
+    executor.allowCoreThreadTimeOut(true);
+    parArray.tasksupport_$eq(new ThreadPoolTaskSupport(executor));
+    return parArray;
   }
 
   private SparkRuntimeUtils() {
