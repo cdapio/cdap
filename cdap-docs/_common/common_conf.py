@@ -31,6 +31,7 @@
 cdap_apps_version = '0.7.0-SNAPSHOT'
 cdap_apps_compatibile_version = 'release/cdap-3.4-compatible'
 
+
 node_js_min_version = 'beginning with v0.10.36'
 node_js_max_version = 'v4.4.0'
 
