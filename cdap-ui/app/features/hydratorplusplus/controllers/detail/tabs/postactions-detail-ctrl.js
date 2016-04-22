@@ -22,14 +22,14 @@ class HydratorPluPlusPostActionDetailCtrl {
     this.$state = $state;
     this.HydratorPlusPlusPluginConfigFactory = HydratorPlusPlusPluginConfigFactory;
 
-    this.postactions = [];
+    this.postActions = [];
     this.config = {};
     this.setState();
   }
   setState() {
     let config = this.HydratorPlusPlusDetailNonRunsStore.getConfigJson();
     this.config = config;
-    this.postactions = config.postactions || [];
+    this.postActions = config.postActions || [];
   }
 
   viewAction(action) {
@@ -74,7 +74,7 @@ class HydratorPluPlusPostActionDetailCtrl {
 
   showModal(noConfig, action, groupsConfig) {
     this.$uibModal.open({
-      keyboard: false,
+      keyboard: true,
       windowTopClass: 'hydrator-modal',
       templateUrl: '/assets/features/hydratorplusplus/templates/partial/postactions-modal.html',
       size: 'lg',

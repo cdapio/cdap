@@ -36,10 +36,8 @@ public class TransformExecutorTest {
 
   @Test
   public void testEmptyTransforms() throws Exception {
-    MockMetrics mockMetrics = new MockMetrics();
     Map<String, TransformDetail> transformationMap = new HashMap<>();
     transformationMap.put("sink", new TransformDetail(new DoubleToString(),
-                                                      new DefaultStageMetrics(mockMetrics, "sink"),
                                                       new ArrayList<String>()));
 
     TransformExecutor executor =
@@ -61,20 +59,28 @@ public class TransformExecutorTest {
     Map<String, TransformDetail> transformationMap = new HashMap<>();
 
     transformationMap.put("transform1",
-                          new TransformDetail(new IntToDouble(), new DefaultStageMetrics(mockMetrics, "transform1"),
-                                              ImmutableList.of("transform2", "sink1")));
+                          new TransformDetail(
+                            new TrackedTransform<>(new IntToDouble(),
+                                                   new DefaultStageMetrics(mockMetrics, "transform1")),
+                            ImmutableList.of("transform2", "sink1")));
 
-    transformationMap.put("transform2", new TransformDetail(new Filter(100d, Threshold.LOWER),
-                                                            new DefaultStageMetrics(mockMetrics, "transform2"),
-                                                            ImmutableList.of("sink2")));
+    transformationMap.put("transform2",
+                          new TransformDetail(
+                            new TrackedTransform<>(new Filter(100d, Threshold.LOWER),
+                                                   new DefaultStageMetrics(mockMetrics, "transform2")),
+                            ImmutableList.of("sink2")));
 
-    transformationMap.put("sink1", new TransformDetail(new DoubleToString(),
-                                                       new DefaultStageMetrics(mockMetrics, "sink1"),
-                                                       ImmutableList.<String>of()));
+    transformationMap.put("sink1",
+                          new TransformDetail(
+                            new TrackedTransform<>(new DoubleToString(),
+                                                   new DefaultStageMetrics(mockMetrics, "sink1")),
+                            ImmutableList.<String>of()));
 
-    transformationMap.put("sink2", new TransformDetail(new DoubleToString(),
-                                                       new DefaultStageMetrics(mockMetrics, "sink2"),
-                                                       ImmutableList.<String>of()));
+    transformationMap.put("sink2",
+                          new TransformDetail(
+                            new TrackedTransform<>(new DoubleToString(),
+                                                   new DefaultStageMetrics(mockMetrics, "sink2")),
+                            ImmutableList.<String>of()));
 
     TransformExecutor<Integer> executor = new TransformExecutor<>(transformationMap, ImmutableSet.of("transform1"));
 
@@ -135,34 +141,48 @@ public class TransformExecutorTest {
     MockMetrics mockMetrics = new MockMetrics();
     Map<String, TransformDetail> transformationMap = new HashMap<>();
 
-    transformationMap.put("conversion", new TransformDetail(new IntToDouble(),
-                                                            new DefaultStageMetrics(mockMetrics, "conversion"),
-                                                            ImmutableList.of("filter1", "filter2")));
+    transformationMap.put("conversion",
+                          new TransformDetail(
+                            new TrackedTransform<>(new IntToDouble(),
+                                                   new DefaultStageMetrics(mockMetrics, "conversion")),
+                            ImmutableList.of("filter1", "filter2")));
 
-    transformationMap.put("filter1", new TransformDetail(new Filter(100d, Threshold.LOWER),
-                                                         new DefaultStageMetrics(mockMetrics, "filter1"),
-                                                         ImmutableList.of("limiter1", "sink1")));
+    transformationMap.put("filter1",
+                          new TransformDetail(
+                            new TrackedTransform<>(new Filter(100d, Threshold.LOWER),
+                                                   new DefaultStageMetrics(mockMetrics, "filter1")),
+                            ImmutableList.of("limiter1", "sink1")));
 
-    transformationMap.put("filter2", new TransformDetail(new Filter(1000d, Threshold.LOWER),
-                                                         new DefaultStageMetrics(mockMetrics, "filter2"),
-                                                         ImmutableList.of("limiter1", "sink2")));
+    transformationMap.put("filter2",
+                          new TransformDetail(
+                            new TrackedTransform<>(new Filter(1000d, Threshold.LOWER),
+                                                   new DefaultStageMetrics(mockMetrics, "filter2")),
+                            ImmutableList.of("limiter1", "sink2")));
 
 
-    transformationMap.put("limiter1", new TransformDetail(new Filter(5000d, Threshold.UPPER),
-                                                          new DefaultStageMetrics(mockMetrics, "limiter1"),
-                                                          ImmutableList.of("sink3")));
+    transformationMap.put("limiter1",
+                          new TransformDetail(
+                            new TrackedTransform<>(new Filter(5000d, Threshold.UPPER),
+                                                   new DefaultStageMetrics(mockMetrics, "limiter1")),
+                            ImmutableList.of("sink3")));
 
-    transformationMap.put("sink1", new TransformDetail(new DoubleToString(),
-                                                       new DefaultStageMetrics(mockMetrics, "sink1"),
-                                                       ImmutableList.<String>of()));
+    transformationMap.put("sink1",
+                          new TransformDetail(
+                            new TrackedTransform<>(new DoubleToString(),
+                                                   new DefaultStageMetrics(mockMetrics, "sink1")),
+                            ImmutableList.<String>of()));
 
-    transformationMap.put("sink2", new TransformDetail(new DoubleToString(),
-                                                       new DefaultStageMetrics(mockMetrics, "sink2"),
-                                                       ImmutableList.<String>of()));
+    transformationMap.put("sink2",
+                          new TransformDetail(
+                            new TrackedTransform<>(new DoubleToString(),
+                                                   new DefaultStageMetrics(mockMetrics, "sink2")),
+                            ImmutableList.<String>of()));
 
-    transformationMap.put("sink3", new TransformDetail(new DoubleToString(),
-                                                       new DefaultStageMetrics(mockMetrics, "sink3"),
-                                                       ImmutableList.<String>of()));
+    transformationMap.put("sink3",
+                          new TransformDetail(
+                            new TrackedTransform<>(new DoubleToString(),
+                                                   new DefaultStageMetrics(mockMetrics, "sink3")),
+                            ImmutableList.<String>of()));
 
 
 
@@ -192,32 +212,42 @@ public class TransformExecutorTest {
     Map<String, TransformDetail> transformationMap = new HashMap<>();
 
 
-    transformationMap.put("filter1", new TransformDetail(new Filter(100d, Threshold.LOWER),
-                                                         new DefaultStageMetrics(mockMetrics, "filter1"),
-                                                         ImmutableList.of("limiter1", "sink1")));
+    transformationMap.put("filter1",
+                          new TransformDetail(
+                            new TrackedTransform<>(new Filter(100d, Threshold.LOWER),
+                                                   new DefaultStageMetrics(mockMetrics, "filter1")),
+                            ImmutableList.of("limiter1", "sink1")));
 
-    transformationMap.put("filter2", new TransformDetail(new Filter(1000d, Threshold.LOWER),
-                                                         new DefaultStageMetrics(mockMetrics, "filter2"),
-                                                         ImmutableList.of("limiter1", "sink2")));
-
-
-    transformationMap.put("limiter1", new TransformDetail(new Filter(5000d, Threshold.UPPER),
-                                                          new DefaultStageMetrics(mockMetrics, "limiter1"),
-                                                          ImmutableList.of("sink3")));
-
-    transformationMap.put("sink1", new TransformDetail(new DoubleToString(),
-                                                       new DefaultStageMetrics(mockMetrics, "sink1"),
-                                                       ImmutableList.<String>of()));
-
-    transformationMap.put("sink2", new TransformDetail(new DoubleToString(),
-                                                       new DefaultStageMetrics(mockMetrics, "sink2"),
-                                                       ImmutableList.<String>of()));
-
-    transformationMap.put("sink3", new TransformDetail(new DoubleToString(),
-                                                       new DefaultStageMetrics(mockMetrics, "sink3"),
-                                                       ImmutableList.<String>of()));
+    transformationMap.put("filter2",
+                          new TransformDetail(
+                            new TrackedTransform<>(new Filter(1000d, Threshold.LOWER),
+                                                   new DefaultStageMetrics(mockMetrics, "filter2")),
+                            ImmutableList.of("limiter1", "sink2")));
 
 
+    transformationMap.put("limiter1",
+                          new TransformDetail(
+                            new TrackedTransform<>(new Filter(5000d, Threshold.UPPER),
+                                                   new DefaultStageMetrics(mockMetrics, "limiter1")),
+                            ImmutableList.of("sink3")));
+
+    transformationMap.put("sink1",
+                          new TransformDetail(
+                            new TrackedTransform<>(new DoubleToString(),
+                                                   new DefaultStageMetrics(mockMetrics, "sink1")),
+                            ImmutableList.<String>of()));
+
+    transformationMap.put("sink2",
+                          new TransformDetail(
+                            new TrackedTransform<>(new DoubleToString(),
+                                                   new DefaultStageMetrics(mockMetrics, "sink2")),
+                            ImmutableList.<String>of()));
+
+    transformationMap.put("sink3",
+                          new TransformDetail(
+                            new TrackedTransform<>(new DoubleToString(),
+                                                   new DefaultStageMetrics(mockMetrics, "sink3")),
+                            ImmutableList.<String>of()));
 
     TransformExecutor<Double> executor = new TransformExecutor<>(transformationMap,
                                                                  ImmutableSet.of("filter1", "filter2"));

@@ -80,6 +80,7 @@ public class LookupSource extends RealtimeSource<StructuredRecord> {
         recordBuilder.set(entry.getKey(), entry.getValue());
       }
       writer.emit(recordBuilder.build());
+      currentState.setState("done", new byte[] { 1 });
     }
     return currentState;
   }
