@@ -194,7 +194,7 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
           schedule: appConfigClone.configJson.schedule,
           connections: uiConfig.connections,
           comments: appConfigClone.configJson.comments,
-          postactions: appConfigClone.configJson.postactions,
+          postActions: appConfigClone.configJson.postActions,
           engine: appConfigClone.configJson.engine
         }
       };
