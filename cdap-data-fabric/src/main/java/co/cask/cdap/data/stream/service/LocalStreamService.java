@@ -33,6 +33,7 @@ import org.apache.twill.common.Cancellable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.FileNotFoundException;
 import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -70,7 +71,19 @@ public class LocalStreamService extends AbstractStreamService {
   protected void initialize() throws Exception {
     for (Map.Entry<Id.Namespace, StreamSpecification> streamSpecEntry : streamMetaStore.listStreams().entries()) {
       Id.Stream streamId = Id.Stream.from(streamSpecEntry.getKey(), streamSpecEntry.getValue().getName());
-      StreamConfig config = streamAdmin.getConfig(streamId);
+      StreamConfig config;
+      try {
+        config = streamAdmin.getConfig(streamId);
+      } catch (FileNotFoundException e) {
+        // TODO: this kind of inconsistency should not happen. [CDAP-5722]
+        LOG.warn("Inconsistent stream state: Stream '{}' exists in meta store " +
+                   "but its configuration file does not exist", streamId);
+        continue;
+      } catch (Exception e) {
+        LOG.warn("Inconsistent stream state: Stream '{}' exists in meta store " +
+                   "but its configuration cannot be read:", streamId, e);
+        continue;
+      }
       long eventsSizes = getStreamEventsSize(streamId);
       createSizeAggregator(streamId, eventsSizes, config.getNotificationThresholdMB());
     }
@@ -92,7 +105,13 @@ public class LocalStreamService extends AbstractStreamService {
       try {
         if (streamSizeAggregator == null) {
           // First time that we see this Stream here
-          StreamConfig config = streamAdmin.getConfig(streamId);
+          StreamConfig config;
+          try {
+            config = streamAdmin.getConfig(streamId);
+          } catch (FileNotFoundException e) {
+            // this is a stream that has no configuration: ignore it to avoid flooding the logs with exceptions
+            continue;
+          }
           streamSizeAggregator = createSizeAggregator(streamId, 0, config.getNotificationThresholdMB());
         }
         streamSizeAggregator.checkAggregatedSize();

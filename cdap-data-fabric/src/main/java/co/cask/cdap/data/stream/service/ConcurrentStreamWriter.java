@@ -111,6 +111,15 @@ public final class ConcurrentStreamWriter implements Closeable {
     this.createLock = new ReentrantLock();
   }
 
+  public void close(Id.Stream streamId) throws IOException, NotFoundException {
+    createLock.lock();
+    try {
+      closeEventQueue(streamId);
+    } finally {
+      createLock.unlock();
+    }
+  }
+
   /**
    * Writes an event to the given stream.
    *
@@ -265,6 +274,17 @@ public final class ConcurrentStreamWriter implements Closeable {
     }
   }
 
+  private void closeEventQueue(Id.Stream streamId) {
+    EventQueue eventQueue = eventQueues.remove(streamId);
+    if (eventQueue != null) {
+      try {
+        eventQueue.close();
+      } catch (IOException e) {
+        LOG.warn("Failed to close writer.", e);
+      }
+    }
+  }
+
   /**
    * Factory for creating stream file and stream {@link FileWriter}.
    * It also watch for changes in stream generation so that it can create appropriate file/file writer.
@@ -287,17 +307,6 @@ public final class ConcurrentStreamWriter implements Closeable {
     public void deleted(Id.Stream streamId) {
       LOG.debug("Properties deleted for stream '{}' for stream writer", streamId);
       closeEventQueue(streamId);
-    }
-
-    private void closeEventQueue(Id.Stream streamId) {
-      EventQueue eventQueue = eventQueues.remove(streamId);
-      if (eventQueue != null) {
-        try {
-          eventQueue.close();
-        } catch (IOException e) {
-          LOG.warn("Failed to close writer.", e);
-        }
-      }
     }
 
     /**
