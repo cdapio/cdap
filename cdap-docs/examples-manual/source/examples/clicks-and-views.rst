@@ -1,0 +1,164 @@
+.. meta::
+    :author: Cask Data, Inc.
+    :description: Cask Data Application Platform Clicks and Views Application
+    :copyright: Copyright © 2016 Cask Data, Inc.
+
+.. _examples-clicks-and-views:
+
+================
+Clicks and Views
+================
+
+A Cask Data Application Platform (CDAP) example demonstrating a reduce-side join
+across two Streams, using MapReduce.
+
+
+Overview
+========
+This application has a MapReduce which processes records two Streams and outputs to a PartitionedFileSet.
+
+- The ``ClicksAndViewsMapReduce`` processes the records from a ``views`` Stream and a ``clicks`` Stream,
+  while joining on the ``viewId`` of the records, and writing the joined records to a ``joined`` PartitionedFileSet.
+
+Let's look at some of these components, and then run the application and see the results.
+
+The Clicks and Views Application
+--------------------------------
+As in the other :ref:`examples <examples-index>`, the components
+of the application are tied together by the class ``ClicksAndViews``:
+
+.. literalinclude:: /../../../cdap-examples/ClicksAndViews/src/main/java/co/cask/cdap/examples/clicksandviews/ClicksAndViews.java
+   :language: java
+   :lines: 27-
+
+Data Storage
+------------
+- *views* input``Stream`` contains ad views, representing an advertisement downloaded to a viewer's screen.
+- *clicks* input ``Stream`` contains ad clicks, representing when a viewer clicks on an advertisement.
+- *joined* output ``PartitionedFileSetFileSet`` contains the joined ad views, which additionally contains the
+  count of clicks each ad view has. This Dataset is partitioned on the logical start time of the MapReduce.
+
+MapReduce over multiple Inputs
+------------------------------
+``ClicksAndViewsMapReduce`` is a MapReduce that reads from the *clicks* and *views* ``Stream``s and writes to
+the *joined* ``PartitionedFileSet``. The ``beforeSubmit`` method prepares the MapReduce program. It sets up the
+two ``Stream``s as input and sets up the ``PartitionedFileSet`` as output, with the appropriate ``PartitionKey``.
+The Mapper class then keys each of the records based upon the ``viewId``. That makes it so that all clicks and views
+for a particular ``viewId`` go to a single Reducer for joining.
+
+
+.. Building and Starting
+.. =====================
+.. |example| replace:: ClicksAndViews
+.. |example-italic| replace:: *ClicksAndViews*
+.. |application-overview-page| replace:: :cdap-ui-apps-programs:`application overview page, programs tab <ClicksAndViews>`
+
+.. include:: _includes/_building-starting-running.txt
+
+
+Running the Example
+===================
+
+Ingesting Records
+-----------------
+Begin by uploading a file containing some newline-separated records representing view events into the *views* stream:
+
+.. tabbed-parsed-literal::
+
+  .. Linux
+
+  $ cdap-cli.sh load stream views examples/ClicksAndViews/resources/views.txt
+  
+  Successfully sent stream event to stream 'views'
+
+  .. Windows
+
+  > cdap-cli.bat load stream views examples\ClicksAndViews\resources\views.txt
+  
+  Successfully sent stream event to stream 'views'
+
+
+Also upload records representing click events into the *clicks* stream:
+
+.. tabbed-parsed-literal::
+
+  .. Linux
+
+  $ cdap-cli.sh load stream clicks examples/ClicksAndViews/resources/clicks.txt
+
+  Successfully sent stream event to stream 'clicks'
+
+  .. Windows
+
+  > cdap-cli.bat load stream clicks examples\ClicksAndViews\resources\clicks.txt
+
+  Successfully sent stream event to stream 'clicks'
+
+
+.. |example-mapreduce| replace:: ClicksAndViewsMapReduce
+.. |example-mapreduce-italic| replace:: *ClicksAndViewsMapReduce*
+
+Starting the MapReduce
+----------------------
+The MapReduce will write to a partition based upon its logical start time, when it is run.
+
+- Using the CDAP UI, go to the |application-overview|,
+  click |example-mapreduce-italic| to get to the MapReduce detail page, then click
+  the *Start* button; or
+- From the Standalone CDAP SDK directory, use the Command Line Interface:
+
+  .. tabbed-parsed-literal::
+
+      $ cdap-cli.sh start mapreduce |example|.\ |example-mapreduce|
+      
+      Successfully started mapreduce '|example-mapreduce|' of application '|example|'
+      with stored runtime arguments '{}'
+
+Querying the Results
+--------------------
+.. highlight:: console
+
+To sample the *joined* ``PartitionedFileSet``, execute an explore query using the CDAP CLI:
+
+.. tabbed-parsed-literal::
+
+  $ cdap-cli.sh execute "\"SELECT * FROM dataset_joined\""
+
+- Alternatively, go to the *rawRecords*
+  :cdap-ui-datasets-explore:`dataset overview page, explore tab <rawRecords>`
+  and execute the query from there.
+
+The view records along with their click count will be displayed::
+
+  +======================================================================================================================================================================================================================+
+  | dataset_joined.viewid:  | dataset_joined.requestb | dataset_joined.adid: BI | dataset_joined.referrer | dataset_joined.usercook | dataset_joined.ip: STRI | dataset_joined.numclick | dataset_joined.runtime: BIGINT |
+  | BIGINT                  | egintime: BIGINT        | GINT                    | : STRING                | ie: STRING              | NG                      | s: INT                  |                                |
+  +======================================================================================================================================================================================================================+
+  | 0                       | 1461219010              | 2157                    | http://www.google.com   | lu=fQ9qHjLjFg3qi3bZiuz  | 62.128.93.36            | 0                       | 1461284201475                  |
+  | 1                       | 1461265001              | 2157                    | http://www.google.co.uk | lu=8fsdggknea@ASJHlz    | 21.612.39.63            | 1                       | 1461284201475                  |
+  | 2                       | 1461281958              | 2157                    | http://www.yahoo.com    | name=Mike               | 212.193.252.52          | 1                       | 1461284201475                  |
+  | 3                       | 1461331879              | 2157                    | http://www.amazon.com   | name=Matt               | 1.116.135.146           | 0                       | 1461284201475                  |
+  | 4                       | 1461348738              | 2157                    | http://www.t.co         | name=Nicholas; Httponly | 89.141.94.158           | 0                       | 1461284201475                  |
+  | 5                       | 1461349158              | 2157                    | http://www.linkedin.com | lo=Npa0jbIHGloMnx75     | 69.75.87.114            | 1                       | 1461284201475                  |
+  +======================================================================================================================================================================================================================+
+  Fetched 6 rows
+
+
+To calculate a click through rate from this data, you could divide the number of clicks by the number of total views::
+
+.. tabbed-parsed-literal::
+
+  $ cdap-cli.sh execute "\"SELECT SUM(numclicks)/COUNT(*) AS CTR FROM dataset_joined\""
+
+With our sample data, the click through rate is 0.5::
+
+  +=============+
+  | ctr: DOUBLE |
+  +=============+
+  | 0.5         |
+  +=============+
+  Fetched 1 rows
+
+.. Stopping and Removing the Application
+.. =====================================
+.. include:: _includes/_stopping-service-removing-application.txt

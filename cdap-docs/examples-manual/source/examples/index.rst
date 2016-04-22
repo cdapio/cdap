@@ -16,6 +16,7 @@ Examples
    :titlesonly:
 
    Hello World <hello-world>
+   Clicks and Views <clicks-and-views>
    Count Random <count-random>
    Data Cleansing <data-cleansing>
    FileSet Example <fileset-example>
