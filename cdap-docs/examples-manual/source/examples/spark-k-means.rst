@@ -83,7 +83,7 @@ Standalone CDAP SDK directory, using the Command Line Interface:
   
   $ cdap-cli.sh load stream pointsStream examples/SparkKMeans/resources/points.txt
   
-  Successfully sent stream event to stream 'pointsStream' 
+  Successfully loaded file to stream 'pointsStream'
 
 Running the Spark Program
 -------------------------

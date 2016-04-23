@@ -255,7 +255,7 @@ public class CLIMainTest extends CLITestBase {
       }
     }
     testCommandOutputContains(cli, "load stream " + streamId + " " + file.getAbsolutePath(),
-                              "Successfully sent stream event to stream");
+                              "Successfully loaded file to stream");
     testCommandOutputContains(cli, "get stream " + streamId, "9, Event 9");
     testCommandOutputContains(cli, "get stream-stats " + streamId,
                               String.format("No schema found for stream '%s'", streamId));

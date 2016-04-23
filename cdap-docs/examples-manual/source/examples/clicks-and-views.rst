@@ -77,7 +77,7 @@ Begin by uploading a file containing newline-separated records representing view
 
   $ cdap-cli.sh load stream views examples/ClicksAndViews/resources/views.txt
   
-  Successfully sent stream event to stream 'views'
+  Successfully loaded file to stream 'views'
 
 Then, upload records representing click events into the *clicks* stream:
 
@@ -85,7 +85,7 @@ Then, upload records representing click events into the *clicks* stream:
 
   $ cdap-cli.sh load stream clicks examples/ClicksAndViews/resources/clicks.txt
 
-  Successfully sent stream event to stream 'clicks'
+  Successfully loaded file to stream 'clicks'
 
 
 .. |example-mapreduce| replace:: ClicksAndViewsMapReduce
