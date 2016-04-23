@@ -178,22 +178,21 @@ class HydratorPlusPlusHydratorService {
         input = {
           fields: [{ name: 'body', type: 'string' }]
         };
+      
+        input.fields.unshift({
+          name: 'headers',
+          type: {
+            type: 'map',
+            keys: 'string',
+            values: 'string'
+          }
+        });
+
+        input.fields.unshift({
+          name: 'ts',
+          type: 'long'
+        });
       }
-
-      input.fields.unshift({
-        name: 'headers',
-        type: {
-          type: 'map',
-          keys: 'string',
-          values: 'string'
-        }
-      });
-
-      input.fields.unshift({
-        name: 'ts',
-        type: 'long'
-      });
-
     }
 
     schema = input ? input.fields : null;

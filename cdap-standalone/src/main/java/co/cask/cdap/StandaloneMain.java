@@ -35,6 +35,7 @@ import co.cask.cdap.common.io.URLConnections;
 import co.cask.cdap.common.namespace.guice.NamespaceClientRuntimeModule;
 import co.cask.cdap.common.startup.ConfigurationLogger;
 import co.cask.cdap.common.utils.DirUtils;
+import co.cask.cdap.common.utils.Networks;
 import co.cask.cdap.common.utils.OSDetector;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
@@ -85,6 +86,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.InetAddress;
 import java.util.Collections;
 import java.util.List;
 
@@ -425,18 +427,19 @@ public class StandaloneMain {
     cConf.set(Constants.CFG_DATA_INMEMORY_PERSISTENCE, Constants.InMemoryPersistenceType.LEVELDB.name());
 
     // configure all services except for router to bind to 127.0.0.1
-    cConf.set(Constants.AppFabric.SERVER_ADDRESS, "127.0.0.1");
-    cConf.set(Constants.Transaction.Container.ADDRESS, "127.0.0.1");
-    cConf.set(Constants.Dataset.Manager.ADDRESS, "127.0.0.1");
-    cConf.set(Constants.Dataset.Executor.ADDRESS, "127.0.0.1");
-    cConf.set(Constants.Stream.ADDRESS, "127.0.0.1");
-    cConf.set(Constants.Metrics.ADDRESS, "127.0.0.1");
-    cConf.set(Constants.Metrics.SERVER_ADDRESS, "127.0.0.1");
-    cConf.set(Constants.MetricsProcessor.ADDRESS, "127.0.0.1");
-    cConf.set(Constants.LogSaver.ADDRESS, "127.0.0.1");
-    cConf.set(Constants.Security.AUTH_SERVER_BIND_ADDRESS, "127.0.0.1");
-    cConf.set(Constants.Explore.SERVER_ADDRESS, "127.0.0.1");
-    cConf.set(Constants.Metadata.SERVICE_BIND_ADDRESS, "127.0.0.1");
+    String localhost = InetAddress.getLoopbackAddress().getHostAddress();
+    cConf.set(Constants.AppFabric.SERVER_ADDRESS, localhost);
+    cConf.set(Constants.Transaction.Container.ADDRESS, localhost);
+    cConf.set(Constants.Dataset.Manager.ADDRESS, localhost);
+    cConf.set(Constants.Dataset.Executor.ADDRESS, localhost);
+    cConf.set(Constants.Stream.ADDRESS, localhost);
+    cConf.set(Constants.Metrics.ADDRESS, localhost);
+    cConf.set(Constants.Metrics.SERVER_ADDRESS, localhost);
+    cConf.set(Constants.MetricsProcessor.ADDRESS, localhost);
+    cConf.set(Constants.LogSaver.ADDRESS, localhost);
+    cConf.set(Constants.Security.AUTH_SERVER_BIND_ADDRESS, localhost);
+    cConf.set(Constants.Explore.SERVER_ADDRESS, localhost);
+    cConf.set(Constants.Metadata.SERVICE_BIND_ADDRESS, localhost);
 
     return ImmutableList.of(
       new ConfigModule(cConf, hConf),
