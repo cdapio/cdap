@@ -19,6 +19,7 @@
 # BELL: Set it to for the bell function to make a sound when called
 # COLOR_LOGS: Set it for color output by Sphinx and these scripts
 
+ADDITIONAL_ARTIFACTS="additional-cask-artifacts"
 API="cdap-api"
 APIDOCS="apidocs"
 APIS="apis"
@@ -36,6 +37,7 @@ REFERENCE="reference-manual"
 SOURCE="source"
 SPHINX_MESSAGES="warnings.txt"
 TARGET="target"
+TRACKER_APP="cask-tracker"
 
 FALSE="false"
 TRUE="true"
