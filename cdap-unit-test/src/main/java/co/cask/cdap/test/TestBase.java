@@ -127,6 +127,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.InetAddress;
 import java.net.URL;
 import java.sql.Connection;
 import java.util.ArrayList;
@@ -339,7 +340,20 @@ public class TestBase {
     }
 
     // These configurations cannot be overridden by user
-    cConf.set(Constants.Dataset.Manager.ADDRESS, "localhost");
+    // configure all services except for router to bind to localhost
+    String localhost = InetAddress.getLoopbackAddress().getHostAddress();
+    cConf.set(Constants.AppFabric.SERVER_ADDRESS, localhost);
+    cConf.set(Constants.Transaction.Container.ADDRESS, localhost);
+    cConf.set(Constants.Dataset.Manager.ADDRESS, localhost);
+    cConf.set(Constants.Dataset.Executor.ADDRESS, localhost);
+    cConf.set(Constants.Stream.ADDRESS, localhost);
+    cConf.set(Constants.Metrics.ADDRESS, localhost);
+    cConf.set(Constants.Metrics.SERVER_ADDRESS, localhost);
+    cConf.set(Constants.MetricsProcessor.ADDRESS, localhost);
+    cConf.set(Constants.LogSaver.ADDRESS, localhost);
+    cConf.set(Constants.Security.AUTH_SERVER_BIND_ADDRESS, localhost);
+    cConf.set(Constants.Explore.SERVER_ADDRESS, localhost);
+    cConf.set(Constants.Metadata.SERVICE_BIND_ADDRESS, localhost);
     cConf.set(Constants.Metrics.SERVER_PORT, Integer.toString(Networks.getRandomPort()));
 
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, localDataDir.getAbsolutePath());
