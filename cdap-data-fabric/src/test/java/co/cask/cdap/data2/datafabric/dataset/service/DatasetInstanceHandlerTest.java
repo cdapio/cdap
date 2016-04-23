@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -22,6 +22,7 @@ import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.table.Get;
 import co.cask.cdap.api.dataset.table.Put;
 import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.dataset2.lib.table.CoreDatasetsModule;
 import co.cask.cdap.data2.dataset2.module.lib.inmemory.InMemoryTableModule;
 import co.cask.cdap.data2.transaction.queue.QueueConstants;
@@ -157,6 +158,16 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
       Assert.assertEquals(HttpStatus.SC_OK, deleteInstance("nullPropertiesTable").getResponseCode());
       Assert.assertEquals(0, getInstances().getResponseObject().size());
 
+      // create workflow local dataset instance
+      DatasetProperties localDSProperties = DatasetProperties.builder().add("prop1", "val1")
+        .add(Constants.AppFabric.WORKFLOW_LOCAL_DATASET_PROPERTY, "true").build();
+      Assert.assertEquals(HttpStatus.SC_OK, createInstance("localDSInstance", "datasetType2",
+                                                           localDSProperties).getResponseCode());
+
+      // getInstances call should still return 0
+      Assert.assertEquals(0, getInstances().getResponseObject().size());
+      Assert.assertEquals(HttpStatus.SC_OK, deleteInstance("localDSInstance").getResponseCode());
+
       // delete dataset modules
       Assert.assertEquals(HttpStatus.SC_OK, deleteModule("module2").getResponseCode());
       Assert.assertEquals(HttpStatus.SC_OK, deleteModule("module1").getResponseCode());
@@ -164,6 +175,7 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
     } finally {
       deleteInstance("dataset1");
       deleteInstance("nullPropertiesTable");
+      deleteInstance("localDSInstance");
       deleteModule("module2");
       deleteModule("module1");
     }

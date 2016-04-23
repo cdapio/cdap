@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -24,6 +24,7 @@ import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.data.batch.BatchWritable;
+import co.cask.cdap.api.data.batch.Output;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.lib.AbstractDataset;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
@@ -220,9 +221,9 @@ public class AppWithPartitionConsumers extends AbstractApplication {
       PartitionedFileSetArguments.setOutputPartitionKey(outputArgs, partitionKey);
 
       // We know that PartitionedFileSet is an OutputFormatProvider, so we set an instance of it as an output to the
-      // MapReduce job to test MapReduceContext#addOutput(String, OutputFormatProvider)
+      // MapReduce job to test MapReduceContext#addOutput(Output#OutputFormatProviderOutput)
       final PartitionedFileSet outputLines = context.getDataset("outputLines", outputArgs);
-      context.addOutput("outputLines", outputLines);
+      context.addOutput(Output.of("outputLines", outputLines));
 
       Job job = context.getHadoopJob();
       job.setMapperClass(Tokenizer.class);

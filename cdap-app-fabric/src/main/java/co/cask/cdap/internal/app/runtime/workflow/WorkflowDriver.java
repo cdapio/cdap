@@ -21,6 +21,7 @@ import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.common.RuntimeArguments;
 import co.cask.cdap.api.common.Scope;
 import co.cask.cdap.api.dataset.DatasetManagementException;
+import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.workflow.NodeStatus;
@@ -176,7 +177,6 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
   @Override
   protected void startUp() throws Exception {
     LoggingContextAccessor.setLoggingContext(loggingContext);
-    LOG.info("Starting Workflow {}", workflowSpec);
 
     // Using small size thread pool is enough, as the API we supported are just simple lookup.
     httpService = NettyHttpService.builder()
@@ -476,13 +476,23 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     executeAll(iterator, appSpec, instantiator, classLoader, token);
   }
 
+  private DatasetProperties addLocalDatasetProperty(DatasetProperties properties) {
+    String dsDescription = properties.getDescription();
+    DatasetProperties.Builder builder = DatasetProperties.builder();
+    builder.addAll(properties.getProperties());
+    builder.add(Constants.AppFabric.WORKFLOW_LOCAL_DATASET_PROPERTY, "true");
+    builder.setDescription(dsDescription);
+    return builder.build();
+  }
+
   private void createLocalDatasets() throws IOException, DatasetManagementException {
     for (Map.Entry<String, String> entry : datasetFramework.getDatasetNameMapping().entrySet()) {
       String localInstanceName = entry.getValue();
       DatasetId instanceId = new DatasetId(workflowRunId.getNamespace(), localInstanceName);
       DatasetCreationSpec instanceSpec = workflowSpec.getLocalDatasetSpecs().get(entry.getKey());
       LOG.debug("Adding Workflow local dataset instance: {}", localInstanceName);
-      datasetFramework.addInstance(instanceSpec.getTypeName(), instanceId.toId(), instanceSpec.getProperties());
+      datasetFramework.addInstance(instanceSpec.getTypeName(), instanceId.toId(),
+                                   addLocalDatasetProperty(instanceSpec.getProperties()));
     }
   }
 

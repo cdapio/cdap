@@ -26,7 +26,11 @@ import com.google.gson.GsonBuilder;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Map;
@@ -281,6 +285,37 @@ public class SchemaTest {
     verifyThrowsException("x integer");
     verifyThrowsException("x record<y int>");
     verifyThrowsException("x array<>");
+  }
+
+  @Test
+  public void testSerializable() throws IOException, ClassNotFoundException {
+    Schema schema = Schema.recordOf(
+      "record",
+      Schema.Field.of("boolean", Schema.of(Schema.Type.BOOLEAN)),
+      Schema.Field.of("int", Schema.of(Schema.Type.INT)),
+      Schema.Field.of("long", Schema.of(Schema.Type.LONG)),
+      Schema.Field.of("float", Schema.of(Schema.Type.FLOAT)),
+      Schema.Field.of("double", Schema.of(Schema.Type.DOUBLE)),
+      Schema.Field.of("string", Schema.of(Schema.Type.STRING)),
+      Schema.Field.of("bytes", Schema.of(Schema.Type.BYTES)),
+      Schema.Field.of("enum", Schema.enumWith("a", "b", "c")),
+      Schema.Field.of("array", Schema.arrayOf(Schema.of(Schema.Type.INT))),
+      Schema.Field.of("map", Schema.mapOf(Schema.of(Schema.Type.STRING), Schema.of(Schema.Type.INT))),
+      Schema.Field.of("union", Schema.unionOf(Schema.of(Schema.Type.NULL), Schema.of(Schema.Type.STRING)))
+    );
+
+    // Trigger the computation of the schemaString field
+    String schemaString = schema.toString();
+
+    ByteArrayOutputStream os = new ByteArrayOutputStream();
+    try (ObjectOutputStream oos = new ObjectOutputStream(os)) {
+      oos.writeObject(schema);
+    }
+    try (ObjectInputStream ois = new ObjectInputStream(new ByteArrayInputStream(os.toByteArray()))) {
+      Schema restoredSchema = (Schema) ois.readObject();
+      Assert.assertEquals(schema, restoredSchema);
+      Assert.assertEquals(schemaString, restoredSchema.toString());
+    }
   }
 
   private void verifyThrowsException(String toParse) {

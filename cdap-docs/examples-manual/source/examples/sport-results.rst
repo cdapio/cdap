@@ -1,7 +1,7 @@
 .. meta::
     :author: Cask Data, Inc.
     :description: Cask Data Application Platform WordCount Application
-    :copyright: Copyright © 2014-2015 Cask Data, Inc.
+    :copyright: Copyright © 2014-2016 Cask Data, Inc.
 
 .. _examples-sport-results:
 
@@ -101,7 +101,7 @@ the *totals* PartitionedFileSet. The ``beforeSubmit`` method prepares the MapRed
 
 .. literalinclude:: /../../../cdap-examples/SportResults/src/main/java/co/cask/cdap/examples/sportresults/ScoreCounter.java
     :language: java
-    :lines: 56-82
+    :lines: 58-84
     :dedent: 2
 
 It is worth mentioning that nothing else in ``ScoreCounter`` is specifically programmed to use file partitions.

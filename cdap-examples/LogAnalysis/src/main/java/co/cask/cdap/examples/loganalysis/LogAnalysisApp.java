@@ -20,6 +20,7 @@ import co.cask.cdap.api.annotation.UseDataSet;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.stream.Stream;
+import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.lib.TimePartitionDetail;
@@ -87,11 +88,14 @@ public class LogAnalysisApp extends AbstractApplication {
     addService(REQUEST_COUNTER_SERVICE, new RequestCounterHandler());
 
     // Datasets to store output after processing
-    createDataset(RESPONSE_COUNT_STORE, KeyValueTable.class);
-    createDataset(HIT_COUNT_STORE, KeyValueTable.class);
+    createDataset(RESPONSE_COUNT_STORE, KeyValueTable.class,
+                  DatasetProperties.builder().setDescription("Store response counts").build());
+    createDataset(HIT_COUNT_STORE, KeyValueTable.class,
+                  DatasetProperties.builder().setDescription("Store hit counts").build());
     createDataset(REQ_COUNT_STORE, TimePartitionedFileSet.class, FileSetProperties.builder()
       .setOutputFormat(TextOutputFormat.class)
-      .setOutputProperty(TextOutputFormat.SEPERATOR, ":").build());
+      .setOutputProperty(TextOutputFormat.SEPERATOR, ":")
+      .setDescription("Store request counts").build());
   }
 
   /**
@@ -101,7 +105,7 @@ public class LogAnalysisApp extends AbstractApplication {
 
     @Override
     public void configure() {
-      setDescription("Runs log analysis spark and mapreduce programs simultaneously");
+      setDescription("Runs Spark and MapReduce log analysis programs simultaneously");
       fork()
         .addMapReduce(HitCounterProgram.class.getSimpleName())
         .also()

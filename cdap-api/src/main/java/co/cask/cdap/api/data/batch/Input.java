@@ -43,6 +43,9 @@ public abstract class Input {
     this.name = name;
   }
 
+  /**
+   * @return The name of the input.
+   */
   public String getName() {
     return name;
   }

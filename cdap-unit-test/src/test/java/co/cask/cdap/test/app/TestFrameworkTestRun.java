@@ -44,6 +44,7 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.RunRecord;
+import co.cask.cdap.proto.WorkflowNodeStateDetail;
 import co.cask.cdap.proto.WorkflowTokenDetail;
 import co.cask.cdap.proto.WorkflowTokenNodeDetail;
 import co.cask.cdap.proto.artifact.AppRequest;
@@ -584,6 +585,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
 
     // Wait for workflow to finish
     wfManager.waitForFinish(1, TimeUnit.MINUTES);
+    Map<String, WorkflowNodeStateDetail> nodeStateDetailMap = wfManager.getWorkflowNodeStates(runId);
     Map<String, String> workflowMetricsContext = new HashMap<>();
     workflowMetricsContext.put(Constants.Metrics.Tag.NAMESPACE, testSpace.getId());
     workflowMetricsContext.put(Constants.Metrics.Tag.APP, applicationManager.getInfo().getName());
@@ -596,12 +598,36 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
 
     Assert.assertEquals(2, getMetricsManager().getTotalMetric(writerContext, "user.num.lines"));
 
-    Map<String, String> sparkMetricsContext = new HashMap<>(workflowMetricsContext);
-    sparkMetricsContext.put(Constants.Metrics.Tag.NODE, "JavaSparkCSVToSpaceConverter");
+    Map<String, String> wfSparkMetricsContext = new HashMap<>(workflowMetricsContext);
+    wfSparkMetricsContext.put(Constants.Metrics.Tag.NODE, "JavaSparkCSVToSpaceConverter");
+    Assert.assertEquals(2, getMetricsManager().getTotalMetric(wfSparkMetricsContext, "user.num.lines"));
+
+    // check in spark context
+    Map<String, String> sparkMetricsContext = new HashMap<>();
+    sparkMetricsContext.put(Constants.Metrics.Tag.NAMESPACE, testSpace.getId());
+    sparkMetricsContext.put(Constants.Metrics.Tag.APP, applicationManager.getInfo().getName());
+    sparkMetricsContext.put(Constants.Metrics.Tag.SPARK, "JavaSparkCSVToSpaceConverter");
+    sparkMetricsContext.put(Constants.Metrics.Tag.RUN_ID,
+                            nodeStateDetailMap.get("JavaSparkCSVToSpaceConverter").getRunId());
     Assert.assertEquals(2, getMetricsManager().getTotalMetric(sparkMetricsContext, "user.num.lines"));
 
-    Map<String, String> mrMetricsContext = new HashMap<>(workflowMetricsContext);
-    mrMetricsContext.put(Constants.Metrics.Tag.NODE, "WordCount");
+    Map<String, String> appMetricsContext = new HashMap<>();
+    appMetricsContext.put(Constants.Metrics.Tag.NAMESPACE, testSpace.getId());
+    appMetricsContext.put(Constants.Metrics.Tag.APP, applicationManager.getInfo().getName());
+    // app metrics context should have sum from custom action and spark metrics.
+    Assert.assertEquals(4, getMetricsManager().getTotalMetric(appMetricsContext, "user.num.lines"));
+
+    Map<String, String> wfMRMetricsContext = new HashMap<>(workflowMetricsContext);
+    wfMRMetricsContext.put(Constants.Metrics.Tag.NODE, "WordCount");
+    Assert.assertEquals(7, getMetricsManager().getTotalMetric(wfMRMetricsContext, "user.num.words"));
+
+    // mr metrics context
+    Map<String, String> mrMetricsContext = new HashMap<>();
+    mrMetricsContext.put(Constants.Metrics.Tag.NAMESPACE, testSpace.getId());
+    mrMetricsContext.put(Constants.Metrics.Tag.APP, applicationManager.getInfo().getName());
+    mrMetricsContext.put(Constants.Metrics.Tag.MAPREDUCE, "WordCount");
+    mrMetricsContext.put(Constants.Metrics.Tag.RUN_ID,
+                            nodeStateDetailMap.get("WordCount").getRunId());
     Assert.assertEquals(7, getMetricsManager().getTotalMetric(mrMetricsContext, "user.num.words"));
 
     Map<String, String> readerContext = new HashMap<>(workflowMetricsContext);

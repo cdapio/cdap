@@ -29,6 +29,7 @@ class HydratorPlusPlusStudioCtrl {
       HydratorPlusPlusDetailNonRunsStore.reset();
       HydratorPlusPlusNodeConfigStore.reset();
       HydratorPlusPlusConsoleActions.resetMessages();
+      $window.onbeforeunload = null;
     });
 
     let getValidArtifact = () => {
@@ -67,6 +68,32 @@ class HydratorPlusPlusStudioCtrl {
       HydratorPlusPlusConfigActions.initializeConfigStore(config);
     }
 
+    function customConfirm(message){
+      var start = Date.now();
+      var result = confirm(message);
+      var timeDifference = Date.now() - start;
+      /*
+        FIXME: This can easily be prevented if we upgrade to angular ui router version > 0.2.16.
+        
+        This is just to confirm if the suppression is by the browser or
+         a human interventation (too quick a reply). If the time difference is less then 50ms
+         In the worst case a super human clicks on ok or cancel within 50ms and we show the confirm
+         popup once again. Otherwise this loop is to check if its a browser native supression.
+         If it is then we just return true.
+
+         The reasoning behind this is the user has selected 'Prevent this page from showing any additional dialogs' while clicking OK in the popup and so any dirty state checks are inherently skipped based on that choice.
+      */
+      for(var i=0; i < 10 && !result && timeDifference < 50; i++){
+        start = Date.now();
+        result = confirm(message);
+        timeDifference = Date.now() - start;
+      }
+      if(timeDifference < 50) {
+        return true;
+      }
+      return result;
+    }
+
     var confirmOnPageExit = function (e) {
 
       if (!HydratorPlusPlusConfigStore.getIsStateDirty()) { return; }
@@ -84,7 +111,7 @@ class HydratorPlusPlusStudioCtrl {
 
     $scope.$on('$stateChangeStart', function (event) {
       if (HydratorPlusPlusConfigStore.getIsStateDirty()) {
-        var response = confirm('You have unsaved changes. Are you sure you want to exit this page?');
+        var response = customConfirm('You have unsaved changes. Are you sure you want to exit this page?');
         if (!response) {
           event.preventDefault();
         }

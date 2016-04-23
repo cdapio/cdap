@@ -52,11 +52,14 @@ public class PurchaseHistoryStore
    * method such that application code that uses this dataset does not need to be aware of the detailed
    * properties that are expected.
    *
+   * @param description Dataset description
+   *
    * @return the properties required to create an instance of this dataset
    */
-  public static DatasetProperties properties() {
+  public static DatasetProperties properties(String description) {
     try {
-      return ObjectStores.objectStoreProperties(PurchaseHistory.class, DatasetProperties.EMPTY);
+      return ObjectStores.objectStoreProperties(PurchaseHistory.class,
+                                                DatasetProperties.builder().setDescription(description).build());
     } catch (UnsupportedTypeException e) {
       throw new RuntimeException("This should never be thrown - PurchaseHistory is a supported type", e);
     }

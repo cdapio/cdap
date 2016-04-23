@@ -20,6 +20,8 @@ import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.etl.api.PipelineConfigurable;
 import co.cask.cdap.etl.api.batch.BatchSource;
 import co.cask.cdap.etl.api.realtime.RealtimeSource;
+import co.cask.cdap.etl.mock.batch.MockExternalSink;
+import co.cask.cdap.etl.mock.batch.MockExternalSource;
 import co.cask.cdap.etl.mock.batch.NodeStatesAction;
 import co.cask.cdap.etl.mock.batch.aggregator.FieldCountAggregator;
 import co.cask.cdap.etl.mock.batch.aggregator.IdentityAggregator;
@@ -50,6 +52,7 @@ public class HydratorTestBase extends TestBase {
   private static final Set<PluginClass> BATCH_MOCK_PLUGINS = ImmutableSet.of(
     FieldCountAggregator.PLUGIN_CLASS, IdentityAggregator.PLUGIN_CLASS,
     co.cask.cdap.etl.mock.batch.MockSink.PLUGIN_CLASS, co.cask.cdap.etl.mock.batch.MockSource.PLUGIN_CLASS,
+    MockExternalSource.PLUGIN_CLASS, MockExternalSink.PLUGIN_CLASS,
     DoubleTransform.PLUGIN_CLASS, ErrorTransform.PLUGIN_CLASS, IdentityTransform.PLUGIN_CLASS,
     IntValueFilterTransform.PLUGIN_CLASS, StringValueFilterTransform.PLUGIN_CLASS
   );
@@ -91,6 +94,7 @@ public class HydratorTestBase extends TestBase {
                       BATCH_MOCK_PLUGINS,
                       co.cask.cdap.etl.mock.batch.MockSource.class,
                       co.cask.cdap.etl.mock.batch.MockSink.class,
+                      MockExternalSource.class, MockExternalSink.class,
                       DoubleTransform.class, ErrorTransform.class, IdentityTransform.class,
                       IntValueFilterTransform.class, StringValueFilterTransform.class,
                       FieldCountAggregator.class, IdentityAggregator.class,

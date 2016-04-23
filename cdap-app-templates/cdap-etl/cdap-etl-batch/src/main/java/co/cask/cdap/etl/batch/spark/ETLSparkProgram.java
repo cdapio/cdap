@@ -157,9 +157,9 @@ public class ETLSparkProgram implements JavaSparkMain, TxRunnable {
           input.flatMapToPair(new PreGroupFunction(sec, aggregatorName));
         JavaPairRDD<Object, Iterable<Object>> groupedRDD =
           numPartitions < 0 ? preGroupRDD.groupByKey() : preGroupRDD.groupByKey(numPartitions);
-        return groupedRDD.flatMapToPair(new MapFunction<Iterable<Object>>(sec, null, aggregatorName)).cache();
+        return groupedRDD.flatMapToPair(new MapFunction<Iterable<Object>>(sec, null, aggregatorName, false)).cache();
       } else {
-        return input.flatMapToPair(new MapFunction<>(sec, null, null)).cache();
+        return input.flatMapToPair(new MapFunction<>(sec, null, null, false)).cache();
       }
     }
 
@@ -199,7 +199,7 @@ public class ETLSparkProgram implements JavaSparkMain, TxRunnable {
                                      phaseSpec.isStageLoggingEnabled(), phaseSpec.getConnectorDatasets()));
 
     JavaPairRDD<String, Object> sourceTransformed =
-      input.flatMapToPair(new MapFunction<>(sec, sourcePipelineStr, null)).cache();
+      input.flatMapToPair(new MapFunction<>(sec, sourcePipelineStr, null, true)).cache();
 
     SparkCompute sparkCompute =
       new PipelinePluginInstantiator(sec.getPluginContext(), phaseSpec).newPluginInstance(sparkComputeName);
@@ -326,10 +326,13 @@ public class ETLSparkProgram implements JavaSparkMain, TxRunnable {
 
     @Nullable
     private final String aggregatorName;
+    private final boolean isBeforeBreak;
 
-    public MapFunction(JavaSparkExecutionContext sec, String pipelineStr, String aggregatorName) {
+    public MapFunction(JavaSparkExecutionContext sec, String pipelineStr, String aggregatorName,
+                       boolean isBeforeBreak) {
       super(sec, pipelineStr);
       this.aggregatorName = aggregatorName;
+      this.isBeforeBreak = isBeforeBreak;
     }
 
     @Override
@@ -338,7 +341,7 @@ public class ETLSparkProgram implements JavaSparkMain, TxRunnable {
       throws Exception {
       TransformExecutorFactory<KeyValue<Object, T>> transformExecutorFactory =
         new SparkTransformExecutorFactory<>(pluginContext, pluginInstantiator, metrics,
-                                            logicalStartTime, runtimeArgs, false);
+                                            logicalStartTime, runtimeArgs, isBeforeBreak);
 
       PipelinePhase pipelinePhase = phaseSpec.getPhase();
       if (aggregatorName != null) {

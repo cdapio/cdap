@@ -91,7 +91,7 @@ class HydratorPlusPlusConfigStore {
     return {
       connections: [],
       comments: [],
-      postactions: []
+      postActions: []
     };
   }
 
@@ -171,6 +171,7 @@ class HydratorPlusPlusConfigStore {
       this.state.__ui__.nodes
     );
     config.stages = [];
+
     connections.forEach( connection => {
       let fromConnectionName, toConnectionName;
 
@@ -198,7 +199,7 @@ class HydratorPlusPlusConfigStore {
       config.schedule = this.getSchedule();
       config.engine = this.getEngine();
     } else if (appType === this.GLOBALS.etlRealtime) {
-      config.instance = this.getInstance();
+      config.instances = this.getInstance();
     }
 
     if (this.state.description) {
@@ -227,7 +228,7 @@ class HydratorPlusPlusConfigStore {
       action.name = action.plugin.name + '-' + currCount;
     });
 
-    config.postactions = postActions;
+    config.postActions = postActions;
 
     return config;
   }
@@ -335,9 +336,9 @@ class HydratorPlusPlusConfigStore {
     this.state.artifact.scope = artifact.scope;
 
     if (this.GLOBALS.etlBatchPipelines.indexOf(artifact.name) !== -1) {
-      this.state.config.schedule = '* * * * *';
+      this.state.config.schedule = this.state.config.schedule || '* * * * *';
     } else if (artifact.name === this.GLOBALS.etlRealtime) {
-      this.state.config.instance = 1;
+      this.state.config.instances = this.state.config.instances || 1;
     }
 
     this.emitChange();
@@ -631,10 +632,10 @@ class HydratorPlusPlusConfigStore {
     return isStateValid;
   }
   getInstance() {
-    return this.getState().config.instance;
+    return this.getState().config.instances;
   }
-  setInstance(instance) {
-    this.state.config.instance = instance;
+  setInstance(instances) {
+    this.state.config.instances = instances;
   }
 
   setComments(comments) {
@@ -645,25 +646,25 @@ class HydratorPlusPlusConfigStore {
   }
 
   addPostAction(config) {
-    this.state.config.postactions.push(config);
+    this.state.config.postActions.push(config);
     this.emitChange();
   }
   editPostAction(config) {
-    let index = _.findLastIndex(this.state.config.postactions, (post) => {
+    let index = _.findLastIndex(this.state.config.postActions, (post) => {
       return config.name === post.name;
     });
 
-    this.state.config.postactions[index] = config;
+    this.state.config.postActions[index] = config;
     this.emitChange();
   }
   deletePostAction(config) {
-    _.remove(this.state.config.postactions, (post) => {
+    _.remove(this.state.config.postActions, (post) => {
       return post.name === config.name;
     });
     this.emitChange();
   }
   getPostActions() {
-    return this.getState().config.postactions;
+    return this.getState().config.postActions;
   }
 
   saveAsDraft() {
@@ -679,7 +680,7 @@ class HydratorPlusPlusConfigStore {
     if(!this.getDraftId()) {
       this.setDraftId(this.uuid.v4());
       this.$stateParams.draftId = this.getDraftId();
-      this.$state.go('hydrator.create.studio', this.$stateParams, {notify: false});
+      this.$state.go('hydratorplusplus.create', this.$stateParams, {notify: false});
     }
     let config = this.getState();
     // This is not to fall in the scenario where when the user saves a draft with a node selected.

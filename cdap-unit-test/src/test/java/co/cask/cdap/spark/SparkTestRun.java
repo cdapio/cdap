@@ -213,7 +213,7 @@ public class SparkTestRun extends TestFrameworkTestBase {
           getMetricsManager().query(new MetricDataQuery(
             0,
             System.currentTimeMillis() / 1000L,
-            60,
+            Integer.MAX_VALUE,
             "system." + Constants.Metrics.Name.Dataset.OP_COUNT,
             AggregationFunction.SUM,
             ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, DefaultId.NAMESPACE.getId(),

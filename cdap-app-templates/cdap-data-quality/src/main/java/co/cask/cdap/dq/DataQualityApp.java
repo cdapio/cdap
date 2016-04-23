@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,6 +20,7 @@ import co.cask.cdap.api.Config;
 import co.cask.cdap.api.ProgramLifecycle;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.api.data.batch.Output;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.table.Put;
@@ -185,7 +186,7 @@ public class DataQualityApp extends AbstractApplication<DataQualityApp.DataQuali
         context, metrics, new DatasetContextLookupProvider(context),
         "batchsource:" + context.getSpecification().getProperty("sourceName") + ":0", context.getRuntimeArguments());
       batchSource.prepareRun(sourceContext);
-      context.addOutput(context.getSpecification().getProperty("datasetName"));
+      context.addOutput(Output.ofDataset(context.getSpecification().getProperty("datasetName")));
     }
   }
 

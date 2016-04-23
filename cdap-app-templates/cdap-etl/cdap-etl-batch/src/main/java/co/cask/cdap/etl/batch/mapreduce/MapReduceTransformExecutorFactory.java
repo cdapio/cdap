@@ -32,6 +32,7 @@ import co.cask.cdap.etl.batch.conversion.WritableConversions;
 import co.cask.cdap.etl.common.DatasetContextLookupProvider;
 import co.cask.cdap.etl.common.DefaultEmitter;
 import co.cask.cdap.etl.common.DefaultStageMetrics;
+import co.cask.cdap.etl.common.TrackedTransform;
 import com.google.common.base.Function;
 import com.google.common.collect.Iterators;
 import org.apache.hadoop.conf.Configuration;
@@ -83,18 +84,22 @@ public class MapReduceTransformExecutorFactory<T> extends TransformExecutorFacto
 
   @SuppressWarnings("unchecked")
   @Override
-  protected Transformation getTransformation(String pluginType, String stageName) throws Exception {
+  protected TrackedTransform getTransformation(String pluginType, String stageName) throws Exception {
     if (BatchAggregator.PLUGIN_TYPE.equals(pluginType)) {
       BatchAggregator<?, ?, ?> batchAggregator = pluginInstantiator.newPluginInstance(stageName);
       BatchRuntimeContext runtimeContext = createRuntimeContext(stageName);
       batchAggregator.initialize(runtimeContext);
+      StageMetrics stageMetrics = new DefaultStageMetrics(metrics, stageName);
       if (isMapper) {
-        return new MapperAggregatorTransformation(batchAggregator,
-                                                  new DefaultStageMetrics(metrics, stageName),
-                                                  mapOutputKeyClassName,
-                                                  mapOutputValClassName);
+        return getTrackedGroupStep(new MapperAggregatorTransformation(batchAggregator,
+                                                                      mapOutputKeyClassName,
+                                                                      mapOutputValClassName),
+                                   stageMetrics);
       } else {
-        return new ReducerAggregatorTransformation(batchAggregator, mapOutputKeyClassName, mapOutputValClassName);
+        return getTrackedAggregateStep(new ReducerAggregatorTransformation(batchAggregator,
+                                                                           mapOutputKeyClassName,
+                                                                           mapOutputValClassName),
+                                       stageMetrics);
       }
     }
     return super.getTransformation(pluginType, stageName);
@@ -120,11 +125,10 @@ public class MapReduceTransformExecutorFactory<T> extends TransformExecutorFacto
     private final WritableConversion<GROUP_VAL, OUT_VAL> valConversion;
 
     public MapperAggregatorTransformation(Aggregator<GROUP_KEY, GROUP_VAL, ?> aggregator,
-                                          StageMetrics stageMetrics,
                                           String groupKeyClassName,
                                           String groupValClassName) {
       this.aggregator = aggregator;
-      this.groupKeyEmitter = new DefaultEmitter<>(stageMetrics);
+      this.groupKeyEmitter = new DefaultEmitter<>();
       WritableConversion<GROUP_KEY, OUT_KEY> keyConversion = WritableConversions.getConversion(groupKeyClassName);
       WritableConversion<GROUP_VAL, OUT_VAL> valConversion = WritableConversions.getConversion(groupValClassName);
       // if the conversion is null, it means the user is using a Writable already

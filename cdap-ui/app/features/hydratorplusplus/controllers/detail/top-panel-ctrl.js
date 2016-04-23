@@ -194,7 +194,7 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
             .deletePipeline(params)
             .then(
               function success() {
-                $state.go('hydrator.list');
+                $state.go('hydratorplusplus.list');
                 myLoadingService.hideLoadingIcon();
               },
               function error(err) {

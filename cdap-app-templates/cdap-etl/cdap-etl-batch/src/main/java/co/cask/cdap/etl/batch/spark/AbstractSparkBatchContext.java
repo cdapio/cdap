@@ -26,7 +26,7 @@ import co.cask.cdap.etl.batch.AbstractBatchContext;
  */
 public abstract class AbstractSparkBatchContext extends AbstractBatchContext implements BatchContext {
 
-  private final SparkClientContext sparkContext;
+  protected final SparkClientContext sparkContext;
 
   public AbstractSparkBatchContext(SparkClientContext sparkContext, LookupProvider lookupProvider, String stageId) {
     super(sparkContext, sparkContext, sparkContext.getMetrics(), lookupProvider, stageId,

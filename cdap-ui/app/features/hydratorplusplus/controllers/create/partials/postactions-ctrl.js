@@ -48,7 +48,7 @@ class HydratorPlusPlusPostActionsCtrl {
 
   }
   setState() {
-    this.postactions = this.HydratorPlusPlusConfigStore.getPostActions();
+    this.postActions = this.HydratorPlusPlusConfigStore.getPostActions();
     this.activeTab = 'OVERVIEW';
   }
 
@@ -58,6 +58,7 @@ class HydratorPlusPlusPostActionsCtrl {
     if (tab === 'OVERVIEW') { return; }
 
     this.isEdit = false;
+    this.groupsConfig = null;
     this.pluginConfig = {
       name: tab.name + '-' + this.uuid.v4(),
       plugin: {
@@ -101,7 +102,7 @@ class HydratorPlusPlusPostActionsCtrl {
       pluginName: tab.name
     };
 
-    this.myPipelineApi.fetchPluginProperties(params)
+    this.myPipelineApi.fetchPostActionProperties(params)
       .$promise
       .then( (res) => {
         this.pluginConfig._backendProperties = res[0].properties;
@@ -140,6 +141,7 @@ class HydratorPlusPlusPostActionsCtrl {
   cancel() {
     this.activeTab = 'OVERVIEW';
     this.pluginConfig = {};
+    this.groupsConfig = null;
   }
 
   fieldValidation() {
@@ -184,6 +186,7 @@ class HydratorPlusPlusPostActionsCtrl {
     }
 
     this.pluginConfig = {};
+    this.groupsConfig = null;
   }
 
   deleteAction(config) {

@@ -20,9 +20,18 @@
 # Set environment variables here.
 
 # Main cmd is the non-java command to run.
+
 MAIN_CMD=node
+
+# Check for embedded node binary, and ensure it's the correct binary ABI for this system
+if test -x ${CDAP_HOME}/ui/bin/node ; then
+  ${CDAP_HOME}/ui/bin/node --version 2>&1 >/dev/null
+  if [ $? -eq 0 ] ; then
+    MAIN_CMD=${CDAP_HOME}/ui/bin/node
+  fi
+fi
 
 export NODE_ENV=production
 
 # Arguments for MAIN_CMD
-MAIN_CMD_ARGS="$CDAP_HOME/ui/server.js"
+MAIN_CMD_ARGS="${CDAP_HOME}/ui/server.js"

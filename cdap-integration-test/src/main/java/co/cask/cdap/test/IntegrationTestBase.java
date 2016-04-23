@@ -39,6 +39,7 @@ import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.StreamDetail;
+import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.security.authentication.client.AccessToken;
 import co.cask.cdap.security.authentication.client.AuthenticationClient;
 import co.cask.cdap.security.authentication.client.basic.BasicAuthenticationClient;
@@ -314,8 +315,8 @@ public abstract class IntegrationTestBase {
     return deployApplication(Id.Namespace.DEFAULT, applicationClz);
   }
 
-  protected ApplicationManager getApplicationManager(Id.Application appId) throws Exception {
-    return getTestManager().getApplicationManager(appId);
+  protected ApplicationManager getApplicationManager(ApplicationId applicationId) throws Exception {
+    return getTestManager().getApplicationManager(applicationId);
   }
 
   private boolean isUserDataset(DatasetSpecificationSummary specification) {

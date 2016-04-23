@@ -22,6 +22,7 @@ import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.workflow.NodeStatus;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.datapipeline.mock.NaiveBayesClassifier;
 import co.cask.cdap.datapipeline.mock.NaiveBayesTrainer;
 import co.cask.cdap.datapipeline.mock.SpamMessage;
@@ -53,6 +54,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -61,8 +63,10 @@ import org.junit.Test;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  *
@@ -87,6 +91,11 @@ public class DataPipelineTest extends HydratorTestBase {
     addPluginArtifact(new ArtifactId(NamespaceId.DEFAULT.getNamespace(), "spark-plugins", "1.0.0"),
                       APP_ARTIFACT_ID,
                       NaiveBayesTrainer.class, NaiveBayesClassifier.class);
+  }
+
+  @After
+  public void cleanupTest() throws Exception {
+    getMetricsManager().resetAll();
   }
 
   @Test
@@ -124,6 +133,9 @@ public class DataPipelineTest extends HydratorTestBase {
     Set<StructuredRecord> expected = ImmutableSet.of(recordSamuel, recordBob);
     Set<StructuredRecord> actual = Sets.newHashSet(MockSink.readOutput(sinkManager));
     Assert.assertEquals(expected, actual);
+
+    validateMetric(2, appId, "source.records.out");
+    validateMetric(2, appId, "sink.records.in");
   }
 
   @Test
@@ -168,6 +180,10 @@ public class DataPipelineTest extends HydratorTestBase {
     Set<StructuredRecord> expected = ImmutableSet.of(recordSamuel, recordBob);
     Set<StructuredRecord> actual = Sets.newHashSet(MockSink.readOutput(sinkManager));
     Assert.assertEquals(expected, actual);
+
+    validateMetric(1, appId, "source1.records.out");
+    validateMetric(1, appId, "source2.records.out");
+    validateMetric(2, appId, "sink.records.in");
   }
 
   @Test
@@ -177,7 +193,9 @@ public class DataPipelineTest extends HydratorTestBase {
      *           |--> transform1 --|
      * source2 --|                 |
      *                             |--> transform2 --> sink2
-     * source3 --------------------|
+     *                                     ^
+     *                                     |
+     * source3 ----------------------------|
      */
     ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
       .addStage(new ETLStage("source1", MockSource.getPlugin("msInput1")))
@@ -231,6 +249,16 @@ public class DataPipelineTest extends HydratorTestBase {
     expected = ImmutableSet.of(recordSamuel, recordBob, recordJane);
     actual = Sets.newHashSet(MockSink.readOutput(sinkManager));
     Assert.assertEquals(expected, actual);
+
+    validateMetric(1, appId, "source1.records.out");
+    validateMetric(1, appId, "source2.records.out");
+    validateMetric(1, appId, "source3.records.out");
+    validateMetric(2, appId, "transform1.records.in");
+    validateMetric(2, appId, "transform1.records.out");
+    validateMetric(3, appId, "transform2.records.in");
+    validateMetric(3, appId, "transform2.records.out");
+    validateMetric(2, appId, "sink1.records.in");
+    validateMetric(3, appId, "sink2.records.in");
   }
 
   @Test
@@ -300,6 +328,17 @@ public class DataPipelineTest extends HydratorTestBase {
     Set<StructuredRecord> expected = ImmutableSet.of(recordSamuel);
     Set<StructuredRecord> actual = Sets.newHashSet(MockSink.readOutput(sinkManager));
     Assert.assertEquals(expected, actual);
+
+    validateMetric(3, appId, "source.records.out");
+    validateMetric(3, appId, "filter1.records.in");
+    validateMetric(2, appId, "filter1.records.out");
+    validateMetric(2, appId, "aggregator1.records.in");
+    validateMetric(2, appId, "aggregator1.records.out");
+    validateMetric(2, appId, "aggregator2.records.in");
+    validateMetric(2, appId, "aggregator2.records.out");
+    validateMetric(2, appId, "filter2.records.in");
+    validateMetric(1, appId, "filter2.records.out");
+    validateMetric(1, appId, "sink.records.out");
   }
 
   private void testParallelAggregators(Engine engine) throws Exception {
@@ -312,6 +351,7 @@ public class DataPipelineTest extends HydratorTestBase {
                  |--> agg2 --> sink2
      */
     ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
+      .setEngine(engine)
       .addStage(new ETLStage("source", MockSource.getPlugin(sourceName)))
       .addStage(new ETLStage("sink1", MockSink.getPlugin(sink1Name)))
       .addStage(new ETLStage("sink2", MockSink.getPlugin(sink2Name)))
@@ -376,6 +416,18 @@ public class DataPipelineTest extends HydratorTestBase {
       StructuredRecord.builder(outputSchema2).set("item", 4L).set("ct", 1L).build());
     actual = Sets.newHashSet(MockSink.readOutput(sinkManager));
     Assert.assertEquals(expected, actual);
+
+    validateMetric(5, appId, "source.records.out");
+    validateMetric(5, appId, "agg1.records.in");
+    // 2 users, but FieldCountAggregator always emits an 'all' group
+    validateMetric(3, appId, "agg1.aggregator.groups");
+    validateMetric(3, appId, "agg1.records.out");
+    validateMetric(5, appId, "agg2.records.in");
+    // 4 items, but FieldCountAggregator always emits an 'all' group
+    validateMetric(5, appId, "agg2.aggregator.groups");
+    validateMetric(5, appId, "agg2.records.out");
+    validateMetric(3, appId, "sink1.records.in");
+    validateMetric(5, appId, "sink2.records.in");
   }
 
   @Test
@@ -439,7 +491,7 @@ public class DataPipelineTest extends HydratorTestBase {
       .build();
 
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
-    Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "SinglePhaseApp");
+    Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "SparkSinkApp");
     ApplicationManager appManager = deployApplication(appId, appRequest);
 
 
@@ -480,6 +532,9 @@ public class DataPipelineTest extends HydratorTestBase {
     Assert.assertEquals(1.0d, Bytes.toDouble(classifiedTexts.get().read("free money money")), 0.01d);
     Assert.assertEquals(0.0d, Bytes.toDouble(classifiedTexts.get().read("what are you doing today")), 0.01d);
     Assert.assertEquals(0.0d, Bytes.toDouble(classifiedTexts.get().read("genuine report")), 0.01d);
+
+    validateMetric(10, appId, "source.records.out");
+    validateMetric(10, appId, "customsink.records.in");
   }
 
   private void testSinglePhaseWithSparkCompute() throws Exception {
@@ -503,7 +558,7 @@ public class DataPipelineTest extends HydratorTestBase {
       .build();
 
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
-    Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "SinglePhaseApp");
+    Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "SparkComputeApp");
     ApplicationManager appManager = deployApplication(appId, appRequest);
 
 
@@ -540,5 +595,19 @@ public class DataPipelineTest extends HydratorTestBase {
     expected.add(new SpamMessage("genuine report", 0.0));
 
     Assert.assertEquals(expected, results);
+
+    validateMetric(4, appId, "source.records.out");
+    validateMetric(4, appId, "sparkcompute.records.in");
+    validateMetric(4, appId, "sink.records.in");
+  }
+
+  private void validateMetric(long expected, Id.Application appId,
+                              String metric) throws TimeoutException, InterruptedException {
+    Map<String, String> tags = ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, appId.getNamespaceId(),
+                                               Constants.Metrics.Tag.APP, appId.getId(),
+                                               Constants.Metrics.Tag.WORKFLOW, SmartWorkflow.NAME);
+    getMetricsManager().waitForTotalMetricCount(tags, "user." + metric, expected, 20, TimeUnit.SECONDS);
+    // wait for won't throw an exception if the metric count is greater than expected
+    Assert.assertEquals(expected, getMetricsManager().getTotalMetric(tags, "user." + metric));
   }
 }

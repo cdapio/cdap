@@ -81,6 +81,15 @@ class TrackerMetadataController{
       isSystemEmpty: false
     };
 
+    /**
+     * Need to show Dataset Spec from Dataset Properties if
+     * dataset type is externalDataset. Ideally Backend should
+     * return this automatically.
+     **/
+    if (systemMetadata.properties.type === 'externalDataset') {
+      this.fetchExternalDatasetProperties();
+    }
+
     if (Object.keys(userMetadata.properties).length === 0) {
       this.activePropertyTab = 1;
       this.properties.isUserEmpty = true;
@@ -89,6 +98,25 @@ class TrackerMetadataController{
     this.properties.isSystemEmpty = Object.keys(systemMetadata.properties).length === 0;
 
     this.schema = this.parseSchema(systemMetadata.properties.schema);
+  }
+
+  fetchExternalDatasetProperties() {
+    let datasetParams = {
+      namespace: this.$state.params.namespace,
+      entityId: this.$state.params.entityId,
+      scope: this.$scope
+    };
+    this.myTrackerApi.getDatasetDetail(datasetParams)
+      .$promise
+      .then( (res) => {
+        let datasetProperties = res.spec.properties;
+
+        angular.extend(this.properties.user, datasetProperties);
+        if (Object.keys(this.properties.user).length > 0) {
+          this.activePropertyTab = 0;
+          this.properties.isUserEmpty = false;
+        }
+      });
   }
 
   parseSchema(schema) {

@@ -19,6 +19,7 @@ package co.cask.cdap.metadata;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.app.RunIds;
+import co.cask.cdap.common.entity.EntityExistenceVerifier;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
 import co.cask.cdap.data2.metadata.lineage.Lineage;
@@ -28,6 +29,7 @@ import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.metadata.MetadataRecord;
 import co.cask.cdap.proto.metadata.MetadataScope;
@@ -91,7 +93,7 @@ public class LineageAdminTest extends AppFabricTestBase {
                                                  Id.DatasetInstance.from("default", "testSimpleLineage"));
     Store store = getInjector().getInstance(Store.class);
     MetadataStore metadataStore = getInjector().getInstance(MetadataStore.class);
-    LineageAdmin lineageAdmin = new LineageAdmin(lineageStore, store, metadataStore, new NoOpEntityValidator());
+    LineageAdmin lineageAdmin = new LineageAdmin(lineageStore, store, metadataStore, new NoOpEntityExistenceVerifier());
 
     // Define metadata
     MetadataRecord run1AppMeta = new MetadataRecord(program1.getApplication(), MetadataScope.USER,
@@ -184,7 +186,7 @@ public class LineageAdminTest extends AppFabricTestBase {
                                                  Id.DatasetInstance.from("default", "testSimpleLoopLineage"));
     Store store = getInjector().getInstance(Store.class);
     MetadataStore metadataStore = getInjector().getInstance(MetadataStore.class);
-    LineageAdmin lineageAdmin = new LineageAdmin(lineageStore, store, metadataStore, new NoOpEntityValidator());
+    LineageAdmin lineageAdmin = new LineageAdmin(lineageStore, store, metadataStore, new NoOpEntityExistenceVerifier());
 
 
     // Add access
@@ -246,7 +248,7 @@ public class LineageAdminTest extends AppFabricTestBase {
                                                  Id.DatasetInstance.from("default", "testDirectCycle"));
     Store store = getInjector().getInstance(Store.class);
     MetadataStore metadataStore = getInjector().getInstance(MetadataStore.class);
-    LineageAdmin lineageAdmin = new LineageAdmin(lineageStore, store, metadataStore, new NoOpEntityValidator());
+    LineageAdmin lineageAdmin = new LineageAdmin(lineageStore, store, metadataStore, new NoOpEntityExistenceVerifier());
 
     // Add accesses
     addRuns(store, run1, run2, run3, run4, run5);
@@ -276,7 +278,7 @@ public class LineageAdminTest extends AppFabricTestBase {
                                                  Id.DatasetInstance.from("default", "testDirectCycleTwoRuns"));
     Store store = getInjector().getInstance(Store.class);
     MetadataStore metadataStore = getInjector().getInstance(MetadataStore.class);
-    LineageAdmin lineageAdmin = new LineageAdmin(lineageStore, store, metadataStore, new NoOpEntityValidator());
+    LineageAdmin lineageAdmin = new LineageAdmin(lineageStore, store, metadataStore, new NoOpEntityExistenceVerifier());
 
     // Add accesses
     addRuns(store, run1, run2, run3, run4, run5);
@@ -312,7 +314,7 @@ public class LineageAdminTest extends AppFabricTestBase {
                                                  Id.DatasetInstance.from("default", "testBranchLineage"));
     Store store = getInjector().getInstance(Store.class);
     MetadataStore metadataStore = getInjector().getInstance(MetadataStore.class);
-    LineageAdmin lineageAdmin = new LineageAdmin(lineageStore, store, metadataStore, new NoOpEntityValidator());
+    LineageAdmin lineageAdmin = new LineageAdmin(lineageStore, store, metadataStore, new NoOpEntityExistenceVerifier());
 
     // Add accesses
     addRuns(store, run1, run2, run3, run4, run5);
@@ -380,7 +382,7 @@ public class LineageAdminTest extends AppFabricTestBase {
                                                  Id.DatasetInstance.from("default", "testBranchLoopLineage"));
     Store store = getInjector().getInstance(Store.class);
     MetadataStore metadataStore = getInjector().getInstance(MetadataStore.class);
-    LineageAdmin lineageAdmin = new LineageAdmin(lineageStore, store, metadataStore, new NoOpEntityValidator());
+    LineageAdmin lineageAdmin = new LineageAdmin(lineageStore, store, metadataStore, new NoOpEntityExistenceVerifier());
 
     // Add accesses
     addRuns(store, run1, run2, run3, run4, run5);
@@ -534,20 +536,9 @@ public class LineageAdminTest extends AppFabricTestBase {
     return getInjector().getInstance(DatasetFramework.class);
   }
 
-  private static final class NoOpEntityValidator extends EntityValidator {
-    public NoOpEntityValidator() {
-      // This entity validator does not do any validation.
-      // Hence it is okay to pass in null as constructor arguments.
-      super(null, null, null, null, null);
-    }
-
+  private static final class NoOpEntityExistenceVerifier implements EntityExistenceVerifier {
     @Override
-    public void ensureEntityExists(Id.NamespacedId entityId) throws NotFoundException {
-      // no-op
-    }
-
-    @Override
-    public void ensureRunExists(Id.Run run) throws NotFoundException {
+    public void ensureExists(EntityId entityId) throws NotFoundException {
       // no-op
     }
   }

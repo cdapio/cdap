@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,6 +16,7 @@
 
 package co.cask.cdap.data2.dataset2.lib.file;
 
+import co.cask.cdap.api.data.batch.DatasetOutputCommitter;
 import co.cask.cdap.api.dataset.DataSetException;
 import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetSpecification;
@@ -29,6 +30,7 @@ import co.cask.cdap.proto.Id;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
@@ -48,7 +50,7 @@ import javax.annotation.Nullable;
 /**
  * Implementation of file dataset.
  */
-public final class FileSetDataset implements FileSet {
+public final class FileSetDataset implements FileSet, DatasetOutputCommitter {
 
   private static final Logger LOG = LoggerFactory.getLogger(FileSetDataset.class);
 
@@ -250,5 +252,35 @@ public final class FileSetDataset implements FileSet {
 
   private String getFileSystemPath(Location loc) {
     return loc.toURI().getPath();
+  }
+
+  @Override
+  public void onSuccess() throws DataSetException {
+    // nothing needed to do on success
+  }
+
+  @Override
+  public void onFailure() throws DataSetException {
+    Location outputLocation = getOutputLocation();
+    // If there is no output path, it is either using DynamicPartitioner or the job would have failed.
+    // Either way, we can't do much here.
+    if (outputLocation == null) {
+      return;
+    }
+
+    try {
+      // Only delete the configured output directory, if it is empty.
+      // On Failure, org.apache.hadoop.mapreduce.lib.output.FileOutputFormat will remove files that it wrote,
+      // but it leaves around the directory that it created.
+      // We don't want to unconditionally delete the output directory on failure, because it may have files written
+      // by a different job.
+      if (outputLocation.isDirectory() && outputLocation.list().isEmpty()) {
+        if (!outputLocation.delete()) {
+          throw new DataSetException(String.format("Error deleting file(s) at path %s.", outputLocation));
+        }
+      }
+    } catch (IOException ioe) {
+      throw new DataSetException(String.format("Error deleting file(s) at path %s.", outputLocation), ioe);
+    }
   }
 }

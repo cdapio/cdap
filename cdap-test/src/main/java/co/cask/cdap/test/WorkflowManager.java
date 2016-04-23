@@ -75,5 +75,5 @@ public interface WorkflowManager extends ProgramManager<WorkflowManager> {
    * @return {@link Map} of node name to the {@link WorkflowNodeStateDetail}
    * @throws NotFoundException when the specified Workflow run is not found
    */
-  Map<String, WorkflowNodeStateDetail> getWorkflowNodeStates(ProgramRunId workflowRunId) throws NotFoundException;
+  Map<String, WorkflowNodeStateDetail> getWorkflowNodeStates(String workflowRunId) throws NotFoundException;
 }

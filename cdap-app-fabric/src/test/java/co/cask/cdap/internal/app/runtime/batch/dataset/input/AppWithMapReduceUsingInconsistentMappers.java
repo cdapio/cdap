@@ -18,6 +18,7 @@ package co.cask.cdap.internal.app.runtime.batch.dataset.input;
 
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.data.batch.Input;
+import co.cask.cdap.api.data.batch.Output;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
@@ -55,7 +56,7 @@ public class AppWithMapReduceUsingInconsistentMappers extends AbstractApplicatio
     public void beforeSubmit(MapReduceContext context) throws Exception {
       // the inputs will be set in child classes
 
-      context.addOutput("output");
+      context.addOutput(Output.ofDataset("output"));
 
       Job job = context.getHadoopJob();
       job.setReducerClass(SomeReducer.class);

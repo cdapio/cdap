@@ -59,6 +59,7 @@ public class StreamConversionApp extends AbstractApplication {
       .setExploreInputFormat("org.apache.hadoop.hive.ql.io.avro.AvroContainerInputFormat")
       .setExploreOutputFormat("org.apache.hadoop.hive.ql.io.avro.AvroContainerOutputFormat")
       .setTableProperty("avro.schema.literal", SCHEMA_STRING)
+      .setDescription("Converted stream events dataset")
       .build());
   }
 }

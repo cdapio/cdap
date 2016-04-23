@@ -37,6 +37,7 @@ import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.api.metrics.TagValue;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.dataset2.lib.cube.Aggregation;
+import co.cask.cdap.data2.dataset2.lib.cube.AggregationAlias;
 import co.cask.cdap.data2.dataset2.lib.cube.DefaultAggregation;
 import co.cask.cdap.data2.dataset2.lib.cube.DefaultCube;
 import co.cask.cdap.data2.dataset2.lib.cube.FactTableSupplier;
@@ -45,6 +46,7 @@ import com.google.common.base.Function;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -52,6 +54,7 @@ import com.google.inject.Inject;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -76,6 +79,10 @@ public class DefaultMetricStore implements MetricStore {
   private static final String BY_STREAM = "stream";
   private static final String BY_DATASET = "dataset";
   private static final String BY_COMPONENT = "component";
+  private static final Map<String, AggregationAlias> AGGREGATIONS_ALIAS_DIMENSIONS =
+    ImmutableMap.of(BY_WORKFLOW,
+                    new AggregationAlias(ImmutableMap.of(Constants.Metrics.Tag.RUN_ID,
+                                                         Constants.Metrics.Tag.WORKFLOW_RUN_ID)));
 
   private final int resolutions[];
   private final Supplier<Cube> cube;
@@ -209,7 +216,7 @@ public class DefaultMetricStore implements MetricStore {
     this.cube = Suppliers.memoize(new Supplier<Cube>() {
       @Override
       public Cube get() {
-        DefaultCube cube = new DefaultCube(resolutions, factTableSupplier, AGGREGATIONS);
+        DefaultCube cube = new DefaultCube(resolutions, factTableSupplier, AGGREGATIONS, AGGREGATIONS_ALIAS_DIMENSIONS);
         cube.setMetricsCollector(metricsContext);
         return cube;
       }

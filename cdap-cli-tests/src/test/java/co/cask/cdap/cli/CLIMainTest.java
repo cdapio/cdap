@@ -505,7 +505,7 @@ public class CLIMainTest extends CLITestBase {
   }
 
   @Test
-  public void testWorkflowToken() throws Exception {
+  public void testWorkflows() throws Exception {
     String workflow = String.format("%s.%s", FakeApp.NAME, FakeWorkflow.NAME);
     File doneFile = TMP_FOLDER.newFile("fake.done");
     Map<String, String> runtimeArgs = ImmutableMap.of("done.file", doneFile.getAbsolutePath());
@@ -546,7 +546,7 @@ public class CLIMainTest extends CLITestBase {
       cli, String.format("get workflow token %s %s at node %s scope user key %s", workflow, runId,
                          FakeWorkflow.FakeAction.ANOTHER_FAKE_NAME, FakeWorkflow.FakeAction.TOKEN_KEY), fakeNodeValue);
 
-    testCommandOutputContains(cli, "get workflow logs " + workflow, "Starting Workflow");
+    testCommandOutputContains(cli, "get workflow logs " + workflow, FakeWorkflow.FAKE_LOG);
 
     // stop workflow
     testCommandOutputContains(cli, "stop workflow " + workflow,

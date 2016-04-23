@@ -49,9 +49,11 @@ import com.google.common.util.concurrent.SettableFuture;
 import com.google.gson.Gson;
 import org.apache.twill.common.Threads;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
+import javax.annotation.Nullable;
 
 /**
  * An Abstract class implementing {@link ProgramWorkflowRunner}, providing a {@link Runnable} of
@@ -105,11 +107,12 @@ abstract class AbstractProgramWorkflowRunner implements ProgramWorkflowRunner {
 
   @Override
   public final Runnable create(String name) {
+    ProgramRunner programRunner = programRunnerFactory.create(getProgramType());
     try {
-      ProgramRunner programRunner = programRunnerFactory.create(getProgramType());
       Program program = rewriteProgram(name, createProgram(programRunner, workflowProgram));
       return getProgramRunnable(name, programRunner, program);
     } catch (Exception e) {
+      closeProgramRunner(programRunner);
       throw Throwables.propagate(e);
     }
   }
@@ -175,16 +178,17 @@ abstract class AbstractProgramWorkflowRunner implements ProgramWorkflowRunner {
   }
 
   private void runAndWait(ProgramRunner programRunner, Program program, ProgramOptions options) throws Exception {
+    Closeable closeable = createCloseable(programRunner, program);
     ProgramController controller;
     try {
       controller = programRunner.run(program, options);
     } catch (Throwable t) {
       // If there is any exception when running the program, close the program to release resources.
       // Otherwise it will be released when the execution completed.
-      Closeables.closeQuietly(program);
+      Closeables.closeQuietly(closeable);
       throw t;
     }
-    blockForCompletion(program, controller);
+    blockForCompletion(closeable, controller);
 
     if (controller instanceof WorkflowTokenProvider) {
       updateWorkflowToken(((WorkflowTokenProvider) controller).getWorkflowToken());
@@ -197,17 +201,33 @@ abstract class AbstractProgramWorkflowRunner implements ProgramWorkflowRunner {
   /**
    * Adds a listener to the {@link ProgramController} and blocks for completion.
    *
-   * @param program the {@link Program} in execution. It will get closed when the execution completed
+   * @param closeable a {@link Closeable} to call when the program execution completed
    * @param controller the {@link ProgramController} for the program
    * @throws Exception if the execution failed
    */
-  private void blockForCompletion(final Program program, final ProgramController controller) throws Exception {
+  private void blockForCompletion(final Closeable closeable, final ProgramController controller) throws Exception {
     // Execute the program.
     final SettableFuture<Void> completion = SettableFuture.create();
     controller.addListener(new AbstractListener() {
+
+      @Override
+      public void init(ProgramController.State currentState, @Nullable Throwable cause) {
+        switch (currentState) {
+          case COMPLETED:
+            completed();
+          break;
+          case KILLED:
+            killed();
+          break;
+          case ERROR:
+            error(cause);
+          break;
+        }
+      }
+
       @Override
       public void completed() {
-        Closeables.closeQuietly(program);
+        Closeables.closeQuietly(closeable);
         nodeStates.put(nodeId, new WorkflowNodeState(nodeId, NodeStatus.COMPLETED, controller.getRunId().getId(),
                                                      null));
         completion.set(null);
@@ -215,14 +235,14 @@ abstract class AbstractProgramWorkflowRunner implements ProgramWorkflowRunner {
 
       @Override
       public void killed() {
-        Closeables.closeQuietly(program);
+        Closeables.closeQuietly(closeable);
         nodeStates.put(nodeId, new WorkflowNodeState(nodeId, NodeStatus.KILLED, controller.getRunId().getId(), null));
         completion.set(null);
       }
 
       @Override
       public void error(Throwable cause) {
-        Closeables.closeQuietly(program);
+        Closeables.closeQuietly(closeable);
         nodeStates.put(nodeId, new WorkflowNodeState(nodeId, NodeStatus.FAILED, controller.getRunId().getId(), cause));
         completion.setException(cause);
       }
@@ -250,5 +270,27 @@ abstract class AbstractProgramWorkflowRunner implements ProgramWorkflowRunner {
 
   private void updateWorkflowToken(WorkflowToken workflowToken) throws Exception {
     ((BasicWorkflowToken) token).mergeToken(workflowToken);
+  }
+
+  /**
+   * Creates a {@link Closeable} that will close the given {@link ProgramRunner} and {@link Program}.
+   */
+  private Closeable createCloseable(final ProgramRunner programRunner, final Program program) {
+    return new Closeable() {
+      @Override
+      public void close() throws IOException {
+        Closeables.closeQuietly(program);
+        closeProgramRunner(programRunner);
+      }
+    };
+  }
+
+  /**
+   * Closes the given {@link ProgramRunner} if it implements {@link Closeable}.
+   */
+  private void closeProgramRunner(ProgramRunner programRunner) {
+    if (programRunner instanceof Closeable) {
+      Closeables.closeQuietly((Closeable) programRunner);
+    }
   }
 }

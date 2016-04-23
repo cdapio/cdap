@@ -2,7 +2,7 @@
 
 REM #################################################################################
 REM ##
-REM ## Copyright (c) 2014-2015 Cask Data, Inc.
+REM ## Copyright (c) 2014-2016 Cask Data, Inc.
 REM ##
 REM ## Licensed under the Apache License, Version 2.0 (the "License"); you may not
 REM ## use this file except in compliance with the License. You may obtain a copy of
@@ -18,7 +18,7 @@ REM ## the License.
 REM ##
 REM #################################################################################
 
-SET ORIGPATH=%cd%
+SET ORIG_DIR=%cd%
 SET CDAP_HOME=%~dp0
 SET CDAP_HOME=%CDAP_HOME:~0,-5%
 SET JAVACMD=%JAVA_HOME%\bin\java.exe
@@ -26,7 +26,8 @@ SET DEFAULT_JVM_OPTS=-Xmx2048m -XX:MaxPermSize=256m
 
 REM %CDAP_HOME%
 SET CLASSPATH=%CDAP_HOME%\lib\*;%CDAP_HOME%\conf\
-SET PATH=%PATH%;%CDAP_HOME%\libexec\bin
+SET ORIG_PATH=%PATH%
+SET PATH=%PATH%;%CDAP_HOME%\libexec\bin;%CDAP_HOME%\lib\native;
 
 cd %CDAP_HOME%
 
@@ -276,7 +277,8 @@ CALL :STOP
 GOTO :START
 
 :FINALLY
-cd %ORIGPATH%
+cd %ORIG_DIR%
+SET PATH=%ORIG_PATH%
 GOTO:EOF
 
 
@@ -292,3 +294,5 @@ for /F "TOKENS=*" %%b in ('dir  /a-d %CDAP_HOME%\logs 2^>NUL ^| find /c "%extens
   rename %CDAP_HOME%\logs\%extension% %extension%.1 >NUL 2>NUL
 )
 endlocal
+
+:EOF

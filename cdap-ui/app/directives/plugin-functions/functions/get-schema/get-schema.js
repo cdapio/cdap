@@ -20,10 +20,27 @@ angular.module(PKG.name + '.commons')
       restrict: 'E',
       templateUrl: 'plugin-functions/functions/get-schema/get-schema.html',
       scope: {
-        node: '='
+        node: '=',
+        fnConfig: '='
       },
-      controller: function ($scope, $uibModal, EventPipe) {
+      controller: function ($scope, $uibModal, EventPipe, myPipelineApi) {
         var vm = this;
+        var fnConfig = $scope.fnConfig;
+        var methodName = fnConfig['plugin-method'] || 'getSchema';
+        var methodType = fnConfig.method || 'GET';
+        var getPluginMethodApi = function(methodType) {
+          switch(methodType) {
+            case 'POST':
+              return myPipelineApi.postPluginMethod;
+            case 'GET':
+              return myPipelineApi.getPluginMethod;
+            case 'PUT':
+              return myPipelineApi.putPluginMethod;
+            case 'DELETE':
+              return myPipelineApi.deletePluginMethod;
+          }
+        };
+        var pluginMethodApi = getPluginMethodApi(methodType);
 
         vm.openModal = function () {
           var modal = $uibModal.open({
@@ -31,7 +48,7 @@ angular.module(PKG.name + '.commons')
             size: 'lg',
             windowTopClass: 'hydrator-modal get-schema-modal',
             keyboard: true,
-            controller: function ($scope, nodeInfo, myPipelineApi, $state) {
+            controller: function ($scope, nodeInfo, $state) {
               var mvm = this;
 
               mvm.node = angular.copy(nodeInfo);
@@ -49,11 +66,12 @@ angular.module(PKG.name + '.commons')
                   version: mvm.node.plugin.artifact.version,
                   pluginType: mvm.node.type,
                   pluginName: mvm.node.plugin.name,
-                  methodName: 'getSchema',
+                  methodName: methodName,
                   scope: mvm.node.plugin.artifact.scope
                 };
 
-                myPipelineApi.pluginMethod(params, config)
+
+                pluginMethodApi(params, config)
                   .$promise
                   .then(function (res) {
                     mvm.error = null;
