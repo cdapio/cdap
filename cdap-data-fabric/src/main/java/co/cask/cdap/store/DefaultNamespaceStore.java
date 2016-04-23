@@ -73,9 +73,10 @@ public class DefaultNamespaceStore implements NamespaceStore {
             table = dsCache.getDataset(APP_META_INSTANCE_ID.getId());
           } catch (DatasetInstantiationException e) {
             try {
-              table = DatasetsUtil.getOrCreateDataset(
+              DatasetsUtil.getOrCreateDataset(
                 dsFramework, APP_META_INSTANCE_ID, "table",
                 DatasetProperties.EMPTY, DatasetDefinition.NO_ARGUMENTS, null);
+              table = dsCache.getDataset(APP_META_INSTANCE_ID.getId());
             } catch (DatasetManagementException | IOException e1) {
               throw Throwables.propagate(e1);
             }
