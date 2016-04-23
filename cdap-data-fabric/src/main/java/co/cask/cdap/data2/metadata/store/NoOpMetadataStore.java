@@ -153,4 +153,14 @@ public class NoOpMetadataStore implements MetadataStore {
     }
     return builder.build();
   }
+
+  @Override
+  public void rebuildIndexes() {
+    // NO-OP
+  }
+
+  @Override
+  public void deleteAllIndexes() {
+    // NO-OP
+  }
 }

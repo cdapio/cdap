@@ -98,7 +98,7 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
     RunId runId = RunIds.generate();
     ProgramOptions optionsWithRunId = updateProgramOptions(options, runId);
     File tempDir = createTempDirectory(program.getId(), runId);
-    Runnable cleanUpTask = createCleanupTask(tempDir);
+    Runnable cleanUpTask = createCleanupTask(tempDir, runner);
     try {
       ProgramOptions optionsWithPlugins = createPluginSnapshot(optionsWithRunId, program.getId(), tempDir,
                                                                program.getApplicationSpecification());
@@ -340,6 +340,8 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
       public void init(ProgramController.State currentState, @Nullable Throwable cause) {
         if (!COMPLETED_STATES.contains(currentState)) {
           add(runtimeInfo);
+        } else {
+          cleanUpTask.run();
         }
       }
 

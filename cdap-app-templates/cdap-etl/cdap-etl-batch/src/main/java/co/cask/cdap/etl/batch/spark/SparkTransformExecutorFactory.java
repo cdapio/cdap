@@ -31,6 +31,7 @@ import co.cask.cdap.etl.batch.PipelinePluginInstantiator;
 import co.cask.cdap.etl.batch.TransformExecutorFactory;
 import co.cask.cdap.etl.common.DefaultEmitter;
 import co.cask.cdap.etl.common.DefaultStageMetrics;
+import co.cask.cdap.etl.common.TrackedTransform;
 import scala.Tuple2;
 
 import java.util.Map;
@@ -51,18 +52,19 @@ public class SparkTransformExecutorFactory<T> extends TransformExecutorFactory<T
   private final PluginContext pluginContext;
   private final long logicalStartTime;
   private final Map<String, String> runtimeArgs;
-  private final boolean isPreGroup;
+  // whether this is before the group step of an aggregator, or before a spark compute stage
+  private final boolean isFirstHalf;
 
   public SparkTransformExecutorFactory(PluginContext pluginContext,
                                        PipelinePluginInstantiator pluginInstantiator,
                                        Metrics metrics, long logicalStartTime,
                                        Map<String, String> runtimeArgs,
-                                       boolean isPreGroup) {
+                                       boolean isFirstHalf) {
     super(pluginInstantiator, metrics);
     this.pluginContext = pluginContext;
     this.logicalStartTime = logicalStartTime;
     this.runtimeArgs = runtimeArgs;
-    this.isPreGroup = isPreGroup;
+    this.isFirstHalf = isFirstHalf;
   }
 
   @Override
@@ -72,19 +74,26 @@ public class SparkTransformExecutorFactory<T> extends TransformExecutorFactory<T
 
   @SuppressWarnings("unchecked")
   @Override
-  protected Transformation getTransformation(String pluginType, String stageName) throws Exception {
+  protected TrackedTransform getTransformation(String pluginType, String stageName) throws Exception {
+    StageMetrics stageMetrics = new DefaultStageMetrics(metrics, stageName);
     if (BatchAggregator.PLUGIN_TYPE.equals(pluginType)) {
       BatchAggregator<?, ?, ?> batchAggregator = pluginInstantiator.newPluginInstance(stageName);
       BatchRuntimeContext runtimeContext = createRuntimeContext(stageName);
       batchAggregator.initialize(runtimeContext);
-      if (isPreGroup) {
-        return new PreGroupAggregatorTransformation(batchAggregator, new DefaultStageMetrics(metrics, stageName));
+      if (isFirstHalf) {
+        return getTrackedGroupStep(new PreGroupAggregatorTransformation(batchAggregator), stageMetrics);
       } else {
-        return new PostGroupAggregatorTransformation(batchAggregator);
+        return getTrackedAggregateStep(new PostGroupAggregatorTransformation(batchAggregator), stageMetrics);
       }
-    } else if (SparkSink.PLUGIN_TYPE.equals(pluginType) || SparkCompute.PLUGIN_TYPE.equals(pluginType)) {
+    } else if (SparkSink.PLUGIN_TYPE.equals(pluginType)) {
       // if this plugin type is a SparkSink or SparkCompute, substitute in an IDENTITY_TRANSFORMATION
-      return IDENTITY_TRANSFORMATION;
+      return  new TrackedTransform(IDENTITY_TRANSFORMATION, stageMetrics, TrackedTransform.RECORDS_IN, null);
+    } else if (SparkCompute.PLUGIN_TYPE.equals(pluginType)) {
+      // if this is source -> sparkcompute, then its before the break. In that case, we only want to emit records in
+      // if this is sparkcompute -> sink, then its after the break. In that case, we only want to emit records out
+      return isFirstHalf ?
+        new TrackedTransform(IDENTITY_TRANSFORMATION, stageMetrics, TrackedTransform.RECORDS_IN, null) :
+        new TrackedTransform(IDENTITY_TRANSFORMATION, stageMetrics, TrackedTransform.RECORDS_OUT, null);
     }
     return super.getTransformation(pluginType, stageName);
   }
@@ -101,10 +110,9 @@ public class SparkTransformExecutorFactory<T> extends TransformExecutorFactory<T
     private final Aggregator<GROUP_KEY, GROUP_VAL, ?> aggregator;
     private final DefaultEmitter<GROUP_KEY> groupKeyEmitter;
 
-    public PreGroupAggregatorTransformation(Aggregator<GROUP_KEY, GROUP_VAL, ?> aggregator,
-                                            StageMetrics stageMetrics) {
+    public PreGroupAggregatorTransformation(Aggregator<GROUP_KEY, GROUP_VAL, ?> aggregator) {
       this.aggregator = aggregator;
-      this.groupKeyEmitter = new DefaultEmitter<>(stageMetrics);
+      this.groupKeyEmitter = new DefaultEmitter<>();
     }
 
     @Override

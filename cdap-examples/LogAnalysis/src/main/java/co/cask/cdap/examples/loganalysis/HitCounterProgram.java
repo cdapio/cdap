@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,6 +17,8 @@
 package co.cask.cdap.examples.loganalysis;
 
 import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.api.data.batch.Input;
+import co.cask.cdap.api.data.batch.Output;
 import co.cask.cdap.api.data.stream.StreamBatchReadable;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
@@ -39,8 +41,9 @@ public class HitCounterProgram extends AbstractMapReduce {
     Job job = context.getHadoopJob();
     job.setMapperClass(Emitter.class);
     job.setReducerClass(Counter.class);
-    context.addOutput(LogAnalysisApp.HIT_COUNT_STORE);
-    StreamBatchReadable.useStreamInput(context, LogAnalysisApp.LOG_STREAM);
+
+    context.addInput(Input.ofStream(LogAnalysisApp.LOG_STREAM));
+    context.addOutput(Output.ofDataset(LogAnalysisApp.HIT_COUNT_STORE));
   }
 
   /**

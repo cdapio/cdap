@@ -1,7 +1,7 @@
 .. meta::
     :author: Cask Data, Inc.
     :description: Cask Data Application Platform WordCount Application
-    :copyright: Copyright © 2015 Cask Data, Inc.
+    :copyright: Copyright © 2015-2016 Cask Data, Inc.
 
 .. _examples-stream-conversion:
 
@@ -58,35 +58,35 @@ and it configures the *events* stream as its input and the *converted* dataset a
 
   .. literalinclude:: /../../../cdap-examples/StreamConversion/src/main/java/co/cask/cdap/examples/streamconversion/StreamConversionMapReduce.java
      :language: java
-     :lines: 63-68
+     :lines: 65-70
      :dedent: 4
      
 - Based on the logical start time, the MapReduce determines the range of events to read from the stream:
 
   .. literalinclude:: /../../../cdap-examples/StreamConversion/src/main/java/co/cask/cdap/examples/streamconversion/StreamConversionMapReduce.java
      :language: java
-     :lines: 70-72
+     :lines: 72-74
      :dedent: 4
 
 - Each MapReduce run writes its output to a partition with the logical start time:
 
   .. literalinclude:: /../../../cdap-examples/StreamConversion/src/main/java/co/cask/cdap/examples/streamconversion/StreamConversionMapReduce.java
      :language: java
-     :lines: 75-77
+     :lines: 77-79
      :dedent: 4
 
 - Note that the output file path is derived from the output partition time by the dataset itself:
 
   .. literalinclude:: /../../../cdap-examples/StreamConversion/src/main/java/co/cask/cdap/examples/streamconversion/StreamConversionMapReduce.java
      :language: java
-     :lines: 79-80
+     :lines: 81-82
      :dedent: 4
 
 - The Mapper itself is straight-forward: for each event, it emits an Avro record:
 
   .. literalinclude:: /../../../cdap-examples/StreamConversion/src/main/java/co/cask/cdap/examples/streamconversion/StreamConversionMapReduce.java
      :language: java
-     :lines: 86-98
+     :lines: 88-100
      :dedent: 2
 
 

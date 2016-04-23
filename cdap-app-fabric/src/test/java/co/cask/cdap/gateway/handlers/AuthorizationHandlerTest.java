@@ -22,8 +22,11 @@ import co.cask.cdap.client.AuthorizationClient;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.config.ConnectionConfig;
 import co.cask.cdap.common.FeatureDisabledException;
+import co.cask.cdap.common.NotFoundException;
+import co.cask.cdap.common.UnauthenticatedException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.entity.EntityExistenceVerifier;
 import co.cask.cdap.common.http.AuthenticationChannelHandler;
 import co.cask.cdap.common.http.CommonNettyHttpServiceBuilder;
 import co.cask.cdap.proto.id.EntityId;
@@ -59,6 +62,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.io.IOException;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Properties;
@@ -84,6 +88,11 @@ public class AuthorizationHandlerTest {
   };
   private final Principal admin = new Principal("admin", Principal.PrincipalType.USER);
   private final Properties properties = new Properties();
+  private final EntityId ns1 = Ids.namespace("ns1");
+  private final EntityId ns2 = Ids.namespace("ns2");
+  private final EntityExistenceVerifier entityExistenceVerifier = new InMemoryEntityExistenceVerifier(
+    ImmutableSet.of(ns1, ns2)
+  );
 
   private NettyHttpService service;
   private AuthorizationClient client;
@@ -103,7 +112,7 @@ public class AuthorizationHandlerTest {
           public Authorizer get() {
             return auth;
           }
-        }, conf)))
+        }, conf, entityExistenceVerifier)))
       .modifyChannelPipeline(new Function<ChannelPipeline, ChannelPipeline>() {
         @Override
         public ChannelPipeline apply(ChannelPipeline input) {
@@ -157,7 +166,7 @@ public class AuthorizationHandlerTest {
           public Authorizer get() {
             return new InMemoryAuthorizer();
           }
-        }, cConf)))
+        }, cConf, entityExistenceVerifier)))
       .build();
     service.startAndWait();
     try {
@@ -244,8 +253,6 @@ public class AuthorizationHandlerTest {
 
   @Test
   public void testRevokeEntityUserActions() throws Exception {
-    NamespaceId ns1 = Ids.namespace("ns1");
-
     // grant() and revoke(EntityId, String, Set<Action>)
     verifyAuthFailure(ns1, admin, Action.READ);
 
@@ -258,7 +265,6 @@ public class AuthorizationHandlerTest {
 
   @Test
   public void testRevokeEntityUser() throws Exception {
-    NamespaceId ns1 = Ids.namespace("ns1");
     Principal adminGroup = new Principal("admin", Principal.PrincipalType.GROUP);
     Principal bob = new Principal("bob", Principal.PrincipalType.USER);
 
@@ -275,8 +281,6 @@ public class AuthorizationHandlerTest {
 
   @Test
   public void testRevokeEntity() throws Exception {
-    NamespaceId ns1 = Ids.namespace("ns1");
-    NamespaceId ns2 = Ids.namespace("ns2");
     Principal adminGroup = new Principal("admin", Principal.PrincipalType.GROUP);
     Principal bob = new Principal("bob", Principal.PrincipalType.USER);
 
@@ -345,9 +349,6 @@ public class AuthorizationHandlerTest {
     // check listing roles for spiderman have engineers role
     Assert.assertEquals(Sets.newHashSet(engineers), client.listRoles(spiderman));
 
-    // authorization checks with roles
-    NamespaceId ns1 = Ids.namespace("ns1");
-
     // check that spiderman who has engineers roles cannot read from ns1
     verifyAuthFailure(ns1, spiderman, Action.READ);
 
@@ -387,7 +388,6 @@ public class AuthorizationHandlerTest {
 
   @Test
   public void testAuthorizationForPrivileges() throws Exception {
-    NamespaceId ns = Ids.namespace("ns");
     Principal bob = new Principal("bob", Principal.PrincipalType.USER);
     Principal alice = new Principal("alice", Principal.PrincipalType.USER);
     // olduser has been set as admin in the beginning of this test. admin has been configured as a superuser.
@@ -395,39 +395,57 @@ public class AuthorizationHandlerTest {
     setCurrentUser(alice.getName());
     try {
       try {
-        client.grant(ns, bob, ImmutableSet.of(Action.ALL));
+        client.grant(ns1, bob, ImmutableSet.of(Action.ALL));
         Assert.fail(String.format("alice should not be able to grant privileges to bob on namespace %s because she " +
-                                    "does not have admin privileges on the namespace.", ns));
+                                    "does not have admin privileges on the namespace.", ns1));
       } catch (UnauthorizedException expected) {
         // expected
       }
       setCurrentUser(oldUser);
       // admin should be able to grant since he is a super user
-      client.grant(ns, alice, ImmutableSet.of(Action.ADMIN));
+      client.grant(ns1, alice, ImmutableSet.of(Action.ADMIN));
       // now alice should be able to grant privileges on ns since she has ADMIN privileges
       setCurrentUser(alice.getName());
-      client.grant(ns, bob, ImmutableSet.of(Action.ALL));
+      client.grant(ns1, bob, ImmutableSet.of(Action.ALL));
       // revoke alice's permissions as admin
       setCurrentUser(oldUser);
-      client.revoke(ns);
+      client.revoke(ns1);
       // revoking bob's privileges as alice should fail
       setCurrentUser(alice.getName());
       try {
-        client.revoke(ns, bob, ImmutableSet.of(Action.ALL));
+        client.revoke(ns1, bob, ImmutableSet.of(Action.ALL));
         Assert.fail(String.format("alice should not be able to revoke bob's privileges on namespace %s because she " +
-                                    "does not have admin privileges on the namespace.", ns));
+                                    "does not have admin privileges on the namespace.", ns1));
       } catch (UnauthorizedException expected) {
         // expected
       }
       // grant alice privileges as admin again
       setCurrentUser(oldUser);
-      client.grant(ns, alice, ImmutableSet.of(Action.ALL));
+      client.grant(ns1, alice, ImmutableSet.of(Action.ALL));
       // Now alice should be able to revoke bob's privileges
       setCurrentUser(alice.getName());
-      client.revoke(ns, bob, ImmutableSet.of(Action.ALL));
+      client.revoke(ns1, bob, ImmutableSet.of(Action.ALL));
     } finally {
       setCurrentUser(oldUser);
     }
+  }
+
+  @Test(expected = NotFoundException.class)
+  public void testGrantOnNonExistingEntity()
+    throws FeatureDisabledException, UnauthenticatedException, UnauthorizedException, IOException, NotFoundException {
+    client.grant(Ids.namespace("ns3"), admin, ImmutableSet.of(Action.ADMIN));
+  }
+
+  @Test(expected = NotFoundException.class)
+  public void testRevokeOnNonExistingEntity()
+    throws FeatureDisabledException, UnauthenticatedException, UnauthorizedException, IOException, NotFoundException {
+    client.revoke(Ids.namespace("ns3"), admin, ImmutableSet.of(Action.ADMIN));
+  }
+
+  @Test(expected = NotFoundException.class)
+  public void testRevokeAllOnNonExistingEntity()
+    throws FeatureDisabledException, UnauthenticatedException, UnauthorizedException, IOException, NotFoundException {
+    client.revoke(Ids.namespace("ns3"));
   }
 
   /**

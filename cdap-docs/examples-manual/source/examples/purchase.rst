@@ -1,7 +1,7 @@
 .. meta::
     :author: Cask Data, Inc.
     :description: Cask Data Application Platform Purchase Application
-    :copyright: Copyright © 2014-2015 Cask Data, Inc.
+    :copyright: Copyright © 2014-2016 Cask Data, Inc.
 
 .. _examples-purchase:
 
@@ -60,7 +60,7 @@ of the application are tied together by the class ``PurchaseApp``:
 
 .. literalinclude:: /../../../cdap-examples/Purchase/src/main/java/co/cask/cdap/examples/purchase/PurchaseApp.java
     :language: java
-    :lines: 31-
+    :lines: 32-
 
 Storing Purchases with the *Purchase* ObjectStore Data Storage
 --------------------------------------------------------------
@@ -97,7 +97,7 @@ default values used in configuration and as runtime arguments:
 
 .. literalinclude:: /../../../cdap-examples/Purchase/src/main/java/co/cask/cdap/examples/purchase/PurchaseHistoryBuilder.java
    :language: java
-   :lines: 46-76
+   :lines: 47-77
 
 *PurchaseHistoryService* Service
 --------------------------------

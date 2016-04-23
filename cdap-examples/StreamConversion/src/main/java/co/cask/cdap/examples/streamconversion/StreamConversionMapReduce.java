@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,6 +18,8 @@ package co.cask.cdap.examples.streamconversion;
 
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.api.data.batch.Input;
+import co.cask.cdap.api.data.batch.Output;
 import co.cask.cdap.api.data.stream.StreamBatchReadable;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSetArguments;
@@ -69,13 +71,13 @@ public class StreamConversionMapReduce extends AbstractMapReduce {
 
     // read 5 minutes of events from the stream, ending at the logical start time of this run
     long logicalTime = context.getLogicalStartTime();
-    StreamBatchReadable.useStreamInput(context, "events", logicalTime - TimeUnit.MINUTES.toMillis(5), logicalTime);
+    context.addInput(Input.ofStream("events", logicalTime - TimeUnit.MINUTES.toMillis(5), logicalTime));
 
     // each run writes its output to a partition with the logical start time.
     TimePartitionedFileSetArguments.setOutputPartitionTime(dsArguments, logicalTime);
-    TimePartitionedFileSet partitionedFileSet = context.getDataset("converted", dsArguments);
-    context.addOutput("converted", partitionedFileSet);
+    context.addOutput(Output.ofDataset("converted", dsArguments));
 
+    TimePartitionedFileSet partitionedFileSet = context.getDataset("converted", dsArguments);
     LOG.info("Output location for new partition is: {}",
              partitionedFileSet.getEmbeddedFileSet().getOutputLocation());
   }

@@ -28,6 +28,7 @@ angular.module(PKG.name + '.services')
         pluginsFetchPath = pluginFetchBase + '?scope=system',
         extensionsFetchPath = extensionsFetchBase + '?scope=system',
         pluginDetailFetch = pluginFetchBase + '/plugins/:pluginName?scope=system',
+        postActionDetailFetch = pluginFetchBase + '/plugins/:pluginName',
         artifactPropertiesPath = '/namespaces/:namespace/artifacts/:artifactName/versions/:artifactVersion/properties',
         pluginMethodsPath = '/namespaces/:namespace/artifacts/:artifactName/versions/:version/plugintypes/:pluginType/plugins/:pluginName/methods/:methodName';
 
@@ -58,6 +59,9 @@ angular.module(PKG.name + '.services')
         // The above three could be replaced by this one.
         fetchPluginProperties: myHelpers.getConfig('GET', 'REQUEST', pluginDetailFetch, true),
 
+        // This should ideally be merged with fetchPluginProperties, however the path has SYSTEM scope
+        fetchPostActionProperties: myHelpers.getConfig('GET', 'REQUEST', postActionDetailFetch, true),
+
         // FIXME: This needs to be replaced with fetching etl-batch & etl-realtime separately.
         list: myHelpers.getConfig('GET', 'REQUEST', listPath, true),
         pollStatus: myHelpers.getConfig('GET', 'POLL', pipelinePath + '/status'),
@@ -68,7 +72,11 @@ angular.module(PKG.name + '.services')
         datasets: myHelpers.getConfig('GET', 'REQUEST', pipelinePath + '/datasets', true),
         streams: myHelpers.getConfig('GET', 'REQUEST', pipelinePath + '/streams', true),
         action: myHelpers.getConfig('POST', 'REQUEST', pipelinePath + '/:action'),
-        pluginMethod: myHelpers.getConfig('POST', 'REQUEST', pluginMethodsPath, false, { suppressErrors: true })
+
+        postPluginMethod: myHelpers.getConfig('POST', 'REQUEST', pluginMethodsPath, false, { suppressErrors: true }),
+        getPluginMethod: myHelpers.getConfig('GET', 'REQUEST', pluginMethodsPath, false, { suppressErrors: true }),
+        putPluginMethod: myHelpers.getConfig('PUT', 'REQUEST', pluginMethodsPath, false, { suppressErrors: true }),
+        deletePluginMethod: myHelpers.getConfig('DELETE', 'REQUEST', pluginMethodsPath, false, { suppressErrors: true })
       }
     );
   });

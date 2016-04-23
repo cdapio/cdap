@@ -1812,6 +1812,8 @@
         <stage.lib.dir>${stage.opt.dir}/lib</stage.lib.dir>
         <stage.plugins.dir>${stage.opt.dir}/plugins</stage.plugins.dir>
         <package.depends>--depends cdap</package.depends>
+        <package.deb.arch>all</package.deb.arch>
+        <package.rpm.arch>all</package.rpm.arch>
         <package.dirs>opt etc</package.dirs>
       </properties>
       <build>
@@ -2259,7 +2261,7 @@
                       -C "${stage.dir}"
                       --directories "/opt/cdap/${package.name}"
                       --version "${package.version}"
-                      --architecture all
+                      --architecture "${package.rpm.arch}"
                       --rpm-os linux
                       --url "http://cask.co"
                       --template-value "project=${package.name}"
@@ -2312,7 +2314,7 @@
                       -C "${stage.dir}-deb"
                       --directories "/opt/cdap/${package.name}"
                       --version "${package.version}"
-                      --architecture all
+                      --architecture "${package.deb.arch}"
                       --url "http://cask.co"
                       --template-value "project=${package.name}"
                       --after-install "${project.parent.basedir}/cdap-distributions/src/debian/scripts/postinst"

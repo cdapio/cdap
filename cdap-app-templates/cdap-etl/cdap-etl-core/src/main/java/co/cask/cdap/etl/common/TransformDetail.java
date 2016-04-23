@@ -19,7 +19,6 @@ package co.cask.cdap.etl.common;
 import co.cask.cdap.etl.api.Destroyable;
 import co.cask.cdap.etl.api.Emitter;
 import co.cask.cdap.etl.api.InvalidEntry;
-import co.cask.cdap.etl.api.StageMetrics;
 import co.cask.cdap.etl.api.Transformation;
 
 import java.util.Collection;
@@ -30,12 +29,12 @@ import java.util.Collection;
 public class TransformDetail implements Emitter<Object> {
   private final Transformation transformation;
   private final Collection<String> nextStages;
-  private final DefaultEmitter defaultEmitter;
+  private final DefaultEmitter<Object> defaultEmitter;
 
-  public TransformDetail(Transformation transformation, StageMetrics metrics, Collection<String> nextStages) {
-    this.transformation = new TrackedTransform<>(transformation, metrics);
+  public TransformDetail(Transformation transformation, Collection<String> nextStages) {
+    this.transformation = transformation;
     this.nextStages = nextStages;
-    this.defaultEmitter = new DefaultEmitter<>(metrics);
+    this.defaultEmitter = new DefaultEmitter<>();
   }
 
   @Override

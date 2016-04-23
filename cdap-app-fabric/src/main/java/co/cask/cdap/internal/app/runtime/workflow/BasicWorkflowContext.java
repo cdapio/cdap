@@ -27,7 +27,9 @@ import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.metrics.ProgramUserMetrics;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.Arguments;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.internal.app.program.ProgramTypeMetricTag;
 import co.cask.cdap.internal.app.runtime.AbstractContext;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.tephra.TransactionSystemClient;
@@ -84,8 +86,11 @@ final class BasicWorkflowContext extends AbstractContext implements WorkflowCont
     if (service == null) {
       return null;
     }
-    Map<String, String> tags = Maps.newHashMap(getMetricsContext(program, runId));
-
+    Map<String, String> tags = Maps.newHashMap();
+    tags.put(Constants.Metrics.Tag.NAMESPACE, program.getNamespaceId());
+    tags.put(Constants.Metrics.Tag.APP, program.getApplicationId());
+    tags.put(ProgramTypeMetricTag.getTagName(program.getType()), program.getName());
+    tags.put(Constants.Metrics.Tag.WORKFLOW_RUN_ID, runId);
     return service.getContext(tags);
   }
 

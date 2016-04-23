@@ -22,6 +22,9 @@ angular.module(PKG.name + '.commons')
         panelGroups: '=',
         view: '=',
 
+        groupGenericName: '@',
+        itemGenericName: '@',
+
         onAdd: '&',
         onPanelItemClick: '&',
         onPanelItemClickContext: '='

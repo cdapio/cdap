@@ -50,12 +50,15 @@ final class BasicSparkClientContext implements SparkClientContext {
 
   private final SparkRuntimeContext sparkRuntimeContext;
   private final Map<String, LocalizeResource> localizeResources;
+  private Resources driverResources;
   private Resources executorResources;
   private SparkConf sparkConf;
 
   BasicSparkClientContext(SparkRuntimeContext sparkRuntimeContext) {
     this.sparkRuntimeContext = sparkRuntimeContext;
     this.localizeResources = new HashMap<>();
+    this.driverResources = Optional.fromNullable(
+      sparkRuntimeContext.getSparkSpecification().getDriverResources()).or(new Resources());
     this.executorResources = Optional.fromNullable(
       sparkRuntimeContext.getSparkSpecification().getExecutorResources()).or(new Resources());
   }
@@ -73,6 +76,11 @@ final class BasicSparkClientContext implements SparkClientContext {
   @Override
   public Metrics getMetrics() {
     return sparkRuntimeContext;
+  }
+
+  @Override
+  public void setDriverResources(Resources resources) {
+    this.driverResources = resources;
   }
 
   @Override
@@ -171,7 +179,14 @@ final class BasicSparkClientContext implements SparkClientContext {
   }
 
   /**
-   * Returns the {@link Resources} requirement to be used for the Spark executor processes.
+   * Returns the {@link Resources} requirement for the Spark driver process.
+   */
+  Resources getDriverResources() {
+    return driverResources;
+  }
+
+  /**
+   * Returns the {@link Resources} requirement for the Spark executor processes.
    */
   Resources getExecutorResources() {
     return executorResources;

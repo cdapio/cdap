@@ -378,7 +378,9 @@ public final class Schema implements Serializable {
 
   private final List<Schema> unionSchemas;
 
-  private String schemaString;
+  // No need to serialize the schemaString to save space
+  // It can be recomputed on demand (and usually it is not used in the context that serialization is used)
+  private transient String schemaString;
   private SchemaHash schemaHash;
 
   private Schema(Type type, Set<String> enumValues, Schema componentSchema, Schema keySchema, Schema valueSchema,
@@ -390,7 +392,7 @@ public final class Schema implements Serializable {
     this.componentSchema = componentSchema;
     this.keySchema = keySchema;
     this.valueSchema = valueSchema;
-    this.mapSchema = (keySchema == null || valueSchema == null) ? null : immutableEntry(keySchema, valueSchema);
+    this.mapSchema = (keySchema == null || valueSchema == null) ? null : new ImmutableEntry<>(keySchema, valueSchema);
     this.recordName = recordName;
     this.fieldMap = populateRecordFields(fieldMap);
     this.fields = this.fieldMap == null ? null : Collections.unmodifiableList(new ArrayList<>(this.fieldMap.values()));
@@ -614,47 +616,6 @@ public final class Schema implements Serializable {
     return firstSchema.getType() == Type.NULL ? unionSchemas.get(1) : firstSchema;
   }
 
-  private <K, V> Map.Entry<K, V> immutableEntry(final K key, final V value) {
-    return new Map.Entry<K, V>() {
-      @Override
-      public K getKey() {
-        return key;
-      }
-
-      @Override
-      public V getValue() {
-        return value;
-      }
-
-      @Override
-      public V setValue(V value) {
-        throw new UnsupportedOperationException("Mutation to entry not supported");
-      }
-
-      @Override
-      public String toString() {
-        return getKey() + "=" + getValue();
-      }
-
-      @Override
-      public boolean equals(Object obj) {
-        if (obj == null) {
-          return false;
-        }
-        if (!(obj instanceof Map.Entry)) {
-          return false;
-        }
-        Map.Entry other = (Map.Entry) obj;
-        return Objects.equals(key, other.getKey()) && Objects.equals(value, other.getValue());
-      }
-
-      @Override
-      public int hashCode() {
-        return Objects.hash(getKey(), getValue());
-      }
-    };
-  }
-
   private boolean checkCompatible(Schema target, Set<Map.Entry<String, String>> recordCompared) {
     if (type.isSimpleType()) {
       if (type == target.getType()) {
@@ -693,7 +654,7 @@ public final class Schema implements Serializable {
             && valueSchema.checkCompatible(target.valueSchema, recordCompared);
         case RECORD:
           // For every common field (by name), their schema must be compatible
-          if (recordCompared.add(immutableEntry(recordName, target.recordName))) {
+          if (recordCompared.add(new ImmutableEntry<>(recordName, target.recordName))) {
             for (Field field : fields) {
               Field targetField = target.getField(field.getName());
               if (targetField == null) {
@@ -740,7 +701,7 @@ public final class Schema implements Serializable {
    */
   private <V> Map.Entry<Map<V, Integer>, Map<Integer, V>> createIndex(Set<V> values) {
     if (values == null) {
-      return immutableEntry(null, null);
+      return new ImmutableEntry<>(null, null);
     }
 
     Map<V, Integer> forwardMap = new HashMap<>();
@@ -752,7 +713,7 @@ public final class Schema implements Serializable {
       idx++;
     }
 
-    return immutableEntry(Collections.unmodifiableMap(forwardMap), Collections.unmodifiableMap(reverseMap));
+    return new ImmutableEntry<>(Collections.unmodifiableMap(forwardMap), Collections.unmodifiableMap(reverseMap));
   }
 
   /**
@@ -853,5 +814,53 @@ public final class Schema implements Serializable {
       throw new RuntimeException(e);
     }
     return writer.toString();
+  }
+
+  private static final class ImmutableEntry<K, V> implements Map.Entry<K, V>, Serializable {
+
+    private final K key;
+    private final V value;
+
+    private ImmutableEntry(K key, V value) {
+      this.key = key;
+      this.value = value;
+    }
+
+    @Override
+    public K getKey() {
+      return key;
+    }
+
+    @Override
+    public V getValue() {
+      return value;
+    }
+
+    @Override
+    public V setValue(V value) {
+      throw new UnsupportedOperationException("Mutation to entry not supported");
+    }
+
+    @Override
+    public String toString() {
+      return getKey() + "=" + getValue();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      if (obj == null) {
+        return false;
+      }
+      if (!(obj instanceof Map.Entry)) {
+        return false;
+      }
+      Map.Entry other = (Map.Entry) obj;
+      return Objects.equals(key, other.getKey()) && Objects.equals(value, other.getValue());
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(getKey(), getValue());
+    }
   }
 }

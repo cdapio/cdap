@@ -32,6 +32,7 @@ import co.cask.cdap.api.worker.AbstractWorker;
 import co.cask.cdap.api.worker.WorkerContext;
 import co.cask.cdap.etl.api.Emitter;
 import co.cask.cdap.etl.api.InvalidEntry;
+import co.cask.cdap.etl.api.StageMetrics;
 import co.cask.cdap.etl.api.Transform;
 import co.cask.cdap.etl.api.Transformation;
 import co.cask.cdap.etl.api.realtime.RealtimeSink;
@@ -42,9 +43,10 @@ import co.cask.cdap.etl.common.DefaultEmitter;
 import co.cask.cdap.etl.common.DefaultStageMetrics;
 import co.cask.cdap.etl.common.Destroyables;
 import co.cask.cdap.etl.common.LoggedTransform;
-import co.cask.cdap.etl.common.NoopMetrics;
 import co.cask.cdap.etl.common.PipelinePhase;
 import co.cask.cdap.etl.common.SetMultimapCodec;
+import co.cask.cdap.etl.common.TrackedEmitter;
+import co.cask.cdap.etl.common.TrackedTransform;
 import co.cask.cdap.etl.common.TransformDetail;
 import co.cask.cdap.etl.common.TransformExecutor;
 import co.cask.cdap.etl.common.TransformResponse;
@@ -112,7 +114,6 @@ public class ETLWorker extends AbstractWorker {
   private String sourceStageName;
   private Map<String, RealtimeSink> sinks;
   private TransformExecutor transformExecutor;
-  private DefaultEmitter sourceEmitter;
   private String stateStoreKey;
   private byte[] stateStoreKeyBytes;
   private String appName;
@@ -233,7 +234,6 @@ public class ETLWorker extends AbstractWorker {
     sourceStageName = sourceName;
     LOG.debug("Source Class : {}", source.getClass().getName());
     source.initialize(sourceContext);
-    sourceEmitter = new DefaultEmitter(sourceContext.getMetrics());
   }
 
   @SuppressWarnings("unchecked")
@@ -250,7 +250,7 @@ public class ETLWorker extends AbstractWorker {
         context, metrics, new TxLookupProvider(context), sinkName);
       LOG.debug("Sink Class : {}", sink.getClass().getName());
       sink.initialize(sinkContext);
-      sink = new TrackedRealtimeSink(sink, sinkContext.getMetrics());
+      sink = new TrackedRealtimeSink(sink, new DefaultStageMetrics(metrics, sinkName));
 
       Transformation identityTransformation = new Transformation() {
         @Override
@@ -261,10 +261,11 @@ public class ETLWorker extends AbstractWorker {
 
       // we use identity transformation to simplify executing transformation in pipeline (similar to ETLMapreduce),
       // since we want to emit metrics during write to sink and not during this transformation, we use NoOpMetrics.
-      transformationMap.put(sinkInfo.getName(),
-                            new TransformDetail(identityTransformation,
-                                                new NoopMetrics(),
-                                                new HashSet<String>()));
+      TrackedTransform trackedTransform = new TrackedTransform(identityTransformation,
+                                                               new DefaultStageMetrics(metrics, sinkName),
+                                                               TrackedTransform.RECORDS_IN,
+                                                               null);
+      transformationMap.put(sinkInfo.getName(), new TransformDetail(trackedTransform, new HashSet<String>()));
       sinks.put(sinkInfo.getName(), sink);
     }
   }
@@ -285,9 +286,10 @@ public class ETLWorker extends AbstractWorker {
           context, metrics, new TxLookupProvider(context), transformName);
         LOG.debug("Transform Class : {}", transform.getClass().getName());
         transform.initialize(transformContext);
-        transformDetailMap.put(transformName,
-                               new TransformDetail(transform, new DefaultStageMetrics(metrics, transformName),
-                                                   pipeline.getStageOutputs(transformName)));
+        StageMetrics stageMetrics = new DefaultStageMetrics(metrics, transformName);
+        transformDetailMap.put(transformName, new TransformDetail(
+          new TrackedTransform<>(transform, stageMetrics),
+          pipeline.getStageOutputs(transformName)));
         if (transformInfo.getErrorDatasetName() != null) {
           tranformIdToDatasetName.put(transformName, transformInfo.getErrorDatasetName());
         }
@@ -320,10 +322,15 @@ public class ETLWorker extends AbstractWorker {
       }
     });
 
+    DefaultEmitter<Object> sourceEmitter = new DefaultEmitter<>();
+    TrackedEmitter<Object> trackedSourceEmitter =
+      new TrackedEmitter<>(sourceEmitter,
+                           new DefaultStageMetrics(metrics, sourceStageName),
+                           TrackedTransform.RECORDS_OUT);
     while (!stopped) {
       // Invoke poll method of the source to fetch data
       try {
-        SourceState newState = source.poll(sourceEmitter, new SourceState(currentState));
+        SourceState newState = source.poll(trackedSourceEmitter, new SourceState(currentState));
         if (newState != null) {
           nextState.setState(newState);
         }

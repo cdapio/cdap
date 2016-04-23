@@ -85,7 +85,7 @@ class TrackerLineageController{
     let startTime = parseInt(this.customTimeRange.startTime.valueOf() / 1000, 10);
     let endTime = parseInt(this.customTimeRange.endTime.valueOf() / 1000, 10);
 
-    this.$state.go('tracker.entity.lineage', { start: startTime, end: endTime });
+    this.$state.go('tracker.detail.entity.lineage', { start: startTime, end: endTime });
   }
 
   getLineage(entityType, entityId) {

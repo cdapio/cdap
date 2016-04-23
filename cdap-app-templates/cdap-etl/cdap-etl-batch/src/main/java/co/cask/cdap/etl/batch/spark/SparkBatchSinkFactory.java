@@ -16,6 +16,7 @@
 
 package co.cask.cdap.etl.batch.spark;
 
+import co.cask.cdap.api.data.batch.Output;
 import co.cask.cdap.api.data.batch.OutputFormatProvider;
 import co.cask.cdap.api.spark.JavaSparkExecutionContext;
 import com.google.common.collect.ImmutableMap;
@@ -82,22 +83,46 @@ final class SparkBatchSinkFactory {
     this.sinkOutputs = sinkOutputs;
   }
 
-  void addOutput(String stageName, String outputName, OutputFormatProvider outputFormatProvider) {
-    if (outputFormatProviders.containsKey(outputName) || datasetInfos.containsKey(outputName)) {
-      throw new IllegalArgumentException("OutputFormatProvider with name " + outputName + " is already defined. " +
-                                           "Cannot add multiple OutputFormatProviders with the same name.");
+  void addOutput(String stageName, Output output) {
+    if (output instanceof Output.DatasetOutput) {
+      // Note if output format provider is trackable then it comes in as DatasetOutput
+      Output.DatasetOutput datasetOutput = (Output.DatasetOutput) output;
+      addOutput(stageName, datasetOutput.getName(), datasetOutput.getAlias(), datasetOutput.getArguments());
+    } else if (output instanceof Output.OutputFormatProviderOutput) {
+      Output.OutputFormatProviderOutput ofpOutput = (Output.OutputFormatProviderOutput) output;
+      addOutput(stageName, ofpOutput.getAlias(),
+                new BasicOutputFormatProvider(ofpOutput.getOutputFormatProvider().getOutputFormatClassName(),
+                                              ofpOutput.getOutputFormatProvider().getOutputFormatConfiguration()));
+    } else {
+      throw new IllegalArgumentException("Unknown output format type: " + output.getClass().getCanonicalName());
     }
-    outputFormatProviders.put(outputName, outputFormatProvider);
-    addStageOutput(stageName, outputName);
+  }
+
+  void addOutput(String stageName, String alias, OutputFormatProvider outputFormatProvider) {
+    addOutput(stageName, alias,
+              new BasicOutputFormatProvider(outputFormatProvider.getOutputFormatClassName(),
+                                            outputFormatProvider.getOutputFormatConfiguration()));
   }
 
   void addOutput(String stageName, String datasetName, Map<String, String> datasetArgs) {
-    if (outputFormatProviders.containsKey(datasetName) || datasetInfos.containsKey(datasetName)) {
-      throw new IllegalArgumentException("Output dataset with name " + datasetName + " is already defined. " +
-                                           "Cannot add the same dataset as output multiple times.");
+    addOutput(stageName, datasetName, datasetName, datasetArgs);
+  }
+
+  private void addOutput(String stageName, String alias,
+                         BasicOutputFormatProvider outputFormatProvider) {
+    if (outputFormatProviders.containsKey(alias) || datasetInfos.containsKey(alias)) {
+      throw new IllegalArgumentException("Output already configured: " + alias);
     }
-    datasetInfos.put(datasetName, new DatasetInfo(datasetName, datasetArgs, null));
-    addStageOutput(stageName, datasetName);
+    outputFormatProviders.put(alias, outputFormatProvider);
+    addStageOutput(stageName, alias);
+  }
+
+  private void addOutput(String stageName, String datasetName, String alias, Map<String, String> datasetArgs) {
+    if (outputFormatProviders.containsKey(alias) || datasetInfos.containsKey(alias)) {
+      throw new IllegalArgumentException("Output already configured: " + alias);
+    }
+    datasetInfos.put(alias, new DatasetInfo(datasetName, datasetArgs, null));
+    addStageOutput(stageName, alias);
   }
 
   void serialize(OutputStream outputStream) throws IOException {

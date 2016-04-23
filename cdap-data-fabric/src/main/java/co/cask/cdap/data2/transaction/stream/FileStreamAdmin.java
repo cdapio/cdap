@@ -239,8 +239,10 @@ public class FileStreamAdmin implements StreamAdmin {
   @Override
   public StreamConfig getConfig(Id.Stream streamId) throws IOException {
     Location configLocation = getConfigLocation(streamId);
-    Preconditions.checkArgument(configLocation.exists(), "Stream '%s' does not exist.", streamId);
-
+    if (!configLocation.exists()) {
+      throw new FileNotFoundException(String.format("Configuration file %s for stream '%s' does not exist.",
+                                                    configLocation.toURI().getPath(), streamId));
+    }
     StreamConfig config = GSON.fromJson(
       CharStreams.toString(CharStreams.newReaderSupplier(Locations.newInputSupplier(configLocation), Charsets.UTF_8)),
       StreamConfig.class);

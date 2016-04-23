@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -44,13 +44,15 @@ import co.cask.cdap.api.dataset.table.Put;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.io.Locations;
+import co.cask.cdap.data2.dataset2.lib.file.FileSetDataset;
 import co.cask.cdap.explore.client.ExploreFacade;
 import co.cask.cdap.proto.Id;
 import co.cask.tephra.Transaction;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.inject.Provider;
 import org.apache.twill.filesystem.Location;
@@ -61,6 +63,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -75,6 +78,7 @@ import javax.annotation.Nullable;
 public class PartitionedFileSetDataset extends AbstractDataset implements PartitionedFileSet, DatasetOutputCommitter {
 
   private static final Logger LOG = LoggerFactory.getLogger(PartitionedFileSetDataset.class);
+  private static final String QUARANTINE_DIR = ".quarantine";
 
   // column keys
   protected static final byte[] RELATIVE_PATH = { 'p' };
@@ -99,7 +103,12 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
   // the partition already exists. The reason for this is to provide backward-compatibility for CDAP-1227:
   // by adding the partition in the onSuccess() of this dataset, map/reduce programs do not need to do that in
   // their onFinish() any longer. But existing map/reduce programs may still do that, and would now fail.
-  private final Map<String, PartitionKey> partitionsAddedInSameTx = Maps.newHashMap();
+  private final Map<String, PartitionKey> partitionsAddedInSameTx = new HashMap<>();
+
+  // Keep track of all partitions' being added/dropped in this transaction, so we can rollback their paths,
+  // if necessary.
+  private final List<PathOperation> operationsInThisTx = new ArrayList<>();
+
   private Transaction tx;
 
   // this will store the result of filterInputPaths() after it is called (the result is needed by
@@ -124,20 +133,88 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
   @Override
   public void startTx(Transaction tx) {
     partitionsAddedInSameTx.clear();
+    operationsInThisTx.clear();
     super.startTx(tx);
     this.tx = tx;
   }
 
   @Override
   public void postTxCommit() {
+    // simply delete the quarantine directory for this transaction
+    try {
+      Location quarantine = getQuarantineLocation();
+      if (quarantine.exists()) {
+        boolean deleteSuccess = quarantine.delete(true);
+        if (!deleteSuccess) {
+          throw new DataSetException(String.format("Error deleting quarantine location %s.", quarantine));
+        }
+      }
+    } catch (IOException e) {
+      throw new DataSetException(String.format("Error deleting quarantine location for tx %s.", tx.getWritePointer()),
+                                 e);
+    }
+
     this.tx = null;
     super.postTxCommit();
   }
 
   @Override
   public boolean rollbackTx() throws Exception {
+    // rollback all the partition add and drop operations, in reverse order
+    // if any throw exception, suppress it temporarily while attempting to roll back the remainder operations
+    IOException ioe = null;
+    for (int i = operationsInThisTx.size() - 1; i >= 0; i--) {
+      PathOperation operation = operationsInThisTx.get(i);
+      try {
+        rollbackOperation(operation);
+      } catch (IOException e) {
+        if (ioe == null) {
+          ioe = e;
+        } else {
+          ioe.addSuppressed(e);
+        }
+      }
+    }
+    if (ioe != null) {
+      throw ioe;
+    }
+
     this.tx = null;
     return super.rollbackTx();
+  }
+
+  private void rollbackOperation(PathOperation operation) throws IOException {
+    switch (operation.getOperationType()) {
+      case CREATE:
+        undoPartitionCreate(operation.getRelativePath());
+        break;
+      case DROP:
+        undoPartitionDelete(operation.getRelativePath());
+        break;
+      default:
+        // this shouldn't happen, since we only have the above types defined in the Enum.
+        throw new IllegalArgumentException("Unknown operation type: " + operation.getOperationType());
+    }
+  }
+
+  private void undoPartitionDelete(String relativePath) throws IOException {
+    // move from quarantine, back to original location
+    Location srcLocation = getQuarantineLocation().append(relativePath);
+    if (srcLocation.exists()) {
+      srcLocation.renameTo(files.getLocation(relativePath));
+    }
+  }
+
+  private void undoPartitionCreate(String relativePath) throws IOException {
+    Location location = files.getLocation(relativePath);
+    if (location.exists() && !location.delete(true)) {
+      throw new IOException(String.format("Failed to delete location %s.", location));
+    }
+  }
+
+  private Location getQuarantineLocation() throws IOException {
+    // each transaction must not share its quarantine directory with another transaction
+    return files.getBaseLocation().append(QUARANTINE_DIR + "." + tx.getTransactionId());
   }
 
   @Override
@@ -193,6 +270,7 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
 
     partitionsTable.put(put);
     partitionsAddedInSameTx.put(path, key);
+    operationsInThisTx.add(new PathOperation(path, PathOperation.OperationType.CREATE));
 
 
     if (explorable) {
@@ -391,18 +469,26 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
       return;
     }
     if (!isExternal) {
+      Location partitionLocation = partition.getLocation();
       try {
-        if (partition.getLocation().exists()) {
-          boolean deleteSuccess = partition.getLocation().delete(true);
-          if (!deleteSuccess) {
-            throw new DataSetException(String.format("Error deleting file(s) for partition %s at path %s.",
-                                                     key, partition.getLocation()));
+        if (partitionLocation.exists()) {
+          Location dstLocation = getQuarantineLocation().append(partition.getRelativePath());
+          Location dstParent = Locations.getParent(dstLocation);
+          // shouldn't be null, since dstLocation was created by appending to a location, so it must have a parent
+          Preconditions.checkNotNull(dstParent);
+          // before moving into quarantine, we need to ensure that parent location exists
+          if (!dstParent.exists()) {
+            if (!dstParent.mkdirs()) {
+              throw new DataSetException(String.format("Failed to create parent directory %s", dstParent));
+            }
           }
+          partitionLocation.renameTo(dstLocation);
         }
-      } catch (IOException e) {
-        throw new DataSetException(String.format("Error deleting file(s) for partition %s at path %s: %s.",
-                                                 key, partition.getLocation(), e.getMessage()), e);
+      } catch (IOException ioe) {
+        throw new DataSetException(String.format("Failed to move location %s into quarantine", partitionLocation));
       }
+      operationsInThisTx.add(new PathOperation(partition.getRelativePath(),
+                                               PathOperation.OperationType.DROP));
     }
     partitionsTable.delete(rowKey);
     dropPartitionFromExplore(key);
@@ -517,7 +603,7 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
   }
 
   private PartitionMetadata metadataFromRow(Row row) {
-    Map<String, String> metadata = Maps.newHashMap();
+    Map<String, String> metadata = new HashMap<>();
     for (Map.Entry<byte[], byte[]> entry : row.getColumns().entrySet()) {
       if (Bytes.startsWith(entry.getKey(), METADATA_PREFIX)) {
         String metadataKey = metadataKeyFromColumnKey(entry.getKey());
@@ -645,7 +731,7 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
     }
 
     // copy the output properties of the embedded file set to the output arguments
-    Map<String, String> outputArgs = Maps.newHashMap(files.getOutputFormatConfiguration());
+    Map<String, String> outputArgs = new HashMap<>(files.getOutputFormatConfiguration());
 
     // we set the file set's output path in the definition's getDataset(), so there is no need to configure it again.
     // here we just want to validate that an output partition key or dynamic partitioner was specified in the arguments.
@@ -673,8 +759,8 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
   @Override
   public void onSuccess() throws DataSetException {
     String outputPath = FileSetArguments.getOutputPath(runtimeArguments);
-    // if there is no output path, the batch job probably would have failed
-    // we definitely can't do much here if we don't know the output path
+    // If there is no output path, it is either using DynamicPartitioner or the job would have failed.
+    // Either way, we can't do much here.
     if (outputPath == null) {
       return;
     }
@@ -685,11 +771,15 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
       Map<String, String> metadata = PartitionedFileSetArguments.getOutputPartitionMetadata(runtimeArguments);
       addPartition(outputKey, outputPath, metadata);
     }
+
+    // currently, FileSetDataset#onSuccess is a no-op, but call it, in case it does something in the future
+    ((FileSetDataset) files).onSuccess();
   }
 
   @Override
   public void onFailure() throws DataSetException {
-    // nothing to do, as we have not written anything to the dataset yet
+    // depend on FileSetDataset's implementation of #onFailure to rollback
+    ((FileSetDataset) files).onFailure();
   }
 
   @Override
@@ -879,7 +969,7 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
     protected BasicPartitionOutput(PartitionedFileSetDataset partitionedFileSetDataset, String relativePath,
                                    PartitionKey key) {
       super(partitionedFileSetDataset, relativePath, key);
-      this.metadata = Maps.newHashMap();
+      this.metadata = new HashMap<>();
     }
 
     @Override

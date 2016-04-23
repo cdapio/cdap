@@ -89,10 +89,12 @@ public class RemoteWorkflowManager extends AbstractProgramManager<WorkflowManage
   }
 
   @Override
-  public Map<String, WorkflowNodeStateDetail> getWorkflowNodeStates(ProgramRunId workflowRunId)
+  public Map<String, WorkflowNodeStateDetail> getWorkflowNodeStates(String workflowRunId)
     throws NotFoundException {
     try {
-      return workflowClient.getWorkflowNodeStates(workflowRunId);
+      ProgramRunId programRunId = new ProgramRunId(workflowId.getNamespaceId(), workflowId.getApplicationId(),
+                                                   workflowId.getType(), workflowId.getId(), workflowRunId);
+      return workflowClient.getWorkflowNodeStates(programRunId);
     } catch (IOException | UnauthenticatedException e) {
       throw Throwables.propagate(e);
     }

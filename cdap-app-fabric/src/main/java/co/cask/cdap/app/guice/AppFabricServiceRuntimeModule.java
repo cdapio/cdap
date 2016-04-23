@@ -127,6 +127,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                              StreamHandler.class, StreamFetchHandler.class,
                              StreamViewHttpHandler.class),
                            new ConfigStoreModule().getInMemoryModule(),
+                           new EntityVerifierModule(),
                            new AbstractModule() {
                              @Override
                              protected void configure() {
@@ -158,6 +159,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                              StreamHandler.class, StreamFetchHandler.class,
                              StreamViewHttpHandler.class),
                            new ConfigStoreModule().getStandaloneModule(),
+                           new EntityVerifierModule(),
                            new AbstractModule() {
                              @Override
                              protected void configure() {
@@ -211,6 +213,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
 
     return Modules.combine(new AppFabricServiceModule(),
                            new ConfigStoreModule().getDistributedModule(),
+                           new EntityVerifierModule(),
                            new AbstractModule() {
                              @Override
                              protected void configure() {

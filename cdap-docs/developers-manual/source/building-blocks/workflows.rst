@@ -1,6 +1,6 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2014-2015 Cask Data, Inc.
+    :copyright: Copyright © 2014-2016 Cask Data, Inc.
 
 .. _workflows:
 
@@ -239,7 +239,7 @@ Here is an example, taken from the
 
 .. literalinclude:: /../../../cdap-examples/WikipediaPipeline/src/main/java/co/cask/cdap/examples/wikipedia/TopNMapReduce.java
    :language: java
-   :lines: 109-123
+   :lines: 111-125
 
 **Note:** The test of ``workflowToken != null`` is only required because this Reducer could
 be used outside of a workflow. When run from within a workflow, the token is guaranteed to

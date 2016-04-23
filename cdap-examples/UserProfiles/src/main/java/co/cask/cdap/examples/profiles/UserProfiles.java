@@ -35,11 +35,12 @@ public class UserProfiles extends AbstractApplication {
   @Override
   public void configure() {
     setName("UserProfiles");
-    setDescription("Demonstrates the use of column-level conflict detection.");
+    setDescription("Demonstrates the use of column-level conflict detection");
     addStream(new Stream("events"));
     addFlow(new ActivityFlow());
     addService(new UserProfileService());
-    createDataset("counters", KeyValueTable.class);
+    createDataset("counters", KeyValueTable.class,
+                  DatasetProperties.builder().setDescription("Counters key-value table").build());
 
     // create the profiles table with a schema so that it can be explored via Hive
     Schema profileSchema = Schema.recordOf(
@@ -58,6 +59,7 @@ public class UserProfiles extends AbstractApplication {
       .add(Table.PROPERTY_SCHEMA, profileSchema.toString())
       // to indicate that the id field should come from the row key and not a row column
       .add(Table.PROPERTY_SCHEMA_ROW_FIELD, "id")
+      .setDescription("Profiles table with column-level conflict detection")
       .build());
   }
 }

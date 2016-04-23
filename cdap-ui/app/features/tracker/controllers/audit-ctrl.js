@@ -60,6 +60,8 @@ class TrackerAuditController {
       endTime: null
     };
 
+    this.enableTrackerLoading = false;
+
     this.selectedTimeRange = this.findTimeRange();
 
     this.currentPage = 1;
@@ -85,10 +87,11 @@ class TrackerAuditController {
     let startTime = parseInt(this.customTimeRange.startTime.valueOf() / 1000, 10);
     let endTime = parseInt(this.customTimeRange.endTime.valueOf() / 1000, 10);
 
-    this.$state.go('tracker.entity.audit', { start: startTime, end: endTime });
+    this.$state.go('tracker.detail.entity.audit', { start: startTime, end: endTime });
   }
 
   fetchAuditLogs(currentPage) {
+    this.enableTrackerLoading = false;
     let params = {
       namespace: this.$state.params.namespace,
       entityType: this.$state.params.entityType === 'streams' ? 'stream' : 'dataset',
@@ -104,10 +107,9 @@ class TrackerAuditController {
       .then((response) => {
         this.auditLogs = response;
       }, (err) => {
-        console.log('Error: ', err);
         this.myAlertOnValium.show({
           type: 'danger',
-          content: 'Enable the Tracker extension to view audit logs.'
+          content: err.data
         });
       });
   }

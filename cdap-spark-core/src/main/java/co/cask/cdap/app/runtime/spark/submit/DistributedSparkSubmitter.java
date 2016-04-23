@@ -16,9 +16,17 @@
 
 package co.cask.cdap.app.runtime.spark.submit;
 
+import co.cask.cdap.app.runtime.spark.SparkMainWrapper;
+import co.cask.cdap.app.runtime.spark.SparkRuntimeContext;
+import co.cask.cdap.app.runtime.spark.SparkRuntimeEnv;
+import co.cask.cdap.app.runtime.spark.distributed.SparkExecutionService;
+import co.cask.cdap.internal.app.runtime.workflow.BasicWorkflowToken;
+import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
+import co.cask.cdap.proto.id.ProgramRunId;
 import org.apache.hadoop.conf.Configuration;
 
-import java.util.HashMap;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
 
@@ -27,33 +35,60 @@ import javax.annotation.Nullable;
  */
 public class DistributedSparkSubmitter extends AbstractSparkSubmitter {
 
-  private final String schedulerQueueName;
   private final Configuration hConf;
+  private final String schedulerQueueName;
+  private final SparkExecutionService sparkExecutionService;
 
-  public DistributedSparkSubmitter(Configuration hConf, @Nullable String schedulerQueueName) {
+  public DistributedSparkSubmitter(Configuration hConf, String hostname, SparkRuntimeContext runtimeContext,
+                                   @Nullable String schedulerQueueName) {
     this.hConf = hConf;
     this.schedulerQueueName = schedulerQueueName;
+    ProgramRunId programRunId = runtimeContext.getProgram().getId().toEntityId().run(runtimeContext.getRunId().getId());
+    WorkflowProgramInfo workflowInfo = runtimeContext.getWorkflowInfo();
+    BasicWorkflowToken workflowToken = workflowInfo == null ? null : workflowInfo.getWorkflowToken();
+    this.sparkExecutionService = new SparkExecutionService(hostname, programRunId, workflowToken);
   }
 
   @Override
   protected Map<String, String> getSubmitConf() {
-    Map<String, String> submitConf = new HashMap<>();
-
-    // Copy all hadoop configurations to the submission conf, prefix with "spark.hadoop.". This is
-    // how Spark YARN client get hold of Hadoop configurations if those configurations are not in classpath,
-    // which is true in CM cluster due to private hadoop conf directory (SPARK-13441) and YARN-4727
-    for (Map.Entry<String, String> entry : hConf) {
-      submitConf.put("spark.hadoop." + entry.getKey(), hConf.get(entry.getKey()));
-    }
-
     if (schedulerQueueName != null && !schedulerQueueName.isEmpty()) {
-      submitConf.put("spark.yarn.queue", schedulerQueueName);
+      return Collections.singletonMap("spark.yarn.queue", schedulerQueueName);
     }
-    return submitConf;
+    return Collections.emptyMap();
   }
 
   @Override
   protected String getMaster(Map<String, String> configs) {
-    return "yarn-client";
+    return "yarn-cluster";
+  }
+
+  @Override
+  protected List<String> beforeSubmit() {
+    // Add all Hadoop configurations to the SparkRuntimeEnv, prefix with "spark.hadoop.". This is
+    // how Spark YARN client get hold of Hadoop configurations if those configurations are not in classpath,
+    // which is true in CM cluster due to private hadoop conf directory (SPARK-13441) and YARN-4727
+    for (Map.Entry<String, String> entry : hConf) {
+      SparkRuntimeEnv.setProperty("spark.hadoop." + entry.getKey(), hConf.get(entry.getKey()));
+    }
+
+    sparkExecutionService.startAndWait();
+    return Collections.singletonList("--" + SparkMainWrapper.ARG_EXECUTION_SERVICE_URI()
+                                       + "=" + sparkExecutionService.getBaseURI());
+  }
+
+  @Override
+  protected void triggerShutdown() {
+    // Just stop the execution service and block on that.
+    // It will wait till the call the "completed" from the Spark driver.
+    sparkExecutionService.stopAndWait();
+  }
+
+  @Override
+  protected void onCompleted(boolean succeeded) {
+    if (succeeded) {
+      sparkExecutionService.stopAndWait();
+    } else {
+      sparkExecutionService.shutdownNow();
+    }
   }
 }

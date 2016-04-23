@@ -70,6 +70,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -78,11 +79,13 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.counters.Limits;
 import org.apache.twill.kafka.client.KafkaClientService;
 import org.apache.twill.zookeeper.ZKClientService;
+import org.apache.zookeeper.server.ZooKeeperServerMain;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -93,6 +96,8 @@ public class StandaloneMain {
 
   // A special key in the CConfiguration to disable UI. It's mainly used for unit-tests that start Standalone.
   public static final String DISABLE_UI = "standalone.disable.ui";
+  public static final String LOCAL_ZOOKEEPER_SERVER_PORT = "local.zkserver.port";
+  public static final String LOCAL_KAFKA_DIR = "local.kafka.dir";
 
   private static final Logger LOG = LoggerFactory.getLogger(StandaloneMain.class);
 
@@ -110,29 +115,41 @@ public class StandaloneMain {
   private final boolean securityEnabled;
   private final boolean sslEnabled;
   private final CConfiguration cConf;
-
-  private ExternalAuthenticationServer externalAuthenticationServer;
   private final DatasetService datasetService;
-
-  private ExploreExecutorService exploreExecutorService;
   private final ExploreClient exploreClient;
-
   private final ZKClientService zkClient;
   private final KafkaClientService kafkaClient;
+  private final ExternalJavaProcessExecutor kafkaProcessExecutor;
+  private final ExternalJavaProcessExecutor zookeeperProcessExecutor;
+
+  private ExternalAuthenticationServer externalAuthenticationServer;
+  private ExploreExecutorService exploreExecutorService;
+
 
   private StandaloneMain(List<Module> modules, CConfiguration cConf) {
     this.cConf = cConf;
 
     injector = Guice.createInjector(modules);
 
-    // Start ZK client and Kafka client only when audit is enabled
-    boolean auditEnabled = cConf.getBoolean(Constants.Audit.ENABLED);
-    if (auditEnabled) {
+    // Start ZK client, Kafka client, ZK Server and Kafka Server only when audit is enabled
+    if (cConf.getBoolean(Constants.Audit.ENABLED)) {
       zkClient = injector.getInstance(ZKClientService.class);
       kafkaClient = injector.getInstance(KafkaClientService.class);
+      File zkLogs = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR), "zk-logs");
+      String zkPort = cConf.get(LOCAL_ZOOKEEPER_SERVER_PORT);
+      zookeeperProcessExecutor = new ExternalJavaProcessExecutor(ZooKeeperServerMain.class.getCanonicalName(),
+                                                                 ImmutableList.of(zkPort, zkLogs.getAbsolutePath()));
+
+      String kafkaClassPath =  new File(cConf.get(LOCAL_KAFKA_DIR), "*").getAbsolutePath();
+      kafkaProcessExecutor = new ExternalJavaProcessExecutor("co.cask.cdap.kafka.run.KafkaServerMain",
+                                                             Collections.<String>emptyList(),
+                                                             ImmutableMap.of("KAFKA_HEAP_OPTS", "-Xmx1G -Xms1G"),
+                                                             kafkaClassPath);
     } else {
       zkClient = null;
       kafkaClient = null;
+      zookeeperProcessExecutor = null;
+      kafkaProcessExecutor = null;
     }
 
     txService = injector.getInstance(InMemoryTransactionService.class);
@@ -202,6 +219,14 @@ public class StandaloneMain {
     ConfigurationLogger.logImportantConfig(cConf);
 
     // Start all the services.
+    if (zookeeperProcessExecutor != null) {
+      zookeeperProcessExecutor.startAndWait();
+    }
+
+    if (kafkaProcessExecutor != null) {
+      kafkaProcessExecutor.startAndWait();
+    }
+
     if (zkClient != null) {
       zkClient.startAndWait();
     }
@@ -290,6 +315,14 @@ public class StandaloneMain {
       if (zkClient != null) {
         zkClient.startAndWait();
       }
+
+      if (kafkaProcessExecutor != null) {
+        kafkaProcessExecutor.stopAndWait();
+      }
+
+      if (zookeeperProcessExecutor != null) {
+        zookeeperProcessExecutor.stopAndWait();
+      }
     } catch (Throwable e) {
       LOG.error("Exception during shutdown", e);
       // We can't do much but exit. Because there was an exception, some non-daemon threads may still be running.
@@ -328,6 +361,7 @@ public class StandaloneMain {
       }
       main.startUp();
     } catch (Throwable e) {
+      @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
       Throwable rootCause = Throwables.getRootCause(e);
       if (rootCause instanceof ServiceBindException) {
         LOG.error("Failed to start Standalone CDAP: {}", rootCause.getMessage());
