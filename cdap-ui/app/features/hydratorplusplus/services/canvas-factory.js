@@ -17,78 +17,6 @@
 
   angular.module(PKG.name + '.feature.hydratorplusplus')
   .factory('HydratorPlusPlusCanvasFactory', function(myHelpers, $q, myAlertOnValium, GLOBALS, $filter) {
-    function extractMetadataFromDraft(data) {
-      var returnConfig = {};
-      returnConfig.name = myHelpers.objectQuery(data, 'name');
-      returnConfig.description = myHelpers.objectQuery(data, 'description');
-      var template = myHelpers.objectQuery(data, 'artifact', 'name');
-
-      returnConfig.template = {
-        type: template
-      };
-      if (GLOBALS.etlBatchPipelines.indexOf(template) !== -1) {
-        returnConfig.template.schedule = {};
-        returnConfig.template.schedule.cron = myHelpers.objectQuery(data.config, 'schedule') || '* * * * *';
-      } else if (template === GLOBALS.etlRealtime) {
-        returnConfig.template.instance = myHelpers.objectQuery(data.config, 'instance') || 1;
-      }
-      return returnConfig;
-    }
-
-    function parseImportedJson(configJson, type) {
-      var result;
-      try {
-        result = JSON.parse(configJson);
-      } catch(e) {
-        return {
-          message: 'The imported config json is incorrect. Please check the JSON content',
-          error: true
-        };
-      }
-
-      if (result.artifact.name !== type) {
-        return {
-          message: 'Template imported is for ' + result.artifact.name + '. Please switch to ' + result.artifact.name + ' creation to import.',
-          error: true
-        };
-      }
-      // We need to perform more validations on the uploaded json.
-      if (
-          !result.config.source ||
-          !result.config.sinks ||
-          !result.config.transforms
-        ) {
-        return {
-          message: 'The structure of imported config is incorrect. To the base structure of the config please try creating a new adpater and viewing the config.',
-          error: true
-        };
-      }
-      return result;
-    }
-
-    function importPipeline(files, templateType) {
-      var defer = $q.defer();
-      var reader = new FileReader();
-      reader.readAsText(files[0], 'UTF-8');
-
-      reader.onload = function (evt) {
-        var result = parseImportedJson(evt.target.result, templateType);
-        if (result.error) {
-          myAlertOnValium.show({
-            type: 'danger',
-            content: result.message
-          });
-          defer.reject(result.message);
-        } else {
-          defer.resolve(result);
-        }
-      };
-
-      reader.onerror = function (evt) {
-        defer.reject(evt);
-      };
-      return defer.promise;
-    }
 
     /*
       This is the inner utility function that is used once we have a source node to start our traversal.
@@ -232,9 +160,6 @@
     }
 
     return {
-      extractMetadataFromDraft: extractMetadataFromDraft,
-      importPipeline: importPipeline,
-      parseImportedJson: parseImportedJson,
       orderConnections: orderConnections,
       pruneProperties: pruneProperties
     };
