@@ -18,6 +18,7 @@ package co.cask.cdap.app.runtime.spark.distributed;
 
 import co.cask.cdap.api.workflow.Value;
 import co.cask.cdap.common.app.RunIds;
+import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.internal.app.runtime.workflow.BasicWorkflowToken;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ProgramRunId;
@@ -29,6 +30,7 @@ import org.junit.Test;
 
 import java.net.InetAddress;
 import java.util.Map;
+import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -65,7 +67,7 @@ public class SparkExecutionServiceTest {
     SparkExecutionService service = new SparkExecutionService(InetAddress.getLoopbackAddress().getCanonicalHostName(),
                                                               programRunId, null);
     service.startAndWait();
-    SparkExecutionClient client = new SparkExecutionClient(service.getBaseURI(), programRunId);
+    final SparkExecutionClient client = new SparkExecutionClient(service.getBaseURI(), programRunId);
 
     // Heartbeats multiple times.
     for (int i = 0; i < 5; i++) {
@@ -76,10 +78,13 @@ public class SparkExecutionServiceTest {
     // Stop the program from the service side
     ListenableFuture<Service.State> stopFuture = service.stop();
 
-    // The next heartbeat will receive the STOP command
-    SparkCommand command = client.heartbeat(null);
-    Assert.assertNotNull(command);
-    Assert.assertEquals(SparkCommand.STOP, command);
+    // Expect some future heartbeats will receive the STOP command
+    Tasks.waitFor(SparkCommand.STOP, new Callable<SparkCommand>() {
+      @Override
+      public SparkCommand call() throws Exception {
+        return client.heartbeat(null);
+      }
+    }, 10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
 
     // Call complete to notify the service it has been stopped
     client.completed(null);

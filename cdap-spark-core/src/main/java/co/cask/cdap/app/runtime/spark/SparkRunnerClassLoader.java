@@ -63,8 +63,9 @@ public final class SparkRunnerClassLoader extends URLClassLoader {
     Type.getObjectType("org/apache/spark/streaming/StreamingContext");
   private static final Type SPARK_CONF_TYPE = Type.getObjectType("org/apache/spark/SparkConf");
   // SparkSubmit is a companion object, hence the "$" at the end
-  private static final Type SPARK_SUBMIT_TYPE = Type.getObjectType("org.apache.spark.deploy.SparkSubmit$");
+  private static final Type SPARK_SUBMIT_TYPE = Type.getObjectType("org/apache/spark/deploy/SparkSubmit$");
   private static final Type SPARK_YARN_CLIENT_TYPE = Type.getObjectType("org/apache/spark/deploy/yarn/Client");
+  private static final Type SPARK_DSTREAM_GRAPH_TYPE = Type.getObjectType("org/apache/spark/streaming/DStreamGraph");
 
   // Don't refer akka Remoting with the ".class" because in future Spark version, akka dependency is removed and
   // we don't want to force a dependency on akka.
@@ -84,6 +85,7 @@ public final class SparkRunnerClassLoader extends URLClassLoader {
   private static final Set<String> API_CLASSES;
 
   private final boolean rewriteYarnClient;
+  private final boolean rewriteDStreamGraph;
 
   static {
     Set<String> apiClasses = new HashSet<>();
@@ -115,13 +117,16 @@ public final class SparkRunnerClassLoader extends URLClassLoader {
     return urls.toArray(new URL[urls.size()]);
   }
 
-  public SparkRunnerClassLoader(ClassLoader parent, boolean rewriteYarnClient) throws IOException {
-    this(getClassloaderURLs(parent), parent, rewriteYarnClient);
+  public SparkRunnerClassLoader(ClassLoader parent,
+                                boolean rewriteYarnClient, boolean rewriteDStreamGraph) throws IOException {
+    this(getClassloaderURLs(parent), parent, rewriteYarnClient, rewriteDStreamGraph);
   }
 
-  public SparkRunnerClassLoader(URL[] urls, @Nullable ClassLoader parent, boolean rewriteYarnClient) {
+  public SparkRunnerClassLoader(URL[] urls, @Nullable ClassLoader parent,
+                                boolean rewriteYarnClient, boolean rewriteDStreamGraph) {
     super(urls, parent);
     this.rewriteYarnClient = rewriteYarnClient;
+    this.rewriteDStreamGraph = rewriteDStreamGraph;
   }
 
   @Override
@@ -167,7 +172,11 @@ public final class SparkRunnerClassLoader extends URLClassLoader {
         // Rewrite System.setProperty call to SparkRuntimeEnv.setProperty for SparkSubmit and all inner classes
         cls = rewriteSetPropertiesAndDefineClass(name, is);
       } else if (name.equals(SPARK_YARN_CLIENT_TYPE.getClassName()) && rewriteYarnClient) {
+        // Rewrite YarnClient for workaround SPARK-13441.
         cls = defineClient(name, is);
+      } else if (name.equals(SPARK_DSTREAM_GRAPH_TYPE.getClassName()) && rewriteDStreamGraph) {
+        // Rewrite DStreamGraph to set TaskSupport on parallel array usage to avoid Thread leak
+        cls = defineDStreamGraph(name, is);
       } else if (name.equals(AKKA_REMOTING_TYPE.getClassName())) {
         // Define the akka.remote.Remoting class to avoid thread leakage
         cls = defineAkkaRemoting(name, is);
@@ -213,6 +222,41 @@ public final class SparkRunnerClassLoader extends URLClassLoader {
                                       new Method("setupSparkConf", Type.VOID_TYPE, new Type[] { sparkConfType }));
       }
     });
+  }
+
+  /**
+   * Defines the DStreamGraph class by rewriting calls to parallel array with a call to
+   * SparkRuntimeUtils#setTaskSupport(ParArray).
+   */
+  private Class<?> defineDStreamGraph(String name, InputStream byteCodeStream) throws IOException {
+    ClassReader cr = new ClassReader(byteCodeStream);
+    ClassWriter cw = new ClassWriter(0);
+
+    cr.accept(new ClassVisitor(Opcodes.ASM5, cw) {
+      @Override
+      public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
+        MethodVisitor mv = super.visitMethod(access, name, desc, signature, exceptions);
+        return new MethodVisitor(Opcodes.ASM5, mv) {
+          @Override
+          public void visitMethodInsn(int opcode, String owner, String name, String desc, boolean itf) {
+            super.visitMethodInsn(opcode, owner, name, desc, itf);
+            // If detected call to ArrayBuffer.par(), set the TaskSupport to avoid thread leak.
+            //INVOKEVIRTUAL scala/collection/mutable/ ArrayBuffer.par ()Lscala/collection/parallel/mutable/ParArray;
+            Type returnType = Type.getReturnType(desc);
+            if (opcode == Opcodes.INVOKEVIRTUAL && name.equals("par")
+                && owner.equals("scala/collection/mutable/ArrayBuffer")
+                && returnType.getClassName().equals("scala.collection.parallel.mutable.ParArray")) {
+              super.visitMethodInsn(Opcodes.INVOKESTATIC,
+                                    Type.getType(SparkRuntimeUtils.class).getInternalName(),
+                                    "setTaskSupport", Type.getMethodDescriptor(returnType, returnType), false);
+            }
+          }
+        };
+      }
+    }, ClassReader.EXPAND_FRAMES);
+
+    byte[] byteCode = cw.toByteArray();
+    return defineClass(name, byteCode, 0, byteCode.length);
   }
 
   /**
