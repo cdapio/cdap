@@ -1,0 +1,23 @@
+{
+  "metadata": {
+    "spec-version": "1.0"
+  },
+  "configuration-groups": [
+    {
+      "label": "Word Count Sink Configuration",
+      "properties": [
+        {
+          "widget-type": "textbox",
+          "label": "Field Name",
+          "name": "field"
+        },
+        {
+          "widget-type": "dataset-selector",
+          "label": "Table Name",
+          "name": "tableName"
+        }
+      ]
+    }
+  ],
+  "outputs": []
+}

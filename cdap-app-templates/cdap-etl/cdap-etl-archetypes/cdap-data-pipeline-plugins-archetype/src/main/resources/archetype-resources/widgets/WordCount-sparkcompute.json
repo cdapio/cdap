@@ -1,0 +1,26 @@
+{
+  "metadata": {
+    "spec-version": "1.0"
+  },
+  "configuration-groups": [
+    {
+      "label": "Word Count Compute Configuration",
+      "properties": [
+        {
+          "widget-type": "textbox",
+          "label": "Field Name",
+          "name": "field"
+        }
+      ]
+    }
+  ],
+  "outputs": [
+    {
+      "widget-type": "non-editable-schema-editor",
+      "schema": {
+        "word": "string",
+        "count": "long"
+      }
+    }
+  ]
+}
