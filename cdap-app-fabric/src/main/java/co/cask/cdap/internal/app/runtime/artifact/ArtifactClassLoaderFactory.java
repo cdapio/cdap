@@ -67,20 +67,15 @@ final class ArtifactClassLoaderFactory {
   CloseableClassLoader createClassLoader(Location artifactLocation) throws IOException {
     final File unpackDir = BundleJarUtil.unJar(artifactLocation, DirUtils.createTempDir(tmpDir));
 
+    ProgramRunner programRunner = null;
     ProgramClassLoader programClassLoader = null;
     try {
       // Try to create a ProgramClassLoader from the Spark runtime system if it is available.
       // It is needed because we don't know what program types that an artifact might have.
       // TODO: CDAP-5613. We shouldn't always expose the Spark classes.
-      ProgramRunner programRunner = programRunnerFactory.create(ProgramType.SPARK);
-      try {
-        if (programRunner instanceof ProgramClassLoaderProvider) {
-          programClassLoader = ((ProgramClassLoaderProvider) programRunner).createProgramClassLoader(cConf, unpackDir);
-        }
-      } finally {
-        if (programRunner instanceof Closeable) {
-          Closeables.closeQuietly((Closeable) programRunner);
-        }
+      programRunner = programRunnerFactory.create(ProgramType.SPARK);
+      if (programRunner instanceof ProgramClassLoaderProvider) {
+        programClassLoader = ((ProgramClassLoaderProvider) programRunner).createProgramClassLoader(cConf, unpackDir);
       }
     } catch (Exception e) {
       // If Spark is not supported, exception is expected. We'll use the default filter.
@@ -92,11 +87,15 @@ final class ArtifactClassLoaderFactory {
     }
 
     final ProgramClassLoader finalProgramClassLoader = programClassLoader;
+    final ProgramRunner finalProgramRunner = programRunner;
     return new CloseableClassLoader(programClassLoader, new Closeable() {
       @Override
       public void close() {
         try {
           Closeables.closeQuietly(finalProgramClassLoader);
+          if (finalProgramRunner instanceof Closeable) {
+            Closeables.closeQuietly((Closeable) finalProgramRunner);
+          }
           DirUtils.deleteDirectoryContents(unpackDir);
         } catch (IOException e) {
           LOG.warn("Failed to delete directory {}", unpackDir, e);
