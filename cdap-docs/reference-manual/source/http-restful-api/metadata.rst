@@ -559,7 +559,7 @@ Entities that match the specified query and entity type are returned in the body
      - Restricts the search to either all or specified entity types: ``all``, ``artifact``, ``app``, ``dataset``,
        ``program``, ``stream``, or ``view``
    * - ``<term>``
-     - Query term, as described below. Query terms are case-insensitive
+     - :ref:`Query term <metadata_query_terms>`, as described below. Query terms are case-insensitive
 
 .. rubric:: HTTP Responses
 
@@ -571,6 +571,8 @@ Entities that match the specified query and entity type are returned in the body
      - Description
    * - ``200 OK``
      - Entity ID and metadata of entities that match the query and entity type(s) are returned in the body of the response
+
+.. _metadata_query_terms::
 
 .. rubric:: Query Terms
 

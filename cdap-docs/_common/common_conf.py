@@ -28,9 +28,10 @@
 
 # Component versions used in replacements:
 
+cask_tracker_version = '0.1.0-SNAPSHOT'
+
 cdap_apps_version = '0.7.0-SNAPSHOT'
 cdap_apps_compatibile_version = 'release/cdap-3.4-compatible'
-
 
 node_js_min_version = 'beginning with v0.10.36'
 node_js_max_version = 'v4.4.0'
@@ -285,6 +286,13 @@ if cdap_apps_version:
 .. |cdap-apps-compatibile-version| replace:: %(cdap-apps-compatibile-version)s
 
 """ % {'cdap-apps-version': cdap_apps_version, 'cdap-apps-compatibile-version': cdap_apps_compatibile_version}
+
+if cask_tracker_version:
+    rst_epilog += """
+.. |cask-tracker-version| replace:: %(cask-tracker-version)s
+.. |literal-cask-tracker-version| replace:: ``%(cask-tracker-version)s``
+
+""" % {'cask-tracker-version': cask_tracker_version}
 
 # There are two options for replacing |today|: either, you set today to some
 # non-false value, then it is used:
