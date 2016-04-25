@@ -19,7 +19,7 @@ how it is based off of the metadata system - add plenty of links
 
 
 Cask Tracker ("Tracker") is a self-service CDAP extension that automatically captures
-metadata and lets you see how data is flowing into and out of datasets, streams, and
+:ref:`metadata <metadata-lineage>` and lets you see how data is flowing into and out of datasets, streams, and
 stream views.
 
 It allows you to perform impact and root-cause analysis, and delivers an audit-trail for
@@ -28,6 +28,10 @@ describes, explains, locates, and makes it easier to retrieve, use, and manage d
 
 Tracker also allows for the storage of metadata where it can be accessed and indexed. This
 allows it to be is easily searched and provides consistent, high-quality metadata.
+
+Tracker's UI shows a graphical visualization of the :ref:`lineage
+<metadata-lineage-lineage>` of an entity. A lineage shows |---| for a specified time range
+|---| all data access of the entity, and details of where that access originated from.
 
 
 **Harvest, Index, and Track Datasets**
