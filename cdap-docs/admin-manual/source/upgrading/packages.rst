@@ -103,8 +103,8 @@ upgrade instructions for the earlier versions and upgrade first to
 
      $ for i in `ls /etc/init.d/ | grep cdap` ; do sudo service $i start ; done
 
-#. To upgrade existing ETL applications created using the 3.2.x versions of ``cdap-etl-batch`` or 
-   ``cdap-etl-realtime``, there are :ref:`separate instructions on doing so <cdap-apps-etl-upgrade>`.
+#. To upgrade existing ETL applications created using the |previous-short-version|\.x versions of ``cdap-etl-batch``
+   or ``cdap-etl-realtime``, there are :ref:`separate instructions on doing so <cdap-apps-etl-upgrade>`.
 
 
 .. _admin-upgrading-packages-upgrading-hadoop:
