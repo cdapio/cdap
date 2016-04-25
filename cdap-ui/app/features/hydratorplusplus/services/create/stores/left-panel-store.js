@@ -54,6 +54,7 @@ var mapPluginTemplatesWithMoreInfo = (type, DAGPlusPlusFactory, popoverTemplate)
     plugin.type = type;
     plugin.icon = DAGPlusPlusFactory.getIcon(plugin.pluginName);
     plugin.template = popoverTemplate;
+    plugin.name = plugin.pluginTemplate;
     if (plugin.pluginTemplate) {
       plugin.nodeClass = 'plugin-templates';
     }
