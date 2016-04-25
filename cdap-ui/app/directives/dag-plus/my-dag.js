@@ -34,7 +34,8 @@ commonModule.directive('myDagPlus', function() {
       showMetrics: '=',
       metricsData: '=',
       nodePopoverTemplate: '@',
-      disableNodeClick: '='
+      disableNodeClick: '=',
+      separation: '=?'
     },
     link: function(scope, element) {
       scope.element = element;

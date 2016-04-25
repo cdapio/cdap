@@ -52,6 +52,18 @@ angular.module(PKG.name + '.services')
       'sparkcompute': 'transform'
     },
 
+    artifactConvert: {
+      'cdap-etl-batch': 'ETL Batch',
+      'cdap-etl-realtime': 'ETL Realtime',
+      'cdap-data-pipeline': 'Data Pipeline'
+    },
+
+    iconArtifact: {
+      'cdap-etl-batch': 'ETLBatch',
+      'cdap-etl-realtime': 'ETLRealtime',
+      'cdap-data-pipeline': 'ETLBatch'
+    },
+
     'en': {
       hydrator: {
         appLabel: 'Hydrator Pipeline',
