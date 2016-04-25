@@ -23,6 +23,8 @@ module.exports = function(config){
       'dist/assets/bundle/lib.js',
       'test/config.js',
       'dist/assets/bundle/app.js',
+      'dist/assets/bundle/app.es6.js',
+      'dist/assets/bundle/polyfill.js',
       'dist/assets/bundle/tpl.js',
       'bower_components/jquery/dist/jquery.js',
       'bower_components/angular-mocks/angular-mocks.js',
@@ -30,25 +32,22 @@ module.exports = function(config){
       'test/unit/**/*.js'
     ],
 
-    autoWatch : true,
+    autoWatch: true,
 
     frameworks: ['jasmine'],
-
-    browsers : ['Chrome'],
-
+    browsers: ['Chrome'],
     plugins : [
-            'karma-chrome-launcher',
-            'karma-jasmine'
-            ],
-
+      'karma-chrome-launcher',
+      'karma-jasmine',
+      'karma-mocha-reporter'
+    ],
     customLaunchers: {
       Chrome_travis_ci: {
         base: 'Chrome',
         flags: ['--no-sandbox']
       }
     },
-
-    reporters: ['progress']
+    reporters: ['mocha']
 
   };
 

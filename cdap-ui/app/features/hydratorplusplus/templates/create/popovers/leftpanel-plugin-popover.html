@@ -26,8 +26,8 @@
   <ul class="list-group">
     <li class="list-group-item">
       <h5>
-        <strong>{{::contentData.name || contentData.pluginTemplate }}</strong>
-        <a href="#" ng-if="!contentData.pluginTemplate" ng-click="delayClose(1) && popoverContext.onItemClicked($event,  {action: 'createTemplate', contentData: contentData})">
+        <strong>{{ contentData.templateName || contentData.name }}</strong>
+        <a href="#" ng-if="!contentData.templateName" ng-click="delayClose(1) && popoverContext.onItemClicked($event,  {action: 'createTemplate', contentData: contentData})">
           <span class="fa fa-plus-circle"></span>
           <span>Template</span>
         </a>
@@ -44,13 +44,13 @@
         </a>
       </h6>
       <h6>
-        <a ng-if="contentData.pluginTemplate"
+        <a ng-if="contentData.templateName"
            href="#"
            ng-click="delayClose(1) && popoverContext.onItemClicked($event, {action: 'editTemplate', contentData: contentData})">
            <span class="fa fa-pencil"></span>
            <span>Edit</span>
         </a>
-        <a ng-if="contentData.pluginTemplate"
+        <a ng-if="contentData.templateName"
            href="#"
            ng-click="delayClose(1) && popoverContext.onItemClicked($event, {action: 'deleteTemplate', contentData: contentData})">
            <span class="fa fa-trash"></span>
@@ -66,10 +66,10 @@
     <a  ng-if="contentData.showAllVersion"
         href="#"
         class="list-group-item"
-        ng-repeat="artifact in contentData.allArtifacts track by $index"
-        ng-class="{'active': artifact.version === contentData.defaultArtifact.version}"
-        ng-click="(contentData.defaultArtifact = artifact) && delayClose(1) && popoverContext.onItemClicked($event, contentData)">
-      {{::artifact.version}}
+        ng-repeat="specificPlugin in contentData.allArtifacts track by $index"
+        ng-class="{'active': specificPlugin.artifact.version === contentData.defaultArtifact.version}"
+        ng-click="(contentData.defaultArtifact = specificPlugin.artifact) && delayClose(1) && popoverContext.onItemClicked($event, contentData)">
+      {{::specificPlugin.artifact.version}}
     </a>
   </ul>
 </div>

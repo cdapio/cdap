@@ -135,7 +135,7 @@ angular.module(`${PKG.name}.commons`)
           vm.noConfig = false;
 
           vm.groupsConfig = HydratorPlusPlusPluginConfigFactory.generateNodeConfig(vm.pluginConfig._backendProperties, res);
-
+          vm.pluginDescription = vm.plugin.description || '';
           angular.forEach(vm.groupsConfig.groups, function (group) {
             angular.forEach(group.fields, function (field) {
               if (field.defaultValue) {
