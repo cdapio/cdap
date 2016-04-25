@@ -191,18 +191,19 @@ Search
 Searching in Tracker is provided by an interface similar to that of a popular search engine:
 
 .. figure:: ../_images/tracker-home-search.png
-   :figwidth: 100%
-   :width: 3in
-   :align: center
+  :figwidth: 100%
+  :width: 800px
+  :align: center
+  :class: bordered-image
 
-In the text box you can enter your search terms.
+In the text box, you enter your search terms:
 
 - Multiple search terms can be searched by separating them with a space character.
 - Search terms are case-insensitive.
 - Search the metadata of entities by using either a complete or partial name followed by
   an asterisk ``*``, as described in the :ref:`Metadata HTTP RESTful API
   <metadata_query_terms>`.
-- Searches tags, properties, and schema of CDAP datasets, streams, and stream views.
+- Tracker searches tags, properties, and schema of CDAP datasets, streams, and stream views.
 
 For example, if you have just started CDAP and enabled Tracker, you could enter a search
 term such as ``a* k*``, which will find all entities that begin with the letter ``a`` or
@@ -211,32 +212,34 @@ term such as ``a* k*``, which will find all entities that begin with the letter 
 The results would appear similar to this:
 
 .. figure:: ../_images/tracker-first-search.png
-   :figwidth: 100%
-   :width: 3in
-   :align: center
+  :figwidth: 100%
+  :width: 800px
+  :align: center
+  :class: bordered-image
 
 In this example, Tracker has found two datasets that satisfy the condition. The search
 used is shown in the upper-left, and the results show both the datasets found with
 information and links for each.
 
-On the left side is the **Filter** pane, which provides information on what was found (the
+**On the left side** is the **Filter** pane, which provides information on what was found (the
 entities and metadata types) with statistics of the number found for each category. A blue
 checkbox allows you to filter based on these attributes. If you mouse over a category, an
 ``only`` link will appear, which allows you to select *only* that category as a filter.
 
-Note that *entities* and *metadata* have an ``and`` relationship; at least one of each
-must be selected for there to be any results that appear.
+Note that the *entities* and *metadata* filters have an ``and`` relationship; at least one
+selection must be made in each of *entities* and *metadata* for there to be any results
+that appear.
 
-On the right side is a sortable list of results. Sortable by *Create Date* or the entity
+**On the right side** is a sortable list of results. It is sortable by *Create Date* or the entity
 ID (name), either *A-Z* (alphabetical ascending), or *Z-A* (alphabetical descending).
 
 Each entry in the list provides a summery of information about the entity, and its name is
 a hyperlink to further details: metadata, lineage, and audit log.
 
 The **Jump** button provides three actions: go to the selected entity in CDAP, or add it
-as a source or sink in a new Cask Hydrator pipeline. (Datasets can be added as sources or
+to a new Cask Hydrator pipeline as a source or as a sink. Datasets can be added as sources or
 sinks to batch pipelines, while streams can be sources in batch pipelines or sinks in
-real-time pipelines.)
+real-time pipelines.
 
 
 
@@ -251,22 +254,41 @@ metadata APIs
 search APIs?
 
 
+Tracker supports searching of the *AuditLog* dataset through an HTTP RESTful
+API. To search for any audit log entries for a particular dataset, stream, or stream view,
+submit an HTTP GET request::
 
-GET <base-url>/namespaces/<namespace>/apps/_Tracker/services/AuditLog/methods/auditlog/<entity-type>/<name>
-[?startTime=<time>][&endTime=<time>][&offset=<offset>][&limit=<limit>]
+  GET <base-url>/namespaces/<namespace>/apps/_Tracker/services/AuditLog/methods/auditlog/<entity-type>/<name>
+    [?startTime=<time>][&endTime=<time>][&offset=<offset>][&limit=<limit>]
 
-where 
+where:
 
-<namespace>   Namespace ID
-<entity-type> dataset, stream, or stream_view
-<name>        Name of the <entity-type>
-<time>        Time range defined by start and end times, where the times are either in
-              milliseconds since the start of the Epoch, or a relative time, using ``now`` and times added to it.
-              You can apply simple math, using ``now`` for the current time, ``s`` for seconds, ``m``
-              for minutes, ``h`` for hours and ``d`` for days. For example: ``now-5d-12h`` is 5 days
-              and 12 hours ago.
-<offset>
-<limit>
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``<namespace>``
+     - Namespace ID
+   * - ``<entity-type>``
+     - One of ``dataset``, ``stream``, or ``stream_view``
+   * - ``<name>``
+     - Name of the ``<entity-type>``
+   * - ``<time>`` *(Optional)*
+     - Time range defined by start (*startTime*, default ``0``) and end (*endTime*, default ``now``) times, where the times are either in
+       milliseconds since the start of the Epoch, or a relative time, using ``now`` and times added to it.
+       You can apply simple math, using ``now`` for the current time, ``s`` for seconds, ``m``
+       for minutes, ``h`` for hours and ``d`` for days. For example: ``now-5d-12h`` is 5 days
+       and 12 hours ago.
+   * - ``<offset>`` *(Optional)*
+     - The offset to start the results at for paging; default is ``0``.
+   * - ``<limit>`` *(Optional)*
+     - The maximum number of results to return in the results; default is ``10``.
+     
+The results (if any)
+
+
 
 Example::
 
@@ -335,6 +357,25 @@ Results (reformatted for display)::
     "offset": 0
   }
 
+
+.. rubric:: HTTP Responses
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Status Codes
+     - Description
+   * - ``200 OK``
+     - Returns the audit log entries requested in the body of the response.
+   * - ``400 BAD REQUEST``
+     - Returned if the input values are invalid, such as an incorrect date format, negative
+       offsets or limits, or an invalid range. The response will include an appropriate error
+       message.
+   * - ``404 NOT FOUND``
+     - No entities matching the specified query were found.
+   * - ``500 SERVER ERROR``
+     - Unknown server error.
 
 /auditmetrics/topEntities?limit={limit}
 
