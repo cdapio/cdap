@@ -116,7 +116,7 @@ public class ETLConfig extends Config {
   }
 
   public List<ETLStage> getSinks() {
-    return sinks;
+    return sinks == null ? new ArrayList<ETLStage>() : sinks;
   }
 
   public List<ETLStage> getTransforms() {
@@ -124,11 +124,11 @@ public class ETLConfig extends Config {
   }
 
   public List<Connection> getConnections() {
-    return connections;
+    return connections == null ? new ArrayList<Connection>() : connections;
   }
 
   public Resources getResources() {
-    return resources;
+    return resources == null ? new Resources() : resources;
   }
 
   public Boolean isStageLoggingEnabled() {
@@ -139,9 +139,9 @@ public class ETLConfig extends Config {
                                                                                   UpgradeContext upgradeContext,
                                                                                   String sourceType,
                                                                                   String sinkType) {
-    builder.setResources(resources).addConnections(connections);
+    builder.setResources(getResources()).addConnections(getConnections());
 
-    if (!stageLoggingEnabled) {
+    if (!isStageLoggingEnabled()) {
       builder.disableStageLogging();
     }
 
