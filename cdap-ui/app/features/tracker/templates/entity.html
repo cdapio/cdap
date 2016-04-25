@@ -26,10 +26,9 @@
 
   <div class="entity-detail"
        ng-class="{ 'offset': !$state.params.searchTerm }">
-    <h3
-      uib-tooltip="{{ $state.params.entityId }}"
-      tooltip-enable="$state.params.entityId.length > 50"
-      tooltip-popup-delay="300">
+    <h3 uib-tooltip="{{ $state.params.entityId }}"
+        tooltip-enable="$state.params.entityId.length > 50"
+        tooltip-popup-delay="300">
       {{ $state.params.entityId | myEllipsis: 50 }}
     </h3>
     <div class="entity-type">
