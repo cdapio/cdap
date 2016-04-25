@@ -65,8 +65,8 @@ CDAP:
    upgrade steps against the running services.  From the CDAP Service page, select "Run CDAP
    Post-Upgrade Tasks."
 
-#. To upgrade existing ETL applications created using the 3.2.x versions of ``cdap-etl-batch`` or 
-   ``cdap-etl-realtime``, there are :ref:`separate instructions <cdap-apps-etl-upgrade>`.
+#. To upgrade existing ETL applications created using the |previous-short-version|\.x versions of 
+   ``cdap-etl-batch`` or ``cdap-etl-realtime``, there are :ref:`separate instructions <cdap-apps-etl-upgrade>`.
 
 #. You must recompile and then redeploy your applications prior to using them.
 
