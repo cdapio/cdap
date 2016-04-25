@@ -184,7 +184,7 @@
                 ]
             }
         ],
-        "schedule": "* * * * *",
+        "schedule": "0 * * * *",
         "engine": "mapreduce"
     }
 }

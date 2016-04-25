@@ -15,7 +15,7 @@
  */
 
 class HydratorPlusPlusConfigStore {
-  constructor(HydratorPlusPlusConfigDispatcher, HydratorPlusPlusCanvasFactory, GLOBALS, mySettings, HydratorPlusPlusConsoleActions, $stateParams, myHelpers, NonStorePipelineErrorFactory, HydratorPlusPlusHydratorService, $q, HydratorPlusPlusPluginConfigFactory, uuid, $state){
+  constructor(HydratorPlusPlusConfigDispatcher, HydratorPlusPlusCanvasFactory, GLOBALS, mySettings, HydratorPlusPlusConsoleActions, $stateParams, myHelpers, NonStorePipelineErrorFactory, HydratorPlusPlusHydratorService, $q, HydratorPlusPlusPluginConfigFactory, uuid, $state, HYDRATOR_DEFAULT_VALUES){
     this.state = {};
     this.mySettings = mySettings;
     this.HydratorPlusPlusConsoleActions = HydratorPlusPlusConsoleActions;
@@ -29,6 +29,7 @@ class HydratorPlusPlusConfigStore {
     this.HydratorPlusPlusPluginConfigFactory = HydratorPlusPlusPluginConfigFactory;
     this.uuid = uuid;
     this.$state = $state;
+    this.HYDRATOR_DEFAULT_VALUES = HYDRATOR_DEFAULT_VALUES;
 
     this.changeListeners = [];
     this.setDefaults();
@@ -336,9 +337,9 @@ class HydratorPlusPlusConfigStore {
     this.state.artifact.scope = artifact.scope;
 
     if (this.GLOBALS.etlBatchPipelines.indexOf(artifact.name) !== -1) {
-      this.state.config.schedule = this.state.config.schedule || '* * * * *';
+      this.state.config.schedule = this.state.config.schedule || this.HYDRATOR_DEFAULT_VALUES.schedule;
     } else if (artifact.name === this.GLOBALS.etlRealtime) {
-      this.state.config.instances = this.state.config.instances || 1;
+      this.state.config.instances = this.state.config.instances || this.HYDRATOR_DEFAULT_VALUES.instance;
     }
 
     this.emitChange();
@@ -731,6 +732,6 @@ class HydratorPlusPlusConfigStore {
   }
 }
 
-HydratorPlusPlusConfigStore.$inject = ['HydratorPlusPlusConfigDispatcher', 'HydratorPlusPlusCanvasFactory', 'GLOBALS', 'mySettings', 'HydratorPlusPlusConsoleActions', '$stateParams', 'myHelpers', 'NonStorePipelineErrorFactory', 'HydratorPlusPlusHydratorService', '$q', 'HydratorPlusPlusPluginConfigFactory', 'uuid', '$state'];
+HydratorPlusPlusConfigStore.$inject = ['HydratorPlusPlusConfigDispatcher', 'HydratorPlusPlusCanvasFactory', 'GLOBALS', 'mySettings', 'HydratorPlusPlusConsoleActions', '$stateParams', 'myHelpers', 'NonStorePipelineErrorFactory', 'HydratorPlusPlusHydratorService', '$q', 'HydratorPlusPlusPluginConfigFactory', 'uuid', '$state', 'HYDRATOR_DEFAULT_VALUES'];
 angular.module(`${PKG.name}.feature.hydratorplusplus`)
   .service('HydratorPlusPlusConfigStore', HydratorPlusPlusConfigStore);
