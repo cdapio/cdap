@@ -11,17 +11,6 @@
 Cask Tracker
 ============   
 
-.. figure:: ../_images/tracker_logo_sm.png
-   :figwidth: 100%
-   :width: 2in
-   :align: left
-
-.. figure:: ../_images/img_trackdiagram.png
-   :figwidth: 100%
-   :width: 3in
-   :align: center
-
-
 Introduction
 ============
 
@@ -103,20 +92,16 @@ The Tracker UI is shipped with CDAP, started automatically as part of the CDAP U
 
   http://localhost:9999/ns/default/tracker/home
 
-Tracker is built from a system artifact included with CDAP::
-
-  tracker-|cask-tracker-version|.jar
-
-  tracker-0.1.0-SNAPSHOT.jar
+Tracker is built from a system artifact included with CDAP, ``tracker-``|literal-cask-tracker-version|``.jar``.
 
 
 Installation
 ============
 Cask Tracker is deployed from its system artifact included with CDAP. A CDAP administrator
-does not need to build anything to add Cask Tracker to CDAP; they merely need to enable
-the application.
+does not need to build anything to add Cask Tracker to CDAP; they merely need to add two
+properties to the ``cdap-site.xml`` and the enable the the application after starting CDAP.
 
-This property is required in the ``cdap-site.xml`` for the audit log functionality of Tracker::
+These two properties are required in the ``cdap-site.xml`` for the audit log functionality of Tracker::
   
   <!-- Audit Configuration -->
 
@@ -141,13 +126,13 @@ Enabling Tracker
 To enable Tracker, go to Tracker UI at http://localhost:9999/ns/default/tracker/home and
 press the ``"Enable Tracker"`` button to enable Tracker.
 
-Once pressed, the application will be deployed, the datasets created, the flow and service started, and search
-and audit logging will become available.
+Once pressed, the application will be deployed, the datasets created, the flow and service
+started, and search and audit logging will become available.
 
 If you are enabling Tracker from outside the UI, you will, in addition to enabling auditing 
 in the ``cdap-site.xml`` as described above, need to:
 
-- load the artifact (``tracker-``\ |literal-cask-tracker-version|\ ``.jar``)
+- load the artifact (``tracker-``|literal-cask-tracker-version|``.jar``)
   
 - create the application based on the artifact, supplying a configuration file::
     
@@ -241,6 +226,45 @@ to a new Cask Hydrator pipeline as a source or as a sink. Datasets can be added 
 sinks to batch pipelines, while streams can be sources in batch pipelines or sinks in
 real-time pipelines.
 
+Entity Details
+--------------
+Clicking on a name in the search results list will take you to details for a particular
+entity. Details are provided on three separate tabs: *Metadata*, *Lineage*, and *Audit
+Log*.
+
+**Metadata**
+
+The *Metadata* tab provides lists of *System Tags*, *Schema*, *User Properties*, and
+*System Properties* that were found for the entity. The values shown will vary depending
+on the type of entity and each individual entity. For instance, a stream may have a schema
+attached, and if so, it will be displayed.
+
+**Lineage**
+
+The *Lineage* tab shows the relationship between an entity and the programs that are
+interacting with it. As different lineage diagrams can be created for the same entity,
+depending on the particular set of programs selected to construct the diagram, a green
+button in the shape of an arrow is used to cycle through the different lineage digrams
+that a particular entity participates in.
+
+A date menu in the left side of the digram lets you control the time range that the
+diagram displays. By default, the last seven days are used, though a custom range can be
+specified, in addition to common time ranges (two weeks to one year).
+
+**Audit Log**
+
+The *Audit Log* tab shows each record in the *AuditLog* dataset that has been created for
+that particular entity, displayed in reverse chronological order. Note that due to a
+limitation in CDAP, reading and writing from a flow or service to a dataset shows an
+access of "UNKNOWN" rather than indicating if it was read or write access.
+
+A date menu in the left side of the digram lets you control the time range that the
+diagram displays. By default, the last seven days are used, though a custom range can be
+specified, in addition to common time ranges (two weeks to one year).
+
+Integrations
+------------
+
 
 
 
@@ -248,15 +272,10 @@ real-time pipelines.
 
 Tracker HTTP RESTful API
 ========================
-APIs
-audit logs - TBD
-metadata APIs 
-search APIs?
 
-
-Tracker supports searching of the *AuditLog* dataset through an HTTP RESTful
-API. To search for any audit log entries for a particular dataset, stream, or stream view,
-submit an HTTP GET request::
+Tracker supports searching of the *AuditLog* dataset through an HTTP RESTful API. To
+search for audit log entries for a particular dataset, stream, or stream view, submit an
+HTTP GET request::
 
   GET <base-url>/namespaces/<namespace>/apps/_Tracker/services/AuditLog/methods/auditlog/<entity-type>/<name>
     [?startTime=<time>][&endTime=<time>][&offset=<offset>][&limit=<limit>]
@@ -276,24 +295,34 @@ where:
    * - ``<name>``
      - Name of the ``<entity-type>``
    * - ``<time>`` *(Optional)*
-     - Time range defined by start (*startTime*, default ``0``) and end (*endTime*, default ``now``) times, where the times are either in
-       milliseconds since the start of the Epoch, or a relative time, using ``now`` and times added to it.
-       You can apply simple math, using ``now`` for the current time, ``s`` for seconds, ``m``
-       for minutes, ``h`` for hours and ``d`` for days. For example: ``now-5d-12h`` is 5 days
+     - Time range defined by start (*startTime*, default ``0``) and end (*endTime*,
+       default ``now``) times, where the times are either in milliseconds since the start of
+       the Epoch, or a relative time, using ``now`` and times added to it. You can apply
+       simple math, using ``now`` for the current time, ``s`` for seconds, ``m`` for
+       minutes, ``h`` for hours and ``d`` for days. For example: ``now-5d-12h`` is 5 days
        and 12 hours ago.
    * - ``<offset>`` *(Optional)*
      - The offset to start the results at for paging; default is ``0``.
    * - ``<limit>`` *(Optional)*
      - The maximum number of results to return in the results; default is ``10``.
      
-The results (if any)
+A successful query will return with the results as a field along with a count of the total
+results available, plus the offset used for the set of results returned. This is to allow
+for pagination through the results.
 
+If there are no results, an empty set of results will be returned (pretty-printed here for
+display)::
+
+  {
+    "totalResults": 0,
+    "results": [],
+    "offset": 0
+  }
 
 
 Example::
 
   curl -w'\n' -X GET 'http://localhost:10000/v3/namespaces/default/apps/_Tracker/services/AuditLog/methods/auditlog/stream/who?limit=1&startTime=now-5d-12h&endTime=now-12h'
-
 
 Results (reformatted for display)::
 
@@ -372,11 +401,5 @@ Results (reformatted for display)::
      - Returned if the input values are invalid, such as an incorrect date format, negative
        offsets or limits, or an invalid range. The response will include an appropriate error
        message.
-   * - ``404 NOT FOUND``
-     - No entities matching the specified query were found.
    * - ``500 SERVER ERROR``
      - Unknown server error.
-
-/auditmetrics/topEntities?limit={limit}
-
-
