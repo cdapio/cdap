@@ -79,7 +79,7 @@ public class DistributedSparkSubmitter extends AbstractSparkSubmitter {
   @Override
   protected void triggerShutdown() {
     // Just stop the execution service and block on that.
-    // It will wait till the call the "completed" from the Spark driver.
+    // It will wait till the "completed" call from the Spark driver.
     sparkExecutionService.stopAndWait();
   }
 

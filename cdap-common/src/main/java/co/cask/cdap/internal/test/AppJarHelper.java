@@ -47,23 +47,28 @@ public final class AppJarHelper {
 
   public static Location createDeploymentJar(LocationFactory locationFactory, Class<?> clz, Manifest manifest,
                                              File... bundleEmbeddedJars) throws IOException {
+    return createDeploymentJar(locationFactory, clz, manifest, new ClassAcceptor() {
+      final Set<String> visibleResources = ProgramResources.getVisibleResources();
 
-    final Set<String> visibleResources = ProgramResources.getVisibleResources();
-    // Exclude all classes that are visible form the system to the program classloader.
-    ApplicationBundler bundler = new ApplicationBundler(new ClassAcceptor() {
       @Override
       public boolean accept(String className, URL classUrl, URL classPathUrl) {
         if (visibleResources.contains(className.replace('.', '/') + ".class")) {
           return false;
         }
-        // Exclude all Spark classes in the app jar.
-        // We keep the Scala classes in case the app is not Spark but uses Scala in unit-test (CDAP-5168)
+        // TODO: Fix it with CDAP-5800
         if (className.startsWith("org.apache.spark.")) {
           return false;
         }
         return true;
       }
-    });
+    }, bundleEmbeddedJars);
+  }
+
+  public static Location createDeploymentJar(LocationFactory locationFactory, Class<?> clz, Manifest manifest,
+                                             ClassAcceptor classAcceptor,
+                                             File... bundleEmbeddedJars) throws IOException {
+    // Exclude all classes that are visible form the system to the program classloader.
+    ApplicationBundler bundler = new ApplicationBundler(classAcceptor);
     Location jarLocation = locationFactory.create(clz.getName()).getTempFile(".jar");
     ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(clz.getClassLoader());
     try {
