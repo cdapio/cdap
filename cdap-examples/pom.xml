@@ -41,6 +41,7 @@
     <module>HelloWorld</module>
     <module>Purchase</module>
     <module>SparkKMeans</module>
+    <module>SparkKafkaWordCount</module>
     <module>SparkPageRank</module>
     <module>LogAnalysis</module>
     <module>SportResults</module>
@@ -358,21 +359,9 @@
       </dependency>
       <dependency>
         <groupId>org.apache.spark</groupId>
-        <artifactId>spark-core_2.10</artifactId>
+        <artifactId>spark-streaming-kafka_2.10</artifactId>
         <version>${spark.version}</version>
-        <scope>provided</scope>
-        <exclusions>
-          <exclusion>
-            <groupId>asm</groupId>
-            <artifactId>asm</artifactId>
-          </exclusion>
-        </exclusions>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.spark</groupId>
-        <artifactId>spark-mllib_2.10</artifactId>
-        <version>${spark.version}</version>
-        <scope>provided</scope>
+        <!--<scope>provided</scope>-->
       </dependency>
       <dependency>
         <groupId>org.scala-lang</groupId>
