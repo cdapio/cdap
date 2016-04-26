@@ -30,10 +30,10 @@ function HydratorPlusPlusOrderingFactory() {
       'transform': 'Transform',
       'batchsource': 'Source',
       'batchsink': 'Sink',
-      'batchaggregator': 'Aggregator',
+      'batchaggregator': 'Aggregate',
       'realtimesink': 'Sink',
       'realtimesource': 'Source',
-      'sparksink': 'SparkML',
+      'sparksink': 'Model',
       'sparkcompute': 'Compute'
     };
 
@@ -49,8 +49,8 @@ function HydratorPlusPlusOrderingFactory() {
     let source = pluginsMap.filter( p => { return p.name === 'Source'; });
     let transform = pluginsMap.filter( p => { return p.name === 'Transform'; });
     let sink = pluginsMap.filter( p => { return p.name === 'Sink'; });
-    let aggregator = pluginsMap.filter( p => { return p.name === 'Aggregator'; });
-    let sparksink = pluginsMap.filter( p => { return p.name === 'SparkML'; });
+    let aggregator = pluginsMap.filter( p => { return p.name === 'Aggregate'; });
+    let sparksink = pluginsMap.filter( p => { return p.name === 'Model'; });
     let sparkcompute = pluginsMap.filter( p => { return p.name === 'Compute'; });
 
     orderedTypes.push(source[0]);
