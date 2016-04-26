@@ -29,7 +29,6 @@ import co.cask.cdap.proto.QueryStatus;
 import co.cask.cdap.store.NamespaceStore;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
@@ -44,6 +43,7 @@ import org.apache.hive.service.cli.RowSet;
 import org.apache.hive.service.cli.SessionHandle;
 
 import java.io.File;
+import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -88,6 +88,6 @@ public class Hive14ExploreService extends BaseHiveExploreService {
   @Override
   protected OperationHandle doExecute(SessionHandle sessionHandle, String statement)
     throws HiveSQLException, ExploreException {
-    return getCliService().executeStatementAsync(sessionHandle, statement, ImmutableMap.<String, String>of());
+    return getCliService().executeStatementAsync(sessionHandle, statement, new HashMap<String, String>());
   }
 }

@@ -16,11 +16,17 @@
 
 package co.cask.cdap.data2.metadata.system;
 
+import co.cask.cdap.api.data.format.FormatSpecification;
+import co.cask.cdap.api.data.format.RecordFormat;
 import co.cask.cdap.api.data.schema.Schema;
+import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
+import co.cask.cdap.format.RecordFormats;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ViewSpecification;
 import com.google.common.collect.ImmutableMap;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -29,7 +35,7 @@ import javax.annotation.Nullable;
  * A {@link AbstractSystemMetadataWriter} for an {@link Id.Stream.View view}.
  */
 public class ViewSystemMetadataWriter extends AbstractSystemMetadataWriter {
-
+  private static final Logger LOG = LoggerFactory.getLogger(ViewSystemMetadataWriter.class);
   private final Id.Stream.View viewId;
   private final ViewSpecification viewSpec;
 
@@ -57,6 +63,18 @@ public class ViewSystemMetadataWriter extends AbstractSystemMetadataWriter {
   @Override
   protected String getSchemaToAdd() {
     Schema schema = viewSpec.getFormat().getSchema();
+    if (schema == null) {
+      FormatSpecification format = viewSpec.getFormat();
+      RecordFormat<Object, Object> initializedFormat = null;
+      try {
+        initializedFormat = RecordFormats.createInitializedFormat(format);
+        schema = initializedFormat.getSchema();
+      } catch (IllegalAccessException | InstantiationException | UnsupportedTypeException | ClassNotFoundException e) {
+        LOG.debug("Exception: ", e);
+        LOG.warn("Exception while determining schema for view {}. View {} will not contain schema as metadata.", viewId,
+                 viewId);
+      }
+    }
     return schema == null ? null : schema.toString();
   }
 }

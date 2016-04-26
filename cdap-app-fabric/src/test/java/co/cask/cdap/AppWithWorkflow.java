@@ -66,8 +66,35 @@ public class AppWithWorkflow extends AbstractApplication {
     public static final String NAME = "SampleWorkflow";
     public static final String FIRST_ACTION = "firstAction";
     public static final String SECOND_ACTION = "secondAction";
+    public static final String WORD_COUNT_MR = WordCountMapReduce.class.getSimpleName();
     public static final String TABLE_NAME = "MyTable";
     public static final String FILE_NAME = "MyFile";
+    public static final String INITIALIZE_TOKEN_KEY = "workflow.initialize.key";
+    public static final String INITIALIZE_TOKEN_VALUE = "workflow.initialize.value";
+    public static final String DESTROY_TOKEN_KEY = "workflow.destroy";
+    public static final String DESTROY_TOKEN_SUCCESS_VALUE = "workflow.destroy.success";
+    public static final String DESTROY_TOKEN_FAIL_VALUE = "workflow.destroy.fail";
+
+    @Override
+    public void initialize(WorkflowContext context) throws Exception {
+      super.initialize(context);
+      context.getToken().put(SampleWorkflow.INITIALIZE_TOKEN_KEY, SampleWorkflow.INITIALIZE_TOKEN_VALUE);
+    }
+
+    @Override
+    public void destroy() {
+      WorkflowToken token = getContext().getToken();
+      @SuppressWarnings("ConstantConditions")
+      String initializeValue = token.get(SampleWorkflow.INITIALIZE_TOKEN_KEY, SampleWorkflow.NAME).toString();
+      if (!initializeValue.equals(SampleWorkflow.INITIALIZE_TOKEN_VALUE)) {
+        // Should not happen, since we are always putting token in the Workflow.initialize method.
+        // We can not throw exception here since any exception thrown will be caught in the Workflow driver.
+        // So in order to test this put some token value which is check in the test case.
+        token.put(SampleWorkflow.DESTROY_TOKEN_KEY, SampleWorkflow.DESTROY_TOKEN_FAIL_VALUE);
+      } else {
+        token.put(SampleWorkflow.DESTROY_TOKEN_KEY, SampleWorkflow.DESTROY_TOKEN_SUCCESS_VALUE);
+      }
+    }
 
     @Override
     public void configure() {
@@ -77,7 +104,7 @@ public class AppWithWorkflow extends AbstractApplication {
       createLocalDataset(FILE_NAME, FileSet.class, DatasetProperties.builder().add("anotherFoo", "anotherBar").build());
       addAction(new DummyAction(FIRST_ACTION));
       addAction(new DummyAction(SECOND_ACTION));
-      addMapReduce(WordCountMapReduce.class.getSimpleName());
+      addMapReduce(WORD_COUNT_MR);
     }
   }
 
@@ -109,6 +136,14 @@ public class AppWithWorkflow extends AbstractApplication {
     @Override
     public void run() {
       LOG.info("Ran dummy action");
+      @SuppressWarnings("ConstantConditions")
+      String initializeValue = getContext().getToken().get(SampleWorkflow.INITIALIZE_TOKEN_KEY,
+                                                           SampleWorkflow.NAME).toString();
+      if (!initializeValue.equals(SampleWorkflow.INITIALIZE_TOKEN_VALUE)) {
+        String msg = String.format("Expected value of token %s but got %s.", SampleWorkflow.INITIALIZE_TOKEN_VALUE,
+                                   initializeValue);
+        throw new IllegalStateException(msg);
+      }
     }
   }
 
@@ -141,4 +176,3 @@ public class AppWithWorkflow extends AbstractApplication {
     }
   }
 }
-

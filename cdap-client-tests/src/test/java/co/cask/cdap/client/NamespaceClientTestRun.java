@@ -52,7 +52,8 @@ public class NamespaceClientTestRun extends ClientTestBase {
     List<NamespaceMeta> namespaces = namespaceClient.list();
     int initialNamespaceCount = namespaces.size();
 
-    verifyDoesNotExist(DOES_NOT_EXIST);
+    Assert.assertFalse(String.format("Namespace '%s' must not be found", DOES_NOT_EXIST),
+                       namespaceClient.exists(DOES_NOT_EXIST));
     verifyReservedCreate();
     verifyReservedDelete();
 
@@ -119,24 +120,6 @@ public class NamespaceClientTestRun extends ClientTestBase {
     // verify that only the default namespace is left
     Assert.assertEquals(1, namespaceClient.list().size());
     Assert.assertEquals(Id.Namespace.DEFAULT.getId(), namespaceClient.list().get(0).getName());
-  }
-
-  private void verifyDoesNotExist(Id.Namespace namespaceId)
-    throws Exception {
-
-    try {
-      namespaceClient.get(namespaceId);
-      Assert.fail(String.format("Namespace '%s' must not be found", namespaceId));
-    } catch (NotFoundException e) {
-      // expected
-    }
-
-    try {
-      namespaceClient.delete(namespaceId);
-      Assert.fail(String.format("Namespace '%s' must not be found", namespaceId));
-    } catch (NotFoundException e) {
-      // expected
-    }
   }
 
   private void verifyReservedCreate() throws Exception {

@@ -26,7 +26,6 @@ import co.cask.cdap.internal.app.store.DefaultStore;
 import co.cask.cdap.logging.context.FlowletLoggingContext;
 import co.cask.cdap.logging.context.LoggingContextHelper;
 import co.cask.cdap.logging.context.MapReduceLoggingContext;
-import co.cask.cdap.logging.context.SparkLoggingContext;
 import co.cask.cdap.logging.context.UserServiceLoggingContext;
 import co.cask.cdap.logging.context.WorkflowLoggingContext;
 import co.cask.cdap.logging.context.WorkflowProgramLoggingContext;

@@ -43,9 +43,10 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.artifact.ArtifactRange;
+import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.Ids;
 import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.NamespacedArtifactId;
 import co.cask.cdap.test.internal.ApplicationManagerFactory;
 import co.cask.cdap.test.internal.ArtifactManagerFactory;
 import co.cask.cdap.test.internal.StreamManagerFactory;
@@ -161,7 +162,8 @@ public class UnitTestManager implements TestManager {
       MockAppConfigurer configurer = new MockAppConfigurer(app);
       app.configure(configurer, new DefaultApplicationContext<>(configObject));
       appFabricClient.deployApplication(namespace, applicationClz, appConfig, bundleEmbeddedJars);
-      return appManagerFactory.create(Id.Application.from(namespace, configurer.getName()));
+      ApplicationId applicationId = new ApplicationId(namespace.getId(), configurer.getName());
+      return appManagerFactory.create(applicationId.toId());
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
@@ -175,8 +177,8 @@ public class UnitTestManager implements TestManager {
   }
 
   @Override
-  public ApplicationManager getApplicationManager(Id.Application appId) {
-    return appManagerFactory.create(appId);
+  public ApplicationManager getApplicationManager(ApplicationId applicationId) {
+    return appManagerFactory.create(applicationId.toId());
   }
 
   @Override
@@ -185,7 +187,7 @@ public class UnitTestManager implements TestManager {
   }
 
   @Override
-  public ArtifactManager addArtifact(NamespacedArtifactId artifactId, File artifactFile) throws Exception {
+  public ArtifactManager addArtifact(ArtifactId artifactId, File artifactFile) throws Exception {
     artifactRepository.addArtifact(artifactId.toId(), artifactFile);
     return artifactManagerFactory.create(artifactId);
   }
@@ -196,7 +198,7 @@ public class UnitTestManager implements TestManager {
   }
 
   @Override
-  public ArtifactManager addAppArtifact(NamespacedArtifactId artifactId, Class<?> appClass) throws Exception {
+  public ArtifactManager addAppArtifact(ArtifactId artifactId, Class<?> appClass) throws Exception {
     Location appJar = AppJarHelper.createDeploymentJar(locationFactory, appClass, new Manifest());
     addArtifact(artifactId, appJar);
     return artifactManagerFactory.create(artifactId);
@@ -208,7 +210,7 @@ public class UnitTestManager implements TestManager {
   }
 
   @Override
-  public ArtifactManager addAppArtifact(NamespacedArtifactId artifactId, Class<?> appClass,
+  public ArtifactManager addAppArtifact(ArtifactId artifactId, Class<?> appClass,
                                         String... exportPackages) throws Exception {
     Manifest manifest = new Manifest();
     manifest.getMainAttributes().put(ManifestFields.EXPORT_PACKAGE, Joiner.on(',').join(exportPackages));
@@ -223,7 +225,7 @@ public class UnitTestManager implements TestManager {
   }
 
   @Override
-  public ArtifactManager addAppArtifact(NamespacedArtifactId artifactId, Class<?> appClass,
+  public ArtifactManager addAppArtifact(ArtifactId artifactId, Class<?> appClass,
                                         Manifest manifest) throws Exception {
     Location appJar = AppJarHelper.createDeploymentJar(locationFactory, appClass, manifest);
     addArtifact(artifactId, appJar);
@@ -237,7 +239,7 @@ public class UnitTestManager implements TestManager {
   }
 
   @Override
-  public ArtifactManager addPluginArtifact(NamespacedArtifactId artifactId, NamespacedArtifactId parent,
+  public ArtifactManager addPluginArtifact(ArtifactId artifactId, ArtifactId parent,
                                            Class<?> pluginClass, Class<?>... pluginClasses) throws Exception {
     Set<ArtifactRange> parents = new HashSet<>();
     parents.add(new ArtifactRange(
@@ -254,7 +256,7 @@ public class UnitTestManager implements TestManager {
   }
 
   @Override
-  public ArtifactManager addPluginArtifact(NamespacedArtifactId artifactId, Set<ArtifactRange> parents,
+  public ArtifactManager addPluginArtifact(ArtifactId artifactId, Set<ArtifactRange> parents,
                                            Class<?> pluginClass, Class<?>... pluginClasses) throws Exception {
     File pluginJar = createPluginJar(artifactId, pluginClass, pluginClasses);
     artifactRepository.addArtifact(artifactId.toId(), pluginJar, parents);
@@ -270,7 +272,7 @@ public class UnitTestManager implements TestManager {
   }
 
   @Override
-  public ArtifactManager addPluginArtifact(NamespacedArtifactId artifactId, NamespacedArtifactId parent,
+  public ArtifactManager addPluginArtifact(ArtifactId artifactId, ArtifactId parent,
                                            @Nullable Set<PluginClass> additionalPlugins, Class<?> pluginClass,
                                            Class<?>... pluginClasses) throws Exception {
     Set<ArtifactRange> parents = new HashSet<>();
@@ -289,7 +291,7 @@ public class UnitTestManager implements TestManager {
   }
 
   @Override
-  public ArtifactManager addPluginArtifact(NamespacedArtifactId artifactId, Set<ArtifactRange> parents,
+  public ArtifactManager addPluginArtifact(ArtifactId artifactId, Set<ArtifactRange> parents,
                                            @Nullable Set<PluginClass> additionalPlugins, Class<?> pluginClass,
                                            Class<?>... pluginClasses) throws Exception {
     File pluginJar = createPluginJar(artifactId, pluginClass, pluginClasses);
@@ -444,7 +446,7 @@ public class UnitTestManager implements TestManager {
     return manifest;
   }
 
-  private File createPluginJar(NamespacedArtifactId artifactId, Class<?> pluginClass,
+  private File createPluginJar(ArtifactId artifactId, Class<?> pluginClass,
                                Class<?>... pluginClasses) throws IOException {
     Manifest manifest = createManifest(pluginClass, pluginClasses);
     Location appJar = PluginJarHelper.createPluginJar(locationFactory, manifest, pluginClass, pluginClasses);
@@ -455,7 +457,7 @@ public class UnitTestManager implements TestManager {
     return destination;
   }
 
-  private void addArtifact(NamespacedArtifactId artifactId, Location jar) throws Exception {
+  private void addArtifact(ArtifactId artifactId, Location jar) throws Exception {
     File destination =
       new File(tmpDir, String.format("%s-%s.jar", artifactId.getArtifact(), artifactId.getVersion()));
     Files.copy(Locations.newInputSupplier(jar), destination);

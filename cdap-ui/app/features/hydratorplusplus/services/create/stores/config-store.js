@@ -15,7 +15,7 @@
  */
 
 class HydratorPlusPlusConfigStore {
-  constructor(HydratorPlusPlusConfigDispatcher, HydratorPlusPlusCanvasFactory, GLOBALS, mySettings, HydratorPlusPlusConsoleActions, $stateParams, myHelpers, NonStorePipelineErrorFactory, HydratorPlusPlusHydratorService, $q, HydratorPlusPlusPluginConfigFactory, uuid, $state){
+  constructor(HydratorPlusPlusConfigDispatcher, HydratorPlusPlusCanvasFactory, GLOBALS, mySettings, HydratorPlusPlusConsoleActions, $stateParams, myHelpers, NonStorePipelineErrorFactory, HydratorPlusPlusHydratorService, $q, HydratorPlusPlusPluginConfigFactory, uuid, $state, HYDRATOR_DEFAULT_VALUES){
     this.state = {};
     this.mySettings = mySettings;
     this.HydratorPlusPlusConsoleActions = HydratorPlusPlusConsoleActions;
@@ -29,6 +29,7 @@ class HydratorPlusPlusConfigStore {
     this.HydratorPlusPlusPluginConfigFactory = HydratorPlusPlusPluginConfigFactory;
     this.uuid = uuid;
     this.$state = $state;
+    this.HYDRATOR_DEFAULT_VALUES = HYDRATOR_DEFAULT_VALUES;
 
     this.changeListeners = [];
     this.setDefaults();
@@ -43,9 +44,16 @@ class HydratorPlusPlusConfigStore {
     this.hydratorPlusPlusConfigDispatcher.register('onSaveAsDraft', this.saveAsDraft.bind(this));
     this.hydratorPlusPlusConfigDispatcher.register('onInitialize', this.init.bind(this));
     this.hydratorPlusPlusConfigDispatcher.register('onSchemaPropagationDownStream', this.propagateIOSchemas.bind(this));
+    this.hydratorPlusPlusConfigDispatcher.register('onAddPostAction', this.addPostAction.bind(this));
+    this.hydratorPlusPlusConfigDispatcher.register('onEditPostAction', this.editPostAction.bind(this));
+    this.hydratorPlusPlusConfigDispatcher.register('onDeletePostAction', this.deletePostAction.bind(this));
   }
   registerOnChangeListener(callback) {
-    this.changeListeners.push(callback);
+    let index = this.changeListeners.push(callback);
+    // un-subscribe for listners.
+    return () => {
+      this.changeListeners.splice(index-1, 1);
+    };
   }
   emitChange() {
     this.changeListeners.forEach( callback => callback() );
@@ -62,7 +70,7 @@ class HydratorPlusPlusConfigStore {
         draftId: null
       },
       description: '',
-      name: ''
+      name: '',
     };
     angular.extend(this.state, {config: this.getDefaultConfig()});
 
@@ -83,7 +91,8 @@ class HydratorPlusPlusConfigStore {
   getDefaultConfig() {
     return {
       connections: [],
-      comments: []
+      comments: [],
+      postActions: []
     };
   }
 
@@ -163,6 +172,7 @@ class HydratorPlusPlusConfigStore {
       this.state.__ui__.nodes
     );
     config.stages = [];
+
     connections.forEach( connection => {
       let fromConnectionName, toConnectionName;
 
@@ -190,7 +200,7 @@ class HydratorPlusPlusConfigStore {
       config.schedule = this.getSchedule();
       config.engine = this.getEngine();
     } else if (appType === this.GLOBALS.etlRealtime) {
-      config.instance = this.getInstance();
+      config.instances = this.getInstance();
     }
 
     if (this.state.description) {
@@ -198,6 +208,28 @@ class HydratorPlusPlusConfigStore {
     }
 
     config.comments = this.getComments();
+
+
+    // Removing UUID from postactions name
+    let postActions = this.getPostActions();
+    postActions = _.sortBy(postActions, (action) => {
+      return action.plugin.name;
+    });
+
+    let currCount = 0;
+    let currAction = '';
+
+    angular.forEach(postActions, (action) => {
+      if (action.plugin.name !== currAction) {
+        currAction = action.plugin.name;
+        currCount = 1;
+      } else {
+        currCount++;
+      }
+      action.name = action.plugin.name + '-' + currCount;
+    });
+
+    config.postActions = postActions;
 
     return config;
   }
@@ -305,9 +337,9 @@ class HydratorPlusPlusConfigStore {
     this.state.artifact.scope = artifact.scope;
 
     if (this.GLOBALS.etlBatchPipelines.indexOf(artifact.name) !== -1) {
-      this.state.config.schedule = '* * * * *';
+      this.state.config.schedule = this.state.config.schedule || this.HYDRATOR_DEFAULT_VALUES.schedule;
     } else if (artifact.name === this.GLOBALS.etlRealtime) {
-      this.state.config.instance = 1;
+      this.state.config.instances = this.state.config.instances || this.HYDRATOR_DEFAULT_VALUES.instance;
     }
 
     this.emitChange();
@@ -601,10 +633,10 @@ class HydratorPlusPlusConfigStore {
     return isStateValid;
   }
   getInstance() {
-    return this.getState().config.instance;
+    return this.getState().config.instances;
   }
-  setInstance(instance) {
-    this.state.config.instance = instance;
+  setInstance(instances) {
+    this.state.config.instances = instances;
   }
 
   setComments(comments) {
@@ -614,12 +646,42 @@ class HydratorPlusPlusConfigStore {
     return this.getState().config.comments;
   }
 
+  addPostAction(config) {
+    this.state.config.postActions.push(config);
+    this.emitChange();
+  }
+  editPostAction(config) {
+    let index = _.findLastIndex(this.state.config.postActions, (post) => {
+      return config.name === post.name;
+    });
+
+    this.state.config.postActions[index] = config;
+    this.emitChange();
+  }
+  deletePostAction(config) {
+    _.remove(this.state.config.postActions, (post) => {
+      return post.name === config.name;
+    });
+    this.emitChange();
+  }
+  getPostActions() {
+    return this.getState().config.postActions;
+  }
+
   saveAsDraft() {
     this.HydratorPlusPlusConsoleActions.resetMessages();
+    let name = this.getName();
+    if (!name.length) {
+      this.HydratorPlusPlusConsoleActions.addMessage({
+        type: 'error',
+        content: this.GLOBALS.en.hydrator.studio.error['MISSING-NAME']
+      });
+      return;
+    }
     if(!this.getDraftId()) {
       this.setDraftId(this.uuid.v4());
       this.$stateParams.draftId = this.getDraftId();
-      this.$state.go('hydrator.create.studio', this.$stateParams, {notify: false});
+      this.$state.go('hydratorplusplus.create', this.$stateParams, {notify: false});
     }
     let config = this.getState();
     // This is not to fall in the scenario where when the user saves a draft with a node selected.
@@ -657,7 +719,8 @@ class HydratorPlusPlusConfigStore {
             type: 'success',
             content: `Draft ${config.name} saved successfully.`
           });
-          this.state.isStateDirty = false;
+          this.__defaultState = angular.copy(this.state);
+          this.emitChange();
         },
         err => {
           this.HydratorPlusPlusConsoleActions.addMessage({
@@ -669,6 +732,6 @@ class HydratorPlusPlusConfigStore {
   }
 }
 
-HydratorPlusPlusConfigStore.$inject = ['HydratorPlusPlusConfigDispatcher', 'HydratorPlusPlusCanvasFactory', 'GLOBALS', 'mySettings', 'HydratorPlusPlusConsoleActions', '$stateParams', 'myHelpers', 'NonStorePipelineErrorFactory', 'HydratorPlusPlusHydratorService', '$q', 'HydratorPlusPlusPluginConfigFactory', 'uuid', '$state'];
+HydratorPlusPlusConfigStore.$inject = ['HydratorPlusPlusConfigDispatcher', 'HydratorPlusPlusCanvasFactory', 'GLOBALS', 'mySettings', 'HydratorPlusPlusConsoleActions', '$stateParams', 'myHelpers', 'NonStorePipelineErrorFactory', 'HydratorPlusPlusHydratorService', '$q', 'HydratorPlusPlusPluginConfigFactory', 'uuid', '$state', 'HYDRATOR_DEFAULT_VALUES'];
 angular.module(`${PKG.name}.feature.hydratorplusplus`)
   .service('HydratorPlusPlusConfigStore', HydratorPlusPlusConfigStore);

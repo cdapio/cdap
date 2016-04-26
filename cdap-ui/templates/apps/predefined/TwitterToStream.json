@@ -1,77 +1,83 @@
 {
-  "artifact": {
-    "name": "cdap-etl-realtime",
-    "scope": "SYSTEM",
-    "version": "3.4.0-SNAPSHOT"
-  },
-  "config": {
-    "source": {
-      "name": "Twitter-5339cbf1-0f54-47ff-bd0a-8110b0cc1c4f",
-      "plugin": {
-        "name": "Twitter",
-        "label": "Twitter",
-        "properties": {
-          "AccessToken": "",
-          "AccessTokenSecret": "",
-          "ConsumerSecret": "",
-          "ConsumerKey": ""
-        },
-        "artifact": {
-          "name": "core-plugins",
-          "scope": "SYSTEM",
-          "version": "1.3.0-SNAPSHOT"
-        }
-      }
+    "artifact": {
+        "name": "cdap-etl-realtime",
+        "scope": "SYSTEM",
+        "version": "3.4.0-SNAPSHOT"
     },
-    "sinks": [
-      {
-        "name": "Stream-1afa36c2-20a8-44a6-b582-2aea9496578e",
-        "plugin": {
-          "name": "Stream",
-          "label": "Stream",
-          "properties": {
-            "name": "",
-            "headers.field": "header",
-            "body.field": "body"
-          },
-          "artifact": {
-            "name": "core-plugins",
-            "scope": "SYSTEM",
-            "version": "1.3.0-SNAPSHOT"
-          }
-        }
-      }
-    ],
-    "transforms": [
-      {
-        "name": "Script-274c4151-f080-41f8-a50d-58a4299794f2",
-        "plugin": {
-          "name": "Script",
-          "label": "Transform to Stream",
-          "properties": {
-            "schema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"headers\",\"type\":{\"type\":\"map\",\"keys\":\"string\",\"values\":\"string\"}},{\"name\":\"body\",\"type\":\"string\"}]}",
-            "script": "function transform(input) {\n   if (input.source !== null) {\n     input.source = 'No-Source';     \n   }\n   \n   var body = [ input.id, input.message, input.lang, input.favCount, input.rtCount, input.source]\n   \n   return {\n       headers : { id : input.id + '' , lang : input.lang},\n       body : body.join('\\t')\n   } \n}"
-          },
-          "artifact": {
-            "name": "core-plugins",
-            "scope": "SYSTEM",
-            "version": "1.3.0-SNAPSHOT"
-          }
-        }
-      }
-    ],
-    "instances": 1,
-    "connections": [
-      {
-        "from": "Twitter-5339cbf1-0f54-47ff-bd0a-8110b0cc1c4f",
-        "to": "Script-274c4151-f080-41f8-a50d-58a4299794f2"
-      },
-      {
-        "from": "Script-274c4151-f080-41f8-a50d-58a4299794f2",
-        "to": "Stream-1afa36c2-20a8-44a6-b582-2aea9496578e"
-      }
-    ]
-  },
-  "description": "Ingest real-time Twitter Stream into a stream",
-  "name": "TwitterToStream"
+    "description": "Ingest real-time Twitter Stream into a stream",
+    "name": "TwitterToStream",
+    "config": {
+        "connections": [
+            {
+                "from": "Twitter",
+                "to": "Transform to Stream"
+            },
+            {
+                "from": "Transform to Stream",
+                "to": "Stream"
+            }
+        ],
+        "comments": [],
+        "postActions": [],
+        "stages": [
+            {
+                "name": "Twitter",
+                "plugin": {
+                    "name": "Twitter",
+                    "type": "realtimesource",
+                    "label": "Twitter",
+                    "artifact": {
+                        "name": "core-plugins",
+                        "scope": "SYSTEM",
+                        "version": "1.3.0-SNAPSHOT"
+                    },
+                    "properties": {
+                        "AccessToken": "",
+                        "AccessTokenSecret": "",
+                        "ConsumerSecret": "",
+                        "ConsumerKey": ""
+                    }
+                },
+                "outputSchema": "{\"fields\":[{\"name\":\"id\",\"type\":\"long\"},{\"name\":\"message\",\"type\":\"string\"},{\"name\":\"lang\",\"type\":[\"string\",\"null\"]},{\"name\":\"time\",\"type\":[\"long\",\"null\"]},{\"name\":\"favCount\",\"type\":\"int\"},{\"name\":\"rtCount\",\"type\":\"int\"},{\"name\":\"source\",\"type\":[\"string\",\"null\"]},{\"name\":\"geoLat\",\"type\":[\"double\",\"null\"]},{\"name\":\"geoLong\",\"type\":[\"double\",\"null\"]},{\"name\":\"isRetweet\",\"type\":\"boolean\"}]}"
+            },
+            {
+                "name": "Transform to Stream",
+                "plugin": {
+                    "name": "Script",
+                    "type": "transform",
+                    "label": "Transform to Stream",
+                    "artifact": {
+                        "name": "core-plugins",
+                        "scope": "SYSTEM",
+                        "version": "1.3.0-SNAPSHOT"
+                    },
+                    "properties": {
+                        "schema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"headers\",\"type\":{\"type\":\"map\",\"keys\":\"string\",\"values\":\"string\"}},{\"name\":\"body\",\"type\":\"string\"}]}",
+                        "script": "function transform(input) {\n   if (input.source !== null) {\n     input.source = 'No-Source';     \n   }\n   \n   var body = [ input.id, input.message, input.lang, input.favCount, input.rtCount, input.source]\n   \n   return {\n       headers : { id : input.id + '' , lang : input.lang},\n       body : body.join('\\t')\n   } \n}"
+                    }
+                },
+                "outputSchema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"headers\",\"type\":{\"type\":\"map\",\"keys\":\"string\",\"values\":\"string\"}},{\"name\":\"body\",\"type\":\"string\"}]}"
+            },
+            {
+                "name": "Stream",
+                "plugin": {
+                    "name": "Stream",
+                    "type": "realtimesink",
+                    "label": "Stream",
+                    "artifact": {
+                        "name": "core-plugins",
+                        "scope": "SYSTEM",
+                        "version": "1.3.0-SNAPSHOT"
+                    },
+                    "properties": {
+                        "name": "",
+                        "headers.field": "header",
+                        "body.field": "body"
+                    }
+                },
+                "outputSchema": "{\"fields\":[{\"readonly\":true,\"name\":\"ts\",\"type\":\"long\"},{\"readonly\":true,\"name\":\"headers\",\"type\":{\"type\":\"map\",\"keys\":\"string\",\"values\":\"string\"}},{\"name\":\"body\",\"type\":\"string\"}]}"
+            }
+        ],
+        "instances": 1
+    }
 }

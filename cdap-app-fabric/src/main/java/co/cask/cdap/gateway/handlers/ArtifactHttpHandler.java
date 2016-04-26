@@ -122,15 +122,16 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
   private final ArtifactRepository artifactRepository;
   private final NamespaceAdmin namespaceAdmin;
   private final File tmpDir;
-  private final CConfiguration cConf;
+  private final PluginService pluginService;
 
   @Inject
-  ArtifactHttpHandler(CConfiguration cConf, ArtifactRepository artifactRepository, NamespaceAdmin namespaceAdmin) {
+  ArtifactHttpHandler(CConfiguration cConf, ArtifactRepository artifactRepository, NamespaceAdmin namespaceAdmin,
+                      PluginService pluginService) {
     this.namespaceAdmin = namespaceAdmin;
     this.artifactRepository = artifactRepository;
     this.tmpDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
                            cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
-    this.cConf = cConf;
+    this.pluginService = pluginService;
   }
 
   @POST
@@ -470,11 +471,9 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
       throw new BadRequestException("Request body is used as plugin method parameter, " +
                                       "Received empty request body.");
     }
-
-    try (PluginService pluginService = new PluginService(artifactRepository, tmpDir, cConf)) {
+    try {
       PluginEndpoint pluginEndpoint =
         pluginService.getPluginEndpoint(namespace, artifactId, pluginType, pluginName, methodName);
-
       Object response = pluginEndpoint.invoke(GSON.fromJson(requestBody, pluginEndpoint.getMethodParameterType()));
       responder.sendString(HttpResponseStatus.OK, GSON.toJson(response));
     } catch (JsonSyntaxException e) {

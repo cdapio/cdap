@@ -18,6 +18,7 @@ package co.cask.cdap.api.mapreduce;
 
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.data.batch.Input;
+import co.cask.cdap.api.data.batch.Output;
 import co.cask.cdap.api.data.stream.StreamBatchReadable;
 import co.cask.cdap.internal.api.AbstractPluginConfigurable;
 
@@ -178,7 +179,7 @@ public abstract class AbstractMapReduce extends AbstractPluginConfigurable<MapRe
   /**
    * Sets the name of the Dataset used as output for the {@link MapReduce}.
    *
-   * @deprecated as of 3.2.0. Use {@link MapReduceContext#addOutput(String datasetName)}
+   * @deprecated as of 3.2.0. Use {@link MapReduceContext#addOutput(Output output)}
    *             in {@link #beforeSubmit}, instead.
    */
   @Deprecated

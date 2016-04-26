@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,6 +18,8 @@ package co.cask.cdap.examples.wikipedia;
 
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.api.data.batch.Input;
+import co.cask.cdap.api.data.batch.Output;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.workflow.Value;
@@ -57,7 +59,6 @@ public class WikiContentValidatorAndNormalizer extends AbstractMapReduce {
     setName(NAME);
     setDescription("A MapReduce program that dumps page titles to a dataset.");
     setMapperResources(new Resources(512));
-    setInputDataset(WikipediaPipelineApp.RAW_WIKIPEDIA_DATASET);
   }
 
   @Override
@@ -65,7 +66,8 @@ public class WikiContentValidatorAndNormalizer extends AbstractMapReduce {
     Job job = context.getHadoopJob();
     job.setMapperClass(FilterNormalizerMapper.class);
     job.setNumReduceTasks(0);
-    context.addOutput(WikipediaPipelineApp.NORMALIZED_WIKIPEDIA_DATASET);
+    context.addInput(Input.ofDataset(WikipediaPipelineApp.RAW_WIKIPEDIA_DATASET));
+    context.addOutput(Output.ofDataset(WikipediaPipelineApp.NORMALIZED_WIKIPEDIA_DATASET));
   }
 
   @Override

@@ -82,6 +82,26 @@ public class StreamClientTestRun extends ClientTestBase {
     Assert.assertNotNull(config);
   }
 
+  @Test
+  public void testDescription() throws Exception {
+    String description = "Good Stream";
+    Long ttl = 10L;
+    Integer notifMB = 300;
+    Id.Stream streamId = Id.Stream.from(namespaceId, "testDesc");
+    StreamProperties properties = new StreamProperties(ttl, null, notifMB, description);
+    streamClient.create(streamId, properties);
+    StreamProperties actual = streamClient.getConfig(streamId);
+    Assert.assertEquals(description, actual.getDescription());
+    Assert.assertEquals(ttl, actual.getTTL());
+    Assert.assertEquals(notifMB, actual.getNotificationThresholdMB());
+    description = "New Description";
+    streamClient.setDescription(streamId, description);
+    actual = streamClient.getConfig(streamId);
+    Assert.assertEquals(description, actual.getDescription());
+    Assert.assertEquals(ttl, actual.getTTL());
+    Assert.assertEquals(notifMB, actual.getNotificationThresholdMB());
+  }
+
   /**
    * Tests for the get events call
    */

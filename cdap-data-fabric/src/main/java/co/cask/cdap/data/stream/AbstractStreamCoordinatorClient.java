@@ -198,7 +198,8 @@ public abstract class AbstractStreamCoordinatorClient extends AbstractIdleServic
           firstNotNull(properties.getTTL(), oldProperties.getTTL()),
           firstNotNull(properties.getFormat(), oldProperties.getFormat()),
           firstNotNull(properties.getNotificationThresholdMB(), oldProperties.getNotificationThresholdMB()),
-          firstNotNull(properties.getGeneration(), oldProperties.getGeneration()));
+          firstNotNull(properties.getGeneration(), oldProperties.getGeneration()),
+          firstNotNull(properties.getDescription(), oldProperties.getDescription()));
       }
     });
   }

@@ -62,7 +62,7 @@ public class GetDatasetInstancePropertiesCommand extends AbstractCommand {
 
   @Override
   public String getDescription() {
-    return String.format("Gets the properties used to create or update %s.",
+    return String.format("Gets the properties used to create or update %s",
                          Fragment.of(Article.A, ElementType.DATASET.getName()));
   }
 }

@@ -20,7 +20,6 @@ import co.cask.cdap.data2.transaction.coprocessor.DefaultTransactionStateCacheSu
 import co.cask.cdap.data2.util.hbase.HTableNameConverter;
 import co.cask.tephra.TxConstants;
 import co.cask.tephra.coprocessor.TransactionStateCache;
-import co.cask.tephra.persist.TransactionSnapshot;
 import co.cask.tephra.persist.TransactionVisibilityState;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Supplier;

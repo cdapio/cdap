@@ -169,6 +169,11 @@ public final class Constants {
      * Configuration setting to set the maximum size of a workflow token in MB
      */
     public static final String WORKFLOW_TOKEN_MAX_SIZE_MB = "workflow.token.max.size.mb";
+
+    /**
+     * Name of the property used to identify whether the dataset is local or not.
+     */
+    public static final String WORKFLOW_LOCAL_DATASET_PROPERTY = "workflow.local.dataset";
   }
 
   /**
@@ -345,6 +350,7 @@ public final class Constants {
 
     public static final String URL_PREFIX = "stream://";
     public static final String DESCRIPTION = "stream.description";
+    public static final String FORMAT_SPECIFICATION = "stream.format.specification";
 
     /**
      * Contains HTTP headers used by Stream handler.
@@ -512,6 +518,7 @@ public final class Constants {
       public static final String MR_TASK_TYPE = "mrt";
 
       public static final String WORKFLOW = "wf";
+      public static final String WORKFLOW_RUN_ID = "wfr";
       public static final String NODE = "nd";
 
       public static final String SPARK = "sp";

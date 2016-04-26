@@ -21,6 +21,15 @@ angular.module(PKG.name + '.commons')
         element: '<get-schema></get-schema>',
         attributes: {
           'node': 'node',
+          'fn-config': 'fnConfig',
+          'class': 'pull-right'
+        }
+      },
+      'outputSchema': {
+        element: '<output-schema></output-schema>',
+        attributes: {
+          'node': 'node',
+          'fn-config': 'fnConfig',
           'class': 'pull-right'
         }
       }

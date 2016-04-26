@@ -22,7 +22,7 @@
     </div>
   </div>
 
-  <div class="schema-container" ng-if="fields === 'SHOW' || fields === 'GROK'">
+  <div class="schema-container" ng-if="fields === 'SHOW' || fields === 'GROK'" >
     <div class="text-danger" ng-if="error">
       {{ error }}
     </div>
@@ -41,8 +41,8 @@
             </th>
             <th></th>
           </thead>
-          <tbody>
-            <tr ng-repeat="property in properties" ng-keypress="enter($event, $index)" ng-click="emptyRowClick(property, $index)">
+          <tbody infinite-scroll="loadNextSetOfRows()" infinite-scroll-disabled="properties.length <= limitedToView">
+            <tr ng-repeat="property in properties | limitTo: limitedToView track by $index" ng-keypress="enter($event, $index)" ng-click="emptyRowClick(property, $index)">
               <td class="name" ng-if="!property.empty" ng-class="{'active-cell': activeCell === true}">
                 <input
                     ng-focus="activeCell = true"
@@ -51,8 +51,8 @@
                     class="form-control"
                     ng-model="property.name"
                     placeholder="name"
-                    ng-disabled="property.readonly"
-                    my-focus-watch="property.newField" />
+                    my-focus-watch="property.newField"
+                    ng-disabled="property.readonly"/>
               </td>
               <td class="type" ng-if="!property.empty" ng-class="{'active-cell': activeCell === true}" >
                 <div class="select-wrapper">

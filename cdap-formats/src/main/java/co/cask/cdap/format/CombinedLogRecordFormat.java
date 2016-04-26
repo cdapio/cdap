@@ -63,7 +63,7 @@ public class CombinedLogRecordFormat extends AbstractStreamEventRecordFormat<Str
              Schema.Field.of("remote_host", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
              Schema.Field.of("remote_login", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
              Schema.Field.of("auth_user", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
-             Schema.Field.of("date", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
+             Schema.Field.of("request_time", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
              Schema.Field.of("request", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
              Schema.Field.of("status", Schema.nullableOf(Schema.of(Schema.Type.INT))),
              Schema.Field.of("content_length", Schema.nullableOf(Schema.of(Schema.Type.INT))),

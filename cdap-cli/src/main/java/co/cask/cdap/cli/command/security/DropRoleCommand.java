@@ -53,6 +53,6 @@ public class DropRoleCommand extends AbstractAuthCommand {
 
   @Override
   public String getDescription() {
-    return "Drops a role from authorization system for role based access control.";
+    return "Drops a role from authorization system for role-based access control";
   }
 }

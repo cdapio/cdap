@@ -21,9 +21,9 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.gateway.handlers.InMemoryAuthorizer;
 import co.cask.cdap.internal.AppFabricTestHelper;
 import co.cask.cdap.internal.test.AppJarHelper;
+import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.InstanceId;
 import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.NamespacedArtifactId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.proto.security.Privilege;
@@ -97,7 +97,7 @@ public class SystemArtifactsAuthorizationTest {
     // refreshing system artifacts should succeed now
     artifactRepository.addSystemArtifacts();
     // deleting a system artifact should still fail because alice does not have admin privileges on the CDAP instance
-    NamespacedArtifactId systemArtifact = NamespaceId.SYSTEM.artifact("system-artifact", "1.0");
+    ArtifactId systemArtifact = NamespaceId.SYSTEM.artifact("system-artifact", "1.0");
     try {
       artifactRepository.deleteArtifact(systemArtifact.toId());
       Assert.fail("Deleting a system artifact should have failed because alice does not have admin privileges on " +

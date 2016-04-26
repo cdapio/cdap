@@ -141,7 +141,12 @@ angular.module(PKG.name + '.commons')
         'streamformatter': 'icon-streamformatter',
         'hdfs': 'icon-hdfs',
         'hasher': 'icon-hasher',
-        'javascript': 'icon-javascript'
+        'javascript': 'icon-javascript',
+        'deduper': 'icon-deduper',
+        'distinct': 'icon-distinct',
+        'naivebayestrainer': 'icon-naivebayestrainer',
+        'groupbyaggregate': 'icon-groupbyaggregate',
+        'naivebayesclassifier': 'icon-naivebayesclassifier'
 
       };
 
@@ -150,11 +155,13 @@ angular.module(PKG.name + '.commons')
       return icon;
     }
 
-    function getGraphLayout(nodes, connections) {
+    function getGraphLayout(nodes, connections, separation) {
+      var rankSeparation = separation || 200;
+
       var graph = new dagre.graphlib.Graph();
       graph.setGraph({
         nodesep: 90,
-        ranksep: 200,
+        ranksep: rankSeparation,
         rankdir: 'LR',
         marginx: 0,
         marginy: 0

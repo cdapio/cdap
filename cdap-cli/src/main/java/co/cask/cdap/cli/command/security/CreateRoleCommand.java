@@ -53,6 +53,6 @@ public class CreateRoleCommand extends AbstractAuthCommand {
 
   @Override
   public String getDescription() {
-    return "Creates a role in authorization system for role based access control.";
+    return "Creates a role in authorization system for role-based access control";
   }
 }

@@ -1,7 +1,7 @@
 .. meta::
     :author: Cask Data, Inc.
     :description: Cask Data Application Platform SparkPageRank Application
-    :copyright: Copyright © 2014-2015 Cask Data, Inc.
+    :copyright: Copyright © 2014-2016 Cask Data, Inc.
 
 .. _examples-spark-page-rank:
 
@@ -42,7 +42,7 @@ of the application are tied together by the class ``SparkPageRankApp``:
 
 .. literalinclude:: /../../../cdap-examples/SparkPageRank/src/main/java/co/cask/cdap/examples/sparkpagerank/SparkPageRankApp.java
    :language: java
-   :lines: 50-89
+   :lines: 55-96
    :append: ...
 
 The *ranks* and *rankscount* ObjectStore Data Storage
@@ -63,7 +63,7 @@ When a Spark program is running inside a workflow, the memory requirements confi
 
 .. literalinclude:: /../../../cdap-examples/SparkPageRank/src/main/java/co/cask/cdap/examples/sparkpagerank/SparkPageRankApp.java
     :language: java
-    :lines: 113-114
+    :lines: 120-121
     :dedent: 6
 
 .. Building and Starting
@@ -95,7 +95,7 @@ Standalone CDAP SDK directory, using the Command Line Interface:
 
   $ cdap-cli.sh load stream backlinkURLStream examples/SparkPageRank/resources/urlpairs.txt
   
-  Successfully sent stream event to stream 'backlinkURLStream'
+  Successfully loaded file to stream 'backlinkURLStream'
 
 Starting the Workflow
 ---------------------

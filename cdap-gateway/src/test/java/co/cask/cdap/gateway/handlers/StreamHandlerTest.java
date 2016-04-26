@@ -109,6 +109,47 @@ public class StreamHandlerTest extends GatewayTestBase {
   }
 
   @Test
+  public void testUpdateDescription() throws Exception {
+    // Create a stream with some ttl and description
+    String desc = "large stream";
+    HttpURLConnection urlConn = openURL(createURL("streams/stream1"), HttpMethod.PUT);
+    urlConn.setDoOutput(true);
+    Schema schema = Schema.recordOf("event", Schema.Field.of("purchase", Schema.of(Schema.Type.STRING)));
+    FormatSpecification formatSpecification = new FormatSpecification(
+      TextRecordFormat.class.getCanonicalName(), schema, ImmutableMap.of(TextRecordFormat.CHARSET, "utf8"));
+    StreamProperties properties = new StreamProperties(1L, formatSpecification, 128, desc);
+    urlConn.getOutputStream().write(GSON.toJson(properties).getBytes(Charsets.UTF_8));
+    Assert.assertEquals(HttpResponseStatus.OK.getCode(), urlConn.getResponseCode());
+    urlConn.disconnect();
+
+    // Check whether ttl and description got persisted
+    urlConn = openURL(createStreamInfoURL("stream1"), HttpMethod.GET);
+    Assert.assertEquals(HttpResponseStatus.OK.getCode(), urlConn.getResponseCode());
+    StreamProperties actual = GSON.fromJson(new String(ByteStreams.toByteArray(urlConn.getInputStream()),
+                                                       Charsets.UTF_8), StreamProperties.class);
+    urlConn.disconnect();
+    Assert.assertEquals(properties, actual);
+
+    // Update desc and ttl and check whether the changes were persisted
+    StreamProperties newProps = new StreamProperties(2L, null, null, "small stream");
+    urlConn = openURL(createPropertiesURL("stream1"), HttpMethod.PUT);
+    urlConn.setDoOutput(true);
+    urlConn.getOutputStream().write(GSON.toJson(newProps).getBytes(Charsets.UTF_8));
+    Assert.assertEquals(HttpResponseStatus.OK.getCode(), urlConn.getResponseCode());
+    urlConn.disconnect();
+
+    urlConn = openURL(createStreamInfoURL("stream1"), HttpMethod.GET);
+    Assert.assertEquals(HttpResponseStatus.OK.getCode(), urlConn.getResponseCode());
+    actual = GSON.fromJson(new String(ByteStreams.toByteArray(urlConn.getInputStream()), Charsets.UTF_8),
+                           StreamProperties.class);
+    urlConn.disconnect();
+    StreamProperties expected = new StreamProperties(newProps.getTTL(), properties.getFormat(),
+                                                     properties.getNotificationThresholdMB(),
+                                                     newProps.getDescription());
+    Assert.assertEquals(expected, actual);
+  }
+
+  @Test
   public void testStreamCreate() throws Exception {
     // Try to get info on a non-existent stream
     HttpURLConnection urlConn = openURL(createStreamInfoURL("test_stream1"), HttpMethod.GET);

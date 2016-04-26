@@ -19,10 +19,7 @@ package co.cask.cdap.etl.proto.v0;
 import co.cask.cdap.api.Config;
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.etl.api.Transform;
-import co.cask.cdap.etl.api.realtime.RealtimeSink;
-import co.cask.cdap.etl.api.realtime.RealtimeSource;
 import co.cask.cdap.etl.proto.UpgradeContext;
-import co.cask.cdap.etl.proto.UpgradeableConfig;
 
 import java.util.ArrayList;
 import java.util.Collections;

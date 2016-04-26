@@ -35,10 +35,7 @@ angular.module(PKG.name+'.feature.dashboard')
             return (new MyDashboardsModel($stateParams.namespace)).$promise;
           }
         },
-        controller: 'DashboardCtrl',
-        ncyBreadcrumb: {
-          skip: true
-        }
+        controller: 'DashboardCtrl'
       })
 
       .state('dashboard.standard', {
@@ -50,10 +47,7 @@ angular.module(PKG.name+'.feature.dashboard')
       .state('dashboard.standard.cdap', {
         url: '/cdap',
         templateUrl: '/assets/features/dashboard/templates/staticdashboard.html',
-        controller: 'OpsCdapCtrl',
-        ncyBreadcrumb: {
-          label: 'Operations'
-        }
+        controller: 'OpsCdapCtrl'
       })
 
       .state('dashboard.user', {
@@ -64,9 +58,6 @@ angular.module(PKG.name+'.feature.dashboard')
           tab: function($stateParams) {
             return $stateParams.tab;
           }
-        },
-        ncyBreadcrumb: {
-          label: 'Operations'
         }
       })
 

@@ -58,6 +58,6 @@ public class RemoveRoleFromPrincipalCommand extends AbstractAuthCommand {
 
   @Override
   public String getDescription() {
-    return "Removes a role from a principal in authorization system for role based access control.";
+    return "Removes a role from a principal in authorization system for role-based access control";
   }
 }

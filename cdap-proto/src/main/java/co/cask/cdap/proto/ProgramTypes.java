@@ -25,7 +25,6 @@ import co.cask.cdap.api.webapp.WebappSpecification;
 import co.cask.cdap.api.worker.WorkerSpecification;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
 
-import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.Map;
 

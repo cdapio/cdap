@@ -26,6 +26,27 @@
 source ../vars
 source ../_common/common-build.sh
 
+CLI_DOC_TOOL="../tools/docs-cli-commands.py"
+CLI_INPUT_TXT="${PROJECT_PATH}/cdap-docs-gen/target/cdap-docs-cli.txt"
+CLI_TABLE_RST="cdap-cli-table.rst"
+
+CHECK_INCLUDES=${TRUE}
+
+function download_includes() {
+  local target_includes_dir=${1}
+  echo "Copying CLI Docs: building rst file from cli-docs results..." 
+  python "${CLI_DOC_TOOL}" "${CLI_INPUT_TXT}" "${target_includes_dir}/${CLI_TABLE_RST}"
+  status_code=$?
+  if [ "${status_code}" == "0" ]; then
+    echo "CLI rst file written to ${CLI_TABLE_RST}"
+  else
+    local m="Error ${status_code} building CLI docs table"
+    echo_red_bold "${m}"
+    set_message "${m}"
+  fi
+  return $status_code
+}
+
 function build_extras() {
   echo_red_bold "Building extras."
   local html_path="${TARGET_PATH}/${HTML}"

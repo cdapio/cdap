@@ -21,6 +21,7 @@ import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.common.RuntimeArguments;
 import co.cask.cdap.api.common.Scope;
 import co.cask.cdap.api.dataset.DatasetManagementException;
+import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.workflow.NodeStatus;
@@ -129,6 +130,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
   private final ProgramRunId workflowRunId;
   private Workflow workflow;
   private final BasicWorkflowContext basicWorkflowContext;
+  private final BasicWorkflowToken basicWorkflowToken;
   private final Map<String, WorkflowNodeState> nodeStates = new ConcurrentHashMap<>();
   @Nullable
   private final PluginInstantiator pluginInstantiator;
@@ -164,8 +166,9 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     this.workflowProgramRunnerFactory = new ProgramWorkflowRunnerFactory(cConf, workflowSpec, programRunnerFactory,
                                                                          program, options);
 
+    this.basicWorkflowToken = new BasicWorkflowToken(cConf.getInt(Constants.AppFabric.WORKFLOW_TOKEN_MAX_SIZE_MB));
     this.basicWorkflowContext = new BasicWorkflowContext(workflowSpec, null, null, new BasicArguments(runtimeArgs),
-                                                         null, program, RunIds.fromString(runId),
+                                                         basicWorkflowToken, program, RunIds.fromString(runId),
                                                          metricsCollectionService, datasetFramework, txClient,
                                                          discoveryServiceClient, nodeStates, pluginInstantiator);
     this.pluginInstantiator = pluginInstantiator;
@@ -174,7 +177,6 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
   @Override
   protected void startUp() throws Exception {
     LoggingContextAccessor.setLoggingContext(loggingContext);
-    LOG.info("Starting Workflow {}", workflowSpec);
 
     // Using small size thread pool is enough, as the API we supported are just simple lookup.
     httpService = NettyHttpService.builder()
@@ -205,7 +207,9 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
 
     try {
       if (workflow instanceof ProgramLifecycle) {
+        basicWorkflowToken.setCurrentNode(workflowSpec.getName());
         ((ProgramLifecycle<WorkflowContext>) workflow).initialize(basicWorkflowContext);
+        store.updateWorkflowToken(workflowRunId, basicWorkflowToken);
       }
     } catch (Throwable t) {
       LOG.error(String.format("Failed to initialize the Workflow %s", workflowRunId), t);
@@ -274,7 +278,9 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     try {
       transactionContext.start();
       if (workflow instanceof ProgramLifecycle) {
+        basicWorkflowToken.setCurrentNode(workflowSpec.getName());
         ((ProgramLifecycle<WorkflowContext>) workflow).destroy();
+        store.updateWorkflowToken(workflowRunId, basicWorkflowToken);
       }
       transactionContext.finish();
     } catch (Throwable t) {
@@ -451,8 +457,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     Predicate<WorkflowContext> predicate = instantiator.get(
       TypeToken.of((Class<? extends Predicate<WorkflowContext>>) clz)).create();
 
-    WorkflowContext context = new BasicWorkflowContext(workflowSpec, null, null,
-                                                       new BasicArguments(runtimeArgs), token,
+    WorkflowContext context = new BasicWorkflowContext(workflowSpec, null, null, new BasicArguments(runtimeArgs), token,
                                                        program, RunIds.fromString(workflowRunId.getRun()),
                                                        metricsCollectionService, datasetFramework, txClient,
                                                        discoveryServiceClient, nodeStates, pluginInstantiator);
@@ -471,13 +476,23 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     executeAll(iterator, appSpec, instantiator, classLoader, token);
   }
 
+  private DatasetProperties addLocalDatasetProperty(DatasetProperties properties) {
+    String dsDescription = properties.getDescription();
+    DatasetProperties.Builder builder = DatasetProperties.builder();
+    builder.addAll(properties.getProperties());
+    builder.add(Constants.AppFabric.WORKFLOW_LOCAL_DATASET_PROPERTY, "true");
+    builder.setDescription(dsDescription);
+    return builder.build();
+  }
+
   private void createLocalDatasets() throws IOException, DatasetManagementException {
     for (Map.Entry<String, String> entry : datasetFramework.getDatasetNameMapping().entrySet()) {
       String localInstanceName = entry.getValue();
       DatasetId instanceId = new DatasetId(workflowRunId.getNamespace(), localInstanceName);
       DatasetCreationSpec instanceSpec = workflowSpec.getLocalDatasetSpecs().get(entry.getKey());
       LOG.debug("Adding Workflow local dataset instance: {}", localInstanceName);
-      datasetFramework.addInstance(instanceSpec.getTypeName(), instanceId.toId(), instanceSpec.getProperties());
+      datasetFramework.addInstance(instanceSpec.getTypeName(), instanceId.toId(),
+                                   addLocalDatasetProperty(instanceSpec.getProperties()));
     }
   }
 
@@ -501,13 +516,12 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
 
   @Override
   protected void run() throws Exception {
-    LOG.info("Start workflow execution for {}", workflowSpec);
-    WorkflowToken token = new BasicWorkflowToken(cConf.getInt(Constants.AppFabric.WORKFLOW_TOKEN_MAX_SIZE_MB));
+    LOG.info("Start workflow execution for {}", workflowSpec.getName());
+    LOG.debug("Workflow specification is {}", workflowSpec);
     executeAll(workflowSpec.getNodes().iterator(), program.getApplicationSpecification(),
-               new InstantiatorFactory(false), program.getClassLoader(), token);
-
+               new InstantiatorFactory(false), program.getClassLoader(), basicWorkflowToken);
     basicWorkflowContext.setSuccess();
-    LOG.info("Workflow execution succeeded for {}", workflowSpec);
+    LOG.info("Workflow execution succeeded for {}", workflowSpec.getName());
   }
 
   private void executeAll(Iterator<WorkflowNode> iterator, ApplicationSpecification appSpec,

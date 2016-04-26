@@ -17,6 +17,7 @@ package co.cask.cdap.proto.element;
 
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.DatasetModuleId;
 import co.cask.cdap.proto.id.DatasetTypeId;
@@ -25,7 +26,6 @@ import co.cask.cdap.proto.id.FlowletId;
 import co.cask.cdap.proto.id.FlowletQueueId;
 import co.cask.cdap.proto.id.InstanceId;
 import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.NamespacedArtifactId;
 import co.cask.cdap.proto.id.NotificationFeedId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
@@ -65,7 +65,7 @@ public enum EntityType {
   FLOWLET_QUEUE(FlowletQueueId.class, Id.Flow.Flowlet.Queue.class),
   SCHEDULE(ScheduleId.class, Id.Schedule.class),
   NOTIFICATION_FEED(NotificationFeedId.class, Id.NotificationFeed.class),
-  ARTIFACT(NamespacedArtifactId.class, Id.Artifact.class),
+  ARTIFACT(ArtifactId.class, Id.Artifact.class),
   DATASET(DatasetId.class, Id.DatasetInstance.class),
 
   QUERY(QueryId.class, Id.QueryHandle.class),

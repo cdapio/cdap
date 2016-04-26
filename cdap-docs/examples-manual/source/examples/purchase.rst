@@ -1,7 +1,7 @@
 .. meta::
     :author: Cask Data, Inc.
     :description: Cask Data Application Platform Purchase Application
-    :copyright: Copyright © 2014-2015 Cask Data, Inc.
+    :copyright: Copyright © 2014-2016 Cask Data, Inc.
 
 .. _examples-purchase:
 
@@ -60,7 +60,7 @@ of the application are tied together by the class ``PurchaseApp``:
 
 .. literalinclude:: /../../../cdap-examples/Purchase/src/main/java/co/cask/cdap/examples/purchase/PurchaseApp.java
     :language: java
-    :lines: 31-
+    :lines: 32-
 
 Storing Purchases with the *Purchase* ObjectStore Data Storage
 --------------------------------------------------------------
@@ -189,7 +189,7 @@ CDAP SDK directory, using the Command Line Interface:
 .. tabbed-parsed-literal::
 
   $ cdap-cli.sh load stream purchaseStream examples/Purchase/resources/purchases.txt 
-  Successfully sent stream event to stream 'purchaseStream'
+  Successfully loaded file to stream 'purchaseStream'
 
 .. Starting the Workflow
 .. ---------------------

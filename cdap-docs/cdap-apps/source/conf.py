@@ -15,12 +15,21 @@ from common_conf import *
 
 html_short_title_toc, html_short_title, html_context = set_conf_for_manual()
 
+rst_epilog += """
+.. |cdap-hydrator-version| replace:: %(cdap-hydrator-version)s
+
+.. |literal-cdap-hydrator-version| replace:: ``%(cdap-hydrator-version)s``
+
+""" % {'cdap-hydrator-version': os.environ.get('HYDRATOR_VERSION')}
+
+
 def setup(app):
     # Call imported setup
     _setup(app)
     
     # Add a custom config value that can be used for conditional content
     app.add_config_value('release_version', '', 'env')
+
 
 # Set the condition
 if version == ('3.2.0'):

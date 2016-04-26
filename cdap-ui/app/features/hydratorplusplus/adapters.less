@@ -66,11 +66,6 @@ body.theme-cdap {
       overflow: auto;
     }
 
-    .zoom-control {
-      position: fixed;
-      top: 145px;
-    }
-
     i.fa-exclamation-circle {
       margin-left: 3px;
       outline: none;
@@ -133,6 +128,10 @@ body.theme-cdap {
         }
       }
     }
+
+    .zoom-control {
+      position: fixed;
+    }
   }
 
   &.state-hydratorplusplus-detail {
@@ -152,7 +151,7 @@ body.theme-cdap {
     height: 100%;
   }
 
-  &.state-hydratorplusplus-create, &.state-hydrator-list, &.state-hydrator-preconfigured, &.state-hydratorplusplus-create {
+  &.state-hydratorplusplus-create, &.state-hydratorplusplus-list, &.state-hydrator-preconfigured, &.state-hydratorplusplus-create {
     .alerts {
       top: 50px;
       z-index: 1029;
@@ -162,6 +161,10 @@ body.theme-cdap {
     .alerts {
       top: 120px;
       z-index: 1028;
+    }
+
+    .zoom-control {
+      top: 143px;
     }
   }
 
@@ -283,73 +286,17 @@ body.theme-cdap {
         h4 { color: white; }
       }
     }
+
+    .zoom-control {
+      top: 115px;
+    }
   }
 
-  &.state-hydrator-list {
+  &.state-hydratorplusplus-list {
     main.container {
       width: 100%;
       padding-right: 0;
       padding-left: 0;
-    }
-    .side-panel.top {
-      background-color: white;
-      font-weight: 500;
-      position: fixed;
-      top: 60px;
-      right: 0;
-      left: 0;
-      z-index: 1028;
-      height: 60px;
-      .box-shadow(0 7px 7px fade(black, 10%), 0 19px 59px fade(black, 25%););
-      h1 {
-        border-right: 1px solid @table-border-color;
-        display: inline-block;
-        font-size: 20px;
-        line-height: 60px;
-        margin: 0;
-        padding: 0 15px;
-      }
-      > div {
-        padding: 7px 15px;
-        span {
-          display: block;
-          &:first-child {
-            font-size: 15px;
-          }
-          &:last-child {
-            font-size: 18px;
-          }
-        }
-      }
-      ul {
-        line-height: 60px;
-        margin: 0;
-        li {
-          padding: 0 15px;
-          i {
-            font-size: 22px;
-            margin-right: 10px;
-            vertical-align: sub;
-          }
-          span {
-            font-size: 15px;
-            &:first-child {
-              padding-right: 5px;
-            }
-          }
-        }
-      }
-      a.btn-primary {
-        position: absolute;
-        right: 40px;
-        top: 35px;
-        padding: 12px 16px;
-        .border-radius(50%);
-        span.fa {
-          font-size: 24px;
-          vertical-align: middle;
-        }
-      }
     }
     .my-pipelines {
       margin-top: 8px;

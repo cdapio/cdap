@@ -41,7 +41,7 @@ of the application are tied together by the class ``WordCount``:
 
 .. literalinclude:: /../../../cdap-examples/WordCount/src/main/java/co/cask/cdap/examples/wordcount/WordCount.java
    :language: java
-   :lines: 31-
+   :lines: 32-
 
 Data Storage
 ------------

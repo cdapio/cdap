@@ -63,7 +63,7 @@ of the application are tied together by the class ``WikipediaPipelineApp``:
 
 .. literalinclude:: /../../../cdap-examples/WikipediaPipeline/src/main/java/co/cask/cdap/examples/wikipedia/WikipediaPipelineApp.java
    :language: java
-   :lines: 26-77
+   :lines: 28-82
 
 This application demonstrates:
 
@@ -142,7 +142,7 @@ The *pageTitleStream* consumes events in the format returned by the Facebook "Li
 
       $ cdap-cli.sh load stream pageTitleStream examples/WikipediaPipeline/resources/fb-likes-data.txt
     
-      Successfully sent stream event to stream 'pageTitleStream'
+      Successfully loaded file to stream 'pageTitleStream'
 
   The *wikiStream* consumes events in the format returned by the MediaWiki Wikipedia API.
 
@@ -153,7 +153,7 @@ The *pageTitleStream* consumes events in the format returned by the Facebook "Li
 
       $ cdap-cli.sh load stream wikiStream examples/WikipediaPipeline/resources/wikipedia-data.txt
     
-      Successfully sent stream event to stream 'wikiStream'
+      Successfully loaded file to stream 'wikiStream'
 
 .. Start the Workflow
 .. ------------------

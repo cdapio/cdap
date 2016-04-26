@@ -97,8 +97,7 @@ and executed in CDAP:
 
 .. literalinclude:: /../../../cdap-examples/WebAnalytics/src/main/java/co/cask/cdap/examples/webanalytics/WebAnalytics.java
    :language: java
-   :lines: 26-35
-   :dedent: 2
+   :lines: 26-
 
 
 .. Building and Starting
@@ -139,7 +138,7 @@ using the CDAP Commmand Line Interface:
 
   $ cdap-cli.sh load stream log examples/resources/accesslog.txt
   
-  Successfully sent stream event to stream 'log'
+  Successfully loaded file to stream 'log'
 
 Query the Unique Visitor Page Views
 ---------------------------------------

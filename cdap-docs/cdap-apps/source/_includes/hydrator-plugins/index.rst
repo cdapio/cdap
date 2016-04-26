@@ -16,7 +16,8 @@ can be explored using RESTful APIs.
 If you are creating a custom plugin to extend the existing system artifacts, its name
 should not collide with existing names for ease of use in the CDAP UI.
 
-Shipped with CDAP, the plugins listed below are available for creating ETL applications.
+Shipped with CDAP, the plugins listed below (Hydrator Version |cdap-hydrator-version|) are
+available for creating ETL applications.
 
 
 .. toctree::

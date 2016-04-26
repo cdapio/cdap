@@ -81,7 +81,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ExecutionException;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
@@ -345,7 +344,7 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
                                     @PathParam("app-id") String applicationId,
                                     @PathParam("workflow-id") String workflowId,
                                     @PathParam("run-id") String runId)
-    throws NotFoundException, DatasetManagementException {
+    throws NotFoundException {
     ApplicationId appId = Ids.namespace(namespaceId).app(applicationId);
     ApplicationSpecification appSpec = store.getApplication(appId.toId());
     if (appSpec == null) {

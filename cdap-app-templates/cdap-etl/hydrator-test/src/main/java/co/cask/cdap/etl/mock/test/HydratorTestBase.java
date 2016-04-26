@@ -20,6 +20,8 @@ import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.etl.api.PipelineConfigurable;
 import co.cask.cdap.etl.api.batch.BatchSource;
 import co.cask.cdap.etl.api.realtime.RealtimeSource;
+import co.cask.cdap.etl.mock.batch.MockExternalSink;
+import co.cask.cdap.etl.mock.batch.MockExternalSource;
 import co.cask.cdap.etl.mock.batch.NodeStatesAction;
 import co.cask.cdap.etl.mock.batch.aggregator.FieldCountAggregator;
 import co.cask.cdap.etl.mock.batch.aggregator.IdentityAggregator;
@@ -31,7 +33,7 @@ import co.cask.cdap.etl.mock.transform.ErrorTransform;
 import co.cask.cdap.etl.mock.transform.IdentityTransform;
 import co.cask.cdap.etl.mock.transform.IntValueFilterTransform;
 import co.cask.cdap.etl.mock.transform.StringValueFilterTransform;
-import co.cask.cdap.proto.id.NamespacedArtifactId;
+import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.test.TestBase;
 import com.google.common.collect.ImmutableSet;
 
@@ -50,6 +52,7 @@ public class HydratorTestBase extends TestBase {
   private static final Set<PluginClass> BATCH_MOCK_PLUGINS = ImmutableSet.of(
     FieldCountAggregator.PLUGIN_CLASS, IdentityAggregator.PLUGIN_CLASS,
     co.cask.cdap.etl.mock.batch.MockSink.PLUGIN_CLASS, co.cask.cdap.etl.mock.batch.MockSource.PLUGIN_CLASS,
+    MockExternalSource.PLUGIN_CLASS, MockExternalSink.PLUGIN_CLASS,
     DoubleTransform.PLUGIN_CLASS, ErrorTransform.PLUGIN_CLASS, IdentityTransform.PLUGIN_CLASS,
     IntValueFilterTransform.PLUGIN_CLASS, StringValueFilterTransform.PLUGIN_CLASS
   );
@@ -57,7 +60,7 @@ public class HydratorTestBase extends TestBase {
   public HydratorTestBase() {
   }
 
-  protected static void setupRealtimeArtifacts(NamespacedArtifactId artifactId, Class<?> appClass) throws Exception {
+  protected static void setupRealtimeArtifacts(ArtifactId artifactId, Class<?> appClass) throws Exception {
     addAppArtifact(artifactId, appClass,
                    RealtimeSource.class.getPackage().getName(),
                    PipelineConfigurable.class.getPackage().getName());
@@ -70,7 +73,7 @@ public class HydratorTestBase extends TestBase {
     // To work around, we'll just explicitly specify each plugin.
     Set<PluginClass> pluginClasses = new HashSet<>();
 
-    addPluginArtifact(new NamespacedArtifactId(artifactId.getNamespace(), artifactId.getArtifact() + "-mocks", "1.0.0"),
+    addPluginArtifact(new ArtifactId(artifactId.getNamespace(), artifactId.getArtifact() + "-mocks", "1.0.0"),
                       artifactId,
                       REALTIME_MOCK_PLUGINS,
                       MockSink.class, MockSource.class, LookupSource.class,
@@ -78,7 +81,7 @@ public class HydratorTestBase extends TestBase {
                       IntValueFilterTransform.class, StringValueFilterTransform.class);
   }
 
-  protected static void setupBatchArtifacts(NamespacedArtifactId artifactId, Class<?> appClass) throws Exception {
+  protected static void setupBatchArtifacts(ArtifactId artifactId, Class<?> appClass) throws Exception {
     // add the app artifact
     addAppArtifact(artifactId, appClass,
                    BatchSource.class.getPackage().getName(),
@@ -86,11 +89,12 @@ public class HydratorTestBase extends TestBase {
                    "org.apache.avro.mapred", "org.apache.avro", "org.apache.avro.generic", "org.apache.avro.io");
 
     // add plugins artifact
-    addPluginArtifact(new NamespacedArtifactId(artifactId.getNamespace(), artifactId.getArtifact() + "-mocks", "1.0.0"),
+    addPluginArtifact(new ArtifactId(artifactId.getNamespace(), artifactId.getArtifact() + "-mocks", "1.0.0"),
                       artifactId,
                       BATCH_MOCK_PLUGINS,
                       co.cask.cdap.etl.mock.batch.MockSource.class,
                       co.cask.cdap.etl.mock.batch.MockSink.class,
+                      MockExternalSource.class, MockExternalSink.class,
                       DoubleTransform.class, ErrorTransform.class, IdentityTransform.class,
                       IntValueFilterTransform.class, StringValueFilterTransform.class,
                       FieldCountAggregator.class, IdentityAggregator.class,

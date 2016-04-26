@@ -32,8 +32,8 @@ import co.cask.cdap.etl.proto.v2.ETLStage;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.artifact.ArtifactSummary;
+import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.NamespacedArtifactId;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.DataSetManager;
 import co.cask.cdap.test.SlowTests;
@@ -41,7 +41,9 @@ import co.cask.cdap.test.TestConfiguration;
 import co.cask.cdap.test.WorkerManager;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -53,15 +55,17 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  * Tests for {@link ETLWorker}.
  */
 public class ETLWorkerTest extends HydratorTestBase {
   private static final Logger LOG = LoggerFactory.getLogger(ETLWorkerTest.class);
-  protected static final NamespacedArtifactId APP_ARTIFACT_ID =
-    new NamespacedArtifactId(NamespaceId.DEFAULT.getNamespace(), "app", "1.0.0");
+  protected static final ArtifactId APP_ARTIFACT_ID =
+    new ArtifactId(NamespaceId.DEFAULT.getNamespace(), "app", "1.0.0");
   protected static final ArtifactSummary APP_ARTIFACT = new ArtifactSummary("app", "1.0.0");
   private static int startCount = 0;
 
@@ -74,6 +78,11 @@ public class ETLWorkerTest extends HydratorTestBase {
       return;
     }
     setupRealtimeArtifacts(APP_ARTIFACT_ID, ETLRealtimeApplication.class);
+  }
+
+  @After
+  public void cleanupTest() throws Exception {
+    getMetricsManager().resetAll();
   }
 
   @Test
@@ -95,7 +104,7 @@ public class ETLWorkerTest extends HydratorTestBase {
       .addConnection("source", "sink")
       .build();
 
-    Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "testToStream");
+    Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "simpleApp");
     AppRequest<ETLRealtimeConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
     ApplicationManager appManager = deployApplication(appId, appRequest);
 
@@ -109,6 +118,9 @@ public class ETLWorkerTest extends HydratorTestBase {
     } finally {
       stopWorker(workerManager);
     }
+
+    validateMetric(2, appId, "source.records.out");
+    validateMetric(2, appId, "sink.records.in");
   }
 
   @Test
@@ -150,7 +162,7 @@ public class ETLWorkerTest extends HydratorTestBase {
       .addConnection("source", "sink")
       .build();
 
-    Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "testToStream");
+    Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "lookupTestApp");
     AppRequest<ETLRealtimeConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
     ApplicationManager appManager = deployApplication(appId, appRequest);
 
@@ -171,6 +183,8 @@ public class ETLWorkerTest extends HydratorTestBase {
     } finally {
       stopWorker(workerManager);
     }
+    validateMetric(1, appId, "source.records.out");
+    validateMetric(1, appId, "sink.records.in");
   }
 
   @Test
@@ -225,6 +239,16 @@ public class ETLWorkerTest extends HydratorTestBase {
     } finally {
       stopWorker(workerManager);
     }
+
+    validateMetric(3, appId, "source.records.out");
+    validateMetric(3, appId, "valueFilter.records.in");
+    validateMetric(2, appId, "valueFilter.records.out");
+    validateMetric(3, appId, "double.records.in");
+    validateMetric(6, appId, "double.records.out");
+    validateMetric(3, appId, "identity.records.in");
+    validateMetric(3, appId, "identity.records.out");
+    validateMetric(2, appId, "sink1.records.in");
+    validateMetric(9, appId, "sink2.records.in");
   }
 
   private void stopWorker(WorkerManager workerManager) {
@@ -234,5 +258,15 @@ public class ETLWorkerTest extends HydratorTestBase {
     } catch (Throwable t) {
       LOG.error("Error stopping worker.", t);
     }
+  }
+
+  private void validateMetric(long expected, Id.Application appId,
+                              String metric) throws TimeoutException, InterruptedException {
+    Map<String, String> tags = ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, appId.getNamespaceId(),
+                                               Constants.Metrics.Tag.APP, appId.getId(),
+                                               Constants.Metrics.Tag.WORKER, ETLWorker.NAME);
+    getMetricsManager().waitForTotalMetricCount(tags, "user." + metric, expected, 20, TimeUnit.SECONDS);
+    // wait for won't throw an exception if the metric count is greater than expected
+    Assert.assertEquals(expected, getMetricsManager().getTotalMetric(tags, "user." + metric));
   }
 }

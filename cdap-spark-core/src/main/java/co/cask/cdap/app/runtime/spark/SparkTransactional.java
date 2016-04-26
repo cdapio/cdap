@@ -60,7 +60,7 @@ final class SparkTransactional implements Transactional {
       @Override
       public void set(TransactionalDatasetContext value) {
         String txKey = Long.toString(value.getTransaction().getWritePointer());
-        if (SparkContextCache.setLocalProperty(ACTIVE_TRANSACTION_KEY, txKey)) {
+        if (SparkRuntimeEnv.setLocalProperty(ACTIVE_TRANSACTION_KEY, txKey)) {
           transactionInfos.put(txKey, value);
         }
 
@@ -69,10 +69,10 @@ final class SparkTransactional implements Transactional {
 
       @Override
       public void remove() {
-        String txKey = SparkContextCache.getLocalProperty(ACTIVE_TRANSACTION_KEY);
+        String txKey = SparkRuntimeEnv.getLocalProperty(ACTIVE_TRANSACTION_KEY);
         if (txKey != null && !txKey.isEmpty()) {
           // Spark doesn't support unsetting of property. Hence set it to empty.
-          SparkContextCache.setLocalProperty(ACTIVE_TRANSACTION_KEY, "");
+          SparkRuntimeEnv.setLocalProperty(ACTIVE_TRANSACTION_KEY, "");
           transactionInfos.remove(txKey);
         }
         super.remove();

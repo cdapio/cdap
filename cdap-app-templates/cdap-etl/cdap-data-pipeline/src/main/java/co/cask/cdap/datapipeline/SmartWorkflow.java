@@ -109,16 +109,10 @@ public class SmartWorkflow extends AbstractWorkflow {
     // Dag classes don't allow a 'dag' without connections
     if (plan.getPhaseConnections().isEmpty()) {
 
-      // todo:(CDAP-3008) remove this once CDAP supports parallel spark jobs in a workflow
       WorkflowProgramAdder programAdder;
-      WorkflowForkConfigurer forkConfigurer = null;
-      if (engine == Engine.SPARK) {
-        programAdder = new TrunkProgramAdder(getConfigurer());
-      } else {
-        // multiple phases, do a fork then join
-        forkConfigurer = getConfigurer().fork();
-        programAdder = new BranchProgramAdder(forkConfigurer);
-      }
+      // multiple phases, do a fork then join
+      WorkflowForkConfigurer forkConfigurer = getConfigurer().fork();
+      programAdder = new BranchProgramAdder(forkConfigurer);
       for (String phaseName : plan.getPhases().keySet()) {
         addProgram(phaseName, programAdder);
       }
@@ -129,16 +123,6 @@ public class SmartWorkflow extends AbstractWorkflow {
     }
 
     dag = new ControlDag(plan.getPhaseConnections());
-
-    // todo:(CDAP-3008) remove this once CDAP supports parallel spark jobs in a workflow
-    if (engine == Engine.SPARK) {
-      WorkflowProgramAdder programAdder = new TrunkProgramAdder(getConfigurer());
-      for (String phaseName : dag.getTopologicalOrder()) {
-        addProgram(phaseName, programAdder);
-      }
-      return;
-    }
-
     // after flattening, there is guaranteed to be just one source
     dag.flatten();
     String start = dag.getSources().iterator().next();

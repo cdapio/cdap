@@ -18,7 +18,7 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
   .config(function($stateProvider, $urlRouterProvider, MYAUTH_ROLE) {
     $stateProvider
       .state('hydratorplusplus', {
-        url: '/hydratorplusplus',
+        url: '/hydrator',
         abstract: true,
         parent: 'ns',
         data: {
@@ -29,7 +29,7 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
       })
 
         .state('hydratorplusplus.create', {
-          url: '/studio?draftId&artifactType',
+          url: '/studio?artifactType&draftId',
           params: {
             data: null
           },
@@ -57,42 +57,88 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
               }
               return defer.promise;
             },
-            rSelectedArtifact: function($stateParams, $q, myPipelineApi) {
+            rSelectedArtifact: function($stateParams, $q, myPipelineApi, myAlertOnValium, $state, GLOBALS) {
               var defer = $q.defer();
+              let uiSupportedArtifacts = [GLOBALS.etlBatch, GLOBALS.etlRealtime, GLOBALS.etlDataPipeline];
+              let isArtifactValid = (backendArtifacts, artifact) => {
+                return backendArtifacts.filter( a => a.name === artifact).length;
+              };
+              let isAnyUISupportedArtifactPresent = (backendArtifacts) => {
+                return backendArtifacts.filter( artifact => uiSupportedArtifacts.indexOf(artifact.name) !== -1);
+              };
+              let getValidUISupportedArtifact = (backendArtifacts) => {
+                let validUISupportedArtifact = isAnyUISupportedArtifactPresent(backendArtifacts);
+                return validUISupportedArtifact.length ?  validUISupportedArtifact[0]: false;
+              };
+
+              let showError = (message) => {
+                message = (typeof message === 'string' ? message : GLOBALS.en.hydrator.studio.error['MISSING-SYSTEM-ARTIFACTS']);
+                myAlertOnValium.show({
+                  type: 'danger',
+                  content: message
+                });
+              };
+
               myPipelineApi.fetchArtifacts({
                 namespace: $stateParams.namespace
-              }).$promise.then((res) => {
-                let uiSupportedArtifacts = ['cdap-etl-batch', 'cdap-etl-realtime', 'cdap-data-pipeline'];
-                let filteredRes;
-                if ($stateParams.artifactType) {
-                  filteredRes = res.filter( r => r.name === $stateParams.artifactType );
-                  if (filteredRes.length) {
-                    defer.resolve(filteredRes[0].name);
+              }).$promise.then((artifactsFromBackend) => {
+                let showWarningAndNavigateAway = () => {
+                  if (!$state.current.name.length) {
+                    $state.go('hydrator.list').then(showError);
+                    return;
                   } else {
-                    defer.resolve(res[0].name);
+                    $state.go($state.current).then(showError);
                   }
+                };
+
+                let chooseDefaultArtifact = () => {
+                  if(!isArtifactValid(artifactsFromBackend, GLOBALS.etlDataPipeline)) {
+                    if (!isAnyUISupportedArtifactPresent(artifactsFromBackend).length) {
+                      return showWarningAndNavigateAway();
+                    } else {
+                      $stateParams.artifactType = getValidUISupportedArtifact(artifactsFromBackend).name;
+                      defer.resolve($stateParams.artifactType);
+                    }
+                  } else {
+                    $stateParams.artifactType = GLOBALS.etlDataPipeline;
+                    defer.resolve($stateParams.artifactType);
+                  }
+                };
+
+                if(!artifactsFromBackend.length) {
+                  return showWarningAndNavigateAway();
+                }
+
+                if(!isArtifactValid(artifactsFromBackend, $stateParams.artifactType)) {
+                  chooseDefaultArtifact();
                 } else {
-                  filteredRes = res.filter( r => uiSupportedArtifacts.indexOf(r.name) !== -1 );
-                  $stateParams.artifactType = filteredRes.filter(fres => fres.name === 'cdap-data-pipeline')[0].name;
                   defer.resolve($stateParams.artifactType);
                 }
-              });
+              },
+              (err) => {
+                showError(err);
+              }
+            );
               return defer.promise;
             },
-            rArtifacts: function(myPipelineApi, $stateParams, $q, HydratorPlusPlusOrderingFactory) {
+            rArtifacts: function(myPipelineApi, $stateParams, $q, HydratorPlusPlusOrderingFactory, GLOBALS) {
               var defer = $q.defer();
               myPipelineApi.fetchArtifacts({
                 namespace: $stateParams.namespace
               }).$promise
               .then((res) => {
-                let uiSupportedArtifacts = ['cdap-etl-batch', 'cdap-etl-realtime', 'cdap-data-pipeline'];
-                let filteredRes = res.filter( r => uiSupportedArtifacts.indexOf(r.name) !== -1 );
+                if (!res.length) {
+                  return;
+                } else {
+                  let uiSupportedArtifacts = [GLOBALS.etlBatch, GLOBALS.etlRealtime, GLOBALS.etlDataPipeline];
+                  let filteredRes = res.filter( r => uiSupportedArtifacts.indexOf(r.name) !== -1 );
 
-                filteredRes = filteredRes.map( r => {
-                  r.label = HydratorPlusPlusOrderingFactory.getArtifactDisplayName(r.name);
-                  return r;
-                });
-                defer.resolve(filteredRes);
+                  filteredRes = filteredRes.map( r => {
+                    r.label = HydratorPlusPlusOrderingFactory.getArtifactDisplayName(r.name);
+                    return r;
+                  });
+                  defer.resolve(filteredRes);
+                }
               });
               return defer.promise;
             },
@@ -138,13 +184,45 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
             highlightTab: 'hydratorList'
           },
           resolve : {
-            rPipelineDetail: function($stateParams, $q, myPipelineApi) {
+            rPipelineDetail: function($stateParams, $q, myPipelineApi, myAlertOnValium, $state) {
               var params = {
                 namespace: $stateParams.namespace,
                 pipeline: $stateParams.pipelineId
               };
 
-              return myPipelineApi.get(params).$promise;
+              return myPipelineApi
+                .get(params)
+                .$promise
+                .then(
+                  (pipelineDetail) => {
+                    let config = pipelineDetail.configuration;
+                    try {
+                      config = JSON.parse(config);
+                    } catch(e) {
+                      myAlertOnValium.show({
+                        type: 'danger',
+                        content: 'Invalid configuration JSON.'
+                      });
+                      $q.reject(false);
+                      // FIXME: We should not have done this. But ui-router when rejected on a 'resolve:' function takes it to the parent state apparently
+                      // and in our case the parent state is 'hydratorplusplus and since its an abstract state it goes to home.'
+                      $state.go('hydratorplusplus.list');
+                      return;
+                    }
+                    if(!config.stages) {
+                      myAlertOnValium.show({
+                        type: 'danger',
+                        content: 'Pipeline is created using older version of hydrator. Please upgrage the pipeline to newer version(3.4) to view in UI.'
+                      });
+                      $q.reject(false);
+                      // FIXME: We should not have done this. But ui-router when rejected on a 'resolve:' function takes it to the parent state apparently
+                      // and in our case the parent state is 'hydratorplusplus and since its an abstract state it goes to home.'
+                      $state.go('hydratorplusplus.list');
+                      return;
+                    }
+                    return $q.resolve(pipelineDetail);
+                  }
+                );
             }
           },
           ncyBreadcrumb: {
@@ -172,6 +250,16 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
               controllerAs: 'CanvasCtrl'
             }
           }
-        });
+        })
 
+        .state('hydratorplusplus.list', {
+          url: '',
+          data: {
+            authorizedRoles: MYAUTH_ROLE.all,
+            highlightTab: 'hydratorList'
+          },
+          templateUrl: '/assets/features/hydrator/templates/list.html',
+          controller: 'HydratorListController',
+          controllerAs: 'ListController'
+        });
   });

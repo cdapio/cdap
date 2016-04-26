@@ -46,6 +46,8 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -64,14 +66,14 @@ import javax.annotation.Nullable;
  * Implementation of {@link MetadataStore} used in distributed mode.
  */
 public class DefaultMetadataStore implements MetadataStore {
-
-  // TODO: CDAP-4311 Needed only for Upgrade Tool for 3.3. Make private in 3.4.
-  public static final Id.DatasetInstance BUSINESS_METADATA_INSTANCE_ID =
+  private static final Logger LOG = LoggerFactory.getLogger(DefaultMetadataStore.class);
+  private static final Id.DatasetInstance BUSINESS_METADATA_INSTANCE_ID =
     Id.DatasetInstance.from(Id.Namespace.SYSTEM, "business.metadata");
   private static final Id.DatasetInstance SYSTEM_METADATA_INSTANCE_ID =
     Id.DatasetInstance.from(Id.Namespace.SYSTEM, "system.metadata");
   private static final Map<String, String> EMPTY_PROPERTIES = ImmutableMap.of();
   private static final Set<String> EMPTY_TAGS = ImmutableSet.of();
+  private static final int BATCH_SIZE = 1000;
 
   private static final Comparator<Map.Entry<Id.NamespacedId, Integer>> SEARCH_RESULT_DESC_SCORE_COMPARATOR =
     new Comparator<Map.Entry<Id.NamespacedId, Integer>>() {
@@ -471,6 +473,27 @@ public class DefaultMetadataStore implements MetadataStore {
     return builder.build();
   }
 
+  @Override
+  public void rebuildIndexes() {
+    byte[] row = null;
+    while ((row = rebuildIndex(row, MetadataScope.SYSTEM)) != null) {
+      LOG.debug("Completed a batch for rebuilding system metadata indexes.");
+    }
+    while ((row = rebuildIndex(row, MetadataScope.USER)) != null) {
+      LOG.debug("Completed a batch for rebuilding business metadata indexes.");
+    }
+  }
+
+  @Override
+  public void deleteAllIndexes() {
+    while (deleteBatch(MetadataScope.SYSTEM) != 0) {
+      LOG.debug("Deleted a batch of system metadata indexes.");
+    }
+    while (deleteBatch(MetadataScope.USER) != 0) {
+      LOG.debug("Deleted a batch of business metadata indexes.");
+    }
+  }
+
   private void publish(MetadataRecord previous, MetadataRecord additions, MetadataRecord deletions) {
     MetadataChangeRecord.MetadataDiffRecord diff = new MetadataChangeRecord.MetadataDiffRecord(additions, deletions);
     MetadataChangeRecord changeRecord = new MetadataChangeRecord(previous, diff, System.currentTimeMillis());
@@ -497,6 +520,24 @@ public class DefaultMetadataStore implements MetadataStore {
     MetadataDataset metadataDataset = newMetadataDataset(scope);
     TransactionExecutor txExecutor = Transactions.createTransactionExecutor(txExecutorFactory, metadataDataset);
     txExecutor.executeUnchecked(func, metadataDataset);
+  }
+
+  private byte[] rebuildIndex(final byte[] startRowKey, MetadataScope scope) {
+    return execute(new TransactionExecutor.Function<MetadataDataset, byte[]>() {
+      @Override
+      public byte[] apply(MetadataDataset input) throws Exception {
+        return input.rebuildIndexes(startRowKey, BATCH_SIZE);
+      }
+    }, scope);
+  }
+
+  private int deleteBatch(MetadataScope scope) {
+    return execute(new TransactionExecutor.Function<MetadataDataset, Integer>() {
+      @Override
+      public Integer apply(MetadataDataset input) throws Exception {
+        return input.deleteAllIndexes(BATCH_SIZE);
+      }
+    }, scope);
   }
 
   private MetadataDataset newMetadataDataset(MetadataScope scope) {

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,8 +20,11 @@ import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.annotation.UseDataSet;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.api.data.batch.Input;
+import co.cask.cdap.api.data.batch.Output;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 import co.cask.cdap.api.data.stream.Stream;
+import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.lib.ObjectStore;
 import co.cask.cdap.api.dataset.lib.ObjectStores;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
@@ -31,6 +34,7 @@ import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceRequest;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
 import co.cask.cdap.api.spark.AbstractSpark;
+import co.cask.cdap.api.spark.SparkClientContext;
 import co.cask.cdap.api.workflow.AbstractWorkflow;
 import com.google.common.base.Charsets;
 import com.google.gson.Gson;
@@ -39,6 +43,7 @@ import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
+import org.apache.spark.SparkConf;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
@@ -77,8 +82,10 @@ public class SparkPageRankApp extends AbstractApplication {
 
     // Store input and processed data in ObjectStore Datasets
     try {
-      ObjectStores.createObjectStore(getConfigurer(), "ranks", Integer.class);
-      ObjectStores.createObjectStore(getConfigurer(), "rankscount", Integer.class);
+      ObjectStores.createObjectStore(getConfigurer(), "ranks", Integer.class,
+                                     DatasetProperties.builder().setDescription("Ranks Dataset").build());
+      ObjectStores.createObjectStore(getConfigurer(), "rankscount", Integer.class,
+                                     DatasetProperties.builder().setDescription("Ranks Count Dataset").build());
     } catch (UnsupportedTypeException e) {
       // This exception is thrown by ObjectStore if its parameter type cannot be
       // (de)serialized (for example, if it is an interface and not a class, then there is
@@ -95,7 +102,7 @@ public class SparkPageRankApp extends AbstractApplication {
 
     @Override
     public void configure() {
-      setDescription("Runs SparkPageRankProgram followed by RanksCounter MapReduce");
+      setDescription("Runs PageRankSpark program followed by RanksCounter MapReduce program");
       addSpark(PageRankSpark.class.getSimpleName());
       addMapReduce(RanksCounter.class.getSimpleName());
     }
@@ -108,10 +115,15 @@ public class SparkPageRankApp extends AbstractApplication {
 
     @Override
     public void configure() {
-      setDescription("Spark Page Rank Program");
+      setDescription("Spark page rank program");
       setMainClass(SparkPageRankProgram.class);
       setDriverResources(new Resources(1024));
       setExecutorResources(new Resources(1024));
+    }
+
+    @Override
+    public void beforeSubmit(SparkClientContext context) throws Exception {
+      context.setSparkConf(new SparkConf().set("spark.driver.extraJavaOptions", "-XX:MaxPermSize=256m"));
     }
   }
 
@@ -181,17 +193,13 @@ public class SparkPageRankApp extends AbstractApplication {
   public static class RanksCounter extends AbstractMapReduce {
 
     @Override
-    public void configure() {
-      setInputDataset("ranks");
-    }
-
-    @Override
     public void beforeSubmit(MapReduceContext context) throws Exception {
       Job job = context.getHadoopJob();
       job.setMapperClass(Emitter.class);
       job.setReducerClass(Counter.class);
       job.setNumReduceTasks(1);
-      context.addOutput("rankscount");
+      context.addInput(Input.ofDataset("ranks"));
+      context.addOutput(Output.ofDataset("rankscount"));
     }
 
     /**

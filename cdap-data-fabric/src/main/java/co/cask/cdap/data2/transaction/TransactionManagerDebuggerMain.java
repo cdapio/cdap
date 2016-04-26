@@ -19,6 +19,7 @@ package co.cask.cdap.data2.transaction;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.CConfigurationUtil;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.utils.OSDetector;
 import co.cask.tephra.ChangeId;
 import co.cask.tephra.TransactionManager;
 import co.cask.tephra.TxConstants;
@@ -66,7 +67,7 @@ public class TransactionManagerDebuggerMain {
   private static final SimpleDateFormat formatter
       = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S z");
   private static final String TOOL_NAME = "tx-debugger";
-
+        
   private static final String HOST_OPTION = "host";
   private static final String PORT_OPTION = "port";
   private static final String FILENAME_OPTION = "filename";
@@ -229,9 +230,11 @@ public class TransactionManagerDebuggerMain {
     } else {
       pw = new PrintWriter(System.out);
     }
+    
+    String toolName = TOOL_NAME + (OSDetector.isWindows() ? ".bat" : ".sh");
     pw.println("Usage:" +
-        "\n\t " + TOOL_NAME + " view [ <option> ... ]" +
-        "\n\t " + TOOL_NAME + " invalidate --host <name> --transaction <id>");
+        "\n\t " + toolName + " view [ <option> ... ]" +
+        "\n\t " + toolName + " invalidate --host <name> --transaction <id>");
     pw.println("\nOptions:\n");
     HelpFormatter formatter = new HelpFormatter();
     formatter.printOptions(pw, 100, options, 0, 10);

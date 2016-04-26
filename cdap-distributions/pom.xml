@@ -87,7 +87,7 @@
                     -t rpm
                     -C "${stage.dir}"
                     --version "${package.version}"
-                    --architecture all
+                    --architecture "${package.rpm.arch}"
                     --rpm-os linux
                     --url "http://www.cask.co"
                     --template-value "project=cdap"
@@ -164,7 +164,7 @@
                     -t deb
                     -C "${stage.dir}-deb"
                     --version "${package.version}"
-                    --architecture all
+                    --architecture "${package.deb.arch}"
                     --url "http://www.cask.co"
                     --template-value "project=cdap"
                     --after-install "${project.basedir}/src/debian/scripts/common-postinst"

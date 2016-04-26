@@ -21,7 +21,6 @@ import co.cask.cdap.proto.Id;
 import org.apache.twill.filesystem.Location;
 
 import java.io.IOException;
-import java.util.Map;
 import javax.annotation.Nullable;
 
 /**

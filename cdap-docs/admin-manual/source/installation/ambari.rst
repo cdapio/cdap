@@ -36,12 +36,6 @@ Installation using Apache Ambari
 Preparing the Cluster
 =====================
 
-.. Node.js Installation
-.. --------------------
-.. include:: /../target/_includes/ambari-installation.rst
-    :start-after: .. _ambari-install-node-js:
-    :end-before: .. _ambari-install-packaging:
-
 .. Hadoop Configuration
 .. --------------------
 .. include:: ../_includes/installation/hadoop-configuration.txt

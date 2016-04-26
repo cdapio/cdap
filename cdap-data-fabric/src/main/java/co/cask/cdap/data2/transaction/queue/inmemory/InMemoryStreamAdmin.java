@@ -18,6 +18,7 @@ package co.cask.cdap.data2.transaction.queue.inmemory;
 
 import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.common.StreamNotFoundException;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.data.stream.service.StreamMetaStore;
 import co.cask.cdap.data.view.ViewAdmin;
@@ -104,6 +105,11 @@ public class InMemoryStreamAdmin extends InMemoryQueueAdmin implements StreamAdm
   }
 
   @Override
+  public StreamProperties getProperties(Id.Stream streamId) {
+    throw new UnsupportedOperationException("Stream properties not supported for non-file based stream.");
+  }
+
+  @Override
   public void updateConfig(Id.Stream streamId, StreamProperties properties) throws IOException {
     throw new UnsupportedOperationException("Stream config not supported for non-file based stream.");
   }
@@ -123,7 +129,8 @@ public class InMemoryStreamAdmin extends InMemoryQueueAdmin implements StreamAdm
   @Override
   public StreamConfig create(Id.Stream streamId, @Nullable Properties props) throws Exception {
     create(QueueName.fromStream(streamId), props);
-    streamMetaStore.addStream(streamId);
+    String description = (props != null) ? props.getProperty(Constants.Stream.DESCRIPTION) : null;
+    streamMetaStore.addStream(streamId, description);
     publishAudit(streamId, AuditType.CREATE);
     return null;
   }

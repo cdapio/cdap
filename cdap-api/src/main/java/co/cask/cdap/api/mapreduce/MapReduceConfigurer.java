@@ -20,7 +20,7 @@ import co.cask.cdap.api.DatasetConfigurer;
 import co.cask.cdap.api.ProgramConfigurer;
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.data.batch.Input;
-import co.cask.cdap.api.data.stream.StreamBatchReadable;
+import co.cask.cdap.api.data.batch.Output;
 import co.cask.cdap.api.plugin.PluginConfigurer;
 
 /**
@@ -49,7 +49,7 @@ public interface MapReduceConfigurer extends DatasetConfigurer, ProgramConfigure
   /**
    * Sets the name of the dataset used as output for the {@link MapReduce}.
    *
-   * @deprecated as of 3.4.0. Use {@link MapReduceContext#addOutput(String)}
+   * @deprecated as of 3.4.0. Use {@link MapReduceContext#addOutput(Output)}
    *             in beforeSubmit, instead.
    */
   @Deprecated

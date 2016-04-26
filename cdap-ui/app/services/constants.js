@@ -52,6 +52,18 @@ angular.module(PKG.name + '.services')
       'sparkcompute': 'transform'
     },
 
+    artifactConvert: {
+      'cdap-etl-batch': 'ETL Batch',
+      'cdap-etl-realtime': 'ETL Realtime',
+      'cdap-data-pipeline': 'Data Pipeline'
+    },
+
+    iconArtifact: {
+      'cdap-etl-batch': 'ETLBatch',
+      'cdap-etl-realtime': 'ETLRealtime',
+      'cdap-data-pipeline': 'ETLBatch'
+    },
+
     'en': {
       hydrator: {
         appLabel: 'Hydrator Pipeline',
@@ -71,7 +83,7 @@ angular.module(PKG.name + '.services')
             'MISSING-REQUIRED-FIELDS': 'is missing required fields',
             'NO-SOURCE-FOUND': 'Please add a source to your pipeline',
             'MISSING-NAME': 'Pipeline name is missing.',
-            'INVALID-NAME': 'Pipeline names can only contain alphanumeric (\'a-z A-Z 0-9\') and underscore ( \'_\') characters. Please remove any other characters.',
+            'INVALID-NAME': 'Pipeline names can only contain alphanumeric (\'a-z A-Z 0-9\'), underscore (\'_\'), and hyphen (\'-\') characters. Please remove any other characters.',
             'NO-SINK-FOUND': 'Please add a sink to your pipeline',
             'NAME-ALREADY-EXISTS': 'A pipeline with this name already exists. Please choose a different name.',
             'DUPLICATE-NODE-NAMES': 'Every node should have a unique name to be exported/published.',
@@ -85,7 +97,8 @@ angular.module(PKG.name + '.services')
               'INVALID-SCHEDULE': 'Batch pipeline should have a valid schedule specification.',
               'INVALID-INSTANCE': 'Realtime pipeline should have a valid instance specification.',
               'INVALID-NODES-CONNECTIONS': 'Unknown node(s) in \'connections\' property in pipeline specification.'
-            }
+            },
+            'MISSING-SYSTEM-ARTIFACTS': 'Missing system artifacts. Please load system artifacts to use hydrator studio.'
           },
           pluginDoesNotExist: 'This plugin does not exist: '
         },

@@ -25,6 +25,7 @@ import co.cask.cdap.data.stream.StreamCoordinatorClient;
 import co.cask.cdap.internal.app.namespace.DefaultNamespaceEnsurer;
 import co.cask.cdap.internal.app.runtime.artifact.SystemArtifactLoader;
 import co.cask.cdap.internal.app.runtime.flow.FlowUtils;
+import co.cask.cdap.internal.app.runtime.plugin.PluginService;
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerService;
 import co.cask.cdap.notifications.service.NotificationService;
 import co.cask.cdap.security.authorization.AuthorizerInstantiatorService;
@@ -64,11 +65,12 @@ public class StandaloneAppFabricServer extends AppFabricServer {
                                    DefaultNamespaceEnsurer defaultNamespaceEnsurer,
                                    MetricStore metricStore,
                                    SystemArtifactLoader systemArtifactLoader,
-                                   AuthorizerInstantiatorService authorizerInstantiatorService) {
+                                   AuthorizerInstantiatorService authorizerInstantiatorService,
+                                   PluginService pluginService) {
     super(configuration, discoveryService, schedulerService, notificationService, hostname, handlers,
           metricsCollectionService, programRuntimeService, applicationLifecycleService,
           programLifecycleService, streamCoordinatorClient, servicesNames, handlerHookNames, defaultNamespaceEnsurer,
-          systemArtifactLoader, authorizerInstantiatorService);
+          systemArtifactLoader, authorizerInstantiatorService, pluginService);
     this.metricStore = metricStore;
   }
 

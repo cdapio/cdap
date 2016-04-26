@@ -28,7 +28,6 @@ import co.cask.cdap.api.mapreduce.MapReduceTaskContext;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.metrics.MetricsContext;
-import co.cask.cdap.api.metrics.MultiMetricsContext;
 import co.cask.cdap.api.plugin.Plugin;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.metrics.MapReduceMetrics;
@@ -42,7 +41,7 @@ import co.cask.cdap.internal.app.runtime.AbstractContext;
 import co.cask.cdap.internal.app.runtime.DefaultTaskLocalizationContext;
 import co.cask.cdap.internal.app.runtime.batch.dataset.CloseableBatchWritable;
 import co.cask.cdap.internal.app.runtime.batch.dataset.ForwardingSplitReader;
-import co.cask.cdap.internal.app.runtime.batch.dataset.MultipleOutputs;
+import co.cask.cdap.internal.app.runtime.batch.dataset.output.MultipleOutputs;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
 import co.cask.tephra.Transaction;
@@ -204,21 +203,14 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
       tags.put(Constants.Metrics.Tag.INSTANCE_ID, taskId);
     }
 
-    MetricsContext programMetricsContext = service.getContext(tags);
-
-    if (workflowProgramInfo == null) {
-      return programMetricsContext;
+    if (workflowProgramInfo != null) {
+      // If running inside Workflow, add the WorkflowMetricsContext as well
+      tags.put(Constants.Metrics.Tag.WORKFLOW, workflowProgramInfo.getName());
+      tags.put(Constants.Metrics.Tag.WORKFLOW_RUN_ID, workflowProgramInfo.getRunId().getId());
+      tags.put(Constants.Metrics.Tag.NODE, workflowProgramInfo.getNodeId());
     }
 
-    // If running inside Workflow, add the WorkflowMetricsContext as well
-    tags = Maps.newHashMap();
-    tags.put(Constants.Metrics.Tag.NAMESPACE, program.getNamespaceId());
-    tags.put(Constants.Metrics.Tag.APP, program.getApplicationId());
-    tags.put(Constants.Metrics.Tag.WORKFLOW, workflowProgramInfo.getName());
-    tags.put(Constants.Metrics.Tag.RUN_ID, workflowProgramInfo.getRunId().getId());
-    tags.put(Constants.Metrics.Tag.NODE, workflowProgramInfo.getNodeId());
-
-    return new MultiMetricsContext(programMetricsContext, service.getContext(tags));
+    return service.getContext(tags);
   }
 
   @Override

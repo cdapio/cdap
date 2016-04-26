@@ -77,7 +77,7 @@ class DefaultSparkExecutionContext(runtimeContext: SparkRuntimeContext,
   sparkTxService.startAndWait()
 
   // Attach a listener to the SparkContextCache, which will in turn listening to events from SparkContext.
-  SparkContextCache.addSparkListener(new SparkListener {
+  SparkRuntimeEnv.addSparkListener(new SparkListener {
 
     override def onApplicationEnd(applicationEnd: SparkListenerApplicationEnd) = applicationEndLatch.countDown
 
@@ -109,7 +109,7 @@ class DefaultSparkExecutionContext(runtimeContext: SparkRuntimeContext,
     try {
       // If there is a SparkContext, wait for the ApplicationEnd callback
       // This make sure all jobs' transactions are committed/invalidated
-      SparkContextCache.stop.foreach(sc => applicationEndLatch.await())
+      SparkRuntimeEnv.stop.foreach(sc => applicationEndLatch.await())
     } finally {
       sparkTxService.stopAndWait()
     }

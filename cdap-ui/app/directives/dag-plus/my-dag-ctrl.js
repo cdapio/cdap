@@ -32,6 +32,8 @@ angular.module(PKG.name + '.commons')
     var selected = [];
     var labels = [];
 
+    var separation = $scope.separation || 200; // node separation length
+
     var metricsLabel = [
       [ 'Custom', {
         create: function (label) {
@@ -206,10 +208,16 @@ angular.module(PKG.name + '.commons')
             });
           }, true);
         }
-
-        vm.fitToScreen();
-
       });
+
+      // This is here because the left panel is initially in the minimized mode and expands
+      // based on user setting on local storage. This is taking more than a single angular digest cycle
+      // Hence the timeout to 1sec to render it in subsequent digest cycles.
+      // FIXME: This directive should not be dependent on specific external component to render itself.
+      // The left panel should default to expanded view and cleaning up the graph and fit to screen should happen in parallel.
+      $timeout(() => {
+        vm.fitToScreen();
+      }, 500);
     }
 
     vm.nodeMouseEnter = function (node) {
@@ -553,11 +561,11 @@ angular.module(PKG.name + '.commons')
     vm.cleanUpGraph = function () {
       if ($scope.nodes.length === 0) { return; }
 
-      var graphNodes = DAGPlusPlusFactory.getGraphLayout($scope.nodes, $scope.connections)._nodes;
+      var graphNodes = DAGPlusPlusFactory.getGraphLayout($scope.nodes, $scope.connections, separation)._nodes;
       angular.forEach($scope.nodes, function (node) {
         var location = graphNodes[node.name];
         node._uiPosition = {
-          left: location.x + 'px',
+          left: location.x - 50 + 'px',
           top: location.y + 'px'
         };
       });
@@ -622,7 +630,7 @@ angular.module(PKG.name + '.commons')
       var parent = $scope.element[0].parentElement.getBoundingClientRect();
 
       // calculating the scales and finding the minimum scale
-      var widthScale = (parent.width - 100) / width;
+      var widthScale = (parent.width - 150) / width;
       var heightScale = (parent.height - 100) / height;
 
       vm.scale = Math.min(widthScale, heightScale);
@@ -637,7 +645,7 @@ angular.module(PKG.name + '.commons')
       // with margin of 50px
       var offsetLeft = parseInt(minLeft._uiPosition.left, 10);
       angular.forEach($scope.nodes, function (node) {
-        node._uiPosition.left = (parseInt(node._uiPosition.left, 10) - offsetLeft + 50) + 'px';
+        node._uiPosition.left = (parseInt(node._uiPosition.left, 10) - offsetLeft) + 'px';
       });
 
       var offsetTop = parseInt(minTop._uiPosition.top, 10);

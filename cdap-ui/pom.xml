@@ -123,6 +123,7 @@
                   <exclude>**/npm-debug.log</exclude>
                   <exclude>**/node/**</exclude>
                   <exclude>**/*.json</exclude>
+                  <exclude>**/LICENSE-node</exclude>
                 </excludes>
               </configuration>
             </execution>
@@ -137,6 +138,8 @@
       <id>dist</id>
       <properties>
         <package.depends>--depends cdap --replaces cdap-web-app --conflicts cdap-web-app</package.depends>
+        <package.deb.arch>amd64</package.deb.arch>
+        <package.rpm.arch>x86_64</package.rpm.arch>
       </properties>
       <build>
         <plugins>
@@ -152,7 +155,7 @@
                 </goals>
                 <configuration>
                   <nodeVersion>v0.12.0</nodeVersion>
-                  <npmVersion>2.5.1</npmVersion>
+                  <npmVersion>2.15.1</npmVersion>
                 </configuration>
               </execution>
               <execution>
@@ -267,23 +270,33 @@
                 <configuration>
                   <target>
                     <copy todir = "${stage.opt.dir}/server">
-                      <fileset dir = "server"/>
+                      <fileset dir = "server" />
                     </copy>
                     <copy todir = "${stage.opt.dir}/dist">
-                      <fileset dir = "dist"/>
+                      <fileset dir = "dist" />
+                    </copy>
+                    <copy todir = "${stage.opt.dir}/bin">
+                      <fileset dir = "node">
+                        <include name="node" />
+                      </fileset>
                     </copy>
                     <copy todir = "${stage.opt.dir}/node_modules">
-                      <fileset dir = "node_modules"/>
+                      <fileset dir = "node_modules" />
                     </copy>
                     <copy todir = "${stage.opt.dir}/templates">
-                      <fileset dir = "templates"/>
+                      <fileset dir = "templates" />
                     </copy>
-                    <copy todir = "${stage.opt.dir}/">
+                    <copy todir = "${stage.opt.dir}">
+                      <fileset dir = "./">
+                        <include name="LICENSE-node" />
+                      </fileset>
+                    </copy>
+                    <copy todir = "${stage.opt.dir}">
                       <fileset dir = "./">
                         <include name="package.json" />
                       </fileset>
                     </copy>
-                    <copy todir = "${stage.opt.dir}/">
+                    <copy todir = "${stage.opt.dir}">
                       <fileset dir = "./">
                         <include name="server.js" />
                       </fileset>

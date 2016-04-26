@@ -22,7 +22,7 @@
   </select>
 
   <div class="import-section">
-    <a class="btn btn-default" href="" ng-click="HydratorPlusPlusLeftPanelCtrl.showTemplates()">Plugin Templates</a>
+    <a class="btn btn-default" href="" ng-click="HydratorPlusPlusLeftPanelCtrl.showTemplates()">Template Gallery</a>
     <a class="btn btn-default" href="" ng-click="HydratorPlusPlusLeftPanelCtrl.openFileBrowser()">Import Pipeline</a>
   </div>
 </div>
@@ -31,6 +31,9 @@
 
   data-placement="left"
   data-is-sub-menu="true"
+
+  data-item-generic-name="plugins"
+  data-group-generic-name="artifacts"
 
   data-on-panel-item-click-context="HydratorPlusPlusLeftPanelCtrl"
   data-on-panel-item-click="HydratorPlusPlusLeftPanelCtrl.onLeftSidePanelItemClicked">

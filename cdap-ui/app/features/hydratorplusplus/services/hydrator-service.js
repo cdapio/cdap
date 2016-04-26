@@ -15,7 +15,7 @@
  */
 
 class HydratorPlusPlusHydratorService {
-  constructor(GLOBALS, DAGPlusPlusFactory, uuid, $state, $rootScope, myPipelineApi, $q, IMPLICIT_SCHEMA, DAGPlusPlusNodesStore) {
+  constructor(GLOBALS, DAGPlusPlusFactory, uuid, $state, $rootScope, myPipelineApi, $q, IMPLICIT_SCHEMA, DAGPlusPlusNodesStore, myHelpers) {
     this.GLOBALS = GLOBALS;
     this.DAGPlusPlusFactory = DAGPlusPlusFactory;
     this.uuid = uuid;
@@ -25,17 +25,18 @@ class HydratorPlusPlusHydratorService {
     this.$q = $q;
     this.IMPLICIT_SCHEMA = IMPLICIT_SCHEMA;
     this.DAGPlusPlusNodesStore = DAGPlusPlusNodesStore;
+    this.myHelpers = myHelpers;
   }
 
-  getNodesAndConnectionsFromConfig(pipeline) {
+  getNodesAndConnectionsFromConfig(pipeline, isStudio) {
     if (pipeline.config && pipeline.config.stages) {
-      return this._parseNewConfigStages(pipeline.config);
+      return this._parseNewConfigStages(pipeline.config, isStudio);
     } else {
-      return this._parseOldConfig(pipeline);
+      return this._parseOldConfig(pipeline, isStudio);
     }
   }
 
-  _parseNewConfigStages(config) {
+  _parseNewConfigStages(config, isStudio) {
     let nodes = [];
     let connections = [];
     config.stages.forEach( node => {
@@ -48,7 +49,13 @@ class HydratorPlusPlusHydratorService {
     });
     connections = config.connections;
     // Obtaining layout of graph with Dagre
-    var graph = this.DAGPlusPlusFactory.getGraphLayout(nodes, connections);
+    var graph;
+    if (isStudio) {
+      graph = this.DAGPlusPlusFactory.getGraphLayout(nodes, connections, 100);
+    } else {
+      graph = this.DAGPlusPlusFactory.getGraphLayout(nodes, connections);
+    }
+
     angular.forEach(nodes, function (node) {
       node._uiPosition = {
         'top': graph._nodes[node.name].y + 'px' ,
@@ -62,7 +69,7 @@ class HydratorPlusPlusHydratorService {
     };
   }
 
-  _parseOldConfig(pipeline) {
+  _parseOldConfig(pipeline, isStudio) {
     let nodes = [];
     let connections = [];
     let config = pipeline.config;
@@ -97,7 +104,12 @@ class HydratorPlusPlusHydratorService {
     connections = config.connections;
 
     // Obtaining layout of graph with Dagre
-    var graph = this.DAGPlusPlusFactory.getGraphLayout(nodes, connections);
+    var graph;
+    if (isStudio) {
+      graph = this.DAGPlusPlusFactory.getGraphLayout(nodes, connections, 100);
+    } else {
+      graph = this.DAGPlusPlusFactory.getGraphLayout(nodes, connections);
+    }
     angular.forEach(nodes, function (node) {
       node._uiPosition = {
         'top': graph._nodes[node.name].y + 'px' ,
@@ -122,17 +134,26 @@ class HydratorPlusPlusHydratorService {
       extensionType: node.type,
       pluginName: node.plugin.name
     };
-    let nodeArtifact = node.plugin.artifact;
+
     return this.myPipelineApi.fetchPluginProperties(params)
       .$promise
-      .then(function(res = []) {
-        let match = res.filter(plug => angular.equals(plug.artifact, nodeArtifact));
-        var pluginProperties = (match.length? match[0].properties: {});
-        if (res.length && (!node.description || (node.description && !node.description.length))) {
-          node.description = res[0].description;
+      .then((res = []) => {
+        let nodeArtifact = node.plugin.artifact;
+        if (node.plugin && !node.plugin.artifact && res.length) {
+          let lastElementIndex = res.length - 1;
+          node._backendProperties = res[lastElementIndex].properties || {};
+          node.description = res[lastElementIndex].description;
+          node.plugin.artifact = res[lastElementIndex].artifact;
+          defer.resolve(node);
+        } else {
+          let match = res.filter(plug => angular.equals(plug.artifact, nodeArtifact));
+          let pluginProperties = (match.length? match[0].properties: {});
+          if (res.length && this.myHelpers.objectQuery(node, 'description', 'length')) {
+            node.description = res[0].description;
+          }
+          node._backendProperties = pluginProperties;
+          defer.resolve(node);
         }
-        node._backendProperties = pluginProperties;
-        defer.resolve(node);
         return defer.promise;
       });
   }
@@ -168,22 +189,21 @@ class HydratorPlusPlusHydratorService {
         input = {
           fields: [{ name: 'body', type: 'string' }]
         };
+
+        input.fields.unshift({
+          name: 'headers',
+          type: {
+            type: 'map',
+            keys: 'string',
+            values: 'string'
+          }
+        });
+
+        input.fields.unshift({
+          name: 'ts',
+          type: 'long'
+        });
       }
-
-      input.fields.unshift({
-        name: 'headers',
-        type: {
-          type: 'map',
-          keys: 'string',
-          values: 'string'
-        }
-      });
-
-      input.fields.unshift({
-        name: 'ts',
-        type: 'long'
-      });
-
     }
 
     schema = input ? input.fields : null;
@@ -257,6 +277,6 @@ class HydratorPlusPlusHydratorService {
   }
 
 }
-HydratorPlusPlusHydratorService.$inject = ['GLOBALS', 'DAGPlusPlusFactory', 'uuid', '$state', '$rootScope', 'myPipelineApi', '$q', 'IMPLICIT_SCHEMA', 'DAGPlusPlusNodesStore'];
+HydratorPlusPlusHydratorService.$inject = ['GLOBALS', 'DAGPlusPlusFactory', 'uuid', '$state', '$rootScope', 'myPipelineApi', '$q', 'IMPLICIT_SCHEMA', 'DAGPlusPlusNodesStore', 'myHelpers'];
 angular.module(`${PKG.name}.feature.hydratorplusplus`)
   .service('HydratorPlusPlusHydratorService', HydratorPlusPlusHydratorService);

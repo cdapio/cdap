@@ -109,6 +109,7 @@
     <hbase10cdh550.version>1.0.0-cdh5.5.0</hbase10cdh550.version>
     <hbase10.version>1.0.1.1</hbase10.version>
     <hbase11.version>1.1.1</hbase11.version>
+    <hbase12cdh570.version>1.2.0-cdh5.7.0</hbase12cdh570.version>
     <hive.version>1.1.0</hive.version>
     <hsql.version>2.2.4</hsql.version>
     <http.component.version>4.2.5</http.component.version>
@@ -131,7 +132,7 @@
     <snappy.version>1.1.1.7</snappy.version>
     <shiro.version>1.2.1</shiro.version>
     <slf4j.version>1.7.5</slf4j.version>
-    <tephra.version>0.6.5</tephra.version>
+    <tephra.version>0.7.1</tephra.version>
     <thrift.version>0.9.0</thrift.version>
     <twill.version>0.7.0-incubating</twill.version>
     <unboundid.version>2.3.6</unboundid.version>
@@ -1445,10 +1446,11 @@
           <artifactId>maven-surefire-plugin</artifactId>
           <version>2.14.1</version>
           <configuration>
-            <argLine>-Xmx5000m -Djava.awt.headless=true -XX:MaxPermSize=256m -XX:+UseConcMarkSweepGC -XX:OnOutOfMemoryError="kill -9 %p" -XX:+HeapDumpOnOutOfMemoryError -Djava.net.preferIPv4Stack=true</argLine>
+            <argLine>-Xmx5000m -Djava.awt.headless=true -XX:MaxPermSize=256m -XX:+UseConcMarkSweepGC -XX:OnOutOfMemoryError="kill -9 %p" -XX:+HeapDumpOnOutOfMemoryError</argLine>
             <redirectTestOutputToFile>${surefire.redirectTestOutputToFile}</redirectTestOutputToFile>
             <reuseForks>false</reuseForks>
             <reportFormat>plain</reportFormat>
+            <trimStackTrace>false</trimStackTrace>
             <systemPropertyVariables>
               <java.io.tmpdir>${project.build.directory}</java.io.tmpdir>
             </systemPropertyVariables>
@@ -1811,6 +1813,8 @@
         <stage.lib.dir>${stage.opt.dir}/lib</stage.lib.dir>
         <stage.plugins.dir>${stage.opt.dir}/plugins</stage.plugins.dir>
         <package.depends>--depends cdap</package.depends>
+        <package.deb.arch>all</package.deb.arch>
+        <package.rpm.arch>all</package.rpm.arch>
         <package.dirs>opt etc</package.dirs>
       </properties>
       <build>
@@ -2258,7 +2262,7 @@
                       -C "${stage.dir}"
                       --directories "/opt/cdap/${package.name}"
                       --version "${package.version}"
-                      --architecture all
+                      --architecture "${package.rpm.arch}"
                       --rpm-os linux
                       --url "http://cask.co"
                       --template-value "project=${package.name}"
@@ -2311,7 +2315,7 @@
                       -C "${stage.dir}-deb"
                       --directories "/opt/cdap/${package.name}"
                       --version "${package.version}"
-                      --architecture all
+                      --architecture "${package.deb.arch}"
                       --url "http://cask.co"
                       --template-value "project=${package.name}"
                       --after-install "${project.parent.basedir}/cdap-distributions/src/debian/scripts/postinst"
@@ -2431,6 +2435,7 @@
         <module>cdap-hbase-compat-1.0-cdh</module>
         <module>cdap-hbase-compat-1.0</module>
         <module>cdap-hbase-compat-1.1</module>
+        <module>cdap-hbase-compat-1.2-cdh5.7.0</module>
         <module>cdap-common</module>
         <module>cdap-docs-gen</module>
         <module>cdap-watchdog-api</module>

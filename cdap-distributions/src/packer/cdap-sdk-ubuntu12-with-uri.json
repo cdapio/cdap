@@ -1,6 +1,6 @@
 {
   "variables": {
-    "sdk_version": "3.4.0-SNAPSHOT"
+    "sdk_version": "DEFINE ME ON COMMAND LINE"
   },
   "builders": [
     {
@@ -126,8 +126,10 @@
       "skip_install": true,
       "json": {
         "cdap": {
-          "version": "3.4.0-SNAPSHOT-1",
+          "comment": "DO NOT PUT SNAPHOT IN THE VERSION BELOW, THIS CONTROLS CDAP COOKBOOK CODE",
+          "version": "3.4.0-1",
           "sdk": {
+            "comment": "COPY SDK ZIP TO files/cdap-sdk.zip BEFORE RUNNING ME",
             "url": "file:///tmp/cdap-sdk.zip"
           }
         }

@@ -22,7 +22,6 @@ import co.cask.cdap.common.lang.DirectoryClassLoader;
 import co.cask.cdap.common.lang.FilterClassLoader;
 import co.cask.cdap.security.spi.authorization.Authorizer;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Predicates;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import org.slf4j.Logger;

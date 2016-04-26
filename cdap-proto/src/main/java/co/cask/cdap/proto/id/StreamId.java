@@ -83,4 +83,8 @@ public class StreamId extends EntityId implements NamespacedId, ParentedId<Names
   public static StreamId fromString(String string) {
     return EntityId.fromString(string, StreamId.class);
   }
+
+  public StreamViewId view(String view) {
+    return new StreamViewId(namespace, stream, view);
+  }
 }

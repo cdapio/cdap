@@ -54,6 +54,7 @@ var mapPluginTemplatesWithMoreInfo = (type, DAGPlusPlusFactory, popoverTemplate)
     plugin.type = type;
     plugin.icon = DAGPlusPlusFactory.getIcon(plugin.pluginName);
     plugin.template = popoverTemplate;
+    plugin.name = plugin.pluginTemplate;
     if (plugin.pluginTemplate) {
       plugin.nodeClass = 'plugin-templates';
     }
@@ -78,7 +79,7 @@ class HydratorPlusPlusLeftPanelStore {
     this.mySettings
         .get('plugin-default-version')
         .then((res = {}) => {
-          this.state.defaultArtifactMap = res;
+          this.state.defaultArtifactMap = res || {};
           return this.$q.resolve;
         })
         .then($timeout(this.cleanupNonExistentPlugins.bind(this), 10000));
@@ -149,15 +150,15 @@ class HydratorPlusPlusLeftPanelStore {
     return this.state.plugins[extension] || [];
   }
   checkAndUpdateDefaultVersion(pluginsList) {
-    if (!angular.isObject(this.state.defaultVersionsMap)) {
+    if (!angular.isObject(this.state.defaultArtifactMap)) {
       this.mySettings
           .get('plugin-default-version')
           .then( res => {
-            this.state.defaultVersionsMap = res;
-            updateDefaultVersion(pluginsList, this.state.defaultVersionsMap);
+            this.state.defaultArtifactMap = res;
+            updateDefaultVersion(pluginsList, this.state.defaultArtifactMap);
           });
     } else {
-      updateDefaultVersion(pluginsList, this.state.defaultVersionsMap);
+      updateDefaultVersion(pluginsList, this.state.defaultArtifactMap);
     }
   }
   updatePluginDefaultVersion(plugin) {
@@ -207,11 +208,11 @@ class HydratorPlusPlusLeftPanelStore {
                 }
               });
         });
-    if (Object.keys(defaultVersionsMap).length) {
+    if (angular.isObject(defaultVersionsMap) && Object.keys(defaultVersionsMap).length) {
       angular.forEach(defaultVersionsMap, (pluginArtifact, pluginKey) => {
-        delete this.state.defaultVersionsMap[pluginKey];
+        delete this.state.defaultArtifactMap[pluginKey];
       });
-      this.mySettings.set('plugin-default-version', this.state.defaultVersionsMap);
+      this.mySettings.set('plugin-default-version', this.state.defaultArtifactMap);
     }
   }
 

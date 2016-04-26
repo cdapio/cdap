@@ -16,7 +16,6 @@
 package co.cask.cdap.internal.app.runtime.distributed;
 
 import co.cask.cdap.internal.app.runtime.batch.MapReduceProgramRunner;
-import org.apache.hadoop.mapred.YarnClientProtocolProvider;
 
 /**
  * Wraps {@link MapReduceProgramRunner} to be run via Twill

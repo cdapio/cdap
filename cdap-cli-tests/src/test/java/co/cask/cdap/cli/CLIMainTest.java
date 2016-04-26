@@ -39,6 +39,7 @@ import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.StreamProperties;
 import co.cask.cdap.proto.WorkflowTokenDetail;
 import co.cask.cdap.test.XSlowTests;
 import co.cask.common.cli.CLI;
@@ -211,6 +212,19 @@ public class CLIMainTest extends CLITestBase {
   public void testStream() throws Exception {
     String streamId = PREFIX + "sdf123";
 
+    File file = new File(TMP_FOLDER.newFolder(), "test1.txt");
+    StreamProperties streamProperties = new StreamProperties(2L, null, 10, "Golden Stream");
+    try (BufferedWriter writer = Files.newWriter(file, Charsets.UTF_8)) {
+      writer.write(GSON.toJson(streamProperties));
+    }
+    testCommandOutputContains(cli, "create stream " + streamId + " " + file.getAbsolutePath(),
+                              "Successfully created stream");
+    testCommandOutputContains(cli, "describe stream " + streamId, "Golden Stream");
+    testCommandOutputContains(cli, "set stream description " + streamId + " 'Silver Stream'",
+                              "Successfully set stream description");
+    testCommandOutputContains(cli, "describe stream " + streamId, "Silver Stream");
+    testCommandOutputContains(cli, "delete stream " + streamId, "Successfully deleted stream");
+
     testCommandOutputContains(cli, "create stream " + streamId, "Successfully created stream");
     testCommandOutputContains(cli, "list streams", streamId);
     testCommandOutputNotContains(cli, "get stream " + streamId, "helloworld");
@@ -226,7 +240,7 @@ public class CLIMainTest extends CLITestBase {
                               "Successfully set notification threshold of stream");
     testCommandOutputContains(cli, "describe stream " + streamId, "100000");
 
-    File file = new File(TMP_FOLDER.newFolder(), "test.txt");
+    file = new File(TMP_FOLDER.newFolder(), "test2.txt");
     // If the file not exist or not a file, upload should fails with an error.
     testCommandOutputContains(cli, "load stream " + streamId + " " + file.getAbsolutePath(), "Not a file");
     testCommandOutputContains(cli,
@@ -241,7 +255,7 @@ public class CLIMainTest extends CLITestBase {
       }
     }
     testCommandOutputContains(cli, "load stream " + streamId + " " + file.getAbsolutePath(),
-                              "Successfully sent stream event to stream");
+                              "Successfully loaded file to stream");
     testCommandOutputContains(cli, "get stream " + streamId, "9, Event 9");
     testCommandOutputContains(cli, "get stream-stats " + streamId,
                               String.format("No schema found for stream '%s'", streamId));
@@ -491,7 +505,7 @@ public class CLIMainTest extends CLITestBase {
   }
 
   @Test
-  public void testWorkflowToken() throws Exception {
+  public void testWorkflows() throws Exception {
     String workflow = String.format("%s.%s", FakeApp.NAME, FakeWorkflow.NAME);
     File doneFile = TMP_FOLDER.newFile("fake.done");
     Map<String, String> runtimeArgs = ImmutableMap.of("done.file", doneFile.getAbsolutePath());
@@ -532,7 +546,7 @@ public class CLIMainTest extends CLITestBase {
       cli, String.format("get workflow token %s %s at node %s scope user key %s", workflow, runId,
                          FakeWorkflow.FakeAction.ANOTHER_FAKE_NAME, FakeWorkflow.FakeAction.TOKEN_KEY), fakeNodeValue);
 
-    testCommandOutputContains(cli, "get workflow logs " + workflow, "Starting Workflow");
+    testCommandOutputContains(cli, "get workflow logs " + workflow, FakeWorkflow.FAKE_LOG);
 
     // stop workflow
     testCommandOutputContains(cli, "stop workflow " + workflow,

@@ -17,7 +17,6 @@
 package co.cask.cdap.app.runtime.spark.submit;
 
 import co.cask.cdap.api.spark.SparkExecutionContext;
-import co.cask.cdap.api.spark.SparkMain;
 import co.cask.cdap.app.runtime.spark.SparkExecutionContextFactory;
 import co.cask.cdap.app.runtime.spark.SparkRuntimeContext;
 import co.cask.cdap.internal.app.runtime.distributed.LocalizeResource;

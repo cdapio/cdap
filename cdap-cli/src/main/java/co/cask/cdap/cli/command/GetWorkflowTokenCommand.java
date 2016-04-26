@@ -94,7 +94,7 @@ public class GetWorkflowTokenCommand extends AbstractCommand {
 
   @Override
   public String getDescription() {
-    return "Gets the workflow token of a workflow for a given run id.";
+    return "Gets the workflow token of a workflow for a given run ID";
   }
 
   private Table getWorkflowToken(Id.Run runId, WorkflowToken.Scope workflowTokenScope,

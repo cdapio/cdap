@@ -95,7 +95,7 @@ function LineageController ($scope, jsPlumb, $timeout, $state, LineageStore, myT
     let nodeInfo = vm.uniqueNodes[node.uniqueNodeId];
 
     if (nodeInfo.nodeType === 'data') {
-      return 'tracker.entity.metadata({ entityType:Lineage.uniqueNodes[node.uniqueNodeId].entityType, entityId: Lineage.uniqueNodes[node.uniqueNodeId].entityId })';
+      return 'tracker.detail.entity.metadata({ entityType:Lineage.uniqueNodes[node.uniqueNodeId].entityType, entityId: Lineage.uniqueNodes[node.uniqueNodeId].entityId })';
     } else {
       // when you return non existant state, the href attribute never gets created
       return '-';

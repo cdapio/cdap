@@ -30,6 +30,7 @@ import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.config.ConnectionConfig;
 import co.cask.cdap.client.exception.DisconnectedException;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.utils.OSDetector;
 import co.cask.common.cli.CLI;
 import co.cask.common.cli.Command;
 import co.cask.common.cli.CommandSet;
@@ -73,6 +74,7 @@ public class CLIMain {
 
   private static final boolean DEFAULT_VERIFY_SSL = true;
   private static final boolean DEFAULT_AUTOCONNECT = true;
+  private static final String TOOL_NAME = "cdap-cli";
 
   @VisibleForTesting
   public static final Option HELP_OPTION = new Option(
@@ -335,6 +337,7 @@ public class CLIMain {
   }
 
   private static void usage() {
+    String toolName = TOOL_NAME + (OSDetector.isWindows() ? ".bat" : ".sh");
     HelpFormatter formatter = new HelpFormatter();
     String args =
       "[--autoconnect <true|false>] " +
@@ -343,7 +346,7 @@ public class CLIMain {
       "[--verify-ssl <true|false>] " +
       "[--uri <uri>]" +
       "[--script <script-file>]";
-    formatter.printHelp("cdap-cli.sh " + args, getOptions());
+    formatter.printHelp(toolName + " " + args, getOptions());
     System.exit(0);
   }
 

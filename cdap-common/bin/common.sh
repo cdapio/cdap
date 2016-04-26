@@ -165,7 +165,10 @@ cdap_set_hbase() {
         hbasecompat="${CDAP_HOME}/hbase-compat-1.0/lib/*"
         ;;
       1.1*)
-        hbasecompat="$CDAP_HOME/hbase-compat-1.1/lib/*"
+        hbasecompat="${CDAP_HOME}/hbase-compat-1.1/lib/*"
+        ;;
+      1.2-cdh*)
+        hbasecompat="${CDAP_HOME}/hbase-compat-1.2-cdh5.7.0/lib/*"
         ;;
       *)
         echo "ERROR: Unknown/unsupported version of HBase found: ${HBASE_VERSION}"

@@ -77,7 +77,7 @@ public class ListRolesCommand extends AbstractAuthCommand {
 
   @Override
   public String getDescription() {
-    return "Lists all roles, optionally for a particular principal in authorization system for role based " +
-      "access control.";
+    return "Lists all roles, optionally for a particular principal in an authorization system for role-based " +
+      "access control";
   }
 }

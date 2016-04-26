@@ -139,7 +139,7 @@ for CDAP to run successfully.
       ``conf/cdap-site.xml`` (by default, it is enabled)::
   
         <property>
-          <name>cdap.explore.enabled</name>
+          <name>explore.enabled</name>
           <value>false</value>
           <description>Enable Explore functionality</description>
         </property>

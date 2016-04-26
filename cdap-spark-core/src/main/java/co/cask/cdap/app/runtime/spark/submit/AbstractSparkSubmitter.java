@@ -19,7 +19,6 @@ package co.cask.cdap.app.runtime.spark.submit;
 
 import co.cask.cdap.api.spark.SparkSpecification;
 import co.cask.cdap.app.runtime.spark.SparkClassLoader;
-import co.cask.cdap.app.runtime.spark.SparkContextCache;
 import co.cask.cdap.app.runtime.spark.SparkExecutionContextFactory;
 import co.cask.cdap.app.runtime.spark.SparkMainWrapper;
 import co.cask.cdap.app.runtime.spark.SparkRuntimeContext;
@@ -111,10 +110,14 @@ public abstract class AbstractSparkSubmitter implements SparkSubmitter {
     executor.submit(new Runnable() {
       @Override
       public void run() {
+        List<String> extraArgs = beforeSubmit();
         try {
-          submit(runtimeContext, contextFactory, args.toArray(new String[args.size()]));
+          String[] submitArgs = Iterables.toArray(Iterables.concat(args, extraArgs), String.class);
+          submit(runtimeContext, contextFactory, submitArgs);
+          onCompleted(true);
           resultFuture.set(result);
         } catch (Throwable t) {
+          onCompleted(false);
           resultFuture.setException(t);
         } finally {
           completion.countDown();
@@ -134,14 +137,14 @@ public abstract class AbstractSparkSubmitter implements SparkSubmitter {
   /**
    * Invoked for stopping the Spark job explicitly.
    */
-  protected void triggerShutdown() {
-    // Try to get the SparkContext and call stop on it.
-    try {
-      SparkContextCache.stop();
-    } catch (Throwable t) {
-      // Don't propagate the exception.
-      LOG.error("Exception while calling SparkContext.stop()", t);
-    }
+  protected abstract void triggerShutdown();
+
+  protected List<String> beforeSubmit() {
+    return Collections.emptyList();
+  }
+
+  protected void onCompleted(boolean succeeded) {
+    // no-op
   }
 
   /**
@@ -157,13 +160,17 @@ public abstract class AbstractSparkSubmitter implements SparkSubmitter {
    * @param runtimeContext context representing the Spark program
    * @param args arguments for the {@link SparkSubmit#main(String[])} method.
    */
-  protected void submit(SparkRuntimeContext runtimeContext,
-                        SparkExecutionContextFactory contextFactory, String[] args) {
+  private void submit(SparkRuntimeContext runtimeContext,
+                      SparkExecutionContextFactory contextFactory, String[] args) {
     Cancellable cancellable = SparkRuntimeUtils.setContextClassLoader(new SparkClassLoader(runtimeContext,
                                                                                            contextFactory));
     try {
       LOG.debug("Calling SparkSubmit for {} {}: {}",
                 runtimeContext.getProgram().getId(), runtimeContext.getRunId(), Arrays.toString(args));
+      // Explicitly set the SPARK_SUBMIT property as it is no longer set on the System properties by the SparkSubmit
+      // after the class rewrite. This property only control logging of a warning when submitting the Spark job,
+      // hence it's harmless to just leave it there.
+      System.setProperty("SPARK_SUBMIT", "true");
       SparkSubmit.main(args);
       LOG.debug("SparkSubmit returned for {} {}", runtimeContext.getProgram().getId(), runtimeContext.getRunId());
     } finally {
@@ -210,7 +217,7 @@ public abstract class AbstractSparkSubmitter implements SparkSubmitter {
 
     return builder
       .add(jobJar.getAbsolutePath())
-      .add(spec.getMainClassName())
+      .add("--" + SparkMainWrapper.ARG_USER_CLASS() + "=" + spec.getMainClassName())
       .build();
   }
 

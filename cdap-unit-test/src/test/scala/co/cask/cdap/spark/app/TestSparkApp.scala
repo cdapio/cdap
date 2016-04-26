@@ -20,7 +20,10 @@ import co.cask.cdap.api.app.AbstractApplication
 import co.cask.cdap.api.data.stream.Stream
 import co.cask.cdap.api.dataset.lib.{FileSet, FileSetProperties, KeyValueTable}
 import co.cask.cdap.api.spark.AbstractSpark
+import co.cask.cdap.api.workflow.{AbstractWorkflow, AbstractWorkflowAction}
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat
+
+import scala.collection.JavaConversions._
 
 /**
   * An application for SparkTestRun.
@@ -42,6 +45,10 @@ class TestSparkApp extends AbstractApplication {
     addSpark(new ExplicitTransactionSpark)
     addSpark(new StreamFormatSpecSpark)
     addSpark(new ScalaStreamFormatSpecSpark)
+
+    addSpark(new ForkSpark("ForkSpark1"))
+    addSpark(new ForkSpark("ForkSpark2"))
+    addWorkflow(new ForkSparkWorkflow)
   }
 
   final class ClassicSpark extends AbstractSpark {
@@ -53,6 +60,25 @@ class TestSparkApp extends AbstractApplication {
   final class ScalaClassicSpark extends AbstractSpark {
     override protected def configure {
       setMainClassName("co.cask.cdap.spark.app.ScalaClassicSparkProgram")
+    }
+  }
+
+  final class ForkSparkWorkflow extends AbstractWorkflow {
+    override protected def configure(): Unit = {
+      fork()
+        .addSpark("ForkSpark1")
+      .also()
+        .addSpark("ForkSpark2")
+      .join()
+      addAction(new VerifyAction)
+    }
+  }
+
+  final class VerifyAction extends AbstractWorkflowAction {
+    override def run() = {
+      val values = getContext.getToken.getAll("sum")
+      require(values.map(_.getValue.getAsInt).distinct.size == 2,
+              "Expect number of distinct 'sum' token be 2: " + values)
     }
   }
 }

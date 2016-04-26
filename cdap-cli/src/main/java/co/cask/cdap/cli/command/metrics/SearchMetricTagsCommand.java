@@ -57,6 +57,6 @@ public class SearchMetricTagsCommand extends AbstractAuthCommand {
 
   @Override
   public String getDescription() {
-    return "Searches metric tags. Provide <tags> as a map in the format 'tag1=value1 tag2=value2'.";
+    return "Searches metric tags. Provide '<tags>' as a map in the format 'tag1=value1 tag2=value2'.";
   }
 }

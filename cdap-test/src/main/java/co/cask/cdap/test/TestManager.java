@@ -29,8 +29,9 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.artifact.ArtifactRange;
+import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.NamespacedArtifactId;
 
 import java.io.File;
 import java.sql.Connection;
@@ -83,60 +84,60 @@ public interface TestManager {
    * @param appId the id of deployed application
    * @return An {@link ApplicationManager} to manage the deployed application.
    */
-  ApplicationManager getApplicationManager(Id.Application appId) throws Exception;
+  ApplicationManager getApplicationManager(ApplicationId appId) throws Exception;
 
   /**
-   * Add the specified artifact.
+   * Adds the specified artifact.
    *
    * @param artifactId the id of the artifact to add
    * @param artifactFile the contents of the artifact. Must be a valid jar file containing apps or plugins
-   * @deprecated since 3.4.0 use {@link #addArtifact(NamespacedArtifactId, File)}
+   * @deprecated since 3.4.0 use {@link #addArtifact(ArtifactId, File)}
    */
   @Deprecated
   void addArtifact(Id.Artifact artifactId, File artifactFile) throws Exception;
 
   /**
-   * Add the specified artifact.
+   * Adds the specified artifact.
    *
    * @param artifactId the id of the artifact to add
    * @param artifactFile the contents of the artifact. Must be a valid jar file containing apps or plugins
    * @return an {@link ArtifactManager} to manage the added artifact
    */
-  ArtifactManager addArtifact(NamespacedArtifactId artifactId, File artifactFile) throws Exception;
+  ArtifactManager addArtifact(ArtifactId artifactId, File artifactFile) throws Exception;
 
   /**
-   * Build an application artifact from the specified class and then add it.
+   * Builds an application artifact from the specified class and then adds it.
    *
    * @param artifactId the id of the artifact to add
    * @param appClass the application class to build the artifact from
-   * @deprecated since 3.4.0. Use {@link #addAppArtifact(NamespacedArtifactId, Class)}
+   * @deprecated since 3.4.0. Use {@link #addAppArtifact(ArtifactId, Class)}
    */
   @Deprecated
   void addAppArtifact(Id.Artifact artifactId, Class<?> appClass) throws Exception;
 
   /**
-   * Build an application artifact from the specified class and then add it.
+   * Builds an application artifact from the specified class and then adds it.
    *
    * @param artifactId the id of the artifact to add
    * @param appClass the application class to build the artifact from
    * @return an {@link ArtifactManager} for managing the added app artifact
    */
-  ArtifactManager addAppArtifact(NamespacedArtifactId artifactId, Class<?> appClass) throws Exception;
+  ArtifactManager addAppArtifact(ArtifactId artifactId, Class<?> appClass) throws Exception;
 
   /**
-   * Build an application artifact from the specified class and then add it.
+   * Builds an application artifact from the specified class and then adds it.
    *
    * @param artifactId the id of the artifact to add
    * @param appClass the application class to build the artifact from
    * @param exportPackages the packages to export and place in the manifest of the jar to build. This should include
    *                       packages that contain classes that plugins for the application will implement.
-   * @deprecated since 3.4.0. Use {@link #addAppArtifact(NamespacedArtifactId, Class, String...)} instead
+   * @deprecated since 3.4.0. Use {@link #addAppArtifact(ArtifactId, Class, String...)} instead
    */
   @Deprecated
   void addAppArtifact(Id.Artifact artifactId, Class<?> appClass, String... exportPackages) throws Exception;
 
   /**
-   * Build an application artifact from the specified class and then add it.
+   * Builds an application artifact from the specified class and then adds it.
    *
    * @param artifactId the id of the artifact to add
    * @param appClass the application class to build the artifact from
@@ -144,33 +145,33 @@ public interface TestManager {
    *                       packages that contain classes that plugins for the application will implement.
    * @return an {@link ArtifactManager} to manage the added app artifact
    */
-  ArtifactManager addAppArtifact(NamespacedArtifactId artifactId, Class<?> appClass,
+  ArtifactManager addAppArtifact(ArtifactId artifactId, Class<?> appClass,
                                  String... exportPackages) throws Exception;
 
   /**
-   * Build an application artifact from the specified class and then add it.
+   * Builds an application artifact from the specified class and then adds it.
    *
    * @param artifactId the id of the artifact to add
    * @param appClass the application class to build the artifact from
    * @param manifest the manifest to use when building the jar
-   * @deprecated since 3.4.0. Use {@link #addAppArtifact(NamespacedArtifactId, Class, Manifest)} instead
+   * @deprecated since 3.4.0. Use {@link #addAppArtifact(ArtifactId, Class, Manifest)} instead
    */
   @Deprecated
   void addAppArtifact(Id.Artifact artifactId, Class<?> appClass, Manifest manifest) throws Exception;
 
   /**
-   * Build an application artifact from the specified class and then add it.
+   * Builds an application artifact from the specified class and then adds it.
    *
    * @param artifactId the id of the artifact to add
    * @param appClass the application class to build the artifact from
    * @param manifest the manifest to use when building the jar
    * @return an {@link ArtifactManager} to manage the added app artifact
    */
-  ArtifactManager addAppArtifact(NamespacedArtifactId artifactId, Class<?> appClass,
+  ArtifactManager addAppArtifact(ArtifactId artifactId, Class<?> appClass,
                                  Manifest manifest) throws Exception;
 
   /**
-   * Build an artifact from the specified plugin classes and then add it. The
+   * Builds an artifact from the specified plugin classes and then adds it. The
    * jar created will include all classes in the same package as the give classes, plus any dependencies of the
    * given classes. If another plugin in the same package as the given plugin requires a different set of dependent
    * classes, you must include both plugins. For example, suppose you have two plugins,
@@ -184,14 +185,14 @@ public interface TestManager {
    * @param parent the parent artifact it extends
    * @param pluginClass the plugin class to build the jar from
    * @param pluginClasses any additional plugin classes that should be included in the jar
-   * @deprecated since 3.4.0. Use {@link #addPluginArtifact(NamespacedArtifactId, NamespacedArtifactId, Class, Class[])}
+   * @deprecated since 3.4.0. Use {@link #addPluginArtifact(ArtifactId, ArtifactId, Class, Class[])}
    */
   @Deprecated
   void addPluginArtifact(Id.Artifact artifactId, Id.Artifact parent,
                          Class<?> pluginClass, Class<?>... pluginClasses) throws Exception;
 
   /**
-   * Build an artifact from the specified plugin classes and then add it. The
+   * Builds an artifact from the specified plugin classes and then adds it. The
    * jar created will include all classes in the same package as the give classes, plus any dependencies of the
    * given classes. If another plugin in the same package as the given plugin requires a different set of dependent
    * classes, you must include both plugins. For example, suppose you have two plugins,
@@ -207,11 +208,11 @@ public interface TestManager {
    * @param pluginClasses any additional plugin classes that should be included in the jar
    * @return an {@link ArtifactManager} for managing the added artifact
    */
-  ArtifactManager addPluginArtifact(NamespacedArtifactId artifactId, NamespacedArtifactId parent,
+  ArtifactManager addPluginArtifact(ArtifactId artifactId, ArtifactId parent,
                                     Class<?> pluginClass, Class<?>... pluginClasses) throws Exception;
 
   /**
-   * Build an artifact from the specified plugin classes and then add it. The
+   * Builds an artifact from the specified plugin classes and then adds it. The
    * jar created will include all classes in the same package as the give classes, plus any dependencies of the
    * given classes. If another plugin in the same package as the given plugin requires a different set of dependent
    * classes, you must include both plugins. For example, suppose you have two plugins,
@@ -225,13 +226,13 @@ public interface TestManager {
    * @param parents the parent artifacts it extends
    * @param pluginClass the plugin class to build the jar from
    * @param pluginClasses any additional plugin classes that should be included in the jar
-   * @deprecated since 3.4.0. Use {@link #addPluginArtifact(NamespacedArtifactId, Set, Class, Class[])}
+   * @deprecated since 3.4.0. Use {@link #addPluginArtifact(ArtifactId, Set, Class, Class[])}
    */
   void addPluginArtifact(Id.Artifact artifactId, Set<ArtifactRange> parents,
                          Class<?> pluginClass, Class<?>... pluginClasses) throws Exception;
 
   /**
-   * Build an artifact from the specified plugin classes and then add it. The
+   * Builds an artifact from the specified plugin classes and then adds it. The
    * jar created will include all classes in the same package as the give classes, plus any dependencies of the
    * given classes. If another plugin in the same package as the given plugin requires a different set of dependent
    * classes, you must include both plugins. For example, suppose you have two plugins,
@@ -247,12 +248,12 @@ public interface TestManager {
    * @param pluginClasses any additional plugin classes that should be included in the jar
    * @return an {@link ArtifactManager} to manage the added plugin artifact
    */
-  ArtifactManager addPluginArtifact(NamespacedArtifactId artifactId, Set<ArtifactRange> parents,
+  ArtifactManager addPluginArtifact(ArtifactId artifactId, Set<ArtifactRange> parents,
                                     Class<?> pluginClass, Class<?>... pluginClasses) throws Exception;
 
 
   /**
-   * Build an artifact from the specified plugin classes and then add it. The
+   * Builds an artifact from the specified plugin classes and then adds it. The
    * jar created will include all classes in the same package as the give classes, plus any dependencies of the
    * given classes. If another plugin in the same package as the given plugin requires a different set of dependent
    * classes, you must include both plugins. For example, suppose you have two plugins,
@@ -269,7 +270,7 @@ public interface TestManager {
    * @param pluginClass the plugin class to build the jar from
    * @param pluginClasses any additional plugin classes that should be included in the jar
    * @deprecated since 3.4.0.
-   * Use {@link #addPluginArtifact(NamespacedArtifactId, NamespacedArtifactId, Set, Class, Class[])}
+   * Use {@link #addPluginArtifact(ArtifactId, ArtifactId, Set, Class, Class[])}
    */
   @Deprecated
   void addPluginArtifact(Id.Artifact artifactId, Id.Artifact parent,
@@ -277,7 +278,7 @@ public interface TestManager {
                          Class<?> pluginClass, Class<?>... pluginClasses) throws Exception;
 
   /**
-   * Build an artifact from the specified plugin classes and then add it. The
+   * Builds an artifact from the specified plugin classes and then adds it. The
    * jar created will include all classes in the same package as the give classes, plus any dependencies of the
    * given classes. If another plugin in the same package as the given plugin requires a different set of dependent
    * classes, you must include both plugins. For example, suppose you have two plugins,
@@ -295,12 +296,12 @@ public interface TestManager {
    * @param pluginClasses any additional plugin classes that should be included in the jar
    * @return an {@link ArtifactManager} to manage this artifact
    */
-  ArtifactManager addPluginArtifact(NamespacedArtifactId artifactId, NamespacedArtifactId parent,
+  ArtifactManager addPluginArtifact(ArtifactId artifactId, ArtifactId parent,
                                     @Nullable Set<PluginClass> additionalPlugins,
                                     Class<?> pluginClass, Class<?>... pluginClasses) throws Exception;
 
   /**
-   * Build an artifact from the specified plugin classes and then add it. The
+   * Builds an artifact from the specified plugin classes and then adds it. The
    * jar created will include all classes in the same package as the give classes, plus any dependencies of the
    * given classes. If another plugin in the same package as the given plugin requires a different set of dependent
    * classes, you must include both plugins. For example, suppose you have two plugins,
@@ -317,14 +318,14 @@ public interface TestManager {
    * @param pluginClass the plugin class to build the jar from
    * @param pluginClasses any additional plugin classes that should be included in the jar
    * @deprecated since 3.4.0
-   * Use {@link #addPluginArtifact(NamespacedArtifactId, Set, Set, Class, Class[])}
+   * Use {@link #addPluginArtifact(ArtifactId, Set, Set, Class, Class[])}
    */
   void addPluginArtifact(Id.Artifact artifactId, Set<ArtifactRange> parents,
                          @Nullable Set<PluginClass> additionalPlugins,
                          Class<?> pluginClass, Class<?>... pluginClasses) throws Exception;
 
   /**
-   * Build an artifact from the specified plugin classes and then add it. The
+   * Builds an artifact from the specified plugin classes and then adds it. The
    * jar created will include all classes in the same package as the give classes, plus any dependencies of the
    * given classes. If another plugin in the same package as the given plugin requires a different set of dependent
    * classes, you must include both plugins. For example, suppose you have two plugins,
@@ -342,12 +343,12 @@ public interface TestManager {
    * @param pluginClasses any additional plugin classes that should be included in the jar
    * @return {@link ArtifactManager} to manage the added plugin artifact
    */
-  ArtifactManager addPluginArtifact(NamespacedArtifactId artifactId, Set<ArtifactRange> parents,
+  ArtifactManager addPluginArtifact(ArtifactId artifactId, Set<ArtifactRange> parents,
                                     @Nullable Set<PluginClass> additionalPlugins,
                                     Class<?> pluginClass, Class<?>... pluginClasses) throws Exception;
 
   /**
-   * Delete the specified artifact.
+   * Deletes the specified artifact.
    *
    * @param artifactId the id of the artifact to delete
    * @deprecated since 3.4.0. Use {@link ArtifactManager#delete()} instead
@@ -400,11 +401,11 @@ public interface TestManager {
                                                 String datasetTypeName, String datasetInstanceName) throws Exception;
 
   /**
-   * Gets Dataset manager of Dataset instance of type <T>
+   * Gets Dataset manager of Dataset instance of type {@literal <}T>.
    *
    * @param namespace namespace of the dataset
    * @param datasetInstanceName instance name of dataset
-   * @return Dataset Manager of Dataset instance of type <T>
+   * @return Dataset Manager of Dataset instance of type {@literal <}T>
    * @throws Exception
    */
   @Beta
@@ -412,7 +413,7 @@ public interface TestManager {
 
   /**
    * @param namespace namespace to interact within
-   * @return a JDBC connection that allows to run SQL queries over data sets.
+   * @return a JDBC connection that allows the running of SQL queries over data sets
    */
   @Beta
   Connection getQueryClient(Id.Namespace namespace) throws Exception;

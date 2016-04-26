@@ -17,13 +17,8 @@
 package co.cask.cdap.etl.api.batch;
 
 import co.cask.cdap.api.annotation.Beta;
-import co.cask.cdap.etl.api.Aggregator;
-import co.cask.cdap.etl.api.Emitter;
 import co.cask.cdap.etl.api.PipelineConfigurable;
 import co.cask.cdap.etl.api.PipelineConfigurer;
-import co.cask.cdap.etl.api.StageLifecycle;
-
-import java.util.Iterator;
 
 /**
  * Defines some logic that runs at the end of a workflow run. The action is run regardless of whether the pipeline

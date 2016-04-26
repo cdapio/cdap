@@ -80,9 +80,9 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.artifact.ArtifactRange;
+import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.InstanceId;
 import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.NamespacedArtifactId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.security.authorization.AuthorizerInstantiatorService;
@@ -127,6 +127,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.InetAddress;
 import java.net.URL;
 import java.sql.Connection;
 import java.util.ArrayList;
@@ -339,7 +340,20 @@ public class TestBase {
     }
 
     // These configurations cannot be overridden by user
-    cConf.set(Constants.Dataset.Manager.ADDRESS, "localhost");
+    // configure all services except for router to bind to localhost
+    String localhost = InetAddress.getLoopbackAddress().getHostAddress();
+    cConf.set(Constants.AppFabric.SERVER_ADDRESS, localhost);
+    cConf.set(Constants.Transaction.Container.ADDRESS, localhost);
+    cConf.set(Constants.Dataset.Manager.ADDRESS, localhost);
+    cConf.set(Constants.Dataset.Executor.ADDRESS, localhost);
+    cConf.set(Constants.Stream.ADDRESS, localhost);
+    cConf.set(Constants.Metrics.ADDRESS, localhost);
+    cConf.set(Constants.Metrics.SERVER_ADDRESS, localhost);
+    cConf.set(Constants.MetricsProcessor.ADDRESS, localhost);
+    cConf.set(Constants.LogSaver.ADDRESS, localhost);
+    cConf.set(Constants.Security.AUTH_SERVER_BIND_ADDRESS, localhost);
+    cConf.set(Constants.Explore.SERVER_ADDRESS, localhost);
+    cConf.set(Constants.Metadata.SERVICE_BIND_ADDRESS, localhost);
     cConf.set(Constants.Metrics.SERVER_PORT, Integer.toString(Networks.getRandomPort()));
 
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, localDataDir.getAbsolutePath());
@@ -479,7 +493,7 @@ public class TestBase {
    *
    * @param artifactId the id of the artifact to add
    * @param artifactFile the contents of the artifact. Must be a valid jar file containing apps or plugins
-   * @deprecated since 3.4.0. Use {@link #addArtifact(NamespacedArtifactId, File)}
+   * @deprecated since 3.4.0. Use {@link #addArtifact(ArtifactId, File)}
    */
   @Deprecated
   protected static void addArtifact(Id.Artifact artifactId, File artifactFile) throws Exception {
@@ -493,7 +507,7 @@ public class TestBase {
    * @param artifactFile the contents of the artifact. Must be a valid jar file containing apps or plugins
    * @throws Exception
    */
-  protected static ArtifactManager addArtifact(NamespacedArtifactId artifactId, File artifactFile) throws Exception {
+  protected static ArtifactManager addArtifact(ArtifactId artifactId, File artifactFile) throws Exception {
     return getTestManager().addArtifact(artifactId, artifactFile);
   }
 
@@ -502,7 +516,7 @@ public class TestBase {
    *
    * @param artifactId the id of the artifact to add
    * @param appClass the application class to build the artifact from
-   * @deprecated since 3.4.0. Use {@link #addArtifact(NamespacedArtifactId, File)}.
+   * @deprecated since 3.4.0. Use {@link #addArtifact(ArtifactId, File)}.
    */
   @Deprecated
   protected static void addAppArtifact(Id.Artifact artifactId, Class<?> appClass) throws Exception {
@@ -516,7 +530,7 @@ public class TestBase {
    * @param appClass the application class to build the artifact from
    * @return an {@link ArtifactManager} to manage the added artifact
    */
-  protected static ArtifactManager addAppArtifact(NamespacedArtifactId artifactId, Class<?> appClass) throws Exception {
+  protected static ArtifactManager addAppArtifact(ArtifactId artifactId, Class<?> appClass) throws Exception {
     return getTestManager().addAppArtifact(artifactId, appClass);
   }
 
@@ -527,7 +541,7 @@ public class TestBase {
    * @param appClass the application class to build the artifact from
    * @param exportPackages the packages to export and place in the manifest of the jar to build. This should include
    *                       packages that contain classes that plugins for the application will implement.
-   * @deprecated since 3.4.0. Use {@link #addAppArtifact(NamespacedArtifactId, Class, String...)}
+   * @deprecated since 3.4.0. Use {@link #addAppArtifact(ArtifactId, Class, String...)}
    */
   @Deprecated
   protected static void addAppArtifact(Id.Artifact artifactId, Class<?> appClass,
@@ -544,7 +558,7 @@ public class TestBase {
    *                       packages that contain classes that plugins for the application will implement.
    * @return an {@link ArtifactManager} to manage the added artifact
    */
-  protected static ArtifactManager addAppArtifact(NamespacedArtifactId artifactId, Class<?> appClass,
+  protected static ArtifactManager addAppArtifact(ArtifactId artifactId, Class<?> appClass,
                                                   String... exportPackages) throws Exception {
     return getTestManager().addAppArtifact(artifactId, appClass, exportPackages);
   }
@@ -555,7 +569,7 @@ public class TestBase {
    * @param artifactId the id of the artifact to add
    * @param appClass the application class to build the artifact from
    * @param manifest the manifest to use when building the jar
-   * @deprecated since 3.4.0. Use {@link #addAppArtifact(NamespacedArtifactId, Class, Manifest)}
+   * @deprecated since 3.4.0. Use {@link #addAppArtifact(ArtifactId, Class, Manifest)}
    */
   @Deprecated
   protected static void addAppArtifact(Id.Artifact artifactId, Class<?> appClass, Manifest manifest) throws Exception {
@@ -570,7 +584,7 @@ public class TestBase {
    * @param manifest the manifest to use when building the jar
    * @return an {@link ArtifactManager} to manage the added artifact
    */
-  protected static ArtifactManager addAppArtifact(NamespacedArtifactId artifactId, Class<?> appClass,
+  protected static ArtifactManager addAppArtifact(ArtifactId artifactId, Class<?> appClass,
                                                   Manifest manifest) throws Exception {
     return getTestManager().addAppArtifact(artifactId, appClass, manifest);
   }
@@ -590,7 +604,7 @@ public class TestBase {
    * @param parent the parent artifact it extends
    * @param pluginClass the plugin class to build the jar from
    * @param pluginClasses any additional plugin classes that should be included in the jar
-   * @deprecated since 3.4.0. Use {@link #addPluginArtifact(NamespacedArtifactId, NamespacedArtifactId, Class, Class[])}
+   * @deprecated since 3.4.0. Use {@link #addPluginArtifact(ArtifactId, ArtifactId, Class, Class[])}
    */
   @Deprecated
   protected static void addPluginArtifact(Id.Artifact artifactId, Id.Artifact parent,
@@ -615,7 +629,7 @@ public class TestBase {
    * @param pluginClasses any additional plugin classes that should be included in the jar
    * @return {@link ArtifactManager} to manage the added plugin artifact
    */
-  protected static ArtifactManager addPluginArtifact(NamespacedArtifactId artifactId, NamespacedArtifactId parent,
+  protected static ArtifactManager addPluginArtifact(ArtifactId artifactId, ArtifactId parent,
                                                      Class<?> pluginClass,
                                                      Class<?>... pluginClasses) throws Exception {
     return getTestManager().addPluginArtifact(artifactId, parent, pluginClass, pluginClasses);
@@ -639,7 +653,7 @@ public class TestBase {
    * @param pluginClass the plugin class to build the jar from
    * @param pluginClasses any additional plugin classes that should be included in the jar
    * @deprecated since 3.4.0. Use
-   * {@link #addPluginArtifact(NamespacedArtifactId, NamespacedArtifactId, Set, Class, Class[])}
+   * {@link #addPluginArtifact(ArtifactId, ArtifactId, Set, Class, Class[])}
    */
   @Deprecated
   protected static void addPluginArtifact(Id.Artifact artifactId, Id.Artifact parent,
@@ -667,7 +681,7 @@ public class TestBase {
    * @param pluginClasses any additional plugin classes that should be included in the jar
    * @return an {@link ArtifactManager} to manage the added plugin artifact
    */
-  protected static ArtifactManager addPluginArtifact(NamespacedArtifactId artifactId, NamespacedArtifactId parent,
+  protected static ArtifactManager addPluginArtifact(ArtifactId artifactId, ArtifactId parent,
                                                      Set<PluginClass> additionalPlugins,
                                                      Class<?> pluginClass, Class<?>... pluginClasses) throws Exception {
     return getTestManager().addPluginArtifact(artifactId, parent, additionalPlugins, pluginClass, pluginClasses);
@@ -688,7 +702,7 @@ public class TestBase {
    * @param parentArtifacts the parent artifacts it extends
    * @param pluginClass the plugin class to build the jar from
    * @param pluginClasses any additional plugin classes that should be included in the jar
-   * @deprecated since 3.4.0. Use {@link #addPluginArtifact(NamespacedArtifactId, Set, Class, Class[])}
+   * @deprecated since 3.4.0. Use {@link #addPluginArtifact(ArtifactId, Set, Class, Class[])}
    */
   @Deprecated
   protected static void addPluginArtifact(Id.Artifact artifactId, Set<ArtifactRange> parentArtifacts,
@@ -713,7 +727,7 @@ public class TestBase {
    * @param pluginClasses any additional plugin classes that should be included in the jar
    * @return an {@link ArtifactManager} to manage the added plugin artifact
    */
-  protected static ArtifactManager addPluginArtifact(NamespacedArtifactId artifactId,
+  protected static ArtifactManager addPluginArtifact(ArtifactId artifactId,
                                                      Set<ArtifactRange> parentArtifacts, Class<?> pluginClass,
                                                      Class<?>... pluginClasses) throws Exception {
     return getTestManager().addPluginArtifact(artifactId, parentArtifacts, pluginClass, pluginClasses);
@@ -760,6 +774,7 @@ public class TestBase {
   /**
    * Adds an instance of a dataset.
    *
+   * @param namespace namespace for the dataset
    * @param datasetTypeName dataset type name
    * @param datasetInstanceName instance name
    * @param props properties
@@ -789,6 +804,7 @@ public class TestBase {
   /**
    * Adds an instance of dataset.
    *
+   * @param namespace namespace for the dataset
    * @param datasetTypeName dataset type name
    * @param datasetInstanceName instance name
    * @param <T> type of the dataset admin
@@ -812,9 +828,10 @@ public class TestBase {
   }
 
   /**
-   * Gets Dataset manager of Dataset instance of type <T>
+   * Gets Dataset manager of Dataset instance of type {@literal <}T>.
    *
-   * @param datasetInstanceName - instance name of dataset
+   * @param namespace namespace for the dataset
+   * @param datasetInstanceName instance name of dataset
    * @return Dataset Manager of Dataset instance of type <T>
    * @throws Exception
    */
@@ -824,10 +841,10 @@ public class TestBase {
   }
 
   /**
-   * Gets Dataset manager of Dataset instance of type <T>
+   * Gets Dataset manager of Dataset instance of type {@literal <}T>.
    *
-   * @param datasetInstanceName - instance name of dataset
-   * @return Dataset Manager of Dataset instance of type <T>
+   * @param datasetInstanceName instance name of dataset
+   * @return Dataset Manager of Dataset instance of type {@literal <}T>
    * @throws Exception
    */
   protected final <T> DataSetManager<T> getDataset(String datasetInstanceName) throws Exception {
@@ -835,7 +852,9 @@ public class TestBase {
   }
 
   /**
-   * Returns a JDBC connection that allows to run SQL queries over data sets.
+   * Returns a JDBC connection that allows the running of SQL queries over data sets.
+   * 
+   * @param namespace namespace for the connection
    */
   protected final Connection getQueryClient(Id.Namespace namespace) throws Exception {
     if (!cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED)) {
@@ -845,7 +864,7 @@ public class TestBase {
   }
 
   /**
-   * Returns a JDBC connection that allows to run SQL queries over data sets.
+   * Returns a JDBC connection that allows the running of SQL queries over data sets.
    */
   protected final Connection getQueryClient() throws Exception {
     return getQueryClient(Id.Namespace.DEFAULT);
@@ -864,6 +883,7 @@ public class TestBase {
   /**
    * Returns a {@link StreamManager} for the specified stream in the specified namespace
    *
+   * @param namespace namespace for the stream
    * @param streamName the specified stream
    * @return {@link StreamManager} for the specified stream in the specified namespace
    */

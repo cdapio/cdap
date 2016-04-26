@@ -22,9 +22,7 @@ import co.cask.cdap.store.DefaultNamespaceStore;
 import co.cask.cdap.store.NamespaceStore;
 import com.google.inject.Module;
 import com.google.inject.PrivateModule;
-import com.google.inject.Scope;
 import com.google.inject.Scopes;
-import com.google.inject.Singleton;
 
 
 /**

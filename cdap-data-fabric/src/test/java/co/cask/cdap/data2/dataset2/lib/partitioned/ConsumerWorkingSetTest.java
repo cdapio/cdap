@@ -19,7 +19,6 @@ package co.cask.cdap.data2.dataset2.lib.partitioned;
 import co.cask.cdap.api.dataset.lib.PartitionKey;
 import co.cask.cdap.api.dataset.lib.partitioned.ConsumerWorkingSet;
 import co.cask.cdap.api.dataset.lib.partitioned.DefaultConsumablePartition;
-import co.cask.cdap.api.dataset.lib.partitioned.ProcessState;
 import org.junit.Assert;
 import org.junit.Test;
 

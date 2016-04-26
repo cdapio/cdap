@@ -69,6 +69,6 @@ public class ConnectCommand implements Command {
 
   @Override
   public String getDescription() {
-    return "Connects to a CDAP instance.";
+    return "Connects to a CDAP instance";
   }
 }

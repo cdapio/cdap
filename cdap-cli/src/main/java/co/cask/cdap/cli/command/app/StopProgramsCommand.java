@@ -71,6 +71,6 @@ public class StopProgramsCommand extends BaseBatchCommand<BatchProgram> {
 
   @Override
   public String getDescription() {
-    return getDescription("stop");
+    return getDescription("stop", "stops");
   }
 }

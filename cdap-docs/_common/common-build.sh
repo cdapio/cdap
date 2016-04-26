@@ -242,7 +242,7 @@ function check_includes() {
     rm -rf ${target_includes_dir}
     mkdir ${target_includes_dir}
     download_includes ${target_includes_dir}
-    test_includes
+    test_includes ${target_includes_dir}
   else
     echo "No includes to be checked."
   fi
@@ -255,6 +255,7 @@ function download_includes() {
 }
 
 function test_includes() {
+  # $1 is passed as the directory to which the downloaded files are to be written.
   # For an example of over-riding this function, see developer/build.sh
   echo "No includes to be tested."
 }
