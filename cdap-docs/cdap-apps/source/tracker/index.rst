@@ -60,8 +60,9 @@ Tracker's UI shows a graphical visualization of the :ref:`lineage
 
 **Blends Metadata Analytics and Integrations**
 
-- See how your datasets are being created, accessed, and processed with built-in usage
-  analytics capabilities.
+- See how your datasets are being created, accessed, and processed.
+
+.. with built-in usage analytics capabilities.
 
 - Multi-dimensional usage analytics to understand the interaction between users,
   applications, and datasets.
@@ -103,10 +104,10 @@ Tracker is built from a system artifact included with CDAP, |literal-cask-tracke
 Installation
 ============
 Cask Tracker is deployed from its system artifact included with CDAP. A CDAP administrator
-does not need to build anything to add Cask Tracker to CDAP; they merely need to add two
-properties to the ``cdap-site.xml`` and the enable the the application after starting CDAP.
+does not need to build anything to add Cask Tracker to CDAP; they merely need to enable
+the application after starting CDAP.
 
-These two properties are required in the ``cdap-site.xml`` for the audit log functionality of Tracker::
+These two properties are used by Tracker for its audit log functionality::
   
   <!-- Audit Configuration -->
 
@@ -125,6 +126,9 @@ These two properties are required in the ``cdap-site.xml`` for the audit log fun
       Apache Kafka topic name to which audit messages are published
     </description>
   </property>
+
+As these are the default settings for these properties, they do not need to be included in the
+``cdap-site.xml`` file.
 
 Enabling Tracker
 ----------------
@@ -160,9 +164,8 @@ CDAP is restarted. Each time that you start CDAP, you will need to re-enable Tra
 Re-enabling Tracker does not recreate the datasets; instead, the same datasets as were
 used in previous runs are used.
 
-If you are using the audit log feature of Tracker, it is important that Tracker be enabled
-**before** you begin any other applications, or their activities will not be recorded by
-Tracker in its audit log.
+If you are using the audit log feature of Tracker, it is best that Tracker be enabled
+**before** you begin any other applications.
 
 If the installation of CDAP is an upgrade from a previous version, all activity and
 datasets prior to the enabling of Tracker will not be available or seen in the Tracker UI.
@@ -175,6 +178,7 @@ If for some reason you need to disable or remove Tracker, you would need to:
 - stop the Tracker service
 - delete the Tracker application
 - delete the Tracker datasets
+- Set the property ``audit.enabled`` to ``false`` in the ``cdap-site.xml`` and restart CDAP
 
 
 Tracker and its UI
@@ -243,10 +247,10 @@ Log*.
 
 **Metadata**
 
-The *Metadata* tab provides lists of *System Tags*, *Schema*, *User Properties*, and
-*System Properties* that were found for the entity. The values shown will vary depending
-on the type of entity and each individual entity. For instance, a stream may have a schema
-attached, and if so, it will be displayed.
+The *Metadata* tab provides lists of the *System Tags*, *User Tags*, *Schema*, *User
+Properties*, and *System Properties* that were found for the entity. The values shown will
+vary depending on the type of entity and each individual entity. For instance, a stream
+may have a schema attached, and if so, it will be displayed.
 
 .. figure:: ../_images/tracker-metadata.png
   :figwidth: 100%
@@ -275,9 +279,10 @@ specified, in addition to common time ranges (two weeks to one year).
 **Audit Log**
 
 The *Audit Log* tab shows each record in the *AuditLog* dataset that has been created for
-that particular entity, displayed in reverse chronological order. Note that due to a
-limitation in CDAP, reading and writing from a flow or service to a dataset shows an
-access of "UNKNOWN" rather than indicating if it was read or write access.
+that particular entity, displayed in reverse chronological order. Because of how datasets
+work in CDAP, reading and writing from a flow or service to a dataset shows an access of
+"UNKNOWN" rather than indicating if it was read or write access. This will be addressed in
+a future release.
 
 A date menu in the left side of the digram lets you control the time range that the
 diagram displays. By default, the last seven days are used, though a custom range can be
@@ -344,7 +349,8 @@ where:
      
 A successful query will return with the results as a field along with a count of the total
 results available, plus the offset used for the set of results returned. This is to allow
-for pagination through the results.
+for pagination through the results. Results are sorted so that the most recent audit event
+in the time range is returned first.
 
 If there are no results, an empty set of results will be returned (pretty-printed here for
 display)::
