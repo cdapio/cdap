@@ -136,11 +136,19 @@ Once pressed, the application will be deployed, the datasets created (if necessa
 started, and search and audit logging will become available.
 
 If you are enabling Tracker from outside the UI, you will, in addition to enabling auditing 
-in the ``cdap-site.xml`` as described above, need to:
+in the ``cdap-site.xml`` as described above, need to follow these steps:
 
-- load the artifact (|literal-cask-tracker-version-jar|)
-  
-- create the application based on the artifact, supplying a configuration file::
+- Using the CDAP CLI, load the artifact (|literal-cask-tracker-version-jar|):
+
+  .. container:: highlight
+
+    .. parsed-literal::
+
+      |cdap >| load artifact target/|cask-tracker-version-jar|
+    
+- Create an application configuration file (``appconfig.txt``) that contains the Kafka
+  Audit Log reader configuration (the property ``auditLogKafkaConfig``). It is the Kafka
+  Consumer Flowlet configuration information. For example::
     
     {
       "config": {
@@ -152,6 +160,32 @@ in the ``cdap-site.xml`` as described above, need to:
 
   substituting for ``<host>`` and ``<port>`` with appropriate values.
   
+- Create a CDAP application using the configuration file:
+
+  .. container:: highlight
+
+    .. parsed-literal::
+
+      |cdap >| create app TrackerApp tracker |cask-tracker-version| USER appconfig.txt
+
+**Audit Log Kafka Config:**
+
+This key contains a property map with:
+
+- Required Properties:
+
+  - ``zookeeperString``: Kafka Zookeeper string that can be used to subscribe to the CDAP audit log updates
+  - ``brokerString``: Kafka Broker string to which CDAP audit log data is published
+
+  *Note:* Specify either the ``zookeeperString`` or the ``brokerString``.
+
+- Optional Properties:
+
+  - ``topic``: Kafka Topic to which CDAP audit updates are published; default is ``audit`` which
+    corresponds to the default topic used in CDAP for audit log updates
+  - ``numPartitions``: Number of Kafka partitions; default is set to ``10``
+  - ``offsetDataset``: Name of the dataset where Kafka offsets are stored; default is ``kafkaOffset``
+
 Restarting CDAP
 ---------------
 As Tracker is an application running inside CDAP, it does not start up automatically when

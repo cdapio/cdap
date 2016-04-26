@@ -290,6 +290,7 @@ if cdap_apps_version:
 if cask_tracker_version:
     rst_epilog += """
 .. |cask-tracker-version| replace:: %(cask-tracker-version)s
+.. |cask-tracker-version-jar| replace:: tracker-%(cask-tracker-version)s.jar
 .. |literal-cask-tracker-version| replace:: ``%(cask-tracker-version)s``
 .. |literal-cask-tracker-version-jar| replace:: ``tracker-%(cask-tracker-version)s.jar``
 
