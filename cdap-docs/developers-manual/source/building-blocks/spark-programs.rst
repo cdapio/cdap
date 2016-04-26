@@ -26,9 +26,11 @@ implementation of three methods:
 - ``beforeSubmit()``
 - ``onFinish()``
 
+You can also extend from the abstract class ``AbstractSpark`` to simplify implementation.
+
 ::
 
-  public class WordCountProgram implements Spark {
+  public class WordCountProgram extends AbstractSpark {
     @Override
     public SparkSpecification configure() {
       return SparkSpecification.Builder.with()
@@ -39,7 +41,8 @@ implementation of three methods:
     }
 
 The configure method is similar to the one found in flows and
-MapReduce programs. It defines the name, description, and the class containing the main method of a Spark program.
+MapReduce programs. It defines the name, description, and the class containing the Spark program to be executed
+by the Spark framework.
 
 The ``beforeSubmit()`` method is invoked at runtime, before the
 Spark program is executed. Because many Spark programs do not
@@ -84,37 +87,49 @@ If both the memory and the number of cores needs to be set, this can be done usi
 In this case, 1024 MB and two cores is assigned to each executor process.
 
 
-CDAP SparkContext
-=================
-CDAP provides its own ``SparkContext``, which is needed to access :ref:`datasets <spark-datasets>`.
+CDAP Spark Program
+==================
+The main class being set through the ``setMainClass`` or ``setMainClassName`` method inside the ``Spark.configure()``
+method will be executed by the Spark framework. The main class must have one of the following properties:
 
-CDAP Spark programs must implement either ``JavaSparkProgram`` or ``ScalaSparkProgram``,
-depending upon the language (Java or Scala) in which the program is written. You can also access the Spark's
-``SparkContext`` (for Scala programs) and ``JavaSparkContext`` (for Java programs) in your CDAP Spark program by calling
-``getOriginalSparkContext()`` on CDAP ``SparkContext``.
+#. Extends from ``SparkMain`` if written in Scala
+#. Implements ``JavaSparkMain`` if written in Java
+#. Have a ``def main(args: Array[String])`` method if written in Scala
+#. Have a ``public static void main(String[] args)`` method if written in Java
+
+User program is responsible for creating either the ``SparkContext`` or ``JavaSparkContext`` instance, inside either
+the ``run`` method of ``SparkMain`` or ``JavaSparkMain`` or inside the ``main`` method.
+
+CDAP SparkExecutionContext
+==========================
+CDAP provides a ``SparkExecutionContext``, which is needed to access :ref:`datasets <spark-datasets>` and also
+interacts with CDAP services, such as service discovery and metrics. It is only available to Spark program that
+is extended from ``SparkMain`` or ``JavaSparkMain``.
 
 .. tabbed-parsed-literal::
-  :tabs: Java,Scala
+  :tabs: Scala,Java
   :dependent: java-scala
-  :languages: java,scala
+  :languages: scala,java
 
-  .. Java
+  .. Scala
 
-  public class MyJavaSparkProgram implements JavaSparkProgram {
-    @Override
-    public void run(SparkContext sparkContext) {
-      JavaSparkContext originalSparkContext = sparkContext.originalSparkContext();
+  class MyScalaSparkProgram extends ScalaSparkProgram {
+    override def run(implicit sec: SparkExecutionContext): Unit = {
+      val sc = new SparkContext
+      val RDD[(String, String)] = sc.fromDataset("mydataset")
         ...
     }
   }
 
-  .. Scala
+  .. Java
 
-  class MyScalaSparkProgram implements ScalaSparkProgram {
-    override def run(sparkContext: SparkContext) {
-      val originalSparkContext = sparkContext.originalSparkContext();
+  public class MyJavaSparkProgram implements JavaSparkMain {
+    @Override
+    public void run(JavaSparkExecutionContext sec) {
+      JavaSparkContext jsc = new JavaSparkContext();
+      JavaPairRDD<String, String> rdd = sec.fromDataset("mydataset");
         ...
-      }
+    }
   }
 
 .. _spark-datasets:
@@ -124,7 +139,8 @@ Spark and Datasets
 ==================
 Spark programs in CDAP can directly access **dataset** similar to the way a MapReduce can. 
 These programs can create Spark's Resilient Distributed Dataset (RDD) by
-reading a dataset and can also write RDD to a dataset.
+reading a dataset and can also write RDD to a dataset. In Scala, implicit objects are provided
+for reading and writing datasets directly through the ``SparkContext`` and ``RDD`` objects.
 
 In order to access a dataset in Spark, both the key and value classes have to be serializable.
 Otherwise, Spark will fail to read or write them.
@@ -134,38 +150,38 @@ An ``ObjectStore`` dataset can be used, provided its classes are serializable.
 - Creating an RDD from dataset
 
   .. tabbed-parsed-literal::
-    :tabs: Java,Scala
+    :tabs: Scala,Java
     :dependent: java-scala
-    :languages: java,scala
-
-    .. Java
-
-    JavaPairRDD<byte[], Purchase> purchaseRDD = sparkContext.readFromDataset("purchases",
-                                                                              byte[].class,
-                                                                              Purchase.class);
+    :languages: scala,java
 
     .. Scala
 
-    val purchaseRDD: RDD[(Array[Byte], Purchase)] = sparkContext.readFromDataset("purchases",
-                                                                                  classOf[Array[Byte]],
-                                                                                  classOf[Purchase]);
+    val sc = new SparkContext
+    val purchaseRDD = sc.readFromDataset[Array[Byte], Purchase]("purchases");
+
+    .. Java
+
+    JavaSparkContext jsc = new JavaSparkContext();
+    JavaPairRDD<byte[], Purchase> purchaseRDD = sec.fromDataset("purchases");
 
 - Writing an RDD to dataset
 
   .. tabbed-parsed-literal::
-    :tabs: Java,Scala
+    :tabs: Scala,Java
     :dependent: java-scala
-    :languages: java,scala
-
-    .. Java
-
-    sparkContext.writeToDataset(purchaseRDD, "purchases", byte[].class, Purchase.class);
+    :languages: scala,java
 
     .. Scala
 
-    sparkContext.writeToDataset(purchaseRDD, "purchases", classOf[Array[Byte]], classOf[Purchase])
+    purchaseRDD.saveAsDataset("purchases")
 
-You can also access a dataset directly by calling the ``getDataset()`` method of the SparkContext.
+    .. Java
+
+    sec.saveAsDataset(purchaseRDD, "purchases");
+
+You can also access a dataset directly by calling the ``getDataset()`` method of the ``SparkExecutionContext`` or
+``JavaSparkExecutionContext``. However, the dataset acquired through the ``getDataset()`` cannot be used through
+function closure.
 See also the section on :ref:`Using Datasets in Programs <datasets-in-programs>`.
 
 
@@ -176,28 +192,51 @@ These programs can create Spark's Resilient Distributed Dataset (RDD) by reading
 You can read from a stream using:
 
 .. tabbed-parsed-literal::
-  :tabs: Java,Scala
+  :tabs: Scala,Java
   :dependent: java-scala
-  :languages: java,scala
-
-  .. Java
-
-  JavaPairRDD<LongWritable, Text> backlinkURLs = sc.readFromStream("backlinkURLStream",
-                                                                  Text.class);
+  :languages: scala,java
 
   .. Scala
 
-  val ratingsDataset: NewHadoopRDD[Array[Byte], Text] = sc.readFromStream("ratingsStream",
-                                                                           classOf[Text])
+  val ratingsDataset = sc.fromStream[(Long, String)]("ratingsStream")
 
-It’s possible to read parts of a stream by specifying start and end timestamps using::
+  .. Java
 
-    sc.readFromStream(streamName, vClass, startTime, endTime);
+  JavaPairRDD<Long, String> ratingsDataset = sec.fromStream("ratingsStream", String.class);
 
-You can read custom objects from a stream by providing a decoderType extended from
+It’s possible to read parts of a stream by specifying start and end timestamps using:
+
+.. tabbed-parsed-literal::
+  :tabs: Scala,Java
+  :dependent: java-scala
+  :languages: scala,java
+
+  .. Scala
+
+  val ratingsDataset = sc.fromStream[(Long, String)]("ratingsStream", startTime, endTime)
+
+  .. Java
+
+  JavaPairRDD<Long, String> ratingsDataset = sec.fromStream("ratingsStream", startTime, endTime, String.class);
+
+.. highlight:: scala
+
+In Scala, custom objects conversion is done through an implicit conversion function::
+
+    // The SparkMain provides implicit functions for (Long, String) and String conversion already
+    val pairRDD: RDD[(Long, String)] = sc.fromStream(streamName)
+    val valueRDD: RDD[String] = sc.fromStream(streamName)
+
+    // Defining a custom conversion
+    implicit def toArray(event: StreamEvent): Array[String] = Bytes.toString(event.getBody).split(",")
+    val rdd: RDD[Array[String]] = sc.fromStream(streamName)
+
+.. highlight:: java
+
+In Java, you can read custom objects from a stream by providing a decoderType extended from
 `StreamEventDecoder <../../reference-manual/javadocs/co/cask/cdap/api/stream/StreamEventDecoder.html>`__::
 
-    sc.readFromStream(streamName, vClass, startTime, endTime, decoderType);
+    sec.fromStream(streamName, startTime, endTime, decoderType, keyType, valueType);
 
 
 Spark and Services
@@ -208,12 +247,12 @@ due to failure or another reason, worker nodes will see the most recent endpoint
 
 Here is an example of service discovery in a Spark program::
 
-    final ServiceDiscoverer discoveryServiceContext = sc.getServiceDiscoverer();
+    final ServiceDiscoverer serviceDiscover = sec.getServiceDiscoverer();
     JavaPairRDD<byte[], Integer> ranksRaw = ranks.mapToPair(new PairFunction<Tuple2<String, Double>,
                                                             byte[], Integer>() {
       @Override
       public Tuple2<byte[], Integer> call(Tuple2<String, Double> tuple) throws Exception {
-        URL serviceURL = discoveryServiceContext.getServiceURL(SparkPageRankApp.GOOGLE_TYPE_PR_SERVICE_NAME);
+        URL serviceURL = serviceDiscover.getServiceURL(SparkPageRankApp.GOOGLE_TYPE_PR_SERVICE_NAME);
         if (serviceURL == null) {
           throw new RuntimeException("Failed to discover service: " +
                                                                  SparkPageRankApp.GOOGLE_TYPE_PR_SERVICE_NAME);
@@ -221,13 +260,11 @@ Here is an example of service discovery in a Spark program::
         try {
           URLConnection connection = new URL(serviceURL, String.format("transform/%s",
                                                                       tuple._2().toString())).openConnection();
-          BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream(),
-                                                                           Charsets.UTF_8));
-          try {
+          try (
+            BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream(), Charsets.UTF_8))
+          ) {
             String pr = reader.readLine();
             return new Tuple2<byte[], Integer>(tuple._1().getBytes(Charsets.UTF_8), Integer.parseInt(pr));
-          } finally {
-            Closeables.closeQuietly(reader);
           }
         } catch (Exception e) {
           LOG.warn("Failed to read the stream for service {}",
@@ -260,29 +297,80 @@ You can also emit custom user metrics from the worker nodes of your Spark progra
 Spark in Workflows
 ==================
 Spark programs in CDAP can also be added to a :ref:`workflow <workflows>`, similar to a :ref:`MapReduce <mapreduce>`.
+The Spark program can get information about the workflow through the ``SparkExecutionContext.getWorkflowInfo`` method.
 
 
-Spark SQL
-=========
-The entry point to functionality in Spark SQL is through a Spark `SQLContext
-<http://spark.apache.org/docs/latest/sql-programming-guide.html#starting-point-sqlcontext>`__.
-To run a Spark SQL program in CDAP, you can obtain a ``SQLContext`` from CDAP's ``SparkContext``
-using one of these approaches:
+Transaction an Spark
+====================
+When the Spark program interacts with datasets, the system will automatically create a long-running transaction
+that covers the Spark job execution. A Spark job refers to a Spark action and any tasks that need to execute to
+evaluate the action (see `Spark Job Scheduling <http://spark.apache.org/docs/1.6.1/job-scheduling.html#scheduling-within-an-application>`__ for details).
+You can also control the transaction scope explicitly. It will be useful when you want multiple Spark actions to be
+committed in the same transaction. For example, in Kafka Spark Streaming, you can persist the Kafka offsets
+together with the changes in datasets in the same transaction to get the exactly-once processing semantics.
+
+Here is an example of using explicit transaction in Spark:
 
 .. tabbed-parsed-literal::
-  :tabs: Java,Scala
+  :tabs: Scala,Java
   :dependent: java-scala
-  :languages: java,scala
+  :languages: scala,java
+
+  .. Scala
+
+  // Perform multiple operations in the same transaction
+  Transaction {
+    // Create a standard wordcount RDD
+    val wordCountRDD = sc.fromStream[String]("stream")
+        .flatMap(_.split(" "))
+        .map((_, 1))
+        .reduceByKey(_ + _)
+
+    // Save those words that have count > 10 to "aboveten" dataset
+    wordCountRDD
+      .filter(_._2 > 10)
+      .saveAsDataset("aboveten")
+
+    // Save all wordcount to another "allcounts" dataset
+    wordCountRDD.saveAsDataset("allcounts")
+
+    // Updates to both "aboveten" and "allcounts" dataset will be committed within the same Transaction.
+  }
+
+  // Perform RDD operations together with direct dataset access in the same transaction
+  Transaction(datasetContext => {
+    sc.fromDataset[String, Int]("source")
+      .saveAsDataset("sink")
+
+    val table: Table = datasetContext.getDataset("copyCount")
+    table.increment(new Increment("source", "sink", 1L))
+  })
 
   .. Java
 
-  org.apache.spark.SparkContext originalSparkContext = sc.getOriginalSparkContext();
-  SQLContext sqlContext = new SQLContext(originalSparkContext);
+  @Override
+  public void run(JavaSparkExecutionContext sec) throws Exception {
+    // Perform RDD operations together with direct dataset access in the same transaction
+    sec.execute(new TransactionRunnable(sec));
+  }
 
-  .. Scala:
+  static class TransactionRunnable implements TxRunnable, Serializable {
 
-  val originalSparkContext:org.apache.spark.SparkContext = sc.getOriginalSparkContext[org.apache.spark.SparkContext]
-  val sqlContext = new org.apache.spark.sql.SQLContext(originalSparkContext)
+    private final JavaSparkExecutionContext sec;
+
+    public TransactionRunnable(JavaSparkExecutionContext sec) {
+      this.sec = sec;
+    }
+
+    @Override
+    public void run(DatasetContext context) throws Exception {
+      JavaPairRDD<String, Integer> source = sec.fromDataset("source");
+      sec.saveAsDataset(source, "sink");
+
+      Table table = context.getDataset("copyCount");
+      table.increment(new Increment("source", "sink", 1L));
+    }
+  }
 
 
 Spark Program Examples
