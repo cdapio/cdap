@@ -99,8 +99,6 @@ public abstract class AbstractSparkSubmitter implements SparkSubmitter {
         // Try to shutdown the running spark job.
         triggerShutdown();
 
-        // Interrupt the executing thread as well in case it is blocking in somewhere.
-        executor.shutdownNow();
         // Wait for the Spark-Submit returns
         Uninterruptibles.awaitUninterruptibly(completion);
       }

@@ -24,6 +24,7 @@ import co.cask.cdap.mapreduce.service.MapReduceServiceIntegrationTestRun;
 import co.cask.cdap.partitioned.PartitionConsumingTestRun;
 import co.cask.cdap.service.FileUploadServiceTestRun;
 import co.cask.cdap.spark.SparkFileSetTestRun;
+import co.cask.cdap.spark.SparkStreamingTestRun;
 import co.cask.cdap.spark.SparkTestRun;
 import co.cask.cdap.spark.metrics.SparkMetricsIntegrationTestRun;
 import co.cask.cdap.spark.service.SparkServiceIntegrationTestRun;
@@ -57,6 +58,7 @@ import org.junit.runners.Suite;
   SparkMetricsIntegrationTestRun.class,
   SparkServiceIntegrationTestRun.class,
   SparkStreamIntegrationTestRun.class,
+  SparkStreamingTestRun.class,
   SparkTestRun.class,
   TestFrameworkTestRun.class
 })

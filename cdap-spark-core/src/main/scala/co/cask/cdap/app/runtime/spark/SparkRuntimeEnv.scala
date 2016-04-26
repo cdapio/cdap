@@ -22,7 +22,7 @@ import javax.annotation.Nullable
 
 import com.google.common.reflect.TypeToken
 import org.apache.spark.scheduler._
-import org.apache.spark.streaming.StreamingContext
+import org.apache.spark.streaming.{StreamingContext, StreamingContextState}
 import org.apache.spark.{SparkConf, SparkContext}
 import org.slf4j.LoggerFactory
 
@@ -153,28 +153,49 @@ object SparkRuntimeEnv {
     * Stop this cache. It will stop the [[org.apache.spark.SparkContext]] in the cache and also prevent any
     * future setting of new [[org.apache.spark.SparkContext]].
     *
+    * @param thread an optional Thread to interrupt upon stopping.
     * @return [[scala.Some]] [[org.apache.spark.SparkContext]] if there is a one
     */
-  def stop: Option[SparkContext] = {
+  def stop(thread: Option[Thread] = None): Option[SparkContext] = {
+    var sc: Option[SparkContext] = None
+    var ssc: Option[StreamingContext] = None
+
     this.synchronized {
       if (!stopped) {
         stopped = true
-        try {
-          streamingContext.foreach(ssc => {
-            // Stop the Streaming context gracefully
-            ssc.stop(false, true)
-          })
-        } finally {
-          sparkContext.foreach(sc => {
-            val cleanup = createCleanup(sc);
-            try {
-              sc.stop
-            } finally {
-              cleanup()
-            }
-          })
-        }
+        sc = sparkContext
+        ssc = streamingContext
       }
+    }
+
+    try {
+      ssc.foreach(context => {
+        // If running Spark streaming, interrupt the thread first to give
+        // the Spark program time to terminate gracefully.
+        thread.foreach(t => {
+          t.interrupt()
+          t.join()
+        })
+        if (context.getState() != StreamingContextState.STOPPED) {
+          context.stop(false, false)
+        }
+      })
+    } finally {
+      sc.foreach(context => {
+        val cleanup = createCleanup(context);
+        try {
+          if (!context.isStopped) {
+            context.stop
+          }
+        } finally {
+          // Just interrupt the thread to unblock any blocking call
+          thread.foreach(_.interrupt())
+          cleanup()
+        }
+      })
+    }
+
+    this.synchronized {
       sparkListeners.clear()
       sparkContext;
     }

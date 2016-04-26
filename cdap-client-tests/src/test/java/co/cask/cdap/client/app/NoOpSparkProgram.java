@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,37 +16,34 @@
 
 package co.cask.cdap.client.app;
 
-import co.cask.cdap.api.spark.AbstractSpark;
 import co.cask.cdap.api.spark.JavaSparkExecutionContext;
 import co.cask.cdap.api.spark.JavaSparkMain;
+import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Arrays;
-import java.util.List;
-
 /**
- * A Fake spark program to test CLI integration with Spark
+ *
  */
-public class FakeSpark extends AbstractSpark implements JavaSparkMain {
+public class NoOpSparkProgram implements JavaSparkMain {
 
-  public static final String NAME = "FakeSparkProgram";
-  private static final Logger LOG = LoggerFactory.getLogger(FakeSpark.class);
-
-  @Override
-  public void configure() {
-    setName(NAME);
-    setDescription("");
-    setMainClass(FakeSpark.class);
-  }
+  private static final Logger LOG = LoggerFactory.getLogger(NoOpSparkProgram.class);
 
   @Override
   public void run(JavaSparkExecutionContext sec) throws Exception {
     JavaSparkContext jsc = new JavaSparkContext();
+    JavaPairRDD<Long, String> streamRDD = sec.fromStream(AllProgramsApp.STREAM_NAME, String.class);
+    LOG.info("Stream events: {}", streamRDD.count());
 
-    LOG.info("HelloFakeSpark");
-    List<Integer> data = Arrays.asList(1, 2, 3, 4, 5);
-    LOG.info("Collected: {}", jsc.parallelize(data).collect());
+    JavaPairRDD<byte[], byte[]> datasetRDD = sec.fromDataset(AllProgramsApp.DATASET_NAME);
+    LOG.info("Dataset pairs: {}", datasetRDD.count());
+
+    sec.saveAsDataset(datasetRDD, AllProgramsApp.DATASET_NAME2);
+
+    datasetRDD = sec.fromDataset(AllProgramsApp.DATASET_NAME3);
+    LOG.info("Dataset pairs: {}", datasetRDD.count());
+
+    sec.saveAsDataset(datasetRDD, AllProgramsApp.DATASET_NAME3);
   }
 }

@@ -57,7 +57,10 @@ public final class SparkRunnerClassLoader extends URLClassLoader {
 
   // Define some of the class types used for bytecode rewriting purpose. Cannot be referred with .class since
   // those classes may not be available to the ClassLoader of this class (they are loadable from this ClassLoader).
-  private static final Type SPARK_RUNTIME_ENV_TYPE = Type.getType(SparkRuntimeEnv.class);
+  private static final Type SPARK_RUNTIME_ENV_TYPE =
+    Type.getObjectType("co/cask/cdap/app/runtime/spark/SparkRuntimeEnv");
+  private static final Type SPARK_RUNTIME_UTILS_TYPE =
+    Type.getObjectType("co/cask/cdap/app/runtime/spark/SparkRuntimeUtils");
   private static final Type SPARK_CONTEXT_TYPE = Type.getObjectType("org/apache/spark/SparkContext");
   private static final Type SPARK_STREAMING_CONTEXT_TYPE =
     Type.getObjectType("org/apache/spark/streaming/StreamingContext");
@@ -246,8 +249,7 @@ public final class SparkRunnerClassLoader extends URLClassLoader {
             if (opcode == Opcodes.INVOKEVIRTUAL && name.equals("par")
                 && owner.equals("scala/collection/mutable/ArrayBuffer")
                 && returnType.getClassName().equals("scala.collection.parallel.mutable.ParArray")) {
-              super.visitMethodInsn(Opcodes.INVOKESTATIC,
-                                    Type.getType(SparkRuntimeUtils.class).getInternalName(),
+              super.visitMethodInsn(Opcodes.INVOKESTATIC, SPARK_RUNTIME_UTILS_TYPE.getInternalName(),
                                     "setTaskSupport", Type.getMethodDescriptor(returnType, returnType), false);
             }
           }
@@ -527,7 +529,7 @@ public final class SparkRunnerClassLoader extends URLClassLoader {
 
         // call SparkRuntimeUtils.createConfArchive, return a File and leave it in stack
         Type stringType = Type.getType(String.class);
-        mg.invokeStatic(Type.getType(SparkRuntimeUtils.class),
+        mg.invokeStatic(SPARK_RUNTIME_UTILS_TYPE,
                         new Method("createConfArchive", Type.getType(File.class),
                                    new Type[] { SPARK_CONF_TYPE, stringType, stringType, stringType}));
         if (isReturnFile) {
