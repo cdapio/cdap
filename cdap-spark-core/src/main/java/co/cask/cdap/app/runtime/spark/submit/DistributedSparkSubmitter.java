@@ -28,6 +28,7 @@ import org.apache.hadoop.conf.Configuration;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
 import javax.annotation.Nullable;
 
 /**
@@ -79,7 +80,7 @@ public class DistributedSparkSubmitter extends AbstractSparkSubmitter {
   @Override
   protected void triggerShutdown() {
     // Just stop the execution service and block on that.
-    // It will wait till the call the "completed" from the Spark driver.
+    // It will wait till the "completed" call from the Spark driver.
     sparkExecutionService.stopAndWait();
   }
 

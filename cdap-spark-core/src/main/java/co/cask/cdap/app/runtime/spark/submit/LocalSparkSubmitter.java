@@ -16,11 +16,15 @@
 
 package co.cask.cdap.app.runtime.spark.submit;
 
+import co.cask.cdap.app.runtime.spark.SparkMainWrapper;
 import co.cask.cdap.app.runtime.spark.SparkRuntimeEnv;
+import co.cask.cdap.app.runtime.spark.SparkRuntimeUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -47,12 +51,8 @@ public class LocalSparkSubmitter extends AbstractSparkSubmitter {
 
   @Override
   protected void triggerShutdown() {
-    // Try to get the SparkContext and call stop on it.
-    try {
-      SparkRuntimeEnv.stop();
-    } catch (Throwable t) {
-      // Don't propagate the exception.
-      LOG.error("Exception while calling SparkContext.stop()", t);
-    }
+    // We just stop the SparkMainWrapper directly. Through the SparkClassLoader, we make sure that Spark
+    // sees the same SparkMainWrapper class as this one
+    SparkMainWrapper.triggerShutdown();
   }
 }
