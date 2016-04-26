@@ -380,8 +380,9 @@ Here is an example of using an explicit transaction in Spark:
 
 Spark Program Examples
 ======================
-- For an example of **a Spark program,** see the :ref:`Spark K-Means <examples-spark-k-means>`
-  and :ref:`Spark Page Rank <examples-spark-page-rank>` examples.
+- For examples of **Spark programs,** see the :ref:`Spam Classifier
+  <examples-spam-classifier>`, :ref:`Spark K-Means <examples-spark-k-means>`, and
+  :ref:`Spark Page Rank <examples-spark-page-rank>` examples.
 
 - For a longer example, the how-to guide :ref:`cdap-spark-guide` gives another demonstration.
 
