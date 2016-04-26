@@ -186,9 +186,9 @@ public class UnitTestManager implements TestManager {
       app.configure(configurer, new DefaultApplicationContext<>(configObject));
       ApplicationId applicationId = new ApplicationId(namespace.getId(), configurer.getName());
 
-      ArtifactSummary artifactSummy = new ArtifactSummary(artifactId.getArtifact(), artifactId.getVersion());
+      ArtifactSummary artifactSummary = new ArtifactSummary(artifactId.getArtifact(), artifactId.getVersion());
       appFabricClient.deployApplication(applicationId.toId(),
-                                        new AppRequest(artifactSummy, configObject));
+                                        new AppRequest(artifactSummary, configObject));
       return appManagerFactory.create(applicationId.toId());
     } catch (Exception e) {
       throw Throwables.propagate(e);

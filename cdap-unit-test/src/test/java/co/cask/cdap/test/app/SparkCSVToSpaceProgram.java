@@ -38,7 +38,6 @@ import java.util.Map;
 /**
  * Main class for the Spark program to convert comma separated file into space separated file.
  */
-
 public final class SparkCSVToSpaceProgram extends AbstractSpark implements JavaSparkMain {
 
   @Override
@@ -74,7 +73,6 @@ public final class SparkCSVToSpaceProgram extends AbstractSpark implements JavaS
 
         Map<String, String> fileSetArgs = new HashMap<>();
         FileSetArguments.setOutputPath(fileSetArgs, outputPath);
-
 
         FileSet fileSet = context.getDataset(WorkflowAppWithLocalDatasets.CSV_FILESET_DATASET, fileSetArgs);
         try (PrintWriter writer = new PrintWriter(fileSet.getOutputLocation().getOutputStream())) {

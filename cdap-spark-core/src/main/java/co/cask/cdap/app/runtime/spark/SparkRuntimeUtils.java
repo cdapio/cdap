@@ -124,7 +124,7 @@ public final class SparkRuntimeUtils {
 
     /**
      * Gets the set of resources information that are from the Spark Streaming Core. It excludes any
-     * Spark streaming extensions, such as Kafka or Flume. They need to be excluded before they are not
+     * Spark streaming extensions, such as Kafka or Flume. They need to be excluded since they are not
      * part of Spark distribution and it should be loaded from the user program ClassLoader. This filtering
      * is needed for unit-testing because in unit-test, those extension classes are loadable from the system
      * classloader, causing same classes being loaded through different classloader.

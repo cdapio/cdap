@@ -55,9 +55,6 @@ public final class AppJarHelper {
         if (visibleResources.contains(className.replace('.', '/') + ".class")) {
           return false;
         }
-        if (className.startsWith("scala.")) {
-          return true;
-        }
         // TODO: Fix it with CDAP-5800
         if (className.startsWith("org.apache.spark.")) {
           return false;

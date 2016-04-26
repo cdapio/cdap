@@ -28,7 +28,6 @@ import org.apache.hadoop.conf.Configuration;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ExecutorService;
 import javax.annotation.Nullable;
 
 /**
