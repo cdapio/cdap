@@ -24,7 +24,7 @@
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
-  <artifactId>SparkKafkaWordCount</artifactId>
+  <artifactId>SparkSpamFiltering</artifactId>
 
   <properties>
     <app.main.class>co.cask.cdap.examples.sparkstreaming.SparkSpamFiltering</app.main.class>

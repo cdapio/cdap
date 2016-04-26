@@ -17,7 +17,7 @@ package co.cask.cdap.examples.sparkstreaming
 
 import co.cask.cdap.api.common.Bytes
 import co.cask.cdap.api.spark.{SparkExecutionContext, SparkMain}
-import kafka.serializer.StringDecoder
+import kafka.serializer.{DefaultDecoder, StringDecoder}
 import org.apache.spark.SparkContext
 import org.apache.spark.mllib.classification.{NaiveBayes, NaiveBayesModel}
 import org.apache.spark.mllib.feature.HashingTF
@@ -61,8 +61,6 @@ class SparkSpamFilteringProgram extends SparkMain {
 
     val modelData: RDD[LabeledPoint] = spamLabeledPoint.union(notSpamLabeledPoint)
 
-    println(modelData.take(10).deep.mkString("\n"))
-
     val model: NaiveBayesModel = NaiveBayes.train(modelData, 1.0)
 
     val streamingContext: StreamingContext = new StreamingContext(sparkContext, Seconds(2))
@@ -79,17 +77,19 @@ class SparkSpamFilteringProgram extends SparkMain {
     // Create direct kafka stream with brokers and topics
     val topicsSet = topics.split(",").toSet
     val kafkaParams = Map[String, String]("metadata.broker.list" -> brokers, "auto.offset.reset" -> "smallest")
-    val messages = KafkaUtils.createDirectStream[String, String, StringDecoder, StringDecoder](streamingContext,
+    val messages = KafkaUtils.createDirectStream[Array[Byte], String, DefaultDecoder, StringDecoder](streamingContext,
       kafkaParams, topicsSet)
 
     messages.print()
 
-    messages.foreachRDD { (rdd: RDD[(String, String)]) =>
-      rdd.map { line =>
+    messages.foreachRDD { (rdd: RDD[(Array[Byte], String)]) =>
+      val classified : RDD [(Array[Byte], Double)] = rdd.map { line =>
         val vector: Vector = tf.transform(line._2.split(" "))
         val value: Double = model.predict(vector)
-        (Bytes.toBytes(line._1), value)
-      }.saveAsDataset(SparkSpamFiltering.DATASET)
+        (line._1, value)
+      }
+      println(classified.collect().deep.mkString("\n"))
+      classified.saveAsDataset(SparkSpamFiltering.DATASET)
     }
 
     streamingContext.start()
