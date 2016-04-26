@@ -95,7 +95,7 @@ Standalone CDAP SDK directory, using the Command Line Interface:
 
   $ cdap-cli.sh load stream backlinkURLStream examples/SparkPageRank/resources/urlpairs.txt
   
-  Successfully sent stream event to stream 'backlinkURLStream'
+  Successfully loaded file to stream 'backlinkURLStream'
 
 Starting the Workflow
 ---------------------

@@ -308,7 +308,7 @@ We have already prepared a sample of Web server access logs for you to inject in
    $ cd $CDAP-SDK-HOME
    $ cdap-cli.sh load stream logEventStream examples/cdap-apps-release-cdap-|short-version|-compatible/Wise/resources/apache.accesslog text/plain
 
-   Successfully sent stream event to stream 'logEventStream'
+   Successfully loaded file to stream 'logEventStream'
    
 
 This requires that a Standalone CDAP instance be running with the WISE application already
