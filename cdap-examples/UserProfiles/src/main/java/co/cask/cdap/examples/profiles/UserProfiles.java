@@ -54,12 +54,12 @@ public class UserProfiles extends AbstractApplication {
       Schema.Field.of("active", Schema.nullableOf(Schema.of(Schema.Type.LONG)))
     );
     createDataset("profiles", Table.class.getName(), DatasetProperties.builder()
-      // create the profiles table with column-level conflict detection
+      .setDescription("Profiles table with column-level conflict detection")
+        // create the profiles table with column-level conflict detection
       .add(Table.PROPERTY_CONFLICT_LEVEL, ConflictDetection.COLUMN.name())
       .add(Table.PROPERTY_SCHEMA, profileSchema.toString())
       // to indicate that the id field should come from the row key and not a row column
       .add(Table.PROPERTY_SCHEMA_ROW_FIELD, "id")
-      .setDescription("Profiles table with column-level conflict detection")
       .build());
   }
 }

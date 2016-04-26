@@ -487,12 +487,11 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
   }
 
   private DatasetProperties addLocalDatasetProperty(DatasetProperties properties) {
-    String dsDescription = properties.getDescription();
-    DatasetProperties.Builder builder = DatasetProperties.builder();
-    builder.addAll(properties.getProperties());
-    builder.add(Constants.AppFabric.WORKFLOW_LOCAL_DATASET_PROPERTY, "true");
-    builder.setDescription(dsDescription);
-    return builder.build();
+    return DatasetProperties.builder()
+      .setDescription(properties.getDescription())
+      .addAll(properties.getProperties())
+      .add(Constants.AppFabric.WORKFLOW_LOCAL_DATASET_PROPERTY, "true")
+      .build();
   }
 
   private void createLocalDatasets() throws IOException, DatasetManagementException {

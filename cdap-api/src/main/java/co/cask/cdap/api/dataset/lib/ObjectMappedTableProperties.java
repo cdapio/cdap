@@ -36,6 +36,8 @@ import java.util.Map;
 public class ObjectMappedTableProperties {
   private static final SchemaGenerator schemaGenerator = new ReflectionSchemaGenerator();
 
+  private ObjectMappedTableProperties() { }
+
   /**
    * The type of object in the table.
    */
@@ -93,7 +95,7 @@ public class ObjectMappedTableProperties {
   /**
    * A Builder to construct properties for {@link ObjectMappedTable} datasets.
    */
-  public static class Builder extends DatasetProperties.Builder {
+  public static class Builder extends DatasetProperties.AbstractBuilder<Builder> {
 
     private final Gson gson = new Gson();
 
@@ -116,7 +118,7 @@ public class ObjectMappedTableProperties {
     public Builder setType(Type type) throws UnsupportedTypeException {
       add(OBJECT_TYPE, gson.toJson(new TypeRepresentation(type)));
       add(OBJECT_SCHEMA, schemaGenerator.generate(type, false).toString());
-      return this;
+      return thisBuilder();
     }
 
     /**
@@ -131,7 +133,7 @@ public class ObjectMappedTableProperties {
      */
     public Builder setRowKeyExploreName(String name) {
       add(ROW_KEY_EXPLORE_NAME, name);
-      return this;
+      return thisBuilder();
     }
 
     /**
@@ -149,14 +151,7 @@ public class ObjectMappedTableProperties {
         throw new IllegalArgumentException("Key type must be bytes or string.");
       }
       add(ROW_KEY_EXPLORE_TYPE, type.name());
-      return this;
-    }
-
-    /**
-     * Create a DatasetProperties from this builder.
-     */
-    public DatasetProperties build() {
-      return super.build();
+      return thisBuilder();
     }
   }
 }
