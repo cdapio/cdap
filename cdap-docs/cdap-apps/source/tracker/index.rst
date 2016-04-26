@@ -14,13 +14,9 @@ Cask Tracker
 Introduction
 ============
 
-how it is based off of the metadata system - add plenty of links
- 
-
-
 Cask Tracker ("Tracker") is a self-service CDAP extension that automatically captures
-:ref:`metadata <metadata-lineage>` and lets you see how data is flowing into and out of datasets, streams, and
-stream views.
+:ref:`metadata <metadata-lineage>` and lets you see how data is flowing into and out 
+of datasets, streams, and stream views.
 
 It allows you to perform impact and root-cause analysis, and delivers an audit-trail for
 auditability and compliance. Tracker furnishes access to structured information that
@@ -95,8 +91,13 @@ The Cask Tracker application consists of an application in CDAP with two program
 The Tracker UI is shipped with CDAP, started automatically as part of the CDAP UI, and is available at:
 
   http://localhost:9999/ns/default/tracker/home
+  
+or (Distributed CDAP):
 
-Tracker is built from a system artifact included with CDAP, ``tracker-``|literal-cask-tracker-version|``.jar``.
+  http://host:dashboard-bind-port/ns/default/tracker/home
+  
+
+Tracker is built from a system artifact included with CDAP, |literal-cask-tracker-version-jar|.
 
 
 Installation
@@ -127,16 +128,18 @@ These two properties are required in the ``cdap-site.xml`` for the audit log fun
 
 Enabling Tracker
 ----------------
-To enable Tracker, go to Tracker UI at http://localhost:9999/ns/default/tracker/home and
-press the ``"Enable Tracker"`` button to enable Tracker.
+To enable Tracker, go to the **Tracker UI** at 
+(in the SDK) http://localhost:9999/ns/default/tracker/home or 
+(Distributed CDAP) http://host:dashboard-bind-port/ns/default/tracker/home 
+and press the ``"Enable Tracker"`` button to deploy and start Tracker.
 
-Once pressed, the application will be deployed, the datasets created, the flow and service
+Once pressed, the application will be deployed, the datasets created (if necessary), the flow and service
 started, and search and audit logging will become available.
 
 If you are enabling Tracker from outside the UI, you will, in addition to enabling auditing 
 in the ``cdap-site.xml`` as described above, need to:
 
-- load the artifact (``tracker-``|literal-cask-tracker-version|``.jar``)
+- load the artifact (|literal-cask-tracker-version-jar|)
   
 - create the application based on the artifact, supplying a configuration file::
     
@@ -153,10 +156,13 @@ in the ``cdap-site.xml`` as described above, need to:
 Restarting CDAP
 ---------------
 As Tracker is an application running inside CDAP, it does not start up automatically when
-CDAP is restarted. Each time that you start CDAP, you will need to re-enable Tracker. If you
-are using the audit log feature of Tracker, it is important that Tracker be enabled **before**
-you begin any other applications, or their activities will not be recorded by Tracker in
-its audit log.
+CDAP is restarted. Each time that you start CDAP, you will need to re-enable Tracker.
+Re-enabling Tracker does not recreate the datasets; instead, the same datasets as were
+used in previous runs are used.
+
+If you are using the audit log feature of Tracker, it is important that Tracker be enabled
+**before** you begin any other applications, or their activities will not be recorded by
+Tracker in its audit log.
 
 If the installation of CDAP is an upgrade from a previous version, all activity and
 datasets prior to the enabling of Tracker will not be available or seen in the Tracker UI.
@@ -173,7 +179,6 @@ If for some reason you need to disable or remove Tracker, you would need to:
 
 Tracker and its UI
 ==================
-overview of what does tracker provide? - how to navigate the UI, what is where etc
 
 Search
 ------
@@ -243,6 +248,12 @@ The *Metadata* tab provides lists of *System Tags*, *Schema*, *User Properties*,
 on the type of entity and each individual entity. For instance, a stream may have a schema
 attached, and if so, it will be displayed.
 
+.. figure:: ../_images/tracker-metadata.png
+  :figwidth: 100%
+  :width: 800px
+  :align: center
+  :class: bordered-image
+
 **Lineage**
 
 The *Lineage* tab shows the relationship between an entity and the programs that are
@@ -255,6 +266,12 @@ A date menu in the left side of the digram lets you control the time range that 
 diagram displays. By default, the last seven days are used, though a custom range can be
 specified, in addition to common time ranges (two weeks to one year).
 
+.. figure:: ../_images/tracker-lineage.png
+  :figwidth: 100%
+  :width: 800px
+  :align: center
+  :class: bordered-image
+
 **Audit Log**
 
 The *Audit Log* tab shows each record in the *AuditLog* dataset that has been created for
@@ -266,12 +283,27 @@ A date menu in the left side of the digram lets you control the time range that 
 diagram displays. By default, the last seven days are used, though a custom range can be
 specified, in addition to common time ranges (two weeks to one year).
 
+.. figure:: ../_images/tracker-audit-log.png
+  :figwidth: 100%
+  :width: 800px
+  :align: center
+  :class: bordered-image
+
 Integrations
 ------------
 
+Tracker allows for an easy integration with `Cloudera Navigator
+<https://www.cloudera.com/products/cloudera-navigator.html>`__  by providing a UI to
+connecting to a Navigator instance:
 
+.. figure:: ../_images/tracker-integration-configuration.png
+  :figwidth: 100%
+  :width: 800px
+  :align: center
+  :class: bordered-image
 
-
+Details on completing this form are described in CDAP's documentation on
+:ref:`Navigator Integration Application <navigator-integration>`.
 
 
 Tracker HTTP RESTful API

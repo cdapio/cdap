@@ -291,6 +291,7 @@ if cask_tracker_version:
     rst_epilog += """
 .. |cask-tracker-version| replace:: %(cask-tracker-version)s
 .. |literal-cask-tracker-version| replace:: ``%(cask-tracker-version)s``
+.. |literal-cask-tracker-version-jar| replace:: ``tracker-%(cask-tracker-version)s.jar``
 
 """ % {'cask-tracker-version': cask_tracker_version}
 
