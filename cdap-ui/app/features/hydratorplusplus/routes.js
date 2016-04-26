@@ -57,14 +57,18 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
               }
               return defer.promise;
             },
-            rSelectedArtifact: function($stateParams, $q, myPipelineApi, myAlertOnValium, $state, GLOBALS) {
+            rSelectedArtifact: function($stateParams, $q, myPipelineApi, myAlertOnValium, $state, GLOBALS, $rootScope) {
               var defer = $q.defer();
               let uiSupportedArtifacts = [GLOBALS.etlBatch, GLOBALS.etlRealtime, GLOBALS.etlDataPipeline];
               let isArtifactValid = (backendArtifacts, artifact) => {
-                return backendArtifacts.filter( a => a.name === artifact).length;
+                return backendArtifacts.filter( a =>
+                  (a.name === artifact && a.version === $rootScope.cdapVersion)
+                ).length;
               };
               let isAnyUISupportedArtifactPresent = (backendArtifacts) => {
-                return backendArtifacts.filter( artifact => uiSupportedArtifacts.indexOf(artifact.name) !== -1);
+                return backendArtifacts
+                        .filter( artifact => artifact.version === $rootScope.cdapVersion)
+                        .filter( artifact => uiSupportedArtifacts.indexOf(artifact.name) !== -1);
               };
               let getValidUISupportedArtifact = (backendArtifacts) => {
                 let validUISupportedArtifact = isAnyUISupportedArtifactPresent(backendArtifacts);
@@ -121,7 +125,7 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
             );
               return defer.promise;
             },
-            rArtifacts: function(myPipelineApi, $stateParams, $q, HydratorPlusPlusOrderingFactory, GLOBALS) {
+            rArtifacts: function(myPipelineApi, $stateParams, $q, HydratorPlusPlusOrderingFactory, GLOBALS, $rootScope) {
               var defer = $q.defer();
               myPipelineApi.fetchArtifacts({
                 namespace: $stateParams.namespace
@@ -131,7 +135,9 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
                   return;
                 } else {
                   let uiSupportedArtifacts = [GLOBALS.etlBatch, GLOBALS.etlRealtime, GLOBALS.etlDataPipeline];
-                  let filteredRes = res.filter( r => uiSupportedArtifacts.indexOf(r.name) !== -1 );
+                  let filteredRes = res
+                    .filter( artifact => artifact.version === $rootScope.cdapVersion)
+                    .filter( r => uiSupportedArtifacts.indexOf(r.name) !== -1 );
 
                   filteredRes = filteredRes.map( r => {
                     r.label = HydratorPlusPlusOrderingFactory.getArtifactDisplayName(r.name);

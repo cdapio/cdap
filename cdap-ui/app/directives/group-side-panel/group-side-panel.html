@@ -33,7 +33,7 @@
 
   <div class="groups-container">
     <div class="item"
-          ng-repeat="group in MySidePanel.groups"
+          ng-repeat="group in MySidePanel.groups track by $index"
           ng-click="MySidePanel.openedGroup = group.name"
           ng-style="MySidePanel.openedGroup === group.name && {height: MySidePanel.groupWrapperHeight}"
           ng-class="{'item-open': MySidePanel.openedGroup === group.name }">
