@@ -572,7 +572,7 @@ Entities that match the specified query and entity type are returned in the body
    * - ``200 OK``
      - Entity ID and metadata of entities that match the query and entity type(s) are returned in the body of the response
 
-.. _http-restful-api-metadata-query-terms::
+.. _http-restful-api-metadata-query-terms:
 
 .. rubric:: Query Terms
 
