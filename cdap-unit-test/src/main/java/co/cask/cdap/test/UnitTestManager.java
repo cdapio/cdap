@@ -177,14 +177,14 @@ public class UnitTestManager implements TestManager {
       ArtifactId artifactId = new ArtifactId(namespace.getId(), applicationClz.getSimpleName(), "1.0-SNAPSHOT");
       addAppArtifact(artifactId, applicationClz);
 
+      if (configObject == null) {
+        configObject = (Config) TypeToken.of(configType).getRawType().newInstance();
+      }
+
       Application app = applicationClz.newInstance();
       MockAppConfigurer configurer = new MockAppConfigurer(app);
       app.configure(configurer, new DefaultApplicationContext<>(configObject));
       ApplicationId applicationId = new ApplicationId(namespace.getId(), configurer.getName());
-
-      if (configObject == null) {
-        configObject = (Config) TypeToken.of(configType).getRawType().newInstance();
-      }
 
       ArtifactSummary artifactSummy = new ArtifactSummary(artifactId.getArtifact(), artifactId.getVersion());
       appFabricClient.deployApplication(applicationId.toId(),
