@@ -28,15 +28,15 @@ class HydratorPlusPlusHydratorService {
     this.myHelpers = myHelpers;
   }
 
-  getNodesAndConnectionsFromConfig(pipeline) {
+  getNodesAndConnectionsFromConfig(pipeline, isStudio) {
     if (pipeline.config && pipeline.config.stages) {
-      return this._parseNewConfigStages(pipeline.config);
+      return this._parseNewConfigStages(pipeline.config, isStudio);
     } else {
-      return this._parseOldConfig(pipeline);
+      return this._parseOldConfig(pipeline, isStudio);
     }
   }
 
-  _parseNewConfigStages(config) {
+  _parseNewConfigStages(config, isStudio) {
     let nodes = [];
     let connections = [];
     config.stages.forEach( node => {
@@ -49,7 +49,13 @@ class HydratorPlusPlusHydratorService {
     });
     connections = config.connections;
     // Obtaining layout of graph with Dagre
-    var graph = this.DAGPlusPlusFactory.getGraphLayout(nodes, connections);
+    var graph;
+    if (isStudio) {
+      graph = this.DAGPlusPlusFactory.getGraphLayout(nodes, connections, 100);
+    } else {
+      graph = this.DAGPlusPlusFactory.getGraphLayout(nodes, connections);
+    }
+
     angular.forEach(nodes, function (node) {
       node._uiPosition = {
         'top': graph._nodes[node.name].y + 'px' ,
@@ -63,7 +69,7 @@ class HydratorPlusPlusHydratorService {
     };
   }
 
-  _parseOldConfig(pipeline) {
+  _parseOldConfig(pipeline, isStudio) {
     let nodes = [];
     let connections = [];
     let config = pipeline.config;
@@ -98,7 +104,12 @@ class HydratorPlusPlusHydratorService {
     connections = config.connections;
 
     // Obtaining layout of graph with Dagre
-    var graph = this.DAGPlusPlusFactory.getGraphLayout(nodes, connections);
+    var graph;
+    if (isStudio) {
+      graph = this.DAGPlusPlusFactory.getGraphLayout(nodes, connections, 100);
+    } else {
+      graph = this.DAGPlusPlusFactory.getGraphLayout(nodes, connections);
+    }
     angular.forEach(nodes, function (node) {
       node._uiPosition = {
         'top': graph._nodes[node.name].y + 'px' ,
@@ -178,7 +189,7 @@ class HydratorPlusPlusHydratorService {
         input = {
           fields: [{ name: 'body', type: 'string' }]
         };
-      
+
         input.fields.unshift({
           name: 'headers',
           type: {

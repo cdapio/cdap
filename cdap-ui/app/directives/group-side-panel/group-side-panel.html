@@ -59,7 +59,7 @@
                data-popover-context="MySidePanel"
                ng-click="MySidePanel.onItemClicked($event, plugin)">
             <span ng-if="plugin.icon" class="text-center fa {{plugin.icon}}"></span>
-            <span class="name">{{ (plugin.name || plugin.pluginTemplate) | myEllipsis: 15}}</span>
+            <span class="name">{{ (plugin.name || plugin.pluginTemplate) }}</span>
             <span class="plugin-badge">T</span>
           </div>
           <div class="no-item-message" ng-if="group.filtered.length === 0">
