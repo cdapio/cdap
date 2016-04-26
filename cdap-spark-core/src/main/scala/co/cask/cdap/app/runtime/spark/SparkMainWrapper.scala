@@ -44,7 +44,25 @@ object SparkMainWrapper {
   private val HEARTBEAT_INTERVAL_SECONDS = 1L
   private val LOG = LoggerFactory.getLogger(SparkMainWrapper.getClass)
 
-  def main(args: Array[String]):Unit = {
+  @volatile
+  private var stopped: Boolean = false
+  @volatile
+  private var mainThread: Option[Thread] = None
+
+  /**
+    * Triggers the shutdown of the main execution thread.
+    */
+  def triggerShutdown(): Unit = {
+    stopped = true
+    SparkRuntimeEnv.stop(mainThread)
+  }
+
+  def main(args: Array[String]): Unit = {
+    mainThread = Some(Thread.currentThread)
+    if (stopped) {
+      return
+    }
+
     val arguments: Map[String, String] = RuntimeArguments.fromPosixArray(args).toMap
     require(arguments.contains(ARG_USER_CLASS), "Missing Spark program class name")
 
@@ -66,31 +84,38 @@ object SparkMainWrapper {
       val userSparkClass = sparkClassLoader.getProgramClassLoader.loadClass(arguments(ARG_USER_CLASS))
       val executionContext = sparkClassLoader.createExecutionContext()
       try {
-        val cancelHeartbeat = startHeartbeat(arguments, runtimeContext, () => stop(Thread.currentThread))
-        userSparkClass match {
-          // SparkMain
-          case cls if classOf[SparkMain].isAssignableFrom(cls) =>
-            cls.asSubclass(classOf[SparkMain]).newInstance().run(executionContext)
+        val cancelHeartbeat = startHeartbeat(arguments, runtimeContext, () => triggerShutdown)
+        try {
+          userSparkClass match {
+            // SparkMain
+            case cls if classOf[SparkMain].isAssignableFrom(cls) =>
+              cls.asSubclass(classOf[SparkMain]).newInstance().run(executionContext)
 
-          // JavaSparkMain
-          case cls if classOf[JavaSparkMain].isAssignableFrom(cls) =>
-            cls.asSubclass(classOf[JavaSparkMain]).newInstance().run(
-              sparkClassLoader.createJavaExecutionContext(executionContext))
+            // JavaSparkMain
+            case cls if classOf[JavaSparkMain].isAssignableFrom(cls) =>
+              cls.asSubclass(classOf[JavaSparkMain]).newInstance().run(
+                sparkClassLoader.createJavaExecutionContext(executionContext))
 
-          // main() method
-          case cls =>
-            getMainMethod(cls).fold(
-              throw new IllegalArgumentException(userSparkClass.getName
-                + " is not a supported Spark program. It should implement either "
-                + classOf[SparkMain].getName + " or " + classOf[JavaSparkMain].getName
-                + " or has a main method defined")
-            )(
-              _.invoke(null, RuntimeArguments.toPosixArray(runtimeContext.getRuntimeArguments))
-            )
+            // main() method
+            case cls =>
+              getMainMethod(cls).fold(
+                throw new IllegalArgumentException(userSparkClass.getName
+                  + " is not a supported Spark program. It should implement either "
+                  + classOf[SparkMain].getName + " or " + classOf[JavaSparkMain].getName
+                  + " or has a main method defined")
+              )(
+                _.invoke(null, RuntimeArguments.toPosixArray(runtimeContext.getRuntimeArguments))
+              )
+          }
+          stopped = true
+        } finally {
+          // If stop is request or the program returns normally, cancel the heartbeat
+          if (stopped) cancelHeartbeat.cancel
         }
-        cancelHeartbeat.cancel
       } catch {
-        case t: Throwable => if (!SparkRuntimeEnv.isStopped) throw t
+        // If there is InterruptedException after stop is being request, we don't treat it as failure
+        case interrupted: InterruptedException => if (!stopped) throw interrupted
+        case t: Throwable => throw t
       } finally {
         executionContext match {
           case c: AutoCloseable => c.close
@@ -185,18 +210,6 @@ object SparkMainWrapper {
         LOG.info("Stopping Spark program upon receiving stop command")
         stopFunc()
       case notSupported => LOG.warn("Ignoring unsupported command {}", notSupported)
-    }
-  }
-
-  /**
-    * Stops the Spark execution by stopping the [[co.cask.cdap.app.runtime.spark.SparkRuntimeEnv]] and
-    * interrupting the given Thread.
-    */
-  private def stop(thread: Thread): Unit = {
-    try {
-      SparkRuntimeEnv.stop
-    } finally {
-      thread.interrupt()
     }
   }
 }

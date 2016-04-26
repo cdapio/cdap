@@ -42,6 +42,7 @@ import org.apache.twill.internal.zookeeper.InMemoryZKServer;
 import org.apache.twill.kafka.client.BrokerService;
 import org.apache.twill.kafka.client.Compression;
 import org.apache.twill.kafka.client.FetchedMessage;
+import org.apache.twill.kafka.client.KafkaClient;
 import org.apache.twill.kafka.client.KafkaClientService;
 import org.apache.twill.kafka.client.KafkaConsumer;
 import org.apache.twill.kafka.client.KafkaPublisher;
@@ -321,5 +322,19 @@ public class KafkaTester extends ExternalResource {
     cancellable.cancel();
     Assert.assertTrue(stopLatch.await(15, TimeUnit.SECONDS));
     return actual;
+  }
+
+  /**
+   * Returns the {@link KafkaClient} that can be used to talk to the Kafka server started in this class.
+   */
+  public KafkaClient getKafkaClient() {
+    return kafkaClient;
+  }
+
+  /**
+   * Returns the {@link BrokerService} that provides information about the Kafka server started in this class.
+   */
+  public BrokerService getBrokerService() {
+    return brokerService;
   }
 }

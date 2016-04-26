@@ -60,10 +60,6 @@ class ExplicitTransactionSpark extends AbstractSpark with SparkMain  {
     // committed by the transaction above.
     // When unit-test try to stop the Spark program, this thread should get interrupted and hence terminating
     // the Spark program
-    try {
-      TimeUnit.SECONDS.sleep(300)
-    } catch {
-      case e: InterruptedException => // no-op
-    }
+    TimeUnit.SECONDS.sleep(300)
   }
 }

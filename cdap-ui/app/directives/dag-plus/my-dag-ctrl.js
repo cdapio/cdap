@@ -32,6 +32,8 @@ angular.module(PKG.name + '.commons')
     var selected = [];
     var labels = [];
 
+    var separation = $scope.separation || 200; // node separation length
+
     var metricsLabel = [
       [ 'Custom', {
         create: function (label) {
@@ -559,11 +561,11 @@ angular.module(PKG.name + '.commons')
     vm.cleanUpGraph = function () {
       if ($scope.nodes.length === 0) { return; }
 
-      var graphNodes = DAGPlusPlusFactory.getGraphLayout($scope.nodes, $scope.connections)._nodes;
+      var graphNodes = DAGPlusPlusFactory.getGraphLayout($scope.nodes, $scope.connections, separation)._nodes;
       angular.forEach($scope.nodes, function (node) {
         var location = graphNodes[node.name];
         node._uiPosition = {
-          left: location.x + 'px',
+          left: location.x - 50 + 'px',
           top: location.y + 'px'
         };
       });
@@ -643,7 +645,7 @@ angular.module(PKG.name + '.commons')
       // with margin of 50px
       var offsetLeft = parseInt(minLeft._uiPosition.left, 10);
       angular.forEach($scope.nodes, function (node) {
-        node._uiPosition.left = (parseInt(node._uiPosition.left, 10) - offsetLeft + 50) + 'px';
+        node._uiPosition.left = (parseInt(node._uiPosition.left, 10) - offsetLeft) + 'px';
       });
 
       var offsetTop = parseInt(minTop._uiPosition.top, 10);

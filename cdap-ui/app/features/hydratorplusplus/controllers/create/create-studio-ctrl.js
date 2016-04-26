@@ -48,7 +48,7 @@ class HydratorPlusPlusStudioCtrl {
       HydratorPlusPlusConfigActions.initializeConfigStore(rConfig);
       let configJson = rConfig;
       if (!rConfig.__ui__) {
-        configJson = HydratorPlusPlusHydratorService.getNodesAndConnectionsFromConfig(rConfig);
+        configJson = HydratorPlusPlusHydratorService.getNodesAndConnectionsFromConfig(rConfig, true);
         configJson['__ui__'] = {
           nodes: configJson.nodes.map( (node) => {
             node.properties = node.plugin.properties;
@@ -74,7 +74,7 @@ class HydratorPlusPlusStudioCtrl {
       var timeDifference = Date.now() - start;
       /*
         FIXME: This can easily be prevented if we upgrade to angular ui router version > 0.2.16.
-        
+
         This is just to confirm if the suppression is by the browser or
          a human interventation (too quick a reply). If the time difference is less then 50ms
          In the worst case a super human clicks on ok or cancel within 50ms and we show the confirm
