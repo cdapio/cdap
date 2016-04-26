@@ -559,7 +559,7 @@ Entities that match the specified query and entity type are returned in the body
      - Restricts the search to either all or specified entity types: ``all``, ``artifact``, ``app``, ``dataset``,
        ``program``, ``stream``, or ``view``
    * - ``<term>``
-     - :ref:`Query term <metadata_query_terms>`, as described below. Query terms are case-insensitive
+     - :ref:`Query term <http-restful-api-metadata-query-terms>`, as described below. Query terms are case-insensitive
 
 .. rubric:: HTTP Responses
 
@@ -572,7 +572,7 @@ Entities that match the specified query and entity type are returned in the body
    * - ``200 OK``
      - Entity ID and metadata of entities that match the query and entity type(s) are returned in the body of the response
 
-.. _metadata_query_terms::
+.. _http-restful-api-metadata-query-terms::
 
 .. rubric:: Query Terms
 

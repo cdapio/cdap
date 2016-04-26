@@ -196,7 +196,7 @@ In the text box, you enter your search terms:
 - Search terms are case-insensitive.
 - Search the metadata of entities by using either a complete or partial name followed by
   an asterisk ``*``, as described in the :ref:`Metadata HTTP RESTful API
-  <metadata_query_terms>`.
+  <http-restful-api-metadata-query-terms>`.
 - Tracker searches tags, properties, and schema of CDAP datasets, streams, and stream views.
 
 For example, if you have just started CDAP and enabled Tracker, you could enter a search
