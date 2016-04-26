@@ -25,7 +25,7 @@ angular.module(PKG.name+'.feature.overview')
       .state('overview', {
         data: {
           authorizedRoles: MYAUTH_ROLE.all,
-          highlightTab: 'development'
+          highlightTab: 'home'
         },
         parent: 'ns',
         url: '',
