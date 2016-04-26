@@ -62,11 +62,6 @@ Tracker's UI shows a graphical visualization of the :ref:`lineage
 
 - See how your datasets are being created, accessed, and processed.
 
-.. with built-in usage analytics capabilities.
-
-- Multi-dimensional usage analytics to understand the interaction between users,
-  applications, and datasets.
-
 - Extensible integrations are available with enterprise-grade MDM (master data management)
   systems such as `Cloudera Navigator <https://www.cloudera.com/products/cloudera-navigator.html>`__ 
   for centralizing metadata repository and the delivery of complete, accurate, and correct
