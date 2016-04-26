@@ -109,7 +109,7 @@ Standalone CDAP SDK directory, using the Command Line Interface:
 .. tabbed-parsed-literal::
 
   $ cdap-cli.sh load stream logStream examples/LogAnalysis/resources/apache.accesslog "text/plain"
-  Successfully sent stream event to stream 'logStream'
+  Successfully loaded file to stream 'logStream'
 
 .. Starting the Workflow
 .. ---------------------

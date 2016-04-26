@@ -1,0 +1,31 @@
+{
+  "metadata": {
+    "spec-version": "1.0"
+  },
+  "configuration-groups": [
+    {
+      "label": "String Case Configuration",
+      "properties": [
+        {
+          "widget-type": "csv",
+          "label": "Fields to upper case",
+          "name": "upperFields",
+          "description": "List of fields to upper case.",
+          "widget-attributes": {
+            "delimiter": ","
+          }
+        },
+        {
+          "widget-type": "csv",
+          "label": "Fields to lower case",
+          "name": "lowerFields",
+          "description": "List of fields to lower case.",
+          "widget-attributes": {
+            "delimiter": ","
+          }
+        }
+      ]
+    }
+  ],
+  "outputs": []
+}

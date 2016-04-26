@@ -189,7 +189,7 @@ CDAP SDK directory, using the Command Line Interface:
 .. tabbed-parsed-literal::
 
   $ cdap-cli.sh load stream purchaseStream examples/Purchase/resources/purchases.txt 
-  Successfully sent stream event to stream 'purchaseStream'
+  Successfully loaded file to stream 'purchaseStream'
 
 .. Starting the Workflow
 .. ---------------------
