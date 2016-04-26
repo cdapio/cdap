@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.spark;
 
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.internal.app.runtime.distributed.LocalizeResource;
 import com.google.common.base.Preconditions;
@@ -52,7 +53,7 @@ public final class SparkUtils {
   // Environment variable name for locating spark assembly jar file
   private static final String SPARK_ASSEMBLY_JAR = "SPARK_ASSEMBLY_JAR";
   // Environment variable name for locating spark home directory
-  private static final String SPARK_HOME = "SPARK_HOME";
+  private static final String SPARK_HOME = Constants.SPARK_HOME;
 
   // File name of the Spark conf directory as defined by the Spark framework
   // This is for the Hack to workaround CDAP-5019 (SPARK-13441)
