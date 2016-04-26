@@ -182,7 +182,8 @@ public class UpgradeTool {
         "The contents of this file can be sent directly to CDAP to update or create an application."))
       .addOption(new Option("e", "errorDir", true, "Optional directory to write any upgraded pipeline configs that " +
         "failed to upgrade. The problematic configs can then be manually edited and upgraded separately. " +
-        "Upgrade errors may happen for pipelines that use plugins that are not backwards compatible."));
+        "Upgrade errors may happen for pipelines that use plugins that are not backwards compatible. " +
+        "This directory must be writable by the user that is running this tool."));
 
     CommandLineParser parser = new BasicParser();
     CommandLine commandLine = parser.parse(options, args);
@@ -210,6 +211,20 @@ public class UpgradeTool {
     }
 
     File errorDir = commandLine.hasOption("e") ? new File(commandLine.getOptionValue("e")) : null;
+    if (errorDir != null) {
+      if (!errorDir.exists()) {
+        if (!errorDir.mkdirs()) {
+          LOG.error("Unable to create error directory {}.", errorDir.getAbsolutePath());
+          System.exit(1);
+        }
+      } else if (!errorDir.isDirectory()) {
+        LOG.error("{} is not a directory.", errorDir.getAbsolutePath());
+        System.exit(1);
+      } else if (!errorDir.canWrite()) {
+        LOG.error("Unable to write to error directory {}.", errorDir.getAbsolutePath());
+        System.exit(1);
+      }
+    }
     UpgradeTool upgradeTool = new UpgradeTool(clientConfig, errorDir);
 
     String namespace = commandLine.getOptionValue("n");
