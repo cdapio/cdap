@@ -54,7 +54,8 @@ public final class SparkCSVToSpaceProgram extends AbstractSpark implements JavaS
     Map<String, String> fileSetArgs = new HashMap<>();
     final Metrics metrics = sec.getMetrics();
     FileSetArguments.addInputPath(fileSetArgs, sec.getRuntimeArguments().get("input.path"));
-    JavaPairRDD<LongWritable, Text> input = sec.fromDataset(WorkflowAppWithLocalDatasets.CSV_FILESET_DATASET, fileSetArgs);
+    JavaPairRDD<LongWritable, Text> input = sec.fromDataset(
+      WorkflowAppWithLocalDatasets.CSV_FILESET_DATASET, fileSetArgs);
 
     final List<String> converted = input.values().map(new Function<Text, String>() {
       @Override
