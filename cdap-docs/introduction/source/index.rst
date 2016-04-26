@@ -181,7 +181,7 @@ Data Ingestion
         
             |cdap >| load stream logEventStream examples/resources/accesslog.txt
  
-            Successfully sent stream event to stream 'logEventStream'
+            Successfully loaded file to stream 'logEventStream'
 
 
 Data Exploration
@@ -584,7 +584,7 @@ Advanced Data Exploration
  
             |cdap >| load stream ip2geo examples/resources/ip2geo-maps.csv
  
-            Successfully sent stream event to stream 'ip2geo'
+            Successfully loaded file to stream 'ip2geo'
 
 .. container:: table-block
 
@@ -1059,7 +1059,7 @@ Transforming Your Data
  
             |cdap >| load stream logEventStream examples/resources/accesslog.txt
           
-            Successfully sent stream event to stream 'logEventStream'
+            Successfully loaded file to stream 'logEventStream'
 
 .. container:: table-block
 
@@ -1383,7 +1383,7 @@ Building Real World Applications
  
             |cdap >| load stream logEventStream examples/resources/accesslog.txt
  
-            Successfully sent stream event to stream 'logEventStream'  
+            Successfully loaded file to stream 'logEventStream'
 
 .. container:: table-block
 

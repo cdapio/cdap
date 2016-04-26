@@ -138,7 +138,7 @@ using the CDAP Commmand Line Interface:
 
   $ cdap-cli.sh load stream log examples/resources/accesslog.txt
   
-  Successfully sent stream event to stream 'log'
+  Successfully loaded file to stream 'log'
 
 Query the Unique Visitor Page Views
 ---------------------------------------

@@ -15,7 +15,7 @@
  */
 
 class HydratorPlusPlusPreConfiguredCtrl {
-  constructor (rTemplateType, GLOBALS, myPipelineTemplatesApi, HydratorPlusPlusHydratorService, HydratorPlusPlusCanvasFactory, DAGPlusPlusNodesActionsFactory, $state, HydratorPlusPlusConfigStore) {
+  constructor (rTemplateType, GLOBALS, myPipelineTemplatesApi, HydratorPlusPlusHydratorService, HydratorPlusPlusCanvasFactory, DAGPlusPlusNodesActionsFactory, $state, HydratorPlusPlusConfigStore, myAlertOnValium) {
     this.currentPage = 1;
     this.templates = [];
     this.HydratorPlusPlusHydratorService = HydratorPlusPlusHydratorService;
@@ -23,30 +23,21 @@ class HydratorPlusPlusPreConfiguredCtrl {
     this.myPipelineTemplatesApi = myPipelineTemplatesApi;
     this.DAGPlusPlusNodesActionsFactory = DAGPlusPlusNodesActionsFactory;
     this.HydratorPlusPlusConfigStore = HydratorPlusPlusConfigStore;
+    this.GLOBALS = GLOBALS;
     this.$state = $state;
+    this.myAlertOnValium = myAlertOnValium;
 
-    this.typeFilter = (rTemplateType === GLOBALS.etlBatch? GLOBALS.etlBatch: GLOBALS.etlRealtime);
+    this.typeFilter = rTemplateType;
     this.fetchTemplates().then((plugins) => {
       this.templates = plugins;
     });
   }
 
   selectTemplate(template) {
-    let result = this.HydratorPlusPlusCanvasFactory.parseImportedJson(
-      JSON.stringify(template._properties),
-      template.type
-    );
-    if (result.error) {
-      this.myAlertOnValium.show({
-        type: 'danger',
-        content: 'Imported pre-defined app has issues. Please check the JSON of the imported pre-defined app.'
-      });
-    } else {
-      this.HydratorPlusPlusConfigStore.setState(this.HydratorPlusPlusConfigStore.getDefaults());
-      this.$state.go('hydratorplusplus.create', {
-        data: result
-      });
-    }
+    this.HydratorPlusPlusConfigStore.setState(this.HydratorPlusPlusConfigStore.getDefaults());
+    this.$state.go('hydratorplusplus.create', {
+      data: template._properties
+    });
   }
 
   fetchTemplates() {
@@ -71,6 +62,15 @@ class HydratorPlusPlusPreConfiguredCtrl {
             .$promise
             .then( (res) => {
               plugin._properties = res;
+              delete plugin._properties.$promise;
+              delete plugin._properties.$resolved;
+
+              plugin._source = res.config.stages.filter( (stage) => {
+                return this.GLOBALS.pluginConvert[stage.plugin.type] === 'source';
+              });
+              plugin._sinks = res.config.stages.filter( (stage) => {
+                return this.GLOBALS.pluginConvert[stage.plugin.type] === 'sink';
+              });
             });
         });
 
@@ -80,6 +80,6 @@ class HydratorPlusPlusPreConfiguredCtrl {
 
 }
 
-HydratorPlusPlusPreConfiguredCtrl.$inject = ['rTemplateType', 'GLOBALS', 'myPipelineTemplatesApi', 'HydratorPlusPlusHydratorService', 'HydratorPlusPlusCanvasFactory', 'DAGPlusPlusNodesActionsFactory', '$state', 'HydratorPlusPlusConfigStore'];
+HydratorPlusPlusPreConfiguredCtrl.$inject = ['rTemplateType', 'GLOBALS', 'myPipelineTemplatesApi', 'HydratorPlusPlusHydratorService', 'HydratorPlusPlusCanvasFactory', 'DAGPlusPlusNodesActionsFactory', '$state', 'HydratorPlusPlusConfigStore', 'myAlertOnValium'];
 angular.module(`${PKG.name}.feature.hydratorplusplus`)
   .controller('HydratorPlusPlusPreConfiguredCtrl', HydratorPlusPlusPreConfiguredCtrl);

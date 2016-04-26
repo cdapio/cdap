@@ -37,7 +37,7 @@ body.theme-cdap {
         text-decoration: none;
         span {
           display: inline-block;
-          line-height: @height-of-toppanel;
+          line-height: 35px;
           font-size: 1.8em;
           @media (min-width: @screen-sm-min) {
             font-size: 23px;
@@ -95,8 +95,6 @@ body.theme-cdap {
         }
       }
       &.right {
-        margin-top: 20px;
-        margin-left: 30px;
         width: 100%;
         .tooltip-arrow {
           border-right: 5px solid #666;
@@ -153,7 +151,7 @@ body.theme-cdap {
           &:after {
             position: absolute;
             font-family: FontAwesome;
-            top: 0;
+            top: 5px;
             right: -30px;
             content: "\f040";
             .opacity(0);
@@ -177,8 +175,8 @@ body.theme-cdap {
             }
             &:first-child {
               font-size: 14px;
-              margin-top: 8px;
-              line-height: 13px;
+              margin-top: 5px;
+              line-height: 17px;
               &.placeholder {
                 &:before {
                   content: "Name your pipeline";
@@ -240,6 +238,11 @@ body.theme-cdap {
           cursor: auto;
           @box-shadow: 0 7px 7px fade(black, 10%), 0 19px 59px fade(black, 20%);
           .box-shadow(@box-shadow);
+          div.pipeline-type {
+            span {
+              line-height: @height-of-toppanel;
+            }
+          }
           div.pipeline-name {
             width: 85%;
             padding-top: 10px;

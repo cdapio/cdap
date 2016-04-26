@@ -308,7 +308,7 @@ body.state-tracker-detail-entity {
 
     .entity-detail {
       padding-left: 10px;
-      padding-right: 20px;
+      padding-right: 30px;
       width: 200px;
       h3 {
         font-size: 16px;
@@ -811,15 +811,17 @@ body.state-tracker-integrations {
   }
 }
 
-.tooltip.tracker-tooltip .tooltip-inner {
-  color: @title-font-color;
-  background-color: white;
-  border: none;
-  box-shadow: 0 6px 12px rgba(0,0,0,.175);
-}
-/* Hide arrow */
-.tooltip.customClass .tooltip-arrow {
-  display: none;
+.tooltip.tracker-tooltip {
+  .tooltip-inner {
+    color: @title-font-color;
+    background-color: white;
+    border: none;
+    box-shadow: 0 6px 12px rgba(0,0,0,.175);
+  }
+
+  .tooltip-arrow {
+    display: none;
+  }
 }
 
 .popover.complex-schema {

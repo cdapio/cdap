@@ -49,11 +49,18 @@ public class SparkProgramRuntimeProvider implements ProgramRuntimeProvider {
   public ProgramRunner createProgramRunner(ProgramType type, Mode mode, Injector injector) {
     Preconditions.checkArgument(type == ProgramType.SPARK, "Unsupported program type %s. Only %s is supported",
                                 type, ProgramType.SPARK);
+
     switch (mode) {
       case LOCAL:
-        return createSparkProgramRunner(injector, SparkProgramRunner.class.getName());
+        // No need to rewrite YarnClient, but needs to rewrite DStreamGraph to avoid leak
+        return createSparkProgramRunner(injector, SparkProgramRunner.class.getName(), false, true);
       case DISTRIBUTED:
-        return createSparkProgramRunner(injector, DistributedSparkProgramRunner.class.getName());
+        // Rewrite YarnClient based on config, but no need to rewrite DStreamGraph since driver runs in AM
+        // There is no leakage issue.
+        boolean rewriteYarnClient = injector.getInstance(CConfiguration.class)
+                                            .getBoolean(Constants.AppFabric.SPARK_YARN_CLIENT_REWRITE);
+        return createSparkProgramRunner(injector, DistributedSparkProgramRunner.class.getName(),
+                                        rewriteYarnClient, false);
       default:
         throw new IllegalArgumentException("Unsupported Spark execution mode " + mode);
     }
@@ -62,11 +69,10 @@ public class SparkProgramRuntimeProvider implements ProgramRuntimeProvider {
   /**
    * Creates a {@link ProgramRunner} that execute Spark program from the given {@link Injector}.
    */
-  private ProgramRunner createSparkProgramRunner(Injector injector, String programRunnerClassName) {
+  private ProgramRunner createSparkProgramRunner(Injector injector, String programRunnerClassName,
+                                                 boolean rewriteYarnClient, boolean rewriteDStreamGraph) {
     try {
-      boolean rewriteYarnClient = injector.getInstance(CConfiguration.class)
-        .getBoolean(Constants.AppFabric.SPARK_YARN_CLIENT_REWRITE);
-      SparkRunnerClassLoader classLoader = createClassLoader(rewriteYarnClient);
+      SparkRunnerClassLoader classLoader = createClassLoader(rewriteYarnClient, rewriteDStreamGraph);
       try {
         ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(classLoader);
         try {
@@ -150,13 +156,15 @@ public class SparkProgramRuntimeProvider implements ProgramRuntimeProvider {
   /**
    * Returns an array of {@link URL} being used by the {@link ClassLoader} of this {@link Class}.
    */
-  private synchronized SparkRunnerClassLoader createClassLoader(boolean rewriteYarnClient) throws IOException {
+  private synchronized SparkRunnerClassLoader createClassLoader(boolean rewriteYarnClient,
+                                                                boolean rewriteDStreamGraph) throws IOException {
     SparkRunnerClassLoader classLoader;
     if (classLoaderUrls == null) {
-      classLoader = new SparkRunnerClassLoader(getClass().getClassLoader(), rewriteYarnClient);
+      classLoader = new SparkRunnerClassLoader(getClass().getClassLoader(), rewriteYarnClient, rewriteDStreamGraph);
       classLoaderUrls = classLoader.getURLs();
     } else {
-      classLoader = new SparkRunnerClassLoader(classLoaderUrls, getClass().getClassLoader(), rewriteYarnClient);
+      classLoader = new SparkRunnerClassLoader(classLoaderUrls, getClass().getClassLoader(),
+                                               rewriteYarnClient, rewriteDStreamGraph);
     }
     return classLoader;
   }

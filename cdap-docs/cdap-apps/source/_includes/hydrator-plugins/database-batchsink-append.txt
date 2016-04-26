@@ -1,0 +1,5 @@
+
+Using Third-Party JARs
+----------------------
+For information on how to use the JDBC jar to talk to the database sink, see
+[Using Third-Party JARs](../third-party.html).

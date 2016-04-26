@@ -18,6 +18,7 @@ package co.cask.cdap.app.guice;
 
 import co.cask.cdap.common.entity.DefaultEntityExistenceVerifier;
 import co.cask.cdap.common.entity.EntityExistenceVerifier;
+import co.cask.cdap.common.entity.InstanceExistenceVerifier;
 import co.cask.cdap.data.stream.StreamExistenceVerifier;
 import co.cask.cdap.data.view.ViewExistenceVerifier;
 import co.cask.cdap.data2.dataset2.DatasetExistenceVerifier;
@@ -30,6 +31,7 @@ import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.EntityId;
+import co.cask.cdap.proto.id.InstanceId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
@@ -50,6 +52,7 @@ public class EntityVerifierModule extends PrivateModule {
                              new TypeLiteral<Class<? extends EntityId>>() { },
                              new TypeLiteral<EntityExistenceVerifier<? extends EntityId>>() { });
 
+    existenceVerifiers.addBinding(InstanceId.class).to(InstanceExistenceVerifier.class);
     existenceVerifiers.addBinding(NamespaceId.class).to(NamespaceExistenceVerifier.class);
     existenceVerifiers.addBinding(ArtifactId.class).to(ArtifactExistenceVerifier.class);
     existenceVerifiers.addBinding(ApplicationId.class).to(ApplicationExistenceVerifier.class);

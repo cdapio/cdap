@@ -50,7 +50,7 @@
            ng-show="MySidePanel.openedGroup === null || MySidePanel.openedGroup === group.name">
         <div class="item-body" ng-class="{'view-icon': MySidePanel.view === 'icon', 'view-list': MySidePanel.view === 'list'}">
 
-          <div ng-if="MySidePanel.view === 'icon'" ng-repeat="plugin in group.filtered = (group.plugins | filter: {name: MySidePanel.searchText}) track by $index"
+          <div ng-if="MySidePanel.view === 'icon'" ng-repeat="plugin in group.filtered = (group.plugins | filter: {name: MySidePanel.searchText} | orderBy: 'name') track by $index"
                class="plugin-item {{plugin.nodeClass}}"
                my-popover
                data-placement="right"
@@ -65,7 +65,7 @@
           <div class="no-item-message" ng-if="group.filtered.length === 0">
             <h4>No {{MySidePanel.itemGenericName}} found.</h4>
           </div>
-          <div ng-if="MySidePanel.view === 'list'" ng-repeat="plugin in group.filtered = (group.plugins | filter: {name: MySidePanel.searchText}) track by $index"
+          <div ng-if="MySidePanel.view === 'list'" ng-repeat="plugin in group.filtered = (group.plugins | filter: {name: MySidePanel.searchText} | orderBy: 'name') track by $index"
                class="plugin-item {{plugin.nodeClass}}"
                ng-click="MySidePanel.onItemClicked($event, plugin)">
             <span ng-if="plugin.icon" class="text-center fa {{plugin.icon}}"></span>
