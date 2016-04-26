@@ -25,8 +25,8 @@ import co.cask.cdap.proto.Id;
  */
 public class RealtimeClientBasedUpgradeContext extends ClientBasedUpgradeContext {
 
-  public RealtimeClientBasedUpgradeContext(ArtifactClient artifactClient) {
-    super(artifactClient, Id.Artifact.from(Id.Namespace.SYSTEM, "cdap-etl-realtime", ETLVersion.getVersion()));
+  public RealtimeClientBasedUpgradeContext(Id.Namespace namespace, ArtifactClient artifactClient) {
+    super(artifactClient, Id.Artifact.from(namespace, "cdap-etl-realtime", ETLVersion.getVersion()));
   }
 
 }

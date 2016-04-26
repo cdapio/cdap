@@ -26,6 +26,7 @@ import co.cask.cdap.client.config.ConnectionConfig;
 import co.cask.cdap.etl.proto.UpgradeContext;
 import co.cask.cdap.etl.proto.UpgradeableConfig;
 import co.cask.cdap.etl.proto.v2.ETLBatchConfig;
+import co.cask.cdap.etl.proto.v2.ETLConfig;
 import co.cask.cdap.etl.proto.v2.ETLRealtimeConfig;
 import co.cask.cdap.etl.tool.config.BatchClientBasedUpgradeContext;
 import co.cask.cdap.etl.tool.config.RealtimeClientBasedUpgradeContext;
@@ -51,12 +52,15 @@ import org.slf4j.LoggerFactory;
 
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.HashSet;
 import java.util.Set;
+import javax.annotation.Nullable;
 
 /**
  * Used to upgrade pipelines from older pipelines to current pipelines.
@@ -71,18 +75,18 @@ public class UpgradeTool {
   private final ApplicationClient appClient;
   private final ArtifactSummary batchArtifact;
   private final ArtifactSummary realtimeArtifact;
-  private final UpgradeContext batchUpgradeContext;
-  private final UpgradeContext realtimeUpgradeContext;
+  private final ArtifactClient artifactClient;
+  @Nullable
+  private final File errorDir;
 
-  private UpgradeTool(ClientConfig clientConfig) {
+  private UpgradeTool(ClientConfig clientConfig, @Nullable File errorDir) {
     String version = ETLVersion.getVersion();
     this.batchArtifact = new ArtifactSummary(BATCH_NAME, version, ArtifactScope.SYSTEM);
     this.realtimeArtifact = new ArtifactSummary(REALTIME_NAME, version, ArtifactScope.SYSTEM);
     this.appClient = new ApplicationClient(clientConfig);
     this.namespaceClient = new NamespaceClient(clientConfig);
-    ArtifactClient artifactClient = new ArtifactClient(clientConfig);
-    this.batchUpgradeContext = new BatchClientBasedUpgradeContext(artifactClient);
-    this.realtimeUpgradeContext = new RealtimeClientBasedUpgradeContext(artifactClient);
+    this.artifactClient = new ArtifactClient(clientConfig);
+    this.errorDir = errorDir;
   }
 
   private Set<Id.Application> upgrade() throws Exception {
@@ -117,21 +121,39 @@ public class UpgradeTool {
     String artifactName = appDetail.getArtifact().getName();
     String artifactVersion = appDetail.getVersion();
     if (BATCH_NAME.equals(artifactName)) {
+      UpgradeContext upgradeContext = new BatchClientBasedUpgradeContext(appId.getNamespace(), artifactClient);
       ETLBatchConfig upgradedConfig =
-        convertBatchConfig(artifactVersion, appDetail.getConfiguration(), batchUpgradeContext);
-      AppRequest<ETLBatchConfig> updateRequest = new AppRequest<>(batchArtifact, upgradedConfig);
-      appClient.update(appId, updateRequest);
+        convertBatchConfig(artifactVersion, appDetail.getConfiguration(), upgradeContext);
+      upgrade(appId, batchArtifact, upgradedConfig);
     } else if (REALTIME_NAME.equals(artifactName)) {
+      UpgradeContext upgradeContext = new RealtimeClientBasedUpgradeContext(appId.getNamespace(), artifactClient);
       ETLRealtimeConfig upgradedConfig =
-        convertRealtimeConfig(artifactVersion, appDetail.getConfiguration(), realtimeUpgradeContext);
-      AppRequest<ETLRealtimeConfig> updateRequest = new AppRequest<>(realtimeArtifact, upgradedConfig);
-      appClient.update(appId, updateRequest);
+        convertRealtimeConfig(artifactVersion, appDetail.getConfiguration(), upgradeContext);
+      upgrade(appId, realtimeArtifact, upgradedConfig);
     } else {
       // should never happen
       LOG.warn("Unknown app artifact {}. Skipping pipeline.", artifactName);
       return false;
     }
     return true;
+  }
+
+  private <T extends ETLConfig> void upgrade(Id.Application appId, ArtifactSummary appArtifact,
+                                             T config) throws IOException {
+    AppRequest<T> updateRequest = new AppRequest<>(appArtifact, config);
+    try {
+      appClient.update(appId, updateRequest);
+    } catch (Exception e) {
+      LOG.error("Error upgrading pipeline {}.", appId, e);
+      if (errorDir != null) {
+        File errorFile = new File(errorDir, String.format("%s-%s.json", appId.getNamespaceId(), appId.getId()));
+        LOG.error("Writing config for pipeline {} to {} for further manual investigation.",
+                  appId, errorFile.getAbsolutePath());
+        try (OutputStreamWriter outputStreamWriter = new OutputStreamWriter(new FileOutputStream(errorFile))) {
+          outputStreamWriter.write(GSON.toJson(config));
+        }
+      }
+    }
   }
 
   public static void main(String[] args) throws Exception {
@@ -157,7 +179,11 @@ public class UpgradeTool {
         "as expected by older versions of the etl artifacts."))
       .addOption(new Option("o", "outputfile", true, "File to write the converted application details provided in " +
         "the configfile option. If none is given, results will be written to the input file + '.converted'. " +
-        "The contents of this file can be sent directly to CDAP to update or create an application."));
+        "The contents of this file can be sent directly to CDAP to update or create an application."))
+      .addOption(new Option("e", "errorDir", true, "Optional directory to write any upgraded pipeline configs that " +
+        "failed to upgrade. The problematic configs can then be manually edited and upgraded separately. " +
+        "Upgrade errors may happen for pipelines that use plugins that are not backwards compatible. " +
+        "This directory must be writable by the user that is running this tool."));
 
     CommandLineParser parser = new BasicParser();
     CommandLine commandLine = parser.parse(options, args);
@@ -184,7 +210,22 @@ public class UpgradeTool {
       System.exit(0);
     }
 
-    UpgradeTool upgradeTool = new UpgradeTool(clientConfig);
+    File errorDir = commandLine.hasOption("e") ? new File(commandLine.getOptionValue("e")) : null;
+    if (errorDir != null) {
+      if (!errorDir.exists()) {
+        if (!errorDir.mkdirs()) {
+          LOG.error("Unable to create error directory {}.", errorDir.getAbsolutePath());
+          System.exit(1);
+        }
+      } else if (!errorDir.isDirectory()) {
+        LOG.error("{} is not a directory.", errorDir.getAbsolutePath());
+        System.exit(1);
+      } else if (!errorDir.canWrite()) {
+        LOG.error("Unable to write to error directory {}.", errorDir.getAbsolutePath());
+        System.exit(1);
+      }
+    }
+    UpgradeTool upgradeTool = new UpgradeTool(clientConfig, errorDir);
 
     String namespace = commandLine.getOptionValue("n");
     String pipelineName = commandLine.getOptionValue("p");
@@ -217,7 +258,7 @@ public class UpgradeTool {
     }
     LOG.info("Successfully upgraded {} pipelines:", pipelines.size());
     for (Id.Application pipeline : pipelines) {
-      LOG.info("-- {}", pipeline);
+      LOG.info("  {}", pipeline);
     }
   }
 
@@ -283,7 +324,7 @@ public class UpgradeTool {
     String oldArtifactVersion = artifactFile.artifact.getVersion();
     if (BATCH_NAME.equals(artifactFile.artifact.getName())) {
       ArtifactSummary artifact = new ArtifactSummary(BATCH_NAME, version, ArtifactScope.SYSTEM);
-      UpgradeContext upgradeContext = new BatchClientBasedUpgradeContext(artifactClient);
+      UpgradeContext upgradeContext = new BatchClientBasedUpgradeContext(Id.Namespace.DEFAULT, artifactClient);
       ETLBatchConfig config = convertBatchConfig(oldArtifactVersion, artifactFile.config.toString(), upgradeContext);
       AppRequest<ETLBatchConfig> updated = new AppRequest<>(artifact, config);
       try (BufferedWriter writer = Files.newBufferedWriter(outputFile.toPath(), StandardCharsets.UTF_8)) {
@@ -291,7 +332,7 @@ public class UpgradeTool {
       }
     } else {
       ArtifactSummary artifact = new ArtifactSummary(REALTIME_NAME, version, ArtifactScope.SYSTEM);
-      UpgradeContext upgradeContext = new RealtimeClientBasedUpgradeContext(artifactClient);
+      UpgradeContext upgradeContext = new RealtimeClientBasedUpgradeContext(Id.Namespace.DEFAULT, artifactClient);
       ETLRealtimeConfig config =
         convertRealtimeConfig(oldArtifactVersion, artifactFile.config.toString(), upgradeContext);
       AppRequest<ETLRealtimeConfig> updated = new AppRequest<>(artifact, config);
@@ -325,7 +366,8 @@ public class UpgradeTool {
     ArtifactVersion artifactVersion = new ArtifactVersion(artifactSummary.getVersion());
     Integer majorVersion = artifactVersion.getMajor();
     Integer minorVersion = artifactVersion.getMinor();
-    return majorVersion != null && majorVersion == 3 && minorVersion != null && minorVersion >= 2;
+    return majorVersion != null && majorVersion == 3 && minorVersion != null && minorVersion >= 2 &&
+      minorVersion < 4;
   }
 
   private static ETLBatchConfig convertBatchConfig(String artifactVersion, String configStr,
