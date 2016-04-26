@@ -188,8 +188,8 @@ public class AuthorizationTest extends TestBase {
     try {
       deployApplication(NamespaceId.DEFAULT.toId(), DummyApp.class);
       Assert.fail("App deployment should fail because alice does not have WRITE access on the default namespace");
-    } catch (IllegalStateException expected) {
-      // expected
+    } catch (RuntimeException e) {
+      Assert.assertTrue(e.getCause() instanceof UnauthorizedException);
     }
     Authorizer authorizer = getAuthorizer();
     authorizer.grant(instance, ALICE, ImmutableSet.of(Action.ADMIN));

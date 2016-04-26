@@ -70,14 +70,8 @@
                         <span>App</span>
                       </span>
                       <span ng-if="myHydratorFactory.isETLApp(app.artifact.name)">
-                        <span ng-if="app.artifact.name === GLOBALS.etlBatch">
-                          <span class="icon-ETLBatch"></span>
-                          <span>ETL Batch</span>
-                        </span>
-                        <span ng-if="app.artifact.name === GLOBALS.etlRealtime">
-                          <span class="icon-ETLRealtime"></span>
-                          <span>ETL Real-time</span>
-                        </span>
+                        <span class="icon-{{ GLOBALS.iconArtifact[app.artifact.name] }}"></span>
+                        <span>{{ GLOBALS.artifactConvert[app.artifact.name] }}</span>
                       </span>
                     </td>
                     <td>
