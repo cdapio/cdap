@@ -19,8 +19,8 @@ Installation
 ============
 The ODBC drivers can be downloaded from these locations: 
 
-- `Windows 32-bit driver <http://cask.co>`__
-- `Windows 64-bit driver <http://cask.co>`__
+- `Windows 32-bit driver installer <https://repository.cask.co/downloads/cdap-odbc/CDAP.ODBCDriver-x86-1.0.0.1.msi>`__
+- `Windows 64-bit driver installer <https://repository.cask.co/downloads/cdap-odbc/CDAP.ODBCDriver-x64-1.0.0.1.msi>`__
 
 After downloading the appropriate *msi* installer for your operating system and starting it,
 follow the prompts to install the driver:
