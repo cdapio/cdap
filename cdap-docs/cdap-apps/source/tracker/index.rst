@@ -207,7 +207,6 @@ If for some reason you need to disable or remove Tracker, you would need to:
 - stop the Tracker service
 - delete the Tracker application
 - delete the Tracker datasets
-- Set the property ``audit.enabled`` to ``false`` in the ``cdap-site.xml`` and restart CDAP
 
 
 Tracker and its UI
