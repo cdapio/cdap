@@ -36,7 +36,6 @@ angular.module(PKG.name + '.feature.tracker')
         resolve: {
           rTrackerApp: function (myTrackerApi, $q, $stateParams, $state, UI_CONFIG, myAlertOnValium) {
             let defer = $q.defer();
-
             let params = {
               namespace: $stateParams.namespace
             };
@@ -68,7 +67,7 @@ angular.module(PKG.name + '.feature.tracker')
                   });
 
                   if (!isRunning) {
-                    $state.go('tracker-enable');
+                    $state.go('tracker-enable', $stateParams);
                   } else {
                     defer.resolve(true);
                   }
@@ -79,7 +78,7 @@ angular.module(PKG.name + '.feature.tracker')
                   });
                 });
               }, () => {
-                $state.go('tracker-enable');
+                $state.go('tracker-enable', $stateParams);
               });
 
             return defer.promise;
