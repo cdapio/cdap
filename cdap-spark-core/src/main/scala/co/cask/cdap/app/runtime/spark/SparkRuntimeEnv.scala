@@ -176,17 +176,13 @@ object SparkRuntimeEnv {
           t.interrupt()
           t.join()
         })
-        if (context.getState() != StreamingContextState.STOPPED) {
-          context.stop(false, false)
-        }
+        context.stop(false, false)
       })
     } finally {
       sc.foreach(context => {
         val cleanup = createCleanup(context);
         try {
-          if (!context.isStopped) {
-            context.stop
-          }
+          context.stop
         } finally {
           // Just interrupt the thread to unblock any blocking call
           thread.foreach(_.interrupt())
