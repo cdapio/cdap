@@ -164,7 +164,7 @@ Assign CDAP Services to Hosts
       :figwidth: 100%
       :width: 800px
       :align: center
-      :class: bordered-image
+      :class: bordered-image-top-margin
  
       **Ambari Dashboard:** Assigning Masters
  
