@@ -268,6 +268,10 @@ cdap_set_hive_classpath() {
     if [ -n "${HIVE_HOME}" -a -n "${HIVE_CONF_DIR}" -a -n "${HADOOP_CONF_DIR}" ]; then
       EXPLORE_CONF_FILES=$(ls -1dF ${HIVE_CONF_DIR}/* ${HADOOP_CONF_DIR}/* | sed -e '/\/$/d' | tr '\n' ':')
       EXPLORE_CLASSPATH=$(ls -1 ${HIVE_HOME}/lib/hive-exec-* ${HIVE_HOME}/lib/*.jar | tr '\n' ':')
+      if [ -n "${TEZ_HOME}" -a -n "${TEZ_CONF_DIR}" ]; then
+        # tez-site.xml also need to be passed to explore service
+        EXPLORE_CONF_FILES=${EXPLORE_CONF_FILES}:${TEZ_CONF_DIR}/tez-site.xml:
+      fi
       export EXPLORE_CONF_FILES EXPLORE_CLASSPATH
     fi
   fi

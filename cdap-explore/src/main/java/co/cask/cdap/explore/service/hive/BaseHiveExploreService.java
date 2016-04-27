@@ -235,8 +235,17 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
       String hadoopAuthToken = System.getenv(UserGroupInformation.HADOOP_TOKEN_FILE_LOCATION);
       if (hadoopAuthToken != null) {
         conf.set("mapreduce.job.credentials.binary", hadoopAuthToken);
+        if ("tez".equals(conf.get("hive.execution.engine"))) {
+          // Add token file location property for tez if engine is tez
+          conf.set("tez.credentials.path", hadoopAuthToken);
+        }
       }
     }
+
+    // Since we use delegation token in HIVE, unset the SPNEGO authentication if it is
+    // enabled. Please see CDAP-3452 for details.
+    conf.unset(HiveConf.ConfVars.HIVE_SERVER2_SPNEGO_KEYTAB.toString());
+    conf.unset(HiveConf.ConfVars.HIVE_SERVER2_SPNEGO_PRINCIPAL.toString());
     return conf;
   }
 
