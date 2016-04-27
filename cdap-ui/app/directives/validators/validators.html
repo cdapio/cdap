@@ -63,7 +63,7 @@
           </div>
         </div>
 
-        <div class="panel-body" ng-if="ValidatorsCtrl.isRule">
+        <div class="panel-body" ng-if="ValidatorsCtrl.isRule && !isDisabled">
 
           <div class="panel panel-default panel-nested" ng-repeat="(key, value) in ValidatorsCtrl.validationFields">
             <div class="panel-heading">
@@ -137,7 +137,7 @@
 
         </div>
 
-        <div class="panel-body" ng-if="!ValidatorsCtrl.isRule">
+        <div class="panel-body" ng-if="!ValidatorsCtrl.isRule || isDisabled">
           <fieldset disabled>
             <div my-ace-editor ng-model="model.properties.validationScript"></div>
           </fieldset>
