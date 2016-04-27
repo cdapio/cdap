@@ -25,7 +25,7 @@ angular.module(PKG.name+'.feature.overview')
       .state('overview', {
         data: {
           authorizedRoles: MYAUTH_ROLE.all,
-          highlightTab: 'home'
+          highlightTab: 'development'
         },
         parent: 'ns',
         url: '',
@@ -33,7 +33,7 @@ angular.module(PKG.name+'.feature.overview')
         controller: 'OverviewCtrl',
         controllerAs: 'OverviewCtrl',
         ncyBreadcrumb: {
-          label: 'Home'
+          skip: true
         }
       })
 
