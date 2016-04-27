@@ -148,7 +148,8 @@ class HydratorPlusPlusConfigStore {
         } catch(e) {}
       }
       node.plugin.properties = stripFormatSchemas(node.watchProperty, node.outputSchemaProperty, angular.copy(node.plugin.properties));
-      config.stages.push({
+
+      let configObj = {
         name: node.plugin.label,
         plugin: {
           // Solely adding id and _backendProperties for validation.
@@ -162,7 +163,13 @@ class HydratorPlusPlusConfigStore {
         },
         outputSchema: node.outputSchema,
         inputSchema: node.inputSchema
-      });
+      };
+
+      if (node.errorDatasetName) {
+        configObj.errorDatasetName = node.errorDatasetName;
+      }
+
+      config.stages.push(configObj);
       delete nodesMap[id];
     };
 
