@@ -77,7 +77,8 @@ on the installation, monitoring and diagnosing fully distributed CDAP in a Hadoo
   - **Introduction to CDAP Applications:** Applications that are reusable through configuration and
     extensible through plugins 
   - **Cask Hydrator and ETL Pipelines:** Makes performing ETL possible without writing code 
-  - **Creating Custom ETL Plugins:** For developers of custom ETL plugins 
+  - **Creating Custom ETL Plugins:** For developers of custom ETL plugins
+  - **Cask Tracker:** A CDAP extension that captures metadata for datasets, streams, and stream views
   - **Data Quality:** An extensible *CDAP Application* to assess the quality of data
     using its out-of-the-box functionality and libraries
   
