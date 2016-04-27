@@ -41,8 +41,9 @@ angular.module(PKG.name + '.services')
         'sparkcompute': 'sparkcompute'
       },
       'post-run-actions': {
-        'databasequery': 'Database Query',
-        'httpcallback': 'HTTP Callback'
+        'email': 'Send Email',
+        'databasequery': 'Run Database Query',
+        'httpcallback': 'Make HTTP Call'
       }
     },
     pluginConvert: {
