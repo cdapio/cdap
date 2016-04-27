@@ -56,6 +56,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.file.FileVisitResult;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.PathMatcher;
+import java.nio.file.Paths;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.HashSet;
@@ -213,6 +220,9 @@ public class ExploreServiceUtils {
       File sparkAssemblyJar = SparkUtils.locateSparkAssemblyJar();
       LOG.debug("Adding spark jar to explore dependency {}", sparkAssemblyJar);
       additionalJars.add(sparkAssemblyJar);
+    }
+    if (isTezAvailable()) {
+      additionalJars.addAll(getTezJars());
     }
     return traceExploreDependencies(classLoader, tmpDir, additionalJars);
   }
@@ -529,5 +539,40 @@ public class ExploreServiceUtils {
     // We don't support setting engine through session configuration now
     String engine = hiveConf.get("hive.execution.engine");
     return "spark".equalsIgnoreCase(engine);
+  }
+
+  // This method is used to determine if Tez is enabled based on TEZ_HOME environment variable.
+  // Master prepares the explore container by adding jars available in TEZ_HOME.
+  // However this environment variable is not available to explore container itself(BaseHiveService).
+  // There we check the existence of tez using hive.execution.engine config variable.
+  private static boolean isTezAvailable() {
+    return System.getenv(Constants.TEZ_HOME) != null;
+  }
+
+  private static Set<File> getTezJars() {
+    String tezHome = System.getenv(Constants.TEZ_HOME);
+    Path tezHomeDir = Paths.get(tezHome);
+    final PathMatcher pathMatcher = tezHomeDir.getFileSystem().getPathMatcher("glob:*.jar");
+    final Set<File> tezJars = new HashSet<>();
+    try {
+      Files.walkFileTree(tezHomeDir, new SimpleFileVisitor<Path>() {
+        @Override
+        public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+          if (attrs.isRegularFile() && pathMatcher.matches(file.getFileName())) {
+            tezJars.add(file.toFile());
+          }
+          return FileVisitResult.CONTINUE;
+        }
+
+        @Override
+        public FileVisitResult visitFileFailed(Path file, IOException exc) throws IOException {
+          // Ignore error
+          return FileVisitResult.CONTINUE;
+        }
+      });
+    } catch (IOException e) {
+      LOG.warn("Exception raised while inspecting {}", tezHomeDir, e);
+    }
+    return tezJars;
   }
 }
