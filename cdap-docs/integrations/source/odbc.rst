@@ -19,8 +19,8 @@ Installation
 ============
 The ODBC drivers can be downloaded from these locations: 
 
-- `Windows 64-bit driver <http://cask.co>`__
 - `Windows 32-bit driver <http://cask.co>`__
+- `Windows 64-bit driver <http://cask.co>`__
 
 After downloading the appropriate *msi* installer for your operating system and starting it,
 follow the prompts to install the driver:
