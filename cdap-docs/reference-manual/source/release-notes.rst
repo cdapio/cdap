@@ -38,14 +38,14 @@ New Features
 - `CDAP-3854 <https://issues.cask.co/browse/CDAP-3854>`__ - Added the capability to
   configure Kafka topic for logs and notifications using the ``cdap-site.xml``.
 
-- `CDAP-3980 <https://issues.cask.co/browse/CDAP-3980>`__ - MapReduce programs now support
-  multiple configured inputs.
+- `CDAP-3980 <https://issues.cask.co/browse/CDAP-3980>`__ - MapReduce programs submitted via CDAP
+  now support multiple configured inputs.
 
 - `CDAP-4970 <https://issues.cask.co/browse/CDAP-4970>`__ - Added capability to fetch the
   schema from a JDBC source specified for a Database plugin from inside Cask Hydrator.
 
-- `CDAP-5011 <https://issues.cask.co/browse/CDAP-5011>`__ - Introducing Cask Tracker: data
-  discovery with metadata, audit, and lineage.
+- `CDAP-5011 <https://issues.cask.co/browse/CDAP-5011>`__ - Added a CDAP extension *Cask Tracker*:
+  data discovery with metadata, audit, and lineage.
 
 - `CDAP-5146 <https://issues.cask.co/browse/CDAP-5146>`__ - Added a new Cask Hydrator
   ``batchaggregator`` plugin type. An aggregator operates on a collection of records,
@@ -106,7 +106,7 @@ Improvements
   run succeeded or failed.
 
 - `CDAP-5001 <https://issues.cask.co/browse/CDAP-5001>`__ - Downloading an explore query
-  from the CDAP UI will now stream directly to the client.
+  from the CDAP UI will now stream the results directly to the client.
 
 - `CDAP-5037 <https://issues.cask.co/browse/CDAP-5037>`__ - Added a configuration property
   to Cask Hydrator TimePartitionedFileSet (TPFS) sinks that will clean out data that is
@@ -149,11 +149,11 @@ Improvements
 - `CDAP-5376 <https://issues.cask.co/browse/CDAP-5376>`__ - Added an API for MapReduce to
   retrieve information about the enclosing workflow, including its run ID.
 
-- `CDAP-5378 <https://issues.cask.co/browse/CDAP-5378>`__ - Provides access to workflow
+- `CDAP-5378 <https://issues.cask.co/browse/CDAP-5378>`__ - Added access to workflow
   information in a Spark program when it is executed inside a workflow.
 
-- `CDAP-5424 <https://issues.cask.co/browse/CDAP-5424>`__ - Track the lineage of external
-  sources and sinks in a Cask Hydrator pipeline.
+- `CDAP-5424 <https://issues.cask.co/browse/CDAP-5424>`__ - Added the ability to track the
+  lineage of external sources and sinks in a Cask Hydrator pipeline.
 
 - `CDAP-5512 <https://issues.cask.co/browse/CDAP-5512>`__ - Extended the workflow APIs to
   allow the use of plugins.
@@ -167,13 +167,13 @@ Improvements
 
 Bug Fixes
 ---------
-- `CDAP-3498 <https://issues.cask.co/browse/CDAP-3498>`__ - CDAP was upgraded to use
+- `CDAP-3498 <https://issues.cask.co/browse/CDAP-3498>`__ - Upgraded CDAP to use
   Apache Twill ``0.7.0-incubating`` with numerous new features, improvements, and bug
   fixes. See the `Apache Twill release notes
   <http://twill.incubator.apache.org/releases/0.7.0-incubating.html>`__ for details.
 
 - `CDAP-3584 <https://issues.cask.co/browse/CDAP-3584>`__ - Upon transaction rollback, a
-  ``PartitionedFileSet`` will roll back the files for the partitions that were added and/or
+  ``PartitionedFileSet`` now rolls back the files for the partitions that were added and/or
   removed in that transaction.
 
 - `CDAP-3749 <https://issues.cask.co/browse/CDAP-3749>`__ - Fixed a bug with the database
