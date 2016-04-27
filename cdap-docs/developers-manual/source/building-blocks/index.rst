@@ -28,6 +28,7 @@ Building Blocks
     Workflows <workflows>
     Artifacts <artifacts>
     Metadata and Lineage <metadata-lineage>
+    Audit Logging <audit-logging>
     Namespaces <namespaces>
     Transaction System <transaction-system>
 
@@ -64,6 +65,10 @@ write data through the data abstraction layer in CDAP.
   These can be retrieved and searched, and the metadata used to discover CDAP entities.
   Access of these entities is tracked, and you can view the :doc:`lineage <metadata-lineage>` of datasets and streams.
   With a lineage diagram, you can then drill down into the metadata of its nodes. 
+
+- :doc:`Audit Logging <audit-logging>` provides a chronological ledger containing evidence of operations or
+  changes on CDAP entities. This information can be used to capture a trail of the activities that 
+  determined the state of an entity at a given point in time.
 
 - A :doc:`Namespace <namespaces>` is a logical grouping of application and data in CDAP.
   Conceptually, namespaces can be thought of as a partitioning of a CDAP instance.
