@@ -57,7 +57,7 @@ Integrations
 - |mapr|_ Configuring and installing CDAP on **MapR** *(Administration Manual)*
 
 
-.. rubric:: Accessing CDAP Datasets through JDBC, ODBC, and Business Intelligence Tools
+.. rubric:: Accessing CDAP Datasets through JDBC and ODBC
 
 Many Business Intelligence tools can integrate with relational databases using JDBC or ODBC
 drivers. They often include drivers to connect to standard databases such as MySQL or

@@ -15,6 +15,14 @@ CDAP ODBC Drivers enable integration with Windows-based applications that suppor
 interface, allowing access to CDAP Datasets. CDAP provides ODBC drivers that support both 32-bit and
 64-bit Windows operating systems. 
 
++-----------------------+-----------+---------------------+
+| ODBC Driver           | Version   | CDAP Versions       |
++=======================+===========+=====================+
+| Windows 32-bit driver | 1.0.0.1   | CDAP 3.4 and higher |
++-----------------------+-----------+---------------------+
+| Windows 64-bit driver | 1.0.0.1   | CDAP 3.4 and higher |
++-----------------------+-----------+---------------------+
+
 Installation
 ============
 The ODBC drivers can be downloaded from these locations: 
