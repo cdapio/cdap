@@ -25,6 +25,7 @@ import co.cask.cdap.explore.service.hive.Hive12ExploreService;
 import co.cask.cdap.explore.service.hive.Hive13ExploreService;
 import co.cask.cdap.explore.service.hive.Hive14ExploreService;
 import co.cask.cdap.hive.ExploreUtils;
+import co.cask.cdap.internal.app.runtime.spark.SparkUtils;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
@@ -33,6 +34,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.google.common.io.ByteStreams;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.MRJobConfig;
 import org.apache.hadoop.util.VersionInfo;
@@ -56,6 +58,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.Enumeration;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.jar.JarEntry;
@@ -205,7 +208,13 @@ public class ExploreServiceUtils {
     }
 
     ClassLoader classLoader = ExploreUtils.getExploreClassloader();
-    return traceExploreDependencies(classLoader, tmpDir);
+    Set<File> additionalJars = new HashSet<>();
+    if (isSparkAvailable()) {
+      File sparkAssemblyJar = SparkUtils.locateSparkAssemblyJar();
+      LOG.debug("Adding spark jar to explore dependency {}", sparkAssemblyJar);
+      additionalJars.add(sparkAssemblyJar);
+    }
+    return traceExploreDependencies(classLoader, tmpDir, additionalJars);
   }
 
   /**
@@ -214,9 +223,10 @@ public class ExploreServiceUtils {
    * @param classLoader class loader to use to trace the dependencies.
    *                    If it is null, use the class loader of this class.
    * @param tmpDir temporary directory for storing rewritten jar files.
+   * @param additionalJars additional jars that will be added to the end of the returned set.
    * @return an ordered set of jar files.
    */
-  public static Set<File> traceExploreDependencies(ClassLoader classLoader, File tmpDir)
+  private static Set<File> traceExploreDependencies(ClassLoader classLoader, File tmpDir, Set<File> additionalJars)
     throws IOException {
     if (exploreDependencies != null) {
       return exploreDependencies;
@@ -263,6 +273,7 @@ public class ExploreServiceUtils {
                                                  "org.apache.hive.builtins.BuiltinUtils",
                                                  // Needed for - at least - CDH 5 integration
                                                  "org.apache.hadoop.hive.shims.Hadoop23Shims"));
+    orderedDependencies.addAll(additionalJars);
 
     exploreDependencies = orderedDependencies;
     return orderedDependencies;
@@ -486,6 +497,12 @@ public class ExploreServiceUtils {
     conf.setBoolean(Job.MAPREDUCE_JOB_USER_CLASSPATH_FIRST, false);
     conf.setBoolean(MRJobConfig.MAPREDUCE_JOB_CLASSLOADER, false);
 
+    String sparkHome = System.getenv(Constants.SPARK_HOME);
+    if (sparkHome != null) {
+      LOG.debug("Setting spark.home in hive conf to {}", sparkHome);
+      conf.set("spark.home", sparkHome);
+    }
+
     File newHiveConfFile = new File(tempDir, "hive-site.xml");
 
     try (FileOutputStream os = new FileOutputStream(newHiveConfFile)) {
@@ -495,5 +512,22 @@ public class ExploreServiceUtils {
       throw Throwables.propagate(e);
     }
     return newHiveConfFile;
+  }
+
+  public static boolean isSparkAvailable() {
+    try {
+      // SparkUtils.locateSparkAssemblyJar() throws IllegalStateException if it is not able to locate spark jar
+      SparkUtils.locateSparkAssemblyJar();
+      return true;
+    } catch (IllegalStateException e) {
+      LOG.debug("Got exception while determining spark availability", e);
+      return false;
+    }
+  }
+
+  public static boolean isSparkEngine(HiveConf hiveConf) {
+    // We don't support setting engine through session configuration now
+    String engine = hiveConf.get("hive.execution.engine");
+    return "spark".equalsIgnoreCase(engine);
   }
 }

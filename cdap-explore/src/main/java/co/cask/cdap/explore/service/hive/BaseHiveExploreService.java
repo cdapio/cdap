@@ -32,6 +32,7 @@ import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.explore.service.Explore;
 import co.cask.cdap.explore.service.ExploreException;
 import co.cask.cdap.explore.service.ExploreService;
+import co.cask.cdap.explore.service.ExploreServiceUtils;
 import co.cask.cdap.explore.service.ExploreTableManager;
 import co.cask.cdap.explore.service.HandleNotFoundException;
 import co.cask.cdap.explore.service.HiveStreamRedirector;
@@ -107,6 +108,7 @@ import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 import java.sql.SQLException;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -132,6 +134,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
   private static final int PREVIEW_COUNT = 5;
   private static final long METASTORE_CLIENT_CLEANUP_PERIOD = 60;
   public static final String HIVE_METASTORE_TOKEN_KEY = "hive.metastore.token.signature";
+  public static final String SPARK_YARN_DIST_FILES = "spark.yarn.dist.files";
 
   private final CConfiguration cConf;
   private final Configuration hConf;
@@ -159,6 +162,8 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
   // The following two fields are for tracking GC'ed metastore clients and be able to call close on them.
   private final Map<Reference<? extends Supplier<IMetaStoreClient>>, IMetaStoreClient> metastoreClientReferences;
   private final ReferenceQueue<Supplier<IMetaStoreClient>> metastoreClientReferenceQueue;
+
+  private final Map<String, String> sparkConf = new HashMap<>();
 
   protected abstract QueryStatus doFetchStatus(OperationHandle handle) throws HiveSQLException, ExploreException,
     HandleNotFoundException;
@@ -273,7 +278,13 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
   protected void startUp() throws Exception {
     LOG.info("Starting {}...", BaseHiveExploreService.class.getSimpleName());
 
-    cliService.init(getHiveConf());
+    HiveConf hiveConf = getHiveConf();
+    if (ExploreServiceUtils.isSparkEngine(hiveConf)) {
+      LOG.info("Engine is spark");
+      setupSparkConf();
+    }
+
+    cliService.init(hiveConf);
     cliService.start();
 
     metastoreClientsExecutorService.scheduleWithFixedDelay(
@@ -326,6 +337,33 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     }
 
     cliService.stop();
+  }
+
+  private void setupSparkConf() {
+    // Copy over hadoop configuration as spark properties since we don't localize hadoop conf dirs due to CDAP-5019
+    for (Map.Entry<String, String> entry : hConf) {
+      sparkConf.put("spark.hadoop." + entry.getKey(), hConf.get(entry.getKey()));
+    }
+
+    // don't localize config, we pass all hadoop configuration in spark properties
+    sparkConf.put("spark.yarn.localizeConfig", "false");
+
+    // Setup files to be copied over to spark containers
+    sparkConf.put(BaseHiveExploreService.SPARK_YARN_DIST_FILES,
+                  System.getProperty(BaseHiveExploreService.SPARK_YARN_DIST_FILES));
+
+    if (UserGroupInformation.isSecurityEnabled()) {
+      // define metastore token key name
+      sparkConf.put("spark.hadoop." + HIVE_METASTORE_TOKEN_KEY, HiveAuthFactory.HS2_CLIENT_TOKEN);
+
+      // tokens are already provided for spark client
+      sparkConf.put("spark.yarn.security.tokens.hive.enabled", "false");
+      sparkConf.put("spark.yarn.security.tokens.hbase.enabled", "false");
+
+      // Hive needs to ignore security settings while running spark job
+      sparkConf.put(HiveConf.ConfVars.HIVE_SERVER2_AUTHENTICATION.toString(), "NONE");
+      sparkConf.put(HiveConf.ConfVars.HIVE_SERVER2_ENABLE_DOAS.toString(), "false");
+    }
   }
 
   @Override
@@ -737,6 +775,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     try {
       SessionHandle sessionHandle = null;
       OperationHandle operationHandle = null;
+      LOG.trace("Got statement: {}", statement);
       Map<String, String> sessionConf = startSession(namespace);
       try {
         sessionHandle = openHiveSession(sessionConf);
@@ -1258,6 +1297,9 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     ConfigurationUtil.set(sessionConf, Constants.Explore.CCONF_KEY, CConfCodec.INSTANCE, cConf);
     ConfigurationUtil.set(sessionConf, Constants.Explore.HCONF_KEY, HConfCodec.INSTANCE, hConf);
 
+    if (ExploreServiceUtils.isSparkEngine(getHiveConf())) {
+      sessionConf.putAll(sparkConf);
+    }
     return sessionConf;
   }
 

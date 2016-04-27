@@ -45,6 +45,8 @@ public final class Constants {
   public static final String HTTP_CLIENT_TIMEOUT_MS = "http.client.connection.timeout.ms";
   /** Uniquely identifies a CDAP instance */
   public static final String INSTANCE_NAME = "instance.name";
+  // Environment variable name for spark home
+  public static final String SPARK_HOME = "SPARK_HOME";
 
   /**
    * Configuration for Master startup.
