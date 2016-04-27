@@ -246,9 +246,8 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
     } catch (Exception e) {
       // See if it is due to job cancelation. If it is, then it's not an error.
       if (jobCompletion.isCancelled()) {
-        LOG.debug("Spark program execution cancelled: {}", runtimeContext);
+        LOG.info("Spark program execution cancelled: {}", runtimeContext);
       } else {
-        LOG.error("Spark program execution failure: {}", runtimeContext, e);
         throw e;
       }
     }

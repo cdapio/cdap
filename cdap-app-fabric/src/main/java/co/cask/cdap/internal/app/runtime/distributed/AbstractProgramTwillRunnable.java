@@ -102,6 +102,7 @@ import org.apache.twill.zookeeper.ZKClientService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.ParameterizedType;
@@ -350,6 +351,9 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
         throw Throwables.propagate(Throwables.getRootCause(e));
       }
     } finally {
+      if (programRunner instanceof Closeable) {
+        Closeables.closeQuietly((Closeable) programRunner);
+      }
       // Always unblock the handleCommand method if it is not unblocked before (e.g if program failed to start).
       // The controller state will make sure the corresponding command will be handled correctly in the correct state.
       runlatch.countDown();
