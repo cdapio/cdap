@@ -35,6 +35,9 @@ New Features
 - `CDAP-3051 <https://issues.cask.co/browse/CDAP-3051>`__ - Added capability for programs to
   perform administrative dataset operations (create, update, truncate, drop).
 
+- `CDAP-3854 <https://issues.cask.co/browse/CDAP-3854>`__ - Added the capability to
+  configure Kafka topic for logs and notifications using the ``cdap-site.xml``.
+
 - `CDAP-3980 <https://issues.cask.co/browse/CDAP-3980>`__ - MapReduce programs now support
   multiple configured inputs.
 
@@ -129,7 +132,10 @@ Improvements
   of being broken up into separate "source", "transforms", and "sinks" arrays.
 
 - `CDAP-5181 <https://issues.cask.co/browse/CDAP-5181>`__ - Added an HTTP RESTful endpoint
-  to retreive the state of all nodes in a workflow.
+  to retrieve the state of all nodes in a workflow.
+
+- `CDAP-5182 <https://issues.cask.co/browse/CDAP-5182>`__ - Added an API to retrieve the
+  properties that were used to configure (or reconfigure) a dataset.
 
 - `CDAP-5207 <https://issues.cask.co/browse/CDAP-5207>`__ - Removed dependency on Guava
   from the ``cdap-proto`` module.
@@ -140,7 +146,7 @@ Improvements
   now accepts a stream configuration (with TTL, description, format specification, and
   notification threshold).
 
-- `CDAP-5376 <https://issues.cask.co/browse/CDAP-5376>`__ - Adds an API for MapReduce to
+- `CDAP-5376 <https://issues.cask.co/browse/CDAP-5376>`__ - Added an API for MapReduce to
   retrieve information about the enclosing workflow, including its run ID.
 
 - `CDAP-5378 <https://issues.cask.co/browse/CDAP-5378>`__ - Provides access to workflow
@@ -174,9 +180,6 @@ Bug Fixes
   plugins that required a password to be specified if the user was specified, even if the
   password was empty.
 
-- `CDAP-3854 <https://issues.cask.co/browse/CDAP-3854>`__ - Added the capability to
-  configure Kafka topic for logs and notifications using the ``cdap-site.xml``.
-
 - `CDAP-4060 <https://issues.cask.co/browse/CDAP-4060>`__ - Added the status for custom
   actions in workflow diagrams.
 
@@ -208,12 +211,12 @@ Bug Fixes
 
 - `CDAP-5062 <https://issues.cask.co/browse/CDAP-5062>`__ - Added a ``fetch.size``
   connection setting to the JDBC driver to control the number of rows fetched per database
-  cursor, and increased the default fetch from 50 to 1000.
+  cursor, and increased the default fetch size from 50 to 1000.
 
 - `CDAP-5092 <https://issues.cask.co/browse/CDAP-5092>`__ - Fixed a problem that prevented
   applications written in Scala from being deployed.
 
-- `CDAP-5103 <https://issues.cask.co/browse/CDAP-5103>`__ - Fix a problem so that when the
+- `CDAP-5103 <https://issues.cask.co/browse/CDAP-5103>`__ - Fixed a problem so that when the
   schema for a view was not explicitly specified, the view system metadata will include the
   default schema for the specified format if that is available.
 
@@ -224,10 +227,6 @@ Bug Fixes
 - `CDAP-5177 <https://issues.cask.co/browse/CDAP-5177>`__ - Fixed a problem with
   PartitionConsumer not appropriately handling partitions that had been deleted since they
   were added to the working set.
-
-- `CDAP-5182 <https://issues.cask.co/browse/CDAP-5182>`__ - Fixed a problem preventing
-  programs from administering datasets by adding an API to retrieve the properties that were
-  used to configure (or reconfigure) a dataset.
 
 - `CDAP-5241 <https://issues.cask.co/browse/CDAP-5241>`__ - Fixed a problem with metadata
   for a dataset not being deleted when a dataset was deleted.
@@ -253,16 +252,11 @@ Bug Fixes
   in the ``cdap.bat`` start script.
 
 - `CDAP-5460 <https://issues.cask.co/browse/CDAP-5460>`__ - Fixed a problem with the
-  workflow	Spark programs status not being updated in the CDAP UI on the program list
+  workflow Spark programs status not being updated in the CDAP UI on the program list
   screen when it is run as a part of Workflow.
 
 - `CDAP-5463 <https://issues.cask.co/browse/CDAP-5463>`__ - Fixed an issue when changing
   the number of instances of a worker or service.
-
-- `CDAP-5465 <https://issues.cask.co/browse/CDAP-5465>`__ - Fixed a problem |---| in the Cask
-  Hydrator Studio |---| when cloning a batch pipeline with "Spark" as its underlying engine being
-  changed to using a "MapReduce" engine when the clone was completed. Fixed by picking an
-  appropriate engine during the clone process in the CDAP UI.
 
 - `CDAP-5513 <https://issues.cask.co/browse/CDAP-5513>`__ - Fixed a problem with the
   update of metadata indexes so that search results reflect metadata updates correctly.
@@ -279,7 +273,7 @@ Bug Fixes
   multiple sources in the CDAP UI while constructing a pipeline.
 
 - `CDAP-5619 <https://issues.cask.co/browse/CDAP-5619>`__ - Fixed a problem with the
-  importation of a pipeline configuration. If the imported pipeline config doesn't have
+  import of a pipeline configuration. If the imported pipeline config doesn't have
   artifact information for a plugin, the CDAP UI now defaults to the latest artifact from
   the list of artifacts sent by the backend.
 
@@ -292,11 +286,6 @@ Bug Fixes
 
 - `CDAP-5652 <https://issues.cask.co/browse/CDAP-5652>`__ - Added command line interface
   command to retrieve the workflow node states.
-
-- `CDAP-5662 <https://issues.cask.co/browse/CDAP-5662>`__ - Fixed a problem with the CDAP
-  UI being unresponsive if there were no Hydrator artifacts present. The CDAP UI now shows
-  appropriate error messages when System artifacts are missing when trying to create a
-  pipeline in the CDAP UI.
 
 Deprecated and Removed Features
 -------------------------------
