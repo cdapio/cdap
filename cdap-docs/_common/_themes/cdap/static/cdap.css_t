@@ -361,6 +361,11 @@ div.viewcode-block:target {
 img.bordered-image { 
     border:2px outset #708091;
     display: inline-block; 
+}
+
+img.bordered-image-top-margin { 
+    border:2px outset #708091;
+    display: inline-block; 
     margin-top: 20px; 
 }
 

@@ -103,6 +103,7 @@ on the installation, monitoring and diagnosing fully distributed CDAP in a Hadoo
   - **Cloudera:** Integrating CDAP into Cloudera, using Cloudera Manager, running interactive queries with Impala, and
     bridging CDAP Metadata with Cloudera's data management tool, Navigator
   - **JDBC:** The CDAP JDBC driver, included with CDAP
+  - **ODBC:** The CDAP ODBC driver available for CDAP
   - **Pentaho:** *Pentaho Data Integration*, a business intelligence tool that can be used with CDAP
   - **Squirrel:** *SquirrelSQL*, a simple JDBC client that can be integrated with CDAP
 

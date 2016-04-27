@@ -89,6 +89,6 @@ monitoring of metrics, logs, and other run-time information.
    :figwidth: 100%
    :width: 6in
    :align: center
-   :class: bordered-image
+   :class: bordered-image-top-margin
 
    **Cask Hydrator Studio:** Visual editor showing the creation of an ETL pipeline

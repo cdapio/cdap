@@ -57,9 +57,9 @@ Integrations
 - |mapr|_ Configuring and installing CDAP on **MapR** *(Administration Manual)*
 
 
-.. rubric:: BI Tools: Accessing CDAP Datasets through Business Intelligence Tools
+.. rubric:: Accessing CDAP Datasets through JDBC, ODBC, and Business Intelligence Tools
 
-Most Business Intelligence tools can integrate with relational databases using JDBC
+Many Business Intelligence tools can integrate with relational databases using JDBC or ODBC
 drivers. They often include drivers to connect to standard databases such as MySQL or
 PostgreSQL. Most tools allow the addition of non-standard JDBC drivers.
 
@@ -74,6 +74,12 @@ The example :ref:`cdap-bi-guide` includes the use of Pentaho.
 
 - |jdbc|_ A JDBC driver provided with CDAP to make **integrations with external programs**
   and third-party BI (business intelligence) tools easier.
+
+
+.. |odbc| replace:: **CDAP ODBC Driver:**
+.. _odbc: odbc.html
+
+- |odbc|_ An ODBC driver provided for CDAP to allow **integration with external Windows programs**.
 
 
 .. |pentaho| replace:: **Pentaho Data Integration:**
