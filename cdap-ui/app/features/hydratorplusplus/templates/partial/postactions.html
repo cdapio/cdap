@@ -27,7 +27,7 @@
           ng-repeat="action in PostActionController.postActionsList"
           ng-click="PostActionController.tabClick(action)"
           ng-class="{'active': PostActionController.activeTab.name === action.name }">
-        {{ action.name }}
+        {{ action.label }}
       </li>
     </ul>
   </div>

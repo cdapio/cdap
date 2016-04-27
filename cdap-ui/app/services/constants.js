@@ -39,6 +39,10 @@ angular.module(PKG.name + '.services')
         'batchaggregator': 'batchaggregator',
         'sparksink': 'sparksink',
         'sparkcompute': 'sparkcompute'
+      },
+      'post-run-actions': {
+        'databasequery': 'Database Query',
+        'httpcallback': 'HTTP Callback'
       }
     },
     pluginConvert: {
