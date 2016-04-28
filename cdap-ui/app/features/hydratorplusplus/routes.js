@@ -264,8 +264,8 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
             authorizedRoles: MYAUTH_ROLE.all,
             highlightTab: 'hydratorList'
           },
-          templateUrl: '/assets/features/hydrator/templates/list.html',
-          controller: 'HydratorListController',
+          templateUrl: '/assets/features/hydratorplusplus/templates/list.html',
+          controller: 'HydratorPlusPlusListController',
           controllerAs: 'ListController'
         });
   });
