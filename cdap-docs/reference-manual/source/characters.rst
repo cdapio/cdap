@@ -1,6 +1,6 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2015 Cask Data, Inc.
+    :copyright: Copyright © 2015-2016 Cask Data, Inc.
 
 .. highlight:: console
 
@@ -37,6 +37,10 @@ plugins) support an *alphanumeric extra extended character set:*
 - Alphanumeric characters (``a-z A-Z 0-9``)
 - Hyphens (``-``)
 - Underscores (``_``)
+
+Note that streams and datasets whose names begin with an underscore (``_``) will not be
+visible in the home page of the :ref:`CDAP UI <cdap-ui>`, though they will be visible
+elsewhere in the CDAP UI.
 
 
 Dataset Character Set (Deprecated)

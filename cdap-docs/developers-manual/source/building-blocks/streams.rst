@@ -1,6 +1,6 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2014-2015 Cask Data, Inc.
+    :copyright: Copyright © 2014-2016 Cask Data, Inc.
 
 .. _streams:
 
@@ -29,7 +29,9 @@ This specifies a new stream named *myStream*.
 
 Streams are uniquely identified by the ID string (a "name") and are explicitly created
 before being used. Names used for streams need to be unique across the CDAP instance, as
-streams are shared between applications.
+streams are shared between applications. Names that start with an underscore (``_``) will
+not be visible in the home page of the :ref:`CDAP UI <cdap-ui>`, though they will be
+visible elsewhere in the CDAP UI.
 
 
 Writing To a Stream

@@ -1,0 +1,18 @@
+.. To use this include, define these replacements:
+.. application-overview
+.. example
+.. example-spark
+.. example-spark-italic
+
+**Stopping the Spark Program**
+
+- Using the CDAP UI, go to the |application-overview|,
+  click |example-spark-italic| to get to the Spark program detail page, then click the *Stop* button; or
+  
+- From the Standalone CDAP SDK directory, use the Command Line Interface:
+
+  .. tabbed-parsed-literal::
+
+    $ cdap-cli.sh stop spark |example|.\ |example-spark|
+    
+    Successfully stopped Spark '|example-spark|' of application '|example|'

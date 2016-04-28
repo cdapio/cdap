@@ -116,6 +116,7 @@
     <jetty.version>6.1.22</jetty.version>
     <jetty8.version>8.1.15.v20140411</jetty8.version>
     <jline.version>2.12</jline.version>
+    <jsch.version>0.1.42</jsch.version>
     <junit.version>4.11</junit.version>
     <kafka.version>0.8.2.2</kafka.version>
     <leveldb.version>0.6</leveldb.version>
@@ -327,6 +328,11 @@
         <groupId>com.google.code.gson</groupId>
         <artifactId>gson</artifactId>
         <version>${gson.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.jcraft</groupId>
+        <artifactId>jsch</artifactId>
+        <version>${jsch.version}</version>
       </dependency>
       <dependency>
         <groupId>org.apache.avro</groupId>
@@ -2534,7 +2540,7 @@
             </group>
             <group>
               <title>Application Template Packages</title>
-              <packages>co.cask.cdap.app.*</packages>
+              <packages>co.cask.cdap.etl.*</packages>
             </group>
           </groups>
         </configuration>
