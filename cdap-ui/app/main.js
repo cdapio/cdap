@@ -31,7 +31,6 @@ angular
       PKG.name+'.feature.admin',
       PKG.name+'.feature.userprofile',
       PKG.name+'.feature.experimental',
-      PKG.name+'.feature.hydrator',
       PKG.name+'.feature.hydratorplusplus',
       PKG.name+'.feature.explore',
       PKG.name +'.feature.search',

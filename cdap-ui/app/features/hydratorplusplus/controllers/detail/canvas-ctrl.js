@@ -15,8 +15,7 @@
  */
 
 angular.module(PKG.name + '.feature.hydratorplusplus')
-  .controller('HydratorPlusPlusDetailCanvasCtrl', function(rPipelineDetail, HydratorPlusPlusBottomPanelStore, DAGPlusPlusNodesActionsFactory, HydratorPlusPlusHydratorService, DAGPlusPlusNodesStore, ConfigStore, HydratorPlusPlusNodeConfigActions, HydratorPlusPlusDetailNonRunsStore, HydratorPlusPlusDetailMetricsStore) {
-    this.ConfigStore = ConfigStore;
+  .controller('HydratorPlusPlusDetailCanvasCtrl', function(rPipelineDetail, HydratorPlusPlusBottomPanelStore, DAGPlusPlusNodesActionsFactory, HydratorPlusPlusHydratorService, DAGPlusPlusNodesStore, HydratorPlusPlusNodeConfigActions, HydratorPlusPlusDetailNonRunsStore, HydratorPlusPlusDetailMetricsStore) {
     this.DAGPlusPlusNodesStore = DAGPlusPlusNodesStore;
     this.HydratorPlusPlusDetailNonRunsStore = HydratorPlusPlusDetailNonRunsStore;
     this.HydratorPlusPlusNodeConfigActions = HydratorPlusPlusNodeConfigActions;

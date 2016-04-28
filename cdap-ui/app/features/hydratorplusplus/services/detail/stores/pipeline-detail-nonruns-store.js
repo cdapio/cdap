@@ -15,8 +15,8 @@
  */
 
 angular.module(PKG.name + '.feature.hydratorplusplus')
-  .service('HydratorPlusPlusDetailNonRunsStore', function(HydratorPlusPlusDetailDispatcher, HydratorService) {
-    this.HydratorService = HydratorService;
+  .service('HydratorPlusPlusDetailNonRunsStore', function(HydratorPlusPlusDetailDispatcher, HydratorPlusPlusHydratorService) {
+    this.HydratorPlusPlusHydratorService = HydratorPlusPlusHydratorService;
     this.setDefaults = function(app) {
       this.state = {
         scheduleStatus: null,
@@ -117,7 +117,7 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
       }
       if(appConfig.configJson) {
         app.config = appConfig.configJson;
-        uiConfig = this.HydratorService.getNodesAndConnectionsFromConfig(app);
+        uiConfig = this.HydratorPlusPlusHydratorService.getNodesAndConnectionsFromConfig(app);
         let setDefaultOutputSchemaForNodes = (node) => {
           var pluginName = node.plugin.name;
           var pluginToSchemaMap = {
