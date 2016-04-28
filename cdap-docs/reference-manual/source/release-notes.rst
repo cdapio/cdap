@@ -291,6 +291,12 @@ Deprecated and Removed Features
 -------------------------------
 - See the :ref:`CDAP 3.4.0 Javadocs <javadocs>` for a list of deprecated and removed APIs.
 
+- As of *CDAP v3.4.0*, *Metadata Update Notifications* have been deprecated, pending
+  removal in a later version. The :ref:`CDAP Audit Notifications <auditing>` contain
+  notifications for metadata changes. Please change all uses of *Metadata Update
+  Notifications* to consume only those messages from the audit feed that have the ``type``
+  field set to ``METADATA_CHANGE``.
+ 
 Known Issues
 ------------
 - After upgrading CDAP from a pre-3.0 version, any unprocessed metrics data in Kafka will
