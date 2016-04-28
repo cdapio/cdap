@@ -33,7 +33,8 @@ angular.module(PKG.name + '.feature.admin')
         }
         $scope.dataList = res.filter(function(dataset) {
           return dataset.type !== 'externalDataset';
-        });
+        })
+        .concat($scope.dataList);
       });
 
     myStreamApi.list(params)
