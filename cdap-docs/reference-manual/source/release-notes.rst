@@ -45,6 +45,9 @@ New Features
 - `CDAP-3980 <https://issues.cask.co/browse/CDAP-3980>`__ - MapReduce programs submitted via CDAP
   now support multiple configured inputs.
 
+- `CDAP-4807 <https://issues.cask.co/browse/CDAP-4807>`__ - Added an ODBC 3.0 Driver for
+  CDAP Datasets for Windows-based applications that support an ODBC interface.
+
 - `CDAP-4970 <https://issues.cask.co/browse/CDAP-4970>`__ - Added capability to fetch the
   schema from a JDBC source specified for a Database plugin from inside Cask Hydrator.
 
