@@ -52,15 +52,17 @@ public class SparkProgramRuntimeProvider implements ProgramRuntimeProvider {
 
     switch (mode) {
       case LOCAL:
-        // No need to rewrite YarnClient, but needs to rewrite DStreamGraph to avoid leak
-        return createSparkProgramRunner(injector, SparkProgramRunner.class.getName(), false, true);
-      case DISTRIBUTED:
-        // Rewrite YarnClient based on config, but no need to rewrite DStreamGraph since driver runs in AM
-        // There is no leakage issue.
+        // Rewrite YarnClient based on config. The LOCAL runner is used in both SDK and distributed mode
+        // The actual mode that Spark is running is determined by the cdap.spark.cluster.mode attribute
+        // in the hConf
         boolean rewriteYarnClient = injector.getInstance(CConfiguration.class)
                                             .getBoolean(Constants.AppFabric.SPARK_YARN_CLIENT_REWRITE);
+        return createSparkProgramRunner(injector, SparkProgramRunner.class.getName(), rewriteYarnClient, true);
+      case DISTRIBUTED:
+        // The distributed program runner is only used by the CDAP master to launch the twill container
+        // hence it doesn't need to do any class rewrite.
         return createSparkProgramRunner(injector, DistributedSparkProgramRunner.class.getName(),
-                                        rewriteYarnClient, false);
+                                        false, false);
       default:
         throw new IllegalArgumentException("Unsupported Spark execution mode " + mode);
     }
