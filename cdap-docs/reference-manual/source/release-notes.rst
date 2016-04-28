@@ -81,6 +81,9 @@ New Features
 - `CDAP-5392 <https://issues.cask.co/browse/CDAP-5392>`__ - Added support for
   ``FormatSpecification`` in Spark when consuming data from a stream.
 
+- `CDAP-5707 <https://issues.cask.co/browse/CDAP-5707>`__ - Added support for executing
+  Hive queries on Tez.
+
 Improvements
 ------------
 - `CDAP-4071 <https://issues.cask.co/browse/CDAP-4071>`__ - MapReduce programs can now be
