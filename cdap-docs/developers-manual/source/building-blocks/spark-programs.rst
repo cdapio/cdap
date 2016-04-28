@@ -136,7 +136,7 @@ are extended from either ``SparkMain`` or ``JavaSparkMain``.
 
 Spark and Datasets
 ==================
-Spark programs in CDAP can directly access **dataset** similar to the way a MapReduce can. 
+Spark programs in CDAP can directly access **datasets** similar to the way a MapReduce can. 
 These programs can create Spark's Resilient Distributed Dataset (RDD) by reading a dataset
 and can also write RDD to a dataset. In Scala, implicit objects are provided for reading
 and writing datasets directly through the ``SparkContext`` and ``RDD`` objects.
@@ -177,11 +177,6 @@ be used, provided its classes are serializable.
     .. Java
 
     sec.saveAsDataset(purchaseRDD, "purchases");
-
-You can also access a dataset directly by calling the ``getDataset()`` method of either
-``SparkExecutionContext`` or ``JavaSparkExecutionContext``. However, the dataset acquired
-through ``getDataset()`` cannot be used through a function closure. See the section on
-:ref:`Using Datasets in Programs <datasets-in-programs>` for additional information.
 
 
 Spark and Streams
@@ -312,6 +307,12 @@ You can also control the transaction scope yourself explicitly. It's useful when
 multiple Spark actions to be committed in the same transaction. For example, in Kafka
 Spark Streaming, you can persist the Kafka offsets together with the changes in the
 datasets in the same transaction to obtain exactly-once processing semantics.
+
+When using an *explicit* transaction, you can access a dataset directly by calling the
+``getDataset()`` method of the ``DatasetContext`` provided to the transaction. However,
+the dataset acquired through ``getDataset()`` cannot be used through a function closure.
+See the section on :ref:`Using Datasets in Programs <datasets-in-programs>` for additional
+information.
 
 Here is an example of using an explicit transaction in Spark:
 
