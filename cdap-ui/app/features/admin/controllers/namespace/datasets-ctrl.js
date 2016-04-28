@@ -28,7 +28,13 @@ angular.module(PKG.name + '.feature.admin')
     myDatasetApi.list(params)
       .$promise
       .then(function (res) {
-        $scope.dataList = $scope.dataList.concat(res);
+        if (!Array.isArray(res)) {
+          return;
+        }
+        $scope.dataList = res.filter(function(dataset) {
+          return dataset.type !== 'externalDataset';
+        })
+        .concat($scope.dataList);
       });
 
     myStreamApi.list(params)
