@@ -26,6 +26,11 @@ Cask Data Application Platform Release Notes
 `Release 3.4.0 <http://docs.cask.co/cdap/3.4.0/index.html>`__
 =============================================================
 
+API Changes
+-----------
+- `CDAP-5082 <https://issues.cask.co/browse/CDAP-5082>`__ - Added a new Spark Java and Scala API.
+
+
 New Features
 ------------
 - `CDAP-20 <https://issues.cask.co/browse/CDAP-20>`__ - Removed dependency on the Guava
@@ -132,6 +137,10 @@ Improvements
 - `CDAP-5075 <https://issues.cask.co/browse/CDAP-5075>`__ - Programs now have a
   ``logical.start.time`` runtime argument that is populated by the system to be the start
   time of the program. The argument can be overridden just as other runtime arguments.
+
+- `CDAP-5082 <https://issues.cask.co/browse/CDAP-5082>`__ - Added support for Spark
+  streaming (to interact with the transactional datasets in CDAP), and support for
+  concurrent Spark execution through Workflow forking.
 
 - `CDAP-5178 <https://issues.cask.co/browse/CDAP-5178>`__ - Changed the format of the Cask
   Hydrator configuration. All pipeline stages are now together in a "stages" array instead
@@ -2888,14 +2897,6 @@ Bug Fixes
   
 - Added a recommended version (v.12.0) of Node.js to the documentation
   (`CDAP-2762 <https://issues.cask.co/browse/CDAP-2762>`__).
-  
-
-API Changes
------------
-
-
-Deprecated and Removed Features
--------------------------------
 
 
 .. _known-issues-301:
