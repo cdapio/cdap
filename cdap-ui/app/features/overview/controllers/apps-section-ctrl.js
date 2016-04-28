@@ -41,7 +41,7 @@ angular.module(PKG.name + '.feature.overview')
       .$promise
       .then(function(res) {
         this.dataList = this.dataList.concat(res).filter(function(dataset) {
-          return dataset.name.indexOf('_') !== 0;
+          return (dataset.name.indexOf('_') !== 0 && dataset.type !== 'externalDataset');
         });
       }.bind(this));
 
