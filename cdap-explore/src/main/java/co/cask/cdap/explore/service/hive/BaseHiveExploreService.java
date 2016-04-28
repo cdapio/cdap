@@ -244,8 +244,8 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
 
     // Since we use delegation token in HIVE, unset the SPNEGO authentication if it is
     // enabled. Please see CDAP-3452 for details.
-    conf.unset(HiveConf.ConfVars.HIVE_SERVER2_SPNEGO_KEYTAB.toString());
-    conf.unset(HiveConf.ConfVars.HIVE_SERVER2_SPNEGO_PRINCIPAL.toString());
+    conf.unset("hive.server2.authentication.spnego.keytab");
+    conf.unset("hive.server2.authentication.spnego.principal");
     return conf;
   }
 

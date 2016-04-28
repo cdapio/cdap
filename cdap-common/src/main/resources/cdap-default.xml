@@ -1014,7 +1014,7 @@
     <name>metadata.updates.kafka.broker.list</name>
     <value>127.0.0.1:${kafka.bind.port}</value>
     <description>
-      Apache Kafka broker list to which metadata update notifications are published
+      Apache Kafka broker list to which metadata update notifications are published (deprecated)
     </description>
   </property>
 
@@ -1022,7 +1022,7 @@
     <name>metadata.updates.kafka.topic</name>
     <value>cdap-metadata-updates</value>
     <description>
-      Apache Kafka topic name to which metadata update notifications are published
+      Apache Kafka topic name to which metadata update notifications are published (deprecated)
     </description>
   </property>
 
@@ -1033,7 +1033,7 @@
       Determines if metadata updates will be published to Apache Kafka.
       External systems can subscribe to the Kafka topic determined by
       ${metadata.updates.kafka.topic} to receive notifications of metadata
-      updates.
+      updates (deprecated).
     </description>
   </property>
 
