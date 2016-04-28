@@ -559,7 +559,7 @@ Entities that match the specified query and entity type are returned in the body
      - Restricts the search to either all or specified entity types: ``all``, ``artifact``, ``app``, ``dataset``,
        ``program``, ``stream``, or ``view``
    * - ``<term>``
-     - Query term, as described below. Query terms are case-insensitive
+     - :ref:`Query term <http-restful-api-metadata-query-terms>`, as described below. Query terms are case-insensitive
 
 .. rubric:: HTTP Responses
 
@@ -571,6 +571,8 @@ Entities that match the specified query and entity type are returned in the body
      - Description
    * - ``200 OK``
      - Entity ID and metadata of entities that match the query and entity type(s) are returned in the body of the response
+
+.. _http-restful-api-metadata-query-terms:
 
 .. rubric:: Query Terms
 
@@ -639,7 +641,7 @@ Viewing Lineages
 ================
 To view the lineage of a dataset or stream, submit an HTTP GET request::
 
-  GET <base-url>/namespaces/<namespace>/<entity-type>/<entity-id>/lineage?start=<start-ts>&end=<end-ts>&levels=<levels>
+  GET <base-url>/namespaces/<namespace>/<entity-type>/<entity-id>/lineage?start=<start-ts>&end=<end-ts>[&levels=<levels>][&collapse=<collapse>&collapse=<collapse>...]
 
 where:
 
@@ -662,9 +664,16 @@ where:
    * - ``<levels>``
      - Number of levels of lineage output to return. Defaults to 10. Determines how far back the provenance
        of the data in the lineage chain is calculated.
+   * - ``<collapse>``
+     - An optional set of ``collapse`` types (any of ``access``, ``run`` or ``component``) by which to 
+       :ref:`collapse the lineage output <http-restful-api-metadata-lineage-collapse>`. 
+       By default, lineage output is not collapsed. Multiple collapse parameters is supported.
 
 See in the Metrics HTTP RESTful API :ref:`Querying by a Time Range <http-restful-api-metrics-time-range>`
 for examples of the "now" time syntax.
+
+For more information about collapsing lineage output, please refer to the section below on
+:ref:`Collapsing Lineage Output <http-restful-api-metadata-lineage-collapse>`.
 
 The lineage will be returned as a JSON string in the body of the response. The JSON describes lineage as a graph
 of connections between programs and datasets (or streams) in the specified time range. The number of
@@ -767,6 +776,246 @@ Here is an example, pretty-printed::
        list of strings in the body of the response
    * - ``404 NOT FOUND``
      - No entities matching the specified query were found
+
+
+.. _http-restful-api-metadata-lineage-collapse:
+
+Collapsing Lineage Output
+-------------------------
+Lineage output can be collapsed by `access`, `run` or `component`. Collapsing allows you to group all the lineage
+relations for the specified collapse type together in the lineage output. Collapsing is useful when you do not want
+to differentiate between multiple lineage relations that only differ by the collapse-type. 
+
+For example, consider a program that wrote to a dataset in multiple runs over a specified time interval. 
+If you do not want to differentiate between lineage relations involving different runs of this program 
+(so you only want to know that a program accessed a data entity in a given time interval), you could provide 
+the query parameter ``collapse=run`` to the lineage API. This would collapse the lineage relations in the 
+output to group the multiple runs of the program together. 
+
+You can also collapse lineage relations by `access` |---| which will group together those relations that 
+differ only in access types; or by `component` |---| which will group together those that differ only in 
+components together. The lineage HTTP RESTful API also allows you to use multiple `collapse` parameters in the same query.
+
+Consider these relations from the output of a lineage API request::
+
+  "relations": [
+    {
+      "accesses": [
+        "read"
+      ],
+      "components": [
+        "collector"
+      ],
+      "data": "dataset.default.purchases",
+      "program": "mapreduce.default.PurchaseHistory.PurchaseFlow",
+      "runs": [
+        "a442db61-0c2f-11e6-bc75-561602fdb525"
+      ]
+    },
+    {
+      "accesses": [
+        "read"
+      ],
+      "components": [
+        "reader"
+      ],
+      "data": "dataset.default.purchases",
+      "program": "mapreduce.default.PurchaseHistory.PurchaseFlow",
+      "runs": [
+        "a442db61-0c2f-11e6-bc75-561602fdb525"
+      ]
+    },
+    {
+      "accesses": [
+        "read"
+      ],
+      "components": [
+        "collector"
+      ],
+      "data": "dataset.default.purchases",
+      "program": "mapreduce.default.PurchaseHistory.PurchaseFlow",
+      "runs": [
+        "ae188ea2-0c2f-11e6-b499-561602fdb525"
+      ]
+    },
+    {
+      "accesses": [
+        "write"
+      ],
+      "components": [
+        "collector"
+      ],
+      "data": "dataset.default.purchases",
+      "program": "mapreduce.default.PurchaseHistory.PurchaseFlow",
+      "runs": [
+        "a442db61-0c2f-11e6-bc75-561602fdb525"
+      ]
+    },
+    {
+      "accesses": [
+        "write"
+      ],
+      "components": [
+        "collector"
+      ],
+      "data": "dataset.default.purchase",
+      "program": "mapreduce.default.PurchaseHistory.PurchaseFlow",
+      "runs": [
+        "ae188ea2-0c2f-11e6-b499-561602fdb525"
+      ]
+    }
+  ]
+
+Collapsing the above by `run` would group the runs together as::
+
+  "relations": [
+    {
+      "accesses": [
+        "read"
+      ],
+      "components": [
+        "collector"
+      ],
+      "data": "dataset.default.purchases",
+      "program": "mapreduce.default.PurchaseHistory.PurchaseFlow",
+      "runs": [
+        "a442db61-0c2f-11e6-bc75-561602fdb525",
+        "ae188ea2-0c2f-11e6-b499-561602fdb525"
+      ]
+    },
+    {
+      "accesses": [
+        "read"
+      ],
+      "components": [
+        "reader"
+      ],
+      "data": "dataset.default.purchases",
+      "program": "mapreduce.default.PurchaseHistory.PurchaseFlow",
+      "runs": [
+        "a442db61-0c2f-11e6-bc75-561602fdb525"
+      ]
+    },
+    {
+      "accesses": [
+        "write"
+      ],
+      "components": [
+        "collector"
+      ],
+      "data": "dataset.default.purchases",
+      "program": "mapreduce.default.PurchaseHistory.PurchaseFlow",
+      "runs": [
+        "a442db61-0c2f-11e6-bc75-561602fdb525",
+        "ae188ea2-0c2f-11e6-b499-561602fdb525"
+      ]
+    }
+  ]
+
+Collapsing by `access` would produce::
+
+  "relations": [
+    {
+      "accesses": [
+        "read",
+        "write"
+      ],
+      "components": [
+        "collector"
+      ],
+      "data": "dataset.default.purchases",
+      "program": "mapreduce.default.PurchaseHistory.PurchaseFlow",
+      "runs": [
+        "a442db61-0c2f-11e6-bc75-561602fdb525"
+      ]
+    },
+    {
+      "accesses": [
+        "read",
+        "write"
+      ],
+      "components": [
+        "collector"
+      ],
+      "data": "dataset.default.purchases",
+      "program": "mapreduce.default.PurchaseHistory.PurchaseFlow",
+      "runs": [
+        "ae188ea2-0c2f-11e6-b499-561602fdb525"
+      ]
+    },
+    {
+      "accesses": [
+        "read"
+      ],
+      "components": [
+        "reader"
+      ],
+      "data": "dataset.default.purchases",
+      "program": "mapreduce.default.PurchaseHistory.PurchaseFlow",
+      "runs": [
+        "a442db61-0c2f-11e6-bc75-561602fdb525"
+      ]
+    }
+  ]
+
+Similarly, collapsing by `component` will generate::
+
+  "relations": [
+    {
+      "accesses": [
+        "read"
+      ],
+      "components": [
+        "collector",
+        "reader"
+      ],
+      "data": "dataset.default.purchases",
+      "program": "mapreduce.default.PurchaseHistory.PurchaseFlow",
+      "runs": [
+        "a442db61-0c2f-11e6-bc75-561602fdb525"
+      ]
+    },
+    {
+      "accesses": [
+        "read"
+      ],
+      "components": [
+        "collector"
+      ],
+      "data": "dataset.default.purchases",
+      "program": "mapreduce.default.PurchaseHistory.PurchaseFlow",
+      "runs": [
+        "ae188ea2-0c2f-11e6-b499-561602fdb525"
+      ]
+    },
+    {
+      "accesses": [
+        "write"
+      ],
+      "components": [
+        "collector"
+      ],
+      "data": "dataset.default.purchases",
+      "program": "mapreduce.default.PurchaseHistory.PurchaseFlow",
+      "runs": [
+        "a442db61-0c2f-11e6-bc75-561602fdb525"
+      ]
+    },
+    {
+      "accesses": [
+        "write"
+      ],
+      "components": [
+        "collector"
+      ],
+      "data": "dataset.default.purchase",
+      "program": "mapreduce.default.PurchaseHistory.PurchaseFlow",
+      "runs": [
+        "ae188ea2-0c2f-11e6-b499-561602fdb525"
+      ]
+    }
+  ]
+
 
 .. _http-restful-api-metadata-run:
 

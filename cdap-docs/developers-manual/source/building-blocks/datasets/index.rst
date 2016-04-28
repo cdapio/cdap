@@ -63,6 +63,9 @@ For example, to create a DataSet named *myCounters* of type
       createDataset("myCounters", KeyValueTable.class);
       ...
 
+Names (*myCounters*) that start with an underscore (``_``) will not be visible in the home
+page of the :ref:`CDAP UI <cdap-ui>`, though they will be visible elsewhere in the CDAP UI.
+
 .. _datasets-in-programs:
 
 .. rubric:: Using Datasets in Programs

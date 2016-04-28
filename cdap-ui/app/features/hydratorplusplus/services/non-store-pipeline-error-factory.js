@@ -203,7 +203,7 @@ let hasValidSchedule = (importConfig, GLOBALS) => {
 };
 let hasValidInstance = (importConfig, GLOBALS) => {
   let isRealtimePipeline = importConfig.artifact.name === GLOBALS.etlRealtime;
-  return !isRealtimePipeline? true: importConfig.config.instance;
+  return !isRealtimePipeline? true: importConfig.config.instances;
 };
 let hasValidNodesConnections = (importConfig) => {
   if (!importConfig.config.connections) {

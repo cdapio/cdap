@@ -36,6 +36,7 @@ import com.google.common.base.Joiner;
 import com.google.common.collect.SetMultimap;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import org.apache.spark.SparkConf;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -94,6 +95,7 @@ public class ETLSpark extends AbstractSpark {
     cleanupFiles = new ArrayList<>();
     CompositeFinisher.Builder finishers = CompositeFinisher.builder();
 
+    context.setSparkConf(new SparkConf().set("spark.driver.extraJavaOptions", "-XX:MaxPermSize=256m"));
     Map<String, String> properties = context.getSpecification().getProperties();
     BatchPhaseSpec phaseSpec = GSON.fromJson(properties.get(Constants.PIPELINEID), BatchPhaseSpec.class);
     PipelinePluginInstantiator pluginInstantiator =

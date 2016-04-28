@@ -30,15 +30,18 @@ import co.cask.cdap.explore.executor.NamespacedQueryExecutorHttpHandler;
 import co.cask.cdap.explore.executor.QueryExecutorHttpHandler;
 import co.cask.cdap.explore.service.ExploreService;
 import co.cask.cdap.explore.service.ExploreServiceUtils;
+import co.cask.cdap.explore.service.hive.BaseHiveExploreService;
 import co.cask.cdap.explore.service.hive.Hive14ExploreService;
 import co.cask.cdap.format.RecordFormats;
 import co.cask.cdap.gateway.handlers.CommonHandlers;
 import co.cask.cdap.hive.datasets.DatasetStorageHandler;
 import co.cask.http.HttpHandler;
+import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.io.Files;
 import com.google.inject.Exposed;
@@ -307,6 +310,18 @@ public class ExploreRuntimeModule extends RuntimeModule {
     }
     List<String> orderedDependenciesStr = builder.build();
 
+    // These dependency files need to be copied over to spark container
+    System.setProperty(BaseHiveExploreService.SPARK_YARN_DIST_FILES,
+                       Joiner.on(',').join(Iterables.transform(orderedDependencies, new Function<File, String>() {
+                         @Override
+                         public String apply(File input) {
+                           return input.getAbsolutePath();
+                         }
+                       })));
+    LOG.debug("Setting {} to {}", BaseHiveExploreService.SPARK_YARN_DIST_FILES,
+              System.getProperty(BaseHiveExploreService.SPARK_YARN_DIST_FILES));
+
+    // These dependency files need to be copied over to hive job container
     System.setProperty(HiveConf.ConfVars.HIVEAUXJARS.toString(), Joiner.on(',').join(orderedDependenciesStr));
     LOG.debug("Setting {} to {}", HiveConf.ConfVars.HIVEAUXJARS.toString(),
               System.getProperty(HiveConf.ConfVars.HIVEAUXJARS.toString()));

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -32,6 +32,7 @@ import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.explore.service.Explore;
 import co.cask.cdap.explore.service.ExploreException;
 import co.cask.cdap.explore.service.ExploreService;
+import co.cask.cdap.explore.service.ExploreServiceUtils;
 import co.cask.cdap.explore.service.ExploreTableManager;
 import co.cask.cdap.explore.service.HandleNotFoundException;
 import co.cask.cdap.explore.service.HiveStreamRedirector;
@@ -66,7 +67,6 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.common.io.Closeables;
-import com.google.common.io.Files;
 import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.gson.Gson;
@@ -80,6 +80,7 @@ import org.apache.hadoop.hive.metastore.api.NoSuchObjectException;
 import org.apache.hadoop.hive.metastore.api.Table;
 import org.apache.hadoop.hive.ql.session.SessionState;
 import org.apache.hadoop.mapreduce.JobContext;
+import org.apache.hadoop.security.Credentials;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hive.service.auth.HiveAuthFactory;
 import org.apache.hive.service.cli.CLIService;
@@ -97,6 +98,7 @@ import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
@@ -105,8 +107,16 @@ import java.io.Reader;
 import java.lang.ref.Reference;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+import java.nio.file.attribute.FileAttribute;
+import java.nio.file.attribute.PosixFilePermission;
+import java.nio.file.attribute.PosixFilePermissions;
 import java.sql.SQLException;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -132,6 +142,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
   private static final int PREVIEW_COUNT = 5;
   private static final long METASTORE_CLIENT_CLEANUP_PERIOD = 60;
   public static final String HIVE_METASTORE_TOKEN_KEY = "hive.metastore.token.signature";
+  public static final String SPARK_YARN_DIST_FILES = "spark.yarn.dist.files";
 
   private final CConfiguration cConf;
   private final Configuration hConf;
@@ -159,6 +170,8 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
   // The following two fields are for tracking GC'ed metastore clients and be able to call close on them.
   private final Map<Reference<? extends Supplier<IMetaStoreClient>>, IMetaStoreClient> metastoreClientReferences;
   private final ReferenceQueue<Supplier<IMetaStoreClient>> metastoreClientReferenceQueue;
+
+  private final Map<String, String> sparkConf = new HashMap<>();
 
   protected abstract QueryStatus doFetchStatus(OperationHandle handle) throws HiveSQLException, ExploreException,
     HandleNotFoundException;
@@ -230,8 +243,17 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
       String hadoopAuthToken = System.getenv(UserGroupInformation.HADOOP_TOKEN_FILE_LOCATION);
       if (hadoopAuthToken != null) {
         conf.set("mapreduce.job.credentials.binary", hadoopAuthToken);
+        if ("tez".equals(conf.get("hive.execution.engine"))) {
+          // Add token file location property for tez if engine is tez
+          conf.set("tez.credentials.path", hadoopAuthToken);
+        }
       }
     }
+
+    // Since we use delegation token in HIVE, unset the SPNEGO authentication if it is
+    // enabled. Please see CDAP-3452 for details.
+    conf.unset("hive.server2.authentication.spnego.keytab");
+    conf.unset("hive.server2.authentication.spnego.principal");
     return conf;
   }
 
@@ -273,7 +295,13 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
   protected void startUp() throws Exception {
     LOG.info("Starting {}...", BaseHiveExploreService.class.getSimpleName());
 
-    cliService.init(getHiveConf());
+    HiveConf hiveConf = getHiveConf();
+    if (ExploreServiceUtils.isSparkEngine(hiveConf)) {
+      LOG.info("Engine is spark");
+      setupSparkConf();
+    }
+
+    cliService.init(hiveConf);
     cliService.start();
 
     metastoreClientsExecutorService.scheduleWithFixedDelay(
@@ -326,6 +354,33 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     }
 
     cliService.stop();
+  }
+
+  private void setupSparkConf() {
+    // Copy over hadoop configuration as spark properties since we don't localize hadoop conf dirs due to CDAP-5019
+    for (Map.Entry<String, String> entry : hConf) {
+      sparkConf.put("spark.hadoop." + entry.getKey(), hConf.get(entry.getKey()));
+    }
+
+    // don't localize config, we pass all hadoop configuration in spark properties
+    sparkConf.put("spark.yarn.localizeConfig", "false");
+
+    // Setup files to be copied over to spark containers
+    sparkConf.put(BaseHiveExploreService.SPARK_YARN_DIST_FILES,
+                  System.getProperty(BaseHiveExploreService.SPARK_YARN_DIST_FILES));
+
+    if (UserGroupInformation.isSecurityEnabled()) {
+      // define metastore token key name
+      sparkConf.put("spark.hadoop." + HIVE_METASTORE_TOKEN_KEY, HiveAuthFactory.HS2_CLIENT_TOKEN);
+
+      // tokens are already provided for spark client
+      sparkConf.put("spark.yarn.security.tokens.hive.enabled", "false");
+      sparkConf.put("spark.yarn.security.tokens.hbase.enabled", "false");
+
+      // Hive needs to ignore security settings while running spark job
+      sparkConf.put(HiveConf.ConfVars.HIVE_SERVER2_AUTHENTICATION.toString(), "NONE");
+      sparkConf.put(HiveConf.ConfVars.HIVE_SERVER2_ENABLE_DOAS.toString(), "false");
+    }
   }
 
   @Override
@@ -668,7 +723,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
 
     try {
       // Even with the "IF NOT EXISTS" in the create command, Hive still logs a non-fatal warning internally
-      // when attempting to create the "default" namsepace (since it already exists in Hive).
+      // when attempting to create the "default" namespace (since it already exists in Hive).
       // This check prevents the extra warn log.
       if (Id.Namespace.DEFAULT.equals(namespace)) {
         return QueryHandle.NO_OP;
@@ -737,6 +792,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     try {
       SessionHandle sessionHandle = null;
       OperationHandle operationHandle = null;
+      LOG.trace("Got statement: {}", statement);
       Map<String, String> sessionConf = startSession(namespace);
       try {
         sessionHandle = openHiveSession(sessionConf);
@@ -860,7 +916,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
       File previewFile = operationInfo.getPreviewFile();
       if (previewFile != null) {
         try {
-          Reader reader = Files.newReader(previewFile, Charsets.UTF_8);
+          Reader reader = com.google.common.io.Files.newReader(previewFile, Charsets.UTF_8);
           try {
             return GSON.fromJson(reader, new TypeToken<List<QueryResult>>() { }.getType());
           } finally {
@@ -925,7 +981,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     return listBuilder.build();
   }
 
-  protected void setCurrentDatabase(String dbName) throws Throwable {
+  private void setCurrentDatabase(String dbName) throws Throwable {
     SessionState.get().setCurrentDatabase(dbName);
   }
 
@@ -1057,7 +1113,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     while (count < secondsToWait) {
       try {
         datasetFramework.getInstances(Id.Namespace.DEFAULT);
-        LOG.info("Dataset service is up and running, proceding with explore upgrade.");
+        LOG.info("Dataset service is up and running, proceeding with explore upgrade.");
         return;
       } catch (Exception e) {
         count++;
@@ -1221,7 +1277,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     }
   }
 
-  private String getHiveDatabase(String namespace) {
+  private String getHiveDatabase(@Nullable String namespace) {
     // null namespace implies that the operation happens across all databases
     if (namespace == null) {
       return null;
@@ -1235,12 +1291,17 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
    * @return configuration for a hive session that contains a transaction, and serialized CDAP configuration and
    * HBase configuration. This will be used by the map-reduce tasks started by Hive.
    * @throws IOException
+   * @throws ExploreException
    */
-  protected Map<String, String> startSession() throws IOException {
+  protected Map<String, String> startSession() throws IOException, ExploreException {
     return startSession(null);
   }
 
-  protected Map<String, String> startSession(Id.Namespace namespace) throws IOException {
+  protected Map<String, String> startSession(Id.Namespace namespace) throws IOException, ExploreException {
+    if (UserGroupInformation.isSecurityEnabled()) {
+      updateTokenStore();
+    }
+
     Map<String, String> sessionConf = Maps.newHashMap();
 
     QueryHandle queryHandle = QueryHandle.generate();
@@ -1258,7 +1319,41 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     ConfigurationUtil.set(sessionConf, Constants.Explore.CCONF_KEY, CConfCodec.INSTANCE, cConf);
     ConfigurationUtil.set(sessionConf, Constants.Explore.HCONF_KEY, HConfCodec.INSTANCE, hConf);
 
+    if (ExploreServiceUtils.isSparkEngine(getHiveConf())) {
+      sessionConf.putAll(sparkConf);
+    }
     return sessionConf;
+  }
+
+  /**
+   * Updates the token store to be used for the hive job, based upon the Explore container's credentials.
+   * This is because twill doesn't update the container_tokens on upon token refresh.
+   * See: https://issues.apache.org/jira/browse/TWILL-170
+   */
+  private void updateTokenStore() throws IOException, ExploreException {
+    String hadoopTokenFileLocation = System.getenv(UserGroupInformation.HADOOP_TOKEN_FILE_LOCATION);
+    if (hadoopTokenFileLocation == null) {
+      LOG.warn("Skipping update of token store due to failure to find environment variable '{}'.",
+               UserGroupInformation.HADOOP_TOKEN_FILE_LOCATION);
+      return;
+    }
+
+    Path credentialsFile = Paths.get(hadoopTokenFileLocation);
+
+    FileAttribute<Set<PosixFilePermission>> originalPermissionAttributes =
+      PosixFilePermissions.asFileAttribute(Files.getPosixFilePermissions(credentialsFile));
+
+    Path tmpFile = Files.createTempFile(credentialsFile.getParent(), "credentials.store", null,
+                                        originalPermissionAttributes);
+    LOG.debug("Writing to temporary file: {}", tmpFile);
+
+    try (DataOutputStream os = new DataOutputStream(Files.newOutputStream(tmpFile))) {
+      Credentials credentials = UserGroupInformation.getCurrentUser().getCredentials();
+      credentials.writeTokenStorageToStream(os);
+    }
+
+    Files.move(tmpFile, credentialsFile, StandardCopyOption.ATOMIC_MOVE);
+    LOG.debug("Secure store saved to {}", credentialsFile);
   }
 
   protected QueryHandle getQueryHandle(Map<String, String> sessionConf) throws HandleNotFoundException {

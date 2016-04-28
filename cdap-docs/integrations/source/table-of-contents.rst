@@ -12,5 +12,6 @@ CDAP Integrations Table of Contents
     Introduction <index>
     Cloudera <partners/cloudera/index>
     CDAP JDBC Driver <jdbc>
+    CDAP ODBC Driver <odbc>
     Pentaho Data Integration <pentaho>
     SquirrelSQL <squirrel>
