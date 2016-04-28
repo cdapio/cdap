@@ -40,7 +40,9 @@ angular.module(PKG.name + '.feature.overview')
     myDatasetApi.list(params)
       .$promise
       .then(function(res) {
-        this.dataList = this.dataList.concat(res);
+        this.dataList = this.dataList.concat(res).filter(function(dataset) {
+          return dataset.name.indexOf('_') !== 0;
+        });
       }.bind(this));
 
     myStreamApi.list(params)
@@ -51,7 +53,9 @@ angular.module(PKG.name + '.feature.overview')
             r.type = 'Stream';
           });
 
-          this.dataList = this.dataList.concat(res);
+          this.dataList = this.dataList.concat(res).filter(function(stream) {
+            return stream.name.indexOf('_') !== 0;
+          });
         }
       }.bind(this));
     this.onFileSelected = myAppUploader.upload;
