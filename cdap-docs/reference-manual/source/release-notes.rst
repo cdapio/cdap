@@ -310,6 +310,12 @@ Bug Fixes
 - `CDAP-5652 <https://issues.cask.co/browse/CDAP-5652>`__ - Added command line interface
   command to retrieve the workflow node states.
 
+- `CDAP-5793 <https://issues.cask.co/browse/CDAP-5793>`__ - CDAP Explore jobs properly use
+  the latest/updated delegation tokens.
+
+- `CDAP-5844 <https://issues.cask.co/browse/CDAP-5844>`__ - Fixed a problem with the
+  updating of the HDFS delegation token for HA mode.
+
 Deprecated and Removed Features
 -------------------------------
 - See the :ref:`CDAP 3.4.0 Javadocs <javadocs>` for a list of deprecated and removed APIs.
