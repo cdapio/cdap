@@ -81,8 +81,11 @@ New Features
 - `CDAP-5392 <https://issues.cask.co/browse/CDAP-5392>`__ - Added support for
   ``FormatSpecification`` in Spark when consuming data from a stream.
 
-- `CDAP-5707 <https://issues.cask.co/browse/CDAP-5707>`__ - Added support for executing
-  Hive queries on Tez.
+- `CDAP-5504 <https://issues.cask.co/browse/CDAP-5504>`__ - Added experimental support for
+  using Spark as an execution engine for CDAP Explore.
+
+- `CDAP-5707 <https://issues.cask.co/browse/CDAP-5707>`__ - Added support for using Tez as
+  an execution engine for CDAP Explore.
 
 Improvements
 ------------
