@@ -22,6 +22,7 @@ Resources
 - `Cloudera Navigator <http://www.cloudera.com/products/cloudera-navigator.html>`__
 - :ref:`Real-time processing using Flows <flows-flowlets-index>`
 - :cdap-kafka-flow:`Kafka Flowlet Library <>`
+- :ref:`Overview of Audit Logging in CDAP <audit-logging>`
 
 
 Getting Started
@@ -33,9 +34,9 @@ To use the Navigator Integration App, you need CDAP version 3.3.0 (or higher) an
 
 Metadata Publishing to Kafka
 ----------------------------
-The Navigator Integration App contains a flow that subscribes to the Kafka topic to which the CDAP Metadata service publishes
-the metadata updates. Hence, before using this application, you should enable publishing of metadata updates to
-Kafka, as described in the CDAP document :ref:`Enable Metadata Update Notifications <metadata-update-notifications>`.
+The Navigator Integration App contains a flow that subscribes to the Kafka topic to which the CDAP audit logs are
+published. Hence, before using this application, you should
+:ref:`enable audit publishing <audit-logging-configuring-audit-publishing>`.
 
 
 Deploying the Application
