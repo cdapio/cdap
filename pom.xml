@@ -1812,7 +1812,8 @@
         <stage.opt.dir>${stage.dir}/opt/cdap/${package.name}</stage.opt.dir>
         <stage.lib.dir>${stage.opt.dir}/lib</stage.lib.dir>
         <stage.plugins.dir>${stage.opt.dir}/plugins</stage.plugins.dir>
-        <package.depends>--depends cdap</package.depends>
+        <package.deb.depends>--depends cdap</package.deb.depends>
+        <package.rpm.depends>--depends cdap</package.rpm.depends>
         <package.deb.arch>all</package.deb.arch>
         <package.rpm.arch>all</package.rpm.arch>
         <package.dirs>opt etc</package.dirs>
@@ -2271,7 +2272,7 @@
                       --after-remove "${project.parent.basedir}/cdap-distributions/src/rpm/scripts/postrm"
                       --iteration "${release.iteration}"
                       --depends libxml2
-                      ${package.depends}
+                      ${package.rpm.depends}
                       ${package.dirs}
                     </commandlineArgs>
                   </configuration>
@@ -2323,7 +2324,7 @@
                       --after-remove "${project.parent.basedir}/cdap-distributions/src/debian/scripts/postrm"
                       --iteration "${release.iteration}"
                       --depends libxml2-utils
-                      ${package.depends}
+                      ${package.deb.depends}
                       ${package.dirs}
                     </commandlineArgs>
                   </configuration>
