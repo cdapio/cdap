@@ -2533,7 +2533,7 @@
             </group>
             <group>
               <title>Application Template Packages</title>
-              <packages>co.cask.cdap.app.*</packages>
+              <packages>co.cask.cdap.etl.*</packages>
             </group>
           </groups>
         </configuration>
