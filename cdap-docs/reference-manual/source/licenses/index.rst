@@ -95,6 +95,65 @@ with `this license: <https://github.com/mbostock/d3/blob/master/LICENSE>`__
   NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
   EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+The library `f2j <http://icl.cs.utk.edu/f2j/index.html>`__ is included in CDAP in binary format,
+with `this license: <http://icl.cs.utk.edu/f2j/software/index.html>`__
+
+  | Copyright © 2015 The University of Tennessee. All rights reserved.
+
+  Redistribution and use in source and binary forms, with or without modification, are
+  permitted provided that the following conditions are met:
+
+  * Redistributions of source code must retain the above copyright notice, this list of
+    conditions and the following disclaimer.
+
+  * Redistributions in binary form must reproduce the above copyright notice, this list of
+    conditions and the following disclaimer listed in this license in the documentation
+    and/or other materials provided with the distribution.
+
+  * Neither the name of the copyright holders nor the names of its contributors may be
+    used to endorse or promote products derived from this software without specific prior
+    written permission.
+
+  This software is provided by the copyright holders and contributors "as is" and any
+  express or implied warranties, including, but not limited to, the implied warranties of
+  merchantability and fitness for a particular purpose are disclaimed. in no event shall
+  the copyright owner or contributors be liable for any direct, indirect, incidental,
+  special, exemplary, or consequential damages (including, but not limited to, procurement
+  of substitute goods or services; loss of use, data, or profits; or business
+  interruption) however caused and on any theory of liability, whether in contract, strict
+  liability, or tort (including negligence or otherwise) arising in any way out of the use
+  of this software, even if advised of the possibility of such damage.
+
+The library `jblas <https://github.com/mikiobraun/jblas>`__ is included in CDAP in binary format,
+with `this license: <https://github.com/mikiobraun/jblas/blob/master/COPYING>`__
+
+  | Copyright (c) 2009, Mikio L. Braun and contributors
+  | All rights reserved.
+
+  Redistribution and use in source and binary forms, with or without modification, are
+  permitted provided that the following conditions are met:
+
+  * Redistributions of source code must retain the above copyright
+    notice, this list of conditions and the following disclaimer.
+
+  * Redistributions in binary form must reproduce the above
+    copyright notice, this list of conditions and the following disclaimer in the
+    documentation and/or other materials provided with the distribution.
+
+  * Neither the name of the Technische Universität Berlin nor the
+    names of its contributors may be used to endorse or promote products derived from this
+    software without specific prior written permission.
+
+  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY
+  EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+  MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL
+  THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+  SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT
+  OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+  LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
 The library `jodd <http://jodd.org/>`__ is included in CDAP in binary format,
 with `this license: <http://jodd.org/license.html>`__
 
@@ -120,6 +179,36 @@ with `this license: <http://jodd.org/license.html>`__
   INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
   LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+The library `JSch <http://www.jcraft.com/jsch/>`__ is included in CDAP in binary format,
+with `this license: <http://www.jcraft.com/jsch/LICENSE.txt>`__
+
+  | Copyright (c) 2002-2015 Atsuhiko Yamanaka, JCraft,Inc. 
+  | All rights reserved.
+
+  Redistribution and use in source and binary forms, with or without
+  modification, are permitted provided that the following conditions are met:
+
+  1. Redistributions of source code must retain the above copyright notice,
+     this list of conditions and the following disclaimer.
+
+  2. Redistributions in binary form must reproduce the above copyright 
+     notice, this list of conditions and the following disclaimer in 
+     the documentation and/or other materials provided with the distribution.
+
+  3. The names of the authors may not be used to endorse or promote products
+     derived from this software without specific prior written permission.
+
+  THIS SOFTWARE IS PROVIDED "AS IS" AND ANY EXPRESSED OR IMPLIED WARRANTIES,
+  INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+  FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL JCRAFT,
+  INC. OR ANY CONTRIBUTORS TO THIS SOFTWARE BE LIABLE FOR ANY DIRECT, INDIRECT,
+  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+  LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA,
+  OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+  LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+  NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
+  EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 The library `js-beautify <https://github.com/beautify-web/js-beautify>`__ is included in
 CDAP in binary format, with `this license:
@@ -178,66 +267,6 @@ with `this license: <https://raw.githubusercontent.com/fusesource/leveldbjni/mas
   (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
   
-`Scala libraries <http://www.scala-lang.org/index.html>`__ are included in CDAP in binary format,
-with `this license: <http://www.scala-lang.org/license.html>`__
-
-  | Copyright (c) 2002-\ |current_year|, EPFL
-  | Copyright (c) 2011-\ |current_year|, Typesafe, Inc.
-  
-  All rights reserved.
-
-  Redistribution and use in source and binary forms, with or without
-  modification, are permitted provided that the following conditions are met:
-
-  * Redistributions of source code must retain the above copyright notice, this
-    list of conditions and the following disclaimer.
-
-  * Redistributions in binary form must reproduce the above copyright notice,
-    this list of conditions and the following disclaimer in the documentation
-    and/or other materials provided with the distribution.
-
-  * Neither the name of the EPFL nor the names of its contributors may be used to endorse
-    or promote products derived from this software without specific prior written permission.
-
-  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS “AS IS” AND ANY
-  EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
-  MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL
-  THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-  SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT
-  OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-  LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
-The library `f2j <http://icl.cs.utk.edu/f2j/index.html>`__ is included in CDAP in binary format,
-with `this license: <http://icl.cs.utk.edu/f2j/software/index.html>`__
-
-  | Copyright © 2015 The University of Tennessee. All rights reserved.
-
-  Redistribution and use in source and binary forms, with or without modification, are
-  permitted provided that the following conditions are met:
-
-  * Redistributions of source code must retain the above copyright notice, this list of
-    conditions and the following disclaimer.
-
-  * Redistributions in binary form must reproduce the above copyright notice, this list of
-    conditions and the following disclaimer listed in this license in the documentation
-    and/or other materials provided with the distribution.
-
-  * Neither the name of the copyright holders nor the names of its contributors may be
-    used to endorse or promote products derived from this software without specific prior
-    written permission.
-
-  This software is provided by the copyright holders and contributors "as is" and any
-  express or implied warranties, including, but not limited to, the implied warranties of
-  merchantability and fitness for a particular purpose are disclaimed. in no event shall
-  the copyright owner or contributors be liable for any direct, indirect, incidental,
-  special, exemplary, or consequential damages (including, but not limited to, procurement
-  of substitute goods or services; loss of use, data, or profits; or business
-  interruption) however caused and on any theory of liability, whether in contract, strict
-  liability, or tort (including negligence or otherwise) arising in any way out of the use
-  of this software, even if advised of the possibility of such damage.
-
 The library `netlib-java <https://github.com/fommil/netlib-java>`__ is included in CDAP in binary format,
 with `this license: <https://github.com/fommil/netlib-java/blob/master/LICENSE.txt>`__
 
@@ -277,30 +306,31 @@ with `this license: <https://github.com/fommil/netlib-java/blob/master/LICENSE.t
   LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-The library `jblas <https://github.com/mikiobraun/jblas>`__ is included in CDAP in binary format,
-with `this license: <https://github.com/mikiobraun/jblas/blob/master/COPYING>`__
+The `Scala libraries <http://www.scala-lang.org/index.html>`__ are included in CDAP in binary format,
+with `this license: <http://www.scala-lang.org/license.html>`__
 
-  | Copyright (c) 2009, Mikio L. Braun and contributors
-  | All rights reserved.
+  | Copyright (c) 2002-\ |current_year|, EPFL
+  | Copyright (c) 2011-\ |current_year|, Typesafe, Inc.
+  
+  All rights reserved.
 
-  Redistribution and use in source and binary forms, with or without modification, are
-  permitted provided that the following conditions are met:
+  Redistribution and use in source and binary forms, with or without
+  modification, are permitted provided that the following conditions are met:
 
-  * Redistributions of source code must retain the above copyright
-    notice, this list of conditions and the following disclaimer.
+  * Redistributions of source code must retain the above copyright notice, this
+    list of conditions and the following disclaimer.
 
-  * Redistributions in binary form must reproduce the above
-    copyright notice, this list of conditions and the following disclaimer in the
-    documentation and/or other materials provided with the distribution.
+  * Redistributions in binary form must reproduce the above copyright notice,
+    this list of conditions and the following disclaimer in the documentation
+    and/or other materials provided with the distribution.
 
-  * Neither the name of the Technische Universität Berlin nor the
-    names of its contributors may be used to endorse or promote products derived from this
-    software without specific prior written permission.
+  * Neither the name of the EPFL nor the names of its contributors may be used to endorse
+    or promote products derived from this software without specific prior written permission.
 
-  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY
+  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS “AS IS” AND ANY
   EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
   MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL
-  THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+  THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
   SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT
   OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
   INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
