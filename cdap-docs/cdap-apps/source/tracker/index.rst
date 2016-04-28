@@ -80,9 +80,9 @@ The Cask Tracker application consists of an application in CDAP with two program
 
 - ``_Tracker`` application: names begins with an underscore
 - ``AuditLog`` service: it exposes the Tracker audit log as an API
-- ``AuditLogFlow`` flow: subscribes to Kafka audit messages and stores them in the ``AuditLog``	dataset
-- ``AuditLog`` custom dataset: type ``co.cask.tracker.entity.AuditLogTable``
-- ``kafkaOffset`` dataset: type key-value table
+- ``AuditLogFlow`` flow: subscribes to Kafka audit messages and stores them in the ``_AuditLog``	dataset
+- ``_AuditLog`` custom dataset: type ``co.cask.tracker.entity.AuditLogTable``
+- ``_kafkaOffset`` dataset: type key-value table
 
 The Tracker UI is shipped with CDAP, started automatically as part of the CDAP UI, and is available at:
 
@@ -184,7 +184,7 @@ This key contains a property map with:
   - ``topic``: Kafka Topic to which CDAP audit updates are published; default is ``audit`` which
     corresponds to the default topic used in CDAP for audit log updates
   - ``numPartitions``: Number of Kafka partitions; default is set to ``10``
-  - ``offsetDataset``: Name of the dataset where Kafka offsets are stored; default is ``kafkaOffset``
+  - ``offsetDataset``: Name of the dataset where Kafka offsets are stored; default is ``_kafkaOffset``
 
 Restarting CDAP
 ---------------
@@ -306,7 +306,7 @@ specified, in addition to common time ranges (two weeks to one year).
 
 **Audit Log**
 
-The *Audit Log* tab shows each record in the *AuditLog* dataset that has been created for
+The *Audit Log* tab shows each record in the *_AuditLog* dataset that has been created for
 that particular entity, displayed in reverse chronological order. Because of how datasets
 work in CDAP, reading and writing from a flow or service to a dataset shows an access of
 "UNKNOWN" rather than indicating if it was read or write access. This will be addressed in
@@ -342,7 +342,7 @@ Details on completing this form are described in CDAP's documentation on
 Tracker HTTP RESTful API
 ========================
 
-Tracker supports searching of the *AuditLog* dataset through an HTTP RESTful API. To
+Tracker supports searching of the *_AuditLog* dataset through an HTTP RESTful API. To
 search for audit log entries for a particular dataset, stream, or stream view, submit an
 HTTP GET request::
 
