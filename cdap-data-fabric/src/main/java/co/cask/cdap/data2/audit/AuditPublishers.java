@@ -21,9 +21,13 @@ import co.cask.cdap.proto.audit.AuditPayload;
 import co.cask.cdap.proto.audit.AuditType;
 import co.cask.cdap.proto.audit.payload.access.AccessPayload;
 import co.cask.cdap.proto.id.EntityIdCompatible;
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import javax.annotation.Nullable;
 
@@ -33,6 +37,9 @@ import javax.annotation.Nullable;
 public final class AuditPublishers {
   private static final Logger LOG = LoggerFactory.getLogger(AuditPublishers.class);
   private static final AtomicBoolean WARNING_LOGGED = new AtomicBoolean(false);
+  private static final Integer ACCESS_CACHE_MAX_SIZE = 1024;
+  private static final Cache<AccessAuditInfo, Boolean> CACHE_AUDIT_LOGS =
+    CacheBuilder.newBuilder().expireAfterWrite(1L, TimeUnit.DAYS).maximumSize(ACCESS_CACHE_MAX_SIZE).build();
 
   private AuditPublishers() {}
 
@@ -49,6 +56,15 @@ public final class AuditPublishers {
     if (publisher == null) {
       logWarning();
       return;
+    }
+
+    AccessAuditInfo accessAuditInfo = new AccessAuditInfo(accessor, entityId, accessType);
+    synchronized (CACHE_AUDIT_LOGS) {
+      if (CACHE_AUDIT_LOGS.getIfPresent(accessAuditInfo) != null) {
+        // this access has already been published recently (since it is present in the cache). hence don't publish again
+        return;
+      }
+      CACHE_AUDIT_LOGS.put(accessAuditInfo, true);
     }
 
     switch (accessType) {
@@ -103,6 +119,63 @@ public final class AuditPublishers {
     if (!WARNING_LOGGED.get()) {
       LOG.warn("Audit publisher is null, audit information will not be published");
       WARNING_LOGGED.set(true);
+    }
+  }
+
+  /**
+   * Contains the accessed entity info and the access type.
+   */
+  private static class AccessAuditInfo {
+    private final EntityIdCompatible accessorEntity;
+    private final EntityIdCompatible accessedEntity;
+    private final AccessType accessType;
+
+    AccessAuditInfo(EntityIdCompatible accessorEntity, EntityIdCompatible accessedEntity, AccessType accessType) {
+      this.accessorEntity = accessorEntity;
+      this.accessedEntity = accessedEntity;
+      this.accessType = accessType;
+    }
+
+    public EntityIdCompatible getAccessorEntity() {
+      return accessorEntity;
+    }
+
+    public EntityIdCompatible getAccessedEntity() {
+      return accessedEntity;
+    }
+
+    public AccessType getAccessType() {
+      return accessType;
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(accessorEntity, accessedEntity, accessType);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      if (this == obj) {
+        return true;
+      }
+
+      if (obj == null || getClass() != obj.getClass()) {
+        return false;
+      }
+
+      AccessAuditInfo that = (AccessAuditInfo) obj;
+      return Objects.equals(accessorEntity, that.accessorEntity) &&
+        Objects.equals(accessedEntity, that.accessedEntity) &&
+        Objects.equals(accessType, that.accessType);
+    }
+
+    @Override
+    public String toString() {
+      return "AccessedEntityInfo{" +
+        "accessorEntity='" + accessorEntity + '\'' +
+        "accessedEntity='" + accessedEntity + '\'' +
+        ", accessType='" + accessType +
+        '}';
     }
   }
 }

@@ -25,8 +25,8 @@ import co.cask.cdap.proto.Id;
  */
 public class BatchClientBasedUpgradeContext extends ClientBasedUpgradeContext {
 
-  public BatchClientBasedUpgradeContext(ArtifactClient artifactClient) {
-    super(artifactClient, Id.Artifact.from(Id.Namespace.SYSTEM, "cdap-etl-batch", ETLVersion.getVersion()));
+  public BatchClientBasedUpgradeContext(Id.Namespace namespace, ArtifactClient artifactClient) {
+    super(artifactClient, Id.Artifact.from(namespace, "cdap-etl-batch", ETLVersion.getVersion()));
   }
 
 }

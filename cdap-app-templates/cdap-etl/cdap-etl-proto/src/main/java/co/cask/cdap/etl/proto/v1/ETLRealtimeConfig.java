@@ -80,7 +80,7 @@ public final class ETLRealtimeConfig extends ETLConfig
   }
 
   public Integer getInstances() {
-    return instances;
+    return instances == null ? 1 : instances;
   }
 
   @Override

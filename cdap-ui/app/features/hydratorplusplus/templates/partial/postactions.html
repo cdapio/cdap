@@ -18,16 +18,16 @@
   <!-- SIDEBAR -->
   <div class="post-actions-sidebar">
     <ul class="list-unstyled">
-      <li class="text-center active"
+      <li class="text-left active"
           ng-click="PostActionController.tabClick('OVERVIEW')"
           ng-class="{'active': PostActionController.activeTab === 'OVERVIEW' }">
         Overview
       </li>
-      <li class="text-center"
+      <li class="text-left"
           ng-repeat="action in PostActionController.postActionsList"
           ng-click="PostActionController.tabClick(action)"
           ng-class="{'active': PostActionController.activeTab.name === action.name }">
-        {{ action.name }}
+        {{ action.label }}
       </li>
     </ul>
   </div>

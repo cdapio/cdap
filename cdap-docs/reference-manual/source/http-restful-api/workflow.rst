@@ -19,7 +19,7 @@ Returned values can be specified for a particular scope, node or key.
 Obtaining a Token's Values
 --------------------------
 To get the values that were put into the workflow token for a particular run, 
-usen an HTTP GET request to the query's URL::
+use an HTTP GET request to the query's URL::
 
   GET <base-url>/namespaces/<namespace>/apps/{app-id}/workflows/{workflow-id}/runs/{run-id}[/nodes/{node-id}]/token
   
@@ -135,6 +135,103 @@ Examples
      - Retrieves the value for the key *key1* at node *MyExitNode* from the token in the scope *User* for a specific run of *MyWorkflow*
 
 
+Workflow Local Datasets
+=======================
+This interface supports listing and deleting the local datasets associated with a particular workflow run.
+
+Listing Local Datasets
+----------------------
+To retrieve the local datasets associated with a particular run, use an HTTP GET request to the query's URL::
+
+  GET <base-url>/namespaces/<namespace>/apps/<app-id>/workflows/<workflow-id>/runs/<run-id>/localdatasets
+
+where
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``<namespace>``
+     - Namespace ID
+   * - ``<app-id>``
+     - Name of the application
+   * - ``<workflow-id>``
+     - Name of the workflow
+   * - ``<run-id>``
+     - UUID of the workflow run
+
+Deleting Local Datasets
+-----------------------
+To delete the local datasets associated with a particular run, use an HTTP DELETE request to the query's URL::
+
+  DELETE <base-url>/namespaces/<namespace>/apps/<app-id>/workflows/<workflow-id>/runs/<run-id>/localdatasets
+
+where
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``<namespace>``
+     - Namespace ID
+   * - ``<app-id>``
+     - Name of the application
+   * - ``<workflow-id>``
+     - Name of the workflow
+   * - ``<run-id>``
+     - UUID of the workflow run
+
+Workflow State
+==============
+The workflow state interface allows you to retrieve the state of all nodes that were executed as
+a part of a given workflow run.
+
+To retrieve the state of a particular workflow run, use an HTTP GET request to the query's URL::
+
+  GET <base-url>/namespaces/<namespace>/apps/<app-id>/workflows/<workflow-id>/runs/<run-id>/nodes/state
+
+where
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``<namespace>``
+     - Namespace ID
+   * - ``<app-id>``
+     - Name of the application
+   * - ``<workflow-id>``
+     - Name of the workflow
+   * - ``<run-id>``
+     - UUID of the workflow run
+     
+Example
+-------
+The query::
+
+  GET <base-url>/namespaces/default/apps/Purchase/workflows/PurchaseHistoryWorkflow/runs/53280521-0ce3-11e6-873e-da6a50dd7318/nodes/state
+
+would return results similar to these, pretty-printed for display::
+
+  {
+      "PurchaseHistoryBuilder": {
+          "nodeId": "PurchaseHistoryBuilder",
+          "nodeStatus": "COMPLETED",
+          "runId": "53504da2-0ce3-11e6-92bb-da6a50dd7318"
+      },
+      "PurchaseReader": {
+          "nodeId": "PurchaseReader",
+          "nodeStatus": "COMPLETED"
+      }
+  }
+
+
 Workflow Statistics
 ===================
 These requests provide statistics across *successful* runs of a Workflow, in a time
@@ -194,8 +291,7 @@ Examples: ``now-<n>s``, ``now-<n>m``,  ``now-<n>h``, or ``now-<n>d``.
 
 Example
 -------
-The query
-::
+The query::
 
   GET <base-url>/namespaces/default/apps/Purchase/workflows/PurchaseHistoryWorkflow/statistics?
     start=1441918778&end=1442005182&percentile=80&percentile=90&percentile=95&percentile=99
@@ -299,7 +395,7 @@ If the query was successful, the body will contain a JSON structure of statistic
 
 Example
 -------
-::
+The query::
 
   GET <base-url>/namespaces/default/apps/Purchase/workflows/PurchaseHistoryWorkflow/runs/
     1873ade0-58d9-11e5-b79d-8cae4cfd0e64/statistics?limit=10&interval=10s'  

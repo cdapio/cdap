@@ -173,11 +173,7 @@ The CDAP Master log shows permissions issues.
 Ensure that ``hdfs:///${hdfs.namespace}`` and ``hdfs:///user/${hdfs.user}`` exist and are owned by ``${hdfs.user}``.
 (``hdfs.namespace`` and ``hdfs.user`` are defined in your installation's :ref:`cdap-site.xml file <packages-configuration-options>`.)
 
-In rare cases, ensure ``hdfs:///${hdfs.namespace}/tx.snapshot`` exists and is owned by
-``${hdfs.user}``, until `CDAP-3817 <https://issues.cask.co/browse/CDAP-3817>`__ is
-resolved. 
-
-In any other case, the error should show which directory it is attempting to access, such as::
+In any other cases, the error should show which directory it is attempting to access, such as::
 
   2015-10-30 22:14:27,528 - ERROR [ STARTING:...MasterServiceMain$2@452] - master.services failed with exception; restarting with back-off
   java.lang.RuntimeException: java.io.IOException: failed to copy bundle from file:/tmp/appMaster.37a86cfd....jar5052.tmp

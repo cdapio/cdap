@@ -57,6 +57,8 @@ import org.slf4j.LoggerFactory;
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
@@ -136,7 +138,9 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
     return new Runnable() {
       @Override
       public void run() {
-        for (Object resource : resources) {
+        List<Object> resourceList = new ArrayList<>(Arrays.asList(resources));
+        Collections.reverse(resourceList);
+        for (Object resource : resourceList) {
           if (resource == null) {
             continue;
           }

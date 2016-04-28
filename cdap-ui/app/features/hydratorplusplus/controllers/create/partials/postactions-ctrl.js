@@ -15,7 +15,7 @@
  */
 
 class HydratorPlusPlusPostActionsCtrl {
-  constructor(HydratorPlusPlusConfigStore, myPipelineApi, $state, HydratorPlusPlusPluginConfigFactory, uuid, HydratorPlusPlusConfigActions, myAlertOnValium, GLOBALS) {
+  constructor(HydratorPlusPlusConfigStore, myPipelineApi, $state, HydratorPlusPlusPluginConfigFactory, uuid, HydratorPlusPlusConfigActions, myAlertOnValium, GLOBALS, myHelpers) {
     this.HydratorPlusPlusConfigStore = HydratorPlusPlusConfigStore;
     this.myPipelineApi = myPipelineApi;
     this.$state = $state;
@@ -24,6 +24,7 @@ class HydratorPlusPlusPostActionsCtrl {
     this.HydratorPlusPlusConfigActions = HydratorPlusPlusConfigActions;
     this.myAlertOnValium = myAlertOnValium;
     this.GLOBALS = GLOBALS;
+
 
     this.requiredPropertyError = this.GLOBALS.en.hydrator.studio.error['GENERIC-MISSING-REQUIRED-FIELDS'];
 
@@ -41,7 +42,10 @@ class HydratorPlusPlusPostActionsCtrl {
     this.myPipelineApi.fetchPlugins(params)
       .$promise
       .then( (res) => {
-        this.postActionsList = res;
+        this.postActionsList = res.map( postaction => {
+          // Coverting the name to lowercase before lookup as we can maintain a case insensitive map in case backend wants to change from camelcase or to any other case.
+          return Object.assign({}, postaction, { label: myHelpers.objectQuery(GLOBALS.pluginTypes, 'post-run-actions', postaction.name.toLowerCase()) || postaction.name });
+        });
       });
 
     this.setState();
@@ -194,6 +198,6 @@ class HydratorPlusPlusPostActionsCtrl {
   }
 }
 
-HydratorPlusPlusPostActionsCtrl.$inject = ['HydratorPlusPlusConfigStore', 'myPipelineApi', '$state', 'HydratorPlusPlusPluginConfigFactory', 'uuid', 'HydratorPlusPlusConfigActions', 'myAlertOnValium', 'GLOBALS'];
+HydratorPlusPlusPostActionsCtrl.$inject = ['HydratorPlusPlusConfigStore', 'myPipelineApi', '$state', 'HydratorPlusPlusPluginConfigFactory', 'uuid', 'HydratorPlusPlusConfigActions', 'myAlertOnValium', 'GLOBALS', 'myHelpers'];
 angular.module(`${PKG.name}.feature.hydratorplusplus`)
   .controller('HydratorPlusPlusPostActionsCtrl', HydratorPlusPlusPostActionsCtrl);

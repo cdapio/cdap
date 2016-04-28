@@ -50,6 +50,8 @@ import javax.annotation.Nullable;
 
 /**
  * A special {@link ClassLoader} for defining and loading all cdap-spark-core classes and Spark classes.
+ *
+ * IMPORTANT: Due to discovery in CDAP-5822, don't use getResourceAsStream in this class.
  */
 public final class SparkRunnerClassLoader extends URLClassLoader {
 
@@ -145,7 +147,7 @@ public final class SparkRunnerClassLoader extends URLClassLoader {
         && !name.startsWith("co.cask.cdap.app.runtime.spark.")
         && !name.startsWith("org.apache.spark.") && !name.startsWith("org.spark-project.")
         && !name.startsWith("com.fasterxml.jackson.module.scala.")
-        && !name.startsWith("akka."))) {
+        && !name.startsWith("akka.") && !name.startsWith("com.typesafe."))) {
       return super.loadClass(name, resolve);
     }
 
@@ -156,7 +158,7 @@ public final class SparkRunnerClassLoader extends URLClassLoader {
     }
 
     // Define the class with this ClassLoader
-    try (InputStream is = getResourceAsStream(name.replace('.', '/') + ".class")) {
+    try (InputStream is = openResource(name.replace('.', '/') + ".class")) {
       if (is == null) {
         throw new ClassNotFoundException("Failed to find resource for class " + name);
       }
@@ -435,7 +437,10 @@ public final class SparkRunnerClassLoader extends URLClassLoader {
    */
   @Nullable
   private Type determineAkkaDispatcherReturnType() {
-    try (InputStream is = getResourceAsStream("akka/actor/ActorSystem.class")) {
+    try (InputStream is = openResource("akka/actor/ActorSystem.class")) {
+      if (is == null) {
+        return null;
+      }
       final AtomicReference<Type> result = new AtomicReference<>();
       ClassReader cr = new ClassReader(is);
       cr.accept(new ClassVisitor(Opcodes.ASM5) {
@@ -552,6 +557,12 @@ public final class SparkRunnerClassLoader extends URLClassLoader {
 
     byte[] byteCode = cw.toByteArray();
     return defineClass(name, byteCode, 0, byteCode.length);
+  }
+
+  @Nullable
+  private InputStream openResource(String resourceName) throws IOException {
+    URL resource = findResource(resourceName);
+    return resource == null ? null : resource.openStream();
   }
 
   /**

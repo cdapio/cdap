@@ -33,7 +33,7 @@ angular.module(PKG.name+'.feature.overview')
         controller: 'OverviewCtrl',
         controllerAs: 'OverviewCtrl',
         ncyBreadcrumb: {
-          label: 'Home'
+          skip: true
         }
       })
 

@@ -1,6 +1,6 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2015 Cask Data, Inc.
+    :copyright: Copyright © 2015-2016 Cask Data, Inc.
 
 ===================================
 CDAP Applications Table of Contents
@@ -11,4 +11,5 @@ CDAP Applications Table of Contents
 
     Introduction <index>
     Cask Hydrator and ETL <hydrator/index>
+    Cask Tracker <tracker/index>
     Data Quality Application <data-quality/index>
