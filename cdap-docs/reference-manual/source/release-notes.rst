@@ -30,7 +30,6 @@ API Changes
 -----------
 - `CDAP-5082 <https://issues.cask.co/browse/CDAP-5082>`__ - Added a new Spark Java and Scala API.
 
-
 New Features
 ------------
 - `CDAP-20 <https://issues.cask.co/browse/CDAP-20>`__ - Removed dependency on the Guava
@@ -86,11 +85,17 @@ New Features
 - `CDAP-5392 <https://issues.cask.co/browse/CDAP-5392>`__ - Added support for
   ``FormatSpecification`` in Spark when consuming data from a stream.
 
+- `CDAP-5446 <https://issues.cask.co/browse/CDAP-5446>`__ - Added an example application
+  demonstrating the use of Spark Streaming with machine-learning and spam classifying.
+
 - `CDAP-5504 <https://issues.cask.co/browse/CDAP-5504>`__ - Added experimental support for
   using Spark as an execution engine for CDAP Explore.
 
 - `CDAP-5707 <https://issues.cask.co/browse/CDAP-5707>`__ - Added support for using Tez as
   an execution engine for CDAP Explore.
+
+- `CDAP-5846 <https://issues.cask.co/browse/CDAP-5846>`__ - Bundled `Node.js
+  <https://nodejs.org/>`__ with the CDAP UI RPM and DEB packages and with the CDAP Parcels.
 
 Improvements
 ------------
@@ -348,6 +353,9 @@ Known Issues
   A workflow that is scheduled by time will not be run between the failure of the primary
   master and the time that the secondary takes over. This scheduled run will not be
   triggered at all.
+
+- `CDAP-2920 <https://issues.cask.co/browse/CDAP-2920>`__ - Spark jobs on a
+  Kerberos-enabled CDAP cluster cannot run longer than the delegation token expiration.
 
 - `CDAP-2945 <https://issues.cask.co/browse/CDAP-2945>`__ -
   If the input partition filter for a PartitionedFileSet does not match any partitions,
