@@ -207,7 +207,8 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
         localizeResources.add(new LocalizeResource(saveHConf(hConf, tempDir)));
       }
 
-      final Map<String, String> configs = createSubmitConfigs(context, tempDir, metricsConfPath, logbackJarName);
+      final Map<String, String> configs = createSubmitConfigs(context, tempDir, metricsConfPath, logbackJarName,
+                                                              contextConfig.isLocal());
       submitSpark = new Callable<ListenableFuture<RunId>>() {
         @Override
         public ListenableFuture<RunId> call() throws Exception {
@@ -365,7 +366,8 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
    * Creates the configurations for the spark submitter.
    */
   private Map<String, String> createSubmitConfigs(BasicSparkClientContext context, File localDir,
-                                                  String metricsConfPath, @Nullable String logbackJarName) {
+                                                  String metricsConfPath, @Nullable String logbackJarName,
+                                                  boolean localMode) {
     Map<String, String> configs = new HashMap<>();
 
     // Make Spark UI runs on random port. By default, Spark UI runs on port 4040 and it will do a sequential search
@@ -387,15 +389,23 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
       }
     }
 
-    String extraClassPath = Joiner.on(File.pathSeparator).join(Paths.get("$PWD", CDAP_LAUNCHER_JAR),
-                                                               Paths.get("$PWD", CDAP_SPARK_JAR, "lib", "*"));
-    if (logbackJarName != null) {
-      extraClassPath = logbackJarName + File.pathSeparator + extraClassPath;
+    // CDAP-5854: On Windows * is a reserved character which cannot be used in paths. So adding the below to
+    // classpaths will fail. Please see CDAP-5854.
+    // In local mode spark program runs under the same jvm as cdap master and these jars will already be in the
+    // classpath so adding them is not required. In non-local mode where spark driver and executors runs in a different
+    // jvm we are adding these to their classpath.
+    if (!localMode) {
+      String extraClassPath = Joiner.on(File.pathSeparator).join(Paths.get("$PWD", CDAP_LAUNCHER_JAR),
+                                                                 Paths.get("$PWD", CDAP_SPARK_JAR, "lib", "*"));
+      if (logbackJarName != null) {
+        extraClassPath = logbackJarName + File.pathSeparator + extraClassPath;
+      }
+
+      // These are system specific and shouldn't allow user to modify them
+      configs.put("spark.driver.extraClassPath", extraClassPath);
+      configs.put("spark.executor.extraClassPath", extraClassPath);
     }
 
-    // These are system specific and shouldn't allow user to modify them
-    configs.put("spark.driver.extraClassPath", extraClassPath);
-    configs.put("spark.executor.extraClassPath", extraClassPath);
     configs.put("spark.metrics.conf", metricsConfPath);
     configs.put("spark.local.dir", localDir.getAbsolutePath());
 
