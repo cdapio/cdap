@@ -77,7 +77,8 @@ gulp.task('css:app', function() {
     .pipe(plug.if('*.less', plug.less()))
     .pipe(plug.concat('app.css'))
     .pipe(plug.postcss(processor))
-    .pipe(gulp.dest('./dist/assets/bundle'));
+    .pipe(gulp.dest('./dist/assets/bundle'))
+    .pipe(plug.livereload());
 });
 
 
@@ -203,14 +204,20 @@ function getEs6Features(isNegate) {
 
 function getEs6Directives(isNegate) {
   var es6directives = [
-    (isNegate ? '!' : '') + './app/directives/dag-plus/**/*.js',
-    (isNegate ? '!' : '') + './app/directives/plugin-templates/**/*.js',
-    (isNegate ? '!' : '') + './app/directives/my-global-navbar/*.js',
-    (isNegate ? '!' : '') + './app/directives/datetime-picker/*.js',
-    (isNegate ? '!' : '') + './app/directives/datetime-range/*.js'
+    'dag-plus',
+    'plugin-templates',
+    'my-global-navbar',
+    'datetime-picker',
+    'datetime-range'
   ];
 
-  return es6directives;
+  var returnVal = [];
+  es6directives.forEach(function (directive) {
+    var path = (isNegate ? '!' : '') + './app/directives/' + directive + '/**/*.js';
+    returnVal.push(path);
+  });
+
+  return returnVal;
 }
 
 
@@ -241,7 +248,8 @@ gulp.task('watch:js:app', function() {
        footer: '\n})('+PKG+');\n'
     }))
     .pipe(plug.concat('app.js'))
-    .pipe(gulp.dest('./dist/assets/bundle'));
+    .pipe(gulp.dest('./dist/assets/bundle'))
+    .pipe(plug.livereload());
 });
 
 gulp.task('watch:js:app:babel', function() {
@@ -266,7 +274,8 @@ gulp.task('watch:js:app:babel', function() {
     }))
     .pipe(plug.concat('app.es6.js'))
     // .pipe(plug.sourcemaps.write("."))
-    .pipe(gulp.dest('./dist/assets/bundle'));
+    .pipe(gulp.dest('./dist/assets/bundle'))
+    .pipe(plug.livereload());
 });
 
 gulp.task('js:app', function() {
@@ -335,7 +344,8 @@ gulp.task('tpl', function() {
 
   )
     .pipe(plug.concat('tpl.js'))
-    .pipe(gulp.dest('./dist/assets/bundle'));
+    .pipe(gulp.dest('./dist/assets/bundle'))
+    .pipe(plug.livereload());
 });
 
 
@@ -355,7 +365,8 @@ gulp.task('polyfill', function () {
 gulp.task('html:partials', function() {
   return gulp.src('./app/features/**/*.html')
       .pipe(plug.htmlmin({ removeComments: true }))
-      .pipe(gulp.dest('./dist/assets/features'));
+      .pipe(gulp.dest('./dist/assets/features'))
+      .pipe(plug.livereload());
 });
 
 gulp.task('html:main', function() {
@@ -472,44 +483,23 @@ gulp.task('default', ['lint', 'build']);
 gulp.task('watch', ['jshint', 'watch:build'], function() {
   plug.livereload.listen();
 
-  gulp.watch('./dist/**/*')
-    .on('change', plug.livereload.changed);
-
-  gulp.watch([
+  var jsAppSource = [
     './app/**/*.js',
-    '!./app/features/workflows/**/*.js',
-    '!./app/features/hydratorplusplus/**/*.js',
-    '!./app/features/apps/**/*.js',
-    '!./app/features/search/**/*.js',
-    '!./app/features/pins/**/*.js',
-    '!./app/features/flows/**/*.js',
-    '!./app/directives/dag-plus/**/*.js',
-    '!./app/directives/plugin-templates/**/*.js',
-    '!./app/features/tracker/**/*.js',
-    '!./app/directives/my-global-navbar/**/*.js',
-    '!./app/directives/datetime-picker/*.js',
-    '!./app/directives/datetime-range/*.js',
     '!./app/**/*-test.js'
-  ], ['jshint', 'watch:js:app']);
-  gulp.watch([
-    './app/features/workflows/**/*.js',
-    './app/features/hydratorplusplus/**/*.js',
-    './app/features/apps/**/*.js',
-    './app/features/pins/**/*.js',
-    './app/features/search/**/*.js',
-    './app/features/flows/**/*.js',
-    './app/directives/dag-plus/**/*.js',
-    './app/directives/plugin-templates/**/*.js',
-    './app/features/tracker/**/*.js',
-    './app/directives/my-global-navbar/**/*.js',
-    './app/directives/datetime-picker/*.js',
-    './app/directives/datetime-range/*.js'
-  ], ['jshint', 'watch:js:app:babel']);
+  ];
+  jsAppSource = jsAppSource.concat(getEs6Features(true));
+  jsAppSource = jsAppSource.concat(getEs6Directives(true));
+
+  gulp.watch(jsAppSource, ['jshint', 'watch:js:app']);
+
+  var jsAppBabelSource = getEs6Features(false);
+  jsAppBabelSource = jsAppBabelSource.concat(getEs6Directives(false));
+  gulp.watch(jsAppBabelSource, ['jshint', 'watch:js:app:babel']);
 
   gulp.watch('./app/**/*.{less,css}', ['css']);
   gulp.watch(['./app/directives/**/*.html', './app/features/home/home.html'], ['tpl']);
   gulp.watch('./app/features/**/*.html', ['html:partials']);
-  gulp.watch('./app/img/**/*', ['img']);
-  gulp.watch('./app/index.html', ['html:main.dev']);
+  // gulp.watch('./app/img/**/*', ['img']);
+  // gulp.watch('./app/index.html', ['html:main.dev']);
 
 });
