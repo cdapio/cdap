@@ -1,0 +1,13 @@
+
+body{
+    counter-reset: section-numbering;
+}
+
+div.section h2::before {
+    counter-increment: section-numbering;
+    content: "Step " counter(section-numbering)": ";
+}
+
+div#advanced-topics.section h2:before {
+    content: ' ';
+}
