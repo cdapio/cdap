@@ -32,11 +32,11 @@ AMBARIPORT=8080
 
 # CDAP config
 # The git branch to clone
-CDAP_BRANCH='release/3.3'
+CDAP_BRANCH='release/3.4'
 # Optional tag to checkout - All released versions of this script should set this
 CDAP_TAG=''
 # The CDAP package version passed to Chef
-CDAP_VERSION='3.3.2-1'
+CDAP_VERSION='3.4.0-1'
 # The version of Chef to install
 CHEF_VERSION='12.7.2'
 # cdap-site.xml configuration parameters
