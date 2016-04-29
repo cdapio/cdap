@@ -1,7 +1,7 @@
 .. meta::
     :author: Cask Data, Inc 
     :description: Release notes for the Cask Data Application Platform
-    :copyright: Copyright © 2014-2015 Cask Data, Inc.
+    :copyright: Copyright © 2014-2016 Cask Data, Inc.
 
 :hide-nav: true
 :orphan:
@@ -26,28 +26,306 @@ Cask Data Application Platform Release Notes
 `Release 3.4.0 <http://docs.cask.co/cdap/3.4.0/index.html>`__
 =============================================================
 
+API Changes
+-----------
+- `CDAP-5082 <https://issues.cask.co/browse/CDAP-5082>`__ - Added a new Spark Java and Scala API.
+
 New Features
 ------------
-- `CDAP-9999 <https://issues.cask.co/browse/CDAP-9999>`__ - Added...
+- `CDAP-20 <https://issues.cask.co/browse/CDAP-20>`__ - Removed dependency on the Guava
+  library from the ``cdap-api`` module. Applications are now free to use a Guava library
+  version of their choice.
+
+- `CDAP-3051 <https://issues.cask.co/browse/CDAP-3051>`__ - Added capability for programs to
+  perform administrative dataset operations (create, update, truncate, drop).
+
+- `CDAP-3854 <https://issues.cask.co/browse/CDAP-3854>`__ - Added the capability to
+  configure Kafka topic for logs and notifications using the ``cdap-site.xml``.
+
+- `CDAP-3980 <https://issues.cask.co/browse/CDAP-3980>`__ - MapReduce programs submitted via CDAP
+  now support multiple configured inputs.
+
+- `CDAP-4807 <https://issues.cask.co/browse/CDAP-4807>`__ - Added an ODBC 3.0 Driver for
+  CDAP Datasets for Windows-based applications that support an ODBC interface.
+
+- `CDAP-4970 <https://issues.cask.co/browse/CDAP-4970>`__ - Added capability to fetch the
+  schema from a JDBC source specified for a Database plugin from inside Cask Hydrator.
+
+- `CDAP-5011 <https://issues.cask.co/browse/CDAP-5011>`__ - Added a CDAP extension *Cask Tracker*:
+  data discovery with metadata, audit, and lineage.
+
+- `CDAP-5146 <https://issues.cask.co/browse/CDAP-5146>`__ - Added a new Cask Hydrator
+  ``batchaggregator`` plugin type. An aggregator operates on a collection of records,
+  grouping them by a key and performing an aggregation on each group.
+
+- `CDAP-5172 <https://issues.cask.co/browse/CDAP-5172>`__ - Added support for
+  authorization extensions in CDAP. Extensions extend an ``Authorizer`` class and provide a
+  bundle jar containing all their required dependencies. This jar is then specified using
+  the property ``security.authorization.extension.jar.path`` in the ``cdap-site.xml``.
+
+- `CDAP-5191 <https://issues.cask.co/browse/CDAP-5191>`__ - Added an ``FTPBatchSource``
+  that can fetch data from an FTP server in a batch pipeline of Cask Hydrator.
+
+- `CDAP-5205 <https://issues.cask.co/browse/CDAP-5205>`__ - Added a global search across
+  all CDAP entities in the CDAP UI.
+
+- `CDAP-5274 <https://issues.cask.co/browse/CDAP-5274>`__ - The Cask Hydrator Studio now
+  includes the capability to configure a new type of pipeline, a "data pipeline" (beta
+  feature).
+
+- `CDAP-5360 <https://issues.cask.co/browse/CDAP-5360>`__ - The CDAP UI now supports
+  ``Sparksink`` and ``Sparkcompute`` plugin types, included in a new "data pipeline"
+  artifact.
+
+- `CDAP-5361 <https://issues.cask.co/browse/CDAP-5361>`__ - Added a ``SparkTransform``
+  plugin type, which allows the running of a Spark job that operates as a transform in an ETL
+  batch pipeline.
+
+- `CDAP-5362 <https://issues.cask.co/browse/CDAP-5362>`__ - Added a ``SparkSink`` plugin
+  type, which allows the running of a Spark job (such as machine learning) on the output of
+  an ETL batch pipeline.
+
+- `CDAP-5392 <https://issues.cask.co/browse/CDAP-5392>`__ - Added support for
+  ``FormatSpecification`` in Spark when consuming data from a stream.
+
+- `CDAP-5446 <https://issues.cask.co/browse/CDAP-5446>`__ - Added an example application
+  demonstrating the use of Spark Streaming with machine-learning and spam classifying.
+
+- `CDAP-5504 <https://issues.cask.co/browse/CDAP-5504>`__ - Added experimental support for
+  using Spark as an execution engine for CDAP Explore.
+
+- `CDAP-5707 <https://issues.cask.co/browse/CDAP-5707>`__ - Added support for using Tez as
+  an execution engine for CDAP Explore.
+
+- `CDAP-5846 <https://issues.cask.co/browse/CDAP-5846>`__ - Bundled `Node.js
+  <https://nodejs.org/>`__ with the CDAP UI RPM and DEB packages and with the CDAP Parcels.
 
 Improvements
 ------------
-- `CDAP-9999 <https://issues.cask.co/browse/CDAP-9999>`__ - Added...
+- `CDAP-4071 <https://issues.cask.co/browse/CDAP-4071>`__ - MapReduce programs can now be
+  configured to write metadata for each partition created using a ``DynamicPartitioner``.
+
+- `CDAP-4117 <https://issues.cask.co/browse/CDAP-4117>`__ - Fixed an issue of not using
+  the correct user account to access HDFS when submitting a YARN application through
+  Apache Twill, which caused a cleanup failure (and a confusing error message) upon
+  application termination.
+
+- `CDAP-4644 <https://issues.cask.co/browse/CDAP-4644>`__ - Workflow logs now contain logs
+  from all of the actions executed by a workflow.
+
+- `CDAP-4842 <https://issues.cask.co/browse/CDAP-4842>`__ - Added a ``hydrator-test``
+  module that contains mock plugins for unit testing Hydrator plugins.
+
+- `CDAP-4925 <https://issues.cask.co/browse/CDAP-4925>`__ - Added to the CDAP test
+  framework the ability to delete applications and artifacts, retrieve application
+  information, update an application, and write and remove properties for artifacts.
+
+- `CDAP-4955 <https://issues.cask.co/browse/CDAP-4955>`__ - Added a 'postaction' Cask
+  Hydrator plugin type that runs at the end of a pipeline run, irregardless of whether the
+  run succeeded or failed.
+
+- `CDAP-5001 <https://issues.cask.co/browse/CDAP-5001>`__ - Downloading an explore query
+  from the CDAP UI will now stream the results directly to the client.
+
+- `CDAP-5037 <https://issues.cask.co/browse/CDAP-5037>`__ - Added a configuration property
+  to Cask Hydrator TimePartitionedFileSet (TPFS) sinks that will clean out data that is
+  older than a threshold amount of time.
+
+- `CDAP-5039 <https://issues.cask.co/browse/CDAP-5039>`__ - Added runtime macros to
+  database and post-action Cask Hydrator plugins.
+
+- `CDAP-5042 <https://issues.cask.co/browse/CDAP-5042>`__ - Added a ``numSplits``
+  configuration property to Cask Hydrator database sources to allow users to configure how
+  many splits should be used for an import query.
+
+- `CDAP-5046 <https://issues.cask.co/browse/CDAP-5046>`__ - The CDAP UI now allows a
+  plugin developer to use a "textarea" in node configurations for displaying a plugin
+  property.
+
+- `CDAP-5075 <https://issues.cask.co/browse/CDAP-5075>`__ - Programs now have a
+  ``logical.start.time`` runtime argument that is populated by the system to be the start
+  time of the program. The argument can be overridden just as other runtime arguments.
+
+- `CDAP-5082 <https://issues.cask.co/browse/CDAP-5082>`__ - Added support for Spark
+  streaming (to interact with the transactional datasets in CDAP), and support for
+  concurrent Spark execution through Workflow forking.
+
+- `CDAP-5178 <https://issues.cask.co/browse/CDAP-5178>`__ - Changed the format of the Cask
+  Hydrator configuration. All pipeline stages are now together in a "stages" array instead
+  of being broken up into separate "source", "transforms", and "sinks" arrays.
+
+- `CDAP-5181 <https://issues.cask.co/browse/CDAP-5181>`__ - Added an HTTP RESTful endpoint
+  to retrieve the state of all nodes in a workflow.
+
+- `CDAP-5182 <https://issues.cask.co/browse/CDAP-5182>`__ - Added an API to retrieve the
+  properties that were used to configure (or reconfigure) a dataset.
+
+- `CDAP-5207 <https://issues.cask.co/browse/CDAP-5207>`__ - Removed dependency on Guava
+  from the ``cdap-proto`` module.
+
+- `CDAP-5228 <https://issues.cask.co/browse/CDAP-5228>`__ - Added support for CDH 5.7.
+
+- `CDAP-5330 <https://issues.cask.co/browse/CDAP-5330>`__ - The stream creation endpoint
+  now accepts a stream configuration (with TTL, description, format specification, and
+  notification threshold).
+
+- `CDAP-5376 <https://issues.cask.co/browse/CDAP-5376>`__ - Added an API for MapReduce to
+  retrieve information about the enclosing workflow, including its run ID.
+
+- `CDAP-5378 <https://issues.cask.co/browse/CDAP-5378>`__ - Added access to workflow
+  information in a Spark program when it is executed inside a workflow.
+
+- `CDAP-5424 <https://issues.cask.co/browse/CDAP-5424>`__ - Added the ability to track the
+  lineage of external sources and sinks in a Cask Hydrator pipeline.
+
+- `CDAP-5512 <https://issues.cask.co/browse/CDAP-5512>`__ - Extended the workflow APIs to
+  allow the use of plugins.
+  
+- `CDAP-5664 <https://issues.cask.co/browse/CDAP-5664>`__ - Introduced a ``referenceName``
+  property (used for lineage and annotation metadata) into all external sources and sinks.
+  This needs to be set before using any of these plugins.
+
+- `CDAP-5779 <https://issues.cask.co/browse/CDAP-5779>`__ - Upgraded the Tephra version in
+  CDAP to 0.7.1.
 
 Bug Fixes
 ---------
-- `CDAP-9999 <https://issues.cask.co/browse/CDAP-9999>`__ - Fixed a problem with...
+- `CDAP-3498 <https://issues.cask.co/browse/CDAP-3498>`__ - Upgraded CDAP to use
+  Apache Twill ``0.7.0-incubating`` with numerous new features, improvements, and bug
+  fixes. See the `Apache Twill release notes
+  <http://twill.incubator.apache.org/releases/0.7.0-incubating.html>`__ for details.
 
-API Changes
------------
-- `CDAP-9999 <https://issues.cask.co/browse/CDAP-9999>`__ - Added...
+- `CDAP-3584 <https://issues.cask.co/browse/CDAP-3584>`__ - Upon transaction rollback, a
+  ``PartitionedFileSet`` now rolls back the files for the partitions that were added and/or
+  removed in that transaction.
+
+- `CDAP-3749 <https://issues.cask.co/browse/CDAP-3749>`__ - Fixed a bug with the database
+  plugins that required a password to be specified if the user was specified, even if the
+  password was empty.
+
+- `CDAP-4060 <https://issues.cask.co/browse/CDAP-4060>`__ - Added the status for custom
+  actions in workflow diagrams.
+
+- `CDAP-4143 <https://issues.cask.co/browse/CDAP-4143>`__ - Fixed a problem with the
+  database source where a semicolon at the end of the query would cause an error.
+
+- `CDAP-4692 <https://issues.cask.co/browse/CDAP-4692>`__ - The CDAP UI now prevents users
+  from accidentally losing their DAG by showing a browser-native popup for a confirmation
+  before navigating away from the Cask Hydrator Studio view.
+
+- `CDAP-4695 <https://issues.cask.co/browse/CDAP-4695>`__ - Fixed an issue in the Windows
+  CDAP SDK where streams could not be deleted.
+
+- `CDAP-4735 <https://issues.cask.co/browse/CDAP-4735>`__ - Fixed an issue that made Java
+  extensions unavailable to programs, fixing the JavaScript-based Hydrator transforms under Java 8.
+
+- `CDAP-4908 <https://issues.cask.co/browse/CDAP-4908>`__ - Removed ``tableName`` as a
+  required setting from database sources, since the ``importQuery`` is sufficient.
+
+- `CDAP-4921 <https://issues.cask.co/browse/CDAP-4921>`__ - Renamed the Hydrator
+  ``Teradata`` batch source to ``Database``. The previous ``Database`` source is no longer
+  supported.
+
+- `CDAP-4982 <https://issues.cask.co/browse/CDAP-4982>`__ - Changed the Cask Hydrator
+  LogParser transform ``logFormat`` field from a textbox to a dropdown.
+
+- `CDAP-5041 <https://issues.cask.co/browse/CDAP-5041>`__ - Changed several
+  ``ExploreConnection`` methods to be no-ops instead of throwing exceptions.
+
+- `CDAP-5062 <https://issues.cask.co/browse/CDAP-5062>`__ - Added a ``fetch.size``
+  connection setting to the JDBC driver to control the number of rows fetched per database
+  cursor, and increased the default fetch size from 50 to 1000.
+
+- `CDAP-5092 <https://issues.cask.co/browse/CDAP-5092>`__ - Fixed a problem that prevented
+  applications written in Scala from being deployed.
+
+- `CDAP-5103 <https://issues.cask.co/browse/CDAP-5103>`__ - Fixed a problem so that when the
+  schema for a view was not explicitly specified, the view system metadata will include the
+  default schema for the specified format if that is available.
+
+- `CDAP-5131 <https://issues.cask.co/browse/CDAP-5131>`__ - Fixed a problem when filtering
+  plugins by their extension plugin type; filtering by the extensions plugin type was
+  returning extra results for any plugins that did not have an extension.
+
+- `CDAP-5177 <https://issues.cask.co/browse/CDAP-5177>`__ - Fixed a problem with
+  PartitionConsumer not appropriately handling partitions that had been deleted since they
+  were added to the working set.
+
+- `CDAP-5241 <https://issues.cask.co/browse/CDAP-5241>`__ - Fixed a problem with metadata
+  for a dataset not being deleted when a dataset was deleted.
+
+- `CDAP-5267 <https://issues.cask.co/browse/CDAP-5267>`__ - Fixed a problem with the
+  ``PartitionFilter.ALWAYS_MATCH`` not working as an input partition filter.
+  ``PartitionFilter`` is now serialized into one key of the runtime arguments, to support
+  serialization of ``PartitionFilter.ALWAYS_MATCH``. If there are additional fields in the
+  ``PartitionFilter`` that do not exist in the partitioning, the filter will then never match.
+
+- `CDAP-5272 <https://issues.cask.co/browse/CDAP-5272>`__ - Fixed a problem with a null
+  pointer exception when null values were written to a database sink in Cask Hydrator.
+
+- `CDAP-5280 <https://issues.cask.co/browse/CDAP-5280>`__ - Corrected the documentation of
+  the Query HTTP RESTful API for the retrieving of the status of a query.
+
+- `CDAP-5297 <https://issues.cask.co/browse/CDAP-5297>`__ - Fixed a problem with the CDAP
+  UI not supporting pipelines created using previous versions of Cask Hydrator. The UI now
+  shows appropriate information to upgrade the pipeline to be able to view it in the UI.
+
+- `CDAP-5417 <https://issues.cask.co/browse/CDAP-5417>`__ - Fixed an issue with running
+  the CDAP examples in the CDAP SDK under Windows by setting appropriate memory requirements
+  in the ``cdap.bat`` start script.
+
+- `CDAP-5460 <https://issues.cask.co/browse/CDAP-5460>`__ - Fixed a problem with the
+  workflow Spark programs status not being updated in the CDAP UI on the program list
+  screen when it is run as a part of Workflow.
+
+- `CDAP-5463 <https://issues.cask.co/browse/CDAP-5463>`__ - Fixed an issue when changing
+  the number of instances of a worker or service.
+
+- `CDAP-5513 <https://issues.cask.co/browse/CDAP-5513>`__ - Fixed a problem with the
+  update of metadata indexes so that search results reflect metadata updates correctly.
+
+- `CDAP-5550 <https://issues.cask.co/browse/CDAP-5550>`__ - Fixed a problem with the
+  workflow statistics HTTP RESTful endpoint. The endpoint now has a default limit of 10 and
+  a default interval of 10 seconds.
+
+- `CDAP-5557 <https://issues.cask.co/browse/CDAP-5557>`__ - Fixed a problem of not showing
+  an appropriate error message in the node configuration when the CDAP backend returns 404
+  for a plugin property.
+
+- `CDAP-5583 <https://issues.cask.co/browse/CDAP-5583>`__ - Added the ability to support
+  multiple sources in the CDAP UI while constructing a pipeline.
+
+- `CDAP-5619 <https://issues.cask.co/browse/CDAP-5619>`__ - Fixed a problem with the
+  import of a pipeline configuration. If the imported pipeline config doesn't have
+  artifact information for a plugin, the CDAP UI now defaults to the latest artifact from
+  the list of artifacts sent by the backend.
+
+- `CDAP-5629 <https://issues.cask.co/browse/CDAP-5629>`__ - Fixed a problem with losing
+  metadata after changing the stream format on a MapR cluster by avoiding the use of Hive
+  keywords in the CLF format field names; the 'date' field was renamed to 'request_time'.
+
+- `CDAP-5634 <https://issues.cask.co/browse/CDAP-5634>`__ - Fixed a performance issue when
+  rendering/scrolling through large input or output schemas for a plugin in the CDAP UI.
+
+- `CDAP-5652 <https://issues.cask.co/browse/CDAP-5652>`__ - Added command line interface
+  command to retrieve the workflow node states.
+
+- `CDAP-5793 <https://issues.cask.co/browse/CDAP-5793>`__ - CDAP Explore jobs properly use
+  the latest/updated delegation tokens.
+
+- `CDAP-5844 <https://issues.cask.co/browse/CDAP-5844>`__ - Fixed a problem with the
+  updating of the HDFS delegation token for HA mode.
 
 Deprecated and Removed Features
 -------------------------------
 - See the :ref:`CDAP 3.4.0 Javadocs <javadocs>` for a list of deprecated and removed APIs.
 
-- `CDAP-9999 <https://issues.cask.co/browse/CDAP-9999>`__ - Removed...
-
+- As of *CDAP v3.4.0*, *Metadata Update Notifications* have been deprecated, pending
+  removal in a later version. The :ref:`CDAP Audit Notifications <audit-logging>` contain
+  notifications for metadata changes. Please change all uses of *Metadata Update
+  Notifications* to consume only those messages from the audit feed that have the ``type``
+  field set to ``METADATA_CHANGE``.
+ 
 Known Issues
 ------------
 - After upgrading CDAP from a pre-3.0 version, any unprocessed metrics data in Kafka will
@@ -85,6 +363,9 @@ Known Issues
   master and the time that the secondary takes over. This scheduled run will not be
   triggered at all.
 
+- `CDAP-2920 <https://issues.cask.co/browse/CDAP-2920>`__ - Spark jobs on a
+  Kerberos-enabled CDAP cluster cannot run longer than the delegation token expiration.
+
 - `CDAP-2945 <https://issues.cask.co/browse/CDAP-2945>`__ -
   If the input partition filter for a PartitionedFileSet does not match any partitions,
   MapReduce jobs can fail.
@@ -115,8 +396,17 @@ Known Issues
   If a table schema contains a field name that is a reserved word in the Hive DDL, ``'enable explore'`` fails.
 
 
-`Release 3.3.2 <http://docs.cask.co/cdap/3.3.2/index.html>`__
+`Release 3.3.3 <http://docs.cask.co/cdap/3.3.3/index.html>`__
+=============================================================
 
+Bug Fix
+-------
+
+- `CDAP-5350 <https://issues.cask.co/browse/CDAP-5350>`__ - Fixed an issue that prevented
+  MapReduce programs from running on clusters with encryption.
+
+
+`Release 3.3.2 <http://docs.cask.co/cdap/3.3.2/index.html>`__
 =============================================================
 
 Improvements
@@ -2624,14 +2914,6 @@ Bug Fixes
   
 - Added a recommended version (v.12.0) of Node.js to the documentation
   (`CDAP-2762 <https://issues.cask.co/browse/CDAP-2762>`__).
-  
-
-API Changes
------------
-
-
-Deprecated and Removed Features
--------------------------------
 
 
 .. _known-issues-301:

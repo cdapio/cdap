@@ -1298,10 +1298,6 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
   }
 
   protected Map<String, String> startSession(Id.Namespace namespace) throws IOException, ExploreException {
-    if (UserGroupInformation.isSecurityEnabled()) {
-      updateTokenStore();
-    }
-
     Map<String, String> sessionConf = Maps.newHashMap();
 
     QueryHandle queryHandle = QueryHandle.generate();
@@ -1322,6 +1318,14 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     if (ExploreServiceUtils.isSparkEngine(getHiveConf())) {
       sessionConf.putAll(sparkConf);
     }
+
+    if (UserGroupInformation.isSecurityEnabled()) {
+      // make sure RM does not cancel delegation tokens after the query is run
+      sessionConf.put("mapreduce.job.complete.cancel.delegation.tokens", "false");
+      // refresh delegations for the job - TWILL-170
+      updateTokenStore();
+    }
+
     return sessionConf;
   }
 

@@ -55,7 +55,9 @@ Downloading and Distributing Packages
 +----------------+-------------------------------+
 | CDAP Series    | MapR Distributions            |
 +================+===============================+
-| CDAP 3.3.x     | MapR 4.1, MapR 5.0            |
+| CDAP 3.4.x     | MapR 4.1, MapR 5.0, MapR 5.1  |
++----------------+-------------------------------+
+| CDAP 3.3.x     | MapR 4.1, MapR 5.0, MapR 5.1  |
 +----------------+-------------------------------+
 | CDAP 3.2.x     | MapR 4.1, MapR 5.0            |
 +----------------+-------------------------------+
@@ -63,7 +65,6 @@ Downloading and Distributing Packages
 +----------------+-------------------------------+
 
 .. _mapr-compatibility-matrix-end:
-
 
 Preparing Package Managers
 --------------------------
