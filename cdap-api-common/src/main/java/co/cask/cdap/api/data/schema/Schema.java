@@ -704,8 +704,8 @@ public final class Schema implements Serializable {
       return new ImmutableEntry<>(null, null);
     }
 
-    Map<V, Integer> forwardMap = new HashMap<>();
-    Map<Integer, V> reverseMap = new HashMap<>();
+    Map<V, Integer> forwardMap = new LinkedHashMap<>();
+    Map<Integer, V> reverseMap = new LinkedHashMap<>();
     int idx = 0;
     for (V value : values) {
       forwardMap.put(value, idx);
