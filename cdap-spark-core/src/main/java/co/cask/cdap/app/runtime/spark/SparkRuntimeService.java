@@ -366,7 +366,9 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
    * Creates the configurations for the spark submitter.
    */
   private Map<String, String> createSubmitConfigs(BasicSparkClientContext context, File localDir,
-                                                  String metricsConfPath, @Nullable String logbackJarName, boolean local) {
+                                                  String metricsConfPath, @Nullable String logbackJarName, 
+                                                  boolean local) {
+
     Map<String, String> configs = new HashMap<>();
 
     // Make Spark UI runs on random port. By default, Spark UI runs on port 4040 and it will do a sequential search
