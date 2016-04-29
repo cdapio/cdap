@@ -42,7 +42,7 @@ my-dag-plus {
       border: 0;
       background-color: @table-bg;
 
-      &.normal-cursor #dag-container *{
+      &.normal-cursor #dag-container * {
         cursor: default;
       }
 
@@ -62,7 +62,8 @@ my-dag-plus {
       height: 66px;
       width: 105px;
       &.selected {
-        &.realtimesource, &.batchsource {
+        &.realtimesource,
+        &.batchsource {
           .node {
             background-color: #48c038;
             border-width: 6px;
@@ -74,13 +75,16 @@ my-dag-plus {
             border-width: 6px;
           }
         }
-        &.realtimesink, &.batchsink, &.sparksink {
+        &.realtimesink,
+        &.batchsink,
+        &.sparksink {
           .node {
             background-color: #8367df;
             border-width: 6px;
           }
         }
-        .icon.fa, .fa.fa-close {
+        .icon.fa,
+        .fa.fa-close {
           color: white;
         }
         .icon.fa {
@@ -100,13 +104,15 @@ my-dag-plus {
         .transition(background-color 50ms linear);
         .transition(color 50ms linear);
         background-clip: border-box;
-        &:hover, &:focus {
+        &:hover,
+        &:focus {
           .fa.fa-close {
             .opacity(1);
           }
         }
       }
-      &.realtimesource, &.batchsource {
+      &.realtimesource,
+      &.batchsource {
         color: #48c038;
         left: 10vw;
         .node {
@@ -120,7 +126,9 @@ my-dag-plus {
           border: 3px solid #4586f3;
         }
       }
-      &.realtimesink, &.batchsink, &.sparksink {
+      &.realtimesink,
+      &.batchsink,
+      &.sparksink {
         color: #8367df;
         left: 50vw;
         .node {
@@ -128,7 +136,8 @@ my-dag-plus {
         }
       }
 
-      .icon.fa, .fa.fa-close {
+      .icon.fa,
+      .fa.fa-close {
         cursor: pointer;
 
       }
@@ -275,7 +284,8 @@ my-dag-plus {
       vertical-align: middle;
       .border-radius(1px);
       .box-shadow(0 0 0 3px fade(black, 20%));
-      &:hover, &:focus {
+      &:hover,
+      &:focus {
         background-color: #4f5464;
         color: white;
       }
@@ -296,12 +306,15 @@ my-dag-plus {
     padding-left: 20px;
   }
 }
+
 .badge-warning {
   background-color: @brand-warning;
 }
+
 .badge-error {
   background-color: @brand-danger;
 }
+
 .theme-cdap {
   .tooltip-warning {
     &.tooltip {
@@ -363,12 +376,13 @@ my-dag-plus {
         border-left: 1px solid @table-border-color;
         margin-top: 0;
         margin-bottom: 0;
-        th, td {
+        th,
+        td {
           border-left: 0;
         }
         th {
           border-bottom: 1px solid @table-border-color;
-          color: #5F6674;
+          color: #5f6674;
           font-size: 13px;
           font-weight: 500;
         }

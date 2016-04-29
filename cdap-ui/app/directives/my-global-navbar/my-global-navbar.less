@@ -43,7 +43,8 @@ my-global-navbar {
       }
     }
 
-    .menu-item, .navbar-item {
+    .menu-item,
+    .navbar-item {
       display: inline-block;
       line-height: @navbar-height;
       height: @navbar-height;
@@ -66,7 +67,10 @@ my-global-navbar {
         color: #cccccc;
         text-decoration: none;
         font-size: 14px;
-        &:hover, &:focus { background-color: inherit; }
+        &:hover,
+        &:focus {
+          background-color: inherit;
+        }
       }
     }
 
@@ -130,7 +134,7 @@ my-global-navbar {
     }
     // TODO: Look into switching this to behave like the Settings uib dropdown
     .popover.bottom > .arrow {
-      border-bottom-color: #999;
+      border-bottom-color: #999999;
     }
   }
 
@@ -175,8 +179,8 @@ my-global-navbar {
       .brand {
         height: @navbar-height;
 
-        .brand-icon, .product-name {
-          display: inline-block;
+        .brand-icon,
+        .product-name {
           float: left;
         }
 
@@ -204,7 +208,8 @@ my-global-navbar {
   .brand-header .navbar-brand { border-color: @border-product-color; }
   .navbar-list {
     a {
-      &:hover, &.active {
+      &:hover,
+      &.active {
         color: @active-link-color;
       }
     }

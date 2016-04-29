@@ -17,7 +17,8 @@
 @import "../../styles/variables.less";
 @import "../../styles/themes/cdap/mixins.less";
 
-my-flow-graph, my-workflow-graph {
+my-flow-graph,
+my-workflow-graph {
   .diagram-container div.tooltip .tooltip-inner {
     max-width: 250px;
   }
@@ -44,7 +45,7 @@ my-flow-graph {
   }
 
   .node rect {
-    stroke: #999;
+    stroke: #999999;
     fill: white;
     stroke-width: 1.5px;
   }
@@ -96,7 +97,7 @@ my-flow-graph {
   }
 
   .flowlet-instances {
-    fill: #01ABED;
+    fill: #01abed;
     stroke: @cdap-darkness;
     stroke-width: 2px;
   }
@@ -140,7 +141,7 @@ my-workflow-graph {
   }
 
   .node rect {
-    stroke: #999;
+    stroke: #999999;
     fill: white;
     stroke-width: 1.5px;
   }
@@ -161,7 +162,10 @@ my-workflow-graph {
       cursor: not-allowed;
     }
 
-    &.running, &.failed, &.completed, &.killed {
+    &.running,
+    &.failed,
+    &.completed,
+    &.killed {
       cursor: pointer;
 
       + .label text {
@@ -187,7 +191,8 @@ my-workflow-graph {
     }
   }
 
-  .end-svg, .start-svg {
+  .end-svg,
+  .start-svg {
     stroke-width: 7px;
     fill: white;
   }
