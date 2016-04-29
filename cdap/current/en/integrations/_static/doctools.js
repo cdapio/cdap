@@ -269,7 +269,11 @@ function anchor_scroll(hash){
     $('html, body').animate({ scrollTop: toPosition });
     // Update URL in browser
     if(history && "pushState" in history) {
-      history.pushState({}, document.title, window.location.pathname + "#" + hash);
+      try {
+        history.pushState({}, document.title, window.location.pathname + "#" + hash);
+      } catch (e) {
+        console.log("Unable to set history for: " + document.title);
+      }
     }
   }
 }
