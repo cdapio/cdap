@@ -1250,10 +1250,6 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
   }
 
   protected Map<String, String> startSession(Id.Namespace namespace) throws IOException, ExploreException {
-    if (UserGroupInformation.isSecurityEnabled()) {
-      updateTokenStore();
-    }
-
     Map<String, String> sessionConf = Maps.newHashMap();
 
     QueryHandle queryHandle = QueryHandle.generate();
@@ -1270,6 +1266,13 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     ConfigurationUtil.set(sessionConf, Constants.Explore.TX_QUERY_KEY, TxnCodec.INSTANCE, tx);
     ConfigurationUtil.set(sessionConf, Constants.Explore.CCONF_KEY, CConfCodec.INSTANCE, cConf);
     ConfigurationUtil.set(sessionConf, Constants.Explore.HCONF_KEY, HConfCodec.INSTANCE, hConf);
+
+    if (UserGroupInformation.isSecurityEnabled()) {
+      // make sure RM does not cancel delegation tokens after the query is run
+      sessionConf.put("mapreduce.job.complete.cancel.delegation.tokens", "false");
+      // refresh delegations for the job - TWILL-170
+      updateTokenStore();
+    }
 
     return sessionConf;
   }
