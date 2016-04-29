@@ -16,7 +16,7 @@
 
 package co.cask.cdap.app.runtime;
 
-import co.cask.cdap.app.program.Program;
+import co.cask.cdap.app.program.ProgramDescriptor;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramLiveInfo;
 import co.cask.cdap.proto.ProgramType;
@@ -49,11 +49,11 @@ public interface ProgramRuntimeService extends Service {
   /**
    * Starts the given program and return a {@link RuntimeInfo} about the running program.
    *
-   * @param program A {@link Program} to run.
+   * @param programDescriptor describing the program to run
    * @param options {@link ProgramOptions} that are needed by the program.
    * @return A {@link ProgramController} for the running program.
    */
-  RuntimeInfo run(Program program, ProgramOptions options);
+  RuntimeInfo run(ProgramDescriptor programDescriptor, ProgramOptions options);
 
   /**
    * Find the {@link RuntimeInfo} for a running program with the given {@link RunId}.

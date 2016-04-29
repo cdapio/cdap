@@ -25,6 +25,7 @@ import co.cask.cdap.ScheduleAppWithMissingWorkflow;
 import co.cask.cdap.WorkflowApp;
 import co.cask.cdap.WorkflowSchedulesWithSameNameApp;
 import co.cask.cdap.app.program.Program;
+import co.cask.cdap.app.program.ProgramDescriptor;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
@@ -93,14 +94,15 @@ public class WorkflowTest {
     final Injector injector = AppFabricTestHelper.getInjector();
     ProgramRunnerFactory runnerFactory = injector.getInstance(ProgramRunnerFactory.class);
 
-    final Program program = Iterators.filter(app.getPrograms().iterator(), new Predicate<Program>() {
-      @Override
-      public boolean apply(Program input) {
-        return input.getType() == ProgramType.WORKFLOW;
-      }
-    }).next();
+    final ProgramDescriptor programDescriptor = Iterators.filter(
+      app.getPrograms().iterator(), new Predicate<ProgramDescriptor>() {
+        @Override
+        public boolean apply(ProgramDescriptor input) {
+          return input.getProgramId().getType() == ProgramType.WORKFLOW;
+        }
+      }).next();
 
-    ProgramRunner programRunner = runnerFactory.create(program.getType());
+    ProgramRunner programRunner = runnerFactory.create(programDescriptor.getProgramId().getType());
     String inputPath = createInput();
     String outputPath = new File(tmpFolder.newFolder(), "output").getAbsolutePath();
     final String runId = RunIds.generate().getId();
@@ -109,6 +111,8 @@ public class WorkflowTest {
       ProgramOptionConstants.HOST, InetAddress.getLoopbackAddress().getCanonicalHostName()
     ));
     BasicArguments userArgs = new BasicArguments(ImmutableMap.of("inputPath", inputPath, "outputPath", outputPath));
+    final Program program = AppFabricTestHelper.createProgram(programDescriptor, app.getArtifactLocation(),
+                                                              programRunner, TEMP_FOLDER_SUPPLIER);
     ProgramOptions options = new SimpleProgramOptions(program.getName(), systemArgs, userArgs);
 
     final SettableFuture<String> completion = SettableFuture.create();
@@ -212,19 +216,23 @@ public class WorkflowTest {
     final Injector injector = AppFabricTestHelper.getInjector();
     ProgramRunnerFactory runnerFactory = injector.getInstance(ProgramRunnerFactory.class);
 
-    final Program program = Iterators.filter(app.getPrograms().iterator(), new Predicate<Program>() {
-      @Override
-      public boolean apply(Program input) {
-        return input.getType() == ProgramType.WORKFLOW;
-      }
-    }).next();
+    final ProgramDescriptor programDescriptor = Iterators.filter(
+      app.getPrograms().iterator(), new Predicate<ProgramDescriptor>() {
+        @Override
+        public boolean apply(ProgramDescriptor input) {
+          return input.getProgramId().getType() == ProgramType.WORKFLOW;
+        }
+      }).next();
 
-    ProgramRunner programRunner = runnerFactory.create(program.getType());
+    ProgramRunner programRunner = runnerFactory.create(programDescriptor.getProgramId().getType());
     final String runId = RunIds.generate().getId();
     BasicArguments systemArgs = new BasicArguments(ImmutableMap.of(
       ProgramOptionConstants.RUN_ID, runId,
       ProgramOptionConstants.HOST, InetAddress.getLoopbackAddress().getCanonicalHostName()
     ));
+
+    final Program program = AppFabricTestHelper.createProgram(programDescriptor, app.getArtifactLocation(),
+                                                              programRunner, TEMP_FOLDER_SUPPLIER);
     ProgramOptions options = new SimpleProgramOptions(program.getName(), systemArgs, new BasicArguments());
 
     final SettableFuture<String> completion = SettableFuture.create();

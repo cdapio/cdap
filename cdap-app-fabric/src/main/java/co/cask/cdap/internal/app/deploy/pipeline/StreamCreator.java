@@ -19,36 +19,35 @@ package co.cask.cdap.internal.app.deploy.pipeline;
 import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.NamespaceId;
 
 import java.util.Properties;
 
 /**
  * Creates streams.
  */
-public class StreamCreator {
+final class StreamCreator {
 
-  private final Id.Namespace namespace;
   private final StreamAdmin streamAdmin;
 
-  public StreamCreator(Id.Namespace namespace, StreamAdmin streamAdmin) {
-    this.namespace = namespace;
+  StreamCreator(StreamAdmin streamAdmin) {
     this.streamAdmin = streamAdmin;
   }
 
   /**
    * Create the given streams and the Hive tables for the streams if explore is enabled.
    *
+   * @param namespaceId the namespace to have the stream created in
    * @param streamSpecs the set of stream specifications for streams to be created
    * @throws Exception if there was an exception creating a stream
    */
-  public void createStreams(Iterable<StreamSpecification> streamSpecs) throws Exception {
+  void createStreams(NamespaceId namespaceId, Iterable<StreamSpecification> streamSpecs) throws Exception {
     for (StreamSpecification spec : streamSpecs) {
       Properties props = new Properties();
       if (spec.getDescription() != null) {
         props.put(Constants.Stream.DESCRIPTION, spec.getDescription());
       }
-      streamAdmin.create(Id.Stream.from(namespace, spec.getName()), props);
+      streamAdmin.create(namespaceId.stream(spec.getName()).toId(), props);
     }
   }
 }

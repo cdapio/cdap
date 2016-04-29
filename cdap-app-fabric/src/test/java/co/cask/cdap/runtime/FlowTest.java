@@ -26,6 +26,7 @@ import co.cask.cdap.api.metrics.MetricDataQuery;
 import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.api.metrics.MetricTimeSeries;
 import co.cask.cdap.app.program.Program;
+import co.cask.cdap.app.program.ProgramDescriptor;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.app.runtime.ProgramRunnerFactory;
@@ -126,12 +127,13 @@ public class FlowTest {
 
     // Only running flow is good. But, in case of service, we need to send something to service as it's lazy loading
     List<ProgramController> controllers = Lists.newArrayList();
-    for (final Program program : app.getPrograms()) {
-      ProgramRunner runner = runnerFactory.create(program.getType());
+    for (ProgramDescriptor programDescriptor : app.getPrograms()) {
+      ProgramRunner runner = runnerFactory.create(programDescriptor.getProgramId().getType());
       BasicArguments systemArgs = new BasicArguments(ImmutableMap.of(ProgramOptionConstants.RUN_ID,
                                                                      RunIds.generate().getId()));
       BasicArguments userArgs = new BasicArguments(ImmutableMap.of("arg", "test"));
-
+      Program program = AppFabricTestHelper.createProgram(programDescriptor, app.getArtifactLocation(),
+                                                          runner, TEMP_FOLDER_SUPPLIER);
       controllers.add(runner.run(program, new SimpleProgramOptions(program.getName(), systemArgs, userArgs)));
     }
 
@@ -165,14 +167,16 @@ public class FlowTest {
 
     List<ProgramController> controllers = Lists.newArrayList();
 
-    for (final Program program : app.getPrograms()) {
+    for (ProgramDescriptor programDescriptor : app.getPrograms()) {
       // running mapreduce is out of scope of this tests (there's separate unit-test for that)
-      if (program.getType() == ProgramType.MAPREDUCE) {
+      if (programDescriptor.getProgramId().getType() == ProgramType.MAPREDUCE) {
         continue;
       }
-      ProgramRunner runner = runnerFactory.create(program.getType());
+      ProgramRunner runner = runnerFactory.create(programDescriptor.getProgramId().getType());
       BasicArguments systemArgs = new BasicArguments(ImmutableMap.of(ProgramOptionConstants.RUN_ID,
                                                                      RunIds.generate().getId()));
+      Program program = AppFabricTestHelper.createProgram(programDescriptor, app.getArtifactLocation(),
+                                                          runner, TEMP_FOLDER_SUPPLIER);
       controllers.add(runner.run(program, new SimpleProgramOptions(program.getName(), systemArgs,
                                                                    new BasicArguments())));
     }
@@ -182,7 +186,7 @@ public class FlowTest {
     TransactionSystemClient txSystemClient = AppFabricTestHelper.getInjector().
                                              getInstance(TransactionSystemClient.class);
 
-    QueueName queueName = QueueName.fromStream(app.getId().getNamespaceId(), "text");
+    QueueName queueName = QueueName.fromStream(app.getApplicationId().getNamespace(), "text");
     QueueClientFactory queueClientFactory = AppFabricTestHelper.getInjector().getInstance(QueueClientFactory.class);
     QueueProducer producer = queueClientFactory.createProducer(queueName);
 
@@ -256,19 +260,21 @@ public class FlowTest {
   @Test
   public void testFlowPendingMetric() throws Exception {
 
-    final ApplicationWithPrograms app = AppFabricTestHelper.deployApplicationWithManager(
-      PendingMetricTestApp.class, TEMP_FOLDER_SUPPLIER);
+    final ApplicationWithPrograms app = AppFabricTestHelper.deployApplicationWithManager(PendingMetricTestApp.class,
+                                                                                         TEMP_FOLDER_SUPPLIER);
     ProgramRunnerFactory runnerFactory = AppFabricTestHelper.getInjector().getInstance(ProgramRunnerFactory.class);
 
     File tempFolder = TEMP_FOLDER_SUPPLIER.get();
 
     ProgramController controller = null;
-    for (final Program program : app.getPrograms()) {
+    for (ProgramDescriptor programDescriptor : app.getPrograms()) {
       // running mapreduce is out of scope of this tests (there's separate unit-test for that)
-      if (program.getType() == ProgramType.FLOW) {
-        ProgramRunner runner = runnerFactory.create(program.getType());
+      if (programDescriptor.getProgramId().getType() == ProgramType.FLOW) {
+        ProgramRunner runner = runnerFactory.create(programDescriptor.getProgramId().getType());
         BasicArguments systemArgs = new BasicArguments(ImmutableMap.of(ProgramOptionConstants.RUN_ID,
                                                                        RunIds.generate().getId()));
+        Program program = AppFabricTestHelper.createProgram(programDescriptor, app.getArtifactLocation(),
+                                                            runner, TEMP_FOLDER_SUPPLIER);
         controller = runner.run(program, new SimpleProgramOptions(
           program.getName(), systemArgs, new BasicArguments(ImmutableMap.of("temp", tempFolder.getAbsolutePath(),
                                                                             "count", "4"))));

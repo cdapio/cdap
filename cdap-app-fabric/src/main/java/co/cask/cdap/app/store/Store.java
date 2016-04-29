@@ -25,6 +25,7 @@ import co.cask.cdap.api.worker.Worker;
 import co.cask.cdap.api.workflow.Workflow;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.program.Program;
+import co.cask.cdap.app.program.ProgramDescriptor;
 import co.cask.cdap.common.ApplicationNotFoundException;
 import co.cask.cdap.common.ProgramNotFoundException;
 import co.cask.cdap.internal.app.store.RunRecordMeta;
@@ -37,7 +38,6 @@ import co.cask.cdap.proto.id.ProgramRunId;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Predicate;
 import org.apache.twill.api.RunId;
-import org.apache.twill.filesystem.Location;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -67,10 +67,11 @@ public interface Store {
    * Loads a given program.
    *
    * @param program id of the program
-   * @return An instance of {@link co.cask.cdap.app.program.DefaultProgram} if found.
+   * @return An instance of {@link ProgramDescriptor} if found.
    * @throws IOException
    */
-  Program loadProgram(Id.Program program) throws IOException, ApplicationNotFoundException, ProgramNotFoundException;
+  ProgramDescriptor loadProgram(Id.Program program) throws IOException, ApplicationNotFoundException,
+                                                           ProgramNotFoundException;
 
   /**
    * Logs start of program run.
@@ -204,10 +205,8 @@ public interface Store {
    *
    * @param id            application id
    * @param specification application specification to store
-   * @param appArchiveLocation location of the deployed app archive
    */
-  void addApplication(Id.Application id,
-                      ApplicationSpecification specification, Location appArchiveLocation);
+  void addApplication(Id.Application id, ApplicationSpecification specification);
 
 
   /**
@@ -237,15 +236,6 @@ public interface Store {
    * @return collection of all application specs in the namespace
    */
   Collection<ApplicationSpecification> getAllApplications(Id.Namespace id);
-
-  /**
-   * Returns location of the application archive.
-   *
-   * @param id application id
-   * @return application archive location
-   */
-  @Nullable
-  Location getApplicationArchiveLocation(Id.Application id);
 
   /**
    * Sets number of instances of specific flowlet.

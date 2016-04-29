@@ -16,9 +16,9 @@
 
 package co.cask.cdap.internal.app.runtime;
 
-import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.runtime.ProgramOptions;
+import co.cask.cdap.proto.id.ProgramId;
 
 /**
  *
@@ -30,8 +30,8 @@ public final class SimpleProgramOptions implements ProgramOptions {
   private final Arguments userArguments;
   private final boolean debug;
 
-  public SimpleProgramOptions(Program program) {
-    this(program.getName(), new BasicArguments(), new BasicArguments());
+  public SimpleProgramOptions(ProgramId programId) {
+    this(programId.getProgram(), new BasicArguments(), new BasicArguments());
   }
 
   public SimpleProgramOptions(String name, Arguments arguments, Arguments userArguments) {

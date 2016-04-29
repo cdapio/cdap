@@ -20,7 +20,7 @@ import co.cask.cdap.WebCrawlApp;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.app.verification.VerifyResult;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
-import co.cask.cdap.internal.app.Specifications;
+import co.cask.cdap.internal.app.deploy.Specifications;
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
 import co.cask.cdap.proto.Id;
 import org.junit.Assert;

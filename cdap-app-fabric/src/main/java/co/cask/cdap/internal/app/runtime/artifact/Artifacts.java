@@ -19,15 +19,17 @@ package co.cask.cdap.internal.app.runtime.artifact;
 import co.cask.cdap.api.Config;
 import co.cask.cdap.api.app.Application;
 import co.cask.cdap.api.artifact.ArtifactId;
+import co.cask.cdap.api.artifact.ArtifactScope;
 import co.cask.cdap.internal.lang.Reflections;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.base.Preconditions;
 import com.google.common.reflect.TypeToken;
 
 import java.lang.reflect.Type;
 
 /**
- * Util class that contains helper methods related to handling of {@link Id.Artifact}s.
+ * Util class that contains helper methods related to handling of artifacts.
  */
 public final class Artifacts {
 
@@ -60,6 +62,18 @@ public final class Artifacts {
       "Application config type " + configType + " not supported. " +
       "Type must extend Config and cannot be parameterized.");
     return Config.class;
+  }
+
+  /**
+   * Converts a {@link ArtifactId} to {@link co.cask.cdap.proto.id.ArtifactId}.
+   *
+   * @param namespaceId the user namespace to use
+   * @param artifactId the artifact id to convert
+   */
+  public static co.cask.cdap.proto.id.ArtifactId toArtifactId(NamespaceId namespaceId, ArtifactId artifactId) {
+    ArtifactScope scope = artifactId.getScope();
+    NamespaceId artifactNamespace = scope == ArtifactScope.SYSTEM ? NamespaceId.SYSTEM : namespaceId;
+    return artifactNamespace.artifact(artifactId.getName(), artifactId.getVersion().getVersion());
   }
 
   private Artifacts() {

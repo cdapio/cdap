@@ -18,8 +18,11 @@ package co.cask.cdap.app.runtime;
 
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.app.program.Program;
+import co.cask.cdap.app.program.ProgramDescriptor;
+import co.cask.cdap.common.ArtifactNotFoundException;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.internal.app.runtime.ProgramControllerServiceAdapter;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
@@ -37,6 +40,7 @@ import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -58,6 +62,7 @@ public class AbstractProgramRuntimeServiceTest {
     // The race condition is if a program finished very fast such that inside the AbstractProgramRuntimeService is
     // still in the run method, it holds the object lock, making the callback from the listener block forever.
     ProgramRunnerFactory runnerFactory = createProgramRunnerFactory();
+    final Program program = createDummyProgram();
 
     final ProgramRuntimeService runtimeService = new AbstractProgramRuntimeService(CConfiguration.create(),
                                                                                    runnerFactory, null) {
@@ -65,13 +70,27 @@ public class AbstractProgramRuntimeServiceTest {
       public ProgramLiveInfo getLiveInfo(Id.Program programId) {
         return new ProgramLiveInfo(programId, "runtime") { };
       }
+
+      @Override
+      protected Location getArtifactLocation(ProgramDescriptor descriptor) throws IOException,
+                                                                                  ArtifactNotFoundException {
+        // Just return some dummy location. It is not used by the test.
+        return Locations.toLocation(TEMP_FOLDER.newFile());
+      }
+
+      @Override
+      protected Program createProgram(CConfiguration cConf, ProgramRunner programRunner,
+                                      ProgramDescriptor programDescriptor,
+                                      Location programJarLocation, File tempDir) throws IOException {
+        return program;
+      }
     };
 
     runtimeService.startAndWait();
     try {
-      Program program = createDummyProgram();
+      ProgramDescriptor descriptor = new ProgramDescriptor(program.getId().toEntityId(), null, null);
       final ProgramController controller =
-        runtimeService.run(program, new SimpleProgramOptions(program)).getController();
+        runtimeService.run(descriptor, new SimpleProgramOptions(program.getId().toEntityId())).getController();
       Tasks.waitFor(ProgramController.State.COMPLETED, new Callable<ProgramController.State>() {
         @Override
         public ProgramController.State call() throws Exception {

@@ -55,17 +55,16 @@ import com.google.common.base.Preconditions;
 
 import java.util.HashMap;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * Default implementation of {@link ApplicationConfigurer}.
  */
 public class DefaultAppConfigurer extends DefaultPluginConfigurer implements ApplicationConfigurer {
-  private String name;
-  private String description;
-  private String configuration;
-  private Id.Artifact artifactId;
-  private ArtifactRepository artifactRepository;
-  private PluginInstantiator pluginInstantiator;
+  private final ArtifactRepository artifactRepository;
+  private final PluginInstantiator pluginInstantiator;
+  private final Id.Artifact artifactId;
+  private final String configuration;
   private final Map<String, FlowSpecification> flows = new HashMap<>();
   private final Map<String, MapReduceSpecification> mapReduces = new HashMap<>();
   private final Map<String, SparkSpecification> sparks = new HashMap<>();
@@ -73,17 +72,18 @@ public class DefaultAppConfigurer extends DefaultPluginConfigurer implements App
   private final Map<String, ServiceSpecification> services = new HashMap<>();
   private final Map<String, ScheduleSpecification> schedules = new HashMap<>();
   private final Map<String, WorkerSpecification> workers = new HashMap<>();
+  private String name;
+  private String description;
 
   // passed app to be used to resolve default name and description
   @VisibleForTesting
-  public DefaultAppConfigurer(Id.Namespace namespace, Application app) {
-    super(namespace, null, null, null);
-    this.name = app.getClass().getSimpleName();
-    this.description = "";
+  public DefaultAppConfigurer(Id.Namespace namespace, Id.Artifact artifactId, Application app) {
+    this(namespace, artifactId, app, "", null, null);
   }
 
   public DefaultAppConfigurer(Id.Namespace namespace, Id.Artifact artifactId, Application app, String configuration,
-                              ArtifactRepository artifactRepository, PluginInstantiator pluginInstantiator) {
+                              @Nullable ArtifactRepository artifactRepository,
+                              @Nullable PluginInstantiator pluginInstantiator) {
     super(namespace, artifactId, artifactRepository, pluginInstantiator);
     this.name = app.getClass().getSimpleName();
     this.description = "";
@@ -193,12 +193,20 @@ public class DefaultAppConfigurer extends DefaultPluginConfigurer implements App
     schedules.put(schedule.getName(), spec);
   }
 
-  public ApplicationSpecification createSpecification() {
+  /**
+   * Creates a {@link ApplicationSpecification} based on values in this configurer.
+   *
+   * @param applicationName if not null, the application name to use instead of using the one from this configurer
+   * @return a new {@link ApplicationSpecification}.
+   */
+  public ApplicationSpecification createSpecification(@Nullable String applicationName) {
     // can be null only for apps before 3.2 that were not upgraded
-    ArtifactId id = artifactId == null ? null :
-      new ArtifactId(artifactId.getName(), artifactId.getVersion(),
-                     artifactId.getNamespace().equals(Id.Namespace.SYSTEM) ? ArtifactScope.SYSTEM : ArtifactScope.USER);
-    return new DefaultApplicationSpecification(name, description, configuration, id, getStreams(),
+    ArtifactScope scope = artifactId.getNamespace().equals(Id.Namespace.SYSTEM)
+                            ? ArtifactScope.SYSTEM : ArtifactScope.USER;
+    ArtifactId artifactId = new ArtifactId(this.artifactId.getName(), this.artifactId.getVersion(), scope);
+
+    String appName = applicationName == null ? name : applicationName;
+    return new DefaultApplicationSpecification(appName, description, configuration, artifactId, getStreams(),
                                                getDatasetModules(), getDatasetSpecs(),
                                                flows, mapReduces, sparks, workflows, services,
                                                schedules, workers, getPlugins());

@@ -18,16 +18,19 @@ package co.cask.cdap.internal.app.deploy;
 
 import co.cask.cdap.ConfigTestApp;
 import co.cask.cdap.ToyApp;
+import co.cask.cdap.api.artifact.ArtifactId;
+import co.cask.cdap.api.artifact.ArtifactScope;
+import co.cask.cdap.api.artifact.ArtifactVersion;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.internal.AppFabricTestHelper;
-import co.cask.cdap.internal.DefaultId;
 import co.cask.cdap.internal.app.deploy.pipeline.AppDeploymentInfo;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
+import co.cask.cdap.internal.app.runtime.artifact.ArtifactDescriptor;
 import co.cask.cdap.internal.test.AppJarHelper;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.id.NamespaceId;
 import com.google.gson.Gson;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
@@ -75,10 +78,13 @@ public class LocalApplicationManagerTest {
     }
 
     Location jarLoc = Locations.toLocation(deployFile);
-    Id.Artifact artifactId = Id.Artifact.from(DefaultId.NAMESPACE, "dummy", "1.0.0-SNAPSHOT");
-    AppDeploymentInfo info = new AppDeploymentInfo(artifactId, "some.class.name", jarLoc, null);
 
-    AppFabricTestHelper.getLocalManager().deploy(DefaultId.NAMESPACE, null, info).get();
+    ArtifactId artifactId = new ArtifactId("dummy", new ArtifactVersion("1.0.0-SNAPSHOT"), ArtifactScope.USER);
+    ArtifactDescriptor artifactDescriptor = new ArtifactDescriptor(artifactId, jarLoc);
+
+    AppDeploymentInfo info = new AppDeploymentInfo(artifactDescriptor, NamespaceId.DEFAULT,
+                                                   "some.class.name", null, null);
+    AppFabricTestHelper.getLocalManager().deploy(info).get();
   }
 
   /**
@@ -87,34 +93,34 @@ public class LocalApplicationManagerTest {
   @Test
   public void testGoodPipeline() throws Exception {
     Location deployedJar = AppJarHelper.createDeploymentJar(lf, ToyApp.class);
-    Id.Artifact artifactId = Id.Artifact.from(DefaultId.NAMESPACE, "toyapp", "1.0.0-SNAPSHOT");
-    AppDeploymentInfo info = new AppDeploymentInfo(artifactId, ToyApp.class.getName(), deployedJar, null);
+    ArtifactId artifactId = new ArtifactId("toyapp", new ArtifactVersion("1.0.0-SNAPSHOT"), ArtifactScope.USER);
+    ArtifactDescriptor artifactDescriptor = new ArtifactDescriptor(artifactId, deployedJar);
+    AppDeploymentInfo info = new AppDeploymentInfo(artifactDescriptor, NamespaceId.DEFAULT,
+                                                   ToyApp.class.getName(), null, null);
+    ApplicationWithPrograms input = AppFabricTestHelper.getLocalManager().deploy(info).get();
 
-    ApplicationWithPrograms input = AppFabricTestHelper.getLocalManager().deploy(DefaultId.NAMESPACE,
-                                                                                 null, info).get();
-
-    Assert.assertEquals(input.getPrograms().iterator().next().getType(), ProgramType.FLOW);
-    Assert.assertEquals(input.getPrograms().iterator().next().getName(), "ToyFlow");
+    Assert.assertEquals(input.getPrograms().iterator().next().getProgramId().getType(), ProgramType.FLOW);
+    Assert.assertEquals(input.getPrograms().iterator().next().getProgramId().getProgram(), "ToyFlow");
   }
 
   @Test
   public void testValidConfigPipeline() throws Exception {
     Location deployedJar = AppJarHelper.createDeploymentJar(lf, ConfigTestApp.class);
-    Id.Artifact artifactId = Id.Artifact.from(DefaultId.NAMESPACE, "configtest", "1.0.0-SNAPSHOT");
     ConfigTestApp.ConfigClass config = new ConfigTestApp.ConfigClass("myStream", "myTable");
-    AppDeploymentInfo info =
-      new AppDeploymentInfo(artifactId, ConfigTestApp.class.getName(), deployedJar, GSON.toJson(config));
-
-    AppFabricTestHelper.getLocalManager().deploy(DefaultId.NAMESPACE, "MyApp", info).get();
+    ArtifactId artifactId = new ArtifactId("configtest", new ArtifactVersion("1.0.0-SNAPSHOT"), ArtifactScope.USER);
+    ArtifactDescriptor artifactDescriptor = new ArtifactDescriptor(artifactId, deployedJar);
+    AppDeploymentInfo info = new AppDeploymentInfo(artifactDescriptor, NamespaceId.DEFAULT,
+                                                   ConfigTestApp.class.getName(), "MyApp", GSON.toJson(config));
+    AppFabricTestHelper.getLocalManager().deploy(info).get();
   }
 
   @Test(expected = ExecutionException.class)
   public void testInvalidConfigPipeline() throws Exception {
     Location deployedJar = AppJarHelper.createDeploymentJar(lf, ConfigTestApp.class);
-    Id.Artifact artifactId = Id.Artifact.from(DefaultId.NAMESPACE, "configtest", "1.0.0-SNAPSHOT");
-    AppDeploymentInfo info =
-      new AppDeploymentInfo(artifactId, ConfigTestApp.class.getName(), deployedJar, GSON.toJson("invalid"));
-
-    AppFabricTestHelper.getLocalManager().deploy(DefaultId.NAMESPACE, "BadApp", info).get();
+    ArtifactId artifactId = new ArtifactId("configtest", new ArtifactVersion("1.0.0-SNAPSHOT"), ArtifactScope.USER);
+    ArtifactDescriptor artifactDescriptor = new ArtifactDescriptor(artifactId, deployedJar);
+    AppDeploymentInfo info = new AppDeploymentInfo(artifactDescriptor, NamespaceId.DEFAULT,
+                                                   ConfigTestApp.class.getName(), "BadApp", GSON.toJson("invalid"));
+    AppFabricTestHelper.getLocalManager().deploy(info).get();
   }
 }

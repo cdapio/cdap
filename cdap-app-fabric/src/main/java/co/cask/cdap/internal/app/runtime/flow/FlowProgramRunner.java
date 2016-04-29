@@ -295,7 +295,7 @@ public final class FlowProgramRunner implements ProgramRunner {
 
       // Then reconfigure stream/queue consumers
       FlowUtils.reconfigure(consumerQueues.get(flowletName),
-                            FlowUtils.generateConsumerGroupId(program, flowletName), newInstanceCount,
+                            FlowUtils.generateConsumerGroupId(program.getId(), flowletName), newInstanceCount,
                             streamAdmin, queueAdmin, txExecutorFactory);
 
       // Then change instance count of current flowlets
@@ -350,7 +350,7 @@ public final class FlowProgramRunner implements ProgramRunner {
 
       // Then reconfigure stream/queue consumers
       FlowUtils.reconfigure(consumerQueues.get(flowletName),
-                            FlowUtils.generateConsumerGroupId(program, flowletName), newInstanceCount,
+                            FlowUtils.generateConsumerGroupId(program.getId(), flowletName), newInstanceCount,
                             streamAdmin, queueAdmin, txExecutorFactory);
 
       // Next updates instance count for each flowlets

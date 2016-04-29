@@ -73,7 +73,7 @@ final class BasicFlowletContext extends AbstractContext implements FlowletContex
           dsFramework, txClient, discoveryServiceClient, false);
     this.flowId = program.getName();
     this.flowletId = flowletId;
-    this.groupId = FlowUtils.generateConsumerGroupId(program, flowletId);
+    this.groupId = FlowUtils.generateConsumerGroupId(program.getId(), flowletId);
     this.instanceId = instanceId;
     this.instanceCount = instanceCount;
     this.flowletSpec = flowletSpec;

@@ -32,6 +32,7 @@ import co.cask.cdap.pipeline.AbstractStage;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.ProgramTypes;
+import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
 import co.cask.cdap.security.spi.authorization.Authorizer;
@@ -80,7 +81,7 @@ public class DeletedProgramHandlerStage extends AbstractStage<ApplicationDeploya
 
   @Override
   public void process(ApplicationDeployable appSpec) throws Exception {
-    List<ProgramSpecification> deletedSpecs = store.getDeletedProgramSpecifications(appSpec.getId(),
+    List<ProgramSpecification> deletedSpecs = store.getDeletedProgramSpecifications(appSpec.getApplicationId().toId(),
                                                                                     appSpec.getSpecification());
 
     // TODO: this should also delete logs and run records (or not?), and do it for all program types [CDAP-2187]
@@ -89,7 +90,7 @@ public class DeletedProgramHandlerStage extends AbstractStage<ApplicationDeploya
     for (ProgramSpecification spec : deletedSpecs) {
       //call the deleted spec
       ProgramType type = ProgramTypes.fromSpecification(spec);
-      Id.Program programId = Id.Program.from(appSpec.getId(), type, spec.getName());
+      Id.Program programId = appSpec.getApplicationId().program(type, spec.getName()).toId();
       programTerminator.stop(programId);
       // revoke privileges
       authorizer.revoke(programId.toEntityId(), SecurityRequestContext.toPrincipal(), ImmutableSet.of(Action.ALL));
@@ -110,7 +111,7 @@ public class DeletedProgramHandlerStage extends AbstractStage<ApplicationDeploya
         // Remove all process states and group states for each stream
         String namespace = String.format("%s.%s", programId.getApplicationId(), programId.getId());
         for (Map.Entry<String, Collection<Long>> entry : streamGroups.asMap().entrySet()) {
-          streamConsumerFactory.dropAll(Id.Stream.from(appSpec.getId().getNamespaceId(), entry.getKey()),
+          streamConsumerFactory.dropAll(appSpec.getApplicationId().getParent().stream(entry.getKey()).toId(),
                                         namespace, entry.getValue());
         }
 
@@ -122,19 +123,19 @@ public class DeletedProgramHandlerStage extends AbstractStage<ApplicationDeploya
       metadataStore.removeMetadata(programId);
     }
     if (!deletedFlows.isEmpty()) {
-      deleteMetrics(appSpec.getId().getNamespaceId(), appSpec.getId().getId(), deletedFlows);
+      deleteMetrics(appSpec.getApplicationId(), deletedFlows);
     }
 
     emit(appSpec);
   }
 
-  private void deleteMetrics(String namespace, String application, Iterable<String> flows) throws Exception {
-    LOG.debug("Deleting metrics for application {}", application);
+  private void deleteMetrics(ApplicationId applicationId, Iterable<String> flows) throws Exception {
+    LOG.debug("Deleting metrics for application {}", applicationId);
     for (String flow : flows) {
       long endTs = System.currentTimeMillis() / 1000;
       Map<String, String> tags = Maps.newHashMap();
-      tags.put(Constants.Metrics.Tag.NAMESPACE, namespace);
-      tags.put(Constants.Metrics.Tag.APP, application);
+      tags.put(Constants.Metrics.Tag.NAMESPACE, applicationId.getNamespace());
+      tags.put(Constants.Metrics.Tag.APP, applicationId.getApplication());
       tags.put(Constants.Metrics.Tag.FLOW, flow);
       MetricDeleteQuery deleteQuery = new MetricDeleteQuery(0, endTs, Collections.<String>emptyList(), tags);
       metricStore.delete(deleteQuery);

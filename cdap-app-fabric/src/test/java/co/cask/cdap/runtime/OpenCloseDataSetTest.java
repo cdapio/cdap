@@ -20,6 +20,7 @@ import co.cask.cdap.DummyAppWithTrackingTable;
 import co.cask.cdap.TrackingTable;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.app.program.Program;
+import co.cask.cdap.app.program.ProgramDescriptor;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.app.runtime.ProgramRunnerFactory;
@@ -112,13 +113,15 @@ public class OpenCloseDataSetTest {
     List<ProgramController> controllers = Lists.newArrayList();
 
     // start the programs
-    for (Program program : app.getPrograms()) {
-      if (program.getType().equals(ProgramType.MAPREDUCE)) {
+    for (ProgramDescriptor programDescriptor : app.getPrograms()) {
+      if (programDescriptor.getProgramId().getType().equals(ProgramType.MAPREDUCE)) {
         continue;
       }
-      ProgramRunner runner = runnerFactory.create(program.getType());
+      ProgramRunner runner = runnerFactory.create(programDescriptor.getProgramId().getType());
       BasicArguments systemArgs = new BasicArguments(ImmutableMap.of(ProgramOptionConstants.RUN_ID,
                                                                      RunIds.generate().getId()));
+      Program program = AppFabricTestHelper.createProgram(programDescriptor, app.getArtifactLocation(),
+                                                          runner, TEMP_FOLDER_SUPPLIER);
       controllers.add(runner.run(program, new SimpleProgramOptions(program.getName(), systemArgs,
                                                                    new BasicArguments())));
     }
@@ -127,7 +130,7 @@ public class OpenCloseDataSetTest {
     TransactionSystemClient txSystemClient = AppFabricTestHelper.getInjector().
       getInstance(TransactionSystemClient.class);
 
-    QueueName queueName = QueueName.fromStream(app.getId().getNamespaceId(), "xx");
+    QueueName queueName = QueueName.fromStream(app.getApplicationId().getNamespace(), "xx");
     QueueClientFactory queueClientFactory = AppFabricTestHelper.getInjector().getInstance(QueueClientFactory.class);
     QueueProducer producer = queueClientFactory.createProducer(queueName);
 
@@ -198,11 +201,13 @@ public class OpenCloseDataSetTest {
 
     // now start the m/r job
     ProgramController controller = null;
-    for (Program program : app.getPrograms()) {
-      if (program.getType().equals(ProgramType.MAPREDUCE)) {
-        ProgramRunner runner = runnerFactory.create(program.getType());
+    for (ProgramDescriptor programDescriptor : app.getPrograms()) {
+      if (programDescriptor.getProgramId().getType().equals(ProgramType.MAPREDUCE)) {
+        ProgramRunner runner = runnerFactory.create(programDescriptor.getProgramId().getType());
         BasicArguments systemArgs = new BasicArguments(ImmutableMap.of(ProgramOptionConstants.RUN_ID,
                                                                        RunIds.generate().getId()));
+        Program program = AppFabricTestHelper.createProgram(programDescriptor, app.getArtifactLocation(),
+                                                            runner, TEMP_FOLDER_SUPPLIER);
         controller = runner.run(program, new SimpleProgramOptions(program.getName(), systemArgs, new BasicArguments()));
       }
     }

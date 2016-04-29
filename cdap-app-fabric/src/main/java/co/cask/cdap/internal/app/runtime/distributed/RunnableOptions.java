@@ -16,11 +16,16 @@
 package co.cask.cdap.internal.app.runtime.distributed;
 
 /**
- * Helper class for defining argument options
+ * Helper class for defining argument options for the TwillRunnable being used for
+ * running programs in distributed mode.
  */
 final class RunnableOptions {
   static final String JAR = "jar";
+  static final String HADOOP_CONF_FILE = "hConf";
+  static final String CDAP_CONF_FILE = "cConf";
+  static final String APP_SPEC_FILE = "appSpec";
   static final String PROGRAM_OPTIONS = "popts";
+  static final String PROGRAM_ID = "pid";
 
   private RunnableOptions() {
   }
