@@ -26,6 +26,7 @@ import co.cask.cdap.common.lang.ProgramClassLoader;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
+import co.cask.cdap.common.logging.RedirectedPrintStream;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.internal.app.runtime.batch.distributed.DistributedMapReduceTaskContextProvider;
 import co.cask.cdap.internal.app.runtime.batch.distributed.MapReduceContainerLauncher;
@@ -54,6 +55,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -139,6 +141,9 @@ public class MapReduceClassLoader extends CombineClassLoader implements AutoClos
     // Logging context needs to be set in main thread.
     LoggingContext loggingContext = createMapReduceLoggingContext();
     LoggingContextAccessor.setLoggingContext(loggingContext);
+
+    System.setOut(new PrintStream(RedirectedPrintStream.createRedirectedOutStream(LOG, System.out), true));
+    System.setErr(new PrintStream(RedirectedPrintStream.createRedirectedErrStream(LOG, System.err), true));
 
     synchronized (this) {
       taskContextProvider = Optional.fromNullable(taskContextProvider).or(taskContextProviderSupplier);
