@@ -21,6 +21,7 @@ import co.cask.cdap.api.annotation.UseDataSet;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.batch.Input;
+import co.cask.cdap.api.data.batch.Output;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.lib.TimeseriesTable;
 import co.cask.cdap.api.dataset.table.Table;
@@ -88,11 +89,6 @@ public class AppWithMapReduce extends AbstractApplication {
     private Metrics metrics;
 
     @Override
-    protected void configure() {
-      setOutputDataset("timeSeries");
-    }
-
-    @Override
     public void beforeSubmit(MapReduceContext context) throws Exception {
       metrics.count("beforeSubmit", 1);
       Job hadoopJob = context.getHadoopJob();
@@ -110,6 +106,7 @@ public class AppWithMapReduce extends AbstractApplication {
         hadoopJob.getConfiguration().setInt("c.reducer.flush.freq", 1);
       }
       metrics.count("beforeSubmit", 1);
+      context.addOutput(Output.ofDataset("timeSeries"));
     }
 
     @Override

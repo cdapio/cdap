@@ -28,7 +28,7 @@ public final class TestFlow extends AbstractFlow {
 
 
   @Override
-  protected void configureFlow() {
+  protected void configure() {
     setName(NAME);
     setDescription("SomeDescription");
     addFlowlet(TestFlowlet.NAME, new TestFlowlet());

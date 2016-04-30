@@ -102,31 +102,6 @@ public abstract class AbstractMapReduce extends AbstractPluginConfigurable<MapRe
   }
 
   /**
-   * Specifies set of Dataset names that are used by the {@link MapReduce}.
-   * @deprecated Deprecated as of 2.8.0. Dataset can be requested directly through the method
-   *             {@link MapReduceContext#getDataset(String)} or
-   *             {@link MapReduceTaskContext#getDataset(String)} at runtime.
-   */
-  @Deprecated
-  protected final void useDatasets(String dataset, String...moreDatasets) {
-    List<String> datasets = new ArrayList<>();
-    datasets.add(dataset);
-    datasets.addAll(Arrays.asList(moreDatasets));
-    configurer.useDatasets(datasets);
-  }
-
-  /**
-   * Specifies set of Dataset names that are used by the {@link MapReduce}.
-   * @deprecated Deprecated as of 2.8.0. Dataset can be requested directly through the method
-   *             {@link MapReduceContext#getDataset(String)} or
-   *             {@link MapReduceTaskContext#getDataset(String)} at runtime.
-   */
-  @Deprecated
-  protected final void useDatasets(Iterable<String> datasets) {
-    configurer.useDatasets(datasets);
-  }
-
-  /**
    * Sets the name of the Dataset used as input for the {@link MapReduce}.
    *
    * @deprecated as of 3.4.0. Use {@link MapReduceContext#addInput(Input)}
@@ -174,17 +149,6 @@ public abstract class AbstractMapReduce extends AbstractPluginConfigurable<MapRe
   @Deprecated
   protected final void useStreamInput(StreamBatchReadable streamBatchReadable) {
     configurer.setInputDataset(streamBatchReadable.toURI().toString());
-  }
-
-  /**
-   * Sets the name of the Dataset used as output for the {@link MapReduce}.
-   *
-   * @deprecated as of 3.2.0. Use {@link MapReduceContext#addOutput(Output output)}
-   *             in {@link #beforeSubmit}, instead.
-   */
-  @Deprecated
-  protected final void setOutputDataset(String dataset) {
-    configurer.setOutputDataset(dataset);
   }
 
   @Override

@@ -43,7 +43,7 @@ public class InvalidFlowOutputApp extends AbstractApplication {
   public static final class InvalidFlow extends AbstractFlow {
 
     @Override
-    protected void configureFlow() {
+    protected void configure() {
       setName("InvalidFlow");
       setDescription("Invalid flow");
       addFlowlet("gen", new InvalidGenerator());

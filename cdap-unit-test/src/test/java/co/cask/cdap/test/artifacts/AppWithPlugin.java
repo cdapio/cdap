@@ -19,6 +19,8 @@ package co.cask.cdap.test.artifacts;
 import co.cask.cdap.api.ProgramLifecycle;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.api.data.batch.Input;
+import co.cask.cdap.api.data.batch.Output;
 import co.cask.cdap.api.data.stream.StreamBatchReadable;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.table.Put;
@@ -139,7 +141,6 @@ public class AppWithPlugin extends AbstractApplication {
       setName(MAPREDUCE);
       createDataset("output", KeyValueTable.class);
       addStream("input");
-      setOutputDataset("output");
     }
 
     @Override
@@ -147,8 +148,9 @@ public class AppWithPlugin extends AbstractApplication {
       super.beforeSubmit(context);
       Job job = context.getHadoopJob();
       job.setMapperClass(SimpleMapper.class);
-      StreamBatchReadable.useStreamInput(context, "input", 0, Long.MAX_VALUE);
       job.setNumReduceTasks(0);
+      context.addInput(Input.ofStream("input"));
+      context.addOutput(Output.ofDataset("output"));
     }
   }
 

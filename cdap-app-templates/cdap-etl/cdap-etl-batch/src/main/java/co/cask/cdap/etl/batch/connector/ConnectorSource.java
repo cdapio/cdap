@@ -16,6 +16,7 @@
 
 package co.cask.cdap.etl.batch.connector;
 
+import co.cask.cdap.api.data.batch.Input;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.lib.KeyValue;
@@ -88,7 +89,7 @@ public class ConnectorSource extends BatchSource<LongWritable, Text, StructuredR
     for (PartitionDetail partitionDetail : inputFileset.getPartitions(PartitionFilter.ALWAYS_MATCH)) {
       PartitionedFileSetArguments.addInputPartition(arguments, partitionDetail);
     }
-    context.setInput(datasetName, arguments);
+    context.setInput(Input.ofDataset(datasetName, arguments));
   }
 
   @Override

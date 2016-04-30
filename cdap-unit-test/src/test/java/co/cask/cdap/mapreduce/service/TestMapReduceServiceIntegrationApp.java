@@ -18,6 +18,8 @@ package co.cask.cdap.mapreduce.service;
 
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.api.data.batch.Input;
+import co.cask.cdap.api.data.batch.Output;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
@@ -25,6 +27,7 @@ import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceRequest;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
 import co.cask.cdap.test.app.MyKeyValueTableDefinition;
+import com.google.common.base.Preconditions;
 import com.google.common.io.ByteStreams;
 import org.apache.commons.io.Charsets;
 import org.apache.commons.lang.StringUtils;
@@ -77,8 +80,6 @@ public class TestMapReduceServiceIntegrationApp extends AbstractApplication {
     @Override
     public void configure() {
       setName(MR_NAME);
-      setInputDataset(INPUT_DATASET);
-      setOutputDataset(OUTPUT_DATASET);
     }
 
     @Override
@@ -89,7 +90,10 @@ public class TestMapReduceServiceIntegrationApp extends AbstractApplication {
       job.setMapOutputValueClass(LongWritable.class);
       job.setReducerClass(MyReducer.class);
       URL serviceURL = context.getServiceURL(SERVICE_NAME);
+      Preconditions.checkNotNull(serviceURL);
       job.getConfiguration().set(SERVICE_URL, serviceURL.toString());
+      context.addInput(Input.ofDataset(INPUT_DATASET));
+      context.addOutput(Output.ofDataset(OUTPUT_DATASET));
     }
 
     private static URL getServiceUrl(TaskInputOutputContext context) throws MalformedURLException {

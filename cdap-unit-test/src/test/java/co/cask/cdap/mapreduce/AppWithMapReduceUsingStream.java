@@ -18,6 +18,8 @@ package co.cask.cdap.mapreduce;
 
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.api.data.batch.Input;
+import co.cask.cdap.api.data.batch.Output;
 import co.cask.cdap.api.data.format.FormatSpecification;
 import co.cask.cdap.api.data.format.Formats;
 import co.cask.cdap.api.data.format.StructuredRecord;
@@ -59,10 +61,6 @@ public class AppWithMapReduceUsingStream extends AbstractApplication {
   }
 
   public static final class BodyTracker extends AbstractMapReduce {
-    @Override
-    public void configure() {
-      setOutputDataset("prices");
-    }
 
     @Override
     public void beforeSubmit(MapReduceContext context) throws Exception {
@@ -75,7 +73,8 @@ public class AppWithMapReduceUsingStream extends AbstractApplication {
       job.setOutputValueClass(byte[].class);
       FormatSpecification formatSpec = new FormatSpecification(
         Formats.AVRO, SCHEMA, Collections.<String, String>emptyMap());
-      StreamBatchReadable.useStreamInput(context, "mrStream", 0, Long.MAX_VALUE, formatSpec);
+      context.addInput(Input.ofStream("mrStream", 0, Long.MAX_VALUE, formatSpec));
+      context.addOutput(Output.ofDataset("prices"));
     }
   }
 

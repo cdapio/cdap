@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,6 +20,8 @@ import co.cask.cdap.api.annotation.ProcessInput;
 import co.cask.cdap.api.annotation.UseDataSet;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.api.data.batch.Input;
+import co.cask.cdap.api.data.batch.Output;
 import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.flow.AbstractFlow;
 import co.cask.cdap.api.flow.flowlet.AbstractFlowlet;
@@ -70,7 +72,7 @@ public class DummyAppWithTrackingTable extends AbstractApplication {
   public static class DummyFlow extends AbstractFlow {
 
     @Override
-    protected void configureFlow() {
+    protected void configure() {
       setName("dummy-flow");
       setDescription("a dummy flow that does not much");
       addFlowlet("fwlt", new DummyFlowlet());
@@ -122,8 +124,6 @@ public class DummyAppWithTrackingTable extends AbstractApplication {
     public void configure() {
       setName("dummy-batch");
       setDescription("batch job that copies from foo to bar");
-      setInputDataset("foo");
-      setOutputDataset("bar");
     }
 
     @Override
@@ -131,6 +131,8 @@ public class DummyAppWithTrackingTable extends AbstractApplication {
       Job job = context.getHadoopJob();
       job.setMapperClass(DummyMapper.class);
       job.setReducerClass(DummyReducer.class);
+      context.addInput(Input.ofDataset("foo"));
+      context.addOutput(Output.ofDataset("bar"));
     }
   }
 

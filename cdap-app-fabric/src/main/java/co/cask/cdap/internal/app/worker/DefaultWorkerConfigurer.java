@@ -28,7 +28,6 @@ import co.cask.cdap.internal.specification.PropertyFieldExtractor;
 import co.cask.cdap.proto.Id;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
@@ -92,11 +91,6 @@ public class DefaultWorkerConfigurer extends DefaultPluginConfigurer implements 
   @Override
   public void setProperties(Map<String, String> properties) {
     this.properties = ImmutableMap.copyOf(properties);
-  }
-
-  @Override
-  public void useDatasets(Iterable<String> datasets) {
-    Iterables.addAll(this.datasets, datasets);
   }
 
   public WorkerSpecification createSpecification() {

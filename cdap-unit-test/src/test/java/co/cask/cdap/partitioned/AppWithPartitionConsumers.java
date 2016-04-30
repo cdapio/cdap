@@ -206,7 +206,6 @@ public class AppWithPartitionConsumers extends AbstractApplication {
 
     @Override
     public void configure() {
-      setOutputDataset("counts");
       setMapperResources(new Resources(1024));
       setReducerResources(new Resources(1024));
     }
@@ -224,6 +223,7 @@ public class AppWithPartitionConsumers extends AbstractApplication {
       // MapReduce job to test MapReduceContext#addOutput(Output#OutputFormatProviderOutput)
       final PartitionedFileSet outputLines = context.getDataset("outputLines", outputArgs);
       context.addOutput(Output.of("outputLines", outputLines));
+      context.addOutput(Output.ofDataset("counts"));
 
       Job job = context.getHadoopJob();
       job.setMapperClass(Tokenizer.class);

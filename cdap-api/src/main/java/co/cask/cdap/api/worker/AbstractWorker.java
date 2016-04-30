@@ -82,34 +82,6 @@ public abstract class AbstractWorker extends AbstractPluginConfigurable<WorkerCo
   }
 
   /**
-   * Adds the names of {@link Dataset Datasets} used by the worker.
-   * @param dataset dataset name
-   * @param datasets more dataset names
-   * @deprecated Deprecated as of 2.8.0. Dataset can be requested directly through the method
-   *             {@link DatasetContext#getDataset(String)} at runtime when
-   *             calling {@link WorkerContext#execute(TxRunnable)}.
-   */
-  @Deprecated
-  protected void useDatasets(String dataset, String...datasets) {
-    List<String> datasetList = new ArrayList<>();
-    datasetList.add(dataset);
-    datasetList.addAll(Arrays.asList(datasets));
-    useDatasets(datasetList);
-  }
-
-  /**
-   * Adds the names of {@link Dataset Datasets} used by the worker.
-   * @param datasets dataset names
-   * @deprecated Deprecated as of 2.8.0. Dataset can be requested directly through the method
-   *             {@link DatasetContext#getDataset(String)} at runtime when
-   *             calling {@link WorkerContext#execute(TxRunnable)}.
-   */
-  @Deprecated
-  protected void useDatasets(Iterable<String> datasets) {
-    configurer.useDatasets(datasets);
-  }
-
-  /**
    * Returns the {@link WorkerConfigurer} used for configuration. Only available during configuration time.
    */
   @Override

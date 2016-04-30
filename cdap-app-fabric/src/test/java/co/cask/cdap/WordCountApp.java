@@ -113,7 +113,7 @@ public class WordCountApp extends AbstractApplication {
   public static class WordCountFlow extends AbstractFlow {
 
     @Override
-    protected void configureFlow() {
+    protected void configure() {
       setName("WordCountFlow");
       setDescription("Flow for counting words");
       addFlowlet("StreamSource", new StreamSucker());

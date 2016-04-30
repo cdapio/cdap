@@ -40,14 +40,4 @@ public interface WorkerConfigurer extends DatasetConfigurer, ProgramConfigurer, 
    * @param instances number of instances, must be > 0
    */
   void setInstances(int instances);
-
-  /**
-   * Adds the names of {@link Dataset Datasets} used by the worker.
-   * @param datasets dataset names
-   * @deprecated Deprecated as of 2.8.0. Dataset can be requested directly through the method
-   *             {@link DatasetContext#getDataset(String)} at runtime when
-   *             calling {@link WorkerContext#execute(TxRunnable)}.
-   */
-  @Deprecated
-  void useDatasets(Iterable<String> datasets);
 }

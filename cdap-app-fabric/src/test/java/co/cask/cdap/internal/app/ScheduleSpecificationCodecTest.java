@@ -91,7 +91,7 @@ public class ScheduleSpecificationCodecTest {
 
     ScheduleSpecification deserialized = GSON.fromJson(jsonStr, ScheduleSpecification.class);
     ScheduleSpecification expectedSpec = new ScheduleSpecification(
-      Schedules.createTimeSchedule(schedule.getName(), schedule.getDescription(), cronEntry),
+      Schedules.builder(schedule.getName()).setDescription(schedule.getDescription()).createTimeSchedule(cronEntry),
       programInfo, properties);
 
     Assert.assertEquals(expectedSpec, deserialized);
