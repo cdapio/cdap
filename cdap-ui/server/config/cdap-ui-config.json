@@ -1,0 +1,21 @@
+{
+  "tracker": {
+    "artifact": {
+      "name": "tracker",
+      "version": "0.1.0-SNAPSHOT",
+      "scope": "SYSTEM"
+    },
+    "appId": "_Tracker",
+    "programId": "AuditLog",
+    "flowProgramId": "AuditLogFlow"
+  },
+  "navigator": {
+    "artifact": {
+      "name": "navigator",
+      "version": "0.2.0-SNAPSHOT",
+      "scope": "SYSTEM"
+    },
+    "appId": "_ClouderaNavigator",
+    "programId": "MetadataFlow"
+  }
+}

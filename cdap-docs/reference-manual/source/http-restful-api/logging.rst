@@ -14,7 +14,7 @@ Logging HTTP RESTful API
 Downloading Application Logs
 ----------------------------
 Logs emitted by a *flow*, *MapReduce*, *service*, or *Spark* program running in CDAP can be
-downloaded with the Logging HTTP API. To do that, send an HTTP GET request::
+downloaded with the Logging HTTP RESTful API. To do that, send an HTTP GET request::
 
   GET <base-url>/namespaces/<namespace>/apps/<app-id>/<program-type>/<program-id>/logs?start=<ts>&stop=<ts>
 
@@ -50,7 +50,7 @@ downloaded with the Logging HTTP API. To do that, send an HTTP GET request::
        ending ``Thu, 24 Oct 2013 01:05:00 GMT`` (five minutes later)
 
 
-Downloading Application Logs For A Run
+Downloading Application Logs For a Run
 --------------------------------------
 To download logs for a program run, send an HTTP GET request::
 
@@ -142,7 +142,3 @@ Filtering
 ---------
 A filter string can be supplied as an optional parameter. It will filter the returned log entries
 to those that match the supplied string.
-
-
-
-

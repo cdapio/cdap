@@ -19,25 +19,54 @@ angular.module(PKG.name + '.services')
     // Should be under property called 'artifactTypes' to be consistent. GLOBALS.etlBatch doesn't make much sense.
     etlBatch: 'cdap-etl-batch',
     etlRealtime: 'cdap-etl-realtime',
-
+    etlDataPipeline: 'cdap-data-pipeline',
+    etlBatchPipelines: ['cdap-etl-batch', 'cdap-data-pipeline'],
     pluginTypes: {
       'cdap-etl-batch': {
         'source': 'batchsource',
         'sink': 'batchsink',
-        'transform': 'transform'
+        'transform': 'transform',
       },
       'cdap-etl-realtime': {
         'source': 'realtimesource',
         'sink': 'realtimesink',
         'transform': 'transform'
+      },
+      'cdap-data-pipeline': {
+        'source': 'batchsource',
+        'sink': 'batchsink',
+        'transform': 'transform',
+        'batchaggregator': 'batchaggregator',
+        'sparksink': 'sparksink',
+        'sparkcompute': 'sparkcompute'
+      },
+      'post-run-actions': {
+        'email': 'Send Email',
+        'databasequery': 'Run Database Query',
+        'httpcallback': 'Make HTTP Call'
       }
     },
     pluginConvert: {
+      'batchaggregator': 'batchaggregator',
       'batchsource': 'source',
       'realtimesource': 'source',
       'batchsink': 'sink',
       'realtimesink': 'sink',
-      'transform': 'transform'
+      'transform': 'transform',
+      'sparksink': 'sink',
+      'sparkcompute': 'transform'
+    },
+
+    artifactConvert: {
+      'cdap-etl-batch': 'ETL Batch',
+      'cdap-etl-realtime': 'ETL Realtime',
+      'cdap-data-pipeline': 'Data Pipeline'
+    },
+
+    iconArtifact: {
+      'cdap-etl-batch': 'ETLBatch',
+      'cdap-etl-realtime': 'ETLRealtime',
+      'cdap-data-pipeline': 'ETLBatch'
     },
 
     'en': {
@@ -48,21 +77,23 @@ angular.module(PKG.name + '.services')
             'DEFAULT-REFERENCE': 'Please select a plugin to view reference information',
             'NO-REFERENCE': 'Currently, no reference information is available for this plugin.',
             'NO-CONFIG': 'No widgets JSON found for the plugin. Please check documentation on how to add.',
+            'ARTIFACT-UPLOAD-MESSAGE-JAR': 'The plugin JAR needs to be a JAR file.',
+            'ARTIFACT-UPLOAD-MESSAGE-JSON': 'The plugin JSON needs to be a JSON file.',
+            'ARTIFACT-UPLOAD-ERROR-JSON': 'Error in parsing config json for the artifact.'
           },
           error: {
             'SYNTAX-CONFIG-JSON': 'Error parsing widgets JSON for the plugin. Please check the documentation to fix.',
             'SEMANTIC-CONFIG-JSON': 'Semantic error in the configuration JSON for the plugin.',
             'GENERIC-MISSING-REQUIRED-FIELDS': 'Please provide required information.',
-            'MISSING-REQUIRED-FIELDS': ' is missing required fields',
-            'MORE-THAN-ONE-SOURCE-FOUND': 'Pipelines can only have one source. Please remove any additional sources.',
+            'MISSING-REQUIRED-FIELDS': 'is missing required fields',
             'NO-SOURCE-FOUND': 'Please add a source to your pipeline',
             'MISSING-NAME': 'Pipeline name is missing.',
-            'INVALID-NAME': 'Pipeline names can only contain alphanumeric (\'a-z A-Z 0-9\') and underscore ( \'_\') characters. Please remove any other characters.',
+            'INVALID-NAME': 'Pipeline names can only contain alphanumeric (\'a-z A-Z 0-9\'), underscore (\'_\'), and hyphen (\'-\') characters. Please remove any other characters.',
             'NO-SINK-FOUND': 'Please add a sink to your pipeline',
             'NAME-ALREADY-EXISTS': 'A pipeline with this name already exists. Please choose a different name.',
             'DUPLICATE-NODE-NAMES': 'Every node should have a unique name to be exported/published.',
             'DUPLICATE-NAME': 'Node with the same name already exists.',
-            'MISSING-CONNECTION': ' is missing connection',
+            'MISSING-CONNECTION': 'is missing connection',
             'IMPORT-JSON': {
               'INVALID-ARTIFACT': 'Pipeline configuration should have a valild artifact specification.',
               'INVALID-CONFIG': 'Missing \'config\' property in pipeline specification.',
@@ -71,7 +102,8 @@ angular.module(PKG.name + '.services')
               'INVALID-SCHEDULE': 'Batch pipeline should have a valid schedule specification.',
               'INVALID-INSTANCE': 'Realtime pipeline should have a valid instance specification.',
               'INVALID-NODES-CONNECTIONS': 'Unknown node(s) in \'connections\' property in pipeline specification.'
-            }
+            },
+            'MISSING-SYSTEM-ARTIFACTS': 'Missing system artifacts. Please load system artifacts to use hydrator studio.'
           },
           pluginDoesNotExist: 'This plugin does not exist: '
         },
@@ -85,7 +117,11 @@ angular.module(PKG.name + '.services')
       admin: {
         templateNameExistsError: 'This template name already exists! Please choose another name.',
         pluginSameNameError: 'There is already a plugin with this name.',
-        templateNameMissingError: 'Please enter a template name.'
+        templateNameMissingError: 'Please enter a template name.',
+        pluginTypeMissingError: 'Please choose a plugin type.',
+        templateTypeMissingError: 'Please choose a template type.',
+        pluginMissingError: 'Please choose a plugin.',
+        pluginVersionMissingError: 'Please choose artifact version for the plugin.'
       }
     }
   });

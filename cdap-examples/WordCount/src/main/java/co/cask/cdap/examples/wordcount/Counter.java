@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,7 +20,6 @@ import co.cask.cdap.api.annotation.Property;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.flow.flowlet.AbstractFlowlet;
-import co.cask.cdap.api.flow.flowlet.FlowletConfigurer;
 import co.cask.cdap.api.flow.flowlet.FlowletContext;
 import co.cask.cdap.api.flow.flowlet.OutputEmitter;
 import co.cask.cdap.api.metrics.Metrics;
@@ -40,12 +39,6 @@ public class Counter extends AbstractFlowlet {
 
   public Counter(String wordCountTableName) {
     this.wordCountTableName = wordCountTableName;
-  }
-
-  @Override
-  public void configure(FlowletConfigurer configurer) {
-    super.configure(configurer);
-    useDatasets(wordCountTableName);
   }
 
   @Override

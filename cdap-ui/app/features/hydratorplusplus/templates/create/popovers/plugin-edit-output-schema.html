@@ -1,0 +1,93 @@
+<!--
+  Copyright © 2015 Cask Data, Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+-->
+
+<div class="output-schema" ng-init="watchproperty=HydratorPlusPlusNodeConfigCtrl.state.groupsConfig.outputSchema.schemaProperties['property-watch']">
+
+  <div class="schema-error">
+    <ul>
+      <li class="text-danger" ng-repeat="error in HydratorPlusPlusNodeConfigCtrl.state.errors">{{ error }}</li>
+    </ul>
+  </div>
+  <h4>
+    <span ng-if="!HydratorPlusPlusNodeConfigCtrl.state.isSink">Output Schema</span>
+    <span ng-if="HydratorPlusPlusNodeConfigCtrl.state.isSink">Schema</span>
+
+    <span class="fa fa-asterisk ng-scope" ng-if="HydratorPlusPlusNodeConfigCtrl.state.groupsConfig.outputSchema.isOutputSchemaRequired"></span>
+
+    <div class="pull-right" uib-dropdown>
+      <button class="btn btn-default" uib-dropdown-toggle>
+        <span>Actions</span>
+        <span class="fa fa-chevron-down"></span>
+      </button>
+
+      <ul class="output-schema-actions" uib-dropdown-menu>
+        <li ng-if="(!HydratorPlusPlusNodeConfigCtrl.state.groupsConfig.outputSchema.implicitSchema && !isDisabled)">
+          <a href="" ng-click="HydratorPlusPlusNodeConfigCtrl.importSchema()">Import</a>
+        </li>
+        <li>
+          <a href="" ng-click="HydratorPlusPlusNodeConfigCtrl.exportSchema()">Export</a>
+        </li>
+        <li ng-if="!isDisabled && !HydratorPlusPlusNodeConfigCtrl.state.isSink">
+          <a href="" ng-click="HydratorPlusPlusNodeConfigCtrl.showPropagateConfirm = true">Propagate</a>
+        </li>
+        <li ng-if="(!HydratorPlusPlusNodeConfigCtrl.state.groupsConfig.outputSchema.implicitSchema && !isDisabled)">
+          <a href="" ng-click="HydratorPlusPlusNodeConfigCtrl.schemaClear()">Clear</a>
+        </li>
+      </ul>
+    </div>
+  </h4>
+  <fieldset class="clearfix" ng-disabled="isDisabled">
+    <div class="schema-propagation-confirm">
+      <div class="well well-xs" ng-if="HydratorPlusPlusNodeConfigCtrl.showPropagateConfirm">
+        Existing schema will be over-written. Continue?
+        <div class="row confirmation-button">
+          <button ng-click="HydratorPlusPlusNodeConfigCtrl.propagateSchemaDownStream(); HydratorPlusPlusNodeConfigCtrl.showPropagateConfirm=false;" class="btn btn-default">Yes</button>
+          <button ng-click="HydratorPlusPlusNodeConfigCtrl.showPropagateConfirm = false" class="btn btn-default">No</button>
+        </div>
+      </div>
+    </div>
+    <div ng-if="isDisabled">
+      <my-schema-editor
+        ng-model="HydratorPlusPlusNodeConfigCtrl.state.node.outputSchema"
+        ng-if="HydratorPlusPlusNodeConfigCtrl.state.node.outputSchema"
+        data-disabled="HydratorPlusPlusNodeConfigCtrl.state.groupsConfig.outputSchema.implicitSchema || isDisabled"
+        plugin-properties="HydratorPlusPlusNodeConfigCtrl.state.node.plugin.properties"
+        config="HydratorPlusPlusNodeConfigCtrl.state.groupsConfig.outputSchema.schemaProperties">
+      </my-schema-editor>
+    </div>
+    <div ng-if="!isDisabled">
+      <my-schema-editor
+        ng-model="HydratorPlusPlusNodeConfigCtrl.state.node.outputSchema"
+        data-disabled="HydratorPlusPlusNodeConfigCtrl.state.groupsConfig.outputSchema.implicitSchema"
+        plugin-properties="HydratorPlusPlusNodeConfigCtrl.state.node.plugin.properties"
+        config="HydratorPlusPlusNodeConfigCtrl.state.groupsConfig.outputSchema.schemaProperties">
+      </my-schema-editor>
+    </div>
+  </fieldset>
+
+  <div ng-if="!HydratorPlusPlusNodeConfigCtrl.state.node.outputSchema && isDisabled && HydratorPlusPlusNodeConfigCtrl.state.node.plugin.properties.format !== 'clf' && HydratorPlusPlusNodeConfigCtrl.state.node.plugin.properties.format !== 'syslog'">
+    <div class="well well-lg">
+      <h4>There is no output schema</h4>
+    </div>
+  </div>
+</div>
+
+<my-file-select class="sr-only"
+                id="schema-import-link"
+                data-button-icon="fa-upload"
+                on-file-select="HydratorPlusPlusNodeConfigCtrl.importFiles($files)"
+                data-button-label="Import">
+</my-file-select>

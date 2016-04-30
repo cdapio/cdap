@@ -22,16 +22,25 @@ import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.namespace.guice.NamespaceClientRuntimeModule;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
+import co.cask.cdap.data2.audit.AuditModule;
+import co.cask.cdap.data2.audit.InMemoryAuditPublisher;
+import co.cask.cdap.data2.audit.payload.builder.MetadataPayloadBuilder;
 import co.cask.cdap.kafka.KafkaTester;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.audit.AuditMessage;
+import co.cask.cdap.proto.audit.AuditType;
 import co.cask.cdap.proto.codec.NamespacedIdCodec;
+import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.NamespacedId;
+import co.cask.cdap.proto.metadata.Metadata;
 import co.cask.cdap.proto.metadata.MetadataChangeRecord;
 import co.cask.cdap.proto.metadata.MetadataRecord;
 import co.cask.cdap.proto.metadata.MetadataScope;
 import co.cask.cdap.proto.metadata.MetadataSearchResultRecord;
 import co.cask.tephra.TransactionManager;
 import co.cask.tephra.runtime.TransactionInMemoryModule;
+import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -44,12 +53,15 @@ import com.google.inject.Injector;
 import com.google.inject.util.Modules;
 import org.junit.AfterClass;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -77,7 +89,8 @@ public class MetadataStoreTest {
       new LocationRuntimeModule().getInMemoryModules(),
       new TransactionInMemoryModule(),
       new SystemDatasetRuntimeModule().getInMemoryModules(),
-      new NamespaceClientRuntimeModule().getInMemoryModules()
+      new NamespaceClientRuntimeModule().getInMemoryModules(),
+      new AuditModule().getInMemoryModules()
     ),
     1,
     Constants.Metadata.UPDATES_KAFKA_BROKER_LIST
@@ -191,6 +204,7 @@ public class MetadataStoreTest {
 
   private static TransactionManager txManager;
   private static MetadataStore store;
+  private static InMemoryAuditPublisher auditPublisher;
 
   @BeforeClass
   public static void setup() throws IOException {
@@ -198,6 +212,12 @@ public class MetadataStoreTest {
     txManager = injector.getInstance(TransactionManager.class);
     txManager.startAndWait();
     store = injector.getInstance(MetadataStore.class);
+    auditPublisher = injector.getInstance(InMemoryAuditPublisher.class);
+  }
+
+  @Before
+  public void clearAudit() throws Exception {
+    auditPublisher.popMessages();
   }
 
   @Test
@@ -214,6 +234,34 @@ public class MetadataStoreTest {
     }
     // note kafka offset
     kafkaOffset += publishedChanges.size();
+
+    // Verify audit publishing for the metadata changes
+    Function<MetadataChangeRecord, AuditMessage> metadataChangeRecordToAuditMessage =
+      new Function<MetadataChangeRecord, AuditMessage>() {
+        @Override
+        public AuditMessage apply(MetadataChangeRecord input) {
+          MetadataPayloadBuilder builder = new MetadataPayloadBuilder();
+          builder.addPrevious(input.getPrevious());
+          builder.addAdditions(input.getChanges().getAdditions());
+          builder.addDeletions(input.getChanges().getDeletions());
+          return new AuditMessage(0, input.getPrevious().getEntityId().toEntityId(), "",
+                                  AuditType.METADATA_CHANGE, builder.build());
+        }
+      };
+
+    // Audit messages for metadata changes
+    List<AuditMessage> expectedAuditMessages = Lists.transform(expectedChanges, metadataChangeRecordToAuditMessage);
+    List<AuditMessage> actualAuditMessages = new ArrayList<>();
+    for (AuditMessage auditMessage : auditPublisher.popMessages()) {
+      // Ignore system audit messages
+      if (auditMessage.getEntityId() instanceof NamespacedId) {
+        String systemNs = NamespaceId.SYSTEM.getNamespace();
+        if (!((NamespacedId) auditMessage.getEntityId()).getNamespace().equals(systemNs)) {
+          actualAuditMessages.add(auditMessage);
+        }
+      }
+    }
+    Assert.assertEquals(expectedAuditMessages, actualAuditMessages);
   }
 
   @Test
@@ -243,26 +291,54 @@ public class MetadataStoreTest {
     Id.Stream stream1 = Id.Stream.from("ns1", "s1");
     Id.DatasetInstance dataset1 = Id.DatasetInstance.from("ns1", "ds1");
 
+    // Add metadata
     String multiWordValue = "aV1 av2 ,  -  ,  av3 - av4_av5 av6";
-    store.setProperties(MetadataScope.USER, flow1, ImmutableMap.of("key1", "value1",
-                                                                   "key2", "value2",
-                                                                   "multiword", multiWordValue));
+    Map<String, String> flowUserProps = ImmutableMap.of("key1", "value1",
+                                                                 "key2", "value2",
+                                                                 "multiword", multiWordValue);
+    Map<String, String> flowSysProps = ImmutableMap.of("sysKey1", "sysValue1");
+    Set<String> flowUserTags = ImmutableSet.of("tag1", "tag2");
+    Set<String> flowSysTags = ImmutableSet.of("sysTag1");
+    store.setProperties(MetadataScope.USER, flow1, flowUserProps);
+    store.setProperties(MetadataScope.SYSTEM, flow1, flowSysProps);
+    store.addTags(MetadataScope.USER, flow1, flowUserTags.toArray(new String[flowUserTags.size()]));
+    store.addTags(MetadataScope.SYSTEM, flow1, flowSysTags.toArray(new String[flowSysTags.size()]));
 
-    store.setProperties(MetadataScope.USER, stream1, ImmutableMap.of("sKey1", "sValue1 sValue2",
-                                                                     "Key1", "Value1"));
+    Map<String, String> streamUserProps = ImmutableMap.of("sKey1", "sValue1 sValue2",
+                                                                   "Key1", "Value1");
+    store.setProperties(MetadataScope.USER, stream1, streamUserProps);
 
-    store.setProperties(MetadataScope.USER, dataset1, ImmutableMap.of("sKey1", "sValuee1 sValuee2"));
+    Map<String, String> datasetUserProps = ImmutableMap.of("sKey1", "sValuee1 sValuee2");
+    store.setProperties(MetadataScope.USER, dataset1, datasetUserProps);
 
-    // Test score match
+    // Test score and metadata match
     List<MetadataSearchResultRecord> actual = Lists.newArrayList(store.searchMetadata("ns1", "value1 multiword:av2"));
-    List<MetadataSearchResultRecord> expected = Lists.newArrayList(new MetadataSearchResultRecord(flow1),
-                                                                        new MetadataSearchResultRecord(stream1));
+
+    Map<MetadataScope, Metadata> expectedFlowMetadata =
+      ImmutableMap.of(MetadataScope.USER, new Metadata(flowUserProps, flowUserTags),
+                      MetadataScope.SYSTEM, new Metadata(flowSysProps, flowSysTags));
+    Map<MetadataScope, Metadata> expectedStreamMetadata =
+      ImmutableMap.of(MetadataScope.USER, new Metadata(streamUserProps, Collections.<String>emptySet()));
+    Map<MetadataScope, Metadata> expectedDatasetMetadata =
+      ImmutableMap.of(MetadataScope.USER, new Metadata(datasetUserProps, Collections.<String>emptySet()));
+    List<MetadataSearchResultRecord> expected =
+      Lists.newArrayList(
+        new MetadataSearchResultRecord(flow1,
+                                       expectedFlowMetadata),
+        new MetadataSearchResultRecord(stream1,
+                                       expectedStreamMetadata)
+      );
     Assert.assertEquals(expected, actual);
 
     actual = Lists.newArrayList(store.searchMetadata("ns1", "value1 sValue*"));
-    expected = Lists.newArrayList(new MetadataSearchResultRecord(stream1),
-                                  new MetadataSearchResultRecord(dataset1),
-                                  new MetadataSearchResultRecord(flow1));
+    expected = Lists.newArrayList(
+      new MetadataSearchResultRecord(stream1,
+                                     expectedStreamMetadata),
+      new MetadataSearchResultRecord(dataset1,
+                                     expectedDatasetMetadata),
+      new MetadataSearchResultRecord(flow1,
+                                     expectedFlowMetadata)
+    );
     Assert.assertEquals(expected, actual);
   }
 

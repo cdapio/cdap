@@ -20,6 +20,7 @@ import co.cask.cdap.common.InvalidMetadataException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.entity.EntityExistenceVerifier;
 import co.cask.cdap.data2.metadata.dataset.MetadataDataset;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.proto.Id;
@@ -33,7 +34,6 @@ import com.google.inject.Inject;
 
 import java.util.Map;
 import java.util.Set;
-import javax.annotation.Nullable;
 
 /**
  * Implementation of {@link MetadataAdmin} that interacts directly with {@link MetadataStore}.
@@ -54,112 +54,107 @@ public class DefaultMetadataAdmin implements MetadataAdmin {
 
   private final MetadataStore metadataStore;
   private final CConfiguration cConf;
-  private final EntityValidator entityValidator;
+  private final EntityExistenceVerifier entityExistenceVerifier;
 
   @Inject
-  DefaultMetadataAdmin(MetadataStore metadataStore, CConfiguration cConf, EntityValidator entityValidator) {
+  DefaultMetadataAdmin(MetadataStore metadataStore, CConfiguration cConf,
+                       EntityExistenceVerifier entityExistenceVerifier) {
     this.metadataStore = metadataStore;
     this.cConf = cConf;
-    this.entityValidator = entityValidator;
+    this.entityExistenceVerifier = entityExistenceVerifier;
   }
 
   @Override
   public void addProperties(Id.NamespacedId entityId, Map<String, String> properties)
     throws NotFoundException, InvalidMetadataException {
-    entityValidator.ensureEntityExists(entityId);
+    entityExistenceVerifier.ensureExists(entityId.toEntityId());
     validateProperties(entityId, properties);
     metadataStore.setProperties(MetadataScope.USER, entityId, properties);
   }
 
   @Override
   public void addTags(Id.NamespacedId entityId, String... tags) throws NotFoundException, InvalidMetadataException {
-    entityValidator.ensureEntityExists(entityId);
+    entityExistenceVerifier.ensureExists(entityId.toEntityId());
     validateTags(entityId, tags);
     metadataStore.addTags(MetadataScope.USER, entityId, tags);
   }
 
   @Override
   public Set<MetadataRecord> getMetadata(Id.NamespacedId entityId) throws NotFoundException {
-    entityValidator.ensureEntityExists(entityId);
+    entityExistenceVerifier.ensureExists(entityId.toEntityId());
     return metadataStore.getMetadata(entityId);
   }
 
   @Override
   public Set<MetadataRecord> getMetadata(MetadataScope scope, Id.NamespacedId entityId) throws NotFoundException {
-    entityValidator.ensureEntityExists(entityId);
+    entityExistenceVerifier.ensureExists(entityId.toEntityId());
     return ImmutableSet.of(metadataStore.getMetadata(scope, entityId));
   }
 
   @Override
   public Map<String, String> getProperties(Id.NamespacedId entityId) throws NotFoundException {
-    entityValidator.ensureEntityExists(entityId);
+    entityExistenceVerifier.ensureExists(entityId.toEntityId());
     return metadataStore.getProperties(entityId);
   }
 
   @Override
   public Map<String, String> getProperties(MetadataScope scope, Id.NamespacedId entityId) throws NotFoundException {
-    entityValidator.ensureEntityExists(entityId);
+    entityExistenceVerifier.ensureExists(entityId.toEntityId());
     return metadataStore.getProperties(scope, entityId);
   }
 
   @Override
   public Set<String> getTags(Id.NamespacedId entityId) throws NotFoundException {
-    entityValidator.ensureEntityExists(entityId);
+    entityExistenceVerifier.ensureExists(entityId.toEntityId());
     return metadataStore.getTags(entityId);
   }
 
   @Override
   public Set<String> getTags(MetadataScope scope, Id.NamespacedId entityId) throws NotFoundException {
-    entityValidator.ensureEntityExists(entityId);
+    entityExistenceVerifier.ensureExists(entityId.toEntityId());
     return metadataStore.getTags(scope, entityId);
   }
 
   @Override
   public void removeMetadata(Id.NamespacedId entityId) throws NotFoundException {
-    entityValidator.ensureEntityExists(entityId);
+    entityExistenceVerifier.ensureExists(entityId.toEntityId());
     metadataStore.removeMetadata(MetadataScope.USER, entityId);
   }
 
   @Override
   public void removeProperties(Id.NamespacedId entityId) throws NotFoundException {
-    entityValidator.ensureEntityExists(entityId);
+    entityExistenceVerifier.ensureExists(entityId.toEntityId());
     metadataStore.removeProperties(MetadataScope.USER, entityId);
   }
 
   @Override
   public void removeProperties(Id.NamespacedId entityId, String... keys) throws NotFoundException {
-    entityValidator.ensureEntityExists(entityId);
+    entityExistenceVerifier.ensureExists(entityId.toEntityId());
     metadataStore.removeProperties(MetadataScope.USER, entityId, keys);
   }
 
   @Override
   public void removeTags(Id.NamespacedId entityId) throws NotFoundException {
-    entityValidator.ensureEntityExists(entityId);
+    entityExistenceVerifier.ensureExists(entityId.toEntityId());
     metadataStore.removeTags(MetadataScope.USER, entityId);
   }
 
   @Override
   public void removeTags(Id.NamespacedId entityId, String... tags) throws NotFoundException {
-    entityValidator.ensureEntityExists(entityId);
+    entityExistenceVerifier.ensureExists(entityId.toEntityId());
     metadataStore.removeTags(MetadataScope.USER, entityId, tags);
   }
 
   @Override
   public Set<MetadataSearchResultRecord> searchMetadata(String namespaceId, String searchQuery,
-                                                        @Nullable MetadataSearchTargetType type) {
-    if (type == null) {
-      return metadataStore.searchMetadata(namespaceId, searchQuery);
-    }
-    return metadataStore.searchMetadataOnType(namespaceId, searchQuery, type);
+                                                        Set<MetadataSearchTargetType> types) {
+    return metadataStore.searchMetadataOnType(namespaceId, searchQuery, types);
   }
 
   @Override
   public Set<MetadataSearchResultRecord> searchMetadata(MetadataScope scope, String namespaceId, String searchQuery,
-                                                        @Nullable final MetadataSearchTargetType type) {
-    if (type == null) {
-      return metadataStore.searchMetadata(scope, namespaceId, searchQuery);
-    }
-    return metadataStore.searchMetadataOnType(scope, namespaceId, searchQuery, type);
+                                                        Set<MetadataSearchTargetType> types) {
+    return metadataStore.searchMetadataOnType(scope, namespaceId, searchQuery, types);
   }
 
   // Helper methods to validate the metadata entries.

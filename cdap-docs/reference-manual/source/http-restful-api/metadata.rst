@@ -23,7 +23,7 @@ The HTTP RESTful API is divided into these sections:
 
 - :ref:`metadata properties <http-restful-api-metadata-properties>`
 - :ref:`metadata tags <http-restful-api-metadata-tags>`
-- :ref:`searching properties <http-restful-api-metadata-searching>`
+- :ref:`searching metadata <http-restful-api-metadata-searching>`
 - :ref:`viewing lineage <http-restful-api-metadata-lineage>`
 - :ref:`metadata for a run of a program <http-restful-api-metadata-run>`
 
@@ -491,40 +491,60 @@ or, for a particular view of a stream::
 
 Searching for Metadata
 ======================
-CDAP supports searching metadata of entities. To find which applications, datasets, or streams have a particular
+CDAP supports searching metadata of entities. To find which applications, datasets, streams, etc. have a particular
 metadata property or metadata tag, submit an HTTP GET request::
 
-  GET <base-url>/namespaces/<namespace>/metadata/search?query=<term>&target=<entity-type>
+  GET <base-url>/namespaces/<namespace>/metadata/search?query=<term>[&target=<entity-type>&target=<entity-type2>...]
 
-Entities with the specified terms are returned as list of entity IDs::
+Entities that match the specified query and entity type are returned in the body of the response in JSON format::
 
   [
-      {
-          "entityId": {
-              "id": {
-                  "applicationId": "PurchaseHistory",
-                  "namespace": {
-                      "id": "default"
-                  }
+     {
+        "entityId":{
+           "id":{
+              "applicationId":"PurchaseHistory",
+              "namespace":{
+                 "id":"default"
+              }
+           },
+           "type":"application"
+        },
+        "metadata":{
+           "SYSTEM":{
+              "properties":{
+                 "Flow:PurchaseFlow":"PurchaseFlow",
+                 "MapReduce:PurchaseHistoryBuilder":"PurchaseHistoryBuilder"
               },
-              "type": "application"
-          }
-      },
-      {
-          "entityId": {
-              "id": {
-                  "application": {
-                      "applicationId": "PurchaseHistory",
-                      "namespace": {
-                          "id": "default"
-                      }
-                  },
-                  "id": "PurchaseFlow",
-                  "type": "Flow"
+              "tags":[
+                 "Purchase",
+                 "PurchaseHistory"
+              ]
+           }
+        }
+     },
+     {
+        "entityId":{
+           "id":{
+              "instanceId":"history",
+              "namespace":{
+                 "id":"default"
+              }
+           },
+           "type":"datasetinstance"
+        },
+        "metadata":{
+           "SYSTEM":{
+              "properties":{
+                 "type":"co.cask.cdap.examples.purchase.PurchaseHistoryStore"
               },
-              "type": "program"
-          }
-      }
+              "tags":[
+                 "history",
+                 "explore",
+                 "batch"
+              ]
+           }
+        }
+     }
   ]
 
 .. list-table::
@@ -536,9 +556,10 @@ Entities with the specified terms are returned as list of entity IDs::
    * - ``<namespace>``
      - Namespace ID
    * - ``<entity-type>``
-     - One of ``artifact``, ``app``, ``dataset``, ``program``, ``stream`` or ``view``
+     - Restricts the search to either all or specified entity types: ``all``, ``artifact``, ``app``, ``dataset``,
+       ``program``, ``stream``, or ``view``
    * - ``<term>``
-     - Query term, as described below. Query terms are case-insensitive
+     - :ref:`Query term <http-restful-api-metadata-query-terms>`, as described below. Query terms are case-insensitive
 
 .. rubric:: HTTP Responses
 
@@ -549,8 +570,9 @@ Entities with the specified terms are returned as list of entity IDs::
    * - Status Codes
      - Description
    * - ``200 OK``
-     - Entity IDs of entities with the metadata properties specified were returned as a
-       list of strings in the body of the response
+     - Entity ID and metadata of entities that match the query and entity type(s) are returned in the body of the response
+
+.. _http-restful-api-metadata-query-terms:
 
 .. rubric:: Query Terms
 
@@ -619,7 +641,7 @@ Viewing Lineages
 ================
 To view the lineage of a dataset or stream, submit an HTTP GET request::
 
-  GET <base-url>/namespaces/<namespace>/<entity-type>/<entity-id>/lineage?start=<start-ts>&end=<end-ts>&maxLevels=<max-levels>
+  GET <base-url>/namespaces/<namespace>/<entity-type>/<entity-id>/lineage?start=<start-ts>&end=<end-ts>[&levels=<levels>][&collapse=<collapse>&collapse=<collapse>...]
 
 where:
 
@@ -632,21 +654,30 @@ where:
    * - ``<namespace>``
      - Namespace ID
    * - ``<entity-type>``
-     - One of ``dataset`` or ``stream``
+     - One of ``datasets`` or ``streams``
    * - ``<entity-id>``
      - Name of the ``dataset`` or ``stream``
    * - ``<start-ts>``
      - Starting time-stamp of lineage (inclusive), in seconds. Supports ``now``, ``now-1h``, etc. syntax.
    * - ``<end-ts>``
      - Ending time-stamp of lineage (exclusive), in seconds. Supports ``now``, ``now-1h``, etc. syntax.
-   * - ``<max-levels>``
-     - Maximum number of levels
+   * - ``<levels>``
+     - Number of levels of lineage output to return. Defaults to 10. Determines how far back the provenance
+       of the data in the lineage chain is calculated.
+   * - ``<collapse>``
+     - An optional set of ``collapse`` types (any of ``access``, ``run`` or ``component``) by which to 
+       :ref:`collapse the lineage output <http-restful-api-metadata-lineage-collapse>`. 
+       By default, lineage output is not collapsed. Multiple collapse parameters is supported.
 
 See in the Metrics HTTP RESTful API :ref:`Querying by a Time Range <http-restful-api-metrics-time-range>`
 for examples of the "now" time syntax.
 
-The lineage will be returned as a JSON string in the body of the response. The number of
-levels of the request (``<max-levels>``) determines how far back the provenance of the
+For more information about collapsing lineage output, please refer to the section below on
+:ref:`Collapsing Lineage Output <http-restful-api-metadata-lineage-collapse>`.
+
+The lineage will be returned as a JSON string in the body of the response. The JSON describes lineage as a graph
+of connections between programs and datasets (or streams) in the specified time range. The number of
+levels of the request (``<levels>``) determines the depth of the graph. This impacts how far back the provenance of the
 data in the lineage chain is calculated, as described in the :ref:`Metadata and Lineage <metadata-lineage-lineage>`.
 
 Lineage JSON consists of three main sections:
@@ -746,6 +777,246 @@ Here is an example, pretty-printed::
    * - ``404 NOT FOUND``
      - No entities matching the specified query were found
 
+
+.. _http-restful-api-metadata-lineage-collapse:
+
+Collapsing Lineage Output
+-------------------------
+Lineage output can be collapsed by `access`, `run` or `component`. Collapsing allows you to group all the lineage
+relations for the specified collapse type together in the lineage output. Collapsing is useful when you do not want
+to differentiate between multiple lineage relations that only differ by the collapse-type. 
+
+For example, consider a program that wrote to a dataset in multiple runs over a specified time interval. 
+If you do not want to differentiate between lineage relations involving different runs of this program 
+(so you only want to know that a program accessed a data entity in a given time interval), you could provide 
+the query parameter ``collapse=run`` to the lineage API. This would collapse the lineage relations in the 
+output to group the multiple runs of the program together. 
+
+You can also collapse lineage relations by `access` |---| which will group together those relations that 
+differ only in access types; or by `component` |---| which will group together those that differ only in 
+components together. The lineage HTTP RESTful API also allows you to use multiple `collapse` parameters in the same query.
+
+Consider these relations from the output of a lineage API request::
+
+  "relations": [
+    {
+      "accesses": [
+        "read"
+      ],
+      "components": [
+        "collector"
+      ],
+      "data": "dataset.default.purchases",
+      "program": "mapreduce.default.PurchaseHistory.PurchaseFlow",
+      "runs": [
+        "a442db61-0c2f-11e6-bc75-561602fdb525"
+      ]
+    },
+    {
+      "accesses": [
+        "read"
+      ],
+      "components": [
+        "reader"
+      ],
+      "data": "dataset.default.purchases",
+      "program": "mapreduce.default.PurchaseHistory.PurchaseFlow",
+      "runs": [
+        "a442db61-0c2f-11e6-bc75-561602fdb525"
+      ]
+    },
+    {
+      "accesses": [
+        "read"
+      ],
+      "components": [
+        "collector"
+      ],
+      "data": "dataset.default.purchases",
+      "program": "mapreduce.default.PurchaseHistory.PurchaseFlow",
+      "runs": [
+        "ae188ea2-0c2f-11e6-b499-561602fdb525"
+      ]
+    },
+    {
+      "accesses": [
+        "write"
+      ],
+      "components": [
+        "collector"
+      ],
+      "data": "dataset.default.purchases",
+      "program": "mapreduce.default.PurchaseHistory.PurchaseFlow",
+      "runs": [
+        "a442db61-0c2f-11e6-bc75-561602fdb525"
+      ]
+    },
+    {
+      "accesses": [
+        "write"
+      ],
+      "components": [
+        "collector"
+      ],
+      "data": "dataset.default.purchase",
+      "program": "mapreduce.default.PurchaseHistory.PurchaseFlow",
+      "runs": [
+        "ae188ea2-0c2f-11e6-b499-561602fdb525"
+      ]
+    }
+  ]
+
+Collapsing the above by `run` would group the runs together as::
+
+  "relations": [
+    {
+      "accesses": [
+        "read"
+      ],
+      "components": [
+        "collector"
+      ],
+      "data": "dataset.default.purchases",
+      "program": "mapreduce.default.PurchaseHistory.PurchaseFlow",
+      "runs": [
+        "a442db61-0c2f-11e6-bc75-561602fdb525",
+        "ae188ea2-0c2f-11e6-b499-561602fdb525"
+      ]
+    },
+    {
+      "accesses": [
+        "read"
+      ],
+      "components": [
+        "reader"
+      ],
+      "data": "dataset.default.purchases",
+      "program": "mapreduce.default.PurchaseHistory.PurchaseFlow",
+      "runs": [
+        "a442db61-0c2f-11e6-bc75-561602fdb525"
+      ]
+    },
+    {
+      "accesses": [
+        "write"
+      ],
+      "components": [
+        "collector"
+      ],
+      "data": "dataset.default.purchases",
+      "program": "mapreduce.default.PurchaseHistory.PurchaseFlow",
+      "runs": [
+        "a442db61-0c2f-11e6-bc75-561602fdb525",
+        "ae188ea2-0c2f-11e6-b499-561602fdb525"
+      ]
+    }
+  ]
+
+Collapsing by `access` would produce::
+
+  "relations": [
+    {
+      "accesses": [
+        "read",
+        "write"
+      ],
+      "components": [
+        "collector"
+      ],
+      "data": "dataset.default.purchases",
+      "program": "mapreduce.default.PurchaseHistory.PurchaseFlow",
+      "runs": [
+        "a442db61-0c2f-11e6-bc75-561602fdb525"
+      ]
+    },
+    {
+      "accesses": [
+        "read",
+        "write"
+      ],
+      "components": [
+        "collector"
+      ],
+      "data": "dataset.default.purchases",
+      "program": "mapreduce.default.PurchaseHistory.PurchaseFlow",
+      "runs": [
+        "ae188ea2-0c2f-11e6-b499-561602fdb525"
+      ]
+    },
+    {
+      "accesses": [
+        "read"
+      ],
+      "components": [
+        "reader"
+      ],
+      "data": "dataset.default.purchases",
+      "program": "mapreduce.default.PurchaseHistory.PurchaseFlow",
+      "runs": [
+        "a442db61-0c2f-11e6-bc75-561602fdb525"
+      ]
+    }
+  ]
+
+Similarly, collapsing by `component` will generate::
+
+  "relations": [
+    {
+      "accesses": [
+        "read"
+      ],
+      "components": [
+        "collector",
+        "reader"
+      ],
+      "data": "dataset.default.purchases",
+      "program": "mapreduce.default.PurchaseHistory.PurchaseFlow",
+      "runs": [
+        "a442db61-0c2f-11e6-bc75-561602fdb525"
+      ]
+    },
+    {
+      "accesses": [
+        "read"
+      ],
+      "components": [
+        "collector"
+      ],
+      "data": "dataset.default.purchases",
+      "program": "mapreduce.default.PurchaseHistory.PurchaseFlow",
+      "runs": [
+        "ae188ea2-0c2f-11e6-b499-561602fdb525"
+      ]
+    },
+    {
+      "accesses": [
+        "write"
+      ],
+      "components": [
+        "collector"
+      ],
+      "data": "dataset.default.purchases",
+      "program": "mapreduce.default.PurchaseHistory.PurchaseFlow",
+      "runs": [
+        "a442db61-0c2f-11e6-bc75-561602fdb525"
+      ]
+    },
+    {
+      "accesses": [
+        "write"
+      ],
+      "components": [
+        "collector"
+      ],
+      "data": "dataset.default.purchase",
+      "program": "mapreduce.default.PurchaseHistory.PurchaseFlow",
+      "runs": [
+        "ae188ea2-0c2f-11e6-b499-561602fdb525"
+      ]
+    }
+  ]
+
+
 .. _http-restful-api-metadata-run:
 
 Retrieving Metadata for a Program Run
@@ -753,7 +1024,7 @@ Retrieving Metadata for a Program Run
 At every run of a program, the metadata associated with the program, the application it is part of, and any datasets
 and streams used by the program run are recorded. To retrieve the metadata for a program run, submit an HTTP GET request::
 
-  GET <base-url>/namespaces/<namespace>/apps/<app-id>/<program-type>/<program-id>/runs/<run-id>/metadata/tags
+  GET <base-url>/namespaces/<namespace>/apps/<app-id>/<program-type>/<program-id>/runs/<run-id>/metadata
 
 with the metadata returned as a JSON string in the return body::
 

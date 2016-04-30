@@ -1,0 +1,185 @@
+/*
+ * Copyright © 2016 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
+@grey: #999;
+@font: #3d3d3d;
+@node-height: 55px;
+@node-width: 175px;
+
+my-lineage-diagram {
+  .lineage-diagram-container {
+    position: relative;
+    width: 100vw;
+  }
+
+  .no-content-message {
+    margin-top: 150px;
+    p {
+      font-size: 18px;
+      color: #666;
+    }
+  }
+
+  .nodes {
+    width: @node-width;
+    height: @node-height;
+    position: absolute;
+    padding: 10px 15px;
+    cursor: pointer;
+
+    .entity-type {
+      span[class*="icon-"] {
+        font-size: 13px;
+      }
+      margin-top: 3px;
+    }
+
+    .entity-link {
+      text-decoration: none;
+      user-select: none;
+    }
+
+    h4 {
+      margin: 0;
+      overflow-x: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    &.data {
+      .nodeTypeStyling(white, @font, @grey);
+    }
+
+    &.program {
+      .nodeTypeStyling(@grey, white, white);
+    }
+
+    .navigation-control {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      line-height: @node-height;
+
+      span {
+        font-size: 45px;
+        color: #35c853;
+        vertical-align: middle;
+      }
+
+      @offset: 180px; // node width + 5px
+
+      &.right {
+        left: @offset;
+      }
+      &.left {
+        right: @offset;
+      }
+    }
+
+    .tracker-program-popover {
+      width: 500px;
+      max-width: 500px;
+      border: 0;
+      border-radius: 0;
+      position: absolute;
+      top: 0;
+      left: 0;
+      background-color: white;
+      z-index: 1000;
+      padding: 5px;
+
+      h4, h5 {
+        font-weight: 500;
+        margin-bottom: 4px;
+      }
+
+      .tracker-popover-content {
+        cursor: default;
+        .inside-column {
+          padding-left: 10px;
+          padding-right: 10px;
+        }
+
+        .top-bar {
+          background-color: #666;
+          color: white;
+          padding-bottom: 5px;
+          h4, h5 { color: white; }
+          h4 {
+            font-size: 16px;
+            margin-top: 10px;
+          }
+
+          .entity-detail {
+            padding-left: 10px;
+            span { font-size: 14px; }
+            a { color: white; }
+          }
+
+          .runs-controller {
+            font-size: 15px;
+            line-height: 24px;
+
+            span {
+              vertical-align: middle;
+              user-select: none;
+            }
+
+            span.fa {
+              font-size: 24px;
+              margin: 0 5px;
+              cursor: pointer;
+            }
+          }
+
+          .close-button {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            font-size: 15px;
+            cursor: pointer;
+          }
+        }
+
+        .info-container {
+          background-color: #333;
+          color: white;
+          padding-bottom: 10px;
+
+          h5 {
+            color: #ccc;
+            margin-bottom: 0;
+          }
+        }
+
+      }
+    }
+  }
+}
+
+.nodeTypeStyling(@node-background-color: white, @font-color: black, @entity-type-font-color: black) {
+  background-color: @node-background-color;
+  color: @font-color;
+  h4.entity-name {
+    color: @font-color;
+  }
+  .entity-type {
+    color: @entity-type-font-color;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow-x: hidden;
+  }
+}

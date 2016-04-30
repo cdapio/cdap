@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -32,9 +32,9 @@ public interface WorkflowToken {
    * Keys in the {@link WorkflowToken} can be added by user, using the
    * {@link WorkflowToken#put} method. These keys are added under the {@link Scope#USER} scope.
    * CDAP also adds some keys to the {@link WorkflowToken}. for e.g. MapReduce counters.
-   * The keys added by CDAP gets added under {@link Scope#SYSTEM} scope.
+   * The keys added by CDAP are added under the {@link Scope#SYSTEM} scope.
    */
-  public enum Scope {
+  enum Scope {
     USER,
     SYSTEM
   }
@@ -42,18 +42,26 @@ public interface WorkflowToken {
   /**
    * Put the specified key and value into the {@link WorkflowToken}.
    * The token may store additional information about the context in which
-   * this key is being set, for example, the unique name of the workflow node.
+   * this key is being set. For example, the context information stored by the
+   * token may be the workflow node that is performing the operation, or the name
+   * of the workflow if the operation is performed in {@link AbstractWorkflow#initialize}
+   * or {@link AbstractWorkflow#destroy} method.
    * @param key the key representing the entry
    * @param value the value for the key
+   * @throws UnsupportedOperationException if called in a context where the token may not be modified.
    */
   void put(String key, String value);
 
   /**
    * Put the specified key and {@link Value} into the {@link WorkflowToken}.
    * The token may store additional information about the context in which
-   * this key is being set, for example, the unique name of the workflow node.
+   * this key is being set. For example, the context information stored by the
+   * token may be the workflow node that is performing the operation, or the name
+   * of the workflow if the operation is performed in {@link AbstractWorkflow#initialize}
+   * or {@link AbstractWorkflow#destroy} method.
    * @param key the key representing entry
    * @param value the {@link Value} for the key
+   * @throws UnsupportedOperationException if called in a context where the token may not be modified.
    */
   void put(String key, Value value);
 
@@ -78,6 +86,8 @@ public interface WorkflowToken {
 
   /**
    * Get the value set for the specified key by the specified node for a {@link Scope#USER} scope.
+   * To get the token values set from {@link AbstractWorkflow#initialize} or
+   * {@link AbstractWorkflow#destroy} methods, provide the name of the Workflow as nodeName.
    * @param key the key to be searched
    * @param nodeName the name of the node
    * @return the {@link Value} set for the key by nodeName or <code>null</code> if the key is not
@@ -88,6 +98,8 @@ public interface WorkflowToken {
 
   /**
    * Get the value set for the specified key by the specified node for a given scope.
+   * To get the token values set from {@link AbstractWorkflow#initialize} or
+   * {@link AbstractWorkflow#destroy} methods, provide the name of the Workflow as nodeName.
    * @param key the key to be searched
    * @param nodeName the name of the node
    * @param scope the {@link WorkflowToken.Scope} for the key
@@ -138,7 +150,9 @@ public interface WorkflowToken {
 
   /**
    * Get the {@link Map} of key to {@link Value}s that were added to the {@link WorkflowToken}
-   * by specific node for a {@link Scope#USER} scope.
+   * by specific node for a {@link Scope#USER} scope. To get the token values set from
+   * {@link AbstractWorkflow#initialize} or {@link AbstractWorkflow#destroy} methods, provide
+   * the name of the Workflow as nodeName.
    * @param nodeName the unique name of the node
    * @return the map of key to values that were added by the specified node
    */
@@ -146,7 +160,9 @@ public interface WorkflowToken {
 
   /**
    * Get the {@link Map} of key to {@link Value}s that were added to the {@link WorkflowToken}
-   * by specific node for a given scope.
+   * by specific node for a given scope. To get the token values set from
+   * {@link AbstractWorkflow#initialize} or {@link AbstractWorkflow#destroy} methods, provide
+   * the name of the Workflow as nodeName.
    * @param nodeName the unique name of the node
    * @param scope the {@link WorkflowToken.Scope} for the key
    * @return the map of key to values that were added by the specified node for a given scope

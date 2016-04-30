@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,18 +20,28 @@ import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetDefinition;
+import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
+import co.cask.cdap.api.dataset.InstanceConflictException;
+import co.cask.cdap.api.dataset.InstanceNotFoundException;
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.lang.ClassLoaders;
+import co.cask.cdap.data2.audit.AuditPublisher;
+import co.cask.cdap.data2.audit.AuditPublishers;
+import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.datafabric.dataset.type.ConstantClassLoaderProvider;
 import co.cask.cdap.data2.datafabric.dataset.type.DatasetClassLoaderProvider;
 import co.cask.cdap.data2.dataset2.module.lib.DatasetModules;
+import co.cask.cdap.data2.metadata.lineage.AccessType;
 import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.audit.AuditPayload;
+import co.cask.cdap.proto.audit.AuditType;
+import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Supplier;
@@ -91,6 +101,8 @@ public class InMemoryDatasetFramework implements DatasetFramework {
   // NOTE: We maintain one DatasetDefinitionRegistry per namespace
   private final Map<Id.Namespace, DatasetDefinitionRegistry> registries;
 
+  private AuditPublisher auditPublisher;
+
   public InMemoryDatasetFramework(DatasetDefinitionRegistryFactory registryFactory, CConfiguration configuration) {
     this(registryFactory, new HashMap<String, DatasetModule>(), configuration);
   }
@@ -135,6 +147,12 @@ public class InMemoryDatasetFramework implements DatasetFramework {
     ReadWriteLock readWriteLock = new ReentrantReadWriteLock();
     readLock = readWriteLock.readLock();
     writeLock = readWriteLock.writeLock();
+  }
+
+  @SuppressWarnings("unused")
+  @Inject(optional = true)
+  public void setAuditPublisher(AuditPublisher auditPublisher) {
+    this.auditPublisher = auditPublisher;
   }
 
   @Override
@@ -212,16 +230,20 @@ public class InMemoryDatasetFramework implements DatasetFramework {
         throw new InstanceConflictException(String.format("Dataset instance '%s' already exists.", datasetInstanceId));
       }
 
-      DatasetDefinitionRegistry registry = getRegistryForType(datasetInstanceId.getNamespace(), datasetType);
-      if (registry == null) {
+      DatasetDefinition def = getDefinitionForType(datasetInstanceId.getNamespace(), datasetType);
+      if (def == null) {
         throw new DatasetManagementException(
           String.format("Dataset type '%s' is neither registered in the '%s' namespace nor in the system namespace",
                         datasetType, datasetInstanceId.getNamespaceId()));
       }
-      DatasetDefinition def = registry.get(datasetType);
       DatasetSpecification spec = def.configure(datasetInstanceId.getId(), props);
+      spec = spec.setOriginalProperties(props);
+      if (props.getDescription() != null) {
+        spec = spec.setDescription(props.getDescription());
+      }
       def.getAdmin(DatasetContext.from(datasetInstanceId.getNamespaceId()), spec, null).create();
       instances.put(datasetInstanceId.getNamespace(), datasetInstanceId, spec);
+      publishAudit(datasetInstanceId, AuditType.CREATE);
       LOG.info("Created dataset {} of type {}", datasetInstanceId, datasetType);
     } finally {
       writeLock.unlock();
@@ -235,19 +257,22 @@ public class InMemoryDatasetFramework implements DatasetFramework {
     try {
       DatasetSpecification oldSpec = instances.get(datasetInstanceId.getNamespace(), datasetInstanceId);
       if (oldSpec == null) {
-        throw new InstanceConflictException(String.format("Dataset instance '%s' does not exist.", datasetInstanceId));
+        throw new InstanceNotFoundException(datasetInstanceId.getId());
       }
-      String datasetType = oldSpec.getType();
-      DatasetDefinitionRegistry registry = getRegistryForType(datasetInstanceId.getNamespace(), datasetType);
-      if (registry == null) {
+      DatasetDefinition def = getDefinitionForType(datasetInstanceId.getNamespace(), oldSpec.getType());
+      if (def == null) {
         throw new DatasetManagementException(
           String.format("Dataset type '%s' is neither registered in the '%s' namespace nor in the system namespace",
-                        datasetType, datasetInstanceId.getNamespaceId()));
+                        oldSpec.getType(), datasetInstanceId.getNamespaceId()));
       }
-      DatasetDefinition def = registry.get(datasetType);
       DatasetSpecification spec = def.configure(datasetInstanceId.getId(), props);
+      spec = spec.setOriginalProperties(props);
+      if (props.getDescription() != null) {
+        spec = spec.setDescription(props.getDescription());
+      }
       instances.put(datasetInstanceId.getNamespace(), datasetInstanceId, spec);
       def.getAdmin(DatasetContext.from(datasetInstanceId.getNamespaceId()), spec, null).upgrade();
+      publishAudit(datasetInstanceId, AuditType.UPDATE);
     } finally {
       writeLock.unlock();
     }
@@ -275,7 +300,8 @@ public class InMemoryDatasetFramework implements DatasetFramework {
   public DatasetSpecification getDatasetSpec(Id.DatasetInstance datasetInstanceId) {
     readLock.lock();
     try {
-      return instances.get(datasetInstanceId.getNamespace(), datasetInstanceId);
+      DatasetSpecification spec = instances.get(datasetInstanceId.getNamespace(), datasetInstanceId);
+      return DatasetsUtil.fixOriginalProperties(spec);
     } finally {
       readLock.unlock();
     }
@@ -304,20 +330,44 @@ public class InMemoryDatasetFramework implements DatasetFramework {
   }
 
   @Override
-  public void deleteInstance(Id.DatasetInstance datasetInstanceId)
+  public void truncateInstance(Id.DatasetInstance instanceId)
     throws DatasetManagementException, IOException {
     writeLock.lock();
     try {
-      DatasetSpecification spec = instances.remove(datasetInstanceId.getNamespace(), datasetInstanceId);
-      String datasetType = spec.getType();
-      DatasetDefinitionRegistry registry = getRegistryForType(datasetInstanceId.getNamespace(), datasetType);
-      if (registry == null) {
+      DatasetSpecification spec = instances.get(instanceId.getNamespace(), instanceId);
+      if (spec == null) {
+        throw new InstanceNotFoundException(instanceId.getId());
+      }
+      DatasetDefinition def = getDefinitionForType(instanceId.getNamespace(), spec.getType());
+      if (def == null) {
         throw new DatasetManagementException(
           String.format("Dataset type '%s' is neither registered in the '%s' namespace nor in the system namespace",
-                        datasetType, datasetInstanceId.getNamespaceId()));
+                        spec.getType(), instanceId.getNamespaceId()));
       }
-      DatasetDefinition def = registry.get(datasetType);
-      def.getAdmin(DatasetContext.from(datasetInstanceId.getNamespaceId()), spec, null).drop();
+      def.getAdmin(DatasetContext.from(instanceId.getNamespaceId()), spec, null).truncate();
+      publishAudit(instanceId, AuditType.TRUNCATE);
+    } finally {
+      writeLock.unlock();
+    }
+  }
+
+  @Override
+  public void deleteInstance(Id.DatasetInstance instanceId)
+    throws DatasetManagementException, IOException {
+    writeLock.lock();
+    try {
+      DatasetSpecification spec = instances.remove(instanceId.getNamespace(), instanceId);
+      if (spec == null) {
+        throw new InstanceNotFoundException(instanceId.getId());
+      }
+      DatasetDefinition def = getDefinitionForType(instanceId.getNamespace(), spec.getType());
+      if (def == null) {
+        throw new DatasetManagementException(
+          String.format("Dataset type '%s' is neither registered in the '%s' namespace nor in the system namespace",
+                        spec.getType(), instanceId.getNamespaceId()));
+      }
+      def.getAdmin(DatasetContext.from(instanceId.getNamespaceId()), spec, null).drop();
+      publishAudit(instanceId, AuditType.DELETE);
     } finally {
       writeLock.unlock();
     }
@@ -328,15 +378,14 @@ public class InMemoryDatasetFramework implements DatasetFramework {
     writeLock.lock();
     try {
       for (DatasetSpecification spec : instances.row(namespaceId).values()) {
-        String datasetType = spec.getType();
-        DatasetDefinitionRegistry registry = getRegistryForType(namespaceId, datasetType);
-        if (registry == null) {
+        DatasetDefinition def = getDefinitionForType(namespaceId, spec.getType());
+        if (def == null) {
           throw new DatasetManagementException(
             String.format("Dataset type '%s' is neither registered in the '%s' namespace nor in the system namespace",
-                          datasetType, namespaceId));
+                          spec.getType(), namespaceId));
         }
-        DatasetDefinition def = registry.get(spec.getType());
         def.getAdmin(DatasetContext.from(namespaceId.getId()), spec, null).drop();
+        publishAudit(Id.DatasetInstance.from(namespaceId, spec.getName()), AuditType.DELETE);
       }
       instances.row(namespaceId).clear();
     } finally {
@@ -403,6 +452,17 @@ public class InMemoryDatasetFramework implements DatasetFramework {
                                           @Nullable ClassLoader parentClassLoader,
                                           DatasetClassLoaderProvider classLoaderProvider,
                                           @Nullable Iterable<? extends Id> owners) throws IOException {
+    return getDataset(datasetInstanceId, arguments, parentClassLoader, classLoaderProvider, owners, AccessType.UNKNOWN);
+  }
+
+  @Nullable
+  @Override
+  public <T extends Dataset> T getDataset(Id.DatasetInstance datasetInstanceId, @Nullable Map<String, String> arguments,
+                                          @Nullable ClassLoader parentClassLoader,
+                                          DatasetClassLoaderProvider classLoaderProvider,
+                                          @Nullable Iterable<? extends Id> owners, AccessType accessType)
+    throws IOException {
+
     readLock.lock();
     try {
       DatasetSpecification spec = instances.get(datasetInstanceId.getNamespace(), datasetInstanceId);
@@ -413,10 +473,17 @@ public class InMemoryDatasetFramework implements DatasetFramework {
       DatasetDefinition def =
         createRegistry(availableModuleClasses, parentClassLoader).get(spec.getType());
       return (T) (def.getDataset(DatasetContext.from(datasetInstanceId.getNamespaceId()),
-        spec, arguments, parentClassLoader));
+                                 spec, arguments, parentClassLoader));
     } finally {
       readLock.unlock();
     }
+  }
+
+  @Override
+  public void writeLineage(Id.DatasetInstance datasetInstanceId, AccessType accessType) {
+    // no-op. The InMemoryDatasetFramework doesn't need to do anything.
+    // The lineage should be recorded before this point. In fact, this should not even be called because
+    // RemoteDatasetFramework's implementation of this is also a no-op.
   }
 
   @Override
@@ -491,14 +558,15 @@ public class InMemoryDatasetFramework implements DatasetFramework {
   }
 
   @Nullable
-  private DatasetDefinitionRegistry getRegistryForType(Id.Namespace namespaceId, String datasetType) {
+  @VisibleForTesting
+  DatasetDefinition getDefinitionForType(Id.Namespace namespaceId, String datasetType) {
     DatasetDefinitionRegistry registry = registries.get(namespaceId);
     if (registry != null && registry.hasType(datasetType)) {
-      return registry;
+      return registry.get(datasetType);
     }
     registry = registries.get(Id.Namespace.SYSTEM);
     if (registry != null && registry.hasType(datasetType)) {
-      return registry;
+      return registry.get(datasetType);
     }
     return null;
   }
@@ -509,11 +577,11 @@ public class InMemoryDatasetFramework implements DatasetFramework {
 
     private final List<String> types = Lists.newArrayList();
 
-    public TypesTrackingRegistry(DatasetDefinitionRegistry delegate) {
+    TypesTrackingRegistry(DatasetDefinitionRegistry delegate) {
       this.delegate = delegate;
     }
 
-    public List<String> getTypes() {
+    List<String> getTypes() {
       return types;
     }
 
@@ -544,5 +612,14 @@ public class InMemoryDatasetFramework implements DatasetFramework {
     public boolean hasType(String datasetTypeName) {
       return delegate.hasType(datasetTypeName);
     }
+  }
+
+  private void publishAudit(Id.DatasetInstance datasetInstance, AuditType auditType) {
+    // Don't publish audit for system datasets admin operations, there can be a deadlock
+    if (NamespaceId.SYSTEM.getNamespace().equals(datasetInstance.getNamespaceId()) &&
+      auditType != AuditType.ACCESS) {
+      return;
+    }
+    AuditPublishers.publishAudit(auditPublisher, datasetInstance, auditType, AuditPayload.EMPTY_PAYLOAD);
   }
 }

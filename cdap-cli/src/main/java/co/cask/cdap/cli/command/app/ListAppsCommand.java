@@ -77,7 +77,7 @@ public class ListAppsCommand extends AbstractAuthCommand {
 
   @Override
   public String getDescription() {
-    return String.format("Lists all %s, optionally filtered by artifact name and version.",
+    return String.format("Lists all %s, optionally filtered by artifact name and version",
       ElementType.APP.getNamePlural());
   }
 }

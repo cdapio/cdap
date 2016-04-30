@@ -48,29 +48,29 @@ The application can be created from the ``cdap-data-quality`` system artifact by
         "datasetName": "dataQuality",
         "workflowScheduleMinutes": 5,
         "fieldAggregations": {
-          "referrer": [ "DiscreteValuesHistogram" ],
-          "status": [ "DiscreteValuesHistogram" ],
+          "remote_host": [ "DiscreteValuesHistogram" ],
           "remote_login": [ "DiscreteValuesHistogram" ],
-          "request": [ "DiscreteValuesHistogram" ],
-          "user_agent": [ "DiscreteValuesHistogram" ],
           "auth_user": [ "DiscreteValuesHistogram" ],
-          "content_length": [ "DiscreteValuesHistogram" ],
           "date": [ "DiscreteValuesHistogram" ],
-          "remote_host": [ "DiscreteValuesHistogram" ]
+          "request": [ "DiscreteValuesHistogram" ],
+          "status": [ "DiscreteValuesHistogram" ],
+          "content_length": [ "DiscreteValuesHistogram" ],
+          "referrer": [ "DiscreteValuesHistogram" ],
+          "user_agent": [ "DiscreteValuesHistogram" ]
         }
       }
     }
 
 
-* ``source`` : Data Quality Source
+* ``source``: Data Quality Source
 
   - ``name``: Name of the :ref:`Batch Source Plugin <cdap-apps-etl-plugins-batchsources>`.
-  - ``id``: Unique ID that can be used to query for Data Quality metrics using DataQualityService.
-  - ``properties``: Properties required by the :ref:`Batch Source Plugin <cdap-apps-etl-plugins-batchsources>`.
+  - ``id``: Unique ID that can be used to query for Data Quality metrics using DataQualityService
+  - ``properties``: Properties required by the :ref:`Batch Source Plugin <cdap-apps-etl-plugins-batchsources>`
   
-* ``workflowScheduleMinutes`` : Frequency (in minutes) with which the workflow runs the aggregation MapReduce.
-* ``datasetName`` : Name of the destination dataset.
-* ``fieldAggregations`` : Map that relates each field value to a set of aggregation functions.
+* ``workflowScheduleMinutes``: Frequency (in minutes) with which the workflow runs the aggregation MapReduce
+* ``datasetName``: Name of the destination dataset
+* ``fieldAggregations``: Map that relates each field value to a set of aggregation functions
 
 Deploying the Application
 -------------------------
@@ -85,12 +85,12 @@ See :ref:`Batch Sources <cdap-apps-etl-plugins-batchsources>` for more informati
 End-to-End Example
 ==================
 
-Let's take the example of a user who wants wants to use the Data Quality Application to:
+Let's take the example of a user who wants to use the Data Quality Application to:
 
-- Ingest a stream of CLF log data.
-- Generate several histograms partitioned by the time distribution of status codes.
-- Generate the aforementioned-aggregations every 10 minutes.
-- Query ranges of timestamps for aggregated histogram data.
+- ingest a stream of CLF log data;
+- generate histograms partitioned by the time distribution of status codes;
+- generate these aggregations every 10 minutes; and
+- query ranges of timestamps for aggregated histogram data.
 
 We would create a Data Quality Application by creating a JSON file ``appconfig.json`` that contains:
 
@@ -162,7 +162,7 @@ We would make this request::
 
   $ curl -w'\n' http://localhost:10000/v3/namespaces/default/apps/StreamDQ/services/DataQualityService/methods/v1/sources/logStream/fields/status/aggregations/DiscreteValuesHistogram/totals
 
-If you use the aforementioned sample Apache Access logs, your response should look like this: 
+If you use the above sample Apache Access logs, your response should look like this: 
 
 .. code:: json
 
@@ -192,7 +192,7 @@ under the ``functions`` directory (``DQApp/src/main/java/data/quality/app/functi
 
 All aggregation functions need to implement the ``BasicAggregationFunction`` interface. If
 a function produces aggregations that can be combined (for example, frequencies can be
-combined but standard deviations cannot), it should also implement the
+combined while standard deviations cannot), it should also implement the
 ``CombinableAggregationFunction`` interface. This will let you combine existing
 aggregations over custom time ranges at query time.
 

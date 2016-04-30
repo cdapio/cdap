@@ -37,6 +37,7 @@ The response body will contain a JSON-formatted list of the existing datasets::
   {
      "name":"cdap.user.purchases",
      "type":"co.cask.cdap.api.dataset.lib.ObjectStore",
+     "description" : "Purchases Dataset",
      "properties":{
         "schema":"...",
         "type":"..."
@@ -55,11 +56,12 @@ You can create a dataset by issuing an HTTP PUT request to the URL::
 
   PUT <base-url>/namespaces/<namespace>/data/datasets/<dataset-name>
 
-with JSON-formatted name of the dataset type and properties in a body::
+with JSON-formatted name of the dataset type, properties, and description in a body::
 
   {
      "typeName":"<type-name>",
-     "properties":{<properties>}
+     "properties":{<properties>},
+     "description":"Dataset Description"
   }
 
 
@@ -77,6 +79,8 @@ with JSON-formatted name of the dataset type and properties in a body::
      - Type of the new dataset
    * - ``<properties>``
      - Dataset properties, map of String to String.
+   * - ``description``
+     - Dataset description
 
 .. rubric:: HTTP Responses
 .. list-table::
@@ -100,12 +104,55 @@ with JSON-formatted name of the dataset type and properties in a body::
    * - HTTP Request
      - ``PUT <base-url>/namespaces/default/data/datasets/mydataset``
    * - Body
-     - ``{"typeName":"co.cask.cdap.api.dataset.table.Table",`` ``"properties":{"dataset.table.ttl":"3600"}}``
+     - ``{"typeName":"co.cask.cdap.api.dataset.table.Table",`` ``"properties":{"dataset.table.ttl":"3600"},``
+       ``"description":"My Dataset Description"}``
    * - Description
      - Creates a dataset named *mydataset* of the type ``Table`` in the namespace *default*
-       with the time-to-live property set to 1 hour
+       with the time-to-live property set to 1 hour and a description of ``My Dataset Description``
 
 .. _http-restful-api-dataset-updating:
+
+Properties of an Existing Dataset
+---------------------------------
+
+You can retrieve the properties with which a dataset was created or last updated by issuing an HTTP GET request to
+the URL::
+
+	GET <base-url>/namespaces/<namespace>/data/datasets/<dataset-name>/properties
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``<namespace>``
+     - Namespace ID
+   * - ``<dataset-name>``
+     - Name of the existing dataset
+
+.. rubric:: HTTP Responses
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Status Codes
+     - Description
+   * - ``200 OK``
+     - Requested dataset was successfully updated
+   * - ``404 Not Found``
+     - Requested dataset instance was not found
+
+The response |---| if successful |---| will contain the JSON-formatted properties::
+
+  {
+     "key1":"value1",
+     "key2":"value2"
+  }
+
+Note that this will return the original properties that were submitted when the dataset was created or updated.
+You can use these properties to create a clone of the dataset, or as a basis for updating some properties of this
+dataset without modifying the remaining properties.
 
 Updating an Existing Dataset
 ----------------------------

@@ -289,7 +289,7 @@ public class LogCleanupTest {
     new Function<Location, URI>() {
       @Override
       public URI apply(Location input) {
-        return Locations.toURI(input);
+        return input.toURI();
       }
     };
 }

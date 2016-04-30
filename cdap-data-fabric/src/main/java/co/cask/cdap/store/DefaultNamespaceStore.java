@@ -18,13 +18,13 @@ package co.cask.cdap.store;
 
 import co.cask.cdap.api.data.DatasetInstantiationException;
 import co.cask.cdap.api.dataset.DatasetDefinition;
+import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
@@ -73,9 +73,10 @@ public class DefaultNamespaceStore implements NamespaceStore {
             table = dsCache.getDataset(APP_META_INSTANCE_ID.getId());
           } catch (DatasetInstantiationException e) {
             try {
-              table = DatasetsUtil.getOrCreateDataset(
+              DatasetsUtil.getOrCreateDataset(
                 dsFramework, APP_META_INSTANCE_ID, "table",
                 DatasetProperties.EMPTY, DatasetDefinition.NO_ARGUMENTS, null);
+              table = dsCache.getDataset(APP_META_INSTANCE_ID.getId());
             } catch (DatasetManagementException | IOException e1) {
               throw Throwables.propagate(e1);
             }

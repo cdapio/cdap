@@ -86,6 +86,7 @@ class NodeConfigController {
       watchers: [],
       outputSchemaUpdate: 0
     };
+    this.showPropagateConfirm = false;
   }
   propagateSchemaDownStream() {
     this.ConfigActionsFactory.propagateSchemaDownStream(this.state.node.name);
@@ -161,6 +162,7 @@ class NodeConfigController {
                   'NodeConfigController.state.node',
                   () => {
                     this.validateNodeLabel(this);
+                    this.validateSchema();
                     this.ConfigActionsFactory.editPlugin(this.state.node.name, this.state.node);
                   },
                   true

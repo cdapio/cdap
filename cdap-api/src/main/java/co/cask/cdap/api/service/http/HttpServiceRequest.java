@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,11 +16,10 @@
 
 package co.cask.cdap.api.service.http;
 
-import com.google.common.collect.Multimap;
-
 import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * Interface with methods for processing HTTP requests.
@@ -43,13 +42,6 @@ public interface HttpServiceRequest {
   ByteBuffer getContent();
 
   /**
-   * @return the headers of this request; each header name can map to multiple values
-   * @deprecated Use {@link #getAllHeaders()} instead. This method will be removed in future release.
-   */
-  @Deprecated
-  Multimap<String, String> getHeaders();
-
-  /**
    * @return all headers of this request; each header name can map to multiple values
    */
   Map<String, List<String>> getAllHeaders();
@@ -58,13 +50,15 @@ public interface HttpServiceRequest {
    * Returns all of the values for a specified header
    *
    * @param key the header to find
-   * @return all of the values for that header
+   * @return all of the values for that header; an empty list will be returned if there is no such header
    */
   List<String> getHeaders(String key);
 
   /**
    * @param key the header to find
-   * @return the value of the specified header; if the header maps to multiple values, return the first value
+   * @return the value of the specified header; if the header maps to multiple values, return the first value;
+   *         if there is no such header, a {@code null} value will be returned.
    */
+  @Nullable
   String getHeader(String key);
 }

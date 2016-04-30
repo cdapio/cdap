@@ -22,7 +22,20 @@
 # Main cmd is the non-java command to run.
 MAIN_CMD=node
 
+# Check for embedded node binary, and ensure it's the correct binary ABI for this system
+if test -x ${CDAP_HOME}/ui/bin/node ; then
+  ${CDAP_HOME}/ui/bin/node --version >/dev/null 2>&1
+  if [ $? -eq 0 ] ; then
+    MAIN_CMD=${CDAP_HOME}/ui/bin/node
+  elif [[ $(which node 2>/dev/null) ]]; then
+    MAIN_CMD=node
+  else
+    echo "Unable to locate Node.js binary (node), is it installed and in the PATH?"
+    exit 1
+  fi
+fi
+
 export NODE_ENV=production
 
 # Arguments for MAIN_CMD
-MAIN_CMD_ARGS="$CDAP_HOME/ui/server.js"
+MAIN_CMD_ARGS="${CDAP_HOME}/ui/server.js"

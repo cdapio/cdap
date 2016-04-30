@@ -1,0 +1,103 @@
+<!--
+  Copyright © 2016 Cask Data, Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+-->
+
+<div ng-controller="HydratorPlusPlusPostActionsCtrl as PostActionController" class="post-actions-tab clearfix">
+  <!-- SIDEBAR -->
+  <div class="post-actions-sidebar">
+    <ul class="list-unstyled">
+      <li class="text-left active"
+          ng-click="PostActionController.tabClick('OVERVIEW')"
+          ng-class="{'active': PostActionController.activeTab === 'OVERVIEW' }">
+        Overview
+      </li>
+      <li class="text-left"
+          ng-repeat="action in PostActionController.postActionsList"
+          ng-click="PostActionController.tabClick(action)"
+          ng-class="{'active': PostActionController.activeTab.name === action.name }">
+        {{ action.label }}
+      </li>
+    </ul>
+  </div>
+
+  <!-- MAIN CONTENT -->
+  <div class="post-actions-content">
+
+    <!-- OVERVIEW -->
+    <div class="main-container" ng-if="PostActionController.activeTab === 'OVERVIEW'">
+      <table class="table" ng-if="PostActionController.postActions.length !== 0">
+        <thead>
+          <th>Action</th>
+          <th>Description</th>
+          <th colspan="2">Event</th>
+        </thead>
+
+        <tbody>
+          <tr ng-repeat="action in PostActionController.postActions">
+            <td>{{ action.plugin.name }}</td>
+            <td>{{ action._uiDescription }}</td>
+            <td>{{ action.plugin.properties.runCondition }}</td>
+            <td class="clearfix">
+              <a href="" class="pull-left"
+                 ng-click="PostActionController.edit(action)">
+                Edit
+              </a>
+              <i class="fa fa-trash text-danger pull-right"
+                 ng-click="PostActionController.deleteAction(action)">
+               </i>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="empty-message text-center" ng-if="PostActionController.postActions.length === 0">
+        <h4>You haven't set any actions yet.</h4>
+      </div>
+    </div>
+
+
+    <!-- PLUGIN -->
+    <div class="main-container" ng-if="PostActionController.activeTab !== 'OVERVIEW'">
+      <div class="form-group">
+        <label class="control-label">Description</label>
+        <textarea class="form-control" ng-model="PostActionController.pluginConfig._uiDescription"></textarea>
+      </div>
+
+      <!-- WITH CONFIG -->
+      <div ng-if="!PostActionController.noConfig">
+        <div ng-include="'/assets/features/hydratorplusplus/templates/partial/postactions-form.html'">
+        </div>
+      </div>
+
+      <!-- NO CONFIG -->
+      <div ng-if="PostActionController.noConfig">
+        <div ng-include="'/assets/features/hydratorplusplus/templates/partial/postactions-noconfig-form.html'">
+        </div>
+      </div>
+
+      <div class="action-buttons text-right">
+        <button class="btn btn-default" ng-click="PostActionController.cancel()">
+          Cancel
+        </button>
+
+        <button class="btn btn-blue" ng-click="PostActionController.save(PostActionController.isEdit)">
+          <span ng-if="!PostActionController.isEdit">Add</span>
+          <span ng-if="PostActionController.isEdit">Save</span>
+        </button>
+      </div>
+    </div>
+
+  </div>
+</div>

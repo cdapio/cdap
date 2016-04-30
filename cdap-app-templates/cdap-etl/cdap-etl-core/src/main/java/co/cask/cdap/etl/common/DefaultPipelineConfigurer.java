@@ -24,7 +24,6 @@ import co.cask.cdap.api.plugin.PluginConfigurer;
 import co.cask.cdap.api.plugin.PluginProperties;
 import co.cask.cdap.api.plugin.PluginSelector;
 import co.cask.cdap.etl.api.PipelineConfigurer;
-import co.cask.cdap.etl.api.StageConfigurer;
 
 import javax.annotation.Nullable;
 
@@ -116,7 +115,7 @@ public class DefaultPipelineConfigurer implements PipelineConfigurer {
   }
 
   @Override
-  public StageConfigurer getStageConfigurer() {
+  public DefaultStageConfigurer getStageConfigurer() {
     return stageConfigurer;
   }
 }

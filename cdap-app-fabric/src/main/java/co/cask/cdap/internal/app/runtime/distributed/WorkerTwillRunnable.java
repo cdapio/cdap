@@ -27,8 +27,4 @@ public class WorkerTwillRunnable extends AbstractProgramTwillRunnable<WorkerProg
     super(name, hConfName, cConfName);
   }
 
-  @Override
-  protected Class<WorkerProgramRunner> getProgramClass() {
-    return WorkerProgramRunner.class;
-  }
 }

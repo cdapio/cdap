@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -28,8 +28,8 @@ angular.module(PKG.name + '.commons')
       controllerAs: 'MyExploreCtrl'
     };
 
+    function myExploreCtrl ($scope, myExploreApi, $http, $state, $uibModal, myCdapUrl, $timeout, myAlert, MY_CONFIG, Blob, FileSaver) {
 
-    function myExploreCtrl ($scope, myExploreApi, $http, $state, $bootstrapModal, myCdapUrl, $timeout, myAlert, MY_CONFIG) {
         var vm = this;
 
         vm.queries = [];
@@ -88,7 +88,7 @@ angular.module(PKG.name + '.commons')
         vm.getQueries();
 
         vm.preview = function (query) {
-          $bootstrapModal.open({
+          $uibModal.open({
             templateUrl: 'explore/preview-modal.html',
             size: 'lg',
             resolve: {
@@ -103,8 +103,12 @@ angular.module(PKG.name + '.commons')
               myExploreApi.getQuerySchema(params)
                 .$promise
                 .then(function (res) {
-                  angular.forEach(res, function(v) {
-                    v.name = v.name.split('.')[1];
+                  angular.forEach(res, function(column) {
+                    // check for '.' in the name, before splitting on it, because in the case that specific columns are
+                    // queried, the column names in the schema are not prefixed by the dataset name
+                    if (column.name.indexOf('.') !== -1) {
+                      column.name = column.name.split('.')[1];
+                    }
                   });
 
                   $scope.schema = res;
@@ -131,16 +135,13 @@ angular.module(PKG.name + '.commons')
           $http.post('/downloadQuery', {
             'backendUrl': myCdapUrl.constructUrl({_cdapPath: '/data/explore/queries/' + query.query_handle + '/download'}),
             'queryHandle': query.query_handle
-          })
+          }, {responseType: 'blob'})
             .success(function(res) {
 
-              var url = (MY_CONFIG.sslEnabled? 'https://': 'http://') + window.location.host + res;
+              var blob = new Blob([res], { type: 'text/csv' });
+              var filename = query.query_handle + '.csv';
 
-              var element = angular.element('<a/>');
-              element.attr({
-                href: url,
-                target: '_self'
-              })[0].click();
+              FileSaver.saveAs(blob, filename);
 
               query.downloading = false;
             })

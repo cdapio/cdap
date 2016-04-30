@@ -43,16 +43,19 @@ function usage() {
   echo "    docs-outer        Dirty build of HTML with docs.cask.co code, skipping re-building inner doc, zipping, and Javadocs"
   echo "    docs              Dirty build of HTML with docs.cask.co code, skipping zipping and Javadocs"
   echo 
-  echo "    docs-github  Clean build of HTML and Javadocs, zipped, for placing on GitHub"
-  echo "    docs-web     Clean build of HTML and Javadocs, zipped, for placing on docs.cask.co webserver"
+  echo "    docs-github       Clean build of HTML and Javadocs, zipped, for placing on GitHub"
+  echo "    docs-web          Clean build of HTML and Javadocs, zipped, for placing on docs.cask.co webserver"
   echo 
-  echo "    clean         Clean up any previous build's target directories"
-  echo "    docs-cli      Build CLI documentation"
-  echo "    javadocs      Build Javadocs used in documentation"
-  echo "    javadocs-all  Build Javadocs for all modules"
-  echo "    licenses      Clean build of License Dependency PDFs"
-  echo "    sdk           Build CDAP SDK"
-  echo "    version       Print the version information"
+  echo "    clean             Clean up any previous build's target directories"
+  echo "    docs-cli          Build CLI input file used in the documentation"
+  echo "    javadocs          Build Javadocs used in documentation"
+  echo "    javadocs-all      Build Javadocs for all modules"
+  echo "    licenses          Clean build of License Dependency PDFs"
+  echo "    sdk               Build CDAP SDK (includes the Hydrator plugins if Hydrator plugins source is at"
+  echo "                        '${HYDRATOR_PLUGINS_PATH}'"
+  echo "                        or the environment variable 'HYDRATOR_PLUGINS_PATH' has been set)"
+  echo 
+  echo "    version           Print the version information"
   echo 
   echo "  with"
   echo "    source    Path to ${PROJECT} source, if not '${PROJECT_PATH}'"
@@ -69,9 +72,12 @@ function error_usage() {
 
 function set_project_path() {
   if [ "x${ARG_2}" == "x" ]; then
-    PROJECT_PATH="${SCRIPT_PATH}/../"
+    PROJECT_PATH="${SCRIPT_PATH}/.."
   else
     PROJECT_PATH="${SCRIPT_PATH}/../../${ARG_2}"
+  fi
+  if [[ "x${HYDRATOR_PLUGINS_PATH}" == "x" ]]; then
+    HYDRATOR_PLUGINS_PATH="${PROJECT_PATH}/../${HYDRATOR_PLUGINS}"
   fi
 }
 
@@ -105,6 +111,7 @@ function setup() {
 
 function run_command() {
   case ${1} in
+    clean )             clean_targets;;
     docs-all )          build_all;;
     docs )              build_docs ${DOCS};;
     docs-outer )        build_docs ${DOCS_OUTER};;
@@ -117,8 +124,7 @@ function run_command() {
     docs-github-part )  build_docs_github_part;;
     docs-web-part )     build_docs_web_part;;
     
-    clean )             clean_targets;;
-    docs-cli )          build_docs_cli ;;
+    docs-cli )          build_docs_cli;;
     javadocs )          build_javadocs ${DOCS};;
     javadocs-all )      build_javadocs ${ALL};;
     licenses )          build_license_dependency_pdfs;;
@@ -141,6 +147,7 @@ function build_all() {
   run_command docs-first-pass ${ARG_2} 
   clear_messages_set_messages_file
   run_command javadocs
+  run_command docs-cli
   run_command docs-github-part ${ARG_2} 
   stash_github_zip 
   run_command docs-web-part ${ARG_2} 
@@ -162,31 +169,45 @@ function build_docs() {
   local doc_type=${1}
   local source_path=${ARG_2}
   local javadocs="${WITHOUT}"
+  local cli_docs="${WITHOUT}"
   if [ "${doc_type}" == "${GITHUB}" -o "${doc_type}" == "${WEB}" ]; then
     javadocs="${WITH}"
+    cli_docs="${WITH}"
   fi
+  if [ "${doc_type}" == "${WEB_ONLY}" -o "${doc_type}" == "${GITHUB_ONLY}" ]; then
+    cli_docs="${WITH}"
+  fi  
   echo "========================================================"
   echo "========================================================"
-  echo "Building \"${doc_type}\" (${javadocs} Javadocs)"
+  echo "Building \"${doc_type}\""
+  echo "(${cli_docs} CLI docs, ${javadocs} Javadocs)"
   echo "--------------------------------------------------------"
   echo
   if [[ "${doc_type}" != "${DOCS}" && "${doc_type}" != "${DOCS_OUTER}" ]]; then
     clean_targets
   fi
   clear_messages_set_messages_file
-  
   if [ "${doc_type}" != "${DOCS_OUTER}" ]; then
     run_command docs-first-pass ${source_path}
   fi
-  
   if [ "${doc_type}" == "${DOCS}" -o "${doc_type}" == "${DOCS_OUTER}" ]; then
+    if [ "${javadocs}" != "${WITH}" -o "${cli_docs}" != "${WITH}" ]; then
+      check_build_rst
+    fi
     build_docs_outer_level ${source_path}
     copy_docs_inner_level
   else
     clear_messages_set_messages_file
   fi
-  if [ "${javadocs}" == "${WITH}" ]; then
-    run_command javadocs
+  if [ "${javadocs}" == "${WITH}" -o "${cli_docs}" == "${WITH}" ]; then
+    if [ "${javadocs}" == "${WITH}" ]; then
+      run_command javadocs
+    fi
+    if [ "${cli_docs}" == "${WITH}" ]; then
+      run_command docs-cli
+    fi
+  else
+    check_build_rst
   fi
   if [ "${doc_type}" == "${GITHUB}" -o "${doc_type}" == "${GITHUB_ONLY}" ]; then
     run_command docs-github-part ${source_path}
@@ -245,18 +266,35 @@ function build_javadocs_api() {
 
 function build_docs_cli() {
   echo "========================================================"
-  echo "Building CLI Docs"
+  echo "Building CLI Input File for docs"
   echo "--------------------------------------------------------"
   echo
-  local target_txt=${SCRIPT_PATH}/../cdap-docs-gen/${TARGET}/cdap-docs-cli.txt
-  set_version
-  set_mvn_environment
-  mvn package -pl cdap-docs-gen -am -DskipTests
-  java -cp cdap-docs-gen/target/cdap-docs-gen-${PROJECT_VERSION}.jar:cdap-cli/target/cdap-cli-${PROJECT_VERSION}.jar co.cask.cdap.docgen.cli.GenerateCLIDocsTable > ${target_txt}
-  echo "CLI Docs written to ${target_txt}"
-  local warnings=$?
+  local warnings
+  if [ ${NO_CLI_DOCS} ]; then
+    echo_red_bold "Building CLI input file disabled."
+  else
+    local target_txt=${SCRIPT_PATH}/../cdap-docs-gen/${TARGET}/cdap-docs-cli.txt
+    set_version
+    set_mvn_environment
+    mvn package -pl cdap-docs-gen -am -DskipTests
+    warnings=$?
+    if [ "${warnings}" == "0" ]; then
+      echo "Completed building of CLI"
+      java -cp cdap-docs-gen/target/cdap-docs-gen-${PROJECT_VERSION}.jar:cdap-cli/target/cdap-cli-${PROJECT_VERSION}.jar co.cask.cdap.docgen.cli.GenerateCLIDocsTable > ${target_txt}
+      warnings=$?
+      if [ "${warnings}" == "0" ]; then
+        echo "CLI input file written to ${target_txt}"
+        USING_CLI_DOCS="true"
+      else
+        echo "Error building CLI input file: ${warnings}"
+      fi
+    else
+      echo "Error building CLI itself: ${warnings}"
+    fi
+    export USING_CLI_DOCS
+  fi
   echo "--------------------------------------------------------"
-  echo "Completed Build of CLI Docs"
+  echo "Completed Build of CLI Input File for docs"
   echo "========================================================"
   echo
   return ${warnings}
@@ -451,10 +489,36 @@ function build_license_dependency_pdfs() {
 }
 
 function build_standalone() {
+  local add_artifacts=""
+  if [ -d ${HYDRATOR_PLUGINS_PATH} ]; then
+    build_hydrator_plugins
+    local errors=$?
+    if [ "${errors}" == "0" ]; then
+      add_artifacts="-Dadditional.artifacts.dir=${HYDRATOR_PLUGINS_PATH}"
+    fi
+  else
+    echo "No HYDRATOR_PLUGINS_PATH at ${HYDRATOR_PLUGINS_PATH}"
+  fi
   set_mvn_environment
-  MAVEN_OPTS="-Xmx1024m -XX:MaxPermSize=128m" mvn clean package -pl cdap-standalone,cdap-app-templates/cdap-etl,cdap-app-templates/cdap-data-quality,cdap-examples -am -amd -DskipTests -P examples,templates,dist,release,unit-tests
+  MAVEN_OPTS="-Xmx1024m -XX:MaxPermSize=128m" mvn clean package \
+  -pl cdap-standalone,cdap-app-templates/cdap-etl,cdap-app-templates/cdap-data-quality,cdap-examples \
+  -am -amd -DskipTests -P examples,templates,dist,release,unit-tests ${add_artifacts}
 }
 
+function build_hydrator_plugins() {
+  local errors=0
+  set_mvn_environment
+  if [ -d ${HYDRATOR_PLUGINS_PATH} ]; then
+    cd ${HYDRATOR_PLUGINS_PATH}
+    echo "HYDRATOR_PLUGINS_PATH: ${HYDRATOR_PLUGINS_PATH}"
+    mvn clean package -DskipTests
+    errors=$?
+  else
+    echo "No HYDRATOR_PLUGINS_PATH at ${HYDRATOR_PLUGINS_PATH}"
+  fi
+  return ${errors}
+}
+  
 function print_version() {
   cd ${SCRIPT_PATH}/developers-manual
   ./build.sh display-version ${ARG_2} 

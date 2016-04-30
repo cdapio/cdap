@@ -18,6 +18,8 @@ package co.cask.cdap.internal.app.runtime.batch;
 
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.api.data.batch.Input;
+import co.cask.cdap.api.data.batch.Output;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.lib.DynamicPartitioner;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
@@ -29,6 +31,7 @@ import co.cask.cdap.api.dataset.lib.Partitioning;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.mapreduce.MapReduceTaskContext;
+import com.google.common.collect.ImmutableMap;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import org.apache.avro.generic.GenericRecord;
@@ -75,7 +78,6 @@ public class AppWithMapReduceUsingAvroDynamicPartitioner extends AbstractApplica
         // Properties for file set
       .setInputFormat(AvroKeyInputFormat.class)
       .setOutputFormat(AvroKeyOutputFormat.class)
-      .setOutputProperty("schema", SCHEMA_STRING)
         // Properties for Explore (to create a partitioned Hive table)
       .setEnableExploreOnCreate(true)
       .setSerDe("org.apache.hadoop.hive.serde2.avro.AvroSerDe")
@@ -112,14 +114,19 @@ public class AppWithMapReduceUsingAvroDynamicPartitioner extends AbstractApplica
    * MapReduce job that dynamically partitions records based upon the 'zip' field in the record.
    */
   public static final class DynamicPartitioningMapReduce extends AbstractMapReduce {
+    public static final Map<String, String> METADATA = ImmutableMap.of("someKey1", "thisValue",
+                                                                       "someKey2", "otherValue",
+                                                                       "finalKey", "final.Value",
+                                                                       "post.-final", "actually.final.value");
 
     @Override
     public void beforeSubmit(MapReduceContext context) throws Exception {
-      context.setInput(INPUT_DATASET);
+      context.addInput(Input.ofDataset(INPUT_DATASET));
 
-      Map<String, String> cleanRecordsArgs = new HashMap<>();
-      PartitionedFileSetArguments.setDynamicPartitioner(cleanRecordsArgs, TimeAndZipPartitioner.class);
-      context.addOutput(OUTPUT_DATASET, cleanRecordsArgs);
+      Map<String, String> outputDatasetArgs = new HashMap<>();
+      PartitionedFileSetArguments.setDynamicPartitioner(outputDatasetArgs, TimeAndZipPartitioner.class);
+      PartitionedFileSetArguments.setOutputPartitionMetadata(outputDatasetArgs, METADATA);
+      context.addOutput(Output.ofDataset(OUTPUT_DATASET, outputDatasetArgs));
 
       Job job = context.getHadoopJob();
       job.setMapperClass(FileMapper.class);

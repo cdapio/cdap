@@ -11,13 +11,20 @@ Testing and Debugging
 .. toctree::
    :maxdepth: 1
    
-    Testing <testing>
+    Testing a CDAP Application <testing>
     Debugging <debugging>
     Troubleshooting <troubleshooting>
 
 
 CDAP comes with a number of tools to make a developer's life easier. These tools
 help with testing and debugging CDAP applications:
+
+.. |testing-cdap| replace:: **Testing a CDAP Application:**
+.. _testing-cdap: testing.html
+
+- |testing-cdap|_ Strategies and approaches for **testing CDAP applications**, including
+  testing flows, Map Reduce and Spark programs, and artifacts.  
+
 
 .. |test-framework| replace:: **Test Framework:**
 .. _test-framework: testing.html#test-framework

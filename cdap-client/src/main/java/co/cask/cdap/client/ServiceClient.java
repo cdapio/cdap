@@ -24,7 +24,7 @@ import co.cask.cdap.api.service.http.ServiceHttpEndpoint;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.util.RESTClient;
 import co.cask.cdap.common.NotFoundException;
-import co.cask.cdap.common.UnauthorizedException;
+import co.cask.cdap.common.UnauthenticatedException;
 import co.cask.cdap.proto.Id;
 import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpResponse;
@@ -62,11 +62,11 @@ public class ServiceClient {
    * @param service ID of the service
    * @return {@link ServiceSpecification} representing the service
    * @throws IOException if a network error occurred
-   * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
+   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    * @throws NotFoundException if the app or service could not be found
    */
   public ServiceSpecification get(Id.Service service)
-    throws IOException, UnauthorizedException, NotFoundException {
+    throws IOException, UnauthenticatedException, NotFoundException {
 
     URL url = config.resolveNamespacedURLV3(service.getNamespace(),
                                             String.format("apps/%s/services/%s",
@@ -86,11 +86,11 @@ public class ServiceClient {
    * @param service ID of the service
    * @return A list of {@link ServiceHttpEndpoint}
    * @throws IOException if a network error occurred
-   * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
+   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    * @throws NotFoundException if the app or service could not be found
    */
   public List<ServiceHttpEndpoint> getEndpoints(Id.Service service)
-    throws IOException, UnauthorizedException, NotFoundException {
+    throws IOException, UnauthenticatedException, NotFoundException {
 
     ServiceSpecification specification = get(service);
     ImmutableList.Builder<ServiceHttpEndpoint> builder = new ImmutableList.Builder<>();
@@ -101,7 +101,7 @@ public class ServiceClient {
   }
 
   public URL getServiceURL(Id.Service service)
-    throws NotFoundException, IOException, UnauthorizedException {
+    throws NotFoundException, IOException, UnauthenticatedException {
     // Make sure the service actually exists
     get(service);
     return config.resolveNamespacedURLV3(service.getNamespace(),

@@ -35,6 +35,7 @@ import co.cask.cdap.data.stream.service.StreamHttpService;
 import co.cask.cdap.data.stream.service.StreamService;
 import co.cask.cdap.data.stream.service.StreamServiceRuntimeModule;
 import co.cask.cdap.data.view.ViewAdminModules;
+import co.cask.cdap.data2.audit.AuditModule;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.logging.appender.LogAppenderInitializer;
 import co.cask.cdap.logging.guice.LoggingModules;
@@ -94,8 +95,9 @@ public class StreamHandlerRunnable extends AbstractMasterTwillRunnable {
         new StreamAdminModules().getDistributedModules(),
         new NotificationFeedClientModule(),
         new NotificationServiceRuntimeModule().getDistributedModules(),
-        new NamespaceClientRuntimeModule().getDistributedModules()
-      );
+        new NamespaceClientRuntimeModule().getDistributedModules(),
+        new AuditModule().getDistributedModules()
+        );
 
       injector.getInstance(LogAppenderInitializer.class).initialize();
       LoggingContextAccessor.setLoggingContext(new ServiceLoggingContext(Id.Namespace.SYSTEM.getId(),

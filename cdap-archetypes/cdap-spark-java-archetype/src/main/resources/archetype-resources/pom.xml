@@ -29,8 +29,8 @@
     <app.main.class>${package}.SparkPageRankApp</app.main.class>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-    <cdap.version>3.3.2</cdap.version>
-    <spark.core.version>1.3.1</spark.core.version>
+    <cdap.version>3.4.0</cdap.version>
+    <spark.core.version>1.6.1</spark.core.version>
     <slf4j.version>1.7.5</slf4j.version>
     <guava.version>13.0.1</guava.version>
     <gson.version>2.2.4</gson.version>
@@ -41,6 +41,12 @@
     <dependency>
       <groupId>co.cask.cdap</groupId>
       <artifactId>cdap-api</artifactId>
+      <version>${cdap.version}</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>co.cask.cdap</groupId>
+      <artifactId>cdap-api-spark</artifactId>
       <version>${cdap.version}</version>
       <scope>provided</scope>
     </dependency>
@@ -72,7 +78,6 @@
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
       <version>${guava.version}</version>
-      <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>com.google.code.gson</groupId>
@@ -177,6 +182,11 @@
   <build>
     <pluginManagement>
       <plugins>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-surefire-plugin</artifactId>
+          <version>2.14.1</version>
+        </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-compiler-plugin</artifactId>

@@ -1,0 +1,79 @@
+<!--
+  Copyright © 2015 Cask Data, Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+-->
+
+<div class="side-panel top text-center">
+  <div class="row nomargin">
+    <div class="col-xs-12 col-sm-7 text-left nopadding">
+      <div class="hydrator-metadata" ng-class="{'expanded': HydratorPlusPlusTopPanelCtrl.metadataExpanded}">
+        <div ng-click="HydratorPlusPlusTopPanelCtrl.openMetadata()" class="clearfix">
+          <div class="pipeline-type">
+            <span ng-if="HydratorPlusPlusTopPanelCtrl.GLOBALS.etlBatchPipelines.indexOf(HydratorPlusPlusTopPanelCtrl.state.artifact.name) !== -1"
+                  class="icon-ETLBatch"></span>
+            <span ng-if="HydratorPlusPlusTopPanelCtrl.state.artifact.name === HydratorPlusPlusTopPanelCtrl.GLOBALS.etlRealtime"
+                  class="icon-ETLRealtime"></span>
+          </div>
+          <div class="pipeline-name pull-left">
+            <div ng-class="{'placeholder': !HydratorPlusPlusTopPanelCtrl.state.metadata.name.length}"
+                 ng-if="!HydratorPlusPlusTopPanelCtrl.metadataExpanded"
+                 ng-bind="HydratorPlusPlusTopPanelCtrl.state.metadata['name']"
+                 uib-tooltip="{{ HydratorPlusPlusTopPanelCtrl.state.metadata.name }}"
+                 tooltip-placement="right"
+                 tooltip-append-to-body="true"
+                 tooltip-enable="HydratorPlusPlusTopPanelCtrl.state.metadata.name.length > 27"
+                 tooltip-class="toppanel-tooltip"></div>
+            <input type="text"
+                   ng-if="HydratorPlusPlusTopPanelCtrl.metadataExpanded"
+                   ng-model="HydratorPlusPlusTopPanelCtrl.state.metadata['name']"
+                   my-maxlength="64"
+                   placeholder="Name your pipeline"
+                   ng-keyup="HydratorPlusPlusTopPanelCtrl.onEnterOnMetadata($event)" />
+            <div ng-class="{'placeholder': !HydratorPlusPlusTopPanelCtrl.state.metadata['description'].length}"
+                 ng-if="!HydratorPlusPlusTopPanelCtrl.metadataExpanded"
+                 ng-bind="HydratorPlusPlusTopPanelCtrl.parsedDescription | myEllipsis: 65"
+                 uib-tooltip-html="HydratorPlusPlusTopPanelCtrl.tooltipDescription"
+                 tooltip-placement="right"
+                 tooltip-enable="HydratorPlusPlusTopPanelCtrl.tooltipDescription.length > 64"
+                 tooltip-class="toppanel-tooltip"
+                 ng-if="!HydratorPlusPlusTopPanelCtrl.metadataExpanded"
+                 tooltip-append-to-body="true"></div>
+            <textarea ng-model="HydratorPlusPlusTopPanelCtrl.state.metadata['description']"
+                      placeholder="Enter a description for your pipeline."
+                      ng-if="HydratorPlusPlusTopPanelCtrl.metadataExpanded"></textarea>
+          </div>
+        </div>
+
+        <div class="btn-group pull-right">
+          <button type="button" class="btn btn-default" ng-click="HydratorPlusPlusTopPanelCtrl.resetMetadata()">Cancel</button>
+          <button type="button" class="btn btn-success" ng-click="HydratorPlusPlusTopPanelCtrl.saveMetadata()">Save</button>
+        </div>
+      </div>
+    </div>
+    <div class="col-sm-3 col-sm-offset-2 text-right nopadding">
+      <div class="btn-group action-buttons">
+        <div class="btn"
+             ng-repeat="action in HydratorPlusPlusTopPanelCtrl.canvasOperations"
+             ng-click="action.fn()"
+             uib-tooltip="{{action.name}}"
+             tooltip-placement="bottom"
+             tooltip-append-to-body="true"
+             tooltip-class="toppanel-tooltip">
+          <span class="fa {{action.icon}}"></span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -56,11 +56,14 @@ function ($scope, $state, myAlertOnValium, $filter, myDatasetApi, myExploreApi, 
     myDatasetApi.delete(params, {}, function success() {
       EventPipe.emit('hideLoadingIcon.immediate');
 
-      $state.go('admin.namespace.detail.data', {}, {reload: true});
-      myAlertOnValium.show({
-        type: 'success',
-        content: 'Successfully deleted dataset'
-      });
+      $state.go('admin.namespace.detail.data', {}, {reload: true})
+        .then(function () {
+          myAlertOnValium.show({
+            type: 'success',
+            content: 'Successfully deleted dataset'
+          });
+        });
+
     }, function error() {
       EventPipe.emit('hideLoadingIcon.immediate');
     });

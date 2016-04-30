@@ -485,7 +485,7 @@ public abstract class BufferingTable extends AbstractTable implements MeteredDat
       // NOTE: we copy passed column's and value's byte arrays to protect buffer against possible changes of these
       // arrays on client
       if (values[i] != null && values[i].length == 0) {
-        LOG.warn("Write of an empty value is not supported");
+        warnAboutEmptyValue(columns[i]);
       }
       colVals.put(copy(columns[i]), new PutValue(copy(values[i])));
     }
@@ -598,8 +598,9 @@ public abstract class BufferingTable extends AbstractTable implements MeteredDat
 
   @Override
   public boolean compareAndSwap(byte[] row, byte[] column, byte[] expectedValue, byte[] newValue) {
+    // TODO: add support for empty values; see https://issues.cask.co/browse/TEPHRA-45 for details.
     if (newValue != null && newValue.length == 0) {
-      LOG.warn("Write of an empty value is not supported");
+      warnAboutEmptyValue(column);
     }
     // NOTE: there is more efficient way to do it, but for now we want more simple implementation, not over-optimizing
     byte[][] columns = new byte[][]{column};
@@ -951,7 +952,8 @@ public abstract class BufferingTable extends AbstractTable implements MeteredDat
       } else {
         order = Bytes.compareTo(currentKey, currentRow.getRow());
       }
-      Row result = null;
+
+      Row result;
       if (order > 0) {
         // persisted row comes first or buffer is empty
         result = currentRow;
@@ -979,5 +981,27 @@ public abstract class BufferingTable extends AbstractTable implements MeteredDat
     public void close() {
       this.persistedScanner.close();
     }
+  }
+
+  private long warnedCount = 0L;
+  private long skippedCount = 0L;
+  private long warnFrequency = 1L;
+
+  private void warnAboutEmptyValue(byte[] column) {
+    if (++skippedCount < warnFrequency) {
+      // have not skipped often enough, skip logging this time
+      return;
+    }
+    skippedCount = 0;
+    String additionalMessage = "";
+    // after every 10th of logging, double the frequency but max out at 4096
+    if (++warnedCount >= 10 && warnFrequency < 4096) {
+      warnedCount = 0;
+      warnFrequency = 2 * warnFrequency;
+      additionalMessage = String.format(
+        "To reduce log verbosity, this warning will now only be logged one in %d times", warnFrequency);
+    }
+    LOG.warn("Attempt to write an empty value to column '{}' of table '{}'. " +
+               "This will result in deleting the column. {}", Bytes.toString(column), name, additionalMessage);
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -43,6 +43,12 @@ public final class Constants {
   public static final String COLLECT_CONTAINER_LOGS = "master.collect.containers.log";
   public static final String COLLECT_APP_CONTAINER_LOG_LEVEL = "master.collect.app.containers.log.level";
   public static final String HTTP_CLIENT_TIMEOUT_MS = "http.client.connection.timeout.ms";
+  /** Uniquely identifies a CDAP instance */
+  public static final String INSTANCE_NAME = "instance.name";
+  // Environment variable name for spark home
+  public static final String SPARK_HOME = "SPARK_HOME";
+  // Environment variable for TEZ home
+  public static final String TEZ_HOME = "TEZ_HOME";
 
   /**
    * Configuration for Master startup.
@@ -125,6 +131,8 @@ public final class Constants {
     public static final String PROGRAM_RUNID_CORRECTOR_INTERVAL_SECONDS = "app.program.runid.corrector.interval";
     public static final String SYSTEM_ARTIFACTS_DIR = "app.artifact.dir";
     public static final String PROGRAM_EXTRA_CLASSPATH = "app.program.extra.classpath";
+    public static final String SPARK_YARN_CLIENT_REWRITE = "app.program.spark.yarn.client.rewrite.enabled";
+    public static final String RUNTIME_EXT_DIR = "app.program.runtime.extensions.dir";
 
     /**
      * Guice named bindings.
@@ -165,6 +173,11 @@ public final class Constants {
      * Configuration setting to set the maximum size of a workflow token in MB
      */
     public static final String WORKFLOW_TOKEN_MAX_SIZE_MB = "workflow.token.max.size.mb";
+
+    /**
+     * Name of the property used to identify whether the dataset is local or not.
+     */
+    public static final String WORKFLOW_LOCAL_DATASET_PROPERTY = "workflow.local.dataset";
   }
 
   /**
@@ -340,6 +353,8 @@ public final class Constants {
     public static final int HBASE_WRITE_BUFFER_SIZE = 4 * 1024 * 1024;
 
     public static final String URL_PREFIX = "stream://";
+    public static final String DESCRIPTION = "stream.description";
+    public static final String FORMAT_SPECIFICATION = "stream.format.specification";
 
     /**
      * Contains HTTP headers used by Stream handler.
@@ -507,13 +522,13 @@ public final class Constants {
       public static final String MR_TASK_TYPE = "mrt";
 
       public static final String WORKFLOW = "wf";
+      public static final String WORKFLOW_RUN_ID = "wfr";
+      public static final String NODE = "nd";
 
       public static final String SPARK = "sp";
 
       // who emitted: user vs system (scope is historical name)
       public static final String SCOPE = "scp";
-
-      public static final String ADAPTER = "adp";
 
       public static final String PRODUCER = "pr";
       public static final String CONSUMER = "co";
@@ -623,6 +638,7 @@ public final class Constants {
    */
   public static final class Logging {
     public static final String COMPONENT_NAME = "services";
+    public static final String KAFKA_TOPIC = "log.kafka.topic";
   }
 
   /**
@@ -681,8 +697,11 @@ public final class Constants {
     public static final class Authorization {
       /** Enables authorization */
       public static final String ENABLED = "security.authorization.enabled";
-      /** AuthorizationPlugin class name */
-      public static final String HANDLER_CLASS = "security.authorization.pluginClassName";
+      /** Extension jar path */
+      public static final String EXTENSION_JAR_PATH = "security.authorization.extension.jar.path";
+      /** Prefix for extension properties */
+      public static final String EXTENSION_CONFIG_PREFIX =
+        "security.authorization.extension.config.";
     }
 
     /**
@@ -801,6 +820,7 @@ public final class Constants {
    */
   public static final class Notification {
     public static final String TRANSPORT_SYSTEM = "notification.transport.system";
+    public static final String KAFKA_TOPIC = "notification.kafka.topic";
 
     /**
      * Notifications in Streams constants.
@@ -926,5 +946,13 @@ public final class Constants {
     public static final String UPDATES_PUBLISH_ENABLED = "metadata.updates.publish.enabled";
     public static final String UPDATES_KAFKA_BROKER_LIST = "metadata.updates.kafka.broker.list";
     public static final String MAX_CHARS_ALLOWED = "metadata.max.allowed.chars";
+  }
+
+  /**
+   * Constants for publishing audit
+   */
+  public static final class Audit {
+    public static final String ENABLED = "audit.enabled";
+    public static final String KAFKA_TOPIC = "audit.kafka.topic";
   }
 }

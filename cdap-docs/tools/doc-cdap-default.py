@@ -59,6 +59,7 @@ OTHER_CDAP_XML_FILES = 'cdap-xml-files.txt'
 
 FIRST_TWO_SECTIONS = ['General Configuration', 'Global Configuration']
 
+RST_ANCHOR_TEMPLATE = ".. _appendix-cdap-default-%s:"
 
 RST_TABLE_HEADER = """
 .. list-table::
@@ -233,7 +234,8 @@ class Section:
         if name.endswith(CONFIG):
             name = name[0:-len(CONFIG)]
         underline = "-" * len(name)
-        rst = "\n%s\n%s\n%s\n" % (name, underline, RST_TABLE_HEADER)
+        anchor = RST_ANCHOR_TEMPLATE % name.lower().replace(' ','-')
+        rst = "\n%s\n\n%s\n%s\n%s\n" % (anchor, name, underline, RST_TABLE_HEADER)
         return rst
 
     def display(self):

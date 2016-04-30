@@ -26,6 +26,7 @@ import co.cask.cdap.api.metrics.MetricTimeSeries;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.app.guice.AppFabricServiceRuntimeModule;
+import co.cask.cdap.app.guice.AuthorizationModule;
 import co.cask.cdap.app.guice.ProgramRunnerRuntimeModule;
 import co.cask.cdap.app.guice.ServiceStoreModules;
 import co.cask.cdap.app.queue.QueueSpecification;
@@ -346,6 +347,7 @@ public class FlowQueuePendingCorrector extends AbstractIdleService {
       new MetricsClientRuntimeModule().getDistributedModules(),
       new KafkaClientModule(),
       new NamespaceStoreModule().getDistributedModules(),
+      new AuthorizationModule(),
       new AbstractModule() {
         @Override
         protected void configure() {

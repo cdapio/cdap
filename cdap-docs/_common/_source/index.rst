@@ -16,12 +16,12 @@ CDAP Documentation v\ |version|
 .. .. rubric:: Introduction to the Cask Data Application Platform
 
 The Cask |(TM)| Data Application Platform (CDAP) is an integrated, open source application
-development platform for the Hadoop ecosystem that provides developers with data and
+development platform for the Apache Hadoop |(R)| ecosystem that provides developers with data and
 application abstractions to simplify and accelerate application development, address a
 broader range of real-time and batch use cases, and deploy applications into production
 while satisfying enterprise requirements.
 
-CDAP is a layer of software running on top of Apache Hadoop |(R)| platforms such as
+CDAP is a layer of software running on top of Hadoop platforms such as
 the Cloudera Enterprise Data Hub, the Hortonworks |(R)| Data Platform, or 
 the MapR Distribution. CDAP provides these essential capabilities:
 
@@ -77,7 +77,8 @@ on the installation, monitoring and diagnosing fully distributed CDAP in a Hadoo
   - **Introduction to CDAP Applications:** Applications that are reusable through configuration and
     extensible through plugins 
   - **Cask Hydrator and ETL Pipelines:** Makes performing ETL possible without writing code 
-  - **Creating Custom ETL Plugins:** For developers of custom ETL plugins 
+  - **Creating Custom ETL Plugins:** For developers of custom ETL plugins
+  - **Cask Tracker:** A CDAP extension that captures metadata for datasets, streams, and stream views
   - **Data Quality:** An extensible *CDAP Application* to assess the quality of data
     using its out-of-the-box functionality and libraries
   
@@ -90,10 +91,9 @@ on the installation, monitoring and diagnosing fully distributed CDAP in a Hadoo
   - **Installation:** Putting CDAP into production, with installation, configuration and upgrading for
     different distributions
   - **Security:** CDAP supports securing clusters using a perimeter security model
-  - **Operations:** Logging, metrics, monitoring, runtime arguments, scaling instances, resource
-    guarantees, transaction service maintenance, troubleshooting and introduces the CDAP UI
-  - **Troubleshooting and Appendices:** Installation and configuration troubleshooting
-    tips, and appendices that cover the CDAP installation and security configuration files
+  - **Operations:** Logging, monitoring, metrics, runtime arguments, scaling instances, resource
+    guarantees, transaction service maintenance, and introduces the CDAP UI
+  - **Appendices:** Covers the CDAP installation and security configuration files
 
 
 .. |integrations| replace:: **Integrations:**
@@ -104,6 +104,7 @@ on the installation, monitoring and diagnosing fully distributed CDAP in a Hadoo
   - **Cloudera:** Integrating CDAP into Cloudera, using Cloudera Manager, running interactive queries with Impala, and
     bridging CDAP Metadata with Cloudera's data management tool, Navigator
   - **JDBC:** The CDAP JDBC driver, included with CDAP
+  - **ODBC:** The CDAP ODBC driver available for CDAP
   - **Pentaho:** *Pentaho Data Integration*, a business intelligence tool that can be used with CDAP
   - **Squirrel:** *SquirrelSQL*, a simple JDBC client that can be integrated with CDAP
 
@@ -137,8 +138,10 @@ on the installation, monitoring and diagnosing fully distributed CDAP in a Hadoo
 - |faqs|_ Answers to questions you might have about CDAP
 
   - **General Questions** 
-  - **CDAP Startup** 
-  - **Other Resources:** Additional resources for solving problems
+  - **CDAP Installation** and **Startup** 
+  - **Cloudera Manager** 
+  - **Hydrator** 
+  - **Additional Resources:** Other resources for solving problems
   
 ..   - **Applications** 
 ..   - **User Interface** 

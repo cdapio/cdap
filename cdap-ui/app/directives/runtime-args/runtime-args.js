@@ -23,7 +23,7 @@ angular.module(PKG.name+'.commons')
       templateUrl: 'runtime-args/runtime-args.html'
     };
   })
-  .service('myRuntimeService', function($bootstrapModal, $rootScope){
+  .service('myRuntimeService', function($uibModal, $rootScope){
     var modalInstance;
 
     this.show = function(runtimeargs) {
@@ -37,7 +37,7 @@ angular.module(PKG.name+'.commons')
         });
       });
 
-      modalInstance = $bootstrapModal.open({
+      modalInstance = $uibModal.open({
         template: '<my-runtime-args></my-runtime-args>',
         size: 'lg',
         scope: scope

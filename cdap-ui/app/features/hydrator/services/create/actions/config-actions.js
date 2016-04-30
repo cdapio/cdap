@@ -95,7 +95,7 @@ class ConfigActionsFactory {
         .then(
           () => {
             this.EventPipe.emit('hideLoadingIcon.immediate');
-            this.$state.go('hydrator.detail', { pipelineId: adapterName });
+            this.$state.go('hydratorplusplus.detail', { pipelineId: adapterName });
           }
         );
     };

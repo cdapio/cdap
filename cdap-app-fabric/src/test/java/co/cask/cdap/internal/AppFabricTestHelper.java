@@ -39,16 +39,20 @@ import co.cask.cdap.internal.test.AppJarHelper;
 import co.cask.cdap.notifications.service.NotificationService;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
+import co.cask.cdap.security.authorization.AuthorizerInstantiatorService;
 import co.cask.tephra.TransactionManager;
 import com.google.common.base.Function;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
+import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Key;
+import com.google.inject.Module;
 import com.google.inject.TypeLiteral;
+import com.google.inject.util.Modules;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
@@ -56,7 +60,6 @@ import org.apache.twill.filesystem.LocationFactory;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
 /**
@@ -74,13 +77,22 @@ public class AppFabricTestHelper {
     return getInjector(CConfiguration.create());
   }
 
-  public static synchronized Injector getInjector(CConfiguration conf) {
+  public static Injector getInjector(CConfiguration conf) {
+    return getInjector(conf, new AbstractModule() {
+      @Override
+      protected void configure() {
+        // no overrides
+      }
+    });
+  }
+
+  public static synchronized Injector getInjector(CConfiguration conf, Module overrides) {
     if (injector == null) {
       configuration = conf;
       configuration.set(Constants.CFG_LOCAL_DATA_DIR, TEMP_FOLDER.newFolder("data").getAbsolutePath());
       configuration.set(Constants.AppFabric.REST_PORT, Integer.toString(Networks.getRandomPort()));
       configuration.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, true);
-      injector = Guice.createInjector(new AppFabricTestModule(configuration));
+      injector = Guice.createInjector(Modules.override(new AppFabricTestModule(configuration)).with(overrides));
       injector.getInstance(TransactionManager.class).startAndWait();
       injector.getInstance(DatasetOpExecutor.class).startAndWait();
       injector.getInstance(DatasetService.class).startAndWait();
@@ -88,6 +100,7 @@ public class AppFabricTestHelper {
       injector.getInstance(StreamCoordinatorClient.class).startAndWait();
       injector.getInstance(NotificationService.class).startAndWait();
       injector.getInstance(MetricsCollectionService.class).startAndWait();
+      injector.getInstance(AuthorizerInstantiatorService.class).startAndWait();
     }
     return injector;
   }
@@ -108,37 +121,6 @@ public class AppFabricTestHelper {
     });
   }
 
-  public static void deployApplication(Class<?> application) throws Exception {
-    deployApplication(application, CConfiguration.create());
-  }
-
-  public static void deployApplication(Id.Namespace namespace, Class<?> application) throws Exception {
-    deployApplication(namespace, application, CConfiguration.create());
-  }
-
-  public static void deployApplication(Class<?> application, CConfiguration cConf) throws Exception {
-    deployApplication(Id.Namespace.DEFAULT, application, cConf);
-  }
-
-  public static void deployApplication(Id.Namespace namespace, Class<?> application,
-                                       CConfiguration cConf) throws Exception {
-    long time = TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS);
-    deployApplication(namespace, application, "app-" + time, null, cConf);
-  }
-
-  public static void deployApplication(Id.Namespace namespace, Class<?> applicationClz,
-                                       String appName, @Nullable String config) throws Exception {
-    deployApplication(namespace, applicationClz, appName, config, null);
-  }
-
-  public static void deployApplication(Id.Namespace namespace, Class<?> applicationClz,
-                                       String appName, @Nullable String config, CConfiguration cConf) throws Exception {
-    ensureNamespaceExists(namespace, cConf);
-    AppFabricClient appFabricClient = getInjector(cConf).getInstance(AppFabricClient.class);
-    Location deployedJar = appFabricClient.deployApplication(namespace, appName, applicationClz, config);
-    deployedJar.delete(true);
-  }
-
   public static void ensureNamespaceExists(Id.Namespace namespace) throws Exception {
     ensureNamespaceExists(namespace, CConfiguration.create());
   }
@@ -150,31 +132,34 @@ public class AppFabricTestHelper {
     }
   }
 
-  public static void deployApplication(Id.Namespace namespace, Class<?> applicationClz, String appName)
-    throws Exception {
-    deployApplication(namespace, applicationClz, appName, null);
+  public static void deployApplication(Id.Namespace namespace, Class<?> applicationClz,
+                                       @Nullable String config, CConfiguration cConf) throws Exception {
+    ensureNamespaceExists(namespace, cConf);
+    AppFabricClient appFabricClient = getInjector(cConf).getInstance(AppFabricClient.class);
+    Location deployedJar = appFabricClient.deployApplication(namespace, applicationClz, config);
+    deployedJar.delete(true);
   }
 
-  public static void deployApplication(Class<?> applicationClz, String appName) throws Exception {
-    deployApplication(applicationClz, appName, null);
-  }
-
-  public static void deployApplication(Class<?> applicationClz, String appName, String config) throws Exception {
-    deployApplication(Id.Namespace.DEFAULT, applicationClz, appName, config);
-  }
 
   public static ApplicationWithPrograms deployApplicationWithManager(Class<?> appClass,
                                                                      final Supplier<File> folderSupplier)
     throws Exception {
-    ensureNamespaceExists(Id.Namespace.DEFAULT);
+    return deployApplicationWithManager(Id.Namespace.DEFAULT, appClass, folderSupplier);
+  }
+
+  public static ApplicationWithPrograms deployApplicationWithManager(Id.Namespace namespace, Class<?> appClass,
+                                                                     final Supplier<File> folderSupplier)
+    throws Exception {
+    ensureNamespaceExists(namespace);
     Location deployedJar = createAppJar(appClass);
-    Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, appClass.getSimpleName(),
+    Id.Artifact artifactId = Id.Artifact.from(namespace, appClass.getSimpleName(),
                                               String.format("1.0.%d", System.currentTimeMillis()));
     AppDeploymentInfo info = new AppDeploymentInfo(artifactId, appClass.getName(), deployedJar, null);
-    ApplicationWithPrograms appWithPrograms = getLocalManager().deploy(DefaultId.NAMESPACE, null, info).get();
+    ApplicationWithPrograms appWithPrograms = getLocalManager().deploy(namespace, null, info).get();
     // Transform program to get loadable, as the one created in deploy pipeline is not loadable.
 
-    final List<Program> programs = ImmutableList.copyOf(Iterables.transform(appWithPrograms.getPrograms(),
+    final List<Program> programs = ImmutableList.copyOf(Iterables.transform(
+      appWithPrograms.getPrograms(),
       new Function<Program, Program>() {
         @Override
         public Program apply(Program program) {

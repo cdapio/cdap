@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -24,7 +24,6 @@ import co.cask.cdap.proto.SystemServiceMeta;
 import co.cask.http.HttpResponder;
 import com.google.common.collect.Lists;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonSyntaxException;
 import com.google.inject.Inject;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
@@ -99,34 +98,25 @@ public class AbstractMonitorHandler extends AbstractAppFabricHttpHandler {
       }
 
       MasterServiceManager serviceManager = serviceManagementMap.get(serviceName);
-      int instance;
-      try {
-        instance = getInstances(request);
-      } catch (IllegalArgumentException e) {
-        responder.sendString(HttpResponseStatus.BAD_REQUEST, "Invalid instance value in request");
-        return;
-      } catch (JsonSyntaxException e) {
-        responder.sendString(HttpResponseStatus.BAD_REQUEST, "Invalid JSON in request");
-        return;
-      }
+      int instances = getInstances(request);
       if (!serviceManager.isServiceEnabled()) {
         responder.sendString(HttpResponseStatus.FORBIDDEN, String.format("Service %s is not enabled", serviceName));
         return;
       }
 
-      Integer currentInstance = getSystemServiceInstanceCount(serviceName);
-      if (instance < serviceManager.getMinInstances() || instance > serviceManager.getMaxInstances()) {
+      int currentInstances = getSystemServiceInstanceCount(serviceName);
+      if (instances < serviceManager.getMinInstances() || instances > serviceManager.getMaxInstances()) {
         String response = String.format("Instance count should be between [%s,%s]", serviceManager.getMinInstances(),
                                         serviceManager.getMaxInstances());
         responder.sendString(HttpResponseStatus.BAD_REQUEST, response);
         return;
-      } else if (instance == currentInstance) {
+      } else if (instances == currentInstances) {
         responder.sendStatus(HttpResponseStatus.OK);
         return;
       }
 
-      serviceStore.setServiceInstance(serviceName, instance);
-      if (serviceManager.setInstances(instance)) {
+      serviceStore.setServiceInstance(serviceName, instances);
+      if (serviceManager.setInstances(instances)) {
         responder.sendStatus(HttpResponseStatus.OK);
       } else {
         responder.sendString(HttpResponseStatus.BAD_REQUEST, "Operation did not succeed");
@@ -224,10 +214,9 @@ public class AbstractMonitorHandler extends AbstractAppFabricHttpHandler {
 
     try {
       if (!masterServiceManager.isServiceEnabled()) {
-        String message = String.format("Failed to restart instance for % because the service is not enabled.",
+        String message = String.format("Failed to restart instance for %s because the service is not enabled.",
                                        serviceName);
         LOG.debug(message);
-
         isSuccess = false;
         responder.sendString(HttpResponseStatus.FORBIDDEN, message);
         return;
@@ -243,10 +232,9 @@ public class AbstractMonitorHandler extends AbstractAppFabricHttpHandler {
       }
       responder.sendStatus(HttpResponseStatus.OK);
     } catch (IllegalStateException ise) {
-      String message = String.format("Failed to restart instance for % because the service may not be ready yet",
-                                 serviceName);
+      String message = String.format("Failed to restart instance for %s because the service may not be ready yet",
+                                     serviceName);
       LOG.debug(message, ise);
-
       isSuccess = false;
       responder.sendString(HttpResponseStatus.SERVICE_UNAVAILABLE, message);
     } catch (IllegalArgumentException iex) {

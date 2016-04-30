@@ -18,11 +18,9 @@ package co.cask.cdap.common.lang;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.proto.ProgramType;
 
 import java.io.File;
 import java.io.IOException;
-import javax.annotation.Nullable;
 
 /**
  * ClassLoader that implements bundle jar feature, in which the application jar contains
@@ -30,18 +28,12 @@ import javax.annotation.Nullable;
  */
 public class ProgramClassLoader extends DirectoryClassLoader {
 
-  /**
-   * Constructs an instance that load classes from the given directory, without program type. See
-   * {@link ProgramResources#getVisibleResources(ClassLoader, ProgramType)} for details on system classes that
-   * are visible to the returned ClassLoader.
-   */
-  public static ProgramClassLoader create(CConfiguration cConf, File unpackedJarDir,
-                                          ClassLoader parentClassLoader) throws IOException {
-    return create(cConf, unpackedJarDir, parentClassLoader, null);
-  }
+  private final File dir;
 
   /**
    * Constructs an instance that load classes from the given directory for the given program type.
+   * See {@link ProgramResources#getVisibleResources()} for details on system classes that
+   * are visible to the returned ClassLoader.
    * <p/>
    * The URLs for class loading are:
    * <p/>
@@ -51,14 +43,18 @@ public class ProgramClassLoader extends DirectoryClassLoader {
    * [dir]/lib/*.jar
    * </pre>
    */
-  public static ProgramClassLoader create(CConfiguration cConf, File unpackedJarDir, ClassLoader parentClassLoader,
-                                          @Nullable ProgramType programType) throws IOException {
-    ClassLoader filteredParent = FilterClassLoader.create(programType, parentClassLoader);
-    return new ProgramClassLoader(unpackedJarDir, filteredParent,
-                                  cConf.get(Constants.AppFabric.PROGRAM_EXTRA_CLASSPATH, ""));
+  public static ProgramClassLoader create(CConfiguration cConf, File unpackedJarDir,
+                                          ClassLoader unfilteredParentClassLoader) throws IOException {
+    ClassLoader filteredParent = FilterClassLoader.create(unfilteredParentClassLoader);
+    return new ProgramClassLoader(cConf, unpackedJarDir, filteredParent);
   }
 
-  private ProgramClassLoader(File dir, ClassLoader parent, String extraClassPath) {
-    super(dir, extraClassPath, parent, "lib");
+  public ProgramClassLoader(CConfiguration cConf, File dir, ClassLoader parent) {
+    super(dir, cConf.get(Constants.AppFabric.PROGRAM_EXTRA_CLASSPATH, ""), parent, "lib");
+    this.dir = dir;
+  }
+
+  public File getDir() {
+    return dir;
   }
 }

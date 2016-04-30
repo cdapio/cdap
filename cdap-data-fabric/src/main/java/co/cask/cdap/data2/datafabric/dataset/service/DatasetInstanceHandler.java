@@ -21,6 +21,7 @@ import co.cask.cdap.common.DatasetTypeNotFoundException;
 import co.cask.cdap.common.HandlerException;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetAdminOpResponse;
+import co.cask.cdap.internal.guava.reflect.TypeToken;
 import co.cask.cdap.proto.DatasetInstanceConfiguration;
 import co.cask.cdap.proto.DatasetMeta;
 import co.cask.cdap.proto.Id;
@@ -108,6 +109,17 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
     } catch (HandlerException e) {
       responder.sendString(e.getFailureStatus(), e.getMessage());
     }
+  }
+
+  @GET
+  @Path("/data/datasets/{name}/properties")
+  public void getProperties(HttpRequest request, HttpResponder responder,
+                            @PathParam("namespace-id") String namespaceId,
+                            @PathParam("name") String name) throws Exception {
+    Id.DatasetInstance instance = ConversionHelpers.toDatasetInstanceId(namespaceId, name);
+    responder.sendJson(HttpResponseStatus.OK,
+                       instanceService.getOriginalProperties(instance),
+                       new TypeToken<Map<String, String>>() { }.getType());
   }
 
   /**

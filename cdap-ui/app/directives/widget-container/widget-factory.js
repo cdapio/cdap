@@ -33,6 +33,16 @@ angular.module(PKG.name + '.commons')
           placeholder: '{{myconfig.properties.default || myconfig["widget-attributes"].default || ""}}'
         }
       },
+      'textarea': {
+        element: '<textarea></textarea>',
+        attributes: {
+          'class': 'form-control',
+          'data-ng-trim': 'false',
+          'ng-model': 'model',
+          'rows': '{{myconfig["widget-attributes"].rows}}',
+          placeholder: '{{myconfig.properties.default || myconfig["widget-attributes"].default || ""}}'
+        }
+      },
       'password': {
         element: '<input/>',
         attributes: {
@@ -110,6 +120,13 @@ angular.module(PKG.name + '.commons')
           'ng-model': 'model',
           'data-config': 'myconfig',
           'is-dropdown': 'true'
+        }
+      },
+      'function-dropdown-with-alias': {
+        element: '<my-function-dropdown-with-alias></my-function-dropdown-with-alias>',
+        attributes: {
+          'ng-model': 'model',
+          'data-config': 'myconfig'
         }
       },
       'schedule': {

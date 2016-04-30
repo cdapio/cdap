@@ -1,0 +1,6 @@
+0	1461219010	2157	http://www.google.com	lu=fQ9qHjLjFg3qi3bZiuz	62.128.93.36
+1	1461265001	2157	http://www.google.co.uk	lu=8fsdggknea@ASJHlz	21.612.39.63
+2	1461281958	2157	http://www.yahoo.com	name=Mike	212.193.252.52
+3	1461331879	2157	http://www.amazon.com	name=Matt	1.116.135.146
+4	1461348738	2157	http://www.t.co	name=Nicholas; Httponly	89.141.94.158
+5	1461349158	2157	http://www.linkedin.com	lo=Npa0jbIHGloMnx75	69.75.87.114

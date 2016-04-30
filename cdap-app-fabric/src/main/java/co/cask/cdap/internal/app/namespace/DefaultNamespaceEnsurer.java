@@ -21,6 +21,8 @@ import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.service.RetryOnStartFailureService;
 import co.cask.cdap.common.service.RetryStrategies;
 import co.cask.cdap.proto.NamespaceMeta;
+import co.cask.cdap.proto.security.Principal;
+import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
 import com.google.common.base.Supplier;
 import com.google.common.util.concurrent.AbstractService;
 import com.google.common.util.concurrent.Service;
@@ -47,7 +49,9 @@ public final class DefaultNamespaceEnsurer extends AbstractService {
         return new AbstractService() {
           @Override
           protected void doStart() {
+            String oldUserId = SecurityRequestContext.getUserId();
             try {
+              SecurityRequestContext.setUserId(Principal.SYSTEM.getName());
               namespaceAdmin.create(NamespaceMeta.DEFAULT);
               // if there is no exception, assume successfully created and break
               LOG.info("Created default namespace successfully.");
@@ -58,6 +62,8 @@ public final class DefaultNamespaceEnsurer extends AbstractService {
               notifyStarted();
             } catch (Exception e) {
               notifyFailed(e);
+            } finally {
+              SecurityRequestContext.setUserId(oldUserId);
             }
           }
 

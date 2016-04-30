@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -30,26 +30,26 @@ import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
+import co.cask.cdap.app.runtime.ProgramRuntimeProvider;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
+import co.cask.cdap.internal.app.runtime.ProgramRuntimeProviderLoader;
 import co.cask.cdap.internal.app.runtime.batch.distributed.MapReduceContainerHelper;
-import co.cask.cdap.internal.app.runtime.spark.SparkContextConfig;
 import co.cask.cdap.internal.app.runtime.spark.SparkUtils;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.security.TokenSecureStoreUpdater;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
+import org.apache.hadoop.mapred.YarnClientProtocolProvider;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.TwillController;
 import org.apache.twill.api.TwillRunner;
-import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -61,11 +61,16 @@ public final class DistributedWorkflowProgramRunner extends AbstractDistributedP
 
   private static final Logger LOG = LoggerFactory.getLogger(DistributedWorkflowProgramRunner.class);
 
+  private static final String HCONF_ATTR_CLUSTER_MODE = "cdap.spark.cluster.mode";
+
+  private final ProgramRuntimeProviderLoader runtimeProviderLoader;
+
   @Inject
-  public DistributedWorkflowProgramRunner(TwillRunner twillRunner, LocationFactory locationFactory,
-                                          YarnConfiguration hConf, CConfiguration cConf,
-                                          TokenSecureStoreUpdater tokenSecureStoreUpdater) {
-    super(twillRunner, locationFactory, createConfiguration(hConf), cConf, tokenSecureStoreUpdater);
+  public DistributedWorkflowProgramRunner(TwillRunner twillRunner, YarnConfiguration hConf, CConfiguration cConf,
+                                          TokenSecureStoreUpdater tokenSecureStoreUpdater,
+                                          ProgramRuntimeProviderLoader runtimeProviderLoader) {
+    super(twillRunner, createConfiguration(hConf), cConf, tokenSecureStoreUpdater);
+    this.runtimeProviderLoader = runtimeProviderLoader;
   }
 
   @Override
@@ -85,46 +90,41 @@ public final class DistributedWorkflowProgramRunner extends AbstractDistributedP
 
     // It the workflow has Spark, localize the spark-assembly jar
     List<String> extraClassPaths = new ArrayList<>();
+    List<Class<?>> extraDependencies = new ArrayList<>();
+
+    // Adds the extra classes that MapReduce needs
+    extraDependencies.add(YarnClientProtocolProvider.class);
 
     // See if the Workflow has Spark or MapReduce in it
     DriverMeta driverMeta = findDriverResources(program.getApplicationSpecification().getSpark(),
                                                 program.getApplicationSpecification().getMapReduce(), workflowSpec);
 
     if (driverMeta.hasSpark) {
+      // Adds the extra class that Spark runtime needed
+      ProgramRuntimeProvider provider = runtimeProviderLoader.get(ProgramType.SPARK);
+      Preconditions.checkState(provider != null, "Missing Spark runtime system. Not able to run Spark program.");
+      extraDependencies.add(provider.getClass());
+
       // Localize the spark-assembly jar and spark conf zip
-      String sparkAssemblyJarName = SparkUtils.prepareSparkResources(cConf, tempDir, localizeResources);
+      String sparkAssemblyJarName = SparkUtils.prepareSparkResources(tempDir, localizeResources);
       extraClassPaths.add(sparkAssemblyJarName);
     }
     
     // Add classpaths for MR framework
     extraClassPaths.addAll(MapReduceContainerHelper.localizeFramework(hConf, localizeResources));
 
-    // TODO(CDAP-3119): Hack for TWILL-144. Need to remove
-    if (MapReduceContainerHelper.getFrameworkURI(hConf) != null) {
-      try {
-        File launcherFile = File.createTempFile("launcher", ".jar", tempDir);
-        MapReduceContainerHelper.saveLauncher(hConf, launcherFile, extraClassPaths);
-        localizeResources.put("launcher.jar", new LocalizeResource(launcherFile));
-      } catch (Exception e) {
-        LOG.warn("Failed to create twill container launcher.jar for TWILL-144 hack. " +
-                   "Still proceed, but the run will likely fail", e);
-      }
-    }
-    // End Hack for TWILL-144
-
     LOG.info("Launching distributed workflow: " + program.getName() + ":" + workflowSpec.getName());
     TwillController controller = launcher.launch(
       new WorkflowTwillApplication(program, workflowSpec, localizeResources, eventHandler, driverMeta.resources),
-      extraClassPaths
+      extraClassPaths, extraDependencies
     );
-
     RunId runId = RunIds.fromString(options.getArguments().getOption(ProgramOptionConstants.RUN_ID));
     return new WorkflowTwillProgramController(program.getId(), controller, runId).startListen();
   }
 
   private static YarnConfiguration createConfiguration(YarnConfiguration hConf) {
     YarnConfiguration configuration = new YarnConfiguration(hConf);
-    configuration.setBoolean(SparkContextConfig.HCONF_ATTR_CLUSTER_MODE, true);
+    configuration.setBoolean(HCONF_ATTR_CLUSTER_MODE, true);
     return configuration;
   }
 
@@ -134,11 +134,11 @@ public final class DistributedWorkflowProgramRunner extends AbstractDistributedP
    * whether the workflow contains spark.
    */
   private DriverMeta findDriverResources(Map<String, SparkSpecification> sparkSpecs,
-                                        Map<String, MapReduceSpecification> mrSpecs,
-                                        WorkflowSpecification spec) {
-    // Find the resource requirements from the workflow
+                                         Map<String, MapReduceSpecification> mrSpecs,
+                                         WorkflowSpecification spec) {
+    // Find the resource requirements from the workflow with 768MB as minimum.
     // It is the largest memory and cores from all Spark and MapReduce programs inside the workflow
-    Resources resources = new Resources();
+    Resources resources = new Resources(768);
     boolean hasSpark = false;
 
     for (WorkflowNode node : spec.getNodeIdMap().values()) {

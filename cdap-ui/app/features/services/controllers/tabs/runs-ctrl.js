@@ -15,10 +15,10 @@
  */
 
 angular.module(PKG.name + '.feature.services')
-  .controller('ServicesRunsController', function($scope, $filter, $state, rRuns, $bootstrapModal, rServiceDetail) {
+  .controller('ServicesRunsController', function($scope, $filter, $state, rRuns, $uibModal, rServiceDetail) {
     var fFilter = $filter('filter');
     this.runs = rRuns;
-    this.$bootstrapModal = $bootstrapModal;
+    this.$uibModal = $uibModal;
     this.description = rServiceDetail.description;
     if ($state.params.runid) {
       var match = fFilter(rRuns, {runid: $state.params.runid});
@@ -70,7 +70,7 @@ angular.module(PKG.name + '.feature.services')
     };
 
     this.openHistory = function() {
-      this.$bootstrapModal.open({
+      this.$uibModal.open({
         size: 'lg',
         templateUrl: '/assets/features/services/templates/tabs/history.html',
         controller: ['runs', '$scope', function(runs, $scope) {

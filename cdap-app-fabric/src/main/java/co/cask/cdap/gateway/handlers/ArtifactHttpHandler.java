@@ -16,6 +16,7 @@
 
 package co.cask.cdap.gateway.handlers;
 
+import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.artifact.ArtifactScope;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.plugin.PluginClass;
@@ -25,6 +26,7 @@ import co.cask.cdap.common.ArtifactNotFoundException;
 import co.cask.cdap.common.ArtifactRangeNotFoundException;
 import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.NamespaceNotFoundException;
+import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.conf.PluginClassDeserializer;
@@ -34,7 +36,9 @@ import co.cask.cdap.internal.app.runtime.artifact.ArtifactDescriptor;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactDetail;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.artifact.WriteConflictException;
+import co.cask.cdap.internal.app.runtime.plugin.PluginEndpoint;
 import co.cask.cdap.internal.app.runtime.plugin.PluginNotExistsException;
+import co.cask.cdap.internal.app.runtime.plugin.PluginService;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.artifact.ApplicationClassInfo;
@@ -45,6 +49,9 @@ import co.cask.cdap.proto.artifact.ArtifactSummary;
 import co.cask.cdap.proto.artifact.InvalidArtifactRangeException;
 import co.cask.cdap.proto.artifact.PluginInfo;
 import co.cask.cdap.proto.artifact.PluginSummary;
+import co.cask.cdap.proto.id.Ids;
+import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.BodyConsumer;
 import co.cask.http.HttpResponder;
@@ -71,6 +78,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.List;
@@ -93,7 +101,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.QueryParam;
 
 /**
- * {@link co.cask.http.HttpHandler} for managing adapter lifecycle.
+ * {@link co.cask.http.HttpHandler} for managing artifacts.
  */
 @Singleton
 @Path(Constants.Gateway.API_VERSION_3)
@@ -114,26 +122,28 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
   private final ArtifactRepository artifactRepository;
   private final NamespaceAdmin namespaceAdmin;
   private final File tmpDir;
+  private final PluginService pluginService;
 
   @Inject
-  public ArtifactHttpHandler(CConfiguration cConf,
-                             ArtifactRepository artifactRepository, NamespaceAdmin namespaceAdmin) {
+  ArtifactHttpHandler(CConfiguration cConf, ArtifactRepository artifactRepository, NamespaceAdmin namespaceAdmin,
+                      PluginService pluginService) {
     this.namespaceAdmin = namespaceAdmin;
     this.artifactRepository = artifactRepository;
     this.tmpDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
-      cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
+                           cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
+    this.pluginService = pluginService;
   }
 
   @POST
   @Path("/namespaces/system/artifacts")
-  public void refreshSystemArtifacts(HttpRequest request, HttpResponder responder) {
+  public void refreshSystemArtifacts(HttpRequest request, HttpResponder responder) throws Exception {
     try {
       artifactRepository.addSystemArtifacts();
       responder.sendStatus(HttpResponseStatus.OK);
     } catch (IOException e) {
       LOG.error("Error while refreshing system artifacts.", e);
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR,
-        "There was an IO error while refreshing system artifacts, please try again.");
+                           "There was an IO error while refreshing system artifacts, please try again.");
     } catch (WriteConflictException e) {
       LOG.error("Error while refreshing system artifacts.", e);
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
@@ -149,10 +159,10 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
 
     try {
       if (scope == null) {
-        Id.Namespace namespace = validateAndGetNamespace(namespaceId);
+        NamespaceId namespace = validateAndGetNamespace(namespaceId);
         responder.sendJson(HttpResponseStatus.OK, artifactRepository.getArtifacts(namespace, true));
       } else {
-        Id.Namespace namespace = validateAndGetScopedNamespace(Id.Namespace.from(namespaceId), scope);
+        NamespaceId namespace = validateAndGetScopedNamespace(Ids.namespace(namespaceId), scope);
         responder.sendJson(HttpResponseStatus.OK, artifactRepository.getArtifacts(namespace, false));
       }
     } catch (IOException e) {
@@ -169,7 +179,7 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
                                   @QueryParam("scope") @DefaultValue("user") String scope)
     throws NamespaceNotFoundException, BadRequestException {
 
-    Id.Namespace namespace = validateAndGetScopedNamespace(Id.Namespace.from(namespaceId), scope);
+    NamespaceId namespace = validateAndGetScopedNamespace(Ids.namespace(namespaceId), scope);
 
     try {
       responder.sendJson(HttpResponseStatus.OK, artifactRepository.getArtifacts(namespace, artifactName));
@@ -190,7 +200,7 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
                               @QueryParam("scope") @DefaultValue("user") String scope)
     throws NamespaceNotFoundException, BadRequestException {
 
-    Id.Namespace namespace = validateAndGetScopedNamespace(Id.Namespace.from(namespaceId), scope);
+    NamespaceId namespace = validateAndGetScopedNamespace(Ids.namespace(namespaceId), scope);
     Id.Artifact artifactId = validateAndGetArtifactId(namespace, artifactName, artifactVersion);
 
     try {
@@ -218,7 +228,7 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
                             @QueryParam("keys") @Nullable String keys)
     throws NamespaceNotFoundException, BadRequestException {
 
-    Id.Namespace namespace = validateAndGetScopedNamespace(Id.Namespace.from(namespaceId), scope);
+    NamespaceId namespace = validateAndGetScopedNamespace(Ids.namespace(namespaceId), scope);
     Id.Artifact artifactId = validateAndGetArtifactId(namespace, artifactName, artifactVersion);
 
     try {
@@ -249,11 +259,9 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
   public void writeProperties(HttpRequest request, HttpResponder responder,
                               @PathParam("namespace-id") String namespaceId,
                               @PathParam("artifact-name") String artifactName,
-                              @PathParam("artifact-version") String artifactVersion)
-    throws NamespaceNotFoundException, BadRequestException {
-
-    Id.Namespace namespace = Id.Namespace.SYSTEM.getId().equalsIgnoreCase(namespaceId) ?
-      Id.Namespace.SYSTEM : validateAndGetNamespace(namespaceId);
+                              @PathParam("artifact-version") String artifactVersion) throws Exception {
+    NamespaceId namespace = NamespaceId.SYSTEM.getNamespace().equalsIgnoreCase(namespaceId) ?
+      NamespaceId.SYSTEM : validateAndGetNamespace(namespaceId);
     Id.Artifact artifactId = validateAndGetArtifactId(namespace, artifactName, artifactVersion);
 
     Map<String, String> properties;
@@ -283,11 +291,9 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
                             @PathParam("namespace-id") String namespaceId,
                             @PathParam("artifact-name") String artifactName,
                             @PathParam("artifact-version") String artifactVersion,
-                            @PathParam("property") String key)
-    throws NamespaceNotFoundException, BadRequestException {
-
-    Id.Namespace namespace = Id.Namespace.SYSTEM.getId().equalsIgnoreCase(namespaceId) ?
-      Id.Namespace.SYSTEM : validateAndGetNamespace(namespaceId);
+                            @PathParam("property") String key) throws Exception {
+    NamespaceId namespace = NamespaceId.SYSTEM.getNamespace().equalsIgnoreCase(namespaceId) ?
+      NamespaceId.SYSTEM : validateAndGetNamespace(namespaceId);
     Id.Artifact artifactId = validateAndGetArtifactId(namespace, artifactName, artifactVersion);
 
     String value = request.getContent().toString(Charsets.UTF_8);
@@ -316,8 +322,8 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
                           @PathParam("property") String key)
     throws NamespaceNotFoundException, BadRequestException {
 
-    Id.Namespace namespace = Id.Namespace.SYSTEM.getId().equalsIgnoreCase(namespaceId) ?
-      Id.Namespace.SYSTEM : validateAndGetNamespace(namespaceId);
+    NamespaceId namespace = NamespaceId.SYSTEM.getNamespace().equalsIgnoreCase(namespaceId) ?
+      NamespaceId.SYSTEM : validateAndGetNamespace(namespaceId);
     Id.Artifact artifactId = validateAndGetArtifactId(namespace, artifactName, artifactVersion);
 
     try {
@@ -336,11 +342,10 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
   public void deleteProperties(HttpRequest request, HttpResponder responder,
                                @PathParam("namespace-id") String namespaceId,
                                @PathParam("artifact-name") String artifactName,
-                               @PathParam("artifact-version") String artifactVersion)
-    throws NamespaceNotFoundException, BadRequestException {
+                               @PathParam("artifact-version") String artifactVersion) throws Exception {
 
-    Id.Namespace namespace = Id.Namespace.SYSTEM.getId().equalsIgnoreCase(namespaceId) ?
-      Id.Namespace.SYSTEM : validateAndGetNamespace(namespaceId);
+    NamespaceId namespace = NamespaceId.SYSTEM.getNamespace().equalsIgnoreCase(namespaceId) ?
+      NamespaceId.SYSTEM : validateAndGetNamespace(namespaceId);
     Id.Artifact artifactId = validateAndGetArtifactId(namespace, artifactName, artifactVersion);
 
     try {
@@ -360,11 +365,10 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
                              @PathParam("namespace-id") String namespaceId,
                              @PathParam("artifact-name") String artifactName,
                              @PathParam("artifact-version") String artifactVersion,
-                             @PathParam("property") String key)
-    throws NamespaceNotFoundException, BadRequestException {
+                             @PathParam("property") String key) throws Exception {
 
-    Id.Namespace namespace = Id.Namespace.SYSTEM.getId().equalsIgnoreCase(namespaceId) ?
-      Id.Namespace.SYSTEM : validateAndGetNamespace(namespaceId);
+    NamespaceId namespace = NamespaceId.SYSTEM.getNamespace().equalsIgnoreCase(namespaceId) ?
+      NamespaceId.SYSTEM : validateAndGetNamespace(namespaceId);
     Id.Artifact artifactId = validateAndGetArtifactId(namespace, artifactName, artifactVersion);
 
     try {
@@ -387,14 +391,14 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
                                      @QueryParam("scope") @DefaultValue("user") String scope)
     throws NamespaceNotFoundException, BadRequestException, ArtifactNotFoundException {
 
-    Id.Namespace namespace = Id.Namespace.from(namespaceId);
-    Id.Namespace artifactNamespace = validateAndGetScopedNamespace(namespace, scope);
+    NamespaceId namespace = Ids.namespace(namespaceId);
+    NamespaceId artifactNamespace = validateAndGetScopedNamespace(namespace, scope);
     Id.Artifact artifactId = validateAndGetArtifactId(artifactNamespace, artifactName, artifactVersion);
 
     try {
-      SortedMap<ArtifactDescriptor, List<PluginClass>> plugins = artifactRepository.getPlugins(namespace, artifactId);
+      SortedMap<ArtifactDescriptor, Set<PluginClass>> plugins = artifactRepository.getPlugins(namespace, artifactId);
       Set<String> pluginTypes = Sets.newHashSet();
-      for (List<PluginClass> pluginClasses : plugins.values()) {
+      for (Set<PluginClass> pluginClasses : plugins.values()) {
         for (PluginClass pluginClass : pluginClasses) {
           pluginTypes.add(pluginClass.getType());
         }
@@ -403,7 +407,7 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
     } catch (IOException e) {
       LOG.error("Exception looking up plugins for artifact {}", artifactId, e);
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR,
-        "Error reading plugins for the artifact from the store.");
+                           "Error reading plugins for the artifact from the store.");
     }
   }
 
@@ -417,16 +421,16 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
                                  @QueryParam("scope") @DefaultValue("user") String scope)
     throws NamespaceNotFoundException, BadRequestException, ArtifactNotFoundException {
 
-    Id.Namespace namespace = Id.Namespace.from(namespaceId);
-    Id.Namespace artifactNamespace = validateAndGetScopedNamespace(namespace, scope);
+    NamespaceId namespace = Ids.namespace(namespaceId);
+    NamespaceId artifactNamespace = validateAndGetScopedNamespace(namespace, scope);
     Id.Artifact artifactId = validateAndGetArtifactId(artifactNamespace, artifactName, artifactVersion);
 
     try {
-      SortedMap<ArtifactDescriptor, List<PluginClass>> plugins =
+      SortedMap<ArtifactDescriptor, Set<PluginClass>> plugins =
         artifactRepository.getPlugins(namespace, artifactId, pluginType);
       List<PluginSummary> pluginSummaries = Lists.newArrayList();
       // flatten the map
-      for (Map.Entry<ArtifactDescriptor, List<PluginClass>> pluginsEntry : plugins.entrySet()) {
+      for (Map.Entry<ArtifactDescriptor, Set<PluginClass>> pluginsEntry : plugins.entrySet()) {
         ArtifactDescriptor pluginArtifact = pluginsEntry.getKey();
         ArtifactSummary pluginArtifactSummary = ArtifactSummary.from(pluginArtifact.getArtifactId());
 
@@ -440,13 +444,55 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
     } catch (IOException e) {
       LOG.error("Exception looking up plugins for artifact {}", artifactId, e);
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR,
-        "Error reading plugins for the artifact from the store.");
+                           "Error reading plugins for the artifact from the store.");
+    }
+  }
+
+  @Beta
+  @POST
+  @Path("/namespaces/{namespace-id}/artifacts/{artifact-name}/" +
+    "versions/{artifact-version}/plugintypes/{plugin-type}/plugins/{plugin-name}/methods/{plugin-method}")
+  public void callArtifactPluginMethod(HttpRequest request, HttpResponder responder,
+                                       @PathParam("namespace-id") String namespaceId,
+                                       @PathParam("artifact-name") String artifactName,
+                                       @PathParam("artifact-version") String artifactVersion,
+                                       @PathParam("plugin-name") String pluginName,
+                                       @PathParam("plugin-type") String pluginType,
+                                       @PathParam("plugin-method") String methodName,
+                                       @QueryParam("scope") @DefaultValue("user") String scope)
+    throws NotFoundException, BadRequestException, IOException, ClassNotFoundException, IllegalAccessException {
+
+    String requestBody = request.getContent().toString(Charsets.UTF_8);
+    NamespaceId namespace = Ids.namespace(namespaceId);
+    NamespaceId artifactNamespace = validateAndGetScopedNamespace(namespace, scope);
+    Id.Artifact artifactId = validateAndGetArtifactId(artifactNamespace, artifactName, artifactVersion);
+
+    if (requestBody.isEmpty()) {
+      throw new BadRequestException("Request body is used as plugin method parameter, " +
+                                      "Received empty request body.");
+    }
+    try {
+      PluginEndpoint pluginEndpoint =
+        pluginService.getPluginEndpoint(namespace, artifactId, pluginType, pluginName, methodName);
+      Object response = pluginEndpoint.invoke(GSON.fromJson(requestBody, pluginEndpoint.getMethodParameterType()));
+      responder.sendString(HttpResponseStatus.OK, GSON.toJson(response));
+    } catch (JsonSyntaxException e) {
+      responder.sendString(HttpResponseStatus.BAD_REQUEST,
+                           "Unable to deserialize request body to method parameter type");
+    } catch (InvocationTargetException e) {
+      if (e.getCause() instanceof javax.ws.rs.NotFoundException) {
+        throw new NotFoundException(e.getCause());
+      } else if (e.getCause() instanceof javax.ws.rs.BadRequestException) {
+        throw new BadRequestException(e.getCause());
+      } else {
+        responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Error while invoking plugin method");
+      }
     }
   }
 
   @GET
   @Path("/namespaces/{namespace-id}/artifacts/{artifact-name}/" +
-        "versions/{artifact-version}/extensions/{plugin-type}/plugins/{plugin-name}")
+    "versions/{artifact-version}/extensions/{plugin-type}/plugins/{plugin-name}")
   public void getArtifactPlugin(HttpRequest request, HttpResponder responder,
                                 @PathParam("namespace-id") String namespaceId,
                                 @PathParam("artifact-name") String artifactName,
@@ -456,8 +502,8 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
                                 @QueryParam("scope") @DefaultValue("user") String scope)
     throws NamespaceNotFoundException, BadRequestException, ArtifactNotFoundException {
 
-    Id.Namespace namespace = Id.Namespace.from(namespaceId);
-    Id.Namespace artifactNamespace = validateAndGetScopedNamespace(namespace, scope);
+    NamespaceId namespace = Ids.namespace(namespaceId);
+    NamespaceId artifactNamespace = validateAndGetScopedNamespace(namespace, scope);
     Id.Artifact artifactId = validateAndGetArtifactId(artifactNamespace, artifactName, artifactVersion);
 
     try {
@@ -473,7 +519,7 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
         PluginClass pluginClass = pluginsEntry.getValue();
         pluginInfos.add(new PluginInfo(
           pluginClass.getName(), pluginClass.getType(), pluginClass.getDescription(),
-          pluginClass.getClassName(), pluginArtifactSummary, pluginClass.getProperties()));
+          pluginClass.getClassName(), pluginArtifactSummary, pluginClass.getProperties(), pluginClass.getEndpoints()));
       }
       responder.sendJson(HttpResponseStatus.OK, pluginInfos);
     } catch (PluginNotExistsException e) {
@@ -481,7 +527,7 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
     } catch (IOException e) {
       LOG.error("Exception looking up plugins for artifact {}", artifactId, e);
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR,
-        "Error reading plugins for the artifact from the store.");
+                           "Error reading plugins for the artifact from the store.");
     }
   }
 
@@ -494,13 +540,13 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
 
     try {
       if (scope == null) {
-        Id.Namespace namespace = validateAndGetNamespace(namespaceId);
+        NamespaceId namespace = validateAndGetNamespace(namespaceId);
         responder.sendJson(HttpResponseStatus.OK, artifactRepository.getApplicationClasses(namespace, true),
-          APPCLASS_SUMMARIES_TYPE, GSON);
+                           APPCLASS_SUMMARIES_TYPE, GSON);
       } else {
-        Id.Namespace namespace = validateAndGetScopedNamespace(Id.Namespace.from(namespaceId), scope);
+        NamespaceId namespace = validateAndGetScopedNamespace(Ids.namespace(namespaceId), scope);
         responder.sendJson(HttpResponseStatus.OK, artifactRepository.getApplicationClasses(namespace, false),
-          APPCLASS_SUMMARIES_TYPE, GSON);
+                           APPCLASS_SUMMARIES_TYPE, GSON);
       }
     } catch (IOException e) {
       LOG.error("Error getting app classes for namespace {}.", namespaceId, e);
@@ -517,29 +563,29 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
                                     @QueryParam("scope") @DefaultValue("user") String scope)
     throws NamespaceNotFoundException, BadRequestException {
 
-    Id.Namespace namespace = validateAndGetScopedNamespace(Id.Namespace.from(namespaceId), scope);
+    NamespaceId namespace = validateAndGetScopedNamespace(Ids.namespace(namespaceId), scope);
 
     try {
       responder.sendJson(HttpResponseStatus.OK, artifactRepository.getApplicationClasses(namespace, className),
-        APPCLASS_INFOS_TYPE, GSON);
+                         APPCLASS_INFOS_TYPE, GSON);
     } catch (IOException e) {
       LOG.error("Error getting app classes for namespace {}.", namespaceId, e);
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR,
-        "Error reading app class information from store, please try again.");
+                           "Error reading app class information from store, please try again.");
     }
   }
 
   @POST
   @Path("/namespaces/{namespace-id}/artifacts/{artifact-name}")
   public BodyConsumer addArtifact(HttpRequest request, HttpResponder responder,
-                                  @PathParam("namespace-id") String namespaceId,
+                                  @PathParam("namespace-id") final String namespaceId,
                                   @PathParam("artifact-name") final String artifactName,
                                   @HeaderParam(VERSION_HEADER) final String artifactVersion,
                                   @HeaderParam(EXTENDS_HEADER) final String parentArtifactsStr,
                                   @HeaderParam(PLUGINS_HEADER) String pluginClasses)
     throws NamespaceNotFoundException, BadRequestException {
 
-    final Id.Namespace namespace = validateAndGetNamespace(namespaceId);
+    final NamespaceId namespace = validateAndGetNamespace(namespaceId);
 
     // if version is explicitly given, validate the id now. otherwise version will be derived from the manifest
     // and validated there
@@ -584,13 +630,19 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
             responder.sendString(HttpResponseStatus.CONFLICT, e.getMessage());
           } catch (WriteConflictException e) {
             responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR,
-              "Conflict while writing artifact, please try again.");
+                                 "Conflict while writing artifact, please try again.");
           } catch (IOException e) {
-            LOG.error("Exception while trying to write artifact {}-{}.", artifactName, artifactVersion, e);
+            LOG.error("Exception while trying to write artifact {}-{}-{}.",
+                      namespaceId, artifactName, artifactVersion, e);
             responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR,
-              "Error performing IO while writing artifact.");
+                                 "Error performing IO while writing artifact.");
           } catch (BadRequestException e) {
             responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
+          } catch (UnauthorizedException e) {
+            responder.sendString(HttpResponseStatus.FORBIDDEN, e.getMessage());
+          } catch (Exception e) {
+            LOG.error("Error while writing artifact {}-{}-{}", namespaceId, artifactName, artifactVersion, e);
+            responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Error while adding artifact.");
           }
         }
 
@@ -628,11 +680,9 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
   public void deleteArtifact(HttpRequest request, HttpResponder responder,
                              @PathParam("namespace-id") String namespaceId,
                              @PathParam("artifact-name") String artifactName,
-                             @PathParam("artifact-version") String artifactVersion)
-    throws NamespaceNotFoundException, BadRequestException {
-
-    Id.Namespace namespace = Id.Namespace.SYSTEM.getId().equalsIgnoreCase(namespaceId) ?
-      Id.Namespace.SYSTEM : validateAndGetNamespace(namespaceId);
+                             @PathParam("artifact-version") String artifactVersion) throws Exception {
+    NamespaceId namespace = NamespaceId.SYSTEM.getNamespace().equalsIgnoreCase(namespaceId) ?
+      NamespaceId.SYSTEM : validateAndGetNamespace(namespaceId);
     Id.Artifact artifactId = validateAndGetArtifactId(namespace, artifactName, artifactVersion);
 
     try {
@@ -653,11 +703,11 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
     }
   }
 
-  private Id.Namespace validateAndGetNamespace(String namespaceId) throws NamespaceNotFoundException {
-    return validateAndGetScopedNamespace(Id.Namespace.from(namespaceId), ArtifactScope.USER);
+  private NamespaceId validateAndGetNamespace(String namespaceId) throws NamespaceNotFoundException {
+    return validateAndGetScopedNamespace(Ids.namespace(namespaceId), ArtifactScope.USER);
   }
 
-  private Id.Namespace validateAndGetScopedNamespace(Id.Namespace namespace, String scope)
+  private NamespaceId validateAndGetScopedNamespace(NamespaceId namespace, String scope)
     throws NamespaceNotFoundException, BadRequestException {
     if (scope != null) {
       return validateAndGetScopedNamespace(namespace, validateScope(scope));
@@ -667,11 +717,11 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
 
   // check that the namespace exists, and check if the request is only supposed to include system artifacts,
   // and returning the system namespace if so.
-  private Id.Namespace validateAndGetScopedNamespace(Id.Namespace namespace, ArtifactScope scope)
+  private NamespaceId validateAndGetScopedNamespace(NamespaceId namespace, ArtifactScope scope)
     throws NamespaceNotFoundException {
 
     try {
-      namespaceAdmin.get(namespace);
+      namespaceAdmin.get(namespace.toId());
     } catch (NamespaceNotFoundException e) {
       throw e;
     } catch (Exception e) {
@@ -681,13 +731,13 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
       throw Throwables.propagate(e);
     }
 
-    return ArtifactScope.SYSTEM.equals(scope) ? Id.Namespace.SYSTEM : namespace;
+    return ArtifactScope.SYSTEM.equals(scope) ? NamespaceId.SYSTEM : namespace;
   }
 
-  private Id.Artifact validateAndGetArtifactId(Id.Namespace namespace, String name,
+  private Id.Artifact validateAndGetArtifactId(NamespaceId namespace, String name,
                                                String version) throws BadRequestException {
     try {
-      return Id.Artifact.from(namespace, name, version);
+      return Id.Artifact.from(namespace.toId(), name, version);
     } catch (Exception e) {
       throw new BadRequestException(e.getMessage());
     }
@@ -696,7 +746,7 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
   // find out if this artifact extends other artifacts. If so, there will be a header like
   // 'Artifact-Extends: <name>[<lowerversion>,<upperversion>]/<name>[<lowerversion>,<upperversion>]:
   // for example: 'Artifact-Extends: etl-batch[1.0.0,2.0.0]/etl-realtime[1.0.0:3.0.0]
-  private Set<ArtifactRange> parseExtendsHeader(Id.Namespace namespace, String extendsHeader)
+  private Set<ArtifactRange> parseExtendsHeader(NamespaceId namespace, String extendsHeader)
     throws BadRequestException {
 
     Set<ArtifactRange> parentArtifacts = Sets.newHashSet();
@@ -710,14 +760,14 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
           range = ArtifactRange.parse(parent);
           // only support extending an artifact that is in the same namespace, or system namespace
           if (!range.getNamespace().equals(Id.Namespace.SYSTEM) &&
-              !range.getNamespace().equals(namespace)) {
+            !range.getNamespace().equals(namespace.toId())) {
             throw new BadRequestException(
               String.format("Parent artifact %s must be in the same namespace or a system artifact.", parent));
           }
         } catch (InvalidArtifactRangeException e) {
           // if this failed, try parsing as a non-namespaced range like etl-batch[1.0.0,2.0.0)
           try {
-            range = ArtifactRange.parse(namespace, parent);
+            range = ArtifactRange.parse(namespace.toId(), parent);
           } catch (InvalidArtifactRangeException e1) {
             throw new BadRequestException(String.format("Invalid artifact range %s: %s", parent, e1.getMessage()));
           }

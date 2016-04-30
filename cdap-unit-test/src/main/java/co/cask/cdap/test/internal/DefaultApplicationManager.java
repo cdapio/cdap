@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,10 +17,13 @@
 package co.cask.cdap.test.internal;
 
 import co.cask.cdap.internal.AppFabricClient;
+import co.cask.cdap.proto.ApplicationDetail;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
+import co.cask.cdap.proto.artifact.AppRequest;
+import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.test.AbstractApplicationManager;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.DefaultMapReduceManager;
@@ -166,5 +169,25 @@ public class DefaultApplicationManager extends AbstractApplicationManager {
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
+  }
+
+  @Override
+  public void update(AppRequest appRequest) throws Exception {
+    appFabricClient.updateApplication(application.toEntityId(), appRequest);
+  }
+
+  @Override
+  public void delete() throws Exception {
+    appFabricClient.deleteApplication(application.toEntityId());
+  }
+
+  @Override
+  public ApplicationDetail getInfo() throws Exception {
+    return appFabricClient.getInfo(application.toEntityId());
+  }
+
+  @Override
+  public void setRuntimeArgs(ProgramId programId, Map<String, String> args) throws Exception {
+    appFabricClient.setRuntimeArgs(programId, args);
   }
 }

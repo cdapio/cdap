@@ -71,6 +71,6 @@ public class StartProgramsCommand extends BaseBatchCommand<BatchProgramStart> {
 
   @Override
   public String getDescription() {
-    return getDescription("start");
+    return getDescription("start", "starts");
   }
 }

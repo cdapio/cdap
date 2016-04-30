@@ -8,6 +8,8 @@
 Real-time Sinks
 ===============
 
+Hydrator Version |cdap-hydrator-version|
+
 .. toctree::
     :maxdepth: 1
     :glob:

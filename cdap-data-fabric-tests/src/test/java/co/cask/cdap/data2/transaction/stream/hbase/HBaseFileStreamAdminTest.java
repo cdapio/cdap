@@ -34,6 +34,8 @@ import co.cask.cdap.data.stream.StreamFileWriterFactory;
 import co.cask.cdap.data.stream.service.InMemoryStreamMetaStore;
 import co.cask.cdap.data.stream.service.StreamMetaStore;
 import co.cask.cdap.data.view.ViewAdminModules;
+import co.cask.cdap.data2.audit.AuditModule;
+import co.cask.cdap.data2.audit.InMemoryAuditPublisher;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamAdminTest;
 import co.cask.cdap.explore.guice.ExploreClientModule;
@@ -74,6 +76,7 @@ public class HBaseFileStreamAdminTest extends StreamAdminTest {
   private static TransactionManager txManager;
   private static StreamFileWriterFactory fileWriterFactory;
   private static StreamCoordinatorClient streamCoordinatorClient;
+  private static InMemoryAuditPublisher inMemoryAuditPublisher;
 
   @BeforeClass
   public static void init() throws Exception {
@@ -96,6 +99,7 @@ public class HBaseFileStreamAdminTest extends StreamAdminTest {
       new SystemDatasetRuntimeModule().getInMemoryModules(),
       new ExploreClientModule(),
       new ViewAdminModules().getInMemoryModules(),
+      new AuditModule().getInMemoryModules(),
       Modules.override(new DataFabricDistributedModule(), new StreamAdminModules().getDistributedModules())
         .with(new AbstractModule() {
           @Override
@@ -114,6 +118,7 @@ public class HBaseFileStreamAdminTest extends StreamAdminTest {
     txManager = injector.getInstance(TransactionManager.class);
     fileWriterFactory = injector.getInstance(StreamFileWriterFactory.class);
     streamCoordinatorClient = injector.getInstance(StreamCoordinatorClient.class);
+    inMemoryAuditPublisher = injector.getInstance(InMemoryAuditPublisher.class);
 
     setupNamespaces(injector.getInstance(NamespacedLocationFactory.class));
     txManager.startAndWait();
@@ -134,5 +139,10 @@ public class HBaseFileStreamAdminTest extends StreamAdminTest {
   @Override
   protected StreamFileWriterFactory getFileWriterFactory() {
     return fileWriterFactory;
+  }
+
+  @Override
+  protected InMemoryAuditPublisher getInMemoryAuditPublisher() {
+    return inMemoryAuditPublisher;
   }
 }

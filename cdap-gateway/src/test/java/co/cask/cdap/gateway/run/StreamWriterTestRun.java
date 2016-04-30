@@ -35,7 +35,7 @@ public class StreamWriterTestRun extends GatewayTestBase {
 
   @Test
   public void testStreamWrites() throws Exception {
-    HttpResponse response = GatewayFastTestsSuite.deploy(AppWritingtoStream.class, AppWritingtoStream.APPNAME);
+    HttpResponse response = GatewayFastTestsSuite.deploy(AppWritingtoStream.class, TEMP_FOLDER.newFolder());
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
     //Start Flow
     response = GatewayFastTestsSuite.doPost(String.format("/v3/namespaces/default/apps/%s/flows/%s/start",

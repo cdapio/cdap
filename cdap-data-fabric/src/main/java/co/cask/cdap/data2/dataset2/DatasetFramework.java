@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,11 +18,15 @@ package co.cask.cdap.data2.dataset2;
 
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetAdmin;
+import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
+import co.cask.cdap.api.dataset.InstanceConflictException;
+import co.cask.cdap.api.dataset.InstanceNotFoundException;
 import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.common.ServiceUnavailableException;
 import co.cask.cdap.data2.datafabric.dataset.type.DatasetClassLoaderProvider;
+import co.cask.cdap.data2.metadata.lineage.AccessType;
 import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.Id;
 import com.google.common.annotations.VisibleForTesting;
@@ -185,10 +189,22 @@ public interface DatasetFramework {
   boolean hasType(Id.DatasetType datasetTypeId) throws DatasetManagementException;
 
   /**
+   * Truncates a dataset instance.
+   *
+   * @param datasetInstanceId dataset instance name
+   * @throws InstanceNotFoundException if dataset instance does not exist
+   * @throws IOException when truncation of dataset instance using its admin fails
+   * @throws DatasetManagementException
+   * @throws ServiceUnavailableException when the dataset service is not running
+   */
+  void truncateInstance(Id.DatasetInstance datasetInstanceId) throws DatasetManagementException, IOException;
+
+  /**
    * Deletes dataset instance from the system.
    *
    * @param datasetInstanceId dataset instance name
    * @throws InstanceConflictException if dataset instance cannot be deleted because of its dependencies
+   * @throws InstanceNotFoundException if dataset instance does not exist
    * @throws IOException when deletion of dataset instance using its admin fails
    * @throws DatasetManagementException
    * @throws ServiceUnavailableException when the dataset service is not running
@@ -298,6 +314,38 @@ public interface DatasetFramework {
                                    DatasetClassLoaderProvider classLoaderProvider,
                                    @Nullable Iterable<? extends Id> owners)
     throws DatasetManagementException, IOException;
+
+  /**
+   * Gets dataset to be used to perform data operations. This one is used when the classloader(s) for a dataset may
+   * create some resources that need to be cleaned up on close, and an access type is specified.
+   *
+   * @param <T> dataset type to be returned
+   * @param datasetInstanceId dataset instance id
+   * @param arguments runtime arguments for the dataset instance
+   * @param classLoader parent classLoader to be used to load classes or {@code null} to use system classLoader
+   * @param classLoaderProvider provider to get classloaders for different dataset modules
+   * @param owners owners of the dataset
+   * @param accessType accessType for this request
+   * @return instance of dataset or {@code null} if dataset instance of this name doesn't exist.
+   * @throws DatasetManagementException when there's trouble getting dataset meta info
+   * @throws IOException when there's trouble to instantiate {@link co.cask.cdap.api.dataset.Dataset}
+   * @throws ServiceUnavailableException when the dataset service is not running
+   */
+  @Nullable
+  <T extends Dataset> T getDataset(Id.DatasetInstance datasetInstanceId, @Nullable Map<String, String> arguments,
+                                   @Nullable ClassLoader classLoader,
+                                   DatasetClassLoaderProvider classLoaderProvider,
+                                   @Nullable Iterable<? extends Id> owners,
+                                   AccessType accessType)
+    throws DatasetManagementException, IOException;
+
+  /**
+   * Write lineage for a particular dataset instance.
+   *
+   * @param datasetInstanceId dataset instance id
+   * @param accessType accessType to be recorded
+   */
+  void writeLineage(Id.DatasetInstance datasetInstanceId, AccessType accessType);
 
   /**
    * Creates a namespace in the Storage Providers - HBase/LevelDB, Hive and HDFS/Local File System.

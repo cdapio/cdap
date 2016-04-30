@@ -18,7 +18,7 @@ package co.cask.cdap.test;
 
 import co.cask.cdap.StandaloneTester;
 import co.cask.cdap.api.dataset.DatasetAdmin;
-import co.cask.cdap.common.UnauthorizedException;
+import co.cask.cdap.common.UnauthenticatedException;
 import co.cask.cdap.proto.Id;
 import co.cask.common.http.HttpMethod;
 import com.google.common.collect.ImmutableMap;
@@ -79,7 +79,8 @@ public class TestSQL extends IntegrationTestBase {
     Assert.assertFalse(dsAdmin.exists());
   }
 
-  private void put(ServiceManager serviceManager, String key, String value) throws IOException, UnauthorizedException {
+  private void put(ServiceManager serviceManager, String key,
+                   String value) throws IOException, UnauthenticatedException {
     URL url = new URL(serviceManager.getServiceURL(), key);
     getRestClient().execute(HttpMethod.PUT, url, value,
                             ImmutableMap.<String, String>of(), getClientConfig().getAccessToken());

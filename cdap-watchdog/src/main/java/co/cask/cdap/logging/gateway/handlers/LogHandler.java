@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -91,12 +91,11 @@ public class LogHandler extends AbstractHttpHandler {
                            @QueryParam("stop") @DefaultValue("-1") long toTimeSecsParam,
                            @QueryParam("escape") @DefaultValue("true") boolean escape,
                            @QueryParam("filter") @DefaultValue("") String filterStr) {
-    LoggingContext loggingContext =
-      LoggingContextHelper.getLoggingContextWithRunId(namespaceId, appId, programId,
-                                                      ProgramType.valueOfCategoryName(programType),
-                                                      runId);
-    RunRecordMeta runRecord = programStore.getRun(
-      Id.Program.from(namespaceId, appId, ProgramType.valueOfCategoryName(programType), programId), runId);
+    ProgramType type = ProgramType.valueOfCategoryName(programType);
+    RunRecordMeta runRecord = programStore.getRun(Id.Program.from(namespaceId, appId, type, programId), runId);
+    LoggingContext loggingContext = LoggingContextHelper.getLoggingContextWithRunId(namespaceId, appId, programId, type,
+                                                                                    runId, runRecord.getSystemArgs());
+
     doGetLogs(responder, loggingContext, fromTimeSecsParam, toTimeSecsParam, escape, filterStr, runRecord);
   }
 
@@ -113,7 +112,7 @@ public class LogHandler extends AbstractHttpHandler {
 
       ReadRange readRange = new ReadRange(timeRange.getFromMillis(), timeRange.getToMillis(),
                                           LogOffset.INVALID_KAFKA_OFFSET);
-      readRange = adjustReadRange(readRange, runRecord);
+      readRange = adjustReadRange(readRange, runRecord, fromTimeSecsParam != -1);
 
       ChunkedLogReaderCallback logCallback = new ChunkedLogReaderCallback(responder, logPattern, escape);
       logReader.getLog(loggingContext, readRange.getFromMillis(), readRange.getToMillis(), filter, logCallback);
@@ -148,12 +147,11 @@ public class LogHandler extends AbstractHttpHandler {
                         @QueryParam("fromOffset") @DefaultValue("") String fromOffsetStr,
                         @QueryParam("escape") @DefaultValue("true") boolean escape,
                         @QueryParam("filter") @DefaultValue("") String filterStr) {
-    LoggingContext loggingContext =
-      LoggingContextHelper.getLoggingContextWithRunId(namespaceId, appId, programId,
-                                                      ProgramType.valueOfCategoryName(programType),
-                                                      runId);
-    RunRecordMeta runRecord = programStore.getRun(
-      Id.Program.from(namespaceId, appId, ProgramType.valueOfCategoryName(programType), programId), runId);
+    ProgramType type = ProgramType.valueOfCategoryName(programType);
+    RunRecordMeta runRecord = programStore.getRun(Id.Program.from(namespaceId, appId, type, programId), runId);
+    LoggingContext loggingContext = LoggingContextHelper.getLoggingContextWithRunId(namespaceId, appId, programId, type,
+                                                                                    runId, runRecord.getSystemArgs());
+
     doNext(responder, loggingContext, maxEvents, fromOffsetStr, escape, filterStr, runRecord);
   }
 
@@ -166,7 +164,7 @@ public class LogHandler extends AbstractHttpHandler {
 
       LogOffset logOffset = FormattedLogEvent.parseLogOffset(fromOffsetStr);
       ReadRange readRange = ReadRange.createFromRange(logOffset);
-      readRange = adjustReadRange(readRange, runRecord);
+      readRange = adjustReadRange(readRange, runRecord, true);
       logReader.getLogNext(loggingContext, readRange, maxEvents, filter, logCallback);
       logCallback.close();
     } catch (SecurityException e) {
@@ -179,7 +177,8 @@ public class LogHandler extends AbstractHttpHandler {
   /**
    * If readRange is outside runRecord's range, then the readRange is adjusted to fall within runRecords range.
    */
-  private ReadRange adjustReadRange(ReadRange readRange, @Nullable RunRecordMeta runRecord) {
+  private ReadRange adjustReadRange(ReadRange readRange, @Nullable RunRecordMeta runRecord,
+                                    boolean fromTimeSpecified) {
     if (runRecord == null) {
       return readRange;
     }
@@ -188,9 +187,19 @@ public class LogHandler extends AbstractHttpHandler {
     long toTimeMillis = readRange.getToMillis();
 
     long runStartMillis = TimeUnit.SECONDS.toMillis(runRecord.getStartTs());
-    if (fromTimeMillis < runStartMillis) {
+
+    if (!fromTimeSpecified) {
+      // If from time is not specified explicitly, use the run records start time as from time
       fromTimeMillis = runStartMillis;
     }
+
+
+    if (fromTimeMillis < runStartMillis) {
+      // If from time is specified but is smaller than run records start time, reset it to
+      // run record start time. This is to optimize so that we do not look into extra files.
+      fromTimeMillis = runStartMillis;
+    }
+
     if (runRecord.getStopTs() != null) {
       // Add a buffer to stop time due to CDAP-3100
       long runStopMillis = TimeUnit.SECONDS.toMillis(runRecord.getStopTs() + 1);
@@ -198,6 +207,7 @@ public class LogHandler extends AbstractHttpHandler {
         toTimeMillis = runStopMillis;
       }
     }
+
     ReadRange adjusted = new ReadRange(fromTimeMillis, toTimeMillis, readRange.getKafkaOffset());
     LOG.trace("Original read range: {}. Adjusted read range: {}", readRange, adjusted);
     return adjusted;
@@ -226,12 +236,11 @@ public class LogHandler extends AbstractHttpHandler {
                         @QueryParam("fromOffset") @DefaultValue("") String fromOffsetStr,
                         @QueryParam("escape") @DefaultValue("true") boolean escape,
                         @QueryParam("filter") @DefaultValue("") String filterStr) {
-    LoggingContext loggingContext =
-      LoggingContextHelper.getLoggingContextWithRunId(namespaceId, appId, programId,
-                                                      ProgramType.valueOfCategoryName(programType),
-                                                      runId);
-    RunRecordMeta runRecord = programStore.getRun(
-      Id.Program.from(namespaceId, appId, ProgramType.valueOfCategoryName(programType), programId), runId);
+    ProgramType type = ProgramType.valueOfCategoryName(programType);
+    RunRecordMeta runRecord = programStore.getRun(Id.Program.from(namespaceId, appId, type, programId), runId);
+    LoggingContext loggingContext = LoggingContextHelper.getLoggingContextWithRunId(namespaceId, appId, programId, type,
+                                                                                    runId, runRecord.getSystemArgs());
+
     doPrev(responder, loggingContext, maxEvents, fromOffsetStr, escape, filterStr, runRecord);
   }
 
@@ -243,7 +252,7 @@ public class LogHandler extends AbstractHttpHandler {
       LogReaderCallback logCallback = new LogReaderCallback(responder, logPattern, escape);
       LogOffset logOffset = FormattedLogEvent.parseLogOffset(fromOffsetStr);
       ReadRange readRange = ReadRange.createToRange(logOffset);
-      readRange = adjustReadRange(readRange, runRecord);
+      readRange = adjustReadRange(readRange, runRecord, true);
       logReader.getLogPrev(loggingContext, readRange,
                            maxEvents, filter, logCallback);
       logCallback.close();
@@ -329,7 +338,7 @@ public class LogHandler extends AbstractHttpHandler {
     private final long fromMillis;
     private final long toMillis;
 
-    public TimeRange(long fromMillis, long toMillis) {
+    private TimeRange(long fromMillis, long toMillis) {
       this.fromMillis = fromMillis;
       this.toMillis = toMillis;
     }
@@ -344,9 +353,10 @@ public class LogHandler extends AbstractHttpHandler {
   }
 
   private static TimeRange parseTime(long fromTimeSecsParam, long toTimeSecsParam, HttpResponder responder) {
+    long currentTimeMillis = System.currentTimeMillis();
     long fromMillis = fromTimeSecsParam < 0 ?
-      System.currentTimeMillis() - TimeUnit.HOURS.toMillis(1) : TimeUnit.SECONDS.toMillis(fromTimeSecsParam);
-    long toMillis = toTimeSecsParam < 0 ? System.currentTimeMillis() : TimeUnit.SECONDS.toMillis(toTimeSecsParam);
+      currentTimeMillis - TimeUnit.HOURS.toMillis(1) : TimeUnit.SECONDS.toMillis(fromTimeSecsParam);
+    long toMillis = toTimeSecsParam < 0 ? currentTimeMillis : TimeUnit.SECONDS.toMillis(toTimeSecsParam);
 
     if (toMillis <= fromMillis) {
       responder.sendString(HttpResponseStatus.BAD_REQUEST, "Invalid time range. " +

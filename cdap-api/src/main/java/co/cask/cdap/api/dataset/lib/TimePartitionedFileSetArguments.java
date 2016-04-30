@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,6 @@
 package co.cask.cdap.api.dataset.lib;
 
 import co.cask.cdap.api.annotation.Beta;
-import com.google.common.base.Strings;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -89,9 +88,10 @@ public class TimePartitionedFileSetArguments extends PartitionedFileSetArguments
    */
   public static void setOutputPathFormat(Map<String, String> arguments, String pathFormat, @Nullable String timeZone) {
     long curTime = System.currentTimeMillis();
+    boolean hasTimeZone = timeZone != null && !timeZone.isEmpty();
     try {
       SimpleDateFormat format = new SimpleDateFormat(pathFormat);
-      if (!Strings.isNullOrEmpty(timeZone)) {
+      if (hasTimeZone) {
         format.setTimeZone(TimeZone.getTimeZone(timeZone));
       }
       format.format(new Date(curTime));
@@ -99,7 +99,7 @@ public class TimePartitionedFileSetArguments extends PartitionedFileSetArguments
       throw new IllegalArgumentException("Invalid date format: " + pathFormat + '\n' + e);
     }
     arguments.put(OUTPUT_PATH_FORMAT, pathFormat);
-    if (!Strings.isNullOrEmpty(timeZone)) {
+    if (hasTimeZone) {
       arguments.put(OUTPUT_TIME_ZONE, timeZone);
     }
   }

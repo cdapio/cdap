@@ -16,23 +16,28 @@
 
 package co.cask.cdap.examples.wikipedia
 
-import java.util
-
-import co.cask.cdap.api.spark.{ScalaSparkProgram, SparkContext}
+import co.cask.cdap.api.spark.{SparkExecutionContext, SparkMain}
+import org.apache.spark.SparkContext
 import org.apache.spark.mllib.clustering.KMeans
 import org.apache.spark.mllib.linalg.Vector
+
+import scala.collection.JavaConversions._
 
 /**
  * Scala program to run K-Means algorithm on Wikipedia data.
  */
-class ScalaSparkKMeans extends ScalaSparkProgram {
-  override def run(context: SparkContext): Unit = {
-    val arguments: util.Map[String, String] = context.getRuntimeArguments
-    val maxIterations: Int = if (arguments.containsKey("max.iterations")) arguments.get("max.iterations").toInt else 10
-    val k: Int = if (arguments.containsKey("num.topics")) arguments.get("num.topics").toInt else 10
+class ScalaSparkKMeans extends SparkMain {
+
+  override def run(implicit sec: SparkExecutionContext): Unit = {
+    val sc = new SparkContext
+
+    val arguments = sec.getRuntimeArguments.toMap
+    val maxIterations = arguments.get("max.iterations").map(_.toInt).getOrElse(10)
+    val k = arguments.get("num.topics").map(_.toInt).getOrElse(10)
 
     // Pre-process data for LDA
-    val (corpus, vocabArray, _) = ClusteringUtils.preProcess(context)
+    val (corpus, vocabArray, _) = ClusteringUtils.preProcess(
+      sc.fromDataset(WikipediaPipelineApp.NORMALIZED_WIKIPEDIA_DATASET), arguments)
     corpus.cache()
 
     // Cluster the data into two classes using KMeans
@@ -52,10 +57,10 @@ class ScalaSparkKMeans extends ScalaSparkProgram {
 
     val topTenTermsWithWeights: Array[Array[(String, Double)]] = topTenWeightsWithIndex.map {
       case clusterCenter: Array[(Double, Int)] => clusterCenter.map {
-        case element: ((Double, Int)) => ((vocabArray(element._2), element._1))
+        case element: ((Double, Int)) => (vocabArray(element._2), element._1)
       }
     }
 
-    ClusteringUtils.storeResults(context, topTenTermsWithWeights, WikipediaPipelineApp.SPARK_CLUSTERING_OUTPUT_DATASET)
+    ClusteringUtils.storeResults(sc, sec, topTenTermsWithWeights, WikipediaPipelineApp.SPARK_CLUSTERING_OUTPUT_DATASET)
   }
 }

@@ -17,6 +17,7 @@
 package co.cask.cdap.logging.appender;
 
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.data2.dataset2.lib.table.inmemory.InMemoryTableService;
@@ -24,7 +25,6 @@ import co.cask.cdap.logging.KafkaTestBase;
 import co.cask.cdap.logging.LoggingConfiguration;
 import co.cask.cdap.logging.appender.file.FileLogAppender;
 import co.cask.cdap.logging.appender.kafka.KafkaLogAppender;
-import co.cask.cdap.logging.appender.kafka.KafkaTopic;
 import co.cask.cdap.logging.appender.kafka.StringPartitioner;
 import co.cask.cdap.logging.context.FlowletLoggingContext;
 import co.cask.cdap.logging.filter.Filter;
@@ -113,7 +113,7 @@ public class TestDistributedLogReader extends KafkaTestBase {
     fileAppender.stop();
     kafkaAppender.stop();
 
-    generateCheckpointTime(LOGGING_CONTEXT_BOTH, 30);
+    generateCheckpointTime(LOGGING_CONTEXT_BOTH, 30, cConf.get(Constants.Logging.KAFKA_TOPIC));
 
     kafkaAppender = injector.getInstance(KafkaLogAppender.class);
     new LogAppenderInitializer(kafkaAppender).initialize("TestDistributedLogReader-kafka");
@@ -130,7 +130,7 @@ public class TestDistributedLogReader extends KafkaTestBase {
     generateLogs(fileLogger, "Log message2", 0, 40);
     fileAppender.stop();
 
-    generateCheckpointTime(LOGGING_CONTEXT_FILE, 40);
+    generateCheckpointTime(LOGGING_CONTEXT_FILE, 40, cConf.get(Constants.Logging.KAFKA_TOPIC));
 
     // Generate logs for LOGGING_CONTEXT_KAFKA, logs only in kafka
     LoggingContextAccessor.setLoggingContext(LOGGING_CONTEXT_KAFKA);
@@ -271,7 +271,8 @@ public class TestDistributedLogReader extends KafkaTestBase {
     }
   }
 
-  private static void generateCheckpointTime(LoggingContext loggingContext, int numExpectedEvents) throws Exception {
+  private static void generateCheckpointTime(LoggingContext loggingContext,
+                                             int numExpectedEvents, String kafkaTopic) throws Exception {
     FileLogReader logReader = injector.getInstance(FileLogReader.class);
     LoggingTester.LogCallback logCallback = new LoggingTester.LogCallback();
     logReader.getLog(loggingContext, 0, Long.MAX_VALUE, Filter.EMPTY_FILTER, logCallback);
@@ -280,7 +281,7 @@ public class TestDistributedLogReader extends KafkaTestBase {
     // Save checkpoint (time of last event)
     CheckpointManagerFactory checkpointManagerFactory = injector.getInstance(CheckpointManagerFactory.class);
     CheckpointManager checkpointManager =
-      checkpointManagerFactory.create(KafkaTopic.getTopic(), KafkaLogWriterPlugin.CHECKPOINT_ROW_KEY_PREFIX);
+      checkpointManagerFactory.create(kafkaTopic, KafkaLogWriterPlugin.CHECKPOINT_ROW_KEY_PREFIX);
     long checkpointTime = logCallback.getEvents().get(numExpectedEvents - 1).getLoggingEvent().getTimeStamp();
     checkpointManager.saveCheckpoint(ImmutableMap.of(stringPartitioner.partition(loggingContext.getLogPartition(), -1),
                                                      new Checkpoint(numExpectedEvents, checkpointTime)));

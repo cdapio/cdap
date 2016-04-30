@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -22,24 +22,24 @@ import co.cask.cdap.api.RuntimeContext;
 import co.cask.cdap.api.ServiceDiscoverer;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.data.batch.BatchReadable;
+import co.cask.cdap.api.data.batch.Input;
 import co.cask.cdap.api.data.batch.InputFormatProvider;
+import co.cask.cdap.api.data.batch.Output;
 import co.cask.cdap.api.data.batch.OutputFormatProvider;
 import co.cask.cdap.api.data.batch.Split;
 import co.cask.cdap.api.data.stream.StreamBatchReadable;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.plugin.PluginContext;
-import co.cask.cdap.api.workflow.Workflow;
-import co.cask.cdap.api.workflow.WorkflowToken;
+import co.cask.cdap.api.workflow.WorkflowInfoProvider;
 
 import java.util.List;
 import java.util.Map;
-import javax.annotation.Nullable;
 
 /**
  * MapReduce job execution context.
  */
-public interface MapReduceContext
-  extends RuntimeContext, DatasetContext, ServiceDiscoverer, PluginContext, ClientLocalizationContext {
+public interface MapReduceContext extends RuntimeContext, DatasetContext, ServiceDiscoverer,
+                                          PluginContext, ClientLocalizationContext, WorkflowInfoProvider {
 
   /**
    * @return The specification used to configure this {@link MapReduce} job instance.
@@ -60,58 +60,71 @@ public interface MapReduceContext
   <T> T getHadoopJob();
 
   /**
-   * Overrides the input configuration of this MapReduce job to use the specific stream.
+   * Overrides the input configuration of this MapReduce job to use the specific stream as the single input.
    *
    * @param stream the input stream.
+   * @deprecated as of 3.4.0. Use {@link MapReduceContext#addInput(Input)} instead.
    */
+  @Deprecated
   void setInput(StreamBatchReadable stream);
 
   /**
-   * Overrides the input configuration of this MapReduce job to use
-   * the specified dataset by its name.
+   * Overrides the input configuration of this MapReduce job to use the specified dataset by its name,
+   * as the single input.
    *
    * @param datasetName the name of the input dataset.
+   * @deprecated as of 3.4.0. Use {@link MapReduceContext#addInput(Input)} instead.
    */
+  @Deprecated
   void setInput(String datasetName);
 
   /**
-   * Overrides the input configuration of this MapReduce job to use
-   * the specified dataset by its name and arguments.
+   * Overrides the input configuration of this MapReduce job to use he specified dataset by its name and arguments,
+   * as the single input.
    *
    * @param datasetName the the name of the input dataset
    * @param arguments the arguments to use when instantiating the dataset
+   * @deprecated as of 3.4.0. Use {@link MapReduceContext#addInput(Input)} instead.
    */
+  @Deprecated
   void setInput(String datasetName, Map<String, String> arguments);
 
   /**
-   * Overrides the input configuration of this MapReduce job to use
-   * the specified dataset by its name and data selection splits.
+   * Overrides the input configuration of this MapReduce job to use the specified dataset by its name and data
+   * selection splits, as teh single input
    *
    * @param datasetName the name of the input dataset
    * @param splits the data selection splits
+   * @deprecated as of 3.4.0. Use {@link MapReduceContext#addInput(Input)} instead.
    */
+  @Deprecated
   void setInput(String datasetName, List<Split> splits);
 
   /**
-   * Overrides the input configuration of this MapReduce job to use
-   * the specified dataset by its name and arguments with the given data selection splits.
+   * Overrides the input configuration of this MapReduce job to use the specified dataset by its name and arguments
+   * with the given data selection splits, as the single input.
    *
    * @param datasetName the name of the input dataset
    * @param arguments the arguments to use when instantiating the dataset
    * @param splits the data selection splits
+   * @deprecated as of 3.4.0. Use {@link MapReduceContext#addInput(Input)} instead.
    */
+  @Deprecated
   void setInput(String datasetName, Map<String, String> arguments, List<Split> splits);
 
   /**
    * Overrides the input configuration of this MapReduce job to the one provided by the given
-   * {@link InputFormatProvider}.
+   * {@link InputFormatProvider}, as the single input.
    *
    * @param inputFormatProvider provider for InputFormat and configurations to be used
+   * @deprecated as of 3.4.0. Use {@link MapReduceContext#addInput(Input)} instead.
    */
+  @Deprecated
   void setInput(InputFormatProvider inputFormatProvider);
 
   /**
-   * Overrides the input configuration of this MapReduce job to read from the specified dataset instance.
+   * Overrides the input configuration of this MapReduce job to read from the specified dataset instance,
+   * as the single input.
    *
    * <p>
    * Currently, the dataset passed in must either be an {@link InputFormatProvider} or a {@link BatchReadable}.
@@ -123,17 +136,31 @@ public interface MapReduceContext
    *
    * @param datasetName the name of the input dataset
    * @param dataset the input dataset
-   * @deprecated as of version 3.3.0. Use {@link #setInput(String, Map)}
-   *             or {@link #setInput(InputFormatProvider)} instead.
+   * @deprecated as of version 3.3.0. Use {@link #addInput(Input)} instead.
    */
   @Deprecated
   void setInput(String datasetName, Dataset dataset);
 
   /**
+   * Updates the input configuration of this MapReduce job to use the specified {@link Input}.
+   * @param input the input to be used
+   * @throws IllegalStateException if called after any setInput methods.
+   */
+  void addInput(Input input);
+
+  /**
+   * Updates the input configuration of this MapReduce job to use the specified {@link Input}.
+   * @param input the input to be used
+   * @param mapperCls the mapper class to be used for the input
+   * @throws IllegalStateException if called after any setInput methods.
+   */
+  void addInput(Input input, Class<?> mapperCls);
+
+  /**
    * Overrides the output configuration of this MapReduce job to write to the specified dataset by its name.
    *
    * @param datasetName the name of the output dataset
-   * Deprecated as of version 3.2.0. Use {@link #addOutput(String)}, instead.
+   * Deprecated as of version 3.2.0. Use {@link #addOutput(Output)}, instead.
    */
   @Deprecated
   void setOutput(String datasetName);
@@ -147,7 +174,7 @@ public interface MapReduceContext
    * @param datasetName the name of the output dataset
    * @param dataset the output dataset
    * @throws IllegalArgumentException if the given dataset is not an OutputFormatProvider.
-   * Deprecated as of version 3.2.0. Use {@link #addOutput(String, Map)}, instead.
+   * Deprecated as of version 3.2.0. Use {@link #addOutput(Output)}, instead.
    */
   @Deprecated
   void setOutput(String datasetName, Dataset dataset);
@@ -157,7 +184,9 @@ public interface MapReduceContext
    * its name.
    *
    * @param datasetName the name of the output dataset
+   * Deprecated as of version 3.4.0. Use {@link #addOutput(Output)}, instead.
    */
+  @Deprecated
   void addOutput(String datasetName);
 
   /**
@@ -169,17 +198,29 @@ public interface MapReduceContext
    * @param datasetName the name of the output dataset
    * @param arguments the arguments to use when instantiating the dataset
    * @throws IllegalArgumentException if the specified dataset is not an OutputFormatProvider.
+   * Deprecated as of version 3.4.0. Use {@link #addOutput(Output)}, instead.
    */
+  @Deprecated
   void addOutput(String datasetName, Map<String, String> arguments);
 
   /**
-   * Updates the output configuration of this MapReduce job to also allow writing using the given OutputFormatProvider.
+   * Updates the output configuration of this MapReduce job to also allow writing using the given
+   * {@link OutputFormatProvider}.
    *
-   * @param outputName the name of the output
+   * @param alias the alias of the output
    * @param outputFormatProvider the outputFormatProvider which specifies an OutputFormat and configuration to be used
    *                             when writing to this output
+   * Deprecated as of version 3.4.0. Use {@link #addOutput(Output)}, instead.
    */
-  void addOutput(String outputName, OutputFormatProvider outputFormatProvider);
+  @Deprecated
+  void addOutput(String alias, OutputFormatProvider outputFormatProvider);
+
+  // TODO: (CDAP-5651) change usages of above three deprecated methods to use this
+  /**
+   * Updates the output configuration of this MapReduce job to use the specified {@link Output}.
+   * @param output the output to be used
+   */
+  void addOutput(Output output);
 
   /**
    * Overrides the resources, such as memory and virtual cores, to use for each mapper of this MapReduce job.
@@ -194,11 +235,4 @@ public interface MapReduceContext
    * @param resources Resources that each reducer should use.
    */
   void setReducerResources(Resources resources);
-
-  /**
-   * @return the {@link WorkflowToken} associated with the current {@link Workflow},
-   * if the {@link MapReduce} program is executed as a part of the Workflow; returns {@code null} otherwise.
-   */
-  @Nullable
-  WorkflowToken getWorkflowToken();
 }

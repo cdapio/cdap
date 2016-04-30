@@ -21,6 +21,7 @@ import co.cask.cdap.api.artifact.ArtifactClasses;
 import co.cask.cdap.api.artifact.ArtifactId;
 import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.api.plugin.PluginSelector;
+import co.cask.cdap.app.runtime.ProgramRunnerFactory;
 import co.cask.cdap.common.ArtifactAlreadyExistsException;
 import co.cask.cdap.common.ArtifactNotFoundException;
 import co.cask.cdap.common.ArtifactRangeNotFoundException;
@@ -41,7 +42,13 @@ import co.cask.cdap.proto.artifact.ApplicationClassSummary;
 import co.cask.cdap.proto.artifact.ArtifactInfo;
 import co.cask.cdap.proto.artifact.ArtifactRange;
 import co.cask.cdap.proto.artifact.ArtifactSummary;
-import co.cask.cdap.proto.metadata.MetadataScope;
+import co.cask.cdap.proto.id.InstanceId;
+import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.security.Action;
+import co.cask.cdap.proto.security.Principal;
+import co.cask.cdap.security.authorization.AuthorizerInstantiatorService;
+import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
+import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
@@ -79,14 +86,17 @@ public class ArtifactRepository {
   private final List<File> systemArtifactDirs;
   private final ArtifactConfigReader configReader;
   private final MetadataStore metadataStore;
+  private final AuthorizerInstantiatorService authorizerInstantiatorService;
+  private final InstanceId instanceId;
 
+  @VisibleForTesting
   @Inject
-  ArtifactRepository(CConfiguration cConf, ArtifactStore artifactStore, MetadataStore metadataStore) {
+  public ArtifactRepository(CConfiguration cConf, ArtifactStore artifactStore, MetadataStore metadataStore,
+                            AuthorizerInstantiatorService authorizerInstantiatorService,
+                            ProgramRunnerFactory programRunnerFactory) {
     this.artifactStore = artifactStore;
-    File baseUnpackDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
-      cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
-    this.artifactClassLoaderFactory = new ArtifactClassLoaderFactory(cConf, baseUnpackDir);
-    this.artifactInspector = new ArtifactInspector(cConf, artifactClassLoaderFactory, baseUnpackDir);
+    this.artifactClassLoaderFactory = new ArtifactClassLoaderFactory(cConf, programRunnerFactory);
+    this.artifactInspector = new ArtifactInspector(cConf, artifactClassLoaderFactory);
     this.systemArtifactDirs = new ArrayList<>();
     for (String dir : cConf.get(Constants.AppFabric.SYSTEM_ARTIFACTS_DIR).split(";")) {
       File file = new File(dir);
@@ -98,6 +108,19 @@ public class ArtifactRepository {
     }
     this.configReader = new ArtifactConfigReader();
     this.metadataStore = metadataStore;
+    this.authorizerInstantiatorService = authorizerInstantiatorService;
+    this.instanceId = new InstanceId(cConf.get(Constants.INSTANCE_NAME));
+  }
+
+  /**
+   * Create a classloader that uses the artifact at the specified location to load classes, with access to
+   * packages that all program type has access to.
+   * It delegates to {@link ArtifactClassLoaderFactory#createClassLoader(Location)}.
+   *
+   * @see ArtifactClassLoaderFactory
+   */
+  public CloseableClassLoader createArtifactClassLoader(Location artifactLocation) throws IOException {
+    return artifactClassLoaderFactory.createClassLoader(artifactLocation);
   }
 
   /**
@@ -107,9 +130,9 @@ public class ArtifactRepository {
    * @param namespace the namespace to delete artifacts in.
    * @throws IOException if there was an error making changes in the meta store
    */
-  public void clear(Id.Namespace namespace) throws IOException {
+  public void clear(NamespaceId namespace) throws Exception {
     for (ArtifactDetail artifactDetail : artifactStore.getArtifacts(namespace)) {
-      deleteArtifact(Id.Artifact.from(namespace, artifactDetail.getDescriptor().getArtifactId()));
+      deleteArtifact(Id.Artifact.from(namespace.toId(), artifactDetail.getDescriptor().getArtifactId()));
     }
   }
 
@@ -122,10 +145,10 @@ public class ArtifactRepository {
    * @return an unmodifiable list of artifacts that belong to the given namespace
    * @throws IOException if there as an exception reading from the meta store
    */
-  public List<ArtifactSummary> getArtifacts(Id.Namespace namespace, boolean includeSystem) throws IOException {
-    List<ArtifactSummary> summaries = Lists.newArrayList();
+  public List<ArtifactSummary> getArtifacts(NamespaceId namespace, boolean includeSystem) throws IOException {
+    List<ArtifactSummary> summaries = new ArrayList<>();
     if (includeSystem) {
-      convertAndAdd(summaries, artifactStore.getArtifacts(Id.Namespace.SYSTEM));
+      convertAndAdd(summaries, artifactStore.getArtifacts(NamespaceId.SYSTEM));
     }
     return Collections.unmodifiableList(convertAndAdd(summaries, artifactStore.getArtifacts(namespace)));
   }
@@ -140,9 +163,9 @@ public class ArtifactRepository {
    * @throws IOException if there as an exception reading from the meta store
    * @throws ArtifactNotFoundException if no artifacts of the given name in the given namespace exist
    */
-  public List<ArtifactSummary> getArtifacts(Id.Namespace namespace, String name)
+  public List<ArtifactSummary> getArtifacts(NamespaceId namespace, String name)
     throws IOException, ArtifactNotFoundException {
-    List<ArtifactSummary> summaries = Lists.newArrayList();
+    List<ArtifactSummary> summaries = new ArrayList<>();
     return Collections.unmodifiableList(convertAndAdd(summaries, artifactStore.getArtifacts(namespace, name)));
   }
 
@@ -160,6 +183,17 @@ public class ArtifactRepository {
   }
 
   /**
+   * Get all artifacts that match artifacts in the given ranges.
+   *
+   * @param range the range to match artifacts in
+   * @return an unmodifiable list of all artifacts that match the given ranges. If none exist, an empty list
+   *         is returned
+   */
+  public List<ArtifactDetail> getArtifacts(final ArtifactRange range) {
+    return artifactStore.getArtifacts(range);
+  }
+
+  /**
    * Get all application classes in the given namespace, optionally including classes from system artifacts as well.
    * Will never return null. If no artifacts exist, an empty list is returned. Namespace existence is not checked.
    *
@@ -168,11 +202,11 @@ public class ArtifactRepository {
    * @return an unmodifiable list of application classes that belong to the given namespace
    * @throws IOException if there as an exception reading from the meta store
    */
-  public List<ApplicationClassSummary> getApplicationClasses(Id.Namespace namespace,
+  public List<ApplicationClassSummary> getApplicationClasses(NamespaceId namespace,
                                                              boolean includeSystem) throws IOException {
     List<ApplicationClassSummary> summaries = Lists.newArrayList();
     if (includeSystem) {
-      addAppSummaries(summaries, Id.Namespace.SYSTEM);
+      addAppSummaries(summaries, NamespaceId.SYSTEM);
     }
     addAppSummaries(summaries, namespace);
 
@@ -188,7 +222,7 @@ public class ArtifactRepository {
    * @return an unmodifiable list of application classes that belong to the given namespace
    * @throws IOException if there as an exception reading from the meta store
    */
-  public List<ApplicationClassInfo> getApplicationClasses(Id.Namespace namespace,
+  public List<ApplicationClassInfo> getApplicationClasses(NamespaceId namespace,
                                                           String className) throws IOException {
     List<ApplicationClassInfo> infos = Lists.newArrayList();
     for (Map.Entry<ArtifactDescriptor, ApplicationClass> entry :
@@ -199,6 +233,7 @@ public class ArtifactRepository {
     }
     return Collections.unmodifiableList(infos);
   }
+
 
   /**
    * Returns a {@link SortedMap} of plugin artifact to all plugins available for the given artifact. The keys
@@ -211,7 +246,7 @@ public class ArtifactRepository {
    * @throws ArtifactNotFoundException if the given artifact does not exist
    * @throws IOException if there was an exception reading plugin metadata from the artifact store
    */
-  public SortedMap<ArtifactDescriptor, List<PluginClass>> getPlugins(Id.Namespace namespace, Id.Artifact artifactId)
+  public SortedMap<ArtifactDescriptor, Set<PluginClass>> getPlugins(NamespaceId namespace, Id.Artifact artifactId)
     throws IOException, ArtifactNotFoundException {
     return artifactStore.getPluginClasses(namespace, artifactId);
   }
@@ -228,7 +263,7 @@ public class ArtifactRepository {
    * @throws ArtifactNotFoundException if the given artifact does not exist
    * @throws IOException if there was an exception reading plugin metadata from the artifact store
    */
-  public SortedMap<ArtifactDescriptor, List<PluginClass>> getPlugins(Id.Namespace namespace, Id.Artifact artifactId,
+  public SortedMap<ArtifactDescriptor, Set<PluginClass>> getPlugins(NamespaceId namespace, Id.Artifact artifactId,
                                                                      String pluginType)
     throws IOException, ArtifactNotFoundException {
     return artifactStore.getPluginClasses(namespace, artifactId, pluginType);
@@ -247,7 +282,7 @@ public class ArtifactRepository {
    * @throws ArtifactNotFoundException if the given artifact does not exist
    * @throws IOException if there was an exception reading plugin metadata from the artifact store
    */
-  public SortedMap<ArtifactDescriptor, PluginClass> getPlugins(Id.Namespace namespace, Id.Artifact artifactId,
+  public SortedMap<ArtifactDescriptor, PluginClass> getPlugins(NamespaceId namespace, Id.Artifact artifactId,
                                                                String pluginType, String pluginName)
     throws IOException, PluginNotExistsException, ArtifactNotFoundException {
     return artifactStore.getPluginClasses(namespace, artifactId, pluginType, pluginName);
@@ -266,7 +301,7 @@ public class ArtifactRepository {
    * @throws ArtifactNotFoundException if the given artifact does not exist
    * @throws PluginNotExistsException if no plugins of the given type and name are available to the given artifact
    */
-  public Map.Entry<ArtifactDescriptor, PluginClass> findPlugin(Id.Namespace namespace, Id.Artifact artifactId,
+  public Map.Entry<ArtifactDescriptor, PluginClass> findPlugin(NamespaceId namespace, Id.Artifact artifactId,
                                                                String pluginType, String pluginName,
                                                                PluginSelector selector)
     throws IOException, PluginNotExistsException, ArtifactNotFoundException {
@@ -300,20 +335,32 @@ public class ArtifactRepository {
    * @throws ArtifactAlreadyExistsException if the artifact already exists
    * @throws InvalidArtifactException if the artifact is invalid. For example, if it is not a zip file,
    *                                  or the application class given is not an Application.
+   * @throws UnauthorizedException if the current user does not have the privilege to add an artifact in the specified
+   *                               namespace. To add an artifact, a user needs {@link Action#WRITE} privilege on the
+   *                               namespace in which the artifact is being added. If authorization is successful, and
+   *                               the artifact is added successfully, then the user gets {@link Action#ALL} privileges
+   *                               on the added artifact.
    */
-  public ArtifactDetail addArtifact(Id.Artifact artifactId, File artifactFile)
-    throws IOException, WriteConflictException, ArtifactAlreadyExistsException, InvalidArtifactException {
+  public ArtifactDetail addArtifact(Id.Artifact artifactId, File artifactFile) throws Exception {
+    Principal principal = SecurityRequestContext.toPrincipal();
+    NamespaceId namespace = artifactId.getNamespace().toEntityId();
+    // Enforce WRITE privileges on the namespace
+    authorizerInstantiatorService.get().enforce(namespace, principal, Action.WRITE);
 
     Location artifactLocation = Locations.toLocation(artifactFile);
-    try (CloseableClassLoader parentClassLoader = artifactClassLoaderFactory.createClassLoader(artifactLocation)) {
+    ArtifactDetail artifactDetail;
+    try (CloseableClassLoader parentClassLoader = createArtifactClassLoader(artifactLocation)) {
       ArtifactClasses artifactClasses = inspectArtifact(artifactId, artifactFile, null, parentClassLoader);
       validatePluginSet(artifactClasses.getPlugins());
       ArtifactMeta meta = new ArtifactMeta(artifactClasses, ImmutableSet.<ArtifactRange>of());
       ArtifactInfo artifactInfo = new ArtifactInfo(artifactId.toArtifactId(), artifactClasses,
-                                                  ImmutableMap.<String, String>of());
+                                                   ImmutableMap.<String, String>of());
       writeSystemMetadata(artifactId, artifactInfo);
-      return artifactStore.write(artifactId, meta, Files.newInputStreamSupplier(artifactFile));
+      artifactDetail = artifactStore.write(artifactId, meta, Files.newInputStreamSupplier(artifactFile));
     }
+    // grant ALL privileges once artifact is successfully added
+    authorizerInstantiatorService.get().grant(artifactId.toEntityId(), principal, Collections.singleton(Action.ALL));
+    return artifactDetail;
   }
 
   /**
@@ -331,13 +378,25 @@ public class ArtifactRepository {
    * @throws InvalidArtifactException if the artifact is invalid. Can happen if it is not a zip file,
    *                                  if the application class given is not an Application,
    *                                  or if it has parents that also have parents.
+   * @throws UnauthorizedException if the user is not authorized to add an artifact in the specified namespace. To add
+   *                               an artifact, a user must have {@link Action#WRITE} on the namespace in which
+   *                               the artifact is being added. If authorization is successful, and
+   *                               the artifact is added successfully, then the user gets {@link Action#ALL} privileges
+   *                               on the added artifact.
    */
+  @VisibleForTesting
   public ArtifactDetail addArtifact(Id.Artifact artifactId, File artifactFile,
-                                    @Nullable Set<ArtifactRange> parentArtifacts)
-    throws IOException, ArtifactRangeNotFoundException, WriteConflictException,
-    ArtifactAlreadyExistsException, InvalidArtifactException {
-
-    return addArtifact(artifactId, artifactFile, parentArtifacts, null, Collections.<String, String>emptyMap());
+                                    @Nullable Set<ArtifactRange> parentArtifacts) throws Exception {
+    // To add an artifact, a user must have write privileges on the namespace in which the artifact is being added
+    // This method is used to add user plugin artifacts, so enforce authorization on the specified, non-system namespace
+    Principal principal = SecurityRequestContext.toPrincipal();
+    NamespaceId namespace = artifactId.getNamespace().toEntityId();
+    authorizerInstantiatorService.get().enforce(namespace, principal, Action.WRITE);
+    ArtifactDetail artifactDetail = addArtifact(artifactId, artifactFile, parentArtifacts, null,
+                                                Collections.<String, String>emptyMap());
+    // artifact successfully added. now grant ALL permissions on the artifact to the current user
+    authorizerInstantiatorService.get().grant(artifactId.toEntityId(), principal, Collections.singleton(Action.ALL));
+    return artifactDetail;
   }
 
   /**
@@ -354,14 +413,26 @@ public class ArtifactRepository {
    *                          If null, no additional plugin classes will be added
    * @throws IOException if there was an exception reading from the artifact store
    * @throws ArtifactRangeNotFoundException if none of the parent artifacts could be found
+   * @throws UnauthorizedException if the user is not authorized to add an artifact in the specified namespace. To add
+   *                               an artifact, a user must have {@link Action#WRITE} on the namespace in which
+   *                               the artifact is being added. If authorization is successful, and
+   *                               the artifact is added successfully, then the user gets {@link Action#ALL} privileges
+   *                               on the added artifact.
    */
   public ArtifactDetail addArtifact(Id.Artifact artifactId, File artifactFile,
                                     @Nullable Set<ArtifactRange> parentArtifacts,
-                                    @Nullable Set<PluginClass> additionalPlugins)
-    throws IOException, ArtifactAlreadyExistsException, WriteConflictException,
-    InvalidArtifactException, ArtifactRangeNotFoundException {
-    return addArtifact(artifactId, artifactFile, parentArtifacts,
-                       additionalPlugins, Collections.<String, String>emptyMap());
+                                    @Nullable Set<PluginClass> additionalPlugins) throws Exception {
+    // To add an artifact, a user must have write privileges on the namespace in which the artifact is being added
+    // This method is used to add user app artifacts, so enforce authorization on the specified, non-system namespace
+    Principal principal = SecurityRequestContext.toPrincipal();
+    NamespaceId namespace = artifactId.getNamespace().toEntityId();
+    authorizerInstantiatorService.get().enforce(namespace, principal, Action.WRITE);
+
+    ArtifactDetail artifactDetail = addArtifact(artifactId, artifactFile, parentArtifacts, additionalPlugins,
+                                                Collections.<String, String>emptyMap());
+    // artifact successfully added. now grant ALL permissions on the artifact to the current user
+    authorizerInstantiatorService.get().grant(artifactId.toEntityId(), principal, Collections.singleton(Action.ALL));
+    return artifactDetail;
   }
 
   /**
@@ -379,14 +450,17 @@ public class ArtifactRepository {
    * @param properties properties for the artifact
    * @throws IOException if there was an exception reading from the artifact store
    * @throws ArtifactRangeNotFoundException if none of the parent artifacts could be found
+   * @throws UnauthorizedException if the user is not authorized to add an artifact in the specified namespace. To add
+   *                               an artifact, a user must have {@link Action#WRITE} on the namespace in which
+   *                               the artifact is being added. If authorization is successful, and
+   *                               the artifact is added successfully, then the user gets {@link Action#ALL} privileges
+   *                               on the added artifact.
    */
+  @VisibleForTesting
   public ArtifactDetail addArtifact(Id.Artifact artifactId, File artifactFile,
                                     @Nullable Set<ArtifactRange> parentArtifacts,
                                     @Nullable Set<PluginClass> additionalPlugins,
-                                    Map<String, String> properties)
-    throws IOException, ArtifactAlreadyExistsException, WriteConflictException,
-    InvalidArtifactException, ArtifactRangeNotFoundException {
-
+                                    Map<String, String> properties) throws Exception {
     if (additionalPlugins != null) {
       validatePluginSet(additionalPlugins);
     }
@@ -394,8 +468,7 @@ public class ArtifactRepository {
     parentArtifacts = parentArtifacts == null ? Collections.<ArtifactRange>emptySet() : parentArtifacts;
     CloseableClassLoader parentClassLoader;
     if (parentArtifacts.isEmpty()) {
-      parentClassLoader =
-        artifactClassLoaderFactory.createClassLoader(Locations.toLocation(artifactFile));
+      parentClassLoader = createArtifactClassLoader(Locations.toLocation(artifactFile));
     } else {
       validateParentSet(artifactId, parentArtifacts);
       parentClassLoader = createParentClassLoader(artifactId, parentArtifacts);
@@ -424,9 +497,12 @@ public class ArtifactRepository {
    * @param properties the artifact properties to add
    * @throws IOException if there was an exception writing to the artifact store
    * @throws ArtifactNotFoundException if the artifact does not exist
+   * @throws UnauthorizedException if the current user is not permitted to write properties to the artifact. To be able
+   *                               to write properties to an artifact, users must have admin privileges on the artifact
    */
-  public void writeArtifactProperties(Id.Artifact artifactId, final Map<String, String> properties)
-    throws IOException, ArtifactNotFoundException {
+  public void writeArtifactProperties(Id.Artifact artifactId, final Map<String, String> properties) throws Exception {
+    authorizerInstantiatorService.get().enforce(artifactId.toEntityId(), SecurityRequestContext.toPrincipal(),
+                                                Action.ADMIN);
     artifactStore.updateArtifactProperties(artifactId, new Function<Map<String, String>, Map<String, String>>() {
       @Override
       public Map<String, String> apply(Map<String, String> oldProperties) {
@@ -444,9 +520,12 @@ public class ArtifactRepository {
    * @param value the property value to write
    * @throws IOException if there was an exception writing to the artifact store
    * @throws ArtifactNotFoundException if the artifact does not exist
+   * @throws UnauthorizedException if the current user is not permitted to write properties to the artifact. To be able
+   *                               to write properties to an artifact, users must have admin privileges on the artifact
    */
-  public void writeArtifactProperty(Id.Artifact artifactId, final String key, final String value)
-    throws IOException, ArtifactNotFoundException {
+  public void writeArtifactProperty(Id.Artifact artifactId, final String key, final String value) throws Exception {
+    authorizerInstantiatorService.get().enforce(artifactId.toEntityId(), SecurityRequestContext.toPrincipal(),
+                                                Action.ADMIN);
     artifactStore.updateArtifactProperties(artifactId, new Function<Map<String, String>, Map<String, String>>() {
       @Override
       public Map<String, String> apply(Map<String, String> oldProperties) {
@@ -465,9 +544,12 @@ public class ArtifactRepository {
    * @param key the property to delete
    * @throws IOException if there was an exception writing to the artifact store
    * @throws ArtifactNotFoundException if the artifact does not exist
+   * @throws UnauthorizedException if the current user is not permitted to remove a property from the artifact. To be
+   *                               able to remove a property, users must have admin privileges on the artifact
    */
-  public void deleteArtifactProperty(Id.Artifact artifactId, final String key)
-    throws IOException, ArtifactNotFoundException {
+  public void deleteArtifactProperty(Id.Artifact artifactId, final String key) throws Exception {
+    authorizerInstantiatorService.get().enforce(artifactId.toEntityId(), SecurityRequestContext.toPrincipal(),
+                                                Action.ADMIN);
     artifactStore.updateArtifactProperties(artifactId, new Function<Map<String, String>, Map<String, String>>() {
       @Override
       public Map<String, String> apply(Map<String, String> oldProperties) {
@@ -488,8 +570,12 @@ public class ArtifactRepository {
    * @param artifactId the id of the artifact to delete properties from
    * @throws IOException if there was an exception writing to the artifact store
    * @throws ArtifactNotFoundException if the artifact does not exist
+   * @throws UnauthorizedException if the current user is not permitted to remove properties from the artifact. To be
+   *                               able to remove properties, users must have admin privileges on the artifact
    */
-  public void deleteArtifactProperties(Id.Artifact artifactId) throws IOException, ArtifactNotFoundException {
+  public void deleteArtifactProperties(Id.Artifact artifactId) throws Exception {
+    authorizerInstantiatorService.get().enforce(artifactId.toEntityId(), SecurityRequestContext.toPrincipal(),
+                                                Action.ADMIN);
     artifactStore.updateArtifactProperties(artifactId, new Function<Map<String, String>, Map<String, String>>() {
       @Override
       public Map<String, String> apply(Map<String, String> oldProperties) {
@@ -522,8 +608,19 @@ public class ArtifactRepository {
    * @throws WriteConflictException if there was a write conflicting adding the system artifact. This shouldn't happen,
    *                                but if it does, it should be ok to retry the operation.
    */
-  public void addSystemArtifacts() throws IOException, WriteConflictException {
-
+  public void addSystemArtifacts() throws Exception {
+    // this method is called from two places:
+    // 1. the SystemArtifactLoader calls it during master startup to load all system artifacts. There should not be any
+    // authorization enforcement for this step.
+    // 2. the refresh system artifacts API - POST /namespaces/system/artifacts calls this when a user hits that API. To
+    // perform this operation, a user must have write privileges on the cdap instance
+    Principal principal = SecurityRequestContext.toPrincipal();
+    if (Principal.SYSTEM.equals(principal)) {
+      LOG.trace("Skipping authorization enforcement since it is being called with the system principal. This is " +
+                  "so the SystemArtifactLoader can load system artifacts.");
+    } else {
+      authorizerInstantiatorService.get().enforce(instanceId, principal, Action.WRITE);
+    }
     // scan the directory for artifact .jar files and config files for those artifacts
     List<SystemArtifactInfo> systemArtifacts = new ArrayList<>();
     for (File systemArtifactDir : systemArtifactDirs) {
@@ -591,7 +688,7 @@ public class ArtifactRepository {
     }
   }
 
-  private void addSystemArtifact(SystemArtifactInfo systemArtifactInfo) throws IOException, WriteConflictException {
+  private void addSystemArtifact(SystemArtifactInfo systemArtifactInfo) throws Exception {
     String fileName = systemArtifactInfo.getArtifactFile().getName();
     try {
       Id.Artifact artifactId = systemArtifactInfo.getArtifactId();
@@ -600,6 +697,7 @@ public class ArtifactRepository {
       if (!artifactId.getVersion().isSnapshot()) {
         try {
           artifactStore.getArtifact(artifactId);
+          LOG.info("Artifact {} already exists, will not try loading it again.", artifactId);
           return;
         } catch (ArtifactNotFoundException e) {
           // this is fine, means it doesn't exist yet and we should add it
@@ -611,13 +709,15 @@ public class ArtifactRepository {
                   systemArtifactInfo.getConfig().getParents(),
                   systemArtifactInfo.getConfig().getPlugins(),
                   systemArtifactInfo.getConfig().getProperties());
+      LOG.info("Added system artifact {}.", artifactId);
     } catch (ArtifactAlreadyExistsException e) {
       // shouldn't happen... but if it does for some reason it's fine, it means it was added some other way already.
     } catch (ArtifactRangeNotFoundException e) {
-      LOG.warn(String.format("Could not add system artifact '%s' because it extends artifacts that do not exist.",
-        fileName), e);
+      LOG.warn("Could not add system artifact '{}' because it extends artifacts that do not exist.", fileName, e);
     } catch (InvalidArtifactException e) {
-      LOG.warn(String.format("Could not add system artifact '%s' because it is invalid.", fileName), e);
+      LOG.warn("Could not add system artifact '{}' because it is invalid.", fileName, e);
+    } catch (UnauthorizedException e) {
+      LOG.warn("Could not add system artifact '{}' because of an authorization error.", fileName, e);
     }
   }
 
@@ -626,8 +726,20 @@ public class ArtifactRepository {
    *
    * @param artifactId the artifact to delete
    * @throws IOException if there was some IO error deleting the artifact
+   * @throws UnauthorizedException if the current user is not authorized to delete the artifact. To delete an artifact,
+   *                               a user needs {@link Action#ADMIN} permission on the artifact.
    */
-  public void deleteArtifact(Id.Artifact artifactId) throws IOException {
+  public void deleteArtifact(Id.Artifact artifactId) throws Exception {
+    // for deleting system artifacts, users need admin privileges on the CDAP instance.
+    // for deleting non-system artifacts, users need admin privileges on the artifact being deleted.
+    Principal principal = SecurityRequestContext.toPrincipal();
+    if (NamespaceId.SYSTEM.equals(artifactId.getNamespace().toEntityId())) {
+      authorizerInstantiatorService.get().enforce(instanceId, principal, Action.ADMIN);
+    } else {
+      authorizerInstantiatorService.get().enforce(artifactId.toEntityId(), principal, Action.ADMIN);
+    }
+    // revoke all privileges on the artifact
+    authorizerInstantiatorService.get().revoke(artifactId.toEntityId());
     artifactStore.delete(artifactId);
     metadataStore.removeMetadata(artifactId);
   }
@@ -660,7 +772,7 @@ public class ArtifactRepository {
 
     if (parents.isEmpty()) {
       throw new ArtifactRangeNotFoundException(String.format("Artifact %s extends artifacts '%s' that do not exist",
-        artifactId, Joiner.on('/').join(parentArtifacts)));
+                                                             artifactId, Joiner.on('/').join(parentArtifacts)));
     }
 
     // check if any of the parents also have parents, which is not allowed. This is to simplify things
@@ -690,10 +802,10 @@ public class ArtifactRepository {
     // assumes any of the parents will do
     Location parentLocation = parents.get(0).getDescriptor().getLocation();
 
-    return artifactClassLoaderFactory.createClassLoader(parentLocation);
+    return createArtifactClassLoader(parentLocation);
   }
 
-  private void addAppSummaries(List<ApplicationClassSummary> summaries, Id.Namespace namespace) {
+  private void addAppSummaries(List<ApplicationClassSummary> summaries, NamespaceId namespace) {
     for (Map.Entry<ArtifactDescriptor, List<ApplicationClass>> classInfo :
       artifactStore.getApplicationClasses(namespace).entrySet()) {
       ArtifactSummary artifactSummary = ArtifactSummary.from(classInfo.getKey().getArtifactId());

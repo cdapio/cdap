@@ -31,7 +31,7 @@ public final class ProgramOptionConstants {
 
   public static final String HOST = "host";
 
-  public static final String LOGICAL_START_TIME = "logicalStartTime";
+  public static final String LOGICAL_START_TIME = "logical.start.time";
 
   public static final String RETRY_COUNT = "retryCount";
 

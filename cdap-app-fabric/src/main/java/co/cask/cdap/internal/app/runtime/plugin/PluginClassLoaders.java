@@ -20,7 +20,6 @@ import co.cask.cdap.api.plugin.Plugin;
 import co.cask.cdap.common.lang.CombineClassLoader;
 import co.cask.cdap.common.lang.FilterClassLoader;
 import com.google.common.base.Function;
-import com.google.common.base.Predicates;
 import com.google.common.base.Throwables;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableList;
@@ -97,9 +96,19 @@ public final class PluginClassLoaders {
 
   private static ClassLoader createClassFilteredClassLoader(Iterable<String> allowedClasses,
                                                             ClassLoader parentClassLoader) {
-    Set<String> allowedResources = ImmutableSet.copyOf(Iterables.transform(allowedClasses, CLASS_TO_RESOURCE_NAME));
-    return FilterClassLoader.create(Predicates.in(allowedResources),
-                                    Predicates.<String>alwaysTrue(), parentClassLoader);
+    final Set<String> allowedResources = ImmutableSet.copyOf(Iterables.transform(allowedClasses,
+                                                                                 CLASS_TO_RESOURCE_NAME));
+    return new FilterClassLoader(parentClassLoader, new FilterClassLoader.Filter() {
+      @Override
+      public boolean acceptResource(String resource) {
+        return allowedResources.contains(resource);
+      }
+
+      @Override
+      public boolean acceptPackage(String packageName) {
+        return true;
+      }
+    });
   }
 
   private PluginClassLoaders() {

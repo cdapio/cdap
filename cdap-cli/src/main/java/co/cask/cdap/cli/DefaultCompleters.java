@@ -33,6 +33,7 @@ import co.cask.cdap.client.ApplicationClient;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.metadata.MetadataScope;
 import co.cask.cdap.proto.metadata.MetadataSearchTargetType;
+import co.cask.cdap.proto.security.Principal;
 import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Injector;
@@ -74,6 +75,7 @@ public class DefaultCompleters implements Supplier<Map<String, Completer>> {
         .put(ArgumentName.TARGET_TYPE.getName(), new EnumCompleter(MetadataSearchTargetType.class))
         .put(ArgumentName.METADATA_SCOPE.getName(), new EnumCompleter(MetadataScope.class))
         .put(ArgumentName.FORMAT.getName(), new StringsCompleter(Formats.ALL))
+        .put(ArgumentName.PRINCIPAL_TYPE.getName(), new EnumCompleter(Principal.PrincipalType.class))
         .putAll(generateProgramIdCompleters(injector)).build();
   }
 

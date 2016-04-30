@@ -46,7 +46,7 @@ public class AppSystemMetadataWriter extends AbstractSystemMetadataWriter {
   }
 
   @Override
-  Map<String, String> getSystemPropertiesToAdd() {
+  protected Map<String, String> getSystemPropertiesToAdd() {
     ImmutableMap.Builder<String, String> properties = ImmutableMap.builder();
     addPrograms(properties);
     addSchedules(properties);
@@ -63,7 +63,7 @@ public class AppSystemMetadataWriter extends AbstractSystemMetadataWriter {
   }
 
   @Override
-  String[] getSystemTagsToAdd() {
+  protected String[] getSystemTagsToAdd() {
     return new String[] {
       appSpec.getName(),
       appSpec.getArtifactId().getName()

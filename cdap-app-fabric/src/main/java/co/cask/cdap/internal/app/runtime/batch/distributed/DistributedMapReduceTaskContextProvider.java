@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -27,6 +27,7 @@ import co.cask.cdap.common.guice.ZKClientModule;
 import co.cask.cdap.data.runtime.DataFabricDistributedModule;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.TransactionExecutorModule;
+import co.cask.cdap.data2.audit.AuditModule;
 import co.cask.cdap.data2.transaction.metrics.TransactionManagerMetricsCollector;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
@@ -137,6 +138,7 @@ public final class DistributedMapReduceTaskContextProvider extends MapReduceTask
       new DataSetsModules().getDistributedModules(),
       new TransactionModules().getDistributedModules(),
       new TransactionExecutorModule(),
+      new AuditModule().getDistributedModules(),
       new AbstractModule() {
         @Override
         protected void configure() {

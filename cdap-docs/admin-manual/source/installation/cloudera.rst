@@ -66,12 +66,6 @@ These roles map to the :ref:`CDAP components <admin-manual-cdap-components>` of 
 
 - All services run as the ``'cdap'`` user installed by the parcel.
 
-.. Node.js Installation
-.. --------------------
-.. include:: /../target/_includes/cloudera-installation.rst
-    :start-after: .. _cloudera-install-node-js:
-    :end-before: .. _cloudera-install-packaging:
-
 .. Hadoop Configuration
 .. --------------------
 .. include:: ../_includes/installation/hadoop-configuration.txt
@@ -123,33 +117,53 @@ available services which CM can install.
 
 .. _cloudera-compatibility-matrix:
 
-+---------------------------------------------------------------------------------------+
-| Supported Cloudera Manager (CM) and Cloudera Data Hub (CDH) Distributions             |
-+------------+-----------------------+---------------------+----------------------------+
-| CM Version | CDH Version           | CSD Version         |  CDAP Parcel Version       |
-+============+=======================+=====================+============================+
-| 5.6        | 5.6.x                 | 3.3.x               | *Matching CSD major.minor* | 
-+------------+-----------------------+---------------------+----------------------------+
-| 5.5, 5.6   | 5.5.x                 | 3.3.x               | *Matching CSD major.minor* | 
-+------------+-----------------------+---------------------+----------------------------+
-| 5.5, 5.6   | 5.4.x                 | 3.1.x through 3.3.x | *Matching CSD major.minor* |
-+------------+-----------------------+---------------------+----------------------------+
-| 5.5, 5.6   | no greater than 5.3.x | 3.0.x through 3.3.x | *Matching CSD major.minor* |
-+------------+-----------------------+---------------------+----------------------------+
-|                                                                                       |
-+------------+-----------------------+---------------------+----------------------------+
-| 5.4        | 5.4.x                 | 3.1.x through 3.3.x | *Matching CSD major.minor* | 
-+------------+-----------------------+---------------------+----------------------------+
-| 5.4        | no greater than 5.3.x | 3.0.x through 3.3.x | *Matching CSD major.minor* | 
-+------------+-----------------------+---------------------+----------------------------+
-|                                                                                       |
-+------------+-----------------------+---------------------+----------------------------+
-| 5.3        | no greater than 5.3.x | 3.0.x through 3.1.x | *Matching CSD major.minor* |
-+------------+-----------------------+---------------------+----------------------------+
-| 5.2        | no greater than 5.2.x | 3.0.x through 3.1.x | *Matching CSD major.minor* |
-+------------+-----------------------+---------------------+----------------------------+
-| 5.1        | no greater than 5.1.x | *Not supported*     | |---|                      | 
-+------------+-----------------------+---------------------+----------------------------+
++---------------------------------------------------------------------------+
+| Supported Cloudera Manager (CM) and Cloudera Data Hub (CDH) Distributions |
++------------+-----------------------+--------------------------------------+
+| CM Version | CDH Version           | CDAP Parcel / CSD Version            |
++============+=======================+======================================+
+| 5.7        | 5.7.x                 | 3.4.x                                |
++------------+-----------------------+--------------------------------------+
+| 5.7        | 5.6.x                 | 3.3.x through 3.4.x                  |
++------------+-----------------------+--------------------------------------+
+| 5.7        | 5.5.x                 | 3.3.x through 3.4.x                  |
++------------+-----------------------+--------------------------------------+
+| 5.7        | 5.4.x                 | 3.1.x through 3.4.x                  |
++------------+-----------------------+--------------------------------------+
+| 5.7        | no greater than 5.3.x | 3.0.x through 3.4.x                  |
++------------+-----------------------+--------------------------------------+
+|                                                                           |
++------------+-----------------------+--------------------------------------+
+| 5.6        | 5.6.x                 | 3.3.x                                |
++------------+-----------------------+--------------------------------------+
+| 5.6        | 5.5.x                 | 3.3.x                                |
++------------+-----------------------+--------------------------------------+
+| 5.6        | 5.4.x                 | 3.1.x through 3.3.x                  |
++------------+-----------------------+--------------------------------------+
+| 5.6        | no greater than 5.3.x | 3.0.x through 3.3.x                  |
++------------+-----------------------+--------------------------------------+
+|                                                                           |
++------------+-----------------------+--------------------------------------+
+| 5.5        | 5.5.x                 | 3.3.x                                |
++------------+-----------------------+--------------------------------------+
+| 5.5        | 5.4.x                 | 3.1.x through 3.3.x                  |
++------------+-----------------------+--------------------------------------+
+| 5.5        | no greater than 5.3.x | 3.0.x through 3.3.x                  |
++------------+-----------------------+--------------------------------------+
+|                                                                           |
++------------+-----------------------+--------------------------------------+
+| 5.4        | 5.4.x                 | 3.1.x through 3.3.x                  |
++------------+-----------------------+--------------------------------------+
+| 5.4        | no greater than 5.3.x | 3.0.x through 3.3.x                  |
++------------+-----------------------+--------------------------------------+
+|                                                                           |
++------------+-----------------------+--------------------------------------+
+| 5.3        | no greater than 5.3.x | 3.0.x through 3.1.x                  |
++------------+-----------------------+--------------------------------------+
+| 5.2        | no greater than 5.2.x | 3.0.x through 3.1.x                  |
++------------+-----------------------+--------------------------------------+
+| 5.1        | no greater than 5.1.x | *Not supported*                      | 
++------------+-----------------------+--------------------------------------+
 
 .. _cloudera-compatibility-matrix-end:
 
@@ -493,12 +507,30 @@ Enabling Kerberos
 -----------------
 For Kerberos-enabled Hadoop clusters:
 
-- The ``'cdap'`` user needs to be granted HBase permissions to create tables.
+- The ``cdap`` user needs to be granted HBase permissions to create tables.
   As the ``hbase`` user, issue the command::
  
     $ echo "grant 'cdap', 'RWCA'" | hbase shell
 
-- The ``'cdap'`` user must be able to launch YARN containers, either by adding it to the YARN
+- The ``cdap`` user must be able to launch YARN containers, either by adding it to the YARN
   ``allowed.system.users`` or by adjusting the YARN ``min.user.id`` to include the ``cdap`` user.
   (Search for the YARN configuration ``allowed.system.users`` in Cloudera Manager, and then add
   the ``cdap`` user to the whitelist.)
+  
+- If you are converting an existing CDAP cluster to being Kerberos-enabled, then you may
+  run into Yarn usercache directory permission problems. A non-Kerberos cluster with
+  default settings will run CDAP containers as the user ``yarn``. A Kerberos cluster will
+  run them as the user ``cdap``. When converting, the usercache directory that Yarn
+  creates will already exist and be owned by a different user. On all datanodes, run this
+  command, substituting in the correct value of the YARN parameter ``yarn.nodemanager.local-dirs``::
+    
+    rm -rf <YARN.NODEMANAGER.LOCAL-DIRS>/usercache/cdap
+  
+  (As ``yarn.nodemanager.local-dirs`` can be a comma-separated list of directories, you may
+  need to run this command multiple times, once for each entry.)
+  
+  If, for example, the setting for ``yarn.nodemanager.local-dirs`` is ``/yarn/nm``, you would use::
+  
+    rm -rf /yarn/nm/usercache/cdap
+
+  Restart CDAP after removing the usercache(s).

@@ -16,11 +16,12 @@
 
 package co.cask.cdap.data.tools;
 
-import co.cask.cdap.api.dataset.DatasetSpecification;
+import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.app.guice.AppFabricServiceRuntimeModule;
+import co.cask.cdap.app.guice.AuthorizationModule;
 import co.cask.cdap.app.guice.ProgramRunnerRuntimeModule;
 import co.cask.cdap.app.guice.ServiceStoreModules;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -43,11 +44,9 @@ import co.cask.cdap.data2.datafabric.dataset.instance.DatasetInstanceManager;
 import co.cask.cdap.data2.datafabric.dataset.service.mds.MDSDatasetsRegistry;
 import co.cask.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.data2.dataset2.DefaultDatasetDefinitionRegistry;
 import co.cask.cdap.data2.dataset2.InMemoryDatasetFramework;
 import co.cask.cdap.data2.dataset2.lib.hbase.AbstractHBaseDataSetAdmin;
-import co.cask.cdap.data2.metadata.dataset.MetadataDataset;
 import co.cask.cdap.data2.metadata.lineage.LineageStore;
 import co.cask.cdap.data2.metadata.store.DefaultMetadataStore;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
@@ -67,11 +66,9 @@ import co.cask.cdap.metrics.store.DefaultMetricStore;
 import co.cask.cdap.metrics.store.MetricDatasetFactory;
 import co.cask.cdap.notifications.feeds.client.NotificationFeedClientModule;
 import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.store.NamespaceStore;
 import co.cask.cdap.store.guice.NamespaceStoreModule;
 import co.cask.tephra.distributed.TransactionService;
-import com.google.gson.Gson;
-import com.google.gson.JsonObject;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -110,10 +107,11 @@ public class UpgradeTool {
   private final DatasetUpgrader dsUpgrade;
   private final QueueAdmin queueAdmin;
   private final DatasetSpecificationUpgrader dsSpecUpgrader;
-  private final DatasetInstanceManager datasetInstanceManager;
   private final MetadataStore metadataStore;
   private final ExistingEntitySystemMetadataWriter existingEntitySystemMetadataWriter;
   private final DatasetServiceManager datasetServiceManager;
+  private final NamespaceStore nsStore;
+  private final DefaultStore store;
 
   /**
    * Set of Action available in this tool.
@@ -122,10 +120,12 @@ public class UpgradeTool {
     UPGRADE("Upgrades CDAP to " + ProjectInfo.getVersion() + "\n" +
               "  The upgrade tool upgrades the following: \n" +
               "  1. User and System Datasets (upgrades the coprocessor jars)\n" +
-              "  2. Upgrade Schedule Triggers\n" +
-              "  3. Upgrade Business Metadata Dataset\n" +
-              "  4. Stream State Store\n" +
-              "  5. Generate system metadata for all existing entities\n" +
+              "  2. Schedule Triggers\n" +
+              "  3. Stream State Store\n" +
+              "  4. Workflow run records in Application Metadata Store\n" +
+              "  5. System metadata for all existing entities\n" +
+              "  6. Metadata indexes for all existing metadata\n" +
+              "  7. Any metadata that may have left behind for deleted datasets (This metadata will be removed).\n" +
               "  Note: Once you run the upgrade tool you cannot rollback to the previous version."),
     UPGRADE_HBASE("After an HBase upgrade, updates the coprocessor jars of all user and \n" +
                     "system HBase tables to a version that is compatible with the new HBase \n" +
@@ -158,8 +158,8 @@ public class UpgradeTool {
     this.dsUpgrade = injector.getInstance(DatasetUpgrader.class);
     this.dsSpecUpgrader = injector.getInstance(DatasetSpecificationUpgrader.class);
     this.queueAdmin = injector.getInstance(QueueAdmin.class);
-    this.datasetInstanceManager =
-      injector.getInstance(Key.get(DatasetInstanceManager.class, Names.named("datasetInstanceManager")));
+    this.nsStore = injector.getInstance(NamespaceStore.class);
+    this.store = injector.getInstance(DefaultStore.class);
 
     Runtime.getRuntime().addShutdownHook(new Thread() {
       @Override
@@ -212,6 +212,7 @@ public class UpgradeTool {
       new NotificationServiceRuntimeModule().getInMemoryModules(),
       new KafkaClientModule(),
       new NamespaceStoreModule().getDistributedModules(),
+      new AuthorizationModule(),
       new AbstractModule() {
         @Override
         protected void configure() {
@@ -390,19 +391,24 @@ public class UpgradeTool {
     LOG.info("Upgrading schedules...");
     datasetBasedTimeScheduleStore.upgrade();
 
-    LOG.info("Upgrading Business Metadata Dataset Specification...");
-    upgradeBusinessMetadataDatasetSpec();
-
-    LOG.info("Upgrading Business Metadata Dataset...");
-    metadataStore.upgrade();
-
     LOG.info("Upgrading stream state store table...");
     streamStateStoreUpgrader.upgrade();
+
+    LOG.info("Upgrading Workflow run records in application metadata store table...");
+    store.upgrade();
 
     datasetServiceManager.startUp();
     LOG.info("Writing system metadata to existing entities...");
     try {
       existingEntitySystemMetadataWriter.write(datasetServiceManager.getDSFramework());
+      LOG.info("Removing metadata for deleted datasets...");
+      DeletedDatasetMetadataRemover datasetMetadataRemover = new DeletedDatasetMetadataRemover(
+        nsStore, metadataStore, datasetServiceManager.getDSFramework());
+      datasetMetadataRemover.remove();
+      LOG.info("Deleting old metadata indexes...");
+      metadataStore.deleteAllIndexes();
+      LOG.info("Re-building metadata indexes...");
+      metadataStore.rebuildIndexes();
     } finally {
       datasetServiceManager.shutDown();
     }
@@ -460,44 +466,5 @@ public class UpgradeTool {
 
     // Usage registry
     UsageRegistry.setupDatasets(datasetFramework);
-  }
-
-  private void upgradeBusinessMetadataDatasetSpec() {
-    DatasetSpecification oldBusinessMetadataSpec =
-      datasetInstanceManager.get(DefaultMetadataStore.BUSINESS_METADATA_INSTANCE_ID);
-    if (oldBusinessMetadataSpec == null) {
-      LOG.info("Business Metadata Dataset not found. No upgrade necessary.");
-      return;
-    }
-    // Updating the type in the spec using Gson. Doing choosing this option over two others:
-    // 1. Build a new DatasetSpecification using the DatasetSpecification Builder: This seems clean, but because
-    // of the namespacing logic in the builder, you would need to change names of the embedded datasets first,
-    // leading to unnecessary complex logic for this temporary code.
-    // 2. Add a DatasetSpecification.changeType: This is probably the cleanest option, however, we would have to
-    // add a new public static method to an API class, again for this temporary use-case. Maybe we can do this
-    // later if we see this as a more frequent pattern.
-    // For now, update the type using Gson, and deserialize the updated JsonObject as a new DatasetSpecification.
-    Gson gson = new Gson();
-    // change the dataset type name since in 3.3  it changed to MetadataDataset
-    JsonObject jsonObject = gson.toJsonTree(oldBusinessMetadataSpec, DatasetSpecification.class).getAsJsonObject();
-    jsonObject.addProperty("type", MetadataDataset.class.getName());
-    // change the columnsToIndex to 'i' since in 3.3 we index column 'i'
-    JsonObject metadataIndexObject = jsonObject.get("datasetSpecs").getAsJsonObject()
-      .get("metadata_index").getAsJsonObject();
-    JsonObject properties = metadataIndexObject.get("properties").getAsJsonObject();
-    properties.addProperty("columnsToIndex", "i");
-    JsonObject dProperties = metadataIndexObject.get("datasetSpecs").getAsJsonObject().get("d").getAsJsonObject()
-      .get("properties").getAsJsonObject();
-    JsonObject iProperties = metadataIndexObject.get("datasetSpecs").getAsJsonObject().get("i").getAsJsonObject()
-      .get("properties").getAsJsonObject();
-    dProperties.addProperty("columnsToIndex", "i");
-    iProperties.addProperty("columnsToIndex", "i");
-
-    LOG.info("The new Business Metadata Dataset Spec being written is {}", new Gson().toJson(jsonObject));
-    DatasetSpecification newBusinessMetadataSpec = gson.fromJson(jsonObject, DatasetSpecification.class);
-    datasetInstanceManager.delete(DefaultMetadataStore.BUSINESS_METADATA_INSTANCE_ID);
-    datasetInstanceManager.add(Id.Namespace.SYSTEM, newBusinessMetadataSpec);
-    LOG.info("Found old Business Metadata Dataset Spec {}. Upgraded it to new spec {}.",
-             oldBusinessMetadataSpec, newBusinessMetadataSpec);
   }
 }

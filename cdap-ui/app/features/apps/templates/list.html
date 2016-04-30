@@ -23,10 +23,10 @@
     <h2> All Applications </h2>
   </div>
   <div class="col-xs-5 col-md-2 h2 text-right">
-    <div class="btn-group dropdown-right" dropdown>
+    <div class="btn-group dropdown-right" uib-dropdown>
       <button type="button"
               class="btn btn-default dropdown-toggle"
-              dropdown-toggle=""
+              uib-dropdown-toggle=""
               aria-haspopup="true"
               aria-expanded="false">
         Add Application <span class="caret"></span>
@@ -40,7 +40,7 @@
           </my-file-select>
         </li>
         <li>
-          <a ui-sref="hydrator.create"  class="clearfix">
+          <a ui-sref="hydratorplusplus.create({ namespace: $stateParams.namespace })"  class="clearfix">
             <span class="pull-left">{{ListController.GLOBALS.en.hydrator.appLabel}}</span>
           </a>
         </li>
@@ -78,7 +78,7 @@
           <a ui-sref="apps.detail.overview.programs({ appId: app.name })"
               ng-if="ListController.myHydratorFactory.isCustomApp(app.artifact.name)"
               ng-click="MyOrderings.appClicked(app.name)">
-            <strong tooltip="{{app.name}}"
+            <strong uib-tooltip="{{app.name}}"
                     tooltip-enable="app.name.length > 35"
                     tooltip-append-to-body="true">
               {{ ::app.name | myEllipsis:35 }}
@@ -87,7 +87,7 @@
           <a ui-sref="apps.detail.overview.status({ appId: app.name })"
               ng-if="ListController.myHydratorFactory.isETLApp(app.artifact.name)"
               ng-click="MyOrderings.appClicked(app.name)">
-            <strong tooltip="{{app.name}}"
+            <strong uib-tooltip="{{app.name}}"
                     tooltip-enable="app.name.length > 35"
                     tooltip-append-to-body="true">
               {{ ::app.name | myEllipsis:35 }}
@@ -100,14 +100,8 @@
             <span>App</span>
           </span>
           <span ng-if="ListController.myHydratorFactory.isETLApp(app.artifact.name)">
-            <span ng-if="app.artifact.name === ListController.GLOBALS.etlRealtime">
-              <span class="icon-ETLRealtime"></span>
-              <span> ETL Real-time</span>
-            </span>
-            <span ng-if="app.artifact.name === ListController.GLOBALS.etlBatch">
-              <span class="icon-ETLBatch"></span>
-              <span>ETL Batch</span>
-            </span>
+            <span class="icon-{{ ListController.GLOBALS.iconArtifact[app.artifact.name] }}"></span>
+            <span>{{ ListController.GLOBALS.artifactConvert[app.artifact.name] }}</span>
           </span>
         </td>
         <td>{{ ::app.version }}</td>
@@ -120,5 +114,5 @@
 </div>
 
 <div class="text-center" ng-if="ListController.filtered.length > 10">
-  <pagination total-items="ListController.filtered.length" ng-model="ListController.currentPage"></pagination>
+  <uib-pagination total-items="ListController.filtered.length" ng-model="ListController.currentPage"></uib-pagination>
 </div>

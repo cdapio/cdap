@@ -48,11 +48,11 @@ public class ListDatasetInstancesCommand extends AbstractAuthCommand {
     List<DatasetSpecificationSummary> datasetMetas = datasetClient.list(cliConfig.getCurrentNamespace());
 
     Table table = Table.builder()
-      .setHeader("name", "type")
+      .setHeader("name", "type", "description")
       .setRows(datasetMetas, new RowMaker<DatasetSpecificationSummary>() {
         @Override
         public List<?> makeRow(DatasetSpecificationSummary object) {
-          return Lists.newArrayList(object.getName(), object.getType());
+          return Lists.newArrayList(object.getName(), object.getType(), object.getDescription());
         }
       }).build();
     cliConfig.getTableRenderer().render(cliConfig, output, table);
@@ -65,6 +65,6 @@ public class ListDatasetInstancesCommand extends AbstractAuthCommand {
 
   @Override
   public String getDescription() {
-    return String.format("Lists all %s.", ElementType.DATASET.getNamePlural());
+    return String.format("Lists all %s", ElementType.DATASET.getNamePlural());
   }
 }

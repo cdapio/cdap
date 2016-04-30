@@ -17,17 +17,30 @@
 package co.cask.cdap.data2.datafabric.dataset;
 
 import co.cask.cdap.api.dataset.Dataset;
+import co.cask.cdap.api.dataset.DatasetDefinition;
+import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.DatasetProperties;
+import co.cask.cdap.api.dataset.DatasetSpecification;
+import co.cask.cdap.api.dataset.InstanceConflictException;
+import co.cask.cdap.api.dataset.lib.FileSet;
+import co.cask.cdap.api.dataset.lib.ObjectMappedTable;
+import co.cask.cdap.api.dataset.lib.PartitionedFileSetProperties;
+import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
+import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.data2.dataset2.DatasetManagementException;
-import co.cask.cdap.data2.dataset2.InstanceConflictException;
+import co.cask.cdap.data2.dataset2.lib.file.FileSetDataset;
+import co.cask.cdap.data2.metadata.lineage.LineageDataset;
+import co.cask.cdap.data2.registry.UsageDataset;
 import co.cask.cdap.proto.Id;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.TreeMap;
+import javax.annotation.Nullable;
 
 /**
  * Has handy methods for dealing with Datasets.
@@ -73,5 +86,52 @@ public final class DatasetsUtil {
         throw Throwables.propagate(e);
       }
     }
+  }
+
+
+  /**
+   * For a dataset spec that does not contain the original properties, we attempt to reconstruct them from
+   * the properties at the top-level of the spec. For most datasets, these will be identical, however, there
+   * are a few known dataset types whose {@link DatasetDefinition#configure(String, DatasetProperties)} method
+   * adds additional properties. As of release 3.3, the set of built-in such dataset types is known. Any dataset
+   * created or reconfigured beginning with 3.4 will have the original properties stored in the spec.
+   * @param spec a dataset spec that does not contain the original properties
+   * @return the input spec if it is null or if it has original properties; otherwise a spec that has the
+   *         original properties with which the dataset was created or reconfigured, at best effort.
+   */
+  @VisibleForTesting
+  public static DatasetSpecification fixOriginalProperties(@Nullable DatasetSpecification spec) {
+    if (spec == null || spec.getOriginalProperties() != null) {
+      return spec;
+    }
+    Map<String, String> props = new TreeMap<>(spec.getProperties());
+    if (!props.isEmpty()) {
+      String type = spec.getType();
+
+      // file sets add a fileset version indicating how to handle absolute base paths
+      if (FileSet.class.getName().equals(type) || "fileSet".equals(type)) {
+        props.remove(FileSetDataset.FILESET_VERSION_PROPERTY);
+
+        // TPFS adds the partitioning
+      } else if (TimePartitionedFileSet.class.getName().equals(type) || "timePartitionedFileSet".equals(type)) {
+        props.remove(PartitionedFileSetProperties.PARTITIONING_FIELDS);
+        for (String key : spec.getProperties().keySet()) {
+          if (key.startsWith(PartitionedFileSetProperties.PARTITIONING_FIELD_PREFIX)) {
+            props.remove(key);
+          }
+        }
+
+        // ObjectMappedTable adds the table schema and its row field name
+      } else if (ObjectMappedTable.class.getName().endsWith(type) || "objectMappedTable".equals(type)) {
+        props.remove(Table.PROPERTY_SCHEMA);
+        props.remove(Table.PROPERTY_SCHEMA_ROW_FIELD);
+
+        // LineageDataset and UsageDataset add the conflict level of none
+      } else if (UsageDataset.class.getSimpleName().equals(type) ||
+        LineageDataset.class.getName().equals(type) || "lineageDataset".equals(type)) {
+        props.remove(Table.PROPERTY_CONFLICT_LEVEL);
+      }
+    }
+    return spec.setOriginalProperties(props);
   }
 }

@@ -93,6 +93,6 @@ public class SearchCommandsCommand extends HelpCommand {
 
   @Override
   public String getDescription() {
-    return "Searches available commands using regex.";
+    return "Searches available commands using regex";
   }
 }

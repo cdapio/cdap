@@ -18,55 +18,93 @@
  @import "../../styles/themes/cdap/mixins.less";
  @import "../../../bower_components/bootstrap/less/mixins.less";
 
-my-search{
-  .search-box {
-    @media (min-width: @screen-lg-min) {
-      height: 32px;
-    }
-    div.input-group {
-      background-color: rgb(39, 43, 52);
-      padding: 0 12px;
-      .transition(all 0.2s ease-in);
-      .border-radius(12px);
-      @media (min-width: @screen-lg-min) {
-        background-color: transparent;
-        line-height: 32px;
-        text-align: right;
-      }
-      .form-control {
-        color: white;
-        background-color: transparent;
-        border: 0;
-        padding: 0 6px 0 0;
-        .placeholder-color(@color: white, @font-weight: 400);
-        .box-shadow(none);
-        .transition(all 100ms ease-in);
-        @media (min-width: @screen-lg-min) {
-          float: none;
-          width: 1px;
-          .appearance(none);
-          .opacity(0);
-        }
-        &:focus {
-          outline: 0;
-          .box-shadow(none);
-        }
-      }
-      .input-group-addon {
-        background-color: transparent;
-        border: 0;
-        color: @cdap-header-icons;
-        padding: 0;
-      }
-      &.search-active {
-        background-color: rgb(39, 43, 52);
+@navbar-bg: #464a56;
+@border-color: #cdcdcd;
+
+my-search {
+  .navbar-item { // this is because of specificity
+    .search-box {
+      z-index: 955;
+      .form-group {
+        margin-top: 11px;
+        z-index: 955;
+
         .form-control {
-          width: 100%;
-          @media (min-width: @screen-lg-min) {
-            .opacity(1);
-          }
+          height: 28px;
+        }
+        .form-control-feedback {
+          color: @navbar-bg;
+          vertical-align: middle;
+          line-height: 25px;
         }
       }
     }
+
+    &.has-results {
+      background-color: white;
+      color: @navbar-bg;
+      border-bottom: 1px solid @border-color;
+
+      .form-group {
+        .form-control {
+          background-color: @navbar-bg;
+          color: white;
+        }
+
+        .form-control-feedback {
+          color: white;
+        }
+      }
+    }
+  }
+
+  .search-results {
+    width: 450px;
+    max-height: 500px;
+    position: absolute;
+    background-color: white;
+    top: 50px;
+    transform: translateX(-20px);
+    cursor: default;
+    font-size: 14px;
+    line-height: 35px;
+    padding-top: 15px;
+    padding-bottom: 15px;
+    border-bottom-right-radius: 4px;
+    border-bottom-left-radius: 4px;
+    z-index: 955;
+    overflow-y: auto;
+
+    .box-shadow(0 7px 15px 1px fade(black, 30%));
+
+    h4 {
+      color: @navbar-bg;
+      font-weight: 500;
+    }
+
+    .result-info, .truncate-ellipsis {
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+
+    .entity-details, .entity-app-details {
+      color: #999999;
+      span {
+        vertical-align: middle;
+      }
+    }
+
+    .entity-app-details { margin-left: 15px; }
+  }
+
+  .blank-click-handler {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    width: 100vw;
+    z-index: 950;
+    cursor: default;
   }
 }

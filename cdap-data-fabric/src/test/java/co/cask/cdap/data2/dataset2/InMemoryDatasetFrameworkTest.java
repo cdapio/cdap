@@ -16,6 +16,8 @@
 
 package co.cask.cdap.data2.dataset2;
 
+import co.cask.cdap.api.dataset.DatasetManagementException;
+
 /**
  *
  */
@@ -23,7 +25,8 @@ public class InMemoryDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
 
   @Override
   protected DatasetFramework getFramework() throws DatasetManagementException {
-    DatasetFramework framework = new InMemoryDatasetFramework(registryFactory, DEFAULT_MODULES, cConf);
+    InMemoryDatasetFramework framework = new InMemoryDatasetFramework(registryFactory, DEFAULT_MODULES, cConf);
+    framework.setAuditPublisher(inMemoryAuditPublisher);
     framework.createNamespace(NAMESPACE_ID);
     return framework;
   }

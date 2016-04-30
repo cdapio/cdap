@@ -23,7 +23,7 @@
   <parent>
     <groupId>co.cask.cdap</groupId>
     <artifactId>cdap-etl</artifactId>
-    <version>3.3.2</version>
+    <version>3.4.0</version>
   </parent>
 
   <artifactId>cdap-etl-realtime</artifactId>
@@ -53,6 +53,12 @@
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>co.cask.cdap</groupId>
+      <artifactId>hydrator-test</artifactId>
+      <version>${project.version}</version>
+      <scope>test</scope>
     </dependency>
     <!-- TODO Remove this when CDAP-3810 is fixed -->
     <dependency>

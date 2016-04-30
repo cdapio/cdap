@@ -21,6 +21,7 @@ import co.cask.cdap.api.plugin.PluginPropertyField;
 
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 /**
  * Represents an plugin info returned by
@@ -29,11 +30,13 @@ import java.util.Objects;
 @Beta
 public class PluginInfo extends PluginSummary {
   private final Map<String, PluginPropertyField> properties;
+  private final Set<String> endpoints;
 
   public PluginInfo(String name, String type, String description, String className,
-                    ArtifactSummary artifact, Map<String, PluginPropertyField> properties) {
+                    ArtifactSummary artifact, Map<String, PluginPropertyField> properties, Set<String> endpoints) {
     super(name, type, description, className, artifact);
     this.properties = properties;
+    this.endpoints = endpoints;
   }
 
   public Map<String, PluginPropertyField> getProperties() {
@@ -52,7 +55,8 @@ public class PluginInfo extends PluginSummary {
     PluginInfo that = (PluginInfo) o;
 
     return super.equals(that) &&
-      Objects.equals(properties, that.properties);
+      Objects.equals(properties, that.properties) &&
+      Objects.equals(endpoints, that.endpoints);
   }
 
   @Override
@@ -69,6 +73,7 @@ public class PluginInfo extends PluginSummary {
       ", className='" + className + '\'' +
       ", properties=" + properties +
       ", artifact=" + artifact +
+      ", endpoints=" + endpoints +
       '}';
   }
 }

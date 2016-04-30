@@ -8,6 +8,8 @@
 Shared Plugins
 ==============
 
+Hydrator Version |cdap-hydrator-version|
+
 .. toctree::
     :maxdepth: 1
     :glob:

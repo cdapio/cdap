@@ -37,6 +37,7 @@ import co.cask.cdap.api.worker.WorkerSpecification;
 import co.cask.cdap.api.workflow.ScheduleProgramInfo;
 import co.cask.cdap.api.workflow.Workflow;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
+import co.cask.cdap.internal.api.DefaultDatasetConfigurer;
 import co.cask.cdap.internal.app.DefaultApplicationSpecification;
 import co.cask.cdap.internal.app.DefaultPluginConfigurer;
 import co.cask.cdap.internal.app.mapreduce.DefaultMapReduceConfigurer;
@@ -49,6 +50,7 @@ import co.cask.cdap.internal.app.worker.DefaultWorkerConfigurer;
 import co.cask.cdap.internal.app.workflow.DefaultWorkflowConfigurer;
 import co.cask.cdap.internal.schedule.StreamSizeSchedule;
 import co.cask.cdap.proto.Id;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 
 import java.util.HashMap;
@@ -73,16 +75,11 @@ public class DefaultAppConfigurer extends DefaultPluginConfigurer implements App
   private final Map<String, WorkerSpecification> workers = new HashMap<>();
 
   // passed app to be used to resolve default name and description
+  @VisibleForTesting
   public DefaultAppConfigurer(Id.Namespace namespace, Application app) {
     super(namespace, null, null, null);
     this.name = app.getClass().getSimpleName();
     this.description = "";
-  }
-
-  // TODO: Remove this constructor when app templates are removed and when all applications are created from artifacts
-  public DefaultAppConfigurer(Id.Namespace namespace, Application app, String configuration) {
-    this(namespace, app);
-    this.configuration = configuration;
   }
 
   public DefaultAppConfigurer(Id.Namespace namespace, Id.Artifact artifactId, Application app, String configuration,
@@ -112,9 +109,7 @@ public class DefaultAppConfigurer extends DefaultPluginConfigurer implements App
     DefaultFlowConfigurer configurer = new DefaultFlowConfigurer(flow);
     flow.configure(configurer);
     FlowSpecification spec = configurer.createSpecification();
-    addStreams(configurer.getStreams());
-    addDatasetModules(configurer.getDatasetModules());
-    addDatasetSpecs(configurer.getDatasetSpecs());
+    addDatasets(configurer);
     flows.put(spec.getName(), spec);
   }
 
@@ -125,11 +120,7 @@ public class DefaultAppConfigurer extends DefaultPluginConfigurer implements App
                                                                            artifactRepository,
                                                                            pluginInstantiator);
     mapReduce.configure(configurer);
-
-    addStreams(configurer.getStreams());
-    addDatasetModules(configurer.getDatasetModules());
-    addDatasetSpecs(configurer.getDatasetSpecs());
-    addPlugins(configurer.getPlugins());
+    addDatasetsAndPlugins(configurer);
     MapReduceSpecification spec = configurer.createSpecification();
     mapReduces.put(spec.getName(), spec);
   }
@@ -141,11 +132,7 @@ public class DefaultAppConfigurer extends DefaultPluginConfigurer implements App
                                                                    artifactRepository,
                                                                    pluginInstantiator);
     spark.configure(configurer);
-
-    addStreams(configurer.getStreams());
-    addDatasetModules(configurer.getDatasetModules());
-    addDatasetSpecs(configurer.getDatasetSpecs());
-    addPlugins(configurer.getPlugins());
+    addDatasetsAndPlugins(configurer);
     SparkSpecification spec = configurer.createSpecification();
     sparks.put(spec.getName(), spec);
   }
@@ -153,9 +140,12 @@ public class DefaultAppConfigurer extends DefaultPluginConfigurer implements App
   @Override
   public void addWorkflow(Workflow workflow) {
     Preconditions.checkArgument(workflow != null, "Workflow cannot be null.");
-    DefaultWorkflowConfigurer configurer = new DefaultWorkflowConfigurer(workflow);
+    DefaultWorkflowConfigurer configurer = new DefaultWorkflowConfigurer(workflow, this,
+                                                                         deployNamespace, artifactId,
+                                                                         artifactRepository, pluginInstantiator);
     workflow.configure(configurer);
     WorkflowSpecification spec = configurer.createSpecification();
+    addDatasetsAndPlugins(configurer);
     workflows.put(spec.getName(), spec);
   }
 
@@ -166,10 +156,7 @@ public class DefaultAppConfigurer extends DefaultPluginConfigurer implements App
     service.configure(configurer);
 
     ServiceSpecification spec = configurer.createSpecification();
-    addStreams(configurer.getStreams());
-    addDatasetModules(configurer.getDatasetModules());
-    addDatasetSpecs(configurer.getDatasetSpecs());
-    addPlugins(configurer.getPlugins());
+    addDatasetsAndPlugins(configurer);
     services.put(spec.getName(), spec);
   }
 
@@ -180,11 +167,7 @@ public class DefaultAppConfigurer extends DefaultPluginConfigurer implements App
                                                                      artifactRepository,
                                                                      pluginInstantiator);
     worker.configure(configurer);
-
-    addStreams(configurer.getStreams());
-    addDatasetModules(configurer.getDatasetModules());
-    addDatasetSpecs(configurer.getDatasetSpecs());
-    addPlugins(configurer.getPlugins());
+    addDatasetsAndPlugins(configurer);
     WorkerSpecification spec = configurer.createSpecification();
     workers.put(spec.getName(), spec);
   }
@@ -219,5 +202,16 @@ public class DefaultAppConfigurer extends DefaultPluginConfigurer implements App
                                                getDatasetModules(), getDatasetSpecs(),
                                                flows, mapReduces, sparks, workflows, services,
                                                schedules, workers, getPlugins());
+  }
+
+  private void addDatasetsAndPlugins(DefaultPluginConfigurer configurer) {
+    addDatasets(configurer);
+    addPlugins(configurer.getPlugins());
+  }
+
+  private void addDatasets(DefaultDatasetConfigurer configurer) {
+    addStreams(configurer.getStreams());
+    addDatasetModules(configurer.getDatasetModules());
+    addDatasetSpecs(configurer.getDatasetSpecs());
   }
 }

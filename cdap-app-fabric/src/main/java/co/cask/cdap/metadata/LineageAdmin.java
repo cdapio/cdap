@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,6 +19,7 @@ package co.cask.cdap.metadata;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.app.RunIds;
+import co.cask.cdap.common.entity.EntityExistenceVerifier;
 import co.cask.cdap.data2.metadata.lineage.Lineage;
 import co.cask.cdap.data2.metadata.lineage.LineageStore;
 import co.cask.cdap.data2.metadata.lineage.Relation;
@@ -66,15 +67,15 @@ public class LineageAdmin {
   private final LineageStore lineageStore;
   private final Store store;
   private final MetadataStore metadataStore;
-  private final EntityValidator entityValidator;
+  private final EntityExistenceVerifier entityExistenceVerifier;
 
   @Inject
   LineageAdmin(LineageStore lineageStore, Store store, MetadataStore metadataStore,
-               EntityValidator entityValidator) {
+               EntityExistenceVerifier entityExistenceVerifier) {
     this.lineageStore = lineageStore;
     this.store = store;
     this.metadataStore = metadataStore;
-    this.entityValidator = entityValidator;
+    this.entityExistenceVerifier = entityExistenceVerifier;
   }
 
   /**
@@ -109,7 +110,7 @@ public class LineageAdmin {
    * @return metadata associated with a run
    */
   public Set<MetadataRecord> getMetadataForRun(Id.Run run) throws NotFoundException {
-    entityValidator.ensureRunExists(run);
+    entityExistenceVerifier.ensureExists(run.toEntityId());
 
     Set<Id.NamespacedId> runEntities = new HashSet<>(lineageStore.getEntitiesForRun(run));
     // No entities associated with the run, but run exists.
@@ -131,7 +132,7 @@ public class LineageAdmin {
     LOG.trace("Computing lineage for data {}, startMillis {}, endMillis {}, levels {}",
               sourceData, startMillis, endMillis, levels);
 
-    entityValidator.ensureEntityExists(sourceData);
+    entityExistenceVerifier.ensureExists(sourceData.toEntityId());
 
     // Convert start time and end time period into scan keys in terms of program start times.
     Set<RunId> runningInRange = store.getRunningInRange(TimeUnit.MILLISECONDS.toSeconds(startMillis),

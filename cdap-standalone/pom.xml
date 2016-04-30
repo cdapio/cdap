@@ -24,9 +24,8 @@
   <parent>
     <groupId>co.cask.cdap</groupId>
     <artifactId>cdap</artifactId>
-    <version>3.3.2</version>
+    <version>3.4.0</version>
   </parent>
-
 
   <artifactId>cdap-standalone</artifactId>
   <name>CDAP Standalone</name>
@@ -48,20 +47,6 @@
       <artifactId>logback-classic</artifactId>
     </dependency>
 
-    <!-- Include spark runtime in standalone -->
-    <dependency>
-      <groupId>org.apache.spark</groupId>
-      <artifactId>spark-core_2.10</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.spark</groupId>
-      <artifactId>spark-sql_2.10</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.spark</groupId>
-      <artifactId>spark-mllib_2.10</artifactId>
-    </dependency>
-
     <dependency>
       <groupId>co.cask.cdap</groupId>
       <artifactId>cdap-api</artifactId>
@@ -71,6 +56,12 @@
       <groupId>co.cask.cdap</groupId>
       <artifactId>cdap-common</artifactId>
       <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>co.cask.cdap</groupId>
+      <artifactId>cdap-kafka</artifactId>
+      <version>${project.version}</version>
+      <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>co.cask.cdap</groupId>
@@ -132,6 +123,16 @@
       <version>${project.version}</version>
     </dependency>
     <dependency>
+      <groupId>co.cask.cdap</groupId>
+      <artifactId>cdap-api-spark</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>co.cask.cdap</groupId>
+      <artifactId>cdap-spark-core</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
       <groupId>co.cask.tephra</groupId>
       <artifactId>tephra-core</artifactId>
     </dependency>
@@ -144,9 +145,33 @@
       <artifactId>twill-discovery-core</artifactId>
     </dependency>
     <dependency>
+      <groupId>org.apache.twill</groupId>
+      <artifactId>twill-zookeeper</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.twill</groupId>
+      <artifactId>twill-core</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.zookeeper</groupId>
+      <artifactId>zookeeper</artifactId>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.xerial.snappy</groupId>
+      <artifactId>snappy-java</artifactId>
+    </dependency>
+    <dependency>
       <groupId>co.cask.cdap</groupId>
       <artifactId>cdap-ui</artifactId>
       <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>co.cask.cdap</groupId>
+      <artifactId>cdap-app-fabric</artifactId>
+      <version>${project.version}</version>
+      <type>test-jar</type>
+      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>junit</groupId>
@@ -190,6 +215,23 @@
         <additional.artifacts.config.pattern>**/target/*.json</additional.artifacts.config.pattern>
         <additional.artifacts.exclude.pattern>**/target/*-tests.jar</additional.artifacts.exclude.pattern>
       </properties>
+
+      <!-- Add dependencies on spark api and core. It just for making sure those artifacts are built before this -->
+      <dependencies>
+        <dependency>
+          <groupId>co.cask.cdap</groupId>
+          <artifactId>cdap-api-spark</artifactId>
+          <version>${project.version}</version>
+          <scope>provided</scope>
+        </dependency>
+        <dependency>
+          <groupId>co.cask.cdap</groupId>
+          <artifactId>cdap-spark-core</artifactId>
+          <version>${project.version}</version>
+          <scope>provided</scope>
+        </dependency>
+      </dependencies>
+
       <build>
         <plugins>
           <plugin>
@@ -213,7 +255,7 @@
                   <overWriteReleases>false</overWriteReleases>
                   <overWriteSnapshots>false</overWriteSnapshots>
                   <overWriteIfNewer>true</overWriteIfNewer>
-                  <excludeGroupIds>org.apache.hbase,asm,org.apache.zookeeper</excludeGroupIds>
+                  <excludeGroupIds>org.apache.hbase,asm</excludeGroupIds>
                   <excludeArtifactIds>zkclient,servlet-api,cdap-cli,cdap-explore-jdbc</excludeArtifactIds>
                   <prependGroupId>true</prependGroupId>
                   <silent>true</silent>
@@ -373,6 +415,21 @@
                         <exclude>**/target/stage-packaging*/**</exclude>
                       </excludes>
                     </resource>
+                    <!-- Copy runtime extensions. Currently only has Spark and Kafka (for audit logging) -->
+                    <resource>
+                      <directory>${project.parent.basedir}/cdap-spark-core/target/libexec</directory>
+                      <targetPath>ext/runtimes/spark</targetPath>
+                      <includes>
+                        <include>*.jar</include>
+                      </includes>
+                    </resource>
+                    <resource>
+                      <directory>${project.parent.basedir}/cdap-kafka/target/libexec</directory>
+                      <targetPath>ext/runtimes/kafka</targetPath>
+                      <includes>
+                        <include>*.jar</include>
+                      </includes>
+                    </resource>
                   </resources>
                 </configuration>
               </execution>
@@ -399,6 +456,14 @@
                       </directory>
                       <includes>
                         <include>cdap-etl-realtime-${project.version}.jar</include>
+                      </includes>
+                    </resource>
+                    <resource>
+                      <directory>
+                        ${project.parent.basedir}/cdap-app-templates/cdap-etl/cdap-data-pipeline/target
+                      </directory>
+                      <includes>
+                        <include>cdap-data-pipeline-${project.version}.jar</include>
                       </includes>
                     </resource>
                   </resources>
@@ -500,6 +565,8 @@
                         <include name="${additional.artifacts.jar.pattern}"/>
                         <include name="${additional.artifacts.config.pattern}"/>
                         <exclude name="${additional.artifacts.exclude.pattern}"/>
+                        <exclude name="*:sources"/>
+                        <exclude name="*:javadoc"/>
                       </fileset>
                     </copy>
                   </target>

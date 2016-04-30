@@ -15,11 +15,11 @@
  */
 
 angular.module(PKG.name + '.feature.spark')
-  .controller('SparkRunsController', function($scope, $filter, $state, rRuns, $bootstrapModal, rSparkDetail) {
+  .controller('SparkRunsController', function($scope, $filter, $state, rRuns, $uibModal, rSparkDetail) {
     var fFilter = $filter('filter'),
         match;
     this.runs = rRuns;
-    this.$bootstrapModal = $bootstrapModal;
+    this.$uibModal = $uibModal;
     this.description = rSparkDetail.description;
     if ($state.params.runid) {
       match = fFilter(rRuns, {runid: $state.params.runid});
@@ -63,7 +63,7 @@ angular.module(PKG.name + '.feature.spark')
     };
 
     this.openHistory = function() {
-      this.$bootstrapModal.open({
+      this.$uibModal.open({
         size: 'lg',
         templateUrl: '/assets/features/spark/templates/tabs/history.html',
         controller: ['runs', '$scope', function(runs, $scope) {

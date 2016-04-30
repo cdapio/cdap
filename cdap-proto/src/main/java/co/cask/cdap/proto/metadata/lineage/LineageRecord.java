@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,9 +16,9 @@
 
 package co.cask.cdap.proto.metadata.lineage;
 
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
-
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -37,9 +37,9 @@ public class LineageRecord {
                        Map<String, DataRecord> data) {
     this.start = start;
     this.end = end;
-    this.relations = ImmutableSet.copyOf(relations);
-    this.programs = ImmutableMap.copyOf(programs);
-    this.data = ImmutableMap.copyOf(data);
+    this.relations = Collections.unmodifiableSet(new LinkedHashSet<>(relations));
+    this.programs = Collections.unmodifiableMap(new LinkedHashMap<>(programs));
+    this.data = Collections.unmodifiableMap(new LinkedHashMap<>(data));
   }
 
   public long getStart() {

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,6 +16,7 @@
 
 package co.cask.cdap.data2.dataset2.lib.file;
 
+import co.cask.cdap.api.data.batch.DatasetOutputCommitter;
 import co.cask.cdap.api.dataset.DataSetException;
 import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetSpecification;
@@ -24,12 +25,12 @@ import co.cask.cdap.api.dataset.lib.FileSetArguments;
 import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.proto.Id;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
@@ -49,11 +50,11 @@ import javax.annotation.Nullable;
 /**
  * Implementation of file dataset.
  */
-public final class FileSetDataset implements FileSet {
+public final class FileSetDataset implements FileSet, DatasetOutputCommitter {
 
   private static final Logger LOG = LoggerFactory.getLogger(FileSetDataset.class);
 
-  static final String FILESET_VERSION_PROPERTY = "fileset.version";
+  public static final String FILESET_VERSION_PROPERTY = "fileset.version";
   static final String FILESET_VERSION = "2";
 
   private final DatasetSpecification spec;
@@ -123,10 +124,10 @@ public final class FileSetDataset implements FileSet {
                    "To disable this message, upgrade the dataset properties with a relative path. ",
                  spec.getName(), basePath);
       } else {
-        String topLevelPath = Locations.toURI(namespacedLocationFactory.getBaseLocation()).getPath();
+        String topLevelPath = namespacedLocationFactory.getBaseLocation().toURI().getPath();
         topLevelPath = topLevelPath.endsWith("/") ? topLevelPath : topLevelPath + "/";
         Location baseLocation = rootLocationFactory.create(basePath);
-        if (Locations.toURI(baseLocation).getPath().startsWith(topLevelPath)) {
+        if (baseLocation.toURI().getPath().startsWith(topLevelPath)) {
           throw new DataSetException("Invalid base path '" + basePath + "' for dataset '" + spec.getName() + "'. " +
                                        "It must not be inside the CDAP base path '" + topLevelPath + "'.");
         }
@@ -250,6 +251,36 @@ public final class FileSetDataset implements FileSet {
   }
 
   private String getFileSystemPath(Location loc) {
-    return Locations.toURI(loc).getPath();
+    return loc.toURI().getPath();
+  }
+
+  @Override
+  public void onSuccess() throws DataSetException {
+    // nothing needed to do on success
+  }
+
+  @Override
+  public void onFailure() throws DataSetException {
+    Location outputLocation = getOutputLocation();
+    // If there is no output path, it is either using DynamicPartitioner or the job would have failed.
+    // Either way, we can't do much here.
+    if (outputLocation == null) {
+      return;
+    }
+
+    try {
+      // Only delete the configured output directory, if it is empty.
+      // On Failure, org.apache.hadoop.mapreduce.lib.output.FileOutputFormat will remove files that it wrote,
+      // but it leaves around the directory that it created.
+      // We don't want to unconditionally delete the output directory on failure, because it may have files written
+      // by a different job.
+      if (outputLocation.isDirectory() && outputLocation.list().isEmpty()) {
+        if (!outputLocation.delete()) {
+          throw new DataSetException(String.format("Error deleting file(s) at path %s.", outputLocation));
+        }
+      }
+    } catch (IOException ioe) {
+      throw new DataSetException(String.format("Error deleting file(s) at path %s.", outputLocation), ioe);
+    }
   }
 }

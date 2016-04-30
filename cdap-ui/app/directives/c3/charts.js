@@ -24,7 +24,8 @@ var baseDirective = {
     chartMetric: '=',
     chartMetricAlias: '@',
     chartSize: '=',
-    chartSettings: '='
+    chartSettings: '=',
+    chartPadding: '=?'
   },
   controller: 'c3Controller'
 };
@@ -119,6 +120,9 @@ ngC3.controller('c3Controller', function ($scope, c3, $filter, $timeout) {
       };
       xTick.format = timestampFormat;
     }
+    if ($scope.chartPadding) {
+      chartConfig.padding = $scope.chartPadding;
+    }
     chartConfig.axis = { x: { show: $scope.options.showx,
                               tick : xTick },
                          y: { show: $scope.options.showy,
@@ -132,6 +136,9 @@ ngC3.controller('c3Controller', function ($scope, c3, $filter, $timeout) {
     chartConfig.zoom = { enabled: false };
     chartConfig.transition = { duration: 1000 };
     chartConfig.donut = { width: 45 };
+    chartConfig.spline = {
+      interpolation: { type: 'monotone' }
+    };
     $scope.chart = c3.generate(chartConfig);
   }
 

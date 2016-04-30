@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,9 +16,9 @@
 
 package co.cask.cdap.proto;
 
-import com.google.common.collect.ImmutableMap;
-
+import java.util.Collections;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * POJO that carries dataset type and properties information for create dataset request
@@ -26,10 +26,16 @@ import java.util.Map;
 public final class DatasetInstanceConfiguration {
   private final String typeName;
   private final Map<String, String> properties;
+  private final String description;
 
   public DatasetInstanceConfiguration(String typeName, Map<String, String> properties) {
+    this(typeName, properties, null);
+  }
+  
+  public DatasetInstanceConfiguration(String typeName, Map<String, String> properties, @Nullable String description) {
     this.typeName = typeName;
     this.properties = properties;
+    this.description = description;
   }
 
   public String getTypeName() {
@@ -37,7 +43,11 @@ public final class DatasetInstanceConfiguration {
   }
 
   public Map<String, String> getProperties() {
-    return properties == null ? ImmutableMap.<String, String>of() : properties;
+    return properties == null ? Collections.<String, String>emptyMap() : properties;
   }
 
+  @Nullable
+  public String getDescription() {
+    return description;
+  }
 }

@@ -19,6 +19,9 @@ processed asynchronously; to obtain query results, perform these steps:
 - once finished, retrieve the **result schema** and the **results**;
 - finally, **close the query** to free the resources that it holds.
 
+
+.. _http-restful-api-query-submitting:
+
 Submitting a Query
 ------------------
 To submit a SQL query, post the query string to the ``queries`` URL::
@@ -78,11 +81,15 @@ used to identify the query in subsequent requests::
        dataset, *mydataset* in the namespace *default*
 
 
+.. _http-restful-api-query-status:
+
 Status of a Query
 -----------------
 The status of a query is obtained using a HTTP GET request to the query's URL::
 
-  GET <base-url>/namespaces/<namespace>/data/explore/queries/<query-handle>/status
+  GET <base-url>/data/explore/queries/<query-handle>/status
+  
+**Note:** this endpoint is *not* namespaced, as all query-handles are globally unique.
 
 .. list-table::
    :widths: 20 80
@@ -90,8 +97,6 @@ The status of a query is obtained using a HTTP GET request to the query's URL::
 
    * - Parameter
      - Description
-   * - ``<namespace>``
-     - Namespace ID
    * - ``<query-handle>``
      - Handle obtained when the query was submitted
 
@@ -126,13 +131,15 @@ Status can be one of the following: ``INITIALIZED``, ``RUNNING``, ``FINISHED``, 
    :stub-columns: 1
 
    * - HTTP Request
-     - ``GET <base-url>/namespaces/default/data/explore/queries/57cf1b01-8dba-423a-a8b4-66cd29dd75e2/status``
+     - ``GET <base-url>/data/explore/queries/57cf1b01-8dba-423a-a8b4-66cd29dd75e2/status``
    * - HTTP Response
      - ``{"status":"FINISHED","hasResults":true}``
    * - Description
      - Retrieve the status of the query in the namespace *default* which has the handle
        ``57cf1b01-8dba-423a-a8b4-66cd29dd75e2``
 
+
+.. _http-restful-api-query-obtaining-results:
 
 Obtaining the Result Schema
 ---------------------------
@@ -190,8 +197,10 @@ The type of each column is a data type as defined in the `Hive language manual
        ``{"name":"dataset_mydataset.value","type":"array<tinyint>","position":2}]``
    * - Description
      - Retrieve the schema of the result of the query in the namespace *default* which has
-       the handle 57cf1b01-8dba-423a-a8b4-66cd29dd75e2
+       the handle ``57cf1b01-8dba-423a-a8b4-66cd29dd75e2``
 
+
+.. _http-restful-api-query-retrieving-results:
 
 Retrieving Query Results
 ------------------------
@@ -264,6 +273,9 @@ been retrieved, then the returned list is empty.
    * - Description
      - Retrieve the results of the query which has the handle 57cf1b01-8dba-423a-a8b4-66cd29dd75e2
 
+
+.. _http-restful-api-query-closing:
+
 Closing a Query
 ---------------
 The query can be closed by issuing an HTTP DELETE against its URL::
@@ -306,6 +318,9 @@ This frees all resources that are held by this query.
      - ``DELETE <base-url>/namespaces/default/data/explore/queries/57cf1b01-8dba-423a-a8b4-66cd29dd75e2``
    * - Description
      - Close the query in the namespace *default* which has the handle ``57cf1b01-8dba-423a-a8b4-66cd29dd75e2``
+
+
+.. _http-restful-api-query-listing:
 
 List of Queries
 ---------------
@@ -365,6 +380,9 @@ The results are returned as a JSON array, with each element containing informati
    * - Description
      - Retrieves all queries
 
+
+.. _http-restful-api-query-counting:
+
 Count of Active Queries
 -----------------------
 To return the count of active queries, use::
@@ -383,6 +401,9 @@ To return the count of active queries, use::
 The results are returned in the body as a JSON string::
 
   { "count":6 }
+
+
+.. _http-restful-api-query-downloading:
 
 Download Query Results
 ----------------------
@@ -421,3 +442,86 @@ if results for the ``query-handle`` are attempted to be downloaded again.
      - The query handle does not match any current query
    * - ``409 Conflict``
      - The query results were already downloaded
+
+
+.. _http-restful-api-query-enable-disable:
+
+Enabling and Disabling Querying
+-------------------------------
+Querying (or exploring) of datasets and streams can be enabled and disabled using these endpoints.
+
+Exploration of data in CDAP is governed by a combination of enabling the CDAP Explore
+Service and then creating datasets and streams that are explorable. The CDAP Explore
+Service is enabled by a :ref:`setting in the CDAP configuration file
+<appendix-cdap-default-explore-service>` (``explore.enabled`` in ``cdap-site.xml`` file).
+
+Datasets and streams |---| that were created while the Explore Service was not enabled
+|---| can, once the service is enabled and CDAP restarted, be enabled for exploration by
+using these endpoints.
+
+You can also use these endpoints to disable exploration of a specific dataset or
+stream. The dataset or stream will still be accessible programmatically; it just won't
+respond to queries or be available for exploration using the CDAP UI.
+
+For datasets::
+
+  POST <base-url>/namespaces/<namespace>/data/explore/datasets/<dataset-name>/enable
+  POST <base-url>/namespaces/<namespace>/data/explore/datasets/<dataset-name>/disable
+
+For streams::
+
+  POST <base-url>/namespaces/<namespace>/data/explore/streams/<stream-name>/tables/<table-name>/enable
+  POST <base-url>/namespaces/<namespace>/data/explore/streams/<stream-name>/tables/<table-name>/disable
+
+Each of these endpoints returns a query handle that can be used to submit requests
+tracking the :ref:`status of the query <http-restful-api-query-status>`.
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``<namespace>``
+     - Namespace ID
+   * - ``<dataset-name>``
+     - Name of the dataset
+   * - ``<stream-name>``
+     - Name of the stream
+   * - ``<table-name>``
+     - Name of the table
+     
+.. rubric:: HTTP Responses
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Status Codes
+     - Description
+   * - ``200 OK``
+     - The query execution was successfully initiated, and the body will contain the query-handle
+       used to identify the query in subsequent requests
+   * - ``404 Not Found``
+     - The query is not well-formed or contains an error such as a nonexistent table name
+
+.. rubric:: Comments
+
+If the request was successful, the body will contain a query handle that can be used to
+identify the query in subsequent requests, such as a :ref:`status request
+<http-restful-api-query-status>`::
+
+  { "handle":"<query-handle>" }
+
+.. rubric:: Example
+.. list-table::
+   :widths: 20 80
+   :stub-columns: 1
+
+   * - HTTP Request
+     - ``POST <base-url>/namespaces/default/data/explore/datasets/logEventStream_converted/disable``
+   * - HTTP Response
+     - ``{"handle":"57cf1b01-8dba-423a-a8b4-66cd29dd75e2"}``
+   * - Description
+     - Submits a request in the namespace *default* to disable the dataset
+       *logEventStream_converted* from being explored. The handle can be used to check the
+       status.

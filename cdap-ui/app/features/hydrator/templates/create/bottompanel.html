@@ -32,14 +32,14 @@
       <a ng-click="BottomPanelController.toggleCollapse(BottomPanelController.bottomPanelState)">
         <span ng-if="BottomPanelController.bottomPanelState !== 0"
               class="fa fa-minus"
-              tooltip="Minimize"
+              uib-tooltip="Minimize"
               tooltip-class="tooltip-pane"
               tooltip-placement="top"
               tooltip-append-to-body="true">
         </span>
         <span ng-if="BottomPanelController.bottomPanelState === 0"
               class="fa fa-expand"
-              tooltip="Grow"
+              uib-tooltip="Grow"
               tooltip-class="tooltip-pane"
               tooltip-placement="top"
               tooltip-append-to-body="true">
@@ -48,14 +48,14 @@
       <a ng-click="BottomPanelController.toggleMaximized(BottomPanelController.bottomPanelState)">
         <span ng-if="BottomPanelController.bottomPanelState !== 2"
               class="fa fa-arrows-alt"
-              tooltip="Maximize"
+              uib-tooltip="Maximize"
               tooltip-class="tooltip-pane"
               tooltip-placement="top"
               tooltip-append-to-body="true">
         </span>
         <span ng-if="BottomPanelController.bottomPanelState === 2"
               class="fa fa-compress"
-              tooltip="Shrink"
+              uib-tooltip="Shrink"
               tooltip-class="tooltip-pane"
               tooltip-placement="top"
               tooltip-append-to-body="true">

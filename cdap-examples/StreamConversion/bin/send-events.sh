@@ -39,9 +39,9 @@ function usage() {
   echo ""
   echo "  Options"
   echo "    --host      Specifies the host that CDAP is running on. (Default: localhost)"
-  echo "    --events    How many events to send"
-  echo "    --delay     How many seconds to sleep between each call (e.g., 0.1 for 100 ms)"
-  echo "    --verbose   Print some information"
+  echo "    --events    Number of events to send (default 100)"
+  echo "    --delay     Number of seconds to sleep between each call (default 0.01s; 0.1 for 100 ms)"
+  echo "    --verbose   Print a message for each event sent"
   echo "    --help      This help message"
   echo ""
 }

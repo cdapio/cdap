@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,8 +16,9 @@
 
 package co.cask.cdap.logging.read;
 
+import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.LoggingContext;
-import co.cask.cdap.logging.appender.kafka.KafkaTopic;
 import co.cask.cdap.logging.appender.kafka.StringPartitioner;
 import co.cask.cdap.logging.filter.Filter;
 import co.cask.cdap.logging.save.CheckpointManager;
@@ -42,11 +43,12 @@ public final class DistributedLogReader implements LogReader {
    * Creates a DistributedLogReader object.
    */
   @Inject
-  public DistributedLogReader(KafkaLogReader kafkaLogReader, FileLogReader fileLogReader,
+  DistributedLogReader(CConfiguration cConf,
+                              KafkaLogReader kafkaLogReader, FileLogReader fileLogReader,
                               CheckpointManagerFactory checkpointManagerFactory, StringPartitioner partitioner) {
     this.kafkaLogReader = kafkaLogReader;
     this.fileLogReader = fileLogReader;
-    this.checkpointManager = checkpointManagerFactory.create(KafkaTopic.getTopic(),
+    this.checkpointManager = checkpointManagerFactory.create(cConf.get(Constants.Logging.KAFKA_TOPIC),
                                                              KafkaLogWriterPlugin.CHECKPOINT_ROW_KEY_PREFIX);
     this.partitioner = partitioner;
   }

@@ -15,10 +15,16 @@
  */
 package co.cask.cdap.app.program;
 
+import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.lang.FilterClassLoader;
+import co.cask.cdap.common.lang.ProgramClassLoader;
+import co.cask.cdap.common.lang.ProgramClassLoaderProvider;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
+import co.cask.cdap.internal.app.program.ForwardingProgram;
 import co.cask.cdap.proto.Id;
 import com.google.common.base.Objects;
+import com.google.common.io.Closeables;
 import org.apache.twill.filesystem.Location;
 
 import java.io.File;
@@ -53,6 +59,41 @@ public final class Programs {
    */
   public static Program create(Location location) throws IOException {
     return new DefaultProgram(location, getClassLoader());
+  }
+
+  /**
+   * Creates a {@link Program} that can be executed by the given {@link ProgramRunner}.
+   *
+   * @param cConf the CDAP configuration
+   * @param programRunner the {@link ProgramRunner} for executing the program
+   * @param programJarLocation the {@link Location} of the program jar file
+   * @param unpackedDir a directory that the program jar file was unpacked to
+   * @return a new {@link Program} instance.
+   * @throws IOException If failed to create the program
+   */
+  public static Program create(CConfiguration cConf, ProgramRunner programRunner,
+                               Location programJarLocation, File unpackedDir) throws IOException {
+    final ProgramClassLoader programClassLoader;
+    if (programRunner instanceof ProgramClassLoaderProvider) {
+      programClassLoader = ((ProgramClassLoaderProvider) programRunner).createProgramClassLoader(cConf, unpackedDir);
+    } else {
+      programClassLoader = new ProgramClassLoader(cConf, unpackedDir,
+                                                  FilterClassLoader.create(Programs.class.getClassLoader()));
+    }
+
+    if (programClassLoader == null) {
+      // Shouldn't happen. This is to catch invalid ProgramFilterClassLoaderProvider implementation
+      // since it's provided by the ProgramRunner, which can be external to CDAP
+      throw new IOException("Program classloader cannot be null");
+    }
+
+    return new ForwardingProgram(Programs.create(programJarLocation, programClassLoader)) {
+      @Override
+      public void close() throws IOException {
+        Closeables.closeQuietly(programClassLoader);
+        super.close();
+      }
+    };
   }
 
   /**

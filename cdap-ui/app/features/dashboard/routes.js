@@ -35,10 +35,7 @@ angular.module(PKG.name+'.feature.dashboard')
             return (new MyDashboardsModel($stateParams.namespace)).$promise;
           }
         },
-        controller: 'DashboardCtrl',
-        ncyBreadcrumb: {
-          skip: true
-        }
+        controller: 'DashboardCtrl'
       })
 
       .state('dashboard.standard', {
@@ -50,10 +47,7 @@ angular.module(PKG.name+'.feature.dashboard')
       .state('dashboard.standard.cdap', {
         url: '/cdap',
         templateUrl: '/assets/features/dashboard/templates/staticdashboard.html',
-        controller: 'OpsCdapCtrl',
-        ncyBreadcrumb: {
-          label: 'Operations'
-        }
+        controller: 'OpsCdapCtrl'
       })
 
       .state('dashboard.user', {
@@ -64,22 +58,19 @@ angular.module(PKG.name+'.feature.dashboard')
           tab: function($stateParams) {
             return $stateParams.tab;
           }
-        },
-        ncyBreadcrumb: {
-          label: 'Operations'
         }
       })
 
       .state('dashboard.user.addwdgt', {
         url: '/widget/add',
-        onEnter: function ($stateParams, $state, $bootstrapModal, $rootScope, rDashboardsModel, tab) {
+        onEnter: function ($stateParams, $state, $uibModal, $rootScope, rDashboardsModel, tab) {
           var scope = $rootScope.$new();
           var currentBoard = rDashboardsModel.data[$stateParams.tab];
           scope.currentBoard = currentBoard;
           scope.metricsLimit = currentBoard.WIDGET_LIMIT;
           scope.metricsSlotsFilled = currentBoard.columns.length;
 
-          $bootstrapModal.open({
+          $uibModal.open({
             templateUrl: '/assets/features/dashboard/templates/partials/addwdgt.html',
             size: 'lg',
             backdrop: true,
@@ -91,8 +82,8 @@ angular.module(PKG.name+'.feature.dashboard')
             $state.go('dashboard.user', {tab: tab}, { reload: true });
           });
         },
-        onExit: function($modalStack) {
-          $modalStack.dismissAll();
+        onExit: function($uibModalStack) {
+          $uibModalStack.dismissAll();
         }
       })
 

@@ -23,7 +23,9 @@ angular.module(PKG.name + '.services')
           path: '/namespaces/' + ($state.params.namespace || namespace) + '/apps',
           file: files[i]
 
-        }, 'application/octet-stream')
+        }, {
+          'Content-type': 'application/octet-stream'
+        })
           .then(success,error);
       }
 

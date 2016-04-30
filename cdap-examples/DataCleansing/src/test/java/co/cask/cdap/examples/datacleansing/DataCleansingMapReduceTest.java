@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -194,6 +194,8 @@ public class DataCleansingMapReduceTest extends TestBase {
     Set<PartitionDetail> partitions = partitionedFileSet.getPartitions(filter);
     Set<String> cleanData = new HashSet<>();
     for (PartitionDetail partition : partitions) {
+      Assert.assertEquals(ImmutableMap.of("source.program", "DataCleansingMapReduce"),
+                          partition.getMetadata().asMap());
       Location partitionLocation = partition.getLocation();
       for (Location location : partitionLocation.list()) {
         if (location.getName().startsWith("part-")) {

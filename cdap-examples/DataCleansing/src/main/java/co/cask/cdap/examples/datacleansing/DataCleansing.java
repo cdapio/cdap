@@ -37,7 +37,7 @@ public class DataCleansing extends AbstractApplication {
   @Override
   public void configure() {
     setName(NAME);
-    setDescription("Example Data Cleansing Application");
+    setDescription("Example data cleansing application");
 
     // Ingest and retrieve the data using a Service
     addService(new DataCleansingService());
@@ -48,12 +48,14 @@ public class DataCleansing extends AbstractApplication {
     // Store the state of the incrementally processing MapReduce
     createDataset(CONSUMING_STATE, KeyValueTable.class);
 
-    // Create the "rawRecords" partitioned file set for storing the input records, configure it to work with MapReduce
+    // Create the "rawRecords" partitioned file set for storing the input records, 
+    // configure it to work with MapReduce
     createDataset(RAW_RECORDS, PartitionedFileSet.class, PartitionedFileSetProperties.builder()
       // Properties for partitioning
       .setPartitioning(Partitioning.builder().addLongField("time").build())
       // Properties for file set
       .setInputFormat(TextInputFormat.class)
+      .setDescription("Store input records")
       .build());
 
     createDataset(CLEAN_RECORDS, PartitionedFileSet.class, PartitionedFileSetProperties.builder()
@@ -66,6 +68,7 @@ public class DataCleansing extends AbstractApplication {
       .setExploreFormat("text")
       .setExploreFormatProperty("delimiter", "\n")
       .setExploreSchema("record STRING")
+      .setDescription("Store clean records")
       .build());
 
     createDataset(INVALID_RECORDS, PartitionedFileSet.class, PartitionedFileSetProperties.builder()
@@ -78,6 +81,7 @@ public class DataCleansing extends AbstractApplication {
       .setExploreFormat("text")
       .setExploreFormatProperty("delimiter", "\n")
       .setExploreSchema("record STRING")
+      .setDescription("Store invalid records")
       .build());
   }
 }

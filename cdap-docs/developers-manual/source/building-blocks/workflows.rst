@@ -1,6 +1,6 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2014-2015 Cask Data, Inc.
+    :copyright: Copyright © 2014-2016 Cask Data, Inc.
 
 .. _workflows:
 
@@ -27,9 +27,8 @@ subsequent programs in the sequence are executed.
 
 The control flow of a workflow can be described as a directed, acyclic graph (DAG) of actions.
 To be more precise, we require that it be a series-parallel graph. This is a graph with a
-single start node and a single finish node. As described below, execution can be either
-sequential (the default) or :ref:`concurrent <workflow-concurrent>`, and the graph can be 
-either a simple series of nodes or a more complicated :ref:`parallel workflow <workflow_parallel>`.
+single start node and a single finish node; in between, the graph can be either a simple
+series of nodes or a more complicated :ref:`parallel workflow <workflow_parallel>`.
 
 Workflows can be controlled by the :ref:`CDAP CLI <cli>` and the :ref:`Lifecycle HTTP
 RESTful API <http-restful-api-lifecycle>`. The :ref:`status of a workflow
@@ -72,6 +71,12 @@ the ``configure`` method::
   public static class MyWorkflow extends AbstractWorkflow {
 
     @Override
+    public void initialize(WorkflowContext context) throws Exception {
+      // Invoked before the Workflow run starts
+      super.initialize(context);
+    }
+
+    @Override
     public void configure() {
         setName("MyWorkflow");
         setDescription("MyWorkflow description");
@@ -80,11 +85,35 @@ the ``configure`` method::
         addMapReduce("AnotherMapReduce");
         addAction(new MyAction());
     }
+
+    @Override
+    public void destroy() {
+      // Invoked after the execution of the Workflow
+      // Determine the status of the Workflow
+      boolean isWorkflowSuccessful = getContext().isSuccessful();
+
+      // Get the state of all nodes that were executed as a part of this Workflow run.
+      Map<String, WorkflowNodeState> nodeStates = getContext().getNodeStates();
+    }
   }
 
 In this example, the ``MyWorkflow`` will be executed every 5 hours. During each execution
 of the workflow, the ``MyMapReduce``, ``MySpark``, and ``AnotherMapReduce`` programs and
 the ``MyAction`` custom action will be executed in order.
+
+In addition to ``configure()`` method, extending from ``AbstractWorkflow`` allows you to
+implement these methods:
+
+- ``initialize()``
+- ``destroy()``
+
+The ``initialize()`` method is invoked at runtime before the start of the workflow run.
+Any error occurred in this method causes failure of the workflow.
+
+The ``destroy()`` method is invoked after the workflow run is completed, either successfully
+or on failure. ``WorkflowContext`` can be used to determine the status of the workflow. This method
+also has access to the state of all nodes that were executed as a part of the workflow run
+through the ``WorkflowContext``. An error occurring in this method does not affect the status of the workflow.
 
 .. _workflow-custom-actions:
 
@@ -179,11 +208,42 @@ The workflow itself uses the same names in its configuration::
 
 .. _workflow-concurrent:
 
+Local Datasets in Workflow
+--------------------------
+Local datasets are the datasets that are created for each workflow run and deleted once the
+workflow run finishes. Consider a workflow which runs multiple actions with output of one action
+is given as an input to the next action. However, we are only interested in the output of the final
+action. In this case, datasets created by intermediate stages can be defined as local datasets when
+configuring the workflow. This allows the workflow system to manage such temporary storage for you.
+
+The local datasets can be configured in the workflow as::
+
+  public class WorkflowWithLocalDatasets extends AbstractWorkflow {
+    @Override
+    protected void configure() {
+      ...
+      createLocalDataset("WordCount", KeyValueTable.class);
+      createLocalDataset("CSVData", FileSet.class,FileSetProperties.builder()
+      .setInputFormat(TextInputFormat.class)
+      .setOutputFormat(TextOutputFormat.class).build());
+      ...
+    }
+  }
+
+``WordCount`` and ``CSVData`` are configured as local datasets for a workflow. For every workflow run,
+these datasets will be created and they will be named as ``WordCount.<unique_id>`` and
+``CSVData.<unique_id>``. Once the run is complete they will be deleted by the workflow system.
+
+Local datasets can be retained after the workflow run is complete by setting the runtime
+argument ``dataset.<dataset_name>.keep.local`` to ``true``. For example in order to keep a *WordCount*
+dataset even after the workflow run is complete, set the runtime argument ``dataset.WordCount.keep.local``
+to ``true``. To keep all local datasets, set the runtime argument ``dataset.*.keep.local`` to ``true``.
+
 Concurrent Workflows
 --------------------
-By default, a workflow runs sequentially. Multiple instances of a workflow can be run
-concurrently. To enable concurrent runs for a workflow, set its runtime argument
-``concurrent.runs.enabled`` to ``true``.
+By default, a workflow runs concurrently, allowing multiple instances of a workflow to be
+run simultaneously. However, for scheduled workflows, the number of concurrent runs can be
+controlled by :ref:`setting a maximum number <run-constraints>` of runs.
 
 
 .. _workflow_token:
@@ -240,7 +300,7 @@ Here is an example, taken from the
 
 .. literalinclude:: /../../../cdap-examples/WikipediaPipeline/src/main/java/co/cask/cdap/examples/wikipedia/TopNMapReduce.java
    :language: java
-   :lines: 109-123
+   :lines: 111-125
 
 **Note:** The test of ``workflowToken != null`` is only required because this Reducer could
 be used outside of a workflow. When run from within a workflow, the token is guaranteed to
@@ -309,6 +369,7 @@ the :ref:`Wikipedia Pipeline <examples-wikipedia-data-pipeline>` example's ``Clu
 .. literalinclude:: /../../../cdap-examples/WikipediaPipeline/src/main/scala/co/cask/cdap/examples/wikipedia/ClusteringUtils.scala
    :language: scala
    :lines: 121-126
+   :dedent: 4
 
 Persisting the WorkflowToken
 ----------------------------

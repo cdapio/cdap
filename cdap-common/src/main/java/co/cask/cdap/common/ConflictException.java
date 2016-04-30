@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,10 +16,13 @@
 
 package co.cask.cdap.common;
 
+import co.cask.cdap.api.common.HttpErrorStatusProvider;
+import org.jboss.netty.handler.codec.http.HttpResponseStatus;
+
 /**
  * Thrown when there was a conflict.
  */
-public class ConflictException extends Exception {
+public class ConflictException extends Exception implements HttpErrorStatusProvider {
 
   public ConflictException() {
     super();
@@ -31,5 +34,10 @@ public class ConflictException extends Exception {
 
   public ConflictException(String message, Throwable cause) {
     super(message, cause);
+  }
+
+  @Override
+  public int getStatusCode() {
+    return HttpResponseStatus.CONFLICT.getCode();
   }
 }

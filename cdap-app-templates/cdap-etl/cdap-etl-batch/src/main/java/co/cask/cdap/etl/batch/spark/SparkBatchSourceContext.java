@@ -17,14 +17,15 @@
 package co.cask.cdap.etl.batch.spark;
 
 import co.cask.cdap.api.data.batch.BatchReadable;
+import co.cask.cdap.api.data.batch.Input;
 import co.cask.cdap.api.data.batch.InputFormatProvider;
 import co.cask.cdap.api.data.batch.Split;
 import co.cask.cdap.api.data.stream.StreamBatchReadable;
 import co.cask.cdap.api.dataset.Dataset;
-import co.cask.cdap.api.spark.SparkContext;
+import co.cask.cdap.api.spark.SparkClientContext;
 import co.cask.cdap.etl.api.LookupProvider;
-import co.cask.cdap.etl.api.batch.BatchSinkContext;
 import co.cask.cdap.etl.api.batch.BatchSourceContext;
+import co.cask.cdap.etl.common.ExternalDatasets;
 
 import java.util.Collections;
 import java.util.List;
@@ -38,7 +39,7 @@ public class SparkBatchSourceContext extends AbstractSparkBatchContext implement
 
   private SparkBatchSourceFactory sourceFactory;
 
-  public SparkBatchSourceContext(SparkContext sparkContext, LookupProvider lookupProvider, String stageId) {
+  public SparkBatchSourceContext(SparkClientContext sparkContext, LookupProvider lookupProvider, String stageId) {
     super(sparkContext, lookupProvider, stageId);
   }
 
@@ -81,6 +82,12 @@ public class SparkBatchSourceContext extends AbstractSparkBatchContext implement
     } else {
       throw new IllegalArgumentException("Input dataset must be a BatchReadable or InputFormatProvider.");
     }
+  }
+
+  @Override
+  public void setInput(Input input) {
+    Input trackableInput = ExternalDatasets.makeTrackable(sparkContext.getAdmin(), input);
+    sourceFactory = SparkBatchSourceFactory.create(trackableInput);
   }
 
   @Nullable

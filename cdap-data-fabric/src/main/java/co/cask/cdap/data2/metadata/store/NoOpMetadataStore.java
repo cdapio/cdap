@@ -126,13 +126,13 @@ public class NoOpMetadataStore implements MetadataStore {
 
   @Override
   public Set<MetadataSearchResultRecord> searchMetadataOnType(String namespaceId, String searchQuery,
-                                                              MetadataSearchTargetType type) {
+                                                              Set<MetadataSearchTargetType> types) {
     return Collections.emptySet();
   }
 
   @Override
   public Set<MetadataSearchResultRecord> searchMetadataOnType(MetadataScope scope, String namespaceId,
-                                                              String searchQuery, MetadataSearchTargetType type) {
+                                                              String searchQuery, Set<MetadataSearchTargetType> types) {
     return Collections.emptySet();
   }
 
@@ -155,7 +155,12 @@ public class NoOpMetadataStore implements MetadataStore {
   }
 
   @Override
-  public void upgrade() {
+  public void rebuildIndexes() {
+    // NO-OP
+  }
+
+  @Override
+  public void deleteAllIndexes() {
     // NO-OP
   }
 }

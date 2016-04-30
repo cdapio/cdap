@@ -1,7 +1,7 @@
 .. meta::
     :author: Cask Data, Inc.
     :description: HTTP RESTful Interface to the Cask Data Application Platform
-    :copyright: Copyright © 2014 Cask Data, Inc.
+    :copyright: Copyright © 2014-2016 Cask Data, Inc.
 
 .. _http-restful-api-monitor:
 
@@ -12,14 +12,33 @@ Monitor HTTP RESTful API
 .. highlight:: console
 
 CDAP internally uses a variety of system services that are critical to its functionality.
-This section describes the RESTful APIs that can be used to see into system services.
+This section describes the RESTful APIs that can be used to examine system services.
 
-Details of All Available System Services
-----------------------------------------
+Listing all System Services and Their Details
+---------------------------------------------
 
 For the detailed information of all available system services, use::
 
   GET <base-url>/system/services
+
+The response body will contain a JSON-formatted list of the existing system services::
+
+  [
+      {
+          "name": "appfabric",
+          "description": "Service for managing application lifecycle.",
+          "status": "OK",
+          "logs": "OK",
+          "min": 1,
+          "max": 1,
+          "requested": 1,
+          "provisioned": 1
+      }
+      ...
+  ]
+  
+See :ref:`downloading System Logs <http-restful-api-logging_downloading_system_logs>` for
+information and an example of using these system services.
 
 .. rubric:: HTTP Responses
 .. list-table::
@@ -31,8 +50,8 @@ For the detailed information of all available system services, use::
    * - ``200 OK``
      - The event successfully called the method, and the body contains the results
 
-Checking Status of All CDAP System Services
--------------------------------------------
+Checking the Status of all CDAP System Services
+-----------------------------------------------
 To check the status of all the system services, use::
 
   GET <base-url>/system/services/status
@@ -47,8 +66,8 @@ To check the status of all the system services, use::
    * - ``200 OK``
      - The event successfully called the method, and the body contains the results
 
-Checking Status of a Specific CDAP System Service
--------------------------------------------------
+Checking the Status of a CDAP System Service
+--------------------------------------------
 To check the status of a specific system service, use::
 
   GET <base-url>/system/services/<service-name>/status
@@ -110,6 +129,102 @@ The status of these CDAP system services can be checked:
      - ``GET <base-url>/system/services/metrics/status``
    * - Description
      - Returns the status of the metrics service
+
+Container Information of a CDAP System Service
+----------------------------------------------
+If you are trying to debug a system service, you can retrieve container info for a system service with::
+
+  GET <base-url>/system/services/<service-id>/live-info
+  
+where
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``<service-id>``
+     - Name of the system service
+     
+**Note:** This returns useful information only for Distributed CDAP installations.
+
+
+Restarting System Service Instances
+-----------------------------------
+
+To restart all instances of a system service in CDAP, you can issue an HTTP POST request to the URL::
+
+  POST <base-url>/system/services/<service-id>/restart
+
+You can restart a particular instance of a system service in CDAP, using its instance id, by issuing
+an HTTP POST request to the URL::
+
+  POST <base-url>/system/services/<service-id>/instances/<instance-id>/restart
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``<service-id>``
+     - Name of the service whose instances are to be restarted
+   * - ``<instance-id>``
+     - Specific instance of a service that needs to be restarted;
+       instance-id runs from 0 to (the number of instances per service -1)
+
+.. rubric:: HTTP Responses
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Status Codes
+     - Description
+   * - ``403 Bad Request``
+     - The service is unavailable because it was not enabled
+   * - ``404 Service not found``
+     - The service name is not valid
+   * - ``500 Internal error``
+     - Internal error encountered when processing the request
+   * - ``503 Service Unavailable``
+     - The service is unavailable. For example, it may not yet have been started
+
+To retrieve details of the last restart attempt made for a particular service, issue an HTTP GET request to the URL::
+
+  GET <base-url>/system/services/<service-id>/latest-restart
+
+The response body will contain a JSON-formatted status of the last restart attempt for that service::
+
+  {
+      "instanceIds":[0],
+      "serviceName":"dataset.executor",
+      "startTimeInMs":1437070039984,
+      "endTimeInMs":1437070039992,
+      "status":"SUCCESS"}
+  }
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``<service-id>``
+     - Name of the service for which details of last restart are to be retrieved
+
+.. rubric:: HTTP Responses
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Status Codes
+     - Description
+   * - ``404 Service not found``
+     - The service name is not valid
+   * - ``500 Internal error``
+     - Internal error encountered when processing the request
+
 
 Scaling System Services
 -----------------------

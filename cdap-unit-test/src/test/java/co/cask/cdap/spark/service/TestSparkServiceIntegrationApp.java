@@ -24,8 +24,8 @@ import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceRequest;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
 import co.cask.cdap.api.spark.AbstractSpark;
-import co.cask.cdap.api.spark.JavaSparkProgram;
-import co.cask.cdap.api.spark.SparkContext;
+import co.cask.cdap.api.spark.JavaSparkExecutionContext;
+import co.cask.cdap.api.spark.JavaSparkMain;
 import com.google.common.io.Closeables;
 import org.apache.commons.io.Charsets;
 import org.apache.spark.api.java.JavaPairRDD;
@@ -71,14 +71,16 @@ public class TestSparkServiceIntegrationApp extends AbstractApplication {
     }
   }
 
-  public static class SparkServiceProgram implements JavaSparkProgram {
+  public static class SparkServiceProgram implements JavaSparkMain {
+
     @Override
-    public void run(SparkContext context) {
+    public void run(JavaSparkExecutionContext sec) throws Exception {
+      JavaSparkContext jsc = new JavaSparkContext();
       List<Integer> data = Arrays.asList(1, 2, 3, 4, 5);
 
-      JavaRDD<Integer> distData = ((JavaSparkContext) context.getOriginalSparkContext()).parallelize(data);
+      JavaRDD<Integer> distData = jsc.parallelize(data);
       distData.count();
-      final ServiceDiscoverer serviceDiscoverer = context.getServiceDiscoverer();
+      final ServiceDiscoverer serviceDiscoverer = sec.getServiceDiscoverer();
       JavaPairRDD<byte[], byte[]> resultRDD = distData.mapToPair(new PairFunction<Integer,
         byte[], byte[]>() {
         @Override
@@ -90,10 +92,10 @@ public class TestSparkServiceIntegrationApp extends AbstractApplication {
           String squaredVale = reader.readLine();
           Closeables.closeQuietly(reader);
           return new Tuple2<>(Bytes.toBytes(String.valueOf(num)),
-                                            Bytes.toBytes(squaredVale));
+                              Bytes.toBytes(squaredVale));
         }
       });
-      context.writeToDataset(resultRDD, "result", byte[].class, byte[].class);
+      sec.saveAsDataset(resultRDD, "result");
     }
   }
 

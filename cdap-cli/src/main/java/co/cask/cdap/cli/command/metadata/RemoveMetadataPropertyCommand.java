@@ -25,7 +25,6 @@ import co.cask.common.cli.Arguments;
 import com.google.inject.Inject;
 
 import java.io.PrintStream;
-import java.util.Map;
 
 /**
  * Removes a metadata property for an entity.
@@ -55,6 +54,6 @@ public class RemoveMetadataPropertyCommand extends AbstractCommand {
 
   @Override
   public String getDescription() {
-    return "Removes a metadata property for an entity";
+    return "Removes a specific metadata property for an entity";
   }
 }

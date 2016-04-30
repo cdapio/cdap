@@ -102,7 +102,6 @@ public class MetricsHandler extends AbstractHttpHandler {
       .put(Constants.Metrics.Tag.DATASET, "dataset")
 
       .put(Constants.Metrics.Tag.APP, "app")
-      .put(Constants.Metrics.Tag.ADAPTER, "adapter")
 
       .put(Constants.Metrics.Tag.SERVICE, "service")
       // SERVICE_HANDLER is the same HANDLER

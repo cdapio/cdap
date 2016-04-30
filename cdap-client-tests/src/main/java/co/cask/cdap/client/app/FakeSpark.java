@@ -17,9 +17,8 @@
 package co.cask.cdap.client.app;
 
 import co.cask.cdap.api.spark.AbstractSpark;
-import co.cask.cdap.api.spark.JavaSparkProgram;
-import co.cask.cdap.api.spark.SparkContext;
-import org.apache.spark.api.java.JavaRDD;
+import co.cask.cdap.api.spark.JavaSparkExecutionContext;
+import co.cask.cdap.api.spark.JavaSparkMain;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,7 +29,7 @@ import java.util.List;
 /**
  * A Fake spark program to test CLI integration with Spark
  */
-public class FakeSpark extends AbstractSpark {
+public class FakeSpark extends AbstractSpark implements JavaSparkMain {
 
   public static final String NAME = "FakeSparkProgram";
   private static final Logger LOG = LoggerFactory.getLogger(FakeSpark.class);
@@ -39,19 +38,15 @@ public class FakeSpark extends AbstractSpark {
   public void configure() {
     setName(NAME);
     setDescription("");
-    setMainClass(FakeSparkProgram.class);
+    setMainClass(FakeSpark.class);
   }
 
-  /**
-   *
-   */
-  public static class FakeSparkProgram implements JavaSparkProgram {
-    @Override
-    public void run(SparkContext context) {
-      LOG.info("HelloFakeSpark");
-      List<Integer> data = Arrays.asList(1, 2, 3, 4, 5);
-      JavaRDD<Integer> distData = ((JavaSparkContext) context.getOriginalSparkContext()).parallelize(data);
-      distData.collect();
-    }
+  @Override
+  public void run(JavaSparkExecutionContext sec) throws Exception {
+    JavaSparkContext jsc = new JavaSparkContext();
+
+    LOG.info("HelloFakeSpark");
+    List<Integer> data = Arrays.asList(1, 2, 3, 4, 5);
+    LOG.info("Collected: {}", jsc.parallelize(data).collect());
   }
 }

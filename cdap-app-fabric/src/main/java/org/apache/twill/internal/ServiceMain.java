@@ -55,7 +55,8 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * Class for main method that starts a service.
- * TODO: This is copied from TWILL-154 and should be removed when upgrade to Twill 0.7.0 (CDAP-3498)
+ * TODO: This is copied from TWILL-154 and has temp fix for TWILL-147 for MapR issue
+ * and should be removed when upgrade to Twill 0.8.0
  */
 public abstract class ServiceMain {
 
@@ -162,12 +163,16 @@ public abstract class ServiceMain {
   /**
    * Creates a {@link ZKClientService}.
    */
-  protected static ZKClientService createZKClient(String zkConnectStr) {
+  protected static ZKClientService createZKClient(String zkConnectStr, String appName) {
     return ZKClientServices.delegate(
-      ZKClients.reWatchOnExpire(
-        ZKClients.retryOnFailure(
-          ZKClientService.Builder.of(zkConnectStr).build(),
-          RetryStrategies.fixDelay(1, TimeUnit.SECONDS))));
+      ZKClients.namespace(
+        ZKClients.reWatchOnExpire(
+          ZKClients.retryOnFailure(
+            ZKClientService.Builder.of(zkConnectStr).build(),
+            RetryStrategies.fixDelay(1, TimeUnit.SECONDS)
+          )
+        ), "/" + appName
+      ));
   }
 
   private void configureLogger() {
@@ -261,10 +266,11 @@ public abstract class ServiceMain {
   /**
    * A simple service for creating/remove ZK paths needed for {@link AbstractTwillService}.
    */
-  protected static final class TwillZKPathService extends AbstractIdleService {
+  protected static class TwillZKPathService extends AbstractIdleService {
+
+    protected static final long TIMEOUT_SECONDS = 5L;
 
     private static final Logger LOG = LoggerFactory.getLogger(TwillZKPathService.class);
-    private static final long TIMEOUT_SECONDS = 5L;
 
     private final ZKClient zkClient;
     private final String path;
@@ -288,4 +294,3 @@ public abstract class ServiceMain {
     }
   }
 }
-

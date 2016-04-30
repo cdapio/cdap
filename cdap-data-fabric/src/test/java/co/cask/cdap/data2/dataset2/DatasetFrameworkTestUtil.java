@@ -18,6 +18,7 @@ package co.cask.cdap.data2.dataset2;
 
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetDefinition;
+import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
@@ -28,6 +29,7 @@ import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
 import co.cask.cdap.data.runtime.TransactionExecutorModule;
+import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.Id;
 import co.cask.tephra.DefaultTransactionExecutor;
 import co.cask.tephra.TransactionAware;
@@ -46,6 +48,7 @@ import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Collection;
 import java.util.Map;
 
 public final class DatasetFrameworkTestUtil extends ExternalResource {
@@ -143,6 +146,10 @@ public final class DatasetFrameworkTestUtil extends ExternalResource {
     return framework.getDatasetSpec(datasetInstanceId);
   }
 
+  public Collection<DatasetSpecificationSummary> list(Id.Namespace namespace) throws DatasetManagementException {
+    return framework.getInstances(namespace);
+  }
+
   /**
    * @param tables the TransactionAwares over which the returned TransactionExecutor operates on.
    * @return a TransactionExecutor that uses a dummy implementation of a TransactionSystemClient. Note that this
@@ -166,4 +173,11 @@ public final class DatasetFrameworkTestUtil extends ExternalResource {
   public TransactionManager getTxManager() {
     return txManager;
   }
+
+  // helper to make this method accessible to DatasetsUtilTest
+  public static DatasetDefinition getDatasetDefinition(InMemoryDatasetFramework framework,
+                                                       Id.Namespace namespace, String type) {
+    return framework.getDefinitionForType(namespace, type);
+  }
+
 }

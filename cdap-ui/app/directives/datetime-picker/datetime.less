@@ -1,0 +1,207 @@
+/*
+ * Copyright © 2016 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
+@import "../../styles/variables.less";
+
+@track-color: #464a56;
+@thumb-color: white;
+
+@thumb-radius: 50%;
+@thumb-height: 15px;
+@thumb-width: 15px;
+@thumb-shadow-size: 1px;
+@thumb-shadow-blur: 3px;
+@thumb-shadow-color: #111;
+@thumb-border-width: 0;
+@thumb-border-color: white;
+
+@track-width: 100%;
+@track-height: 5px;
+@track-shadow-size: 0;
+@track-shadow-blur: 0;
+@track-shadow-color: #222;
+@track-border-width: 0;
+@track-border-color: black;
+
+@track-radius: 5px;
+@contrast: 0;
+
+my-datetime-picker {
+
+  .datetime-range {
+    width: 400px;
+
+    .time-picker {
+      padding: 15px;
+      background-color: #eee;
+
+      .time-text, .time-slider {
+        width: 49%;
+        display: inline-block;
+        vertical-align: middle;
+      }
+
+      input::-webkit-outer-spin-button,
+      input::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+      }
+      input[type=number] {
+        -moz-appearance: textfield;
+      }
+
+      label { margin-bottom: 0; }
+
+      .colon {
+        font-size: 30px;
+        font-weight: 400;
+      }
+    }
+
+    .time-input {
+      height: 50px;
+      width: 70px;
+      font-size: 30px;
+      background-color: @track-color;
+      color: white;
+      border: 0;
+      border-radius: 4px;
+      text-align: center;
+    }
+
+    .minutes-slider { margin-top: 15px; }
+
+    .uib-yearpicker, .uib-monthpicker, .uib-daypicker {
+      width: 100%;
+      .btn-default {
+        border: 0;
+
+        &.btn-info {
+          background-color: @tracker-green;
+          span { color: white; }
+        }
+
+        &.active {
+          background-color: white;
+          box-shadow: none;
+
+          &.btn-info {
+            background-color: @tracker-green;
+            span { color: white; }
+          }
+        }
+      }
+    }
+  }
+
+
+  /**
+   * Slider Styling
+   * Source: https://css-tricks.com/styling-cross-browser-compatible-range-inputs-css/
+   **/
+  .shadow(@shadow-size,@shadow-blur,@shadow-color) {
+    box-shadow: @shadow-size @shadow-size @shadow-blur @shadow-color, 0px 0px @shadow-size lighten(@shadow-color,5%);
+  }
+
+  .track() {
+    width: @track-width;
+    height: @track-height;
+    cursor: pointer;
+    animate: 0.2s;
+  }
+
+  .thumb() {
+    .shadow(@thumb-shadow-size,@thumb-shadow-blur,@thumb-shadow-color);
+    border: @thumb-border-width solid @thumb-border-color;
+    height: @thumb-height;
+    width: @thumb-width;
+    border-radius: @thumb-radius;
+    background: @thumb-color;
+    cursor: pointer;
+  }
+
+  input[type=range] {
+    -webkit-appearance: none;
+    margin: @thumb-height/3 0;
+    width: @track-width;
+
+    &:focus {
+      outline: none;
+    }
+
+    &::-webkit-slider-runnable-track {
+      .track();
+      .shadow(@track-shadow-size,@track-shadow-blur,@track-shadow-color);
+      background: @track-color;
+      border-radius: @track-radius;
+      border: @track-border-width solid @track-border-color;
+    }
+
+    &::-webkit-slider-thumb {
+      .thumb();
+      -webkit-appearance: none;
+      margin-top: ((-@track-border-width * 2 + @track-height) / 2) - (@thumb-height / 2);
+    }
+
+    &:focus::-webkit-slider-runnable-track {
+      background: lighten(@track-color, @contrast);
+    }
+
+    &::-moz-range-track {
+      .track();
+      .shadow(@track-shadow-size,@track-shadow-blur,@track-shadow-color);
+      background: @track-color;
+      border-radius: @track-radius;
+       border: @track-border-width solid @track-border-color;
+    }
+    &::-moz-range-thumb {
+       .thumb();
+    }
+
+    &::-ms-track {
+      .track();
+      background: transparent;
+      border-color: transparent;
+      border-width: @thumb-width 0;
+      color: transparent;
+    }
+
+    &::-ms-fill-lower {
+      background: darken(@track-color, @contrast);
+      border: @track-border-width solid @track-border-color;
+      border-radius: @track-radius*2;
+      .shadow(@track-shadow-size,@track-shadow-blur,@track-shadow-color);
+    }
+    &::-ms-fill-upper {
+      background: @track-color;
+      border: @track-border-width solid @track-border-color;
+      border-radius: @track-radius*2;
+      .shadow(@track-shadow-size,@track-shadow-blur,@track-shadow-color);
+    }
+    &::-ms-thumb {
+      .thumb();
+    }
+    &:focus::-ms-fill-lower {
+      background: @track-color;
+    }
+    &:focus::-ms-fill-upper {
+      background: lighten(@track-color, @contrast);
+    }
+  }
+
+  /* END OF SLIDER STYLES */
+
+}

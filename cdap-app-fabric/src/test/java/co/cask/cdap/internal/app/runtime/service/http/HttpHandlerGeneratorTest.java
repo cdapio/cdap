@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,10 +16,13 @@
 
 package co.cask.cdap.internal.app.runtime.service.http;
 
+import co.cask.cdap.api.Admin;
 import co.cask.cdap.api.Transactional;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.data.DatasetInstantiationException;
 import co.cask.cdap.api.dataset.Dataset;
+import co.cask.cdap.api.dataset.DatasetProperties;
+import co.cask.cdap.api.dataset.InstanceNotFoundException;
 import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.api.plugin.PluginProperties;
 import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
@@ -47,6 +50,7 @@ import com.google.common.io.ByteStreams;
 import com.google.common.io.Closeables;
 import com.google.common.io.Files;
 import com.google.common.reflect.TypeToken;
+import org.apache.twill.api.RunId;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.filesystem.Location;
 import org.junit.Assert;
@@ -70,6 +74,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import javax.annotation.Nullable;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
@@ -559,6 +564,11 @@ public class HttpHandlerGeneratorTest {
     }
 
     @Override
+    public RunId getRunId() {
+      return null;
+    }
+
+    @Override
     public <T extends Dataset> T getDataset(String name) throws DatasetInstantiationException {
       return getDataset(name, null);
     }
@@ -635,6 +645,48 @@ public class HttpHandlerGeneratorTest {
     @Override
     public <T> T newPluginInstance(String pluginId) throws InstantiationException {
       return null;
+    }
+
+    @Override
+    public Admin getAdmin() {
+      return new Admin() {
+        @Override
+        public boolean datasetExists(String name) {
+          return false;
+        }
+
+        @Nullable
+        @Override
+        public String getDatasetType(String name) throws InstanceNotFoundException {
+          throw new InstanceNotFoundException(name);
+        }
+
+        @Nullable
+        @Override
+        public DatasetProperties getDatasetProperties(String name) throws InstanceNotFoundException {
+          throw new InstanceNotFoundException(name);
+        }
+
+        @Override
+        public void createDataset(String name, String type, DatasetProperties properties) {
+          // nop-op
+        }
+
+        @Override
+        public void updateDataset(String name, DatasetProperties properties) {
+          // no-op
+        }
+
+        @Override
+        public void dropDataset(String name) {
+          // no-op
+        }
+
+        @Override
+        public void truncateDataset(String name) {
+          // nop-op
+        }
+      };
     }
   }
 }

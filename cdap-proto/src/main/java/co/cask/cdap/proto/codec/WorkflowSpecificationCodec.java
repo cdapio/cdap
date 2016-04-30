@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,6 +17,7 @@ package co.cask.cdap.proto.codec;
 
 import co.cask.cdap.api.workflow.WorkflowNode;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
+import co.cask.cdap.internal.dataset.DatasetCreationSpec;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -41,7 +42,7 @@ public final class WorkflowSpecificationCodec extends AbstractSpecificationCodec
     jsonObj.add("description", new JsonPrimitive(src.getDescription()));
     jsonObj.add("properties", serializeMap(src.getProperties(), context, String.class));
     jsonObj.add("nodes", serializeList(src.getNodes(), context, WorkflowNode.class));
-
+    jsonObj.add("localDatasetSpecs", serializeMap(src.getLocalDatasetSpecs(), context, DatasetCreationSpec.class));
     return jsonObj;
   }
 
@@ -55,7 +56,9 @@ public final class WorkflowSpecificationCodec extends AbstractSpecificationCodec
     String description = jsonObj.get("description").getAsString();
     Map<String, String> properties = deserializeMap(jsonObj.get("properties"), context, String.class);
     List<WorkflowNode> nodes = deserializeList(jsonObj.get("nodes"), context, WorkflowNode.class);
+    Map<String, DatasetCreationSpec> localDatasetSpec = deserializeMap(jsonObj.get("localDatasetSpecs"), context,
+                                                                       DatasetCreationSpec.class);
 
-    return new WorkflowSpecification(className, name, description, properties, nodes);
+    return new WorkflowSpecification(className, name, description, properties, nodes, localDatasetSpec);
   }
 }

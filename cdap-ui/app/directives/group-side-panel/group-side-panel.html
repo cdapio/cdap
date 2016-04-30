@@ -17,25 +17,41 @@
 <div class="side-panel text-center left">
   <div class="hydrator-filter clearfix">
     <input class="form-control pull-left" placeholder="Filter" type="text" ng-model="MySidePanel.searchText" />
+    <div class="btn-group">
+      <div class="btn btn-default btn-sm"
+            ng-class="{'active': MySidePanel.view === 'list'}"
+            ng-click="MySidePanel.view = 'list'">
+        <span class="fa fa-list-ul"></span>
+      </div>
+      <div class="btn btn-default btn-sm"
+            ng-class="{'active': MySidePanel.view === 'icon'}"
+            ng-click="MySidePanel.view = 'icon'">
+        <span class="fa fa-th"></span>
+      </div>
+    </div>
   </div>
 
   <div class="groups-container">
     <div class="item"
-          ng-repeat="group in MySidePanel.groups"
-          ng-click="MySidePanel.toggleGroup(group)"
-          ng-class="{'item-open': MySidePanel.openedGroup === group.name, 'group-default': MySidePanel.openedGroup === null }">
-      <div class="text-left item-heading {{group.name}}">
-        <span class="name">{{group.name | caskCapitalizeFilter}} </span>
+          ng-repeat="group in MySidePanel.groups track by $index"
+          ng-click="MySidePanel.openedGroup = group.name"
+          ng-style="MySidePanel.openedGroup === group.name && {height: MySidePanel.groupWrapperHeight}"
+          ng-class="{'item-open': MySidePanel.openedGroup === group.name }">
+      <div class="text-left item-heading {{group.name}}" >
+        <span class="fa"
+              ng-class="{'fa-caret-down': MySidePanel.openedGroup === group.name, 'fa-caret-right': MySidePanel.openedGroup !== group.name}">
+        </span>
+        <span class="name">{{group.name}} </span>
         <div class="pull-right">
           <span class="badge" >{{group.filtered.length}}</span>
         </div>
       </div>
-
       <div class="item-body-wrapper"
            ng-show="MySidePanel.openedGroup === null || MySidePanel.openedGroup === group.name">
-        <div class="item-body">
-          <div ng-repeat="plugin in group.filtered = (group.plugins | filter: {name: MySidePanel.searchText}) track by $index"
-               class="plugin-item"
+        <div class="item-body" ng-class="{'view-icon': MySidePanel.view === 'icon', 'view-list': MySidePanel.view === 'list'}">
+
+          <div ng-if="MySidePanel.view === 'icon'" ng-repeat="plugin in group.filtered = (group.plugins | filter: {name: MySidePanel.searchText} | orderBy: 'name') track by $index"
+               class="plugin-item {{plugin.nodeClass}}"
                my-popover
                data-placement="right"
                data-template="plugin.template"
@@ -43,10 +59,30 @@
                data-popover-context="MySidePanel"
                ng-click="MySidePanel.onItemClicked($event, plugin)">
             <span ng-if="plugin.icon" class="text-center fa {{plugin.icon}}"></span>
-            <span class="name">{{ (plugin.name || plugin.pluginTemplate) | myEllipsis: 15}}</span>
+            <span class="name">{{ (plugin.name || plugin.pluginTemplate) }}</span>
+            <span class="plugin-badge">T</span>
+          </div>
+          <div class="no-item-message" ng-if="group.filtered.length === 0">
+            <h4>No {{MySidePanel.itemGenericName}} found.</h4>
+          </div>
+          <div ng-if="MySidePanel.view === 'list'" ng-repeat="plugin in group.filtered = (group.plugins | filter: {name: MySidePanel.searchText} | orderBy: 'name') track by $index"
+               class="plugin-item {{plugin.nodeClass}}"
+               ng-click="MySidePanel.onItemClicked($event, plugin)">
+            <span ng-if="plugin.icon" class="text-center fa {{plugin.icon}}"></span>
+            <span class="name"
+                  my-popover
+                  data-placement="right"
+                  data-template="plugin.template"
+                  content-data="plugin"
+                  data-popover-context="MySidePanel"
+            >{{ (plugin.name || plugin.pluginTemplate)}}</span>
+            <span class="plugin-badge">T</span>
           </div>
         </div>
       </div>
+    </div>
+    <div ng-if="MySidePanel.groups.length === 0">
+      <h4>No {{MySidePanel.groupGenericName}} found.</h4>
     </div>
   </div>
 </div>

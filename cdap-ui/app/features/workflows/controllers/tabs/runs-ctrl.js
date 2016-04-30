@@ -16,14 +16,14 @@
 
 var params = {};
 class WorkflowsRunsController {
-  constructor($scope, $state, $filter, rRuns, myWorkFlowApi, $bootstrapModal, rWorkflowDetail) {
+  constructor($scope, $state, $filter, rRuns, myWorkFlowApi, $uibModal, rWorkflowDetail) {
     let fFilter = $filter('filter');
     this.runs = rRuns;
     this.$scope = $scope;
     this.$state = $state;
     this.myWorkFlowApi = myWorkFlowApi;
     this.runStatus = null;
-    this.$bootstrapModal = $bootstrapModal;
+    this.$uibModal = $uibModal;
     this.description = rWorkflowDetail.description;
 
 
@@ -140,7 +140,7 @@ class WorkflowsRunsController {
   }
 
   openHistory() {
-    this.$bootstrapModal.open({
+    this.$uibModal.open({
       size: 'lg',
       templateUrl: '/assets/features/workflows/templates/tabs/history.html',
       controller: ['runs', '$scope', function(runs, $scope) {
@@ -153,7 +153,7 @@ class WorkflowsRunsController {
   }
 
   openSchedules() {
-    this.$bootstrapModal.open({
+    this.$uibModal.open({
       size: 'lg',
       templateUrl: '/assets/features/workflows/templates/tabs/schedules.html',
       controller: 'WorkflowsSchedulesController',
@@ -163,7 +163,7 @@ class WorkflowsRunsController {
 
 }
 
-WorkflowsRunsController.$inject = ['$scope', '$state', '$filter', 'rRuns', 'myWorkFlowApi', '$bootstrapModal', 'rWorkflowDetail'];
+WorkflowsRunsController.$inject = ['$scope', '$state', '$filter', 'rRuns', 'myWorkFlowApi', '$uibModal', 'rWorkflowDetail'];
 
 angular.module(`${PKG.name}.feature.workflows`)
   .controller('WorkflowsRunsController', WorkflowsRunsController);

@@ -127,7 +127,7 @@ public class InMemoryTable extends BufferingTable {
     byte[] stopRow = scan.getStopRow();
     NavigableMap<byte[], NavigableMap<byte[], NavigableMap<Long, byte[]>>> rowRange =
       InMemoryTableService.getRowRange(getTableName(), startRow, stopRow,
-          tx == null ? null : tx.getReadPointer());
+          tx == null ? null : tx);
     NavigableMap<byte[], NavigableMap<byte[], byte[]>> visibleRowRange = getLatestNotExcludedRows(rowRange, tx);
     NavigableMap<byte[], NavigableMap<byte[], byte[]>> rows = unwrapDeletesForRows(visibleRowRange);
 
@@ -162,13 +162,13 @@ public class InMemoryTable extends BufferingTable {
     // no tx logic needed
     if (tx == null) {
       NavigableMap<byte[], NavigableMap<Long, byte[]>> rowMap =
-        InMemoryTableService.get(getTableName(), row, NO_TX_VERSION);
+        InMemoryTableService.get(getTableName(), row, tx);
 
       return unwrapDeletes(filterByColumns(getLatest(rowMap), columns));
     }
 
     NavigableMap<byte[], NavigableMap<Long, byte[]>> rowMap =
-      InMemoryTableService.get(getTableName(), row, tx.getReadPointer());
+      InMemoryTableService.get(getTableName(), row, tx);
 
     if (rowMap == null) {
       return EMPTY_ROW_MAP;

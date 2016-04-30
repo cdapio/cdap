@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,7 +16,6 @@
 
 package co.cask.cdap.proto;
 
-import com.google.common.primitives.Longs;
 import com.google.gson.annotations.SerializedName;
 
 /**
@@ -74,6 +73,6 @@ public class QueryInfo implements Comparable<QueryInfo> {
   @Override
   public int compareTo(QueryInfo queryInfo) {
     // descending.
-    return Longs.compare(queryInfo.getTimestamp(), getTimestamp());
+    return Long.valueOf(queryInfo.getTimestamp()).compareTo((getTimestamp()));
   }
 }

@@ -24,7 +24,7 @@
   <parent>
     <groupId>co.cask.cdap</groupId>
     <artifactId>cdap</artifactId>
-    <version>3.3.2</version>
+    <version>3.4.0</version>
   </parent>
 
   <artifactId>cdap-security</artifactId>
@@ -40,6 +40,11 @@
     <dependency>
       <groupId>co.cask.cdap</groupId>
       <artifactId>cdap-proto</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>co.cask.cdap</groupId>
+      <artifactId>cdap-security-spi</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>

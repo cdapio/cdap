@@ -18,6 +18,7 @@ package co.cask.cdap.data2.datafabric.dataset.service;
 
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.common.BadRequestException;
+import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.transaction.queue.QueueConstants;
 import co.cask.cdap.proto.DatasetInstanceConfiguration;
 import co.cask.cdap.proto.DatasetSpecificationSummary;
@@ -101,7 +102,9 @@ class ConversionHelpers {
       if (QueueConstants.STATE_STORE_NAME.equals(spec.getName())) {
         continue;
       }
-      datasetSummaries.add(new DatasetSpecificationSummary(spec.getName(), spec.getType(), spec.getProperties()));
+      spec = DatasetsUtil.fixOriginalProperties(spec);
+      datasetSummaries.add(new DatasetSpecificationSummary(spec.getName(), spec.getType(), spec.getDescription(),
+                                                           spec.getOriginalProperties()));
     }
     return datasetSummaries;
   }

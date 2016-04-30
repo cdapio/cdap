@@ -89,12 +89,8 @@
               <span class="fa fa-list-ul"></span>
                <span>All Applications</span>
             </a>
-            <a ui-sref="hydrator.list" class="btn btn-default">
-              <span class="icon-hydrator"></span>
-               <span>Pipelines</span>
-            </a>
-            <div class="btn-group dropdown-right" dropdown>
-              <button type="button" class="btn btn-default dropdown-toggle white-dropdown" dropdown-toggle>
+            <div class="btn-group dropdown-right" uib-dropdown>
+              <button type="button" class="btn btn-default dropdown-toggle white-dropdown" uib-dropdown-toggle>
                 Add Application <span class="caret"></span>
               </button>
               <ul class="dropdown-menu dropdown-menu-right" role="menu">
@@ -106,7 +102,7 @@
                   </my-file-select>
                 </li>
                 <li>
-                  <a ui-sref="hydrator.create" class="clearfix">
+                  <a ui-sref="hydratorplusplus.create({ namespace: $stateParams.namespace })" class="clearfix">
                     <span class="pull-left">{{AppsSectionCtrl.GLOBALS.en.hydrator.appLabel}}</span>
                   </a>
                 </li>
@@ -117,7 +113,9 @@
       </div>
 
       <ul class="list-group">
-        <li class="list-group-item" ng-repeat="app in AppsSectionCtrl.apps | orderBy:AppsSectionCtrl.MyOrderings.appOrdering | limitTo:5">
+        <li class="list-group-item"
+            ng-repeat="app in AppsSectionCtrl.apps | orderBy:AppsSectionCtrl.MyOrderings.appOrdering | limitTo:5"
+            ng-if="!app.name.startsWith('_')">
           <a ui-sref="apps.detail.overview.programs({appId: app.id})"
               ng-if="AppsSectionCtrl.myHydratorFactory.isCustomApp(app.artifact.name)"
               ng-click="AppsSectionCtrl.MyOrderings.appClicked(app.id)">
@@ -132,14 +130,8 @@
               ng-click="AppsSectionCtrl.MyOrderings.appClicked(app.id)">
             <p ng-bind="app.name"> </p>
             <div class="title-type-image">
-              <span ng-if="AppsSectionCtrl.GLOBALS.etlBatch === app.artifact.name">
-                <span class="icon-ETLBatch"></span>
-                <span>ETL Batch</span>
-              </span>
-              <span ng-if="AppsSectionCtrl.GLOBALS.etlRealtime === app.artifact.name">
-                <span class="icon-ETLRealtime"></span>
-                <span>ETL Real-time</span>
-              </span>
+              <span class="icon-{{ AppsSectionCtrl.GLOBALS.iconArtifact[app.artifact.name] }}"></span>
+              <span>{{ AppsSectionCtrl.GLOBALS.artifactConvert[app.artifact.name] }}</span>
             </div>
           </a>
         </li>
@@ -152,8 +144,8 @@
         <p> You haven't deployed any applications. </p>
       </div>
       <hr />
-      <div class="btn-group dropdown-right" dropdown>
-        <button type="button" class="btn btn-default dropdown-toggle white-dropdown" dropdown-toggle>
+      <div class="btn-group dropdown-right" uib-dropdown>
+        <button type="button" class="btn btn-default dropdown-toggle white-dropdown" uib-dropdown-toggle>
           Add Application <span class="caret"></span>
         </button>
         <ul class="dropdown-menu dropdown-menu-right" role="menu">
@@ -165,7 +157,7 @@
             </my-file-select>
           </li>
           <li>
-            <a ui-sref="hydrator.create" class="clearfix">
+            <a ui-sref="hydratorplusplus.create({ namespace: $stateParams.namespace })" class="clearfix">
               <span class="pull-left">{{AppsSectionCtrl.GLOBALS.en.hydrator.appLabel}}</span>
             </a>
           </li>

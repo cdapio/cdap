@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,14 +17,15 @@ package co.cask.cdap.proto.element;
 
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.DatasetModuleId;
 import co.cask.cdap.proto.id.DatasetTypeId;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.FlowletId;
 import co.cask.cdap.proto.id.FlowletQueueId;
+import co.cask.cdap.proto.id.InstanceId;
 import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.NamespacedArtifactId;
 import co.cask.cdap.proto.id.NotificationFeedId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
@@ -33,13 +34,14 @@ import co.cask.cdap.proto.id.ScheduleId;
 import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.proto.id.StreamViewId;
 import co.cask.cdap.proto.id.SystemServiceId;
-import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableMap;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * Represents a type of CDAP element. E.g. namespace, application, datasets, streams.
@@ -48,6 +50,7 @@ import java.util.Map;
 @SuppressWarnings("unchecked")
 public enum EntityType {
 
+  INSTANCE(InstanceId.class, null),
   NAMESPACE(NamespaceId.class, Id.Namespace.class),
   APPLICATION(ApplicationId.class, Id.Application.class),
   PROGRAM(ProgramId.class, Id.Program.class),
@@ -62,7 +65,7 @@ public enum EntityType {
   FLOWLET_QUEUE(FlowletQueueId.class, Id.Flow.Flowlet.Queue.class),
   SCHEDULE(ScheduleId.class, Id.Schedule.class),
   NOTIFICATION_FEED(NotificationFeedId.class, Id.NotificationFeed.class),
-  ARTIFACT(NamespacedArtifactId.class, Id.Artifact.class),
+  ARTIFACT(ArtifactId.class, Id.Artifact.class),
   DATASET(DatasetId.class, Id.DatasetInstance.class),
 
   QUERY(QueryId.class, Id.QueryHandle.class),
@@ -71,17 +74,20 @@ public enum EntityType {
   private static final Map<Class<? extends EntityId>, EntityType> byIdClass;
   private static final Map<Class<? extends Id>, EntityType> byOldIdClass;
   static {
-    ImmutableMap.Builder<Class<? extends EntityId>, EntityType> builder = ImmutableMap.builder();
-    ImmutableMap.Builder<Class<? extends Id>, EntityType> builderOld = ImmutableMap.builder();
+    Map<Class<? extends EntityId>, EntityType> byIdClassMap = new LinkedHashMap<>();
+    Map<Class<? extends Id>, EntityType> byOldIdClassMap = new LinkedHashMap<>();
     for (EntityType type : EntityType.values()) {
-      builder.put(type.getIdClass(), type);
-      builderOld.put(type.getOldIdClass(), type);
+      byIdClassMap.put(type.getIdClass(), type);
+      if (type.getOldIdClass() != null) {
+        byOldIdClassMap.put(type.getOldIdClass(), type);
+      }
     }
-    byIdClass = builder.build();
-    byOldIdClass = builderOld.build();
+    byIdClass = Collections.unmodifiableMap(byIdClassMap);
+    byOldIdClass = Collections.unmodifiableMap(byOldIdClassMap);
   }
 
   private final Class<? extends EntityId> idClass;
+  @Nullable
   private final Class<? extends Id> oldIdClass;
   private final MethodHandle fromIdParts;
 
@@ -100,6 +106,7 @@ public enum EntityType {
     return idClass;
   }
 
+  @Nullable
   public Class<? extends Id> getOldIdClass() {
     return oldIdClass;
   }
@@ -121,8 +128,10 @@ public enum EntityType {
   public <T extends EntityId> T fromIdParts(Iterable<String> idParts) {
     try {
       return (T) fromIdParts.invoke(idParts);
+    } catch (RuntimeException t) {
+      throw t;
     } catch (Throwable t) {
-      throw Throwables.propagate(t);
+      throw new RuntimeException(t);
     }
   }
 }

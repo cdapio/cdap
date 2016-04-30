@@ -22,7 +22,6 @@ import co.cask.cdap.api.data.stream.StreamBatchReadable;
 import co.cask.cdap.api.stream.StreamEventData;
 import co.cask.cdap.api.stream.StreamEventDecoder;
 import co.cask.cdap.common.conf.ConfigurationUtil;
-import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.proto.Id;
@@ -93,7 +92,7 @@ public class StreamInputFormatProvider implements InputFormatProvider {
       hConf.clear();
 
       StreamInputFormat.setTTL(hConf, streamConfig.getTTL());
-      StreamInputFormat.setStreamPath(hConf, Locations.toURI(streamPath));
+      StreamInputFormat.setStreamPath(hConf, streamPath.toURI());
       StreamInputFormat.setTimeRange(hConf, streamBatchReadable.getStartTime(), streamBatchReadable.getEndTime());
       FormatSpecification formatSpec = streamBatchReadable.getFormatSpecification();
       if (formatSpec != null) {

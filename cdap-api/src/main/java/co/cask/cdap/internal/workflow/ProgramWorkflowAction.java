@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,12 +18,11 @@ package co.cask.cdap.internal.workflow;
 import co.cask.cdap.api.RuntimeContext;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.workflow.AbstractWorkflowAction;
-import co.cask.cdap.api.workflow.WorkflowActionConfigurer;
-import co.cask.cdap.api.workflow.WorkflowContext;
-import com.google.common.collect.ImmutableMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.Callable;
 
 /**
@@ -37,7 +36,6 @@ public final class ProgramWorkflowAction extends AbstractWorkflowAction {
   public static final String PROGRAM_TYPE = "ProgramType";
 
   private String programName;
-  private Runnable programRunner;
   private SchedulableProgramType programType;
 
   public ProgramWorkflowAction(String programName, SchedulableProgramType programType) {
@@ -46,32 +44,21 @@ public final class ProgramWorkflowAction extends AbstractWorkflowAction {
   }
 
   @Override
-  public void configure(WorkflowActionConfigurer configurer) {
-    super.configure(configurer);
+  public void configure() {
     setName(programName);
     setDescription("Workflow action for " + programType.name() + " " + programName);
-    setProperties(ImmutableMap.of(PROGRAM_TYPE, programType.name(),
-                                  PROGRAM_NAME, programName));
-  }
 
-  @Override
-  public void initialize(WorkflowContext context) throws Exception {
-    programName = context.getSpecification().getProperties().get(PROGRAM_NAME);
-    if (programName == null) {
-      throw new IllegalArgumentException("No Program name provided.");
-    }
-
-    programRunner = context.getProgramRunner(programName);
-    programType = context.getSpecification().getProperties().containsKey(PROGRAM_TYPE) ?
-      SchedulableProgramType.valueOf(context.getSpecification().getProperties().get(PROGRAM_TYPE)) : null;
-
-    LOG.info("Initialized for {} Program {} in workflow action",
-             programType != null ? programType.name() : null, programName);
+    Map<String, String> properties = new HashMap<>();
+    properties.put(PROGRAM_TYPE, programType.name());
+    properties.put(PROGRAM_NAME, programName);
+    setProperties(properties);
   }
 
   @Override
   public void run() {
     try {
+      String programName = getContext().getSpecification().getProperties().get(PROGRAM_NAME);
+      Runnable programRunner = getContext().getProgramRunner(programName);
       LOG.info("Starting Program for workflow action: {}", programName);
       programRunner.run();
 

@@ -21,7 +21,7 @@
 body.theme-cdap.state-hydrator-create {
   .left-panel-wrapper {
     position: fixed;
-    top: 120px;
+    top: 110px;
     bottom: 53px;
     left: 0;
     z-index: 1024;
@@ -53,6 +53,9 @@ body.theme-cdap.state-hydrator-create {
         .name {
           display: inline-block;
           max-width: 81px;
+        }
+        .plugin-badge {
+          display: none;
         }
       }
       + .right-wrapper {
@@ -96,6 +99,11 @@ body.theme-cdap.state-hydrator-create {
     }
     .hydrator-filter {
       padding: 20px 0 20px 10px;
+      > * {
+        &:not(input){
+          display: none;
+        }
+      }
       input {
         background-color: fade(@gray-dark, 25%);
         background-image: url('@{img-path}/hydrator_bg_pattern.png');
@@ -168,9 +176,9 @@ body.theme-cdap.state-hydrator-create {
 
         .item-body-wrapper {
           // Syntax needed to avoid LESS parsing issue affecting calc()
-          height: ~"-moz-calc(100% - 120px)";
-          height: ~"-webkit-calc(100% - 120px)";
-          height: ~"calc(100% - 120px)";
+          height: ~"-moz-calc(100% - 40px)";
+          height: ~"-webkit-calc(100% - 40px)";
+          height: ~"calc(100% - 40px)";
         }
       }
 
@@ -185,6 +193,9 @@ body.theme-cdap.state-hydrator-create {
         span.name {
           font-size: 13px;
           line-height: inherit;
+        }
+        .fa {
+          display: none;
         }
       }
       .item-body-wrapper {
@@ -201,6 +212,10 @@ body.theme-cdap.state-hydrator-create {
         @media (max-height: 550px) {
           max-height: 20vh;
         }
+        .no-item-message {
+          color: white;
+          width: 100%;
+        }
       }
       .plugin-item {
         background-color: white;
@@ -212,7 +227,7 @@ body.theme-cdap.state-hydrator-create {
         height: 40px;
         width: 48%;
         .border-radius(4px);
-        .transition(all 0.2s ease);
+
         &:hover, &:focus {
           background-color: fade(black, 45%);
           border: 1px dashed #999;
@@ -239,6 +254,10 @@ body.theme-cdap.state-hydrator-create {
 
   .my-cdap-popover {
     padding: 0;
+    outline: none;
+
+    &:focus { outline: none; }
+
     .popover-content {
       padding: 5px;
       .list-group {

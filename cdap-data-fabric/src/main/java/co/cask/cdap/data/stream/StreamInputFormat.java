@@ -176,8 +176,9 @@ public class StreamInputFormat<K, V> extends InputFormat<K, V> {
    * @param conf The job configuration
    * @return The {@link StreamEventDecoder} class or {@code null} if it is not set.
    */
-  public static Class<? extends StreamEventDecoder> getDecoderClass(Configuration conf) {
-    return conf.getClass(DECODER_TYPE, null, StreamEventDecoder.class);
+  @SuppressWarnings("unchecked")
+  public static <K, V> Class<? extends StreamEventDecoder<K, V>> getDecoderClass(Configuration conf) {
+    return (Class<? extends StreamEventDecoder<K, V>>) conf.getClass(DECODER_TYPE, null, StreamEventDecoder.class);
   }
 
   /**

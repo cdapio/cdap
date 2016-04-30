@@ -87,6 +87,6 @@ public class StatusProgramsCommand extends BaseBatchCommand<BatchProgram> {
 
   @Override
   public String getDescription() {
-    return getDescription("get status of");
+    return getDescription("get status of", "gets status of");
   }
 }

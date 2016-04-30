@@ -35,12 +35,6 @@ ResourceManager*, or *HBase Master*, then the client configurations will already
 A typical client node should have the ``mapr-client``, ``mapr-hbase``, and ``mapr-hive``
 packages installed, and can be configured using the MapR `configure.sh
 <http://doc.mapr.com/display/MapR/configure.sh>`__ utility.
-
-.. Node.js Installation
-.. --------------------
-.. include:: /../target/_includes/mapr-installation.rst
-    :start-after: .. _mapr-install-node-js:
-    :end-before: .. _mapr-install-packaging:
  
 .. Hadoop Configuration
 .. --------------------
@@ -61,7 +55,9 @@ Downloading and Distributing Packages
 +----------------+-------------------------------+
 | CDAP Series    | MapR Distributions            |
 +================+===============================+
-| CDAP 3.3.x     | MapR 4.1, MapR 5.0            |
+| CDAP 3.4.x     | MapR 4.1, MapR 5.0, MapR 5.1  |
++----------------+-------------------------------+
+| CDAP 3.3.x     | MapR 4.1, MapR 5.0, MapR 5.1  |
 +----------------+-------------------------------+
 | CDAP 3.2.x     | MapR 4.1, MapR 5.0            |
 +----------------+-------------------------------+
@@ -69,7 +65,6 @@ Downloading and Distributing Packages
 +----------------+-------------------------------+
 
 .. _mapr-compatibility-matrix-end:
-
 
 Preparing Package Managers
 --------------------------

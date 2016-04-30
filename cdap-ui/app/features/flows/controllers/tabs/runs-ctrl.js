@@ -15,11 +15,11 @@
  */
 
  class FlowsRunsController {
-   constructor($scope, $filter, $state, rRuns, $bootstrapModal, rFlowsDetail) {
+   constructor($scope, $filter, $state, rRuns, $uibModal, rFlowsDetail) {
     this.$scope = $scope;
     this.$filter = $filter;
     this.runs = rRuns;
-    this.$bootstrapModal = $bootstrapModal;
+    this.$uibModal = $uibModal;
     this.rFlowsDetail = rFlowsDetail;
     this.description = rFlowsDetail.description;
 
@@ -91,7 +91,7 @@
    }
 
    openHistory() {
-     this.$bootstrapModal.open({
+     this.$uibModal.open({
        size: 'lg',
        templateUrl: '/assets/features/flows/templates/tabs/history.html',
        controller: ['runs', '$scope', function(runs, $scope) {
@@ -106,7 +106,7 @@
    }
  }
 
-FlowsRunsController.$inject = ['$scope', '$filter', '$state', 'rRuns', '$bootstrapModal', 'rFlowsDetail'];
+FlowsRunsController.$inject = ['$scope', '$filter', '$state', 'rRuns', '$uibModal', 'rFlowsDetail'];
 
 angular.module(PKG.name + '.feature.flows')
   .controller('FlowsRunsController', FlowsRunsController);

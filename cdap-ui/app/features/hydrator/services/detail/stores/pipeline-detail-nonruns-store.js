@@ -172,19 +172,28 @@ angular.module(PKG.name + '.feature.hydrator')
       }
 
       appConfig.type = app.artifact.name;
+
+      // FIXME: TL;DR - Object reference being changed somewhere in the detailed view is affecting the clone behavior.
+      // Longer version -
+      // Right now appConfig.configJson is modified somewhere (modify reference) which affects the 'schema' property of 'Stream'
+      // plugin once the node is opened in the bottom panel. This is causing clone to fail. I am creating a copy so that no matter
+      // what gets changed in the detailed view is not passed on to the clone. This shouldn't be a problem as nothing should be changed
+      // in detailed view. `appConfig.configJson` is the culprit.
+      // One of the worst cases of 2way binding where right now the app is super big that I have no f***ing clue where which one is modified.
+      let appConfigClone = angular.copy(appConfig);
       appConfig.cloneConfig = {
         name: app.name,
         artifact: app.artifact,
-        description: appConfig.configJson.description,
-        __ui__: appConfig.DAGConfig,
+        description: appConfigClone.configJson.description,
+        __ui__: appConfigClone.DAGConfig,
         config: {
-          source: appConfig.configJson.source,
-          sinks: appConfig.configJson.sinks,
-          transforms: appConfig.configJson.transforms,
-          instances: appConfig.configJson.instance,
-          schedule: appConfig.configJson.schedule,
+          source: appConfigClone.configJson.source,
+          sinks: appConfigClone.configJson.sinks,
+          transforms: appConfigClone.configJson.transforms,
+          instances: appConfigClone.configJson.instance,
+          schedule: appConfigClone.configJson.schedule,
           connections: uiConfig.connections,
-          comments: appConfig.configJson.comments
+          comments: appConfigClone.configJson.comments
         }
       };
       appConfig.streams = app.streams.map(function (stream) {

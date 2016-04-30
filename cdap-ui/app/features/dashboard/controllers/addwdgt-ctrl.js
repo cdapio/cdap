@@ -19,7 +19,7 @@
  */
 
 angular.module(PKG.name+'.feature.dashboard').controller('DashboardAddWdgtCtrl',
-function ($scope, $modalInstance, caskFocusManager, Widget) {
+function ($scope, $uibModalInstance, caskFocusManager, Widget) {
 
   caskFocusManager.focus('addWdgtType');
 
@@ -79,7 +79,7 @@ function ($scope, $modalInstance, caskFocusManager, Widget) {
   }, 1000);
 
   $scope.closeModal = function() {
-    $modalInstance.close();
+    $uibModalInstance.close();
   };
 
 });

@@ -16,6 +16,10 @@ These are the CDAP components:
 - **CDAP UI:** User interface for managing CDAP applications (package *cdap-ui*); and
 - **CDAP Authentication Server:** Performs client authentication for CDAP when security is enabled (package *cdap-security*).
 
+An *optional* component is available:
+
+- **CDAP CLI:** User interface for interacting with CDAP from within a shell, similar to the HBase or bash shells (package *cdap-ui*).
+
 Some CDAP components run on YARN, while others orchestrate “containers” in the Hadoop cluster.
 The CDAP Router service starts a router instance on each of the local boxes and instantiates
 one or more gateway instances on YARN as determined by the gateway service configuration.

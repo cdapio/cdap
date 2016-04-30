@@ -67,7 +67,7 @@ angular.module(PKG.name + '.commons')
             '/apps/' + params.appId +
             '/' + params.programType + '/' + params.programId +
             '/runs/' + params.runId +
-            '/logs/prev?max=50';
+            '/logs/prev?max=50&escape=false';
 
           pollPromise = dataSrc.poll({
             _cdapPath: path,
@@ -87,6 +87,7 @@ angular.module(PKG.name + '.commons')
           params = {};
           angular.copy($scope.params, params);
           params.max = 50;
+          params.escape = false;
           params.scope = $scope;
 
           $scope.model = [];

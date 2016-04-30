@@ -17,9 +17,8 @@
 package co.cask.cdap.proto.metadata;
 
 import co.cask.cdap.proto.Id;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
 
+import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -28,6 +27,7 @@ import java.util.Set;
  * Represents the complete metadata of a {@link Id.NamespacedId} including its properties, tags in a given
  * {@link MetadataScope}
  */
+@Deprecated
 public class MetadataRecord {
   private final Id.NamespacedId entityId;
   private final MetadataScope scope;
@@ -38,7 +38,7 @@ public class MetadataRecord {
    * Returns an empty {@link MetadataRecord} in the specified {@link MetadataScope}.
    */
   public MetadataRecord(Id.NamespacedId entityId, MetadataScope scope) {
-    this(entityId, scope, ImmutableMap.<String, String>of(), ImmutableSet.<String>of());
+    this(entityId, scope, Collections.<String, String>emptyMap(), Collections.<String>emptySet());
   }
 
   /**

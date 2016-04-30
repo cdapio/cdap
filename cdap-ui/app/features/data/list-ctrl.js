@@ -29,6 +29,9 @@ angular.module(PKG.name + '.feature.data')
       .$promise
       .then(function (res) {
         this.dataList = res
+          .filter( function(dataset) {
+            return dataset.type !== 'externalDataset';
+          })
           .map(function(dataset) {
             dataset.dataType = 'Dataset';
 

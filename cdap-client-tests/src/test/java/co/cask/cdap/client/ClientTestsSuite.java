@@ -31,7 +31,9 @@ import org.junit.runners.Suite;
   ApplicationClientTestRun.class,
   ArtifactClientTestRun.class,
   DatasetClientTestRun.class,
+  LineageTestRun.class,
   MetaClientTestRun.class,
+  MetadataHttpHandlerTestRun.class,
   MetricsClientTestRun.class,
   MonitorClientTestRun.class,
   NamespaceClientTestRun.class,
@@ -41,6 +43,7 @@ import org.junit.runners.Suite;
   ScheduleClientTestRun.class,
   ServiceClientTestRun.class,
   StreamClientTestRun.class,
+  UsageHandlerTestRun.class,
   WorkflowClientTestRun.class,
 })
 public class ClientTestsSuite extends ClientTestBase {

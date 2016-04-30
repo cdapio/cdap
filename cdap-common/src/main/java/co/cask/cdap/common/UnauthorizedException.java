@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,10 +17,11 @@
 package co.cask.cdap.common;
 
 /**
- * Thrown when a user is not authorized to perform an operation.
+ * Exception thrown when a user is not authenticated to perform an operation.
+ * @deprecated since 3.4.0. Please use {@link UnauthenticatedException} instead.
  */
+@Deprecated
 public class UnauthorizedException extends Exception {
-
   public UnauthorizedException() {
     super();
   }
@@ -32,5 +33,4 @@ public class UnauthorizedException extends Exception {
   public UnauthorizedException(String message) {
     super(message);
   }
-
 }

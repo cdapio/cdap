@@ -1,0 +1,252 @@
+{
+    "artifact": {
+        "name": "cdap-data-pipeline",
+        "version": "3.4.0",
+        "scope": "SYSTEM"
+    },
+    "description": "Score incoming events against a learned model to classify events as spam or not spam",
+    "name": "EventClassifier",
+    "config": {
+        "connections": [
+            {
+                "from": "Events",
+                "to": "Projection"
+            },
+            {
+                "from": "Projection",
+                "to": "Classify Event"
+            },
+            {
+                "from": "Classify Event",
+                "to": "Spam Messages"
+            },
+            {
+                "from": "Spam Messages",
+                "to": "Spam"
+            },
+            {
+                "from": "Classify Event",
+                "to": "Non Spam Messages"
+            },
+            {
+                "from": "Non Spam Messages",
+                "to": "Non Spam"
+            }
+        ],
+        "comments": [],
+        "postActions": [],
+        "stages": [
+            {
+                "name": "Events",
+                "plugin": {
+                    "name": "Stream",
+                    "type": "batchsource",
+                    "label": "Events",
+                    "artifact": {
+                        "name": "core-plugins",
+                        "version": "1.3.0",
+                        "scope": "SYSTEM"
+                    },
+                    "properties": {
+                        "format": "text",
+                        "schema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"body\",\"type\":\"string\"}]}",
+                        "name": "events",
+                        "duration": "1d",
+                        "format.setting.pattern": null
+                    }
+                },
+                "outputSchema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"ts\",\"type\":\"long\",\"readonly\":true},{\"name\":\"headers\",\"type\":{\"type\":\"map\",\"keys\":\"string\",\"values\":\"string\"},\"readonly\":true},{\"name\":\"body\",\"type\":\"string\"}]}",
+                "inputSchema": null
+            },
+            {
+                "name": "Projection",
+                "plugin": {
+                    "name": "Projection",
+                    "type": "transform",
+                    "label": "Projection",
+                    "artifact": {
+                        "name": "core-plugins",
+                        "version": "1.3.0",
+                        "scope": "SYSTEM"
+                    },
+                    "properties": {
+                        "convert": "",
+                        "drop": "ts,headers",
+                        "rename": ""
+                    }
+                },
+                "outputSchema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"body\",\"type\":\"string\"}]}",
+                "inputSchema": [
+                    {
+                        "name": "ts",
+                        "type": "long",
+                        "nullable": false
+                    },
+                    {
+                        "name": "headers",
+                        "type": {
+                            "type": "map",
+                            "keys": "string",
+                            "values": "string"
+                        },
+                        "nullable": false
+                    },
+                    {
+                        "name": "body",
+                        "type": "string",
+                        "nullable": false
+                    }
+                ]
+            },
+            {
+                "name": "Classify Event",
+                "plugin": {
+                    "name": "NaiveBayesClassifier",
+                    "type": "sparkcompute",
+                    "label": "Classify Event",
+                    "artifact": {
+                        "name": "spark-plugins",
+                        "version": "1.3.0",
+                        "scope": "SYSTEM"
+                    },
+                    "properties": {
+                        "fileSetName": "modelFileSet",
+                        "path": "output",
+                        "fieldToClassify": "body",
+                        "predictionField": "isSpam"
+                    }
+                },
+                "outputSchema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"body\",\"type\":\"string\"},{\"name\":\"isSpam\",\"type\":\"double\"}]}",
+                "inputSchema": [
+                    {
+                        "name": "body",
+                        "type": "string",
+                        "nullable": false
+                    }
+                ]
+            },
+            {
+                "name": "Spam Messages",
+                "plugin": {
+                    "name": "JavaScript",
+                    "type": "transform",
+                    "label": "Spam Messages",
+                    "artifact": {
+                        "name": "core-plugins",
+                        "version": "1.3.0",
+                        "scope": "SYSTEM"
+                    },
+                    "properties": {
+                        "script": "function transform(input, emitter, context) {\n    if (input.isSpam == 1.0) {\n        emitter.emit(input);\n    }\n}",
+                        "schema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"body\",\"type\":\"string\"},{\"name\":\"isSpam\",\"type\":\"double\"}]}"
+                    }
+                },
+                "outputSchema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"body\",\"type\":\"string\"},{\"name\":\"isSpam\",\"type\":\"double\"}]}",
+                "inputSchema": [
+                    {
+                        "name": "body",
+                        "type": "string",
+                        "nullable": false
+                    },
+                    {
+                        "name": "isSpam",
+                        "type": "double",
+                        "nullable": false
+                    }
+                ]
+            },
+            {
+                "name": "Spam",
+                "plugin": {
+                    "name": "TPFSAvro",
+                    "type": "batchsink",
+                    "label": "Spam",
+                    "artifact": {
+                        "name": "core-plugins",
+                        "version": "1.3.0",
+                        "scope": "SYSTEM"
+                    },
+                    "properties": {
+                        "schema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"body\",\"type\":\"string\"},{\"name\":\"isSpam\",\"type\":\"double\"}]}",
+                        "name": "spam"
+                    }
+                },
+                "outputSchema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"body\",\"type\":\"string\"},{\"name\":\"isSpam\",\"type\":\"double\"}]}",
+                "inputSchema": [
+                    {
+                        "name": "body",
+                        "type": "string",
+                        "nullable": false
+                    },
+                    {
+                        "name": "isSpam",
+                        "type": "double",
+                        "nullable": false
+                    }
+                ]
+            },
+            {
+                "name": "Non Spam Messages",
+                "plugin": {
+                    "name": "JavaScript",
+                    "type": "transform",
+                    "label": "Non Spam Messages",
+                    "artifact": {
+                        "name": "core-plugins",
+                        "version": "1.3.0",
+                        "scope": "SYSTEM"
+                    },
+                    "properties": {
+                        "script": "function transform(input, emitter, context) {\n    if (input.isSpam === 0.0) {\n        emitter.emit(input);\n    }\n}",
+                        "schema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"body\",\"type\":\"string\"},{\"name\":\"isSpam\",\"type\":\"double\"}]}"
+                    }
+                },
+                "outputSchema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"body\",\"type\":\"string\"},{\"name\":\"isSpam\",\"type\":\"double\"}]}",
+                "inputSchema": [
+                    {
+                        "name": "body",
+                        "type": "string",
+                        "nullable": false
+                    },
+                    {
+                        "name": "isSpam",
+                        "type": "double",
+                        "nullable": false
+                    }
+                ]
+            },
+            {
+                "name": "Non Spam",
+                "plugin": {
+                    "name": "TPFSAvro",
+                    "type": "batchsink",
+                    "label": "Non Spam",
+                    "artifact": {
+                        "name": "core-plugins",
+                        "version": "1.3.0",
+                        "scope": "SYSTEM"
+                    },
+                    "properties": {
+                        "schema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"body\",\"type\":\"string\"},{\"name\":\"isSpam\",\"type\":\"double\"}]}",
+                        "name": "non_spam"
+                    }
+                },
+                "outputSchema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"body\",\"type\":\"string\"},{\"name\":\"isSpam\",\"type\":\"double\"}]}",
+                "inputSchema": [
+                    {
+                        "name": "body",
+                        "type": "string",
+                        "nullable": false
+                    },
+                    {
+                        "name": "isSpam",
+                        "type": "double",
+                        "nullable": false
+                    }
+                ]
+            }
+        ],
+        "schedule": "0 * * * *",
+        "engine": "mapreduce"
+    }
+}

@@ -17,6 +17,8 @@
 package co.cask.cdap.proto.metadata;
 
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.audit.AuditMessage;
+import co.cask.cdap.proto.audit.AuditType;
 
 import java.util.Objects;
 import javax.annotation.Nullable;
@@ -24,7 +26,10 @@ import javax.annotation.Nullable;
 /**
  * Represents a Metadata change for a given {@link Id.NamespacedId}, including its previous state, the change,
  * the time that the change occurred and (optionally) the entity that made the update.
+ *
+ * @deprecated Use {@link AuditMessage} with {@link AuditType#METADATA_CHANGE} instead.
  */
+@Deprecated
 public final class MetadataChangeRecord {
   private final MetadataRecord previous;
   private final MetadataDiffRecord changes;

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,12 +20,15 @@ import co.cask.cdap.api.ProgramLifecycle;
 import co.cask.cdap.api.RuntimeContext;
 import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.common.lang.PropertyFieldSetter;
-import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.internal.app.runtime.DataSetFieldSetter;
 import co.cask.cdap.internal.app.runtime.MetricsFieldSetter;
+import co.cask.cdap.internal.app.runtime.batch.dataset.input.TaggedInputSplit;
 import co.cask.cdap.internal.lang.Reflections;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.mapreduce.InputFormat;
+import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.MRJobConfig;
 import org.apache.hadoop.mapreduce.Mapper;
@@ -50,11 +53,21 @@ public class MapperWrapper extends Mapper {
   public static void wrap(Job job) {
     // NOTE: we don't use job.getMapperClass() as we don't need to load user class here
     Configuration conf = job.getConfiguration();
-    String mapClass = conf.get(MRJobConfig.MAP_CLASS_ATTR);
-    if (mapClass != null) {
-      conf.set(MapperWrapper.ATTR_MAPPER_CLASS, mapClass);
-      job.setMapperClass(MapperWrapper.class);
-    }
+    String mapClass = conf.get(MRJobConfig.MAP_CLASS_ATTR, Mapper.class.getName());
+    conf.set(MapperWrapper.ATTR_MAPPER_CLASS, mapClass);
+    job.setMapperClass(MapperWrapper.class);
+  }
+
+  /**
+   * Retrieves the class name of the wrapped mapper class from a Job's configuration.
+   *
+   * @param conf The conf from which to get the wrapped class.
+   * @return the class name of the wrapped Mapper class
+   */
+  public static String getWrappedMapper(Configuration conf) {
+    String wrappedMapperClassName = conf.get(MapperWrapper.ATTR_MAPPER_CLASS);
+    Preconditions.checkNotNull(wrappedMapperClassName, "Wrapped mapper class could not be found.");
+    return wrappedMapperClassName;
   }
 
   @SuppressWarnings("unchecked")
@@ -63,15 +76,17 @@ public class MapperWrapper extends Mapper {
     MapReduceClassLoader classLoader = MapReduceClassLoader.getFromConfiguration(context.getConfiguration());
     BasicMapReduceTaskContext basicMapReduceContext = classLoader.getTaskContextProvider().get(context);
 
-    LoggingContextAccessor.setLoggingContext(basicMapReduceContext.getLoggingContext());
-
     // this is a hook for periodic flushing of changes buffered by datasets (to avoid OOME)
     WrappedMapper.Context flushingContext = createAutoFlushingContext(context, basicMapReduceContext);
-    basicMapReduceContext.setHadoopContext(flushingContext);
 
-    String userMapper = context.getConfiguration().get(ATTR_MAPPER_CLASS);
+    basicMapReduceContext.setHadoopContext(flushingContext);
+    InputSplit inputSplit = context.getInputSplit();
+    if (inputSplit instanceof TaggedInputSplit) {
+      basicMapReduceContext.setInputName(((TaggedInputSplit) inputSplit).getName());
+    }
+
     ClassLoader programClassLoader = classLoader.getProgramClassLoader();
-    Mapper delegate = createMapperInstance(programClassLoader, userMapper);
+    Mapper delegate = createMapperInstance(programClassLoader, getWrappedMapper(context.getConfiguration()), context);
 
     // injecting runtime components, like datasets, etc.
     try {
@@ -154,11 +169,35 @@ public class MapperWrapper extends Mapper {
         }
         return result;
       }
+
+      @Override
+      public InputSplit getInputSplit() {
+        InputSplit inputSplit = super.getInputSplit();
+        if (inputSplit instanceof TaggedInputSplit) {
+          // expose the delegate InputSplit to the user
+          inputSplit = ((TaggedInputSplit) inputSplit).getInputSplit();
+        }
+        return inputSplit;
+      }
+
+      @Override
+      public Class<? extends InputFormat<?, ?>> getInputFormatClass() throws ClassNotFoundException {
+        InputSplit inputSplit = super.getInputSplit();
+        if (inputSplit instanceof TaggedInputSplit) {
+          // expose the delegate InputFormat to the user
+          return ((TaggedInputSplit) inputSplit).getInputFormatClass();
+        }
+        return super.getInputFormatClass();
+      }
     };
     return flushingContext;
   }
 
-  private Mapper createMapperInstance(ClassLoader classLoader, String userMapper) {
+  private Mapper createMapperInstance(ClassLoader classLoader, String userMapper, Context context) {
+    if (context.getInputSplit() instanceof TaggedInputSplit) {
+      // Find the delegate Mapper from the TaggedInputSplit.
+      userMapper = ((TaggedInputSplit) context.getInputSplit()).getMapperClassName();
+    }
     try {
       return (Mapper) classLoader.loadClass(userMapper).newInstance();
     } catch (Exception e) {

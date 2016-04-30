@@ -16,17 +16,14 @@
 
 package co.cask.cdap.internal.app;
 
-import co.cask.cdap.api.artifact.ArtifactId;
 import co.cask.cdap.api.plugin.Plugin;
-import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.api.plugin.PluginConfigurer;
 import co.cask.cdap.api.plugin.PluginProperties;
-import co.cask.cdap.api.plugin.PluginPropertyField;
 import co.cask.cdap.api.plugin.PluginSelector;
 import co.cask.cdap.common.ArtifactNotFoundException;
 import co.cask.cdap.internal.api.DefaultDatasetConfigurer;
-import co.cask.cdap.internal.app.runtime.artifact.ArtifactDescriptor;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
+import co.cask.cdap.internal.app.runtime.plugin.FindPluginHelper;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.internal.app.runtime.plugin.PluginNotExistsException;
 import co.cask.cdap.proto.Id;
@@ -150,31 +147,9 @@ public class DefaultPluginConfigurer extends DefaultDatasetConfigurer implements
                             PluginProperties properties, PluginSelector selector)
     throws PluginNotExistsException, ArtifactNotFoundException {
     Preconditions.checkArgument(!plugins.containsKey(pluginId),
-                                "Plugin of type %s, name %s was already added.", pluginType, pluginName);
-    Preconditions.checkArgument(properties != null, "Plugin properties cannot be null");
-
-    Map.Entry<ArtifactDescriptor, PluginClass> pluginEntry;
-    try {
-      pluginEntry = artifactRepository.findPlugin(deployNamespace, artifactId, pluginType, pluginName, selector);
-    } catch (IOException e) {
-      throw Throwables.propagate(e);
-    }
-
-    // Just verify if all required properties are provided.
-    // No type checking is done for now.
-    for (PluginPropertyField field : pluginEntry.getValue().getProperties().values()) {
-      Preconditions.checkArgument(!field.isRequired() ||
-                                    (properties != null && properties.getProperties().containsKey(field.getName())),
-                                  "Required property '%s' missing for plugin of type %s, name %s.",
-                                  field.getName(), pluginType, pluginName);
-    }
-
-    ArtifactId artifactId = pluginEntry.getKey().getArtifactId();
-    try {
-      pluginInstantiator.addArtifact(pluginEntry.getKey().getLocation(), artifactId);
-    } catch (IOException e) {
-      Throwables.propagate(e);
-    }
-    return new Plugin(artifactId, pluginEntry.getValue(), properties);
+                                "Plugin of type %s, name %s was already added as id %s.",
+                                pluginType, pluginName, pluginId);
+    return FindPluginHelper.findPlugin(artifactRepository, pluginInstantiator, deployNamespace.toEntityId(), artifactId,
+                                       pluginType, pluginName, properties, selector);
   }
 }

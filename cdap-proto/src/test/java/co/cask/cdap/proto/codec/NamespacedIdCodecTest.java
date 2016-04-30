@@ -20,13 +20,13 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.metadata.MetadataRecord;
 import co.cask.cdap.proto.metadata.MetadataScope;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -78,8 +78,12 @@ public class NamespacedIdCodecTest {
 
   @Test
   public void testWithMetadataRecord() {
-    Map<String, String> properties = ImmutableMap.of("key1", "value1", "k1", "v1");
-    Set<String> tags = ImmutableSet.of("tag1", "t1");
+    Map<String, String> properties = new HashMap<>();
+    properties.put("key1", "value1");
+    properties.put("k1", "v1");
+    Set<String> tags = new LinkedHashSet<>();
+    tags.add("tag1");
+    tags.add("t1");
     // verify with Id.Application
     MetadataRecord appRecord = new MetadataRecord(app, MetadataScope.USER, properties, tags);
     String appRecordJson = GSON.toJson(appRecord);

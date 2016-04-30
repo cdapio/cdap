@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,12 +18,12 @@ package co.cask.cdap.internal.app.runtime.batch;
 
 import co.cask.cdap.api.data.batch.Split;
 import co.cask.cdap.api.plugin.Plugin;
-import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
-import co.cask.cdap.internal.app.runtime.workflow.BasicWorkflowToken;
+import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
+import co.cask.cdap.proto.id.ProgramId;
 import co.cask.tephra.Transaction;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
@@ -58,9 +58,8 @@ public final class MapReduceContextConfig {
   private static final Gson GSON = new Gson();
 
   private static final String HCONF_ATTR_RUN_ID = "hconf.program.run.id";
-  private static final String HCONF_ATTR_LOGICAL_START_TIME = "hconf.program.logical.start.time";
-  private static final String HCONF_ATTR_PROGRAM_NAME_IN_WORKFLOW = "hconf.program.name.in.workflow";
-  private static final String HCONF_ATTR_WORKFLOW_TOKEN = "hconf.program.workflow.token";
+  private static final String HCONF_ATTR_PROGRAM_ID = "hconf.program.id";
+  private static final String HCONF_ATTR_WORKFLOW_INFO = "hconf.program.workflow.info";
   private static final String HCONF_ATTR_PLUGINS = "hconf.program.plugins.map";
   private static final String HCONF_ATTR_ARGS = "hconf.program.args";
   private static final String HCONF_ATTR_PROGRAM_JAR_URI = "hconf.program.jar.uri";
@@ -90,9 +89,8 @@ public final class MapReduceContextConfig {
   public void set(BasicMapReduceContext context, CConfiguration conf, Transaction tx, URI programJarURI,
                   Map<String, String> localizedUserResources) {
     setRunId(context.getRunId().getId());
-    setLogicalStartTime(context.getLogicalStartTime());
-    setProgramNameInWorkflow(context.getProgramNameInWorkflow());
-    setWorkflowToken(context.getWorkflowToken());
+    setProgramId(context.getProgram().getId().toEntityId());
+    setWorkflowProgramInfo(context.getWorkflowInfo());
     setPlugins(context.getPlugins());
     setArguments(context.getRuntimeArguments());
     setProgramJarURI(programJarURI);
@@ -118,6 +116,10 @@ public final class MapReduceContextConfig {
     hConf.set(HCONF_ATTR_RUN_ID, runId);
   }
 
+  private void setProgramId(ProgramId programId) {
+    hConf.set(HCONF_ATTR_PROGRAM_ID, GSON.toJson(programId));
+  }
+
   /**
    * Returns the {@link RunId} for the MapReduce program.
    */
@@ -125,52 +127,31 @@ public final class MapReduceContextConfig {
     return RunIds.fromString(hConf.get(HCONF_ATTR_RUN_ID));
   }
 
-  private void setLogicalStartTime(long startTime) {
-    hConf.setLong(HCONF_ATTR_LOGICAL_START_TIME, startTime);
-  }
-
   /**
-   * Returns the logical start time for the MapReduce program.
+   * Returns the {@link ProgramId} for the MapReduce program.
    */
-  public long getLogicalStartTime() {
-    long startTime = hConf.getLong(HCONF_ATTR_LOGICAL_START_TIME, -1L);
-    // It shouldn't happen
-    Preconditions.checkArgument(startTime >= 0, "Logical start time is not present.");
-    return startTime;
+  public ProgramId getProgramId() {
+    return GSON.fromJson(hConf.get(HCONF_ATTR_PROGRAM_ID), ProgramId.class);
   }
 
-  private void setProgramNameInWorkflow(@Nullable String programNameInWorkflow) {
-    if (programNameInWorkflow != null) {
-      hConf.set(HCONF_ATTR_PROGRAM_NAME_IN_WORKFLOW, programNameInWorkflow);
+  private void setWorkflowProgramInfo(@Nullable WorkflowProgramInfo info) {
+    if (info != null) {
+      hConf.set(HCONF_ATTR_WORKFLOW_INFO, GSON.toJson(info));
     }
   }
 
   /**
-   * Returns the MapReduce program name when it is running inside Workflow or {@code null} if not.
+   * Returns the {@link WorkflowProgramInfo} if it is running inside Workflow or {@code null} if not.
    */
   @Nullable
-  public String getProgramNameInWorkflow() {
-    return hConf.get(HCONF_ATTR_PROGRAM_NAME_IN_WORKFLOW);
-  }
-
-  private void setWorkflowToken(@Nullable WorkflowToken workflowToken) {
-    if (workflowToken != null) {
-      hConf.set(HCONF_ATTR_WORKFLOW_TOKEN, GSON.toJson(workflowToken));
-    }
-  }
-
-  /**
-   * Returns the {@link WorkflowToken} if it is running inside Workflow or {@code null} if not.
-   */
-  @Nullable
-  public WorkflowToken getWorkflowToken() {
-    String tokenJson = hConf.get(HCONF_ATTR_WORKFLOW_TOKEN);
-    if (tokenJson == null) {
+  public WorkflowProgramInfo getWorkflowProgramInfo() {
+    String info = hConf.get(HCONF_ATTR_WORKFLOW_INFO);
+    if (info == null) {
       return null;
     }
-    BasicWorkflowToken token = GSON.fromJson(tokenJson, BasicWorkflowToken.class);
-    token.disablePut();
-    return token;
+    WorkflowProgramInfo workflowProgramInfo = GSON.fromJson(info, WorkflowProgramInfo.class);
+    workflowProgramInfo.getWorkflowToken().disablePut();
+    return workflowProgramInfo;
   }
 
   private void setPlugins(Map<String, Plugin> plugins) {

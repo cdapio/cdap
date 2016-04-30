@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,13 +21,17 @@ import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.api.plugin.Plugin;
 import co.cask.cdap.api.workflow.WorkflowActionSpecification;
 import co.cask.cdap.api.workflow.WorkflowContext;
+import co.cask.cdap.api.workflow.WorkflowNodeState;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.metrics.ProgramUserMetrics;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.Arguments;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.internal.app.program.ProgramTypeMetricTag;
 import co.cask.cdap.internal.app.runtime.AbstractContext;
+import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
@@ -45,25 +49,26 @@ final class BasicWorkflowContext extends AbstractContext implements WorkflowCont
 
   private final WorkflowSpecification workflowSpec;
   private final WorkflowActionSpecification specification;
-  private final long logicalStartTime;
   private final ProgramWorkflowRunner programWorkflowRunner;
   private final Map<String, String> runtimeArgs;
   private final WorkflowToken token;
   private final Metrics userMetrics;
+  private final Map<String, WorkflowNodeState> nodeStates;
+  private boolean success = false;
 
   BasicWorkflowContext(WorkflowSpecification workflowSpec, @Nullable WorkflowActionSpecification spec,
-                       long logicalStartTime, @Nullable ProgramWorkflowRunner programWorkflowRunner,
+                       @Nullable ProgramWorkflowRunner programWorkflowRunner,
                        Arguments arguments, WorkflowToken token, Program program, RunId runId,
                        MetricsCollectionService metricsCollectionService,
                        DatasetFramework datasetFramework, TransactionSystemClient txClient,
-                       DiscoveryServiceClient discoveryServiceClient) {
+                       DiscoveryServiceClient discoveryServiceClient, Map<String, WorkflowNodeState> nodeStates,
+                       @Nullable PluginInstantiator pluginInstantiator) {
     super(program, runId, arguments,
           (spec == null) ? new HashSet<String>() : spec.getDatasets(),
           getMetricCollector(program, runId.getId(), metricsCollectionService),
-          datasetFramework, txClient, discoveryServiceClient, false);
+          datasetFramework, txClient, discoveryServiceClient, false, pluginInstantiator);
     this.workflowSpec = workflowSpec;
     this.specification = spec;
-    this.logicalStartTime = logicalStartTime;
     this.programWorkflowRunner = programWorkflowRunner;
     this.runtimeArgs = ImmutableMap.copyOf(arguments.asMap());
     this.token = token;
@@ -72,6 +77,7 @@ final class BasicWorkflowContext extends AbstractContext implements WorkflowCont
     } else {
       this.userMetrics = null;
     }
+    this.nodeStates = nodeStates;
   }
 
   @Nullable
@@ -80,8 +86,11 @@ final class BasicWorkflowContext extends AbstractContext implements WorkflowCont
     if (service == null) {
       return null;
     }
-    Map<String, String> tags = Maps.newHashMap(getMetricsContext(program, runId));
-
+    Map<String, String> tags = Maps.newHashMap();
+    tags.put(Constants.Metrics.Tag.NAMESPACE, program.getNamespaceId());
+    tags.put(Constants.Metrics.Tag.APP, program.getApplicationId());
+    tags.put(ProgramTypeMetricTag.getTagName(program.getType()), program.getName());
+    tags.put(Constants.Metrics.Tag.WORKFLOW_RUN_ID, runId);
     return service.getContext(tags);
   }
 
@@ -96,11 +105,6 @@ final class BasicWorkflowContext extends AbstractContext implements WorkflowCont
       throw new UnsupportedOperationException("Operation not allowed.");
     }
     return specification;
-  }
-
-  @Override
-  public long getLogicalStartTime() {
-    return logicalStartTime;
   }
 
   @Override
@@ -129,5 +133,22 @@ final class BasicWorkflowContext extends AbstractContext implements WorkflowCont
   @Override
   public WorkflowToken getToken() {
     return token;
+  }
+
+  @Override
+  public Map<String, WorkflowNodeState> getNodeStates() {
+    return ImmutableMap.copyOf(nodeStates);
+  }
+
+  /**
+   * Sets the success flag if execution of the program associated with current context succeeds.
+   */
+  void setSuccess() {
+    success = true;
+  }
+
+  @Override
+  public boolean isSuccessful() {
+    return success;
   }
 }

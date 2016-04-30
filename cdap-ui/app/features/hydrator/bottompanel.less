@@ -122,7 +122,7 @@ body.theme-cdap.state-hydrator {
     // Styling for maximized bottom panel
     &.maximized {
       position: fixed;
-      top: 120px;
+      top: 110px;
       right: 0;
       left: 0;
       bottom: 53px;
@@ -250,6 +250,9 @@ body.theme-cdap.state-hydrator {
       .schema-propagation-confirm {
         padding-top: 10px;
       }
+      .confirmation-button {
+        margin-top: 5px;
+      }
       .btn-group {
         .btn {
           margin-right: 5px;
@@ -358,7 +361,10 @@ body.theme-cdap.state-hydrator {
       }
     }
     .form-control {
-      height: 30px;
+      &:not(textarea) {
+        height: 30px;
+      }
+
       .box-shadow(none);
       &:focus {
         border-color: @table-border-color;

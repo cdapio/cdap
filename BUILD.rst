@@ -36,7 +36,8 @@ Standalone and Distributed CDAP
 
 - Run selected test::
 
-    MAVEN_OPTS="-Xmx1024m -XX:MaxPermSize=128m" mvn -Dtest=TestClass,TestMore*Class,TestClassMethod#methodName -DfailIfNoTests=false test
+    MAVEN_OPTS="-Xmx1024m -XX:MaxPermSize=128m" mvn -Dtest=TestClass,TestMore*Class,TestClassMethod#methodName \
+    -DfailIfNoTests=false test
 
 - Run App-Template tests::
 
@@ -50,11 +51,16 @@ Standalone and Distributed CDAP
 
 - Build Standalone distribution ZIP::
 
-    MAVEN_OPTS="-Xmx1024m -XX:MaxPermSize=128m" mvn clean package -pl cdap-standalone,cdap-app-templates/cdap-etl,cdap-app-templates/cdap-data-quality,cdap-examples -am -amd -DskipTests -P examples,templates,dist,release,unit-tests
+    MAVEN_OPTS="-Xmx1024m -XX:MaxPermSize=128m" mvn clean package \
+    -pl cdap-standalone,cdap-app-templates/cdap-etl,cdap-app-templates/cdap-data-quality,cdap-examples \
+    -am -amd -DskipTests -P examples,templates,dist,release,unit-tests
 
 - Build Standalone distribution ZIP with additional system artifacts::
 
-    MAVEN_OPTS="-Xmx1024m -XX:MaxPermSize=128m" mvn clean package -pl cdap-standalone,cdap-app-templates/cdap-etl,cdap-app-templates/cdap-data-quality,cdap-examples -am -amd -DskipTests -P examples,templates,dist,release,unit-tests -Dadditional.artifacts.dir=</path/to/additional/artifacts>
+    MAVEN_OPTS="-Xmx1024m -XX:MaxPermSize=128m" mvn clean package \
+    -pl cdap-standalone,cdap-app-templates/cdap-etl,cdap-app-templates/cdap-data-quality,cdap-examples \
+    -am -amd -DskipTests -P examples,templates,dist,release,unit-tests \
+    -Dadditional.artifacts.dir=</path/to/additional/artifacts>
 
   This will copy any .jar and .json files in any 'target' directories under the specified path to the artifacts directory.
 
@@ -62,21 +68,25 @@ Standalone and Distributed CDAP
 
     mvn clean package javadoc:javadoc -pl cdap-api -am -DskipTests -P release
     
-- Build the limited set of Javadocs, including the App Templates, used in documentation::
+- Build the limited set of Javadocs, including the ETL Application Templates, included in the CDAP documentation::
 
-    MAVEN_OPTS="-Xmx1024m -XX:MaxPermSize=128m" mvn clean install -P examples,templates,release -DskipTests -Dgpg.skip=true && mvn clean site -DskipTests -P templates -DisOffline=false
+    MAVEN_OPTS="-Xmx1024m -XX:MaxPermSize=128m" mvn clean install -P examples,templates,release -DskipTests \
+    -Dgpg.skip=true && mvn clean site -DskipTests -P templates -DisOffline=false
 
-- Build the complete set of Javadocs, for all modules (currently incomplete)::
+- Build the complete set of Javadocs, for all modules and examples::
 
-    MAVEN_OPTS="-Xmx1024m" mvn clean site -Dmaxmemory=1024m -DskipTests
-    
+    MAVEN_OPTS="-Xmx1024m -XX:MaxPermSize=128m" mvn clean install -P examples,templates,release -DskipTests \
+    -Dgpg.skip=true && mvn clean javadoc:aggregate -DskipTests -P examples,templates -DisOffline=false
+
 - Build distributions (rpm, deb, tgz)::
 
-    MAVEN_OPTS="-Xmx1024m -XX:MaxPermSize=128m" mvn clean package -DskipTests -P examples,templates,dist,release,rpm-prepare,rpm,deb-prepare,deb,tgz,unit-tests
+    MAVEN_OPTS="-Xmx1024m -XX:MaxPermSize=128m" mvn clean package -DskipTests \
+    -P examples,templates,dist,release,rpm-prepare,rpm,deb-prepare,deb,tgz,unit-tests
 
 - Build Cloudera Manager parcel::
 
-    MAVEN_OPTS="-Xmx1024m -XX:MaxPermSize=128m" mvn clean package -DskipTests -P templates,dist,tgz && ./cdap-distributions/bin/build_parcel.sh
+    MAVEN_OPTS="-Xmx1024m -XX:MaxPermSize=128m" mvn clean package -DskipTests \
+    -P templates,dist,tgz && ./cdap-distributions/bin/build_parcel.sh
 
 - Show dependency tree::
 
@@ -104,8 +114,7 @@ Standalone and Distributed CDAP
     
 - Running from IDE (Intellij and Eclipse)::
 
-    cd cdap-ui
-    bower install && npm install && gulp build
+    mvn clean package -pl cdap-ui -am -DskipTests -P dist
     
   (Whenever there is a change in the UI packages.)
     
@@ -115,7 +124,7 @@ Standalone and Distributed CDAP
 License and Trademarks
 ======================
 
-Copyright © 2014-2015 Cask Data, Inc.
+Copyright © 2014-2016 Cask Data, Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
 in compliance with the License. You may obtain a copy of the License at

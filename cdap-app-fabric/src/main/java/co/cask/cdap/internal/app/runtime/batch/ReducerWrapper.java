@@ -20,7 +20,6 @@ import co.cask.cdap.api.ProgramLifecycle;
 import co.cask.cdap.api.RuntimeContext;
 import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.common.lang.PropertyFieldSetter;
-import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.internal.app.runtime.DataSetFieldSetter;
 import co.cask.cdap.internal.app.runtime.MetricsFieldSetter;
 import co.cask.cdap.internal.lang.Reflections;
@@ -62,7 +61,6 @@ public class ReducerWrapper extends Reducer {
   public void run(Context context) throws IOException, InterruptedException {
     MapReduceClassLoader classLoader = MapReduceClassLoader.getFromConfiguration(context.getConfiguration());
     BasicMapReduceTaskContext basicMapReduceContext = classLoader.getTaskContextProvider().get(context);
-    LoggingContextAccessor.setLoggingContext(basicMapReduceContext.getLoggingContext());
 
     // this is a hook for periodic flushing of changes buffered by datasets (to avoid OOME)
     WrappedReducer.Context flushingContext = createAutoFlushingContext(context, basicMapReduceContext);

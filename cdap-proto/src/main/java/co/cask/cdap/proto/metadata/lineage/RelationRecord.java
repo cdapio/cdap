@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,8 +16,8 @@
 
 package co.cask.cdap.proto.metadata.lineage;
 
-import com.google.common.collect.ImmutableSet;
-
+import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.Objects;
 import java.util.Set;
 
@@ -27,16 +27,16 @@ import java.util.Set;
 public class RelationRecord {
   private final String data;
   private final String program;
-  private final String access;
+  private final Set<String> accesses;
   private final Set<String> runs;
   private final Set<String> components;
 
-  public RelationRecord(String data, String program, String access, Set<String> runs, Set<String> components) {
+  public RelationRecord(String data, String program, Set<String> accesses, Set<String> runs, Set<String> components) {
     this.data = data;
     this.program = program;
-    this.access = access;
-    this.runs = ImmutableSet.copyOf(runs);
-    this.components = ImmutableSet.copyOf(components);
+    this.accesses = Collections.unmodifiableSet(new LinkedHashSet<>(accesses));
+    this.runs = Collections.unmodifiableSet(new LinkedHashSet<>(runs));
+    this.components = Collections.unmodifiableSet(new LinkedHashSet<>(components));
   }
 
   public String getData() {
@@ -47,8 +47,8 @@ public class RelationRecord {
     return program;
   }
 
-  public String getAccess() {
-    return access;
+  public Set<String> getAccesses() {
+    return accesses;
   }
 
   public Set<String> getRuns() {
@@ -67,17 +67,17 @@ public class RelationRecord {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    RelationRecord relation = (RelationRecord) o;
-    return Objects.equals(data, relation.data) &&
-      Objects.equals(program, relation.program) &&
-      Objects.equals(access, relation.access) &&
-      Objects.equals(runs, relation.runs) &&
-      Objects.equals(components, relation.components);
+    RelationRecord that = (RelationRecord) o;
+    return Objects.equals(data, that.data) &&
+      Objects.equals(program, that.program) &&
+      Objects.equals(accesses, that.accesses) &&
+      Objects.equals(runs, that.runs) &&
+      Objects.equals(components, that.components);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(data, program, access, runs, components);
+    return Objects.hash(data, program, accesses, runs, components);
   }
 
   @Override
@@ -85,7 +85,7 @@ public class RelationRecord {
     return "RelationRecord{" +
       "data='" + data + '\'' +
       ", program='" + program + '\'' +
-      ", access='" + access + '\'' +
+      ", accesses=" + accesses +
       ", runs=" + runs +
       ", components=" + components +
       '}';

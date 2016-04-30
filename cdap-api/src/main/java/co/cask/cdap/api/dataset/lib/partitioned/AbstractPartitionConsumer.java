@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,11 +19,9 @@ package co.cask.cdap.api.dataset.lib.partitioned;
 import co.cask.cdap.api.dataset.lib.Partition;
 import co.cask.cdap.api.dataset.lib.PartitionKey;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
-import com.google.common.base.Function;
-import com.google.common.collect.Lists;
 
+import java.util.AbstractList;
 import java.util.List;
-import javax.annotation.Nullable;
 
 /**
  * Abstract implementation of PartitionConsumer, which manages state persistence and serialization/deserialization
@@ -51,7 +49,8 @@ public abstract class AbstractPartitionConsumer implements PartitionConsumer {
    * @param partitionKeys list of partition keys to mark as either succeeded or failed processing
    * @param succeeded whether or not processing of the specified partitions was successful
    */
-  public abstract void doFinish(ConsumerWorkingSet workingSet, List<PartitionKey> partitionKeys, boolean succeeded);
+  public abstract void doFinish(ConsumerWorkingSet workingSet, List<? extends PartitionKey> partitionKeys,
+                                boolean succeeded);
 
 
   /**
@@ -111,15 +110,35 @@ public abstract class AbstractPartitionConsumer implements PartitionConsumer {
   }
 
   @Override
-  public void onFinish(List<? extends Partition> partitions, boolean succeeded) {
-    List<PartitionKey> partitionKeys = Lists.transform(partitions, new Function<Partition, PartitionKey>() {
-      @Nullable
-      @Override
-      public PartitionKey apply(Partition input) {
-        return input.getPartitionKey();
-      }
-    });
+  public void onFinish(final List<? extends Partition> partitions, boolean succeeded) {
+    List<PartitionKey> partitionKeys = new AbstractList<PartitionKey>() {
 
+      @Override
+      public int size() {
+        return partitions.size();
+      }
+
+      @Override
+      public PartitionKey get(int index) {
+        return partitions.get(index).getPartitionKey();
+      }
+
+      @Override
+      public void clear() {
+        partitions.clear();
+      }
+
+      @Override
+      public PartitionKey remove(int index) {
+        return partitions.remove(index).getPartitionKey();
+      }
+    };
+
+    onFinishWithKeys(partitionKeys, succeeded);
+  }
+
+  @Override
+  public void onFinishWithKeys(List<? extends PartitionKey> partitionKeys, boolean succeeded) {
     ConsumerWorkingSet workingSet = readState();
 
     doFinish(workingSet, partitionKeys, succeeded);

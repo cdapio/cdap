@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,7 +16,9 @@
 
 package co.cask.cdap.api.dataset.lib.partitioned;
 
+import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.dataset.lib.Partition;
+import co.cask.cdap.api.dataset.lib.PartitionKey;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
 
 import java.util.List;
@@ -27,6 +29,7 @@ import java.util.List;
  * the consumePartitions method must be called in its own, short transaction before the processing of the partitions.
  * This is so that other concurrent consumers can see that the partitions have been marked as IN_PROGRESS.
  */
+@Beta
 public interface PartitionConsumer {
 
   /**
@@ -55,4 +58,13 @@ public interface PartitionConsumer {
    * @param succeeded whether or not processing of the specified partitions was successful
    */
   void onFinish(List<? extends Partition> partitions, boolean succeeded);
+
+  /**
+   * Same as {@link #onFinish(List, boolean)}, but allows specifying {@link PartitionKey}s
+   * instead of {@link co.cask.cdap.api.dataset.lib.Partition}s.
+   *
+   * @param partitionKeys list of partition keys to mark as either succeeded or failed processing
+   * @param succeeded whether or not processing of the specified partitions was successful
+   */
+  void onFinishWithKeys(List<? extends PartitionKey> partitionKeys, boolean succeeded);
 }

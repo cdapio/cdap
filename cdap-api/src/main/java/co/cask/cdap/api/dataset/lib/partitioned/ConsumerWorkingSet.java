@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -22,17 +22,10 @@ import co.cask.cdap.api.dataset.lib.PartitionConsumerState;
 import co.cask.cdap.api.dataset.lib.PartitionDetail;
 import co.cask.cdap.api.dataset.lib.PartitionKey;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
-import com.google.common.base.Function;
-import com.google.common.collect.Lists;
-import com.google.common.primitives.Ints;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
-import javax.annotation.Nullable;
 
 /**
  * Keeps track of a list of partitions that are either available for consuming or are currently being consumed.
@@ -146,31 +139,23 @@ public class ConsumerWorkingSet {
   public byte[] toBytes() {
     // first byte for serialization format version
     int numBytes = 1;
-    numBytes += Ints.BYTES;
+    numBytes += Bytes.SIZEOF_INT;
 
-    List<byte[]> partitionsBytes = Lists.transform(partitions, new Function<ConsumablePartition, byte[]>() {
-      @Nullable
-      @Override
-      public byte[] apply(ConsumablePartition input) {
-        // we know that all the ConsumablePartitions in the partitions list are instances of DefaultPartitionConsumer
-        // because of how we construct it
-        return ((DefaultConsumablePartition) input).toBytes();
-      }
-    });
-
-    for (byte[] partitionBytes : partitionsBytes) {
-      numBytes += Ints.BYTES;
+    for (ConsumablePartition partition : partitions) {
+      byte[] partitionBytes = ((DefaultConsumablePartition) partition).toBytes();
+      numBytes += Bytes.SIZEOF_INT;
       numBytes += partitionBytes.length;
     }
 
     byte[] markerBytes = partitionConsumerState.toBytes();
-    numBytes += Ints.BYTES;
+    numBytes += Bytes.SIZEOF_INT;
     numBytes += markerBytes.length;
 
     ByteBuffer bb = ByteBuffer.allocate(numBytes);
     bb.put((byte) VERSION);
     bb.putInt(partitions.size());
-    for (byte[] partitionBytes : partitionsBytes) {
+    for (ConsumablePartition partition : partitions) {
+      byte[] partitionBytes = ((DefaultConsumablePartition) partition).toBytes();
       bb.putInt(partitionBytes.length);
       bb.put(partitionBytes);
     }

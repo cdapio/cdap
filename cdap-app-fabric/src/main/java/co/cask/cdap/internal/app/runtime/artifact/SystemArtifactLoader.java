@@ -18,12 +18,13 @@ package co.cask.cdap.internal.app.runtime.artifact;
 
 import co.cask.cdap.common.service.RetryOnStartFailureService;
 import co.cask.cdap.common.service.RetryStrategies;
+import co.cask.cdap.proto.security.Principal;
+import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
 import com.google.common.base.Supplier;
 import com.google.common.util.concurrent.AbstractService;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.Inject;
 
-import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -34,23 +35,24 @@ public final class SystemArtifactLoader extends AbstractService {
   private final Service serviceDelegate;
 
   @Inject
-  public SystemArtifactLoader(final ArtifactRepository artifactRepository) {
+  SystemArtifactLoader(final ArtifactRepository artifactRepository) {
     this.serviceDelegate = new RetryOnStartFailureService(new Supplier<Service>() {
       @Override
       public Service get() {
         return new AbstractService() {
           @Override
           protected void doStart() {
+            String oldUserId = SecurityRequestContext.getUserId();
             try {
+              SecurityRequestContext.setUserId(Principal.SYSTEM.getName());
               artifactRepository.addSystemArtifacts();
               // if there is no exception, all good, continue on
               notifyStarted();
-            } catch (WriteConflictException e) {
+            } catch (Exception e) {
               // transient error, fail it and retry
               notifyFailed(e);
-            } catch (IOException e) {
-              // transient error, fail it and retry
-              notifyFailed(e);
+            } finally {
+              SecurityRequestContext.setUserId(oldUserId);
             }
           }
 

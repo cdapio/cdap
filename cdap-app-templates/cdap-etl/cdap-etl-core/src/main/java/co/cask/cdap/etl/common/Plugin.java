@@ -24,7 +24,10 @@ import javax.annotation.Nullable;
 
 /**
  * Plugin Configuration that is part of {@link ETLStage}.
+ *
+ * @deprecated use ETLPlugin from cdap-etl-proto instead
  */
+@Deprecated
 public class Plugin {
   private final String name;
   private final Map<String, String> properties;

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,6 +18,8 @@ package co.cask.cdap.examples.datacleansing;
 
 import co.cask.cdap.api.ProgramLifecycle;
 import co.cask.cdap.api.Resources;
+import co.cask.cdap.api.data.batch.Input;
+import co.cask.cdap.api.data.batch.Output;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.lib.DynamicPartitioner;
 import co.cask.cdap.api.dataset.lib.PartitionKey;
@@ -28,6 +30,7 @@ import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.mapreduce.MapReduceTaskContext;
 import co.cask.cdap.api.metrics.Metrics;
+import com.google.common.collect.ImmutableMap;
 import com.google.gson.JsonParser;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.NullWritable;
@@ -68,14 +71,18 @@ public class DataCleansingMapReduce extends AbstractMapReduce {
     Long timeKey = Long.valueOf(context.getRuntimeArguments().get(OUTPUT_PARTITION_KEY));
     PartitionKey outputKey = PartitionKey.builder().addLongField("time", timeKey).build();
 
+    Map<String, String> metadataToAssign = ImmutableMap.of("source.program", "DataCleansingMapReduce");
+
     // set up two outputs - one for invalid records and one for valid records
     Map<String, String> invalidRecordsArgs = new HashMap<>();
     PartitionedFileSetArguments.setOutputPartitionKey(invalidRecordsArgs, outputKey);
-    context.addOutput(DataCleansing.INVALID_RECORDS, invalidRecordsArgs);
+    PartitionedFileSetArguments.setOutputPartitionMetadata(invalidRecordsArgs, metadataToAssign);
+    context.addOutput(Output.ofDataset(DataCleansing.INVALID_RECORDS, invalidRecordsArgs));
 
     Map<String, String> cleanRecordsArgs = new HashMap<>();
     PartitionedFileSetArguments.setDynamicPartitioner(cleanRecordsArgs, TimeAndZipPartitioner.class);
-    context.addOutput(DataCleansing.CLEAN_RECORDS, cleanRecordsArgs);
+    PartitionedFileSetArguments.setOutputPartitionMetadata(cleanRecordsArgs, metadataToAssign);
+    context.addOutput(Output.ofDataset(DataCleansing.CLEAN_RECORDS, cleanRecordsArgs));
 
     Job job = context.getHadoopJob();
     job.setMapperClass(SchemaMatchingFilter.class);

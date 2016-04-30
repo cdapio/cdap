@@ -16,11 +16,12 @@
 
 package co.cask.cdap.etl.batch.spark;
 
+import co.cask.cdap.api.data.batch.Output;
 import co.cask.cdap.api.data.batch.OutputFormatProvider;
-import co.cask.cdap.api.spark.SparkContext;
+import co.cask.cdap.api.spark.SparkClientContext;
 import co.cask.cdap.etl.api.LookupProvider;
-import co.cask.cdap.etl.api.batch.BatchRuntimeContext;
 import co.cask.cdap.etl.api.batch.BatchSinkContext;
+import co.cask.cdap.etl.common.ExternalDatasets;
 
 import java.util.Collections;
 import java.util.Map;
@@ -32,7 +33,7 @@ public class SparkBatchSinkContext extends AbstractSparkBatchContext implements 
 
   private final SparkBatchSinkFactory sinkFactory;
 
-  public SparkBatchSinkContext(SparkBatchSinkFactory sinkFactory, SparkContext sparkContext,
+  public SparkBatchSinkContext(SparkBatchSinkFactory sinkFactory, SparkClientContext sparkContext,
                                LookupProvider lookupProvider, String stageId) {
     super(sparkContext, lookupProvider, stageId);
     this.sinkFactory = sinkFactory;
@@ -51,5 +52,11 @@ public class SparkBatchSinkContext extends AbstractSparkBatchContext implements 
   @Override
   public void addOutput(String outputName, OutputFormatProvider outputFormatProvider) {
     sinkFactory.addOutput(getStageName(), outputName, outputFormatProvider);
+  }
+
+  @Override
+  public void addOutput(Output output) {
+    Output trackableOutput = ExternalDatasets.makeTrackable(sparkContext.getAdmin(), output);
+    sinkFactory.addOutput(getStageName(), trackableOutput);
   }
 }

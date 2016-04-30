@@ -96,26 +96,24 @@ installation and its security configuration.
 
 - |operations|_
 
-    .. |logging| replace:: **Logging:**
+    .. |logging| replace:: **Logging and Monitoring:**
     .. _logging: operations/logging.html
 
-    - |logging|_ Covers **CDAP support for logging** through standard SLF4J (Simple Logging Facade for Java) APIs.
+    - |logging|_ CDAP collects **logs** for all of its internal services and user
+      applications; at the same time, CDAP can be **monitored through external systems**.
+      Covers **log location**, **logging messages**, the **master services logback
+      configuration** and **CDAP support for logging** through standard SLF4J (Simple
+      Logging Facade for Java) APIs.
 
     .. |metrics| replace:: **Metrics:**
     .. _metrics: operations/metrics.html
 
     - |metrics|_ CDAP collects **metrics about the application’s behavior and performance**.
   
-    .. |monitoring| replace:: **Monitoring:**
-    .. _monitoring: operations/monitoring.html
-
-    - |monitoring|_ CDAP collects **logs and metrics** for all of its internal services. 
-      This section provides links to the relevant APIs for accessing these logs and metrics.
-
     .. |preferences| replace:: **Preferences and Runtime Arguments:**
     .. _preferences: operations/preferences.html
 
-    - |preferences|_ Flows, MapReduce programs, services, workflows, and workers can receive **runtime arguments.**
+    - |preferences|_ Flows, MapReduce and Spark programs, services, workers, and workflows can receive **runtime arguments.**
 
     .. |scaling-instances| replace:: **Scaling Instances:**
     .. _scaling-instances: operations/scaling-instances.html

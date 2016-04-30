@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,32 +18,28 @@ package co.cask.cdap.cli.command.security;
 
 import co.cask.cdap.cli.ArgumentName;
 import co.cask.cdap.cli.CLIConfig;
-import co.cask.cdap.cli.ElementType;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.client.AuthorizationClient;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.security.Action;
-import co.cask.cdap.proto.security.RevokeRequest;
+import co.cask.cdap.proto.security.Principal;
 import co.cask.common.cli.Arguments;
 import com.google.common.base.Joiner;
-import com.google.common.base.Splitter;
-import com.google.common.collect.ImmutableSet;
+import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 
 import java.io.PrintStream;
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.Set;
 
 /**
- * Revokes a user's permission to perform certain actions on an entity.
+ * Revoke command base class
  */
-public class RevokeActionCommand extends AbstractAuthCommand {
+public abstract class RevokeActionCommand extends AbstractAuthCommand {
 
   private final AuthorizationClient client;
 
   @Inject
-  public RevokeActionCommand(AuthorizationClient client, CLIConfig cliConfig) {
+  RevokeActionCommand(AuthorizationClient client, CLIConfig cliConfig) {
     super(cliConfig);
     this.client = client;
   }
@@ -51,37 +47,27 @@ public class RevokeActionCommand extends AbstractAuthCommand {
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
     EntityId entity = EntityId.fromString(arguments.get(ArgumentName.ENTITY.toString()));
-    String user = arguments.getOptional("user", null);
+    String principalName = arguments.getOptional("principal-name", null);
+    String type = arguments.getOptional("principal-type", null);
+    Principal.PrincipalType principalType =
+      type != null ? Principal.PrincipalType.valueOf(type.toUpperCase()) : null;
+    Principal principal = type != null ? new Principal(principalName, principalType) : null;
     String actionsString = arguments.getOptional("actions", null);
-    Set<Action> actions = actionsString == null ? null : fromStrings(Splitter.on(",").split(actionsString));
+    Set<Action> actions = actionsString == null ? null : ACTIONS_STRING_TO_SET.apply(actionsString);
 
-    client.revoke(new RevokeRequest(entity, user, actions));
-    if (user == null) {
-      output.printf("Successfully revoked all actions on entity '%s' for all users", entity.toString());
-    } else if (actions == null) {
-      output.printf("Successfully revoked all actions on entity '%s' for user '%s'\n",
-                    entity.toString(), user);
+    client.revoke(entity, principal, actions);
+    if (principal == null && actions == null) {
+      // Revoked all actions for all principals on the entity
+      output.printf("Successfully revoked all actions on entity '%s' for all principals", entity.toString());
     } else {
-      output.printf("Successfully revoked action(s) '%s' on entity '%s' for user '%s'\n",
-                    Joiner.on(",").join(actions), entity.toString(), user);
+      // currently, the CLI only supports 2 scenarios:
+      // 1. both actions and principal are null - supported in the if block.
+      // 2. both actions and principal are non-null - supported here. So it should be ok to have preconditions here to
+      // enforce that both are non-null. In fact, if only one of them is null, the CLI will fail to parse the command.
+      Preconditions.checkNotNull(actions, "Actions cannot be null when principal is not null in the revoke command");
+      Preconditions.checkNotNull(principal, "Principal cannot be null when actions is not null in the revoke command");
+      output.printf("Successfully revoked action(s) '%s' on entity '%s' for %s '%s'\n",
+                    Joiner.on(",").join(actions), entity.toString(), principal.getType(), principal.getName());
     }
-  }
-
-  @Override
-  public String getPattern() {
-    return String.format("security revoke entity <%s> [user <user>] [actions <actions>]", ArgumentName.ENTITY);
-  }
-
-  @Override
-  public String getDescription() {
-    return "Revokes a user's permission to perform certain actions on an entity. <actions> is a comma-separated list.";
-  }
-
-  private Set<Action> fromStrings(Iterable<String> strings) {
-    Set<Action> result = new HashSet<>();
-    for (String string : strings) {
-      result.add(Action.valueOf(string));
-    }
-    return result;
   }
 }

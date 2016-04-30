@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -35,16 +35,15 @@ import co.cask.cdap.app.metrics.ProgramUserMetrics;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.metadata.lineage.AccessType;
 import co.cask.cdap.internal.app.runtime.AbstractContext;
 import co.cask.cdap.internal.app.runtime.DefaultTaskLocalizationContext;
 import co.cask.cdap.internal.app.runtime.batch.dataset.CloseableBatchWritable;
 import co.cask.cdap.internal.app.runtime.batch.dataset.ForwardingSplitReader;
-import co.cask.cdap.internal.app.runtime.batch.dataset.MultipleOutputs;
+import co.cask.cdap.internal.app.runtime.batch.dataset.output.MultipleOutputs;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
-import co.cask.cdap.logging.context.MapReduceLoggingContext;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
 import co.cask.tephra.Transaction;
 import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionSystemClient;
@@ -77,9 +76,7 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
   implements MapReduceTaskContext<KEYOUT, VALUEOUT> {
 
   private final MapReduceSpecification spec;
-  private final LoggingContext loggingContext;
-  private final long logicalStartTime;
-  private final WorkflowToken workflowToken;
+  private final WorkflowProgramInfo workflowProgramInfo;
   private final Metrics userMetrics;
   private final Map<String, Plugin> plugins;
   private final Transaction transaction;
@@ -87,6 +84,7 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
 
   private MultipleOutputs multipleOutputs;
   private TaskInputOutputContext<?, ?, KEYOUT, VALUEOUT> context;
+  private String inputName;
 
   // keeps track of all tx-aware datasets to perform the transaction lifecycle for them. Note that
   // the transaction is already started, and it will be committed or aborted outside of this task.
@@ -98,8 +96,7 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
                                    RunId runId, String taskId,
                                    Arguments runtimeArguments,
                                    MapReduceSpecification spec,
-                                   long logicalStartTime,
-                                   @Nullable WorkflowToken workflowToken,
+                                   @Nullable WorkflowProgramInfo workflowProgramInfo,
                                    DiscoveryServiceClient discoveryServiceClient,
                                    MetricsCollectionService metricsCollectionService,
                                    TransactionSystemClient txClient,
@@ -108,28 +105,16 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
                                    @Nullable PluginInstantiator pluginInstantiator,
                                    Map<String, File> localizedResources) {
     super(program, runId, runtimeArguments, ImmutableSet.<String>of(),
-          getMetricCollector(program, runId.getId(), taskId, metricsCollectionService, type),
+          createMetricsContext(program, runId.getId(), metricsCollectionService, taskId, type, workflowProgramInfo),
           dsFramework, txClient, discoveryServiceClient, false, pluginInstantiator);
-    this.logicalStartTime = logicalStartTime;
-    this.workflowToken = workflowToken;
+    this.workflowProgramInfo = workflowProgramInfo;
     this.transaction = transaction;
-
-    if (metricsCollectionService != null) {
-      this.userMetrics = new ProgramUserMetrics(getProgramMetrics());
-    } else {
-      this.userMetrics = null;
-    }
-    this.loggingContext = createLoggingContext(program.getId(), runId);
+    this.userMetrics = new ProgramUserMetrics(getProgramMetrics());
     this.spec = spec;
     this.plugins = Maps.newHashMap(program.getApplicationSpecification().getPlugins());
     this.taskLocalizationContext = new DefaultTaskLocalizationContext(localizedResources);
 
     initializeTransactionAwares();
-  }
-
-  private LoggingContext createLoggingContext(Id.Program programId, RunId runId) {
-    return new MapReduceLoggingContext(programId.getNamespaceId(), programId.getApplicationId(),
-                                       programId.getId(), runId.getId());
   }
 
   @Override
@@ -169,6 +154,10 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
     this.context = context;
   }
 
+  public void setInputName(String inputName) {
+    this.inputName = inputName;
+  }
+
   /**
    * Closes the {@link MultipleOutputs} contained inside this context.
    */
@@ -183,33 +172,42 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
     return spec;
   }
 
-  @Override
-  public long getLogicalStartTime() {
-    return logicalStartTime;
-  }
-
   /**
    * Returns the WorkflowToken if the MapReduce program is executed as a part of the Workflow.
    */
   @Override
   @Nullable
   public WorkflowToken getWorkflowToken() {
-    return workflowToken;
+    return workflowProgramInfo == null ? null : workflowProgramInfo.getWorkflowToken();
   }
 
   @Nullable
-  private static MetricsContext getMetricCollector(Program program, String runId, String taskId,
-                                                   @Nullable MetricsCollectionService service,
-                                                   @Nullable MapReduceMetrics.TaskType type) {
-    if (service == null) {
-      return null;
-    }
+  @Override
+  public WorkflowProgramInfo getWorkflowInfo() {
+    return workflowProgramInfo;
+  }
 
+  @Nullable
+  @Override
+  public String getInputName() {
+    return inputName;
+  }
+
+  private static MetricsContext createMetricsContext(Program program, String runId, MetricsCollectionService service,
+                                                     String taskId, @Nullable MapReduceMetrics.TaskType type,
+                                                     @Nullable WorkflowProgramInfo workflowProgramInfo) {
     Map<String, String> tags = Maps.newHashMap();
     tags.putAll(getMetricsContext(program, runId));
     if (type != null) {
       tags.put(Constants.Metrics.Tag.MR_TASK_TYPE, type.getId());
       tags.put(Constants.Metrics.Tag.INSTANCE_ID, taskId);
+    }
+
+    if (workflowProgramInfo != null) {
+      // If running inside Workflow, add the WorkflowMetricsContext as well
+      tags.put(Constants.Metrics.Tag.WORKFLOW, workflowProgramInfo.getName());
+      tags.put(Constants.Metrics.Tag.WORKFLOW_RUN_ID, workflowProgramInfo.getRunId().getId());
+      tags.put(Constants.Metrics.Tag.NODE, workflowProgramInfo.getNodeId());
     }
 
     return service.getContext(tags);
@@ -218,10 +216,6 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
   @Override
   public Metrics getMetrics() {
     return userMetrics;
-  }
-
-  public LoggingContext getLoggingContext() {
-    return loggingContext;
   }
 
   //---- following are methods to manage transaction lifecycle for the datasets. This needs to
@@ -244,7 +238,12 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
   @Override
   public <T extends Dataset> T getDataset(String name, Map<String, String> arguments)
     throws DatasetInstantiationException {
-    T dataset = super.getDataset(name, arguments);
+    return getDataset(name, arguments, AccessType.UNKNOWN);
+  }
+
+  protected <T extends Dataset> T getDataset(String name, Map<String, String> arguments, AccessType accessType)
+    throws DatasetInstantiationException {
+    T dataset = super.getDataset(name, arguments, accessType);
     if (dataset instanceof TransactionAware) {
       TransactionAware txAware = (TransactionAware) dataset;
       if (txAwares.add(txAware)) {
@@ -287,7 +286,7 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
    * Returns a {@link BatchReadable} that reads data from the given dataset.
    */
   <K, V> BatchReadable<K, V> getBatchReadable(String datasetName, Map<String, String> datasetArgs) {
-    Dataset dataset = getDataset(datasetName, datasetArgs);
+    Dataset dataset = getDataset(datasetName, datasetArgs, AccessType.READ);
     // Must be BatchReadable.
     Preconditions.checkArgument(dataset instanceof BatchReadable, "Dataset '%s' is not a BatchReadable.", datasetName);
 
@@ -331,7 +330,7 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
    * Returns a {@link CloseableBatchWritable} that writes data to the given dataset.
    */
   <K, V> CloseableBatchWritable<K, V> getBatchWritable(String datasetName, Map<String, String> datasetArgs) {
-    Dataset dataset = getDataset(datasetName, datasetArgs);
+    Dataset dataset = getDataset(datasetName, datasetArgs, AccessType.WRITE);
     // Must be BatchWritable.
     Preconditions.checkArgument(dataset instanceof BatchWritable, "Dataset '%s' is not a BatchWritable.", datasetName);
 

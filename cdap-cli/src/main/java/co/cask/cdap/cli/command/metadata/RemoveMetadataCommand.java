@@ -22,11 +22,9 @@ import co.cask.cdap.cli.util.AbstractCommand;
 import co.cask.cdap.client.MetadataClient;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.common.cli.Arguments;
-import com.google.common.collect.ImmutableSet;
 import com.google.inject.Inject;
 
 import java.io.PrintStream;
-import java.util.Set;
 
 /**
  * Removes metadata for an entity.

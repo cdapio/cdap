@@ -32,6 +32,8 @@ import co.cask.cdap.internal.app.runtime.plugin.PluginNotExistsException;
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.artifact.ArtifactRange;
+import co.cask.cdap.proto.id.Ids;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.test.SlowTests;
 import com.google.common.base.Charsets;
 import com.google.common.base.Function;
@@ -76,18 +78,18 @@ public class ArtifactStoreTest {
 
   @After
   public void cleanup() throws IOException {
-    artifactStore.clear(Id.Namespace.DEFAULT);
+    artifactStore.clear(NamespaceId.DEFAULT);
   }
 
   @Test
   public void testGetNonexistantArtifact() throws IOException {
-    Id.Namespace namespace = Id.Namespace.from("ns1");
+    NamespaceId namespace = Ids.namespace("ns1");
 
     // no artifacts in a namespace should return an empty collection
     Assert.assertTrue(artifactStore.getArtifacts(namespace).isEmpty());
     // no artifacts in range should return an empty collection
     ArtifactRange range = new ArtifactRange(
-      namespace, "something", new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0"));
+      namespace.toId(), "something", new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0"));
     Assert.assertTrue(artifactStore.getArtifacts(range).isEmpty());
 
     // no artifact by namespace and artifact name should throw an exception
@@ -100,7 +102,7 @@ public class ArtifactStoreTest {
 
     // no artifact by namespace, artifact name, and version should throw an exception
     try {
-      artifactStore.getArtifact(Id.Artifact.from(namespace, "something", "1.0.0"));
+      artifactStore.getArtifact(Id.Artifact.from(namespace.toId(), "something", "1.0.0"));
       Assert.fail();
     } catch (ArtifactNotFoundException e) {
       // expected
@@ -113,21 +115,21 @@ public class ArtifactStoreTest {
 
     // if parent doesn't exist, we expect it to throw ArtifactNotFound
     try {
-      artifactStore.getPluginClasses(Id.Namespace.DEFAULT, parentArtifact);
+      artifactStore.getPluginClasses(NamespaceId.DEFAULT, parentArtifact);
       Assert.fail();
     } catch (ArtifactNotFoundException e) {
       // expected
     }
 
     try {
-      artifactStore.getPluginClasses(Id.Namespace.DEFAULT, parentArtifact, "sometype");
+      artifactStore.getPluginClasses(NamespaceId.DEFAULT, parentArtifact, "sometype");
       Assert.fail();
     } catch (ArtifactNotFoundException e) {
       // expected
     }
 
     try {
-      artifactStore.getPluginClasses(Id.Namespace.DEFAULT, parentArtifact, "sometype", "somename");
+      artifactStore.getPluginClasses(NamespaceId.DEFAULT, parentArtifact, "sometype", "somename");
       Assert.fail();
     } catch (ArtifactNotFoundException e) {
       // expected
@@ -138,14 +140,14 @@ public class ArtifactStoreTest {
     writeArtifact(parentArtifact, meta, "jar contents");
 
     // no plugins in a namespace should return an empty collection
-    Assert.assertTrue(artifactStore.getPluginClasses(Id.Namespace.DEFAULT, parentArtifact).isEmpty());
+    Assert.assertTrue(artifactStore.getPluginClasses(NamespaceId.DEFAULT, parentArtifact).isEmpty());
 
     // no plugins in namespace of a given type should return an empty map
-    Assert.assertTrue(artifactStore.getPluginClasses(Id.Namespace.DEFAULT, parentArtifact, "sometype").isEmpty());
+    Assert.assertTrue(artifactStore.getPluginClasses(NamespaceId.DEFAULT, parentArtifact, "sometype").isEmpty());
 
     // no plugins in namespace of a given type and name should throw an exception about no plugins
     try {
-      artifactStore.getPluginClasses(Id.Namespace.DEFAULT, parentArtifact, "sometype", "somename");
+      artifactStore.getPluginClasses(NamespaceId.DEFAULT, parentArtifact, "sometype", "somename");
       Assert.fail();
     } catch (PluginNotExistsException e) {
       // expected
@@ -159,8 +161,10 @@ public class ArtifactStoreTest {
       new PluginClass("atype", "plugin1", "", "c.c.c.plugin1", "cfg", ImmutableMap.<String, PluginPropertyField>of());
     PluginClass plugin2 =
       new PluginClass("atype", "plugin2", "", "c.c.c.plugin2", "cfg", ImmutableMap.<String, PluginPropertyField>of());
+    PluginClass plugin3 =
+      new PluginClass("btype", "plugin3", "", "c.c.c.plugin3", "cfg", ImmutableMap.<String, PluginPropertyField>of());
 
-    List<PluginClass> plugins = ImmutableList.of(plugin1, plugin2);
+    Set<PluginClass> plugins = ImmutableSet.of(plugin1, plugin2, plugin3);
     ApplicationClass appClass = new ApplicationClass(
       InspectionApp.class.getName(), "",
       new ReflectionSchemaGenerator().generate(InspectionApp.AConfig.class));
@@ -174,8 +178,8 @@ public class ArtifactStoreTest {
     assertEqual(artifactId, artifactMeta, artifactContents, artifactDetail);
 
     // test that plugins in the artifact show up when getting plugins for that artifact
-    Map<ArtifactDescriptor, List<PluginClass>> pluginsMap =
-      artifactStore.getPluginClasses(Id.Namespace.DEFAULT, artifactId);
+    Map<ArtifactDescriptor, Set<PluginClass>> pluginsMap =
+      artifactStore.getPluginClasses(NamespaceId.DEFAULT, artifactId);
     Assert.assertEquals(1, pluginsMap.size());
     Assert.assertTrue(pluginsMap.containsKey(artifactDetail.getDescriptor()));
     Set<PluginClass> expected = ImmutableSet.copyOf(plugins);
@@ -183,19 +187,19 @@ public class ArtifactStoreTest {
     Assert.assertEquals(expected, actual);
 
     // test plugins for the specific type
-    pluginsMap = artifactStore.getPluginClasses(Id.Namespace.DEFAULT, artifactId, "atype");
+    pluginsMap = artifactStore.getPluginClasses(NamespaceId.DEFAULT, artifactId, "atype");
     Assert.assertEquals(1, pluginsMap.size());
     Assert.assertTrue(pluginsMap.containsKey(artifactDetail.getDescriptor()));
-    expected = ImmutableSet.copyOf(plugins);
+    expected = ImmutableSet.of(plugin1, plugin2);
     actual = ImmutableSet.copyOf(pluginsMap.get(artifactDetail.getDescriptor()));
     Assert.assertEquals(expected, actual);
 
     // test plugins for specific type and name
     Map<ArtifactDescriptor, PluginClass> pluginClasses =
-      artifactStore.getPluginClasses(Id.Namespace.DEFAULT, artifactId, "atype", "plugin2");
+      artifactStore.getPluginClasses(NamespaceId.DEFAULT, artifactId, "btype", "plugin3");
     Assert.assertEquals(1, pluginClasses.size());
     Assert.assertTrue(pluginClasses.containsKey(artifactDetail.getDescriptor()));
-    Assert.assertEquals(plugin2, pluginClasses.get(artifactDetail.getDescriptor()));
+    Assert.assertEquals(plugin3, pluginClasses.get(artifactDetail.getDescriptor()));
   }
 
   @Test
@@ -221,7 +225,7 @@ public class ArtifactStoreTest {
     writeArtifact(childId, artifactMeta, "child contents");
 
     // check parent has plugins from the child
-    Assert.assertFalse(artifactStore.getPluginClasses(Id.Namespace.DEFAULT, parentId).isEmpty());
+    Assert.assertFalse(artifactStore.getPluginClasses(NamespaceId.DEFAULT, parentId).isEmpty());
 
     // delete the child artifact
     artifactStore.delete(childId);
@@ -235,18 +239,18 @@ public class ArtifactStoreTest {
     }
 
     // shouldn't see it in the list
-    List<ArtifactDetail> artifactList = artifactStore.getArtifacts(parentId.getNamespace());
+    List<ArtifactDetail> artifactList = artifactStore.getArtifacts(parentId.getNamespace().toEntityId());
     Assert.assertEquals(1, artifactList.size());
     Assert.assertEquals(parentId.getName(), artifactList.get(0).getDescriptor().getArtifactId().getName());
     // shouldn't see any more plugins for parent
-    Assert.assertTrue(artifactStore.getPluginClasses(Id.Namespace.DEFAULT, parentId).isEmpty());
+    Assert.assertTrue(artifactStore.getPluginClasses(NamespaceId.DEFAULT, parentId).isEmpty());
 
     // delete parent
     artifactStore.delete(parentId);
     // nothing should be in the list
-    Assert.assertTrue(artifactStore.getArtifacts(parentId.getNamespace()).isEmpty());
+    Assert.assertTrue(artifactStore.getArtifacts(parentId.getNamespace().toEntityId()).isEmpty());
     // shouldn't be able to see app class either
-    Assert.assertTrue(artifactStore.getApplicationClasses(Id.Namespace.DEFAULT, appClass.getClassName()).isEmpty());
+    Assert.assertTrue(artifactStore.getApplicationClasses(NamespaceId.DEFAULT, appClass.getClassName()).isEmpty());
   }
 
   @Test(expected = ArtifactAlreadyExistsException.class)
@@ -295,9 +299,9 @@ public class ArtifactStoreTest {
 
     // check that plugin1 was deleted and plugin2 remains
     Assert.assertEquals(ImmutableMap.of(detail.getDescriptor(), plugin2),
-      artifactStore.getPluginClasses(Id.Namespace.DEFAULT, parentArtifactId, plugin2.getType(), plugin2.getName()));
+      artifactStore.getPluginClasses(NamespaceId.DEFAULT, parentArtifactId, plugin2.getType(), plugin2.getName()));
     try {
-      artifactStore.getPluginClasses(Id.Namespace.DEFAULT, parentArtifactId, plugin1.getType(), plugin1.getName());
+      artifactStore.getPluginClasses(NamespaceId.DEFAULT, parentArtifactId, plugin1.getType(), plugin1.getName());
       Assert.fail();
     } catch (PluginNotExistsException e) {
       // expected
@@ -329,15 +333,15 @@ public class ArtifactStoreTest {
       assertEqual(artifact1, meta1, contents1, info1);
       assertEqual(artifact2, meta2, contents2, info2);
 
-      List<ArtifactDetail> namespace1Artifacts = artifactStore.getArtifacts(namespace1);
-      List<ArtifactDetail> namespace2Artifacts = artifactStore.getArtifacts(namespace2);
+      List<ArtifactDetail> namespace1Artifacts = artifactStore.getArtifacts(namespace1.toEntityId());
+      List<ArtifactDetail> namespace2Artifacts = artifactStore.getArtifacts(namespace2.toEntityId());
       Assert.assertEquals(1, namespace1Artifacts.size());
       assertEqual(artifact1, meta1, contents1, namespace1Artifacts.get(0));
       Assert.assertEquals(1, namespace2Artifacts.size());
       assertEqual(artifact2, meta2, contents2, namespace2Artifacts.get(0));
     } finally {
-      artifactStore.clear(namespace1);
-      artifactStore.clear(namespace2);
+      artifactStore.clear(namespace1.toEntityId());
+      artifactStore.clear(namespace2.toEntityId());
     }
   }
 
@@ -355,22 +359,22 @@ public class ArtifactStoreTest {
     PluginClass plugin =
       new PluginClass("atype", "plugin1", "", "c.c.c.plugin1", "cfg", ImmutableMap.<String, PluginPropertyField>of());
     // write a plugins artifact in namespace1
-    Id.Namespace namespace1 = Id.Namespace.from("ns1");
-    Id.Artifact artifact1 = Id.Artifact.from(namespace1, "plugins1", "1.0.0");
+    NamespaceId namespace1 = Ids.namespace("ns1");
+    Id.Artifact artifact1 = Id.Artifact.from(namespace1.toId(), "plugins1", "1.0.0");
     ArtifactMeta meta1 = new ArtifactMeta(ArtifactClasses.builder().addPlugin(plugin).build(), usableBy);
     String contents1 = "plugin1 contents";
     writeArtifact(artifact1, meta1, contents1);
 
     // write a plugins artifact in namespace2
-    Id.Namespace namespace2 = Id.Namespace.from("ns2");
-    Id.Artifact artifact2 = Id.Artifact.from(namespace2, "plugins2", "1.0.0");
+    NamespaceId namespace2 = Ids.namespace("ns2");
+    Id.Artifact artifact2 = Id.Artifact.from(namespace2.toId(), "plugins2", "1.0.0");
     ArtifactMeta meta2 = new ArtifactMeta(ArtifactClasses.builder().addPlugin(plugin).build(), usableBy);
     String contents2 = "plugin2 contents";
     writeArtifact(artifact2, meta2, contents2);
 
     try {
       // this should only get plugins from artifact1
-      SortedMap<ArtifactDescriptor, List<PluginClass>> plugins =
+      SortedMap<ArtifactDescriptor, Set<PluginClass>> plugins =
         artifactStore.getPluginClasses(namespace1, systemAppArtifact);
       Assert.assertEquals(1, plugins.size());
       ArtifactDescriptor artifactDescriptor = plugins.firstKey();
@@ -386,7 +390,7 @@ public class ArtifactStoreTest {
     } finally {
       artifactStore.clear(namespace1);
       artifactStore.clear(namespace2);
-      artifactStore.clear(Id.Namespace.SYSTEM);
+      artifactStore.clear(NamespaceId.SYSTEM);
     }
   }
 
@@ -416,18 +420,18 @@ public class ArtifactStoreTest {
 
     // test we get 1 version of artifact1 and 2 versions of artifact2
     List<ArtifactDetail> artifact1Versions =
-      artifactStore.getArtifacts(artifact1V1.getNamespace(), artifact1V1.getName());
+      artifactStore.getArtifacts(artifact1V1.getNamespace().toEntityId(), artifact1V1.getName());
     Assert.assertEquals(1, artifact1Versions.size());
     assertEqual(artifact1V1, meta1V1, contents1V1, artifact1Versions.get(0));
 
     List<ArtifactDetail> artifact2Versions =
-      artifactStore.getArtifacts(artifact2V1.getNamespace(), artifact2V1.getName());
+      artifactStore.getArtifacts(artifact2V1.getNamespace().toEntityId(), artifact2V1.getName());
     Assert.assertEquals(2, artifact2Versions.size());
     assertEqual(artifact2V1, meta2V1, contents2V1, artifact2Versions.get(0));
     assertEqual(artifact2V2, meta2V2, contents2V2, artifact2Versions.get(1));
 
     // test we get all 3 in the getArtifacts() call for the namespace
-    List<ArtifactDetail> artifactVersions = artifactStore.getArtifacts(Id.Namespace.DEFAULT);
+    List<ArtifactDetail> artifactVersions = artifactStore.getArtifacts(NamespaceId.DEFAULT);
     Assert.assertEquals(3, artifactVersions.size());
     assertEqual(artifact1V1, meta1V1, contents1V1, artifactVersions.get(0));
     assertEqual(artifact2V1, meta2V1, contents2V1, artifactVersions.get(1));
@@ -492,7 +496,7 @@ public class ArtifactStoreTest {
 
     // test getting all app classes in the namespace
     Map<ArtifactDescriptor, List<ApplicationClass>> appClasses =
-      artifactStore.getApplicationClasses(Id.Namespace.DEFAULT);
+      artifactStore.getApplicationClasses(NamespaceId.DEFAULT);
     Map<ArtifactDescriptor, List<ApplicationClass>> expected =
       ImmutableMap.<ArtifactDescriptor, List<ApplicationClass>>of(
         app1v1Detail.getDescriptor(), ImmutableList.of(inspectionClass1),
@@ -504,7 +508,7 @@ public class ArtifactStoreTest {
 
     // test getting all app classes by class name
     Map<ArtifactDescriptor, ApplicationClass> appArtifacts =
-      artifactStore.getApplicationClasses(Id.Namespace.DEFAULT, InspectionApp.class.getName());
+      artifactStore.getApplicationClasses(NamespaceId.DEFAULT, InspectionApp.class.getName());
     Map<ArtifactDescriptor, ApplicationClass> expectedAppArtifacts = ImmutableMap.of(
       app1v1Detail.getDescriptor(), inspectionClass1,
       app1v2Detail.getDescriptor(), inspectionClass2,
@@ -512,11 +516,11 @@ public class ArtifactStoreTest {
     );
     Assert.assertEquals(expectedAppArtifacts, appArtifacts);
 
-    appArtifacts = artifactStore.getApplicationClasses(Id.Namespace.DEFAULT, WordCountApp.class.getName());
+    appArtifacts = artifactStore.getApplicationClasses(NamespaceId.DEFAULT, WordCountApp.class.getName());
     expectedAppArtifacts = ImmutableMap.of(app3v1Detail.getDescriptor(), wordCountClass1);
     Assert.assertEquals(expectedAppArtifacts, appArtifacts);
 
-    Assert.assertTrue(artifactStore.getApplicationClasses(Id.Namespace.from("ghost")).isEmpty());
+    Assert.assertTrue(artifactStore.getApplicationClasses(Ids.namespace("ghost")).isEmpty());
   }
 
   @Test
@@ -612,35 +616,35 @@ public class ArtifactStoreTest {
     ArtifactDescriptor artifactZv200Info = artifactStore.getArtifact(artifactZv200).getDescriptor();
 
     // test getting all plugins in the namespace
-    Map<ArtifactDescriptor, List<PluginClass>> expected = Maps.newHashMap();
-    expected.put(artifactXv100Info, ImmutableList.of(pluginA1));
-    expected.put(artifactXv110Info, ImmutableList.of(pluginA1));
-    expected.put(artifactXv200Info, ImmutableList.of(pluginA1, pluginA2));
-    expected.put(artifactYv100Info, ImmutableList.of(pluginB1));
-    expected.put(artifactYv200Info, ImmutableList.of(pluginB2));
-    expected.put(artifactZv100Info, ImmutableList.of(pluginA1, pluginB1));
-    expected.put(artifactZv200Info, ImmutableList.of(pluginA1, pluginA2, pluginB1, pluginB2));
-    Map<ArtifactDescriptor, List<PluginClass>> actual =
-      artifactStore.getPluginClasses(Id.Namespace.DEFAULT, parentArtifactId);
+    Map<ArtifactDescriptor, Set<PluginClass>> expected = Maps.newHashMap();
+    expected.put(artifactXv100Info, ImmutableSet.of(pluginA1));
+    expected.put(artifactXv110Info, ImmutableSet.of(pluginA1));
+    expected.put(artifactXv200Info, ImmutableSet.of(pluginA1, pluginA2));
+    expected.put(artifactYv100Info, ImmutableSet.of(pluginB1));
+    expected.put(artifactYv200Info, ImmutableSet.of(pluginB2));
+    expected.put(artifactZv100Info, ImmutableSet.of(pluginA1, pluginB1));
+    expected.put(artifactZv200Info, ImmutableSet.of(pluginA1, pluginA2, pluginB1, pluginB2));
+    Map<ArtifactDescriptor, Set<PluginClass>> actual =
+      artifactStore.getPluginClasses(NamespaceId.DEFAULT, parentArtifactId);
     Assert.assertEquals(expected, actual);
 
     // test getting all plugins by namespace and type
     // get all of type A
     expected = Maps.newHashMap();
-    expected.put(artifactXv100Info, ImmutableList.of(pluginA1));
-    expected.put(artifactXv110Info, ImmutableList.of(pluginA1));
-    expected.put(artifactXv200Info, ImmutableList.of(pluginA1, pluginA2));
-    expected.put(artifactZv100Info, ImmutableList.of(pluginA1));
-    expected.put(artifactZv200Info, ImmutableList.of(pluginA1, pluginA2));
-    actual = artifactStore.getPluginClasses(Id.Namespace.DEFAULT, parentArtifactId, "A");
+    expected.put(artifactXv100Info, ImmutableSet.of(pluginA1));
+    expected.put(artifactXv110Info, ImmutableSet.of(pluginA1));
+    expected.put(artifactXv200Info, ImmutableSet.of(pluginA1, pluginA2));
+    expected.put(artifactZv100Info, ImmutableSet.of(pluginA1));
+    expected.put(artifactZv200Info, ImmutableSet.of(pluginA1, pluginA2));
+    actual = artifactStore.getPluginClasses(NamespaceId.DEFAULT, parentArtifactId, "A");
     Assert.assertEquals(expected, actual);
     // get all of type B
     expected = Maps.newHashMap();
-    expected.put(artifactYv100Info, ImmutableList.of(pluginB1));
-    expected.put(artifactYv200Info, ImmutableList.of(pluginB2));
-    expected.put(artifactZv100Info, ImmutableList.of(pluginB1));
-    expected.put(artifactZv200Info, ImmutableList.of(pluginB1, pluginB2));
-    actual = artifactStore.getPluginClasses(Id.Namespace.DEFAULT, parentArtifactId, "B");
+    expected.put(artifactYv100Info, ImmutableSet.of(pluginB1));
+    expected.put(artifactYv200Info, ImmutableSet.of(pluginB2));
+    expected.put(artifactZv100Info, ImmutableSet.of(pluginB1));
+    expected.put(artifactZv200Info, ImmutableSet.of(pluginB1, pluginB2));
+    actual = artifactStore.getPluginClasses(NamespaceId.DEFAULT, parentArtifactId, "B");
     Assert.assertEquals(expected, actual);
 
     // test getting plugins by namespace, type, and name
@@ -652,26 +656,26 @@ public class ArtifactStoreTest {
     expectedMap.put(artifactZv100Info, pluginA1);
     expectedMap.put(artifactZv200Info, pluginA1);
     Map<ArtifactDescriptor, PluginClass> actualMap =
-      artifactStore.getPluginClasses(Id.Namespace.DEFAULT, parentArtifactId, "A", "p1");
+      artifactStore.getPluginClasses(NamespaceId.DEFAULT, parentArtifactId, "A", "p1");
     Assert.assertEquals(expectedMap, actualMap);
     // get all of type A and name p2
     expectedMap = Maps.newHashMap();
     expectedMap.put(artifactXv200Info, pluginA2);
     expectedMap.put(artifactZv200Info, pluginA2);
-    actualMap = artifactStore.getPluginClasses(Id.Namespace.DEFAULT, parentArtifactId, "A", "p2");
+    actualMap = artifactStore.getPluginClasses(NamespaceId.DEFAULT, parentArtifactId, "A", "p2");
     Assert.assertEquals(expectedMap, actualMap);
     // get all of type B and name p1
     expectedMap = Maps.newHashMap();
     expectedMap.put(artifactYv100Info, pluginB1);
     expectedMap.put(artifactZv100Info, pluginB1);
     expectedMap.put(artifactZv200Info, pluginB1);
-    actualMap = artifactStore.getPluginClasses(Id.Namespace.DEFAULT, parentArtifactId, "B", "p1");
+    actualMap = artifactStore.getPluginClasses(NamespaceId.DEFAULT, parentArtifactId, "B", "p1");
     Assert.assertEquals(expectedMap, actualMap);
     // get all of type B and name p2
     expectedMap = Maps.newHashMap();
     expectedMap.put(artifactYv200Info, pluginB2);
     expectedMap.put(artifactZv200Info, pluginB2);
-    actualMap = artifactStore.getPluginClasses(Id.Namespace.DEFAULT, parentArtifactId, "B", "p2");
+    actualMap = artifactStore.getPluginClasses(NamespaceId.DEFAULT, parentArtifactId, "B", "p2");
     Assert.assertEquals(expectedMap, actualMap);
   }
 
@@ -681,7 +685,7 @@ public class ArtifactStoreTest {
       Id.Namespace.DEFAULT, "parent", new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0"));
     // add one artifact with a couple plugins
     Id.Artifact artifact1 = Id.Artifact.from(Id.Namespace.DEFAULT, "plugins1", "1.0.0");
-    List<PluginClass> plugins = ImmutableList.of(
+    Set<PluginClass> plugins = ImmutableSet.of(
       new PluginClass("atype", "plugin1", "", "c.c.c.plugin1", "cfg", ImmutableMap.<String, PluginPropertyField>of()),
       new PluginClass("atype", "plugin2", "", "c.c.c.plugin2", "cfg", ImmutableMap.<String, PluginPropertyField>of())
     );
@@ -699,11 +703,11 @@ public class ArtifactStoreTest {
 
     Id.Artifact parentArtifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "parent", "1.0.0");
     writeArtifact(parentArtifactId, new ArtifactMeta(ArtifactClasses.builder().build()), "content");
-    Map<ArtifactDescriptor, List<PluginClass>> expected = Maps.newHashMap();
+    Map<ArtifactDescriptor, Set<PluginClass>> expected = Maps.newHashMap();
     expected.put(artifact1Info, plugins);
     expected.put(artifact2Info, plugins);
-    Map<ArtifactDescriptor, List<PluginClass>> actual =
-      artifactStore.getPluginClasses(Id.Namespace.DEFAULT, parentArtifactId);
+    Map<ArtifactDescriptor, Set<PluginClass>> actual =
+      artifactStore.getPluginClasses(NamespaceId.DEFAULT, parentArtifactId);
     Assert.assertEquals(expected, actual);
   }
 
@@ -754,54 +758,54 @@ public class ArtifactStoreTest {
     // check parent-1.0.0 has plugin1 but parent-0.0.9 does not and 1.0.1 does not
     Id.Artifact parentId = Id.Artifact.from(Id.Namespace.DEFAULT, "parent", "0.0.9");
     writeArtifact(parentId, parentMeta, "content");
-    Assert.assertTrue(artifactStore.getPluginClasses(Id.Namespace.DEFAULT, parentId).isEmpty());
+    Assert.assertTrue(artifactStore.getPluginClasses(NamespaceId.DEFAULT, parentId).isEmpty());
 
     parentId = Id.Artifact.from(Id.Namespace.DEFAULT, "parent", "1.0.1");
     writeArtifact(parentId, parentMeta, "content");
-    Assert.assertTrue(artifactStore.getPluginClasses(Id.Namespace.DEFAULT, parentId).isEmpty());
+    Assert.assertTrue(artifactStore.getPluginClasses(NamespaceId.DEFAULT, parentId).isEmpty());
 
     parentId = Id.Artifact.from(Id.Namespace.DEFAULT, "parent", "1.0.0");
     writeArtifact(parentId, parentMeta, "content");
-    Assert.assertEquals(1, artifactStore.getPluginClasses(Id.Namespace.DEFAULT, parentId).size());
+    Assert.assertEquals(1, artifactStore.getPluginClasses(NamespaceId.DEFAULT, parentId).size());
 
     // check parent-2.0.0 has plugin2 but parent-1.9.9 does not and 2.0.1 does not
     parentId = Id.Artifact.from(Id.Namespace.DEFAULT, "parent", "1.9.9");
     writeArtifact(parentId, parentMeta, "content");
-    Assert.assertTrue(artifactStore.getPluginClasses(Id.Namespace.DEFAULT, parentId).isEmpty());
+    Assert.assertTrue(artifactStore.getPluginClasses(NamespaceId.DEFAULT, parentId).isEmpty());
 
     parentId = Id.Artifact.from(Id.Namespace.DEFAULT, "parent", "2.0.1");
     writeArtifact(parentId, parentMeta, "content");
-    Assert.assertTrue(artifactStore.getPluginClasses(Id.Namespace.DEFAULT, parentId).isEmpty());
+    Assert.assertTrue(artifactStore.getPluginClasses(NamespaceId.DEFAULT, parentId).isEmpty());
 
     parentId = Id.Artifact.from(Id.Namespace.DEFAULT, "parent", "2.0.0");
     writeArtifact(parentId, parentMeta, "content");
-    Assert.assertEquals(1, artifactStore.getPluginClasses(Id.Namespace.DEFAULT, parentId).size());
+    Assert.assertEquals(1, artifactStore.getPluginClasses(NamespaceId.DEFAULT, parentId).size());
 
     // check parent-3.0.1 has plugin3 but parent-3.0.0 does not and 3.0.2 does not
     parentId = Id.Artifact.from(Id.Namespace.DEFAULT, "parent", "3.0.0");
     writeArtifact(parentId, parentMeta, "content");
-    Assert.assertTrue(artifactStore.getPluginClasses(Id.Namespace.DEFAULT, parentId).isEmpty());
+    Assert.assertTrue(artifactStore.getPluginClasses(NamespaceId.DEFAULT, parentId).isEmpty());
 
     parentId = Id.Artifact.from(Id.Namespace.DEFAULT, "parent", "3.0.2");
     writeArtifact(parentId, parentMeta, "content");
-    Assert.assertTrue(artifactStore.getPluginClasses(Id.Namespace.DEFAULT, parentId).isEmpty());
+    Assert.assertTrue(artifactStore.getPluginClasses(NamespaceId.DEFAULT, parentId).isEmpty());
 
     parentId = Id.Artifact.from(Id.Namespace.DEFAULT, "parent", "3.0.1");
     writeArtifact(parentId, parentMeta, "content");
-    Assert.assertEquals(1, artifactStore.getPluginClasses(Id.Namespace.DEFAULT, parentId).size());
+    Assert.assertEquals(1, artifactStore.getPluginClasses(NamespaceId.DEFAULT, parentId).size());
 
     // check parent-4.0.1 has plugin4 but parent-4.0.0 does not and 4.0.2 does not
     parentId = Id.Artifact.from(Id.Namespace.DEFAULT, "parent", "4.0.0");
     writeArtifact(parentId, parentMeta, "content");
-    Assert.assertTrue(artifactStore.getPluginClasses(Id.Namespace.DEFAULT, parentId).isEmpty());
+    Assert.assertTrue(artifactStore.getPluginClasses(NamespaceId.DEFAULT, parentId).isEmpty());
 
     parentId = Id.Artifact.from(Id.Namespace.DEFAULT, "parent", "4.0.2");
     writeArtifact(parentId, parentMeta, "content");
-    Assert.assertTrue(artifactStore.getPluginClasses(Id.Namespace.DEFAULT, parentId).isEmpty());
+    Assert.assertTrue(artifactStore.getPluginClasses(NamespaceId.DEFAULT, parentId).isEmpty());
 
     parentId = Id.Artifact.from(Id.Namespace.DEFAULT, "parent", "4.0.1");
     writeArtifact(parentId, parentMeta, "content");
-    Assert.assertEquals(1, artifactStore.getPluginClasses(Id.Namespace.DEFAULT, parentId).size());
+    Assert.assertEquals(1, artifactStore.getPluginClasses(NamespaceId.DEFAULT, parentId).size());
   }
 
   // this test tests that when an artifact specifies a range of artifact versions it extends,
@@ -812,7 +816,7 @@ public class ArtifactStoreTest {
     Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "plugins", "0.1.0");
     Set<ArtifactRange> parentArtifacts = ImmutableSet.of(new ArtifactRange(
       Id.Namespace.DEFAULT, "parent", new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0")));
-    List<PluginClass> plugins = ImmutableList.of(
+    Set<PluginClass> plugins = ImmutableSet.of(
       new PluginClass("atype", "plugin1", "", "c.c.c.plugin1", "cfg", ImmutableMap.<String, PluginPropertyField>of())
     );
     ArtifactMeta meta = new ArtifactMeta(ArtifactClasses.builder().addPlugins(plugins).build(), parentArtifacts);
@@ -833,10 +837,10 @@ public class ArtifactStoreTest {
       // we're testing range filtering, not the absence of the parent artifact
       writeArtifact(badId, emptyMeta, "content");
 
-      Assert.assertTrue(artifactStore.getPluginClasses(Id.Namespace.DEFAULT, badId).isEmpty());
-      Assert.assertTrue(artifactStore.getPluginClasses(Id.Namespace.DEFAULT, badId, "atype").isEmpty());
+      Assert.assertTrue(artifactStore.getPluginClasses(NamespaceId.DEFAULT, badId).isEmpty());
+      Assert.assertTrue(artifactStore.getPluginClasses(NamespaceId.DEFAULT, badId, "atype").isEmpty());
       try {
-        artifactStore.getPluginClasses(Id.Namespace.DEFAULT, badId, "atype", "plugin1");
+        artifactStore.getPluginClasses(NamespaceId.DEFAULT, badId, "atype", "plugin1");
         Assert.fail();
       } catch (PluginNotExistsException e) {
         // expected
@@ -852,17 +856,17 @@ public class ArtifactStoreTest {
       Id.Artifact.from(Id.Namespace.DEFAULT, "parent", "1.99.999"),
       Id.Artifact.from(Id.Namespace.DEFAULT, "parent", "2.0.0-SNAPSHOT")
     );
-    Map<ArtifactDescriptor, List<PluginClass>> expectedPluginsMapList = ImmutableMap.of(artifactInfo, plugins);
-    Map<ArtifactDescriptor, PluginClass> expectedPluginsMap = ImmutableMap.of(artifactInfo, plugins.get(0));
+    Map<ArtifactDescriptor, Set<PluginClass>> expectedPluginsMapList = ImmutableMap.of(artifactInfo, plugins);
+    Map<ArtifactDescriptor, PluginClass> expectedPluginsMap = ImmutableMap.of(artifactInfo, plugins.iterator().next());
     for (Id.Artifact goodId : goodIds) {
       // make sure parent actually exists
       writeArtifact(goodId, emptyMeta, "content");
 
-      Assert.assertEquals(expectedPluginsMapList, artifactStore.getPluginClasses(Id.Namespace.DEFAULT, goodId));
+      Assert.assertEquals(expectedPluginsMapList, artifactStore.getPluginClasses(NamespaceId.DEFAULT, goodId));
       Assert.assertEquals(expectedPluginsMapList,
-                          artifactStore.getPluginClasses(Id.Namespace.DEFAULT, goodId, "atype"));
+                          artifactStore.getPluginClasses(NamespaceId.DEFAULT, goodId, "atype"));
       Assert.assertEquals(expectedPluginsMap,
-                          artifactStore.getPluginClasses(Id.Namespace.DEFAULT, goodId, "atype", "plugin1"));
+                          artifactStore.getPluginClasses(NamespaceId.DEFAULT, goodId, "atype", "plugin1"));
     }
   }
 
@@ -1011,10 +1015,10 @@ public class ArtifactStoreTest {
     assertEqual(artifactId, expectedMeta, winnerWriter, detail);
 
     // check only 1 plugin remains and that its the correct one
-    Map<ArtifactDescriptor, List<PluginClass>> pluginMap =
-      artifactStore.getPluginClasses(Id.Namespace.DEFAULT, parentArtifactId, "plugin-type");
-    Map<ArtifactDescriptor, List<PluginClass>> expected = Maps.newHashMap();
-    expected.put(detail.getDescriptor(), Lists.newArrayList(
+    Map<ArtifactDescriptor, Set<PluginClass>> pluginMap =
+      artifactStore.getPluginClasses(NamespaceId.DEFAULT, parentArtifactId, "plugin-type");
+    Map<ArtifactDescriptor, Set<PluginClass>> expected = Maps.newHashMap();
+    expected.put(detail.getDescriptor(), ImmutableSet.<PluginClass>of(
       new PluginClass("plugin-type", "plugin" + winnerWriter, "", "classname", "cfg",
       ImmutableMap.<String, PluginPropertyField>of())));
     Assert.assertEquals(expected, pluginMap);

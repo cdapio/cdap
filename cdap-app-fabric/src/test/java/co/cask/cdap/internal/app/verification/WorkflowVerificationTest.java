@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,6 +18,8 @@ package co.cask.cdap.internal.app.verification;
 
 import co.cask.cdap.GoodWorkflowApp;
 import co.cask.cdap.api.app.ApplicationSpecification;
+import co.cask.cdap.api.dataset.lib.FileSet;
+import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.workflow.ScheduleProgramInfo;
 import co.cask.cdap.api.workflow.WorkflowActionNode;
@@ -28,11 +30,13 @@ import co.cask.cdap.api.workflow.WorkflowNodeType;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.Specifications;
+import co.cask.cdap.internal.dataset.DatasetCreationSpec;
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
 import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  *
@@ -43,10 +47,60 @@ public class WorkflowVerificationTest {
     ApplicationSpecification appSpec = Specifications.from(new GoodWorkflowApp());
     verifyGoodWorkflowSpecifications(appSpec);
     verifyAnotherGoodWorkflowSpecification(appSpec);
+    verifyWorkflowWithLocalDatasetSpecification(appSpec);
     ApplicationSpecificationAdapter adapter = ApplicationSpecificationAdapter.create(new ReflectionSchemaGenerator());
     ApplicationSpecification newSpec = adapter.fromJson(adapter.toJson(appSpec));
     verifyGoodWorkflowSpecifications(newSpec);
-    verifyAnotherGoodWorkflowSpecification(appSpec);
+    verifyAnotherGoodWorkflowSpecification(newSpec);
+    verifyWorkflowWithLocalDatasetSpecification(newSpec);
+  }
+
+  private void verifyWorkflowWithLocalDatasetSpecification(ApplicationSpecification appSpec) {
+    WorkflowSpecification spec = appSpec.getWorkflows().get("WorkflowWithLocalDatasets");
+    List<WorkflowNode> nodes = spec.getNodes();
+    Assert.assertTrue(nodes.size() == 2);
+
+    WorkflowNode node = nodes.get(0);
+    Assert.assertTrue(node.getType() == WorkflowNodeType.ACTION);
+    WorkflowActionNode actionNode = (WorkflowActionNode) node;
+    Assert.assertTrue(actionNode.getProgram().equals(new ScheduleProgramInfo(SchedulableProgramType.MAPREDUCE,
+                                                                             "MR1")));
+
+    node = nodes.get(1);
+    Assert.assertTrue(node.getType() == WorkflowNodeType.ACTION);
+    actionNode = (WorkflowActionNode) node;
+    Assert.assertTrue(actionNode.getProgram().equals(new ScheduleProgramInfo(SchedulableProgramType.SPARK,
+                                                                             "SP1")));
+
+    Map<String, DatasetCreationSpec> localDatasetSpecs = spec.getLocalDatasetSpecs();
+    Assert.assertEquals(5, localDatasetSpecs.size());
+
+    DatasetCreationSpec datasetCreationSpec = localDatasetSpecs.get("mytable");
+    Assert.assertEquals(Table.class.getName(), datasetCreationSpec.getTypeName());
+    Assert.assertEquals(0, datasetCreationSpec.getProperties().getProperties().size());
+
+    datasetCreationSpec = localDatasetSpecs.get("myfile");
+    Assert.assertEquals(FileSet.class.getName(), datasetCreationSpec.getTypeName());
+    Assert.assertEquals(0, datasetCreationSpec.getProperties().getProperties().size());
+
+    datasetCreationSpec = localDatasetSpecs.get("myfile_with_properties");
+    Assert.assertEquals(FileSet.class.getName(), datasetCreationSpec.getTypeName());
+    Assert.assertEquals("prop_value", datasetCreationSpec.getProperties().getProperties().get("prop_key"));
+
+    datasetCreationSpec = localDatasetSpecs.get("mytablefromtype");
+    Assert.assertEquals(Table.class.getName(), datasetCreationSpec.getTypeName());
+    Assert.assertEquals(0, datasetCreationSpec.getProperties().getProperties().size());
+
+    datasetCreationSpec = localDatasetSpecs.get("myfilefromtype");
+    Assert.assertEquals(FileSet.class.getName(), datasetCreationSpec.getTypeName());
+    Assert.assertEquals("another_prop_value",
+                        datasetCreationSpec.getProperties().getProperties().get("another_prop_key"));
+
+    // Check if the application specification has correct modules
+    Map<String, String> datasetModules = appSpec.getDatasetModules();
+    Assert.assertEquals(2, datasetModules.size());
+    Assert.assertTrue(datasetModules.containsKey(FileSet.class.getName()));
+    Assert.assertTrue(datasetModules.containsKey(Table.class.getName()));
   }
 
   private void verifyAnotherGoodWorkflowSpecification(ApplicationSpecification appSpec) {

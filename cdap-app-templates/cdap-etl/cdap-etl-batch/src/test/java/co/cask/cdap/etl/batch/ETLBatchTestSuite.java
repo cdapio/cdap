@@ -22,14 +22,13 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 
 /**
- * This is a test suite that runs all tests in for ETL batch. This avoids starting/stoping the unit-test framework
+ * This is a test suite that runs all tests in for ETL batch. This avoids starting/stopping the unit-test framework
  * for every test class.
  */
 @Category(XSlowTests.class)
 @RunWith(Suite.class)
 @Suite.SuiteClasses({
-  ETLEmailActionTestRun.class,
-  ETLMapReduceTestRun.class,
+  ETLWorkflowTestRun.class,
   ETLSparkTestRun.class
 })
 public class ETLBatchTestSuite extends ETLBatchTestBase {

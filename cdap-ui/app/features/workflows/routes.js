@@ -84,8 +84,8 @@ angular.module(`${PKG.name}.feature.workflows`)
             parent: 'apps.detail.overview.programs',
             label: '{{$state.params.programId}}'
           },
-          onExit: function($modalStack) {
-            $modalStack.dismissAll();
+          onExit: function($uibModalStack) {
+            $uibModalStack.dismissAll();
           }
         })
 
@@ -98,8 +98,8 @@ angular.module(`${PKG.name}.feature.workflows`)
               label: '{{$state.params.runid}}',
               parent: 'workflows.detail'
             },
-            onExit: function($modalStack) {
-              $modalStack.dismissAll();
+            onExit: function($uibModalStack) {
+              $uibModalStack.dismissAll();
             }
           });
   });

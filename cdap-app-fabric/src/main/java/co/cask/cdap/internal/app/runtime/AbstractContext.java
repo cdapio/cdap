@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime;
 
+import co.cask.cdap.api.Admin;
 import co.cask.cdap.api.RuntimeContext;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.common.RuntimeArguments;
@@ -36,17 +37,17 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DynamicDatasetCache;
 import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
 import co.cask.cdap.data2.dataset2.SingleThreadDatasetCache;
+import co.cask.cdap.data2.metadata.lineage.AccessType;
 import co.cask.cdap.internal.app.program.ProgramTypeMetricTag;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -67,10 +68,12 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
   private final DiscoveryServiceClient discoveryServiceClient;
   private final PluginInstantiator pluginInstantiator;
   private final PluginContext pluginContext;
+  private final Admin admin;
+  private final long logicalStartTime;
   protected final DynamicDatasetCache datasetCache;
 
   /**
-   * Constructs a context without application template adapter support.
+   * Constructs a context without plugin support.
    */
   protected AbstractContext(Program program, RunId runId, Arguments arguments,
                             Set<String> datasets, MetricsContext metricsContext,
@@ -81,21 +84,23 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
   }
 
   /**
-   * Constructs a context. To have application template adapter support,
-   * both the {@code adapterSpec} and {@code pluginInstantiator} must not be null.
+   * Constructs a context. To have plugin support, the {@code pluginInstantiator} must not be null.
    */
   protected AbstractContext(Program program, RunId runId, Arguments arguments,
                             Set<String> datasets, MetricsContext metricsContext,
                             DatasetFramework dsFramework, TransactionSystemClient txClient,
                             DiscoveryServiceClient discoveryServiceClient, boolean multiThreaded,
                             @Nullable PluginInstantiator pluginInstantiator) {
-    super(program.getId());
+    super(program.getId().toEntityId());
     this.program = program;
     this.runId = runId;
-    this.runtimeArguments = ImmutableMap.copyOf(arguments.asMap());
     this.discoveryServiceClient = discoveryServiceClient;
     this.owners = createOwners(program.getId());
     this.programMetrics = metricsContext;
+
+    Map<String, String> runtimeArgs = new HashMap<>(arguments.asMap());
+    this.logicalStartTime = ProgramRunners.updateLogicalStartTime(runtimeArgs);
+    this.runtimeArguments = Collections.unmodifiableMap(runtimeArgs);
 
     Map<String, Map<String, String>> staticDatasets = new HashMap<>();
     for (String name : datasets) {
@@ -104,13 +109,14 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
     SystemDatasetInstantiator instantiator =
       new SystemDatasetInstantiator(dsFramework, program.getClassLoader(), owners);
     this.datasetCache = multiThreaded
-      ? new MultiThreadDatasetCache(instantiator, txClient, new NamespaceId(namespaceId),
+      ? new MultiThreadDatasetCache(instantiator, txClient, program.getId().getNamespace().toEntityId(),
                                     runtimeArguments, programMetrics, staticDatasets)
-      : new SingleThreadDatasetCache(instantiator, txClient, new NamespaceId(namespaceId),
+      : new SingleThreadDatasetCache(instantiator, txClient, program.getId().getNamespace().toEntityId(),
                                      runtimeArguments, programMetrics, staticDatasets);
     this.pluginInstantiator = pluginInstantiator;
     this.pluginContext = new DefaultPluginContext(pluginInstantiator, program.getId(),
                                                   program.getApplicationSpecification().getPlugins());
+    this.admin = new DefaultAdmin(dsFramework, program.getId().getNamespace().toEntityId());
   }
 
   private List<Id> createOwners(Id.Program programId) {
@@ -165,7 +171,12 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
   @Override
   public <T extends Dataset> T getDataset(String name, Map<String, String> arguments)
     throws DatasetInstantiationException {
-    return datasetCache.getDataset(name, arguments);
+    return getDataset(name, arguments, AccessType.UNKNOWN);
+  }
+
+  protected <T extends Dataset> T getDataset(String name, Map<String, String> arguments, AccessType accessType)
+    throws DatasetInstantiationException {
+    return datasetCache.getDataset(name, arguments, accessType);
   }
 
   @Override
@@ -194,6 +205,7 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
     return program;
   }
 
+  @Override
   public RunId getRunId() {
     return runId;
   }
@@ -201,6 +213,10 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
   @Override
   public Map<String, String> getRuntimeArguments() {
     return runtimeArguments;
+  }
+
+  public long getLogicalStartTime() {
+    return logicalStartTime;
   }
 
   /**
@@ -240,5 +256,10 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
   @Override
   public <T> T newPluginInstance(String pluginId) throws InstantiationException {
     return pluginContext.newPluginInstance(pluginId);
+  }
+
+  @Override
+  public Admin getAdmin() {
+    return admin;
   }
 }

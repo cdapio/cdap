@@ -1,7 +1,7 @@
 .. meta::
     :author: Cask Data, Inc.
     :description: Cask Data Application Platform WordCount Application
-    :copyright: Copyright © 2015 Cask Data, Inc.
+    :copyright: Copyright © 2015-2016 Cask Data, Inc.
 
 .. _examples-stream-conversion:
 
@@ -45,8 +45,8 @@ The interesting part is the creation of the dataset *converted*:
   - The first set of properties configures the underlying FileSet, as documented in the
     :ref:`FileSet <datasets-fileset>` section.
   - The second set of properties configures how the dataset is queryable with SQL. Here we can enable the
-    dataset for querying, and if so, we must specify Hive-specific properties for the Avro format: The Avro
-    SerDe, an input and an output format, and an additional table property, namely the schema for the Avro SerDe.
+    dataset for querying, and if so, we must specify Hive-specific properties for the Avro format: the Avro
+    SerDe, an input and an output format, and an additional table property: namely, the schema for the Avro SerDe.
 
 The MapReduce Program
 ---------------------
@@ -58,35 +58,35 @@ and it configures the *events* stream as its input and the *converted* dataset a
 
   .. literalinclude:: /../../../cdap-examples/StreamConversion/src/main/java/co/cask/cdap/examples/streamconversion/StreamConversionMapReduce.java
      :language: java
-     :lines: 63-68
+     :lines: 65-70
      :dedent: 4
      
 - Based on the logical start time, the MapReduce determines the range of events to read from the stream:
 
   .. literalinclude:: /../../../cdap-examples/StreamConversion/src/main/java/co/cask/cdap/examples/streamconversion/StreamConversionMapReduce.java
      :language: java
-     :lines: 70-72
+     :lines: 72-74
      :dedent: 4
 
 - Each MapReduce run writes its output to a partition with the logical start time:
 
   .. literalinclude:: /../../../cdap-examples/StreamConversion/src/main/java/co/cask/cdap/examples/streamconversion/StreamConversionMapReduce.java
      :language: java
-     :lines: 75-77
+     :lines: 77-79
      :dedent: 4
 
 - Note that the output file path is derived from the output partition time by the dataset itself:
 
   .. literalinclude:: /../../../cdap-examples/StreamConversion/src/main/java/co/cask/cdap/examples/streamconversion/StreamConversionMapReduce.java
      :language: java
-     :lines: 79-80
+     :lines: 81-82
      :dedent: 4
 
 - The Mapper itself is straight-forward: for each event, it emits an Avro record:
 
   .. literalinclude:: /../../../cdap-examples/StreamConversion/src/main/java/co/cask/cdap/examples/streamconversion/StreamConversionMapReduce.java
      :language: java
-     :lines: 86-98
+     :lines: 88-100
      :dedent: 2
 
 
@@ -116,14 +116,24 @@ Running the Workflow
 --------------------
 The ``StreamConversionWorkflow`` will run automatically every five minutes based on its schedule.
 To give it some data, you can use a provided script to send events to the stream, for example,
-to send 10000 events at a rate of roughly two per second::
+to send 10000 events at a rate of roughly two per second (one per second in the case of Windows):
 
+.. tabbed-parsed-literal::
+
+  .. Linux
+  
   $ examples/StreamConversion/bin/send-events.sh --events 10000 --delay 0.5
 
-You can now wait for the workflow to run, after which you can query the partitions in the
-*converted* dataset::
+  .. Windows
+  
+  > examples\StreamConversion\bin\send-events.bat 10000 1
 
-  $ cdap-cli.sh execute \"show partitions dataset_converted\"
+You can now wait for the workflow to run, after which you can query the partitions in the
+*converted* dataset:
+
+.. tabbed-parsed-literal::
+
+  $ cdap-cli.sh execute "\"show partitions dataset_converted\""
   
   +============================================+
   | partition: STRING                          |
@@ -134,11 +144,13 @@ You can now wait for the workflow to run, after which you can query the partitio
   +============================================+
 
 Note that in the Hive meta store, the partitions are registered with multiple dimensions rather
-than the time since the Epoch: the year, month, day of the month, hour and minute of the day.
+than the time since the Epoch: the year, month, and day of the month plus the hour and minute of the day.
 
-You can also query the data in the dataset. For example, to find the five most frequent body texts, issue::
+You can also query the data in the dataset. For example, to find the five most frequent body texts, issue:
 
-  $ cdap-cli.sh execute '"select count(*) as count, body from dataset_converted group by body order by count desc limit 5"'
+.. tabbed-parsed-literal::
+
+  $ cdap-cli.sh execute "\"select count(*) as count, body from dataset_converted group by body order by count desc limit 5\""
   
   +==============================+
   | count: BIGINT | body: STRING |
@@ -153,7 +165,7 @@ You can also query the data in the dataset. For example, to find the five most f
 Because this dataset is time-partitioned, you can use the partitioning keys to restrict the scope
 of the query. For example, to run the same query for only the month of January, use the query::
 
-  select count(*) as count, body from dataset_converted where month=5 group by body order by count desc limit 5
+  select count(*) as count, body from dataset_converted where month=1 group by body order by count desc limit 5
 
 
 .. Stopping and Removing the Application

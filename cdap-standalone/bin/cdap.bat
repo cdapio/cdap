@@ -2,7 +2,7 @@
 
 REM #################################################################################
 REM ##
-REM ## Copyright © 2014-2015 Cask Data, Inc.
+REM ## Copyright (c) 2014-2016 Cask Data, Inc.
 REM ##
 REM ## Licensed under the Apache License, Version 2.0 (the "License"); you may not
 REM ## use this file except in compliance with the License. You may obtain a copy of
@@ -18,14 +18,16 @@ REM ## the License.
 REM ##
 REM #################################################################################
 
-SET ORIGPATH=%cd%
+SET ORIG_DIR=%cd%
 SET CDAP_HOME=%~dp0
 SET CDAP_HOME=%CDAP_HOME:~0,-5%
 SET JAVACMD=%JAVA_HOME%\bin\java.exe
+SET DEFAULT_JVM_OPTS=-Xmx2048m -XX:MaxPermSize=256m
 
 REM %CDAP_HOME%
 SET CLASSPATH=%CDAP_HOME%\lib\*;%CDAP_HOME%\conf\
-SET PATH=%PATH%;%CDAP_HOME%\libexec\bin
+SET ORIG_PATH=%PATH%
+SET PATH=%PATH%;%CDAP_HOME%\libexec\bin;%CDAP_HOME%\lib\native;
 
 cd %CDAP_HOME%
 
@@ -107,8 +109,10 @@ if NOT "%line%" == "7" (
 endlocal
 
 REM Check if Node.js is installed
+set nodejs_minimum=v0.10.36
 for %%x in (node.exe) do if [%%~$PATH:x]==[] (
-  echo Node.js Standalone CDAP requires Node.js but it's either not installed or not in path. Exiting. 1>&2
+  echo Standalone CDAP requires Node.js but it's either not installed or not in path. 1>&2
+  echo We recommend any version of Node.js starting with %nodejs_minimum%. Exiting. 1>&2
   GOTO :FINALLY
 )
 
@@ -120,9 +124,11 @@ for /f "tokens=* delims= " %%f in ('node -v') do @(
 set line=%line:v=!!%
 
 for /F "delims=.,v tokens=1,2,3" %%a in ('echo %line%') do (
-  if %%a LEQ 1 if %%b LSS 10 (
-    echo Node.js version is not supported. We recommend any version of Node.js greater than v0.10.0.
+  if %%a LSS 1 if %%b LSS 11 if %%c LSS 36 (
+    echo Node.js v%line% is not supported. The minimum version supported is %nodejs_minimum%.
     GOTO :FINALLY
+  ) else (
+    echo Node.js version: v%line% 
   )
 )
 endlocal
@@ -184,7 +190,7 @@ IF "%2" == "--enable-debug" (
   set DEBUG_OPTIONS="-agentlib:jdwp=transport=dt_socket,address=localhost:!port!,server=y,suspend=n"
 )
 
-start /B %JAVACMD% !DEBUG_OPTIONS! -Dhadoop.security.group.mapping=org.apache.hadoop.security.JniBasedUnixGroupsMappingWithFallback -Dhadoop.home.dir=%CDAP_HOME%\libexec -classpath %CLASSPATH% co.cask.cdap.StandaloneMain >> %CDAP_HOME%\logs\cdap-process.log 2>&1 < NUL
+start /B %JAVACMD% %DEFAULT_JVM_OPTS% !DEBUG_OPTIONS! -Dhadoop.security.group.mapping=org.apache.hadoop.security.JniBasedUnixGroupsMappingWithFallback -Dhadoop.home.dir=%CDAP_HOME%\libexec -classpath %CLASSPATH% co.cask.cdap.StandaloneMain >> %CDAP_HOME%\logs\cdap-process.log 2>&1 < NUL
 echo Starting Standalone CDAP...
 
 for /F "TOKENS=1,2,*" %%a in ('tasklist /FI "IMAGENAME eq java.exe"') DO SET MyPID=%%b
@@ -271,7 +277,8 @@ CALL :STOP
 GOTO :START
 
 :FINALLY
-cd %ORIGPATH%
+cd %ORIG_DIR%
+SET PATH=%ORIG_PATH%
 GOTO:EOF
 
 
@@ -287,3 +294,5 @@ for /F "TOKENS=*" %%b in ('dir  /a-d %CDAP_HOME%\logs 2^>NUL ^| find /c "%extens
   rename %CDAP_HOME%\logs\%extension% %extension%.1 >NUL 2>NUL
 )
 endlocal
+
+:EOF

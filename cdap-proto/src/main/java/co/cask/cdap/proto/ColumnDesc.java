@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,7 +16,7 @@
 
 package co.cask.cdap.proto;
 
-import com.google.common.base.Objects;
+import java.util.Objects;
 
 /**
  * Represents a column inside a query result.
@@ -65,24 +65,24 @@ public class ColumnDesc {
 
     ColumnDesc that = (ColumnDesc) o;
 
-    return Objects.equal(this.name, that.name) &&
-      Objects.equal(this.type, that.type) &&
-      Objects.equal(this.position, that.position) &&
-      Objects.equal(this.comment, that.comment);
+    return Objects.equals(this.name, that.name) &&
+      Objects.equals(this.type, that.type) &&
+      Objects.equals(this.position, that.position) &&
+      Objects.equals(this.comment, that.comment);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(name, type, position, comment);
+    return Objects.hash(name, type, position, comment);
   }
 
   @Override
   public String toString() {
-    return Objects.toStringHelper(this)
-      .add("name", name)
-      .add("type", type)
-      .add("position", position)
-      .add("comment", comment)
-      .toString();
+    return "ColumnDesc{" +
+      "name='" + name + '\'' +
+      ", type='" + type + '\'' +
+      ", position=" + position +
+      ", comment='" + comment + '\'' +
+      '}';
   }
 }

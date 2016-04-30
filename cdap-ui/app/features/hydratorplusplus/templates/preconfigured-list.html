@@ -1,0 +1,90 @@
+<!--
+  Copyright © 2016 Cask Data, Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+-->
+
+<div class="hydrator-preconfigured">
+  <div class="row">
+    <div class="col-lg-8 col-lg-offset-2 tiles-container">
+      <div class="col-sm-12 heading preconfigured text-center">
+        <h3>
+          <span>Select a pre-configured Pipeline</span>
+        </h3>
+      </div>
+
+      <div class="row">
+        <div class="col-xs-3 templates-filters">
+          <div class="row">
+            <div class="col-xs-12">
+              <div class="form-group has-feedback">
+                <input type="text"
+                  class="form-control"
+                  ng-model="PreconfiguredController.searchText"
+                  placeholder="Search" />
+                <span class="fa fa-search form-control-feedback"></span>
+              </div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-xs-12">
+              <div class="btn-group-vertical">
+                <button class="btn btn-default text-left"
+                  ng-class="{'active': PreconfiguredController.typeFilter === ''}"
+                  ng-click="PreconfiguredController.typeFilter = ''">
+                  All
+                </button>
+                <button class="btn btn-default text-left"
+                  ng-class="{'active': PreconfiguredController.GLOBALS.etlBatchPipelines.indexOf(PreconfiguredController.typeFilter) !== -1}"
+                  ng-click="PreconfiguredController.typeFilter = PreconfiguredController.GLOBALS.etlBatch">
+                  Batch
+                </button>
+                <button class="btn btn-default text-left"
+                  ng-class="{'active': PreconfiguredController.typeFilter === PreconfiguredController.GLOBALS.etlRealtime}"
+                  ng-click="PreconfiguredController.typeFilter = PreconfiguredController.GLOBALS.etlRealtime">
+                  Real-time
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-xs-9 template-main">
+          <div class="row">
+            <div class="col-xs-4"
+              ng-repeat="template in PreconfiguredController.filtered = (PreconfiguredController.templates | filter: { type: PreconfiguredController.typeFilter, $: PreconfiguredController.searchText }) | myPaginate:PreconfiguredController.currentPage:9"
+              ng-click="PreconfiguredController.selectTemplate(template)">
+              <div class="well well-md start-well template-link">
+                <h4 class="template-name">{{ template.name }}</h4>
+                <p>{{ template.description }}</p>
+                <hr/>
+                <div class="template-properties">
+                  <p>Source: {{ template._properties.config.source.plugin.name }}</p>
+                  <p>Sinks: {{ template._properties.config.sinks[0].plugin.name }}<span ng-if="template._properties.config.sinks.length > 1">, ...</span> </p>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-xs-12" ng-if="PreconfiguredController.filtered.length > 9">
+              <uib-pagination total-items="PreconfiguredController.filtered.length"
+                ng-model="PreconfiguredController.currentPage"
+                items-per-page="9"></uib-pagination>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>

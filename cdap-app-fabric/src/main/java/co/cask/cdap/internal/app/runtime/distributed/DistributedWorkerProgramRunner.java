@@ -37,7 +37,6 @@ import org.apache.twill.api.EventHandler;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.TwillController;
 import org.apache.twill.api.TwillRunner;
-import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,10 +52,9 @@ public class DistributedWorkerProgramRunner extends AbstractDistributedProgramRu
   private static final Gson GSON = new Gson();
 
   @Inject
-  DistributedWorkerProgramRunner(TwillRunner twillRunner, LocationFactory locationFactory,
-                                 YarnConfiguration hConf, CConfiguration cConf,
+  DistributedWorkerProgramRunner(TwillRunner twillRunner, YarnConfiguration hConf, CConfiguration cConf,
                                  TokenSecureStoreUpdater tokenSecureStoreUpdater) {
-    super(twillRunner, locationFactory, hConf, cConf, tokenSecureStoreUpdater);
+    super(twillRunner, hConf, cConf, tokenSecureStoreUpdater);
   }
 
   @Override

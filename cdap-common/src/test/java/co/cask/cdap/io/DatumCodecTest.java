@@ -286,7 +286,7 @@ public class DatumCodecTest {
   /**
    *
    */
-  public static enum TestEnum {
+  public enum TestEnum {
     VALUE1, VALUE2, VALUE3
   }
 
@@ -303,11 +303,12 @@ public class DatumCodecTest {
     writer.encode(TestEnum.VALUE2, encoder);
 
     BinaryDecoder decoder = new BinaryDecoder(input);
-    ReflectionDatumReader<TestEnum> reader = new ReflectionDatumReader<>(schema, TypeToken.of(TestEnum.class));
+    Schema readSchema = Schema.parseJson(schema.toString());
+    ReflectionDatumReader<TestEnum> reader = new ReflectionDatumReader<>(readSchema, TypeToken.of(TestEnum.class));
 
-    Assert.assertEquals(TestEnum.VALUE1, reader.read(decoder, schema));
-    Assert.assertEquals(TestEnum.VALUE3, reader.read(decoder, schema));
-    Assert.assertEquals(TestEnum.VALUE2, reader.read(decoder, schema));
+    Assert.assertEquals(TestEnum.VALUE1, reader.read(decoder, readSchema));
+    Assert.assertEquals(TestEnum.VALUE3, reader.read(decoder, readSchema));
+    Assert.assertEquals(TestEnum.VALUE2, reader.read(decoder, readSchema));
   }
 
   // this tests that the datum reader treats empty fields correctly. It reproduces the issue in ENG-2404.

@@ -17,7 +17,9 @@
 package co.cask.cdap.logging.save;
 
 import ch.qos.logback.classic.LoggerContext;
+import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.util.StatusPrinter;
+import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.ApplicationLoggingContext;
@@ -27,11 +29,14 @@ import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.logging.NamespaceLoggingContext;
 import co.cask.cdap.common.logging.ServiceLoggingContext;
 import co.cask.cdap.common.logging.SystemLoggingContext;
+import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import co.cask.cdap.logging.KafkaTestBase;
 import co.cask.cdap.logging.LoggingConfiguration;
 import co.cask.cdap.logging.appender.LogAppenderInitializer;
 import co.cask.cdap.logging.appender.kafka.KafkaLogAppender;
+import co.cask.cdap.logging.appender.kafka.LoggingEventSerializer;
 import co.cask.cdap.logging.context.FlowletLoggingContext;
+import co.cask.cdap.logging.context.LoggingContextHelper;
 import co.cask.cdap.logging.filter.Filter;
 import co.cask.cdap.logging.read.AvroFileReader;
 import co.cask.cdap.logging.read.FileLogReader;
@@ -39,15 +44,20 @@ import co.cask.cdap.logging.read.LogEvent;
 import co.cask.cdap.logging.serialize.LogSchema;
 import co.cask.cdap.test.SlowTests;
 import co.cask.tephra.TransactionManager;
+import com.google.common.base.Function;
+import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.inject.Injector;
 import com.google.inject.Key;
 import com.google.inject.TypeLiteral;
@@ -55,6 +65,7 @@ import com.google.inject.name.Names;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
+import org.apache.twill.kafka.client.FetchedMessage;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -67,8 +78,11 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.text.SimpleDateFormat;
+import java.util.Collection;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.concurrent.Executors;
@@ -90,7 +104,7 @@ public class LogSaverPluginTest extends KafkaTestBase {
   private static LogSaver logSaver;
   private static String namespaceDir;
   private static KafkaLogAppender appender;
-  private static CountingLogAppender countingLogAppender;
+  private static Gson gson;
 
   @BeforeClass
   public static void initialize() throws IOException {
@@ -100,8 +114,9 @@ public class LogSaverPluginTest extends KafkaTestBase {
 
     injector = KAFKA_TESTER.getInjector();
     appender = injector.getInstance(KafkaLogAppender.class);
-    countingLogAppender = new CountingLogAppender(appender);
+    CountingLogAppender countingLogAppender = new CountingLogAppender(appender);
     new LogAppenderInitializer(countingLogAppender).initialize("LogSaverPluginTest");
+    gson = new GsonBuilder().registerTypeAdapter(Schema.class, new SchemaTypeAdapter()).create();
   }
 
   public void startLogSaver() throws Exception {
@@ -126,40 +141,50 @@ public class LogSaverPluginTest extends KafkaTestBase {
     // Re-process from the reset offset
     // Verify checkpoints
 
-    startLogSaver();
-    publishLogs();
+    try {
+      startLogSaver();
+      publishLogs();
 
-    LocationFactory locationFactory = injector.getInstance(LocationFactory.class);
-    Location ns1LogBaseDir = locationFactory.create(namespaceDir).append("NS_1").append(logBaseDir);
-    waitTillLogSaverDone(ns1LogBaseDir, "APP_1/flow-FLOW_1/%s", "Test log message 59 arg1 arg2");
+      LocationFactory locationFactory = injector.getInstance(LocationFactory.class);
+      Location ns1LogBaseDir = locationFactory.create(namespaceDir).append("NS_1").append(logBaseDir);
+      waitTillLogSaverDone(ns1LogBaseDir, "APP_1/flow-FLOW_1/%s", "Test log message 59 arg1 arg2");
 
-    testLogRead(new FlowletLoggingContext("NS_1", "APP_1", "FLOW_1", "", "RUN1", "INSTANCE"));
+      testLogRead(new FlowletLoggingContext("NS_1", "APP_1", "FLOW_1", "", "RUN1", "INSTANCE"));
 
-    LogCallback logCallback = new LogCallback();
-    FileLogReader distributedLogReader = injector.getInstance(FileLogReader.class);
-    distributedLogReader.getLog(new FlowletLoggingContext("NS_1", "APP_1", "FLOW_1", "", null, "INSTANCE"),
-                                0, Long.MAX_VALUE, Filter.EMPTY_FILTER, logCallback);
-    Assert.assertEquals(60, logCallback.getEvents().size());
+      LogCallback logCallback = new LogCallback();
+      FileLogReader distributedLogReader = injector.getInstance(FileLogReader.class);
+      distributedLogReader.getLog(new FlowletLoggingContext("NS_1", "APP_1", "FLOW_1", "", null, "INSTANCE"),
+                                  0, Long.MAX_VALUE, Filter.EMPTY_FILTER, logCallback);
+      Assert.assertEquals(60, logCallback.getEvents().size());
 
-    // Reset checkpoint for log saver plugin
-    resetLogSaverPluginCheckpoint();
+      // Reset checkpoint for log saver plugin
+      resetLogSaverPluginCheckpoint();
 
-    // reset the logsaver to start reading from reset offset
-    Set<Integer> partitions = Sets.newHashSet(0, 1);
-    logSaver.unscheduleTasks();
-    logSaver.scheduleTasks(partitions);
+      // reset the logsaver to start reading from reset offset
+      Set<Integer> partitions = Sets.newHashSet(0, 1);
+      logSaver.unscheduleTasks();
+      logSaver.scheduleTasks(partitions);
 
-    waitTillLogSaverDone(ns1LogBaseDir, "APP_1/flow-FLOW_1/%s", "Test log message 59 arg1 arg2");
-    stopLogSaver();
+      waitTillLogSaverDone(ns1LogBaseDir, "APP_1/flow-FLOW_1/%s", "Test log message 59 arg1 arg2");
+      stopLogSaver();
 
-    LogCallback callbackAfterReset = new LogCallback();
+      LogCallback callbackAfterReset = new LogCallback();
 
-    //Verify that more records are processed by LogWriter plugin
-    distributedLogReader.getLog(new FlowletLoggingContext("NS_1", "APP_1", "FLOW_1", "", null, "INSTANCE"),
-                                0, Long.MAX_VALUE, Filter.EMPTY_FILTER, callbackAfterReset);
-    Assert.assertEquals(60, logCallback.getEvents().size());
-    // Checkpoint should read 60 for both processor
-    verifyCheckpoint();
+      //Verify that more records are processed by LogWriter plugin
+      distributedLogReader.getLog(new FlowletLoggingContext("NS_1", "APP_1", "FLOW_1", "", null, "INSTANCE"),
+                                  0, Long.MAX_VALUE, Filter.EMPTY_FILTER, callbackAfterReset);
+      Assert.assertEquals(60, logCallback.getEvents().size());
+      // Checkpoint should read 60 for both processor
+      verifyCheckpoint();
+    } catch (Throwable t) {
+      try {
+        final Multimap<String, String> contextMessages = getPublishedKafkaMessages();
+        LOG.info("All kafka messages: {}", contextMessages);
+      } catch (Exception e) {
+        LOG.error("Error while getting published kafka messages {}", e);
+      }
+      throw t;
+    }
   }
 
   private void resetLogSaverPluginCheckpoint() throws Exception {
@@ -188,7 +213,6 @@ public class LogSaverPluginTest extends KafkaTestBase {
     TypeLiteral<Set<KafkaLogProcessor>> type = new TypeLiteral<Set<KafkaLogProcessor>>() { };
     Set<KafkaLogProcessor> processors =
       injector.getInstance(Key.get(type, Names.named(Constants.LogSaver.MESSAGE_PROCESSORS)));
-
     for (KafkaLogProcessor processor : processors) {
       CheckpointManager checkpointManager = getCheckPointManager(processor);
       Assert.assertEquals(60, checkpointManager.getCheckpoint(0).getNextOffset());
@@ -215,9 +239,7 @@ public class LogSaverPluginTest extends KafkaTestBase {
     List<LogEvent> allEvents = logCallback1.getEvents();
 
     for (int i = 0; i < 60; ++i) {
-      Assert.assertEquals("Log append count for " + loggingContext.getLogPartition() + " = " +
-                            countingLogAppender.getCount(loggingContext.getLogPartition()),
-                          String.format("Test log message %d arg1 arg2", i),
+      Assert.assertEquals("Assert failed: ", String.format("Test log message %d arg1 arg2", i),
                           allEvents.get(i).getLoggingEvent().getFormattedMessage());
       if (loggingContext instanceof ServiceLoggingContext) {
         Assert.assertEquals(
@@ -319,6 +341,41 @@ public class LogSaverPluginTest extends KafkaTestBase {
     Assert.assertEquals("Test log message 18 arg1 arg2", events.get(0).getLoggingEvent().getFormattedMessage());
     Assert.assertEquals("Test log message 33 arg1 arg2",
                         events.get(events.size() - 1 - (events.size() - 16)).getLoggingEvent().getFormattedMessage());
+  }
+
+  private Multimap<String, String> getPublishedKafkaMessages() throws InterruptedException {
+    final Multimap<String, String> contextMessages = ArrayListMultimap.create();
+    KAFKA_TESTER.getPublishedMessages(KAFKA_TESTER.getCConf().get(Constants.Logging.KAFKA_TOPIC),
+                                      ImmutableSet.of(0, 1), 60, 0, new Function<FetchedMessage, String>() {
+        @Override
+        public String apply(final FetchedMessage input) {
+          try {
+            Map.Entry<String, String> entry = convertFetchedMessage(input);
+            contextMessages.put(entry.getKey(), entry.getValue());
+          } catch (IOException e) {
+            LOG.error("Error while converting FetchedMessage {}", e);
+          }
+          return "";
+        }
+      });
+    for (Map.Entry<String, Collection<String>> entry : contextMessages.asMap().entrySet()) {
+      LOG.info("Kafka Message Count for {} is {}", entry.getKey(), entry.getValue().size());
+    }
+    return contextMessages;
+  }
+
+  private Map.Entry<String, String> convertFetchedMessage(FetchedMessage message) throws IOException {
+    LoggingEventSerializer serializer = new LoggingEventSerializer();
+    ILoggingEvent iLoggingEvent = serializer.fromBytes(message.getPayload());
+    LoggingContext loggingContext = LoggingContextHelper.getLoggingContext(iLoggingEvent.getMDCPropertyMap());
+    String key = loggingContext.getLogPartition();
+
+    // Temporary map for pretty format
+    Map<String, String> tempMap = new HashMap<>();
+    tempMap.put("Timestamp", Long.toString(iLoggingEvent.getTimeStamp()));
+    tempMap.put("Partition", Long.toString(message.getTopicPartition().getPartition()));
+    tempMap.put("LogEvent", iLoggingEvent.getFormattedMessage());
+    return Maps.immutableEntry(key, gson.toJson(tempMap));
   }
 
   private void publishLogs() throws Exception {

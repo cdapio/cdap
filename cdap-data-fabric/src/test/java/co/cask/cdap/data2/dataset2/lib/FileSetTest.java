@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,20 +17,21 @@
 package co.cask.cdap.data2.dataset2.lib;
 
 import co.cask.cdap.api.dataset.DataSetException;
+import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.api.dataset.lib.FileSetArguments;
 import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.data2.dataset2.DatasetFrameworkTestUtil;
-import co.cask.cdap.data2.dataset2.DatasetManagementException;
-import co.cask.cdap.data2.dataset2.lib.file.FileSetModule;
+import co.cask.cdap.data2.dataset2.lib.file.FileSetDataset;
 import co.cask.cdap.proto.Id;
+import co.cask.tephra.TransactionFailureException;
 import com.google.common.collect.Maps;
 import org.apache.twill.filesystem.Location;
-import org.junit.AfterClass;
+import org.junit.After;
 import org.junit.Assert;
-import org.junit.BeforeClass;
+import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -63,8 +64,8 @@ public class FileSetTest {
   private static final Id.DatasetInstance testFileSetInstance5 =
     Id.DatasetInstance.from(DatasetFrameworkTestUtil.NAMESPACE_ID, "externalFileSet");
 
-  @BeforeClass
-  public static void beforeClass() throws Exception {
+  @Before
+  public void before() throws Exception {
     dsFrameworkUtil.createInstance("fileSet", testFileSetInstance1, FileSetProperties.builder()
       .setBasePath("testDir").build());
     Map<String, String> fileArgs = Maps.newHashMap();
@@ -72,7 +73,6 @@ public class FileSetTest {
     FileSetArguments.setOutputPath(fileArgs, "some?File1");
     fileSet1 = dsFrameworkUtil.getInstance(testFileSetInstance1, fileArgs);
 
-    dsFrameworkUtil.addModule(Id.DatasetModule.from(OTHER_NAMESPACE, "fileSet"), new FileSetModule());
     dsFrameworkUtil.createInstance("fileSet", testFileSetInstance2, FileSetProperties.builder()
       .setBasePath("testDir").build());
     fileArgs = Maps.newHashMap();
@@ -81,8 +81,8 @@ public class FileSetTest {
     fileSet2 = dsFrameworkUtil.getInstance(testFileSetInstance2, fileArgs);
   }
 
-  @AfterClass
-  public static void afterClass() throws Exception {
+  @After
+  public void after() throws Exception {
     deleteInstance(testFileSetInstance1);
     deleteInstance(testFileSetInstance2);
     deleteInstance(testFileSetInstance3);
@@ -107,23 +107,23 @@ public class FileSetTest {
     Assert.assertEquals(fileSet1NsDir.getName(), DatasetFrameworkTestUtil.NAMESPACE_ID.getId());
     Assert.assertEquals(fileSet2NsDir.getName(), OTHER_NAMESPACE.getId());
 
-    Assert.assertNotEquals(Locations.toURI(fileSet1.getInputLocations().get(0)).getPath(),
-                           Locations.toURI(fileSet2.getInputLocations().get(0)).getPath());
-    Assert.assertNotEquals(Locations.toURI(fileSet1Output).getPath(), Locations.toURI(fileSet2Output).getPath());
+    Assert.assertNotEquals(fileSet1.getInputLocations().get(0).toURI().getPath(),
+                           fileSet2.getInputLocations().get(0).toURI().getPath());
+    Assert.assertNotEquals(fileSet1Output.toURI().getPath(), fileSet2Output.toURI().getPath());
 
-    OutputStream out = fileSet1.getOutputLocation().getOutputStream();
-    out.write(42);
-    out.close();
-    out = fileSet2.getOutputLocation().getOutputStream();
-    out.write(54);
-    out.close();
+    try (OutputStream out = fileSet1.getOutputLocation().getOutputStream()) {
+      out.write(42);
+    }
+    try (OutputStream out = fileSet2.getOutputLocation().getOutputStream()) {
+      out.write(54);
+    }
 
-    InputStream in = fileSet1.getInputLocations().get(0).getInputStream();
-    Assert.assertEquals(42, in.read());
-    in.close();
-    in = fileSet2.getInputLocations().get(0).getInputStream();
-    Assert.assertEquals(54, in.read());
-    in.close();
+    try (InputStream in = fileSet1.getInputLocations().get(0).getInputStream()) {
+      Assert.assertEquals(42, in.read());
+    }
+    try (InputStream in = fileSet2.getInputLocations().get(0).getInputStream()) {
+      Assert.assertEquals(54, in.read());
+    }
   }
 
   @Test
@@ -140,10 +140,10 @@ public class FileSetTest {
     FileSet fileSet = dsFrameworkUtil.getInstance(testFileSetInstance3, fileArgs);
 
     // write to the output path
-    Assert.assertEquals(absolutePath + "/out", Locations.toURI(fileSet.getOutputLocation()).getPath());
-    OutputStream out = fileSet.getOutputLocation().getOutputStream();
-    out.write(42);
-    out.close();
+    Assert.assertEquals(absolutePath + "/out", fileSet.getOutputLocation().toURI().getPath());
+    try (OutputStream out = fileSet.getOutputLocation().getOutputStream()) {
+      out.write(42);
+    }
 
     // validate that the file was created
     Assert.assertTrue(new File(absolutePath + "/out").isFile());
@@ -225,5 +225,55 @@ public class FileSetTest {
                                      .setBasePath(absolutePath)
                                      .setDataExternal(true)
                                      .build());
+  }
+
+  @Test
+   public void testRollback() throws IOException, TransactionFailureException {
+    // test deletion of an empty output directory
+    Location outputLocation = fileSet1.getOutputLocation();
+    Assert.assertFalse(outputLocation.exists());
+
+    Assert.assertTrue(outputLocation.mkdirs());
+
+    Assert.assertTrue(outputLocation.exists());
+    ((FileSetDataset) fileSet1).onFailure();
+
+    Assert.assertFalse(outputLocation.exists());
+  }
+
+  @Test
+  public void testRollbackOfNonDirectoryOutput() throws IOException, TransactionFailureException {
+    // test deletion of an output location, pointing to a non-directory file
+    Location outputFile = fileSet1.getOutputLocation();
+    Assert.assertFalse(outputFile.exists());
+
+    outputFile.getOutputStream().close();
+
+    Assert.assertTrue(outputFile.exists());
+    ((FileSetDataset) fileSet1).onFailure();
+
+    // the output file should still not be deleted
+    Assert.assertTrue(outputFile.exists());
+  }
+
+  @Test
+  public void testRollbackWithNonEmptyDir() throws IOException, TransactionFailureException {
+    Location outputDir = fileSet1.getOutputLocation();
+    Assert.assertFalse(outputDir.exists());
+
+    Assert.assertTrue(outputDir.mkdirs());
+
+    Location outputFile = outputDir.append("outputFile");
+    // this will create the outputFile
+    outputFile.getOutputStream().close();
+
+    Assert.assertTrue(outputFile.exists());
+
+    Assert.assertTrue(outputDir.exists());
+    ((FileSetDataset) fileSet1).onFailure();
+
+    // both the output dir and file in it should still exist
+    Assert.assertTrue(outputDir.exists());
+    Assert.assertTrue(outputFile.exists());
   }
 }

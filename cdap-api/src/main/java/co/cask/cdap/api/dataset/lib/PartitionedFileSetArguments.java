@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,8 +18,12 @@ package co.cask.cdap.api.dataset.lib;
 
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.dataset.lib.Partitioning.FieldType;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.reflect.TypeToken;
 
-import java.util.Collection;
+import java.lang.reflect.Type;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -34,9 +38,11 @@ public class PartitionedFileSetArguments {
   public static final String OUTPUT_PARTITION_KEY_PREFIX = "output.partition.key.";
   public static final String OUTPUT_PARTITION_METADATA_PREFIX = "output.partition.metadata.";
   public static final String DYNAMIC_PARTITIONER_CLASS_NAME = "output.dynamic.partitioner.class.name";
-  public static final String INPUT_PARTITION_LOWER_PREFIX = "input.filter.lower.";
-  public static final String INPUT_PARTITION_UPPER_PREFIX = "input.filter.upper.";
-  public static final String INPUT_PARTITION_VALUE_PREFIX = "input.filter.value.";
+  public static final String INPUT_PARTITION_FILTER = "input.partition.filter";
+
+  private static final Gson GSON =
+    new GsonBuilder().registerTypeAdapter(PartitionFilter.Condition.class, new ConditionCodec()).create();
+  private static final Type PARTITION_FILTER_LIST_TYPE = new TypeToken<List<PartitionFilter>>() { }.getType();
 
   /**
    * Set the partition key of the output partition when using PartitionedFileSet as an OutputFormatProvider.
@@ -104,20 +110,9 @@ public class PartitionedFileSetArguments {
    * @param filter The partition filter.
    */
   public static void setInputPartitionFilter(Map<String, String> arguments, PartitionFilter filter) {
-    for (Map.Entry<String, PartitionFilter.Condition<? extends Comparable>> entry : filter.getConditions().entrySet()) {
-      String fieldName = entry.getKey();
-      PartitionFilter.Condition<? extends Comparable> condition = entry.getValue();
-      if (condition.isSingleValue()) {
-        arguments.put(INPUT_PARTITION_VALUE_PREFIX + fieldName, condition.getValue().toString());
-      } else {
-        if (condition.getLower() != null) {
-          arguments.put(INPUT_PARTITION_LOWER_PREFIX + fieldName, condition.getLower().toString());
-        }
-        if (condition.getUpper() != null) {
-          arguments.put(INPUT_PARTITION_UPPER_PREFIX + fieldName, condition.getUpper().toString());
-        }
-      }
-    }
+    // Serialize a singleton list for now. Support for multiple PartitionFilters can be added in the future.
+    // See: https://issues.cask.co/browse/CDAP-5618
+    arguments.put(INPUT_PARTITION_FILTER, GSON.toJson(Collections.singletonList(filter)));
   }
 
   /**
@@ -126,34 +121,33 @@ public class PartitionedFileSetArguments {
    * @param arguments the runtime arguments for a partitioned dataset
    * @param partitioning the declared partitioning for the dataset, needed for proper interpretation of values
    * @return the PartitionFilter specified in the arguments or null if no filter is specified.
+   * @deprecated as of 3.4.0. Use {@link #getInputPartitionFilter(Map)} instead.
    */
   @Nullable
+  @Deprecated
   public static PartitionFilter getInputPartitionFilter(Map<String, String> arguments, Partitioning partitioning) {
-    PartitionFilter.Builder builder = PartitionFilter.builder();
-    for (Map.Entry<String, FieldType> entry : partitioning.getFields().entrySet()) {
-      String fieldName = entry.getKey();
-      FieldType fieldType = entry.getValue();
+    return getInputPartitionFilter(arguments);
+  }
 
-      // is it a single-value condition?
-      String stringValue = arguments.get(INPUT_PARTITION_VALUE_PREFIX + fieldName);
-      Comparable fieldValue = convertFieldValue("filter", "value", fieldName, fieldType, stringValue, true);
-      if (null != fieldValue) {
-        @SuppressWarnings({ "unchecked", "unused" }) // we know it's type safe, but Java does not
-        PartitionFilter.Builder unused = builder.addValueCondition(fieldName, fieldValue);
-        continue;
-      }
-      // must be a range condition
-      String stringLower = arguments.get(INPUT_PARTITION_LOWER_PREFIX + fieldName);
-      String stringUpper = arguments.get(INPUT_PARTITION_UPPER_PREFIX + fieldName);
-      Comparable lowerValue = convertFieldValue("filter", "lower bound", fieldName, fieldType, stringLower, true);
-      Comparable upperValue = convertFieldValue("filter", "upper bound", fieldName, fieldType, stringUpper, true);
-      if (null == lowerValue && null == upperValue) {
-        continue; // this field was not present in the filter
-      }
-      @SuppressWarnings({ "unchecked", "unused" }) // we know it's type safe, but Java does not
-      PartitionFilter.Builder unused = builder.addRangeCondition(fieldName, lowerValue, upperValue);
+  /**
+   * Get the partition filter for the input to be read.
+   *
+   * @param arguments the runtime arguments for a partitioned dataset
+   * @return the PartitionFilter specified in the arguments or null if no filter is specified.
+   */
+  @Nullable
+  public static PartitionFilter getInputPartitionFilter(Map<String, String> arguments) {
+    if (!arguments.containsKey(INPUT_PARTITION_FILTER)) {
+      return null;
     }
-    return builder.isEmpty() ? null : builder.build();
+    List<PartitionFilter> singletonList
+      = GSON.fromJson(arguments.get(INPUT_PARTITION_FILTER), PARTITION_FILTER_LIST_TYPE);
+    // this shouldn't happen based upon how we are serializing in #setInputPartitionFilter.
+    // however, user might not use that method and attempt to specify/construct the runtime arguments themselves.
+    if (singletonList.size() != 1) {
+      throw new IllegalArgumentException("Expected serialized list to have length 1. Actual: " + singletonList.size());
+    }
+    return singletonList.get(0);
   }
 
   // helper to convert a string value into a field value in a partition key or filter

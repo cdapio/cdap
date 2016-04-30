@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -26,7 +26,6 @@ import co.cask.cdap.api.service.http.HttpServiceRequest;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
 import co.cask.cdap.api.workflow.AbstractWorkflow;
 import co.cask.cdap.api.workflow.AbstractWorkflowAction;
-import co.cask.cdap.api.workflow.WorkflowActionConfigurer;
 import com.google.common.base.Throwables;
 import org.junit.Assert;
 
@@ -67,12 +66,6 @@ public class DatasetWithCustomActionApp extends AbstractApplication {
     private static class TestAction extends AbstractWorkflowAction {
       @UseDataSet(CUSTOM_TABLE)
       private KeyValueTable table;
-
-      @Override
-      public void configure(WorkflowActionConfigurer configurer) {
-        super.configure(configurer);
-        useDatasets(CUSTOM_FILESET);
-      }
 
       @Override
       public void run() {

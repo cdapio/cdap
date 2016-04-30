@@ -22,7 +22,6 @@ import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.internal.app.runtime.ProgramControllerServiceAdapter;
-import co.cask.cdap.internal.app.runtime.ProgramRunnerFactory;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.proto.Id;
@@ -111,7 +110,7 @@ public class AbstractProgramRuntimeServiceTest {
   private ProgramRunnerFactory createProgramRunnerFactory() {
     return new ProgramRunnerFactory() {
       @Override
-      public ProgramRunner create(Type programType) {
+      public ProgramRunner create(ProgramType programType) {
         return new ProgramRunner() {
           @Override
           public ProgramController run(Program program, ProgramOptions options) {

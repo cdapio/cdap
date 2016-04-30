@@ -28,22 +28,23 @@ of the *CentersService*. It will respond with the center's coordinates based on 
 
 Let's look at some of these components, and then run the application and see the results.
 
-The SparkKMeans Application
----------------------------
+The *SparkKMeans* Application
+-----------------------------
 As in the other `examples <index.html>`__, the components
 of the application are tied together by the class ``SparkKMeansApp``:
 
 .. literalinclude:: /../../../cdap-examples/SparkKMeans/src/main/java/co/cask/cdap/examples/sparkkmeans/SparkKMeansApp.java
    :language: java
-   :lines: 51-82
+   :lines: 52-84
+   :append: . . .
 
-The ``points`` and ``centers`` ObjectStore Data Storage
--------------------------------------------------------
+The *points* and *centers* ObjectStore Data Storage
+---------------------------------------------------
 The raw points data is stored in an ObjectStore dataset, *points*.
 The calculated centers data is stored in a second ObjectStore dataset, *centers*.
 
-The ``CentersService`` Service
-------------------------------
+The *CentersService* Service
+----------------------------
 This service has a ``centers/{index}`` endpoint to obtain the center's coordinates of a given index.
 
 
@@ -76,10 +77,13 @@ Running the Example
 Injecting Points Data
 ---------------------
 Inject a file of points data to the stream *pointsStream* by running this command from the
-Standalone CDAP SDK directory, using the Command Line Interface::
+Standalone CDAP SDK directory, using the Command Line Interface:
   
-  $ cdap-cli.sh load stream pointsStream examples/SparkKMeans/resources/points.txt 
-  Successfully sent stream event to stream 'pointsStream' 
+.. tabbed-parsed-literal::
+  
+  $ cdap-cli.sh load stream pointsStream examples/SparkKMeans/resources/points.txt
+  
+  Successfully loaded file to stream 'pointsStream'
 
 Running the Spark Program
 -------------------------
@@ -89,36 +93,39 @@ There are three ways to start the Spark program:
    <http://localhost:9999/ns/default/apps/SparkKMeans/overview/programs>`__,
    click ``CentersService`` to get to the service detail page, then click the *Start* button; or
    
-#. Send a query via an HTTP request using the ``curl`` command::
+#. Use the Command Line Interface:
 
-    $ curl -w'\n' -v  -d '{args="3"}' \
-      http://localhost:10000/v3/namespaces/default/apps/SparkKMeans/spark/SparkKMeansProgram/start
-
-#. Use the Command Line Interface::
+   .. tabbed-parsed-literal::
 
     $ cdap-cli.sh start spark SparkKMeans.SparkKMeansProgram "args='3'"
+
+#. Send a query via an HTTP request using the ``curl`` command:
+
+   .. tabbed-parsed-literal::
+
+    $ curl -w"\n" -X POST -d "{args='3'}" \
+    "http://localhost:10000/v3/namespaces/default/apps/SparkKMeans/spark/SparkKMeansProgram/start"
+    
 
 Querying the Results
 --------------------
 To query the *centers* ObjectStore using the ``CentersService``, you can:
 
-- Send a query via an HTTP request using the ``curl`` command. For example::
+- You can use the Command Line Interface:
 
-    $ curl -w'\n' -v http://localhost:10000/v3/namespaces/default/apps/SparkKMeans/services/CentersService/methods/centers/1
-
-- You can use the Command Line Interface::
+  .. tabbed-parsed-literal::
 
     $ cdap-cli.sh call service SparkKMeans.CentersService GET centers/1
+    
+    306.52261306532665,306.52261306532665,793.7956448911223
 
-    +======================================================================================================+
-    | status | headers                 | body size | body                                                  |
-    +======================================================================================================+
-    | 200    | Content-Length : 53     | 53        | 755.3206896551723,755.3206896551723,484.6722828459188 |
-    |        | Connection : keep-alive |           |                                                       |
-    |        | Content-Type : text/pla |           |                                                       |
-    |        | in; charset=UTF-8       |           |                                                       |
-    +======================================================================================================+
+- Send a query via an HTTP request using the ``curl`` command. For example:
 
+  .. tabbed-parsed-literal::
+
+    $ curl -w"\n" -X GET "http://localhost:10000/v3/namespaces/default/apps/SparkKMeans/services/CentersService/methods/centers/1"
+    
+    306.52261306532665,306.52261306532665,793.7956448911223
 
 .. Stopping and Removing the Application
 .. =====================================

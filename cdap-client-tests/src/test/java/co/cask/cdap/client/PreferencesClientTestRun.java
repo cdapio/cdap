@@ -91,11 +91,13 @@ public class PreferencesClientTestRun extends ClientTestBase {
 
       programClient.setRuntimeArgs(service, setMap);
       assertEquals(setMap, programClient.getRuntimeArgs(service));
-      programClient.start(service, false, ImmutableMap.of("run", "value"));
-      assertProgramRunning(programClient, service);
 
       propMap.put("run", "value");
+      propMap.put("logical.start.time", "1234567890000");
       propMap.putAll(setMap);
+
+      programClient.start(service, false, propMap);
+      assertProgramRunning(programClient, service);
 
       URL serviceURL = new URL(serviceClient.getServiceURL(service), AppReturnsArgs.ENDPOINT);
       HttpResponse response = getServiceResponse(serviceURL);
@@ -105,20 +107,25 @@ public class PreferencesClientTestRun extends ClientTestBase {
       programClient.stop(service);
       assertProgramStopped(programClient, service);
 
+      long minStartTime = System.currentTimeMillis();
       client.deleteInstancePreferences();
       programClient.start(service);
       assertProgramRunning(programClient, service);
       propMap.remove("key");
       propMap.remove("run");
+      propMap.remove("logical.start.time");
 
       serviceURL = new URL(serviceClient.getServiceURL(service), AppReturnsArgs.ENDPOINT);
       response = getServiceResponse(serviceURL);
       responseMap = GSON.fromJson(response.getResponseBodyAsString(), STRING_MAP_TYPE);
+      long actualStartTime = Long.parseLong(responseMap.remove("logical.start.time"));
+      Assert.assertTrue(actualStartTime >= minStartTime);
       assertEquals(propMap, responseMap);
       programClient.stop(service);
       assertProgramStopped(programClient, service);
 
       propMap.clear();
+      minStartTime = System.currentTimeMillis();
       programClient.setRuntimeArgs(service, propMap);
       programClient.start(service);
       assertProgramRunning(programClient, service);
@@ -126,6 +133,8 @@ public class PreferencesClientTestRun extends ClientTestBase {
       response = getServiceResponse(serviceURL);
       assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
       responseMap = GSON.fromJson(response.getResponseBodyAsString(), STRING_MAP_TYPE);
+      actualStartTime = Long.parseLong(responseMap.remove("logical.start.time"));
+      Assert.assertTrue(actualStartTime >= minStartTime);
       assertEquals(propMap, responseMap);
     } finally {
       programClient.stop(service);

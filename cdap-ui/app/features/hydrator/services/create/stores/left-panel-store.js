@@ -92,6 +92,7 @@ class LeftPanelStore {
     pluginsDispatcher.register('onTransformsFetch', this.setTransforms.bind(this));
     pluginsDispatcher.register('onSinksFetch', this.setSinks.bind(this));
     pluginsDispatcher.register('onPluginTemplatesFetch', this.updatePluginTemplates.bind(this));
+    pluginsDispatcher.register('onLeftPanelStoreReset', this.setDefaults.bind(this));
   }
   setDefaults() {
     this.state = {

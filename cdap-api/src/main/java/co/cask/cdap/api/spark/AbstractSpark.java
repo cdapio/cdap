@@ -71,7 +71,7 @@ public abstract class AbstractSpark extends AbstractPluginConfigurable<SparkConf
    *
    * @param mainClass the class containing the main method
    */
-  protected final void setMainClass(Class<? extends SparkProgram> mainClass) {
+  protected final void setMainClass(Class<?> mainClass) {
     setMainClassName(mainClass.getName());
   }
 
@@ -110,12 +110,12 @@ public abstract class AbstractSpark extends AbstractPluginConfigurable<SparkConf
   }
 
   @Override
-  public void beforeSubmit(SparkContext context) throws Exception {
+  public void beforeSubmit(SparkClientContext context) throws Exception {
     // Do nothing by default
   }
 
   @Override
-  public void onFinish(boolean succeeded, SparkContext context) throws Exception {
+  public void onFinish(boolean succeeded, SparkClientContext context) throws Exception {
     // Do nothing by default
   }
 }

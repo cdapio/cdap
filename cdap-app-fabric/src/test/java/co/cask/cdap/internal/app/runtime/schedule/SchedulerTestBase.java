@@ -32,12 +32,18 @@ import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Predicate;
+import com.google.common.base.Supplier;
+import com.google.common.base.Throwables;
 import com.google.inject.Injector;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
@@ -66,6 +72,20 @@ public abstract class SchedulerTestBase {
     .setDescription("Every 1M")
     .createDataSchedule(Schedules.Source.STREAM, STREAM_ID.getId(), 1);
 
+  @ClassRule
+  public static TemporaryFolder tmpFolder = new TemporaryFolder();
+
+  private static final Supplier<File> TEMP_FOLDER_SUPPLIER = new Supplier<File>() {
+    @Override
+    public File get() {
+      try {
+        return tmpFolder.newFolder();
+      } catch (IOException e) {
+        throw Throwables.propagate(e);
+      }
+    }
+  };
+
   protected interface StreamMetricsPublisher {
     void increment(long size) throws Exception;
   }
@@ -86,7 +106,7 @@ public abstract class SchedulerTestBase {
   @Test
   public void testStreamSizeSchedule() throws Exception {
     // Test the StreamSizeScheduler behavior using notifications
-    AppFabricTestHelper.deployApplication(AppWithStreamSizeSchedule.class);
+    AppFabricTestHelper.deployApplicationWithManager(AppWithStreamSizeSchedule.class, TEMP_FOLDER_SUPPLIER);
     Assert.assertEquals(Scheduler.ScheduleState.SUSPENDED,
                         streamSizeScheduler.scheduleState(PROGRAM_ID, PROGRAM_TYPE, SCHEDULE_NAME_1));
     Assert.assertEquals(Scheduler.ScheduleState.SUSPENDED,

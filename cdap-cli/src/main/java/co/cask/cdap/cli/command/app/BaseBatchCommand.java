@@ -24,7 +24,7 @@ import co.cask.cdap.cli.english.Fragment;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.client.ApplicationClient;
 import co.cask.cdap.common.ApplicationNotFoundException;
-import co.cask.cdap.common.UnauthorizedException;
+import co.cask.cdap.common.UnauthenticatedException;
 import co.cask.cdap.proto.BatchProgram;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRecord;
@@ -70,7 +70,7 @@ public abstract class BaseBatchCommand<T extends BatchProgram> extends AbstractA
    * Reads arguments to get app id, program types, and list of input programs.
    */
   protected Args<T> readArgs(Arguments arguments)
-    throws ApplicationNotFoundException, UnauthorizedException, IOException {
+    throws ApplicationNotFoundException, UnauthenticatedException, IOException {
 
     String appName = arguments.get(ArgumentName.APP.getName());
     Id.Application appId = Id.Application.from(cliConfig.getCurrentNamespace(), appName);
@@ -106,12 +106,13 @@ public abstract class BaseBatchCommand<T extends BatchProgram> extends AbstractA
     return types;
   }
 
-  protected String getDescription(String action) {
+  protected String getDescription(String action, String actionPlural) {
     return String.format("Command to %s one or more programs of %s. " +
-        "By default, %s all flows, services, and workers. A comma separated list of program types can be " +
-        "specified, which will start all programs of those types. For example, specifying \"flow,workflow\" will %s " +
+        "By default, %s all flows, services, and workers. A comma-separated list of program types can be " +
+        "specified, which will %s all programs of those types. For example, specifying 'flow,workflow' will %s " +
         "all flows and workflows in the %s.",
-      action, Fragment.of(Article.A, ElementType.APP.getName()), action, action, ElementType.APP.getName());
+      action, Fragment.of(Article.A, ElementType.APP.getName()), actionPlural, action, action, 
+      ElementType.APP.getName());
   }
 
   /**

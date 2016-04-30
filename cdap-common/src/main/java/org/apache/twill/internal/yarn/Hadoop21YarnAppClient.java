@@ -29,8 +29,10 @@ import org.apache.hadoop.yarn.api.records.Resource;
 import org.apache.hadoop.yarn.client.api.YarnClient;
 import org.apache.hadoop.yarn.client.api.YarnClientApplication;
 import org.apache.twill.api.TwillSpecification;
+import org.apache.twill.internal.Constants;
 import org.apache.twill.internal.ProcessController;
 import org.apache.twill.internal.ProcessLauncher;
+import org.apache.twill.internal.appmaster.ApplicationMasterInfo;
 import org.apache.twill.internal.appmaster.ApplicationMasterProcessLauncher;
 import org.apache.twill.internal.appmaster.ApplicationSubmitter;
 import org.slf4j.Logger;
@@ -59,8 +61,8 @@ public final class Hadoop21YarnAppClient extends AbstractIdleService implements 
   }
 
   @Override
-  public ProcessLauncher<ApplicationId> createLauncher(TwillSpecification twillSpec,
-                                                       @Nullable String schedulerQueue) throws Exception {
+  public ProcessLauncher<ApplicationMasterInfo> createLauncher(TwillSpecification twillSpec,
+                                                               @Nullable String schedulerQueue) throws Exception {
     // Request for new application
     YarnClientApplication application = yarnClient.createApplication();
     final GetNewApplicationResponse response = application.getNewApplicationResponse();
@@ -75,13 +77,19 @@ public final class Hadoop21YarnAppClient extends AbstractIdleService implements 
       appSubmissionContext.setQueue(schedulerQueue);
     }
 
+    // TODO: Make it adjustable through TwillSpec (TWILL-90)
+    // Set the resource requirement for AM
+    final Resource capability = adjustMemory(response, Resource.newInstance(Constants.APP_MASTER_MEMORY_MB, 1));
+    ApplicationMasterInfo appMasterInfo = new ApplicationMasterInfo(appId, capability.getMemory(),
+                                                                    capability.getVirtualCores());
+
     ApplicationSubmitter submitter = new ApplicationSubmitter() {
       @Override
-      public ProcessController<YarnApplicationReport> submit(YarnLaunchContext context, Resource capability) {
+      public ProcessController<YarnApplicationReport> submit(YarnLaunchContext context) {
         ContainerLaunchContext launchContext = context.getLaunchContext();
 
         appSubmissionContext.setAMContainerSpec(launchContext);
-        appSubmissionContext.setResource(adjustMemory(response, capability));
+        appSubmissionContext.setResource(capability);
         appSubmissionContext.setMaxAppAttempts(2);
 
         try {
@@ -94,7 +102,7 @@ public final class Hadoop21YarnAppClient extends AbstractIdleService implements 
       }
     };
 
-    return new ApplicationMasterProcessLauncher(appId, submitter);
+    return new ApplicationMasterProcessLauncher(appMasterInfo, submitter);
   }
 
   private Resource adjustMemory(GetNewApplicationResponse response, Resource capability) {
@@ -109,9 +117,9 @@ public final class Hadoop21YarnAppClient extends AbstractIdleService implements 
   }
 
   @Override
-  public ProcessLauncher<ApplicationId> createLauncher(String user,
-                                                       TwillSpecification twillSpec,
-                                                       @Nullable String schedulerQueue) throws Exception {
+  public ProcessLauncher<ApplicationMasterInfo> createLauncher(String user,
+                                                               TwillSpecification twillSpec,
+                                                               @Nullable String schedulerQueue) throws Exception {
     // Ignore user
     return createLauncher(twillSpec, schedulerQueue);
   }

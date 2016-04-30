@@ -16,14 +16,11 @@
 package co.cask.cdap.internal.app.runtime.distributed;
 
 import co.cask.cdap.internal.app.runtime.batch.MapReduceProgramRunner;
-import org.apache.hadoop.mapred.YarnClientProtocolProvider;
 
 /**
  * Wraps {@link MapReduceProgramRunner} to be run via Twill
  */
 final class MapReduceTwillRunnable extends AbstractProgramTwillRunnable<MapReduceProgramRunner> {
-  // NOTE: DO NOT REMOVE.  Though it is unused, the dependency is needed when submitting the mapred job.
-  private YarnClientProtocolProvider provider;
 
   MapReduceTwillRunnable(String name, String hConfName, String cConfName) {
     super(name, hConfName, cConfName);
@@ -33,10 +30,5 @@ final class MapReduceTwillRunnable extends AbstractProgramTwillRunnable<MapReduc
   protected boolean propagateServiceError() {
     // Don't propagate MR failure as failure. Quick fix for CDAP-749.
     return false;
-  }
-
-  @Override
-  protected Class<MapReduceProgramRunner> getProgramClass() {
-    return MapReduceProgramRunner.class;
   }
 }

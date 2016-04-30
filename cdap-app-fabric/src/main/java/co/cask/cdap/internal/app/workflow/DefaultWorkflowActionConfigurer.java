@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,7 +16,6 @@
 
 package co.cask.cdap.internal.app.workflow;
 
-import co.cask.cdap.api.workflow.AbstractWorkflowAction;
 import co.cask.cdap.api.workflow.WorkflowAction;
 import co.cask.cdap.api.workflow.WorkflowActionConfigurer;
 import co.cask.cdap.api.workflow.WorkflowActionSpecification;
@@ -94,7 +93,7 @@ public class DefaultWorkflowActionConfigurer implements WorkflowActionConfigurer
     return new DefaultWorkflowActionSpecification(className, name, description, properties, datasets);
   }
 
-  public static WorkflowActionSpecification configureAction(AbstractWorkflowAction action) {
+  public static WorkflowActionSpecification configureAction(WorkflowAction action) {
     DefaultWorkflowActionConfigurer configurer = new DefaultWorkflowActionConfigurer(action);
     action.configure(configurer);
     return configurer.createSpecification();

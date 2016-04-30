@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -28,6 +28,7 @@ import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 import co.cask.cdap.api.data.stream.Stream;
+import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.lib.ObjectMappedTable;
 import co.cask.cdap.api.dataset.lib.ObjectMappedTableProperties;
@@ -43,8 +44,6 @@ import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceRequest;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
 import co.cask.cdap.api.spark.AbstractSpark;
-import co.cask.cdap.api.spark.JavaSparkProgram;
-import co.cask.cdap.api.spark.SparkContext;
 import co.cask.cdap.api.worker.AbstractWorker;
 import co.cask.cdap.api.workflow.AbstractWorkflow;
 import co.cask.cdap.api.workflow.AbstractWorkflowAction;
@@ -55,7 +54,6 @@ import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
-import org.apache.spark.api.java.JavaPairRDD;
 import org.junit.Assert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -78,6 +76,8 @@ public class AllProgramsApp extends AbstractApplication {
   public static final String NAME = "App";
   public static final String STREAM_NAME = "stream";
   public static final String DATASET_NAME = "kvt";
+  public static final String DATASET_NAME2 = "kvt2";
+  public static final String DATASET_NAME3 = "kvt3";
   public static final String PLUGIN_DESCRIPTION = "test plugin";
   public static final String PLUGIN_NAME = "mytestplugin";
   public static final String PLUGIN_TYPE = "testplugin";
@@ -89,10 +89,14 @@ public class AllProgramsApp extends AbstractApplication {
   public void configure() {
     setName(NAME);
     setDescription("Application which has everything");
-    addStream(new Stream(STREAM_NAME));
-    createDataset(DATASET_NAME, KeyValueTable.class);
+    addStream(new Stream(STREAM_NAME, "test stream"));
+    createDataset(DATASET_NAME, KeyValueTable.class,
+                  DatasetProperties.builder().setDescription("test dataset").build());
+    createDataset(DATASET_NAME2, KeyValueTable.class);
+    createDataset(DATASET_NAME3, KeyValueTable.class);
     addFlow(new NoOpFlow());
     addMapReduce(new NoOpMR());
+    addMapReduce(new NoOpMR2());
     addWorkflow(new NoOpWorkflow());
     addWorker(new NoOpWorker());
     addSpark(new NoOpSpark());
@@ -103,7 +107,11 @@ public class AllProgramsApp extends AbstractApplication {
                      NoOpWorkflow.NAME);
     try {
       createDataset(DS_WITH_SCHEMA_NAME, ObjectMappedTable.class,
-                    ObjectMappedTableProperties.builder().setType(DsSchema.class).build());
+                    ObjectMappedTableProperties.builder()
+                      .setType(DsSchema.class)
+                      .setDescription("test object mapped table")
+                      .build()
+      );
     } catch (UnsupportedTypeException e) {
       // ignore for test
     }
@@ -173,6 +181,20 @@ public class AllProgramsApp extends AbstractApplication {
     }
   }
 
+  /**
+   * Similar to {@link NoOpMR}, but uses a dataset as input, instead of a stream.
+   */
+  public static class NoOpMR2 extends AbstractMapReduce {
+    public static final String NAME = "NoOpMR2";
+
+    @Override
+    protected void configure() {
+      setName(NAME);
+      setInputDataset(DATASET_NAME2);
+      setOutputDataset(DATASET_NAME);
+    }
+  }
+
   public static class NoOpMapper extends Mapper<LongWritable, BytesWritable, Text, Text>
     implements ProgramLifecycle<MapReduceContext> {
     @Override
@@ -181,7 +203,6 @@ public class AllProgramsApp extends AbstractApplication {
       Text output = new Text(value.copyBytes());
       context.write(output, output);
     }
-
     @Override
     public void initialize(MapReduceContext context) throws Exception {
       Object obj = context.newPluginInstance("mrid");
@@ -221,15 +242,9 @@ public class AllProgramsApp extends AbstractApplication {
   /**
    *
    */
-  public static class NoOpSparkProgram implements JavaSparkProgram {
-    @Override
-    public void run(SparkContext context) {
-      JavaPairRDD<LongWritable, String> streamRDD = context.readFromStream(STREAM_NAME, String.class);
-      LOG.info("Stream events: {}", streamRDD.count());
-
-      JavaPairRDD<byte[], byte[]> datasetRDD = context.readFromDataset(DATASET_NAME, byte[].class, byte[].class);
-      LOG.info("Dataset pairs: {}", datasetRDD.count());
-    }
+  public static class NoOpSparkProgram  {
+    // An empty class since in App-Fabric we don't have Spark dependency.
+    // The intention of this class is to test various MDS and meta operation only without running the program
   }
 
   /**
@@ -241,10 +256,10 @@ public class AllProgramsApp extends AbstractApplication {
 
     @Override
     public void configure() {
-        setName(NAME);
-        setDescription("NoOp Workflow description");
-        addAction(new NoOpAction());
-        addMapReduce(NoOpMR.NAME);
+      setName(NAME);
+      setDescription("NoOp Workflow description");
+      addAction(new NoOpAction());
+      addMapReduce(NoOpMR.NAME);
     }
   }
 
@@ -316,16 +331,15 @@ public class AllProgramsApp extends AbstractApplication {
     }
 
     public class NoOpHandler extends AbstractHttpServiceHandler {
-      @Override
-      protected void configure() {
-        useDatasets(DATASET_NAME);
-      }
+
+      @UseDataSet(DATASET_NAME)
+      private KeyValueTable table;
 
       @Path(ENDPOINT)
       @GET
       public void handler(HttpServiceRequest request, HttpServiceResponder responder) {
         LOG.info("Endpoint {} called in service {}", ENDPOINT, NAME);
-        KeyValueTable table = getContext().getDataset(DATASET_NAME);
+        table = getContext().getDataset(DATASET_NAME);
         table.write("no-op-service", "no-op-service");
         responder.sendStatus(200);
       }

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,16 +16,16 @@
 
 package co.cask.cdap.data2.datafabric.dataset;
 
+import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.DatasetProperties;
+import co.cask.cdap.api.dataset.InstanceConflictException;
+import co.cask.cdap.api.dataset.InstanceNotFoundException;
 import co.cask.cdap.common.ServiceUnavailableException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.EndpointStrategy;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
-import co.cask.cdap.common.http.SecurityRequestContext;
 import co.cask.cdap.common.io.Locations;
-import co.cask.cdap.data2.dataset2.DatasetManagementException;
-import co.cask.cdap.data2.dataset2.InstanceConflictException;
 import co.cask.cdap.data2.dataset2.ModuleConflictException;
 import co.cask.cdap.proto.DatasetInstanceConfiguration;
 import co.cask.cdap.proto.DatasetMeta;
@@ -33,6 +33,7 @@ import co.cask.cdap.proto.DatasetModuleMeta;
 import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
 import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpRequestConfig;
@@ -76,7 +77,7 @@ class DatasetServiceClient {
   private final Id.Namespace namespaceId;
   private final HttpRequestConfig httpRequestConfig;
 
-  public DatasetServiceClient(final DiscoveryServiceClient discoveryClient, Id.Namespace namespaceId,
+  DatasetServiceClient(final DiscoveryServiceClient discoveryClient, Id.Namespace namespaceId,
                               CConfiguration cConf) {
     this.endpointStrategySupplier = Suppliers.memoize(new Supplier<EndpointStrategy>() {
       @Override
@@ -154,8 +155,8 @@ class DatasetServiceClient {
 
   public void addInstance(String datasetInstanceName, String datasetType, DatasetProperties props)
     throws DatasetManagementException {
-    DatasetInstanceConfiguration creationProperties = new DatasetInstanceConfiguration(datasetType,
-                                                                                       props.getProperties());
+    DatasetInstanceConfiguration creationProperties =
+      new DatasetInstanceConfiguration(datasetType, props.getProperties(), props.getDescription());
 
     HttpResponse response = doPut("datasets/" + datasetInstanceName, GSON.toJson(creationProperties));
 
@@ -174,18 +175,35 @@ class DatasetServiceClient {
     HttpResponse response = doPut("datasets/" + datasetInstanceName + "/properties",
                                   GSON.toJson(props.getProperties()));
 
+    if (HttpResponseStatus.NOT_FOUND.getCode() == response.getResponseCode()) {
+      throw new InstanceNotFoundException(datasetInstanceName);
+    }
     if (HttpResponseStatus.CONFLICT.getCode() == response.getResponseCode()) {
-      throw new InstanceConflictException(String.format("Failed to add instance %s due to conflict, details: %s",
+      throw new InstanceConflictException(String.format("Failed to update instance %s due to conflict, details: %s",
                                                         datasetInstanceName, response));
     }
     if (HttpResponseStatus.OK.getCode() != response.getResponseCode()) {
-      throw new DatasetManagementException(String.format("Failed to add instance %s, details: %s",
+      throw new DatasetManagementException(String.format("Failed to update instance %s, details: %s",
+                                                         datasetInstanceName, response));
+    }
+  }
+
+  public void truncateInstance(String datasetInstanceName) throws DatasetManagementException {
+    HttpResponse response = doPost("datasets/" + datasetInstanceName + "/admin/truncate");
+    if (HttpResponseStatus.NOT_FOUND.getCode() == response.getResponseCode()) {
+      throw new InstanceNotFoundException(datasetInstanceName);
+    }
+    if (HttpResponseStatus.OK.getCode() != response.getResponseCode()) {
+      throw new DatasetManagementException(String.format("Failed to truncate instance %s, details: %s",
                                                          datasetInstanceName, response));
     }
   }
 
   public void deleteInstance(String datasetInstanceName) throws DatasetManagementException {
     HttpResponse response = doDelete("datasets/" + datasetInstanceName);
+    if (HttpResponseStatus.NOT_FOUND.getCode() == response.getResponseCode()) {
+      throw new InstanceNotFoundException(datasetInstanceName);
+    }
     if (HttpResponseStatus.CONFLICT.getCode() == response.getResponseCode()) {
       throw new InstanceConflictException(String.format("Failed to delete instance %s due to conflict, details: %s",
                                                         datasetInstanceName, response));
@@ -256,8 +274,11 @@ class DatasetServiceClient {
   }
 
   private HttpResponse doPut(String resource, String body) throws DatasetManagementException {
-
     return doRequest(HttpMethod.PUT, resource, null, body);
+  }
+
+  private HttpResponse doPost(String resource) throws DatasetManagementException {
+    return doRequest(HttpMethod.POST, resource);
   }
 
   private HttpResponse doDelete(String resource) throws DatasetManagementException {
@@ -306,8 +327,8 @@ class DatasetServiceClient {
   }
 
   private HttpRequest.Builder processBuilder(HttpRequest.Builder builder) {
-    if (SecurityRequestContext.getUserId().isPresent()) {
-      builder.addHeader(Constants.Security.Headers.USER_ID, SecurityRequestContext.getUserId().get());
+    if (SecurityRequestContext.getUserId() != null) {
+      builder.addHeader(Constants.Security.Headers.USER_ID, SecurityRequestContext.getUserId());
     }
     return builder;
   }

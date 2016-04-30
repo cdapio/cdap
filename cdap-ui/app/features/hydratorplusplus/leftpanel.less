@@ -1,0 +1,608 @@
+/*
+ * Copyright © 2015 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
+@import '../../styles/variables.less';
+@import "../../../bower_components/bootstrap/less/mixins.less";
+@import '../../styles/themes/cdap/mixins.less';
+@height-of-toppanel: 35px;
+
+body.theme-cdap.state-hydratorplusplus-create {
+  .left-panel-wrapper {
+    position: fixed;
+    top: 50px;
+    bottom: 53px;
+    left: 0;
+    z-index: 1024;
+    width: 130px;
+    vertical-align: top;
+    background: #e1e1e1;
+    @media (max-width: @screen-xs-max) {
+      bottom: 75px;
+    }
+    .transition(width 0.2s ease);
+    &.expanded {
+      width: 290px;
+
+      .left-panel {
+        .left-top-section {
+          height: 80px;
+          padding: 5px 0;
+          background: white;
+          border-right: 1px solid #dddddd;
+
+          select.form-control {
+            width: 270px;
+            margin-left: 10px;
+            height: 30px;
+            background: #999999;
+            color: white;
+          }
+          .btn.btn-default {
+            width: 47.5%;
+            height: 26px;
+            line-height: 12px;
+            margin: 8px 0;
+            font-weight: 600;
+            color: #9A9A9A;
+            font-size: 12px;
+          }
+          .import-section {
+            padding-left: 10px;
+            margin-top: 1px;
+            display: block;
+
+            strong {
+              font-size: 12px;
+              &:last-child {
+                margin-left: 20px;
+              }
+              a {
+                text-decoration: none;
+                color: #BEBEBE;
+                &:focus {
+                  outline: 0;
+                }
+              }
+            }
+          }
+        }
+        my-side-panel {
+          display: block;
+          border-right: 1px solid #dddddd;
+          border-top: 1px solid #dddddd;
+          height: ~"calc(100% - 79px)"; // 100% height of left panel - 80px of height from top section of left panel (filter, import, templates & + plugin)
+
+          .hydrator-filter {
+            min-height: 50px;
+            .btn-group, input.form-control {
+              display: block;
+              height: 32px;
+              margin: 0;
+            }
+            input.form-control {
+              border: 1px solid #dfe2e9;
+            }
+            .btn-group {
+              display: inline-block;
+              .btn.btn-default {
+                height: 32px;
+                margin-top: 0;
+                border: 1px solid #dfe2e9;
+                box-shadow: none;
+                line-height: 20px;
+
+                &.active {
+                  background: #BEBEBE;
+                  color: white;
+                }
+              }
+            }
+          }
+          .groups-container {
+            position: static;
+            border-top: 1px solid #D4D4D4;
+            height: calc(~"100% - 50px");
+            .item {
+              color: @cdap-lightgray;
+              font-size: 14px;
+              .item-body, .item-heading {
+                .name {
+                  display: inline-block;
+                  vertical-align: top;
+                  overflow-x: hidden;
+                  text-overflow: ellipsis;
+                  white-space: nowrap;
+                  font-weight: 500;
+                }
+              }
+
+              &.item-open {
+
+                .item-heading {
+                  border-bottom-color: transparent;
+                }
+                .item-body-wrapper {
+                  // Syntax needed to avoid LESS parsing issue affecting calc()
+                  height: -moz-calc(~"100% - "@height-of-toppanel);
+                  height: -webkit-calc(~"100% - "@height-of-toppanel);
+                  height: calc(~"100% - "@height-of-toppanel);
+                }
+              }
+
+              .item-heading {
+                color: black;
+                font-weight: bold;
+                padding: 0 15px 0 10px;
+                height: @height-of-toppanel;
+                line-height: @height-of-toppanel;
+                width: 100%;
+                border-bottom: 1px solid #D4D4D4;
+                background-color: #e8e8e8;
+                span.name {
+                  font-size: 13px;
+                  line-height: inherit;
+                }
+              }
+              .item-body-wrapper {
+                overflow-y: auto;
+                overflow-x: hidden;
+                border-top: 1px solid #CBCBCB;
+                border-bottom: 1px solid #CBCBCB;
+              }
+              .item-body {
+                &.view-icon {
+                  padding: 10px 5px 0;
+                  .flexbox();
+                  flex-direction: row;
+                  flex-wrap: wrap;
+                  align-items: baseline;
+                  justify-content: space-between;
+                  // Adjust max height to prevent side panel from becoming unusable below a certain browser height
+                  @media (max-height: 550px) {
+                    max-height: 20vh;
+                  }
+                  .plugin-item {
+                    text-align: left;
+                    width: 48%;
+                    position: relative;
+                    background-color: white;
+                    border: 1px solid transparent;
+                    color: #666;
+                    line-height: 28px;
+                    margin-bottom: 4px;
+                    padding: 0 6px;
+                    height: 28px;
+                    width: 49%;
+                    border: 1px solid #dddddd;
+                    .border-radius(4px);
+                    .box-shadow(1px 4px 7px -5px rgba(0,0,0,0.65));
+                    .name {
+                      display: inline-block;
+                      max-width: 100px;
+                    }
+                    .plugin-badge {
+                      display: none;
+                    }
+                    &.plugin-templates{
+                      .plugin-badge {
+                        display: block;
+                        font-size: 8px;
+                        position: absolute;
+                        left: 120px;
+                        background: #D8D8D8;
+                        border-radius: 2px;
+                        margin: 0;
+                        padding: 3px 3px;
+                        line-height: 8px;
+                        top: 3px;
+                      }
+                    }
+
+                    > .fa {
+                      font-size: 12px;
+                      width: 18px;
+                      line-height: 30px;
+                      vertical-align: top;
+                    }
+                    .name {
+                      font-size: 11px;
+                    }
+                  }
+                }
+                &.view-list {
+                  .plugin-item {
+                    text-align: left;
+                    margin: 10px 12px;
+                    text-align: left;
+                    width: 100%;
+                    position: relative;
+
+                    .plugin-badge {
+                      display: none;
+                    }
+
+                    &.plugin-templates {
+                      .plugin-badge {
+                        display: inline-block;
+                        font-size: 8px;
+                        background: #ADADAD;
+                        color: white;
+                        border-radius: 2px;
+                        margin: 0;
+                        padding: 3px 3px;
+                        line-height: 8px;
+                      }
+                    }
+                    > .fa {
+                      font-size: 13px;
+                    }
+                    .name {
+                      font-size: 12px;
+                      vertical-align: text-top;
+                      display: inline-block;
+                      max-width: 85%;
+                    }
+                  }
+                }
+
+                .no-item-message {
+                  width: 100%;
+                }
+              }
+
+            }
+          }
+        }
+
+        .btn-left-panel-toggle {
+          position: absolute;
+          left: 260px;
+          top: 90px;
+          height: 32px;
+          border-top-right-radius: 0;
+          border-bottom-right-radius: 0;
+          .btn.btn-default {
+            line-height: 20px;
+          }
+        }
+        .btn-left-panel-add-plugin {
+          position: absolute;
+          left: 144px;
+          top: 90px;
+          height: 32px;
+          line-height: 21px;
+        }
+      }
+      ~ .top-panel {
+        div.side-panel.top {
+          left: 290px;
+          max-width: ~"calc(100% - 290px)";
+        }
+      }
+      ~ .right-wrapper {
+        margin-left: 290px;
+      }
+
+    }
+
+    ~ .right-wrapper {
+      margin-left: 130px;
+      height: 100%;
+      position: relative;
+      .transition(all 0.2s ease);
+    }
+
+    width: 130px;
+    .left-top-section {
+      padding: 5px;
+      background: white;
+
+      select.form-control {
+        width: 100%;
+        height: 30px;
+        background: #999999;
+        color: white;
+      }
+      .btn.btn-default {
+        width: 100%;
+        height: 26px;
+        line-height: 12px;
+        color: #9A9A9A;
+        font-weight: 600;
+        &:first-child {
+          margin: 5px 0;
+          padding-left: 6px;
+        }
+        &:last-child {
+          margin: 0;
+        }
+      }
+    }
+    my-side-panel {
+      .side-panel {
+        height: 100%;
+      }
+      .groups-container {
+        top: 152px;
+
+        .item {
+          color: @cdap-lightgray;
+          font-size: 14px;
+
+          &.item-open {
+            .name {
+              font-weight: 500;
+            }
+            .item-body-wrapper {
+              // Syntax needed to avoid LESS parsing issue affecting calc()
+              height: -moz-calc(~"100% - "@height-of-toppanel);
+              height: -webkit-calc(~"100% - "@height-of-toppanel);
+              height: calc(~"100% - "@height-of-toppanel);
+              overflow-y: auto;
+            }
+          }
+
+          .item-heading {
+            color: black;
+            font-weight: bold;
+            padding: 0 5px 0 5px;
+            height: @height-of-toppanel;
+            line-height: @height-of-toppanel;
+            width: 100%;
+            border-bottom: 1px solid #D4D4D4;
+            span.name {
+              font-size: 13px;
+              line-height: inherit;
+            }
+            .badge {
+              padding: 0;
+            }
+          }
+
+          .item-body {
+            &.view-icon {
+              padding: 10px 10px 0;
+              .flexbox();
+              flex-direction: row;
+              flex-wrap: wrap;
+              align-items: baseline;
+              justify-content: space-between;
+              // Adjust max height to prevent side panel from becoming unusable below a certain browser height
+              @media (max-height: 550px) {
+                max-height: 20vh;
+              }
+              .plugin-item {
+                text-align: center;
+                width: 48%;
+                position: relative;
+                background-color: white;
+                border: 1px solid transparent;
+                color: #666;
+                line-height: 30px;
+                margin-bottom: 6px;
+                padding: 0 8px;
+                height: 30px;
+                border: 1px solid #dddddd;
+                .border-radius(4px);
+
+                .name {
+                  display: none;
+                }
+                .plugin-badge {
+                  display: none;
+                }
+                &.plugin-templates{
+                  .plugin-badge {
+                    display: block;
+                    font-size: 8px;
+                    position: absolute;
+                    left: 110px;
+                    background: #D8D8D8;
+                    border-radius: 2px;
+                    margin: 0;
+                    padding: 3px 3px;
+                    line-height: 8px;
+                    top: 3px;
+                  }
+                }
+
+                > .fa {
+                  font-size: 18px;
+                  width: 18px;
+                  line-height: 30px;
+                  vertical-align: top;
+                }
+                .name {
+                  font-size: 11px;
+                }
+              }
+            }
+            &.view-list {
+              .plugin-item {
+                text-align: left;
+                margin: 5px;
+                overflow: hidden;
+
+                .plugin-badge {
+                  display: none;
+                }
+
+                &.plugin-templates {
+                  .plugin-badge {
+                    display: inline-block;
+                    font-size: 8px;
+                    background: #ADADAD;
+                    color: white;
+                    border-radius: 2px;
+                    margin: 0;
+                    padding: 3px 3px;
+                    line-height: 8px;
+                  }
+                }
+                .name {
+                  max-width: 70%;
+                  text-overflow: ellipsis;
+                  padding-right: 5px;
+                  overflow: hidden;
+                  font-size: 12px;
+                  vertical-align: text-top;
+                  display: inline-block;
+                }
+              }
+            }
+          }
+        }
+
+      }
+      .hydrator-filter {
+        padding: 9px 5px;
+        padding-left: 10px;
+        background: #EEEEEE;
+        min-height: 41px;
+
+        .btn-group, input.form-control {
+          display: none;
+        }
+
+      }
+    }
+    .btn-left-panel-toggle {
+      position: absolute;
+      left: 100px;
+      top: 108px;
+    }
+    .btn-left-panel-add-plugin {
+      position: absolute;
+      left: 10px;
+      top: 108px;
+    }
+
+    .badge {
+      background-color: transparent;
+      color: #666;
+      vertical-align: text-bottom;
+      &:before, &:after {
+        padding: 2px;
+      }
+    }
+  }
+
+
+  .my-cdap-popover {
+    padding: 0;
+    outline: none;
+    border-radius: 0;
+
+    .arrow {
+      border-right-color: black;
+
+      &:after {
+        border-right-color: black;
+      }
+    }
+    &:focus { outline: none; }
+
+    .popover-content {
+      padding: 5px;
+      background: black;
+
+      .list-group {
+        margin: 0;
+        .list-group-item {
+          padding: 4px 4px;
+          border: 0;
+          background: black;
+          color: white;
+          h6 {
+            &:not(:first-child) {
+              margin-left: 5px;
+
+              a {
+                text-decoration: none;
+                &:not(:last-child) {
+                  margin-right: 5px;
+                }
+              }
+            }
+          }
+          h5,h6 {
+            margin:0;
+            font-weight: bold;
+            display: inline-block;
+            a {
+              text-decoration: none;
+              margin-left: 3px;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  .modal {
+    &.plugin-templates-modal {
+      plugin-templates {
+        display: block;
+        overflow-y: auto;
+        overflow-x: hidden;
+
+        h3 {
+          strong {
+            word-break: break-all;
+          }
+        }
+      }
+    }
+    &.load-artifact-modal {
+      .modal-content {
+        .inner-section {
+          border: 2px dotted grey;
+          height: inherit;
+          height: 200px;
+          border-radius: 8px;
+          padding-top: 50px;
+          background: transparent;
+          width: 100%;
+
+          .fa.fa-cloud-upload, .fa.fa-refresh.fa-spin {
+            font-size: 64px;
+          }
+          .upload-message {
+            margin-top: 20px;
+          }
+        }
+
+        .row {
+          height: 200px;
+        }
+      }
+    }
+    &.confirm-modal.hydrator-modal {
+      .modal-dialog {
+        max-width: 500px;
+      }
+    }
+  }
+  @media(min-width: @screen-md) {
+    .modal {
+      &.load-artifact-modal {
+        .modal-lg {
+          width: 600px;
+        }
+      }
+    }
+  }
+}

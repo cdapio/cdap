@@ -1,3 +1,5 @@
+
+
 /*
  * Copyright © 2015 Cask Data, Inc.
  *
@@ -30,9 +32,12 @@ angular
       PKG.name+'.feature.userprofile',
       PKG.name+'.feature.experimental',
       PKG.name+'.feature.hydrator',
+      PKG.name+'.feature.hydratorplusplus',
       PKG.name+'.feature.explore',
       PKG.name +'.feature.search',
-      PKG.name +'.feature.pins'
+      PKG.name +'.feature.pins',
+      PKG.name +'.feature.tracker'
+
     ]).name,
 
     angular.module(PKG.name+'.commons', [
@@ -87,8 +92,9 @@ angular
       'gridster',
       'angular-cron-jobs',
       'angularjs-dropdown-multiselect',
-      'hc.marked'
-
+      'hc.marked',
+      'ngFileSaver',
+      'infinite-scroll'
     ]).name,
 
     'angular-loading-bar'
@@ -198,8 +204,8 @@ angular
     });
   })
 
-  .config(function ($bootstrapTooltipProvider) {
-    $bootstrapTooltipProvider.setTriggers({
+  .config(function ($uibTooltipProvider) {
+    $uibTooltipProvider.setTriggers({
       'customShow': 'customHide'
     });
   })
@@ -226,6 +232,7 @@ angular
       tables: true
     });
   }])
+
   /*
     FIXME: This is a one time only thing. Once all old users who migrated to 3.3 have their drafts moved from global level to
           namespace level this snippet can be removed. Ideally in 4.* we should be able to remove this.

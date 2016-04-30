@@ -102,11 +102,17 @@ This table lists the **system** metadata annotations of CDAP entities:
      - * Schema (field names and types)
      - * View name
 
-
 .. _metadata-update-notifications:
 
 Metadata Update Notifications
 =============================
+.. topic::  **Note: Metadata Update Notifications Deprecated**
+
+    As of *CDAP v3.4.0*, *Metadata Update Notifications* have been deprecated, pending removal in a later
+    version. The :ref:`CDAP Audit Notifications <audit-logging>` contain notifications for metadata changes. Please change
+    all uses of *Metadata Update Notifications* to consume only those messages from the audit feed that have the
+    ``type`` field set to ``METADATA_CHANGE``.
+
 CDAP has the capability of publishing notifications to an external Apache Kafka instance
 upon metadata updates.
 

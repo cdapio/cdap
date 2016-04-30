@@ -99,26 +99,14 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
     collector.increment("zz", 1);
     collector.increment("ab", 1);
 
-    collector = collectionService.getContext(getAdapterContext("yourspace", "WCount1", "ClassicWordCount",
-                                                               MapReduceMetrics.TaskType.Mapper,
-                                                               "run1", "task1", "adapter1"));
-    collector.increment("areads", 3);
-    collector.increment("awrites", 4);
-
-    collector = collectionService.getContext(getAdapterContext("yourspace", "WCount1", "ClassicWordCount",
-                                                               MapReduceMetrics.TaskType.Mapper,
-                                                               "run2", "task1", "adapter1"));
-    collector.increment("areads", 3);
-    collector.increment("awrites", 4);
-
-    collector = collectionService.getContext(getWorkerAdapterContext("yourspace", "WCount1", "WorkerWordCount",
-                                                                     "run1", "task1", "adapter2"));
+    collector = collectionService.getContext(getWorkerContext("yourspace", "WCount1", "WorkerWordCount",
+                                                              "run1", "task1"));
 
     collector.increment("workerreads", 5);
     collector.increment("workerwrites", 6);
 
-    collector = collectionService.getContext(getWorkerAdapterContext("yourspace", "WCount1", "WorkerWordCount",
-                                                                     "run2", "task1", "adapter2"));
+    collector = collectionService.getContext(getWorkerContext("yourspace", "WCount1", "WorkerWordCount",
+                                                              "run2", "task1"));
 
     collector.increment("workerreads", 5);
     collector.increment("workerwrites", 6);
@@ -157,10 +145,10 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
     verifySearchResultWithTags("/v3/metrics/search?target=tag&tag=namespace:myspace",
                        getSearchResultExpected("app", "WordCount1"));
     verifySearchResultWithTags("/v3/metrics/search?target=tag&tag=namespace:yourspace",
-                       getSearchResultExpected("adapter", "adapter1", "adapter", "adapter2", "app", "WCount1"));
+                       getSearchResultExpected("app", "WCount1"));
 
     verifySearchResultWithTags("/v3/metrics/search?target=tag&tag=namespace:yourspace",
-                               getSearchResultExpected("adapter", "adapter1", "adapter", "adapter2", "app", "WCount1"));
+                               getSearchResultExpected("app", "WCount1"));
 
     // WordCount should be found in myspace, not in yourspace
     verifySearchResultWithTags("/v3/metrics/search?target=tag&tag=namespace:myspace&tag=app:WordCount1",
@@ -177,19 +165,13 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
                                                "worker", "WorkerWordCount"
                        ));
 
-    // Only run ids when you specify namespace and adapter
-    verifySearchResultWithTags("/v3/metrics/search?target=tag&tag=namespace:yourspace&tag=adapter:adapter1",
-                               getSearchResultExpected("run", "run1",
-                                                       "run", "run2"));
-
     verifySearchResultWithTags("/v3/metrics/search?target=tag&tag=namespace:myspace&tag=app:WCount1",
                                getSearchResultExpected());
 
     // verify other metrics for WCount app
     verifySearchResultWithTags("/v3/metrics/search?target=tag&tag=namespace:yourspace&tag=app:WCount1" +
                                  "&tag=mapreduce:ClassicWordCount",
-                               getSearchResultExpected("run", "run1",
-                                                       "run", "run2"));
+                               getSearchResultExpected("run", "run1"));
 
     verifySearchResultWithTags("/v3/metrics/search?target=tag&tag=namespace:yourspace&tag=app:WCount1" +
                                  "&tag=mapreduce:ClassicWordCount&tag=run:run1",
@@ -214,9 +196,7 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
     // verify "*"
 
     verifySearchResultWithTags("/v3/metrics/search?target=tag&tag=namespace:*",
-                               getSearchResultExpected("adapter", "adapter1",
-                                                       "adapter", "adapter2",
-                                                       "app", "WordCount1",
+                               getSearchResultExpected("app", "WordCount1",
                                                        "app", "WCount1",
                                                        "component", "metrics.processor"));
 
@@ -420,82 +400,6 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
     verifyAggregateQueryResult(
       "/v3/metrics/query?" + getTags("yourspace", "WCount1", "WCounter") +
         "&metric=system.reads&aggregate=true", 4);
-
-    // for adapters, the same metrics should be available at both, just adapter level as well as mapreduce level
-    // adapter level
-    verifyAggregateQueryResult(
-      "/v3/metrics/query?tag=namespace:yourspace&tag=adapter:adapter1&tag=run:run1" +
-        "&metric=system.areads&aggregate=true", 3);
-    verifyAggregateQueryResult(
-      "/v3/metrics/query?tag=namespace:yourspace&tag=adapter:adapter1&tag=run:run1" +
-        "&metric=system.awrites&aggregate=true", 4);
-    verifyAggregateQueryResult(
-      "/v3/metrics/query?tag=namespace:yourspace&tag=adapter:adapter1&tag=run:run2" +
-        "&metric=system.areads&aggregate=true", 3);
-    verifyAggregateQueryResult(
-      "/v3/metrics/query?tag=namespace:yourspace&tag=adapter:adapter1&tag=run:run2" +
-        "&metric=system.awrites&aggregate=true", 4);
-    verifyAggregateQueryResult(
-      "/v3/metrics/query?tag=namespace:yourspace&tag=adapter:adapter1&metric=system.areads&aggregate=true", 6);
-    verifyAggregateQueryResult(
-      "/v3/metrics/query?tag=namespace:yourspace&tag=adapter:adapter1&metric=system.awrites&aggregate=true", 8);
-    // mapreduce level
-    verifyAggregateQueryResult(
-      "/v3/metrics/query?tag=namespace:yourspace&tag=app:WCount1&tag=mapreduce:ClassicWordCount&tag=run:run1" +
-        "&metric=system.areads&aggregate=true", 3);
-    verifyAggregateQueryResult(
-      "/v3/metrics/query?tag=namespace:yourspace&tag=app:WCount1&tag=mapreduce:ClassicWordCount&tag=run:run1" +
-        "&metric=system.awrites&aggregate=true", 4);
-    verifyAggregateQueryResult(
-      "/v3/metrics/query?tag=namespace:yourspace&tag=app:WCount1&tag=mapreduce:ClassicWordCount&tag=run:run2" +
-        "&metric=system.areads&aggregate=true", 3);
-    verifyAggregateQueryResult(
-      "/v3/metrics/query?tag=namespace:yourspace&tag=app:WCount1&tag=mapreduce:ClassicWordCount&tag=run:run2" +
-        "&metric=system.awrites&aggregate=true", 4);
-    verifyAggregateQueryResult(
-      "/v3/metrics/query?tag=namespace:yourspace&tag=app:WCount1&tag=mapreduce:ClassicWordCount" +
-        "&metric=system.areads&aggregate=true", 6);
-    verifyAggregateQueryResult(
-      "/v3/metrics/query?tag=namespace:yourspace&tag=app:WCount1&tag=mapreduce:ClassicWordCount" +
-        "&metric=system.awrites&aggregate=true", 8);
-
-    // for adapters, the same metrics should be available at both, just adapter level as well as worker level
-    // adapter level
-    verifyAggregateQueryResult(
-      "/v3/metrics/query?tag=namespace:yourspace&tag=adapter:adapter2&tag=run:run1" +
-        "&metric=system.workerreads&aggregate=true", 5);
-    verifyAggregateQueryResult(
-      "/v3/metrics/query?tag=namespace:yourspace&tag=adapter:adapter2&tag=run:run1" +
-        "&metric=system.workerwrites&aggregate=true", 6);
-    verifyAggregateQueryResult(
-      "/v3/metrics/query?tag=namespace:yourspace&tag=adapter:adapter2&tag=run:run2" +
-        "&metric=system.workerreads&aggregate=true", 5);
-    verifyAggregateQueryResult(
-      "/v3/metrics/query?tag=namespace:yourspace&tag=adapter:adapter2&tag=run:run2" +
-        "&metric=system.workerwrites&aggregate=true", 6);
-    verifyAggregateQueryResult(
-      "/v3/metrics/query?tag=namespace:yourspace&tag=adapter:adapter2&metric=system.workerreads&aggregate=true", 10);
-    verifyAggregateQueryResult(
-      "/v3/metrics/query?tag=namespace:yourspace&tag=adapter:adapter2&metric=system.workerwrites&aggregate=true", 12);
-    // worker level
-    verifyAggregateQueryResult(
-      "/v3/metrics/query?tag=namespace:yourspace&tag=app:WCount1&tag=worker:WorkerWordCount&tag=run:run1" +
-        "&metric=system.workerreads&aggregate=true", 5);
-    verifyAggregateQueryResult(
-      "/v3/metrics/query?tag=namespace:yourspace&tag=app:WCount1&tag=worker:WorkerWordCount&tag=run:run1" +
-        "&metric=system.workerwrites&aggregate=true", 6);
-    verifyAggregateQueryResult(
-      "/v3/metrics/query?tag=namespace:yourspace&tag=app:WCount1&tag=worker:WorkerWordCount&tag=run:run2" +
-        "&metric=system.workerreads&aggregate=true", 5);
-    verifyAggregateQueryResult(
-      "/v3/metrics/query?tag=namespace:yourspace&tag=app:WCount1&tag=worker:WorkerWordCount&tag=run:run2" +
-        "&metric=system.workerwrites&aggregate=true", 6);
-    verifyAggregateQueryResult(
-      "/v3/metrics/query?tag=namespace:yourspace&tag=app:WCount1&tag=worker:WorkerWordCount" +
-        "&metric=system.workerreads&aggregate=true", 10);
-    verifyAggregateQueryResult(
-      "/v3/metrics/query?tag=namespace:yourspace&tag=app:WCount1&tag=worker:WorkerWordCount" +
-        "&metric=system.workerwrites&aggregate=true", 12);
 
     // aggregate result, in the wrong namespace
     verifyEmptyQueryResult(
@@ -703,11 +607,8 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
                                "&tag=flow:WCounter&tag=dataset:*&tag=run:run1&tag=flowlet:splitter",
                              ImmutableList.of("system.reads"));
 
-    verifySearchMetricResult("/v3/metrics/search?target=metric&tag=namespace:yourspace&tag=adapter:adapter1",
-                             ImmutableList.of("system.areads", "system.awrites"));
-
-    verifySearchMetricResult("/v3/metrics/search?target=metric&tag=namespace:yourspace&tag=adapter:adapter2",
-                             ImmutableList.of("system.workerreads", "system.workerwrites"));
+    verifySearchMetricResult("/v3/metrics/search?target=metric&tag=namespace:yourspace",
+                             ImmutableList.of("system.reads", "system.workerreads", "system.workerwrites"));
 
     // wrong namespace
     verifySearchMetricResult("/v3/metrics/search?target=metric&tag=namespace:myspace&tag=app:WCount1" +

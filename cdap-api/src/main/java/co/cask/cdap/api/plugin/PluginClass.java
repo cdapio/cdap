@@ -18,7 +18,10 @@ package co.cask.cdap.api.plugin;
 
 import co.cask.cdap.api.annotation.Beta;
 
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import javax.annotation.Nullable;
 
 /**
@@ -33,9 +36,11 @@ public class PluginClass {
   private final String className;
   private final String configFieldName;
   private final Map<String, PluginPropertyField> properties;
+  private final Set<String> endpoints;
 
   public PluginClass(String type, String name, String description, String className,
-                     @Nullable String configfieldName, Map<String, PluginPropertyField> properties) {
+                     @Nullable String configfieldName, Map<String, PluginPropertyField> properties,
+                     Set<String> endpoints) {
     if (type == null) {
       throw new IllegalArgumentException("Plugin class type cannot be null");
     }
@@ -58,6 +63,12 @@ public class PluginClass {
     this.className = className;
     this.configFieldName = configfieldName;
     this.properties = properties;
+    this.endpoints = endpoints;
+  }
+
+  public PluginClass(String type, String name, String description, String className,
+                     @Nullable String configfieldName, Map<String, PluginPropertyField> properties) {
+    this(type, name, description, className, configfieldName, properties, new HashSet<String>());
   }
 
   /**
@@ -98,6 +109,14 @@ public class PluginClass {
   }
 
   /**
+   * Returns the set of plugin endpoints available in the plugin.
+   * If no such field will return empty set.
+   */
+  public Set<String> getEndpoints() {
+    return endpoints;
+  }
+
+  /**
    * Returns a map from config property name to {@link PluginPropertyField} that are supported by the plugin class.
    */
   public Map<String, PluginPropertyField> getProperties() {
@@ -115,12 +134,13 @@ public class PluginClass {
 
     PluginClass that = (PluginClass) o;
 
-    return type.equals(that.type)
-      && name.equals(that.name)
-      && description.equals(that.description)
-      && className.equals(that.className)
-      && !(configFieldName != null ? !configFieldName.equals(that.configFieldName) : that.configFieldName != null)
-      && properties.equals(that.properties);
+    return Objects.equals(type, that.type)
+      && Objects.equals(name, that.name)
+      && Objects.equals(description, that.description)
+      && Objects.equals(className, that.className)
+      && Objects.equals(configFieldName, that.configFieldName)
+      && Objects.equals(properties, that.properties)
+      && Objects.equals(endpoints, that.endpoints);
   }
 
   @Override
@@ -131,6 +151,7 @@ public class PluginClass {
     result = 31 * result + className.hashCode();
     result = 31 * result + (configFieldName != null ? configFieldName.hashCode() : 0);
     result = 31 * result + properties.hashCode();
+    result = 31 * result + (endpoints != null ? endpoints.hashCode() : 0);
     return result;
   }
 
@@ -142,7 +163,8 @@ public class PluginClass {
       ", name='" + name + '\'' +
       ", description='" + description + '\'' +
       ", configFieldName='" + configFieldName + '\'' +
-      ", properties=" + properties +
+      ", properties=" + properties + '\'' +
+      ", endpoints='" + endpoints +
       '}';
   }
 }

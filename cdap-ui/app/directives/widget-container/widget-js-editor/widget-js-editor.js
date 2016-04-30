@@ -31,7 +31,10 @@ angular.module(PKG.name + '.commons')
           workerPath: '/assets/bundle/ace-editor-worker-scripts',
           mode: $scope.mode || 'javascript',
           useWrapMode: true,
-          newLineMode: 'unix'
+          newLineMode: 'unix',
+          advanced: {
+            tabSize: 2
+          }
         };
 
       }

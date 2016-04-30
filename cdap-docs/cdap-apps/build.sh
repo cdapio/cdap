@@ -19,20 +19,40 @@
 source ../vars
 source ../_common/common-build.sh
 
+EXTRACT_TABLE_TOOL="../tools/docs-extract-table.py"
+
 CHECK_INCLUDES=${TRUE}
+
+RETURN_STRING="\
+"
+VERSION_STRING="Hydrator Version "
+
+function get_hydrator_version() {
+  local base_target="${1}"
+  local base_source="${2}"
+  local source_url="${base_source}/pom.xml"
+  local target="${base_target}/pom.xml"
+  curl --silent ${source_url} --output ${target}
+  HYDRATOR_VERSION=$(grep "<version>" ${target})
+  HYDRATOR_VERSION=${HYDRATOR_VERSION#*<version>}
+  HYDRATOR_VERSION=${HYDRATOR_VERSION%%</version>*}
+  export HYDRATOR_VERSION
+}
 
 function download_md_doc_file() {
   # Downloads a Markdown docs file to a directory
+  #
   # https://raw.githubusercontent.com/caskdata/hydrator-plugins/develop/cassandra-plugins/docs/Cassandra-batchsink.md
   # goes to
   # hydrator-plugins/batchsinks/cassandra.md
-  # 1:Includes dir 2:GitHub Hydrator source dir 3:Hydrator dir 4:Type 5:Target filename 6:Source Markdown filename
-  # download_md_doc_file base_target  base_source      source_dir        source_file_name
-  # download_md_doc_file $base_target $hydrator_source cassandra-plugins Cassandra-batchsink.md 
+  #
+  # download_md_doc_file base_target  base_source      source_dir        source_file_name       append_file (optional)
+  # download_md_doc_file $base_target $hydrator_source cassandra-plugins Cassandra-batchsink.md append.txt
   local base_target="${1}"
   local base_source="${2}"
   local source_dir="${3}"
   local source_file_name="${4}" # JavaScript-transform.md
+  local append_file="${5}"
   local source_name="${source_file_name%-*}"
 
   local type=$(echo "${source_file_name#*-}" | tr [:upper:] [:lower:]) # batchsink
@@ -65,12 +85,32 @@ function download_md_doc_file() {
       echo_red_bold "${m}"
       set_message "${m}"
       echo -e "# ${source_name} ${type_capital}\n$(cat ${target})" > ${target}
-    fi    
+    fi
+    if [[ "x${append_file}" != "x" ]]; then
+      echo "  Appending ${append_file} to ${target_file_name}"
+      cat ${base_target}/${append_file} >> ${target}
+    fi
+    echo "${RETURN_STRING}" >> ${target}
+    echo "${VERSION_STRING}${HYDRATOR_VERSION}" >> ${target}
   else
     local m="URL does not exist: ${source_url}"
     echo_red_bold "${m}"
     set_message "${m}"
-  fi   
+  fi
+}
+
+function extract_table() {
+  # Extracts a table written in Markdown from a file so it can be reused in reST files
+  local base_target="${1}"
+  local source_file="${2}"
+  local target_file="${3}"
+
+  local extract_table_input="${base_target}/${source_file}"
+  local extract_table_output="${base_target}/${target_file}"
+
+  echo "Extracting table from ${extract_table_input}"
+  echo "Writing table info to ${extract_table_output}"
+  python "${EXTRACT_TABLE_TOOL}" "${extract_table_input}" "${extract_table_output}"
 }
 
 function download_includes() {
@@ -91,7 +131,8 @@ function download_includes() {
   
   local hydrator_source="${base_source}/${hydrator_branch}"
   echo_red_bold "Using $hydrator_source"
-
+  get_hydrator_version $base_target $hydrator_source
+  
   # 1:Includes dir 2:GitHub Hydrator source dir 3:Hydrator dir 4:Type 5:Target filename 6:Source Markdown filename
 
   download_md_doc_file $base_target $hydrator_source cassandra-plugins Cassandra-batchsink.md 
@@ -118,8 +159,8 @@ function download_includes() {
   download_md_doc_file $base_target $hydrator_source core-plugins ScriptFilter-transform.md
   download_md_doc_file $base_target $hydrator_source core-plugins SnapshotAvro-batchsink.md
   download_md_doc_file $base_target $hydrator_source core-plugins SnapshotAvro-batchsource.md
-  download_md_doc_file $base_target $hydrator_source core-plugins SnapshotParquet-batchsink.md
   download_md_doc_file $base_target $hydrator_source core-plugins SnapshotParquet-batchsource.md
+  download_md_doc_file $base_target $hydrator_source core-plugins SnapshotParquet-batchsink.md
   download_md_doc_file $base_target $hydrator_source core-plugins Stream-batchsource.md
   download_md_doc_file $base_target $hydrator_source core-plugins Stream-realtimesink.md
   download_md_doc_file $base_target $hydrator_source core-plugins StructuredRecordToGenericRecord-transform.md
@@ -132,10 +173,9 @@ function download_includes() {
   download_md_doc_file $base_target $hydrator_source core-plugins Table-realtimesink.md
   download_md_doc_file $base_target $hydrator_source core-plugins Twitter-realtimesource.md
   download_md_doc_file $base_target $hydrator_source core-plugins Validator-transform.md
-  
-  download_md_doc_file $base_target $hydrator_source database-plugins Database-batchsink.md
-  download_md_doc_file $base_target $hydrator_source database-plugins Database-batchsource.md
-  download_md_doc_file $base_target $hydrator_source database-plugins Teradata-batchsource.md
+
+  download_md_doc_file $base_target $hydrator_source database-plugins Database-batchsink.md database-batchsink-append.txt
+  download_md_doc_file $base_target $hydrator_source database-plugins Database-batchsource.md database-batchsource-append.txt
   
   download_md_doc_file $base_target $hydrator_source elasticsearch-plugins Elasticsearch-batchsink.md
   download_md_doc_file $base_target $hydrator_source elasticsearch-plugins Elasticsearch-batchsource.md
@@ -168,6 +208,8 @@ function download_includes() {
   download_md_doc_file $base_target $hydrator_source transform-plugins JSONParser-transform.md
   download_md_doc_file $base_target $hydrator_source transform-plugins StreamFormatter-transform.md
 
+  extract_table ${base_target} transforms/validator.md validator-extract.txt
+  
 }
 
 run_command ${1}

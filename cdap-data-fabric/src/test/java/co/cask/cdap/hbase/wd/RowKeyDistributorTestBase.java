@@ -18,8 +18,8 @@ package co.cask.cdap.hbase.wd;
 import co.cask.cdap.common.utils.Networks;
 import co.cask.cdap.test.XSlowTests;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
-import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Put;
@@ -30,9 +30,7 @@ import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
 import org.apache.hadoop.hbase.mapreduce.TableMapReduceUtil;
 import org.apache.hadoop.hbase.mapreduce.TableMapper;
 import org.apache.hadoop.hbase.util.Bytes;
-import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapreduce.Job;
-import org.apache.hadoop.mapreduce.MRJobConfig;
 import org.apache.hadoop.mapreduce.lib.output.NullOutputFormat;
 import org.junit.After;
 import org.junit.AfterClass;
@@ -87,20 +85,7 @@ public abstract class RowKeyDistributorTestBase {
     hConf.setInt("hbase.regionserver.port", Networks.getRandomPort());
     hConf.setInt("hbase.regionserver.info.port", Networks.getRandomPort());
 
-
-    // Set the JAVA_HOME env for MapReduce. In case it is missing from the host.
-    String javaHomeEnv = "JAVA_HOME=" + System.getProperty("java.home");
-    hConf.set(MRJobConfig.MR_AM_ENV, javaHomeEnv);
-    hConf.set(JobConf.MAPRED_MAP_TASK_ENV, javaHomeEnv);
-    hConf.set(JobConf.MAPRED_REDUCE_TASK_ENV, javaHomeEnv);
-
-    // Make it less annoying in Mac.
-    hConf.set(MRJobConfig.MR_AM_COMMAND_OPTS, "-Djava.awt.headless=true");
-    hConf.set(JobConf.MAPRED_MAP_TASK_JAVA_OPTS, "-Djava.awt.headless=true");
-    hConf.set(JobConf.MAPRED_REDUCE_TASK_JAVA_OPTS, "-Djava.awt.headless=true");
-
     testingUtility.startMiniCluster();
-    testingUtility.startMiniMapReduceCluster();
     hTable = testingUtility.createTable(TABLE, CF);
   }
 
@@ -109,7 +94,6 @@ public abstract class RowKeyDistributorTestBase {
     if (!runAfter) {
       return;
     }
-    testingUtility.shutdownMiniMapReduceCluster();
     testingUtility.shutdownMiniCluster();
   }
 
@@ -231,7 +215,11 @@ public abstract class RowKeyDistributorTestBase {
             writeTestData(origKeyPrefix, numValues, startWithValue, seekIntervalMinValue, seekIntervalMaxValue);
 
     // Reading data
-    Configuration conf = testingUtility.getConfiguration();
+    Configuration conf = new Configuration(testingUtility.getConfiguration());
+    conf.set("fs.defaultFS", "file:///");
+    conf.set("fs.default.name", "file:///");
+    conf.setInt("mapreduce.local.map.tasks.maximum", 16);
+    conf.setInt("mapreduce.local.reduce.tasks.maximum", 16);
     Job job = Job.getInstance(conf, "testMapReduceInternal()-Job");
     TableMapReduceUtil.initTableMapperJob(TABLE_NAME, scan,
             RowCounterMapper.class, ImmutableBytesWritable.class, Result.class, job);
@@ -260,12 +248,12 @@ public abstract class RowKeyDistributorTestBase {
    */
   static class RowCounterMapper extends TableMapper<ImmutableBytesWritable, Result> {
     /** Counter enumeration to count the actual rows. */
-    public static enum Counters { ROWS }
+    public enum Counters { ROWS }
 
     @Override
     public void map(ImmutableBytesWritable row, Result values, Context context) throws IOException {
-      for (KeyValue value: values.list()) {
-        if (value.getValue().length > 0) {
+      for (Cell cell : values.rawCells()) {
+        if (cell.getValueLength() > 0) {
           context.getCounter(Counters.ROWS).increment(1);
           break;
         }

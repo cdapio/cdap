@@ -22,14 +22,14 @@ import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
+import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.internal.app.AbstractInMemoryProgramRunner;
-import co.cask.cdap.internal.app.runtime.ProgramRunnerFactory;
 import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.Table;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import org.apache.twill.api.RunId;
 
 /**
@@ -37,9 +37,12 @@ import org.apache.twill.api.RunId;
  */
 public class InMemoryServiceProgramRunner extends AbstractInMemoryProgramRunner {
 
+  private final Provider<ServiceProgramRunner> serviceProgramRunnerProvider;
+
   @Inject
-  InMemoryServiceProgramRunner(CConfiguration cConf, ProgramRunnerFactory programRunnerFactory) {
-    super(cConf, programRunnerFactory);
+  InMemoryServiceProgramRunner(CConfiguration cConf, Provider<ServiceProgramRunner> serviceProgramRunnerProvider) {
+    super(cConf);
+    this.serviceProgramRunnerProvider = serviceProgramRunnerProvider;
   }
 
   @Override
@@ -57,10 +60,11 @@ public class InMemoryServiceProgramRunner extends AbstractInMemoryProgramRunner 
 
     //RunId for the service
     RunId runId = RunIds.generate();
-    Table<String, Integer, ProgramController> components = startPrograms(program, runId, options,
-                                                                         ProgramRunnerFactory.Type.SERVICE_COMPONENT,
-                                                                         serviceSpec.getInstances());
-    return new InMemoryProgramController(components, runId, program, serviceSpec, options,
-                                         ProgramRunnerFactory.Type.SERVICE_COMPONENT);
+    return startAll(program, options, runId, serviceSpec.getInstances());
+  }
+
+  @Override
+  protected ProgramRunner createProgramRunner() {
+    return serviceProgramRunnerProvider.get();
   }
 }

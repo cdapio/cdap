@@ -28,7 +28,7 @@ import javax.annotation.Nullable;
 /**
  * This stores the input schema that is passed to this stage from other stages in the pipeline and
  * the output schema that could be sent to the next stages from this stage.
- * Currently we only allow a sinlge input/output schema per stage
+ * Currently we only allow a single input/output schema per stage.
  */
 public class DefaultStageConfigurer implements StageConfigurer {
   private Schema outputSchema;
@@ -41,6 +41,7 @@ public class DefaultStageConfigurer implements StageConfigurer {
     this.inputSchemaSet = false;
   }
 
+  @Nullable
   public Schema getOutputSchema() {
     return outputSchema;
   }
@@ -58,7 +59,9 @@ public class DefaultStageConfigurer implements StageConfigurer {
 
   public void setInputSchema(@Nullable Schema inputSchema) {
     if (this.inputSchemaSet && !Objects.equals(this.inputSchema, inputSchema)) {
-      throw new IllegalArgumentException("Two different input schema were set for the stage " + stageName);
+      throw new IllegalArgumentException(
+        String.format("Two different input schema were set for stage %s. Schema1 = %s. Schema2 = %s.",
+                      stageName, this.inputSchema, inputSchema));
     }
     this.inputSchema = inputSchema;
     this.inputSchemaSet = true;

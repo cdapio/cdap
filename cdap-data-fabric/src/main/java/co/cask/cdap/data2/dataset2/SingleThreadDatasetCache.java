@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -32,6 +32,7 @@ import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Preconditions;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
+import com.google.common.cache.ForwardingLoadingCache;
 import com.google.common.cache.LoadingCache;
 import com.google.common.cache.RemovalListener;
 import com.google.common.cache.RemovalNotification;
@@ -88,7 +89,8 @@ public class SingleThreadDatasetCache extends DynamicDatasetCache {
       @Override
       @ParametersAreNonnullByDefault
       public Dataset load(DatasetCacheKey key) throws Exception {
-        Dataset dataset = instantiator.getDataset(namespace.dataset(key.getName()), key.getArguments());
+        Dataset dataset = instantiator.getDataset(namespace.dataset(key.getName()).toId(), key.getArguments(),
+                                                  key.getAccessType());
         if (dataset instanceof MeteredDataset && metricsContext != null) {
           ((MeteredDataset) dataset).setMetricsCollector(
             metricsContext.childContext(Constants.Metrics.Tag.DATASET, key.getName()));
@@ -96,7 +98,7 @@ public class SingleThreadDatasetCache extends DynamicDatasetCache {
         return dataset;
       }
     };
-    this.datasetCache = CacheBuilder.newBuilder().removalListener(
+    LoadingCache<DatasetCacheKey, Dataset> delegate = CacheBuilder.newBuilder().removalListener(
       new RemovalListener<DatasetCacheKey, Dataset>() {
         @Override
         @ParametersAreNonnullByDefault
@@ -106,6 +108,8 @@ public class SingleThreadDatasetCache extends DynamicDatasetCache {
       })
       .build(datasetLoader);
 
+    this.datasetCache = new LineageRecordingDatasetCache(delegate, instantiator, namespace);
+
     // add all the static datasets to the cache. This makes sure that a) the cache is preloaded and
     // b) if any static datasets cannot be loaded, the problem show right away (and not later). See
     // also the javadoc of this c'tor, which states that all static datasets get loaded right away.
@@ -114,6 +118,30 @@ public class SingleThreadDatasetCache extends DynamicDatasetCache {
         this.staticDatasets.put(new DatasetCacheKey(entry.getKey(), entry.getValue()),
                                 getDataset(entry.getKey(), entry.getValue()));
       }
+    }
+  }
+
+  /**
+   * Cache that records lineage for a dataset access each time the dataset is requested.
+   */
+  private static final class LineageRecordingDatasetCache
+    extends ForwardingLoadingCache.SimpleForwardingLoadingCache<DatasetCacheKey, Dataset> {
+
+    private final SystemDatasetInstantiator instantiator;
+    private final NamespaceId namespaceId;
+
+    protected LineageRecordingDatasetCache(LoadingCache<DatasetCacheKey, Dataset> delegate,
+                                           SystemDatasetInstantiator instantiator, NamespaceId namespaceId) {
+      super(delegate);
+      this.instantiator = instantiator;
+      this.namespaceId = namespaceId;
+    }
+
+    @Override
+    public Dataset get(DatasetCacheKey key) throws ExecutionException {
+      // write lineage information on each get call
+      instantiator.writeLineage(namespaceId.dataset(key.getName()).toId(), key.getAccessType());
+      return super.get(key);
     }
   }
 

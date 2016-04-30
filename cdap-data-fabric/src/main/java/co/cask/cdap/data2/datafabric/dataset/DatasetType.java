@@ -42,7 +42,12 @@ public final class DatasetType<D extends Dataset, A extends DatasetAdmin> {
   }
 
   public DatasetSpecification configure(String instanceName, DatasetProperties properties) {
-    return delegate.configure(instanceName, properties);
+    DatasetSpecification spec = delegate.configure(instanceName, properties);
+    spec = spec.setOriginalProperties(properties);
+    if (properties.getDescription() != null) {
+      spec = spec.setDescription(properties.getDescription());
+    }
+    return spec;
   }
 
   public A getAdmin(DatasetContext datasetContext, DatasetSpecification spec) throws IOException {

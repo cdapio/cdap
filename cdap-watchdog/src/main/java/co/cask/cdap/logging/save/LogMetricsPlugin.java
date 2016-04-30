@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,9 +18,9 @@ package co.cask.cdap.logging.save;
 
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.metrics.MetricsContext;
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.LoggingContext;
-import co.cask.cdap.logging.appender.kafka.KafkaTopic;
 import co.cask.cdap.logging.context.LoggingContextHelper;
 import co.cask.cdap.logging.kafka.KafkaLogEvent;
 import co.cask.cdap.proto.Id;
@@ -57,10 +57,10 @@ public class LogMetricsPlugin extends AbstractKafkaLogProcessor {
   private CheckPointWriter checkPointWriter;
 
   @Inject
-  public LogMetricsPlugin (MetricsCollectionService metricsCollectionService,
-                           CheckpointManagerFactory checkpointManagerFactory) {
+  LogMetricsPlugin (CConfiguration cConf, MetricsCollectionService metricsCollectionService,
+                    CheckpointManagerFactory checkpointManagerFactory) {
     this.metricsCollectionService = metricsCollectionService;
-    this.checkpointManager = checkpointManagerFactory.create(KafkaTopic.getTopic(), ROW_KEY_PREFIX);
+    this.checkpointManager = checkpointManagerFactory.create(cConf.get(Constants.Logging.KAFKA_TOPIC), ROW_KEY_PREFIX);
   }
 
   @Override

@@ -32,6 +32,7 @@ import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.HDFSTransactionStateStorageProvider;
 import co.cask.cdap.data.runtime.TransactionManagerProvider;
+import co.cask.cdap.data2.audit.AuditModule;
 import co.cask.cdap.logging.appender.LogAppenderInitializer;
 import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
@@ -124,7 +125,8 @@ public class TransactionServiceTwillRunnable extends AbstractMasterTwillRunnable
       new LocationRuntimeModule().getDistributedModules(),
       new DiscoveryRuntimeModule().getDistributedModules(),
       new MetricsClientRuntimeModule().getDistributedModules(),
-      new LoggingModules().getDistributedModules()
+      new LoggingModules().getDistributedModules(),
+      new AuditModule().getDistributedModules()
     );
   }
 

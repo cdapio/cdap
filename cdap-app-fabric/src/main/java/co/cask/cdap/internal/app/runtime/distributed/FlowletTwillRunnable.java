@@ -35,11 +35,6 @@ final class FlowletTwillRunnable extends AbstractProgramTwillRunnable<FlowletPro
   }
 
   @Override
-  protected Class<FlowletProgramRunner> getProgramClass() {
-    return FlowletProgramRunner.class;
-  }
-
-  @Override
   public void handleCommand(Command command) throws Exception {
     try {
       super.handleCommand(command);

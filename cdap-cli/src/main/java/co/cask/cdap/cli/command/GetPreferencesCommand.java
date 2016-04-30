@@ -40,6 +40,6 @@ public class GetPreferencesCommand extends AbstractGetPreferencesCommand {
 
   @Override
   public String getDescription() {
-    return String.format("Gets the preferences of %s.", Fragment.of(Article.A, type.getName()));
+    return String.format("Gets the preferences of %s", Fragment.of(Article.A, type.getName()));
   }
 }

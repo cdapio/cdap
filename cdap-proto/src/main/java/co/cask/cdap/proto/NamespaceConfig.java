@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,8 +16,9 @@
 
 package co.cask.cdap.proto;
 
-import com.google.common.base.Objects;
 import com.google.gson.annotations.SerializedName;
+
+import java.util.Objects;
 
 /**
  * Represents the configuration of a namespace. This class needs to be GSON serializable.
@@ -44,7 +45,7 @@ public class NamespaceConfig {
       return false;
     }
     NamespaceConfig other = (NamespaceConfig) o;
-    return Objects.equal(schedulerQueueName, other.schedulerQueueName);
+    return Objects.equals(schedulerQueueName, other.schedulerQueueName);
   }
 
   @Override
@@ -54,8 +55,8 @@ public class NamespaceConfig {
 
   @Override
   public String toString() {
-    return Objects.toStringHelper(this)
-                  .add("scheduler.queue.name", schedulerQueueName)
-                  .toString();
+    return "NamespaceConfig{" +
+      "scheduler.queue.name='" + schedulerQueueName + '\'' +
+      '}';
   }
 }

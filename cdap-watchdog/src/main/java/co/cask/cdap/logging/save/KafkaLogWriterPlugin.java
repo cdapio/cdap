@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,7 +21,6 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.logging.LoggingConfiguration;
-import co.cask.cdap.logging.appender.kafka.KafkaTopic;
 import co.cask.cdap.logging.appender.kafka.LoggingEventSerializer;
 import co.cask.cdap.logging.kafka.KafkaLogEvent;
 import co.cask.cdap.logging.write.AvroFileWriter;
@@ -75,71 +74,72 @@ public class KafkaLogWriterPlugin extends AbstractKafkaLogProcessor {
   private CountDownLatch countDownLatch;
 
   @Inject
-  public KafkaLogWriterPlugin(CConfiguration cConfig, FileMetaDataManager fileMetaDataManager,
-                              LocationFactory locationFactory, CheckpointManagerFactory checkpointManagerFactory)
+  KafkaLogWriterPlugin(CConfiguration cConf, FileMetaDataManager fileMetaDataManager,
+                       LocationFactory locationFactory, CheckpointManagerFactory checkpointManagerFactory)
     throws Exception {
 
     this.serializer = new LoggingEventSerializer();
     this.messageTable = TreeBasedTable.create();
 
-    this.logBaseDir = cConfig.get(LoggingConfiguration.LOG_BASE_DIR);
+    this.logBaseDir = cConf.get(LoggingConfiguration.LOG_BASE_DIR);
     Preconditions.checkNotNull(this.logBaseDir, "Log base dir cannot be null");
     LOG.info(String.format("Log base dir is %s", this.logBaseDir));
 
-    long retentionDurationDays = cConfig.getLong(LoggingConfiguration.LOG_RETENTION_DURATION_DAYS,
+    long retentionDurationDays = cConf.getLong(LoggingConfiguration.LOG_RETENTION_DURATION_DAYS,
                                                  LoggingConfiguration.DEFAULT_LOG_RETENTION_DURATION_DAYS);
     Preconditions.checkArgument(retentionDurationDays > 0,
                                 "Log file retention duration is invalid: %s", retentionDurationDays);
 
-    long maxLogFileSizeBytes = cConfig.getLong(LoggingConfiguration.LOG_MAX_FILE_SIZE_BYTES, 20 * 1024 * 1024);
+    long maxLogFileSizeBytes = cConf.getLong(LoggingConfiguration.LOG_MAX_FILE_SIZE_BYTES, 20 * 1024 * 1024);
     Preconditions.checkArgument(maxLogFileSizeBytes > 0,
                                 "Max log file size is invalid: %s", maxLogFileSizeBytes);
 
-    int syncIntervalBytes = cConfig.getInt(LoggingConfiguration.LOG_FILE_SYNC_INTERVAL_BYTES, 50 * 1024);
+    int syncIntervalBytes = cConf.getInt(LoggingConfiguration.LOG_FILE_SYNC_INTERVAL_BYTES, 50 * 1024);
     Preconditions.checkArgument(syncIntervalBytes > 0,
                                 "Log file sync interval is invalid: %s", syncIntervalBytes);
 
-    long checkpointIntervalMs = cConfig.getLong(LoggingConfiguration.LOG_SAVER_CHECKPOINT_INTERVAL_MS,
+    long checkpointIntervalMs = cConf.getLong(LoggingConfiguration.LOG_SAVER_CHECKPOINT_INTERVAL_MS,
                                                 LoggingConfiguration.DEFAULT_LOG_SAVER_CHECKPOINT_INTERVAL_MS);
     Preconditions.checkArgument(checkpointIntervalMs > 0,
                                 "Checkpoint interval is invalid: %s", checkpointIntervalMs);
 
-    long inactiveIntervalMs = cConfig.getLong(LoggingConfiguration.LOG_SAVER_INACTIVE_FILE_INTERVAL_MS,
+    long inactiveIntervalMs = cConf.getLong(LoggingConfiguration.LOG_SAVER_INACTIVE_FILE_INTERVAL_MS,
                                               LoggingConfiguration.DEFAULT_LOG_SAVER_INACTIVE_FILE_INTERVAL_MS);
     Preconditions.checkArgument(inactiveIntervalMs > 0,
                                 "Inactive interval is invalid: %s", inactiveIntervalMs);
 
-    this.eventBucketIntervalMs = cConfig.getLong(LoggingConfiguration.LOG_SAVER_EVENT_BUCKET_INTERVAL_MS,
+    this.eventBucketIntervalMs = cConf.getLong(LoggingConfiguration.LOG_SAVER_EVENT_BUCKET_INTERVAL_MS,
                                                  LoggingConfiguration.DEFAULT_LOG_SAVER_EVENT_BUCKET_INTERVAL_MS);
     Preconditions.checkArgument(this.eventBucketIntervalMs > 0,
                                 "Event bucket interval is invalid: %s", this.eventBucketIntervalMs);
 
-    this.maxNumberOfBucketsInTable = cConfig.getLong
+    this.maxNumberOfBucketsInTable = cConf.getLong
       (LoggingConfiguration.LOG_SAVER_MAXIMUM_INMEMORY_EVENT_BUCKETS,
        LoggingConfiguration.DEFAULT_LOG_SAVER_MAXIMUM_INMEMORY_EVENT_BUCKETS);
     Preconditions.checkArgument(this.maxNumberOfBucketsInTable > 0,
                                 "Maximum number of event buckets in memory is invalid: %s",
                                 this.maxNumberOfBucketsInTable);
 
-    long topicCreationSleepMs = cConfig.getLong(LoggingConfiguration.LOG_SAVER_TOPIC_WAIT_SLEEP_MS,
+    long topicCreationSleepMs = cConf.getLong(LoggingConfiguration.LOG_SAVER_TOPIC_WAIT_SLEEP_MS,
                                                 LoggingConfiguration.DEFAULT_LOG_SAVER_TOPIC_WAIT_SLEEP_MS);
     Preconditions.checkArgument(topicCreationSleepMs > 0,
                                 "Topic creation wait sleep is invalid: %s", topicCreationSleepMs);
 
-    logCleanupIntervalMins = cConfig.getInt(LoggingConfiguration.LOG_CLEANUP_RUN_INTERVAL_MINS,
+    logCleanupIntervalMins = cConf.getInt(LoggingConfiguration.LOG_CLEANUP_RUN_INTERVAL_MINS,
                                             LoggingConfiguration.DEFAULT_LOG_CLEANUP_RUN_INTERVAL_MINS);
     Preconditions.checkArgument(logCleanupIntervalMins > 0,
                                 "Log cleanup run interval is invalid: %s", logCleanupIntervalMins);
 
-    AvroFileWriter avroFileWriter = new AvroFileWriter(fileMetaDataManager, cConfig, locationFactory.create(""),
+    AvroFileWriter avroFileWriter = new AvroFileWriter(fileMetaDataManager, cConf, locationFactory.create(""),
                                                        logBaseDir, serializer.getAvroSchema(), maxLogFileSizeBytes,
                                                        syncIntervalBytes, inactiveIntervalMs);
 
-    checkpointManager = checkpointManagerFactory.create(KafkaTopic.getTopic(), CHECKPOINT_ROW_KEY_PREFIX);
+    checkpointManager = checkpointManagerFactory.create(cConf.get(Constants.Logging.KAFKA_TOPIC),
+                                                        CHECKPOINT_ROW_KEY_PREFIX);
 
     this.logFileWriter = new CheckpointingLogFileWriter(avroFileWriter, checkpointManager, checkpointIntervalMs);
 
-    String namespacesDir = cConfig.get(Constants.Namespace.NAMESPACES_DIR);
+    String namespacesDir = cConf.get(Constants.Namespace.NAMESPACES_DIR);
     long retentionDurationMs = TimeUnit.MILLISECONDS.convert(retentionDurationDays, TimeUnit.DAYS);
     this.logCleanup = new LogCleanup(fileMetaDataManager, locationFactory.create(""), namespacesDir,
                                      retentionDurationMs);

@@ -28,10 +28,13 @@
 
 # Component versions used in replacements:
 
-cdap_apps_version = '0.4.0'
+cask_tracker_version = '0.1.0-SNAPSHOT'
 
-node_js_version = 'greater than v0.10.36 through v0.12.*'
-recommended_node_js_version = 'v0.12.*'
+cdap_apps_version = '0.7.0-SNAPSHOT'
+cdap_apps_compatibile_version = 'release/cdap-3.4-compatible'
+
+node_js_min_version = 'beginning with v0.10.36'
+node_js_max_version = 'v4.4.0'
 
 import sys
 import os
@@ -118,6 +121,7 @@ extensions = [
     'sphinx.ext.ifconfig',
     'sphinx.ext.intersphinx',
     'sphinx.ext.extlinks',
+    'tabbed-parsed-literal',
 ]
 
 _intersphinx_mapping = "../../%%s/%s/html/objects.inv" % target
@@ -191,6 +195,9 @@ rst_epilog = """
 .. |#| replace:: :gp:`#`
 
 .. role:: gp
+.. |>| replace:: :gp:`>`
+
+.. role:: gp
 .. |cdap >| replace:: :gp:`cdap >`
 
 .. |http:| replace:: http:
@@ -209,16 +216,18 @@ rst_epilog = """
 .. |non-breaking-space| unicode:: U+00A0 .. non-breaking space
 """
 
-if node_js_version:
-    rst_epilog = rst_epilog + """
-.. |node-js-version| replace:: %(node_js_version)s
-""" % {'node_js_version': node_js_version}
-    rst_epilog = rst_epilog + """
-.. |recommended_node_js_version| replace:: %(recommended_node_js_version)s
-""" % {'recommended_node_js_version': recommended_node_js_version}
+if node_js_min_version:
+    rst_epilog += """
+.. |node-js-min-version| replace:: %(node_js_min_version)s
+
+.. |node-js-max-version| replace:: %(node_js_max_version)s
+
+""" % {'node_js_min_version': node_js_min_version,
+       'node_js_max_version': node_js_max_version,
+      }
 
 if version:
-    rst_epilog = rst_epilog + """
+    rst_epilog += """
 .. |bold-version| replace:: **%(version)s**
 
 .. |italic-version| replace:: *%(version)s*
@@ -227,13 +236,19 @@ if version:
 """ % {'version': version}
 
 if short_version:
-    rst_epilog = rst_epilog + """
+    previous_short_version = float(short_version) -0.1
+    rst_epilog += """
 .. |short-version| replace:: %(short_version)s
+.. |bold-short-version| replace:: **%(short_version)s**
 .. |literal-short-version| replace:: ``%(short_version)s``
-""" % {'short_version': short_version}
+.. |previous-short-version| replace:: %(previous_short_version)s
+.. |bold-previous-short-version| replace:: **%(previous_short_version)s**
+.. |literal-previous-short-version| replace:: ``%(previous_short_version)s``
+
+""" % {'short_version': short_version, 'previous_short_version': previous_short_version}
 
 if version_tuple:
-    rst_epilog = rst_epilog + """
+    rst_epilog += """
 .. |version-major| replace:: %s
 .. |version-minor| replace:: %s
 .. |version-fix| replace:: %s
@@ -241,7 +256,7 @@ if version_tuple:
 .. |version-suffix-realtime| replace:: %srealtime
 """ % version_tuple
 
-    rst_epilog = rst_epilog + """
+    rst_epilog += """
 .. |literal-version-major| replace:: ``%s``
 .. |literal-version-minor| replace:: ``%s``
 .. |literal-version-fix| replace:: ``%s``
@@ -250,27 +265,36 @@ if version_tuple:
 """ % version_tuple
 
 if release:
-    rst_epilog = rst_epilog + """
+    rst_epilog += """
 .. |literal-release| replace:: ``%(release)s``
 """ % {'release': release}
 
 if current_year:
-    rst_epilog = rst_epilog + """
+    rst_epilog += """
 .. |current_year| replace:: %(current_year)s
 """ % {'current_year': current_year}
 
 if copyright:
-    rst_epilog = rst_epilog + """
+    rst_epilog += """
 .. |copyright| replace:: %(copyright)s
 """ % {'copyright': copyright}
 
 if cdap_apps_version:
-    rst_epilog = rst_epilog + """
+    rst_epilog += """
 .. |cdap-apps-version| replace:: %(cdap-apps-version)s
-
 .. |literal-cdap-apps-version| replace:: ``%(cdap-apps-version)s``
+.. |cdap-apps-compatibile-version| replace:: %(cdap-apps-compatibile-version)s
 
-""" % {'cdap-apps-version': cdap_apps_version}
+""" % {'cdap-apps-version': cdap_apps_version, 'cdap-apps-compatibile-version': cdap_apps_compatibile_version}
+
+if cask_tracker_version:
+    rst_epilog += """
+.. |cask-tracker-version| replace:: %(cask-tracker-version)s
+.. |cask-tracker-version-jar| replace:: tracker-%(cask-tracker-version)s.jar
+.. |literal-cask-tracker-version| replace:: ``%(cask-tracker-version)s``
+.. |literal-cask-tracker-version-jar| replace:: ``tracker-%(cask-tracker-version)s.jar``
+
+""" % {'cask-tracker-version': cask_tracker_version}
 
 # There are two options for replacing |today|: either, you set today to some
 # non-false value, then it is used:

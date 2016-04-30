@@ -19,7 +19,7 @@ package co.cask.cdap.etl.realtime;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
-import co.cask.cdap.etl.realtime.config.ETLRealtimeConfig;
+import co.cask.cdap.etl.proto.v2.ETLRealtimeConfig;
 
 /**
  * ETL Realtime Application.
@@ -30,7 +30,7 @@ public class ETLRealtimeApplication extends AbstractApplication<ETLRealtimeConfi
 
   @Override
   public void configure() {
-    ETLRealtimeConfig config = getConfig();
+    ETLRealtimeConfig config = getConfig().convertOldConfig();
     setDescription(DEFAULT_DESCRIPTION);
     addWorker(new ETLWorker(config));
     createDataset(STATE_TABLE, KeyValueTable.class, DatasetProperties.EMPTY);

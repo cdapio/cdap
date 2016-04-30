@@ -16,12 +16,13 @@
 
 package co.cask.cdap.data2.dataset2.cache;
 
+import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetFrameworkTestUtil;
-import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.data2.dataset2.DynamicDatasetCache;
+import co.cask.cdap.data2.metadata.lineage.AccessType;
 import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -117,8 +118,12 @@ public abstract class DynamicDatasetCacheTest {
     Assert.assertSame(a, a2);
 
     TestDataset b = cache.getDataset("b", B_ARGUMENTS);
-    TestDataset b1 = cache.getDataset("b", B_ARGUMENTS);
+    TestDataset b1 = cache.getDataset("b", B_ARGUMENTS, AccessType.READ);
+    TestDataset b2 = cache.getDataset("b", B_ARGUMENTS, AccessType.WRITE);
     Assert.assertSame(b, b1);
+
+    // assert that b1 and b2 are the same, even though their accessType is different
+    Assert.assertSame(b1, b2);
 
     // validate that arguments for a are the global runtime args of the cache
     Assert.assertEquals(2, a.getArguments().size());

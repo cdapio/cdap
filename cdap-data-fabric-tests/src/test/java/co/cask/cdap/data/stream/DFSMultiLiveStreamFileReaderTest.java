@@ -15,9 +15,9 @@
  */
 package co.cask.cdap.data.stream;
 
-import co.cask.cdap.common.io.FileContextLocationFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hdfs.MiniDFSCluster;
+import org.apache.twill.filesystem.FileContextLocationFactory;
 import org.apache.twill.filesystem.LocationFactory;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;

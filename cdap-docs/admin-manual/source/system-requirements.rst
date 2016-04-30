@@ -82,7 +82,6 @@ Software Prerequisites
 You'll need this software installed:
 
 - A :ref:`Java runtime <admin-manual-install-java-runtime>` on each CDAP node and Hadoop datanode.
-- A :ref:`Node.js runtime <admin-manual-install-node.js>` on each CDAP node.
 - A Hadoop, HBase, Hive (and optionally Spark) environment to run against.
 - To use the **ad-hoc querying capabilities of CDAP,** ensure the cluster has a compatible version of
   Hive installed. See the section on :ref:`Hadoop Compatibility <admin-manual-hadoop-compatibility-matrix>`.
@@ -111,44 +110,6 @@ CDAP is tested with the Oracle JDKs; it may work with other JDKs such as
 
 Once you have installed the JDK, you'll need to set the JAVA_HOME environment variable.
 
-.. _admin-manual-install-node.js:
-
-Node.js Runtime
----------------
-You can download an appropriate version of Node.js from `nodejs.org
-<http://nodejs.org>`__. We recommend any version of `Node.js <https://nodejs.org/>`__
-|node-js-version|; in particular, we recommend |recommended_node_js_version|.
-   
-**Installing Node.js on RPM using Yum**
-
-#. Run as root (note that running under sudo will not work)::
-
-    $ su root
-    # curl --silent --location https://rpm.nodesource.com/setup | bash -
-    # yum -y install nodejs
-
-#. Check the Node.js installation and version using::
-
-    # node --version
-
-**Installing Node.js on Debian using APT**
-
-#. Run as root (note that running under sudo will not work)::
-
-    $ su root
-    # curl -sL https://deb.nodesource.com/setup_5.x | bash -
-    # apt-get install --yes nodejs
-
-#. *Note:* If there is no root account or root password, set one using these commands, following the prompts
-   to enter a new UNIX password (which will become the password for root)::
-
-    $ sudo usermod root -p password; sudo passwd root
- 
-#. Check the Node.js installation and version using::
-
-    # node --version
-
-   
 .. _admin-manual-install-ntp:
 
 NTP (Network Time Protocol)

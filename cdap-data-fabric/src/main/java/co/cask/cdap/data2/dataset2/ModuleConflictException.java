@@ -16,6 +16,8 @@
 
 package co.cask.cdap.data2.dataset2;
 
+import co.cask.cdap.api.dataset.DatasetManagementException;
+
 /**
  * Thrown when operation conflicts with existing {@link co.cask.cdap.api.dataset.module.DatasetModule}s
  * in the system.

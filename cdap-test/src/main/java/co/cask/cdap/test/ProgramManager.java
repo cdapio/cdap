@@ -91,4 +91,11 @@ public interface ProgramManager<T extends ProgramManager> {
    * @return list of {@link RunRecord} history
    */
   List<RunRecord> getHistory(ProgramRunStatus status);
+
+  /**
+   * Save runtime arguments for the program for all runs.
+   *
+   * @param args the runtime arguments to save
+   */
+  void setRuntimeArgs(Map<String, String> args) throws Exception;
 }

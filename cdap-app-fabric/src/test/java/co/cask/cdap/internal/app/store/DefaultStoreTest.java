@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -46,27 +46,33 @@ import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.schedule.Schedules;
 import co.cask.cdap.api.service.ServiceSpecification;
+import co.cask.cdap.api.workflow.NodeStatus;
 import co.cask.cdap.api.workflow.ScheduleProgramInfo;
 import co.cask.cdap.app.DefaultAppConfigurer;
 import co.cask.cdap.app.DefaultApplicationContext;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.common.app.RunIds;
-import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.internal.AppFabricTestHelper;
 import co.cask.cdap.internal.DefaultId;
 import co.cask.cdap.internal.app.Specifications;
+import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.WorkflowNodeStateDetail;
+import co.cask.cdap.proto.WorkflowNodeThrowable;
+import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.proto.id.Ids;
+import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.store.DefaultNamespaceStore;
-import co.cask.cdap.templates.AdapterDefinition;
 import com.google.common.base.Function;
-import com.google.common.base.Objects;
+import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -81,10 +87,13 @@ import org.apache.twill.filesystem.Location;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
-import java.util.Collection;
-import java.util.Iterator;
+import java.io.File;
+import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -95,13 +104,27 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 /**
- *
+ * Tests for {@link DefaultStore}.
  */
 public class DefaultStoreTest {
   private static final Gson GSON = new Gson();
   private static DefaultStore store;
   private static DefaultNamespaceStore nsStore;
   private static Scheduler scheduler;
+
+  @ClassRule
+  public static TemporaryFolder tmpFolder = new TemporaryFolder();
+
+  private static final Supplier<File> TEMP_FOLDER_SUPPLIER = new Supplier<File>() {
+    @Override
+    public File get() {
+      try {
+        return tmpFolder.newFolder();
+      } catch (IOException e) {
+        throw Throwables.propagate(e);
+      }
+    }
+  };
 
   @BeforeClass
   public static void beforeClass() throws Exception {
@@ -125,7 +148,7 @@ public class DefaultStoreTest {
 
   @Test
   public void testLoadingProgram() throws Exception {
-    AppFabricTestHelper.deployApplication(ToyApp.class);
+    AppFabricTestHelper.deployApplicationWithManager(ToyApp.class, TEMP_FOLDER_SUPPLIER);
     Program program = store.loadProgram(Id.Program.from(DefaultId.NAMESPACE.getId(), "ToyApp",
                                                         ProgramType.FLOW, "ToyFlow"));
     Assert.assertNotNull(program);
@@ -162,6 +185,81 @@ public class DefaultStoreTest {
     Assert.assertTrue(store.getRuns(programId2, ProgramRunStatus.ALL, 0, Long.MAX_VALUE, Integer.MAX_VALUE).isEmpty());
   }
 
+  @Test
+  public void testWorkflowNodeState() throws Exception {
+    String namespaceName = "namespace1";
+    String appName = "app1";
+    String workflowName = "workflow1";
+    String mapReduceName = "mapReduce1";
+    String sparkName = "spark1";
+
+    ApplicationId appId = Ids.namespace(namespaceName).app(appName);
+    ProgramId mapReduceProgram = appId.mr(mapReduceName);
+    ProgramId sparkProgram = appId.spark(sparkName);
+
+    long currentTime = System.currentTimeMillis();
+    RunId workflowRunId = RunIds.generate(currentTime);
+    ProgramRunId workflowRun = appId.workflow(workflowName).run(workflowRunId.getId());
+
+    // start Workflow
+    store.setStart(workflowRun.getParent().toId(), workflowRun.getRun(), currentTime);
+
+    // start MapReduce as a part of Workflow
+    Map<String, String> systemArgs = ImmutableMap.of(ProgramOptionConstants.WORKFLOW_NODE_ID, mapReduceName,
+                                                     ProgramOptionConstants.WORKFLOW_NAME, workflowName,
+                                                     ProgramOptionConstants.WORKFLOW_RUN_ID, workflowRunId.getId());
+
+    RunId mapReduceRunId = RunIds.generate(currentTime + 10);
+    store.setStart(mapReduceProgram.toId(), mapReduceRunId.getId(), currentTime + 10, null,
+                   ImmutableMap.<String, String>of(), systemArgs);
+
+    // stop the MapReduce program
+    store.setStop(mapReduceProgram.toId(), mapReduceRunId.getId(), currentTime + 50, ProgramRunStatus.COMPLETED);
+
+    // start Spark program as a part of Workflow
+    systemArgs = ImmutableMap.of(ProgramOptionConstants.WORKFLOW_NODE_ID, sparkName,
+                                 ProgramOptionConstants.WORKFLOW_NAME, workflowName,
+                                 ProgramOptionConstants.WORKFLOW_RUN_ID, workflowRunId.getId());
+
+    RunId sparkRunId = RunIds.generate(currentTime + 60);
+    store.setStart(sparkProgram.toId(), sparkRunId.getId(), currentTime + 60, null,
+                   ImmutableMap.<String, String>of(), systemArgs);
+
+    // stop the Spark program with failure
+    NullPointerException npe = new NullPointerException("dataset not found");
+    IllegalArgumentException iae = new IllegalArgumentException("illegal argument", npe);
+    store.setStop(sparkProgram.toId(), sparkRunId.getId(), currentTime + 100, ProgramRunStatus.FAILED, iae);
+
+    // stop Workflow
+    store.setStop(workflowRun.getParent().toId(), workflowRun.getRun(), currentTime + 110, ProgramRunStatus.FAILED);
+
+    List<WorkflowNodeStateDetail> nodeStateDetails = store.getWorkflowNodeStates(workflowRun);
+    Map<String, WorkflowNodeStateDetail> workflowNodeStates = new HashMap<>();
+    for (WorkflowNodeStateDetail nodeStateDetail : nodeStateDetails) {
+      workflowNodeStates.put(nodeStateDetail.getNodeId(), nodeStateDetail);
+    }
+
+    Assert.assertEquals(2, workflowNodeStates.size());
+    WorkflowNodeStateDetail nodeStateDetail = workflowNodeStates.get(mapReduceName);
+    Assert.assertEquals(mapReduceName, nodeStateDetail.getNodeId());
+    Assert.assertEquals(NodeStatus.COMPLETED, nodeStateDetail.getNodeStatus());
+    Assert.assertEquals(mapReduceRunId.getId(), nodeStateDetail.getRunId());
+    Assert.assertNull(nodeStateDetail.getFailureCause());
+
+    nodeStateDetail = workflowNodeStates.get(sparkName);
+    Assert.assertEquals(sparkName, nodeStateDetail.getNodeId());
+    Assert.assertEquals(NodeStatus.FAILED, nodeStateDetail.getNodeStatus());
+    Assert.assertEquals(sparkRunId.getId(), nodeStateDetail.getRunId());
+    WorkflowNodeThrowable failureCause = nodeStateDetail.getFailureCause();
+    Assert.assertNotNull(failureCause);
+    Assert.assertTrue("illegal argument".equals(failureCause.getMessage()));
+    Assert.assertTrue("java.lang.IllegalArgumentException".equals(failureCause.getClassName()));
+    failureCause = failureCause.getCause();
+    Assert.assertNotNull(failureCause);
+    Assert.assertTrue("dataset not found".equals(failureCause.getMessage()));
+    Assert.assertTrue("java.lang.NullPointerException".equals(failureCause.getClassName()));
+    Assert.assertNull(failureCause.getCause());
+  }
 
   @Test
   public void testConcurrentStopStart() throws Exception {
@@ -337,7 +435,7 @@ public class DefaultStoreTest {
 
     Location archiveLocation = store.getApplicationArchiveLocation(id);
     Assert.assertNotNull(archiveLocation);
-    Assert.assertEquals("/foo/path/application1.jar", Locations.toURI(archiveLocation).getPath());
+    Assert.assertEquals("/foo/path/application1.jar", archiveLocation.toURI().getPath());
   }
 
   @Test
@@ -354,7 +452,7 @@ public class DefaultStoreTest {
     Location archiveLocation = store.getApplicationArchiveLocation(id);
     Assert.assertNotNull(archiveLocation);
     Assert.assertEquals("/foo/path/application1_modified.jar",
-                        Locations.toURI(archiveLocation).getPath());
+                        archiveLocation.toURI().getPath());
   }
 
   @Test
@@ -499,7 +597,7 @@ public class DefaultStoreTest {
 
   @Test
   public void testServiceInstances() throws Exception {
-    AppFabricTestHelper.deployApplication(AppWithServices.class);
+    AppFabricTestHelper.deployApplicationWithManager(AppWithServices.class, TEMP_FOLDER_SUPPLIER);
     AbstractApplication app = new AppWithServices();
     DefaultAppConfigurer appConfigurer = new DefaultAppConfigurer(Id.Namespace.DEFAULT, app);
     app.configure(appConfigurer, new DefaultApplicationContext());
@@ -528,7 +626,7 @@ public class DefaultStoreTest {
 
   @Test
   public void testSetFlowletInstances() throws Exception {
-    AppFabricTestHelper.deployApplication(WordCountApp.class);
+    AppFabricTestHelper.deployApplicationWithManager(WordCountApp.class, TEMP_FOLDER_SUPPLIER);
 
     ApplicationSpecification spec = Specifications.from(new WordCountApp());
     int initialInstances = spec.getFlows().get("WordCountFlow").getFlowlets().get("StreamSource").getInstances();
@@ -554,7 +652,7 @@ public class DefaultStoreTest {
 
   @Test
   public void testWorkerInstances() throws Exception {
-    AppFabricTestHelper.deployApplication(AppWithWorker.class);
+    AppFabricTestHelper.deployApplicationWithManager(AppWithWorker.class, TEMP_FOLDER_SUPPLIER);
     ApplicationSpecification spec = Specifications.from(new AppWithWorker());
 
     Id.Application appId = Id.Application.from(DefaultId.NAMESPACE.getId(), spec.getName());
@@ -763,7 +861,7 @@ public class DefaultStoreTest {
   @Test
   public void testCheckDeletedProgramSpecs() throws Exception {
     //Deploy program with all types of programs.
-    AppFabricTestHelper.deployApplication(AllProgramsApp.class);
+    AppFabricTestHelper.deployApplicationWithManager(AllProgramsApp.class, TEMP_FOLDER_SUPPLIER);
     ApplicationSpecification spec = Specifications.from(new AllProgramsApp());
 
     Set<String> specsToBeVerified = Sets.newHashSet();
@@ -775,7 +873,7 @@ public class DefaultStoreTest {
     specsToBeVerified.addAll(spec.getSpark().keySet());
 
     //Verify if there are 6 program specs in AllProgramsApp
-    Assert.assertEquals(6, specsToBeVerified.size());
+    Assert.assertEquals(7, specsToBeVerified.size());
 
     Id.Application appId = Id.Application.from(DefaultId.NAMESPACE, "App");
     // Check the diff with the same app - re-deployment scenario where programs are not removed.
@@ -787,7 +885,7 @@ public class DefaultStoreTest {
 
     //Get the deleted program specs by sending a spec with same name as AllProgramsApp but with no programs
     deletedSpecs = store.getDeletedProgramSpecifications(appId, spec);
-    Assert.assertEquals(6, deletedSpecs.size());
+    Assert.assertEquals(7, deletedSpecs.size());
 
     for (ProgramSpecification specification : deletedSpecs) {
       //Remove the spec that is verified, to check the count later.
@@ -801,7 +899,7 @@ public class DefaultStoreTest {
   @Test
   public void testCheckDeletedWorkflow() throws Exception {
     //Deploy program with all types of programs.
-    AppFabricTestHelper.deployApplication(AllProgramsApp.class);
+    AppFabricTestHelper.deployApplicationWithManager(AllProgramsApp.class, TEMP_FOLDER_SUPPLIER);
     ApplicationSpecification spec = Specifications.from(new AllProgramsApp());
 
     Set<String> specsToBeDeleted = Sets.newHashSet();
@@ -816,7 +914,7 @@ public class DefaultStoreTest {
 
     //Get the deleted program specs by sending a spec with same name as AllProgramsApp but with no programs
     List<ProgramSpecification> deletedSpecs = store.getDeletedProgramSpecifications(appId, spec);
-    Assert.assertEquals(1, deletedSpecs.size());
+    Assert.assertEquals(2, deletedSpecs.size());
 
     for (ProgramSpecification specification : deletedSpecs) {
       //Remove the spec that is verified, to check the count later.
@@ -855,7 +953,7 @@ public class DefaultStoreTest {
 
   @Test
   public void testDynamicScheduling() throws Exception {
-    AppFabricTestHelper.deployApplication(AppWithWorkflow.class);
+    AppFabricTestHelper.deployApplicationWithManager(AppWithWorkflow.class, TEMP_FOLDER_SUPPLIER);
     Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, AppWithWorkflow.NAME);
 
     Map<String, ScheduleSpecification> schedules = getSchedules(appId);
@@ -899,100 +997,6 @@ public class DefaultStoreTest {
     ApplicationSpecification application = store.getApplication(appId);
     Assert.assertNotNull(application);
     return application.getSchedules();
-  }
-
-  @Test
-  public void testAdapterMDSOperations() throws Exception {
-    Id.Namespace namespaceId = new Id.Namespace("testAdapterMDS");
-
-    AdapterDefinition spec1 = AdapterDefinition.builder("spec1", Id.Program.from(namespaceId,
-                                                                                 "template1",
-                                                                                 ProgramType.WORKFLOW,
-                                                                                 "program1"))
-      .setConfig(GSON.toJsonTree(ImmutableMap.of("k1", "v1")).getAsJsonObject())
-      .build();
-
-    TemplateConf templateConf = new TemplateConf(5, "5", ImmutableMap.of("123", "456"));
-    AdapterDefinition spec2 = AdapterDefinition.builder("spec2", Id.Program.from(namespaceId, "template2",
-                                                                                 ProgramType.WORKER, "program2"))
-      .setConfig(GSON.toJsonTree(templateConf).getAsJsonObject())
-      .build();
-
-    store.addAdapter(namespaceId, spec1);
-    store.addAdapter(namespaceId, spec2);
-
-    // check get all adapters
-    Collection<AdapterDefinition> adapters = store.getAllAdapters(namespaceId);
-    Assert.assertEquals(2, adapters.size());
-    // apparently JsonObjects can be equal, but have different hash codes which means we can't just put
-    // them in a set and compare...
-    Iterator<AdapterDefinition> iter = adapters.iterator();
-    AdapterDefinition actual1 = iter.next();
-    AdapterDefinition actual2 = iter.next();
-    // since order is not guaranteed...
-    if (actual1.getName().equals(spec1.getName())) {
-      Assert.assertEquals(actual1, spec1);
-      Assert.assertEquals(actual2, spec2);
-    } else {
-      Assert.assertEquals(actual1, spec2);
-      Assert.assertEquals(actual2, spec1);
-    }
-
-    // Get non existing spec
-    AdapterDefinition retrievedAdapter = store.getAdapter(namespaceId, "nonExistingAdapter");
-    Assert.assertNull(retrievedAdapter);
-
-    //Retrieve specs
-    AdapterDefinition retrievedSpec1 = store.getAdapter(namespaceId, spec1.getName());
-    Assert.assertEquals(spec1, retrievedSpec1);
-    // Remove spec
-    store.removeAdapter(namespaceId, spec1.getName());
-
-    // verify the deleted spec is gone.
-    retrievedAdapter = store.getAdapter(namespaceId, spec1.getName());
-    Assert.assertNull(retrievedAdapter);
-
-    // verify the other adapter still exists
-    AdapterDefinition retrievedSpec2 = store.getAdapter(namespaceId, spec2.getName());
-    Assert.assertEquals(spec2, retrievedSpec2);
-
-    // remove all
-    store.removeAllAdapters(namespaceId);
-
-    // verify all adapters are gone
-    retrievedAdapter = store.getAdapter(namespaceId, spec2.getName());
-    Assert.assertNull(retrievedAdapter);
-  }
-
-  private static class TemplateConf {
-    private final int x;
-    private final String y;
-    private final Map<String, String> z;
-
-    public TemplateConf(int x, String y, Map<String, String> z) {
-      this.x = x;
-      this.y = y;
-      this.z = z;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) {
-        return true;
-      }
-      if (o == null || getClass() != o.getClass()) {
-        return false;
-      }
-
-      TemplateConf that = (TemplateConf) o;
-
-      return Objects.equal(x, that.x) && Objects.equal(y, that.y) && Objects.equal(z, that.z);
-    }
-
-    @Override
-    public int hashCode() {
-      return Objects.hashCode(x, y, z);
-    }
   }
 
   @Test

@@ -18,6 +18,7 @@ package co.cask.cdap.data.runtime.main;
 
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.app.guice.AppFabricServiceRuntimeModule;
+import co.cask.cdap.app.guice.AuthorizationModule;
 import co.cask.cdap.app.guice.ProgramRunnerRuntimeModule;
 import co.cask.cdap.app.guice.ServiceStoreModules;
 import co.cask.cdap.app.store.ServiceStore;
@@ -43,6 +44,7 @@ import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.stream.StreamAdminModules;
 import co.cask.cdap.data.view.ViewAdminModules;
+import co.cask.cdap.data2.audit.AuditModule;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.util.hbase.ConfigurationTable;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
@@ -50,7 +52,6 @@ import co.cask.cdap.explore.client.ExploreClient;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.explore.service.ExploreServiceUtils;
 import co.cask.cdap.hive.ExploreUtils;
-import co.cask.cdap.internal.app.runtime.spark.SparkUtils;
 import co.cask.cdap.internal.app.services.AppFabricServer;
 import co.cask.cdap.logging.appender.LogAppenderInitializer;
 import co.cask.cdap.logging.guice.LoggingModules;
@@ -209,23 +210,6 @@ public class MasterServiceMain extends DaemonMain {
       LOG.error("Could not disable caching of URLJarFiles. This may lead to 'too many open files` exception.", e);
     }
 
-    // Create a new daemon thread to start the writing of Spark
-    Thread sparkRewriteThread = new Thread("Spark-Jar-Rewrite") {
-      @Override
-      public void run() {
-        try {
-          SparkUtils.getRewrittenSparkAssemblyJar(cConf);
-        } catch (IllegalStateException e) {
-          // It's ok if Spark is not configured at all
-          LOG.debug("Spark library is not available: {}", e.getMessage());
-        } catch (Throwable t) {
-          LOG.warn("Failed to rewrite Spark Assembly JAR", t);
-        }
-      }
-    };
-    sparkRewriteThread.setDaemon(true);
-    sparkRewriteThread.start();
-
     createSystemHBaseNamespace();
     updateConfigurationTable();
 
@@ -376,7 +360,9 @@ public class MasterServiceMain extends DaemonMain {
       new ViewAdminModules().getDistributedModules(),
       new StreamAdminModules().getDistributedModules(),
       new NamespaceClientRuntimeModule().getDistributedModules(),
-      new NamespaceStoreModule().getDistributedModules()
+      new NamespaceStoreModule().getDistributedModules(),
+      new AuditModule().getDistributedModules(),
+      new AuthorizationModule()
     );
   }
 

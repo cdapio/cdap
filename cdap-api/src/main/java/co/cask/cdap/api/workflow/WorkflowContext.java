@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,14 +18,17 @@ package co.cask.cdap.api.workflow;
 import co.cask.cdap.api.Predicate;
 import co.cask.cdap.api.RuntimeContext;
 import co.cask.cdap.api.ServiceDiscoverer;
+import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.data.DatasetContext;
+import co.cask.cdap.api.plugin.PluginContext;
 
 import java.util.Map;
 
 /**
- * Represents the runtime context of a {@link WorkflowAction}.
+ * Represents the runtime context of a {@link Workflow}. This context is also
+ * available to {@link WorkflowAction}.
  */
-public interface WorkflowContext extends RuntimeContext, ServiceDiscoverer, DatasetContext {
+public interface WorkflowContext extends RuntimeContext, ServiceDiscoverer, DatasetContext, PluginContext {
 
   WorkflowSpecification getWorkflowSpecification();
 
@@ -43,6 +46,7 @@ public interface WorkflowContext extends RuntimeContext, ServiceDiscoverer, Data
    * @throws IllegalArgumentException if no program with the specified name is defined in the workflow
    * @throws UnsupportedOperationException if it is called from {@link Predicate}
    */
+  @Deprecated
   Runnable getProgramRunner(String name);
 
   /**
@@ -54,4 +58,21 @@ public interface WorkflowContext extends RuntimeContext, ServiceDiscoverer, Data
    * @return a {@link WorkflowToken}
    */
   WorkflowToken getToken();
+
+  /**
+   * Return an immutable {@link Map} of node ids to {@link WorkflowNodeState}. This can be used
+   * from {@link AbstractWorkflow#destroy} method to determine the status of all nodes
+   * executed by the Workflow in the current run.
+   */
+  @Beta
+  Map<String, WorkflowNodeState> getNodeStates();
+
+  /**
+   * Return true if the execution was successful, false otherwise. This method can be
+   * used from {@link AbstractWorkflow#destroy} to determine the status of the {@link Workflow}.
+   * It can also be used from {@link WorkflowAction#destroy} method to determine the status
+   * of the {@link WorkflowAction}. If it is called before the execution is completed, false is returned.
+   */
+  @Beta
+  boolean isSuccessful();
 }

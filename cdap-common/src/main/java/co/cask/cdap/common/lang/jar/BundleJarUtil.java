@@ -62,7 +62,7 @@ public class BundleJarUtil {
    * @throws IOException if failed to load the manifest.
    */
   public static Manifest getManifest(Location jarLocation) throws IOException {
-    URI uri = Locations.toURI(jarLocation);
+    URI uri = jarLocation.toURI();
 
     // Small optimization if the location is local
     if ("file".equals(uri.getScheme())) {
@@ -106,7 +106,7 @@ public class BundleJarUtil {
                                                     final String entryName) throws IOException {
     Preconditions.checkArgument(jarLocation != null);
     Preconditions.checkArgument(entryName != null);
-    final URI uri = Locations.toURI(jarLocation);
+    final URI uri = jarLocation.toURI();
 
     // Small optimization if the location is local
     if ("file".equals(uri.getScheme())) {

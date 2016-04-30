@@ -23,8 +23,7 @@ import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.config.ConnectionConfig;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.ProgramNotFoundException;
-import co.cask.cdap.common.UnauthorizedException;
-import co.cask.cdap.common.io.Locations;
+import co.cask.cdap.common.UnauthenticatedException;
 import co.cask.cdap.internal.test.AppJarHelper;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRecord;
@@ -32,7 +31,6 @@ import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.test.SingletonExternalResource;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
-import com.google.common.io.Files;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
@@ -43,10 +41,13 @@ import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.jar.Manifest;
 
 /**
  *
@@ -87,7 +88,7 @@ public abstract class ClientTestBase {
   }
 
   protected void assertFlowletInstances(ProgramClient programClient, Id.Flow.Flowlet flowlet, int numInstances)
-    throws IOException, NotFoundException, UnauthorizedException {
+    throws IOException, NotFoundException, UnauthenticatedException {
 
     int actualInstances;
     int numTries = 0;
@@ -100,19 +101,19 @@ public abstract class ClientTestBase {
   }
 
   protected void assertProgramRunning(ProgramClient programClient, Id.Program program)
-    throws IOException, ProgramNotFoundException, UnauthorizedException, InterruptedException {
+    throws IOException, ProgramNotFoundException, UnauthenticatedException, InterruptedException {
 
     assertProgramStatus(programClient, program, "RUNNING");
   }
 
   protected void assertProgramStopped(ProgramClient programClient, Id.Program program)
-    throws IOException, ProgramNotFoundException, UnauthorizedException, InterruptedException {
+    throws IOException, ProgramNotFoundException, UnauthenticatedException, InterruptedException {
 
     assertProgramStatus(programClient, program, "STOPPED");
   }
 
   protected void assertProgramStatus(ProgramClient programClient, Id.Program program, String programStatus)
-    throws IOException, ProgramNotFoundException, UnauthorizedException, InterruptedException {
+    throws IOException, ProgramNotFoundException, UnauthenticatedException, InterruptedException {
 
     try {
       programClient.waitForStatus(program, programStatus, 60, TimeUnit.SECONDS);
@@ -124,15 +125,31 @@ public abstract class ClientTestBase {
   }
 
   protected File createAppJarFile(Class<?> cls) throws IOException {
-    return createAppJarFile(cls, cls.getSimpleName(), String.format("1.0.%d-SNAPSHOT", System.currentTimeMillis()));
+    return createArtifactJarFile(cls, new Manifest());
   }
 
   protected File createAppJarFile(Class<?> cls, String name, String version) throws IOException {
+    return createArtifactJarFile(cls, name, version, new Manifest());
+  }
+
+  protected File createArtifactJarFile(Class<?> cls, Manifest manifest) throws IOException {
+    return createArtifactJarFile(cls, cls.getSimpleName(),
+                                 String.format("1.0.%d-SNAPSHOT", System.currentTimeMillis()), manifest);
+  }
+
+  protected File createArtifactJarFile(Class<?> cls, String name,
+                                       String version, Manifest manifest) throws IOException {
+
     File tmpJarFolder = TMP_FOLDER.newFolder();
     LocationFactory locationFactory = new LocalLocationFactory(tmpJarFolder);
-    Location deploymentJar = AppJarHelper.createDeploymentJar(locationFactory, cls);
+    Location deploymentJar = AppJarHelper.createDeploymentJar(locationFactory, cls, manifest);
+
     File appJarFile = new File(tmpJarFolder, String.format("%s-%s.jar", name, version));
-    Files.copy(Locations.newInputSupplier(deploymentJar), appJarFile);
+    try {
+      Files.createLink(appJarFile.toPath(), Paths.get(deploymentJar.toURI()));
+    } catch (Exception e) {
+      Files.copy(appJarFile.toPath(), Paths.get(deploymentJar.toURI()));
+    }
     return appJarFile;
   }
 }

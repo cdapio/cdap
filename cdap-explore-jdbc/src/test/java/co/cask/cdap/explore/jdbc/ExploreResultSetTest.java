@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -35,9 +35,10 @@ import java.sql.Timestamp;
 import java.util.List;
 
 /**
- *
+ * Tests for {@link ExploreResultSet}.
  */
 public class ExploreResultSetTest {
+  private final String ns = "ns1";
   @Test
   public void testResultSet() throws Exception {
     ExploreClient exploreClient = new MockExploreClient(
@@ -79,9 +80,8 @@ public class ExploreResultSetTest {
         ))
     );
 
-    ResultSet resultSet = new ExploreResultSet(exploreClient.submit(Id.Namespace.from(""), "mock_query").get(),
-                                               new ExploreStatement(null, exploreClient, ""),
-                                               0);
+    ResultSet resultSet = new ExploreResultSet(exploreClient.submit(Id.Namespace.from(ns), "mock_query").get(),
+                                               new ExploreStatement(null, exploreClient, ns), 0);
     Assert.assertTrue(resultSet.next());
     Assert.assertEquals(resultSet.getObject(1), resultSet.getObject("column1"));
     Assert.assertEquals("value1", resultSet.getString(1));
@@ -121,9 +121,8 @@ public class ExploreResultSetTest {
         ))
     );
 
-    ResultSet resultSet = new ExploreResultSet(exploreClient.submit(Id.Namespace.from(""), "mock_query").get(),
-                                               new ExploreStatement(null, exploreClient, ""),
-                                               0);
+    ResultSet resultSet = new ExploreResultSet(exploreClient.submit(Id.Namespace.from(ns), "mock_query").get(),
+                                               new ExploreStatement(null, exploreClient, ns), 0);
     Assert.assertTrue(resultSet.next());
     Assert.assertEquals(1, resultSet.findColumn("column1"));
     Assert.assertEquals(1, resultSet.getObject("column1"));

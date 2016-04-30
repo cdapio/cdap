@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,10 +17,10 @@
 package co.cask.cdap.internal.app.runtime.batch;
 
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
-import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data.stream.StreamInputFormat;
 import co.cask.cdap.data.stream.decoder.IdentityStreamEventDecoder;
 import co.cask.cdap.data.stream.decoder.TextStreamEventDecoder;
+import com.google.common.reflect.TypeToken;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
@@ -38,30 +38,35 @@ public class StreamDecoderDetectionTest {
 
   @Test
   public void testDecoderDetection() throws IOException {
-    // For testing purpose, we don't need all those parameters
     Configuration hConf = new Configuration();
-    MapReduceRuntimeService runtimeService = new MapReduceRuntimeService(null,
-      CConfiguration.create(), hConf, null, null, null, null, null, null, null, null);
 
     hConf.setClass(Job.MAP_CLASS_ATTR, IdentityMapper.class, Mapper.class);
-    StreamInputFormat.inferDecoderClass(hConf, runtimeService.getInputValueType(hConf, Void.class));
+    StreamInputFormat.inferDecoderClass(hConf, MapReduceRuntimeService.getInputValueType(hConf, Void.class,
+                                                                                         getMapperTypeToken(hConf)));
     Assert.assertSame(IdentityStreamEventDecoder.class, StreamInputFormat.getDecoderClass(hConf));
 
     hConf.setClass(Job.MAP_CLASS_ATTR, NoTypeMapper.class, Mapper.class);
-    StreamInputFormat.inferDecoderClass(hConf, runtimeService.getInputValueType(hConf, StreamEvent.class));
+    StreamInputFormat.inferDecoderClass(hConf, MapReduceRuntimeService.getInputValueType(hConf, StreamEvent.class,
+                                                                                         getMapperTypeToken(hConf)));
     Assert.assertSame(IdentityStreamEventDecoder.class, StreamInputFormat.getDecoderClass(hConf));
 
     hConf.setClass(Job.MAP_CLASS_ATTR, TextMapper.class, Mapper.class);
-    StreamInputFormat.inferDecoderClass(hConf, runtimeService.getInputValueType(hConf, Void.class));
+    StreamInputFormat.inferDecoderClass(hConf, MapReduceRuntimeService.getInputValueType(hConf, Void.class,
+                                                                                         getMapperTypeToken(hConf)));
     Assert.assertSame(TextStreamEventDecoder.class, StreamInputFormat.getDecoderClass(hConf));
 
     try {
       hConf.setClass(Job.MAP_CLASS_ATTR, InvalidTypeMapper.class, Mapper.class);
-      StreamInputFormat.inferDecoderClass(hConf, runtimeService.getInputValueType(hConf, Void.class));
+      StreamInputFormat.inferDecoderClass(hConf, MapReduceRuntimeService.getInputValueType(hConf, Void.class,
+                                                                                           getMapperTypeToken(hConf)));
       Assert.fail("Expected Exception");
     } catch (IllegalArgumentException e) {
       // Expected
     }
+  }
+
+  private TypeToken<?> getMapperTypeToken(Configuration hConf) {
+    return MapReduceRuntimeService.resolveClass(hConf, Job.MAP_CLASS_ATTR, Mapper.class);
   }
 
   public static final class IdentityMapper extends Mapper<LongWritable, StreamEvent, String, String> {

@@ -80,16 +80,10 @@ public class CreateOrUpdateStreamViewCommand extends AbstractAuthCommand {
 
   @Override
   public String getDescription() {
-    return new StringBuilder()
-      .append("Creates or updates a stream-view")
-      .append(". Valid <").append(ArgumentName.FORMAT).append(">s are ")
-      .append(Joiner.on(", ").join(Formats.ALL))
-      .append(". <")
-      .append(ArgumentName.SCHEMA)
-      .append("> is a sql-like schema \"column_name data_type, ...\" or Avro-like JSON schema and <")
-      .append(ArgumentName.SETTINGS)
-      .append("> is specified in the format \"key1=v1 key2=v2\".")
-      .toString();
+    return String.format("Creates or updates a stream-view. Valid '<%s>'s are '%s'. '<%s>' is a SQL-like schema " +
+      "'column_name data_type, ...' or an Avro-like JSON schema and '<%s>' is specified in the format " +
+      "'key1=v1 key2=v2'.",
+      ArgumentName.FORMAT, Joiner.on("', '").join(Formats.ALL), ArgumentName.SCHEMA, ArgumentName.SETTINGS);
   }
 
   @Nullable

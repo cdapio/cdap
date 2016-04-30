@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,9 +16,8 @@
 
 package co.cask.cdap.proto;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
-
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import javax.annotation.Nullable;
 
@@ -30,7 +29,7 @@ public class SystemServiceLiveInfo {
   private final List<Containers.ContainerInfo> containers;
 
   public SystemServiceLiveInfo(List<Containers.ContainerInfo> containers) {
-    this.containers = ImmutableList.copyOf(containers);
+    this.containers = Collections.unmodifiableList(new ArrayList<>(containers));
   }
 
   @Nullable
@@ -46,7 +45,7 @@ public class SystemServiceLiveInfo {
    *
    */
   public static class Builder {
-    private final List<Containers.ContainerInfo> containers = Lists.newArrayList();
+    private final List<Containers.ContainerInfo> containers = new ArrayList<>();
 
     public Builder addContainer(Containers.ContainerInfo containerInfo) {
       containers.add(containerInfo);

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -24,6 +24,8 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
+import co.cask.cdap.proto.id.Ids;
+import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Lists;
 import com.google.gson.Gson;
@@ -181,6 +183,65 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
     testPrevFilter("testTemplate1", "workflows", "testWorkflow1", MockLogReader.TEST_NAMESPACE);
     testPrevNoFrom("testTemplate1", "workflows", "testWorkflow1", MockLogReader.TEST_NAMESPACE);
     testPrevRunId("testTemplate1", "workflows", "testWorkflow1", MockLogReader.TEST_NAMESPACE);
+  }
+
+  private List<LogLine> getLogs(String namespaceId, String appId, String programType, String programName, String runId,
+                                String endPoint) throws Exception {
+    String path = String.format("apps/%s/%s/%s/runs/%s/logs/%s?max=1000", appId, programType, programName, runId,
+                                endPoint);
+    HttpResponse response = doGet(getVersionedAPIPath(path, namespaceId));
+    Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
+    String out = EntityUtils.toString(response.getEntity());
+    return GSON.fromJson(out, LIST_LOGLINE_TYPE);
+  }
+
+  @Test
+  public void testWorkflowRunLogs() throws Exception {
+    ProgramId workflowId = Ids.namespace(MockLogReader.TEST_NAMESPACE).app(MockLogReader.SOME_WORKFLOW_APP)
+      .workflow(MockLogReader.SOME_WORKFLOW);
+    RunRecord runRecord = mockLogReader.getRunRecord(workflowId.toId());
+    List<LogLine> logLines = getLogs(MockLogReader.TEST_NAMESPACE, MockLogReader.SOME_WORKFLOW_APP, "workflows",
+                                     MockLogReader.SOME_WORKFLOW, runRecord.getPid(), "next");
+    Assert.assertEquals(320, logLines.size());
+    // First 80 lines correspond to the Workflow
+    String log = logLines.get(5).getLog();
+    Assert.assertTrue(log.contains(MockLogReader.SOME_WORKFLOW));
+    Assert.assertFalse(log.contains(MockLogReader.SOME_MAPREDUCE));
+    Assert.assertFalse(log.contains(MockLogReader.SOME_SPARK));
+    // Lines 81-160 corresponds to MapReduce
+    log = logLines.get(85).getLog();
+    Assert.assertFalse(log.contains(MockLogReader.SOME_WORKFLOW));
+    Assert.assertTrue(log.contains(MockLogReader.SOME_MAPREDUCE));
+    Assert.assertFalse(log.contains(MockLogReader.SOME_SPARK));
+    // Lines 161-240 corresponds to Spark
+    log = logLines.get(165).getLog();
+    Assert.assertFalse(log.contains(MockLogReader.SOME_WORKFLOW));
+    Assert.assertFalse(log.contains(MockLogReader.SOME_MAPREDUCE));
+    Assert.assertTrue(log.contains(MockLogReader.SOME_SPARK));
+
+    ProgramId mapReduceId = Ids.namespace(MockLogReader.TEST_NAMESPACE).app(MockLogReader.SOME_WORKFLOW_APP)
+      .mr(MockLogReader.SOME_MAPREDUCE);
+    runRecord = mockLogReader.getRunRecord(mapReduceId.toId());
+    logLines = getLogs(MockLogReader.TEST_NAMESPACE, MockLogReader.SOME_WORKFLOW_APP, "mapreduce",
+                       MockLogReader.SOME_MAPREDUCE, runRecord.getPid(), "next");
+    // Only 80 lines should correspond to MapReduce
+    Assert.assertEquals(80, logLines.size());
+    log = logLines.get(10).getLog();
+    Assert.assertFalse(log.contains(MockLogReader.SOME_WORKFLOW));
+    Assert.assertTrue(log.contains(MockLogReader.SOME_MAPREDUCE));
+    Assert.assertFalse(log.contains(MockLogReader.SOME_SPARK));
+
+    ProgramId sparkId = Ids.namespace(MockLogReader.TEST_NAMESPACE).app(MockLogReader.SOME_WORKFLOW_APP)
+      .spark(MockLogReader.SOME_SPARK);
+    runRecord = mockLogReader.getRunRecord(sparkId.toId());
+    logLines = getLogs(MockLogReader.TEST_NAMESPACE, MockLogReader.SOME_WORKFLOW_APP, "spark",
+                       MockLogReader.SOME_SPARK, runRecord.getPid(), "next");
+    // Only 80 lines should correspond to Spark
+    Assert.assertEquals(80, logLines.size());
+    log = logLines.get(15).getLog();
+    Assert.assertFalse(log.contains(MockLogReader.SOME_WORKFLOW));
+    Assert.assertFalse(log.contains(MockLogReader.SOME_MAPREDUCE));
+    Assert.assertTrue(log.contains(MockLogReader.SOME_SPARK));
   }
 
   @Test

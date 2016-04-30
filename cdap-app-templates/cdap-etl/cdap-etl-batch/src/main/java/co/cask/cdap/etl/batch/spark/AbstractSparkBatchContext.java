@@ -16,29 +16,22 @@
 
 package co.cask.cdap.etl.batch.spark;
 
-import co.cask.cdap.api.data.DatasetInstantiationException;
-import co.cask.cdap.api.dataset.Dataset;
-import co.cask.cdap.api.spark.SparkContext;
+import co.cask.cdap.api.spark.SparkClientContext;
 import co.cask.cdap.etl.api.LookupProvider;
 import co.cask.cdap.etl.api.batch.BatchContext;
-import co.cask.cdap.etl.common.AbstractTransformContext;
-
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import co.cask.cdap.etl.batch.AbstractBatchContext;
 
 /**
- * Abstract implementation of {@link BatchContext} using {@link SparkContext}.
+ * Abstract implementation of {@link BatchContext} using {@link SparkClientContext}.
  */
-public abstract class AbstractSparkBatchContext extends AbstractTransformContext implements BatchContext {
+public abstract class AbstractSparkBatchContext extends AbstractBatchContext implements BatchContext {
 
-  private final SparkContext sparkContext;
-  private final Map<String, String> runtimeArguments;
+  protected final SparkClientContext sparkContext;
 
-  public AbstractSparkBatchContext(SparkContext sparkContext, LookupProvider lookupProvider, String stageId) {
-    super(sparkContext.getPluginContext(), sparkContext.getMetrics(), lookupProvider, stageId);
+  public AbstractSparkBatchContext(SparkClientContext sparkContext, LookupProvider lookupProvider, String stageId) {
+    super(sparkContext, sparkContext, sparkContext.getMetrics(), lookupProvider, stageId,
+          sparkContext.getLogicalStartTime(), sparkContext.getRuntimeArguments());
     this.sparkContext = sparkContext;
-    this.runtimeArguments = new HashMap<>(sparkContext.getRuntimeArguments());
   }
 
   @Override
@@ -51,36 +44,4 @@ public abstract class AbstractSparkBatchContext extends AbstractTransformContext
     throw new UnsupportedOperationException("Hadoop Job is not available in Spark");
   }
 
-  @Override
-  public <T extends Dataset> T getDataset(String name) throws DatasetInstantiationException {
-    return sparkContext.getDataset(name);
-  }
-
-  @Override
-  public <T extends Dataset> T getDataset(String name,
-                                          Map<String, String> arguments) throws DatasetInstantiationException {
-    return sparkContext.getDataset(name, arguments);
-  }
-
-  @Override
-  public void releaseDataset(Dataset dataset) {
-    sparkContext.releaseDataset(dataset);
-  }
-
-  @Override
-  public void discardDataset(Dataset dataset) {
-    sparkContext.discardDataset(dataset);
-  }
-
-  @Override
-  public Map<String, String> getRuntimeArguments() {
-    return Collections.unmodifiableMap(runtimeArguments);
-  }
-
-  @Override
-  public void setRuntimeArgument(String key, String value, boolean overwrite) {
-    if (overwrite || !runtimeArguments.containsKey(key)) {
-      runtimeArguments.put(key, value);
-    }
-  }
 }

@@ -35,7 +35,6 @@ import org.apache.twill.api.EventHandler;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.TwillController;
 import org.apache.twill.api.TwillRunner;
-import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,10 +49,9 @@ public class DistributedServiceProgramRunner extends AbstractDistributedProgramR
   private static final Logger LOG = LoggerFactory.getLogger(DistributedServiceProgramRunner.class);
 
   @Inject
-  DistributedServiceProgramRunner(TwillRunner twillRunner, LocationFactory locationFactory,
-                                  YarnConfiguration hConf, CConfiguration cConf,
+  DistributedServiceProgramRunner(TwillRunner twillRunner, YarnConfiguration hConf, CConfiguration cConf,
                                   TokenSecureStoreUpdater tokenSecureStoreUpdater) {
-    super(twillRunner, locationFactory, hConf, cConf, tokenSecureStoreUpdater);
+    super(twillRunner, hConf, cConf, tokenSecureStoreUpdater);
   }
 
   @Override

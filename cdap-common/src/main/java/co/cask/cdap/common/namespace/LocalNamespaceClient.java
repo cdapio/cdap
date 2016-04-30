@@ -16,7 +16,7 @@
 
 package co.cask.cdap.common.namespace;
 
-import co.cask.cdap.common.UnauthorizedException;
+import co.cask.cdap.common.UnauthenticatedException;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.common.http.HttpRequest;
@@ -61,7 +61,7 @@ public class LocalNamespaceClient extends AbstractNamespaceClient {
 
   // This class overrides all public API methods to use in-memory namespaceAdmin, and so the following two are not used.
   @Override
-  protected HttpResponse execute(HttpRequest request) throws IOException, UnauthorizedException {
+  protected HttpResponse execute(HttpRequest request) throws IOException, UnauthenticatedException {
     return null;
   }
 

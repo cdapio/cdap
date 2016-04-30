@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -44,6 +44,19 @@ public class InMemoryStreamMetaStore implements StreamMetaStore {
   @Override
   public void addStream(Id.Stream streamId) throws Exception {
     streams.put(streamId.getNamespaceId(), streamId.getId());
+  }
+
+  @Override
+  public void addStream(Id.Stream streamId, @Nullable String description) throws Exception {
+    addStream(streamId);
+  }
+
+  @Override
+  public StreamSpecification getStream(Id.Stream streamId) throws Exception {
+    if (!streamExists(streamId)) {
+      return null;
+    }
+    return new StreamSpecification.Builder().setName(streamId.getId()).create();
   }
 
   @Override

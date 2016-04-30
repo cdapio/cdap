@@ -1,4 +1,6 @@
 /*
+ * Copyright © 2015-2016 Cask Data, Inc.
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
@@ -41,7 +43,6 @@ public class MapReduceStreamInputTestRun extends TestFrameworkTestBase {
 
   @Test
   public void test() throws Exception {
-
     ApplicationManager applicationManager = deployApplication(AppWithMapReduceUsingStream.class);
     Schema schema = new Schema.Parser().parse(AppWithMapReduceUsingStream.SCHEMA.toString());
     StreamManager streamManager = getStreamManager("mrStream");

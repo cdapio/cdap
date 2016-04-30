@@ -1,0 +1,125 @@
+{
+    "artifact": {
+        "name": "cdap-data-pipeline",
+        "scope": "SYSTEM",
+        "version": "3.4.0"
+    },
+    "description": "Training model using Naive-Bayes Classifier",
+    "name": "NaiveBayesTrainer",
+    "config": {
+        "connections": [
+            {
+                "from": "Training Data",
+                "to": "Label Training Data"
+            },
+            {
+                "from": "Label Training Data",
+                "to": "Train Model"
+            }
+        ],
+        "comments": [],
+        "postActions": [],
+        "stages": [
+            {
+                "name": "Training Data",
+                "plugin": {
+                    "name": "Stream",
+                    "type": "batchsource",
+                    "label": "Training Data",
+                    "artifact": {
+                        "name": "core-plugins",
+                        "version": "1.3.0",
+                        "scope": "SYSTEM"
+                    },
+                    "properties": {
+                        "format": "tsv",
+                        "schema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"label\",\"type\":\"string\"},{\"name\":\"text\",\"type\":\"string\"}]}",
+                        "format.setting.pattern": null,
+                        "name": "trainingdata",
+                        "duration": "1h"
+                    }
+                },
+                "outputSchema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"ts\",\"type\":\"long\",\"readonly\":true},{\"name\":\"headers\",\"type\":{\"type\":\"map\",\"keys\":\"string\",\"values\":\"string\"},\"readonly\":true},{\"name\":\"label\",\"type\":\"string\"},{\"name\":\"text\",\"type\":\"string\"}]}",
+                "inputSchema": null
+            },
+            {
+                "name": "Label Training Data",
+                "plugin": {
+                    "name": "JavaScript",
+                    "type": "transform",
+                    "label": "Label Training Data",
+                    "artifact": {
+                        "scope": "SYSTEM",
+                        "name": "core-plugins",
+                        "version": "1.3.0"
+                    },
+                    "properties": {
+                        "schema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"label\",\"type\":\"double\"},{\"name\":\"text\",\"type\":\"string\"}]}",
+                        "script": "function transform(input, emitter, context) {\n  emitter.emit({\n      \"label\": input.label === \"spam\" ? 1.0 : 0.0,\n      \"text\": input.text\n  });\n}"
+                    }
+                },
+                "outputSchema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"label\",\"type\":\"double\"},{\"name\":\"text\",\"type\":\"string\"}]}",
+                "inputSchema": [
+                    {
+                        "name": "ts",
+                        "type": "long",
+                        "nullable": false
+                    },
+                    {
+                        "name": "headers",
+                        "type": {
+                            "type": "map",
+                            "keys": "string",
+                            "values": "string"
+                        },
+                        "nullable": false
+                    },
+                    {
+                        "name": "label",
+                        "type": "string",
+                        "nullable": false
+                    },
+                    {
+                        "name": "text",
+                        "type": "string",
+                        "nullable": false
+                    }
+                ]
+            },
+            {
+                "name": "Train Model",
+                "plugin": {
+                    "name": "NaiveBayesTrainer",
+                    "type": "sparksink",
+                    "label": "Train Model",
+                    "artifact": {
+                        "scope": "SYSTEM",
+                        "name": "spark-plugins",
+                        "version": "1.3.0"
+                    },
+                    "properties": {
+                        "fieldToClassify": "text",
+                        "fileSetName": "modelFileSet",
+                        "path": "output",
+                        "predictionField": "label"
+                    }
+                },
+                "outputSchema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"label\",\"type\":\"double\"},{\"name\":\"text\",\"type\":\"string\"}]}",
+                "inputSchema": [
+                    {
+                        "name": "label",
+                        "type": "double",
+                        "nullable": false
+                    },
+                    {
+                        "name": "text",
+                        "type": "string",
+                        "nullable": false
+                    }
+                ]
+            }
+        ],
+        "schedule": "0 * * * *",
+        "engine": "mapreduce"
+    }
+}

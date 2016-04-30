@@ -31,6 +31,7 @@ To try this yourself, :ref:`download a copy of CDAP SDK <standalone-index>`, ins
 and then use the resources in its ``examples`` directory as you follow along.
 
 We'll look at these areas:
+  - `Installation`_
   - `Data Ingestion`_
   - `Data Exploration`_
   - `Data Exploration: Attaching A Schema`_
@@ -65,20 +66,31 @@ Installation
        - - Install and startup **Hadoop** and related technologies, as required
          
      * - Using CDAP
-       - - Install **CDAP** by downloading zipfile, unzipping and starting **CDAP Server**
+       - - Install **CDAP** by `downloading <http://cask.co/downloads/>`_ a zipfile, unzipping, and starting the **CDAP Server**
       
      * -  
-       - .. container:: highlight
-
-          .. parsed-literal::    
+       - .. tabbed-parsed-literal::
+       
+            .. Linux
       
-            |$| unzip cdap-sdk-\ |release|\ .zip
-            |$| cd cdap-sdk-\ |release|
-            |$| ./bin/cdap.sh start
+            $ unzip cdap-sdk-|release|.zip
+            $ cd cdap-sdk-|release|
+            $ ./bin/cdap.sh start
           
             Starting Standalone CDAP ................
             Standalone CDAP started successfully.
             Connect to the CDAP UI at http://localhost:9999
+            
+            .. Windows
+            
+            > jar xf cdap-sdk-|release|.zip
+            > cd cdap-sdk-|release|
+            > bin\cdap.bat start
+          
+            Starting Standalone CDAP ................
+            Standalone CDAP started successfully.
+            Connect to the CDAP UI at http://localhost:9999
+            
 
 .. container:: table-block
 
@@ -101,11 +113,9 @@ Installation
        - - Start **CDAP CLI** (Command Line Interface)
 
      * -  
-       - .. container:: highlight
+       - .. tabbed-parsed-literal::
 
-          .. parsed-literal::    
-      
-            |$| ./bin/cdap-cli.sh
+            $ ./bin/cdap-cli.sh
             
             Successfully connected to CDAP instance at \http://localhost:10000/default
             |cdap >| 
@@ -139,13 +149,12 @@ Data Ingestion
          - Configure **Kafka** or **Flume** to write to time partitions
          
      * - Using CDAP
-       - .. container:: highlight
+       - .. tabbed-parsed-literal::
+            :tabs: "CDAP CLI"
        
-          .. parsed-literal::
-       
-           |cdap >| create stream logEventStream
+            |cdap >| create stream logEventStream
 
-           Successfully created stream with ID 'logEventStream'
+            Successfully created stream with ID 'logEventStream'
 
 .. container:: table-block
 
@@ -167,13 +176,12 @@ Data Ingestion
          - Create external table in **Hive** called ``stream_logeventstream``
          
      * - Using CDAP
-       - .. container:: highlight
-       
-          .. parsed-literal::
-       
-           |cdap >| load stream logEventStream examples/resources/accesslog.txt
-
-           Successfully sent stream event to stream 'logEventStream'
+       - .. tabbed-parsed-literal::
+            :tabs: "CDAP CLI"
+        
+            |cdap >| load stream logEventStream examples/resources/accesslog.txt
+ 
+            Successfully loaded file to stream 'logEventStream'
 
 
 Data Exploration
@@ -205,19 +213,18 @@ Data Exploration
          - ``DESCRIBE stream_logeventstream``
          
      * - Using CDAP
-       - .. container:: highlight
-       
-          .. parsed-literal::
-       
+       - .. tabbed-parsed-literal::
+            :tabs: "CDAP CLI"
+        
             |cdap >| execute 'describe stream_logEventStream'
-
-            +=========================================================================================================+
-            | col_name: STRING                 | data_type: STRING                | comment: STRING                   |
-            +=========================================================================================================+
-            | ts                               | bigint                           | from deserializer                 |
-            | headers                          | map<string,string>               | from deserializer                 |
-            | body                             | string                           | from deserializer                 |
-            +=========================================================================================================+
+ 
+            +===========================================================+
+            | col_name: STRING | data_type: STRING  | comment: STRING   |
+            +===========================================================+
+            | ts               | bigint             | from deserializer |
+            | headers          | map<string,string> | from deserializer |
+            | body             | string             | from deserializer |
+            +===========================================================+
             Fetched 3 rows
 
 .. container:: table-block
@@ -239,36 +246,35 @@ Data Exploration
          - ``SELECT * FROM stream_logeventstream LIMIT 2``
 
      * - Using CDAP
-       - .. container:: highlight
-       
-          .. parsed-literal::
-
+       - .. tabbed-parsed-literal::
+            :tabs: "CDAP CLI"
+ 
             |cdap >| execute 'select * from stream_logEventStream limit 2'
-
+           
          .. container:: highlight
        
-          ::
-          
-            +==============================================================================================================+
-            | stream_logeventstream.ts: | stream_logeventstream.hea | stream_logeventstream.body: STRING                   |
-            | BIGINT                    | ders: map<string,string>  |                                                      |
-            +==============================================================================================================+
-            | 1428969220987             | {"content.type":"text/pla | 69.181.160.120 - - [08/Feb/2015:04:36:40 +0000] "GET |
-            |                           | in"}                      |  /ajax/planStatusHistoryNeighbouringSummaries.action |
-            |                           |                           | ?planKey=COOP-DBT&buildNumber=284&_=1423341312519 HT |
-            |                           |                           | TP/1.1" 200 508 "http://builds.cask.co/browse/COOP-D |
-            |                           |                           | BT-284/log" "Mozilla/5.0 (Macintosh; Intel Mac OS X  |
-            |                           |                           | 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chro |
-            |                           |                           | me/38.0.2125.122 Safari/537.36"                      |
-            |--------------------------------------------------------------------------------------------------------------|
-            | 1428969220987             | {"content.type":"text/pla | 69.181.160.120 - - [08/Feb/2015:04:36:47 +0000] "GET |
-            |                           | in"}                      |  /rest/api/latest/server?_=1423341312520 HTTP/1.1" 2 |
-            |                           |                           | 00 45 "http://builds.cask.co/browse/COOP-DBT-284/log |
-            |                           |                           | " "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) A |
-            |                           |                           | ppleWebKit/537.36 (KHTML, like Gecko) Chrome/38.0.21 |
-            |                           |                           | 25.122 Safari/537.36"                                |
-            +==============================================================================================================+
-            Fetched 2 rows
+           ::
+            
+             +==============================================================================================================+
+             | stream_logeventstream.ts: | stream_logeventstream.hea | stream_logeventstream.body: STRING                   |
+             | BIGINT                    | ders: map<string,string>  |                                                      |
+             +==============================================================================================================+
+             | 1428969220987             | {"content.type":"text/pla | 69.181.160.120 - - [08/Feb/2015:04:36:40 +0000] "GET |
+             |                           | in"}                      |  /ajax/planStatusHistoryNeighbouringSummaries.action |
+             |                           |                           | ?planKey=COOP-DBT&buildNumber=284&_=1423341312519 HT |
+             |                           |                           | TP/1.1" 200 508 "http://builds.cask.co/browse/COOP-D |
+             |                           |                           | BT-284/log" "Mozilla/5.0 (Macintosh; Intel Mac OS X  |
+             |                           |                           | 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chro |
+             |                           |                           | me/38.0.2125.122 Safari/537.36"                      |
+             |--------------------------------------------------------------------------------------------------------------|
+             | 1428969220987             | {"content.type":"text/pla | 69.181.160.120 - - [08/Feb/2015:04:36:47 +0000] "GET |
+             |                           | in"}                      |  /rest/api/latest/server?_=1423341312520 HTTP/1.1" 2 |
+             |                           |                           | 00 45 "http://builds.cask.co/browse/COOP-DBT-284/log |
+             |                           |                           | " "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) A |
+             |                           |                           | ppleWebKit/537.36 (KHTML, like Gecko) Chrome/38.0.21 |
+             |                           |                           | 25.122 Safari/537.36"                                |
+             +==============================================================================================================+
+             Fetched 2 rows
 
 
 Data Exploration: Attaching a Schema
@@ -293,10 +299,9 @@ Data Exploration: Attaching a Schema
          - Recreate the **Hive** table with new schema
          
      * - Using CDAP
-       - .. container:: highlight
-       
-          .. parsed-literal::
-
+       - .. tabbed-parsed-literal::
+            :tabs: "CDAP CLI"
+ 
             |cdap >| set stream format logEventStream clf
   
             Successfully set format of stream 'logEventStream'
@@ -320,12 +325,11 @@ Data Exploration: Attaching a Schema
          - ``DESCRIBE stream_logeventsetream``
          
      * - Using CDAP
-       - .. container:: highlight
-       
-          .. parsed-literal::
-
+       - .. tabbed-parsed-literal::
+            :tabs: "CDAP CLI"
+ 
             |cdap >| execute 'describe stream_logEventStream'
-
+ 
             +=============================================================================+
             | col_name: STRING          | data_type: STRING       | comment: STRING       |
             +=============================================================================+
@@ -362,16 +366,15 @@ Data Exploration: Attaching a Schema
          - ``SELECT * FROM stream_logeventsetream LIMIT 2``
          
      * - Using CDAP
-       - .. container:: highlight
-       
-          .. parsed-literal::
-
+       - .. tabbed-parsed-literal::
+            :tabs: "CDAP CLI"
+ 
             |cdap >| execute 'select * from stream_logEventStream limit 2'
 
          .. container:: highlight
        
-          ::
-          
+           ::
+           
             +==================================================================================================================================+
             | stream_l | stream_l | stream_l | stream_l | stream_l | stream_l | stream_l | stream_l | stream_l | stream_l | stream_logeventstr |
             | ogevents | ogevents | ogevents | ogevents | ogevents | ogevents | ogevents | ogevents | ogevents | ogevents | eam.user_agent: ST |
@@ -425,10 +428,9 @@ Data Exploration: Attaching a Schema
        - Write code to compute the various stats: number of unique elements, histograms, etc.
          
      * - Using CDAP
-       - .. container:: highlight
-       
-          .. parsed-literal::
-
+       - .. tabbed-parsed-literal::
+            :tabs: "CDAP CLI"
+ 
             |cdap >| get stream-stats logEventStream limit 1000
 
          .. container:: highlight
@@ -437,26 +439,26 @@ Data Exploration: Attaching a Schema
           
             column: stream_logeventstream.remote_host, type: STRING
             Unique elements: 6
-
+ 
             column: stream_logeventstream.remote_login, type: STRING
             Unique elements: 0
-
+ 
             column: stream_logeventstream.auth_user, type: STRING
             Unique elements: 0
-
+ 
             column: stream_logeventstream.date, type: STRING
             Unique elements: 750
-
+ 
             column: stream_logeventstream.request, type: STRING
             Unique elements: 972
-
+ 
             column: stream_logeventstream.status, type: INT
             Unique elements: 4
             Histogram:
               [200, 299]: 977  |+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
               [300, 399]: 17   |
               [400, 499]: 6    |
-
+ 
             column: stream_logeventstream.content_length, type: INT
             Unique elements: 142
             Histogram:
@@ -516,13 +518,13 @@ Data Exploration: Attaching a Schema
               [397900, 397999]: 2    |
               [1343400, 1343499]: 1  |
               [1351600, 1351699]: 1  |
-
+ 
             column: stream_logeventstream.referrer, type: STRING
             Unique elements: 8
-
+ 
             column: stream_logeventstream.user_agent, type: STRING
             Unique elements: 4
-
+ 
             Analyzing 1000 stream events in the time range [0, 9223372036854775807]...
 
 
@@ -550,12 +552,11 @@ Advanced Data Exploration
        - - Create a file in **Hadoop** file system called ``ip2geo``
          
      * - Using CDAP
-       - .. container:: highlight
-       
-          .. parsed-literal::
-
+       - .. tabbed-parsed-literal::
+            :tabs: "CDAP CLI"
+ 
             |cdap >| create stream ip2geo
-
+ 
             Successfully created stream with ID 'ip2geo'
 
 .. container:: table-block
@@ -578,13 +579,12 @@ Advanced Data Exploration
          - Create external table in **Hive** called ``stream_ip2geo``
 
      * - Using CDAP
-       - .. container:: highlight
-       
-          .. parsed-literal::
-
+       - .. tabbed-parsed-literal::
+            :tabs: "CDAP CLI"
+ 
             |cdap >| load stream ip2geo examples/resources/ip2geo-maps.csv
-
-            Successfully sent stream event to stream 'ip2geo'
+ 
+            Successfully loaded file to stream 'ip2geo'
 
 .. container:: table-block
 
@@ -604,10 +604,9 @@ Advanced Data Exploration
        - Write data to **Kafka** or append directly to **HDFS**
          
      * - Using CDAP
-       - .. container:: highlight
-       
-          .. parsed-literal::
-
+       - .. tabbed-parsed-literal::
+            :tabs: "CDAP CLI"
+ 
             |cdap >| send stream ip2geo '69.181.160.120, Los Angeles, CA'
           
             Successfully sent stream event to stream 'ip2geo'
@@ -631,12 +630,11 @@ Advanced Data Exploration
          - ``SELECT * FROM stream_ip2geo``
          
      * - Using CDAP
-       - .. container:: highlight
-       
-          .. parsed-literal::
-
+       - .. tabbed-parsed-literal::
+            :tabs: "CDAP CLI"
+ 
             |cdap >| execute 'select * from stream_ip2geo'
-
+ 
             +===========================================================================================================+
             | stream_ip2geo.ts: BIGINT | stream_ip2geo.headers: map<string,string> | stream_ip2geo.body: STRING         |
             +===========================================================================================================+
@@ -684,10 +682,9 @@ Advanced Data Exploration
          - Recreate the **Hive** table with new schema
          
      * - Using CDAP
-       - .. container:: highlight
-       
-          .. parsed-literal::
-
+       - .. tabbed-parsed-literal::
+            :tabs: "CDAP CLI"
+ 
             |cdap >| set stream format ip2geo csv "ip string, city string, state string"
           
             Successfully set format of stream 'ip2geo'
@@ -711,10 +708,9 @@ Advanced Data Exploration
          - ``SELECT * FROM stream_ip2geo``
          
      * - Using CDAP
-       - .. container:: highlight
-       
-          .. parsed-literal::
-
+       - .. tabbed-parsed-literal::
+            :tabs: "CDAP CLI"
+ 
             |cdap >| execute 'select * from stream_ip2geo'
                     
             +================================================================================================================+
@@ -765,16 +761,15 @@ Advanced Data Exploration
          - ``SELECT remote_host, city, state, request from stream_logEventStream join stream_ip2geo on (stream_logEventStream.remote_host = stream_ip2geo.ip) limit 10``
          
      * - Using CDAP
-       - .. container:: highlight
-       
-          .. parsed-literal::
-
+       - .. tabbed-parsed-literal::
+            :tabs: "CDAP CLI"
+ 
             |cdap >| execute 'select remote_host, city, state, request from stream_logEventStream join stream_ip2geo on (stream_logEventStream.remote_host = stream_ip2geo.ip) limit 10'
-
+ 
          .. container:: highlight
        
-          ::
-
+           ::
+ 
             +======================================================================================================================+
             | remote_host: STRING | city: STRING | state: STRING | request: STRING                                                 |
             +======================================================================================================================+
@@ -855,68 +850,90 @@ Transforming Your Data
          - Keep track of last processed times
          
      * - Using CDAP
-       - - Write a configuration file, saving it to ``examples/resources/app-config.json``:
+       - - Write a configuration file, saving it to ``examples/resources/app-config.json``, with these contents:
 
      * - 
-       - ::
-
-            {
-                "description": "Periodically reads stream data and writes it to a TimePartitionedFileSet",
-                "config": {
-                    "schedule": "*/5 * * * *",
-                    "source": {
-                        "name": "Stream",
-                        "properties": {
-                            "name": "logEventStream",
-                            "duration": "5m",
-                            "format": "clf"
-                        }
-                    },
-                    "transforms": [
-                        {
-                            "name": "Projection",
-                            "properties": {
-                                "drop": "headers"
-                            }
-                        }
-                    ],
-                    "sinks": [
-                      {
-                          "name": "TPFSAvro",
-                          "properties": {
-                              "name": "logEventStream_converted",
-                              "schema": "{
-                                  \"type\":\"record\",
-                                  \"name\":\"logEvent\",
-                                  \"fields\":[
-                                      {\"name\":\"ts\",\"type\":\"long\"},
-                                      {\"name\":\"remotehost\",\"type\":[\"string\",\"null\"]},
-                                      {\"name\":\"remotelogname\",\"type\":[\"string\",\"null\"]},
-                                      {\"name\":\"authuser\",\"type\":[\"string\",\"null\"]},
-                                      {\"name\":\"date\",\"type\":[\"string\",\"null\"]},
-                                      {\"name\":\"request\",\"type\":[\"string\",\"null\"]},
-                                      {\"name\":\"status\",\"type\":[\"int\",\"null\"]},
-                                      {\"name\":\"contentlength\",\"type\":[\"int\",\"null\"]},
-                                      {\"name\":\"referrer\",\"type\":[\"string\",\"null\"]},
-                                      {\"name\":\"useragent\",\"type\":[\"string\",\"null\"]}
-                                  ]
-                              }",
-                              "basePath": "logEventStream_converted"
-                          }
-                      }
-                    ]
-                }
-            }
-
+       - .. code:: json
+           :class: copyable copyable-text
+       
+           {
+             "artifact": {
+               "name": "cdap-etl-batch",
+               "scope": "SYSTEM",
+               "version": "3.4.0-SNAPSHOT"
+             },
+             "config": {
+               "schedule": "*/5 * * * *",
+               "engine": "mapreduce",
+               "source": {
+                 "name": "Stream",
+                 "plugin": {
+                   "name": "Stream",
+                   "properties": {
+                     "format": "clf",
+                     "name": "logEventStream",
+                     "duration": "5m"
+                   }
+                 }
+               },
+               "sinks": [
+                 {
+                   "name": "TPFSAvro",
+                   "plugin": {
+                     "name": "TPFSAvro",
+                     "properties": {
+                       "schema": "{
+                         \"type\":\"record\",
+                         \"name\":\"etlSchemaBody\",
+                         \"fields\":[
+                           {\"name\":\"ts\",\"type\":\"long\"},
+                           {\"name\":\"remote_host\",\"type\":[\"string\",\"null\"]},
+                           {\"name\":\"remote_login\",\"type\":[\"string\",\"null\"]},
+                           {\"name\":\"auth_user\",\"type\":[\"string\",\"null\"]},
+                           {\"name\":\"date\",\"type\":[\"string\",\"null\"]},
+                           {\"name\":\"request\",\"type\":[\"string\",\"null\"]},
+                           {\"name\":\"status\",\"type\":[\"int\",\"null\"]},
+                           {\"name\":\"content_length\",\"type\":[\"int\",\"null\"]},
+                           {\"name\":\"referrer\",\"type\":[\"string\",\"null\"]},
+                           {\"name\":\"user_agent\",\"type\":[\"string\",\"null\"]}]}",
+                       "name": "logEventStream_converted",
+                       "basePath": "logEventStream_converted"
+                     }
+                   }
+                 }
+               ],
+               "transforms": [
+                 {
+                   "name": "Projection",
+                   "plugin": {
+                     "name": "Projection",
+                     "properties": {
+                       "drop": "headers"
+                     }
+                   }
+                 }
+               ],
+               "connections": [
+                 {
+                   "from": "Stream",
+                   "to": "Projection"
+                 },
+                 {
+                   "from": "Projection",
+                   "to": "TPFSAvro"
+                 }
+               ]
+             }
+           }
+            
      * - 
        - - Create an application using that configuration through the CLI:
 
      * - 
-       - .. container:: highlight
-     
-          .. parsed-literal::
-
-            |cdap >| create app logEventStreamConverter cdap-etl-batch |version| system examples/resources/app-config.json
+       - .. tabbed-parsed-literal::
+            :tabs: "CDAP CLI"
+ 
+            |cdap >| create app logEventStreamConverter cdap-etl-batch |release| system examples/resources/app-config.json
             Successfully created application
           
             |cdap >| resume schedule logEventStreamConverter.etlWorkflow
@@ -940,35 +957,40 @@ Transforming Your Data
        - - Not available
          
      * - Using CDAP
-       - .. container:: highlight
-       
-          .. parsed-literal::
-
+       - .. tabbed-parsed-literal::
+            :tabs: "CDAP CLI"
+ 
             |cdap >| list apps
-
-            +=======================================================================================+
-            | id                      | descript | artifactName   | artifactVersion | artifactScope |
-            |                         | ion      |                |                 |               |
-            +=======================================================================================+
-            | logEventStreamConverter | Batch Ex | cdap-etl-batch | 3.2.0           | SYSTEM        |
-            |                         | tract-Tr |                |                 |               |
-            |                         | ansform- |                |                 |               |
-            |                         | Load (ET |                |                 |               |
-            |                         | L) Templ |                |                 |               |
-            |                         | ate      |                |                 |               |
-            +=======================================================================================+
+ 
+            +========================================================================================+
+            | id                      | descripti | artifactName   | artifactVersion | artifactScope |
+            |                         | on        |                |                 |               |
+            +========================================================================================+
+            | logEventStreamConverter | Extract-T | cdap-etl-batch | |version|           | SYSTEM        |
+            |                         | ransform- |                |                 |               |
+            |                         | Load (ETL |                |                 |               |
+            |                         | ) Batch A |                |                 |               |
+            |                         | pplicatio |                |                 |               |
+            |                         | n         |                |                 |               |
+            +========================================================================================+
+ 
+         .. tabbed-parsed-literal::
+            :tabs: "CDAP CLI"
 
             |cdap >| describe app logEventStreamConverter
-
-            +========================================================================+
-            | type      | id           | description                                 |
-            +========================================================================+
-            | MapReduce | ETLMapReduce | MapReduce Driver for ETL Batch Applications |
-            | Workflow  | ETLWorkflow  | Workflow for ETL Batch MapReduce Driver     |
-            +========================================================================+
+ 
+            +====================================================================================================+
+            | type      | id           | description                                                             |
+            +====================================================================================================+
+            | MapReduce | ETLMapReduce | DataFlow MapReduce phase executor. Sources 'Stream' to sinks 'TPFSAvro' |
+            | Workflow  | ETLWorkflow  | Workflow for ETL Batch MapReduce Driver                                 |
+            +====================================================================================================+
+ 
+         .. tabbed-parsed-literal::
+            :tabs: "CDAP CLI"
 
             |cdap >| describe stream logEventStream
-
+ 
             +==================================================================================+
             | ttl              | format | schema                   | notification.threshold.mb |
             +==================================================================================+
@@ -993,14 +1015,21 @@ Transforming Your Data
             |                  |        | ype":["string","null"]}] |                           |
             |                  |        | }                        |                           |
             +==================================================================================+
+ 
+         .. tabbed-parsed-literal::
+            :tabs: "CDAP CLI"
 
             |cdap >| get workflow schedules logEventStreamConverter.ETLWorkflow
+ 
+         .. container:: highlight
+       
+           ::
 
             +=================================================================================================================+
             | application | program     | program type | name        | type        | description | properties  | runtime args |
             +=================================================================================================================+
-            | logEventStr | ETLWorkflow | WORKFLOW     | etlWorkflow | co.cask.cda | batch etl s | cron entry: | {}           |
-            | eamConverte |             |              |             | p.internal. | chedule     |  \*/5 * * *  |              |
+            | logEventStr | ETLWorkflow | WORKFLOW     | etlWorkflow | co.cask.cda | ETL Batch s | cron entry: | {}           |
+            | eamConverte |             |              |             | p.internal. | chedule     |  */5 * * *  |              |
             | r           |             |              |             | schedule.Ti |             | *           |              |
             |             |             |              |             | meSchedule  |             |             |              |
             +=================================================================================================================+  
@@ -1025,13 +1054,12 @@ Transforming Your Data
          - Create external table in **Hive** called ``stream_ip2geo``
          
      * - Using CDAP
-       - .. container:: highlight
-       
-          .. parsed-literal::
-
+       - .. tabbed-parsed-literal::
+            :tabs: "CDAP CLI"
+ 
             |cdap >| load stream logEventStream examples/resources/accesslog.txt
           
-            Successfully sent stream event to stream 'logEventStream'
+            Successfully loaded file to stream 'logEventStream'
 
 .. container:: table-block
 
@@ -1054,12 +1082,11 @@ Transforming Your Data
      * - Using CDAP
        - Dataset that is time partitioned
 
-         .. container:: highlight
-       
-          .. parsed-literal::
-
+         .. tabbed-parsed-literal::
+            :tabs: "CDAP CLI"
+ 
             |cdap >| list dataset instances
-
+ 
             +=================================================================================+
             | name                      | type                                                |
             +=================================================================================+
@@ -1085,25 +1112,24 @@ Transforming Your Data
          - ``'describe user_logEventStream_converted'`` 
          
      * - Using CDAP
-       - .. container:: highlight
-       
-          .. parsed-literal::
-
+       - .. tabbed-parsed-literal::
+            :tabs: "CDAP CLI"
+ 
             |cdap >| execute 'describe dataset_logEventStream_converted'
           
             +=======================================================================+
             | col_name: STRING        | data_type: STRING    | comment: STRING      |
             +=======================================================================+
             | ts                      | bigint               | from deserializer    |
-            | remotehost              | string               | from deserializer    |
-            | remotelogname           | string               | from deserializer    |
-            | authuser                | string               | from deserializer    |
+            | remote_host             | string               | from deserializer    |
+            | remote_login            | string               | from deserializer    |
+            | auth_user               | string               | from deserializer    |
             | date                    | string               | from deserializer    |
             | request                 | string               | from deserializer    |
             | status                  | int                  | from deserializer    |
-            | contentlength           | int                  | from deserializer    |
+            | content_length          | int                  | from deserializer    |
             | referrer                | string               | from deserializer    |
-            | useragent               | string               | from deserializer    |
+            | user_agent              | string               | from deserializer    |
             | year                    | int                  |                      |
             | month                   | int                  |                      |
             | day                     | int                  |                      |
@@ -1143,18 +1169,18 @@ Transforming Your Data
        - - Instead of waiting for the schedule to run, you can directly start the workflow and check its status:
 
      * - 
-       - .. container:: highlight
-       
-          .. parsed-literal::
-
+       - .. tabbed-parsed-literal::
+            :tabs: "CDAP CLI"
+ 
             |cdap >| start workflow logEventStreamConverter.ETLWorkflow
             
-            Successfully started workflow 'ETLWorkflow' of application 'logEventStreamConverter' with stored runtime arguments '{}'            
+            Successfully started workflow 'ETLWorkflow' of application 'logEventStreamConverter'
+            with stored runtime arguments '{}'            
             
             |cdap >| get workflow status logEventStreamConverter.ETLWorkflow
             
             RUNNING
-
+ 
             ...
             
             |cdap >| get workflow status logEventStreamConverter.ETLWorkflow
@@ -1165,16 +1191,15 @@ Transforming Your Data
        - - Once the workflow has stopped, retrieve the first two events from the converted data: 
 
      * - 
-       - .. container:: highlight
-       
-          .. parsed-literal::
-
+       - .. tabbed-parsed-literal::
+            :tabs: "CDAP CLI"
+ 
             |cdap >| execute 'SELECT ts, request, status FROM dataset_logEventStream_converted LIMIT 2'
           
          .. container:: highlight
          
-          ::
-          
+           ::
+           
             +=====================================================================+
             | ts: BIGINT    | request: STRING                       | status: INT |
             +=====================================================================+
@@ -1228,21 +1253,18 @@ Building Real World Applications
      * - Using CDAP
        - Download the Wise app and unzip into the ``examples`` directory of your CDAP SDK:
        
-         .. container:: highlight
-
-          .. parsed-literal::    
+         .. tabbed-parsed-literal::
       
-            |$| cd $CDAP_SDK_HOME/examples
-            |$| curl -O \http://repository.cask.co/downloads/co/cask/cdap/apps/\ |cdap-apps-version|\ /cdap-wise-\ |cdap-apps-version|\ .zip
-            |$| unzip cdap-wise-\ |cdap-apps-version|\ .zip
+            $ cd cdap-sdk-|release|/examples
+            $ curl -O http://repository.cask.co/downloads/co/cask/cdap/apps/|cdap-apps-version|/cdap-wise-|cdap-apps-version|.zip
+            $ unzip cdap-wise-|cdap-apps-version|.zip
 
          From within the CDAP CLI:
 
-         .. container:: highlight
-
-          .. parsed-literal::    
-
-            |cdap >| deploy app examples/cdap-wise-\ |cdap-apps-version|/target/cdap-wise-\ |cdap-apps-version|.jar
+         .. tabbed-parsed-literal::
+            :tabs: "CDAP CLI"
+ 
+            |cdap >| deploy app examples/cdap-wise-|cdap-apps-version|/target/cdap-wise-|cdap-apps-version|.jar
           
             Successfully deployed application
 
@@ -1265,19 +1287,18 @@ Building Real World Applications
          - Check **YARN** Console
          
      * - Using CDAP
-       - .. container:: highlight
-       
-          .. parsed-literal::
-
+       - .. tabbed-parsed-literal::
+            :tabs: "CDAP CLI"
+ 
             |cdap >| describe app Wise
-
+ 
             +=====================================================================+
             | type      | id                    | description                     |
             +=====================================================================+
-            | Flow      | WiseFlow              | Wise flow                       |
+            | Flow      | WiseFlow              | Wise Flow                       |
             | MapReduce | BounceCountsMapReduce | Bounce Counts MapReduce Program |
             | Service   | WiseService           |                                 |
-            | workflow  | WiseWorkflow          | Wise workflow                   |
+            | workflow  | WiseWorkflow          | Wise Workflow                   |
             +=====================================================================+
 
 .. container:: table-block
@@ -1301,13 +1322,13 @@ Building Real World Applications
          - ``yarn jar /path/to/myprogram.jar``
          
      * - Using CDAP
-       - .. container:: highlight
-       
-          .. parsed-literal::
-
+       - .. tabbed-parsed-literal::
+            :tabs: "CDAP CLI"
+ 
             |cdap >| start flow Wise.WiseFlow
           
-            Successfully started flow 'WiseFlow' of application 'Wise' with stored runtime arguments '{}'
+            Successfully started flow 'WiseFlow' of application 'Wise'
+            with stored runtime arguments '{}'
 
 .. container:: table-block
 
@@ -1330,10 +1351,9 @@ Building Real World Applications
          - ``yarn application -status <APP ID>``
          
      * - Using CDAP
-       - .. container:: highlight
-       
-          .. parsed-literal::
-
+       - .. tabbed-parsed-literal::
+            :tabs: "CDAP CLI"
+ 
             |cdap >| get flow status Wise.WiseFlow
           
             RUNNING
@@ -1358,13 +1378,12 @@ Building Real World Applications
          - Create external table in **Hive** called ``cdap_stream_logeventstream``
          
      * - Using CDAP
-       - .. container:: highlight
-       
-          .. parsed-literal::
-
+       - .. tabbed-parsed-literal::
+            :tabs: "CDAP CLI"
+ 
             |cdap >| load stream logEventStream examples/resources/accesslog.txt
-
-            Successfully sent stream event to stream 'logEventStream'  
+ 
+            Successfully loaded file to stream 'logEventStream'
 
 .. container:: table-block
 
@@ -1389,12 +1408,11 @@ Building Real World Applications
          - Click on container logs
          
      * - Using CDAP
-       - .. container:: highlight
-       
-          .. parsed-literal::
-
+       - .. tabbed-parsed-literal::
+            :tabs: "CDAP CLI"
+ 
             |cdap >| get flow logs Wise.WiseFlow
-
+ 
             2015-04-15 09:22:53,775 - INFO  [FlowletRuntimeService
             STARTING:c.c.c.i.a.r.f.FlowletRuntimeService$1@110] - Initializing flowlet:
             flowlet=pageViewCount, instance=0, groupsize=1, namespaceId=default, applicationId=Wise,
@@ -1435,13 +1453,13 @@ Building Real World Applications
          - ``oozie job -start <arguments>``
          
      * - Using CDAP
-       - .. container:: highlight
-       
-          .. parsed-literal::
-
+       - .. tabbed-parsed-literal::
+            :tabs: "CDAP CLI"
+ 
             |cdap >| start workflow Wise.WiseWorkflow
           
-            Successfully started workflow 'WiseWorkflow' of application 'Wise' with stored runtime arguments '{}'
+            Successfully started workflow 'WiseWorkflow' of application 'Wise' 
+            with stored runtime arguments '{}'
 
 .. container:: table-block
 
@@ -1462,11 +1480,10 @@ Building Real World Applications
          - ``oozie job -info <jobid>``
          
      * - Using CDAP
-       - .. container:: highlight
-       
-          .. parsed-literal::
-
-            |cdap >| get workflow status Wise.Wiseworkflow
+       - .. tabbed-parsed-literal::
+            :tabs: "CDAP CLI"
+ 
+            |cdap >| get workflow status Wise.WiseWorkflow
           
             RUNNING
 
@@ -1491,13 +1508,13 @@ Building Real World Applications
          - ``yarn jar /path/to/myprogram.jar``
          
      * - Using CDAP
-       - .. container:: highlight
-       
-          .. parsed-literal::
-
+       - .. tabbed-parsed-literal::
+            :tabs: "CDAP CLI"
+ 
             |cdap >| start service Wise.WiseService
           
-            Successfully started service 'WiseService' of application 'Wise' with stored runtime arguments '{}'
+            Successfully started service 'WiseService' of application 'Wise' 
+            with stored runtime arguments '{}'
 
 .. container:: table-block
 
@@ -1520,10 +1537,9 @@ Building Real World Applications
          - ``yarn application -status <APP ID>``
          
      * - Using CDAP
-       - .. container:: highlight
-       
-          .. parsed-literal::
-
+       - .. tabbed-parsed-literal::
+            :tabs: "CDAP CLI"
+ 
             |cdap >| get service status Wise.WiseService
           
             RUNNING
@@ -1553,10 +1569,9 @@ Building Real World Applications
          - Click on container logs
          
      * - Using CDAP
-       - .. container:: highlight
-       
-          .. parsed-literal::
-
+       - .. tabbed-parsed-literal::
+            :tabs: "CDAP CLI"
+ 
             |cdap >| get endpoints service Wise.WiseService
           
             +=========================+
@@ -1586,10 +1601,9 @@ Building Real World Applications
          - Run ``curl http://hostname:port/v3/namespaces/default/apps/Wise/services/WiseService/methods/ip/69.181.160.120/count``
          
      * - Using CDAP
-       - .. container:: highlight
-       
-          .. parsed-literal::
-
+       - .. tabbed-parsed-literal::
+            :tabs: "CDAP CLI"
+ 
             |cdap >| call service Wise.WiseService GET /ip/69.181.160.120/count
           
             < 200 OK
@@ -1630,12 +1644,11 @@ Building Real World Applications
        - - The listing returned will depend on whether you have run all of the previous examples
 
      * -  
-       - .. container:: highlight
-
-          .. parsed-literal::    
-      
+       - .. tabbed-parsed-literal::
+            :tabs: "CDAP CLI"
+       
             |cdap >| list dataset instances
-
+ 
             +================================================================================+
             | name                     | type                                                |
             +================================================================================+
@@ -1665,9 +1678,8 @@ Building Real World Applications
          - ``"SELECT * FROM dataset_bouncecountstore LIMIT 5"``
          
      * - Using CDAP
-       - .. container:: highlight
-       
-          .. parsed-literal::
+       - .. tabbed-parsed-literal::
+            :tabs: "CDAP CLI"
 
             |cdap >| execute 'SELECT * FROM dataset_bouncecountstore LIMIT 5'
           
@@ -1722,9 +1734,8 @@ Building Real World Applications
          - ``yarn application -kill <application ID>``
          
      * - Using CDAP
-       - .. container:: highlight
-       
-          .. parsed-literal::
+       - .. tabbed-parsed-literal::
+            :tabs: "CDAP CLI"
 
             |cdap >| stop service Wise.WiseService
           
@@ -1751,9 +1762,8 @@ Building Real World Applications
          - ``yarn application -kill <application ID>``
          
      * - Using CDAP
-       - .. container:: highlight
-       
-          .. parsed-literal::
+       - .. tabbed-parsed-literal::
+            :tabs: "CDAP CLI"
 
             |cdap >| stop flow Wise.WiseFlow
           
@@ -1778,9 +1788,8 @@ Building Real World Applications
          - Remove the service jars and flow jars
          
      * - Using CDAP
-       - .. container:: highlight
-       
-          .. parsed-literal::
+       - .. tabbed-parsed-literal::
+            :tabs: "CDAP CLI"
 
             |cdap >| delete app Wise
           

@@ -74,18 +74,13 @@ public abstract class AbstractHttpServiceResponder implements HttpServiceRespond
   }
 
   @Override
-  public final void sendStatus(int status, Multimap<String, String> headers) {
-    doSend(status, "text/plain", null, null, headers);
-  }
-
-  @Override
   public final void sendStatus(int status, Map<String, String> headers) {
     sendStatus(status, headers.entrySet());
   }
 
   @Override
   public final void sendStatus(int status, Iterable<? extends Map.Entry<String, String>> headers) {
-    sendStatus(status, createMultimap(headers));
+    doSend(status, "text/plain", null, null, createMultimap(headers));
   }
 
   @Override
@@ -101,12 +96,7 @@ public abstract class AbstractHttpServiceResponder implements HttpServiceRespond
   @Override
   public final void send(int status, ByteBuffer content, String contentType,
                    Iterable<? extends Map.Entry<String, String>> headers) {
-    send(status, content, contentType, createMultimap(headers));
-  }
-
-  @Override
-  public final void send(int status, ByteBuffer content, String contentType, Multimap<String, String> headers) {
-    doSend(status, contentType, ChannelBuffers.copiedBuffer(content), null, headers);
+    doSend(status, contentType, ChannelBuffers.copiedBuffer(content), null, createMultimap(headers));
   }
 
   @Override

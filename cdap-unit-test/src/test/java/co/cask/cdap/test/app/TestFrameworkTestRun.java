@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -41,8 +41,10 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.RunRecord;
+import co.cask.cdap.proto.WorkflowNodeStateDetail;
 import co.cask.cdap.proto.WorkflowTokenDetail;
 import co.cask.cdap.proto.WorkflowTokenNodeDetail;
 import co.cask.cdap.proto.artifact.AppRequest;
@@ -98,6 +100,7 @@ import java.net.URL;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -121,7 +124,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
 
   @Before
   public void setUp() throws Exception {
-    createNamespace(testSpace);
+    getNamespaceAdmin().create(new NamespaceMeta.Builder().setName(testSpace).build());
   }
 
   @Test
@@ -142,7 +145,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
         deployApplication(appId, createRequest);
         // fail if we succeed with application deployment
         Assert.fail();
-      } catch (IllegalStateException e) {
+      } catch (Exception e) {
         // expected
       }
     }
@@ -288,11 +291,14 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
       }
     }, 5, TimeUnit.SECONDS, 10, TimeUnit.MILLISECONDS);
 
-    MapReduceManager mrManager = appManager.getMapReduceManager(AppWithPlugin.MAPREDUCE);
-    mrManager.start();
-    mrManager.waitForFinish(10, TimeUnit.MINUTES);
-    List<RunRecord> runRecords = mrManager.getHistory();
+    WorkflowManager workflowManager = appManager.getWorkflowManager(AppWithPlugin.WORKFLOW);
+    workflowManager.start();
+    workflowManager.waitForFinish(10, TimeUnit.MINUTES);
+    List<RunRecord> runRecords = workflowManager.getHistory();
     Assert.assertNotEquals(ProgramRunStatus.FAILED, runRecords.get(0).getStatus());
+    DataSetManager<KeyValueTable> workflowTableManager = getDataset(AppWithPlugin.WORKFLOW_TABLE);
+    String value = Bytes.toString(workflowTableManager.get().read("val"));
+    Assert.assertEquals(AppWithPlugin.TEST, value);
 
     // Testing Spark Plugins. First send some data to stream for the Spark program to process
     StreamManager streamManager = getStreamManager(AppWithPlugin.SPARK_STREAM);
@@ -410,6 +416,31 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     Assert.assertEquals(Long.valueOf(1), aggs.get(writeCountName));
   }
 
+  @Test
+  public void testWorkflowStatus() throws Exception {
+    ApplicationManager appManager = deployApplication(WorkflowStatusTestApp.class);
+
+    File workflowSuccess = new File(TMP_FOLDER.newFolder() + "/workflow.success");
+    File actionSuccess = new File(TMP_FOLDER.newFolder() + "/action.success");
+
+    WorkflowManager workflowManager = appManager.getWorkflowManager(WorkflowStatusTestApp.WORKFLOW_NAME);
+    workflowManager.start(ImmutableMap.of("workflow.success.file", workflowSuccess.getAbsolutePath(),
+                                          "action.success.file", actionSuccess.getAbsolutePath(),
+                                          "throw.exception", "true"));
+    workflowManager.waitForFinish(1, TimeUnit.MINUTES);
+
+    // Since action and workflow failed the files should not exist
+    Assert.assertFalse(workflowSuccess.exists());
+    Assert.assertFalse(actionSuccess.exists());
+
+    workflowManager.start(ImmutableMap.of("workflow.success.file", workflowSuccess.getAbsolutePath(),
+                                          "action.success.file", actionSuccess.getAbsolutePath()));
+    workflowManager.waitForFinish(1, TimeUnit.MINUTES);
+
+    Assert.assertTrue(workflowSuccess.exists());
+    Assert.assertTrue(actionSuccess.exists());
+  }
+
   @Category(SlowTests.class)
   @Test
   public void testCustomActionDatasetAccess() throws Exception {
@@ -439,9 +470,177 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
 
   @Category(XSlowTests.class)
   @Test
+  public void testWorkflowLocalDatasets() throws Exception {
+    ApplicationManager applicationManager = deployApplication(testSpace, WorkflowAppWithLocalDatasets.class);
+
+    // Execute Workflow without keeping the local datasets after run
+    Map<String, String> additionalParams = new HashMap<>();
+    String runId = executeWorkflow(applicationManager, additionalParams);
+    verifyWorkflowRun(runId, false, false, "COMPLETED");
+
+    additionalParams.put("dataset.wordcount.keep.local", "true");
+    runId = executeWorkflow(applicationManager, additionalParams);
+    verifyWorkflowRun(runId, true, false, "COMPLETED");
+
+    additionalParams.clear();
+    additionalParams.put("dataset.*.keep.local", "true");
+    runId = executeWorkflow(applicationManager, additionalParams);
+    verifyWorkflowRun(runId, true, true, "COMPLETED");
+
+    additionalParams.clear();
+    additionalParams.put("dataset.*.keep.local", "true");
+    additionalParams.put("destroy.throw.exception", "true");
+    runId = executeWorkflow(applicationManager, additionalParams);
+    verifyWorkflowRun(runId, true, true, "STARTED");
+
+    WorkflowManager wfManager = applicationManager.getWorkflowManager(WorkflowAppWithLocalDatasets.WORKFLOW_NAME);
+    List<RunRecord> history = wfManager.getHistory();
+    Assert.assertEquals(4, history.size());
+    for (RunRecord record : history) {
+      Assert.assertEquals(ProgramRunStatus.COMPLETED, record.getStatus());
+    }
+  }
+
+  private void verifyWorkflowRun(String runId, boolean shouldKeepWordCountDataset, boolean shouldKeepCSVFilesetDataset,
+                                 String expectedRunStatus)
+    throws Exception {
+
+    // Once the Workflow run is complete local datasets should not be available
+    DataSetManager<KeyValueTable> localKeyValueDataset = getDataset(testSpace,
+                                                                    WorkflowAppWithLocalDatasets.WORDCOUNT_DATASET
+                                                                      + "." + runId);
+
+    if (shouldKeepWordCountDataset) {
+      Assert.assertNotNull(localKeyValueDataset.get());
+    } else {
+      Assert.assertNull(localKeyValueDataset.get());
+    }
+
+    DataSetManager<FileSet> localFileSetDataset = getDataset(testSpace, WorkflowAppWithLocalDatasets.CSV_FILESET_DATASET
+      + "." + runId);
+
+    if (shouldKeepCSVFilesetDataset) {
+      Assert.assertNotNull(localFileSetDataset.get());
+    } else {
+      Assert.assertNull(localFileSetDataset.get());
+    }
+
+    // Dataset which is not local should still be available
+    DataSetManager<KeyValueTable> nonLocalKeyValueDataset = getDataset(testSpace,
+                                                                       WorkflowAppWithLocalDatasets.RESULT_DATASET);
+    Assert.assertEquals("6", Bytes.toString(nonLocalKeyValueDataset.get().read("UniqueWordCount")));
+
+    // There should not be any local copy of the non local dataset
+    nonLocalKeyValueDataset = getDataset(testSpace, WorkflowAppWithLocalDatasets.RESULT_DATASET + "." + runId);
+    Assert.assertNull(nonLocalKeyValueDataset.get());
+
+    DataSetManager<KeyValueTable> workflowRuns
+      = getDataset(testSpace, WorkflowAppWithLocalDatasets.WORKFLOW_RUNS_DATASET);
+
+    Assert.assertEquals(expectedRunStatus, Bytes.toString(workflowRuns.get().read(runId)));
+  }
+
+  private String executeWorkflow(ApplicationManager applicationManager, Map<String, String> additionalParams)
+    throws Exception {
+    WorkflowManager wfManager = applicationManager.getWorkflowManager(WorkflowAppWithLocalDatasets.WORKFLOW_NAME);
+    Map<String, String> runtimeArgs = new HashMap<>();
+    File waitFile = new File(TMP_FOLDER.newFolder(), "/wait.file");
+    File doneFile = new File(TMP_FOLDER.newFolder(), "/done.file");
+
+    runtimeArgs.put("input.path", "input");
+    runtimeArgs.put("output.path", "output");
+    runtimeArgs.put("wait.file", waitFile.getAbsolutePath());
+    runtimeArgs.put("done.file", doneFile.getAbsolutePath());
+    runtimeArgs.putAll(additionalParams);
+    wfManager.start(runtimeArgs);
+
+    // Wait till custom action in the Workflow is triggerred.
+    while (!waitFile.exists()) {
+      TimeUnit.MILLISECONDS.sleep(50);
+    }
+
+    // Now the Workflow should have RUNNING status. Get its runid.
+    List<RunRecord> history = wfManager.getHistory(ProgramRunStatus.RUNNING);
+    Assert.assertEquals(1, history.size());
+    String runId = history.get(0).getPid();
+
+    // Get the local datasets for this Workflow run
+    DataSetManager<KeyValueTable> localDataset = getDataset(testSpace, WorkflowAppWithLocalDatasets.WORDCOUNT_DATASET
+      + "." + runId);
+    Assert.assertEquals("2", Bytes.toString(localDataset.get().read("text")));
+
+    DataSetManager<FileSet> fileSetDataset = getDataset(testSpace, WorkflowAppWithLocalDatasets.CSV_FILESET_DATASET
+      + "." + runId);
+    Assert.assertNotNull(fileSetDataset.get());
+
+    // Local datasets should not exist at the namespace level
+    localDataset = getDataset(testSpace, WorkflowAppWithLocalDatasets.WORDCOUNT_DATASET);
+    Assert.assertNull(localDataset.get());
+
+    fileSetDataset = getDataset(testSpace, WorkflowAppWithLocalDatasets.CSV_FILESET_DATASET);
+    Assert.assertNull(fileSetDataset.get());
+
+    // Signal the Workflow to continue
+    doneFile.createNewFile();
+
+    // Wait for workflow to finish
+    wfManager.waitForFinish(1, TimeUnit.MINUTES);
+    Map<String, WorkflowNodeStateDetail> nodeStateDetailMap = wfManager.getWorkflowNodeStates(runId);
+    Map<String, String> workflowMetricsContext = new HashMap<>();
+    workflowMetricsContext.put(Constants.Metrics.Tag.NAMESPACE, testSpace.getId());
+    workflowMetricsContext.put(Constants.Metrics.Tag.APP, applicationManager.getInfo().getName());
+    workflowMetricsContext.put(Constants.Metrics.Tag.WORKFLOW, WorkflowAppWithLocalDatasets.WORKFLOW_NAME);
+    workflowMetricsContext.put(Constants.Metrics.Tag.RUN_ID, runId);
+
+    Map<String, String> writerContext = new HashMap<>(workflowMetricsContext);
+    writerContext.put(Constants.Metrics.Tag.NODE,
+                      WorkflowAppWithLocalDatasets.LocalDatasetWriter.class.getSimpleName());
+
+    Assert.assertEquals(2, getMetricsManager().getTotalMetric(writerContext, "user.num.lines"));
+
+    Map<String, String> wfSparkMetricsContext = new HashMap<>(workflowMetricsContext);
+    wfSparkMetricsContext.put(Constants.Metrics.Tag.NODE, "JavaSparkCSVToSpaceConverter");
+    Assert.assertEquals(2, getMetricsManager().getTotalMetric(wfSparkMetricsContext, "user.num.lines"));
+
+    // check in spark context
+    Map<String, String> sparkMetricsContext = new HashMap<>();
+    sparkMetricsContext.put(Constants.Metrics.Tag.NAMESPACE, testSpace.getId());
+    sparkMetricsContext.put(Constants.Metrics.Tag.APP, applicationManager.getInfo().getName());
+    sparkMetricsContext.put(Constants.Metrics.Tag.SPARK, "JavaSparkCSVToSpaceConverter");
+    sparkMetricsContext.put(Constants.Metrics.Tag.RUN_ID,
+                            nodeStateDetailMap.get("JavaSparkCSVToSpaceConverter").getRunId());
+    Assert.assertEquals(2, getMetricsManager().getTotalMetric(sparkMetricsContext, "user.num.lines"));
+
+    Map<String, String> appMetricsContext = new HashMap<>();
+    appMetricsContext.put(Constants.Metrics.Tag.NAMESPACE, testSpace.getId());
+    appMetricsContext.put(Constants.Metrics.Tag.APP, applicationManager.getInfo().getName());
+    // app metrics context should have sum from custom action and spark metrics.
+    Assert.assertEquals(4, getMetricsManager().getTotalMetric(appMetricsContext, "user.num.lines"));
+
+    Map<String, String> wfMRMetricsContext = new HashMap<>(workflowMetricsContext);
+    wfMRMetricsContext.put(Constants.Metrics.Tag.NODE, "WordCount");
+    Assert.assertEquals(7, getMetricsManager().getTotalMetric(wfMRMetricsContext, "user.num.words"));
+
+    // mr metrics context
+    Map<String, String> mrMetricsContext = new HashMap<>();
+    mrMetricsContext.put(Constants.Metrics.Tag.NAMESPACE, testSpace.getId());
+    mrMetricsContext.put(Constants.Metrics.Tag.APP, applicationManager.getInfo().getName());
+    mrMetricsContext.put(Constants.Metrics.Tag.MAPREDUCE, "WordCount");
+    mrMetricsContext.put(Constants.Metrics.Tag.RUN_ID,
+                            nodeStateDetailMap.get("WordCount").getRunId());
+    Assert.assertEquals(7, getMetricsManager().getTotalMetric(mrMetricsContext, "user.num.words"));
+
+    Map<String, String> readerContext = new HashMap<>(workflowMetricsContext);
+    readerContext.put(Constants.Metrics.Tag.NODE, "readerAction");
+    Assert.assertEquals(6, getMetricsManager().getTotalMetric(readerContext, "user.unique.words"));
+    return runId;
+  }
+
+  @Category(XSlowTests.class)
+  @Test
   public void testDeployWorkflowApp() throws Exception {
     ApplicationManager applicationManager = deployApplication(testSpace, AppWithSchedule.class);
-    WorkflowManager wfmanager = applicationManager.getWorkflowManager("SampleWorkflow");
+    final WorkflowManager wfmanager = applicationManager.getWorkflowManager("SampleWorkflow");
     List<ScheduleSpecification> schedules = wfmanager.getSchedules();
     Assert.assertEquals(1, schedules.size());
     String scheduleName = schedules.get(0).getSchedule().getName();
@@ -449,21 +648,40 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     Assert.assertFalse(scheduleName.isEmpty());
     wfmanager.getSchedule(scheduleName).resume();
 
-    waitForWorkflowRuns(wfmanager, 0);
-
     String status = wfmanager.getSchedule(scheduleName).status(200);
     Assert.assertEquals("SCHEDULED", status);
+
+    // Make sure something ran before suspending
+    Tasks.waitFor(true, new Callable<Boolean>() {
+      @Override
+      public Boolean call() throws Exception {
+        return !wfmanager.getHistory().isEmpty();
+      }
+    }, 10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
 
     wfmanager.getSchedule(scheduleName).suspend();
     waitForScheduleState(scheduleName, wfmanager, Scheduler.ScheduleState.SUSPENDED);
 
-    TimeUnit.SECONDS.sleep(3);
+    // All runs should be completed
+    Tasks.waitFor(true, new Callable<Boolean>() {
+      @Override
+      public Boolean call() throws Exception {
+        for (RunRecord record : wfmanager.getHistory()) {
+          if (record.getStatus() != ProgramRunStatus.COMPLETED) {
+            return false;
+          }
+        }
+        return true;
+      }
+    }, 10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
+
     List<RunRecord> history = wfmanager.getHistory();
     int workflowRuns = history.size();
+    Assert.assertTrue(workflowRuns > 0);
 
     //Sleep for some time and verify there are no more scheduled jobs after the suspend.
-    TimeUnit.SECONDS.sleep(10);
-    int workflowRunsAfterSuspend = wfmanager.getHistory().size();
+    TimeUnit.SECONDS.sleep(5);
+    final int workflowRunsAfterSuspend = wfmanager.getHistory().size();
     Assert.assertEquals(workflowRuns, workflowRunsAfterSuspend);
 
     wfmanager.getSchedule(scheduleName).resume();
@@ -471,7 +689,13 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     //Check that after resume it goes to "SCHEDULED" state
     waitForScheduleState(scheduleName, wfmanager, Scheduler.ScheduleState.SCHEDULED);
 
-    waitForWorkflowRuns(wfmanager, workflowRunsAfterSuspend);
+    // Make sure new runs happens after resume
+    Tasks.waitFor(true, new Callable<Boolean>() {
+      @Override
+      public Boolean call() throws Exception {
+        return wfmanager.getHistory().size() > workflowRunsAfterSuspend;
+      }
+    }, 10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
 
     //check scheduled state
     Assert.assertEquals("SCHEDULED", wfmanager.getSchedule(scheduleName).status(200));

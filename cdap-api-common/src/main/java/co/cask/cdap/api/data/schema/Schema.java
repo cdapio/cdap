@@ -19,19 +19,17 @@ package co.cask.cdap.api.data.schema;
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.internal.io.SQLSchemaParser;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
-import com.google.common.collect.BiMap;
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.ImmutableBiMap;
-import com.google.common.collect.Multimap;
 import com.google.gson.stream.JsonWriter;
 
 import java.io.IOException;
 import java.io.Reader;
+import java.io.Serializable;
 import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -43,8 +41,9 @@ import java.util.Set;
  * This class represents schema of data types.
  */
 @Beta
-public final class Schema {
+public final class Schema implements Serializable {
   private static final SchemaTypeAdapter SCHEMA_TYPE_ADAPTER = new SchemaTypeAdapter();
+  private static final long serialVersionUID = -1891891892562027345L;
 
   /**
    * Types known to Schema.
@@ -83,7 +82,8 @@ public final class Schema {
   /**
    * Represents a field inside a {@link Type#RECORD} schema.
    */
-  public static final class Field {
+  public static final class Field implements Serializable {
+    private static final long serialVersionUID = 5423721270457378454L;
     private final String name;
     private final Schema schema;
 
@@ -363,8 +363,8 @@ public final class Schema {
 
   private final Type type;
 
-  private final BiMap<String, Integer> enumValues;
-  private final BiMap<Integer, String> enumIndexes;
+  private final Map<String, Integer> enumValues;
+  private final Map<Integer, String> enumIndexes;
 
   private final Schema componentSchema;
 
@@ -378,18 +378,21 @@ public final class Schema {
 
   private final List<Schema> unionSchemas;
 
-  private String schemaString;
+  // No need to serialize the schemaString to save space
+  // It can be recomputed on demand (and usually it is not used in the context that serialization is used)
+  private transient String schemaString;
   private SchemaHash schemaHash;
 
   private Schema(Type type, Set<String> enumValues, Schema componentSchema, Schema keySchema, Schema valueSchema,
                  String recordName, Map<String, Field> fieldMap, List<Schema> unionSchemas) {
     this.type = type;
-    this.enumValues = createIndex(enumValues);
-    this.enumIndexes = this.enumValues == null ? null : this.enumValues.inverse();
+    Map.Entry<Map<String, Integer>, Map<Integer, String>> enumValuesIndexes = createIndex(enumValues);
+    this.enumValues = enumValuesIndexes.getKey();
+    this.enumIndexes = enumValuesIndexes.getValue();
     this.componentSchema = componentSchema;
     this.keySchema = keySchema;
     this.valueSchema = valueSchema;
-    this.mapSchema = (keySchema == null || valueSchema == null) ? null : immutableEntry(keySchema, valueSchema);
+    this.mapSchema = (keySchema == null || valueSchema == null) ? null : new ImmutableEntry<>(keySchema, valueSchema);
     this.recordName = recordName;
     this.fieldMap = populateRecordFields(fieldMap);
     this.fields = this.fieldMap == null ? null : Collections.unmodifiableList(new ArrayList<>(this.fieldMap.values()));
@@ -555,7 +558,7 @@ public final class Schema {
     if (equals(target)) {
       return true;
     }
-    Multimap<String, String> recordCompared = HashMultimap.create();
+    Set<Map.Entry<String, String>> recordCompared = new HashSet<>();
     return checkCompatible(target, recordCompared);
   }
 
@@ -613,48 +616,7 @@ public final class Schema {
     return firstSchema.getType() == Type.NULL ? unionSchemas.get(1) : firstSchema;
   }
 
-  private <K, V> Map.Entry<K, V> immutableEntry(final K key, final V value) {
-    return new Map.Entry<K, V>() {
-      @Override
-      public K getKey() {
-        return key;
-      }
-
-      @Override
-      public V getValue() {
-        return value;
-      }
-
-      @Override
-      public V setValue(V value) {
-        throw new UnsupportedOperationException("Mutation to entry not supported");
-      }
-
-      @Override
-      public String toString() {
-        return getKey() + "=" + getValue();
-      }
-
-      @Override
-      public boolean equals(Object obj) {
-        if (obj == null) {
-          return false;
-        }
-        if (!(obj instanceof Map.Entry)) {
-          return false;
-        }
-        Map.Entry other = (Map.Entry) obj;
-        return Objects.equals(key, other.getKey()) && Objects.equals(value, other.getValue());
-      }
-
-      @Override
-      public int hashCode() {
-        return Objects.hash(getKey(), getValue());
-      }
-    };
-  }
-
-  private boolean checkCompatible(Schema target, Multimap<String, String> recordCompared) {
+  private boolean checkCompatible(Schema target, Set<Map.Entry<String, String>> recordCompared) {
     if (type.isSimpleType()) {
       if (type == target.getType()) {
         // Same simple type are always compatible
@@ -692,8 +654,7 @@ public final class Schema {
             && valueSchema.checkCompatible(target.valueSchema, recordCompared);
         case RECORD:
           // For every common field (by name), their schema must be compatible
-          if (!recordCompared.containsEntry(recordName, target.recordName)) {
-            recordCompared.put(recordName, target.recordName);
+          if (recordCompared.add(new ImmutableEntry<>(recordName, target.recordName))) {
             for (Field field : fields) {
               Field targetField = target.getField(field.getName());
               if (targetField == null) {
@@ -732,22 +693,27 @@ public final class Schema {
   }
 
   /**
-   * Creates a map of indexes based on the iteration order of the given set.
+   * Creates a pair of Maps such that the first map contains indexes based on the iteration order of the given set.
+   * The second map is the inverse of the first map.
    *
    * @param values Set of values to create index on
-   * @return A map from the values to indexes in the set iteration order.
+   * @return A {@link Map.Entry} containing two maps.
    */
-  private <V> BiMap<V, Integer> createIndex(Set<V> values) {
+  private <V> Map.Entry<Map<V, Integer>, Map<Integer, V>> createIndex(Set<V> values) {
     if (values == null) {
-      return null;
+      return new ImmutableEntry<>(null, null);
     }
 
-    ImmutableBiMap.Builder<V, Integer> builder = ImmutableBiMap.builder();
+    Map<V, Integer> forwardMap = new LinkedHashMap<>();
+    Map<Integer, V> reverseMap = new LinkedHashMap<>();
     int idx = 0;
     for (V value : values) {
-      builder.put(value, idx++);
+      forwardMap.put(value, idx);
+      reverseMap.put(idx, value);
+      idx++;
     }
-    return builder.build();
+
+    return new ImmutableEntry<>(Collections.unmodifiableMap(forwardMap), Collections.unmodifiableMap(reverseMap));
   }
 
   /**
@@ -848,5 +814,53 @@ public final class Schema {
       throw new RuntimeException(e);
     }
     return writer.toString();
+  }
+
+  private static final class ImmutableEntry<K, V> implements Map.Entry<K, V>, Serializable {
+
+    private final K key;
+    private final V value;
+
+    private ImmutableEntry(K key, V value) {
+      this.key = key;
+      this.value = value;
+    }
+
+    @Override
+    public K getKey() {
+      return key;
+    }
+
+    @Override
+    public V getValue() {
+      return value;
+    }
+
+    @Override
+    public V setValue(V value) {
+      throw new UnsupportedOperationException("Mutation to entry not supported");
+    }
+
+    @Override
+    public String toString() {
+      return getKey() + "=" + getValue();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      if (obj == null) {
+        return false;
+      }
+      if (!(obj instanceof Map.Entry)) {
+        return false;
+      }
+      Map.Entry other = (Map.Entry) obj;
+      return Objects.equals(key, other.getKey()) && Objects.equals(value, other.getValue());
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(getKey(), getValue());
+    }
   }
 }

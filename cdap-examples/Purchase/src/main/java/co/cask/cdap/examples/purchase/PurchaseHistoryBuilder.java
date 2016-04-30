@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,11 +13,14 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package co.cask.cdap.examples.purchase;
 
 import co.cask.cdap.api.ProgramLifecycle;
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.annotation.UseDataSet;
+import co.cask.cdap.api.data.batch.Input;
+import co.cask.cdap.api.data.batch.Output;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
@@ -48,7 +51,6 @@ public class PurchaseHistoryBuilder extends AbstractMapReduce {
   @Override
   public void configure() {
     setDescription("Purchase History Builder");
-    setInputDataset("purchases");
     setDriverResources(new Resources(1024));
     setMapperResources(new Resources(1024));
     setReducerResources(new Resources(1024));
@@ -57,9 +59,10 @@ public class PurchaseHistoryBuilder extends AbstractMapReduce {
   @Override
   public void beforeSubmit(MapReduceContext context) throws Exception {
     Job job = context.getHadoopJob();
-    job.setMapperClass(PurchaseMapper.class);
     job.setReducerClass(PerUserReducer.class);
-    context.addOutput("history");
+
+    context.addInput(Input.ofDataset("purchases"), PurchaseMapper.class);
+    context.addOutput(Output.ofDataset("history"));
 
     // override default memory usage if the corresponding runtime arguments are set.
     Map<String, String> runtimeArgs = context.getRuntimeArguments();
@@ -81,8 +84,7 @@ public class PurchaseHistoryBuilder extends AbstractMapReduce {
     private Metrics mapMetrics;
 
     @Override
-    public void map(byte[] key, Purchase purchase, Context context)
-      throws IOException, InterruptedException {
+    public void map(byte[] key, Purchase purchase, Context context) throws IOException, InterruptedException {
       String user = purchase.getCustomer();
       if (purchase.getPrice() > 100000) {
         mapMetrics.count("purchases.large", 1);

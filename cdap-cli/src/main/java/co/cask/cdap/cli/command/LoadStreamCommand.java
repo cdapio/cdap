@@ -84,7 +84,7 @@ public class LoadStreamCommand extends AbstractAuthCommand implements Categorize
     }
 
     streamClient.sendFile(streamId, contentType, file);
-    output.printf("Successfully sent stream event to stream '%s'\n", streamId.getId());
+    output.printf("Successfully loaded file to stream '%s'\n", streamId.getId());
   }
 
   @Override
@@ -97,13 +97,13 @@ public class LoadStreamCommand extends AbstractAuthCommand implements Categorize
   public String getDescription() {
     return String.format("Loads a file to %s. The contents of the file will " +
                          "become multiple events in the %s, " +
-                         "based on the content type (%s). If <%s> is not provided, " +
-                         "it will be detected by the file extension. Supported file extensions: %s.",
+                         "based on the content type (%s). If '<%s>' is not provided, " +
+                         "it will be detected by the file extension. Supported file extensions: '%s'.",
                          Fragment.of(Article.A, ElementType.STREAM.getName()),
                          ElementType.STREAM.getName(),
                          Joiner.on(", ").join(ImmutableSet.copyOf(CONTENT_TYPE_MAP.values())),
                          ArgumentName.CONTENT_TYPE,
-                         Joiner.on(", ").join(CONTENT_TYPE_MAP.keySet()));
+                         Joiner.on("', '").join(CONTENT_TYPE_MAP.keySet()));
   }
 
   private String getContentType(String extension) {

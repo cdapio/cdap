@@ -17,11 +17,16 @@
 package co.cask.cdap.cli.util;
 
 import co.cask.cdap.cli.CLIConfig;
-import co.cask.cdap.common.UnauthorizedException;
+import co.cask.cdap.common.UnauthenticatedException;
+import co.cask.cdap.proto.security.Action;
 import co.cask.common.cli.Arguments;
 import co.cask.common.cli.Command;
+import com.google.common.base.Function;
+import com.google.common.base.Splitter;
+import com.google.common.collect.ImmutableSet;
 
 import java.io.PrintStream;
+import java.util.Set;
 
 /**
  * Abstract command for updating {@link co.cask.cdap.security.authentication.client.AccessToken}.
@@ -29,6 +34,17 @@ import java.io.PrintStream;
 public abstract class AbstractAuthCommand implements Command {
 
   protected final CLIConfig cliConfig;
+
+  protected static final Function<String, Set<Action>> ACTIONS_STRING_TO_SET = new Function<String, Set<Action>>() {
+    @Override
+    public Set<Action> apply(String input) {
+      ImmutableSet.Builder<Action> resultBuilder = ImmutableSet.builder();
+      for (String action : Splitter.on(",").trimResults().split(input)) {
+        resultBuilder.add(Action.valueOf(action.toUpperCase()));
+      }
+      return resultBuilder.build();
+    }
+  };
 
   public AbstractAuthCommand(CLIConfig cliConfig) {
     this.cliConfig = cliConfig;
@@ -38,7 +54,7 @@ public abstract class AbstractAuthCommand implements Command {
   public void execute(Arguments arguments, PrintStream printStream) throws Exception {
     try {
       perform(arguments, printStream);
-    } catch (UnauthorizedException e) {
+    } catch (UnauthenticatedException e) {
       cliConfig.updateAccessToken(printStream);
       perform(arguments, printStream);
     }

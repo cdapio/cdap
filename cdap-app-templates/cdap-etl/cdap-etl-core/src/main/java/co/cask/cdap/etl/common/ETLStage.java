@@ -22,7 +22,10 @@ import javax.annotation.Nullable;
 
 /**
  * ETL Stage Configuration.
+ *
+ * @deprecated use ETLStage in cdap-etl-proto instead.
  */
+@Deprecated
 public final class ETLStage {
   private final String name;
   private final Plugin plugin;

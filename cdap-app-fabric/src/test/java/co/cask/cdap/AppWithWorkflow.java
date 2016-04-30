@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,13 +19,15 @@ package co.cask.cdap;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 import co.cask.cdap.api.data.stream.Stream;
+import co.cask.cdap.api.dataset.DatasetProperties;
+import co.cask.cdap.api.dataset.lib.FileSet;
+import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.lib.ObjectStores;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.workflow.AbstractWorkflow;
 import co.cask.cdap.api.workflow.AbstractWorkflowAction;
 import co.cask.cdap.api.workflow.Value;
-import co.cask.cdap.api.workflow.WorkflowActionConfigurer;
 import co.cask.cdap.api.workflow.WorkflowContext;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.internal.app.runtime.batch.WordCount;
@@ -62,16 +64,47 @@ public class AppWithWorkflow extends AbstractApplication {
    */
   public static class SampleWorkflow extends AbstractWorkflow {
     public static final String NAME = "SampleWorkflow";
-    public static String firstActionName = "firstAction";
-    public static String secondActionName = "secondAction";
+    public static final String FIRST_ACTION = "firstAction";
+    public static final String SECOND_ACTION = "secondAction";
+    public static final String WORD_COUNT_MR = WordCountMapReduce.class.getSimpleName();
+    public static final String TABLE_NAME = "MyTable";
+    public static final String FILE_NAME = "MyFile";
+    public static final String INITIALIZE_TOKEN_KEY = "workflow.initialize.key";
+    public static final String INITIALIZE_TOKEN_VALUE = "workflow.initialize.value";
+    public static final String DESTROY_TOKEN_KEY = "workflow.destroy";
+    public static final String DESTROY_TOKEN_SUCCESS_VALUE = "workflow.destroy.success";
+    public static final String DESTROY_TOKEN_FAIL_VALUE = "workflow.destroy.fail";
+
+    @Override
+    public void initialize(WorkflowContext context) throws Exception {
+      super.initialize(context);
+      context.getToken().put(SampleWorkflow.INITIALIZE_TOKEN_KEY, SampleWorkflow.INITIALIZE_TOKEN_VALUE);
+    }
+
+    @Override
+    public void destroy() {
+      WorkflowToken token = getContext().getToken();
+      @SuppressWarnings("ConstantConditions")
+      String initializeValue = token.get(SampleWorkflow.INITIALIZE_TOKEN_KEY, SampleWorkflow.NAME).toString();
+      if (!initializeValue.equals(SampleWorkflow.INITIALIZE_TOKEN_VALUE)) {
+        // Should not happen, since we are always putting token in the Workflow.initialize method.
+        // We can not throw exception here since any exception thrown will be caught in the Workflow driver.
+        // So in order to test this put some token value which is check in the test case.
+        token.put(SampleWorkflow.DESTROY_TOKEN_KEY, SampleWorkflow.DESTROY_TOKEN_FAIL_VALUE);
+      } else {
+        token.put(SampleWorkflow.DESTROY_TOKEN_KEY, SampleWorkflow.DESTROY_TOKEN_SUCCESS_VALUE);
+      }
+    }
 
     @Override
     public void configure() {
       setName(NAME);
       setDescription("SampleWorkflow description");
-      addAction(new DummyAction(firstActionName));
-      addAction(new DummyAction(secondActionName));
-      addMapReduce(WordCountMapReduce.class.getSimpleName());
+      createLocalDataset(TABLE_NAME, KeyValueTable.class, DatasetProperties.builder().add("foo", "bar").build());
+      createLocalDataset(FILE_NAME, FileSet.class, DatasetProperties.builder().add("anotherFoo", "anotherBar").build());
+      addAction(new DummyAction(FIRST_ACTION));
+      addAction(new DummyAction(SECOND_ACTION));
+      addMapReduce(WORD_COUNT_MR);
     }
   }
 
@@ -89,8 +122,7 @@ public class AppWithWorkflow extends AbstractApplication {
     }
 
     @Override
-    public void configure(WorkflowActionConfigurer configurer) {
-      super.configure(configurer);
+    public void configure() {
       setName(name);
     }
 
@@ -104,6 +136,14 @@ public class AppWithWorkflow extends AbstractApplication {
     @Override
     public void run() {
       LOG.info("Ran dummy action");
+      @SuppressWarnings("ConstantConditions")
+      String initializeValue = getContext().getToken().get(SampleWorkflow.INITIALIZE_TOKEN_KEY,
+                                                           SampleWorkflow.NAME).toString();
+      if (!initializeValue.equals(SampleWorkflow.INITIALIZE_TOKEN_VALUE)) {
+        String msg = String.format("Expected value of token %s but got %s.", SampleWorkflow.INITIALIZE_TOKEN_VALUE,
+                                   initializeValue);
+        throw new IllegalStateException(msg);
+      }
     }
   }
 
@@ -136,4 +176,3 @@ public class AppWithWorkflow extends AbstractApplication {
     }
   }
 }
-

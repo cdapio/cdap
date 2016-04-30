@@ -57,11 +57,15 @@ public class MasterStartupTool {
     ConfigurationLogger.logImportantConfig(cConf);
     LOG.info("Hadoop subsystem versions:");
     LOG.info("  Hadoop version: {}", ClientVersions.getHadoopVersion());
+    LOG.info("  HBase version: {}", ClientVersions.getHBaseVersion());
     LOG.info("  ZooKeeper version: {}", ClientVersions.getZooKeeperVersion());
     LOG.info("  Kafka version: {}", ClientVersions.getKafkaVersion());
     if (cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED)) {
       LOG.info("  Hive version: {}", ExploreServiceUtils.getHiveVersion());
     }
+    LOG.info("CDAP version: {}", ClientVersions.getCdapVersion());
+    LOG.info("CDAP HBase compat version: {}", ClientVersions.getCdapHBaseCompatVersion());
+    LOG.info("Tephra HBase compat version: {}", ClientVersions.getTephraHBaseCompatVersion());
 
     if (!cConf.getBoolean(Constants.Startup.CHECKS_ENABLED)) {
       return;

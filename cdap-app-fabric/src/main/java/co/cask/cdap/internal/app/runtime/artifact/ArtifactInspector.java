@@ -26,12 +26,14 @@ import co.cask.cdap.api.artifact.ArtifactClasses;
 import co.cask.cdap.api.artifact.ArtifactId;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
+import co.cask.cdap.api.plugin.EndpointPluginContext;
 import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.api.plugin.PluginConfig;
 import co.cask.cdap.api.plugin.PluginPropertyField;
 import co.cask.cdap.app.program.ManifestFields;
 import co.cask.cdap.common.InvalidArtifactException;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.common.utils.DirUtils;
@@ -61,10 +63,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Enumeration;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -74,22 +78,22 @@ import java.util.jar.JarFile;
 import java.util.jar.Manifest;
 import java.util.zip.ZipException;
 import javax.annotation.Nullable;
+import javax.ws.rs.Path;
 
 /**
  * Inspects a jar file to determine metadata about the artifact.
  */
-public class ArtifactInspector {
+final class ArtifactInspector {
   private static final Logger LOG = LoggerFactory.getLogger(ArtifactInspector.class);
+
   private final CConfiguration cConf;
   private final ArtifactClassLoaderFactory artifactClassLoaderFactory;
   private final ReflectionSchemaGenerator schemaGenerator;
-  private final File tempDir;
 
-  ArtifactInspector(CConfiguration cConf, ArtifactClassLoaderFactory artifactClassLoaderFactory, File tempDir) {
+  ArtifactInspector(CConfiguration cConf, ArtifactClassLoaderFactory artifactClassLoaderFactory) {
     this.cConf = cConf;
     this.artifactClassLoaderFactory = artifactClassLoaderFactory;
     this.schemaGenerator = new ReflectionSchemaGenerator(false);
-    this.tempDir = tempDir;
   }
 
   /**
@@ -104,26 +108,31 @@ public class ArtifactInspector {
    * @throws InvalidArtifactException if the artifact is invalid. For example, if the application main class is not
    *                                  actually an Application.
    */
-  public ArtifactClasses inspectArtifact(Id.Artifact artifactId, File artifactFile,
-                                         ClassLoader parentClassLoader) throws IOException, InvalidArtifactException {
+  ArtifactClasses inspectArtifact(Id.Artifact artifactId, File artifactFile,
+                                  ClassLoader parentClassLoader) throws IOException, InvalidArtifactException {
 
-    ArtifactClasses.Builder builder = inspectApplications(artifactId, ArtifactClasses.builder(), artifactFile);
-
-    File stageDir = DirUtils.createTempDir(tempDir);
+    ArtifactClasses.Builder builder = inspectApplications(artifactId, ArtifactClasses.builder(),
+                                                          Locations.toLocation(artifactFile));
+    File tmpDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
+                           cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
+    File stageDir = DirUtils.createTempDir(tmpDir);
     try (PluginInstantiator pluginInstantiator = new PluginInstantiator(cConf, parentClassLoader, stageDir)) {
       pluginInstantiator.addArtifact(Locations.toLocation(artifactFile), artifactId.toArtifactId());
       inspectPlugins(builder, artifactFile, artifactId.toArtifactId(), pluginInstantiator);
     } finally {
-      DirUtils.deleteDirectoryContents(stageDir);
+      try {
+        DirUtils.deleteDirectoryContents(stageDir);
+      } catch (IOException e) {
+        LOG.warn("Exception raised while deleting directory {}", stageDir, e);
+      }
     }
     return builder.build();
   }
 
   private ArtifactClasses.Builder inspectApplications(Id.Artifact artifactId,
                                                       ArtifactClasses.Builder builder,
-                                                      File artifactFile) throws IOException, InvalidArtifactException {
-
-    Location artifactLocation = Locations.toLocation(artifactFile);
+                                                      Location artifactLocation) throws IOException,
+    InvalidArtifactException {
 
     // right now we force users to include the application main class as an attribute in their manifest,
     // which forces them to have a single application class.
@@ -146,9 +155,7 @@ public class ArtifactInspector {
     }
 
     if (mainClassName != null) {
-      try (CloseableClassLoader artifactClassLoader =
-             artifactClassLoaderFactory.createClassLoader(Locations.toLocation(artifactFile))) {
-
+      try (CloseableClassLoader artifactClassLoader = artifactClassLoaderFactory.createClassLoader(artifactLocation)) {
         Object appMain = artifactClassLoader.loadClass(mainClassName).newInstance();
         if (!(appMain instanceof Application)) {
           // we don't want to error here, just don't record an application class.
@@ -200,7 +207,6 @@ public class ArtifactInspector {
       return builder;
     }
 
-    // Load the plugin class and inspect the config field.
     try {
       ClassLoader pluginClassLoader = pluginInstantiator.getArtifactClassLoader(artifactId);
       for (Class<?> cls : getPluginClasses(exportPackages, pluginClassLoader)) {
@@ -211,9 +217,10 @@ public class ArtifactInspector {
         Map<String, PluginPropertyField> pluginProperties = Maps.newHashMap();
         try {
           String configField = getProperties(TypeToken.of(cls), pluginProperties);
+          Set<String> pluginEndpoints = getPluginEndpoints(cls);
           PluginClass pluginClass = new PluginClass(pluginAnnotation.type(), getPluginName(cls),
-            getPluginDescription(cls), cls.getName(),
-            configField, pluginProperties);
+                                                    getPluginDescription(cls), cls.getName(),
+                                                    configField, pluginProperties, pluginEndpoints);
           builder.addPlugin(pluginClass);
         } catch (UnsupportedTypeException e) {
           LOG.warn("Plugin configuration type not supported. Plugin ignored. {}", cls, e);
@@ -222,8 +229,8 @@ public class ArtifactInspector {
     } catch (Throwable t) {
       throw new InvalidArtifactException(String.format(
         "Class could not be found while inspecting artifact for plugins. " +
-        "Please check dependencies are available, and that the correct parent artifact was specified. " +
-        "Error class: %s, message: %s.", t.getClass(), t.getMessage()), t);
+          "Please check dependencies are available, and that the correct parent artifact was specified. " +
+          "Error class: %s, message: %s.", t.getClass(), t.getMessage()), t);
     }
 
     return builder;
@@ -321,6 +328,44 @@ public class ArtifactInspector {
   }
 
   /**
+   * Extracts and returns set of endpoints in the plugin.
+   * @throws IllegalArgumentException if there are duplicate endpoints found or
+   * if the number of arguments is not 1 or 2, or if type of 2nd argument is not an EndpointPluginContext.
+   */
+  private Set<String> getPluginEndpoints(Class<?> cls) throws IllegalArgumentException {
+    Set<String> endpoints = new HashSet<>();
+    Method[] methods = cls.getMethods();
+    for (Method method : methods) {
+      Path pathAnnotation = method.getAnnotation(Path.class);
+      // method should have path annotation else continue
+      if (pathAnnotation != null) {
+        if (!endpoints.add(pathAnnotation.value())) {
+          // if the endpoint already exists throw an exception saying, plugin has two methods with same endpoint name.
+          throw new IllegalArgumentException(String.format("Two Endpoints with same name : %s found in Plugin : %s",
+                                                           pathAnnotation.value(), getPluginName(cls)));
+        }
+        // check that length of method parameters is 1 or 2. if length is 2,
+        // check that 2nd param is of type EndpointPluginContext
+        if (!(method.getParameterTypes().length == 1 || method.getParameterTypes().length == 2)) {
+          throw new IllegalArgumentException(
+            String.format("Endpoint parameters can only be of length 1 or 2, " +
+                            "found endpoint %s with %s parameters",
+                          pathAnnotation.value(), method.getParameterTypes().length));
+        }
+        if (method.getParameterTypes().length == 2 &&
+          !EndpointPluginContext.class.isAssignableFrom(method.getParameterTypes()[1])) {
+          throw new IllegalArgumentException(
+            String.format("2nd parameter of endpoint should be EndpointPluginContext, " +
+                            "%s is not of type %s in endpoint %s",
+                          method.getParameterTypes()[1], EndpointPluginContext.class.getName(),
+                          pathAnnotation.value()));
+        }
+      }
+    }
+    return endpoints;
+  }
+
+  /**
    * Returns description for the plugin.
    */
   private String getPluginDescription(Class<?> cls) {
@@ -380,7 +425,7 @@ public class ArtifactInspector {
         PluginPropertyField property = createPluginProperty(field, type);
         if (result.containsKey(property.getName())) {
           throw new IllegalArgumentException("Plugin config with name " + property.getName()
-            + " already defined in " + configType.getRawType());
+                                               + " already defined in " + configType.getRawType());
         }
         result.put(property.getName(), property);
       }

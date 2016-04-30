@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -30,7 +30,7 @@ import java.sql.SQLException;
 import java.util.List;
 
 /**
- *
+ * Tests for {@link ExplorePreparedStatement}.
  */
 public class ExplorePreparedStatementTest {
 
@@ -45,9 +45,9 @@ public class ExplorePreparedStatementTest {
                       (List<QueryResult>) Lists.<QueryResult>newArrayList())
     );
 
-
+    String ns = "ns1";
     ExplorePreparedStatement statement = new ExplorePreparedStatement(null, exploreClient,
-                                                                      "SELECT * FROM table WHERE id=?, name=?", "");
+                                                                      "SELECT * FROM table WHERE id=?, name=?", ns);
     statement.setInt(1, 100);
     try {
       statement.execute();
@@ -65,27 +65,27 @@ public class ExplorePreparedStatementTest {
     Assert.assertFalse(rs.isClosed());
     Assert.assertFalse(rs.next());
 
-    statement = new ExplorePreparedStatement(null, exploreClient, "SELECT * FROM table WHERE name='?'", "");
+    statement = new ExplorePreparedStatement(null, exploreClient, "SELECT * FROM table WHERE name='?'", ns);
     Assert.assertEquals("SELECT * FROM table WHERE name='?'", statement.updateSql());
 
-    statement = new ExplorePreparedStatement(null, exploreClient, "SELECT * FROM table WHERE name='?', id=?", "");
+    statement = new ExplorePreparedStatement(null, exploreClient, "SELECT * FROM table WHERE name='?', id=?", ns);
     statement.setInt(1, 100);
     Assert.assertEquals("SELECT * FROM table WHERE name='?', id=100", statement.updateSql());
 
-    statement = new ExplorePreparedStatement(null, exploreClient, "SELECT * FROM table WHERE name=\"?\", id=?", "");
+    statement = new ExplorePreparedStatement(null, exploreClient, "SELECT * FROM table WHERE name=\"?\", id=?", ns);
     statement.setInt(1, 100);
     Assert.assertEquals("SELECT * FROM table WHERE name=\"?\", id=100", statement.updateSql());
 
-    statement = new ExplorePreparedStatement(null, exploreClient, "SELECT * FROM table WHERE name=\"'?'\", id=?", "");
+    statement = new ExplorePreparedStatement(null, exploreClient, "SELECT * FROM table WHERE name=\"'?'\", id=?", ns);
     statement.setInt(1, 100);
     Assert.assertEquals("SELECT * FROM table WHERE name=\"'?'\", id=100", statement.updateSql());
 
-    statement = new ExplorePreparedStatement(null, exploreClient, "SELECT * FROM table WHERE name=\"'?\", id=?", "");
+    statement = new ExplorePreparedStatement(null, exploreClient, "SELECT * FROM table WHERE name=\"'?\", id=?", ns);
     statement.setInt(1, 100);
     Assert.assertEquals("SELECT * FROM table WHERE name=\"'?\", id=100", statement.updateSql());
 
     statement = new ExplorePreparedStatement(null, exploreClient,
-                                             "SELECT * FROM table WHERE name=\"\\\"?\\\"\", id=?", "");
+                                             "SELECT * FROM table WHERE name=\"\\\"?\\\"\", id=?", ns);
     statement.setInt(1, 100);
     Assert.assertEquals("SELECT * FROM table WHERE name=\"\\\"?\\\"\", id=100", statement.updateSql());
   }

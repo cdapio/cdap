@@ -88,8 +88,8 @@ public class CreateAppCommand extends AbstractAuthCommand {
 
   @Override
   public String getDescription() {
-    return String.format("Creates %s from an artifact with optional configuration. If configuration is needed, it " +
-      "must be given as a file whose contents are a JSON object containing the application config. " +
+    return String.format("Creates %s from an artifact, optionally using a configuration. If a configuration is " +
+      "needed, it must be given as a file whose contents are a JSON object containing the application config. " +
       "For example, the file contents could contain: '{ \"config\": { \"stream\": \"purchases\" } }'. In this case, " +
       "the application would receive '{ \"stream\": \"purchases\" }' as its config object.",
       Fragment.of(Article.A, ElementType.APP.getName()));

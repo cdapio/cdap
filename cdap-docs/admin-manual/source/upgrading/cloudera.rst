@@ -9,33 +9,38 @@ Upgrading CDAP using Cloudera Manager
 =====================================
 
 
-.. _admin-upgrading-cloudera-cdap:
+.. _admin-upgrading-cloudera-upgrading-cdap:
 
 Upgrading CDAP
 ==============
+When upgrading an existing CDAP installation from a previous version, you will need
+to make sure the CDAP table definitions in HBase are up-to-date.
+
+**These steps will upgrade from CDAP** |bold-previous-short-version|\ **.x to**
+|bold-version|\ **.** If you are on an earlier version of CDAP, please follow the
+upgrade instructions for the earlier versions and upgrade first to
+|previous-short-version|\.x before proceeding.
 
 Upgrading CDAP Patch Release Versions
 -------------------------------------
+Upgrading between patch versions of CDAP refers to upgrading from one |short-version|\.x
+version to a higher |short-version|\.x version.
 When a new compatible CDAP parcel is released, it will be available via the Parcels page
 in the Cloudera Manager UI.
 
-#. Stop all flows, services, and other programs in all your applications.
-
-#. Stop CDAP services.
-
-#. Use the Cloudera Manager UI to download, distribute, and activate the parcel on all
-   cluster hosts.
-
-#. Start CDAP services.
-
 Upgrading CDAP Major/Minor Release Versions
 -------------------------------------------
-Upgrading between major versions of CDAP involves the additional steps of upgrading the
-CSD, and running the included CDAP Upgrade Tool. Upgrades between multiple Major/Minor
+Upgrading between major versions of CDAP (for example, from a |previous-short-version|\.x version 
+to |short-version|\.x) involves the additional step of upgrading the
+CSD. Upgrades between multiple Major/Minor
 versions must be done consecutively, and a version cannot be skipped unless otherwise
 noted.
 
-The following is the generic procedure for Major/Minor version upgrades:
+The following is the generic procedure for all upgrades. These steps will stop CDAP,
+update the installation, run an upgrade tool for the table definitions, and then restart
+CDAP:
+
+.. highlight:: console
 
 #. Stop all flows, services, and other programs in all your applications.
 
@@ -60,8 +65,8 @@ The following is the generic procedure for Major/Minor version upgrades:
    upgrade steps against the running services.  From the CDAP Service page, select "Run CDAP
    Post-Upgrade Tasks."
 
-#. To upgrade existing ETL applications created using the 3.2.x versions of ``cdap-etl-batch`` or 
-   ``cdap-etl-realtime``, there are :ref:`separate instructions <cdap-apps-etl-upgrade>`.
+#. To upgrade existing ETL applications created using the |previous-short-version|\.x versions of 
+   ``cdap-etl-batch`` or ``cdap-etl-realtime``, there are :ref:`separate instructions <cdap-apps-etl-upgrade>`.
 
 #. You must recompile and then redeploy your applications prior to using them.
 
@@ -83,8 +88,10 @@ goes wrong, see these troubleshooting instructions for :ref:`problems while upgr
 
 **Upgrade Steps**
 
+.. highlight:: console
+
 1. Upgrade CDAP to a version that will support the new CDH version, following the usual
-   :ref:`CDAP-Cloudera Manager upgrade procedure <admin-upgrading-cloudera-cdap>`. 
+   :ref:`CDAP-Cloudera Manager upgrade procedure <admin-upgrading-cloudera-upgrading-cdap>`. 
 
 #. After upgrading CDAP, start CDAP and check that it is working correctly.
 

@@ -175,12 +175,12 @@ To do this, write the following JSON to a config file::
 the ``schema`` values) to be a conforming JSON file. 
 
 Then use your config file with the ``cdap-etl-batch`` artifact to create an application through the CLI.
-For example, if you wrote the above JSON to a file named ``conversion.json``::
+For example, if you wrote the above JSON to a file named ``conversion.json``:
 
-  .. container:: highlight
+.. container:: highlight
 
-    .. parsed-literal::
-      cdap > create app trades_conversion cdap-etl-batch |version| system <path-to-conversion.json>
+  .. parsed-literal::
+    cdap > create app trades_conversion cdap-etl-batch |release| system <path-to-conversion.json>
 
 
 This will create and configure an application. The application's schedule (named, by default, to ``etlWorkflow``)

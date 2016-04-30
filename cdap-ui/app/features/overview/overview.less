@@ -19,56 +19,72 @@
 @import "../../styles/themes/cdap/mixins.less";
 
 body.state-overview {
-  .panel-message {
-    margin: 20px auto 40px;
-    position: relative;
+  .welcome-banner {
+    position: absolute;
+    top: 50px;
+    left: 0;
+    right: 0;
+    height: 130px;
+    background: url('@{img-path}/CDAP_promo_ad.jpg') no-repeat left center;
+    background-size: cover;
 
-    .panel-body {
-      padding: 0 0 0 20px;
-    }
-    .row {
-      height: 150px;
-      .hydrator-banner {
-        padding: 25px;
-        img {
-          max-height: 100px;
-          max-width: 100%;
-        }
-      }
-      .banner-content {
-        position: relative;
-        top: 50%;
-        transform: translateY(-50%);
-        padding-right: 50px;
-        h4 {
-          font-weight: 600;
-          line-height: 1.3;
-          margin-bottom: 15px;
-          color: #31313d;
-        }
-        .btn.btn-blue {
-          background-color: #4285f4;
-          color: white;
-          padding-left: 35px;
-          padding-right: 35px;
-        }
-      }
-    }
     .btn-close {
       position: absolute;
-      right: 10px;
-      z-index: 10;
+      font-size: 25px;
+      top: 15px;
+      right: 15px;
+      color: #ccc;
+      padding: 5px;
+      cursor: pointer;
     }
-    small {
-      display: inline-block;
-      font-size: 13px;
-      margin-top: 4px;
-      vertical-align: text-top;
+
+    .banner-title, .banner-content { color: white; }
+    .banner-title {
+      font-size: 39px;
+      font-weight: 500;
+      margin-top: 0;
+      margin-bottom: 5px;
+      line-height: 43px;
     }
-    p {
-      font-size: 11px;
+    p { margin-left: 3px; }
+
+    .banner-content {
+      margin-top: 30px;
+    }
+    .text-content {
+      margin-left: 80px;
+      font-size: 14px;
+    }
+
+    .hydrator-banner {
+      background: url('@{img-path}/Hydrator_logo.png') no-repeat left center;
+    }
+    .tracker-banner {
+      background: url('@{img-path}/tracker_logo.png') no-repeat left center;
+    }
+
+    .btn {
+      margin-left: 15px;
+      font-size: 16px;
+      font-weight: 500;
+      padding: 3px 14px;
+      color: white;
+      vertical-align: top;
+      margin-top: 8px;
+
+      &.btn-hydrator { background-color: @hydrator-blue; }
+      &.btn-tracker { background-color: @tracker-green; }
     }
   }
+
+  .system-health-title-offset {
+    margin-top: 110px;
+  }
+
+  .alerts {
+    top: 50px;
+  }
+
   section {
 
     &.system-health {

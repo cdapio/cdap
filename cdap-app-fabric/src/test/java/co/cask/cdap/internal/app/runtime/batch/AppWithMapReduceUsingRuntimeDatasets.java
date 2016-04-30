@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,6 +19,8 @@ package co.cask.cdap.internal.app.runtime.batch;
 import co.cask.cdap.api.ProgramLifecycle;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.api.data.batch.Input;
+import co.cask.cdap.api.data.batch.Output;
 import co.cask.cdap.api.dataset.lib.FileSetArguments;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.table.Put;
@@ -86,11 +88,11 @@ public class AppWithMapReduceUsingRuntimeDatasets extends AbstractApplication {
       // Setup input and output file sets
       Map<String, String> args = Maps.newHashMap();
       FileSetArguments.setInputPaths(args, inputPaths);
-      context.setInput(inputName, args);
+      context.addInput(Input.ofDataset(inputName, args));
 
       args.clear();
       FileSetArguments.setOutputPath(args, outputPath);
-      context.addOutput(outputName, args);
+      context.addOutput(Output.ofDataset(outputName, args));
 
       Table table = context.getDataset("rtt");
       table.put(new Put("a").add("b", "c"));

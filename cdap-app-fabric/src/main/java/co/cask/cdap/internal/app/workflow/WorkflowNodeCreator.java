@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,13 +17,11 @@
 package co.cask.cdap.internal.app.workflow;
 
 import co.cask.cdap.api.schedule.SchedulableProgramType;
-import co.cask.cdap.api.workflow.AbstractWorkflowAction;
 import co.cask.cdap.api.workflow.ScheduleProgramInfo;
 import co.cask.cdap.api.workflow.WorkflowAction;
 import co.cask.cdap.api.workflow.WorkflowActionNode;
 import co.cask.cdap.api.workflow.WorkflowActionSpecification;
 import co.cask.cdap.api.workflow.WorkflowNode;
-import co.cask.cdap.internal.workflow.DefaultWorkflowActionSpecification;
 import com.google.common.base.Preconditions;
 
 /**
@@ -55,13 +53,7 @@ final class WorkflowNodeCreator {
 
   static WorkflowNode createWorkflowCustomActionNode(WorkflowAction action) {
     Preconditions.checkArgument(action != null, "WorkflowAction is null.");
-    WorkflowActionSpecification spec;
-    if (action instanceof AbstractWorkflowAction) {
-      spec = DefaultWorkflowActionConfigurer.configureAction((AbstractWorkflowAction) action);
-    } else {
-      spec = new DefaultWorkflowActionSpecification(action.configure(), action);
-    }
+    WorkflowActionSpecification spec = DefaultWorkflowActionConfigurer.configureAction(action);
     return new WorkflowActionNode(spec.getName(), spec);
   }
-
 }

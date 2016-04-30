@@ -19,11 +19,12 @@ package co.cask.cdap.etl.batch;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.table.Table;
-import co.cask.cdap.etl.batch.config.ETLBatchConfig;
-import co.cask.cdap.etl.batch.mock.MockSink;
-import co.cask.cdap.etl.batch.mock.MockSource;
-import co.cask.cdap.etl.batch.mock.StringValueFilterTransform;
-import co.cask.cdap.etl.common.ETLStage;
+import co.cask.cdap.etl.mock.batch.MockSink;
+import co.cask.cdap.etl.mock.batch.MockSource;
+import co.cask.cdap.etl.mock.transform.StringValueFilterTransform;
+import co.cask.cdap.etl.proto.Engine;
+import co.cask.cdap.etl.proto.v2.ETLBatchConfig;
+import co.cask.cdap.etl.proto.v2.ETLStage;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.test.ApplicationManager;
@@ -53,17 +54,17 @@ public class ETLSparkTestRun extends ETLBatchTestBase {
      *            ---- filter ---- sink2
      */
     ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
-      .setEngine(ETLBatchConfig.Engine.SPARK)
-      .setSource(new ETLStage("source", MockSource.getPlugin("sparkinput")))
-      .addSink(new ETLStage("sink1", MockSink.getPlugin("sparkoutput1")))
-      .addSink(new ETLStage("sink2", MockSink.getPlugin("sparkoutput2")))
-      .addTransform(new ETLStage("filter", StringValueFilterTransform.getPlugin("name", "samuel")))
+      .setEngine(Engine.SPARK)
+      .addStage(new ETLStage("source", MockSource.getPlugin("sparkinput")))
+      .addStage(new ETLStage("sink1", MockSink.getPlugin("sparkoutput1")))
+      .addStage(new ETLStage("sink2", MockSink.getPlugin("sparkoutput2")))
+      .addStage(new ETLStage("filter", StringValueFilterTransform.getPlugin("name", "samuel")))
       .addConnection("source", "sink1")
       .addConnection("source", "filter")
       .addConnection("filter", "sink2")
       .build();
 
-    AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(ETLBATCH_ARTIFACT, etlConfig);
+    AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
     Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "DagApp");
     ApplicationManager appManager = deployApplication(appId, appRequest);
 

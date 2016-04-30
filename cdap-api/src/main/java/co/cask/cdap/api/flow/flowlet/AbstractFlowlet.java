@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -106,7 +106,10 @@ public abstract class AbstractFlowlet extends AbstractProgramDatasetConfigurable
    *
    * @param dataset dataset name
    * @param datasets more dataset names
+   * @deprecated Deprecated as of 3.4.0. Dataset can be requested directly through the method
+   *             {@link FlowletContext#getDataset(String)} at runtime.
    */
+  @Deprecated
   protected void useDatasets(String dataset, String...datasets) {
     List<String> datasetList = new ArrayList<>();
     datasetList.add(dataset);
@@ -118,7 +121,10 @@ public abstract class AbstractFlowlet extends AbstractProgramDatasetConfigurable
    * Adds the names of {@link Dataset}s used by the Flowlet.
    *
    * @param datasets dataset names
+   * @deprecated Deprecated as of 3.4.0. Dataset can be requested directly through the method
+   *             {@link FlowletContext#getDataset(String)} at runtime.
    */
+  @Deprecated
   protected void useDatasets(Iterable<String> datasets) {
     configurer.useDatasets(datasets);
   }

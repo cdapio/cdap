@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -32,6 +32,7 @@ import co.cask.cdap.api.worker.AbstractWorker;
 import co.cask.cdap.api.worker.WorkerContext;
 import co.cask.cdap.etl.api.Emitter;
 import co.cask.cdap.etl.api.InvalidEntry;
+import co.cask.cdap.etl.api.StageMetrics;
 import co.cask.cdap.etl.api.Transform;
 import co.cask.cdap.etl.api.Transformation;
 import co.cask.cdap.etl.api.realtime.RealtimeSink;
@@ -42,22 +43,31 @@ import co.cask.cdap.etl.common.DefaultEmitter;
 import co.cask.cdap.etl.common.DefaultStageMetrics;
 import co.cask.cdap.etl.common.Destroyables;
 import co.cask.cdap.etl.common.LoggedTransform;
-import co.cask.cdap.etl.common.NoopMetrics;
-import co.cask.cdap.etl.common.Pipeline;
-import co.cask.cdap.etl.common.PipelineRegisterer;
-import co.cask.cdap.etl.common.SinkInfo;
+import co.cask.cdap.etl.common.PipelinePhase;
+import co.cask.cdap.etl.common.SetMultimapCodec;
+import co.cask.cdap.etl.common.TrackedEmitter;
+import co.cask.cdap.etl.common.TrackedTransform;
 import co.cask.cdap.etl.common.TransformDetail;
 import co.cask.cdap.etl.common.TransformExecutor;
-import co.cask.cdap.etl.common.TransformInfo;
 import co.cask.cdap.etl.common.TransformResponse;
 import co.cask.cdap.etl.common.TxLookupProvider;
 import co.cask.cdap.etl.log.LogStageInjector;
-import co.cask.cdap.etl.realtime.config.ETLRealtimeConfig;
+import co.cask.cdap.etl.planner.PipelinePlan;
+import co.cask.cdap.etl.planner.PipelinePlanner;
+import co.cask.cdap.etl.planner.StageInfo;
+import co.cask.cdap.etl.proto.v2.ETLRealtimeConfig;
+import co.cask.cdap.etl.spec.PipelineSpec;
+import co.cask.cdap.etl.spec.PipelineSpecGenerator;
+import co.cask.cdap.etl.spec.StageSpec;
 import co.cask.cdap.format.StructuredRecordStringConverter;
+import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.SetMultimap;
 import com.google.common.collect.Sets;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -65,6 +75,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -72,12 +83,15 @@ import java.util.Set;
 import java.util.UUID;
 
 /**
- * Worker driver for Realtime ETL Adapters.
+ * Worker driver for Realtime ETL Applications.
  */
 public class ETLWorker extends AbstractWorker {
   public static final String NAME = ETLWorker.class.getSimpleName();
   private static final Logger LOG = LoggerFactory.getLogger(ETLWorker.class);
-  private static final Gson GSON = new Gson();
+  private static final Gson GSON = new GsonBuilder()
+    .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
+    .registerTypeAdapter(SetMultimap.class, new SetMultimapCodec<>())
+    .create();
   private static final String SEPARATOR = ":";
   private static final Schema ERROR_SCHEMA = Schema.recordOf(
     "error",
@@ -86,6 +100,9 @@ public class ETLWorker extends AbstractWorker {
     Schema.Field.of(Constants.ErrorDataset.ERRMSG, Schema.unionOf(Schema.of(Schema.Type.STRING),
                                                                   Schema.of(Schema.Type.NULL))),
     Schema.Field.of(Constants.ErrorDataset.INVALIDENTRY, Schema.of(Schema.Type.STRING)));
+  private static final String UNIQUE_ID = "uniqueid";
+  private static final Set<String> SUPPORTED_PLUGIN_TYPES = ImmutableSet.of(
+    RealtimeSource.PLUGIN_TYPE, RealtimeSink.PLUGIN_TYPE, Transform.PLUGIN_TYPE);
 
   // only visible at configure time
   private final ETLRealtimeConfig config;
@@ -97,7 +114,6 @@ public class ETLWorker extends AbstractWorker {
   private String sourceStageName;
   private Map<String, RealtimeSink> sinks;
   private TransformExecutor transformExecutor;
-  private DefaultEmitter sourceEmitter;
   private String stateStoreKey;
   private byte[] stateStoreKeyBytes;
   private String appName;
@@ -111,8 +127,8 @@ public class ETLWorker extends AbstractWorker {
   @Override
   public void configure() {
     setName(NAME);
-    setDescription("Worker Driver for Realtime ETL Adapters");
-    int instances = config.getInstances() != null ? config.getInstances() : 1;
+    setDescription("Worker Driver for Realtime ETL Pipelines");
+    int instances = config.getInstances();
     if (instances < 1) {
       throw new IllegalArgumentException("instances must be greater than 0.");
     }
@@ -121,16 +137,38 @@ public class ETLWorker extends AbstractWorker {
       setResources(config.getResources());
     }
 
-    PipelineRegisterer registerer = new PipelineRegisterer(getConfigurer(), "realtime");
-    // using table dataset type for error dataset
-    Pipeline pipeline = registerer.registerPlugins(config, Table.class, DatasetProperties.builder()
-      .add(Table.PROPERTY_SCHEMA, ERROR_SCHEMA.toString())
-      .build(), false);
+    PipelineSpecGenerator<ETLRealtimeConfig, PipelineSpec> specGenerator =
+      new RealtimePipelineSpecGenerator(getConfigurer(),
+                                        ImmutableSet.of(RealtimeSource.PLUGIN_TYPE),
+                                        ImmutableSet.of(RealtimeSink.PLUGIN_TYPE),
+                                        Table.class,
+                                        DatasetProperties.builder()
+                                          .add(Table.PROPERTY_SCHEMA, ERROR_SCHEMA.toString())
+                                          .build());
+    PipelineSpec spec = specGenerator.generateSpec(config);
+    int sourceCount = 0;
+    for (StageSpec stageSpec : spec.getStages()) {
+      if (RealtimeSource.PLUGIN_TYPE.equals(stageSpec.getPlugin().getType())) {
+        sourceCount++;
+      }
+    }
+    if (sourceCount != 1) {
+      throw new IllegalArgumentException("Invalid pipeline. There must only be one source.");
+    }
+    PipelinePlanner planner = new PipelinePlanner(SUPPORTED_PLUGIN_TYPES,
+                                                  ImmutableSet.<String>of(), ImmutableSet.<String>of());
+    PipelinePlan plan = planner.plan(spec);
+    if (plan.getPhases().size() != 1) {
+      // should never happen
+      throw new IllegalArgumentException("There was an error planning the pipeline. There should only be one phase.");
+    }
+    PipelinePhase pipeline = plan.getPhases().values().iterator().next();
 
     Map<String, String> properties = new HashMap<>();
+    properties.put(Constants.PIPELINE_SPEC_KEY, GSON.toJson(spec));
     properties.put(Constants.PIPELINEID, GSON.toJson(pipeline));
     // Generate unique id for this app creation.
-    properties.put(Constants.Realtime.UNIQUE_ID, String.valueOf(System.currentTimeMillis()));
+    properties.put(UNIQUE_ID, String.valueOf(System.currentTimeMillis()));
     properties.put(Constants.STAGE_LOGGING_ENABLED, String.valueOf(config.isStageLoggingEnabled()));
     setProperties(properties);
   }
@@ -145,22 +183,22 @@ public class ETLWorker extends AbstractWorker {
     Map<String, String> properties = context.getSpecification().getProperties();
     appName = context.getApplicationSpecification().getName();
     Preconditions.checkArgument(properties.containsKey(Constants.PIPELINEID));
-    Preconditions.checkArgument(properties.containsKey(Constants.Realtime.UNIQUE_ID));
+    Preconditions.checkArgument(properties.containsKey(UNIQUE_ID));
 
-    String uniqueId = properties.get(Constants.Realtime.UNIQUE_ID);
+    String uniqueId = properties.get(UNIQUE_ID);
 
     // Each worker instance should have its own unique state.
     final String appName = context.getApplicationSpecification().getName();
     stateStoreKey = String.format("%s%s%s%s%s", appName, SEPARATOR, uniqueId, SEPARATOR, context.getInstanceId());
     stateStoreKeyBytes = Bytes.toBytes(stateStoreKey);
 
-    // Cleanup the rows in statetable for runs with same adapter name but other runids.
+    // Cleanup the rows in statetable for runs with same app name but other runids.
     getContext().execute(new TxRunnable() {
       @Override
       public void run(DatasetContext dsContext) throws Exception {
         KeyValueTable stateTable = dsContext.getDataset(ETLRealtimeApplication.STATE_TABLE);
         byte[] startKey = Bytes.toBytes(String.format("%s%s", appName, SEPARATOR));
-        // Scan the table for adaptername: prefixes and remove rows which doesn't match the unique id of this adapter.
+        // Scan the table for appname: prefixes and remove rows which doesn't match the unique id of this application.
         CloseableIterator<KeyValue<byte[], byte[]>> rows = stateTable.scan(startKey, Bytes.stopKeyForPrefix(startKey));
         try {
           while (rows.hasNext()) {
@@ -175,48 +213,44 @@ public class ETLWorker extends AbstractWorker {
       }
     });
 
-    Map<String, List<String>> connectionsMap =
-      GSON.fromJson(properties.get(Constants.PIPELINEID), Pipeline.class).getConnections();
+    PipelinePhase pipeline = GSON.fromJson(properties.get(Constants.PIPELINEID), PipelinePhase.class);
     Map<String, TransformDetail> transformationMap = new HashMap<>();
-    DefaultEmitter defaultEmitter = new DefaultEmitter(metrics);
 
-    initializeSource(context);
+    initializeSource(context, pipeline);
 
-    initializeTransforms(context, transformationMap, connectionsMap);
-    initializeSinks(context, transformationMap);
-    List<String> startStages = new ArrayList<>();
-    startStages.addAll(connectionsMap.get(sourceStageName));
+    initializeTransforms(context, transformationMap, pipeline);
+    initializeSinks(context, transformationMap, pipeline);
+    Set<String> startStages = new HashSet<>();
+    startStages.addAll(pipeline.getStageOutputs(sourceStageName));
     transformExecutor = new TransformExecutor(transformationMap, startStages);
   }
 
-  private void initializeSource(WorkerContext context) throws Exception {
-    String sourcePluginId =
-      GSON.fromJson(context.getSpecification().getProperty(Constants.PIPELINEID), Pipeline.class).getSource();
-    source = context.newPluginInstance(sourcePluginId);
-    source = new LoggedRealtimeSource<>(sourcePluginId, source);
+  private void initializeSource(WorkerContext context, PipelinePhase pipeline) throws Exception {
+    String sourceName = pipeline.getStagesOfType(RealtimeSource.PLUGIN_TYPE).iterator().next().getName();
+    source = context.newPluginInstance(sourceName);
+    source = new LoggedRealtimeSource<>(sourceName, source);
     WorkerRealtimeContext sourceContext = new WorkerRealtimeContext(
-      context, metrics, new TxLookupProvider(context), sourcePluginId);
-    sourceStageName = sourcePluginId;
+      context, metrics, new TxLookupProvider(context), sourceName);
+    sourceStageName = sourceName;
     LOG.debug("Source Class : {}", source.getClass().getName());
     source.initialize(sourceContext);
-    sourceEmitter = new DefaultEmitter(sourceContext.getMetrics());
   }
 
   @SuppressWarnings("unchecked")
   private void initializeSinks(WorkerContext context,
-                               Map<String, TransformDetail> transformationMap) throws Exception {
-    List<SinkInfo> sinkInfos = GSON.fromJson(context.getSpecification().getProperty(Constants.PIPELINEID),
-                                             Pipeline.class).getSinks();
+                               Map<String, TransformDetail> transformationMap,
+                               PipelinePhase pipeline) throws Exception {
+    Set<StageInfo> sinkInfos = pipeline.getStagesOfType(RealtimeSink.PLUGIN_TYPE);
     sinks = new HashMap<>(sinkInfos.size());
-    for (SinkInfo sinkInfo : sinkInfos) {
-      String sinkName = sinkInfo.getSinkId();
+    for (StageInfo sinkInfo : sinkInfos) {
+      String sinkName = sinkInfo.getName();
       RealtimeSink sink = context.newPluginInstance(sinkName);
       sink = new LoggedRealtimeSink(sinkName, sink);
       WorkerRealtimeContext sinkContext = new WorkerRealtimeContext(
         context, metrics, new TxLookupProvider(context), sinkName);
       LOG.debug("Sink Class : {}", sink.getClass().getName());
       sink.initialize(sinkContext);
-      sink = new TrackedRealtimeSink(sink, sinkContext.getMetrics());
+      sink = new TrackedRealtimeSink(sink, new DefaultStageMetrics(metrics, sinkName));
 
       Transformation identityTransformation = new Transformation() {
         @Override
@@ -227,36 +261,37 @@ public class ETLWorker extends AbstractWorker {
 
       // we use identity transformation to simplify executing transformation in pipeline (similar to ETLMapreduce),
       // since we want to emit metrics during write to sink and not during this transformation, we use NoOpMetrics.
-      transformationMap.put(sinkInfo.getSinkId(),
-                            new TransformDetail(identityTransformation,
-                                                new NoopMetrics(),
-                                                new ArrayList<String>()));
-      sinks.put(sinkInfo.getSinkId(), sink);
+      TrackedTransform trackedTransform = new TrackedTransform(identityTransformation,
+                                                               new DefaultStageMetrics(metrics, sinkName),
+                                                               TrackedTransform.RECORDS_IN,
+                                                               null);
+      transformationMap.put(sinkInfo.getName(), new TransformDetail(trackedTransform, new HashSet<String>()));
+      sinks.put(sinkInfo.getName(), sink);
     }
   }
 
   private void initializeTransforms(WorkerContext context,
                                     Map<String, TransformDetail> transformDetailMap,
-                                    Map<String, List<String>> connectionsMap) throws Exception {
-    List<TransformInfo> transformInfos =
-      GSON.fromJson(context.getSpecification().getProperty(Constants.PIPELINEID), Pipeline.class).getTransforms();
+                                    PipelinePhase pipeline) throws Exception {
+    Set<StageInfo> transformInfos = pipeline.getStagesOfType(Transform.PLUGIN_TYPE);
     Preconditions.checkArgument(transformInfos != null);
     tranformIdToDatasetName = new HashMap<>(transformInfos.size());
 
-    for (TransformInfo transformInfo : transformInfos) {
-      String transformId = transformInfo.getTransformId();
+    for (StageInfo transformInfo : transformInfos) {
+      String transformName = transformInfo.getName();
       try {
-        Transform<?, ?> transform = context.newPluginInstance(transformId);
-        transform = new LoggedTransform<>(transformId, transform);
+        Transform<?, ?> transform = context.newPluginInstance(transformName);
+        transform = new LoggedTransform<>(transformName, transform);
         WorkerRealtimeContext transformContext = new WorkerRealtimeContext(
-          context, metrics, new TxLookupProvider(context), transformId);
+          context, metrics, new TxLookupProvider(context), transformName);
         LOG.debug("Transform Class : {}", transform.getClass().getName());
         transform.initialize(transformContext);
-        transformDetailMap.put(transformId,
-                               new TransformDetail(transform, new DefaultStageMetrics(metrics, transformId),
-                                                   connectionsMap.get(transformId)));
+        StageMetrics stageMetrics = new DefaultStageMetrics(metrics, transformName);
+        transformDetailMap.put(transformName, new TransformDetail(
+          new TrackedTransform<>(transform, stageMetrics),
+          pipeline.getStageOutputs(transformName)));
         if (transformInfo.getErrorDatasetName() != null) {
-          tranformIdToDatasetName.put(transformId, transformInfo.getErrorDatasetName());
+          tranformIdToDatasetName.put(transformName, transformInfo.getErrorDatasetName());
         }
       } catch (InstantiationException e) {
         LOG.error("Unable to instantiate Transform", e);
@@ -287,10 +322,15 @@ public class ETLWorker extends AbstractWorker {
       }
     });
 
+    DefaultEmitter<Object> sourceEmitter = new DefaultEmitter<>();
+    TrackedEmitter<Object> trackedSourceEmitter =
+      new TrackedEmitter<>(sourceEmitter,
+                           new DefaultStageMetrics(metrics, sourceStageName),
+                           TrackedTransform.RECORDS_OUT);
     while (!stopped) {
       // Invoke poll method of the source to fetch data
       try {
-        SourceState newState = source.poll(sourceEmitter, new SourceState(currentState));
+        SourceState newState = source.poll(trackedSourceEmitter, new SourceState(currentState));
         if (newState != null) {
           nextState.setState(newState);
         }

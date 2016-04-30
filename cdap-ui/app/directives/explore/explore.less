@@ -47,6 +47,7 @@ my-explore {
       td {
         vertical-align: middle;
         font-size: 13px;
+        word-break: break-all;
 
         &.col-index {
           width: 5%;
@@ -66,7 +67,11 @@ my-explore {
 
         &.col-actions {
           width: 20%;
-
+          .btn-group-justified {
+            @media (max-width: @screen-xs-max) {
+              display: inline-block;
+            }
+          }
           button.btn {
             padding: 10px;
           }

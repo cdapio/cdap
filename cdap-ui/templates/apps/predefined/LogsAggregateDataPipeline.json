@@ -1,0 +1,190 @@
+{
+    "artifact": {
+        "name": "cdap-data-pipeline",
+        "version": "3.4.0",
+        "scope": "SYSTEM"
+    },
+    "description": "Reads access logs, stores the raw logs and computes aggregates",
+    "name": "LogsAggregateDataPipeline",
+    "config": {
+        "connections": [
+            {
+                "from": "S3 Source",
+                "to": "Log Parser"
+            },
+            {
+                "from": "Log Parser",
+                "to": "Group By Aggregator"
+            },
+            {
+                "from": "Group By Aggregator",
+                "to": "Aggregated Result"
+            },
+            {
+                "from": "S3 Source",
+                "to": "Raw Logs"
+            }
+        ],
+        "comments": [],
+        "postActions": [],
+        "stages": [
+            {
+                "name": "S3 Source",
+                "plugin": {
+                    "name": "S3",
+                    "type": "batchsource",
+                    "label": "S3 Source",
+                    "artifact": {
+                        "name": "core-plugins",
+                        "version": "1.3.0",
+                        "scope": "SYSTEM"
+                    },
+                    "properties": {
+                        "accessID": "",
+                        "accessKey": "",
+                        "path": ""
+                    }
+                },
+                "outputSchema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"body\",\"type\":\"string\"}]}",
+                "inputSchema": null
+            },
+            {
+                "name": "Log Parser",
+                "plugin": {
+                    "name": "LogParser",
+                    "type": "transform",
+                    "label": "Log Parser",
+                    "artifact": {
+                        "name": "core-plugins",
+                        "version": "1.3.0",
+                        "scope": "SYSTEM"
+                    },
+                    "properties": {
+                        "logFormat": "CLF",
+                        "inputName": "body"
+                    }
+                },
+                "outputSchema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"uri\",\"type\":\"string\"},{\"name\":\"ip\",\"type\":\"string\"},{\"name\":\"browser\",\"type\":\"string\"},{\"name\":\"device\",\"type\":\"string\"},{\"name\":\"httpStatus\",\"type\":\"int\"},{\"name\":\"ts\",\"type\":\"long\"}]}",
+                "inputSchema": [
+                    {
+                        "name": "body",
+                        "type": "string",
+                        "nullable": false
+                    }
+                ]
+            },
+            {
+                "name": "Group By Aggregator",
+                "plugin": {
+                    "name": "GroupByAggregate",
+                    "type": "batchaggregator",
+                    "label": "Group By Aggregator",
+                    "artifact": {
+                        "name": "core-plugins",
+                        "version": "1.3.0",
+                        "scope": "SYSTEM"
+                    },
+                    "properties": {
+                        "groupByFields": "ip,httpStatus",
+                        "aggregates": "count:Count(ip)"
+                    }
+                },
+                "outputSchema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"ip\",\"type\":[\"string\",\"null\"]},{\"name\":\"httpStatus\",\"type\":[\"int\",\"null\"]},{\"name\":\"count\",\"type\":\"long\"}]}",
+                "inputSchema": [
+                    {
+                        "name": "uri",
+                        "type": "string",
+                        "nullable": false
+                    },
+                    {
+                        "name": "ip",
+                        "type": "string",
+                        "nullable": false
+                    },
+                    {
+                        "name": "browser",
+                        "type": "string",
+                        "nullable": false
+                    },
+                    {
+                        "name": "device",
+                        "type": "string",
+                        "nullable": false
+                    },
+                    {
+                        "name": "httpStatus",
+                        "type": "int",
+                        "nullable": false
+                    },
+                    {
+                        "name": "ts",
+                        "type": "long",
+                        "nullable": false
+                    }
+                ]
+            },
+            {
+                "name": "Aggregated Result",
+                "plugin": {
+                    "name": "TPFSAvro",
+                    "type": "batchsink",
+                    "label": "Aggregated Result",
+                    "artifact": {
+                        "name": "core-plugins",
+                        "version": "1.3.0",
+                        "scope": "SYSTEM"
+                    },
+                    "properties": {
+                        "schema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"ip\",\"type\":[\"string\",\"null\"]},{\"name\":\"httpStatus\",\"type\":[\"int\",\"null\"]},{\"name\":\"count\",\"type\":\"long\"}]}",
+                        "name": "aggregates_host_status"
+                    }
+                },
+                "outputSchema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"ip\",\"type\":[\"string\",\"null\"]},{\"name\":\"httpStatus\",\"type\":[\"int\",\"null\"]},{\"name\":\"count\",\"type\":\"long\"}]}",
+                "inputSchema": [
+                    {
+                        "name": "ip",
+                        "type": "string",
+                        "nullable": true
+                    },
+                    {
+                        "name": "httpStatus",
+                        "type": "int",
+                        "nullable": true
+                    },
+                    {
+                        "name": "count",
+                        "type": "long",
+                        "nullable": false
+                    }
+                ]
+            },
+            {
+                "name": "Raw Logs",
+                "plugin": {
+                    "name": "TPFSAvro",
+                    "type": "batchsink",
+                    "label": "Raw Logs",
+                    "artifact": {
+                        "name": "core-plugins",
+                        "version": "1.3.0",
+                        "scope": "SYSTEM"
+                    },
+                    "properties": {
+                        "schema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"body\",\"type\":\"string\"}]}",
+                        "name": "access_raw"
+                    }
+                },
+                "outputSchema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"body\",\"type\":\"string\"}]}",
+                "inputSchema": [
+                    {
+                        "name": "body",
+                        "type": "string",
+                        "nullable": false
+                    }
+                ]
+            }
+        ],
+        "schedule": "0 * * * *",
+        "engine": "mapreduce"
+    }
+}

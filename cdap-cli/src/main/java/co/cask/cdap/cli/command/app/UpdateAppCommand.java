@@ -88,7 +88,7 @@ public class UpdateAppCommand extends AbstractAuthCommand {
 
   @Override
   public String getDescription() {
-    return String.format("Updates %s to use another artifact version and/or configuration.", Fragment.of(
+    return String.format("Updates %s to use another artifact version and/or configuration", Fragment.of(
       Article.A, ElementType.APP.getName()));
   }
 }

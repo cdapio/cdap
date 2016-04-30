@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,6 +16,7 @@
 
 package co.cask.cdap.proto;
 
+import co.cask.cdap.api.workflow.NodeStatus;
 
 /**
  * Program Status Types used to query program runs
@@ -26,5 +27,26 @@ public enum ProgramRunStatus {
   SUSPENDED,
   COMPLETED,
   FAILED,
-  KILLED
+  KILLED;
+
+  /**
+   * Conversion from program run status to Workflow node status.
+   * @param status the program run status to be converted
+   * @return the converted Workflow node status
+   */
+  public static NodeStatus toNodeStatus(ProgramRunStatus status) {
+    switch(status) {
+      case RUNNING:
+        return NodeStatus.RUNNING;
+      case COMPLETED:
+        return NodeStatus.COMPLETED;
+      case FAILED:
+        return NodeStatus.FAILED;
+      case KILLED:
+        return NodeStatus.KILLED;
+      default:
+        throw new IllegalArgumentException(String.format("No node status available corresponding to program status %s",
+                                                         status.name()));
+    }
+  }
 }

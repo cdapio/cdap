@@ -19,6 +19,7 @@ package co.cask.cdap.api.dataset;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * Dataset instance properties.
@@ -35,14 +36,21 @@ public final class DatasetProperties {
    */
   public static final String SCHEMA = "schema";
 
+  private final String description;
   private final Map<String, String> properties;
 
-  private DatasetProperties(Map<String, String> properties) {
+  private DatasetProperties(Map<String, String> properties, @Nullable String description) {
+    this.description = description;
     this.properties = properties;
   }
 
   public static Builder builder() {
     return new Builder();
+  }
+
+  @Nullable
+  public String getDescription() {
+    return description;
   }
 
   /**
@@ -63,9 +71,21 @@ public final class DatasetProperties {
    * A Builder to construct DatasetProperties instances.
    */
   public static class Builder {
+    private String description;
     private Map<String, String> properties = new HashMap<>();
 
     protected Builder() {
+    }
+
+    /**
+     * Sets description of the dataset
+     *
+     * @param description dataset description
+     * @return this builder object to allow chaining
+     */
+    public Builder setDescription(String description) {
+      this.description = description;
+      return this;
     }
 
     /**
@@ -105,7 +125,7 @@ public final class DatasetProperties {
      * constructor.
      */
     public DatasetProperties build() {
-      return new DatasetProperties(Collections.unmodifiableMap(this.properties));
+      return new DatasetProperties(Collections.unmodifiableMap(this.properties), description);
     }
   }
 }

@@ -1001,6 +1001,8 @@ public class StreamSizeScheduler implements Scheduler {
       argsBuilder.put(ProgramOptionConstants.RUN_BASE_COUNT_TIME, Long.toString(basePollTs));
       argsBuilder.put(ProgramOptionConstants.RUN_BASE_COUNT_SIZE, Long.toString(basePollSize));
       argsBuilder.putAll(properties);
+      final Map<String, String> userOverrides = ImmutableMap.of(ProgramOptionConstants.LOGICAL_START_TIME,
+                                                                Long.toString(pollingInfo.getTimestamp()));
 
       if (lastRunSize != -1 && lastRunTs != -1) {
         argsBuilder.put(ProgramOptionConstants.LAST_SCHEDULED_RUN_LOGICAL_START_TIME, Long.toString(lastRunTs));
@@ -1030,7 +1032,7 @@ public class StreamSizeScheduler implements Scheduler {
                                       @Override
                                       public void execute() throws Exception {
                                         LOG.info("About to start streamSizeSchedule {}", currentSchedule.getName());
-                                        taskRunner.run(programId, argsBuilder.build());
+                                        taskRunner.run(programId, argsBuilder.build(), userOverrides);
                                       }
                                     });
         lastRunSize = pollingInfo.getSize();

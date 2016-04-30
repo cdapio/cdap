@@ -25,7 +25,7 @@ import co.cask.cdap.client.MetaClient;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.config.ConnectionConfig;
 import co.cask.cdap.client.exception.DisconnectedException;
-import co.cask.cdap.common.UnauthorizedException;
+import co.cask.cdap.common.UnauthenticatedException;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.security.authentication.client.AccessToken;
 import co.cask.cdap.security.authentication.client.AuthenticationClient;
@@ -173,7 +173,7 @@ public class CLIConfig implements TableRendererConfig {
 
   private void checkConnection(ClientConfig baseClientConfig,
                                ConnectionConfig connectionInfo,
-                               AccessToken accessToken) throws IOException, UnauthorizedException {
+                               AccessToken accessToken) throws IOException, UnauthenticatedException {
     ClientConfig clientConfig = new ClientConfig.Builder(baseClientConfig)
       .setConnectionConfig(connectionInfo)
       .setAccessToken(accessToken)
@@ -202,11 +202,11 @@ public class CLIConfig implements TableRendererConfig {
     try {
       UserAccessToken savedToken = getSavedAccessToken(connectionInfo.getHostname());
       if (savedToken == null) {
-        throw new UnauthorizedException();
+        throw new UnauthenticatedException();
       }
       checkConnection(clientConfig, connectionInfo, savedToken.getAccessToken());
       return savedToken;
-    } catch (UnauthorizedException ignored) {
+    } catch (UnauthenticatedException ignored) {
       // access token invalid - fall through to try acquiring token manually
     }
 

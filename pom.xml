@@ -22,7 +22,7 @@
 
   <groupId>co.cask.cdap</groupId>
   <artifactId>cdap</artifactId>
-  <version>3.3.2</version>
+  <version>3.4.0</version>
   <packaging>pom</packaging>
   <name>Cask Data Application Platform (CDAP)</name>
   <description>Data Application Platform for Hadoop</description>
@@ -109,12 +109,14 @@
     <hbase10cdh550.version>1.0.0-cdh5.5.0</hbase10cdh550.version>
     <hbase10.version>1.0.1.1</hbase10.version>
     <hbase11.version>1.1.1</hbase11.version>
+    <hbase12cdh570.version>1.2.0-cdh5.7.0</hbase12cdh570.version>
     <hive.version>1.1.0</hive.version>
     <hsql.version>2.2.4</hsql.version>
     <http.component.version>4.2.5</http.component.version>
     <jetty.version>6.1.22</jetty.version>
     <jetty8.version>8.1.15.v20140411</jetty8.version>
     <jline.version>2.12</jline.version>
+    <jsch.version>0.1.42</jsch.version>
     <junit.version>4.11</junit.version>
     <kafka.version>0.8.2.2</kafka.version>
     <leveldb.version>0.6</leveldb.version>
@@ -126,16 +128,17 @@
     <rs-api.version>2.0</rs-api.version>
     <quartz.version>2.2.0</quartz.version>
     <resteasy.version>3.0.8.Final</resteasy.version>
+    <scala.version>2.10.4</scala.version>
     <servlet.api.version>3.0.1</servlet.api.version>
     <snappy.version>1.1.1.7</snappy.version>
     <shiro.version>1.2.1</shiro.version>
     <slf4j.version>1.7.5</slf4j.version>
-    <tephra.version>0.6.5</tephra.version>
+    <tephra.version>0.7.1</tephra.version>
     <thrift.version>0.9.0</thrift.version>
-    <twill.version>0.6.0-incubating</twill.version>
+    <twill.version>0.7.0-incubating</twill.version>
     <unboundid.version>2.3.6</unboundid.version>
     <zookeeper.version>3.4.5</zookeeper.version>
-    <spark.version>1.3.1</spark.version>
+    <spark.version>1.6.1</spark.version>
     <cdap.client.version>1.2.0</cdap.client.version>
     <twitter4j.version>4.0.3</twitter4j.version>
     <dumbster.version>1.6</dumbster.version>
@@ -152,6 +155,16 @@
       <dependency>
         <groupId>org.slf4j</groupId>
         <artifactId>slf4j-api</artifactId>
+        <version>${slf4j.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.slf4j</groupId>
+        <artifactId>log4j-over-slf4j</artifactId>
+        <version>${slf4j.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.slf4j</groupId>
+        <artifactId>jcl-over-slf4j</artifactId>
         <version>${slf4j.version}</version>
       </dependency>
       <dependency>
@@ -315,6 +328,11 @@
         <groupId>com.google.code.gson</groupId>
         <artifactId>gson</artifactId>
         <version>${gson.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.jcraft</groupId>
+        <artifactId>jsch</artifactId>
+        <version>${jsch.version}</version>
       </dependency>
       <dependency>
         <groupId>org.apache.avro</groupId>
@@ -584,6 +602,18 @@
             <groupId>commons-logging</groupId>
             <artifactId>commons-logging</artifactId>
           </exclusion>
+          <exclusion>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-yarn-api</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-yarn-client</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-yarn-common</artifactId>
+          </exclusion>
         </exclusions>
       </dependency>
       <dependency>
@@ -674,6 +704,71 @@
           <exclusion>
             <artifactId>slf4j-api</artifactId>
             <groupId>org.slf4j</groupId>
+          </exclusion>
+        </exclusions>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.hadoop</groupId>
+        <artifactId>hadoop-yarn-api</artifactId>
+        <version>${hadoop.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>commons-logging</groupId>
+            <artifactId>commons-logging</artifactId>
+          </exclusion>
+        </exclusions>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.hadoop</groupId>
+        <artifactId>hadoop-yarn-client</artifactId>
+        <version>${hadoop.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>commons-logging</groupId>
+            <artifactId>commons-logging</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.mortbay.jetty</groupId>
+            <artifactId>jetty-util</artifactId>
+          </exclusion>
+        </exclusions>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.hadoop</groupId>
+        <artifactId>hadoop-yarn-common</artifactId>
+        <version>${hadoop.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>javax.xml.bind</groupId>
+            <artifactId>jaxb-api</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>javax.servlet</groupId>
+            <artifactId>servlet-api</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>com.sun.jersey</groupId>
+            <artifactId>jersey-core</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>com.sun.jersey</groupId>
+            <artifactId>jersey-server</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>com.sun.jersey</groupId>
+            <artifactId>jersey-json</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>com.sun.jersey.contribs</groupId>
+            <artifactId>jersey-guice</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>commons-logging</groupId>
+            <artifactId>commons-logging</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>com.google.inject.extensions</groupId>
+            <artifactId>guice-servlet</artifactId>
           </exclusion>
         </exclusions>
       </dependency>
@@ -1063,6 +1158,10 @@
           </exclusion>
           <exclusion>
             <groupId>asm</groupId>
+            <artifactId>asm</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>asm</groupId>
             <artifactId>asm-commons</artifactId>
           </exclusion>
           <exclusion>
@@ -1210,10 +1309,6 @@
             <artifactId>curator-recipes</artifactId>
           </exclusion>
           <exclusion>
-            <groupId>org.tachyonproject</groupId>
-            <artifactId>tachyon-client</artifactId>
-          </exclusion>
-          <exclusion>
             <groupId>org.scala-lang</groupId>
             <artifactId>scala-compiler</artifactId>
           </exclusion>
@@ -1229,7 +1324,16 @@
             <groupId>net.java.dev.jets3t</groupId>
             <artifactId>jets3t</artifactId>
           </exclusion>
+          <exclusion>
+            <groupId>asm</groupId>
+            <artifactId>asm</artifactId>
+          </exclusion>
         </exclusions>
+      </dependency>
+      <dependency>
+        <groupId>org.scala-lang</groupId>
+        <artifactId>scala-library</artifactId>
+        <version>${scala.version}</version>
       </dependency>
       <dependency>
         <groupId>org.apache.spark</groupId>
@@ -1241,6 +1345,11 @@
             <artifactId>scala-compiler</artifactId>
           </exclusion>
         </exclusions>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.spark</groupId>
+        <artifactId>spark-streaming_2.10</artifactId>
+        <version>${spark.version}</version>
       </dependency>
       <dependency>
         <groupId>org.apache.spark</groupId>
@@ -1343,10 +1452,11 @@
           <artifactId>maven-surefire-plugin</artifactId>
           <version>2.14.1</version>
           <configuration>
-            <argLine>-Xmx5000m -Djava.awt.headless=true -XX:MaxPermSize=256m -XX:+UseConcMarkSweepGC -XX:OnOutOfMemoryError="kill -9 %p" -Djava.net.preferIPv4Stack=true</argLine>
+            <argLine>-Xmx5000m -Djava.awt.headless=true -XX:MaxPermSize=256m -XX:+UseConcMarkSweepGC -XX:OnOutOfMemoryError="kill -9 %p" -XX:+HeapDumpOnOutOfMemoryError</argLine>
             <redirectTestOutputToFile>${surefire.redirectTestOutputToFile}</redirectTestOutputToFile>
             <reuseForks>false</reuseForks>
             <reportFormat>plain</reportFormat>
+            <trimStackTrace>false</trimStackTrace>
             <systemPropertyVariables>
               <java.io.tmpdir>${project.build.directory}</java.io.tmpdir>
             </systemPropertyVariables>
@@ -1445,6 +1555,42 @@
               </configuration>
               <goals>
                 <goal>check</goal>
+              </goals>
+            </execution>
+          </executions>
+        </plugin>
+
+        <!-- Scala code compilation -->
+        <plugin>
+          <groupId>net.alchim31.maven</groupId>
+          <artifactId>scala-maven-plugin</artifactId>
+          <version>3.2.2</version>
+          <configuration>
+            <args>
+              <arg>-target:jvm-1.7</arg>
+            </args>
+          </configuration>
+          <executions>
+            <execution>
+              <id>scala-add-source</id>
+              <goals>
+                <goal>add-source</goal>
+              </goals>
+            </execution>
+            <execution>
+              <id>scala-compile</id>
+              <!-- Needs to be before the compile phase -->
+              <phase>process-resources</phase>
+              <goals>
+                <goal>compile</goal>
+              </goals>
+            </execution>
+            <execution>
+              <id>scala-test-compile</id>
+              <!-- Needs to be before the test-compile phase -->
+              <phase>process-test-resources</phase>
+              <goals>
+                <goal>testCompile</goal>
               </goals>
             </execution>
           </executions>
@@ -1611,6 +1757,7 @@
               <artifactId>maven-javadoc-plugin</artifactId>
               <version>2.9.1</version>
               <configuration>
+                <stylesheetfile>cdap-distributions/src/javadoc/stylesheet.css</stylesheetfile>
                 <bottom>
                   <![CDATA[Copyright &#169; {currentYear} <a href="http://cask.co" target="_blank">Cask Data, Inc.</a> Licensed under the <a href="http://www.apache.org/licenses/LICENSE-2.0" target="_blank">Apache License, Version 2.0</a>.]]>
                 </bottom>
@@ -1671,7 +1818,10 @@
         <stage.opt.dir>${stage.dir}/opt/cdap/${package.name}</stage.opt.dir>
         <stage.lib.dir>${stage.opt.dir}/lib</stage.lib.dir>
         <stage.plugins.dir>${stage.opt.dir}/plugins</stage.plugins.dir>
-        <package.depends>--depends cdap</package.depends>
+        <package.deb.depends>--depends cdap</package.deb.depends>
+        <package.rpm.depends>--depends cdap</package.rpm.depends>
+        <package.deb.arch>all</package.deb.arch>
+        <package.rpm.arch>all</package.rpm.arch>
         <package.dirs>opt etc</package.dirs>
       </properties>
       <build>
@@ -2119,7 +2269,7 @@
                       -C "${stage.dir}"
                       --directories "/opt/cdap/${package.name}"
                       --version "${package.version}"
-                      --architecture all
+                      --architecture "${package.rpm.arch}"
                       --rpm-os linux
                       --url "http://cask.co"
                       --template-value "project=${package.name}"
@@ -2128,7 +2278,7 @@
                       --after-remove "${project.parent.basedir}/cdap-distributions/src/rpm/scripts/postrm"
                       --iteration "${release.iteration}"
                       --depends libxml2
-                      ${package.depends}
+                      ${package.rpm.depends}
                       ${package.dirs}
                     </commandlineArgs>
                   </configuration>
@@ -2172,7 +2322,7 @@
                       -C "${stage.dir}-deb"
                       --directories "/opt/cdap/${package.name}"
                       --version "${package.version}"
-                      --architecture all
+                      --architecture "${package.deb.arch}"
                       --url "http://cask.co"
                       --template-value "project=${package.name}"
                       --after-install "${project.parent.basedir}/cdap-distributions/src/debian/scripts/postinst"
@@ -2180,7 +2330,7 @@
                       --after-remove "${project.parent.basedir}/cdap-distributions/src/debian/scripts/postrm"
                       --iteration "${release.iteration}"
                       --depends libxml2-utils
-                      ${package.depends}
+                      ${package.deb.depends}
                       ${package.dirs}
                     </commandlineArgs>
                   </configuration>
@@ -2264,6 +2414,7 @@
         <module>cdap-data-fabric-tests</module>
         <module>cdap-cli-tests</module>
         <module>cdap-client-tests</module>
+        <module>cdap-app-fabric-tests</module>
       </modules>
     </profile>
 
@@ -2283,6 +2434,7 @@
         <module>cdap-api-common</module>
         <module>cdap-spi</module>
         <module>cdap-api</module>
+        <module>cdap-api-spark</module>
         <module>cdap-formats</module>
         <module>cdap-hbase-compat-0.96</module>
         <module>cdap-hbase-compat-0.98</module>
@@ -2290,6 +2442,7 @@
         <module>cdap-hbase-compat-1.0-cdh</module>
         <module>cdap-hbase-compat-1.0</module>
         <module>cdap-hbase-compat-1.1</module>
+        <module>cdap-hbase-compat-1.2-cdh5.7.0</module>
         <module>cdap-common</module>
         <module>cdap-docs-gen</module>
         <module>cdap-watchdog-api</module>
@@ -2297,8 +2450,9 @@
         <module>cdap-data-fabric</module>
         <module>cdap-watchdog</module>
         <module>cdap-app-fabric</module>
+        <module>cdap-spark-core</module>
+        <module>cdap-security-spi</module>
         <module>cdap-security</module>
-        <module>cdap-authorization-dataset-plugin</module>
         <module>cdap-gateway</module>
         <module>cdap-explore-client</module>
         <module>cdap-explore-jdbc</module>
@@ -2317,6 +2471,42 @@
         <module>cdap-integration-test</module>
         <module>cdap-ui</module>
       </modules>
+    </profile>
+    <profile>
+      <id>doclint-java8-disable</id>
+      <activation>
+        <jdk>[1.8,)</jdk>
+      </activation>
+      <build>
+        <pluginManagement>
+          <plugins>
+            <plugin>
+              <groupId>org.apache.maven.plugins</groupId>
+              <artifactId>maven-javadoc-plugin</artifactId>
+              <configuration>
+                <additionalparam>-Xdoclint:none</additionalparam>
+                <failOnError>false</failOnError>
+              </configuration>
+            </plugin>
+            <plugin>
+              <groupId>org.apache.maven.plugins</groupId>
+              <artifactId>maven-site-plugin</artifactId>
+              <configuration>
+                <reportPlugins>
+                  <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-javadoc-plugin</artifactId>
+                    <configuration>
+                      <additionalparam>-Xdoclint:none</additionalparam>
+                      <failOnError>false</failOnError>
+                    </configuration>
+                  </plugin>
+                </reportPlugins>
+              </configuration>
+            </plugin>
+          </plugins>
+        </pluginManagement>
+      </build>
     </profile>
   </profiles>
 
@@ -2350,7 +2540,7 @@
             </group>
             <group>
               <title>Application Template Packages</title>
-              <packages>co.cask.cdap.app.*</packages>
+              <packages>co.cask.cdap.etl.*</packages>
             </group>
           </groups>
         </configuration>

@@ -32,6 +32,8 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.ScheduledRuntime;
+import com.google.common.base.Supplier;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import org.apache.twill.filesystem.LocationFactory;
@@ -40,11 +42,15 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+import org.junit.rules.TemporaryFolder;
 import org.quartz.ObjectAlreadyExistsException;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.Calendar;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -86,6 +92,20 @@ public class SchedulerServiceTest {
     .createDataSchedule(Schedules.Source.STREAM, STREAM_ID.getId(), 5);
   private ApplicationSpecification applicationSpecification;
 
+  @ClassRule
+  public static TemporaryFolder tmpFolder = new TemporaryFolder();
+
+  private static final Supplier<File> TEMP_FOLDER_SUPPLIER = new Supplier<File>() {
+    @Override
+    public File get() {
+      try {
+        return tmpFolder.newFolder();
+      } catch (IOException e) {
+        throw Throwables.propagate(e);
+      }
+    }
+  };
+
   @Rule
   public final ExpectedException exception = ExpectedException.none();
 
@@ -97,7 +117,7 @@ public class SchedulerServiceTest {
     namespaceAdmin = AppFabricTestHelper.getInjector().getInstance(NamespaceAdmin.class);
     namespaceAdmin.create(new NamespaceMeta.Builder().setName(namespace).build());
     namespaceAdmin.create(NamespaceMeta.DEFAULT);
-    AppFabricTestHelper.deployApplication(namespace, AppWithWorkflow.class);
+    AppFabricTestHelper.deployApplicationWithManager(namespace, AppWithWorkflow.class, TEMP_FOLDER_SUPPLIER);
   }
 
   @AfterClass

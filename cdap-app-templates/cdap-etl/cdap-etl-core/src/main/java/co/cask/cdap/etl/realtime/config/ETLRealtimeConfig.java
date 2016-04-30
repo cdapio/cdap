@@ -28,7 +28,10 @@ import java.util.Objects;
 
 /**
  * ETL Realtime Configuration. Public constructors are all deprecated in favor of the builder.
+ *
+ * @deprecated use ETLRealtimeConfig from cdap-etl-proto instead
  */
+@Deprecated
 public final class ETLRealtimeConfig extends ETLConfig {
   private final Integer instances;
 

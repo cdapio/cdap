@@ -1,6 +1,6 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2014-2015 Cask Data, Inc.
+    :copyright: Copyright © 2014-2016 Cask Data, Inc.
 
 .. _mapreduce:
 
@@ -338,7 +338,8 @@ are set:
 
 .. literalinclude:: /../../../cdap-examples/Purchase/src/main/java/co/cask/cdap/examples/purchase/PurchaseHistoryBuilder.java
    :language: java
-   :lines: 44-54
+   :lines: 47-57
+   :append: ...
 
 The Resources API, if called with two arguments, sets both the memory used in megabytes
 and the number of virtual cores used.

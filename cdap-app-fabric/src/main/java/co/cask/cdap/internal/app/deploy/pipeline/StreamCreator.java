@@ -16,10 +16,12 @@
 
 package co.cask.cdap.internal.app.deploy.pipeline;
 
+import co.cask.cdap.api.data.stream.StreamSpecification;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.proto.Id;
 
-import java.util.Set;
+import java.util.Properties;
 
 /**
  * Creates streams.
@@ -37,12 +39,16 @@ public class StreamCreator {
   /**
    * Create the given streams and the Hive tables for the streams if explore is enabled.
    *
-   * @param streamNames the set of streams to create
+   * @param streamSpecs the set of stream specifications for streams to be created
    * @throws Exception if there was an exception creating a stream
    */
-  public void createStreams(Set<String> streamNames) throws Exception {
-    for (String streamName : streamNames) {
-      streamAdmin.create(Id.Stream.from(namespace, streamName));
+  public void createStreams(Iterable<StreamSpecification> streamSpecs) throws Exception {
+    for (StreamSpecification spec : streamSpecs) {
+      Properties props = new Properties();
+      if (spec.getDescription() != null) {
+        props.put(Constants.Stream.DESCRIPTION, spec.getDescription());
+      }
+      streamAdmin.create(Id.Stream.from(namespace, spec.getName()), props);
     }
   }
 }

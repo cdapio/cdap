@@ -1,6 +1,6 @@
 {
   "variables": {
-    "sdk_version": "3.3.2"
+    "sdk_version": "DEFINE ME ON COMMAND LINE"
   },
   "builders": [
     {
@@ -29,7 +29,8 @@
         "initrd=/install/initrd.gz -- <enter>"
       ],
       "vboxmanage": [
-        ["modifyvm", "{{ .Name }}", "--memory", "4096"]
+        ["modifyvm", "{{ .Name }}", "--memory", "4096"],
+        ["modifyvm", "{{ .Name }}", "--nictype1", "virtio"]
       ],
       "vboxmanage_post": [
         ["modifyvm", "{{ .Name }}", "--clipboard", "bidirectional"],
@@ -89,7 +90,7 @@
         },
         "idea": {
           "setup_dir": "/opt",
-          "version": "15.0.2"
+          "version": "2016.1"
         },
         "hadoop": {
           "distribution": "hdp",
@@ -125,8 +126,10 @@
       "skip_install": true,
       "json": {
         "cdap": {
-          "version": "3.3.2-1",
+          "comment": "DO NOT PUT SNAPHOT IN THE VERSION BELOW, THIS CONTROLS CDAP COOKBOOK CODE",
+          "version": "3.4.0-1",
           "sdk": {
+            "comment": "COPY SDK ZIP TO files/cdap-sdk.zip BEFORE RUNNING ME",
             "url": "file:///tmp/cdap-sdk.zip"
           }
         }

@@ -83,6 +83,9 @@ public class MapReduceContainerLauncher {
 
     Thread.currentThread().setContextClassLoader(classLoader);
 
+    // Invoke MapReduceClassLoader.getTaskContextProvider()
+    classLoader.getClass().getDeclaredMethod("getTaskContextProvider").invoke(classLoader);
+
     Class<?> mainClass = classLoader.loadClass(mainClassName);
     Method mainMethod = mainClass.getMethod("main", String[].class);
     mainMethod.setAccessible(true);

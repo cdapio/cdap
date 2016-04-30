@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,9 +18,6 @@ package co.cask.cdap.api.dataset.lib.partitioned;
 
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.lib.PartitionKey;
-import com.google.common.base.Preconditions;
-import com.google.common.primitives.Ints;
-import com.google.common.primitives.Longs;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
@@ -89,14 +86,18 @@ public final class DefaultConsumablePartition implements ConsumablePartition {
 
   @Override
   public void take() {
-    Preconditions.checkState(processState == ProcessState.AVAILABLE);
+    if (processState != ProcessState.AVAILABLE) {
+      throw new IllegalStateException();
+    }
     processState = ProcessState.IN_PROGRESS;
   }
 
 
   @Override
   public void retry() {
-    Preconditions.checkState(processState == ProcessState.IN_PROGRESS);
+    if (processState != ProcessState.IN_PROGRESS) {
+      throw new IllegalStateException();
+    }
     processState = ProcessState.AVAILABLE;
     numFailures++;
     timestamp = 0;
@@ -104,13 +105,17 @@ public final class DefaultConsumablePartition implements ConsumablePartition {
 
   @Override
   public void complete() {
-    Preconditions.checkState(processState == ProcessState.IN_PROGRESS);
+    if (processState != ProcessState.IN_PROGRESS) {
+      throw new IllegalStateException();
+    }
     processState = ProcessState.COMPLETED;
   }
 
   @Override
   public void discard() {
-    Preconditions.checkState(processState == ProcessState.IN_PROGRESS);
+    if (processState != ProcessState.IN_PROGRESS) {
+      throw new IllegalStateException();
+    }
     processState = ProcessState.DISCARDED;
   }
 
@@ -131,10 +136,10 @@ public final class DefaultConsumablePartition implements ConsumablePartition {
     byte[] partitionKeyBytes = Bytes.toBytes(GSON.toJson(partitionKey));
     // 1 byte for the ProcessState
     int numBytes = 1;
-    numBytes += Ints.BYTES;
+    numBytes += Bytes.SIZEOF_INT;
     numBytes += partitionKeyBytes.length;
-    numBytes += Longs.BYTES;
-    numBytes += Ints.BYTES;
+    numBytes += Bytes.SIZEOF_LONG;
+    numBytes += Bytes.SIZEOF_INT;
 
     ByteBuffer bb = ByteBuffer.allocate(numBytes);
 

@@ -20,7 +20,7 @@ import co.cask.cdap.client.common.ClientTestBase;
 import co.cask.cdap.common.AlreadyExistsException;
 import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.NotFoundException;
-import co.cask.cdap.common.UnauthorizedException;
+import co.cask.cdap.common.UnauthenticatedException;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import org.junit.Assert;
@@ -52,7 +52,8 @@ public class NamespaceClientTestRun extends ClientTestBase {
     List<NamespaceMeta> namespaces = namespaceClient.list();
     int initialNamespaceCount = namespaces.size();
 
-    verifyDoesNotExist(DOES_NOT_EXIST);
+    Assert.assertFalse(String.format("Namespace '%s' must not be found", DOES_NOT_EXIST),
+                       namespaceClient.exists(DOES_NOT_EXIST));
     verifyReservedCreate();
     verifyReservedDelete();
 
@@ -121,24 +122,6 @@ public class NamespaceClientTestRun extends ClientTestBase {
     Assert.assertEquals(Id.Namespace.DEFAULT.getId(), namespaceClient.list().get(0).getName());
   }
 
-  private void verifyDoesNotExist(Id.Namespace namespaceId)
-    throws Exception {
-
-    try {
-      namespaceClient.get(namespaceId);
-      Assert.fail(String.format("Namespace '%s' must not be found", namespaceId));
-    } catch (NotFoundException e) {
-      // expected
-    }
-
-    try {
-      namespaceClient.delete(namespaceId);
-      Assert.fail(String.format("Namespace '%s' must not be found", namespaceId));
-    } catch (NotFoundException e) {
-      // expected
-    }
-  }
-
   private void verifyReservedCreate() throws Exception {
     NamespaceMeta.Builder builder = new NamespaceMeta.Builder();
     builder.setName(Id.Namespace.DEFAULT);
@@ -170,7 +153,7 @@ public class NamespaceClientTestRun extends ClientTestBase {
     }
   }
 
-  private void waitForNamespaceCreation(Id.Namespace namespace) throws IOException, UnauthorizedException,
+  private void waitForNamespaceCreation(Id.Namespace namespace) throws IOException, UnauthenticatedException,
     InterruptedException {
     int count = 0;
     while (count < 10) {

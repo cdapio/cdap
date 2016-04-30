@@ -45,7 +45,7 @@ class BottomPanelController {
       }
     } );
     ConsoleStore.registerOnChangeListener( () => { this.selectTab(0); } );
-
+    this.setIsCollapsed();
     this.selectTab(0);
   }
   selectTab(tab) {

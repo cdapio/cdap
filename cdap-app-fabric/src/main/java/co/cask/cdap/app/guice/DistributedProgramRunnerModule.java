@@ -16,25 +16,20 @@
 package co.cask.cdap.app.guice;
 
 import co.cask.cdap.app.runtime.ProgramRunner;
+import co.cask.cdap.app.runtime.ProgramRunnerFactory;
+import co.cask.cdap.app.runtime.ProgramRuntimeProvider;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
-import co.cask.cdap.internal.app.runtime.ProgramRunnerFactory;
 import co.cask.cdap.internal.app.runtime.distributed.DistributedFlowProgramRunner;
 import co.cask.cdap.internal.app.runtime.distributed.DistributedMapReduceProgramRunner;
 import co.cask.cdap.internal.app.runtime.distributed.DistributedProgramRuntimeService;
 import co.cask.cdap.internal.app.runtime.distributed.DistributedServiceProgramRunner;
-import co.cask.cdap.internal.app.runtime.distributed.DistributedSparkProgramRunner;
 import co.cask.cdap.internal.app.runtime.distributed.DistributedWebappProgramRunner;
 import co.cask.cdap.internal.app.runtime.distributed.DistributedWorkerProgramRunner;
 import co.cask.cdap.internal.app.runtime.distributed.DistributedWorkflowProgramRunner;
-import com.google.common.base.Preconditions;
+import co.cask.cdap.proto.ProgramType;
 import com.google.inject.PrivateModule;
-import com.google.inject.Provider;
-import com.google.inject.Provides;
 import com.google.inject.Scopes;
-import com.google.inject.Singleton;
 import com.google.inject.multibindings.MapBinder;
-
-import java.util.Map;
 
 /**
  * Guice module for distributed AppFabric. Used by the app-fabric server, not for distributed containers.
@@ -44,33 +39,24 @@ final class DistributedProgramRunnerModule extends PrivateModule {
   @Override
   protected void configure() {
     // Bind ProgramRunner
-    MapBinder<ProgramRunnerFactory.Type, ProgramRunner> runnerFactoryBinder =
-      MapBinder.newMapBinder(binder(), ProgramRunnerFactory.Type.class, ProgramRunner.class);
-    runnerFactoryBinder.addBinding(ProgramRunnerFactory.Type.FLOW).to(DistributedFlowProgramRunner.class);
-    runnerFactoryBinder.addBinding(ProgramRunnerFactory.Type.MAPREDUCE).to(DistributedMapReduceProgramRunner.class);
-    runnerFactoryBinder.addBinding(ProgramRunnerFactory.Type.WORKFLOW).to(DistributedWorkflowProgramRunner.class);
-    runnerFactoryBinder.addBinding(ProgramRunnerFactory.Type.WEBAPP).to(DistributedWebappProgramRunner.class);
-    runnerFactoryBinder.addBinding(ProgramRunnerFactory.Type.SERVICE).to(DistributedServiceProgramRunner.class);
-    runnerFactoryBinder.addBinding(ProgramRunnerFactory.Type.WORKER).to(DistributedWorkerProgramRunner.class);
-    runnerFactoryBinder.addBinding(ProgramRunnerFactory.Type.SPARK).to(DistributedSparkProgramRunner.class);
+    MapBinder<ProgramType, ProgramRunner> defaultProgramRunnerBinder =
+      MapBinder.newMapBinder(binder(), ProgramType.class, ProgramRunner.class);
+    defaultProgramRunnerBinder.addBinding(ProgramType.FLOW).to(DistributedFlowProgramRunner.class);
+    defaultProgramRunnerBinder.addBinding(ProgramType.MAPREDUCE).to(DistributedMapReduceProgramRunner.class);
+    defaultProgramRunnerBinder.addBinding(ProgramType.WORKFLOW).to(DistributedWorkflowProgramRunner.class);
+    defaultProgramRunnerBinder.addBinding(ProgramType.WEBAPP).to(DistributedWebappProgramRunner.class);
+    defaultProgramRunnerBinder.addBinding(ProgramType.SERVICE).to(DistributedServiceProgramRunner.class);
+    defaultProgramRunnerBinder.addBinding(ProgramType.WORKER).to(DistributedWorkerProgramRunner.class);
+
+    // ProgramRunnerFactory should be in distributed mode
+    bind(ProgramRuntimeProvider.Mode.class).toInstance(ProgramRuntimeProvider.Mode.DISTRIBUTED);
+    // Bind and expose ProgramRunnerFactory. It is used in both program deployment and program execution.
+    // Should get refactory by CDAP-5506
+    bind(ProgramRunnerFactory.class).to(DefaultProgramRunnerFactory.class).in(Scopes.SINGLETON);
+    expose(ProgramRunnerFactory.class);
 
     // Bind and expose ProgramRuntimeService
     bind(ProgramRuntimeService.class).to(DistributedProgramRuntimeService.class).in(Scopes.SINGLETON);
     expose(ProgramRuntimeService.class);
-  }
-
-  @Singleton
-  @Provides
-  private ProgramRunnerFactory provideProgramRunnerFactory(final Map<ProgramRunnerFactory.Type,
-                                                                     Provider<ProgramRunner>> providers) {
-
-    return new ProgramRunnerFactory() {
-      @Override
-      public ProgramRunner create(Type programType) {
-        Provider<ProgramRunner> provider = providers.get(programType);
-        Preconditions.checkNotNull(provider, "Unsupported program type: " + programType);
-        return provider.get();
-      }
-    };
   }
 }

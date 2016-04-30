@@ -21,16 +21,21 @@ import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.app.program.ManifestFields;
 import co.cask.cdap.app.store.ServiceStore;
+import co.cask.cdap.client.DatasetClient;
+import co.cask.cdap.client.StreamClient;
+import co.cask.cdap.client.StreamViewClient;
+import co.cask.cdap.client.config.ClientConfig;
+import co.cask.cdap.client.config.ConnectionConfig;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.EndpointStrategy;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.common.io.Locations;
+import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.data.stream.service.StreamService;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
-import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.internal.app.services.AppFabricServer;
 import co.cask.cdap.internal.guice.AppFabricTestModule;
 import co.cask.cdap.internal.test.AppJarHelper;
@@ -40,6 +45,7 @@ import co.cask.cdap.metrics.query.MetricsQueryService;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.RunRecord;
+import co.cask.cdap.proto.StreamProperties;
 import co.cask.cdap.proto.ViewSpecification;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.artifact.ArtifactRange;
@@ -48,7 +54,6 @@ import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ObjectArrays;
 import com.google.common.io.ByteStreams;
@@ -68,16 +73,16 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.entity.ByteArrayEntity;
+import org.apache.http.entity.FileEntity;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.util.EntityUtils;
-import org.apache.twill.api.ClassAcceptor;
+import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.discovery.ServiceDiscovered;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
-import org.apache.twill.internal.utils.Dependencies;
 import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -85,7 +90,6 @@ import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.rules.TemporaryFolder;
 
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
@@ -93,16 +97,12 @@ import java.io.InputStream;
 import java.lang.reflect.Type;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.URL;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
-import java.util.jar.JarEntry;
-import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
-import java.util.zip.ZipEntry;
 import javax.annotation.Nullable;
 import javax.ws.rs.core.MediaType;
 
@@ -146,10 +146,12 @@ public abstract class AppFabricTestBase {
   private static DatasetService datasetService;
   private static TransactionSystemClient txClient;
   private static StreamService streamService;
-  private static StreamAdmin streamAdmin;
   private static ServiceStore serviceStore;
   private static MetadataService metadataService;
   private static LocationFactory locationFactory;
+  private static StreamClient streamClient;
+  private static StreamViewClient streamViewClient;
+  private static DatasetClient datasetClient;
 
   @ClassRule
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
@@ -187,10 +189,12 @@ public abstract class AppFabricTestBase {
     streamService.startAndWait();
     serviceStore = injector.getInstance(ServiceStore.class);
     serviceStore.startAndWait();
-    streamAdmin = injector.getInstance(StreamAdmin.class);
     metadataService = injector.getInstance(MetadataService.class);
     metadataService.startAndWait();
     locationFactory = getInjector().getInstance(LocationFactory.class);
+    streamClient = new StreamClient(getClientConfig(discoveryClient, Constants.Service.STREAMS));
+    streamViewClient = new StreamViewClient(getClientConfig(discoveryClient, Constants.Service.STREAMS));
+    datasetClient = new DatasetClient(getClientConfig(discoveryClient, Constants.Service.DATASET_MANAGER));
     createNamespaces();
   }
 
@@ -381,31 +385,12 @@ public abstract class AppFabricTestBase {
    * Deploys an application.
    */
   protected HttpResponse deploy(Class<?> application) throws Exception {
-    return deploy(application, null);
-  }
-
-  protected HttpResponse deploy(Class<?> application, @Nullable String appName) throws Exception {
-    return deploy(application, null, null, appName, null, null);
-  }
-
-  protected HttpResponse deploy(Class<?> application, @Nullable String appName, @Nullable Config appConfig)
-    throws Exception {
-    return deploy(application, null, null, appName, null, appConfig);
+    return deploy(application, null, null);
   }
 
   protected HttpResponse deploy(Class<?> application, @Nullable String apiVersion, @Nullable String namespace)
     throws Exception {
-    return deploy(application, apiVersion, namespace, null, null, null);
-  }
-
-  protected HttpResponse deploy(Class<?> application, @Nullable String apiVersion, @Nullable String namespace,
-                                @Nullable String appName) throws Exception {
-    return deploy(application, apiVersion, namespace, appName, null, null);
-  }
-
-  protected HttpResponse deploy(Class<?> application, @Nullable String apiVersion, @Nullable String namespace,
-                                @Nullable String appName, @Nullable String appVersion) throws Exception {
-    return deploy(application, apiVersion, namespace, appName, appVersion, null);
+    return deploy(application, apiVersion, namespace, null, null);
   }
 
   protected HttpResponse deploy(Id.Application appId,
@@ -423,62 +408,33 @@ public abstract class AppFabricTestBase {
    * Deploys an application with (optionally) a defined app name and app version
    */
   protected HttpResponse deploy(Class<?> application, @Nullable String apiVersion, @Nullable String namespace,
-                                @Nullable String appName, @Nullable String appVersion,
-                                @Nullable Config appConfig) throws Exception {
+                                @Nullable String appVersion, @Nullable Config appConfig) throws Exception {
     namespace = namespace == null ? Id.Namespace.DEFAULT.getId() : namespace;
     apiVersion = apiVersion == null ? Constants.Gateway.API_VERSION_3_TOKEN : apiVersion;
     appVersion = appVersion == null ? String.format("1.0.%d", System.currentTimeMillis()) : appVersion;
 
     Manifest manifest = new Manifest();
-    manifest.getMainAttributes().put(ManifestFields.MANIFEST_VERSION, "1.0");
-    manifest.getMainAttributes().put(ManifestFields.MAIN_CLASS, application.getName());
     manifest.getMainAttributes().put(ManifestFields.BUNDLE_VERSION, appVersion);
 
-    ByteArrayOutputStream bos = new ByteArrayOutputStream();
-    final String pkgName = application.getPackage().getName();
+    File artifactJar = buildAppArtifact(application, application.getSimpleName(), manifest);
+    File expandDir = tmpFolder.newFolder();
+    BundleJarUtil.unJar(Locations.toLocation(artifactJar), expandDir);
 
-    // Grab every classes under the application class package.
-    try (JarOutputStream jarOut = new JarOutputStream(bos, manifest)) {
-      ClassLoader classLoader = application.getClassLoader();
-      if (classLoader == null) {
-        classLoader = ClassLoader.getSystemClassLoader();
-      }
-      Dependencies.findClassDependencies(classLoader, new ClassAcceptor() {
-        @Override
-        public boolean accept(String className, URL classUrl, URL classPathUrl) {
-          try {
-            if (className.startsWith(pkgName)) {
-              jarOut.putNextEntry(new JarEntry(className.replace('.', '/') + ".class"));
-              try (InputStream in = classUrl.openStream()) {
-                ByteStreams.copy(in, jarOut);
-              }
-              return true;
-            }
-            return false;
-          } catch (Exception e) {
-            throw Throwables.propagate(e);
-          }
-        }
-      }, application.getName());
-
-      // Add webapp
-      jarOut.putNextEntry(new ZipEntry("webapp/default/netlens/src/1.txt"));
-      ByteStreams.copy(new ByteArrayInputStream("dummy data".getBytes(Charsets.UTF_8)), jarOut);
-    }
+    // Add webapp
+    File webAppFile = new File(expandDir, "webapp/default/netlens/src/1.txt");
+    webAppFile.getParentFile().mkdirs();
+    Files.write("dummy data", webAppFile, Charsets.UTF_8);
+    BundleJarUtil.createJar(expandDir, artifactJar);
 
     HttpEntityEnclosingRequestBase request;
     String versionedApiPath = getVersionedAPIPath("apps/", apiVersion, namespace);
-    if (appName == null) {
-      request = getPost(versionedApiPath);
-    } else {
-      request = getPut(versionedApiPath + appName);
-    }
+    request = getPost(versionedApiPath);
     request.setHeader(Constants.Gateway.API_KEY, "api-key-example");
     request.setHeader("X-Archive-Name", String.format("%s-%s.jar", application.getSimpleName(), appVersion));
     if (appConfig != null) {
       request.setHeader("X-App-Config", GSON.toJson(appConfig));
     }
-    request.setEntity(new ByteArrayEntity(bos.toByteArray()));
+    request.setEntity(new FileEntity(artifactJar));
     return execute(request);
   }
 
@@ -659,8 +615,8 @@ public abstract class AppFabricTestBase {
       @Override
       public String call() throws Exception {
         String path = String.format("apps/%s/%s/%s/status",
-          programId.getApplicationId(),
-          programId.getType().getCategoryName(), programId.getId());
+                                    programId.getApplicationId(),
+                                    programId.getType().getCategoryName(), programId.getId());
         HttpResponse response = doGet(getVersionedAPIPath(path, programId.getNamespaceId()));
         JsonObject status = GSON.fromJson(EntityUtils.toString(response.getEntity()), JsonObject.class);
         if (status == null || !status.has("status")) {
@@ -701,9 +657,9 @@ public abstract class AppFabricTestBase {
 
   protected HttpResponse programStatus(Id.Program program) throws Exception {
     String path = String.format("apps/%s/%s/%s/status",
-      program.getApplicationId(),
-      program.getType().getCategoryName(),
-      program.getId());
+                                program.getApplicationId(),
+                                program.getType().getCategoryName(),
+                                program.getId());
     return doGet(getVersionedAPIPath(path, program.getNamespaceId()));
   }
 
@@ -725,7 +681,7 @@ public abstract class AppFabricTestBase {
   protected int resumeSchedule(String namespace, String appName, String schedule) throws Exception {
     String scheduleResume = String.format("apps/%s/schedules/%s/resume", appName, schedule);
     HttpResponse response = doPost(getVersionedAPIPath(scheduleResume, Constants.Gateway.API_VERSION_3_TOKEN,
-      namespace));
+                                                       namespace));
     return response.getStatusLine().getStatusCode();
   }
 
@@ -770,16 +726,28 @@ public abstract class AppFabricTestBase {
     return GSON.fromJson(json, LIST_RUNRECORD_TYPE);
   }
 
-  protected boolean datasetExists(Id.DatasetInstance datasetID) throws Exception {
-    return dsOpService.exists(datasetID);
-  }
-
-  protected boolean streamExists(Id.Stream streamID) throws Exception {
-    return streamAdmin.exists(streamID);
-  }
-
   protected boolean createOrUpdateView(Id.Stream.View viewId, ViewSpecification spec) throws Exception {
-    return streamAdmin.createOrUpdateView(viewId, spec);
+    return streamViewClient.createOrUpdate(viewId, spec);
+  }
+
+  protected void deleteStream(Id.Stream stream) throws Exception {
+    streamClient.delete(stream);
+  }
+
+  protected void deleteView(Id.Stream.View view) throws Exception {
+    streamViewClient.delete(view);
+  }
+
+  protected void setStreamProperties(Id.Stream stream, StreamProperties props) throws Exception {
+    streamClient.setStreamProperties(stream, props);
+  }
+
+  protected void updateDatasetProperties(Id.DatasetInstance dataset, Map<String, String> properties) throws Exception {
+    datasetClient.updateExisting(dataset, properties);
+  }
+
+  protected void deleteDataset(Id.DatasetInstance datasetInstance) throws Exception {
+    datasetClient.delete(datasetInstance);
   }
 
   protected HttpResponse createNamespace(String id) throws Exception {
@@ -812,10 +780,27 @@ public abstract class AppFabricTestBase {
                  GSON.toJson(meta));
   }
 
-  protected File buildAppArtifact(Class cls, String name) throws IOException {
-    Location appJar = AppJarHelper.createDeploymentJar(locationFactory, cls, new Manifest());
+  protected File buildAppArtifact(Class<?> cls, String name) throws IOException {
+    return buildAppArtifact(cls, name, new Manifest());
+  }
+
+  protected File buildAppArtifact(Class<?> cls, String name, Manifest manifest) throws IOException {
+    if (!name.endsWith(".jar")) {
+      name += ".jar";
+    }
+    Location appJar = AppJarHelper.createDeploymentJar(locationFactory, cls, manifest);
     File destination = new File(tmpFolder.newFolder(), name);
     Files.copy(Locations.newInputSupplier(appJar), destination);
     return destination;
+  }
+
+  private static ClientConfig getClientConfig(DiscoveryServiceClient discoveryClient, String service) {
+    EndpointStrategy endpointStrategy =
+      new RandomEndpointStrategy(discoveryClient.discover(service));
+    Discoverable discoverable = endpointStrategy.pick(1, TimeUnit.SECONDS);
+    Assert.assertNotNull(discoverable);
+    int port = discoverable.getSocketAddress().getPort();
+    ConnectionConfig connectionConfig = ConnectionConfig.builder().setHostname(hostname).setPort(port).build();
+    return ClientConfig.builder().setConnectionConfig(connectionConfig).build();
   }
 }

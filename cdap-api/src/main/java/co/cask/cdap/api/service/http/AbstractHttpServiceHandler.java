@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -100,7 +100,10 @@ public abstract class AbstractHttpServiceHandler extends AbstractPluginConfigura
    *
    * @param dataset Dataset name.
    * @param datasets More Dataset names.
+   * @deprecated Deprecated as of 3.4.0. Dataset can be requested directly through the method
+   *             {@link HttpServiceContext#getDataset(String)} at runtime.
    */
+  @Deprecated
   protected void useDatasets(String dataset, String...datasets) {
     List<String> datasetList = new ArrayList<>();
     datasetList.add(dataset);
@@ -112,7 +115,10 @@ public abstract class AbstractHttpServiceHandler extends AbstractPluginConfigura
    * Adds the names of {@link co.cask.cdap.api.dataset.Dataset DataSets} used by the Service.
    *
    * @param datasets Dataset names.
+   * @deprecated Deprecated as of 3.4.0. Dataset can be requested directly through the method
+   *             {@link HttpServiceContext#getDataset(String)} at runtime.
    */
+  @Deprecated
   protected void useDatasets(Iterable<String> datasets) {
     configurer.useDatasets(datasets);
   }

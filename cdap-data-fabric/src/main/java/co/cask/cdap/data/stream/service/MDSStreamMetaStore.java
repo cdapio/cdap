@@ -27,6 +27,7 @@ import co.cask.cdap.data2.dataset2.tx.Transactional;
 import co.cask.cdap.proto.Id;
 import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionExecutorFactory;
+import com.google.common.base.Optional;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMultimap;
@@ -39,6 +40,7 @@ import org.slf4j.LoggerFactory;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * Implementation of {@link StreamMetaStore} that access MDS directly.
@@ -76,13 +78,28 @@ public final class MDSStreamMetaStore implements StreamMetaStore {
   }
 
   @Override
-  public void addStream(final Id.Stream streamId) throws Exception {
+  public void addStream(Id.Stream streamId) throws Exception {
+    addStream(streamId, null);
+  }
+
+  @Override
+  public void addStream(final Id.Stream streamId, @Nullable final String description) throws Exception {
     txnl.executeUnchecked(new TransactionExecutor.Function<StreamMds, Void>() {
       @Override
       public Void apply(StreamMds mds) throws Exception {
-        mds.streams.write(getKey(streamId),
-                          createStreamSpec(streamId));
+        String desc = Optional.fromNullable(description).orNull();
+        mds.streams.write(getKey(streamId), createStreamSpec(streamId, desc));
         return null;
+      }
+    });
+  }
+
+  @Override
+  public StreamSpecification getStream(final Id.Stream streamId) throws Exception {
+    return txnl.executeUnchecked(new TransactionExecutor.Function<StreamMds, StreamSpecification>() {
+      @Override
+      public StreamSpecification apply(StreamMds mds) throws Exception {
+        return mds.streams.getFirst(getKey(streamId), StreamSpecification.class);
       }
     });
   }
@@ -127,8 +144,7 @@ public final class MDSStreamMetaStore implements StreamMetaStore {
         public Multimap<Id.Namespace, StreamSpecification> apply(StreamMds mds) throws Exception {
           ImmutableMultimap.Builder<Id.Namespace, StreamSpecification> builder = ImmutableMultimap.builder();
           Map<MDSKey, StreamSpecification> streamSpecs =
-            mds.streams.listKV(new MDSKey.Builder().add(TYPE_STREAM).build(),
-                               StreamSpecification.class);
+            mds.streams.listKV(new MDSKey.Builder().add(TYPE_STREAM).build(), StreamSpecification.class);
           for (Map.Entry<MDSKey, StreamSpecification> streamSpecEntry : streamSpecs.entrySet()) {
             MDSKey.Splitter splitter = streamSpecEntry.getKey().split();
             // skip the first name ("stream")
@@ -143,12 +159,11 @@ public final class MDSStreamMetaStore implements StreamMetaStore {
   }
 
   private MDSKey getKey(Id.Stream streamId) {
-    return new MDSKey.Builder()
-      .add(TYPE_STREAM, streamId.getNamespaceId(), streamId.getId()).build();
+    return new MDSKey.Builder().add(TYPE_STREAM, streamId.getNamespaceId(), streamId.getId()).build();
   }
 
-  private StreamSpecification createStreamSpec(Id.Stream streamId) {
-    return new StreamSpecification.Builder().setName(streamId.getId()).create();
+  private StreamSpecification createStreamSpec(Id.Stream streamId, String description) {
+    return new StreamSpecification.Builder().setName(streamId.getId()).setDescription(description).create();
   }
 
   private static final class StreamMds implements Iterable<MetadataStoreDataset> {

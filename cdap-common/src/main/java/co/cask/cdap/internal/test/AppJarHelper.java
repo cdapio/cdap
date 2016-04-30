@@ -18,7 +18,6 @@ package co.cask.cdap.internal.test;
 
 import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.common.lang.ProgramResources;
-import co.cask.cdap.proto.ProgramType;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.Files;
 import org.apache.twill.api.ClassAcceptor;
@@ -48,16 +47,28 @@ public final class AppJarHelper {
 
   public static Location createDeploymentJar(LocationFactory locationFactory, Class<?> clz, Manifest manifest,
                                              File... bundleEmbeddedJars) throws IOException {
+    return createDeploymentJar(locationFactory, clz, manifest, new ClassAcceptor() {
+      final Set<String> visibleResources = ProgramResources.getVisibleResources();
 
-    final Set<String> visibleResources = ProgramResources.getVisibleResources(AppJarHelper.class.getClassLoader(),
-                                                                              ProgramType.SPARK);
-    // Exclude all classes that are visible form the system to the program classloader.
-    ApplicationBundler bundler = new ApplicationBundler(new ClassAcceptor() {
       @Override
       public boolean accept(String className, URL classUrl, URL classPathUrl) {
-        return !visibleResources.contains(className.replace('.', '/') + ".class");
+        if (visibleResources.contains(className.replace('.', '/') + ".class")) {
+          return false;
+        }
+        // TODO: Fix it with CDAP-5800
+        if (className.startsWith("org.apache.spark.")) {
+          return false;
+        }
+        return true;
       }
-    });
+    }, bundleEmbeddedJars);
+  }
+
+  public static Location createDeploymentJar(LocationFactory locationFactory, Class<?> clz, Manifest manifest,
+                                             ClassAcceptor classAcceptor,
+                                             File... bundleEmbeddedJars) throws IOException {
+    // Exclude all classes that are visible form the system to the program classloader.
+    ApplicationBundler bundler = new ApplicationBundler(classAcceptor);
     Location jarLocation = locationFactory.create(clz.getName()).getTempFile(".jar");
     ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(clz.getClassLoader());
     try {

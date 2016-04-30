@@ -42,6 +42,9 @@ public class WorkflowCommandSet extends CommandSet<Command> {
     List<Command> commands = new ArrayList<>();
     commands.add(new GetWorkflowCurrentRunCommand(ElementType.WORKFLOW, programClient, cliConfig));
     commands.add(new GetWorkflowTokenCommand(workflowClient, cliConfig));
+    commands.add(new GetWorkflowLocalDatasetsCommand(workflowClient, cliConfig));
+    commands.add(new DeleteWorkflowLocalDatasetsCommand(workflowClient, cliConfig));
+    commands.add(new GetWorkflowStateCommand(workflowClient, cliConfig));
     return commands;
   }
 }

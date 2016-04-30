@@ -22,7 +22,7 @@
   <parent>
     <groupId>co.cask.cdap</groupId>
     <artifactId>cdap-etl</artifactId>
-    <version>3.3.2</version>
+    <version>3.4.0</version>
   </parent>
 
   <artifactId>cdap-etl-archetypes</artifactId>
@@ -30,6 +30,7 @@
   <name>CDAP Application Archetypes</name>
 
   <modules>
+    <module>cdap-data-pipeline-plugins-archetype</module>
     <module>cdap-etl-realtime-source-archetype</module>
     <module>cdap-etl-realtime-sink-archetype</module>
     <module>cdap-etl-batch-source-archetype</module>

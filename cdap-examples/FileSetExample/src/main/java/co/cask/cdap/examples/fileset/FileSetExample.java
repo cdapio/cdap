@@ -40,11 +40,13 @@ public class FileSetExample extends AbstractApplication {
       .setBasePath("example/data/lines")
       .setInputFormat(TextInputFormat.class)
       .setOutputFormat(TextOutputFormat.class)
+      .setDescription("Store input lines")
       .build());
     createDataset("counts", FileSet.class, FileSetProperties.builder()
       .setInputFormat(TextInputFormat.class)
       .setOutputFormat(TextOutputFormat.class)
       .setOutputProperty(TextOutputFormat.SEPERATOR, ":")
+      .setDescription("Store word counts")
       .build());
     addService(new FileSetService());
     addMapReduce(new WordCount());

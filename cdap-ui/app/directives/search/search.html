@@ -14,19 +14,60 @@
   the License.
 -->
 
-<div class="search-box">
-  <div class="input-group"
-       ng-class="{'search-active': MySearchCtrl.displaySearchBox || MySearchCtrl.searchTxt.length}"
-       ng-mouseover="MySearchCtrl.displaySearchBox = true"
-       ng-mouseleave="MySearchCtrl.escapeSearch()">
-    <input ng-model="MySearchCtrl.searchTxt"
-           ng-keyup="MySearchCtrl.onSearch($event)"
-           type="text"
-           class="form-control"
-           placeholder="Search Metadata"
-           my-escape-close="MySearchCtrl.escapeSearch()" />
-    <div class="input-group-addon">
-      <span class="fa fa-search"></span>
+<div class="navbar-item" ng-class="{ 'has-results': SearchCtrl.searchEntered }">
+  <span class="fa fa-search"
+        ng-click="SearchCtrl.showSearch()"
+        ng-if="!SearchCtrl.showSearchBox"></span>
+
+  <div class="blank-click-handler" ng-click="SearchCtrl.onBlur()" ng-if="SearchCtrl.showSearchBox"></div>
+  <div class="search-box" ng-if="SearchCtrl.showSearchBox">
+    <div class="form-group has-feedback" ng-keyup="SearchCtrl.search($event)">
+      <input type="text"
+             class="form-control"
+             ng-model="SearchCtrl.searchTerm"
+             pattern="^(?![*]).*$"
+             cask-focus="globalSearch">
+      <span class="fa fa-search form-control-feedback"></span>
+    </div>
+
+    <div class="search-results" ng-if="SearchCtrl.searchResults.length > 0">
+      <div ng-repeat="result in SearchCtrl.searchResults | orderBy:'type'">
+        <a class="entity-name clearfix"
+           ui-sref="{{ result.stateLink }}">
+          <div class="col-xs-7 truncate-ellipsis">
+            <div class="result-info">
+              <span class="{{ result.icon }}"></span>
+              <span uib-tooltip="Type: {{ result.type }}"
+                    tooltip-popup-delay="300"
+                    tooltip-append-to-body="true">
+                {{ result.name }}
+              </span>
+            </div>
+          </div>
+
+          <div class="col-xs-5 truncate-ellipsis">
+            <span class="entity-app-details" ng-if="result.programType">
+              <span class="icon-app"></span>
+              <span>{{ result.stateParams.appId }}</span>
+            </span>
+          </div>
+        </a>
+      </div>
+    </div>
+
+    <div class="search-results" ng-if="SearchCtrl.searchEntered && SearchCtrl.searchResults.length === 0">
+      <div class="text-center" ng-if="SearchCtrl.loading">
+        <h4>
+          <span class="fa fa-spin fa-refresh"></span>
+          <span>Searching</span>
+        </h4>
+      </div>
+
+      <div class="text-center" ng-if="SearchCtrl.searchResults.length === 0 && !SearchCtrl.loading">
+        <h4>
+          <span>No results</span>
+        </h4>
+      </div>
     </div>
   </div>
 </div>

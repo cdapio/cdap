@@ -20,11 +20,12 @@ import co.cask.cdap.api.data.DatasetInstantiationException;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetDefinition;
+import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.data2.datafabric.dataset.type.ConstantClassLoaderProvider;
 import co.cask.cdap.data2.datafabric.dataset.type.DatasetClassLoaderProvider;
 import co.cask.cdap.data2.datafabric.dataset.type.DirectoryClassLoaderProvider;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.data2.dataset2.DatasetManagementException;
+import co.cask.cdap.data2.metadata.lineage.AccessType;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.id.DatasetId;
 import com.google.common.base.Objects;
@@ -77,18 +78,23 @@ public class SystemDatasetInstantiator implements Closeable {
     return getDataset(datasetId, DatasetDefinition.NO_ARGUMENTS);
   }
 
-  @SuppressWarnings("unchecked")
   public <T extends Dataset> T getDataset(DatasetId datasetId, Map<String, String> arguments)
     throws DatasetInstantiationException {
     return getDataset((Id.DatasetInstance) datasetId.toId(), arguments);
   }
 
-  @SuppressWarnings("unchecked")
-    public <T extends Dataset> T getDataset(Id.DatasetInstance datasetId, Map<String, String> arguments)
+  public <T extends Dataset> T getDataset(Id.DatasetInstance datasetId, Map<String, String> arguments)
     throws DatasetInstantiationException {
+    return getDataset(datasetId, arguments, AccessType.UNKNOWN);
+  }
+
+  @SuppressWarnings("unchecked")
+  public <T extends Dataset> T getDataset(Id.DatasetInstance datasetId, Map<String, String> arguments,
+                                          AccessType accessType) throws DatasetInstantiationException {
 
     try {
-      T dataset = datasetFramework.getDataset(datasetId, arguments, parentClassLoader, classLoaderProvider, owners);
+      T dataset = datasetFramework.getDataset(datasetId, arguments, parentClassLoader, classLoaderProvider, owners,
+                                              accessType);
       if (dataset == null) {
         throw new DatasetInstantiationException("Trying to access dataset that does not exist: " + datasetId);
       }
@@ -96,6 +102,10 @@ public class SystemDatasetInstantiator implements Closeable {
     } catch (Exception e) {
       throw new DatasetInstantiationException("Failed to access dataset: " + datasetId, e);
     }
+  }
+
+  public void writeLineage(Id.DatasetInstance datasetId, AccessType accessType) {
+    datasetFramework.writeLineage(datasetId, accessType);
   }
 
   @Override

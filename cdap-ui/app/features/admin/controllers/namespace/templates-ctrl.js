@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -309,13 +309,15 @@ angular.module(PKG.name + '.feature.admin')
 
           mySettings.set('pluginTemplates', res)
             .then(function () {
-              myAlertOnValium.show({
-                type: 'success',
-                content: 'Success saving template'
-              });
               vm.loading = false;
 
-              $state.go('admin.namespace.detail.templateslist');
+              $state.go('admin.namespace.detail.templateslist')
+                .then(function () {
+                  myAlertOnValium.show({
+                    type: 'success',
+                    content: 'Success saving template'
+                  });
+                });
             });
         });
     };

@@ -44,6 +44,7 @@ import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionExecutorFactory;
 import co.cask.tephra.TransactionFailureException;
+import co.cask.tephra.TxConstants;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
@@ -53,8 +54,10 @@ import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.twill.filesystem.Location;
 import org.junit.Assert;
+import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.junit.rules.ExternalResource;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -77,6 +80,16 @@ import javax.annotation.Nullable;
  */
 @Category(XSlowTests.class)
 public class MapReduceProgramRunnerTest extends MapReduceRunnerTestBase {
+  @ClassRule
+  public static final ExternalResource RESOURCE = new ExternalResource() {
+    @Override
+    protected void before() throws Throwable {
+      // Set the tx timeout to a ridiculously low value that will test that the long-running transactions
+      // actually bypass that timeout.
+      System.setProperty(TxConstants.Manager.CFG_TX_TIMEOUT, "1");
+      System.setProperty(TxConstants.Manager.CFG_TX_CLEANUP_INTERVAL, "2");
+    }
+  };
 
   /**
    * Tests that beforeSubmit() and getSplits() are called in the same transaction,
@@ -161,7 +174,7 @@ public class MapReduceProgramRunnerTest extends MapReduceRunnerTestBase {
       metricStore.query(new MetricDataQuery(
         0,
         System.currentTimeMillis() / 1000L,
-        60,
+        Integer.MAX_VALUE,
         "system." + Constants.Metrics.Name.Dataset.OP_COUNT,
         AggregationFunction.SUM,
         ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, DefaultId.NAMESPACE.getId(),
@@ -222,12 +235,14 @@ public class MapReduceProgramRunnerTest extends MapReduceRunnerTestBase {
     final long[] values = { 15L, 17L, 7L, 3L };
     final FileSet input = datasetCache.getDataset(inputDatasetName, inputArgs);
     long sum = 0L, count = 1;
+    long inputRecords = 0;
     for (Location inputLocation : input.getInputLocations()) {
       final PrintWriter writer = new PrintWriter(inputLocation.getOutputStream());
       for (long value : values) {
         value *= count;
         writer.println(value);
         sum += value;
+        inputRecords++;
       }
       writer.close();
       count++;
@@ -261,11 +276,13 @@ public class MapReduceProgramRunnerTest extends MapReduceRunnerTestBase {
     Assert.assertEquals(sum, Long.parseLong(fields[1]));
 
     if (counterTableName != null) {
+      final long totalInputRecords = inputRecords;
       Transactions.execute(datasetCache.newTransactionContext(), "countersVerify", new Runnable() {
         @Override
         public void run() {
           KeyValueTable counters = datasetCache.getDataset(counterTableName);
-          Assert.assertEquals(4L, counters.incrementAndGet(AppWithMapReduceUsingRuntimeDatasets.INPUT_RECORDS, 0L));
+          Assert.assertEquals(totalInputRecords,
+                              counters.incrementAndGet(AppWithMapReduceUsingRuntimeDatasets.INPUT_RECORDS, 0L));
           Assert.assertEquals(1L, counters.incrementAndGet(AppWithMapReduceUsingRuntimeDatasets.REDUCE_KEYS, 0L));
         }
       });

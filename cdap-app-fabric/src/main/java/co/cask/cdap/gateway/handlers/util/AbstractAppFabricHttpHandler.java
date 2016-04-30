@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,6 +20,7 @@ import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.store.Store;
+import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.internal.UserErrors;
 import co.cask.cdap.internal.UserMessages;
 import co.cask.cdap.proto.Id;
@@ -28,6 +29,8 @@ import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.codec.EntityIdTypeAdapter;
 import co.cask.cdap.proto.id.EntityId;
+import co.cask.cdap.proto.id.Ids;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Charsets;
@@ -78,62 +81,15 @@ public abstract class AbstractAppFabricHttpHandler extends AbstractHttpHandler {
 
   public static final String APP_CONFIG_HEADER = "X-App-Config";
 
-  /**
-   * Class to represent status of programs.
-   */
-  protected static final class AppFabricServiceStatus {
-
-    public static final AppFabricServiceStatus OK = new AppFabricServiceStatus(HttpResponseStatus.OK, "");
-
-    public static final AppFabricServiceStatus APP_NOT_FOUND =
-      new AppFabricServiceStatus(HttpResponseStatus.NOT_FOUND, "Application not found");
-
-    public static final AppFabricServiceStatus PROGRAM_STILL_RUNNING =
-      new AppFabricServiceStatus(HttpResponseStatus.FORBIDDEN, "Program is still running");
-
-    public static final AppFabricServiceStatus PROGRAM_ALREADY_RUNNING =
-      new AppFabricServiceStatus(HttpResponseStatus.CONFLICT, "Program is already running");
-
-    public static final AppFabricServiceStatus PROGRAM_ALREADY_STOPPED =
-      new AppFabricServiceStatus(HttpResponseStatus.CONFLICT, "Program already stopped");
-
-    public static final AppFabricServiceStatus PROGRAM_ALREADY_SUSPENDED =
-      new AppFabricServiceStatus(HttpResponseStatus.CONFLICT, "Program run already suspended");
-
-    public static final AppFabricServiceStatus RUNTIME_INFO_NOT_FOUND =
-      new AppFabricServiceStatus(HttpResponseStatus.CONFLICT,
-                                 UserMessages.getMessage(UserErrors.RUNTIME_INFO_NOT_FOUND));
-
-    public static final AppFabricServiceStatus PROGRAM_NOT_FOUND =
-      new AppFabricServiceStatus(HttpResponseStatus.NOT_FOUND, "Program not found");
-
-    public static final AppFabricServiceStatus INTERNAL_ERROR =
-      new AppFabricServiceStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Internal server error");
-
-    private final HttpResponseStatus code;
-    private final String message;
-
-    /**
-     * Describes the output status of app fabric operations.
-     */
-    public AppFabricServiceStatus(HttpResponseStatus code, String message) {
-      this.code = code;
-      this.message = message;
-    }
-
-    public HttpResponseStatus getCode() {
-      return code;
-    }
-
-    public String getMessage() {
-      return message;
-    }
-  }
-
-  protected int getInstances(HttpRequest request) throws IllegalArgumentException, JsonSyntaxException {
-    Instances instances = parseBody(request, Instances.class);
+  protected int getInstances(HttpRequest request) throws BadRequestException {
+    Instances instances;
+      try {
+        instances = parseBody(request, Instances.class);
+      } catch (JsonSyntaxException e) {
+        throw new BadRequestException("Invalid JSON in request: " + e.getMessage());
+      }
     if (instances == null) {
-      throw new IllegalArgumentException("Could not read instances from request body");
+      throw new BadRequestException("Invalid instance value in request");
     }
     return instances.getInstances();
   }
@@ -175,7 +131,7 @@ public abstract class AbstractAppFabricHttpHandler extends AbstractHttpHandler {
   protected final void programList(HttpResponder responder, String namespaceId, ProgramType type,
                                    Store store) throws Exception {
     try {
-      Id.Namespace namespace = Id.Namespace.from(namespaceId);
+      NamespaceId namespace = Ids.namespace(namespaceId);
       List<ProgramRecord> programRecords = listPrograms(namespace, type, store);
 
       if (programRecords == null) {
@@ -188,10 +144,10 @@ public abstract class AbstractAppFabricHttpHandler extends AbstractHttpHandler {
     }
   }
 
-  protected final List<ProgramRecord> listPrograms(Id.Namespace namespaceId, ProgramType type, Store store)
+  protected final List<ProgramRecord> listPrograms(NamespaceId namespaceId, ProgramType type, Store store)
     throws Exception {
     try {
-      Collection<ApplicationSpecification> appSpecs = store.getAllApplications(namespaceId);
+      Collection<ApplicationSpecification> appSpecs = store.getAllApplications(namespaceId.toId());
       return listPrograms(appSpecs, type);
     } catch (Throwable throwable) {
       LOG.warn(throwable.getMessage(), throwable);

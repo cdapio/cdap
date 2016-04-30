@@ -21,6 +21,7 @@ import co.cask.cdap.api.plugin.PluginContext;
 import co.cask.cdap.api.plugin.PluginProperties;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 
@@ -35,11 +36,22 @@ public class DefaultPluginContext implements PluginContext {
 
   @Nullable
   private final PluginInstantiator pluginInstantiator;
-  private final Id.Program programId;
+  private final ProgramId programId;
   private final Map<String, Plugin> plugins;
 
+  /**
+   * Constructor.
+   *
+   * @deprecated Use {@link #DefaultPluginContext(PluginInstantiator, ProgramId, Map)} instead.
+   */
+  @Deprecated
   public DefaultPluginContext(@Nullable PluginInstantiator pluginInstantiator,
                               Id.Program programId, Map<String, Plugin> plugins) {
+    this(pluginInstantiator, programId.toEntityId(), plugins);
+  }
+
+  public DefaultPluginContext(@Nullable PluginInstantiator pluginInstantiator,
+                              ProgramId programId, Map<String, Plugin> plugins) {
     this.pluginInstantiator = pluginInstantiator;
     this.programId = programId;
     this.plugins = plugins;
@@ -87,7 +99,7 @@ public class DefaultPluginContext implements PluginContext {
   private Plugin getPlugin(String pluginId) {
     Plugin plugin = plugins.get(pluginId);
     Preconditions.checkArgument(plugin != null, "Plugin with id %s does not exist in program %s of application %s.",
-                                pluginId, programId.getId(), programId.getApplicationId());
+                                pluginId, programId.getProgram(), programId.getApplication());
     return plugin;
   }
 }

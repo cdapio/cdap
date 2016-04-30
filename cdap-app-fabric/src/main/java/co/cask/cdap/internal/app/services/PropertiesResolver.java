@@ -20,8 +20,8 @@ import co.cask.cdap.app.runtime.scheduler.SchedulerQueueResolver;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.config.PreferencesStore;
+import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.store.NamespaceStore;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
@@ -43,8 +43,10 @@ public class PropertiesResolver {
   }
 
   public Map<String, String> getUserProperties(Id.Program id) {
-    return prefStore.getResolvedProperties(id.getNamespaceId(), id.getApplicationId(),
-                                           id.getType().getCategoryName(), id.getId());
+    Map<String, String> userArgs = prefStore.getResolvedProperties(id.getNamespaceId(), id.getApplicationId(),
+                                                                   id.getType().getCategoryName(), id.getId());
+    userArgs.put(ProgramOptionConstants.LOGICAL_START_TIME, Long.toString(System.currentTimeMillis()));
+    return userArgs;
   }
 
   public Map<String, String> getSystemProperties(Id.Program id) {

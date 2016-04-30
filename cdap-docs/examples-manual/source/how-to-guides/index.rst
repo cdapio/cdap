@@ -1,6 +1,6 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2014-2015 Cask Data, Inc.
+    :copyright: Copyright © 2014-2016 Cask Data, Inc.
 
 :hide-toc: true
 
@@ -16,7 +16,7 @@ How-To Guides
 
    cdap-bi-guide
    cdap-cube-guide
-   cdap-etl-adapter-guide
+   cdap-etl-guide
    cdap-flow-guide
    cdap-flume-guide
    cdap-kafka-ingest-guide
@@ -43,10 +43,10 @@ instructions for building the “Hello World” of any development task with CDA
 - |cube-guide|_ Use a **Cube Dataset** to perform **online analytical processing** of weblogs with CDAP.
 
 
-.. |etl-adapter-guide| replace:: **Creating ETL Applications:**
-.. _etl-adapter-guide: cdap-etl-adapter-guide.html
+.. |etl-guide| replace:: **Creating ETL Applications:**
+.. _etl-guide: cdap-etl-guide.html
 
-- |etl-adapter-guide|_ Using CDAP **System Artifacts** to create **ETL pipelines** and applications.
+- |etl-guide|_ Using CDAP **System Artifacts** to create **ETL pipelines** and applications.
 
 
 .. |flow-guide| replace:: **Real-time Data Processing With a Flow:**

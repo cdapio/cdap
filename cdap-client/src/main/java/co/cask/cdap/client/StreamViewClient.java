@@ -21,7 +21,7 @@ import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.util.RESTClient;
 import co.cask.cdap.common.NotFoundException;
-import co.cask.cdap.common.UnauthorizedException;
+import co.cask.cdap.common.UnauthenticatedException;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ViewDetail;
@@ -70,7 +70,7 @@ public class StreamViewClient {
    * @return true if a view was created, false if updated
    */
   public boolean createOrUpdate(Id.Stream.View id, ViewSpecification viewSpecification)
-    throws NotFoundException, IOException, UnauthorizedException {
+    throws NotFoundException, IOException, UnauthenticatedException {
 
     URL url = config.resolveNamespacedURLV3(
       id.getNamespace(), String.format("streams/%s/views/%s", id.getStreamId(), id.getId()));
@@ -85,7 +85,7 @@ public class StreamViewClient {
    * @param id the view
    * @throws NotFoundException if the view was not found
    */
-  public void delete(Id.Stream.View id) throws IOException, UnauthorizedException, NotFoundException {
+  public void delete(Id.Stream.View id) throws IOException, UnauthenticatedException, NotFoundException {
     URL url = config.resolveNamespacedURLV3(
       id.getNamespace(), String.format("streams/%s/views/%s", id.getStreamId(), id.getId()));
     HttpResponse response = restClient.execute(HttpMethod.DELETE, url, config.getAccessToken(),
@@ -100,7 +100,7 @@ public class StreamViewClient {
    *
    * @return the list of views associated with a stream
    */
-  public List<String> list(Id.Stream stream) throws IOException, UnauthorizedException {
+  public List<String> list(Id.Stream stream) throws IOException, UnauthenticatedException {
     URL url = config.resolveNamespacedURLV3(stream.getNamespace(), String.format("streams/%s/views", stream.getId()));
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken());
     return ObjectResponse.fromJsonBody(response, new TypeToken<List<String>>() { }).getResponseObject();
@@ -114,7 +114,7 @@ public class StreamViewClient {
    * @throws NotFoundException if the view was not found
    */
   public ViewDetail get(Id.Stream.View id)
-    throws NotFoundException, IOException, UnauthorizedException {
+    throws NotFoundException, IOException, UnauthenticatedException {
 
     URL url = config.resolveNamespacedURLV3(
       id.getNamespace(), String.format("streams/%s/views/%s", id.getStreamId(), id.getId()));

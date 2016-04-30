@@ -26,7 +26,6 @@ import co.cask.cdap.proto.metadata.MetadataSearchTargetType;
 
 import java.util.Map;
 import java.util.Set;
-import javax.annotation.Nullable;
 
 /**
  * Interface that the {@link MetadataHttpHandler} uses to interact with Metadata.
@@ -151,27 +150,28 @@ public interface MetadataAdmin {
   void removeTags(Id.NamespacedId entityId, String ... tags) throws NotFoundException;
 
   /**
-   * Executes a search for CDAP entities in the specified namespace with the specified search query and an optional
-   * {@link MetadataSearchTargetType entity type} in both {@link MetadataScope#USER} and {@link MetadataScope#SYSTEM}.
+   * Executes a search for CDAP entities in the specified namespace with the specified search query and
+   * an optional set of {@link MetadataSearchTargetType entity types} in both
+   * {@link MetadataScope#USER} and {@link MetadataScope#SYSTEM}.
    *
    * @param namespaceId The namespace to filter the search by
    * @param searchQuery The search query
-   * @param type The particular type of CDAP entity to be searched. If null all possible types will be searched
+   * @param types The types of CDAP entity to be searched. If empty all possible types will be searched
    * @return a {@link Set} containing a {@link MetadataSearchResultRecord} for each matching entity
    */
   Set<MetadataSearchResultRecord> searchMetadata(String namespaceId, String searchQuery,
-                                                 @Nullable MetadataSearchTargetType type);
+                                                 Set<MetadataSearchTargetType> types);
 
   /**
-   * Executes a search for CDAP entities in the specified namespace with the specified search query and an optional
-   * {@link MetadataSearchTargetType entity type} in the specified {@link MetadataScope}.
+   * Executes a search for CDAP entities in the specified namespace with the specified search query and
+   * an optional set of {@link MetadataSearchTargetType entity types} in the specified {@link MetadataScope}.
    *
    * @param scope the {@link MetadataScope} to restrict the search to
    * @param namespaceId The namespace id to filter the search by
    * @param searchQuery The search query
-   * @param type The particular type of CDAP entity to be searched. If null all possible types will be searched
+   * @param types The types of CDAP entity to be searched. If empty all possible types will be searched
    * @return a {@link Set} containing a {@link MetadataSearchResultRecord} for each matching entity
    */
   Set<MetadataSearchResultRecord> searchMetadata(MetadataScope scope, String namespaceId, String searchQuery,
-                                                 @Nullable MetadataSearchTargetType type);
+                                                 Set<MetadataSearchTargetType> types);
 }

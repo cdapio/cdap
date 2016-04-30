@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,8 +16,9 @@
 
 package co.cask.cdap.proto;
 
-import com.google.common.base.Objects;
 import com.google.gson.annotations.SerializedName;
+
+import java.util.Objects;
 
 /**
  * Basic information about a Hive table.
@@ -53,12 +54,12 @@ public class TableNameInfo {
 
     TableNameInfo that = (TableNameInfo) o;
 
-    return Objects.equal(this.databaseName, that.databaseName)
-      && Objects.equal(this.tableName, that.tableName);
+    return Objects.equals(this.databaseName, that.databaseName)
+      && Objects.equals(this.tableName, that.tableName);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(databaseName, tableName);
+    return Objects.hash(databaseName, tableName);
   }
 }

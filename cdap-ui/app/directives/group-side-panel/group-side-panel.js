@@ -20,7 +20,12 @@ angular.module(PKG.name + '.commons')
       restrict: 'E',
       scope: {
         panelGroups: '=',
+        view: '=',
 
+        groupGenericName: '@',
+        itemGenericName: '@',
+
+        onAdd: '&',
         onPanelItemClick: '&',
         onPanelItemClickContext: '='
       },

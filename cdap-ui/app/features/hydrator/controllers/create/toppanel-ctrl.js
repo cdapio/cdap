@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,11 +15,12 @@
  */
 
 class TopPanelController{
-  constructor(GLOBALS, $stateParams, $alert, ConfigStore, ConfigActionsFactory, $bootstrapModal, ConsoleActionsFactory, NodesActionsFactory) {
+  constructor(GLOBALS, $stateParams, ConfigStore, ConfigActionsFactory, $uibModal, ConsoleActionsFactory, NodesActionsFactory) {
+
     this.GLOBALS = GLOBALS;
     this.ConfigStore = ConfigStore;
     this.ConfigActionsFactory = ConfigActionsFactory;
-    this.$bootstrapModal = $bootstrapModal;
+    this.$uibModal = $uibModal;
     this.ConsoleActionsFactory = ConsoleActionsFactory;
     this.NodesActionsFactory = NodesActionsFactory;
     this.parsedDescription = this.ConfigStore.getDescription();
@@ -101,7 +102,7 @@ class TopPanelController{
     if (!config) {
       return;
     }
-    this.$bootstrapModal.open({
+    this.$uibModal.open({
       templateUrl: '/assets/features/hydrator/templates/create/popovers/viewconfig.html',
       size: 'lg',
       keyboard: true,
@@ -151,7 +152,7 @@ class TopPanelController{
   }
 }
 
-TopPanelController.$inject = ['GLOBALS', '$stateParams', '$alert', 'ConfigStore', 'ConfigActionsFactory', '$bootstrapModal', 'ConsoleActionsFactory', 'NodesActionsFactory'];
+TopPanelController.$inject = ['GLOBALS', '$stateParams', 'ConfigStore', 'ConfigActionsFactory', '$uibModal', 'ConsoleActionsFactory', 'NodesActionsFactory'];
 
 angular.module(PKG.name + '.feature.hydrator')
   .controller('TopPanelController', TopPanelController);

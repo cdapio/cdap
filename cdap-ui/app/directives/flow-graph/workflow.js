@@ -247,7 +247,6 @@ module.directive('myWorkflowGraph', function ($filter, $location, FlowFactories,
 
       scope.update = function () {
         angular.forEach(scope.model.current, function (value, key) {
-
           var instanceId = scope.instanceMap[key].nodeId;
           var shapeSvg = scope.svg.select('#job-' + instanceId);
 

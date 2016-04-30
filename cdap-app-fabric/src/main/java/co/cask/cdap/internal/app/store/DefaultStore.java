@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -22,6 +22,7 @@ import co.cask.cdap.api.data.DatasetInstantiationException;
 import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetDefinition;
+import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.flow.FlowSpecification;
@@ -42,23 +43,21 @@ import co.cask.cdap.common.ApplicationNotFoundException;
 import co.cask.cdap.common.ProgramNotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
 import co.cask.cdap.internal.app.ForwardingApplicationSpecification;
 import co.cask.cdap.internal.app.ForwardingFlowSpecification;
 import co.cask.cdap.internal.app.program.ProgramBundle;
-import co.cask.cdap.proto.AdapterStatus;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.WorkflowNodeStateDetail;
 import co.cask.cdap.proto.WorkflowStatistics;
 import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.templates.AdapterDefinition;
+import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionExecutorFactory;
@@ -192,7 +191,6 @@ public class DefaultStore implements Store {
     }
   }
 
-  @Nullable
   @Override
   public Program loadProgram(final Id.Program id)
     throws IOException, ApplicationNotFoundException, ProgramNotFoundException {
@@ -256,7 +254,9 @@ public class DefaultStore implements Store {
             case COMPLETED:
             case KILLED:
             case FAILED:
-              mds.recordProgramStop(id, pid, nowSecs, updateStatus);
+              Throwable failureCause = updateStatus == ProgramRunStatus.FAILED
+                ? new Throwable("Marking run record as failed since no running program found.") : null;
+              mds.recordProgramStop(id, pid, nowSecs, updateStatus, failureCause);
               break;
             default:
               break;
@@ -287,11 +287,17 @@ public class DefaultStore implements Store {
 
   @Override
   public void setStop(final Id.Program id, final String pid, final long endTime, final ProgramRunStatus runStatus) {
+    setStop(id, pid, endTime, runStatus, null);
+  }
+
+  @Override
+  public void setStop(final Id.Program id, final String pid, final long endTime, final ProgramRunStatus runStatus,
+                      final Throwable failureCause) {
     Preconditions.checkArgument(runStatus != null, "Run state of program run should be defined");
     appsTx.get().executeUnchecked(new TransactionExecutor.Function<AppMetadataStore, Void>() {
       @Override
       public Void apply(AppMetadataStore mds) throws Exception {
-        mds.recordProgramStop(id, pid, endTime, runStatus);
+        mds.recordProgramStop(id, pid, endTime, runStatus, failureCause);
         return null;
       }
     }, apps.get());
@@ -320,7 +326,8 @@ public class DefaultStore implements Store {
     Map<String, WorkflowNode> nodeIdMap = workflowSpec.getNodeIdMap();
     final List<WorkflowDataset.ProgramRun> programRunsList = new ArrayList<>();
     for (Map.Entry<String, String> entry : run.getProperties().entrySet()) {
-      if (!("workflowToken".equals(entry.getKey()) || "runtimeArgs".equals(entry.getKey()))) {
+      if (!("workflowToken".equals(entry.getKey()) || "runtimeArgs".equals(entry.getKey())
+        || "workflowNodeState".equals(entry.getKey()))) {
         WorkflowActionNode workflowNode = (WorkflowActionNode) nodeIdMap.get(entry.getKey());
         ProgramType programType = ProgramType.valueOfSchedulableType(workflowNode.getProgram().getProgramType());
         Id.Program innerProgram = Id.Program.from(app.getNamespaceId(), app.getId(), programType, entry.getKey());
@@ -465,7 +472,7 @@ public class DefaultStore implements Store {
     appsTx.get().executeUnchecked(new TransactionExecutor.Function<AppMetadataStore, Void>() {
       @Override
       public Void apply(AppMetadataStore mds) throws Exception {
-        mds.writeApplication(id.getNamespaceId(), id.getId(), spec, Locations.toURI(appArchiveLocation).toString());
+        mds.writeApplication(id.getNamespaceId(), id.getId(), spec, appArchiveLocation.toURI().toString());
         return null;
       }
     }, apps.get());
@@ -877,86 +884,12 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public void addAdapter(final Id.Namespace id, final AdapterDefinition adapterSpec) {
+  public void updateWorkflowToken(final ProgramRunId workflowRunId, final WorkflowToken token) {
     appsTx.get().executeUnchecked(
       new TransactionExecutor.Function<AppMetadataStore, Void>() {
         @Override
         public Void apply(AppMetadataStore mds) throws Exception {
-          mds.writeAdapter(id, adapterSpec, AdapterStatus.STOPPED);
-          return null;
-        }
-      }, apps.get());
-  }
-
-  @Nullable
-  @Override
-  public AdapterDefinition getAdapter(final Id.Namespace id, final String name) {
-    return appsTx.get().executeUnchecked(
-      new TransactionExecutor.Function<AppMetadataStore, AdapterDefinition>() {
-        @Override
-        public AdapterDefinition apply(AppMetadataStore mds) throws Exception {
-          return mds.getAdapter(id, name);
-        }
-      }, apps.get());
-  }
-
-  @Override
-  public Collection<AdapterDefinition> getAllAdapters(final Id.Namespace id) {
-    return appsTx.get().executeUnchecked(
-      new TransactionExecutor.Function<AppMetadataStore, Collection<AdapterDefinition>>() {
-        @Override
-        public Collection<AdapterDefinition> apply(AppMetadataStore mds) throws Exception {
-          return mds.getAllAdapters(id);
-        }
-      }, apps.get());
-  }
-
-  @Override
-  public void removeAdapter(final Id.Namespace id, final String name) {
-    appsTx.get().executeUnchecked(
-      new TransactionExecutor.Function<AppMetadataStore, Void>() {
-        @Override
-        public Void apply(AppMetadataStore mds) throws Exception {
-          mds.deleteAdapter(id, name);
-          return null;
-        }
-      }, apps.get());
-  }
-
-  @Override
-  public void removeAllAdapters(final Id.Namespace id) {
-    appsTx.get().executeUnchecked(
-      new TransactionExecutor.Function<AppMetadataStore, Void>() {
-        @Override
-        public Void apply(AppMetadataStore mds) throws Exception {
-          mds.deleteAllAdapters(id);
-          return null;
-        }
-      }, apps.get());
-  }
-
-  @Override
-  public void setWorkflowProgramStart(final Id.Program programId, final String programRunId, final String workflow,
-                                      final String workflowRunId, final String workflowNodeId,
-                                      final long startTimeInSeconds, final String twillRunId) {
-    appsTx.get().executeUnchecked(
-      new TransactionExecutor.Function<AppMetadataStore, Void>() {
-        @Override
-        public Void apply(AppMetadataStore mds) throws Exception {
-          mds.recordWorkflowProgramStart(programId, programRunId, workflow, workflowRunId, workflowNodeId,
-                                         startTimeInSeconds, twillRunId);
-          return null;
-        }
-      }, apps.get());
-  }
-
-  @Override
-  public void updateWorkflowToken(final Id.Workflow workflowId, final String workflowRunId, final WorkflowToken token) {
-    appsTx.get().executeUnchecked(
-      new TransactionExecutor.Function<AppMetadataStore, Void>() {
-        @Override
-        public Void apply(AppMetadataStore mds) throws Exception {
-          mds.updateWorkflowToken(workflowId, workflowRunId, token);
+          mds.updateWorkflowToken(workflowRunId, token);
           return null;
         }
       }, apps.get());
@@ -969,6 +902,29 @@ public class DefaultStore implements Store {
         @Override
         public WorkflowToken apply(AppMetadataStore mds) throws Exception {
           return mds.getWorkflowToken(workflowId, workflowRunId);
+        }
+      }, apps.get());
+  }
+
+  @Override
+  public void addWorkflowNodeState(final ProgramRunId workflowRunId, final WorkflowNodeStateDetail nodeStateDetail) {
+    appsTx.get().executeUnchecked(
+      new TransactionExecutor.Function<AppMetadataStore, Void>() {
+        @Override
+        public Void apply(AppMetadataStore mds) throws Exception {
+          mds.addWorkflowNodeState(workflowRunId, nodeStateDetail);
+          return null;
+        }
+      }, apps.get());
+  }
+
+  @Override
+  public List<WorkflowNodeStateDetail> getWorkflowNodeStates(final ProgramRunId workflowRunId) {
+    return appsTx.get().executeUnchecked(
+      new TransactionExecutor.Function<AppMetadataStore, List<WorkflowNodeStateDetail>>() {
+        @Override
+        public List<WorkflowNodeStateDetail> apply(AppMetadataStore mds) throws Exception {
+          return mds.getWorkflowNodeStates(workflowRunId);
         }
       }, apps.get());
   }
@@ -1226,6 +1182,17 @@ public class DefaultStore implements Store {
         @Override
         public Set<RunId> apply(AppMetadataStore mds) throws Exception {
           return mds.getRunningInRange(startTimeInSecs, endTimeInSecs);
+        }
+      }, apps.get());
+  }
+
+  public void upgrade() {
+    appsTx.get().executeUnchecked(
+      new TransactionExecutor.Function<AppMetadataStore, Void>() {
+        @Override
+        public Void apply(AppMetadataStore mds) throws Exception {
+          mds.upgradeWorkflowRunRecords();
+          return null;
         }
       }, apps.get());
   }

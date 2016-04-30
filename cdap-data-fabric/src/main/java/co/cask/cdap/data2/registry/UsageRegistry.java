@@ -16,11 +16,11 @@
 
 package co.cask.cdap.data2.registry;
 
+import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.data2.datafabric.dataset.DatasetProvider;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.data2.dataset2.tx.Transactional;
 import co.cask.cdap.proto.Id;
 import co.cask.tephra.TransactionExecutor;
@@ -39,7 +39,7 @@ import java.util.Iterator;
 import java.util.Set;
 
 /**
- * Store program/adapter -> dataset/stream usage information.
+ * Store program -> dataset/stream usage information.
  *
  * TODO: Reduce duplication between this and {@link UsageDataset}.
  */

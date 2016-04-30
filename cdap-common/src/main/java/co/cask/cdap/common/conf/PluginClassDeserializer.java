@@ -28,7 +28,9 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 
 import java.lang.reflect.Type;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * A Gson deserializater for creating {@link PluginClass} object from external plugin config file.
@@ -38,6 +40,8 @@ public class PluginClassDeserializer implements JsonDeserializer<PluginClass> {
 
   // Type for the PluginClass.properties map.
   private static final Type PROPERTIES_TYPE = new TypeToken<Map<String, PluginPropertyField>>() { }.getType();
+  //Type for endpoints property
+  private static final Type ENDPOINTS_TYPE = new TypeToken<Set<String>>() { }.getType();
 
   @Override
   public PluginClass deserialize(JsonElement json, Type typeOfT,
@@ -53,11 +57,16 @@ public class PluginClassDeserializer implements JsonDeserializer<PluginClass> {
     String description = jsonObj.has("description") ? jsonObj.get("description").getAsString() : "";
     String className = getRequired(jsonObj, "className").getAsString();
 
+    Set<String> endpointsSet = new HashSet<>();
+    if (jsonObj.has("endpoints")) {
+      endpointsSet = context.deserialize(jsonObj.get("endpoints"), ENDPOINTS_TYPE);
+    }
+
     Map<String, PluginPropertyField> properties = jsonObj.has("properties")
       ? context.<Map<String, PluginPropertyField>>deserialize(jsonObj.get("properties"), PROPERTIES_TYPE)
       : ImmutableMap.<String, PluginPropertyField>of();
 
-    return new PluginClass(type, name, description, className, null, properties);
+    return new PluginClass(type, name, description, className, null, properties, endpointsSet);
   }
 
   private JsonElement getRequired(JsonObject jsonObj, String name) {

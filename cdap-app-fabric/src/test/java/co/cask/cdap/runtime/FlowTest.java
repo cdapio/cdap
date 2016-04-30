@@ -28,6 +28,7 @@ import co.cask.cdap.api.metrics.MetricTimeSeries;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramRunner;
+import co.cask.cdap.app.runtime.ProgramRunnerFactory;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.EndpointStrategy;
@@ -43,7 +44,6 @@ import co.cask.cdap.internal.DefaultId;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
-import co.cask.cdap.internal.app.runtime.ProgramRunnerFactory;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramType;
@@ -127,7 +127,7 @@ public class FlowTest {
     // Only running flow is good. But, in case of service, we need to send something to service as it's lazy loading
     List<ProgramController> controllers = Lists.newArrayList();
     for (final Program program : app.getPrograms()) {
-      ProgramRunner runner = runnerFactory.create(ProgramRunnerFactory.Type.valueOf(program.getType().name()));
+      ProgramRunner runner = runnerFactory.create(program.getType());
       BasicArguments systemArgs = new BasicArguments(ImmutableMap.of(ProgramOptionConstants.RUN_ID,
                                                                      RunIds.generate().getId()));
       BasicArguments userArgs = new BasicArguments(ImmutableMap.of("arg", "test"));
@@ -170,7 +170,7 @@ public class FlowTest {
       if (program.getType() == ProgramType.MAPREDUCE) {
         continue;
       }
-      ProgramRunner runner = runnerFactory.create(ProgramRunnerFactory.Type.valueOf(program.getType().name()));
+      ProgramRunner runner = runnerFactory.create(program.getType());
       BasicArguments systemArgs = new BasicArguments(ImmutableMap.of(ProgramOptionConstants.RUN_ID,
                                                                      RunIds.generate().getId()));
       controllers.add(runner.run(program, new SimpleProgramOptions(program.getName(), systemArgs,
@@ -266,7 +266,7 @@ public class FlowTest {
     for (final Program program : app.getPrograms()) {
       // running mapreduce is out of scope of this tests (there's separate unit-test for that)
       if (program.getType() == ProgramType.FLOW) {
-        ProgramRunner runner = runnerFactory.create(ProgramRunnerFactory.Type.valueOf(program.getType().name()));
+        ProgramRunner runner = runnerFactory.create(program.getType());
         BasicArguments systemArgs = new BasicArguments(ImmutableMap.of(ProgramOptionConstants.RUN_ID,
                                                                        RunIds.generate().getId()));
         controller = runner.run(program, new SimpleProgramOptions(
@@ -294,14 +294,15 @@ public class FlowTest {
       // source emits 4, then forward-one reads 1, hence 3 should be pending
       waitForPending(tagsForSourceToOne, 3, 5000); // wait a little longer as flow needs to start
       waitForPending(tagsForAllToOne, 3, 100); // wait a little longer as flow needs to start
-      // forward-two receives each of the 4 as a string and an int, but could have read 1 per each queue
-      // so there should be either 3 + 4 = 7 pending or 3 + 3 = 6 pending,
-      // but we don't know whether the queue pending count will be 4, 3 or 3, 4 or 3, 3
+      // forward-two receives each of the 4 as a string and an int, but could have read 1 at most per each queue
+      // so there should be either 3 + 4 = 7 pending or 3 + 3 = 6 pending, or 4 + 4 = 8 pending
+      // but we don't know whether the queue pending count will be 4, 3 or 3, 4 or 3, 3 or 4, 4
       long intPending = waitForPending(tagsForSourceToTwoInts, 3, 4L, 1000);
       long stringPending = waitForPending(tagsForSourceToTwoStrings, 3, 4L, 1000);
       long totalPending = intPending + stringPending;
-      Assert.assertTrue(totalPending == 6 || totalPending == 7);
-      waitForPending(tagsForSourceToTwo, 7, 6L, 100);
+      Assert.assertTrue(String.format("Expected the pending events count to be 6, 7 or 8. But it was %d", totalPending),
+                        totalPending == 6 || totalPending == 7 || totalPending == 8);
+      waitForPending(tagsForSourceToTwo, 7, 6L, 500);
       waitForPending(tagsForAllToTwo, 7, 6L, 100);
       // neither one nor two have emitted, so the total pending should be = 12 - 1 (forward-one) - 1 or 2 (forward-two)
       // => 10 or 9 events

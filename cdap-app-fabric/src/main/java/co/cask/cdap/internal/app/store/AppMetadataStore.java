@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,22 +20,27 @@ import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.api.workflow.NodeStatus;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.runtime.ProgramController;
-import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data2.dataset2.lib.table.MDSKey;
 import co.cask.cdap.data2.dataset2.lib.table.MetadataStoreDataset;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.DefaultApplicationSpecification;
+import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.workflow.BasicWorkflowToken;
-import co.cask.cdap.proto.AdapterStatus;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.templates.AdapterDefinition;
+import co.cask.cdap.proto.WorkflowNodeStateDetail;
+import co.cask.cdap.proto.WorkflowNodeThrowable;
+import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.proto.id.Ids;
+import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.tephra.TxConstants;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Function;
@@ -77,9 +82,9 @@ public class AppMetadataStore extends MetadataStoreDataset {
   private static final String TYPE_RUN_RECORD_STARTED = "runRecordStarted";
   private static final String TYPE_RUN_RECORD_SUSPENDED = "runRecordSuspended";
   private static final String TYPE_RUN_RECORD_COMPLETED = "runRecordCompleted";
+  private static final String TYPE_WORKFLOW_NODE_STATE = "wns";
+  private static final String TYPE_WORKFLOW_TOKEN = "wft";
   private static final String TYPE_NAMESPACE = "namespace";
-  private static final String TYPE_ADAPTER = "adapter";
-  private static final String WORKFLOW_TOKEN_PROPERTY_KEY = "workflowToken";
 
   private final CConfiguration cConf;
 
@@ -151,8 +156,75 @@ public class AppMetadataStore extends MetadataStoreDataset {
     write(key, updated);
   }
 
+  /**
+   * Return the {@link List} of {@link WorkflowNodeStateDetail} for a given Workflow run.
+   */
+  public List<WorkflowNodeStateDetail> getWorkflowNodeStates(ProgramRunId workflowRunId) {
+    MDSKey key = getProgramKeyBuilder(TYPE_WORKFLOW_NODE_STATE, workflowRunId.getParent().toId())
+      .add(workflowRunId.getRun()).build();
+
+    return list(key, WorkflowNodeStateDetail.class);
+  }
+
+  /**
+   * This method is called to associate node state of custom action with the Workflow run.
+   *
+   * @param workflowRunId the run for which node state is to be added
+   * @param nodeStateDetail node state details to be added
+   */
+  public void addWorkflowNodeState(ProgramRunId workflowRunId, WorkflowNodeStateDetail nodeStateDetail) {
+    // Node states will be stored with following key:
+    // workflowNodeState.namespace.app.WORKFLOW.workflowName.workflowRun.workflowNodeId
+    MDSKey key = getProgramKeyBuilder(TYPE_WORKFLOW_NODE_STATE, workflowRunId.getParent().toId())
+      .add(workflowRunId.getRun()).add(nodeStateDetail.getNodeId()).build();
+
+    write(key, nodeStateDetail);
+  }
+
+  private void addWorkflowNodeState(ProgramId programId, String pid, Map<String, String> systemArgs,
+                                    ProgramRunStatus status, @Nullable Throwable failureCause) {
+    String workflowNodeId = systemArgs.get(ProgramOptionConstants.WORKFLOW_NODE_ID);
+    String workflowName = systemArgs.get(ProgramOptionConstants.WORKFLOW_NAME);
+    String workflowRun = systemArgs.get(ProgramOptionConstants.WORKFLOW_RUN_ID);
+
+    ApplicationId appId = Ids.namespace(programId.getNamespace()).app(programId.getApplication());
+    ProgramRunId workflowRunId = appId.workflow(workflowName).run(workflowRun);
+
+    // Node states will be stored with following key:
+    // workflowNodeState.namespace.app.WORKFLOW.workflowName.workflowRun.workflowNodeId
+    MDSKey key = getProgramKeyBuilder(TYPE_WORKFLOW_NODE_STATE, workflowRunId.getParent().toId())
+      .add(workflowRun).add(workflowNodeId).build();
+
+    WorkflowNodeThrowable defaultThrowable = failureCause == null ? null : new WorkflowNodeThrowable(failureCause);
+    WorkflowNodeStateDetail nodeStateDetail = new WorkflowNodeStateDetail(workflowNodeId,
+                                                                          ProgramRunStatus.toNodeStatus(status),
+                                                                          pid, defaultThrowable);
+
+    write(key, nodeStateDetail);
+
+    // Get the run record of the Workflow which started this program
+    key = getWorkflowRunRecordKey(workflowRunId.getParent().toId(), workflowRunId.getRun());
+
+    RunRecordMeta record = get(key, RunRecordMeta.class);
+    if (record != null) {
+      // Update the parent Workflow run record by adding node id and program run id in the properties
+      Map<String, String> properties = record.getProperties();
+      properties.put(workflowNodeId, pid);
+      write(key, new RunRecordMeta(record, properties));
+    }
+  }
+
   public void recordProgramStart(Id.Program program, String pid, long startTs, String twillRunId,
                                  Map<String, String> runtimeArgs, Map<String, String> systemArgs) {
+
+    String workflowrunId = null;
+    if (systemArgs != null && systemArgs.containsKey(ProgramOptionConstants.WORKFLOW_NAME)) {
+      // Program is started by Workflow. Add row corresponding to its node state.
+      ProgramId programId = program.toEntityId();
+      addWorkflowNodeState(programId, pid, systemArgs, ProgramRunStatus.RUNNING, null);
+      workflowrunId = systemArgs.get(ProgramOptionConstants.WORKFLOW_RUN_ID);
+    }
+
     MDSKey key = new MDSKey.Builder()
       .add(TYPE_RUN_RECORD_STARTED)
       .add(program.getNamespaceId())
@@ -162,12 +234,15 @@ public class AppMetadataStore extends MetadataStoreDataset {
       .add(pid)
       .build();
 
+    ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
+    builder.put("runtimeArgs", GSON.toJson(runtimeArgs, MAP_STRING_STRING_TYPE));
+    if (workflowrunId != null) {
+      builder.put("workflowrunid", workflowrunId);
+    }
 
-    write(key, new RunRecordMeta(pid, startTs, null, ProgramRunStatus.RUNNING,
-                                 ImmutableMap.of(
-                                   "runtimeArgs", GSON.toJson(runtimeArgs, MAP_STRING_STRING_TYPE)),
-                                 systemArgs,
-                                 twillRunId));
+    RunRecordMeta meta = new RunRecordMeta(pid, startTs, null, ProgramRunStatus.RUNNING, builder.build(), systemArgs,
+                                           twillRunId);
+    write(key, meta);
   }
 
   public void recordProgramSuspend(Id.Program program, String pid) {
@@ -220,7 +295,8 @@ public class AppMetadataStore extends MetadataStoreDataset {
     write(key, new RunRecordMeta(record, null, toStatus));
   }
 
-  public void recordProgramStop(Id.Program program, String pid, long stopTs, ProgramRunStatus runStatus) {
+  public void recordProgramStop(Id.Program program, String pid, long stopTs, ProgramRunStatus runStatus,
+                                @Nullable Throwable failureCause) {
     MDSKey key = new MDSKey.Builder()
       .add(TYPE_RUN_RECORD_STARTED)
       .add(program.getNamespaceId())
@@ -237,6 +313,11 @@ public class AppMetadataStore extends MetadataStoreDataset {
                                  program.getId(), pid);
       LOG.error(msg);
       throw new IllegalArgumentException(msg);
+    }
+
+    if (started.getSystemArgs() != null && started.getSystemArgs().containsKey(ProgramOptionConstants.WORKFLOW_NAME)) {
+      ProgramId programId = program.toEntityId();
+      addWorkflowNodeState(programId, pid, started.getSystemArgs(), runStatus, failureCause);
     }
 
     deleteAll(key);
@@ -257,8 +338,8 @@ public class AppMetadataStore extends MetadataStoreDataset {
     return getRuns(null, status, Long.MIN_VALUE, Long.MAX_VALUE, Integer.MAX_VALUE, filter);
   }
 
-  private MDSKey.Builder getProgramKeyBuilder(String searchType, @Nullable Id.Program program) {
-    MDSKey.Builder builder = new MDSKey.Builder().add(searchType);
+  private MDSKey.Builder getProgramKeyBuilder(String recordType, @Nullable Id.Program program) {
+    MDSKey.Builder builder = new MDSKey.Builder().add(recordType);
     if (program != null) {
       builder.add(program.getNamespaceId());
       builder.add(program.getApplicationId());
@@ -486,47 +567,6 @@ public class AppMetadataStore extends MetadataStoreDataset {
     return list(getNamespaceKey(null), NamespaceMeta.class);
   }
 
-  @Deprecated
-  public void writeAdapter(Id.Namespace id, AdapterDefinition adapterSpec,
-                           AdapterStatus adapterStatus) {
-    write(new MDSKey.Builder().add(TYPE_ADAPTER, id.getId(), adapterSpec.getName()).build(),
-          new AdapterMeta(adapterSpec, adapterStatus));
-  }
-
-  @Nullable
-  @Deprecated
-  public AdapterDefinition getAdapter(Id.Namespace id, String name) {
-    AdapterMeta adapterMeta = getAdapterMeta(id, name);
-    return adapterMeta == null ?  null : adapterMeta.getSpec();
-  }
-
-  @SuppressWarnings("unchecked")
-  @Deprecated
-  private AdapterMeta getAdapterMeta(Id.Namespace id, String name) {
-    return getFirst(new MDSKey.Builder().add(TYPE_ADAPTER, id.getId(), name).build(), AdapterMeta.class);
-  }
-
-  @Deprecated
-  public List<AdapterDefinition> getAllAdapters(Id.Namespace id) {
-    List<AdapterDefinition> adapterSpecs = Lists.newArrayList();
-    List<AdapterMeta> adapterMetas = list(new MDSKey.Builder().add(TYPE_ADAPTER, id.getId()).build(),
-                                          AdapterMeta.class);
-    for (AdapterMeta adapterMeta : adapterMetas) {
-      adapterSpecs.add(adapterMeta.getSpec());
-    }
-    return adapterSpecs;
-  }
-
-  @Deprecated
-  public void deleteAdapter(Id.Namespace id, String name) {
-    deleteAll(new MDSKey.Builder().add(TYPE_ADAPTER, id.getId(), name).build());
-  }
-
-  @Deprecated
-  public void deleteAllAdapters(Id.Namespace id) {
-    deleteAll(new MDSKey.Builder().add(TYPE_ADAPTER, id.getId()).build());
-  }
-
   private MDSKey getNamespaceKey(@Nullable String name) {
     MDSKey.Builder builder = new MDSKey.Builder().add(TYPE_NAMESPACE);
     if (null != name) {
@@ -535,78 +575,31 @@ public class AppMetadataStore extends MetadataStoreDataset {
     return builder.build();
   }
 
-  public void recordWorkflowProgramStart(Id.Program program, String programRunId, String workflow,
-                                         String workflowRunId, String workflowNodeId, long startTimeInSeconds,
-                                         String twillRunId) {
-    // Get the run record of the Workflow which started this program
-    MDSKey key = getWorkflowRunRecordKey(Id.Workflow.from(program.getApplication(), workflow), workflowRunId);
+  public void updateWorkflowToken(ProgramRunId workflowRunId, WorkflowToken workflowToken) {
+    // Workflow token will be stored with following key:
+    // [wft][namespace][app][WORKFLOW][workflowName][workflowRun]
+    MDSKey key = getProgramKeyBuilder(TYPE_WORKFLOW_TOKEN, workflowRunId.getParent().toId())
+      .add(workflowRunId.getRun()).build();
 
-    RunRecordMeta record = get(key, RunRecordMeta.class);
-    if (record == null) {
-      String msg = String.format("No meta found for associated Workflow %s run record %s, while recording run for the" +
-                                   " namespace %s app %s type %s program %s runid %s", workflow, workflowRunId,
-                                 program.getNamespaceId(), program.getApplicationId(), program.getType().name(),
-                                 program.getId(), programRunId);
-      LOG.error(msg);
-      throw new IllegalArgumentException(msg);
-    }
-
-    // Update the parent Workflow run record by adding node id and program run id in the properties
-    Map<String, String> properties = record.getProperties();
-    properties.put(workflowNodeId, programRunId);
-
-    write(key, new RunRecordMeta(record.getPid(), record.getStartTs(), null, ProgramRunStatus.RUNNING,
-                                 properties, record.getSystemArgs(), record.getTwillRunId()));
-
-    // Record the program start
-    key = new MDSKey.Builder()
-      .add(TYPE_RUN_RECORD_STARTED)
-      .add(program.getNamespaceId())
-      .add(program.getApplicationId())
-      .add(program.getType().name())
-      .add(program.getId())
-      .add(programRunId)
-      .build();
-
-    write(key, new RunRecordMeta(programRunId, startTimeInSeconds, null, ProgramRunStatus.RUNNING,
-                                 ImmutableMap.of("workflowrunid", workflowRunId), null, twillRunId));
+    write(key, workflowToken);
   }
 
-  public void updateWorkflowToken(Id.Workflow workflowId, String workflowRunId,
-                                  WorkflowToken workflowToken) throws NotFoundException {
-    RunRecordMeta runRecordMeta = getUnfinishedRun(workflowId, TYPE_RUN_RECORD_STARTED, workflowRunId);
-    if (runRecordMeta == null) {
-      // Even if a run is suspended, the currently running node runs to completion.
-      // This node also updates the workflow token at the end.
-      // For such a scenario, check for a suspended run record too.
-      runRecordMeta = getUnfinishedRun(workflowId, TYPE_RUN_RECORD_SUSPENDED, workflowRunId);
-      if (runRecordMeta == null) {
-        throw new NotFoundException(new Id.Run(workflowId, workflowRunId));
-      }
-    }
-    Map<String, String> propertiesToUpdate = runRecordMeta.getProperties();
-    propertiesToUpdate.put(WORKFLOW_TOKEN_PROPERTY_KEY, GSON.toJson(workflowToken));
+  public WorkflowToken getWorkflowToken(Id.Workflow workflowId, String workflowRunId) {
+    // Workflow token is stored with following key:
+    // [wft][namespace][app][WORKFLOW][workflowName][workflowRun]
+    MDSKey key = getProgramKeyBuilder(TYPE_WORKFLOW_TOKEN, workflowId).add(workflowRunId).build();
 
-    write(getWorkflowRunRecordKey(workflowId, workflowRunId),
-          new RunRecordMeta(runRecordMeta, propertiesToUpdate));
-  }
-
-  public WorkflowToken getWorkflowToken(Id.Workflow workflowId, String workflowRunId) throws NotFoundException {
-    RunRecordMeta runRecordMeta = getRun(workflowId, workflowRunId);
-    if (runRecordMeta == null) {
-      throw new NotFoundException(new Id.Run(workflowId, workflowRunId));
-    }
-    String workflowToken = runRecordMeta.getProperties().get(WORKFLOW_TOKEN_PROPERTY_KEY);
-    // For pre-3.1 run records, there won't be a workflow token. Return an empty token for such run records.
+    BasicWorkflowToken workflowToken = get(key, BasicWorkflowToken.class);
     if (workflowToken == null) {
       LOG.debug("No workflow token available for workflow: {}, runId: {}", workflowId, workflowRunId);
       // Its ok to not allow any updates by returning a 0 size token.
       return new BasicWorkflowToken(0);
     }
-    return GSON.fromJson(workflowToken, BasicWorkflowToken.class);
+
+    return workflowToken;
   }
 
-  private MDSKey getWorkflowRunRecordKey(Id.Workflow workflowId, String workflowRunId) {
+  private MDSKey getWorkflowRunRecordKey(Id.Program workflowId, String workflowRunId) {
     return new MDSKey.Builder()
       .add(TYPE_RUN_RECORD_STARTED)
       .add(workflowId.getNamespaceId())
@@ -719,5 +712,81 @@ public class AppMetadataStore extends MetadataStoreDataset {
       }
       return true;
     }
+  }
+
+  /**
+   * Upgrade the Workflow run records. This method iterate over all Workflow run records
+   * and create new records for Workflow token and Workflow node states based on the properties.
+   */
+  public void upgradeWorkflowRunRecords() {
+    final String workflowTokenPropertyName = "workflowToken";
+    String runtimeArgsPropertyName = "runtimeArgs";
+    MDSKey startKey = new MDSKey.Builder().add(TYPE_RUN_RECORD_COMPLETED).build();
+    MDSKey endKey = new MDSKey(Bytes.stopKeyForPrefix(startKey.getKey()));
+    Predicate<RunRecordMeta> predicate = new Predicate<RunRecordMeta>() {
+      @Override
+      public boolean apply(@Nullable RunRecordMeta input) {
+        return input != null && input.getProperties().containsKey(workflowTokenPropertyName);
+      }
+    };
+
+    Map<MDSKey, RunRecordMeta> wfRunRecords = listKV(startKey, endKey, RunRecordMeta.class, Integer.MAX_VALUE,
+                                                     predicate);
+
+    for (Map.Entry<MDSKey, RunRecordMeta> wfRunRecord : wfRunRecords.entrySet()) {
+      String runId = wfRunRecord.getValue().getPid();
+      ProgramRunId workflowRunId = getProgramIdFromRunRecordKey(wfRunRecord.getKey()).run(runId);
+
+      Map<String, String> runRecordProperties = wfRunRecord.getValue().getProperties();
+
+      String workflowToken = runRecordProperties.get(workflowTokenPropertyName);
+      updateWorkflowToken(workflowRunId, GSON.fromJson(workflowToken, BasicWorkflowToken.class));
+
+      for (Map.Entry<String, String> property : runRecordProperties.entrySet()) {
+        if (property.getKey().equals(workflowTokenPropertyName) || property.getKey().equals(runtimeArgsPropertyName)) {
+          // property is for workflow token or runtime argument
+          continue;
+        }
+
+        // Property is of type - <program name, program run id>
+        String programName = property.getKey();
+        String programRunId = property.getValue();
+        ProgramId programId = Ids.namespace(workflowRunId.getNamespace()).app(workflowRunId.getApplication())
+          .mr(programName);
+        // Check if the current property is MapReduce program
+        RunRecordMeta completedRun = getCompletedRun(programId.toId(), programRunId);
+        if (completedRun == null) {
+          // Check if current property is for Spark program
+          programId = Ids.namespace(workflowRunId.getNamespace()).app(workflowRunId.getApplication())
+            .spark(programName);
+          completedRun = getCompletedRun(programId.toId(), programRunId);
+        }
+
+        if (completedRun == null) {
+          continue;
+        }
+
+        NodeStatus nodeStatus = ProgramRunStatus.toNodeStatus(completedRun.getStatus());
+        WorkflowNodeStateDetail nodeStateDetail = new WorkflowNodeStateDetail(programName, nodeStatus, programRunId,
+                                                                              null);
+        addWorkflowNodeState(workflowRunId, nodeStateDetail);
+      }
+    }
+  }
+
+  private ProgramId getProgramIdFromRunRecordKey(MDSKey key) {
+    MDSKey.Splitter splitter = key.split();
+    // Skip the RunRecord type.
+    splitter.skipString();
+    // Namespace id is the next part.
+    String namespaceId = splitter.getString();
+    // Application id is the next part.
+    String applicationId = splitter.getString();
+    // Program type is the next part.
+    String programType = splitter.getString();
+    // Program id is the next part.
+    String programId = splitter.getString();
+
+    return Ids.namespace(namespaceId).app(applicationId).program(ProgramType.valueOf(programType), programId);
   }
 }

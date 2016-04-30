@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -28,14 +28,14 @@ public final class KafkaNotificationUtils {
    * Map a {@link Id.NotificationFeed} to a Kafka topic partition.
    *
    * @param feed {@link Id.NotificationFeed} object
+   * @param topic kafka topic
    * @return Kafka topic that should contain the Notifications published on the {@code feed}
    */
-  public static TopicPartition getKafkaTopicPartition(Id.NotificationFeed feed) {
-    // For now, we only have a topic per feed Category.
-    // Later, we may want to have multiple topics per categories, defined in cdap-site.
+  public static TopicPartition getKafkaTopicPartition(String topic, Id.NotificationFeed feed) {
+    // we now can have have multiple topics per categories, defined in cdap-site.
     // For example, we may have 10 topics for the category streams, which names would be
     // notifications-streams-1 .. notifications-streams-10.
-    return new TopicPartition(String.format("notifications-%s", feed.getCategory()), 0);
+    return new TopicPartition(String.format("%s-%s", topic, feed.getCategory()), 0);
   }
 
   /**

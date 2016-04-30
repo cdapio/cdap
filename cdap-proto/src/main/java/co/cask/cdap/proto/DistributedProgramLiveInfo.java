@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,8 +16,7 @@
 
 package co.cask.cdap.proto;
 
-import com.google.common.collect.Lists;
-
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -26,8 +25,8 @@ import java.util.List;
 public class DistributedProgramLiveInfo extends ProgramLiveInfo implements Containers {
 
   private final String yarnAppId;
-  private final List<Containers.ContainerInfo> containers = Lists.newArrayList();
-  private final List<String> services = Lists.newArrayList();
+  private final List<Containers.ContainerInfo> containers = new ArrayList<>();
+  private final List<String> services = new ArrayList<>();
 
   public DistributedProgramLiveInfo(Id.Program program, String yarnAppId) {
     super(program, "distributed");

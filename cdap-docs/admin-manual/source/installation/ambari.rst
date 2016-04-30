@@ -36,12 +36,6 @@ Installation using Apache Ambari
 Preparing the Cluster
 =====================
 
-.. Node.js Installation
-.. --------------------
-.. include:: /../target/_includes/ambari-installation.rst
-    :start-after: .. _ambari-install-node-js:
-    :end-before: .. _ambari-install-packaging:
-
 .. Hadoop Configuration
 .. --------------------
 .. include:: ../_includes/installation/hadoop-configuration.txt
@@ -81,19 +75,21 @@ with the CDAP Repository from the list below that you would like to use:
 
 .. _ambari-compatibility-matrix:
 
-+-----------------------------------------------------------------------+
-| Supported Hortonworks Data Platform (HDP) Distributions               |
-+----------------+-----------------+------------------------------------+
-| CDAP Series    | CDAP Repository | Hadoop Distributions               |
-+================+=================+====================================+
-| CDAP 3.3.x     | ``cdap/3.3``    | HDP 2.0, HDP 2.1, HDP 2.2, HDP 2.3 |
-+----------------+-----------------+------------------------------------+
-| CDAP 3.2.x     | ``cdap/3.2``    | HDP 2.0, HDP 2.1, HDP 2.2, HDP 2.3 |
-+----------------+-----------------+------------------------------------+
-| CDAP 3.1.x     | ``cdap/3.1``    | HDP 2.0, HDP 2.1, HDP 2.2          |
-+----------------+-----------------+------------------------------------+
-| CDAP 3.0.x     | ``cdap/3.0``    | HDP 2.0, HDP 2.1                   |
-+----------------+-----------------+------------------------------------+
++------------------------------------------------------------+
+| Supported Hortonworks Data Platform (HDP) Distributions    |
++----------------+-----------------+-------------------------+
+| CDAP Series    | CDAP Repository | Hadoop Distributions    |
++================+=================+=========================+
+| CDAP 3.4.x     | ``cdap/3.4``    | HDP 2.0 through HDP 2.4 |
++----------------+-----------------+-------------------------+
+| CDAP 3.3.x     | ``cdap/3.3``    | HDP 2.0 through HDP 2.3 |
++----------------+-----------------+-------------------------+
+| CDAP 3.2.x     | ``cdap/3.2``    | HDP 2.0 through HDP 2.3 |
++----------------+-----------------+-------------------------+
+| CDAP 3.1.x     | ``cdap/3.1``    | HDP 2.0 through HDP 2.2 |
++----------------+-----------------+-------------------------+
+| CDAP 3.0.x     | ``cdap/3.0``    | HDP 2.0 and HDP 2.1     |
++----------------+-----------------+-------------------------+
 
 .. _ambari-compatibility-matrix-end:
 
@@ -170,7 +166,7 @@ Assign CDAP Services to Hosts
       :figwidth: 100%
       :width: 800px
       :align: center
-      :class: bordered-image
+      :class: bordered-image-top-margin
  
       **Ambari Dashboard:** Assigning Masters
  
@@ -324,7 +320,7 @@ Service Checks in Apache Ambari
       **Ambari Dashboard:** *CDAP* Service Screen
 
 CDAP is now running on your cluster, managed by Ambari. You can login to the CDAP UI at
-the address of the node running the CDAP-UI service at port 9999.
+the address of the node running the CDAP UI service at port 9999.
 
 .. include:: /_includes/installation/smoke-test-cdap.txt
 

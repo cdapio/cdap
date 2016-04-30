@@ -18,6 +18,7 @@ package co.cask.cdap;
 
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.app.guice.AppFabricServiceRuntimeModule;
+import co.cask.cdap.app.guice.AuthorizationModule;
 import co.cask.cdap.app.guice.ProgramRunnerRuntimeModule;
 import co.cask.cdap.app.guice.ServiceStoreModules;
 import co.cask.cdap.app.store.ServiceStore;
@@ -27,11 +28,14 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.IOModule;
+import co.cask.cdap.common.guice.KafkaClientModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
+import co.cask.cdap.common.guice.ZKClientModule;
 import co.cask.cdap.common.io.URLConnections;
 import co.cask.cdap.common.namespace.guice.NamespaceClientRuntimeModule;
 import co.cask.cdap.common.startup.ConfigurationLogger;
 import co.cask.cdap.common.utils.DirUtils;
+import co.cask.cdap.common.utils.Networks;
 import co.cask.cdap.common.utils.OSDetector;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
@@ -40,6 +44,7 @@ import co.cask.cdap.data.stream.StreamAdminModules;
 import co.cask.cdap.data.stream.service.StreamService;
 import co.cask.cdap.data.stream.service.StreamServiceRuntimeModule;
 import co.cask.cdap.data.view.ViewAdminModules;
+import co.cask.cdap.data2.audit.AuditModule;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.explore.client.ExploreClient;
 import co.cask.cdap.explore.executor.ExploreExecutorService;
@@ -62,20 +67,27 @@ import co.cask.cdap.security.guice.SecurityModules;
 import co.cask.cdap.security.server.ExternalAuthenticationServer;
 import co.cask.cdap.store.guice.NamespaceStoreModule;
 import co.cask.tephra.inmemory.InMemoryTransactionService;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.counters.Limits;
+import org.apache.twill.kafka.client.KafkaClientService;
+import org.apache.twill.zookeeper.ZKClientService;
+import org.apache.zookeeper.server.ZooKeeperServerMain;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.InetAddress;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -86,9 +98,12 @@ public class StandaloneMain {
 
   // A special key in the CConfiguration to disable UI. It's mainly used for unit-tests that start Standalone.
   public static final String DISABLE_UI = "standalone.disable.ui";
+  public static final String LOCAL_ZOOKEEPER_SERVER_PORT = "local.zkserver.port";
+  public static final String LOCAL_KAFKA_DIR = "local.kafka.dir";
 
   private static final Logger LOG = LoggerFactory.getLogger(StandaloneMain.class);
 
+  private final Injector injector;
   private final UserInterfaceService userInterfaceService;
   private final NettyRouter router;
   private final MetricsQueryService metricsQueryService;
@@ -101,18 +116,44 @@ public class StandaloneMain {
   private final MetadataService metadataService;
   private final boolean securityEnabled;
   private final boolean sslEnabled;
-  private final CConfiguration configuration;
+  private final CConfiguration cConf;
+  private final DatasetService datasetService;
+  private final ExploreClient exploreClient;
+  private final ZKClientService zkClient;
+  private final KafkaClientService kafkaClient;
+  private final ExternalJavaProcessExecutor kafkaProcessExecutor;
+  private final ExternalJavaProcessExecutor zookeeperProcessExecutor;
 
   private ExternalAuthenticationServer externalAuthenticationServer;
-  private final DatasetService datasetService;
-
   private ExploreExecutorService exploreExecutorService;
-  private final ExploreClient exploreClient;
 
-  private StandaloneMain(List<Module> modules, CConfiguration configuration) {
-    this.configuration = configuration;
 
-    Injector injector = Guice.createInjector(modules);
+  private StandaloneMain(List<Module> modules, CConfiguration cConf) {
+    this.cConf = cConf;
+
+    injector = Guice.createInjector(modules);
+
+    // Start ZK client, Kafka client, ZK Server and Kafka Server only when audit is enabled
+    if (cConf.getBoolean(Constants.Audit.ENABLED)) {
+      zkClient = injector.getInstance(ZKClientService.class);
+      kafkaClient = injector.getInstance(KafkaClientService.class);
+      File zkLogs = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR), "zk-logs");
+      String zkPort = cConf.get(LOCAL_ZOOKEEPER_SERVER_PORT);
+      zookeeperProcessExecutor = new ExternalJavaProcessExecutor(ZooKeeperServerMain.class.getCanonicalName(),
+                                                                 ImmutableList.of(zkPort, zkLogs.getAbsolutePath()));
+
+      String kafkaClassPath =  new File(cConf.get(LOCAL_KAFKA_DIR), "*").getAbsolutePath();
+      kafkaProcessExecutor = new ExternalJavaProcessExecutor("co.cask.cdap.kafka.run.KafkaServerMain",
+                                                             Collections.<String>emptyList(),
+                                                             ImmutableMap.of("KAFKA_HEAP_OPTS", "-Xmx1G -Xms1G"),
+                                                             kafkaClassPath);
+    } else {
+      zkClient = null;
+      kafkaClient = null;
+      zookeeperProcessExecutor = null;
+      kafkaProcessExecutor = null;
+    }
+
     txService = injector.getInstance(InMemoryTransactionService.class);
     router = injector.getInstance(NettyRouter.class);
     metricsQueryService = injector.getInstance(MetricsQueryService.class);
@@ -124,19 +165,19 @@ public class StandaloneMain {
     serviceStore = injector.getInstance(ServiceStore.class);
     streamService = injector.getInstance(StreamService.class);
 
-    if (configuration.getBoolean(DISABLE_UI, false)) {
+    if (cConf.getBoolean(DISABLE_UI, false)) {
       userInterfaceService = null;
     } else {
       userInterfaceService = injector.getInstance(UserInterfaceService.class);
     }
 
-    sslEnabled = configuration.getBoolean(Constants.Security.SSL_ENABLED);
-    securityEnabled = configuration.getBoolean(Constants.Security.ENABLED);
+    sslEnabled = cConf.getBoolean(Constants.Security.SSL_ENABLED);
+    securityEnabled = cConf.getBoolean(Constants.Security.ENABLED);
     if (securityEnabled) {
       externalAuthenticationServer = injector.getInstance(ExternalAuthenticationServer.class);
     }
 
-    boolean exploreEnabled = configuration.getBoolean(Constants.Explore.EXPLORE_ENABLED);
+    boolean exploreEnabled = cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED);
     if (exploreEnabled) {
       ExploreServiceUtils.checkHiveSupport(getClass().getClassLoader());
       exploreExecutorService = injector.getInstance(ExploreExecutorService.class);
@@ -161,6 +202,14 @@ public class StandaloneMain {
   }
 
   /**
+   * INTERNAL METHOD. Returns the guice injector of Standalone. It's for testing only. Use with extra caution.
+   */
+  @VisibleForTesting
+  public Injector getInjector() {
+    return injector;
+  }
+
+  /**
    * Start the service.
    */
   public void startUp() throws Exception {
@@ -169,9 +218,25 @@ public class StandaloneMain {
 
     cleanupTempDir();
 
-    ConfigurationLogger.logImportantConfig(configuration);
+    ConfigurationLogger.logImportantConfig(cConf);
 
     // Start all the services.
+    if (zookeeperProcessExecutor != null) {
+      zookeeperProcessExecutor.startAndWait();
+    }
+
+    if (kafkaProcessExecutor != null) {
+      kafkaProcessExecutor.startAndWait();
+    }
+
+    if (zkClient != null) {
+      zkClient.startAndWait();
+    }
+
+    if (kafkaClient != null) {
+      kafkaClient.startAndWait();
+    }
+
     txService.startAndWait();
     metricsCollectionService.startAndWait();
     datasetService.startAndWait();
@@ -205,8 +270,8 @@ public class StandaloneMain {
 
     String protocol = sslEnabled ? "https" : "http";
     int dashboardPort = sslEnabled ?
-      configuration.getInt(Constants.Dashboard.SSL_BIND_PORT) :
-      configuration.getInt(Constants.Dashboard.BIND_PORT);
+      cConf.getInt(Constants.Dashboard.SSL_BIND_PORT) :
+      cConf.getInt(Constants.Dashboard.BIND_PORT);
     System.out.println("Standalone CDAP started successfully.");
     System.out.printf("Connect to the CDAP UI at %s://%s:%d\n", protocol, "localhost", dashboardPort);
   }
@@ -230,6 +295,7 @@ public class StandaloneMain {
         exploreExecutorService.stopAndWait();
       }
       exploreClient.close();
+      metadataService.stopAndWait();
       serviceStore.stopAndWait();
       // app fabric will also stop all programs
       appFabricServer.stopAndWait();
@@ -243,8 +309,22 @@ public class StandaloneMain {
         externalAuthenticationServer.stopAndWait();
       }
       logAppenderInitializer.close();
-      metadataService.stopAndWait();
 
+      if (kafkaClient != null) {
+        kafkaClient.stopAndWait();
+      }
+
+      if (zkClient != null) {
+        zkClient.startAndWait();
+      }
+
+      if (kafkaProcessExecutor != null) {
+        kafkaProcessExecutor.stopAndWait();
+      }
+
+      if (zookeeperProcessExecutor != null) {
+        zookeeperProcessExecutor.stopAndWait();
+      }
     } catch (Throwable e) {
       LOG.error("Exception during shutdown", e);
       // We can't do much but exit. Because there was an exception, some non-daemon threads may still be running.
@@ -256,8 +336,8 @@ public class StandaloneMain {
   }
 
   private void cleanupTempDir() {
-    File tmpDir = new File(configuration.get(Constants.CFG_LOCAL_DATA_DIR),
-                           configuration.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
+    File tmpDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
+                           cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
 
     if (!tmpDir.isDirectory()) {
       return;
@@ -283,6 +363,7 @@ public class StandaloneMain {
       }
       main.startUp();
     } catch (Throwable e) {
+      @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
       Throwable rootCause = Throwables.getRootCause(e);
       if (rootCause instanceof ServiceBindException) {
         LOG.error("Failed to start Standalone CDAP: {}", rootCause.getMessage());
@@ -340,28 +421,31 @@ public class StandaloneMain {
     return new StandaloneMain(modules, cConf);
   }
 
-  private static List<Module> createPersistentModules(CConfiguration configuration, Configuration hConf) {
-    configuration.setIfUnset(Constants.CFG_DATA_LEVELDB_DIR, Constants.DEFAULT_DATA_LEVELDB_DIR);
+  private static List<Module> createPersistentModules(CConfiguration cConf, Configuration hConf) {
+    cConf.setIfUnset(Constants.CFG_DATA_LEVELDB_DIR, Constants.DEFAULT_DATA_LEVELDB_DIR);
 
-    configuration.set(Constants.CFG_DATA_INMEMORY_PERSISTENCE, Constants.InMemoryPersistenceType.LEVELDB.name());
+    cConf.set(Constants.CFG_DATA_INMEMORY_PERSISTENCE, Constants.InMemoryPersistenceType.LEVELDB.name());
 
     // configure all services except for router to bind to 127.0.0.1
-    configuration.set(Constants.AppFabric.SERVER_ADDRESS, "127.0.0.1");
-    configuration.set(Constants.Transaction.Container.ADDRESS, "127.0.0.1");
-    configuration.set(Constants.Dataset.Manager.ADDRESS, "127.0.0.1");
-    configuration.set(Constants.Dataset.Executor.ADDRESS, "127.0.0.1");
-    configuration.set(Constants.Stream.ADDRESS, "127.0.0.1");
-    configuration.set(Constants.Metrics.ADDRESS, "127.0.0.1");
-    configuration.set(Constants.Metrics.SERVER_ADDRESS, "127.0.0.1");
-    configuration.set(Constants.MetricsProcessor.ADDRESS, "127.0.0.1");
-    configuration.set(Constants.LogSaver.ADDRESS, "127.0.0.1");
-    configuration.set(Constants.Security.AUTH_SERVER_BIND_ADDRESS, "127.0.0.1");
-    configuration.set(Constants.Explore.SERVER_ADDRESS, "127.0.0.1");
-    configuration.set(Constants.Metadata.SERVICE_BIND_ADDRESS, "127.0.0.1");
+    String localhost = InetAddress.getLoopbackAddress().getHostAddress();
+    cConf.set(Constants.AppFabric.SERVER_ADDRESS, localhost);
+    cConf.set(Constants.Transaction.Container.ADDRESS, localhost);
+    cConf.set(Constants.Dataset.Manager.ADDRESS, localhost);
+    cConf.set(Constants.Dataset.Executor.ADDRESS, localhost);
+    cConf.set(Constants.Stream.ADDRESS, localhost);
+    cConf.set(Constants.Metrics.ADDRESS, localhost);
+    cConf.set(Constants.Metrics.SERVER_ADDRESS, localhost);
+    cConf.set(Constants.MetricsProcessor.ADDRESS, localhost);
+    cConf.set(Constants.LogSaver.ADDRESS, localhost);
+    cConf.set(Constants.Security.AUTH_SERVER_BIND_ADDRESS, localhost);
+    cConf.set(Constants.Explore.SERVER_ADDRESS, localhost);
+    cConf.set(Constants.Metadata.SERVICE_BIND_ADDRESS, localhost);
 
     return ImmutableList.of(
-      new ConfigModule(configuration, hConf),
+      new ConfigModule(cConf, hConf),
       new IOModule(),
+      new ZKClientModule(),
+      new KafkaClientModule(),
       new MetricsHandlerModule(),
       new DiscoveryRuntimeModule().getStandaloneModules(),
       new LocationRuntimeModule().getStandaloneModules(),
@@ -384,7 +468,9 @@ public class StandaloneMain {
       new StreamAdminModules().getStandaloneModules(),
       new NamespaceClientRuntimeModule().getStandaloneModules(),
       new NamespaceStoreModule().getStandaloneModules(),
-      new MetadataServiceModule()
+      new MetadataServiceModule(),
+      new AuditModule().getStandaloneModules(),
+      new AuthorizationModule()
     );
   }
 }

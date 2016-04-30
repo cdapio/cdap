@@ -23,8 +23,10 @@ import co.cask.cdap.client.common.ClientTestBase;
 import co.cask.cdap.common.AlreadyExistsException;
 import co.cask.cdap.common.DatasetModuleNotFoundException;
 import co.cask.cdap.common.DatasetTypeNotFoundException;
+import co.cask.cdap.proto.DatasetInstanceConfiguration;
 import co.cask.cdap.proto.DatasetMeta;
 import co.cask.cdap.proto.DatasetModuleMeta;
+import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
@@ -39,7 +41,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 
 /**
  * Test for {@link DatasetClient}, {@link DatasetModuleClient}, and {@link DatasetTypeClient}.
@@ -136,8 +141,17 @@ public class DatasetClientTestRun extends ClientTestBase {
 
     Id.DatasetInstance instance = Id.DatasetInstance.from(TEST_NAMESPACE, "testDataset");
 
-    datasetClient.create(instance, StandaloneDataset.TYPE_NAME);
+    String description = "test description";
+    datasetClient.create(instance,
+                         new DatasetInstanceConfiguration(StandaloneDataset.TYPE_NAME,
+                                                          Collections.<String, String>emptyMap(), description));
     Assert.assertEquals(numBaseDataset + 1, datasetClient.list(TEST_NAMESPACE).size());
+
+    // Assert dataset summary for the newly created dataset
+    DatasetSpecificationSummary expectedSpec =
+      new DatasetSpecificationSummary(instance.getId(), StandaloneDataset.TYPE_NAME, description,
+                                      Collections.<String, String>emptyMap());
+    Assert.assertEquals(expectedSpec, getSpecForDataset(instance, datasetClient.list(TEST_NAMESPACE)));
     datasetClient.truncate(instance);
 
     DatasetMeta metaBefore = datasetClient.get(instance);
@@ -200,5 +214,17 @@ public class DatasetClientTestRun extends ClientTestBase {
     Assert.assertFalse(datasetClient.exists(instance));
     datasetClient.create(instance, Table.class.getName());
     Assert.assertTrue(datasetClient.exists(instance));
+  }
+
+  @Nullable
+  private DatasetSpecificationSummary getSpecForDataset(Id.DatasetInstance instance,
+                                                        List<DatasetSpecificationSummary> summaries) {
+    DatasetSpecificationSummary actualSummary = null;
+    for (DatasetSpecificationSummary summary : summaries) {
+      if (StandaloneDataset.TYPE_NAME.equals(summary.getType()) && instance.getId().equals(summary.getName())) {
+        actualSummary = summary;
+      }
+    }
+    return actualSummary;
   }
 }

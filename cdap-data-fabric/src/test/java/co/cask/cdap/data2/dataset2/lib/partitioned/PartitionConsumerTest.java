@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -43,7 +43,6 @@ import co.cask.tephra.inmemory.InMemoryTxSystemClient;
 import com.google.common.base.Function;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
 import org.apache.twill.filesystem.Location;
 import org.junit.After;
 import org.junit.Assert;
@@ -157,12 +156,12 @@ public class PartitionConsumerTest {
     final PartitionedFileSet dataset = dsFrameworkUtil.getInstance(pfsInstance);
     final TransactionAware txAwareDataset = (TransactionAware) dataset;
 
-    final Set<PartitionKey> partitionKeys1 = Sets.newHashSet();
+    final Set<PartitionKey> partitionKeys1 = new HashSet<>();
     for (int i = 0; i < 10; i++) {
       partitionKeys1.add(generateUniqueKey());
     }
 
-    final Set<PartitionKey> partitionKeys2 = Sets.newHashSet();
+    final Set<PartitionKey> partitionKeys2 = new HashSet<>();
     for (int i = 0; i < 15; i++) {
       partitionKeys2.add(generateUniqueKey());
     }
@@ -183,14 +182,8 @@ public class PartitionConsumerTest {
       public void apply() throws Exception {
         // Initial consumption results in the partitions corresponding to partitionKeys1 to be consumed because only
         // those partitions are added to the dataset at this point
-        List<Partition> consumedPartitions = Lists.newArrayList();
-        Iterables.addAll(consumedPartitions, partitionConsumer.consumePartitions().getPartitions());
-
-        Set<PartitionKey> retrievedKeys = Sets.newHashSet();
-        for (Partition consumedPartition : consumedPartitions) {
-          retrievedKeys.add(consumedPartition.getPartitionKey());
-        }
-        Assert.assertEquals(partitionKeys1, retrievedKeys);
+        List<? extends Partition> consumedPartitions = partitionConsumer.consumePartitions().getPartitions();
+        Assert.assertEquals(partitionKeys1, toKeys(consumedPartitions));
       }
     });
 
@@ -208,14 +201,7 @@ public class PartitionConsumerTest {
       public void apply() throws Exception {
         // using the same PartitionConsumer (which remembers the PartitionConsumerState) to consume additional
         // partitions results in only the newly added partitions (corresponding to partitionKeys2) to be returned
-        List<Partition> consumedPartitions = Lists.newArrayList();
-        Iterables.addAll(consumedPartitions, partitionConsumer.consumePartitions().getPartitions());
-
-        Set<PartitionKey> retrievedKeys = Sets.newHashSet();
-        for (Partition consumedPartition : consumedPartitions) {
-          retrievedKeys.add(consumedPartition.getPartitionKey());
-        }
-        Assert.assertEquals(partitionKeys2, retrievedKeys);
+        Assert.assertEquals(partitionKeys2, toKeys(partitionConsumer.consumePartitions().getPartitions()));
       }
     });
 
@@ -232,36 +218,121 @@ public class PartitionConsumerTest {
       public void apply() throws Exception {
         // creating a new PartitionConsumer resets the consumption state. Consuming from it then returns an iterator
         // with all the partition keys
-        List<Partition> consumedPartitions = Lists.newArrayList();
-        List<? extends PartitionDetail> partitionDetails =
-          new ConcurrentPartitionConsumer(dataset, new InMemoryStatePersistor())
-            .consumePartitions().getPartitions();
-        Iterables.addAll(consumedPartitions, partitionDetails);
+        List<? extends Partition> consumedPartitions =
+          new ConcurrentPartitionConsumer(dataset, new InMemoryStatePersistor()).consumePartitions().getPartitions();
 
-        Set<PartitionKey> retrievedKeys = Sets.newHashSet();
-        for (Partition consumedPartition : consumedPartitions) {
-          retrievedKeys.add(consumedPartition.getPartitionKey());
-        }
-        Set<PartitionKey> allKeys = Sets.newHashSet();
+        Set<PartitionKey> allKeys = new HashSet<>();
         allKeys.addAll(partitionKeys1);
         allKeys.addAll(partitionKeys2);
-        Assert.assertEquals(allKeys, retrievedKeys);
+        Assert.assertEquals(allKeys, toKeys(consumedPartitions));
       }
     });
   }
 
+  @Test
+  public void testConsumeAfterDelete() throws Exception {
+    final PartitionedFileSet dataset = dsFrameworkUtil.getInstance(pfsInstance);
+    final TransactionAware txAwareDataset = (TransactionAware) dataset;
+
+    final Set<PartitionKey> partitionKeys1 = new HashSet<>();
+    for (int i = 0; i < 3; i++) {
+      partitionKeys1.add(generateUniqueKey());
+    }
+
+    // need to ensure that our consumerConfiguration is larger than the amount we consume initially, so that
+    // additional partitions (which will be deleted afterwards) are brought into the working set
+    ConsumerConfiguration consumerConfiguration = ConsumerConfiguration.builder().setMaxWorkingSetSize(100).build();
+
+    final PartitionConsumer partitionConsumer =
+      new ConcurrentPartitionConsumer(dataset, new InMemoryStatePersistor(), consumerConfiguration);
+    dsFrameworkUtil.newInMemoryTransactionExecutor(txAwareDataset).execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        for (PartitionKey partitionKey : partitionKeys1) {
+          dataset.getPartitionOutput(partitionKey).addPartition();
+        }
+      }
+    });
+
+    dsFrameworkUtil.newInMemoryTransactionExecutor(txAwareDataset).execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        // add 2 more partitions after the first 3. We do not need to keep track of these, because they will be dropped
+        // and not consumed
+        for (int i = 0; i < 2; i++) {
+          dataset.getPartitionOutput(generateUniqueKey()).addPartition();
+        }
+      }
+    });
+
+    dsFrameworkUtil.newInMemoryTransactionExecutor(txAwareDataset).execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        // consume 3 of the 5 initial partitions
+        Assert.assertEquals(partitionKeys1, toKeys(partitionConsumer.consumePartitions(3).getPartitions()));
+      }
+    });
+
+
+    final Set<PartitionKey> partitionKeys2 = new HashSet<>();
+    for (int i = 0; i < 5; i++) {
+      partitionKeys2.add(generateUniqueKey());
+    }
+
+    dsFrameworkUtil.newInMemoryTransactionExecutor(txAwareDataset).execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        // drop all existing partitions (2 of which are not consumed)
+        for (PartitionDetail partitionDetail : dataset.getPartitions(PartitionFilter.ALWAYS_MATCH)) {
+          dataset.dropPartition(partitionDetail.getPartitionKey());
+        }
+        // add 5 new ones
+        for (PartitionKey partitionKey : partitionKeys2) {
+          dataset.getPartitionOutput(partitionKey).addPartition();
+        }
+      }
+    });
+
+    dsFrameworkUtil.newInMemoryTransactionExecutor(txAwareDataset).execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        // the consumed partition keys should correspond to partitionKeys2, and not include the dropped, but unconsumed
+        // partitions added before them
+        Assert.assertEquals(partitionKeys2, toKeys(partitionConsumer.consumePartitions().getPartitions()));
+      }
+    });
+
+    dsFrameworkUtil.newInMemoryTransactionExecutor(txAwareDataset).execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        // consuming the partitions again, without adding any new partitions returns an empty iterator
+        Assert.assertTrue(partitionConsumer.consumePartitions().getPartitions().isEmpty());
+      }
+    });
+
+    dsFrameworkUtil.newInMemoryTransactionExecutor(txAwareDataset).execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        // creating a new PartitionConsumer resets the consumption state. Consuming from it then returns an iterator
+        // with all the partition keys added after the deletions
+        ConcurrentPartitionConsumer partitionConsumer2 =
+          new ConcurrentPartitionConsumer(dataset, new InMemoryStatePersistor());
+        Assert.assertEquals(partitionKeys2, toKeys(partitionConsumer2.consumePartitions().getPartitions()));
+      }
+    });
+  }
 
   @Test
   public void testPartitionConsumingWithFilterAndLimit() throws Exception {
     final PartitionedFileSet dataset = dsFrameworkUtil.getInstance(pfsInstance);
     final TransactionAware txAwareDataset = (TransactionAware) dataset;
 
-    final Set<PartitionKey> partitionKeys1 = Sets.newHashSet();
+    final Set<PartitionKey> partitionKeys1 = new HashSet<>();
     for (int i = 0; i < 10; i++) {
       partitionKeys1.add(generateUniqueKey());
     }
 
-    final Set<PartitionKey> partitionKeys2 = Sets.newHashSet();
+    final Set<PartitionKey> partitionKeys2 = new HashSet<>();
     for (int i = 0; i < 15; i++) {
       partitionKeys2.add(generateUniqueKey());
     }
@@ -283,7 +354,7 @@ public class PartitionConsumerTest {
       public void apply() throws Exception {
         // Initial consumption results in the partitions corresponding to partitionKeys1 to be consumed because only
         // those partitions are added to the dataset at this point
-        List<Partition> consumedPartitions = Lists.newArrayList();
+        List<Partition> consumedPartitions = new ArrayList<>();
 
         // with limit = 1, the returned iterator is only size 1, even though there are more unconsumed partitions
         Iterables.addAll(consumedPartitions, partitionConsumer.consumePartitions(1).getPartitions());
@@ -297,11 +368,7 @@ public class PartitionConsumerTest {
         Iterables.addAll(consumedPartitions, partitionConsumer.consumePartitions(5).getPartitions());
         Assert.assertEquals(10, consumedPartitions.size());
 
-        Set<PartitionKey> retrievedKeys = Sets.newHashSet();
-        for (Partition consumedPartition : consumedPartitions) {
-          retrievedKeys.add(consumedPartition.getPartitionKey());
-        }
-        Assert.assertEquals(partitionKeys1, retrievedKeys);
+        Assert.assertEquals(partitionKeys1, toKeys(consumedPartitions));
       }
     });
 
@@ -319,14 +386,7 @@ public class PartitionConsumerTest {
       public void apply() throws Exception {
         // using the same PartitionConsumer (which remembers the PartitionConsumerState) to consume additional
         // partitions results in only the newly added partitions (corresponding to partitionKeys2) to be returned
-        List<Partition> consumedPartitions = Lists.newArrayList();
-        Iterables.addAll(consumedPartitions, partitionConsumer.consumePartitions().getPartitions());
-
-        Set<PartitionKey> retrievedKeys = Sets.newHashSet();
-        for (Partition consumedPartition : consumedPartitions) {
-          retrievedKeys.add(consumedPartition.getPartitionKey());
-        }
-        Assert.assertEquals(partitionKeys2, retrievedKeys);
+        Assert.assertEquals(partitionKeys2, toKeys(partitionConsumer.consumePartitions().getPartitions()));
       }
     });
 
@@ -357,7 +417,7 @@ public class PartitionConsumerTest {
           ConsumerConfiguration.builder().setPartitionPredicate(predicate).build();
         PartitionConsumer newPartitionConsumer =
           new ConcurrentPartitionConsumer(dataset, new InMemoryStatePersistor(), configuration);
-        List<Partition> consumedPartitions = Lists.newArrayList();
+        List<Partition> consumedPartitions = new ArrayList<>();
 
         // apply the filter (narrows it down to 6 elements) and apply a limit of 4 results in 4 consumed partitions
         Iterables.addAll(consumedPartitions, newPartitionConsumer.consumePartitions(4).getPartitions());
@@ -379,6 +439,117 @@ public class PartitionConsumerTest {
         Assert.assertEquals(expectedIFields, actualIFields);
       }
     });
+  }
+
+  /**
+   * A custom {@link PartitionAcceptor} which skips any partitions that have partition key field 's' not equal to
+   * an 'allowedSField'. It also stops iterating if the 'i' key field is equal to a specified 'stopOnI' value.
+   */
+  public static final class CustomAcceptor implements PartitionAcceptor {
+
+    private final String allowedSField;
+    private final Integer stopOnI;
+
+    public CustomAcceptor(String allowedSField) {
+      this(allowedSField, null);
+    }
+
+    public CustomAcceptor(String allowedSField, @Nullable Integer stopOnI) {
+      this.allowedSField = allowedSField;
+      this.stopOnI = stopOnI;
+    }
+
+    @Override
+    public Return accept(PartitionDetail partitionDetail) {
+      String sField = (String) partitionDetail.getPartitionKey().getField("s");
+      if (!allowedSField.equals(sField)) {
+        return Return.SKIP;
+      }
+
+      int iField = (int) partitionDetail.getPartitionKey().getField("i");
+      if (stopOnI != null && stopOnI.equals(iField)) {
+        return Return.STOP;
+      }
+      return Return.ACCEPT;
+    }
+  }
+
+  @Test
+  public void testPartitionConsumingWithPartitionAcceptor() throws Exception {
+    final PartitionedFileSet dataset = dsFrameworkUtil.getInstance(pfsInstance);
+    final TransactionAware txAwareDataset = (TransactionAware) dataset;
+
+    // i will range from [0,10), s will always be 'partitionKeys1'
+    final Set<PartitionKey> partitionKeys1 = new HashSet<>();
+    for (int i = 0; i < 10; i++) {
+      PartitionKey key = PartitionKey.builder()
+        .addIntField("i", i)
+        .addLongField("l", 17L)
+        .addStringField("s", "partitionKeys1")
+        .build();
+      partitionKeys1.add(key);
+    }
+
+    // i will range from [0,15), s will always be 'partitionKeys2'
+    final Set<PartitionKey> partitionKeys2 = new HashSet<>();
+    for (int i = 0; i < 15; i++) {
+      PartitionKey key = PartitionKey.builder()
+        .addIntField("i", i)
+        .addLongField("l", 17L)
+        .addStringField("s", "partitionKeys2")
+        .build();
+      partitionKeys2.add(key);
+    }
+
+    dsFrameworkUtil.newInMemoryTransactionExecutor(txAwareDataset).execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        for (final PartitionKey partitionKey : partitionKeys1) {
+          dataset.getPartitionOutput(partitionKey).addPartition();
+        }
+
+        for (final PartitionKey partitionKey : partitionKeys2) {
+          dataset.getPartitionOutput(partitionKey).addPartition();
+        }
+      }
+    });
+
+    final PartitionConsumer partitionConsumer = new ConcurrentPartitionConsumer(dataset, new InMemoryStatePersistor());
+    dsFrameworkUtil.newInMemoryTransactionExecutor(txAwareDataset).execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        List<Partition> consumedPartitions = new ArrayList<>();
+
+        // specify a PartitionAcceptor that only limits to partitions where 's' field is equal to 'partitionKeys1'
+        // so it will get all the partitions in partitionKeys1
+        Iterables.addAll(consumedPartitions,
+                         partitionConsumer.consumePartitions(new CustomAcceptor("partitionKeys1")).getPartitions());
+
+        // assert that we consumed all the partitions represented by partitionsKeys1
+        Assert.assertEquals(partitionKeys1, toKeys(consumedPartitions));
+
+        consumedPartitions.clear();
+        // ask for partitions where 's' field is equal to 'partitionKeys2', but stop iterating upon 'i' field == 8
+        Iterables.addAll(consumedPartitions,
+                         partitionConsumer.consumePartitions(new CustomAcceptor("partitionKeys2", 8)).getPartitions());
+        // this will give us 8 of partitionKeys2
+        Assert.assertEquals(8, consumedPartitions.size());
+
+        // ask for the remainder of the partitions - i ranging from [8,15). Then, we will have all of 'partitionKeys2'
+        Iterables.addAll(consumedPartitions, partitionConsumer.consumePartitions().getPartitions());
+
+        Assert.assertEquals(partitionKeys2, toKeys(consumedPartitions));
+
+      }
+    });
+  }
+
+  private Set<PartitionKey> toKeys(List<? extends Partition> partitions) {
+    Set<PartitionKey> partitionKeys = new HashSet<>(partitions.size());
+    for (Partition partition : partitions) {
+      partitionKeys.add(partition.getPartitionKey());
+    }
+    return partitionKeys;
   }
 
   private static final class InMemoryStatePersistor implements StatePersistor {
@@ -447,9 +618,18 @@ public class PartitionConsumerTest {
         List<PartitionDetail> consumedBy3 = partitionConsumer3.consumePartitions(2).getPartitions();
         Assert.assertEquals(1, consumedBy3.size());
 
-        // partitionConsumers 2 and 3 marks that it succesfully processed the partitions
+        // partitionConsumers 2 and 3 marks that it successfully processed the partitions
         partitionConsumer3.onFinish(consumedBy3, true);
-        partitionConsumer2.onFinish(consumedBy2, true);
+
+        // test onFinishWithKeys API
+        List<PartitionKey> keysConsumedBy2 =
+          Lists.transform(consumedBy2, new Function<PartitionDetail, PartitionKey>() {
+          @Override
+          public PartitionKey apply(PartitionDetail input) {
+            return input.getPartitionKey();
+          }
+        });
+        partitionConsumer2.onFinishWithKeys(keysConsumedBy2, true);
 
         // at this point, all partitions are processed, so no additional partitions are available for consumption
         Assert.assertEquals(0, partitionConsumer3.consumePartitions().getPartitions().size());
@@ -460,16 +640,8 @@ public class PartitionConsumerTest {
         allProcessedPartitions.addAll(consumedBy2);
         allProcessedPartitions.addAll(consumedBy3);
 
-        List<PartitionKey> allProcessedKeys =
-          Lists.transform(allProcessedPartitions, new Function<PartitionDetail, PartitionKey>() {
-          @Override
-          public PartitionKey apply(PartitionDetail input) {
-            return input.getPartitionKey();
-          }
-        });
-
         // ordering may be different, since all the partitions were added in the same transaction
-        Assert.assertEquals(partitionKeys, Sets.newHashSet(allProcessedKeys));
+        Assert.assertEquals(partitionKeys, toKeys(allProcessedPartitions));
       }
     });
   }

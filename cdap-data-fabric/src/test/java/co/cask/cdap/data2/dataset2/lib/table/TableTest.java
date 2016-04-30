@@ -43,7 +43,6 @@ import co.cask.tephra.TransactionSystemClient;
 import co.cask.tephra.inmemory.InMemoryTxSystemClient;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSortedMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -57,7 +56,6 @@ import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -1919,6 +1917,32 @@ public abstract class TableTest<T extends Table> {
 
     table.delete(new Delete(R1, C1, V1));
     verifyDatasetMetrics(metrics, ++writes, reads);
+
+    // drop table
+    admin.drop();
+  }
+
+  @Test
+  public void testReadOwnWrite() throws Exception {
+    final String tableName = "readOwnWrite";
+    DatasetAdmin admin = getTableAdmin(CONTEXT1, tableName);
+    admin.create();
+    Table table = getTable(CONTEXT1, tableName);
+
+    Transaction tx = txClient.startShort();
+    try {
+      ((TransactionAware) table).startTx(tx);
+
+      // Write some data, then flush it by calling commitTx.
+      table.put(new Put(R1, C1, V1));
+
+      ((TransactionAware) table).commitTx();
+
+      // Try to read the previous write.
+      Assert.assertArrayEquals(V1, table.get(new Get(R1, C1)).get(C1));
+    } finally {
+      txClient.commit(tx);
+    }
 
     // drop table
     admin.drop();

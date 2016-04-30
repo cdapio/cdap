@@ -17,8 +17,8 @@
 package co.cask.cdap.data2.dataset2.tx;
 
 import co.cask.cdap.api.dataset.Dataset;
+import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.common.service.UncaughtExceptionIdleService;
-import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.data2.transaction.TransactionSystemClientService;
 import co.cask.tephra.DefaultTransactionExecutor;
 import co.cask.tephra.TransactionAware;

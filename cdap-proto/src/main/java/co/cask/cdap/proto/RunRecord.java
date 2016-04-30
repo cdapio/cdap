@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,11 +16,12 @@
 
 package co.cask.cdap.proto;
 
-import com.google.common.base.Objects;
-import com.google.common.collect.Maps;
 import com.google.gson.annotations.SerializedName;
 
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Objects;
 import javax.annotation.Nullable;
 
 /**
@@ -49,7 +50,8 @@ public class RunRecord {
     this.startTs = startTs;
     this.stopTs = stopTs;
     this.status = status;
-    this.properties = properties == null ? Maps.<String, String>newHashMap() : properties;
+    this.properties = properties == null ? Collections.<String, String>emptyMap() :
+      Collections.unmodifiableMap(new LinkedHashMap<>(properties));
   }
 
   public RunRecord(RunRecord otherRunRecord) {
@@ -89,26 +91,26 @@ public class RunRecord {
 
     RunRecord that = (RunRecord) o;
 
-    return Objects.equal(this.pid, that.pid) &&
-      Objects.equal(this.startTs, that.startTs) &&
-      Objects.equal(this.stopTs, that.stopTs) &&
-      Objects.equal(this.status, that.status) &&
-      Objects.equal(this.properties, that.properties);
+    return Objects.equals(this.pid, that.pid) &&
+      Objects.equals(this.startTs, that.startTs) &&
+      Objects.equals(this.stopTs, that.stopTs) &&
+      Objects.equals(this.status, that.status) &&
+      Objects.equals(this.properties, that.properties);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(pid, startTs, stopTs, status, properties);
+    return Objects.hash(pid, startTs, stopTs, status, properties);
   }
 
   @Override
   public String toString() {
-    return Objects.toStringHelper(this)
-      .add("pid", pid)
-      .add("startTs", startTs)
-      .add("stopTs", stopTs)
-      .add("status", status)
-      .add("properties", properties)
-      .toString();
+    return "RunRecord{" +
+      "pid='" + pid + '\'' +
+      ", startTs=" + startTs +
+      ", stopTs=" + stopTs +
+      ", status=" + status +
+      ", properties=" + properties +
+      '}';
   }
 }

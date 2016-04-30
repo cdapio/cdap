@@ -18,10 +18,13 @@ package co.cask.cdap.examples.wikipedia
 
 import java.util
 
-import co.cask.cdap.api.spark.{ScalaSparkProgram, SparkContext}
+import co.cask.cdap.api.spark.{SparkExecutionContext, SparkMain}
+import org.apache.spark.SparkContext
 import org.apache.spark.mllib.clustering.{LDA, LDAModel}
 import org.apache.spark.mllib.linalg.Vector
 import org.apache.spark.rdd.RDD
+
+import scala.collection.JavaConversions._
 
 /**
  * Scala program to run Latent Dirichlet Allocation (LDA) on wikipedia data.
@@ -29,14 +32,16 @@ import org.apache.spark.rdd.RDD
  * https://github.com/apache/spark/blob/master/examples/src/main/scala/org/apache/spark/examples/mllib/LDAExample.scala
  * for CDAP.
  */
-class ScalaSparkLDA extends ScalaSparkProgram {
+class ScalaSparkLDA extends SparkMain {
 
-  override def run(context: SparkContext): Unit = {
+  override def run(implicit sec: SparkExecutionContext): Unit = {
+    val sc = new SparkContext
 
-    val arguments: util.Map[String, String] = context.getRuntimeArguments
+    val arguments = sec.getRuntimeArguments
 
     // Pre-process data for LDA
-    val (corpus, vocabArray, _) = ClusteringUtils.preProcess(context)
+    val (corpus, vocabArray, _) = ClusteringUtils.preProcess(
+      sc.fromDataset(WikipediaPipelineApp.NORMALIZED_WIKIPEDIA_DATASET), sec.getRuntimeArguments.toMap)
     corpus.cache()
 
     // Run LDA
@@ -50,7 +55,7 @@ class ScalaSparkLDA extends ScalaSparkProgram {
       }
     }
 
-    ClusteringUtils.storeResults(context, topics, WikipediaPipelineApp.SPARK_CLUSTERING_OUTPUT_DATASET)
+    ClusteringUtils.storeResults(sc, sec, topics, WikipediaPipelineApp.SPARK_CLUSTERING_OUTPUT_DATASET)
   }
 
   private def runLDA(corpus: RDD[(Long, Vector)],

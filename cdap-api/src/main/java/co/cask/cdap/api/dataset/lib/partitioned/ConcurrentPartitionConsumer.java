@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -47,16 +47,23 @@ public class ConcurrentPartitionConsumer extends AbstractPartitionConsumer {
   public PartitionConsumerResult doConsume(ConsumerWorkingSet workingSet, PartitionAcceptor acceptor) {
     doExpiry(workingSet);
     workingSet.populate(getPartitionedFileSet(), getConfiguration());
+    List<PartitionDetail> toConsume = selectPartitions(acceptor, workingSet.getPartitions());
+    return new PartitionConsumerResult(toConsume, removeDiscardedPartitions(workingSet));
+  }
 
+  private List<PartitionDetail> selectPartitions(PartitionAcceptor acceptor,
+                                                 List<? extends ConsumablePartition> partitions) {
     long now = System.currentTimeMillis();
     List<PartitionDetail> toConsume = new ArrayList<>();
-
-    List<? extends ConsumablePartition> partitions = workingSet.getPartitions();
     for (ConsumablePartition consumablePartition : partitions) {
       if (ProcessState.AVAILABLE != consumablePartition.getProcessState()) {
         continue;
       }
       PartitionDetail partition = getPartitionedFileSet().getPartition(consumablePartition.getPartitionKey());
+      if (partition == null) {
+        // no longer exists
+        continue;
+      }
       PartitionAcceptor.Return accept = acceptor.accept(partition);
       switch (accept) {
         case ACCEPT:
@@ -67,14 +74,14 @@ public class ConcurrentPartitionConsumer extends AbstractPartitionConsumer {
         case SKIP:
           continue;
         case STOP:
-          break;
+          return toConsume;
       }
     }
-    return new PartitionConsumerResult(toConsume, removeDiscardedPartitions(workingSet));
+    return toConsume;
   }
 
   @Override
-  public void doFinish(ConsumerWorkingSet workingSet, List<PartitionKey> partitionKeys, boolean succeeded) {
+  public void doFinish(ConsumerWorkingSet workingSet, List<? extends PartitionKey> partitionKeys, boolean succeeded) {
     doExpiry(workingSet);
     if (succeeded) {
       commit(workingSet, partitionKeys);
@@ -86,7 +93,7 @@ public class ConcurrentPartitionConsumer extends AbstractPartitionConsumer {
   /**
    * Removes the given partition keys from the working set, as they have been successfully processed.
    */
-  protected void commit(ConsumerWorkingSet workingSet, List<PartitionKey> partitionKeys) {
+  protected void commit(ConsumerWorkingSet workingSet, List<? extends PartitionKey> partitionKeys) {
     for (PartitionKey key : partitionKeys) {
       ConsumablePartition consumablePartition = workingSet.lookup(key);
       assertInProgress(consumablePartition);
@@ -98,7 +105,7 @@ public class ConcurrentPartitionConsumer extends AbstractPartitionConsumer {
    * Resets the process state of the given partition keys, as they were not successfully processed, or discards the
    * partition if it has already been attempted the configured number of attempts.
    */
-  protected void abort(ConsumerWorkingSet workingSet, List<PartitionKey> partitionKeys) {
+  protected void abort(ConsumerWorkingSet workingSet, List<? extends PartitionKey> partitionKeys) {
     List<PartitionKey> discardedPartitions = new ArrayList<>();
     for (PartitionKey key : partitionKeys) {
       ConsumablePartition consumablePartition = workingSet.lookup(key);

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -73,7 +73,7 @@ public class PurchaseAppTest extends TestBase {
 
     // Add customer's profile information
     URL userProfileUrl = new URL(userProfileServiceManager.getServiceURL(15, TimeUnit.SECONDS),
-                                    UserProfileServiceHandler.USER_ENDPOINT);
+                                 UserProfileServiceHandler.USER_ENDPOINT);
     HttpURLConnection userProfileConnection = (HttpURLConnection) userProfileUrl.openConnection();
     String userProfileJson = "{'id' : 'joe', 'firstName': 'joe', 'lastName':'bernard', 'categories': ['fruits']}";
 
@@ -88,7 +88,7 @@ public class PurchaseAppTest extends TestBase {
 
     // Test service to retrieve customer's profile information
     userProfileUrl = new URL(userProfileServiceManager.getServiceURL(15, TimeUnit.SECONDS),
-                                    UserProfileServiceHandler.USER_ENDPOINT + "/joe");
+                             UserProfileServiceHandler.USER_ENDPOINT + "/joe");
     userProfileConnection = (HttpURLConnection) userProfileUrl.openConnection();
     Assert.assertEquals(HttpURLConnection.HTTP_OK, userProfileConnection.getResponseCode());
     String customerJson;
@@ -103,7 +103,8 @@ public class PurchaseAppTest extends TestBase {
     Assert.assertEquals(profileFromService.getLastName(), "bernard");
 
     // Run PurchaseHistoryWorkflow which will process the data
-    MapReduceManager mapReduceManager = appManager.getMapReduceManager("PurchaseHistoryBuilder").start();
+    MapReduceManager mapReduceManager =
+      appManager.getMapReduceManager(PurchaseHistoryBuilder.class.getSimpleName()).start();
     mapReduceManager.waitForFinish(3, TimeUnit.MINUTES);
 
     // Start PurchaseHistoryService

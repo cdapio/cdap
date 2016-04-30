@@ -22,7 +22,7 @@ import co.cask.cdap.cli.ProgramIdArgument;
 import co.cask.cdap.cli.util.ArgumentParser;
 import co.cask.cdap.client.ServiceClient;
 import co.cask.cdap.common.NotFoundException;
-import co.cask.cdap.common.UnauthorizedException;
+import co.cask.cdap.common.UnauthenticatedException;
 import co.cask.cdap.proto.Id;
 import co.cask.common.cli.completers.PrefixCompleter;
 import com.google.common.collect.Lists;
@@ -76,7 +76,7 @@ public class HttpMethodPrefixCompleter extends PrefixCompleter {
           httpMethods.add(method);
         }
       }
-    } catch (IOException | UnauthorizedException | NotFoundException ignored) {
+    } catch (IOException | UnauthenticatedException | NotFoundException ignored) {
     }
     return httpMethods;
   }

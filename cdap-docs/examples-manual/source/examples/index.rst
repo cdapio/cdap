@@ -16,11 +16,13 @@ Examples
    :titlesonly:
 
    Hello World <hello-world>
+   Clicks and Views <clicks-and-views>
    Count Random <count-random>
    Data Cleansing <data-cleansing>
    FileSet Example <fileset-example>
    Log Analysis <log-analysis>
    Purchase <purchase>
+   Spam Classifier <spam-classifier>
    Spark K-Means <spark-k-means>
    Spark Page Rank <spark-page-rank>
    Sport Results <sport-results>
@@ -62,6 +64,9 @@ In addition to the :ref:`Getting Started's <getting-started-index>`
       the flow processes the events and stores them in a dataset. A MapReduce program reads the dataset, compiles
       the purchases for each customer into a purchase history and stores the histories in a second dataset.
       The purchase histories can then be queried either through a service or an ad-hoc SQL query.
+  * - :doc:`Spam Classifier <spam-classifier>`
+    - An application that demonstrates a Spark Streaming application that classifies Kafka
+      messages as either "spam" or "ham" (not "spam") based on a trained Spark MLlib NaiveBayes model.
   * - :doc:`Spark K-Means <spark-k-means>`
     - An application that demonstrates streaming text analysis using a Spark program. It calculates the centers
       of points from an input stream using the K-Means clustering method.

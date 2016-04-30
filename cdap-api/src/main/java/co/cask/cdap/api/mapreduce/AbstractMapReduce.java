@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,6 +17,8 @@
 package co.cask.cdap.api.mapreduce;
 
 import co.cask.cdap.api.Resources;
+import co.cask.cdap.api.data.batch.Input;
+import co.cask.cdap.api.data.batch.Output;
 import co.cask.cdap.api.data.stream.StreamBatchReadable;
 import co.cask.cdap.internal.api.AbstractPluginConfigurable;
 
@@ -101,7 +103,9 @@ public abstract class AbstractMapReduce extends AbstractPluginConfigurable<MapRe
 
   /**
    * Specifies set of Dataset names that are used by the {@link MapReduce}.
-   * @deprecated datasets used in runtime need not be specified in {@link MapReduce#configure}
+   * @deprecated Deprecated as of 2.8.0. Dataset can be requested directly through the method
+   *             {@link MapReduceContext#getDataset(String)} or
+   *             {@link MapReduceTaskContext#getDataset(String)} at runtime.
    */
   @Deprecated
   protected final void useDatasets(String dataset, String...moreDatasets) {
@@ -113,7 +117,9 @@ public abstract class AbstractMapReduce extends AbstractPluginConfigurable<MapRe
 
   /**
    * Specifies set of Dataset names that are used by the {@link MapReduce}.
-   * @deprecated datasets used in runtime need not be specified in {@link MapReduce#configure}
+   * @deprecated Deprecated as of 2.8.0. Dataset can be requested directly through the method
+   *             {@link MapReduceContext#getDataset(String)} or
+   *             {@link MapReduceTaskContext#getDataset(String)} at runtime.
    */
   @Deprecated
   protected final void useDatasets(Iterable<String> datasets) {
@@ -122,7 +128,11 @@ public abstract class AbstractMapReduce extends AbstractPluginConfigurable<MapRe
 
   /**
    * Sets the name of the Dataset used as input for the {@link MapReduce}.
+   *
+   * @deprecated as of 3.4.0. Use {@link MapReduceContext#addInput(Input)}
+   * in {@link #beforeSubmit}, instead.
    */
+  @Deprecated
   protected final void setInputDataset(String dataset) {
     configurer.setInputDataset(dataset);
   }
@@ -131,7 +141,10 @@ public abstract class AbstractMapReduce extends AbstractPluginConfigurable<MapRe
    * Uses Stream as input for the {@link MapReduce}.
    *
    * @param stream Name of the stream
+   * @deprecated as of 3.4.0. Use {@link MapReduceContext#addInput(Input)}
+   *             in {@link #beforeSubmit}, instead.
    */
+  @Deprecated
   protected final void useStreamInput(String stream) {
     useStreamInput(new StreamBatchReadable(stream));
   }
@@ -141,7 +154,11 @@ public abstract class AbstractMapReduce extends AbstractPluginConfigurable<MapRe
    * {@link #useStreamInput(StreamBatchReadable) setInputStream(new StreamBatchReadable(stream, startTime, endTime))}.
    *
    * @see StreamBatchReadable
+   *
+   * @deprecated as of 3.4.0. Use {@link MapReduceContext#addInput(Input)}
+   *             in {@link #beforeSubmit}, instead.
    */
+  @Deprecated
   protected final void useStreamInput(String stream, long startTime, long endTime) {
     useStreamInput(new StreamBatchReadable(stream, startTime, endTime));
   }
@@ -150,7 +167,11 @@ public abstract class AbstractMapReduce extends AbstractPluginConfigurable<MapRe
    * Uses Stream as input for the {@link MapReduce}.
    *
    * @see StreamBatchReadable
+   *
+   * @deprecated as of 3.4.0. Use {@link MapReduceContext#addInput(Input)}
+   *             in {@link #beforeSubmit}, instead.
    */
+  @Deprecated
   protected final void useStreamInput(StreamBatchReadable streamBatchReadable) {
     configurer.setInputDataset(streamBatchReadable.toURI().toString());
   }
@@ -158,8 +179,8 @@ public abstract class AbstractMapReduce extends AbstractPluginConfigurable<MapRe
   /**
    * Sets the name of the Dataset used as output for the {@link MapReduce}.
    *
-   * Deprecated as of 3.2.0. Use {@link MapReduceContext#addOutput(String datasetName)}
-   * in {@link #beforeSubmit}, instead.
+   * @deprecated as of 3.2.0. Use {@link MapReduceContext#addOutput(Output output)}
+   *             in {@link #beforeSubmit}, instead.
    */
   @Deprecated
   protected final void setOutputDataset(String dataset) {

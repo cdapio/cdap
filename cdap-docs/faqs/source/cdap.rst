@@ -173,11 +173,7 @@ The CDAP Master log shows permissions issues.
 Ensure that ``hdfs:///${hdfs.namespace}`` and ``hdfs:///user/${hdfs.user}`` exist and are owned by ``${hdfs.user}``.
 (``hdfs.namespace`` and ``hdfs.user`` are defined in your installation's :ref:`cdap-site.xml file <packages-configuration-options>`.)
 
-In rare cases, ensure ``hdfs:///${hdfs.namespace}/tx.snapshot`` exists and is owned by
-``${hdfs.user}``, until `CDAP-3817 <https://issues.cask.co/browse/CDAP-3817>`__ is
-resolved. 
-
-In any other case, the error should show which directory it is attempting to access, such as::
+In any other cases, the error should show which directory it is attempting to access, such as::
 
   2015-10-30 22:14:27,528 - ERROR [ STARTING:...MasterServiceMain$2@452] - master.services failed with exception; restarting with back-off
   java.lang.RuntimeException: java.io.IOException: failed to copy bundle from file:/tmp/appMaster.37a86cfd....jar5052.tmp
@@ -201,7 +197,7 @@ The CDAP Master log shows an error about the dataset service not being found.
 If you see an error such as::
 
     2015-05-15 12:15:53,028 - ERROR [heartbeats-scheduler:c.c.c.d.s.s.MDSStreamMetaStore$1@71] 
-    - Failed to access app.meta table co.cask.cdap.data2.dataset2.DatasetManagementException: 
+    - Failed to access app.meta table co.cask.cdap.api.dataset.DatasetManagementException:
     Cannot retrieve dataset instance app.meta info, details: Response code: 407, 
     message:'Proxy Authentication Required', 
     body: '<HTML><HEAD> <TITLE>Access Denied</TITLE> </HEAD>
@@ -231,11 +227,11 @@ Router on port 11015. Another solution is to simply run the CDAP Router on a dif
 host than HiveServer2.
 
 
-CDAP services on distributed CDAP aren't starting up due to ``java.lang.ClassNotFoundException``. What should I do?
--------------------------------------------------------------------------------------------------------------------
-If the CDAP services on a distributed CDAP environment wouldn't start up, you will see errors
-in the logs. You will find in the logs for ``cdap-master`` under ``/var/log/cdap/master*.log``
-errors such as these::
+CDAP services on distributed CDAP aren't starting up due to an exception. What should I do?
+-------------------------------------------------------------------------------------------
+If the CDAP services on a distributed CDAP environment wouldn't start up due to a
+``java.lang.ClassNotFoundException``, you will see errors in the logs. You will find in
+the logs for ``cdap-master`` under ``/var/log/cdap/master*.log`` errors such as these::
 
  "Exception in thread "main" java.lang.NoClassDefFoundError:
    co.cask.cdap.data.runtime.main.MasterServiceMain

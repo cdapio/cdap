@@ -20,7 +20,6 @@ import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.mapreduce.MapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
-import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.runtime.ProgramController;
@@ -44,9 +43,11 @@ import co.cask.cdap.internal.app.runtime.MetricsFieldSetter;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.ProgramRunners;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
-import co.cask.cdap.internal.app.runtime.workflow.BasicWorkflowToken;
+import co.cask.cdap.internal.app.runtime.workflow.NameMappedDatasetFramework;
+import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
 import co.cask.cdap.internal.lang.Reflections;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Preconditions;
@@ -54,7 +55,6 @@ import com.google.common.base.Throwables;
 import com.google.common.io.Closeables;
 import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.Service;
-import com.google.gson.Gson;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;
@@ -79,7 +79,6 @@ import javax.annotation.Nullable;
  */
 public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
   private static final Logger LOG = LoggerFactory.getLogger(MapReduceProgramRunner.class);
-  private static final Gson GSON = new Gson();
 
   private final Injector injector;
   private final StreamAdmin streamAdmin;
@@ -141,23 +140,15 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
 
     final RunId runId = RunIds.fromString(arguments.getOption(ProgramOptionConstants.RUN_ID));
 
-    long logicalStartTime = arguments.hasOption(ProgramOptionConstants.LOGICAL_START_TIME)
-                                ? Long.parseLong(arguments
-                                                   .getOption(ProgramOptionConstants.LOGICAL_START_TIME))
-                                : System.currentTimeMillis();
-
-    String programNameInWorkflow = arguments.getOption(ProgramOptionConstants.PROGRAM_NAME_IN_WORKFLOW);
-
-    WorkflowToken workflowToken = null;
-    if (arguments.hasOption(ProgramOptionConstants.WORKFLOW_TOKEN)) {
-      workflowToken = GSON.fromJson(arguments.getOption(ProgramOptionConstants.WORKFLOW_TOKEN),
-                                    BasicWorkflowToken.class);
-    }
+    WorkflowProgramInfo workflowInfo = WorkflowProgramInfo.create(arguments);
+    DatasetFramework programDatasetFramework = workflowInfo == null ?
+      datasetFramework :
+      NameMappedDatasetFramework.createFromWorkflowProgramInfo(datasetFramework, workflowInfo, appSpec);
 
     // Setup dataset framework context, if required
-    if (datasetFramework instanceof ProgramContextAware) {
+    if (programDatasetFramework instanceof ProgramContextAware) {
       Id.Program programId = program.getId();
-      ((ProgramContextAware) datasetFramework).initContext(new Id.Run(programId, runId.getId()));
+      ((ProgramContextAware) programDatasetFramework).initContext(new Id.Run(programId, runId.getId()));
     }
 
     MapReduce mapReduce;
@@ -178,8 +169,8 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
 
       final BasicMapReduceContext context =
         new BasicMapReduceContext(program, runId, options.getUserArguments(), spec,
-                                  logicalStartTime, programNameInWorkflow, workflowToken, discoveryServiceClient,
-                                  metricsCollectionService, txSystemClient, datasetFramework, streamAdmin,
+                                  workflowInfo, discoveryServiceClient,
+                                  metricsCollectionService, txSystemClient, programDatasetFramework, streamAdmin,
                                   getPluginArchive(options), pluginInstantiator);
 
       Reflections.visit(mapReduce, mapReduce.getClass(),
@@ -226,9 +217,6 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
                                                         final Arguments arguments, final Arguments userArgs) {
 
     final String twillRunId = arguments.getOption(ProgramOptionConstants.TWILL_RUN_ID);
-    final String workflowName = arguments.getOption(ProgramOptionConstants.WORKFLOW_NAME);
-    final String workflowNodeId = arguments.getOption(ProgramOptionConstants.WORKFLOW_NODE_ID);
-    final String workflowRunId = arguments.getOption(ProgramOptionConstants.WORKFLOW_RUN_ID);
 
     return new ServiceListenerAdapter() {
       @Override
@@ -239,35 +227,28 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
           // If RunId is not time-based, use current time as start time
           startTimeInSeconds = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
         }
-        if (workflowName == null) {
-          store.setStart(program.getId(), runId.getId(), startTimeInSeconds, twillRunId,
-                         userArgs.asMap(), arguments.asMap());
-        } else {
-          // Program started by Workflow
-          store.setWorkflowProgramStart(program.getId(), runId.getId(), workflowName, workflowRunId, workflowNodeId,
-                                        startTimeInSeconds, twillRunId);
-        }
+        store.setStart(program.getId(), runId.getId(), startTimeInSeconds, twillRunId, userArgs.asMap(),
+                       arguments.asMap());
       }
 
       @Override
       public void terminated(Service.State from) {
         closeAllQuietly(closeables);
+        ProgramRunStatus runStatus = ProgramController.State.COMPLETED.getRunStatus();
         if (from == Service.State.STOPPING) {
           // Service was killed
-          store.setStop(program.getId(), runId.getId(), TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
-                        ProgramController.State.KILLED.getRunStatus());
-        } else {
-          // Service completed by itself.
-          store.setStop(program.getId(), runId.getId(), TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
-                        ProgramController.State.COMPLETED.getRunStatus());
+          runStatus = ProgramController.State.KILLED.getRunStatus();
         }
+
+        store.setStop(program.getId(), runId.getId(), TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
+                      runStatus);
       }
 
       @Override
-      public void failed(Service.State from, Throwable failure) {
+      public void failed(Service.State from, @Nullable Throwable failure) {
         closeAllQuietly(closeables);
         store.setStop(program.getId(), runId.getId(), TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
-                      ProgramController.State.ERROR.getRunStatus());
+                      ProgramController.State.ERROR.getRunStatus(), failure);
       }
     };
   }

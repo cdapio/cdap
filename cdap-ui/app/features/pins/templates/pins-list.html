@@ -48,7 +48,7 @@
           ng-repeat="pin in PinsListController.filteredPins = (PinsListController.pinsList | filter: PinsListController.searchTxt ) track by $index">
           <span class="fa fa-thumb-tack"></span>
           <span ng-bind="pin.label | myEllipsis: 10"
-                tooltip="{{pin.label}}"
+                uib-tooltip="{{pin.label}}"
                 tooltip-enable="pin.label.length > 10">
           </span>
       </a>

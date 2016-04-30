@@ -22,10 +22,14 @@ import co.cask.cdap.api.dataset.lib.IndexedTable;
 import co.cask.cdap.api.dataset.table.Delete;
 import co.cask.cdap.api.dataset.table.Put;
 import co.cask.cdap.api.dataset.table.Row;
+import co.cask.cdap.api.dataset.table.Scan;
 import co.cask.cdap.api.dataset.table.Scanner;
+import co.cask.cdap.common.utils.ImmutablePair;
+import co.cask.cdap.data2.dataset2.lib.table.FuzzyRowFilter;
 import co.cask.cdap.data2.dataset2.lib.table.MDSKey;
 import co.cask.cdap.data2.metadata.indexer.DefaultValueIndexer;
 import co.cask.cdap.data2.metadata.indexer.Indexer;
+import co.cask.cdap.data2.metadata.indexer.SchemaIndexer;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.codec.NamespacedIdCodec;
 import co.cask.cdap.proto.metadata.MetadataSearchTargetType;
@@ -33,8 +37,10 @@ import com.google.common.base.Joiner;
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
 import com.google.common.base.Splitter;
+import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -43,6 +49,9 @@ import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -67,13 +76,16 @@ public class MetadataDataset extends AbstractDataset {
   private static final String VALUE_COLUMN = "v";  // column for metadata value
   private static final String TAGS_SEPARATOR = ",";
 
-  //TODO: (UPG-3.3): Make this public after 3.3
-  public static final String INDEX_COLUMN = "i";          // column for metadata indexes
+  // Fuzzy key is of form <row key, key mask>. We want to compare row keys.
+  private static final Comparator<ImmutablePair<byte[], byte[]>> FUZZY_KEY_COMPARATOR =
+    new Comparator<ImmutablePair<byte[], byte[]>>() {
+      @Override
+      public int compare(ImmutablePair<byte[], byte[]> o1, ImmutablePair<byte[], byte[]> o2) {
+        return Bytes.compareTo(o1.getFirst(), o2.getFirst());
+      }
+    };
 
-  //TODO: (UPG-3.3): Remove this after 3.3. This is only for upgrade from 3.2 to 3.3
-  // These are the columns which were indexed in 3.2
-  public static final String CASE_INSENSITIVE_VALUE_COLUMN = "civ";
-  public static final String KEYVALUE_COLUMN = "kv";
+  static final String INDEX_COLUMN = "i";          // column for metadata indexes
 
   public static final String TAGS_KEY = "tags";
   public static final String KEYVALUE_SEPARATOR = ":";
@@ -238,7 +250,11 @@ public class MetadataDataset extends AbstractDataset {
     if (tags == null) {
       return new HashSet<>();
     }
-    return Sets.newHashSet(Splitter.on(TAGS_SEPARATOR).omitEmptyStrings().trimResults().split(tags.getValue()));
+    return splitTags(tags.getValue());
+  }
+
+  private static HashSet<String> splitTags(String tags) {
+    return Sets.newHashSet(Splitter.on(TAGS_SEPARATOR).omitEmptyStrings().trimResults().split(tags));
   }
 
   /**
@@ -322,11 +338,7 @@ public class MetadataDataset extends AbstractDataset {
     try {
       Row next;
       while ((next = scan.next()) != null) {
-        String index = next.getString(INDEX_COLUMN);
-        if (index == null) {
-          continue;
-        }
-        indexedTable.delete(new Delete(next.getRow()));
+        deleteIndexRow(next);
       }
     } finally {
       scan.close();
@@ -369,7 +381,13 @@ public class MetadataDataset extends AbstractDataset {
    * @param targetId the {@link Id.NamespacedId} for which to remove the properties
    */
   public void removeProperties(Id.NamespacedId targetId) {
-    removeMetadata(targetId);
+    removeMetadata(targetId,
+                   new Predicate<String>() {
+                     @Override
+                     public boolean apply(String input) {
+                       return !TAGS_KEY.equals(input);
+                     }
+                   });
   }
 
   /**
@@ -378,7 +396,13 @@ public class MetadataDataset extends AbstractDataset {
    * @param targetId the {@link Id.NamespacedId} for which to remove the tags
    */
   public void removeTags(Id.NamespacedId targetId) {
-    removeMetadata(targetId);
+    removeMetadata(targetId,
+                   new Predicate<String>() {
+                     @Override
+                     public boolean apply(String input) {
+                       return TAGS_KEY.equals(input);
+                     }
+                   });
   }
 
   /**
@@ -413,15 +437,97 @@ public class MetadataDataset extends AbstractDataset {
   }
 
   /**
+   * Returns metadata for a given set of entities
+   *
+   * @param targetIds entities for which metadata is required
+   * @return map of entitiyId to set of metadata for that entity
+   */
+  public Set<Metadata> getMetadata(Set<? extends Id.NamespacedId> targetIds) {
+    if (targetIds.isEmpty()) {
+      return Collections.emptySet();
+    }
+
+    List<ImmutablePair<byte [], byte []>> fuzzyKeys = new ArrayList<>();
+    for (Id.NamespacedId targetId : targetIds) {
+      fuzzyKeys.add(getFuzzyKeyFor(targetId));
+    }
+
+    // Sort fuzzy keys
+    Collections.sort(fuzzyKeys, FUZZY_KEY_COMPARATOR);
+
+    // Scan using fuzzy filter. Scan returns one row per property.
+    // Group the rows on entityId
+    Multimap<Id.NamespacedId, MetadataEntry> metadataMap = HashMultimap.create();
+    byte[] start = fuzzyKeys.get(0).getFirst();
+    byte[] end = Bytes.stopKeyForPrefix(fuzzyKeys.get(fuzzyKeys.size() - 1).getFirst());
+    Scanner scan = indexedTable.scan(new Scan(start, end, new FuzzyRowFilter(fuzzyKeys)));
+    try {
+      Row next;
+      while ((next = scan.next()) != null) {
+        MetadataEntry metadataEntry = convertRow(next);
+        if (metadataEntry != null) {
+          metadataMap.put(metadataEntry.getTargetId(), metadataEntry);
+        }
+      }
+    } finally {
+      scan.close();
+    }
+
+    // Create metadata objects for each entity from grouped rows
+    Set<Metadata> metadataSet = new HashSet<>();
+    for (Map.Entry<Id.NamespacedId, Collection<MetadataEntry>> entry : metadataMap.asMap().entrySet()) {
+      Map<String, String> properties = new HashMap<>();
+      Set<String> tags = Collections.emptySet();
+      for (MetadataEntry metadataEntry : entry.getValue()) {
+        if (TAGS_KEY.equals(metadataEntry.getKey())) {
+          tags = splitTags(metadataEntry.getValue());
+        } else {
+          properties.put(metadataEntry.getKey(), metadataEntry.getValue());
+        }
+      }
+      metadataSet.add(new Metadata(entry.getKey(), properties, tags));
+    }
+    return metadataSet;
+  }
+
+  @Nullable
+  private MetadataEntry convertRow(Row row) {
+    byte[] rowKey = row.getRow();
+    String targetType = MdsKey.getTargetType(rowKey);
+    Id.NamespacedId namespacedId = MdsKey.getNamespacedIdFromKey(targetType, rowKey);
+    String key = MdsKey.getMetadataKey(targetType, rowKey);
+    byte[] value = row.get(VALUE_COLUMN);
+    if (key == null || value == null) {
+      return null;
+    }
+    return new MetadataEntry(namespacedId, key, Bytes.toString(value));
+  }
+
+  private ImmutablePair<byte[], byte[]> getFuzzyKeyFor(Id.NamespacedId targetId) {
+    // We need to create fuzzy pairs to match the first part of the key containing targetId
+    MDSKey mdsKey = MdsKey.getMDSValueKey(targetId, null);
+    byte[] keyBytes = mdsKey.getKey();
+    // byte array is automatically initialized to 0, which implies fixed match in fuzzy info
+    // the row key after targetId doesn't need to be a match.
+    // Workaround for HBASE-15676, need to have at least one 1 in the fuzzy filter
+    byte[] infoBytes = new byte[keyBytes.length + 1];
+    infoBytes[infoBytes.length - 1] = 1;
+
+    // the key array size and mask array size has to be equal so increase the size by 1
+    return new ImmutablePair<>(Bytes.concat(keyBytes, new byte[1]), infoBytes);
+  }
+
+  /**
    * Searches entities that match the specified search query in the specified namespace and {@link Id.Namespace#SYSTEM}
    * for the specified {@link MetadataSearchTargetType}.
    *
    * @param namespaceId the namespace to search in
    * @param searchQuery the search query, which could be of two forms: [key]:[value] or just [value] and can have '*'
    *                    at the end for a prefix search
-   * @param type the {@link MetadataSearchTargetType} to restrict the search to.
+   * @param types the {@link MetadataSearchTargetType} to restrict the search to, if empty all types are searched
    */
-  public List<MetadataEntry> search(String namespaceId, String searchQuery, MetadataSearchTargetType type) {
+  public List<MetadataEntry> search(String namespaceId, String searchQuery, Set<MetadataSearchTargetType> types) {
+    boolean includeAllTypes = types.isEmpty() || types.contains(MetadataSearchTargetType.ALL);
     List<MetadataEntry> results = new ArrayList<>();
     for (String searchTerm : getSearchTerms(namespaceId, searchQuery)) {
       Scanner scanner;
@@ -445,13 +551,13 @@ public class MetadataDataset extends AbstractDataset {
           final byte[] rowKey = next.getRow();
           String targetType = MdsKey.getTargetType(rowKey);
 
-          // Filter on target type if not ALL
-          if ((type != MetadataSearchTargetType.ALL) &&
-            (type != MetadataSearchTargetType.valueOfSerializedForm(targetType))) {
+          // Filter on target type if not set to include all types
+          if (!includeAllTypes &&
+            !types.contains(MetadataSearchTargetType.valueOfSerializedForm(targetType))) {
             continue;
           }
 
-          Id.NamespacedId targetId = MdsKey.getNamespaceIdFromKey(targetType, rowKey);
+          Id.NamespacedId targetId = MdsKey.getNamespacedIdFromKey(targetType, rowKey);
           String key = MdsKey.getMetadataKey(targetType, rowKey);
           MetadataEntry entry = getMetadata(targetId, key);
           results.add(entry);
@@ -504,7 +610,7 @@ public class MetadataDataset extends AbstractDataset {
     // add the metadata value
     put.add(Bytes.toBytes(VALUE_COLUMN), Bytes.toBytes(entry.getValue()));
     indexedTable.put(put);
-    storeIndexes(targetId, entry, indexer.getIndexes(entry));
+    storeIndexes(targetId, entry.getKey(), indexer.getIndexes(entry));
     writeHistory(targetId);
   }
 
@@ -512,15 +618,18 @@ public class MetadataDataset extends AbstractDataset {
    * Store indexes for a {@link MetadataEntry}
    *
    * @param targetId the {@link Id.NamespacedId} from which the metadata indexes has to be stored
-   * @param entry the {@link MetadataEntry} which has to be indexed
+   * @param metadataKey the metadata key for which the indexes are to be stored
    * @param indexes {@link Set<String>} of indexes to store for this {@link MetadataEntry}
    */
-  private void storeIndexes(Id.NamespacedId targetId, MetadataEntry entry, Set<String> indexes) {
+  private void storeIndexes(Id.NamespacedId targetId, String metadataKey, Set<String> indexes) {
+    // Delete existing indexes for targetId-key
+    deleteIndexes(targetId, metadataKey);
+
     for (String index : indexes) {
-      // store the index with key of the metadata
-      indexedTable.put(getIndexPut(targetId, entry.getKey(), entry.getKey() + KEYVALUE_SEPARATOR + index));
+      // store the index with key of the metadata, so that we allow searches of the form [key]:[value]
+      indexedTable.put(getIndexPut(targetId, metadataKey, metadataKey + KEYVALUE_SEPARATOR + index));
       // store just the index value
-      indexedTable.put(getIndexPut(targetId, entry.getKey(), index));
+      indexedTable.put(getIndexPut(targetId, metadataKey, index));
     }
   }
 
@@ -553,105 +662,95 @@ public class MetadataDataset extends AbstractDataset {
   }
 
   /**
-   * Upgrades the metadata from 3.2 to 3.3 for new storage format
+   * Rebuilds all the indexes in the {@link MetadataDataset} in batches.
+   *
+   * @param startRowKey the key of the row to start the scan for the current batch with
+   * @param limit the batch size
+   * @return the row key of the last row scanned in the current batch, {@code null} if there are no more rows to scan.
    */
-  public void upgrade() {
-    new Upgrader().upgrade();
+  @Nullable
+  public byte[] rebuildIndexes(@Nullable byte[] startRowKey, int limit) {
+    // Now rebuild indexes for all values in the metadata dataset
+    byte[] valueRowPrefix = MdsKey.getValueRowPrefix();
+    // If startRow is null, start at the beginning, else start at the provided start row
+    startRowKey = startRowKey == null ? valueRowPrefix : startRowKey;
+    // stopRowKey will always be the last row key with the valueRowPrefix
+    byte[] stopRowKey = Bytes.stopKeyForPrefix(valueRowPrefix);
+    Scanner scanner = indexedTable.scan(startRowKey, stopRowKey);
+    Row row;
+    try {
+      while ((limit > 0) && (row = scanner.next()) != null) {
+        byte[] rowKey = row.getRow();
+        String targetType = MdsKey.getTargetType(rowKey);
+        Id.NamespacedId namespacedId = MdsKey.getNamespacedIdFromKey(targetType, rowKey);
+        String metadataKey = MdsKey.getMetadataKey(targetType, rowKey);
+        Indexer indexer = getIndexerForKey(metadataKey);
+        MetadataEntry metadataEntry = getMetadata(namespacedId, metadataKey);
+        if (metadataEntry == null) {
+          LOG.warn("Found null metadata entry for a known metadata key {} for entity {} which has an index stored. " +
+                     "Ignoring.", metadataKey, namespacedId);
+          continue;
+        }
+        Set<String> indexes = indexer.getIndexes(metadataEntry);
+        // storeIndexes deletes old indexes
+        storeIndexes(namespacedId, metadataKey, indexes);
+        limit--;
+      }
+      Row startRowForNextBatch = scanner.next();
+      if (startRowForNextBatch == null) {
+        return null;
+      }
+      return startRowForNextBatch.getRow();
+    } finally {
+      scanner.close();
+    }
   }
 
   /**
-   * Upgrader class for {@link MetadataDataset}. This class contains some functions from 3.2 which have changed in 3.3
-   * in their only 3.2 format to help in reading and processing the old metadata. This inner class should be deleted
-   * after 3.3
+   * Delete all indexes in the metadata dataset.
+   *
+   * @param limit the number of rows (indexes) to delete
+   * @return the offset at which to start deletion
    */
-  private class Upgrader {
-    public void upgrade() {
-      boolean upgradePerformed = false;
-      Scanner scan = indexedTable.scan(null, null); // scan the whole table
-      try {
-        Row next;
-        while ((next = scan.next()) != null) {
-          byte[] value = next.get(VALUE_COLUMN);
-          if (next.get(CASE_INSENSITIVE_VALUE_COLUMN) != null && value != null) {
-            // if case insensitive column has value then this is an old entry from 3.2 which needs to be updated.
-            final byte[] rowKey = next.getRow();
-            String targetType = MdsKey.getTargetType(rowKey);
-            Id.NamespacedId targetId = MdsKey.getNamespaceIdFromKey(targetType, rowKey);
-            String key = getMetadataKeyFromOldFormat(targetType, rowKey);
-            MetadataEntry metadataEntry = new MetadataEntry(targetId, key, Bytes.toString(value));
-            indexedTable.delete(new Delete(rowKey));            // remove the old metadata entry
-            // add the metadata back creating new indexes. We can just use DefaultValueIndexer because
-            // in 3.2 we didn't have schema as metadata so no old records can be schema.
-            write(metadataEntry.getTargetId(), metadataEntry, new DefaultValueIndexer());
-            upgradePerformed = true;
-            LOG.info("Upgraded MetadataEntry: {}", metadataEntry);
-          }
+  public int deleteAllIndexes(int limit) {
+    byte[] indexStartPrefix = MdsKey.getIndexRowPrefix();
+    byte[] indexStopPrefix = Bytes.stopKeyForPrefix(indexStartPrefix);
+    int count = 0;
+    Scanner scanner = indexedTable.scan(indexStartPrefix, indexStopPrefix);
+    Row row;
+    try {
+      while (count < limit && ((row = scanner.next()) != null)) {
+        if (deleteIndexRow(row)) {
+          count++;
         }
-      } finally {
-        scan.close();
       }
-      if (!upgradePerformed) {
-        LOG.info("No MetadataEntry found in old format. Metadata upgrade not required.");
-      }
+    } finally {
+      scanner.close();
     }
+    return count;
+  }
 
-    /**
-     * Write similar to {@link MetadataDataset#write(Id.NamespacedId, MetadataEntry, Indexer)} but without history
-     * since while writting during upgrade we don't want to add history.
-     */
-    private void write(Id.NamespacedId targetId, MetadataEntry entry, Indexer indexer) {
-      String key = entry.getKey();
-      MDSKey mdsValueKey = MdsKey.getMDSValueKey(targetId, key);
-      Put put = new Put(mdsValueKey.getKey());
-
-      // add the metadata value
-      put.add(Bytes.toBytes(VALUE_COLUMN), Bytes.toBytes(entry.getValue()));
-      indexedTable.put(put);
-      // index the metadata
-      storeIndexes(targetId, entry, indexer.getIndexes(entry));
+  // TODO: CDAP-5663 The entire logic of mapping between Indexers and keys should be made internal to MetadataDataset
+  private Indexer getIndexerForKey(String key) {
+    if ("schema".equals(key)) {
+      return new SchemaIndexer();
     }
+    return new DefaultValueIndexer();
+  }
 
-    /**
-     * This to read old Metadata keys which were written with a metadata type in 3.2
-     * Its used to update from 3.2 to 3.3 and should be removed after 3.3
-     * This is almost a copy of {@link MdsKey#getMetadataKey(String, byte[])} with additional skip for MetadataType
-     * which we used to write in 3.2
-     */
-    public String getMetadataKeyFromOldFormat(String type, byte[] rowKey) {
-      MDSKey.Splitter keySplitter = new MDSKey(rowKey).split();
-      // The rowkey in the following format in 3.2
-      // [rowPrefix][targetType][targetId][metadataType][key]
-      // so skip the first few strings.
-
-      // Skip rowType
-      keySplitter.skipBytes();
-
-      // Skip targetType
-      keySplitter.skipString();
-
-      // Skip targetId
-      if (type.equals(Id.Program.class.getSimpleName())) {
-        keySplitter.skipString();
-        keySplitter.skipString();
-        keySplitter.skipString();
-        keySplitter.skipString();
-      } else if (type.equals(Id.Application.class.getSimpleName())) {
-        keySplitter.skipString();
-        keySplitter.skipString();
-      } else if (type.equals(Id.DatasetInstance.class.getSimpleName())) {
-        keySplitter.skipString();
-        keySplitter.skipString();
-      } else if (type.equals(Id.Stream.class.getSimpleName())) {
-        keySplitter.skipString();
-        keySplitter.skipString();
-      } else {
-        throw new IllegalArgumentException("Illegal Type " + type + " of metadata source.");
-      }
-
-      // Skip metadata-type as the old key as metadata type
-      keySplitter.getString();
-
-      return keySplitter.getString();
+  /**
+   * Deletes a row if the value in the index column is non-null. This is necessary because at least in the
+   * InMemoryTable implementation, after deleting the index row, the index column still has a {@code null} value in it.
+   * A {@link Scanner} on the table after the delete returns the deleted rows with {@code null} values.
+   *
+   * @param row the row to delete
+   * @return {@code true} if the row was deleted, {@code false} otherwise
+   */
+  private boolean deleteIndexRow(Row row) {
+    if (row.get(INDEX_COLUMN) == null) {
+      return false;
     }
+    indexedTable.delete(new Delete(row.getRow()));
+    return true;
   }
 }

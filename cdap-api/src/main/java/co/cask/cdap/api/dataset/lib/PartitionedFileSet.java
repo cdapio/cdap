@@ -23,9 +23,6 @@ import co.cask.cdap.api.data.batch.OutputFormatProvider;
 import co.cask.cdap.api.dataset.DataSetException;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.PartitionNotFoundException;
-import co.cask.cdap.api.dataset.lib.partitioned.ConsumerConfiguration;
-import co.cask.cdap.api.dataset.lib.partitioned.PartitionConsumer;
-import co.cask.cdap.api.dataset.lib.partitioned.StatePersistor;
 
 import java.util.Map;
 import java.util.Set;

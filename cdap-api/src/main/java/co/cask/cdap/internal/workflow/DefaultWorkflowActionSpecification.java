@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,7 +15,6 @@
  */
 package co.cask.cdap.internal.workflow;
 
-import co.cask.cdap.api.workflow.WorkflowAction;
 import co.cask.cdap.api.workflow.WorkflowActionSpecification;
 
 import java.util.Collections;
@@ -34,30 +33,6 @@ public class DefaultWorkflowActionSpecification implements WorkflowActionSpecifi
   private final String description;
   private final Map<String, String> properties;
   private final Set<String> datasets;
-
-  /**
-   * This constructor does not set the class name, which will cause null pointer exceptions
-   * when serializing the action spec. But we have to keep this for backward-compatibility,
-   * because {@link co.cask.cdap.api.workflow.WorkflowActionSpecification.Builder} uses it,
-   * and it cannot enforce that the class name be set. Therefore, we must fix the specs
-   * produced by this constructor using the second constructor. This can go away as soon
-   * as we remove the deprecated builder-style configure method from WorkflowAction.
-   */
-  @Deprecated
-  public DefaultWorkflowActionSpecification(String name, String description,
-                                            Map<String, String> properties, Set<String> datasets) {
-    this(null, name, description, properties, datasets);
-  }
-
-  /**
-   * Fix a spec created with the first constructor, in builder-style workflow action configuration,
-   * by adding the class name of the acton. This can go away as soon
-   * as we remove the deprecated builder-style configure method from WorkflowAction.
-   */
-  @Deprecated
-  public DefaultWorkflowActionSpecification(WorkflowActionSpecification spec, WorkflowAction action) {
-    this(action.getClass().getName(), spec.getName(), spec.getDescription(), spec.getProperties(), spec.getDatasets());
-  }
 
   /**
    * Constructor be used by WorkflowActionConfigurer during workflow action configuration.

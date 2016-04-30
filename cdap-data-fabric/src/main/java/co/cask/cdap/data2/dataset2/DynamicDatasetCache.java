@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -25,6 +25,7 @@ import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
+import co.cask.cdap.data2.metadata.lineage.AccessType;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionContext;
@@ -101,6 +102,7 @@ public abstract class DynamicDatasetCache implements DatasetContext, Supplier<Tr
   /**
    * Instantiate a dataset, allowing to bypass the cache. This means that the dataset will not be added to
    * the in-progress transactions, and it will also not be closed when the cache is closed.
+   *
    * @param name the name of the dataset
    * @param arguments arguments for the dataset
    * @param bypass whether to bypass the cache
@@ -108,6 +110,34 @@ public abstract class DynamicDatasetCache implements DatasetContext, Supplier<Tr
    */
   public final <T extends Dataset> T getDataset(String name, Map<String, String> arguments, boolean bypass)
     throws DatasetInstantiationException {
+    return getDataset(name, arguments, bypass, AccessType.UNKNOWN);
+  }
+
+  /**
+   * Get an instance of the specified dataset, with the specified access type.
+   *
+   * @param name the name of the dataset
+   * @param arguments arguments for the dataset
+   * @param <T> the type of the dataset
+   * @param accessType the accessType
+   */
+  public final <T extends Dataset> T getDataset(String name, Map<String, String> arguments,
+                                                AccessType accessType) throws DatasetInstantiationException {
+    return getDataset(name, arguments, false, accessType);
+  }
+
+  /**
+   * Instantiate a dataset, allowing to bypass the cache. This means that the dataset will not be added to
+   * the in-progress transactions, and it will also not be closed when the cache is closed.
+   *
+   * @param name the name of the dataset
+   * @param arguments arguments for the dataset
+   * @param bypass whether to bypass the cache
+   * @param <T> the type of the dataset
+   * @param accessType the accessType
+   */
+  public final <T extends Dataset> T getDataset(String name, Map<String, String> arguments, boolean bypass,
+                                                AccessType accessType) throws DatasetInstantiationException {
     // apply actual runtime arguments on top of the context's runtime arguments for this dataset
     Map<String, String> dsArguments =
       RuntimeArguments.extractScope(Scope.DATASET, name, runtimeArguments);
@@ -117,7 +147,7 @@ public abstract class DynamicDatasetCache implements DatasetContext, Supplier<Tr
     // The internal of the dataset instantiate may switch the context class loader to a different one when necessary
     ClassLoader currentClassLoader = ClassLoaders.setContextClassLoader(getClass().getClassLoader());
     try {
-      return getDataset(new DatasetCacheKey(name, dsArguments), bypass);
+      return getDataset(new DatasetCacheKey(name, dsArguments, accessType), bypass);
     } finally {
       ClassLoaders.setContextClassLoader(currentClassLoader);
     }
@@ -205,16 +235,22 @@ public abstract class DynamicDatasetCache implements DatasetContext, Supplier<Tr
   public abstract void invalidate();
 
   /**
-   * A key used by implementations of {@link DynamicDatasetCache} to cache Datasets. Includes the dataset name
-   * and it's arguments.
+   * A key used by implementations of {@link DynamicDatasetCache} to cache Datasets. Includes the dataset name, its
+   * arguments, and its {@link AccessType}.
    */
   protected static final class DatasetCacheKey {
     private final String name;
     private final Map<String, String> arguments;
+    private final AccessType accessType;
 
-    protected DatasetCacheKey(String name, Map<String, String> arguments) {
+    protected DatasetCacheKey(String name, @Nullable Map<String, String> arguments) {
+      this(name, arguments, AccessType.UNKNOWN);
+    }
+
+    protected DatasetCacheKey(String name, @Nullable Map<String, String> arguments, AccessType accessType) {
       this.name = name;
       this.arguments = arguments == null ? DatasetDefinition.NO_ARGUMENTS : arguments;
+      this.accessType = accessType;
     }
 
     public String getName() {
@@ -223,6 +259,10 @@ public abstract class DynamicDatasetCache implements DatasetContext, Supplier<Tr
 
     public Map<String, String> getArguments() {
       return arguments;
+    }
+
+    public AccessType getAccessType() {
+      return accessType;
     }
 
     @Override
@@ -247,7 +287,11 @@ public abstract class DynamicDatasetCache implements DatasetContext, Supplier<Tr
 
     @Override
     public String toString() {
-      return Objects.toStringHelper(this).add("name", name).add("arguments", arguments).toString();
+      return Objects.toStringHelper(this)
+        .add("name", name)
+        .add("arguments", arguments)
+        .add("accessType", accessType)
+        .toString();
     }
   }
 }

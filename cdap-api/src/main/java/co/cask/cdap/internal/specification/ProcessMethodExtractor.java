@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,9 +20,9 @@ import co.cask.cdap.api.annotation.ProcessInput;
 import co.cask.cdap.api.annotation.Tick;
 import co.cask.cdap.api.flow.FlowletDefinition;
 import co.cask.cdap.api.flow.flowlet.InputContext;
+import co.cask.cdap.internal.guava.reflect.TypeToken;
 import co.cask.cdap.internal.lang.MethodVisitor;
 import co.cask.cdap.internal.lang.Reflections;
-import com.google.common.reflect.TypeToken;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
@@ -50,9 +50,7 @@ public final class ProcessMethodExtractor extends MethodVisitor {
 
   @Override
   public void visit(Object instance, Type inspectType, Type declareType, Method method) throws Exception {
-    TypeToken<?> inspectTypeToken = TypeToken.of(inspectType);
-
-    if (!seenMethods.add(new FlowletMethod(method, inspectTypeToken))) {
+    if (!seenMethods.add(FlowletMethod.create(method, inspectType))) {
       // The method is already seen. It can only happen if a children class override a parent class method and
       // is visting the parent method, since the method visiting order is always from the leaf class walking
       // up the class hierarchy.
@@ -61,6 +59,7 @@ public final class ProcessMethodExtractor extends MethodVisitor {
 
     ProcessInput processInputAnnotation = method.getAnnotation(ProcessInput.class);
     Tick tickAnnotation = method.getAnnotation(Tick.class);
+    TypeToken<?> inspectTypeToken = TypeToken.of(inspectType);
 
     if (processInputAnnotation == null && tickAnnotation == null) {
       return;

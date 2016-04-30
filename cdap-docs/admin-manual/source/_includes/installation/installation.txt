@@ -1,13 +1,3 @@
-.. _|distribution|-install-node-js:
-
-Node.js Installation
---------------------
-Node.js must be installed on the node(s) where the CDAP UI service will run. We recommend
-any version of `Node.js <https://nodejs.org/>`__ |node-js-version|; in particular, we
-recommend |recommended_node_js_version|. You can download an appropriate version of
-Node.js from `nodejs.org <http://nodejs.org/dist/>`__. Detailed instructions on installing
-Node.js :ref:`are available <admin-manual-install-node.js>`.
-
 .. _|distribution|-install-packaging:
 
 Preparing Package Managers
@@ -107,11 +97,17 @@ minimum of two boxes.
 
 This will download and install the latest version of CDAP with all of its dependencies. 
 
+.. _|distribution|-cli-package-installation:
+
+To install the optional :ref:`CDAP CLI <cli>` on a node, add the ``cdap-cli`` package to
+the list of packages in the commands below.
 
 Using Chef
 ..........
 If you are using `Chef <https://www.getchef.com>`__ to install CDAP, an `official
 cookbook is available <https://supermarket.getchef.com/cookbooks/cdap>`__.
+
+To install the optional :ref:`CDAP CLI <cli>` on a node, use the ``fullstack`` recipe.
 
 
 On RPM using Yum

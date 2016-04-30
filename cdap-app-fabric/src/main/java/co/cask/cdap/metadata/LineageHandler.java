@@ -25,6 +25,7 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.codec.NamespacedIdCodec;
 import co.cask.cdap.proto.metadata.MetadataRecord;
+import co.cask.cdap.proto.metadata.lineage.CollapseType;
 import co.cask.cdap.proto.metadata.lineage.LineageRecord;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
@@ -36,8 +37,12 @@ import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 
 import java.lang.reflect.Type;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -68,7 +73,8 @@ public class LineageHandler extends AbstractHttpHandler {
                              @PathParam("dataset-id") String datasetId,
                              @QueryParam("start") String startStr,
                              @QueryParam("end") String endStr,
-                             @QueryParam("levels") @DefaultValue("10") int levels) throws Exception {
+                             @QueryParam("levels") @DefaultValue("10") int levels,
+                             @QueryParam("collapse") List<String> collapse) throws Exception {
 
     checkLevels(levels);
     TimeRange range = parseRange(startStr, endStr);
@@ -78,7 +84,7 @@ public class LineageHandler extends AbstractHttpHandler {
     responder.sendJson(HttpResponseStatus.OK,
                        LineageSerializer.toLineageRecord(TimeUnit.MILLISECONDS.toSeconds(range.getStart()),
                                                          TimeUnit.MILLISECONDS.toSeconds(range.getEnd()),
-                                                         lineage),
+                                                         lineage, getCollapseTypes(collapse)),
                        LineageRecord.class, GSON);
   }
 
@@ -89,7 +95,8 @@ public class LineageHandler extends AbstractHttpHandler {
                             @PathParam("stream-id") String stream,
                             @QueryParam("start") String startStr,
                             @QueryParam("end") String endStr,
-                            @QueryParam("levels") @DefaultValue("10") int levels) throws Exception {
+                            @QueryParam("levels") @DefaultValue("10") int levels,
+                            @QueryParam("collapse") List<String> collapse) throws Exception {
 
     checkLevels(levels);
     TimeRange range = parseRange(startStr, endStr);
@@ -99,7 +106,7 @@ public class LineageHandler extends AbstractHttpHandler {
     responder.sendJson(HttpResponseStatus.OK,
                        LineageSerializer.toLineageRecord(TimeUnit.MILLISECONDS.toSeconds(range.getStart()),
                                                          TimeUnit.MILLISECONDS.toSeconds(range.getEnd()),
-                                                         lineage),
+                                                         lineage, getCollapseTypes(collapse)),
                        LineageRecord.class, GSON);
   }
 
@@ -121,6 +128,23 @@ public class LineageHandler extends AbstractHttpHandler {
     if (levels < 1) {
       throw new BadRequestException(String.format("Invalid levels (%d), should be greater than 0.", levels));
     }
+  }
+
+  private static Set<CollapseType> getCollapseTypes(@Nullable List<String> collapse) throws BadRequestException {
+    if (collapse == null) {
+      return Collections.emptySet();
+    }
+
+    Set<CollapseType> collapseTypes = new HashSet<>();
+    for (String c : collapse) {
+      try {
+        CollapseType type = CollapseType.valueOf(c.toUpperCase());
+        collapseTypes.add(type);
+      } catch (IllegalArgumentException e) {
+        throw new BadRequestException(String.format("Invalid collapse type %s", c));
+      }
+    }
+    return collapseTypes;
   }
 
   // TODO: CDAP-3715 This is a fairly common operation useful in various handlers

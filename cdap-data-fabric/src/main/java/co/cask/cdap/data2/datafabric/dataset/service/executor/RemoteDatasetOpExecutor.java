@@ -109,9 +109,9 @@ public abstract class RemoteDatasetOpExecutor extends UncaughtExceptionIdleServi
 
   @Override
   public DatasetSpecification create(Id.DatasetInstance datasetInstanceId, DatasetTypeMeta typeMeta,
-                                     DatasetProperties props) throws Exception {
+                                     DatasetProperties props, boolean existing) throws Exception {
 
-    InternalDatasetCreationParams creationParams = new InternalDatasetCreationParams(typeMeta, props);
+    InternalDatasetCreationParams creationParams = new InternalDatasetCreationParams(typeMeta, props, existing);
     HttpRequest request = HttpRequest.post(resolve(datasetInstanceId, "create"))
       .withBody(GSON.toJson(creationParams))
       .build();

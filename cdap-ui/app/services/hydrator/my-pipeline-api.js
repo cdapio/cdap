@@ -19,12 +19,18 @@ angular.module(PKG.name + '.services')
     var templatePath = '/templates',
         pipelinePath = '/namespaces/:namespace/apps/:pipeline',
 
-        listPath = '/namespaces/:namespace/apps?artifactName=' + GLOBALS.etlBatch + ',' + GLOBALS.etlRealtime,
-
-        pluginFetchBase = '/namespaces/:namespace/artifacts/:pipelineType/versions/:version/extensions/:extensionType',
+        loadArtifactPath = '/namespaces/:namespace/artifacts/:artifactName',
+        loadArtifactJSON = loadArtifactPath + '/versions/:version/properties',
+        listPath = '/namespaces/:namespace/apps?artifactName=' + GLOBALS.etlBatch + ',' + GLOBALS.etlRealtime + ',' + GLOBALS.etlDataPipeline,
+        artifactsPath = '/namespaces/:namespace/artifacts?scope=SYSTEM',
+        extensionsFetchBase = '/namespaces/:namespace/artifacts/:pipelineType/versions/:version/extensions',
+        pluginFetchBase = extensionsFetchBase + '/:extensionType',
         pluginsFetchPath = pluginFetchBase + '?scope=system',
+        extensionsFetchPath = extensionsFetchBase + '?scope=system',
         pluginDetailFetch = pluginFetchBase + '/plugins/:pluginName?scope=system',
-        artifactPropertiesPath = '/namespaces/:namespace/artifacts/:artifactName/versions/:artifactVersion/properties';
+        postActionDetailFetch = pluginFetchBase + '/plugins/:pluginName',
+        artifactPropertiesPath = '/namespaces/:namespace/artifacts/:artifactName/versions/:artifactVersion/properties',
+        pluginMethodsPath = '/namespaces/:namespace/artifacts/:artifactName/versions/:version/plugintypes/:pluginType/plugins/:pluginName/methods/:methodName';
 
 
     return $resource(
@@ -33,11 +39,16 @@ angular.module(PKG.name + '.services')
 
       },
       {
+
+        loadArtifact: myHelpers.getConfig('POST', 'REQUEST', loadArtifactPath, false, {contentType: 'application/java-archive'}),
+        loadJson: myHelpers.getConfig('PUT', 'REQUEST', loadArtifactJSON, false, {contentType: 'application/json'}),
         save: myHelpers.getConfig('PUT', 'REQUEST', pipelinePath, false, {contentType: 'application/json'}),
-        fetchTemplates: myHelpers.getConfig('GET', 'REQUEST', templatePath, true),
+        fetchArtifacts: myHelpers.getConfig('GET', 'REQUEST', artifactsPath, true),
+        fetchExtensions: myHelpers.getConfig('GET', 'REQUEST', extensionsFetchPath, true),
         fetchSources: myHelpers.getConfig('GET', 'REQUEST', pluginsFetchPath, true),
         fetchSinks: myHelpers.getConfig('GET', 'REQUEST', pluginsFetchPath, true),
         fetchTransforms: myHelpers.getConfig('GET', 'REQUEST', pluginsFetchPath, true),
+        fetchTemplates: myHelpers.getConfig('GET', 'REQUEST', templatePath, true),
         fetchPlugins: myHelpers.getConfig('GET', 'REQUEST', pluginsFetchPath, true),
         fetchSourceProperties: myHelpers.getConfig('GET', 'REQUEST', pluginDetailFetch, true),
         fetchSinkProperties: myHelpers.getConfig('GET', 'REQUEST', pluginDetailFetch, true),
@@ -48,6 +59,9 @@ angular.module(PKG.name + '.services')
         // The above three could be replaced by this one.
         fetchPluginProperties: myHelpers.getConfig('GET', 'REQUEST', pluginDetailFetch, true),
 
+        // This should ideally be merged with fetchPluginProperties, however the path has SYSTEM scope
+        fetchPostActionProperties: myHelpers.getConfig('GET', 'REQUEST', postActionDetailFetch, true),
+
         // FIXME: This needs to be replaced with fetching etl-batch & etl-realtime separately.
         list: myHelpers.getConfig('GET', 'REQUEST', listPath, true),
         pollStatus: myHelpers.getConfig('GET', 'POLL', pipelinePath + '/status'),
@@ -57,7 +71,12 @@ angular.module(PKG.name + '.services')
         get: myHelpers.getConfig('GET', 'REQUEST', pipelinePath),
         datasets: myHelpers.getConfig('GET', 'REQUEST', pipelinePath + '/datasets', true),
         streams: myHelpers.getConfig('GET', 'REQUEST', pipelinePath + '/streams', true),
-        action: myHelpers.getConfig('POST', 'REQUEST', pipelinePath + '/:action')
+        action: myHelpers.getConfig('POST', 'REQUEST', pipelinePath + '/:action'),
+
+        postPluginMethod: myHelpers.getConfig('POST', 'REQUEST', pluginMethodsPath, false, { suppressErrors: true }),
+        getPluginMethod: myHelpers.getConfig('GET', 'REQUEST', pluginMethodsPath, false, { suppressErrors: true }),
+        putPluginMethod: myHelpers.getConfig('PUT', 'REQUEST', pluginMethodsPath, false, { suppressErrors: true }),
+        deletePluginMethod: myHelpers.getConfig('DELETE', 'REQUEST', pluginMethodsPath, false, { suppressErrors: true })
       }
     );
   });

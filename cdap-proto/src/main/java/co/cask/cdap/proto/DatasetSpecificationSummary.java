@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,9 +17,10 @@
 package co.cask.cdap.proto;
 
 import co.cask.cdap.api.dataset.DatasetSpecification;
-import com.google.common.base.Objects;
 
 import java.util.Map;
+import java.util.Objects;
+import javax.annotation.Nullable;
 
 /**
  * Summary of a {@link DatasetSpecification}. This is returned by the dataset API when getting all dataset instances
@@ -29,12 +30,19 @@ import java.util.Map;
 public class DatasetSpecificationSummary {
   private final String name;
   private final String type;
+  private final String description;
   private final Map<String, String> properties;
 
-  public DatasetSpecificationSummary(String name, String type, Map<String, String> properties) {
+  public DatasetSpecificationSummary(String name, String type, @Nullable String description,
+                                     Map<String, String> properties) {
     this.name = name;
     this.type = type;
+    this.description = description;
     this.properties = properties;
+  }
+
+  public DatasetSpecificationSummary(String name, String type, Map<String, String> properties) {
+    this(name, type, null, properties);
   }
 
   public String getName() {
@@ -43,6 +51,10 @@ public class DatasetSpecificationSummary {
 
   public String getType() {
     return type;
+  }
+
+  public String getDescription() {
+    return description;
   }
 
   public Map<String, String> getProperties() {
@@ -54,29 +66,28 @@ public class DatasetSpecificationSummary {
     if (this == o) {
       return true;
     }
-    if (!(o instanceof DatasetSpecificationSummary)) {
+    if (o == null || getClass() != o.getClass()) {
       return false;
     }
-
     DatasetSpecificationSummary that = (DatasetSpecificationSummary) o;
-
-    return Objects.equal(name, that.name) &&
-      Objects.equal(type, that.type) &&
-      Objects.equal(properties, that.properties);
-  }
-
-  @Override
-  public String toString() {
-    final StringBuilder sb = new StringBuilder("DatasetSpecificationSummary{");
-    sb.append("name='").append(name).append('\'');
-    sb.append(", type='").append(type).append('\'');
-    sb.append(", properties=").append(properties);
-    sb.append('}');
-    return sb.toString();
+    return Objects.equals(name, that.name) &&
+      Objects.equals(type, that.type) &&
+      Objects.equals(description, that.description) &&
+      Objects.equals(properties, that.properties);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(name, type, properties);
+    return Objects.hash(name, type, description, properties);
+  }
+
+  @Override
+  public String toString() {
+    return "DatasetSpecificationSummary{" +
+      "name='" + name + '\'' +
+      ", type='" + type + '\'' +
+      ", description='" + description + '\'' +
+      ", properties=" + properties +
+      '}';
   }
 }

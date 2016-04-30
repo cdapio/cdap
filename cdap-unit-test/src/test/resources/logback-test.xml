@@ -29,9 +29,12 @@
     <logger name="org.apache.zookeeper.server" level="ERROR"/>
     <logger name="org.apache.zookeeper" level="ERROR"/>
     <logger name="com.ning" level="WARN"/>
+    <logger name="org.apache.spark" level="WARN"/>
+    <logger name="org.spark-project" level="WARN"/>
     <logger name="org.apache.hadoop" level="WARN"/>
     <logger name="org.apache.hive" level="WARN"/>
     <logger name="org.quartz.core" level="WARN"/>
+    <logger name="io.netty.util.internal" level="WARN"/>
 
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>

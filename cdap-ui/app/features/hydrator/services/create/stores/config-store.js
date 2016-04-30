@@ -240,6 +240,7 @@ class ConfigStore {
 
     var nodes = angular.copy(this.getNodes()).map( node => {
       node.name = node.plugin.label;
+      delete node.error;
       return node;
     });
     state.__ui__.nodes = nodes;
@@ -266,26 +267,6 @@ class ConfigStore {
       return false;
     }
     var stateCopy = this.getConfigForExport();
-    var source = stateCopy.config.source;
-    var sinks = stateCopy.config.sinks;
-    var transforms = stateCopy.config.transforms;
-
-    if (source.plugin) {
-      delete source.outputSchema;
-      delete source.inputSchema;
-    }
-    angular.forEach(sinks, (sink) => {
-      if (sink.plugin) {
-        delete sink.outputSchema;
-        delete sink.inputSchema;
-      }
-    });
-    angular.forEach(transforms, (transform) =>  {
-      if (transform.plugin) {
-        delete transform.outputSchema;
-        delete transform.inputSchema;
-      }
-    });
     delete stateCopy.__ui__;
 
     angular.forEach(stateCopy.config.comments, (comment) => {
@@ -475,10 +456,14 @@ class ConfigStore {
         return;
       }
       // If we encounter an implicit schema down the stream while propagation stop there and return.
-      if (node.isImplicitSchema) {
+      if (nodesMap[node] && nodesMap[node].implicitSchema) {
         return;
       }
       node.forEach( n => {
+        // If we encounter an implicit schema down the stream while propagation stop there and return.
+        if (nodesMap[n].implicitSchema) {
+          return;
+        }
         nodesMap[n].outputSchema = outputSchema;
         nodesMap[n].inputSchema = outputSchema;
         if (nodesMap[n].outputSchemaProperty) {
@@ -660,6 +645,7 @@ class ConfigStore {
     // Next time they come to the draft and we still have the node selected but the bottom panel not updated.
     config.__ui__.nodes = config.__ui__.nodes.map( node => {
       delete node.selected;
+      delete node.error;
       return node;
     });
     let checkForDuplicateDrafts = (config, draftsMap = {}) => {

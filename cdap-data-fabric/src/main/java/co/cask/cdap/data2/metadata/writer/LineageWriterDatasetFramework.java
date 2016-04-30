@@ -17,51 +17,44 @@
 package co.cask.cdap.data2.metadata.writer;
 
 import co.cask.cdap.api.dataset.Dataset;
-import co.cask.cdap.api.dataset.DatasetAdmin;
+import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.DatasetProperties;
-import co.cask.cdap.api.dataset.DatasetSpecification;
-import co.cask.cdap.api.dataset.module.DatasetModule;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.data.dataset.SystemDatasetInstantiatorFactory;
 import co.cask.cdap.data.runtime.DataSetsModules;
+import co.cask.cdap.data2.audit.AuditPublisher;
+import co.cask.cdap.data2.audit.AuditPublishers;
 import co.cask.cdap.data2.datafabric.dataset.type.DatasetClassLoaderProvider;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.data2.dataset2.DatasetManagementException;
+import co.cask.cdap.data2.dataset2.ForwardingDatasetFramework;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
-import co.cask.cdap.data2.metadata.store.MetadataStore;
-import co.cask.cdap.data2.metadata.system.AbstractSystemMetadataWriter;
-import co.cask.cdap.data2.metadata.system.DatasetSystemMetadataWriter;
-import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.Id;
-import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
-import org.apache.twill.filesystem.Location;
-import org.apache.twill.filesystem.LocationFactory;
 
 import java.io.IOException;
-import java.util.Collection;
 import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
  * {@link DatasetFramework} that also records lineage (program-dataset access) records.
  */
-public class LineageWriterDatasetFramework implements DatasetFramework, ProgramContextAware {
-  private final DatasetFramework delegate;
+public class LineageWriterDatasetFramework extends ForwardingDatasetFramework implements ProgramContextAware {
   private final LineageWriter lineageWriter;
   private final ProgramContext programContext = new ProgramContext();
-  private final MetadataStore metadataStore;
-  private final SystemDatasetInstantiatorFactory dsInstantiatorFactory;
+
+  private AuditPublisher auditPublisher;
 
   @Inject
-  LineageWriterDatasetFramework(@Named(DataSetsModules.BASIC_DATASET_FRAMEWORK) DatasetFramework datasetFramework,
-                                LineageWriter lineageWriter, MetadataStore metadataStore,
-                                LocationFactory locationFactory, CConfiguration cConf) {
-    this.delegate = datasetFramework;
+  public LineageWriterDatasetFramework(
+    @Named(DataSetsModules.BASIC_DATASET_FRAMEWORK) DatasetFramework datasetFramework,
+    LineageWriter lineageWriter) {
+    super(datasetFramework);
     this.lineageWriter = lineageWriter;
-    this.metadataStore = metadataStore;
-    this.dsInstantiatorFactory = new SystemDatasetInstantiatorFactory(locationFactory, datasetFramework, cConf);
+  }
+
+  @SuppressWarnings("unused")
+  @Inject(optional = true)
+  public void setAuditPublisher(AuditPublisher auditPublisher) {
+    this.auditPublisher = auditPublisher;
   }
 
   @Override
@@ -75,121 +68,26 @@ public class LineageWriterDatasetFramework implements DatasetFramework, ProgramC
   }
 
   @Override
-  public void addModule(Id.DatasetModule moduleId, DatasetModule module) throws DatasetManagementException {
-    delegate.addModule(moduleId, module);
-  }
-
-  @Override
-  public void addModule(Id.DatasetModule moduleId, DatasetModule module,
-                        Location jarLocation) throws DatasetManagementException {
-    delegate.addModule(moduleId, module, jarLocation);
-  }
-
-  @Override
-  public void deleteModule(Id.DatasetModule moduleId) throws DatasetManagementException {
-    delegate.deleteModule(moduleId);
-  }
-
-  @Override
-  public void deleteAllModules(Id.Namespace namespaceId) throws DatasetManagementException {
-    delegate.deleteAllModules(namespaceId);
-  }
-
-  @Override
   public void addInstance(String datasetTypeName, Id.DatasetInstance datasetInstanceId, DatasetProperties props)
     throws DatasetManagementException, IOException {
-    delegate.addInstance(datasetTypeName, datasetInstanceId, props);
-    // add system metadata for user datasets only
-    if (!isUserDataset(datasetInstanceId)) {
-      return;
-    }
-    AbstractSystemMetadataWriter systemMetadataWriter =
-      new DatasetSystemMetadataWriter(metadataStore, dsInstantiatorFactory, datasetInstanceId, props, datasetTypeName);
-    systemMetadataWriter.write();
-  }
+    super.addInstance(datasetTypeName, datasetInstanceId, props);
 
-  //TODO: CDAP-4627 - Figure out a better way to identify system datasets in user namespaces
-  private boolean isUserDataset(Id.DatasetInstance datasetInstanceId) {
-    return !Id.Namespace.SYSTEM.equals(datasetInstanceId.getNamespace()) &&
-      !"system.queue.config".equals(datasetInstanceId.getId()) &&
-      !datasetInstanceId.getId().startsWith("system.sharded.queue") &&
-      !datasetInstanceId.getId().startsWith("system.queue") &&
-      !datasetInstanceId.getId().startsWith("system.stream");
   }
 
   @Override
   public void updateInstance(Id.DatasetInstance datasetInstanceId, DatasetProperties props)
     throws DatasetManagementException, IOException {
-    delegate.updateInstance(datasetInstanceId, props);
-    // add system metadata for user datasets only
-    if (!isUserDataset(datasetInstanceId)) {
-      return;
-    }
-    AbstractSystemMetadataWriter systemMetadataWriter =
-      new DatasetSystemMetadataWriter(metadataStore, dsInstantiatorFactory, datasetInstanceId, props, null);
-    systemMetadataWriter.write();
-  }
-
-  @Override
-  public Collection<DatasetSpecificationSummary> getInstances(Id.Namespace namespaceId)
-    throws DatasetManagementException {
-    return delegate.getInstances(namespaceId);
-  }
-
-  @Override
-  @Nullable
-  public DatasetSpecification getDatasetSpec(Id.DatasetInstance datasetInstanceId) throws DatasetManagementException {
-    return delegate.getDatasetSpec(datasetInstanceId);
-  }
-
-  @Override
-  public boolean hasInstance(Id.DatasetInstance datasetInstanceId) throws DatasetManagementException {
-    return delegate.hasInstance(datasetInstanceId);
-  }
-
-  @Override
-  public boolean hasSystemType(String typeName) throws DatasetManagementException {
-    return delegate.hasSystemType(typeName);
-  }
-
-  @Override
-  @VisibleForTesting
-  public boolean hasType(Id.DatasetType datasetTypeId) throws DatasetManagementException {
-    return delegate.hasType(datasetTypeId);
+    super.updateInstance(datasetInstanceId, props);
   }
 
   @Override
   public void deleteInstance(Id.DatasetInstance datasetInstanceId) throws DatasetManagementException, IOException {
-    // Remove metadata for the dataset (TODO: https://issues.cask.co/browse/CDAP-3670)
-    metadataStore.removeMetadata(datasetInstanceId);
     delegate.deleteInstance(datasetInstanceId);
   }
 
   @Override
   public void deleteAllInstances(Id.Namespace namespaceId) throws DatasetManagementException, IOException {
-    Collection<DatasetSpecificationSummary> datasets = this.getInstances(namespaceId);
-    for (DatasetSpecificationSummary dataset : datasets) {
-      String dsName = dataset.getName();
-      Id.DatasetInstance datasetInstanceId = Id.DatasetInstance.from(namespaceId, dsName);
-      // Remove metadata for the dataset (TODO: https://issues.cask.co/browse/CDAP-3670)
-      metadataStore.removeMetadata(datasetInstanceId);
-    }
     delegate.deleteAllInstances(namespaceId);
-  }
-
-  @Override
-  @Nullable
-  public <T extends DatasetAdmin> T getAdmin(Id.DatasetInstance datasetInstanceId, @Nullable ClassLoader classLoader)
-    throws DatasetManagementException, IOException {
-    return delegate.getAdmin(datasetInstanceId, classLoader);
-  }
-
-  @Override
-  @Nullable
-  public <T extends DatasetAdmin> T getAdmin(Id.DatasetInstance datasetInstanceId, @Nullable ClassLoader classLoader,
-                                             DatasetClassLoaderProvider classLoaderProvider)
-    throws DatasetManagementException, IOException {
-    return delegate.getAdmin(datasetInstanceId, classLoader, classLoaderProvider);
   }
 
   @Override
@@ -198,7 +96,7 @@ public class LineageWriterDatasetFramework implements DatasetFramework, ProgramC
                                           @Nullable Map<String, String> arguments, @Nullable ClassLoader classLoader,
                                           @Nullable Iterable<? extends Id> owners)
     throws DatasetManagementException, IOException {
-    T dataset = delegate.getDataset(datasetInstanceId, arguments, classLoader, owners);
+    T dataset = super.getDataset(datasetInstanceId, arguments, classLoader, owners);
     writeLineage(datasetInstanceId, dataset);
     return dataset;
   }
@@ -208,7 +106,7 @@ public class LineageWriterDatasetFramework implements DatasetFramework, ProgramC
   public <T extends Dataset> T getDataset(Id.DatasetInstance datasetInstanceId,
                                           @Nullable Map<String, String> arguments, @Nullable ClassLoader classLoader)
     throws DatasetManagementException, IOException {
-    T dataset = delegate.getDataset(datasetInstanceId, arguments, classLoader);
+    T dataset = super.getDataset(datasetInstanceId, arguments, classLoader);
     writeLineage(datasetInstanceId, dataset);
     return dataset;
   }
@@ -220,25 +118,45 @@ public class LineageWriterDatasetFramework implements DatasetFramework, ProgramC
                                           DatasetClassLoaderProvider classLoaderProvider,
                                           @Nullable Iterable<? extends Id> owners)
     throws DatasetManagementException, IOException {
-    T dataset = delegate.getDataset(datasetInstanceId, arguments, classLoader, classLoaderProvider, owners);
+    T dataset = super.getDataset(datasetInstanceId, arguments, classLoader, classLoaderProvider, owners);
     writeLineage(datasetInstanceId, dataset);
     return dataset;
   }
 
+  @Nullable
   @Override
-  public void createNamespace(Id.Namespace namespaceId) throws DatasetManagementException {
-    delegate.createNamespace(namespaceId);
+  public <T extends Dataset> T getDataset(Id.DatasetInstance datasetInstanceId, @Nullable Map<String, String> arguments,
+                                          @Nullable ClassLoader classLoader,
+                                          DatasetClassLoaderProvider classLoaderProvider,
+                                          @Nullable Iterable<? extends Id> owners, AccessType accessType)
+    throws DatasetManagementException, IOException {
+    T dataset = super.getDataset(datasetInstanceId, arguments, classLoader, classLoaderProvider, owners, accessType);
+    writeLineage(datasetInstanceId, dataset, accessType);
+    return dataset;
   }
 
   @Override
-  public void deleteNamespace(Id.Namespace namespaceId) throws DatasetManagementException {
-    delegate.deleteNamespace(namespaceId);
+  public void writeLineage(Id.DatasetInstance datasetInstanceId, AccessType accessType) {
+    super.writeLineage(datasetInstanceId, accessType);
+    doWriteLineage(datasetInstanceId, accessType);
   }
 
-  private <T extends Dataset> void writeLineage(Id.DatasetInstance datasetInstanceId, T dataset) {
-    if (dataset != null && programContext.getRun() != null) {
-      lineageWriter.addAccess(programContext.getRun(), datasetInstanceId, AccessType.UNKNOWN,
+  private <T extends Dataset> void writeLineage(Id.DatasetInstance datasetInstanceId, @Nullable T dataset) {
+    writeLineage(datasetInstanceId, dataset, AccessType.UNKNOWN);
+  }
+
+  private <T extends Dataset> void writeLineage(Id.DatasetInstance datasetInstanceId, @Nullable T dataset,
+                                                AccessType accessType) {
+    if (dataset != null) {
+      doWriteLineage(datasetInstanceId, accessType);
+    }
+  }
+
+  private void doWriteLineage(Id.DatasetInstance datasetInstanceId, AccessType accessType) {
+    if (programContext.getRun() != null) {
+      lineageWriter.addAccess(programContext.getRun(), datasetInstanceId, accessType,
                               programContext.getComponentId());
+      AuditPublishers.publishAccess(auditPublisher, datasetInstanceId, accessType, programContext.getRun());
     }
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,6 +20,7 @@ import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.dataset.DataSetException;
+import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.schedule.Schedule;
@@ -35,7 +36,6 @@ import co.cask.cdap.app.store.Store;
 import co.cask.cdap.app.verification.Verifier;
 import co.cask.cdap.app.verification.VerifyResult;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.internal.app.verification.ApplicationVerification;
 import co.cask.cdap.internal.app.verification.DatasetCreationSpecVerifier;
 import co.cask.cdap.internal.app.verification.FlowVerification;
@@ -49,6 +49,8 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.HashSet;
 import java.util.List;
@@ -62,7 +64,7 @@ import java.util.Set;
  * concrete implementations.
  */
 public class ApplicationVerificationStage extends AbstractStage<ApplicationDeployable> {
-
+  private static final Logger LOG = LoggerFactory.getLogger(ApplicationVerificationStage.class);
   private final Map<Class<?>, Verifier<?>> verifiers = Maps.newIdentityHashMap();
   private final DatasetFramework dsFramework;
   private final Store store;
@@ -183,6 +185,14 @@ public class ApplicationVerificationStage extends AbstractStage<ApplicationDeplo
   private void verifyWorkflowNode(ApplicationSpecification appSpec, WorkflowSpecification workflowSpec,
                                   WorkflowNode node, Set<String> existingNodeNames) {
     WorkflowNodeType nodeType = node.getType();
+    // TODO CDAP-5640 Add check so that node id in the Workflow should not be same as name of the Workflow.
+    if (node.getNodeId().equals(workflowSpec.getName())) {
+      String msg = String.format("Node used in Workflow has same name as that of Workflow '%s'." +
+                                   " This will conflict while getting the Workflow token details associated with" +
+                                   " the node. Please use name for the node other than the name of the Workflow.",
+                                 workflowSpec.getName());
+      LOG.warn(msg);
+    }
     switch (nodeType) {
       case ACTION:
         verifyWorkflowAction(appSpec, node);

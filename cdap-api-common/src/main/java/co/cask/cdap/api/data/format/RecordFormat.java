@@ -22,6 +22,7 @@ import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 
 import java.util.Collections;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * Interface specifying how to read data in some format into java objects.
@@ -68,7 +69,7 @@ public abstract class RecordFormat<FROM, TO> {
    * @param formatSpecification the specification for the format, containing the desired schema and settings
    * @throws UnsupportedTypeException if the desired schema and properties are not supported
    */
-  public void initialize(FormatSpecification formatSpecification) throws UnsupportedTypeException {
+  public void initialize(@Nullable FormatSpecification formatSpecification) throws UnsupportedTypeException {
     Schema desiredSchema = null;
     Map<String, String> settings = Collections.emptyMap();
     if (formatSpecification != null) {
@@ -77,7 +78,11 @@ public abstract class RecordFormat<FROM, TO> {
     }
     desiredSchema = desiredSchema == null ? getDefaultSchema() : desiredSchema;
     if (desiredSchema == null) {
-      throw new UnsupportedTypeException("A schema must be provided to this format.");
+      String msg = "A schema must be provided to the format: ";
+      if (formatSpecification != null) {
+        msg += formatSpecification.getName();
+      }
+      throw new UnsupportedTypeException(msg);
     }
     validateIsRecord(desiredSchema);
     validateSchema(desiredSchema);

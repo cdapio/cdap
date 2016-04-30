@@ -16,8 +16,8 @@
 
 package co.cask.cdap.data2.dataset2.cache;
 
+import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
-import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.data2.dataset2.DynamicDatasetCache;
 import co.cask.cdap.data2.dataset2.SingleThreadDatasetCache;
 import co.cask.tephra.TransactionFailureException;

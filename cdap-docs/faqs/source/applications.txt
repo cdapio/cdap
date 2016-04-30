@@ -52,12 +52,12 @@ Hive JDBC.
 You can use this to get data into a CDAP Table. From then on, it becomes a dataset like
 any other in CDAP, and can be accessed using Spark.
 
-You can also set up an ETL pipeline (using the CDAP-UI) with Hive as a source and a CDAP Table as a
+You can also set up an ETL pipeline (using the CDAP UI) with Hive as a source and a CDAP Table as a
 sink. Please see the `DBTableToHBaseTable example 
 <https://github.com/cdap-guides/cdap-etl-adapter-guide/tree/develop/DBTableToHBaseTable>`__
 for an example of database-to-CDAP Table. You will need to change the JDBC properties in the example
 provided on that page. Alternatively, you can provide all of this information in the
-CDAP-UI. 
+CDAP UI. 
 
 
 Spark
