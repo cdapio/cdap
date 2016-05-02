@@ -192,14 +192,10 @@ function getEs6Features(isNegate) {
     'hydratorplusplus',
     'tracker'
   ];
-  var returnVal = [];
-  es6features.forEach(function(feature) {
-    returnVal = returnVal.concat([
-      (isNegate? '!': '') + './app/features/' + feature + '/module.js',
-      (isNegate? '!': '') + './app/features/' + feature + '/**/*js',
-    ]);
+
+  return es6features.map(function (feature) {
+    return (isNegate ? '!' : '') + './app/features/' + feature + '/**/*.js';
   });
-  return returnVal;
 }
 
 function getEs6Directives(isNegate) {
@@ -211,13 +207,9 @@ function getEs6Directives(isNegate) {
     'datetime-range'
   ];
 
-  var returnVal = [];
-  es6directives.forEach(function (directive) {
-    var path = (isNegate ? '!' : '') + './app/directives/' + directive + '/**/*.js';
-    returnVal.push(path);
+  return es6directives.map(function (directive) {
+    return (isNegate ? '!' : '') + './app/directives/' + directive + '/**/*.js';
   });
-
-  return returnVal;
 }
 
 
@@ -499,7 +491,4 @@ gulp.task('watch', ['jshint', 'watch:build'], function() {
   gulp.watch('./app/**/*.{less,css}', ['css']);
   gulp.watch(['./app/directives/**/*.html', './app/features/home/home.html'], ['tpl']);
   gulp.watch('./app/features/**/*.html', ['html:partials']);
-  // gulp.watch('./app/img/**/*', ['img']);
-  // gulp.watch('./app/index.html', ['html:main.dev']);
-
 });
