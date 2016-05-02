@@ -32,7 +32,7 @@ function myJumpFactory($state, myTrackerApi, $rootScope) {
   let corePluginsArtifacts = {
     name: 'core-plugins',
     scope: 'SYSTEM',
-    version: '1.3.0-SNAPSHOT'
+    version: '1.3.0'
   };
 
   let batchSourceTemplate = {
