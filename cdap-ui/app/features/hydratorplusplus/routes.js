@@ -88,7 +88,7 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
               }).$promise.then((artifactsFromBackend) => {
                 let showWarningAndNavigateAway = () => {
                   if (!$state.current.name.length) {
-                    $state.go('hydrator.list').then(showError);
+                    $state.go('hydratorplusplus.list').then(showError);
                     return;
                   } else {
                     $state.go($state.current).then(showError);

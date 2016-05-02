@@ -20,7 +20,7 @@ function NavbarController ($scope, $state, myNamespace, EventPipe, MYAUTH_EVENT,
   let vm = this;
 
   function findActiveProduct() {
-    if ($state.includes('hydrator.**') || $state.includes('hydratorplusplus.**')) {
+    if ($state.includes('hydratorplusplus.**')) {
       return 'hydrator';
     } else if ($state.includes('tracker.**') || $state.is('tracker-enable')) {
       return 'tracker';
@@ -65,7 +65,7 @@ function NavbarController ($scope, $state, myNamespace, EventPipe, MYAUTH_EVENT,
   vm.logout = myAuth.logout.bind(myAuth);
   vm.changeNamespace = (ns) => {
     if ($state.params.namespace === ns.name) { return; }
-    if ($state.includes('hydrator.**')) {
+    if ($state.includes('hydratorplusplus.**')) {
       $state.go('hydratorplusplus.list', { namespace: ns.name });
     } else if ($state.includes('tracker.**') || $state.is('tracker-enable')) {
       $state.go('tracker.home', { namespace: ns.name });
