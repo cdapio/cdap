@@ -150,7 +150,7 @@ public class UpgradeTool {
         LOG.error("Writing config for pipeline {} to {} for further manual investigation.",
                   appId, errorFile.getAbsolutePath());
         try (OutputStreamWriter outputStreamWriter = new OutputStreamWriter(new FileOutputStream(errorFile))) {
-          outputStreamWriter.write(GSON.toJson(config));
+          outputStreamWriter.write(GSON.toJson(updateRequest));
         }
       }
     }
