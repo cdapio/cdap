@@ -23,7 +23,6 @@ import co.cask.cdap.api.dataset.table.Table;
 import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionExecutorFactory;
-import co.cask.tephra.TransactionFailureException;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
@@ -47,7 +46,6 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -339,38 +337,6 @@ public class DatasetBasedTimeScheduleStore extends RAMJobStore {
   }
 
   /**
-   * Upgrades trigger and their state stored in the Store. It reads them as {@link TriggerStatus} through
-   * deserialization and then stores them back as {@link TriggerStatusV2} through custom serialization.
-   */
-  public void upgrade() throws InterruptedException, TransactionFailureException, IOException,
-    DatasetManagementException {
-    initializeScheduleTable();
-    factory.createExecutor(ImmutableList.of((TransactionAware) table))
-      .execute(new TransactionExecutor.Subroutine() {
-        @Override
-        public void apply() throws Exception {
-          Row result = table.get(TRIGGER_KEY);
-          if (result.isEmpty()) {
-            return;
-          }
-          boolean upgradedSchedules = false;
-          for (byte[] bytes : result.getColumns().values()) {
-            Object triggerObject = SerializationUtils.deserialize(bytes);
-            if (triggerObject instanceof TriggerStatus) {
-              TriggerStatus trigger = (TriggerStatus) triggerObject;
-              persistTrigger(table, trigger.trigger, trigger.state);
-              upgradedSchedules = true;
-              LOG.info("Trigger with key {} upgraded", trigger.trigger.getKey());
-            }
-          }
-          if (!upgradedSchedules) {
-            LOG.info("No schedules needs to be upgraded.");
-          }
-        }
-      });
-  }
-
-  /**
    * Trigger and state.
    * New version of TriggerStatus which supports custom serialization from CDAP 3.3 release.
    */
@@ -398,26 +364,6 @@ public class DatasetBasedTimeScheduleStore extends RAMJobStore {
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
       trigger = (OperableTrigger) in.readObject();
       state = Trigger.TriggerState.valueOf(in.readUTF());
-    }
-  }
-
-  /**
-   * Trigger and state.
-   * Legacy TriggerStatus class which was used till CDAP 3.2. Its needed to deserialize the existing triggers while
-   * upgrading from 3.2 to 3.3. This class should be removed in the release next to 3.3
-   * TODO CDAP-4200: Improvise deserilization to make sure deserilization happen for all java version and is not
-   * dependent of compiler version.
-   */
-  private static class TriggerStatus implements Serializable {
-    // This is the serial version UID with which triggers were serialized till CDAP 3.2.
-    // Upgrade will fail to deserialize the TriggerStatus written in or before 3.2 if this UID is changed.
-    private static final long serialVersionUID = 8129408058145464685L;
-    private OperableTrigger trigger;
-    private Trigger.TriggerState state;
-
-    private TriggerStatus(OperableTrigger trigger, Trigger.TriggerState state) {
-      this.trigger = trigger;
-      this.state = state;
     }
   }
 }
