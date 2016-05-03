@@ -37,7 +37,7 @@ angular.module(PKG.name + '.feature.tracker')
           rTrackerApp: function (myTrackerApi, $q, $stateParams, $state, UI_CONFIG, myAlertOnValium) {
             let defer = $q.defer();
             let params = {
-              namespace: $stateParams.namespace
+              namespace: $stateParams.namespace || 'default'
             };
 
             myTrackerApi.getTrackerApp(params)
