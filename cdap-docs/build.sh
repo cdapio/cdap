@@ -51,15 +51,11 @@ function usage() {
   echo "    javadocs          Build Javadocs used in documentation"
   echo "    javadocs-all      Build Javadocs for all modules"
   echo "    licenses          Clean build of License Dependency PDFs"
-  echo "    sdk               Build CDAP SDK (includes the Hydrator plugins if Hydrator plugins source is at"
-  echo "                        '${HYDRATOR_PLUGINS_PATH}'"
-  echo "                        or the environment variable 'HYDRATOR_PLUGINS_PATH' has been set)"
-  echo 
   echo "    version           Print the version information"
   echo 
   echo "  with"
-  echo "    source    Path to ${PROJECT} source, if not '${PROJECT_PATH}'"
-  echo "              Path is relative to '${SCRIPT_PATH}/../..'"
+  echo "    source    Path to '${PROJECT}' source, if not '${PROJECT_PATH}'"
+  echo "              Path is relative to '${SOURCE_PATH}'"
   echo 
 }
 
@@ -76,9 +72,9 @@ function set_project_path() {
   else
     PROJECT_PATH="${SCRIPT_PATH}/../../${ARG_2}"
   fi
-  if [[ "x${HYDRATOR_PLUGINS_PATH}" == "x" ]]; then
-    HYDRATOR_PLUGINS_PATH="${PROJECT_PATH}/../${HYDRATOR_PLUGINS}"
-  fi
+  PROJECT_PATH=$(cd ${PROJECT_PATH} && pwd)
+  SOURCE_PATH="${SCRIPT_PATH}/../../"
+  SOURCE_PATH=$(cd ${SOURCE_PATH} && pwd)
 }
 
 function set_debug() {
@@ -128,7 +124,6 @@ function run_command() {
     javadocs )          build_javadocs ${DOCS};;
     javadocs-all )      build_javadocs ${ALL};;
     licenses )          build_license_dependency_pdfs;;
-    sdk )               build_standalone;;
     version )           print_version;;
     docs-test )         docs_test;;
     * )                 error_usage ${1};;
@@ -486,37 +481,6 @@ function clean_outer_level() {
 function build_license_dependency_pdfs() {
   cd ${SCRIPT_PATH}/reference-manual
   ./build.sh license-pdfs ${ARG_2} 
-}
-
-function build_standalone() {
-  local add_artifacts=""
-  if [ -d ${HYDRATOR_PLUGINS_PATH} ]; then
-    build_hydrator_plugins
-    local errors=$?
-    if [ "${errors}" == "0" ]; then
-      add_artifacts="-Dadditional.artifacts.dir=${HYDRATOR_PLUGINS_PATH}"
-    fi
-  else
-    echo "No HYDRATOR_PLUGINS_PATH at ${HYDRATOR_PLUGINS_PATH}"
-  fi
-  set_mvn_environment
-  MAVEN_OPTS="-Xmx1024m -XX:MaxPermSize=128m" mvn clean package \
-  -pl cdap-standalone,cdap-app-templates/cdap-etl,cdap-app-templates/cdap-data-quality,cdap-examples \
-  -am -amd -DskipTests -P examples,templates,dist,release,unit-tests ${add_artifacts}
-}
-
-function build_hydrator_plugins() {
-  local errors=0
-  set_mvn_environment
-  if [ -d ${HYDRATOR_PLUGINS_PATH} ]; then
-    cd ${HYDRATOR_PLUGINS_PATH}
-    echo "HYDRATOR_PLUGINS_PATH: ${HYDRATOR_PLUGINS_PATH}"
-    mvn clean package -DskipTests
-    errors=$?
-  else
-    echo "No HYDRATOR_PLUGINS_PATH at ${HYDRATOR_PLUGINS_PATH}"
-  fi
-  return ${errors}
 }
   
 function print_version() {
