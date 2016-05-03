@@ -20,6 +20,7 @@ WITH_JAVADOCS="$WITHOUT"
 
 MANUALS="introduction developers-manual cdap-apps admin-manual integrations examples-manual reference-manual faqs"
 
+# Used to monitor any changes in building of Javadocs
 # BUILD.rst
 BUILD_RST="BUILD.rst"
 BUILD_RST_HASH_LOCATION="cdap-docs/vars"
