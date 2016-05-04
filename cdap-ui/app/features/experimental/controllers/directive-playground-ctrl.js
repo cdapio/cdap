@@ -15,6 +15,6 @@
  */
 
  angular.module(`${PKG.name}.feature.experimental`)
-   .controller('DirectivePlayGround', function($scope) {
-     $scope.dsMultipleValuesModel = 'value1:value2:value3,newValue1:newValue2:newValue3';
+   .controller('DirectivePlayGround', function() {
+     this.dsMultipleValuesModel = 'value1:value2:value3,newValue1:newValue2:newValue3';
    });
