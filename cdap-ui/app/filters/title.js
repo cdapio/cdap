@@ -23,6 +23,7 @@ angular.module(PKG.name+'.filters').filter('myTitleFilter',
 function myTitleFilter () {
 
   return function(state) {
+    if (!state) { return '';}
     var title = state.data && state.data.title;
     return (title ? title + ' | ' : '') + 'CDAP';
   };
