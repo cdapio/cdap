@@ -18,16 +18,17 @@ package co.cask.cdap.gateway.handlers;
 
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
-import co.cask.http.ChunkResponder;
+import co.cask.http.BodyProducer;
 import co.cask.http.HttpResponder;
 import co.cask.tephra.InvalidTruncateTimeException;
 import co.cask.tephra.TransactionCouldNotTakeSnapshotException;
 import co.cask.tephra.TransactionSystemClient;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
-import com.google.common.io.Closeables;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
+import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
@@ -70,22 +71,37 @@ public class TransactionHttpHandler extends AbstractAppFabricHttpHandler {
     throws TransactionCouldNotTakeSnapshotException, IOException {
     LOG.trace("Taking transaction manager snapshot at time {}", System.currentTimeMillis());
     LOG.trace("Took and retrieved transaction manager snapshot successfully.");
-    try (InputStream in = txClient.getSnapshotInputStream()) {
-      ChunkResponder chunkResponder = responder.sendChunkStart(HttpResponseStatus.OK,
-                                                               ImmutableMultimap.<String, String>of());
-      while (true) {
+    responder.sendContent(HttpResponseStatus.OK, new BodyProducer() {
+      InputStream in = txClient.getSnapshotInputStream();
+
+      @Override
+      public ChannelBuffer nextChunk() throws Exception {
         // netty doesn't copy the readBytes buffer, so we have to reallocate a new buffer
         byte[] readBytes = new byte[4096];
         int res = in.read(readBytes, 0, 4096);
         if (res == -1) {
-          break;
+          return ChannelBuffers.EMPTY_BUFFER;
         }
         // If failed to send chunk, IOException will be raised.
         // It'll just propagated to the netty-http library to handle it
-        chunkResponder.sendChunk(ChannelBuffers.wrappedBuffer(readBytes, 0, res));
+        return ChannelBuffers.wrappedBuffer(readBytes, 0, res);
       }
-      Closeables.closeQuietly(chunkResponder);
-    }
+
+      @Override
+      public void finished() throws Exception {
+        in.close();
+      }
+
+      @Override
+      public void handleError(Throwable throwable) {
+        try {
+          in.close();
+        } catch (IOException e) {
+          Throwables.propagate(e);
+        }
+      }
+      // can be nullable, right...?
+    }, ImmutableMultimap.<String, String>of());
   }
 
   /**
