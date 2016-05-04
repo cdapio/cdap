@@ -35,6 +35,23 @@
 <div class="panel panel-default">
   <div class="panel-heading">
     <div class="panel-title">
+      Values Delimiter
+    </div>
+  </div>
+  <div class="panel-body">
+    <my-dsv-multiple-values
+      data-config="{'widget-attributes': { 'values-delimiter': ':', 'delimiter': ',', 'numValues': '3'}}"
+      ng-model="dsMultipleValuesModel">
+    </my-dsv-multiple-values>
+    <pre>
+      Result: {{dsMultipleValuesModel | json: 4}}
+    </pre>
+  </div>
+</div>
+
+<div class="panel panel-default">
+  <div class="panel-heading">
+    <div class="panel-title">
       Marked down directive Demo
     </div>
   </div>
