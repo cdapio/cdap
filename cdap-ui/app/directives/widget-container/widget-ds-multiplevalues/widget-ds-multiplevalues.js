@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.commons')
-  .directive('myDsvMultipleValues', function() {
+  .directive('myDsMultipleValues', function() {
     return {
       restrict: 'E',
       scope: {

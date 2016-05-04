@@ -75,6 +75,13 @@ angular.module(PKG.name + '.commons')
           'data-type': 'dsv'
         }
       },
+      'ds-multiplevalues': {
+        element: '<my-ds-multiple-values></my-ds-multiple-values>',
+        attributes: {
+          'ng-model': 'model',
+          'data-config': 'myconfig'
+        }
+      },
       'json-editor': {
         element: '<my-json-textbox></my-json-textbox>',
         attributes: {
