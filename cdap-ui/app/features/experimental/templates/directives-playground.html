@@ -39,12 +39,12 @@
     </div>
   </div>
   <div class="panel-body">
-    <my-dsv-multiple-values
+    <my-ds-multiple-values
       data-config="{'widget-attributes': { 'values-delimiter': ':', 'delimiter': ',', 'numValues': '3'}}"
-      ng-model="dsMultipleValuesModel">
-    </my-dsv-multiple-values>
+      ng-model="DirectivePlayGround.dsMultipleValuesModel">
+    </my-ds-multiple-values>
     <pre>
-      Result: {{dsMultipleValuesModel | json: 4}}
+      Result: {{DirectivePlayGround.dsMultipleValuesModel | json: 4}}
     </pre>
   </div>
 </div>
