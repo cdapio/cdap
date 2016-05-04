@@ -38,6 +38,7 @@ import java.net.URLEncoder;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * This class is for using a Stream as input for a MapReduce program. 
@@ -71,6 +72,7 @@ public class StreamBatchReadable implements BatchReadable<Long, String> {
   private final long startTime;
   private final long endTime;
   private final String decoderType;
+  @Nullable
   private final FormatSpecification bodyFormatSpec;
 
   /**
@@ -277,6 +279,7 @@ public class StreamBatchReadable implements BatchReadable<Long, String> {
   /**
    * Returns the {@link FormatSpecification} for reading the body of the stream.
    */
+  @Nullable
   public FormatSpecification getFormatSpecification() {
     return bodyFormatSpec;
   }
