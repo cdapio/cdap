@@ -35,7 +35,6 @@ import co.cask.cdap.common.io.URLConnections;
 import co.cask.cdap.common.namespace.guice.NamespaceClientRuntimeModule;
 import co.cask.cdap.common.startup.ConfigurationLogger;
 import co.cask.cdap.common.utils.DirUtils;
-import co.cask.cdap.common.utils.Networks;
 import co.cask.cdap.common.utils.OSDetector;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
@@ -123,6 +122,7 @@ public class StandaloneMain {
   private final KafkaClientService kafkaClient;
   private final ExternalJavaProcessExecutor kafkaProcessExecutor;
   private final ExternalJavaProcessExecutor zookeeperProcessExecutor;
+  private final TrackerAppCreationService trackerAppCreationService;
 
   private ExternalAuthenticationServer externalAuthenticationServer;
   private ExploreExecutorService exploreExecutorService;
@@ -147,11 +147,13 @@ public class StandaloneMain {
                                                              Collections.<String>emptyList(),
                                                              ImmutableMap.of("KAFKA_HEAP_OPTS", "-Xmx1G -Xms1G"),
                                                              kafkaClassPath);
+      trackerAppCreationService = injector.getInstance(TrackerAppCreationService.class);
     } else {
       zkClient = null;
       kafkaClient = null;
       zookeeperProcessExecutor = null;
       kafkaProcessExecutor = null;
+      trackerAppCreationService = null;
     }
 
     txService = injector.getInstance(InMemoryTransactionService.class);
@@ -268,6 +270,10 @@ public class StandaloneMain {
     }
     metadataService.startAndWait();
 
+    if (trackerAppCreationService != null) {
+      trackerAppCreationService.startAndWait();
+    }
+
     String protocol = sslEnabled ? "https" : "http";
     int dashboardPort = sslEnabled ?
       cConf.getInt(Constants.Dashboard.SSL_BIND_PORT) :
@@ -287,6 +293,11 @@ public class StandaloneMain {
       if (userInterfaceService != null) {
         userInterfaceService.stopAndWait();
       }
+
+      if (trackerAppCreationService != null) {
+        trackerAppCreationService.stopAndWait();
+      }
+
       //  shut down router to stop all incoming traffic
       router.stopAndWait();
       // now the stream writer and the explore service (they need tx)

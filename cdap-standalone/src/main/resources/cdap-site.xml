@@ -182,4 +182,19 @@
     </description>
   </property>
 
+  <property>
+    <name>tracker.app.config</name>
+    <value>{
+             "auditLogKafkaConfig" : {
+               "topic" : "${audit.kafka.topic}",
+               "zookeeperString" :
+                     "${router.bind.address}:${local.zkserver.port}/${root.namespace}/${kafka.zookeeper.namespace}"
+             }
+           }
+    </value>
+    <description>
+      Application configuration for Tracker
+    </description>
+  </property>
+
 </configuration>
