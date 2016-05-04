@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -151,7 +151,7 @@ public class AppWritingtoStream extends AbstractApplication {
   private static final class SimpleFlow extends AbstractFlow {
 
     @Override
-    protected void configureFlow() {
+    protected void configure() {
       setName(FLOW);
       addFlowlet("flowlet", new StreamFlowlet());
       connectStream(STREAM, "flowlet");

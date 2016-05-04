@@ -26,6 +26,8 @@ import co.cask.cdap.api.annotation.UseDataSet;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.DatasetContext;
+import co.cask.cdap.api.data.batch.Input;
+import co.cask.cdap.api.data.batch.Output;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.dataset.DatasetProperties;
@@ -172,8 +174,6 @@ public class AllProgramsApp extends AbstractApplication {
     @Override
     protected void configure() {
       setName(NAME);
-      useStreamInput(STREAM_NAME);
-      setOutputDataset(DATASET_NAME);
     }
 
     @Override
@@ -181,6 +181,8 @@ public class AllProgramsApp extends AbstractApplication {
       Job job = context.getHadoopJob();
       job.setMapperClass(NoOpMapper.class);
       job.setReducerClass(NoOpReducer.class);
+      context.addInput(Input.ofStream(STREAM_NAME));
+      context.addOutput(Output.ofDataset(DATASET_NAME));
     }
   }
 
@@ -193,8 +195,12 @@ public class AllProgramsApp extends AbstractApplication {
     @Override
     protected void configure() {
       setName(NAME);
-      setInputDataset(DATASET_NAME2);
-      setOutputDataset(DATASET_NAME);
+    }
+
+    @Override
+    public void beforeSubmit(MapReduceContext context) throws Exception {
+      context.addInput(Input.ofDataset(DATASET_NAME2));
+      context.addOutput(Output.ofDataset(DATASET_NAME));
     }
   }
 

@@ -51,7 +51,7 @@ public class ToyApp extends AbstractApplication {
   public static final class ToyFlow extends AbstractFlow {
 
     @Override
-    protected void configureFlow() {
+    protected void configure() {
       setName("ToyFlow");
       setDescription("Complex Toy Flow");
       addFlowlet(new A());

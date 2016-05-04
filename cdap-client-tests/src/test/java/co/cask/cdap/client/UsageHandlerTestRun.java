@@ -167,6 +167,10 @@ public class UsageHandlerTestRun extends ClientTestBase {
     Assert.assertEquals(0, getDatasetProgramUsage(dataset).size());
 
     deployApp(AllProgramsApp.class);
+    // now that we only support dynamic dataset instantiation in beforeSubmit (and not in configure as before),
+    // we must run the mapreduce program to register its usage
+    startProgram(program);
+    waitState(program, ProgramStatus.STOPPED);
 
     try {
       Assert.assertTrue(getAppStreamUsage(app).contains(stream));

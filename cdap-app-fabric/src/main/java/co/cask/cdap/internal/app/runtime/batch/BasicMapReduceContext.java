@@ -23,7 +23,6 @@ import co.cask.cdap.api.data.batch.Output;
 import co.cask.cdap.api.data.batch.OutputFormatProvider;
 import co.cask.cdap.api.data.batch.Split;
 import co.cask.cdap.api.data.stream.StreamBatchReadable;
-import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.metrics.Metrics;
@@ -127,7 +126,7 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
       addInput(Input.ofDataset(spec.getInputDataSet()));
     }
     if (spec.getOutputDataSet() != null) {
-      setOutput(spec.getOutputDataSet());
+      addOutput(Output.ofDataset(spec.getOutputDataSet()));
     }
   }
 
@@ -210,12 +209,6 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
   }
 
   @Override
-  public void setInput(String inputDatasetName, Dataset dataset) {
-    setInput(new DatasetInputFormatProvider(inputDatasetName, Collections.<String, String>emptyMap(),
-                                            dataset, null, MapReduceBatchReadableInputFormat.class));
-  }
-
-  @Override
   public void setInput(InputFormatProvider inputFormatProvider) {
     // with the setInput method, only 1 input will be set, and so the name does not matter much.
     // make it immutable to prevent calls to addInput after setting a single input.
@@ -266,21 +259,6 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
   }
 
   @Override
-  public void setOutput(String datasetName) {
-    clearOutputs();
-    addOutput(datasetName);
-  }
-
-  //TODO: update this to allow a BatchWritable once the DatasetOutputFormat can support taking an instance
-  //      and not just the name
-  @Override
-  public void setOutput(String datasetName, Dataset dataset) {
-    clearOutputs();
-    addOutput(datasetName, new DatasetOutputFormatProvider(datasetName, Collections.<String, String>emptyMap(),
-                                                           dataset, MapReduceBatchWritableOutputFormat.class));
-  }
-
-  @Override
   public void addOutput(String datasetName) {
     addOutput(datasetName, Collections.<String, String>emptyMap());
   }
@@ -321,10 +299,6 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
       throw new IllegalArgumentException(String.format("Output %s has unknown output class %s",
                                                        output.getName(), output.getClass().getCanonicalName()));
     }
-  }
-
-  private void clearOutputs() {
-    this.outputFormatProviders.clear();
   }
 
   /**

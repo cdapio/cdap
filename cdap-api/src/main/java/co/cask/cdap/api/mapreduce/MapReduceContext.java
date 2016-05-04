@@ -123,25 +123,6 @@ public interface MapReduceContext extends RuntimeContext, DatasetContext, Servic
   void setInput(InputFormatProvider inputFormatProvider);
 
   /**
-   * Overrides the input configuration of this MapReduce job to read from the specified dataset instance,
-   * as the single input.
-   *
-   * <p>
-   * Currently, the dataset passed in must either be an {@link InputFormatProvider} or a {@link BatchReadable}.
-   * You may want to use this method instead of {@link #setInput(String, List)} if your input dataset uses runtime
-   * arguments set in your own program logic. Input splits are determined either from the dataset instance if it is
-   * a {@link BatchReadable} or from the corresponding MapReduce InputFormat if the dataset instance is a
-   * {@link InputFormatProvider}.
-   * </p>
-   *
-   * @param datasetName the name of the input dataset
-   * @param dataset the input dataset
-   * @deprecated as of version 3.3.0. Use {@link #addInput(Input)} instead.
-   */
-  @Deprecated
-  void setInput(String datasetName, Dataset dataset);
-
-  /**
    * Updates the input configuration of this MapReduce job to use the specified {@link Input}.
    * @param input the input to be used
    * @throws IllegalStateException if called after any setInput methods.
@@ -155,29 +136,6 @@ public interface MapReduceContext extends RuntimeContext, DatasetContext, Servic
    * @throws IllegalStateException if called after any setInput methods.
    */
   void addInput(Input input, Class<?> mapperCls);
-
-  /**
-   * Overrides the output configuration of this MapReduce job to write to the specified dataset by its name.
-   *
-   * @param datasetName the name of the output dataset
-   * Deprecated as of version 3.2.0. Use {@link #addOutput(Output)}, instead.
-   */
-  @Deprecated
-  void setOutput(String datasetName);
-
-  /**
-   * Overrides the output configuration of this MapReduce job to write to the specified dataset instance.
-   * Currently, the dataset passed in must be an {@link OutputFormatProvider}.
-   * You may want to use this method instead of {@link #setOutput(String)} if your output dataset uses runtime
-   * arguments set in your own program logic.
-   *
-   * @param datasetName the name of the output dataset
-   * @param dataset the output dataset
-   * @throws IllegalArgumentException if the given dataset is not an OutputFormatProvider.
-   * Deprecated as of version 3.2.0. Use {@link #addOutput(Output)}, instead.
-   */
-  @Deprecated
-  void setOutput(String datasetName, Dataset dataset);
 
   /**
    * Overrides the output configuration of this MapReduce job to also allow writing to the specified dataset by

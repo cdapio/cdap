@@ -74,17 +74,6 @@ public class SparkBatchSourceContext extends AbstractSparkBatchContext implement
   }
 
   @Override
-  public void setInput(String datasetName, Dataset dataset) {
-    if (dataset instanceof BatchReadable) {
-      setInput(datasetName, ((BatchReadable) dataset).getSplits());
-    } else if (dataset instanceof InputFormatProvider) {
-      setInput((InputFormatProvider) dataset);
-    } else {
-      throw new IllegalArgumentException("Input dataset must be a BatchReadable or InputFormatProvider.");
-    }
-  }
-
-  @Override
   public void setInput(Input input) {
     Input trackableInput = ExternalDatasets.makeTrackable(sparkContext.getAdmin(), input);
     sourceFactory = SparkBatchSourceFactory.create(trackableInput);

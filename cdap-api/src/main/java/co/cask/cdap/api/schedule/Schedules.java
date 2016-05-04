@@ -23,41 +23,6 @@ import co.cask.cdap.internal.schedule.TimeSchedule;
  * Factory class to create {@link Schedule} objects.
  */
 public final class Schedules {
-  
-  /**
-   * Build a time-based schedule.
-   *
-   * @param name name of the schedule
-   * @param description description of the schedule
-   * @param cronExpression cron expression for the schedule
-   * @return a schedule based on the given {@code cronExpression}
-   * @deprecated As of version 3.3.0, replaced by {@link #builder(String)}.
-   */
-  @Deprecated
-  public static Schedule createTimeSchedule(String name, String description, String cronExpression) {
-    return new TimeSchedule(name, description, cronExpression);
-  }
-
-  /**
-   * Build a schedule based on data availability.
-   *
-   * @param name name of the schedule
-   * @param description description of the schedule
-   * @param source source of data the schedule is based on
-   * @param sourceName name of the source of data the schedule is based on
-   * @param dataTriggerMB the size of data, in MB, that the source has to receive to trigger an execution
-   * @return a schedule based on data availability in the given {@code dataSourceName}
-   * @deprecated As of version 3.3.0, replaced by {@link #builder(String)}.
-   */
-  @Deprecated
-  public static Schedule createDataSchedule(String name, String description, Source source, String sourceName,
-                                            int dataTriggerMB) {
-    switch (source) {
-      case STREAM:
-        return new StreamSizeSchedule(name, description, sourceName, dataTriggerMB);
-    }
-    throw new IllegalArgumentException("Unhandled source of " + source);
-  }
 
   private Schedules() {
   }

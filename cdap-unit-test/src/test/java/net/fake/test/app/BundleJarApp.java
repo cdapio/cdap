@@ -271,7 +271,7 @@ public class BundleJarApp extends AbstractApplication {
   public static class SimpleFlow extends AbstractFlow {
 
     @Override
-    protected void configureFlow() {
+    protected void configure() {
       setName("SimpleFlow");
       setDescription("Description");
       addFlowlet("simpleFlowlet", new SimpleFlowlet());

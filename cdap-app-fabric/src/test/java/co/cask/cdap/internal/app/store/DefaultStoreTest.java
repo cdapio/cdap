@@ -509,7 +509,7 @@ public class DefaultStoreTest {
     }
 
     @Override
-    protected void configureFlow() {
+    protected void configure() {
       setName(name);
       setDescription("Flow for counting words");
       addFlowlet(new FlowletImpl("flowlet1"));

@@ -16,7 +16,6 @@
 
 package co.cask.cdap.api.dataset.lib;
 
-import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -39,29 +38,5 @@ public class PartitionConsumerResult {
 
   public List<PartitionDetail> getPartitions() {
     return partitions;
-  }
-
-  /**
-   * @deprecated Deprecated as of 3.3.0. Use {@link #getPartitions()} instead.
-   */
-  @Deprecated
-  public Iterator<Partition> getPartitionIterator() {
-    final Iterator<PartitionDetail> iterator = partitions.iterator();
-    return new Iterator<Partition>() {
-      @Override
-      public boolean hasNext() {
-        return iterator.hasNext();
-      }
-
-      @Override
-      public Partition next() {
-        return iterator.next();
-      }
-
-      @Override
-      public void remove() {
-        iterator.remove();
-      }
-    };
   }
 }

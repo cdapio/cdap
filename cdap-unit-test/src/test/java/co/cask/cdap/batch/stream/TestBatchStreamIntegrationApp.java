@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,6 +19,8 @@ package co.cask.cdap.batch.stream;
 import co.cask.cdap.api.annotation.Batch;
 import co.cask.cdap.api.annotation.ProcessInput;
 import co.cask.cdap.api.app.AbstractApplication;
+import co.cask.cdap.api.data.batch.Input;
+import co.cask.cdap.api.data.batch.Output;
 import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.flow.AbstractFlow;
@@ -62,16 +64,12 @@ public class TestBatchStreamIntegrationApp extends AbstractApplication {
   public static class StreamTestBatch extends AbstractMapReduce {
 
     @Override
-    public void configure() {
-      useStreamInput("s_1");
-      setOutputDataset("results");
-    }
-
-    @Override
     public void beforeSubmit(MapReduceContext context) throws Exception {
       Job job = context.getHadoopJob();
       setMapperClass(job);
       job.setReducerClass(StreamTestBatchReducer.class);
+      context.addInput(Input.ofStream("s_1"));
+      context.addOutput(Output.ofDataset("results"));
     }
 
     protected void setMapperClass(Job job) {
@@ -120,7 +118,7 @@ public class TestBatchStreamIntegrationApp extends AbstractApplication {
   public static class StreamTestFlow extends AbstractFlow {
 
     @Override
-    protected void configureFlow() {
+    protected void configure() {
       setName("StreamTestFlow");
       setDescription("Flow for testing batch stream dequeue");
       addFlowlet(new StreamReader());

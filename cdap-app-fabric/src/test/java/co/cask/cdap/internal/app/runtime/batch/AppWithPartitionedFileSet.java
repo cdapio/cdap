@@ -18,6 +18,8 @@ package co.cask.cdap.internal.app.runtime.batch;
 
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.api.data.batch.Input;
+import co.cask.cdap.api.data.batch.Output;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSetProperties;
 import co.cask.cdap.api.dataset.lib.Partitioning;
 import co.cask.cdap.api.dataset.table.Put;
@@ -73,17 +75,14 @@ public class AppWithPartitionedFileSet extends AbstractApplication {
    * Map/Reduce that reads the "input" table and writes to a partition.
    */
   public static final class PartitionWriter extends AbstractMapReduce {
-    @Override
-    public void configure() {
-      setInputDataset(INPUT);
-      setOutputDataset(PARTITIONED);
-    }
 
     @Override
     public void beforeSubmit(MapReduceContext context) throws Exception {
       Job job = context.getHadoopJob();
       job.setMapperClass(SimpleMapper.class);
       job.setNumReduceTasks(0);
+      context.addInput(Input.ofDataset(INPUT));
+      context.addOutput(Output.ofDataset(PARTITIONED));
     }
   }
 
@@ -103,18 +102,14 @@ public class AppWithPartitionedFileSet extends AbstractApplication {
   public static final class PartitionReader extends AbstractMapReduce {
 
     @Override
-    public void configure() {
-      setInputDataset(PARTITIONED);
-      setOutputDataset(OUTPUT);
-    }
-
-    @Override
     public void beforeSubmit(MapReduceContext context) throws Exception {
       Job job = context.getHadoopJob();
       job.setMapperClass(ReaderMapper.class);
       job.setNumReduceTasks(0);
       String row = context.getRuntimeArguments().get(ROW_TO_WRITE);
       job.getConfiguration().set(ROW_TO_WRITE, row);
+      context.addInput(Input.ofDataset(PARTITIONED));
+      context.addOutput(Output.ofDataset(OUTPUT));
     }
 
   }

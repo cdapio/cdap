@@ -62,7 +62,7 @@ public class FilterAppWithNewFlowAPI extends AbstractApplication {
   public static class FilterFlow extends AbstractFlow {
 
     @Override
-    public void configureFlow() {
+    public void configure() {
       setName("FilterFlow");
       setDescription("Flow for counting words");
       addStream("input");

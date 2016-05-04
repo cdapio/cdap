@@ -19,6 +19,7 @@ package co.cask.cdap.etl.mock.batch;
 import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.annotation.Plugin;
 import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.api.data.batch.Input;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.lib.KeyValue;
@@ -82,7 +83,7 @@ public class MockSource extends BatchSource<byte[], Row, StructuredRecord> {
 
   @Override
   public void prepareRun(BatchSourceContext context) throws Exception {
-    context.setInput(config.tableName);
+    context.setInput(Input.ofDataset(config.tableName));
   }
 
   public static ETLPlugin getPlugin(String tableName) {

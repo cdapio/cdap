@@ -72,11 +72,6 @@ public final class DefaultMapReduceConfigurer extends DefaultPluginConfigurer im
   }
 
   @Override
-  public void useDatasets(Iterable<String> datasets) {
-    this.datasets = ImmutableSet.copyOf(datasets);
-  }
-
-  @Override
   public void setInputDataset(String dataset) {
     this.inputDataset = dataset;
   }

@@ -47,7 +47,7 @@ public class MapReduceSourceContext extends MapReduceBatchContext implements Bat
     LogContext.runWithoutLoggingUnchecked(new Callable<Void>() {
       @Override
       public Void call() throws Exception {
-        mrContext.setInput(stream);
+        mrContext.addInput(Input.ofStream(stream.getStreamName()));
         return null;
       }
     });
@@ -58,7 +58,7 @@ public class MapReduceSourceContext extends MapReduceBatchContext implements Bat
     LogContext.runWithoutLoggingUnchecked(new Callable<Void>() {
       @Override
       public Void call() throws Exception {
-        mrContext.setInput(datasetName);
+        mrContext.addInput(Input.ofDataset(datasetName));
         return null;
       }
     });
@@ -69,7 +69,7 @@ public class MapReduceSourceContext extends MapReduceBatchContext implements Bat
     LogContext.runWithoutLoggingUnchecked(new Callable<Void>() {
       @Override
       public Void call() throws Exception {
-        mrContext.setInput(datasetName, arguments);
+        mrContext.addInput(Input.ofDataset(datasetName, arguments));
         return null;
       }
     });
@@ -80,7 +80,7 @@ public class MapReduceSourceContext extends MapReduceBatchContext implements Bat
     LogContext.runWithoutLoggingUnchecked(new Callable<Void>() {
       @Override
       public Void call() throws Exception {
-        mrContext.setInput(datasetName, splits);
+        mrContext.addInput(Input.ofDataset(datasetName, splits));
         return null;
       }
     });
@@ -91,7 +91,7 @@ public class MapReduceSourceContext extends MapReduceBatchContext implements Bat
     LogContext.runWithoutLoggingUnchecked(new Callable<Void>() {
       @Override
       public Void call() throws Exception {
-        mrContext.setInput(datasetName, arguments, splits);
+        mrContext.addInput(Input.ofDataset(datasetName, arguments, splits));
         return null;
       }
     });
@@ -102,7 +102,7 @@ public class MapReduceSourceContext extends MapReduceBatchContext implements Bat
     LogContext.runWithoutLoggingUnchecked(new Callable<Void>() {
       @Override
       public Void call() throws Exception {
-        mrContext.setInput(inputFormatProvider);
+        mrContext.addInput(Input.of(inputFormatProvider.getInputFormatClassName(), inputFormatProvider));
         return null;
       }
     });
@@ -115,17 +115,6 @@ public class MapReduceSourceContext extends MapReduceBatchContext implements Bat
       public Void call() throws Exception {
         Input trackableInput =  ExternalDatasets.makeTrackable(mrContext.getAdmin(), input);
         mrContext.addInput(trackableInput);
-        return null;
-      }
-    });
-  }
-
-  @Override
-  public void setInput(final String datasetName, final Dataset dataset) {
-    LogContext.runWithoutLoggingUnchecked(new Callable<Void>() {
-      @Override
-      public Void call() throws Exception {
-        mrContext.setInput(datasetName, dataset);
         return null;
       }
     });
