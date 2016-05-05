@@ -19,8 +19,8 @@ package co.cask.cdap.etl.batch.mapreduce;
 import co.cask.cdap.api.data.batch.Input;
 import co.cask.cdap.api.data.batch.InputFormatProvider;
 import co.cask.cdap.api.data.batch.Split;
+import co.cask.cdap.api.data.format.FormatSpecification;
 import co.cask.cdap.api.data.stream.StreamBatchReadable;
-import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.etl.api.LookupProvider;
@@ -47,7 +47,13 @@ public class MapReduceSourceContext extends MapReduceBatchContext implements Bat
     LogContext.runWithoutLoggingUnchecked(new Callable<Void>() {
       @Override
       public Void call() throws Exception {
-        mrContext.addInput(Input.ofStream(stream.getStreamName()));
+        FormatSpecification formatSpec = stream.getFormatSpecification();
+        if (formatSpec == null) {
+          mrContext.addInput(Input.ofStream(stream.getStreamName(), stream.getStartTime(), stream.getEndTime()));
+        } else {
+          mrContext.addInput(Input.ofStream(stream.getStreamName(), stream.getStartTime(),
+                                            stream.getEndTime(), formatSpec));
+        }
         return null;
       }
     });
