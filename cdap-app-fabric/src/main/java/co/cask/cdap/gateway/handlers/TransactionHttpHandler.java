@@ -72,6 +72,7 @@ public class TransactionHttpHandler extends AbstractAppFabricHttpHandler {
     LOG.trace("Taking transaction manager snapshot at time {}", System.currentTimeMillis());
     LOG.trace("Took and retrieved transaction manager snapshot successfully.");
     responder.sendContent(HttpResponseStatus.OK, new BodyProducer() {
+      // do this on first read, instead of here? what if it never gets closed like this?
       InputStream in = txClient.getSnapshotInputStream();
 
       @Override

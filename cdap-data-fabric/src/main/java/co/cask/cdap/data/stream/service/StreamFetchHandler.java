@@ -33,9 +33,11 @@ import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.proto.Id;
 import co.cask.http.AbstractHttpHandler;
+import co.cask.http.BodyProducer;
 import co.cask.http.ChunkResponder;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Charsets;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Lists;
 import com.google.common.io.Closeables;
@@ -106,7 +108,7 @@ public final class StreamFetchHandler extends AbstractHttpHandler {
                     @PathParam("stream") String stream,
                     @QueryParam("start") @DefaultValue("0") String start,
                     @QueryParam("end") @DefaultValue("9223372036854775807") String end,
-                    @QueryParam("limit") @DefaultValue("2147483647") int limit) throws Exception {
+                    @QueryParam("limit") @DefaultValue("2147483647") final int limit) throws Exception {
     long startTime = TimeMathParser.parseTime(start, TimeUnit.MILLISECONDS);
     long endTime = TimeMathParser.parseTime(end, TimeUnit.MILLISECONDS);
 
@@ -115,16 +117,16 @@ public final class StreamFetchHandler extends AbstractHttpHandler {
       return;
     }
 
-    StreamConfig streamConfig = streamAdmin.getConfig(streamId);
+    final StreamConfig streamConfig = streamAdmin.getConfig(streamId);
     long now = System.currentTimeMillis();
     startTime = Math.max(startTime, now - streamConfig.getTTL());
     endTime = Math.min(endTime, now);
 
-    // Create the stream event reader
-    try (FileReader<StreamEventOffset, Iterable<StreamFileOffset>> reader = createReader(streamConfig, startTime)) {
-      TimeRangeReadFilter readFilter = new TimeRangeReadFilter(startTime, endTime);
-      List<StreamEvent> events = Lists.newArrayListWithCapacity(100);
+    final TimeRangeReadFilter readFilter = new TimeRangeReadFilter(startTime, endTime);
 
+    // Create a stream event reader simply to determine whether it is empty or not
+    try (FileReader<StreamEventOffset, Iterable<StreamFileOffset>> reader = createReader(streamConfig, startTime)) {
+      List<StreamEvent> events = Lists.newArrayListWithCapacity(100);
       // Reads the first batch of events from the stream.
       int eventsRead = readEvents(reader, events, limit, readFilter);
 
@@ -133,49 +135,111 @@ public final class StreamFetchHandler extends AbstractHttpHandler {
         responder.sendStatus(HttpResponseStatus.NO_CONTENT);
         return;
       }
+    }
 
-      // Send with chunk response, as we don't want to buffer all events in memory to determine the content-length.
-      ChunkResponder chunkResponder = responder.sendChunkStart(HttpResponseStatus.OK,
-                                                               ImmutableMultimap.of(HttpHeaders.Names.CONTENT_TYPE,
-                                                                                    "application/json; charset=utf-8"));
-      ChannelBuffer buffer = ChannelBuffers.dynamicBuffer();
-      JsonWriter jsonWriter = new JsonWriter(new OutputStreamWriter(new ChannelBufferOutputStream(buffer),
-                                                                    Charsets.UTF_8));
-      // Response is an array of stream event
-      jsonWriter.beginArray();
-      while (limit > 0 && eventsRead > 0) {
-        limit -= eventsRead;
+    final long finalStartTime = startTime;
+    // Send with BodyProducer, as we don't want to buffer all events in memory to determine the content-length.
+    responder.sendContent(HttpResponseStatus.OK, new BodyProducer() {
+      private boolean initialized;
 
-        for (StreamEvent event : events) {
-          GSON.toJson(event, StreamEvent.class, jsonWriter);
-          jsonWriter.flush();
+      private FileReader<StreamEventOffset, Iterable<StreamFileOffset>> reader;
+      private ChannelBuffer buffer;
+      private JsonWriter jsonWriter;
 
-          // If exceeded chunk size limit, send a new chunk.
-          if (buffer.readableBytes() >= CHUNK_SIZE) {
-            // If the connect is closed, sendChunk will throw IOException.
-            // No need to handle the exception as it will just propagated back to the netty-http library
-            // and it will handle it.
-            // Need to copy the buffer because the buffer will get reused and send chunk is an async operation
-            chunkResponder.sendChunk(buffer.copy());
-            buffer.clear();
+      private int innerLimit;
+      List<StreamEvent> events = Lists.newArrayListWithCapacity(100);
+      private int eventsRead;
+      private int idxInEvents;
+
+      private boolean lastChunkSent;
+
+      private void initialize() throws IOException, InterruptedException {
+        if (initialized) {
+          return;
+        }
+        initialized = true;
+
+        reader = createReader(streamConfig, finalStartTime);
+
+        buffer = ChannelBuffers.dynamicBuffer();
+        jsonWriter = new JsonWriter(new OutputStreamWriter(new ChannelBufferOutputStream(buffer),
+                                                           Charsets.UTF_8));
+        jsonWriter.beginArray();
+
+        innerLimit = limit;
+        // Reads the first batch of events from the stream.
+        eventsRead = readEvents(reader, events, innerLimit, readFilter);
+        idxInEvents = 0;
+
+        lastChunkSent = false;
+      }
+
+      private void close() throws IOException {
+        reader.close();
+      }
+
+      @Override
+      public ChannelBuffer nextChunk() throws Exception {
+        initialize();
+
+        // Response is an array of stream event
+        while (innerLimit > 0 && eventsRead > 0) {
+          innerLimit -= eventsRead;
+          for (; idxInEvents < events.size(); idxInEvents++) {
+            StreamEvent event = events.get(idxInEvents);
+
+            GSON.toJson(event, StreamEvent.class, jsonWriter);
+            // TODO: is it necessary to flush each time?
+            jsonWriter.flush();
+
+            // If exceeded chunk size limit, send a new chunk.
+            if (buffer.readableBytes() >= CHUNK_SIZE) {
+              // If the connect is closed, sendChunk will throw IOException.
+              // No need to handle the exception as it will just propagated back to the netty-http library
+              // and it will handle it.
+              // Need to copy the buffer because the buffer will get reused and send chunk is an async operation
+              ChannelBuffer toReturn = buffer.copy();
+              buffer.clear();
+              return toReturn;
+            }
+          }
+          idxInEvents = 0;
+          events.clear();
+
+          if (innerLimit > 0) {
+            eventsRead = readEvents(reader, events, innerLimit, readFilter);
           }
         }
-        events.clear();
 
-        if (limit > 0) {
-          eventsRead = readEvents(reader, events, limit, readFilter);
+        // avoid endArray() and closing the jsonWriter multiple times
+        if (!lastChunkSent) {
+          jsonWriter.endArray();
+          jsonWriter.close();
+
+          // Send the last chunk that still has data
+          if (buffer.readable()) {
+            // No need to copy the last chunk, since the buffer will not be reused
+            lastChunkSent = true;
+            return buffer;
+          }
+        }
+        return ChannelBuffers.EMPTY_BUFFER;
+      }
+
+      @Override
+      public void finished() throws Exception {
+        close();
+      }
+
+      @Override
+      public void handleError(Throwable cause) {
+        try {
+          close();
+        } catch (IOException e) {
+          Throwables.propagate(e);
         }
       }
-      jsonWriter.endArray();
-      jsonWriter.close();
-
-      // Send the last chunk that still has data
-      if (buffer.readable()) {
-        // No need to copy the last chunk, since the buffer will not be reused
-        chunkResponder.sendChunk(buffer);
-      }
-      Closeables.closeQuietly(chunkResponder);
-    }
+    }, ImmutableMultimap.of(HttpHeaders.Names.CONTENT_TYPE, "application/json; charset=utf-8"));
   }
 
   /**
