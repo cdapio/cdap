@@ -260,6 +260,7 @@ cdap_set_hive_classpath() {
         HIVE_HOME=${HIVE_HOME:-$(echo -e "${HIVE_VARS}" | grep '^env:HIVE_HOME=' | cut -d= -f2)}
         HIVE_CONF_DIR=${HIVE_CONF_DIR:-$(echo -e "${HIVE_VARS}" | grep '^env:HIVE_CONF_DIR=' | cut -d= -f2)}
         HADOOP_CONF_DIR=${HADOOP_CONF_DIR:-$(echo -e "${HIVE_VARS}" | grep '^env:HADOOP_CONF_DIR=' | cut -d= -f2)}
+        HIVE_EXEC_ENGINE=${HIVE_EXEC_ENGINE:-$(echo -e "${HIVE_VARS}" | grep '^hive.execution.engine=' | cut -d= -f2)}
       fi
     fi
 
@@ -272,6 +273,10 @@ cdap_set_hive_classpath() {
         # tez-site.xml also need to be passed to explore service
         EXPLORE_CONF_FILES=${EXPLORE_CONF_FILES}:${TEZ_CONF_DIR}/tez-site.xml:
       fi
+      if [[ "${HIVE_EXEC_ENGINE}" == "spark" ]]; then
+        # We require SPARK_HOME to be set for CDAP to include the Spark assembly JAR for Explore
+        cdap_set_spark || die "Unable to get SPARK_HOME, but default Hive engine is Spark"
+      fi
       export EXPLORE_CONF_FILES EXPLORE_CLASSPATH
     fi
   fi
@@ -281,6 +286,7 @@ cdap_set_hive_classpath() {
 cdap_set_spark() {
   # First, see if we're set to something sane
   if [ -n "${SPARK_HOME}" -a -d "${SPARK_HOME}" ]; then
+    export SPARK_HOME
     return 0 # SPARK_HOME is set, already
   else
     if [[ $(which spark-shell 2>/dev/null) ]]; then
