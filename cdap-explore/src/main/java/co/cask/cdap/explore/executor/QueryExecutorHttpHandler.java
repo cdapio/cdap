@@ -26,13 +26,10 @@ import co.cask.cdap.proto.ColumnDesc;
 import co.cask.cdap.proto.QueryHandle;
 import co.cask.cdap.proto.QueryResult;
 import co.cask.cdap.proto.QueryStatus;
-import co.cask.http.ChunkResponder;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
-import com.google.common.io.Closeables;
 import com.google.inject.Inject;
-import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
@@ -232,7 +229,7 @@ public class QueryExecutorHttpHandler extends AbstractQueryExecutorHttpHandler {
 
   @POST
   @Path("data/explore/queries/{id}/download")
-  public void downloadQueryResults(final HttpRequest request, final HttpResponder responder,
+  public void downloadQueryResults(HttpRequest request, final HttpResponder responder,
                                    @PathParam("id") final String id)
     throws ExploreException, IOException, SQLException, HandleNotFoundException {
     // NOTE: this call is a POST because it is not idempotent: cursor of results is moved
@@ -240,15 +237,14 @@ public class QueryExecutorHttpHandler extends AbstractQueryExecutorHttpHandler {
     doAs(handle, new Callable<Void>() {
       @Override
       public Void call() throws Exception {
-        doDownloadQueryResults(request, responder, handle);
+        doDownloadQueryResults(responder, handle);
         return null;
       }
     });
   }
 
-  private void doDownloadQueryResults(HttpRequest request, HttpResponder responder,
+  private void doDownloadQueryResults(HttpResponder responder,
                                       QueryHandle handle) throws ExploreException, IOException {
-    boolean responseStarted = false;
     try {
       if (handle.equals(QueryHandle.NO_OP) ||
         !exploreService.getStatus(handle).getStatus().equals(QueryStatus.OpStatus.FINISHED)) {
@@ -256,49 +252,21 @@ public class QueryExecutorHttpHandler extends AbstractQueryExecutorHttpHandler {
         return;
       }
 
-      StringBuffer sb = new StringBuffer();
-      sb.append(getCSVHeaders(exploreService.getResultSchema(handle)));
-      sb.append('\n');
-
-      List<QueryResult> results;
-      results = exploreService.previewResults(handle);
-      if (results.isEmpty()) {
-        results = exploreService.nextResults(handle, DOWNLOAD_FETCH_CHUNK_SIZE);
-      }
-
-      ChunkResponder chunkResponder = responder.sendChunkStart(HttpResponseStatus.OK, null);
-      responseStarted = true;
-      while (!results.isEmpty()) {
-        for (QueryResult result : results) {
-          appendCSVRow(sb, result);
-          sb.append('\n');
-        }
-        // If failed to send to client, just propagate the IOException and let netty-http to handle
-        chunkResponder.sendChunk(ChannelBuffers.wrappedBuffer(sb.toString().getBytes("UTF-8")));
-        sb.delete(0, sb.length());
-        results = exploreService.nextResults(handle, DOWNLOAD_FETCH_CHUNK_SIZE);
-      }
-      Closeables.closeQuietly(chunkResponder);
+      QueryResultsBodyProducer queryResultsBodyProducer = new QueryResultsBodyProducer(exploreService, handle);
+      responder.sendContent(HttpResponseStatus.OK, queryResultsBodyProducer, null);
 
     } catch (IllegalArgumentException e) {
       LOG.debug("Got exception:", e);
-      // We can't send another response if sendChunkStart has been called
-      if (!responseStarted) {
-        responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
-      }
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
     } catch (SQLException e) {
       LOG.debug("Got exception:", e);
-      if (!responseStarted) {
-        responder.sendString(HttpResponseStatus.BAD_REQUEST, String.format("[SQLState %s] %s",
-                                                                           e.getSQLState(), e.getMessage()));
-      }
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, String.format("[SQLState %s] %s",
+                                                                         e.getSQLState(), e.getMessage()));
     } catch (HandleNotFoundException e) {
-      if (!responseStarted) {
-        if (e.isInactive()) {
-          responder.sendString(HttpResponseStatus.CONFLICT, "Query is inactive");
-        } else {
-          responder.sendStatus(HttpResponseStatus.NOT_FOUND);
-        }
+      if (e.isInactive()) {
+        responder.sendString(HttpResponseStatus.CONFLICT, "Query is inactive");
+      } else {
+        responder.sendStatus(HttpResponseStatus.NOT_FOUND);
       }
     }
   }
