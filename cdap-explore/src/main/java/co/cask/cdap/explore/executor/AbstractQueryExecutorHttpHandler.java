@@ -101,7 +101,7 @@ public class AbstractQueryExecutorHttpHandler extends AbstractHttpHandler {
     }
   }
 
-  protected String getCSVHeaders(List<ColumnDesc> schema)
+  protected static String getCSVHeaders(List<ColumnDesc> schema)
     throws HandleNotFoundException, SQLException, ExploreException {
     StringBuffer sb = new StringBuffer();
     boolean first = true;
@@ -116,7 +116,7 @@ public class AbstractQueryExecutorHttpHandler extends AbstractHttpHandler {
     return sb.toString();
   }
 
-  protected String appendCSVRow(StringBuffer sb, QueryResult result)
+  protected static String appendCSVRow(StringBuffer sb, QueryResult result)
     throws HandleNotFoundException, SQLException, ExploreException {
     boolean first = true;
     for (Object o : result.getColumns()) {

@@ -24,11 +24,13 @@ import co.cask.cdap.proto.ColumnDesc;
 import co.cask.cdap.proto.QueryHandle;
 import co.cask.cdap.proto.QueryResult;
 import co.cask.cdap.proto.QueryStatus;
+import co.cask.http.BodyProducer;
 import co.cask.http.ChunkResponder;
 import co.cask.http.HttpResponder;
 import com.google.common.collect.Lists;
 import com.google.common.io.Closeables;
 import com.google.inject.Inject;
+import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
@@ -184,6 +186,68 @@ public class QueryExecutorHttpHandler extends AbstractQueryExecutorHttpHandler {
     }
   }
 
+  private static final class QueryResultsBodyProducer extends BodyProducer {
+
+    private final ExploreService exploreService;
+    private final QueryHandle handle;
+
+    private final StringBuffer sb;
+
+    private List<QueryResult> results;
+    private boolean initialized;
+
+    public QueryResultsBodyProducer(ExploreService exploreService, QueryHandle handle) {
+      this.exploreService = exploreService;
+      this.handle = handle;
+
+      this.sb = new StringBuffer();
+    }
+
+    private void initialize() throws HandleNotFoundException, SQLException, ExploreException {
+      if (initialized) {
+        return;
+      }
+      initialized = true;
+
+      sb.append(getCSVHeaders(exploreService.getResultSchema(handle)));
+      sb.append('\n');
+
+      results = exploreService.previewResults(handle);
+      if (results.isEmpty()) {
+        results = exploreService.nextResults(handle, DOWNLOAD_FETCH_CHUNK_SIZE);
+      }
+    }
+
+    @Override
+    public ChannelBuffer nextChunk() throws Exception {
+      initialize();
+
+      if (results.isEmpty()) {
+        return ChannelBuffers.EMPTY_BUFFER;
+      }
+
+      for (QueryResult result : results) {
+        appendCSVRow(sb, result);
+        sb.append('\n');
+      }
+      // If failed to send to client, just propagate the IOException and let netty-http to handle
+      ChannelBuffer toReturn = ChannelBuffers.wrappedBuffer(sb.toString().getBytes("UTF-8"));
+      sb.delete(0, sb.length());
+      results = exploreService.nextResults(handle, DOWNLOAD_FETCH_CHUNK_SIZE);
+      return toReturn;
+    }
+
+    @Override
+    public void finished() throws Exception {
+
+    }
+
+    @Override
+    public void handleError(Throwable cause) {
+
+    }
+  }
+
   @POST
   @Path("data/explore/queries/{id}/download")
   public void downloadQueryResults(HttpRequest request, HttpResponder responder,
@@ -198,33 +262,13 @@ public class QueryExecutorHttpHandler extends AbstractQueryExecutorHttpHandler {
         return;
       }
 
-      StringBuffer sb = new StringBuffer();
-      sb.append(getCSVHeaders(exploreService.getResultSchema(handle)));
-      sb.append('\n');
-
-      List<QueryResult> results;
-      results = exploreService.previewResults(handle);
-      if (results.isEmpty()) {
-        results = exploreService.nextResults(handle, DOWNLOAD_FETCH_CHUNK_SIZE);
-      }
-
-      ChunkResponder chunkResponder = responder.sendChunkStart(HttpResponseStatus.OK, null);
       responseStarted = true;
-      while (!results.isEmpty()) {
-        for (QueryResult result : results) {
-          appendCSVRow(sb, result);
-          sb.append('\n');
-        }
-        // If failed to send to client, just propagate the IOException and let netty-http to handle
-        chunkResponder.sendChunk(ChannelBuffers.wrappedBuffer(sb.toString().getBytes("UTF-8")));
-        sb.delete(0, sb.length());
-        results = exploreService.nextResults(handle, DOWNLOAD_FETCH_CHUNK_SIZE);
-      }
-      Closeables.closeQuietly(chunkResponder);
+      responder.sendContent(HttpResponseStatus.OK, new QueryResultsBodyProducer(exploreService, handle), null);
 
+      // TODO: verify following exceptions
     } catch (IllegalArgumentException e) {
       LOG.debug("Got exception:", e);
-      // We can't send another response if sendChunkStart has been called
+      // We can't send another response if sendContent has been called
       if (!responseStarted) {
         responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
       }
