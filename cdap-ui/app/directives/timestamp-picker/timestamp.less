@@ -17,8 +17,6 @@
 @import "../../styles/variables.less";
 
 my-timestamp-picker {
-
-
   .input-group {
     > input.form-control {
       width: 50%;
@@ -30,16 +28,13 @@ my-timestamp-picker {
           border-bottom-right-radius: @input-border-radius;
         }
       }
-
     }
   }
-
 
   .dropdown-menu.datepicker,
   .dropdown-menu.timepicker {
     width: auto;
-
-    padding: .5em;
+    padding: 0.5em;
 
     button {
       outline: none;
@@ -48,26 +43,21 @@ my-timestamp-picker {
     }
   }
 
-
   .dropdown-menu.datepicker {
     min-width: 350px;
 
     thead th {
-      padding: .5em 0;
+      padding: 0.5em 0;
     }
     tbody td {
       padding: 3px;
     }
-
   }
 
-
   .dropdown-menu.timepicker {
-
     tbody td {
       padding: 3px 0;
     }
-
   }
 
 }

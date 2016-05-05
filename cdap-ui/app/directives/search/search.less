@@ -14,9 +14,9 @@
  * the License.
  */
 
- @import "../../styles/variables.less";
- @import "../../styles/themes/cdap/mixins.less";
- @import "../../../bower_components/bootstrap/less/mixins.less";
+@import "../../styles/variables.less";
+@import "../../styles/themes/cdap/mixins.less";
+@import "../../../bower_components/bootstrap/less/mixins.less";
 
 @navbar-bg: #464a56;
 @border-color: #cdcdcd;
@@ -82,13 +82,15 @@ my-search {
       font-weight: 500;
     }
 
-    .result-info, .truncate-ellipsis {
+    .result-info,
+    .truncate-ellipsis {
       overflow: hidden;
       white-space: nowrap;
       text-overflow: ellipsis;
     }
 
-    .entity-details, .entity-app-details {
+    .entity-details,
+    .entity-app-details {
       color: #999999;
       span {
         vertical-align: middle;

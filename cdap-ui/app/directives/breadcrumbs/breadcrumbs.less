@@ -19,10 +19,12 @@
 @import "../../../bower_components/bootstrap/less/mixins.less";
 
 body.theme-cdap {
-  my-breadcrumbs, my-breadcrumb {
+  my-breadcrumbs,
+  my-breadcrumb {
     @media (max-width: @screen-xs-max) {
       display: none;
     }
+
     @media (min-width: @screen-sm-min) {
       background-color: white;
       border-bottom: 1px solid @panel-default-border;
@@ -50,7 +52,8 @@ body.theme-cdap {
           &:after {
             z-index: 99;
           }
-          &:not(:last-child), &:not(:only-child) {
+          &:not(:last-child),
+          &:not(:only-child) {
             &:before {
               content: none;
             }
@@ -70,7 +73,8 @@ body.theme-cdap {
           }
           &:last-child {
             background-image: url('@{img-path}/gray_chevron_body.png');
-            &:before, &:after {
+            &:before,
+            &:after {
               background-color: white;
               height: 40px;
               top: 0;
@@ -86,21 +90,23 @@ body.theme-cdap {
               content: url('@{img-path}/gray_chevron_front.png');
               right: 0;
               position: absolute;
-              border-bottom: 1px solid #ddd;
+              border-bottom: 1px solid #dddddd;
             }
             span {
               color: @cdap-header;
               padding-right: 18px;
             }
           }
-          a, span {
+          a,
+          span {
             display: inline-block;
             vertical-align: top;
           }
           a {
             color: @cdap-gray;
             padding-left: 11px;
-            &:hover, &:focus {
+            &:hover,
+            &:focus {
               text-decoration: none;
             }
           }
