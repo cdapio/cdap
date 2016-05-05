@@ -72,6 +72,7 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.Service;
+import com.google.common.util.concurrent.UncheckedExecutionException;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
@@ -287,7 +288,7 @@ public class StandaloneMain {
    */
   public void shutDown() {
     LOG.info("Shutting down Standalone CDAP");
-
+    boolean halt = false;
     try {
       // order matters: first shut down UI 'cause it will stop working after router is down
       if (userInterfaceService != null) {
@@ -326,23 +327,38 @@ public class StandaloneMain {
       }
 
       if (zkClient != null) {
-        zkClient.startAndWait();
-      }
-
-      if (kafkaProcessExecutor != null) {
-        kafkaProcessExecutor.stopAndWait();
-      }
-
-      if (zookeeperProcessExecutor != null) {
-        zookeeperProcessExecutor.stopAndWait();
+        zkClient.stopAndWait();
       }
     } catch (Throwable e) {
+      halt = true;
       LOG.error("Exception during shutdown", e);
-      // We can't do much but exit. Because there was an exception, some non-daemon threads may still be running.
-      // Therefore System.exit() won't do it, we need to force a halt.
-      Runtime.getRuntime().halt(1);
     } finally {
+      stopExternalProcesses();
       cleanupTempDir();
+    }
+
+    // We can't do much but exit. Because there was an exception, some non-daemon threads may still be running.
+    // Therefore System.exit() won't do it, we need to force a halt.
+    if (halt) {
+      Runtime.getRuntime().halt(1);
+    }
+  }
+
+  private void stopExternalProcesses() {
+    if (kafkaProcessExecutor != null) {
+      try {
+        kafkaProcessExecutor.stopAndWait();
+      } catch (UncheckedExecutionException ex) {
+        LOG.warn("Exception during Kafka process shutdown. Process might still be running.", ex);
+      }
+    }
+
+    if (zookeeperProcessExecutor != null) {
+      try {
+        zookeeperProcessExecutor.stopAndWait();
+      } catch (UncheckedExecutionException ex) {
+        LOG.warn("Exception during Zookeeper process shutdown. Process might still be running", ex);
+      }
     }
   }
 
@@ -386,6 +402,7 @@ public class StandaloneMain {
         System.err.println("Failed to start Standalone CDAP");
         e.printStackTrace(System.err);
       }
+      main.stopExternalProcesses();
       Runtime.getRuntime().halt(-2);
     }
   }
