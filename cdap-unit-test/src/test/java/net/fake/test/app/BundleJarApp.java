@@ -179,7 +179,7 @@ public class BundleJarApp extends AbstractApplication {
      * @throws Exception
      */
     @Override
-    public void beforeSubmit(MapReduceContext context) throws Exception {
+    public void initialize(MapReduceContext context) throws Exception {
       LOG.info("Hello " + loadTestClasses());
 
       Job job = context.getHadoopJob();

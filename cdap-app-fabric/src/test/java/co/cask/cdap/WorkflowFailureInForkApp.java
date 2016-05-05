@@ -81,7 +81,7 @@ public class WorkflowFailureInForkApp extends AbstractApplication {
 
     @Override
     @SuppressWarnings("ConstantConditions")
-    public void beforeSubmit(MapReduceContext context) throws Exception {
+    public void initialize(MapReduceContext context) throws Exception {
       Map<String, String> args = context.getRuntimeArguments();
       String inputPath = args.get("inputPath");
       String outputPath = args.get("outputPath");
@@ -99,7 +99,7 @@ public class WorkflowFailureInForkApp extends AbstractApplication {
         file = new File(args.get("wait.file"));
         //noinspection ResultOfMethodCallIgnored
         file.createNewFile();
-        throw new RuntimeException("Exception in beforeSubmit()");
+        throw new RuntimeException("Exception in initialize()");
       }
       File file = new File(args.get("sync.file"));
       //noinspection ResultOfMethodCallIgnored

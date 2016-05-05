@@ -176,7 +176,7 @@ public class DataQualityApp extends AbstractApplication<DataQualityApp.DataQuali
     }
 
     @Override
-    public void beforeSubmit(MapReduceContext context) throws Exception {
+    public void initialize(MapReduceContext context) throws Exception {
       Job job = context.getHadoopJob();
       job.setMapperClass(AggregationMapper.class);
       job.setReducerClass(AggregationReducer.class);

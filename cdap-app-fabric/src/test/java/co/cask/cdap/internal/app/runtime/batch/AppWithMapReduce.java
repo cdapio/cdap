@@ -63,15 +63,11 @@ public class AppWithMapReduce extends AbstractApplication {
     }
 
     @Override
-    public void beforeSubmit(MapReduceContext context) throws Exception {
+    public void initialize(MapReduceContext context) throws Exception {
+      super.initialize(context);
       String inputPath = Bytes.toString(table.read(Bytes.toBytes("inputPath")));
       String outputPath = Bytes.toString(table.read(Bytes.toBytes("outputPath")));
       WordCount.configureJob((Job) context.getHadoopJob(), inputPath, outputPath);
-    }
-
-    @Override
-    public void onFinish(boolean succeeded, MapReduceContext context) throws Exception {
-      System.out.println("Action taken on MapReduce job " + (succeeded ? "" : "un") + "successful completion");
     }
   }
 
@@ -89,7 +85,8 @@ public class AppWithMapReduce extends AbstractApplication {
     private Metrics metrics;
 
     @Override
-    public void beforeSubmit(MapReduceContext context) throws Exception {
+    public void initialize(MapReduceContext context) throws Exception {
+      super.initialize(context);
       metrics.count("beforeSubmit", 1);
       Job hadoopJob = context.getHadoopJob();
       AggregateMetricsByTag.configureJob(hadoopJob);
@@ -110,9 +107,8 @@ public class AppWithMapReduce extends AbstractApplication {
     }
 
     @Override
-    public void onFinish(boolean succeeded, MapReduceContext context) throws Exception {
+    public void destroy() {
       metrics.count("onFinish", 1);
-      System.out.println("Action taken on MapReduce job " + (succeeded ? "" : "un") + "successful completion");
       onFinishTable.write(Bytes.toBytes("onFinish"), Bytes.toBytes("onFinish:done"));
       metrics.count("onFinish", 1);
     }

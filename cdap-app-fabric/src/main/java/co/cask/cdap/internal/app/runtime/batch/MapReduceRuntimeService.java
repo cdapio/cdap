@@ -16,6 +16,9 @@
 
 package co.cask.cdap.internal.app.runtime.batch;
 
+import co.cask.cdap.api.ProgramLifecycle;
+import co.cask.cdap.api.ProgramState;
+import co.cask.cdap.api.ProgramStatus;
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.data.batch.DatasetOutputCommitter;
 import co.cask.cdap.api.data.batch.InputFormatProvider;
@@ -116,10 +119,10 @@ import javax.annotation.Nullable;
 /**
  * Performs the actual execution of mapreduce job.
  *
- * Service start -> Performs job setup, beforeSubmit and submit job
+ * Service start -> Performs job setup, initialize and submit job
  * Service run -> Poll for job completion
  * Service triggerStop -> kill job
- * Service stop -> Commit/abort transaction, onFinish, cleanup
+ * Service stop -> Commit/abort transaction, destroy, cleanup
  */
 final class MapReduceRuntimeService extends AbstractExecutionThreadService {
 
@@ -220,7 +223,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
 
       // For local mode, everything is in the configuration classloader already, hence no need to create new jar
       if (!MapReduceTaskContextProvider.isLocal(mapredConf)) {
-        // After calling beforeSubmit, we know what plugins are needed for the program, hence construct the proper
+        // After calling initialize, we know what plugins are needed for the program, hence construct the proper
         // ClassLoader from here and use it for setting up the job
         Location pluginArchive = createPluginArchive(tempLocation);
         if (pluginArchive != null) {
@@ -332,6 +335,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
   @Override
   protected void shutDown() throws Exception {
     boolean success = job.isSuccessful();
+    String failureInfo = job.getStatus().getFailureInfo();
 
     try {
       if (success) {
@@ -350,7 +354,11 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     } finally {
       // whatever happens we want to call this
       try {
-        onFinish(success);
+        if (mapReduce instanceof ProgramLifecycle) {
+          destroy(success, failureInfo);
+        } else {
+          onFinish(success);
+        }
       } finally {
         context.close();
         cleanupTask.run();
@@ -458,17 +466,27 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
   }
 
   /**
-   * Calls the {@link MapReduce#beforeSubmit(MapReduceContext)} method and
-   * also setup the Input/Output within the same transaction.
+   * For pre 3.5 MapReduce programs, calls the {@link MapReduce#beforeSubmit(MapReduceContext)} method.
+   * For MapReduce programs created after 3.5, calls the initialize method of the {@link ProgramLifecycle}.
+   * This method also sets up the Input/Output within the same transaction.
    */
+  @SuppressWarnings("unchecked")
   private void beforeSubmit(final Job job) throws TransactionFailureException {
     TransactionContext txContext = context.getTransactionContext();
-    Transactions.execute(txContext, "beforeSubmit", new Callable<Void>() {
+    Transactions.execute(txContext, "initialize", new Callable<Void>() {
       @Override
       public Void call() throws Exception {
         ClassLoader oldClassLoader = setContextCombinedClassLoader(context);
         try {
-          mapReduce.beforeSubmit(context);
+          context.setState(new ProgramState(ProgramStatus.INITIALIZING, null));
+          if (mapReduce instanceof ProgramLifecycle) {
+            ((ProgramLifecycle) mapReduce).initialize(context);
+          } else {
+            mapReduce.beforeSubmit(context);
+          }
+
+          // once the initialize method is executed, set the status of the MapReduce to RUNNING
+          context.setState(new ProgramState(ProgramStatus.RUNNING, null));
 
           // set input/outputs info, and get one of the configured mapper's TypeToken
           TypeToken<?> mapperTypeToken = setInputsIfNeeded(job);
@@ -534,6 +552,51 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
         }
       }
     });
+  }
+
+  private ProgramState getProgramState(boolean success, String failureInfo) {
+    if (stopRequested) {
+      // Program explicitly stopped, return KILLED state
+      return new ProgramState(ProgramStatus.KILLED, null);
+    }
+    if (!success) {
+      // Program is unsuccessful, return FAILED state
+      return new ProgramState(ProgramStatus.FAILED, failureInfo);
+    }
+    // Program is successfully completed, return COMPLETE state
+    return new ProgramState(ProgramStatus.COMPLETED, null);
+  }
+
+  /**
+   * Calls the destroy method of {@link ProgramLifecycle}.
+   */
+  private void destroy(final boolean succeeded, final String failureInfo) {
+    TransactionContext txContext = context.getTransactionContext();
+    try {
+      Transactions.execute(txContext, "destroy", new Callable<Void>() {
+        @Override
+        public Void call() throws Exception {
+          ClassLoader oldClassLoader = setContextCombinedClassLoader(context);
+          try {
+            // TODO (CDAP-1952): this should be done in the output committer, to make the M/R fail if addPartition fails
+            // TODO (CDAP-1952): also, should failure of an output committer change the status of the program run?
+            boolean success = succeeded;
+            for (Map.Entry<String, OutputFormatProvider> dsEntry : context.getOutputFormatProviders().entrySet()) {
+              if (!commitOutput(succeeded, dsEntry.getKey(), dsEntry.getValue())) {
+                success = false;
+              }
+            }
+            context.setState(getProgramState(success, failureInfo));
+            ((ProgramLifecycle) mapReduce).destroy();
+            return null;
+          } finally {
+            ClassLoaders.setContextClassLoader(oldClassLoader);
+          }
+        }
+      });
+    } catch (Throwable e) {
+      LOG.warn("Error executing the destroy method of the MapReduce program {}", context.getProgram().getName(), e);
+    }
   }
 
   private void assertConsistentTypes(Class<? extends Mapper> firstMapperClass,
@@ -610,8 +673,6 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     }
     return resolveClass(firstMapperClass, Mapper.class);
   }
-
-
 
   private void setDecoderForStream(StreamInputFormatProvider streamProvider, Job job,
                                    Map<String, String> inputFormatConfiguration, Class<? extends Mapper> mapperClass) {
@@ -864,7 +925,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
 
     Type[] typeArgs = ((ParameterizedType) type.getType()).getActualTypeArguments();
 
-    // Set it only if the user didn't set it in beforeSubmit
+    // Set it only if the user didn't set it in initialize
     // The key and value type are in the 3rd and 4th type parameters
     if (!isProgrammaticConfig(conf, MRJobConfig.OUTPUT_KEY_CLASS)) {
       Class<?> cls = TypeToken.of(typeArgs[2]).getRawType();
@@ -907,7 +968,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
 
     Type[] typeArgs = ((ParameterizedType) type.getType()).getActualTypeArguments();
 
-    // Set it only if the user didn't set it in beforeSubmit
+    // Set it only if the user didn't set it in initialize
     // The key and value type are in the 3rd and 4th type parameters
     if (!isProgrammaticConfig(conf, MRJobConfig.MAP_OUTPUT_KEY_CLASS)) {
       Class<?> cls = TypeToken.of(typeArgs[keyIdx]).getRawType();

@@ -144,8 +144,8 @@ public class AppWithPlugin extends AbstractApplication {
     }
 
     @Override
-    public void beforeSubmit(MapReduceContext context) throws Exception {
-      super.beforeSubmit(context);
+    public void initialize(MapReduceContext context) throws Exception {
+      super.initialize(context);
       Job job = context.getHadoopJob();
       job.setMapperClass(SimpleMapper.class);
       job.setNumReduceTasks(0);

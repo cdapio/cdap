@@ -17,6 +17,8 @@ package co.cask.cdap.internal.app.runtime.batch;
  */
 
 import co.cask.cdap.api.Admin;
+import co.cask.cdap.api.ProgramState;
+import co.cask.cdap.api.ProgramStatus;
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.data.DatasetInstantiationException;
@@ -250,6 +252,12 @@ public class MapReduceLifecycleContext<KEY, VALUE> implements MapReduceTaskConte
   @Override
   public void setReducerResources(Resources resources) {
     LOG.warn(UNSUPPORTED_OPERATION_MESSAGE);
+  }
+
+  @Override
+  public ProgramState getState() {
+    // In MapperWrapper and ReducerWrapper the status would be RUNNING
+    return new ProgramState(ProgramStatus.RUNNING, null);
   }
 
   @Override

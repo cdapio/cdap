@@ -177,7 +177,7 @@ public class AllProgramsApp extends AbstractApplication {
     }
 
     @Override
-    public void beforeSubmit(MapReduceContext context) throws Exception {
+    public void initialize(MapReduceContext context) throws Exception {
       Job job = context.getHadoopJob();
       job.setMapperClass(NoOpMapper.class);
       job.setReducerClass(NoOpReducer.class);
@@ -198,7 +198,7 @@ public class AllProgramsApp extends AbstractApplication {
     }
 
     @Override
-    public void beforeSubmit(MapReduceContext context) throws Exception {
+    public void initialize(MapReduceContext context) throws Exception {
       context.addInput(Input.ofDataset(DATASET_NAME2));
       context.addOutput(Output.ofDataset(DATASET_NAME));
     }

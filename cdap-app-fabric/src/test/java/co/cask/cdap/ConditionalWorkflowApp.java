@@ -117,7 +117,7 @@ public class ConditionalWorkflowApp extends AbstractApplication {
     }
 
     @Override
-    public void beforeSubmit(MapReduceContext context) throws Exception {
+    public void initialize(MapReduceContext context) throws Exception {
       Job job = context.getHadoopJob();
       job.setMapperClass(MyVerifier.class);
       String inputPath = context.getRuntimeArguments().get("inputPath");
@@ -158,7 +158,7 @@ public class ConditionalWorkflowApp extends AbstractApplication {
     }
 
     @Override
-    public void beforeSubmit(MapReduceContext context) throws Exception {
+    public void initialize(MapReduceContext context) throws Exception {
       Map<String, String> args = context.getRuntimeArguments();
       String inputPath = args.get("inputPath");
       String outputPath = args.get("outputPath");

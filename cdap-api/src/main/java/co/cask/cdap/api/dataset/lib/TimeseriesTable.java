@@ -261,7 +261,7 @@ public class TimeseriesTable extends TimeseriesDataset
     throw new UnsupportedOperationException("Cannot use TimeSeriesTable as input for Batch directly. " +
                                               "Use getInput(...) and call " +
                                               "MapReduceContext.setInput(tsTable, splits) in the " +
-                                              "beforeSubmit(MapReduceContext context) method of the MapReduce app.");
+                                              "initialize(MapReduceContext context) method of the MapReduce app.");
   }
 
   @Override

@@ -17,6 +17,7 @@
 package co.cask.cdap.partitioned;
 
 import co.cask.cdap.api.ProgramLifecycle;
+import co.cask.cdap.api.ProgramStatus;
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.TxRunnable;
 import co.cask.cdap.api.annotation.UseDataSet;
@@ -211,7 +212,8 @@ public class AppWithPartitionConsumers extends AbstractApplication {
     }
 
     @Override
-    public void beforeSubmit(MapReduceContext context) throws Exception {
+    public void initialize(MapReduceContext context) throws Exception {
+      super.initialize(context);
       batchPartitionCommitter =
         PartitionBatchInput.setInput(context, "lines", new KVTableStatePersistor("consumingState", "state.key"));
 
@@ -232,8 +234,9 @@ public class AppWithPartitionConsumers extends AbstractApplication {
     }
 
     @Override
-    public void onFinish(boolean succeeded, MapReduceContext context) throws Exception {
-      batchPartitionCommitter.onFinish(succeeded);
+    public void destroy() {
+      boolean isSuccessful = getContext().getState().getStatus() == ProgramStatus.COMPLETED;
+      batchPartitionCommitter.onFinish(isSuccessful);
     }
 
     /**

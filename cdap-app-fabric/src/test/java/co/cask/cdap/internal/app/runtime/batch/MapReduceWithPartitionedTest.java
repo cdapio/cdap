@@ -118,7 +118,7 @@ public class MapReduceWithPartitionedTest extends MapReduceRunnerTestBase {
     // now run the m/r again with a new partition time, say 5 minutes later
     TimePartitionedFileSetArguments.setOutputPartitionTime(outputArgs, time5);
     runtimeArguments.putAll(RuntimeArguments.addScope(Scope.DATASET, TIME_PARTITIONED, outputArgs));
-    // make the mapreduce add the partition in onFinish, to validate that this does not fail the job
+    // make the mapreduce add the partition in destroy, to validate that this does not fail the job
     runtimeArguments.put(AppWithTimePartitionedFileSet.COMPAT_ADD_PARTITION, "true");
     runProgram(app, AppWithTimePartitionedFileSet.PartitionWriter.class, new BasicArguments(runtimeArguments));
 
