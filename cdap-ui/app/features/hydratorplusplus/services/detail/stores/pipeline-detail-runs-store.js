@@ -15,11 +15,10 @@
  */
 
 angular.module(PKG.name + '.feature.hydratorplusplus')
-  .service('HydratorPlusPlusDetailRunsStore', function(HydratorPlusPlusDetailDispatcher, $state, myHelpers, GLOBALS, myPipelineCommonApi, HydratorService) {
+  .service('HydratorPlusPlusDetailRunsStore', function(HydratorPlusPlusDetailDispatcher, $state, myHelpers, GLOBALS, myPipelineCommonApi) {
 
     var dispatcher = HydratorPlusPlusDetailDispatcher.getDispatcher();
     this.changeListeners = [];
-    this.HydratorService = HydratorService;
     this.setDefaults = function(app) {
       this.state = {
         runs:{

@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.feature.hydratorplusplus')
-  .service('HydratorPlusPlusDetailMetricsActions', function(DetailRunsStore, HydratorPlusPlusDetailMetricsDispatcher, MyCDAPDataSource, $filter, MyMetricsQueryHelper, HydratorPlusPlusDetailNonRunsStore, $interval) {
+  .service('HydratorPlusPlusDetailMetricsActions', function(HydratorPlusPlusDetailMetricsDispatcher, MyCDAPDataSource, $filter, MyMetricsQueryHelper, HydratorPlusPlusDetailNonRunsStore, $interval) {
 
     var dispatcher = HydratorPlusPlusDetailMetricsDispatcher.getDispatcher();
     var metricsPoll;

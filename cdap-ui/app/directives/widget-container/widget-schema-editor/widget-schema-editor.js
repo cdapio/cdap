@@ -25,7 +25,7 @@ angular.module(PKG.name + '.commons')
         disabled: '='
       },
       templateUrl: 'widget-container/widget-schema-editor/widget-schema-editor.html',
-      controller: function($scope, myHelpers, EventPipe, IMPLICIT_SCHEMA, HydratorService, $timeout, myAlertOnValium) {
+      controller: function($scope, myHelpers, EventPipe, IMPLICIT_SCHEMA, HydratorPlusPlusHydratorService, $timeout, myAlertOnValium) {
         var modelCopy = angular.copy($scope.model);
         $scope.limitedToView = 15;
         var typeMap = 'map<string, string>';
@@ -279,7 +279,7 @@ angular.module(PKG.name + '.commons')
 
 
         function formatSchema() {
-          $scope.model = HydratorService.formatOutputSchema($scope.properties);
+          $scope.model = HydratorPlusPlusHydratorService.formatOutputSchema($scope.properties);
         }
 
         // watch for changes
