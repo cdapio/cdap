@@ -228,7 +228,7 @@ public class HiveExploreServiceStreamTest extends BaseHiveExploreServiceTest {
     try {
       Schema schema = Schema.recordOf(
         "purchase",
-        Schema.Field.of("userid", Schema.of(Schema.Type.STRING)),
+        Schema.Field.of("user", Schema.of(Schema.Type.STRING)),
         Schema.Field.of("num", Schema.of(Schema.Type.INT)),
         Schema.Field.of("price", Schema.of(Schema.Type.DOUBLE))
       );
@@ -252,12 +252,12 @@ public class HiveExploreServiceStreamTest extends BaseHiveExploreServiceTest {
 
       ExploreExecutionResult result = exploreClient.submit(
         NAMESPACE_ID,
-        "SELECT userid, sum(num) as total_num, sum(price * num) as total_price " +
-          "FROM " + getTableName(streamId) + " GROUP BY userid ORDER BY total_price DESC").get();
+        "SELECT `user`, sum(num) as total_num, sum(price * num) as total_price " +
+          "FROM " + getTableName(streamId) + " GROUP BY `user` ORDER BY total_price DESC").get();
 
       Assert.assertTrue(result.hasNext());
       Assert.assertEquals(
-        Lists.newArrayList(new ColumnDesc("userid", "STRING", 1, null),
+        Lists.newArrayList(new ColumnDesc("user", "STRING", 1, null),
                            new ColumnDesc("total_num", "BIGINT", 2, null),
                            new ColumnDesc("total_price", "DOUBLE", 3, null)),
         result.getResultSchema());

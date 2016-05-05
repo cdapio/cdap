@@ -192,7 +192,8 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     this.metastoreClientReferenceQueue = new ReferenceQueue<>();
     this.datasetFramework = datasetFramework;
     this.streamAdmin = streamAdmin;
-    this.exploreTableManager = new ExploreTableManager(this, datasetInstantiatorFactory, new ExploreTableNaming());
+    this.exploreTableManager = new ExploreTableManager(this, datasetInstantiatorFactory,
+                                                       new ExploreTableNaming(), hConf);
     this.datasetInstantiatorFactory = datasetInstantiatorFactory;
     this.tableNaming = tableNaming;
 

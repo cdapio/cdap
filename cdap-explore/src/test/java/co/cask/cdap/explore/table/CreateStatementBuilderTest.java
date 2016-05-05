@@ -53,7 +53,7 @@ public class CreateStatementBuilderTest {
       Constants.Explore.STREAM_NAME, "purchases",
       Constants.Explore.STREAM_NAMESPACE, "default");
 
-    String actual = new CreateStatementBuilder("purchases", "stream_purchases")
+    String actual = new CreateStatementBuilder("purchases", "stream_purchases", false)
       .setSchema(schema)
       .setLocation("hdfs://namenode/my/path")
       .setTableProperties(ImmutableMap.of("somekey", "someval"))
@@ -76,7 +76,7 @@ public class CreateStatementBuilderTest {
       .addIntField("f2")
       .build();
 
-    String actual = new CreateStatementBuilder("myfiles", "dataset_myfiles")
+    String actual = new CreateStatementBuilder("myfiles", "dataset_myfiles", false)
       .setSchema(hiveSchema)
       .setLocation("hdfs://namenode/my/path")
       .setTableComment("CDAP Dataset")
@@ -101,7 +101,7 @@ public class CreateStatementBuilderTest {
       .addIntField("f2")
       .build();
 
-    String actual = new CreateStatementBuilder("myfiles", "dataset_myfiles")
+    String actual = new CreateStatementBuilder("myfiles", "dataset_myfiles", false)
       .setSchema(hiveSchema)
       .setLocation("hdfs://namenode/my/path")
       .setTableComment("CDAP Dataset")
@@ -133,7 +133,7 @@ public class CreateStatementBuilderTest {
       .addIntField("f2")
       .build();
 
-    String actual = new CreateStatementBuilder("myfiles", "dataset_myfiles")
+    String actual = new CreateStatementBuilder("myfiles", "dataset_myfiles", false)
       .setSchema(schema)
       .setTableProperties(ImmutableMap.of("avro.schema.literal", schema.toString()))
       .setLocation("hdfs://namenode/my/path")
