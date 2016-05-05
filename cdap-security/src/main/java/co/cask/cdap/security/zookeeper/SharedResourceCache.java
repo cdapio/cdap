@@ -19,6 +19,7 @@ package co.cask.cdap.security.zookeeper;
 import co.cask.cdap.common.io.Codec;
 import co.cask.cdap.common.zookeeper.ZKExtOperations;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Suppliers;
 import com.google.common.base.Throwables;
 import com.google.common.cache.AbstractLoadingCache;
 import com.google.common.collect.Maps;
@@ -165,16 +166,15 @@ public class SharedResourceCache<T> extends AbstractLoadingCache<String, T> {
   public void put(final String name, final T instance) {
     final String znode = joinZNode(parentZnode, name);
     try {
-      final byte[] encoded = codec.encode(instance);
       LOG.debug("Setting value for node {}", znode);
-      ListenableFuture<String> future = ZKExtOperations.createOrSet(zookeeper, znode, encoded, znode,
-                                                                    MAX_RETRIES, znodeACL);
+      ListenableFuture<T> future = ZKExtOperations.createOrSet(zookeeper, znode, Suppliers.ofInstance(instance),
+                                                               codec, MAX_RETRIES, znodeACL);
 
-      Futures.addCallback(future, new FutureCallback<String>() {
+      Futures.addCallback(future, new FutureCallback<T>() {
         @Override
-        public void onSuccess(String result) {
+        public void onSuccess(T result) {
           LOG.debug("Created or set node {}", znode);
-          resources.put(name, instance);
+          resources.put(name, result);
         }
 
         @Override
@@ -184,7 +184,10 @@ public class SharedResourceCache<T> extends AbstractLoadingCache<String, T> {
         }
       });
 
-    } catch (IOException ioe) {
+      // Block until it is done
+      future.get();
+
+    } catch (Exception ioe) {
       throw Throwables.propagate(ioe);
     }
   }
