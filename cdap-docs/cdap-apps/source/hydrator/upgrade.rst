@@ -25,9 +25,11 @@ run the command:
   
     |$| java -cp /opt/cdap/master/libexec/cdap-etl-tools-|version|.jar co.cask.cdap.etl.tool.UpgradeTool -u \http://<host>:<port> -e /tmp/failedUpgrades upgrade
 
-The first argument is the host and port for the CDAP master. The second argument is a directory to write the configurations
-of any pipelines that could not be upgraded. A pipeline may fail to upgrade if the new version of a plugin used in the
-pipeline is not backwards compatible. For example, this may happen if the plugin added a new required property.
+The first argument is the host and port for the :ref:`CDAP router
+<appendix-cdap-default-router>`. The second argument is a directory to write the
+configurations of any pipelines that could not be upgraded. A pipeline may fail to upgrade
+if the new version of a plugin used in the pipeline is not backwards compatible. For
+example, this may happen if the plugin added a new required property.
 
 You can also upgrade just the ETL applications within a specific namespace:
 

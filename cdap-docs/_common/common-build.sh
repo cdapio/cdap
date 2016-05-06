@@ -324,7 +324,9 @@ function set_version() {
     GIT_BRANCH_TYPE=${GIT_BRANCH}
   elif [ "${full_branch:0:4}" == "docs" ]; then
     GIT_BRANCH="${full_branch}"
-    if [ "x${GIT_BRANCH_TYPE}" == "x" ]; then
+    if [ "${GIT_BRANCH_PARENT:0:7}" == "develop" ]; then
+      GIT_BRANCH_TYPE="develop-feature"
+    elif [ "x${GIT_BRANCH_TYPE}" == "x" ]; then
       GIT_BRANCH_TYPE="release-feature"
     fi
   elif [ "${GIT_BRANCH:0:7}" == "release" ]; then
