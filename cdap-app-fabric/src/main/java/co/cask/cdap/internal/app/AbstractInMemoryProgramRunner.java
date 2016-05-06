@@ -125,6 +125,7 @@ public abstract class AbstractInMemoryProgramRunner implements ProgramRunner {
     private final ProgramOptions options;
     private final Lock lock = new ReentrantLock();
     private final AtomicLong liveComponents;
+    private volatile Throwable errorCause;
 
     InMemoryProgramController(Table<String, Integer, ProgramController> components,
                               Program program, ProgramOptions options, RunId runId) {
@@ -144,12 +145,31 @@ public abstract class AbstractInMemoryProgramRunner implements ProgramRunner {
         controller.addListener(new AbstractListener() {
           @Override
           public void completed() {
-            if (liveComponents.decrementAndGet()  == 0) {
-              complete();
+            if (liveComponents.decrementAndGet() == 0) {
+              // If at least one of the components failed with an error, then set the state to ERROR
+              if (errorCause != null) {
+                setError(errorCause);
+              } else {
+                complete();
+              }
+            }
+          }
+
+          @Override
+          public void error(Throwable cause) {
+            // Make a note that a component failed with an error
+            errorCause = cause;
+            // If the live component count goes to zero, then set the state of the controller to ERROR
+            if (liveComponents.decrementAndGet() == 0) {
+              setError(cause);
             }
           }
         }, Threads.SAME_THREAD_EXECUTOR);
       }
+    }
+
+    private void setError(Throwable cause) {
+      error(cause);
     }
 
     @Override

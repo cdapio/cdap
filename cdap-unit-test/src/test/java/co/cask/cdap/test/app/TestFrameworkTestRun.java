@@ -193,6 +193,69 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
   }
 
   @Test
+  public void testWorkerThrowingException() throws Exception {
+    ApplicationManager appManager = deployApplication(AppWithExceptionThrowingWorker.class);
+    final WorkerManager workerManager = appManager.getWorkerManager(AppWithExceptionThrowingWorker.WORKER_NAME);
+
+    // Only one instance of the worker and it throws an exception. ProgramRunStatus should go to FAILED state.
+    testExceptionWorker(workerManager);
+    List<RunRecord> runRecords = workerManager.getHistory(ProgramRunStatus.FAILED);
+    Tasks.waitFor(3, new Callable<Integer>() {
+      @Override
+      public Integer call() throws Exception {
+        return workerManager.getHistory(ProgramRunStatus.FAILED).size();
+      }
+    }, 5, TimeUnit.SECONDS, 10, TimeUnit.MILLISECONDS);
+    Assert.assertEquals(3, runRecords.size());
+
+    // Test a case where worker completes without an exception.
+    workerManager.start();
+    workerManager.waitForFinish(3, TimeUnit.SECONDS);
+    Tasks.waitFor(1, new Callable<Integer>() {
+      @Override
+      public Integer call() throws Exception {
+        return workerManager.getHistory(ProgramRunStatus.COMPLETED).size();
+      }
+    }, 5, TimeUnit.SECONDS, 10, TimeUnit.MILLISECONDS);
+
+    // Few of the instances of the worker will throw an exception, while others complete normally. Still the
+    // ProgramRunStatus should go to FAILED state.
+    workerManager.setInstances(9);
+    testExceptionWorker(workerManager);
+    Tasks.waitFor(6, new Callable<Integer>() {
+      @Override
+      public Integer call() throws Exception {
+        return workerManager.getHistory(ProgramRunStatus.FAILED).size();
+      }
+    }, 5, TimeUnit.SECONDS, 10, TimeUnit.MILLISECONDS);
+    Tasks.waitFor(7, new Callable<Integer>() {
+      @Override
+      public Integer call() throws Exception {
+        return workerManager.getHistory().size();
+      }
+    }, 5, TimeUnit.SECONDS, 10, TimeUnit.MILLISECONDS);
+
+    // Test a case where worker completes without an exception.
+    workerManager.start();
+    workerManager.waitForFinish(3, TimeUnit.SECONDS);
+    Tasks.waitFor(2, new Callable<Integer>() {
+      @Override
+      public Integer call() throws Exception {
+        return workerManager.getHistory(ProgramRunStatus.COMPLETED).size();
+      }
+    }, 5, TimeUnit.SECONDS, 10, TimeUnit.MILLISECONDS);
+  }
+
+  private void testExceptionWorker(WorkerManager workerManager) throws Exception {
+    workerManager.start(ImmutableMap.of(AppWithExceptionThrowingWorker.INITIALIZE, ""));
+    workerManager.waitForFinish(3, TimeUnit.SECONDS);
+    workerManager.start(ImmutableMap.of(AppWithExceptionThrowingWorker.RUN, ""));
+    workerManager.waitForFinish(3, TimeUnit.SECONDS);
+    workerManager.start(ImmutableMap.of(AppWithExceptionThrowingWorker.DESTROY, ""));
+    workerManager.waitForFinish(3, TimeUnit.SECONDS);
+  }
+
+  @Test
   public void testServiceManager() throws Exception {
     ApplicationManager applicationManager = deployApplication(FilterApp.class);
     final ServiceManager countService = applicationManager.getServiceManager("CountService");
