@@ -20,6 +20,7 @@ import co.cask.cdap.common.zookeeper.ZKExtOperations;
 import com.google.common.base.Function;
 import com.google.common.base.Functions;
 import com.google.common.base.Objects;
+import com.google.common.base.Suppliers;
 import com.google.common.base.Throwables;
 import com.google.common.collect.LinkedHashMultimap;
 import com.google.common.collect.Maps;
@@ -92,15 +93,10 @@ public final class ResourceCoordinatorClient extends AbstractService {
    *         {@link ListenableFuture#cancel(boolean)} has no effect.
    */
   public ListenableFuture<ResourceRequirement> submitRequirement(ResourceRequirement requirement) {
-    try {
-      String zkPath = CoordinationConstants.REQUIREMENTS_PATH + "/" + requirement.getName();
-      byte[] data = CoordinationConstants.RESOURCE_REQUIREMENT_CODEC.encode(requirement);
-
-      return ZKExtOperations.createOrSet(zkClient, zkPath, data,
-                                         requirement, CoordinationConstants.MAX_ZK_FAILURE_RETRY);
-    } catch (Exception e) {
-      return Futures.immediateFailedFuture(e);
-    }
+    String zkPath = CoordinationConstants.REQUIREMENTS_PATH + "/" + requirement.getName();
+    return ZKExtOperations.createOrSet(zkClient, zkPath, Suppliers.ofInstance(requirement),
+                                       CoordinationConstants.RESOURCE_REQUIREMENT_CODEC,
+                                       CoordinationConstants.MAX_ZK_FAILURE_RETRY);
   }
 
   /**

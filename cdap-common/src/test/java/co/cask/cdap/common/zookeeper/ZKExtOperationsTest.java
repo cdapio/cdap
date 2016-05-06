@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,6 +18,7 @@ package co.cask.cdap.common.zookeeper;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.common.io.Codec;
 import com.google.common.base.Function;
+import com.google.common.base.Suppliers;
 import com.google.common.base.Throwables;
 import org.apache.twill.internal.zookeeper.InMemoryZKServer;
 import org.apache.twill.zookeeper.ZKClientService;
@@ -138,6 +139,47 @@ public class ZKExtOperationsTest {
     zkClient2.stopAndWait();
   }
 
+  @Test
+  public void testCreateOrSet() throws Exception {
+    String path = "/parent/testCreateOrSet";
+    ZKClientService zkClient = ZKClientService.Builder.of(zkServer.getConnectionStr()).build();
+    zkClient.startAndWait();
+
+    // Create with "1"
+    Assert.assertEquals(1, ZKExtOperations.createOrSet(zkClient, path,
+                                                       Suppliers.ofInstance(1), INT_CODEC, 0).get().intValue());
+    // Should get "1" back
+    Assert.assertEquals(1, INT_CODEC.decode(zkClient.getData(path).get().getData()).intValue());
+
+    // Set with "2"
+    Assert.assertEquals(2, ZKExtOperations.createOrSet(zkClient, path,
+                                                       Suppliers.ofInstance(2), INT_CODEC, 0).get().intValue());
+    // Should get "2" back
+    Assert.assertEquals(2, INT_CODEC.decode(zkClient.getData(path).get().getData()).intValue());
+
+    zkClient.stopAndWait();
+  }
+
+  @Test
+  public void testSetOrCreate() throws Exception {
+    String path = "/parent/testSetOrCreate";
+    ZKClientService zkClient = ZKClientService.Builder.of(zkServer.getConnectionStr()).build();
+    zkClient.startAndWait();
+
+    // Create with "1"
+    Assert.assertEquals(1, ZKExtOperations.setOrCreate(zkClient, path,
+                                                       Suppliers.ofInstance(1), INT_CODEC, 0).get().intValue());
+    // Should get "1" back
+    Assert.assertEquals(1, INT_CODEC.decode(zkClient.getData(path).get().getData()).intValue());
+
+    // Set with "2"
+    Assert.assertEquals(2, ZKExtOperations.setOrCreate(zkClient, path,
+                                                       Suppliers.ofInstance(2), INT_CODEC, 0).get().intValue());
+    // Should get "2" back
+    Assert.assertEquals(2, INT_CODEC.decode(zkClient.getData(path).get().getData()).intValue());
+
+    zkClient.stopAndWait();
+  }
 
   @AfterClass
   public static void finish() {

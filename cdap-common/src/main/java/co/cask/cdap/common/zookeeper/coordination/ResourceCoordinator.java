@@ -17,6 +17,9 @@ package co.cask.cdap.common.zookeeper.coordination;
 
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.common.zookeeper.ZKExtOperations;
+import com.google.common.base.Functions;
+import com.google.common.base.Supplier;
+import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSortedSet;
 import com.google.common.collect.Maps;
@@ -41,8 +44,10 @@ import org.apache.zookeeper.data.Stat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -85,9 +90,11 @@ public final class ResourceCoordinator extends AbstractService {
     this.zkClient = zkClient;
     this.discoveryService = discoveryService;
     this.assignmentStrategy = assignmentStrategy;
-    this.requirements = Maps.newHashMap();
-    this.assignments = Maps.newHashMap();
-    this.serviceDiscovered = Maps.newHashMap();
+    this.requirements = new HashMap<>();
+    // The assignments map will be accessed from both the coordinator thread and the zk event thread
+    // in order to make sure the latest assignment is being used to store in the ZK node.
+    this.assignments = new ConcurrentHashMap<>();
+    this.serviceDiscovered = new HashMap<>();
     this.discoverableListener = new DiscoverableChangeListener();
   }
 
@@ -364,14 +371,18 @@ public final class ResourceCoordinator extends AbstractService {
    * @param assignment The assignment to be persisted.
    */
   private void saveAssignment(ResourceAssignment assignment) {
-    assignments.put(assignment.getName(), assignment);
+    String assignmentName = assignment.getName();
+    assignments.put(assignmentName, assignment);
 
     try {
       final byte[] data = CoordinationConstants.RESOURCE_ASSIGNMENT_CODEC.encode(assignment);
-      String zkPath = CoordinationConstants.ASSIGNMENTS_PATH + "/" + assignment.getName();
+      String zkPath = CoordinationConstants.ASSIGNMENTS_PATH + "/" + assignmentName;
 
+      Supplier<ResourceAssignment> dataSupplier = Suppliers.compose(Functions.forMap(assignments),
+                                                                    Suppliers.ofInstance(assignmentName));
       Futures.addCallback(
-        ZKExtOperations.setOrCreate(zkClient, zkPath, data, assignment, CoordinationConstants.MAX_ZK_FAILURE_RETRY),
+        ZKExtOperations.setOrCreate(zkClient, zkPath, dataSupplier, CoordinationConstants.RESOURCE_ASSIGNMENT_CODEC,
+                                    CoordinationConstants.MAX_ZK_FAILURE_RETRY),
         new FutureCallback<ResourceAssignment>() {
 
           @Override
@@ -389,7 +400,7 @@ public final class ResourceCoordinator extends AbstractService {
       );
     } catch (Exception e) {
       // Something very wrong
-      LOG.error("Failed to save assignment: {}", assignment.getName(), e);
+      LOG.error("Failed to save assignment: {}", assignmentName, e);
     }
   }
 
