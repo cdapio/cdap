@@ -14,10 +14,12 @@
  * the License.
  */
 
-function NavbarController ($scope, $state, myNamespace, EventPipe, MYAUTH_EVENT, myAuth, MY_CONFIG) {
+function NavbarController ($scope, $state, myNamespace, EventPipe, MYAUTH_EVENT, myAuth, MY_CONFIG, $cookies) {
   'ngInject';
 
   let vm = this;
+
+  this.$cookies = $cookies;
 
   function findActiveProduct() {
     if ($state.includes('hydratorplusplus.**')) {
@@ -65,6 +67,9 @@ function NavbarController ($scope, $state, myNamespace, EventPipe, MYAUTH_EVENT,
   vm.logout = myAuth.logout.bind(myAuth);
   vm.changeNamespace = (ns) => {
     if ($state.params.namespace === ns.name) { return; }
+
+    $cookies.put('CDAP_Namespace', ns.name);
+
     if ($state.includes('hydratorplusplus.**')) {
       $state.go('hydratorplusplus.list', { namespace: ns.name });
     } else if ($state.includes('tracker.**') || $state.is('tracker-enable')) {
@@ -75,6 +80,11 @@ function NavbarController ($scope, $state, myNamespace, EventPipe, MYAUTH_EVENT,
       $state.go('overview', { namespace: ns.name });
     }
   };
+
+
+  $scope.$on('$destroy', () => {
+    $cookies.remove('CDAP_Namespace');
+  });
 
 }
 
