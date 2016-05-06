@@ -299,12 +299,13 @@ test the creation of multiple applications from the same artifact, as well as th
 
 To add an artifact containing an application class::
 
-  // add the artifact for etl batch app
-  addAppArtifact(Id.Artifact.from(Id.Namespace.DEFAULT, "etlbatch", "3.2.0"), ETLBatchApplication.class,
+  // Add the artifact for ETL batch app
+  addAppArtifact(new NamespacedArtifactId(NamespaceId.DEFAULT.getNamespace(), "etlbatch", "3.5.0"), 
+    ETLBatchApplication.class,
     BatchSource.class.getPackage().getName(),
     PipelineConfigurable.class.getPackage().getName(),
     "org.apache.avro.mapred", "org.apache.avro", "org.apache.avro.generic");
-
+  
 The first argument is the id of the artifact; the second is the application class; and the remainder
 of the arguments are packages
 that should be included in the ``Export-Packages`` manifest attribute bundled in the JAR. The framework will
@@ -313,17 +314,17 @@ mimic what happens when you actually build your application JAR.
 
 An application can then be deployed using that artifact::
 
-  // create application create request
+  // Create application create request
   ETLBatchConfig etlConfig = new ETLBatchConfig("* * * * *", source, sink, transformList);
-  AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(new ArtifactSummary("etlbatch", "3.2.0"), etlConfig);
+  AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(new ArtifactSummary("etlbatch", "3.5.0"), etlConfig);
   Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "KVToKV");
 
-  // deploy the application
+  // Deploy the application
   ApplicationManager appManager = deployApplication(appId, appRequest);
 
 Plugins extending the artifact can also be added::
 
-  // add artifact for transforms
+  // Add artifact for transforms
   addPluginArtifact(Id.Artifact.from(Id.Namespace.DEFAULT, "transforms", "1.0.0"), APP_ARTIFACT_ID,
     ProjectionTransform.class, ScriptFilterTransform.class, ValidatorTransform.class, CoreValidator.class,
     StructuredRecordToGenericRecordTransform.class);
