@@ -25,6 +25,7 @@ import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.api.dataset.lib.FileSetArguments;
 import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
+import co.cask.cdap.api.dataset.lib.ObjectMappedTable;
 import co.cask.cdap.api.dataset.lib.ObjectStore;
 import co.cask.cdap.api.dataset.lib.cube.AggregationFunction;
 import co.cask.cdap.api.metrics.MetricDataQuery;
@@ -35,7 +36,9 @@ import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.internal.DefaultId;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.spark.app.CharCountProgram;
+import co.cask.cdap.spark.app.DatasetSQLSpark;
 import co.cask.cdap.spark.app.ExplicitTransactionSpark;
+import co.cask.cdap.spark.app.Person;
 import co.cask.cdap.spark.app.ScalaCharCountProgram;
 import co.cask.cdap.spark.app.ScalaSparkLogParser;
 import co.cask.cdap.spark.app.ScalaStreamFormatSpecSpark;
@@ -49,6 +52,7 @@ import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.DataSetManager;
 import co.cask.cdap.test.SparkManager;
 import co.cask.cdap.test.StreamManager;
+import co.cask.cdap.test.TestConfiguration;
 import co.cask.cdap.test.WorkflowManager;
 import co.cask.cdap.test.base.TestFrameworkTestBase;
 import com.google.common.base.Charsets;
@@ -82,9 +86,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 /**
  * Unit-tests for testing Spark program.
@@ -94,10 +96,43 @@ public class SparkTestRun extends TestFrameworkTestBase {
   @ClassRule
   public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
 
+  @ClassRule
+  public static final TestConfiguration CONFIG = new TestConfiguration("explore.enabled", false);
+
   private static final Logger LOG = LoggerFactory.getLogger(SparkTestRun.class);
 
   private static final String TEST_STRING_1 = "persisted data";
   private static final String TEST_STRING_2 = "distributed systems";
+
+  @Test
+  public void testDatasetSQL() throws Exception {
+    ApplicationManager appManager = deployApplication(TestSparkApp.class);
+
+    DataSetManager<ObjectMappedTable<Person>> tableManager = getDataset("PersonTable");
+
+    ObjectMappedTable<Person> table = tableManager.get();
+    table.write("1", new Person("1", "Bob", 10));
+    table.write("2", new Person("2", "Bill", 20));
+    table.write("3", new Person("3", "Berry", 30));
+    tableManager.flush();
+
+    SparkManager sparkManager = appManager.getSparkManager(DatasetSQLSpark.class.getSimpleName()).start();
+    sparkManager.waitForFinish(2, TimeUnit.MINUTES);
+
+    // The program executes "SELECT * FROM Person WHERE age > 10", hence expected two new entries for Bill and Berry.
+    tableManager.flush();
+
+    Person person = table.read("new:2");
+    Assert.assertEquals("Bill", person.name());
+    Assert.assertEquals(20, person.age());
+
+    person = table.read("new:3");
+    Assert.assertEquals("Berry", person.name());
+    Assert.assertEquals(30, person.age());
+
+    // Shouldn't have new Bob
+    Assert.assertNull(table.read("new:1"));
+  }
 
   @Test
   public void testClassicSpark() throws Exception {
