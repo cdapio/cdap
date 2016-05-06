@@ -315,7 +315,7 @@ public class MapReduceProgramRunnerTest extends MapReduceRunnerTestBase {
         }
       });
 
-    runProgram(app, AppWithMapReduceUsingObjectStore.ComputeCounts.class, false);
+    runProgram(app, AppWithMapReduceUsingObjectStore.ComputeCounts.class, false, true);
 
     final KeyValueTable output = datasetCache.getDataset("count");
     //read output and verify result
@@ -354,7 +354,7 @@ public class MapReduceProgramRunnerTest extends MapReduceRunnerTestBase {
         }
       });
 
-    runProgram(app, AppWithMapReduce.ClassicWordCount.class, false);
+    runProgram(app, AppWithMapReduce.ClassicWordCount.class, false, true);
 
     File[] outputFiles = outputDir.listFiles(new FilenameFilter() {
       @Override
@@ -402,7 +402,7 @@ public class MapReduceProgramRunnerTest extends MapReduceRunnerTestBase {
 
     // 2) run job
     final long start = System.currentTimeMillis();
-    runProgram(app, AppWithMapReduce.AggregateTimeseriesByTag.class, frequentFlushing);
+    runProgram(app, AppWithMapReduce.AggregateTimeseriesByTag.class, frequentFlushing, true);
     final long stop = System.currentTimeMillis();
 
     // 3) verify results
@@ -526,7 +526,7 @@ public class MapReduceProgramRunnerTest extends MapReduceRunnerTestBase {
 
     // 2) run job
     final long start = System.currentTimeMillis();
-    runProgram(app, AppWithMapReduce.AggregateTimeseriesByTag.class, frequentFlushing);
+    runProgram(app, AppWithMapReduce.AggregateTimeseriesByTag.class, frequentFlushing, false);
     final long stop = System.currentTimeMillis();
 
     // 3) verify results
@@ -581,7 +581,8 @@ public class MapReduceProgramRunnerTest extends MapReduceRunnerTestBase {
     table.write(new TimeseriesTable.Entry(metric2, Bytes.toBytes(4L), 3, tag1, tag3));
   }
 
-  private void runProgram(ApplicationWithPrograms app, Class<?> programClass, boolean frequentFlushing)
+  private void runProgram(ApplicationWithPrograms app, Class<?> programClass, boolean frequentFlushing,
+                          boolean expectedStatus)
     throws Exception {
     HashMap<String, String> userArgs = Maps.newHashMap();
     userArgs.put("metric", "metric");
@@ -591,7 +592,7 @@ public class MapReduceProgramRunnerTest extends MapReduceRunnerTestBase {
     if (frequentFlushing) {
       userArgs.put("frequentFlushing", "true");
     }
-    runProgram(app, programClass, new BasicArguments(userArgs));
+    Assert.assertEquals(expectedStatus, runProgram(app, programClass, new BasicArguments(userArgs)));
   }
 
   private String createInput() throws IOException {
