@@ -772,6 +772,10 @@ public class ProgramLifecycleService extends AbstractIdleService {
               }
             }
             break;
+          case CUSTOM_ACTION:
+          case WEBAPP:
+            // no-op
+            break;
           default:
             LOG.debug("Unknown program type: " + programType.name());
             break;
