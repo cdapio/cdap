@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -35,7 +35,7 @@ public class FakeFlow extends AbstractFlow {
   public static final String FLOWLET_NAME = "fakeFlowlet";
 
   @Override
-  protected void configureFlow() {
+  protected void configure() {
     setName(NAME);
     setDescription("Does nothing");
     addFlowlet(FLOWLET_NAME, new FakeFlowlet());

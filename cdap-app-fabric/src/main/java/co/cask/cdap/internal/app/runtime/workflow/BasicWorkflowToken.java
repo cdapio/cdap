@@ -129,11 +129,6 @@ public class BasicWorkflowToken implements WorkflowToken, Serializable {
         }
       }
     }
-
-    if (other.getMapReduceCounters() != null) {
-      // Overwriting is the intended behavior to keep it backward compatible
-      this.mapReduceCounters = copyHadoopCounters(other.getMapReduceCounters());
-    }
   }
 
   @Override
@@ -259,11 +254,6 @@ public class BasicWorkflowToken implements WorkflowToken, Serializable {
   @Override
   public synchronized Map<String, List<NodeValue>> getAll(Scope scope) {
     return ImmutableMap.copyOf(tokenValueMap.get(scope));
-  }
-
-  @Override
-  public synchronized Map<String, Map<String, Long>> getMapReduceCounters() {
-    return mapReduceCounters;
   }
 
   /**

@@ -19,8 +19,8 @@ package co.cask.cdap.etl.batch.mapreduce;
 import co.cask.cdap.api.data.batch.Input;
 import co.cask.cdap.api.data.batch.InputFormatProvider;
 import co.cask.cdap.api.data.batch.Split;
+import co.cask.cdap.api.data.format.FormatSpecification;
 import co.cask.cdap.api.data.stream.StreamBatchReadable;
-import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.etl.api.LookupProvider;
@@ -47,7 +47,13 @@ public class MapReduceSourceContext extends MapReduceBatchContext implements Bat
     LogContext.runWithoutLoggingUnchecked(new Callable<Void>() {
       @Override
       public Void call() throws Exception {
-        mrContext.setInput(stream);
+        FormatSpecification formatSpec = stream.getFormatSpecification();
+        if (formatSpec == null) {
+          mrContext.addInput(Input.ofStream(stream.getStreamName(), stream.getStartTime(), stream.getEndTime()));
+        } else {
+          mrContext.addInput(Input.ofStream(stream.getStreamName(), stream.getStartTime(),
+                                            stream.getEndTime(), formatSpec));
+        }
         return null;
       }
     });
@@ -58,7 +64,7 @@ public class MapReduceSourceContext extends MapReduceBatchContext implements Bat
     LogContext.runWithoutLoggingUnchecked(new Callable<Void>() {
       @Override
       public Void call() throws Exception {
-        mrContext.setInput(datasetName);
+        mrContext.addInput(Input.ofDataset(datasetName));
         return null;
       }
     });
@@ -69,7 +75,7 @@ public class MapReduceSourceContext extends MapReduceBatchContext implements Bat
     LogContext.runWithoutLoggingUnchecked(new Callable<Void>() {
       @Override
       public Void call() throws Exception {
-        mrContext.setInput(datasetName, arguments);
+        mrContext.addInput(Input.ofDataset(datasetName, arguments));
         return null;
       }
     });
@@ -80,7 +86,7 @@ public class MapReduceSourceContext extends MapReduceBatchContext implements Bat
     LogContext.runWithoutLoggingUnchecked(new Callable<Void>() {
       @Override
       public Void call() throws Exception {
-        mrContext.setInput(datasetName, splits);
+        mrContext.addInput(Input.ofDataset(datasetName, splits));
         return null;
       }
     });
@@ -91,7 +97,7 @@ public class MapReduceSourceContext extends MapReduceBatchContext implements Bat
     LogContext.runWithoutLoggingUnchecked(new Callable<Void>() {
       @Override
       public Void call() throws Exception {
-        mrContext.setInput(datasetName, arguments, splits);
+        mrContext.addInput(Input.ofDataset(datasetName, arguments, splits));
         return null;
       }
     });
@@ -102,7 +108,7 @@ public class MapReduceSourceContext extends MapReduceBatchContext implements Bat
     LogContext.runWithoutLoggingUnchecked(new Callable<Void>() {
       @Override
       public Void call() throws Exception {
-        mrContext.setInput(inputFormatProvider);
+        mrContext.addInput(Input.of(inputFormatProvider.getInputFormatClassName(), inputFormatProvider));
         return null;
       }
     });
@@ -115,17 +121,6 @@ public class MapReduceSourceContext extends MapReduceBatchContext implements Bat
       public Void call() throws Exception {
         Input trackableInput =  ExternalDatasets.makeTrackable(mrContext.getAdmin(), input);
         mrContext.addInput(trackableInput);
-        return null;
-      }
-    });
-  }
-
-  @Override
-  public void setInput(final String datasetName, final Dataset dataset) {
-    LogContext.runWithoutLoggingUnchecked(new Callable<Void>() {
-      @Override
-      public Void call() throws Exception {
-        mrContext.setInput(datasetName, dataset);
         return null;
       }
     });

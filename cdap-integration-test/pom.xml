@@ -20,7 +20,7 @@
   <parent>
     <artifactId>cdap</artifactId>
     <groupId>co.cask.cdap</groupId>
-    <version>3.4.0</version>
+    <version>3.5.0-SNAPSHOT</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
@@ -79,6 +79,11 @@
       <artifactId>cdap-app-fabric</artifactId>
       <version>${project.version}</version>
       <type>test-jar</type>
+    </dependency>
+    <dependency>
+      <groupId>co.cask.cdap</groupId>
+      <artifactId>cdap-spark-core</artifactId>
+      <version>${project.version}</version>
     </dependency>
 
     <!-- In compile scope because this module should only be used in test scope -->

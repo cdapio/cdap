@@ -24,7 +24,7 @@
 @thumb-width: 15px;
 @thumb-shadow-size: 1px;
 @thumb-shadow-blur: 3px;
-@thumb-shadow-color: #111;
+@thumb-shadow-color: #111111;
 @thumb-border-width: 0;
 @thumb-border-color: white;
 
@@ -32,7 +32,7 @@
 @track-height: 5px;
 @track-shadow-size: 0;
 @track-shadow-blur: 0;
-@track-shadow-color: #222;
+@track-shadow-color: #222222;
 @track-border-width: 0;
 @track-border-color: black;
 
@@ -46,9 +46,10 @@ my-datetime-picker {
 
     .time-picker {
       padding: 15px;
-      background-color: #eee;
+      background-color: #eeeeee;
 
-      .time-text, .time-slider {
+      .time-text,
+      .time-slider {
         width: 49%;
         display: inline-block;
         vertical-align: middle;
@@ -84,7 +85,9 @@ my-datetime-picker {
 
     .minutes-slider { margin-top: 15px; }
 
-    .uib-yearpicker, .uib-monthpicker, .uib-daypicker {
+    .uib-yearpicker,
+    .uib-monthpicker,
+    .uib-daypicker {
       width: 100%;
       .btn-default {
         border: 0;
@@ -107,13 +110,12 @@ my-datetime-picker {
     }
   }
 
-
   /**
    * Slider Styling
    * Source: https://css-tricks.com/styling-cross-browser-compatible-range-inputs-css/
    **/
   .shadow(@shadow-size,@shadow-blur,@shadow-color) {
-    box-shadow: @shadow-size @shadow-size @shadow-blur @shadow-color, 0px 0px @shadow-size lighten(@shadow-color,5%);
+    box-shadow: @shadow-size @shadow-size @shadow-blur @shadow-color, 0 0 @shadow-size lighten(@shadow-color, 5%);
   }
 
   .track() {
@@ -165,10 +167,10 @@ my-datetime-picker {
       .shadow(@track-shadow-size,@track-shadow-blur,@track-shadow-color);
       background: @track-color;
       border-radius: @track-radius;
-       border: @track-border-width solid @track-border-color;
+      border: @track-border-width solid @track-border-color;
     }
     &::-moz-range-thumb {
-       .thumb();
+      .thumb();
     }
 
     &::-ms-track {

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,6 +18,8 @@ package co.cask.cdap.internal.app.runtime.batch;
 
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.api.data.batch.Input;
+import co.cask.cdap.api.data.batch.Output;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.lib.ObjectStores;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
@@ -51,17 +53,14 @@ public class AppWithMapReduceUsingObjectStore extends AbstractApplication {
    *
    */
   public static final class ComputeCounts extends AbstractMapReduce {
-    @Override
-    public void configure() {
-      setInputDataset("keys");
-      setOutputDataset("count");
-    }
 
     @Override
     public void beforeSubmit(MapReduceContext context) throws Exception {
       Job job = context.getHadoopJob();
       job.setMapperClass(ObjectStoreMapper.class);
       job.setReducerClass(KeyValueStoreReducer.class);
+      context.addInput(Input.ofDataset("keys"));
+      context.addOutput(Output.ofDataset("count"));
     }
 
     @Override

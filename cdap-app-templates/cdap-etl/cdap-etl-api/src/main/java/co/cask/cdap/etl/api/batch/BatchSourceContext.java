@@ -17,12 +17,10 @@
 package co.cask.cdap.etl.api.batch;
 
 import co.cask.cdap.api.annotation.Beta;
-import co.cask.cdap.api.data.batch.BatchReadable;
 import co.cask.cdap.api.data.batch.Input;
 import co.cask.cdap.api.data.batch.InputFormatProvider;
 import co.cask.cdap.api.data.batch.Split;
 import co.cask.cdap.api.data.stream.StreamBatchReadable;
-import co.cask.cdap.api.dataset.Dataset;
 
 import java.util.List;
 import java.util.Map;
@@ -108,23 +106,4 @@ public interface BatchSourceContext extends BatchContext {
    * @param input the input to be used
    */
   void setInput(Input input);
-
-  /**
-   * Overrides the input configuration of this MapReduce job to write to the specified dataset instance.
-   *
-   * <p>
-   * Currently, the dataset passed in must either be an {@link InputFormatProvider} or a {@link BatchReadable}.
-   * You may want to use this method instead of {@link #setInput(String, List)} if your input dataset uses runtime
-   * arguments set in your own program logic. Input splits are determined either from the dataset instance if it is
-   * a {@link BatchReadable} or from the corresponding MapReduce InputFormat if the dataset instance is a
-   * {@link InputFormatProvider}.
-   * </p>
-   *
-   * @param datasetName the name of the input dataset
-   * @param dataset the input dataset
-   * @deprecated Deprecated since 3.3.0.
-   *             Use {@link #setInput(String, Map)} or {@link #setInput(InputFormatProvider)} instead
-   */
-  @Deprecated
-  void setInput(String datasetName, Dataset dataset);
 }

@@ -30,18 +30,7 @@ public class AbstractFlow extends AbstractProgramDatasetConfigurable<FlowConfigu
   @Override
   public final void configure(FlowConfigurer configurer) {
     this.configurer = configurer;
-    configureFlow();
     configure();
-  }
-
-  /**
-   * Configure the flow.
-   *
-   * @deprecated (as of version 3.3.0) Use {@link AbstractFlow#configure()} instead.
-   */
-  @Deprecated
-  protected void configureFlow() {
-
   }
 
   /**

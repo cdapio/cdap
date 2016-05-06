@@ -93,17 +93,16 @@ public class ConditionalWorkflowApp extends AbstractApplication {
     public boolean apply(@Nullable WorkflowContext input) {
       if (input != null) {
         input.getToken().put("action.type", "Condition");
-        Map<String, Map<String, Long>> hadoopCounters = input.getToken().getMapReduceCounters();
-        if (hadoopCounters != null) {
-          Map<String, Long> customCounters = hadoopCounters.get("MyCustomCounter");
-          // If number of good records are greater than the number of bad records then only
-          // return true to execute the true branch associated with this Condition node
-          if (customCounters.get("GoodRecord") > customCounters.get("BadRecord")) {
-            input.getToken().put("conditionResult", "true");
-            return true;
-          }
-          input.getToken().put("conditionResult", "false");
+        List<NodeValue> goodRecords = input.getToken().getAll("MyCustomCounter.GoodRecord", WorkflowToken.Scope.SYSTEM);
+        List<NodeValue> badRecords = input.getToken().getAll("MyCustomCounter.BadRecord", WorkflowToken.Scope.SYSTEM);
+        // If number of good records are greater than the number of bad records then only
+        // return true to execute the true branch associated with this Condition node
+
+        if (goodRecords.get(0).getValue().getAsLong() > badRecords.get(0).getValue().getAsLong()) {
+          input.getToken().put("conditionResult", "true");
+          return true;
         }
+        input.getToken().put("conditionResult", "false");
       }
       return false;
     }
@@ -258,14 +257,14 @@ public class ConditionalWorkflowApp extends AbstractApplication {
 
     @SuppressWarnings("ConstantConditions")
     private void validateMapReduceCounters(WorkflowToken workflowToken, String programName) {
-      Map<String, Map<String, Long>> mapReduceCounters = workflowToken.getMapReduceCounters();
-      Preconditions.checkNotNull(mapReduceCounters);
-
-      Map<String, Long> taskCounters = mapReduceCounters.get(taskCounterGroupName);
-      long mapInputRecords = taskCounters.get(mapInputRecordsCounterName);
-      long mapOutputRecords = taskCounters.get(mapOutputRecordsCounterName);
-      long reduceInputRecords = taskCounters.get(reduceInputRecordsCounterName);
-      long reduceOutputRecords = taskCounters.get(reduceOutputRecordsCounterName);
+      long mapInputRecords = workflowToken.get(taskCounterGroupName + "." + mapInputRecordsCounterName,
+                                               WorkflowToken.Scope.SYSTEM).getAsLong();
+      long mapOutputRecords = workflowToken.get(taskCounterGroupName + "." + mapOutputRecordsCounterName,
+                                                WorkflowToken.Scope.SYSTEM).getAsLong();
+      long reduceInputRecords = workflowToken.get(taskCounterGroupName + "." + reduceInputRecordsCounterName,
+                                                  WorkflowToken.Scope.SYSTEM).getAsLong();
+      long reduceOutputRecords = workflowToken.get(taskCounterGroupName + "." + reduceOutputRecordsCounterName,
+                                                   WorkflowToken.Scope.SYSTEM).getAsLong();
 
       long flattenMapInputRecords = workflowToken.get(flattenMapInputRecordsCounterName,
                                                       WorkflowToken.Scope.SYSTEM).getAsLong();

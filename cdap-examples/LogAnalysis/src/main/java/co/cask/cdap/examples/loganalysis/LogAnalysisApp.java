@@ -46,6 +46,7 @@ import java.net.HttpURLConnection;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.util.Date;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
@@ -195,7 +196,7 @@ public class LogAnalysisApp extends AbstractApplication {
     static final String REQUEST_FILE_CONTENT_PATH = "reqfile";
     static final String REQUEST_FILE_PATH_HANDLER_KEY = "time";
     private static final DateFormat SHORT_DATE_FORMAT = DateFormat.getDateTimeInstance(DateFormat.SHORT,
-                                                                                      DateFormat.SHORT);
+                                                                                       DateFormat.SHORT, Locale.US);
 
     @UseDataSet(REQ_COUNT_STORE)
     private TimePartitionedFileSet reqCountStore;

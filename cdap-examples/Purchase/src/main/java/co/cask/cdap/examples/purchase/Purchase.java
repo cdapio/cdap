@@ -21,6 +21,7 @@ import org.apache.hadoop.io.WritableUtils;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import javax.annotation.Nullable;
 
 /**
  * This class represents a purchase made by a customer. It is a very simple class and only contains
@@ -37,16 +38,22 @@ public class Purchase implements Writable {
   }
 
   public Purchase(Purchase other) {
-    this(other.getCustomer(), other.getProduct(), other.getQuantity(), other.getPrice(), other.getPurchaseTime());
+    this(other.getCustomer(), other.getProduct(), other.getQuantity(), other.getPrice(),
+         other.getPurchaseTime(), other.getCatalogId());
   }
 
   public Purchase(String customer, String product, int quantity, int price, long purchaseTime) {
+    this(customer, product, quantity, price, purchaseTime, null);
+  }
+
+  public Purchase(String customer, String product, int quantity, int price, long purchaseTime,
+                  @Nullable String catalogId) {
     this.customer = customer;
     this.product = product;
     this.quantity = quantity;
     this.price = price;
     this.purchaseTime = purchaseTime;
-    this.catalogId = "";
+    this.catalogId = catalogId;
   }
 
   public String getCustomer() {

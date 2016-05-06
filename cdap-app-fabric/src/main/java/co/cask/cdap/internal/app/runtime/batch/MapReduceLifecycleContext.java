@@ -213,27 +213,12 @@ public class MapReduceLifecycleContext<KEY, VALUE> implements MapReduceTaskConte
   }
 
   @Override
-  public void setInput(String datasetName, Dataset dataset) {
-    LOG.warn(UNSUPPORTED_OPERATION_MESSAGE);
-  }
-
-  @Override
   public void addInput(Input input) {
     LOG.warn(UNSUPPORTED_OPERATION_MESSAGE);
   }
 
   @Override
   public void addInput(Input input, Class<?> mapperCls) {
-    LOG.warn(UNSUPPORTED_OPERATION_MESSAGE);
-  }
-
-  @Override
-  public void setOutput(String datasetName) {
-    LOG.warn(UNSUPPORTED_OPERATION_MESSAGE);
-  }
-
-  @Override
-  public void setOutput(String datasetName, Dataset dataset) {
     LOG.warn(UNSUPPORTED_OPERATION_MESSAGE);
   }
 

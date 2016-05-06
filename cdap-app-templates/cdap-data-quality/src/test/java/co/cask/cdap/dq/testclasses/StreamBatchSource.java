@@ -19,6 +19,7 @@ package co.cask.cdap.dq.testclasses;
 import co.cask.cdap.api.annotation.Description;
 import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.annotation.Plugin;
+import co.cask.cdap.api.data.batch.Input;
 import co.cask.cdap.api.data.format.FormatSpecification;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.schema.Schema;
@@ -106,11 +107,11 @@ public class StreamBatchSource extends BatchSource<LongWritable, Object, Structu
 
     FormatSpecification formatSpec = streamBatchConfig.getFormatSpec();
 
-    StreamBatchReadable stream;
+    Input stream;
     if (formatSpec == null) {
-      stream = new StreamBatchReadable(streamBatchConfig.name, startTime, endTime);
+      stream = Input.ofStream(streamBatchConfig.name, startTime, endTime);
     } else {
-      stream = new StreamBatchReadable(streamBatchConfig.name, startTime, endTime, formatSpec);
+      stream = Input.ofStream(streamBatchConfig.name, startTime, endTime, formatSpec);
     }
     context.setInput(stream);
   }

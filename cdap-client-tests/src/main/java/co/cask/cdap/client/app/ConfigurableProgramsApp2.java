@@ -93,7 +93,7 @@ public class ConfigurableProgramsApp2 extends AbstractApplication<ConfigurablePr
     }
 
     @Override
-    protected void configureFlow() {
+    protected void configure() {
       setName(name);
       addFlowlet("flohlet", new Flohlet(dataset));
       connectStream(stream, "flohlet");

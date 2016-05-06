@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -44,7 +44,7 @@ public class PendingMetricTestApp extends AbstractApplication {
   public static class TestPendingFlow extends AbstractFlow {
 
     @Override
-    protected void configureFlow() {
+    protected void configure() {
       setName("TestPendingFlow");
       setDescription("A flow to test whether queue pending events metrics are emitted correctly.");
       addFlowlet("source", new Source());

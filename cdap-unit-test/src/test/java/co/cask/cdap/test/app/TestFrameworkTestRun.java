@@ -792,8 +792,6 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
 
   @Category(XSlowTests.class)
   @Test(timeout = 240000)
-  @Ignore
-  // TODO: Investigate why this fails in Bamboo, but not locally
   public void testMultiInput() throws Exception {
     ApplicationManager applicationManager = deployApplication(JoinMultiStreamApp.class);
     FlowManager flowManager = applicationManager.getFlowManager("JoinMultiFlow").start();

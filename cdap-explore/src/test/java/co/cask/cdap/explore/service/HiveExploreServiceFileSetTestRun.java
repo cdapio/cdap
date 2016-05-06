@@ -46,6 +46,7 @@ import org.junit.rules.TemporaryFolder;
 
 import java.text.DateFormat;
 import java.util.Collections;
+import java.util.Locale;
 
 /**
  * This tests that time partitioned file sets and their partitions are correctly registered
@@ -61,7 +62,8 @@ public class HiveExploreServiceFileSetTestRun extends BaseHiveExploreServiceTest
   private static final Schema SCHEMA = Schema.recordOf("kv",
                                                        Schema.Field.of("key", Schema.of(Schema.Type.STRING)),
                                                        Schema.Field.of("value", Schema.of(Schema.Type.STRING)));
-  private static final DateFormat DATE_FORMAT = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT);
+  private static final DateFormat DATE_FORMAT = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT,
+                                                                               Locale.US);
 
   @BeforeClass
   public static void start() throws Exception {

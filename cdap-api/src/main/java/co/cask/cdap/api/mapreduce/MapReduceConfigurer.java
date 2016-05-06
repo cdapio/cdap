@@ -29,15 +29,6 @@ import co.cask.cdap.api.plugin.PluginConfigurer;
 public interface MapReduceConfigurer extends DatasetConfigurer, ProgramConfigurer, PluginConfigurer {
 
   /**
-   * Specifies set of dataset names that are used by the {@link MapReduce}.
-   * @deprecated Deprecated as of 2.8.0. Dataset can be requested directly through the method
-   *             {@link MapReduceContext#getDataset(String)} or
-   *             {@link MapReduceTaskContext#getDataset(String)} at runtime.
-   */
-  @Deprecated
-  void useDatasets(Iterable<String> datasets);
-
-  /**
    * Sets the name of the dataset used as input for the {@link MapReduce}.
    *
    * @deprecated as of 3.4.0. Use {@link MapReduceContext#addInput(Input)}

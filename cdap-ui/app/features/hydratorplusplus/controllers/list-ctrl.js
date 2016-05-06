@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,8 +14,8 @@
  * the License.
  */
 
-angular.module(PKG.name + '.feature.hydrator')
-  .controller('HydratorListController', function($scope, myPipelineApi, $stateParams, GLOBALS, mySettings, $state, $timeout, myHelpers, myWorkFlowApi, myWorkersApi, MyCDAPDataSource, myAppsApi, myAlertOnValium) {
+angular.module(PKG.name + '.feature.hydratorplusplus')
+  .controller('HydratorPlusPlusListController', function($scope, myPipelineApi, $stateParams, GLOBALS, mySettings, $state, $timeout, myHelpers, myWorkFlowApi, myWorkersApi, MyCDAPDataSource, myAppsApi, myAlertOnValium) {
     var dataSrc = new MyCDAPDataSource($scope);
     var vm = this;
 

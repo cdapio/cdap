@@ -155,11 +155,11 @@ function download_includes() {
   
   test_an_include 4255a2e3d417e928ac5182ddd932139f ../../cdap-examples/HelloWorld/src/main/java/co/cask/cdap/examples/helloworld/HelloWorld.java
 
-  test_an_include 7f64f17c2371484381d819417635a4a0 ../../cdap-examples/LogAnalysis/src/main/java/co/cask/cdap/examples/loganalysis/LogAnalysisApp.java
-  
+  test_an_include 4626aaec1bbc5bdbfd1de28cc721ec76 ../../cdap-examples/LogAnalysis/src/main/java/co/cask/cdap/examples/loganalysis/LogAnalysisApp.java
+
   test_an_include f90e4e4ce08851f45bdbe2563efb51dd ../../cdap-examples/Purchase/src/main/java/co/cask/cdap/examples/purchase/PurchaseApp.java
   test_an_include 29fe1471372678115e643b0ad431b28d ../../cdap-examples/Purchase/src/main/java/co/cask/cdap/examples/purchase/PurchaseStore.java
-  test_an_include c186b779b972749da93cf42762a3b637 ../../cdap-examples/Purchase/src/main/java/co/cask/cdap/examples/purchase/PurchaseHistoryBuilder.java
+  test_an_include 273e0c1d2ff47c6a7a79d2c5d5de4203 ../../cdap-examples/Purchase/src/main/java/co/cask/cdap/examples/purchase/PurchaseHistoryBuilder.java
   test_an_include 80216a08a2b3d480e4a081722408222f ../../cdap-examples/Purchase/src/main/java/co/cask/cdap/examples/purchase/PurchaseHistoryService.java
 
   test_an_include 04abc21d3a3423cecc3b9c9619aa960d ../../cdap-examples/SpamClassifier/src/main/java/co/cask/cdap/examples/sparkstreaming/SpamClassifier.java

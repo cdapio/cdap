@@ -44,7 +44,7 @@ angular.module(PKG.name + '.commons')
 
 
 angular.module(PKG.name + '.commons')
-  .controller('MyValidatorsCtrl', function($scope, myHydratorValidatorsApi, EventPipe, NodeConfigStore, myHelpers, NonStorePipelineErrorFactory, GLOBALS, js_beautify, HydratorService) {
+  .controller('MyValidatorsCtrl', function($scope, myHydratorValidatorsApi, EventPipe, NodeConfigStore, myHelpers, NonStorePipelineErrorFactory, GLOBALS, js_beautify, HydratorPlusPlusHydratorService) {
     var vm = this;
 
     vm.validators = [];
@@ -57,7 +57,7 @@ angular.module(PKG.name + '.commons')
     var classNameList = [];
 
     // We just need to set the input schema as the output schema
-    $scope.outputSchema = HydratorService.formatOutputSchema($scope.inputSchema);
+    $scope.outputSchema = HydratorPlusPlusHydratorService.formatOutputSchema($scope.inputSchema);
 
 
     myHydratorValidatorsApi.get()

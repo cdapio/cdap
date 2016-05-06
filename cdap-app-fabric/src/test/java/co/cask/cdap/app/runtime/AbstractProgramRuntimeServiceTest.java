@@ -59,8 +59,8 @@ public class AbstractProgramRuntimeServiceTest {
     // still in the run method, it holds the object lock, making the callback from the listener block forever.
     ProgramRunnerFactory runnerFactory = createProgramRunnerFactory();
 
-    ProgramRuntimeService runtimeService = new AbstractProgramRuntimeService(CConfiguration.create(),
-                                                                             runnerFactory, null) {
+    final ProgramRuntimeService runtimeService = new AbstractProgramRuntimeService(CConfiguration.create(),
+                                                                                   runnerFactory, null) {
       @Override
       public ProgramLiveInfo getLiveInfo(Id.Program programId) {
         return new ProgramLiveInfo(programId, "runtime") { };
@@ -79,7 +79,12 @@ public class AbstractProgramRuntimeServiceTest {
         }
       }, 5, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
 
-      Assert.assertTrue(runtimeService.list(ProgramType.WORKER).isEmpty());
+      Tasks.waitFor(true, new Callable<Boolean>() {
+        @Override
+        public Boolean call() throws Exception {
+          return runtimeService.list(ProgramType.WORKER).isEmpty();
+        }
+      }, 5, TimeUnit.SECONDS, 100, TimeUnit.MICROSECONDS);
     } finally {
       runtimeService.stopAndWait();
     }

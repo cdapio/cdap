@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -119,7 +119,7 @@ public class BloatedWordCountApp extends AbstractApplication {
   public static class WordCountFlow extends AbstractFlow {
 
     @Override
-    protected void configureFlow() {
+    protected void configure() {
       setName("WordCountFlow");
       setDescription("Flow for counting words");
       addFlowlet("StreamSource", new StreamSucker());

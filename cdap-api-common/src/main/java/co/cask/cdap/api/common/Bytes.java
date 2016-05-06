@@ -1458,42 +1458,4 @@ public class Bytes {
     // i.e. "read to the end"
     return null;
   }
-
-  /**
-   * Creates immutable sorted map with one entry with given key and value.
-   * @param key key of the entry
-   * @param value value of the entry
-   * @return instance of {@link NavigableMap}
-   *
-   * @deprecated This method will be removed in future release
-   */
-  @Deprecated
-  public static <T> NavigableMap<byte[], T> immutableSortedMapOf(byte[] key, T value) {
-    // Not really immutable. However, for the sake of removing
-    // guava usage and given this API is deprecated, it should be fine.
-    TreeMap<byte[], T> result = new TreeMap<byte[], T>(BYTES_COMPARATOR);
-    result.put(key, value);
-    return result;
-  }
-
-  /**
-   * Creates immutable sorted map with two entries with given keys and values.
-   * @param key1 key of the first entry
-   * @param value1 value of the first entry
-   * @param key2 key of the second entry
-   * @param value2 value of the second entry
-   * @return instance of {@link NavigableMap}
-   *
-   * @deprecated This method will be removed in future release
-   */
-  @Deprecated
-  public static <T> NavigableMap<byte[], T> immutableSortedMapOf(byte[] key1, T value1,
-                                                                  byte[] key2, T value2) {
-    // Not really immutable. However, for the sake of removing
-    // guava usage and given this API is deprecated, it should be fine.
-    TreeMap<byte[], T> result = new TreeMap<byte[], T>(BYTES_COMPARATOR);
-    result.put(key1, value1);
-    result.put(key2, value2);
-    return result;
-  }
 }

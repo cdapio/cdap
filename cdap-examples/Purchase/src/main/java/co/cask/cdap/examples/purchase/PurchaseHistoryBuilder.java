@@ -129,7 +129,7 @@ public class PurchaseHistoryBuilder extends AbstractMapReduce {
           userProfile = new Gson().fromJson(response.getResponseBodyAsString(), UserProfile.class);
         }
       } catch (Exception e) {
-        LOG.warn("Error accessing user profile: {}", e.getCause());
+        LOG.warn("Error accessing user profile.", e);
       }
 
       PurchaseHistory purchases = new PurchaseHistory(customer.toString(), userProfile);

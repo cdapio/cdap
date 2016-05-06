@@ -96,7 +96,7 @@ public class ConfigTestApp extends AbstractApplication<ConfigTestApp.ConfigClass
     }
 
     @Override
-    protected void configureFlow() {
+    protected void configure() {
       setName(FLOW_NAME);
       addFlowlet(FLOWLET_NAME, new SimpleFlowlet(datasetName));
       connectStream(streamName, FLOWLET_NAME);

@@ -15,9 +15,9 @@
  */
 
 var commonModule = angular.module(PKG.name+'.commons');
-// commonModule.factory('jsPlumb', function ($window) {
-//   return $window.jsPlumb;
-// });
+commonModule.factory('jsPlumb', function ($window) {
+  return $window.jsPlumb;
+});
 
 commonModule.directive('myDagPlus', function() {
   return {

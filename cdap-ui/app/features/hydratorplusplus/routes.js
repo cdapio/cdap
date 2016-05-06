@@ -88,7 +88,7 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
               }).$promise.then((artifactsFromBackend) => {
                 let showWarningAndNavigateAway = () => {
                   if (!$state.current.name.length) {
-                    $state.go('hydrator.list').then(showError);
+                    $state.go('hydratorplusplus.list').then(showError);
                     return;
                   } else {
                     $state.go($state.current).then(showError);
@@ -264,8 +264,8 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
             authorizedRoles: MYAUTH_ROLE.all,
             highlightTab: 'hydratorList'
           },
-          templateUrl: '/assets/features/hydrator/templates/list.html',
-          controller: 'HydratorListController',
+          templateUrl: '/assets/features/hydratorplusplus/templates/list.html',
+          controller: 'HydratorPlusPlusListController',
           controllerAs: 'ListController'
         });
   });
