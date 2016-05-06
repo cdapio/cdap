@@ -20,6 +20,7 @@ import co.cask.cdap.common.conf.AbstractPropertyStore;
 import co.cask.cdap.common.conf.PropertyUpdater;
 import co.cask.cdap.common.io.Codec;
 import co.cask.cdap.common.zookeeper.ZKExtOperations;
+import com.google.common.base.Suppliers;
 import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
@@ -92,12 +93,8 @@ public final class ZKPropertyStore<T> extends AbstractPropertyStore<T> {
 
   @Override
   public ListenableFuture<T> set(String name, T property) {
-    try {
-      return ZKExtOperations.setOrCreate(zkClient, getPath(name),
-                                         codec.encode(property), property, MAX_ZK_FAILURE_RETRIES);
-    } catch (IOException e) {
-      return Futures.immediateFailedFuture(e);
-    }
+    return ZKExtOperations.setOrCreate(zkClient, getPath(name), Suppliers.ofInstance(property),
+                                       codec, MAX_ZK_FAILURE_RETRIES);
   }
 
   @Override
