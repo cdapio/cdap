@@ -120,13 +120,13 @@ public class SharedResourceCacheTest {
     assertEquals(cache2.get(key3), cache1.get(key3));
 
     // replace an existing key
-    String value2new = "value2.2";
+    final String value2new = "value2.2";
     final SettableFuture<String> value2future = SettableFuture.create();
     ResourceListener<String> value2listener = new BaseResourceListener<String>() {
       @Override
       public void onResourceUpdate(String name, String instance) {
         LOG.info("Resource updated: {}={}", name, instance);
-        if (name.equals(key2)) {
+        if (key2.equals(name) && value2new.equals(instance)) {
           value2future.set(instance);
         }
       }
@@ -135,9 +135,7 @@ public class SharedResourceCacheTest {
     cache2.addListener(value2listener);
     cache1.put(key2, value2new);
 
-    //String newValue = value2future.get(10000, TimeUnit.MILLISECONDS);
-    String newValue = value2future.get();
-    assertEquals(value2new, newValue);
+    assertEquals(value2new, value2future.get(10, TimeUnit.SECONDS));
     assertEquals(value2new, cache2.get(key2));
 
     cache2.removeListener(value2listener);
