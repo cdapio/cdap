@@ -18,7 +18,7 @@ package co.cask.cdap.spark.app
 
 import co.cask.cdap.api.app.AbstractApplication
 import co.cask.cdap.api.data.stream.Stream
-import co.cask.cdap.api.dataset.lib.{FileSet, FileSetProperties, KeyValueTable, TimeseriesTable}
+import co.cask.cdap.api.dataset.lib.{FileSet, FileSetProperties, KeyValueTable, ObjectMappedTable, ObjectMappedTableProperties, TimeseriesTable}
 import co.cask.cdap.api.spark.AbstractSpark
 import co.cask.cdap.api.workflow.{AbstractWorkflow, AbstractWorkflowAction}
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat
@@ -40,6 +40,10 @@ class TestSparkApp extends AbstractApplication {
         .setOutputProperty(TextOutputFormat.SEPERATOR, ":")
         .build)
     createDataset("TimeSeriesResult", classOf[TimeseriesTable])
+
+    createDataset("PersonTable", classOf[ObjectMappedTable[Person]],
+                  ObjectMappedTableProperties.builder().setType(classOf[Person]).build())
+    addSpark(new DatasetSQLSpark)
 
     addSpark(new ClassicSpark)
     addSpark(new ScalaClassicSpark)

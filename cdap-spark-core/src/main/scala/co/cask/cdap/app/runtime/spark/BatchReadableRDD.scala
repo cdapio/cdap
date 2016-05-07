@@ -93,6 +93,7 @@ class BatchReadableRDD[K: ClassTag, V: ClassTag](@transient sc: SparkContext,
                                           inputMetrics: Option[InputMetrics],
                                           closeable: () => Unit) extends Iterator[(K, V)] {
     val done = new AtomicBoolean
+    var nextKeyValue: Option[(K, V)] = None
 
     override def hasNext: Boolean = {
       if (done.get()) {
@@ -101,13 +102,23 @@ class BatchReadableRDD[K: ClassTag, V: ClassTag](@transient sc: SparkContext,
       if (context.isInterrupted()) {
         throw new TaskKilledException
       }
-      splitReader.nextKeyValue()
+
+      // Find the next key value if necessary
+      if (nextKeyValue.isEmpty && splitReader.nextKeyValue()) {
+        nextKeyValue = Some((splitReader.getCurrentKey, splitReader.getCurrentValue))
+      }
+      return nextKeyValue.isDefined
     }
 
     override def next: (K, V) = {
+      // Precondition check. It shouldn't fail.
+      require(nextKeyValue.isDefined || hasNext, "No more entries")
+
       // TODO: Add metrics for size being read. It requires dataset to expose it.
       inputMetrics.foreach(_.incRecordsRead(1L))
-      (splitReader.getCurrentKey, splitReader.getCurrentValue)
+      val result = nextKeyValue.get
+      nextKeyValue = None
+      result
     }
 
     def close: Unit = {
