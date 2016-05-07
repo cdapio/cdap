@@ -103,9 +103,12 @@ public class QueryClientTestRun extends ClientTestBase {
       exploreClient.enableExploreDataset(dataset).get();
       executeBasicQuery(namespace, FakeApp.DS_NAME);
 
-      ExploreExecutionResult executionResult = queryClient.execute(otherNamespace, "show tables").get();
-      List<QueryResult> otherNamespaceTables = Lists.newArrayList(executionResult);
-      Assert.assertEquals(0, otherNamespaceTables.size());
+      try {
+        queryClient.execute(otherNamespace, "show tables").get();
+        Assert.fail("Explore Query should have thrown an ExecutionException since the database should not exist");
+      } catch (ExecutionException e) {
+        // expected
+      }
     } finally {
       programClient.stop(flow);
       assertProgramStopped(programClient, flow);

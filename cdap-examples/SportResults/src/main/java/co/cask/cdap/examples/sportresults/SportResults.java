@@ -44,7 +44,7 @@ public class SportResults extends AbstractApplication {
       // Properties for Explore (to create a partitioned Hive table)
       .setEnableExploreOnCreate(true)
       .setExploreFormat("csv")
-      .setExploreSchema("date STRING, winner STRING, loser STRING, winnerpoints INT, loserpoints INT")
+      .setExploreSchema("`date` STRING, winner STRING, loser STRING, winnerpoints INT, loserpoints INT")
       .setDescription("FileSet dataset of game results for a sport league and season")
       .build());
 

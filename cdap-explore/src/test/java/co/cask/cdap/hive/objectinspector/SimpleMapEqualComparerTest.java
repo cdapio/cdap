@@ -21,8 +21,8 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.serde.serdeConstants;
 import org.apache.hadoop.hive.serde2.ByteStream;
 import org.apache.hadoop.hive.serde2.SerDeException;
+import org.apache.hadoop.hive.serde2.lazy.LazySerDeParameters;
 import org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe;
-import org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe.SerDeParameters;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorUtils;
 import org.apache.hadoop.hive.serde2.objectinspector.SimpleMapEqualComparer;
@@ -80,7 +80,7 @@ public class SimpleMapEqualComparerTest {
 
   Object serializeAndDeserialize(TextStringMapHolder o1, StructObjectInspector oi1,
       LazySimpleSerDe serde,
-      SerDeParameters serdeParams) throws IOException, SerDeException {
+      LazySerDeParameters serdeParams) throws IOException, SerDeException {
     ByteStream.Output serializeStream = new ByteStream.Output();
     LazySimpleSerDe.serialize(serializeStream, o1, oi1, serdeParams
         .getSeparators(), 0, serdeParams.getNullSequence(), serdeParams
@@ -102,8 +102,7 @@ public class SimpleMapEqualComparerTest {
     Properties tbl = new Properties();
     tbl.setProperty(serdeConstants.LIST_COLUMNS, ObjectInspectorUtils.getFieldNames(oi1));
     tbl.setProperty(serdeConstants.LIST_COLUMN_TYPES, ObjectInspectorUtils.getFieldTypes(oi1));
-    SerDeParameters serdeParams = LazySimpleSerDe.initSerdeParams(conf, tbl,
-        LazySimpleSerDe.class.getName());
+    LazySerDeParameters serdeParams = new LazySerDeParameters(conf, tbl, LazySimpleSerDe.class.getName());
     serde.initialize(conf, tbl);
     ObjectInspector oi2 = serde.getObjectInspector();
 
@@ -135,7 +134,7 @@ public class SimpleMapEqualComparerTest {
 
   Object serializeAndDeserialize(StringTextMapHolder o1, StructObjectInspector oi1,
       LazySimpleSerDe serde,
-      SerDeParameters serdeParams) throws IOException, SerDeException {
+      LazySerDeParameters serdeParams) throws IOException, SerDeException {
     ByteStream.Output serializeStream = new ByteStream.Output();
     LazySimpleSerDe.serialize(serializeStream, o1, oi1, serdeParams
         .getSeparators(), 0, serdeParams.getNullSequence(), serdeParams
@@ -157,8 +156,7 @@ public class SimpleMapEqualComparerTest {
     Properties tbl = new Properties();
     tbl.setProperty(serdeConstants.LIST_COLUMNS, ObjectInspectorUtils.getFieldNames(oi1));
     tbl.setProperty(serdeConstants.LIST_COLUMN_TYPES, ObjectInspectorUtils.getFieldTypes(oi1));
-    SerDeParameters serdeParams = LazySimpleSerDe.initSerdeParams(conf, tbl,
-        LazySimpleSerDe.class.getName());
+    LazySerDeParameters serdeParams = new LazySerDeParameters(conf, tbl, LazySimpleSerDe.class.getName());
     serde.initialize(conf, tbl);
     ObjectInspector oi2 = serde.getObjectInspector();
 
