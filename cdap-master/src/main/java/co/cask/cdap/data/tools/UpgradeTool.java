@@ -57,7 +57,6 @@ import co.cask.cdap.data2.transaction.TransactionSystemClientService;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactStore;
-import co.cask.cdap.internal.app.runtime.schedule.store.DatasetBasedTimeScheduleStore;
 import co.cask.cdap.internal.app.runtime.schedule.store.ScheduleStoreTableUtil;
 import co.cask.cdap.internal.app.store.DefaultStore;
 import co.cask.cdap.logging.save.LogSaverTableUtil;
@@ -102,7 +101,6 @@ public class UpgradeTool {
   private final ZKClientService zkClientService;
   private final MDSDatasetsRegistry mdsDatasetsRegistry;
   private final DatasetFramework dsFramework;
-  private final DatasetBasedTimeScheduleStore datasetBasedTimeScheduleStore;
   private final StreamStateStoreUpgrader streamStateStoreUpgrader;
   private final DatasetUpgrader dsUpgrade;
   private final QueueAdmin queueAdmin;
@@ -120,12 +118,11 @@ public class UpgradeTool {
     UPGRADE("Upgrades CDAP to " + ProjectInfo.getVersion() + "\n" +
               "  The upgrade tool upgrades the following: \n" +
               "  1. User and System Datasets (upgrades the coprocessor jars)\n" +
-              "  2. Schedule Triggers\n" +
-              "  3. Stream State Store\n" +
-              "  4. Workflow run records in Application Metadata Store\n" +
-              "  5. System metadata for all existing entities\n" +
-              "  6. Metadata indexes for all existing metadata\n" +
-              "  7. Any metadata that may have left behind for deleted datasets (This metadata will be removed).\n" +
+              "  2. Stream State Store\n" +
+              "  3. Workflow run records in Application Metadata Store\n" +
+              "  4. System metadata for all existing entities\n" +
+              "  5. Metadata indexes for all existing metadata\n" +
+              "  6. Any metadata that may have left behind for deleted datasets (This metadata will be removed).\n" +
               "  Note: Once you run the upgrade tool you cannot rollback to the previous version."),
     UPGRADE_HBASE("After an HBase upgrade, updates the coprocessor jars of all user and \n" +
                     "system HBase tables to a version that is compatible with the new HBase \n" +
@@ -152,7 +149,6 @@ public class UpgradeTool {
     this.dsFramework = injector.getInstance(DatasetFramework.class);
     this.mdsDatasetsRegistry = injector.getInstance(Key.get(MDSDatasetsRegistry.class,
                                                             Names.named("mdsDatasetsRegistry")));
-    this.datasetBasedTimeScheduleStore = injector.getInstance(DatasetBasedTimeScheduleStore.class);
     this.metadataStore = injector.getInstance(MetadataStore.class);
     this.streamStateStoreUpgrader = injector.getInstance(StreamStateStoreUpgrader.class);
     this.dsUpgrade = injector.getInstance(DatasetUpgrader.class);
@@ -387,9 +383,6 @@ public class UpgradeTool {
 
     LOG.info("Upgrading Dataset Specification...");
     dsSpecUpgrader.upgrade();
-
-    LOG.info("Upgrading schedules...");
-    datasetBasedTimeScheduleStore.upgrade();
 
     LOG.info("Upgrading stream state store table...");
     streamStateStoreUpgrader.upgrade();
