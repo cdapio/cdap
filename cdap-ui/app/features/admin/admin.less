@@ -64,7 +64,7 @@ body.theme-cdap {
                 }
                 ul { // Namespace child menu (tertiary)
                   background-color: @tertiary-menu-bg;
-                  @shadow: 0 1px 4px black, 0 -1px 0px black;
+                  @shadow: 0 1px 4px black, 0 -1px 0 black;
                   .box-shadow(@shadow);
                   li {
                     &:not(:last-child) { border-bottom: 1px solid fade(@child-menu-link-color, 30%); }
@@ -81,7 +81,8 @@ body.theme-cdap {
               font-size: 14px;
               font-weight: 500;
               padding: 15px;
-              &:hover, &:focus { text-decoration: none; }
+              &:hover,
+              &:focus { text-decoration: none; }
               &.abstract {
                 &.current {
                   border-left: 4px solid @cdap-orange;
@@ -104,7 +105,7 @@ body.theme-cdap {
       }
       [datasets-list] {
         table {
-          tr{
+          tr {
             td {
               [class*="icon-"] {
                 vertical-align: middle;
@@ -213,7 +214,8 @@ body.theme-cdap {
   &.state-admin-system-services-detail {
     main.container {
       // This is required to steal the focus from an already clicked button on previous state.
-      .btn-default.active, .btn.btn-default:focus {
+      .btn-default.active,
+      .btn.btn-default:focus {
         background-color: white;
         border-color: #dfe2e9;
       }
@@ -222,7 +224,8 @@ body.theme-cdap {
   &.state-admin-namespace-detail-templateedit {
     .table {
       margin-top: 0;
-      th, td {
+      th,
+      td {
         max-width: 0;
         overflow: hidden;
         text-overflow: ellipsis;
@@ -230,7 +233,8 @@ body.theme-cdap {
       }
       > thead > tr > th {
         border: 1px solid @table-border-color;
-        &:hover, &:focus {
+        &:hover,
+        &:focus {
           cursor: default;
         }
         label {
@@ -242,7 +246,7 @@ body.theme-cdap {
         height: 36px;
         padding: 0 10px;
         vertical-align: middle;
-        border: 1px solid #ddd;
+        border: 1px solid #dddddd;
         border-collapse: collapse;
         &.name {
           width: 35%;
@@ -271,7 +275,8 @@ body.theme-cdap {
       div.select-wrapper {
         background-color: transparent;
       }
-      input[type="text"], select.form-control {
+      input[type="text"],
+      select.form-control {
         border: 0;
       }
       input[type="text"] {
@@ -281,7 +286,7 @@ body.theme-cdap {
         font-weight: 400;
       }
       .form-control {
-        color: #666;
+        color: #666666;
         height: 30px;
         padding: 0;
         .box-shadow(none);
