@@ -16,6 +16,7 @@
 
 package co.cask.cdap.logging.read;
 
+import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.LoggingContext;
@@ -27,6 +28,8 @@ import co.cask.cdap.logging.save.KafkaLogWriterPlugin;
 import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.List;
 
 /**
  * Reads logs in a distributed setup, using kafka for latest logs and files for older logs.
@@ -55,7 +58,7 @@ public final class DistributedLogReader implements LogReader {
 
   @Override
   public void getLogNext(final LoggingContext loggingContext, final ReadRange readRange, final int maxEvents,
-                              final Filter filter, final Callback callback) {
+                         final Filter filter, final Callback callback) {
     // If latest logs are not requested, try reading from file.
     if (readRange != ReadRange.LATEST) {
       long checkpointTime = getCheckpointTime(loggingContext);
@@ -84,7 +87,7 @@ public final class DistributedLogReader implements LogReader {
 
   @Override
   public void getLogPrev(final LoggingContext loggingContext, final ReadRange readRange, final int maxEvents,
-                              final Filter filter, final Callback callback) {
+                         final Filter filter, final Callback callback) {
     // If latest logs are not requested, try reading from file.
     if (readRange != ReadRange.LATEST) {
       long checkpointTime = getCheckpointTime(loggingContext);
@@ -110,8 +113,14 @@ public final class DistributedLogReader implements LogReader {
 
   @Override
   public void getLog(final LoggingContext loggingContext, final long fromTimeMs, final long toTimeMs,
-                          final Filter filter, final Callback callback) {
+                     final Filter filter, final Callback callback) {
     fileLogReader.getLog(loggingContext, fromTimeMs, toTimeMs, filter, callback);
+  }
+
+  @Override
+  public CloseableIterator<LogEvent> getLog(LoggingContext loggingContext, long fromTimeMs, long toTimeMs,
+                                            Filter filter) {
+    return fileLogReader.getLog(loggingContext, fromTimeMs, toTimeMs, filter);
   }
 
   private long getCheckpointTime(LoggingContext loggingContext) {

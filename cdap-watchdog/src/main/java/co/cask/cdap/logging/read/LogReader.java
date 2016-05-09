@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,6 +16,7 @@
 
 package co.cask.cdap.logging.read;
 
+import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.logging.filter.Filter;
 
@@ -24,7 +25,7 @@ import co.cask.cdap.logging.filter.Filter;
  */
 public interface LogReader {
   /**
-   * Read log events of a Flow or Map Reduce program after a given offset.
+   * Read log events for a given LoggingContext after a given offset.
    * @param loggingContext context to look up log events.
    * @param readRange range for reading log events. Use {@link ReadRange#LATEST} to get the latest log events.
    * @param maxEvents max log events to return.
@@ -32,10 +33,10 @@ public interface LogReader {
    * @param callback callback to handle the log events.
    */
   void getLogNext(LoggingContext loggingContext, ReadRange readRange, int maxEvents, Filter filter,
-                       Callback callback);
+                  Callback callback);
 
   /**
-   * Read log events of a Flow or Map Reduce program before a given offset.
+   * Read log events for a given LoggingContext before a given offset.
    * @param loggingContext context to look up log events.
    * @param readRange range for reading log events. Use {@link ReadRange#LATEST} to get the latest log events.
    * @param maxEvents max log events to return.
@@ -43,10 +44,10 @@ public interface LogReader {
    * @param callback callback to handle the log events.
    */
   void getLogPrev(LoggingContext loggingContext, ReadRange readRange, int maxEvents, Filter filter,
-                       Callback callback);
+                  Callback callback);
 
   /**
-   * Returns log events of a Flow or Map between given times.
+   * Returns log events for a given LoggingContext between given times.
    * @param loggingContext context to look up log events.
    * @param fromTimeMs start time.
    * @param toTimeMs end time.
@@ -54,5 +55,14 @@ public interface LogReader {
    * @param callback Callback to handle the log events.
    */
   void getLog(LoggingContext loggingContext, long fromTimeMs, long toTimeMs, Filter filter,
-                   Callback callback);
+              Callback callback);
+  /**
+   * Returns log events for a given LoggingContext between given times.
+   * @param loggingContext context to look up log events.
+   * @param fromTimeMs start time.
+   * @param toTimeMs end time.
+   * @param filter filter to select log events
+   * @return list of log events
+   */
+  CloseableIterator<LogEvent> getLog(LoggingContext loggingContext, long fromTimeMs, long toTimeMs, Filter filter);
 }

@@ -16,6 +16,7 @@
 
 package co.cask.cdap.logging.gateway.handlers;
 
+import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.LoggingContext;
@@ -25,6 +26,7 @@ import co.cask.cdap.logging.context.LoggingContextHelper;
 import co.cask.cdap.logging.filter.Filter;
 import co.cask.cdap.logging.filter.FilterParser;
 import co.cask.cdap.logging.gateway.handlers.store.ProgramStore;
+import co.cask.cdap.logging.read.LogEvent;
 import co.cask.cdap.logging.read.LogOffset;
 import co.cask.cdap.logging.read.LogReader;
 import co.cask.cdap.logging.read.ReadRange;
@@ -33,8 +35,10 @@ import co.cask.cdap.proto.ProgramType;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpHandler;
 import co.cask.http.HttpResponder;
+import com.google.common.collect.ImmutableMultimap;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
@@ -114,9 +118,10 @@ public class LogHandler extends AbstractHttpHandler {
                                           LogOffset.INVALID_KAFKA_OFFSET);
       readRange = adjustReadRange(readRange, runRecord, fromTimeSecsParam != -1);
 
-      ChunkedLogReaderCallback logCallback = new ChunkedLogReaderCallback(responder, logPattern, escape);
-      logReader.getLog(loggingContext, readRange.getFromMillis(), readRange.getToMillis(), filter, logCallback);
-      logCallback.close();
+      CloseableIterator<LogEvent> logEventIter =
+        logReader.getLog(loggingContext, readRange.getFromMillis(), readRange.getToMillis(), filter);
+      responder.sendContent(HttpResponseStatus.OK, new ChunkedLogReaderProducer(logEventIter, logPattern, escape),
+                            ImmutableMultimap.of(HttpHeaders.Names.CONTENT_TYPE, "text/plain; charset=utf-8"));
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
     } catch (IllegalArgumentException e) {
@@ -265,27 +270,15 @@ public class LogHandler extends AbstractHttpHandler {
 
   @GET
   @Path("/system/{component-id}/{service-id}/logs")
-  public void sysList(HttpRequest request, HttpResponder responder, @PathParam("component-id") String componentId,
+  public void sysLogs(HttpRequest request, HttpResponder responder, @PathParam("component-id") String componentId,
                       @PathParam("service-id") String serviceId,
                       @QueryParam("start") @DefaultValue("-1") long fromTimeSecsParam,
                       @QueryParam("stop") @DefaultValue("-1") long toTimeSecsParam,
                       @QueryParam("escape") @DefaultValue("true") boolean escape,
                       @QueryParam("filter") @DefaultValue("") String filterStr) {
-    try {
-      TimeRange timeRange = parseTime(fromTimeSecsParam, toTimeSecsParam, responder);
-      if (timeRange == null) {
-        return;
-      }
-
-      Filter filter = FilterParser.parse(filterStr);
-      LoggingContext loggingContext = LoggingContextHelper.getLoggingContext(Id.Namespace.SYSTEM.getId(), componentId,
-                                                                             serviceId);
-      ChunkedLogReaderCallback logCallback = new ChunkedLogReaderCallback(responder, logPattern, escape);
-      logReader.getLog(loggingContext, timeRange.getFromMillis(), timeRange.getToMillis(), filter, logCallback);
-      logCallback.close();
-    } catch (IllegalArgumentException e) {
-      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
-    }
+    LoggingContext loggingContext =
+      LoggingContextHelper.getLoggingContext(Id.Namespace.SYSTEM.getId(), componentId, serviceId);
+    doGetLogs(responder, loggingContext, fromTimeSecsParam, toTimeSecsParam, escape, filterStr, null);
   }
 
   @GET

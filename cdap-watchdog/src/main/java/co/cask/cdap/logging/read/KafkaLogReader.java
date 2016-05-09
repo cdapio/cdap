@@ -17,6 +17,7 @@
 package co.cask.cdap.logging.read;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
+import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.LoggingContext;
@@ -191,6 +192,13 @@ public class KafkaLogReader implements LogReader {
   @Override
   public void getLog(LoggingContext loggingContext, long fromTimeMs, long toTimeMs,
                      Filter filter, Callback callback) {
+    throw new UnsupportedOperationException("Getting logs by time is not supported by "
+                                              + KafkaLogReader.class.getSimpleName());
+  }
+
+  @Override
+  public CloseableIterator<LogEvent> getLog(LoggingContext loggingContext, long fromTimeMs, long toTimeMs,
+                                            Filter filter) {
     throw new UnsupportedOperationException("Getting logs by time is not supported by "
                                               + KafkaLogReader.class.getSimpleName());
   }

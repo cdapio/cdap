@@ -17,6 +17,7 @@
 package co.cask.cdap.logging.read;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
+import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.io.SeekableInputStream;
 import co.cask.cdap.logging.filter.Filter;
@@ -38,6 +39,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.NoSuchElementException;
 
 /**
  * Reads log events from an Avro file.
@@ -52,13 +54,39 @@ public class AvroFileReader {
     this.schema = schema;
   }
 
-  public void readLog(Location file, Filter logFilter, long fromTimeMs, long toTimeMs,
-                      int maxEvents, Callback callback) {
-    try {
-      DataFileReader<GenericRecord> dataFileReader = createReader(file);
+  public static final class LogEventIterator implements CloseableIterator<LogEvent> {
+
+    private final Location file;
+    private final DataFileReader<GenericRecord> dataFileReader;
+
+    private final Filter logFilter;
+    private final long fromTimeMs;
+    private final long toTimeMs;
+    private final long maxEvents;
+
+    private ILoggingEvent loggingEvent;
+    private GenericRecord datum;
+
+    private int count = 0;
+    private long prevTimestamp = -1;
+
+    private LogEvent next;
+
+    public LogEventIterator(Location file, DataFileReader<GenericRecord> dataFileReader,
+                            Filter logFilter, long fromTimeMs, long toTimeMs, long maxEvents) {
+      this.file = file;
+      this.dataFileReader = dataFileReader;
+
+      this.logFilter = logFilter;
+      this.fromTimeMs = fromTimeMs;
+      this.toTimeMs = toTimeMs;
+      this.maxEvents = maxEvents;
+
+      init();
+    }
+
+    private void init() {
       try {
-        ILoggingEvent loggingEvent;
-        GenericRecord datum;
         if (dataFileReader.hasNext()) {
           datum = dataFileReader.next();
           loggingEvent = LoggingEvent.decode(datum);
@@ -78,31 +106,86 @@ public class AvroFileReader {
 
           // We're now likely past the record with fromTimeMs, rewind to the previous sync point
           dataFileReader.sync(prevPrevSyncPos);
+        }
 
-          // Start reading events from file
-          int count = 0;
-          long prevTimestamp = -1;
-          while (dataFileReader.hasNext()) {
-            loggingEvent = LoggingEvent.decode(dataFileReader.next(datum));
-            if (loggingEvent.getTimeStamp() >= fromTimeMs && logFilter.match(loggingEvent)) {
-              ++count;
-              if ((count > maxEvents || loggingEvent.getTimeStamp() >= toTimeMs)
-                && loggingEvent.getTimeStamp() != prevTimestamp) {
-                break;
-              }
-              callback.handle(new LogEvent(loggingEvent,
-                                           new LogOffset(LogOffset.INVALID_KAFKA_OFFSET, loggingEvent.getTimeStamp())));
-            }
-            prevTimestamp = loggingEvent.getTimeStamp();
-          }
-        }
-      } finally {
-        try {
-          dataFileReader.close();
-        } catch (IOException e) {
-          LOG.error("Got exception while closing log file {}", file, e);
-        }
+        // populate the first element
+        computeNext();
+
+      } catch (Exception e) {
+        LOG.error("Got exception while reading log file {}", file, e);
+        throw Throwables.propagate(e);
       }
+    }
+
+    // will compute the next LogEvent and set the field 'next', unless its already set
+    private void computeNext() {
+      try {
+        // read events from file
+        while (next == null && dataFileReader.hasNext()) {
+          loggingEvent = LoggingEvent.decode(dataFileReader.next(datum));
+          if (loggingEvent.getTimeStamp() >= fromTimeMs && logFilter.match(loggingEvent)) {
+            ++count;
+            if ((count > maxEvents || loggingEvent.getTimeStamp() >= toTimeMs)
+              && loggingEvent.getTimeStamp() != prevTimestamp) {
+              break;
+            }
+            next = new LogEvent(loggingEvent,
+                                new LogOffset(LogOffset.INVALID_KAFKA_OFFSET, loggingEvent.getTimeStamp()));
+          }
+          prevTimestamp = loggingEvent.getTimeStamp();
+        }
+      } catch (Exception e) {
+        LOG.error("Got exception while reading log file {}", file, e);
+        throw Throwables.propagate(e);
+      }
+    }
+
+    @Override
+    public void close() {
+      try {
+        dataFileReader.close();
+      } catch (IOException e) {
+        LOG.error("Got exception while closing log file {}", file, e);
+      }
+    }
+
+    @Override
+    public boolean hasNext() {
+      return next != null;
+    }
+
+    @Override
+    public LogEvent next() {
+      if (this.next == null) {
+        throw new NoSuchElementException();
+      }
+      LogEvent toReturn = this.next;
+      this.next = null;
+      computeNext();
+      return toReturn;
+    }
+
+    @Override
+    public void remove() {
+      throw new UnsupportedOperationException("Remove not supported");
+    }
+  }
+
+  public CloseableIterator<LogEvent> readLog(Location file, Filter logFilter, long fromTimeMs, long toTimeMs,
+                                             int maxEvents) {
+    try {
+      return new LogEventIterator(file, createReader(file), logFilter, fromTimeMs, toTimeMs, maxEvents);
+    } catch (Exception e) {
+      LOG.error("Got exception while reading log file {}", file, e);
+      throw Throwables.propagate(e);
+    }
+  }
+
+  public void readLog(Location file, Filter logFilter, long fromTimeMs, long toTimeMs,
+                      int maxEvents, Callback callback) {
+    try {
+
+
     } catch (Exception e) {
       LOG.error("Got exception while reading log file {}", file, e);
       throw Throwables.propagate(e);

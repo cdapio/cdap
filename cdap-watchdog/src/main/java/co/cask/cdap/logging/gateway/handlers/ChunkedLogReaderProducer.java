@@ -18,14 +18,17 @@ package co.cask.cdap.logging.gateway.handlers;
 
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.PatternLayout;
+import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.logging.read.Callback;
 import co.cask.cdap.logging.read.LogEvent;
+import co.cask.http.BodyProducer;
 import co.cask.http.ChunkResponder;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.io.Closeables;
 import org.apache.commons.lang.StringEscapeUtils;
+import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
@@ -43,20 +46,24 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * LogReader callback to encode log events, and send them as chunked stream.
  */
-class ChunkedLogReaderCallback implements Callback {
+class ChunkedLogReaderProducer extends BodyProducer {
 
-  private static final Logger LOG = LoggerFactory.getLogger(ChunkedLogReaderCallback.class);
+  private static final Logger LOG = LoggerFactory.getLogger(ChunkedLogReaderProducer.class);
+
+  private final CloseableIterator<LogEvent> logEventIter;
 
   private final ByteBuffer chunkBuffer = ByteBuffer.allocate(8 * 1024);
   private final CharsetEncoder charsetEncoder = Charset.forName("UTF-8").newEncoder();
-  private final HttpResponder responder;
   private final PatternLayout patternLayout;
   private final boolean escape;
   private final AtomicInteger count = new AtomicInteger();
-  private ChunkResponder chunkResponder;
 
-  ChunkedLogReaderCallback(HttpResponder responder, String logPattern, boolean escape) {
-    this.responder = responder;
+  private boolean doneSending = false;
+
+
+  ChunkedLogReaderProducer(CloseableIterator<LogEvent> logEventIter, String logPattern, boolean escape) {
+    this.logEventIter = logEventIter;
+
     this.escape = escape;
 
     ch.qos.logback.classic.Logger rootLogger =
@@ -66,77 +73,83 @@ class ChunkedLogReaderCallback implements Callback {
     this.patternLayout = new PatternLayout();
     this.patternLayout.setContext(loggerContext);
     this.patternLayout.setPattern(logPattern);
-  }
 
-  @Override
-  public void init() {
     patternLayout.start();
-    chunkResponder = responder.sendChunkStart(HttpResponseStatus.OK,
-                                              ImmutableMultimap.of(HttpHeaders.Names.CONTENT_TYPE,
-                                                                   "text/plain; charset=utf-8"));
+  }
+
+  private void close() {
+    try {
+      patternLayout.stop();
+    } finally {
+      logEventIter.close();
+    }
   }
 
   @Override
-  public void handle(LogEvent event) {
+  public ChannelBuffer nextChunk() throws Exception {
+    if (!logEventIter.hasNext()) {
+      if (doneSending) {
+        return ChannelBuffers.EMPTY_BUFFER;
+      }
+
+      // Write the last chunk
+      chunkBuffer.put((byte) 0);
+
+      // Flush the encoder
+      CoderResult coderResult = charsetEncoder.flush(chunkBuffer);
+      chunkBuffer.flip();
+      ChannelBuffer toReturn = ChannelBuffers.copiedBuffer(chunkBuffer);
+
+      chunkBuffer.clear();
+      if (!coderResult.isOverflow()) {
+        doneSending = true;
+      }
+      return toReturn;
+
+    }
+
+    LogEvent event = logEventIter.next();
     String logLine = patternLayout.doLayout(event.getLoggingEvent());
     logLine = escape ? StringEscapeUtils.escapeHtml(logLine) : logLine;
-
+/*
     try {
       // Encode logLine and send chunks
-      encodeSend(CharBuffer.wrap(logLine), false);
+      CharBuffer inBuffer = CharBuffer.wrap(logLine);
+      while (true) {
+        CoderResult coderResult = charsetEncoder.encode(inBuffer, chunkBuffer, false);
+        if (coderResult.isOverflow()) {
+          // if reached buffer capacity then flush chunk
+          chunkBuffer.flip();
+          ChannelBuffer toReturn = ChannelBuffers.copiedBuffer(chunkBuffer);
+          chunkBuffer.clear();
+          return null;
+        } else if (coderResult.isError()) {
+          // skip characters causing error, and retry
+          inBuffer.position(inBuffer.position() + coderResult.length());
+        } else {
+          // log line was completely written
+          break;
+        }
+      }
+
+
+
       count.incrementAndGet();
     } catch (IOException e) {
       // Just propagate the exception, the caller of this Callback should be handling it.
       throw Throwables.propagate(e);
     }
+    */
+    return null;
   }
 
   @Override
-  public int getCount() {
-    return count.get();
+  public void finished() throws Exception {
+    close();
   }
 
   @Override
-  public void close() {
-    try {
-      // Write the last chunk
-      encodeSend(CharBuffer.allocate(0), true);
-      // Flush the encoder
-      CoderResult coderResult;
-      do {
-        coderResult = charsetEncoder.flush(chunkBuffer);
-        chunkBuffer.flip();
-        chunkResponder.sendChunk(ChannelBuffers.copiedBuffer(chunkBuffer));
-        chunkBuffer.clear();
-      } while (coderResult.isOverflow());
-    } catch (IOException e) {
-      // If cannot send chunks, nothing can be done (since the client closed connection).
-      // Just log the error as debug.
-      LOG.debug("Failed to send chunk", e);
-    } finally {
-      try {
-        patternLayout.stop();
-      } finally {
-        Closeables.closeQuietly(chunkResponder);
-      }
-    }
-  }
-
-  private void encodeSend(CharBuffer inBuffer, boolean endOfInput) throws IOException {
-    while (true) {
-      CoderResult coderResult = charsetEncoder.encode(inBuffer, chunkBuffer, endOfInput);
-      if (coderResult.isOverflow()) {
-        // if reached buffer capacity then flush chunk
-        chunkBuffer.flip();
-        chunkResponder.sendChunk(ChannelBuffers.copiedBuffer(chunkBuffer));
-        chunkBuffer.clear();
-      } else if (coderResult.isError()) {
-        // skip characters causing error, and retry
-        inBuffer.position(inBuffer.position() + coderResult.length());
-      } else {
-        // log line was completely written
-        break;
-      }
-    }
+  public void handleError(Throwable cause) {
+    close();
   }
 }

@@ -16,6 +16,7 @@
 
 package co.cask.cdap.logging.read;
 
+import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.logging.LoggingConfiguration;
@@ -29,6 +30,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Iterators;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import org.apache.avro.Schema;
@@ -36,9 +38,15 @@ import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 import java.util.NavigableMap;
+import java.util.NoSuchElementException;
+
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
 
 /**
  * Reads log events from a file.
@@ -66,7 +74,7 @@ public class FileLogReader implements LogReader {
 
   @Override
   public void getLogNext(final LoggingContext loggingContext, final ReadRange readRange, final int maxEvents,
-                              final Filter filter, final Callback callback) {
+                         final Filter filter, final Callback callback) {
     if (readRange == ReadRange.LATEST) {
       getLogPrev(loggingContext, readRange, maxEvents, filter, callback);
       return;
@@ -96,13 +104,13 @@ public class FileLogReader implements LogReader {
       }
     } catch (Throwable e) {
       LOG.error("Got exception: ", e);
-      throw  Throwables.propagate(e);
+      throw Throwables.propagate(e);
     }
   }
 
   @Override
   public void getLogPrev(final LoggingContext loggingContext, final ReadRange readRange, final int maxEvents,
-                              final Filter filter, final Callback callback) {
+                         final Filter filter, final Callback callback) {
     callback.init();
     try {
       Filter logFilter = new AndFilter(ImmutableList.of(LoggingContextHelper.createFilter(loggingContext),
@@ -135,13 +143,13 @@ public class FileLogReader implements LogReader {
       }
     } catch (Throwable e) {
       LOG.error("Got exception: ", e);
-      throw  Throwables.propagate(e);
+      throw Throwables.propagate(e);
     }
   }
 
   @Override
   public void getLog(final LoggingContext loggingContext, final long fromTimeMs, final long toTimeMs,
-                          final Filter filter, final Callback callback) {
+                     final Filter filter, final Callback callback) {
     callback.init();
     try {
       Filter logFilter = new AndFilter(ImmutableList.of(LoggingContextHelper.createFilter(loggingContext),
@@ -161,8 +169,153 @@ public class FileLogReader implements LogReader {
       }
     } catch (Throwable e) {
       LOG.error("Got exception: ", e);
-      throw  Throwables.propagate(e);
+      throw Throwables.propagate(e);
     }
+  }
+
+  @Override
+  public CloseableIterator<LogEvent> getLog(LoggingContext loggingContext, final long fromTimeMs, final long toTimeMs,
+                                            Filter filter) {
+    try {
+      final Filter logFilter = new AndFilter(ImmutableList.of(LoggingContextHelper.createFilter(loggingContext),
+                                                              filter));
+
+      LOG.trace("Using fromTimeMs={}, toTimeMs={}", fromTimeMs, toTimeMs);
+      NavigableMap<Long, Location> sortedFiles = fileMetaDataManager.listFiles(loggingContext);
+      if (sortedFiles.isEmpty()) {
+        // return empty iterator
+        return null;
+      }
+
+      List<Location> filesInRange = getFilesInRange(sortedFiles, fromTimeMs, toTimeMs);
+
+      final AvroFileReader avroFileReader = new AvroFileReader(schema);
+      final Iterator<Location> filesIter = filesInRange.iterator();
+
+      CloseableIterator closeableIterator = new CloseableIterator() {
+        private CloseableIterator<LogEvent> curr = null;
+
+        @Override
+        public void close() {
+          if (curr != null) {
+            curr.close();
+          }
+        }
+
+        @Override
+        public boolean hasNext() {
+          return filesIter.hasNext();
+        }
+
+        @Override
+        public CloseableIterator<LogEvent> next() {
+          if (curr != null) {
+            curr.close();
+          }
+          Location file = filesIter.next();
+          LOG.trace("Reading file {}", file);
+          curr = avroFileReader.readLog(file, logFilter, fromTimeMs, toTimeMs, Integer.MAX_VALUE);
+          return curr;
+        }
+
+        @Override
+        public void remove() {
+          throw new UnsupportedOperationException("Remove not supported");
+        }
+      };
+
+      return concat(closeableIterator);
+    } catch (Throwable e) {
+      LOG.error("Got exception: ", e);
+      throw Throwables.propagate(e);
+    }
+  }
+
+  /**
+   * Combines multiple iterators into a single iterator. The returned iterator
+   * iterates across the elements of each iterator in {@code inputs}. The input
+   * iterators are not polled until necessary.
+   *
+   * <p>The returned iterator supports {@code remove()} when the corresponding
+   * input iterator supports it. The methods of the returned iterator may throw
+   * {@code NullPointerException} if any of the input iterators is null.
+   *
+   * <p><b>Note:</b> the current implementation is not suitable for nested
+   * concatenated iterators, i.e. the following should be avoided when in a loop:
+   * {@code iterator = Iterators.concat(iterator, suffix);}, since iteration over the
+   * resulting iterator has a cubic complexity to the depth of the nesting.
+   */
+  public static <T> CloseableIterator<T> concat(
+    final CloseableIterator<? extends CloseableIterator<? extends T>> inputs) {
+    checkNotNull(inputs);
+    return new CloseableIterator<T>() {
+      @Override
+      public void close() {
+        current.close();
+        current = null;
+        while (inputs.hasNext()) {
+          inputs.next().close();
+        }
+        inputs.close();
+        removeFrom = null;
+        // TODO: close all iterators
+      }
+
+      CloseableIterator<? extends T> current = new CloseableIterator<T>() {
+        @Override
+        public void close() {
+        }
+
+        @Override
+        public boolean hasNext() {
+          return false;
+        }
+
+        @Override
+        public T next() {
+          throw new NoSuchElementException();
+        }
+
+        @Override
+        public void remove() {
+          throw new IllegalStateException();
+        }
+      };
+
+      CloseableIterator<? extends T> removeFrom;
+
+      @Override
+      public boolean hasNext() {
+        // http://code.google.com/p/google-collections/issues/detail?id=151
+        // current.hasNext() might be relatively expensive, worth minimizing.
+        boolean currentHasNext;
+        // checkNotNull eager for GWT
+        // note: it must be here & not where 'current' is assigned,
+        // because otherwise we'll have called inputs.next() before throwing
+        // the first NPE, and the next time around we'll call inputs.next()
+        // again, incorrectly moving beyond the error.
+        while (!(currentHasNext = checkNotNull(current).hasNext())
+          && inputs.hasNext()) {
+          current = inputs.next();
+        }
+        return currentHasNext;
+      }
+      @Override
+      public T next() {
+        if (!hasNext()) {
+          throw new NoSuchElementException();
+        }
+        removeFrom = current;
+        return current.next();
+      }
+      @Override
+      public void remove() {
+        checkState(removeFrom != null,
+                   "no calls to next() since last call to remove()");
+        removeFrom.remove();
+        removeFrom = null;
+      }
+    };
   }
 
   @VisibleForTesting

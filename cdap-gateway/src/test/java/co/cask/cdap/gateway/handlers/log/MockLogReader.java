@@ -18,6 +18,7 @@ package co.cask.cdap.gateway.handlers.log;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.spi.LoggingEvent;
+import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.logging.ApplicationLoggingContext;
 import co.cask.cdap.common.logging.LoggingContext;
@@ -31,6 +32,7 @@ import co.cask.cdap.logging.context.WorkflowLoggingContext;
 import co.cask.cdap.logging.context.WorkflowProgramLoggingContext;
 import co.cask.cdap.logging.filter.Filter;
 import co.cask.cdap.logging.read.Callback;
+import co.cask.cdap.logging.read.CollectingCallback;
 import co.cask.cdap.logging.read.LogEvent;
 import co.cask.cdap.logging.read.LogOffset;
 import co.cask.cdap.logging.read.LogReader;
@@ -53,6 +55,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -275,6 +278,37 @@ public class MockLogReader implements LogReader {
     long toOffset = getOffset(toTimeMs / 1000);
     getLogNext(loggingContext, new ReadRange(fromTimeMs, toTimeMs, fromOffset),
                (int) (toOffset - fromOffset), filter, callback);
+  }
+
+  @Override
+  public CloseableIterator<LogEvent> getLog(LoggingContext loggingContext, long fromTimeMs, long toTimeMs,
+                                            Filter filter) {
+    CollectingCallback callback = new CollectingCallback();
+    getLog(loggingContext, fromTimeMs, toTimeMs, filter, callback);
+
+    final Iterator<LogEvent> iterator = callback.getLogEvents().iterator();
+
+    return new CloseableIterator() {
+      @Override
+      public boolean hasNext() {
+        return iterator.hasNext();
+      }
+
+      @Override
+      public LogEvent next() {
+        return iterator.next();
+      }
+
+      @Override
+      public void remove() {
+        iterator.remove();
+      }
+
+      @Override
+      public void close() {
+        // no-op
+      }
+    };
   }
 
   private static final Function<LoggingContext.SystemTag, String> TAG_TO_STRING_FUNCTION =
