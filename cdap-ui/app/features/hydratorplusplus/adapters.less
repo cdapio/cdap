@@ -28,7 +28,7 @@ body.theme-cdap {
       padding-left: 0;
 
       & > div {
-        margin-bottom: 0
+        margin-bottom: 0;
       }
     }
 
@@ -50,6 +50,7 @@ body.theme-cdap {
         height: ~"-webkit-calc(100vh - 187px)";
         height: ~"calc(100vh - 187px)";
       }
+
       @media (min-height: 800px) {
         height: 40vh;
       }
@@ -87,9 +88,11 @@ body.theme-cdap {
 
   }
 
-  &.state-hydratorplusplus-detail, &.state-hydratorplusplus-create {
+  &.state-hydratorplusplus-detail,
+  &.state-hydratorplusplus-create {
     .btn {
-      &.btn-orange, &.btn-grey {
+      &.btn-orange,
+      &.btn-grey {
         color: white;
       }
       &.btn-orange {
@@ -97,13 +100,13 @@ body.theme-cdap {
       }
 
       &.btn-grey {
-        background-color: #ccc;
+        background-color: #cccccc;
       }
 
       &.btn-default.dropdown-toggle {
         background-color: white;
-        color: #666;
-        border: 1px solid #999;
+        color: #666666;
+        border: 1px solid #999999;
         padding: 5px 15px;
       }
     }
@@ -113,7 +116,7 @@ body.theme-cdap {
 
       & > li > a {
         background-color: white;
-        color: #666;
+        color: #666666;
 
         &:hover {
           background-color: @hydrator-blue;
@@ -144,7 +147,9 @@ body.theme-cdap {
     height: 100%;
   }
 
-  &.state-hydratorplusplus-create, &.state-hydratorplusplus-list, &.state-hydratorplusplus-create {
+  &.state-hydratorplusplus-create,
+  &.state-hydratorplusplus-list,
+  &.state-hydratorplusplus-create {
     .alerts {
       top: 50px;
       z-index: 1029;
@@ -231,7 +236,8 @@ body.theme-cdap {
         background-color: @cdap-header;
         text-decoration: none;
 
-        h4, p { color: white; }
+        h4,
+        p { color: white; }
         hr { border-color: white; }
       }
 
@@ -257,7 +263,8 @@ body.theme-cdap {
       justify-content: center;
 
       .border-radius(6px);
-      h4, a {
+      h4,
+      a {
         font-weight: 500;
       }
       h4 {
@@ -296,7 +303,8 @@ body.theme-cdap {
       table.table {
         background-color: white;
 
-        th, td {
+        th,
+        td {
           color: @gray-dark;
           padding-right: 15px;
           padding-left: 15px;
