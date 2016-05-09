@@ -44,7 +44,7 @@ angular.module(PKG.name + '.commons')
 
 
 angular.module(PKG.name + '.commons')
-  .controller('MyValidatorsCtrl', function($scope, myHydratorValidatorsApi, EventPipe, NodeConfigStore, myHelpers, NonStorePipelineErrorFactory, GLOBALS, js_beautify, HydratorPlusPlusHydratorService) {
+  .controller('MyValidatorsCtrl', function($scope, myHydratorValidatorsApi, EventPipe, HydratorPlusPlusConfigStore, myHelpers, NonStorePipelineErrorFactory, GLOBALS, js_beautify, HydratorPlusPlusHydratorService) {
     var vm = this;
 
     vm.validators = [];
@@ -242,7 +242,7 @@ angular.module(PKG.name + '.commons')
     }
 
     function validateNodesLabels () {
-      var nodes = NodeConfigStore.ConfigStore.getNodes();
+      var nodes = HydratorPlusPlusConfigStore.getNodes();
       var nodeName = $scope.model.label;
 
       if (!nodeName) {
