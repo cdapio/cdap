@@ -109,7 +109,7 @@
     <hbase10cdh550.version>1.0.0-cdh5.5.0</hbase10cdh550.version>
     <hbase10.version>1.0.1.1</hbase10.version>
     <hbase11.version>1.1.1</hbase11.version>
-    <hbase12cdh570.version>1.2.0-cdh5.7.0</hbase12cdh570.version>
+    <hbase12cdh570.version>1.2.1</hbase12cdh570.version>
     <hive.version>1.2.1</hive.version>
     <hsql.version>2.2.4</hsql.version>
     <http.component.version>4.2.5</http.component.version>
@@ -133,7 +133,7 @@
     <snappy.version>1.1.1.7</snappy.version>
     <shiro.version>1.2.1</shiro.version>
     <slf4j.version>1.7.5</slf4j.version>
-    <tephra.version>0.7.1</tephra.version>
+    <tephra.version>0.7.1-SNAPSHOT</tephra.version>
     <thrift.version>0.9.0</thrift.version>
     <twill.version>0.7.0-incubating</twill.version>
     <unboundid.version>2.3.6</unboundid.version>
