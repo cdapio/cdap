@@ -48,7 +48,10 @@ The ``configure()`` method creates the two PartitionedFileSet datasets used in t
        2011/9/9,Philadelphia Eagles,Cleveland Browns,17,16
        2011/9/9,New England Patriots,Tennessee Titans,34,13
 
-  We have included some sample data in the ``resources`` directory.
+  We have included some sample data in the ``resources`` directory. Note that because the
+  column name ``date`` is a `Hive reserved keyword
+  <https://cwiki.apache.org/confluence/display/Hive/LanguageManual+DDL#LanguageManualDDL-Keywords,Non-reservedKeywordsandReservedKeywords>`__, 
+  it has been enclosed in single back-ticks in the Explore schema declaration.
 - The *totals* dataset stores aggregates across all seasons and thus has the league as its single
   partitioning field. Each record has, for an individual team, the total number of games won and lost
   and the total number of points scored and conceded.
