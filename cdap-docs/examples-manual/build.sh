@@ -168,7 +168,7 @@ function download_includes() {
   
   test_an_include b58bab093dbf5035c93b334fbf0857fc ../../cdap-examples/SparkPageRank/src/main/java/co/cask/cdap/examples/sparkpagerank/SparkPageRankApp.java
 
-  test_an_include 02ac96187846a269f65f9b1a21723df3 ../../cdap-examples/SportResults/src/main/java/co/cask/cdap/examples/sportresults/SportResults.java
+  test_an_include 1dff2aa10d09f384965e343be7f83f76 ../../cdap-examples/SportResults/src/main/java/co/cask/cdap/examples/sportresults/SportResults.java
   test_an_include c488b6ad3b5708977a8a913460e4e650 ../../cdap-examples/SportResults/src/main/java/co/cask/cdap/examples/sportresults/UploadService.java
   test_an_include 68df90a54f61ff3c63317aeed865f686 ../../cdap-examples/SportResults/src/main/java/co/cask/cdap/examples/sportresults/ScoreCounter.java
   
