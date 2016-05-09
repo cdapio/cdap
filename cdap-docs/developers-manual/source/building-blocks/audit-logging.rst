@@ -18,7 +18,9 @@ entity's :ref:`metadata <metadata-lineage-metadata>`. For data entities (dataset
 streams), it includes access information used to generate the entity's :ref:`lineage
 <metadata-lineage-lineage>`. Audit logging is an especially important feature because it
 enables users to integrate CDAP with external data governance systems such as
-:ref:`Cloudera Navigator <audit-logging-navigator-integration>`.
+:ref:`Cloudera Navigator <audit-logging-navigator-integration>`. Please note that audit logs are not published during
+CDAP Upgrade. Hence, any application which uses CDAP audit logs to sync metadata will go out of sync. Please see
+`CDAP-5954 <https://issues.cask.co/browse/CDAP-5954>`__.
 
 .. _audit-logging-supported-audit-events:
 
