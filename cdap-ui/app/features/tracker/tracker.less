@@ -24,24 +24,30 @@
 @tracker-banner-font-color: #1f293a;
 @tracker-grey: #999999;
 @border-color: #cdcdcd;
-@search-font-color: #666;
-@title-font-color: #333;
+@search-font-color: #666666;
+@title-font-color: #333333;
 @active-font: #363945;
 @filter-sidebar-background-color: #eeeeee;
 @search-top-bar-container-size: 60px;
 @navbar-size: 50px;
 @entity-detail-top-bar-size: 50px;
 
-body[class*='state-tracker']{
+body[class*='state-tracker'] {
   main.container {
     margin-top: 50px;
     width: 100%;
     padding: 0 0 15px 0;
 
-    h1, h2, h3, h4, h5, h6 {
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6 {
       font-weight: 500;
     }
   }
+
   .alerts { top: 50px; }
 
   footer { border-top: 1px solid @border-color; }
@@ -116,7 +122,7 @@ body.state-tracker {
       display: inline-block;
     }
 
-    .try-star-search { color: #777; }
+    .try-star-search { color: #777777; }
 
     .form-group {
       margin-bottom: 0;
@@ -178,10 +184,12 @@ body.state-tracker {
       }
 
       .tracker-filters {
-        .filter-show-all, .only-button {
+        .filter-show-all,
+        .only-button {
           color: @tracker-green;
           text-decoration: underline;
         }
+
         .filter-show-all {
           margin-left: 10px;
           cursor: pointer;
@@ -194,6 +202,7 @@ body.state-tracker {
           &.hover {
             background-color: #dfdfdf;
           }
+
           .only-button {
             margin-right: 10px;
           }
@@ -227,7 +236,7 @@ body.state-tracker {
 
         .btn.btn-grey {
           margin-left: 10px;
-          background-color: #ccc;
+          background-color: #cccccc;
           color: @active-font;
           padding: 4px 10px 7px; // aligning text with Sort by
           font-weight: 500;
@@ -251,11 +260,14 @@ body.state-tracker {
         height: 100%;
         padding-bottom: 51px; // This is to offset the top sort panel
 
-        h4, h5, p {
+        h4,
+        h5,
+        p {
           font-weight: 500;
         }
 
-        h4, h4 a {
+        h4,
+        h4 a {
           font-size: 16px;
           color: @title-font-color;
           margin-bottom: 5px;
@@ -283,7 +295,6 @@ body.state-tracker {
   .time-range-picker-group {
     .dropdown-menu { margin: 0; }
   }
-
 }
 
 body.state-tracker-detail-entity {
@@ -294,7 +305,10 @@ body.state-tracker-detail-entity {
     border-bottom: 1px solid @border-color;
     background-color: white;
 
-    .back-button, .entity-detail, .tab-options, .action-button {
+    .back-button,
+    .entity-detail,
+    .tab-options,
+    .action-button {
       height: 100%;
       vertical-align: middle;
       display: table-cell;
@@ -372,7 +386,9 @@ body.state-tracker-detail-entity {
     padding: 20px;
   }
 
-  .entity-detail-tags-column, .entity-detail-schema-column, .entity-detail-properties-column {
+  .entity-detail-tags-column,
+  .entity-detail-schema-column,
+  .entity-detail-properties-column {
     position: absolute;
     top: @navbar-size + @search-top-bar-container-size + 1 + @entity-detail-top-bar-size + 1;
     bottom: 53px;
@@ -384,10 +400,13 @@ body.state-tracker-detail-entity {
       border-right: 0;
       border-left: 0;
 
-      th:first-child, td:first-child {
+      th:first-child,
+      td:first-child {
         border-left: 0;
       }
-      th:last-child, td:last-child {
+
+      th:last-child,
+      td:last-child {
         border-right: 0;
       }
 
@@ -397,10 +416,10 @@ body.state-tracker-detail-entity {
     }
   }
 
-  .entity-detail-tags-column, .entity-detail-schema-column {
+  .entity-detail-tags-column,
+  .entity-detail-schema-column {
     width: 30%;
     border-right: 4px solid @border-color;
-
   }
 
   .entity-detail-tags-column {
@@ -414,13 +433,12 @@ body.state-tracker-detail-entity {
     }
 
     .system-tags .tags-container div {
-      background-color: #ccc;
+      background-color: #cccccc;
       color: @title-font-color;
     }
 
     .tags-container {
       margin-bottom: 40px;
-
 
       div {
         display: inline-block;
@@ -458,7 +476,8 @@ body.state-tracker-detail-entity {
     margin-top: 0;
     width: 100%;
 
-    th, td {
+    th,
+    td {
       font-size: 13px;
     }
     td {
@@ -579,7 +598,8 @@ body.state-tracker-integrations {
       display: table-cell;
       vertical-align: middle;
 
-      h3, p { font-weight: 500; }
+      h3,
+      p { font-weight: 500; }
 
       h3 { margin: 5px 0; }
       p {
@@ -620,9 +640,10 @@ body.state-tracker-integrations {
       max-height: ~"-webkit-calc(100vh - 150px)";
       max-height: ~"calc(100vh - 150px)";
       overflow-y: auto;
-      .box-shadow(0 0 20px 1px rgba(0,0,0,0.5));
+      .box-shadow(0 0 20px 1px rgba(0, 0, 0, 0.5));
 
-      h3, h4 {
+      h3,
+      h4 {
         margin-bottom: 15px;
       }
       h3 {
@@ -633,7 +654,7 @@ body.state-tracker-integrations {
       .popover-content { padding: 0; }
 
       .control-label {
-        color: #888;
+        color: #888888;
         font-size: 12px;
         text-align: left;
       }
@@ -651,16 +672,10 @@ body.state-tracker-integrations {
       .optional-settings-toggle {
         user-select: none;
         cursor: pointer;
-        color: #888;
+        color: #888888;
       }
 
-
-
       div.arrow { display: none; }
-    }
-
-    .config-popover {
-
     }
 
     .integration-status {
@@ -675,7 +690,6 @@ body.state-tracker-integrations {
       .status > p { margin-bottom: 0; }
       .status-information { margin: 0; }
       .enable-control { vertical-align: middle; }
-
 
       /* SWITCH STYLING */
       .integrations-switch {
@@ -699,7 +713,8 @@ body.state-tracker-integrations {
           border-radius: 50%;
           transition: all 0.3s ease-in 0s;
 
-          &:after, &:before {
+          &:after,
+          &:before {
             display: block;
             font-size: 11px;
             position: absolute;
@@ -729,6 +744,7 @@ body.state-tracker-integrations {
           }
         }
       }
+
       /* SWITCH STYLING END */
     }
   }
@@ -737,7 +753,9 @@ body.state-tracker-integrations {
     background-color: #464a56;
     padding-top: 10px;
 
-    .events-sent-title, .total-events, .time-label {
+    .events-sent-title,
+    .total-events,
+    .time-label {
       color: white;
       position: absolute;
       display: inline-block;
@@ -775,7 +793,8 @@ body.state-tracker-integrations {
       vertical-align: middle;
       display: inline-block;
 
-      h3, p { margin: 0; }
+      h3,
+      p { margin: 0; }
       p {
         margin-left: 2px;
         margin-top: 3px;
@@ -783,7 +802,8 @@ body.state-tracker-integrations {
       }
     }
 
-    & > .col-xs-10, & > .col-xs-2 {
+    & > .col-xs-10,
+    & > .col-xs-2 {
       height: 60px;
       line-height: 60px;
       background-color: #dddddd;
@@ -794,7 +814,8 @@ body.state-tracker-integrations {
         background-color: @tracker-green;
         color: white;
 
-        &:hover, &:focus {
+        &:hover,
+        &:focus {
           background-color: darken(@tracker-green, 10%);
         }
 
@@ -816,7 +837,7 @@ body.state-tracker-integrations {
     color: @title-font-color;
     background-color: white;
     border: none;
-    box-shadow: 0 6px 12px rgba(0,0,0,.175);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.175);
   }
 
   .tooltip-arrow {

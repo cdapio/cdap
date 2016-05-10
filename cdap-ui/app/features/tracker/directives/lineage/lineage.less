@@ -14,7 +14,7 @@
  * the License.
  */
 
-@grey: #999;
+@grey: #999999;
 @font: #3d3d3d;
 @node-height: 55px;
 @node-width: 175px;
@@ -29,7 +29,7 @@ my-lineage-diagram {
     margin-top: 150px;
     p {
       font-size: 18px;
-      color: #666;
+      color: #666666;
     }
   }
 
@@ -101,23 +101,28 @@ my-lineage-diagram {
       z-index: 1000;
       padding: 5px;
 
-      h4, h5 {
+      h4,
+      h5 {
         font-weight: 500;
         margin-bottom: 4px;
       }
 
       .tracker-popover-content {
         cursor: default;
+
         .inside-column {
           padding-left: 10px;
           padding-right: 10px;
         }
 
         .top-bar {
-          background-color: #666;
+          background-color: #666666;
           color: white;
           padding-bottom: 5px;
-          h4, h5 { color: white; }
+
+          h4,
+          h5 { color: white; }
+
           h4 {
             font-size: 16px;
             margin-top: 10px;
@@ -155,12 +160,12 @@ my-lineage-diagram {
         }
 
         .info-container {
-          background-color: #333;
+          background-color: #333333;
           color: white;
           padding-bottom: 10px;
 
           h5 {
-            color: #ccc;
+            color: #cccccc;
             margin-bottom: 0;
           }
         }
