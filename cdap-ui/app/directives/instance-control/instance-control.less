@@ -72,22 +72,12 @@ my-instance-control {
         right: 0;
         bottom: 0;
         margin: 0;
+        z-index: 950;
         .opacity(1);
         .appearance(none);
         &:before,
         &:after {
-          display: block;
-          font-family: 'FontAwesome';
           width: 32px;
-          text-align: center;
-        }
-        &:before {
-          content: '\f0d8';
-        }
-        &:after {
-          content: '\f0d7';
-          position: relative;
-          bottom: 4px;
         }
       }
       + span {
@@ -98,6 +88,23 @@ my-instance-control {
         width: 46px;
         right: 10px;
         bottom: 25px;
+        z-index: 900;
+        &:before,
+        &:after {
+          display: block;
+          font-family: 'FontAwesome';
+          position: absolute;
+          left: 18px;
+        }
+        &:before {
+          content: '\f0d8';
+          top: -18px;
+        }
+        &:after {
+          content: '\f0d7';
+          top: -2px;
+        }
+
       }
     }
   }
