@@ -17,6 +17,12 @@
 # limitations under the License.
 #
 
+# COOK-74
+if node['cdap'].key?('cdap_site') && node['cdap']['cdap_site'].key?('security.server.ssl.enabled') &&
+   !node['cdap']['cdap_site'].key?('ssl.enabled')
+  default['cdap']['cdap_site']['ssl.enabled'] = node['cdap']['cdap_site']['security.server.ssl.enabled']
+end
+
 # SSL Settings
 if node['cdap'].key?('cdap_site') && node['cdap']['cdap_site'].key?('ssl.enabled') &&
    node['cdap']['cdap_site']['ssl.enabled'].to_s == 'true'
