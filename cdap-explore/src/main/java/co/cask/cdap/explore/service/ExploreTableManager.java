@@ -470,7 +470,8 @@ public class ExploreTableManager {
       String quote = fieldValue instanceof String ? "'" : "";
       builder.append(sep);
       if (shouldEscapeColumns) {
-        builder.append('`').append(fieldName).append('`');
+        // a literal backtick(`) is just a double backtick(``)
+        builder.append('`').append(fieldName.replace("`", "``")).append('`');
       } else {
         builder.append(fieldName);
       }

@@ -16,6 +16,7 @@
 
 package co.cask.cdap.explore.table;
 
+import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 import com.google.common.base.Objects;
 import com.google.common.reflect.TypeToken;
@@ -213,6 +214,22 @@ public class SchemaConverterTest {
   }
 
   @Test
+  public void testBacktickInFieldName() throws Exception {
+    Schema schema = Schema.recordOf(
+      "backtick",
+      Schema.Field.of("abc`123", Schema.of(Schema.Type.STRING)),
+      Schema.Field.of("re`c", Schema.recordOf(
+        "record",
+        Schema.Field.of("`x", Schema.of(Schema.Type.INT))))
+    );
+
+    SchemaConverter schemaConverter = new SchemaConverter(false);
+    Assert.assertEquals("(abc`123 string, re`c struct<`x:int>)", schemaConverter.toHiveSchema(schema));
+    schemaConverter = new SchemaConverter(true);
+    Assert.assertEquals("(`abc``123` string, `re``c` struct<```x`:int>)", schemaConverter.toHiveSchema(schema));
+  }
+
+  @Test
   public void testUnsupportedTypes() {
     verifyUnsupportedSchema(Integer.class);
     verifyUnsupportedSchema(String.class);
@@ -226,16 +243,23 @@ public class SchemaConverterTest {
   public void testSupportedTypes() throws Exception {
     // Should not throw an exception
     new SchemaConverter(false).toHiveSchema(NotRecursive.class);
+    new SchemaConverter(true).toHiveSchema(NotRecursive.class);
   }
 
   private void verifyUnsupportedSchema(Type type) {
     String schema;
     try {
       schema = new SchemaConverter(false).toHiveSchema(type);
+      Assert.fail("Type " + type + " should not be supported and cause exception but returned " + schema);
     } catch (UnsupportedTypeException e) {
       // expected
-      return;
     }
-    Assert.fail("Type " + type + " should not be supported and cause exception but returned " + schema);
+
+    try {
+      schema = new SchemaConverter(true).toHiveSchema(type);
+      Assert.fail("Type " + type + " should not be supported and cause exception but returned " + schema);
+    } catch (UnsupportedTypeException e) {
+      // expected
+    }
   }
 }

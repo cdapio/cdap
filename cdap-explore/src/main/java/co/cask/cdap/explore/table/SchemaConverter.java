@@ -142,7 +142,8 @@ public class SchemaConverter {
     throws UnsupportedTypeException {
     String name = field.getName();
     if (escapeColumns) {
-      builder.append('`').append(name).append('`');
+      // a literal backtick(`) is represented as a double backtick(``)
+      builder.append('`').append(name.replace("`", "``")).append('`');
     } else {
       builder.append(name);
     }

@@ -44,6 +44,14 @@ The body of the request must contain a JSON string of the form::
   }
 
 where ``<SQL-query-string>`` is the actual SQL query.
+If you are running a version of Hive that uses reserved keywords, and a column in your query is a `Hive reserved keyword
+<https://cwiki.apache.org/confluence/display/Hive/LanguageManual+DDL#LanguageManualDDL-Keywords,
+Non-reservedKeywordsandReservedKeywords>`__, you must enclose the column name in backticks.
+For example::
+
+  {
+    "query": "select `date` from stream_events"
+  }
 
 .. rubric:: HTTP Responses
 .. list-table::
