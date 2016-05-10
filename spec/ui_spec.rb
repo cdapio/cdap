@@ -40,11 +40,12 @@ describe 'cdap::ui' do
     end
   end
 
-  context 'using older nodejs cookbook' do
+  context 'using older nodejs cookbook on CDAP 3.3' do
     let(:chef_run) do
       ChefSpec::SoloRunner.new(platform: 'centos', version: 6.6) do |node|
         node.automatic['domain'] = 'example.com'
         node.default['cdap']['repo']['url'] = 'https://USER:PASS@cdap.repo/path/to/repo'
+        node.override['cdap']['version'] = '3.3.3'
         node.default['hadoop']['hdfs_site']['dfs.datanode.max.transfer.threads'] = '4096'
         node.default['hadoop']['mapred_site']['mapreduce.framework.name'] = 'yarn'
         stub_command(/update-alternatives --display /).and_return(false)
