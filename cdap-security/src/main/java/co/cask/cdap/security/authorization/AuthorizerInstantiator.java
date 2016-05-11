@@ -101,7 +101,7 @@ public class AuthorizerInstantiator implements Closeable, Supplier<Authorizer> {
    * authorization is disabled.
    */
   @Override
-  public Authorizer get() {
+  public synchronized Authorizer get() {
     if (authorizer != null) {
       return authorizer;
     }
