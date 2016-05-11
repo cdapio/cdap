@@ -59,9 +59,9 @@ import java.util.jar.Manifest;
 import javax.annotation.Nullable;
 
 /**
- * Tests for {@link AuthorizerInstantiatorService}.
+ * Tests for {@link AuthorizerSupplier}.
  */
-public class AuthorizerInstantiatorServiceTest {
+public class AuthorizerSupplierTest {
 
   @ClassRule
   public static final TemporaryFolder TEMPORARY_FOLDER = new TemporaryFolder();
@@ -105,7 +105,7 @@ public class AuthorizerInstantiatorServiceTest {
   }
 
   private void assertDisabled(CConfiguration cConf, FeatureDisabledException.Feature feature) {
-    AuthorizerInstantiatorService instantiator = new AuthorizerInstantiatorService(cConf, factory);
+    AuthorizerSupplier instantiator = new AuthorizerSupplier(cConf, factory);
     instantiator.startAndWait();
     try {
       Authorizer authorizer = instantiator.get();
@@ -123,7 +123,7 @@ public class AuthorizerInstantiatorServiceTest {
   @Test(expected = InvalidAuthorizerException.class)
   public void testNonExistingAuthorizerJarPath() throws Throwable {
     cConf.set(Constants.Security.Authorization.EXTENSION_JAR_PATH, "/path/to/external-test-authorizer.jar");
-    AuthorizerInstantiatorService instantiator = new AuthorizerInstantiatorService(cConf, factory);
+    AuthorizerSupplier instantiator = new AuthorizerSupplier(cConf, factory);
     try {
       instantiator.startAndWait();
     } catch (UncheckedExecutionException e) {
@@ -136,7 +136,7 @@ public class AuthorizerInstantiatorServiceTest {
   @Test(expected = InvalidAuthorizerException.class)
   public void testAuthorizerJarPathIsDirectory() throws Throwable {
     cConf.set(Constants.Security.Authorization.EXTENSION_JAR_PATH, TEMPORARY_FOLDER.newFolder().getPath());
-    AuthorizerInstantiatorService instantiator = new AuthorizerInstantiatorService(cConf, factory);
+    AuthorizerSupplier instantiator = new AuthorizerSupplier(cConf, factory);
     try {
       instantiator.startAndWait();
     } catch (UncheckedExecutionException e) {
@@ -149,7 +149,7 @@ public class AuthorizerInstantiatorServiceTest {
   @Test(expected = InvalidAuthorizerException.class)
   public void testAuthorizerJarPathIsNotJar() throws Throwable {
     cConf.set(Constants.Security.Authorization.EXTENSION_JAR_PATH, TEMPORARY_FOLDER.newFile("abc.txt").getPath());
-    AuthorizerInstantiatorService instantiator = new AuthorizerInstantiatorService(cConf, factory);
+    AuthorizerSupplier instantiator = new AuthorizerSupplier(cConf, factory);
     try {
       instantiator.startAndWait();
     } catch (UncheckedExecutionException e) {
@@ -163,7 +163,7 @@ public class AuthorizerInstantiatorServiceTest {
   public void testMissingManifest() throws Throwable {
     Location externalAuthJar = createInvalidExternalAuthJar(null);
     cConf.set(Constants.Security.Authorization.EXTENSION_JAR_PATH, externalAuthJar.toString());
-    AuthorizerInstantiatorService instantiator = new AuthorizerInstantiatorService(cConf, factory);
+    AuthorizerSupplier instantiator = new AuthorizerSupplier(cConf, factory);
     try {
       instantiator.startAndWait();
     } catch (UncheckedExecutionException e) {
@@ -179,7 +179,7 @@ public class AuthorizerInstantiatorServiceTest {
     manifest.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION, "1.0");
     Location externalAuthJar = createInvalidExternalAuthJar(manifest);
     cConf.set(Constants.Security.Authorization.EXTENSION_JAR_PATH, externalAuthJar.toString());
-    AuthorizerInstantiatorService instantiator = new AuthorizerInstantiatorService(cConf, factory);
+    AuthorizerSupplier instantiator = new AuthorizerSupplier(cConf, factory);
     try {
       instantiator.startAndWait();
     } catch (UncheckedExecutionException e) {
@@ -197,7 +197,7 @@ public class AuthorizerInstantiatorServiceTest {
     Location externalAuthJar = AppJarHelper.createDeploymentJar(locationFactory, DoesNotImplementAuthorizer.class,
                                                                 manifest);
     cConf.set(Constants.Security.Authorization.EXTENSION_JAR_PATH, externalAuthJar.toString());
-    AuthorizerInstantiatorService instantiator = new AuthorizerInstantiatorService(cConf, factory);
+    AuthorizerSupplier instantiator = new AuthorizerSupplier(cConf, factory);
     try {
       instantiator.startAndWait();
     } catch (UncheckedExecutionException e) {
@@ -216,7 +216,7 @@ public class AuthorizerInstantiatorServiceTest {
     Location externalAuthJar = AppJarHelper.createDeploymentJar(locationFactory, ExceptionInInitialize.class,
                                                                 manifest);
     cConf.set(Constants.Security.Authorization.EXTENSION_JAR_PATH, externalAuthJar.toString());
-    AuthorizerInstantiatorService instantiator = new AuthorizerInstantiatorService(cConf, factory);
+    AuthorizerSupplier instantiator = new AuthorizerSupplier(cConf, factory);
     try {
       instantiator.startAndWait();
     } catch (UncheckedExecutionException e) {
@@ -241,7 +241,7 @@ public class AuthorizerInstantiatorServiceTest {
                   "http://foo.bar.co:5555");
     cConfCopy.set("foo." + Constants.Security.Authorization.EXTENSION_CONFIG_PREFIX + "dont.include",
                   "not.prefix.should.not.be.included");
-    AuthorizerInstantiatorService instantiator = new AuthorizerInstantiatorService(cConfCopy, factory);
+    AuthorizerSupplier instantiator = new AuthorizerSupplier(cConfCopy, factory);
     try {
       instantiator.startAndWait();
       Assert.assertTrue(instantiator.isRunning());

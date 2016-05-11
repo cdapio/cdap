@@ -28,7 +28,7 @@ import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
 import co.cask.cdap.internal.app.runtime.DefaultAdmin;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.authorization.AuthorizationContextFactory;
-import co.cask.cdap.security.authorization.AuthorizerInstantiatorService;
+import co.cask.cdap.security.authorization.AuthorizerSupplier;
 import co.cask.cdap.security.authorization.DefaultAuthorizationContext;
 import co.cask.cdap.security.spi.authorization.AuthorizationContext;
 import co.cask.cdap.security.spi.authorization.Authorizer;
@@ -56,8 +56,8 @@ import java.util.Properties;
  *
  * This module is part of the injector created in StandaloneMain and MasterServiceMain, which makes it available to
  * services. The requirements for this module are:
- * 1. This module is used for creating and exposing {@link AuthorizerInstantiatorService}.
- * 2. The {@link AuthorizerInstantiatorService} needs a {@link DefaultAuthorizationContext}.
+ * 1. This module is used for creating and exposing {@link AuthorizerSupplier}.
+ * 2. The {@link AuthorizerSupplier} needs a {@link DefaultAuthorizationContext}.
  * 3. The {@link DefaultAuthorizationContext} needs a {@link DatasetContext}, a {@link Admin} and a
  * {@link Transactional}.
  *
@@ -74,8 +74,8 @@ import java.util.Properties;
  * 5. Using the bound {@link DatasetContext}, {@link Admin} and {@link Transactional} to provide the injections for
  * {@link DefaultAuthorizationContext}, which is provided using a {@link Guice} {@link FactoryModuleBuilder} to
  * construct a {@link AuthorizationContextFactory}.
- * 6. Only exposing a {@link Singleton} binding to {@link AuthorizerInstantiatorService} from this module. The
- * {@link AuthorizerInstantiatorService} can just {@link Inject} the {@link AuthorizationContextFactory} and call
+ * 6. Only exposing a {@link Singleton} binding to {@link AuthorizerSupplier} from this module. The
+ * {@link AuthorizerSupplier} can just {@link Inject} the {@link AuthorizationContextFactory} and call
  * {@link AuthorizationContextFactory#create(Properties)} using an {@link Assisted} {@link Properties} object.
  */
 public class AuthorizationModule extends PrivateModule {
@@ -92,8 +92,8 @@ public class AuthorizationModule extends PrivateModule {
         .build(AuthorizationContextFactory.class)
     );
 
-    bind(AuthorizerInstantiatorService.class).in(Scopes.SINGLETON);
-    expose(AuthorizerInstantiatorService.class);
+    bind(AuthorizerSupplier.class).in(Scopes.SINGLETON);
+    expose(AuthorizerSupplier.class);
   }
 
   @Singleton

@@ -37,7 +37,7 @@ import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.proto.security.Privilege;
 import co.cask.cdap.proto.security.Role;
 import co.cask.cdap.security.authorization.AuthorizationContextFactory;
-import co.cask.cdap.security.authorization.AuthorizerInstantiatorService;
+import co.cask.cdap.security.authorization.AuthorizerSupplier;
 import co.cask.cdap.security.authorization.DefaultAuthorizationContext;
 import co.cask.cdap.security.authorization.NoOpAdmin;
 import co.cask.cdap.security.authorization.NoOpDatasetContext;
@@ -107,7 +107,7 @@ public class AuthorizationHandlerTest {
     auth.initialize(factory.create(properties));
     service = new CommonNettyHttpServiceBuilder(conf)
       .addHttpHandlers(ImmutableList.of(new AuthorizationHandler(
-        new AuthorizerInstantiatorService(conf, factory) {
+        new AuthorizerSupplier(conf, factory) {
           @Override
           public Authorizer get() {
             return auth;
@@ -161,7 +161,7 @@ public class AuthorizationHandlerTest {
                             String configSetting) throws Exception {
     NettyHttpService service = new CommonNettyHttpServiceBuilder(cConf)
       .addHttpHandlers(ImmutableList.of(new AuthorizationHandler(
-        new AuthorizerInstantiatorService(cConf, factory) {
+        new AuthorizerSupplier(cConf, factory) {
           @Override
           public Authorizer get() {
             return new InMemoryAuthorizer();
