@@ -13,7 +13,6 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-
 package co.cask.cdap.security.authorization;
 
 import co.cask.cdap.common.conf.CConfiguration;
@@ -26,13 +25,9 @@ import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.security.spi.authorization.AuthorizationContext;
 import co.cask.cdap.security.spi.authorization.Authorizer;
 import co.cask.cdap.security.spi.authorization.NoOpAuthorizer;
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
-import com.google.common.base.Supplier;
 import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.AbstractIdleService;
-import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -75,7 +70,7 @@ import java.util.zip.ZipException;
  *   {@link AuthorizerClassLoader} is closed.</li>
  * </ul>
  */
-public class AuthorizerInstantiatorService extends AbstractIdleService implements Supplier<Authorizer> {
+public class AuthorizerInstantiatorService extends AbstractIdleService {
 
   private static final Logger LOG = LoggerFactory.getLogger(AuthorizerInstantiatorService.class);
 
@@ -89,14 +84,16 @@ public class AuthorizerInstantiatorService extends AbstractIdleService implement
   private AuthorizerClassLoader authorizerClassLoader;
   private Authorizer authorizer;
 
-  @Inject
-  @VisibleForTesting
   public AuthorizerInstantiatorService(CConfiguration cConf, AuthorizationContextFactory authorizationContextFactory) {
     this.cConf = cConf;
     this.authenticationEnabled = cConf.getBoolean(Constants.Security.ENABLED);
     this.authorizationEnabled = cConf.getBoolean(Constants.Security.Authorization.ENABLED);
     this.instantiatorFactory = new InstantiatorFactory(false);
     this.authorizationContextFactory = authorizationContextFactory;
+  }
+
+  public Authorizer getAuthorizer() {
+    return authorizer;
   }
 
   @Override
@@ -146,16 +143,6 @@ public class AuthorizerInstantiatorService extends AbstractIdleService implement
       // It's a cleanup step. Nothing much can be done if cleanup fails.
       LOG.warn("Failed to delete directory {}", tmpDir, e);
     }
-  }
-
-  /**
-   * Returns an instance of the configured {@link Authorizer} extension, or of {@link NoOpAuthorizer}, if
-   * authorization is disabled.
-   */
-  @Override
-  public Authorizer get() {
-    Preconditions.checkState(isRunning(), "Authorization Service has not yet started. Authorizer not available.");
-    return authorizer;
   }
 
   /**
