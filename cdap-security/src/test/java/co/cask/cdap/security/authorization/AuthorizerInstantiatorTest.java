@@ -37,7 +37,6 @@ import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.tephra.TransactionFailureException;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.util.concurrent.UncheckedExecutionException;
 import com.google.gson.Gson;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
@@ -59,9 +58,9 @@ import java.util.jar.Manifest;
 import javax.annotation.Nullable;
 
 /**
- * Tests for {@link AuthorizerInstantiatorService}.
+ * Tests for {@link AuthorizerInstantiator}.
  */
-public class AuthorizerInstantiatorServiceTest {
+public class AuthorizerInstantiatorTest {
 
   @ClassRule
   public static final TemporaryFolder TEMPORARY_FOLDER = new TemporaryFolder();
@@ -104,10 +103,8 @@ public class AuthorizerInstantiatorServiceTest {
     assertDisabled(cConf, FeatureDisabledException.Feature.AUTHORIZATION);
   }
 
-  private void assertDisabled(CConfiguration cConf, FeatureDisabledException.Feature feature) {
-    AuthorizerInstantiatorService instantiator = new AuthorizerInstantiatorService(cConf, factory);
-    instantiator.startAndWait();
-    try {
+  private void assertDisabled(CConfiguration cConf, FeatureDisabledException.Feature feature) throws IOException {
+    try (AuthorizerInstantiator instantiator = new AuthorizerInstantiator(cConf, factory)) {
       Authorizer authorizer = instantiator.get();
       Assert.assertTrue(
         String.format("When %s is disabled, a %s must be returned, but got %s.",
@@ -115,62 +112,52 @@ public class AuthorizerInstantiatorServiceTest {
                       authorizer.getClass().getName()),
         authorizer instanceof NoOpAuthorizer
       );
-    } finally {
-      instantiator.stopAndWait();
     }
   }
 
   @Test(expected = InvalidAuthorizerException.class)
   public void testNonExistingAuthorizerJarPath() throws Throwable {
     cConf.set(Constants.Security.Authorization.EXTENSION_JAR_PATH, "/path/to/external-test-authorizer.jar");
-    AuthorizerInstantiatorService instantiator = new AuthorizerInstantiatorService(cConf, factory);
-    try {
-      instantiator.startAndWait();
-    } catch (UncheckedExecutionException e) {
+    try (AuthorizerInstantiator instantiator = new AuthorizerInstantiator(cConf, factory)) {
+      instantiator.get();
+      Assert.fail("Instantiation of Authorizer should have failed because extension jar does not exist.");
+    } catch (Throwable e) {
       throw Throwables.getRootCause(e);
     }
-    Assert.assertFalse("Authorizer Instantiator should not have started because extension jar does not exist",
-                       instantiator.isRunning());
   }
 
   @Test(expected = InvalidAuthorizerException.class)
   public void testAuthorizerJarPathIsDirectory() throws Throwable {
     cConf.set(Constants.Security.Authorization.EXTENSION_JAR_PATH, TEMPORARY_FOLDER.newFolder().getPath());
-    AuthorizerInstantiatorService instantiator = new AuthorizerInstantiatorService(cConf, factory);
-    try {
-      instantiator.startAndWait();
-    } catch (UncheckedExecutionException e) {
+    try (AuthorizerInstantiator instantiator = new AuthorizerInstantiator(cConf, factory)) {
+      instantiator.get();
+      Assert.fail("Instantiation of Authorizer should have failed because extension jar is a directory");
+    } catch (Throwable e) {
       throw Throwables.getRootCause(e);
     }
-    Assert.assertFalse("Authorizer Instantiator should not have started because extension jar is a directory",
-                       instantiator.isRunning());
   }
 
   @Test(expected = InvalidAuthorizerException.class)
   public void testAuthorizerJarPathIsNotJar() throws Throwable {
     cConf.set(Constants.Security.Authorization.EXTENSION_JAR_PATH, TEMPORARY_FOLDER.newFile("abc.txt").getPath());
-    AuthorizerInstantiatorService instantiator = new AuthorizerInstantiatorService(cConf, factory);
-    try {
-      instantiator.startAndWait();
-    } catch (UncheckedExecutionException e) {
+    try (AuthorizerInstantiator instantiator = new AuthorizerInstantiator(cConf, factory)) {
+      instantiator.get();
+      Assert.fail("Instantiation of Authorizer should have failed because extension jar is not a jar file");
+    } catch (Throwable e) {
       throw Throwables.getRootCause(e);
     }
-    Assert.assertFalse("Authorizer Instantiator should not have started because extension jar is not a jar file",
-                       instantiator.isRunning());
   }
 
   @Test(expected = InvalidAuthorizerException.class)
   public void testMissingManifest() throws Throwable {
     Location externalAuthJar = createInvalidExternalAuthJar(null);
     cConf.set(Constants.Security.Authorization.EXTENSION_JAR_PATH, externalAuthJar.toString());
-    AuthorizerInstantiatorService instantiator = new AuthorizerInstantiatorService(cConf, factory);
-    try {
-      instantiator.startAndWait();
-    } catch (UncheckedExecutionException e) {
+    try (AuthorizerInstantiator instantiator = new AuthorizerInstantiator(cConf, factory)) {
+      instantiator.get();
+      Assert.fail("Instantiation of Authorizer should have failed because extension jar does not have a manifest");
+    } catch (Throwable e) {
       throw Throwables.getRootCause(e);
     }
-    Assert.assertFalse("Authorizer Instantiator should not have started because extension jar does not have a manifest",
-                       instantiator.isRunning());
   }
 
   @Test(expected = InvalidAuthorizerException.class)
@@ -179,14 +166,13 @@ public class AuthorizerInstantiatorServiceTest {
     manifest.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION, "1.0");
     Location externalAuthJar = createInvalidExternalAuthJar(manifest);
     cConf.set(Constants.Security.Authorization.EXTENSION_JAR_PATH, externalAuthJar.toString());
-    AuthorizerInstantiatorService instantiator = new AuthorizerInstantiatorService(cConf, factory);
-    try {
-      instantiator.startAndWait();
-    } catch (UncheckedExecutionException e) {
+    try (AuthorizerInstantiator instantiator = new AuthorizerInstantiator(cConf, factory)) {
+      instantiator.get();
+      Assert.fail("Instantiation of Authorizer should have failed because extension jar's manifest does not define" +
+                    " Authorizer class.");
+    } catch (Throwable e) {
       throw Throwables.getRootCause(e);
     }
-    Assert.assertFalse("Authorizer Instantiator should not have started because extension jar's manifest does not " +
-                         "define Authorizer class.", instantiator.isRunning());
   }
 
   @Test(expected = InvalidAuthorizerException.class)
@@ -197,15 +183,13 @@ public class AuthorizerInstantiatorServiceTest {
     Location externalAuthJar = AppJarHelper.createDeploymentJar(locationFactory, DoesNotImplementAuthorizer.class,
                                                                 manifest);
     cConf.set(Constants.Security.Authorization.EXTENSION_JAR_PATH, externalAuthJar.toString());
-    AuthorizerInstantiatorService instantiator = new AuthorizerInstantiatorService(cConf, factory);
-    try {
-      instantiator.startAndWait();
-    } catch (UncheckedExecutionException e) {
+    try (AuthorizerInstantiator instantiator = new AuthorizerInstantiator(cConf, factory)) {
+      instantiator.get();
+      Assert.fail("Instantiation of Authorizer should have failed because the Authorizer class defined in the" +
+                    " extension jar's manifest does not implement " + Authorizer.class.getName());
+    } catch (Throwable e) {
       throw Throwables.getRootCause(e);
     }
-    Assert.assertFalse("Authorizer Instantiator should not have started because the Authorizer class defined in " +
-                         "the extension jar's manifest does not implement " + Authorizer.class.getName(),
-                       instantiator.isRunning());
   }
 
   @Test(expected = InvalidAuthorizerException.class)
@@ -216,15 +200,13 @@ public class AuthorizerInstantiatorServiceTest {
     Location externalAuthJar = AppJarHelper.createDeploymentJar(locationFactory, ExceptionInInitialize.class,
                                                                 manifest);
     cConf.set(Constants.Security.Authorization.EXTENSION_JAR_PATH, externalAuthJar.toString());
-    AuthorizerInstantiatorService instantiator = new AuthorizerInstantiatorService(cConf, factory);
-    try {
-      instantiator.startAndWait();
-    } catch (UncheckedExecutionException e) {
+    try (AuthorizerInstantiator instantiator = new AuthorizerInstantiator(cConf, factory)) {
+      instantiator.get();
+      Assert.fail("Instantiation of Authorizer should have failed because the Authorizer class defined in " +
+                    "the extension jar's manifest does not implement " + Authorizer.class.getName());
+    } catch (Throwable e) {
       throw e.getCause();
     }
-    Assert.assertFalse("Authorizer Instantiator should not have started because the Authorizer class defined in " +
-                         "the extension jar's manifest does not implement " + Authorizer.class.getName(),
-                       instantiator.isRunning());
   }
 
   @Test
@@ -241,10 +223,7 @@ public class AuthorizerInstantiatorServiceTest {
                   "http://foo.bar.co:5555");
     cConfCopy.set("foo." + Constants.Security.Authorization.EXTENSION_CONFIG_PREFIX + "dont.include",
                   "not.prefix.should.not.be.included");
-    AuthorizerInstantiatorService instantiator = new AuthorizerInstantiatorService(cConfCopy, factory);
-    try {
-      instantiator.startAndWait();
-      Assert.assertTrue(instantiator.isRunning());
+    try (AuthorizerInstantiator instantiator = new AuthorizerInstantiator(cConfCopy, factory)) {
       // should be able to load the ExternalAuthorizer class via the AuthorizerInstantiatorService
       Authorizer externalAuthorizer1 = instantiator.get();
       Assert.assertNotNull(externalAuthorizer1);
@@ -278,8 +257,6 @@ public class AuthorizerInstantiatorServiceTest {
       expectedProps.put("service.address", "http://foo.bar.co:5555");
       Properties actualProps = validAuthorizer.getProperties();
       Assert.assertEquals(expectedProps, actualProps);
-    } finally {
-      instantiator.stopAndWait();
     }
   }
 

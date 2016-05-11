@@ -27,15 +27,15 @@ import co.cask.cdap.security.spi.authorization.AuthorizationContext;
 import co.cask.cdap.security.spi.authorization.Authorizer;
 import co.cask.cdap.security.spi.authorization.NoOpAuthorizer;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.base.Supplier;
+import com.google.common.base.Throwables;
 import com.google.common.reflect.TypeToken;
-import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.Closeable;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -54,10 +54,7 @@ import java.util.zip.ZipException;
  * which the {@link Authorizer} interface is instantiated. This parent only has classes required by the
  * {@code cdap-security-spi} module.
  *
- * It is implemented as a {@link AbstractIdleService} so it can manage initialization and destruction of the
- * {@link AuthorizerClassLoader} in a reliable manner.
- *
- * The {@link AuthorizerInstantiatorService} has the following expectations from the extension:
+ * The {@link AuthorizerInstantiator} has the following expectations from the extension:
  * <ul>
  *   <li>Authorization is enabled setting the parameter {@link Constants.Security.Authorization#ENABLED} to true in
  *   {@code cdap-site.xml}. When authorization is disabled, an instance of {@link NoOpAuthorizer} is returned.</li>
@@ -66,18 +63,18 @@ import java.util.zip.ZipException;
  *   <li>The instantiator reads a fully qualified class name specified as the {@link Attributes.Name#MAIN_CLASS}
  *   attribute in the extension jar's manifest file. This class must implement {@link Authorizer} and have a default
  *   constructor.</li>
- *   <li>During {@link AbstractIdleService#startUp()}, the service creates an instance of of the {@link Authorizer}
+ *   <li>During {@link #get}, the instantiator creates an instance of the {@link Authorizer}
  *   class and also calls its {@link Authorizer#initialize(AuthorizationContext)} method with an
  *   {@link AuthorizationContext} created using a {@link AuthorizationContextFactory} by providing it a
  *   {@link Properties} object that is populated with all configuration settings from {@code cdap-site.xml} that have
  *   keys with the prefix {@link Constants.Security.Authorization#EXTENSION_CONFIG_PREFIX}.</li>
- *   <li>During {@link AbstractIdleService#shutDown()}, the {@link Authorizer#destroy()} method is invoked, and the
+ *   <li>During {@link #close()}, the {@link Authorizer#destroy()} method is invoked, and the
  *   {@link AuthorizerClassLoader} is closed.</li>
  * </ul>
  */
-public class AuthorizerInstantiatorService extends AbstractIdleService implements Supplier<Authorizer> {
+public class AuthorizerInstantiator implements Closeable, Supplier<Authorizer> {
 
-  private static final Logger LOG = LoggerFactory.getLogger(AuthorizerInstantiatorService.class);
+  private static final Logger LOG = LoggerFactory.getLogger(AuthorizerInstantiator.class);
 
   private final CConfiguration cConf;
   private final boolean authenticationEnabled;
@@ -91,7 +88,7 @@ public class AuthorizerInstantiatorService extends AbstractIdleService implement
 
   @Inject
   @VisibleForTesting
-  public AuthorizerInstantiatorService(CConfiguration cConf, AuthorizationContextFactory authorizationContextFactory) {
+  public AuthorizerInstantiator(CConfiguration cConf, AuthorizationContextFactory authorizationContextFactory) {
     this.cConf = cConf;
     this.authenticationEnabled = cConf.getBoolean(Constants.Security.ENABLED);
     this.authorizationEnabled = cConf.getBoolean(Constants.Security.Authorization.ENABLED);
@@ -99,17 +96,25 @@ public class AuthorizerInstantiatorService extends AbstractIdleService implement
     this.authorizationContextFactory = authorizationContextFactory;
   }
 
+  /**
+   * Returns an instance of the configured {@link Authorizer} extension, or of {@link NoOpAuthorizer}, if
+   * authorization is disabled.
+   */
   @Override
-  protected void startUp() throws Exception {
+  public Authorizer get() {
+    if (authorizer != null) {
+      return authorizer;
+    }
+
     if (!authorizationEnabled) {
       LOG.debug("Authorization is disabled. Using a no-op authorizer.");
-      this.authorizer = new NoOpAuthorizer();
-      return;
+      authorizer = new NoOpAuthorizer();
+      return authorizer;
     }
     if (!authenticationEnabled) {
       LOG.debug("Authorization is enabled. However, authentication is disabled. Using a no-op authorizer.");
-      this.authorizer = new NoOpAuthorizer();
-      return;
+      authorizer = new NoOpAuthorizer();
+      return authorizer;
     }
     // Authorization is enabled, so continue with startup now
     String authorizerExtensionJarPath = cConf.get(Constants.Security.Authorization.EXTENSION_JAR_PATH);
@@ -119,42 +124,17 @@ public class AuthorizerInstantiatorService extends AbstractIdleService implement
                         "the fully qualified path of the jar file to use as the authorization backend.",
                       Constants.Security.Authorization.EXTENSION_JAR_PATH));
     }
-    File authorizerExtensionJar = new File(authorizerExtensionJarPath);
-    ensureValidAuthExtensionJar(authorizerExtensionJar);
-    File tmpDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
-                           cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
-    this.tmpDir = DirUtils.createTempDir(tmpDir);
-    this.authorizerClassLoader = createAuthorizerClassLoader(authorizerExtensionJar);
-    this.authorizer = createAndInitializeAuthorizerInstance(authorizerExtensionJar);
-  }
-
-  @Override
-  protected void shutDown() throws Exception {
-    authorizer.destroy();
-    if (!authorizationEnabled || !authenticationEnabled) {
-      // nothing to close, since we would not have created a class loader
-      return;
-    }
     try {
-      authorizerClassLoader.close();
-    } catch (IOException e) {
-      LOG.warn("Failed to close authorizer class loader", e);
+      File authorizerExtensionJar = new File(authorizerExtensionJarPath);
+      ensureValidAuthExtensionJar(authorizerExtensionJar);
+      File absoluteTmpFile = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
+                                      cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
+      tmpDir = DirUtils.createTempDir(absoluteTmpFile);
+      authorizerClassLoader = createAuthorizerClassLoader(authorizerExtensionJar);
+      authorizer = createAndInitializeAuthorizerInstance(authorizerExtensionJar);
+    } catch (Exception e) {
+      Throwables.propagate(e);
     }
-    try {
-      DirUtils.deleteDirectoryContents(tmpDir);
-    } catch (IOException e) {
-      // It's a cleanup step. Nothing much can be done if cleanup fails.
-      LOG.warn("Failed to delete directory {}", tmpDir, e);
-    }
-  }
-
-  /**
-   * Returns an instance of the configured {@link Authorizer} extension, or of {@link NoOpAuthorizer}, if
-   * authorization is disabled.
-   */
-  @Override
-  public Authorizer get() {
-    Preconditions.checkState(isRunning(), "Authorization Service has not yet started. Authorizer not available.");
     return authorizer;
   }
 
@@ -288,6 +268,39 @@ public class AuthorizerInstantiatorService extends AbstractIdleService implement
         String.format("Authorization extension jar %s specified as %s must be a file.", authorizerExtensionJar,
                       Constants.Security.Authorization.EXTENSION_JAR_PATH)
       );
+    }
+  }
+
+  @Override
+  public void close() throws IOException {
+    if (authorizer != null) {
+      try {
+        authorizer.destroy();
+      } catch (Throwable t) {
+        LOG.warn("Failed to destroy authorizer.", t);
+      }
+    }
+
+    if (!authorizationEnabled || !authenticationEnabled) {
+      // nothing to close, since we would not have created a class loader
+      return;
+    }
+
+    if (authorizerClassLoader != null) {
+      try {
+        authorizerClassLoader.close();
+      } catch (Throwable t) {
+        LOG.warn("Failed to close authorizer class loader", t);
+      }
+    }
+
+    if (tmpDir != null) {
+      try {
+        DirUtils.deleteDirectoryContents(tmpDir);
+      } catch (Throwable t) {
+        // It's a cleanup step. Nothing much can be done if cleanup fails.
+        LOG.warn("Failed to delete directory {}", tmpDir, t);
+      }
     }
   }
 }
