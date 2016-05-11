@@ -32,7 +32,6 @@ import co.cask.cdap.internal.app.runtime.plugin.PluginService;
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerService;
 import co.cask.cdap.notifications.service.NotificationService;
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.security.authorization.AuthorizerInstantiatorService;
 import co.cask.http.HandlerHook;
 import co.cask.http.HttpHandler;
 import co.cask.http.NettyHttpService;
@@ -75,7 +74,6 @@ public class AppFabricServer extends AbstractIdleService {
   private final ProgramLifecycleService programLifecycleService;
   private final DefaultNamespaceEnsurer defaultNamespaceEnsurer;
   private final SystemArtifactLoader systemArtifactLoader;
-  private final AuthorizerInstantiatorService authorizerInstantiatorService;
   private final PluginService pluginService;
 
   private NettyHttpService httpService;
@@ -100,7 +98,6 @@ public class AppFabricServer extends AbstractIdleService {
                          @Named("appfabric.handler.hooks") Set<String> handlerHookNames,
                          DefaultNamespaceEnsurer defaultNamespaceEnsurer,
                          SystemArtifactLoader systemArtifactLoader,
-                         AuthorizerInstantiatorService authorizerInstantiatorService,
                          PluginService pluginService) {
     this.hostname = hostname;
     this.discoveryService = discoveryService;
@@ -117,7 +114,6 @@ public class AppFabricServer extends AbstractIdleService {
     this.programLifecycleService = programLifecycleService;
     this.defaultNamespaceEnsurer = defaultNamespaceEnsurer;
     this.systemArtifactLoader = systemArtifactLoader;
-    this.authorizerInstantiatorService = authorizerInstantiatorService;
     this.pluginService = pluginService;
   }
 
@@ -138,7 +134,6 @@ public class AppFabricServer extends AbstractIdleService {
         programRuntimeService.start(),
         streamCoordinatorClient.start(),
         programLifecycleService.start(),
-        authorizerInstantiatorService.start(),
         pluginService.start()
       )
     ).get();
@@ -227,7 +222,6 @@ public class AppFabricServer extends AbstractIdleService {
     systemArtifactLoader.stopAndWait();
     notificationService.stopAndWait();
     programLifecycleService.stopAndWait();
-    authorizerInstantiatorService.stopAndWait();
     pluginService.stopAndWait();
   }
 }

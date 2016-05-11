@@ -62,6 +62,7 @@ import co.cask.cdap.metrics.guice.MetricsHandlerModule;
 import co.cask.cdap.metrics.query.MetricsQueryService;
 import co.cask.cdap.notifications.feeds.guice.NotificationFeedServiceRuntimeModule;
 import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
+import co.cask.cdap.security.authorization.AuthorizerInstantiator;
 import co.cask.cdap.security.guice.SecurityModules;
 import co.cask.cdap.security.server.ExternalAuthenticationServer;
 import co.cask.cdap.store.guice.NamespaceStoreModule;
@@ -124,6 +125,7 @@ public class StandaloneMain {
   private final ExternalJavaProcessExecutor kafkaProcessExecutor;
   private final ExternalJavaProcessExecutor zookeeperProcessExecutor;
   private final TrackerAppCreationService trackerAppCreationService;
+  private final AuthorizerInstantiator authorizerInstantiator;
 
   private ExternalAuthenticationServer externalAuthenticationServer;
   private ExploreExecutorService exploreExecutorService;
@@ -188,6 +190,7 @@ public class StandaloneMain {
 
     exploreClient = injector.getInstance(ExploreClient.class);
     metadataService = injector.getInstance(MetadataService.class);
+    authorizerInstantiator = injector.getInstance(AuthorizerInstantiator.class);
 
     Runtime.getRuntime().addShutdownHook(new Thread() {
       @Override
@@ -329,6 +332,8 @@ public class StandaloneMain {
       if (zkClient != null) {
         zkClient.stopAndWait();
       }
+
+      authorizerInstantiator.close();
     } catch (Throwable e) {
       halt = true;
       LOG.error("Exception during shutdown", e);
