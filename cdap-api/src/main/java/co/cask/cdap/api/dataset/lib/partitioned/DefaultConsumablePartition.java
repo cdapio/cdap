@@ -86,37 +86,41 @@ public final class DefaultConsumablePartition implements ConsumablePartition {
 
   @Override
   public void take() {
-    if (processState != ProcessState.AVAILABLE) {
-      throw new IllegalStateException();
-    }
+    assertState(ProcessState.AVAILABLE);
     processState = ProcessState.IN_PROGRESS;
+  }
+
+  @Override
+  public void untake() {
+    assertState(ProcessState.IN_PROGRESS);
+    processState = ProcessState.AVAILABLE;
+    timestamp = 0;
   }
 
 
   @Override
   public void retry() {
-    if (processState != ProcessState.IN_PROGRESS) {
-      throw new IllegalStateException();
-    }
-    processState = ProcessState.AVAILABLE;
+    untake();
     numFailures++;
-    timestamp = 0;
   }
 
   @Override
   public void complete() {
-    if (processState != ProcessState.IN_PROGRESS) {
-      throw new IllegalStateException();
-    }
+    assertState(ProcessState.IN_PROGRESS);
     processState = ProcessState.COMPLETED;
   }
 
   @Override
   public void discard() {
-    if (processState != ProcessState.IN_PROGRESS) {
-      throw new IllegalStateException();
-    }
+    assertState(ProcessState.IN_PROGRESS);
     processState = ProcessState.DISCARDED;
+  }
+
+  private void assertState(ProcessState expectedState) {
+    if (processState != expectedState) {
+      throw new IllegalStateException(String.format("Expected process state to be '%s', but was '%s' for key '%s'",
+                                                    expectedState, processState, partitionKey));
+    }
   }
 
   static DefaultConsumablePartition fromBytes(byte[] bytes) {

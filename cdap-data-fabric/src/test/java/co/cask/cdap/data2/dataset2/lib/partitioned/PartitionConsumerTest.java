@@ -41,6 +41,7 @@ import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionManager;
 import co.cask.tephra.inmemory.InMemoryTxSystemClient;
 import com.google.common.base.Function;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import org.apache.twill.filesystem.Location;
@@ -437,6 +438,64 @@ public class PartitionConsumerTest {
           actualIFields.add((Integer) consumedPartition.getPartitionKey().getField("i"));
         }
         Assert.assertEquals(expectedIFields, actualIFields);
+      }
+    });
+  }
+
+  @Test
+  public void testPartitionPutback() throws Exception {
+    final PartitionedFileSet dataset = dsFrameworkUtil.getInstance(pfsInstance);
+    final TransactionAware txAwareDataset = (TransactionAware) dataset;
+
+    final Set<PartitionKey> partitionKeys = new HashSet<>();
+    for (int i = 0; i < 10; i++) {
+      partitionKeys.add(generateUniqueKey());
+    }
+
+    final PartitionConsumer partitionConsumer =
+      new ConcurrentPartitionConsumer(dataset, new InMemoryStatePersistor(),
+                                      ConsumerConfiguration.builder().setMaxRetries(1).build());
+    dsFrameworkUtil.newInMemoryTransactionExecutor(txAwareDataset).execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        for (PartitionKey partitionKey : partitionKeys) {
+          dataset.getPartitionOutput(partitionKey).addPartition();
+        }
+      }
+    });
+
+    dsFrameworkUtil.newInMemoryTransactionExecutor(txAwareDataset).execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        // consume all the partitions
+        List<? extends Partition> consumedPartitions = partitionConsumer.consumePartitions().getPartitions();
+        Assert.assertEquals(partitionKeys, toKeys(consumedPartitions));
+
+        // consuming the partitions again, without adding any new partitions returns an empty iterator
+        Assert.assertTrue(partitionConsumer.consumePartitions().getPartitions().isEmpty());
+
+        // we configured the max number of retries to be 1. However, we are putting back all the partitions 5 times,
+        // and testing that they are still available for processing, and that there are no failed partitions
+        for (int i = 0; i < 5; i++) {
+          partitionConsumer.untake(consumedPartitions);
+
+          PartitionConsumerResult result = partitionConsumer.consumePartitions();
+          consumedPartitions = result.getPartitions();
+          Assert.assertEquals(partitionKeys, toKeys(consumedPartitions));
+          Assert.assertEquals(0, result.getFailedPartitions().size());
+        }
+
+        // consuming the partitions again, without adding any new partitions returns an empty iterator
+        Assert.assertTrue(partitionConsumer.consumePartitions().getPartitions().isEmpty());
+
+        // test functionality to put back a partial subset of the retrieved the partitions
+        Partition firstConsumedPartition = consumedPartitions.get(0);
+        // test the untakeWithKeys method
+        partitionConsumer.untakeWithKeys(ImmutableList.of(firstConsumedPartition.getPartitionKey()));
+
+        consumedPartitions = partitionConsumer.consumePartitions().getPartitions();
+        Assert.assertEquals(1, consumedPartitions.size());
+        Assert.assertEquals(firstConsumedPartition, consumedPartitions.get(0));
       }
     });
   }

@@ -54,6 +54,11 @@ public interface ConsumablePartition {
   void take();
 
   /**
+   * Marks the ProcessState as AVAILABLE, after it has been taken.
+   */
+  void untake();
+
+  /**
    * Marks the ProcessState as AVAILABLE, resets the timestamp to 0, and increments the number of failures by 1
    */
   void retry();

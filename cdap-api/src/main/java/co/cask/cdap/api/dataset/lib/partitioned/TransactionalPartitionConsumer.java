@@ -123,6 +123,34 @@ public final class TransactionalPartitionConsumer implements PartitionConsumer {
     }
   }
 
+  @Override
+  public void untake(final List<? extends Partition> partitions) {
+    try {
+      transactional.execute(new TxRunnable() {
+        @Override
+        public void run(DatasetContext context) throws Exception {
+          getPartitionConsumer(context).untake(partitions);
+        }
+      });
+    } catch (TransactionFailureException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  @Override
+  public void untakeWithKeys(final List<? extends PartitionKey> partitionKeys) {
+    try {
+      transactional.execute(new TxRunnable() {
+        @Override
+        public void run(DatasetContext context) throws Exception {
+          getPartitionConsumer(context).untakeWithKeys(partitionKeys);
+        }
+      });
+    } catch (TransactionFailureException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
   private PartitionConsumer getPartitionConsumer(DatasetContext context) {
     PartitionedFileSet lines = context.getDataset(partitionedFileSetName);
     return new ConcurrentPartitionConsumer(lines, new DelegatingStatePersistor(context, statePersistor),
