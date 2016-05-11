@@ -193,13 +193,13 @@ def process_pdf(input_file, options):
     print "Completed parsing input file"
 
     # Generate PDF
-#     /usr/local/bin/rst2pdf 
+#     rst2pdf 
 #     --config="/Users/*/*/cdap/docs/developers-manual/source/_templates/pdf-config" 
 #     --stylesheets="/Users/*/*/cdap/docs/developers-manual/source/_templates/pdf-stylesheet" 
 #     -o "/Users/*/*/cdap/docs/developers-manual/build-pdf/rest2.pdf" 
 #     "/Users/*/*/cdap/docs/developers-manual/source/rest.rst_temp”
 
-    command = '/usr/local/bin/rst2pdf --config="%s" --stylesheets="%s" -o "%s" %s' % (config, stylesheets, output, temp_file)
+    command = 'rst2pdf --config="%s" --stylesheets="%s" -o "%s" %s' % (config, stylesheets, output, temp_file)
     print "command: %s" % command
     try:
         output = subprocess.check_output(command, shell=True, stderr=subprocess.STDOUT,)
