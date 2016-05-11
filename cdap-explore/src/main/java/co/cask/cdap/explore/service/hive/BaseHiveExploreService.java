@@ -1322,6 +1322,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     if (UserGroupInformation.isSecurityEnabled()) {
       // make sure RM does not cancel delegation tokens after the query is run
       sessionConf.put("mapreduce.job.complete.cancel.delegation.tokens", "false");
+      sessionConf.put("spark.hadoop.mapreduce.job.complete.cancel.delegation.tokens", "false");
       // refresh delegations for the job - TWILL-170
       updateTokenStore();
     }
