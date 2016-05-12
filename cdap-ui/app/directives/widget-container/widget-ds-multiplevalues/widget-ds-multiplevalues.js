@@ -32,7 +32,8 @@ angular.module(PKG.name + '.commons')
           .objectQuery($scope.config, 'widget-attributes', 'delimiter') || ',';
         $scope.numValues = myHelpers
           .objectQuery($scope.config, 'widget-attributes', 'numValues') || 2;
-
+        $scope.placeholders = myHelpers
+          .objectQuery($scope.config, 'widget-attributes', 'placeholders') || [];
         $scope.numValues = parseInt($scope.numValues, 10);
         $scope.showDelimiter = false;
         var showDelimiterProperty = myHelpers.objectQuery($scope.config, 'widget-attributes', 'showDelimiter');
