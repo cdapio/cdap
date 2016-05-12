@@ -10,10 +10,10 @@
 
     
     
-    <meta name="git_release" content="3.4.0">
-    <meta name="git_hash" content="c0022513cd549a0b8de5ca0596f74c17b3bcc3f1">
-    <meta name="git_timestamp" content="2016-04-29 06:11:14 -0700">
-    <title>Building and Running CDAP Applications &mdash; Cask Data Application Platform 3.4.0 Documentation</title>
+    <meta name="git_release" content="3.4.1">
+    <meta name="git_hash" content="401c9f3c93408abb6865903b462121e4c7cf0904">
+    <meta name="git_timestamp" content="2016-05-12 12:17:30 -0700">
+    <title>Building and Running CDAP Applications &mdash; Cask Data Application Platform 3.4.1 Documentation</title>
     
     <link rel="stylesheet" href="../_static/cdap.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
@@ -24,7 +24,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '3.4.0',
+        VERSION:     '3.4.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  false
@@ -47,7 +47,7 @@
     })(window,document,'script','dataLayer','GTM-PBZ3JL');</script>
     <!-- Google Tag Manager end -->
     <link rel="shortcut icon" href="../_static/favicon.ico"/>
-    <link rel="top" title="Cask Data Application Platform 3.4.0 Documentation" href="../index.html" />
+    <link rel="top" title="Cask Data Application Platform 3.4.1 Documentation" href="../index.html" />
     <link rel="up" title="Getting Started Developing with CDAP" href="index.html" />
     <link rel="next" title="Cask Data Application Platform Overview" href="../overview/index.html" />
     <link rel="prev" title="Starting and Stopping Standalone CDAP" href="start-stop-cdap.html" /> 
@@ -68,7 +68,7 @@
         
         <script type="text/javascript" src="../_static/version-menu.js"></script>
         <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
-        <script>window.setVersion('3.4.0');</script>
+        <script>window.setVersion('3.4.1');</script>
        
         <li><a href="../table-of-contents.html">CDAP Developers’ Manual</a> &raquo;</li>
           <li><a href="index.html" accesskey="U">Getting Started Developing with CDAP</a> &raquo;</li> 
@@ -258,7 +258,7 @@ $(function tabbedparsedliteral25() {
 <div class="code code-tab">
 <div class="highlight-console">
 <!-- tabbed-parsed-literal start -->
-<div class="highlight"><pre><span class="go">examples/&lt;example-directory&gt;/target/&lt;example&gt;-3.4.0.jar</span>
+<div class="highlight"><pre><span class="go">examples/&lt;example-directory&gt;/target/&lt;example&gt;-3.4.1.jar</span>
 </pre></div>
 <!-- tabbed-parsed-literal end -->
 </div>
@@ -269,7 +269,7 @@ $(function tabbedparsedliteral25() {
 <div class="code code-tab">
 <div class="highlight-shell-session">
 <!-- tabbed-parsed-literal start -->
-<div class="highlight"><pre><span class="go">examples\&lt;example-directory&gt;\target\&lt;example&gt;-3.4.0.jar</span>
+<div class="highlight"><pre><span class="go">examples\&lt;example-directory&gt;\target\&lt;example&gt;-3.4.1.jar</span>
 </pre></div>
 <!-- tabbed-parsed-literal end -->
 </div>
@@ -281,7 +281,7 @@ $(function tabbedparsedliteral25() {
 
 </div>
 </li>
-<li><p class="first">From the Standalone CDAP SDK directory, use the <a class="reference external" href="../source/../../reference-manual/cli-api.html#cli" title="(in Cask Data Application Platform v3.4.0)"><span class="xref std std-ref">Command Line Interface (CLI)</span></a>:</p>
+<li><p class="first">From the Standalone CDAP SDK directory, use the <a class="reference external" href="../source/../../reference-manual/cli-api.html#cli" title="(in Cask Data Application Platform v3.4.1)"><span class="xref std std-ref">Command Line Interface (CLI)</span></a>:</p>
 <script type="text/javascript">
 
 $(function tabbedparsedliteral26() {
@@ -309,10 +309,10 @@ $(function tabbedparsedliteral26() {
 <div class="code code-tab">
 <div class="highlight-console">
 <!-- tabbed-parsed-literal start -->
-<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">cdap-cli.sh load artifact examples/&lt;example-directory&gt;/target/&lt;example&gt;-3.4.0.jar</span>
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">cdap-cli.sh load artifact examples/&lt;example-directory&gt;/target/&lt;example&gt;-3.4.1.jar</span>
 <span class="go">Successfully added artifact with name &#39;&lt;example&gt;&#39;</span>
 
-<span class="gp">$ </span><span class="copyable-text">cdap-cli.sh create app &lt;app name&gt; &lt;example&gt; 3.4.0 user</span>
+<span class="gp">$ </span><span class="copyable-text">cdap-cli.sh create app &lt;app name&gt; &lt;example&gt; 3.4.1 user</span>
 <span class="go">Successfully created application</span>
 </pre></div>
 <!-- tabbed-parsed-literal end -->
@@ -324,10 +324,10 @@ $(function tabbedparsedliteral26() {
 <div class="code code-tab">
 <div class="highlight-shell-session">
 <!-- tabbed-parsed-literal start -->
-<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">cdap-cli.bat load artifact examples\&lt;example-directory&gt;\target\&lt;example&gt;-3.4.0.jar</span></span>
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">cdap-cli.bat load artifact examples\&lt;example-directory&gt;\target\&lt;example&gt;-3.4.1.jar</span></span>
 <span class="go">Successfully added artifact with name &#39;&lt;example&gt;&#39;</span>
 
-<span class="gp">&gt; </span><span class="copyable-text"><span class="go">cdap-cli.bat create app &lt;app name&gt; &lt;example&gt; 3.4.0 user</span></span>
+<span class="gp">&gt; </span><span class="copyable-text"><span class="go">cdap-cli.bat create app &lt;app name&gt; &lt;example&gt; 3.4.1 user</span></span>
 <span class="go">Successfully created application</span>
 </pre></div>
 <!-- tabbed-parsed-literal end -->
@@ -371,11 +371,11 @@ $(function tabbedparsedliteral27() {
 <div class="highlight-console">
 <!-- tabbed-parsed-literal start -->
 <div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">curl -w<span class="s1">&#39;\n&#39;</span> localhost:10000/v3/namespaces/default/artifacts/&lt;example&gt; <span class="se">\</span>
-<span class="go">  --data-binary @examples/&lt;example-directory&gt;/target/&lt;example&gt;-3.4.0.jar</span></span>
+<span class="go">  --data-binary @examples/&lt;example-directory&gt;/target/&lt;example&gt;-3.4.1.jar</span></span>
 <span class="go">Artifact added successfully</span>
 
 <span class="gp">$ </span><span class="copyable-text">curl -w<span class="s1">&#39;\n&#39;</span> -X PUT -H <span class="s2">&quot;Content-Type: application/json&quot;</span> localhost:10000/v3/namespaces/default/apps/&lt;app name&gt; <span class="se">\</span>
-<span class="go">  -d &#39;{ &quot;artifact&quot;: { &quot;name&quot;: &quot;&lt;example&gt;&quot;, &quot;version&quot;: &quot;3.4.0&quot;, &quot;scope&quot;: &quot;user&quot; }, &quot;config&quot;: {} }&#39;</span></span>
+<span class="go">  -d &#39;{ &quot;artifact&quot;: { &quot;name&quot;: &quot;&lt;example&gt;&quot;, &quot;version&quot;: &quot;3.4.1&quot;, &quot;scope&quot;: &quot;user&quot; }, &quot;config&quot;: {} }&#39;</span></span>
 <span class="go">Deploy Complete</span>
 </pre></div>
 <!-- tabbed-parsed-literal end -->
@@ -388,11 +388,11 @@ $(function tabbedparsedliteral27() {
 <div class="highlight-shell-session">
 <!-- tabbed-parsed-literal start -->
 <div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">curl localhost:10000/v3/namespaces/default/artifacts/&lt;example&gt; ^</span>
-<span class="go">--data-binary @examples\&lt;example-directory&gt;\target\&lt;example&gt;-3.4.0.jar</span></span>
+<span class="go">--data-binary @examples\&lt;example-directory&gt;\target\&lt;example&gt;-3.4.1.jar</span></span>
 <span class="go">Artifact added successfully</span>
 
 <span class="gp">&gt; </span><span class="copyable-text"><span class="go">curl -X PUT -H &quot;Content-Type: application\json&quot; localhost:10000/v3/namespaces/default/apps/&lt;app name&gt; ^</span>
-<span class="go">-d &#39;{ &quot;artifact&quot;: { &quot;name&quot;: &quot;&lt;example&gt;&quot;, &quot;version&quot;: &quot;3.4.0&quot;, &quot;scope&quot;: &quot;user&quot; }, &quot;config&quot;: {} }&#39;</span></span>
+<span class="go">-d &#39;{ &quot;artifact&quot;: { &quot;name&quot;: &quot;&lt;example&gt;&quot;, &quot;version&quot;: &quot;3.4.1&quot;, &quot;scope&quot;: &quot;user&quot; }, &quot;config&quot;: {} }&#39;</span></span>
 <span class="go">Deploy Complete</span>
 </pre></div>
 <!-- tabbed-parsed-literal end -->
@@ -416,7 +416,7 @@ application&#8217;s name in either the <a class="reference external" href="http:
 see the status of any of the programs associated with the application and, by clicking
 on them, go to their detail page where you can start or stop them.</p>
 </li>
-<li><p class="first">From the Standalone CDAP SDK directory, use the <a class="reference external" href="../source/../../reference-manual/cli-api.html#cli" title="(in Cask Data Application Platform v3.4.0)"><span class="xref std std-ref">Command Line Interface</span></a>.
+<li><p class="first">From the Standalone CDAP SDK directory, use the <a class="reference external" href="../source/../../reference-manual/cli-api.html#cli" title="(in Cask Data Application Platform v3.4.1)"><span class="xref std std-ref">Command Line Interface</span></a>.
 In each CDAP example, the CLI commands for that particular example are provided:</p>
 <script type="text/javascript">
 
@@ -499,7 +499,7 @@ $(function tabbedparsedliteral28() {
 <li><p class="first">On an application&#8217;s detail page in the CDAP UI, you can click on a program to go
 to its detail page and then click the <em>Stop</em> button there; or</p>
 </li>
-<li><p class="first">From the Standalone CDAP SDK directory, use the <a class="reference external" href="../source/../../reference-manual/cli-api.html#cli" title="(in Cask Data Application Platform v3.4.0)"><span class="xref std std-ref">Command Line Interface</span></a>:</p>
+<li><p class="first">From the Standalone CDAP SDK directory, use the <a class="reference external" href="../source/../../reference-manual/cli-api.html#cli" title="(in Cask Data Application Platform v3.4.1)"><span class="xref std std-ref">Command Line Interface</span></a>:</p>
 <script type="text/javascript">
 
 $(function tabbedparsedliteral29() {
@@ -612,13 +612,13 @@ $(function tabbedparsedliteral30() {
 </div>
 <p>Note that any storage (datasets) created or used by the application will remain, as they
 are independent of the application. Datasets can be deleted from the <a class="reference external" href="http://localhost:9999/admin/namespace/detail/default/data"><em>Management Datasets</em></a> page of
-the CDAP UI, or by using the <a class="reference external" href="../source/../../reference-manual/http-restful-api/index.html#restful-api" title="(in Cask Data Application Platform v3.4.0)"><span class="xref std std-ref">HTTP Restful API</span></a>, the
-<a class="reference external" href="../source/../../reference-manual/java-client-api.html#java-client-api" title="(in Cask Data Application Platform v3.4.0)"><span class="xref std std-ref">Java Client API</span></a>, or the <a class="reference external" href="../source/../../reference-manual/cli-api.html#cli" title="(in Cask Data Application Platform v3.4.0)"><span class="xref std std-ref">Command Line Interface API</span></a>.</p>
+the CDAP UI, or by using the <a class="reference external" href="../source/../../reference-manual/http-restful-api/index.html#restful-api" title="(in Cask Data Application Platform v3.4.1)"><span class="xref std std-ref">HTTP Restful API</span></a>, the
+<a class="reference external" href="../source/../../reference-manual/java-client-api.html#java-client-api" title="(in Cask Data Application Platform v3.4.1)"><span class="xref std std-ref">Java Client API</span></a>, or the <a class="reference external" href="../source/../../reference-manual/cli-api.html#cli" title="(in Cask Data Application Platform v3.4.1)"><span class="xref std std-ref">Command Line Interface API</span></a>.</p>
 <p>Streams can be either truncated or deleted, using similar methods.</p>
 <p>The artifact used to create the application will also remain, as multiple
 applications can be created from the same artifact. Artifacts can be deleted using the
-<a class="reference external" href="../source/../../reference-manual/http-restful-api/index.html#restful-api" title="(in Cask Data Application Platform v3.4.0)"><span class="xref std std-ref">Http Restful API</span></a>, the
-<a class="reference external" href="../source/../../reference-manual/java-client-api.html#java-client-api" title="(in Cask Data Application Platform v3.4.0)"><span class="xref std std-ref">Java Client API</span></a>, or the <a class="reference external" href="../source/../../reference-manual/cli-api.html#cli" title="(in Cask Data Application Platform v3.4.0)"><span class="xref std std-ref">Command Line Interface API</span></a>.</p>
+<a class="reference external" href="../source/../../reference-manual/http-restful-api/index.html#restful-api" title="(in Cask Data Application Platform v3.4.1)"><span class="xref std std-ref">Http Restful API</span></a>, the
+<a class="reference external" href="../source/../../reference-manual/java-client-api.html#java-client-api" title="(in Cask Data Application Platform v3.4.1)"><span class="xref std std-ref">Java Client API</span></a>, or the <a class="reference external" href="../source/../../reference-manual/cli-api.html#cli" title="(in Cask Data Application Platform v3.4.1)"><span class="xref std std-ref">Command Line Interface API</span></a>.</p>
 </div>
 </div>
 
@@ -641,7 +641,7 @@ applications can be created from the same artifact. Artifacts can be deleted usi
     
     
   <div role="note" aria-label="manuals links">
-    <h3><a href="../table-of-contents/../../index.html" rel="nofollow">CDAP Documentation v3.4.0</a></h3>
+    <h3><a href="../table-of-contents/../../index.html" rel="nofollow">CDAP Documentation v3.4.1</a></h3>
     <ul class="this-page-menu">
       <li><div class=""></div><a href="../table-of-contents/../../index.html" rel="nofollow">Overview</a></li>
       <li><div class=""></div><a href="../table-of-contents/../../introduction/index.html" rel="nofollow">Introduction to CDAP</a></li>
@@ -715,7 +715,7 @@ applications can be created from the same artifact. Artifacts can be deleted usi
   <div role="note" aria-label="downloads links">
     <h3>Downloads</h3>
     <ul class="this-page-menu">
-      <li><a href="http://docs.cask.co/cdap/3.4.0/cdap-docs-3.4.0-web.zip"
+      <li><a href="http://docs.cask.co/cdap/3.4.1/cdap-docs-3.4.1-web.zip"
             rel="nofollow">Zip Archive of CDAP Documentation</a></li>
     </ul>
    </div>

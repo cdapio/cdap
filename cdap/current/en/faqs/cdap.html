@@ -11,10 +11,10 @@
 
     
     
-    <meta name="git_release" content="3.4.0">
-    <meta name="git_hash" content="c0022513cd549a0b8de5ca0596f74c17b3bcc3f1">
-    <meta name="git_timestamp" content="2016-04-29 06:11:14 -0700">
-    <title>FAQs: CDAP &mdash; Cask Data Application Platform 3.4.0 Documentation</title>
+    <meta name="git_release" content="3.4.1">
+    <meta name="git_hash" content="401c9f3c93408abb6865903b462121e4c7cf0904">
+    <meta name="git_timestamp" content="2016-05-12 12:17:30 -0700">
+    <title>FAQs: CDAP &mdash; Cask Data Application Platform 3.4.1 Documentation</title>
     
     <link rel="stylesheet" href="_static/cdap-faqs.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -25,7 +25,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '3.4.0',
+        VERSION:     '3.4.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  false
@@ -48,7 +48,7 @@
     })(window,document,'script','dataLayer','GTM-PBZ3JL');</script>
     <!-- Google Tag Manager end -->
     <link rel="shortcut icon" href="_static/favicon.ico"/>
-    <link rel="top" title="Cask Data Application Platform 3.4.0 Documentation" href="index.html" />
+    <link rel="top" title="Cask Data Application Platform 3.4.1 Documentation" href="index.html" />
     <link rel="next" title="FAQs: Cloudera Manager" href="cloudera-manager.html" />
     <link rel="prev" title="FAQs: General Questions" href="general.html" /> 
   </head>
@@ -68,7 +68,7 @@
         
         <script type="text/javascript" src="_static/version-menu.js"></script>
         <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
-        <script>window.setVersion('3.4.0');</script>
+        <script>window.setVersion('3.4.1');</script>
        
         <li><a href="table-of-contents.html">CDAP FAQs</a> &raquo;</li> 
       </ul>
@@ -85,7 +85,7 @@
 <div class="section" id="what-are-the-memory-and-core-requirements-for-cdap">
 <span id="faq-installation-startup-memory-core-requirements"></span><h2>What are the memory and core requirements for CDAP?<a class="headerlink" href="#what-are-the-memory-and-core-requirements-for-cdap" title="Permalink to this headline">¶</a></h2>
 <p>The requirements are governed by two sources: CDAP and YARN, and the requirements are
-<a class="reference external" href="source/../../admin-manual/system-requirements.html#admin-manual-memory-core-requirements" title="(in Cask Data Application Platform v3.4.0)"><span class="xref std std-ref">described here</span></a>.</p>
+<a class="reference external" href="source/../../admin-manual/system-requirements.html#admin-manual-memory-core-requirements" title="(in Cask Data Application Platform v3.4.1)"><span class="xref std std-ref">described here</span></a>.</p>
 </div>
 <div class="section" id="how-do-i-set-the-cdap-properties-for-components-running-on-multiple-machines">
 <h2>How do I set the CDAP properties for components running on multiple machines?<a class="headerlink" href="#how-do-i-set-the-cdap-properties-for-components-running-on-multiple-machines" title="Permalink to this headline">¶</a></h2>
@@ -140,8 +140,8 @@ been installed:</p>
 </div>
 <div class="section" id="i-ve-followed-the-install-instructions-yet-cdap-does-not-start-and-fails-verification-what-next">
 <h2>I&#8217;ve followed the install instructions, yet CDAP does not start and fails verification. What next?<a class="headerlink" href="#i-ve-followed-the-install-instructions-yet-cdap-does-not-start-and-fails-verification-what-next" title="Permalink to this headline">¶</a></h2>
-<p>If you have followed <a class="reference external" href="source/../../admin-manual/installation/index.html#installation-index" title="(in Cask Data Application Platform v3.4.0)"><span class="xref std std-ref">the installation instructions</span></a>, and CDAP either did not pass the
-<a class="reference external" href="source/../../admin-manual/verification.html#admin-manual-verification" title="(in Cask Data Application Platform v3.4.0)"><span class="xref std std-ref">verification step</span></a> or did not startup, check:</p>
+<p>If you have followed <a class="reference external" href="source/../../admin-manual/installation/index.html#installation-index" title="(in Cask Data Application Platform v3.4.1)"><span class="xref std std-ref">the installation instructions</span></a>, and CDAP either did not pass the
+<a class="reference external" href="source/../../admin-manual/verification.html#admin-manual-verification" title="(in Cask Data Application Platform v3.4.1)"><span class="xref std std-ref">verification step</span></a> or did not startup, check:</p>
 <ul>
 <li><p class="first">Look in the CDAP logs for error messages (located either in <code class="docutils literal"><span class="pre">/var/log/cdap</span></code> for CDAP Distributed or
 <code class="docutils literal"><span class="pre">$CDAP_HOME/logs</span></code> for CDAP SDK Standalone)</p>
@@ -158,10 +158,10 @@ Debian version) from <a class="reference external" href="http://cask.co/download
 </li>
 <li><p class="first">Check permissions of directories:</p>
 <ul class="simple">
-<li>The <a class="reference external" href="source/../../admin-manual/installation/packages.html#packages-configuration-options" title="(in Cask Data Application Platform v3.4.0)"><span class="xref std std-ref">CDAP HDFS User</span></a> (by default, <code class="docutils literal"><span class="pre">yarn</span></code>) owns the HDFS directory (by default,  <code class="docutils literal"><span class="pre">/cdap</span></code>).</li>
-<li>The <a class="reference external" href="source/../../admin-manual/installation/packages.html#packages-configuration-options" title="(in Cask Data Application Platform v3.4.0)"><span class="xref std std-ref">Kafka Log directory</span></a> (by default, <code class="docutils literal"><span class="pre">/data/cdap/kafka-logs</span></code>),
+<li>The <a class="reference external" href="source/../../admin-manual/installation/packages.html#packages-configuration-options" title="(in Cask Data Application Platform v3.4.1)"><span class="xref std std-ref">CDAP HDFS User</span></a> (by default, <code class="docutils literal"><span class="pre">yarn</span></code>) owns the HDFS directory (by default,  <code class="docutils literal"><span class="pre">/cdap</span></code>).</li>
+<li>The <a class="reference external" href="source/../../admin-manual/installation/packages.html#packages-configuration-options" title="(in Cask Data Application Platform v3.4.1)"><span class="xref std std-ref">Kafka Log directory</span></a> (by default, <code class="docutils literal"><span class="pre">/data/cdap/kafka-logs</span></code>),
 must be writable by the CDAP UNIX user.</li>
-<li>The <a class="reference external" href="source/../../admin-manual/installation/packages.html#packages-configuration-tmp-files" title="(in Cask Data Application Platform v3.4.0)"><span class="xref std std-ref">temp directories</span></a> utilized by CDAP must be writable by the CDAP UNIX user.</li>
+<li>The <a class="reference external" href="source/../../admin-manual/installation/packages.html#packages-configuration-tmp-files" title="(in Cask Data Application Platform v3.4.1)"><span class="xref std std-ref">temp directories</span></a> utilized by CDAP must be writable by the CDAP UNIX user.</li>
 </ul>
 </li>
 </ul>
@@ -204,7 +204,7 @@ the master container (Application Master) logs to see if it was able to launch a
 <li>If it was able to launch all containers, then you may need to check the launched container logs for any errors.
 The <code class="docutils literal"><span class="pre">yarn-site.xml</span></code> configuration file determines the container log directory.</li>
 <li>Ensure that the CDAP UI can connect to the CDAP Router. Check that the configured <code class="docutils literal"><span class="pre">router.server.address</span></code> and
-<code class="docutils literal"><span class="pre">router.server.port</span></code> (default 10000) in <a class="reference external" href="source/../../admin-manual/installation/packages.html#packages-configuration-options" title="(in Cask Data Application Platform v3.4.0)"><span class="xref std std-ref">cdap-site.xml file</span></a> corresponds with where the CDAP Router is listening.</li>
+<code class="docutils literal"><span class="pre">router.server.port</span></code> (default 10000) in <a class="reference external" href="source/../../admin-manual/installation/packages.html#packages-configuration-options" title="(in Cask Data Application Platform v3.4.1)"><span class="xref std std-ref">cdap-site.xml file</span></a> corresponds with where the CDAP Router is listening.</li>
 </ul>
 </div>
 <div class="section" id="i-don-t-see-the-cdap-master-service-on-yarn">
@@ -214,7 +214,7 @@ The <code class="docutils literal"><span class="pre">yarn-site.xml</span></code>
 Can you log into the cluster at <code class="docutils literal"><span class="pre">http://&lt;host&gt;:8088</span></code> and access the YARN Resource Manager webapp?</li>
 <li>Ensure <a class="reference internal" href="#faq-installation-startup-memory-core-requirements"><span>YARN has enough memory and vcore capacity</span></a>.</li>
 <li>Is the router address properly configured (<code class="docutils literal"><span class="pre">router.server.address</span></code> and <code class="docutils literal"><span class="pre">router.server.port</span></code>
-(default 10000) in <a class="reference external" href="source/../../admin-manual/installation/packages.html#packages-configuration-options" title="(in Cask Data Application Platform v3.4.0)"><span class="xref std std-ref">cdap-site.xml file</span></a>) and the boxes using it?</li>
+(default 10000) in <a class="reference external" href="source/../../admin-manual/installation/packages.html#packages-configuration-options" title="(in Cask Data Application Platform v3.4.1)"><span class="xref std std-ref">cdap-site.xml file</span></a>) and the boxes using it?</li>
 <li>Check that the classpath used includes the YARN configuration in it.</li>
 </ul>
 </div>
@@ -227,7 +227,7 @@ either due to a lack of disk space or permissions.</p>
 <div class="section" id="the-cdap-master-log-shows-permissions-issues">
 <h2>The CDAP Master log shows permissions issues.<a class="headerlink" href="#the-cdap-master-log-shows-permissions-issues" title="Permalink to this headline">¶</a></h2>
 <p>Ensure that <code class="docutils literal"><span class="pre">hdfs:///${hdfs.namespace}</span></code> and <code class="docutils literal"><span class="pre">hdfs:///user/${hdfs.user}</span></code> exist and are owned by <code class="docutils literal"><span class="pre">${hdfs.user}</span></code>.
-(<code class="docutils literal"><span class="pre">hdfs.namespace</span></code> and <code class="docutils literal"><span class="pre">hdfs.user</span></code> are defined in your installation&#8217;s <a class="reference external" href="source/../../admin-manual/installation/packages.html#packages-configuration-options" title="(in Cask Data Application Platform v3.4.0)"><span class="xref std std-ref">cdap-site.xml file</span></a>.)</p>
+(<code class="docutils literal"><span class="pre">hdfs.namespace</span></code> and <code class="docutils literal"><span class="pre">hdfs.user</span></code> are defined in your installation&#8217;s <a class="reference external" href="source/../../admin-manual/installation/packages.html#packages-configuration-options" title="(in Cask Data Application Platform v3.4.1)"><span class="xref std std-ref">cdap-site.xml file</span></a>.)</p>
 <p>In any other cases, the error should show which directory it is attempting to access, such as:</p>
 <div class="highlight-java"><div class="highlight"><pre>2015-10-30 22:14:27,528 - ERROR [ STARTING:...MasterServiceMain$2@452] - master.services failed with exception; restarting with back-off
 java.lang.RuntimeException: java.io.IOException: failed to copy bundle from file:/tmp/appMaster.37a86cfd....jar5052.tmp
@@ -290,12 +290,12 @@ the logs for <code class="docutils literal"><span class="pre">cdap-master</span>
 </div>
 <p>Things to check as possible solutions:</p>
 <ol class="arabic">
-<li><p class="first">Check if the JDK being used is <a class="reference external" href="source/../../admin-manual/system-requirements.html#admin-manual-install-java-runtime" title="(in Cask Data Application Platform v3.4.0)"><span class="xref std std-ref">supported by CDAP</span></a>:</p>
+<li><p class="first">Check if the JDK being used is <a class="reference external" href="source/../../admin-manual/system-requirements.html#admin-manual-install-java-runtime" title="(in Cask Data Application Platform v3.4.1)"><span class="xref std std-ref">supported by CDAP</span></a>:</p>
 <div class="highlight-java"><div class="highlight"><pre><span class="n">java</span> <span class="o">-</span><span class="n">version</span>
 </pre></div>
 </div>
 </li>
-<li><p class="first">Check if the CDAP user is using a <a class="reference external" href="source/../../admin-manual/system-requirements.html#admin-manual-install-java-runtime" title="(in Cask Data Application Platform v3.4.0)"><span class="xref std std-ref">correct version of the JDK</span></a>:</p>
+<li><p class="first">Check if the CDAP user is using a <a class="reference external" href="source/../../admin-manual/system-requirements.html#admin-manual-install-java-runtime" title="(in Cask Data Application Platform v3.4.1)"><span class="xref std std-ref">correct version of the JDK</span></a>:</p>
 <div class="highlight-java"><div class="highlight"><pre><span class="n">sudo</span> <span class="n">su</span> <span class="o">-</span> <span class="o">&lt;</span><span class="n">cdap</span><span class="o">-</span><span class="n">user</span><span class="o">&gt;</span>
 <span class="n">java</span> <span class="o">-</span><span class="n">version</span>
 </pre></div>
@@ -314,7 +314,7 @@ the logs for <code class="docutils literal"><span class="pre">cdap-master</span>
 </div>
 <p>If the classpath is incorrect (in general, the <code class="docutils literal"><span class="pre">hbase-compat-&lt;version&gt;/lib/*</span></code> and
 <code class="docutils literal"><span class="pre">cdap/master/lib/*</span></code> entries must precede any other paths that contain JARs or classes
-such as the HBase classpath), review the <a class="reference external" href="source/../../admin-manual/installation/index.html#installation-index" title="(in Cask Data Application Platform v3.4.0)"><span class="xref std std-ref">installation instructions</span></a> and correct.</p>
+such as the HBase classpath), review the <a class="reference external" href="source/../../admin-manual/installation/index.html#installation-index" title="(in Cask Data Application Platform v3.4.1)"><span class="xref std std-ref">installation instructions</span></a> and correct.</p>
 </li>
 </ol>
 </div>
@@ -364,7 +364,7 @@ However, decreasing the number of in-memory buckets may lead to out-of-order log
 <li>Increase the number of Log Saver instances using <code class="docutils literal"><span class="pre">log.saver.num.instances</span></code>; and</li>
 <li>Adjust the number of in-memory log buckets <code class="docutils literal"><span class="pre">log.saver.event.max.inmemory.buckets</span></code>.</li>
 </ul>
-<p>See the <code class="docutils literal"><span class="pre">log.saver</span></code> parameter section of the <a class="reference external" href="source/../../admin-manual/appendices/cdap-site.html#appendix-cdap-site-xml" title="(in Cask Data Application Platform v3.4.0)"><span class="xref std std-ref">Appendix cdap-site.xml</span></a> for a list of these configuration parameters and their
+<p>See the <code class="docutils literal"><span class="pre">log.saver</span></code> parameter section of the <a class="reference external" href="source/../../admin-manual/appendices/cdap-site.html#appendix-cdap-site-xml" title="(in Cask Data Application Platform v3.4.1)"><span class="xref std std-ref">Appendix cdap-site.xml</span></a> for a list of these configuration parameters and their
 values that can be adjusted.</p>
 <p class="rubric">Upgrading CDAP</p>
 </div>
@@ -447,7 +447,7 @@ discussions that we think will be helpful to the users.</p>
     
     
   <div role="note" aria-label="manuals links">
-    <h3><a href="table-of-contents/../../index.html" rel="nofollow">CDAP Documentation v3.4.0</a></h3>
+    <h3><a href="table-of-contents/../../index.html" rel="nofollow">CDAP Documentation v3.4.1</a></h3>
     <ul class="this-page-menu">
       <li><div class=""></div><a href="table-of-contents/../../index.html" rel="nofollow">Overview</a></li>
       <li><div class=""></div><a href="table-of-contents/../../introduction/index.html" rel="nofollow">Introduction to CDAP</a></li>
@@ -503,7 +503,7 @@ discussions that we think will be helpful to the users.</p>
   <div role="note" aria-label="downloads links">
     <h3>Downloads</h3>
     <ul class="this-page-menu">
-      <li><a href="http://docs.cask.co/cdap/3.4.0/cdap-docs-3.4.0-web.zip"
+      <li><a href="http://docs.cask.co/cdap/3.4.1/cdap-docs-3.4.1-web.zip"
             rel="nofollow">Zip Archive of CDAP Documentation</a></li>
     </ul>
    </div>

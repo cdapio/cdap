@@ -10,10 +10,10 @@
 
     
     
-    <meta name="git_release" content="3.4.0">
-    <meta name="git_hash" content="c0022513cd549a0b8de5ca0596f74c17b3bcc3f1">
-    <meta name="git_timestamp" content="2016-04-29 06:11:14 -0700">
-    <title>Logging and Monitoring &mdash; Cask Data Application Platform 3.4.0 Documentation</title>
+    <meta name="git_release" content="3.4.1">
+    <meta name="git_hash" content="401c9f3c93408abb6865903b462121e4c7cf0904">
+    <meta name="git_timestamp" content="2016-05-12 12:17:30 -0700">
+    <title>Logging and Monitoring &mdash; Cask Data Application Platform 3.4.1 Documentation</title>
     
     <link rel="stylesheet" href="../_static/cdap.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
@@ -24,7 +24,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '3.4.0',
+        VERSION:     '3.4.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  false
@@ -47,7 +47,7 @@
     })(window,document,'script','dataLayer','GTM-PBZ3JL');</script>
     <!-- Google Tag Manager end -->
     <link rel="shortcut icon" href="../_static/favicon.ico"/>
-    <link rel="top" title="Cask Data Application Platform 3.4.0 Documentation" href="../index.html" />
+    <link rel="top" title="Cask Data Application Platform 3.4.1 Documentation" href="../index.html" />
     <link rel="up" title="Operations" href="index.html" />
     <link rel="next" title="Metrics" href="metrics.html" />
     <link rel="prev" title="Operations" href="index.html" /> 
@@ -68,7 +68,7 @@
         
         <script type="text/javascript" src="../_static/version-menu.js"></script>
         <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
-        <script>window.setVersion('3.4.0');</script>
+        <script>window.setVersion('3.4.1');</script>
        
         <li><a href="../table-of-contents.html">CDAP Administration Manual</a> &raquo;</li>
           <li><a href="index.html" accesskey="U">Operations</a> &raquo;</li> 
@@ -88,8 +88,8 @@
 Being able to view these details can be very helpful in debugging CDAP applications as
 well as analyzing their performance. CDAP gives access to its logs, metrics, and other
 monitoring information through RESTful APIs as well as a Java Client.</p>
-<p>See the <a class="reference external" href="../source/../../reference-manual/http-restful-api/logging.html#http-restful-api-logging" title="(in Cask Data Application Platform v3.4.0)"><span class="xref std std-ref">Logging</span></a>, <a class="reference external" href="../source/../../reference-manual/http-restful-api/metrics.html#http-restful-api-metrics" title="(in Cask Data Application Platform v3.4.0)"><span class="xref std std-ref">Metrics</span></a>,
-and <a class="reference external" href="../source/../../reference-manual/http-restful-api/monitor.html#http-restful-api-monitor" title="(in Cask Data Application Platform v3.4.0)"><span class="xref std std-ref">Monitoring</span></a> HTTP RESTful APIs, the <a class="reference external" href="../source/../../reference-manual/java-client-api.html#java-client-api" title="(in Cask Data Application Platform v3.4.0)"><span class="xref std std-ref">Java Client</span></a>, and the <a class="reference internal" href="#master-service-logging-configuration"><span>Master Service Logging Configuration</span></a> for
+<p>See the <a class="reference external" href="../source/../../reference-manual/http-restful-api/logging.html#http-restful-api-logging" title="(in Cask Data Application Platform v3.4.1)"><span class="xref std std-ref">Logging</span></a>, <a class="reference external" href="../source/../../reference-manual/http-restful-api/metrics.html#http-restful-api-metrics" title="(in Cask Data Application Platform v3.4.1)"><span class="xref std std-ref">Metrics</span></a>,
+and <a class="reference external" href="../source/../../reference-manual/http-restful-api/monitor.html#http-restful-api-monitor" title="(in Cask Data Application Platform v3.4.1)"><span class="xref std std-ref">Monitoring</span></a> HTTP RESTful APIs, the <a class="reference external" href="../source/../../reference-manual/java-client-api.html#java-client-api" title="(in Cask Data Application Platform v3.4.1)"><span class="xref std std-ref">Java Client</span></a>, and the <a class="reference internal" href="#master-service-logging-configuration"><span>Master Service Logging Configuration</span></a> for
 additional information.</p>
 </div>
 <div class="section" id="log-location">
@@ -118,7 +118,7 @@ directories under <code class="docutils literal"><span class="pre">/var/run/clou
 </div>
 <p>The log messages emitted by your application code can be viewed in different ways.</p>
 <ul class="simple">
-<li>Using the <a class="reference external" href="../source/../../reference-manual/http-restful-api/index.html#restful-api" title="(in Cask Data Application Platform v3.4.0)"><span>CDAP HTTP RESTful API v3</span></a>. The <a class="reference external" href="../source/../../reference-manual/http-restful-api/logging.html#http-restful-api-logging" title="(in Cask Data Application Platform v3.4.0)"><span class="xref std std-ref">Logging HTTP RESTful API</span></a>
+<li>Using the <a class="reference external" href="../source/../../reference-manual/http-restful-api/index.html#restful-api" title="(in Cask Data Application Platform v3.4.1)"><span>CDAP HTTP RESTful API v3</span></a>. The <a class="reference external" href="../source/../../reference-manual/http-restful-api/logging.html#http-restful-api-logging" title="(in Cask Data Application Platform v3.4.1)"><span class="xref std std-ref">Logging HTTP RESTful API</span></a>
 details the available contexts that can be called to retrieve different messages.</li>
 <li>Log messages of an application can be viewed in the <a class="reference internal" href="cdap-ui.html#cdap-ui"><span>CDAP UI</span></a>
 by clicking the <em>Logs</em> tab of an application.</li>
@@ -126,7 +126,7 @@ by clicking the <em>Logs</em> tab of an application.</li>
 </div>
 <div class="section" id="master-service-logging-configuration">
 <span id="id1"></span><h2>Master Service Logging Configuration<a class="headerlink" href="#master-service-logging-configuration" title="Permalink to this headline">¶</a></h2>
-<p><a class="reference external" href="../source/../../reference-manual/glossary.html#term-master-services" title="(in Cask Data Application Platform v3.4.0)"><span class="xref std std-term">Master Services</span></a> use <code class="docutils literal"><span class="pre">logback-container.xml</span></code>, packaged with the CDAP distribution,
+<p><a class="reference external" href="../source/../../reference-manual/glossary.html#term-master-services" title="(in Cask Data Application Platform v3.4.1)"><span class="xref std std-term">Master Services</span></a> use <code class="docutils literal"><span class="pre">logback-container.xml</span></code>, packaged with the CDAP distribution,
 for logging configuration. This logback does log rotation once a day at midnight and expires logs older than
 14 days. Changes can be made to <code class="docutils literal"><span class="pre">logback-container.xml</span></code>, and the <code class="docutils literal"><span class="pre">cdap-master</span></code> process will need to be restarted
 for the modified logback to take effect.</p>
@@ -158,7 +158,7 @@ for checking the status of CDAP applications, programs, and the CDAP instance it
     
     
   <div role="note" aria-label="manuals links">
-    <h3><a href="../table-of-contents/../../index.html" rel="nofollow">CDAP Documentation v3.4.0</a></h3>
+    <h3><a href="../table-of-contents/../../index.html" rel="nofollow">CDAP Documentation v3.4.1</a></h3>
     <ul class="this-page-menu">
       <li><div class=""></div><a href="../table-of-contents/../../index.html" rel="nofollow">Overview</a></li>
       <li><div class=""></div><a href="../table-of-contents/../../introduction/index.html" rel="nofollow">Introduction to CDAP</a></li>
@@ -234,7 +234,7 @@ for checking the status of CDAP applications, programs, and the CDAP instance it
   <div role="note" aria-label="downloads links">
     <h3>Downloads</h3>
     <ul class="this-page-menu">
-      <li><a href="http://docs.cask.co/cdap/3.4.0/cdap-docs-3.4.0-web.zip"
+      <li><a href="http://docs.cask.co/cdap/3.4.1/cdap-docs-3.4.1-web.zip"
             rel="nofollow">Zip Archive of CDAP Documentation</a></li>
     </ul>
    </div>

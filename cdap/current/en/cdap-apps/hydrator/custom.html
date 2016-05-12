@@ -10,10 +10,10 @@
 
     
     
-    <meta name="git_release" content="3.4.0">
-    <meta name="git_hash" content="c0022513cd549a0b8de5ca0596f74c17b3bcc3f1">
-    <meta name="git_timestamp" content="2016-04-29 06:11:14 -0700">
-    <title>Creating Custom ETL Plugins &mdash; Cask Data Application Platform 3.4.0 Documentation</title>
+    <meta name="git_release" content="3.4.1">
+    <meta name="git_hash" content="401c9f3c93408abb6865903b462121e4c7cf0904">
+    <meta name="git_timestamp" content="2016-05-12 12:17:30 -0700">
+    <title>Creating Custom ETL Plugins &mdash; Cask Data Application Platform 3.4.1 Documentation</title>
     
     <link rel="stylesheet" href="../_static/cdap.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
@@ -24,7 +24,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '3.4.0',
+        VERSION:     '3.4.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  false
@@ -47,7 +47,7 @@
     })(window,document,'script','dataLayer','GTM-PBZ3JL');</script>
     <!-- Google Tag Manager end -->
     <link rel="shortcut icon" href="../_static/favicon.ico"/>
-    <link rel="top" title="Cask Data Application Platform 3.4.0 Documentation" href="../index.html" />
+    <link rel="top" title="Cask Data Application Platform 3.4.1 Documentation" href="../index.html" />
     <link rel="up" title="Cask Hydrator and ETL Pipelines" href="index.html" />
     <link rel="next" title="ETL Plugins" href="hydrator-plugins/index.html" />
     <link rel="prev" title="Creating an ETL Application" href="creating.html" /> 
@@ -68,7 +68,7 @@
         
         <script type="text/javascript" src="../_static/version-menu.js"></script>
         <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
-        <script>window.setVersion('3.4.0');</script>
+        <script>window.setVersion('3.4.1');</script>
        
         <li><a href="../table-of-contents.html">CDAP CDAP Applications</a> &raquo;</li>
           <li><a href="index.html" accesskey="U">Cask Hydrator and ETL Pipelines</a> &raquo;</li> 
@@ -115,7 +115,7 @@ refer to the <a class="reference internal" href="../index.html#cdap-apps-index">
 <span class="gp">$</span> mvn archetype:generate \
       -DarchetypeGroupId=co.cask.cdap \
       -DarchetypeArtifactId=&lt;archetype&gt; \
-      -DarchetypeVersion=3.4.0 \
+      -DarchetypeVersion=3.4.1 \
       -DgroupId=org.example.plugin
 </pre>
 </div>
@@ -589,7 +589,7 @@ incoming data object. An emitter can be used to pass the results to the subseque
 <p>Below is an example of a <code class="docutils literal"><span class="pre">DuplicateTransform</span></code> that emits copies of the incoming record
 based on the value in the record. In addition, a user metric indicating the number of
 copies in each transform is emitted. The user metrics can be queried by using the CDAP
-<a class="reference external" href="../source/../../reference-manual/http-restful-api/metrics.html#http-restful-api-metrics" title="(in Cask Data Application Platform v3.4.0)"><span class="xref std std-ref">Metrics HTTP RESTful API</span></a>:</p>
+<a class="reference external" href="../source/../../reference-manual/http-restful-api/metrics.html#http-restful-api-metrics" title="(in Cask Data Application Platform v3.4.1)"><span class="xref std std-ref">Metrics HTTP RESTful API</span></a>:</p>
 <div class="highlight-java"><div class="highlight"><pre><span class="nd">@Plugin</span><span class="o">(</span><span class="n">type</span> <span class="o">=</span> <span class="s">&quot;transform&quot;</span><span class="o">)</span>
 <span class="nd">@Name</span><span class="o">(</span><span class="s">&quot;Duplicator&quot;</span><span class="o">)</span>
 <span class="nd">@Description</span><span class="o">(</span><span class="s">&quot;Transformation example that makes copies.&quot;</span><span class="o">)</span>
@@ -680,7 +680,7 @@ for the entire pipeline.</li>
 for the entire pipeline.</li>
 </ul>
 <p><strong>ScriptLookup</strong></p>
-<p>Currently, <code class="docutils literal"><span class="pre">ScriptContext.getLookup(String</span> <span class="pre">table)</span></code> only supports <a class="reference external" href="../source/../../developers-manual/building-blocks/datasets/index.html#datasets-index" title="(in Cask Data Application Platform v3.4.0)"><span class="xref std std-ref">key-value tables</span></a>.</p>
+<p>Currently, <code class="docutils literal"><span class="pre">ScriptContext.getLookup(String</span> <span class="pre">table)</span></code> only supports <a class="reference external" href="../source/../../developers-manual/building-blocks/datasets/index.html#datasets-index" title="(in Cask Data Application Platform v3.4.1)"><span class="xref std std-ref">key-value tables</span></a>.</p>
 <p>For example, if a lookup table <em>purchases</em> is configured, then you will be able to perform
 operations with that lookup table in your script: <code class="docutils literal"><span class="pre">context.getLookup('purchases').lookup('key')</span></code></p>
 <p><strong>Validator Object</strong></p>
@@ -993,7 +993,7 @@ to ensure that the JAR can trace all required dependencies to correctly build th
 <p>The examples are taken directly from the <code class="docutils literal"><span class="pre">BaseETLBatchTest</span></code> in the <code class="docutils literal"><span class="pre">cdap-etl-batch</span></code> artifact
 included with CDAP.</p>
 <p>Additional information on unit testing with CDAP is in the Developers’ Manual section
-on <a class="reference external" href="../source/../../developers-manual/testing/testing.html#test-framework" title="(in Cask Data Application Platform v3.4.0)"><span class="xref std std-ref">Testing a CDAP Application</span></a>.</p>
+on <a class="reference external" href="../source/../../developers-manual/testing/testing.html#test-framework" title="(in Cask Data Application Platform v3.4.1)"><span class="xref std std-ref">Testing a CDAP Application</span></a>.</p>
 <p>In addition, CDAP provides a <code class="docutils literal"><span class="pre">hydrator-test</span></code> module that contains several mock plugins
 for you to use in tests with your custom plugins. To use the module, add a dependency to
 your <code class="docutils literal"><span class="pre">pom.xml</span></code>:</p>
@@ -1107,7 +1107,7 @@ created from one of the artifacts), the plugins must first be packaged in a JAR 
 After that, the JAR file must be deployed either as a <a class="reference internal" href="#plugins-deployment-system"><span>system artifact</span></a> or a <a class="reference internal" href="#plugins-deployment-user"><span>user artifact</span></a>.</p>
 <p>A system artifact is available to users across any namespace. A user artifact is available
 only to users in the namespace to which it is deployed. By design, deploying as a user
-artifact just requires access to the <a class="reference external" href="../source/../../reference-manual/http-restful-api/artifact.html#http-restful-api-artifact-add" title="(in Cask Data Application Platform v3.4.0)"><span class="xref std std-ref">RESTful API</span></a>,
+artifact just requires access to the <a class="reference external" href="../source/../../reference-manual/http-restful-api/artifact.html#http-restful-api-artifact-add" title="(in Cask Data Application Platform v3.4.1)"><span class="xref std std-ref">RESTful API</span></a>,
 while deploying as a system artifact requires access to the filesystem of the CDAP Master.
 This then requires administrator access and permission.</p>
 </div>
@@ -1147,7 +1147,7 @@ must be placed in the appropriate directory.</p>
 <li><strong>Standalone mode:</strong> <code class="docutils literal"><span class="pre">$CDAP_INSTALL_DIR/artifacts</span></code></li>
 <li><strong>Distributed mode:</strong> The plugin JARs should be placed in the local file system and the path
 can be provided to CDAP by setting the property <code class="docutils literal"><span class="pre">app.artifact.dir</span></code> in
-<a class="reference external" href="../source/../../admin-manual/appendices/cdap-site.html#appendix-cdap-site-xml" title="(in Cask Data Application Platform v3.4.0)"><span class="xref std std-ref">cdap-site.xml</span></a>. Multiple directories can be defined by separating
+<a class="reference external" href="../source/../../admin-manual/appendices/cdap-site.html#appendix-cdap-site-xml" title="(in Cask Data Application Platform v3.4.1)"><span class="xref std std-ref">cdap-site.xml</span></a>. Multiple directories can be defined by separating
 them with a semicolon.The default path is <code class="docutils literal"><span class="pre">/opt/cdap/master/artifacts</span></code>.</li>
 </ul>
 <p>For each plugin JAR, there must also be a corresponding configuration file to specify which artifacts
@@ -1159,11 +1159,11 @@ and <code class="docutils literal"><span class="pre">cdap-etl-realtime</span></c
 <div class="highlight container">
 <pre class="literal-block">
 {
-  &quot;parents&quot;: [ &quot;cdap-etl-batch[3.4.0,3.4.0]&quot;, &quot;cdap-etl-realtime[3.4.0,3.4.0]&quot; ]
+  &quot;parents&quot;: [ &quot;cdap-etl-batch[3.4.1,3.4.1]&quot;, &quot;cdap-etl-realtime[3.4.1,3.4.1]&quot; ]
 }
 </pre>
 </div>
-<p>This file specifies that the plugins in <code class="docutils literal"><span class="pre">custom-transforms-1.0.0.jar</span></code> can be used by version 3.4.0 of
+<p>This file specifies that the plugins in <code class="docutils literal"><span class="pre">custom-transforms-1.0.0.jar</span></code> can be used by version 3.4.1 of
 the <code class="docutils literal"><span class="pre">cdap-etl-batch</span></code> and <code class="docutils literal"><span class="pre">cdap-etl-realtime</span></code> artifacts. You can also specify a wider range of versions
 that can use the plugins, with square brackets <code class="docutils literal"><span class="pre">[</span> <span class="pre">]</span></code> indicating an inclusive version and parentheses <code class="docutils literal"><span class="pre">(</span> <span class="pre">)</span></code> indicating
 an exclusive version. For example:</p>
@@ -1195,15 +1195,15 @@ list them in the configuration:</p>
 </div>
 </div>
 <p>Once your JARs and matching configuration files are in place, a CDAP CLI command (<code class="docutils literal"><span class="pre">load</span> <span class="pre">artifact</span></code>) or
-a RESTful API call to <a class="reference external" href="../source/../../reference-manual/http-restful-api/artifact.html#http-restful-api-artifact-system-load" title="(in Cask Data Application Platform v3.4.0)"><span class="xref std std-ref">load system artifacts</span></a>
-can be made to load the artifacts. As described in the documentation on <a class="reference external" href="../source/../../developers-manual/building-blocks/artifacts.html#artifacts" title="(in Cask Data Application Platform v3.4.0)"><span>Artifacts</span></a>, only
+a RESTful API call to <a class="reference external" href="../source/../../reference-manual/http-restful-api/artifact.html#http-restful-api-artifact-system-load" title="(in Cask Data Application Platform v3.4.1)"><span class="xref std std-ref">load system artifacts</span></a>
+can be made to load the artifacts. As described in the documentation on <a class="reference external" href="../source/../../developers-manual/building-blocks/artifacts.html#artifacts" title="(in Cask Data Application Platform v3.4.1)"><span>Artifacts</span></a>, only
 snapshot artifacts can be re-deployed without requiring that they first be deleted.</p>
 <p>Alternatively, the CDAP Standalone should be restarted for this change to take effect in Standalone
 mode, and <code class="docutils literal"><span class="pre">cdap-master</span></code> services should be restarted in the Distributed mode.</p>
 </div>
 <div class="section" id="deploying-as-a-user-artifact">
 <span id="plugins-deployment-user"></span><h3>Deploying as a User Artifact<a class="headerlink" href="#deploying-as-a-user-artifact" title="Permalink to this headline">¶</a></h3>
-<p>To deploy the artifact as a user artifact, use the <a class="reference external" href="../source/../../reference-manual/http-restful-api/artifact.html#http-restful-api-artifact-add" title="(in Cask Data Application Platform v3.4.0)"><span class="xref std std-ref">RESTful Add Artifact API</span></a> or the CLI.</p>
+<p>To deploy the artifact as a user artifact, use the <a class="reference external" href="../source/../../reference-manual/http-restful-api/artifact.html#http-restful-api-artifact-add" title="(in Cask Data Application Platform v3.4.1)"><span class="xref std std-ref">RESTful Add Artifact API</span></a> or the CLI.</p>
 <p>When using the RESTful API, you will need to specify the <code class="docutils literal"><span class="pre">Artifact-Extends</span></code> header.
 Unless the artifact&#8217;s version is defined in the manifest file of the JAR file you upload,
 you will also need to specify the <code class="docutils literal"><span class="pre">Artifact-Version</span></code> header.</p>
@@ -1238,7 +1238,7 @@ $(function tabbedparsedliteral1() {
 <div class="highlight-console">
 <!-- tabbed-parsed-literal start -->
 <div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">curl -w<span class="s2">&quot;\n&quot;</span> -X POST <span class="s2">&quot;localhost:10000/v3/namespaces/default/artifacts/custom-transforms&quot;</span> <span class="se">\</span>
-<span class="go">-H &quot;Artifact-Extends: system:cdap-etl-batch[3.4.0, 3.4.0]/system:cdap-etl-realtime[3.4.0, 3.4.0]&quot; \</span>
+<span class="go">-H &quot;Artifact-Extends: system:cdap-etl-batch[3.4.1, 3.4.1]/system:cdap-etl-realtime[3.4.1, 3.4.1]&quot; \</span>
 <span class="go">--data-binary @/path/to/custom-transforms-1.0.0.jar</span></span>
 </pre></div>
 <!-- tabbed-parsed-literal end -->
@@ -1251,7 +1251,7 @@ $(function tabbedparsedliteral1() {
 <div class="highlight-shell-session">
 <!-- tabbed-parsed-literal start -->
 <div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">curl -X POST &quot;localhost:10000/v3/namespaces/default/artifacts/custom-transforms&quot; ^</span>
-<span class="go">-H &quot;Artifact-Extends: system:cdap-etl-batch[3.4.0, 3.4.0]\system:cdap-etl-realtime[3.4.0, 3.4.0]&quot; ^</span>
+<span class="go">-H &quot;Artifact-Extends: system:cdap-etl-batch[3.4.1, 3.4.1]\system:cdap-etl-realtime[3.4.1, 3.4.1]&quot; ^</span>
 <span class="go">--data-binary @\path\to\custom-transforms-1.0.0.jar</span></span>
 </pre></div>
 <!-- tabbed-parsed-literal end -->
@@ -1315,7 +1315,7 @@ $(function() {
 <div class="highlight container">
 <pre class="literal-block">
 {
-  &quot;parents&quot;: [ &quot;system:cdap-etl-batch[3.4.0,3.4.0]&quot;, &quot;system:cdap-etl-realtime[3.4.0,3.4.0]&quot; ]
+  &quot;parents&quot;: [ &quot;system:cdap-etl-batch[3.4.1,3.4.1]&quot;, &quot;system:cdap-etl-realtime[3.4.1,3.4.1]&quot; ]
 }
 </pre>
 </div>
@@ -1324,8 +1324,8 @@ you must prefix the parent artifact name with <code class="docutils literal"><sp
 This is in the event there is a user artifact with the same name as the system artifact.
 If you are extending a user artifact, no prefix is required.</p>
 <p>You can deploy third-party JARs in the same way except the plugin information needs
-<a class="reference external" href="../source/../../developers-manual/building-blocks/plugins.html#plugins-third-party" title="(in Cask Data Application Platform v3.4.0)"><span class="xref std std-ref">to be explicitly listed</span></a>. As described in the documentation on
-<a class="reference external" href="../source/../../developers-manual/building-blocks/artifacts.html#artifacts" title="(in Cask Data Application Platform v3.4.0)"><span>Artifacts</span></a>, only snapshot artifacts can be re-deployed without requiring that they
+<a class="reference external" href="../source/../../developers-manual/building-blocks/plugins.html#plugins-third-party" title="(in Cask Data Application Platform v3.4.1)"><span class="xref std std-ref">to be explicitly listed</span></a>. As described in the documentation on
+<a class="reference external" href="../source/../../developers-manual/building-blocks/artifacts.html#artifacts" title="(in Cask Data Application Platform v3.4.1)"><span>Artifacts</span></a>, only snapshot artifacts can be re-deployed without requiring that they
 first be deleted.</p>
 <p>Using the RESTful API (note that if the artifact version is not in the JAR manifest file,
 it needs to be set explicitly, as the JAR contents are uploaded without the filename):</p>
@@ -1359,7 +1359,7 @@ $(function tabbedparsedliteral3() {
 <div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">curl -w<span class="s2">&quot;\n&quot;</span> -X POST <span class="s2">&quot;localhost:10000/v3/namespaces/default/artifacts/mysql-connector-java&quot;</span> <span class="se">\</span>
 <span class="go">-H &quot;Artifact-Plugins: [ { &#39;name&#39;: &#39;mysql&#39;, &#39;type&#39;: &#39;jdbc&#39;, &#39;className&#39;: &#39;com.mysql.jdbc.Driver&#39; } ]&quot; \</span>
 <span class="go">-H &quot;Artifact-Version: 5.1.35&quot; \</span>
-<span class="go">-H &quot;Artifact-Extends: system:cdap-etl-batch[3.4.0, 3.4.0]/system:cdap-etl-realtime[3.4.0, 3.4.0]&quot; \</span>
+<span class="go">-H &quot;Artifact-Extends: system:cdap-etl-batch[3.4.1, 3.4.1]/system:cdap-etl-realtime[3.4.1, 3.4.1]&quot; \</span>
 <span class="go">--data-binary @mysql-connector-java-5.1.35.jar</span></span>
 </pre></div>
 <!-- tabbed-parsed-literal end -->
@@ -1374,7 +1374,7 @@ $(function tabbedparsedliteral3() {
 <div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">curl -X POST &quot;localhost:10000/v3/namespaces/default/artifacts/mysql-connector-java&quot; ^</span>
 <span class="go">-H &quot;Artifact-Plugins: [ { &#39;name&#39;: &#39;mysql&#39;, &#39;type&#39;: &#39;jdbc&#39;, &#39;className&#39;: &#39;com.mysql.jdbc.Driver&#39; } ]&quot; ^</span>
 <span class="go">-H &quot;Artifact-Version: 5.1.35&quot; ^</span>
-<span class="go">-H &quot;Artifact-Extends: system:cdap-etl-batch[3.4.0, 3.4.0]\system:cdap-etl-realtime[3.4.0, 3.4.0]&quot; ^</span>
+<span class="go">-H &quot;Artifact-Extends: system:cdap-etl-batch[3.4.1, 3.4.1]\system:cdap-etl-realtime[3.4.1, 3.4.1]&quot; ^</span>
 <span class="go">--data-binary @mysql-connector-java-5.1.35.jar</span></span>
 </pre></div>
 <!-- tabbed-parsed-literal end -->
@@ -1438,7 +1438,7 @@ $(function() {
 <div class="highlight container">
 <pre class="literal-block">
 {
-  &quot;parents&quot;: [ &quot;system:cdap-etl-batch[3.4.0,3.4.0]&quot;, &quot;system:cdap-etl-realtime[3.4.0,3.4.0]&quot; ],
+  &quot;parents&quot;: [ &quot;system:cdap-etl-batch[3.4.1,3.4.1]&quot;, &quot;system:cdap-etl-realtime[3.4.1,3.4.1]&quot; ],
   &quot;plugins&quot;: [
     {
       &quot;name&quot;: &quot;mysql&quot;,
@@ -1453,7 +1453,7 @@ $(function() {
 <div class="section" id="deployment-verification">
 <span id="plugins-deployment-verification"></span><h3>Deployment Verification<a class="headerlink" href="#deployment-verification" title="Permalink to this headline">¶</a></h3>
 <p>You can verify that a plugin artifact was added successfully by using the
-<a class="reference external" href="../source/../../reference-manual/http-restful-api/artifact.html#http-restful-api-artifact-detail" title="(in Cask Data Application Platform v3.4.0)"><span class="xref std std-ref">RESTful Artifact API</span></a> to retrieve artifact details.
+<a class="reference external" href="../source/../../reference-manual/http-restful-api/artifact.html#http-restful-api-artifact-detail" title="(in Cask Data Application Platform v3.4.1)"><span class="xref std std-ref">RESTful Artifact API</span></a> to retrieve artifact details.
 For example, to retrieve detail about our <code class="docutils literal"><span class="pre">custom-transforms</span></code> artifact:</p>
 <script type="text/javascript">
 
@@ -1507,7 +1507,7 @@ $(function tabbedparsedliteral5() {
 <p>If you deployed the <code class="docutils literal"><span class="pre">custom-transforms</span></code> artifact as a system artifact, the scope is <code class="docutils literal"><span class="pre">system</span></code>.
 If you deployed the <code class="docutils literal"><span class="pre">custom-transforms</span></code> artifact as a user artifact, the scope is <code class="docutils literal"><span class="pre">user</span></code>.</p>
 <p>You can verify that the plugins in your newly-added artifact are available to its parent by using the
-<a class="reference external" href="../source/../../reference-manual/http-restful-api/artifact.html#http-restful-api-artifact-available-plugins" title="(in Cask Data Application Platform v3.4.0)"><span class="xref std std-ref">RESTful Artifact API</span></a> to list plugins of a
+<a class="reference external" href="../source/../../reference-manual/http-restful-api/artifact.html#http-restful-api-artifact-available-plugins" title="(in Cask Data Application Platform v3.4.1)"><span class="xref std std-ref">RESTful Artifact API</span></a> to list plugins of a
 specific type. For example, to check if <code class="docutils literal"><span class="pre">cdap-etl-batch</span></code> can access the plugins in the
 <code class="docutils literal"><span class="pre">custom-transforms</span></code> artifact:</p>
 <script type="text/javascript">
@@ -1537,7 +1537,7 @@ $(function tabbedparsedliteral6() {
 <div class="code code-tab">
 <div class="highlight-console">
 <!-- tabbed-parsed-literal start -->
-<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">curl -w<span class="s2">&quot;\n&quot;</span> -X POST <span class="s2">&quot;localhost:10000/v3/namespaces/default/artifacts/cdap-etl-batch/versions/3.4.0/extensions/transform?scope=system&quot;</span></span>
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">curl -w<span class="s2">&quot;\n&quot;</span> -X POST <span class="s2">&quot;localhost:10000/v3/namespaces/default/artifacts/cdap-etl-batch/versions/3.4.1/extensions/transform?scope=system&quot;</span></span>
 </pre></div>
 <!-- tabbed-parsed-literal end -->
 </div>
@@ -1548,7 +1548,7 @@ $(function tabbedparsedliteral6() {
 <div class="code code-tab">
 <div class="highlight-shell-session">
 <!-- tabbed-parsed-literal start -->
-<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">curl -X POST &quot;localhost:10000/v3/namespaces/default/artifacts/cdap-etl-batch/versions/3.4.0/extensions/transform?scope=system&quot;</span></span>
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">curl -X POST &quot;localhost:10000/v3/namespaces/default/artifacts/cdap-etl-batch/versions/3.4.1/extensions/transform?scope=system&quot;</span></span>
 </pre></div>
 <!-- tabbed-parsed-literal end -->
 </div>
@@ -1633,7 +1633,7 @@ widget type.</li>
 applied to a particular plugin property.</li>
 </ul>
 <p>Note that with the exception of the value of the <em>label</em>, all property values are case-sensitive.</p>
-<p>To find the available field names, you can use the Artifact HTTP RESTful API to <a class="reference external" href="../source/../../reference-manual/http-restful-api/artifact.html#http-restful-api-artifact-plugin-detail" title="(in Cask Data Application Platform v3.4.0)"><span class="xref std std-ref">retrieve plugin details</span></a> for an artifact, which
+<p>To find the available field names, you can use the Artifact HTTP RESTful API to <a class="reference external" href="../source/../../reference-manual/http-restful-api/artifact.html#http-restful-api-artifact-plugin-detail" title="(in Cask Data Application Platform v3.4.1)"><span class="xref std std-ref">retrieve plugin details</span></a> for an artifact, which
 will include all the available names. (If the artifact is your own, you will already know the
 available field names.)</p>
 <p>In the case of our <em>Batch Source</em> plugin example, the <code class="docutils literal"><span class="pre">configuration-groups</span></code> can be represented by:</p>
@@ -1679,7 +1679,7 @@ available field names.)</p>
 <p>A widget in the CDAP UI represents a component that will be rendered and used to set a
 value of a property of a plugin. These are the different widgets—their type, a
 description, their attributes (if any), and their output data type—that we support in
-Cask Hydrator as of version 3.4.0:</p>
+Cask Hydrator as of version 3.4.1:</p>
 <table border="1" class="docutils">
 <colgroup>
 <col width="21%" />
@@ -1970,7 +1970,7 @@ different plugins in the CDAP UI is consistent.</p>
     
     
   <div role="note" aria-label="manuals links">
-    <h3><a href="../table-of-contents/../../index.html" rel="nofollow">CDAP Documentation v3.4.0</a></h3>
+    <h3><a href="../table-of-contents/../../index.html" rel="nofollow">CDAP Documentation v3.4.1</a></h3>
     <ul class="this-page-menu">
       <li><div class=""></div><a href="../table-of-contents/../../index.html" rel="nofollow">Overview</a></li>
       <li><div class=""></div><a href="../table-of-contents/../../introduction/index.html" rel="nofollow">Introduction to CDAP</a></li>
@@ -2061,7 +2061,7 @@ different plugins in the CDAP UI is consistent.</p>
   <div role="note" aria-label="downloads links">
     <h3>Downloads</h3>
     <ul class="this-page-menu">
-      <li><a href="http://docs.cask.co/cdap/3.4.0/cdap-docs-3.4.0-web.zip"
+      <li><a href="http://docs.cask.co/cdap/3.4.1/cdap-docs-3.4.1-web.zip"
             rel="nofollow">Zip Archive of CDAP Documentation</a></li>
     </ul>
    </div>

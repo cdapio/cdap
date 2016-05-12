@@ -11,10 +11,10 @@
 
     
     
-    <meta name="git_release" content="3.4.0">
-    <meta name="git_hash" content="c0022513cd549a0b8de5ca0596f74c17b3bcc3f1">
-    <meta name="git_timestamp" content="2016-04-29 06:11:14 -0700">
-    <title>Views HTTP RESTful API &mdash; Cask Data Application Platform 3.4.0 Documentation</title>
+    <meta name="git_release" content="3.4.1">
+    <meta name="git_hash" content="401c9f3c93408abb6865903b462121e4c7cf0904">
+    <meta name="git_timestamp" content="2016-05-12 12:17:30 -0700">
+    <title>Views HTTP RESTful API &mdash; Cask Data Application Platform 3.4.1 Documentation</title>
     
     <link rel="stylesheet" href="../_static/cdap.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
@@ -25,7 +25,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '3.4.0',
+        VERSION:     '3.4.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  false
@@ -48,7 +48,7 @@
     })(window,document,'script','dataLayer','GTM-PBZ3JL');</script>
     <!-- Google Tag Manager end -->
     <link rel="shortcut icon" href="../_static/favicon.ico"/>
-    <link rel="top" title="Cask Data Application Platform 3.4.0 Documentation" href="../index.html" />
+    <link rel="top" title="Cask Data Application Platform 3.4.1 Documentation" href="../index.html" />
     <link rel="up" title="CDAP HTTP RESTful API v3" href="index.html" />
     <link rel="next" title="Workflow HTTP RESTful API" href="workflow.html" />
     <link rel="prev" title="Transaction Service HTTP RESTful API" href="transactions.html" /> 
@@ -69,7 +69,7 @@
         
         <script type="text/javascript" src="../_static/version-menu.js"></script>
         <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
-        <script>window.setVersion('3.4.0');</script>
+        <script>window.setVersion('3.4.1');</script>
        
         <li><a href="../table-of-contents.html">CDAP Reference Manual</a> &raquo;</li>
           <li><a href="index.html" accesskey="U">CDAP HTTP RESTful API v3</a> &raquo;</li> 
@@ -84,13 +84,13 @@
   <div class="section" id="views-http-restful-api">
 <span id="http-restful-api-views"></span><h1>Views HTTP RESTful API<a class="headerlink" href="#views-http-restful-api" title="Permalink to this headline">¶</a></h1>
 <p>Views are a read-only source from where data can be read. They are similar to a
-<a class="reference external" href="../source/../../developers-manual/building-blocks/streams.html#streams" title="(in Cask Data Application Platform v3.4.0)"><span class="xref std std-ref">stream</span></a> or <a class="reference external" href="../source/../../developers-manual/building-blocks/datasets/index.html#datasets-index" title="(in Cask Data Application Platform v3.4.0)"><span class="xref std std-ref">dataset</span></a>.</p>
-<p>A view has a specific read format. Read formats consist of a <a class="reference external" href="../source/../../developers-manual/data-exploration/streams.html#stream-exploration-stream-format" title="(in Cask Data Application Platform v3.4.0)"><span class="xref std std-ref">format</span></a>
-(such as CSV, TSV, or Avro, amongst others) and a <a class="reference external" href="../source/../../developers-manual/data-exploration/streams.html#stream-exploration-stream-schema" title="(in Cask Data Application Platform v3.4.0)"><span class="xref std std-ref">schema</span></a>.
-Some formats (<a class="reference external" href="../source/../../developers-manual/data-exploration/streams.html#id2" title="(in Cask Data Application Platform v3.4.0)"><span class="xref std std-ref">CSV, TSV</span></a>) use an additional <em>settings</em>
+<a class="reference external" href="../source/../../developers-manual/building-blocks/streams.html#streams" title="(in Cask Data Application Platform v3.4.1)"><span class="xref std std-ref">stream</span></a> or <a class="reference external" href="../source/../../developers-manual/building-blocks/datasets/index.html#datasets-index" title="(in Cask Data Application Platform v3.4.1)"><span class="xref std std-ref">dataset</span></a>.</p>
+<p>A view has a specific read format. Read formats consist of a <a class="reference external" href="../source/../../developers-manual/data-exploration/streams.html#stream-exploration-stream-format" title="(in Cask Data Application Platform v3.4.1)"><span class="xref std std-ref">format</span></a>
+(such as CSV, TSV, or Avro, amongst others) and a <a class="reference external" href="../source/../../developers-manual/data-exploration/streams.html#stream-exploration-stream-schema" title="(in Cask Data Application Platform v3.4.1)"><span class="xref std std-ref">schema</span></a>.
+Some formats (<a class="reference external" href="../source/../../developers-manual/data-exploration/streams.html#id2" title="(in Cask Data Application Platform v3.4.1)"><span class="xref std std-ref">CSV, TSV</span></a>) use an additional <em>settings</em>
 attribute to complete the mapping of data to fields.</p>
-<p><a class="reference external" href="../source/../../developers-manual/data-exploration/index.html#data-exploration" title="(in Cask Data Application Platform v3.4.0)"><span class="xref std std-ref">CDAP Explore</span></a> needs to be <a class="reference external" href="../source/../../admin-manual/installation/packages.html#packages-configuration-explore-service" title="(in Cask Data Application Platform v3.4.0)"><span class="xref std std-ref">enabled</span></a> before any views are created so that a
-Hive table can be created for each view. (See the <a class="reference external" href="../source/../../admin-manual/installation/index.html#installation-index" title="(in Cask Data Application Platform v3.4.0)"><span class="xref std std-ref">CDAP installation instructions</span></a> for your particular Hadoop distribution for details.)</p>
+<p><a class="reference external" href="../source/../../developers-manual/data-exploration/index.html#data-exploration" title="(in Cask Data Application Platform v3.4.1)"><span class="xref std std-ref">CDAP Explore</span></a> needs to be <a class="reference external" href="../source/../../admin-manual/installation/packages.html#packages-configuration-explore-service" title="(in Cask Data Application Platform v3.4.1)"><span class="xref std std-ref">enabled</span></a> before any views are created so that a
+Hive table can be created for each view. (See the <a class="reference external" href="../source/../../admin-manual/installation/index.html#installation-index" title="(in Cask Data Application Platform v3.4.1)"><span class="xref std std-ref">CDAP installation instructions</span></a> for your particular Hadoop distribution for details.)</p>
 <p>Currently, views are only supported for streams. Support for datasets will be added in a
 later version of CDAP.</p>
 <div class="section" id="creating-a-stream-view">
@@ -121,7 +121,7 @@ later version of CDAP.</p>
 </tr>
 </tbody>
 </table>
-<p>The request body is a JSON object specifying the <a class="reference external" href="../source/../../developers-manual/data-exploration/streams.html#stream-exploration-stream-format" title="(in Cask Data Application Platform v3.4.0)"><span class="xref std std-ref">read format</span></a> to be used.</p>
+<p>The request body is a JSON object specifying the <a class="reference external" href="../source/../../developers-manual/data-exploration/streams.html#stream-exploration-stream-format" title="(in Cask Data Application Platform v3.4.1)"><span class="xref std std-ref">read format</span></a> to be used.</p>
 <p>An existing stream view can be modified with the same command; only the response code will differ.</p>
 <p class="rubric">Example</p>
 <p>For example, to create a stream view <em>logStreamView</em> on an existing stream
@@ -374,7 +374,7 @@ to the URL:</p>
     
     
   <div role="note" aria-label="manuals links">
-    <h3><a href="../table-of-contents/../../index.html" rel="nofollow">CDAP Documentation v3.4.0</a></h3>
+    <h3><a href="../table-of-contents/../../index.html" rel="nofollow">CDAP Documentation v3.4.1</a></h3>
     <ul class="this-page-menu">
       <li><div class=""></div><a href="../table-of-contents/../../index.html" rel="nofollow">Overview</a></li>
       <li><div class=""></div><a href="../table-of-contents/../../introduction/index.html" rel="nofollow">Introduction to CDAP</a></li>
@@ -455,7 +455,7 @@ to the URL:</p>
   <div role="note" aria-label="downloads links">
     <h3>Downloads</h3>
     <ul class="this-page-menu">
-      <li><a href="http://docs.cask.co/cdap/3.4.0/cdap-docs-3.4.0-web.zip"
+      <li><a href="http://docs.cask.co/cdap/3.4.1/cdap-docs-3.4.1-web.zip"
             rel="nofollow">Zip Archive of CDAP Documentation</a></li>
     </ul>
    </div>

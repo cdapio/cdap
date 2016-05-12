@@ -11,10 +11,10 @@
 
     
     
-    <meta name="git_release" content="3.4.0">
-    <meta name="git_hash" content="c0022513cd549a0b8de5ca0596f74c17b3bcc3f1">
-    <meta name="git_timestamp" content="2016-04-29 06:11:14 -0700">
-    <title>Introduction to CDAP &mdash; Cask Data Application Platform 3.4.0 Documentation</title>
+    <meta name="git_release" content="3.4.1">
+    <meta name="git_hash" content="401c9f3c93408abb6865903b462121e4c7cf0904">
+    <meta name="git_timestamp" content="2016-05-12 12:17:30 -0700">
+    <title>Introduction to CDAP &mdash; Cask Data Application Platform 3.4.1 Documentation</title>
     
     <link rel="stylesheet" href="_static/cdap.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -25,7 +25,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '3.4.0',
+        VERSION:     '3.4.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  false
@@ -48,7 +48,7 @@
     })(window,document,'script','dataLayer','GTM-PBZ3JL');</script>
     <!-- Google Tag Manager end -->
     <link rel="shortcut icon" href="_static/favicon.ico"/>
-    <link rel="top" title="Cask Data Application Platform 3.4.0 Documentation" href="#" />
+    <link rel="top" title="Cask Data Application Platform 3.4.1 Documentation" href="#" />
     <link rel="prev" title="Introduction Table of Contents" href="table-of-contents.html" /> 
   </head>
   <body role="document">
@@ -64,7 +64,7 @@
         
         <script type="text/javascript" src="_static/version-menu.js"></script>
         <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
-        <script>window.setVersion('3.4.0');</script>
+        <script>window.setVersion('3.4.1');</script>
        
         <li><a href="table-of-contents.html">CDAP Introduction to CDAP</a> &raquo;</li> 
       </ul>
@@ -89,7 +89,7 @@ the Hadoop ecosystem and using CDAP—a new paradigm.</p>
 technologies required, and then show an equivalent CDAP command with the resulting output
 from the CDAP Command Line Interface. (Output has been reformatted to fit the webpage
 as required.)</p>
-<p>To try this yourself, <a class="reference external" href="source/../../developers-manual/getting-started/standalone/index.html#standalone-index" title="(in Cask Data Application Platform v3.4.0)"><span class="xref std std-ref">download a copy of CDAP SDK</span></a>, install it
+<p>To try this yourself, <a class="reference external" href="source/../../developers-manual/getting-started/standalone/index.html#standalone-index" title="(in Cask Data Application Platform v3.4.1)"><span class="xref std std-ref">download a copy of CDAP SDK</span></a>, install it
 and then use the resources in its <code class="docutils literal"><span class="pre">examples</span></code> directory as you follow along.</p>
 <dl class="docutils">
 <dt>We&#8217;ll look at these areas:</dt>
@@ -170,8 +170,8 @@ $(function tabbedparsedliteral1() {
 <div class="code code-tab">
 <div class="first last highlight-console">
 <!-- tabbed-parsed-literal start -->
-<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">unzip cdap-sdk-3.4.0.zip</span>
-<span class="gp">$ </span><span class="copyable-text"><span class="nb">cd </span>cdap-sdk-3.4.0</span>
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">unzip cdap-sdk-3.4.1.zip</span>
+<span class="gp">$ </span><span class="copyable-text"><span class="nb">cd </span>cdap-sdk-3.4.1</span>
 <span class="gp">$ </span><span class="copyable-text">./bin/cdap.sh start</span>
 
 <span class="go">Starting Standalone CDAP ................</span>
@@ -187,8 +187,8 @@ $(function tabbedparsedliteral1() {
 <div class="code code-tab">
 <div class="first last highlight-shell-session">
 <!-- tabbed-parsed-literal start -->
-<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">jar xf cdap-sdk-3.4.0.zip</span></span>
-<span class="gp">&gt; </span><span class="copyable-text"><span class="go">cd cdap-sdk-3.4.0</span></span>
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">jar xf cdap-sdk-3.4.1.zip</span></span>
+<span class="gp">&gt; </span><span class="copyable-text"><span class="go">cd cdap-sdk-3.4.1</span></span>
 <span class="gp">&gt; </span><span class="copyable-text"><span class="go">bin\cdap.bat start</span></span>
 
 <span class="go">Starting Standalone CDAP ................</span>
@@ -304,7 +304,7 @@ $(function tabbedparsedliteral2() {
 <div class="section" id="data-ingestion">
 <h2>Data Ingestion<a class="headerlink" href="#data-ingestion" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
-<li>Data is ingested into CDAP using <a class="reference external" href="source/../../developers-manual/building-blocks/streams.html#streams" title="(in Cask Data Application Platform v3.4.0)"><span class="xref std std-ref">streams</span></a></li>
+<li>Data is ingested into CDAP using <a class="reference external" href="source/../../developers-manual/building-blocks/streams.html#streams" title="(in Cask Data Application Platform v3.4.1)"><span class="xref std std-ref">streams</span></a></li>
 <li>Streams are abstractions over HDFS with an HTTP endpoint</li>
 <li>Data in a stream are ordered and time-partitioned</li>
 <li>CDAP supports easy exploration and processing in both real time and batch</li>
@@ -1801,7 +1801,7 @@ $(function() {
 <div class="section" id="transforming-your-data">
 <h2>Transforming Your Data<a class="headerlink" href="#transforming-your-data" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
-<li>CDAP <a class="reference external" href="source/../../cdap-apps/index.html#cdap-apps-index" title="(in Cask Data Application Platform v3.4.0)"><span class="xref std std-ref">Included Applications</span></a> are applications that are
+<li>CDAP <a class="reference external" href="source/../../cdap-apps/index.html#cdap-apps-index" title="(in Cask Data Application Platform v3.4.1)"><span class="xref std std-ref">Included Applications</span></a> are applications that are
 reusable through the configuration of artifacts and can be used to create an application
 without writing any code at all</li>
 <li>Built-in ETL (Extract, Transform, Load) and Data Quality applications</li>
@@ -1962,7 +1962,7 @@ $(function() {
 <div class="code code-tab">
 <div class="first last highlight-shell-session">
 <!-- tabbed-parsed-literal start -->
-<div class="highlight"><pre class="copyable"><span class="gp">cdap &gt; </span><span class="copyable-text"><span class="go">create app logEventStreamConverter cdap-etl-batch 3.4.0 system examples/resources/app-config.json</span></span>
+<div class="highlight"><pre class="copyable"><span class="gp">cdap &gt; </span><span class="copyable-text"><span class="go">create app logEventStreamConverter cdap-etl-batch 3.4.1 system examples/resources/app-config.json</span></span>
 <span class="go">Successfully created application</span>
 
 <span class="gp">cdap &gt; </span><span class="copyable-text"><span class="go">resume schedule logEventStreamConverter.etlWorkflow</span></span>
@@ -2049,7 +2049,7 @@ $(function() {
 <span class="go">| id                      | descripti | artifactName   | artifactVersion | artifactScope |</span>
 <span class="go">|                         | on        |                |                 |               |</span>
 <span class="go">+========================================================================================+</span>
-<span class="go">| logEventStreamConverter | Extract-T | cdap-etl-batch | 3.4.0           | SYSTEM        |</span>
+<span class="go">| logEventStreamConverter | Extract-T | cdap-etl-batch | 3.4.1           | SYSTEM        |</span>
 <span class="go">|                         | ransform- |                |                 |               |</span>
 <span class="go">|                         | Load (ETL |                |                 |               |</span>
 <span class="go">|                         | ) Batch A |                |                 |               |</span>
@@ -2773,7 +2773,7 @@ $(function tabbedparsedliteral28() {
 <div class="code code-tab">
 <div class="highlight-console">
 <!-- tabbed-parsed-literal start -->
-<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text"><span class="nb">cd </span>cdap-sdk-3.4.0/examples</span>
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text"><span class="nb">cd </span>cdap-sdk-3.4.1/examples</span>
 <span class="gp">$ </span><span class="copyable-text">curl -O http://repository.cask.co/downloads/co/cask/cdap/apps/0.7.0-SNAPSHOT/cdap-wise-0.7.0-SNAPSHOT.zip</span>
 <span class="gp">$ </span><span class="copyable-text">unzip cdap-wise-0.7.0-SNAPSHOT.zip</span>
 </pre></div>
@@ -2786,7 +2786,7 @@ $(function tabbedparsedliteral28() {
 <div class="code code-tab">
 <div class="highlight-shell-session">
 <!-- tabbed-parsed-literal start -->
-<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">cd cdap-sdk-3.4.0\examples</span></span>
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">cd cdap-sdk-3.4.1\examples</span></span>
 <span class="gp">&gt; </span><span class="copyable-text"><span class="go">curl -O http://repository.cask.co/downloads/co/cask/cdap/apps/0.7.0-SNAPSHOT/cdap-wise-0.7.0-SNAPSHOT.zip</span></span>
 <span class="gp">&gt; </span><span class="copyable-text"><span class="go">unzip cdap-wise-0.7.0-SNAPSHOT.zip</span></span>
 </pre></div>
@@ -4285,7 +4285,7 @@ $(function() {
     
     
   <div role="note" aria-label="manuals links">
-    <h3><a href="table-of-contents/../../index.html" rel="nofollow">CDAP Documentation v3.4.0</a></h3>
+    <h3><a href="table-of-contents/../../index.html" rel="nofollow">CDAP Documentation v3.4.1</a></h3>
     <ul class="this-page-menu">
       <li><div class=""></div><a href="table-of-contents/../../index.html" rel="nofollow">Overview</a></li>
       <li><div class=""></div><b><a href="table-of-contents/../../introduction/index.html" rel="nofollow">Introduction to CDAP</a></b></li>
@@ -4344,7 +4344,7 @@ $(function() {
   <div role="note" aria-label="downloads links">
     <h3>Downloads</h3>
     <ul class="this-page-menu">
-      <li><a href="http://docs.cask.co/cdap/3.4.0/cdap-docs-3.4.0-web.zip"
+      <li><a href="http://docs.cask.co/cdap/3.4.1/cdap-docs-3.4.1-web.zip"
             rel="nofollow">Zip Archive of CDAP Documentation</a></li>
     </ul>
    </div>

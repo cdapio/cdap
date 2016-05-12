@@ -10,10 +10,10 @@
 
     
     
-    <meta name="git_release" content="3.4.0">
-    <meta name="git_hash" content="c0022513cd549a0b8de5ca0596f74c17b3bcc3f1">
-    <meta name="git_timestamp" content="2016-04-29 06:11:14 -0700">
-    <title>ETL Upgrade Procedure &mdash; Cask Data Application Platform 3.4.0 Documentation</title>
+    <meta name="git_release" content="3.4.1">
+    <meta name="git_hash" content="401c9f3c93408abb6865903b462121e4c7cf0904">
+    <meta name="git_timestamp" content="2016-05-12 12:17:30 -0700">
+    <title>ETL Upgrade Procedure &mdash; Cask Data Application Platform 3.4.1 Documentation</title>
     
     <link rel="stylesheet" href="../_static/cdap.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
@@ -24,7 +24,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '3.4.0',
+        VERSION:     '3.4.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  false
@@ -47,7 +47,7 @@
     })(window,document,'script','dataLayer','GTM-PBZ3JL');</script>
     <!-- Google Tag Manager end -->
     <link rel="shortcut icon" href="../_static/favicon.ico"/>
-    <link rel="top" title="Cask Data Application Platform 3.4.0 Documentation" href="../index.html" />
+    <link rel="top" title="Cask Data Application Platform 3.4.1 Documentation" href="../index.html" />
     <link rel="up" title="Cask Hydrator and ETL Pipelines" href="index.html" />
     <link rel="next" title="Cask Tracker" href="../tracker/index.html" />
     <link rel="prev" title="Using Third-Party JARs" href="hydrator-plugins/third-party.html" /> 
@@ -68,7 +68,7 @@
         
         <script type="text/javascript" src="../_static/version-menu.js"></script>
         <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
-        <script>window.setVersion('3.4.0');</script>
+        <script>window.setVersion('3.4.1');</script>
        
         <li><a href="../table-of-contents.html">CDAP CDAP Applications</a> &raquo;</li>
           <li><a href="index.html" accesskey="U">Cask Hydrator and ETL Pipelines</a> &raquo;</li> 
@@ -86,14 +86,14 @@
 of <code class="docutils literal"><span class="pre">cdap-etl-batch</span></code> or <code class="docutils literal"><span class="pre">cdap-etl-realtime</span></code>, you can use the ETL upgrade tool packaged
 with the distributed version of CDAP. You would want to run this tool to upgrade
 applications that were created with earlier versions of the artifacts, that you would
-like to open in the 3.4.0 version of Cask Hydrator Studio.</p>
+like to open in the 3.4.1 version of Cask Hydrator Studio.</p>
 <p>The tool will connect to an instance of CDAP, look for any applications that use 3.3.x
 versions of the <code class="docutils literal"><span class="pre">cdap-etl-batch</span></code> or <code class="docutils literal"><span class="pre">cdap-etl-realtime</span></code> artifacts, and then update the
-application to use the 3.4.0 version of those artifacts. CDAP must be running when you
+application to use the 3.4.1 version of those artifacts. CDAP must be running when you
 run the command:</p>
 <div class="highlight container">
 <pre class="literal-block">
-<span class="gp">$</span> java -cp /opt/cdap/master/libexec/cdap-etl-tools-3.4.0.jar co.cask.cdap.etl.tool.UpgradeTool -u http://&lt;host&gt;:&lt;port&gt; -e /tmp/failedUpgrades upgrade
+<span class="gp">$</span> java -cp /opt/cdap/master/libexec/cdap-etl-tools-3.4.1.jar co.cask.cdap.etl.tool.UpgradeTool -u http://&lt;host&gt;:&lt;port&gt; -e /tmp/failedUpgrades upgrade
 </pre>
 </div>
 <p>The first argument is the host and port for the CDAP master. The second argument is a directory to write the configurations
@@ -102,19 +102,19 @@ pipeline is not backwards compatible. For example, this may happen if the plugin
 <p>You can also upgrade just the ETL applications within a specific namespace:</p>
 <div class="highlight container">
 <pre class="literal-block">
-<span class="gp">$</span> java -cp /opt/cdap/master/libexec/cdap-etl-tools-3.4.0.jar co.cask.cdap.etl.tool.UpgradeTool -u http://&lt;host&gt;:&lt;port&gt; -n &lt;namespace&gt; upgrade
+<span class="gp">$</span> java -cp /opt/cdap/master/libexec/cdap-etl-tools-3.4.1.jar co.cask.cdap.etl.tool.UpgradeTool -u http://&lt;host&gt;:&lt;port&gt; -n &lt;namespace&gt; upgrade
 </pre>
 </div>
 <p>You can also upgrade just one ETL application:</p>
 <div class="highlight container">
 <pre class="literal-block">
-<span class="gp">$</span> java -cp /opt/cdap/master/libexec/cdap-etl-tools-3.4.0.jar co.cask.cdap.etl.tool.UpgradeTool -u http://&lt;host&gt;:&lt;port&gt; -n &lt;namespace&gt; -p &lt;app-name&gt; upgrade
+<span class="gp">$</span> java -cp /opt/cdap/master/libexec/cdap-etl-tools-3.4.1.jar co.cask.cdap.etl.tool.UpgradeTool -u http://&lt;host&gt;:&lt;port&gt; -n &lt;namespace&gt; -p &lt;app-name&gt; upgrade
 </pre>
 </div>
 <p>If you have authentication turned on, you also need to store an authentication token in a file and pass the file to the tool:</p>
 <div class="highlight container">
 <pre class="literal-block">
-<span class="gp">$</span> java -cp /opt/cdap/master/libexec/cdap-etl-tools-3.4.0.jar co.cask.cdap.etl.tool.UpgradeTool -u http://&lt;host&gt;:&lt;port&gt; -a &lt;tokenfile&gt; upgrade
+<span class="gp">$</span> java -cp /opt/cdap/master/libexec/cdap-etl-tools-3.4.1.jar co.cask.cdap.etl.tool.UpgradeTool -u http://&lt;host&gt;:&lt;port&gt; -a &lt;tokenfile&gt; upgrade
 </pre>
 </div>
 </div>
@@ -138,7 +138,7 @@ pipeline is not backwards compatible. For example, this may happen if the plugin
     
     
   <div role="note" aria-label="manuals links">
-    <h3><a href="../table-of-contents/../../index.html" rel="nofollow">CDAP Documentation v3.4.0</a></h3>
+    <h3><a href="../table-of-contents/../../index.html" rel="nofollow">CDAP Documentation v3.4.1</a></h3>
     <ul class="this-page-menu">
       <li><div class=""></div><a href="../table-of-contents/../../index.html" rel="nofollow">Overview</a></li>
       <li><div class=""></div><a href="../table-of-contents/../../introduction/index.html" rel="nofollow">Introduction to CDAP</a></li>
@@ -198,7 +198,7 @@ pipeline is not backwards compatible. For example, this may happen if the plugin
   <div role="note" aria-label="downloads links">
     <h3>Downloads</h3>
     <ul class="this-page-menu">
-      <li><a href="http://docs.cask.co/cdap/3.4.0/cdap-docs-3.4.0-web.zip"
+      <li><a href="http://docs.cask.co/cdap/3.4.1/cdap-docs-3.4.1-web.zip"
             rel="nofollow">Zip Archive of CDAP Documentation</a></li>
     </ul>
    </div>

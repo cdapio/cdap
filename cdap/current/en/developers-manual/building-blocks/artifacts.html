@@ -10,10 +10,10 @@
 
     
     
-    <meta name="git_release" content="3.4.0">
-    <meta name="git_hash" content="c0022513cd549a0b8de5ca0596f74c17b3bcc3f1">
-    <meta name="git_timestamp" content="2016-04-29 06:11:14 -0700">
-    <title>Artifacts &mdash; Cask Data Application Platform 3.4.0 Documentation</title>
+    <meta name="git_release" content="3.4.1">
+    <meta name="git_hash" content="401c9f3c93408abb6865903b462121e4c7cf0904">
+    <meta name="git_timestamp" content="2016-05-12 12:17:30 -0700">
+    <title>Artifacts &mdash; Cask Data Application Platform 3.4.1 Documentation</title>
     
     <link rel="stylesheet" href="../_static/cdap.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
@@ -24,7 +24,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '3.4.0',
+        VERSION:     '3.4.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  false
@@ -47,7 +47,7 @@
     })(window,document,'script','dataLayer','GTM-PBZ3JL');</script>
     <!-- Google Tag Manager end -->
     <link rel="shortcut icon" href="../_static/favicon.ico"/>
-    <link rel="top" title="Cask Data Application Platform 3.4.0 Documentation" href="../index.html" />
+    <link rel="top" title="Cask Data Application Platform 3.4.1 Documentation" href="../index.html" />
     <link rel="up" title="Building Blocks" href="index.html" />
     <link rel="next" title="Metadata and Lineage" href="metadata-lineage.html" />
     <link rel="prev" title="Workflows" href="workflows.html" /> 
@@ -68,7 +68,7 @@
         
         <script type="text/javascript" src="../_static/version-menu.js"></script>
         <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
-        <script>window.setVersion('3.4.0');</script>
+        <script>window.setVersion('3.4.1');</script>
        
         <li><a href="../table-of-contents.html">CDAP Developers’ Manual</a> &raquo;</li>
           <li><a href="index.html" accesskey="U">Building Blocks</a> &raquo;</li> 
@@ -101,10 +101,10 @@ An <em>Artifact</em> is a snapshot artifact if the version suffix begins with <c
 <code class="docutils literal"><span class="pre">'1.2.3.SNAPSHOT-test'</span></code> is a snapshot version because it has a suffix of <code class="docutils literal"><span class="pre">'SNAPSHOT-test'</span></code>, which
 begins with <code class="docutils literal"><span class="pre">SNAPSHOT</span></code>. <code class="docutils literal"><span class="pre">'1.2.3'</span></code> is not a snapshot version because there is no suffix. <code class="docutils literal"><span class="pre">'1.2.3-hadoop2'</span></code>
 is also not a snapshot version because the suffix does not begin with <code class="docutils literal"><span class="pre">SNAPSHOT</span></code>.</p>
-<p>Artifacts are managed using the <a class="reference external" href="../source/../../reference-manual/http-restful-api/artifact.html#http-restful-api-artifact" title="(in Cask Data Application Platform v3.4.0)"><span class="xref std std-ref">Artifact HTTP RESTful APIs</span></a>.</p>
+<p>Artifacts are managed using the <a class="reference external" href="../source/../../reference-manual/http-restful-api/artifact.html#http-restful-api-artifact" title="(in Cask Data Application Platform v3.4.1)"><span class="xref std std-ref">Artifact HTTP RESTful APIs</span></a>.</p>
 <div class="section" id="deploying-an-artifact">
 <h2>Deploying an Artifact<a class="headerlink" href="#deploying-an-artifact" title="Permalink to this headline">¶</a></h2>
-<p>An artifact is deployed through the <a class="reference external" href="../source/../../reference-manual/http-restful-api/artifact.html#http-restful-api-artifact-add" title="(in Cask Data Application Platform v3.4.0)"><span class="xref std std-ref">RESTful API</span></a>.
+<p>An artifact is deployed through the <a class="reference external" href="../source/../../reference-manual/http-restful-api/artifact.html#http-restful-api-artifact-add" title="(in Cask Data Application Platform v3.4.1)"><span class="xref std std-ref">RESTful API</span></a>.
 If it contains an Application class, the artifact
 can then be used to create applications. Once an artifact is deployed, it cannot be changed, with
 the exception of snapshot versions of artifacts. Snapshot artifacts can be deployed multiple times,
@@ -136,16 +136,16 @@ artifact.</p>
 <p>Normally, an artifact is added to a specific namespace. Users in one namespace cannot see or use
 artifacts in another namespace. These are referred to as <a class="reference internal" href="plugins.html#plugins-deployment-user"><span>user artifacts</span></a>.</p>
 <p>Sometimes there is a need to provide an artifact that can be used across namespaces. One
-example of this are the <a class="reference external" href="../source/../../cdap-apps/hydrator/hydrator-plugins/index.html#cdap-apps-etl-plugins" title="(in Cask Data Application Platform v3.4.0)"><span class="xref std std-ref">ETL artifacts</span></a> shipped with
+example of this are the <a class="reference external" href="../source/../../cdap-apps/hydrator/hydrator-plugins/index.html#cdap-apps-etl-plugins" title="(in Cask Data Application Platform v3.4.1)"><span class="xref std std-ref">ETL artifacts</span></a> shipped with
 CDAP. In such scenarios, a <a class="reference internal" href="plugins.html#plugins-deployment-system"><span>system artifact</span></a> can be used.</p>
 <p>System artifacts cannot be added through the RESTful API, but must be added by placing the
 artifact in a special directory. For Distributed CDAP, this directory is defined by the
-<code class="docutils literal"><span class="pre">app.artifact.dir</span></code> setting in <a class="reference external" href="../source/../../admin-manual/appendices/cdap-site.html#appendix-cdap-site-xml" title="(in Cask Data Application Platform v3.4.0)"><span class="xref std std-ref">cdap-site.xml</span></a>. Multiple directories
+<code class="docutils literal"><span class="pre">app.artifact.dir</span></code> setting in <a class="reference external" href="../source/../../admin-manual/appendices/cdap-site.html#appendix-cdap-site-xml" title="(in Cask Data Application Platform v3.4.1)"><span class="xref std std-ref">cdap-site.xml</span></a>. Multiple directories
 can be defined by separating them with a semicolon. It defaults to
 <code class="docutils literal"><span class="pre">/opt/cdap/master/artifacts</span></code>. For the CDAP Standalone SDK, the directory is set to the
 <code class="docutils literal"><span class="pre">artifacts</span></code> directory.</p>
 <p>Any artifact in the directory will be added to CDAP when it starts up. In addition, a
-<a class="reference external" href="../source/../../reference-manual/http-restful-api/artifact.html#http-restful-api-artifact-system-load" title="(in Cask Data Application Platform v3.4.0)"><span class="xref std std-ref">RESTful API</span></a>
+<a class="reference external" href="../source/../../reference-manual/http-restful-api/artifact.html#http-restful-api-artifact-system-load" title="(in Cask Data Application Platform v3.4.1)"><span class="xref std std-ref">RESTful API</span></a>
 call can be made to scan the directory for any new artifacts that may have been added since CDAP
 started.</p>
 <p>If a system artifact contains plugins that extend another system artifact, a matching
@@ -304,7 +304,7 @@ from the <code class="docutils literal"><span class="pre">purchases</span></code
 </pre></div>
 </div>
 <p>We can then manage the lifecycle of the flow using the
-<a class="reference external" href="../source/../../reference-manual/http-restful-api/lifecycle.html#http-restful-api-lifecycle" title="(in Cask Data Application Platform v3.4.0)"><span class="xref std std-ref">Application Lifecycle RESTful APIs</span></a>.
+<a class="reference external" href="../source/../../reference-manual/http-restful-api/lifecycle.html#http-restful-api-lifecycle" title="(in Cask Data Application Platform v3.4.1)"><span class="xref std std-ref">Application Lifecycle RESTful APIs</span></a>.
 After it has been running for a while, a bug is found in the code. The development team provides
 a fix, and <code class="docutils literal"><span class="pre">myapp-1.0.1.jar</span></code> is released. The artifact is deployed:</p>
 <div class="highlight-java"><div class="highlight"><pre><span class="n">curl</span> <span class="n">localhost</span><span class="o">:</span><span class="mi">10000</span><span class="o">/</span><span class="n">v3</span><span class="o">/</span><span class="n">namespaces</span><span class="o">/</span><span class="k">default</span><span class="o">/</span><span class="n">artifacts</span><span class="o">/</span><span class="n">myapp</span> <span class="o">--</span><span class="n">data</span><span class="o">-</span><span class="n">binary</span> <span class="nd">@myapp</span><span class="o">-</span><span class="mf">1.0</span><span class="o">.</span><span class="mi">1</span><span class="o">.</span><span class="na">jar</span>
@@ -379,7 +379,7 @@ bug and decide to roll back to the previous version. The flow is stopped and ano
     
     
   <div role="note" aria-label="manuals links">
-    <h3><a href="../table-of-contents/../../index.html" rel="nofollow">CDAP Documentation v3.4.0</a></h3>
+    <h3><a href="../table-of-contents/../../index.html" rel="nofollow">CDAP Documentation v3.4.1</a></h3>
     <ul class="this-page-menu">
       <li><div class=""></div><a href="../table-of-contents/../../index.html" rel="nofollow">Overview</a></li>
       <li><div class=""></div><a href="../table-of-contents/../../introduction/index.html" rel="nofollow">Introduction to CDAP</a></li>
@@ -464,7 +464,7 @@ bug and decide to roll back to the previous version. The flow is stopped and ano
   <div role="note" aria-label="downloads links">
     <h3>Downloads</h3>
     <ul class="this-page-menu">
-      <li><a href="http://docs.cask.co/cdap/3.4.0/cdap-docs-3.4.0-web.zip"
+      <li><a href="http://docs.cask.co/cdap/3.4.1/cdap-docs-3.4.1-web.zip"
             rel="nofollow">Zip Archive of CDAP Documentation</a></li>
     </ul>
    </div>

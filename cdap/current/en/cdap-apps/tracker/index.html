@@ -11,10 +11,10 @@
 
     
     
-    <meta name="git_release" content="3.4.0">
-    <meta name="git_hash" content="c0022513cd549a0b8de5ca0596f74c17b3bcc3f1">
-    <meta name="git_timestamp" content="2016-04-29 06:11:14 -0700">
-    <title>Cask Tracker &mdash; Cask Data Application Platform 3.4.0 Documentation</title>
+    <meta name="git_release" content="3.4.1">
+    <meta name="git_hash" content="401c9f3c93408abb6865903b462121e4c7cf0904">
+    <meta name="git_timestamp" content="2016-05-12 12:17:30 -0700">
+    <title>Cask Tracker &mdash; Cask Data Application Platform 3.4.1 Documentation</title>
     
     <link rel="stylesheet" href="../_static/cdap.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
@@ -26,7 +26,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '3.4.0',
+        VERSION:     '3.4.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  false
@@ -49,7 +49,7 @@
     })(window,document,'script','dataLayer','GTM-PBZ3JL');</script>
     <!-- Google Tag Manager end -->
     <link rel="shortcut icon" href="../_static/favicon.ico"/>
-    <link rel="top" title="Cask Data Application Platform 3.4.0 Documentation" href="../index.html" />
+    <link rel="top" title="Cask Data Application Platform 3.4.1 Documentation" href="../index.html" />
     <link rel="next" title="Data Quality Application" href="../data-quality/index.html" />
     <link rel="prev" title="ETL Upgrade Procedure" href="../hydrator/upgrade.html" /> 
   </head>
@@ -69,7 +69,7 @@
         
         <script type="text/javascript" src="../_static/version-menu.js"></script>
         <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
-        <script>window.setVersion('3.4.0');</script>
+        <script>window.setVersion('3.4.1');</script>
        
         <li><a href="../table-of-contents.html">CDAP CDAP Applications</a> &raquo;</li> 
       </ul>
@@ -85,14 +85,14 @@
 <div class="section" id="introduction">
 <h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h2>
 <p>Cask Tracker (&#8220;Tracker&#8221;) is a self-service CDAP extension that automatically captures
-<a class="reference external" href="../source/../../developers-manual/building-blocks/metadata-lineage.html#metadata-lineage" title="(in Cask Data Application Platform v3.4.0)"><span class="xref std std-ref">metadata</span></a> and lets you see how data is flowing into and out
+<a class="reference external" href="../source/../../developers-manual/building-blocks/metadata-lineage.html#metadata-lineage" title="(in Cask Data Application Platform v3.4.1)"><span class="xref std std-ref">metadata</span></a> and lets you see how data is flowing into and out
 of datasets, streams, and stream views.</p>
 <p>It allows you to perform impact and root-cause analysis, and delivers an audit-trail for
 auditability and compliance. Tracker furnishes access to structured information that
 describes, explains, locates, and makes it easier to retrieve, use, and manage datasets.</p>
 <p>Tracker also allows for the storage of metadata where it can be accessed and indexed. This
 allows it to be is easily searched and provides consistent, high-quality metadata.</p>
-<p>Tracker&#8217;s UI shows a graphical visualization of the <a class="reference external" href="../source/../../developers-manual/building-blocks/metadata-lineage.html#metadata-lineage-lineage" title="(in Cask Data Application Platform v3.4.0)"><span class="xref std std-ref">lineage</span></a> of an entity. A lineage shows—for a specified time range—all data access of the entity, and details of where that access originated from.</p>
+<p>Tracker&#8217;s UI shows a graphical visualization of the <a class="reference external" href="../source/../../developers-manual/building-blocks/metadata-lineage.html#metadata-lineage-lineage" title="(in Cask Data Application Platform v3.4.1)"><span class="xref std std-ref">lineage</span></a> of an entity. A lineage shows—for a specified time range—all data access of the entity, and details of where that access originated from.</p>
 <p><strong>Harvest, Index, and Track Datasets</strong></p>
 <ul class="simple">
 <li>Immediate, timely, and seamless capture of technical, business, and operational metadata,
@@ -267,7 +267,7 @@ datasets prior to the enabling of Tracker will not be available or seen in the T
 <li>Multiple search terms can be searched by separating them with a space character.</li>
 <li>Search terms are case-insensitive.</li>
 <li>Search the metadata of entities by using either a complete or partial name followed by
-an asterisk <code class="docutils literal"><span class="pre">*</span></code>, as described in the <a class="reference external" href="../source/../../reference-manual/http-restful-api/metadata.html#http-restful-api-metadata-query-terms" title="(in Cask Data Application Platform v3.4.0)"><span class="xref std std-ref">Metadata HTTP RESTful API</span></a>.</li>
+an asterisk <code class="docutils literal"><span class="pre">*</span></code>, as described in the <a class="reference external" href="../source/../../reference-manual/http-restful-api/metadata.html#http-restful-api-metadata-query-terms" title="(in Cask Data Application Platform v3.4.1)"><span class="xref std std-ref">Metadata HTTP RESTful API</span></a>.</li>
 <li>Tracker searches tags, properties, and schema of CDAP datasets, streams, and stream views.</li>
 </ul>
 <p>For example, if you have just started CDAP and enabled Tracker, you could enter a search
@@ -342,7 +342,7 @@ connecting to a Navigator instance:</p>
 <a class="bordered-image reference internal image-reference" href="../_images/tracker-integration-configuration.png"><img alt="../_images/tracker-integration-configuration.png" class="bordered-image" src="../_images/tracker-integration-configuration.png" style="width: 800px;" /></a>
 </div>
 <p>Details on completing this form are described in CDAP&#8217;s documentation on
-<a class="reference external" href="../source/../../integrations/partners/cloudera/navigator-integration.html#navigator-integration" title="(in Cask Data Application Platform v3.4.0)"><span class="xref std std-ref">Navigator Integration Application</span></a>.</p>
+<a class="reference external" href="../source/../../integrations/partners/cloudera/navigator-integration.html#navigator-integration" title="(in Cask Data Application Platform v3.4.1)"><span class="xref std std-ref">Navigator Integration Application</span></a>.</p>
 </div>
 </div>
 <div class="section" id="tracker-http-restful-api">
@@ -517,7 +517,7 @@ message.</td>
     
     
   <div role="note" aria-label="manuals links">
-    <h3><a href="../table-of-contents/../../index.html" rel="nofollow">CDAP Documentation v3.4.0</a></h3>
+    <h3><a href="../table-of-contents/../../index.html" rel="nofollow">CDAP Documentation v3.4.1</a></h3>
     <ul class="this-page-menu">
       <li><div class=""></div><a href="../table-of-contents/../../index.html" rel="nofollow">Overview</a></li>
       <li><div class=""></div><a href="../table-of-contents/../../introduction/index.html" rel="nofollow">Introduction to CDAP</a></li>
@@ -590,7 +590,7 @@ message.</td>
   <div role="note" aria-label="downloads links">
     <h3>Downloads</h3>
     <ul class="this-page-menu">
-      <li><a href="http://docs.cask.co/cdap/3.4.0/cdap-docs-3.4.0-web.zip"
+      <li><a href="http://docs.cask.co/cdap/3.4.1/cdap-docs-3.4.1-web.zip"
             rel="nofollow">Zip Archive of CDAP Documentation</a></li>
     </ul>
    </div>

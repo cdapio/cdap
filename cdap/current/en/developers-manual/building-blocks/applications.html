@@ -10,10 +10,10 @@
 
     
     
-    <meta name="git_release" content="3.4.0">
-    <meta name="git_hash" content="c0022513cd549a0b8de5ca0596f74c17b3bcc3f1">
-    <meta name="git_timestamp" content="2016-04-29 06:11:14 -0700">
-    <title>Applications &mdash; Cask Data Application Platform 3.4.0 Documentation</title>
+    <meta name="git_release" content="3.4.1">
+    <meta name="git_hash" content="401c9f3c93408abb6865903b462121e4c7cf0904">
+    <meta name="git_timestamp" content="2016-05-12 12:17:30 -0700">
+    <title>Applications &mdash; Cask Data Application Platform 3.4.1 Documentation</title>
     
     <link rel="stylesheet" href="../_static/cdap.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
@@ -24,7 +24,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '3.4.0',
+        VERSION:     '3.4.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  false
@@ -47,7 +47,7 @@
     })(window,document,'script','dataLayer','GTM-PBZ3JL');</script>
     <!-- Google Tag Manager end -->
     <link rel="shortcut icon" href="../_static/favicon.ico"/>
-    <link rel="top" title="Cask Data Application Platform 3.4.0 Documentation" href="../index.html" />
+    <link rel="top" title="Cask Data Application Platform 3.4.1 Documentation" href="../index.html" />
     <link rel="up" title="Building Blocks" href="index.html" />
     <link rel="next" title="Streams" href="streams.html" />
     <link rel="prev" title="Core Abstractions" href="core.html" /> 
@@ -68,7 +68,7 @@
         
         <script type="text/javascript" src="../_static/version-menu.js"></script>
         <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
-        <script>window.setVersion('3.4.0');</script>
+        <script>window.setVersion('3.4.1');</script>
        
         <li><a href="../table-of-contents.html">CDAP Developers’ Manual</a> &raquo;</li>
           <li><a href="index.html" accesskey="U">Building Blocks</a> &raquo;</li> 
@@ -147,7 +147,7 @@ The configuration class needs to be the type parameter of the <code class="docut
 It should also extend the <code class="docutils literal"><span class="pre">Config</span></code> class present in the CDAP API. The configuration is provided as part of the
 request body to create an application. It is available during
 configuration time through the <code class="docutils literal"><span class="pre">getConfig()</span></code> method in <code class="docutils literal"><span class="pre">AbstractApplication</span></code>.</p>
-<p>Information about the RESTful call is available in the <a class="reference external" href="../source/../../reference-manual/http-restful-api/lifecycle.html#http-restful-api-lifecycle" title="(in Cask Data Application Platform v3.4.0)"><span class="xref std std-ref">Lifecycle HTTP RESTful API documentation</span></a>.</p>
+<p>Information about the RESTful call is available in the <a class="reference external" href="../source/../../reference-manual/http-restful-api/lifecycle.html#http-restful-api-lifecycle" title="(in Cask Data Application Platform v3.4.1)"><span class="xref std std-ref">Lifecycle HTTP RESTful API documentation</span></a>.</p>
 <p>We can modify the <code class="docutils literal"><span class="pre">MyApp</span></code> class above to take in a Configuration <code class="docutils literal"><span class="pre">MyApp.MyAppConfig</span></code>:</p>
 <div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">MyApp</span> <span class="kd">extends</span> <span class="n">AbstractApplication</span><span class="o">&lt;</span><span class="n">MyApp</span><span class="o">.</span><span class="na">MyAppConfig</span><span class="o">&gt;</span> <span class="o">{</span>
 
@@ -213,9 +213,9 @@ usage of the dataset. It is also used during the runtime to get the dataset inst
 </div>
 <div class="section" id="application-example">
 <h2>Application Example<a class="headerlink" href="#application-example" title="Permalink to this headline">¶</a></h2>
-<p>Applications are included in just about every CDAP <a class="reference external" href="../source/../../examples-manual/apps-packs.html#apps-and-packs" title="(in Cask Data Application Platform v3.4.0)"><span class="xref std std-ref">application</span></a>,
-<a class="reference external" href="../source/../../examples-manual/tutorials/index.html#tutorials" title="(in Cask Data Application Platform v3.4.0)"><span class="xref std std-ref">tutorial</span></a>, <a class="reference external" href="../source/../../examples-manual/how-to-guides/index.html#guides-index" title="(in Cask Data Application Platform v3.4.0)"><span class="xref std std-ref">guide</span></a> or <a class="reference external" href="../source/../../examples-manual/examples/index.html#examples-index" title="(in Cask Data Application Platform v3.4.0)"><span class="xref std std-ref">example</span></a>.</p>
-<p>An example demonstrating the usage of a configuration is the <a class="reference external" href="../source/../../examples-manual/examples/word-count.html#examples-word-count" title="(in Cask Data Application Platform v3.4.0)"><span class="xref std std-ref">WordCount example</span></a>.</p>
+<p>Applications are included in just about every CDAP <a class="reference external" href="../source/../../examples-manual/apps-packs.html#apps-and-packs" title="(in Cask Data Application Platform v3.4.1)"><span class="xref std std-ref">application</span></a>,
+<a class="reference external" href="../source/../../examples-manual/tutorials/index.html#tutorials" title="(in Cask Data Application Platform v3.4.1)"><span class="xref std std-ref">tutorial</span></a>, <a class="reference external" href="../source/../../examples-manual/how-to-guides/index.html#guides-index" title="(in Cask Data Application Platform v3.4.1)"><span class="xref std std-ref">guide</span></a> or <a class="reference external" href="../source/../../examples-manual/examples/index.html#examples-index" title="(in Cask Data Application Platform v3.4.1)"><span class="xref std std-ref">example</span></a>.</p>
+<p>An example demonstrating the usage of a configuration is the <a class="reference external" href="../source/../../examples-manual/examples/word-count.html#examples-word-count" title="(in Cask Data Application Platform v3.4.1)"><span class="xref std std-ref">WordCount example</span></a>.</p>
 </div>
 </div>
 
@@ -238,7 +238,7 @@ usage of the dataset. It is also used during the runtime to get the dataset inst
     
     
   <div role="note" aria-label="manuals links">
-    <h3><a href="../table-of-contents/../../index.html" rel="nofollow">CDAP Documentation v3.4.0</a></h3>
+    <h3><a href="../table-of-contents/../../index.html" rel="nofollow">CDAP Documentation v3.4.1</a></h3>
     <ul class="this-page-menu">
       <li><div class=""></div><a href="../table-of-contents/../../index.html" rel="nofollow">Overview</a></li>
       <li><div class=""></div><a href="../table-of-contents/../../introduction/index.html" rel="nofollow">Introduction to CDAP</a></li>
@@ -322,7 +322,7 @@ usage of the dataset. It is also used during the runtime to get the dataset inst
   <div role="note" aria-label="downloads links">
     <h3>Downloads</h3>
     <ul class="this-page-menu">
-      <li><a href="http://docs.cask.co/cdap/3.4.0/cdap-docs-3.4.0-web.zip"
+      <li><a href="http://docs.cask.co/cdap/3.4.1/cdap-docs-3.4.1-web.zip"
             rel="nofollow">Zip Archive of CDAP Documentation</a></li>
     </ul>
    </div>

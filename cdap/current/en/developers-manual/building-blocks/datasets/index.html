@@ -10,10 +10,10 @@
 
     
     
-    <meta name="git_release" content="3.4.0">
-    <meta name="git_hash" content="c0022513cd549a0b8de5ca0596f74c17b3bcc3f1">
-    <meta name="git_timestamp" content="2016-04-29 06:11:14 -0700">
-    <title>Datasets &mdash; Cask Data Application Platform 3.4.0 Documentation</title>
+    <meta name="git_release" content="3.4.1">
+    <meta name="git_hash" content="401c9f3c93408abb6865903b462121e4c7cf0904">
+    <meta name="git_timestamp" content="2016-05-12 12:17:30 -0700">
+    <title>Datasets &mdash; Cask Data Application Platform 3.4.1 Documentation</title>
     
     <link rel="stylesheet" href="../../_static/cdap.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -24,7 +24,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '3.4.0',
+        VERSION:     '3.4.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  false
@@ -47,7 +47,7 @@
     })(window,document,'script','dataLayer','GTM-PBZ3JL');</script>
     <!-- Google Tag Manager end -->
     <link rel="shortcut icon" href="../../_static/favicon.ico"/>
-    <link rel="top" title="Cask Data Application Platform 3.4.0 Documentation" href="../../index.html" />
+    <link rel="top" title="Cask Data Application Platform 3.4.1 Documentation" href="../../index.html" />
     <link rel="up" title="Building Blocks" href="../index.html" />
     <link rel="next" title="Table API" href="table.html" />
     <link rel="prev" title="Streams" href="../streams.html" /> 
@@ -68,7 +68,7 @@
         
         <script type="text/javascript" src="../../_static/version-menu.js"></script>
         <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
-        <script>window.setVersion('3.4.0');</script>
+        <script>window.setVersion('3.4.1');</script>
        
         <li><a href="../../table-of-contents.html">CDAP Developers’ Manual</a> &raquo;</li>
           <li><a href="../index.html" accesskey="U">Building Blocks</a> &raquo;</li> 
@@ -118,8 +118,8 @@ included with CDAP, including key/value tables, indexed tables and
 time series. You can implement your own data patterns as custom
 datasets, on top of any combination of core and system datasets.</p>
 <p class="rubric">Creating a Dataset</p>
-<p>You can create a dataset in CDAP using either the <a class="reference external" href="../../source/../../reference-manual/http-restful-api/dataset.html#http-restful-api-dataset" title="(in Cask Data Application Platform v3.4.0)"><span>Dataset HTTP RESTful API</span></a>, the
-<a class="reference external" href="../../source/../../reference-manual/cli-api.html#cli" title="(in Cask Data Application Platform v3.4.0)"><span class="xref std std-ref">Command Line Interface</span></a>, or in an <a class="reference internal" href="../applications.html#applications"><span>application specification.</span></a></p>
+<p>You can create a dataset in CDAP using either the <a class="reference external" href="../../source/../../reference-manual/http-restful-api/dataset.html#http-restful-api-dataset" title="(in Cask Data Application Platform v3.4.1)"><span>Dataset HTTP RESTful API</span></a>, the
+<a class="reference external" href="../../source/../../reference-manual/cli-api.html#cli" title="(in Cask Data Application Platform v3.4.1)"><span class="xref std std-ref">Command Line Interface</span></a>, or in an <a class="reference internal" href="../applications.html#applications"><span>application specification.</span></a></p>
 <p>You tell applications to create a dataset if it does not already
 exist by declaring the dataset details in the application specification.
 For example, to create a DataSet named <em>myCounters</em> of type
@@ -130,7 +130,7 @@ For example, to create a DataSet named <em>myCounters</em> of type
 </pre></div>
 </div>
 <p>Names (<em>myCounters</em>) that start with an underscore (<code class="docutils literal"><span class="pre">_</span></code>) will not be visible in the home
-page of the <a class="reference external" href="../../source/../../admin-manual/operations/cdap-ui.html#cdap-ui" title="(in Cask Data Application Platform v3.4.0)"><span class="xref std std-ref">CDAP UI</span></a>, though they will be visible elsewhere in the CDAP UI.</p>
+page of the <a class="reference external" href="../../source/../../admin-manual/operations/cdap-ui.html#cdap-ui" title="(in Cask Data Application Platform v3.4.1)"><span class="xref std std-ref">CDAP UI</span></a>, though they will be visible elsewhere in the CDAP UI.</p>
 <p class="rubric" id="datasets-in-programs">Using Datasets in Programs</p>
 <p>There are two ways to use a dataset in a program:</p>
 <ul>
@@ -204,7 +204,7 @@ the dataset in a member variable at that time (similar to static datasets, but a
   <span class="o">}</span>
 </pre></div>
 </div>
-<p>See the <a class="reference external" href="../../source/../../examples-manual/examples/word-count.html#examples-word-count" title="(in Cask Data Application Platform v3.4.0)"><span class="xref std std-ref">Word Count</span></a> for an example of how this can be used to configure
+<p>See the <a class="reference external" href="../../source/../../examples-manual/examples/word-count.html#examples-word-count" title="(in Cask Data Application Platform v3.4.1)"><span class="xref std std-ref">Word Count</span></a> for an example of how this can be used to configure
 the dataset names used by an application.</p>
 <p>Contrary to static datasets, dynamic datasets allow the release of the resources held by their Java classes
 after you are finished using them. You can do that by calling the <code class="docutils literal"><span class="pre">discardDataset()</span></code> method of the program context:
@@ -236,7 +236,7 @@ methods defined in the dataset&#8217;s API. However, you cannot perform administ
 dropping a dataset. For these operations, the program context offers an <code class="docutils literal"><span class="pre">Admin</span></code> interface that can be obtained
 through the <code class="docutils literal"><span class="pre">getAdmin()</span></code> method of the context. This is available in all types of programs. For example, in
 a service handler, you can obtain the <code class="docutils literal"><span class="pre">Admin</span></code> through the <code class="docutils literal"><span class="pre">HttpServiceContext</span></code>. The <code class="docutils literal"><span class="pre">FileSetHandler</span></code> of the
-<a class="reference external" href="../../source/../../examples-manual/examples/fileset-example.html#examples-fileset" title="(in Cask Data Application Platform v3.4.0)"><span>FileSet Example</span></a> extends <code class="docutils literal"><span class="pre">AbstractHttpServiceHandler</span></code>—its <code class="docutils literal"><span class="pre">configure</span></code> method saves the context
+<a class="reference external" href="../../source/../../examples-manual/examples/fileset-example.html#examples-fileset" title="(in Cask Data Application Platform v3.4.1)"><span>FileSet Example</span></a> extends <code class="docutils literal"><span class="pre">AbstractHttpServiceHandler</span></code>—its <code class="docutils literal"><span class="pre">configure</span></code> method saves the context
 in an instance variable and makes it available through <code class="docutils literal"><span class="pre">getContext()</span></code>:</p>
 <div class="highlight-java"><div class="highlight"><pre><span class="cm">/**</span>
 <span class="cm"> * A handler that allows reading and writing files.</span>
@@ -280,7 +280,7 @@ either by cloning an existing file set&#8217;s dataset properties, or using the 
   <span class="o">}</span>
 </pre></div>
 </div>
-<p>For more details, see the <a class="reference external" href="../../source/../../examples-manual/examples/fileset-example.html#examples-fileset" title="(in Cask Data Application Platform v3.4.0)"><span>FileSet Example</span></a>.</p>
+<p>For more details, see the <a class="reference external" href="../../source/../../examples-manual/examples/fileset-example.html#examples-fileset" title="(in Cask Data Application Platform v3.4.1)"><span>FileSet Example</span></a>.</p>
 <p>Note that even though you can call dataset management methods within a transaction, these operations are <em>not</em>
 transactional, and they are not rolled back in case the current transaction fails. It is advisable not to mix data
 operations and dataset management operations within the same transaction.</p>
@@ -298,7 +298,7 @@ maximum age (in seconds) that data should be retained.</p>
 </pre></div>
 </div>
 <p>The default TTL for all datasets is infinite, meaning that data will never expire. The TTL
-property of an existing dataset can be changed using the <a class="reference external" href="../../source/../../reference-manual/http-restful-api/dataset.html#http-restful-api-dataset" title="(in Cask Data Application Platform v3.4.0)"><span>Dataset HTTP RESTful API</span></a>.</p>
+property of an existing dataset can be changed using the <a class="reference external" href="../../source/../../reference-manual/http-restful-api/dataset.html#http-restful-api-dataset" title="(in Cask Data Application Platform v3.4.1)"><span>Dataset HTTP RESTful API</span></a>.</p>
 <p class="rubric">Types of Datasets</p>
 <p>A dataset abstraction is defined by a Java class that implements the <code class="docutils literal"><span class="pre">DatasetDefinition</span></code> interface.
 The implementation of a dataset typically relies on one or more underlying (embedded) datasets.
@@ -355,7 +355,7 @@ be aware of actual file paths.</p>
 <li><p class="first">A <code class="docutils literal"><span class="pre">TimePartitionedFileSet</span></code> is a further variation that uses a timestamp as the partitioning key.
 Though it is not required that data in each partition be organized by time,
 each partition is assigned a logical time.</p>
-<p>This is in contrast to a <a class="reference external" href="../../source/../../examples-manual/how-to-guides/cdap-timeseries-guide.html#cdap-timeseries-guide" title="(in Cask Data Application Platform v3.4.0)"><span class="xref std std-ref">Timeseries Table</span></a> dataset, where
+<p>This is in contrast to a <a class="reference external" href="../../source/../../examples-manual/how-to-guides/cdap-timeseries-guide.html#cdap-timeseries-guide" title="(in Cask Data Application Platform v3.4.1)"><span class="xref std std-ref">Timeseries Table</span></a> dataset, where
 time is the primary means of how data is organized, and both the data model and the
 schema that represents the data are optimized for querying and aggregating over time
 ranges.</p>
@@ -368,35 +368,35 @@ time.</p>
 provides a querying interface for retrieval of data and allows exploring of the stored data.</p>
 <p>See <a class="reference internal" href="cube.html#datasets-cube"><span>Cube Dataset</span></a> for: details on configuring a Cube dataset;
 writing to and reading from it; and querying and exploring the data in a cube.</p>
-<p>An example of using the Cube dataset is provided in the <a class="reference external" href="../../source/../../examples-manual/how-to-guides/cdap-cube-guide.html#cdap-cube-guide" title="(in Cask Data Application Platform v3.4.0)"><span class="xref std std-ref">Data Analysis with OLAP
+<p>An example of using the Cube dataset is provided in the <a class="reference external" href="../../source/../../examples-manual/how-to-guides/cdap-cube-guide.html#cdap-cube-guide" title="(in Cask Data Application Platform v3.4.1)"><span class="xref std std-ref">Data Analysis with OLAP
 Cube</span></a> guide.</p>
 </li>
 </ul>
 <div class="section" id="dataset-examples">
 <h2>Dataset Examples<a class="headerlink" href="#dataset-examples" title="Permalink to this headline">¶</a></h2>
-<p>Datasets are included in just about every CDAP <a class="reference external" href="../../source/../../examples-manual/apps-packs.html#apps-and-packs" title="(in Cask Data Application Platform v3.4.0)"><span class="xref std std-ref">application</span></a>,
-<a class="reference external" href="../../source/../../examples-manual/tutorials/index.html#tutorials" title="(in Cask Data Application Platform v3.4.0)"><span class="xref std std-ref">tutorial</span></a>, <a class="reference external" href="../../source/../../examples-manual/how-to-guides/index.html#guides-index" title="(in Cask Data Application Platform v3.4.0)"><span class="xref std std-ref">guide</span></a> or <a class="reference external" href="../../source/../../examples-manual/examples/index.html#examples-index" title="(in Cask Data Application Platform v3.4.0)"><span class="xref std std-ref">example</span></a>.</p>
+<p>Datasets are included in just about every CDAP <a class="reference external" href="../../source/../../examples-manual/apps-packs.html#apps-and-packs" title="(in Cask Data Application Platform v3.4.1)"><span class="xref std std-ref">application</span></a>,
+<a class="reference external" href="../../source/../../examples-manual/tutorials/index.html#tutorials" title="(in Cask Data Application Platform v3.4.1)"><span class="xref std std-ref">tutorial</span></a>, <a class="reference external" href="../../source/../../examples-manual/how-to-guides/index.html#guides-index" title="(in Cask Data Application Platform v3.4.1)"><span class="xref std std-ref">guide</span></a> or <a class="reference external" href="../../source/../../examples-manual/examples/index.html#examples-index" title="(in Cask Data Application Platform v3.4.1)"><span class="xref std std-ref">example</span></a>.</p>
 <ul class="simple">
-<li>The simplest example, <a class="reference external" href="../../source/../../examples-manual/examples/hello-world.html#examples-hello-world" title="(in Cask Data Application Platform v3.4.0)"><span class="xref std std-ref">Hello World</span></a>, demonstrates using a
+<li>The simplest example, <a class="reference external" href="../../source/../../examples-manual/examples/hello-world.html#examples-hello-world" title="(in Cask Data Application Platform v3.4.1)"><span class="xref std std-ref">Hello World</span></a>, demonstrates using a
 stream to <strong>ingest a name into a dataset.</strong></li>
-<li>For examples of <strong>custom datasets,</strong> see the <a class="reference external" href="../../source/../../examples-manual/examples/word-count.html#examples-word-count" title="(in Cask Data Application Platform v3.4.0)"><span class="xref std std-ref">Word Count</span></a>
-and <a class="reference external" href="../../source/../../examples-manual/examples/web-analytics.html#examples-web-analytics" title="(in Cask Data Application Platform v3.4.0)"><span class="xref std std-ref">Web Analytics</span></a> examples.</li>
-<li>For an example of <strong>a dataset and a Map Reduce Job,</strong> see the <a class="reference external" href="../../source/../../examples-manual/examples/purchase.html#examples-purchase" title="(in Cask Data Application Platform v3.4.0)"><span class="xref std std-ref">Purchase</span></a> example.</li>
-<li>For an example of a <strong>Table dataset,</strong> see the <a class="reference external" href="../../source/../../examples-manual/examples/word-count.html#examples-word-count" title="(in Cask Data Application Platform v3.4.0)"><span class="xref std std-ref">Word Count</span></a> example.</li>
-<li>For an example of a <strong>Cube dataset,</strong> see the <a class="reference external" href="../../source/../../examples-manual/how-to-guides/cdap-cube-guide.html#cdap-cube-guide" title="(in Cask Data Application Platform v3.4.0)"><span class="xref std std-ref">Data Analysis with OLAP Cube</span></a> guide.</li>
-<li>For an example of a <strong>FileSet dataset,</strong> see the <a class="reference external" href="../../source/../../examples-manual/examples/fileset-example.html#examples-fileset" title="(in Cask Data Application Platform v3.4.0)"><span class="xref std std-ref">FileSet</span></a> example.</li>
-<li>For an example of a <strong>PartitionedFileSet,</strong> see the <a class="reference external" href="../../source/../../examples-manual/examples/sport-results.html#examples-sport-results" title="(in Cask Data Application Platform v3.4.0)"><span class="xref std std-ref">Sport Results</span></a>
+<li>For examples of <strong>custom datasets,</strong> see the <a class="reference external" href="../../source/../../examples-manual/examples/word-count.html#examples-word-count" title="(in Cask Data Application Platform v3.4.1)"><span class="xref std std-ref">Word Count</span></a>
+and <a class="reference external" href="../../source/../../examples-manual/examples/web-analytics.html#examples-web-analytics" title="(in Cask Data Application Platform v3.4.1)"><span class="xref std std-ref">Web Analytics</span></a> examples.</li>
+<li>For an example of <strong>a dataset and a Map Reduce Job,</strong> see the <a class="reference external" href="../../source/../../examples-manual/examples/purchase.html#examples-purchase" title="(in Cask Data Application Platform v3.4.1)"><span class="xref std std-ref">Purchase</span></a> example.</li>
+<li>For an example of a <strong>Table dataset,</strong> see the <a class="reference external" href="../../source/../../examples-manual/examples/word-count.html#examples-word-count" title="(in Cask Data Application Platform v3.4.1)"><span class="xref std std-ref">Word Count</span></a> example.</li>
+<li>For an example of a <strong>Cube dataset,</strong> see the <a class="reference external" href="../../source/../../examples-manual/how-to-guides/cdap-cube-guide.html#cdap-cube-guide" title="(in Cask Data Application Platform v3.4.1)"><span class="xref std std-ref">Data Analysis with OLAP Cube</span></a> guide.</li>
+<li>For an example of a <strong>FileSet dataset,</strong> see the <a class="reference external" href="../../source/../../examples-manual/examples/fileset-example.html#examples-fileset" title="(in Cask Data Application Platform v3.4.1)"><span class="xref std std-ref">FileSet</span></a> example.</li>
+<li>For an example of a <strong>PartitionedFileSet,</strong> see the <a class="reference external" href="../../source/../../examples-manual/examples/sport-results.html#examples-sport-results" title="(in Cask Data Application Platform v3.4.1)"><span class="xref std std-ref">Sport Results</span></a>
 example.</li>
-<li>For an example of a <strong>TimePartitionedFileSet,</strong> see the <a class="reference external" href="../../source/../../examples-manual/examples/stream-conversion.html#examples-stream-conversion" title="(in Cask Data Application Platform v3.4.0)"><span class="xref std std-ref">StreamConversion</span></a> example.</li>
+<li>For an example of a <strong>TimePartitionedFileSet,</strong> see the <a class="reference external" href="../../source/../../examples-manual/examples/stream-conversion.html#examples-stream-conversion" title="(in Cask Data Application Platform v3.4.1)"><span class="xref std std-ref">StreamConversion</span></a> example.</li>
 <li>For examples of <strong>key-value Table datasets,</strong> see the
-<a class="reference external" href="../../source/../../examples-manual/examples/hello-world.html#examples-hello-world" title="(in Cask Data Application Platform v3.4.0)"><span class="xref std std-ref">Hello World</span></a>,
-<a class="reference external" href="../../source/../../examples-manual/examples/count-random.html#examples-count-random" title="(in Cask Data Application Platform v3.4.0)"><span class="xref std std-ref">Count Random</span></a>,
-<a class="reference external" href="../../source/../../examples-manual/examples/word-count.html#examples-word-count" title="(in Cask Data Application Platform v3.4.0)"><span class="xref std std-ref">Word Count</span></a>, and
-<a class="reference external" href="../../source/../../examples-manual/examples/purchase.html#examples-purchase" title="(in Cask Data Application Platform v3.4.0)"><span class="xref std std-ref">Purchase</span></a> examples.</li>
-<li>For an example of an <strong>ObjectMappedTable dataset,</strong> see the <a class="reference external" href="../../source/../../examples-manual/examples/purchase.html#examples-purchase" title="(in Cask Data Application Platform v3.4.0)"><span class="xref std std-ref">Purchase</span></a> example.</li>
-<li>For examples of <strong>ObjectStore datasets,</strong> see the <a class="reference external" href="../../source/../../examples-manual/examples/purchase.html#examples-purchase" title="(in Cask Data Application Platform v3.4.0)"><span class="xref std std-ref">Purchase</span></a>,
-<a class="reference external" href="../../source/../../examples-manual/examples/spark-k-means.html#examples-spark-k-means" title="(in Cask Data Application Platform v3.4.0)"><span class="xref std std-ref">Spark K-Means</span></a>, and <a class="reference external" href="../../source/../../examples-manual/examples/spark-page-rank.html#examples-spark-page-rank" title="(in Cask Data Application Platform v3.4.0)"><span class="xref std std-ref">Spark Page Rank</span></a> examples.</li>
-<li>For an example of a <strong>Timeseries Table dataset,</strong> see the how-to guide <a class="reference external" href="../../source/../../examples-manual/how-to-guides/cdap-timeseries-guide.html#cdap-timeseries-guide" title="(in Cask Data Application Platform v3.4.0)"><span>Storing Timeseries Data</span></a>.</li>
+<a class="reference external" href="../../source/../../examples-manual/examples/hello-world.html#examples-hello-world" title="(in Cask Data Application Platform v3.4.1)"><span class="xref std std-ref">Hello World</span></a>,
+<a class="reference external" href="../../source/../../examples-manual/examples/count-random.html#examples-count-random" title="(in Cask Data Application Platform v3.4.1)"><span class="xref std std-ref">Count Random</span></a>,
+<a class="reference external" href="../../source/../../examples-manual/examples/word-count.html#examples-word-count" title="(in Cask Data Application Platform v3.4.1)"><span class="xref std std-ref">Word Count</span></a>, and
+<a class="reference external" href="../../source/../../examples-manual/examples/purchase.html#examples-purchase" title="(in Cask Data Application Platform v3.4.1)"><span class="xref std std-ref">Purchase</span></a> examples.</li>
+<li>For an example of an <strong>ObjectMappedTable dataset,</strong> see the <a class="reference external" href="../../source/../../examples-manual/examples/purchase.html#examples-purchase" title="(in Cask Data Application Platform v3.4.1)"><span class="xref std std-ref">Purchase</span></a> example.</li>
+<li>For examples of <strong>ObjectStore datasets,</strong> see the <a class="reference external" href="../../source/../../examples-manual/examples/purchase.html#examples-purchase" title="(in Cask Data Application Platform v3.4.1)"><span class="xref std std-ref">Purchase</span></a>,
+<a class="reference external" href="../../source/../../examples-manual/examples/spark-k-means.html#examples-spark-k-means" title="(in Cask Data Application Platform v3.4.1)"><span class="xref std std-ref">Spark K-Means</span></a>, and <a class="reference external" href="../../source/../../examples-manual/examples/spark-page-rank.html#examples-spark-page-rank" title="(in Cask Data Application Platform v3.4.1)"><span class="xref std std-ref">Spark Page Rank</span></a> examples.</li>
+<li>For an example of a <strong>Timeseries Table dataset,</strong> see the how-to guide <a class="reference external" href="../../source/../../examples-manual/how-to-guides/cdap-timeseries-guide.html#cdap-timeseries-guide" title="(in Cask Data Application Platform v3.4.1)"><span>Storing Timeseries Data</span></a>.</li>
 </ul>
 </div>
 </div>
@@ -420,7 +420,7 @@ example.</li>
     
     
   <div role="note" aria-label="manuals links">
-    <h3><a href="../../table-of-contents/../../index.html" rel="nofollow">CDAP Documentation v3.4.0</a></h3>
+    <h3><a href="../../table-of-contents/../../index.html" rel="nofollow">CDAP Documentation v3.4.1</a></h3>
     <ul class="this-page-menu">
       <li><div class=""></div><a href="../../table-of-contents/../../index.html" rel="nofollow">Overview</a></li>
       <li><div class=""></div><a href="../../table-of-contents/../../introduction/index.html" rel="nofollow">Introduction to CDAP</a></li>
@@ -507,7 +507,7 @@ example.</li>
   <div role="note" aria-label="downloads links">
     <h3>Downloads</h3>
     <ul class="this-page-menu">
-      <li><a href="http://docs.cask.co/cdap/3.4.0/cdap-docs-3.4.0-web.zip"
+      <li><a href="http://docs.cask.co/cdap/3.4.1/cdap-docs-3.4.1-web.zip"
             rel="nofollow">Zip Archive of CDAP Documentation</a></li>
     </ul>
    </div>

@@ -10,10 +10,10 @@
 
     
     
-    <meta name="git_release" content="3.4.0">
-    <meta name="git_hash" content="c0022513cd549a0b8de5ca0596f74c17b3bcc3f1">
-    <meta name="git_timestamp" content="2016-04-29 06:11:14 -0700">
-    <title>Upgrading CDAP using Cloudera Manager &mdash; Cask Data Application Platform 3.4.0 Documentation</title>
+    <meta name="git_release" content="3.4.1">
+    <meta name="git_hash" content="401c9f3c93408abb6865903b462121e4c7cf0904">
+    <meta name="git_timestamp" content="2016-05-12 12:17:30 -0700">
+    <title>Upgrading CDAP using Cloudera Manager &mdash; Cask Data Application Platform 3.4.1 Documentation</title>
     
     <link rel="stylesheet" href="../_static/cdap.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
@@ -24,7 +24,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '3.4.0',
+        VERSION:     '3.4.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  false
@@ -47,7 +47,7 @@
     })(window,document,'script','dataLayer','GTM-PBZ3JL');</script>
     <!-- Google Tag Manager end -->
     <link rel="shortcut icon" href="../_static/favicon.ico"/>
-    <link rel="top" title="Cask Data Application Platform 3.4.0 Documentation" href="../index.html" />
+    <link rel="top" title="Cask Data Application Platform 3.4.1 Documentation" href="../index.html" />
     <link rel="up" title="Upgrading" href="index.html" />
     <link rel="next" title="Upgrading CDAP using Apache Ambari" href="ambari.html" />
     <link rel="prev" title="Upgrading" href="index.html" /> 
@@ -68,7 +68,7 @@
         
         <script type="text/javascript" src="../_static/version-menu.js"></script>
         <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
-        <script>window.setVersion('3.4.0');</script>
+        <script>window.setVersion('3.4.1');</script>
        
         <li><a href="../table-of-contents.html">CDAP Administration Manual</a> &raquo;</li>
           <li><a href="index.html" accesskey="U">Upgrading</a> &raquo;</li> 
@@ -87,7 +87,7 @@
 <p>When upgrading an existing CDAP installation from a previous version, you will need
 to make sure the CDAP table definitions in HBase are up-to-date.</p>
 <p><strong>These steps will upgrade from CDAP</strong> <strong>3.3</strong><strong>.x to</strong>
-<strong>3.4.0</strong><strong>.</strong> If you are on an earlier version of CDAP, please follow the
+<strong>3.4.1</strong><strong>.</strong> If you are on an earlier version of CDAP, please follow the
 upgrade instructions for the earlier versions and upgrade first to
 3.3.x before proceeding.</p>
 <div class="section" id="upgrading-cdap-patch-release-versions">
@@ -124,7 +124,7 @@ remove role instances as necessary. Check the <a class="reference internal" href
 upgrade steps against the running services.  From the CDAP Service page, select &#8220;Run CDAP
 Post-Upgrade Tasks.&#8221;</li>
 <li>To upgrade existing ETL applications created using the 3.3.x versions of
-<code class="docutils literal"><span class="pre">cdap-etl-batch</span></code> or <code class="docutils literal"><span class="pre">cdap-etl-realtime</span></code>, there are <a class="reference external" href="../source/../../cdap-apps/hydrator/upgrade.html#cdap-apps-etl-upgrade" title="(in Cask Data Application Platform v3.4.0)"><span class="xref std std-ref">separate instructions</span></a>.</li>
+<code class="docutils literal"><span class="pre">cdap-etl-batch</span></code> or <code class="docutils literal"><span class="pre">cdap-etl-realtime</span></code>, there are <a class="reference external" href="../source/../../cdap-apps/hydrator/upgrade.html#cdap-apps-etl-upgrade" title="(in Cask Data Application Platform v3.4.1)"><span class="xref std std-ref">separate instructions</span></a>.</li>
 <li>You must recompile and then redeploy your applications prior to using them.</li>
 </ol>
 </div>
@@ -137,7 +137,7 @@ one version to the next can require that the HBase coprocessors be upgraded to t
 version. The steps below will, if required, update the coprocessors appropriately.</p>
 <p><strong>It is important to perform these steps as described, otherwise the coprocessors may not
 get upgraded correctly and HBase regionservers may crash.</strong> In the case where something
-goes wrong, see these troubleshooting instructions for <a class="reference external" href="../source/../../faqs/cdap.html#faqs-cloudera-troubleshooting-upgrade-cdh" title="(in Cask Data Application Platform v3.4.0)"><span class="xref std std-ref">problems while upgrading CDH</span></a>.</p>
+goes wrong, see these troubleshooting instructions for <a class="reference external" href="../source/../../faqs/cdap.html#faqs-cloudera-troubleshooting-upgrade-cdh" title="(in Cask Data Application Platform v3.4.1)"><span class="xref std std-ref">problems while upgrading CDH</span></a>.</p>
 <p><strong>Upgrade Steps</strong></p>
 <ol class="arabic">
 <li><p class="first">Upgrade CDAP to a version that will support the new CDH version, following the usual
@@ -189,7 +189,7 @@ page, select &#8220;Run Post-CDH Upgrade Tasks&#8221; from the Actions menu.</p>
     
     
   <div role="note" aria-label="manuals links">
-    <h3><a href="../table-of-contents/../../index.html" rel="nofollow">CDAP Documentation v3.4.0</a></h3>
+    <h3><a href="../table-of-contents/../../index.html" rel="nofollow">CDAP Documentation v3.4.1</a></h3>
     <ul class="this-page-menu">
       <li><div class=""></div><a href="../table-of-contents/../../index.html" rel="nofollow">Overview</a></li>
       <li><div class=""></div><a href="../table-of-contents/../../introduction/index.html" rel="nofollow">Introduction to CDAP</a></li>
@@ -259,7 +259,7 @@ page, select &#8220;Run Post-CDH Upgrade Tasks&#8221; from the Actions menu.</p>
   <div role="note" aria-label="downloads links">
     <h3>Downloads</h3>
     <ul class="this-page-menu">
-      <li><a href="http://docs.cask.co/cdap/3.4.0/cdap-docs-3.4.0-web.zip"
+      <li><a href="http://docs.cask.co/cdap/3.4.1/cdap-docs-3.4.1-web.zip"
             rel="nofollow">Zip Archive of CDAP Documentation</a></li>
     </ul>
    </div>

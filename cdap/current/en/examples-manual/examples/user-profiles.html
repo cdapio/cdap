@@ -11,10 +11,10 @@
 
     
     
-    <meta name="git_release" content="3.4.0">
-    <meta name="git_hash" content="c0022513cd549a0b8de5ca0596f74c17b3bcc3f1">
-    <meta name="git_timestamp" content="2016-04-29 06:11:14 -0700">
-    <title>User Profiles &mdash; Cask Data Application Platform 3.4.0 Documentation</title>
+    <meta name="git_release" content="3.4.1">
+    <meta name="git_hash" content="401c9f3c93408abb6865903b462121e4c7cf0904">
+    <meta name="git_timestamp" content="2016-05-12 12:17:30 -0700">
+    <title>User Profiles &mdash; Cask Data Application Platform 3.4.1 Documentation</title>
     
     <link rel="stylesheet" href="../_static/cdap.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
@@ -25,7 +25,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '3.4.0',
+        VERSION:     '3.4.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  false
@@ -48,7 +48,7 @@
     })(window,document,'script','dataLayer','GTM-PBZ3JL');</script>
     <!-- Google Tag Manager end -->
     <link rel="shortcut icon" href="../_static/favicon.ico"/>
-    <link rel="top" title="Cask Data Application Platform 3.4.0 Documentation" href="../index.html" />
+    <link rel="top" title="Cask Data Application Platform 3.4.1 Documentation" href="../index.html" />
     <link rel="up" title="Examples" href="index.html" />
     <link rel="next" title="Web Analytics Application" href="web-analytics.html" />
     <link rel="prev" title="Stream Conversion" href="stream-conversion.html" /> 
@@ -69,7 +69,7 @@
         
         <script type="text/javascript" src="../_static/version-menu.js"></script>
         <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
-        <script>window.setVersion('3.4.0');</script>
+        <script>window.setVersion('3.4.1');</script>
        
         <li><a href="../table-of-contents.html">CDAP Examples, Guides, and Tutorials</a> &raquo;</li>
           <li><a href="index.html" accesskey="U">Examples</a> &raquo;</li> 
@@ -178,8 +178,8 @@ to write to two different columns of the same row at the same time.</p>
 <div class="section" id="building-and-starting">
 <h2>Building and Starting<a class="headerlink" href="#building-and-starting" title="Permalink to this headline">¶</a></h2>
 <ul>
-<li><p class="first">You can either build the example (as described in <a class="reference external" href="../source/../../developers-manual/getting-started/building-apps.html#cdap-building-running-example" title="(in Cask Data Application Platform v3.4.0)"><span class="xref std std-ref">Building an Example Application</span></a>) or use the pre-built JAR file included in the CDAP SDK
-(as described in <a class="reference external" href="../source/../../developers-manual/getting-started/building-apps.html#cdap-building-running-deploying" title="(in Cask Data Application Platform v3.4.0)"><span class="xref std std-ref">Deploying an Application</span></a>):</p>
+<li><p class="first">You can either build the example (as described in <a class="reference external" href="../source/../../developers-manual/getting-started/building-apps.html#cdap-building-running-example" title="(in Cask Data Application Platform v3.4.1)"><span class="xref std std-ref">Building an Example Application</span></a>) or use the pre-built JAR file included in the CDAP SDK
+(as described in <a class="reference external" href="../source/../../developers-manual/getting-started/building-apps.html#cdap-building-running-deploying" title="(in Cask Data Application Platform v3.4.1)"><span class="xref std std-ref">Deploying an Application</span></a>):</p>
 <script type="text/javascript">
 
 $(function tabbedparsedliteral140() {
@@ -207,7 +207,7 @@ $(function tabbedparsedliteral140() {
 <div class="code code-tab">
 <div class="highlight-console">
 <!-- tabbed-parsed-literal start -->
-<div class="highlight"><pre><span class="go">examples/UserProfiles/target/UserProfiles-3.4.0.jar</span>
+<div class="highlight"><pre><span class="go">examples/UserProfiles/target/UserProfiles-3.4.1.jar</span>
 </pre></div>
 <!-- tabbed-parsed-literal end -->
 </div>
@@ -218,7 +218,7 @@ $(function tabbedparsedliteral140() {
 <div class="code code-tab">
 <div class="highlight-shell-session">
 <!-- tabbed-parsed-literal start -->
-<div class="highlight"><pre><span class="go">examples\UserProfiles\target\UserProfiles-3.4.0.jar</span>
+<div class="highlight"><pre><span class="go">examples\UserProfiles\target\UserProfiles-3.4.1.jar</span>
 </pre></div>
 <!-- tabbed-parsed-literal end -->
 </div>
@@ -230,10 +230,10 @@ $(function tabbedparsedliteral140() {
 
 </div>
 </li>
-<li><p class="first">Start CDAP (as described in <a class="reference external" href="../source/../../developers-manual/getting-started/start-stop-cdap.html#start-stop-cdap" title="(in Cask Data Application Platform v3.4.0)"><span class="xref std std-ref">Starting and Stopping CDAP</span></a>).</p>
+<li><p class="first">Start CDAP (as described in <a class="reference external" href="../source/../../developers-manual/getting-started/start-stop-cdap.html#start-stop-cdap" title="(in Cask Data Application Platform v3.4.1)"><span class="xref std std-ref">Starting and Stopping CDAP</span></a>).</p>
 </li>
-<li><p class="first">Deploy the application, as described in <a class="reference external" href="../source/../../developers-manual/getting-started/building-apps.html#cdap-building-running-deploying" title="(in Cask Data Application Platform v3.4.0)"><span class="xref std std-ref">Deploying an Application</span></a>.
-For example, from the Standalone CDAP SDK directory, use the <a class="reference external" href="../source/../../reference-manual/cli-api.html#cli" title="(in Cask Data Application Platform v3.4.0)"><span class="xref std std-ref">Command Line Interface (CLI)</span></a>:</p>
+<li><p class="first">Deploy the application, as described in <a class="reference external" href="../source/../../developers-manual/getting-started/building-apps.html#cdap-building-running-deploying" title="(in Cask Data Application Platform v3.4.1)"><span class="xref std std-ref">Deploying an Application</span></a>.
+For example, from the Standalone CDAP SDK directory, use the <a class="reference external" href="../source/../../reference-manual/cli-api.html#cli" title="(in Cask Data Application Platform v3.4.1)"><span class="xref std std-ref">Command Line Interface (CLI)</span></a>:</p>
 <script type="text/javascript">
 
 $(function tabbedparsedliteral141() {
@@ -261,11 +261,11 @@ $(function tabbedparsedliteral141() {
 <div class="code code-tab">
 <div class="highlight-console">
 <!-- tabbed-parsed-literal start -->
-<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">cdap-cli.sh load artifact examples/UserProfiles/target/UserProfiles-3.4.0.jar</span>
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">cdap-cli.sh load artifact examples/UserProfiles/target/UserProfiles-3.4.1.jar</span>
 
 <span class="go">Successfully added artifact with name &#39;UserProfiles&#39;</span>
 
-<span class="gp">$ </span><span class="copyable-text">cdap-cli.sh create app UserProfiles UserProfiles 3.4.0 user</span>
+<span class="gp">$ </span><span class="copyable-text">cdap-cli.sh create app UserProfiles UserProfiles 3.4.1 user</span>
 
 <span class="go">Successfully created application</span>
 </pre></div>
@@ -278,11 +278,11 @@ $(function tabbedparsedliteral141() {
 <div class="code code-tab">
 <div class="highlight-shell-session">
 <!-- tabbed-parsed-literal start -->
-<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">cdap-cli.bat load artifact examples\UserProfiles\target\UserProfiles-3.4.0.jar</span></span>
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">cdap-cli.bat load artifact examples\UserProfiles\target\UserProfiles-3.4.1.jar</span></span>
 
 <span class="go">Successfully added artifact with name &#39;UserProfiles&#39;</span>
 
-<span class="gp">&gt; </span><span class="copyable-text"><span class="go">cdap-cli.bat create app UserProfiles UserProfiles 3.4.0 user</span></span>
+<span class="gp">&gt; </span><span class="copyable-text"><span class="go">cdap-cli.bat create app UserProfiles UserProfiles 3.4.1 user</span></span>
 
 <span class="go">Successfully created application</span>
 </pre></div>
@@ -297,13 +297,13 @@ $(function tabbedparsedliteral141() {
 </div>
 </li>
 <li><p class="first">Once the application has been deployed, you can start its components, as described in
-<a class="reference external" href="../source/../../developers-manual/getting-started/building-apps.html#cdap-building-running-starting-application" title="(in Cask Data Application Platform v3.4.0)"><span class="xref std std-ref">Starting an Application</span></a>, and detailed at the
+<a class="reference external" href="../source/../../developers-manual/getting-started/building-apps.html#cdap-building-running-starting-application" title="(in Cask Data Application Platform v3.4.1)"><span class="xref std std-ref">Starting an Application</span></a>, and detailed at the
 start of <a class="reference external" href="#running-the-example">running the example</a>.</p>
 </li>
 <li><p class="first">Once all components are started, <a class="reference external" href="#running-the-example">run the example</a>.</p>
 </li>
-<li><p class="first">When finished, you can <a class="reference external" href="../source/../../developers-manual/getting-started/building-apps.html#cdap-building-running-stopping" title="(in Cask Data Application Platform v3.4.0)"><span class="xref std std-ref">stop</span></a>
-and <a class="reference external" href="../source/../../developers-manual/getting-started/building-apps.html#cdap-building-running-removing" title="(in Cask Data Application Platform v3.4.0)"><span class="xref std std-ref">remove the application</span></a>.</p>
+<li><p class="first">When finished, you can <a class="reference external" href="../source/../../developers-manual/getting-started/building-apps.html#cdap-building-running-stopping" title="(in Cask Data Application Platform v3.4.1)"><span class="xref std std-ref">stop</span></a>
+and <a class="reference external" href="../source/../../developers-manual/getting-started/building-apps.html#cdap-building-running-removing" title="(in Cask Data Application Platform v3.4.1)"><span class="xref std std-ref">remove the application</span></a>.</p>
 </li>
 </ul>
 </div>
@@ -328,7 +328,7 @@ and build this example twice:</p>
 <ul class="simple">
 <li>The first time you build the application, set the <code class="docutils literal"><span class="pre">Table.PROPERTY_CONFLICT_LEVEL</span></code> to
 <code class="docutils literal"><span class="pre">ConflictDetection.ROW.name()</span></code>.</li>
-<li>Build the example (as described <a class="reference external" href="../source/../../developers-manual/getting-started/building-apps.html#cdap-building-running-example" title="(in Cask Data Application Platform v3.4.0)"><span class="xref std std-ref">Building an Example Application</span></a>).</li>
+<li>Build the example (as described <a class="reference external" href="../source/../../developers-manual/getting-started/building-apps.html#cdap-building-running-example" title="(in Cask Data Application Platform v3.4.1)"><span class="xref std std-ref">Building an Example Application</span></a>).</li>
 <li>Start CDAP, deploy and start the application and its component.
 Make sure you start the flow and service as described below.</li>
 <li>Once the application has been deployed and started, you can run the example by <a class="reference external" href="#starting-the-flow">starting the flow and service.</a></li>
@@ -769,7 +769,7 @@ $(function tabbedparsedliteral148() {
 </div>
 <div class="section" id="stopping-and-removing-the-application">
 <h2>Stopping and Removing the Application<a class="headerlink" href="#stopping-and-removing-the-application" title="Permalink to this headline">¶</a></h2>
-<p>Once done, you can stop the application as described in <a class="reference external" href="../source/../../developers-manual/getting-started/building-apps.html#cdap-building-running-stopping" title="(in Cask Data Application Platform v3.4.0)"><span class="xref std std-ref">Stopping an Application</span></a>. Here is an example-specific description of the steps:</p>
+<p>Once done, you can stop the application as described in <a class="reference external" href="../source/../../developers-manual/getting-started/building-apps.html#cdap-building-running-stopping" title="(in Cask Data Application Platform v3.4.1)"><span class="xref std std-ref">Stopping an Application</span></a>. Here is an example-specific description of the steps:</p>
 <p><strong>Stopping the Flow</strong></p>
 <ul>
 <li><p class="first">Using the CDAP UI, go to the <em>UserProfiles</em> <a class="reference external" href="http://localhost:9999/ns/default/apps/UserProfiles/overview/programs">application overview page, programs tab</a>,
@@ -893,7 +893,7 @@ $(function tabbedparsedliteral150() {
 </li>
 </ul>
 <p><strong>Removing the Application</strong></p>
-<p>You can now remove the application as described in <a class="reference external" href="../source/../../developers-manual/getting-started/building-apps.html#cdap-building-running-removing" title="(in Cask Data Application Platform v3.4.0)"><span class="xref std std-ref">Removing an Application</span></a>, or:</p>
+<p>You can now remove the application as described in <a class="reference external" href="../source/../../developers-manual/getting-started/building-apps.html#cdap-building-running-removing" title="(in Cask Data Application Platform v3.4.1)"><span class="xref std std-ref">Removing an Application</span></a>, or:</p>
 <ul>
 <li><p class="first">Using the CDAP UI, go to the <em>UserProfiles</em> <a class="reference external" href="http://localhost:9999/ns/default/apps/UserProfiles/overview/programs">application overview page, programs tab</a>,
 click the <em>Actions</em> menu on the right side and select <em>Manage</em> to go to the Management
@@ -974,7 +974,7 @@ $(function tabbedparsedliteral151() {
     
     
   <div role="note" aria-label="manuals links">
-    <h3><a href="../table-of-contents/../../index.html" rel="nofollow">CDAP Documentation v3.4.0</a></h3>
+    <h3><a href="../table-of-contents/../../index.html" rel="nofollow">CDAP Documentation v3.4.1</a></h3>
     <ul class="this-page-menu">
       <li><div class=""></div><a href="../table-of-contents/../../index.html" rel="nofollow">Overview</a></li>
       <li><div class=""></div><a href="../table-of-contents/../../introduction/index.html" rel="nofollow">Introduction to CDAP</a></li>
@@ -1053,7 +1053,7 @@ $(function tabbedparsedliteral151() {
   <div role="note" aria-label="downloads links">
     <h3>Downloads</h3>
     <ul class="this-page-menu">
-      <li><a href="http://docs.cask.co/cdap/3.4.0/cdap-docs-3.4.0-web.zip"
+      <li><a href="http://docs.cask.co/cdap/3.4.1/cdap-docs-3.4.1-web.zip"
             rel="nofollow">Zip Archive of CDAP Documentation</a></li>
     </ul>
    </div>

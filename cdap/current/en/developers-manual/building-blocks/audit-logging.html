@@ -10,10 +10,10 @@
 
     
     
-    <meta name="git_release" content="3.4.0">
-    <meta name="git_hash" content="c0022513cd549a0b8de5ca0596f74c17b3bcc3f1">
-    <meta name="git_timestamp" content="2016-04-29 06:11:14 -0700">
-    <title>Audit Logging &mdash; Cask Data Application Platform 3.4.0 Documentation</title>
+    <meta name="git_release" content="3.4.1">
+    <meta name="git_hash" content="401c9f3c93408abb6865903b462121e4c7cf0904">
+    <meta name="git_timestamp" content="2016-05-12 12:17:30 -0700">
+    <title>Audit Logging &mdash; Cask Data Application Platform 3.4.1 Documentation</title>
     
     <link rel="stylesheet" href="../_static/cdap.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
@@ -24,7 +24,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '3.4.0',
+        VERSION:     '3.4.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  false
@@ -47,7 +47,7 @@
     })(window,document,'script','dataLayer','GTM-PBZ3JL');</script>
     <!-- Google Tag Manager end -->
     <link rel="shortcut icon" href="../_static/favicon.ico"/>
-    <link rel="top" title="Cask Data Application Platform 3.4.0 Documentation" href="../index.html" />
+    <link rel="top" title="Cask Data Application Platform 3.4.1 Documentation" href="../index.html" />
     <link rel="up" title="Building Blocks" href="index.html" />
     <link rel="next" title="Namespaces" href="namespaces.html" />
     <link rel="prev" title="Metadata and Lineage" href="metadata-lineage.html" /> 
@@ -68,7 +68,7 @@
         
         <script type="text/javascript" src="../_static/version-menu.js"></script>
         <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
-        <script>window.setVersion('3.4.0');</script>
+        <script>window.setVersion('3.4.1');</script>
        
         <li><a href="../table-of-contents.html">CDAP Developers’ Manual</a> &raquo;</li>
           <li><a href="index.html" accesskey="U">Building Blocks</a> &raquo;</li> 
@@ -92,6 +92,10 @@ entity&#8217;s <a class="reference internal" href="metadata-lineage.html#metadat
 streams), it includes access information used to generate the entity&#8217;s <a class="reference internal" href="metadata-lineage.html#metadata-lineage-lineage"><span>lineage</span></a>. Audit logging is an especially important feature because it
 enables users to integrate CDAP with external data governance systems such as
 <a class="reference internal" href="#audit-logging-navigator-integration"><span>Cloudera Navigator</span></a>.</p>
+<p>Please note that audit logs are not published during a CDAP upgrade, as CDAP services are
+not available. Hence, any application which uses CDAP audit logs to sync metadata will go
+out of sync with respect to changes made during the upgrade. Please see
+<a class="reference external" href="https://issues.cask.co/browse/CDAP-5954">CDAP-5954</a> for details.</p>
 </div>
 <div class="section" id="supported-audit-events">
 <span id="audit-logging-supported-audit-events"></span><h2>Supported Audit Events<a class="headerlink" href="#supported-audit-events" title="Permalink to this headline">¶</a></h2>
@@ -158,7 +162,7 @@ enables users to integrate CDAP with external data governance systems such as
 <div class="section" id="configuring-audit-publishing">
 <span id="audit-logging-configuring-audit-publishing"></span><h2>Configuring Audit Publishing<a class="headerlink" href="#configuring-audit-publishing" title="Permalink to this headline">¶</a></h2>
 <p>Audit publishing is controlled by these properties set in the <code class="docutils literal"><span class="pre">cdap-site.xml</span></code>, as described in the
-<a class="reference external" href="../source/../../admin-manual/appendices/cdap-site.html#appendix-cdap-site-xml" title="(in Cask Data Application Platform v3.4.0)"><span class="xref std std-ref">Administration Manual</span></a>:</p>
+<a class="reference external" href="../source/../../admin-manual/appendices/cdap-site.html#appendix-cdap-site-xml" title="(in Cask Data Application Platform v3.4.1)"><span class="xref std std-ref">Administration Manual</span></a>:</p>
 <ul class="simple">
 <li><code class="docutils literal"><span class="pre">audit.enabled</span></code>: Determines if publishing of audit logs is enabled; defaults to <code class="docutils literal"><span class="pre">true</span></code></li>
 <li><code class="docutils literal"><span class="pre">audit.kafka.topic</span></code>: Determines the Kafka topic to publish to; defaults to <code class="docutils literal"><span class="pre">audit</span></code></li>
@@ -168,7 +172,7 @@ enables users to integrate CDAP with external data governance systems such as
 <span id="audit-logging-consuming-audit-events"></span><h2>Consuming Audit Events<a class="headerlink" href="#consuming-audit-events" title="Permalink to this headline">¶</a></h2>
 <p>When audit publishing is <a class="reference internal" href="#audit-logging-configuring-audit-publishing"><span>enabled</span></a>, for
 <a class="reference internal" href="#audit-logging-supported-audit-events"><span>every audit event</span></a>, a message is published to
-<a class="reference external" href="../source/../../admin-manual/cdap-components.html#admin-manual-cdap-components" title="(in Cask Data Application Platform v3.4.0)"><span class="xref std std-ref">CDAP Kafka</span></a> to the
+<a class="reference external" href="../source/../../admin-manual/cdap-components.html#admin-manual-cdap-components" title="(in Cask Data Application Platform v3.4.1)"><span class="xref std std-ref">CDAP Kafka</span></a> to the
 <a class="reference internal" href="#audit-logging-configuring-audit-publishing"><span>configured kafka topic</span></a>.</p>
 <p>The contents of the message are a JSON representation of
 the <a class="reference external" href="https://github.com/caskdata/cdap/blob/develop/cdap-proto/src/main/java/co/cask/cdap/proto/audit/AuditMessage.java">AuditMessage</a>
@@ -269,7 +273,7 @@ to enable deserializing of the audit messages using the <a class="reference exte
 <div class="section" id="cloudera-navigator-integration">
 <span id="audit-logging-navigator-integration"></span><h3>Cloudera Navigator Integration<a class="headerlink" href="#cloudera-navigator-integration" title="Permalink to this headline">¶</a></h3>
 <p>CDAP Metadata can be pushed to Cloudera Navigator for metadata discovery and search.
-Refer to <a class="reference external" href="../source/../../integrations/partners/cloudera/navigator-integration.html#navigator-integration" title="(in Cask Data Application Platform v3.4.0)"><span class="xref std std-ref">Cloudera Navigator Integration</span></a> for more information.</p>
+Refer to <a class="reference external" href="../source/../../integrations/partners/cloudera/navigator-integration.html#navigator-integration" title="(in Cask Data Application Platform v3.4.1)"><span class="xref std std-ref">Cloudera Navigator Integration</span></a> for more information.</p>
 </div>
 </div>
 </div>
@@ -293,7 +297,7 @@ Refer to <a class="reference external" href="../source/../../integrations/partne
     
     
   <div role="note" aria-label="manuals links">
-    <h3><a href="../table-of-contents/../../index.html" rel="nofollow">CDAP Documentation v3.4.0</a></h3>
+    <h3><a href="../table-of-contents/../../index.html" rel="nofollow">CDAP Documentation v3.4.1</a></h3>
     <ul class="this-page-menu">
       <li><div class=""></div><a href="../table-of-contents/../../index.html" rel="nofollow">Overview</a></li>
       <li><div class=""></div><a href="../table-of-contents/../../introduction/index.html" rel="nofollow">Introduction to CDAP</a></li>
@@ -378,7 +382,7 @@ Refer to <a class="reference external" href="../source/../../integrations/partne
   <div role="note" aria-label="downloads links">
     <h3>Downloads</h3>
     <ul class="this-page-menu">
-      <li><a href="http://docs.cask.co/cdap/3.4.0/cdap-docs-3.4.0-web.zip"
+      <li><a href="http://docs.cask.co/cdap/3.4.1/cdap-docs-3.4.1-web.zip"
             rel="nofollow">Zip Archive of CDAP Documentation</a></li>
     </ul>
    </div>
