@@ -42,6 +42,8 @@ angular.module(PKG.name+'.feature.experimental')
         .state('experimental.directivesPlayground', {
           url: '/experimental-directives',
           templateUrl: '/assets/features/experimental/templates/directives-playground.html',
+          controller: 'DirectivePlayGround',
+          controllerAs: 'DirectivePlayGround',
           ncyBreadcrumb: {
             label: 'Directives Playground',
             parent: 'experimental.home'

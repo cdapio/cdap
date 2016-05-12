@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,18 +14,7 @@
  * the License.
  */
 
-/**
- * myTitleFilter
- * intended for use in the <title> tag.
- */
-
-angular.module(PKG.name+'.filters').filter('myTitleFilter',
-function myTitleFilter () {
-
-  return function(state) {
-    if (!state) { return '';}
-    var title = state.data && state.data.title;
-    return (title ? title + ' | ' : '') + 'CDAP';
-  };
-
-});
+ angular.module(`${PKG.name}.feature.experimental`)
+   .controller('DirectivePlayGround', function() {
+     this.dsMultipleValuesModel = 'value1:value2:value3,newValue1:newValue2:newValue3';
+   });
