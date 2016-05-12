@@ -39,6 +39,7 @@ body.theme-cdap {
           display: inline-block;
           line-height: 35px;
           font-size: 1.8em;
+
           @media (min-width: @screen-sm-min) {
             font-size: 23px;
           }
@@ -59,7 +60,8 @@ body.theme-cdap {
         span {
           line-height: @height-of-toppanel;
         }
-        &:hover, &:focus {
+        &:hover,
+        &:focus {
           background-color: #ebebeb;
           border-right: 1px solid #ebebeb;
           border-left: 1px solid @table-border-color;
@@ -74,6 +76,7 @@ body.theme-cdap {
         + .btn {
           margin-left: 0;
         }
+
         @media (max-width: @screen-xs-max) {
           display: none;
         }
@@ -91,26 +94,26 @@ body.theme-cdap {
       }
       &.top {
         .tooltip-arrow {
-          border-top: 5px solid #666;
+          border-top: 5px solid #666666;
         }
       }
       &.right {
         width: 100%;
         .tooltip-arrow {
-          border-right: 5px solid #666;
+          border-right: 5px solid #666666;
         }
       }
       &.bottom {
         .tooltip-arrow {
-          border-bottom: 5px solid #666;
+          border-bottom: 5px solid #666666;
         }
       }
       &.icon-tooltip {
         width: auto;
       }
       .tooltip-inner {
-        background-color: #666;
-        border: 1px solid #666;
+        background-color: #666666;
+        border: 1px solid #666666;
         padding-right: 10px;
         padding-left: 10px;
       }
@@ -134,10 +137,12 @@ body.theme-cdap {
         z-index: 1021;
         .box-shadow(none);
         .transition(all 0.2s ease);
+
         @media (min-width: @screen-lg-min) {
           max-width: 650px;
         }
-        &:hover, &:focus {
+        &:hover,
+        &:focus {
           cursor: pointer;
         }
         div.pipeline-type {
@@ -157,7 +162,8 @@ body.theme-cdap {
             .opacity(0);
             .transition(opacity 0.2s ease);
           }
-          &:hover, &:focus {
+          &:hover,
+          &:focus {
             &:after {
               .opacity(1);
             }
@@ -167,7 +173,8 @@ body.theme-cdap {
               content: none;
               color: gray;
             }
-            &:first-child, &:last-child {
+            &:first-child,
+            &:last-child {
               max-width: 100%;
               text-overflow: ellipsis;
               white-space: nowrap;
@@ -193,7 +200,8 @@ body.theme-cdap {
             }
           }
         }
-        input, textarea {
+        input,
+        textarea {
           background-color: transparent;
           display: inline-block;
           font-size: 12px;
@@ -204,7 +212,8 @@ body.theme-cdap {
           max-width: 100%;
           .border-radius(6px);
           .placeholder-color(@color: gray);
-          &:hover, &:focus {
+          &:hover,
+          &:focus {
             cursor: auto;
           }
           &:focus {
@@ -265,8 +274,9 @@ body.theme-cdap {
               visibility: visible;
               &:first-child {
                 background-color: @body-bg;
-                &:hover, &:focus {
-                  background-color: darken(@body-bg, 10%)
+                &:hover,
+                &:focus {
+                  background-color: darken(@body-bg, 10%);
                 }
               }
               &:last-child {
@@ -295,7 +305,8 @@ body.theme-cdap {
         padding: 0 10px;
         vertical-align: middle;
         text-align: left;
-        &:first-child, &:last-child {
+        &:first-child,
+        &:last-child {
           border-left: 0;
         }
         &:last-child {
@@ -343,14 +354,13 @@ body.theme-cdap {
         div.pipeline-type {
           text-decoration: none;
           padding: 0 10px 0 5px;
-          span {
-          }
         }
         div.pipeline-name {
           text-align: left;
           padding-top: 4px;
         }
-        h1, p {
+        h1,
+        p {
           white-space: nowrap;
           overflow: hidden;
           text-overflow: ellipsis;
@@ -364,7 +374,7 @@ body.theme-cdap {
           line-height: 20px;
         }
         p {
-          color: #666;
+          color: #666666;
           font-size: 12px;
           font-weight: 400;
           margin: 0;

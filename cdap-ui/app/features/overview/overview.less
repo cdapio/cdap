@@ -33,12 +33,13 @@ body.state-overview {
       font-size: 25px;
       top: 15px;
       right: 15px;
-      color: #ccc;
+      color: #cccccc;
       padding: 5px;
       cursor: pointer;
     }
 
-    .banner-title, .banner-content { color: white; }
+    .banner-title,
+    .banner-content { color: white; }
     .banner-title {
       font-size: 39px;
       font-weight: 500;
@@ -126,6 +127,7 @@ body.state-overview {
         }
         .col-xs-8 {
           padding-left: 0;
+
           @media (max-width: @screen-xs-max) {
             p {
               font-size: 10px;
@@ -137,9 +139,11 @@ body.state-overview {
           line-height: 90px;
           max-width: 340px;
           .border-radius(50px);
+
           @media (max-width: @screen-md-max) {
             margin: 0 auto;
           }
+
           @media (min-width: @screen-lg-min) {
             position: relative;
             top: 30px;
@@ -169,9 +173,11 @@ body.state-overview {
             padding-bottom: 10px;
           }
         }
+
         @media (max-width: @screen-md-max) {
           text-align: center;
         }
+
         @media (min-width: @screen-lg-min) {
           text-align: center;
           p.text-center {
@@ -191,6 +197,7 @@ body.state-overview {
           .c3-line {
             stroke-width: 2px;
           }
+
           @media (max-width: @screen-xs-max) {
             display: block;
             max-width: 280px;
@@ -201,6 +208,7 @@ body.state-overview {
           @media (min-width: @screen-sm-min) {
             margin-right: 28px;
           }
+
           @media (min-width: @screen-lg-min) {
             margin-left: 56px;
           }
@@ -265,8 +273,9 @@ body.state-overview {
       }
       .col-sm-9 {
         text-align: left;
+
         @media (min-width: @screen-sm-min) {
-         text-align: right;
+          text-align: right;
         }
       }
       .col-md-6 {
@@ -300,7 +309,8 @@ body.state-overview {
         a {
           display: block;
           padding: 10px 15px;
-          &:hover, &:focus {
+          &:hover,
+          &:focus {
             text-decoration: none;
           }
         }
@@ -323,7 +333,7 @@ body.state-overview {
         color: @cdap-bluegray;
       }
       p {
-        color: #5F6674;
+        color: #5f6674;
       }
     }
     section {
@@ -332,10 +342,11 @@ body.state-overview {
         background-color: white;
         color: @cdap-bluegray;
         border: 1px solid #d1d4dc;
-        p, span { color: @cdap-bluegray; }
+        p,
+        span { color: @cdap-bluegray; }
         .c3 {
           svg {
-            border: 1px solid rgba(0,0,0,0.1);
+            border: 1px solid rgba(0, 0, 0, 0.1);
             background-color: @cdap-header;
           }
         }
@@ -371,7 +382,7 @@ body.state-overview {
         }
         .col-sm-3 {
           p {
-            color: #5F6674;
+            color: #5f6674;
           }
         }
         button.white-dropdown {
@@ -379,12 +390,15 @@ body.state-overview {
         }
         li.list-group-item {
           background-color: white;
-          a, p {
+          a,
+          p {
             color: @cdap-bluegray;
           }
-          &:hover, &:focus {
+          &:hover,
+          &:focus {
             background-color: @cdap-bluegray;
-            a, p {
+            a,
+            p {
               color: white;
             }
           }
