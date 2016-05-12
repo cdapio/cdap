@@ -35,6 +35,23 @@
 <div class="panel panel-default">
   <div class="panel-heading">
     <div class="panel-title">
+      Values Delimiter
+    </div>
+  </div>
+  <div class="panel-body">
+    <my-ds-multiple-values
+      data-config="{'widget-attributes': { 'values-delimiter': ':', 'delimiter': ',', 'numValues': '3', placeholders: ['function', 'db-field']}}"
+      ng-model="DirectivePlayGround.dsMultipleValuesModel">
+    </my-ds-multiple-values>
+    <pre>
+      Result: {{DirectivePlayGround.dsMultipleValuesModel | json: 4}}
+    </pre>
+  </div>
+</div>
+
+<div class="panel panel-default">
+  <div class="panel-heading">
+    <div class="panel-title">
       Marked down directive Demo
     </div>
   </div>
