@@ -73,7 +73,8 @@ Known Issues
   Kafka service is not running. As a consequence, any applications that
   sync to the CDAP metadata will become out-of-sync as changes to the
   metadata made by the upgrade tool will not be published.
-
+  
+- See also the *Known Issues* of `version 3.4.0 <#known-issues-340>`_\ .
 
 
 `Release 3.4.0 <http://docs.cask.co/cdap/3.4.0/index.html>`__
@@ -379,6 +380,8 @@ Deprecated and Removed Features
   Notifications* to consume only those messages from the audit feed that have the ``type``
   field set to ``METADATA_CHANGE``.
  
+.. _known-issues-340:
+
 Known Issues
 ------------
 - After upgrading CDAP from a pre-3.0 version, any unprocessed metrics data in Kafka will
