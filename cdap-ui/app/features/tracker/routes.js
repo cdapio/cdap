@@ -34,10 +34,10 @@ angular.module(PKG.name + '.feature.tracker')
         parent: 'ns',
         template: '<ui-view/>',
         resolve: {
-          rTrackerApp: function (myTrackerApi, $q, $stateParams, $state, UI_CONFIG, myAlertOnValium) {
+          rTrackerApp: function (myTrackerApi, $q, $stateParams, $state, UI_CONFIG, myAlertOnValium, $cookies) {
             let defer = $q.defer();
             let params = {
-              namespace: $stateParams.namespace
+              namespace: $stateParams.namespace || $cookies.get('CDAP_Namespace') || 'default'
             };
 
             myTrackerApi.getTrackerApp(params)

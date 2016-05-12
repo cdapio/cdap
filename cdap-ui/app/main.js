@@ -34,7 +34,6 @@ angular
       PKG.name+'.feature.hydratorplusplus',
       PKG.name+'.feature.explore',
       PKG.name +'.feature.search',
-      PKG.name +'.feature.pins',
       PKG.name +'.feature.tracker'
 
     ]).name,
