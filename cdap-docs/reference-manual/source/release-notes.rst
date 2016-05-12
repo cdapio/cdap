@@ -23,6 +23,59 @@ Cask Data Application Platform Release Notes
    :backlinks: none
    :depth: 2
 
+`Release 3.4.1 <http://docs.cask.co/cdap/3.4.1/index.html>`__
+=============================================================
+
+Bug Fixes
+---------
+- `CDAP-4388 <https://issues.cask.co/browse/CDAP-4388>`__ - Fixed a race
+  condition bug in ResourceCoordinator that prevented performing partition
+  assignment in the correct order. It affects the metrics processor and
+  stream coordinator.
+
+- `CDAP-5855 <https://issues.cask.co/browse/CDAP-5855>`__ - Avoid the
+  cancellation of delegation tokens upon completion of Explore-launched
+  MapReduce and Spark jobs, as these delegation tokens are shared by CDAP
+  system services.
+
+- `CDAP-5868 <https://issues.cask.co/browse/CDAP-5868>`__ - Removed
+  'SNAPSHOT' from the artifact version of apps created by default by the CDAP UI.
+  This fixes deploying Cask Tracker and Navigator apps, enabling Cask Tracker
+  from the CDAP UI.
+
+- `CDAP-5884 <https://issues.cask.co/browse/CDAP-5884>`__ - Fixed a bug
+  that caused SDK builds to fail when using 3.3.x versions of maven.
+
+- `CDAP-5887 <https://issues.cask.co/browse/CDAP-5887>`__ - Fixed the
+  Hydrator upgrade tool to correctly write out pipeline configs that
+  failed to upgrade.
+
+- `CDAP-5889 <https://issues.cask.co/browse/CDAP-5889>`__ - The CDAP
+  Standalone now deploys and starts the Cask Tracker app in the default
+  namespace if the Tracker artifact is present.
+
+- `CDAP-5898 <https://issues.cask.co/browse/CDAP-5898>`__ - Shutdown
+  external processes started by CDAP (Zookeeper and Kafka) when there is
+  an error during either startup or shutdown of CDAP.
+
+- `CDAP-5907 <https://issues.cask.co/browse/CDAP-5907>`__ - Fixed an
+  issue where parsing of an AVRO schema was failing when it included
+  optional fields such as 'doc' or 'default'.
+
+- `CDAP-5947 <https://issues.cask.co/browse/CDAP-5947>`__ - Fixed a bug
+  in the BatchReadableRDD so that it won't skip records when used by
+  DataFrame.
+
+Known Issues
+------------
+- `CDAP-5900 <https://issues.cask.co/browse/CDAP-5900>`__ - During the
+  upgrade to CDAP 3.4.1, publishing to Kafka is halted because the CDAP
+  Kafka service is not running. As a consequence, any applications that
+  sync to the CDAP metadata will become out-of-sync as changes to the
+  metadata made by the upgrade tool will not be published.
+
+
+
 `Release 3.4.0 <http://docs.cask.co/cdap/3.4.0/index.html>`__
 =============================================================
 
